@@ -20,6 +20,7 @@
   |   busca_titulos_bordero         | DSCT0002.pc_busca_titulos_bordero       |
   |   carrega_dados_bordero_titulos | DSCT0002.pc_carrega_dados_bordero_tit   |
   |   busca_dados_impressao_dsctit  | DSCT0002.pc_busca_dados_imp_descont     |
+  |   busca_tarifa_desconto_titulo  | DSCT0003.pc_busca_tarifa_desc_titulo    |
   +---------------------------------+-----------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -36,7 +37,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 11/12/2017
+    Data    : Julho/2008                     Ultima Atualizacao: 16/11/2018
            
     Dados referentes ao programa:
                 
@@ -362,7 +363,7 @@
                              (Gabriel).
                              
                 24/06/2014 - Adicionado o parametro par_dsoperac 
-                            (com valor 'DESCONTO TITULO') 'a chamada das
+                            (com valor 'DESCONTO TITULO') a chamada das
                             procedures cria-tabelas-avalistas e 
                             atualiza_tabela_avalistas. 
                             (Chamado 166383) - (Fabricio)
@@ -497,20 +498,82 @@
                08/08/2017 - Inserido Valor do bordero no cálculo das tarifas - Everton/Mouts/M150
                
                04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
-                            de novo limite. (Chamado 768648) - (Fabricio) 
+                            de novo limite. (Chamado 768648) - (Fabricio)
 
-               16/10/2017 - Inserido valor liquido do Bordero para cálculo de tarifas - Everton/Mouts/M150
+			   16/10/2017 - Inserido valor liquido do Bordero para cálculo de tarifas - Everton/Mouts/M150
 
                20/10/2017 - Projeto 410 - Ajustado cálculo do IOF na liberação do borderô
                             (Diogo - MoutS)
 
                25/10/2017 - Projeto 410 - Ajustado cálculo do IOF na baixa do título
                             (James)
-			   
-			   20/10/2017 - Criada procedure busca_iof_simples_nacional 
+
+               20/10/2017 - Criada procedure busca_iof_simples_nacional 
                             (Diogo - MoutS - Projeto 410 - RF 43 a 46)
 
                11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
+
+               07/03/2018 - Preenchimento do campo 'dtrenova' na procedure busca_dados_dsctit (Leonardo Oliveira - GFT)
+
+               13/03/2018 - Preenchimento do campo 'perrenov' na procedure busca_dados_dsctit  (Leonardo Oliveira - GFT)
+
+               14/03/2018 - Removido o conteúdo "(CONTINGENCIA)" das situações 3-Aprovada e 6-Rejeitada do campo insitapr da 
+                            procedure busca_limites (Paulo Penteado - GFT)
+
+               16/03/2018 - Preenchimento dos campos  'flgstlcr' e 'cddlinha' na procedure busca_dados_dsctit (Leonardo Oliveira - GFT)
+               
+               16/03/2018 - Filtrar as operações de desconto que foram inclusas no sistema e não tiverem a liberação/efetivação dentro de até 120 dias corridos em 'busca_borderos' (Leonardo Oliveira - GFT)
+
+               23/03/2018 - Alterada as rotinas efetua_inclusao_limite e efetua_alteracao_limite para substituir a utilização da tabela de contrato CRAPLIM para
+                            a tabela de proposta CRAWLIM.
+                            Criado a procedure busca_dados_proposta para preencher a tt-dsctit_dados_limite com os dados da proposta, ela é chamada na procedure 
+                            busca_dados_limite_altera (Paulo Penteado GFT)
+                            
+               10/04/2018 - Adicionado o procedimento busca_dados_proposta_consulta (Paulo Penteado GFT)
+
+               12/04/2018 - Criado a procedure 'busca_dados_limite_manutencao',
+                              - Criado a procedure 'realizar_manutencao_contrato', 
+                              - Retirada a validação para alteração na procedure 'busca_dados_limite',
+                              - Adição da validação de limite máximo na procedure 'efetua_inclusao_limite' (Leonardo Oliveira - GFT)
+
+               13/04/2018 - Na procedure busca_dados_impressao_dsctit alterado a chamada da procedure busca_dados_proposta_consulta pela 
+                            busca_dados_proposta_consulta (Paulo penteado GFT)
+
+               16/04/2018 - Na procedure efetua_cancelamento_limite, adicionado o cancelamento das proposta principal e de manutenção do contrato (Paulo Penteado GFT)
+
+               18/04/2018 - Na procedure realizar_manutencao_contrato, adicionado validação para não incluir uma proposta de manutenção caso já tenha uma outra proposta
+                            na situação Em estudo, Aprovada ou Não Aprovada (Paulo Penteado GFT)
+
+               20/04/2018 - Na procedure busca_dados_dsctit, adicionado o retorno da data da ultima proposta de manutenção ativa (Paulo Penteado GFT)
+
+               24/04/2018 - Copiado a validação de verificação de proposta em estudo existente na rotina b1wgen0030.p > realizar_manutencao_contrato para a 
+                            rotina b1wgen0030.p > busca_dados_limite_manutencao.
+                            Adicionado a procedure busca_dados_proposta_manuten. (Paulo Penteado GFT)
+
+               25/04/2018 - Correções na busca_parametros_dsctit para buscar as regras de registrados (Luis Fernando GFT)
+               
+               17/04/2017 - Chamada para rotina pc_valida_adesao_produto.
+                          - Inlusao das procedures valida_inclusao_bordero,
+                            valida_alteracao_bordero e valida_exclusao_tit_bordero.
+                            Projeto 366 (Lombardi).
+
+               09/05/2018 - Adicionado na busca_dados_limite_altera validação para não permitir a alteração de uma proposta criada antes da nova implantação do
+                            Limite de Desconto de Título (Paulo Penteado GFT)
+			   
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+               21/08/2018 - Adicionado na efetua_cancelamento_limite validação para não permitir a exclusao de contrato com propostas pendentes na IBRATAN (Andrew Albuquerque - GFT)
+               
+               23/08/2018 - Alteraçao na efetua_cancelamento_limite: Registrar o cancelamento na tabela de histórico de alteraçao de contrato de limite (Andrew Albuquerque - GFT)
+               
+               29/08/2018 - Adicionado controle para situaçao(insitlim) ANULADA na proc 'busca_dados_proposta'. PRJ 438 (Mateus Z - Mouts)
+				  
+               03/09/2018 - Correção para remover lote (Jonata - Mouts).
+
+			   13/11/2018 - Adicionada parametros a procedure pc_verifica_tarifa_operacao. PRJ 345. (Fabio Stein - Supero)
+
+               16/11/2018 - Alterado para buscar o qtd dias de renovacao da tabela craprli (Paulo Penteao GFT)
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -899,6 +962,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEF VAR aux_qtacobra AS INTE                                     NO-UNDO.
     DEF VAR aux_fliseope AS INTE                                     NO-UNDO.
     DEF VAR aux_cdacesso AS CHAR                                     NO-UNDO.
+	DEF VAR aux_nrseqdig AS INT									     NO-UNDO.
 
     DEFINE VARIABLE aux_qtdiaiof AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_periofop AS DECIMAL NO-UNDO.
@@ -906,7 +970,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEFINE VARIABLE aux_vltotiof AS DECIMAL NO-UNDO.
     DEFINE VARIABLE aux_inpessoa AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_vltotaliofsn AS DECIMAL NO-UNDO.
-    
+
     DEFINE VARIABLE aux_natjurid AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_tpregtrb AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_vltotiofpri AS DECIMAL NO-UNDO.
@@ -1096,7 +1160,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                    INPUT par_dtmvtolt,
                                    OUTPUT TABLE tt-erro,
                                    OUTPUT TABLE tt-iof).
-
+                               
     RUN busca_iof_simples_nacional IN h-b1wgen9999 (INPUT par_cdcooper,
                                       INPUT 0, /* agenci */
                                       INPUT 0, /* caixa  */
@@ -2055,6 +2119,24 @@ PROCEDURE efetua_liber_anali_bordero:
          DO TRANSACTION ON ENDKEY UNDO LIBERACAO, RETURN "NOK"
                         ON ERROR  UNDO LIBERACAO, RETURN "NOK":
                         
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+			/* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+			RUN STORED-PROCEDURE pc_sequence_progress
+			aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+												,INPUT "NRSEQDIG"
+												,STRING(par_cdcooper) + ";" + STRING(par_dtmvtolt,"99/99/9999") + ";" + STRING(1) + ";100;" + STRING(17000 + aux_cdpactra)
+												,INPUT "N"
+												,"").
+
+			CLOSE STORED-PROC pc_sequence_progress
+			aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+			{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+			ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+				                       WHEN pc_sequence_progress.pr_sequence <> ?.
+
             /*  Liberacao do bordero .....................................*/
             DO aux_contador = 1 TO 10:
 
@@ -2109,7 +2191,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                    NO-LOCK:
               ASSIGN aux_vltotoperac = aux_vltotoperac + crabtdb.vlliquid.
             END.
-            
+                           
             ASSIGN aux_vltotiof = 0
                    aux_vltotiofpri = 0
                    aux_vltotiofadi = 0
@@ -2245,7 +2327,7 @@ PROCEDURE efetua_liber_anali_bordero:
                 IF pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal <> "" THEN
                   DO:
                     ASSIGN aux_vltxiofatraso = DECI(pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal).
-                  END.
+                  END.                  
                 IF pc_calcula_valor_iof_prg.pr_flgimune <> ? THEN
                   DO:
                     ASSIGN aux_flgimune = pc_calcula_valor_iof_prg.pr_flgimune.
@@ -2340,6 +2422,8 @@ PROCEDURE efetua_liber_anali_bordero:
                                                         ,INPUT 16                   /* Tipo de tarifa */
                                                         ,INPUT 0                    /* Tipo TAA */
                                                         ,INPUT 1                    /* Quantidade de operacoes */
+														,INPUT 0			/* numero documento - adicionado por Valeria Supero outubro 2018 */ 
+														,INPUT 0			/* hora de realização da operação -adicionado por Valeria Supero */
                                                         ,OUTPUT 0                   /* Quantidade de operações a serem cobradas */
                                                         ,OUTPUT 0                   /* Indicador de isencao de tarifa (0 - nao isenta, 1 - isenta) */
                                                         ,OUTPUT 0    /* Código da crítica */
@@ -2424,26 +2508,18 @@ PROCEDURE efetua_liber_anali_bordero:
                    craplcm.cdbccxlt = craplot.cdbccxlt 
                    craplcm.nrdolote = craplot.nrdolote
                    craplcm.nrdconta = crapbdt.nrdconta
-                   craplcm.nrdocmto = craplot.nrseqdig + 1
+                   craplcm.nrdocmto = aux_nrseqdig 
                    craplcm.vllanmto = aux_vlborder
                    craplcm.cdhistor = 686
-                   craplcm.nrseqdig = craplot.nrseqdig + 1 
+                   craplcm.nrseqdig = aux_nrseqdig
                    craplcm.nrdctabb = crapbdt.nrdconta 
 
                    craplcm.nrautdoc = 0
                    craplcm.cdcooper = par_cdcooper
 
                    craplcm.cdpesqbb = "Desconto do bordero " +
-                                       STRING(crapbdt.nrborder,"zzz,zz9")
+                                       STRING(crapbdt.nrborder,"zzz,zz9").
 
-                   craplot.nrseqdig = craplcm.nrseqdig
-                   craplot.qtinfoln = craplot.qtinfoln + 1
-                   craplot.qtcompln = craplot.qtcompln + 1
-        
-                   craplot.vlinfocr = craplot.vlinfocr +
-                                      craplcm.vllanmto
-                   craplot.vlcompcr = craplot.vlcompcr +
-                                      craplcm.vllanmto.
               
             VALIDATE craplot.
             VALIDATE craplcm.
@@ -2920,6 +2996,8 @@ PROCEDURE busca_limites:
     
     DEF OUTPUT PARAM TABLE FOR tt-limite_tit.
 
+    DEF VAR aux_dssitmnt AS CHAR   NO-UNDO.
+
     EMPTY TEMP-TABLE tt-limite_tit.
 
     ASSIGN aux_dscritic = ""
@@ -2934,6 +3012,43 @@ PROCEDURE busca_limites:
                            crapprp.tpctrato = craplim.tpctrlim   AND
                            crapprp.nrctrato = craplim.nrctrlim
                            NO-LOCK NO-ERROR.
+						   
+        FIND crawlim WHERE (crawlim.cdcooper = craplim.cdcooper   AND
+                            crawlim.nrdconta = craplim.nrdconta   AND
+                            crawlim.tpctrlim = craplim.tpctrlim   AND
+                            crawlim.nrctrmnt = craplim.nrctrlim   AND
+                            crawlim.insitlim = 1 /*em estudo*/ )
+                           OR
+                           (crawlim.cdcooper = craplim.cdcooper   AND
+                            crawlim.nrdconta = craplim.nrdconta   AND
+                            crawlim.tpctrlim = craplim.tpctrlim   AND
+                            crawlim.nrctrmnt = craplim.nrctrlim   AND
+                            crawlim.insitlim = 5 /*aprovada*/ )
+                           OR
+                           (crawlim.cdcooper = craplim.cdcooper   AND
+                            crawlim.nrdconta = craplim.nrdconta   AND
+                            crawlim.tpctrlim = craplim.tpctrlim   AND
+                            crawlim.nrctrmnt = craplim.nrctrlim   AND
+                            crawlim.insitlim = 6 /*não aprovada*/ )
+                           OR /*438*/
+                           (crawlim.cdcooper = craplim.cdcooper   AND
+                            crawlim.nrdconta = craplim.nrdconta   AND
+                            crawlim.tpctrlim = craplim.tpctrlim   AND
+                            crawlim.nrctrmnt = craplim.nrctrlim   AND
+                            crawlim.insitlim = 8 /*438 - Expirada decurso de prazo*/ )                            
+                           OR /*438*/
+                           (crawlim.cdcooper = craplim.cdcooper   AND
+                            crawlim.nrdconta = craplim.nrdconta   AND
+                            crawlim.tpctrlim = craplim.tpctrlim   AND
+                            crawlim.nrctrmnt = craplim.nrctrlim   AND
+                            crawlim.insitlim = 9 /*438 - Anulada - Paulo Martins (Mouts)*/ )                                
+                           NO-LOCK NO-ERROR.
+
+        IF  AVAILABLE crawlim  THEN
+            ASSIGN aux_dssitmnt = "MAJORAÇÃO SOLICITADA".
+        ELSE
+            ASSIGN aux_dssitmnt = "ATIVO".
+			
 
         CREATE tt-limite_tit.
         ASSIGN tt-limite_tit.dtpropos = craplim.dtpropos
@@ -2943,17 +3058,26 @@ PROCEDURE busca_limites:
                tt-limite_tit.qtdiavig = craplim.qtdiavig
                tt-limite_tit.cddlinha = craplim.cddlinha
                tt-limite_tit.tpctrlim = craplim.tpctrlim
-               tt-limite_tit.dssitlim = (IF craplim.insitlim = 1 THEN
+               tt-limite_tit.dssitlim = (IF craplim.insitlim = 1 THEN               /*Situacao do Limite*/
                                             "EM ESTUDO"
                                          ELSE 
                                          IF craplim.insitlim = 2 THEN
-                                            "ATIVO"
+                                            aux_dssitmnt
                                          ELSE
                                          IF craplim.insitlim = 3 THEN
                                             "CANCELADO"
                                          ELSE
                                          IF craplim.insitlim = 4 THEN
                                             "VIGENTE"
+                                         ELSE 
+                                         IF craplim.insitlim = 5 THEN
+                                            "APROVADO"
+                                         ELSE
+                                         IF craplim.insitlim = 6 THEN
+                                            "NAO APROVADO"
+                                         ELSE
+                                         IF craplim.insitlim = 7 THEN
+                                            "REJEITADO"
                                          ELSE 
                                             "DIFERENTE")
                tt-limite_tit.flgenvio = IF   AVAIL crapprp   THEN
@@ -3025,6 +3149,114 @@ PROCEDURE busca_dados_limite_consulta:
         DO:
             ASSIGN aux_cdcritic = 0
                    aux_dscritic = "Dados de limite nao encontrados.".
+                   
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                                       
+            RETURN "NOK".            
+        END.
+    
+    RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT
+        SET h-b1wgen9999.                                     
+
+    IF  NOT VALID-HANDLE(h-b1wgen9999)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Handle invalido para BO b1wgen9999.".
+                   
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                                       
+            RETURN "NOK".
+
+        END.
+        
+    RUN lista_avalistas IN h-b1wgen9999 (INPUT par_cdcooper,  
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT par_cdoperad,
+                                         INPUT par_nmdatela,
+                                         INPUT par_idorigem,
+                                         INPUT par_nrdconta,
+                                         INPUT par_idseqttl,
+                                         INPUT 8, /** Tipo do contrato **/
+                                         INPUT par_nrctrlim,    
+                                         INPUT tt-dsctit_dados_limite.nrctaav1,
+                                         INPUT tt-dsctit_dados_limite.nrctaav2,
+                                        OUTPUT TABLE tt-dados-avais,
+                                        OUTPUT TABLE tt-erro).      
+                                          
+    DELETE PROCEDURE h-b1wgen9999.
+    
+    IF  RETURN-VALUE = "NOK"  THEN
+        RETURN "NOK".
+
+    RETURN "OK".
+
+END PROCEDURE.
+
+/*******************************************************************/
+/*    Buscar dados de uma proposta limite de desconto de titulos   */
+/*******************************************************************/
+PROCEDURE busca_dados_proposta_consulta:
+
+    DEF INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
+    DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_nrctrlim AS INTE                    NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_limite.
+    DEF OUTPUT PARAM TABLE FOR tt-dados-avais.
+    DEF OUTPUT PARAM TABLE FOR tt-dados_dsctit.
+    
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-dsctit_dados_limite.
+    EMPTY TEMP-TABLE tt-dados-avais.
+    EMPTY TEMP-TABLE tt-dados_dsctit.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0.
+    
+    DEF VAR h-b1wgen9999 AS HANDLE NO-UNDO.
+    
+    RUN busca_dados_proposta(INPUT par_cdcooper,
+                             INPUT par_cdagenci, 
+                             INPUT par_nrdcaixa,
+                             INPUT par_cdoperad,
+                             INPUT par_dtmvtolt,
+                             INPUT par_idorigem,
+                             INPUT par_nrdconta,
+                             INPUT par_idseqttl,  
+                             INPUT par_nmdatela,
+                             INPUT par_nrctrlim,
+                             INPUT "C",
+                             OUTPUT TABLE tt-erro,
+                             OUTPUT TABLE tt-dsctit_dados_limite,
+                             OUTPUT TABLE tt-dados_dsctit).
+    
+    IF  RETURN-VALUE = "NOK"  THEN
+        RETURN "NOK".
+    
+    FIND FIRST tt-dsctit_dados_limite NO-LOCK NO-ERROR.
+    IF  NOT AVAIL tt-dsctit_dados_limite  THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Dados da proposta nao encontrados.".
                    
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -3193,7 +3425,7 @@ PROCEDURE busca_dados_limite_altera:
        END.
 
 
-    RUN busca_dados_limite (INPUT par_cdcooper,
+    RUN busca_dados_proposta (INPUT par_cdcooper,
                             INPUT par_cdagenci, 
                             INPUT par_nrdcaixa,
                             INPUT par_cdoperad,
@@ -3364,13 +3596,36 @@ PROCEDURE busca_dados_limite_incluir:
 		   RETURN "NOK".
 	    END.
 
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */
+
     RUN busca_parametros_dsctit (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT FALSE,
+                                 INPUT TRUE,
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-dados_dsctit,
                                 OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -3423,7 +3678,7 @@ PROCEDURE busca_dados_limite_incluir:
 					DO:
     						CREATE tt-msg-confirma.
 							ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
-								   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+								   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema AILOS. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
         END.
     
 			END.
@@ -3635,26 +3890,6 @@ PROCEDURE busca_dados_limite:
                END.
         END.
     ELSE
-    IF  par_cddopcao = "A"  THEN
-        DO:
-            IF  craplim.insitlim <> 1   THEN
-                DO:
-                    ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "E' possivel alterar contratos" +
-                                          " somente com a situacao EM" +
-                                          " ESTUDO.".
-                          
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-                                  
-                    RETURN "NOK".                    
-                END.
-        END.
-    ELSE
     IF  par_cddopcao = "E"  THEN
         DO:
             IF  craplim.insitlim <> 1   THEN
@@ -3716,13 +3951,36 @@ PROCEDURE busca_dados_limite:
             RETURN "NOK".
         END.
 
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */ 
+
     RUN busca_parametros_dsctit (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT FALSE,
+                                 INPUT TRUE,
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit,
                                  OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -3791,9 +4049,263 @@ PROCEDURE busca_dados_limite:
            tt-dsctit_dados_limite.vltotsfn = craplim.vltotsfn
            tt-dsctit_dados_limite.nrperger = craplim.nrperger
            /* Faturamento unico cliente - Pessoa Juridica */
-           tt-dsctit_dados_limite.perfatcl =
-                           crapjfn.perfatcl WHEN AVAILABLE crapjfn
-           tt-dsctit_dados_limite.idcobop = craplim.idcobop.
+           tt-dsctit_dados_limite.perfatcl = crapjfn.perfatcl
+                                             WHEN AVAILABLE crapjfn.
+    
+    RETURN "OK".
+
+END PROCEDURE.
+
+/**********************************************************************************/
+/*      Buscar dados de uma determinada proposta de limite de desconto de titulos */
+/**********************************************************************************/
+PROCEDURE busca_dados_proposta:
+
+    DEF INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
+    DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_nrctrlim AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cddopcao AS CHAR                    NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_limite.
+    DEF OUTPUT PARAM TABLE FOR tt-dados_dsctit.
+
+    DEF VAR aux_cdtipdoc AS INTEGER                         NO-UNDO.
+
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-dsctit_dados_limite.
+    EMPTY TEMP-TABLE tt-dados_dsctit.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0.
+    
+    DEF VAR h-b1wgen9999 AS HANDLE NO-UNDO.
+
+    FIND FIRST crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                             crawlim.nrdconta = par_nrdconta AND
+                             crawlim.tpctrlim = 3            AND
+                             crawlim.nrctrlim = par_nrctrlim NO-LOCK NO-ERROR.
+         
+    IF  NOT AVAILABLE crawlim   THEN 
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Registro de proposta não encontrado.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+        END.
+ 
+    IF  par_cddopcao = "X"  THEN        
+        DO:
+            IF  crawlim.insitlim <> 1   THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "A proposta DEVE estar EM ESTUDO.".
+                          
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,            /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                                  
+                    RETURN "NOK".
+               END.
+        END.
+    ELSE
+    IF  par_cddopcao = "A"  THEN
+        DO:
+            /* PRJ 438 - Adicionado controle para situaçao ANULADA */
+            IF  ((crawlim.insitlim = 2) or (crawlim.insitlim = 3) or (crawlim.insitlim = 4) or (crawlim.insitlim = 9))  THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "Não é permitido alterar uma proposta com a situação ATIVA, CANCELADA, ANULADA ou VIGENTE".
+                          
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,            /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                                  
+                    RETURN "NOK".                    
+                END.
+        END.
+    ELSE
+    IF  par_cddopcao = "E"  THEN
+        DO:
+            IF  crawlim.insitlim <> 1   THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "A proposta DEVE estar em ESTUDO.".
+                          
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,            /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                                  
+                    RETURN "NOK".
+                END.
+        END.
+
+    FIND crapprp WHERE crapprp.cdcooper = par_cdcooper       AND
+                       crapprp.nrdconta = crawlim.nrdconta   AND
+                       crapprp.nrctrato = crawlim.nrctrlim   AND
+                       crapprp.tpctrato = 3 
+                       NO-LOCK NO-ERROR.    
+                   
+    IF  NOT AVAILABLE crapprp   THEN                                   
+        DO:
+            ASSIGN aux_cdcritic = 0.
+                   aux_dscritic = "Regisro de proposta de desconto de titulo" +
+                                  " não encontrada.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".            
+        END.    
+    
+    FIND crapldc WHERE crapldc.cdcooper = par_cdcooper       AND
+                       crapldc.cddlinha = crawlim.cddlinha   AND
+                       crapldc.tpdescto = 3 
+                       NO-LOCK NO-ERROR.
+
+    IF  NOT AVAILABLE crapldc  THEN 
+        DO:
+            ASSIGN aux_cdcritic = 0.
+                   aux_dscritic = "Regisro de linha " +
+                                  "de desconto não encontrada.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".
+        END.
+
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */ 
+
+    RUN busca_parametros_dsctit (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT par_cdoperad,
+                                 INPUT par_dtmvtolt,
+                                 INPUT par_idorigem,
+                                 INPUT TRUE,
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
+                                 OUTPUT TABLE tt-erro,
+                                 OUTPUT TABLE tt-dados_dsctit,
+                                 OUTPUT TABLE tt-dados_cecred_dsctit).
+
+    IF  RETURN-VALUE = "NOK" THEN
+        RETURN "NOK".
+
+    FIND FIRST tt-dados_dsctit NO-LOCK NO-ERROR.
+
+    FIND crapjfn WHERE crapjfn.cdcooper = par_cdcooper AND
+                       crapjfn.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+        
+    FIND craptab WHERE craptab.cdcooper = par_cdcooper  AND         
+               craptab.nmsistem = "CRED"        AND         
+               craptab.tptabela = "GENERI"      AND         
+               craptab.cdempres = 00            AND         
+               craptab.cdacesso = "DIGITALIZA"  AND
+               craptab.tpregist = 3 
+               NO-LOCK NO-ERROR.
+
+    IF  NOT AVAIL craptab THEN
+        DO:
+            ASSIGN aux_dscritic = 'Falta registro na Tabela "DIGITALIZA". '.
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                    
+            RETURN "NOK".
+        END. 
+
+    ASSIGN aux_cdtipdoc = INTE(ENTRY(3,craptab.dstextab,";")).
+
+    CREATE tt-dsctit_dados_limite.  
+    ASSIGN tt-dsctit_dados_limite.txdmulta = tt-dados_dsctit.pcdmulta
+           tt-dsctit_dados_limite.codlinha = crapldc.cddlinha
+           tt-dsctit_dados_limite.dsdlinha = crapldc.dsdlinha
+           tt-dsctit_dados_limite.txjurmor = crapldc.txjurmor 
+           tt-dsctit_dados_limite.dsramati = crapprp.dsramati
+           tt-dsctit_dados_limite.vlmedtit = crapprp.vlmedchq
+           tt-dsctit_dados_limite.vlfatura = crapprp.vlfatura
+           tt-dsctit_dados_limite.vloutras = crapprp.vloutras
+           tt-dsctit_dados_limite.vlsalari = crapprp.vlsalari
+           tt-dsctit_dados_limite.vlsalcon = crapprp.vlsalcon
+           tt-dsctit_dados_limite.dsdbens1 = SUBSTRING(crapprp.dsdebens,01,060)
+           tt-dsctit_dados_limite.dsdbens2 = SUBSTRING(crapprp.dsdebens,61,120)
+           tt-dsctit_dados_limite.dsobserv = crapprp.dsobserv[1]
+           tt-dsctit_dados_limite.insitlim = crawlim.insitlim
+           tt-dsctit_dados_limite.nrctrlim = crawlim.nrctrlim
+           tt-dsctit_dados_limite.vllimite = crawlim.vllimite
+           tt-dsctit_dados_limite.qtdiavig = crawlim.qtdiavig
+           tt-dsctit_dados_limite.cddlinha = crawlim.cddlinha
+           tt-dsctit_dados_limite.dtcancel = crawlim.dtcancel
+           tt-dsctit_dados_limite.nrctaav1 = crawlim.nrctaav1
+           tt-dsctit_dados_limite.nrctaav2 = crawlim.nrctaav2
+           tt-dsctit_dados_limite.flgdigit = crawlim.flgdigit
+           tt-dsctit_dados_limite.cdtipdoc = aux_cdtipdoc
+           /* ------------------- Rating -----------------*/
+           tt-dsctit_dados_limite.nrgarope = crawlim.nrgarope
+           tt-dsctit_dados_limite.nrinfcad = crawlim.nrinfcad
+           tt-dsctit_dados_limite.nrliquid = crawlim.nrliquid
+           tt-dsctit_dados_limite.nrpatlvr = crawlim.nrpatlvr
+           tt-dsctit_dados_limite.vltotsfn = crawlim.vltotsfn
+           tt-dsctit_dados_limite.nrperger = crawlim.nrperger
+           /* Faturamento unico cliente - Pessoa Juridica */
+           tt-dsctit_dados_limite.perfatcl = crapjfn.perfatcl
+                                             WHEN AVAILABLE crapjfn
+           tt-dsctit_dados_limite.idcobop = crawlim.idcobop.
     
     RETURN "OK".
 
@@ -3992,6 +4504,27 @@ PROCEDURE valida_proposta_dados:
 
        END.
 
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */
 
    RUN busca_parametros_dsctit (INPUT par_cdcooper,
                                 INPUT par_cdagenci,
@@ -3999,7 +4532,8 @@ PROCEDURE valida_proposta_dados:
                                 INPUT par_cdoperad,
                                 INPUT par_dtmvtolt,
                                 INPUT par_idorigem,
-                                INPUT FALSE,
+                                INPUT TRUE,
+                                INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-dados_dsctit,
                                 OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -4368,9 +4902,9 @@ PROCEDURE valida_proposta_dados:
 
 END PROCEDURE.
 
-/*****************************************************************************/
-/*       Efetuar a inclusao de uma novo limite de desconto de titulos        */
-/*****************************************************************************/
+/*************************************************************************************/
+/*       Efetuar a inclusao de uma nova proposta de limite de desconto de titulos    */
+/*************************************************************************************/
 PROCEDURE efetua_inclusao_limite:
 
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
@@ -4443,10 +4977,11 @@ PROCEDURE efetua_inclusao_limite:
     DEF  INPUT PARAM par_nrperger AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vltotsfn AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_perfatcl AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctrmnt AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idcobope AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_nrctrlim AS INTE                           NO-UNDO.                                   
     DEF OUTPUT PARAM TABLE FOR tt-erro.
-    DEFINE OUTPUT PARAM TABLE FOR tt-msg-confirma.
+    DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
         
     DEF VAR h-b1wgen0021 AS HANDLE  NO-UNDO.
     DEF VAR h-b1wgen9999 AS HANDLE  NO-UNDO.
@@ -4470,13 +5005,36 @@ PROCEDURE efetua_inclusao_limite:
                aux_dstransa = "Incluir limite " + STRING(par_nrctrlim) +
                               " de desconto de titulos.".
 
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */
+
     RUN busca_parametros_dsctit (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT FALSE,
+                                 INPUT TRUE,
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit,
                                  OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -4485,6 +5043,56 @@ PROCEDURE efetua_inclusao_limite:
 
     IF  RETURN-VALUE = "NOK" THEN
         DO:
+            IF  par_flgerlog  THEN
+                RUN proc_gerar_log (INPUT par_cdcooper,
+                                    INPUT par_cdoperad,
+                                    INPUT aux_dscritic,
+                                    INPUT aux_dsorigem,
+                                    INPUT aux_dstransa,
+                                    INPUT FALSE,
+                                    INPUT par_idseqttl,
+                                    INPUT par_nmdatela,
+                                    INPUT par_nrdconta,
+                                   OUTPUT aux_nrdrowid).
+            
+            RETURN "NOK".
+        END.    
+         
+    /** Buscar regra para renovaçao **/
+    FIND FIRST craprli 
+         WHERE craprli.cdcooper = par_cdcooper
+           AND craprli.tplimite = 3
+           AND craprli.inpessoa = crapass.inpessoa
+           NO-LOCK NO-ERROR.
+
+    IF NOT AVAILABLE craprli  THEN
+       DO:
+           ASSIGN aux_cdcritic = 0
+                  aux_dscritic = "Tabela Regra de limite nao cadastrada.".
+
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1,      /** Sequencia **/
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+           RETURN "NOK".
+       END.
+    
+    /* Validaçao TAB052*/
+    /*LIMITE MAXIMO EXCEDIDO*/
+    IF par_vllimite > tt-dados_dsctit.vllimite THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Limite maximo excedido.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                           
             IF  par_flgerlog  THEN
                 RUN proc_gerar_log (INPUT par_cdcooper,
                                     INPUT par_cdoperad,
@@ -4535,7 +5143,7 @@ PROCEDURE efetua_inclusao_limite:
         DO WHILE TRUE:
           { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-          /* Busca a proxima sequencia do campo crapldt.nrsequen */
+          /* Busca a proxima sequencia do campo craplim.nrctrlim */
           RUN STORED-PROCEDURE pc_sequence_progress
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLIM"
                                               ,INPUT "NRCTRLIM"
@@ -4555,12 +5163,12 @@ PROCEDURE efetua_inclusao_limite:
                             
           
           
-          FIND FIRST craplim 
-               WHERE craplim.cdcooper = par_cdcooper
-                 AND craplim.tpctrlim = 3
-                 AND craplim.nrctrlim = aux_nrctrlim
+          FIND FIRST crawlim 
+               WHERE crawlim.cdcooper = par_cdcooper
+                 AND crawlim.tpctrlim = 3
+                 AND crawlim.nrctrlim = aux_nrctrlim
                  NO-LOCK NO-ERROR.
-          IF NOT AVAILABLE craplim THEN       
+          IF NOT AVAILABLE crawlim THEN       
           DO:
             LEAVE.
           END.
@@ -4640,16 +5248,16 @@ PROCEDURE efetua_inclusao_limite:
             UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
         END.
 
-        FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
-                                 craplim.nrdconta = par_nrdconta AND
-                                 craplim.tpctrlim = 3            AND
-                                 craplim.nrctrlim = par_nrctrlim 
+        FIND FIRST crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                                 crawlim.nrdconta = par_nrdconta AND
+                                 crawlim.tpctrlim = 3            AND
+                                 crawlim.nrctrlim = par_nrctrlim 
                                  NO-LOCK NO-ERROR.
          
-        IF  AVAILABLE craplim   THEN 
+        IF  AVAILABLE crawlim   THEN 
             DO:
                 ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Registro de contrato ja existe.".
+                       aux_dscritic = "Registro de proposta de limite de desconto de titulos ja existente.".
 
                 RUN gera_erro (INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -4724,90 +5332,91 @@ PROCEDURE efetua_inclusao_limite:
                 UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
             END.
         
-        CREATE craplim.
-        ASSIGN craplim.nrdconta    = par_nrdconta
-               craplim.tpctrlim    = 3 /* Desconto de titulo */
-               craplim.nrctrlim    = par_nrctrlim
+        CREATE crawlim.
+        ASSIGN crawlim.nrdconta    = par_nrdconta
+               crawlim.tpctrlim    = 3 /* Limite de Desconto de titulo */
+               crawlim.nrctrlim    = par_nrctrlim
 
                /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
-               craplim.cdopeori = par_cdoperad
-               craplim.cdageori = par_cdagenci
-               craplim.dtinsori = TODAY
+               crawlim.cdopeori = par_cdoperad
+               crawlim.cdageori = par_cdagenci
+               crawlim.dtinsori = TODAY
                /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
 
-               craplim.dtpropos    = par_dtmvtolt
-               craplim.insitlim    = 1
-               craplim.cddlinha    = par_cddlinha
-               craplim.qtdiavig    = par_qtdiavig
-               craplim.cdoperad    = par_cdoperad
-               craplim.cdmotcan    = 0
-               craplim.vllimite    = par_vllimite
-               craplim.inbaslim    = IF par_vllimite > 
+               crawlim.dtpropos    = par_dtmvtolt
+               crawlim.insitlim    = 1
+               crawlim.cddlinha    = par_cddlinha
+               crawlim.qtdiavig    = par_qtdiavig
+               crawlim.cdoperad    = par_cdoperad
+               crawlim.cdmotcan    = 0
+               crawlim.vllimite    = par_vllimite
+               crawlim.inbaslim    = IF par_vllimite > 
                                         tt-saldo-cotas.vlsldcap THEN
                                         2
                                      ELSE  
                                         1
-               craplim.flgimpnp    = TRUE
-               craplim.nrctaav1    = par_nrctaav1
-               craplim.nrctaav2    = par_nrctaav2
+               crawlim.flgimpnp    = TRUE
+               crawlim.nrctaav1    = par_nrctaav1
+               crawlim.nrctaav2    = par_nrctaav2
 
-               craplim.qtrenctr    = tt-dados_dsctit.qtrenova
+               crawlim.qtrenctr    = craprli.qtmaxren
 
-               craplim.dsendav1[1] = IF  par_nrctaav1 <> 0  THEN
+               crawlim.dsendav1[1] = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende1av1) + " " +
                                          STRING(par_nrender1)
-               craplim.dsendav1[2] = IF  par_nrctaav1 <> 0  THEN
+               crawlim.dsendav1[2] = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende2av1) + " - " + 
                                          CAPS(par_nmcidav1) + " - " +
                                          STRING(par_nrcepav1,"99999,999") +
                                          " - " + CAPS(par_cdufava1)
-               craplim.dsendav2[1] = IF  par_nrctaav2 <> 0  THEN
+               crawlim.dsendav2[1] = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende1av2) + " " +
                                          STRING(par_nrender2)
-               craplim.dsendav2[2] = IF  par_nrctaav2 <> 0  THEN
+               crawlim.dsendav2[2] = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende2av2) + " - " + 
                                          CAPS(par_nmcidav2) + " - " +
                                          STRING(par_nrcepav2,"99999,999") +
                                          " - " + CAPS(par_cdufava2)
-               craplim.nmdaval1    = IF  par_nrctaav1 <> 0  THEN
+               crawlim.nmdaval1    = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_nmdaval1)
-               craplim.nmdaval2    = IF  par_nrctaav2 <> 0  THEN
+               crawlim.nmdaval2    = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE    
                                          CAPS(par_nmdaval2)
-               craplim.dscpfav1    = IF  par_nrctaav1 <> 0  THEN
+               crawlim.dscpfav1    = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          par_dsdocav1
-               craplim.dscpfav2    = IF  par_nrctaav2 <> 0  THEN
+               crawlim.dscpfav2    = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE
                                          par_dsdocav2
-               craplim.nmcjgav1    = CAPS(par_nmdcjav1)
-               craplim.nmcjgav2    = CAPS(par_nmdcjav2)
-               craplim.dscfcav1    = CAPS(par_doccjav1)
-               craplim.dscfcav2    = CAPS(par_doccjav2)
-               craplim.nrgarope    = par_nrgarope
-               craplim.nrinfcad    = par_nrinfcad
-               craplim.nrliquid    = par_nrliquid
-               craplim.nrpatlvr    = par_nrpatlvr
-               craplim.nrperger    = par_nrperger
-               craplim.vltotsfn    = par_vltotsfn
-               craplim.cdcooper    = par_cdcooper
-               craplim.idcobope    = par_idcobope
-               craplim.idcobefe    = par_idcobope.
+               crawlim.nmcjgav1    = CAPS(par_nmdcjav1)
+               crawlim.nmcjgav2    = CAPS(par_nmdcjav2)
+               crawlim.dscfcav1    = CAPS(par_doccjav1)
+               crawlim.dscfcav2    = CAPS(par_doccjav2)
+               crawlim.nrgarope    = par_nrgarope
+               crawlim.nrinfcad    = par_nrinfcad
+               crawlim.nrliquid    = par_nrliquid
+               crawlim.nrpatlvr    = par_nrpatlvr
+               crawlim.nrperger    = par_nrperger
+               crawlim.vltotsfn    = par_vltotsfn
+               crawlim.cdcooper    = par_cdcooper
+               crawlim.nrctrmnt    = par_nrctrmnt
+			   crawlim.idcobope    = par_idcobope
+               crawlim.idcobefe    = par_idcobope.
         
-        VALIDATE craplim.
+        VALIDATE crawlim.
 
         FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                            crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
@@ -4860,7 +5469,7 @@ PROCEDURE efetua_inclusao_limite:
         FIND FIRST crapprp WHERE crapprp.cdcooper = par_cdcooper     AND
                                  crapprp.nrdconta = par_nrdconta     AND
                                  crapprp.tpctrato = 3                AND
-                                 crapprp.nrctrato = craplim.nrctrlim
+                                 crapprp.nrctrato = crawlim.nrctrlim
                                  NO-LOCK NO-ERROR.
 
         IF  AVAILABLE crapprp  THEN
@@ -4883,7 +5492,7 @@ PROCEDURE efetua_inclusao_limite:
         CREATE crapprp.
         ASSIGN crapprp.nrdconta = par_nrdconta
                crapprp.nrctrato = par_nrctrlim
-               crapprp.tpctrato = 3 /* Dscto Titulo */
+               crapprp.tpctrato = 3 /* Limite de Dscto Titulo */
                crapprp.dsramati = CAPS(par_dsramati)
                crapprp.vlmedchq = par_vlmedtit
                crapprp.vlfatura = par_vlfatura
@@ -5101,25 +5710,25 @@ PROCEDURE efetua_alteracao_limite:
     DEF VAR aux_contador AS INTE    NO-UNDO.
     DEF VAR aux_flgderro AS LOGI    NO-UNDO.
     
-    DEF VAR old_dtpropos LIKE craplim.dtpropos.
-    DEF VAR old_cddlinha LIKE craplim.cddlinha.
-    DEF VAR old_cdoperad LIKE craplim.cdoperad.
-    DEF VAR old_vllimite LIKE craplim.vllimite.
-    DEF VAR old_inbaslim LIKE craplim.inbaslim.
-    DEF VAR old_nrctaav1 LIKE craplim.nrctaav1.
-    DEF VAR old_nrctaav2 LIKE craplim.nrctaav2.
+    DEF VAR old_dtpropos LIKE crawlim.dtpropos.
+    DEF VAR old_cddlinha LIKE crawlim.cddlinha.
+    DEF VAR old_cdoperad LIKE crawlim.cdoperad.
+    DEF VAR old_vllimite LIKE crawlim.vllimite.
+    DEF VAR old_inbaslim LIKE crawlim.inbaslim.
+    DEF VAR old_nrctaav1 LIKE crawlim.nrctaav1.
+    DEF VAR old_nrctaav2 LIKE crawlim.nrctaav2.
     DEF VAR old_ende1av1 AS CHAR    NO-UNDO.
     DEF VAR old_ende2av1 AS CHAR    NO-UNDO.
     DEF VAR old_ende1av2 AS CHAR    NO-UNDO.
     DEF VAR old_ende2av2 AS CHAR    NO-UNDO.
-    DEF VAR old_nmdaval1 LIKE craplim.nmdaval1.
-    DEF VAR old_nmdaval2 LIKE craplim.nmdaval2.
-    DEF VAR old_dscpfav1 LIKE craplim.dscpfav1.
-    DEF VAR old_dscpfav2 LIKE craplim.dscpfav2.
-    DEF VAR old_nmdcjav1 LIKE craplim.nmcjgav1.
-    DEF VAR old_nmcjgav2 LIKE craplim.nmcjgav2.
-    DEF VAR old_dscfcav1 LIKE craplim.dscfcav1.
-    DEF VAR old_dscfcav2 LIKE craplim.dscfcav2.
+    DEF VAR old_nmdaval1 LIKE crawlim.nmdaval1.
+    DEF VAR old_nmdaval2 LIKE crawlim.nmdaval2.
+    DEF VAR old_dscpfav1 LIKE crawlim.dscpfav1.
+    DEF VAR old_dscpfav2 LIKE crawlim.dscpfav2.
+    DEF VAR old_nmdcjav1 LIKE crawlim.nmcjgav1.
+    DEF VAR old_nmcjgav2 LIKE crawlim.nmcjgav2.
+    DEF VAR old_dscfcav1 LIKE crawlim.dscfcav1.
+    DEF VAR old_dscfcav2 LIKE crawlim.dscfcav2.
     DEF VAR old_dsramati LIKE crapprp.dsramati.
     DEF VAR old_vlmedchq LIKE crapprp.vlmedchq.
     DEF VAR old_vlfatura LIKE crapprp.vlfatura.
@@ -5130,12 +5739,12 @@ PROCEDURE efetua_alteracao_limite:
     DEF VAR old_dsdeben2 LIKE crapprp.dsdebens.
     DEF VAR old_dsobser1 LIKE crapprp.dsobserv[1].
     /**----------- OLD - RATING -----------**/    
-    DEF VAR old_nrgarope LIKE craplim.nrgarope.
-    DEF VAR old_nrinfcad LIKE craplim.nrinfcad.
-    DEF VAR old_nrliquid LIKE craplim.nrliquid.
-    DEF VAR old_nrpatlvr LIKE craplim.nrpatlvr.
-    DEF VAR old_nrperger LIKE craplim.nrperger.
-    DEF VAR old_vltotsfn LIKE craplim.vltotsfn.
+    DEF VAR old_nrgarope LIKE crawlim.nrgarope.
+    DEF VAR old_nrinfcad LIKE crawlim.nrinfcad.
+    DEF VAR old_nrliquid LIKE crawlim.nrliquid.
+    DEF VAR old_nrpatlvr LIKE crawlim.nrpatlvr.
+    DEF VAR old_nrperger LIKE crawlim.nrperger.
+    DEF VAR old_vltotsfn LIKE crawlim.vltotsfn.
     DEF VAR old_perfatcl LIKE crapjfn.perfatcl.    
     
     EMPTY TEMP-TABLE tt-erro.
@@ -5145,8 +5754,8 @@ PROCEDURE efetua_alteracao_limite:
 
     IF  par_flgerlog  THEN
         ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-               aux_dstransa = "Alterar dados do limite " + STRING(par_nrctrlim) +
-                              " de desconto de titulos.".
+               aux_dstransa = "Alterar dados da proposta " + STRING(par_nrctrlim) +
+                              " do limite de desconto de titulos.".
     
                    
     RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT SET h-b1wgen9999.
@@ -5247,23 +5856,23 @@ PROCEDURE efetua_alteracao_limite:
         DELETE PROCEDURE h-b1wgen9999.
         
         DO  aux_contador = 1 TO 10:
-            FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
-                                     craplim.nrdconta = par_nrdconta AND
-                                     craplim.tpctrlim = 3            AND
-                                     craplim.nrctrlim = par_nrctrlim 
+            FIND FIRST crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                                     crawlim.nrdconta = par_nrdconta AND
+                                     crawlim.tpctrlim = 3            AND
+                                     crawlim.nrctrlim = par_nrctrlim 
                                      EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
          
-            IF  NOT AVAILABLE craplim   THEN 
-                IF   LOCKED craplim   THEN
+            IF  NOT AVAILABLE crawlim   THEN 
+                IF   LOCKED crawlim   THEN
                      DO:
-                        aux_dscritic = "Registro de limite sendo" +
+                        aux_dscritic = "Registro da proposta de limite de desconto de titulos sendo" +
                                        " alterado. Tente Novamente.".
                         PAUSE 1 NO-MESSAGE.
                         NEXT.
                      END.
                 ELSE
                      DO:            
-                         ASSIGN aux_dscritic = "Registro de limites nao " +
+                         ASSIGN aux_dscritic = "Registro da proposta de limite de desconto de titulos nao " +
                                                "encontrado.".
                          LEAVE.
                      END.
@@ -5399,101 +6008,109 @@ PROCEDURE efetua_alteracao_limite:
                 LEAVE.
              END. /* Fim do DO TO */
             
-        ASSIGN old_dtpropos     = craplim.dtpropos
-               craplim.dtpropos = par_dtmvtolt
-               craplim.insitlim = 1
-               old_cddlinha     = craplim.cddlinha
-               craplim.cddlinha = par_cddlinha
-               old_cdoperad     = craplim.cdoperad
-               craplim.cdoperad = par_cdoperad
-               craplim.cdmotcan = 0
-               old_vllimite     = craplim.vllimite
-               craplim.vllimite = par_vllimite
-               old_inbaslim     = craplim.inbaslim
-               craplim.inbaslim = IF  par_vllimite > 
+        ASSIGN old_dtpropos     = crawlim.dtpropos
+               crawlim.dtpropos = par_dtmvtolt
+               crawlim.insitlim = 1
+               old_cddlinha     = crawlim.cddlinha
+               crawlim.cddlinha = par_cddlinha
+               old_cdoperad     = crawlim.cdoperad
+               crawlim.cdoperad = par_cdoperad
+               crawlim.cdmotcan = 0
+               old_vllimite     = crawlim.vllimite
+               crawlim.vllimite = par_vllimite
+               old_inbaslim     = crawlim.inbaslim
+               crawlim.inbaslim = IF  par_vllimite > 
                                       tt-saldo-cotas.vlsldcap  THEN 2
                                   ELSE 1
-               craplim.flgimpnp = TRUE
-               old_nrctaav1     = craplim.nrctaav1
-               craplim.nrctaav1 = par_nrctaav1
-               old_nrctaav2     = craplim.nrctaav2
-               craplim.nrctaav2 = par_nrctaav2
-               old_ende1av1     = craplim.dsendav1[1]
-               craplim.dsendav1[1] = IF  par_nrctaav1 <> 0  THEN
+               crawlim.flgimpnp = TRUE
+               old_nrctaav1     = crawlim.nrctaav1
+               crawlim.nrctaav1 = par_nrctaav1
+               old_nrctaav2     = crawlim.nrctaav2
+               crawlim.nrctaav2 = par_nrctaav2
+               old_ende1av1     = crawlim.dsendav1[1]
+               crawlim.dsendav1[1] = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE 
                                          CAPS(par_ende1av1) + " " +
                                          STRING(par_nrender1)
-               old_ende2av1        = craplim.dsendav1[2]
-               craplim.dsendav1[2] = IF  par_nrctaav1 <> 0  THEN
+               old_ende2av1        = crawlim.dsendav1[2]
+               crawlim.dsendav1[2] = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende2av1) + " - " + 
                                          CAPS(par_nmcidav1) + " - " +
                                          STRING(par_nrcepav1,"99999,999") +
                                          " - " + CAPS(par_cdufava1)
-               old_ende1av2 = craplim.dsendav2[1]
-               craplim.dsendav2[1] = IF  par_nrctaav2 <> 0  THEN
+               old_ende1av2 = crawlim.dsendav2[1]
+               crawlim.dsendav2[1] = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende1av2) + " " +
                                          STRING(par_nrender2)
-               old_ende2av2        = craplim.dsendav2[2]
-               craplim.dsendav2[2] = IF  par_nrctaav2 <> 0  THEN
+               old_ende2av2        = crawlim.dsendav2[2]
+               crawlim.dsendav2[2] = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE
                                          CAPS(par_ende2av2) + " - " + 
                                          CAPS(par_nmcidav2) + " - " +
                                          STRING(par_nrcepav2,"99999,999") +
                                          " - " + CAPS(par_cdufava2)
-               old_nmdaval1        = craplim.nmdaval1
-               craplim.nmdaval1    = IF  par_nrctaav1 <> 0  THEN
+               old_nmdaval1        = crawlim.nmdaval1
+               crawlim.nmdaval1    = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          par_nmdaval1
-               old_nmdaval2        = craplim.nmdaval2
-               craplim.nmdaval2    = IF  par_nrctaav2 <> 0  THEN
+               old_nmdaval2        = crawlim.nmdaval2
+               crawlim.nmdaval2    = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE    
                                          par_nmdaval2
-               old_dscpfav1        = craplim.dscpfav1
-               craplim.dscpfav1    = IF  par_nrctaav1 <> 0  THEN
+               old_dscpfav1        = crawlim.dscpfav1
+               crawlim.dscpfav1    = IF  par_nrctaav1 <> 0  THEN
                                          ""
                                      ELSE
                                          par_dsdocav1
-               old_dscpfav2        = craplim.dscpfav2
-               craplim.dscpfav2    = IF  par_nrctaav2 <> 0  THEN
+               old_dscpfav2        = crawlim.dscpfav2
+               crawlim.dscpfav2    = IF  par_nrctaav2 <> 0  THEN
                                          ""
                                      ELSE
                                          par_dsdocav2
-               old_nmdcjav1        = craplim.nmcjgav1
-               craplim.nmcjgav1    = par_nmdcjav1
-               old_nmcjgav2        = craplim.nmcjgav2
-               craplim.nmcjgav2    = par_nmdcjav2
-               old_dscfcav1        = craplim.dscfcav1
-               craplim.dscfcav1    = par_doccjav1
-               old_dscfcav2        = craplim.dscfcav2
-               craplim.dscfcav2    = par_doccjav2
-               old_nrgarope        = craplim.nrgarope
-               craplim.nrgarope    = par_nrgarope
-               old_nrinfcad        = craplim.nrinfcad
-               craplim.nrinfcad    = par_nrinfcad
-               old_nrliquid        = craplim.nrliquid
-               craplim.nrliquid    = par_nrliquid
-               old_nrpatlvr        = craplim.nrpatlvr
-               craplim.nrpatlvr    = par_nrpatlvr
-               old_nrperger        = craplim.nrperger
-               craplim.nrperger    = par_nrperger
-               old_vltotsfn        = craplim.vltotsfn
-               craplim.vltotsfn    = par_vltotsfn
-               craplim.idcobope    = par_idcobope
-               craplim.idcobefe    = par_idcobope.
+               old_nmdcjav1        = crawlim.nmcjgav1
+               crawlim.nmcjgav1    = par_nmdcjav1
+               old_nmcjgav2        = crawlim.nmcjgav2
+               crawlim.nmcjgav2    = par_nmdcjav2
+               old_dscfcav1        = crawlim.dscfcav1
+               crawlim.dscfcav1    = par_doccjav1
+               old_dscfcav2        = crawlim.dscfcav2
+               crawlim.dscfcav2    = par_doccjav2
+               old_nrgarope        = crawlim.nrgarope
+               crawlim.nrgarope    = par_nrgarope
+               old_nrinfcad        = crawlim.nrinfcad
+               crawlim.nrinfcad    = par_nrinfcad
+               old_nrliquid        = crawlim.nrliquid
+               crawlim.nrliquid    = par_nrliquid
+               old_nrpatlvr        = crawlim.nrpatlvr
+               crawlim.nrpatlvr    = par_nrpatlvr
+               old_nrperger        = crawlim.nrperger
+               crawlim.nrperger    = par_nrperger
+               old_vltotsfn        = crawlim.vltotsfn
+               crawlim.vltotsfn    = par_vltotsfn
+			   crawlim.idcobope    = par_idcobope
+               crawlim.idcobefe    = par_idcobope
+               crawlim.insitest    = 0
+               crawlim.dtenvest    = ?
+               crawlim.hrenvest    = 0
+               crawlim.cdopeste    = ""
+               crawlim.insitapr    = 0
+               crawlim.dtaprova    = ?
+               crawlim.hraprova    = 0
+               crawlim.cdopeapr    = "".                                
         DO aux_contador = 1 TO 10:
         
             FIND FIRST crapprp WHERE crapprp.cdcooper = par_cdcooper     AND
                                      crapprp.nrdconta = par_nrdconta     AND
                                      crapprp.tpctrato = 3                AND
-                                     crapprp.nrctrato = craplim.nrctrlim
+                                     crapprp.nrctrato = crawlim.nrctrlim
                                      EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
             IF  NOT AVAILABLE crapprp  THEN
@@ -5554,12 +6171,11 @@ PROCEDURE efetua_alteracao_limite:
                crapprp.dsobserv[1] = CAPS(par_dsobserv)
                crapprp.dsobserv[2] = ""
                crapprp.dsobserv[3] = "".
-        
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0
                                               ,INPUT par_idcobope
-                                              ,INPUT craplim.nrctrlim
+                                              ,INPUT crawlim.nrctrlim
                                               ,"").
 
         CLOSE STORED-PROC pc_vincula_cobertura_operacao
@@ -5584,7 +6200,7 @@ PROCEDURE efetua_alteracao_limite:
                 UNDO TRANS_ALTERA, LEAVE TRANS_ALTERA.
            END.
         
-        FIND CURRENT craplim NO-LOCK NO-ERROR.
+        FIND CURRENT crawlim NO-LOCK NO-ERROR.
         FIND CURRENT crapprp NO-LOCK NO-ERROR.
 
         IF  AVAILABLE crapjfn  THEN
@@ -5622,157 +6238,157 @@ PROCEDURE efetua_alteracao_limite:
                                 INPUT par_nrdconta,
                                OUTPUT aux_nrdrowid).
 
-            IF  old_dtpropos <> craplim.dtpropos  THEN
+            IF  old_dtpropos <> crawlim.dtpropos  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "data proposta",
                                         INPUT old_dtpropos,
-                                        INPUT craplim.dtpropos).
+                                        INPUT crawlim.dtpropos).
                                         
-            IF  old_cddlinha <> craplim.cddlinha  THEN
+            IF  old_cddlinha <> crawlim.cddlinha  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "linha de credito",
                                         INPUT old_cddlinha,
-                                        INPUT craplim.cddlinha).
+                                        INPUT crawlim.cddlinha).
                                         
-            IF  old_cdoperad <> craplim.cdoperad  THEN
+            IF  old_cdoperad <> crawlim.cdoperad  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "operador",
                                         INPUT old_cdoperad,
-                                        INPUT craplim.cdoperad).
+                                        INPUT crawlim.cdoperad).
                                         
-            IF  old_vllimite <> craplim.vllimite  THEN
+            IF  old_vllimite <> crawlim.vllimite  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "valor limite",
                                         INPUT STRING(old_vllimite,
                                                      "z,zzz,zz9.99"),
-                                        INPUT STRING(craplim.vllimite,
+                                        INPUT STRING(crawlim.vllimite,
                                                      "z,zzz,zz9.99")).
                                         
-            IF  old_inbaslim <> craplim.inbaslim  THEN
+            IF  old_inbaslim <> crawlim.inbaslim  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "base limite",
                                         INPUT old_inbaslim,
-                                        INPUT craplim.inbaslim).
+                                        INPUT crawlim.inbaslim).
                                         
-            IF  old_nrctaav1 <> craplim.nrctaav1  THEN
+            IF  old_nrctaav1 <> crawlim.nrctaav1  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "conta aval 1",
                                         INPUT old_nrctaav1,
                                         INPUT par_nrctaav1).
                                         
-            IF  old_nrctaav2 <> craplim.nrctaav2  THEN
+            IF  old_nrctaav2 <> crawlim.nrctaav2  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "conta aval 2",
                                         INPUT old_nrctaav2,
                                         INPUT par_nrctaav2).    
                                         
-            IF  old_ende1av1 <> craplim.dsendav1[1]  THEN
+            IF  old_ende1av1 <> crawlim.dsendav1[1]  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "endereco 1 aval 1",
                                         INPUT old_ende1av1,
-                                        INPUT craplim.dsendav1[1]).
+                                        INPUT crawlim.dsendav1[1]).
                                         
-            IF  old_ende2av1 <> craplim.dsendav1[2]  THEN
+            IF  old_ende2av1 <> crawlim.dsendav1[2]  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "endereco 2 aval 1",
                                         INPUT old_ende2av1,
-                                        INPUT craplim.dsendav1[2]).
+                                        INPUT crawlim.dsendav1[2]).
                                         
-            IF  old_ende1av2 <> craplim.dsendav2[1]  THEN
+            IF  old_ende1av2 <> crawlim.dsendav2[1]  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "endereco 1 aval 2",
                                         INPUT old_ende1av2,
-                                        INPUT craplim.dsendav2[1]).
+                                        INPUT crawlim.dsendav2[1]).
                                         
-            IF  old_ende2av2 <> craplim.dsendav2[2]  THEN
+            IF  old_ende2av2 <> crawlim.dsendav2[2]  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "endereco 2 aval 2",
                                         INPUT old_ende2av2,
-                                        INPUT craplim.dsendav2[2]).
+                                        INPUT crawlim.dsendav2[2]).
                                         
-            IF  old_nmdaval1 <> craplim.nmdaval1  THEN
+            IF  old_nmdaval1 <> crawlim.nmdaval1  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "nome aval 1",
                                         INPUT old_nmdaval1,
-                                        INPUT craplim.nmdaval1).
+                                        INPUT crawlim.nmdaval1).
                                         
-            IF  old_nmdaval2 <> craplim.nmdaval2  THEN
+            IF  old_nmdaval2 <> crawlim.nmdaval2  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "nome aval 2",
                                         INPUT old_nmdaval2,
-                                        INPUT craplim.nmdaval2).
+                                        INPUT crawlim.nmdaval2).
                                         
-            IF  old_dscpfav1 <> craplim.dscpfav1  THEN
+            IF  old_dscpfav1 <> crawlim.dscpfav1  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "cpf aval 1",
                                         INPUT old_dscpfav1,
-                                        INPUT craplim.dscpfav1).
+                                        INPUT crawlim.dscpfav1).
                                         
-            IF  old_dscpfav2 <> craplim.dscpfav2  THEN
+            IF  old_dscpfav2 <> crawlim.dscpfav2  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "cpf aval 2",
                                         INPUT old_dscpfav2,
-                                        INPUT craplim.dscpfav2).
+                                        INPUT crawlim.dscpfav2).
                                         
-            IF  old_nmdcjav1 <> craplim.nmcjgav1  THEN
+            IF  old_nmdcjav1 <> crawlim.nmcjgav1  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "nome conjuge aval 1",
                                         INPUT old_nmdcjav1,
-                                        INPUT craplim.nmcjgav1).
+                                        INPUT crawlim.nmcjgav1).
                                         
-            IF  old_nmcjgav2 <> craplim.nmcjgav2  THEN
+            IF  old_nmcjgav2 <> crawlim.nmcjgav2  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "nome conjuge aval 2",
                                         INPUT old_nmcjgav2,
-                                        INPUT craplim.nmcjgav2).
+                                        INPUT crawlim.nmcjgav2).
                                         
-            IF  old_dscfcav1 <> craplim.dscfcav1  THEN
+            IF  old_dscfcav1 <> crawlim.dscfcav1  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "cpf conjuge aval 1",
                                         INPUT old_dscfcav1,
-                                        INPUT craplim.dscfcav1).
+                                        INPUT crawlim.dscfcav1).
                                  
-            IF  old_dscfcav2 <> craplim.dscfcav2  THEN
+            IF  old_dscfcav2 <> crawlim.dscfcav2  THEN
                 RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                         INPUT "cpf conjuge aval 2",
                                         INPUT old_dscfcav1,
-                                        INPUT craplim.dscfcav1).
+                                        INPUT crawlim.dscfcav1).
             
-            IF   old_nrinfcad <> craplim.nrinfcad   THEN
+            IF   old_nrinfcad <> crawlim.nrinfcad   THEN
                  RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                          INPUT "informacoes cadastrais",
                                          INPUT old_nrinfcad,
-                                         INPUT craplim.nrinfcad).
+                                         INPUT crawlim.nrinfcad).
                     
-            IF   old_nrliquid <> craplim.nrliquid   THEN
+            IF   old_nrliquid <> crawlim.nrliquid   THEN
                  RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                          INPUT "liquidez das garantias",
                                          INPUT old_nrliquid,
-                                         INPUT craplim.nrliquid).
+                                         INPUT crawlim.nrliquid).
                
-            IF   old_nrpatlvr <> craplim.nrpatlvr   THEN
+            IF   old_nrpatlvr <> crawlim.nrpatlvr   THEN
                  RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                          INPUT "patrimonio pessoal livre",
                                          INPUT old_nrpatlvr,
-                                         INPUT craplim.nrpatlvr).
+                                         INPUT crawlim.nrpatlvr).
                               
-            IF   old_nrperger <> craplim.nrperger   THEN
+            IF   old_nrperger <> crawlim.nrperger   THEN
                  RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                          INPUT "percepcao geral (empresa)",
                                          INPUT old_nrperger,
-                                         INPUT craplim.nrperger).
+                                         INPUT crawlim.nrperger).
             
-            IF   old_vltotsfn <> craplim.vltotsfn   THEN
+            IF   old_vltotsfn <> crawlim.vltotsfn   THEN
                  RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                          INPUT "valor total SFN",
                                          INPUT old_vltotsfn,
-                                         INPUT craplim.vltotsfn).   
+                                         INPUT crawlim.vltotsfn).   
             
-            IF   old_nrgarope <> craplim.nrgarope   THEN
+            IF   old_nrgarope <> crawlim.nrgarope   THEN
                  RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                          INPUT "garantia",
                                          INPUT old_nrgarope,
-                                         INPUT craplim.nrgarope).
+                                         INPUT crawlim.nrgarope).
             
             IF   AVAILABLE crapjfn                  AND 
                  old_perfatcl <> crapjfn.perfatcl   THEN
@@ -5876,6 +6492,8 @@ PROCEDURE efetua_cancelamento_limite:
     DEF VAR aux_flgtrans AS LOGI        NO-UNDO.
     DEF VAR h-b1wgen0043 AS HANDLE      NO-UNDO.
 
+    DEF BUFFER crablim  FOR crawlim.
+
     EMPTY TEMP-TABLE tt-erro.
     
     ASSIGN aux_cdcritic = 0
@@ -5924,7 +6542,7 @@ PROCEDURE efetua_cancelamento_limite:
         IF  craplim.insitlim <> 2  THEN
             DO:
                 ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "O contrato DEVE estar ATIVO.".
+                       aux_dscritic = "O contrato deve estar ATIVO.".
                           
                 UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
             END.
@@ -6003,9 +6621,141 @@ PROCEDURE efetua_cancelamento_limite:
         IF  RETURN-VALUE = "NOK"  THEN
             UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
            
+
+        /* No cancelamento do contrato, busco a proposta principal de criacao e cancelo */
+        DO aux_contador = 1 TO 10:
+    
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "".
+
+            FIND FIRST crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                                     crawlim.nrdconta = par_nrdconta AND
+                                     crawlim.tpctrlim = 3            AND
+                                     crawlim.nrctrlim = par_nrctrlim 
+                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+         
+            IF  NOT AVAILABLE crawlim  THEN 
+                IF  LOCKED crawlim  THEN
+                    DO:
+                        aux_dscritic = "Registro de contrato sendo " +
+                                       "alterado. Tente Novamente.".
+                        PAUSE 1 NO-MESSAGE.
+                        NEXT.
+                    END.
+                ELSE
+                    ASSIGN aux_dscritic = "Registro de contrato nao " +
+                                          "encontrado.".
+
+            LEAVE.
+
+        END. /* Final do DO .. TO */    
+    
+        /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+        IF aux_dscritic = "" THEN
+          DO:
+            IF crawlim.insitlim = 1 AND crawlim.insitest = 2 THEN
+              DO:
+                aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                               "um processo de análise deste contrato em andamento".
+              END.
+            ELSE
+              /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+              IF crawlim.insitlim = 1 AND crawlim.insitapr = 8 THEN
+                DO:
+                  aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                               "um processo de análise deste contrato em andamento".
+                END.
+          END.
+          
+        IF  aux_dscritic <> ""  THEN
+            UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
+
+        IF  AVAILABLE crawlim   THEN 
+            ASSIGN crawlim.insitlim = 3.
+
+
+
+        /* No cancelamento do contrato, busco as propostas de manutencao e cancelo */
+        FOR EACH crablim WHERE crablim.cdcooper = par_cdcooper AND
+                               crablim.nrdconta = par_nrdconta AND
+                               crablim.tpctrlim = 3            AND
+                               crablim.nrctrmnt = par_nrctrlim 
+                               NO-LOCK:
+                       
+            DO aux_contador = 1 TO 10:
+    
+               ASSIGN aux_dscritic = "".
+
+               FIND crawlim WHERE RECID(crawlim) = RECID(crablim)
+                                  EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+               IF  NOT AVAILABLE crawlim  THEN 
+                   IF  LOCKED crawlim  THEN
+                       DO:
+                           aux_dscritic = "Registro de contrato sendo " +
+                                          "alterado. Tente Novamente.".
+                           PAUSE 1 NO-MESSAGE.
+                           NEXT.
+                       END.
+                   ELSE
+                       ASSIGN aux_dscritic = "Registro de contrato nao " +
+                                             "encontrado.".
+                                             
+               LEAVE. 
+
+            END.   
+    
+            /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+            IF aux_dscritic = "" THEN
+              DO:
+                IF crawlim.insitlim = 1 AND crawlim.insitest = 2 THEN
+                  DO:
+                    aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                                   "um processo de análise deste contrato em andamento".
+                  END.
+                ELSE
+                  /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+                  IF crawlim.insitlim = 1 AND crawlim.insitapr = 8 THEN
+                    DO:
+                      aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                                     "um processo de análise deste contrato em andamento".
+                    END.
+              END.
+    
+            IF  aux_dscritic <> ""  THEN
+                UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
+           
+            ASSIGN crawlim.insitlim = 3.
+        END.
+           
+        FIND CURRENT crawlim NO-LOCK NO-ERROR.
+
+        RELEASE crawlim.
+           
         FIND CURRENT craplim NO-LOCK NO-ERROR.
 
         RELEASE craplim.
+
+        /*AWAE: Registrar o cancelamento na tabela de histórico. */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+        RUN STORED-PROCEDURE pc_gravar_hist_alt_limite                  
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper  /* Codigo da Cooperativa */ 
+                                            ,INPUT par_nrdconta  /* Numero da Conta Corrente */
+                                            ,INPUT par_nrctrlim  /* Número do contrato de Limite */
+                                            ,INPUT 3             /* Tipo de Contrato */
+                                            ,"CANCELAMENTO"      /* Descriçao do Motivo */
+                                            ,OUTPUT 0            /* Código da Crítica */
+                                            ,OUTPUT "").         /* Descriçao da Crítica */
+
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_gravar_hist_alt_limite
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+        /* Se retornou erro */
+        ASSIGN aux_dscritic = ""
+               aux_dscritic = pc_gravar_hist_alt_limite.pr_dscritic WHEN pc_gravar_hist_alt_limite.pr_dscritic <> ?.
+        IF  aux_dscritic <> "" THEN          
+          UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
 
         ASSIGN aux_flgtrans = TRUE.
         
@@ -6266,7 +7016,7 @@ PROCEDURE efetua_exclusao_limite:
 
                 ASSIGN aux_flgderro = TRUE.                
                 UNDO TRANS_EXCLUSAO, LEAVE TRANS_EXCLUSAO.
-           END.
+            END.
 
         DELETE craplim.
         DELETE crapprp.
@@ -6338,6 +7088,11 @@ PROCEDURE busca_borderos:
         IF  crapbdt.dtlibbdt <> ?  THEN
             IF (crapbdt.dtlibbdt < par_dtmvtolt - 90) AND
                 crapbdt.insitbdt = 4                  THEN  
+                NEXT.
+
+		 IF crapbdt.dtmvtolt <> ?  THEN
+            IF (crapbdt.dtmvtolt <= par_dtmvtolt - 120) AND
+               (crapbdt.insitbdt = 1 OR crapbdt.insitbdt = 2) THEN
                 NEXT.
 
         ASSIGN aux_qttottit = 0
@@ -6591,6 +7346,7 @@ PROCEDURE busca_dados_bordero:
     DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_bordero.
     
     DEF VAR aux_cdtipdoc AS INTEGER                         NO-UNDO.
+    DEF VAR aux_nrctrlim AS INTE                            NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dsctit_dados_bordero.
@@ -6735,6 +7491,20 @@ PROCEDURE busca_dados_bordero:
                 END.
         END.
 
+    FIND crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                       crawlim.nrdconta = par_nrdconta AND
+                       crawlim.tpctrlim = 3            AND
+                       crawlim.nrctrlim = crapbdt.nrctrlim
+                       NO-LOCK NO-ERROR.
+
+    IF  AVAILABLE crawlim  THEN
+        IF  crawlim.nrctrmnt > 0  THEN
+            ASSIGN aux_nrctrlim = crawlim.nrctrmnt.
+        ELSE
+            ASSIGN aux_nrctrlim = crapbdt.nrctrlim.
+    ELSE
+        ASSIGN aux_nrctrlim = crapbdt.nrctrlim.
+
     CREATE tt-dsctit_dados_bordero.
     /* Operadores ............................................... */
     FIND crapope WHERE crapope.cdcooper = par_cdcooper      AND
@@ -6786,7 +7556,7 @@ PROCEDURE busca_dados_bordero:
     ASSIGN aux_cdtipdoc = INTE(ENTRY(3,craptab.dstextab,";")).
     
     ASSIGN tt-dsctit_dados_bordero.nrborder = crapbdt.nrborder
-           tt-dsctit_dados_bordero.nrctrlim = crapbdt.nrctrlim
+           tt-dsctit_dados_bordero.nrctrlim = aux_nrctrlim
            tt-dsctit_dados_bordero.insitbdt = crapbdt.insitbdt
            tt-dsctit_dados_bordero.txmensal = crapbdt.txmensal
            tt-dsctit_dados_bordero.dtlibbdt = crapbdt.dtlibbdt
@@ -6829,6 +7599,8 @@ PROCEDURE busca_dados_dsctit:
     DEF OUTPUT PARAM TABLE FOR tt-desconto_titulos.
     
     DEF VAR h-b1wgen0001 AS HANDLE NO-UNDO.
+    DEF VAR aux_perrenov AS INTEGER                         NO-UNDO.
+    DEF VAR aux_difdays AS INTEGER                          NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-desconto_titulos.
@@ -6891,7 +7663,12 @@ PROCEDURE busca_dados_dsctit:
                     tt-desconto_titulos.dsdlinha = ""
                     tt-desconto_titulos.vlutiliz = 0
                     tt-desconto_titulos.qtutiliz = 0
-                    tt-desconto_titulos.cddopcao = 2.
+                    tt-desconto_titulos.cddopcao = 2
+                    tt-desconto_titulos.dtrenova = ?
+                    tt-desconto_titulos.perrenov = 0
+                    tt-desconto_titulos.cddlinha = 0
+                    tt-desconto_titulos.flgstlcr = ?
+                    tt-desconto_titulos.dtultmnt = ?.
                     
              FOR EACH craptdb WHERE (craptdb.cdcooper = par_cdcooper AND
                                      craptdb.nrdconta = par_nrdconta AND
@@ -6934,13 +7711,23 @@ PROCEDURE busca_dados_dsctit:
              ELSE
                   tt-desconto_titulos.dsdlinha = STRING(crapldc.cddlinha) 
                                                  + " - " + crapldc.dsdlinha.
+                  tt-desconto_titulos.cddlinha = crapldc.cddlinha.
+                  tt-desconto_titulos.flgstlcr = crapldc.flgstlcr.
+                                                 
+             aux_difdays = craplim.dtfimvig - par_dtmvtolt.
+             IF aux_difdays > 15 OR aux_difdays < -60  THEN
+                  aux_perrenov = 0.
+             ELSE
+                  aux_perrenov = 1.
                  
              ASSIGN tt-desconto_titulos.nrctrlim = craplim.nrctrlim
                     tt-desconto_titulos.dtinivig = craplim.dtinivig
                     tt-desconto_titulos.qtdiavig = craplim.qtdiavig
                     tt-desconto_titulos.vllimite = craplim.vllimite
                     tt-desconto_titulos.qtrenova = craplim.qtrenova
-                    tt-desconto_titulos.cddopcao = 1.
+                    tt-desconto_titulos.cddopcao = 1
+                    tt-desconto_titulos.dtrenova = craplim.dtrenova
+                    tt-desconto_titulos.perrenov = aux_perrenov.
                     
              FOR EACH craptdb WHERE (craptdb.cdcooper = par_cdcooper AND
                                      craptdb.nrdconta = par_nrdconta AND
@@ -6967,6 +7754,18 @@ PROCEDURE busca_dados_dsctit:
                                                        (IF crapcco.flgregis = FALSE THEN 1 ELSE 0).
 
              END.  /*  Fim do FOR EACH craptdb  */                    
+
+             FOR EACH crawlim WHERE crawlim.cdcooper = par_cdcooper     AND
+                                    crawlim.nrdconta = par_nrdconta     AND
+                                    crawlim.tpctrlim = 3                AND
+                                    crawlim.nrctrmnt = craplim.nrctrlim AND
+                                    crawlim.insitlim = 2
+                                    NO-LOCK
+                                    BY crawlim.dtpropos DESCENDING:
+                 ASSIGN tt-desconto_titulos.dtultmnt = crawlim.dtpropos.
+                 LEAVE.
+         END.
+
          END.
 
     IF  par_flgerlog  THEN
@@ -6998,6 +7797,8 @@ PROCEDURE busca_parametros_dsctit:
     DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
     DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
     DEF INPUT PARAM par_tpcobran AS LOGICAL                 NO-UNDO.
+    DEF INPUT PARAM par_inpessoa AS INTE                    NO-UNDO.  
+
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-dsctit.
@@ -7012,10 +7813,23 @@ PROCEDURE busca_parametros_dsctit:
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
 
-    IF par_tpcobran = TRUE THEN
-       aux_cdacesso = "LIMDESCTITCR".
+    IF par_inpessoa = 1 THEN /* Pessoa Física */
+    DO:
+    IF par_tpcobran = TRUE THEN /* Cobrança com Regisro */
+    aux_cdacesso = "LIMDESCTITCRPF".
     ELSE
-       aux_cdacesso = "LIMDESCTIT".
+      aux_cdacesso = "LIMDESCTITPF".        
+    END.
+    ELSE
+  DO: 
+    IF par_inpessoa = 2 THEN /* Pessoa Jurídica */
+    DO:   
+      IF par_tpcobran = TRUE THEN /* Cobrança com Regisro */
+      aux_cdacesso = "LIMDESCTITCRPJ".
+    ELSE
+        aux_cdacesso = "LIMDESCTITPJ".
+    END.    
+    END.
 
     FIND craptab WHERE craptab.cdcooper = par_cdcooper    AND
                        craptab.nmsistem = "CRED"          AND
@@ -7039,12 +7853,13 @@ PROCEDURE busca_parametros_dsctit:
                   tt-dsctit.qtprzmax = INTE(ENTRY(10,craptab.dstextab,";"))
                   tt-dsctit.qtminfil = INTE(ENTRY(11,craptab.dstextab,";"))
                   tt-dsctit.nrmespsq = INTE(ENTRY(12,craptab.dstextab,";"))
-                  tt-dsctit.pctitemi = DECI(ENTRY(13,craptab.dstextab,";"))
+                  /*tt-dsctit.pctitemi = DECI(ENTRY(13,craptab.dstextab,";"))*/
                   tt-dsctit.pctolera = DECI(ENTRY(14,craptab.dstextab,";"))
                   tt-dsctit.pcdmulta = DECI(ENTRY(15,craptab.dstextab,";"))
                   tt-dsctit.cardbtit = INTE(ENTRY(31,craptab.dstextab,";"))
                   tt-dsctit.pcnaopag = DECI(ENTRY(33,craptab.dstextab,";"))
                   tt-dsctit.qtnaopag = INTE(ENTRY(34,craptab.dstextab,";"))
+                  tt-dsctit.pcmxctip = DECI(ENTRY(49,craptab.dstextab,";"))
                   tt-dsctit.qtprotes = INTE(ENTRY(35,craptab.dstextab,";")).
            
            CREATE tt-dados_cecred_dsctit.
@@ -7060,12 +7875,13 @@ PROCEDURE busca_parametros_dsctit:
                   tt-dados_cecred_dsctit.qtprzmax = INTE(ENTRY(25,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.qtminfil = INTE(ENTRY(26,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.nrmespsq = INTE(ENTRY(27,craptab.dstextab,";"))
-                  tt-dados_cecred_dsctit.pctitemi = DECI(ENTRY(28,craptab.dstextab,";"))
+                  /*tt-dados_cecred_dsctit.pctitemi = DECI(ENTRY(28,craptab.dstextab,";"))*/
                   tt-dados_cecred_dsctit.pctolera = DECI(ENTRY(29,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.pcdmulta = DECI(ENTRY(30,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.cardbtit = INTE(ENTRY(32,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.pcnaopag = DECI(ENTRY(36,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.qtnaopag = INTE(ENTRY(37,craptab.dstextab,";"))
+                  tt-dados_cecred_dsctit.pcmxctip = DECI(ENTRY(65,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.qtprotes = INTE(ENTRY(38,craptab.dstextab,";")).
               
         END.
@@ -7203,7 +8019,7 @@ PROCEDURE grava_parametros_dsctit:
                                + ";" + STRING(tt-dados_dsctit.qtprzmax,"999")
                                + ";" + STRING(tt-dados_dsctit.qtminfil,"999")
                                + ";" + STRING(tt-dados_dsctit.nrmespsq,"99")
-                               + ";" + STRING(tt-dados_dsctit.pctitemi,"999")
+                               /*+ ";" + STRING(tt-dados_dsctit.pctitemi,"999")*/
                                + ";" + STRING(tt-dados_dsctit.pctolera,"999")
                                + ";" + STRING(tt-dados_dsctit.pcdmulta,"999.999999")
                                     /* CECRED */
@@ -7219,7 +8035,7 @@ PROCEDURE grava_parametros_dsctit:
                                + ";" + STRING(tt-dados_cecred_dsctit.qtprzmax,"999")
                                + ";" + STRING(tt-dados_cecred_dsctit.qtminfil,"999")
                                + ";" + STRING(tt-dados_cecred_dsctit.nrmespsq,"99")
-                               + ";" + STRING(tt-dados_cecred_dsctit.pctitemi,"999")
+                               /*+ ";" + STRING(tt-dados_cecred_dsctit.pctitemi,"999")*/
                                + ";" + STRING(tt-dados_cecred_dsctit.pctolera,"999")
                                + ";" + STRING(tt-dados_cecred_dsctit.pcdmulta,"999.999999")
                                /*carencia debito titulos vencidos*/
@@ -7484,6 +8300,28 @@ PROCEDURE busca_titulos:
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".  
 
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */
+
     RUN busca_parametros_dsctit (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
@@ -7491,6 +8329,7 @@ PROCEDURE busca_titulos:
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
                                  INPUT TRUE, /* COB.REGISTRADA */
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit_cr,
                                  OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -7505,6 +8344,7 @@ PROCEDURE busca_titulos:
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
                                  INPUT FALSE, /* COB.SEM REGISTRO */
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit,
                                  OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -8073,6 +8913,41 @@ PROCEDURE valida_dados_inclusao:
             
         END.
                
+    /* buscar quantidade maxima de digitos aceitos para o convenio */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                  
+    RUN STORED-PROCEDURE pc_valida_adesao_produto
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT par_cdcooper,
+                                 INPUT par_nrdconta,
+                                 INPUT 35, /* Desconto de Titulo */
+                                 OUTPUT 0,   /* pr_cdcritic */
+                                 OUTPUT ""). /* pr_dscritic */
+                
+    CLOSE STORED-PROC pc_valida_adesao_produto
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic
+                              WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+           aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                              WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+    
+    IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+        DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".
+        END.
+    
     IF  CAN-DO("5,6,7,8",STRING(crapass.cdsitdtl))   THEN
         DO:
             ASSIGN aux_cdcritic = 695.
@@ -8538,6 +9413,212 @@ END PROCEDURE.
 
 
 /*****************************************************************************/
+/*                  Valida inclusao de titulos no bordero                    */
+/*****************************************************************************/
+PROCEDURE valida_inclusao_bordero:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdbccxlt AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdolote AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_qttottit AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_vltottit AS DECI                    NO-UNDO.
+       
+    DEF  INPUT PARAM TABLE FOR tt-titulos.
+         
+    DEF OUTPUT PARAM par_solcoord AS INTE                   NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    
+    DEF VAR aux_contador AS INTE NO-UNDO.
+    DEF VAR aux_nrborder AS INTE NO-UNDO.
+    DEF VAR aux_ponteiro AS INTE NO-UNDO.
+    DEF VAR aux_flgtrans AS LOGI NO-UNDO.
+    DEF VAR aux_flgsenha AS LOGI NO-UNDO.
+    DEF VAR aux_cdoperad AS CHAR NO-UNDO.
+
+
+    EMPTY TEMP-TABLE tt-erro.
+
+    ASSIGN aux_nrborder = 0
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_flgtrans = FALSE.
+
+        /* Validaçao de PAC afim de evitar registro do Bordero com PAC ZERO */
+    IF  par_cdagenci <= 0 THEN
+        DO:
+            ASSIGN aux_dscritic = "Cod. do PA nao pode ser igual a zero.".
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).    
+
+            RETURN "NOK".
+        END.
+		
+	RUN valida_titulos_bordero(INPUT par_cdcooper,
+							   INPUT par_cdagenci,
+							   INPUT par_nrdcaixa,
+							   INPUT par_cdoperad,
+							   INPUT par_dtmvtolt,
+							   INPUT par_idorigem,
+							   INPUT par_nrdconta,
+							   INPUT 0, /*nrborder*/
+							   INPUT 2, /*tpvalida*/
+							   INPUT TABLE tt-titulos,
+							   OUTPUT TABLE tt-erro).
+
+    IF RETURN-VALUE <> "OK" THEN
+	   DO:
+	      FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+		  IF NOT AVAIL tt-erro THEN
+		     DO:
+		        ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).    
+
+            END.
+
+            RETURN "NOK".
+
+        END.
+
+    INCLUIR:
+    DO TRANSACTION ON ERROR UNDO INCLUIR, LEAVE INCLUIR:
+         
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Busca a proxima sequencia do campo crapldt.nrsequen */
+        RUN STORED-PROCEDURE pc_sequence_progress
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPBDT"
+                                            ,INPUT "NRBORDER"
+                                            ,STRING(par_cdcooper)
+                                            ,INPUT "N"
+                                            ,"").
+
+        CLOSE STORED-PROC pc_sequence_progress
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_nrborder = INTE(pc_sequence_progress.pr_sequence)
+                              WHEN pc_sequence_progress.pr_sequence <> ?.
+
+        FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
+                                 craplim.nrdconta = par_nrdconta AND
+                                 craplim.tpctrlim = 3            AND
+                                 craplim.insitlim = 2
+                                 NO-LOCK NO-ERROR.
+         
+        IF  NOT AVAILABLE craplim   THEN 
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Limite de desconto de titulo nao " +
+                                      "encontrado.".
+                UNDO INCLUIR, LEAVE INCLUIR.
+            END.
+        
+        IF  craplim.dtfimvig < par_dtmvtolt THEN
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "A vigencia do contrato deve ser maior que a data " +
+                                      "de movimentação do sistema.".
+                UNDO INCLUIR, LEAVE INCLUIR.
+            END.
+        
+        FIND crapldc WHERE crapldc.cdcooper = par_cdcooper       AND
+                           crapldc.cddlinha = craplim.cddlinha   AND
+                           crapldc.tpdescto = 3 
+                           NO-LOCK NO-ERROR.
+
+        IF  NOT AVAILABLE crapldc  THEN 
+            DO:
+                ASSIGN aux_cdcritic = 0.
+                       aux_dscritic = "Regisro de linha " +
+                                      "de desconto nao encontrada.".
+                UNDO INCLUIR, LEAVE INCLUIR.
+            END.        
+
+        IF  CAN-FIND(FIRST tt-titulos WHERE tt-titulos.flgstats = 1   AND 
+                                            tt-titulos.vltitulo = 0)  THEN
+            DO:
+                ASSIGN aux_cdcritic = 0.
+                       aux_dscritic = "Titulo com valor zerado. Operacao " +
+                                      "cancelada.".
+                UNDO INCLUIR, LEAVE INCLUIR.
+            END.
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_valida_valor_de_adesao
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                             INPUT par_nrdconta, /* Numero da conta */
+                                             INPUT 35,           /* Desconto de Titulo */
+                                             INPUT STRING(par_vltottit), /* Valor contratado */
+                                             INPUT par_idorigem, /* Codigo do produto */
+                                             INPUT 0,            /* Codigo da chave */
+                                            OUTPUT 0,            /* Solicita senha coordenador */
+                                            OUTPUT 0,            /* Codigo da crítica */
+                                            OUTPUT "").          /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_valida_valor_de_adesao
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN par_solcoord = 0
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               par_solcoord = pc_valida_valor_de_adesao.pr_solcoord 
+                              WHEN pc_valida_valor_de_adesao.pr_solcoord <> ?
+               aux_cdcritic = pc_valida_valor_de_adesao.pr_cdcritic 
+                              WHEN pc_valida_valor_de_adesao.pr_cdcritic <> ?
+               aux_dscritic = pc_valida_valor_de_adesao.pr_dscritic
+                              WHEN pc_valida_valor_de_adesao.pr_dscritic <> ?.
+        
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+             DO:
+                UNDO INCLUIR, LEAVE INCLUIR.
+             END.
+        
+        ASSIGN aux_flgtrans = TRUE.
+
+    END.  /*  Fim da transacao  */
+
+    IF  NOT aux_flgtrans  THEN
+        DO:
+            IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
+                ASSIGN aux_dscritic = "Nao foi possivel concluir a operacao.".
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).    
+
+            RETURN "NOK".
+        END.
+    
+    RETURN "OK".
+
+END PROCEDURE.
+
+/*****************************************************************************/
 /*                  Efetua inclusao de titulos no bordero                    */
 /*****************************************************************************/
 PROCEDURE efetua_inclusao_bordero:
@@ -8562,7 +9643,6 @@ PROCEDURE efetua_inclusao_bordero:
     DEF VAR aux_nrborder AS INTE NO-UNDO.
     DEF VAR aux_ponteiro AS INTE NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI NO-UNDO.
-
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -8756,6 +9836,209 @@ PROCEDURE efetua_inclusao_bordero:
             RETURN "NOK".
         END.
     
+    RETURN "OK".
+
+END PROCEDURE.
+
+/*****************************************************************************/
+/*   Efetuar alteracao de titulos no bordero - incluindo novos titulos nele  */
+/*****************************************************************************/
+PROCEDURE valida_alteracao_bordero:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrborder AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_qttottit AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_vltottit AS DECI                    NO-UNDO.
+        
+    DEF  INPUT PARAM TABLE FOR tt-titulos.
+          
+    DEF OUTPUT PARAM par_solcoord AS INTE                    NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    
+    DEF VAR aux_contador AS INTE   NO-UNDO.
+    DEF VAR aux_nrborder AS INTE   NO-UNDO.
+    DEF VAR aux_flgtrans AS LOGI   NO-UNDO.
+
+
+    EMPTY TEMP-TABLE tt-erro.
+
+    ASSIGN aux_nrborder = 0
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_flgtrans = FALSE.
+
+    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+
+    ALTERAR:
+    DO  TRANSACTION ON ERROR UNDO ALTERAR, LEAVE ALTERAR:
+         
+        DO  aux_contador = 1 TO 10:
+                                 
+            FIND crapbdt WHERE crapbdt.cdcooper = par_cdcooper AND
+                               crapbdt.nrborder = par_nrborder 
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+      
+            IF  NOT AVAILABLE crapbdt   THEN
+                DO:
+                    IF  LOCKED crapbdt   THEN
+                        DO:
+                            aux_dscritic = "Registro de bordero esta em uso. " +
+                                           "Tente novamente.".
+                            PAUSE 1 NO-MESSAGE.
+                            NEXT.
+                        END.
+                    ELSE
+                        DO:
+                            aux_dscritic = "Registro de bordero nao " +
+                                           "encontrado".
+                            LEAVE.
+                        END.    
+                END.       
+            ELSE
+                DO:
+                    IF  crapbdt.insitbdt <> 1 AND crapbdt.insitbdt <> 2  THEN
+                        DO:
+                            aux_dscritic = "Bordero deve estar em ESTUDO ou " +
+                                           "ANALISADO.".
+                            LEAVE.
+                        END.
+                END.
+                
+            aux_dscritic = "".
+            LEAVE.
+                                  
+        END.  /*  Fim do DO .. TO  */
+            
+        IF  aux_dscritic <> ""  THEN
+            UNDO ALTERAR, LEAVE ALTERAR.
+        
+        IF  crapbdt.insitbdt = 3   THEN                    /*  Liberado  */
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Bordero ja LIBERADO.".
+                UNDO ALTERAR, LEAVE ALTERAR.
+            END.
+            
+        IF  crapbdt.insitbdt = 4   THEN                    /*  Liquidado  */
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Bordero ja LIQUIDADO.".
+                UNDO ALTERAR, LEAVE ALTERAR.
+            END.
+                    
+        DO  aux_contador = 1 TO 10:
+
+            FIND craplot WHERE craplot.cdcooper = crapbdt.cdcooper AND 
+                               craplot.dtmvtolt = crapbdt.dtmvtolt AND
+                               craplot.cdagenci = crapbdt.cdagenci AND
+                               craplot.cdbccxlt = crapbdt.cdbccxlt AND
+                               craplot.nrdolote = crapbdt.nrdolote
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+      
+                IF  NOT AVAILABLE craplot   THEN
+                    IF  LOCKED craplot   THEN
+                        DO:
+                            aux_dscritic = "341 - Registro sendo alterado " +
+                                           "em outro terminal.".
+                            PAUSE 1 NO-MESSAGE.
+                            NEXT.
+                        END.
+                    ELSE
+                        DO:
+                            ASSIGN aux_dscritic = "060 - Lote inexistente.".
+                            LEAVE.
+                        END.
+                ELSE
+                    DO:   
+                        IF  craplot.tplotmov <> 34   THEN
+                            ASSIGN aux_dscritic = "100 - Tipo de lote nao " +
+                                            "corresponde a esse lancamento.".
+                        ELSE
+                        IF  craplot.cdoperad <> par_cdoperad  THEN
+                            ASSIGN aux_dscritic = "Operador deve ser o " +
+                                                  "mesmo que criou o bordero." +
+                                                  " Operador: " +
+                                                  STRING(craplot.cdoperad).
+                            
+                        LEAVE.
+                    END.
+                    
+                aux_dscritic = "".
+                LEAVE.
+            
+        END.   /*  Fim do DO .. TO  */
+            
+        IF  aux_dscritic <> ""   THEN
+            UNDO ALTERAR, LEAVE ALTERAR.
+
+        IF  CAN-FIND(FIRST tt-titulos WHERE tt-titulos.flgstats = 1   AND 
+                                            tt-titulos.vltitulo = 0)  THEN
+            DO:
+                ASSIGN aux_cdcritic = 0.
+                       aux_dscritic = "Titulo com valor zerado. Operacao " +
+                                      "cancelada.".
+                UNDO ALTERAR, LEAVE ALTERAR.
+            END.
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_valida_valor_de_adesao
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                             INPUT par_nrdconta, /* Numero da conta */
+                                             INPUT 35,           /* Desconto de Titulo */
+                                             INPUT STRING(par_vltottit), /* Valor contratado */
+                                             INPUT par_idorigem, /* Codigo do produto */
+                                             INPUT 0,            /* Codigo da chave */
+                                            OUTPUT 0,            /* Solicita senha coordenador */
+                                            OUTPUT 0,            /* Codigo da crítica */
+                                            OUTPUT "").          /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_valida_valor_de_adesao
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN par_solcoord = 0
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               par_solcoord = pc_valida_valor_de_adesao.pr_solcoord 
+                              WHEN pc_valida_valor_de_adesao.pr_solcoord <> ?
+               aux_cdcritic = pc_valida_valor_de_adesao.pr_cdcritic 
+                              WHEN pc_valida_valor_de_adesao.pr_cdcritic <> ?
+               aux_dscritic = pc_valida_valor_de_adesao.pr_dscritic
+                              WHEN pc_valida_valor_de_adesao.pr_dscritic <> ?.
+        
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+             DO:
+                UNDO ALTERAR, LEAVE ALTERAR.
+                
+             END.
+        
+        ASSIGN aux_flgtrans = TRUE.
+
+    END.  /*  Fim da transacao  */
+
+    IF  NOT aux_flgtrans  THEN
+        DO:
+            IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
+                ASSIGN aux_dscritic = "Nao foi possivel concluir a operacao.".
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).    
+
+            RETURN "NOK".
+        END.
+
     RETURN "OK".
 
 END PROCEDURE.
@@ -8976,6 +10259,171 @@ PROCEDURE efetua_alteracao_bordero:
             RETURN "NOK".
         END.
 
+    RETURN "OK".
+
+END PROCEDURE.
+
+/*****************************************************************************/
+/*           Efetua exclusao de titulos de um determinado bordero            */
+/*****************************************************************************/
+PROCEDURE valida_exclusao_tit_bordero:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdbccxlt AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdolote AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_dtsistem AS DATE                    NO-UNDO.
+    DEF  INPUT PARAM par_vltottit AS DECI                    NO-UNDO.
+        
+    DEF  INPUT PARAM TABLE FOR tt-titulos.
+          
+    DEF OUTPUT PARAM par_solcoord AS INTE                    NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    
+    DEF VAR aux_contador AS INTE NO-UNDO.
+    DEF VAR aux_vltottit AS INTE NO-UNDO.
+    
+    EMPTY TEMP-TABLE tt-erro.
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = "".    
+
+    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+
+    EXCLUIR:
+    DO  TRANSACTION ON ERROR UNDO EXCLUIR, RETURN "NOK":
+         
+        DO  aux_contador = 1 TO 10:
+
+            FIND craplot WHERE craplot.cdcooper = par_cdcooper AND 
+                               craplot.dtmvtolt = par_dtmvtolt AND
+                               craplot.cdagenci = par_cdagenci AND
+                               craplot.cdbccxlt = par_cdbccxlt AND
+                               craplot.nrdolote = par_nrdolote
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+      
+                IF  NOT AVAILABLE craplot   THEN
+                    IF  LOCKED craplot   THEN
+                        DO:
+                            aux_cdcritic = 341.
+                            PAUSE 1 NO-MESSAGE.
+                            NEXT.
+                        END.
+                    ELSE
+                        DO:
+                            ASSIGN aux_cdcritic = 60.
+                            LEAVE.
+                        END.
+                ELSE
+                    DO:   
+                        IF  craplot.tplotmov <> 34   THEN
+                            DO:
+                                ASSIGN aux_cdcritic = 100.
+                                LEAVE.
+                            END.
+                    END.
+                    
+                aux_cdcritic = 0.
+                LEAVE.
+            
+        END.   /*  Fim do DO .. TO  */
+            
+        IF  aux_cdcritic > 0   THEN
+            DO:
+                ASSIGN aux_dscritic = "".
+            
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+                    
+                UNDO EXCLUIR, RETURN "NOK".
+            END.
+
+        DO  WHILE TRUE:
+                                 
+            FIND crapbdt WHERE crapbdt.cdcooper = par_cdcooper AND 
+                               crapbdt.nrborder = craplot.cdhistor
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+      
+            IF  NOT AVAILABLE crapbdt   THEN
+                IF  LOCKED crapbdt   THEN
+                    DO:
+                        PAUSE 1 NO-MESSAGE.
+                        NEXT.
+                    END.
+                ELSE
+                    UNDO EXCLUIR, RETURN "NOK".
+               
+            LEAVE.
+                                  
+        END.  /*  Fim do DO WHILE TRUE  */
+
+        IF  crapbdt.insitbdt = 3   THEN                    /*  Liberado  */
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Bordero ja LIBERADO".
+                
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+                 
+                UNDO EXCLUIR, RETURN "NOK".
+            END.
+            
+         
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_valida_valor_de_adesao
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                             INPUT par_nrdconta, /* Numero da conta */
+                                             INPUT 35,           /* Desconto de Titulo */
+                                             INPUT STRING(par_vltottit), /* Valor contratado */
+                                             INPUT par_idorigem, /* Codigo do produto */
+                                             INPUT 0,            /* Codigo da chave */
+                                            OUTPUT 0,            /* Solicita senha coordenador */
+                                            OUTPUT 0,            /* Codigo da crítica */
+                                            OUTPUT "").          /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_valida_valor_de_adesao
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN par_solcoord = 0
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               par_solcoord = pc_valida_valor_de_adesao.pr_solcoord 
+                              WHEN pc_valida_valor_de_adesao.pr_solcoord <> ?
+               aux_cdcritic = pc_valida_valor_de_adesao.pr_cdcritic 
+                              WHEN pc_valida_valor_de_adesao.pr_cdcritic <> ?
+               aux_dscritic = pc_valida_valor_de_adesao.pr_dscritic
+                              WHEN pc_valida_valor_de_adesao.pr_dscritic <> ?.
+        
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+             DO:
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+                 
+                UNDO EXCLUIR, RETURN "NOK".
+             END.
+        
+    END.  /*  Fim da transacao  */
+    
     RETURN "OK".
 
 END PROCEDURE.
@@ -9976,6 +11424,7 @@ PROCEDURE busca_dados_impressao_dsctit:
     DEF VAR rel_dsdmoeda     AS CHAR EXTENT 2 INIT "R$" NO-UNDO.
     DEF VAR aux_dsemsnot     AS CHAR          NO-UNDO.
     DEF VAR rel_nmoperad     AS CHAR          NO-UNDO.
+    DEF VAR aux_nrctrlim     AS INTE          NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-emprsts.
@@ -9991,6 +11440,20 @@ PROCEDURE busca_dados_impressao_dsctit:
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
+    
+    FIND crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                       crawlim.nrdconta = par_nrdconta AND
+                       crawlim.tpctrlim = 3            AND
+                       crawlim.nrctrlim = par_nrctrlim
+                       NO-LOCK NO-ERROR.
+
+    IF  AVAILABLE crawlim  THEN
+        IF  crawlim.nrctrmnt > 0  THEN
+            ASSIGN aux_nrctrlim = crawlim.nrctrmnt.
+        ELSE
+            ASSIGN aux_nrctrlim = par_nrctrlim.
+    ELSE
+        ASSIGN aux_nrctrlim = par_nrctrlim.
     
     IF  par_flgerlog  THEN
         DO:
@@ -10055,7 +11518,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                                     INPUT "nrctrlim",
                                                     INPUT "",
-                                                    INPUT par_nrctrlim).
+                                                    INPUT aux_nrctrlim).
                         
                         END.
                                           
@@ -10094,7 +11557,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                     RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                             INPUT "nrctrlim",
                                             INPUT "",
-                                            INPUT par_nrctrlim).
+                                            INPUT aux_nrctrlim).
                 
                 END.
             
@@ -10132,7 +11595,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                     RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                             INPUT "nrctrlim",
                                             INPUT "",
-                                            INPUT par_nrctrlim).
+                                            INPUT aux_nrctrlim).
                 
                 END.            
             
@@ -10192,7 +11655,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                     RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                             INPUT "nrctrlim",
                                             INPUT "",
-                                            INPUT par_nrctrlim).
+                                            INPUT aux_nrctrlim).
                 
                 END.
             
@@ -10292,7 +11755,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                     RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                             INPUT "nrctrlim",
                                             INPUT "",
-                                            INPUT par_nrctrlim).
+                                            INPUT aux_nrctrlim).
                 
                 END.
             
@@ -10303,7 +11766,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                                          OUTPUT rel_nmrescop[1],
                                          OUTPUT rel_nmrescop[2]).
 
-    RUN busca_dados_limite_consulta (INPUT par_cdcooper,
+    RUN busca_dados_proposta_consulta (INPUT par_cdcooper,
                                      INPUT par_cdagenci, 
                                      INPUT par_nrdcaixa, 
                                      INPUT par_cdoperad,
@@ -10312,7 +11775,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                                      INPUT par_nrdconta,
                                      INPUT par_idseqttl, 
                                      INPUT par_nmdatela,
-                                     INPUT par_nrctrlim,
+                                       INPUT aux_nrctrlim,
                                     OUTPUT TABLE tt-erro,
                                     OUTPUT TABLE tt-dsctit_dados_limite,
                                     OUTPUT TABLE tt-dados-avais,
@@ -10338,7 +11801,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                     RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                             INPUT "nrctrlim",
                                             INPUT "",
-                                            INPUT par_nrctrlim).
+                                            INPUT aux_nrctrlim).
                 
                 END.
             
@@ -10377,7 +11840,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                     RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                             INPUT "nrctrlim",
                                             INPUT "",
-                                            INPUT par_nrctrlim).
+                                            INPUT aux_nrctrlim).
                 
                 END.            
             
@@ -10430,7 +11893,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                                     INPUT "nrctrlim",
                                                     INPUT "",
-                                                    INPUT par_nrctrlim).
+                                                    INPUT aux_nrctrlim).
                 
                         END.            
                     
@@ -10488,7 +11951,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                                     INPUT "nrctrlim",
                                                     INPUT "",
-                                                    INPUT par_nrctrlim).
+                                                    INPUT aux_nrctrlim).
                                         
                         END.                
                     
@@ -10707,7 +12170,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                                     INPUT "nrctrlim",
                                                     INPUT "",
-                                                    INPUT par_nrctrlim).
+                                                    INPUT aux_nrctrlim).
                 
                         END.                    
 
@@ -10758,7 +12221,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                                     INPUT "nrctrlim",
                                                     INPUT "",
-                                                    INPUT par_nrctrlim).
+                                                    INPUT aux_nrctrlim).
                 
                         END.                
                     DELETE PROCEDURE h-b1wgen9999.
@@ -10877,7 +12340,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                                     INPUT "nrctrlim",
                                                     INPUT "",
-                                                    INPUT par_nrctrlim).    
+                                                    INPUT aux_nrctrlim).    
                         END.
                                                           
                     RETURN "NOK".
@@ -10930,7 +12393,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                                        INPUT par_nrdcaixa,
                                        INPUT par_nrdconta,
                                        INPUT rel_nrcpfcgc,
-                                       INPUT par_nrctrlim,
+                                       INPUT aux_nrctrlim,
                                        INPUT tt-dsctit_dados_limite.vllimite,
                                        INPUT par_dtmvtolt,
                                        INPUT aux_dsmesref,
@@ -10963,7 +12426,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                                     INPUT "nrctrlim",
                                                     INPUT "",
-                                                    INPUT par_nrctrlim).    
+                                                    INPUT aux_nrctrlim).    
                         END.
                                                           
                     RETURN "NOK".
@@ -11077,7 +12540,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                                     INPUT "nrctrlim",
                                                     INPUT "",
-                                                    INPUT par_nrctrlim).    
+                                                    INPUT aux_nrctrlim).    
                         END.
                                                           
                     RETURN "NOK".
@@ -11092,7 +12555,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                                        INPUT par_nrdcaixa,
                                        INPUT par_nrdconta,
                                        INPUT rel_nrcpfcgc,
-                                       INPUT par_nrctrlim,
+                                       INPUT aux_nrctrlim,
                                        INPUT tt-dsctit_dados_limite.vllimite,
                                        INPUT par_dtmvtolt,
                                        INPUT aux_dsmesref,
@@ -11125,7 +12588,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                                     INPUT "nrctrlim",
                                                     INPUT "",
-                                                    INPUT par_nrctrlim).    
+                                                    INPUT aux_nrctrlim).    
                         END.
                                                           
                     RETURN "NOK".
@@ -11152,7 +12615,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                                    INPUT tt-dsctit_dados_limite.vlsalari,
                                    INPUT tt-dsctit_dados_limite.vlsalcon,
                                    INPUT tt-dsctit_dados_limite.vloutras,
-                                   INPUT par_nrctrlim,
+                                   INPUT aux_nrctrlim,
                                    INPUT par_nrborder,
                                    INPUT tt-dsctit_dados_limite.vllimite,
                                    INPUT rel_dsobserv[1],
@@ -11210,7 +12673,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                             INPUT crapass.cdagenci, 
                             INPUT par_nrdconta, 
                             INPUT par_dtmvtolt, 
-                            INPUT par_nrctrlim, 
+                            INPUT aux_nrctrlim, 
                             INPUT par_nrborder,
                             INPUT tt-dados_dsctit.nrmespsq,
                             INPUT rel_txdiaria,
@@ -11252,7 +12715,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                                    INPUT tt-dsctit_dados_limite.vlsalari,
                                    INPUT tt-dsctit_dados_limite.vlsalcon,
                                    INPUT tt-dsctit_dados_limite.vloutras,
-                                   INPUT par_nrctrlim,
+                                   INPUT aux_nrctrlim,
                                    INPUT par_nrborder,
                                    INPUT tt-dsctit_dados_limite.vllimite,
                                    INPUT rel_dsobserv[1],
@@ -11313,7 +12776,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                             INPUT crapass.cdagenci, 
                             INPUT par_nrdconta, 
                             INPUT par_dtmvtolt, 
-                            INPUT par_nrctrlim, 
+                            INPUT aux_nrctrlim, 
                             INPUT par_nrborder,
                             INPUT tt-dados_dsctit.nrmespsq,
                             INPUT rel_txdiaria,
@@ -11418,7 +12881,7 @@ PROCEDURE busca_dados_impressao_dsctit:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "nrctrlim",
                                     INPUT "",
-                                    INPUT par_nrctrlim).
+                                    INPUT aux_nrctrlim).
         END.                       
 
     RETURN "OK".
@@ -15551,6 +17014,7 @@ END PROCEDURE.
 PROCEDURE valida-titulo-bordero:
 
     DEF INPUT  PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT  PARAM par_nrdconta AS INTE                    NO-UNDO.
     DEF INPUT  PARAM par_cdagenci AS INTE                    NO-UNDO.
     DEF INPUT  PARAM par_nrdcaixa AS INTE                    NO-UNDO.
     DEF INPUT  PARAM par_cdoperad AS CHAR                    NO-UNDO.
@@ -15571,31 +17035,46 @@ PROCEDURE valida-titulo-bordero:
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
 
-    FIND FIRST tt-dados_dsctit_cr NO-LOCK NO-ERROR.   
-    FIND FIRST tt-dados_dsctit    NO-LOCK NO-ERROR.   
-
-    FIND tt-titulos WHERE tt-titulos.nrcnvcob = par_nrcnvcob AND
-                          tt-titulos.nrdocmto = par_nrdocmto NO-LOCK.
-
-    IF  (tt-titulos.vltitulo > tt-dados_dsctit.vlmaxsac    AND tt-titulos.flgregis = FALSE) OR
-        (tt-titulos.vltitulo > tt-dados_dsctit_cr.vlmaxsac AND tt-titulos.flgregis = TRUE ) THEN
+    /* buscar quantidade maxima de digitos aceitos para o convenio */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+    
+    RUN STORED-PROCEDURE pc_valida_adesao_produto
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT par_cdcooper,
+                                 INPUT par_nrdconta,
+                                 INPUT 35, /* Desconto de Titulo */
+                                 OUTPUT 0,   /* pr_cdcritic */
+                                 OUTPUT ""). /* pr_dscritic */
+                
+    CLOSE STORED-PROC pc_valida_adesao_produto
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic
+                              WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+           aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                              WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+    
+    IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
         DO:
-            ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Valor maximo do titulo excedido. Titulos inferiores a R$ " +
-                                   IF tt-titulos.flgregis = TRUE THEN 
-                                       STRING(tt-dados_dsctit_cr.vlmaxsac,"zzz,zz9.99")
-                                   ELSE 
-                                       STRING(tt-dados_dsctit.vlmaxsac,"zzz,zz9.99").
-
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
                            INPUT par_nrdcaixa,
                            INPUT 1,            /** Sequencia **/
                            INPUT aux_cdcritic,
                            INPUT-OUTPUT aux_dscritic).
-            
+                
             RETURN "NOK".
         END.
+    
+    FIND FIRST tt-dados_dsctit_cr NO-LOCK NO-ERROR.   
+    FIND FIRST tt-dados_dsctit    NO-LOCK NO-ERROR.   
+
+    FIND tt-titulos WHERE tt-titulos.nrcnvcob = par_nrcnvcob AND
+                          tt-titulos.nrdocmto = par_nrdocmto NO-LOCK.
 
     IF  (tt-titulos.vltitulo < tt-dados_dsctit.vlminsac     AND tt-titulos.flgregis = FALSE) OR
         (tt-titulos.vltitulo < tt-dados_dsctit_cr.vlminsac  AND tt-titulos.flgregis = TRUE ) THEN 
@@ -15917,6 +17396,28 @@ PROCEDURE analisar-titulo-bordero:
     DEF BUFFER crabtdb  FOR craptdb.
     DEF BUFFER crabcob  FOR crapcob.
 
+    /* GGS - Inicio */  
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAIL(crapass)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 9
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".    
+
+        END.
+    /* GGS - Fim */
+    
     RUN busca_parametros_dsctit (INPUT par_cdcooper,
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
@@ -15924,6 +17425,7 @@ PROCEDURE analisar-titulo-bordero:
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
                                  INPUT TRUE, /* COB.REGISTRADA */
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit_cr,
                                  OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -15938,6 +17440,7 @@ PROCEDURE analisar-titulo-bordero:
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
                                  INPUT FALSE, /* COB.SEM REGISTRO */
+                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit,
                                  OUTPUT TABLE tt-dados_cecred_dsctit).
@@ -16121,8 +17624,8 @@ PROCEDURE analisar-titulo-bordero:
                 
             END.  /*  Fim do FOR EACH  -- crabtdb  */
 
-            IF  ((aux_vltotsac_cr / aux_vltotbdt_cr) * 100) > tt-dados_dsctit_cr.pctitemi  OR
-                ((aux_vltotsac_sr / aux_vltotbdt_sr) * 100) > tt-dados_dsctit.pctitemi     THEN
+            IF  ((aux_vltotsac_cr / aux_vltotbdt_cr) * 100) > tt-dados_dsctit_cr.pcmxctip  OR
+                ((aux_vltotsac_sr / aux_vltotbdt_sr) * 100) > tt-dados_dsctit.pcmxctip     THEN
                 DO:
                     ASSIGN aux_dsrestri = "Percentual de titulo do " +
                                           "pagador excedido no bordero"
@@ -16704,6 +18207,8 @@ PROCEDURE carrega-impressao-dsctit:
     DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
+    DEF VAR aux_nrctrlim AS INTE                                    NO-UNDO.
+
     RUN sistema/generico/procedures/b1wgen0030i.p PERSISTENT SET h-b1wgen0030i.
 
     IF  NOT VALID-HANDLE(h-b1wgen0030i)  THEN
@@ -16721,6 +18226,20 @@ PROCEDURE carrega-impressao-dsctit:
             RETURN "NOK".
         END.
 
+    FIND crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                       crawlim.nrdconta = par_nrdconta AND
+                       crawlim.tpctrlim = 3            AND
+                       crawlim.nrctrlim = par_nrctrlim
+                       NO-LOCK NO-ERROR.
+
+    IF  AVAILABLE crawlim  THEN
+        IF  crawlim.nrctrmnt > 0  THEN
+            ASSIGN aux_nrctrlim = crawlim.nrctrmnt.
+        ELSE
+            ASSIGN aux_nrctrlim = par_nrctrlim.
+    ELSE
+        ASSIGN aux_nrctrlim = par_nrctrlim.
+
     IF  par_idimpres <= 4 OR par_idimpres = 9 THEN /* Impressoes de Limite */
         DO:
             RUN gera-impressao-limite IN h-b1wgen0030i (INPUT par_cdcooper,
@@ -16735,7 +18254,7 @@ PROCEDURE carrega-impressao-dsctit:
                                                         INPUT par_dtmvtopr,
                                                         INPUT par_inproces,
                                                         INPUT par_idimpres,
-                                                        INPUT par_nrctrlim,
+                                                        INPUT aux_nrctrlim,
                                                         INPUT par_dsiduser,
                                                         INPUT par_flgemail,
                                                         INPUT par_flgerlog,
@@ -17500,9 +19019,720 @@ PROCEDURE valida_titulos_bordero:
     
 	IF aux_flgtrans = FALSE THEN
 	   RETURN "NOK".
-
     RETURN "OK".
 END PROCEDURE.
+
+
+/***************************************************************************
+    Buscar dados de um limite para manutencao 
+***************************************************************************/
+PROCEDURE busca_dados_limite_manutencao:
+
+    DEF INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
+    DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_nrctrlim AS INTE                    NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_limite.
+    DEF OUTPUT PARAM TABLE FOR tt-dados_dsctit.
+
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-dsctit_dados_limite.
+    EMPTY TEMP-TABLE tt-dados_dsctit.
+
+    DEF VAR aux_dsoperac AS CHAR   NO-UNDO.
+    DEF VAR h-b1wgen0110 AS HANDLE NO-UNDO.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0.
+
+    FIND crawlim WHERE (crawlim.cdcooper = par_cdcooper   AND
+                        crawlim.nrdconta = par_nrdconta   AND
+                        crawlim.tpctrlim = 3              AND
+                        crawlim.nrctrmnt = par_nrctrlim   AND
+                        crawlim.insitlim = 1 /*em estudo*/ )
+                       OR
+                       (crawlim.cdcooper = par_cdcooper   AND
+                        crawlim.nrdconta = par_nrdconta   AND
+                        crawlim.tpctrlim = 3              AND
+                        crawlim.nrctrmnt = par_nrctrlim   AND
+                        crawlim.insitlim = 5 /*aprovada*/ )
+                       OR
+                       (crawlim.cdcooper = par_cdcooper   AND
+                        crawlim.nrdconta = par_nrdconta   AND
+                        crawlim.tpctrlim = 3              AND
+                        crawlim.nrctrmnt = par_nrctrlim   AND
+                        crawlim.insitlim = 6 /*não aprovada*/ )
+                       OR
+                       (crawlim.cdcooper = par_cdcooper   AND
+                        crawlim.nrdconta = par_nrdconta   AND
+                        crawlim.tpctrlim = 3              AND
+                        crawlim.nrctrmnt = par_nrctrlim   AND
+                        crawlim.insitlim = 8 /*expirada por decurso de prazo*/)
+                       OR
+                       (crawlim.cdcooper = par_cdcooper   AND
+                        crawlim.nrdconta = par_nrdconta   AND
+                        crawlim.tpctrlim = 3              AND
+                        crawlim.nrctrmnt = par_nrctrlim   AND
+                        crawlim.insitlim = 9 /*Anulado - PRJ438 - Paulo Martins - (Mouts)*/)                        
+                       NO-LOCK NO-ERROR.
+
+    IF  AVAILABLE crawlim  THEN
+        DO:
+            ASSIGN aux_cdcritic = 0.
+            
+            IF  crawlim.insitlim = 1  THEN
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação EM ESTUDO".
+            ELSE
+            IF  crawlim.insitlim = 5  THEN
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação APROVADA".
+            ELSE
+            IF  crawlim.insitlim = 6  THEN
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação NÃO APROVADA".
+            IF  crawlim.insitlim = 8  THEN
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação EXPIRADA DECURSO DE PRAZO".
+            IF  crawlim.insitlim = 9  THEN /*PRJ438 - Paulo Martins (Mouts)*/
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação ANULADA".                                      
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+        END.
+
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF NOT AVAIL(crapass)  THEN
+       DO:
+           ASSIGN aux_cdcritic = 9
+                  aux_dscritic = "".
+
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1,            /** Sequencia **/
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+               
+           RETURN "NOK".        
+
+       END.
+
+    IF NOT VALID-HANDLE(h-b1wgen0110) THEN
+       RUN sistema/generico/procedures/b1wgen0110.p
+           PERSISTENT SET h-b1wgen0110.
+
+    /*Monta a mensagem da operacao para envio no e-mail*/
+    ASSIGN aux_dsoperac = "Tentativa de alterar a proposta de limite de "  + 
+                          "descontos de titulos na conta "                 +
+                          STRING(crapass.nrdconta,"zzzz,zzz,9")            +
+                          " - CPF/CNPJ "                                   +
+                         (IF crapass.inpessoa = 1 THEN
+                             STRING((STRING(crapass.nrcpfcgc,
+                                     "99999999999")),"xxx.xxx.xxx-xx")
+                          ELSE
+                             STRING((STRING(crapass.nrcpfcgc,
+                                     "99999999999999")),
+                                     "xx.xxx.xxx/xxxx-xx")).
+
+    /*Verifica se o associado esta no cadastro restritivo. Se estiver,
+      sera enviado um e-mail informando a situacao*/
+    RUN alerta_fraude IN h-b1wgen0110(INPUT par_cdcooper,
+                                      INPUT par_cdagenci,
+                                      INPUT par_nrdcaixa,
+                                      INPUT par_cdoperad,
+                                      INPUT par_nmdatela,
+                                      INPUT par_dtmvtolt,
+                                      INPUT par_idorigem,
+                                      INPUT crapass.nrcpfcgc,
+                                      INPUT crapass.nrdconta,
+                                      INPUT par_idseqttl,
+                                      INPUT TRUE, /*bloqueia operacao*/
+                                      INPUT 6, /*cdoperac*/
+                                      INPUT aux_dsoperac,
+                                      OUTPUT TABLE tt-erro).
+    
+    IF VALID-HANDLE(h-b1wgen0110) THEN
+       DELETE PROCEDURE(h-b1wgen0110).
+
+    IF RETURN-VALUE <> "OK" THEN
+       DO:
+          IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
+             DO:
+                ASSIGN aux_dscritic = "Nao foi possivel verificar o " + 
+                                      "cadastro restritivo.".
+                
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1, /*sequencia*/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+             END.
+
+          RETURN "NOK".
+
+       END.
+    
+    RUN busca_dados_limite(INPUT par_cdcooper,
+                            INPUT par_cdagenci, 
+                            INPUT par_nrdcaixa,
+                            INPUT par_cdoperad,
+                            INPUT par_dtmvtolt,
+                            INPUT par_idorigem,
+                            INPUT par_nrdconta,
+                            INPUT par_idseqttl,  
+                            INPUT par_nmdatela,
+                            INPUT par_nrctrlim,
+                            INPUT "A",
+                            OUTPUT TABLE tt-erro,
+                            OUTPUT TABLE tt-dsctit_dados_limite,
+                            OUTPUT TABLE tt-dados_dsctit).
+    
+    IF  RETURN-VALUE = "NOK"  THEN
+        RETURN "NOK".
+    
+    FIND FIRST tt-dsctit_dados_limite NO-LOCK NO-ERROR.
+    IF  NOT AVAIL tt-dsctit_dados_limite  THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Dados de limite nao encontrados.".
+                   
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                                       
+            RETURN "NOK".
+        END.
+    
+    
+    RETURN "OK".
+
+END PROCEDURE.
+
+
+
+
+/*****************************************************************************
+       Realizar a manutençao do contrato                                   
+****************************************************************************/
+PROCEDURE realizar_manutencao_contrato:
+
+    DEF INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
+    DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_nrctrlim AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_vllimite AS DECI                    NO-UNDO.
+    DEF INPUT PARAM par_cddlinha AS INTE                    NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
+    DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_limite.
+    DEF OUTPUT PARAM TABLE FOR tt-dados-avais.
+    DEF OUTPUT PARAM TABLE FOR tt-dados_dsctit.
+    
+    DEF VAR aux_nrctrlim AS INTE    NO-UNDO.
+    
+    DEF VAR aux_nrctaav1 AS INTE    NO-UNDO.
+    DEF VAR aux_nmdaval1 AS CHAR    NO-UNDO.
+    DEF VAR aux_nrcpfav1 AS DECI    NO-UNDO.
+    DEF VAR aux_tpdocav1 AS CHAR    NO-UNDO.
+    DEF VAR aux_dsdocav1 AS CHAR    NO-UNDO.
+    DEF VAR aux_nmdcjav1 AS CHAR    NO-UNDO.
+    DEF VAR aux_cpfcjav1 AS DECI    NO-UNDO.
+    DEF VAR aux_tdccjav1 AS CHAR    NO-UNDO.
+    DEF VAR aux_doccjav1 AS CHAR    NO-UNDO.
+    DEF VAR aux_ende1av1 AS CHAR    NO-UNDO.
+    DEF VAR aux_ende2av1 AS CHAR    NO-UNDO.
+    DEF VAR aux_nrfonav1 AS CHAR    NO-UNDO.
+    DEF VAR aux_emailav1 AS CHAR    NO-UNDO.
+    DEF VAR aux_nmcidav1 AS CHAR    NO-UNDO.
+    DEF VAR aux_cdufava1 AS CHAR    NO-UNDO.
+    DEF VAR aux_nrcepav1 AS INTE    NO-UNDO.
+    DEF VAR aux_complen1 AS CHAR    NO-UNDO.
+    DEF VAR aux_nrender1 AS INTE    NO-UNDO.
+    DEF VAR aux_nrcxaps1 AS INTE    NO-UNDO.
+    
+    DEF VAR aux_nrctaav2 AS INTE    NO-UNDO.
+    DEF VAR aux_nmdaval2 AS CHAR    NO-UNDO.
+    DEF VAR aux_nrcpfav2 AS DECI    NO-UNDO.
+    DEF VAR aux_tpdocav2 AS CHAR    NO-UNDO.
+    DEF VAR aux_dsdocav2 AS CHAR    NO-UNDO.
+    DEF VAR aux_nmdcjav2 AS CHAR    NO-UNDO.
+    DEF VAR aux_cpfcjav2 AS DECI    NO-UNDO.
+    DEF VAR aux_tdccjav2 AS CHAR    NO-UNDO.
+    DEF VAR aux_doccjav2 AS CHAR    NO-UNDO.
+    DEF VAR aux_ende1av2 AS CHAR    NO-UNDO.
+    DEF VAR aux_ende2av2 AS CHAR    NO-UNDO.
+    DEF VAR aux_nrfonav2 AS CHAR    NO-UNDO.
+    DEF VAR aux_emailav2 AS CHAR    NO-UNDO.
+    DEF VAR aux_nmcidav2 AS CHAR    NO-UNDO.
+    DEF VAR aux_cdufava2 AS CHAR    NO-UNDO.
+    DEF VAR aux_nrcepav2 AS INTE    NO-UNDO.
+    DEF VAR aux_complen2 AS CHAR    NO-UNDO.
+    DEF VAR aux_nrender2 AS INTE    NO-UNDO.
+    DEF VAR aux_nrcxaps2 AS INTE    NO-UNDO.
+    
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-msg-confirma.
+    EMPTY TEMP-TABLE tt-dsctit_dados_limite.
+    EMPTY TEMP-TABLE tt-dados-avais.
+    EMPTY TEMP-TABLE tt-dados_dsctit.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0
+           aux_nrctaav1 = 0
+           aux_nmdaval1 = ""
+           aux_nrcpfav1 = 0
+           aux_tpdocav1 = "" 
+           aux_dsdocav1 = ""
+           aux_nmdcjav1 = ""
+           aux_cpfcjav1 = 0
+           aux_tdccjav1 = ""
+           aux_doccjav1 = ""
+           aux_ende1av1 = ""
+           aux_ende2av1 = ""
+           aux_nrfonav1 = ""
+           aux_emailav1 = "" 
+           aux_nmcidav1 = ""
+           aux_cdufava1 = ""
+           aux_nrcepav1 = 0
+           aux_nrender1 = 0
+           aux_complen1 = ""
+           aux_nrcxaps1 = 0
+           aux_nrctaav2 = 0
+           aux_nmdaval2 = ""
+           aux_nrcpfav2 = 0
+           aux_tpdocav2 = ""
+           aux_dsdocav2 = ""
+           aux_nmdcjav2 = ""
+           aux_cpfcjav2 = 0
+           aux_tdccjav2 = ""
+           aux_doccjav2 = ""
+           aux_ende1av2 = ""
+           aux_ende2av2 = ""
+           aux_nrfonav2 = ""
+           aux_emailav2 = ""
+           aux_nmcidav2 = ""
+           aux_cdufava2 = ""
+           aux_nrcepav2 = 0
+           aux_nrender2 = 0
+           aux_complen2 = ""
+           aux_nrcxaps2 = 0.
+    
+    FIND crapldc WHERE crapldc.cdcooper = par_cdcooper   AND
+                      crapldc.cddlinha = par_cddlinha   AND
+                      crapldc.tpdescto = 3              AND
+                      crapldc.flgstlcr = TRUE /*ATIVA*/
+                      NO-LOCK NO-ERROR.
+   
+    IF NOT AVAILABLE crapldc THEN
+      DO:
+          ASSIGN aux_cdcritic = 0
+                 aux_dscritic = "Linha de desconto nao cadastrada ou bloqueada.".
+                 
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,            /** Sequencia **/
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+          
+          RETURN "NOK".
+          
+      END.
+
+    RUN busca_dados_limite_consulta(
+                            INPUT par_cdcooper,
+                            INPUT par_cdagenci,
+                            INPUT par_nrdcaixa,
+                            INPUT par_cdoperad,
+                            INPUT par_dtmvtolt,
+                            INPUT par_idorigem,
+                            INPUT par_nrdconta,
+                            INPUT par_idseqttl,
+                            INPUT par_nmdatela,
+                            INPUT par_nrctrlim,
+                            OUTPUT TABLE tt-erro,
+                            OUTPUT TABLE tt-dsctit_dados_limite,
+                            OUTPUT TABLE tt-dados-avais,
+                            OUTPUT TABLE tt-dados_dsctit).
+    
+    IF RETURN-VALUE <> "OK" THEN
+       DO:
+          IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
+             DO:
+                ASSIGN aux_dscritic = "Nao foi possivel consultar dados do limite.".
+
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+             END.
+
+        
+          RETURN "NOK".
+
+       END.
+    ELSE
+      DO:
+        FIND FIRST tt-dados-avais NO-LOCK NO-ERROR.
+
+            IF  AVAIL tt-dados-avais  THEN
+                ASSIGN  aux_nrctaav1 = tt-dados-avais.nrctaava
+                        aux_nmdaval1 = tt-dados-avais.nmdavali
+                        aux_nrcpfav1 = tt-dados-avais.nrcpfcgc
+                        aux_tpdocav1 = tt-dados-avais.tpdocava
+                        aux_dsdocav1 = tt-dados-avais.nrdocava
+                        aux_nmdcjav1 = tt-dados-avais.nmconjug
+                        aux_cpfcjav1 = tt-dados-avais.nrcpfcjg
+                        aux_tdccjav1 = tt-dados-avais.tpdoccjg
+                        aux_doccjav1 = tt-dados-avais.nrdoccjg
+                        aux_ende1av1 = tt-dados-avais.dsendre1
+                        aux_ende2av1 = tt-dados-avais.dsendre2
+                        aux_nrfonav1 = tt-dados-avais.nrfonres
+                        aux_emailav1 = tt-dados-avais.dsdemail
+                        aux_nmcidav1 = tt-dados-avais.nmcidade
+                        aux_cdufava1 = tt-dados-avais.cdufresd
+                        aux_nrcepav1 = tt-dados-avais.nrcepend
+                        aux_complen1 = tt-dados-avais.complend 
+                        aux_nrender1 = tt-dados-avais.nrendere 
+                        aux_nrcxaps1 = tt-dados-avais.nrcxapst.
+            
+            FIND NEXT tt-dados-avais NO-LOCK NO-ERROR.
+
+            IF   AVAIL tt-dados-avais  THEN
+                 ASSIGN aux_nrctaav2 = tt-dados-avais.nrctaava
+                        aux_nmdaval2 = tt-dados-avais.nmdavali
+                        aux_nrcpfav2 = tt-dados-avais.nrcpfcgc
+                        aux_tpdocav2 = tt-dados-avais.tpdocava
+                        aux_dsdocav2 = tt-dados-avais.nrdocava
+                        aux_nmdcjav2 = tt-dados-avais.nmconjug
+                        aux_cpfcjav2 = tt-dados-avais.nrcpfcjg
+                        aux_tdccjav2 = tt-dados-avais.tpdoccjg
+                        aux_doccjav2 = tt-dados-avais.nrdoccjg
+                        aux_ende1av2 = tt-dados-avais.dsendre1
+                        aux_ende2av2 = tt-dados-avais.dsendre2
+                        aux_nrfonav2 = tt-dados-avais.nrfonres
+                        aux_emailav2 = tt-dados-avais.dsdemail
+                        aux_nmcidav2 = tt-dados-avais.nmcidade
+                        aux_cdufava2 = tt-dados-avais.cdufresd
+                        aux_nrcepav2 = tt-dados-avais.nrcepend
+                        aux_complen2 = tt-dados-avais.complend 
+                        aux_nrender2 = tt-dados-avais.nrendere 
+                        aux_nrcxaps2 = tt-dados-avais.nrcxapst.
+      END.
+      
+    
+    RUN efetua_inclusao_limite(
+                   INPUT par_cdcooper,
+                   INPUT par_cdagenci,
+                   INPUT par_nrdcaixa,
+                   INPUT par_nrdconta,
+                   INPUT par_nmdatela,
+                   INPUT par_idorigem,
+                   INPUT par_idseqttl,
+                   INPUT par_dtmvtolt,
+                   INPUT par_cdoperad,
+                   INPUT par_vllimite,
+                   INPUT tt-dsctit_dados_limite.dsramati,
+                   INPUT tt-dsctit_dados_limite.vlmedtit,
+                   INPUT tt-dsctit_dados_limite.vlfatura,
+                   INPUT tt-dsctit_dados_limite.vloutras,
+                   INPUT tt-dsctit_dados_limite.vlsalari,
+                   INPUT tt-dsctit_dados_limite.vlsalcon,
+                   INPUT tt-dsctit_dados_limite.dsdbens1,
+                   INPUT tt-dsctit_dados_limite.dsdbens2,
+                   INPUT par_cddlinha,
+                   INPUT tt-dsctit_dados_limite.dsobserv,   
+                   INPUT tt-dsctit_dados_limite.qtdiavig, 
+                   INPUT FALSE,
+                   INPUT aux_nrctaav1,
+                   INPUT aux_nmdaval1,
+                   INPUT aux_nrcpfav1,
+                   INPUT aux_tpdocav1,
+                   INPUT aux_dsdocav1,
+                   INPUT aux_nmdcjav1,
+                   INPUT aux_cpfcjav1,
+                   INPUT aux_tdccjav1,
+                   INPUT aux_doccjav1,
+                   INPUT aux_ende1av1,
+                   INPUT aux_ende2av1,
+                   INPUT aux_nrfonav1,
+                   INPUT aux_emailav1,
+                   INPUT aux_nmcidav1,
+                   INPUT aux_cdufava1,
+                   INPUT aux_nrcepav1,
+                   INPUT aux_nrender1,
+                   INPUT aux_complen1,
+                   INPUT aux_nrcxaps1,
+                   INPUT aux_nrctaav2,
+                   INPUT aux_nmdaval2,
+                   INPUT aux_nrcpfav2,
+                   INPUT aux_tpdocav2,
+                   INPUT aux_dsdocav2,
+                   INPUT aux_nmdcjav2,
+                   INPUT aux_cpfcjav2,
+                   INPUT aux_tdccjav2,
+                   INPUT aux_doccjav2,
+                   INPUT aux_ende1av2,
+                   INPUT aux_ende2av2,
+                   INPUT aux_nrfonav2,
+                   INPUT aux_emailav2,
+                   INPUT aux_nmcidav2,
+                   INPUT aux_cdufava2,
+                   INPUT aux_nrcepav2,
+                   INPUT aux_nrender2,
+                   INPUT aux_complen2,
+                   INPUT aux_nrcxaps2,
+                   INPUT tt-dsctit_dados_limite.nrgarope,
+                   INPUT tt-dsctit_dados_limite.nrinfcad,
+                   INPUT tt-dsctit_dados_limite.nrliquid,
+                   INPUT tt-dsctit_dados_limite.nrpatlvr,
+                   INPUT tt-dsctit_dados_limite.nrperger,
+                   INPUT tt-dsctit_dados_limite.vltotsfn,
+                   INPUT tt-dsctit_dados_limite.perfatcl,
+                   INPUT tt-dsctit_dados_limite.nrctrlim,
+				   INPUT tt-dsctit_dados_limite.idcobope,
+                   OUTPUT aux_nrctrlim,                                   
+                   OUTPUT TABLE tt-erro,
+                   OUTPUT TABLE tt-msg-confirma).
+    
+    IF RETURN-VALUE <> "OK" THEN
+       DO:
+          IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
+             DO:
+                ASSIGN aux_dscritic = "Nao foi possivel efetuar inclusao da proposta.".
+
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+             END.
+
+          RETURN "NOK".
+
+       END.
+   
+    IF par_vllimite <= tt-dsctit_dados_limite.vllimite THEN
+       DO:
+          
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+          RUN STORED-PROCEDURE pc_efetivar_proposta
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                  ,INPUT par_nrdconta
+                                                  ,INPUT aux_nrctrlim
+                                                  ,INPUT 3
+                                                  ,INPUT par_cdoperad
+                                                  ,INPUT par_cdagenci
+                                                  ,INPUT par_nrdcaixa
+                                                  ,INPUT par_idorigem
+                                                  ,INPUT 3
+                                                  ,OUTPUT 0
+                                                  ,OUTPUT "").
+          
+          CLOSE STORED-PROC pc_efetivar_proposta
+             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+          ASSIGN aux_cdcritic  = INT(pc_efetivar_proposta.pr_cdcritic) WHEN pc_efetivar_proposta.pr_cdcritic <> ?
+                 aux_dscritic  = pc_efetivar_proposta.pr_dscritic WHEN pc_efetivar_proposta.pr_dscritic <> ?.
+          
+          IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+             DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,
+                              INPUT aux_cdcritic,
+                              INPUT-OUTPUT aux_dscritic).
+               RETURN "NOK".
+           END.
+           
+      END.
+   RETURN "OK".       
+
+END PROCEDURE.
+
+/***************************************************************************
+    Buscar dados de uma proposta para alteração da manutencao/majoração
+***************************************************************************/
+PROCEDURE busca_dados_proposta_manuten:
+    DEF INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
+    DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_nrctrlim AS INTE                    NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_limite.
+    DEF OUTPUT PARAM TABLE FOR tt-dados_dsctit.
+
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-dsctit_dados_limite.
+    EMPTY TEMP-TABLE tt-dados_dsctit.
+
+    DEF VAR aux_dsoperac AS CHAR   NO-UNDO.
+    DEF VAR h-b1wgen0110 AS HANDLE NO-UNDO.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0.
+
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+                       
+    IF NOT AVAIL(crapass)  THEN
+       DO:
+           ASSIGN aux_cdcritic = 9
+                  aux_dscritic = "".
+
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1,            /** Sequencia **/
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+               
+           RETURN "NOK".        
+
+       END.
+
+    IF NOT VALID-HANDLE(h-b1wgen0110) THEN
+       RUN sistema/generico/procedures/b1wgen0110.p
+           PERSISTENT SET h-b1wgen0110.
+
+    /*Monta a mensagem da operacao para envio no e-mail*/
+    ASSIGN aux_dsoperac = "Tentativa de alterar a proposta de limite de "  + 
+                          "descontos de titulos na conta "                 +
+                          STRING(crapass.nrdconta,"zzzz,zzz,9")            +
+                          " - CPF/CNPJ "                                   +
+                         (IF crapass.inpessoa = 1 THEN
+                             STRING((STRING(crapass.nrcpfcgc,
+                                     "99999999999")),"xxx.xxx.xxx-xx")
+                          ELSE
+                             STRING((STRING(crapass.nrcpfcgc,
+                                     "99999999999999")),
+                                     "xx.xxx.xxx/xxxx-xx")).
+
+    /*Verifica se o associado esta no cadastro restritivo. Se estiver,
+      sera enviado um e-mail informando a situacao*/
+    RUN alerta_fraude IN h-b1wgen0110(INPUT par_cdcooper,
+                                      INPUT par_cdagenci,
+                                      INPUT par_nrdcaixa,
+                                      INPUT par_cdoperad,
+                                      INPUT par_nmdatela,
+                                      INPUT par_dtmvtolt,
+                                      INPUT par_idorigem,
+                                      INPUT crapass.nrcpfcgc,
+                                      INPUT crapass.nrdconta,
+                                      INPUT par_idseqttl,
+                                      INPUT TRUE, /*bloqueia operacao*/
+                                      INPUT 6, /*cdoperac*/
+                                      INPUT aux_dsoperac,
+                                      OUTPUT TABLE tt-erro).
+    
+    IF VALID-HANDLE(h-b1wgen0110) THEN
+       DELETE PROCEDURE(h-b1wgen0110).
+
+    IF RETURN-VALUE <> "OK" THEN
+       DO:
+          IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
+             DO:
+                ASSIGN aux_dscritic = "Nao foi possivel verificar o " + 
+                                      "cadastro restritivo.".
+                
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1, /*sequencia*/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+             END.
+
+          RETURN "NOK".
+
+       END.
+    
+    RUN busca_dados_proposta(INPUT par_cdcooper,
+                            INPUT par_cdagenci, 
+                            INPUT par_nrdcaixa,
+                            INPUT par_cdoperad,
+                            INPUT par_dtmvtolt,
+                            INPUT par_idorigem,
+                            INPUT par_nrdconta,
+                            INPUT par_idseqttl,  
+                            INPUT par_nmdatela,
+                            INPUT par_nrctrlim,
+                            INPUT "A",
+                            OUTPUT TABLE tt-erro,
+                            OUTPUT TABLE tt-dsctit_dados_limite,
+                            OUTPUT TABLE tt-dados_dsctit).
+    
+    IF  RETURN-VALUE = "NOK"  THEN
+        RETURN "NOK".
+    
+    FIND FIRST tt-dsctit_dados_limite NO-LOCK NO-ERROR.
+    IF  NOT AVAIL tt-dsctit_dados_limite  THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Dados de limite nao encontrados.".
+                   
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                                       
+            RETURN "NOK".
+        END.
+
+    RETURN "OK".
+
+END PROCEDURE.
+
 /*****************************************************************************
                 Busca o valor do IOF para simples nacional                    
 *****************************************************************************/

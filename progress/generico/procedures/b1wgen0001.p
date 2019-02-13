@@ -42,7 +42,7 @@
 
    Programa: b1wgen0001.p                  
    Autora  : Mirtes.
-   Data    : 12/09/2005                      Ultima atualizacao: 17/01/2018
+   Data    : 12/09/2005                      Ultima atualizacao: 30/05/2018
 
    Dados referentes ao programa:
 
@@ -422,6 +422,12 @@
                 21/04/2018 - Alterar tratamento do retorno da pc_consulta_extrato_car para
                              tratar o novo campo idlstdom (Anderson - P285)
 
+                03/05/2018 - Alterado para buscar descricao da situacao de conta do oracle. PRJ366 (Lombardi).
+
+	            30/05/2018 - Carregado campo dscomple na tt-extrato_conta (Alcemir Mout's - Prj. 467).
+
+				13/11/2018 - Adicionada parametros a procedure 
+							pc_verifica_tarifa_operacao. PRJ 345. (Fabio Stein - Supero)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -685,7 +691,7 @@ PROCEDURE consulta-extrato:
                     ASSIGN tt-extrato_conta.dsprotoc = xText:NODE-VALUE WHEN xField:NAME = "dsprotoc".
                     ASSIGN tt-extrato_conta.flgdetal = INT(xText:NODE-VALUE) WHEN xField:NAME = "flgdetal".
                     ASSIGN tt-extrato_conta.idlstdom = INT(xText:NODE-VALUE) WHEN xField:NAME = "idlstdom".
-
+	                ASSIGN tt-extrato_conta.dscomple = xText:NODE-VALUE WHEN xField:NAME = "dscomple".
                 END. 
 
             END.
@@ -1536,6 +1542,8 @@ PROCEDURE gera-tarifa-extrato:
                                          INPUT aux_tipotari, /* Tipo de Tarifa(1-Saque,2-Consulta) */
                                          INPUT 0,            /* Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus) */
                                          INPUT 0,            /* Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque) */
+										 INPUT 0,			/* numero documento - adicionado por Valeria Supero outubro 2018 */ 
+										 INPUT 0,			/* hora de realização da operação -adicionado por Valeria Supero */  
                                          OUTPUT 0,           /* Quantidade de registros a cobrar tarifa na operação */
                                          OUTPUT 0,           /* Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta */
                                          OUTPUT 0,           /* Código da crítica */
@@ -6451,15 +6459,37 @@ FUNCTION fgetdstipcta RETURNS CHARACTER (INPUT p-cdcooper AS INTEGER):
 END FUNCTION.
 
 FUNCTION fgetdssitdct RETURNS CHARACTER:
-DEFINE VARIABLE dsSitDct AS CHARACTER  NO-UNDO.
+DEFINE VARIABLE aux_dssitcta AS CHARACTER  NO-UNDO.
+DEFINE VARIABLE aux_des_erro AS CHARACTER  NO-UNDO.
+DEFINE VARIABLE aux_dscritic AS CHARACTER  NO-UNDO.
 
-    ASSIGN dsSitDct = "NORMAL,ENCERRADA P/ASSOCIADO,ENCERRADA P/COOP,ENCERRADA ~P/DEMISSAO,NAO APROVADA,NORMAL - SEM TALAO,,,ENCERRADA P/OUTRO MOTIVO".
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_descricao_situacao_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdsitdct, /* pr_cdsituacao */
+                                        OUTPUT "",               /* pr_dssituacao */
+                                        OUTPUT "",               /* pr_des_erro   */
+                                        OUTPUT "").              /* pr_dscritic   */
+    
+    CLOSE STORED-PROC pc_descricao_situacao_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_dssitcta = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_dssitcta = pc_descricao_situacao_conta.pr_dssituacao 
+                          WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+           aux_des_erro = pc_descricao_situacao_conta.pr_des_erro 
+                          WHEN pc_descricao_situacao_conta.pr_des_erro <> ?
+           aux_dscritic = pc_descricao_situacao_conta.pr_dscritic
+                          WHEN pc_descricao_situacao_conta.pr_dscritic <> ?.
 
-    RETURN STRING(crapass.cdsitdct,"9") + " " + 
-           IF   crapass.cdsitdct > 0 
-           AND  crapass.cdsitdct <= NUM-ENTRIES(dsSitDct) 
-           THEN  ENTRY(crapass.cdsitdct,dsSitDct)
-           ELSE "".
+    IF aux_des_erro = "NOK" THEN 
+        aux_dssitcta = "".
+
+    RETURN STRING(crapass.cdsitdct,"9") + " " + UPPER(aux_dssitcta).
 
 END FUNCTION.
 

@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 26/05/2018
+    Data      : Marco/2008                    Ultima Atualizacao: 19/10/2018
     
     Dados referentes ao programa:
 
@@ -539,6 +539,18 @@
                 
 			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                 
+				30/07/2018 - Alterado a procedure verifica_acesso_2via colocando uma nova condição para conta restrita.
+
+                03/10/2018 - Ajuste no flag que indica titularidade 
+				             do cartao. Logica esta conforme sugestao das 
+							 anotacoes de trabalho do Incidente em questao.
+                             Chamado PRB0040351 - Gabriel (Mouts).
+
+                19/10/2018 - Permitir a inclusão de cartão quando situação = 6 ou 
+                             conta cartão for zerada (Lucas Ranghetti INC0024543)
+                             
+               23/01/2018 - Altera�ao na rotina de alterar_administradora para contemplar o insitdec (deci�ao da esteira).
+                            INC0027746 Augusto - Supero
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1344,7 +1356,7 @@ PROCEDURE carrega_dados_inclusao:
             RETURN "NOK".
          END.
     ELSE
-    IF   crapass.cdsitdct <> 1   AND
+    /*IF   crapass.cdsitdct <> 1   AND
        (((crapass.cdsitdct <> 5  OR
           crapass.cdsitdct <> 9) AND
           par_idorigem <> 1)     OR
@@ -1365,7 +1377,7 @@ PROCEDURE carrega_dados_inclusao:
                           
             RETURN "NOK".
          END.
-    ELSE
+    ELSE*/
     IF   CAN-DO("5,6,7,8",STRING(crapass.cdsitdtl)) THEN
          DO:
             ASSIGN aux_cdcritic = 695
@@ -1869,6 +1881,7 @@ PROCEDURE valida_nova_proposta:
     DEF  INPUT  PARAM par_dsrepinc                             AS CHAR NO-UNDO.
     DEF  INPUT  PARAM par_dsrepres                             AS CHAR NO-UNDO.
     DEF  INPUT  PARAM par_flgdebit AS LOG                            NO-UNDO.
+    DEF  INPUT  PARAM par_nrctrcrd                             AS INTE NO-UNDO.
 
     DEF OUTPUT  PARAM par_solcoord                             AS INTE NO-UNDO.
     DEF OUTPUT  PARAM TABLE FOR tt-msg-confirma.
@@ -2637,10 +2650,11 @@ PROCEDURE valida_nova_proposta:
                      crawcrd.nrdconta = par_nrdconta AND
                      crawcrd.nrcpftit = par_nrcpfcgc AND
                      crawcrd.cdadmcrd <= 80          AND
-                     crawcrd.cdadmcrd >= 10 NO-LOCK:
+                     crawcrd.cdadmcrd >= 10          AND
+                     /*validado o numero do contrato para tratar o modo de edicao da proposta*/
+                     crawcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
 
-                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ AND 
-                     crawcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
+                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ THEN
                      NEXT.
                    
                 IF   crawcrd.cdadmcrd = crapadc.cdadmcrd  THEN
@@ -2675,10 +2689,11 @@ PROCEDURE valida_nova_proposta:
                                                cratcrd.nrdconta = par_nrdconta AND
                                                cratcrd.nrcpftit = par_nrcpfcgc AND
                                                cratcrd.cdadmcrd <= 80          AND
-                                               cratcrd.cdadmcrd >= 10 NO-LOCK:
+                                               cratcrd.cdadmcrd >= 10          AND
+                                               /*validado o numero do contrato para tratar o modo de edicao da proposta*/
+                                               cratcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
 
-	                        IF   cratcrd.insitcrd = 6 /* Proposta cancelada */ AND 
-                                 cratcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
+	                        IF   cratcrd.insitcrd = 6 /* Proposta cancelada */ THEN
                                  NEXT.
 
                             FIND cratadc WHERE cratadc.cdcooper = par_cdcooper and
@@ -3286,6 +3301,7 @@ PROCEDURE cadastra_novo_cartao:
     DEF  INPUT PARAM par_dsrepres AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dsrepinc AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_flgdebit AS LOG                            NO-UNDO.
+    DEF  INPUT PARAM par_nrctrcrd AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-ctr_novo_cartao.
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
@@ -3407,6 +3423,9 @@ PROCEDURE cadastra_novo_cartao:
                                          INPUT par_cdagenci,
                                          OUTPUT aux_flpiloto).
 
+        
+        IF par_nrctrcrd=0 THEN
+          DO:
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
         /* Busca a proxima sequencia do campo crapldt.nrsequen */
@@ -3424,6 +3443,11 @@ PROCEDURE cadastra_novo_cartao:
 
         ASSIGN aux_nrctrcrd = INTE(pc_sequence_progress.pr_sequence)
                               WHEN pc_sequence_progress.pr_sequence <> ?.
+          END.
+        ELSE
+          DO:
+            ASSIGN aux_nrctrcrd = par_nrctrcrd.
+          END.
         
         FIND crapadc WHERE crapadc.cdcooper = par_cdcooper AND
                            crapadc.cdadmcrd = par_cdadmcrd  
@@ -3484,6 +3508,7 @@ PROCEDURE cadastra_novo_cartao:
                       RUN STORED-PROCEDURE pc_busca_credito_config_categ
                       aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
                                                            INPUT par_cdadmcrd,
+                                                           INPUT 0, /*pr_tplimcrd*/
                                                            OUTPUT 0,
                                                            OUTPUT 0,
                                                            OUTPUT "",
@@ -3540,33 +3565,71 @@ PROCEDURE cadastra_novo_cartao:
                   END.      
            END.
             
-        FOR FIRST crawcrd FIELDS(flgprcrd) WHERE crawcrd.cdcooper = par_cdcooper AND
-                                                 crawcrd.nrdconta = par_nrdconta AND
-                                                 crawcrd.cdadmcrd = par_cdadmcrd AND
-                                                 crawcrd.flgprcrd = 1
-                                                 NO-LOCK : 
-            ASSIGN aux_flgprcrd = 0.
-        END.
+        IF LENGTH(par_nrdoccrd,"CHARACTER") > 15 THEN
+            DO:
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = "Identidade invalida.".
+               
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1,            /** Sequencia **/
+                                 INPUT aux_cdcritic,
+                                 INPUT-OUTPUT aux_dscritic).                
+                             
+                  UNDO TRANS_1, LEAVE TRANS_1.
+            END.
+            
+        /* Inicio - Busca primeiro cartao do cooperado - dentro da mesma adm */
 
+        FIND FIRST crawcrd WHERE crawcrd.cdcooper = par_cdcooper 
+                             AND crawcrd.nrdconta = par_nrdconta  
+                             AND crawcrd.cdadmcrd = par_cdadmcrd 
+                             AND crawcrd.flgprcrd = 1
+                                 NO-LOCK NO-ERROR NO-WAIT.
+
+        /* Verifica se registro foi encontrado */
+        IF AVAILABLE crawcrd THEN 
+          DO:
+            /* Verificar se o CPF do titular do primeiro cartao */
+            /* eh o mesmo que esta sendo validado */ 
+            IF crawcrd.nrcpftit = DECI(par_nrcpfcpf) THEN 
+              ASSIGN aux_flgprcrd = 1. /* Eh o primeiro cartão Bancoob */ 
+            ELSE 
+              ASSIGN aux_flgprcrd = 0. /* Não eh o primeiro titular */ 
+          END.
+        /* Se nao encontrado eh o primeiro cartão Bancoob */
+        ELSE 
+          ASSIGN aux_flgprcrd = 1.    
+
+        /* Fim - Busca primeiro cartao do cooperado - dentro da mesma adm */
 
         /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
         IF par_cdagenci = 0 THEN
           ASSIGN par_cdagenci = glb_cdagenci.
         /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
 
-
+        IF par_nrctrcrd = 0 THEN
         CREATE crawcrd.              /* IF f_verifica_adm(craptlc.cdadmcrd) = 1 THEN */
+        ELSE
+            FIND crawcrd WHERE crawcrd.cdcooper = par_cdcooper AND
+                               crawcrd.nrdconta = par_nrdconta AND
+                               crawcrd.nrctrcrd = par_nrctrcrd 
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
         ASSIGN crawcrd.vllimcrd    = par_vllimpro /*- Cartao Bancoob Jean */
                crawcrd.flgctitg    = IF f_verifica_adm(par_cdadmcrd) = 1 THEN
                                         0 /*Enviar*/
                                      ELSE 
                                         3 /*Inativo*/ 
                crawcrd.dtmvtolt    = ?
-               crawcrd.nrdconta    = par_nrdconta
-               crawcrd.nrctrcrd    = aux_nrctrcrd
+               crawcrd.nrdconta    = par_nrdconta.
+
+               IF par_nrctrcrd = 0 THEN
+                ASSIGN crawcrd.nrctrcrd = aux_nrctrcrd.
 
                /* INICIO - dados para o BI em caso de cancelamento - MACIEL (RKAM) */
-               crawcrd.cdopeori = par_cdoperad 
+               ASSIGN crawcrd.cdopeori = par_cdoperad 
                crawcrd.cdageori = par_cdagenci
                crawcrd.dtinsori = TODAY
                /* FIM - dados para o BI em caso de cancelamento - MACIEL (RKAM) */
@@ -3750,7 +3813,7 @@ PROCEDURE cadastra_novo_cartao:
             
             END. /* Fim da atualizacao de limite de debito */
             
-        IF  crapass.inpessoa = 1  THEN
+        IF  crapass.inpessoa = 1 AND par_nrctrcrd=0 THEN
             DO:
                 RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT 
                     SET h-b1wgen9999.
@@ -3916,12 +3979,14 @@ PROCEDURE cadastra_novo_cartao:
                          
                      END. /* END IF NOT AVAILABLE crabavt THEN */
                      
+                  IF par_nrctrcrd=0 THEN
+                    DO:
                   CREATE crapavt.
                   BUFFER-COPY crabavt TO crapavt.
                   ASSIGN crapavt.nrctremp = crawcrd.nrctrcrd
                          crapavt.tpctrato = 10.
                   VALIDATE crapavt.
-                                  
+                    END.              
                END. /* END DO aux_contador = 1 TO NUM-ENTRIES(par_dsrepres): */
         
            END. /* END IF par_dsrepinc = "OUTROS" THEN */           
@@ -5029,6 +5094,9 @@ PROCEDURE consulta_dados_cartao:
     DEF VAR aux_dstitula AS CHAR               NO-UNDO.
     DEF VAR aux_dsdpagto AS CHAR               NO-UNDO.
     
+    DEF VAR aux_nmempttl LIKE crapass.nmprimtl   NO-UNDO.
+    DEF VAR aux_nrcnpjtl LIKE crapass.nrcpfcgc   NO-UNDO.
+    
     DEF  BUFFER crabass FOR crapass.
     
     EMPTY TEMP-TABLE tt-erro.
@@ -5164,7 +5232,7 @@ PROCEDURE consulta_dados_cartao:
     ELSE
         ASSIGN aux_vllimite = STRING(crawcrd.vllimcrd,"zz,zzz,zz9.99").
     
-    FOR FIRST crapass FIELDS(inpessoa vllimdeb)
+    FOR FIRST crapass FIELDS(inpessoa vllimdeb nrcpfcgc nmprimtl)
                      WHERE crapass.cdcooper = par_cdcooper  AND
                        crapass.nrdconta = par_nrdconta  NO-LOCK:
     END.
@@ -5350,6 +5418,8 @@ PROCEDURE consulta_dados_cartao:
                o campo crawcrd.nrrepinc (Representante que solicitou o cartao) 
                ficou vazio. Nestes casos, na consulta do cartao ira mostar o 
                nome do representante que recebeu o cartao na "Entrega" */
+            ASSIGN aux_nmempttl = crapass.nmprimtl
+                   aux_nrcnpjtl = crapass.nrcpfcgc.   
             IF   crawcrd.nrrepinc <> 0 THEN
                  ASSIGN aux_nrcpfrep = crawcrd.nrrepinc.
             ELSE
@@ -5398,8 +5468,12 @@ PROCEDURE consulta_dados_cartao:
        
     CREATE tt-dados_cartao.
     ASSIGN tt-dados_cartao.nrcrcard = crawcrd.nrcrcard  
+           tt-dados_cartao.nrdoccrd = crawcrd.nrdoccrd
            tt-dados_cartao.nrctrcrd = crawcrd.nrctrcrd
+           tt-dados_cartao.nmresadm = crapadc.nmresadm
            tt-dados_cartao.dscartao = aux_dscartao
+           tt-dados_cartao.nmempttl = aux_nmempttl
+           tt-dados_cartao.nrcnpjtl = aux_nrcnpjtl
            tt-dados_cartao.nmtitcrd = crawcrd.nmtitcrd
            tt-dados_cartao.nmextttl = crawcrd.nmextttl
            tt-dados_cartao.nrcpftit = crawcrd.nrcpftit
@@ -7435,6 +7509,7 @@ PROCEDURE desfaz_entrega_cartao:
             RUN STORED-PROCEDURE pc_busca_credito_config_categ
             aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
                                                  INPUT crawcrd.cdadmcrd,
+                                                 INPUT 0, /*pr_tplimcrd*/
                                                  OUTPUT 0,
                                                  OUTPUT 0,
                                                  OUTPUT "",
@@ -8173,6 +8248,7 @@ PROCEDURE carrega_dados_limcred_cartao:
         RUN STORED-PROCEDURE pc_busca_credito_config_categ
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
                                              INPUT crawcrd.cdadmcrd,
+                                             INPUT 0, /*pr_tplimcrd*/
                                              OUTPUT 0,
                                              OUTPUT 0,
                                              OUTPUT "",
@@ -8492,6 +8568,7 @@ PROCEDURE valida_dados_limcred_cartao:
         RUN STORED-PROCEDURE pc_busca_credito_config_categ
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
                                              INPUT crawcrd.cdadmcrd,
+                                             INPUT 0, /*pr_tplimcrd*/
                                              OUTPUT 0,
                                              OUTPUT 0,
                                              OUTPUT "",
@@ -8552,6 +8629,7 @@ PROCEDURE valida_dados_limcred_cartao:
         RUN STORED-PROCEDURE pc_busca_credito_config_categ
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
                                              INPUT crawcrd.cdadmcrd,
+                                             INPUT 0, /*pr_tplimcrd*/
                                              OUTPUT 0,
                                              OUTPUT 0,
                                              OUTPUT "",
@@ -9941,10 +10019,11 @@ PROCEDURE verifica_acesso_2via:
     IF  RETURN-VALUE = "NOK"  THEN
         RETURN "NOK".
 
-    IF  crapass.cdsitdct <> 1  THEN
+    IF  crapass.cdsitdct <> 1 AND
+		crapass.cdsitdct <> 5 THEN
         DO:
             ASSIGN aux_cdcritic = 0
-                   aux_dscritic = (IF  crapass.cdsitdct = 5 OR crapass.cdsitdct = 9 THEN
+                   aux_dscritic = (IF  /*crapass.cdsitdct = 5 OR*/ crapass.cdsitdct = 9 THEN
                                        "Conta nao aprovada"
                                    ELSE
                                        "Conta encerrada") +
@@ -17130,6 +17209,7 @@ PROCEDURE contrato_cecred_bdn_visa:
                      RUN STORED-PROCEDURE pc_busca_credito_config_categ
                       aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
                                                            INPUT crawcrd.cdadmcrd,
+                                                           INPUT 0, /*pr_tplimcrd*/
                                                            OUTPUT 0,
                                                            OUTPUT 0,
                                                            OUTPUT "",
@@ -18690,6 +18770,7 @@ PROCEDURE busca_dddebito:
           RUN STORED-PROCEDURE pc_busca_credito_config_categ
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
                                                INPUT par_cdadmcrd,
+                                               INPUT 0, /*pr_tplimcrd*/
                                                OUTPUT 0,
                                                OUTPUT 0,
                                                OUTPUT "",
@@ -21006,6 +21087,7 @@ PROCEDURE altera_limite_cartao_pj:
         RUN STORED-PROCEDURE pc_busca_credito_config_categ
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawcrd.cdcooper,
                                              INPUT crawcrd.cdadmcrd,
+                                             INPUT 0, /*pr_tplimcrd*/
                                              OUTPUT 0,
                                              OUTPUT 0,
                                              OUTPUT "",
@@ -21274,6 +21356,7 @@ PROCEDURE altera_dtvcto_cartao_pj:
         RUN STORED-PROCEDURE pc_busca_credito_config_categ
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawcrd.cdcooper,
                                              INPUT crawcrd.cdadmcrd,
+                                             INPUT 0, /*pr_tplimcrd*/
                                              OUTPUT 0,
                                              OUTPUT 0,
                                              OUTPUT "",
@@ -23935,6 +24018,7 @@ PROCEDURE altera_administradora:
                       RUN STORED-PROCEDURE pc_busca_credito_config_categ
                           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
                                                                INPUT par_codnadmi,
+                                                               INPUT 0, /*pr_tplimcrd*/
                                                                OUTPUT 0,
                                                                OUTPUT 0,
                                                                OUTPUT "",
@@ -23977,7 +24061,7 @@ PROCEDURE altera_administradora:
              END.
 
           CREATE crabcrd.
-          BUFFER-COPY crawcrd EXCEPT nrcrcard cdadmcrd insitcrd nrctrcrd TO crabcrd.
+          BUFFER-COPY crawcrd EXCEPT nrcrcard cdadmcrd insitcrd nrctrcrd dtcancel TO crabcrd.
           
            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -23999,6 +24083,7 @@ PROCEDURE altera_administradora:
 
           ASSIGN crabcrd.cdadmcrd = par_codnadmi
                  crabcrd.insitcrd = 1
+                 crabcrd.insitdec = 1              /* Inclusao Augusto - Supero - 23/01/2019 */
                  crabcrd.dtpropos = par_dtmvtolt   /* Inclusao Renato - Supero - 07/11/2014 */
                  crabcrd.dtentreg = ?              /* Inclusao Renato - Supero - 07/11/2014 */
                  aux_flgexist = 1
