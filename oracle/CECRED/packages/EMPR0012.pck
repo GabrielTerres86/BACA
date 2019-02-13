@@ -5677,7 +5677,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt       --> Data Movimento
                                                 ,pr_flgerlog => vr_flgerlog               --> Imprimir log 0=FALSE 1=TRUE
                                                 ,pr_nrctremp => rw_rapassecdc.nrctremp    --> Numero Contrato Emprestimo
-                                                ,pr_dtdpagto => rw_crapdat.dtmvtolt       --> Data pagamento
+                                                ,pr_dtdpagto => rw_rapassecdc.dtdpagto    --> Data pagamento
                                                 ,pr_dtmvtopr => rw_crapdat.dtmvtopr       --> Data
                                                 ,pr_inproces => rw_crapdat.inproces       --> Indicador do processo
                                                 ,pr_nrcpfope => null                      --> CPF do operador
