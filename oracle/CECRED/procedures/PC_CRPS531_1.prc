@@ -32,7 +32,7 @@ end;
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 02/01/2019
+   Data    : Setembro/2009.                     Ultima atualizacao: 14/01/2019
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -334,6 +334,18 @@ end;
                           Jose Dill - Mouts
                           
              02/01/2019 - Tratamento para STR0006R2 - Pagto de boletos em cartório (Lucas Afonso/Cechet)                          
+                          
+             14/01/2019 - Tratamento para STR0006R2, contas 10000003 e 20000006, agencia 100 = Pagto de boletos
+                          em cartorio (Lucas Afonso/Cechet)
+ 
+			 16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
+
+			 07/12/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT D
+                          Jose Dill - Mouts
+                          
+       12/02/2019 - Ajuste da revitalização de lotes craplcm 
+                    Jose Dill - Mout (INC0032794)                   
  
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -369,6 +381,8 @@ end;
     vr_tab_retorno  lanc0001.typ_reg_retorno;
     vr_incrineg     INTEGER;
 
+	rw_craplot_rvt lote0001.cr_craplot_sem_lock%rowtype;
+    vr_nrseqdig    craplot.nrseqdig%type;
 
     /* Busca dos dados da cooperativa */
     CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -516,7 +530,14 @@ end;
     vr_aux_NumRemessaOr         VARCHAR2(100); /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
     vr_aux_AgIF                 VARCHAR2(100); /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
     vr_aux_FinlddCIR            VARCHAR2(100); /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
-
+    vr_aux_SubTpAtv             VARCHAR2(100); /* Sprint D - Req19*/
+    vr_aux_DsVlrFinanc          VARCHAR2(100); /* Sprint D - Req19*/
+    vr_aux_CtCed                VARCHAR2(100); /* Sprint D - Req19*/
+    vr_aux_DtAgendt             VARCHAR2(100); /* Sprint D - Req19*/   
+    vr_idprglog tbgen_prglog.idprglog%type     := 0;
+    vr_aux_valor                NUMBER(15,2) := NULL;
+    vr_aux_valor_char           VARCHAR2(100) := NULL;
+ 
     vr_aux_TPCONTA_CREDITADA    VARCHAR2(2);
     vr_aux_NMTITULAR_CREDITADA  VARCHAR2(80);
     vr_aux_DSCONTA_CREDITADA    VARCHAR2(13);
@@ -557,6 +578,7 @@ end;
     vr_aux_dsmotivo       VARCHAR2(100);
     vr_ret_nrremret       NUMBER;
     vr_aux_nrridflp       NUMBER;
+    vr_aux_dsdemail       VARCHAR2(4000);    
 
     -- Pagamentos de titulos
     vr_tab_lcm_consolidada paga0001.typ_tab_lcm_consolidada;
@@ -572,6 +594,14 @@ end;
                               INDEX BY PLS_INTEGER;
     vr_tab_numerario typ_tab_numerario;
 
+    /* Temp-table para CIR0060 */
+    -- Sprint D Req51
+    TYPE typ_reg_numerario_cir0060 IS RECORD(NumRemessa VARCHAR2(500)
+                                    ,DtLimEntr VARCHAR2(20));
+    TYPE typ_tab_numerario_cir0060 IS TABLE OF typ_reg_numerario_cir0060
+                              INDEX BY PLS_INTEGER;
+    vr_tab_numerario_cir0060 typ_tab_numerario_cir0060;
+
     /* Registro de TED */
     CURSOR cr_craptvl(pr_cdcooper crapcop.cdcooper%TYPE
                      ,pr_idopetrf VARCHAR2) IS
@@ -585,8 +615,9 @@ end;
             ,nrcctrcb
             ,cpfcgrcb
             ,tpdctacr
+            ,dshistor
             ,ROWID
-        FROM craptvl
+        FROM craptvl 
        WHERE craptvl.cdcooper = pr_cdcooper
          AND craptvl.tpdoctrf = 3
          AND UPPER(craptvl.idopetrf) = UPPER(pr_idopetrf);
@@ -815,32 +846,6 @@ end;
     vr_aux_CD_SITUACAO          VARCHAR2(100);
     vr_aux_dtmovto_aux          VARCHAR2(10);
 
-    -- Procedimento para mover o XML processado
-    PROCEDURE pc_mover_arquivo_xml(pr_nmarq_mover IN VARCHAR2
-                                  ,pr_nmdir_mover IN VARCHAR2) is
-    BEGIN
-      -- Marcelo Telles Coelho - Projeto 475
-      -- Procedure comentada, pois não é mais gerado arquivo físico do XML
-      NULL;
-
-    END;
-
-
-    -- Procedimento para salvar o arquivo
-    PROCEDURE pc_salva_arquivo IS
-    BEGIN
-      -- Marcelo Telles Coelho - Projeto 475
-      -- Procedure comentada, pois não é mais executado em paralelo
-      NULL;
-    END pc_salva_arquivo;
-
-    /* SubRotina para concentrar o encerramento de rotina paralela */
-    PROCEDURE pc_finaliza_paralelo IS
-    BEGIN
-      -- Marcelo Telles Coelho - Projeto 475
-      -- Procedure comentada, pois não é mais executado em paralelo
-      NULL;
-    END pc_finaliza_paralelo;
 
     -- Rotina para validar a conta
     PROCEDURE pc_verifica_conta(pr_cdcritic OUT NUMBER
@@ -879,13 +884,6 @@ end;
       vr_val_nrcpfcgc := to_number(vr_aux_CNPJ_CPFCred);
       vr_val_tpdconta := vr_aux_TpCtCredtd;
       vr_val_nrdctapg := vr_aux_CtPgtoCredtd;
-      -- Nao recebemos conta e nem cpf para esta mensagem
-      IF vr_aux_CodMsg = 'STR0003R2' THEN
-        RETURN;
-      END IF;
-      IF vr_aux_CodMsg IN ('CIR0020','CIR0021') THEN    /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
-        RETURN;
-      END IF;
 
       -- Tratar tamanho da conta
       IF LENGTH(vr_val_nrdconta) > 9 THEN
@@ -2380,6 +2378,47 @@ end;
                                     ,pr_cdmensagem    => vr_cdcritic);
           RAISE vr_exc_saida;
         END IF;
+        -- Sprint D - Req19
+        -- Chamada para procedure para armazenar as informações para o Arquivo Contabil
+        vr_aux_valor_char := replace(Nvl(vr_aux_DsVlrFinanc, vr_aux_DsVlrLanc),'.',',');        
+        vr_aux_valor := To_Number(vr_aux_valor_char);
+        --
+        SSPB0001.pc_grava_arquivo_contabil (pr_nmmsg => vr_aux_CodMsg
+                                  ,pr_nmmsg_dev => vr_aux_cdMsg_dev
+                                  ,pr_dtarquivo => To_date(Nvl(vr_aux_DtAgendt, vr_aux_DtMovto),'RRRR-MM-DD')
+                                  ,pr_vlrmsg    => vr_aux_valor
+                                  ,pr_FinlddIF  => vr_aux_FinlddIF
+                                  ,pr_FinlddCli => vr_aux_FinlddCli
+                                  ,pr_NomCliCredtd => vr_aux_NomCliCredtd
+                                  ,pr_CodProdt     => vr_aux_CodProdt
+                                  ,pr_SubTpAtv     => vr_aux_SubTpAtv
+                                  ,pr_CtCredtd     => vr_aux_CtCredtd
+                                  ,pr_CtDebtd      => vr_aux_CtDebtd
+                                  ,pr_CNPJ_CPFCliCredtd => vr_aux_CNPJ_CPFCred
+                                  ,pr_CtCed        => vr_aux_CtCed
+                                  ,pr_NumCtrlSTROr => vr_aux_NumCtrlRem_Or  
+                                  ,pr_NumCtrlIF    => vr_aux_NumCtrlIF
+                                  ,pr_NumCtrlRem   => vr_aux_NumCtrlRem
+                                  ,pr_his          => vr_aux_Hist
+                                  ,pr_dscritic     => vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+          --
+          cecred.pc_log_programa
+            (pr_dstiplog => 'O',              -- tbgen_prglog DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+            pr_cdprograma => vr_glb_cdprogra, -- tbgen_prglog
+            pr_cdcooper => pr_cdcooper,       -- tbgen_prglog
+            pr_tpexecucao => 1,               -- tbgen_prglog DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+            pr_tpocorrencia => 1,             -- tbgen_prglog_ocorrencia -- 1 ERRO TRATADO
+            pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+            pr_dsmensagem => vr_dscritic,     -- tbgen_prglog_ocorrencia
+            pr_flgsucesso => 1,               -- tbgen_prglog DEFAULT 1 -- Indicador de sucesso da execução
+            pr_nmarqlog => NULL,
+            pr_idprglog => vr_idprglog); 
+          --
+          vr_dscritic := null;
+          --    
+        END IF;
+        -- Fim Sprint D
       END;
       -- FIM projeto 475
     EXCEPTION
@@ -3081,7 +3120,7 @@ end;
 
               -- Para a tag NR_OPERACAO
               IF vr_node_name_segcab = 'TpCtDebtd' THEN
-                -- Buscar valor da TAG
+            -- Buscar valor da TAG
                 vr_aux_descrica  := fn_getValue(xmldom.getFirstChild(vr_item_node_segcab));
                 vr_aux_TpCtDebtd := vr_aux_descrica;
               END IF;
@@ -3202,7 +3241,13 @@ end;
               -- Numero de Controle da Cooperativa         -- Marcelo Telles Coelho - Projeto 475
               vr_aux_NumCtrlIF := vr_aux_descrica;         -- Marcelo Telles Coelho - Projeto 475
               vr_nrcontrole_if := vr_aux_descrica;         -- Marcelo Telles Coelho - Projeto 475
-          END IF;
+            END IF;
+          ELSIF vr_node_name = 'CodProdt' THEN             -- Jose Dill Sprint D - Req19
+            vr_aux_CodProdt := vr_aux_descrica; 
+          ELSIF vr_node_name = 'SubTpAtv' THEN             -- Jose Dill Sprint D - Req19
+            vr_aux_SubTpAtv := vr_aux_descrica; 
+          ELSIF vr_node_name = 'DtAgendt' THEN             -- Jose Dill Sprint D - Req19
+            vr_aux_DtAgendt := vr_aux_descrica; 
           END IF;
         END LOOP;
 
@@ -3619,7 +3664,7 @@ END pc_trata_arquivo_slc0001;
 PROCEDURE pc_trata_arquivo_ldl(pr_node      IN xmldom.DOMNode
                               ,pr_dscritic OUT VARCHAR2) IS
 
-        -- SubItens da LDL0024
+        -- SubItens da LDL0024/LDL0022
         vr_elem_node xmldom.DOMElement;
         vr_node_list xmldom.DOMNodeList;
         vr_node_name VARCHAR2(100);
@@ -3640,10 +3685,7 @@ PROCEDURE pc_trata_arquivo_ldl(pr_node      IN xmldom.DOMNode
         vr_ind1 NUMBER;
         vr_ind2 NUMBER;
 
-BEGIN -- inicio pc_trata_arquivo_ldl
-    -- Reiniciar globais
-    vr_aux_CodMsg := 'LDL0024';
-
+BEGIN 
     -- Buscar todos os filhos deste nó
     vr_elem_node := xmldom.makeElement(pr_node);
     -- Faz o get de toda a lista de filhos
@@ -3659,32 +3701,27 @@ BEGIN -- inicio pc_trata_arquivo_ldl
       IF xmldom.getNodeType(vr_item_node) <> xmldom.ELEMENT_NODE THEN
          CONTINUE;
       END IF;
-      
-      IF vr_node_name = 'CodProdt' THEN
-        
-        -- Buscar primeiro filho do nó para buscar seu valor em lógica única
-        vr_valu_node := xmldom.getFirstChild(vr_item_node);
-        vr_aux_descrica := fn_getValue(vr_valu_node);
-        
+      -- Buscar primeiro filho do nó para buscar seu valor em lógica única
+      vr_valu_node := xmldom.getFirstChild(vr_item_node);
+      vr_aux_descrica := fn_getValue(vr_valu_node);
+      IF vr_node_name = 'CodMsg' THEN
+        -- Buscar valor da TAG
+        vr_aux_CodMsg := vr_aux_descrica;
+      ELSIF vr_node_name = 'CodProdt' THEN
         -- Numero de Controle do Remetente 
         vr_aux_CodProdt := vr_aux_descrica;
-        
       ELSIF vr_node_name = 'NumCtrlLDL' THEN
-
-        -- Buscar primeiro filho do nó para buscar seu valor em lógica única
-        vr_valu_node := xmldom.getFirstChild(vr_item_node);
-        vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
-
-        vr_aux_NumCtrlRem := vr_aux_descrica; -- Marcelo Telles Coelho - Projeto 475
-
+        vr_aux_NumCtrlRem := vr_aux_descrica; 
       ELSIF vr_node_name = 'DtRef' THEN  
-        
-        -- Buscar primeiro filho do nó para buscar seu valor em lógica única
-        vr_valu_node := xmldom.getFirstChild(vr_item_node);
-        vr_aux_descrica := fn_getValue(vr_valu_node);
-        
         vr_aux_DtRef := vr_aux_descrica;
-      
+      ELSIF vr_node_name = 'NumCtrlIF' THEN
+        -- Numero de Controle da Cooperativa
+        vr_aux_NumCtrlIF := vr_aux_descrica;
+        vr_nrcontrole_if := vr_aux_descrica; 
+      ELSIF vr_node_name = 'VlrLanc' THEN
+        vr_aux_DsVlrLanc := gene0002.fn_char_para_number(vr_aux_descrica);
+      ELSIF vr_node_name = 'DtMovto' THEN
+        vr_aux_DtMovto := vr_aux_descrica;
       END IF;
     END LOOP;
     
@@ -3762,14 +3799,286 @@ BEGIN -- inicio pc_trata_arquivo_ldl
          END LOOP;
          END IF;
     END LOOP;
+    --
+    IF vr_aux_CodMsg = 'LDL0024' THEN
+      pc_gera_log_SPB('RECEBIDA OK'
+                     ,'LDL0024 RECEBIDA');
+    END IF;
     
-    pc_gera_log_SPB('RECEBIDA OK'
-                   ,'LDL0024 RECEBIDA');
-
 EXCEPTION
 WHEN OTHERS THEN
    pr_dscritic := 'Erro no tratamento do Node pc_trata_arquivo_ldl -->'||sqlerrm;
 END pc_trata_arquivo_ldl;
+
+PROCEDURE pc_trata_arquivo_rdc(pr_node      IN xmldom.DOMNode
+                              ,pr_dscritic OUT VARCHAR2) IS
+
+        -- SubItens das RDCs
+        vr_elem_node xmldom.DOMElement;
+        vr_node_list xmldom.DOMNodeList;
+        vr_node_name VARCHAR2(100);
+        vr_item_node xmldom.DOMNode;
+        vr_valu_node xmldom.DOMNode;
+
+        -- SubItens de Grupo
+        vr_elem_node_grpsit xmldom.DOMElement;
+        vr_node_list_grpsit xmldom.DOMNodeList;
+        vr_node_name_grpsit VARCHAR2(100);
+        vr_item_node_grpsit xmldom.DOMNode;
+        vr_valu_node_grpsit xmldom.DOMNode;
+
+        -- Genéricas
+        vr_aux_descrica     VARCHAR2(1000);
+
+BEGIN 
+    -- Buscar todos os filhos deste nó
+    vr_elem_node := xmldom.makeElement(pr_node);
+    -- Faz o get de toda a lista de filhos
+    vr_node_list := xmldom.getChildrenByTagName(vr_elem_node,'*');
+    
+    -- Percorrer os elementos
+    FOR vr_ind IN 0..xmldom.getLength(vr_node_list)-1 LOOP
+      -- Buscar o item atual
+      vr_item_node := xmldom.item(vr_node_list, vr_ind);
+      -- Captura o nome e tipo do nodo
+      vr_node_name := xmldom.getNodeName(vr_item_node);
+      -- Sair se o nodo não for elemento
+      IF xmldom.getNodeType(vr_item_node) <> xmldom.ELEMENT_NODE THEN
+         CONTINUE;
+      END IF;
+      -- Buscar primeiro filho do nó para buscar seu valor em lógica única
+      vr_valu_node := xmldom.getFirstChild(vr_item_node);
+      vr_aux_descrica := fn_getValue(vr_valu_node);
+      IF vr_node_name = 'CodMsg' THEN
+        -- Buscar valor da TAG
+        vr_aux_CodMsg := vr_aux_descrica;
+      ELSIF vr_node_name = 'NumCtrlIF' THEN
+        -- Numero de Controle da Cooperativa
+        vr_aux_NumCtrlIF := vr_aux_descrica;
+        vr_nrcontrole_if := vr_aux_descrica; 
+      ELSIF vr_node_name = 'VlrFinanc' THEN
+        vr_aux_DsVlrFinanc := gene0002.fn_char_para_number(vr_aux_descrica);
+      ELSIF vr_node_name = 'DtMovto' THEN
+        vr_aux_DtMovto := vr_aux_descrica;
+      END IF;
+    END LOOP;
+    --
+    
+EXCEPTION
+WHEN OTHERS THEN
+   pr_dscritic := 'Erro no tratamento do Node pc_trata_arquivo_rdc -->'||sqlerrm;
+END pc_trata_arquivo_rdc;
+
+PROCEDURE pc_trata_arquivo_sel(pr_node      IN xmldom.DOMNode
+                              ,pr_dscritic OUT VARCHAR2) IS
+
+        -- SubItens das RDCs
+        vr_elem_node xmldom.DOMElement;
+        vr_node_list xmldom.DOMNodeList;
+        vr_node_name VARCHAR2(100);
+        vr_item_node xmldom.DOMNode;
+        vr_valu_node xmldom.DOMNode;
+
+        -- SubItens de Grupo
+        vr_elem_node_grpsit xmldom.DOMElement;
+        vr_node_list_grpsit xmldom.DOMNodeList;
+        vr_node_name_grpsit VARCHAR2(100);
+        vr_item_node_grpsit xmldom.DOMNode;
+        vr_valu_node_grpsit xmldom.DOMNode;
+
+        -- Genéricas
+        vr_aux_descrica     VARCHAR2(1000);
+
+BEGIN 
+    -- Buscar todos os filhos deste nó
+    vr_elem_node := xmldom.makeElement(pr_node);
+    -- Faz o get de toda a lista de filhos
+    vr_node_list := xmldom.getChildrenByTagName(vr_elem_node,'*');
+    
+    -- Percorrer os elementos
+    FOR vr_ind IN 0..xmldom.getLength(vr_node_list)-1 LOOP
+      -- Buscar o item atual
+      vr_item_node := xmldom.item(vr_node_list, vr_ind);
+      -- Captura o nome e tipo do nodo
+      vr_node_name := xmldom.getNodeName(vr_item_node);
+      -- Sair se o nodo não for elemento
+      IF xmldom.getNodeType(vr_item_node) <> xmldom.ELEMENT_NODE THEN
+         CONTINUE;
+      END IF;
+      -- Buscar primeiro filho do nó para buscar seu valor em lógica única
+      vr_valu_node := xmldom.getFirstChild(vr_item_node);
+      vr_aux_descrica := fn_getValue(vr_valu_node);
+      IF vr_node_name = 'CodMsg' THEN
+        -- Buscar valor da TAG
+        vr_aux_CodMsg := vr_aux_descrica;
+      ELSIF vr_node_name = 'DtMovto' THEN
+        vr_aux_DtMovto := vr_aux_descrica;
+      ELSIF vr_node_name = 'CtCed' THEN
+        vr_aux_CtCed := vr_aux_descrica;
+      ELSIF vr_node_name = 'VlrFinanc' THEN
+        vr_aux_DsVlrFinanc := gene0002.fn_char_para_number(vr_aux_descrica);
+      ELSIF vr_node_name = 'NumCtrlIF' THEN
+        -- Numero de Controle da Cooperativa
+        vr_aux_NumCtrlIF := vr_aux_descrica;
+        vr_nrcontrole_if := vr_aux_descrica;         
+      END IF;
+    END LOOP;
+    --
+    
+EXCEPTION
+WHEN OTHERS THEN
+   pr_dscritic := 'Erro no tratamento do Node pc_trata_arquivo_sel -->'||sqlerrm;
+END pc_trata_arquivo_sel;
+
+PROCEDURE pc_trata_arquivo_slb(pr_node      IN xmldom.DOMNode
+                              ,pr_dscritic OUT VARCHAR2) IS
+
+        -- SubItens das SLBs
+        vr_elem_node xmldom.DOMElement;
+        vr_node_list xmldom.DOMNodeList;
+        vr_node_name VARCHAR2(100);
+        vr_item_node xmldom.DOMNode;
+        vr_valu_node xmldom.DOMNode;
+
+        -- SubItens de Grupo
+        vr_elem_node_grpsit xmldom.DOMElement;
+        vr_node_list_grpsit xmldom.DOMNodeList;
+        vr_node_name_grpsit VARCHAR2(100);
+        vr_item_node_grpsit xmldom.DOMNode;
+        vr_valu_node_grpsit xmldom.DOMNode;
+
+        -- Genéricas
+        vr_aux_descrica     VARCHAR2(1000);
+
+BEGIN 
+    -- Buscar todos os filhos deste nó
+    vr_elem_node := xmldom.makeElement(pr_node);
+    -- Faz o get de toda a lista de filhos
+    vr_node_list := xmldom.getChildrenByTagName(vr_elem_node,'*');
+    
+    -- Percorrer os elementos
+    FOR vr_ind IN 0..xmldom.getLength(vr_node_list)-1 LOOP
+      -- Buscar o item atual
+      vr_item_node := xmldom.item(vr_node_list, vr_ind);
+      -- Captura o nome e tipo do nodo
+      vr_node_name := xmldom.getNodeName(vr_item_node);
+      -- Sair se o nodo não for elemento
+      IF xmldom.getNodeType(vr_item_node) <> xmldom.ELEMENT_NODE THEN
+         CONTINUE;
+      END IF;
+      -- Buscar primeiro filho do nó para buscar seu valor em lógica única
+      vr_valu_node := xmldom.getFirstChild(vr_item_node);
+      vr_aux_descrica := fn_getValue(vr_valu_node);
+      IF vr_node_name = 'CodMsg' THEN
+        -- Buscar valor da TAG
+        vr_aux_CodMsg := vr_aux_descrica;
+      ELSIF vr_node_name = 'DtMovto' THEN
+        vr_aux_DtMovto := vr_aux_descrica;
+      ELSIF vr_node_name = 'VlrLanc' THEN
+        vr_aux_DsVlrLanc := gene0002.fn_char_para_number(vr_aux_descrica);
+      ELSIF vr_node_name = 'NumCtrlPart' THEN
+        -- Numero de Controle da Cooperativa
+        vr_aux_NumCtrlIF := vr_aux_descrica;
+        vr_nrcontrole_if := vr_aux_descrica;         
+      END IF;
+    END LOOP;
+    --
+    
+EXCEPTION
+WHEN OTHERS THEN
+   pr_dscritic := 'Erro no tratamento do Node pc_trata_arquivo_sln -->'||sqlerrm;
+END pc_trata_arquivo_slb;
+
+
+PROCEDURE pc_trata_arquivo_cir0060(pr_node      IN xmldom.DOMNode
+                            ,pr_dscritic OUT VARCHAR2) IS
+
+  -- SubItens da CIR0060
+  vr_elem_node xmldom.DOMElement;
+  vr_node_list xmldom.DOMNodeList;
+  vr_node_name VARCHAR2(100);
+  vr_item_node xmldom.DOMNode;
+  vr_valu_node xmldom.DOMNode;
+
+  -- SubItens de Grupo
+  vr_elem_node_grpsit xmldom.DOMElement;
+  vr_node_list_grpsit xmldom.DOMNodeList;
+  vr_node_name_grpsit VARCHAR2(100);
+  vr_item_node_grpsit xmldom.DOMNode;
+  vr_valu_node_grpsit xmldom.DOMNode;
+
+  -- VAriaveis genéricas
+  vr_idx_numerario NUMBER;
+  vr_aux_descrica  VARCHAR2(1000);
+
+BEGIN 
+
+  -- Buscar todos os filhos deste nó
+  vr_elem_node := xmldom.makeElement(pr_node);
+  -- Faz o get de toda a lista de filhos
+  vr_node_list := xmldom.getChildrenByTagName(vr_elem_node,'*');
+  -- Percorrer os elementos
+  FOR i IN 0..xmldom.getLength(vr_node_list)-1 LOOP
+    -- Buscar o item atual
+    vr_item_node := xmldom.item(vr_node_list, i);
+    -- Captura o nome e tipo do nodo
+    vr_node_name := xmldom.getNodeName(vr_item_node);
+    -- Sair se o nodo não for elemento
+    IF xmldom.getNodeType(vr_item_node) <> xmldom.ELEMENT_NODE THEN
+      CONTINUE;
+    END IF;
+
+    IF vr_node_name = 'Grupo_CIR0060_Remessa' THEN
+      -- Setar mensagem e indice pltable
+      vr_aux_CodMsg := 'CIR0060';
+      vr_idx_numerario := vr_tab_numerario_cir0060.count()+1;
+
+      -- Busca filhos
+      vr_elem_node_grpsit := xmldom.makeElement(vr_item_node);
+      -- Faz o get de toda a lista de filhos
+      vr_node_list_grpsit := xmldom.getChildrenByTagName(vr_elem_node_grpsit,'*');
+      -- Percorrer os elementos
+      FOR i IN 0..xmldom.getLength(vr_node_list_grpsit)-1 LOOP
+        -- Buscar o item atual
+        vr_item_node_grpsit := xmldom.item(vr_node_list_grpsit, i);
+        -- Captura o nome e tipo do nodo
+        vr_node_name_grpsit := xmldom.getNodeName(vr_item_node_grpsit);
+        -- Sair se o nodo não for elemento
+        IF xmldom.getNodeType(vr_item_node_grpsit) <> xmldom.ELEMENT_NODE THEN
+          CONTINUE;
+        END IF;
+        -- Para o node Catg
+        IF vr_node_name_grpsit = 'NumRemessa' THEN
+          -- Buscar valor da TAG
+          vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
+          vr_tab_numerario_cir0060(vr_idx_numerario).NumRemessa := fn_getValue(vr_valu_node_grpsit);
+        -- Para o node VlrDen
+        ELSIF vr_node_name_grpsit = 'DtLimEntr' THEN
+          -- Buscar valor da TAG
+          vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
+          vr_tab_numerario_cir0060(vr_idx_numerario).DtLimEntr := fn_getValue(vr_valu_node_grpsit);
+        END IF;
+      END LOOP;
+    ELSE
+      -- Buscar primeiro filho do nó para buscar seu valor em lógica única
+      vr_valu_node := xmldom.getFirstChild(vr_item_node);
+      vr_aux_descrica := fn_getValue(vr_valu_node);
+      -- Copiar para a respectiva variavel conforme nome da tag
+      IF vr_node_name = 'CodMsg' THEN
+        vr_aux_CodMsg := vr_aux_descrica;
+      ELSIF vr_node_name = 'ISPBIF' THEN
+        vr_aux_ISPBIF := vr_aux_descrica; -- Revisar variavel
+      ELSIF vr_node_name = 'DtMovto' THEN
+        vr_aux_DtMovto := vr_aux_descrica;
+      END IF;
+    END IF;
+  END LOOP;
+  
+EXCEPTION
+  WHEN OTHERS THEN
+    pr_dscritic := 'Erro no tratamento do Node pc_trata_arquivo_cir0060 -->'||sqlerrm;
+END pc_trata_arquivo_cir0060;
+
 
 
 
@@ -3894,9 +4203,26 @@ END pc_trata_arquivo_ldl;
             -- Inclusão tratamento mensagem SLC0001 - Mauricio - 03/11/2017
             pc_trata_arquivo_slc0005(pr_node        => vr_item_node
                                 ,pr_dscritic    => vr_dscritic);
-          ELSIF vr_node_name = 'LDL0024' THEN
+          ELSIF vr_node_name  IN ('LDL0024','LDL0022') THEN 
             -- Inclusão tratamento mensagem LDL0024 - Alexandre (Mouts) - 12/12/2017
+            -- Inclusão tratamento mensagem LDL0022 - Sprint D - Req19
             pc_trata_arquivo_ldl(pr_node        => vr_item_node
+                                ,pr_dscritic    => vr_dscritic);
+          ELSIF vr_node_name  IN ('RDC0002','RDC0007') THEN 
+            -- Inclusão tratamento mensagem RDC0002/RDC0007 - Sprint D - Req19
+            pc_trata_arquivo_rdc(pr_node        => vr_item_node
+                                ,pr_dscritic    => vr_dscritic);
+          ELSIF vr_node_name  = 'SEL1069' THEN 
+            -- Inclusão tratamento mensagem SEL1069 - Sprint D - Req19
+            pc_trata_arquivo_sel(pr_node        => vr_item_node
+                                ,pr_dscritic    => vr_dscritic);
+          ELSIF vr_node_name  = 'SLB0002' THEN 
+            -- Inclusão tratamento mensagem SLB0002 - Sprint D - Req20
+            pc_trata_arquivo_slb(pr_node        => vr_item_node
+                                ,pr_dscritic    => vr_dscritic);
+          ELSIF vr_node_name  = 'CIR0060' THEN 
+            -- Inclusão tratamento mensagem CIR0060 - Sprint D - Req51
+            pc_trata_arquivo_cir0060(pr_node        => vr_item_node
                                 ,pr_dscritic    => vr_dscritic);
           ELSE
             -- Trasnferencia de valores
@@ -4984,9 +5310,6 @@ END pc_trata_arquivo_ldl;
                                      ,pr_tipodlog => 'RECEBIDA'
                                      ,pr_msgderro => 'Registro(crapass) de conta transferida nao encontrado');
 
-          -- Mover o arquivo de XML
-          pc_mover_arquivo_xml(pr_nmarq_mover => vr_aux_nmarqxml
-                              ,pr_nmdir_mover => rw_b_crapcop.dsdircop);
 
           -- Retornar com erro
           vr_dscritic := 'Registro(crapass) de conta transferida nao encontrado';
@@ -5002,32 +5325,31 @@ END pc_trata_arquivo_ldl;
       END IF;
 
       -- Buscar / Criar Lote
-      OPEN cr_craplot(pr_cdcooper => rw_b_crapcop.cdcooper
-                     ,pr_dtmvtolt => vr_aux_dtmvtolt
-                     ,pr_cdagenci => vr_glb_cdagenci
-                     ,pr_cdbccxlt => rw_b_crapcop.cdbcoctl
-                     ,pr_nrdolote => vr_glb_nrdolote);
-      FETCH cr_craplot INTO rw_b_craplot;
-      -- Se não encontrou capa do lote
-      IF cr_craplot%NOTFOUND THEN
-        -- Fecha Cursor
-        CLOSE cr_craplot;
-        -- Gerar erro
-        vr_dscritic := 'Lote nao encontrado.';
+      /* Projeto Revitalizacao - Remocao de lote */
+      lote0001.pc_insere_lote_rvt(pr_cdcooper => rw_b_crapcop.cdcooper
+                                , pr_dtmvtolt => vr_aux_dtmvtolt
+                                , pr_cdagenci => vr_glb_cdagenci
+                                , pr_cdbccxlt => rw_b_crapcop.cdbcoctl
+                                , pr_nrdolote => vr_glb_nrdolote
+                                , pr_cdoperad => '1'
+                                , pr_nrdcaixa => 0
+                                , pr_tplotmov => 1
+                                , pr_cdhistor => 0
+                                , pr_craplot => rw_craplot_rvt
+                                , pr_dscritic => vr_dscritic);
+
+      if vr_dscritic is not null then
         RAISE vr_exc_saida;
-      ELSE
-        -- Apenas Fecha Cursor
-        CLOSE cr_craplot;
-      END IF;
+      end if;
 
       -- Verificar se ja existe Lancamento
       vr_aux_existlcm := 0;
       vr_aux_vllanmto := NULL;
-      OPEN cr_craplcm_exis(pr_cdcooper => rw_b_crapcop.cdcooper
-                          ,pr_dtmvtolt => rw_b_craplot.dtmvtolt
-                          ,pr_cdagenci => rw_b_craplot.cdagenci
-                          ,pr_cdbccxlt => rw_b_craplot.cdbccxlt
-                          ,pr_nrdolote => rw_b_craplot.nrdolote
+      OPEN cr_craplcm_exis(pr_cdcooper => rw_craplot_rvt.cdcooper
+                          ,pr_dtmvtolt => rw_craplot_rvt.dtmvtolt
+                          ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                          ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                          ,pr_nrdolote => rw_craplot_rvt.nrdolote
                           ,pr_nrdctabb => rw_craptco.nrdconta
                           ,pr_nrdocmto => vr_aux_nrdocmto);
       FETCH cr_craplcm_exis
@@ -5036,8 +5358,15 @@ END pc_trata_arquivo_ldl;
 
       -- Se encontrar
       IF vr_aux_existlcm = 1 THEN
-        vr_dscritic := 'Lancamento ja existe! Lote: ' ||rw_b_craplot.nrdolote||', Doc.: ' || vr_aux_nrdocmto;
+        vr_dscritic := 'Lancamento ja existe! Lote: ' ||rw_craplot_rvt.nrdolote||', Doc.: ' || vr_aux_nrdocmto;
       ELSE
+        vr_nrseqdig := fn_sequence('CRAPLOT'
+			                      ,'NRSEQDIG'
+			                      ,''||rw_b_crapcop.cdcooper||';'
+				                     ||to_char(vr_aux_dtmvtolt,'DD/MM/RRRR')||';'
+				                     ||vr_glb_cdagenci||';'
+				                     ||rw_b_crapcop.cdbcoctl||';'
+				                     ||vr_glb_nrdolote);
         
         vr_tab_retorno := NULL;
         vr_incrineg := 0;
@@ -5045,10 +5374,10 @@ END pc_trata_arquivo_ldl;
         -- Inserir Lancamento somente se não criticou acima
         LANC0001.pc_gerar_lancamento_conta
                       ( pr_cdcooper => rw_b_crapcop.cdcooper
-                       ,pr_dtmvtolt => rw_b_craplot.dtmvtolt
-                       ,pr_cdagenci => rw_b_craplot.cdagenci
-                       ,pr_cdbccxlt => rw_b_craplot.cdbccxlt
-                       ,pr_nrdolote => rw_b_craplot.nrdolote
+                       ,pr_dtmvtolt => rw_craplot_rvt.dtmvtolt
+                       ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                       ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                       ,pr_nrdolote => rw_craplot_rvt.nrdolote
                        ,pr_nrdconta => rw_craptco.nrdconta
                        ,pr_nrdctabb => rw_craptco.nrdconta
                        ,pr_nrdocmto => vr_aux_nrdocmto
@@ -5058,7 +5387,7 @@ END pc_trata_arquivo_ldl;
                                            WHEN 'PAG0137R2' THEN 799 --> CREDITO TEC
                                            ELSE 578 --> CREDITO TED
                                         END)
-                       ,pr_nrseqdig => nvl(rw_b_craplot.nrseqdig,0) + 1
+                       ,pr_nrseqdig => vr_nrseqdig
                        ,pr_cdpesqbb => vr_aux_dadosdeb
                        ,pr_vllanmto => pr_vlrlanct
                        ,pr_cdoperad => '1'
@@ -5074,7 +5403,6 @@ END pc_trata_arquivo_ldl;
           --> sem tratativas de critica, criticas serão tratadas no if geral logo abaixo
           NULL;         
         END IF;
-                 
       END IF;
 
       -- Se deu erro na gravação
@@ -5096,28 +5424,9 @@ END pc_trata_arquivo_ldl;
                                    ,pr_tipodlog => 'RECEBIDA'
                                    ,pr_msgderro => vr_dscritic);
 
-        -- Mover o arquivo de XML
-        pc_mover_arquivo_xml(pr_nmarq_mover => vr_aux_nmarqxml
-                            ,pr_nmdir_mover => rw_b_crapcop.dsdircop);
-
         -- Retornar sem erro
         RETURN;
       END IF;
-
-      -- Atualizar capa do Lote
-      BEGIN
-        UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + pr_vlrlanct
-                          ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + pr_vlrlanct
-                          ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
-                          ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                          ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
-        WHERE craplot.ROWID = rw_b_craplot.ROWID;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar tabela craplot. ' || SQLERRM;
-          -- Sair da rotina
-          RAISE vr_exc_saida;
-      END;
 
       -- Cria registro das movimentacoes no SPB
       pc_cria_gnmvcen(pr_cdagenci => rw_b_crapcop.cdagectl
@@ -5136,57 +5445,6 @@ END pc_trata_arquivo_ldl;
                                  ,pr_dtmvtolt => vr_aux_dtmvtolt
                                  ,pr_tipodlog => 'RECEBIDA'
                                  ,pr_msgderro => NULL);
-
-      IF rw_craptco.cdcopant = 1  OR    /* Migracao VIACREDI >> Alto Vale */
-         rw_craptco.cdcopant = 2  OR    /* Migracao ACREDI >> VIACREDI */
-         rw_craptco.cdcopant = 4  OR    /* Incorporação CONCREDI >> VIACREDI */
-         rw_craptco.cdcopant = 15 OR    /* Incorporação CREDIMILSUL >>  SCRCRED */
-         rw_craptco.cdcopant = 17 THEN  /* Incorporação TRANSULCRED >>  TRANSPOCRED */
-
-        -- Montar nome do arquivo de LOG
-        vr_aux_nmarqimp := 'teds_migradas'
-                        || to_char(rw_craptco.cdcopant,'fm00')
-                        || to_char(vr_aux_dtmvtolt,'ddmmrrrr');
-
-        -- Testar se o arquivo ainda não existe
-        IF NOT gene0001.fn_exis_arquivo(gene0001.fn_diretorio(pr_tpdireto => 'C'
-                                                             ,pr_cdcooper => 3
-                                                             ,pr_nmsubdir => 'log')||'/'||vr_aux_nmarqimp||'.log') THEN
-          -- Vamos gerar LOG das TEDs Migradas
-          IF rw_craptco.cdcopant = 1 THEN
-            vr_aux_strmigra := 'TEDs MIGRADAS: VIACREDI --> VIACREDI AV';
-          ELSIF rw_craptco.cdcopant = 2 THEN
-            vr_aux_strmigra := 'TEDs MIGRADAS: ACREDI --> VIACREDI';
-          ELSIF rw_craptco.cdcopant = 4 THEN
-            vr_aux_strmigra := 'TEDs MIGRADAS: CONCREDI --> VIACREDI';
-          ELSIF rw_craptco.cdcopant = 15 THEN
-            vr_aux_strmigra := 'TEDs MIGRADAS: CREDIMILSUL --> SCRCRED';
-          ELSIF rw_craptco.cdcopant = 17 THEN
-            vr_aux_strmigra := 'TEDs MIGRADAS: TRANSULCRED --> TRANSPOCRED';
-          ELSE
-            vr_aux_strmigra := 'TEDs MIGRADAS';
-          END IF;
-
-          -- Gerar cabeçalho no arquivo de LOG
-          btch0001.pc_gera_log_batch(pr_cdcooper     => 3 /*Sempre na Central*/
-                                    ,pr_ind_tipo_log => 1
-                                    ,pr_des_log      => LPAD(substr(vr_aux_strmigra,1,40),10,' ')
-                                    ,pr_nmarqlog     => vr_aux_nmarqimp);
-        END IF;
-
-        -- Gerar registro no arquivo de LOG
-        btch0001.pc_gera_log_batch(pr_cdcooper     => 3 /*Sempre na Central*/
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => LPAD(' ',3,' ')||to_char(sysdate,'hh24:mi:ss')
-                                                   || to_char(vr_aux_VlrLanc,'9g999g999g999g990d00')
-                                                   || to_char(rw_craptco.nrctaant,'99999999999999')
-                                                   || to_char(rw_craptco.nrdconta,'99999999999999')
-                                  ,pr_nmarqlog     => vr_aux_nmarqimp);
-      END IF;
-
-      -- Ao final, mover o XML processado
-      pc_mover_arquivo_xml(pr_nmarq_mover => vr_aux_nmarqxml
-                          ,pr_nmdir_mover => rw_b_crapcop.dsdircop);
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -5427,6 +5685,15 @@ END pc_trata_arquivo_ldl;
       and   tmef.nrseq_mensagem_xml = tmx.nrseq_mensagem_xml;       
       rw_tbspbmsgenv cr_tbspbmsgenv%ROWTYPE;
       
+      -- Projeto 475 Sprint D
+      Cursor cr_crapcopctl (pr_cdageclt in number) is
+      Select cop.nrctactl, cop.cdcooper
+      From Crapcop cop
+      Where cop.cdagectl =  pr_cdageclt
+      and   cop.flgativo = 1;          
+      rw_crapcopctl cr_crapcopctl%rowtype;
+      vr_nrdcontacir  crapcop.nrctactl%type;
+      
       
     BEGIN -- inicio pc_trata_lancamentos
       -- Para estado de crise
@@ -5440,62 +5707,23 @@ END pc_trata_arquivo_ldl;
         vr_aux_dtmvtolt := vr_aux_dtintegr;
       END IF;
 
-      -- Marcelo Telles Coelho - Projeto 475
-      -- Verifica se o LOTE já foi criado para a Coperativa em questão
-      OPEN cr_craplot(pr_cdcooper => rw_crapcop_mensag.cdcooper
-                     ,pr_dtmvtolt => vr_aux_dtmvtolt
-                     ,pr_cdagenci => vr_glb_cdagenci
-                     ,pr_cdbccxlt => rw_crapcop_mensag.cdbcoctl
-                     ,pr_nrdolote => vr_glb_nrdolote);
-      FETCH cr_craplot
-       INTO rw_craplot;
-      -- Se não encontrar
-      IF cr_craplot%NOTFOUND THEN
-        CLOSE cr_craplot;
-        -- Inserir o registro de lote para utilização posterior
-        BEGIN
-          INSERT INTO craplot (cdcooper
-                              ,dtmvtolt
-                              ,cdagenci
-                              ,cdbccxlt
-                              ,nrdolote
-                              ,tplotmov)
-                        VALUES(rw_crapcop_mensag.cdcooper  -- cdcooper
-                              ,vr_aux_dtmvtolt             -- dtmvtolt
-                              ,vr_glb_cdagenci             -- cdagenci
-                              ,rw_crapcop_mensag.cdbcoctl  -- cdbccxlt
-                              ,vr_glb_nrdolote             -- nrdolote
-                              ,1);                         -- tplotmov
-        EXCEPTION
-          WHEN dup_val_on_index THEN
-            -- Se o lote já existir é porque outra mensagem executou no mesmo momento, criou o ele e comitou.
-            NULL;
-            -- -- Lote já existe, critica 59
-            -- vr_dscritic := gene0001.fn_busca_critica(59) || ' - LOTE = ' || to_char(vr_glb_nrdolote,'fm000g000');
-            -- RAISE vr_exc_saida;
-          WHEN others THEN
-            -- Erro não tratado
-            vr_dscritic := 'Erro na insercao do lote '||vr_glb_nrdolote|| ' --> ' || sqlerrm;
-            RAISE vr_exc_saida;
-        END;
-        -- Buscar o lote criado
-        OPEN cr_craplot(pr_cdcooper => rw_crapcop_mensag.cdcooper
-                       ,pr_dtmvtolt => vr_aux_dtmvtolt
-                       ,pr_cdagenci => vr_glb_cdagenci
-                       ,pr_cdbccxlt => rw_crapcop_mensag.cdbcoctl
-                       ,pr_nrdolote => vr_glb_nrdolote);
-        FETCH cr_craplot
-         INTO rw_craplot;
-        IF cr_craplot%NOTFOUND THEN
-        CLOSE cr_craplot;
-        -- Gerar erro
-        vr_dscritic := 'Lote nao encontrado.';
+      -- Buscar / Criar Lote
+      /* Projeto Revitalizacao - Remocao de lote */
+      lote0001.pc_insere_lote_rvt(pr_cdcooper => rw_crapcop_mensag.cdcooper
+                                , pr_dtmvtolt => vr_aux_dtmvtolt
+                                , pr_cdagenci => vr_glb_cdagenci
+                                , pr_cdbccxlt => rw_crapcop_mensag.cdbcoctl
+                                , pr_nrdolote => vr_glb_nrdolote
+                                , pr_cdoperad => '1'
+                                , pr_nrdcaixa => 0
+                                , pr_tplotmov => 1
+                                , pr_cdhistor => 0
+                                , pr_craplot => rw_craplot_rvt
+                                , pr_dscritic => vr_dscritic);
+
+      if vr_dscritic is not null then
         RAISE vr_exc_saida;
-        END IF;
-      ELSE
-        CLOSE cr_craplot;
-      END IF;
-      -- Fim Projeto 475
+      end if;
 
       -- Como no campo CodMsg do XML de rejeicao vem o codigo da
       -- mensagem gerada pela cooperativa, sera gravado
@@ -5527,9 +5755,6 @@ END pc_trata_arquivo_ldl;
           IF vr_dscritic IS NOT NULL THEN
             raise vr_exc_saida;
           END IF;
-          
-          -- Salvar o arquivo
-          pc_salva_arquivo;
           
           -- Retornar pois o processo finalizou
           RETURN;
@@ -5672,9 +5897,9 @@ END pc_trata_arquivo_ldl;
                  ,vr_aux_cdhistor
                  ,vr_aux_nrdocmto
                  ,vr_aux_VlrLanc
-                 ,rw_craplot.nrdolote
-                 ,rw_craplot.cdbccxlt
-                 ,rw_craplot.cdagenci
+                 ,rw_craplot_rvt.nrdolote
+                 ,rw_craplot_rvt.cdbccxlt
+                 ,rw_craplot_rvt.cdagenci
                  ,vr_aux_flgenvio
                  ,vr_aux_flgopfin
                  ,'1'
@@ -5687,12 +5912,6 @@ END pc_trata_arquivo_ldl;
                  ,0
                  ,vr_aux_nrridflp);
               -- Atualizar capa do Lote
-              UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_aux_VlrLanc
-                                ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + vr_aux_VlrLanc
-                                ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
-                                ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                                ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
-              WHERE craplot.ROWID = rw_craplot.ROWID;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao criar lancamento de devolucao ou na atualizacao do Lote: '||sqlerrm;
@@ -5707,7 +5926,7 @@ END pc_trata_arquivo_ldl;
               -- Montar email
               vr_aux_dsdemail := 'Ola, houve rejeicao na cabine da seguinte operacao TEC Salario: <br><br>'
                               || ' Conta/Dv: ' || vr_aux_nrctacre || ' <br>'
-                              || ' PA: ' || rw_craplot.cdagenci || ' <br>'
+                              || ' PA: ' || rw_craplot_rvt.cdagenci || ' <br>'
                               || ' Dt.Credito: ' || vr_aux_dtmvtolt            -- rw_crapdat_mensag.dtmvtolt
                               || ' <br>'
                               || ' Dt.Transferencia: ' || vr_aux_dtmvtolt            -- rw_crapdat_mensag.dtmvtolt
@@ -5777,9 +5996,6 @@ END pc_trata_arquivo_ldl;
             raise vr_exc_saida;
           END IF;
           
-          -- Salvar o arquivo
-          pc_salva_arquivo;
-
           -- Processo finalizado
           RETURN;
         ELSE
@@ -5832,9 +6048,6 @@ END pc_trata_arquivo_ldl;
             pc_gera_log_SPB(pr_tipodlog  => 'RECEBIDA'
                            ,pr_msgderro  => vr_dscritic);
             
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-          
             -- Retornar a execução
             RETURN;
           END IF;
@@ -5855,9 +6068,6 @@ END pc_trata_arquivo_ldl;
             IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_saida;
             END IF;
-            
-            -- Salvar o arquivo
-            pc_salva_arquivo;
             
             -- Retornar a execução
             RETURN;
@@ -5925,9 +6135,6 @@ END pc_trata_arquivo_ldl;
               pc_gera_log_SPB(pr_tipodlog  => 'RECEBIDA'
                              ,pr_msgderro  => vr_dscritic);
               
-              -- Salvar o arquivo
-              pc_salva_arquivo;
-            
               -- Retornar a execução
               RETURN;
 
@@ -5987,125 +6194,11 @@ END pc_trata_arquivo_ldl;
                                                           || 'Mensagem: ' || vr_aux_CodMsg || ' '
                                                           || ' --> '||vr_dscritic
                                        ,pr_nmarqlog      => vr_nmarqlog);
-              -- Salvar o arquivo
-              pc_salva_arquivo;
-          
               -- Retornar a execução
               RETURN;
             END IF;
 
           END IF;
-        END IF;
-
-        -- Caso seja estorno de TED de repasse de convenio entao despreza
-        IF vr_aux_CodMsg IN('STR0007','STR0020') THEN
-          -- Marcelo Telles Coelho - Projeto 475
-          -- Gerar registro de cancelamento na LOGSPB
-          -- Chamar rotina de log no SPB
-          pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
-                         ,pr_msgderro  => 'ESTORNO DE TED DE REPASSE DE CONVENIO');
-          -- Fim Projeto 475
-          -- Retornar
-          RETURN;
-        END IF;
-
-        -- Troca de numerarios - CECRED
-        IF vr_aux_CodMsg = 'STR0003R2' THEN
-          -- Montar email
-          vr_aux_dsdemail := 'Codigo Mensagem: ' || vr_aux_CodMsg || ' <br>'
-                          || 'Numero controle STR: ' || vr_aux_NumCtrlRem || ' <br>'
-                          || 'Data Hora Bacen: ' || vr_aux_DtHrBC || ' <br>'
-                          || 'ISPB IF Debitada: ' || vr_aux_ISPBIFDebtd || ' <br>'
-                          || 'Agencia Debitada: ' || vr_aux_AgDebtd || ' <br>'
-                          || 'ISPB IF Credidata: ' || vr_aux_ISPBIFCredtd || ' <br>'
-                          || 'Agencia Creditada: ' || vr_aux_AgCredtd || ' <br>'
-                          || 'Valor Lançamento: ' || vr_aux_VlrLanc || ' <br>'
-                          || 'Codigo Municipio Origem: ' || vr_aux_CodMunicOrigem || ' <br>'
-                          || 'Codigo Municipio Destino: ' || vr_aux_codMunicDest || ' <br>'
-                          || 'Data Movimento: ' || vr_aux_DtMovto || ' <br><br>';
-          -- Incluir numerarios
-          FOR vr_idx IN vr_tab_numerario.first..vr_tab_numerario.last LOOP
-            vr_aux_dsdemail := vr_aux_dsdemail
-                            || 'Categoria: ' || vr_tab_numerario(vr_idx).cdcatego || ' <br>'
-                            || 'Valor Denominacao: ' || vr_tab_numerario(vr_idx).vlrdenom || ' <br> '
-                            || 'Quantidade Denominacao: ' || vr_tab_numerario(vr_idx).qtddenom || ' <br>';
-          END LOOP;
-
-          -- Enviar Email para o Financeiro
-          gene0003.pc_solicita_email(pr_cdcooper        => rw_crapcop_mensag.cdcooper
-                                    ,pr_cdprogra        => vr_glb_cdprogra
-                                    ,pr_des_destino     => gene0001.fn_param_sistema('CRED',rw_crapcop_mensag.cdcooper,'EMAIL_CARRO_FORTE')
-                                    ,pr_des_assunto     => 'Troca de numerarios - CECRED'
-                                    ,pr_des_corpo       => vr_aux_dsdemail
-                                    ,pr_des_anexo       => ''
-                                    ,pr_flg_enviar      => 'S'
-                                    ,pr_flg_log_batch   => 'N' --> Incluir inf. no log
-                                    ,pr_des_erro        => vr_dscritic);
-          -- Se ocorreu erro
-          IF trim(vr_dscritic) IS NOT NULL THEN
-            -- Gerar LOG e continuar o processo normal
-            -- Marcelo Telles Coelho - Projeto 475
-            -- Padronizar os logs no mesmo arquivo
-            BTCH0001.pc_gera_log_batch(pr_cdcooper      => 3
-                                      ,pr_ind_tipo_log => 1
-                                      ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '
-                                                        ||'Erro execucao - '
-                                                        || 'Nr.Controle IF: ' || vr_aux_NumCtrlIF || ' '
-                                                        || 'Mensagem: ' || vr_aux_CodMsg || ' '
-                                                        || ' --> '||vr_dscritic
-                                     ,pr_nmarqlog      => vr_nmarqlog);
-            -- Limpar critica
-            vr_dscritic := null;
-          END IF;
-
-          -- Salvar o arquivo
-          pc_salva_arquivo;
-            
-          -- Retornar a execução
-          RETURN;
-        END IF;
-
-        IF vr_aux_CodMsg = 'CIR0020' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
-          -- Montar email
-          vr_aux_dsdemail := 'Codigo Mensagem: ' || vr_aux_CodMsg || ' <br>'
-                          || 'Número Controle IF: ' || vr_aux_NumCtrlIF || ' <br>'
-                          || 'ISPB IF: ' || vr_aux_ISPBIF || ' <br>'
-                          || 'Número Controle CIR Original: ' || vr_aux_NumCtrlCIROr || ' <br>'
-                          || 'Valor Lançamento: ' || vr_aux_VlrLanc || ' <br>'
-                          || 'Data Movimento: ' || vr_aux_DtMovto || ' <br><br>';
-
-          -- Enviar Email para o Financeiro
-          gene0003.pc_solicita_email(pr_cdcooper        => rw_crapcop_mensag.cdcooper
-                                    ,pr_cdprogra        => vr_glb_cdprogra
-                                    ,pr_des_destino     => gene0001.fn_param_sistema('CRED',rw_crapcop_mensag.cdcooper,'EMAIL_CARRO_FORTE')
-                                    ,pr_des_assunto     => 'Pagamento de Lançamento Devido MECIR - CECRED'
-                                    ,pr_des_corpo       => vr_aux_dsdemail
-                                    ,pr_des_anexo       => ''
-                                    ,pr_flg_enviar      => 'S'
-                                    ,pr_flg_log_batch   => 'N' --> Incluir inf. no log
-                                    ,pr_des_erro        => vr_dscritic);
-          -- Se ocorreu erro
-          IF trim(vr_dscritic) IS NOT NULL THEN
-            -- Gerar LOG e continuar o processo normal
-            -- Marcelo Telles Coelho - Projeto 475
-            -- Padronizar os logs no mesmo arquivo
-            BTCH0001.pc_gera_log_batch(pr_cdcooper      => 3
-                                      ,pr_ind_tipo_log => 1
-                                      ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '
-                                                        ||'Erro execucao - '
-                                                        || 'Nr.Controle IF: ' || vr_aux_NumCtrlIF || ' '
-                                                        || 'Mensagem: ' || vr_aux_CodMsg || ' '
-                                                        || ' --> '||vr_dscritic
-                                     ,pr_nmarqlog      => vr_nmarqlog);
-            -- Limpar critica
-            vr_dscritic := null;
-          END IF;
-
-          -- Salvar o arquivo
-          pc_salva_arquivo;
-            
-          -- Retornar a execução
-          RETURN;
         END IF;
 
         IF vr_aux_CodMsg = 'CIR0021' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
@@ -6148,8 +6241,78 @@ END pc_trata_arquivo_ldl;
             vr_dscritic := null;
           END IF;
 
-          -- Salvar o arquivo
-          pc_salva_arquivo;
+          /* Req50 - Integrar, validar e lançar em conta corrente
+             Credito Cedula Pereciada (Projeto 475 Sprint D)*/
+          IF vr_aux_AgIF is not null THEN  
+            Open cr_crapcopctl (vr_aux_AgIF);
+            Fetch cr_crapcopctl into rw_crapcopctl;
+            If cr_crapcopctl%found Then
+                vr_nrdcontacir:= rw_crapcopctl.nrctactl;
+                --
+                vr_aux_cdhistor := 2483;
+                vr_aux_cdpesqbb := 'CREDITO EM CONTA REF. CEDULA PERICIADA LEGITIMA';   
+                --
+                -- Gerar lançamento em conta
+                BEGIN
+                  INSERT INTO craplcm
+                     (cdcooper
+                     ,dtmvtolt
+                     ,cdagenci
+                     ,cdbccxlt
+                     ,nrdolote
+                     ,nrdconta
+                     ,nrdctabb
+                     ,nrdocmto
+                     ,cdhistor
+                     ,nrseqdig
+                     ,cdpesqbb
+                     ,vllanmto
+                     ,cdoperad
+                     ,hrtransa)
+                  VALUES
+                     (3 --Gravar sempre em conta corrente na base 3 da central 
+                     ,vr_aux_dtmvtolt     
+                     ,rw_craplot_rvt.cdagenci --INC0032794
+                     ,rw_craplot_rvt.cdbccxlt 
+                     ,rw_craplot_rvt.nrdolote 
+                     ,vr_nrdcontacir     
+                     ,vr_nrdcontacir     
+                     ,vr_aux_nrdocmto     
+                     ,vr_aux_cdhistor     
+                     ,nvl(rw_craplot_rvt.nrseqdig,0) + 1
+                     ,vr_aux_cdpesqbb     
+                     ,vr_aux_VlrLanc      
+                     ,'1'
+                     ,to_char(vr_glb_dataatual,'sssss'));
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    vr_dscritic := 'Erro ao inserir na tabela craplcm --> ' || SQLERRM;
+                   -- Sair da rotina
+                   RAISE vr_exc_saida;
+                END;
+
+                -- Atualizar capa do Lote
+                BEGIN
+                  UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_aux_VlrLanc
+                                    ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + vr_aux_VlrLanc
+                                    ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
+                                    ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
+                                    ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
+                  WHERE craplot.ROWID = rw_craplot_rvt.ROWID;
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    vr_dscritic := 'Erro ao atualizar tabela craplot. ' || SQLERRM;
+                    -- Sair da rotina
+                    RAISE vr_exc_saida;
+                END;
+                                         
+            Else
+               -- Não faz nenhum tratamento caso agência seja inválida                   
+               Null;
+            End If;
+            Close cr_crapcopctl;
+          End If;  
+          -- Fim Projeto 475 Sprint D
             
           -- Retornar a execução
           RETURN;
@@ -6184,9 +6347,6 @@ END pc_trata_arquivo_ldl;
               raise vr_exc_saida;
             END IF;
 
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-            
             -- Retornar a execução
             RETURN;
           ELSE
@@ -6249,9 +6409,6 @@ END pc_trata_arquivo_ldl;
             pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
                            ,pr_msgderro  => 'REJEITADA BACENJUD');
 
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-            
             -- Retornar a execução
             RETURN;
 
@@ -6288,14 +6445,16 @@ END pc_trata_arquivo_ldl;
               raise vr_exc_saida;
             END IF;
 
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-            
             -- Retornar a execução
             RETURN;
 
           ELSE
             CLOSE cr_craptvl;
+            -- Sprint D - Não gerar lançamentos para devoluções de convênios (STR0007/STR0020)
+            IF rw_craptvl.dshistor = 'CRPS391' THEN
+               RETURN;
+            END IF;  
+            --            
             -- Se está na cabine
             IF vr_aux_tagCABInf THEN
               vr_aux_VlrLanc := rw_craptvl.vldocrcb;
@@ -6415,9 +6574,6 @@ END pc_trata_arquivo_ldl;
               END IF;               
               -- Fim 475 Sprint C
 
-              -- Salvar o arquivo
-              pc_salva_arquivo;
-            
               -- Retornar a execução
               RETURN;
 
@@ -6495,9 +6651,6 @@ END pc_trata_arquivo_ldl;
                          ,pr_msgderro  => 'DEVOLUCAO BACENJUD');
 
           
-          -- Salvar o arquivo
-          pc_salva_arquivo;
-            
           -- Retornar a execução
           RETURN;
 
@@ -6520,9 +6673,9 @@ END pc_trata_arquivo_ldl;
           vr_aux_vllanmto := NULL;
           OPEN cr_craplcm_exis(pr_cdcooper => rw_crapcop_mensag.cdcooper
                               ,pr_dtmvtolt => vr_aux_dtmvtolt            -- rw_craplot.dtmvtolt
-                              ,pr_cdagenci => rw_craplot.cdagenci
-                              ,pr_cdbccxlt => rw_craplot.cdbccxlt
-                              ,pr_nrdolote => rw_craplot.nrdolote
+                              ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                              ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                              ,pr_nrdolote => rw_craplot_rvt.nrdolote
                               ,pr_nrdctabb => vr_aux_nrctacre
                               ,pr_nrdocmto => vr_aux_nrdocmto);
           FETCH cr_craplcm_exis
@@ -6534,7 +6687,7 @@ END pc_trata_arquivo_ldl;
             IF vr_aux_CodMsg in ('STR0010R2','PAG0111R2') OR vr_aux_tagCABInf THEN
               -- Montar textos de logs
               vr_log_msgderro := 'Lancamento ja existe! Conta: ' || vr_aux_nrctacre
-                              || ', Lote: ' || rw_craplot.nrdolote
+                              || ', Lote: ' || rw_craplot_rvt.nrdolote
                               || ', Doc.: ' || vr_aux_nrdocmto;
               -- Conforme cabine
               IF vr_aux_tagCABInf THEN
@@ -6546,7 +6699,7 @@ END pc_trata_arquivo_ldl;
             ELSE
               -- Montar textos de logs
               vr_tipolog := 'RECEBIDA';
-              vr_log_msgderro := 'Lancamento ja existe! Lote: '|| rw_craplot.nrdolote
+              vr_log_msgderro := 'Lancamento ja existe! Lote: '|| rw_craplot_rvt.nrdolote
                               || ', Doc.: ' || vr_aux_nrdocmto;
             END IF;
             -- Cria registro das movimentacoes no SPB
@@ -6563,9 +6716,6 @@ END pc_trata_arquivo_ldl;
             pc_gera_log_SPB(pr_tipodlog  => vr_tipolog
                            ,pr_msgderro  => vr_log_msgderro);
 
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-          
             -- Retornar a execução
             RETURN;
 
@@ -6574,7 +6724,7 @@ END pc_trata_arquivo_ldl;
               /* Verifica se a TED é destinada a uma conta administradora de recursos */
               OPEN cr_tbfin_rec_con(pr_cdcooper => rw_crapcop_mensag.cdcooper
                                     ,pr_nrdconta => vr_aux_nrctacre
-                                    ,pr_cdagenci => rw_craplot.cdagenci);
+                                    ,pr_cdagenci => rw_craplot_rvt.cdagenci);
               FETCH cr_tbfin_rec_con
               INTO rw_tbfin_rec_con;
 
@@ -6627,18 +6777,26 @@ END pc_trata_arquivo_ldl;
               vr_tab_retorno := NULL;
               vr_incrineg := 0;
               
+              vr_nrseqdig := fn_sequence('CRAPLOT'
+			                      ,'NRSEQDIG'
+			                      ,''||rw_crapcop_mensag.cdcooper||';'
+				                     ||to_char(rw_craplot_rvt.dtmvtolt,'DD/MM/RRRR')||';'
+				                     ||rw_craplot_rvt.cdagenci||';'
+				                     ||rw_craplot_rvt.cdbccxlt||';'
+				                     ||rw_craplot_rvt.nrdolote);
+
               -- -- Gerar lançamento em conta
               LANC0001.pc_gerar_lancamento_conta
                             ( pr_cdcooper => rw_crapcop_mensag.cdcooper
-                             ,pr_dtmvtolt => rw_craplot.dtmvtolt
-                             ,pr_cdagenci => rw_craplot.cdagenci
-                             ,pr_cdbccxlt => rw_craplot.cdbccxlt
-                             ,pr_nrdolote => rw_craplot.nrdolote
+                             ,pr_dtmvtolt => rw_craplot_rvt.dtmvtolt
+                             ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                             ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                             ,pr_nrdolote => rw_craplot_rvt.nrdolote
                              ,pr_nrdconta => vr_aux_nrctacre
                              ,pr_nrdctabb => vr_aux_nrctacre
                              ,pr_nrdocmto => vr_aux_nrdocmto
                              ,pr_cdhistor => vr_aux_cdhistor
-                             ,pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
+                             ,pr_nrseqdig => vr_nrseqdig
                              ,pr_cdpesqbb => vr_aux_cdpesqbb
                              ,pr_vllanmto => vr_aux_VlrLanc
                              ,pr_cdoperad => '1'
@@ -6660,24 +6818,8 @@ END pc_trata_arquivo_ldl;
                  -- Sair da rotina
                  RAISE vr_exc_saida;
                 END IF; 
-              
               END IF;  
 
-              -- Atualizar capa do Lote
-              BEGIN
-                UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_aux_VlrLanc
-                                  ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + vr_aux_VlrLanc
-                                  ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
-                                  ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                                  ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
-                WHERE craplot.ROWID = rw_craplot.ROWID;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao atualizar tabela craplot. ' || SQLERRM;
-                  -- Sair da rotina
-                  RAISE vr_exc_saida;
-              END;
-              --
               -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
               -- Estornar a tarifa da TED, somente se for devolução/rejeição de TED gerada no Ailos
               IF vr_aux_tagCABInfCCL
@@ -7043,9 +7185,6 @@ END pc_trata_arquivo_ldl;
 
           -- Se retornou erro na Liquidação
           IF vr_dscritic IS NOT NULL THEN
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-          
             -- Retornar a execução
             RETURN;
           END IF;
@@ -7167,8 +7306,6 @@ END pc_trata_arquivo_ldl;
                        ,pr_msgderro  => NULL);
       END IF;
 
-      -- Salvar o arquivo
-      pc_salva_arquivo;
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -7256,9 +7393,10 @@ END pc_trata_arquivo_ldl;
       RAISE vr_exc_saida;
     ELSE
       -- Marcelo Telles Coelho - Projeto 475
-      -- Verificar se as mensagens de devolução já foram processadas
+      -- Verificar se as mensagens já foram processadas
       IF vr_aux_CodMsg LIKE '%R2'
       OR vr_aux_tagCABInfCCL
+      OR vr_aux_CodMsg = 'CIR0021' /* Projeto 475 - Req50 */
       THEN
         IF SSPB0003.fn_ver_msg_processada(pr_nrcontrole_str_pag => NVL(vr_aux_NumCtrlRem,vr_aux_NumCtrlIF)
                                          ,pr_CabInf_erro        => vr_aux_CabInf_erro) THEN
@@ -7574,8 +7712,6 @@ END pc_trata_arquivo_ldl;
             END IF;
           END IF;
           -- Salvar o arquivo
-          pc_salva_arquivo;
-          -- Processo finalizado
           RAISE vr_exc_next;
         END IF;
         -- Verifica as Mensagens de Recebimento
@@ -7585,7 +7721,8 @@ END pc_trata_arquivo_ldl;
                                ,'STR0005R2','STR0007R2','STR0008R2','PAG0107R2'
                                ,'STR0025R2','PAG0121R2'                         -- Transferencia Judicial - Andrino
                                ,'LTR0005R2'                                     -- Antecipaçao de Recebíveis - LTR - Mauricio
-                               ,'LDL0020R2','LTR0004'                           -- Alexandre - Mouts
+                               ,'LDL0020R2'                                     -- Alexandre - Mouts
+                               ,'LTR0004'                                       -- Gerada na cabine, mas necessário tratá-la no recebimento                               
                                                                   -- 'LDL0022', -- Mensagem retirada, pois ela é enviada da cabine e não recebida pelo ailos - Projeto 475
                                ,'SLC0001','SLC0005'                             -- Requisição de Transferência de cliente para IF - Mauricio
                                ,'LDL0024'                                       -- Aviso Alteração Horários Câmara LDL - Alexandre Borgmann - Mouts
@@ -7602,11 +7739,15 @@ END pc_trata_arquivo_ldl;
                                ,'STR0026R2'                                     -- Recebimento VR Boleto
                                ,'CIR0020'                                       -- Pagamento de Lançamento Devido MECIR /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
                                ,'CIR0021'                                       -- Lançamento a Crédito Efetivado do MECIR /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+                               ,'CIR0060'                                       -- Destinado ao Mecir informar remessas em atraso - Sprint D Req 51
                                ,'STR0047R1','STR0048R1','STR0047R2') THEN       -- Portabilidade de Credito
           -- Marcelo Telles Coelho - Projeto 475
           -- Devolver crítica de processo em curso para o Barramento SOA
           IF  NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'STR%'
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'PAG%'
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'LDL%' -- Sprint D
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SEL%' -- Sprint D          
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SLB%' -- Sprint D          
           THEN
           -- Se o processo estiver rodando
           IF NOT fn_verifica_processo THEN
@@ -7615,6 +7756,53 @@ END pc_trata_arquivo_ldl;
           END IF;
           END IF;
           -- Fim Projeto 475
+          
+          -- Sprint D - Req19
+          -- Chamada para procedure para armazenar as informações para o Arquivo Contabil
+          IF vr_aux_CodMsg IN ('LDL0022','RDC0002','RDC0007','SEL1069','SLB0002'
+                              ,'STR0003','STR0004','STR0020' ,'STR0007') THEN
+            vr_aux_valor_char := replace(Nvl(vr_aux_DsVlrFinanc, vr_aux_DsVlrLanc),'.',',');        
+            vr_aux_valor := To_Number(vr_aux_valor_char);
+            --
+            SSPB0001.pc_grava_arquivo_contabil (pr_nmmsg => vr_aux_CodMsg
+                                      ,pr_nmmsg_dev => null
+                                      ,pr_dtarquivo => To_date(Nvl(vr_aux_DtAgendt, vr_aux_DtMovto),'RRRR-MM-DD')
+                                      ,pr_vlrmsg    => vr_aux_valor
+                                      ,pr_FinlddIF  => vr_aux_FinlddIF
+                                      ,pr_FinlddCli => vr_aux_FinlddCli
+                                      ,pr_NomCliCredtd => vr_aux_NomCliCredtd
+                                      ,pr_CodProdt     => vr_aux_CodProdt
+                                      ,pr_SubTpAtv     => vr_aux_SubTpAtv
+                                      ,pr_CtCredtd     => vr_aux_CtCredtd
+                                      ,pr_CtDebtd      => vr_aux_CtDebtd
+                                      ,pr_CNPJ_CPFCliCredtd => vr_aux_CNPJ_CPFCred
+                                      ,pr_CtCed        => vr_aux_CtCed
+                                      ,pr_NumCtrlSTROr => vr_aux_NumCtrlRem_Or  
+                                      ,pr_NumCtrlIF    => vr_aux_NumCtrlIF
+                                      ,pr_NumCtrlRem   => vr_aux_NumCtrlRem
+                                      ,pr_his          => vr_aux_Hist
+                                      ,pr_dscritic     => vr_dscritic);
+          END IF;
+          --
+          IF vr_dscritic IS NOT NULL THEN
+            --
+            cecred.pc_log_programa
+              (pr_dstiplog => 'O', -- tbgen_prglog DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+              pr_cdprograma => vr_glb_cdprogra, -- tbgen_prglog
+              pr_cdcooper => pr_cdcooper, -- tbgen_prglog
+              pr_tpexecucao => 1, -- tbgen_prglog DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+              pr_tpocorrencia => 1, -- tbgen_prglog_ocorrencia -- 1 ERRO TRATADO
+              pr_cdcriticidade => 0, -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+              pr_dsmensagem => vr_dscritic, -- tbgen_prglog_ocorrencia
+              pr_flgsucesso => 1, -- tbgen_prglog DEFAULT 1 -- Indicador de sucesso da execução
+              pr_nmarqlog => NULL,
+              pr_idprglog => vr_idprglog); 
+              vr_dscritic := null;
+              --    
+          END IF;
+          -- Fim Sprint D
+          
+          
           --
           -- Marcelo Telles Coelho - Projeto 475
           -- Gerar registro de rastreio de mensagens
@@ -7639,6 +7827,9 @@ END pc_trata_arquivo_ldl;
                                         ,'AGU' -- Aguardando processamento
                                         ) THEN
                   vr_trace_cdfase   := 56; -- Retorno Câmara - R1
+                  vr_trace_idorigem := 'E';
+                ELSIF vr_aux_SitLanc = 'EXP' THEN -- Expirada
+                  vr_trace_cdfase   := 60; -- Cancelada /* Sprint D */
                   vr_trace_idorigem := 'E';
                 ELSE
                   vr_trace_cdfase   := 57; -- Retorno Câmara - R1
@@ -7761,18 +7952,61 @@ END pc_trata_arquivo_ldl;
             vr_dscritic := 'Erro ao processar mensagem --> ' || vr_dscritic;
             RAISE vr_exc_saida;
           END IF;
-          -- Salvar o arquivo
-          pc_salva_arquivo;
           -- Processo finalizado
           RAISE vr_exc_next;
         ELSE
+          -- Sprint D - Req19
+          -- Chamada para procedure para armazenar as informações para o Arquivo Contabil
+          IF vr_aux_CodMsg in ('LDL0020R2','LTR0004','STR0003R2','LTR0005R2','STR0004R2',
+                               'STR0006R2','STR0008R2') THEN
+            vr_aux_valor_char := replace(Nvl(vr_aux_DsVlrFinanc, vr_aux_DsVlrLanc),'.',',');        
+            vr_aux_valor := To_Number(vr_aux_valor_char);
+            --
+            SSPB0001.pc_grava_arquivo_contabil (pr_nmmsg => vr_aux_CodMsg
+                                      ,pr_nmmsg_dev => null
+                                      ,pr_dtarquivo => To_date(Nvl(vr_aux_DtAgendt, vr_aux_DtMovto),'RRRR-MM-DD')
+                                      ,pr_vlrmsg    => vr_aux_valor
+                                      ,pr_FinlddIF  => vr_aux_FinlddIF
+                                      ,pr_FinlddCli => vr_aux_FinlddCli
+                                      ,pr_NomCliCredtd => vr_aux_NomCliCredtd
+                                      ,pr_CodProdt     => vr_aux_CodProdt
+                                      ,pr_SubTpAtv     => vr_aux_SubTpAtv
+                                      ,pr_CtCredtd     => vr_aux_CtCredtd
+                                      ,pr_CtDebtd      => vr_aux_CtDebtd
+                                      ,pr_CNPJ_CPFCliCredtd => vr_aux_CNPJ_CPFCred
+                                      ,pr_CtCed        => vr_aux_CtCed
+                                      ,pr_NumCtrlSTROr => vr_aux_NumCtrlRem_Or  
+                                      ,pr_NumCtrlIF    => vr_aux_NumCtrlIF
+                                      ,pr_NumCtrlRem   => vr_aux_NumCtrlRem
+                                      ,pr_his          => vr_aux_Hist
+                                      ,pr_dscritic     => vr_dscritic);
+          END IF;
+          --
+          IF vr_dscritic IS NOT NULL THEN
+            --
+            cecred.pc_log_programa
+              (pr_dstiplog => 'O', -- tbgen_prglog DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+              pr_cdprograma => vr_glb_cdprogra, -- tbgen_prglog
+              pr_cdcooper => pr_cdcooper, -- tbgen_prglog
+              pr_tpexecucao => 1, -- tbgen_prglog DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+              pr_tpocorrencia => 1, -- tbgen_prglog_ocorrencia -- 1 ERRO TRATADO
+              pr_cdcriticidade => 0, -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+              pr_dsmensagem => vr_dscritic, -- tbgen_prglog_ocorrencia
+              pr_flgsucesso => 1, -- tbgen_prglog DEFAULT 1 -- Indicador de sucesso da execução
+              pr_nmarqlog => NULL,
+              pr_idprglog => vr_idprglog); 
+              vr_dscritic := null;
+              --    
+          END IF;
+          -- Fim Sprint D
+          
           -- Marcelo Telles Coelho - Projeto 475
           -- Buscar Cooperativa da mensagem
           IF rw_crapcop_mensag.cdcooper IS NULL THEN
             -- Tenta converter agencia para numero
             IF NOT fn_numerico(vr_aux_AgCredtd) THEN
               vr_aux_flgderro := TRUE;
-        END IF;
+            END IF;
             -- Se não deu erro
             IF NOT vr_aux_flgderro THEN
               -- Busca dados da Coope por cdagectl
@@ -7818,6 +8052,9 @@ END pc_trata_arquivo_ldl;
                                     ,'AGU' -- Aguardando processamento
                                     ) THEN
               vr_trace_cdfase   := 56; -- Retorno Câmara - R1
+              vr_trace_idorigem := 'E';
+            ELSIF vr_aux_SitLanc = 'EXP' THEN -- Expirada
+              vr_trace_cdfase   := 60; -- Cancelada /* Sprint D */
               vr_trace_idorigem := 'E';
             ELSE
               vr_trace_cdfase   := 57; -- Retorno Câmara - R1
@@ -7896,7 +8133,11 @@ END pc_trata_arquivo_ldl;
             vr_trace_idorigem := 'E';
           ELSE
             vr_trace_cdfase   := 992; -- Demais mensagens tratadas
-            vr_trace_idorigem := 'R';
+            IF vr_aux_CodMsg = 'CIR0020' then -- Sprint D 
+              vr_trace_idorigem := 'E';
+            Else  
+              vr_trace_idorigem := 'R';
+            END IF;  
           END IF;
           --
           IF vr_trace_cdfase IS NOT NULL THEN
@@ -7960,8 +8201,6 @@ END pc_trata_arquivo_ldl;
             vr_dscritic := 'Erro ao processar mensagem --> ' || vr_dscritic;
             RAISE vr_exc_saida;
           END IF;
-          -- Salvar o arquivo
-          pc_salva_arquivo;
           -- Processo finalizado
           RAISE vr_exc_next;
         END IF;
@@ -7976,9 +8215,9 @@ END pc_trata_arquivo_ldl;
 			  IF vr_aux_CodMsg = 'STR0006R2' and (vr_aux_FinlddCli <> '15'
                   /* OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191') removido solicitado por Lombardi a pedido de Jonathan Hasse*/
 				  ) THEN
-           -- Se for finalidade 10 com esse cnpj e agencia não gerar erro
+           -- Se conta 10000003 ou 20000006 e Agencia 100, entao é
+           -- TED recebida de boleto pago em cartório
            IF TRIM(vr_aux_CtCredtd) IN ('10000003','20000006') AND
-              vr_aux_CNPJ_CPFCred = '5463212000129' AND
               vr_aux_AgCredtd = '100'               THEN
                NULL;
            ELSE  
@@ -7996,7 +8235,6 @@ END pc_trata_arquivo_ldl;
                             ,vr_aux_codierro
                             ,vr_dscritic);
 
-            pc_salva_arquivo;
             RAISE vr_exc_next;
             END IF;
           -- Marcelo Telles Coelho - Projeto 475
@@ -8005,7 +8243,7 @@ END pc_trata_arquivo_ldl;
 
             pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
                            ,pr_msgderro  => 'Mensagem nao prevista');
-            pc_salva_arquivo;
+
             RAISE vr_exc_next;
         ELSE
           ccrd0006.pc_insere_msg_ltr_str(vr_aux_VlrLanc
@@ -8036,12 +8274,150 @@ END pc_trata_arquivo_ldl;
              vr_dscritic := 'Erro ao processar mensagem --> ' || vr_dscritic;
              RAISE vr_exc_saida;
           END IF;
-          -- Salvar o arquivo
-          pc_salva_arquivo;
           -- Processo finalizado
+
           RAISE vr_exc_next;
        END IF;
    END IF;
+   
+        -- Sprint D - Retirada a geração de e-mail (STR0003R2, CIR0020) de dentro da rotina pc_trata_lancamentos
+        -- Troca de numerarios - CECRED        
+        IF vr_aux_CodMsg = 'STR0003R2' THEN
+          -- Montar email
+          vr_aux_dsdemail := 'Codigo Mensagem: ' || vr_aux_CodMsg || ' <br>'
+                          || 'Numero controle STR: ' || vr_aux_NumCtrlRem || ' <br>'
+                          || 'Data Hora Bacen: ' || vr_aux_DtHrBC || ' <br>'
+                          || 'ISPB IF Debitada: ' || vr_aux_ISPBIFDebtd || ' <br>'
+                          || 'Agencia Debitada: ' || vr_aux_AgDebtd || ' <br>'
+                          || 'ISPB IF Credidata: ' || vr_aux_ISPBIFCredtd || ' <br>'
+                          || 'Agencia Creditada: ' || vr_aux_AgCredtd || ' <br>'
+                          || 'Valor Lançamento: ' || vr_aux_VlrLanc || ' <br>'
+                          || 'Codigo Municipio Origem: ' || vr_aux_CodMunicOrigem || ' <br>'
+                          || 'Codigo Municipio Destino: ' || vr_aux_codMunicDest || ' <br>'
+                          || 'Data Movimento: ' || vr_aux_DtMovto || ' <br><br>';
+          -- Incluir numerarios
+          FOR vr_idx IN vr_tab_numerario.first..vr_tab_numerario.last LOOP
+            vr_aux_dsdemail := vr_aux_dsdemail
+                            || 'Categoria: ' || vr_tab_numerario(vr_idx).cdcatego || ' <br>'
+                            || 'Valor Denominacao: ' || vr_tab_numerario(vr_idx).vlrdenom || ' <br> '
+                            || 'Quantidade Denominacao: ' || vr_tab_numerario(vr_idx).qtddenom || ' <br>';
+          END LOOP;
+
+          -- Enviar Email para o Financeiro
+          gene0003.pc_solicita_email(pr_cdcooper        => rw_crapcop_mensag.cdcooper
+                                    ,pr_cdprogra        => vr_glb_cdprogra
+                                    ,pr_des_destino     => gene0001.fn_param_sistema('CRED',rw_crapcop_mensag.cdcooper,'EMAIL_CARRO_FORTE')
+                                    ,pr_des_assunto     => 'Troca de numerarios - CECRED'
+                                    ,pr_des_corpo       => vr_aux_dsdemail
+                                    ,pr_des_anexo       => ''
+                                    ,pr_flg_enviar      => 'S'
+                                    ,pr_flg_log_batch   => 'N' --> Incluir inf. no log
+                                    ,pr_des_erro        => vr_dscritic);
+          -- Se ocorreu erro
+          IF trim(vr_dscritic) IS NOT NULL THEN
+            -- Gerar LOG e continuar o processo normal
+            -- Marcelo Telles Coelho - Projeto 475
+            -- Padronizar os logs no mesmo arquivo
+            BTCH0001.pc_gera_log_batch(pr_cdcooper      => 3
+                                      ,pr_ind_tipo_log => 1
+                                      ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '
+                                                        ||'Erro execucao - '
+                                                        || 'Nr.Controle IF: ' || vr_aux_NumCtrlIF || ' '
+                                                        || 'Mensagem: ' || vr_aux_CodMsg || ' '
+                                                        || ' --> '||vr_dscritic
+                                     ,pr_nmarqlog      => vr_nmarqlog);
+            -- Limpar critica
+            vr_dscritic := null;
+          END IF;
+
+          -- Processo finalizado
+          RAISE vr_exc_next;
+        END IF;
+        --
+        IF vr_aux_CodMsg = 'CIR0020' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+          -- Montar email
+          vr_aux_dsdemail := 'Codigo Mensagem: ' || vr_aux_CodMsg || ' <br>'
+                          || 'Número Controle IF: ' || vr_aux_NumCtrlIF || ' <br>'
+                          || 'ISPB IF: ' || vr_aux_ISPBIF || ' <br>'
+                          || 'Número Controle CIR Original: ' || vr_aux_NumCtrlCIROr || ' <br>'
+                          || 'Valor Lançamento: ' || vr_aux_VlrLanc || ' <br>'
+                          || 'Data Movimento: ' || vr_aux_DtMovto || ' <br><br>';
+
+          -- Enviar Email para o Financeiro
+          gene0003.pc_solicita_email(pr_cdcooper        => rw_crapcop_mensag.cdcooper
+                                    ,pr_cdprogra        => vr_glb_cdprogra
+                                    ,pr_des_destino     => gene0001.fn_param_sistema('CRED',rw_crapcop_mensag.cdcooper,'EMAIL_CARRO_FORTE')
+                                    ,pr_des_assunto     => 'Pagamento de Lançamento Devido MECIR - CECRED'
+                                    ,pr_des_corpo       => vr_aux_dsdemail
+                                    ,pr_des_anexo       => ''
+                                    ,pr_flg_enviar      => 'S'
+                                    ,pr_flg_log_batch   => 'N' --> Incluir inf. no log
+                                    ,pr_des_erro        => vr_dscritic);
+          -- Se ocorreu erro
+          IF trim(vr_dscritic) IS NOT NULL THEN
+            -- Gerar LOG e continuar o processo normal
+            -- Marcelo Telles Coelho - Projeto 475
+            -- Padronizar os logs no mesmo arquivo
+            BTCH0001.pc_gera_log_batch(pr_cdcooper      => 3
+                                      ,pr_ind_tipo_log => 1
+                                      ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '
+                                                        ||'Erro execucao - '
+                                                        || 'Nr.Controle IF: ' || vr_aux_NumCtrlIF || ' '
+                                                        || 'Mensagem: ' || vr_aux_CodMsg || ' '
+                                                        || ' --> '||vr_dscritic
+                                     ,pr_nmarqlog      => vr_nmarqlog);
+            -- Limpar critica
+            vr_dscritic := null;
+          END IF;
+
+          -- Processo finalizado
+          RAISE vr_exc_next;
+        END IF;
+        
+        -- Sprint D - Req51 Comunicar equipe responsável pela CIR0060
+        IF vr_aux_CodMsg = 'CIR0060' THEN
+          -- Montar email
+          vr_aux_dsdemail := 'Codigo Mensagem: ' || vr_aux_CodMsg || ' <br>'
+                          || 'ISPBIF: ' || vr_aux_ISPBIF || ' <br>'
+                          || 'Data Movimento: ' || vr_aux_DtMovto || ' <br><br>';
+          -- Incluir remessas
+          FOR vr_idx IN vr_tab_numerario_cir0060.first..vr_tab_numerario_cir0060.last LOOP
+            vr_aux_dsdemail := vr_aux_dsdemail
+                            || 'Numero Remessa: ' || vr_tab_numerario_cir0060(vr_idx).NumRemessa || ' <br>'
+                            || 'Data Limite Entrega: ' || vr_tab_numerario_cir0060(vr_idx).DtLimEntr || ' <br> ';
+          END LOOP;
+
+          -- Enviar Email para o Financeiro
+          gene0003.pc_solicita_email(pr_cdcooper        => rw_crapcop_mensag.cdcooper
+                                    ,pr_cdprogra        => vr_glb_cdprogra
+                                    ,pr_des_destino     => gene0001.fn_param_sistema('CRED',rw_crapcop_mensag.cdcooper,'EMAIL_CARRO_FORTE')
+                                    ,pr_des_assunto     => 'Recebimento CIR0060'
+                                    ,pr_des_corpo       => vr_aux_dsdemail
+                                    ,pr_des_anexo       => ''
+                                    ,pr_flg_enviar      => 'S'
+                                    ,pr_flg_log_batch   => 'N' --> Incluir inf. no log
+                                    ,pr_des_erro        => vr_dscritic);
+          -- Se ocorreu erro
+          IF trim(vr_dscritic) IS NOT NULL THEN
+            -- Padronizar os logs no mesmo arquivo
+            BTCH0001.pc_gera_log_batch(pr_cdcooper      => 3
+                                      ,pr_ind_tipo_log => 1
+                                      ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '
+                                                        ||'Erro execucao - '
+                                                        || 'Nr.Controle IF: ' || vr_aux_NumCtrlIF || ' '
+                                                        || 'Mensagem: ' || vr_aux_CodMsg || ' '
+                                                        || ' --> '||vr_dscritic
+                                     ,pr_nmarqlog      => vr_nmarqlog);
+            -- Limpar critica
+            vr_dscritic := null;
+          END IF;
+
+          -- Processo finalizado
+          RAISE vr_exc_next;
+
+        END IF;
+        -- Fim Sprint D        
+           
         -- VR Boleto
         IF vr_aux_CodMsg = 'STR0026R2' THEN
           -- Trazer arquivo de log do mqcecred_processa
@@ -8074,8 +8450,6 @@ END pc_trata_arquivo_ldl;
               vr_dscritic := 'Erro ao processar mensagem --> ' || vr_dscritic;
               RAISE vr_exc_saida;
             END IF;
-            -- Salvar o arquivo
-            pc_salva_arquivo;
             -- Processo finalizado
             RAISE vr_exc_next;
           ELSE
@@ -8108,8 +8482,6 @@ END pc_trata_arquivo_ldl;
               vr_dscritic := 'Erro ao processar mensagem --> ' || vr_dscritic;
               RAISE vr_exc_saida;
             END IF;
-            -- Salvar o arquivo
-            pc_salva_arquivo;
             -- Processo finalizado
             RAISE vr_exc_next;
           ELSE
@@ -8143,8 +8515,6 @@ END pc_trata_arquivo_ldl;
               vr_dscritic := 'Erro ao processar mensagem --> ' || vr_dscritic;
               RAISE vr_exc_saida;
             END IF;
-            -- Salvar o arquivo
-            pc_salva_arquivo;
             -- Processo finalizado
             RAISE vr_exc_next;
           END IF;
@@ -8216,8 +8586,6 @@ END pc_trata_arquivo_ldl;
               vr_dscritic := 'Erro ao processar mensagem --> ' || vr_dscritic;
               RAISE vr_exc_saida;
             END IF;
-            -- Salvar o arquivo
-            pc_salva_arquivo;
             -- Processo finalizado
             RAISE vr_exc_next;
           ELSE
@@ -8306,8 +8674,6 @@ END pc_trata_arquivo_ldl;
                                                          || 'Mensagem: ' || vr_aux_CodMsg || ' '
                                                          || ' , Erro: '||vr_dscritic
                                         ,pr_nmarqlog     => vr_nmarqlog); --> Log específico do SPB
-              -- Salvar o arquivo
-              pc_salva_arquivo;
               -- Processo finalizado
               RAISE vr_exc_next;
             END IF;
@@ -8326,8 +8692,6 @@ END pc_trata_arquivo_ldl;
                                                          || 'Mensagem: ' || vr_aux_CodMsg || ' '
                                                          || ' , Erro: '||sqlerrm
                                         ,pr_nmarqlog     => vr_nmarqlog); --> Log específico do SPB
-              -- Salvar o arquivo
-              pc_salva_arquivo;
               -- Processo finalizado
               RAISE vr_exc_next;
           END;
@@ -8357,8 +8721,6 @@ END pc_trata_arquivo_ldl;
                                                        || 'Mensagem: ' || vr_aux_CodMsg || ' '
                                                        || ' , Erro: '||vr_dscritic
                                       ,pr_nmarqlog     => vr_nmarqlog); --> Log específico do SPB
-            -- Salvar o arquivo
-            pc_salva_arquivo;
             -- Processo finalizado
             RAISE vr_exc_next;
           END IF;
@@ -8407,8 +8769,6 @@ END pc_trata_arquivo_ldl;
                                                            || 'Mensagem: ' || vr_aux_CodMsg || ' '
                                                            || ' , Erro: '||vr_dscritic
                                           ,pr_nmarqlog     => vr_nmarqlog); --> Log específico do SPB
-                -- Salvar o arquivo
-                pc_salva_arquivo;
                 -- Processo finalizado
                 RAISE vr_exc_next;
               END IF;
@@ -8420,8 +8780,6 @@ END pc_trata_arquivo_ldl;
             vr_idx_descontar := vr_tab_descontar.next(vr_idx_descontar);
           END LOOP;
 
-          -- Ao final, salvar o arquivo
-          pc_salva_arquivo;
           -- Processo finalizado
           RAISE vr_exc_next;
         END IF;
@@ -8483,8 +8841,6 @@ END pc_trata_arquivo_ldl;
             RAISE vr_exc_saida;
           END IF;
 
-          -- Salvar o arquivo
-          pc_salva_arquivo;
           -- Processo finalizado
           RAISE vr_exc_next;
         END IF;
@@ -8518,8 +8874,6 @@ END pc_trata_arquivo_ldl;
               vr_dscritic := 'Erro ao processar mensagem --> ' || vr_dscritic;
               RAISE vr_exc_saida;
             END IF;
-            -- Salvar o arquivo
-            pc_salva_arquivo;
             -- Processo finalizado
             RAISE vr_exc_next;
           END IF;
@@ -8534,24 +8888,13 @@ END pc_trata_arquivo_ldl;
             END IF;
             CLOSE cr_crapcop;
         ELSIF vr_aux_CodMsg = 'CIR0021' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
-          -- Tenta converter agencia para numero
-          IF NOT fn_numerico(vr_aux_AgIF) THEN
-            vr_aux_flgderro := TRUE;
-          END IF;
-          -- Se não deu erro
-          IF NOT vr_aux_flgderro THEN
-            -- Busca dados da Coope por cdagectl
-            OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgIF);
-            FETCH cr_busca_coop
-             INTO rw_crapcop_mensag;
-            -- Se não encontrou
-            IF cr_busca_coop%NOTFOUND THEN
-              vr_aux_flgderro := TRUE;
-            END IF;
-            CLOSE cr_busca_coop;
-          END IF;
+              -- Sprint D - Req50
+              -- Deve integrar o lançamento sempre na cooperativa 3 (Central)
+              -- Busca os dados da cooperativa 3
+              OPEN cr_busca_coop(pr_cdagectl => '100');
+              FETCH cr_busca_coop INTO rw_crapcop_mensag;
+              CLOSE cr_busca_coop;
         ELSE
-
           -- Tenta converter agencia para numero
           IF NOT fn_numerico(vr_aux_AgCredtd) THEN
             vr_aux_flgderro := TRUE;
@@ -8623,8 +8966,6 @@ END pc_trata_arquivo_ldl;
               vr_dscritic := 'Erro ao processar mensagem --> ' || vr_dscritic;
               RAISE vr_exc_saida;
             END IF;
-            -- Salvar o arquivo
-            pc_salva_arquivo;
             -- Processo finalizado
             RAISE vr_exc_next;
           ELSE
@@ -8694,8 +9035,6 @@ END pc_trata_arquivo_ldl;
                 vr_dscritic := 'Erro ao processar mensagem --> ' || vr_dscritic;
                 RAISE vr_exc_saida;
               END IF;
-              -- Salvar o arquivo
-              pc_salva_arquivo;
               -- Processo finalizado
               RAISE vr_exc_next;
             END IF;
@@ -8801,8 +9140,6 @@ END pc_trata_arquivo_ldl;
                 -- Gera LOG SPB
                 pc_gera_log_SPB(pr_tipodlog  => 'ENVIADA SPB NOK'
                                ,pr_msgderro  => 'Retorno R1 não prevista - Situacao Lancamento: '||vr_aux_SitLanc);
-                -- Salvar o arquivo
-                pc_salva_arquivo;
                 -- Processo finalizado
                 RAISE vr_exc_next;
               END IF;
@@ -8882,8 +9219,6 @@ END pc_trata_arquivo_ldl;
                 -- Gera LOG SPB
                 pc_gera_log_SPB(pr_tipodlog  => 'ENVIADA SPB NOK'
                                ,pr_msgderro  => 'Retorno R1 não prevista - Situacao Lancamento: '||vr_aux_SitLanc);
-                -- Salvar o arquivo
-                pc_salva_arquivo;
                 -- Processo finalizado
                 RAISE vr_exc_next;
               END IF;
@@ -8900,8 +9235,6 @@ END pc_trata_arquivo_ldl;
               -- Gera LOG SPB
               pc_gera_log_SPB(pr_tipodlog  => 'RETORNO SPB'
                              ,pr_msgderro  => vr_dscritic);
-              -- Salvar o arquivo
-              pc_salva_arquivo;
               -- Processo finalizado
               RAISE vr_exc_next;
             END IF;
@@ -8911,8 +9244,6 @@ END pc_trata_arquivo_ldl;
           pc_gera_log_SPB(pr_tipodlog  => 'RETORNO SPB'
                          ,pr_msgderro  => NULL);
 
-          -- Salvar o arquivo
-          pc_salva_arquivo;
           -- Processo finalizado
           RAISE vr_exc_next;
 
@@ -8924,8 +9255,6 @@ END pc_trata_arquivo_ldl;
             RAISE vr_exc_saida;
           END IF;
 
-          -- Salvar o arquivo
-          pc_salva_arquivo;
           -- Processo finalizado
           RAISE vr_exc_next;
 
@@ -8941,6 +9270,8 @@ END pc_trata_arquivo_ldl;
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'STR%'
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'PAG%'
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SLC%'
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'CIR%' -- Sprint D 
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'LDL%' -- Sprint D           
           AND NOT vr_aux_tagCABInf
           THEN
             IF NOT fn_verifica_processo THEN
@@ -8961,7 +9292,7 @@ END pc_trata_arquivo_ldl;
       RAISE vr_exc_saida;
     END IF;
     --  Fim Projeto 475
-
+    
     -- Efetuar commit das alterações
     COMMIT;
     pc_alter_session_para_default; -- Marcelo Telles Coelho - Projeto 475 - SPRINT C2
