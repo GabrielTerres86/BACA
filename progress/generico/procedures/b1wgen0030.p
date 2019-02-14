@@ -2508,18 +2508,26 @@ PROCEDURE efetua_liber_anali_bordero:
                    craplcm.cdbccxlt = craplot.cdbccxlt 
                    craplcm.nrdolote = craplot.nrdolote
                    craplcm.nrdconta = crapbdt.nrdconta
-                   craplcm.nrdocmto = aux_nrseqdig 
+                   craplcm.nrdocmto = craplot.nrseqdig + 1
                    craplcm.vllanmto = aux_vlborder
                    craplcm.cdhistor = 686
-                   craplcm.nrseqdig = aux_nrseqdig
+                   craplcm.nrseqdig = craplot.nrseqdig + 1 
                    craplcm.nrdctabb = crapbdt.nrdconta 
 
                    craplcm.nrautdoc = 0
                    craplcm.cdcooper = par_cdcooper
 
                    craplcm.cdpesqbb = "Desconto do bordero " +
-                                       STRING(crapbdt.nrborder,"zzz,zz9").
+                                       STRING(crapbdt.nrborder,"zzz,zz9")
 
+                   craplot.nrseqdig = craplcm.nrseqdig
+                   craplot.qtinfoln = craplot.qtinfoln + 1
+                   craplot.qtcompln = craplot.qtcompln + 1
+
+                   craplot.vlinfocr = craplot.vlinfocr +
+                                      craplcm.vllanmto
+                   craplot.vlcompcr = craplot.vlcompcr +
+                                      craplcm.vllanmto.
               
             VALIDATE craplot.
             VALIDATE craplcm.
@@ -5057,7 +5065,7 @@ PROCEDURE efetua_inclusao_limite:
             
             RETURN "NOK".
         END.    
-         
+
     /** Buscar regra para renovaçao **/
     FIND FIRST craprli 
          WHERE craprli.cdcooper = par_cdcooper
@@ -5359,7 +5367,7 @@ PROCEDURE efetua_inclusao_limite:
                crawlim.nrctaav1    = par_nrctaav1
                crawlim.nrctaav2    = par_nrctaav2
 
-               crawlim.qtrenctr    = craprli.qtmaxren
+               crawlim.qtrenctr    = tt-dados_dsctit.qtrenova
 
                crawlim.dsendav1[1] = IF  par_nrctaav1 <> 0  THEN
                                          ""
@@ -13057,6 +13065,9 @@ PROCEDURE carrega_dados_proposta_limite:
     DEF VAR aux_vlsldtot AS DEC                             NO-UNDO.
     DEF VAR aux_vlsldapl AS DEC                             NO-UNDO.
 
+    DEF VAR aux_dtassele AS DATE                            NO-UNDO. /* Data assinatura eletronica */
+    DEF VAR aux_dsvlrprm AS CHAR                            NO-UNDO. /* Data de corte */
+
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-emprsts.
     EMPTY TEMP-TABLE tt-proposta_limite.
@@ -13239,6 +13250,8 @@ PROCEDURE carrega_dados_proposta_limite:
                                                OUTPUT aux_flgativo,
                                                OUTPUT aux_nrctrhcj,
                                                OUTPUT aux_flgliber,
+                                               OUTPUT aux_dtassele,
+                                               OUTPUT aux_dsvlrprm,
                                               OUTPUT TABLE tt-erro,
                                               OUTPUT TABLE tt-cartoes,
                                               OUTPUT TABLE tt-lim_total).
@@ -13930,6 +13943,8 @@ PROCEDURE carrega_dados_proposta_bordero:
     DEF VAR aux_vlsldrgt AS DEC             NO-UNDO.
     DEF VAR aux_vlsldtot AS DEC             NO-UNDO.
     DEF VAR aux_vlsldapl AS DEC             NO-UNDO.
+    DEF VAR aux_dtassele AS DATE            NO-UNDO. /* Data assinatura eletronica */
+    DEF VAR aux_dsvlrprm AS CHAR            NO-UNDO. /* Data de corte */
 
     EMPTY TEMP-TABLE tt-proposta_bordero.
     EMPTY TEMP-TABLE tt-emprsts.
@@ -14114,6 +14129,8 @@ PROCEDURE carrega_dados_proposta_bordero:
                                                OUTPUT aux_flgativo,
                                                OUTPUT aux_nrctrhcj,
                                                OUTPUT aux_flgliber,
+                                               OUTPUT aux_dtassele,
+                                               OUTPUT aux_dsvlrprm,
                                               OUTPUT TABLE tt-erro,
                                               OUTPUT TABLE tt-cartoes,
                                               OUTPUT TABLE tt-lim_total).

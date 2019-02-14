@@ -158,6 +158,8 @@ DEF VAR aux_inpessoa AS INTE                                           NO-UNDO.
 DEF VAR aux_flgativo AS LOGI                                           NO-UNDO.
 DEF VAR aux_nrctrhcj AS INTE                                           NO-UNDO.
 DEF VAR aux_flgliber AS LOGI                                           NO-UNDO.
+DEF VAR aux_dtassele AS DATE                                           NO-UNDO. /* Data assinatura eletronica */
+DEF VAR aux_dsvlrprm AS CHAR                                           NO-UNDO. /* Data de corte */
 
 DEF VAR aux_iddopcao AS INTE                                           NO-UNDO.
 DEF VAR aux_nrdlinha AS INTE                                           NO-UNDO.
@@ -390,6 +392,7 @@ RUN lista_cartoes IN h_b1wgen0028 ( INPUT glb_cdcooper,
                                    OUTPUT aux_flgativo,
                                    OUTPUT aux_nrctrhcj,
                                    OUTPUT aux_flgliber,
+
                                    OUTPUT TABLE tt-erro,
                                    OUTPUT TABLE tt-cartoes,
                                    OUTPUT TABLE tt-lim_total).
@@ -460,6 +463,8 @@ IF  par_flgtecla  THEN
                                                 OUTPUT aux_flgativo,
                                                 OUTPUT aux_nrctrhcj,
                                                 OUTPUT aux_flgliber,
+                                                OUTPUT aux_dtassele,
+                                                OUTPUT aux_dsvlrprm,
                                                 OUTPUT TABLE tt-erro,
                                                 OUTPUT TABLE tt-cartoes,
                                                 OUTPUT TABLE tt-lim_total).

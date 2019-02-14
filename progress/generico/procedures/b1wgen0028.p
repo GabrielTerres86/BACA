@@ -551,6 +551,9 @@
 
 				12/12/2018 - Adicionado campo flgprovi e criado Procedure para validar a assinatura da senha TA Online (Anderson-Alan Supero P432)
 
+
+                19/10/2018 - Permitir a inclusão de cartão quando situação = 6 ou 
+                             conta cartão for zerada (Lucas Ranghetti INC0024543)
                              
                23/01/2018 - Altera�ao na rotina de alterar_administradora para contemplar o insitdec (deci�ao da esteira).
                             INC0027746 Augusto - Supero
@@ -598,7 +601,7 @@ DEFINE VARIABLE aux_qtregist AS INTEGER     NO-UNDO.
 /*****************
     FUNCOES
 *****************/
-/* Funcao para verificar qual a administradora do cart�o */
+/* Funcao para verificar qual a administradora do cartão */
 FUNCTION f_verifica_adm RETURN INTEGER(INPUT par_cdadmcrd AS INTEGER):
 
     IF  par_cdadmcrd >= 83  AND  
@@ -825,7 +828,7 @@ PROCEDURE lista_cartoes:
 
     DEF VAR aux_vltotccr AS DECI NO-UNDO.
     DEF VAR aux_dssitcrd AS CHAR NO-UNDO.
-        
+
     DEF VAR aux_flgprovi LIKE crapcrd.flgprovi NO-UNDO.
         
     EMPTY TEMP-TABLE tt-erro.
@@ -885,10 +888,10 @@ PROCEDURE lista_cartoes:
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Listar cartoes de credito.".    
            
-    FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd  
-                               dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
-                         WHERE crawcrd.cdcooper = par_cdcooper    AND
-                           crawcrd.nrdconta = par_nrdconta    NO-LOCK:
+    FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd dtinsori
+                            dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
+                      WHERE crawcrd.cdcooper = par_cdcooper    AND
+                            crawcrd.nrdconta = par_nrdconta    NO-LOCK:
                                                                       
         FIND crapadc WHERE crapadc.cdcooper = par_cdcooper      AND
                            crapadc.cdadmcrd = crawcrd.cdadmcrd  
@@ -958,10 +961,7 @@ PROCEDURE lista_cartoes:
                                                 INPUT crawcrd.dtsol2vi,
                                                 INPUT crawcrd.cdadmcrd).
         
-        FIND crapcrd WHERE crapcrd.cdcooper = par_cdcooper      AND
-                           crapcrd.nrdconta = par_nrdconta      AND
-                           crapcrd.nrcrcard = crawcrd.nrcrcard  NO-LOCK NO-ERROR.
-        
+
         IF   NOT AVAILABLE crapcrd THEN
             ASSIGN aux_flgprovi = 0.
             
@@ -2683,7 +2683,8 @@ PROCEDURE valida_nova_proposta:
                      /*validado o numero do contrato para tratar o modo de edicao da proposta*/
                      crawcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
 
-                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ THEN
+                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ OR 
+                     crawcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
                      NEXT.
                    
                 IF   crawcrd.cdadmcrd = crapadc.cdadmcrd  THEN
@@ -2722,7 +2723,8 @@ PROCEDURE valida_nova_proposta:
                                                /*validado o numero do contrato para tratar o modo de edicao da proposta*/
                                                cratcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
 
-	                        IF   cratcrd.insitcrd = 6 /* Proposta cancelada */ THEN
+	                        IF   cratcrd.insitcrd = 6 /* Proposta cancelada */ OR 
+                                 cratcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
                                  NEXT.
 
                             FIND cratadc WHERE cratadc.cdcooper = par_cdcooper and
@@ -25262,8 +25264,8 @@ PROCEDURE valida-senha-ta-online:
                            INPUT-OUTPUT aux_dscritic).
             
         END.
-   
-END.
+        
+    END.
     ELSE IF (LENGTH(par_cddsenha) = 8) THEN
     DO:
         FIND FIRST crapsnh WHERE crapsnh.cdcooper = par_cdcooper     AND
@@ -25339,7 +25341,7 @@ END.
             RETURN "OK".
         END.
         
-    END.
+END.
     ELSE
     DO:
         RETURN "NOK".
