@@ -76,6 +76,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
   --            02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
   --                         crapass, crapttl, crapjur 
   --           		  				 (Adriano - P339).
+  --
+  --            05/12/2018 - SCTASK38225 (Yuri - Mouts)
+  --                         Substituido o mÈtodo XSLPROCESSOR pela chamada da GENE0002.
                            
   ---------------------------------------------------------------------------------------------------------------
 
@@ -2060,7 +2063,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
        --Verificar tamanho do Arquivo
        IF dbms_lob.getlength(vr_des_xml) > 0 THEN
          -- Geracao do arquivo
-         dbms_xslprocessor.clob2file(vr_des_xml, vr_caminho, vr_nmarquiv ,0);
+         -- SCTASK0038225 (Yuri - Mouts)
+         -- Com a migraÁ„o para vers„o Oracle 12C necess·rio alteraÁ„o no procedimento de gerar arquivo
+         --Criar o arquivo no diretorio especificado 
+         gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_xml 
+                                      ,pr_caminho  => vr_caminho
+                                      ,pr_arquivo  => vr_nmarquiv
+                                      ,pr_des_erro => vr_dscritic);
+         IF vr_dscritic IS NOT NULL THEN
+           --levantar Excecao
+           RAISE vr_exc_saida;
+         END IF;
+         -- FIM SCTASK0038225
+/*       dbms_xslprocessor.clob2file(vr_des_xml, vr_caminho, vr_nmarquiv ,0);*/
        END IF;
 
        --Transmitir Arquivo para CIA HERING
@@ -3173,8 +3188,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
         dbms_lob.writeappend(vr_des_clob, length(vr_tab_linha(vr_indice)), vr_tab_linha(vr_indice));
       END LOOP;
 
+      -- SCTASK0038225 (Yuri - Mouts)
+      -- Com a migraÁ„o para vers„o Oracle 12C necess·rio alteraÁ„o no procedimento de gerar arquivo
       --Criar o arquivo no diretorio especificado
-      DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_clob, vr_patcharq, vr_nmarquiv || vr_nmsufixo, 0);
+      gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_clob
+                                   ,pr_caminho  => vr_patcharq
+                                   ,pr_arquivo  => vr_nmarquiv
+                                   ,pr_des_erro => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        --levantar Excecao
+        RAISE vr_exc_saida;
+      END IF;
+      -- FIM SCTASK0038225
+/*    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_clob, vr_patcharq, vr_nmarquiv || vr_nmsufixo, 0);*/
 
       -- Liberando a mem√≥ria alocada pro CLOB
       dbms_lob.close(vr_des_clob);

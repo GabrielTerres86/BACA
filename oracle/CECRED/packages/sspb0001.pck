@@ -94,6 +94,8 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
 
 				16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
+					 
+				13/02/2019 - XSLProcessor
 
 ..............................................................................*/
 

@@ -68,6 +68,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                  23/11/2018 - P442 - Retorno do Score Behaviour do Cooperado (Marcos-Envolti)
 
 				 12/12/2018 - Criado Procedure para salvar a data da assinatura eletronica TA Online. (Anderson-Alan Supero P432)
+				 
+				 13/02/2019 - XSLProcessor
   ---------------------------------------------------------------------------------------------------------------*/
 
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
