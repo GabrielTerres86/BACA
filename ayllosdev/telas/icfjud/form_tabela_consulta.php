@@ -18,19 +18,22 @@ strHTML += '	<fieldset>';
 		
 strHTML += '<div class="divRegistros">';
 	
-strHTML += '		<table>';
+strHTML += '		<table class="tituloRegistros" style="table-layout: fixed;">';
 strHTML += '			<thead>';
-strHTML += '				<tr>';
+strHTML += '				<tr><th>&nbsp;</th>';
 strHTML += '                    <th><? echo utf8ToHtml('Dt. Solicit.'); ?></th>';
 strHTML += '					<th><? echo utf8ToHtml('Banco');  ?></th>';
 strHTML += '					<th><? echo utf8ToHtml('Conta Cheque');  ?></th>';
 strHTML += '					<th><? echo utf8ToHtml('CPF / CNPJ');  ?></th>';
 strHTML += '					<th><? echo utf8ToHtml('Situacao');  ?></th>';
+strHTML += '					<th><? echo utf8ToHtml('CMC7');  ?></th>';
 strHTML += '				</tr>';
 strHTML += '			</thead>';
 strHTML += '			<tbody>';
 	
 lstDadosICF = new Array();
+
+var dados_count = <? echo $dados_count ?>;
 <?php
 		
 for ($i = 0; $i < $dados_count; $i++){
@@ -48,6 +51,7 @@ for ($i = 0; $i < $dados_count; $i++){
 	$cdcritic = getByTagName($dados[$i]->tags,"CDCRITIC");
 	$cdtipcta = getByTagName($dados[$i]->tags,"CDTIPCTA");
 	$dsstatus = getByTagName($dados[$i]->tags,"DSSTATUS");
+	$dsdocmc7 = getByTagName($dados[$i]->tags,"DSDOCMC7");
 		
 	?>
 	
@@ -65,19 +69,23 @@ for ($i = 0; $i < $dados_count; $i++){
 	objRegistro.cdcritic = "<?php echo $cdcritic; ?>";
 	objRegistro.cdtipcta = "<?php echo $cdtipcta; ?>";
 	objRegistro.dsstatus = "<?php echo $dsstatus; ?>";
+	objRegistro.dsdocmc7 = "<?php echo $dsdocmc7; ?>";
 	lstDadosICF[<?php echo $i; ?>] = objRegistro;
 	
 	strHTML += '<tr id="trArquivosProcessados<?php echo $i; ?>" style="cursor: pointer;">';
-	strHTML += '	<td><?php echo $dtinireq; ?>';
+	
+	strHTML += '	<td width="15">';
+	strHTML += '	<input type="checkbox" id="chkReenviarICF_<?php echo $i; ?>" />';
+	strHTML += '	<input type="hidden" name="hddNrctareqICF_<?php echo $i; ?>" id="hddNrctareqICF_<?php echo $i; ?>" value="<?php echo $nrctareq; ?>">';
+	strHTML += '	<input type="hidden" name="hddDacaojudICF_<?php echo $i; ?>" id="hddDacaojudICF_<?php echo $i; ?>" value="<?php echo $dacaojud; ?>">';
 	strHTML += '	</td>';
-	strHTML += '	<td><?php echo $intipreq == 1 ? $cdbanreq : $cdbanori; ?>';
-	strHTML += '	</td>';
-	strHTML += '	<td><?php echo $nrctareq; ?>';
-	strHTML += '	</td>';
-	strHTML += '	<td><?php echo $nrcpfcgc; ?>';
-	strHTML += '	</td>';
-	strHTML += '	<td><?php echo $dsstatus; ?>';
-	strHTML += '	</td>';
+
+	strHTML += '	<td width="70"><?php echo $dtinireq; ?></td>';
+	strHTML += '	<td width="70"><?php echo $intipreq == 1 ? $cdbanreq : $cdbanori; ?></td>';
+	strHTML += '	<td width="70"><?php echo $nrctareq; ?></td>';
+	strHTML += '	<td width="70"><?php echo $nrcpfcgc; ?></td>';
+	strHTML += '	<td width="70"><?php echo $dsstatus; ?></td>';
+	strHTML += '	<td><?php echo $dsdocmc7; ?></td>';
 	strHTML += '</tr>';
 	
 	<?php

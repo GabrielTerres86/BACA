@@ -10,8 +10,8 @@
  
 var cddopcao = '';
 
-var rCddopcao, rNrdconta, rCdbandes, rCdagedes, rNrctades, rDacaojud, rDtinireq, rCdbancon, rCdagecon, rNrctacon,
-	cCddopcao, cNrdconta, cCdbandes, cCdagedes, cNrctades, cDacaojud, cDtinireq, cCdbancon, cCdagecon, cNrctacon;
+var rCddopcao, rNrdconta, rCdbandes, rCdagedes, rNrctades, rDacaojud, rDtinireq, rCdbancon, rCdagecon, rNrctacon, rDsdocmc7,
+	cCddopcao, cNrdconta, cCdbandes, cCdagedes, cNrctades, cDacaojud, cDtinireq, cCdbancon, cCdagecon, cNrctacon, cDsdocmc7;
 
 var btnOK, linkConta, cCampos;
 
@@ -19,7 +19,7 @@ var nrdconta = 0;
 
 var lstDadosICF;
 
-var dtinireq, intipreq, cdbanreq, cdagereq, nrctareq;
+var dtinireq, intipreq, cdbanreq, cdagereq, nrctareq, dsdocmc7;
 
 
 $(document).ready(function() {
@@ -59,12 +59,17 @@ function controlaLayout() {
 	rCdagedes           = $('label[for="cdagedes"]' ,'#frmInclusao');
 	rNrctades           = $('label[for="nrctades"]' ,'#frmInclusao');
 	rDacaojud           = $('label[for="dacaojud"]' ,'#frmInclusao');
+	rTpdconta        	= $('label[for="tpdconta"]' ,'#frmInclusao');
+	rDtdtroca        	= $('label[for="dtdtroca"]' ,'#frmInclusao');
+	rVldopera        	= $('label[for="vldopera"]' ,'#frmInclusao');
+	rDsdocmc7Inc        = $('label[for="dsdocmc7"]' ,'#frmInclusao');
 	
 	rDtinireq           = $('label[for="dtinireq"]'	,'#frmConsulta');
 	rCdbancon           = $('label[for="cdbancon"]' ,'#frmConsulta');
 	rIntipreq           = $('label[for="intipreq"]' ,'#frmConsulta');
 	rCdagecon           = $('label[for="cdagecon"]' ,'#frmConsulta');
 	rNrctacon           = $('label[for="nrctacon"]' ,'#frmConsulta');
+	rDsdocmc7           = $('label[for="dsdocmc7"]' ,'#frmConsulta');
 	
 	cCddopcao			= $('#cddopcao'	,'#frmCab');
 	
@@ -74,19 +79,24 @@ function controlaLayout() {
 	cCdagedes           = $('#cdagedes' ,'#frmInclusao');
 	cNrctades           = $('#nrctades' ,'#frmInclusao');
 	cDacaojud           = $('#dacaojud' ,'#frmInclusao');
+	cTpdconta        	= $('#tpdconta' ,'#frmInclusao');
+	cDtdtroca        	= $('#dtdtroca' ,'#frmInclusao');
+	cVldopera        	= $('#vldopera' ,'#frmInclusao');	
+	cDsdocmc7Inc        = $('#dsdocmc7' ,'#frmInclusao');
 	
 	cDtinireq           = $('#dtinireq'	,'#frmConsulta');
 	cCdbancon           = $('#cdbancon' ,'#frmConsulta');
 	cIntipreq           = $('#intipreq' ,'#frmConsulta');
 	cCdagecon           = $('#cdagecon' ,'#frmConsulta');
 	cNrctacon           = $('#nrctacon' ,'#frmConsulta');
+	cDsdocmc7           = $('#dsdocmc7' ,'#frmConsulta');
 	
 	cCampos             = $('input' ,'#frmInclusao,#frmConsulta');
 	
 	linkConta           = $('a:eq(0)','#frmInclusao,#frmConsulta');
 	
 	rCddopcao.addClass('rotulo').css({'width':'60px'});
-	cCddopcao.css({'width':'430px'});
+	cCddopcao.css({'width':'605px'});
 	
 	$('#divInclusao').css({'display':'none'});
 	$('#divConsulta').css({'display':'none'});
@@ -96,17 +106,46 @@ function controlaLayout() {
 	
 		highlightObjFocus($('#frmInclusao'));
 	
-		rNrdconta.addClass('rotulo').css({'width':'60px'});
-		rCdbandes.addClass('rotulo').css({'width':'60px'});
-		rCdagedes.addClass('rotulo-linha').css({'width':'115px'});
-		rNrctades.addClass('rotulo-linha').css({'width':'121px'});
-		rDacaojud.addClass('rotulo').css({'width':'60px'});
+		rNrdconta.addClass('rotulo').css({'width':'77px'});
+		rCdbandes.addClass('rotulo').css({'width':'123px'});
+		rCdagedes.addClass('rotulo-linha').css({'width':'60px'});
+		rNrctades.addClass('rotulo-linha').css({'width':'50px'});
+		rDacaojud.addClass('rotulo').css({'width':'123px'});
+		rTpdconta.addClass('rotulo').css({'width':'123px'});
+		rDtdtroca.addClass('rotulo').css({'width':'123px'});
+		rVldopera.addClass('rotulo').css({'width':'123px'});
+		rDsdocmc7Inc.addClass('rotulo').css({'width':'123px'});
 		
 		cNrdconta.addClass('conta pesquisa').css({'width':'80px'});
-		cNmprimtl.addClass('descricao').css({'width':'330px'});
+		cNmprimtl.addClass('descricao').css({'width':'317px'});
 		cCdbandes.addClass('rotulo').css({'width':'60px'});
 		cCdagedes.addClass('rotulo-linha');
-		cNrctades.addClass('rotulo-linha');
+		cNrctades.addClass('rotulo');
+		cTpdconta.addClass('campo').css({'width':'140px'});
+		cDtdtroca.addClass('data').css({'width':'80px'});
+		cVldopera.addClass('moeda'); // .setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', '')
+		cDsdocmc7Inc.addClass('campo').css({'width':'260px'});
+		
+		cDsdocmc7Inc.unbind('keyup').bind('keyup', function(e) {
+			formataCampoCmc7(false);
+			return false;
+		});
+		cDsdocmc7Inc.unbind('blur').bind('blur', function(e) {
+			formataCampoCmc7(true);
+			return false;
+		});		
+		
+		cDsdocmc7Inc.unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }		
+		
+			// Se é a tecla ENTER, 
+			if ( e.keyCode == 13 ) {
+				incluiICF();
+				return false;
+
+			}
+		});		
+		
 		
 		if ($.browser.msie) {
 			cCdagedes.css({'width':'60px'});
@@ -116,7 +155,7 @@ function controlaLayout() {
 			cNrctades.css({'width':'97px'});
 		}
 		
-		cDacaojud.addClass('rotulo').css({'width':'238px'});
+		cDacaojud.addClass('rotulo').css({'width':'228px'});
 		
 		
 		cCampos.habilitaCampo();
@@ -136,11 +175,13 @@ function controlaLayout() {
 		rIntipreq.addClass('rotulo-linha').css({'width':'50px'});
 		rCdagecon.addClass('rotulo').css({'width':'125px'});
 		rNrctacon.addClass('rotulo-linha').css({'width':'120px'});
+		rDsdocmc7.addClass('rotulo').css({'width':'125px'});
 		
 		cDtinireq.addClass('data').css({'width':'72px'});
 		cCdbancon.addClass('rotulo-linha').css({'width':'70px'});
 		cCdagecon.addClass('rotulo').css({'width':'72px'});
 		cNrctacon.addClass('rotulo-linha').css({'width':'70px'});
+		cDsdocmc7.addClass('rotulo-linha').css({'width':'260px'});
 		
 		cCampos.habilitaCampo();
 		cCampos.limpaFormulario();
@@ -259,57 +300,94 @@ function incluiICF() {
 	var cdagedes = retiraCaracteres($("#cdagedes","#frmInclusao").val(),"0123456789",true);
 	var nrctades = retiraCaracteres($("#nrctades","#frmInclusao").val(),"0123456789",true);
 	var dacaojud = $("#dacaojud","#frmInclusao").val();
+	var dsdocmc7 = $("#dsdocmc7","#frmInclusao").val();
+	var tpdconta = $("#tpdconta","#frmInclusao").val();
+	var dtdtroca = $("#dtdtroca","#frmInclusao").val();
+	var vldopera = $("#vldopera","#frmInclusao").val();
 	
 	if (nrdconta == '') {
-		showError('error','Conta/dv não informada.','Alerta - ICFJUD','focaCampoErro(\'nrdconta\',\'frmInclusao\');');
+		showError('error','Conta/dv n&atilde;o informada.','Alerta - ICFJUD','focaCampoErro(\'nrdconta\',\'frmInclusao\');');
 		return false;
 	}
 	
 	// Verifica se a conta é válida
 	if ( !validaNroConta(nrdconta) ) { 
-		showError('error','Conta/dv inválida.','Alerta - ICFJUD','focaCampoErro(\'nrdconta\',\'frmInclusao\');'); 
+		showError('error','Conta/dv inv&aacute;lida.','Alerta - ICFJUD','focaCampoErro(\'nrdconta\',\'frmInclusao\');'); 
 		return false; 
 	}
 	
 	if (nmprimtl == '') {
-		showError('error','Confirme o número da conta.','Alerta - ICFJUD','focaCampoErro(\'btOK\',\'frmInclusao\');'); 
+		showError('error','Confirme o n&uacute;mero da conta.','Alerta - ICFJUD','focaCampoErro(\'btOK\',\'frmInclusao\');'); 
 		return false;
 	}
 	
 	cNrdconta.removeClass('campoErro');
 	
 	if (cdbandes == '') {
-		showError('error','Banco destino não informado.','Alerta - ICFJUD','focaCampoErro(\'cdbandes\',\'frmInclusao\');');
+		showError('error','Banco destino n&atilde;o informado.','Alerta - ICFJUD','focaCampoErro(\'cdbandes\',\'frmInclusao\');');
 		return false;
 	}
 	
 	if (cdbandes == 85) {
-		showError('error','Banco destino não pode ser o mesmo que o banco origem.','Alerta - ICFJUD','focaCampoErro(\'cdbandes\',\'frmInclusao\');');
+		showError('error','Banco destino n&atilde;o pode ser o mesmo que o banco origem.','Alerta - ICFJUD','focaCampoErro(\'cdbandes\',\'frmInclusao\');');
 		return false;
 	}
 	
 	cCdbandes.removeClass('campoErro');
 	
 	if (cdagedes == '') {
-		showError('error','Agência destino não informada.','Alerta - ICFJUD','focaCampoErro(\'cdagedes\',\'frmInclusao\');');
+		showError('error','Ag&ecirc;ncia destino n&atilde;o informada.','Alerta - ICFJUD','focaCampoErro(\'cdagedes\',\'frmInclusao\');');
 		return false;
 	}
 	
 	cCdagedes.removeClass('campoErro');
 	
 	if (nrctades == '') {
-		showError('error','Conta destino não informada.','Alerta - ICFJUD','focaCampoErro(\'nrctades\',\'frmInclusao\');');
+		showError('error','Conta destino n&atilde;o informada.','Alerta - ICFJUD','focaCampoErro(\'nrctades\',\'frmInclusao\');');
 		return false;
 	}
 	
 	cNrctades.removeClass('campoErro');
 	
 	if (dacaojud == '') {
-		showError('error','Descrição da ação judicial não informada.','Alerta - ICFJUD','focaCampoErro(\'dacaojud\',\'frmInclusao\');');
+		showError('error','Descri&ccedil;&atilde;o da a&ccedil;&atilde;o judicial n&atilde;o informada.','Alerta - ICFJUD','focaCampoErro(\'dacaojud\',\'frmInclusao\');');
 		return false;
 	}
 	
 	cDacaojud.removeClass('campoErro');
+	
+	if (tpdconta == '00'){
+		showError('error','Selecione o tipo de conta.','Alerta - ICFJUD','focaCampoErro(\'tpdconta\',\'frmInclusao\');');
+		return false;		
+	}
+		
+	cTpdconta.removeClass('campoErro');	
+		
+	if (dtdtroca == '') {
+		showError('error','Data da troca n&atilde;o informada.','Alerta - ICFJUD','focaCampoErro(\'dtdtroca\',\'frmInclusao\');');
+		return false;
+	}
+	
+	cDtdtroca.removeClass('campoErro');	
+	
+	if (vldopera == '') {
+		showError('error','Valor da opera&ccedil;&atilde;o n&atilde;o informado.','Alerta - ICFJUD','focaCampoErro(\'vldopera\',\'frmInclusao\');');
+		return false;
+	}
+	
+	if (Number(vldopera.replace(",",".")) <= 0) {
+		showError('error','Valor da opera&ccedil;&atilde;o informada deve ser maior que 0,00.','Alerta - ICFJUD','focaCampoErro(\'vldopera\',\'frmInclusao\');');
+		return false;
+	}
+	
+	cVldopera.removeClass('campoErro');	
+	
+	if (dsdocmc7 == '') {
+		showError('error','CMC7 n&atilde;o informado.','Alerta - ICFJUD','focaCampoErro(\'dsdocmc7\',\'frmInclusao\');');
+		return false;
+	}	
+	
+	cDsdocmc7.removeClass('campoErro');	
 	
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, incluindo ICF ...");
@@ -326,6 +404,75 @@ function incluiICF() {
 			nrctades: nrctades,
 			dacaojud: dacaojud,
 			cdoperad: cdoperad,
+			dsdocmc7: dsdocmc7,
+			tpdconta: tpdconta,
+			dtdtroca: dtdtroca,
+			vldopera: vldopera,
+			redirect: "script_ajax"
+		}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}				
+	});
+
+}
+
+function reenviarICFs() {
+	
+	var nrctareq = null;
+	var dacaojud = null;
+	var chkReenviarICF = null;
+
+	var nrsctareq = '';
+	var listaacaojud = '';
+	var qtdItensSelecionados = 0;
+
+	for (var i = 0; i < lstDadosICF.length; i++)
+	{
+		var chkReenviarICF = $("#chkReenviarICF_" + i,"#trArquivosProcessados" + i);
+
+		if (chkReenviarICF.prop('checked') == true) {
+			nrctareq = $("#hddNrctareqICF_" + i,"#trArquivosProcessados" + i);
+			dacaojud = $("#hddDacaojudICF_" + i,"#trArquivosProcessados" + i);
+			if (nrsctareq == '') {
+				nrsctareq = nrctareq.val();
+				listaacaojud = dacaojud.val();
+			}
+			else
+			{
+				nrsctareq = nrsctareq + ';' + nrctareq.val();
+				listaacaojud = listaacaojud + ';' + dacaojud.val();
+			}
+
+			qtdItensSelecionados = qtdItensSelecionados + 1;
+		}
+	}
+
+	if (qtdItensSelecionados == 0) {
+		showError('error','Nenhum registro selecionado.','Alerta - ICFJUD','');
+		return false;
+	}
+	
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, reenviando ICFs selecionadas ...");
+	
+	// Executa script de consulta atrav?s de ajax
+	$.ajax({		
+		type: "POST",
+		dataType: "html",
+		url: UrlSite + "telas/icfjud/reenviar_icf.php", 
+		data: {
+			nrsctareq: nrsctareq,
+			listaacaojud: listaacaojud,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -360,18 +507,39 @@ function formataTabela(nmdivform) {
 	ordemInicial = [[0,0]];
 	
 	var arrayLargura = new Array();
-	arrayLargura[0] = '100px';
-	arrayLargura[1] = '72px';
-	arrayLargura[2] = '123px';
-	arrayLargura[3] = '115px';
-	arrayLargura[4] = '83px';
-	
 	var arrayAlinha = new Array();
+
+	if (cddopcao == 'I') {
+		arrayLargura[0] = '70px';
+		arrayLargura[1] = '70px';
+		arrayLargura[2] = '70px';
+		arrayLargura[3] = '70px';
+		arrayLargura[4] = '70px';
+
 	arrayAlinha[0] = 'right';
 	arrayAlinha[1] = 'right';
 	arrayAlinha[2] = 'right';
 	arrayAlinha[3] = 'right';
 	arrayAlinha[4] = 'left';
+		arrayAlinha[5] = 'left';
+	}
+	else
+	{
+		arrayLargura[0] = '15px';
+		arrayLargura[1] = '70px';
+		arrayLargura[2] = '70px';
+		arrayLargura[3] = '70px';
+		arrayLargura[4] = '70px';
+		arrayLargura[5] = '70px';
+
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'right';
+		arrayAlinha[2] = 'right';
+		arrayAlinha[3] = 'right';
+		arrayAlinha[4] = 'right';
+		arrayAlinha[5] = 'left';
+		arrayAlinha[6] = 'left';
+	}
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
 			
@@ -392,6 +560,7 @@ function consultaICF() {
 	cdbanreq = cCdbancon.val();
 	cdagereq = cCdagecon.val();
 	nrctareq = cNrctacon.val();
+	dsdocmc7 = cDsdocmc7.val();
 	
 	// Executa script de consulta através de ajax
 	$.ajax({		
@@ -404,6 +573,7 @@ function consultaICF() {
 			cdbanreq: cdbanreq,
 			cdagereq: cdagereq,
 			nrctareq: nrctareq,
+			dsdocmc7: dsdocmc7,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -451,4 +621,41 @@ function executaImpressao() {
 	var action = UrlSite + "telas/icfjud/imprime_icf.php";
 	
 	carregaImpressaoAyllos("frmImpressao",action);
+}
+
+function formataCampoCmc7(exitCampo){
+	var mask   = '<zzzzzzzz<zzzzzzzzzz>zzzzzzzzzzzz:';
+	var indice = 0;
+	var valorAtual = cDsdocmc7Inc.val();
+	var valorNovo  = '';
+	
+	if ( valorAtual == '' ){
+		return false;
+	}
+	
+	if ( exitCampo && valorAtual.length < 34) {
+		showError('error','Valor do CMC-7 inv&aacute;lido.','Alerta - Aimaro','cDsdocmc7Inc.focus();');
+	}
+	
+	//remover os caracteres de formatação
+	valorAtual = valorAtual.replace(/[^0-9]/g, "").substr(0,30);
+	
+	for ( var x = 0;  x < valorAtual.length; x++ ) {
+				
+		//verifica se é um separador da máscara
+		if (mask.charAt(indice) != 'z'){
+			valorNovo = valorNovo.concat(mask.charAt(indice));
+			indice++;
+		}
+		valorNovo = valorNovo.concat(valorAtual.charAt(x));		
+		indice++;
+	}
+	
+	// verifica se o valor digitado possui 30 caracteres sem formatação
+	if ( valorAtual.length == 30 ){
+		// Adiciona o ultimo caracter da máscara
+		valorNovo = valorNovo.concat(':');
+	}
+	
+	cDsdocmc7Inc.val(valorNovo);
 }
