@@ -29,6 +29,9 @@ CREATE OR REPLACE PACKAGE CECRED.CAPI0001 IS
 
 --                15/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de estorno de lançamentos na conta corrente              
 --	                         pc_estorna_lancto_conta (Fabio Adriano - AMcom)
+--
+--                13/12/2018 - Remoção da atualização da capa de lote de COTAS
+--                             Yuri - Mouts
 
 ---------------------------------------------------------------------------------------------------------
   -- Rotina para integralizar as cotas
@@ -161,15 +164,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
       pr_qtinfoln := rw_craplot.qtinfoln + 1;
       pr_qtcompln := rw_craplot.qtcompln + 1;
-      pr_nrseqdig := rw_craplot.nrseqdig + 1;
 
-      UPDATE craplot
+      -- Como não incrementa mais no update, Busca o sequencial 
+      rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                             pr_nmdcampo => 'NRSEQDIG',
+                             pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                            to_char(pr_dtmvtolt,'DD/MM/RRRR')||';'||
+                                            vc_cdagenci||';'||
+                                            pr_cdbccxlt||';'||
+                                            pr_nrdolote);
+      pr_nrseqdig := rw_craplot.nrseqdig;
+
+      -- comentado por Yuri - Mouts
+/*    UPDATE craplot
          SET nrseqdig = pr_nrseqdig
             ,qtcompln = pr_qtcompln
             ,qtinfoln = pr_qtinfoln
             ,vlcompcr = craplot.vlcompcr + pr_vlintegr
             ,vlinfocr = craplot.vlinfocr + pr_vlintegr
-       WHERE ROWID = rw_craplot.rowid;
+       WHERE ROWID = rw_craplot.rowid;*/
 
     END IF;
     
@@ -253,15 +266,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
       pr_qtinfoln := rw_craplot.qtinfoln + 1;
       pr_qtcompln := rw_craplot.qtcompln + 1;
-      pr_nrseqdig := rw_craplot.nrseqdig + 1;
+      -- Busca o sequencial 
+      rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                             pr_nmdcampo => 'NRSEQDIG',
+                             pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                            to_char(pr_dtmvtolt,'DD/MM/RRRR')||
+                                            vc_cdagenci||';'||
+                                            pr_cdbccxlt||';'||
+                                            pr_nrdolote);
 
-      UPDATE craplot
+      pr_nrseqdig := rw_craplot.nrseqdig;
+      -- comentado por Yuri - Mouts
+/*      UPDATE craplot
          SET nrseqdig = pr_nrseqdig
             ,qtcompln = pr_qtcompln
             ,qtinfoln = pr_qtinfoln
             ,vlcompdb = craplot.vlcompdb + pr_vlintegr
             ,vlinfodb = craplot.vlinfodb + pr_vlintegr
-       WHERE ROWID = rw_craplot.rowid;
+       WHERE ROWID = rw_craplot.rowid;*/
 
     END IF;
     
@@ -870,7 +892,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
      END IF;
 
      -- atualizar lote de cotas de capital (crédito lote)
-     UPDATE craplot
+     -- Comentado por Yuri - Mouts
+/*   UPDATE craplot
         SET qtcompln = (qtcompln - 1)
            ,qtinfoln = (qtinfoln - 1)
            ,vlcompcr = (vlcompcr - rw_craplct.vllanmto)
@@ -878,10 +901,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
       WHERE dtmvtolt = rw_craplct.dtmvtolt
         AND cdagenci = vc_cdagenci
         AND cdbccxlt = vc_cdbccxlt
-        AND nrdolote = vc_lote_cotas_capital;
+        AND nrdolote = vc_lote_cotas_capital;*/
 
      -- atualizar lote de depósito (débito lote)
-     UPDATE craplot
+     -- Comentado por Yuri - Mouts
+/*   UPDATE craplot
         SET qtcompln = (qtcompln - 1)
            ,qtinfoln = (qtinfoln - 1)
            ,vlcompdb = (vlcompdb - rw_craplct.vllanmto)
@@ -889,7 +913,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
       WHERE dtmvtolt = rw_craplct.dtmvtolt
         AND cdagenci = vc_cdagenci
         AND cdbccxlt = vc_cdbccxlt
-        AND nrdolote = vc_lote_deposito_vista;
+        AND nrdolote = vc_lote_deposito_vista;*/
 
      -- atualizar o valor das cotas
      UPDATE crapcot

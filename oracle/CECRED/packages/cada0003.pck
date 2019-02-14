@@ -836,6 +836,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             20/08/2018 - Não considerar cheque cancelado como sendo um produto contratado.
   --                          Rotina fn_produto_habilitado, cursor cr_crapfdc (Wagner, INC0021862).  
   --
+  --             12/12/2018 - Remoção da atualização da capa de lote
+  --                          Yuri - Mouts
+  --
   --             13/12/2018 - Tratamento pra inserção de registro duplicado na TBCADAST_COLABORADOR
   --                          evitando que na hora de um colaborador contratar credito não passe
   --                          pelo fluxo correto (Tiago INC0027920)
@@ -2335,6 +2338,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           RAISE vr_exc_saida;
         END IF;
       END IF;
+      -- Busca o sequencial 
+      -- Remoção atualização da capa de lote
+      rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                                         pr_nmdcampo => 'NRSEQDIG',
+                                         pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                                        to_char(pr_dtmvtolt,'DD/MM/RRRR')||
+                                         ';1;100;8008');
       CLOSE cr_craplot;
 
       -- Insere o lancamento de cotas / capital para a conta de origem
@@ -2359,9 +2369,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            100,
            8008,
            pr_nrdconta_org,
-           rw_craplot.nrseqdig + 1,
+           rw_craplot.nrseqdig,
            86,
-           rw_craplot.nrseqdig + 1,
+           rw_craplot.nrseqdig,
            pr_vlcapmin,
            0,
            0);
@@ -2387,6 +2397,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       rw_craplot.vlinfodb := nvl(rw_craplot.vlinfodb,0) + pr_vlcapmin;
       rw_craplot.vlcompdb := nvl(rw_craplot.vlcompdb,0) + pr_vlcapmin;
 
+      -- Busca o sequencial 
+      -- Remoção da atualização da capa do lote
+      rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                                         pr_nmdcampo => 'NRSEQDIG',
+                                         pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                            to_char(pr_dtmvtolt,'DD/MM/RRRR')||
+                                            ';1;100;8008');
 
       -- Insere o lancamento de cotas / capital para a conta de destino
       BEGIN
@@ -2410,9 +2427,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            100,
            8008,
            pr_nrdconta_dst,
-           rw_craplot.nrseqdig + 2,
+           rw_craplot.nrseqdig,
            67,
-           rw_craplot.nrseqdig + 2,
+           rw_craplot.nrseqdig,
            pr_vlcapmin,
            0,
            0);
@@ -2435,7 +2452,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       END;
 
       -- Atualiza a tabela de lotes
-      BEGIN
+      -- Remoção da atualização da capa de lote
+/*      BEGIN
         UPDATE craplot
            SET nrseqdig = nrseqdig + 2,
                qtinfoln = qtinfoln + 2,
@@ -2447,7 +2465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar CRAPLOT: '||SQLERRM;
           RAISE vr_exc_saida;
-      END;
+      END;*/
 
     EXCEPTION
       WHEN vr_exc_saida THEN

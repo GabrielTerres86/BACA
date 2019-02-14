@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Fabricio
-       Data    : Agosto/2013                     Ultima atualizacao: 04/07/2018
+       Data    : Agosto/2013                     Ultima atualizacao: 13/12/2018
 
        Dados referentes ao programa:
 
@@ -50,6 +50,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                     04/07/2018 - PJ450 Regulatório de Credito - Substituido o Insert na tabela craplcm 
                                  pela chamada da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)  
                    
+                    13/12/2018 - Remoção da atualização da Capa de Lote
+                                 Yuri - Mouts
     ............................................................................ */
 
     DECLARE
@@ -415,10 +417,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
           CLOSE cr_craplot;
 
           -- Atualiza o sequencial da capa do lote
-          rw_craplot.nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1;
+          -- Atualiza o sequencial da capa do lote
+          rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                                 pr_nmdcampo => 'NRSEQDIG',
+                                 pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                                to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                                ';1;100;8454');
+--          rw_craplot.nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1;
 
           -- Atualiza a capa do lote
-          BEGIN
+/*          BEGIN
             UPDATE craplot
                SET nrseqdig = rw_craplot.nrseqdig,
                    qtcompln = qtcompln + 1,
@@ -429,7 +437,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
-          END;
+          END;*/
 
 		  vr_horaminseg := TO_NUMBER(TO_CHAR(SYSDATE, 'hh24mmss')); -- 27/04/2018-deb.unico.
 
@@ -559,12 +567,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
             vr_flgsomar := FALSE;
           END IF;
 
-
+          -- Retirada a atualização da capa de lote. Yuri - Mouts
           -- Atualiza o sequencial da capa do lote
-          rw_craplot.nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1;
+          rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                                 pr_nmdcampo => 'NRSEQDIG',
+                                 pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                                to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                                ';1;100;8464');
+
+--          rw_craplot.nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1;
 
           -- Atualiza a capa do lote
-          BEGIN
+/*          BEGIN
             UPDATE craplot
                SET nrseqdig = rw_craplot.nrseqdig,
                    qtcompln = qtcompln + 1,
@@ -576,7 +590,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
               RAISE vr_exc_saida;
-          END;
+          END;*/
 
           -- Insere na tabela de cotas / capital
           BEGIN
