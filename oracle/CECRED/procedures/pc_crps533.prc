@@ -338,6 +338,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             
                01/02/2019 - Tratamento para gerar alinea 49 na segunda apresentação da alinea 28
                             Chamado PRB0040576 - Jose Dill (Mouts).
+							
+			   07/12/2018 - DEVOLU - Alcemir Mouts
 
 ............................................................................. */
 

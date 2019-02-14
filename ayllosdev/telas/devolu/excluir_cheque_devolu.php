@@ -4,6 +4,12 @@
  * File: excluir_cheque_devolu.php
  * Date: 01/10/2018
  * Time: 13:55
+ *
+ * ALTERAÇOES: 
+ *            07/12/2018 - Melhoria no processo de devoluções de cheques.
+ *                         Alcemir Mout's (INC0022559).
+ *
+ *
  */
 
 session_cache_limiter("private");
@@ -39,6 +45,10 @@ $xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 $xml .= '		<nrctachq>'.$nrctachq.'</nrctachq>';
 $xml .= '		<nrdocmto>'.$nrdocmto.'</nrdocmto>'; //nrcheque
 $xml .= '		<cdoperad>'.$cdoperad.'</cdoperad>';
+$xml .= '		<cdbandep>'.$cdbandep.'</cdbandep>';
+$xml .= '		<cdagedep>'.$cdagedep.'</cdagedep>';
+$xml .= '		<nrctadep>'.$nrctadep.'</nrctadep>';
+$xml .= '		<vllanmto>'.$vllanmto.'</vllanmto>';
 $xml .= '	</Dados>';
 $xml .= '</Root>';
 

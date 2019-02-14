@@ -30,6 +30,8 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
   --                            (Wagner/Sustenção - Chamado #861675).
   --
   --                29/05/2018 - Inclusao de rotinas para baixa de arquivos CCF do FTP da ABBC. Chamado SCTASK0012791 (Heitor - Mouts)
+  --
+  --				06/12/2018 - DEVOLU - Alcemir MOuts
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicao to tipo de array para teste da cdalinea na crepdev
