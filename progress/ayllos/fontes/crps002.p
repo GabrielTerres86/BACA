@@ -1,4 +1,4 @@
-/* ..........................................................................
+/* .........................................................................
 
    Programa: Fontes/crps002.p
    Sistema : Conta-Corrente - Cooperativa de Credito
@@ -24,90 +24,283 @@
                           - Kbase IT Solutions - Paulo Ricardo Maciel.
                           
                19/10/2009 - Alteracao Codigo Historico (Kbase). 
-               
-               04/12/2018 - Tratamento de saldo para cheque depósito em conta em prejuízo
-                          (Renato Raul Cordeiro - AMCom)
-
-               07/02/2019 - Inclusao parametro FLGRESTA na chamada do Oracle
-                          (Renato Raul Cordeiro - AMCom)
                       
-               11/02/2019 - Tratamento de saldo para cheque depósito em conta em prejuízo
-                            Adequações email Guilherme/Jaison
-                          (Renato Raul Cordeiro - AMCom)
-                      
-............................................................................. */
+............................................................................ */
 
 { includes/var_batch.i }
-{ sistema/generico/includes/var_oracle.i }
 
-ASSIGN glb_cdprogra = "crps002"
-       glb_cdcritic = 0
-       glb_dscritic = "".
+DEF        VAR aux_vlsdbloq AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-"  NO-UNDO.
+DEF        VAR aux_vlsdblpr AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-"  NO-UNDO.
+DEF        VAR aux_vlsdblfp AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-"  NO-UNDO.
+
+DEF        VAR aux_inhistor AS INT     FORMAT "99"                   NO-UNDO.
+DEF        VAR aux_cdhistor AS INT     FORMAT "9999"                 NO-UNDO.
+DEF        VAR aux_nrdconta AS INT     FORMAT "zzzz,zz9,9"           NO-UNDO.
+DEF        VAR aux_flgfirst AS LOGICAL                               NO-UNDO.
+
+glb_cdprogra = "crps002".
 
 RUN fontes/iniprg.p.
-                                                                        
-IF  glb_cdcritic > 0 THEN DO:
-    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                      " - " + glb_cdprogra + "' --> '"  +
-                      "Erro ao rodar: " + STRING(glb_cdcritic) + " " + 
-                      "'" + glb_dscritic + "'" + " >> log/proc_batch.log").
-    RETURN.
-END.
 
-ETIME(TRUE).
-       
-{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+IF   glb_cdcritic > 0 THEN
+     RETURN.
 
-RUN STORED-PROCEDURE pc_crps002 aux_handproc = PROC-HANDLE
-    (
-    INPUT glb_cdcooper,
-    INPUT glb_dtmvtolt,
-    INPUT INT(STRING(glb_flgresta,"1/0")),
-    INPUT 0,
-    OUTPUT 0,
-    OUTPUT 0,
-    OUTPUT 0,
-    OUTPUT "").
+IF   glb_dtmvtolt = 02/01/1995 THEN
+     DO:
+         RUN fontes/fimprg.p.
+         RETURN.
+     END.
 
-IF  ERROR-STATUS:ERROR  THEN DO:
-    DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
-        ASSIGN aux_msgerora = aux_msgerora + 
-                              ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
-    END.
-        
-    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                      " - " + glb_cdprogra + "' --> '"  +
-                      "Erro ao executar Stored Procedure: '" +
-                      aux_msgerora + "' >> log/proc_batch.log").
-    RETURN.
-END.
+aux_flgfirst = TRUE.
 
-CLOSE STORED-PROCEDURE pc_crps002 WHERE PROC-HANDLE = aux_handproc.
+FOR EACH crapdpb WHERE crapdpb.cdcooper = glb_cdcooper  AND
+                       crapdpb.dtliblan = glb_dtmvtolt  AND
+                       crapdpb.nrdconta > glb_nrctares  AND
+                       crapdpb.inlibera = 1
+                       USE-INDEX crapdpb3 NO-LOCK:
 
-{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+    IF   crapdpb.cdhistor <> aux_cdhistor   THEN
+         DO:
+             FIND craphis WHERE craphis.cdcooper = glb_cdcooper AND
+                                craphis.cdhistor = crapdpb.cdhistor
+                                NO-LOCK NO-ERROR.
+             
+             IF   NOT AVAILABLE craphis   THEN
+                  DO:
+                      glb_cdcritic = 80.
+                      RUN fontes/critic.p.
+                      UNIX SILENT
+                           VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
+                                  " - " + glb_cdprogra + "' --> '" +
+                                  glb_dscritic +
+                                  " >> log/proc_batch.log").
+                      UNDO, RETURN.
+                  END.
 
-ASSIGN glb_cdcritic = 0
-       glb_dscritic = ""
-       glb_cdcritic = pc_crps002.pr_cdcritic WHEN pc_crps002.pr_cdcritic <> ?
-       glb_dscritic = pc_crps002.pr_dscritic WHEN pc_crps002.pr_dscritic <> ?
-       glb_stprogra = IF pc_crps002.pr_stprogra = 1 THEN TRUE ELSE FALSE
-       glb_infimsol = IF pc_crps002.pr_infimsol = 1 THEN TRUE ELSE FALSE. 
+             ASSIGN aux_cdhistor = craphis.cdhistor
+                    aux_inhistor = craphis.inhistor.
+         END.
 
+    IF   crapdpb.nrdconta <> aux_nrdconta   THEN
+         DO:
+             FIND craptrf WHERE craptrf.cdcooper = glb_cdcooper      AND
+                                craptrf.nrdconta = crapdpb.nrdconta 
+                                NO-LOCK NO-ERROR.
 
-IF  glb_cdcritic <> 0   OR
-    glb_dscritic <> ""  THEN
-    DO:
-        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                          " - " + glb_cdprogra + "' --> '"  +
-                          "Erro ao rodar: " + STRING(glb_cdcritic) + " " + 
-                          "'" + glb_dscritic + "'" + " >> log/proc_batch.log").
-        RETURN.
-    END.                          
+             IF   AVAILABLE craptrf THEN
+                  IF   craptrf.tptransa = 1   AND   craptrf.insittrs = 2   THEN
+                       NEXT.
 
-UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    + 
-                  " - "   + glb_cdprogra + "' --> '"   +
-                  "Stored Procedure rodou em "         + 
-                  STRING(INT(ETIME / 1000),"HH:MM:SS") + 
-                  " >> log/proc_batch.log").
+             IF   aux_flgfirst   THEN
+                  ASSIGN aux_nrdconta = crapdpb.nrdconta
+                         aux_flgfirst = FALSE.
+             ELSE
+                  TRANS_1:
+
+                  DO TRANSACTION:
+
+                     DO WHILE TRUE:
+
+                        FIND crapsld WHERE crapsld.cdcooper = glb_cdcooper  AND
+                                           crapsld.nrdconta = aux_nrdconta
+                                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+                        IF   NOT AVAILABLE crapsld   THEN
+                             IF   LOCKED crapsld   THEN
+                                  DO:
+                                      PAUSE 1 NO-MESSAGE.
+                                      NEXT.
+                                  END.
+                             ELSE
+                                  DO:
+                                      glb_cdcritic = 10.
+                                      RUN fontes/critic.p.
+                                      UNIX SILENT
+                                      VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
+                                              " - " + glb_cdprogra + "' --> '" +
+                                              glb_dscritic +
+                                              " >> log/proc_batch.log").
+                                      RETURN.
+                                  END.
+
+                        LEAVE.
+
+                     END.  /*  Fim do DO WHILE TRUE  */
+
+                     ASSIGN crapsld.vlsdbloq = crapsld.vlsdbloq - aux_vlsdbloq
+                            crapsld.vlsdblpr = crapsld.vlsdblpr - aux_vlsdblpr
+                            crapsld.vlsdblfp = crapsld.vlsdblfp - aux_vlsdblfp
+                            crapsld.vlsddisp = crapsld.vlsddisp + aux_vlsdbloq
+                                                                + aux_vlsdblpr
+                                                                + aux_vlsdblfp
+
+                            aux_vlsdbloq = 0
+                            aux_vlsdblpr = 0
+                            aux_vlsdblfp = 0.
+
+                     IF   crapsld.vlsdbloq < 0   OR
+                          crapsld.vlsdblpr < 0   OR
+                          crapsld.vlsdblfp < 0   THEN
+                          DO:
+                              glb_cdcritic = 136.
+                              RUN fontes/critic.p.
+                              UNIX SILENT
+                                   VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
+                                          " - " + glb_cdprogra + "' --> '" +
+                                          glb_dscritic + " CONTA: " +
+                                          STRING(aux_nrdconta,"zzzz,zz9,9") +
+                                          " >> log/proc_batch.log").
+                          END.
+
+                     DO WHILE TRUE:
+
+                        FIND crapres WHERE crapres.cdcooper = glb_cdcooper  AND
+                                           crapres.cdprogra = glb_cdprogra
+                                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+                        IF   NOT AVAILABLE crapres   THEN
+                             IF   LOCKED crapres   THEN
+                                  DO:
+                                      PAUSE 1 NO-MESSAGE.
+                                      NEXT.
+                                  END.
+                             ELSE
+                                  DO:
+                                      glb_cdcritic = 151.
+                                      RUN fontes/critic.p.
+                                      UNIX SILENT
+                                      VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
+                                             " - " + glb_cdprogra + "' --> '" +
+                                             glb_dscritic +
+                                             " >> log/proc_batch.log").
+                                      UNDO TRANS_1, RETURN.
+                                  END.
+
+                        LEAVE.
+
+                     END.  /*  Fim do DO WHILE TRUE  */
+
+                     ASSIGN crapres.nrdconta = crapsld.nrdconta
+                            aux_nrdconta     = crapdpb.nrdconta.
+
+                  END.  /* Fim da transacao */
+         END.
+
+    IF   aux_inhistor = 3   THEN
+         aux_vlsdbloq = aux_vlsdbloq + crapdpb.vllanmto.
+    ELSE
+         IF   aux_inhistor = 4   THEN
+              aux_vlsdblpr = aux_vlsdblpr + crapdpb.vllanmto.
+         ELSE
+              IF   aux_inhistor = 5   THEN
+                   aux_vlsdblfp = aux_vlsdblfp + crapdpb.vllanmto.
+              ELSE
+                   DO:
+                       glb_cdcritic = 83.
+                       RUN fontes/critic.p.
+                       UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
+                                          " - " + glb_cdprogra + "' --> '" +
+                                          glb_dscritic +
+                                          " >> log/proc_batch.log").
+                       UNDO, RETURN.
+                   END.
+
+END.   /* Fim do FOR EACH */
+
+IF   aux_nrdconta <> 0   THEN
+     TRANS1:
+
+     DO TRANSACTION:
+
+        DO WHILE TRUE:
+
+           FIND crapsld WHERE crapsld.cdcooper = glb_cdcooper   AND
+                              crapsld.nrdconta = aux_nrdconta
+                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+           IF   NOT AVAILABLE crapsld   THEN
+                IF   LOCKED crapsld   THEN
+                     DO:
+                         PAUSE 1 NO-MESSAGE.
+                         NEXT.
+                     END.
+                ELSE
+                     DO:
+                         glb_cdcritic = 10.
+                         RUN fontes/critic.p.
+                         UNIX SILENT
+                              VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
+                                     " - " + glb_cdprogra + "' --> '" +
+                                     glb_dscritic +
+                                     " >> log/proc_batch.log").
+                         RETURN.
+                     END.
+
+           LEAVE.
+
+        END.  /*  Fim do DO WHILE TRUE  */
+
+        ASSIGN crapsld.vlsdbloq = crapsld.vlsdbloq - aux_vlsdbloq
+               crapsld.vlsdblpr = crapsld.vlsdblpr - aux_vlsdblpr
+               crapsld.vlsdblfp = crapsld.vlsdblfp - aux_vlsdblfp
+               crapsld.vlsddisp = crapsld.vlsddisp + aux_vlsdbloq
+                                                   + aux_vlsdblpr
+                                                   + aux_vlsdblfp
+
+               aux_vlsdbloq = 0
+               aux_vlsdblpr = 0
+               aux_vlsdblfp = 0.
+
+        IF   crapsld.vlsdbloq < 0   OR
+             crapsld.vlsdblpr < 0   OR
+             crapsld.vlsdblfp < 0   THEN
+             DO:
+                 glb_cdcritic = 136.
+                 RUN fontes/critic.p.
+                 UNIX SILENT
+                      VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
+                             " - " + glb_cdprogra + "' --> '" +
+                             glb_dscritic + " CONTA: " + 
+                             STRING(aux_nrdconta,"zzzz,zz9,9") +
+                             " >> log/proc_batch.log").
+             END.
+
+        DO WHILE TRUE:
+
+           FIND crapres WHERE crapres.cdcooper = glb_cdcooper   AND
+                              crapres.cdprogra = glb_cdprogra
+                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+           IF   NOT AVAILABLE crapres   THEN
+                IF   LOCKED crapres   THEN
+                     DO:
+                         PAUSE 1 NO-MESSAGE.
+                         NEXT.
+                     END.
+                ELSE
+                     DO:
+                         glb_cdcritic = 151.
+                         RUN fontes/critic.p.
+                         UNIX SILENT
+                              VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
+                                     " - " + glb_cdprogra + "' --> '" +
+                                     glb_dscritic +
+                                     " >> log/proc_batch.log").
+                         UNDO TRANS1, RETURN.
+                     END.
+
+           LEAVE.
+
+        END.  /*  Fim do DO WHILE TRUE  */
+
+        ASSIGN crapres.nrdconta = crapsld.nrdconta.
+
+     END.  /* Fim da transacao */
+
+glb_cdcritic = 0.
 
 RUN fontes/fimprg.p.
+
+/* .......................................................................... */
+
+
