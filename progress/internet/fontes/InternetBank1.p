@@ -1459,9 +1459,9 @@ ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmextttl>" +
                                "</flglimcr><flgconsu>" +
                                STRING(aux_flgconsu) +
                                "</flgconsu><vltotsob>" +
-                               STRING(aux_vltotsob, "zzz,zzz,zzz,zz9.99") +
+                               STRING(aux_vltotsob, "zzz,zzz,zzz,zz9.99-") +
                                "</vltotsob><vlliqjur>" +
-                               STRING(aux_vlliqjur, "zzz,zzz,zzz,zz9.99") +
+                               STRING(aux_vlliqjur, "zzz,zzz,zzz,zz9.99-") +
                                "</vlliqjur><vljurcap>" +
                                TRIM(STRING(aux_vljurcap,"zzz,zzz,zzz,zz9.99-")) +
                                "</vljurcap><flgbinss>" +
@@ -1469,19 +1469,19 @@ ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmextttl>" +
                                "</flgbinss><nmtitula>" + 
                                aux_nmtitula + 
                                "</nmtitula><vllimpag>" + 
-                               STRING(aux_vllimpag, "zzz,zzz,zzz,zz9.99") +
+                               STRING(aux_vllimpag, "zzz,zzz,zzz,zz9.99-") +
                                "</vllimpag><vllimtrf>" +
-                               STRING(aux_vllimtrf, "zzz,zzz,zzz,zz9.99") +
+                               STRING(aux_vllimtrf, "zzz,zzz,zzz,zz9.99-") +
                                "</vllimtrf><vllimted>" + 
-                               STRING(aux_vllimted, "zzz,zzz,zzz,zz9.99") + 
+                               STRING(aux_vllimted, "zzz,zzz,zzz,zz9.99-") + 
                                "</vllimted><vllimvrb>" + 
-                               STRING(aux_vllimvrb, "zzz,zzz,zzz,zz9.99") + 
+                               STRING(aux_vllimvrb, "zzz,zzz,zzz,zz9.99-") + 
                                "</vllimvrb><vllimflp>" + 
-                               STRING(aux_vllimflp, "zzz,zzz,zzz,zz9.99") + 
+                               STRING(aux_vllimflp, "zzz,zzz,zzz,zz9.99-") + 
                                "</vllimflp>" + 
-                               "<vlemplib>" + STRING(aux_vlemplib, "zzz,zzz,zzz,zz9.99") + "</vlemplib>" +
-                               "<vlchqlib>" + STRING(aux_vlchqlib, "zzz,zzz,zzz,zz9.99") + "</vlchqlib>" + 
-                               "<vlblqtaa>" + STRING(aux_vlblqtaa, "zzz,zzz,zzz,zz9.99") + "</vlblqtaa>" +
+                               "<vlemplib>" + STRING(aux_vlemplib, "zzz,zzz,zzz,zz9.99-") + "</vlemplib>" +
+                               "<vlchqlib>" + STRING(aux_vlchqlib, "zzz,zzz,zzz,zz9.99-") + "</vlchqlib>" + 
+                               "<vlblqtaa>" + STRING(aux_vlblqtaa, "zzz,zzz,zzz,zz9.99-") + "</vlblqtaa>" +
                                "</CORRENTISTA>".
 
 
