@@ -220,24 +220,38 @@ create or replace package body cecred.INSS0004 is
         vr_cod_token_api    VARCHAR2(4000);
         vr_typ_saida        VARCHAR2(5000);
         vr_out              VARCHAR2(5000);
+        vr_exc_erro         EXCEPTION;
     BEGIN
+                
+        IF pr_tpservico = 1 THEN        
+           
         vr_cod_token_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                         pr_cdcooper => 0,
                                                       pr_cdacesso => 'COD_TOKEN_API_INSS');
         
-        IF pr_tpservico = 1 THEN                                            
           vr_token_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                         pr_cdcooper => 0,
                                                         pr_cdacesso => 'TOKEN_API_ECO_INSS');
         ELSE
+          vr_cod_token_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                        pr_cdcooper => 0,
+                                                        pr_cdacesso => 'COD_TOKEN_API_INSS');
+                                                        
           vr_token_api := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                     pr_cdcooper => 0,
                                                     pr_cdacesso => 'TOKEN_API_REENV_CAD_INSS');
         END IF;
 
+        IF trim(vr_cod_token_api) IS NULL OR 
+           trim(vr_token_api)     IS NULL THEN
+          
+          RAISE vr_exc_erro;
+          
+        END IF;
+        
         vr_comando_curl := 'curl -k -X POST ' 
                             || '"'||vr_token_api||'"'
-                            || ' -H "authorization: Basic eTFKZ05HYmNkcERmSzVMdXBxblY5c0l2aks4YTpFRUlIWGpfYnNmMEVMVk5CVjVuX0FrNVNmTThh"'
+                            || ' -H "authorization: Basic ' || vr_cod_token_api||'"'
                             || ' -H "cache-control: no-cache"';
         
         GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -252,16 +266,23 @@ create or replace package body cecred.INSS0004 is
         vr_token_type := regexp_replace(json(vr_out).get('token_type').to_char,'^\"|\"$','');
 
         IF vr_token = '' THEN
-            pr_retorno := 'NOK';
+            RAISE vr_exc_erro;
         END IF;   
         
         IF vr_token_type = '' THEN
-            pr_retorno := 'NOK';
+            RAISE vr_exc_erro;
         END IF;
 
         pr_token := vr_token;
         pr_token_type := vr_token_type;
         pr_retorno := 'OK';
+        
+    EXCEPTION 
+       WHEN vr_exc_erro THEN
+           pr_retorno := 'NOK';
+       WHEN OTHERS THEN           
+           pr_retorno := 'NOK';
+            
     END pc_obter_token;
 
     /* 
@@ -428,7 +449,6 @@ create or replace package body cecred.INSS0004 is
         pr_msgreceb := vr_msgreceb;
         pr_nmdireto := vr_nmdireto;
         pr_retorno := 'OK';
-        
     EXCEPTION 
         WHEN OTHERS THEN
             pr_retorno := 'NOK';
@@ -475,7 +495,7 @@ create or replace package body cecred.INSS0004 is
                                                    pr_cdacesso => 'LINK_API_REENV_CAD_INSS'); 
         END IF;
 
-        IF vr_link_api = '' THEN
+        IF trim(vr_link_api) IS NULL THEN
             pr_dsderror := 'Erro ao obter API do servico SOAP';
             RAISE vr_exception;
         END IF;

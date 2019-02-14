@@ -12043,7 +12043,9 @@ create or replace package body cecred.INSS0001 as
         
       -- Verifica se ocorreu erro no envio da requisição SOAP
       IF vr_retorno <> 'OK' THEN
-          vr_dscritic := 'Erro ao enviar requisicao SOAP (INSS0001.pc_envia_requisicao) - ' || vr_dscritic;
+          IF trim(vr_dscritic) IS NULL THEN
+            vr_dscritic := 'Erro ao enviar requisicao de consulta (INSS0001.pc_envia_requisicao_soap).';
+          END IF;  
           RAISE vr_exc_erro;    
       END IF;
 
@@ -12052,7 +12054,10 @@ create or replace package body cecred.INSS0001 as
 
       -- Verifica se ocorreu erro durante a construção do XML de retorno da consulta de margem consignável
       IF vr_retorno <> 'OK' THEN
-          vr_dscritic := 'Erro ao gerar XML consulta de margem consignavel (INSS0001.pc_gerar_xml_cons_marg_consig) - ' || vr_dscritic;
+
+          IF trim(vr_dscritic) IS NULL THEN
+            vr_dscritic := 'Erro ao pegar retorno no XML de consulta (INSS0001.pc_pegar_retorno_xml).';
+          END IF;         
           RAISE vr_exc_erro;    
       END IF;
       
