@@ -428,6 +428,10 @@
 
 				13/11/2018 - Adicionada parametros a procedure 
 							pc_verifica_tarifa_operacao. PRJ 345. (Fabio Stein - Supero)
+
+                14/02/2019 - Ajuste de variavel de lote para apresentacao no aimaro web.
+                             Chamado INC0032723 - Gabriel (Mouts).
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -680,7 +684,7 @@ PROCEDURE consulta-extrato:
                     ASSIGN tt-extrato_conta.dsagenci = xText:NODE-VALUE WHEN xField:NAME = "dsagenci".
                     ASSIGN tt-extrato_conta.cdagenci = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagenci".
                     ASSIGN tt-extrato_conta.cdbccxlt = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdbccxlt".
-                    ASSIGN tt-extrato_conta.nrdolote = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdolote".
+                    ASSIGN tt-extrato_conta.nrdolote = DECI(xText:NODE-VALUE) WHEN xField:NAME = "nrdolote".
                     ASSIGN tt-extrato_conta.dsidenti = xText:NODE-VALUE WHEN xField:NAME = "dsidenti".
                     ASSIGN tt-extrato_conta.nrparepr = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrparepr".
                     ASSIGN tt-extrato_conta.dsextrat = xText:NODE-VALUE WHEN xField:NAME = "dsextrat".

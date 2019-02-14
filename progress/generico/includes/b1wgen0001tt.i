@@ -98,6 +98,10 @@
                06/11/2015 - Adicionada coluna indebcre na tt-tarifas.
 
 			   30/05/2018 - incluido dscomple na tt-extrato_conta (Alcemir Mout's - Prj. 467).
+
+               14/02/2019 - Ajuste de variavel de lote para apresentacao no aimaro web.
+                            Chamado INC0032723 - Gabriel (Mouts).
+
 ............................................................................. */
 
 DEF TEMP-TABLE tt-valores_conta NO-UNDO
@@ -143,7 +147,7 @@ DEF TEMP-TABLE tt-extrato_conta NO-UNDO
     FIELD dsagenci LIKE crapage.nmextage
     FIELD cdagenci LIKE crapage.cdagenci
     FIELD cdbccxlt AS INTE FORMAT "zz9"
-    FIELD nrdolote AS INTE FORMAT "zzz,zz9"
+    FIELD nrdolote AS DECI FORMAT "zzz,zz9"
     FIELD dsidenti LIKE craplcm.dsidenti
     FIELD nrparepr AS INTE
     FIELD dsextrat LIKE craphis.dsextrat
