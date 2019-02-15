@@ -221,7 +221,7 @@ if (getByTagName($dados,"DDDEBANT") == 0){
                     <input  class='campo' id='vllimpro' name='vllimpro' value="<?php echo $vllimite; ?>">
 
                     <label for="flgdebit"><?php echo utf8ToHtml('Habilita função débito:') ?></label>
-                    <input type="checkbox" name="flgdebit" id="flgdebit" class="campo" dtb="1" disabled />
+                    <input type="checkbox" <?=$flgdebit?> name="flgdebit" id="flgdebit" class="campo" dtb="1" disabled />
                     <br />
                     <label for="flgimpnp"><?php echo utf8ToHtml('Promissória:') ?></label>
                     <select name="flgimpnp" id="flgimpnp" class="campo">

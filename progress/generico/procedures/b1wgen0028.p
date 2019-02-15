@@ -889,7 +889,7 @@ PROCEDURE lista_cartoes:
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Listar cartoes de credito.".    
            
-    FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd  
+    FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd dtinsori
                                dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
                          WHERE crawcrd.cdcooper = par_cdcooper    AND
                            crawcrd.nrdconta = par_nrdconta    NO-LOCK:
@@ -3369,6 +3369,9 @@ PROCEDURE cadastra_novo_cartao:
               devera ser tratado o relatorio de "demonstrativo produtos por
               colaborador" da tela CONGPR. (Fabricio - 04/05/2012) */
            aux_dstransa = "Cadastrar novo cartao de credito.".
+           
+    IF par_nrctrcrd > 0 THEN
+      ASSIGN aux_dstransa = "Alterar cartao de credito.".
            
 
     FOR FIRST crapass FIELDS(nrdconta inpessoa nrcpfcgc vllimdeb)  
