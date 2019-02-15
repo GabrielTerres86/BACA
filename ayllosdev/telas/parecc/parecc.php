@@ -19,6 +19,10 @@
 	isPostMethod();
 	
 	require_once("../../includes/carrega_permissoes.php");
+
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'@')) != '') {		
+		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+	}
 ?>
 
 <html>

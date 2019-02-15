@@ -19,7 +19,7 @@
 	isPostMethod();		
 	
 	$cddopcao = isset($_POST["cddopcao"]) ? $_POST["cddopcao"] : "";
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao,false)) <> '') {
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A',false)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
 	

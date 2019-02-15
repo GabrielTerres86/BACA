@@ -115,13 +115,13 @@ function estadoInicial() {
 	$('#frmCab').css({ 'display': 'block' });
 	$('#divTela').css({ 'width': '510px', 'padding-bottom': '2px' });
 
-	desabilitaCampos();
-
 	// Adicionar o foco no campo de OPCAO 
-	$("#cddopcao", "#frmCab").val("A").focus();
+	$("#cddopcao", "#frmCab").val("C").focus();
 	$("#cdcooperativa", "#frmCab").val("0");
 	$("#idfuncionalidade", "#frmCab").val("0");
 	$("#idtipoenvio", "#frmCab").val("0");
+
+	desabilitaCampos();
 
 	carregarFlagHabilitar();
 }
@@ -137,6 +137,8 @@ function desabilitaCampos() {
         $('#btSelecioneDisponiveis', '#frmCadsoa').attr("disabled", "disabled");
         $('#btSelecioneAderidos', '#frmCadsoa').attr("disabled", "disabled");
 
+        $('#flghabilitar', '#frmCab').attr("disabled", "disabled");
+
         $('#btSalvar', '#frmCadsoa').attr("disabled", "disabled");
     } else {
         $('#btLeft', '#frmCadsoa').removeAttr("disabled", "disabled");
@@ -147,6 +149,10 @@ function desabilitaCampos() {
 
         $('#btSelecioneDisponiveis', '#frmCadsoa').removeAttr("disabled", "disabled");
         $('#btSelecioneAderidos', '#frmCadsoa').removeAttr("disabled", "disabled");
+
+        if (glb_cdcooper == 3) {
+            $('#flghabilitar', '#frmCab').removeAttr("disabled", "disabled");
+        }
 
         $('#btSalvar', '#frmCadsoa').removeAttr("disabled", "disabled");
     }

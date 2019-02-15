@@ -82,7 +82,7 @@
 	}
 	
     $cooperativas = $xmlObj->roottag->tags[0]->tags;
-	
+
 ?>
 
 <form id="frmCab" name="frmCab" class="formulario cabecalho" width="700px">
@@ -93,7 +93,10 @@
 				<div>
 				<label for="cddopcao"><? echo utf8ToHtml('Op&ccedil;&atilde;o:') ?></label>
 				<select id="cddopcao" name="cddopcao" onchange="desabilitaCampos()">
+					
+					<?php if (in_array('A', $opcoesTela)) { ?>
 					<option value="A"><? echo utf8ToHtml('A - Alterar Par&acirc;metros')?> </option>
+					<?php } ?>
 					<option value="C"><? echo utf8ToHtml('C - Consultar Par&acirc;metros')?> </option>
 				</select>
 			</td>
