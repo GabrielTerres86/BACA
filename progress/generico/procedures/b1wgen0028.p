@@ -551,7 +551,7 @@
                              
 				12/12/2018 - Adicionado campo flgprovi e criado Procedure para validar a assinatura da senha TA Online (Anderson-Alan Supero P432)
 
-                             
+
                23/01/2018 - Alteraçao na rotina de alterar_administradora para contemplar o insitdec (deciçao da esteira).
                             INC0027746 Augusto - Supero
                             
@@ -829,7 +829,7 @@ PROCEDURE lista_cartoes:
 
     DEF VAR aux_vltotccr AS DECI NO-UNDO.
     DEF VAR aux_dssitcrd AS CHAR NO-UNDO.
-        
+
     DEF VAR aux_flgprovi LIKE crapcrd.flgprovi NO-UNDO.
         
     EMPTY TEMP-TABLE tt-erro.
@@ -890,9 +890,9 @@ PROCEDURE lista_cartoes:
            aux_dstransa = "Listar cartoes de credito.".    
            
     FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd dtinsori
-                               dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
-                         WHERE crawcrd.cdcooper = par_cdcooper    AND
-                           crawcrd.nrdconta = par_nrdconta    NO-LOCK:
+                            dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
+                      WHERE crawcrd.cdcooper = par_cdcooper    AND
+                            crawcrd.nrdconta = par_nrdconta    NO-LOCK:
                                                                       
         FIND crapadc WHERE crapadc.cdcooper = par_cdcooper      AND
                            crapadc.cdadmcrd = crawcrd.cdadmcrd  
@@ -3372,7 +3372,7 @@ PROCEDURE cadastra_novo_cartao:
            
     IF par_nrctrcrd > 0 THEN
       ASSIGN aux_dstransa = "Alterar cartao de credito.".
-           
+
 
     FOR FIRST crapass FIELDS(nrdconta inpessoa nrcpfcgc vllimdeb)  
                      WHERE crapass.cdcooper = par_cdcooper   AND
@@ -25297,8 +25297,8 @@ PROCEDURE valida-senha-ta-online:
                            INPUT-OUTPUT aux_dscritic).
             
         END.
-   
-END.
+        
+    END.
     ELSE IF (LENGTH(par_cddsenha) = 8) THEN
     DO:
         FIND FIRST crapsnh WHERE crapsnh.cdcooper = par_cdcooper     AND

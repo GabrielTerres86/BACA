@@ -1974,7 +1974,7 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE INPUT  PARAMETER par_nrperger AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgerlog AS LOGICAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_idcobope AS INTEGER     NO-UNDO.
-
+    
     DEFINE OUTPUT PARAMETER par_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     DEFINE OUTPUT PARAM TABLE FOR tt-msg-confirma.
@@ -4287,7 +4287,7 @@ PROCEDURE efetua_alteracao_limite:
     DEFINE INPUT  PARAMETER par_nrperger AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgerlog AS LOGICAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_idcobope AS INTEGER     NO-UNDO.
-
+    
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     
     DEFINE VARIABLE h-b1wgen0021 AS HANDLE  NO-UNDO.
@@ -8154,6 +8154,9 @@ PROCEDURE carrega_dados_proposta_bordero:
     DEFINE VARIABLE aux_vlsldapl AS DEC                 NO-UNDO.
     DEFINE VARIABLE h-b1wgen0081 AS HANDLE              NO-UNDO.  
 
+    DEF VAR aux_dtassele AS DATE                        NO-UNDO. /* Data assinatura eletronica */
+    DEF VAR aux_dsvlrprm AS CHAR                        NO-UNDO. /* Data de corte */
+
     EMPTY TEMP-TABLE tt-proposta_bordero_dscchq.
     EMPTY TEMP-TABLE tt-emprsts.
     EMPTY TEMP-TABLE tt-erro.
@@ -8338,6 +8341,8 @@ PROCEDURE carrega_dados_proposta_bordero:
                                                OUTPUT aux_flgativo,
                                                OUTPUT aux_nrctrhcj,
                                                OUTPUT aux_flgliber,
+                                               OUTPUT aux_dtassele,
+                                               OUTPUT aux_dsvlrprm,
                                               OUTPUT TABLE tt-erro,
                                               OUTPUT TABLE tt-cartoes,
                                               OUTPUT TABLE tt-lim_total).
@@ -9032,6 +9037,9 @@ PROCEDURE carrega_dados_proposta_limite:
     DEF VAR aux_vlsldtot AS DEC                        NO-UNDO.
     DEF VAR aux_vlsldapl AS DEC                        NO-UNDO.    
 
+    DEF VAR aux_dtassele AS DATE                       NO-UNDO. /* Data assinatura eletronica */
+    DEF VAR aux_dsvlrprm AS CHAR                       NO-UNDO. /* Data de corte */
+
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-emprsts.
     EMPTY TEMP-TABLE tt-proposta_limite_chq.
@@ -9210,6 +9218,8 @@ PROCEDURE carrega_dados_proposta_limite:
                                            OUTPUT aux_flgativo,
                                            OUTPUT aux_nrctrhcj,
                                            OUTPUT aux_flgliber,
+                                           OUTPUT aux_dtassele,
+                                           OUTPUT aux_dsvlrprm,
                                           OUTPUT TABLE tt-erro,
                                           OUTPUT TABLE tt-cartoes,
                                           OUTPUT TABLE tt-lim_total).
@@ -12409,7 +12419,7 @@ PROCEDURE efetua_liber_anali_bordero:
                 DO:
                   ASSIGN aux_vltotiofcpl = aux_vltotiofcpl + ROUND(DECI(pc_calcula_valor_iof.pr_vliofcpl),2).
                 END.
-              
+             
               /* Soma IOF complementar */
               IF pc_calcula_valor_iof.pr_flgimune <> ? THEN
                   DO:

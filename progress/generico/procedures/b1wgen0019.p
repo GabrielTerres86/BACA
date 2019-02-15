@@ -7760,6 +7760,9 @@ PROCEDURE obtem-dados-proposta:
     DEF VAR aux_vlsldtot AS DEC                                     NO-UNDO.
     DEF VAR aux_vlsldapl AS DEC                                     NO-UNDO.
     
+    DEF VAR aux_dtassele AS DATE                                    NO-UNDO. /* Data assinatura eletronica */
+    DEF VAR aux_dsvlrprm AS CHAR                                    NO-UNDO. /* Data de corte */
+    
     EMPTY TEMP-TABLE tt-dados-prp.
     EMPTY TEMP-TABLE tt-erro.
 
@@ -8240,6 +8243,8 @@ PROCEDURE obtem-dados-proposta:
                                        OUTPUT aux_flgativo,
                                        OUTPUT aux_nrctrhcj,
                                        OUTPUT aux_flgliber,
+                                       OUTPUT aux_dtassele,
+                                       OUTPUT aux_dsvlrprm,
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-cartoes,
                                       OUTPUT TABLE tt-lim_total). 

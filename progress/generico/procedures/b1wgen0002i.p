@@ -275,7 +275,7 @@
 
                15/09/2017 - Ajuste na variavel de retorno dos co-responsaveis
                             pois estourava para conta com muitos AVAIS (Marcos-Supero)   
-
+                            
                06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo convertida (Marcos-Supero)                            
                             
                04/05/2018 - Alterado para buscar descricao da situacao de conta do oracle. PRJ366 (Lombardi)
@@ -589,6 +589,8 @@ PROCEDURE busca-dados-impressao:
     DEF VAR par_flgativo AS LOGI                                    NO-UNDO.
     DEF VAR par_nrctrhcj AS INTE                                    NO-UNDO.
     DEF VAR par_flgliber AS logi                                    NO-UNDO.
+	DEF VAR aux_dtassele AS DATE                                    NO-UNDO. /* Data assinatura eletronica */
+    DEF VAR aux_dsvlrprm AS CHAR                                    NO-UNDO. /* Data de corte */
 
     RUN sistema/generico/procedures/b1wgen0001.p PERSISTENT
         SET h-b1wgen0001.
@@ -921,7 +923,9 @@ PROCEDURE busca-dados-impressao:
                                            INPUT par_flgerlog,  
                                           OUTPUT par_flgativo,  
                                           OUTPUT par_nrctrhcj,  
-                                          OUTPUT par_flgliber,  
+                                          OUTPUT par_flgliber,
+										  OUTPUT aux_dtassele,
+										  OUTPUT aux_dsvlrprm,
                                           OUTPUT TABLE tt-erro,
                                           OUTPUT TABLE tt-cartoes,
                                           OUTPUT TABLE tt-lim_total).
@@ -4016,7 +4020,7 @@ PROCEDURE impressao-prnf:
    DEF VAR aux_cpfcgav1 AS CHAR                                      NO-UNDO.
    DEF VAR aux_cpfcgav2 AS CHAR                                      NO-UNDO.
    DEF VAR aux_dtultdma AS DATE                                      NO-UNDO.
-
+  
   /* Variaveis para o XML */ 
    DEF VAR xDoc          AS HANDLE                                   NO-UNDO.   
    DEF VAR xRoot         AS HANDLE                                   NO-UNDO.  
@@ -4027,7 +4031,7 @@ PROCEDURE impressao-prnf:
    DEF VAR aux_cont      AS INTEGER                                  NO-UNDO. 
    DEF VAR ponteiro_xml  AS MEMPTR                                   NO-UNDO. 
    DEF VAR xml_req       AS LONGCHAR                                 NO-UNDO.
-  
+
    DEF VAR aux_dssitcta AS CHAR                                      NO-UNDO.
 
    /*  Nota Promissoria .................................................... */
@@ -5108,7 +5112,7 @@ PROCEDURE impressao-prnf:
                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
             
             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-            
+          
             ASSIGN aux_dssitcta = ""
                    aux_des_erro = ""
                    aux_dscritic = ""
@@ -5121,7 +5125,7 @@ PROCEDURE impressao-prnf:
           
             IF aux_des_erro = "NOK" THEN 
                 aux_dssitcta = "".
-          
+
             ASSIGN rel_dssitdct = STRING(crapass.cdsitdct) +  "-" + UPPER(aux_dssitcta).
 
            IF NOT VALID-HANDLE(h-b1wgen9999) THEN
