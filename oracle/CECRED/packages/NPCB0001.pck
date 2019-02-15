@@ -1554,17 +1554,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       --se o tipo de título (vr_tituloCIP.CodEspTit) é
       -- 31 (fatura de cartão de crédito) então deve ser sempre "baixa operacional parcial" (tipos 2 ou 3).
       IF   vr_tituloCIP.CodEspTit = 31 THEN                                     
-      IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085' THEN
+        IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085' THEN
           pr_tpdbaixa := 3; -- Baixa Operacional Parcial Interbancária
-      ELSE
+        ELSE
           pr_tpdbaixa := 2; -- Baixa Operacional Parcial Intrabancária
-      END IF;      
+        END IF;      
       ELSE 
         IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085'  THEN 
           pr_tpdbaixa := 0; -- Baixa Operacional Integral Interbancária
         ELSE
           pr_tpdbaixa := 1; -- Baixa Operacional Integral Intrabancária
-    END IF;
+        END IF;
       END IF;
     END IF;
     
