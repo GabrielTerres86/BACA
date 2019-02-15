@@ -107,5 +107,13 @@ update crawcrd set flgprcrd = 0 where cdcooper = 7 and nrdconta = 34991 and nrct
 update crawcrd set insitcrd = 6, dtcancel = '31/08/2018',nrcrcard = 0.00, flgprcrd = 0 where cdcooper = 11 and nrdconta = 454680 and nrctrcrd = 78249;
 
 
+/* INC0031198 */
+update crawcrd 
+   set insitcrd = 3
+      ,dtlibera = to_date('21/01/2019','dd/mm/rrrr')
+ where cdcooper = 9 and nrdconta = 217999 and nrctrcrd = 37771;
+ 
+ 
+
 
 commit;
