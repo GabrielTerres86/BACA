@@ -37,7 +37,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 26/05/2017
+   Data    : Marco/2001                      Ultima atualizacao: 03/09/2018
 
    Dados referentes ao programa:
 
@@ -216,12 +216,14 @@
 
 	         26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA (Tiago/Fabricio #647174
            
-             08/12/2017 - Melhoria 458, adicionado campo tppagmto na procedure gera-faturas
-                          Antonio R. Jr (mouts)
-
+           08/12/2017 - Melhoria 458, adicionado campo tppagmto na procedure gera-faturas
+                        Antonio R. Jr (mouts)
+	        			 
 			 12/12/2017 - Alterar campo flgcnvsi por tparrecd. PRJ406-FGTS (Odirlei-AMcom)
 			 
 			 03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
+
+			 03/09/2018 - Correção para remover lote (Jonata - Mouts).
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -1194,6 +1196,7 @@ PROCEDURE gera-faturas.
     DEF          VAR aux_dvnrodas        AS INTE                       NO-UNDO.
     DEF          VAR aux_poslimit        AS INTE                       NO-UNDO.
     DEF          VAR aux_dvadicio        AS INTE                       NO-UNDO.
+	DEF          VAR aux_nrseqdig        AS INTE                       NO-UNDO.
 
     /* Tratamento de erros para internet e TAA */
     IF   p-cod-agencia = 90   OR    /** Internet **/
@@ -1412,6 +1415,21 @@ PROCEDURE gera-faturas.
                 END.
         END.
 
+        
+	/* Busca a proxima sequencia do campo CRAPLOT.NRSEQDIG */
+	RUN STORED-PROCEDURE pc_sequence_progress
+	aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+										,INPUT "NRSEQDIG"
+										,STRING(crapcop.cdcooper) + ";" + STRING(crapdat.dtmvtocd,"99/99/9999") + ";" + STRING(p-cod-agencia) + ";11;" + STRING(i-nro-lote)
+										,INPUT "N"
+										,"").
+
+	CLOSE STORED-PROC pc_sequence_progress
+	aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+		
+	ASSIGN aux_nrseqdig = INTE(pc_sequence_progress.pr_sequence)
+				               WHEN pc_sequence_progress.pr_sequence <> ?.
+
     TRANS_FAT:
     DO TRANSACTION ON ERROR  UNDO TRANS_FAT, LEAVE TRANS_FAT
                    ON ENDKEY UNDO TRANS_FAT, LEAVE TRANS_FAT:
@@ -1480,7 +1498,7 @@ PROCEDURE gera-faturas.
            craplft.cdseqfat = p-cdseqfat
            craplft.vllanmto = p-vlfatura
            craplft.cdhistor = crapcon.cdhistor
-           craplft.nrseqdig = craplot.nrseqdig + 1
+           craplft.nrseqdig = aux_nrseqdig
            craplft.nrdigfat = p-nrdigfat
            craplft.dtvencto = crapdat.dtmvtocd
            craplft.cdbarras = p-codigo-barras
@@ -1488,12 +1506,7 @@ PROCEDURE gera-faturas.
            craplft.cdempcon = crapcon.cdempcon
            craplft.cdsegmto = crapcon.cdsegmto
            craplft.tpcptdoc = par_tpcptdoc
-           craplft.tppagmto = p-tppagmto
-           craplot.nrseqdig = craplot.nrseqdig + 1
-           craplot.qtcompln = craplot.qtcompln + 1
-           craplot.qtinfoln = craplot.qtinfoln + 1
-           craplot.vlcompcr = craplot.vlcompcr + p-vlfatura
-           craplot.vlinfocr = craplot.vlinfocr + p-vlfatura.
+           craplft.tppagmto = p-tppagmto.
     VALIDATE craplot.
 
     /* Dados do TAA */                    
@@ -2244,14 +2257,14 @@ PROCEDURE valida-valor-limite:
         
         /* Nivel 2-Coordenador / 3-Gerente */        
         IF crapope.nvoperad < 2 THEN
-         DO:
+           DO:
                ASSIGN par_des_erro = "Usuário nao é coordenador."
                       par_dscritic = "Usuário nao é coordenador.".
-             RETURN "NOK".
-         END.
+               RETURN "NOK".
+           END.
 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-        
+
         /* Efetuar a chamada da rotina Oracle */ 
         RUN STORED-PROCEDURE pc_valida_senha_AD
             aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
@@ -2278,13 +2291,13 @@ PROCEDURE valida-valor-limite:
                               
         /* Retorna erro */
         IF  par_dscritic <> "" THEN
-           DO:
-               RETURN "NOK".
-           END.
+          DO:
+              RETURN "NOK".
+          END.
            
-           ASSIGN par_inssenha = 1.
+        ASSIGN par_inssenha = 1.
            
-        END. /* aux_valorlimite */
+      END. /* aux_valorlimite */
       
     RETURN "OK".
 END PROCEDURE.
