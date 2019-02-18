@@ -58,6 +58,8 @@
 
                28/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
                             servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
+                            
+               16/02/2019 - Ajuste variável aux_nrrecid para DECI - Paulo Martins - Mouts                            
 
 ..............................................................................*/
 
@@ -137,7 +139,7 @@ DEF VAR par_vlabatim AS DECIMAL                  NO-UNDO.
 DEF VAR par_vloutdeb AS DECIMAL                  NO-UNDO.
 DEF VAR par_vloutcre AS DECIMAL                  NO-UNDO.
 DEF VAR aux_dsretorn AS CHAR                     NO-UNDO.  
-DEF VAR aux_nrrecid  AS INTE                     NO-UNDO.
+DEF VAR aux_nrrecid  AS DECI                     NO-UNDO.
    
 /* Variaveis para o XML */ 
 DEF VAR xDoc          AS HANDLE               NO-UNDO.   
