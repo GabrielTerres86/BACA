@@ -769,16 +769,8 @@ PROCEDURE gerar_icf604:
           ax_nrispbif2 							                FORMAT "99999999"	  /* 6 - Código ISPB da IF Requisitada do arquivo - (NOVO)*/
           "000"                                     FORMAT "999"    	  /* 7 - Código da IF Incorporada (Informar zeros quando igual ao código da IF Requsiitada) */
           "00000000" 								                FORMAT "99999999"   /* 8 - Código ISPB da IF Incorporada (Informar zeros quando igual ao ISPB da IF Requisitada) - (NOVO) */
-          STRING(crapicf.cdagereq,"9999")           FORMAT "9999".   	  /* 9 - Código da Agencia Requisitada */
-          
-          IF crapicf.tpctapes = "01" THEN /* Conta Sacada */
-            PUT STREAM str_3
-            STRING(crapicf.nrctaori,"999999999999")   FORMAT "999999999999". /* 10 - Número da Conta Requisitada */
-          ELSE                            /* Conta Depositaria */
-            PUT STREAM str_3
-            STRING(crapicf.nrctareq,"999999999999")   FORMAT "999999999999". /* 10 - Número da Conta Requisitada */
-            
-          PUT STREAM str_3
+          STRING(crapicf.cdagereq,"9999")           FORMAT "9999"   	  /* 9 - Código da Agencia Requisitada */
+          STRING(crapicf.nrctareq,"999999999999")   FORMAT "999999999999" /* 10 - Número da Conta Requisitada */
           FILL(" ",12)                              FORMAT "x(12)"   	  /* 11 - Espaço em branco */
           crapicf.dacaojud                          FORMAT "x(25)"  	  /* 12 - Código de Controle da Requisiçao */
           FILL(" ",2)                               FORMAT "x(2)"   	  /* 13 - Espaço em branco */          
@@ -987,6 +979,9 @@ PROCEDURE importar_icf614:
        DO WHILE TRUE TRANSACTION ON ENDKEY UNDO TRANS_1, LEAVE TRANS_1
                                  ON ERROR UNDO TRANS_1, LEAVE TRANS_1:
 
+      /* FIND PARA LIMPAR ERROR-STATUS:ERROR - NAO REMOVER */
+      FIND CURRENT crapcop NO-LOCK NO-ERROR.
+
           SET STREAM str_2 aux_setlinha WITH FRAME AA WIDTH 216.
 
           /* Verifica se é a ultima linha do Arquivo */
@@ -1007,10 +1002,7 @@ PROCEDURE importar_icf614:
                  aux_cdbanori = INT(SUBSTR(aux_setlinha,8,3))
              aux_cdbanreq = INT(SUBSTR(aux_setlinha,19,3))
                  aux_cdagereq = INTE(SUBSTR(aux_setlinha,41,4))
-                 aux_nrctareq = IF  aux_tpctapes = "01" THEN /* Conta Sacada */
-                                  DECI(SUBSTR(aux_setlinha,144,10))
-                                ELSE
-                                  DECI(SUBSTR(aux_setlinha,45,12))
+                 aux_nrctareq = DECI(SUBSTR(aux_setlinha,45,12))
              aux_dacaojud = SUBSTR(aux_setlinha,69,25)             
              aux_dattroca = DATE(INTE(SUBSTR(aux_setlinha,104,2)), /* MM */
                                  INTE(SUBSTR(aux_setlinha,106,2)), /* DD */
@@ -1118,12 +1110,18 @@ PROCEDURE importar_icf614:
 
             IF NOT AVAIL crapfdc THEN
                DO:
-                  aux_cdocorre = 3.
+                        ASSIGN aux_cdcooper = crapcop.cdcooper
+                               aux_cdocorre = 3
+                               aux_nmprimtl = " "
+                               aux_nrcpfcgc = 0.
                END.
             ELSE
               DO:
                 IF crapfdc.dtemschq = ? THEN
-                   aux_cdocorre = 3.
+                         ASSIGN aux_cdcooper = crapcop.cdcooper
+                               aux_cdocorre = 3
+                               aux_nmprimtl = " "
+                               aux_nrcpfcgc = 0.
                       ELSE
                             ASSIGN aux_cdcooper = crapcop.cdcooper
                                    aux_cdocorre = 0 /* Conta Localizada   */
@@ -1133,7 +1131,6 @@ PROCEDURE importar_icf614:
           END.
        ELSE /* Tipo de conta 02 - Conta depositaria */
           DO:
-          
                   FIND FIRST crapchd WHERE crapchd.cdcooper = crapcop.cdcooper
                                  AND crapchd.dtmvtolt = aux_dattroca
                                    AND crapchd.nrdconta = aux_nrctareq
@@ -1143,7 +1140,10 @@ PROCEDURE importar_icf614:
                                  AND crapchd.nrctachq = aux_nrctcmc7 NO-LOCK NO-ERROR.
                                  
             IF  NOT AVAIL crapchd THEN
-                ASSIGN aux_cdocorre = 4. /* Cheque nao foi depositado na cooperativa */
+                      ASSIGN aux_cdcooper = crapcop.cdcooper
+                             aux_cdocorre = 4 /* Cheque nao foi depositado na cooperativa */
+                             aux_nmprimtl = " "
+                             aux_nrcpfcgc = 0.
                   ELSE
                       ASSIGN aux_cdcooper = crapcop.cdcooper
                              aux_cdocorre = 0 /* Conta Localizada   */
@@ -1425,10 +1425,7 @@ PROCEDURE importar_icf616.
           ASSIGN aux_cdbcoreq = INT(SUBSTR(aux_setlinha,19,3))
                  aux_cdagereq = INT(SUBSTR(aux_setlinha,41,4))
                  aux_cdbanchq = INT(SUBSTR(aux_setlinha,160,3))
-                 aux_nrctareq = IF aux_cdbanchq <> 85 THEN 
-                                  DECI(SUBSTR(aux_setlinha,179,10))
-                                ELSE 
-                                  DECI(SUBSTR(aux_setlinha,45,12))
+                 aux_nrctareq = DECI(SUBSTR(aux_setlinha,45,12))
                  aux_dacaojud = SUBSTR(aux_setlinha,69,25)
                  aux_cdocorre = INT(SUBSTR(aux_setlinha,94,2))
                  aux_cdtipcta = INT(SUBSTR(aux_setlinha,96,2))
