@@ -113,7 +113,7 @@ update crawcrd
       ,dtlibera = to_date('21/01/2019','dd/mm/rrrr')
  where cdcooper = 9 and nrdconta = 217999 and nrctrcrd = 37771;
  
- 
-
+/* Contato Daiane skype */
+update crawcrd set dtcancel = null where cdcooper = 1 and nrdconta = 10205152 and nrctrcrd = 1321538;
 
 commit;
