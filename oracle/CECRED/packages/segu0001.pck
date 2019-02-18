@@ -4672,7 +4672,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
                 RAISE vr_exc_erro;
             END;
-          ELSE
+          /*ELSE REMOCAO LOTE
+           
             -- Fechar cursor de lote
             CLOSE cr_craplot;
 
@@ -4690,7 +4691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 -- se ocorreu algum erro durante a criação
                 vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
                 RAISE vr_exc_erro;
-            END;
+            END;*/
           END IF;
 
           --Atribuir Numero Contrato ao Sequencial
