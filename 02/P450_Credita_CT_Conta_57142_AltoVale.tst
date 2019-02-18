@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-13
+15
 -- Created on 15/02/2019 by T0031667 
 declare 
   vr_cdcritic NUMBER;
@@ -12,6 +12,8 @@ begin
                               , pr_dtmvtolt => TRUNC(SYSDATE)
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
+                              
+  COMMIT;
 end;
 0
 0
