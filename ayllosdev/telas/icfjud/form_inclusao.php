@@ -36,15 +36,33 @@
 	<label for="nrctades"><? echo utf8ToHtml('Conta:') ?></label>
 	<input id="nrctades" name="nrctades" type="text" maxlength="12"  />
 	
-	<br/>
+	<label for="dacaojud"><? echo utf8ToHtml('A&ccedil;&atilde;o Judicial:') ?></label>
+	<input id="dacaojud" name="dacaojud" type="text" maxlength="25" /><br style="clear:both;" />
 	
-	<label for="dacaojud"><? echo utf8ToHtml('A&ccedil;&atilde;o Jud.:') ?></label>
-	<input id="dacaojud" name="dacaojud" type="text" maxlength="25" />
+	<label for="tpdconta"><? echo utf8ToHtml('Tipo de Conta:') ?></label>
+	<select id="tpdconta" name="tpdconta">
+		<option value="00" ></option>
+		<option value="01" ><? echo utf8ToHtml('Conta Sacada') ?></option>
+		<option value="02" ><? echo utf8ToHtml('Conta Deposit&aacute;ria') ?></option>
+	</select>
+	
+	<br style="clear:both;" />
+	
+	<label for="dtdtroca"><? echo utf8ToHtml('Data da Troca:') ?></label>
+	<input id="dtdtroca" name="dtdtroca" type="text" />
+	
+	<br style="clear:both;" />
+	
+	<label for="vldopera"><? echo utf8ToHtml('Valor da Opera&ccedil;&atilde;o:') ?></label>
+	<input id="vldopera" name="vldopera" type="text" />	
+	
+	<br style="clear:both;" />
+	
+	<label for="dsdocmc7"><? echo utf8ToHtml('CMC7:') ?></label>
+	<input id="dsdocmc7" name="dsdocmc7" type="text" maxlength="50"  />
 	
     </fieldset>	
 	
-	
-	<hr style="background-color:#666; height:1px;" />
 	
 	<div id="divBotoes">
 		<a href="#" class="botao" id="btnVoltar" name="btnVoltar" onClick="estadoInicial();return false;">Voltar</a>

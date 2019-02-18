@@ -38,6 +38,7 @@
 	$cdbanreq = $_POST["cdbanreq"];
 	$cdagereq = $_POST["cdagereq"];
 	$nrctareq = $_POST["nrctareq"];
+	$dsdocmc7 = htmlspecialchars($_POST["dsdocmc7"]);
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
@@ -63,6 +64,7 @@
 	$xmlConsulta .= "		<cdbanreq>".$cdbanreq."</cdbanreq>";
 	$xmlConsulta .= "		<cdagereq>".$cdagereq."</cdagereq>";
 	$xmlConsulta .= "		<nrctareq>".$nrctareq."</nrctareq>";
+	$xmlConsulta .= "		<dsdocmc7>".$dsdocmc7."</dsdocmc7>";
 	$xmlConsulta .= "	</Dados>";
 	$xmlConsulta .= "</Root>";
 	
