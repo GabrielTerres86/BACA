@@ -450,7 +450,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     IF pr_cdstiope = 'PJ' THEN
       NULL;
     ELSIF pr_cdstiope = 'RC' THEN --Registrado com sucesso      
-      vr_dsmensag := 'Alteração de vencimento registrada no Sistema Financeiro Nacional';
+      vr_dsmensag := 'Alteração de Titulo Registrado no Sistema Financeiro Nacional';
       
       --> Atualizar informações do boleto
       BEGIN
