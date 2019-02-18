@@ -51,7 +51,18 @@ CREATE OR REPLACE PACKAGE CECRED.CHEQ0003 IS
                                          ,pr_nrdolote IN craplot.nrdolote%TYPE  --> Número do lote do lançamento depositante
                                          ,pr_tpopechq IN pls_integer            --> 1 - Custódia / 2 - Desconto 		                                     
                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
-                                         ,pr_dscritic OUT VARCHAR2);                                   
+                                         ,pr_dscritic OUT VARCHAR2);     
+
+  -- Procedimento para inserir o registro de cheque na crapchd para ser possível consultar na tela PESQDP
+  PROCEDURE pc_gera_pesq_deposito_cheque(pr_cdcooper IN crapchd.cdcooper%TYPE  --> Cooperativa emitente cheque
+                                        ,pr_cdcmpchq IN crapchd.cdcmpchq%TYPE  --> Código da Compensação do cheque
+                                        ,pr_cdbanchq IN crapchd.cdbanchq%TYPE  --> Código do banco do cheque      
+                                        ,pr_cdagechq IN crapchd.cdagechq%TYPE  --> Código da agência do cheque    
+                                        ,pr_nrctachq IN crapchd.nrctachq%TYPE  --> Número da conta do cheque
+                                        ,pr_nrcheque IN crapchd.nrcheque%TYPE
+                                        ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE
+                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
+                                        ,pr_dscritic OUT VARCHAR2) ;                                                                       
                                                                                    
 END CHEQ0003;
 /
@@ -69,7 +80,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0003 AS
   -- Frequencia: -----
   -- Objetivo  : Processar a devolução automática de cheques 
   --               
-  --   Alteracoes: 
+  --   Alteracoes: 18/02/2019 - Incluir nova procedure pc_gera_pesq_deposito_cheque
+  --                            Problema PRB0040612 (Andre - MoutS)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -776,7 +788,23 @@ BEGIN
                  -- Retornando nome do módulo logado
                  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque');                                                               
                
-               END IF; -- Conta do depositante informada                                   
+               END IF; -- Conta do depositante informada      
+               
+               -- Seta nome do módulo logado
+               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_gera_pesq_deposito_cheque');
+               
+               pc_gera_pesq_deposito_cheque(pr_cdcooper => pr_cdcoopch
+                                           ,pr_cdcmpchq => pr_cdcmpchq  
+                                           ,pr_cdbanchq => pr_cdbanchq      
+                                           ,pr_cdagechq => pr_cdagechq    
+                                           ,pr_nrctachq => pr_nrctachq
+                                           ,pr_nrcheque => pr_nrcheque 
+                                           ,pr_dtmvtopr => pr_rw_crapdat.dtmvtopr
+                                           ,pr_cdcritic => pr_cdcritic
+                                           ,pr_dscritic => pr_dscritic);        
+               
+               -- Retornando nome do módulo logado
+               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque');                   
           END IF; -- Alinea <> 0  
         ELSE
           IF cr_crapfdc%ISOPEN THEN
@@ -964,7 +992,391 @@ BEGIN
                     'CHEQ0003.pc_efetiva_devchq_depositante. '||sqlerrm||vr_dsparame||'.';      
   END;  
 END pc_efetiva_devchq_depositante;
+      
+-- Procedimento para inserir o registro de cheque na crapchd para ser possível consultar na tela PESQDP
+PROCEDURE pc_gera_pesq_deposito_cheque(pr_cdcooper IN crapchd.cdcooper%TYPE  --> Cooperativa emitente cheque
+                                      ,pr_cdcmpchq IN crapchd.cdcmpchq%TYPE  --> Código da Compensação do cheque
+                                      ,pr_cdbanchq IN crapchd.cdbanchq%TYPE  --> Código do banco do cheque      
+                                      ,pr_cdagechq IN crapchd.cdagechq%TYPE  --> Código da agência do cheque    
+                                      ,pr_nrctachq IN crapchd.nrctachq%TYPE  --> Número da conta do cheque
+                                      ,pr_nrcheque IN crapchd.nrcheque%TYPE
+                                      ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE
+                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
+                                      ,pr_dscritic OUT VARCHAR2) IS
+
+    --Selecionar Custodia de Cheques
+    CURSOR cr_crapcst   (pr_cdcooper IN crapfdc.cdcooper%TYPE
+                        ,pr_cdcmpchq IN crapfdc.cdcmpchq%TYPE
+                        ,pr_cdbanchq IN crapfdc.cdbanchq%TYPE
+                        ,pr_cdagechq IN crapfdc.cdagechq%TYPE
+                        ,pr_nrctachq IN crapfdc.nrctachq%TYPE
+                        ,pr_nrcheque IN crapfdc.nrcheque%TYPE) IS
+      SELECT  crapcst.cdagechq      
+             ,crapcst.cdagenci
+             ,crapcst.cdbanchq
+             ,crapcst.cdbccxlt
+             ,crapcst.cdcmpchq
+             ,crapcst.cdoperad
+             ,crapcst.dsdocmc7
+             ,crapcst.dtmvtolt
+             ,crapcst.inchqcop
+             ,crapcst.cdcooper
+             ,crapcst.insitchq
+             ,crapcst.nrcheque
+             ,crapcst.nrctachq
+             ,crapcst.nrdconta
+             ,crapcst.nrddigc1
+             ,crapcst.nrddigc2
+             ,crapcst.nrddigc3
+             ,crapcst.nrdocmto
+             ,crapcst.nrdolote
+             ,crapcst.nrseqdig
+             ,crapcst.vlcheque
+             ,crapcst.nrborder
+             ,crapcst.insitprv
+        FROM crapcst crapcst
+       WHERE crapcst.cdcooper = pr_cdcooper
+         AND crapcst.cdcmpchq = pr_cdcmpchq
+         AND crapcst.cdbanchq = pr_cdbanchq
+         AND crapcst.cdagechq = pr_cdagechq
+         AND crapcst.nrctachq = pr_nrctachq
+         AND crapcst.nrcheque = pr_nrcheque;
+    rw_crapcst cr_crapcst%ROWTYPE;
+
+    --Selecionar Cheques Contidos do Bordero de desconto de cheques
+    CURSOR cr_crapcdb   (pr_cdcooper IN crapfdc.cdcooper%TYPE
+                        ,pr_cdcmpchq IN crapfdc.cdcmpchq%TYPE
+                        ,pr_cdbanchq IN crapfdc.cdbanchq%TYPE
+                        ,pr_cdagechq IN crapfdc.cdagechq%TYPE
+                        ,pr_nrctachq IN crapfdc.nrctachq%TYPE
+                        ,pr_nrcheque IN crapfdc.nrcheque%TYPE) IS
+      SELECT  crapcdb.cdagechq      
+             ,crapcdb.cdagenci
+             ,crapcdb.cdbanchq
+             ,crapcdb.cdbccxlt
+             ,crapcdb.cdcmpchq
+             ,crapcdb.cdoperad
+             ,crapcdb.dsdocmc7
+             ,crapcdb.dtmvtolt
+             ,crapcdb.inchqcop
+             ,crapcdb.cdcooper
+             ,crapcdb.insitchq
+             ,crapcdb.nrcheque
+             ,crapcdb.nrctachq
+             ,crapcdb.nrdconta
+             ,crapcdb.nrddigc1
+             ,crapcdb.nrddigc2
+             ,crapcdb.nrddigc3
+             ,crapcdb.nrdocmto
+             ,crapcdb.nrdolote
+             ,crapcdb.nrseqdig
+             ,crapcdb.vlcheque
+        FROM crapcdb crapcdb
+       WHERE crapcdb.cdcooper = pr_cdcooper
+         AND crapcdb.cdcmpchq = pr_cdcmpchq
+         AND crapcdb.cdbanchq = pr_cdbanchq
+         AND crapcdb.cdagechq = pr_cdagechq
+         AND crapcdb.nrctachq = pr_nrctachq
+         AND crapcdb.nrcheque = pr_nrcheque;
+    rw_crapcdb cr_crapcdb%ROWTYPE;
+    
+    tab_vlchqmai  NUMBER;
+    tab_incrdcta  pls_integer;
+    tab_intracst  pls_integer; 
+    tab_inchqcop  pls_integer; 
+  
+    vr_inserir    BOOLEAN;
+    vr_nrdcampo   NUMBER;
+    vr_lsdigctr   VARCHAR2(2000);
+    vr_dstextab   VARCHAR2(2000);
+    vr_dsparame   varchar2(4000);
+    
+    vr_cdagechq   crapcst.cdagechq%TYPE;      
+    vr_cdagenci   crapcst.cdagenci%TYPE;
+    vr_cdbanchq   crapcst.cdbanchq%TYPE;
+    vr_cdbccxlt   crapcst.cdbccxlt%TYPE;
+    vr_cdcmpchq   crapcst.cdcmpchq%TYPE;
+    vr_cdoperad   crapcst.cdoperad%TYPE;
+    vr_dsdocmc7   crapcst.dsdocmc7%TYPE;
+    vr_dtmvtolt   crapcst.dtmvtolt%TYPE;
+    vr_inchqcop   crapcst.inchqcop%TYPE;
+    vr_cdcooper   crapcst.cdcooper%TYPE;
+    vr_insitchq   crapcst.insitchq%TYPE;
+    vr_nrcheque   crapcst.nrcheque%TYPE;
+    vr_nrctachq   crapcst.nrctachq%TYPE;
+    vr_nrdconta   crapcst.nrdconta%TYPE;
+    vr_nrddigc1   crapcst.nrddigc1%TYPE;
+    vr_nrddigc2   crapcst.nrddigc2%TYPE;
+    vr_nrddigc3   crapcst.nrddigc3%TYPE;
+    vr_nrdocmto   crapcst.nrdocmto%TYPE;
+    vr_nrdolote   crapcst.nrdolote%TYPE;
+    vr_nrseqdig   crapcst.nrseqdig%TYPE;
+    vr_vlcheque   crapcst.vlcheque%TYPE;    
+    vr_insitprv   crapcst.insitprv%TYPE;   
+    vr_cdsitatu   crapchd.cdsitatu%TYPE;
+    vr_nrterfin   crapchd.nrterfin%TYPE;
+    vr_cdtipchq   crapchd.cdtipchq%TYPE;
+    vr_tpdmovto   crapchd.tpdmovto%TYPE;     
+    vr_nrddigv1   crapchd.nrddigv1%TYPE; 
+    vr_nrddigv2   crapchd.nrddigv2%TYPE;
+    vr_nrddigv3   crapchd.nrddigv3%TYPE;
+
+BEGIN
+  -- Incluido nome do módulo logado
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_gera_pesq_deposito_cheque');
+  
+  --Inicializar variaveis critica
+  pr_cdcritic := 0;
+  pr_dscritic := NULL;
+  
+  -- Agrupa os parâmetros
+  vr_dsparame := 'pr_cdcooper:' || pr_cdcooper ||
+                 ' ,pr_cdcmpchq:' || pr_cdcmpchq  ||
+                 ' ,pr_cdbanchq:' || pr_cdbanchq  ||
+                 ' ,pr_cdagechq:' || pr_cdagechq  ||
+                 ' ,pr_nrctachq:' || pr_nrctachq  ||
+                 ' ,pr_nrcheque:' || pr_nrcheque;
+  
+  -- Iniciar Variáveis     
+  tab_vlchqmai := 0;
+ 
+  BEGIN
+    --Selecionar Custodia do Cheque
+    OPEN cr_crapcst (pr_cdcooper => pr_cdcooper
+                    ,pr_cdcmpchq => pr_cdcmpchq
+                    ,pr_cdbanchq => pr_cdbanchq
+                    ,pr_cdagechq => pr_cdagechq
+                    ,pr_nrctachq => pr_nrctachq
+                    ,pr_nrcheque => pr_nrcheque);
+    --Posicionar na primeira linha
+    FETCH cr_crapcst INTO rw_crapcst;
+    --Fechar Cursor
+    CLOSE cr_crapcst;
+    
+    --Se encontrou custodia
+    IF rw_crapcst.nrctachq IS NOT NULL THEN
+       vr_inserir := TRUE;
+       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
+                                                ,pr_nmsistem => 'CRED'
+                                                ,pr_tptabela => 'USUARI'
+                                                ,pr_cdempres => 11
+                                                ,pr_cdacesso => 'MAIORESCHQ'
+                                                ,pr_tpregist => 001);
+                 
+       tab_vlchqmai := to_number(SUBSTR(vr_dstextab,1,15));
+       
+       IF nvl(rw_crapcst.nrborder,0) = 0 THEN -- Se for custódia
+         vr_cdagechq := rw_crapcst.cdagechq;      
+         vr_cdagenci := 1;
+         vr_cdbanchq := rw_crapcst.cdbanchq;
+         vr_cdbccxlt := rw_crapcst.cdbccxlt;
+         vr_cdcmpchq := rw_crapcst.cdcmpchq;
+         vr_cdoperad := rw_crapcst.cdoperad;
+         vr_cdsitatu := 1;
+         vr_dsdocmc7 := rw_crapcst.dsdocmc7;
+         vr_dtmvtolt := pr_dtmvtopr;
+         vr_inchqcop := rw_crapcst.inchqcop;
+         vr_cdcooper := pr_cdcooper;
+         vr_nrcheque := rw_crapcst.nrcheque;
+         
+         IF (rw_crapcdb.cdbanchq = 1)THEN
+             vr_nrctachq := to_number(substr(rw_crapcdb.dsdocmc7,23,10));
+         ELSE
+             vr_nrctachq := rw_crapcst.nrctachq;
+         END IF;
+         
+         vr_nrdconta := rw_crapcst.nrdconta;
+         vr_nrddigc1 := rw_crapcst.nrddigc1;
+         vr_nrddigc2 := rw_crapcst.nrddigc2;
+         vr_nrddigc3 := rw_crapcst.nrddigc3;
+         vr_nrdocmto := rw_crapcst.nrdocmto;
+         vr_nrdolote := 999999;
+         vr_nrseqdig := rw_crapcst.nrseqdig;
+         vr_nrterfin := 0;
+         vr_cdtipchq := TO_NUMBER(SUBSTR(rw_crapcst.dsdocmc7,20,1));
+         vr_vlcheque := rw_crapcst.vlcheque; 
+         vr_insitprv := rw_crapcst.insitprv;
+         
+         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
+                                                  ,pr_nmsistem => 'CRED'
+                                                  ,pr_tptabela => 'CUSTOD'
+                                                  ,pr_cdempres => 00
+                                                  ,pr_cdacesso => to_char(rw_crapcst.nrdconta)
+                                                  ,pr_tpregist => 0);
+
+         IF vr_dstextab IS NULL   THEN
+            tab_incrdcta := 1;
+            tab_intracst := 1;   /*  Tratamento comp. CREDIHERING  */
+            tab_inchqcop := 1;
+         ELSE
+            tab_incrdcta := TO_NUMBER(SUBSTR(vr_dstextab,05,01));
+            tab_intracst := TO_NUMBER(SUBSTR(vr_dstextab,07,01));
+            tab_inchqcop := TO_NUMBER(SUBSTR(vr_dstextab,09,01));
+         END IF;   
+
+         IF rw_crapcst.inchqcop = 1   THEN   /*  Cheque CREDIHERING  */
+           IF tab_incrdcta = 2   THEN        /*  Nao Credita em CC  */
+             IF tab_intracst = 2   THEN      /*  Comp. Terceiros  */
+                IF tab_inchqcop = 1   THEN   /*  Nao trata chq CREDIHERING */
+                  vr_inserir := FALSE; 
+                END IF;
+             ELSE
+               vr_inserir := FALSE; 
+             END IF; 
+           END IF;   
+         END IF;    
+         
+         IF tab_intracst = 2 THEN
+           IF rw_crapcst.inchqcop = 1 THEN
+             IF tab_inchqcop = 1 THEN
+                vr_insitchq := rw_crapcst.insitchq;
+             ELSE 
+                vr_insitchq := 3;
+             END IF;
+           ELSE 
+             vr_insitchq := 3;
+           END IF;
+         ELSE 
+           vr_insitchq := rw_crapcst.insitchq ;
+         END IF;   
+       ELSE
+        --Selecionar Desconto do Cheque
+        OPEN cr_crapcdb (pr_cdcooper => pr_cdcooper
+                        ,pr_cdcmpchq => pr_cdcmpchq
+                        ,pr_cdbanchq => pr_cdbanchq
+                        ,pr_cdagechq => pr_cdagechq
+                        ,pr_nrctachq => pr_nrctachq
+                        ,pr_nrcheque => pr_nrcheque);
+        FETCH cr_crapcdb INTO rw_crapcdb;
+        --Fechar Cursor
+        CLOSE cr_crapcdb;
+             
+        IF rw_crapcdb.nrctachq IS NOT NULL THEN -- Se encontrou Desconto do Cheque
+           vr_cdagechq := rw_crapcdb.cdagechq;      
+           vr_cdagenci := 1;
+           vr_cdbanchq := rw_crapcdb.cdbanchq;
+           vr_cdbccxlt := rw_crapcdb.cdbccxlt;
+           vr_cdcmpchq := rw_crapcdb.cdcmpchq;
+           vr_cdoperad := rw_crapcdb.cdoperad;
+           vr_cdsitatu := 1;
+           vr_dsdocmc7 := rw_crapcdb.dsdocmc7;
+           vr_dtmvtolt := pr_dtmvtopr;
+           vr_inchqcop := rw_crapcdb.inchqcop;
+           vr_cdcooper := rw_crapcdb.cdcooper;
+           vr_insitchq := rw_crapcdb.insitchq;
+           vr_nrcheque := rw_crapcdb.nrcheque;
+           
+           IF (rw_crapcdb.cdbanchq = 1) AND
+              (rw_crapcdb.inchqcop = 0) THEN
+             vr_nrctachq := to_number(substr(rw_crapcdb.dsdocmc7,23,10));
+           ELSE
+             vr_nrctachq := rw_crapcdb.nrctachq;
+           END IF;
+           
+           vr_nrdconta := rw_crapcdb.nrdconta;
+           vr_nrddigc1 := rw_crapcdb.nrddigc1;
+           vr_nrddigc2 := rw_crapcdb.nrddigc2;
+           vr_nrddigc3 := rw_crapcdb.nrddigc3;
+           vr_nrdocmto := rw_crapcdb.nrdocmto;
+           vr_nrdolote := 888888;
+           vr_nrseqdig := rw_crapcdb.nrseqdig;
+           vr_nrterfin := 0;
+           vr_cdtipchq := to_number(substr(rw_crapcdb.dsdocmc7,20,1));
+           vr_vlcheque := rw_crapcdb.vlcheque;
+           vr_insitprv := 0;
+         ELSE
+           vr_inserir := FALSE;
+         END IF;
+       END IF;
+       
+      IF vr_inserir THEN
+             
+         cheq0001.pc_dig_cmc7(vr_dsdocmc7, vr_nrdcampo, vr_lsdigctr);  
+         vr_nrddigv1 := TO_NUMBER(TO_CHAR(gene0002.fn_busca_entrada(1,vr_lsdigctr,',')));   
+         vr_nrddigv2 := TO_NUMBER(TO_CHAR(gene0002.fn_busca_entrada(2,vr_lsdigctr,','))); 
+         vr_nrddigv3 := TO_NUMBER(TO_CHAR(gene0002.fn_busca_entrada(3,vr_lsdigctr,','))); 
+               
+         IF tab_vlchqmai <= vr_vlcheque THEN
+             vr_tpdmovto := 1;
+         ELSE        
+             vr_tpdmovto := 2;
+         END IF;  
+                
+              
+         INSERT INTO crapchd (cdagechq, 
+                              cdagenci, 
+                              cdbanchq, 
+                              cdbccxlt, 
+                              cdcmpchq, 
+                              cdoperad, 
+                              cdsitatu, 
+                              dsdocmc7,
+                              dtmvtolt, 
+                              inchqcop, 
+                              cdcooper, 
+                              insitchq, 
+                              nrcheque, 
+                              nrctachq, 
+                              nrdconta, 
+                              nrddigc1,
+                              nrddigc2, 
+                              nrddigc3, 
+                              nrddigv1, 
+                              nrddigv2, 
+                              nrddigv3, 
+                              nrdocmto, 
+                              nrdolote, 
+                              nrseqdig,
+                              nrterfin, 
+                              cdtipchq, 
+                              tpdmovto, 
+                              vlcheque, 
+                              insitprv)
+                      VALUES
+                             (vr_cdagechq     
+                              ,vr_cdagenci
+                              ,vr_cdbanchq
+                              ,vr_cdbccxlt
+                              ,vr_cdcmpchq
+                              ,vr_cdoperad
+                              ,vr_cdsitatu
+                              ,vr_dsdocmc7
+                              ,vr_dtmvtolt
+                              ,vr_inchqcop
+                              ,vr_cdcooper
+                              ,vr_insitchq
+                              ,vr_nrcheque
+                              ,vr_nrctachq
+                              ,vr_nrdconta
+                              ,vr_nrddigc1
+                              ,vr_nrddigc2
+                              ,vr_nrddigc3
+                              ,vr_nrddigv1
+                              ,vr_nrddigv2
+                              ,vr_nrddigv3
+                              ,vr_nrdocmto
+                              ,vr_nrdolote
+                              ,vr_nrseqdig
+                              ,vr_nrterfin
+                              ,vr_cdtipchq
+                              ,vr_tpdmovto
+                              ,vr_vlcheque	 
+                              ,vr_insitprv); 
                             
+          END IF;       
+       
+     END IF;  -- rw_crapcst.nrctachq IS NOT NULL
+
+  EXCEPTION
+    WHEN OTHERS THEN      
+      -- No caso de erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);     
+   
+      pr_cdcritic:= 9999;
+      pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                    'CHEQ0003.pc_gera_pesq_deposito_cheque. '||sqlerrm||vr_dsparame||'.';      
+  END;        
+END;
 
 END CHEQ0003;
 /
