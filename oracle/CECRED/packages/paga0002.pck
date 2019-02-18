@@ -812,7 +812,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 10/10/2018
+  --  Data     : Março/2014.                   Ultima atualizacao: 13/02/2019
   --
   -- Dados referentes ao programa:
   --
@@ -955,6 +955,9 @@ create or replace package body cecred.PAGA0002 is
                    30/10/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001)
   --                           Correção da quantidade de parâmetros passados para LANC0001 - Heckmann (AMcom)
 
+	               13/02/2019 - Correcao da finalidade 400 (Tributos Municipais ISS - LCP) para 157
+                               (Jonata  - Mouts / INC0032530).
+  
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -1048,7 +1051,7 @@ create or replace package body cecred.PAGA0002 is
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : David
-      Data    : Abril/2007.                       Ultima atualizacao: 26/10/2018
+      Data    : Abril/2007.                       Ultima atualizacao: 13/02/2019
 
       Dados referentes ao programa:
 
@@ -1170,6 +1173,10 @@ create or replace package body cecred.PAGA0002 is
                                
                   26/10/2018 - Ajuste para tratar o "Codigo identificador" quando escolhido a finalidade 400 - Tributos Municipais ISS - LCP 157
                               (Jonata  - Mouts / INC0024119).
+
+				  13/02/2019 - Correcao da finalidade 400 (Tributos Municipais ISS - LCP) para 157
+                               (Jonata  - Mouts / INC0032530).
+
     .................................................................................*/
     ----------------> CURSORES  <---------------
     CURSOR cr_crapass (prc_cdcooper IN crapass.cdcooper%TYPE,
@@ -1699,9 +1706,9 @@ create or replace package body cecred.PAGA0002 is
   	  RAISE vr_exc_erro;
     END IF; 
 
-    /* Quando informado a finalidade “400 - Tributos Municipais ISS - LCP 157" deve ser validado
+    /* Quando informado a finalidade “157 - Tributos Municipais ISS - LCP 157" deve ser validado
        o código identificador onde pode conter apenas números e ter no máximo 11 posições.*/
-    IF pr_cdfinali = 400 THEN
+    IF pr_cdfinali = 157 THEN
       
       IF NOT gene0002.fn_numerico(pr_dstransf) THEN
         
