@@ -343,6 +343,9 @@ end;
 
 			 07/12/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT D
                           Jose Dill - Mouts
+                          
+       12/02/2019 - Ajuste da revitalização de lotes craplcm 
+                    Jose Dill - Mout (INC0032794)                   
  
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -6269,14 +6272,14 @@ END pc_trata_arquivo_cir0060;
                   VALUES
                      (3 --Gravar sempre em conta corrente na base 3 da central 
                      ,vr_aux_dtmvtolt     
-                     ,rw_craplot.cdagenci 
-                     ,rw_craplot.cdbccxlt 
-                     ,rw_craplot.nrdolote 
+                     ,rw_craplot_rvt.cdagenci --INC0032794
+                     ,rw_craplot_rvt.cdbccxlt 
+                     ,rw_craplot_rvt.nrdolote 
                      ,vr_nrdcontacir     
                      ,vr_nrdcontacir     
                      ,vr_aux_nrdocmto     
                      ,vr_aux_cdhistor     
-                     ,nvl(rw_craplot.nrseqdig,0) + 1
+                     ,nvl(rw_craplot_rvt.nrseqdig,0) + 1
                      ,vr_aux_cdpesqbb     
                      ,vr_aux_VlrLanc      
                      ,'1'
@@ -6295,7 +6298,7 @@ END pc_trata_arquivo_cir0060;
                                     ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
                                     ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
                                     ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
-                  WHERE craplot.ROWID = rw_craplot.ROWID;
+                  WHERE craplot.ROWID = rw_craplot_rvt.ROWID;
                 EXCEPTION
                   WHEN OTHERS THEN
                     vr_dscritic := 'Erro ao atualizar tabela craplot. ' || SQLERRM;
