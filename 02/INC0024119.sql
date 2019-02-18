@@ -1,6 +1,6 @@
 /*
 
-	Backup:
+	Se for necessário efetuar o rollback, usar os scripts abaixo:
 		
     update craptab a    set a.tpregist = 400  where a.progress_recid = 3862498;
     update craptab a    set a.tpregist = 400  where a.progress_recid = 3862483;
@@ -19,6 +19,7 @@
     update craptab a    set a.tpregist = 400  where a.progress_recid = 3862490;
     update craptab a    set a.tpregist = 400  where a.progress_recid = 3862491;
     update craptab a    set a.tpregist = 400  where a.progress_recid = 3862492;
+
 
 */
 
