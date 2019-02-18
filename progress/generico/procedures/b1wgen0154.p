@@ -979,6 +979,9 @@ PROCEDURE importar_icf614:
        DO WHILE TRUE TRANSACTION ON ENDKEY UNDO TRANS_1, LEAVE TRANS_1
                                  ON ERROR UNDO TRANS_1, LEAVE TRANS_1:
 
+      /* FIND PARA LIMPAR ERROR-STATUS:ERROR - NAO REMOVER */
+      FIND CURRENT crapcop NO-LOCK NO-ERROR.
+
           SET STREAM str_2 aux_setlinha WITH FRAME AA WIDTH 216.
 
           /* Verifica se é a ultima linha do Arquivo */
@@ -1107,12 +1110,18 @@ PROCEDURE importar_icf614:
 
             IF NOT AVAIL crapfdc THEN
                DO:
-                  aux_cdocorre = 3.
+                        ASSIGN aux_cdcooper = crapcop.cdcooper
+                               aux_cdocorre = 3
+                               aux_nmprimtl = " "
+                               aux_nrcpfcgc = 0.
                END.
             ELSE
               DO:
                 IF crapfdc.dtemschq = ? THEN
-                   aux_cdocorre = 3.
+                         ASSIGN aux_cdcooper = crapcop.cdcooper
+                               aux_cdocorre = 3
+                               aux_nmprimtl = " "
+                               aux_nrcpfcgc = 0.
                       ELSE
                             ASSIGN aux_cdcooper = crapcop.cdcooper
                                    aux_cdocorre = 0 /* Conta Localizada   */
@@ -1122,7 +1131,6 @@ PROCEDURE importar_icf614:
           END.
        ELSE /* Tipo de conta 02 - Conta depositaria */
           DO:
-          
                   FIND FIRST crapchd WHERE crapchd.cdcooper = crapcop.cdcooper
                                  AND crapchd.dtmvtolt = aux_dattroca
                                    AND crapchd.nrdconta = aux_nrctareq
@@ -1132,7 +1140,10 @@ PROCEDURE importar_icf614:
                                  AND crapchd.nrctachq = aux_nrctcmc7 NO-LOCK NO-ERROR.
                                  
             IF  NOT AVAIL crapchd THEN
-                ASSIGN aux_cdocorre = 4. /* Cheque nao foi depositado na cooperativa */
+                      ASSIGN aux_cdcooper = crapcop.cdcooper
+                             aux_cdocorre = 4 /* Cheque nao foi depositado na cooperativa */
+                             aux_nmprimtl = " "
+                             aux_nrcpfcgc = 0.
                   ELSE
                       ASSIGN aux_cdcooper = crapcop.cdcooper
                              aux_cdocorre = 0 /* Conta Localizada   */
