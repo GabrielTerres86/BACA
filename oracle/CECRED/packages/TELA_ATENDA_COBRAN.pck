@@ -8920,7 +8920,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                    tac.dtalteracao_status = (SELECT MAX(tac2.dtalteracao_status)
                                                 FROM tbrecip_aprovador_calculo tac2
                                                WHERE tac2.idcalculo_reciproci = tac.idcalculo_reciproci
-                                                 AND tac2.idstatus = 'A'))
+                                                 AND tac2.idstatus IN ('A','R')))
              ORDER BY CASE ceb.insitceb
                           WHEN 3 THEN
                            0
