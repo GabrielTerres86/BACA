@@ -66,6 +66,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                             Neste programa o valor DEFAULT eh 'T'. Criamos a PC_CRPS642_PRIORI com  valor DEFAULT 'S'. 	(Fabiano B. Dias - AMcom)								
 
 			   27/11/2018 - Melhoria nos logs para a cooperativa 16 #INC0026432 (Andrey Formigari - Mouts)
+			   
+               19/02/2018 - Ajustado para não propagar exceção quando não tem agendamentos a processar. 
+                            PRB0040590 (Andre - MoutS).         
+			   
      ............................................................................. */
 
      
@@ -909,7 +913,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
            else
          vr_cdcritic:= 0;
              vr_dscritic := 'Não existem agendamentos para a data: '||vr_dtmvtopg||' e a cooperativa: '||pr_cdcooper;
-             raise vr_exc_saida;
+             raise vr_exc_fimprg;
            end if;  
              
          else
