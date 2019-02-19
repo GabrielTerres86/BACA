@@ -10809,13 +10809,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 1 - Inclusao de Cartao
                 3 - Cancelamento de Cartao
                 4 - Inclusao de Adicional
+								5 - Modificação de Cartão
                 7 - Reativacao de Contas
                 10 - Desbloqueio (exclusivo p/ tratamento de reposicao)
                 12 - Alteracao de Estado
                 13 - Alteracao de Estado Conta
                 25 - Reativar Cartao do Adicional                
                 */                
-                IF vr_tipooper NOT IN (1,3,4,7,10,12,13,25) THEN
+                IF vr_tipooper NOT IN (1,3,4,5,7,10,12,13,25) THEN
                    CONTINUE;
                 END IF;
                 
@@ -11179,12 +11180,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
                 /* 
                 3 - Cancelamento de Cartao
+								5 - Modificação de Cartão
                 7 - Reativacao de Contas
                 12 - Alteracao de Estado
                 13 - Alteracao de Estado Conta
                 25 - Reativar Cartao do Adicional                
                 */                
-                IF vr_tipooper IN (3,7,12,13,25) THEN
+                IF vr_tipooper IN (3,5,7,12,13,25) THEN
                   -- Atualiza os dados da situacao do cartao
                   atualiza_situacao_cartao(pr_cdcooper => vr_cdcooper,
                                            pr_nrdconta => vr_nrdconta,
