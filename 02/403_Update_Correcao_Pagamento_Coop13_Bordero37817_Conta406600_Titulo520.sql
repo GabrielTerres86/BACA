@@ -4,6 +4,7 @@ BEGIN
         ,dtdpagto = to_date('13/02/2019','DD/MM/RRRR') 
         ,vlmratit = 9.29
         ,vliofcpl = 0.38
+        ,vlpagiof = 0.38
    WHERE tdb.cdcooper = 13
      AND tdb.nrdconta = 406600
      AND tdb.nrborder = 37817
