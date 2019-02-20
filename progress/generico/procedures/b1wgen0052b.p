@@ -584,7 +584,7 @@ PROCEDURE Busca_Impressao :
                             crapcje.nrdconta = crapass.nrdconta AND 
                             crapcje.idseqttl = 1 USE-INDEX crapcje1 NO-ERROR.
         IF AVAILABLE crapcje THEN
-          ASSIGN aux_nmconjug = crapcje.nmconjug.
+          ASSIGN aux_nmconjug = replace(crapcje.nmconjug, CHR(26)," ").
 
         CASE tt-relat-cab.inpessoa:
             WHEN 1 THEN DO:
@@ -1540,7 +1540,7 @@ PROCEDURE Pesquisa_Associado PRIVATE :
 
                 IF  AVAILABLE crapcje THEN
                     DO:
-                       ASSIGN tt-crapass.nmconju = crapcje.nmconjug.
+                       ASSIGN tt-crapass.nmconju = replace(crapcje.nmconjug, CHR(26)," ").
                     END.
 
                 ASSIGN par_dscritic = "".
