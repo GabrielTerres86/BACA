@@ -63,6 +63,7 @@
  * 037: [16/01/2018] Lucas Reinert			 : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
  * 038: [13/07/2018] Andrey Formigari (Mouts): Novo campo Nome Social (#SCTASK0017525)
  * 039: [04/09/2018] Alcemir          (Mouts): alterado atualizarContasAntigasDemitidas(), incluido parametro operauto (operador autorizador). (SM 364) 
+ * 049: [29/01/2019] Márcio           (Mouts): Validar se CNAE informado é válido (PRB0040478) 
  */
 
 // Definição de algumas variáveis globais 
@@ -862,6 +863,7 @@ function manterRotina() {
         rowidcem = $("#rowidcem", "#frmJuridico").val();
         dsdemail = $("#dsdemail", "#frmJuridico").val();
         cdcnae = $('#cdcnae', '#frmJuridico').val();
+		dscnae = $('#dscnae', '#frmJuridico').val();
         dsendere = $('#dsendere', '#frmJuridico').val();
         nrendere = normalizaNumero($('#nrendere', '#frmJuridico').val());
         complend = $('#complend', '#frmJuridico').val();
@@ -933,7 +935,7 @@ function manterRotina() {
 				dtdemiss: dtdemiss, cdmotdem: cdmotdem, cdsitcpf: cdsitcpf, 
 				rowidass: rowidass, qtparcel: qtparcel,	dtdebito: dtdebito, 
 				vlparcel: vlparcel, operacao: operacao, cdtipcta: cdtipcta, 
-				cdcnae: cdcnae, inconrfb: inconrfb, nmttlrfb: nmttlrfb, 
+				cdcnae: cdcnae,dscnae: dscnae, inconrfb: inconrfb, nmttlrfb: nmttlrfb, 
 				hrinicad: hrinicad, arrayFilhos: arrayFilhos,  
                 arrayFilhosAvtMatric: arrayFilhosAvtMatric,
                 arrayBensMatric: arrayBensMatric, idorigee: idorigee,
@@ -957,6 +959,13 @@ function manterRotina() {
     }
 }
 
+function removeAcentos(str){
+	return str.replace(/[àáâãäå]/g,"a").replace(/[ÀÁÂÃÄÅ]/g,"A").replace(/[ÒÓÔÕÖØ]/g,"O").replace(/[òóôõöø]/g,"o").replace(/[ÈÉÊË]/g,"E").replace(/[èéêë]/g,"e").replace(/[Ç]/g,"C").replace(/[ç]/g,"c").replace(/[ÌÍÎÏ]/g,"I").replace(/[ìíîï]/g,"i").replace(/[ÙÚÛÜ]/g,"U").replace(/[ùúûü]/g,"u").replace(/[ÿ]/g,"y").replace(/[Ñ]/g,"N").replace(/[ñ]/g,"n");
+}
+
+function removeCaracteresInvalidos(str){
+	return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
+}
 function verificaCpfCgcRespSocial(inpessoa, nrcpfcgc) {
     
     $.ajax({
