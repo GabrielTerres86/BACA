@@ -137,7 +137,7 @@ function desabilitaCampos() {
         $('#btSelecioneDisponiveis', '#frmCadsoa').attr("disabled", "disabled");
         $('#btSelecioneAderidos', '#frmCadsoa').attr("disabled", "disabled");
 
-        $('#flghabilitar', '#frmCab').attr("disabled", "disabled");
+        $('#flghabilitar', '#frmCadsoa').attr("disabled", "disabled");
 
         $('#btSalvar', '#frmCadsoa').attr("disabled", "disabled");
     } else {
@@ -151,7 +151,7 @@ function desabilitaCampos() {
         $('#btSelecioneAderidos', '#frmCadsoa').removeAttr("disabled", "disabled");
 
         if (glb_cdcooper == 3) {
-            $('#flghabilitar', '#frmCab').removeAttr("disabled", "disabled");
+            $('#flghabilitar', '#frmCadsoa').removeAttr("disabled", "disabled");
         }
 
         $('#btSalvar', '#frmCadsoa').removeAttr("disabled", "disabled");
@@ -178,7 +178,10 @@ function formataMultSelectPA() {
 	var btSelecioneDisponiveis = $('#btSelecioneDisponiveis','#frmCadsoa');
 	var btSelecioneAderidos = $('#btSelecioneAderidos','#frmCadsoa');
 	var btVoltar = $('#btVoltar','#frmCadsoa');
-	var btSalvar = $('#btSalvar','#frmCadsoa');
+	var btSalvar = $('#btSalvar', '#frmCadsoa');
+	var flghabilitarLbl = $("#flghabilitarLbl", "#frmCadsoa");
+
+	flghabilitarLbl.css({ 'margin-bottom': '10px', 'padding-left': '75px', 'float': 'left' });
 
 	/*dsservico	*/	
 	rDsproduto.addClass('rotulo').css('margin-left','0px');
@@ -245,7 +248,7 @@ function formataCabecalho() {
 	// Labels
 	$('label[for="cddopcao"]', "#frmCab").addClass("rotulo").css({ "width": "40px" });
 	$('label[for="cdcooperativa"]', "#frmCab").addClass("rotulo");
-	$('#flghabilitar').attr('checked', true);
+	$('#flghabilitar', '#frmCadsoa').attr('checked', true);
 	// Campos
 	$("#cddopcao", "#frmCab").css("width", "400px").css("float", "right").habilitaCampo();
 	$("#cdcooperativa", "#frmCab").css("width", "400px").css("float", "right").habilitaCampo();
@@ -255,9 +258,9 @@ function formataCabecalho() {
 	$("#btnOK", "#frmCab").css("width", "45px");
 
 	if (glb_cdcooper == 3)
-		$("#flghabilitar", "#frmCab").habilitaCampo();
+	    $("#flghabilitar", "#frmCadsoa").habilitaCampo();
 	else
-		$("#flghabilitar", "#frmCab").desabilitaCampo();
+	    $("#flghabilitar", "#frmCadsoa").desabilitaCampo();
 
 	$('input[type="text"],select', '#frmCab').limpaFormulario().removeClass('campoErro');
 
@@ -400,7 +403,6 @@ function carregarCoopMultSelect() {
 	$("#idfuncionalidade", "#frmCab").desabilitaCampo();
 	$("#idtipoenvio", "#frmCab").desabilitaCampo();
 	$("#btnOK","#frmCab").desabilitaCampo();
-	$("#flghabilitar","#frmCab").desabilitaCampo();
 
 	$('#dsservico').find('option').remove().end();
 	$('#dsaderido').find('option').remove().end();
@@ -452,7 +454,7 @@ function manterRotina(){
 	var cddopcao  = $('#cddopcao','#frmCab').val();
 	var cdcooperativa  = $('#cdcooperativa','#frmCab').val();
 	
-	var flghabilitar  = $('#flghabilitar','#frmCab').is(':checked') ? 1 : 0;
+	var flghabilitar = $('#flghabilitar', '#frmCadsoa').is(':checked') ? 1 : 0;
 	var idfuncionalidade  = $('#idfuncionalidade','#frmCab').val();
 	var idtipoenvio  = $('#idtipoenvio','#frmCab').val();
 	var cdcooppodenviar = [];

@@ -20,7 +20,10 @@
 ?>
 <br/>
 <form id="frmCadsoa" name="frmCadsoa" class="formulario">
-
+	
+    <label id="flghabilitarLbl" style="display: block; padding-left: 106px; text-indent: 10px;">
+		<input  style=" width: 13px; height: 13px; padding: 0; margin:0; vertical-align: bottom; position: relative; top: 6px;" type="checkbox" id="flghabilitar" name="flghabilitar"><? echo utf8ToHtml('Habilitar cooperativa para envio ao endere&ccedil;o do cooperado.')?>
+	</label>
 	<a href="#" style="text-decoration: underline;" id="btSelecioneDisponiveis"><? echo utf8ToHtml('Selecionar todos'); ?></a>
 	<a href="#" style="text-decoration: underline;" id="btSelecioneAderidos"><? echo utf8ToHtml('Selecionar todos'); ?></a>
 	<label for="dsservico"> <? echo utf8ToHtml('Não podem enviar'); ?></label>

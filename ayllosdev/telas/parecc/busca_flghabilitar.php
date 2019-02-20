@@ -52,8 +52,8 @@
 	$flghabilitar = getByTagName($xmlObj->roottag->tags[0]->tags, 'flghabilitar');
 
 	if ($flghabilitar == 0) {
-		echo '$("#flghabilitar").attr("checked", false);';
+		echo '$("#flghabilitar", "#frmCadsoa").attr("checked", false);';
 	} else {
-		echo '$("#flghabilitar").attr("checked", true);';
+		echo '$("#flghabilitar", "#frmCadsoa").attr("checked", true);';
 	}
 ?>

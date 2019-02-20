@@ -140,14 +140,5 @@
 				</div>
 			</td>
 		</tr>
-		<tr>
-			<td>
-				<div>
-    				<label id="flghabilitarLbl" style="display: block; padding-left: 106px; text-indent: 10px;">
-						<input  style=" width: 13px; height: 13px; padding: 0; margin:0; vertical-align: bottom; position: relative; top: 6px;" type="checkbox" id="flghabilitar" name="flghabilitar"><? echo utf8ToHtml('Habilitar cooperativa para envio ao endere&ccedil;o do cooperado.')?>
-					</label>
-  				</div>
-			</td>
-		</tr>
 	</table>
 </form>
