@@ -8,7 +8,7 @@
   
     Objetivo  : Include com Temp-Tables para a BO b1wgen0108.
   
-    Alteracoes: 
+    Alteracoes: 26/12/2018 - Projeto 510 - Incluí o campo tppagmto na tt-movimentos (Daniel - Envolti)
     
 ............................................................................*/ 
 
@@ -29,7 +29,10 @@ DEF TEMP-TABLE tt-movimentos NO-UNDO
     FIELD dtvencto LIKE crapcbb.dtvencto
     FIELD nmoperad LIKE crapope.nmoperad
     FIELD dsdocmto AS CHAR FORMAT "x(7)"
-    FIELD nrdrowid AS ROWID.
+    FIELD nrdrowid AS ROWID
+	  FIELD tppagmto LIKE crapcbb.tppagmto
+    FIELD dstppgto AS CHAR FORMAT "X(10)"
+    .
 
 DEF TEMP-TABLE tt-concbb NO-UNDO
     FIELD qttitrec AS DECI FORMAT "zzz,zz9"       

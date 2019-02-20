@@ -38,6 +38,8 @@
 							  
              14/05/2018 - Alterado para não permitir alterar faturas com datas
                           inferiores à data atual. (Melhoria PRJ406 - Reinert)
+						  
+             08/01/2019 - Alterações P510, campo Tipo Pgto (Christian Grauppe - Envolti).
 ****************************************************************************/
 
 var frmPesqti    = 'frmPesqti';
@@ -126,7 +128,6 @@ function formataCabecalho(){
 	
 	$('#cddopcao','#frmCabPesqti').habilitaCampo().focus().val('C');
 
-	
 	//Ao pressionar botao cddopcao
 	$('#cddopcao','#frmCabPesqti').unbind('keypress').bind('keypress', function(e){
 	
@@ -858,6 +859,10 @@ function formataFormularios() {
 	$('#'+frmFaturas).limpaFormulario();
 	$('#'+frmDarf41).limpaFormulario();	 	 
 	
+
+	$('br', '#'+frmFaturas).css({'clear':'both'});
+	$('br', '#'+frmTitulos).css({'clear':'both'});
+	
 	//form titulos - label
 	rDspactaa  	= $('label[for="dspactaa"]', '#'+frmTitulos);
 	rNrautdoc  	= $('label[for="nrautdoc"]', '#'+frmTitulos);
@@ -868,6 +873,7 @@ function formataFormularios() {
 	rDscodbar   = $('label[for="dscodbar"]', '#'+frmTitulos);
 	rDslindig   = $('label[for="dslindig"]', '#'+frmTitulos);
 	rDscptdoc  	= $('label[for="dscptdoc"]', '#'+frmTitulos);
+	rTppagmto  	= $('label[for="tppagmto"]', '#'+frmTitulos);
 
 	rDspactaa.addClass('rotulo').css({'width':'145px'});
 	rNrautdoc.addClass('rotulo').css({'width':'145px'});
@@ -878,6 +884,7 @@ function formataFormularios() {
 	rDscodbar.addClass('rotulo').css({'width':'145px'});
 	rDslindig.addClass('rotulo').css({'width':'145px'});
 	rDscptdoc.addClass('rotulo').css({'width':'145px'});
+	rTppagmto.addClass('rotulo').css({'width':'145px'});
 		
 	//form titulos - campos
 	cDspactaa   = $('#dspactaa', '#'+frmTitulos);
@@ -889,11 +896,13 @@ function formataFormularios() {
 	cDscodbar   = $('#dscodbar', '#'+frmTitulos);
 	cDslindig   = $('#dslindig', '#'+frmTitulos);
 	cDscptdoc  	= $('#dscptdoc', '#'+frmTitulos);
+	cTppagmto  	= $('#tppagmto', '#'+frmTitulos);
 
 	cDspactaa.css({'width':'120px'}).desabilitaCampo();
 	cNrautdoc.css({'width':'120px'}).desabilitaCampo();
 	cNrdocmto.css({'width':'114px'}).desabilitaCampo();
 	cCdbandst.css({'width':'320px'}).desabilitaCampo();
+	cTppagmto.css({'width':'475px'}).desabilitaCampo();
 			
 	if($.browser.msie){
 		cFlgpgdda.css({'width':'100px'}).desabilitaCampo();
@@ -901,7 +910,6 @@ function formataFormularios() {
 		cDscodbar.css({'width':'465px'}).desabilitaCampo();
 		cDslindig.css({'width':'465px'}).desabilitaCampo();
 		cDscptdoc.css({'width':'465px'}).desabilitaCampo();
-		
 	}else{
 		cFlgpgdda.css({'width':'94px'}).desabilitaCampo();
 		cNrdconta.css({'width':'90px'}).desabilitaCampo();
@@ -909,7 +917,6 @@ function formataFormularios() {
 		cDslindig.css({'width':'475px'}).desabilitaCampo();
 		cDscptdoc.css({'width':'475px'}).desabilitaCampo();
 	}
-	
 	//form faturas - label
 	rDspactaa  	= $('label[for="dspactaa"]', '#'+frmFaturas);
 	rVlconfoz  	= $('label[for="vlconfoz"]', '#'+frmFaturas);
@@ -924,6 +931,7 @@ function formataFormularios() {
 	rDscptdoc  	= $('label[for="dscptdoc"]', '#'+frmFaturas);    
 	rInsitfat  	= $('label[for="insitfat"]', '#'+frmFaturas);
 	rDsnomfon  	= $('label[for="dsnomfon"]', '#'+frmFaturas);    
+	rTppagmto  	= $('label[for="tppagmto"]', '#'+frmFaturas);
 	
 	rDspactaa.addClass('rotulo').css({'width':'145px'});
 	rNrautdoc.addClass('rotulo').css({'width':'95px'});
@@ -934,6 +942,7 @@ function formataFormularios() {
 	rDscptdoc.addClass('rotulo').css({'width':'95px'});
     rNmempres.addClass('rotulo').css({'width':'95px'});
 	rDsnomfon.addClass('rotulo').css({'width':'95px'});
+	rTppagmto.addClass('rotulo').css({'width':'95px'});
 
 	if ($.browser.msie){
 		rVlconfoz.addClass('rotulo-linha').css({'width':'353px'});
@@ -961,6 +970,7 @@ function formataFormularios() {
 	cDscptdoc  	= $('#dscptdoc', '#'+frmFaturas);
     cNmempres  	= $('#nmempres', '#'+frmFaturas);
 	cDsnomfon  	= $('#dsnomfon', '#'+frmFaturas);
+	cTppagmto  	= $('#tppagmto', '#'+frmFaturas);
 
 	cVlconfoz.css({'width':'80px'}).desabilitaCampo();
 	cInsitfat.css({'width':'60px'}).desabilitaCampo();
@@ -972,7 +982,8 @@ function formataFormularios() {
 	cDscodbar.setMask("STRING","44",charPermitido(),"");	
   cNmarrecd.css({'width':'320px'}).desabilitaCampo();
     cNmempres.css({'width':'320px'}).desabilitaCampo();
-	cDsnomfon.css({'width':'381px'}).desabilitaCampo();
+	cDsnomfon.css({'width':'477px'}).desabilitaCampo();
+	cTppagmto.css({'width':'477px'}).desabilitaCampo();
 	
 	if($.browser.msie){
 		cDscodbar.css({'width':'354px'}).desabilitaCampo();
@@ -989,7 +1000,6 @@ function formataFormularios() {
 
 	    cDscodbar.habilitaCampo();
 		cInsitfat.habilitaCampo();
-		
 	}	
 			
 }
@@ -1015,13 +1025,9 @@ function formataFormDarfs() {
 	rNrrefere.addClass('rotulo-linha').css({'width':'197px'});
 	
 	if($.browser.msie){
-		
 		rDtlimite.addClass('rotulo').css({'width':'155px'});
-		
 	}else{
-		
 		rDtlimite.addClass('rotulo').css({'width':'160px'});
-		
 	}
 	
 	rVllanmto.addClass('rotulo-linha').css({'width':'155px'});
@@ -1114,7 +1120,6 @@ function detalhaDarf() {
 			showError('error','Não foi possível concluir a requisição.(cod.07)','Alerta - Ayllos',"unblockBackground();");
 		},
 		success: function(response) {
-		
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
 				try {
 					$('#divConteudo').html(response);						
@@ -1153,6 +1158,7 @@ function selecionaTitulos(tr){
 	$('#dscodbar','#'+frmTitulos).val( $('#dscodbar', tr ).val() );
     $('#dslindig','#'+frmTitulos).val( $('#dslindig', tr ).val() );
 	$('#dscptdoc','#'+frmTitulos).val( $('#dscptdoc', tr ).val() );
+	$('#tppagmto','#'+frmTitulos).val( $('#tppagmto', tr ).val() );
 	
 	if (dspactaa == "") {
 		
@@ -1200,6 +1206,7 @@ function selecionaFaturas(tr){
     $('#dslindig','#'+frmFaturas).val( $('#dslindig', tr ).val() );
 	$('#dscptdoc','#'+frmFaturas).val( $('#dscptdoc', tr ).val() );
 	$('#dsnomfon','#'+frmFaturas).val( $('#dsnomfon', tr ).val() );
+	$('#tppagmto','#'+frmFaturas).val( $('#tppagmto', tr ).val() );
 	
 	if (dspactaa == "") {
 		

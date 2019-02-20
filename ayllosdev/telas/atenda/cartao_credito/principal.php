@@ -175,6 +175,7 @@
 ?>
 <script>
 function voltarParaTelaPrincipal(){
+	flgPrincipal = true;
 	<?echo 'acessaOpcaoAba(\''.count($glbvars["opcoesTela"]).'\',0,\''.$glbvars["opcoesTela"][0].'\');';?>;
 }
 </script>

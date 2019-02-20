@@ -7,6 +7,8 @@ CREATE OR REPLACE PROCEDURE CECRED.prc_transf_dep_avista_viacon IS
   aux_linha        VARCHAR(1000);
   aux_conf_index   NUMBER := 0;
   aux_vlformat     VARCHAR2(50) := '9999999999999999999990D00';
+  vr_dscritic      VARCHAR2(1000);
+  exc_erro         EXCEPTION;
 
   aux_vlsdposi   crapsld.vlsddisp%TYPE;
   aux_vlsdnega   crapsld.vlsddisp%TYPE;
@@ -733,13 +735,24 @@ BEGIN
   prc_escreve_totais_geral;
 
   -- Criar o arquivo no diretorio especificado
-  dbms_xslprocessor.clob2file(aux_dados, aux_caminho, 'transf_dep_avista_viacon.csv', 0);
+  -- SCTASK0038225 (Yuri - Mouts)
+  gene0002.pc_clob_para_arquivo(pr_clob     => aux_dados 
+                               ,pr_caminho  => aux_caminho 
+                               ,pr_arquivo  => 'transf_dep_avista_viacon.csv' 
+                               ,pr_des_erro => vr_dscritic); 
+  IF vr_dscritic IS NOT NULL THEN
+    RAISE exc_erro ;
+  END IF;
+/*dbms_xslprocessor.clob2file(aux_dados, aux_caminho, 'transf_dep_avista_viacon.csv', 0);*/
 
   -- Liberando a memória alocada pro CLOB
   dbms_lob.close(aux_dados);
   dbms_lob.freetemporary(aux_dados);
 
 EXCEPTION
+  WHEN exc_erro THEN
+    ROLLBACK;
+    dbms_output.put_line('ERRO GENE0002: ' || vr_dscritic);
   WHEN OTHERS THEN
     ROLLBACK;
     dbms_output.put_line('ERRO: ' || SQLERRM);

@@ -2,7 +2,7 @@
 
 Programa: siscaixa/web/crap087.w
 Sistema : CAIXA ON-LINE
-Sigla   : CRED                               Ultima atualizacao: 27/08/2014
+Sigla   : CRED                               Ultima atualizacao: 02/01/2019
    
 Dados referentes ao programa:
 
@@ -13,6 +13,8 @@ Alteracoes: 27/08/2014 - Ajustes referente a homologacao com o SICREDI
 
             07/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
                           norturno rodando (Douglas Pagel - AMcom).
+
+			   02/01/2019 - Projeto 510 - Incluí tipo de pagamento e validação do valor máximo para pagto em espécie. (Daniel - Envolti)
 
 .............................................................................. **/
 
@@ -48,6 +50,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD h_inpesgps      AS CHARACTER FORMAT "X(256)":U
        FIELD h_tpdpagto      AS CHARACTER FORMAT "X(256)":U
        FIELD h_idleitor      AS CHARACTER FORMAT "X(256)":U
+       FIELD v_tppagmto    AS CHARACTER FORMAT "X(256)":U
        FIELD v_cod           AS CHARACTER FORMAT "X(256)":U
        FIELD v_senha         AS CHARACTER FORMAT "X(256)":U
        FIELD hdnEstorno    AS CHARACTER FORMAT "X(256)":U
@@ -182,8 +185,8 @@ DEFINE VARIABLE vr_cdcriticValorAcima AS INTEGER NO-UNDO INIT 0.
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS   ab_unmap.vh_foco  ab_unmap.vh_nome  ab_unmap.v_msg  ab_unmap.proximo  ab_unmap.v_cntanter  ab_unmap.v_coop  ab_unmap.v_pac  ab_unmap.v_caixa  ab_unmap.v_operador  ab_unmap.v_data  ab_unmap.v_conta ab_unmap.v_nome  ab_unmap.tpdpagto  ab_unmap.v_codbarras  ab_unmap.v_codigo  ab_unmap.v_competencia  ab_unmap.v_identificador  ab_unmap.v_valorins  ab_unmap.v_valorout  ab_unmap.v_valorjur  ab_unmap.v_valortot  ab_unmap.v_vencimento  ab_unmap.inpesgps ab_unmap.h_inpesgps ab_unmap.h_tpdpagto ab_unmap.h_idleitor ab_unmap.v_cod ab_unmap.v_senha ab_unmap.hdnEstorno ab_unmap.hdnVerifEstorno ab_unmap.hdnValorAcima
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.vh_foco  ab_unmap.vh_nome  ab_unmap.v_msg  ab_unmap.proximo  ab_unmap.v_cntanter  ab_unmap.v_coop  ab_unmap.v_pac  ab_unmap.v_caixa  ab_unmap.v_operador  ab_unmap.v_data  ab_unmap.v_conta ab_unmap.v_nome  ab_unmap.tpdpagto  ab_unmap.v_codbarras  ab_unmap.v_codigo  ab_unmap.v_competencia  ab_unmap.v_identificador  ab_unmap.v_valorins  ab_unmap.v_valorout  ab_unmap.v_valorjur  ab_unmap.v_valortot  ab_unmap.v_vencimento  ab_unmap.inpesgps ab_unmap.h_inpesgps ab_unmap.h_tpdpagto ab_unmap.h_idleitor ab_unmap.v_cod ab_unmap.v_senha ab_unmap.hdnEstorno ab_unmap.hdnVerifEstorno ab_unmap.hdnValorAcima
+&Scoped-Define ENABLED-OBJECTS   ab_unmap.vh_foco  ab_unmap.vh_nome  ab_unmap.v_msg  ab_unmap.proximo  ab_unmap.v_cntanter  ab_unmap.v_coop  ab_unmap.v_pac  ab_unmap.v_caixa  ab_unmap.v_operador  ab_unmap.v_data  ab_unmap.v_conta ab_unmap.v_nome  ab_unmap.tpdpagto  ab_unmap.v_codbarras  ab_unmap.v_codigo  ab_unmap.v_competencia  ab_unmap.v_identificador  ab_unmap.v_valorins  ab_unmap.v_valorout  ab_unmap.v_valorjur  ab_unmap.v_valortot  ab_unmap.v_vencimento  ab_unmap.inpesgps ab_unmap.h_inpesgps ab_unmap.h_tpdpagto ab_unmap.h_idleitor ab_unmap.v_tppagmto ab_unmap.v_cod ab_unmap.v_senha ab_unmap.hdnEstorno ab_unmap.hdnVerifEstorno ab_unmap.hdnValorAcima
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.vh_foco  ab_unmap.vh_nome  ab_unmap.v_msg  ab_unmap.proximo  ab_unmap.v_cntanter  ab_unmap.v_coop  ab_unmap.v_pac  ab_unmap.v_caixa  ab_unmap.v_operador  ab_unmap.v_data  ab_unmap.v_conta ab_unmap.v_nome  ab_unmap.tpdpagto  ab_unmap.v_codbarras  ab_unmap.v_codigo  ab_unmap.v_competencia  ab_unmap.v_identificador  ab_unmap.v_valorins  ab_unmap.v_valorout  ab_unmap.v_valorjur  ab_unmap.v_valortot  ab_unmap.v_vencimento  ab_unmap.inpesgps ab_unmap.h_inpesgps ab_unmap.h_tpdpagto ab_unmap.h_idleitor ab_unmap.v_tppagmto ab_unmap.v_cod ab_unmap.v_senha ab_unmap.hdnEstorno ab_unmap.hdnVerifEstorno ab_unmap.hdnValorAcima
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -313,6 +316,13 @@ DEFINE FRAME Web-Frame
                     "radio", "2":U,
                     "radio", "0":U
           SIZE 20 BY 3
+     ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
+          "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
+          RADIO-BUTTONS 
+           "v_tppagmto 2", "2":U,
+           "v_tppagmto 0", "0":U,
+           "v_tppagmto 1", "1":U 
+           SIZE 20 BY 2
     ab_unmap.v_cod AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -375,6 +385,7 @@ DEFINE FRAME Web-Frame
           FIELD v_valorout AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valorjur AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valortot AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U 
           FIELD v_cod AS CHARACTER FORMAT "X(256)":U 
           FIELD v_senha AS CHARACTER FORMAT "X(256)":U
           FIELD hdnEstorno AS CHARACTER FORMAT "X(256)":U
@@ -457,6 +468,8 @@ DEFINE FRAME Web-Frame
 /* SETTINGS FOR FILL-IN ab_unmap.v_valorjur IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.v_valortot IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_tppagmto IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.v_cod IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
@@ -546,6 +559,7 @@ PROCEDURE htmOffsets :
   RUN htmAssociate ("h_inpesgps":U,"ab_unmap.h_inpesgps":U,ab_unmap.h_inpesgps:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate ("h_tpdpagto":U,"ab_unmap.h_tpdpagto":U,ab_unmap.h_tpdpagto:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate ("h_idleitor":U,"ab_unmap.h_idleitor":U,ab_unmap.h_idleitor:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).    
   RUN htmAssociate ("v_cod":U,"ab_unmap.v_cod":U,ab_unmap.v_cod:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate ("v_senha":U,"ab_unmap.v_senha":U,ab_unmap.v_senha:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate ("hdnEstorno":U,"ab_unmap.hdnEstorno":U,ab_unmap.hdnEstorno:HANDLE IN FRAME {&FRAME-NAME}).
@@ -625,6 +639,8 @@ PROCEDURE process-web-request :
     DEF VAR hdnEstorno        AS  CHAR         NO-UNDO.
     DEF VAR hdnVerifEstorno   AS  CHAR         NO-UNDO.
     DEF VAR hdnValorAcima     AS  CHAR         NO-UNDO.
+    DEFINE VARIABLE aux_cdcritic     AS INTEGER.
+	DEF VAR aux_vllimite_especie     AS DECIMAL                  NO-UNDO.
      
   /* STEP 0 -
    * Output the MIME header and set up the object as state-less or state-aware. 
@@ -660,7 +676,8 @@ PROCEDURE process-web-request :
          glb_cdagenci = INTE(get-value("user_pac"))
          glb_cdbccxlt = INTE(get-value("user_cx"))
          glb_cdoperad = get-value("operador")
-         ab_unmap.hdnVerifEstorno = get-value("hdnVerifEstorno ").
+         ab_unmap.hdnVerifEstorno = get-value("hdnVerifEstorno ")
+		     v_tppagmto   = get-value("v_tppagmto").
 
 
    /* Describe whether to receive FORM input for all the fields.  For example,
@@ -711,6 +728,7 @@ PROCEDURE process-web-request :
                  v_nome      = ""
                  vh_nome     = ""
                  vh_foco     = "13"
+                 v_tppagmto  = "2"
                  proximo     = "0"
                  tpdpagto    = "0"
                  inpesgps    = "0"
@@ -755,6 +773,7 @@ PROCEDURE process-web-request :
                                       INPUT v_caixa,
                                       INPUT v_valortot,
                                       INPUT ab_unmap.v_senha,
+                                      INPUT v_tppagmto,
                                       OUTPUT aux_des_erro,
                                       OUTPUT aux_dscritic,
                                       OUTPUT aux_inssenha).
@@ -765,6 +784,9 @@ PROCEDURE process-web-request :
                END.
               ELSE
                  DO:                           
+
+                 
+					 
               /* Efetua o Pagamento */
               RUN dbo/b1crap87.p PERSISTENT SET h_b1crap87.
               RUN pc-efetua-gps-pagamento IN h_b1crap87
@@ -785,6 +807,7 @@ PROCEDURE process-web-request :
                                           INPUT v_valortot,
                                           INPUT v_vencimento,
                                           INPUT h_inpesgps,
+                          INPUT v_tppagmto,                          
                                           OUTPUT p-literal,
                                           OUTPUT p-ult-sequencia).
               DELETE PROCEDURE h_b1crap87.
@@ -1146,6 +1169,7 @@ PROCEDURE valida-valor-limite:
     DEF INPUT PARAM par_nrocaixa  AS INTEGER                         NO-UNDO.
     DEF INPUT PARAM par_vltitfat  AS DECIMAL                         NO-UNDO.
     DEF INPUT PARAM par_senha     AS CHARACTER                       NO-UNDO.
+    DEF INPUT PARAM par_tppagmto  AS INTEGER                         NO-UNDO.
     DEF OUTPUT PARAM par_des_erro AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_inssenha AS INTEGER                         NO-UNDO.
@@ -1161,6 +1185,7 @@ PROCEDURE valida-valor-limite:
                                            INPUT par_nrocaixa,
                                            INPUT par_vltitfat,
                                            INPUT par_senha,
+                                           INPUT par_tppagmto,
                                            OUTPUT par_des_erro,
                                            OUTPUT par_dscritic,
                                            OUTPUT par_inssenha).

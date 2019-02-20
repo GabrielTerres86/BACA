@@ -199,6 +199,9 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
               25/01/2019 - Projeto de homologacao de convenios (sustentacao). Nao causara 
                            impacto em prod, usado somente em dev. Gabriel Marcos (Mouts).
 
+						   
+      	     31/01/2019 - Ajuste no formato para o campo código de referencia de debito para o convênio 96 respeitar 8 posições.
+                          (Paulo F. Kowalsky #INC0030727) 
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -689,7 +692,7 @@ begin
         vr_cdidenti:= vr_nrrefere;
       ELSIF rw_gnconve.cdconven in (8, 16, 19, 20, 25, 26, 11, 49) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm000000')||lpad(' ', 19, ' ');
-      elsif rw_gnconve.cdconven in (4, 24, 31, 33, 53, 54, 108) then
+      elsif rw_gnconve.cdconven in (4, 24, 31, 33, 53, 54, 108, 96) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm00000000')||lpad(' ', 17, ' ');
       elsif rw_gnconve.cdconven in (2, 10, 5, 30, 14, 45) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm000000000')||lpad(' ', 16, ' ');

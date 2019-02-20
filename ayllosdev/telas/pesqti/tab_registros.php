@@ -12,6 +12,8 @@
  *
  *                18/01/2018 - Alterações referentes ao PJ406.
  *
+ *                08/01/2019 - Alterações P510, campo Tipo Pgto (Christian Grauppe - Envolti).
+ *
  * --------------
  */ 
 
@@ -62,7 +64,7 @@
 						<input type="hidden" id="cdagenci" name="cdagenci" value="<? echo getByTagName($result->tags,'cdagenci') ?>" />	
 						<input type="hidden" id="cdbccxlt" name="cdbccxlt" value="<? echo getByTagName($result->tags,'cdbandst') ?>" />
 						<input type="hidden" id="dtdpagto" name="dtdpagto" value="<? echo getByTagName($result->tags,'dtdpagto') ?>" />	
-						<input type="hidden" id="cdhiscxa" name="cdhiscxa" value="<? echo $cdhiscxa ?>" />
+						<input type="hidden" id="cdhiscxa" name="cdhiscxa" value="<? echo $cdhiscxa ?>" />	
 						
 						<input type="hidden" id="dtapurac" name="dtapurac" value="<? echo getByTagName($result->tags,'dtapurac') ?>" />
 						<input type="hidden" id="nrcpfcgc" name="nrcpfcgc" value="<? echo getByTagName($result->tags,'nrcpfcgc') ?>" />
@@ -78,6 +80,7 @@
 						<input type="hidden" id="nmempres" name="nmempres" value="<? echo getByTagName($result->tags,'nmempres') ?>" />
 						<input type="hidden" id="dscptdoc" name="dscptdoc" value="<? echo getByTagName($result->tags,'dscptdoc') ?>" />
 						<input type="hidden" id="dsnomfon" name="dsnomfon" value="<? echo getByTagName($result->tags,'dsnomfon') ?>" />
+						<input type="hidden" id="tppagmto" name="tppagmto" value="<? echo getByTagName($result->tags,'tppagmto') ?>" />
 		
 				    </tr>	
 				<? } ?>
@@ -126,24 +129,22 @@
 	$('#btVoltar','#divBotoes').css('display','inline');
 	
 	if ($("#cdhiscxa","#frmFiltroPesqti").hasClass("campoErro")){
-	
 		$('#btVoltar','#divBotoes').css('display','none');
 		$('#btAlterar','#divBotoes').css('display','none');
-		
 	}
+		
 	$('a.paginacaoAnt').unbind('click').bind('click', function() {
 
 		obtemConsulta(<? echo ($nriniseq - $nrregist);?>,<?php echo $nrregist;?>);
 
 	});
 	$('a.paginacaoProx').unbind('click').bind('click', function() {
-		
 		obtemConsulta(<? echo ($nriniseq + $nrregist);?>,<?php echo $nrregist;?>);
-		
 	});		
+		
 	$('#divPesquisaRodape','#divConsulta').formataRodapePesquisa();
-
+	
 	formataFormularios();
-	controlaLayout("1");	
+	controlaLayout("1");		
 			
 </script>

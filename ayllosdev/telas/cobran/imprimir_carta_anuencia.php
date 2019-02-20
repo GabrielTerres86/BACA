@@ -7,7 +7,8 @@
 	                                                                   
   Objetivo  : Gerar o PDF do termo da rotina de COBRANCA da ATENDA.              
 	                                                                 
-  Alterações: 
+  Alterações: 07/02/2019 - Retirado controle de permissoes na impressao 
+                           da carta de anuencia (P352 - Cechet)
   
 ***********************************************************************/
 	session_cache_limiter("private");
@@ -21,12 +22,6 @@
 
 	// Verifica se tela foi chamada pelo método POST
 	isPostMethod();
-
-	// Verifica Permissões
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
-		?><script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
-		exit();	
-	}	
 
 	$nrdconta = ( isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 	$nrdocmto = ( isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0;

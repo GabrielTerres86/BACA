@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Renato Darosci
-   Data    : Setembro/2015                      Ultima atualizacao: 12/04/2018
+   Data    : Setembro/2015                      Ultima atualizacao: 25/01/2019
 
    Dados referentes ao programa:
 
@@ -36,7 +36,11 @@
 
 			   18/04/2018 - Alterar mensagem de retorno e condicional das rotinas
 			                pc_gps_pagamento e pc_gps_agmto_novo.
-							(PRJ381 - Analise de Fraude, Teobaldo Jamunda-AMcom) 
+							(PRJ381 - Analise de Fraude, Teobaldo Jamunda-AMcom)
+
+              
+              25/01/2019 - P510 - Passar 0(Conta) no novo parametros das rotinas 
+                           pc_gps_pagamento e pc_gps_validar_sicredi (Marcos-Envolti)
 
 ..............................................................................*/
     
@@ -255,6 +259,7 @@ ELSE IF  par_tpoperac = 3 THEN DO: /* Efetua pagamento GPS */
                          INPUT par_dshistor,
                          INPUT par_iptransa,    /* --> IP da transacao  IBank/mobile */
                          INPUT par_iddispos,    /* --> ID Dispositivo mobile         */
+                         INPUT 0, /* Conta */
                          OUTPUT "", /*pr_dsprotoc*/
                          OUTPUT "",
                          OUTPUT 0,
@@ -418,6 +423,7 @@ ELSE IF  par_tpoperac = 6 THEN DO:
                           INPUT "",   /* pr_dshistor */
                           INPUT par_iptransa,    /* --> IP da transacao  IBank/mobile */
                           INPUT par_iddispos,    /* --> ID Dispositivo mobile         */                         
+                          INPUT 0,               /* 0-Conta */                          
                           OUTPUT "",  /* pr_dslitera */
                           OUTPUT 0,   /* pr_sequenci */
                           OUTPUT 0,   /* pr_nrseqaut */

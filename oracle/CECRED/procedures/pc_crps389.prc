@@ -1,5 +1,5 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-         pc_crps389 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps389 
+                    (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                     ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                     ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                     ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Abril/2004                      Ultima atualizacao: 10/07/2018
+   Data    : Abril/2004                      Ultima atualizacao: 13/12/2018
 
    Dados referentes ao programa:
 
@@ -72,6 +72,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
 							
                10/07/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
 							
+               13/12/2018 - Remoção da atualização da Capa de Lote
+                            Yuri - Mouts
     ............................................................................ */
 
     DECLARE
@@ -459,6 +461,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
           END;
         END IF;
         CLOSE cr_craplot; -- Fecha a capa de lote
+        -- Busca o sequencial 
+        rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                               pr_nmdcampo => 'NRSEQDIG',
+                               pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                              to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                              ';1;100;10101');
 
         -- PRJ450 - 10/07/2018 - inicio:
         IF rw_crapsdc.tplanmto = 1 THEN
@@ -472,9 +480,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                           , pr_cdbccxlt => rw_craplot.cdbccxlt
                                           , pr_nrdolote => rw_craplot.nrdolote
                                           , pr_nrdconta => rw_crapsdc.nrdconta
-                                          , pr_nrdocmto => rw_craplot.nrseqdig + 1 
+                                          , pr_nrdocmto => rw_craplot.nrseqdig
                                           , pr_cdhistor => 127   
-                                          , pr_nrseqdig => rw_craplot.nrseqdig + 1
+                                          , pr_nrseqdig => rw_craplot.nrseqdig
                                           , pr_vllanmto => rw_crapsdc.vllanmto
                                           , pr_nrdctabb => rw_crapsdc.nrdconta
                                           , pr_cdpesqbb => vr_cdpesqbb
@@ -512,7 +520,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                           , pr_cdcritic  => vr_cdcritic      -- OUT
                                           , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
 
-        vr_nrdocmto := rw_craplot.nrseqdig + 1;
+        vr_nrdocmto := rw_craplot.nrseqdig;
 
         IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_saida;
@@ -521,7 +529,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
         -- PRJ450 - 10/07/2018 - fim.
 
         -- Atualiza a capa de lote
-        rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+/*        rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
         rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
         rw_craplot.vlcompdb := rw_craplot.vlcompdb + rw_crapsdc.vllanmto;
         BEGIN
@@ -536,7 +544,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
           WHEN OTHERS THEN
             vr_dscritic := '1-Erro ao atualizar CRAPLOT: '||SQLERRM;
             RAISE vr_exc_saida;
-        END;
+        END;*/
 
         /*  Cria lancamento de credito no capital ...............................*/
         -- Abre a capa de lote
@@ -583,6 +591,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
           END;
         END IF;
         CLOSE cr_craplot; -- Fecha a capa de lote
+        -- Busca o sequencial 
+        rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                               pr_nmdcampo => 'NRSEQDIG',
+                               pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                              to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                              ';1;100;10102');
 
         -- Insere o lancamento de cotas / capital   
         BEGIN
@@ -605,7 +619,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
              rw_crapsdc.nrdconta,
              vr_nrdocmto,
              decode(rw_crapsdc.tplanmto,1,60,401),
-             rw_craplot.nrseqdig + 1,
+             rw_craplot.nrseqdig,
              rw_crapsdc.vllanmto,
              pr_cdcooper);
         EXCEPTION
@@ -615,7 +629,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
         END;
 
         -- Atualiza a capa de lote
-        rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+/*        rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
         rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
         rw_craplot.vlcompcr := rw_craplot.vlcompcr + rw_crapsdc.vllanmto;
         BEGIN
@@ -630,7 +644,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
           WHEN OTHERS THEN
             vr_dscritic := '2-Erro ao atualizar CRAPLOT: '||SQLERRM;
             RAISE vr_exc_saida;
-        END;
+        END;*/
 
         /*  Atualiza o registro de parcelamento de capital ......................*/
         rw_crapsdc.indebito := 1;
@@ -711,6 +725,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
           END;
         END IF;
         CLOSE cr_craplot; -- Fecha a capa de lote
+        -- Busca o sequencial 
+        rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                               pr_nmdcampo => 'NRSEQDIG',
+                               pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                              to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                              ';1;100;10102');
            
         -- Insere o lancamento de cotas / capital   
         BEGIN
@@ -731,9 +751,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
              rw_craplot.cdbccxlt,
              rw_craplot.nrdolote,
              rw_crapsdc.nrdconta,
-             rw_craplot.nrseqdig + 1,  --Em conversa com o Guilherme, foi colocado este valor ao inves do DECIMAL(RECID(craplcm)) 
+             rw_craplot.nrseqdig,
+--           rw_craplot.nrseqdig + 1,  --Em conversa com o Guilherme, foi colocado este valor ao inves do DECIMAL(RECID(craplcm)) 
              402,
-             rw_craplot.nrseqdig + 1,
+             rw_craplot.nrseqdig,
              rw_crapsdc.vllanmto,
              pr_cdcooper);
         EXCEPTION
@@ -743,7 +764,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
         END;
         
         -- Atualiza a capa de lote
-        rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+/*        rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
         rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
         rw_craplot.vlcompdb := rw_craplot.vlcompdb + rw_crapsdc.vllanmto;
         BEGIN
@@ -758,10 +779,16 @@ CREATE OR REPLACE PROCEDURE CECRED.
           WHEN OTHERS THEN
             vr_dscritic := '3-Erro ao atualizar CRAPLOT: '||SQLERRM;
             RAISE vr_exc_saida;
-        END;
+        END;*/
 
 
         /*  Cria lancamento de credito no capital ...............................*/
+        -- Busca o sequencial 
+        rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                               pr_nmdcampo => 'NRSEQDIG',
+                               pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                              to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                              ';1;100;10102');
         BEGIN
           INSERT INTO craplct
             (dtmvtolt, 
@@ -780,9 +807,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
              rw_craplot.cdbccxlt,
              rw_craplot.nrdolote,
              rw_crapsdc.nrdconta,
-             rw_craplot.nrseqdig + 1, --Em conversa com o Guilherme, foi colocado este valor ao inves do DECIMAL(RECID(craplcm)) 
+             rw_craplot.nrseqdig,
              decode(rw_crapsdc.tplanmto,1,60,401),
-             rw_craplot.nrseqdig + 1,
+             rw_craplot.nrseqdig,
              rw_crapsdc.vllanmto,
              pr_cdcooper);
         EXCEPTION
@@ -792,7 +819,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
         END;
 
         -- Atualiza a capa de lote
-        rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
+/*        rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
         rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
         rw_craplot.vlcompcr := rw_craplot.vlcompcr + rw_crapsdc.vllanmto;
         BEGIN
@@ -807,7 +834,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
           WHEN OTHERS THEN
             vr_dscritic := '4-Erro ao atualizar CRAPLOT: '||SQLERRM;
             RAISE vr_exc_saida;
-        END;
+        END;*/
 
         /*  Atualiza o registro de parcelamento de capital ......................*/
         rw_crapsdc.indebito := 3;

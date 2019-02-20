@@ -94,6 +94,8 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
 
 				16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
+					 
+				13/02/2019 - XSLProcessor
 
 ..............................................................................*/
 
@@ -500,6 +502,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --
   --             04/12/2018 - Tratamento para lote em uso quando banco é 85 (Lucas Ranghetti PRB0040456)
   --
+  --             05/12/2018 - SCTASK0038225 (Yuri - Mouts)
+  --                          Substituir método XSLProcessor pela chamada da GENE0002
+
   --             14/12/2018 -   Sprint D - Na efetivação de agendamento antes do horario de abertura da grade do SPB, 
   --                            tambem deve verificar primeiramente a possibilidade de envio por PAG, assim 
   --                            como ocorre para TED online (Jose Dill - Mouts).
@@ -770,7 +775,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       pc_escreve_xml('</SISMSG>');
 
       --Gera arquivo XML no diretorio salvar
-      DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml,vr_nom_direto,vr_nmarqxml, 0);
+      -- SCTASK0038225
+      gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_xml
+                                   ,pr_caminho  => vr_nom_direto
+                                   ,pr_arquivo  => vr_nmarqxml
+                                   ,pr_des_erro => vr_dscritic); 
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+          
+/*    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml,vr_nom_direto,vr_nmarqxml, 0);*/
+      -- Fim SCTASK0038225
 
       -- Marcelo Telles Coelho - Projeto 475
       -- Não gera/envia mais arquivo físico

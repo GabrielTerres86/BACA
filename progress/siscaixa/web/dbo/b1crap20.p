@@ -30,7 +30,7 @@
 
     b1crap20.p - DOC/TED - Inclusao
     
-    Ultima Atualizacao: 02/02/2019
+    Ultima Atualizacao: 13/02/2019
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -248,7 +248,7 @@
 									 		 
 			    23/08/2017 - Alterado para validar as informacoes do operador 
 							 pelo AD. (PRJ339 - Reinert)
-							
+                             
                 12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                              pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 
@@ -279,6 +279,9 @@
 				02/02/2019 - Correção para o tipo de documento "TED C":
 							-> Ao optar por "Espécie" deve ser permitir apenas para não cooperados
 						    (Jonata - Mouts PRB0040337).
+							 
+				13/02/2019 - Correcao da finalidade 400 (Tributos Municipais ISS - LCP) para 157
+                             (Jonata  - Mouts / INC0032530).
 ----------------------------------------------------------------------------- **/
                              
 {dbo/bo-erro1.i}
@@ -583,6 +586,7 @@ PROCEDURE valida-valores:
     DEFINE INPUT PARAMETER p-dsc-historico    AS CHAR NO-UNDO. /*Descriçao do Histórico*/
     DEFINE INPUT PARAMETER p-ispb-if          AS CHAR   NO-UNDO.  /* ISPB Banco    */
 	DEFINE INPUT PARAMETER p-cdidtran         AS CHAR NO-UNDO.
+
 
     DEF VAR aux_flestcri AS INTE                    NO-UNDO.
 
@@ -1468,12 +1472,12 @@ PROCEDURE valida-valores:
                               INPUT c-desc-erro,
                               INPUT YES).
           END. 
-	/* Quando informado a finalidade “400 - Tributos Municipais ISS - LCP 157" deve ser validado
+	/* Quando informado a finalidade “157 - Tributos Municipais ISS - LCP 157" deve ser validado
        o código identificador onde pode conter apenas números e ter no máximo 11 posições.*/
-    ELSE IF int(p-cod-finalidade) = 400 THEN
+    ELSE IF int(p-cod-finalidade) = 157 THEN
 	  DO:
 	    DEC(p-cdidtran) NO-ERROR.
-    
+
         IF ERROR-STATUS:ERROR THEN    
            DO:
 			 ASSIGN i-cod-erro  = 0
@@ -1679,7 +1683,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
             RETURN "NOK".
         END.
 
-	IF int(p-cod-finalidade) = 400 THEN
+	IF int(p-cod-finalidade) = 157 THEN
 	  DO:
 	     ASSIGN p-cod-id-transf = STRING(dec(p-cod-id-transf),"99999999999").
 		
@@ -1729,7 +1733,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                    craplot.cdopecxa = p-cod-operador.
          
         END.
-        
+
     ASSIGN aux_nrseqdig = craplot.nrseqdig + 1.
 
     IF i-cdhistor = 523 THEN

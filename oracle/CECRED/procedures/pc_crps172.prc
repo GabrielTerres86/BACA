@@ -9,7 +9,7 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/96                     Ultima atualizacao: 05/07/2018
+   Data    : Novembro/96                     Ultima atualizacao: 13/12/2018
 
    Dados referentes ao programa:
 
@@ -116,6 +116,8 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
                             pois programa passou a executar durante o dia no Debitador.
                             (Elton - AMcom)
 							
+               13/12/2018 - Remoção da atualização da capa de lote
+                            Yuri - Mouts
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -483,7 +485,8 @@ BEGIN
         close cr_craplot;
       end if;
       -- Atualiza tabela CRAPLOT
-      begin
+      -- Comentado por Yuri - Remoção atualização capa de lote
+/*      begin
         update craplot ct
            set ct.qtinfoln = ct.qtcompln + 1,
                ct.qtcompln = ct.qtcompln + 1,
@@ -496,7 +499,13 @@ BEGIN
         when others then
           vr_cdcritic := 0;
           vr_dscritic := 'Erro ao atualizar CRAPLOT. ' || sqlerrm;
-      end;
+      end; */
+      -- Como não faz mais o update e incremento, Busca o sequencial 
+      rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                             pr_nmdcampo => 'NRSEQDIG',
+                             pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                            to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                            ';1;100;8454');
   
       -- PRJ450 - 05/07/2018.
       lanc0001.pc_gerar_lancamento_conta (pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -653,7 +662,8 @@ BEGIN
         close cr_craplot;
       end if;
       -- Atualiza tabela CRAPLOT
-      begin
+      -- Comentado por Yuri - Mouts
+/*      begin
         update craplot ct
            set ct.qtinfoln = ct.qtcompln + 1,
                ct.qtcompln = ct.qtcompln + 1,
@@ -666,7 +676,14 @@ BEGIN
         when others then
           vr_cdcritic := 0;
           vr_dscritic := 'Erro ao atualizar CRAPLOT. ' || sqlerrm;
-      end;
+      end; */
+
+      -- Como não incrementa mais no update, Busca o sequencial 
+      rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                             pr_nmdcampo => 'NRSEQDIG',
+                             pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                            to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                            ';1;100;8464');
       -- Gera lancamentos de cotas/capital
       begin
         insert into craplct(cdagenci,

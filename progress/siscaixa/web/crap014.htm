@@ -535,8 +535,12 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                     <td>
                         <table cellspacing="0" cellpadding="0" width="100%">
                             <tr>
+                                <!-- TD e Input escondidos para suprir problema do componente onde se faz obrigatório a seleção de pelo menos um dos valores -->
+                                <td class="linhaform" style="visibility:hidden;">
+                                    <input type="radio" value="2" id="v_tppagmto2" checked name="v_tppagmto">
+                                </td>
                                 <td class="linhaform" style="width: 30%;">
-                                    <input type="radio" value="0" id="v_tppagmto0" name="v_tppagmto" checked>
+                                    <input type="radio" value="0" id="v_tppagmto0" name="v_tppagmto">
                                     Conta
                                 </td>
                                 <td class="linhaform" style="width: 70%;">

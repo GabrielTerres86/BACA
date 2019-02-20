@@ -29,12 +29,14 @@ if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"X"))
 }
 
 $idrecipr = ( (!empty($_POST['idrecipr'])) ? $_POST['idrecipr'] : 0 );
+$nrdconta = ( (!empty($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0 );
 
 // Montar o xml de Requisicao
 $xml  = "";
 $xml .= "<Root>";
 $xml .= " <Dados>";	
 $xml .= "   <idrecipr>".$idrecipr."</idrecipr>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 

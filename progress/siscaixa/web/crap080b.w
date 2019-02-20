@@ -4,7 +4,7 @@
    Sistema :                                        
    Sigla   :     
    Autor   : 
-   Data    :                                    Ultima atualizacao: 22/08/2007
+   Data    :                                    Ultima atualizacao: 02/01/2019
    
    Dados referentes ao programa:
 
@@ -14,6 +14,8 @@
    Alteracoes:      22/08/2007 - Incluido parametros nas chamadas para a BO
                                  valida-codigo-barras do programa dbo/b1crap14.p
                                  (Elton).
+
+                    02/01/2019 - Projeto 510 - Incluí tipo de pagamento e validação do valor máximo para pagto em espécie. (Daniel - Envolti)
 
 ..............................................................................*/
 
@@ -33,6 +35,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_msg AS CHARACTER FORMAT "X(256)":U 
        FIELD v_operador AS CHARACTER FORMAT "X(256)":U 
        FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
+       FIELD v_tppagmto    AS CHARACTER FORMAT "X(256)":U
        FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
        FIELD v_valor1 AS CHARACTER FORMAT "X(256)":U
        FIELD v_cod AS CHARACTER FORMAT "X(256)":U
@@ -119,8 +122,8 @@ DEFINE VARIABLE vr_cdcriticValorAcima AS INTEGER NO-UNDO INIT 0.
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_codbarras ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_valor1 ab_unmap.v_cod ab_unmap.v_senha ab_unmap.hdnValorAcima
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_codbarras ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_valor1 ab_unmap.v_cod ab_unmap.v_senha ab_unmap.hdnValorAcima
+&Scoped-Define ENABLED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_codbarras ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tppagmto ab_unmap.v_valor ab_unmap.v_valor1 ab_unmap.v_cod ab_unmap.v_senha ab_unmap.hdnValorAcima
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_codbarras ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tppagmto ab_unmap.v_valor ab_unmap.v_valor1 ab_unmap.v_cod ab_unmap.v_senha ab_unmap.hdnValorAcima
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -142,6 +145,7 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL
           VIEW-AS RADIO-SET VERTICAL
           RADIO-BUTTONS 
+                    "radio 3","3",
                     "radio 1","1",
 "radio 2","2"
           SIZE 20 BY 3
@@ -181,6 +185,13 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+     ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
+          "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
+          RADIO-BUTTONS 
+           "v_tppagmto 2", "2":U,
+           "v_tppagmto 0", "0":U,
+           "v_tppagmto 1", "1":U 
+           SIZE 20 BY 2
      ab_unmap.v_valor AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -231,6 +242,7 @@ DEFINE FRAME Web-Frame
           FIELD v_msg AS CHARACTER FORMAT "X(256)":U 
           FIELD v_operador AS CHARACTER FORMAT "X(256)":U 
           FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor1 AS CHARACTER FORMAT "X(256)":U 
           FIELD v_cod AS CHARACTER FORMAT "X(256)":U 
@@ -289,6 +301,8 @@ DEFINE FRAME Web-Frame
 /* SETTINGS FOR fill-in ab_unmap.v_operador IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_pac IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_tppagmto IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_valor IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
@@ -366,6 +380,8 @@ PROCEDURE htmOffsets :
     ("v_operador":U,"ab_unmap.v_operador":U,ab_unmap.v_operador:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_pac":U,"ab_unmap.v_pac":U,ab_unmap.v_pac:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).    
   RUN htmAssociate
     ("v_valor":U,"ab_unmap.v_valor":U,ab_unmap.v_valor:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -486,16 +502,19 @@ PROCEDURE process-web-request :
         
      {include/assignfields.i}
      
+     
       ASSIGN
           v_cmc7    = get-value("v_pcmc7")
+          v_tppagmto = get-value("v_tppagmto")
           v_valor   = STRING(DEC(get-value("v_pvalor")),"zzz,zzz,zzz,zz9.99")
           v_valor1  = STRING(DEC(get-value("v_pvalor1")),"zzz,zzz,zzz,zz9.99").
         
       ASSIGN aux_valor = DEC(v_valor) + DEC(v_valor1).
 
       IF  get-value("cancela") <> "" THEN DO:
-          ASSIGN radio       = "1"
+          ASSIGN radio       = "3"
                  v_codbarras = ""
+				 v_tppagmto = "2"
                  vh_foco     = "12".
       END.
       ELSE DO:
@@ -506,6 +525,7 @@ PROCEDURE process-web-request :
                                   INPUT INT(v_caixa),
                                   INPUT (DEC(v_valor) + DEC(v_valor1)),
                                   INPUT STRING(ab_unmap.v_senha),
+								  INPUT get-value("radio"),
                                   OUTPUT aux_des_erro,
                                   OUTPUT aux_dscritic,
                                   OUTPUT aux_inssenha).
@@ -524,6 +544,8 @@ PROCEDURE process-web-request :
                       '<script>window.location =
                       "crap080c.html?v_pradio=" +
                       "'get-value("radio")'" + 
+                      "&v_tppagmto="   + 
+                      "' v_tppagmto '"  +
                       "&v_pvalor="   + 
                       "' v_valor '"  +
                       "&v_pvalor1="  +
@@ -538,13 +560,16 @@ PROCEDURE process-web-request :
                       "' c_dtvencto '"
                       </script>'.
               END.
-              ELSE DO:
+              ELSE 
+				IF  get-value("radio") = "2" THEN DO:
                    ASSIGN p_valor = aux_valor.
             
                    {&OUT}                 /* Fatura Manual */
                       '<script>window.location =
                       "crap080d.html?v_pradio=" +
                       "'get-value("radio")'" + 
+                      "&v_tppagmto="              +
+                      "' v_tppagmto '"             +
                       "&v_pvalor="              +
                       "' v_valor '"             +
                       "&v_pvalor1="             +
@@ -583,7 +608,9 @@ PROCEDURE process-web-request :
                   IF  get-value("radio") = "1" THEN 
                       RUN processa_titulos.
                   ELSE 
+				    IF  get-value("radio") = "2" THEN
                       RUN processa_faturas.
+				  
               END.            
           END.
       END.        
@@ -646,6 +673,7 @@ PROCEDURE process-web-request :
     
     ASSIGN 
           v_cmc7     = get-value("v_pcmc7")
+          v_tppagmto = get-value("v_tppagmto")
           v_valor    = STRING(DEC(get-value("v_pvalor")),"zzz,zzz,zzz,zz9.99")
           v_valor1   = STRING(DEC(get-value("v_pvalor1")),"zzz,zzz,zzz,zz9.99")
           vh_foco    = "12".
@@ -726,6 +754,8 @@ PROCEDURE processa_faturas :
         '<script>window.location =
                  "crap080d.html?v_pradio=" +
                  "'get-value("radio")'" + 
+                 "&v_tppagmto="            +
+                 "' v_tppagmto '"          +
                  "&v_pvalor="              +
                  "' v_valor '"             +
                  "&v_pvalor1="             +
@@ -802,6 +832,8 @@ PROCEDURE processa_titulos :
         '<script>window.location =
               "crap080c.html?v_pradio=" +
               "'get-value("radio")'" + 
+              "&v_tppagmto="   + 
+              "' v_tppagmto '"  +
               "&v_pvalor="   + 
               "' v_valor '"  +
               "&v_pvalor1="  +
@@ -834,6 +866,7 @@ PROCEDURE validar-valor-limite:
     DEF INPUT PARAM par_nrocaixa  AS INTEGER                         NO-UNDO.
     DEF INPUT PARAM par_vltitfat  AS DECIMAL                         NO-UNDO.
     DEF INPUT PARAM par_senha     AS CHARACTER                       NO-UNDO.
+    DEF INPUT PARAM par_radio     AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_des_erro AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_inssenha AS INTEGER                         NO-UNDO.
@@ -849,6 +882,7 @@ PROCEDURE validar-valor-limite:
                                            INPUT par_nrocaixa,
                                            INPUT par_vltitfat,
                                            INPUT par_senha,
+										   INPUT par_radio,
                                            OUTPUT par_des_erro,
                                            OUTPUT par_dscritic,
                                            OUTPUT par_inssenha).

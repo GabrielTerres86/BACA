@@ -18,6 +18,8 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
   --
   --             27/07/2018 - P411.2 Tratamento das rotinas de Poupança Programada X Aplicação Programada
   --                          Cláudio - CIS Corporate
+  --             13/02/2019 - Retornar como saldo o campo "vlsldatl" no caso de consulta de saldo no mesmo dia que a aplicação foi criada
+  --                          CIS Corporate
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -158,6 +160,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
 
      Alteracoes: 15/07/2018 - Inclusao de novo parametro para indicao de apl. programada
                               Cláudio - CIS Corporate
+
+	Alteracoes: 13/02/2019 - Retornar como saldo o campo "vlsldatl" no caso de consulta de saldo no mesmo dia que a aplicação foi criada
+                              CIS Corporate
+
     ..............................................................................*/
     DECLARE
 
@@ -312,8 +318,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
       IF rw_craprac.dtmvtolt = rw_crapdat.dtmvtolt AND
          rw_crapdat.dtmvtolt = vr_dtfimcal      THEN
 
-        pr_vlsldtot := rw_craprac.vlaplica;
-        pr_vlsldrgt := rw_craprac.vlaplica;
+        pr_vlsldtot := rw_craprac.vlsldatl;
+        pr_vlsldrgt := rw_craprac.vlsldatl;
 
         RAISE vr_exc_null;
 

@@ -18,6 +18,8 @@
                             Dataserver Oracle Inclusao do VALIDATE
                             ( Guilherme / SUPERO)
                 
+				26/12/2018 - Projeto 510 - Alterei a procedure busca_dados para retornar também o novo campo crapcbb.tppagmto (Daniel - Envolti)
+				
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -98,7 +100,7 @@ PROCEDURE Busca_Dados:
                                                     nrdcaixa nrdolote valordoc
                                                     valorpag flgrgatv cdbarras
                                                     dsdocmc7 vldescto nrautdoc
-                                                    tpdocmto dtvencto)
+                                                    tpdocmto dtvencto tppagmto)
                                WHERE crabcbb.cdcooper =  par_cdcooper AND
                                      crabcbb.dtmvtolt =  par_dtmvtolx AND
                                      crabcbb.cdagenci >= par_cdagencx AND
@@ -172,7 +174,19 @@ PROCEDURE Busca_Dados:
                                    tt-movimentos.dtvencto = crabcbb.dtvencto
                                    tt-movimentos.nmoperad = crabope.nmoperad
                                    tt-movimentos.dsdocmto = aux_tpdocmto
-                                   tt-movimentos.nrdrowid = ROWID(crabcbb).
+                                   tt-movimentos.nrdrowid = ROWID(crabcbb)
+								                   tt-movimentos.tppagmto = crabcbb.tppagmto.
+                            
+                            IF tt-movimentos.tppagmto = 0 THEN
+                            DO:
+                                tt-movimentos.dstppgto = 'CONTA'.
+                            END.
+                            ELSE
+                            DO:
+                                tt-movimentos.dstppgto = 'ESPECIE'.
+                            END.                             
+                                   
+                                   
                         END.
 
 

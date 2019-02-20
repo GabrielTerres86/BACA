@@ -8,6 +8,14 @@
  * ALTERAÇÕES   : 15/04/2015 - #273953 Inclusao das colunas Banco e Agencia para ficar conforme tela do ambiente caracter (Carlos)
  *
  *				  19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923)
+ *
+ *                07/12/2018 - Melhoria no processo de devoluções de cheques.
+ *                             Alcemir Mout's (INC0022559).
+ *
+ *                23/01/2019 - Alteracao na rotina de alteracao de alinea e
+ *                             melhoria na gravacao do log na verlog.
+ *                             Chamado - PRB0040476 - Gabriel Marcos (Mouts).
+ *
  * --------------
  */
 ?>
@@ -52,10 +60,10 @@
 						<td><input type="checkbox" name="indice" id="indice" onclick="validaSelecao(this,<?php echo $inprejuz; ?>)" value="<? echo $cont_id; ?>"  <?if(getByTagName($lancamento->tags,'cddsitua') == 1  || 
 																																		      getByTagName($lancamento->tags,'cdalinea') == 0  || 
 																																			  getByTagName($lancamento->tags,'cdalinea') == 20 || 
-																																			  getByTagName($lancamento->tags,'cdalinea') == 21 || 																																			  
+																																		   /* getByTagName($lancamento->tags,'cdalinea') == 21 || */																																			  
 																																			  getByTagName($lancamento->tags,'cdalinea') == 28 || 
-																																			  getByTagName($lancamento->tags,'cdalinea') == 49 ||
-																																			  getByTagName($lancamento->tags,'cdalinea') == 70){ ?> disabled <? } ?> />
+																																			  getByTagName($lancamento->tags,'cdalinea') == 49    /* ||
+																																		      getByTagName($lancamento->tags,'cdalinea') == 70    */){ ?> disabled <? } ?> />
 							<script>
 								var id_reg = arrayRegLinha.length;																	
 								arrayRegLinha[id_reg] = new Array();                                                                
@@ -68,6 +76,9 @@
 								arrayRegLinha[id_reg]["nrctachq"] = '<? echo getByTagName($lancamento->tags,'nrctachq'); ?>';   
 								arrayRegLinha[id_reg]["nrdctitg"] = '<? echo getByTagName($lancamento->tags,'nrdctitg'); ?>';   
 								arrayRegLinha[id_reg]["nrdrecid"] = '<? echo getByTagName($lancamento->tags,'nrdrecid'); ?>';   
+								arrayRegLinha[id_reg]["cdbandep"] = '<? echo getByTagName($lancamento->tags,'cdbandep'); ?>';   
+								arrayRegLinha[id_reg]["cdagedep"] = '<? echo getByTagName($lancamento->tags,'cdagedep'); ?>';   
+								arrayRegLinha[id_reg]["nrctadep"] = '<? echo getByTagName($lancamento->tags,'nrctadep'); ?>';   															
 								arrayRegLinha[id_reg]["flag"]     = 'yes';   
 							</script>                                                                                               
 						</td>                                                                                                       
@@ -89,6 +100,9 @@
 						<input type="hidden" id="cdalinea" name="cdalinea" value="<? echo getByTagName($lancamento->tags,'cdalinea') ?>" />
 						<input type="hidden" id="dstabela" name="dstabela" value="<? echo getByTagName($lancamento->tags,'dstabela') ?>" />
 						
+						<input type="hidden" id="cdbandep" name="cdbandep" value="<? echo getByTagName($lancamento->tags,'cdbandep') ?>" />
+						<input type="hidden" id="cdagedep" name="cdagedep" value="<? echo getByTagName($lancamento->tags,'cdagedep') ?>" />
+						<input type="hidden" id="nrctadep" name="nrctadep" value="<? echo getByTagName($lancamento->tags,'nrctadep') ?>" />
 						
 						<td><span><? echo getByTagName($lancamento->tags,'banco'); ?></span>
 							      <? echo getByTagName($lancamento->tags,'dsbccxlt'); ?>

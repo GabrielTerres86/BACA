@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 06/06/2018
+   Data    : Marco/2001                      Ultima atualizacao: 25/01/2019
 
    Dados referentes ao programa:
 
@@ -71,6 +71,10 @@
                            
                06/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
                             norturno rodando (Douglas Pagel - AMcom).
+
+               25/01/2019 - P510 - Remocao dos campos CM7 e Cheque 
+                                 - Validacao de valor em especie maior que 100000  
+                                   (Marcos-Envolti)             
 
    ......................................................................... **/
 
@@ -162,6 +166,11 @@ PROCEDURE critica-valor.
     DEF INPUT  PARAM p-nro-caixa         AS INT.    /* Numero Caixa */
     DEF INPUT  PARAM p-vlr-dinheiro      AS DEC.
     DEF INPUT  PARAM p-vlr-cheque        AS DEC.
+    DEF INPUT  PARAM p-tp-pagmto         AS DEC.
+
+    DEF VAR aux_dscritic            AS CHARACTER                NO-UNDO.
+  	DEF VAR aux_cdcritic            AS INTEGER                  NO-UNDO.
+	  DEF VAR aux_vllimite_especie    AS DECIMAL                  NO-UNDO.
 
     RUN elimina-erro (INPUT p-cooper,
                       INPUT p-cod-agencia,
@@ -224,11 +233,24 @@ PROCEDURE critica-valor.
             RETURN "NOK".
          END.
    
+    IF  p-tp-pagmto = 2 THEN DO:
+        
+        ASSIGN i-cod-erro  = 0
+               c-desc-erro = "É obrigatorio selecionar 'Conta' ou 'Espécie'.".
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        RETURN "NOK".
+    
+    END.
        
     IF  p-vlr-dinheiro = 0  AND
         p-vlr-cheque   = 0 THEN DO:
         ASSIGN i-cod-erro  = 0
-               c-desc-erro = "Informe valor(Dinheiro ou Cheque)".
+               c-desc-erro = "Informe o Valor".
         RUN cria-erro (INPUT p-cooper,
                        INPUT p-cod-agencia,
                        INPUT p-nro-caixa,
@@ -282,6 +304,61 @@ PROCEDURE critica-valor.
              RETURN "NOK".
          END.
 
+    /* Buscar valor limite de pagamentos em especie */
+    IF  p-tp-pagmto = 1 THEN DO:        
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_lim_pagto_especie_pld
+          aux_handproc = PROC-HANDLE NO-ERROR
+          (INPUT crapcop.cdcooper,
+           OUTPUT 0,
+           OUTPUT 0,
+           OUTPUT "").
+
+        CLOSE STORED-PROC pc_lim_pagto_especie_pld
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_vllimite_especie = 0
+           aux_cdcritic = pc_lim_pagto_especie_pld.pr_cdcritic 
+                    WHEN pc_lim_pagto_especie_pld.pr_cdcritic <> ?
+           aux_dscritic = pc_lim_pagto_especie_pld.pr_dscritic 
+                    WHEN pc_lim_pagto_especie_pld.pr_dscritic <> ?
+           aux_vllimite_especie = pc_lim_pagto_especie_pld.pr_vllimite_pagto_especie 
+                    WHEN pc_lim_pagto_especie_pld.pr_vllimite_pagto_especie <> ?.
+        
+        /* Se o valor ultrapassa o limite */
+        IF aux_vllimite_especie <= p-vlr-dinheiro THEN
+        DO:
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = "Valor de pagamento excede o permitido para a operação em espécie. Serão aceitos somente pagamentos inferiores a R$ " 
+                               + TRIM(STRING(aux_vllimite_especie,'zzz,zzz,zz9.99')) + " (Resolução CMN 4.648/18)." .
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+                           
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = "Necessário depositar o recurso em conta e após isso proceder com o pagamento nos canais digitais ou no caixa online - Rotina 80 opção ~"Conta~"." .
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).               
+                           
+            RETURN "NOK".
+        END.
+        
+    END.
+    
+    
+    
     RETURN "OK".
 
 END PROCEDURE.
@@ -802,6 +879,7 @@ PROCEDURE gera-titulos-faturas.
     DEF INPUT  PARAM p-dsautent         AS CHAR. /* Literal aut.corresp.*/
     DEF INPUT  PARAM p-autchave         AS INTE.
     DEF INPUT  PARAM p-cdchave          AS CHAR.
+    DEF INPUT  PARAM p-tppagmto         AS INTE.
     DEF OUTPUT PARAM p-histor           AS INTE.
     DEF OUTPUT PARAM p-pg               AS LOG.
     DEF OUTPUT PARAM p-docto            AS DEC.
@@ -859,7 +937,9 @@ PROCEDURE gera-titulos-faturas.
            crapcbb.vldescto = p-vldescto
            crapcbb.valordoc = p-valor-doc
            crapcbb.tpdocmto = p-tipo-docto /* 1-titulo - 2-fatura */
-           crapcbb.nrseqdig = craplot.nrseqdig + 1.  
+           crapcbb.nrseqdig = craplot.nrseqdig + 1
+		   crapcbb.tppagmto = p-tppagmto
+           .
 
     IF  crapcbb.tpdocmto = 2 THEN  /* Fatura */
         ASSIGN crapcbb.dtvencto = ?.
@@ -2424,6 +2504,7 @@ PROCEDURE validar-valor-limite:
     DEF INPUT PARAM par_nrocaixa  AS INTEGER                         NO-UNDO.
     DEF INPUT PARAM par_vltitfat  AS DECIMAL                         NO-UNDO.
     DEF INPUT PARAM par_senha     AS CHARACTER                       NO-UNDO.
+    DEF INPUT PARAM par_radio     AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_des_erro AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_inssenha AS INTEGER                         NO-UNDO.
@@ -2446,6 +2527,17 @@ PROCEDURE validar-valor-limite:
         RETURN "NOK".
       END.
       
+    IF  par_radio = "3" THEN DO:
+        ASSIGN i-cod-erro  = 0
+               c-desc-erro = "É obrigatorio selecionar 'Título' ou 'Fatura'.".
+        RUN cria-erro (INPUT crapcop.cdcooper,
+                       INPUT par_cdagenci,
+                       INPUT par_nrocaixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        RETURN "NOK".
+    END.
     
     RUN dbo/b1crap14.p PERSISTENT SET h_b1crap14.
                            

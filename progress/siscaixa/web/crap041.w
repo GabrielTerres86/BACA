@@ -24,7 +24,13 @@
                              operar mesmo com o processo noturno em execucao - 
                              Everton Deserto(AMCOM).
 
+			   02/01/2019 - Projeto 510 - Incluí tipo de pagamento e validação do valor máximo para pagto em espécie. (Daniel - Envolti)
+
 .............................................................................. **/
+
+/*Include que contem procedure para criar eliminar e verificar
+  erros na tabela de erros do caixaonline (craperr)*/
+{dbo/bo-erro1.i}
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -52,6 +58,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_vlrmulta AS CHARACTER FORMAT "X(256)":U
        FIELD v_vlrjuros AS CHARACTER FORMAT "X(256)":U
        FIELD v_vlrtotal AS CHARACTER FORMAT "X(256)":U
+       FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U
        FIELD v_cod      AS CHARACTER FORMAT "X(256)":U
        FIELD v_senha    AS CHARACTER FORMAT "X(256)":U
        FIELD hdnEstorno    AS CHARACTER FORMAT "X(256)":U
@@ -121,8 +128,8 @@ DEFINE VARIABLE vr_cdcriticValorAcima AS INTEGER NO-UNDO INIT 0.
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.v_dtapurac ab_unmap.v_conta ab_unmap.v_nrcpfcgc ab_unmap.v_cdtribut ab_unmap.v_cdrefere ab_unmap.v_dtlimite ab_unmap.v_vlrecbru ab_unmap.v_vlpercen ab_unmap.v_vllanmto ab_unmap.v_vlrmulta ab_unmap.v_vlrjuros ab_unmap.v_vlrtotal ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.opcao ab_unmap.v_coop ab_unmap.v_data  ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_cod ab_unmap.v_senha ab_unmap.hdnEstorno ab_unmap.hdnVerifEstorno ab_unmap.hdnValorAcima
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_dtapurac ab_unmap.v_conta ab_unmap.v_nrcpfcgc ab_unmap.v_cdtribut ab_unmap.v_cdrefere ab_unmap.v_dtlimite ab_unmap.v_vlrecbru ab_unmap.v_vlpercen ab_unmap.v_vllanmto ab_unmap.v_vlrmulta ab_unmap.v_vlrjuros ab_unmap.v_vlrtotal ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.opcao ab_unmap.v_coop ab_unmap.v_data  ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_cod ab_unmap.v_senha ab_unmap.hdnEstorno ab_unmap.hdnVerifEstorno ab_unmap.hdnValorAcima
+&Scoped-Define ENABLED-OBJECTS ab_unmap.v_dtapurac ab_unmap.v_conta ab_unmap.v_nrcpfcgc ab_unmap.v_cdtribut ab_unmap.v_cdrefere ab_unmap.v_dtlimite ab_unmap.v_vlrecbru ab_unmap.v_vlpercen ab_unmap.v_vllanmto ab_unmap.v_vlrmulta ab_unmap.v_vlrjuros ab_unmap.v_vlrtotal ab_unmap.v_tppagmto ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.opcao ab_unmap.v_coop ab_unmap.v_data  ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_cod ab_unmap.v_senha ab_unmap.hdnEstorno ab_unmap.hdnVerifEstorno ab_unmap.hdnValorAcima
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_dtapurac ab_unmap.v_conta ab_unmap.v_nrcpfcgc ab_unmap.v_cdtribut ab_unmap.v_cdrefere ab_unmap.v_dtlimite ab_unmap.v_vlrecbru ab_unmap.v_vlpercen ab_unmap.v_vllanmto ab_unmap.v_vlrmulta ab_unmap.v_vlrjuros ab_unmap.v_vlrtotal ab_unmap.v_tppagmto ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.opcao ab_unmap.v_coop ab_unmap.v_data  ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_cod ab_unmap.v_senha ab_unmap.hdnEstorno ab_unmap.hdnVerifEstorno ab_unmap.hdnValorAcima
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -188,6 +195,13 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+     ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
+          "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
+          RADIO-BUTTONS 
+           "v_tppagmto 2", "2":U,
+           "v_tppagmto 0", "0":U,
+           "v_tppagmto 1", "1":U
+           SIZE 20 BY 2
     ab_unmap.vh_foco AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -270,7 +284,8 @@ DEFINE FRAME Web-Frame
             FIELD vllanmto AS CHARACTER FORMAT "X(256)":U
             FIELD vlrmulta AS CHARACTER FORMAT "X(256)":U
             FIELD vlrjuros AS CHARACTER FORMAT "X(256)":U
-            FIELD vlrtotal AS CHARACTER FORMAT "X(256)":U.
+            FIELD vlrtotal AS CHARACTER FORMAT "X(256)":U
+            FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U
 	        FIELD vh_foco    AS CHARACTER FORMAT "X(256)":U 
             FIELD v_caixa    AS CHARACTER FORMAT "X(256)":U 
             FIELD v_conta    AS CHARACTER FORMAT "X(256)":U 
@@ -356,6 +371,8 @@ DEFINE FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_valortot IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_tppagmto IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_cod IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_senha IN FRAME Web-Frame
@@ -434,6 +451,8 @@ PROCEDURE htmOffsets :
     ("v_vlrjuros":U,"ab_unmap.v_vlrjuros":U,ab_unmap.v_vlrjuros:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_vlrtotal":U,"ab_unmap.v_vlrtotal":U,ab_unmap.v_vlrtotal:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("vh_foco":U,"ab_unmap.vh_foco":U,ab_unmap.vh_foco:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -533,10 +552,12 @@ PROCEDURE process-web-request :
   
   DEFINE VARIABLE aux_inssenha      AS INTEGER        NO-UNDO.
   DEFINE VARIABLE aux_des_erro      AS CHARACTER      NO-UNDO.
-  DEFINE VARIABLE aux_dscritic      AS CHARACTER      NO-UNDO.
   DEF VAR         hdnEstorno        AS  CHAR          NO-UNDO.
   DEF VAR         hdnVerifEstorno   AS  CHAR          NO-UNDO.
   DEF VAR         hdnValorAcima     AS  CHAR          NO-UNDO.
+  DEF VAR aux_dscritic            AS CHARACTER                NO-UNDO.
+  DEF VAR aux_cdcritic            AS INTEGER                  NO-UNDO.
+  DEF VAR aux_vllimite_especie    AS DECIMAL                  NO-UNDO.
   
   /* STEP 0 -
    * Output the MIME header and set up the object as state-less or state-aware. 
@@ -649,7 +670,8 @@ PROCEDURE process-web-request :
                                    v_vllanmto  = ab_unmap.v_vllanmto
                                    v_vlrmulta  = ab_unmap.v_vlrmulta
                                    v_vlrjuros  = ab_unmap.v_vlrjuros
-                                   v_vlrtotal  = STRING(DECI(ab_unmap.v_vllanmto) + DECI(ab_unmap.v_vlrmulta) + DECI(ab_unmap.v_vlrjuros), "zzz,zzz,zzz,zz9.99").
+                                   v_vlrtotal  = STRING(DECI(ab_unmap.v_vllanmto) + DECI(ab_unmap.v_vlrmulta) + DECI(ab_unmap.v_vlrjuros), "zzz,zzz,zzz,zz9.99")
+								   v_tppagmto  = ab_unmap.v_tppagmto.
                         END.
                 END.
             ELSE
@@ -666,6 +688,7 @@ PROCEDURE process-web-request :
                        v_vlrmulta  = ""
                        v_vlrjuros  = ""
                        v_vlrtotal  = ""
+					             v_tppagmto  = "2"
                        opcao       = ""
                        vh_foco     = "9".
              ELSE
@@ -702,6 +725,99 @@ PROCEDURE process-web-request :
                      ELSE
                         DO:
 
+                           /* Reiniciar dscritic */ 
+                           ASSIGN aux_dscritic = ?.
+                            
+                           /* Garantir a selecao de Especie ou Conta */ 
+                           IF ab_unmap.v_tppagmto = "2" THEN
+                             DO:
+                              /* Limpar as criticas */
+                              RUN elimina-erro(INPUT STRING(ab_unmap.v_coop),
+                                               INPUT INTE(ab_unmap.v_pac),
+                                               INPUT INTE(ab_unmap.v_caixa)).
+                              /* Criar o erro novo */
+                              ASSIGN aux_dscritic = "É obrigatório selecionar 'Conta' ou 'Espécie'.".
+                                     
+                              RUN cria-erro(INPUT STRING(ab_unmap.v_coop),
+                                            INPUT INTE(ab_unmap.v_pac),
+                                            INPUT INTE(ab_unmap.v_caixa),
+                                            INPUT 0,
+                                            INPUT aux_dscritic,
+                                            INPUT YES).
+                              
+                              ASSIGN ab_unmap.vh_foco = "10".
+                              {include/i-erro.i}          
+                              
+                             END.
+             
+             
+                           IF aux_dscritic = ? AND ab_unmap.v_tppagmto = "1" THEN
+                             DO:
+                             
+                             FIND crapcop WHERE crapcop.nmrescop = ab_unmap.v_coop NO-LOCK NO-ERROR.
+                             
+                             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                             RUN STORED-PROCEDURE pc_lim_pagto_especie_pld
+                               aux_handproc = PROC-HANDLE NO-ERROR
+                               (INPUT crapcop.cdcooper,
+                                OUTPUT 0,
+                                OUTPUT 0,
+                                OUTPUT "").
+
+                             CLOSE STORED-PROC pc_lim_pagto_especie_pld
+                                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                            
+                             ASSIGN aux_cdcritic = 0
+                                aux_dscritic = ?
+                                aux_vllimite_especie = 0
+                                aux_cdcritic = pc_lim_pagto_especie_pld.pr_cdcritic 
+                                         WHEN pc_lim_pagto_especie_pld.pr_cdcritic <> ?
+                                aux_dscritic = pc_lim_pagto_especie_pld.pr_dscritic 
+                                         WHEN pc_lim_pagto_especie_pld.pr_dscritic <> ?
+                                aux_vllimite_especie = pc_lim_pagto_especie_pld.pr_vllimite_pagto_especie 
+                                         WHEN pc_lim_pagto_especie_pld.pr_vllimite_pagto_especie <> ?.
+                            
+                             IF aux_vllimite_especie <= (DECI(ab_unmap.v_vllanmto) + DECI(ab_unmap.v_vlrmulta)+ DECI(ab_unmap.v_vlrjuros)) THEN
+                             DO:
+                               /* Gerar a critica */
+                               aux_dscritic = "Valor de pagamento excede o permitido para a operação em espécie. Serão aceitos somente pagamentos inferiores a R$ " + TRIM(STRING(aux_vllimite_especie,'zzz,zzz,zz9.99'))
+                                     + " (Resolução CMN 4.648/18).".
+                             
+                               /* Limpar as criticas */
+                               RUN elimina-erro(INPUT STRING(ab_unmap.v_coop),
+                                      INPUT INTE(ab_unmap.v_pac),
+                                      INPUT INTE(ab_unmap.v_caixa)).
+                              
+                               /* Criar o erro novo */
+                               RUN cria-erro(INPUT STRING(ab_unmap.v_coop),
+                                     INPUT INTE(ab_unmap.v_pac),
+                                     INPUT INTE(ab_unmap.v_caixa),
+                                     INPUT 0,
+                                     INPUT aux_dscritic,
+                                     INPUT YES).
+
+                               /* Criar a orientacao */
+                               RUN cria-erro(INPUT STRING(ab_unmap.v_coop),
+                                 INPUT INTE(ab_unmap.v_pac),
+                                 INPUT INTE(ab_unmap.v_caixa),
+                                 INPUT 0,
+                                 INPUT "Necessário depositar o recurso em conta e após isso proceder com o pagamento nos canais digitais ou no caixa online - Rotina 41 opção ~"Conta~".",
+                                 INPUT YES).                       
+                                
+                               /* Setar o foco no campo Codigo de Barras */ 
+                               ASSIGN ab_unmap.vh_foco = "10".
+                               {include/i-erro.i}
+                               
+                               
+                             END.
+                           END.
+                           
+                           /* Se nao houve erro nas validacoes acima */
+                           IF aux_dscritic = ? THEN
+                           DO:
+                           
                            RUN validar-valor-limite (INPUT STRING(ab_unmap.v_coop),
                                                      INPUT STRING(ab_unmap.v_cod),
                                                      INPUT INTE(ab_unmap.v_pac),
@@ -735,6 +851,7 @@ PROCEDURE process-web-request :
                                                         INPUT DECI(ab_unmap.v_vllanmto),
                                                         INPUT DECI(ab_unmap.v_vlrmulta),
                                                         INPUT DECI(ab_unmap.v_vlrjuros),
+                                INPUT INTE(ab_unmap.v_tppagmto),
                                                        OUTPUT aux_foco,
                                                        OUTPUT p-literal,
                                                        OUTPUT p-ult-sequencia).
@@ -774,6 +891,7 @@ PROCEDURE process-web-request :
         
                                END.
                             END. /* ELSE RUN validar-valor-limite  */
+                             END.
                         END.                                         
                 END.
         END. /* RETURN "OK" verifica-abertura-boletim FIM */

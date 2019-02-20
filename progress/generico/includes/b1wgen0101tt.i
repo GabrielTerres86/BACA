@@ -40,6 +40,8 @@
            
                 18/01/2018 - Alteraçoes referente ao PJ406.
                              
+				26/12/2018 - Projeto 510 - Incluí novo campo tppagmto na tt-dados-pesqti (Daniel - Envolti)
+                             
 .............................................................................*/
 
 DEF TEMP-TABLE tt-dados-pesqti NO-UNDO
@@ -77,7 +79,8 @@ DEF TEMP-TABLE tt-dados-pesqti NO-UNDO
     FIELD dsnomfon LIKE craplft.dsnomfon
     FIELD nmresage LIKE crapage.nmresage
     FIELD nmarrecd AS CHAR  /* Agente Arrecadador*/
-    FIELD dtdpagto AS DATE.
+    FIELD dtdpagto AS DATE
+	  FIELD tppagmto AS INTE.
 
 
 DEF TEMP-TABLE tt-historicos NO-UNDO

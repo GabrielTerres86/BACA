@@ -20,8 +20,10 @@
 				  
 				  19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
 							   pelo InternetBanking (Projeto 338 - Lucas Lunelli)
-                 
+				  
                   18/01/2018 - Alterações referentes ao PJ406.
+				  
+                  08/01/2019 - Alterações P510, campo Tipo Pgto (Christian Grauppe - Envolti).
 				  
  */	
 ?>
@@ -57,10 +59,10 @@
 		<br/>
 		<label for="nmarrecd"><? echo utf8ToHtml('Ag. Arrecada.:') ?></label>
 		<input name="nmarrecd" id="nmarrecd" type="text" />
-    
-    <br/>
+	
+		<br/>
 		<label for="dscodbar"><? echo utf8ToHtml('Cod. de Barras:') ?></label>
-		<input name="dscodbar" id="dscodbar" type="text" />
+		<input name="dscodbar" id="dscodbar" type="text" />	
 		
 		<label for="insitfat"><? echo utf8ToHtml('Enviado:') ?></label>
 		<select name="insitfat" id="insitfat" class="campo">
@@ -76,6 +78,16 @@
 		
 		<label for="dscptdoc"><? echo utf8ToHtml('Origem pagto:') ?></label>
 		<input name="dscptdoc" id="dscptdoc" type="text" />	
+		
+		<br/>
+
+		<label for="tppagmto"><? echo utf8ToHtml('Tipo pagto:') ?></label>    
+    <select name="tppagmto" id="tppagmto">
+      <option value="0">Conta</option>
+      <option value="1">Especie</option>
+    </select>
+
+		<br/>
 		
 		<label for="dsnomfon"><? echo utf8ToHtml('Nome/Telefone:') ?></label>
 		<input name="dsnomfon" id="dsnomfon" type="text" />	

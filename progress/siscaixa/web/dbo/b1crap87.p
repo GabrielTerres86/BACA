@@ -3,7 +3,7 @@
 Programa: siscaixa/web/dbo/b1crap87.p
 Autor   : Andre Santos - SUPERO
 Sistema : CAIXA ON-LINE
-Sigla   : CRED                               Ultima atualizacao:
+Sigla   : CRED                               Ultima atualizacao: 25/01/2019
 
 Dados referentes ao programa:
 
@@ -18,6 +18,10 @@ Alteracoes: 12/09/2017 - Ajustes melhoria 397 - Rafael (Mouts)
                          
             06/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
                          norturno rodando (Douglas Pagel - AMcom).
+                         
+            25/01/2019 - P510 - Obrigar selecionar Conta ou Especie, verificar
+                         valor maximo legal em especie e propagar para o Oracle (Marcos-Envolti)            
+                         
 .............................................................................. **/
 
 {dbo/bo-erro1.i}
@@ -677,6 +681,8 @@ PROCEDURE pc-efetua-gps-pagamento:
     DEF INPUT PARAM p-vlrtotal  AS DECI                               NO-UNDO.
     DEF INPUT PARAM p-dtvencim  AS CHAR                               NO-UNDO.
     DEF INPUT PARAM p-idfisjur  AS INTE                               NO-UNDO.
+    DEF INPUT PARAM p-tppagmto  AS INTE                               NO-UNDO.
+    
     DEF OUTPUT PARAM p-dslitera AS CHAR                               NO-UNDO.
     DEF OUTPUT PARAM p-nrultaut AS INTE                               NO-UNDO.
 
@@ -754,8 +760,8 @@ PROCEDURE pc-efetua-gps-pagamento:
 						 INPUT "", /* pr_dshistor */
                          INPUT "", /* pr_iptransa */
                          INPUT "", /* pr_iddispos */
+                         INPUT p-tppagmto,
 						 OUTPUT "", /* protocolo */
-                         
                          OUTPUT "",
                          OUTPUT 0,
                          OUTPUT "").
@@ -805,6 +811,7 @@ PROCEDURE validar-valor-limite:
     DEF INPUT PARAM par_nrocaixa  AS INTEGER                         NO-UNDO.
     DEF INPUT PARAM par_vltitfat  AS DECIMAL                         NO-UNDO.
     DEF INPUT PARAM par_senha     AS CHARACTER                       NO-UNDO.
+    DEF INPUT PARAM par_tppagmto  AS INTEGER                         NO-UNDO.
     DEF OUTPUT PARAM par_des_erro AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_inssenha AS INTEGER                         NO-UNDO.
@@ -812,6 +819,9 @@ PROCEDURE validar-valor-limite:
     DEF VAR aux_inssenha          AS INTEGER                         NO-UNDO.
     DEF VAR h_b1crap14            AS HANDLE                          NO-UNDO.
     
+    DEF VAR aux_dscritic            AS CHARACTER                NO-UNDO.
+          DEF VAR aux_cdcritic            AS INTEGER                  NO-UNDO.
+          DEF VAR aux_vllimite_especie    AS DECIMAL                  NO-UNDO.
     
     FIND crapcop WHERE crapcop.nmrescop = par_nmrescop NO-LOCK NO-ERROR.
     IF NOT AVAILABLE crapcop THEN
@@ -823,6 +833,66 @@ PROCEDURE validar-valor-limite:
                        INPUT "Cooperativa nao encontrada.",
                        INPUT YES).
         RETURN "NOK".
+      END.
+      
+    IF  par_tppagmto = 2 THEN DO:
+        RUN cria-erro (INPUT par_nmrescop,
+                       INPUT par_cdagenci,
+                       INPUT par_nrocaixa,
+                       INPUT 0,
+                       INPUT "É obrigatório selecionar 'Conta' ou 'Espécie'.",
+                       INPUT YES).
+        RETURN "NOK".
+    END.
+    
+    /* Buscar valor limite de pagamentos em especie */
+    IF  par_tppagmto = 1 THEN DO:        
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_lim_pagto_especie_pld
+          aux_handproc = PROC-HANDLE NO-ERROR
+          (INPUT crapcop.cdcooper,
+           OUTPUT 0,
+           OUTPUT 0,
+           OUTPUT "").
+
+        CLOSE STORED-PROC pc_lim_pagto_especie_pld
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_vllimite_especie = 0
+           aux_cdcritic = pc_lim_pagto_especie_pld.pr_cdcritic 
+                    WHEN pc_lim_pagto_especie_pld.pr_cdcritic <> ?
+           aux_dscritic = pc_lim_pagto_especie_pld.pr_dscritic 
+                    WHEN pc_lim_pagto_especie_pld.pr_dscritic <> ?
+           aux_vllimite_especie = pc_lim_pagto_especie_pld.pr_vllimite_pagto_especie 
+                    WHEN pc_lim_pagto_especie_pld.pr_vllimite_pagto_especie <> ?.
+        
+        /* Se o valor ultrapassa o limite */
+        IF aux_vllimite_especie <= par_vltitfat THEN
+        DO:
+
+            RUN cria-erro (INPUT par_nmrescop,
+                           INPUT par_cdagenci,
+                           INPUT par_nrocaixa,
+                           INPUT 0,
+                           INPUT "Valor de pagamento excede o permitido para a operação em espécie. Serão aceitos somente pagamentos inferiores a R$ " 
+                               + TRIM(STRING(aux_vllimite_especie,'zzz,zzz,zz9.99')) + " (Resolução CMN 4.648/18).",
+                           INPUT YES).
+                           
+            RUN cria-erro (INPUT par_nmrescop,
+                           INPUT par_cdagenci,
+                           INPUT par_nrocaixa,
+                           INPUT 0,
+                           INPUT "Necessário depositar o recurso em conta e após isso proceder com o pagamento nos canais digitais ou no caixa online - Rotina 87 opção ~"Conta~".",
+                           INPUT YES).               
+                           
+            RETURN "NOK".
+        END.
+        
       END.
       
     

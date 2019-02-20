@@ -129,6 +129,9 @@ var protocolo;
 var glbadc = 'n';
 var justificativaCartao;
 var contigenciaAtiva = false;
+
+var flgPrincipal = true;
+
 // Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
 
@@ -196,6 +199,10 @@ function controlaFoco() {
 
 function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, FlgcChip , decisaoMotorEsteira, flgproviCartao, dataAssAle, dsVlrprm, dtinSolic) {
     
+    // Se não for a tela principal apenas ignora o evento
+    if (!flgPrincipal) 
+        return;
+
 	callbacckReturn = "idAnt=0; setTimeout(function(){ selecionaCartao("+nrCtrCartao+",'"+ nrCartao+"', "+cdAdmCartao+", '"+id+"', '"+cor+"', '"+situacao+"', '"+FlgcChip+"', '"+decisaoMotorEsteira+"', '"+flgproviCartao+"', '"+dataAssAle+"', '"+dsVlrprm+"', '"+dtinSolic+"'); }, 600);";
     if (id != idAnt) {
         // Armazena o número do contrato/proposta, número cartão, cód adm do cartão selecionado eme variaveis GLOBAIS
@@ -333,6 +340,9 @@ function voltaDiv(esconder, mostrar, qtdade, novotam) {
 //$("#divConteudoOpcao").css("height",tamanho);
     if (esconder == 0) {
         $("#divConteudoCartoes").css("display", "block");
+        // voltamos a principal
+        flgPrincipal = true;
+
         for (var i = 1; i <= qtdade; i++) {
             $("#divOpcoesDaOpcao" + i).css("display", "none");
         }
@@ -1310,6 +1320,9 @@ function opcaoNovo(cdcooper) {
 	// Zeramos o contrato
     nrctrcrd = 0;
 
+    // Saimos da tela principal
+    flgPrincipal = false;
+
 	// ALTERAÇÃO 001
     nomeForm = 'frmNovoCartao';
 
@@ -1425,6 +1438,9 @@ function alteraCartao() {
     }
 
     showMsgAguardo("Aguarde...");
+
+    // Saimos da tela principal
+    flgPrincipal = false;
 
     $.ajax({
         type: "POST",
@@ -2254,6 +2270,9 @@ function consultaCartao() {
     }
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, consultando dados do cart&atilde;o de cr&eacute;dito ...");
+
+    // Saimos da tela principal
+    flgPrincipal = false;
 
 	// Carrega conteúdo da opção através de ajax
     $.ajax({
@@ -6676,6 +6695,10 @@ function chamarCoordenador(nrctrcrd, idacionamento,idproces,cdAdmCartao ){
 function alterarLimiteProposta() {
     var cdAdmCartao = $("#btnalterarLimite").attr("cdAdmCartao");
     nomeForm = "frmValorLimCre";
+
+    // Saimos da tela principal
+    flgPrincipal = false;
+
     $.ajax({
         type: "POST",
         dataType: "html",
@@ -6700,6 +6723,10 @@ function alterarLimiteProposta() {
 
 function alterarCartaoProposta() {
     nomeForm = "frmNovoCartao";
+    
+    // Saimos da tela principal
+    flgPrincipal = false;
+
     $.ajax({		
 		type: "POST", 
 		dataType: "html",

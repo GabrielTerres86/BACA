@@ -83,7 +83,7 @@
              
                17/07/2017 - Ajustes para nao buscar IDORGEXP para pessoa jur.
                             PRJ339 - CRM (Odirlei-AMcom)  
-                            
+             
                29/11/2017 - Inclusao do valor de bloqueio em garantia. 
                             PRJ404 - Garantia.(Odirlei-AMcom)                      
              
@@ -95,9 +95,11 @@
                              atualizado para efetivar ou negar a operaçao, utilizado
 							 na abertura do caixa online mesmo quando o processo 
 							 batch noturno ainda esteja em execução - (Fabio Adriano AMcom).
-               
+
                15/03/2018 - Incluido 1 numero na mascara de CNPJ(pessoa juridica). 
 				  		              PRJ420 (Mateus Z - Mouts)
+
+				19/12/2018 - Proj. 411.2 - Poupança Programada -> Aplicação Programada
              
 ............................................................................ **/
 
@@ -201,7 +203,7 @@ PROCEDURE consulta-conta:
     
     DEF VAR aux_cdempres   AS INT                           NO-UNDO.
     DEF VAR aux_cdorgexp   AS CHAR                          NO-UNDO.
-	DEF VAR aux_dstipcta   AS CHAR                          NO-UNDO.
+    DEF VAR aux_dstipcta   AS CHAR                          NO-UNDO.
     DEF VAR aux_dssitdct   AS CHAR                          NO-UNDO.
     DEF VAR aux_des_erro   AS CHAR                          NO-UNDO.
     DEF VAR aux_dscritic   AS CHAR                          NO-UNDO.
@@ -290,7 +292,7 @@ PROCEDURE consulta-conta:
                  ASSIGN tt-conta.nome-seg-tit = crapttl.nmextttl.
 		    END.
 
-        END. 
+        END.
     ELSE
         DO:
             FIND crapjur WHERE crapjur.cdcooper = crapcop.cdcooper  AND
@@ -335,10 +337,10 @@ PROCEDURE consulta-conta:
                                       OUTPUT "",               /* Descriçao do Tipo de conta */
                                       OUTPUT "",               /* Flag Erro */
                                       OUTPUT "").              /* Descriçao da crítica */
-            
+
             CLOSE STORED-PROC pc_descricao_tipo_conta
                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
+            
             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
             ASSIGN aux_dstipcta = ""
@@ -510,7 +512,7 @@ PROCEDURE consulta-conta:
                           ELSE 
                               1.
 
-    FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper     AND     
+    FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper     AND
                            craplcm.nrdconta  = crapsld.nrdconta     AND
                            craplcm.dtmvtolt  = crapdat.dtmvtocd     AND
                            craplcm.cdhistor <> 289                  
@@ -711,7 +713,7 @@ PROCEDURE impressao-saldo:
     DEF INPUT  PARAM p-tipo-impressao    AS INT                       NO-UNDO.
     DEF OUTPUT PARAM p-literal-autentica AS CHAR                      NO-UNDO.
                  
-	DEF VAR aux_dscritic                 AS CHAR                      NO-UNDO.
+    DEF VAR aux_dscritic                 AS CHAR                      NO-UNDO.
                  
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
  
@@ -761,7 +763,7 @@ PROCEDURE impressao-saldo:
             IF  RETURN-VALUE <> "OK" THEN
                 RETURN "NOK".
             
-			/*** Busca Saldo Bloqueado Garantia ***/
+            /*** Busca Saldo Bloqueado Garantia ***/
             IF  NOT VALID-HANDLE(h-b1wgen0112) THEN
                 RUN sistema/generico/procedures/b1wgen0112.p 
                     PERSISTENT SET h-b1wgen0112.
@@ -774,7 +776,7 @@ PROCEDURE impressao-saldo:
                                       OUTPUT aux_dscritic).
                 
             IF  VALID-HANDLE(h-b1wgen0112) THEN
-                DELETE PROCEDURE h-b1wgen0112.
+                DELETE PROCEDURE h-b1wgen0112.  
                 
         END.    
     ELSE
@@ -1295,7 +1297,34 @@ PROCEDURE calcula_poupanca:
                rpp_dtrefere = craprpp.dtfimper
                rpp_dtmvtolt = crapdat.dtmvtocd + 1. /*Calculo ate dia do mvto*/ 
 
-        /*  Leitura dos lancamentos de resgate da aplicacao  */
+		IF craprpp.cdprodut >= 1 THEN
+			DO:
+				{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+				  /* Efetuar a chamada a rotina Oracle */
+				 RUN STORED-PROCEDURE pc_calc_saldo_apl_prog
+				 aux_handproc = PROC-HANDLE NO-ERROR (INPUT p-cdcooper /* Código da Cooperativa */
+													 ,INPUT "CRAP002" /* Código do Programa */
+													 ,INPUT "1" /* Código de Operador */
+													 ,INPUT crapass.nrdconta /* Número da Conta */
+													 ,INPUT 1 /* Titular da Conta */
+													 ,INPUT 2 /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
+													 ,INPUT craprpp.nrctrrpp /* Número de RPP */
+													 ,INPUT crapdat.dtmvtocd /* Data de Movimento */
+													 ,OUTPUT 0           /* Valor de Saldo RPP    */
+													 ,OUTPUT "").        /* Descrição da crítica */
+										 
+				/* Fechar o procedimento para buscarmos o resultado */ 
+				 CLOSE STORED-PROC pc_calc_saldo_apl_prog
+					   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+				 
+				 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+			
+				ASSIGN rpp_vlsdrdpp = pc_calc_saldo_apl_prog.pr_vlsdrdpp.
+			END.
+
+			/*  Leitura dos lancamentos de resgate da aplicacao  */
 
         FOR EACH craplpp WHERE craplpp.cdcooper  = p-cdcooper         AND
                                craplpp.nrdconta  = craprpp.nrdconta   AND

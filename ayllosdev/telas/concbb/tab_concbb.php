@@ -6,6 +6,8 @@
  * OBJETIVO     : Tabela que apresenta a consulta CONCBB
  * --------------
 	* ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *
+ *                08/01/2019 - Alterações P510, campo Tipo Pgto (Christian Grauppe - Envolti).
  * --------------
  */
  
@@ -46,6 +48,7 @@
   								  <input type="hidden" id="valorpag" name="valorpag" value="<? echo formataMoeda(getByTagName($r->tags,'valorpag')) ?>" />								  
   								  <input type="hidden" id="dtvencto" name="dtvencto" value="<? echo getByTagName($r->tags,'dtvencto') ?>" />								  
   								  <input type="hidden" id="nrautdoc" name="nrautdoc" value="<? echo getByTagName($r->tags,'nrautdoc') ?>" />								  
+  								  <input type="hidden" id="dstppgto" name="dstppgto" value="<? echo getByTagName($r->tags,'dstppgto') ?>" />								  
   								  <input type="hidden" id="flgrgatv" name="flgrgatv" value="<? echo getByTagName($r->tags,'flgrgatv') == 'yes' ? 'Sim' : 'Nao' ?>" />								  
   								  <input type="hidden" id="registro" name="registro" value="<? echo getByTagName($r->tags,'nrdrowid') ?>" />								  
 
@@ -126,15 +129,17 @@
 
 	<div id="linha2">
 	<ul class="complemento">
-	<li>CMC-7:</li>
-	<li id="dsdocmc7"></li>
-	<li>Valor:</li>
-	<li id="valordoc"></li>
+	<?/*li>CMC-7:</li>
+	<li id="dsdocmc7"></li*/?>
+	<li>Tipo pgto:</li>
+	<li id="dstppgto"></li>
 	</ul>
 	</div>
 
 	<div id="linha3">
 	<ul class="complemento">
+	<li>Valor:</li>
+	<li id="valordoc"></li>
 	<li>Valor Desconto:</li>
 	<li id="vldescto"></li>
 	<li>Valor Pago:</li>

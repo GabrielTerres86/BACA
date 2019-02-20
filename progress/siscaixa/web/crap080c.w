@@ -11,6 +11,8 @@ Alteracoes: 18/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
                          procedure gera-autenticacao. (Reinert)
                          
             13/12/2013 - Adicionado validate para tabela craperr (Tiago).             
+
+            02/01/2019 - Projeto 510 - Incluí tipo de pagamento e validação do valor máximo para pagto em espécie. (Daniel - Envolti)            
 ............................................................................. */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -35,6 +37,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_tit3 AS CHARACTER FORMAT "X(256)":U 
        FIELD v_tit4 AS CHARACTER FORMAT "X(256)":U 
        FIELD v_tit5 AS CHARACTER FORMAT "X(256)":U 
+       FIELD v_tppagmto    AS CHARACTER FORMAT "X(256)":U
        FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
        FIELD v_valor1 AS CHARACTER FORMAT "X(256)":U 
        FIELD v_valordoc AS CHARACTER FORMAT "X(256)":U .
@@ -144,8 +147,8 @@ DEF TEMP-TABLE w-craperr  NO-UNDO
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_descto ab_unmap.v_dtvencto ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tit1 ab_unmap.v_tit2 ab_unmap.v_tit3 ab_unmap.v_tit4 ab_unmap.v_tit5 ab_unmap.v_valor ab_unmap.v_valor1 ab_unmap.v_valordoc 
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_descto ab_unmap.v_dtvencto ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tit1 ab_unmap.v_tit2 ab_unmap.v_tit3 ab_unmap.v_tit4 ab_unmap.v_tit5 ab_unmap.v_valor ab_unmap.v_valor1 ab_unmap.v_valordoc 
+&Scoped-Define ENABLED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_descto ab_unmap.v_dtvencto ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tit1 ab_unmap.v_tit2 ab_unmap.v_tit3 ab_unmap.v_tit4 ab_unmap.v_tit5 ab_unmap.v_tppagmto ab_unmap.v_valor ab_unmap.v_valor1 ab_unmap.v_valordoc 
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.radio ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_descto ab_unmap.v_dtvencto ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tit1 ab_unmap.v_tit2 ab_unmap.v_tit3 ab_unmap.v_tit4 ab_unmap.v_tit5 ab_unmap.v_tppagmto ab_unmap.v_valor ab_unmap.v_valor1 ab_unmap.v_valordoc 
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -167,6 +170,7 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL
           VIEW-AS RADIO-SET VERTICAL
           RADIO-BUTTONS 
+                      "radio 3", "3":U,
                       "radio 1", "1":U,
                       "radio 2", "2":U
           SIZE 20 BY 3
@@ -230,6 +234,13 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+     ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
+          "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
+          RADIO-BUTTONS 
+           "v_tppagmto 2", "2":U,
+           "v_tppagmto 0", "0":U,
+           "v_tppagmto 1", "1":U 
+           SIZE 20 BY 2
      ab_unmap.v_valor AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -278,6 +289,7 @@ DEFINE FRAME Web-Frame
           FIELD v_tit3 AS CHARACTER FORMAT "X(256)":U 
           FIELD v_tit4 AS CHARACTER FORMAT "X(256)":U 
           FIELD v_tit5 AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor1 AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valordoc AS CHARACTER FORMAT "X(256)":U 
@@ -346,6 +358,8 @@ DEFINE FRAME Web-Frame
 /* SETTINGS FOR fill-in ab_unmap.v_tit4 IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_tit5 IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_tppagmto IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR fill-in ab_unmap.v_valor IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
@@ -431,6 +445,8 @@ PROCEDURE htmOffsets :
     ("v_tit4":U,"ab_unmap.v_tit4":U,ab_unmap.v_tit4:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_tit5":U,"ab_unmap.v_tit5":U,ab_unmap.v_tit5:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).    
   RUN htmAssociate
     ("v_valor":U,"ab_unmap.v_valor":U,ab_unmap.v_valor:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -555,6 +571,7 @@ PROCEDURE process-web-request :
      
      ASSIGN
           v_cmc7     = get-value("v_pcmc7")
+          v_tppagmto = get-value("v_tppagmto")
           v_valor    = STRING(DEC(get-value("v_pvalor")),"zzz,zzz,zzz,zz9.99")
           v_valor1   = STRING(DEC(get-value("v_pvalor1")),"zzz,zzz,zzz,zz9.99")
           radio     = get-value("v_pradio")
@@ -763,6 +780,7 @@ PROCEDURE process-web-request :
 
     ASSIGN 
           v_cmc7     = get-value("v_pcmc7")
+          
           v_valor    = STRING(DEC(get-value("v_pvalor")),"zzz,zzz,zzz,zz9.99")
           v_valor1   = STRING(DEC(get-value("v_pvalor1")),"zzz,zzz,zzz,zz9.99")
           radio     = get-value("v_pradio")
@@ -849,6 +867,7 @@ PROCEDURE gera-titulos :
                                     INPUT  p-dsautent,
                                     INPUT  p-autchave,
                                     INPUT  p-cdchave,
+                                    INPUT  v_tppagmto,
                                     OUTPUT p-histor,
                                     OUTPUT p-pg,    
                                     OUTPUT p-docto,

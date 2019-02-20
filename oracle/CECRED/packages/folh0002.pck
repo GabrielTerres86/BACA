@@ -487,7 +487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Maio/2015                      Ultima atualizacao: 05/07/2018
+   Data    : Maio/2015                      Ultima atualizacao: 15/02/2019
 
    Dados referentes ao programa:
 
@@ -514,6 +514,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                             das procedures: pc_valida_pagto_ib, pc_busca_opcao_deb_ib
                             e pc_lista_pgto_pend_ib, Prj.363 (Jean Michel).
 
+               15/02/2019 - Na procedure pc_envia_pagto_apr_ib após o 
+                            processamento do arquivo incluir o rm (Lucas Ranghetti #PRB0040468)
 ..............................................................................*/
    -- Arrays
    -- Campos da tela
@@ -8182,7 +8184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --  Sistema  : Internet Banking
    --  Sigla    : CRED
    --  Autor    : Andre Santos - SUPERO
-   --  Data     : Julho/2015.                   Ultima atualizacao: 27/01/2016
+   --  Data     : Julho/2015.                   Ultima atualizacao: 15/02/2019
    --
    -- Dados referentes ao programa:
    --
@@ -8194,6 +8196,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --             26/01/2016 - Inclusão de log sob as operacções efetuadas (Marcos-Supero)
    --
    --             27/01/2016 - Incluir controle de lançamentos sem crédito (Marcos-Supero)
+   --
+   --             15/02/2019 - Incluir rm após o processamento do arquivo (Lucas Ranghetti #PRB0040468)
    ---------------------------------------------------------------------------------------------------------------
 
       CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
@@ -8345,6 +8349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_erro EXCEPTION;
       vr_dsalert     VARCHAR2(500); -- Critica
       vr_des_erro     VARCHAR2(500); -- Critica
+      vr_des_reto VARCHAR2(3);
 
    BEGIN
       -- Inicializa Variaveis
@@ -8901,6 +8906,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       -- Limpa tabela de memoria
       vr_tab_pgto.DELETE;
       vr_tab_origem.DELETE;
+      
+      -- Excluir arquivo após o uso - Novo IB
+      if pr_dsdspscp <> 0 then
+        -- Remove o arquivo XML fisico de envio
+        GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                              ,pr_des_comando => 'rm '||vr_dsdireto||'/'||pr_dsarquiv||' 2> /dev/null'
+                              ,pr_typ_saida   => vr_des_reto
+                              ,pr_des_saida   => vr_des_erro);
+        -- Se ocorreu erro dar RAISE
+        IF vr_des_reto = 'ERR' THEN
+          RAISE vr_erro;
+        END IF;
+      end if;
 
       -- Efetua commit
       COMMIT;
