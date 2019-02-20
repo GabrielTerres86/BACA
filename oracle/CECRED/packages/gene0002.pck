@@ -131,6 +131,14 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0002 AS
                                   ,pr_nmarqpdf IN VARCHAR2                  --> Arquivo a ser enviado
                                   ,pr_des_erro OUT VARCHAR2);               --> Saída com erro
   
+  PROCEDURE pc_copia_arq_para_download(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cooperativa conectada
+                                      ,pr_dsdirecp IN VARCHAR2                  --> Diretório do arquivo a ser copiado
+                                      ,pr_nmarqucp IN VARCHAR2                  --> Arquivo a ser copiado
+                                      ,pr_flgcopia IN NUMBER DEFAULT 1          --> Indica se deve ser feita copia (TRUE = Copiar / FALSE = Mover)
+                                      ,pr_dssrvarq OUT VARCHAR2                 --> Nome do servidor onde o arquivo foi postado                                        
+                                      ,pr_dsdirarq OUT VARCHAR2                 --> Nome do diretório onde o arquivo foi postado
+                                      ,pr_des_erro OUT VARCHAR2);               --> Saída com erro
+                                      
   --> Publicar arquivo de controle na intranet
   PROCEDURE pc_publicar_arq_intranet;   
   
@@ -352,7 +360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 24/11/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 19/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -401,6 +409,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             24/11/2017 - Ajuste na rotina fn_char_para_number, para sair da mesma quando o parâmetro estiver
   --                          nulo (Carlos)
+  --
+  --             19/04/2018 - #812349 Na rotina pc_gera_relato, utilizada a rotina pc_mv_arquivo para ganho de
+  --                          perfomance no comando (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
@@ -519,6 +530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     -- Retornar o valor processado
     return vr_dsconve;
+
   EXCEPTION
     when others then
       -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
@@ -1068,7 +1080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: fn_arq_para_blob
        Autor   : Dionathan
-       Data    : Maio/2015                      Ultima atualizacao: 18/10/2017
+       Data    : Maio/2015                      Ultima atualizacao: 06/12/2018
 
        Dados referentes ao programa:
 
@@ -1078,17 +1090,66 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                 (Ana - Envolti - Chamado 776896)
                    18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
+                   06/12/2018 - SCTASK0038225 (Yuri - Mouts)
+                                Utilização do Directory do Oracle
     ..............................................................................*/
 
     -- CLOB para saida
     vr_clob CLOB;
+    --
+    vr_directory  VARCHAR2(4000);
+    vr_path       VARCHAR2(4000);
+    vr_exc_erro   EXCEPTION;
+    vr_typ_saida  VARCHAR2(10);
+    vr_des_saida  VARCHAR2(4000);
+    --
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
 		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_arq_para_clob'); 
-    vr_clob := DBMS_XSLPROCESSOR.read2clob(pr_caminho, pr_arquivo, 1);
+    -- SCTASK0038225 - Yuri (Mouts)
+    -- Buscar o diretório padrão do Oracle 
+    BEGIN
+      SELECT prm.dsvlrprm, dir.DIRECTORY_PATH
+        INTO vr_directory, vr_path
+        FROM crapprm prm,
+             all_directories dir
+       WHERE prm.nmsistem = 'CRED'
+         AND prm.cdcooper = 0
+         AND prm.cdacesso = 'XSLPROCESSOR'
+         AND dir.DIRECTORY_NAME = prm.dsvlrprm;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        vr_des_saida := 'Directory padrão não encontrado: '||vr_des_saida;
+        RAISE vr_exc_erro;
+      WHEN OTHERS THEN
+        vr_des_saida := 'Erro não previsto ao buscar Directory padrão: '||sqlerrm;
+        RAISE vr_exc_erro;
+    END;
+    --
+    -- Mover o arquivo do diretorio para directory do Oracle
+    GENE0001.pc_OScommand_Shell(pr_des_comando => 'cp ' ||pr_caminho||'/'||pr_arquivo||' ' || vr_path||'/'||pr_arquivo
+                               ,pr_typ_saida   => vr_typ_saida
+                               ,pr_des_saida   => vr_des_saida);
+    -- Gerar o CLOB a partir do arquivo no directory do Oracle
+    vr_clob := DBMS_XSLPROCESSOR.read2clob(vr_directory, pr_arquivo, 1);
+    -- Remover o arquivo do diretório Temp
+    GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm ' ||vr_path||'/'||pr_arquivo
+                               ,pr_typ_saida   => vr_typ_saida
+                               ,pr_des_saida   => vr_des_saida);
+
+/*  vr_clob := DBMS_XSLPROCESSOR.read2clob(pr_caminho, pr_arquivo, 1);*/
+    -- Fim SCTASK0038225
     -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
     GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     RETURN vr_clob;
+    --
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      CECRED.pc_internal_exception(pr_compleme => 'GENE0002.fn_arq_para_clob --> ' || vr_des_saida);
+      RETURN NULL;
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception(pr_compleme => 'GENE0002.fn_arq_para_clob');
+      RETURN NULL;
   END fn_arq_para_clob;
 
   /* Procedure para gravar os dados de um BLOB para um arquivo */
@@ -1191,6 +1252,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                 (Ana - Envolti - Chamado 776896)
                    18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
+                   04/12/2018 - Utilização do Directory do Oracle (SCTASK0038225)
+                                (Yuri - Mouts) 
     ..............................................................................*/
     DECLARE
     	vr_nom_arquiv VARCHAR2(2000);
@@ -1198,6 +1261,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_typ_saida  VARCHAR2(10);
       vr_des_saida  VARCHAR2(4000);
       vr_comando    VARCHAR2(32767);
+      vr_directory  VARCHAR2(4000);
+      vr_path       VARCHAR2(4000);
+      vr_nrarquivo  NUMBER(10);
 
     BEGIN
 	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
@@ -1215,9 +1281,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         vr_nom_arquiv := vr_nom_arquiv||'-append'||to_char(SYSTIMESTAMP,'SSSSSFF5')||
                          '.'||vr_ext_arqsai;
       END IF;
-
+      -- SCTASK0038225 - Yuri (Mouts)
+      -- Buscar o diretório padrão do Oracle 
+      BEGIN
+        SELECT prm.dsvlrprm, dir.DIRECTORY_PATH
+          INTO vr_directory, vr_path
+          FROM crapprm prm,
+               all_directories dir
+         WHERE prm.nmsistem = 'CRED'
+           AND prm.cdcooper = 0
+           AND prm.cdacesso = 'XSLPROCESSOR'
+           AND dir.DIRECTORY_NAME = prm.dsvlrprm;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          vr_des_saida := 'Directory padrão não encontrado: '||vr_des_saida;
+          RAISE vr_exc_erro;
+        WHEN OTHERS THEN
+          vr_des_saida := 'Erro não previsto ao buscar Directory padrão: '||sqlerrm;
+          RAISE vr_exc_erro;
+      END;
+      vr_nrarquivo := fn_sequence('XSLPROCESSOR','XSLPROCESSOR', 0); 
+      --
       -- Gerar no diretório solicitado
-      DBMS_XSLPROCESSOR.CLOB2FILE(pr_clob, pr_caminho, vr_nom_arquiv, NLS_CHARSET_ID('UTF8'));
+      DBMS_XSLPROCESSOR.CLOB2FILE(pr_clob, vr_directory , vr_nrarquivo, NLS_CHARSET_ID('UTF8')); 
+      -- Mover o arquivo do diretorio temp para diretório de destino
+      GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv ' ||vr_path||'/'||vr_nrarquivo||' ' || pr_caminho||'/'||vr_nom_arquiv);
+
+/*      -- Gerar no diretório solicitado
+      DBMS_XSLPROCESSOR.CLOB2FILE(pr_clob, pr_caminho, vr_nom_arquiv, NLS_CHARSET_ID('UTF8'));*/
+      -- Fim SCTASK0038225
+
       -- Setar privilégio para evitar falta de permissão a outros usuários
       gene0001.pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||pr_caminho||'/'||vr_nom_arquiv);
 
@@ -1252,10 +1345,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
     EXCEPTION
       WHEN vr_exc_erro THEN
+        CECRED.pc_internal_exception(pr_compleme => 'GENE0002.pc_clob_para_arquivo --> ' || vr_des_saida);
         pr_des_erro := 'GENE0002.pc_clob_para_arquivo --> ' || vr_des_saida;
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception;
+        CECRED.pc_internal_exception(pr_compleme => 'Caminho e arq:' || pr_caminho || '-' || vr_nom_arquiv);
         pr_des_erro := 'GENE0002.pc_clob_para_arquivo --> || Erro ao gravar o conteúdo do Blob para arquivo: '||sqlerrm;
     END;
   END pc_clob_para_arquivo;
@@ -1474,6 +1568,84 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       -- Retornando a critica para o programa chamdador
       pr_des_erro := 'Erro na rotina GENE0002.pc_efetua_copia_pdf_ib. '||sqlerrm;
   END pc_efetua_copia_arq_ib;
+  
+  PROCEDURE pc_copia_arq_para_download(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cooperativa conectada
+                                      ,pr_dsdirecp IN VARCHAR2                  --> Diretório do arquivo a ser copiado
+                                      ,pr_nmarqucp IN VARCHAR2                  --> Arquivo a ser copiado
+                                      ,pr_flgcopia IN NUMBER DEFAULT 1          --> Indica se deve ser feita copia (TRUE = Copiar / FALSE = Mover)
+                                      ,pr_dssrvarq OUT VARCHAR2                 --> Nome do servidor onde o arquivo foi postado                                        
+                                      ,pr_dsdirarq OUT VARCHAR2                 --> Nome do diretório onde o arquivo foi postado
+                                      ,pr_des_erro OUT VARCHAR2) IS             --> Saída com erro
+  /*..............................................................................
+
+       Programa: pc_copia_arq_para_download
+       Autor   : David G Kistner
+       Data    : Dezembro/2017                      Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Objetivo  : Procedure para copiar/mover arquivo para diretorio que possibilita 
+                   o download através de request HTTP
+
+       Alteração:
+
+    ..............................................................................*/
+
+    ------------------------------- VARIAVEIS -------------------------------
+
+    -- controle de criticas
+    vr_exc_saida     EXCEPTION;
+    vr_dsc_erro      VARCHAR2(4000);
+
+    vr_cmdcopia  VARCHAR2(2000);
+    vr_srvib     VARCHAR2(200);
+    -- Saída do Shell
+    vr_typ_saida VARCHAR2(3);
+
+  BEGIN
+    -- Buscar dsdircop
+    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    
+    IF cr_crapcop%FOUND THEN      
+      CLOSE cr_crapcop;
+    ELSE
+      CLOSE cr_crapcop;
+      vr_des_erro := 'Cooperativa não cadastrada.';
+      RAISE vr_exc_saida;
+    END IF;
+      
+    pr_dssrvarq := gene0001.fn_param_sistema('CRED',0,'SRV_DOWNLOAD_ARQUIVO');
+    pr_dsdirarq := '/'||rw_crapcop.dsdircop||gene0001.fn_param_sistema('CRED',0,'SUB_PATH_DOWNLOAD_ARQ');      
+    
+    IF pr_flgcopia = 1 THEN  
+      vr_cmdcopia := 'cp '; -- Copiar
+    ELSE
+      vr_cmdcopia := 'mv '; -- Mover
+    END IF;    
+    
+    vr_cmdcopia := vr_cmdcopia||pr_dsdirecp||pr_nmarqucp||' '||gene0001.fn_diretorio('C',0)||gene0001.fn_param_sistema('CRED',0,'PATH_DOWNLOAD_ARQUIVO')||pr_dsdirarq||'/'||pr_nmarqucp;
+
+    -- Efetuar a execução do comando montado
+    gene0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_cmdcopia
+                         ,pr_typ_saida   => vr_typ_saida
+                         ,pr_des_saida   => vr_des_erro);
+
+    -- Se retornou erro
+    IF vr_typ_saida = 'ERR' OR vr_des_erro NOT LIKE 'Arquivo recebido!%' THEN
+      RAISE vr_exc_saida;
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      pr_des_erro := vr_des_erro;
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
+      -- Retornando a critica para o programa chamdador
+      pr_des_erro := 'Erro na rotina GENE0002.pc_copia_arq_para_download. '||sqlerrm;
+  END pc_copia_arq_para_download;
   
   /*****************************************************
   **   Publicar arquivo de controle na intranet       **
@@ -2538,16 +2710,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     DECLARE
       -- Variáveis para tratamento do arquivo
       vr_xML    XMLType;
+      vr_directory  VARCHAR2(4000);
+      vr_path       VARCHAR2(4000);
+      vr_nrarquivo  NUMBER(10);
+      vr_des_saida  VARCHAR2(4000);
+
     BEGIN
 	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
   	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_XML_para_arquivo');
       -- Efetuar parser para gerar mensagens de erro e validar XML
       vr_xML := XMLType.createXML(pr_XML);
 
-      DBMS_XSLPROCESSOR.CLOB2FILE(vr_xML.getclobval(), pr_caminho, pr_arquivo, NLS_CHARSET_ID('UTF8'));
+      -- SCTASK0038225 - Yuri (Mouts)
+      -- Buscar o diretório padrão do Oracle 
+      BEGIN
+        SELECT prm.dsvlrprm, dir.DIRECTORY_PATH
+          INTO vr_directory, vr_path
+          FROM crapprm prm,
+               all_directories dir
+         WHERE prm.nmsistem = 'CRED'
+           AND prm.cdcooper = 0
+           AND prm.cdacesso = 'XSLPROCESSOR'
+           AND dir.DIRECTORY_NAME = prm.dsvlrprm;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          vr_des_saida := 'GENE0002.pc_XML_para_arquivo --> || Directory padrão não encontrado';
+          RAISE vr_exc_erro;
+        WHEN OTHERS THEN
+          vr_des_saida := 'GENE0002.pc_XML_para_arquivo --> '||sqlerrm;
+          RAISE vr_exc_erro;
+      END;
+      vr_nrarquivo := fn_sequence('XSLPROCESSOR','XSLPROCESSOR', 0); 
+      --
+      -- Gerar no diretório solicitado
+      DBMS_XSLPROCESSOR.CLOB2FILE(vr_xML.getclobval(), vr_directory, vr_nrarquivo, NLS_CHARSET_ID('UTF8')); 
+      -- Mover o arquivo do diretorio temp para diretório de destino
+      GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv ' ||vr_path||'/'||vr_nrarquivo||' ' || pr_caminho||'/'||pr_arquivo);
+
+/*      DBMS_XSLPROCESSOR.CLOB2FILE(vr_xML.getclobval(), pr_caminho, pr_arquivo, NLS_CHARSET_ID('UTF8'));*/
+      -- Fim SCTASK0038225
+      
       -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
       GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
+      WHEN vr_exc_erro THEN
+        CECRED.pc_internal_exception(pr_compleme => 'GENE0002.pc_XML_para_arquivo --> ' || vr_des_saida);
+        pr_des_erro := 'GENE0002.pc_XML_para_arquivo --> || Erro ao gravar o conteúdo do XML para arquivo: '||vr_des_saida;
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
         CECRED.pc_internal_exception;
@@ -2702,7 +2910,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero Tecnologia
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 21/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2734,6 +2942,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                           (Ana - Envolti - Chamado 776896)
     --              18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                           (Ana - Envolti - Chamado 776896)
+    --              
+    --              21/12/2017 - Melhorado consulta da crapprg com UPPER (Tiago #812349)
     -- ...........................................................................
     DECLARE
       -- Buscar dados da solicitação
@@ -2768,7 +2978,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         SELECT prg.nrsolici
           FROM crapprg prg
          WHERE prg.cdcooper = rw_crapslr.cdcooper
-           AND prg.cdprogra = UPPER(rw_crapslr.cdprogra);
+           AND UPPER(prg.cdprogra) = UPPER(rw_crapslr.cdprogra);
       rw_crapprg cr_crapprg%ROWTYPE;
       -- Busca do cadastro de relatórios
       CURSOR cr_craprel(pr_cdrelato craprel.cdrelato%TYPE) IS
@@ -3038,10 +3248,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           END IF;
 
           -- Efetuar mv do arquivo temporário gerado para o nome real do relatório
-          GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                               ,pr_des_comando => 'mv '||rw_crapslr.dsarqsai||'.tmp  '||rw_crapslr.dsarqsai
-                               ,pr_typ_saida   => vr_typ_saida
-                               ,pr_des_saida   => vr_des_saida);
+          gene0001.pc_mv_arquivo(pr_dsarqori  => rw_crapslr.dsarqsai||'.tmp', 
+                                 pr_dsarqdes  => rw_crapslr.dsarqsai, 
+                                 pr_typ_saida => vr_typ_saida, 
+                                 pr_des_saida => vr_des_saida);
 
           -- Testa se a saída da execução acusou erro
           IF vr_typ_saida = 'ERR' THEN
@@ -3087,7 +3297,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         Sistema  : Rotinas genéricas
         Sigla    : GENE
         Autor    : Marcos E. Martini - Supero
-        Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
+        Data     : Dezembro/2012.                   Ultima atualizacao: 21/12/2017
 
         Dados referentes ao programa:
 
@@ -3135,6 +3345,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                   (Ana - Envolti - Chamado 776896)
                      18/10/2017 - Incluído pc_set_modulo com novo padrão
                                   (Ana - Envolti - Chamado 776896)
+                     21/12/2017 - Retirado clob da consulta principal na CRAPSLR pois era algo
+                                  usado em um caso especifico e contribuia para uma baixa 
+                                  performance do programa (Tiago #812349)                     
        ............................................................................. */
     DECLARE
       -- Busca de informações da fila
@@ -3169,7 +3382,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
               ,slr.fldosmail
               ,slr.dscmaxmail
               ,slr.flarquiv
-              ,slr.dsxmldad
               ,slr.flremarq
               ,slr.flappend
           FROM crapslr slr
@@ -3191,6 +3403,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                  ,slr.nrseqsol;     --> e dentro da mesma prioridade os mais antigos primeiro
 
       rw_crapslr cr_crapslr%ROWTYPE;
+      
+      CURSOR cr_crapslr_xml (pr_rowid ROWID) IS
+        SELECT slr.rowid,
+               slr.dsxmldad
+          FROM crapslr slr
+         WHERE slr.ROWID = pr_rowid;
+
+      rw_crapslr_xml cr_crapslr_xml%ROWTYPE;
       
       -- lockar registro, porém sem aguardar em caso se ja estar lockado
       CURSOR cr_crapslr_rowid (pr_rowid ROWID) IS
@@ -3329,12 +3549,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                          ,pr_arquivo => vr_dsarq);
           -- Se for para gerar o arquivo texto puro
           IF Nvl(rw_crapslr.flarquiv,'N') = 'S' THEN
+            OPEN cr_crapslr_xml(pr_rowid => rw_crapslr.rowid);
+            FETCH cr_crapslr_xml INTO rw_crapslr_xml;
+            
+            IF cr_crapslr_xml%NOTFOUND THEN
+              CLOSE cr_crapslr_xml;
+              vr_des_erro := 'GENE0002.pc_process_relato_penden --> CLOB do relatorio pendente nao encontrado. rowid: '||rw_crapslr.rowid;              
+            ELSE           
+              CLOSE cr_crapslr_xml;
             -- Criar o arquivo no diretorio especificado
-            pc_clob_para_arquivo(pr_clob     => rw_crapslr.dsxmldad
+              pc_clob_para_arquivo(pr_clob     => rw_crapslr_xml.dsxmldad
                                 ,pr_caminho  => vr_dsdir
                                 ,pr_arquivo  => vr_dsarq
                                 ,pr_flappend => rw_crapslr.flappend
                                 ,pr_des_erro => vr_des_erro);
+            END IF;
           ELSE
             -- Chamar a geração
             pc_gera_relato(pr_nrseqsol => rw_crapslr.nrseqsol
@@ -3683,7 +3912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 21/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3721,6 +3950,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                            (Ana - Envolti - Chamado 776896)
     --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
+    --
+    --               21/12/2017 - Melhorado consulta na crapprg com UPPER (Tiago #812349)
     -- ............................................................................. */
     DECLARE
       -- Busca do indicador do processo no calendário
@@ -3743,7 +3974,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                    ,prg.cdrelato##1) cdrelato  --> Retornar o codigo cfme o solicitavdo (1,2,3,4,5)
           FROM crapprg prg
          WHERE prg.cdcooper = pr_cdcooper
-           AND prg.cdprogra = UPPER(pr_cdprogra);
+           AND UPPER(prg.cdprogra) = UPPER(pr_cdprogra);
       rw_crapprg cr_crapprg%ROWTYPE;
       -- Busca do cadastro de relatórios
       CURSOR cr_craprel(pr_cdrelato craprel.cdrelato%TYPE) IS
@@ -4073,7 +4304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Abril/2013.                   Ultima atualizacao: 18/10/2017
+    --  Data     : Abril/2013.                   Ultima atualizacao: 21/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4099,6 +4330,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                            (Ana - Envolti - Chamado 776896)
     --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
+    --
+    --               21/12/2017 - Melhorado consulta na crapprg com UPPER (Tiago #812349)
     -- .............................................................................
     DECLARE
       -- Busca do indicador do processo no calendário
@@ -4113,7 +4346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         SELECT prg.nrsolici
           FROM crapprg prg
          WHERE prg.cdcooper = pr_cdcooper
-           AND prg.cdprogra = UPPER(pr_cdprogra);
+           AND UPPER(prg.cdprogra) = UPPER(pr_cdprogra);
       rw_crapprg cr_crapprg%ROWTYPE;
       -- Busca do cadastro de relatórios
       CURSOR cr_craprel(pr_cdrelato craprel.cdrelato%TYPE) IS
