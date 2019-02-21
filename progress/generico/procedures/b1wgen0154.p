@@ -123,7 +123,8 @@ DEF TEMP-TABLE tt-icf606-dados
          FIELD nrcpfcgc LIKE crapicf.nrcpfcgc 
              FIELD totalreg AS INTE
          FIELD dsdlinh2 AS CHAR
-         FIELD dtdtroca AS DATE.
+         FIELD dtdtroca AS DATE
+         FIELD dtrequis AS DATE.
 
 FORM aux_setlinha  FORMAT "x(216)"
      WITH FRAME AA WIDTH 216 NO-BOX NO-LABELS.
@@ -1113,7 +1114,8 @@ PROCEDURE importar_icf614:
                         ASSIGN aux_cdcooper = crapcop.cdcooper
                                aux_cdocorre = 3
                                aux_nmprimtl = " "
-                               aux_nrcpfcgc = 0.
+                               aux_nrcpfcgc = 0
+                               aux_cdtipcta = 1.
                END.
             ELSE
               DO:
@@ -1121,7 +1123,8 @@ PROCEDURE importar_icf614:
                          ASSIGN aux_cdcooper = crapcop.cdcooper
                                aux_cdocorre = 3
                                aux_nmprimtl = " "
-                               aux_nrcpfcgc = 0.
+                               aux_nrcpfcgc = 0
+                               aux_cdtipcta = 1.
                       ELSE
                             ASSIGN aux_cdcooper = crapcop.cdcooper
                                    aux_cdocorre = 0 /* Conta Localizada   */
@@ -1143,7 +1146,8 @@ PROCEDURE importar_icf614:
                       ASSIGN aux_cdcooper = crapcop.cdcooper
                              aux_cdocorre = 4 /* Cheque nao foi depositado na cooperativa */
                              aux_nmprimtl = " "
-                             aux_nrcpfcgc = 0.
+                             aux_nrcpfcgc = 0
+                             aux_cdtipcta = 1.
                   ELSE
                       ASSIGN aux_cdcooper = crapcop.cdcooper
                              aux_cdocorre = 0 /* Conta Localizada   */
@@ -1190,7 +1194,8 @@ PROCEDURE importar_icf614:
                 tt-icf606-dados.nmprimtl = aux_nmprimtl
                tt-icf606-dados.nrcpfcgc = aux_nrcpfcgc
                 tt-icf606-dados.dsdlinh2 = aux_deslinh2
-                tt-icf606-dados.dtdtroca = aux_dattroca.
+                tt-icf606-dados.dtdtroca = aux_dattroca
+                tt-icf606-dados.dtrequis = aux_dtrequis.
        END. /* FIM do DO */
 
        INPUT STREAM str_2 CLOSE.
@@ -1244,9 +1249,9 @@ PROCEDURE importar_icf614:
                STRING(tt-icf606-dados.cdtipcta,"99")             FORMAT "x(2)"
                STRING(tt-icf606-dados.nrcpfcgc,"99999999999999") FORMAT "x(14)"
                tt-icf606-dados.nmprimtl                          FORMAT "x(40)"
-          STRING(YEAR(par_dtmvtolt), "9999")                     FORMAT "9999"
-          STRING(MONTH(par_dtmvtolt), "99")                      FORMAT "99"
-          STRING(DAY(par_dtmvtolt), "99")                        FORMAT "99"
+               STRING(YEAR(tt-icf606-dados.dtrequis), "9999")    FORMAT "9999"
+               STRING(MONTH(tt-icf606-dados.dtrequis), "99")     FORMAT "99"
+               STRING(DAY(tt-icf606-dados.dtrequis), "99")       FORMAT "99"
                SUBSTR(tt-icf606-dados.dsdlinh2,1,30)             FORMAT "x(30)"
                FILL(" ", 8)                                      FORMAT "x(8)"
                STRING(YEAR(tt-icf606-dados.dtdtroca),"9999")     FORMAT "9999"
