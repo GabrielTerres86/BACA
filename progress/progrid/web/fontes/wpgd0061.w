@@ -118,7 +118,8 @@ DEFINE TEMP-TABLE tt-inscritos
   FIELD prgrecid AS CHARACTER
   FIELD dtpreins AS CHARACTER 
   FIELD qtfaleve AS CHARACTER 
-  FIELD flginsin AS CHARACTER.
+  FIELD flginsin AS CHARACTER
+  FIELD qtinscri AS CHARACTER.
   
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
 
@@ -1290,7 +1291,8 @@ PROCEDURE CriaListaInscritos:
                   ASSIGN tt-inscritos.dtpreins = hTextTag:NODE-VALUE WHEN xField2:NAME = "dtpreins".
                   ASSIGN tt-inscritos.qtfaleve = hTextTag:NODE-VALUE WHEN xField2:NAME = "qtfaleve".
                   ASSIGN tt-inscritos.flginsin = hTextTag:NODE-VALUE WHEN xField2:NAME = "flginsin".
-                                    
+                  ASSIGN tt-inscritos.qtinscri = ab_unmap.aux_qtdregis.				  
+
                   VALIDATE tt-inscritos.
    
                 END. 
@@ -1348,6 +1350,7 @@ PROCEDURE CriaListaInscritos:
                                     '",progress:"' + STRING(tt-inscritos.prgrecid) +
                                     '",dtpreins:"' + STRING(tt-inscritos.dtpreins) +
                                     '",qtfaleve:"' + STRING(tt-inscritos.qtfaleve) +
+                                    '",qtinscri:"' + STRING(tt-inscritos.qtinscri) +									
                                     '",flginsin:"' + STRING(tt-inscritos.flginsin) + '"~});').
   END.
     
