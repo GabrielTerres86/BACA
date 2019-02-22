@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-124
+105
 -- Created on 19/02/2019 by T0031667 
 declare       
     --Data da cooperativa
@@ -35,23 +35,10 @@ declare
        RETURN;
      END IF;
      
-     -- Busca saldo devedor (saldo até 59 dias de atraso) e juros +60 não pagos da conta
-     TELA_ATENDA_DEPOSVIS.pc_busca_saldos_juros60_det(pr_cdcooper => 9
-                                                   , pr_nrdconta => 17981
-                                                   , pr_vlsld59d => vr_vlslddev
-                                                   , pr_vlju6037 => vr_vljuro60_37
-                                                   , pr_vlju6038 => vr_vljuro60_38
-                                                   , pr_vlju6057 => vr_vljuro60_57
-                                                   , pr_dtinictr => to_date('16/11/2017', 'DD/MM/YYYY')
-                                                   , pr_cdcritic => :pr_cdcritic
-                                                   , pr_dscritic => :pr_dscritic);
-                                                   
-     IF nvl(:pr_cdcritic, 0) > 0 OR TRIM(:pr_dscritic) is not NULL THEN
-       :pr_cdcritic:= 0;
-       :pr_dscritic:= 'Erro ao recuperar saldo devedor da conta corrente.';
-
-       RETURN;
-     END IF;
+     vr_vlslddev:= 1575.92;
+     vr_vljuro60_37:= 1079.86;
+     vr_vljuro60_38:= 0;
+     vr_vljuro60_57:= 0;
      
      vr_qtdiaatr := TRUNC(SYSDATE) - to_date('23/11/2018', 'DD/MM/YYYY') + 255;
 
@@ -87,6 +74,7 @@ declare
      BEGIN
        UPDATE crapass pass
           SET pass.inprejuz = 1
+            , pass.cdsitdct = 2
         WHERE pass.cdcooper = 9
           AND pass.nrdconta = 17981;
      EXCEPTION
@@ -96,14 +84,7 @@ declare
         RETURN;
      END;
 
-     prej0003.pc_define_situacao_cc_prej(pr_cdcooper => 9
-                                        ,pr_nrdconta => 17981
-                                        ,pr_cdcritic => :pr_cdcritic 
-                                        ,pr_dscritic => :pr_dscritic);
-                                         
-     if nvl(:pr_cdcritic,0) > 0  or TRIM(:pr_dscritic) is not null then
-         RETURN;
-     end if;    
+    
 
      PREJ0003.pc_lanca_transf_extrato_prj(pr_idprejuizo => vr_idprejuizo
                                , pr_cdcooper   => 9
