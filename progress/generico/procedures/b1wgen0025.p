@@ -337,7 +337,7 @@
                              magnético de operador. Quando for um cartão de operador,
                              não consultar transferência de conta (Carlos)
 
-			    19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
                              crapass, crapttl, crapjur (Adriano - P339).
                 30/11/2017 - Ajuste na verifica_prova_vida_inss - Chamado 784845 - 
 				                     Prova de vida nao aparecendo na AV - Andrei - Mouts							
@@ -347,7 +347,9 @@
                 26/12/2017 - #820634 Aumentado o limite de saque noturno, 
                              de R$300 para R$500 (Carlos)
 
-				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+                26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+        
+                22/02/2019 - P429. Validaçao de conta salário na exibiçao do banner de prova de vida no TAA. (Augusto/Supero)
 
 ..............................................................................*/
 
@@ -4709,6 +4711,7 @@ PROCEDURE verifica_prova_vida_inss:
     DEFINE VARIABLE aux_ponteiro                    AS INTEGER                  NO-UNDO.
     DEFINE VARIABLE aux_flgpvida                    AS INTEGER                  NO-UNDO.
     DEFINE VARIABLE aux_flgbinss                    AS INTEGER                  NO-UNDO.
+    DEFINE VARIABLE aux_cdmodali                    AS INTEGER                  NO-UNDO.
 
     RUN sistema/generico/procedures/b1wgen0091.p PERSISTENT SET h_b1wgen0091.
 
@@ -4751,6 +4754,44 @@ PROCEDURE verifica_prova_vida_inss:
         NO-LOCK: 
         ASSIGN aux_dtmvtolt = crapdat.dtmvtolt.
     END.
+    
+    /* P485 - Validaçao para conta salário */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_busca_modalidade_conta aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT  par_cdcooper 
+                  ,INPUT  par_nrdconta 
+                  ,OUTPUT 0
+                  ,OUTPUT ""
+                  ,OUTPUT "").
+                         
+
+    CLOSE STORED-PROC pc_busca_modalidade_conta aux_statproc = PROC-STATUS 
+         WHERE PROC-HANDLE = aux_handproc.
+    
+    ASSIGN par_dscritic = ""
+           aux_cdmodali = 0
+           par_dscritic = pc_busca_modalidade_conta.pr_dscritic 
+                          WHEN pc_busca_modalidade_conta.pr_dscritic <> ?
+           aux_cdmodali = pc_busca_modalidade_conta.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade_conta.pr_cdmodalidade_tipo <> ?.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    /* Se retornou crítica */
+    IF  par_dscritic <> "" THEN
+      DO:
+           RETURN "NOK".
+      END.
+    
+    /* Se a modalidade for 2 entao é conta salário */
+    IF aux_cdmodali = 2 THEN
+      DO:
+        par_flgdinss = NO.
+        RETURN "OK".
+      END.
+    
+    /* P485 - Validaçao para conta salário */
 
     /* verificacao para banner prova de vida
        Cooperativas: 

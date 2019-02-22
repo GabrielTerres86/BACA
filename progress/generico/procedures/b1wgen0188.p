@@ -116,6 +116,8 @@
                              faixa de valor (rotina grava_dados_conta) (Carlos)
 
 				28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
+        
+               22/02/2019 - P429. Validaçao de conta salário na exibiçao do banner Pré Aprovado no TAA. (Augusto/Supero)
                 
 ..............................................................................*/
 
@@ -3143,11 +3145,54 @@ PROCEDURE verifica_mostra_banner_taa:
     DEF VAR aux_ponteiro AS INTE                                    NO-UNDO.
     DEF VAR aux_dtmvtolt AS CHAR                                    NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdmodali AS INTE                                    NO-UNDO.
 
     ASSIGN par_flgdobnr = TRUE
            aux_dtmvtolt = STRING(DAY(par_dtmvtolt), "99")      + "/" +
                           STRING(MONTH(par_dtmvtolt), "99")    + "/" +
                           STRING(YEAR(par_dtmvtolt), "9999").
+
+    
+    /* P485 - Validaçao para conta salário */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_busca_modalidade_conta aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT  par_cdcooper 
+                  ,INPUT  par_nrdconta 
+                  ,OUTPUT 0
+                  ,OUTPUT ""
+                  ,OUTPUT "").
+                         
+
+    CLOSE STORED-PROC pc_busca_modalidade_conta aux_statproc = PROC-STATUS 
+         WHERE PROC-HANDLE = aux_handproc.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdmodali = 0
+           aux_dscritic = pc_busca_modalidade_conta.pr_dscritic 
+                          WHEN pc_busca_modalidade_conta.pr_dscritic <> ?
+           aux_cdmodali = pc_busca_modalidade_conta.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade_conta.pr_cdmodalidade_tipo <> ?.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    /* Se retornou crítica */
+    IF  aux_dscritic <> "" THEN
+      DO:
+           RETURN "NOK".
+      END.
+    
+    /* Se a modalidade for 2 entao é conta salário */
+    IF aux_cdmodali = 2 THEN
+      DO:
+        par_flgdobnr = FALSE.
+        RETURN "OK".
+      END.
+    
+    /* P485 - Validaçao para conta salário */    
+    
+    
+    
 
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
