@@ -1080,7 +1080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: fn_arq_para_blob
        Autor   : Dionathan
-       Data    : Maio/2015                      Ultima atualizacao: 06/12/2018
+       Data    : Maio/2015                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
