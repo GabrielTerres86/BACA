@@ -179,6 +179,9 @@ create or replace package cecred.PAGA0002 is
 			   
 			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
+
+			   22/02/2019 - Retirada for update referente ao cursor do LOTE.
+                            Paulo Martins (Mouts)
 ..............................................................................*/
   -- Antigo tt-agenda-recorrente
   TYPE typ_rec_agenda_recorrente IS RECORD
@@ -7070,8 +7073,8 @@ create or replace package body cecred.PAGA0002 is
          AND craplot.dtmvtolt = pr_dtmvtolt
          AND craplot.cdagenci = pr_cdagenci
          AND craplot.cdbccxlt = pr_cdbccxlt
-         AND craplot.nrdolote = pr_nrdolote
-         FOR UPDATE NOWAIT;
+         AND craplot.nrdolote = pr_nrdolote;
+         /*FOR UPDATE NOWAIT; Não é mais necessário devido a retirada do Update da craplot*/
     rw_craplot cr_craplot%ROWTYPE;
 
     /* busca dados do preposto */
@@ -7429,7 +7432,7 @@ create or replace package body cecred.PAGA0002 is
                                  ||vr_nrdolote);
       -- Tentar criar registro de lote ate 10 vezes
       -- senao abortar
-      FOR i IN 1..10 LOOP
+      /*FOR i IN 1..10 LOOP
         vr_dscritic := NULL;
 
         BEGIN
@@ -7493,9 +7496,53 @@ create or replace package body cecred.PAGA0002 is
             continue;
         END;
 
-      END LOOP;
+      END LOOP;*/
 
+      --> buscar lote
+      OPEN cr_craplot (pr_cdcooper  => pr_cdcooper ,
+                       pr_dtmvtolt  => pr_dtmvtolt ,
+                       pr_cdagenci  => pr_cdagenci ,
+                       pr_cdbccxlt  => 100 ,
+                       pr_nrdolote  => vr_nrdolote );
+      FETCH cr_craplot INTO rw_craplot;
+      IF cr_craplot%NOTFOUND THEN
+        CLOSE cr_craplot;
+        -- se não localizou, deve criar o registro de lote
+        BEGIN
+          INSERT INTO craplot
+                     ( craplot.cdcooper
+                      ,craplot.dtmvtolt
+                      ,craplot.cdagenci
+                      ,craplot.cdbccxlt
+                      ,craplot.nrdolote
+                      ,craplot.nrdcaixa
+                      ,craplot.cdoperad
+                      ,craplot.cdopecxa
+                      ,craplot.tplotmov)
+              VALUES ( pr_cdcooper   -- craplot.cdcooper
+                      ,pr_dtmvtolt   -- craplot.dtmvtolt
+                      ,pr_cdagenci   -- craplot.cdagenci
+                      ,100            -- craplot.cdbccxlt
+                      ,vr_nrdolote   -- craplot.nrdolote
+                      ,pr_nrdcaixa   -- craplot.nrdcaixa
+                      ,pr_cdoperad   -- craplot.cdoperad
+                      ,pr_cdoperad   -- craplot.cdopecxa
+                      ,12)            -- craplot.tplotmov
+              RETURNING craplot.rowid,
+                        craplot.cdbccxlt,
+                        craplot.nrdolote
+              INTO rw_craplot.rowid,
+                   rw_craplot.cdbccxlt,
+                   rw_craplot.nrdolote;
+        EXCEPTION
+          WHEN OTHERS THEN
+           vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
+           RAISE vr_exc_erro;
+        END;
       
+      ELSE
+        CLOSE cr_craplot;
+      END IF;
 
       vr_nmprepos := NULL;
       vr_nrcpfpre := 0;
