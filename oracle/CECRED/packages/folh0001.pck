@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 07/06/2016
+   Data    : Maio/2015                      Ultima atualizacao: 05/07/2018
 
    Dados referentes ao programa:
 
@@ -14,6 +14,10 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
    Objetivo  : Centralizar as rotinas referente ao Serviço Folha de Pagamento
 
    Alteracoes: 07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
+  
+               05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída
+                            da procedure: pc_consulta_arq_folha_ib e da função: fn_cdtarifa_cdfaixav,
+                            Prj.363 (Jean Michel).           
   
 ..............................................................................*/
 
@@ -49,6 +53,10 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
                                  ,pr_vllanmto IN crappfp.vllctpag%TYPE --> Valor do lançamento
                                  ,pr_cdprogra IN crapprg.cdprogra%TYPE DEFAULT 'FOLH0001') --> Programa chamador
                                  RETURN craphis.cdhistor%TYPE;
+  
+  -- Função para retornar código de tarifa e faixa da tarifa
+  FUNCTION fn_cdtarifa_cdfaixav(pr_cdocorre IN craptar.cdocorre%TYPE --> Contem o codigo da ocorrencia.
+                               )RETURN VARCHAR2;
   
   -- Função para centralizar a montagem do nome do operador ou preposto para log
   FUNCTION fn_nmoperad_log(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
@@ -266,7 +274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
    Sistema : Ayllos
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 18/06/2018
+   Data    : Maio/2015                      Ultima atualizacao: 05/07/2018
 
    Dados referentes ao programa:
 
@@ -297,6 +305,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                18/06/2018 - sctask0012758 Na rotina pc_busca_sit_salario, melhoria do cursor cr_lanaut;
                             rotina pc_busca_rendas_aut, melhoria do cursor cr_tbfolha_lanaut e ajustes de 
                             performance no xml (Carlos)
+
+               05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída
+                            da procedure: pc_consulta_arq_folha_ib e da função: fn_cdtarifa_cdfaixav,
+                            Prj.363 (Jean Michel).             
+
+
+              29/05/2018  - Lançamento de Credito e Debito utilizando LANC0001 - Rangel Decker AMcom
+                          - pc_debito_pagto_aprovados
+                          - pc_cr_pagto_aprovados_coop
+
   ..............................................................................*/
 
   --Busca LCS com mesmo num de documento
@@ -315,6 +333,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   
   vr_exis_lcs NUMBER;
   vr_idprglog NUMBER;
+
+  vr_rcraplot   LANC0001.cr_craplot%ROWTYPE; 
+  vr_incrineg   INTEGER;      --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+  vr_tab_retorno    LANC0001.typ_reg_retorno;
+
 
   /* Procedure responsável por retornar a hora, em formato texto, do inicio e fim do horário de transações  */
   PROCEDURE pc_hrtransfer_internet(pr_cdcooper    IN craptab.cdcooper%TYPE
@@ -744,6 +767,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     
     RETURN TRUE;
   END fn_verifica_hist_folha;
+
+  -- Função para retornar código de tarifa e faixa da tarifa
+  FUNCTION fn_cdtarifa_cdfaixav(pr_cdocorre IN craptar.cdocorre%TYPE --> Contem o codigo da ocorrencia.
+                               )RETURN VARCHAR2 IS                                
+  
+    CURSOR cr_craptar IS
+      SELECT craptar.cdtarifa || ',' || crapfvl.cdfaixav
+        FROM craptar
+            ,crapfvl
+       WHERE craptar.cdtarifa = crapfvl.cdtarifa
+         AND craptar.cdinctar = (SELECT crapint.cdinctar FROM crapint WHERE UPPER(crapint.dsinctar) LIKE UPPER('FOLHA'||'%'))
+         AND craptar.cdocorre = pr_cdocorre
+         AND craptar.inpessoa = 2;
+     
+    vr_dstarfai VARCHAR2(20) := '';                        
+  BEGIN
+    OPEN cr_craptar;
+    FETCH cr_craptar INTO vr_dstarfai;
+    
+    RETURN vr_dstarfai;
+  END fn_cdtarifa_cdfaixav;
 
   
   /* Procedure de Reprovacao automatica de estouros fora do horario */
@@ -2097,6 +2141,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                   10/10/2017 - Adicionar NVL na soma do campo vllctpag.
                                (Chamado 754474) - (Fabricio)
                                
+                  29/05/2018 -  Processamento de débitos dos pagamentos aprovados pelas empresas utilizando
+                                LANC0001  Rangel Decker  AMcom
     ..............................................................................*/
 
     -- Buscar o email da agencia vinclulada a conta da empresa
@@ -2591,31 +2637,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                 --Se não achou o lote cria o mesmo
                 IF cr_craplot%NOTFOUND THEN
                   BEGIN
-                    INSERT INTO craplot
-                               (cdcooper
-                               ,dtmvtolt
-                               ,cdagenci
-                               ,cdbccxlt
-                               ,nrdolote
-                               ,tplotmov)
-                         VALUES(pr_cdcooper
-                               ,pr_rw_crapdat.dtmvtolt
-                               ,1   -- cdagenci
-                               ,100 -- cdbccxlt
-                               ,rw_craptab.nrdolote
-                               ,1)
-                         RETURNING craplot.ROWID,
-                                   craplot.nrseqdig,
-                                   craplot.qtcompln,
-                                   craplot.qtinfoln,
-                                   craplot.vlcompdb,
-                                   craplot.vlinfodb
-                              INTO rw_craplot.rowid,
-                                   rw_craplot.nrseqdig,
-                                   rw_craplot.qtcompln,
-                                   rw_craplot.qtinfoln,
-                                   rw_craplot.vlcompdb,
-                                   rw_craplot.vlinfodb;
+                     LANC0001.pc_incluir_lote(pr_cdcooper => pr_cdcooper
+                                              ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                                              ,pr_cdagenci => 1
+                                              ,pr_cdbccxlt => 100
+                                              ,pr_nrdolote => rw_craptab.nrdolote
+                                              ,pr_rw_craplot => vr_rcraplot
+                                              ,pr_cdcritic => vr_cdcritic
+                                              ,pr_dscritic => vr_dscritic);
+
+
+                      rw_craplot.rowid    := vr_rcraplot.rowid;
+                      rw_craplot.nrseqdig := vr_rcraplot.nrseqdig;
+                      rw_craplot.qtcompln := vr_rcraplot.qtcompln;
+                      rw_craplot.qtinfoln := vr_rcraplot.qtinfoln;
+                      rw_craplot.vlcompdb := vr_rcraplot.vlcompdb;
+                      rw_craplot.vlinfodb := vr_rcraplot.vlinfodb;
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                         RAISE vr_exc_erro;
+                       END IF;
 
                   EXCEPTION
                     WHEN OTHERS THEN
@@ -2673,31 +2714,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
                   -- Inserir lançamento
                   BEGIN
-                    INSERT INTO craplcm
-                               (dtmvtolt
-                               ,cdagenci
-                               ,cdbccxlt
-                               ,nrdolote
-                               ,nrdconta
-                               ,nrdctabb
-                               ,nrdctitg
-                               ,nrdocmto
-                               ,cdhistor
-                               ,vllanmto
-                               ,nrseqdig
-                               ,cdcooper)
-                         VALUES(pr_rw_crapdat.dtmvtolt
-                               ,1
-                               ,100
-                               ,rw_craptab.nrdolote
-                               ,rw_crapemp.nrdconta
-                               ,rw_crapemp.nrdconta
-                               ,gene0002.fn_mask(rw_crapemp.nrdconta,'99999999') -- nrdctitg
-                               ,vr_nrseqdig
-                               ,rw_crappfp.cdhisdeb
-                               ,rw_crappfp.vllancto
-                               ,vr_nrseqdig
-                               ,pr_cdcooper);
+
+                   LANC0001.pc_gerar_lancamento_conta( pr_dtmvtolt =>pr_rw_crapdat.dtmvtolt
+                                                      ,pr_cdagenci =>1
+                                                      ,pr_cdbccxlt =>100
+                                                      ,pr_nrdolote =>rw_craptab.nrdolote
+                                                      ,pr_nrdconta =>rw_crapemp.nrdconta
+                                                      ,pr_nrdctabb =>rw_crapemp.nrdconta
+                                                      ,pr_nrdctitg =>gene0002.fn_mask(rw_crapemp.nrdconta,'99999999') -- nrdctitg
+                                                      ,pr_nrdocmto =>vr_nrseqdig
+                                                      ,pr_cdhistor =>rw_crappfp.cdhisdeb
+                                                      ,pr_vllanmto =>rw_crappfp.vllancto
+                                                      ,pr_nrseqdig =>vr_nrseqdig
+                                                      ,pr_cdcooper =>pr_cdcooper
+                                                       -- OUTPUT --
+                                                      ,pr_tab_retorno => vr_tab_retorno
+                                                      ,pr_incrineg => vr_incrineg
+                                                      ,pr_cdcritic => vr_cdcritic
+                                                      ,pr_dscritic => vr_dscritic);
+
+                    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                      RAISE vr_exc_erro;
+                    END IF;
+
                   EXCEPTION
                     WHEN OTHERS THEN
                       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -4301,6 +4340,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --                          dia da dtmvtopr for anterior ao dia limite para debitos. 
   --                          (Jaison/Marcos - Supero)
   --
+  --            29/05/2018 -  Processamento de credito dos pagamentos aprovados de contas da cooperativa utilizando
+  --                          LANC0001  Rangel Decker  AMcom
+  --
   ---------------------------------------------------------------------------------------------------------------
 
     -- Busca os dados do lote
@@ -4588,20 +4630,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     -- Se nao achou faz a criacao do lote TEC
     IF NOT vr_blnfound THEN
       BEGIN
-        INSERT INTO craplot
-                   (cdcooper
-                   ,dtmvtolt
-                   ,cdagenci
-                   ,cdbccxlt
-                   ,nrdolote
-                   ,tplotmov)
-             VALUES(pr_cdcooper
-                   ,pr_rw_crapdat.dtmvtolt
-                   ,1           -- cdagenci
-                   ,100         -- cdbccxlt
-                   ,vr_lote_tec
-                   ,1)
-          RETURNING craplot.rowid INTO rw_craplot_tec.rowid;
+       LANC0001.pc_incluir_lote(pr_cdcooper => pr_cdcooper
+                               ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                               ,pr_cdagenci => 1
+                               ,pr_cdbccxlt => 100
+                               ,pr_nrdolote => vr_lote_tec
+                               ,pr_rw_craplot => vr_rcraplot
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic
+                               );
+
+       rw_craplot_tec.rowid := vr_rcraplot.rowid;
+
+      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+       END IF;
+
       EXCEPTION
         WHEN OTHERS THEN
           CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -4698,20 +4742,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           -- Se nao achou faz a criacao do lote FOL/EMP/COT
           IF NOT vr_blnfound THEN
             BEGIN
-              INSERT INTO craplot
-                         (cdcooper
-                         ,dtmvtolt
-                         ,cdagenci
-                         ,cdbccxlt
-                         ,nrdolote
-                         ,tplotmov)
-                   VALUES(pr_cdcooper
-                         ,pr_rw_crapdat.dtmvtolt
-                         ,1           -- cdagenci
-                         ,100         -- cdbccxlt
-                         ,vr_lote_nro
-                         ,1)
-                RETURNING craplot.rowid INTO rw_craplot.rowid;
+             LANC0001.pc_incluir_lote(pr_cdcooper => pr_cdcooper
+                                     ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                                     ,pr_cdagenci => 1
+                                     ,pr_cdbccxlt => 100
+                                     ,pr_nrdolote => vr_lote_nro
+                                     ,pr_tplotmov =>1
+                                     ,pr_rw_craplot => vr_rcraplot
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+
+              rw_craplot.rowid:= vr_rcraplot.rowid;
+
+               IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 RAISE vr_exc_erro;
+              END IF;
+
+
             EXCEPTION
               WHEN OTHERS THEN
                 CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -4841,31 +4888,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
              RETURNING craplot.nrseqdig INTO rw_craplot_fol.nrseqdig;
 
             -- Inserir lancamento
-            INSERT INTO craplcm
-                       (dtmvtolt
-                       ,cdagenci
-                       ,cdbccxlt
-                       ,nrdolote
-                       ,nrdconta
-                       ,nrdctabb
-                       ,nrdctitg
-                       ,nrdocmto
-                       ,cdhistor
-                       ,vllanmto
-                       ,nrseqdig
-                       ,cdcooper)
-                 VALUES(pr_rw_crapdat.dtmvtolt
-                       ,1
-                       ,100
-                       ,rw_craplot_fol.nrdolote
-                       ,vr_nrdconta
-                       ,vr_nrdconta
-                       ,GENE0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg
-                       ,rw_craplfp.cdempres || rw_craplfp.nrseqpag || to_char(rw_craplfp.nrseqlfp,'fm00000')
-                       ,rw_craplfp.cdhiscre
-                       ,rw_craplfp.vllancto
-                       ,rw_craplot_fol.nrseqdig
-                       ,pr_cdcooper);
+             LANC0001.pc_gerar_lancamento_conta(pr_cdcooper =>pr_cdcooper
+                                               ,pr_dtmvtolt =>pr_rw_crapdat.dtmvtolt
+                                               ,pr_cdagenci => 1
+                                               ,pr_cdbccxlt => 100
+                                               ,pr_nrdolote => rw_craplot_fol.nrdolote
+                                               ,pr_nrdconta => vr_nrdconta
+                                               ,pr_nrdocmto => rw_craplfp.cdempres || rw_craplfp.nrseqpag || to_char(rw_craplfp.nrseqlfp,'fm00000')
+                                               ,pr_vllanmto => rw_craplfp.vllancto
+                                               ,pr_cdhistor => rw_craplfp.cdhiscre
+                                               ,pr_nrseqdig => rw_craplot_fol.nrseqdig
+                                               ,pr_nrdctabb => vr_nrdconta
+                                               ,pr_nrdctitg => GENE0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg
+                                               -- OUTPUT --
+                                              ,pr_tab_retorno => vr_tab_retorno
+                                              ,pr_incrineg => vr_incrineg
+                                              ,pr_cdcritic => vr_cdcritic
+                                              ,pr_dscritic => vr_dscritic);
+
+              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 RAISE vr_exc_erro;
+              END IF;
                          
             pc_inserir_lanaut(pr_cdcooper => pr_cdcooper
                              ,pr_nrdconta => vr_nrdconta
@@ -5192,31 +5235,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                        RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
 
                       -- Inserir lancamento
-                      INSERT INTO craplcm
-                                 (dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdctabb
-                                 ,nrdctitg
-                                 ,nrdocmto
-                                 ,cdhistor
-                                 ,vllanmto
-                                 ,nrseqdig
-                                 ,cdcooper)
-                           VALUES(pr_rw_crapdat.dtmvtolt
-                                 ,1
-                                 ,100
-                                 ,rw_craplot.nrdolote
-                                 ,vr_nrdconta
-                                 ,vr_nrdconta
-                                 ,GENE0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg
-                                 ,rw_craplot.nrseqdig
-                                 ,vr_cdhistor
-                                 ,vr_tot_lanc
-                                 ,rw_craplot.nrseqdig
-                                 ,pr_cdcooper);
+                      LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt =>pr_rw_crapdat.dtmvtolt
+                                                         ,pr_cdagenci => 1
+                                                         ,pr_cdbccxlt => 100
+                                                         ,pr_nrdolote => rw_craplot.nrdolote
+                                                         ,pr_nrdconta => vr_nrdconta
+                                                         ,pr_nrdctabb => vr_nrdconta
+                                                         ,pr_nrdctitg =>GENE0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg
+                                                         ,pr_nrdocmto => rw_craplot.nrseqdig
+                                                         ,pr_cdhistor => vr_cdhistor
+                                                         ,pr_vllanmto => vr_tot_lanc
+                                                         ,pr_nrseqdig => rw_craplot.nrseqdig
+                                                         ,pr_cdcooper => pr_cdcooper
+
+                                                        -- OUTPUT --
+                                                         ,pr_tab_retorno => vr_tab_retorno
+                                                         ,pr_incrineg => vr_incrineg
+                                                         ,pr_cdcritic => vr_cdcritic
+                                                         ,pr_dscritic => vr_dscritic);
+
+                     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                         RAISE vr_exc_erro;
+                     END IF;
+
                     EXCEPTION
                       WHEN OTHERS THEN
                         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -12232,7 +12273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --  Sistema  : Internet Bankig
   --  Sigla    : CRED
   --  Autor    : Renato Darosci - SUPERO
-  --  Data     : Setembro/2015.                   Ultima atualizacao: 27/01/2016
+  --  Data     : Setembro/2015.                   Ultima atualizacao: 05/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -12241,6 +12282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -- Alterações
   --             27/01/2016 - Incluir controle de lançamentos sem crédito (Marcos-Supero)
   --
+  --             05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída, Prj.363 (Jean Michel)
   ---------------------------------------------------------------------------------------------------------------
 
     -- Buscar o registro pai na tabela CRAPPFP
@@ -12283,6 +12325,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
     vr_excerror    EXCEPTION;
 
+    vr_cdtarifa VARCHAR2(10);
+    vr_cdfaixav VARCHAR2(10);
+    vr_dstarfai VARCHAR2(20);
   BEGIN
 
     -- Buscar os dados da CRAPPFP
@@ -12300,6 +12345,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
     -- Fechar o cursor
     CLOSE cr_crappfp;
+    vr_dstarfai := FOLH0001.fn_cdtarifa_cdfaixav(pr_cdocorre => rw_crappfp.idopdebi);
+    vr_cdtarifa := gene0002.fn_busca_entrada(1,vr_dstarfai,',');
+    vr_cdfaixav := gene0002.fn_busca_entrada(2,vr_dstarfai,',');
 
     -- Montar o XML com os dados
     pr_retxml := '<criticas dtcredit="'||to_char(rw_crappfp.dtcredit,'DD/MM/RRRR')||'" '||
@@ -12309,7 +12357,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                            'qtregerr="0" '||
                            'qtdregok="'||NVL(rw_crappfp.qtregpag,0)||'" '||
                            'qtregtot="'||NVL(rw_crappfp.qtregpag,0)||'" '||
-                           'vltotpag="'||to_char(rw_crappfp.vllctpag,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')||'">';
+                           'vltotpag="'||to_char(rw_crappfp.vllctpag,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')||'" '||
+                           'cdtarifa="'||TO_CHAR(vr_cdtarifa)||'" '||
+                           'cdfaixav="'||TO_CHAR(vr_cdfaixav)||'" '||'>';
 
     -- Listar todos os registros filhos no XML
     FOR rw_craplfp IN cr_craplfp(rw_crappfp.cdcooper
@@ -12429,6 +12479,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     END IF;
     
     CLOSE btch0001.cr_crapdat;
+
+    vr_response := NULL;
   
     tari0001.pc_carrega_par_tarifa_vigente(pr_cdcooper => vr_cdcooper
                                           ,pr_cdbattar => 'HSTPARTICIPAFOL'
