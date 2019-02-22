@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                                              ,pr_dscritic OUT VARCHAR2) IS
   BEGIN
   /* .............................................................................
-
+  
    Programa: pc_crps268                      Antigo: fontes/crps268.p
    Sistema : Conta-Corrente - Cooperativa de Crédito
    Sigla   : CRED
@@ -187,7 +187,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
       vr_dsseguro     VARCHAR2(50);
       vr_rowid_log    rowid;
       vr_tab_retorno lanc0001.typ_reg_retorno;
-      
+      vr_nrseqdig craplot.nrseqdig%type; --Remoção de lotes
       -- Objetos para armazenar as variáveis da notificação
       vr_variaveis_notif  NOTI0001.typ_variaveis_notif;
     BEGIN
@@ -378,12 +378,93 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
             RAISE vr_exc_saida;
           END IF;
           
+			-- REMOCAO LOTE 
+			-- APENAS CRIAR LOTE CASO NÃO EXISTA 
+						
+			-- Posiciona a capa de lote
+			OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+					pr_dtmvtopr => rw_crapdat.dtmvtolt,
+					pr_cdagenci => 1,
+					pr_cdbccxlt => 100,
+					pr_nrdolote => 4154);
+			FETCH cr_craplot
+			INTO rw_craplot;
+
+			IF cr_craplot%NOTFOUND THEN
+			  -- Fechar o cursor pois haverá raise
+			  CLOSE cr_craplot;
+					
+				--Criar lote
+				BEGIN
+				INSERT INTO craplot
+				  (craplot.cdcooper
+				  ,craplot.dtmvtolt
+				  ,craplot.cdagenci
+				  ,craplot.cdbccxlt
+				  ,craplot.nrdolote
+				  ,craplot.tplotmov
+				  ,craplot.cdoperad
+				  ,craplot.cdhistor
+				  ,craplot.dtmvtopg
+				  ,craplot.nrseqdig
+				  ,craplot.qtcompln
+				  ,craplot.qtinfoln
+				  ,craplot.vlcompcr
+				  ,craplot.vlinfocr
+				  ,craplot.vlcompdb
+				  ,craplot.vlinfodb)
+				VALUES
+				  (pr_cdcooper
+				  ,rw_crapdat.dtmvtolt
+				  ,1
+				  ,100
+				  ,4154
+				  ,1
+				  ,'1'  -- root
+				  ,vr_cdhistor
+				  ,rw_crapdat.dtmvtolt
+				  ,0  -- craplot.nrseqdig
+				  ,0  -- craplot.qtcompln
+				  ,0  -- craplot.qtinfoln
+				  ,0  -- craplot.vlcompcr
+				  ,0  -- craplot.vlinfocr
+				  ,0  -- craplot.vlcompdb
+				  ,0) -- craplot.vlinfodb
+				  ;
+				EXCEPTION
+				WHEN Dup_Val_On_Index THEN
+				  vr_cdcritic := 0;
+				  vr_dscritic := 'Lote ja cadastrado.';
+				  RAISE vr_exc_saida;
+				WHEN OTHERS THEN
+				  vr_cdcritic := 0;
+				  vr_dscritic := 'Erro ao inserir na tabela de lotes. ' ||
+						 sqlerrm;
+				  RAISE vr_exc_saida;
+				END;
+					
+			END IF;
+
+			CLOSE cr_craplot;
+		  
+		  
           --debita apenas se qtde de dias devedor < 60
           IF rw_crapseg.qtddsdev < 60 THEN
+		  
+		      -- atribuir sequencia do lancamento
+     		  vr_nrseqdig := fn_sequence('CRAPLOT'
+								        ,'NRSEQDIG'
+								        ,''||pr_cdcooper||';'
+									       ||to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||';'
+									       ||'1;'
+									       ||'100;'
+									       ||'4154');
+										   
               -- Insere o lançamento de débito no valor do seguro
               LANC0001.pc_gerar_lancamento_conta(pr_cdagenci => 1 -- rw_craplot.cdagenci
                                                 , pr_cdbccxlt => 100 -- rw_craplot.cdbccxlt
                                                  , pr_cdhistor => vr_cdhistor
+												 , pr_nrseqdig => vr_nrseqdig
                                                  , pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                  , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
                                                  , pr_nrdconta => rw_crapseg.nrdconta
