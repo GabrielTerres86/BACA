@@ -464,14 +464,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARECC is
              AND tpec.idtipoenvio = pr_idtipoenvio;
         
         -- Buscar informacoes do operador
-        CURSOR cr_crapope (pr_cdcooperativa IN crapcop.cdcooper%TYPE,
-                           pr_cdoperad IN crapope.cdoperad%TYPE ) IS
+        CURSOR cr_crapope(pr_cdcooperativa IN crapcop.cdcooper%TYPE
+                         ,pr_cdoperad IN crapope.cdoperad%TYPE ) IS
           SELECT ope.nmoperad
             FROM crapope ope
            WHERE ope.cdcooper = pr_cdcooperativa  
              AND ope.cdoperad = pr_cdoperad;
         rw_crapope cr_crapope%ROWTYPE;
         
+        -- Cursor para verificar se operador tem acesso a opção de Alteracao da tela
+		CURSOR cr_crapace(pr_cdcooper IN crapace.cdcooper%TYPE
+                         ,pr_cdoperad IN crapace.cdoperad%TYPE) IS
+		  SELECT 1
+			FROM crapace ace
+		   WHERE ace.cdcooper = pr_cdcooper
+             AND UPPER(ace.cdoperad) = UPPER(pr_cdoperad)
+             AND UPPER(ace.nmdatela) = 'PARECC'
+		     AND ace.idambace = 2
+			 AND UPPER(ace.cddopcao) LIKE '%A%';
+		rw_crapace cr_crapace%ROWTYPE;
+      
+        -- Cursores de Log
+        -- Buscar informacoes da Cooperativa
+        CURSOR cr_crapcop(pr_cdcooperativa IN crapcop.cdcooper%TYPE) IS
+        SELECT cop.nmrescop
+          FROM crapcop cop
+         WHERE cop.cdcooper = pr_cdcooperativa;
+        rw_crapcop cr_crapcop%ROWTYPE;
+      
+        -- Busca tipo de envio
+        CURSOR cr_dominio (pr_cddominio IN tbcrd_dominio_campo.cddominio%TYPE) IS
+          SELECT tdc.dscodigo
+            FROM tbcrd_dominio_campo tdc
+           WHERE tdc.nmdominio = 'TPENDERECOENTREGA'
+             AND tdc.cddominio = pr_cddominio;
+        rw_dominio cr_dominio%ROWTYPE;
+      
+        -- Busca dados da Agencia
+        CURSOR cr_crapage (pr_cdcooperativa IN crapage.cdcooper%TYPE
+                          ,pr_cdagenci IN crapage.cdagenci%TYPE) IS
+        SELECT age.nmresage
+          FROM crapage age
+         WHERE age.cdcooper = pr_cdcooperativa
+           AND age.cdagenci = pr_cdagenci;
+        rw_crapage cr_crapage%ROWTYPE;
+      
         -- Variaveis de erro
         vr_exc_erro EXCEPTION;
         vr_cdcritic crapcri.cdcritic%TYPE;
@@ -515,6 +552,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARECC is
           RAISE vr_exc_erro;
         END IF;
         
+        
         -- Buscar informacoes do operador
         OPEN cr_crapope (pr_cdcooperativa => vr_cdcooper,
                          pr_cdoperad => vr_cdoperad);
@@ -531,6 +569,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARECC is
           -- Fecha Cursor
           CLOSE cr_crapope;
         END IF;
+        
+        
+        -- Buscar informacoes da cooperativa
+        OPEN cr_crapcop (pr_cdcooperativa => vr_cdcooper);
+        FETCH cr_crapcop INTO rw_crapcop;
+        
+        -- caso nao encontrar a cooperativa
+        IF cr_crapcop%NOTFOUND THEN
+          CLOSE cr_crapcop;
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel encontrar a cooperativa.';
+          -- gerar critica e retornar ao programa chamador
+          RAISE vr_exc_erro;
+        ELSE 
+          -- Fecha Cursor
+          CLOSE cr_crapcop;
+        END IF;
+        
+        
+        OPEN cr_crapace(pr_cdcooper => vr_cdcooper
+                       ,pr_cdoperad => vr_cdoperad);
+			  FETCH cr_crapace INTO rw_crapace;
+			
+			  IF cr_crapace%NOTFOUND AND vr_cdoperad <> '1' THEN
+          CLOSE cr_crapace;
+				  -- Atribui crítica
+				  vr_cdcritic := 0;
+				  vr_dscritic := 'Operador nao possui permissao de alteracao.';
+				  -- Gera exceção
+				  RAISE vr_exc_erro;
+        ELSE
+          -- Fecha Cursor
+          CLOSE cr_crapace;
+        END IF;
+        
         
         -- Verifica se foi informado uma Cooperativa
         IF pr_cdcooperativa IS NULL THEN
@@ -591,41 +664,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARECC is
           RAISE vr_exc_erro;
         END;
         
-        GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
-														,pr_cdoperad => vr_cdoperad
-														,pr_dscritic => NULL
-														,pr_dsorigem => 'AYLLOS'
-														,pr_dstransa => 'Tela PARECC - TBCRD_ENVIO_CARTAO: Criado registro de parametrizacao de entrega de cartao para o cooperado.'
-														,pr_dttransa => TRUNC(SYSDATE)
-														,pr_flgtrans => 1
-														,pr_hrtransa => gene0002.fn_busca_time
-														,pr_idseqttl => 1
-														,pr_nmdatela => vr_nmdatela
-														,pr_nrdconta => 0
-														,pr_nrdrowid => vr_nrdrowid);
+        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooperativa
+							,pr_cdoperad => vr_cdoperad
+							,pr_dscritic => ' '
+							,pr_dsorigem => GENE0001.vr_vet_des_origens(5) -- Aimaro WEB
+							,pr_dstransa => 'PARECC: Criado registro de parametrizacao de entrega de cartao para o cooperado.'
+							,pr_dttransa => TRUNC(SYSDATE)
+							,pr_flgtrans => 1
+							,pr_hrtransa => gene0002.fn_busca_time
+							,pr_idseqttl => 1
+							,pr_nmdatela => vr_nmdatela
+							,pr_nrdconta => 0
+							,pr_nrdrowid => vr_nrdrowid);
                             
 				--
 				GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
 																 ,pr_nmdcampo => 'Cooperativa'
-																 ,pr_dsdadant => 0
-																 ,pr_dsdadatu => nvl(pr_cdcooperativa,0));
+																 ,pr_dsdadant => ''
+																 ,pr_dsdadatu => rw_crapcop.nmrescop);
                                  
         --
 				GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
 																 ,pr_nmdcampo => 'Funcionalidade'
-																 ,pr_dsdadant => 0
-																 ,pr_dsdadatu => nvl(pr_idfuncionalidade,0));
+																 ,pr_dsdadant => ''
+																 ,pr_dsdadatu => 'Envio de cartão de crédito para o endereço do cooperado');
                                  
         --
 				GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
 																 ,pr_nmdcampo => 'Habilitar cooperativa para envio ao endereço do cooperado'
-																 ,pr_dsdadant => 0
+																 ,pr_dsdadant => ''
 																 ,pr_dsdadatu => nvl(pr_flghabilitar,0));
                                  
         --
 				GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
 																 ,pr_nmdcampo => 'Operador'
-																 ,pr_dsdadant => 0
+																 ,pr_dsdadant => ''
 																 ,pr_dsdadatu => nvl(vr_cdoperad,0));
         
         BEGIN
@@ -661,11 +734,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARECC is
                       AND TBCRD_PA_ENVIO_CARTAO.CDAGENCIA = rw_tbcrd_pa_envio_cartao.cdagencia
                       AND TBCRD_PA_ENVIO_CARTAO.IDTIPOENVIO = pr_idtipoenvio;
                       
-              GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+              GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooperativa
                                 ,pr_cdoperad => vr_cdoperad
-                                ,pr_dscritic => NULL
-                                ,pr_dsorigem => 'AYLLOS'
-                                ,pr_dstransa => 'Tela PARECC - TBCRD_PA_ENVIO_CARTAO: Removido registro de relacionamento parametrizacao da lista de PAs para entrega de cartao ao cooperado.'
+                                  ,pr_dscritic => ' '
+                                  ,pr_dsorigem => GENE0001.vr_vet_des_origens(5) -- Aimaro WEB
+                                  ,pr_dstransa => 'PARECC: Removido registro de relacionamento parametrizacao da lista de PAs para entrega de cartao ao cooperado.'
                                 ,pr_dttransa => TRUNC(SYSDATE)
                                 ,pr_flgtrans => 1
                                 ,pr_hrtransa => gene0002.fn_busca_time
@@ -677,32 +750,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARECC is
               --
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                        ,pr_nmdcampo => 'Cooperativa'
-                                       ,pr_dsdadant => nvl(pr_cdcooperativa,0)
-                                       ,pr_dsdadatu => 0);
+                                       ,pr_dsdadant => rw_crapcop.nmrescop
+                                       ,pr_dsdadatu => '');
                                        
               --
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                        ,pr_nmdcampo => 'Funcionalidade'
-                                       ,pr_dsdadant => nvl(pr_idfuncionalidade,0)
-                                       ,pr_dsdadatu => 0);
+                                       ,pr_dsdadant => 'Envio de cartão de crédito para o endereço do cooperado'
+                                       ,pr_dsdadatu => '');
                                        
+              
+              -- Buscar informacoes da agencia
+              OPEN cr_crapage(pr_cdcooperativa => pr_cdcooperativa
+                             ,pr_cdagenci => rw_tbcrd_pa_envio_cartao.cdagencia);
+              FETCH cr_crapage INTO rw_crapage;
+              
+              -- caso nao encontrar o tipo de envio
+              IF cr_crapage%NOTFOUND THEN
+                CLOSE cr_crapage;
+                vr_cdcritic := 0;
+                vr_dscritic := 'Nao foi possivel encontrar a agencia.';
+                -- gerar critica e retornar ao programa chamador
+                RAISE vr_exc_erro;
+              ELSE
+                -- Fecha Cursor
+                CLOSE cr_crapage;
+              END IF;
               --
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                        ,pr_nmdcampo => 'Agencia'
-                                       ,pr_dsdadant => nvl(rw_tbcrd_pa_envio_cartao.cdagencia,0)
-                                       ,pr_dsdadatu => 0);
+                                       ,pr_dsdadant => rw_crapage.nmresage
+                                       ,pr_dsdadatu => '');
                                        
+                                       
+              -- Buscar informacoes do envio
+              OPEN cr_dominio(pr_cddominio => pr_idtipoenvio);
+              FETCH cr_dominio INTO rw_dominio;
+              
+              -- caso nao encontrar o tipo de envio
+              IF cr_dominio%NOTFOUND THEN
+                CLOSE cr_dominio;
+                vr_cdcritic := 0;
+                vr_dscritic := 'Nao foi possivel encontrar o tipo de envio.';
+                -- gerar critica e retornar ao programa chamador
+                RAISE vr_exc_erro;
+              ELSE
+                -- Fecha Cursor
+                CLOSE cr_dominio;
+              END IF;
               --
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                    ,pr_nmdcampo => 'Tipo de Envio'
-                                   ,pr_dsdadant => nvl(pr_idtipoenvio,0)
-                                   ,pr_dsdadatu => 0);
+                                       ,pr_dsdadant => rw_dominio.dscodigo
+                                       ,pr_dsdadatu => '');
                                    
               --
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                        ,pr_nmdcampo => 'Operador'
                                        ,pr_dsdadant => nvl(rw_tbcrd_pa_envio_cartao.cdoperador,0)
-                                       ,pr_dsdadatu => 0);
+                                       ,pr_dsdadatu => '');
             EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao excluir registros: '||SQLERRM;
@@ -736,11 +842,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARECC is
                          ,vr_cdoperad
                          );
               
-              GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+              GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooperativa
                                 ,pr_cdoperad => vr_cdoperad
-                                ,pr_dscritic => NULL
-                                ,pr_dsorigem => 'AYLLOS'
-                                ,pr_dstransa => 'Tela PARECC - TBCRD_PA_ENVIO_CARTAO: Criado registro de relacionamento parametrizacao da lista de PAs para entrega de cartao ao cooperado.'
+                                ,pr_dscritic => ' '
+                                ,pr_dsorigem => GENE0001.vr_vet_des_origens(5) -- Aimaro WEB
+                                ,pr_dstransa => 'PARECC: Criado registro de relacionamento parametrizacao da lista de PAs para entrega de cartao ao cooperado.'
                                 ,pr_dttransa => TRUNC(SYSDATE)
                                 ,pr_flgtrans => 1
                                 ,pr_hrtransa => gene0002.fn_busca_time
@@ -752,31 +858,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARECC is
               --
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                        ,pr_nmdcampo => 'Cooperativa'
-                                       ,pr_dsdadant => 0
-                                       ,pr_dsdadatu => nvl(pr_cdcooperativa,0));
+                                       ,pr_dsdadant => ''
+                                       ,pr_dsdadatu => rw_crapcop.nmrescop);
                                        
               --
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                        ,pr_nmdcampo => 'Funcionalidade'
-                                       ,pr_dsdadant => 0
-                                       ,pr_dsdadatu => nvl(pr_idfuncionalidade,0));
+                                       ,pr_dsdadant => ''
+                                       ,pr_dsdadatu => 'Envio de cartão de crédito para o endereço do cooperado');
                                        
+              -- Buscar informacoes da agencia
+              OPEN cr_crapage(pr_cdcooperativa => pr_cdcooperativa
+                             ,pr_cdagenci => vr_listcdcooppodenviar(ind_registro));
+              FETCH cr_crapage INTO rw_crapage;
+              
+              -- caso nao encontrar o tipo de envio
+              IF cr_crapage%NOTFOUND THEN
+                CLOSE cr_crapage;
+                vr_cdcritic := 0;
+                vr_dscritic := 'Nao foi possivel encontrar a agencia.';
+                -- gerar critica e retornar ao programa chamador
+                RAISE vr_exc_erro;
+              ELSE
+                -- Fecha Cursor
+                CLOSE cr_crapage;
+              END IF;
               --
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                        ,pr_nmdcampo => 'Agencia'
-                                       ,pr_dsdadant => 0
-                                       ,pr_dsdadatu => nvl(vr_listcdcooppodenviar(ind_registro),0));
+                                       ,pr_dsdadant => ''
+                                       ,pr_dsdadatu => rw_crapage.nmresage);
                                        
+              
+              -- Buscar informacoes do envio
+              OPEN cr_dominio(pr_cddominio => pr_idtipoenvio);
+              FETCH cr_dominio INTO rw_dominio;
+              
+              -- caso nao encontrar o tipo de envio
+              IF cr_dominio%NOTFOUND THEN
+                CLOSE cr_dominio;
+                vr_cdcritic := 0;
+                vr_dscritic := 'Nao foi possivel encontrar o tipo de envio.';
+                -- gerar critica e retornar ao programa chamador
+                RAISE vr_exc_erro;
+              ELSE
+                -- Fecha Cursor
+                CLOSE cr_dominio;
+              END IF;
               --
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                        ,pr_nmdcampo => 'Tipo de Envio'
-                                       ,pr_dsdadant => 0
+                                       ,pr_dsdadant => ''
                                        ,pr_dsdadatu => nvl(pr_idtipoenvio,0));
                                    
               --
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                        ,pr_nmdcampo => 'Operador'
-                                       ,pr_dsdadant => 0
+                                       ,pr_dsdadant => ''
                                        ,pr_dsdadatu => nvl(vr_cdoperad,0));
             EXCEPTION
               WHEN DUP_VAL_ON_INDEX THEN
