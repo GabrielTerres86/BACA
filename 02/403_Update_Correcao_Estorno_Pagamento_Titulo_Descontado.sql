@@ -1,4 +1,4 @@
-BEGIN
+
   -- 1
   -- Titulo deve ficar pago, pago no mesmo dia do vencimento, sem cobrança de juros mora e iof
   -- Contrato cyber baixado em 18/02/2019
@@ -24,10 +24,7 @@ BEGIN
    WHERE cdcooper = 1
      AND nrborder = 546436;
 
-  COMMIT;
-END;
-/
-BEGIN
+
   -- 2
   -- Titulo deve ficar liberado, foi pago no mesmo dia do vencimento mas depois foi estornado e não teve mais nenhum pagamento.
   -- Verificar se as rotinas noturnas vão cobrar o juros e mora do titulo por estar em aberto.
@@ -62,10 +59,7 @@ BEGIN
      AND lcb.cdhistor = 2673
      AND lcb.dtmvtolt = to_date('15/02/2019','DD/MM/RRRR') ;
 
-  COMMIT;
-END;
-/
-BEGIN
+
   -- 3
   -- Titulo deve ficar pago, pago no mesmo dia do vencimento, sem cobrança de juros mora e iof
   -- Contrato sem registro no cyber
@@ -86,5 +80,5 @@ BEGIN
      AND tdb.nrdctabb = 113002
      AND tdb.nrcnvcob = 113002;
 
+
   COMMIT;
-END;
