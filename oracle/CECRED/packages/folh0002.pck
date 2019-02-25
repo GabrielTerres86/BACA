@@ -8418,6 +8418,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           RAISE vr_erro;
       END;
 
+      -- Excluir o arquivo, pois desse ponto em diante irá trabalhar com o registro
+      -- de memória. Em caso de erros o programa abortará e o usuário irá realizar
+      -- novamente o envio do arquivo
+      GENE0001.pc_OScommand_Shell('rm ' || vr_dsdireto || '/' || pr_dsarquiv);
+
       -- Se não vieram dados no XML
       IF LENGTH(vr_xmlpagto) <= 0 THEN
          -- Retorna erro pois em situação de insert deve vir dados
@@ -8907,19 +8912,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_tab_pgto.DELETE;
       vr_tab_origem.DELETE;
       
-      -- Excluir arquivo após o uso - Novo IB
-      if pr_dsdspscp <> 0 then
-        -- Remove o arquivo XML fisico de envio
-        GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                              ,pr_des_comando => 'rm '||vr_dsdireto||'/'||pr_dsarquiv||' 2> /dev/null'
-                              ,pr_typ_saida   => vr_des_reto
-                              ,pr_des_saida   => vr_des_erro);
-        -- Se ocorreu erro dar RAISE
-        IF vr_des_reto = 'ERR' THEN
-          RAISE vr_erro;
-        END IF;
-      end if;
-
       -- Efetua commit
       COMMIT;
 
