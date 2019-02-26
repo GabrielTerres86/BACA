@@ -18,6 +18,21 @@ CREATE OR REPLACE PACKAGE CECRED.CAPI0001 IS
 --
 --              23/03/2018 - Incluido na rotina pc_integraliza_cotas validação de valores de integralizacao
 --                           negativos ou zerados (Tiago/Jean INC0010838).
+--
+--              20/02/2018 - Removido tabela "craptip" do cursor "cr_crapass" na procedure
+--                           pc_integraliza_cotas. PRJ366 (Lombardi).
+--
+--              23/05/2018 - Verificacao de valor minimo de capital quando for a primeira
+--                           integralizacao na proc pc_integraliza_cotas. PRJ366 (Lombardi).
+							   
+--                01/08/2018 - PRJ450 - Centralização de lançamento na craplcm (José Amcom)
+
+--                15/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de estorno de lançamentos na conta corrente              
+--	                         pc_estorna_lancto_conta (Fabio Adriano - AMcom)
+--
+--                13/12/2018 - Remoção da atualização da capa de lote de COTAS
+--                             Yuri - Mouts
+
 ---------------------------------------------------------------------------------------------------------
   -- Rotina para integralizar as cotas
   PROCEDURE pc_integraliza_cotas(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -149,15 +164,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
       pr_qtinfoln := rw_craplot.qtinfoln + 1;
       pr_qtcompln := rw_craplot.qtcompln + 1;
-      pr_nrseqdig := rw_craplot.nrseqdig + 1;
 
-      UPDATE craplot
+      -- Como não incrementa mais no update, Busca o sequencial 
+      rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                             pr_nmdcampo => 'NRSEQDIG',
+                             pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                            to_char(pr_dtmvtolt,'DD/MM/RRRR')||';'||
+                                            vc_cdagenci||';'||
+                                            pr_cdbccxlt||';'||
+                                            pr_nrdolote);
+      pr_nrseqdig := rw_craplot.nrseqdig;
+
+      -- comentado por Yuri - Mouts
+/*    UPDATE craplot
          SET nrseqdig = pr_nrseqdig
             ,qtcompln = pr_qtcompln
             ,qtinfoln = pr_qtinfoln
             ,vlcompcr = craplot.vlcompcr + pr_vlintegr
             ,vlinfocr = craplot.vlinfocr + pr_vlintegr
-       WHERE ROWID = rw_craplot.rowid;
+       WHERE ROWID = rw_craplot.rowid;*/
 
     END IF;
     
@@ -241,15 +266,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
       pr_qtinfoln := rw_craplot.qtinfoln + 1;
       pr_qtcompln := rw_craplot.qtcompln + 1;
-      pr_nrseqdig := rw_craplot.nrseqdig + 1;
+      -- Busca o sequencial 
+      rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                             pr_nmdcampo => 'NRSEQDIG',
+                             pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                            to_char(pr_dtmvtolt,'DD/MM/RRRR')||
+                                            vc_cdagenci||';'||
+                                            pr_cdbccxlt||';'||
+                                            pr_nrdolote);
 
-      UPDATE craplot
+      pr_nrseqdig := rw_craplot.nrseqdig;
+      -- comentado por Yuri - Mouts
+/*      UPDATE craplot
          SET nrseqdig = pr_nrseqdig
             ,qtcompln = pr_qtcompln
             ,qtinfoln = pr_qtinfoln
             ,vlcompdb = craplot.vlcompdb + pr_vlintegr
             ,vlinfodb = craplot.vlinfodb + pr_vlintegr
-       WHERE ROWID = rw_craplot.rowid;
+       WHERE ROWID = rw_craplot.rowid;*/
 
     END IF;
     
@@ -425,6 +459,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
                                 ,pr_cdcritic OUT PLS_INTEGER -- Código da crítica
                                 ,pr_dscritic OUT VARCHAR2) IS -- Descrição da crítica
 
+  vr_tab_retorno    LANC0001.typ_reg_retorno;
+  vr_incrineg       INTEGER;  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+                                
+
     CURSOR cr_crapass(pr_cdcooper      IN crapcop.cdcooper%TYPE
                      ,pr_nrdconta      IN crapass.nrdconta%TYPE) IS
     SELECT crapass.cdcooper
@@ -432,12 +470,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
           ,decode(crapass.inpessoa,1,1,2) inpessoa
           ,crapass.cdtipcta
       FROM crapass 
-          ,craptip
      WHERE crapass.cdcooper = pr_cdcooper
-       AND crapass.nrdconta = pr_nrdconta
-       AND craptip.cdcooper = crapass.cdcooper
-       AND craptip.cdtipcta = crapass.cdtipcta;
+       AND crapass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
+    
+    CURSOR cr_craplct(pr_cdcooper      IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta      IN crapass.nrdconta%TYPE) IS
+    SELECT 1
+      FROM craplct 
+     WHERE craplct.cdcooper = pr_cdcooper
+       AND craplct.nrdconta = pr_nrdconta;
+    rw_craplct cr_craplct%ROWTYPE;
     
     -- Erros do processo
 
@@ -534,6 +577,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
       
       CLOSE cr_crapass;    
 
+      OPEN cr_craplct (pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_craplct INTO rw_craplct;
+      
+      IF cr_craplct%FOUND THEN
       CADA0003.pc_busca_valor_minimo_capital(pr_cdcooper  => pr_cdcooper
                                             ,pr_cdagenci  => pr_cdagenci
                                             ,pr_nrdcaixa  => pr_nrdcaixa
@@ -564,6 +612,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
           
         --Levantar Excecao
         RAISE vr_exc_erro;
+          
+      END IF;
+        ELSE
+          CADA0006.pc_valor_min_capital(pr_cdcooper         => pr_cdcooper
+                                       ,pr_inpessoa         => rw_crapass.inpessoa
+                                       ,pr_cdtipo_conta     => rw_crapass.cdtipcta
+                                       ,pr_vlminimo_capital => vr_vlminimo
+                                       ,pr_des_erro         => vr_des_reto
+                                       ,pr_dscritic         => vr_dscritic);
+          --Se Ocorreu erro
+          IF vr_des_reto = 'NOK' THEN
+            pr_dscritic := vr_dscritic;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;    
           
       END IF;
       
@@ -641,36 +704,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
                             ,pr_nrseqdig => vr_nrseqdig);
 
     -- cria lançamento de depositos a vista - craplcm
+    -- Inserir registro de crédito:
+    LANC0001.pc_gerar_lancamento_conta(pr_cdagenci =>vc_cdagenci             -- cdagenci
+                                      ,pr_cdbccxlt =>vc_cdbccxlt             -- cdbccxlt
+                                      ,pr_cdhistor =>vr_craplcm_cdhist       -- cdhistor
+                                      ,pr_dtmvtolt =>pr_dtmvtolt             -- dtmvtolt
+                                      ,pr_cdpesqbb =>vr_cdpesqbb             -- cdpesqbb                                                                                                
+                                      ,pr_nrdconta =>pr_nrdconta             -- nrdconta   
+                                      ,pr_nrdctabb =>pr_nrdconta             -- nrdctabb
+                                      ,pr_nrdctitg =>LPAD(pr_nrdconta, 9, 0) -- nrdctitg                                              
+                                      ,pr_nrdocmto =>vr_nrseqdig             -- nrdocmto                                                
+                                      ,pr_nrdolote =>vc_lote_deposito_vista  -- nrdolote                                                
+                                      ,pr_nrseqdig =>vr_nrseqdig             -- nrseqdig
+                                      ,pr_vllanmto =>pr_vlintegr             -- vllanmto 
+                                      ,pr_cdcooper =>pr_cdcooper             -- cdcooper     
 
-    INSERT INTO craplcm
-      (cdagenci
-      ,cdbccxlt
-      ,cdhistor
-      ,dtmvtolt
-      ,cdpesqbb
-      ,nrdconta
-      ,nrdctabb
-      ,nrdctitg
-      ,nrdocmto
-      ,nrdolote
-      ,nrseqdig
-      ,vllanmto
-      ,cdcooper)
-    VALUES
-      (vc_cdagenci
-      ,vc_cdbccxlt
-      ,vr_craplcm_cdhist
-      ,pr_dtmvtolt
-      ,vr_cdpesqbb -- craplct.nrodcmto
-      ,pr_nrdconta
-      ,pr_nrdconta
-      ,LPAD(pr_nrdconta, 9, 0)
-      ,vr_nrseqdig
-      ,vc_lote_deposito_vista
-      ,vr_nrseqdig
-      ,pr_vlintegr
-      ,pr_cdcooper)
-      RETURNING ROWID INTO vr_nrdrowid;
+                                      -- OUTPUT --
+                                      ,pr_tab_retorno => vr_tab_retorno
+                                      ,pr_incrineg => vr_incrineg
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+
+    IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+       RAISE vr_exc_erro;
+    END IF;    
+    vr_nrdrowid := vr_tab_retorno.rowidlct;
 
    -- atualiza as cotas de capital
    UPDATE crapcot
@@ -834,7 +892,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
      END IF;
 
      -- atualizar lote de cotas de capital (crédito lote)
-     UPDATE craplot
+     -- Comentado por Yuri - Mouts
+/*   UPDATE craplot
         SET qtcompln = (qtcompln - 1)
            ,qtinfoln = (qtinfoln - 1)
            ,vlcompcr = (vlcompcr - rw_craplct.vllanmto)
@@ -842,10 +901,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
       WHERE dtmvtolt = rw_craplct.dtmvtolt
         AND cdagenci = vc_cdagenci
         AND cdbccxlt = vc_cdbccxlt
-        AND nrdolote = vc_lote_cotas_capital;
+        AND nrdolote = vc_lote_cotas_capital;*/
 
      -- atualizar lote de depósito (débito lote)
-     UPDATE craplot
+     -- Comentado por Yuri - Mouts
+/*   UPDATE craplot
         SET qtcompln = (qtcompln - 1)
            ,qtinfoln = (qtinfoln - 1)
            ,vlcompdb = (vlcompdb - rw_craplct.vllanmto)
@@ -853,7 +913,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
       WHERE dtmvtolt = rw_craplct.dtmvtolt
         AND cdagenci = vc_cdagenci
         AND cdbccxlt = vc_cdbccxlt
-        AND nrdolote = vc_lote_deposito_vista;
+        AND nrdolote = vc_lote_deposito_vista;*/
 
      -- atualizar o valor das cotas
      UPDATE crapcot
@@ -873,15 +933,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
      END IF;
 
      -- excluir lançamento na craplcm
-     DELETE craplcm
-      WHERE cdcooper = rw_craplct.cdcooper
-        AND nrdconta = rw_craplct.nrdconta
-        AND dtmvtolt = rw_craplct.dtmvtolt
-        AND cdagenci = rw_craplct.cdagenci
-        AND cdbccxlt = rw_craplct.cdbccxlt
-        AND nrdolote = vc_lote_deposito_vista
-        AND cdpesqbb = rw_craplct.nrdocmto
-        AND cdhistor = vr_cdhistor;
+
+        
+     lanc0001.pc_estorna_lancto_conta(pr_cdcooper => rw_craplct.cdcooper
+                                    , pr_dtmvtolt => rw_craplct.dtmvtolt
+                                    , pr_cdagenci => rw_craplct.cdagenci
+                                    , pr_cdbccxlt => rw_craplct.cdbccxlt
+                                    , pr_nrdolote => vc_lote_deposito_vista
+                                    , pr_nrdctabb => NULL 
+                                    , pr_nrdocmto => NULL
+                                    , pr_cdhistor => vr_cdhistor
+                                    , pr_nrctachq => NULL 
+                                    , pr_nrdconta => rw_craplct.nrdconta
+                                    , pr_cdpesqbb => rw_craplct.nrdocmto
+                                    , pr_rowid    => NULL
+                                    , pr_cdcritic => vr_cdcritic
+                                    , pr_dscritic => vr_dscritic); 
+                                         
+     IF nvl(vr_cdcritic, 0) >= 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        vr_dscritic := 'Problemas ao excluir lancamento: '||vr_dscritic;
+        RAISE vr_exc_erro;
+     END IF; 
 
      -- log
     vr_dstransa := 'Cancelamento de integralização de capital';
