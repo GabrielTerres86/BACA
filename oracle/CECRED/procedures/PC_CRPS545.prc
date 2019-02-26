@@ -20,7 +20,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
    Observações: A tabela genéria gnmvspb agora é populada através das informações geradas 
                 nas tabelas de trace (Projeto 475). No progress, estas informações vem do arquivo físico)
 
-   Alteracoes: 
+   Alteracoes:
+                27-12-2018 - Tratar STR0026R2 conforme programa antigo. Sprint D - Jose Dill
+                
+                19-02-2019 - Tratar contas inválidas com mais de 13 posições - INC0033070
+   
 ............................................................................. */
 
   -- CURSORES
@@ -119,6 +123,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
   
   rw_crapcop cr_crapcop%rowtype;
 
+  CURSOR cr_crapcco (pr_nrconvenio in number) is  
+  select a.cdcooper
+  from crapcco a
+  where a.nrconven = pr_nrconvenio
+  and   a.dsorgarq not in ('INCORPORACAO','MIGRACAO');
+  
+  rw_crapcco cr_crapcco%rowtype;
+
   --Tipo de registro de gnmvspb
   TYPE typ_gnmvspb IS
     RECORD ( dtmvtolt      date        
@@ -192,7 +204,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
   vr_dsfinmsg      gnmvspb.dsfinmsg%type; 
   vr_coddevtransf  varchar2(100);
   vr_numctrlpag    tbspb_msg_enviada.nrcontrole_if%type;
- 
+  vr_NumCodBarras  varchar2(100);
+
   --Variavel de Indice da tabela
   vr_index     pls_integer;
   vr_index_matera pls_integer;
@@ -326,7 +339,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
     --
     vr_cdcooper:= rr_cr_tbmsg_env.cdcooper;
     vr_dsdgrupo:= rr_cr_tbmsg_env.dsgrupo;
-    vr_dscntadb:= rr_cr_tbmsg_env.nrdconta;
+    vr_dscntadb:= Substr(rr_cr_tbmsg_env.nrdconta,1,13); --INC0033070
     --
     vr_dsorigem:= rr_cr_tbmsg_env.dsorigem;
     -- Manipular XML para buscar as informações
@@ -505,7 +518,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
     vr_dsfinmsg := null;    
     --
     vr_cdcooper:= rr_tbmsg_rec.cdcooper;
-    vr_dscntacr:= rr_tbmsg_rec.nrdconta;
+    vr_dscntacr:= Substr(rr_tbmsg_rec.nrdconta,1,13); --INC0033070
     vr_dsdgrupo:= rr_tbmsg_rec.dsgrupo;
     vr_dsorigem := 'SPB';
     -- Manipular XML para buscar as informações
@@ -602,6 +615,26 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
         End if;   
       End If; 
     Else
+      -- Sprint D - Buscar cooperativa através do código de barras (Ajuste)
+      If rr_tbmsg_rec.nmmensagem = 'STR0026R2' Then
+         -- Pegar código de barras para encontrar a cooperativa
+         vr_NumCodBarras:= null;
+         vr_NumCodBarras:= sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'NumCodBarras','S'); 
+         If vr_NumCodBarras is not null then 
+            --
+            Open cr_crapcco (to_number(Substr(vr_NumCodBarras,20,6)));
+            Fetch cr_crapcco into rw_crapcco;
+            If cr_crapcco%found then
+              vr_cdcooper := rw_crapcco.cdcooper;
+              Close cr_crapcco;
+            Else  
+              Close cr_crapcco;
+            End if;  
+            --
+         End If;
+      End If;  
+      -- Fim Sprint D
+      --
       If vr_cdagenci = 0 and vr_dscntacr <> 0 Then
          --   
          rw_cr_agencia.cdagenci := null;
