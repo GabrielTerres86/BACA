@@ -279,7 +279,7 @@ create or replace package body cecred.cobr0011 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Supero
-  --  Data     : Março/2018.                   Ultima atualização: 16/12/2018
+  --  Data     : Março/2018.                   Ultima atualização: 18/02/2019
   --
   -- Dados referentes ao programa:
   --
@@ -295,6 +295,12 @@ create or replace package body cecred.cobr0011 IS
   --             10/12/2018 - Ajuste na sequence de lançamento na conta de recurso financeiro (P352 - Cechet).
   --
   --             16/12/2018 - Ao chamar as instruções da cobrança, deve-se utilizar as procedures da COBR0007 (P352 - Cechet).
+  --
+  --             24/01/2019 - Registrar código ISPB da Central no pagamento de boleto em cartório (P352 - Cechet).
+  --
+  --             14/02/2019 - Ajuste na funcao que retorna o dia util para envio de boleto para protesto (P352 - Cechet).
+  --
+  --             18/02/2019 - Passar motivo '00' como parâmetro para cobrança de tarifa de remessa a cartório (P352 - Cechet).
 ---------------------------------------------------------------------------------------------------------------*/
 
   -- Private type declarations
@@ -575,10 +581,23 @@ create or replace package body cecred.cobr0011 IS
 		--
 		BEGIN
 			--
+      vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                ,pr_dtmvtolt => trunc(SYSDATE)
+                                                ,pr_tipo => 'P' 
+                                                ,pr_feriado => TRUE
+                                                ,pr_excultdia => FALSE);
+              
+      -- se a funcao for executada em um fim de seamana/feriado,
+      -- a data de retorno será o próximo dia útil; caso contrario, 
+      -- entrará na regra abaixo
+      IF vr_dtmvtolt = trunc(SYSDATE) THEN      
+
 			SELECT DECODE(vr_qtdregis, 0, crapdat.dtmvtopr, crapdat.dtmvtolt)
 				INTO vr_dtmvtolt
 				FROM crapdat
 			 WHERE crapdat.cdcooper = pr_cdcooper;
+         
+      END IF;
 			--
 		EXCEPTION
 			WHEN OTHERS THEN
@@ -2510,7 +2529,7 @@ create or replace package body cecred.cobr0011 IS
 																				,pr_tplancto => 'T'              --Tipo Lancamento  /* tplancto = "C" Cartorio */
 																				,pr_vltarifa => 0                --Valor Tarifa
 																				,pr_cdhistor => 0                --Codigo Historico
-																				,pr_cdmotivo => NULL             --Codigo motivo
+																				,pr_cdmotivo => pr_dsmotivo      --Codigo motivo
 																				,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
 																				,pr_cdcritic => vr_cdcritic      --Codigo Critica
 																				,pr_dscritic => vr_dscritic);    --Descricao Critica
@@ -3343,6 +3362,7 @@ create or replace package body cecred.cobr0011 IS
 			END IF;
 			-- Processar liquidacao
 			paga0001.pc_processa_liquidacao(pr_idtabcob            => rw_conciliados.crapcob_id               -- Rowid da Cobranca
+                                     ,pr_nrispbpg            => 5463212                                 -- ISPB da Central Ailos
 																		 ,pr_nrnosnum            => rw_conciliados.nrnosnum                 -- Nosso Numero
 																		 ,pr_cdbanpag            => rw_conciliados.cdbcoctl                 -- Codigo banco pagamento
 																		 ,pr_cdagepag            => rw_conciliados.cdagectl                 -- Codigo Agencia pagamento
