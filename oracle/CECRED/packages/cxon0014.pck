@@ -572,6 +572,17 @@ PROCEDURE pc_ret_ano_barras_darf_car (pr_innumano IN INTEGER,
   PROCEDURE pc_calc_lindig_fatura ( pr_cdbarras IN  VARCHAR2
                                    ,pr_lindigit OUT VARCHAR2);
 
+  /* Calcular Digito adicional */
+  PROCEDURE pc_calcula_dv_adicional (pr_cdbarras IN VARCHAR2       --Codigo barras
+                                    ,pr_poslimit IN INTEGER        --Utilizado para validação de dígito adicional de DAS
+                                    ,pr_nrdigito IN INTEGER        --Numero a ser calculado
+                                    ,pr_flagdvok OUT BOOLEAN) ;   --Digito correto sim/nao                                
+   
+  /* Procedures para calculo de DV do numero da DAS e DV's adicionais da DAS  */
+  PROCEDURE pc_calcula_dv_numero_das (pr_numerdas IN VARCHAR2       --Codigo barras
+                                     ,pr_dvnrodas IN INTEGER        --Utilizado para validação de dígito adicional de DAS
+                                     ,pr_flagdvok OUT BOOLEAN);  --Digito correto sim/nao
+                                     
 END CXON0014;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
@@ -582,7 +593,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 21/12/2018
+  --  Data     : Julho/2013.                   Ultima atualizacao: 25/02/2019
   --
   -- Dados referentes ao programa:
   --
@@ -678,6 +689,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --              21/12/2018 - inc0028676 Retornando a versão do package para correçao da criação/atualização
   --                           do lote na rotina pc_gera_faturas (Carlos)
   --
+  --              25/02/2019 - Inclusão de novas validações no código de barras para DARF/DAS
+  --                           (sctask0046009 - Adriano).
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -6963,6 +6976,195 @@ END pc_gera_titulos_iptu_prog;
     END;
   END pc_verifica_digito;
 
+  
+  /* Calcular Digito adicional */
+  PROCEDURE pc_calcula_dv_adicional (pr_cdbarras IN VARCHAR2       --Codigo barras
+                                    ,pr_poslimit IN INTEGER        --Utilizado para validação de dígito adicional de DAS
+                                    ,pr_nrdigito IN INTEGER        --Numero a ser calculado
+                                    ,pr_flagdvok OUT BOOLEAN) IS   --Digito correto sim/nao
+---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_calcula_dv_adicional             Antigo: dbo/b1crap14.p/calcula_dv_adicional
+  --  Sistema  : Calcular Digito adicional
+  --  Sigla    : CXON
+  --  Autor    : Adriano - Ailos
+  --  Data     : Fevereiro/2019.                   Ultima atualizacao: --/--/----
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Calcular Digito adicional
+
+  ---------------------------------------------------------------------------------------------------------------
+  BEGIN
+    DECLARE
+      --Variaveis Locais
+      vr_digito    INTEGER:= 0;
+      vr_peso      INTEGER:= 2;
+      vr_calculo   INTEGER:= 0;
+      vr_resto     INTEGER:= 0;
+      vr_strnume   VARCHAR2(4000);
+      
+      -- Busca parâmetro que indica se as validações devem ser feitas ou não
+      vr_ligaValidacao INTEGER := GENE0001.fn_param_sistema('CRED',0,'VALIDACAO_DARF_DAS');
+      
+      --Variaveis de Excecao
+      vr_exc_erro EXCEPTION;
+      
+    BEGIN
+      /*
+         Esse parametro foi criado para permitir ligar/desligar essa validação a 
+         qualquer momento.       */
+      IF vr_ligaValidacao = 0 THEN
+      
+        pr_flagdvok := TRUE;
+        RETURN;  
+        
+      END IF;
+      
+      vr_strnume := substr(pr_cdbarras,1,3) || 
+                    substr(pr_cdbarras,5,pr_poslimit);
+      
+      --Percorrer string
+      FOR idx IN REVERSE 1..Length(vr_strnume) LOOP
+        vr_calculo:= vr_calculo + (to_number(SubStr(vr_strnume,idx,1)) * vr_peso);
+                
+        /* Para o calculo do segundo dv adicional (par_poslimit = 38)
+           deve-se utilizar peso de 2 a 42. */
+        IF vr_peso = 9 AND pr_poslimit <> 38 THEN
+          
+          vr_peso:= 2;
+          
+        ELSE
+          
+          --Incrementa peso
+          vr_peso:= vr_peso + 1;
+        
+        END IF;
+        
+      END LOOP;
+      
+      --Resto
+      vr_resto:= Mod(vr_calculo,11);
+      
+      IF vr_resto IN (0,1) THEN
+        vr_digito := 0; 
+      ELSIF vr_resto = 10 THEN
+        vr_digito := 1;   
+      END IF;
+      
+      IF vr_resto <> 0  AND 
+         vr_resto <> 1  AND
+         vr_resto <> 10 THEN
+        vr_digito:= 11 - vr_resto;
+      
+      END IF;
+      
+      IF vr_digito = pr_nrdigito THEN
+        pr_flagdvok := TRUE;
+      ELSE
+        pr_flagdvok := FALSE;
+      END IF;      
+      
+    EXCEPTION
+       WHEN vr_exc_erro THEN
+         NULL;
+       WHEN OTHERS THEN
+         NULL;
+    END;
+  END pc_calcula_dv_adicional;
+  
+  /* Procedures para calculo de DV do numero da DAS e DV's adicionais da DAS  */
+  PROCEDURE pc_calcula_dv_numero_das (pr_numerdas IN VARCHAR2       --Codigo barras
+                                     ,pr_dvnrodas IN INTEGER        --Utilizado para validação de dígito adicional de DAS
+                                     ,pr_flagdvok OUT BOOLEAN) IS   --Digito correto sim/nao
+---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_calcula_dv_numero_das             Antigo: dbo/b1crap14.p/calcula_dv_numero_das
+  --  Sistema  : Calcular Digito DAS
+  --  Sigla    : CXON
+  --  Autor    : Adriano - Ailos
+  --  Data     : Fevereiro/2019.                   Ultima atualizacao: --/--/----
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Calcular Digito DAS
+
+  ---------------------------------------------------------------------------------------------------------------
+  BEGIN
+    DECLARE
+      --Variaveis Locais
+      vr_digito    INTEGER:= 0;
+      vr_peso      INTEGER:= 2;
+      vr_calculo   INTEGER:= 0;
+      vr_resto     INTEGER:= 0;
+      
+      -- Busca parâmetro que indica se as validações devem ser feitas ou não
+      vr_ligaValidacao INTEGER := GENE0001.fn_param_sistema('CRED',0,'VALIDACAO_DARF_DAS');
+            
+      --Variaveis de Excecao
+      vr_exc_erro EXCEPTION;
+      
+    BEGIN
+      
+      /*
+         Esse parametro foi criado para permitir ligar/desligar essa validação a 
+         qualquer momento.       */
+      IF vr_ligaValidacao = 0 THEN
+      
+        pr_flagdvok := TRUE;
+        RETURN;  
+        
+      END IF;
+      
+      --Percorrer string
+      FOR idx IN REVERSE 1..Length(pr_numerdas) LOOP
+        vr_calculo:= vr_calculo + (to_number(SubStr(pr_numerdas,idx,1)) * vr_peso);
+                
+        IF vr_peso = 9 THEN
+          
+          vr_peso:= 2;
+          
+        ELSE
+          
+          --Incrementa peso
+          vr_peso:= vr_peso + 1;
+        
+        END IF;
+        
+      END LOOP;
+      
+      --Resto
+      vr_resto:= Mod(vr_calculo,11);
+      
+      IF vr_resto IN (0,1) THEN
+        vr_digito := 0; 
+      ELSIF vr_resto = 10 THEN
+        vr_digito := 1;   
+      END IF;
+      
+      IF vr_resto <> 0  AND 
+         vr_resto <> 1  AND
+         vr_resto <> 10 THEN
+        vr_digito:= 11 - vr_resto;
+      
+      END IF;
+      
+      IF vr_digito = pr_dvnrodas THEN
+        pr_flagdvok := TRUE;
+      ELSE
+        pr_flagdvok := FALSE;
+      END IF;      
+
+    EXCEPTION
+       WHEN vr_exc_erro THEN
+         NULL;
+       WHEN OTHERS THEN
+         NULL;
+    END;
+  END pc_calcula_dv_numero_das;
+
 
   /* Procedure para validar o codigo de barras */
   PROCEDURE pc_valida_codigo_barras (pr_cooper         IN VARCHAR2                   --Codigo Cooperativa
@@ -7501,7 +7703,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para validacoes Sicredi
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Agosto/2013.                   Ultima atualizacao: 22/07/2016
+  --  Data     : Agosto/2013.                   Ultima atualizacao: 25/02/2019
   --
   -- Dados referentes ao programa:
   --
@@ -7520,6 +7722,9 @@ END pc_gera_titulos_iptu_prog;
   --
   --             22/07/2016 - Ajustada para ser retirado o bloqueio de pagamento de DARF e DAS via PA 90,
   --                          Prj. 338. (Jean Michel)
+  --
+  --              25/02/2019 - Inclusão de novas validações no código de barras para DARF/DAS
+  --                           (sctask0046009 - Adriano).
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7558,6 +7763,7 @@ END pc_gera_titulos_iptu_prog;
 	  vr_poslimit  INTEGER;
 	  vr_dvadicio  INTEGER;
 	  vr_digito    INTEGER;
+    vr_flagdvok BOOLEAN:=FALSE;
       --Variaveis erro
       vr_cod_erro  INTEGER;
       vr_des_erro  VARCHAR2(400);
@@ -7862,6 +8068,52 @@ END pc_gera_titulos_iptu_prog;
 				END LOOP;
 
 			END IF;
+      
+      /* Para DAS - SIMPLES NACIONAL e  DARFC0385 (DARF NUMERADO)
+         deve ser realizado a validação dos digitos.*/
+      IF rw_crapscn.cdempres IN ('K0','608') THEN
+            
+        pc_calcula_dv_numero_das(pr_numerdas => substr(pr_codigo_barras,25,16)        --Codigo barras
+                                ,pr_dvnrodas => to_number(substr(pr_codigo_barras,41,1)) --Utilizado para validação de dígito adicional de DAS
+                                ,pr_flagdvok => vr_flagdvok);
+            
+        --Se digito não estiver correto
+        IF NOT vr_flagdvok THEN
+                
+          vr_cdcritic := 8;
+          vr_des_erro:= ''; 
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+                
+	  END IF;
+              
+        FOR idx IN 42..44 LOOP
+
+          vr_poslimit := idx;
+
+          vr_dvadicio := TO_NUMBER(SUBSTR(pr_codigo_barras, vr_poslimit, 1));
+                
+          pc_calcula_dv_adicional (pr_cdbarras => pr_codigo_barras     --Codigo barras
+                                  ,pr_poslimit => vr_poslimit - 5 --Utilizado para validação de dígito adicional de DAS
+                                  ,pr_nrdigito => vr_dvadicio     --Numero a ser calculado
+                                  ,pr_flagdvok => vr_flagdvok);   --Digito correto sim/nao
+                                      
+          IF NOT vr_flagdvok THEN
+                  
+            vr_cdcritic:= 8;
+            vr_des_erro:= '';         
+                  
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+                  
+          END IF;
+
+
+				END LOOP;
+
+              
+			END IF;
+            
 	  END IF;
 
       -- Verifica se a data esta cadastrada
@@ -8120,7 +8372,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para retornar valores fatura
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 28/07/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 25/02/2019
   --
   -- Dados referentes ao programa:
   --
@@ -8150,6 +8402,9 @@ END pc_gera_titulos_iptu_prog;
   --
   --             16/03/2018 - Ajuste de acentuação na mensagem de crítica de fatura vencida
   --                          (Rafael - Projeto 285 - Nova Conta Online - ID172 - PCT6)
+  --
+  --              25/02/2019 - Inclusão de novas validações no código de barras para DARF/DAS
+  --                           (sctask0046009 - Adriano).
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -8484,8 +8739,23 @@ END pc_gera_titulos_iptu_prog;
                                        ,pr_dscritic      => vr_dscritic);    --Descricao do erro
         -- Se houver critica devera retorna-la
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --Criar Erro
+          CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cod_agencia
+                               ,pr_nrdcaixa => vr_nrdcaixa
+                               ,pr_cod_erro => vr_cdcritic
+                               ,pr_dsc_erro => vr_dscritic
+                               ,pr_flg_erro => TRUE
+                               ,pr_cdcritic => vr_cdcritic_aux
+                               ,pr_dscritic => vr_dscritic_aux);
+          IF vr_cdcritic_aux IS NOT NULL OR
+             vr_dscritic_aux IS NOT NULL THEN
           --Levantar Excecao
           RAISE vr_exc_erro;
+          ELSE
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
         END IF;
       --> Bancoob
       ELSIF rw_crapcon.tparrecd = 2 THEN
@@ -9054,7 +9324,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para gerar as faturas
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Agosto/2013.                   Ultima atualizacao: 03/09/2018
+  --  Data     : Agosto/2013.                   Ultima atualizacao: 25/02/2019
   --
   -- Dados referentes ao programa:
   --
@@ -9084,6 +9354,9 @@ END pc_gera_titulos_iptu_prog;
   --
   --             29/11/2018 - Ajustado rotina pc_inseri_lote para utilizar a sequence igual a quando executado 
   --                          paralelismo, para que não ocorra em de utilizar o mesmo numero do nrseqdig(Debitador unico - Odirlei/AMcom ).           
+  --
+  --              25/02/2019 - Inclusão de novas validações no código de barras para DARF/DAS
+  --                           (sctask0046009 - Adriano).
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -9136,6 +9409,9 @@ END pc_gera_titulos_iptu_prog;
       vr_nrcpfcgc VARCHAR2(100);
       vr_registro ROWID;
       vr_nrseqdig craplcm.nrseqdig%TYPE :=0;
+      vr_poslimit INTEGER;
+   	  vr_dvadicio INTEGER;
+      vr_flagdvok BOOLEAN:=FALSE;
 
       vr_cdempcon NUMBER;
       vr_nrinsemp VARCHAR2(20);
@@ -9460,7 +9736,10 @@ END pc_gera_titulos_iptu_prog;
         /* DARFC0153 - DARF PRETO EUROPA */
         /* DARFS0154 - DARF SIMPLES      */
         /* DARFC0385 (DARF NUMERADO)     */
-        IF pr_vlfatura < 10 AND rw_crapscn.cdempres IN ('K0','147','149','145','608') THEN
+        IF rw_crapscn.cdempres IN ('K0','147','149','145','608') THEN
+          
+          IF pr_vlfatura < 10 THEN
+            
           --Mensagem erro
           vr_cod_erro:= 0;
           vr_des_erro:= 'Pagamento deve ser maior ou igual a R$10,00.';
@@ -9482,8 +9761,55 @@ END pc_gera_titulos_iptu_prog;
             vr_dscritic:= vr_des_erro;
             --Levantar Excecao
             RAISE vr_exc_erro;
+            END IF;
+            
           END IF;
+          
+          /* Para DAS - SIMPLES NACIONAL e  DARFC0385 (DARF NUMERADO)
+             deve ser realizado a validação dos digitos.*/
+          IF rw_crapscn.cdempres IN ('K0','608') THEN
+          
+            pc_calcula_dv_numero_das(pr_numerdas => substr(pr_cdbarras,25,16)        --Codigo barras
+                                    ,pr_dvnrodas => to_number(substr(pr_cdbarras,41,1)) --Utilizado para validação de dígito adicional de DAS
+                                    ,pr_flagdvok => vr_flagdvok);
+          
+            --Se digito não estiver correto
+            IF NOT vr_flagdvok THEN
+              
+              vr_cdcritic := 8;
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+              
+            END IF;
+            
+            FOR idx IN 42..44 LOOP
+
+              vr_poslimit := idx;
+
+              vr_dvadicio := TO_NUMBER(SUBSTR(pr_cdbarras, vr_poslimit, 1));
+              
+              pc_calcula_dv_adicional (pr_cdbarras => pr_cdbarras     --Codigo barras
+                                      ,pr_poslimit => vr_poslimit - 5 --Utilizado para validação de dígito adicional de DAS
+                                      ,pr_nrdigito => vr_dvadicio     --Numero a ser calculado
+                                      ,pr_flagdvok => vr_flagdvok);   --Digito correto sim/nao
+                                    
+              IF NOT vr_flagdvok THEN
+                
+                vr_cdcritic:= 8;
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);          
+                
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+                
+              END IF;
+
+            END LOOP;
+            
+          END IF;
+          
         END IF;
+                
       END IF;
 
       vr_nrseqdig := fn_sequence('CRAPLOT'
