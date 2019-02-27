@@ -1,12 +1,12 @@
 -- Created on 26/02/2019 by F0030248 
--- Baca para realizar cobranÃ§a de tarifa cartorÃ¡ria (HistÃ³rico 2610) 
--- de boletos nÃ£o cobrados desde dez/2018 - INC0033882
+-- Baca para realizar cobrança de tarifa cartorária (Histórico 2610) 
+-- de boletos não cobrados desde dez/2018 - INC0033882
 declare 
   vr_tab_lcm_consolidada PAGA0001.typ_tab_lcm_consolidada;
   -- Local variables here
   i integer;
   CURSOR cr_crapcob IS 
-    SELECT cco.cdbccxlt, cco.nrdolote, cco.cdagenci, dat.dtmvtolt, cob.rowid, cob.cdcooper, cob.nrdconta, cob.nrcnvcob, ret.vltarass 
+    SELECT cco.cdbccxlt, cco.nrdolote, cco.cdagenci, dat.dtmvtolt, cob.rowid, cob.cdcooper, cob.nrdconta, cob.nrcnvcob, ret.vltarass, ret.dtocorre
       FROM crapret ret, crapcco cco, crapcob cob, crapdat dat
     WHERE cco.cdcooper >= 2    
       AND cco.cddbanco = 85
@@ -14,7 +14,7 @@ declare
       AND ret.cdcooper = cco.cdcooper
       AND ret.nrcnvcob = cco.nrconven
       AND ret.dtocorre >= to_date('01/12/2018','DD/MM/RRRR')
-      AND ret.dtocorre <= trunc(sysdate);
+      AND ret.dtocorre <= trunc(sysdate)
       AND ret.cdocorre = 23
       AND ret.cdmotivo = '00'
       AND cob.cdcooper = ret.cdcooper
@@ -31,7 +31,12 @@ declare
 begin
   -- Test statements here
   
-  FOR rw_crapcob IN cr_crapcob LOOP
+  FOR rw_crapcob IN cr_crapcob LOOP   
+    
+    -- ignorar boletos com tarifa de protesto da transpocred anterior a 31/01/2019
+    IF rw_crapcob.cdcooper = 9 AND rw_crapcob.dtocorre <= to_date('31/01/2019','DD/MM/RRRR') THEN
+      CONTINUE;
+    END IF;
   
     vr_tab_lcm_consolidada.delete;  
     
