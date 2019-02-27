@@ -416,6 +416,8 @@ BEGIN
                                      ,'Majoração Automática do Cartão de Crédito'
                                      ,1); --> Por conta
   
+  INSERT INTO tbgen_motivo VALUES(71,'Carga de liberacao manual.',25,1,1);  
+  
   -- Transformar tbepr_param_conta para nova estrutura
   INSERT INTO TBCC_PARAM_PESSOA_PRODUTO(cdcooper             
                                        ,tppessoa             
@@ -473,7 +475,8 @@ BEGIN
        AND par.nrdconta = ass.nrdconta
        AND pre.cdcooper = ass.cdcooper
        AND pre.inpessoa = ass.inpessoa
-       AND par.dtatualiza_pre_aprv IS NULL;           
+       --AND par.dtatualiza_pre_aprv IS NULL
+       ;           
        
   
   -- Gravar
@@ -495,6 +498,7 @@ comment on column CRAWEPR.hrpreapv
 
 
 -- Add/modify columns 
+alter table CRAPPRE add qtdiavig NUMBER(5);
 alter table CRAPPRE add qtdtitul NUMBER(5);
 alter table CRAPPRE add vltitulo NUMBER(15,2);
 alter table CRAPPRE add qtcarcre NUMBER(5);
@@ -504,9 +508,12 @@ alter table CRAPPRE add vldiaest NUMBER(15,2);
 alter table CRAPPRE add vldiadev NUMBER(15,2);
 alter table CRAPPRE add vllimman NUMBER(15,2);
 alter table CRAPPRE add vllimaut NUMBER(15,2);
+alter table CRAPPRE add vlepratr NUMBER(15,2);
 
 
 -- Add comments to the columns 
+comment on column CRAPPRE.qtdtitul
+  is 'Qtd dias maximo de vigencia';
 comment on column CRAPPRE.qtdtitul
   is 'Qtd dias em atraso de Titulos';
 comment on column CRAPPRE.vltitulo
@@ -525,6 +532,9 @@ comment on column CRAPPRE.vllimman
   is 'Valor limitador para cargas manuais';
 comment on column CRAPPRE.vllimaut
   is 'Valor limitador para cargas automaticas';
+comment on column CRAPPRE.vlepratr
+  is 'Valor de Emprestimos em atraso';
+  
 
   
 -- Add/modify columns 

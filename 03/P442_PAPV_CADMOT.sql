@@ -7,8 +7,7 @@ BEGIN
   WHERE mot.idmotivo = 54;
   
   INSERT INTO tbgen_motivo VALUES(69,'Eliminado via carga manual.',25,1,1);
-  INSERT INTO tbgen_motivo VALUES(70,'Carga de bloqueio manual.',25,1,1);
-  INSERT INTO tbgen_motivo VALUES(71,'Carga de liberacao manual.',25,1,1);
+
   INSERT INTO tbgen_motivo VALUES(72,'Solicitado via Aimaro pelo operador.',4,1,1);
   INSERT INTO tbgen_motivo VALUES(73,'Situação da conta regularizada.',25,1,1);
   INSERT INTO tbgen_motivo VALUES(74,'Reliberado pois prazo de bloqueio expirou.',25,1,1);

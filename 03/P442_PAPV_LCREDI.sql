@@ -1,7 +1,7 @@
 BEGIN
    
-  UPDATE lcr.flprapol = 1
-    FROM craplcr lcr
+  UPDATE craplcr lcr
+    SET lcr.flprapol = 1
    WHERE lcr.cdlcremp IN(7000,7001);
                    
                    
