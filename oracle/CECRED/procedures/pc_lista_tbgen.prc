@@ -12,7 +12,7 @@ BEGIN
   Programa: pc_lista_tbgen
   Sistema : Rotina de Log
   Autor   : Belli/Envolti
-  Data    : Maio/2018                   Ultima atualizacao: 11/02/2019  
+  Data    : Maio/2018                   Ultima atualizacao: 27/02/2019  
     
   Dados referentes ao programa:
   
@@ -54,6 +54,10 @@ BEGIN
                          - (Envolti - Belli - Chamado - REQ0033876)
                            
               11/02/2019 - Deu um erro de programa e foi ajustado
+                         - Também dia 13/02/2019 foi ajustada uma query para trazer erros não selecionados
+                         - (Envolti - Belli - Chamado - REQ0040359)
+                         
+              27/02/2019 - Ajuste na parametrização e gravação nos minutos da média do tempo dos programas
                          - (Envolti - Belli - Chamado - REQ0040359)
               
   ....................................................................................... */
@@ -318,7 +322,9 @@ DECLARE
   vr_hrfimexe           VARCHAR2    (5) := NULL;       
   vr_inproces           crapdat.inproces%TYPE;   
   vr_flultexe           INTEGER          := NULL;
-  vr_qtdexec            INTEGER          := NULL;    
+  vr_qtdexec            INTEGER          := NULL;  
+  vr_tpocorre           tbgen_prglog_ocorrencia.tpocorrencia%TYPE;
+  vr_cdcricid           tbgen_prglog_ocorrencia.cdcriticidade%TYPE;
 
   -- Controla log proc_batch, para apenas exibir qnd realmente processar informação
   PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
@@ -573,7 +579,7 @@ DECLARE
                             ,pr_tipabert => 'W'                -- Modo de abertura (R,W,A)
                             ,pr_flaltper => 0                  -- Não modifica permissões de arquivo
                             ,pr_utlfileh => pr_dshandle        -- Handle do arquivo aberto
-                            ,pr_des_erro => vr_dscritic);
+                            ,pr_des_erro => vr_dscritic);                                
     IF vr_dscritic IS NOT NULL THEN
       pr_cdcritic := 0;
       pr_dscritic := vr_dscritic;
@@ -1824,6 +1830,9 @@ DECLARE
                            
               21/11/2018 - Ajustar nomenclatura quando não houver minutos e somente segundos
                          - (Envolti - Belli - Chamado - REQ0033876)
+                         
+              27/02/2019 - Ajuste na parametrização dos minutos da média do tempo dos programas
+                         - (Envolti - Belli - Chamado - REQ0040359)
     
   ............................................................................. */  
   
@@ -2162,6 +2171,7 @@ DECLARE
                          - (Envolti - Belli - Chamado - REQ0033876)
                            
               11/02/2019 - Deu um erro de programa e foi ajustado
+                         - Também dia 13/02/2019 foi ajustada uma query para trazer erros não selecionados
                          - (Envolti - Belli - Chamado - REQ0040359)
     
   ............................................................................. */   
@@ -2431,7 +2441,7 @@ DECLARE
           RAISE vr_exc_montada;
       END;
       -- Utilizar nova última hora 2359 e não mais 0800 e então regra é eliminada - 21/11/2018 - Chd REQ0033876
-
+    
       vr_cdacesso := 'ALERTA_VERMELHO';      
       pc_le_crapprm;
       -- Retorno nome do módulo logado
@@ -2718,14 +2728,14 @@ DECLARE
                                         ,pr_flultexe  => vr_flultexe   -- Retorna se é a ultima execução do procedimento
                                         ,pr_qtdexec   => vr_qtdexec    -- Retorna a quantidade
                                         ,pr_cdcritic  => vr_cdcritic   -- Codigo da critica de erro
-                                        ,pr_dscritic  => vr_dscritic); -- descrição do erro se ocorrer
+                                        ,pr_dscritic  => vr_dscritic); -- descrição do erro se ocorrer    
         -- Trata retorno
         IF nvl(vr_cdcritic,0) > 0         OR
           TRIM(vr_dscritic)   IS NOT NULL THEN
           -- Trata erro
           pr_cdcritic := vr_cdcritic;
           pr_dscritic := vr_dscritic; 
-          RAISE vr_exc_montada;
+          RAISE vr_exc_erro_tratado; -- Ajuste execeção adequada 13/02/3019 - REQ0040359
         END IF;
         -- Retorno nome do módulo logado
         GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);  
@@ -2790,7 +2800,7 @@ DECLARE
     WHERE  t.cdprograma   LIKE 'CRPS%.P'  
     AND    t.dhinicio     IS NOT NULL 
     AND    t.dhfim        IS NOT NULL		  
-    AND    TRUNC(t.dhfim) < vr_dtmovime
+    AND    TRUNC(t.dhfim) < TRUNC(vr_dtsysdat)
     AND    t.idprglog        = 
     ( SELECT   MAX(t4.idprglog) 
         FROM   tbgen_prglog T4
@@ -2920,6 +2930,10 @@ DECLARE
               09/10/2018 - Eliminar a utilização do dtmvtolt CRAPDAT
                          - Criticas 1067/1066. Não é erro - 09/10/2018 - Chd REQ0029484
                          - (Envolti - Belli - Chamado - REQ0029484)
+                           
+              11/02/2019 - Deu um erro de programa e foi ajustado
+                         - Também dia 13/02/2019 foi ajustada uma query para trazer erros não selecionados
+                         - (Envolti - Belli - Chamado - REQ0040359)
     
   ............................................................................. */
   --
@@ -2965,6 +2979,7 @@ DECLARE
     AND   t2.nmsistem  = vr_nmsistem
     AND   t2.inlibprg  = 1 -- 1=lib, 2=bloq e 3=em teste
     AND   t2.nrsolici  <> 999 -- = vr_nrsolici
+    AND   t2.cdprogra LIKE 'CRPS%' -- Ajuste selecionar somente programa batch - 13/02/3019 - REQ0040359
     AND   t3.flgativo = 1
     ORDER BY T2.nrordprg;
     rw_crapprg_tot cr_crapprg_tot%ROWTYPE;
@@ -3253,7 +3268,8 @@ DECLARE
     -- Posiciona procedure
     vr_cdproint := vr_cdproexe || '.pc_cria_job';
     -- Inclusão do módulo e ação logado
-    GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
+    GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);            
+    -- Mesmo atrasando vai calcular os minutos da média do tempo dos programas - 27/02/2019 - REQ0040359  
     -- Job permanente: JBPRG_LISTA_BATCH
     -- Job reagendado: JBPRG_R_LISTA_BAT_$123456789    
     vr_jobname  := 'JBPRG_R_LISTA_BAT'||'_'||'$';
@@ -3267,7 +3283,7 @@ DECLARE
          ( pr_cdcopprm  => ''0'' 
          , pr_nrcadeia  => ''0'' 
          , pr_dtmovime  => NULL
-         , pr_idatzmed  => ''N''
+         , pr_idatzmed  => ''S''
          , pr_cdcritic  => vr_cdcritic  
          , pr_dscritic  => vr_dscritic
          );
@@ -3365,7 +3381,7 @@ DECLARE
     vr_inproces := rw_crapdat.Inproces;
     -- Eliminada dtmvtlt CRAPDAT - 09/10/2018 - Chd REQ0029484
     --vr_dtmvtolt := rw_crapdat.dtmvtolt;
-    vr_dtmvtoan := rw_crapdat.dtmvtoan;
+    vr_dtmvtoan := rw_crapdat.dtmvtoan;  
     
     -- trata feriado
     vr_datautil := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooperprog -- Cooperativa conectada
@@ -3430,6 +3446,10 @@ DECLARE
               21/11/2018 - Utilizar nova última hora 2359 e não mais 0800
                          - Vai subir um SCRIPT com o e-mail do diretor para receber as informações deste processo.
                          - (Envolti - Belli - Chamado - REQ0033876)
+                           
+              11/02/2019 - Deu um erro de programa e foi ajustado
+                         - Também dia 13/02/2019 foi ajustada uma query para trazer erros não selecionados
+                         - (Envolti - Belli - Chamado - REQ0040359)
     
   ............................................................................. */
   --
@@ -3506,7 +3526,7 @@ DECLARE
           -- Trata erro
           pr_cdcritic := vr_cdcritic;
           pr_dscritic := vr_dscritic; 
-          RAISE vr_exc_montada;
+          RAISE vr_exc_erro_tratado; -- Ajuste execeção adequada 13/02/3019 - REQ0040359 
       END IF;
       -- Retorno nome do módulo logado
       GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
@@ -3721,7 +3741,11 @@ BEGIN                                     --- --- --- INICIO DO PROCESSO
   
   vr_tab_cooper.DELETE;
   
-  vr_cdcooinp := NVL(pr_cdcopprm,0);    
+  vr_cdcooinp := NVL(pr_cdcopprm,0);   
+                         
+  -- Retorno da gravação nos minutos da média do tempo dos programas - 27/02/2019 - REQ0040359
+  COMMIT;
+  
   -- Log de fim de execucao
   pc_controla_log_batch(pr_dstiplog => 'F');
     
@@ -3755,10 +3779,20 @@ EXCEPTION
     -- Monta mensagem
     pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic
                                             ,pr_dscritic => pr_dscritic) ||
-                   ' ' || vr_dsparame;                   
+                   ' ' || vr_dsparame;
+    -- Ajusta ocorrencia           
+    IF pr_cdcritic IN ( 0, 1197, 9999, 1034, 1035, 1036, 1037 ) THEN
+      vr_tpocorre := 2;
+      vr_cdcricid := 2;
+    ELSE
+      vr_tpocorre := 1;
+      vr_cdcricid := 0;
+    END IF;                   
     -- Log de erro de execucao
     pc_controla_log_batch(pr_cdcritic => pr_cdcritic
-                         ,pr_dscritic => pr_dscritic);
+                         ,pr_dscritic => pr_dscritic
+                         ,pr_tpocorre => vr_tpocorre
+                         ,pr_cdcricid => vr_cdcricid);
   WHEN vr_exc_montada THEN                 
     -- Log de erro de execucao
     pc_controla_log_batch(pr_cdcritic => pr_cdcritic
