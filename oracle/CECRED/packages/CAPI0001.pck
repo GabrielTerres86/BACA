@@ -165,6 +165,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
       pr_qtinfoln := rw_craplot.qtinfoln + 1;
       pr_qtcompln := rw_craplot.qtcompln + 1;
 
+    END IF;
+
       -- Como não incrementa mais no update, Busca o sequencial 
       rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
                              pr_nmdcampo => 'NRSEQDIG',
@@ -175,16 +177,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
                                             pr_nrdolote);
       pr_nrseqdig := rw_craplot.nrseqdig;
 
-      -- comentado por Yuri - Mouts
-/*    UPDATE craplot
-         SET nrseqdig = pr_nrseqdig
-            ,qtcompln = pr_qtcompln
-            ,qtinfoln = pr_qtinfoln
-            ,vlcompcr = craplot.vlcompcr + pr_vlintegr
-            ,vlinfocr = craplot.vlinfocr + pr_vlintegr
-       WHERE ROWID = rw_craplot.rowid;*/
-
-    END IF;
     
     CLOSE cr_craplot;
 
@@ -266,26 +258,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
       pr_qtinfoln := rw_craplot.qtinfoln + 1;
       pr_qtcompln := rw_craplot.qtcompln + 1;
+
+    END IF;
+
       -- Busca o sequencial 
       rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
                              pr_nmdcampo => 'NRSEQDIG',
                              pr_dsdchave => to_char(pr_cdcooper)||';'||
-                                            to_char(pr_dtmvtolt,'DD/MM/RRRR')||
+                                          to_char(pr_dtmvtolt,'DD/MM/RRRR')||';'||
                                             vc_cdagenci||';'||
                                             pr_cdbccxlt||';'||
                                             pr_nrdolote);
 
       pr_nrseqdig := rw_craplot.nrseqdig;
-      -- comentado por Yuri - Mouts
-/*      UPDATE craplot
-         SET nrseqdig = pr_nrseqdig
-            ,qtcompln = pr_qtcompln
-            ,qtinfoln = pr_qtinfoln
-            ,vlcompdb = craplot.vlcompdb + pr_vlintegr
-            ,vlinfodb = craplot.vlinfodb + pr_vlintegr
-       WHERE ROWID = rw_craplot.rowid;*/
-
-    END IF;
     
     CLOSE cr_craplot;
 
@@ -515,7 +500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
 
   BEGIN
-
+    
     IF NVL(pr_vlintegr,0) <= 0 THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Valor de integralização não pode ser negativo ou zero.';
@@ -612,8 +597,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
           
         --Levantar Excecao
         RAISE vr_exc_erro;
-              
-          END IF;
+          
+      END IF;
         ELSE
           CADA0006.pc_valor_min_capital(pr_cdcooper         => pr_cdcooper
                                        ,pr_inpessoa         => rw_crapass.inpessoa
@@ -767,6 +752,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
   EXCEPTION
     WHEN vr_exc_erro THEN
+      rollback;
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
@@ -778,9 +764,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
                            ,pr_tab_erro => vr_tab_erro);
 
     WHEN OTHERS THEN
+      rollback;
       pr_cdcritic := 0;
       pr_dscritic := 'Erro integralizar cotas(CAPI0001.pc_integraliza_cotas): ' || SQLERRM;
-
+      gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_nrsequen => 1 --> Fixo
+                           ,pr_cdcritic => pr_cdcritic
+                           ,pr_dscritic => pr_dscritic
+                           ,pr_tab_erro => vr_tab_erro);      
   END pc_integraliza_cotas;
 
   -- Cancelar integralização

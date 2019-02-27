@@ -37,7 +37,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 03/09/2018
+   Data    : Marco/2001                      Ultima atualizacao: 15/02/2019
 
    Dados referentes ao programa:
 
@@ -224,6 +224,10 @@
 			 03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
 
 			 03/09/2018 - Correção para remover lote (Jonata - Mouts).
+
+			 15/02/2019 - Ajuste para validar o codigo barras para (DARF NUMERADO)
+						  conforme ja esta sendo feito com  DAS
+						 (Adriano - SCTASK0046009).
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -1317,9 +1321,9 @@ PROCEDURE gera-faturas.
                             RETURN "NOK".
                     
                         END.
-
-                    /* DAS - SIMPLES NACIONAL */
-                    IF crapscn.cdempres = "K0" THEN
+						                    
+                    IF crapscn.cdempres = "K0"  OR   /* DAS - SIMPLES NACIONAL */
+					   crapscn.cdempres = "608" THEN /* DARFC0385 (DARF NUMERADO)     */
                     DO:
                         ASSIGN aux_numerdas = SUBSTR(p-codigo-barras, 25, 16)
                                aux_dvnrodas = INTE(SUBSTR(p-codigo-barras, 41, 1)).
@@ -2262,7 +2266,7 @@ PROCEDURE valida-valor-limite:
                       par_dscritic = "Usuário nao é coordenador.".
                RETURN "NOK".
            END.
-           
+
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
         /* Efetuar a chamada da rotina Oracle */ 
