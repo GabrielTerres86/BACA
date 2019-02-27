@@ -236,6 +236,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 				 AND crapceb.nrdconta = crapass.nrdconta
 				 AND crapceb.cdcooper = pr_cdcooper
 				 AND crapceb.idrecipr = pr_idrecipr
+				 AND ROWNUM = 1
+			 UNION ALL
+			SELECT crapceb.nrdconta
+						,crapass.nmprimtl
+				FROM tbcobran_crapceb crapceb
+						,crapass
+			 WHERE crapceb.cdcooper = crapass.cdcooper
+				 AND crapceb.nrdconta = crapass.nrdconta
+				 AND crapceb.cdcooper = pr_cdcooper
+				 AND crapceb.idrecipr = pr_idrecipr
 				 AND ROWNUM = 1;
 		
 		rw_conta cr_conta%ROWTYPE;
@@ -396,6 +406,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
   END pc_envia_email_alcada;
   --
   PROCEDURE pc_ativa_contrato(pr_cdcooper IN  crapceb.cdcooper%TYPE                           -- Identificador da cooperativa
+		                         ,pr_nrdconta IN  crapceb.nrdconta%TYPE                           -- Numero da conta
+														 ,pr_nrconven IN  crapceb.nrconven%TYPE                           -- Numero do convenio BB
+														 ,pr_nrcnvceb IN  crapceb.nrcnvceb%TYPE                           -- Numero do convenio CECRED
                              ,pr_idrecipr IN  crapceb.idrecipr%TYPE                           -- Identificador do cálculo de reciprocidade
 														 ,pr_dtinicio IN  tbrecip_calculo.dtinicio_vigencia_contrato%TYPE -- Data de início de vigência do contrato
                              ,pr_cdcritic OUT PLS_INTEGER                                     -- Código da crítica
@@ -417,6 +430,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     Alteracoes: 
     
     ..............................................................................*/
+    
+		CURSOR cr_tbcobran_crapceb(pr_cdcooper tbcobran_crapceb.cdcooper%TYPE
+															,pr_idrecipr tbcobran_crapceb.idrecipr%TYPE
+														  ) IS
+		  SELECT tbcobran_crapceb.nrdconta
+			      ,tbcobran_crapceb.nrconven
+						,tbcobran_crapceb.nrcnvceb
+			  FROM tbcobran_crapceb
+			 WHERE tbcobran_crapceb.idrecipr = pr_idrecipr
+			   AND tbcobran_crapceb.nrcnvceb = pr_nrcnvceb
+			   AND tbcobran_crapceb.nrconven = pr_nrconven
+			   AND tbcobran_crapceb.nrdconta = pr_nrdconta
+			   AND tbcobran_crapceb.cdcooper = pr_cdcooper;
+		--
+		rw_tbcobran_crapceb cr_tbcobran_crapceb%ROWTYPE;
     
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -443,6 +471,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     --
 		BEGIN
 			--
+      UPDATE tbcobran_crapceb crapceb 
+         SET crapceb.insitceb = 1 -- Ativo
+       WHERE crapceb.idrecipr = pr_idrecipr
+         AND crapceb.cdcooper = pr_cdcooper
+         AND crapceb.insitceb = 3; -- Pendente
+      --
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao atualizar a situacao na TBCOBRAN_CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+		--
+		BEGIN
+			--
 			UPDATE tbrecip_calculo tc
 			   SET tc.dtinicio_vigencia_contrato = pr_dtinicio
 			 WHERE tc.idcalculo_reciproci        = pr_idrecipr;
@@ -452,6 +494,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
         vr_dscritic := 'Erro ao atualizar a data na tbrecip_calculo ' || pr_idrecipr || ': ' || SQLERRM;
         RAISE vr_exc_erro;
 		END;
+		--
+		OPEN cr_tbcobran_crapceb(pr_cdcooper
+														,pr_idrecipr
+														);
+	  --
+		LOOP
+			--
+			FETCH cr_tbcobran_crapceb INTO rw_tbcobran_crapceb;
+			EXIT WHEN cr_tbcobran_crapceb%NOTFOUND;
+			--
+			tela_atenda_cobran.pc_grava_principal_crapceb(pr_cdcooper => pr_cdcooper                  -- IN
+																									 ,pr_nrdconta => rw_tbcobran_crapceb.nrdconta -- IN
+																									 ,pr_nrconven => rw_tbcobran_crapceb.nrconven -- IN
+																									 ,pr_nrcnvceb => rw_tbcobran_crapceb.nrcnvceb -- IN
+																									 ,pr_insitceb => NULL                         -- IN
+																									 ,pr_dscritic => vr_dscritic                  -- OUT
+																									 );
+			--
+			IF vr_dscritic IS NOT NULL THEN
+				--
+				CLOSE cr_tbcobran_crapceb;
+				RAISE vr_exc_erro;
+				--
+			END IF;
+			--
+		END LOOP;
+		--
+		CLOSE cr_tbcobran_crapceb;
 		--
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -474,6 +544,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 	END pc_ativa_contrato;
 	--
 	PROCEDURE pc_inativa_contrato(pr_cdcooper IN  crapceb.cdcooper%TYPE                        -- Identificador da cooperativa
+		                           ,pr_nrdconta IN  crapceb.nrdconta%TYPE                        -- Numero da conta
+															 ,pr_nrconven IN  crapceb.nrconven%TYPE                        -- Numero do convenio BB
+															 ,pr_nrcnvceb IN  crapceb.nrcnvceb%TYPE                        -- Numero do convenio CECRED
 															 ,pr_idrecipr IN  crapceb.idrecipr%TYPE                        -- Identificador do cálculo de reciprocidade
 															 ,pr_dtfim    IN  tbrecip_calculo.dtfim_vigencia_contrato%TYPE -- Data final da vigência do contrato
 															 ,pr_cdcritic OUT PLS_INTEGER                                  -- Código da crítica
@@ -510,10 +583,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			UPDATE crapceb 
 			   SET crapceb.insitceb = 2 -- Inativo
 			 WHERE crapceb.idrecipr = pr_idrecipr
+			   AND crapceb.nrcnvceb = pr_nrcnvceb
+			   AND crapceb.nrconven = pr_nrconven
+			   AND crapceb.nrdconta = pr_nrdconta
 			   AND crapceb.cdcooper = pr_cdcooper
 				 AND crapceb.insitceb = 1; -- Ativo
 			--
 		EXCEPTION
+			WHEN no_data_found THEN
+				BEGIN
+					--
+					UPDATE tbcobran_crapceb crapceb
+						 SET crapceb.insitceb = 2 -- Inativo
+					 WHERE crapceb.idrecipr = pr_idrecipr
+					   AND crapceb.nrcnvceb = pr_nrcnvceb
+					   AND crapceb.nrconven = pr_nrconven
+					   AND crapceb.nrdconta = pr_nrdconta
+						 AND crapceb.cdcooper = pr_cdcooper
+						 AND crapceb.insitceb = 1; -- Ativo
+					--
+				EXCEPTION
+			WHEN OTHERS THEN
+						vr_dscritic := '2.Erro ao atualizar a situacao na TBCOBRAN_CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
+						RAISE vr_exc_erro;
+				END;
 			WHEN OTHERS THEN
 				vr_dscritic := '2.Erro ao atualizar a situacao na CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
 				RAISE vr_exc_erro;
@@ -591,6 +684,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 				 AND crapceb.insitceb = 3; -- Pendente
 			--
 		EXCEPTION
+			WHEN no_data_found THEN
+				BEGIN
+					--
+					UPDATE tbcobran_crapceb crapceb
+						 SET crapceb.insitceb = 6 -- Não aprova
+					 WHERE crapceb.idrecipr = pr_idrecipr
+						 AND crapceb.cdcooper = pr_cdcooper
+						 AND crapceb.insitceb = 3; -- Pendente
+					--
+				EXCEPTION
+			WHEN OTHERS THEN
+						vr_dscritic := '3.Erro ao atualizar a situacao na TBCOBRAN_CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
+						RAISE vr_exc_erro;
+				END;
 			WHEN OTHERS THEN
 				vr_dscritic := '3.Erro ao atualizar a situacao na CRAPCEB ' || pr_idrecipr || ': ' || SQLERRM;
 				RAISE vr_exc_erro;
@@ -1890,6 +1997,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 																															,crapceb.nrdconta
 																													FROM crapceb
 																												 WHERE crapceb.cdcooper = pr_cdcooper
+																													 AND crapceb.idrecipr = pr_idrecipr
+																										 UNION ALL
+																												SELECT crapceb.cdcooper
+																															,crapceb.nrdconta
+																													FROM tbcobran_crapceb crapceb
+																												 WHERE crapceb.cdcooper = pr_cdcooper
+																													 AND crapceb.idrecipr = pr_idrecipr)
+				 AND crapceb2.insitceb IN(1, 3) -- 1 = Ativo / 3 = Pendente
+			 UNION ALL
+			SELECT crapceb2.cdcooper
+						,crapceb2.nrdconta
+						,crapceb2.nrconven
+						,crapceb2.nrcnvceb
+						,crapceb2.idrecipr
+						,crapceb2.insitceb
+				FROM tbcobran_crapceb crapceb2
+			 WHERE (crapceb2.cdcooper, crapceb2.nrdconta) IN (SELECT crapceb.cdcooper
+																															,crapceb.nrdconta
+																													FROM tbcobran_crapceb crapceb
+																												 WHERE crapceb.cdcooper = pr_cdcooper
 																													 AND crapceb.idrecipr = pr_idrecipr)
 				 AND crapceb2.insitceb IN(1, 3); -- 1 = Ativo / 3 = Pendente
 		
@@ -2049,6 +2176,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 					IF rw_contratos.insitceb = 3 THEN
 						--
 						pc_ativa_contrato(pr_cdcooper => rw_contratos.cdcooper   -- IN
+						                 ,pr_nrdconta => rw_contratos.nrdconta   -- IN
+														 ,pr_nrconven => rw_contratos.nrconven   -- IN
+														 ,pr_nrcnvceb => rw_contratos.nrcnvceb   -- IN
 														 ,pr_idrecipr => rw_contratos.idrecipr   -- IN
 														 ,pr_dtinicio => rw_crapdat.dtmvtolt + 1 -- IN
 														 ,pr_cdcritic => vr_cdcritic             -- OUT
@@ -2058,6 +2188,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 					ELSIF rw_contratos.insitceb = 1 THEN
 						--
 						pc_inativa_contrato(pr_cdcooper => rw_contratos.cdcooper -- IN
+						                   ,pr_nrdconta => rw_contratos.nrdconta -- IN
+															 ,pr_nrconven => rw_contratos.nrconven -- IN
+															 ,pr_nrcnvceb => rw_contratos.nrcnvceb -- IN
 															 ,pr_idrecipr => rw_contratos.idrecipr -- IN
 															 ,pr_dtfim    => rw_crapdat.dtmvtolt   -- IN
 															 ,pr_cdcritic => vr_cdcritic           -- OUT
