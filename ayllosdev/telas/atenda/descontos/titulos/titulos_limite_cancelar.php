@@ -10,6 +10,7 @@
 	 Alterações: 09/06/2010 - Adaptação para RATING (David).
 		         17/06/2016 - M181 - Alterar o CDAGENCI para          
                       passar o CDPACTRA (Rafael Maciel - RKAM) 
+                 12/02/2019 - Alteração para verificar se existem borderôs que ainda não foram liberados, antes do cancelamento do contrato (Cássia de Oliveira - GFT)
 
 	************************************************************************/
 	
@@ -42,6 +43,7 @@
 
 	$nrdconta = $_POST["nrdconta"];
 	$nrctrlim = $_POST["nrctrlim"];
+	$confirma = $_POST["confirma"];
 	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -51,6 +53,37 @@
 	// Verifica se o número do contrato é um inteiro válido
 	if (!validaInteiro($nrctrlim)) {
 		exibeErro("N&uacute;mero do contrato inv&aacute;lido.");
+	}
+	if($confirma == 0){
+
+		$xml .= "<Root>";
+		$xml .= "	<Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrctrlim>".$nrctrlim."</nrctrlim>";	
+		$xml .= "	</Dados>";
+		$xml .= "</Root>";
+		
+
+		$xmlResult = mensageria($xml, 'TELA_ATENDA_DESCTO', 'VERIFICA_BORDERO_CONTRATO',  $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		
+		
+		$xmlObj = getClassXML($xmlResult);
+
+	    $root = $xmlObj->roottag;
+
+	    // Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			
+			exit;
+
+		} else if ($root->dados->fltembdt == '1') {
+
+			echo 'showConfirmacao("Este contrato tem border&ocirc;s que ainda n&atilde;o foram liberados. Deseja continuar?","Confirma&ccedil;&atilde;o - Aimaro","cancelaLimiteDscTit(1);","hideMsgAguardo();","sim.gif","nao.gif");';
+			exit;
+
+		} 
 	}
 	
 	// Monta o xml de requisição

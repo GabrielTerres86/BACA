@@ -199,7 +199,7 @@
 		<?php if ($qtLimites == 0) {
 			echo 'onClick="return false;"';
 		} else {
-			echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o Contrato?\',\'Confirma&ccedil;&atilde;o - Aimaro\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"';
+			echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o Contrato?\',\'Confirma&ccedil;&atilde;o - Aimaro\',\'cancelaLimiteDscTit(0)\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"';
 		} ?>  />
 	
 	<input 
