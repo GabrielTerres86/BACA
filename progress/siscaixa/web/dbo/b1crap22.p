@@ -114,11 +114,14 @@
                07/06/2018 - Alterado a inclusao na CRAPLCM para a Centralizadora de 
                             Lançamentos de Conta Corrente - PRJ450 - Diego Simas - AMcom      
 							
-			   14/11/2018 - Remoção de comandos MESSAGE deixados no código após testes
-			                Reginaldo/AMcom/P450 
+			         14/11/2018 - Remoção de comandos MESSAGE deixados no código após testes
+			                      Reginaldo/AMcom/P450 
                       
                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
+               
+               27/02/2019 - Realizar atribuicao do historico 1014 na variavel para geracao de LOG.
+                            INC0031856 - Heitor (Mouts)
                            
 -----------------------------------------------------------------------------*/
 
@@ -1473,7 +1476,8 @@ PROCEDURE realiza-transferencia:
                       vr-cdagetfn = p-cod-agencia
                       vr-nrterfin = 0
                       vr-nrsequni = aux_nrseqdig
-                      vr-nrautdoc = p-ult-sequencia-lcm.
+                      vr-nrautdoc  = p-ult-sequencia-lcm
+					  aux_cdhisdeb = 1014.
                
                
                IF  p-idagenda > 1 THEN DO:
