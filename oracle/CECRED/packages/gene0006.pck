@@ -93,6 +93,8 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
           ,nmrescop_central crapcop.nmrescop%TYPE
           ,nrtelsac crapcop.nrtelsac%TYPE
           ,nrtelouv crapcop.nrtelouv%TYPE
+          ,idlstdom INTEGER
+          ,dsorigem VARCHAR2(50)
           );
 
   /* Definição da PL Table de registros de protocolos */
@@ -215,6 +217,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
                                  ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
                                  ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
                                  ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
+                                 ,pr_dsprotoc IN VARCHAR2 DEFAULT NULL  --> Lista de protocolos a serem buscados
                                  ,pr_iniconta IN NUMBER                 --> Início da conta
                                  ,pr_nrregist IN NUMBER                 --> Número de registros
                                  ,pr_cdtippro IN VARCHAR2                 --> Código protocolo
@@ -231,6 +234,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
                                ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
                                ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
                                ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
+                               ,pr_dsprotoc IN VARCHAR2 DEFAULT NULL  --> Lista de protocolos a serem buscados
                                ,pr_iniconta IN NUMBER                 --> Início da conta
                                ,pr_nrregist IN NUMBER                 --> Número de registros
                                ,pr_cdtippro IN NUMBER                 --> Código protocolo
@@ -1346,18 +1350,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
 
   /* Listar protocolos gerados podendo ser filtrado por vários tipos */
   PROCEDURE pc_lista_protocolos_por_tipos(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
-                                 ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
-                                 ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
-                                 ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
-                                 ,pr_iniconta IN NUMBER                 --> Início da conta
-                                 ,pr_nrregist IN NUMBER                 --> Número de registros
-                                 ,pr_cdtippro IN VARCHAR2               --> Código protocolo
-                                 ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
-                                 ,pr_dstransa OUT VARCHAR2              --> Descrição da transação
-                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                                 ,pr_qttotreg OUT NUMBER                --> Quantidade de registros
-                                 ,pr_protocolo  OUT typ_tab_protocolo   --> PL Table de registros
-                                 ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+                                         ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                         ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
+                                         ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
+                                         ,pr_dsprotoc IN VARCHAR2 DEFAULT NULL  --> Lista de protocolos a serem buscados
+                                         ,pr_iniconta IN NUMBER                 --> Início da conta
+                                         ,pr_nrregist IN NUMBER                 --> Número de registros
+                                         ,pr_cdtippro IN VARCHAR2               --> Código protocolo
+                                         ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
+                                         ,pr_dstransa OUT VARCHAR2              --> Descrição da transação
+                                         ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                         ,pr_qttotreg OUT NUMBER                --> Quantidade de registros
+                                         ,pr_protocolo  OUT typ_tab_protocolo   --> PL Table de registros
+                                         ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
                                
     -- ..........................................................................
     --
@@ -1380,7 +1385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       vr_exc_erro   EXCEPTION;                   --> Controle de execução
       vr_dtinipro   DATE;                        --> Auxiliar para data inicial do protocolo
       vr_dtfimpro   DATE;                        --> Auxiliar para data final do protocolo
-      vr_exc_iter   EXCEPTION;                   --> Controle de iteração
+	  vr_exc_iter   EXCEPTION;                   --> Controle de iteração
       vr_index      NUMBER;                      --> Indexador para PL Table
       vr_nmoperad   crapopi.nmoperad%TYPE;       --> Nome operador
       vr_cdcritic   crapcri.cdcritic%TYPE := 0;  --> Código da crítica
@@ -1405,7 +1410,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                        ,pr_nrdconta IN crappro.nrdconta%TYPE      --> Número da conta
                        ,pr_dtfimpro IN crappro.dtmvtolt%TYPE      --> Data final do protocolo
                        ,pr_dtinipro IN crappro.dttransa%TYPE      --> Data inicial do protocolo
+                       ,pr_dsprotoc IN VARCHAR2                   --> Lista de protocolos a serem buscados
                        ,pr_cdtippro IN VARCHAR2) IS  --> Tipo do protocolo
+        --Busca por datas
         SELECT co.cdtippro
               ,co.nrcpfope
               ,co.dtmvtolt
@@ -1422,16 +1429,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
               ,co.nmprepos
               ,co.nrcpfpre
               ,co.dscedent
-        FROM crappro co
+         FROM crappro co
         WHERE co.cdcooper  = pr_cdcooper
-          AND co.nrdconta  = pr_nrdconta          
+          AND co.nrdconta  = pr_nrdconta
+          AND TRIM(pr_dsprotoc) IS NULL
           AND trunc(co.dttransa) >= pr_dtinipro
           AND trunc(co.dttransa) <= pr_dtfimpro
-          AND (pr_cdtippro = '0' OR co.cdtippro IN( SELECT regexp_substr(pr_cdtippro, '[^;]+', 1, LEVEL)
-                                    FROM dual
-                                  CONNECT BY LEVEL <= regexp_count(pr_cdtippro, '[^;]+') ))
-        ORDER BY co.dttransa DESC
-                ,co.hrautent DESC;
+          AND (pr_cdtippro = '0' OR co.cdtippro IN(SELECT regexp_substr(pr_cdtippro, '[^;]+', 1, LEVEL)
+                                                     FROM dual
+                                                  CONNECT BY LEVEL <= regexp_count(pr_cdtippro, '[^;]+') ))
+        UNION ALL
+        --Busca por protocolos específicos
+        SELECT co.cdtippro
+              ,co.nrcpfope
+              ,co.dtmvtolt
+              ,co.dttransa
+              ,co.hrautent
+              ,co.vldocmto
+              ,co.nrdocmto
+              ,co.nrseqaut
+              ,co.dsinform##1
+              ,co.dsinform##2
+              ,co.dsinform##3
+              ,co.dsprotoc
+              ,co.flgagend
+              ,co.nmprepos
+              ,co.nrcpfpre
+              ,co.dscedent
+         FROM crappro co
+        WHERE co.cdcooper  = pr_cdcooper
+          AND co.nrdconta  = pr_nrdconta
+          AND TRIM(pr_dsprotoc) IS NOT NULL
+          AND co.dsprotoc IN (SELECT regexp_substr(pr_dsprotoc, '[^;]+', 1, LEVEL) item
+                                FROM dual
+                             CONNECT BY LEVEL <= regexp_count(pr_dsprotoc, '[^;]+'))
+        ORDER BY dttransa DESC
+                ,hrautent DESC;
 
       -- Busca dados de operação
       CURSOR cr_crapopi(pr_cdcooper IN crapopi.cdcooper%TYPE      --> Código da cooperativa
@@ -1513,126 +1546,239 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_dtfimpro => vr_dtfimpro
                                   ,pr_dtinipro => vr_dtinipro
+                                  ,pr_dsprotoc => pr_dsprotoc
                                   ,pr_cdtippro => pr_cdtippro) LOOP
 
         -- Bloco para iteração (escape)
         BEGIN
 
-          -- Nao carregar Protocolo pagamento fatura caso seja o dia de geracao, devido o pagamento
-          -- ainda poder ser estornado.
-          IF rw_crappro.cdtippro = 15  AND rw_crappro.dtmvtolt = rw_crapdat.dtmvtolt THEN 
-		         CONTINUE;
-          END IF;
+        -- Nao carregar Protocolo pagamento fatura caso seja o dia de geracao, devido o pagamento
+        -- ainda poder ser estornado.
+        IF rw_crappro.cdtippro = 15  AND rw_crappro.dtmvtolt = rw_crapdat.dtmvtolt THEN 
+           CONTINUE;
+        END IF;
    
-          -- Validar para TAA
-          IF pr_cdorigem = 3 AND (rw_crappro.cdtippro = 5 OR rw_crappro.cdtippro = 6) THEN
-            RAISE vr_exc_iter;
-          END IF;
+        -- Valida protocolo Favorecido
+        IF pr_cdtippro <> TO_CHAR(8) AND rw_crappro.cdtippro = 8 THEN
+           RAISE vr_exc_iter;
+        END IF;
 
-          -- Valida protocolo Favorecido
-          IF pr_cdtippro <> TO_CHAR(8) AND rw_crappro.cdtippro = 8 THEN
-            RAISE vr_exc_iter;
-          END IF;
+        -- Incrementa quantidade de registros
+        pr_qttotreg := pr_qttotreg + 1; 
 
-          -- Incrementa quantidade de registros
-          pr_qttotreg := pr_qttotreg + 1; 
+        -- Valida condições sobre o registro
+        IF pr_nrregist > 0 AND (pr_qttotreg <= pr_iniconta OR pr_nrregist < (pr_qttotreg - pr_iniconta)) THEN
+           RAISE vr_exc_iter;
+        END IF;
 
-          -- Valida condições sobre o registro
-          IF pr_nrregist > 0 AND (pr_qttotreg <= pr_iniconta OR pr_nrregist < (pr_qttotreg - pr_iniconta)) THEN
-            RAISE vr_exc_iter;
-          END IF;
+        vr_nmoperad := '';
 
-          IF pr_cdorigem = 3 AND -- InternetBank
-             rw_crappro.cdtippro = 1 AND SUBSTR(rw_crappro.dsinform##3,1,3) = 'TAA' THEN -- InternetBank
-            CONTINUE;
-          END IF;
+        -- Busca dados sobre operação
+        OPEN cr_crapopi(pr_cdcooper, pr_nrdconta, rw_crappro.nrcpfope);
+        FETCH cr_crapopi INTO rw_crapopi;
 
-          IF pr_cdorigem = 3 AND -- InternetBank
-             rw_crappro.cdtippro = 20 AND SUBSTR(rw_crappro.dsinform##3,1,3) = 'TAA' THEN -- InternetBank
-            CONTINUE;
-          END IF;
+        -- Verifica se retornou registro na tupla
+        IF cr_crapopi%FOUND THEN
+          CLOSE cr_crapopi;
+          vr_nmoperad := rw_crapopi.nmoperad;
+        ELSE
+          CLOSE cr_crapopi;
+        END IF;
 
-          IF pr_cdorigem = 4 AND -- TAA
-             rw_crappro.cdtippro = 1 AND SUBSTR(rw_crappro.dsinform##3,1,3) = 'TAA' THEN -- InternetBank
-            CONTINUE;
-          END IF;
-          
-          IF pr_cdorigem = 20 AND -- TAA
-             rw_crappro.cdtippro = 1 AND SUBSTR(rw_crappro.dsinform##3,1,3) = 'TAA' THEN -- InternetBank
-            CONTINUE;
-          END IF;
+        -- Criar indice para registro
+        vr_index := pr_protocolo.count + 1;
 
-          vr_nmoperad := '';
+        -- Grava dados do registro
+        pr_protocolo(vr_index).cdtippro := rw_crappro.cdtippro;
+        pr_protocolo(vr_index).dtmvtolt := rw_crappro.dtmvtolt;
+        pr_protocolo(vr_index).dttransa := rw_crappro.dttransa;
+        pr_protocolo(vr_index).hrautent := rw_crappro.hrautent;
+        pr_protocolo(vr_index).vldocmto := rw_crappro.vldocmto;
+        pr_protocolo(vr_index).nrdocmto := rw_crappro.nrdocmto;
+        pr_protocolo(vr_index).nrseqaut := rw_crappro.nrseqaut;
+        pr_protocolo(vr_index).dsinform##1 := rw_crappro.dsinform##1;
+        pr_protocolo(vr_index).dsinform##2 := rw_crappro.dsinform##2;
+        pr_protocolo(vr_index).dsinform##3 := rw_crappro.dsinform##3;
+        pr_protocolo(vr_index).dsprotoc := rw_crappro.dsprotoc;
+        pr_protocolo(vr_index).flgagend := rw_crappro.flgagend;
+        pr_protocolo(vr_index).nmprepos := rw_crappro.nmprepos;
+        pr_protocolo(vr_index).nrcpfpre := rw_crappro.nrcpfpre;
+        pr_protocolo(vr_index).nmoperad := vr_nmoperad;
+        pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
+        pr_protocolo(vr_index).cdagesic := rw_crapcop.cdagesic;
 
-          -- Busca dados sobre operação
-          OPEN cr_crapopi(pr_cdcooper, pr_nrdconta, rw_crappro.nrcpfope);
-          FETCH cr_crapopi INTO rw_crapopi;
-
-          -- Verifica se retornou registro na tupla
-          IF cr_crapopi%FOUND THEN
-            CLOSE cr_crapopi;
-            vr_nmoperad := rw_crapopi.nmoperad;
-          ELSE
-            CLOSE cr_crapopi;
-          END IF;
-
-          -- Criar indice para registro
-          vr_index := pr_protocolo.count + 1;
-
-          -- Grava dados do registro
-          pr_protocolo(vr_index).cdtippro := rw_crappro.cdtippro;
-          pr_protocolo(vr_index).dtmvtolt := rw_crappro.dtmvtolt;
-          pr_protocolo(vr_index).dttransa := rw_crappro.dttransa;
-          pr_protocolo(vr_index).hrautent := rw_crappro.hrautent;
-          pr_protocolo(vr_index).vldocmto := rw_crappro.vldocmto;
-          pr_protocolo(vr_index).nrdocmto := rw_crappro.nrdocmto;
-          pr_protocolo(vr_index).nrseqaut := rw_crappro.nrseqaut;
-          pr_protocolo(vr_index).dsinform##1 := rw_crappro.dsinform##1;
-          pr_protocolo(vr_index).dsinform##2 := rw_crappro.dsinform##2;
-          pr_protocolo(vr_index).dsinform##3 := rw_crappro.dsinform##3;
-          pr_protocolo(vr_index).dsprotoc := rw_crappro.dsprotoc;
-          pr_protocolo(vr_index).flgagend := rw_crappro.flgagend;
-          pr_protocolo(vr_index).nmprepos := rw_crappro.nmprepos;
-          pr_protocolo(vr_index).nrcpfpre := rw_crappro.nrcpfpre;
-          pr_protocolo(vr_index).nmoperad := vr_nmoperad;
-          pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
-          pr_protocolo(vr_index).cdagesic := rw_crapcop.cdagesic;
-
-          IF (rw_crappro.cdtippro = 1 AND pr_cdorigem = 3) OR rw_crappro.cdtippro IN (2,6,9,10,11,12,13,15,16,17,18,19,20,23,24) THEN
-            pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
-            pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
-            pr_protocolo(vr_index).nmrescop := rw_crapcop.nmrescop;
+        IF (rw_crappro.cdtippro = 1 AND pr_cdorigem = 3) OR rw_crappro.cdtippro IN (2,5,6,9,10,11,12,13,15,16,17,18,19,20,23,24) THEN
+          pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
+          pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
+          pr_protocolo(vr_index).nmrescop := rw_crapcop.nmrescop;
             
-            --> Dados da cooperativa central
-            pr_protocolo(vr_index).nmextcop_central := rw_crapcop_central.nmextcop;
-            pr_protocolo(vr_index).nmrescop_central := rw_crapcop_central.nmrescop;
+          --> Dados da cooperativa central
+          pr_protocolo(vr_index).nmextcop_central := rw_crapcop_central.nmextcop;
+          pr_protocolo(vr_index).nmrescop_central := rw_crapcop_central.nmrescop;
                         
-            --> Sac/Ouvidoria Bancoob
-            pr_protocolo(vr_index).nrtelsac := rw_crapcop.nrsacbcb;
-            pr_protocolo(vr_index).nrtelouv := rw_crapcop.nrouvbcb;
-          END IF;
+          --> Sac/Ouvidoria Bancoob
+          pr_protocolo(vr_index).nrtelsac := rw_crapcop.nrsacbcb;
+          pr_protocolo(vr_index).nrtelouv := rw_crapcop.nrouvbcb;
+        END IF;
 		  
-		      IF rw_crappro.cdtippro IN (20) THEN
-             pr_protocolo(vr_index).nrcelular   := TRIM(gene0002.fn_busca_entrada(3, rw_crappro.dsinform##2, '#'));
-             pr_protocolo(vr_index).nmoperadora := TRIM(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'));                      
-          END IF;
+        IF rw_crappro.cdtippro IN (20) THEN
+           pr_protocolo(vr_index).nrcelular   := TRIM(gene0002.fn_busca_entrada(3, rw_crappro.dsinform##2, '#'));
+           pr_protocolo(vr_index).nmoperadora := TRIM(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'));                      
+        END IF;
 
-          -- Valida TAA
-          IF pr_cdorigem = 4 THEN
-            -- Para transferência
-            IF pr_protocolo(vr_index).cdtippro = 1 THEN
-              pr_protocolo(vr_index).dscedent := substr(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'), 19);
+        -- Valida TAA
+        IF pr_cdorigem = 4 THEN
+          -- Para transferência
+          IF pr_protocolo(vr_index).cdtippro = 1 THEN
+            pr_protocolo(vr_index).dscedent := substr(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'), 19);
+          ELSE
+            -- Verifica campo da tabela
+            IF TRIM(rw_crappro.dscedent) IS NULL THEN
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
             ELSE
-              -- Verifica campo da tabela
-              IF rw_crappro.dscedent IS NULL THEN
-                pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
-              ELSE
-                pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
-              END IF;
+              pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
+            END IF;
+          END IF;
+        ELSE
+          pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
+        END IF;
+          
+        -- Tratar para exibir o cedente quando for pagamento, porém a informação do cedente não existe no protocolo
+        IF rw_crappro.cdtippro IN (2,6,15) THEN
+          -- Verifica se existe o nome do cedente
+          IF TRIM(rw_crappro.dscedent) IS NULL THEN
+            -- Se nao possui nome de cedente, validar qual é o canal 
+            IF gene0002.fn_busca_entrada(3, rw_crappro.dsinform##3, '#') LIKE '%TAA%' THEN
+              -- Pagamento feito no ATM
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
+            ELSE 
+              -- Outro pagamento, onde nao existe o nome do cedente
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO';
             END IF;
           ELSE
             pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
           END IF;
+        END IF;
+        
+          -- Identificar a origem do comprovante
+          -- Devido as informações presentes na crappro, será possivel apenas diferenciar em TAA e não TAA
+          -- Quando não for TAA será devolvido como INTERNET
+          -- Caso seja necessario diferenciar a origem, deverá ser revisto a criação do protocolo
+          IF gene0002.fn_busca_entrada(3, rw_crappro.dsinform##3, '#') LIKE '%TAA%' THEN
+            pr_protocolo(vr_index).dsorigem := 'TAA';
+          ELSE 
+            pr_protocolo(vr_index).dsorigem := 'INTERNET';
+          END IF;
+          
+          -- Desmontar a lista de dominio dos protocolos
+          -- Essa lista é referente ao TIPO DE COMPROVANTE
+          CASE
+            -- 2 = Pagamento (Tit/Cnv) / 6 = Pagamento (Tit/Cnv) no TAA
+            WHEN pr_protocolo(vr_index).cdtippro IN ( 2, 6 ) THEN
+              -- Verificar se é comprovante de boleto ou convenio
+              IF UPPER(pr_protocolo(vr_index).dsinform##2) LIKE '%BANCO%'  THEN
+                -- Boleto
+                pr_protocolo(vr_index).idlstdom := 1;
+              ELSIF UPPER(pr_protocolo(vr_index).dsinform##2) LIKE '%CONVENIO%'  THEN
+                -- Convênio
+                pr_protocolo(vr_index).idlstdom := 2;
+              ELSE 
+                -- Paramento não identificado
+                pr_protocolo(vr_index).idlstdom := 15;
+              END IF;
+              
+            -- Credito Salario
+            WHEN pr_protocolo(vr_index).cdtippro = 4 THEN
+              pr_protocolo(vr_index).idlstdom := 3;
+              
+            -- TED
+            WHEN pr_protocolo(vr_index).cdtippro = 9 THEN							
+              pr_protocolo(vr_index).idlstdom := 4;
+
+            -- Transferência
+            WHEN pr_protocolo(vr_index).cdtippro = 1 THEN
+              -- Diferenciar entre intracooperativa e intercooperativa
+              -- As Transferencias que no mesma cooperativa terão o "CDAGECTL" no campo dsinform3
+              IF UPPER(pr_protocolo(vr_index).dsinform##3) LIKE '%' || to_char(rw_crapcop.cdagectl ) || '%'  THEN
+                -- INTRACOOPERATIVA
+                pr_protocolo(vr_index).idlstdom := 5;
+              ELSE
+                -- INTERCOOPERATIVA
+                pr_protocolo(vr_index).idlstdom := 6;
+              END IF;
+              
+            -- 16 = Pagamento DARF / 18 = Agendamento DARF
+            WHEN pr_protocolo(vr_index).cdtippro IN ( 16, 18 ) THEN
+              pr_protocolo(vr_index).idlstdom := 7;
+              
+            -- 17 = Pagamento DAS / 19 = Agendamento DAS
+            WHEN pr_protocolo(vr_index).cdtippro IN ( 17, 19) THEN
+              pr_protocolo(vr_index).idlstdom := 8;
+              
+            -- 13 = Pagamento/Agendamento GPS
+            WHEN pr_protocolo(vr_index).cdtippro = 13 THEN              
+              IF NVL(pr_protocolo(vr_index).flgagend,0) = 0 THEN
+                pr_protocolo(vr_index).idlstdom := 9; -- Pagamento efetivado
+              ELSE
+                pr_protocolo(vr_index).idlstdom := 14; -- Agendamento
+              END IF;              
+              
+            -- 24 = Pagamento FGTS
+            WHEN pr_protocolo(vr_index).cdtippro = 24 THEN
+              pr_protocolo(vr_index).idlstdom := 10;
+              
+            -- 23 = Pagamento DAE
+            WHEN pr_protocolo(vr_index).cdtippro = 23 THEN
+              pr_protocolo(vr_index).idlstdom := 11;
+              
+            -- 20 = Recarga de Celular
+            WHEN pr_protocolo(vr_index).cdtippro = 20 THEN
+              pr_protocolo(vr_index).idlstdom := 1;
+              
+            -- 10 = Aplicação Pre/Pos
+            WHEN pr_protocolo(vr_index).cdtippro = 10 THEN
+              pr_protocolo(vr_index).idlstdom := 30;
+              
+            -- 12 = Resgate Aplicação Pre/Pos
+            WHEN pr_protocolo(vr_index).cdtippro = 12 THEN
+              pr_protocolo(vr_index).idlstdom := 31;
+              
+            -- 11 = Operações DebAut 
+            WHEN pr_protocolo(vr_index).cdtippro = 11  THEN
+              CASE UPPER(pr_protocolo(vr_index).dsinform##1)
+                WHEN 'CADASTRO - INCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 34;
+                WHEN 'CADASTRO - ALTERACAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 35;
+                WHEN 'CADASTRO - EXCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 36;
+                WHEN 'SUSPENSAO - INCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 37;
+                WHEN 'SUSPENSAO - EXCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 38;
+                WHEN 'BLOQUEIO DE DEBITO - INCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 39;
+                WHEN 'BLOQUEIO DE DEBITO - EXCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 40;
+              END CASE;
+              
+            -- 15 = Pagamento DebAut
+            WHEN pr_protocolo(vr_index).cdtippro = 15 THEN
+              pr_protocolo(vr_index).idlstdom := 32;
+              
+            -- 3 = Capital
+            WHEN pr_protocolo(vr_index).cdtippro = 3 THEN
+              pr_protocolo(vr_index).idlstdom := 33;
+
+            -- 5 = Depósito
+            WHEN pr_protocolo(vr_index).cdtippro = 5 THEN
+              pr_protocolo(vr_index).idlstdom := 12;
+              
+            -- Nao identificado 
+            ELSE
+              pr_protocolo(vr_index).idlstdom := 0;
+          END CASE;  
+          
         EXCEPTION
           WHEN vr_exc_iter THEN
             -- Somente passa para a próxima iteração do LOOP
@@ -1657,6 +1803,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                                ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
                                ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
                                ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
+                               ,pr_dsprotoc IN VARCHAR2 DEFAULT NULL  --> Lista de protocolos a serem buscados
                                ,pr_iniconta IN NUMBER                 --> Início da conta
                                ,pr_nrregist IN NUMBER                 --> Número de registros
                                ,pr_cdtippro IN NUMBER                 --> Código protocolo
@@ -1731,6 +1878,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                                    ,pr_nrdconta => pr_nrdconta
                                    ,pr_dtinipro => pr_dtinipro
                                    ,pr_dtfimpro => pr_dtfimpro
+                                   ,pr_dsprotoc => pr_dsprotoc
                                    ,pr_iniconta => pr_iniconta
                                    ,pr_nrregist => pr_nrregist
                                    ,pr_cdtippro => vr_cdtippro
@@ -1760,7 +1908,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero
-    --  Data     : Junho/2013.                   Ultima atualização: --/--/----
+    --  Data     : Junho/2013.                   Ultima atualização: 13/04/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1768,6 +1916,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --  Objetivo  : Exclui protocolo.
     --
     --  Alteracoes: 01/06/2013 - Conversão Progress-Oracle (Petter - Supero).
+    --
+    --              13/04/2018 - Replicado ajustes versao progress e incrementado
+    --                           GPS. PRJ381 - Antifraude(Odirlei-AMcom)
     -- .............................................................................
   BEGIN
     DECLARE
@@ -1857,6 +2008,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         -- Atribui valor de saída
         pr_dsprotoc := rw_crappro.dsprotoc;
 
+        -- 13 - GPS, 23 - DAE, 24 - FGTS
+        -- 17 - DAS,16 - DARF
+        IF pr_cdtippro IN (13,23,24,16,17 )THEN  
+             /* Padrao diferente pois para FGTS e DAE utiliza modelo MD5
+                Gerando protocolo maior, e fazendo que estoure o campo 
+                ao concatenar texto. PRJ406 - FGTS*/
+          -- Atualiza registro
+          UPDATE crappro co
+          SET co.dsprotoc = co.dsprotoc || ' ' || '**ESTORNADO(' ||
+                            to_char(pr_dtmvtolt, 'DD/MM/RR') || '-' ||
+                            to_char(sysdate, 'HH24:MI:SS') || ')'
+          WHERE co.cdcooper = pr_cdcooper
+            AND co.nrdconta = pr_nrdconta
+            AND co.dtmvtolt = pr_dtmvtolt
+            AND co.cdtippro = pr_cdtippro
+            AND co.nrdocmto = pr_nrdocmto;
+             
+        ELSE
+
         -- Atualiza registro
         UPDATE crappro co
         SET co.dsprotoc = co.dsprotoc || ' ' || '*** ESTORNADO (' ||
@@ -1867,7 +2037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           AND co.dtmvtolt = pr_dtmvtolt
           AND co.cdtippro = pr_cdtippro
           AND co.nrdocmto = pr_nrdocmto;
-      
+        END IF;
       END IF;
 
       -- Retorno para sucesso
@@ -2021,11 +2191,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         
         END IF;
         
-        -- Validar para TAA
-        IF pr_cdorigem = 3 AND (rw_crappro.cdtippro = 5 OR rw_crappro.cdtippro = 6) THEN
-          RAISE vr_exc_iter;
-        END IF;
-
         -- Valida protocolo Favorecido
         IF pr_cdtippro <> 8 AND rw_crappro.cdtippro = 8 THEN
           RAISE vr_exc_iter;
@@ -2081,7 +2246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             pr_protocolo(vr_index).dscedent := substr(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'), 19);
           ELSE
             -- Verifica campo da tabela
-            IF rw_crappro.dscedent IS NULL THEN
+            IF TRIM(rw_crappro.dscedent) IS NULL THEN
               pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
             ELSE
               pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
@@ -2090,6 +2255,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         ELSE
           pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
         END IF;   
+        
+        -- Tratar para exibir o cedente quando for pagamento, porém a informação do cedente não existe no protocolo
+        IF rw_crappro.cdtippro IN (2,6,15) THEN
+          -- Verifica se existe o nome do cedente
+          IF TRIM(rw_crappro.dscedent) IS NULL THEN
+            -- Se nao possui nome de cedente, validar qual é o canal 
+            IF gene0002.fn_busca_entrada(3, rw_crappro.dsinform##3, '#') LIKE '%TAA%' THEN
+              -- Pagamento feito no ATM
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
+            ELSE 
+              -- Outro pagamento, onde nao existe o nome do cedente
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO';
+            END IF;
+          ELSE
+            pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
+          END IF;
+        END IF;
         
       END LOOP;         
       
@@ -2242,11 +2424,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           CLOSE cr_crappro; 
         END IF;
         
-        -- Validar para TAA
-        IF pr_cdorigem = 3 AND (rw_crappro.cdtippro = 5 OR rw_crappro.cdtippro = 6) THEN
-          RAISE vr_exc_iter;
-        END IF;
-
         -- Valida protocolo Favorecido
         /*IF pr_cdtippro <> 8 AND rw_crappro.cdtippro = 8 THEN
           RAISE vr_exc_iter;
@@ -2290,7 +2467,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         pr_protocolo(vr_index).nmoperad := vr_nmoperad;
         pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
 
-        IF rw_crappro.cdtippro IN (1,2,6,9,10,11,12,13,15,20,23,24) THEN
+        IF rw_crappro.cdtippro IN (1,2,4,5,6,9,10,11,12,13,15,20,23,24) THEN
           pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
           pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
 				  pr_protocolo(vr_index).nmrescop := rw_crapcop.nmrescop;
@@ -2302,7 +2479,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           --> Sac/Ouvidoria Bancoob
           pr_protocolo(vr_index).nrtelsac := rw_crapcop.nrsacbcb;
           pr_protocolo(vr_index).nrtelouv := rw_crapcop.nrouvbcb;
-        
         
 				ELSIF rw_crappro.cdtippro IN (16,17,18,19) THEN
 					pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdagesic;
@@ -2322,7 +2498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             pr_protocolo(vr_index).dscedent := substr(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'), 19);
           ELSE
             -- Verifica campo da tabela
-            IF rw_crappro.dscedent IS NULL THEN
+            IF TRIM(rw_crappro.dscedent) IS NULL THEN
               pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
             ELSE
               pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
@@ -2331,6 +2507,143 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         ELSE
           pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
         END IF;   
+        
+        -- Tratar para exibir o cedente quando for pagamento, porém a informação do cedente não existe no protocolo
+        IF rw_crappro.cdtippro IN (2,6,15) THEN
+          -- Verifica se existe o nome do cedente
+          IF TRIM(rw_crappro.dscedent) IS NULL THEN
+            -- Se nao possui nome de cedente, validar qual é o canal 
+            IF gene0002.fn_busca_entrada(3, rw_crappro.dsinform##3, '#') LIKE '%TAA%' THEN
+              -- Pagamento feito no ATM
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
+            ELSE 
+              -- Outro pagamento, onde nao existe o nome do cedente
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO';
+            END IF;
+          ELSE
+            pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
+          END IF;
+        END IF;
+        
+        -- Identificar a origem do comprovante
+        -- Devido as informações presentes na crappro, será possivel apenas diferenciar em TAA e não TAA
+        -- Quando não for TAA será devolvido como INTERNET
+        -- Caso seja necessario diferenciar a origem, deverá ser revisto a criação do protocolo
+        IF gene0002.fn_busca_entrada(3, rw_crappro.dsinform##3, '#') LIKE '%TAA%' THEN
+          pr_protocolo(vr_index).dsorigem := 'TAA';
+        ELSE 
+          pr_protocolo(vr_index).dsorigem := 'INTERNET';
+        END IF;
+            
+        -- Desmontar a lista de dominio dos protocolos
+        -- Essa lista é referente ao TIPO DE COMPROVANTE
+        CASE
+          -- 2 = Pagamento (Tit/Cnv) / 6 = Pagamento (Tit/Cnv) no TAA
+          WHEN pr_protocolo(vr_index).cdtippro IN ( 2, 6 ) THEN
+            -- Verificar se é comprovante de boleto ou convenio
+            IF UPPER(pr_protocolo(vr_index).dsinform##2) LIKE '%BANCO%'  THEN
+              -- Boleto
+              pr_protocolo(vr_index).idlstdom := 1;
+            ELSIF UPPER(pr_protocolo(vr_index).dsinform##2) LIKE '%CONVENIO%'  THEN
+              -- Convênio
+              pr_protocolo(vr_index).idlstdom := 2;
+            ELSE 
+              -- Paramento não identificado
+              pr_protocolo(vr_index).idlstdom := 15;
+            END IF;
+                
+          -- Credito Salario
+          WHEN pr_protocolo(vr_index).cdtippro = 4 THEN
+            pr_protocolo(vr_index).idlstdom := 3;
+                
+          -- TED
+          WHEN pr_protocolo(vr_index).cdtippro = 9 THEN							
+            pr_protocolo(vr_index).idlstdom := 4;
+
+          -- Transferência
+          WHEN pr_protocolo(vr_index).cdtippro = 1 THEN
+            -- Diferenciar entre intracooperativa e intercooperativa
+            -- As Transferencias que no mesma cooperativa terão o "CDAGECTL" no campo dsinform3
+            IF UPPER(pr_protocolo(vr_index).dsinform##3) LIKE '%' || to_char(rw_crapcop.cdagectl ) || '%'  THEN
+              -- INTRACOOPERATIVA
+              pr_protocolo(vr_index).idlstdom := 5;
+            ELSE
+              -- INTERCOOPERATIVA
+              pr_protocolo(vr_index).idlstdom := 6;
+            END IF;
+
+          -- 16 = Pagamento DARF / 18 = Agendamento DARF
+          WHEN pr_protocolo(vr_index).cdtippro IN ( 16, 18 ) THEN
+            pr_protocolo(vr_index).idlstdom := 7;
+                
+          -- 17 = Pagamento DAS / 19 = Agendamento DAS
+          WHEN pr_protocolo(vr_index).cdtippro IN ( 17, 19) THEN
+            pr_protocolo(vr_index).idlstdom := 8;
+                
+          -- 13 = Pagamento/Agendamento GPS
+          WHEN pr_protocolo(vr_index).cdtippro = 13 THEN
+            IF NVL(pr_protocolo(vr_index).flgagend,0) = 0 THEN
+              pr_protocolo(vr_index).idlstdom := 9; -- Pagamento efetivado
+            ELSE
+              pr_protocolo(vr_index).idlstdom := 14; -- Agendamento
+            END IF;
+                
+          -- 24 = Pagamento FGTS
+          WHEN pr_protocolo(vr_index).cdtippro = 24 THEN
+            pr_protocolo(vr_index).idlstdom := 10;
+                
+          -- 23 = Pagamento DAE
+          WHEN pr_protocolo(vr_index).cdtippro = 23 THEN
+            pr_protocolo(vr_index).idlstdom := 11;
+                
+          -- 20 = Recarga de Celular
+          WHEN pr_protocolo(vr_index).cdtippro = 20 THEN
+            pr_protocolo(vr_index).idlstdom := 1;
+                
+          -- 10 = Aplicação Pre/Pos
+          WHEN pr_protocolo(vr_index).cdtippro = 10 THEN
+            pr_protocolo(vr_index).idlstdom := 30;
+                
+          -- 12 = Resgate Aplicação Pre/Pos
+          WHEN pr_protocolo(vr_index).cdtippro = 12 THEN
+            pr_protocolo(vr_index).idlstdom := 31;
+                
+          -- 11 = Operações DebAut 
+          WHEN pr_protocolo(vr_index).cdtippro = 11  THEN
+            CASE UPPER(pr_protocolo(vr_index).dsinform##1)
+              WHEN 'CADASTRO - INCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 34;
+              WHEN 'CADASTRO - ALTERACAO' THEN
+                pr_protocolo(vr_index).idlstdom := 35;
+              WHEN 'CADASTRO - EXCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 36;
+              WHEN 'SUSPENSAO - INCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 37;
+              WHEN 'SUSPENSAO - EXCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 38;
+              WHEN 'BLOQUEIO DE DEBITO - INCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 39;
+              WHEN 'BLOQUEIO DE DEBITO - EXCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 40;
+            END CASE;
+            
+          -- 15 = Pagamento DebAut
+          WHEN pr_protocolo(vr_index).cdtippro = 15 THEN
+            pr_protocolo(vr_index).idlstdom := 32;
+                
+          -- 3 = Capital
+          WHEN pr_protocolo(vr_index).cdtippro = 3 THEN
+            pr_protocolo(vr_index).idlstdom := 33;
+
+          -- 5 = Depósito
+          WHEN pr_protocolo(vr_index).cdtippro = 5 THEN
+            pr_protocolo(vr_index).idlstdom := 12;
+                
+          -- Nao identificado 
+          ELSE
+            pr_protocolo(vr_index).idlstdom := 0;
+        END CASE;  
+          
 
     EXCEPTION
       WHEN vr_exc_erro THEN
