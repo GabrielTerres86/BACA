@@ -4,14 +4,14 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Rafael Cechet
-   Data    : Abril/2018                        Ultima atualizacao: 19/04/2018
+   Data    : Abril/2018                        Ultima atualizacao: 07/06/2018
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Consultar Boleto de Cobrança (SOA - ObterDetalheTituloCobranca)
    
-   Alteracoes: 
+   Alteracoes: 07/06/2018 - Incluido novas tags do endereco do beneficiario (P352 - Cechet)
 
 ..............................................................................*/
     
@@ -47,6 +47,13 @@ DEF VAR aux_nmprimtl_ben LIKE crapass.nmprimtl                         NO-UNDO.
 DEF VAR aux_nrcpfcgc_ben LIKE crapass.nrcpfcgc                         NO-UNDO.
 DEF VAR aux_inpessoa_ben LIKE crapass.inpessoa                         NO-UNDO.
 DEF VAR aux_dsdemail_ben LIKE crapcem.dsdemail                         NO-UNDO.
+DEF VAR aux_dsendere_bnf LIKE crapenc.dsendere                         NO-UNDO.
+DEF var aux_nrendere_bnf AS CHAR                                       NO-UNDO.
+DEF var aux_nrcepend_bnf AS CHAR                                       NO-UNDO.
+DEF var aux_complend_bnf LIKE crapenc.complend                         NO-UNDO.
+DEF var aux_nmbairro_bnf LIKE crapenc.nmbairro                         NO-UNDO.
+DEF var aux_nmcidade_bnf LIKE crapenc.nmcidade                         NO-UNDO.
+DEF var aux_cdufende_bnf LIKE crapenc.cdufende                         NO-UNDO.
 
 /* Variaveis de ROLLOUT */
 DEF VAR aux_dstextab LIKE craptab.dstextab                             NO-UNDO.
@@ -440,6 +447,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    "<dsdinst4>" + STRING(tt-consulta-blt.dsdinst4) + "</dsdinst4>" +                                   
                                    "<dsdinst5>" + STRING(tt-consulta-blt.dsdinst5) + "</dsdinst5>" +
                                    "<dtbloqueio>" + (IF tt-consulta-blt.dtbloqueio = ? THEN " " ELSE STRING(tt-consulta-blt.dtbloqueio,"99/99/9999")) + "</dtbloqueio>" + 
+                                   "<insitcrt>"  + STRING(tt-consulta-blt.insitcrt) + "</insitcrt>" +
                                    "</BOLETO>".
 END.
 
@@ -465,7 +473,21 @@ FIND FIRST crapcem WHERE crapcem.cdcooper = par_cdcooper
 
 IF AVAIL crapcem THEN
     ASSIGN aux_dsdemail_ben = crapcem.dsdemail.
-
+    
+/* Buscar o endereco comercial do beneficiario */
+FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper
+                     AND crapenc.nrdconta = par_nrdconta
+                     AND crapenc.tpendass = 9
+                     NO-LOCK NO-ERROR.
+                     
+IF AVAIL crapenc THEN
+   ASSIGN aux_dsendere_bnf = TRIM(crapenc.dsendere)
+          aux_nrendere_bnf = TRIM(STRING(crapenc.nrendere))
+          aux_nrcepend_bnf = STRING(crapenc.nrcepend,"99999999")
+          aux_complend_bnf = TRIM(crapenc.complend)
+          aux_nmbairro_bnf = TRIM(crapenc.nmbairro)
+          aux_nmcidade_bnf = TRIM(crapenc.nmcidade)
+          aux_cdufende_bnf = TRIM(crapenc.cdufende).
     
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<DADOS_BENEFICIARIO><nmprimtl>" + 
@@ -476,7 +498,15 @@ ASSIGN xml_operacao.dslinxml = "<DADOS_BENEFICIARIO><nmprimtl>" +
                                STRING(aux_inpessoa_ben) + 
                                "</inpessoa><dsdemail>" + 
                                aux_dsdemail_ben + 
-                               "</dsdemail></DADOS_BENEFICIARIO>".
+                               "</dsdemail>" + 
+                               "<dsendere_bnf>" + aux_dsendere_bnf + "</dsendere_bnf>" +
+                               "<nrendere_bnf>" + aux_nrendere_bnf + "</nrendere_bnf>" +
+                               "<nrcepend_bnf>" + aux_nrcepend_bnf + "</nrcepend_bnf>" +
+                               "<complend_bnf>" + aux_complend_bnf + "</complend_bnf>" +
+                               "<nmbairro_bnf>" + aux_nmbairro_bnf + "</nmbairro_bnf>" +
+                               "<nmcidade_bnf>" + aux_nmcidade_bnf + "</nmcidade_bnf>" +
+                               "<cdufende_bnf>" + aux_cdufende_bnf + "</cdufende_bnf>" +
+                               "</DADOS_BENEFICIARIO>".
 
 
 RETURN "OK".
