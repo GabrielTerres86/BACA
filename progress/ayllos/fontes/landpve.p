@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 17/07/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 01/02/2019
 
    Dados referentes ao programa:
 
@@ -312,10 +312,21 @@
                             
                29/05/2017 - Alterar chamada da procedure pc_gerandb por pc_gerandb_car
                             (Lucas Ranghetti #681579)
-
+                            
                17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
                             conta e referencia no mesmo dia(dtmvtolt) porem com valores
                             diferentes (Lucas Ranghetti #684123)    
+                            
+               24/10/2017 - Tratamento para buscar o nrcrcard "referencia original" caso 
+                            tenha valor no campo somente para consorcios (Lucas Ranghetti #739738)
+                            
+               19/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de 
+                            estorno de lançamentos na conta corrente              
+                            pc_estorna_lancto_prog (Fabio Adriano - AMcom).             
+
+			   01/02/2019 - Revitalizacao (Remocao de lotes)
+                            Jonata (Mouts)
+  
 ............................................................................. */
 
 { includes/var_online.i }
@@ -323,6 +334,14 @@
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/var_oracle.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
+
+/* Variáveis de uso da BO 200 */
+DEF VAR h-b1wgen0200         AS HANDLE                              NO-UNDO.
+DEF VAR aux_incrineg         AS INT                                 NO-UNDO.
+
+DEF VAR aux_cdcritic        AS INTE                                NO-UNDO.
+DEF VAR aux_dscritic        AS CHAR                                NO-UNDO.
 
 DEF VAR aux_cdhistorc        AS INTE                                 NO-UNDO.
 DEF VAR aux_cdagencic        AS CHAR FORMAT "x(04)"                  NO-UNDO.
@@ -1244,8 +1263,14 @@ DO WHILE TRUE:
                             craplcm.cdhistor = 1231 OR
                             craplcm.cdhistor = 1232 OR
                             craplcm.cdhistor = 1233 OR
-                            craplcm.cdhistor = 1234 THEN
-                                   ASSIGN aux_cdrefere = craplau.nrdocmto.
+                            craplcm.cdhistor = 1234 THEN                             
+                            DO:
+                               IF  craplau.nrcrcard <> 0 THEN
+                                   ASSIGN aux_cdrefere = craplau.nrcrcard.
+                               ELSE 
+                            ASSIGN aux_cdrefere = craplau.nrdocmto.
+                               
+                            END.
                     END.
 
                IF   aux_flgerros  THEN
@@ -1305,6 +1330,10 @@ DO WHILE TRUE:
                
            END.
       
+      IF NOT (craplot.nrdolote = 6400 or 
+	          craplot.nrdolote = 7050 or
+			  craplot.nrdolote = 8473) then
+      do:
       IF   craphis.indebcre = "D"   THEN
            craplot.vlcompdb = craplot.vlcompdb - tel_vllanmto.
       ELSE
@@ -1312,6 +1341,7 @@ DO WHILE TRUE:
                 craplot.vlcompcr = craplot.vlcompcr - tel_vllanmto.
 
       craplot.qtcompln = craplot.qtcompln - 1.
+	  end.
 
       ASSIGN tel_qtinfoln = craplot.qtinfoln   tel_qtcompln = craplot.qtcompln
              tel_vlinfodb = craplot.vlinfodb   tel_vlcompdb = craplot.vlcompdb
@@ -1375,7 +1405,8 @@ DO WHILE TRUE:
 
                         IF   glb_dscritic <> "" THEN
                         DO:
-                            MESSAGE glb_dscritic.
+                            MESSAGE glb_dscritic. 
+                            PAUSE 2 NO-MESSAGE.
                             BELL.
                             ASSIGN glb_dscritic = "".
                             UNDO, NEXT.
@@ -2283,7 +2314,7 @@ DO WHILE TRUE:
       RUN gera_log IN h-b1wgen0014 (INPUT glb_cdcooper,
                                     INPUT glb_cdoperad,
                                     INPUT "",
-                                    INPUT "AYLLOS",
+                                    INPUT "AIMARO",
                                     INPUT "Exclusao de lancamento",
                                     INPUT glb_dtmvtolt,
                                     INPUT TRUE,
@@ -2392,7 +2423,41 @@ DO WHILE TRUE:
             UNDO, NEXT.
           END.
 
-      DELETE craplcm.
+      
+      
+      IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+          RUN sistema/generico/procedures/b1wgen0200.p PERSISTENT SET h-b1wgen0200.
+                        
+      RUN estorna_lancamento_conta IN h-b1wgen0200 
+          (INPUT craplcm.cdcooper               /* par_cdcooper */
+          ,INPUT craplcm.dtmvtolt               /* par_dtmvtolt */
+          ,INPUT craplcm.cdagenci               /* par_cdagenci*/
+          ,INPUT craplcm.cdbccxlt               /* par_cdbccxlt */
+          ,INPUT craplcm.nrdolote               /* par_nrdolote */
+          ,INPUT craplcm.nrdctabb               /* par_nrdctabb */
+          ,INPUT craplcm.nrdocmto               /* par_nrdocmto */
+          ,INPUT craplcm.cdhistor               /* par_cdhistor */           
+          ,INPUT craplcm.nrctachq               /* par_nrctachq */
+          ,INPUT craplcm.nrdconta               /* par_nrdconta */
+          ,INPUT craplcm.cdpesqbb               /* par_cdpesqbb */
+          ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+          ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+      
+      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
+          glb_cdcritic = aux_cdcritic.
+          glb_dscritic = aux_dscritic.
+          RUN fontes/critic.p.
+          BELL.
+          MESSAGE glb_dscritic.
+          ASSIGN glb_cdcritic = 0.
+                      
+          PAUSE 2 NO-MESSAGE.
+                      
+          UNDO, NEXT.
+      END.
+      
+      IF  VALID-HANDLE(h-b1wgen0200) THEN
+          DELETE PROCEDURE h-b1wgen0200.
 
       /* Altera situação de lançamento automático para Rejeitado no caso Débito Automático */
       IF  AVAILABLE craplau THEN
