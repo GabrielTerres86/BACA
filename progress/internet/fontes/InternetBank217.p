@@ -474,10 +474,14 @@ FIND FIRST crapcem WHERE crapcem.cdcooper = par_cdcooper
 IF AVAIL crapcem THEN
     ASSIGN aux_dsdemail_ben = crapcem.dsdemail.
     
+FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper
+                     AND crapass.nrdconta = par_nrdconta
+                     NO-LOCK NO-ERROR.
+    
 /* Buscar o endereco comercial do beneficiario */
 FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper
                      AND crapenc.nrdconta = par_nrdconta
-                     AND crapenc.tpendass = 9
+                     AND crapenc.tpendass = (IF crapass.inpessoa = 1 THEN 10 ELSE 9)
                      NO-LOCK NO-ERROR.
                      
 IF AVAIL crapenc THEN
@@ -488,6 +492,14 @@ IF AVAIL crapenc THEN
           aux_nmbairro_bnf = TRIM(crapenc.nmbairro)
           aux_nmcidade_bnf = TRIM(crapenc.nmcidade)
           aux_cdufende_bnf = TRIM(crapenc.cdufende).
+ELSE          
+   ASSIGN aux_dsendere_bnf = 'NAO ENCONTRADO'
+          aux_nrendere_bnf = '0'
+          aux_nrcepend_bnf = '0'
+          aux_complend_bnf = ' '
+          aux_nmbairro_bnf = ' '
+          aux_nmcidade_bnf = ' '
+          aux_cdufende_bnf = ' '.
     
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<DADOS_BENEFICIARIO><nmprimtl>" + 
