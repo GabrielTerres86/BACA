@@ -16,6 +16,7 @@
  *				  28/07/2016 - Removi o comando session_start e a função utf8tohtml desnecessarios. SD 491925. (Carlos R.)
  *
  *          06/08/2018 - Ajuste na formatação do campo e-mail (Andrey Formigari - Mouts)
+ *			28/02/2019 - Projeto 437 Consignado AMcom - JDB (ID 20190208_437) - Ajutes conforme changeset feito por outra empresa	 (14/09/2018 - Tratamento para o projeto 437 Consignado (incluir  flnecont e tpmodcon))
  *
  * --------------
  */
@@ -24,7 +25,7 @@
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
 	require_once('valida_feriado.php');
-	isPostMethod();
+	isPostMethod(); 
 ?>
 
 <script>
@@ -220,29 +221,31 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 
 		<fieldset>
 			<legend>Informacoes Complementares</legend>
-
+				<!-- -> ID 20190208_437 -->
+				<!--
 				<label for="indescsg">Empr&eacute;stimo Consignado:</label>
 				<input type="checkbox" id = "indescsg" name="indescsg" style="margin-right:10px;"/>
+				-->
+				<label for="flgarqrt">Gera arq. retorno:</label>
+				<input type="checkbox" id = "flgarqrt" name="flgarqrt"/>
 
+				<br style="clear:both" />
+				<!-- <- -->
 				<label for="dtfchfol">Dia Fechamento Folha:</label>
 				<input name="dtfchfol" type="text"  id="dtfchfol" class='campo' />
 
 				<br style="clear:both" />
 				
-				<label for="flgarqrt">Gera arq. retorno:</label>
-				<input type="checkbox" id = "flgarqrt" name="flgarqrt"/>
-
-				<br style="clear:both" />
-				
 				<label for="flgvlddv">Valida DV Cad.Emp:</label>
 				<input type="checkbox" id = "flgvlddv"  name="flgvlddv"/>
-				
+				<!-- -> ID 20190208_437 -->
+				<!--
 				<br style="clear:both" />
 				<br style="clear:both" />
 				
 				<label for="ddmesnov">Dia M&ecirc;s Novo para Empr&eacute;stimo:</label>
 				<input name="ddmesnov" type="text"  id="ddmesnov" class='campo' />
-
+				-->
 				<label for="dtlimdeb">Dia Limite D&eacute;bitos Vinculados:</label>
 				<input name="dtlimdeb" type="text"  id="dtlimdeb" class='campo' />
 				
@@ -288,7 +291,28 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 				</select>
 				<label for="dtavscot">Data Gera&ccedil;&atilde;o:</label>
 				<input name="dtavscot" type="text"  id="dtavscot" class='campo' />
-
+			<!-- -> ID 20190208_437 -->	
+			</fieldset>
+			
+			<fieldset>
+        
+				<legend>Informa&ccedil;&otilde;es consignado</legend>
+				
+				<label for="flnecont">Conv&ecirc;nio Consignado:</label>
+				<input type="checkbox" id = "flnecont" name="flnecont" style="margin-right:10px;"/>
+				
+				<label for="tpmodcon">Modalidade de Conv&ecirc;nio:</label>
+				<select name="tpmodcon" id="tpmodcon" class="campo">
+					<option value=""></option>
+					<option value="1">Privado</option>
+					<option value="2">P&uacute;blico</option>
+					<option value="3">INSS</option>
+				</select>
+				
+				<input name="ddmesnov" type="hidden"  id="ddmesnov" class='campo' />
+				
+				<input name="indescsg" type="hidden" id="indescsg" />
+			<!-- <- -->
 				<!-- CAMPOS LOG -->
 				<?php
 					$cdcooper = ( isset($glbvars["cdcooper"]) ) ? $glbvars["cdcooper"] : '';
@@ -331,6 +355,10 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 				<input type='hidden' name='old_tpdebemp' id='old_tpdebemp'>
 				<input type='hidden' name='old_dtavsemp' id='old_dtavsemp'>				
 				<input type='hidden' name='old_tpdebcot' id='old_tpdebcot'>
+				<!-- -> ID 20190208_437 -->
+				<input type='hidden' name='old_dtavscot' id='old_dtavscot'>
+				<input type='hidden' name='old_tpmodcon' id='old_tpmodcon'>
+				<!-- <- -->
 				<input type='hidden' name='old_dtavscot' id='old_dtavscot'>
 				<input type='hidden'  id='data-2' value='<?php echo trim(valida_feriado($glbvars['dtmvtolt'],5, $arrayParam)); ?>'>
 				<input type='hidden'  id='data-3' value='<?php echo trim(valida_feriado($glbvars['dtmvtolt'],3, $arrayParam)); ?>'>

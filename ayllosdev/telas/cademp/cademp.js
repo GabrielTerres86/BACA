@@ -1,7 +1,7 @@
 /**************************************************************************************************
  Fonte: cademp.js                                                                         
  Autor: Cristian Filipe                                                                  
- Data : Novembro/2013   
+ Data : Novembro/2013    
  
  Alterações:  
 	 29/01/2014 - Desabilita campo opção, exceto para relatório, em LiberaFormulario         
@@ -59,6 +59,7 @@
 				  (Projeto 357 - Reinert)
 
      06/08/2018 - Ajuste na formatação do campo e-mail (Andrey Formigari - Mouts)
+     28/02/2019 - Projeto 437 Consignado AMcom - JDB (ID 20190208_437) - Ajutes conforme changeset feito por outra empresa	 (14/09/2018 - Tratamento para o projeto 437 Consignado (incluir  flnecont e tpmodcon,  remover indescsg))
 ************************************************************************************************/
 
 
@@ -157,6 +158,10 @@ var cTodosFormEmprestimo,
         cTpdebcot,
         cDtavsemp,
         cDtavscot,
+		// -> ID 20190208_437
+		cTpmodcon,
+        cFlnecont,
+		//<-
 // Campos  old (Para a procedure Gera_log)
         old_cIndescsg,
         old_cDtfchfol,
@@ -171,7 +176,11 @@ var cTodosFormEmprestimo,
         old_cTpdebemp,
         old_cTpdebcot,
         old_cDtavsemp,
-        old_cDtavscot;
+        old_cDtavscot,
+		// -> ID 20190208_437
+		old_cTpmodcon,
+        old_cFlnecont;
+		//<-
 
 
 
@@ -327,6 +336,35 @@ function controlaFoco() {
 
 }
 
+// -> ID 20190208_437
+function validaPermissao(){
+	var validaPerm = true;
+	$.ajax({		
+		type: "POST",
+        async: false,
+		url: UrlSite + "telas/cademp/validaPermissao.php", 
+		data: {
+			cddopcao: cddopcao,
+			redirect: "script_ajax"
+		}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				hideMsgAguardo();				
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}				
+	});
+	return validaPerm;
+}
+//<-
+
 function LiberaFormulario() {
 
     if ($('#cddopcao', '#frmCab').hasClass('campoTelaSemBorda')) {
@@ -339,6 +377,11 @@ function LiberaFormulario() {
     }
 
     cddopcao = cCddopcao.val();
+	
+	// -> ID 20190208_437
+	if (!(validaPermissao()))
+		return false;
+	//<-
 
     formataInfEmpresas();
 
@@ -516,6 +559,11 @@ function formataInfEmpresas() {
     var rDtavsemp = $('label[for="dtavsemp"]', '#frmInfEmprestimo');
     var rTpdebcot = $('label[for="tpdebcot"]', '#frmInfEmprestimo');
     var rDtavscot = $('label[for="dtavscot"]', '#frmInfEmprestimo');
+	
+	// -> ID 20190208_437
+	var rTpmodcon = $('label[for="tpmodcon"]', '#frmInfEmprestimo');
+    var rFlnecont = $('label[for="flnecont"]', '#frmInfEmprestimo');
+	// <-
 
     rIndescsg.css({width: '210px'});
     rDtfchfol.css({width: '199px'});
@@ -531,6 +579,10 @@ function formataInfEmpresas() {
     rDtavsemp.css({width: '152px'});
     rTpdebcot.css({width: '150px'});
     rDtavscot.css({width: '152px'});
+	// -> ID 20190208_437
+	rTpmodcon.css({width: '190px'});
+    rFlnecont.css({width: '190px'});
+	//<-
 
     cIndescsg = $('#indescsg', '#frmInfEmprestimo');
     cDtfchfol = $('#dtfchfol', '#frmInfEmprestimo');
@@ -546,7 +598,11 @@ function formataInfEmpresas() {
     cDtavsemp = $('#dtavsemp', '#frmInfEmprestimo');
     cTpdebcot = $('#tpdebcot', '#frmInfEmprestimo');
     cDtavscot = $('#dtavscot', '#frmInfEmprestimo');
-
+	// -> ID 20190208_437
+	cTpmodcon = $('#tpmodcon', '#frmInfEmprestimo');
+    cFlnecont = $('#flnecont', '#frmInfEmprestimo');
+	//<-
+	
     cDdmesnov.css({width: '30px'}).setMask('INTEGER','99');
     cDtlimdeb.css({width: '30px'}).setMask('INTEGER','99');
     cTpconven.css({width: '355px'});
@@ -557,6 +613,9 @@ function formataInfEmpresas() {
     cDtavsemp.addClass('data').css({'width': '80px', 'float': 'left'});
     cTpdebcot.css({width: '120px'});
     cDtavscot.addClass('data').css({'width': '80px', 'float': 'left'});
+	// -> ID 20190208_437
+	cTpmodcon.css({width: '120px'});
+	//<-
 
     highlightObjFocus($('#frmInfEmprestimo'));
     /*Formatando Formulario Emprestimo*/
@@ -610,6 +669,15 @@ function controlaOperacao() {
                             '$("#nrdocnpj","#frmInfEmpresa").focus();');
                     return false;
                 }
+				// -> ID 20190208_437
+				if (cddopcao == 'I') {
+					if (!validaCNPJCadastrado(cnpj))
+					{
+						return false;
+					}
+				}
+				//<-
+				
             }else{
                 showError('error','campo de CNPJ ser informado!',
                           'Campo Obrigat&oacute;rio!',
@@ -774,7 +842,10 @@ function controlaOperacao() {
             }
 			
             // Se estiver checado, efetuamos as validacoes necessarias
-            if (cIndescsg.is(":checked") && (cDtfchfol.val()=="" || (cDtfchfol.val() <= 0 || cDtfchfol.val() > 28))){
+            // -> ID 20190208_437
+			//if (cIndescsg.is(":checked") && (cDtfchfol.val()=="" || (cDtfchfol.val() <= 0 || cDtfchfol.val() > 28))){
+			  if (cFlnecont.is(":checked") && (cDtfchfol.val()=="" || (cDtfchfol.val() <= 0 || cDtfchfol.val() > 28))){
+			// <-
                 showError('error','Dia Fechamento Folha deve ser entre 1 e 28.','Campo obrigat&oacute;rio','$("#dtfchfol","#frmInfEmprestimo").focus();');
                 return false;
         }
@@ -1046,8 +1117,11 @@ function controlaFocoFormulariosEmpresa() {
         cTodosFormEmprestimo.habilitaCampo();
         cDtavsemp.desabilitaCampo();
         cDtavscot.desabilitaCampo();
-
-        cIndescsg.unbind('keypress').bind('keypress', function(e) {
+		
+		// -> ID 20190208_437
+        //cIndescsg.unbind('keypress').bind('keypress', function(e) {
+		cFlnecont.unbind('keypress').bind('keypress', function(e) {
+		//<-
             if (e.keyCode == 9 || e.keyCode == 13) {
                 cDtfchfol.focus();
                 return false;
@@ -1119,6 +1193,40 @@ function controlaFocoFormulariosEmpresa() {
             }
             cDtavscot.val(dat_calcu);
         });
+		
+		// -> ID 20190208_437
+		//Informacoes consignado
+
+        //tpmodcon
+        cTpmodcon.unbind('keypress').bind('keypress', function(e) {
+            if (e.keyCode == 9 || e.keyCode == 13) {
+                cDdmesnov.focus();
+                return false;
+            }
+        });
+        cTpmodcon.desabilitaCampo();
+		if (cddopcao == "I") {
+			cTpmodcon.val("");
+		}
+		
+        //ddmesnov
+        cDdmesnov.focus().unbind('keypress').bind('keypress', function(e) {
+            if (e.keyCode == 9 || e.keyCode == 13) {
+                cFlnecont.focus();
+                return false;
+            }
+        });
+        
+        cFlnecont.desabilitaCampo();
+        //flnecont
+        cFlnecont.focus().unbind('keypress').bind('keypress', function(e) {
+            if (e.keyCode == 9 || e.keyCode == 13) {
+                controlaOperacao();
+                return false;
+            }
+        });
+		//<-
+		
         /*Formulario Emprestimo */
         
         if (cddopcao == "A" && cCdempres.val() == '') {
@@ -1209,7 +1317,10 @@ function alteraInclui() {
     var cnpj;
 
     /* Altera valor nos campos Checkbox */
-    cIndescsg.is(':checked') ? cIndescsg.val(2) : cIndescsg.val(1);
+    // -> ID 20190208_437
+	//cIndescsg.is(':checked') ? cIndescsg.val(2) : cIndescsg.val(1);
+	cFlnecont.is(':checked') ? cFlnecont.val(1) : cFlnecont.val(0);
+	//<-
     cFlgpagto.is(':checked') ? cFlgpagto.val("yes") : cFlgpagto.val("no");
     cFlgpgtib.is(':checked') ? cFlgpgtib.val("yes") : cFlgpgtib.val("no");
     cFlgarqrt.is(':checked') ? cFlgarqrt.val("yes") : cFlgarqrt.val("no");
@@ -1312,7 +1423,11 @@ function alteraInclui() {
             cdempfol: cCdempfol.val(),
             dtavsemp: cDtavsemp.val(),
             dtavscot: cDtavscot.val(),
-            old_flgvlddv: old_cFlgvlddv,
+			// -> ID 20190208_437
+			tpmodcon: cTpmodcon.val(),
+            flnecont: cFlnecont.val(),
+            //<-
+			old_flgvlddv: old_cFlgvlddv,
             old_tpconven: old_cTpconven,
             old_tpdebemp: old_cTpdebemp,
             old_tpdebcot: old_cTpdebcot,
@@ -1323,6 +1438,10 @@ function alteraInclui() {
             old_cdempfol: old_cCdempfol,
             old_dtavsemp: old_cDtavsemp,
             old_dtavscot: old_cDtavscot,
+			// -> ID 20190208_437
+			old_tpmodcon: old_cTpmodcon,
+            old_flnecont: old_cFlnecont,
+			//<-
             redirect: "script_ajax"
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1394,6 +1513,45 @@ function define_cdempres() {
     });
 }
 
+// -> ID 20190208_437
+// Valida a existencia de CNPJ já cadastrado
+function validaCNPJCadastrado(cnpj) {
+     var retornoValida = true;
+	 $.ajax({
+        type: 'POST',
+        async: false,
+        url: UrlSite + 'telas/cademp/valida_cnpjempresa.php',
+        data: {
+            nrdocnpj: cnpj,
+            redirect: 'script_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError(
+                'error',
+                'Nao foi possivel concluir a operacao.',
+                'Alerta - Ayllos',
+                '$("#nrdocnpj","#frmInfEmpresa").focus();');
+			retornoValida = false;
+        },
+        success: function (response) {
+            hideMsgAguardo();
+			eval(response);
+			if (cdemprescnpj != '')	
+			{
+				showError(
+					'error',
+					'CNPJ j&aacute; v&iacute;nculado &aacute; empresa ' + cdemprescnpj + '. N&atilde;o &eacute; poss&iacute;vel cadastrar.',
+					'Alerta - Ayllos',
+					'$("#nrdocnpj","#frmInfEmpresa").focus();');
+				retornoValida = false;
+			}
+				
+        }//success
+    });//ajax
+	return retornoValida;
+}
+//<-
 
 // Busca as informações da empresa
 function buscaEmpresas() {
@@ -1573,8 +1731,10 @@ function selecionaEmpresa() {
                 cTpdebemp.val($('#htpdebemp', $(this)).val());
                 cTpdebcot.val($('#htpdebcot', $(this)).val());
                 cIndescsg.val($('#hindescsg', $(this)).val());
-                cIndescsg.val() == 2 ? cIndescsg.attr('checked', 'checked') : cIndescsg.removeAttr('checked');
-                cFlgpagto.val($('#hflgpagto', $(this)).val());
+                // -> ID 20190208_437
+				//cIndescsg.val() == 2 ? cIndescsg.attr('checked', 'checked') : cIndescsg.removeAttr('checked');
+                //<-
+				cFlgpagto.val($('#hflgpagto', $(this)).val());
                 cFlgpagto.val() == 'yes' ? cFlgpagto.attr('checked', 'checked') : cFlgpagto.removeAttr('checked');
                 cFlgarqrt.val($('#hflgarqrt', $(this)).val());
                 cFlgarqrt.val() == 'yes' ? cFlgarqrt.attr('checked', 'checked') : cFlgarqrt.removeAttr('checked');
@@ -1588,7 +1748,11 @@ function selecionaEmpresa() {
                 cCdcontar.val($('#hcdcontar', $(this)).val());
                 cDscontar.val($('#hdscontar', $(this)).val());
                 cVllimfol.val($('#hvllimfol', $(this)).val());
-
+				// -> ID 20190208_437
+				cTpmodcon.val($('#htpmodcon', $(this)).val());
+                cFlnecont.val($('#hflnecont', $(this)).val());
+                cFlnecont.val() == 1 ? cFlnecont.attr('checked', 'checked') : cFlnecont.removeAttr('checked');
+				//<-
                 old_cFlgvlddv = $('#hflgvlddv', $(this)).val();
                 old_cTpconven = $('#htpconven', $(this)).val();
                 old_cTpdebemp = $('#htpdebemp', $(this)).val();
@@ -1603,7 +1767,10 @@ function selecionaEmpresa() {
                 old_cFlgpgtib = $('#hflgpgtib', $(this)).val();
                 old_cCdcontar = $('#hcdcontar', $(this)).val();
                 old_cVllimfol = $('#hvllimfol', $(this)).val();
-
+				// -> ID 20190208_437
+				old_cTpmodcon = $('#htpmodcon', $(this)).val();
+                old_cFlnecont = $('#hflnecont', $(this)).val();
+				//<-
                 cCdempres.desabilitaCampo();
             }
         });

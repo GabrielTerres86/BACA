@@ -1,16 +1,18 @@
 <?php
 /*!
  * FONTE        : salvar_dados.php
- * CRIAÇÃO      : Michel Candido Gati Tecnologia
- * DATA CRIAÇÃO : 21/08/2013
+ * CRIAÃ‡ÃƒO      : Michel Candido Gati Tecnologia
+ * DATA CRIAÃ‡ÃƒO : 21/08/2013
  *
  * ALTERACAO    : 08/07/2015 - Adicionado validacao de campos referente a dias da tela de tarifas. (Jorge/Elton) - Emergencial
  *                18/05/2016 - Adicionado o campo dtlimdeb. (Jaison/Marcos)
  *				  20/07/2016 - Corrigi os erros de utilizacao de variaveis nao declaradas. SD 471925 (Carlos R.)	
  *                04/12/2017 - Alterar armazenamento da variavel flgdgfib dos valores "true" e "false" para "yes" e "no" (Lucas Ranghetti #802339)
+ *				  28/02/2019 - Projeto 437 Consignado AMcom - JDB (ID 20190208_437) - Ajutes conforme changeset feito por outra empresa
+ *
  *
  */
-
+ 
     session_start();
     require_once('../../includes/config.php');
     require_once('../../includes/funcoes.php');
@@ -52,7 +54,12 @@
     $tpdebemp = ( isset($_POST["tpdebemp"]) ) ? $_POST["tpdebemp"] : '';
     $tpdebcot = ( isset($_POST["tpdebcot"]) ) ? $_POST["tpdebcot"] : '';
     $tpdebppr = ( isset($_POST["tpdebppr"]) ) ? $_POST["tpdebppr"] : '';
-    $indescsg = ( isset($_POST["indescsg"]) ) ? $_POST["indescsg"] : '';
+	
+	// -> ID 20190208_437
+    //$indescsg = ( isset($_POST["indescsg"]) ) ? $_POST["indescsg"] : '';
+	$indescsg = ( isset($_POST["flnecont"]) ) ? $_POST["flnecont"] : '';
+	// <-
+	
     $flgpagto = ( isset($_POST["flgpagto"]) ) ? $_POST["flgpagto"] : '';
     $flgarqrt = ( isset($_POST["flgarqrt"]) ) ? $_POST["flgarqrt"] : '';
     $dtfchfol = ( isset($_POST["dtfchfol"]) ) ? $_POST["dtfchfol"] : '';
@@ -96,8 +103,13 @@
     $old_tpdebemp = ( isset($_POST["old_tpdebemp"]) ) ? $_POST["old_tpdebemp"] : '';
     $old_tpdebcot = ( isset($_POST["old_tpdebcot"]) ) ? $_POST["old_tpdebcot"] : '';
     $old_tpdebppr = ( isset($_POST["old_tpdebppr"]) ) ? $_POST["old_tpdebppr"] : '';
-    $old_indescsg = ( isset($_POST["old_indescsg"]) ) ? $_POST["old_indescsg"] : '';
-    $old_flgpagto = ( isset($_POST["old_flgpagto"]) ) ? $_POST["old_flgpagto"] : '';
+	
+	// -> ID 20190208_437
+    //$old_indescsg = ( isset($_POST["old_indescsg"]) ) ? $_POST["old_indescsg"] : '';	
+	$old_indescsg = ( isset($_POST["old_flnecont"]) ) ? $_POST["old_flnecont"] : '';
+    //<-
+	
+	$old_flgpagto = ( isset($_POST["old_flgpagto"]) ) ? $_POST["old_flgpagto"] : '';
     $old_flgarqrt = ( isset($_POST["old_flgarqrt"]) ) ? $_POST["old_flgarqrt"] : '';
     $old_dtfchfol = ( isset($_POST["old_dtfchfol"]) ) ? $_POST["old_dtfchfol"] : '';
     $old_cdempfol = ( isset($_POST["old_cdempfol"]) ) ? $_POST["old_cdempfol"] : '';
@@ -128,7 +140,10 @@
         $flgdgfib = no;  // Flag de digitalizacao: Se for TRUE, deve mudar pra FALSE
     }
 
-    $auxIndescsg = $indescsg=="2"?"yes":"no";
+	// -> ID 20190208_437
+    //$auxIndescsg = $indescsg=="2"?"yes":"no";
+	$auxIndescsg = $indescsg=="1"?"yes":"no"; 
+	//<-
 
 	$cdcooper = ( isset($glbvars["cdcooper"]) ) ? $glbvars["cdcooper"] : '';
 	$cdagenci = ( isset($glbvars["cdagenci"]) ) ? $glbvars["cdagenci"] : '';
