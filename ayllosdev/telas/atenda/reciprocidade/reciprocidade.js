@@ -3097,7 +3097,8 @@ function abrirAprovacao(hideBtnDetalhes) {
          && typeof nvopelib !== 'undefined' && nvopelib
          && hideBtnDetalhes) {
 
-        pedeSenhaCoordenador(nvopelib, 'aprovarContrato(' + cdcooper + ',' + cdalcada + ',' + idrecipr + ')', 'divRotina');
+        aprovarContrato(cdcooper, cdalcada, idrecipr);
+        //pedeSenhaCoordenador(nvopelib, 'aprovarContrato('+cdcooper+','+cdalcada+','+idrecipr+')', 'divRotina');
         return false;
     }
 
