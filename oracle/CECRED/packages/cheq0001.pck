@@ -309,8 +309,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            deve ordenar a lista pelo numero do cheque (Tiago/Adriano)
                      
               01/04/2018 - Ajuste para utilizar cursor com union, para validar se já existe
-                            crapdev criada (Jonata - MOUTS SD 859822).                           
-                     
+                            crapdev criada (Jonata - MOUTS SD 859822).  
+                            
               19/06/2018 - Ajuste para alimentar corretamente a agencia na solicitação do pedido
                           (Adriano - INC0017466).                         
                      
@@ -998,10 +998,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 
          --Selecionar devolucoes de cheques
          OPEN cr_crapdev_union (pr_cdcooper => pr_cdcooper
-                               ,pr_cdbanchq => vr_aux_cdbanchq
-                               ,pr_cdagechq => pr_cdagechq
-                               ,pr_nrctachq => pr_nrctachq
-                               ,pr_nrcheque => pr_nrdocmto
+                         ,pr_cdbanchq => vr_aux_cdbanchq
+                         ,pr_cdagechq => pr_cdagechq
+                         ,pr_nrctachq => pr_nrctachq
+                         ,pr_nrcheque => pr_nrdocmto
                                ,pr_cdhistor => pr_cdhistor
                                ,pr_vllanmto => pr_vllanmto
                                ,pr_cdbandep => pr_cdbandep
@@ -1228,9 +1228,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
            AND   crapdev.nrctachq = pr_nrctachq
            AND   crapdev.nrcheque = pr_nrdocmto
            AND   crapdev.cdhistor = pr_cdhistor
-           AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
-           AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
-           AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ');
+           AND   nvl(crapdev.cdbandep, 0) = nvl(pr_cdbandep, 0)
+           AND   nvl(crapdev.cdagedep, 0) = nvl(pr_cdagedep, 0)
+           AND   nvl(crapdev.nrctadep, 0) = nvl(pr_nrctadep, 0);
 
            --Se nao conseguiu deletar
            IF SQL%ROWCOUNT = 0 THEN
@@ -1257,9 +1257,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              AND   crapdev.cdagechq = pr_cdagechq
              AND   crapdev.nrctachq = pr_nrctachq
              AND   crapdev.nrcheque = pr_nrdocmto
-             AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
-             AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
-             AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ')
+             AND   nvl(crapdev.cdbandep, 0) = nvl(pr_cdbandep, 0)
+             AND   nvl(crapdev.cdagedep, 0) = nvl(pr_cdagedep, 0)
+             AND   nvl(crapdev.nrctadep, 0) = nvl(pr_nrctadep, 0)
              AND   crapdev.cdhistor = 46;
            EXCEPTION
            WHEN OTHERS THEN
@@ -1281,9 +1281,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
            AND   crapdev.nrctachq = pr_nrctachq
            AND   crapdev.nrcheque = pr_nrdocmto
            AND   crapdev.cdhistor = pr_cdhistor
-           AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
-           AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
-           AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ');
+           AND   nvl(crapdev.cdbandep,0) = nvl(pr_cdbandep,0)
+           AND   nvl(crapdev.cdagedep,0) = nvl(pr_cdagedep,0)
+           AND   nvl(crapdev.nrctadep,0) = nvl(pr_nrctadep,0);
 
            --Se nao conseguiu deletar
            IF SQL%ROWCOUNT = 0 THEN
@@ -1309,9 +1309,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              AND   crapdev.cdagechq = pr_cdagechq
              AND   crapdev.nrctachq = pr_nrctachq
              AND   crapdev.nrcheque = pr_nrdocmto
-             AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
-             AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
-             AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ')
+             AND   nvl(crapdev.cdbandep, 0) = nvl(pr_cdbandep,0)
+             AND   nvl(crapdev.cdagedep, 0) = nvl(pr_cdagedep, 0)
+             AND   nvl(crapdev.nrctadep, 0) = nvl(pr_nrctadep, 0)
              AND   crapdev.cdhistor = 46;
            EXCEPTION
              WHEN OTHERS THEN
@@ -1332,9 +1332,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
            AND   crapdev.cdagechq = pr_cdagechq
            AND   crapdev.nrctachq = pr_nrctachq
            AND   crapdev.nrcheque = pr_nrdocmto
-           AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
-           AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
-           AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ')
+           AND   nvl(crapdev.cdbandep, 0) = nvl(pr_cdbandep, 0)
+           AND   nvl(crapdev.cdagedep, 0) = nvl(pr_cdagedep, 0)
+           AND   nvl(crapdev.nrctadep, 0) = nvl(pr_nrctadep, 0)
            AND   crapdev.cdhistor = pr_cdhistor;
 
            --Se nao conseguiu deletar
@@ -1361,9 +1361,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              AND   crapdev.cdagechq = pr_cdagechq
              AND   crapdev.nrctachq = pr_nrctachq
              AND   crapdev.nrcheque = pr_nrdocmto
-             AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
-             AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
-             AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ')
+             AND   nvl(crapdev.cdbandep, 0) = nvl(pr_cdbandep, 0)
+             AND   nvl(crapdev.cdagedep, 0) = nvl(pr_cdagedep, 0)
+             AND   nvl(crapdev.nrctadep, 0) = nvl(pr_nrctadep, 0)
              AND   crapdev.cdhistor = 46;
            EXCEPTION
            WHEN OTHERS THEN
@@ -3798,7 +3798,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       RAISE vr_exc_saida;
     END IF;
     */
-
+    
 	/* INICIO: SCTASK0039579 */
     
     CADA0006.pc_ind_impede_talonario(pr_cdcooper => vr_cdcooper
@@ -3986,7 +3986,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
   END pc_solicita_talonario_web;
-  
+            
   PROCEDURE pc_listar_talonarios_web(pr_nrdconta      IN crapass.nrdconta%TYPE --> Numero da conta
                                     ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic     OUT PLS_INTEGER           --> Código da crítica

@@ -312,7 +312,7 @@
                             
                29/05/2017 - Alterar chamada da procedure pc_gerandb por pc_gerandb_car
                             (Lucas Ranghetti #681579)
-                            
+
                17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
                             conta e referencia no mesmo dia(dtmvtolt) porem com valores
                             diferentes (Lucas Ranghetti #684123)    
@@ -1263,14 +1263,14 @@ DO WHILE TRUE:
                             craplcm.cdhistor = 1231 OR
                             craplcm.cdhistor = 1232 OR
                             craplcm.cdhistor = 1233 OR
-                            craplcm.cdhistor = 1234 THEN                             
+                            craplcm.cdhistor = 1234 THEN
                             DO:
                                IF  craplau.nrcrcard <> 0 THEN
                                    ASSIGN aux_cdrefere = craplau.nrcrcard.
                                ELSE 
-                            ASSIGN aux_cdrefere = craplau.nrdocmto.
+                                   ASSIGN aux_cdrefere = craplau.nrdocmto.
                                
-                            END.
+                    END.
                     END.
 
                IF   aux_flgerros  THEN
@@ -1406,6 +1406,7 @@ DO WHILE TRUE:
                         IF   glb_dscritic <> "" THEN
                         DO:
                             MESSAGE glb_dscritic.
+                            PAUSE 2 NO-MESSAGE.
                             BELL.
                             ASSIGN glb_dscritic = "".
                             UNDO, NEXT.
@@ -2450,11 +2451,11 @@ DO WHILE TRUE:
           MESSAGE glb_dscritic.
           ASSIGN glb_cdcritic = 0.
                       
-          PAUSE 2 NO-MESSAGE.
-                      
-          UNDO, NEXT.
-      END.
-      
+            PAUSE 2 NO-MESSAGE.
+                        
+            UNDO, NEXT.
+          END.
+
       IF  VALID-HANDLE(h-b1wgen0200) THEN
           DELETE PROCEDURE h-b1wgen0200.
 
