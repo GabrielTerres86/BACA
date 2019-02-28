@@ -184,7 +184,7 @@ function formataFiltro(){
     Lcdempres.addClass('rotulo')
             .css('width','150px');
 
-    Ccdempres.css({ 'width': '100px', 'text-align': 'right' })
+    Ccdempres.css({ 'width': '57px', 'text-align': 'right' })
                 .addClass('inteiro')
                 .addClass('codigo pesquisa')
                 .attr('maxlength', '10')
@@ -195,7 +195,7 @@ function formataFiltro(){
                 .css('display', 'block');
 
     Ccdempres.setMask("INTEGER", "zzzzz.zz9", ".", "");
-    Cdtativconsignado.attr('size','10')
+    Cdtativconsignado.attr('size','8')
         .attr('maxlength','10')
         .setMask("INTEGER", "zz/zz/zzzz", "","");
 
