@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Abril/2003.                     Ultima atualizacao: 31/08/2012
+   Data    : Abril/2003.                     Ultima atualizacao: 20/02/2019
 
    Dados referentes ao programa:
 
@@ -44,6 +44,9 @@
                             (Isara - RKAM)
                             
                31/08/2012 - Tratamento crapcop.nmrescop "x(20)" (Diego).
+                             
+               20/02/2019 - Inclusao de log de fim de execucao do programa 
+                            (Belli - Envolti - Chamado REQ0039739) 
                             
 ............................................................................. */
 
@@ -118,6 +121,48 @@ UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    +
                   "Stored Procedure rodou em "         + 
                   STRING(INT(ETIME / 1000),"HH:MM:SS") + 
                   " >> log/proc_batch.log").
+
+/* Inclusao de log de fim de execucao do programa -  20/02/2019 - Chamado REQ0039739 */
+
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "O",
+    INPUT "CRPS340.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 912,
+    input "912 - FINALIZADO LEGAL",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "PF",
+    INPUT "CRPS340.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 0,
+    input "",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
                   
 RUN fontes/fimprg.p.
 

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Janeiro/2010.                    Ultima atualizacao: 03/09/2012.
+   Data    : Janeiro/2010.                    Ultima atualizacao: 20/02/2019.
 
    Dados referentes ao programa:
 
@@ -41,6 +41,9 @@
                
                04/09/2012 - Inclusão dos campos qtdtic e valortic para o
                             relatorio de cheques roubados/dev. (Lucas R.)
+                             
+               20/02/2019 - Inclusao de log de fim de execucao do programa 
+                            (Belli - Envolti - Chamado REQ0039739)
                
 ............................................................................. */
 
@@ -48,6 +51,9 @@ DEF STREAM str_1.
 DEF STREAM str_2.   /* Relatorio */ 
 
 { includes/var_batch.i "NEW" } 
+
+/* chamado oracle - 20/02/2019 - Chamado REQ0039739 */
+{ sistema/generico/includes/var_oracle.i }
 
 DEF        VAR rel_nmempres AS CHAR    FORMAT "x(15)"                NO-UNDO.
 DEF        VAR rel_nmrelato AS CHAR    FORMAT "x(40)" EXTENT 5       NO-UNDO.
@@ -463,11 +469,11 @@ ASSIGN glb_cdprogra = "crps557"
        aux_fill_191 = FILL("-",208)
        glb_flgbatch = false.
 
-RUN fontes/iniprg.p.
+RUN fontes/iniprg.p.   
 
 IF   glb_cdcritic > 0 THEN
      QUIT.
-   
+  
 /* Busca os valores das Tarifas */
 FIND FIRST gncdtrf NO-LOCK NO-ERROR.
 
@@ -522,6 +528,48 @@ DO:
 
    RUN pi_processa_relatorio.
 END.
+
+/* Inclusao de log de fim de execucao do programa -  20/02/2019 - Chamado REQ0039739 */
+
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "O",
+    INPUT "CRPS557.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 912,
+    input "912 - FINALIZADO LEGAL",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "PF",
+    INPUT "CRPS557.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 0,
+    input "",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} } 
 
 RUN fontes/fimprg.p.
 

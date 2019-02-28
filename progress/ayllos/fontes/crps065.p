@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Agosto/93.                          Ultima atualizacao: 24/04/2017
+   Data    : Agosto/93.                          Ultima atualizacao: 20/02/2019
 
    Dados referentes ao programa:
 
@@ -34,12 +34,18 @@
 			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+                             
+               20/02/2019 - Inclusao de log de fim de execucao do programa 
+                            (Belli - Envolti - Chamado REQ0039739) 
 
  ............................................................................ */
 
 DEF STREAM str_1.    /*  Para relatorio de controle dos debitos do IPMF  */
 
 { includes/var_batch.i "NEW" }
+
+/* Chamada Oracle - 20/02/2019 - REQ0039739 */
+{ sistema/generico/includes/var_oracle.i }
 { includes/var_cpmf.i }
 
 DEF        VAR rel_nmempres AS CHAR    FORMAT "x(15)"                NO-UNDO.
@@ -86,7 +92,7 @@ RUN fontes/iniprg.p.
 
 IF   glb_cdcritic > 0 THEN
      RETURN.
-  
+ 
 FORM "PERIODOS"                 AT 24
      "APURACAO"                 AT 42
      "DEBITO NA CONTA-CORRENTE" AT 64
@@ -139,6 +145,49 @@ FORM aux_contador               AT   1 FORMAT "z9"
 
 IF   tab_dtfimpmf < glb_dtmvtoan   THEN
      DO:
+	 
+    /* Inclusao de log de fim de execucao do programa -  20/02/2019 - Chamado REQ0039739 */
+
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "O",
+    INPUT "CRPS065.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 912,
+    input "912 - FINALIZADO LEGAL",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+    CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "PF",
+    INPUT "CRPS065.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 0,
+    input "",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+    CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+	 
         RUN fontes/fimprg.p.
         RETURN.
      END.
@@ -180,6 +229,49 @@ aux_contamax = aux_contador.
 
 IF   aux_contamax = 0   THEN
      DO:
+	 
+    /* Inclusao de log de fim de execucao do programa -  20/02/2019 - Chamado REQ0039739 */
+
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "O",
+    INPUT "CRPS065.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 912,
+    input "912 - FINALIZADO LEGAL",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+    CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "PF",
+    INPUT "CRPS065.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 0,
+    input "",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+    CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+	
          RUN fontes/fimprg.p.
          QUIT.
      END.
@@ -373,6 +465,48 @@ ASSIGN glb_nmarqimp = "rl/crrl053.lst"
        glb_nmformul = "132dm".
 
 RUN fontes/imprim.p.
+
+/* Inclusao de log de fim de execucao do programa -  20/02/2019 - Chamado REQ0039739 */
+
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "O",
+    INPUT "CRPS065.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 912,
+    input "912 - FINALIZADO LEGAL",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "PF",
+    INPUT "CRPS065.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 0,
+    input "",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
 RUN fontes/fimprg.p.
 

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gati - Diego
-   Data    : Maio/2011                       Ultima atualizacao: 26/05/2018
+   Data    : Maio/2011                       Ultima atualizacao: 20/02/2019
    
    Dados referentes ao programa:
 
@@ -69,7 +69,10 @@
                             
                05/01/2016 - Adicionado coluna de pre-aprovado (Anderson)
 
-			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).   
+                             
+               20/02/2019 - Inclusao de log de fim de execucao do programa 
+                            (Belli - Envolti - Chamado REQ0039739)   
 
 ............................................................................. */
 
@@ -77,6 +80,9 @@ DEF STREAM str_1. /* GERAL */
 DEF STREAM str_2. /* PA'S */
 
 { includes/var_batch.i "NEW" }
+
+/* chamado oracle - 20/02/2019 - Chamado REQ0039739 */
+{ sistema/generico/includes/var_oracle.i }
 
 DEF TEMP-TABLE cratseg NO-UNDO LIKE crapseg
     FIELD nmprimtl LIKE crapass.nmprimtl
@@ -134,12 +140,12 @@ FORM "PERIODO:" AT 23
 ASSIGN glb_cdprogra    = "crps596"
        aux_nmarqimp    = "rl/crrl597_999.lst"
        glb_cdrelato = 597
-       rel_totsegpr = 0.
+       rel_totsegpr = 0.  
 
 RUN fontes/iniprg.p.
 
 IF   glb_cdcritic > 0   THEN
-     QUIT.
+     QUIT.	 
   
 { includes/cabrel132_1.i }          /*  Monta cabecalho do relatorio  */
 
@@ -340,7 +346,49 @@ IF   rel_totsegpr > 0   THEN
 ELSE
      /* Remove o arquivo vazio */
      UNIX SILENT VALUE("rm " + aux_nmarqimp + " 2>/dev/null").
-     
+
+/* Inclusao de log de fim de execucao do programa -  20/02/2019 - Chamado REQ0039739 */
+
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "O",
+    INPUT "CRPS596.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 912,
+    input "912 - FINALIZADO LEGAL",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "PF",
+    INPUT "CRPS596.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 0,
+    input "",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }   
+                         
 RUN fontes/fimprg.p.
 
 /* .......................................................................... */
