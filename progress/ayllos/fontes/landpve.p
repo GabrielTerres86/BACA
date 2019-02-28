@@ -1405,7 +1405,8 @@ DO WHILE TRUE:
 
                         IF   glb_dscritic <> "" THEN
                         DO:
-                            MESSAGE glb_dscritic.
+                            MESSAGE glb_dscritic. 
+                            PAUSE 2 NO-MESSAGE.
                             BELL.
                             ASSIGN glb_dscritic = "".
                             UNDO, NEXT.

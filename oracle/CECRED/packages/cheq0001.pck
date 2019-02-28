@@ -1228,9 +1228,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
            AND   crapdev.nrctachq = pr_nrctachq
            AND   crapdev.nrcheque = pr_nrdocmto
            AND   crapdev.cdhistor = pr_cdhistor
-           AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
-           AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
-           AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ');
+           AND   nvl(crapdev.cdbandep, 0) = nvl(pr_cdbandep, 0)
+           AND   nvl(crapdev.cdagedep, 0) = nvl(pr_cdagedep, 0)
+           AND   nvl(crapdev.nrctadep, 0) = nvl(pr_nrctadep, 0);
 
            --Se nao conseguiu deletar
            IF SQL%ROWCOUNT = 0 THEN
@@ -1257,9 +1257,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              AND   crapdev.cdagechq = pr_cdagechq
              AND   crapdev.nrctachq = pr_nrctachq
              AND   crapdev.nrcheque = pr_nrdocmto
-             AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
-             AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
-             AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ')
+             AND   nvl(crapdev.cdbandep, 0) = nvl(pr_cdbandep, 0)
+             AND   nvl(crapdev.cdagedep, 0) = nvl(pr_cdagedep, 0)
+             AND   nvl(crapdev.nrctadep, 0) = nvl(pr_nrctadep, 0)
              AND   crapdev.cdhistor = 46;
            EXCEPTION
            WHEN OTHERS THEN
@@ -1281,9 +1281,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
            AND   crapdev.nrctachq = pr_nrctachq
            AND   crapdev.nrcheque = pr_nrdocmto
            AND   crapdev.cdhistor = pr_cdhistor
-           AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
-           AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
-           AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ');
+           AND   nvl(crapdev.cdbandep,0) = nvl(pr_cdbandep,0)
+           AND   nvl(crapdev.cdagedep,0) = nvl(pr_cdagedep,0)
+           AND   nvl(crapdev.nrctadep,0) = nvl(pr_nrctadep,0);
 
            --Se nao conseguiu deletar
            IF SQL%ROWCOUNT = 0 THEN
@@ -1309,9 +1309,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              AND   crapdev.cdagechq = pr_cdagechq
              AND   crapdev.nrctachq = pr_nrctachq
              AND   crapdev.nrcheque = pr_nrdocmto
-             AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
-             AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
-             AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ')
+             AND   nvl(crapdev.cdbandep, 0) = nvl(pr_cdbandep,0)
+             AND   nvl(crapdev.cdagedep, 0) = nvl(pr_cdagedep, 0)
+             AND   nvl(crapdev.nrctadep, 0) = nvl(pr_nrctadep, 0)
              AND   crapdev.cdhistor = 46;
            EXCEPTION
              WHEN OTHERS THEN
@@ -1332,9 +1332,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
            AND   crapdev.cdagechq = pr_cdagechq
            AND   crapdev.nrctachq = pr_nrctachq
            AND   crapdev.nrcheque = pr_nrdocmto
-           AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
-           AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
-           AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ')
+           AND   nvl(crapdev.cdbandep, 0) = nvl(pr_cdbandep, 0)
+           AND   nvl(crapdev.cdagedep, 0) = nvl(pr_cdagedep, 0)
+           AND   nvl(crapdev.nrctadep, 0) = nvl(pr_nrctadep, 0)
            AND   crapdev.cdhistor = pr_cdhistor;
 
            --Se nao conseguiu deletar
@@ -1361,9 +1361,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              AND   crapdev.cdagechq = pr_cdagechq
              AND   crapdev.nrctachq = pr_nrctachq
              AND   crapdev.nrcheque = pr_nrdocmto
-             AND   nvl(crapdev.cdbandep,' ') = nvl(pr_cdbandep,' ')
-             AND   nvl(crapdev.cdagedep,' ') = nvl(pr_cdagedep,' ')
-             AND   nvl(crapdev.nrctadep,' ') = nvl(pr_nrctadep,' ')
+             AND   nvl(crapdev.cdbandep, 0) = nvl(pr_cdbandep, 0)
+             AND   nvl(crapdev.cdagedep, 0) = nvl(pr_cdagedep, 0)
+             AND   nvl(crapdev.nrctadep, 0) = nvl(pr_nrctadep, 0)
              AND   crapdev.cdhistor = 46;
            EXCEPTION
            WHEN OTHERS THEN
