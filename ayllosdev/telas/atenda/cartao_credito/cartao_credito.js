@@ -67,6 +67,7 @@
  * 046: [17/08/2018] Fabricio      (AILOS)  : Tratamento na altera_senha_pinpad() para ignorar a AID (application ID) 'A0000001510000'
  *                                            GP GlobalPlatform (por solicitacao da Cabal) em virtude da geracao dos novos chips - SCTASK0025102. (Fabricio)
  * 048: [22/08/2018] Ranghetti     (AILOS)  : Habilitar botao de impressao para cartoes BB - INC0022408.
+ * 049: [26/02/2019] Lucas Henrique (SUPERO): P429 - Inseridos campos de 'Detalhes de Cartões de Crédito Informações do endereço do cooperado'
 */
 
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -77,16 +78,10 @@ var nrctrcrd = 0;   // Variável para guardar o número de contrato do cartão d
 var cdadmcrd = 0;   // Variável para guardar o código da administradora do cartão de crédito
 var nrcrcard = 0;   // Variável para guardar o código número do cartão de crédito
 var flgcchip = 0;  // Variável para guardar se o cartão eh com Chip ou não.
-var flgprovi = 0;
-var dtassele;
-var dsvlrprm;
-var dtinsori;
 var callafterCartaoCredito = '';
 var metOpcaoAba = '';
 var nomeacao = '';
 var bCartaoSituacaoSolicitado = false;
-
-var tipoAssinatura = 'impressa'; // Variável para o controle do tipo de assinatura disponivel, se Eletronica ou Impressa
 
 // Variáveis para armazenar CPF dos representantes informados na opção habilitação
 var cpfpriat = "";
@@ -122,27 +117,12 @@ var dsadmcrdList = {
     15: "AILOS EMPRESAS"
 };
 var nmEmpresPla = "nome Empresa pl";
-var novo_fluxo_envio = false;
-var cTipoAcao = {
-    NOVO_CARTAO: 1,
-    UPGRADE_DOWNGRADE: 2
-};
-
-var cTipoSenha = {
-	SUPERVISOR: 'sup',
-	COOPERADO: 'cop',
-    OPERADOR: 'ope'
-};
-var cdopelib = 0;
 
 var callbacckReturn = undefined;
 var protocolo;
 var glbadc = 'n';
 var justificativaCartao;
 var contigenciaAtiva = false;
-
-var flgPrincipal = true;
-
 // Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
 
@@ -208,23 +188,15 @@ function controlaFoco() {
     $(".FirstInputModal").focus();
 }
 
-function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, FlgcChip , decisaoMotorEsteira, flgproviCartao, dataAssAle, dsVlrprm, dtinSolic) {
+function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, FlgcChip , decisaoMotorEsteira) {
 
-    // Se não for a tela principal apenas ignora o evento
-    if (!flgPrincipal) 
-        return;
-
-	callbacckReturn = "idAnt=0; setTimeout(function(){ selecionaCartao("+nrCtrCartao+",'"+ nrCartao+"', "+cdAdmCartao+", '"+id+"', '"+cor+"', '"+situacao+"', '"+FlgcChip+"', '"+decisaoMotorEsteira+"', '"+flgproviCartao+"', '"+dataAssAle+"', '"+dsVlrprm+"', '"+dtinSolic+"'); }, 600);";
+	callbacckReturn = "idAnt=0; setTimeout(function(){ selecionaCartao("+nrCtrCartao+",'"+ nrCartao+"', "+cdAdmCartao+", '"+id+"', '"+cor+"', '"+situacao+"', '"+FlgcChip+"'); }, 600);";
     if (id != idAnt) {
         // Armazena o número do contrato/proposta, número cartão, cód adm do cartão selecionado eme variaveis GLOBAIS
         nrctrcrd = nrCtrCartao;
         nrcrcard = nrCartao.replace(/\./g, "");
         cdadmcrd = cdAdmCartao;
         flgcchip = ((FlgcChip == "yes") ? 1 : 0);
-        flgprovi = flgproviCartao;
-        dtassele = new Date(dataAssAle.replace(/(\d{2})[-/](\d{2})[-/](\d+)/, "$2/$1/$3"));
-        dsvlrprm = new Date(dsVlrprm.replace(/(\d{2})[-/](\d{2})[-/](\d+)/, "$2/$1/$3"));
-        dtinsori = new Date(dtinSolic.replace(/(\d{2})[-/](\d{2})[-/](\d+)/, "$2/$1/$3"));
         idAnt = id;
         corAnt = cor;
         situacao = situacao.toUpperCase();
@@ -236,81 +208,86 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
             bCartaoSituacaoSolicitado = false;
         }
 
-        $("#btnupdo").attr("onclick", "").unbind("click").bind('click', function () { return false; });
+        $("#btnupdo").prop("disabled", true);
         $("#btnupdo").css('cursor', 'default');
 
-        $("#btnaltr").attr("onclick", "").unbind("click").bind('click', function () { opcaoAlterar();return false; });
+        $("#btnaltr").prop("disabled", false);
         $("#btnaltr").css('cursor', 'pointer');
 
-        $("#btnreno").attr("onclick", "").unbind("click").bind('click', function () { opcaoRenovar();return false; });
+        $("#btnreno").prop("disabled", false);
         $("#btnreno").css('cursor', 'pointer');
 
-        $("#btncanc").attr("onclick", "").unbind("click").bind('click', function () { opcaoCancBloq();return false; });
+        $("#btncanc").prop("disabled", false);
         $("#btncanc").css('cursor', 'pointer');
 
-        $("#btnence").attr("onclick", "").unbind("click").bind('click', function () { opcaoEncerrar();return false; });
+        $("#btnence").prop("disabled", false);
         $("#btnence").css('cursor', 'pointer');
 
-        $("#btnexcl").attr("onclick", "").unbind("click").bind('click', function () { opcaoExcluir();return false; });
+        $("#btnexcl").prop("disabled", false);
         $("#btnexcl").css('cursor', 'pointer');
 
-        $("#btnextr").attr("onclick", "").unbind("click").bind('click', function () { opcaoExtrato();return false; }); //NOK
+        $("#btnextr").prop("disabled", false);
         $("#btnextr").css('cursor', 'pointer');
 
         if (cdadmcrd > 9 && cdadmcrd < 81) {
 
-            $("#btnaltr").attr("onclick", "").unbind("click").bind('click', function () { return false; });
+            $("#btnaltr").prop("disabled", true);
             $("#btnaltr").css('cursor', 'default');
 
-            $("#btnreno").attr("onclick", "").unbind("click").bind('click', function () { return false; });
+            $("#btnreno").prop("disabled", true);
             $("#btnreno").css('cursor', 'default');
 
-            $("#btncanc").attr("onclick", "").unbind("click").bind('click', function () { return false; });
+            $("#btncanc").prop("disabled", true);
             $("#btncanc").css('cursor', 'default');
 
-            $("#btnence").attr("onclick", "").unbind("click").bind('click', function () { return false; });
+            $("#btnence").prop("disabled", true);
             $("#btnence").css('cursor', 'default');
 
 
             if (!(situacao == "ESTUDO" && decisaoMotorEsteira == 'SEM APROVACAO')) {
-                $("#btnexcl").attr("onclick", "").unbind("click").bind('click', function () { return false; });
+                $("#btnexcl").prop("disabled", true);
                 $("#btnexcl").css('cursor', 'default');
             }
 			// Codigo temporario - Se NAO for piloto deve habilitar para excluir como era antes.
 			if (iPiloto == 0 && situacao == "APROV."){
-                $("#btnexcl").attr("onclick", "").unbind("click").bind('click', function () { opcaoExcluir();return false; });
+				$("#btnexcl").prop("disabled", false);
                 $("#btnexcl").css('cursor', 'default');
 			}
 
 			
             if ((cdadmcrd > 10 && cdadmcrd < 17) &&  (situacao == "EM USO" ) && (cdadmcrd != 16 && cdadmcrd != 17)){
+			//if ( true){
+                $("#btnalterarLimite").unbind('click').bind('click', function () { return false; });
 				$("#btnalterarLimite").removeAttr("situacao");
                 $("#btnalterarLimite").attr("nrcrcard", nrcrcard);
                 $("#btnalterarLimite").attr("cdAdmCartao", cdAdmCartao);
-            }
+            }  
             else{
+                 //$("#btnalterarLimite").prop("disabled", true);
+				 $("#btnalterarLimite").unbind('click').bind('click', function () { alteraCartao(); });
 				 $("#btnalterarLimite").attr("situacao", "situacao");
 				 
             }
 			
 			if((cdadmcrd > 10 && cdadmcrd < 17) && situacao == "APROV."){
-                $("#btncanc").attr("onclick", "").unbind("click").bind('click', function () { opcaoCancBloq();return false; });
+				$("#btncanc").removeAttr("disabled");
 				$("#btncanc").css('cursor', 'pointer');
 			}
 
-            $("#btnextr").attr("onclick", "").unbind("click").bind('click', function () { return false; });
-            $("#btnextr").css('cursor', 'default');
 
-            $("#btnimpr").attr("onclick", "").unbind("click").bind('click', function () { return false; });
+            $("#btnextr").prop("disabled", true);
+            $("#btnextr").css('cursor', 'default');
+            
+            $("#btnimpr").prop("disabled", true);
             $("#btnimpr").css('cursor', 'default');
 
             if (situacao == "EM USO" && nrcrcard != 0) {
-                $("#btnupdo").attr("onclick", "").unbind("click").bind('click', function () { opcaoAlteraAdm();return false; });
+                $("#btnupdo").prop("disabled", false);
                 $("#btnupdo").css('cursor', 'default');
             }
         }else{
 			// Habilitar botao de impressao para cartoes BB
-            $("#btnimpr").attr("onclick", "").unbind("click").bind('click', function () { opcaoImprimir();return false; });
+			$("#btnimpr").prop("disabled", false);            
 			$("#btnimpr").css('cursor', 'pointer');
         }
 			
@@ -326,7 +303,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
                 cdadmcrd == 15 ||
                 cdadmcrd == 16 ||
                 cdadmcrd == 17)) {
-            $("#btncanc").attr("onclick", "").unbind("click").bind('click', function () { opcaoCancBloq();return false; });
+            $("#btncanc").prop("disabled", false);
             $("#btncanc").css('cursor', 'default');
 
         }
@@ -345,10 +322,7 @@ function voltaDiv(esconder, mostrar, qtdade, novotam) {
     }
 //$("#divConteudoOpcao").css("height",tamanho);
     if (esconder == 0) {
-        $("#divConteudoCartoes").css("display", "block");        
-        // voltamos a principal
-        flgPrincipal = true;
-
+        $("#divConteudoCartoes").css("display", "block");
         for (var i = 1; i <= qtdade; i++) {
             $("#divOpcoesDaOpcao" + i).css("display", "none");
         }
@@ -604,7 +578,6 @@ function controlaLayout(nomeForm) {
         var Ldtacetaa = $('label[for="dtacetaa"]', '#' + nomeForm);
         var Lnmopetaa = $('label[for="nmopetaa"]', '#' + nomeForm);
         var Ldtrejeit = $('label[for="dtrejeit"]', '#' + nomeForm);
-        var Lflgprovi  = $('label[for="flgprovi"]', '#' + nomeForm);
 
         var Cnrcrcard = $('#nrcrcard', '#' + nomeForm);
         var Cdscartao = $('#dscartao', '#' + nomeForm);
@@ -630,8 +603,6 @@ function controlaLayout(nomeForm) {
         var Cdsacetaa = $('#dsacetaa', '#' + nomeForm);
         var Cdtacetaa = $('#dtacetaa', '#' + nomeForm);
         var Cnmopetaa = $('#nmopetaa', '#' + nomeForm);
-        var Cflgprovi = $('#flgprovi', '#' + nomeForm);
-
 
 		//Pessoa Física e Jurídica
         var Ldsparent = $('label[for="dsparent"]', '#' + nomeForm);
@@ -665,7 +636,7 @@ function controlaLayout(nomeForm) {
         var Cdsdpagto = $('#dsdpagto', '#' + nomeForm);
 
         var cTodos = $('input', '#' + nomeForm);
-				
+		
 		//Campos Endereço entrega Cartão
 		var Ldstipend = $('label[for="dstipend"]', '#' + nomeForm);
 		var Ldsendere = $('label[for="dsendere"]', '#' + nomeForm);
@@ -680,7 +651,7 @@ function controlaLayout(nomeForm) {
 		var Cdscidade = $('#dscidade', '#' + nomeForm);
 		var Cnrcepend = $('#nrcepend', '#' + nomeForm);
 		var Cdsufende = $('#dsufende', '#' + nomeForm);
-		
+
 		//Controle dos labels que são comuns para pessoa Fis. e Jur.
         Lnrcrcard.addClass('rotulo').css('width', '74px');
         Lnmextttl.addClass('rotulo').css('width', '74px');
@@ -704,8 +675,7 @@ function controlaLayout(nomeForm) {
         Ldtacetaa.css('width', '151px');
         Lnmopetaa.css('width', '120px');
         Ldsgraupr.css('width', '90px');
-        Lflgprovi.css({'width': '120px', 'text-align': 'right'});
-		
+				
         Ldstipend.addClass('rotulo').css('width', '55px');
 		Ldsendere.addClass('rotulo').css('width', '55px');
 		Ldsbairro.addClass('rotulo').css('width', '55px');
@@ -740,16 +710,14 @@ function controlaLayout(nomeForm) {
         Cnmopetaa.css({'width': '378px'});
         Cdsgraupr.css({'width': '130px'});
         Cdsdpagto.css({'width': '96px'});
-        Cflgprovi.css({'width': '120px'});
-		
-        Cdstipend.css({'width': '200px'});
+
+		Cdstipend.css({'width': '200px'});
         Cdsendere.css({'width': '456px'});
 		Cdsbairro.css({'width': '200px'});
 		Cdscidade.css({'width': '195px'});
 		Cnrcepend.css({'width': '100px'});
 		Cdsufende.css({'width': '100px'});
 		
-
 		//Pessoa Física e Jurídica
         Ldsparent.addClass('rotulo').css('width', '74px');
         Lvlalugue.addClass('rotulo').css('width', '74px');
@@ -1114,7 +1082,7 @@ function controlaLayout(nomeForm) {
         var tabela = $('table', divRegistro);
 
         divRegistro.css('height', '150px');
-		divRegistro.css('width', '850px');
+		divRegistro.css('width', '770px');
 
         var ordemInicial = new Array();
 
@@ -1139,12 +1107,12 @@ function controlaLayout(nomeForm) {
 
         } else {
             arrayLargura[0] = '58px';
-            arrayLargura[1] = '114px';
-            arrayLargura[2] = '108px';
-            arrayLargura[3] = '105px';
-            arrayLargura[4] = '60px';
-            arrayLargura[5] = '60px';
-            arrayLargura[6] = '112px';
+            arrayLargura[1] = '108px';
+            arrayLargura[2] = '101px';
+            arrayLargura[3] = '96px';
+			arrayLargura[4] = '65px';
+            arrayLargura[5] = '130px';
+            arrayLargura[6] = '130px';
 
             arrayAlinha[0] = 'right';
             arrayAlinha[1] = 'left';
@@ -1153,6 +1121,8 @@ function controlaLayout(nomeForm) {
             arrayAlinha[4] = 'left';
             arrayAlinha[5] = 'left';
             arrayAlinha[6] = 'left';
+
+
         }
 
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
@@ -1335,16 +1305,6 @@ function controlaLayout(nomeForm) {
             'margin-left': '5px',
             'padding': '0px 2px'
         });
-    } else if (nomeForm == 'frmListaEnderecos') {
-        $('#btatualizardados').css({
-            'float': 'none',
-            'cursor': 'pointer'
-        });
-
-        hideMsgAguardo();
-        fechaRotina($('#divRotina'),$('#divUsoGenerico'));
-        $('#divUsoGenerico').setCenterPosition();
-		$('#divUsoGenerico').css('top', '91px');
     }
 
 	ajustarCentralizacao();
@@ -1365,9 +1325,6 @@ function opcaoNovo(cdcooper) {
 
 	// Zeramos o contrato
     nrctrcrd = 0;
-
-    // Saimos da tela principal
-    flgPrincipal = false;
 
 	// ALTERAÇÃO 001
     nomeForm = 'frmNovoCartao';
@@ -1484,9 +1441,6 @@ function alteraCartao() {
     }
 
     showMsgAguardo("Aguarde...");
-
-    // Saimos da tela principal
-    flgPrincipal = false;
 
     $.ajax({
         type: "POST",
@@ -1813,39 +1767,8 @@ function verificaEfetuaGravacao() {
     }
 }
 
-function confirmaEndereco(tipoAcao) {
-	var el = $('input[type="radio"]:checked', '#frmListaEnderecos');
-
-	if (!el.length) {
-		hideMsgAguardo();
-		showError("error", "Deve ser selecionado um endere&ccedil;o para envio do cart&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
-	
-	var label = el.parent().find('label'),
-		enderecoCompleto = '';
-	
-	if (label.length) {
-		enderecoCompleto = label.html().trim();
-	} else {
-		enderecoCompleto = el.parent().find('#outropasel option:selected').data('endereco');
-	}
-
-    if (tipoAcao == cTipoAcao.NOVO_CARTAO) {
-        showConfirmacao("O cart&atilde;o ser&aacute; enviado para o endere&ccedil;o:<br><br>"+enderecoCompleto+"<br><br>Confirma a opera&ccedil;&atilde;o?",
-                    "Confirma&ccedil;&atilde;o - Aimaro",
-                    "validarNovoCartao(true)",
-                    "blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
-    } else if (tipoAcao == cTipoAcao.UPGRADE_DOWNGRADE) {
-        showConfirmacao("O cart&atilde;o ser&aacute; enviado para o endere&ccedil;o:<br><br>"+enderecoCompleto+"<br><br>Confirma a opera&ccedil;&atilde;o?",
-                    "Confirma&ccedil;&atilde;o - Aimaro",
-                    "validarUpDown(nrctrcrd);",
-                    "blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
-    }
-}
-
 // Função para validar novo cartão de crédito
-function validarNovoCartao(efetivaCadastro) {
+function validarNovoCartao() {
     try {
 // Mostra mensagem de aguardo
         if (nrctrcrd == null || nrctrcrd == 0) {
@@ -1905,7 +1828,7 @@ function validarNovoCartao(efetivaCadastro) {
         }
 	
         var tpdpagto = $("#tpdpagto option:selected", "#frmNovoCartao").val();
-        var vllimpro = trim($("#vllimpro", "#frmNovoCartao").val() || "0").replace(/\./g, "");
+        var vllimpro = trim($("#vllimpro", "#frmNovoCartao").val()).replace(/\./g, "");
         vllimpro.replace(/\./g, ",");
 
         $("input[type=checkbox][name='nrseqavl[]']").each(function () {
@@ -1977,55 +1900,49 @@ function validarNovoCartao(efetivaCadastro) {
             return false
         }
 
-		// Verifica se deve entrar no novo fluxo
-		if (!efetivaCadastro && novo_fluxo_envio) {
-			consultaEnderecos(cTipoAcao.NOVO_CARTAO);
-			return;
-		} else {
-			// Executa script de valida��o do cart�o atrav�s de ajax
-			$.ajax({
-				type: "POST",
-				url: UrlSite + "telas/atenda/cartao_credito/validar_novo.php",
-				data: {
-					nrdconta: nrdconta,
-					inpessoa: inpessoa,
-					dsgraupr: dsgraupr,
-					nmtitcrd: nmtitcrd,
-					dsadmcrd: dsadmcrd,
-					dscartao: dscartao,
-					flgimpnp: flgimpnp,
-					vllimpro: vllimpro,
-					vllimdeb: vllimdeb,
-					nrcpfcgc: nrcpfcgc,
-					dddebito: dddebito,
-					dtnasccr: dtnasccr,
-					nrdoccrd: nrdoccrd,
-					dsrepinc: dsrepinc,
-					tpdpagto: tpdpagto,
-					dsrepres: dsrepres,
-					nmempres: nmempres,
-					flgdebit: flgdebit,
-					cdadmcrd: cdadmcrd,
-					nrctrcrd: nrctrcrd,
-					redirect: "script_ajax"
-				},
-				error: function (objAjax, responseError, objExcept) {
-					hideMsgAguardo();
-					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-				},
-				success: function (response) {
-					try {
-						eval(response);
-					} catch (error) {
-						hideMsgAguardo();
-						showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-					}
-				}
-			});
-		}
+        // Executa script de valida��o do cart�o atrav�s de ajax
+        $.ajax({
+            type: "POST",
+            url: UrlSite + "telas/atenda/cartao_credito/validar_novo.php",
+            data: {
+                nrdconta: nrdconta,
+                inpessoa: inpessoa,
+                dsgraupr: dsgraupr,
+                nmtitcrd: nmtitcrd,
+                dsadmcrd: dsadmcrd,
+                dscartao: dscartao,
+                flgimpnp: flgimpnp,
+                vllimpro: vllimpro,
+                vllimdeb: vllimdeb,
+                nrcpfcgc: nrcpfcgc,
+                dddebito: dddebito,
+                dtnasccr: dtnasccr,
+                nrdoccrd: nrdoccrd,
+                dsrepinc: dsrepinc,
+                tpdpagto: tpdpagto,
+                dsrepres: dsrepres,
+                nmempres: nmempres,
+				flgdebit: flgdebit,
+				cdadmcrd: cdadmcrd,
+				nrctrcrd: nrctrcrd,
+                redirect: "script_ajax"
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success: function (response) {
+                try {
+                    eval(response);
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                }
+            }
+        });
     } catch (e) {
         hideMsgAguardo();
-        showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + e.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
     }
 }
 	  
@@ -2052,27 +1969,6 @@ function senhaCoordenador(executaDepois) {
 	},160);
 	
 
-}
-
-//Necessári para captar o 'F' digitado pelo supervisor.
-function altPedeSenhaCoordenador(callAfter, tipoOperad) {
-    
-    pedeSenhaCoordenador(tipoOperad,callAfter,'divRotina');
-    
-    //Apenas define corretamente os eventos se definidos dentro de setTimeOut.
-    setTimeout(function(){
-        $("#btnSenhaCoordenador","#frmSenhaCoordenador").mouseover(function() {
-             cdopelib = $("#cdopelib","#frmSenhaCoordenador").val();
-        });
-        
-        $("#cdopelib","#frmSenhaCoordenador").blur(function(){
-            cdopelib = $("#cdopelib","#frmSenhaCoordenador").val();
-        });
-        
-        $("#cdopelib","#frmSenhaCoordenador").change(function(){
-            cdopelib = $("#cdopelib","#frmSenhaCoordenador").val();
-        });
-    },160);
 }
 
 /*!
@@ -2179,8 +2075,6 @@ function cadastrarNovoCartao() {
     var tpenvcrd = $('#tpenvcrd', '#' + nomeForm).val() || "";
     var flgdebit = $('#flgdebit', '#' + nomeForm).prop('checked') || "";
     var dsrepres = "";
-	var tpendass = "9";
-	var cdagenc2 = "1";
 
     $("input[type=checkbox][name='nrseqavl[]']").each(function () {
         if (this.checked != false) {
@@ -2214,8 +2108,7 @@ function cadastrarNovoCartao() {
             nmcidav2: nmcidav2, nrfonav2: nrfonav2, tpdocav2: tpdocav2, tdccjav2: tdccjav2,
             cdufava2: cdufava2, emailav2: emailav2, nmextttl: nmextttl, tpdpagto: tpdpagto,
             tpenvcrd: tpenvcrd, executandoProdutos: executandoProdutos, dsrepres: dsrepres,
-            dsrepinc: dsrepinc, flgdebit: flgdebit, nrctrcrd: nrctrcrd, tpendass: tpendass,
-			cdagenc2: cdagenc2, redirect: 'script_ajax'
+            dsrepinc: dsrepinc, flgdebit: flgdebit, nrctrcrd: nrctrcrd, redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
@@ -2375,12 +2268,8 @@ function consultaCartao() {
         showError("error", "N&atilde;o h&aacute; cart&atilde;o selecionado.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
-
-    // Mostra mensagem de aguardo
+// Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, consultando dados do cart&atilde;o de cr&eacute;dito ...");
-
-    // Saimos da tela principal
-    flgPrincipal = false;
 
 	// Carrega conteúdo da opção através de ajax
     $.ajax({
@@ -4688,12 +4577,6 @@ function opcaoAlteraAdm() {
         return false;
     }
 
-	if (flgprovi == '1') {
-        hideMsgAguardo();
-        showError("error", "N&atilde;o &eacute; poss&iacute;vel realizar Downgrade ou Upgrade em cart&otilde;es provis&oacute;rios", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        return false;
-    }
-
     nrcrcard = nrcrcard.replace(/\./g, "");
 
 // Mostra mensagem de aguardo
@@ -4771,8 +4654,6 @@ function validarUpDown(contrato) {
     var codaadmi = $("#hdncodadm").val();
     var codnadmi = $("#dsadmant").val();
 	var dsjustificativa = $("#dsjustificativa").val();
-	var tpendass = "9";
-	var cdagenc2 = "1";
 	if(dsjustificativa.length == 0 ){
 		hideMsgAguardo();
         showError("error", "Por favor preencha a justificativa.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -4786,46 +4667,38 @@ function validarUpDown(contrato) {
         return false;
     }
 
-	// Verifica se deve entrar no novo fluxo
-    if (novo_fluxo_envio) {
-        consultaEnderecos(cTipoAcao.UPGRADE_DOWNGRADE);
-        return;
-    } else {
-        // Mostra mensagem de aguardo
-        showMsgAguardo("Aguarde, validando dados...");
+// Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, validando dados...");
 
-        // Carrega conteúdo da opção através de ajax
-        $.ajax({
-            type: "POST",
-            url: UrlSite + "telas/atenda/cartao_credito/altera_administradora.php",
-            dataType: "html",
-            data: {
-                codaadmi: codaadmi,
-                codnadmi: codnadmi,
-                nrdconta: nrdconta,
-                nrcrcard: nrcrcard,
-                nrctrcrd: contrato,
-				tpendass: tpendass,
-                cdagenc2: cdagenc2,
-                dsjustificativa:dsjustificativa,
-                redirect: "html_ajax"
-            },
-            success: function (response) {
-                hideMsgAguardo();
-                var error = false;
-                
-                eval(response);
-                if(!error)
-                    //CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
-                    if (iPiloto == 1) {
-                        atualizaUpgradeDowngrade(contrato);
-                    } else {					
-                        showError("inform","Operacao realizada com sucesso.","Alerta - Aimaro","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
-                    }
-                        
-            }
-        });
-    }
+	// Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/cartao_credito/altera_administradora.php",
+        dataType: "html",
+        data: {
+            codaadmi: codaadmi,
+            codnadmi: codnadmi,
+            nrdconta: nrdconta,
+            nrcrcard: nrcrcard,
+            nrctrcrd: contrato,
+			dsjustificativa:dsjustificativa,
+            redirect: "html_ajax"
+        },
+        success: function (response) {
+            hideMsgAguardo();
+			var error = false;
+			
+            eval(response);
+			if(!error)
+				//CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
+			    if (iPiloto == 1) {
+					atualizaUpgradeDowngrade(contrato);
+				} else {					
+					showError("inform","Operacao realizada com sucesso.","Alerta - Aimaro","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
+				}
+					
+        }
+    });
 }
 
 function buscaTitulares(nrdconta, escolha) {
@@ -5154,7 +5027,7 @@ function lerCartaoChip() {
     }, 500);
 }
 
-function imprimirTermoEntrega(flegMsg) {
+function imprimirTermoEntrega() {
     var idimpres = 0;
     if (cdadmcrd == 1) {  // Administradora Credicard 
 		idimpres = 5; 
@@ -5166,26 +5039,7 @@ function imprimirTermoEntrega(flegMsg) {
 		idimpres = 18;
 	}
 	
-    if (flegMsg == true) {
-        showError("info", "N&atilde;o &eacute; obrigat&oacute;rio a impress&atilde;o do termo, imprima somente se for necess&aacute;rio.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-    }
-
 	gerarImpressao(2, idimpres, cdadmcrd, nrctrcrd, 0);
-}
-
-function assinar(tipo) {
-    if (tipo != 'eletronica' && tipo != 'impressa') {
-        tipo = tipoAssinatura;
-
-    }
-
-    if (tipo == 'eletronica') {
-        solicitaSenhaTAOnline("tipoAssinatura = 'impressa'; imprimirTermoEntrega(true); fechaRotina($('#divUsoGenerico'));", nrdconta, nrcrcard);
-
-    } else if (tipo == 'impressa') {
-        imprimirTermoEntrega();
-
-    }
 }
 
 /**
@@ -6128,12 +5982,9 @@ function enviaSolicitacao() {
     return false;
 }
 
-function validarSenha(nrctrcrd, tipoSenha) {
+function validarSenha(nrctrcrd) {
 	
-    if (tipoSenha == undefined) {
-	    tipoSenha = cTipoSenha.COOPERADO;
-    }	
-
+	
     idacionamento = $("#idacionamento","#frmNovoCartao").val();
     log4console("prj cartoes protocolo : "+protocolo);
 	log4console("prj cartoes idacionamento : "+idacionamento);
@@ -6143,55 +5994,42 @@ function validarSenha(nrctrcrd, tipoSenha) {
         log4console(' add trigger back');
         $(".btnVoltar").attr('onclick','voltarParaTelaPrincipal();');
 		//|| idastcjt !=1
-        if (inpessoa == 1 || tipoSenha == cTipoSenha.SUPERVISOR) {
+        if (inpessoa == 1 ) {
 		//if(false){
 			log4console("indo solicitar senha");
-
-			if (tipoSenha == cTipoSenha.SUPERVISOR) {
-				altPedeSenhaCoordenador('registraSenha('+ nrctrcrd +',\'enviarBancoob( '+ nrctrcrd +' )\',4)', 2);
-			} else if (tipoSenha == cTipoSenha.OPERADOR) {
-                altPedeSenhaCoordenador('registraSenha('+ nrctrcrd +',\'enviarBancoob( '+ nrctrcrd +' )\',5)', 1);
-			} else if (tipoSenha == cTipoSenha.COOPERADO) {
-            	solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'enviarBancoob( '+ nrctrcrd +' )\',1)', nrdconta, true);
-            }
+            solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'enviarBancoob( '+ nrctrcrd +' )\')', nrdconta, true);
             return;
         }
         if ($("#agentPassword:checked").val() != undefined) {
             var nrContaRepresentante =  ($("#agentPassword:checked").val().split("#")[2]);
+            //solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'solicitaSenha( '+ nrctrcrd +')\')', nrContaRepresentante, '', 'sim.gif', 'nao.gif');
+			solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'solicitaSenha( '+ nrctrcrd +')\')', nrContaRepresentante,true);
 
-            if (tipoSenha == cTipoSenha.SUPERVISOR) {
-				altPedeSenhaCoordenador('registraSenha('+ nrctrcrd +',\'solicitaSenha( '+ nrctrcrd +')\',4)', 2);
-			} else if (tipoSenha == cTipoSenha.OPERADOR) {
-                altPedeSenhaCoordenador('registraSenha('+ nrctrcrd +',\'solicitaSenha( '+ nrctrcrd +')\',5)', 1);
-			} else if (tipoSenha == cTipoSenha.COOPERADO) {
-                //solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'solicitaSenha( '+ nrctrcrd +')\')', nrContaRepresentante, '', 'sim.gif', 'nao.gif');
-				solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'solicitaSenha( '+ nrctrcrd +')\',1)', nrContaRepresentante,true);
-			}
         } else {
             showError("error", "Selecione um Representante para validar a senha. ", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         }
 
+
+
     });
+
 
 }
 
-function solicitaSenha(contrato,cdAdmCartao,tipoSenha) {
-	if(cdAdmCartao != undefined && cdAdmCartao != null){
-        cdadmcrd = cdAdmCartao;
-    }
-    if (tipoSenha == undefined || tipoSenha == null) {
-        tipoSenha = cTipoSenha.COOPERADO;
-    }
+function solicitaSenha(contrato,cdAdmCartao) {
+	if(cdAdmCartao != undefined){
+		cdadmcrd = cdAdmCartao;
+	}
     try{
-    if($("#btnsaveRequest").attr('onclick') != 'solicitaTipoSenha('+contrato+')'){
-        $("#btnsaveRequest").attr('onclick','solicitaTipoSenha('+contrato+')');
+    if($("#btnsaveRequest").attr('onclick') != 'solicitaSenha('+contrato+')'){
+        $("#btnsaveRequest").attr('onclick','solicitaSenha('+contrato+')');
     }}catch(e){
         console.log('estamos fora da tela novo');
     }
 	//|| idastcjt !=1  inpessoa == 1
     //if (false) {
-	if(inpessoa == 1 || tipoSenha == cTipoSenha.SUPERVISOR || tipoSenha == cTipoSenha.OPERADOR){
-        validarSenha(contrato, tipoSenha);
+	if( inpessoa == 1 ){
+        validarSenha(contrato);
         return;
     }
     showMsgAguardo("Aguarde ...");
@@ -6223,7 +6061,6 @@ function solicitaSenha(contrato,cdAdmCartao,tipoSenha) {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
-            fechaRotina($('#divUsoGenerico'));
             $("#divConteudoCartoes").hide();
             $("#frmDadosCartaodiv").hide();
             $("#divBotoes").hide();
@@ -6239,42 +6076,6 @@ function solicitaSenha(contrato,cdAdmCartao,tipoSenha) {
     });
 
 }
-
-
-function solicitaTipoSenha(contrato,cdAdmCartao,cdForm) {
-    if (cdForm == undefined) {
-        cdForm = 'novo';
-    }
-    try{
-    if($("#btnsaveRequest").attr('onclick') != 'solicitaTipoSenha('+contrato+')'){
-        $("#btnsaveRequest").attr('onclick','solicitaTipoSenha('+contrato+')');
-    }}catch(e){
-        console.log('estamos fora da tela novo');
-    }
-    $.ajax({
-        type: "POST",
-        dataType: "html",
-        url: UrlSite + "telas/atenda/cartao_credito/solicita_senha_autorizacao.php",
-        data: {
-            contrato:contrato,
-            cdAdmCartao:cdAdmCartao,
-            cdForm:cdForm
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        
-        },
-        success: function (response) {
-            exibeRotina($('#divUsoGenerico'));
-            $('#divUsoGenerico').html(response);
-            $('#divUsoGenerico').css({ 'width': '410px' });
-
-            bloqueiaFundo($('#divUsoGenerico'));
-        }
-    });
-}
-
 function verificaAutorizacoes() {
     
     showMsgAguardo("Aguarde ...");
@@ -6398,7 +6199,7 @@ function imprimirTermoDeAdesao(btn) {
 	
 }
 
-function registraSenha(nrctrcrd, callback, indtipo_senha){
+function registraSenha(nrctrcrd, callback){
         showMsgAguardo("Aguarde...");
         var nrcpf = $("#nrcpfcgc","#frmNovoCartao").val();
         var nmaprovador = $("#nmextttl","#frmNovoCartao").val();
@@ -6406,10 +6207,10 @@ function registraSenha(nrctrcrd, callback, indtipo_senha){
             nrcpf = $("#nrcpftit").val();
             nmaprovador = $("#nmextttl").val();
         }
-        if (indtipo_senha == undefined) {
-            indtipo_senha = 1;
-        }
-        if(inpessoa == 2 && indtipo_senha == 2){
+        
+
+
+        if(inpessoa == 2){
             nmaprovador = ($("#agentPassword:checked").val().split("#")[1]);
             nrcpf = ($("#agentPassword:checked").val().split("#")[0]);
         }
@@ -6430,9 +6231,7 @@ function registraSenha(nrctrcrd, callback, indtipo_senha){
                 nrcpf       : nrcpf,
 				inpessoa    : inpessoa,
 				dsgraupr    : rpr,
-                nmaprovador   : nmaprovador,
-                indtipo_senha : indtipo_senha,
-                cdopelib      : cdopelib
+                nmaprovador : nmaprovador
             },
             error: function (objAjax, responseError, objExcept) {
 
@@ -6864,10 +6663,6 @@ function chamarCoordenador(nrctrcrd, idacionamento,idproces,cdAdmCartao ){
 function alterarLimiteProposta() {
     var cdAdmCartao = $("#btnalterarLimite").attr("cdAdmCartao");
     nomeForm = "frmValorLimCre";
-
-    // Saimos da tela principal
-    flgPrincipal = false;
-
     $.ajax({
         type: "POST",
         dataType: "html",
@@ -6892,10 +6687,6 @@ function alterarLimiteProposta() {
 
 function alterarCartaoProposta() {
     nomeForm = "frmNovoCartao";
-    
-    // Saimos da tela principal
-    flgPrincipal = false;
-
     $.ajax({		
 		type: "POST", 
 		dataType: "html",
@@ -6907,7 +6698,7 @@ function alterarCartaoProposta() {
 			redirect: "html_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
-							
+		
 			hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
@@ -6972,7 +6763,7 @@ function opcaoAlterarProposta() {
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
             },
             success: function (response) {
-                hideMsgAguardo();                
+                hideMsgAguardo();
                 blockBackground(parseInt($("#divRotina").css("z-index")));
                 if (response.tipoProposta == 0) {
                     showError("error", "Edi&ccedil;&atilde;o de proposta n&atilde;o permitida, somente para situa&ccedil;&atilde;o em estudo.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
@@ -6984,86 +6775,4 @@ function opcaoAlterarProposta() {
                 }
             }
     });
-}
-
-// Função para consultar endereços de entrega para o cooperado
-function consultaEnderecos(tipoAcao) {
-    // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, consultando dados do cart&atilde;o de cr&eacute;dito ...");
-    exibeRotina($('#divUsoGenerico'));
-
-	// Carrega conteúdo da opção através de ajax
-    $.ajax({
-        type: "POST",
-        url: UrlSite + "telas/atenda/cartao_credito/consultar_enderecos.php",
-        dataType: "html",
-        data: {
-            nrdconta: nrdconta,
-			tipoacao: tipoAcao,
-            redirect: "html_ajax"
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function (response) {
-            $('#divUsoGenerico').html(response);
-            //$("#divOpcoesDaOpcao1").html(response);
-        }
-    });
-}
-
-function validaReenvioAltLimite(nrcctitg) {
-
-    if (nrcctitg == 0) {
-        return false;
-    }
-
-    $.ajax({
-        type: "POST",
-        url: UrlSite + "telas/atenda/cartao_credito/valida_reenvio_alt_limite.php",
-        dataType: "html",
-        data: {
-            nrdconta: nrdconta,
-            nrcctitg: nrcctitg,
-            redirect: "html_ajax"
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function (response) {
-            hideMsgAguardo();
-            eval(response)
-        }
-    });
-
-
-}
-
-function reenviarUltimaPropostaLimite(nrcrcard, cdadmcrd, nrctrcrd) {
-
-    $.ajax({
-        type: "POST",
-        url: UrlSite + "telas/atenda/cartao_credito/alterar_limite_cartao_proposta.php",
-        dataType: "html",
-        data: {
-            nrcrcard      : nrcrcard,
-            nrdconta      : nrdconta,
-            cdadmcrd      : cdadmcrd,
-            cdAdmCartao   : cdadmcrd,
-            nrctrcrd      : nrctrcrd,
-        },
-        error: function (objAjax, responseError, objExcept) {
-
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function (response) {
-            voltaDiv(0,1,4);
-			$("#divOpcoesDaOpcao1").html(response);
-        }
-    });
-
-
 }
