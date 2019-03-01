@@ -26,6 +26,7 @@
  *				  31/07/2018 - Ajuste realizado para que ao carregar a alteração, traga as informações correta da empresa. (Kelvin)	
  *				  06/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para	
  *                             corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
+ *                01/03/2019 - Tratamento de caracteres invalidos no campo complemento de endereco (PRB0040642 - Gabriel Mouts).
  *
  * --------------
  */
@@ -245,7 +246,7 @@ function manterRotina(operacao) {
     cepedct1 = $('#cepedct1', '#' + nomeForm).val();
     endrect1 = $('#endrect1', '#' + nomeForm).val();
     nrendcom = $('#nrendcom', '#' + nomeForm).val();
-    complcom = $('#complcom', '#' + nomeForm).val();
+    //complcom = $('#complcom', '#' + nomeForm).val();
     bairoct1 = $('#bairoct1', '#' + nomeForm).val();
     cidadct1 = $('#cidadct1', '#' + nomeForm).val();
     ufresct1 = $('#ufresct1', '#' + nomeForm).val();
@@ -258,6 +259,7 @@ function manterRotina(operacao) {
     nrcadast = normalizaNumero(nrcadast);
     cepedct1 = normalizaNumero(cepedct1);
     inpolexp = normalizaNumero(inpolexp);
+    complcom = removeCaracteresInvalidos($('#complcom', '#' + nomeForm).val(), false);
 
     nmextemp = trim(nmextemp);
     dsproftl = trim(dsproftl);
