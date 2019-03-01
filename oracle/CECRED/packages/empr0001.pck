@@ -1040,7 +1040,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 31/10/2017
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 27/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1113,6 +1113,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --             05/06/2018 - P450 - Alteração INSERT na craplcm pela chamada da rotina lanc0001.pc_gerar_lancamento_conta
   --                          Josiane Stiehler- AMcom
   --
+  --             27/12/2018 - Ajuste no tratamento das contas corrente em prejuízo (substituição da verificação através
+  --                          do parâmetro "pr_nmdatela" pelo uso da função "PREJ0003.fn_verifica_preju_conta".
+  --                          P450 - Reginaldo/AMcom
+  --	                               
   --             04/01/2019 - chamado INC0027294 (Fabio-Amcom)
   ---------------------------------------------------------------------------------------------------------------
 
@@ -11344,7 +11348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 11/10/2018
+       Data    : Fevereiro/2014                        Ultima atualizacao: 27/12/2018
 
        Dados referentes ao programa:
 
@@ -11356,6 +11360,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    11/10/2018 - Ajustado rotina para caso pagamento for pago pela tela
                                 BLQ gerar o IOF na tabela prejuizo detalhe.
                                 PRJ450 - Regulatorio(Odirlei-AMcom)
+
+				   27/12/2018 - Ajuste no tratamento de contas corrente em prejuízo (substituição
+								da verificação através do parâmetro "pr_nmdatela" pelo uso da
+								função de verificação do prejuízo de conta corrente).
+								P450 - Reginaldo/AMcom
 
     ............................................................................. */
 
@@ -11389,6 +11398,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
       vr_exc_ok    EXCEPTION;
+
+	  vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
 
       -- Retorna as contas em prejuizo
       CURSOR cr_contaprej (pr_cdcooper  IN tbcc_prejuizo.cdcooper%TYPE
@@ -11462,8 +11473,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RAISE vr_exc_saida;
         END IF;
 
+		-- Verifica se a conta corrente está em prejuízo - Reginaldo/AMcom
+		vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
+				                                      , pr_nrdconta => pr_nrdconta);   
+
         /* Valor da multa */
-        IF nvl(vr_vlrmulta, 0) > 0 AND pr_nmdatela <> 'BLQPREJU' THEN
+        IF nvl(vr_vlrmulta, 0) > 0 AND NOT vr_prejuzcc THEN
           /* Lanca em C/C e atualiza o lote */
           empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                         ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
@@ -11489,7 +11504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
         /* Pagamento de juros de mora */
         IF nvl(vr_vlatraso, 0) > 0
-           AND nvl(vr_vlpagsld, 0) >= 0 AND pr_nmdatela <> 'BLQPREJU' THEN
+           AND nvl(vr_vlpagsld, 0) >= 0 AND NOT vr_prejuzcc THEN
           /* Debita o pagamento da parcela da C/C */
           empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                         ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
@@ -11517,7 +11532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF nvl(vr_vliofcpl, 0) > 0
            AND nvl(vr_vlpagsld, 0) >= 0 THEN
 
-          IF pr_nmdatela = 'BLQPREJU' THEN
+          IF vr_prejuzcc THEN
 
             -- Identificar numero do prejuizo da conta
             OPEN cr_contaprej(pr_cdcooper => pr_cdcooper,
@@ -11575,7 +11590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
 
         /* Lancamento de Valor Pago da Parcela */
-        IF nvl(vr_vlpagsld, 0) > 0 AND pr_nmdatela <> 'BLQPREJU' THEN
+        IF nvl(vr_vlpagsld, 0) > 0 AND NOT vr_prejuzcc THEN
           /* Debita o pagamento da parcela da C/C */
           empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                         ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
@@ -12920,7 +12935,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 27/02/2014
+       Data    : Fevereiro/2014                        Ultima atualizacao: 27/12/2018
 
        Dados referentes ao programa:
 
@@ -12928,6 +12943,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Objetivo  : Rotina para Efetivar o pagamento da parcela
 
        Alteracoes: 28/02/2014 - Conversão Progress para Oracle (Alisson - AMcom)
+
+			       27/12/2018 - Ajuste no tratamento de contas corrente em prejuízo (substituição
+					            da verificação através do parâmetro "pr_nmdatela" pelo uso da
+								função de verificação do prejuízo de conta corrente).
+								P450 - Reginaldo/AMcom  
 
     ............................................................................. */
 
@@ -12949,6 +12969,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Variaveis Excecao
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
+			
+	  vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
 
     BEGIN
       --Inicializar variavel erro
@@ -12997,7 +13019,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RAISE vr_exc_saida;
         END IF;
 
-				IF pr_nmdatela <> 'BLQPREJU' THEN
+		-- Verifica se a conta corrente está em prejuízo
+		vr_prejuzcc:= PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
+
+		IF NOT vr_prejuzcc THEN
 
         /* Lanca em C/C e atualiza o lote */
         empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
@@ -14996,19 +15021,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Renato Darosci
-       Data    : Setembro/2016.                         Ultima atualizacao: 29/09/2016
+       Data    : Setembro/2016.                         Ultima atualizacao: 27/12/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que for chamado.
        Objetivo  :
 
-       Alteracoes:
+       Alteracoes: 27/12/2018 - Ajuste no tratamento de contas corrente em prejuízo (substituição
+								da verificação através do parâmetro "pr_nmdatela" pelo uso da
+								função de verificação do prejuízo de conta corrente).
+								P450 - Reginaldo/AMcom
 
     ............................................................................. */
 
     vr_exc_erro  EXCEPTION;
 
+	vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
   BEGIN
 
     pr_des_reto := 'NOK';
@@ -15040,7 +15069,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       RAISE vr_exc_erro;
     END IF;
 
-    IF pr_nmdatela <> 'BLQPREJU' THEN
+		vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
+
+    IF NOT vr_prejuzcc THEN
     /* Lanca em C/C e atualiza o lote */
     empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                          ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
