@@ -568,6 +568,9 @@ comment on column TBEPR_CARGA_PRE_APRV.indsituacao_carga
 comment on column TBEPR_CARGA_PRE_APRV.dsmotivo_rejeicao
   is 'Motivo da rejeicao da Carga';
   
+BEGIN
+  update TBEPR_CARGA_PRE_APRV set indsituacao_carga = decode(indsituacao_carga,1,2,1);
+END;  
   
   
 -- Create/Recreate indexes 

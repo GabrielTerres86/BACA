@@ -13,6 +13,88 @@ BEGIN
    WHERE upper(ace.nmdatela) = 'IMPPRE'
      AND upper(ace.cddopcao) IN('B','L','A');
      
+ 
+    INSERT INTO crapprg
+               (cdcooper,
+               nmsistem, 
+               cdprogra, 
+               dsprogra##1, 
+               dsprogra##2, 
+               dsprogra##3, 
+               dsprogra##4, 
+               nrsolici, 
+               nrordprg, 
+               inctrprg, 
+               cdrelato##1, 
+               cdrelato##2, 
+               cdrelato##3, 
+               cdrelato##4, 
+               cdrelato##5, 
+               inlibprg, 
+               qtminmed)
+    SELECT cop.cdcooper,
+           nmsistem, 
+           cdprogra, 
+           dsprogra##1, 
+           dsprogra##2, 
+           dsprogra##3, 
+           dsprogra##4, 
+           994, 
+           300, 
+           inctrprg, 
+           cdrelato##1, 
+           cdrelato##2, 
+           cdrelato##3, 
+           cdrelato##4, 
+           cdrelato##5, 
+           inlibprg, 
+           qtminmed
+      FROM crapprg prg, crapcop cop
+     WHERE cop.cdcooper <> 3 AND cop.flgativo = 1
+       AND prg.cdcooper = 3
+       AND prg.cdprogra = 'IMPPRE';     
+       
+  
+      INSERT INTO craptel
+           (nmdatela, 
+            nrmodulo, 
+            cdopptel, 
+            tldatela, 
+            tlrestel, 
+            flgteldf, 
+            flgtelbl, 
+            nmrotina, 
+            lsopptel, 
+            inacesso, 
+            cdcooper, 
+            idsistem, 
+            idevento, 
+            nrordrot, 
+            nrdnivel, 
+            nmrotpai, 
+            idambtel)
+SELECT nmdatela, 
+      nrmodulo, 
+      cdopptel, 
+      tldatela, 
+      tlrestel, 
+      flgteldf, 
+      flgtelbl, 
+      nmrotina, 
+      lsopptel, 
+      inacesso, 
+      cop.cdcooper, 
+      idsistem, 
+      idevento, 
+      nrordrot, 
+      nrdnivel, 
+      nmrotpai, 
+      idambtel
+  FROM craptel tel, crapcop cop
+ WHERE cop.cdcooper <> 3 AND cop.flgativo = 1
+   AND tel.cdcooper = 3
+   AND tel.nmdatela = 'IMPPRE';    
+
 
   -- Migrar acessos das opções I para M e D   
   INSERT INTO crapace (nmdatela, 
