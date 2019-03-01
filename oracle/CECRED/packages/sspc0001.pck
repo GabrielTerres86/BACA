@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0001 AS
   --
   --  Programa: SSPC0001         
   --  Autor   : Andrino Carlos de Souza Junior
-  --  Data    : Julho/2014                     Ultima Atualizacao: 19/05/2017
+  --  Data    : Julho/2014                     Ultima Atualizacao: 01/03/2019
   --
   --  Dados referentes ao programa:
   --
@@ -49,6 +49,8 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0001 AS
   --
   --              28/03/2018 - Adicionando o procedimento pc_solicita_cons_bordero_biro (Andrew Albuquerque - GFT)
   --
+  --              01/03/2019 - Incluso leitura da tabela crapcbc para ignorar operações de desconto na busca de dados
+  --                           de consultas de orgao d eprotecao (Daniel)
   ---------------------------------------------------------------------------------------------------------------
 
 -- Atualiza as tabelas de controle com as informacoes finais
@@ -8600,7 +8602,8 @@ PROCEDURE pc_busca_consulta_biro(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Codi
              crapcbd.nrseqdet
         FROM crapmbr,
              crapcbd,
-             crapass
+             crapass,
+             crapcbc
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta
          AND crapcbd.cdcooper = crapass.cdcooper
@@ -8610,7 +8613,10 @@ PROCEDURE pc_busca_consulta_biro(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Codi
          AND crapmbr.cdmodbir = crapcbd.cdmodbir
          AND crapmbr.nrordimp <> 0 -- Descosiderar Bacen
          AND crapcbd.inreterr = 0  -- Nao houve erros
-       ORDER BY crapcbd.dtconbir DESC; -- Buscar a consuilta mais recente
+         AND crapcbc.nrconbir = crapcbd.nrconbir
+         AND crapcbc.inprodut <> 7
+       ORDER BY crapcbd.dtconbir DESC; -- Buscar a consulta mais recente
+  
   BEGIN
     -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_consulta_biro');  

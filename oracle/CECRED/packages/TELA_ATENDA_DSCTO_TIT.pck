@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
     Programa : TELA_ATENDA_DSCTO_TIT
     Sistema  : Ayllos Web
     Autor    : Paulo Penteado (GFT) / Gustavo Sene (GFT)
-    Data     : Março - 2018                 Ultima atualizacao: 04/09/2018
+    Data     : Março - 2018                 Ultima atualizacao: 01/03/2019
 
     Dados referentes ao programa:
 
@@ -31,6 +31,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                 11/10/2018 - Ajuste no CURSOR cr_crapcob para carregar situação do título, responsável por buscar informações dos 
                              titulos/boletos (utilizado em outras package) (Andrew Albuquerque - GFT)
                 23/11/2018 - Adicionado para guardar o usuario que fez a ultima analise do bordero (clicou no botao analisar) para ser enviado para a esteira
+				01/03/2019 - Removido da clausula WHERE o campo cdtpinsc quando efetuar leitura da crapsab (Daniel)
 
   ---------------------------------------------------------------------------------------------------------------------*/
 
@@ -339,7 +340,6 @@ TYPE typ_tab_titulo IS TABLE OF typ_reg_titulo INDEX BY BINARY_INTEGER;
         ,COUNT(1) over() qtregist 
   FROM   crapcob cob 
          INNER JOIN crapsab sab ON sab.nrinssac = cob.nrinssac AND 
-                                   sab.cdtpinsc = cob.cdtpinsc AND 
                                    sab.cdcooper = cob.cdcooper AND 
                                    sab.nrdconta = cob.nrdconta  
          LEFT  JOIN craptdb tdb ON cob.cdcooper = tdb.cdcooper AND 
@@ -4043,7 +4043,6 @@ END pc_obtem_proposta_aciona_web;
         FROM cecred.crapcob cob -- titulos
        INNER JOIN cecred.crapsab sab -- dados do sacado, para pegar o nome do sacado corretamente
           ON sab.nrinssac = cob.nrinssac 
-         AND sab.cdtpinsc = cob.cdtpinsc
          AND sab.cdcooper = cob.cdcooper
          AND sab.nrdconta = cob.nrdconta
          -- Regras Fixas
@@ -7416,7 +7415,9 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
          tdb.dtlibbdt,
          cob.incobran
         from   crapcob cob 
-          INNER JOIN cecred.crapsab sab ON sab.nrinssac = cob.nrinssac AND sab.cdtpinsc = cob.cdtpinsc AND sab.cdcooper = cob.cdcooper AND sab.nrdconta = cob.nrdconta  
+          INNER JOIN cecred.crapsab sab ON sab.nrinssac = cob.nrinssac AND
+										   sab.cdcooper = cob.cdcooper AND
+										   sab.nrdconta = cob.nrdconta  
           INNER JOIN craptdb tdb ON cob.cdcooper = tdb.cdcooper AND 
                                            cob.cdbandoc = tdb.cdbandoc AND  
                                            cob.nrdctabb = tdb.nrdctabb AND  
@@ -8427,10 +8428,9 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
              cob.cdbandoc,
              cob.nrdctabb
         FROM crapcob cob -- titulos
-             INNER JOIN crapsab sab ON sab.nrinssac = cob.nrinssac 
-                                                 AND sab.cdtpinsc = cob.cdtpinsc
-                                                 AND sab.cdcooper = cob.cdcooper
-                                                 AND sab.nrdconta = cob.nrdconta
+             INNER JOIN crapsab sab ON sab.nrinssac = cob.nrinssac
+								   AND sab.cdcooper = cob.cdcooper
+								   AND sab.nrdconta = cob.nrdconta
              INNER JOIN craptdb tdb ON cob.cdcooper = tdb.cdcooper AND
                                                     cob.cdbandoc = tdb.cdbandoc AND
                                                     cob.nrdctabb = tdb.nrdctabb AND

@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 08/01/2019
+    Data      : Abril/2012                      Ultima Atualizacao: 01/03/2019
     
     Dados referentes ao programa:
 
@@ -341,7 +341,11 @@
 
 				08/01/2019 - Inclusao do documento 207 (Andrey Formigari - Mouts)
 
-			    08/01/2019 - Incluso tratativa para não gerar pendencia de emprestimos do novo CDC (Daniel).				  
+			    08/01/2019 - Incluso tratativa para não gerar pendencia de emprestimos do novo CDC (Daniel).
+				
+				08/01/2019 - Incluso tratativa para não gerar pendencia de borderos inclusos no IB com
+				             valor inferior ao parametro de assinatura (Daniel).				  
+				  
 
 .............................................................................*/
 
@@ -370,6 +374,9 @@ DEF VAR aux_msgenvio  AS CHAR                                         NO-UNDO.
 DEF VAR aux_msgreceb  AS CHAR                                         NO-UNDO.
 
 DEF VAR rel_dsagenci  AS CHAR                                         NO-UNDO.
+
+DEF VAR aux_cdacesso  AS CHAR                                         NO-UNDO.
+DEF VAR aux_valordig  AS DEC                                          NO-UNDO.
 
 DEF VAR aux_dataorig  AS DATE                                         NO-UNDO.
 
@@ -5184,6 +5191,36 @@ PROCEDURE retorna_docs_liberados:
                         aux_vltittot = aux_vltittot + craptdb.vltitulo.
 
                     END.
+					
+					aux_valordig = 0.
+					
+					FIND crapass WHERE crapass.cdcooper = par_cdcooper    AND
+									   crapass.nrdconta = crapbdt.nrdconta
+									   NO-LOCK NO-ERROR.
+									   
+					IF AVAIL crapass THEN
+					DO:
+					
+						IF crapass.inpessoa = 1 THEN /* Fisica */
+							aux_cdacesso = "LIMDESCTITCRPF".
+						ELSE
+							aux_cdacesso = "LIMDESCTITCRPJ".
+		  
+						FIND craptab WHERE craptab.cdcooper = par_cdcooper    AND
+										   craptab.nmsistem = "CRED"          AND
+										   craptab.tptabela = "USUARI"        AND
+										   craptab.cdempres = 11              AND
+										   craptab.cdacesso = aux_cdacesso    AND
+										   craptab.tpregist = 0 NO-LOCK NO-ERROR.
+
+						IF  AVAIL craptab THEN
+						   aux_valordig = DEC(ENTRY(39,craptab.dstextab,";")).						   
+
+					END.
+					
+					/* Nao deve gerar pendencia para borderos efetuados no IB e com valor menor ou igual a parametro */
+                    IF crapbdt.cdoperad = '996' AND aux_vltittot <= aux_valordig THEN
+                        NEXT.
         
                     CREATE tt-documentos-liberados.
                     ASSIGN tt-documentos-liberados.tpdocmto = 88

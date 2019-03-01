@@ -5,7 +5,7 @@ create or replace package cecred.ESTE0003 is
       Sistema  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Paulo Penteado (Gft)
-      Data     : Março/2018.                   Ultima atualizacao: 23/03/2018
+      Data     : Março/2018.                   Ultima atualizacao: 01/03/2019
       
       Dados referentes ao programa:
       Frequencia: Sempre que solicitado
@@ -16,6 +16,8 @@ create or replace package cecred.ESTE0003 is
                   14/04/2018 - Adicionado a procedure pc_crps703 (Paulo Penteado (GFT)) 
 				  29/08/2018 - Adicionado verificação para não permir Analisar proposta 
                              com situação "Anulada". PRJ 438 (Mateus Z- Mouts)
+                  01/03/2019 - Correção para não possibilitar que propostas sem informação de rating sejam 
+				               enviadas para esteira de credito.
   
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -684,7 +686,7 @@ end pc_obrigacao_analise_autom;
           END IF; 
           
           --> Iniciar status
-          vr_dssitret := null;--'TEMPO ESGOTADO';
+          vr_dssitret := 'TEMPO ESGOTADO';
           
           --> HTTP 204 nao tem conteúdo
           IF vr_response.status_code != 204 THEN
@@ -741,9 +743,9 @@ end pc_obrigacao_analise_autom;
             OR to_number(to_char(SYSDATE, 'sssss')) - rw_crawlim.hrenvmot > vr_qtsegund THEN
               BEGIN
                 UPDATE crawlim lim
-                   SET lim.insitlim = 6 --> Nao aprovado
+                   SET lim.insitlim = 1 --> Em estudo
                       ,lim.insitest = 3 --> Analise Finalizada
-                      ,lim.insitapr = 5 --> Rejeitado Automaticamente
+                      ,lim.insitapr = 8 --> Refazer
                  WHERE lim.rowid = rw_crawlim.rowid;
               EXCEPTION
                 WHEN OTHERS THEN 
