@@ -59,7 +59,8 @@ CREATE OR REPLACE PACKAGE CECRED.rcip0001 AS
   PROCEDURE pc_remove_recipro_sem_uso;
   
   /* Calcular os períodos de apuracação expirados e aplicar as regras de reversão e debito */
-  PROCEDURE pc_expira_reciproci_prevista;
+  PROCEDURE pc_expira_reciproci_prevista(pr_cdcritic OUT PLS_INTEGER
+                                        ,pr_dscritic OUT VARCHAR2);
   
   -- Procedure encarregada de buscar os periodos de apuracao
   PROCEDURE pc_periodo_apuracao_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE
@@ -981,7 +982,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
   
   
   /* Calcular os períodos de apuracação expirados e aplicar as regras de reversão e debito */
-  PROCEDURE pc_expira_reciproci_prevista IS
+  PROCEDURE pc_expira_reciproci_prevista(pr_cdcritic OUT PLS_INTEGER
+                                        ,pr_dscritic OUT VARCHAR2) IS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : pc_expira_reciproci_prevista                  Antigo: Não há
@@ -1367,6 +1369,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
                                     ,pr_des_erro    => vr_des_erro);
           -- Commitar para o envio posterior
           COMMIT;
+          pr_dscritic := vr_des_erro;
+          pr_cdcritic := 1051;
         WHEN OTHERS THEN
           -- Cancelar o processo até então
           ROLLBACK;
@@ -1389,6 +1393,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
                                     ,pr_des_erro    => vr_des_erro);
           -- Commitar para o envio posterior
           COMMIT;
+          pr_dscritic := vr_des_erro;
+          pr_cdcritic := 1051;          
       END;  
     END LOOP; -- Fim períodos de apuração
   END pc_expira_reciproci_prevista;
