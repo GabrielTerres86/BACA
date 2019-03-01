@@ -55,8 +55,9 @@
                             INC0027500 - Inclusao da cdobserv no FIND da crapneg para retornar
                               linha exata em casos de lançamento manual. (Jefferson - Mouts)
                             
-               
-              
+               01/03/2019 - Melhoria no retorno da procedure oracle, adicionado parametro de erro.
+                            Verifica existencia de arquivos antes de executar comandos shell.
+                            Chamado PRB0040609 - Gabriel Marcos (Mouts).
 
 ..............................................................................*/
 
@@ -192,6 +193,7 @@ IF  NOT AVAILABLE crapcop  THEN
         RETURN.
     END.
 
+/*
 /* Baixar arquivos do FTP da ABBC */
 { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 RUN STORED-PROCEDURE pc_busca_ccf_transabbc.
@@ -212,7 +214,30 @@ END.
 
 CLOSE STORED-PROCEDURE pc_busca_ccf_transabbc.
 { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+*/
 
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+RUN STORED-PROCEDURE pc_busca_ccf_transabbc
+    aux_handproc = PROC-HANDLE NO-ERROR (OUTPUT ""). /* pr_dscritic */
+
+CLOSE STORED-PROC pc_busca_ccf_transabbc
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+ASSIGN aux_dscritic = pc_busca_ccf_transabbc.pr_dscritic
+                 WHEN pc_busca_ccf_transabbc.pr_dscritic <> ?.
+
+IF aux_dscritic <> "" THEN
+    DO:
+        ASSIGN glb_cdcritic = 782.
+        RUN fontes/critic.p.
+        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
+                          " - " + glb_cdprogra + "' --> '" + 
+                          "'CRITICA: Erro de manipulação de arquivos: " +
+                          aux_dscritic + "' >> log/proc_batch.log").
+        RETURN.
+END.
 
 EMPTY TEMP-TABLE crawarq.
 EMPTY TEMP-TABLE cratrej.
