@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-427
+433
 /* Ajusta aplicacoes nao resgatadas 
  
  Obs.: Considera fixo CDI 6.40
@@ -191,6 +191,12 @@ begin
     RAISE vr_excsaida;
   ELSE
     CLOSE BTCH0001.cr_crapdat;
+  END IF;
+
+  IF rw_crapdat.inproces > 1 THEN
+    vr_dscritic := 'Batch em execução! Cooper: '|| pr_cdcooper;
+    falha(vr_dscritic);
+    RAISE vr_excsaida;
   END IF;
   
   SELECT max(nvl(nrseqdig,0)) vr_nrseqdig into vr_nrseqdig
