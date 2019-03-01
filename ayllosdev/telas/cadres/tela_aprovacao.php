@@ -81,7 +81,7 @@ $g_nvopelib = 0;
 						<tr>
 							<td width="33%" style="padding:2px 4px;height:25px;font-size:11px"><?php echo $dsalcada; ?></td>
 							<td width="33%" style="padding:2px 4px;height:25px;font-size:11px"><a class="txtNormal" href="#" onclick="return false;" style="font-size:11px"><?php echo $dsstatus ?></a></td>
-							<td width="33%" style="padding:2px 4px;height:25px;font-size:11px" align="center"><?php if ($idaprovador && strtoupper($dsstatus) == 'PENDENTE') { ?><button type="button" class="botao" onclick="pedeSenhaCoordenador(<?php echo $nvopelib; ?>, 'aprovarContrato(<?php echo $cdcooper; ?>,<?php echo $cdalcada; ?>,<?php echo $idrecipr; ?>)', 'divRotina');return false;">Aprovar</button><?php } ?>&nbsp;</td>
+							<td width="33%" style="padding:2px 4px;height:25px;font-size:11px" align="center"><?php if ($idaprovador && strtoupper($dsstatus) == 'PENDENTE') { ?><button type="button" class="botao" onclick="showConfirmacao('Confirma a aprova&ccedil;&atilde;o do contrato?', 'Confirma&ccedil;&atilde;o - Aimaro', 'aprovarContrato(<?php echo $cdcooper; ?>,<?php echo $cdalcada; ?>,<?php echo $idrecipr; ?>)', 'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))', 'sim.gif', 'nao.gif');return false;">Aprovar</button><?php } ?>&nbsp;</td>
 							<?php
 							if ($idaprovador && strtoupper($dsstatus) == 'PENDENTE') {
 								$g_cdalcada = $cdalcada;
