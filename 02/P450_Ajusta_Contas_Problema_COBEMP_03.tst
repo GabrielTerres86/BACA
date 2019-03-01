@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-192
+166
 -- Created on 19/02/2019 by T0031667 
 declare 
   CURSOR cr_nrdocmto(pr_cdcooper NUMBER
@@ -161,32 +161,6 @@ BEGIN
     , 1
     , 5
   );
-
-  UPDATE tbcc_prejuizo
-     SET vlsdprej = vlsdprej + 842.89
-   WHERE cdcooper = 1
-     AND nrdconta = 8731560
-     AND dtliquidacao IS NULL
-  RETURNING idprejuizo INTO vr_idprejuizo;
-     
-  PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => 1
-                                  , pr_nrdconta => 8731560
-                                  , pr_dtmvtolt => TRUNC(SYSDATE)
-                                  , pr_cdhistor => 2408
-                                  , pr_idprejuizo => vr_idprejuizo
-                                  , pr_vllanmto => 842.89
-                                  , pr_dthrtran => SYSDATE
-                                  , pr_cdcritic => :pr_cdcritic
-                                  , pr_dscritic => :pr_dscritic);
-                                  
-  IF nvl(:pr_dscritic, 0) > 0 OR TRIM(:pr_dscritic) IS NOT NULL THEN
-    RETURN;
-  END IF;
-  
-  UPDATE crapsld
-     SET vlsmnmes = 0
-   WHERE cdcooper = 9
-     AND nrdconta = 17981;
 
   COMMIT;
   
