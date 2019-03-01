@@ -39,7 +39,7 @@
 	$vlsalari = (isset($_POST['vlsalari'])) ? $_POST['vlsalari'] : '' ; 
 	$endrect1 = (isset($_POST['endrect1'])) ? $_POST['endrect1'] : '' ; 
 	$nrendcom = (isset($_POST['nrendcom'])) ? $_POST['nrendcom'] : '' ; 
-	$complcom = removeCaracteresInvalidos((isset($_POST['complcom'])) ? $_POST['complcom'] : '',false); 
+	$complcom = removeCaracteresInvalidos((isset($_POST['complcom'])) ? $_POST['complcom'] : '',true); 
 	$bairoct1 = (isset($_POST['bairoct1'])) ? $_POST['bairoct1'] : '' ; 
 	$cepedct1 = (isset($_POST['cepedct1'])) ? $_POST['cepedct1'] : '' ; 
 	$cidadct1 = (isset($_POST['cidadct1'])) ? $_POST['cidadct1'] : '' ; 

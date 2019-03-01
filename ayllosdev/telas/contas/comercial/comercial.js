@@ -259,7 +259,7 @@ function manterRotina(operacao) {
     nrcadast = normalizaNumero(nrcadast);
     cepedct1 = normalizaNumero(cepedct1);
     inpolexp = normalizaNumero(inpolexp);
-    complcom = removeCaracteresInvalidos($('#complcom', '#' + nomeForm).val(), false);
+    complcom = removeCaracteresInvalidos($('#complcom', '#' + nomeForm).val(), true);
 
     nmextemp = trim(nmextemp);
     dsproftl = trim(dsproftl);
