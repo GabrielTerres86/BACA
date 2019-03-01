@@ -312,7 +312,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             crapdev criada (Jonata - MOUTS SD 859822).  
                             
               19/06/2018 - Ajuste para alimentar corretamente a agencia na solicitação do pedido
-                          (Adriano - INC0017466).                         
+                          (Adriano - INC0017466).   
+						  
+              11/02/2019 - Ajuste para criticar corretamente a existência de uma requisição 
+                           (Jose Dill Mouts - PRB0040497)  						                        
                      
   --------------------------------------------------------------------------------------------------------------- */
 
