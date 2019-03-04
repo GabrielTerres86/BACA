@@ -2,8 +2,6 @@ DECLARE
   idx PLS_INTEGER := 1;
   
 BEGIN
-  dbms_output.put_line('Inicializando...');
-
   UPDATE craptel
   SET tldatela = 'Pre Aprovado'
      ,tlrestel = 'Pre Aprovado'
@@ -12,13 +10,8 @@ BEGIN
      AND nrmodulo = 1
      AND UPPER(tlrestel) LIKE UPPER('Desabilitar Operacoes');
   
-  dbms_output.put_line('Contador => ' || SQL%ROWCOUNT);
-  
   IF SQL%ROWCOUNT = 0 THEN
     WHILE idx <= 17 LOOP
-      
-      dbms_output.put_line('INSERT => ' || idx);
-    
       INSERT INTO craptel(nmdatela, nrmodulo, cdopptel, tldatela, tlrestel, flgteldf, flgtelbl, nmrotina,lsopptel, inacesso, cdcooper, idsistem, idevento, nrordrot, nrdnivel, idambtel)
          VALUES('ATENDA', 1, '@,A', 'Pre Aprovado', 'Pre Aprovado', 0, 1, 'PRE APROVADO', 'ACESSO,ALTERACAO', 2, idx, 1, 0, 33, 1, 2);
     
@@ -26,7 +19,16 @@ BEGIN
     END LOOP;
   END IF;
   
-  dbms_output.put_line('... finalizando!');
-     
+  FOR rw_ope IN (SELECT ope.cdcooper
+                       ,ope.cdoperad 
+                   FROM crapope ope 
+                 WHERE ope.cdsitope = 1) LOOP
+    INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+    values ('ATENDA', '@', rw_ope.cdoperad, 'PRE APROVADO', rw_ope.cdcooper, 1, 0, 2);
+
+    INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+    values ('ATENDA', 'A', rw_ope.cdoperad, 'PRE APROVADO', rw_ope.cdcooper, 1, 0, 2);
+  END LOOP;
+  
   COMMIT;
 END;
