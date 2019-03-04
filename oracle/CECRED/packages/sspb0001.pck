@@ -463,7 +463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 04/12/2018
+  --  Data     : Julho/2013.                   Ultima atualizacao: 04/03/2019
   --
   -- Dados referentes ao programa:
   --
@@ -510,7 +510,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --                            como ocorre para TED online (Jose Dill - Mouts).
   --                            Sprint D - Armazenar as informações para a geração do arquivo contabil (Req19) (Jose Dill - Mouts) 
   --        
-  --
+  --              04/03/2019 - Quando data de inicio não for enviada deve manter a data já cadastrada
+  --                           (Jonata - Mouts INC0031899).
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -3472,7 +3473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Comunicação com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 27/06/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 01/03/2019
 
       Dados referentes ao programa:
 
@@ -3497,6 +3498,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                estava causando erro de conversão de valor. (Erro ao inserir na tabela gnmvcen. 
                                ORA-01722: invalid number), dentro da pc_gera_xml (Oscar).
                   
+                  01/03/2019 - Se o banco ainda não estiver operante no SPB (Data de inicio da operação), 
+                               deve bloquear o envio da TED.
+                               (Jonata - Mouts INC0031899).
+                               
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
@@ -3522,6 +3527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
             ,crapban.nrispbif
             ,crapban.flgdispb
             ,crapban.flgoppag
+            ,crapban.dtinispb
         FROM crapban
        WHERE crapban.cdbccxlt = pr_cdbccxlt;
 
@@ -3533,6 +3539,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
             ,crapban.nrispbif
             ,crapban.flgdispb
             ,crapban.flgoppag
+            ,crapban.dtinispb
         FROM crapban
        WHERE crapban.nrispbif = pr_cdispbif;
 
@@ -3813,6 +3820,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       RAISE vr_exc_erro;
     END IF;
 
+    -- Verificar se banco já está em operação no SPB
+    IF rw_crapban.flgdispb = 1 /*true*/      AND 
+       trunc(SYSDATE) < rw_crapban.dtinispb  THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Inicio das operacoes no SPB somente a partir de ' || to_char(rw_crapban.dtinispb,'DD/MM/RRRR') || '.';
+      RAISE vr_exc_erro;
+    END IF;
+    
     -- Operando com mensagens STR
     IF rw_crapcop.flgopstr = 1  THEN
       IF rw_crapcop.iniopstr <= gene0002.fn_busca_time AND
@@ -6419,7 +6434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --  Sistema  : Cred
     --  Sigla    : SSPB0001
     --  Autor    : Lucas Reinert
-    --  Data     : Agosto/2016.                   Ultima atualizacao: 18/04/2018
+    --  Data     : Agosto/2016.                   Ultima atualizacao: 04/03/2019
     --
     --  Dados referentes ao programa:
     --
@@ -6435,6 +6450,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 	--               07/08/2018 - Melhoria referente as condicoes que analisam STR0018 e STR0019.
 	--                            Chamado PRB0040135 (Gabriel - Mouts)
 	--
+    --              04/03/2019 - Quando data de inicio não for enviada deve manter a data já cadastrada
+    --                           (Jonata - Mouts INC0031899).
     ------------------------------------------------------------------------------	
 		DECLARE	
 		
@@ -6515,7 +6532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                      ban.flgdispb = 1,
                      ban.nmresbcc = substr(pr_nmdbanco,1,50),
                      ban.nmextbcc = substr(pr_nmdbanco,1,50),
-                     ban.dtinispb = vr_dtinispb
+                     ban.dtinispb = decode(vr_dtinispb,NULL,ban.dtinispb,vr_dtinispb)
                WHERE ban.rowid = rw_crapban.rowid_ban;
           ELSE
              
