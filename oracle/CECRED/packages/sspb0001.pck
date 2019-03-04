@@ -95,6 +95,8 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
 				16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
 
+				13/02/2019 - XSLProcessor
+
 ..............................................................................*/
 
   --criação TempTable
@@ -430,6 +432,27 @@ PROCEDURE pc_proc_opera_str(pr_cdprogra IN VARCHAR2 -- Código do programa
   -- Retornar o NRDOCMTO que compoe o NrControleIF
   FUNCTION fn_nrdocmto_nrctrlif RETURN VARCHAR2;
 
+  PROCEDURE pc_grava_arquivo_contabil (pr_nmmsg        in Varchar2 -- Nome da Mensagem
+                                      ,pr_nmmsg_dev    in Varchar2 Default null -- Nome da Mensagem de devolucao 
+                                      ,pr_dtarquivo    in Date     -- Data na qual o arquivo contabil sera gerado
+                                      ,pr_vlrmsg       in tbspb_msg_enviada.vlmensagem%TYPE   -- Valor do lancamento
+                                      ,pr_FinlddIF     in Varchar2 -- Informação de finalidade IF do XML
+                                      ,pr_FinlddCli    in Varchar2 -- Informação de finalidade do Cliente do XML
+                                      ,pr_NomCliCredtd in Varchar2 -- Nome do cliente de crédito do XML
+                                      ,pr_CodProdt     in Varchar2 -- Código do produto do XML
+                                      ,pr_SubTpAtv     in Varchar2 -- Código da sub atividade do XML
+                                      ,pr_CtCredtd     in Varchar2 -- Número da conta de crédito do XML
+                                      ,pr_CtDebtd      in Varchar2 -- Número da conta de débito do XML
+                                      ,pr_CNPJ_CPFCliCredtd     in Varchar2 -- Número do cnpf/cpf do cliente de crédito do XML
+                                      ,pr_CtCed        in Varchar2 -- Número CtCed do XML
+                                      ,pr_NumCtrlSTROr in Varchar2 -- Número do Controle STR de origem
+                                      ,pr_NumCtrlIF    in Varchar2 -- Número de controle da IF
+                                      ,pr_NumCtrlRem   in Varchar2 -- Número de controle do Remetente
+                                      ,pr_his          in Varchar2 -- Descrição do Histórico do XML 
+                                      ,pr_dscritic OUT VARCHAR2 -- Descricao do erro
+                                      );
+  
+
 END sspb0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
@@ -481,6 +504,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --
   --             05/12/2018 - SCTASK0038225 (Yuri - Mouts)
   --                          Substituir método XSLProcessor pela chamada da GENE0002
+
+  --             14/12/2018 -   Sprint D - Na efetivação de agendamento antes do horario de abertura da grade do SPB, 
+  --                            tambem deve verificar primeiramente a possibilidade de envio por PAG, assim 
+  --                            como ocorre para TED online (Jose Dill - Mouts).
+  --                            Sprint D - Armazenar as informações para a geração do arquivo contabil (Req19) (Jose Dill - Mouts) 
+  --        
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -753,7 +783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-          
+
 /*    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml,vr_nom_direto,vr_nmarqxml, 0);*/
       -- Fim SCTASK0038225
 
@@ -3844,8 +3874,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --> caso nao precise validar e ambos os periodos ja foram excedidos      
     ELSIF pr_flvldhor = 0 AND 
           vr_flgutstr = FALSE AND vr_flgutpag = FALSE THEN 
+      -- Sprint D - Correção para gerar STR para valores inferior ao parametrizado quando a grade de Teds não estiver aberta.
+      -- Esta situação ocorre quando a rotina de agendamento é executada antes da abertura das grades.
+      -- Operando com mensagens PAG
+      IF rw_crapcop.flgoppag = 1  THEN
+        IF pr_vldocmto > rw_crapcop.vlmaxpag THEN
       --> Deve enviar como STR    
       vr_flgutstr := TRUE; 
+        ELSE
+          vr_flgutpag := TRUE;
+          vr_flgutstr := TRUE;
+    END IF;
+      ELSE
+        vr_flgutstr := TRUE;  
+      END IF;
+      -- Fim Sprint D
     END IF;
 
     --> Alimenta variaveis default
@@ -4382,6 +4425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     ---------------> VARIAVEIS <-----------------
     vr_titulari BOOLEAN; --> Mesmo Titular.
     vr_flgctsal BOOLEAN;  --> CC Sal
+    vr_aux_nrdconta tbspb_msg_enviada.nrdconta%type;
 
     -- Marcelo Telles Coelho - Mouts - Projeto 475
     vr_nrseq_mensagem10    tbspb_msg_enviada_fase.nrseq_mensagem%type;
@@ -4405,6 +4449,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     IF pr_flgctsal = 1 THEN
       vr_flgctsal := TRUE;
     END IF;
+    -- Sprint D - Ajustes
+    -- Para as mensagens de convênios o número da conta gravado na tabela de trace deve ser zero
+    IF NVL(pr_cdconven,0) <> 0 THEN
+       vr_aux_nrdconta := null;
+    ELSE
+       vr_aux_nrdconta := pr_nrdconta;   
+    END IF;  
 
     -- Marcelo Telles Coelho - Projeto 475
     -- Gerar registro de rastreio de mensagens
@@ -4419,7 +4470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                ,pr_dsxml_mensagem         => NULL
                                ,pr_dsxml_completo         => NULL
                                ,pr_nrseq_mensagem_xml     => NULL
-                               ,pr_nrdconta               => pr_nrdconta
+                               ,pr_nrdconta               => vr_aux_nrdconta
                                ,pr_cdcooper               => pr_cdcooper
                                ,pr_cdproduto              => 30 -- TED
                                ,pr_nrseq_mensagem         => vr_nrseq_mensagem10
@@ -4442,7 +4493,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                ,pr_dsxml_mensagem         => NULL
                                ,pr_dsxml_completo         => NULL
                                ,pr_nrseq_mensagem_xml     => NULL
-                               ,pr_nrdconta               => pr_nrdconta
+                               ,pr_nrdconta               => vr_aux_nrdconta
                                ,pr_cdcooper               => pr_cdcooper
                                ,pr_cdproduto              => 30 -- TED
                                ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
@@ -4523,7 +4574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Evandro
-      Data     : Dezembro/2006.                   Ultima atualizacao: 04/01/2019
+      Data     : Dezembro/2006.                   Ultima atualizacao: 08/02/2018
 
 
       Dados referentes ao programa:
@@ -6897,5 +6948,493 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
               || to_char(SEQ_TEDENVIO.nextval,'fm000'),8,'0');
     RETURN(nrdocmto);
   END fn_nrdocmto_nrctrlif;
+  
+  PROCEDURE pc_grava_arquivo_contabil (pr_nmmsg        in Varchar2 -- Nome da Mensagem
+                                      ,pr_nmmsg_dev    in Varchar2 Default null -- Nome da Mensagem de devolucao 
+                                      ,pr_dtarquivo    in DATE -- Data na qual o arquivo contabil sera gerado
+                                      ,pr_vlrmsg       in tbspb_msg_enviada.vlmensagem%TYPE -- Valor do lancamento
+                                      ,pr_FinlddIF     in Varchar2 -- Informação de finalidade IF do XML
+                                      ,pr_FinlddCli    in Varchar2 -- Informação de finalidade do Cliente do XML
+                                      ,pr_NomCliCredtd in Varchar2 -- Nome do cliente de crédito do XML
+                                      ,pr_CodProdt     in Varchar2 -- Código do produto do XML
+                                      ,pr_SubTpAtv     in Varchar2 -- Código da sub atividade do XML
+                                      ,pr_CtCredtd     in Varchar2 -- Número da conta de crédito do XML
+                                      ,pr_CtDebtd      in Varchar2 -- Número da conta de débito do XML
+                                      ,pr_CNPJ_CPFCliCredtd     in Varchar2 -- Número do cnpf/cpf do cliente de crédito do XML
+                                      ,pr_CtCed        in Varchar2 -- Número CtCed do XML
+                                      ,pr_NumCtrlSTROr in Varchar2 -- Número do Controle STR de origem
+                                      ,pr_NumCtrlIF    in Varchar2 -- Número de controle da IF
+                                      ,pr_NumCtrlRem   in Varchar2 -- Número de controle do Remetente
+                                      ,pr_his          in Varchar2 -- Descrição do Histórico do XML 
+                                      ,pr_dscritic OUT VARCHAR2 -- Descricao do erro
+                                      ) IS
+
+    -- Gravar as informações necessárias para a geração do arquivo contabil.
+    -- Sprint D - Req19
+    vr_fggrava           boolean:= false;
+    vr_cdhist            number(5):= null;
+    vr_dsflexivel        varchar2(300):= null;
+    vr_CNPJ_CPFCliCredtd number(20) := 0;
+    vr_nrcentrocusto     number(05) := null;
+      
+  BEGIN
+    IF pr_nmmsg in ('LDL0022','LDL0020R2','LTR0004','RDC0002'  ,'RDC0007'  ,'SEL1069'  ,'SLB0002'
+                   ,'STR0003','STR0003R2','STR0004','LTR0005R2','STR0004R2','STR0006R2','STR0008R2'
+                   ,'STR0020'  ,'STR0007') THEN
+      IF pr_CNPJ_CPFCliCredtd is not null THEN
+         vr_CNPJ_CPFCliCredtd:= To_number(pr_CNPJ_CPFCliCredtd);
+      END IF;           
+      IF pr_nmmsg = 'LDL0022' THEN
+         IF pr_CodProdt = 'SLC' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2901;
+            vr_dsflexivel:= pr_nmmsg;
+         ELSIF pr_CodProdt = 'TED' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2891;
+            vr_dsflexivel:= pr_nmmsg;
+         END IF;
+      ELSIF pr_nmmsg = 'LDL0020R2' THEN
+         IF pr_CodProdt = 'SLC' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2896;
+            vr_dsflexivel:= pr_nmmsg;
+         ELSIF pr_CodProdt = 'TED' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2894;
+            vr_dsflexivel:= pr_nmmsg;
+         END IF;
+      ELSIF pr_nmmsg = 'LTR0004' THEN
+         IF pr_SubTpAtv = 'ANTR' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2901;            
+            vr_dsflexivel:= pr_nmmsg||'-'||pr_SubTpAtv;
+         ELSIF pr_SubTpAtv = 'UM' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2908;
+            vr_nrcentrocusto := 125;
+            vr_dsflexivel:= pr_nmmsg;              
+         END IF;
+      ELSIF pr_nmmsg = 'RDC0002' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2898;
+           vr_dsflexivel:= pr_nmmsg;              
+      ELSIF pr_nmmsg = 'RDC0007' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2904;
+            vr_dsflexivel:= pr_nmmsg;              
+      ELSIF pr_nmmsg = 'SEL1069' THEN
+         IF pr_CtCed = '100007' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2909;
+            vr_nrcentrocusto := 125;
+            vr_dsflexivel:= pr_nmmsg ||'-'||pr_CtCed;
+         ELSIF pr_CtCed = '103500300' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2909;
+            vr_nrcentrocusto := 125;
+            vr_dsflexivel:= pr_nmmsg ||'-'||pr_CtCed;
+         END IF;
+      ELSIF pr_nmmsg = 'SLB0002' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2909;
+            vr_nrcentrocusto := 175;
+           vr_dsflexivel:= pr_nmmsg;              
+      ELSIF pr_nmmsg = 'STR0003' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2890;
+           vr_dsflexivel:= pr_nmmsg;              
+      ELSIF pr_nmmsg = 'STR0003R2' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2895;
+           vr_dsflexivel:= pr_nmmsg;              
+      ELSIF pr_nmmsg = 'STR0004' THEN
+         IF pr_FinlddIF = '73' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2903;
+            vr_dsflexivel:= pr_nmmsg;                            
+         END IF;
+      ELSIF pr_nmmsg = 'LTR0005R2' THEN
+         IF pr_SubTpAtv = 'ANTR' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2896;
+            vr_dsflexivel:= pr_nmmsg||'-'||pr_SubTpAtv;
+         END IF;
+      ELSIF pr_nmmsg = 'STR0004R2' AND pr_nmmsg_dev IS NULL THEN
+         IF pr_FinlddIF = '23' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2897;
+         ELSIF pr_FinlddIF = '40' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2899;
+         ELSIF pr_FinlddIF = '73' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2900;
+         END IF;
+         vr_dsflexivel:= pr_nmmsg;
+      ELSIF pr_nmmsg = 'STR0006R2' AND pr_nmmsg_dev IS NULL THEN
+         IF pr_FinlddCli = '15' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2897;
+            vr_dsflexivel:= pr_nmmsg;
+         END IF;
+      ELSIF pr_nmmsg = 'STR0008R2' AND pr_nmmsg_dev IS NULL THEN
+         IF pr_CtDebtd = '2050480' AND
+            vr_CNPJ_CPFCliCredtd = 5463212000129  THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2893;
+            vr_dsflexivel:= pr_nmmsg;
+         END IF;
+      ELSIF pr_nmmsg_dev = 'STR0010' THEN
+         --
+         IF pr_nmmsg = 'STR0004R2' AND
+            pr_FinlddIF = '23'  THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2902;
+            vr_dsflexivel:= pr_nmmsg;
+         ELSIF pr_nmmsg = 'STR0006R2' AND
+            pr_FinlddCli = '15'  THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2902;
+            vr_dsflexivel:= pr_nmmsg;   
+         ELSE
+            vr_fggrava:= False;  
+         END IF;
+      ELSIF pr_nmmsg = 'STR0020' THEN
+         IF pr_CtCredtd = '10049' THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2907;
+            vr_dsflexivel:= pr_his;
+         END IF;
+      ELSIF pr_nmmsg = 'STR0007' THEN
+         IF pr_CtCredtd = '2050480' and vr_CNPJ_CPFCliCredtd = 5463212000129 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2889;
+         ELSIF pr_CtCredtd = '1649000' and vr_CNPJ_CPFCliCredtd = 8075352000118 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2892;
+            vr_dsflexivel:= pr_nmmsg;
+         ELSIF pr_CtCredtd = '76670' and vr_CNPJ_CPFCliCredtd = 82508433000117 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '1055' and vr_CNPJ_CPFCliCredtd = 5278562000115 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '34' and vr_CNPJ_CPFCliCredtd = 82985003000196 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '730165' and vr_CNPJ_CPFCliCredtd = 83102277000152 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '72931' and vr_CNPJ_CPFCliCredtd = 83102772000161 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '52337812' and vr_CNPJ_CPFCliCredtd = 4206050000180 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '273793' and vr_CNPJ_CPFCliCredtd = 23486042000180 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '202425' and vr_CNPJ_CPFCliCredtd = 23397533000154 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '407' and vr_CNPJ_CPFCliCredtd = 83102764000115 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '1870' and vr_CNPJ_CPFCliCredtd = 16539070000152 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '1748' and vr_CNPJ_CPFCliCredtd = 15402029000177 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '289973' and vr_CNPJ_CPFCliCredtd = 83102475000116 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '142891' and vr_CNPJ_CPFCliCredtd = 83102301000153 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '1829' and vr_CNPJ_CPFCliCredtd = 3918310000188 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '1051733' and vr_CNPJ_CPFCliCredtd = 76535764032266 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '36447' and vr_CNPJ_CPFCliCredtd = 83102244000102 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '31' and vr_CNPJ_CPFCliCredtd = 84438381000185 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '134467' and vr_CNPJ_CPFCliCredtd = 2558157000162 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '36587' and vr_CNPJ_CPFCliCredtd = 82636028000184 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '133230' and vr_CNPJ_CPFCliCredtd = 6220197000150 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '760072' and vr_CNPJ_CPFCliCredtd = 85461804000140 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '710013' and vr_CNPJ_CPFCliCredtd = 83102251000104 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '1002987' and vr_CNPJ_CPFCliCredtd = 8336783000190 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '15059' and vr_CNPJ_CPFCliCredtd = 83102855000150 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '49037' and vr_CNPJ_CPFCliCredtd = 7226794000155 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '10' and vr_CNPJ_CPFCliCredtd = 5472936000139 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '195' and vr_CNPJ_CPFCliCredtd = 86050978000183 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '1236571' and vr_CNPJ_CPFCliCredtd = 13007598000192 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '49174' and vr_CNPJ_CPFCliCredtd = 85908309000137 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '1125656' and vr_CNPJ_CPFCliCredtd = 11615872000180 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '63771' and vr_CNPJ_CPFCliCredtd = 83779462000186 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '108' and vr_CNPJ_CPFCliCredtd = 83102483000162 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '518994' and vr_CNPJ_CPFCliCredtd = 72271471000145 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '485' and vr_CNPJ_CPFCliCredtd = 83102491000109 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '290009' and vr_CNPJ_CPFCliCredtd = 75401372000129 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '17' and vr_CNPJ_CPFCliCredtd = 83102434000120 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '5631' and vr_CNPJ_CPFCliCredtd = 76484013000145 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2673' and vr_CNPJ_CPFCliCredtd = 83102582000144 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2703' and vr_CNPJ_CPFCliCredtd = 83102731000175 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2696606' and vr_CNPJ_CPFCliCredtd = 11810343000138 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2696525' and vr_CNPJ_CPFCliCredtd = 83102798000100 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2696533' and vr_CNPJ_CPFCliCredtd = 7789410000102 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '146056' and vr_CNPJ_CPFCliCredtd = 27397940000112 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2905;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '374886' and vr_CNPJ_CPFCliCredtd = 29980158000157 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '3377539' and vr_CNPJ_CPFCliCredtd = 61550141000172 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '627003' and vr_CNPJ_CPFCliCredtd = 61198164000160 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '1002724' and vr_CNPJ_CPFCliCredtd = 7200006000151 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2664186' and vr_CNPJ_CPFCliCredtd = 82624776000147 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '722901' and vr_CNPJ_CPFCliCredtd = 2338268000163 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '876496' and vr_CNPJ_CPFCliCredtd = 7270625000112 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '130000856' and vr_CNPJ_CPFCliCredtd = 33041062000109 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '102067' and vr_CNPJ_CPFCliCredtd = 33448150000111 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2115530' and vr_CNPJ_CPFCliCredtd = 92751213000173 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2072106' and vr_CNPJ_CPFCliCredtd = 4094517000148 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2072076' and vr_CNPJ_CPFCliCredtd = 2255187000108 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '156728' and vr_CNPJ_CPFCliCredtd = 82647165000114 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2441462' and vr_CNPJ_CPFCliCredtd = 5748642000197 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '1197525' and vr_CNPJ_CPFCliCredtd = 11778954000146 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2354195' and vr_CNPJ_CPFCliCredtd = 78524881000137 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '75833' and vr_CNPJ_CPFCliCredtd = 61074175000138 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '75833' and vr_CNPJ_CPFCliCredtd = 61074175000138 THEN -- Igual
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '277010' and vr_CNPJ_CPFCliCredtd = 82662909000170 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2380919' and vr_CNPJ_CPFCliCredtd = 10543892000120 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '1641387' and vr_CNPJ_CPFCliCredtd = 08941893000181 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2439212' and vr_CNPJ_CPFCliCredtd = 20122262000136 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '12548' and vr_CNPJ_CPFCliCredtd = 1060301000173 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2499177' and vr_CNPJ_CPFCliCredtd = 13805273000155 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2651106' and vr_CNPJ_CPFCliCredtd = 10681073000140 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '16780' and vr_CNPJ_CPFCliCredtd = 33608308000173 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2500116' and vr_CNPJ_CPFCliCredtd = 1659667000163 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2521954' and vr_CNPJ_CPFCliCredtd = 22211161000167 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2691256' and vr_CNPJ_CPFCliCredtd = 10884317000191 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '2712407' and vr_CNPJ_CPFCliCredtd = 14373223000109 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         ELSIF pr_CtCredtd = '248398' and vr_CNPJ_CPFCliCredtd = 80150857000127 THEN
+            vr_fggrava:= True;
+            vr_cdhist:= 2906;
+            vr_dsflexivel:= pr_NomCliCredtd;
+         END IF;
+           
+      END IF;  
+    END IF;
+    --
+    IF vr_fggrava THEN
+       --Grava registro para o arquivo contabil
+       BEGIN         
+         INSERT INTO TBSPB_ARQUIVO_CONTABIL
+         (NRSEQ_LANCAMENTO, nmmensagem, nrcontrole_if_str_pag
+         ,dtlancamento_contabil, vlrlancamento
+         ,cdhistor, dsflexivel, idsituacao, dtmvtolt, nrcentrocusto)
+         VALUES
+         (NULL, Nvl(pr_nmmsg_dev,pr_nmmsg), Nvl(pr_NumCtrlIF,Nvl(pr_NumCtrlRem,pr_NumCtrlSTROr))
+         ,pr_dtarquivo    , pr_vlrmsg 
+         ,vr_cdhist, vr_dsflexivel, 0, sysdate, vr_nrcentrocusto);
+       END;
+       --
+    END IF;
+        
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro nao tratado em pc_grava_arquivo_contabil --> '||sqlerrm;      
+  END pc_grava_arquivo_contabil;  
+
+
 END sspb0001;
 /
