@@ -347,7 +347,7 @@
 			if ($alguemAssinou) {
 				echo "enviarBancoob(".$nrctrcrd.")";
 			} else {
-			echo "solicitaSenha($nrctrcrd, $cdadmcrd);";
+				echo "solicitaTipoSenha($nrctrcrd, $cdadmcrd, 'novo');";
 			}
 		} else {
 			exibirErro('error',utf8ToHtml("O Contrato não pôde ser gerado."),'Alerta - Aimaro',$funcaoAposErro,false);
@@ -374,7 +374,7 @@
 	
 	$confmsg = "Deseja visualizar a impress&atilde;o?";
 	$conftit = "Confirma&ccedil;&atilde;o - Aimaro";
-	$confsim = "gerarImpressao(2,".$opcao.",".$cdadmcrd.",".$nrctrcrd.",0);";	
+	$confsim = "gerarImpressao(2,".$opcao.",".$cdadmcrd.",".$nrctrcrd.",0);";
 	$msgdconf = 'showConfirmacao("'.$confmsg.'","'.$conftit.'","'.$confsim.'",callafterCartaoCredito,"sim.gif","nao.gif");';	
 	
 	// Mostra a mensagem de informação para verificar atualização cadastral se for adm BB

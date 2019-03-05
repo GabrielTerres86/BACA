@@ -447,7 +447,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
              dtaprovacao,
              hraprovacao,
              nrcpf,
-             nmaprovador
+             nmaprovador,
+             cdaprovador
         FROM tbcrd_aprovacao_cartao
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
@@ -843,9 +844,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
           vr_tab_assinaturas_ctr(vr_idxassinaturas).nrctrcrd := rw_tbaprc.nrctrcrd;
           vr_tab_assinaturas_ctr(vr_idxassinaturas).indtipo_senha := rw_tbaprc.indtipo_senha;
           vr_tab_assinaturas_ctr(vr_idxassinaturas).nrcpf := rw_tbaprc.nrcpf;
+          IF (TRIM(rw_tbaprc.cdaprovador) IS NULL) THEN
           vr_tab_assinaturas_ctr(vr_idxassinaturas).nmtextoassinatura := 'Assinado eletronicamente, mediante aposição de senha do '
                                                               ||rw_tbaprc.nmaprovador||', no dia '||to_char(rw_tbaprc.dtaprovacao,'DD/MM/YYYY')
                                                               ||' e na hora '||rw_tbaprc.hraprovacao;
+          ELSE
+            vr_tab_assinaturas_ctr(vr_idxassinaturas).nmtextoassinatura := 'Solicitado pelo '||rw_tbaprc.cdaprovador||' - '
+                                                              ||rw_tbaprc.nmaprovador||', no dia '||to_char(rw_tbaprc.dtaprovacao,'DD/MM/YYYY')
+                                                              ||' e na hora '||rw_tbaprc.hraprovacao;
+          END IF;
         END LOOP; 
       EXCEPTION
         WHEN no_data_found THEN

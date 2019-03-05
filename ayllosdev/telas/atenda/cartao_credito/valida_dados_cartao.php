@@ -114,11 +114,6 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
     // Identifica se o cartao possui a opcao debito habilitada
     $flgdebit = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[5]->cdata;
 
-	if ($tpenvcrd > 0) {
-		$tpenv = 0;
-	} else {
-		$tpenv = 1;
-	}
 
     echo 'bloqueiaFundo(divRotina);';
 
@@ -139,7 +134,7 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
             echo '$("#tpdpagto","#frmNovoCartao").val(3);';
         }
 
-        echo '$("#tpenvcrd","#frmNovoCartao").val("'.$tpenv.'");';
+        echo '$("#tpenvcrd","#frmNovoCartao").val("'.$tpenvcrd.'");';
         echo '$("#dddebito","#frmNovoCartao").val("'.$dddebito.'");';
         echo "$('#dddebito').attr('disabled', true);";
         echo "$('#tpenvcrd').attr('disabled', true);";
@@ -211,7 +206,7 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
                 echo '$("#tpdpagto","#frmNovoCartao").val("3");';
             }
 
-            echo '$("#tpenvcrd","#frmNovoCartao").val("'.$tpenv.'");';
+            echo '$("#tpenvcrd","#frmNovoCartao").val("'.$tpenvcrd.'");';
 
             echo '$("#dddebito","#frmNovoCartao").val("' . $dddebito . '");';
 			if($glbadc == 'n' || $cdadmcrd!="15") {

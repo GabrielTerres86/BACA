@@ -699,7 +699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARECC is
 				GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
 																 ,pr_nmdcampo => 'Operador'
 																 ,pr_dsdadant => ''
-																 ,pr_dsdadatu => nvl(vr_cdoperad,0));
+																 ,pr_dsdadatu => nvl(vr_cdoperad,''));
         
         BEGIN
           -- Inserir registro, Tipo de Envio de Cartao
@@ -807,7 +807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARECC is
               --
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                        ,pr_nmdcampo => 'Operador'
-                                       ,pr_dsdadant => nvl(rw_tbcrd_pa_envio_cartao.cdoperador,0)
+                                       ,pr_dsdadant => rw_tbcrd_pa_envio_cartao.cdoperador
                                        ,pr_dsdadatu => '');
             EXCEPTION
                 WHEN OTHERS THEN
@@ -909,13 +909,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARECC is
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                        ,pr_nmdcampo => 'Tipo de Envio'
                                        ,pr_dsdadant => ''
-                                       ,pr_dsdadatu => nvl(pr_idtipoenvio,0));
+                                       ,pr_dsdadatu => rw_dominio.dscodigo);
                                    
               --
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                        ,pr_nmdcampo => 'Operador'
                                        ,pr_dsdadant => ''
-                                       ,pr_dsdadatu => nvl(vr_cdoperad,0));
+                                       ,pr_dsdadatu => nvl(vr_cdoperad,''));
             EXCEPTION
               WHEN DUP_VAL_ON_INDEX THEN
                 --> Se o registro já existe e não será alterado para mentar o codigo do operador que o criou.

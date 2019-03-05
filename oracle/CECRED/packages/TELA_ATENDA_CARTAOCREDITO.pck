@@ -102,6 +102,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                     ,pr_hraprovacao   IN tbcrd_aprovacao_cartao.hraprovacao%TYPE
                                     ,pr_nrcpf         IN tbcrd_aprovacao_cartao.nrcpf%TYPE
                                     ,pr_nmaprovador   IN tbcrd_aprovacao_cartao.nmaprovador%TYPE
+                                    ,pr_cdoperad      IN crapope.cdoperad%TYPE --> Codigo do operador informado
                                     ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic      OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic      OUT VARCHAR2             --> Descrição da crítica
@@ -1650,6 +1651,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                     ,pr_hraprovacao   IN tbcrd_aprovacao_cartao.hraprovacao%TYPE
                                     ,pr_nrcpf         IN tbcrd_aprovacao_cartao.nrcpf%TYPE
                                     ,pr_nmaprovador   IN tbcrd_aprovacao_cartao.nmaprovador%TYPE
+                                    ,pr_cdoperad      IN crapope.cdoperad%TYPE --> Codigo do operador informado
                                     ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic      OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic      OUT VARCHAR2             --> Descrição da crítica
@@ -1657,6 +1659,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                     ,pr_nmdcampo      OUT VARCHAR2             --> Nome do campo com erro
                                     ,pr_des_erro      OUT VARCHAR2) IS         --> Erros do processo
                                     
+    ------------------------------- CURSORES ---------------------------------
+    -- Busca os dados do operador
+    CURSOR cr_crapope (pr_cdcooper IN crapope.cdcooper%TYPE,
+                       pr_cdoperad IN crapope.cdoperad%TYPE) IS
+    SELECT ope.nmoperad
+          ,ope.cdoperad
+      FROM crapope ope
+     WHERE ope.cdcooper = pr_cdcooper
+       AND UPPER(ope.cdoperad) = UPPER(pr_cdoperad);
+     
+    rw_crapope cr_crapope%ROWTYPE;   
+  
+    ------------------------------- VARIÁVEIS --------------------------------
+    
+    -- Variaveis de log
+    vr_cdcooper NUMBER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(1000); --> Desc. Erro
@@ -1664,7 +1689,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
                                     
+    vr_nrcpf tbcrd_aprovacao_cartao.nrcpf%TYPE;
+    vr_nmaprovador tbcrd_aprovacao_cartao.nmaprovador%TYPE;
+    vr_cdaprovador tbcrd_aprovacao_cartao.cdaprovador%TYPE;
+    vr_nrdrowid ROWID;
+    
+    -- Cursor sobre a tabela de datas
+    rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
+    
   BEGIN 
+    
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'PARECC'
+                              ,pr_action => null);
+    
+    /* Extrai os dados */
+    GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+    
+    -- Verifica se houve erro                      
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+    
+    
+    IF (pr_indtipo_senha = 4 OR pr_indtipo_senha = 5) THEN
+      
+      -- Verificar os dados do operador
+      OPEN cr_crapope (pr_cdcooper => pr_cdcooper,
+                       pr_cdoperad => pr_cdoperad);
+      FETCH cr_crapope INTO rw_crapope;
+      -- Se não encontrar registro
+      IF cr_crapope%NOTFOUND THEN                     
+        -- Fecha o cursor
+        CLOSE cr_crapope;
+        
+        -- Monta critica
+        vr_cdcritic := 67;
+             
+        RAISE vr_exc_saida; 
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE cr_crapope;
+      END IF;
+    
+      vr_nrcpf := 0;
+      vr_nmaprovador := rw_crapope.nmoperad;
+      vr_cdaprovador := rw_crapope.cdoperad;
+    ELSE
+      vr_nrcpf := pr_nrcpf;
+      vr_nmaprovador := pr_nmaprovador;
+      vr_cdaprovador := '';
+    END IF;
+    
+    
     -- Inserir 
     BEGIN
       INSERT 
@@ -1676,7 +1761,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                     dtaprovacao,
                                     hraprovacao,
                                     nrcpf,
-                                    nmaprovador)
+                                    nmaprovador,
+                                    cdaprovador)
                              VALUES(tbcrd_aprovacao_cartao_seq.nextval,
                                     pr_cdcooper,
                                     pr_nrdconta,
@@ -1684,8 +1770,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                     pr_indtipo_senha,
                                     to_date(pr_dtaprovacao,'DD/MM/RRRR'),
                                     pr_hraprovacao,
-                                    pr_nrcpf,
-                                    pr_nmaprovador);
+                                    vr_nrcpf,
+                                    vr_nmaprovador,
+                                    vr_cdaprovador);
                                     
        COMMIT;
     EXCEPTION
@@ -1699,8 +1786,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         RAISE vr_exc_saida;
     END;
       
+    GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+														,pr_cdoperad => vr_cdoperad
+														,pr_dscritic => NULL
+														,pr_dsorigem => 'AYLLOS'
+														,pr_dstransa => 'Tela Atenda Cartao Credito - TBCRD_APROVACAO_CARTAO: Criado registro de permissao para solicitacao de cartao.'
+														,pr_dttransa => TRUNC(SYSDATE)
+														,pr_flgtrans => 1
+														,pr_hrtransa => gene0002.fn_busca_time
+														,pr_idseqttl => 1
+														,pr_nmdatela => vr_nmdatela
+														,pr_nrdconta => pr_nrdconta
+														,pr_nrdrowid => vr_nrdrowid);
+                            
+		--
+		GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+														 ,pr_nmdcampo => 'Operador'
+														 ,pr_dsdadant => 0
+														 ,pr_dsdadatu => nvl(pr_cdoperad,0));
+    
   EXCEPTION
     WHEN vr_exc_saida THEN
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+    
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
       ROLLBACK;

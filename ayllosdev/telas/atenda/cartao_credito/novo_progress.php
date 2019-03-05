@@ -124,7 +124,6 @@
 	$inpessoa = getByTagName($dados,"INPESSOA");
 	$cdtipcta = getByTagName($dados,"CDTIPCTA");
 	$nmbandei = getByTagName($dados,"NMBANDEI");
-	$tpenvcrd = getByTagName($dados,"TPENVCRD");
 	
 	// Primeiro Titular
     $nmtitcrd = getByTagName($dados,"NMTITCRD");
@@ -145,7 +144,6 @@
 	// Representantes
 	$nrrepinc = getByTagName($dados,"NRREPINC");    
     $dsrepinc = getByTagName($dados,"DSREPINC");    
-    $tpenvcrd = getByTagName($dados,"TPENCVRD");    
 
     // Administradoras que possuem débito	
 	// Buscar dias do débito da Administradora que aparece por 1º
@@ -351,7 +349,7 @@
 			<input type="text" name="vlalugue" id="vlalugue" class="campo" value="0,00" />
 			<br />
 			
-			<label for="vllimpro"><? echo utf8ToHtml('Limite Proposto:') ?></label>
+			<label for="vllimpro"><? echo utf8ToHtml('Limite Proposto:'); ?></label>
 			<div id="limiteDiv">
 				<? if($adicional || $tipo == "dbt"){?>
 				<select class='campo' id='vllimpro' name='vllimpro' disabled readonly>
@@ -390,8 +388,8 @@
 					</select>
 			<label for="tpenvcrd"><? echo utf8ToHtml('Envio:') ?></label>
 			<select class="campo" id="tpenvcrd" name="tpenvcrd">
-				<option <?php if ($tpenvcrd > 0) { echo "selected"; } ?> value="0">Cooperado</option>
-				<option <?php if ($tpenvcrd == 0) { echo "selected"; } ?> value="1">Cooperativa</option>
+				<option <?php if ($pa_envia_cartao) { echo "selected"; } ?> value="0">Cooperado</option>
+				<option <?php if (!$pa_envia_cartao) { echo "selected"; } ?> value="1">Cooperativa</option>
 			</select>				
 			<br />
 		</fieldset>

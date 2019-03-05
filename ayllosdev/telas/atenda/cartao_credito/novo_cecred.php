@@ -184,7 +184,6 @@ $cdadmdeb = getByTagName($dados,"CDADMDEB");
 $inpessoa = getByTagName($dados,"INPESSOA");
 $cdtipcta = getByTagName($dados,"CDTIPCTA");
 $nmbandei = getByTagName($dados,"NMBANDEI");
-$tpenvcrd = getByTagName($dados,"TPENVCRD");
 
 // Primeiro Titular
 $nmtitcrd = getByTagName($dados,"NMTITCRD");
@@ -657,8 +656,8 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
                     </select>
                     <label for="tpenvcrd"><? echo utf8ToHtml('Envio:') ?></label>
                     <select class='campo' id='tpenvcrd' name='tpenvcrd'>
-                    	<option <?php if ($tpenvcrd > 0) { echo "selected"; } ?> value="0">Cooperado</option>
-						<option <?php if ($tpenvcrd == 0) { echo "selected"; } ?> value="1">Cooperativa</option>
+                    	<option <?php if ($pa_envia_cartao) { echo "selected"; } ?> value="0">Cooperado</option>
+						<option <?php if (!$pa_envia_cartao) { echo "selected"; } ?> value="1">Cooperativa</option>
                     </select>
                     <br />
                 </fieldset>

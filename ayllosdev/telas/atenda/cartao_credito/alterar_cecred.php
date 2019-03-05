@@ -122,13 +122,26 @@ $dsdpagto = getByTagName($dados,"dsdpagto");
 $dsgraupr = getByTagName($dados,"dsgraupr");
 $nrdoccrd = getByTagName($dados,"nrdoccrd");
 $nmresadm = getByTagName($dados,"nmresadm");
-$tpenvcrd = getByTagName($dados,"TPENVCRD");
         
 if (getByTagName($dados,"DDDEBANT") == 0){
     $dddebant = "";
 } else {
     $dddebant = getByTagName($dados,"DDDEBANT");
 }
+
+
+// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
+$xml = "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObjeto = getObjectXML($xmlResult);
+
+$coop_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
+$pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
 
 ?>
 
@@ -240,8 +253,8 @@ if (getByTagName($dados,"DDDEBANT") == 0){
                     </select>
                     <label for="tpenvcrd"><?php echo utf8ToHtml('Envio:') ?></label>
                     <select class='campo' disabled id='tpenvcrd' name='tpenvcrd'>
-                        <option <?php if ($tpenvcrd > 0) { echo "selected"; } ?> value="0">Cooperado</option>
-                        <option <?php if ($tpenvcrd == 0) { echo "selected"; } ?> value="1">Cooperativa</option>
+                        <option <?php if ($pa_envia_cartao) { echo "selected"; } ?> value="0">Cooperado</option>
+                        <option <?php if (!$pa_envia_cartao) { echo "selected"; } ?> value="1">Cooperativa</option>
                     </select>
                     <br />
                 </fieldset>
