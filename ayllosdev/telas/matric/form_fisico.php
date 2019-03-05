@@ -152,7 +152,7 @@
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="nmresemp" id="nmresemp" type="text" value="<? echo getByTagName($registro,'nmresemp') ?>" />
 		
-		<label for="nrcadast">Cad. Emp.:</label>
+		<label for="nrcadast">Matr. Emp.:</label>
 		<input name="nrcadast" id="nrcadast" type="text" value="<? echo getByTagName($registro,'nrcadast') ?>" />	
 		<br />
 		
