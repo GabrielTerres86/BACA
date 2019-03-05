@@ -347,7 +347,7 @@
 			if ($alguemAssinou) {
 				echo "enviarBancoob(".$nrctrcrd.")";
 			} else {
-				echo "solicitaTipoSenha($nrctrcrd, $cdadmcrd, 'novo');";
+				echo "solicitaTipoSenha($nrctrcrd, 'novo');";
 			}
 		} else {
 			exibirErro('error',utf8ToHtml("O Contrato não pôde ser gerado."),'Alerta - Aimaro',$funcaoAposErro,false);

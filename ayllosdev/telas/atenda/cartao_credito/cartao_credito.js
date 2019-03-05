@@ -6056,8 +6056,8 @@ function solicitaSenha(contrato,tipoSenha) {
 	    tipoSenha = cTipoSenha.COOPERADO;
     }
     try{
-    if($("#btnsaveRequest").attr('onclick') != 'solicitaTipoSenha('+contrato+')'){
-        $("#btnsaveRequest").attr('onclick','solicitaTipoSenha('+contrato+')');
+        if($("#btnsaveRequest").attr('onclick') != 'solicitaTipoSenha('+contrato+')'){
+            $("#btnsaveRequest").attr('onclick','solicitaTipoSenha('+contrato+')');
     }}catch(e){
         console.log('estamos fora da tela novo');
     }
@@ -6117,8 +6117,8 @@ function solicitaTipoSenha(contrato,cdForm) {
         cdForm = 'novo';
     }
     try{
-    if($("#btnsaveRequest").attr('onclick') != 'solicitaTipoSenha('+contrato+')'){
-        $("#btnsaveRequest").attr('onclick','solicitaTipoSenha('+contrato+')');
+        if ($("#btnsaveRequest").attr('onclick') != 'solicitaTipoSenha(' + contrato + ',' + cdForm + ')') {
+            $("#btnsaveRequest").attr('onclick', 'solicitaTipoSenha(' + contrato + ',' + cdForm + ')');
     }}catch(e){
         console.log('estamos fora da tela novo');
     }
