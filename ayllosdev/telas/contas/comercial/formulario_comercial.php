@@ -102,7 +102,7 @@
 		<label for="vlsalari">Rendim.:</label>
 		<input name="vlsalari" id="vlsalari" type="text" value="<?php echo getByTagName($comercial,'vlsalari') ?>" />		
 		
-		<label for="nrcadast"><?php echo utf8ToHtml('Cad. Emp.:') ?></label>
+		<label for="nrcadast"><?php echo utf8ToHtml('Matr. Emp.:') ?></label>
 		<input name="nrcadast" id="nrcadast" type="text" value="<?php echo getByTagName($comercial,'nrcadast') ?>" />
 		
 		<br style="clear:both" />
