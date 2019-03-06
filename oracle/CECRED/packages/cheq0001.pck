@@ -223,7 +223,7 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
 									  ,pr_des_erro  OUT VARCHAR2              --> Status erro
                                       ,pr_dscritic  OUT VARCHAR2);            --> Retorno de erro																			
 
-  PROCEDURE pc_busca_ccf_transabbc;
+  PROCEDURE pc_busca_ccf_transabbc (pr_dscritic OUT VARCHAR2);
 
   PROCEDURE pc_solicita_talonario_web(pr_nrdconta      IN crapass.nrdconta%TYPE --> Numero da conta
                                      ,pr_qtreqtal      IN NUMBER                --> Quantidade de taloes requisitados
@@ -3407,7 +3407,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     END;
   END pc_download_ftp;
   
-  PROCEDURE pc_busca_ccf_transabbc IS
+  PROCEDURE pc_busca_ccf_transabbc (pr_dscritic OUT VARCHAR2) IS
   BEGIN
     /* .............................................................................
 
@@ -3426,7 +3426,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 
      Observacao: -----
 
-     Alteracoes:
+     Alteracoes: 01/03/2019 - Validacao de existencia de arquivos evitando ocorrencia
+                              de critica de delete ou unzip. 
+                              Chamado PRB0040609 - Gabriel (Mouts).
+
      ..............................................................................*/
 
     DECLARE
@@ -3454,7 +3457,27 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       -- Cursor genérico de calendário
       rw_crapdat BTCH0001.CR_CRAPDAT%ROWTYPE;
 
-      
+      -- Verifica existencia de arquivo
+      function fn_existe_arquivo (pr_dir_local varchar
+                                 ,pr_nmarquivo varchar) return boolean is
+        vr_lsarquiv      VARCHAR2(4000);
+      begin
+        -- Listar arquivos
+        gene0001.pc_lista_arquivos(pr_path     => pr_dir_local
+                                  ,pr_pesq     => pr_nmarquivo
+                                  ,pr_listarq  => vr_lsarquiv
+                                  ,pr_des_erro => vr_dscritic);
+        -- Se retornar erro ou nao retornar arquivos                                     
+        if trim(vr_dscritic) is not null or vr_lsarquiv is null then
+          return false;
+        else
+          return true;
+        end if;  
+      exception
+        when others then
+          return false;      
+      end fn_existe_arquivo;
+
     BEGIN
       -- Buscar a data do movimento
       OPEN btch0001.cr_crapdat(3);
@@ -3494,45 +3517,60 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                             ,pr_cdcooper => 3   --> Cooperativa
                                             ,pr_nmsubdir => 'abbc');
 
-      /* Remove os arquivos CCF dos dias anteriores */
-      vr_comando:= 'rm '||vr_dir_local ||'/CCF61*';
+      -- Verifica se o arquivo existe
+      if fn_existe_arquivo(vr_dir_local,'CCF61%') then
 
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_des_erro);
-     
-      IF vr_typ_saida = 'ERR' THEN
-        vr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
-        RAISE vr_exc_saida;
-      END IF;
+        /* Remove os arquivos CCF dos dias anteriores */
+        vr_comando:= 'rm '||vr_dir_local ||'/CCF61*';
+
+        --Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_des_erro);
+       
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
+          RAISE vr_exc_saida;
+        END IF;
       
-      vr_comando:= 'rm '||vr_dir_local ||'/CCF62*';
+      end if;
 
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_des_erro);
-     
-      IF vr_typ_saida = 'ERR' THEN
-        vr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
-        RAISE vr_exc_saida;
-      END IF;
+      -- Verifica se o arquivo existe
+      if fn_existe_arquivo(vr_dir_local,'CCF62%') then
+
+        vr_comando:= 'rm '||vr_dir_local ||'/CCF62*';
+
+        --Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_des_erro);
       
-      vr_comando:= 'rm '||vr_dir_local ||'/CCF.ZIP';
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
+          RAISE vr_exc_saida;
+        END IF;
+      
+      end if;
 
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_des_erro);
+      -- Verifica se o arquivo existe
+      if fn_existe_arquivo(vr_dir_local,'CCF.ZIP') then
+
+        vr_comando:= 'rm '||vr_dir_local ||'/CCF.ZIP';
+
+        --Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_des_erro);
      
-      IF vr_typ_saida = 'ERR' THEN
-        vr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
-        RAISE vr_exc_saida;
-      END IF;
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
+          RAISE vr_exc_saida;
+        END IF;
+
+      end if;
 
       vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
 
@@ -3577,47 +3615,58 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
          RAISE vr_exc_saida;
       END IF;
       
-      /*  Executar Extracao do arquivo zip */
-      vr_comando:= 'unzip '||vr_dir_local||'/'||vr_nmarquiv ||' -d ' || vr_dir_local;
+      -- Verifica se o arquivo existe
+      if fn_existe_arquivo(vr_dir_local,vr_nmarquiv) then
 
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_des_erro);
+        /*  Executar Extracao do arquivo zip */
+        vr_comando:= 'unzip '||vr_dir_local||'/'||vr_nmarquiv ||' -d ' || vr_dir_local;
 
-      --Se ocorreu erro dar RAISE
-      IF vr_typ_saida = 'ERR' THEN
-        vr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
-        RAISE vr_exc_saida;
-      END IF;
+        --Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_des_erro);
+
+        --Se ocorreu erro dar RAISE
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
+          RAISE vr_exc_saida;
+        END IF;
+
+      else
+        vr_dscritic := 'Arquivo '||vr_nmarquiv||' não encontrado.';
+        raise vr_exc_saida;
+      end if;
       
       -- Gravar os comandos no banco
       COMMIT;
     EXCEPTION
       WHEN vr_exc_saida THEN
 
+        pr_dscritic := ' - CONV0001.PC_BUSCA_CCF_TRANSABBC - Erro ao'||
+                       ' efetuar download dos arquivos: '||vr_dscritic;
+
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3 --> Sempre na Cecred
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'HH24:MI:SS') || 
-                                                      ' - CONV0001.PC_BUSCA_CCF_TRANSABBC Erro ao efetuar download dos arquivos: ' || vr_dscritic
+                                  ,pr_des_log      => pr_dscritic
                                   ,pr_dstiplog   => 'E'
                                   ,pr_cdprograma => 'CONV0001');
         ROLLBACK;
       WHEN OTHERS THEN
 
+        pr_dscritic := ' - CONV0001.PC_BUSCA_CCF_TRANSABBC - Erro ao'||
+                       ' efetuar download dos arquivos: '||SQLERRM;
+
         cecred.pc_internal_exception;
-      
+
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3 --> Sempre na Cecred
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'HH24:MI:SS') || 
-                                                      ' - CONV0001.PC_BUSCA_CCF_TRANSABBC Erro ao efetuar download dos arquivos: ' || SQLERRM
+                                  ,pr_des_log      => pr_dscritic
                                   ,pr_dstiplog   => 'E'
                                   ,pr_cdprograma => 'CONV0001');
         ROLLBACK;
     END;
   END pc_busca_ccf_transabbc;
-
 
   PROCEDURE pc_solicita_talonario_web(pr_nrdconta      IN crapass.nrdconta%TYPE --> Numero da conta
                                      ,pr_qtreqtal      IN NUMBER                --> Quantidade de taloes requisitados
