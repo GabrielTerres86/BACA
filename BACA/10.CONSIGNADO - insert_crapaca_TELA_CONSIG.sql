@@ -60,7 +60,7 @@ BEGIN
     ('BUSCAR_VENC_PARCELA'
     ,'TELA_CONSIG'
     ,'pc_busca_param_consig_web'
-    ,'pr_idemprconsigparam,pr_cdempres'
+    ,'pr_cdempres'
     ,v_nrseqrdr);   
    
   INSERT INTO CRAPACA
