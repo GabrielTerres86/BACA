@@ -35,6 +35,8 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
   --
   --                16/07/2018 - Inclusão do campo dsorigem no retorno da procedure pc_carrega_agend_recarga, Prj. 363 (Jean Michel)
   --
+  --                11/02/2019 - Gerar data de movimento da crapltr com sysdate (PRB0040602 - Jose Dill - Mouts)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   TYPE typ_reg_critic IS
@@ -370,6 +372,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
   --
   --                16/07/2018 - Inclusão do campo dsorigem no retorno da procedure pc_carrega_agend_recarga, Prj. 363 (Jean Michel)
+  --
+  --                15/02/2019 - Gerar data de movimento da crapltr com o dia útil correto (PRB0040602 - Jose Dill - Mouts)
   --
   ---------------------------------------------------------------------------------------------------------------
   
@@ -2105,7 +2109,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			vr_dtdebito := gene0005.fn_valida_dia_util(pr_cdcooper => 1
 													  ,pr_dtmvtolt => SYSDATE
 													  ,pr_tipo => 'P'   
-													  ,pr_feriado => TRUE);
+													  ,pr_feriado => TRUE
+                            ,pr_excultdia => TRUE); --PRB0040602 
 			
 			-- PF
 			IF rw_crapass.inpessoa = 1 THEN
