@@ -238,6 +238,24 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
 	}
 }
 
+// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
+$xml = "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObjeto = getObjectXML($xmlResult);
+
+$coop_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
+$pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
+
+if ($coop_envia_cartao && !$pa_envia_cartao) {
+	echo "<script>showError('error', 'Nenhuma op&ccedil;&atilde;o de envio definida para o PA, por favor, entre em contato com a SEDE para que seja realizada a parametriza&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);') </script>";
+} elseif ($coop_envia_cartao) {
+	echo '<script>novo_fluxo_envio = true;</script>';
+}
 ?>
 
 <style>
@@ -367,6 +385,10 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
             $('#selectStep').hide();
             $('.selectStep').hide();
             $('#stepRequest').show();
+
+            <?php if ($coop_envia_cartao && !$pa_envia_cartao) { ?>
+				showError('error', 'Nenhuma op&ccedil;&atilde;o de envio definida para o PA, por favor, entre em contato com a SEDE para que seja realizada a parametriza&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);');
+			<? } ?>
         }else{
             stepSelect = 1;
             $('#btnProsseguir').show();
@@ -662,11 +684,13 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
                     <br />
                 </fieldset>
                 <div id="divBotoes" >
-				
-                    <input class="btnVoltar" id="backChoose" type="image" style='display:none' src="<?echo $UrlImagens; ?>botoes/voltar.gif" onClick=" manageSelect();" />
-                    <!-- <input class="" type="image" style='display:none' id="btnsaveRequest" src="<?echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="validarNovoCartao solicitaSenha solicitaSenhaMagnetico('enviaSolicitacao()','643750','','sim.gif','nao.gif');" /> solicitaSenha-->
-                    <input class="" type="image" style='display:none' id="btnsaveRequest" src="<?echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao();" />
 
+                    <input class="botao btnVoltar" id="backChoose" type="button" style='display:none' onclick=" manageSelect();" value="Voltar" />
+					<?php if ($coop_envia_cartao && !$pa_envia_cartao) { ?>
+					<input class="botao botaoDesativado" type="button" style='display:none' id="btnsaveRequest" onclick="return false;" value="Prosseguir" />
+					<?php } else { ?>
+					<input class="botao" type="button" style='display:none' id="btnsaveRequest" onclick="verificaEfetuaGravacao();" value="Prosseguir" />
+					<?php } ?>
                 
 					<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
 					cdagenci="<?php echo $glbvars['cdpactra']; ?>" 

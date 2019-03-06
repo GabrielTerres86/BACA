@@ -153,6 +153,21 @@
 			$sNomeCartaoMultiplo = 'Cartão CECRED Empresas';
 		}
 	}
+
+	// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
+		
+	// Se ocorrer um erro, mostra cr?tica
+	if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
+		exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	}
 				
 ?>
 <script>

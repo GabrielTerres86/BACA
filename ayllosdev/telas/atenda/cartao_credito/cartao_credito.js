@@ -117,6 +117,11 @@ var dsadmcrdList = {
     15: "AILOS EMPRESAS"
 };
 var nmEmpresPla = "nome Empresa pl";
+var novo_fluxo_envio = false;
+var cTipoAcao = {
+    NOVO_CARTAO: 1,
+    UPGRADE_DOWNGRADE: 2
+};
 
 var cTipoSenha = {
 	SUPERVISOR: 'sup',
@@ -1312,6 +1317,16 @@ function controlaLayout(nomeForm) {
             'margin-left': '5px',
             'padding': '0px 2px'
         });
+    } else if (nomeForm == 'frmListaEnderecos') {
+        $('#btatualizardados').css({
+            'float': 'none',
+            'cursor': 'pointer'
+        });
+
+        hideMsgAguardo();
+        fechaRotina($('#divRotina'),$('#divUsoGenerico'));
+        $('#divUsoGenerico').setCenterPosition();
+		$('#divUsoGenerico').css('top', '91px');
     }
 
 	ajustarCentralizacao();
@@ -1774,8 +1789,39 @@ function verificaEfetuaGravacao() {
     }
 }
 
+function confirmaEndereco(tipoAcao) {
+	var el = $('input[type="radio"]:checked', '#frmListaEnderecos');
+
+	if (!el.length) {
+		hideMsgAguardo();
+		showError("error", "Deve ser selecionado um endere&ccedil;o para envio do cart&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+	
+	var label = el.parent().find('label'),
+		enderecoCompleto = '';
+	
+	if (label.length) {
+		enderecoCompleto = label.html().trim();
+	} else {
+		enderecoCompleto = el.parent().find('#outropasel option:selected').data('endereco');
+	}
+
+    if (tipoAcao == cTipoAcao.NOVO_CARTAO) {
+        showConfirmacao("O cart&atilde;o ser&aacute; enviado para o endere&ccedil;o:<br><br>"+enderecoCompleto+"<br><br>Confirma a opera&ccedil;&atilde;o?",
+                    "Confirma&ccedil;&atilde;o - Aimaro",
+                    "validarNovoCartao(true)",
+                    "blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+    } else if (tipoAcao == cTipoAcao.UPGRADE_DOWNGRADE) {
+        showConfirmacao("O cart&atilde;o ser&aacute; enviado para o endere&ccedil;o:<br><br>"+enderecoCompleto+"<br><br>Confirma a opera&ccedil;&atilde;o?",
+                    "Confirma&ccedil;&atilde;o - Aimaro",
+                    "validarUpDown(nrctrcrd);",
+                    "blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+    }
+}
+
 // Função para validar novo cartão de crédito
-function validarNovoCartao() {
+function validarNovoCartao(efetivaCadastro) {
     try {
 // Mostra mensagem de aguardo
         if (nrctrcrd == null || nrctrcrd == 0) {
@@ -1904,49 +1950,55 @@ function validarNovoCartao() {
         if (tpdpagto == 0) {
             hideMsgAguardo();
             showError("error", "Selecione uma Forma de Pagamento.", "Alerta - Aimaro", "$('#tpdpagto','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
-            return false
+            return false;
         }
 
-        // Executa script de valida��o do cart�o atrav�s de ajax
-        $.ajax({
-            type: "POST",
-            url: UrlSite + "telas/atenda/cartao_credito/validar_novo.php",
-            data: {
-                nrdconta: nrdconta,
-                inpessoa: inpessoa,
-                dsgraupr: dsgraupr,
-                nmtitcrd: nmtitcrd,
-                dsadmcrd: dsadmcrd,
-                dscartao: dscartao,
-                flgimpnp: flgimpnp,
-                vllimpro: vllimpro,
-                vllimdeb: vllimdeb,
-                nrcpfcgc: nrcpfcgc,
-                dddebito: dddebito,
-                dtnasccr: dtnasccr,
-                nrdoccrd: nrdoccrd,
-                dsrepinc: dsrepinc,
-                tpdpagto: tpdpagto,
-                dsrepres: dsrepres,
-                nmempres: nmempres,
-				flgdebit: flgdebit,
-				cdadmcrd: cdadmcrd,
-				nrctrcrd: nrctrcrd,
-                redirect: "script_ajax"
-            },
-            error: function (objAjax, responseError, objExcept) {
-                hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-            },
-            success: function (response) {
-                try {
-                    eval(response);
-                } catch (error) {
+        // Verifica se deve entrar no novo fluxo
+		if (!efetivaCadastro && novo_fluxo_envio) {
+            consultaEnderecos(cTipoAcao.NOVO_CARTAO);
+            return;
+        } else {
+            // Executa script de valida��o do cart�o atrav�s de ajax
+            $.ajax({
+                type: "POST",
+                url: UrlSite + "telas/atenda/cartao_credito/validar_novo.php",
+                data: {
+                    nrdconta: nrdconta,
+                    inpessoa: inpessoa,
+                    dsgraupr: dsgraupr,
+                    nmtitcrd: nmtitcrd,
+                    dsadmcrd: dsadmcrd,
+                    dscartao: dscartao,
+                    flgimpnp: flgimpnp,
+                    vllimpro: vllimpro,
+                    vllimdeb: vllimdeb,
+                    nrcpfcgc: nrcpfcgc,
+                    dddebito: dddebito,
+                    dtnasccr: dtnasccr,
+                    nrdoccrd: nrdoccrd,
+                    dsrepinc: dsrepinc,
+                    tpdpagto: tpdpagto,
+                    dsrepres: dsrepres,
+                    nmempres: nmempres,
+                    flgdebit: flgdebit,
+                    cdadmcrd: cdadmcrd,
+                    nrctrcrd: nrctrcrd,
+                    redirect: "script_ajax"
+                },
+                error: function (objAjax, responseError, objExcept) {
                     hideMsgAguardo();
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                },
+                success: function (response) {
+                    try {
+                        eval(response);
+                    } catch (error) {
+                        hideMsgAguardo();
+                        showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                    }
                 }
-            }
-        });
+            });
+        }
     } catch (e) {
         hideMsgAguardo();
         showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -2103,6 +2155,8 @@ function cadastrarNovoCartao() {
     var tpenvcrd = $('#tpenvcrd', '#' + nomeForm).val() || "";
     var flgdebit = $('#flgdebit', '#' + nomeForm).prop('checked') || "";
     var dsrepres = "";
+	var tpendass = "9";
+	var cdagenc2 = "1";
 
     $("input[type=checkbox][name='nrseqavl[]']").each(function () {
         if (this.checked != false) {
@@ -2136,7 +2190,8 @@ function cadastrarNovoCartao() {
             nmcidav2: nmcidav2, nrfonav2: nrfonav2, tpdocav2: tpdocav2, tdccjav2: tdccjav2,
             cdufava2: cdufava2, emailav2: emailav2, nmextttl: nmextttl, tpdpagto: tpdpagto,
             tpenvcrd: tpenvcrd, executandoProdutos: executandoProdutos, dsrepres: dsrepres,
-            dsrepinc: dsrepinc, flgdebit: flgdebit, nrctrcrd: nrctrcrd, redirect: 'script_ajax'
+            dsrepinc: dsrepinc, flgdebit: flgdebit, nrctrcrd: nrctrcrd, tpendass: tpendass,
+			cdagenc2: cdagenc2, redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
@@ -4682,6 +4737,8 @@ function validarUpDown(contrato) {
     var codaadmi = $("#hdncodadm").val();
     var codnadmi = $("#dsadmant").val();
 	var dsjustificativa = $("#dsjustificativa").val();
+	var tpendass = "9";
+	var cdagenc2 = "1";
 	if(dsjustificativa.length == 0 ){
 		hideMsgAguardo();
         showError("error", "Por favor preencha a justificativa.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -4695,38 +4752,46 @@ function validarUpDown(contrato) {
         return false;
     }
 
-// Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, validando dados...");
+    // Verifica se deve entrar no novo fluxo
+    if (novo_fluxo_envio) {
+        consultaEnderecos(cTipoAcao.UPGRADE_DOWNGRADE);
+        return;
+    } else {
+        // Mostra mensagem de aguardo
+        showMsgAguardo("Aguarde, validando dados...");
 
-	// Carrega conteúdo da opção através de ajax
-    $.ajax({
-        type: "POST",
-        url: UrlSite + "telas/atenda/cartao_credito/altera_administradora.php",
-        dataType: "html",
-        data: {
-            codaadmi: codaadmi,
-            codnadmi: codnadmi,
-            nrdconta: nrdconta,
-            nrcrcard: nrcrcard,
-            nrctrcrd: contrato,
-			dsjustificativa:dsjustificativa,
-            redirect: "html_ajax"
-        },
-        success: function (response) {
-            hideMsgAguardo();
-			var error = false;
-			
-            eval(response);
-			if(!error)
-				//CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
-			    if (iPiloto == 1) {
-					atualizaUpgradeDowngrade(contrato);
-				} else {					
-					showError("inform","Operacao realizada com sucesso.","Alerta - Aimaro","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
-				}
-					
-        }
-    });
+        // Carrega conteúdo da opção através de ajax
+        $.ajax({
+            type: "POST",
+            url: UrlSite + "telas/atenda/cartao_credito/altera_administradora.php",
+            dataType: "html",
+            data: {
+                codaadmi: codaadmi,
+                codnadmi: codnadmi,
+                nrdconta: nrdconta,
+                nrcrcard: nrcrcard,
+                nrctrcrd: contrato,
+                tpendass: tpendass,
+                cdagenc2: cdagenc2,
+                dsjustificativa:dsjustificativa,
+                redirect: "html_ajax"
+            },
+            success: function (response) {
+                hideMsgAguardo();
+                var error = false;
+                
+                eval(response);
+                if(!error)
+                    //CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
+                    if (iPiloto == 1) {
+                        atualizaUpgradeDowngrade(contrato);
+                    } else {					
+                        showError("inform","Operacao realizada com sucesso.","Alerta - Aimaro","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
+                    }
+                        
+            }
+        });
+    }
 }
 
 function buscaTitulares(nrdconta, escolha) {
@@ -6851,5 +6916,32 @@ function opcaoAlterarProposta() {
                     alterarLimiteProposta();
                 }
             }
+    });
+}
+
+// Função para consultar endereços de entrega para o cooperado
+function consultaEnderecos(tipoAcao) {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, consultando dados do cart&atilde;o de cr&eacute;dito ...");
+    exibeRotina($('#divUsoGenerico'));
+
+	// Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/cartao_credito/consultar_enderecos.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            tipoacao: tipoAcao,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $('#divUsoGenerico').html(response);
+            //$("#divOpcoesDaOpcao1").html(response);
+        }
     });
 }

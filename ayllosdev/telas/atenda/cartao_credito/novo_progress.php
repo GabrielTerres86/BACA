@@ -184,6 +184,25 @@
 		exibirErro('error', $msgErro, 'Alerta - Ayllos', $funcaoAposErro);
 	}
 	$habilitarEdicaoEmpresaPlastico = (!empty($xmlObj->roottag->tags[0]->tags[0]->tags[0]->cdata) ? $xmlObj->roottag->tags[0]->tags[0]->tags[0]->cdata : "0");
+
+	// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	$coop_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
+	$pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
+
+	if ($coop_envia_cartao && !$pa_envia_cartao) {
+		echo "<script>showError('error', 'Nenhuma op&ccedil;&atilde;o de envio definida para o PA, por favor, entre em contato com a SEDE para que seja realizada a parametriza&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);') </script>";
+	} elseif ($coop_envia_cartao) {
+		echo '<script>novo_fluxo_envio = true;</script>';
+	}
 ?>
 
 <style>
@@ -395,8 +414,12 @@
 		</fieldset>
 		
 		<div id="divBotoes" >
-			<input class="btnVoltar" type="image" src="<?echo $UrlImagens; ?>botoes/voltar.gif" onClick="opcaoNovo(1);return false;" />
-			<input type="image" id="btnsaveRequest" src="<?echo $UrlImagens; ?>botoes/prosseguir.gif" onClick="$('#nmtitcrd').click(); $('#nmextttl').click(); verificaEfetuaGravacao();return false;" />
+			<input type="button" class="botao btnVoltar" onclick="opcaoNovo(1);return false;" value="Voltar" />
+			<?php if ($coop_envia_cartao && !$pa_envia_cartao) { ?>
+			<input type="button" class="botao botaoDesativado" id="btnsaveRequest" onclick="return false;" value="Prosseguir" />
+			<?php } else { ?>
+			<input type="button" class="botao" id="btnsaveRequest" onclick="$('#nmtitcrd').click(); $('#nmextttl').click(); verificaEfetuaGravacao();return false;" value="Prosseguir" />
+			<?php } ?>
 			<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
 				cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
 				nrdcaixa="<?php echo $glbvars['nrdcaixa']; ?>" 
