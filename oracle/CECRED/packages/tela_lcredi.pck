@@ -1061,7 +1061,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
         Sistema : CECRED
         Sigla   : LCREDI
         Autor   : Andrei - RKAM
-        Data    : Julho - 2016.                    Ultima atualizacao: 06/01/2019
+        Data    : Julho - 2016.                    Ultima atualizacao: 04/03/2019
     
         Dados referentes ao programa:
     
@@ -2360,7 +2360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
         Sistema : CECRED
         Sigla   : LCREDI
         Autor   : Andrei - RKAM
-        Data    : Julho - 2016.                    Ultima atualizacao: 06/01/2019
+        Data    : Julho - 2016.                    Ultima atualizacao: 04/03/2019
     
         Dados referentes ao programa:
     
