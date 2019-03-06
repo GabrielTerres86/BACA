@@ -137,7 +137,7 @@ PROCEDURE pc_incluir_pacote(pr_cdcooper           IN INTEGER               --> c
   
     
     -- Pega o primeiro dia do proximo mes
-    vr_dtinicio_vigencia := to_date('01/03/2019','DD/MM/RRRR');
+    vr_dtinicio_vigencia := to_date('01/04/2019','DD/MM/RRRR');
   
   /*  
     OPEN cr_vltarifa (pr_cdcooper => vr_cdcooper
