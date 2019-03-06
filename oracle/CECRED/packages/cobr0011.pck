@@ -279,7 +279,7 @@ create or replace package body cecred.cobr0011 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Supero
-  --  Data     : Março/2018.                   Ultima atualização: 18/02/2019
+  --  Data     : Março/2018.                   Ultima atualização: 01/03/2019
   --
   -- Dados referentes ao programa:
   --
@@ -301,6 +301,8 @@ create or replace package body cecred.cobr0011 IS
   --             14/02/2019 - Ajuste na funcao que retorna o dia util para envio de boleto para protesto (P352 - Cechet).
   --
   --             18/02/2019 - Passar motivo '00' como parâmetro para cobrança de tarifa de remessa a cartório (P352 - Cechet).
+  --
+  --             01/03/2019 - Ajuste na funcao que retorna o dia util para envio de informações ao IEPTB (P352 - Cechet)
 ---------------------------------------------------------------------------------------------------------------*/
 
   -- Private type declarations
@@ -561,25 +563,32 @@ create or replace package body cecred.cobr0011 IS
 	FUNCTION fn_busca_dtmvtolt(pr_cdcooper IN crapdat.cdcooper%TYPE
 		                        ) RETURN DATE IS
 		--
-		vr_qtdregis NUMBER;
 		vr_dtmvtolt DATE;
 		--
-	BEGIN
-		--
-		BEGIN
-			--
-			SELECT COUNT(1)
-				INTO vr_qtdregis
+    -- parametro de horário de envio do arquivo para protesto
+    CURSOR cr_param_protesto IS
+			SELECT COUNT(1) qtdregis
 				FROM tbcobran_param_protesto
 			 WHERE to_date( hrenvio_arquivo, 'SSSSS') > to_date(to_char( SYSDATE, 'SSSSS' ), 'SSSSS')
 				 AND cdcooper = pr_cdcooper;
-			--
-		EXCEPTION
-			WHEN OTHERS THEN
-				raise_application_error(-20001, 'Erro ao buscar o parametro de limite de horario: ' || SQLERRM);
-		END;
+    rw_param_protesto cr_param_protesto%ROWTYPE;    
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 		--
 		BEGIN
+    -- Validar data cooper
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+       CLOSE btch0001.cr_crapdat;
+       raise_application_error(-20001, 'Erro ao buscar data de movimento da cooperativa');       
+    ELSE
+       CLOSE btch0001.cr_crapdat;
+    END IF;
+    
+    OPEN cr_param_protesto;
+    FETCH cr_param_protesto INTO rw_param_protesto;
+    CLOSE cr_param_protesto;    
 			--
       vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                 ,pr_dtmvtolt => trunc(SYSDATE)
@@ -587,28 +596,31 @@ create or replace package body cecred.cobr0011 IS
                                                 ,pr_feriado => TRUE
                                                 ,pr_excultdia => FALSE);
               
-      -- se a funcao for executada em um fim de seamana/feriado,
-      -- a data de retorno será o próximo dia útil; caso contrario, 
-      -- entrará na regra abaixo
-      IF vr_dtmvtolt = trunc(SYSDATE) THEN      
-
-			SELECT DECODE(vr_qtdregis, 0, crapdat.dtmvtopr, crapdat.dtmvtolt)
-				INTO vr_dtmvtolt
-				FROM crapdat
-			 WHERE crapdat.cdcooper = pr_cdcooper;
-         
-      END IF;
+    -- se a data de movimento da cooperativa for igual do dia util calculado
+    -- então sistema deverá verificar se a instrução está sendo executada antes 
+    -- do horário parametrizado, caso contrário, será utilizado o próximo dia útil;
+    IF vr_dtmvtolt = rw_crapdat.dtmvtolt THEN      
 			--
-		EXCEPTION
-			WHEN OTHERS THEN
-				raise_application_error(-20001, 'Erro ao buscar o parametro de limite de horario: ' || SQLERRM);
-		END;
+      -- se o parametro retornou zero, entao horario atual
+      -- está acima do horário parametrizado, portanto utilizar
+      -- o próximo dia útil
+      IF rw_param_protesto.qtdregis = 0 THEN
+        vr_dtmvtolt := rw_crapdat.dtmvtopr;
+      ELSE
+        vr_dtmvtolt := rw_crapdat.dtmvtolt;
+      END IF;
+      --
+    ELSE
+      -- utilizar próximo dia útil quando a data do movimento
+      -- for diferente do dia atual
+      vr_dtmvtolt := rw_crapdat.dtmvtopr;        
+    END IF;         
 		--
 		RETURN vr_dtmvtolt;
 		--
 	EXCEPTION
 		WHEN OTHERS THEN
-			raise_application_error(-20001, 'Erro na fn_busca_dtmvtolt: ' || SQLERRM);
+			raise_application_error(-20001, 'Erro na COBR0011.fn_busca_dtmvtolt: ' || SQLERRM);
 	END fn_busca_dtmvtolt;
 	--
 	PROCEDURE pc_enviar_ted_IEPTB (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa

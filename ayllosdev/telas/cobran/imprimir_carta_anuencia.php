@@ -25,7 +25,8 @@
 
 	$nrdconta = ( isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 	$nrdocmto = ( isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0;
-	$cdbancoc = ( isset($_POST['cdbandoc'])) ? $_POST['cdbandoc'] : 0;
+	$nrcnvcob = ( isset($_POST['nrcnvcob'])) ? $_POST['nrcnvcob'] : 0;
+	$cdbandoc = ( isset($_POST['cdbandoc'])) ? $_POST['cdbandoc'] : 0;
 	$dtcatanu = ( isset($_POST['dtcatanu'])) ? $_POST['dtcatanu'] : '';
 	$nmrepres = (!empty($_POST['nmrepres'])) ? $_POST['nmrepres'] : '';
 	
@@ -39,8 +40,9 @@
 	$xml .= " <Dados>";
 	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "   <nrcnvcob>".$nrcnvcob."</nrcnvcob>"; 
 	$xml .= "   <nrdocmto>".$nrdocmto."</nrdocmto>";
-	$xml .= "   <cdbancoc>".$cdbancoc."</cdbancoc>";
+	$xml .= "   <cdbandoc>".$cdbandoc."</cdbandoc>";
 	$xml .= "   <dtcatanu>".$dtcatanu."</dtcatanu>";
 	$xml .= "   <nmrepres>".$nmrepres."</nmrepres>";
 	$xml .= "   <dtmvtolt>".$glbvars['dtmvtolt']."</dtmvtolt>";

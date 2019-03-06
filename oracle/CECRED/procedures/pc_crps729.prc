@@ -6,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 14/01/2019
+   Data    : Fevereiro/2018                    Ultima atualizacao: 06/03/2019
 
    Dados referentes ao programa:
 
@@ -24,6 +24,8 @@
    
    14/01/2019 - Ajuste no campo t13 - nrdocmto para dsdoccop. 
               - Adicionado campo de complemento de endereço no endereço do pagador. (Cechet).
+   
+   06/03/2019 - Executar apenas em dias úteis na Central (Cechet)
    
   ............................................................................. */
   
@@ -2810,6 +2812,13 @@
   END pc_gera_cancelamento_ieptb;
 	--
 BEGIN
+  
+  -- Executar apenas em dias úteis na Central
+  IF gene0005.fn_valida_dia_util(pr_cdcooper => 3, 
+                                 pr_dtmvtolt => trunc(SYSDATE)) <> trunc(SYSDATE) THEN
+    RETURN;
+  END IF;
+
   -- Incluido controle de Log inicio programa
   pc_controla_log_batch(1, 'Início crps729');
   --
