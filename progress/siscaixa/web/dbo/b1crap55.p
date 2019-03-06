@@ -88,6 +88,9 @@
 
                 03/01/2019 - Nova regra para bloquear bancos. (Andrey Formigari - #SCTASK0035990)
 
+			   25/02/2019 - Adicionado FIND da craplcm conforme insert da
+			         gerar_lancamento_conta_comple (Jefferson - MoutS)
+
 ............................................................................. **/                           
  
 DEF TEMP-TABLE w-compel                                                NO-UNDO
@@ -1614,6 +1617,11 @@ PROCEDURE atualiza-pagto-cheque-liberado:
 												INPUT YES).
 									RETURN "NOK".
                             END. 
+                         ELSE 
+                            DO:
+                                FIND FIRST tt-ret-lancto.
+                                FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                            END.                
          END.
          
     IF   p-valor <> 0  AND      /* Cheque */
