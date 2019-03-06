@@ -31,7 +31,7 @@ BEGIN
   VALUES
     ('EXCLUIR_VENC_PARCELA'
     ,'TELA_CONSIG'
-    ,'pc_excluir_empr_consig_param_web'
+    ,'pc_excluir_param_consig_web'
     ,'pr_idemprconsigparam,pr_cdempres'
     ,v_nrseqrdr);
     
@@ -45,7 +45,7 @@ BEGIN
   VALUES
     ('REPLICAR_VENC_PARCELA'
     ,'TELA_CONSIG'
-    ,'pc_replicar_empr_consig_param_web'
+    ,'pc_replicar_param_consig_web'
     ,'pr_idemprconsigparam,pr_cdempres,pr_dtinclpropostade,pr_dtinclpropostaate,pr_dtenvioarquivo,pr_dtvencimento'
     ,v_nrseqrdr); 
     
@@ -59,9 +59,36 @@ BEGIN
   VALUES
     ('BUSCAR_VENC_PARCELA'
     ,'TELA_CONSIG'
-    ,'pc_buscar_empr_consig_param_web'
+    ,'pc_busca_param_consig_web'
     ,'pr_idemprconsigparam,pr_cdempres'
-    ,v_nrseqrdr);    
+    ,v_nrseqrdr);   
+   
+  INSERT INTO CRAPACA
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('VAL_COOPER_CONSIGNADO'
+    ,'TELA_CONSIG'
+    ,'pc_val_cooper_consignado_web',
+    ,'pr_cdcooper'
+    ,v_nrseqrdr);
+-------------------------------------------------------------------------
+	
+  INSERT INTO CRAPPRM
+    (nmsistem 
+    ,cdcooper 
+    ,cdacesso 
+    ,dstexprm 
+    ,dsvlrprm)
+  VALUES
+    ('CRED'
+    ,13
+    ,'COOPER_CONSIGNADO'
+    ,'Cooperativas que podem utilizar o consignado e suas validações'
+    ,'S');	
     
   COMMIT;             
 END; 
