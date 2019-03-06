@@ -6,10 +6,12 @@
  * OBJETIVO     : Rotina para validar/alterar os dados do CÔNJUGE da tela de CONTAS
  *
  * ALTERACOES   : 19/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
-				  08/09/2015 - Adicionado função para remover caracteres inválidos SD 317628 (Kelvin)
-				  23/12/2015 - #350828 Adicionada a operação para a aba PPE (Carlos) 
-							  14/07/2016 - Correcao na forma de recuperacao das variaveis do XML. SD 479874. Carlos R. 
-                              11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).								  
+                  08/09/2015 - Adicionado função para remover caracteres inválidos SD 317628 (Kelvin)
+                  23/12/2015 - #350828 Adicionada a operação para a aba PPE (Carlos) 
+                  14/07/2016 - Correcao na forma de recuperacao das variaveis do XML. SD 479874. Carlos R. 
+                  11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).	
+                  01/03/2019 - Tratamento de caracteres invalidos no campo complemento de endereco (PRB0040642 - Gabriel Mouts).               
+                                         
  */
     session_start();
 	require_once("../../../includes/config.php");
@@ -37,7 +39,7 @@
 	$vlsalari = (isset($_POST['vlsalari'])) ? $_POST['vlsalari'] : '' ; 
 	$endrect1 = (isset($_POST['endrect1'])) ? $_POST['endrect1'] : '' ; 
 	$nrendcom = (isset($_POST['nrendcom'])) ? $_POST['nrendcom'] : '' ; 
-	$complcom = (isset($_POST['complcom'])) ? $_POST['complcom'] : '' ; 
+	$complcom = removeCaracteresInvalidos((isset($_POST['complcom'])) ? $_POST['complcom'] : '',true); 
 	$bairoct1 = (isset($_POST['bairoct1'])) ? $_POST['bairoct1'] : '' ; 
 	$cepedct1 = (isset($_POST['cepedct1'])) ? $_POST['cepedct1'] : '' ; 
 	$cidadct1 = (isset($_POST['cidadct1'])) ? $_POST['cidadct1'] : '' ; 
