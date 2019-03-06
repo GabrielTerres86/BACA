@@ -312,7 +312,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             crapdev criada (Jonata - MOUTS SD 859822).  
                             
               19/06/2018 - Ajuste para alimentar corretamente a agencia na solicitação do pedido
-                          (Adriano - INC0017466).                         
+                          (Adriano - INC0017466). 
+                       
+              11/02/2019 - Ajuste para criticar corretamente a existência de uma requisição 
+                           (Jose Dill Mouts - PRB0040497)                        
                      
   --------------------------------------------------------------------------------------------------------------- */
 
@@ -4662,7 +4665,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             ,pr_dtmvtocd => rw_crapdat.dtmvtocd
                             ,pr_tprequis => pr_tprequis
                             ,pr_nrdconta => pr_nrdconta
-                            ,pr_nrinichq => (CASE WHEN pr_qtreqtal > 0 THEN 0 ELSE rw_taloes.nrinicial END)
+                            ,pr_nrinichq => vr_nrinichq -- PRB0040497
                             ,pr_cdagenci => vr_cdagenci);
             FETCH cr_crapreq INTO rw_crapreq;
                 
