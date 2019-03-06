@@ -334,7 +334,7 @@ create or replace package body cecred.INSS0004 is
           UTL_File.Put_Line(vr_arquivo_saida, '<soapenv:Body>');      
           UTL_File.Put_Line(vr_arquivo_saida, '<ben:InReenviarCadastroBeneficiarioINSS>');
           UTL_File.Put_Line(vr_arquivo_saida, '<ben:orgaoPagador>' || pr_orgao_pagador ||'</ben:orgaoPagador>');
-          UTL_File.Put_Line(vr_arquivo_saida, '<ben:codBeneficiario> ' || pr_numero_beneficio || '</ben:codBeneficiario>');
+          UTL_File.Put_Line(vr_arquivo_saida, '<ben:codBeneficiario> ' || lpad(pr_numero_beneficio,10,'0') || '</ben:codBeneficiario>');
           UTL_File.Put_Line(vr_arquivo_saida, '</ben:InReenviarCadastroBeneficiarioINSS>'); 
           UTL_File.Put_Line(vr_arquivo_saida, '</soapenv:Body>');
           UTL_File.Put_Line(vr_arquivo_saida, '</soapenv:Envelope>');
