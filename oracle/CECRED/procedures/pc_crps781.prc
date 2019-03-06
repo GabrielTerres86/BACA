@@ -68,6 +68,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps781(pr_cdcooper  IN crapcop.cdcooper%T
       vr_flgdps         varchar2(1);
       vr_vlproposta     crawseg.vlseguro%type;  
       vr_dsmotcan  VARCHAR2(60);        
+      vr_nrdrowid       ROWID;        
       
     BEGIN
 
@@ -122,6 +123,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps781(pr_cdcooper  IN crapcop.cdcooper%T
 
       -- Busca Seguros residenciais vencidos
       FOR rw_seg IN cr_crapseg LOOP        
+        --
           segu0003.pc_validar_prestamista(pr_cdcooper => pr_cdcooper
                                         , pr_nrdconta => rw_seg.nrdconta
                                         , pr_nrctremp => rw_seg.nrctrato
@@ -139,6 +141,49 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps781(pr_cdcooper  IN crapcop.cdcooper%T
                                         , pr_dscritic => vr_dscritic);
           --Se ocorreu erro
           IF vr_dscritic IS NULL and vr_flgprestamista = 'N' THEN
+
+          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => pr_cdoperad
+                              ,pr_dscritic => ''
+                              ,pr_dsorigem => 'Batch'
+                              ,pr_dstransa => 'Cancelamento de Prestamista'
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 1
+                              ,pr_hrtransa => gene0002.fn_busca_time
+                              ,pr_idseqttl => 1
+                              ,pr_nmdatela => 'CRPS781'
+                              ,pr_nrdconta => rw_seg.nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid); 
+                                    
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'ROWID',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => rw_seg.rowid); 
+
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Conta',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => rw_seg.nrdconta); 
+                                    
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Contrato',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => rw_seg.nrctrato);                                    
+
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Saldo Devedor',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => vr_vlproposta); 
+                                      
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Flag DPS',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => vr_flgdps); 
+
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Motivo Cancel.',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => vr_dsmotcan);                                    
             --  
             begin
               update crapseg s
