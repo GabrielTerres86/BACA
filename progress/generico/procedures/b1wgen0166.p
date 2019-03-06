@@ -86,11 +86,13 @@
 
                 04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
                              tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
-							 
-				18/10/2018 - Ajuste na gravacao dos campos indicadores de aviso de debito na
-				             procedure Altera_inclui para considerar o valor ja gravado na tabela
-							 caso exista. Necessario para evitar duplicidade de geracao de registro
-							 na crapavs - INC0025297. (Fabricio)
+
+                05/10/2018 - Adicionada validacao de CNPJ nao existente na procedure Altera_inclui. PRJ437 (CIS).							 
+
+			  	18/10/2018 - Ajuste na gravacao dos campos indicadores de aviso de debito na
+			                 procedure Altera_inclui para considerar o valor ja gravado na tabela
+			                 caso exista. Necessario para evitar duplicidade de geracao de registro
+			                 na crapavs - INC0025297. (Fabricio)
 
 
 .............................................................................*/
@@ -510,6 +512,29 @@ PROCEDURE Altera_inclui:
         
             RETURN "NOK".
         END.
+
+		IF par_tiptrans = "I" THEN DO:
+			/* Buscando o cnpj */
+			FIND crapemp WHERE crapemp.cdcooper = par_cdcooper
+								AND crapemp.nrdocnpj = par_nrdocnpj
+								 NO-LOCK NO-ERROR.
+
+			
+			
+			IF  AVAIL crapemp THEN DO:
+				ASSIGN aux_cdcritic = 0
+					   aux_dscritic = "CNPJ já vinculado a empresa " + STRING(crapemp.cdempres) + "! Não é possivel cadastrar".
+				
+				RUN gera_erro (INPUT par_cdcooper,
+							   INPUT par_cdagenci,
+							   INPUT par_nrdcaixa,
+							   INPUT 1,            /** Sequencia **/
+							   INPUT aux_cdcritic,
+							   INPUT-OUTPUT aux_dscritic).
+			
+				RETURN "NOK".
+			END.
+		END.
     END.
 
     Grava: 
