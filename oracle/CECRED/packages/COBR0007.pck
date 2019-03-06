@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   --  Sistema  : Procedimentos gerais para execucao de inetrucoes de baixa
   --  Sigla    : CRED
   --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 07/11/2018
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 27/02/2019
   --
   -- Dados referentes ao programa:
   --
@@ -311,7 +311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --  Sistema  : Procedimentos gerais para execucao de instrucoes de baixa
   --  Sigla    : CRED
   --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 07/11/2018
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 27/02/2019
   --
   -- Dados referentes ao programa:
   --
@@ -346,6 +346,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
   07/11/2018 - Ajuste de mensagem para usuario final
                (Envolti - Belli - INC0026760)
+    
+  12/02/2019 - Teste Revitalização
+               (Belli - Envolti - REQ0035813)
+               
+  27/02/2019 - Regra deve considerar o sinal de igual para criticar o valor de abatimento
+               (Envolti - Belli - INC0032975)            
 
   -------------------------------------------------------------------------------------------------------------*/
   --Ch 839539
@@ -585,7 +591,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                        ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0
                        ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0
                        ,pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2
-                       ,pr_nmarqlog      IN tbgen_prglog.nmarqlog%type DEFAULT NULL) IS
+                       ,pr_nmarqlog      IN tbgen_prglog.nmarqlog%type DEFAULT NULL
+                       ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%type DEFAULT 1 -- cadeia - 12/02/2019 - REQ0035813
+                       ) IS
     -----------------------------------------------------------------------------------------------------------
     --
     --  Programa : pc_gera_log
@@ -610,7 +618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                            pr_cdcooper      => pr_cdcooper, 
                            pr_tpocorrencia  => pr_ind_tipo_log, 
                            pr_cdprograma    => vr_cdprogra, 
-                           pr_tpexecucao    => 1, --cadeia
+                           pr_tpexecucao    => pr_tpexecucao, -- 12/02/2019 - REQ0035813
                            pr_cdcriticidade => pr_cdcriticidade,
                            pr_cdmensagem    => pr_cdmensagem,    
                            pr_dsmensagem    => pr_dscritic,               
@@ -1564,9 +1572,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         END;
       ELSE
         pr_des_erro:= 'NOK';
---teste ana deixar comentado por enquanto porque é PR_        pr_cdcritic := 1397;  --Registro de remessa nao encontrado
---        pr_dscritic:= 'Problemas na exclusao da Remessa';
-        pr_dscritic := gene0001.fn_busca_critica(1397);
+        pr_dscritic := gene0001.fn_busca_critica(1397); -- Problemas na exclusao da Remessa
 
       END IF;
       --Fechar Cursor
@@ -1810,7 +1816,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         IF vr_des_erro = 'NOK' THEN
           --Levantar Excecao
           RAISE vr_exc_erro;
-        END IF;
+        END IF; 
         -- Inclui nome do modulo logado - 30/08/2018 - REQ0011728
         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0007.pc_verif_existencia_instruc');
       END LOOP;
@@ -2939,7 +2945,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 14/01/2019
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 24/08/201819/05/2016
     --
     --  Dados referentes ao programa:
     --
@@ -3627,15 +3633,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic||vr_dsparame;
+        pr_dscritic:= vr_dscritic;
 
         --Grava tabela de log - Ch REQ0011728
         pc_gera_log(pr_cdcooper      => pr_cdcooper,
                     pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
                     pr_cdcriticidade => 1,
                     pr_cdmensagem    => nvl(pr_cdcritic,0),
                     pr_ind_tipo_log  => 1);
+        -- Ajuste mensagem - 12/02/2019 - REQ0035813
+        IF nvl(pr_cdcritic,0) IN ( 1197, 9999, 1034, 1035, 1036, 1037 ) THEN
+          pr_cdcritic := 1224;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+        ELSIF nvl(pr_cdcritic,0) = 0 AND
+              SUBSTR(pr_dscritic, 1, 7 ) IN ( '1197 - ', '9999 - ', '1034 - ', '1035 - ', '1036 - ', '1037 - ' ) THEN
+          pr_cdcritic := 1224;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+        END IF;
       WHEN OTHERS THEN
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
@@ -3650,6 +3665,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                     pr_cdcriticidade => 2,
                     pr_cdmensagem    => nvl(pr_cdcritic,0),
                     pr_ind_tipo_log  => 2);
+
+        pr_cdcritic := 1224; -- Ajuste mensagem - 12/02/2019 - REQ0035813
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
     END;
   END pc_inst_protestar;
 
@@ -5921,6 +5939,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            Ajuste registro de logs com mensagens corretas
     --                            Comentado cursor cd_craprem2 e variáveis não utilizados
     --                            (Ana - Envolti - Ch. REQ0011728)
+    --
+    --               12/02/2019 - Teste Revitalização
+    --                            (Belli - Envolti - Ch. REQ0035813)     
     -- ...........................................................................................
   BEGIN
     DECLARE
@@ -6088,18 +6109,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         --
       END IF;
       --
+                          
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic||vr_dsparame;
+        pr_dscritic:= vr_dscritic;
 
         --Grava tabela de log - Ch REQ0011728
         pc_gera_log(pr_cdcooper      => nvl(rw_crapcob_id.cdcooper,3),
                     pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
                     pr_cdcriticidade => 1,
                     pr_cdmensagem    => nvl(pr_cdcritic,0),
                     pr_ind_tipo_log  => 1);
+        -- Ajuste mensagem - 12/02/2019 - REQ0035813
+        IF nvl(pr_cdcritic,0) IN ( 1197, 9999, 1034, 1035, 1036, 1037 ) THEN
+          pr_cdcritic := 1224;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+        ELSIF nvl(pr_cdcritic,0) = 0 AND
+              SUBSTR(pr_dscritic, 1, 7 ) IN ( '1197 - ', '9999 - ', '1034 - ', '1035 - ', '1036 - ', '1037 - ' ) THEN
+          pr_cdcritic := 1224;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+        END IF;
       WHEN OTHERS THEN
         CECRED.pc_internal_exception (pr_cdcooper => rw_crapcob_id.cdcooper);  
 
@@ -6114,6 +6145,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                     pr_cdcriticidade => 2,
                     pr_cdmensagem    => nvl(pr_cdcritic,0),
                     pr_ind_tipo_log  => 2);
+
+        pr_cdcritic := 1224; -- Ajuste mensagem - 12/02/2019 - REQ0035813
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
     END;
 
   END pc_inst_pedido_baixa;
@@ -6135,7 +6169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : 
-    --  Data     :                                    Ultima atualizacao: 24/08/201821/08/2017
+    --  Data     :                                    Ultima atualizacao: 12/02/2019
     --
     --  Dados referentes ao programa:
     --
@@ -6147,6 +6181,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            Inclusão pc_set_modulo
     --                            Ajuste registro de logs com mensagens corretas
     --                            (Ana - Envolti - Ch. REQ0011728)
+    --
+    --               12/02/2019 - Rotina não mais utilizada
+    --                            (Belli - Envolti - Ch. REQ0035813)
     -- ...........................................................................................
   BEGIN
      DECLARE
@@ -6955,7 +6992,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Douglas Quisinski
-    --  Data     : Janeiro/2016                     Ultima atualizacao: 24/08/201812/01/2016
+    --  Data     : Janeiro/2016                     Ultima atualizacao: 27/02/2019
     --
     --  Dados referentes ao programa:
     --
@@ -6969,6 +7006,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            Inclusão pc_set_modulo
     --                            Ajuste registro de logs com mensagens corretas
     --                            (Ana - Envolti - Ch. REQ0011728)
+    --
+    --               12/02/2019 - Teste Revitalização
+    --                            (Belli - Envolti - Ch. REQ0035813)
+    --           
+    --               27/02/2019 - Regra deve considerar o sinal de igual para criticar o valor de abatimento
+    --                           (Envolti - Belli - INC0032975)    
+    --
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -7198,7 +7242,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     
     -- Calcular o valor com os abatimentos 
     vr_vltitabr := rw_crapcob.vltitulo - rw_crapcob.vldescto - rw_crapcob.vlabatim;
-    IF  pr_vlabatim > vr_vltitabr THEN
+    IF  pr_vlabatim >= vr_vltitabr THEN -- Regra deve considerar o sinal de igual - 27/02/2019 - INC0032975
       -- Gerar o retorno para o cooperado 
       COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
                                          ,pr_cdocorre => 26   -- Instrucao Rejeitada
@@ -7584,15 +7628,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     WHEN vr_exc_erro THEN
       -- Erro
       pr_cdcritic:= vr_cdcritic;
-      pr_dscritic:= vr_dscritic||vr_dsparame;
+      pr_dscritic:= vr_dscritic;
     
         --Grava tabela de log - Ch REQ0011728
         pc_gera_log(pr_cdcooper      => nvl(pr_cdcooper,3),
                     pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
                     pr_cdcriticidade => 1,
                     pr_cdmensagem    => nvl(pr_cdcritic,0),
                     pr_ind_tipo_log  => 1);
+      -- Ajuste mensagem - 12/02/2019 - REQ0035813
+      IF nvl(pr_cdcritic,0) IN ( 1197, 9999, 1034, 1035, 1036, 1037 ) THEN
+        pr_cdcritic := 1224;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      ELSIF nvl(pr_cdcritic,0) = 0 AND
+            SUBSTR(pr_dscritic, 1, 7 ) IN ( '1197 - ', '9999 - ', '1034 - ', '1035 - ', '1036 - ', '1037 - ' ) THEN
+        pr_cdcritic := 1224;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      END IF;
     WHEN OTHERS THEN
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
@@ -7607,6 +7660,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                   pr_cdcriticidade => 2,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 2);
+
+      pr_cdcritic := 1224; -- Ajuste mensagem - 12/02/2019 - REQ0035813
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
   END pc_inst_conc_abatimento;
 
   -- Procedure para Cancelar Abatimento
@@ -7627,7 +7683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Douglas Quisinski
-    --  Data     : Janeiro/2016                     Ultima atualizacao: 24/08/201812/01/2016
+    --  Data     : Janeiro/2016                     Ultima atualizacao: 12/02/2019
     --
     --  Dados referentes ao programa:
     --
@@ -7641,6 +7697,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            Inclusão pc_set_modulo
     --                            Ajuste registro de logs com mensagens corretas
     --                            (Ana - Envolti - Ch. REQ0011728)
+    --
+    --               12/02/2019 - Teste Revitalização
+    --                            (Belli - Envolti - Ch. REQ0035813)     
+    --                            
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -8211,7 +8271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         pr_tab_lat_consolidada(vr_index_lat).cdocorre:= 13;    -- 13 - Confirmacao Recebimento Instrucao de Cancelamento Abatimento
         pr_tab_lat_consolidada(vr_index_lat).cdmotivo:= NULL;  -- Motivo
         pr_tab_lat_consolidada(vr_index_lat).vllanmto:= rw_crapcob.vltitulo;
-      END IF;
+      END IF;                  
 
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -8225,6 +8285,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                   pr_cdcriticidade => 1,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 1);
+      -- Ajuste mensagem - 12/02/2019 - REQ0035813
+      IF nvl(pr_cdcritic,0) IN ( 1197, 9999, 1034, 1035, 1036, 1037 ) THEN
+        pr_cdcritic := 1224;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      ELSIF nvl(pr_cdcritic,0) = 0 AND
+            SUBSTR(pr_dscritic, 1, 7 ) IN ( '1197 - ', '9999 - ', '1034 - ', '1035 - ', '1036 - ', '1037 - ' ) THEN
+        pr_cdcritic := 1224;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      END IF;
     WHEN OTHERS THEN
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
       -- Erro
@@ -8238,6 +8307,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                   pr_cdcriticidade => 2,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 2);
+
+      pr_cdcritic := 1224; -- Ajuste mensagem - 12/02/2019 - REQ0035813
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
   END pc_inst_canc_abatimento;
 
   -- Procedure para Alteracao do Vencimento
@@ -8995,7 +9067,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Douglas Quisinski
-    --  Data     : Janeiro/2016                     Ultima atualizacao: 24/08/201812/07/2017
+    --  Data     : Janeiro/2016                     Ultima atualizacao: 12/02/2019
     --
     --  Dados referentes ao programa:
     --
@@ -9011,6 +9083,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            Inclusão pc_set_modulo
     --                            Ajuste registro de logs com mensagens corretas
     --                            (Ana - Envolti - Ch. REQ0011728)
+    --
+    --               12/02/2019 - Teste Revitalização
+    --                            (Belli - Envolti - Ch. REQ0035813)    
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -9650,15 +9725,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic||vr_dsparame;
+      pr_dscritic := vr_dscritic;
       
       --Grava tabela de log - Ch REQ0011728
       pc_gera_log(pr_cdcooper      => nvl(pr_cdcooper,3),
                   pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
                   pr_cdcriticidade => 1,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 1);
+      -- Ajuste mensagem - 12/02/2019 - REQ0035813
+      IF nvl(pr_cdcritic,0) IN ( 1197, 9999, 1034, 1035, 1036, 1037 ) THEN
+        pr_cdcritic := 1224;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      ELSIF nvl(pr_cdcritic,0) = 0 AND
+            SUBSTR(pr_dscritic, 1, 7 ) IN ( '1197 - ', '9999 - ', '1034 - ', '1035 - ', '1036 - ', '1037 - ' ) THEN
+        pr_cdcritic := 1224;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      END IF;
     WHEN OTHERS THEN
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
@@ -9673,6 +9757,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                   pr_cdcriticidade => 2,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 2);
+
+      pr_cdcritic := 1224; -- Ajuste mensagem - 12/02/2019 - REQ0035813
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
   END pc_inst_conc_desconto;
   
   -- Procedure para Cancelar Desconto
@@ -9693,7 +9780,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Douglas Quisinski
-    --  Data     : Janeiro/2016                     Ultima atualizacao: 24/08/201812/07/2017
+    --  Data     : Janeiro/2016                     Ultima atualizacao: 12/02/2019
     --
     --  Dados referentes ao programa:
     --
@@ -9709,6 +9796,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            Inclusão pc_set_modulo
     --                            Ajuste registro de logs com mensagens corretas
     --                            (Ana - Envolti - Ch. REQ0011728)
+    --
+    --               12/02/2019 - Teste Revitalização
+    --                            (Belli - Envolti - Ch. REQ0035813)     
+    --                            
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -9761,6 +9852,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                   ||', pr_dtmvtolt:'||pr_dtmvtolt
                   ||', pr_cdoperad:'||pr_cdoperad
                   ||', pr_nrremass:'||pr_nrremass;
+               
     --Verificar cooperativa
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
@@ -10277,15 +10369,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic||vr_dsparame;
+      pr_dscritic := vr_dscritic;
       
       --Grava tabela de log - Ch REQ0011728
       pc_gera_log(pr_cdcooper      => nvl(pr_cdcooper,3),
                   pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
                   pr_cdcriticidade => 1,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 1);
+      -- Ajuste mensagem - 12/02/2019 - REQ0035813
+      IF nvl(pr_cdcritic,0) IN ( 1197, 9999, 1034, 1035, 1036, 1037 ) THEN
+        pr_cdcritic := 1224;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      ELSIF nvl(pr_cdcritic,0) = 0 AND
+            SUBSTR(pr_dscritic, 1, 7 ) IN ( '1197 - ', '9999 - ', '1034 - ', '1035 - ', '1036 - ', '1037 - ' ) THEN
+        pr_cdcritic := 1224;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      END IF;
     WHEN OTHERS THEN
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
       -- Erro
@@ -10299,6 +10400,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                   pr_cdcriticidade => 2,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 2);
+
+      pr_cdcritic := 1224; -- Ajuste mensagem - 12/02/2019 - REQ0035813
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
   END pc_inst_canc_desconto;
 
   -- Procedure para Protestar
@@ -10889,7 +10993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Douglas Quisinski
-    --  Data     : Janeiro/2016                     Ultima atualizacao: 24/08/201808/02/2018
+    --  Data     : Janeiro/2016                     Ultima atualizacao: 12/02/2019
     --
     --  Dados referentes ao programa:
     --
@@ -10905,6 +11009,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            Inclusão pc_set_modulo
     --                            Ajuste registro de logs com mensagens corretas
     --                            (Ana - Envolti - Ch. REQ0011728)
+    --
+    --               12/02/2019 - Teste Revitalização
+    --                            (Belli - Envolti - Ch. REQ0035813)     
+    --                            
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -11559,15 +11667,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic||vr_dsparame;
+      pr_dscritic := vr_dscritic;
       
       --Grava tabela de log - Ch REQ0011728
       pc_gera_log(pr_cdcooper      => nvl(pr_cdcooper,3),
                   pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
                   pr_cdcriticidade => 1,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 1);
+      -- Ajuste mensagem - 12/02/2019 - REQ0035813
+      IF nvl(pr_cdcritic,0) IN ( 1197, 9999, 1034, 1035, 1036, 1037 ) THEN
+        pr_cdcritic := 1224;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      ELSIF nvl(pr_cdcritic,0) = 0 AND
+            SUBSTR(pr_dscritic, 1, 7 ) IN ( '1197 - ', '9999 - ', '1034 - ', '1035 - ', '1036 - ', '1037 - ' ) THEN
+        pr_cdcritic := 1224;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      END IF;
     WHEN OTHERS THEN
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
       -- Erro
@@ -11581,6 +11698,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                   pr_cdcriticidade => 2,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 2);
+
+      pr_cdcritic := 1224; -- Ajuste mensagem - 12/02/2019 - REQ0035813
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
   END pc_inst_sustar_manter;
   
   -- Procedure para Cancelar o Protesto BB
@@ -12628,7 +12748,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       CLOSE cr_crapcob;
     END IF;
       
---dbms_output.put_line('pr_cdcooper:'||pr_cdcooper||',cddbanco:'||rw_crapcco.cddbanco||',nrdctabb:'||rw_crapcco.nrdctabb||',pr_nrdconta:'||pr_nrdconta||',pr_nrcnvcob:'||pr_nrcnvcob||',pr_nrdocmto:'||pr_nrdocmto);
     OPEN cr_crapcob(pr_cdcooper => pr_cdcooper
                    ,pr_cdbandoc => rw_crapcco.cddbanco
                    ,pr_nrdctabb => rw_crapcco.nrdctabb
@@ -12689,7 +12808,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         --
 			ELSE
 				--
---dbms_output.put_line('pc_inst_sustar_manter');
 				pc_inst_sustar_manter(pr_cdcooper            => pr_cdcooper
 														 ,pr_nrdconta            => pr_nrdconta
 														 ,pr_nrcnvcob            => pr_nrcnvcob
@@ -12730,11 +12848,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                   pr_cdcriticidade => 1,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 1);
-
-      -- Complemento para INC0026760
-      -- Se chegar erro não tratado de outras chamadas desta procedure joga para 1124
-      IF pr_cdcritic = 9999 THEN
+      -- Ajuste mensagem - 12/02/2019 - REQ0035813
+      IF nvl(pr_cdcritic,0) IN ( 1197, 9999, 1034, 1035, 1036, 1037 ) THEN
         pr_cdcritic := 1224; -- Nao foi possivel efetuar o procedimento. Tente novamente ou contacte seu PA
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      ELSIF nvl(pr_cdcritic,0) = 0 AND
+            SUBSTR(pr_dscritic, 1, 7 ) IN ( '1197 - ', '9999 - ', '1034 - ', '1035 - ', '1036 - ', '1037 - ' ) THEN
+        pr_cdcritic := 1224;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
       END IF;            
     WHEN OTHERS THEN
@@ -13384,35 +13504,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     vr_dsparame      VARCHAR2(4000);
 
     ------------------------------- CURSORES ---------------------------------    
-/* teste ana   --Selecionar remessas
-    CURSOR cr_craprem2 (pr_cdcooper IN craprem.cdcooper%type
-                       ,pr_nrcnvcob IN craprem.nrcnvcob%type
-                       ,pr_nrdconta IN craprem.nrdconta%type
-                       ,pr_nrdocmto IN craprem.nrdocmto%type
-                       ,pr_cdmotivo IN craprem.cdmotivo%type
-                       ,pr_cdocorre IN craprem.cdocorre%type
-                       ,pr_dtaltera IN craprem.dtaltera%type) IS
-      SELECT rem.dtaltera
-            ,rem.cdcooper
-            ,rem.cdocorre
-            ,rem.nrdconta
-            ,rem.nrdocmto
-            ,rem.nrcnvcob
-            ,rem.dtdprorr
-            ,rem.vlabatim
-            ,rem.rowid
-        FROM craprem rem
-       WHERE rem.cdcooper = pr_cdcooper
-         AND rem.nrcnvcob = pr_nrcnvcob
-         AND rem.nrdconta = pr_nrdconta
-         AND rem.nrdocmto = pr_nrdocmto
-         AND rem.cdmotivo = pr_cdmotivo
-         AND rem.cdocorre = pr_cdocorre
-         AND rem.dtaltera = pr_dtaltera
-       ORDER BY rem.progress_recid DESC;
-    -- Registro de Remessa
-    rw_craprem2   cr_craprem2%ROWTYPE;
-*/
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     
     ------------------------------- VARIAVEIS -------------------------------
@@ -13425,19 +13516,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     vr_cdcritic2  PLS_INTEGER;
     vr_dscritic2  VARCHAR2(4000);
     vr_is_serasa  BOOLEAN;
-    -- Registro de Remessa - teste ana
-    rw_craprem    COBR0007.cr_craprem%ROWTYPE;
-    -- Registro de controle retorno titulos bancarios
-    rw_crapcre    COBR0007.cr_crapcre%ROWTYPE;
-    -- Registro de retorno
-    rw_crapret    COBR0007.cr_crapret%ROWTYPE;
-    -- Registro de Cadastro de Cobranca
-    rw_crapcco    COBR0007.cr_crapcco%ROWTYPE;
-    -- Registro de Data
-    rw_crapdat    BTCH0001.cr_crapdat%ROWTYPE;
-    --Tabelas de Memoria de Remessa
-    vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
-    vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;
 */
     
     vr_nrremret     INTEGER;
@@ -13531,17 +13609,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       RAISE vr_exc_erro;
     END IF;
 
-/*--teste ana
-    -- Verificamos se o boleto possui Negativacao no Serasa
-    IF rw_crapcob.flserasa = 1 AND 
-       rw_crapcob.qtdianeg > 0 THEN
-      -- Sera tratado como Negativacao Serasa
-      vr_is_serasa := TRUE;
-    ELSE 
-      -- Sera tratado como Protesto
-      vr_is_serasa := FALSE;
-    END IF;
-*/
     -- Busca o estado do sacado
     BEGIN
       --
@@ -15541,7 +15608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         Programa: pc_exporta_boletos_emitidos
         Sistema : Ayllos Web
         Autor   : Andre Clemer - Supero
-        Data    : Outubro/2018                 Ultima atualizacao:
+        Data    : Outubro/2018                 Ultima atualizacao: 12/02/2019
         
         Dados referentes ao programa:
         
@@ -15550,6 +15617,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         Objetivo  : Rotina para buscar parametrizacao de Negativacao Serasa.
         
         Alteracoes:
+    
+        Alteracao : 12/02/2019 - Revitalização
+                                 Susbtituição de algumas mensagens por cadastro na CRAPCRI
+                                 Inclusão pc_set_modulo
+                                 Ajuste registro de logs com mensagens corretas
+                                (Belli - Envolti - Ch. REQ0035813)         
         
         ..............................................................................*/
         DECLARE
@@ -15562,13 +15635,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             vr_exc_saida EXCEPTION;
         
             -- Cria o registro de data
-            rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+            ---rw_crapdat btch0001.cr_crapdat%ROWTYPE; -- Excluido cursor - 12/02/2019 - REQ0035813
         
             -- Variaveis internas
             vr_dsarquiv       CLOB := NULL;
             vr_texto_completo CLOB := NULL;
             vr_caminho_arq    VARCHAR2(300);
             vr_nmarqind       VARCHAR2(100);
+            
+            -- Variaveis de Log e Modulo - 12/02/2019 - REQ0035813
+            vr_dsparame VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs
+            vr_cdrotpri VARCHAR2  (100); -- Rotina principal
+            vr_nmrotpro VARCHAR2  (100) := 'pc_exporta_boletos_emitidos'; -- Procedure principal
         
             ---------------------------- CURSORES -----------------------------------
             -- Buscar registros crapcob
@@ -15651,15 +15729,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                     ,pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
             BEGIN
                 gene0002.pc_escreve_xml(vr_dsarquiv, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+                -- Retorna módulo e ação logado
+                GENE0001.pc_set_modulo(pr_module => vr_cdrotpri, pr_action => NULL);
             END;
         
-        BEGIN
+        BEGIN          
+          -- Posiciona procedure - 12/02/2019 - REQ0035813
+          vr_cdrotpri := vr_cdprogra||'.'||vr_nmrotpro;
+          -- Inclusão do módulo e ação logado
+          GENE0001.pc_set_modulo(pr_module => vr_cdrotpri, pr_action => NULL);
+          -- Posiciona parâmetros para geração de Log
+          vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper ||
+                         ', pr_nrdconta:' || pr_nrdconta ||
+                         ', pr_dtmvtini:' || pr_dtmvtini ||
+                         ', pr_dtmvtfim:' || pr_dtmvtfim ||
+                         ', pr_incobran:' || pr_incobran ||
+                         ', pr_nmdsacad:' || pr_nmdsacad;
         
             -- Abre o cursor de data
-            OPEN btch0001.cr_crapdat(pr_cdcooper);
-            FETCH btch0001.cr_crapdat
-                INTO rw_crapdat;
-            CLOSE btch0001.cr_crapdat;
+            --OPEN btch0001.cr_crapdat(pr_cdcooper); - Excluido cursor - 12/02/2019 - REQ0035813
+            --FETCH btch0001.cr_crapdat
+            --    INTO rw_crapdat;
+            --CLOSE btch0001.cr_crapdat;
         
             -- Inicializar o CLOB
             dbms_lob.createtemporary(vr_dsarquiv, TRUE);
@@ -15717,6 +15808,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             vr_caminho_arq := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
                                                    ,pr_cdcooper => pr_cdcooper
                                                    ,pr_nmsubdir => 'arq');
+            -- Retorna módulo e ação logado
+            GENE0001.pc_set_modulo(pr_module => vr_cdrotpri, pr_action => NULL);
         
             vr_nmarqind := 'exporta_boletos.csv';
         
@@ -15724,7 +15817,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             gene0002.pc_clob_para_arquivo(pr_clob     => vr_dsarquiv
                                          ,pr_caminho  => vr_caminho_arq
                                          ,pr_arquivo  => vr_nmarqind
-                                         ,pr_des_erro => vr_dscritic);
+                                         ,pr_des_erro => vr_dscritic);        
+            --Se ocorreu erro
+            IF vr_dscritic IS NOT NULL THEN
+              vr_cdcritic := 0; -- Erro ao gerar o arquivo
+              --Levantar Excecao
+              RAISE vr_exc_saida;
+            END IF;
+            -- Retorna módulo e ação logado
+            GENE0001.pc_set_modulo(pr_module => vr_cdrotpri, pr_action => NULL);
         
             -- Liberando a memória alocada pro CLOB
             dbms_lob.close(vr_dsarquiv);
@@ -15734,32 +15835,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         
             --> Garantir que o arquivo foi gerado
             IF gene0001.fn_exis_arquivo(pr_caminho => pr_nmarqexp) = FALSE THEN
-                vr_dscritic := 'Não foi possivel gerar arquivo, tente novamente.';
+              vr_cdcritic := 1050; -- Erro ao gerar o arquivo
+              --Levantar Excecao
+              RAISE vr_exc_saida;
             END IF;
-        
-            --Se ocorreu erro
-            IF vr_dscritic IS NOT NULL THEN
-                --Levantar Excecao
-                RAISE vr_exc_saida;
-            END IF;
+            
+            -- Limpa módulo e ação logado
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
         
         EXCEPTION
             WHEN vr_exc_saida THEN
-                IF vr_cdcritic <> 0 THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-                ELSE
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic;
-                END IF;
+              -- Efetuar retorno do erro não tratado
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic
+                                                      ,pr_dscritic => vr_dscritic) ||
+                             ' '  || vr_nmrotpro || 
+                             '. ' || vr_dsparame;
+              -- Grava informações para resolver erro de programa/ sistema
+              COBR0007.pc_gera_log(pr_cdcooper      => pr_cdcooper -- Cooperativa
+                                  ,pr_dstiplog      => 'E'
+                                  ,pr_dscritic      => pr_dscritic -- Descricao da critica
+                                  ,pr_cdmensagem    => pr_cdcritic 
+                                  ,pr_tpexecucao    => 3 -- Tipo de execucao: 0-Outro, 1-Batch, 2-Job, 3-Online
+                                  );
+              -- Efetuar retorno do erro não tratado
+              pr_cdcritic := 1224; -- Nao foi possivel efetuar o procedimento. Tente novamente ou contacte seu PA
+              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
             
-                ROLLBACK;
+              ROLLBACK;
             
             WHEN OTHERS THEN
-                pr_cdcritic := vr_cdcritic;
-                pr_dscritic := 'Erro geral na rotina da tela PARPRT: ' || SQLERRM;
-            
-                ROLLBACK;
+              -- No caso de erro de programa gravar tabela especifica de log
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
+              -- Efetuar retorno do erro não tratado
+              pr_cdcritic := 9999;
+              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                             ' '  || vr_nmrotpro || 
+                             ' '  || SQLERRM     ||
+                             '. ' || vr_dsparame;                       
+              -- Grava informações para resolver erro de programa/ sistema
+              COBR0007.pc_gera_log(pr_cdcooper      => pr_cdcooper -- Cooperativa
+                                  ,pr_dstiplog      => 'E'
+                                  ,pr_dscritic      => pr_dscritic -- Descricao da critica
+                                  ,pr_cdmensagem    => pr_cdcritic 
+                                  ,pr_tpexecucao    => 3 -- Tipo de execucao: 0-Outro, 1-Batch, 2-Job, 3-Online
+                                  );
+              -- Efetuar retorno do erro não tratado
+              pr_cdcritic := 1224; -- Nao foi possivel efetuar o procedimento. Tente novamente ou contacte seu PA
+              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+                
+              ROLLBACK;
         END;
     
     END pc_exporta_boletos_emitidos;
