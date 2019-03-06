@@ -66,6 +66,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
 							  pc_carrega_dados_atenda (Andre Clemer - Supero)
 
                  23/11/2018 - P442 - Retorno do Score Behaviour do Cooperado (Marcos-Envolti)
+				 
+                 26/12/2019 - P429 - Detalhes de Cartões de Crédito Informações do endereço do cooperado (Lucas-Supero)
 
                  
   ---------------------------------------------------------------------------------------------------------------*/
@@ -903,6 +905,17 @@ PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA
                                          ,pr_cdcritic  OUT PLS_INTEGER
                                          ,pr_dscritic  OUT VARCHAR2
                                          ,pr_des_reto  OUT VARCHAR2 );
+
+  PROCEDURE pc_retorna_dados_entrg_crt_web(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código da cooperativa
+                                           ,pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código CONTA
+                                           ,pr_nrctrcrd IN VARCHAR2 --crapcrm.nrcartao%TYPE  --> Número do cartão
+                                           ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                           ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                           ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                           ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                           ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                           ,pr_des_erro OUT VARCHAR2);            --> Erros do processo   
+										   
 END CADA0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
@@ -13761,6 +13774,88 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
       END IF;
       pr_des_reto := 'NOK';
 
-  END pc_bloquear_cartao_magnetico;
+    END pc_bloquear_cartao_magnetico;
+  
+  PROCEDURE pc_retorna_dados_entrg_crt_web(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código da cooperativa
+                                           ,pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código CONTA
+                                           ,pr_nrctrcrd IN VARCHAR2 --crapcrm.nrcartao%TYPE  --> Número do cartão
+                                           ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                           ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                           ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                           ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                           ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                           ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+                                               
+  /* .............................................................................
+
+      Programa: pc_retorna_dados_entrega_cartao_web
+      Sistema : CECRED
+      Sigla   : CRD
+      Autor   : Lucas (Supero)
+      Data    : Fevereiro/2019                 Ultima atualizacao: 
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+
+      Objetivo  : Retorna informações da entrega do cartão
+
+      Observacao: -----
+
+      Alteracoes:
+  ..............................................................................*/
+	
+  -- Tratamento de erros
+  vr_cdcritic NUMBER := 0;
+  vr_dscritic VARCHAR2(4000);
+  vr_incrdent NUMBER := 0;  
+  
+  CURSOR cr_busca_dados_entrega IS
+  SELECT 1 as incrdent, tbdom.dscodigo, tbend.nmlogradouro || ', ' || tbend.nrlogradouro ||
+     nvl2(trim(tbend.dscomplemento), ', ' || tbend.dscomplemento || ' ', '') as dsendere,
+     tbend.nmbairro, crapmun.dscidade, tbcadast_uf.cduf,
+     gene0002.fn_mask_cep(tbend.nrcep) as nrcepend
+  FROM tbcrd_endereco_entrega tbend
+    ,tbcrd_dominio_campo tbdom
+    ,crapmun
+    ,tbcadast_uf 
+   WHERE tbend.idtipoenvio = tbdom.cddominio  
+     AND tbdom.nmdominio = 'TPENDERECOENTREGA'
+     AND tbend.cdcooper = pr_cdcooper
+     AND tbend.nrdconta = pr_nrdconta
+     AND tbend.nrctrcrd = pr_nrctrcrd
+     AND crapmun.idcidade = tbend.idcidade
+     AND tbcadast_uf.cduf = crapmun.cdestado; 
+     rw_busca_dados_entrega  cr_busca_dados_entrega%rowtype;
+  
+	BEGIN  
+        
+    OPEN cr_busca_dados_entrega;
+    FETCH cr_busca_dados_entrega INTO rw_busca_dados_entrega;
+    IF cr_busca_dados_entrega%FOUND THEN
+        vr_incrdent := rw_busca_dados_entrega.incrdent;
+        CLOSE cr_busca_dados_entrega;        
+    END IF;
+    pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><Dados> ' ||
+                                   '<incrdent>' || vr_incrdent || '</incrdent>' ||
+                                   '<dstipend>' || nvl(rw_busca_dados_entrega.dscodigo, '') || '</dstipend>' ||
+                                   '<dsendere>' || nvl(rw_busca_dados_entrega.dsendere, '') || '</dsendere>' ||
+                                   '<dsbairro>' || nvl(rw_busca_dados_entrega.nmbairro, '') || '</dsbairro>' ||
+                                   '<dscidade>' || nvl(rw_busca_dados_entrega.dscidade, '') || '</dscidade>' ||
+                                   '<nrcepend>' || nvl(rw_busca_dados_entrega.nrcepend, '') || '</nrcepend>' ||
+                                   '<dsufende>' || nvl(rw_busca_dados_entrega.cduf, '') || '</dsufende>' ||
+																	 '</Dados></Root>');                           
+	EXCEPTION
+			WHEN OTHERS THEN
+
+					pr_cdcritic := vr_cdcritic;
+					pr_dscritic := 'Erro geral na rotina na procedure CADA0004.pc_retorna_dados_entrega_cartao_web. Erro: ' || SQLERRM;
+					pr_des_erro := 'NOK';
+					-- Carregar XML padrão para variável de retorno não utilizada.
+					-- Existe para satisfazer exigência da interface.
+					pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+																				 pr_dscritic || '</Erro></Root>');                                             
+                                               
+  END pc_retorna_dados_entrg_crt_web;   
 END CADA0004;
 /
