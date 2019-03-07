@@ -23,7 +23,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
    Alteracoes:
                 27-12-2018 - Tratar STR0026R2 conforme programa antigo. Sprint D - Jose Dill
                 
-                19-02-2019 - Tratar contas inválidas com mais de 13 posições - INC0033070
+                19-02-2019 - Tratar contas inválidas com mais de 13 posições  - INC0033070  
    
 ............................................................................. */
 
@@ -377,7 +377,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
     vr_dstpctdb := sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'TpCtDebtd','S'); -- TpCtDebtd
     vr_cdagendb := Nvl(sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'AgDebtd','S'),0); -- AgDebtd
     If vr_dscntadb is null Then
-    vr_dscntadb := sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'CtDebtd','S'); -- CtDebtd
+    vr_dscntadb := Substr(sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'CtDebtd','S'),1,13); -- CtDebtd --INC0033070
     End If; 
     --   
     vr_coddevtransf := null;
@@ -395,7 +395,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
         Else
            Close cr_tbspbmsgrec_coop;                               
            vr_cdcooper := rw_tbspbmsgrec_coop.cdcooper;
-           vr_dscntadb := rw_tbspbmsgrec_coop.nrdconta;
+           vr_dscntadb := Substr(rw_tbspbmsgrec_coop.nrdconta,1,13); --INC0033070
            --   
            Open cr_agencia (vr_cdcooper, vr_dscntadb);
            Fetch cr_agencia into rw_cr_agencia;
@@ -445,7 +445,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
     End If;   
     vr_dstpctcr := sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'TpCtCredtd','S'); -- TpCtCredtd
     vr_cdagencr := Nvl(sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'AgCredtd','S'),0); -- AgCredtd
-    vr_dscntacr := Nvl(sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'CtCredtd','S'),0); -- CtCredtd
+    vr_dscntacr := Nvl(Substr(sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'CtCredtd','S'),1,13),0); -- CtCredtd --INC0033070
     vr_dsfinmsg := sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'FinlddCli','S'); -- FinlddCli
     If vr_dsfinmsg is null then
       vr_dsfinmsg := sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'FinlddIF','S'); -- FinlddIF
@@ -553,7 +553,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
     --
     vr_dstpctdb := sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'TpCtDebtd','S'); -- TpCtDebtd    
     vr_cdagendb := Nvl(sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'AgDebtd','S'),0); -- AgDebtd
-    vr_dscntadb := sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'CtDebtd','S'); -- CtDebtd
+    vr_dscntadb := Substr(sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'CtDebtd','S'),1,13); -- CtDebtd --INC0033070
     --   
     vr_dsinstcr := sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'ISPBIFCredtd','S');
     --
@@ -572,7 +572,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
     vr_dstpctcr := sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'TpCtCredtd','S'); -- TpCtCredtd
     vr_cdagencr := Nvl(sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'AgCredtd','S'),0); -- AgCredtd
     If vr_dscntacr is null then 
-    vr_dscntacr := Nvl(sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'CtCredtd','S'),0); -- CtCredtd
+    vr_dscntacr := Nvl(Substr(sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'CtCredtd','S'),1,13),0); -- CtCredtd --INC0033070
     End If;   
     --
     vr_dsfinmsg := sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'FinlddCli','S'); -- FinlddCli
@@ -602,7 +602,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
         Else
            Close cr_tbspbmsgenv_coop;                               
            vr_cdcooper := rw_tbspbmsgenv_coop.cdcooper;
-           vr_dscntacr := rw_tbspbmsgenv_coop.nrdconta;
+           vr_dscntacr := Substr(rw_tbspbmsgenv_coop.nrdconta,1,13); --INC0033070
            --   
            rw_cr_agencia.cdagenci := null;
            Open cr_agencia (vr_cdcooper, vr_dscntacr);
