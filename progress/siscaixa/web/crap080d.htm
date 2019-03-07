@@ -74,10 +74,6 @@
             <td>
                 <table cellspacing="0" cellpadding="0" width="100%">
                     <tr>
-                        <!-- TD e Input escondidos para suprir problema do componente onde se faz obrigatório a seleção de pelo menos um dos valores -->
-                        <td class="linhaform" style="visibility:hidden;">
-                            <input type="radio" value="2" id="v_tppagmto2" name="v_tppagmto">
-                        </td>
                         <td class="linhaform" style="width: 30%;">
                             <input type="radio" value="0" id="v_tppagmto0" name="v_tppagmto" disabled>
                             Conta
@@ -128,24 +124,18 @@
       <table width="101%" cellspacing = 0 cellpadding = 1 class=tcampo>
         <tr><td align="center" class="linhaform" colspan="3" >&nbsp;&nbsp;</td></tr>
         <tr>
-		  <!-- TD e Input escondidos para suprir problema do componente onde se faz obrigatório a seleção de pelo menos um dos valores -->
-		  <td class="linhaform" colspan="3" style="visibility:hidden;">
-			<input type="radio" value="3" checked name="radio">
+          <td width="324" colspan="2" align="right" class="linhaform">
+            <input type="radio" value="1" checked name="radio" disabled>
           </td>
-        </tr>
-        <tr>
-          <td width="324" colspan="2" style="TEXT-ALIGN: right" class="linhaform">
-            <input type="radio" value="1" name="radio" disabled>
-          </td>
-          <td style="TEXT-ALIGN: left" class="linhaform" width="532">
+          <td align="left" class="linhaform" width="532">
             Título
           </td>
         </tr>
         <tr>
-          <td style="TEXT-ALIGN: right" class="linhaform" colspan="2">
+          <td align="right" class="linhaform" colspan="2">
             <input type="radio" value="2" name="radio" disabled>
           </td>
-          <td style="TEXT-ALIGN: left" class="linhaform" width="532">
+          <td align="left" class="linhaform" width="532">
             Fatura
           </td>
         </tr>

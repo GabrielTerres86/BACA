@@ -319,7 +319,6 @@ DEFINE FRAME Web-Frame
      ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
           "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
           RADIO-BUTTONS 
-           "v_tppagmto 2", "2":U,
            "v_tppagmto 0", "0":U,
            "v_tppagmto 1", "1":U 
            SIZE 20 BY 2
@@ -728,7 +727,7 @@ PROCEDURE process-web-request :
                  v_nome      = ""
                  vh_nome     = ""
                  vh_foco     = "13"
-                 v_tppagmto  = "2"
+                 v_tppagmto  = "0"
                  proximo     = "0"
                  tpdpagto    = "0"
                  inpesgps    = "0"
