@@ -62,6 +62,8 @@
 
 			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+				21/11/2018 - Alterado busca pelo nrseqdig, para seguros - REMOCAO LOTE
+
 ..............................................................................*/
 
 DEF STREAM str_1.  /* Rel496 - Registros importados e rejeitados */
@@ -255,7 +257,8 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:    /* Para todos os arquivos ... */
                       craplot.dtmvtolt = glb_dtmvtolt  AND
                       craplot.cdagenci = 1             AND
                       craplot.cdbccxlt = 100           AND
-                      craplot.nrdolote = 10116         EXCLUSIVE-LOCK NO-ERROR.
+                      craplot.nrdolote = 10116         NO-LOCK NO-ERROR.
+   
    
    IF   NOT AVAILABLE craplot   THEN
         DO:
@@ -269,12 +272,14 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:    /* Para todos os arquivos ... */
                    craplot.cdhistor = 586.
         END.
 
+/*	Projeto remocao de lote 
    ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
           craplot.qtcompln = aux_qtregist
           craplot.qtinfoln = aux_qtregist
           craplot.vlcompdb = aux_vlpremio
           craplot.vlinfodb = aux_vlpremio
-          craplot.flgltsis = TRUE.
+          craplot.flgltsis = TRUE.*/
+		  
           
    VALIDATE craplot.
 
