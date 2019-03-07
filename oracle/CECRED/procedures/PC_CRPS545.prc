@@ -20,7 +20,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
    Observações: A tabela genéria gnmvspb agora é populada através das informações geradas 
                 nas tabelas de trace (Projeto 475). No progress, estas informações vem do arquivo físico)
 
-   Alteracoes: 
+   Alteracoes:
+                27-12-2018 - Tratar STR0026R2 conforme programa antigo. Sprint D - Jose Dill
+   
 ............................................................................. */
 
   -- CURSORES
@@ -119,6 +121,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
   
   rw_crapcop cr_crapcop%rowtype;
 
+  CURSOR cr_crapcco (pr_nrconvenio in number) is  
+  select a.cdcooper
+  from crapcco a
+  where a.nrconven = pr_nrconvenio
+  and   a.dsorgarq not in ('INCORPORACAO','MIGRACAO');
+  
+  rw_crapcco cr_crapcco%rowtype;
+
   --Tipo de registro de gnmvspb
   TYPE typ_gnmvspb IS
     RECORD ( dtmvtolt      date        
@@ -192,7 +202,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
   vr_dsfinmsg      gnmvspb.dsfinmsg%type; 
   vr_coddevtransf  varchar2(100);
   vr_numctrlpag    tbspb_msg_enviada.nrcontrole_if%type;
- 
+  vr_NumCodBarras  varchar2(100);
+
   --Variavel de Indice da tabela
   vr_index     pls_integer;
   vr_index_matera pls_integer;
@@ -201,8 +212,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
   vr_exc_saida     EXCEPTION;
   vr_exc_fimprg    EXCEPTION;
   vr_dscritic VARCHAR2(4000);
-  --
-  vr_exc_erro EXCEPTION;  
   --
   
   PROCEDURE PC_EMAIL_DEVOLUCAO_MATERA IS
@@ -256,190 +265,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS545 (pr_flgresta  IN PLS_INTEGER      
   END PC_EMAIL_DEVOLUCAO_MATERA;
   --
   --
-  PROCEDURE verifica_conta_transferida (pr_cdcooper IN crapass.cdcooper%TYPE
-                                       ,pr_nrdconta IN crapass.nrdconta%TYPE
-                                       ,pr_nrcpfcre IN crapass.nrcpfcgc%TYPE) IS
-    CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
-                      ,pr_nrdconta IN crapass.nrdconta%TYPE
-                      ,pr_nrcpfcre IN crapass.nrcpfcgc%TYPE) IS
-    SELECT 1
-      FROM crapass 
-     WHERE cdcooper = pr_cdcooper   
-       AND nrdconta = pr_nrdconta   
-       AND nrcpfcgc = pr_nrcpfcre;
-    --
-    rw_crapass cr_crapass%ROWTYPE;
-    --
-    CURSOR cr_crapttl (pr_cdcooper IN crapass.cdcooper%TYPE
-                      ,pr_nrdconta IN crapass.nrdconta%TYPE
-                      ,pr_nrcpfcre IN crapass.nrcpfcgc%TYPE) IS
-    SELECT 1
-      FROM crapttl 
-     WHERE cdcooper = pr_cdcooper   
-       AND nrdconta = pr_nrdconta   
-       AND nrcpfcgc = pr_nrcpfcre;
-    --
-    rw_crapttl cr_crapttl%ROWTYPE;
-    --
-    CURSOR cr_craptco (pr_cdcooper IN crapass.cdcooper%TYPE
-                      ,pr_nrdconta IN crapass.nrdconta%TYPE
-                      ,pr_intipo   IN number) IS
-    SELECT cdcooper
-          ,cdcopant
-          ,nrdconta
-          ,cdagenci
-      FROM craptco 
-     WHERE cdcopant = pr_cdcooper 
-       AND nrctaant = pr_nrdconta 
-       AND flgativo = 1         
-       AND tpctatrf = 1
-       AND pr_intipo= 1
-    UNION
-    SELECT cdcooper
-          ,cdcopant
-          ,nrdconta
-          ,cdagenci
-      FROM craptco 
-     WHERE cdcopant = pr_cdcooper 
-       AND nrdconta = pr_nrdconta 
-       AND flgativo = 1         
-       AND tpctatrf = 1
-       AND pr_intipo= 2
-    UNION
-    SELECT cdcooper
-          ,cdcopant
-          ,nrdconta
-          ,cdagenci
-      FROM craptco 
-     WHERE cdcooper = pr_cdcooper 
-       AND nrctaant = pr_nrdconta 
-       AND flgativo = 1         
-       AND tpctatrf = 1
-       AND pr_intipo= 3;
-    --
-    rw_craptco cr_craptco%ROWTYPE;
-    --
-    CURSOR cr_crapcop (pr_cdcooper IN crapass.cdcooper%TYPE) IS
-    SELECT cdagectl
-      FROM crapcop cop
-     WHERE cdcooper = pr_cdcooper;
-    --
-    rw_crapcop cr_crapcop%ROWTYPE;
-    --
-    vr_ctavalid BOOLEAN;
   BEGIN
-    /* Necessario verificar se conta e cpf/cnpj sao validos, pois se nao forem
-       eh porque a mensagem foi devolvida na cooperativa que recebeu a mesma, 
-       e nao processou na conta transferida */ 
-    vr_ctavalid := TRUE;
-    --
-    OPEN cr_crapass (pr_cdcooper => pr_cdcooper
-                    ,pr_nrdconta => pr_nrdconta
-                    ,pr_nrcpfcre => pr_nrcpfcre);
-    --
-    FETCH cr_crapass INTO rw_crapass;
-    --Se nao encontrar
-    IF cr_crapass%NOTFOUND THEN
-      OPEN cr_crapttl (pr_cdcooper => pr_cdcooper
-                      ,pr_nrdconta => pr_nrdconta
-                      ,pr_nrcpfcre => pr_nrcpfcre);
-      --
-      FETCH cr_crapttl INTO rw_crapttl;
-      IF cr_crapttl%NOTFOUND THEN
-        vr_ctavalid := FALSE;
-      END IF;
-      --
-      CLOSE cr_crapttl;
-    END IF;
-    --
-    CLOSE cr_crapass;
-    --
-    IF vr_ctavalid OR pr_cdcooper IN (9, 17) THEN
-      IF vr_cdcooper = 4 OR vr_cdcooper = 15  THEN 
-         Null;
-      ELSE          
-        -- Verifica se eh conta transferida   				   
-        -- Mensagem recebida para Agencia Antiga e conta Antiga.
-        -- Neste caso ocorre DE-PARA do credito para coop NOVA, e a centralizacao deve ocorrer na conta da coop. NOVA   
-        OPEN cr_craptco (pr_cdcooper => pr_cdcooper
-                        ,pr_nrdconta => pr_nrdconta
-                        ,pr_intipo   => 1);
-        --
-        FETCH cr_craptco INTO rw_craptco;
-        --Se nao encontrar
-        IF cr_craptco%NOTFOUND THEN
-          CLOSE cr_craptco;
-          --
-          -- Mensagem recebida para Agencia Antiga e conta Nova.
-          -- Neste caso ocorre DEVOLUCAO da mensagem na coop. NOVA, e a centralizacao deve ocorrer na conta da coop. NOVA 
-          OPEN cr_craptco (pr_cdcooper => pr_cdcooper
-                          ,pr_nrdconta => pr_nrdconta
-                          ,pr_intipo   => 2);
-          --
-          FETCH cr_craptco INTO rw_craptco;
-          --Se nao encontrar
-          IF cr_craptco%NOTFOUND THEN
-            CLOSE cr_craptco;
-            --
-            -- Mensagem recebida para Agencia Nova e conta Antiga.
-            -- Neste caso ocorre DEVOLUCAO da mensagem na coop. NOVA, e a centralizacao deve ocorrer na conta da coop. NOVA 
-            OPEN cr_craptco (pr_cdcooper => pr_cdcooper
-                            ,pr_nrdconta => pr_nrdconta
-                            ,pr_intipo   => 3);
-            --
-            FETCH cr_craptco INTO rw_craptco;
-          END IF;
-        END IF;
-        --Se encontrar
-        IF cr_craptco%FOUND THEN
-          -- Verificar se a conta migrada ACREDI >> VIACREDI 
-          IF rw_craptco.cdcooper = 1 AND rw_craptco.cdcopant = 2 THEN 
-            NULL;
-          -- Verificar se a conta migrada VIACREDI >> ALTO VALE
-          ELSIF rw_craptco.cdcooper = 16 AND rw_craptco.cdcopant = 1 THEN 
-            NULL;
-          ELSIF rw_craptco.cdcopant = 17 AND vr_dtmvtolt > '03-20-2017'  THEN -- XX Formato data correto
-            NULL;
-          ELSE
-            OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
-            --
-            FETCH cr_crapcop INTO rw_crapcop;
-            --Se encontrar
-            IF cr_crapcop%FOUND THEN
-              vr_cdcooper := rw_craptco.cdcooper;
-              vr_cdagenci := rw_craptco.cdagenci;
-              vr_dscntacr := rw_craptco.nrdconta; 
-              vr_cdagencr := rw_crapcop.cdagectl;
-            END IF;
-          END IF;
-        ELSE
-          -- Quando vier mensagem para a agencia antiga e conta de destino invalida,
-          --   a mesma sera devolvida pela coop. singular nova. Para que ocorra a centralizacao
-          --   corretamente devera gravar registro na gnmvspb com o codigo da coop. nova. Nesta
-          --  situacao nao encontrara o registro na craptco. 
-          IF vr_cdcooper = 17  THEN
-            IF vr_dtmvtolt > '03-20-2017'  THEN
-              NULL;
-            ELSE 
-              vr_cdcooper := 9;
-            END IF;
-          END IF;
-        END IF;  
-        CLOSE cr_craptco;
-      END IF;
-      
-    END IF;
-
-  EXCEPTION
-    WHEN others THEN
-      -- Erro nao tratado
-      pr_dscritic := 'Erro nao tratado na rotina verifica_conta_transferida --> '||sqlerrm;    
-      RAISE vr_exc_erro;     
-      --  
-  END verifica_conta_transferida;
-
-  
-BEGIN
   -- Código do programa
   vr_cdprogra := 'CRPS545';
 
@@ -511,6 +337,7 @@ BEGIN
     --
     vr_cdcooper:= rr_cr_tbmsg_env.cdcooper;
     vr_dsdgrupo:= rr_cr_tbmsg_env.dsgrupo;
+    vr_dscntadb:= rr_cr_tbmsg_env.nrdconta;
     --
     vr_dsorigem:= rr_cr_tbmsg_env.dsorigem;
     -- Manipular XML para buscar as informações
@@ -547,7 +374,9 @@ BEGIN
     --
     vr_dstpctdb := sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'TpCtDebtd','S'); -- TpCtDebtd
     vr_cdagendb := Nvl(sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'AgDebtd','S'),0); -- AgDebtd
+    If vr_dscntadb is null Then
     vr_dscntadb := sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'CtDebtd','S'); -- CtDebtd
+    End If; 
     --   
     vr_coddevtransf := null;
     vr_coddevtransf := sspb0003.fn_busca_conteudo_campo(rr_cr_tbmsg_env.dsxml_completo,'CodDevTransf','S'); -- CodDevTransf
@@ -687,6 +516,7 @@ BEGIN
     vr_dsfinmsg := null;    
     --
     vr_cdcooper:= rr_tbmsg_rec.cdcooper;
+    vr_dscntacr:= rr_tbmsg_rec.nrdconta;
     vr_dsdgrupo:= rr_tbmsg_rec.dsgrupo;
     vr_dsorigem := 'SPB';
     -- Manipular XML para buscar as informações
@@ -739,7 +569,9 @@ BEGIN
     end if;
     vr_dstpctcr := sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'TpCtCredtd','S'); -- TpCtCredtd
     vr_cdagencr := Nvl(sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'AgCredtd','S'),0); -- AgCredtd
+    If vr_dscntacr is null then 
     vr_dscntacr := Nvl(sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'CtCredtd','S'),0); -- CtCredtd
+    End If;   
     --
     vr_dsfinmsg := sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'FinlddCli','S'); -- FinlddCli
     If vr_dsfinmsg is null then
@@ -781,6 +613,26 @@ BEGIN
         End if;   
       End If; 
     Else
+      -- Sprint D - Buscar cooperativa através do código de barras (Ajuste)
+      If rr_tbmsg_rec.nmmensagem = 'STR0026R2' Then
+         -- Pegar código de barras para encontrar a cooperativa
+         vr_NumCodBarras:= null;
+         vr_NumCodBarras:= sspb0003.fn_busca_conteudo_campo(rr_tbmsg_rec.dsxml_completo,'NumCodBarras','S'); 
+         If vr_NumCodBarras is not null then 
+            --
+            Open cr_crapcco (to_number(Substr(vr_NumCodBarras,20,6)));
+            Fetch cr_crapcco into rw_crapcco;
+            If cr_crapcco%found then
+              vr_cdcooper := rw_crapcco.cdcooper;
+              Close cr_crapcco;
+            Else  
+              Close cr_crapcco;
+            End if;  
+            --
+         End If;
+      End If;  
+      -- Fim Sprint D
+      --
       If vr_cdagenci = 0 and vr_dscntacr <> 0 Then
          --   
          rw_cr_agencia.cdagenci := null;
@@ -803,9 +655,7 @@ BEGIN
        vr_dsareneg:= rw_crapcop.cdagectl;   
     End If;
     --     
-    -- Verificar se a conta atualizada/gravada na tabela de trace é antiga para contas transferidas
-    verifica_conta_transferida (vr_cdcooper, vr_dscntacr, vr_nrcnpjcr);    
-    --
+    
     --Gravar tabela temporaria    
     --Montar indice para acessar tabela
     vr_index:= vr_index + 1;
@@ -877,17 +727,10 @@ BEGIN
   COMMIT; 
   --
 EXCEPTION
-  WHEN vr_exc_erro THEN
-    btch0001.pc_log_internal_exception(3);
-    pr_cdcritic := 0;
-    BTCH0001.pc_gera_log_batch(pr_cdcooper      => 3
-                              ,pr_ind_tipo_log  => 2
-                              ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_cdprogra ||' --> '
-                                                || pr_dscritic
-                              ,pr_nmarqlog      => 'proc_batch.log');
-    ROLLBACK;
   WHEN OTHERS THEN
-    btch0001.pc_log_internal_exception(3);
+    dbms_output.put_line(sqlerrm);
+    cecred.pc_internal_exception(pr_cdcooper => 3);
+    
     -- Efetuar retorno do erro não tratado
     pr_cdcritic := 0;
     pr_dscritic := sqlerrm;
