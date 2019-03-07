@@ -537,6 +537,7 @@
             ,crapmun comarca
             ,crapcco
             ,crapcre
+            ,crapdne 
        WHERE crapcco.cdcooper > 0
          AND crapcco.cddbanco = 85
          AND crapcre.cdcooper = crapcco.cdcooper
@@ -546,10 +547,10 @@
          AND craprem.cdcooper = crapcre.cdcooper
          AND craprem.nrcnvcob = crapcre.nrcnvcob
          AND craprem.nrremret = crapcre.nrremret
-         AND craprem.cdcooper = crapcob.cdcooper
-         AND craprem.nrcnvcob = crapcob.nrcnvcob
-         AND craprem.nrdconta = crapcob.nrdconta
-         AND craprem.nrdocmto = crapcob.nrdocmto
+         AND crapcob.cdcooper = craprem.cdcooper
+         AND crapcob.nrdconta = craprem.nrdconta
+         AND crapcob.nrcnvcob = craprem.nrcnvcob
+         AND crapcob.nrdocmto = craprem.nrdocmto
          AND crapdat.cdcooper = crapcob.cdcooper
          AND crapban.cdbccxlt = crapcob.cdbandoc
          AND crapcop.cdcooper = crapcob.cdcooper
@@ -557,17 +558,19 @@
          AND crapass.cdcooper = crapcob.cdcooper
          AND crapenc.cdcooper = crapass.cdcooper
          AND crapenc.nrdconta = crapass.nrdconta
+         AND crapenc.tpendass = 9 -- Comercial
          AND crapsab.cdcooper = crapcob.cdcooper
          AND crapsab.nrdconta = crapcob.nrdconta
          AND crapsab.nrinssac = crapcob.nrinssac
-         AND trim(upper(crapsab.nmcidsac)) = crapmun.dscidade (+)
-	       AND trim(upper(crapsab.cdufsaca)) = crapmun.cdestado (+)
-         AND crapmun.cdcomarc = LPAD(comarca.cdufibge, 2, '0') || LPAD(comarca.cdcidbge, 5, '0')
-         AND crapenc.tpendass = 9 -- Comercial
+         AND crapdne.nrceplog = crapsab.nrcepsac
+         AND crapdne.idoricad = 1 -- CEP dos correios
+         AND crapmun.dscidade (+) = trim(upper(crapdne.nmextcid))
+	       AND crapmun.cdestado (+) = trim(upper(crapdne.cduflogr))
+         AND LPAD(comarca.cdufibge, 2, '0') || LPAD(comarca.cdcidbge, 5, '0') = crapmun.cdcomarc
          AND crapcob.cdbandoc = 85
          AND crapcob.insrvprt = 1
          AND crapcob.insitcrt = 1 -- Com instrução de protesto
-         AND craprem.cdocorre = 9
+         AND craprem.cdocorre = 9 -- Somente boletos c/ instrução de protesto
        ORDER BY crapmun.cdcomarc;
     --
     rw_craprem cr_craprem%ROWTYPE;
