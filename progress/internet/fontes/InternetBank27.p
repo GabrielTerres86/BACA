@@ -83,6 +83,8 @@
                12/04/2018 - Inclusao de novos campo para realizaçao 
                               de analise de fraude. 
                               PRJ381 - AntiFraude (Odirlei-AMcom)
+                              
+               16/02/2019 - Ajuste variável aux_nrrecid para DECI - Paulo Martins - Mouts
 ..............................................................................*/
 
  
@@ -187,7 +189,7 @@ DEF VAR par_vlabatim AS DECIMAL                                        NO-UNDO.
 DEF VAR par_vloutdeb AS DECIMAL                                        NO-UNDO.
 DEF VAR par_vloutcre AS DECIMAL                                        NO-UNDO.
 DEF VAR aux_dsretorn AS CHAR                                           NO-UNDO.
-DEF VAR aux_nrrecid  AS INTEGER                                        NO-UNDO.
+DEF VAR aux_nrrecid  AS DECI                                           NO-UNDO.
 
 
 DEFINE VARIABLE aux_lindigit AS CHARACTER   NO-UNDO.

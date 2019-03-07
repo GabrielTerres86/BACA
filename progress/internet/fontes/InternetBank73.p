@@ -47,6 +47,8 @@
                             
                08/01/2016 - Convertido a rotina para rotina Oracle, juntamente com 
                             ajustes do Proj. 131 Assinatura Multipla. (Jorge/David)
+                            
+               16/02/2019 - Ajuste variável aux_nrrecid para DECI - Paulo Martins - Mouts                            
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -77,7 +79,7 @@ DEF OUTPUT PARAM TABLE FOR xml_operacao.
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
-def var aux_nrrecid  AS INTE                                           NO-UNDO.
+def var aux_nrrecid  AS DECI                                           NO-UNDO.
 DEF VAR aux_xml_operacao73 AS LONGCHAR                                 NO-UNDO.
 DEF VAR aux_nrletini AS INTE                                           NO-UNDO.
 DEF VAR aux_nrletmax AS INTE                                           NO-UNDO.

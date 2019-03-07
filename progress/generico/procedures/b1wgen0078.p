@@ -27,6 +27,8 @@
 
 				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+                16/02/2019 - Ajuste variável aux_nrrecid para DECI - Paulo Martins - Mouts
+
 
 .............................................................................*/
 
@@ -455,7 +457,7 @@ PROCEDURE gravar-log-adesao:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flmobile AS INTE                           NO-UNDO.
-    DEF VAR aux_nrrecid   AS INTE                                   NO-UNDO.
+    DEF VAR aux_nrrecid   AS DECI                                   NO-UNDO.
 
     /* Gerar log(CRAPLGM) - Rotina Oracle */
       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
