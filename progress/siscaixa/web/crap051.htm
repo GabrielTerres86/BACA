@@ -42,6 +42,17 @@
 <script language=JavaScript src="/script/jquery.js"></script>
 <script language=JavaScript src="/script/mascara.js"></script>
 <script language=JavaScript src="/script/formataconta.js"></script>
+
+<script language=JavaScript>
+	/*PRB0040625*/
+	function removeCaracter(campo) {
+		var vr = campo.value;
+		vr = vr.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
+		campo.value = vr;
+	}
+</script>
+
+
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 <title>INCLUSÃO CHEQUE LIBERADO</title>
 </head>
@@ -109,7 +120,7 @@
           <td align="right" class="linhaform">Ident.Depósito:</td>
           <td align="left" class="linhaform">
           <p align="left">
-          <input type="text" name="v_identifica" size="50" class="input"  maxlength="50" ></p>
+          <input type="text" name="v_identifica" size="50" class="input" maxlength="50"  onKeyUp="JavaScript:removeCaracter(this,14,event)" onKeyDown="JavaScript:removeCaracter(this,14,event)></p>
           </td>
         </tr>
                 

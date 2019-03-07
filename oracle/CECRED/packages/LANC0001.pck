@@ -616,6 +616,9 @@ BEGIN
       pr_tab_retorno.progress_recid_lot := rw_craplot.progress_recid;
 		END IF;
 
+    --Trata caractere inválido PRB0040625
+    vr_dsidenti := replace(pr_dsidenti,'´','');
+    
 		INSERT INTO craplcm (
 				dtmvtolt
 			, cdagenci
@@ -677,7 +680,7 @@ BEGIN
 			, pr_dtrefere
 			, pr_hrtransa
 			, pr_cdoperad
-			, pr_dsidenti
+      , vr_dsidenti
 			, pr_cdcooper
 			, pr_nrdctitg
 			, pr_dscedent
