@@ -114,6 +114,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps328 (pr_cdcooper IN crapcop.cdcooper%T
     vr_cdfvlcop  INTEGER;
     vr_tab_erro  GENE0001.typ_tab_erro;
 
+    --Variavel para log
+    vr_idlog_ini_ger tbgen_prglog.idprglog%type;
+
     --------------------------- SUBROTINAS INTERNAS --------------------------
 
   BEGIN
@@ -122,6 +125,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps328 (pr_cdcooper IN crapcop.cdcooper%T
     GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
                               ,pr_action => null);
                               
+    vr_idlog_ini_ger := null;
+   
+    pc_log_programa(pr_dstiplog   => 'I'
+                   ,pr_cdprograma => vr_cdprogra
+                   ,pr_cdcooper   => pr_cdcooper
+                   ,pr_tpexecucao => 2    -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                   ,pr_idprglog   => vr_idlog_ini_ger);
    
     -- Loop sobre as cooperativa ativas
     FOR rw_crapcop IN cr_crapcop LOOP
@@ -148,6 +158,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps328 (pr_cdcooper IN crapcop.cdcooper%T
         FOR rw_crapcob IN cr_crapcob(pr_cdcooper => rw_crapcop.cdcooper,
                                      pr_dtmvtoan => vr_dtmvtoan,
                                      pr_dtmvtopr => rw_crapdat.dtmvtopr) LOOP
+          BEGIN
           -- Se a data de vencimento for maior que a data atual e menor ou igual ao proximo dia util
           IF rw_crapcob.dtvencto > rw_crapdat.dtmvtolt AND
              rw_crapcob.dtvencto <= rw_crapdat.dtmvtopr AND
@@ -244,11 +255,48 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps328 (pr_cdcooper IN crapcop.cdcooper%T
               pr_dscritic := 'Erro ao atualizar CRAPCOB: '||SQLERRM;
               RAISE vr_exc_saida;
           END;
+            
+            COMMIT;
+          EXCEPTION
+            WHEN vr_exc_saida THEN
+              -- Se foi retornado apenas codigo
+              IF NVL(vr_cdcritic, 0) > 0 AND trim(vr_dscritic) IS NULL THEN
+                -- Buscar a descricao
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+              END IF;
+              
+              -- Efetuar rollback
+              ROLLBACK;
+              
+              pc_log_programa(PR_DSTIPLOG           => 'O'
+                             ,PR_CDPROGRAMA         => vr_cdprogra 
+                             ,pr_cdcooper           => pr_cdcooper
+                             ,pr_tpexecucao         => 2   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             ,pr_tpocorrencia       => 4
+                             ,pr_dsmensagem         => 'Erro envio automatico, boleto '||rw_crapcob.rowid||' - '||vr_dscritic
+                             ,PR_IDPRGLOG           => vr_idlog_ini_ger);
+            WHEN OTHERS THEN
+              -- Efetuar retorno do erro nao tratado
+              vr_cdcritic := 0;
+              vr_dscritic := sqlerrm;
+              
+             -- Efetuar rollback
+              ROLLBACK;
+              
+              pc_log_programa(PR_DSTIPLOG           => 'O'
+                             ,PR_CDPROGRAMA         => vr_cdprogra 
+                             ,pr_cdcooper           => pr_cdcooper
+                             ,pr_tpexecucao         => 2   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             ,pr_tpocorrencia       => 4
+                             ,pr_dsmensagem         => 'Erro envio automatico, boleto '||rw_crapcob.rowid||' - '||vr_dscritic
+                             ,PR_IDPRGLOG           => vr_idlog_ini_ger);
+          END;
         END LOOP; -- Loop sobre os boletos pendentes de envio
       END IF; -- Fim da validacao de horario
 
       -- Busca os SMS que foram processados, mas estao pendentes de retorno
       FOR rw_sms IN cr_sms(rw_crapcop.cdcooper) LOOP
+        BEGIN
         /* Lista de retornos possiveis do CRRETORNO (existente no ESMS0001
             -- 0 - Com sucesso
             -- 10 - Erro
@@ -351,12 +399,51 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps328 (pr_cdcooper IN crapcop.cdcooper%T
           END IF;
         END IF;
         
+          COMMIT;
+        EXCEPTION
+          WHEN vr_exc_saida THEN
+            -- Se foi retornado apenas codigo
+            IF NVL(vr_cdcritic, 0) > 0 AND trim(vr_dscritic) IS NULL THEN
+              -- Buscar a descricao
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        
+            -- Efetuar rollback
+            ROLLBACK;
+            
+            pc_log_programa(PR_DSTIPLOG           => 'O'
+                           ,PR_CDPROGRAMA         => vr_cdprogra 
+                           ,pr_cdcooper           => pr_cdcooper
+                           ,pr_tpexecucao         => 2   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                           ,pr_tpocorrencia       => 4
+                           ,pr_dsmensagem         => 'Erro retorno SMS, boleto '||rw_sms.rowid_crapcob||' - '||vr_dscritic
+                           ,PR_IDPRGLOG           => vr_idlog_ini_ger);
+          WHEN OTHERS THEN
+            -- Efetuar retorno do erro nao tratado
+            vr_cdcritic := 0;
+            vr_dscritic := sqlerrm;
+   
+           -- Efetuar rollback
+            ROLLBACK;
+            
+            pc_log_programa(PR_DSTIPLOG           => 'O'
+                           ,PR_CDPROGRAMA         => vr_cdprogra 
+                           ,pr_cdcooper           => pr_cdcooper
+                           ,pr_tpexecucao         => 2   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                           ,pr_tpocorrencia       => 4
+                           ,pr_dsmensagem         => 'Erro retorno SMS, boleto '||rw_sms.rowid_crapcob||' - '||vr_dscritic
+                           ,PR_IDPRGLOG           => vr_idlog_ini_ger);
+        END;
       END LOOP; -- Loop sobre os envios pendentes
 
     END LOOP; -- FOR rw_crapcoop
 
-    -- Efetuar Commit de informacoes pendentes de gravacao
-    COMMIT;
+    pc_log_programa(pr_dstiplog   => 'F'   
+                     ,pr_cdprograma => vr_cdprogra           
+                     ,pr_cdcooper   => pr_cdcooper 
+                     ,pr_tpexecucao => 2 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                     ,pr_idprglog   => vr_idlog_ini_ger
+                     ,pr_flgsucesso => 1);
 
   EXCEPTION
      WHEN vr_exc_saida THEN
@@ -374,11 +461,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps328 (pr_cdcooper IN crapcop.cdcooper%T
        -- Efetuar rollback
        ROLLBACK;
 
+      pc_log_programa(pr_dstiplog   => 'F'   
+                     ,pr_cdprograma => vr_cdprogra           
+                     ,pr_cdcooper   => pr_cdcooper 
+                     ,pr_tpexecucao => 2 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                     ,pr_idprglog   => vr_idlog_ini_ger
+                     ,pr_flgsucesso => 0); 
      WHEN OTHERS THEN
        -- Efetuar retorno do erro nao tratado
        pr_cdcritic := 0;
        pr_dscritic := sqlerrm;
        -- Efetuar rollback
        ROLLBACK;
+      
+      pc_log_programa(pr_dstiplog   => 'F'   
+                     ,pr_cdprograma => vr_cdprogra           
+                     ,pr_cdcooper   => pr_cdcooper 
+                     ,pr_tpexecucao => 2 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                     ,pr_idprglog   => vr_idlog_ini_ger
+                     ,pr_flgsucesso => 0); 
   END pc_crps328;
 /
