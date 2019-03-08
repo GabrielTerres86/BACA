@@ -116,6 +116,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --                           para não prosseguirmos com a inclusão do cartão pois o mesmo
   --                           ja possui cartão (Lucas Ranghetti #PRB0040493)
   --
+  --             22/01/2019 - Implementação para contemplar cartão provisório na crps672 (Augusto Supero)
+  --
   --             11/02/2019 - Tratamento para flgprcrd quando incluir segunda via 
   --                          (Lucas Ranghetti #PRB0040597)
   --                        - Limpar data de rejeicao ao alterar a situação para 
@@ -8670,6 +8672,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_vllimcrd   crawcrd.vllimcrd%TYPE;                             --> Valor de limite de credito
       vr_tpdpagto   NUMBER          := 0;                              --> Tp de Pagto do cartão
       vr_flgdebcc   NUMBER          := 0;                              --> flg para debitar em conta
+			vr_flgprovi   BOOLEAN;                                           --> flg para cartão provisorio
+			vr_flgproviint crapcrd.flgprovi%TYPE;                            --> flg para cartão provisorio (usado para o insert)
       vr_flgprcrd   NUMBER          := 0;                              --> Primeiro cartão dessa Modalidade
       vr_nmextttl   crapttl.nmextttl%TYPE;                             --> Nome Titular
       vr_vlsalari   crapttl.vlsalari%TYPE;                             --> Salario
@@ -10805,13 +10809,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 1 - Inclusao de Cartao
                 3 - Cancelamento de Cartao
                 4 - Inclusao de Adicional
+								5 - Modificação de Cartão
                 7 - Reativacao de Contas
                 10 - Desbloqueio (exclusivo p/ tratamento de reposicao)
                 12 - Alteracao de Estado
                 13 - Alteracao de Estado Conta
                 25 - Reativar Cartao do Adicional                
                 */                
-                IF vr_tipooper NOT IN (1,3,4,7,10,12,13,25) THEN
+                IF vr_tipooper NOT IN (1,3,4,5,7,10,12,13,25) THEN
                    CONTINUE;
                 END IF;
                 
@@ -10830,6 +10835,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 END;
                 
                 vr_cdlimcrd := 0;
+								vr_flgprovi := FALSE; -- Inicialmente definimos como não provisorio
                 -- Agencia do banco
                 BEGIN 
                   vr_cdagebcb := to_number(substr(vr_des_text,333,4));
@@ -11043,6 +11049,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
                 vr_nrdconta := vr_nrctatp2;
                 
+								vr_nmtitcrd := substr(vr_des_text, 57, 23);
+								-- Validamos se o nome do titular é 'CARTAO PROVISORIO'
+								IF nvl(TRIM(upper(vr_nmtitcrd)), ' ') = 'CARTAO PROVISORIO' THEN
+									vr_flgprovi := TRUE; -- Caso for, definimos o flag como provisorio
+								END IF;
+                
                 IF vr_tipooper IN (1,4) THEN
                   -- Buscar informação do cartão verificando se o mesmo está encerrado (cancelado)
                   OPEN  cr_crawcrd_encerra(vr_cdcooper                            --pr_cdcooper
@@ -11144,7 +11156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    informacao que vem no arquivo informa que o cartao esta sendo REPOSTO (deve cancelar).
                    Fabricio - chamado 559710 */
                 IF vr_tipooper = 10 THEN
-                  IF vr_sitcarta = 10 THEN --reposicao
+                  IF vr_sitcarta = 10 OR vr_flgprovi THEN --reposicao
                     -- Atualiza os dados da situacao do cartao
                     atualiza_situacao_cartao(pr_cdcooper => vr_cdcooper,
                                              pr_nrdconta => vr_nrdconta,
@@ -11168,12 +11180,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
                 /* 
                 3 - Cancelamento de Cartao
+								5 - Modificação de Cartão
                 7 - Reativacao de Contas
                 12 - Alteracao de Estado
                 13 - Alteracao de Estado Conta
                 25 - Reativar Cartao do Adicional                
                 */                
-                IF vr_tipooper IN (3,7,12,13,25) THEN
+                IF vr_tipooper IN (3,5,7,12,13,25) THEN
                   -- Atualiza os dados da situacao do cartao
                   atualiza_situacao_cartao(pr_cdcooper => vr_cdcooper,
                                            pr_nrdconta => vr_nrdconta,
@@ -11945,6 +11958,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     CONTINUE;
                   ELSE      
                     BEGIN
+											vr_flgproviint := 0;
+											IF vr_flgprovi THEN
+											   vr_flgproviint := 1;
+											END IF;
                       INSERT INTO crapcrd
                          (cdcooper,
                           nrdconta,
@@ -11960,7 +11977,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                           cdadmcrd,
                           tpcartao,
                           dtcancel,
-                          flgdebit)
+                          flgdebit,
+													flgprovi)
                       VALUES
                          (rw_crawcrd.cdcooper,
                           rw_crawcrd.nrdconta,
@@ -11976,7 +11994,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                           rw_crawcrd.cdadmcrd,
                           rw_crawcrd.tpcartao,
                           rw_crawcrd.dtcancel,
-                          rw_crawcrd.flgdebit)
+                          rw_crawcrd.flgdebit,
+													vr_flgproviint)
                           RETURNING ROWID INTO rw_crapcrd.rowid;
                     EXCEPTION
                       WHEN OTHERS THEN
@@ -12057,6 +12076,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     IF cr_crapcrd%NOTFOUND THEN
                       -- Cria registro de Cartão de Crédito
                       BEGIN
+												vr_flgproviint := 0;
+												IF vr_flgprovi THEN
+													 vr_flgproviint := 1;
+												END IF;
                         INSERT INTO crapcrd
                            (cdcooper,
                             nrdconta,
@@ -12072,7 +12095,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             cdadmcrd,
                             tpcartao,
                             dtcancel,
-                            flgdebit)
+                            flgdebit,
+														flgprovi)
                         VALUES
                            (rw_crawcrd.cdcooper,
                             rw_crawcrd.nrdconta,
@@ -12088,7 +12112,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             rw_crawcrd.cdadmcrd,
                             rw_crawcrd.tpcartao,
                             rw_crawcrd.dtcancel,
-                            rw_crawcrd.flgdebit)
+                            rw_crawcrd.flgdebit,
+														vr_flgproviint)
                             RETURNING ROWID INTO rw_crapcrd.rowid;
                       EXCEPTION
                         WHEN OTHERS THEN
@@ -12318,6 +12343,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     ELSE
                       -- cria novo registro de cartão de crédito
                       BEGIN
+												vr_flgproviint := 0;
+												IF vr_flgprovi THEN
+													 vr_flgproviint := 1;
+												END IF;
                         INSERT INTO crapcrd
                            (cdcooper,
                             nrdconta,
@@ -12333,7 +12362,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             cdadmcrd,
                             tpcartao,
                             dtcancel,
-                            flgdebit)
+                            flgdebit,
+                            flgprovi)
                         VALUES
                            (rw_crawcrd.cdcooper,
                             rw_crawcrd.nrdconta,
@@ -12349,7 +12379,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             rw_crawcrd.cdadmcrd,
                             rw_crawcrd.tpcartao,
                             rw_crawcrd.dtcancel,
-                            rw_crawcrd.flgdebit)
+                            rw_crawcrd.flgdebit,
+                            vr_flgproviint)
                             RETURNING ROWID INTO rw_crapcrd.rowid;
                       EXCEPTION
                         WHEN OTHERS THEN
