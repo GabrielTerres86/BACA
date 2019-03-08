@@ -6286,6 +6286,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             END IF;
           -- Se teve alteracao da data da demissao ou 
           ELSIF substr(nvl(rw_pessoa_atlz.dschave,'   '),3,1) = 'S' THEN
+            -- Buscar conta do cooperado
+            OPEN cr_crapass_2( pr_cdcooper => rw_crapass.cdcooper
+                              ,pr_nrdconta => rw_crapass.nrdconta);
+            FETCH cr_crapass_2 INTO rw_crapass_2;
+            CLOSE cr_crapass_2;
 
             vr_idinclusao := FALSE;
             -- Busca os dados da ultima inclusao do historico
