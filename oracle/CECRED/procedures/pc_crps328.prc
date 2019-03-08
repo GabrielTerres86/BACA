@@ -335,12 +335,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps328 (pr_cdcooper IN crapcop.cdcooper%T
                            ,pr_inpessoa => rw_sms.inpessoa);
            FETCH cr_tar_inc INTO rw_tar_inc;   
            
-           CLOSE cr_tar_inc;   
-           
            IF cr_tar_inc%found then
              vr_dsinctar:= rw_tar_inc.dsinctar;
+			 CLOSE cr_tar_inc;   
            else
              vr_dsinctar:= 'RETORNO';
+			 CLOSE cr_tar_inc;   
            end if;
                                                
            -- Busca o valor da tarifa
