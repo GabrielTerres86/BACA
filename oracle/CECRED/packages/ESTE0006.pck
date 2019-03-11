@@ -122,6 +122,28 @@ procedure pc_enviar_analise_manual(pr_cdcooper    in crapbdt.cdcooper%type  --> 
                                 ,pr_cdcritic out number                 --> Codigo da critica
                                 ,pr_dscritic out varchar2               --> Descricao da critica
                               );
+                              
+  PROCEDURE pc_interrompe_proposta_bdt_est(pr_cdcooper  IN crapbdt.cdcooper%TYPE,  --> Codigo da cooperativa
+                                       pr_cdagenci  IN crapage.cdagenci%TYPE,  --> Codigo da agencia                                          
+                                       pr_cdoperad  IN crapope.cdoperad%TYPE,  --> codigo do operador
+                                       pr_cdorigem  IN INTEGER,                --> Origem da operacao
+                                       pr_nrdconta  IN crapbdt.nrdconta%TYPE,  --> Numero da conta do cooperado
+                                       pr_nrborder  IN crapbdt.nrborder%type,  --> Numero da proposta do borderô de desconto de titulo 
+									                     pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,  --> Data do movimento                                      
+                                       ---- OUT ----                           
+                                       pr_cdcritic OUT NUMBER,                 --> Codigo da critica
+                                       pr_dscritic OUT VARCHAR2); 
+                                       
+  PROCEDURE pc_cancela_proposta_bdt_est(pr_cdcooper  IN crapbdt.cdcooper%TYPE,  --> Codigo da cooperativa
+                                       pr_cdagenci  IN crapage.cdagenci%TYPE,  --> Codigo da agencia                                          
+                                       pr_cdoperad  IN crapope.cdoperad%TYPE,  --> codigo do operador
+                                       pr_cdorigem  IN INTEGER,                --> Origem da operacao
+                                       pr_nrdconta  IN crapbdt.nrdconta%TYPE,  --> Numero da conta do cooperado
+                                       pr_nrborder  IN crapbdt.nrborder%type,  --> Numero da proposta do borderô de desconto de titulo 
+									                     pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,  --> Data do movimento                                      
+                                       ---- OUT ----                           
+                                       pr_cdcritic OUT NUMBER,                 --> Codigo da critica
+                                       pr_dscritic OUT VARCHAR2);                         
 end ESTE0006;
 /
 create or replace package body cecred.ESTE0006 is
@@ -2048,6 +2070,596 @@ END pc_incluir_bordero_esteira;
 
   END pc_gera_json_bordero;
 
+  PROCEDURE pc_interrompe_proposta_bdt_est(pr_cdcooper  IN crapbdt.cdcooper%TYPE,  --> Codigo da cooperativa
+                                       pr_cdagenci  IN crapage.cdagenci%TYPE,  --> Codigo da agencia                                          
+                                       pr_cdoperad  IN crapope.cdoperad%TYPE,  --> codigo do operador
+                                       pr_cdorigem  IN INTEGER,                --> Origem da operacao
+                                       pr_nrdconta  IN crapbdt.nrdconta%TYPE,  --> Numero da conta do cooperado
+                                       pr_nrborder  IN crapbdt.nrborder%type,  --> Numero da proposta do borderô de desconto de titulo 
+									                     pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,  --> Data do movimento                                      
+                                       ---- OUT ----                           
+                                       pr_cdcritic OUT NUMBER,                 --> Codigo da critica
+                                       pr_dscritic OUT VARCHAR2) IS            --> Descricao da critica
+    /* ..........................................................................
+    
+      Programa : pc_interrompe_proposta_bdt_est        
+      Sistema  : 
+      Sigla    : CRED
+      Autor    : Fábio dos Santos (GFT)
+      Data     : Novembro/2018.                   Ultima atualizacao: 
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel por interromper o fluxo da proposta de borderô de desconto de titulos na esteira
+      Alteração : 05/11/2018 - Criação Fábio dos Santos (GFT)
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    
+    --> Buscar operador
+    CURSOR cr_crapope (pr_cdcooper  crapope.cdcooper%TYPE,
+                       pr_cdoperad  crapope.cdoperad%TYPE) IS
+      SELECT ope.nmoperad
+        FROM crapope ope
+       WHERE ope.cdcooper = pr_cdcooper
+         AND upper(ope.cdoperad) = upper(pr_cdoperad);
+    
+    rw_crapope cr_crapope%ROWTYPE;
+    
+    -----------> CURSORES <-----------
+    CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
+                       pr_nrdconta crapass.nrdconta%TYPE)IS
+      SELECT ass.nrdconta,
+             ass.nmprimtl,
+             ass.cdagenci,
+             age.nmextage,
+             ass.inpessoa,
+             decode(ass.inpessoa,1,0,2,1) inpessoa_ibra,
+             ass.nrcpfcgc
+               
+        FROM crapass ass,
+             crapage age
+       WHERE ass.cdcooper = age.cdcooper
+         AND ass.cdagenci = age.cdagenci
+         AND ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta; 
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    
+    -->busca do borderô de títulos
+	CURSOR cr_crapbdt IS
+	SELECT bdt.rowid
+		  ,bdt.cdagenci
+	  FROM crapbdt bdt
+	 WHERE bdt.cdcooper = pr_cdcooper
+	   AND bdt.nrdconta = pr_nrdconta
+	   AND bdt.nrborder = pr_nrborder;
+	rw_crapbdt cr_crapbdt%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic NUMBER := 0;
+    vr_dscritic VARCHAR2(4000);
+	  vr_dsmensag VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;    
+    
+    
+    -- Objeto json da proposta
+    vr_obj_cancelar json := json();
+    vr_obj_agencia  json := json();
+    -- Auxiliares
+    vr_dsprotocolo VARCHAR2(1000);
+    
+    vr_cdagenci crapage.cdagenci%type; --> Codigo da agencia
+    
+    -- Variaveis para DEBUG
+    vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    
+    
+  BEGIN
+    
+    --> Buscar dados do associado
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    
+    vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
+    
+    -- Caso nao encontrar abortar proceso
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      vr_cdcritic := 9;
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crapass;  
+  
+    -- Se o DEBUG estiver habilitado
+    IF vr_flgdebug = 'S' THEN
+      --> Gravar dados log acionamento
+      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                           pr_cdagenci              => vr_cdagenci,          
+                           pr_cdoperad              => pr_cdoperad,          
+                           pr_cdorigem              => pr_cdorigem,          
+                           pr_nrctrprp              => pr_nrborder, --pr_nrctremp,          
+                           pr_nrdconta              => pr_nrdconta,          
+                           --pr_cdcliente             => 1,
+                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                           pr_dsoperacao            => 'INICIO INTERROMPE PROPOSTA',       
+                           pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
+                           pr_dtmvtolt              => pr_dtmvtolt,       
+                           pr_cdstatus_http         => 0,
+                           pr_dsconteudo_requisicao => null,
+                           pr_dsresposta_requisicao => null,
+                           --pr_flgreenvia            => 0,
+                           --pr_nrreenvio             => 0,
+                           --pr_tpconteudo            => 1,
+                           pr_tpproduto             => 7, --> Desconto de Título – Borderô      --> Tipo DO Produto
+                           pr_idacionamento         => vr_idaciona,
+                           pr_dscritic              => vr_dscritic);
+      -- Sem tratamento de exceção para DEBUG                    
+      --IF TRIM(vr_dscritic) IS NOT NULL THEN
+      --  RAISE vr_exc_erro;
+      --END IF;
+    END IF;     
+     
+    -- Buscar dados do operador
+    OPEN cr_crapope (pr_cdcooper  => pr_cdcooper,
+                     pr_cdoperad  => pr_cdoperad);
+    FETCH cr_crapope INTO rw_crapope;
+    IF cr_crapope%NOTFOUND THEN
+      CLOSE cr_crapope;
+      vr_cdcritic := 67; -- 067 - Operador nao cadastrado.
+      RAISE vr_exc_erro; 
+    ELSE
+      CLOSE cr_crapope;
+    END IF;        
+    
+        
+    --> Buscar dados da proposta de bordero de desconto de titulo
+    OPEN cr_crapbdt;
+    FETCH cr_crapbdt INTO rw_crapbdt;
+	
+    -- Caso nao encontrar abortar proceso
+	  IF cr_crapbdt%NOTFOUND THEN
+      CLOSE cr_crapbdt;
+      vr_cdcritic := 535; -- 535 - Proposta nao encontrada.
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crapbdt; 
+          
+    
+    --> Criar objeto json para agencia da proposta
+    /***************** VERIFICAR *********************/
+    vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
+    vr_obj_agencia.put('PACodigo', rw_crapbdt.cdagenci);    
+    vr_obj_cancelar.put('PA' ,vr_obj_agencia);    
+    vr_obj_agencia := json();
+    
+    --> Criar objeto json para agencia do cooperado
+    vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
+    vr_obj_agencia.put('PACodigo', rw_crapass.cdagenci);    
+    vr_obj_cancelar.put('cooperadoContaPA' ,vr_obj_agencia);
+    vr_obj_agencia := json();
+    
+    -- Nr. conta sem o digito
+    vr_obj_cancelar.put('cooperadoContaNum'     , to_number(substr(rw_crapass.nrdconta,1,length(rw_crapass.nrdconta)-1)));
+    -- Somente o digito
+    vr_obj_cancelar.put('cooperadoContaDv'      , to_number(substr(rw_crapass.nrdconta,-1)));    
+    IF rw_crapass.inpessoa = 1 THEN
+      vr_obj_cancelar.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,11,'0'));
+    ELSE
+      vr_obj_cancelar.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,14,'0'));
+    END IF;
+    
+    vr_obj_cancelar.put('numero'                , pr_nrborder); --pr_nrctremp); 
+    vr_obj_cancelar.put('operadorCancelamentoLogin',lower(pr_cdoperad));
+    vr_obj_cancelar.put('operadorCancelamentoNome' ,rw_crapope.nmoperad) ;
+     --> Criar objeto json para agencia do cooperado
+    vr_obj_agencia.put('cooperativaCodigo'   , pr_cdcooper);
+    vr_obj_agencia.put('PACodigo'            , vr_cdagenci);    
+    vr_obj_cancelar.put('operadorCancelamentoPA'   , vr_obj_agencia);    
+    vr_obj_cancelar.put('dataHora'              ,ESTE0001.fn_DataTempo_ibra(SYSDATE)) ;        
+   
+    -- Se o DEBUG estiver habilitado
+    IF vr_flgdebug = 'S' THEN
+      --> Gravar dados log acionamento
+      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                           pr_cdagenci              => vr_cdagenci,          
+                           pr_cdoperad              => pr_cdoperad,          
+                           pr_cdorigem              => pr_cdorigem,          
+                           pr_nrctrprp              => pr_nrborder, --pr_nrctremp,          
+                           pr_nrdconta              => pr_nrdconta,          
+                           --pr_cdcliente             => 1,      
+                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                           pr_dsoperacao            => 'ANTES INTERROMPER PROPOSTA',       
+                           pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
+                           pr_dtmvtolt              => pr_dtmvtolt,       
+                           pr_cdstatus_http         => 0,
+                           pr_dsconteudo_requisicao => vr_obj_cancelar.to_char,
+                           pr_dsresposta_requisicao => null,
+                           --pr_flgreenvia            => 0,
+                           --pr_nrreenvio             => 0,
+                           --pr_tpconteudo            => 1,
+                           pr_tpproduto             => 7, --> Desconto de Título – Borderô      --> Tipo DO Produto
+                           pr_idacionamento         => vr_idaciona,
+                           pr_dscritic              => vr_dscritic);
+      -- Sem tratamento de exceção para DEBUG                    
+      --IF TRIM(vr_dscritic) IS NOT NULL THEN
+      --  RAISE vr_exc_erro;
+      --END IF;
+    END IF;  
+    
+    -- Enviar dados para Esteira
+    pc_enviar_analise_bordero(pr_cdcooper    => pr_cdcooper               --> Codigo da cooperativa
+					,pr_cdagenci    => vr_cdagenci               --> Codigo da agencia
+					,pr_cdoperad    => pr_cdoperad               --> codigo do operador
+					,pr_cdorigem    => pr_cdorigem               --> Origem da operacao
+					,pr_nrdconta    => pr_nrdconta               --> Numero da conta do cooperado
+					,pr_nrborder    => pr_nrborder               --> Numero da proposta atual/antigo
+					,pr_dtmvtolt    => pr_dtmvtolt               --> Data do movimento
+					,pr_comprecu    => '/interromperFluxo'               --> Complemento do recuros da URI
+					,pr_dsmetodo    => 'PUT'                     --> Descricao do metodo
+					,pr_conteudo    => vr_obj_cancelar.to_char   --> Conteudo no Json para comunicacao
+					,pr_dsoperacao  => 'ENVIO DA INTERRUPÇÃO DA PROPOSTA DE ANALISE DE CREDITO'       --> Operacao realizada
+					,pr_dsprotocolo => vr_dsprotocolo
+					,pr_dscritic    => vr_dscritic);
+    
+    -- Verificar se retornou critica (Ignorar a critica de Proposta Nao Encontrada ou proposta nao permite interromper o fluxo
+    IF vr_dscritic IS NOT NULL 
+      AND lower(vr_dscritic) NOT LIKE '%proposta nao encontrada%' 
+      AND lower(vr_dscritic) NOT LIKE '%proposta nao permite interromper o fluxo%'
+      AND lower(vr_dscritic) NOT LIKE '%produto cdc nao integrado%' THEN
+      RAISE vr_exc_erro;
+    END IF;    
+    
+    -- Se o DEBUG estiver habilitado
+    IF vr_flgdebug = 'S' THEN
+      --> Gravar dados log acionamento
+      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                           pr_cdagenci              => vr_cdagenci,          
+                           pr_cdoperad              => pr_cdoperad,          
+                           pr_cdorigem              => pr_cdorigem,          
+                           pr_nrctrprp              => pr_nrborder, --pr_nrctremp,          
+                           pr_nrdconta              => pr_nrdconta,          
+                           --pr_cdcliente             => 1,      
+                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                           pr_dsoperacao            => 'TERMINO INTERROMPER PROPOSTA',       
+                           pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
+                           pr_dtmvtolt              => pr_dtmvtolt,       
+                           pr_cdstatus_http         => 0,
+                           pr_dsconteudo_requisicao => vr_obj_cancelar.to_char,
+                           pr_dsresposta_requisicao => null,
+                           --pr_flgreenvia            => 0,
+                           --pr_nrreenvio             => 0,
+                           --pr_tpconteudo            => 1,
+                           pr_tpproduto             => 7, --> Desconto de Título – Borderô      --> Tipo DO Produto
+                           pr_idacionamento         => vr_idaciona,
+                           pr_dscritic              => vr_dscritic);
+      -- Sem tratamento de exceção para DEBUG                    
+      --IF TRIM(vr_dscritic) IS NOT NULL THEN
+      --  RAISE vr_exc_erro;
+      --END IF;
+    END IF;   
+    
+    COMMIT;          
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar a interrupcao da Analise de Credito: '||SQLERRM;
+  END pc_interrompe_proposta_bdt_est;
+  
+  PROCEDURE pc_cancela_proposta_bdt_est(pr_cdcooper  IN crapbdt.cdcooper%TYPE,  --> Codigo da cooperativa
+                                       pr_cdagenci  IN crapage.cdagenci%TYPE,  --> Codigo da agencia                                          
+                                       pr_cdoperad  IN crapope.cdoperad%TYPE,  --> codigo do operador
+                                       pr_cdorigem  IN INTEGER,                --> Origem da operacao
+                                       pr_nrdconta  IN crapbdt.nrdconta%TYPE,  --> Numero da conta do cooperado
+                                       pr_nrborder  IN crapbdt.nrborder%type,  --> Numero da proposta do borderô de desconto de titulo 
+									                     pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,  --> Data do movimento                                      
+                                       ---- OUT ----                           
+                                       pr_cdcritic OUT NUMBER,                 --> Codigo da critica
+                                       pr_dscritic OUT VARCHAR2) IS            --> Descricao da critica
+    /* ..........................................................................
+    
+      Programa : pc_cancela_proposta_bdt_est        
+      Sistema  : 
+      Sigla    : CRED
+      Autor    : Cássia de Oliveira (GFT)
+      Data     : Março/2019.                   Ultima atualizacao: 
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel por cancelar a proposta de borderô de desconto de titulos na esteira
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    
+    --> Buscar operador
+    CURSOR cr_crapope (pr_cdcooper  crapope.cdcooper%TYPE,
+                       pr_cdoperad  crapope.cdoperad%TYPE) IS
+      SELECT ope.nmoperad
+        FROM crapope ope
+       WHERE ope.cdcooper = pr_cdcooper
+         AND upper(ope.cdoperad) = upper(pr_cdoperad);
+    
+    rw_crapope cr_crapope%ROWTYPE;
+    
+    -----------> CURSORES <-----------
+    CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
+                       pr_nrdconta crapass.nrdconta%TYPE)IS
+      SELECT ass.nrdconta,
+             ass.nmprimtl,
+             ass.cdagenci,
+             age.nmextage,
+             ass.inpessoa,
+             decode(ass.inpessoa,1,0,2,1) inpessoa_ibra,
+             ass.nrcpfcgc
+               
+        FROM crapass ass,
+             crapage age
+       WHERE ass.cdcooper = age.cdcooper
+         AND ass.cdagenci = age.cdagenci
+         AND ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta; 
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    
+    -->busca do borderô de títulos
+	CURSOR cr_crapbdt IS
+	SELECT bdt.rowid
+		  ,bdt.cdagenci
+	  FROM crapbdt bdt
+	 WHERE bdt.cdcooper = pr_cdcooper
+	   AND bdt.nrdconta = pr_nrdconta
+	   AND bdt.nrborder = pr_nrborder;
+	rw_crapbdt cr_crapbdt%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic NUMBER := 0;
+    vr_dscritic VARCHAR2(4000);
+	  vr_dsmensag VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;    
+    
+    
+    -- Objeto json da proposta
+    vr_obj_cancelar json := json();
+    vr_obj_agencia  json := json();
+    -- Auxiliares
+    vr_dsprotocolo VARCHAR2(1000);
+    
+    vr_cdagenci crapage.cdagenci%type; --> Codigo da agencia
+    
+    -- Variaveis para DEBUG
+    vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    
+    
+  BEGIN
+    
+    --> Buscar dados do associado
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    
+    vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
+    
+    -- Caso nao encontrar abortar proceso
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      vr_cdcritic := 9;
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crapass;  
+  
+    -- Se o DEBUG estiver habilitado
+    IF vr_flgdebug = 'S' THEN
+      --> Gravar dados log acionamento
+      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                           pr_cdagenci              => vr_cdagenci,          
+                           pr_cdoperad              => pr_cdoperad,          
+                           pr_cdorigem              => pr_cdorigem,          
+                           pr_nrctrprp              => pr_nrborder, --pr_nrctremp,          
+                           pr_nrdconta              => pr_nrdconta,          
+                           --pr_cdcliente             => 1,
+                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                           pr_dsoperacao            => 'INICIO CANCELAR PROPOSTA',       
+                           pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
+                           pr_dtmvtolt              => pr_dtmvtolt,       
+                           pr_cdstatus_http         => 0,
+                           pr_dsconteudo_requisicao => null,
+                           pr_dsresposta_requisicao => null,
+                           --pr_flgreenvia            => 0,
+                           --pr_nrreenvio             => 0,
+                           --pr_tpconteudo            => 1,
+                           pr_tpproduto             => 7, --> Desconto de Título – Borderô      --> Tipo DO Produto
+                           pr_idacionamento         => vr_idaciona,
+                           pr_dscritic              => vr_dscritic);
+      -- Sem tratamento de exceção para DEBUG                    
+      --IF TRIM(vr_dscritic) IS NOT NULL THEN
+      --  RAISE vr_exc_erro;
+      --END IF;
+    END IF;     
+     
+    -- Buscar dados do operador
+    OPEN cr_crapope (pr_cdcooper  => pr_cdcooper,
+                     pr_cdoperad  => pr_cdoperad);
+    FETCH cr_crapope INTO rw_crapope;
+    IF cr_crapope%NOTFOUND THEN
+      CLOSE cr_crapope;
+      vr_cdcritic := 67; -- 067 - Operador nao cadastrado.
+      RAISE vr_exc_erro; 
+    ELSE
+      CLOSE cr_crapope;
+    END IF;        
+    
+        
+    --> Buscar dados da proposta de bordero de desconto de titulo
+    OPEN cr_crapbdt;
+    FETCH cr_crapbdt INTO rw_crapbdt;
+	
+    -- Caso nao encontrar abortar proceso
+	  IF cr_crapbdt%NOTFOUND THEN
+      CLOSE cr_crapbdt;
+      vr_cdcritic := 535; -- 535 - Proposta nao encontrada.
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crapbdt; 
+          
+    
+    --> Criar objeto json para agencia da proposta
+    /***************** VERIFICAR *********************/
+    vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
+    vr_obj_agencia.put('PACodigo', rw_crapbdt.cdagenci);    
+    vr_obj_cancelar.put('PA' ,vr_obj_agencia);    
+    vr_obj_agencia := json();
+    
+    --> Criar objeto json para agencia do cooperado
+    vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
+    vr_obj_agencia.put('PACodigo', rw_crapass.cdagenci);    
+    vr_obj_cancelar.put('cooperadoContaPA' ,vr_obj_agencia);
+    vr_obj_agencia := json();
+    
+    -- Nr. conta sem o digito
+    vr_obj_cancelar.put('cooperadoContaNum'     , to_number(substr(rw_crapass.nrdconta,1,length(rw_crapass.nrdconta)-1)));
+    -- Somente o digito
+    vr_obj_cancelar.put('cooperadoContaDv'      , to_number(substr(rw_crapass.nrdconta,-1)));    
+    IF rw_crapass.inpessoa = 1 THEN
+      vr_obj_cancelar.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,11,'0'));
+    ELSE
+      vr_obj_cancelar.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,14,'0'));
+    END IF;
+    
+    vr_obj_cancelar.put('numero'                , pr_nrborder); --pr_nrctremp); 
+    vr_obj_cancelar.put('operadorCancelamentoLogin',lower(pr_cdoperad));
+    vr_obj_cancelar.put('operadorCancelamentoNome' ,rw_crapope.nmoperad) ;
+     --> Criar objeto json para agencia do cooperado
+    vr_obj_agencia.put('cooperativaCodigo'   , pr_cdcooper);
+    vr_obj_agencia.put('PACodigo'            , vr_cdagenci);    
+    vr_obj_cancelar.put('operadorCancelamentoPA'   , vr_obj_agencia);    
+    vr_obj_cancelar.put('dataHora'              ,ESTE0001.fn_DataTempo_ibra(SYSDATE)) ;        
+   
+    -- Se o DEBUG estiver habilitado
+    IF vr_flgdebug = 'S' THEN
+      --> Gravar dados log acionamento
+      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                           pr_cdagenci              => vr_cdagenci,          
+                           pr_cdoperad              => pr_cdoperad,          
+                           pr_cdorigem              => pr_cdorigem,          
+                           pr_nrctrprp              => pr_nrborder, --pr_nrctremp,          
+                           pr_nrdconta              => pr_nrdconta,          
+                           --pr_cdcliente             => 1,      
+                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                           pr_dsoperacao            => 'ANTES CANCELAR PROPOSTA',       
+                           pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
+                           pr_dtmvtolt              => pr_dtmvtolt,       
+                           pr_cdstatus_http         => 0,
+                           pr_dsconteudo_requisicao => vr_obj_cancelar.to_char,
+                           pr_dsresposta_requisicao => null,
+                           --pr_flgreenvia            => 0,
+                           --pr_nrreenvio             => 0,
+                           --pr_tpconteudo            => 1,
+                           pr_tpproduto             => 7, --> Desconto de Título – Borderô      --> Tipo DO Produto
+                           pr_idacionamento         => vr_idaciona,
+                           pr_dscritic              => vr_dscritic);
+      -- Sem tratamento de exceção para DEBUG                    
+      --IF TRIM(vr_dscritic) IS NOT NULL THEN
+      --  RAISE vr_exc_erro;
+      --END IF;
+    END IF;  
+    
+    -- Enviar dados para Esteira
+    pc_enviar_analise_bordero(pr_cdcooper    => pr_cdcooper               --> Codigo da cooperativa
+					,pr_cdagenci    => vr_cdagenci               --> Codigo da agencia
+					,pr_cdoperad    => pr_cdoperad               --> codigo do operador
+					,pr_cdorigem    => pr_cdorigem               --> Origem da operacao
+					,pr_nrdconta    => pr_nrdconta               --> Numero da conta do cooperado
+					,pr_nrborder    => pr_nrborder               --> Numero da proposta atual/antigo
+					,pr_dtmvtolt    => pr_dtmvtolt               --> Data do movimento
+					,pr_comprecu    => '/cancelar'               --> Complemento do recuros da URI
+					,pr_dsmetodo    => 'PUT'                     --> Descricao do metodo
+					,pr_conteudo    => vr_obj_cancelar.to_char   --> Conteudo no Json para comunicacao
+					,pr_dsoperacao  => 'ENVIO DO CANCELAMENTO DA PROPOSTA DE ANALISE DE CREDITO'       --> Operacao realizada
+					,pr_dsprotocolo => vr_dsprotocolo
+					,pr_dscritic    => vr_dscritic);
+    
+    -- Verificar se retornou critica (Ignorar a critica de Proposta Nao Encontrada ou proposta nao permite interromper o fluxo
+    IF vr_dscritic IS NOT NULL 
+      AND lower(vr_dscritic) NOT LIKE '%proposta nao encontrada%' 
+      AND lower(vr_dscritic) NOT LIKE '%proposta nao permite interromper o fluxo%'
+      AND lower(vr_dscritic) NOT LIKE '%produto cdc nao integrado%' THEN
+      RAISE vr_exc_erro;
+    END IF;    
+    
+    -- Se o DEBUG estiver habilitado
+    IF vr_flgdebug = 'S' THEN
+      --> Gravar dados log acionamento
+      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                           pr_cdagenci              => vr_cdagenci,          
+                           pr_cdoperad              => pr_cdoperad,          
+                           pr_cdorigem              => pr_cdorigem,          
+                           pr_nrctrprp              => pr_nrborder, --pr_nrctremp,          
+                           pr_nrdconta              => pr_nrdconta,          
+                           --pr_cdcliente             => 1,      
+                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                           pr_dsoperacao            => 'TERMINO CANCELAR PROPOSTA',       
+                           pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
+                           pr_dtmvtolt              => pr_dtmvtolt,       
+                           pr_cdstatus_http         => 0,
+                           pr_dsconteudo_requisicao => vr_obj_cancelar.to_char,
+                           pr_dsresposta_requisicao => null,
+                           --pr_flgreenvia            => 0,
+                           --pr_nrreenvio             => 0,
+                           --pr_tpconteudo            => 1,
+                           pr_tpproduto             => 7, --> Desconto de Título – Borderô      --> Tipo DO Produto
+                           pr_idacionamento         => vr_idaciona,
+                           pr_dscritic              => vr_dscritic);
+      -- Sem tratamento de exceção para DEBUG                    
+      --IF TRIM(vr_dscritic) IS NOT NULL THEN
+      --  RAISE vr_exc_erro;
+      --END IF;
+    END IF;   
+    
+    COMMIT;          
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar o cancelamento da Analise de Credito: '||SQLERRM;
+  END pc_cancela_proposta_bdt_est;
 
 END ESTE0006;
 /
