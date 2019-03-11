@@ -6,6 +6,7 @@ create table CECRED.TBGEN_ANALISE_CREDITO
   NRDCONTA          NUMBER(10) not null,  
   NRCPFCGC          NUMBER(25) not null,
   NRCONTRATO        NUMBER(10) not null,
+  NRVERSAO_ANALISE  NUMBER(5) not null,
   DHINICIO_ANALISE  DATE default SYSDATE not null,
   DTMVTOLT          DATE not null,
   TPPRODUTO         NUMBER(2) not null,
@@ -26,6 +27,8 @@ create table CECRED.TBGEN_ANALISE_CREDITO
   is 'CPF ou CNPJ';
   comment on column CECRED.TBGEN_ANALISE_CREDITO.NRCONTRATO
   is 'Numero do contrato';
+  comment on column CECRED.TBGEN_ANALISE_CREDITO.NRVERSAO_ANALISE
+  is 'NR Versao da analise por contrato';
   comment on column CECRED.TBGEN_ANALISE_CREDITO.DHINICIO_ANALISE
   is 'Data e Hora inicio da analise';
   comment on column CECRED.TBGEN_ANALISE_CREDITO.DTMVTOLT
