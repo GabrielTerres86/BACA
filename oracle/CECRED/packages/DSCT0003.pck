@@ -6579,6 +6579,23 @@ END pc_inserir_lancamento_bordero;
     -- Altera a decisao de todos os titulos daquele bordero para NAO APROVADOS 
     UPDATE craptdb SET insittit = 0, insitapr = 2 WHERE nrborder = pr_nrborder AND cdcooper = vr_cdcooper AND nrdconta = pr_nrdconta;
   
+    
+    ESTE0006.pc_interrompe_proposta_bdt_est(pr_cdcooper => vr_cdcooper
+                                           ,pr_cdagenci => vr_cdagenci
+                                           ,pr_cdoperad => vr_cdoperad
+                                           ,pr_cdorigem => vr_idorigem
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrborder => pr_nrborder
+                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+    
+                                           
+                                           
+    IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF; 
+  
     -- Efetua os inserts para apresentacao na tela VERLOG
     gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                         ,pr_cdoperad => vr_cdoperad
