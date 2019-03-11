@@ -1,6 +1,7 @@
 -- Create table
 create table CECRED.TBGEN_ANALISE_CREDITO
 (
+  IDANALISE_CONTRATO NUMBER(15) not null,
   CDCOOPER          NUMBER(5) not null,
   NRDCONTA          NUMBER(10) not null,  
   NRCPFCGC          NUMBER(25) not null,
@@ -8,14 +9,15 @@ create table CECRED.TBGEN_ANALISE_CREDITO
   DHINICIO_ANALISE  DATE default SYSDATE not null,
   DTMVTOLT          DATE not null,
   TPPRODUTO         NUMBER(2) not null,
-  NRANALISE_CONTRATO NUMBER(5) not null,
-  XMLANALISE        SYS.XMLTYPE,
+  XMLANALISE        CLOB,
   DSCRITIC          VARCHAR2(245));
 
 -- Add comments to the table 
   comment on table CECRED.TBGEN_ANALISE_CREDITO
   is 'Controle de analise de credito via tela analise credito';
--- Add comments to the columns 
+-- Add comments to the columns
+  comment on column CECRED.TBGEN_ANALISE_CREDITO.IDANALISE_CONTRATO
+  is 'Numero da analise de contrato - sequencial'; 
   comment on column CECRED.TBGEN_ANALISE_CREDITO.CDCOOPER
   is 'Cooperativa';
   comment on column CECRED.TBGEN_ANALISE_CREDITO.NRDCONTA
@@ -30,8 +32,7 @@ create table CECRED.TBGEN_ANALISE_CREDITO
   is 'Data movimento';
   comment on column CECRED.TBGEN_ANALISE_CREDITO.TPPRODUTO
   is 'Codigo do produto';
-  comment on column CECRED.TBGEN_ANALISE_CREDITO.NRANALISE_CONTRATO
-  is 'Numero da analise de contrato - sequencial';
+  
   comment on column CECRED.TBGEN_ANALISE_CREDITO.XMLANALISE
   is 'Xml gerado';
   comment on column CECRED.TBGEN_ANALISE_CREDITO.DSCRITIC
@@ -39,18 +40,25 @@ create table CECRED.TBGEN_ANALISE_CREDITO
     
 -- Create/Recreate primary, unique and foreign key constraints 
 alter table CECRED.TBGEN_ANALISE_CREDITO
-  add constraint TBGEN_ANALISE_CREDITO primary key (CDCOOPER,NRDCONTA,NRCONTRATO,TPPRODUTO,NRANALISE_CONTRATO)
-  using index 
-  tablespace TBS_GERAL_I
-  pctfree 10
-  initrans 2
-  maxtrans 255
-  storage
-  (
-    initial 64K
-    next 1M
-    minextents 1
-    maxextents unlimited
-  );
+  add constraint TBGEN_ANALISE_CREDITO_PK primary key (IDANALISE_CONTRATO);
+  
+CREATE INDEX CECRED.TBGEN_ANALISE_CREDITO_idx01 on CECRED.TBGEN_ANALISE_CREDITO(cdcooper,nrdconta,NRCONTRATO);
 
+
+-- Create sequence 
+create sequence CECRED.TBGEN_ANALISE_CREDITO_seq
+minvalue 1
+maxvalue 99999999999999999999999
+start with 1
+increment by 1
+nocache
+order;
+
+CREATE OR REPLACE TRIGGER CECRED.TRG_TBGEN_ANALISE_CREDITO_ID BEFORE
+    INSERT ON TBGEN_ANALISE_CREDITO
+    FOR EACH ROW
+    WHEN ( new.IDANALISE_CONTRATO IS NULL )
+BEGIN
+    :new.IDANALISE_CONTRATO := TBGEN_ANALISE_CREDITO_SEQ.nextval;
+END;
   
