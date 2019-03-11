@@ -1710,6 +1710,11 @@ PROCEDURE atualiza-pagto-cheque-liberado:
 									RETURN "NOK".
                                 
                             END. 
+                         ELSE 
+                            DO:
+                                FIND FIRST tt-ret-lancto.
+                                FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                            END.                
          END.
 
         DELETE PROCEDURE h-b1wgen0200. 
