@@ -815,7 +815,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 13/02/2019
+  --  Data     : Março/2014.                   Ultima atualizacao: 11/03/2019
   --
   -- Dados referentes ao programa:
   --
@@ -961,6 +961,8 @@ create or replace package body cecred.PAGA0002 is
 	               13/02/2019 - Correcao da finalidade 400 (Tributos Municipais ISS - LCP) para 157
                                (Jonata  - Mouts / INC0032530).
   
+                   11/03/2019 - inc0033310 Na rodina pc_obtem_agendamentos, alterado o índice do cursor cr_craplau,
+                                de CRAPLAU4 para CRAPLAU8 (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -9929,7 +9931,7 @@ create or replace package body cecred.PAGA0002 is
                      ,pr_nrdolote IN craplau.nrdolote%TYPE
                      ,pr_dtageini IN craplau.dtmvtopg%TYPE
                      ,pr_dtagefim IN craplau.dtmvtopg%TYPE) IS
-    SELECT /*+ INDEX (LAU CRAPLAU##CRAPLAU4) */
+    SELECT /*+ INDEX (LAU CRAPLAU##CRAPLAU8) */
            lau.dtmvtolt
           ,lau.cdcooper
           ,lau.insitlau
