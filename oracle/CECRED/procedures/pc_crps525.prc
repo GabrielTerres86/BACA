@@ -1,9 +1,10 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps525 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                                              ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
-                                              ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
-                                              ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
-                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
-                                              ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps525 
+                            (pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+                            ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
+                            ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
+                            ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
+                            ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                            ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
     /*........................................................................
 
@@ -11,17 +12,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps525 (pr_cdcooper IN crapcop.cdcooper%T
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Fernando
-    Data    : Abril/2009                      Ultima Atualizacao: 23/06/2016
+    Data    : Abril/2009                      Ultima Atualizacao: 26/09/2016
     Dados referente ao programa:
 
     Frequencia: Diario.
 
-    Objetivo  : Gerar relatorio de limites de desconto de cheques vencidos.
+    Objetivo  : Criar tarifas de custodia de cheques custodiados no dia
 
     Alteracoes: 15/01/2013 - Conversão Progress >> Oracle PLSQL (Jean Michel)
-    
-                23/06/2016 - Correcao para o uso da function fn_busca_dstextab 
-                             da TABE0001. (Carlos Rafael Tanholi).
+                
+                26/09/2016 - Programa reformulado para cobrar tarifa, geração do relatorio
+                             não ocorrerá mais no batch e sim via tela.
+                             PRJ300 - Desconto de cheque (Odirlei-AMcom)
+                             
 ..............................................................................*/
 
     DECLARE
@@ -31,19 +34,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps525 (pr_cdcooper IN crapcop.cdcooper%T
       -- Código do programa
       vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS525';
 
+	  -- Data de Corte Liberação do Projeto 300
+	  vr_dtacorte DATE := TO_DATE('23/05/2017','DD/MM/RRRR');
+
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
+      vr_tab_erro   GENE0001.typ_tab_erro;
 
-      vr_clobxml CLOB; -- Variavel para relatorios e xml
-      vr_dtvencdc DATE; -- Data de vencimento
-      vr_dsarquiv varchar2(100);
-      vr_msgsemin INTEGER := 0;
-      -- Guardar registro dstextab
-      vr_dstextab craptab.dstextab%TYPE;      
-      
       ------------------------------- CURSORES ---------------------------------
 
       -- Busca dos dados da cooperativa
@@ -54,41 +54,63 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps525 (pr_cdcooper IN crapcop.cdcooper%T
          WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
 
-
-      -- Consulta contas que possuam limites
-       CURSOR cr_crapass (pr_cdcooper crapcop.cdcooper%TYPE) IS
-
-        SELECT
-          ass.cdcooper,
-          ass.nrdconta,
-          lim.nrctrlim,
-          lim.dtinivig,
-          lim.vllimite,
-          lim.qtdiavig
-        FROM
-          crapass ass,
-          craplim lim
-        WHERE
-          ass.cdcooper = pr_cdcooper  AND
-          lim.cdcooper = ass.cdcooper AND
-          lim.nrdconta = ass.nrdconta AND
-          lim.tpctrlim = 2            AND -- Tipo Contrato Limite
-          lim.insitlim = 2                -- Situacao
-        ORDER BY
-          ass.nrdconta;
-
-      rw_crapass cr_crapass%ROWTYPE;
+      --> Buscar custodias criada no dia
+      CURSOR cr_crapcst (pr_cdcooper crapcst.cdcooper%TYPE,
+                         pr_dtmvtolt crapcst.dtmvtolt%TYPE )IS
+       SELECT cst.cdcooper
+             ,cst.nrdconta
+             ,cst.nrborder
+             ,ass.inpessoa
+             ,MAX(cst.nrdolote)   nrdolote
+             ,COUNT(cst.nrdconta) nrqtddcc
+         FROM crapcst cst
+             ,crapass ass
+        WHERE cst.cdcooper = ass.cdcooper
+          AND cst.nrdconta = ass.nrdconta
+          AND cst.cdcooper = pr_cdcooper
+          AND cst.dtmvtolt = pr_dtmvtolt
+		  AND cst.dtmvtolt > vr_dtacorte
+          AND cst.dtdevolu IS NULL
+          AND cst.cdbccxlt = 600
+        GROUP BY cst.cdcooper
+                ,cst.nrdconta
+                ,cst.nrborder
+                ,ass.inpessoa
+        ORDER BY cst.cdcooper
+                ,cst.nrdconta;
 
       -- Cursor genérico de calendário
-      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
+      ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
+      TYPE typ_rec_tarcust 
+           IS RECORD (cdhistor   INTEGER,
+                      cdhisest   INTEGER,
+                      vltarifa   NUMBER,
+                      dtdivulg   DATE,
+                      dtvigenc   DATE,
+                      cdfvlcop   INTEGER);
+
+      TYPE typ_tab_tarcust IS TABLE OF typ_rec_tarcust
+           INDEX BY PLS_INTEGER;
+
+      ------------------------------- VARIAVEIS -------------------------------
+      vr_tab_tarcust   typ_tab_tarcust;
+      vr_cdbattar      VARCHAR2(100);
+      vr_cdhistor      INTEGER;
+      vr_cdhisest      INTEGER;
+      vr_vltarifa      NUMBER;
+      vr_dtdivulg      DATE;
+      vr_dtvigenc      DATE;
+      vr_cdfvlcop      INTEGER;
+      vr_vltottar      NUMBER := 0;
+      vr_rowid         ROWID;
+           
+      vr_qtacobra      INTEGER;
+      vr_fliseope      INTEGER;
 
       --------------------------- SUBROTINAS INTERNAS --------------------------
 
-      -- Subrotina para escrever texto na variável clob do xml
-      PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
-      BEGIN
-        dbms_lob.writeappend(vr_clobxml, length(pr_des_dados), pr_des_dados);
-      END;
+
 
     BEGIN
 
@@ -141,98 +163,152 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps525 (pr_cdcooper IN crapcop.cdcooper%T
         RAISE vr_exc_saida;
       END IF;
 
-      -- Inicializar o clob (xml)
-      dbms_lob.createtemporary(vr_clobxml, TRUE);
-      dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
-
-      -- Inicio do arquivo xml
-      pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
+      --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
       
-      -- Buscar configuração na tabela
-      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                               ,pr_nmsistem => 'CRED'
-                                               ,pr_tptabela => 'USUARI'
-                                               ,pr_cdempres => 11
-                                               ,pr_cdacesso => 'LIMDESCONT'
-                                               ,pr_tpregist => 0);
-      									 
-      IF TRIM(vr_dstextab) IS NULL THEN   
-        -- Montar mensagem de critica
-        vr_dscritic := 'Falta tabela de limite de desconto';
-        RAISE vr_exc_saida;
-      END IF;
+      FOR i IN 1..2 LOOP
 
-	    -- Consulta todas as contas da cooperativa
-      OPEN cr_crapass(pr_cdcooper => pr_cdcooper);
+        -- Codigo da tarifa
+        IF i = 1 THEN
+          vr_cdbattar := 'CUSTDCTOPF';
+        ELSE
+          vr_cdbattar := 'CUSTDCTOPJ';
+        END IF;
 
-        LOOP
-          FETCH cr_crapass
-            INTO rw_crapass;
-
-          -- Sai do loop quando chegar ao fim dos registros
-          EXIT WHEN cr_crapass%NOTFOUND;
-
-          -- Calcula a data de vencimento
-          vr_dtvencdc := rw_crapass.dtinivig + (rw_crapass.qtdiavig * SUBSTR(vr_dstextab, 19, 2));
-
-          -- Verifica data de vencimento
-          IF vr_dtvencdc > rw_crapdat.dtmvtoan AND vr_dtvencdc <= rw_crapdat.dtmvtolt THEN
-
-            vr_msgsemin := 1; -- Indica que existem registro p/ o relatório
-
-            -- Escreve arquivo XML com as informações de vencimento
-            pc_escreve_xml('<nrdconta id="' || gene0002.fn_mask_conta(rw_crapass.nrdconta) || '">' ||
-                             '<nrctrlim>' || TO_CHAR(rw_crapass.nrctrlim,'999G999G000') || '</nrctrlim>' ||
-                             '<dtinivig>' || TO_CHAR(rw_crapass.dtinivig,'dd/mm/yyyy') || '</dtinivig>' ||
-                             '<dtvencdc>' || TO_CHAR(vr_dtvencdc,'dd/mm/yyyy') || '</dtvencdc>' ||
-                             '<vllimite>' || TO_CHAR(rw_crapass.vllimite,'99999G990d00') || '</vllimite>' ||
-                             '<qtdiavig>' || gene0002.fn_mask(rw_crapass.qtdiavig,'zzz9') || '</qtdiavig>' ||
-                             '<qtrenova>' || TO_CHAR(SUBSTR(vr_dstextab, 19, 2),'9999999') || '</qtrenova>' ||
-                           '</nrdconta>');
-
+        --> Carregar Tarifas de pessoa fisica e juridica      
+        TARI0001.pc_carrega_dados_tar_vigente ( pr_cdcooper  => pr_cdcooper   -- Codigo Cooperativa
+                                               ,pr_cdbattar  => vr_cdbattar   -- Codigo Tarifa
+                                               ,pr_vllanmto  => 0             -- Valor Lancamento
+                                               ,pr_cdprogra  => 'CUST0001'    -- Codigo Programa
+                                               ,pr_cdhistor  => vr_tab_tarcust(i).cdhistor   -- Codigo Historico
+                                               ,pr_cdhisest  => vr_tab_tarcust(i).cdhisest   -- Historico Estorno
+                                               ,pr_vltarifa  => vr_tab_tarcust(i).vltarifa   -- Valor tarifa
+                                               ,pr_dtdivulg  => vr_tab_tarcust(i).dtdivulg   -- Data Divulgacao
+                                               ,pr_dtvigenc  => vr_tab_tarcust(i).dtvigenc   -- Data Vigencia
+                                               ,pr_cdfvlcop  => vr_tab_tarcust(i).cdfvlcop   -- Codigo faixa valor cooperativa
+                                               ,pr_cdcritic  => vr_cdcritic   -- Codigo Critica
+                                               ,pr_dscritic  => vr_dscritic   -- Descricao Critica
+                                               ,pr_tab_erro  => vr_tab_erro); -- Tabela erros
+        -- Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          -- Se possui erro no vetor
+          IF vr_tab_erro.Count > 0 THEN
+            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic := 0;
+            vr_dscritic := 'Nao foi possivel carregar a tarifa.';
           END IF;
+          -- Levantar Excecao
+          RAISE vr_exc_saida;
+        END IF;
+      END LOOP;
 
-        END LOOP;
+      
+      --> Buscar custodias criada no dia
+      FOR rw_crapcst IN cr_crapcst (pr_cdcooper => pr_cdcooper,
+                                    pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+                                          
+        -- Codigo da tarifa
+        IF rw_crapcst.inpessoa = 1 THEN
+          --> CUSTDCTOPF
+          vr_cdhistor := vr_tab_tarcust(1).cdhistor;
+          vr_cdhisest := vr_tab_tarcust(1).cdhisest;
+          vr_vltarifa := vr_tab_tarcust(1).vltarifa;
+          vr_dtdivulg := vr_tab_tarcust(1).dtdivulg;
+          vr_dtvigenc := vr_tab_tarcust(1).dtvigenc;
+          vr_cdfvlcop := vr_tab_tarcust(1).cdfvlcop;
+          
+        ELSE
+          --> CUSTDCTOPJ
+          vr_cdhistor := vr_tab_tarcust(2).cdhistor;
+          vr_cdhisest := vr_tab_tarcust(2).cdhisest;
+          vr_vltarifa := vr_tab_tarcust(2).vltarifa;
+          vr_dtdivulg := vr_tab_tarcust(2).dtdivulg;
+          vr_dtvigenc := vr_tab_tarcust(2).dtvigenc;
+          vr_cdfvlcop := vr_tab_tarcust(2).cdfvlcop;
+          END IF;
+     
+        -- O valor sera baseado na quantidade(crapcst) de cheques, multiplicado pelo valor da tarifa
+        vr_vltottar := vr_vltarifa * rw_crapcst.nrqtddcc;--> vr_nrqtddcc;
+         
+         
+        --> Efetua verificacao para cobrancas de tarifas sobre operacoes 
+        TARI0001.pc_verifica_tarifa_operacao( pr_cdcooper => rw_crapcst.cdcooper      --> Codigo da Cooperativa
+                                             ,pr_cdoperad => '1'                      --> Codigo Operador
+                                             ,pr_cdagenci => 1                        --> Codigo Agencia
+                                             ,pr_cdbccxlt => 100                      --> Codigo banco caixa
+                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt      --> Data Lancamento
+                                             ,pr_cdprogra => 'CRPS525'                --> Nome do Programa que chama a rotina
+                                             ,pr_idorigem => 7                        --> Identificador Origem(1-AYLLOS,2-CAIXA,3-INTERNET,4-TAA,5-AYLLOS WEB,6-URA)
+                                             ,pr_nrdconta => rw_crapcst.nrdconta      --> Numero da Conta
+                                             ,pr_tipotari => 3                        --> Tipo de Tarifa(1-Saque,2-Consulta)
+                                             ,pr_tipostaa => 0                        --> Tipo de TAA que foi efetuado a operacao(1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus)
+                                             ,pr_qtoperac => rw_crapcst.nrqtddcc              --> Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque)
+                                             ,pr_qtacobra => vr_qtacobra              --> Quantidade de registros a cobrar tarifa na operação
+                                             ,pr_fliseope => vr_fliseope              --> Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta
+                                             ,pr_cdcritic => vr_cdcritic              --> Codigo da critica
+                                             ,pr_dscritic => vr_dscritic);            --> Descricao da critica
 
-      CLOSE cr_crapass;
+        -- Se ocorreu erro
+        IF nvl(vr_cdcritic,0) <> 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Levantar Excecao
+          RAISE vr_exc_saida;
+        END IF;
+        
+        IF vr_fliseope <> 1 THEN
 
-      -- Verifica se ralatório contém informações
-      IF vr_msgsemin = 0 THEN
-        -- Caso não tenha informação, nrconta consta como vazio
-        pc_escreve_xml('<nrdconta id=""></nrdconta>');
-      END IF;
-
-      -- Fecha tag principal do arquivo xml
-      pc_escreve_xml('</raiz>');
-
-      -- Diretorio que sera gerado o arquivo final
-      vr_dsarquiv := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => pr_cdcooper, pr_nmsubdir => 'rl') || '/crrl511.lst';
-
-      -- Solicitacao do relatorio
-      gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa
-                                  pr_cdprogra  => vr_cdprogra,         --> Programa chamador
-                                  pr_dtmvtolt  => rw_crapdat.dtmvtolt, --> Data do movimento atual
-                                  pr_dsxml     => vr_clobxml,          --> Arquivo XML de dados
-                                  pr_dsxmlnode => '/raiz/nrdconta',    --> Nó do XML para iteração
-                                  pr_dsjasper  => 'crrl511.jasper',    --> Arquivo de layout do iReport
-                                  pr_dsparams  => '',                  --> Array de parametros diversos
-                                  pr_dsarqsaid => vr_dsarquiv,         --> Path/Nome do arquivo PDF gerado
-                                  pr_flg_gerar => 'N',                 --> Gerar o arquivo na hora*
-                                  pr_qtcoluna  => 132,                 --> Qtd colunas do relatório (80,132,234)
-                                  pr_flg_impri => 'S',                 --> Chamar a impressão (Imprim.p)*
-                                  pr_nmformul  => '80col',             --> Nome do formulário para impressão
-                                  pr_nrcopias  => 1,                   --> Qtd de cópias
-                                  pr_des_erro  => vr_dscritic);        --> Saída com erro
-
-      -- Verifica se ocorreu uma critica
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-
-      -- Libera a memoria alocada p/ variave clob
-      dbms_lob.close(vr_clobxml);
-      dbms_lob.freetemporary(vr_clobxml);
-
+          -- Se a quantidade de registros a cobrar tarifa na operação for maior que 0
+          IF vr_qtacobra > 0 THEN
+             -- Atribui novo valor total a cobrar
+             vr_vltottar := vr_qtacobra * vr_vltarifa;
+          END IF;         
+         
+          -- Criar Lancamento automatico tarifa
+          TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper      => rw_crapcst.cdcooper
+                                          ,pr_nrdconta      => rw_crapcst.nrdconta
+                                          ,pr_dtmvtolt      => rw_crapdat.dtmvtolt
+                                          ,pr_cdhistor      => vr_cdhistor
+                                          ,pr_vllanaut      => vr_vltottar
+                                          ,pr_cdoperad      => '1'
+                                          ,pr_cdagenci      => 1
+                                          ,pr_cdbccxlt      => 100
+                                          ,pr_nrdolote      => 10133
+                                          ,pr_tpdolote      => 1
+                                          ,pr_nrdocmto      => rw_crapcst.nrdolote
+                                          ,pr_nrdctabb      => rw_crapcst.nrdconta
+                                          ,pr_nrdctitg      => GENE0002.fn_mask(rw_crapcst.nrdconta,'99999999')
+                                          ,pr_cdpesqbb      => ' '
+                                          ,pr_cdbanchq      => 0
+                                          ,pr_cdagechq      => 0
+                                          ,pr_nrctachq      => 0
+                                          ,pr_flgaviso      => FALSE
+                                          ,pr_tpdaviso      => 0
+                                          ,pr_cdfvlcop      => vr_cdfvlcop
+                                          ,pr_inproces      => rw_crapdat.inproces
+                                          ,pr_rowid_craplat => vr_rowid
+                                          ,pr_tab_erro      => vr_tab_erro
+                                          ,pr_cdcritic      => vr_cdcritic
+                                          ,pr_dscritic      => vr_dscritic);
+          -- Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            -- Se possui erro no vetor
+            IF vr_tab_erro.Count > 0 THEN
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            ELSE
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro no lancamento tarifa de custodia de cheque.';
+            END IF;
+            -- Levantar Excecao
+            RAISE vr_exc_saida;
+          END IF;
+         
+        END IF;
+        
+      END LOOP;                              
+      
+      ----------------- ENCERRAMENTO DO PROGRAMA -------------------
       -- Processo OK, chama a fimprg
       btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                                ,pr_cdprogra => vr_cdprogra
