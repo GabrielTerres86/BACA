@@ -520,7 +520,7 @@ PROCEDURE horario_operacao:
 
     IF  par_tpoperac = 0  OR   /** Todos            **/ 
         par_tpoperac = 4  OR   /** TED              **/
-        par_tpoperac = 6  OR   /** VR-Boleto        **/ 
+        par_tpoperac = 6       /** VR-Boleto        **/
         /* par_tpoperac = 7  THEN */ /** Folha Pagamento  **/ /*Projeto 475 - Sprint D2 - Marcelo Coelho - não verificar crise para Folha */
         THEN
         DO:
