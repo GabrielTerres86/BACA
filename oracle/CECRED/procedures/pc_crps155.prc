@@ -133,12 +133,12 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
        and crapass.nrdconta  = craprpp.nrdconta
        and (pr_qterro = 0 or
            (pr_qterro > 0 and exists (select 1
-                                        from tbgen_batch_controle
-                                       where tbgen_batch_controle.cdcooper    = pr_cdcooper
-                                         and tbgen_batch_controle.cdprogra    = pr_cdprogra
-                                         and tbgen_batch_controle.tpagrupador = 1
-                                         and tbgen_batch_controle.cdagrupador = crapass.cdagenci
-                                         and tbgen_batch_controle.insituacao  = 1
+                                          from tbgen_batch_controle
+                                         where tbgen_batch_controle.cdcooper    = pr_cdcooper
+                                           and tbgen_batch_controle.cdprogra    = pr_cdprogra
+                                           and tbgen_batch_controle.tpagrupador = 1
+                                           and tbgen_batch_controle.cdagrupador = crapass.cdagenci
+                                           and tbgen_batch_controle.insituacao  = 1
                                          and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)))
     order by crapass.cdagenci;
 
@@ -372,17 +372,17 @@ begin
                     pr_cdcooper   => pr_cdcooper, 
                     pr_tpexecucao => 1,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                     pr_idprglog   => vr_idlog_ini_ger);
-
+    
     -- Gerar o ID para o paralelismo
     vr_idparale := gene0001.fn_gera_id_paralelo;
-    
+     
     -- Se houver algum erro, o id vira zerado
     IF vr_idparale = 0 THEN
        -- Levantar exceção
        vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_id_paralelo.';
        RAISE vr_exc_saida;
     END IF;
-    
+                                          
     -- Verifica se algum job paralelo executou com erro
     vr_qterro := 0;
     vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
@@ -469,7 +469,7 @@ begin
       -- Levantar exceçao
       raise vr_exc_saida;
     end if;                                  
-                                
+
 
     -- Verifica se algum job paralelo executou com erro
     vr_qterro := 0;
@@ -504,7 +504,7 @@ begin
                                     ,pr_idcontrole  => vr_idcontrole             -- ID de Controle
                                     ,pr_cdcritic    => pr_cdcritic               -- Codigo da critica
                                     ,pr_dscritic    => vr_dscritic              
-                                     );   
+                                     );       
     -- Testar saida com erro
     if  vr_dscritic is not null then 
       -- Levantar exceçao
@@ -808,6 +808,7 @@ begin
     
   end if;
 
+  --Se for o programa principal - executado no batch
   if pr_idparale = 0 then
     -- Processo OK, devemos chamar a fimprg
     btch0001.pc_valida_fimprg (pr_cdcooper => pr_cdcooper
@@ -829,7 +830,7 @@ begin
                                                       
     end if;    
     
-    if vr_inproces > 2 then 
+    if vr_inproces > 2 and vr_qtdjobs > 0 then 
       --Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
       pc_log_programa(pr_dstiplog   => 'F',    
                       pr_cdprograma => vr_cdprogra,           
@@ -841,6 +842,8 @@ begin
 
     --Salvar informacoes no banco de dados
     commit;
+  
+  --Se for job chamado pelo programa do batch     
   else
     -- Atualiza finalização do batch na tabela de controle 
     gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
