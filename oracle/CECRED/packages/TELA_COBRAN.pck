@@ -113,8 +113,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBRAN IS
   --> Rotina responsavel por gerar o relatorio carta anuencia - Chamada ayllos Web                                    
   PROCEDURE pc_relat_carta_anuencia_web (pr_cdcooper   IN craptab.cdcooper%TYPE  --> Cooperativa                                  
                                         ,pr_nrdconta    IN crapass.nrdconta%TYPE  --> Número da conta
+                                        ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE         --> Número do convenio                                        
                                         ,pr_nrdocmto    IN crapcob.nrdocmto%TYPE  --> Número do documento
-	                                      ,pr_cdbancoc    IN crapcob.cdbandoc%TYPE  --> Código do banco
+	                                      ,pr_cdbandoc    IN crapcob.cdbandoc%TYPE  --> Código do banco
                                         ,pr_dtcatanu    IN VARCHAR2               --> Data quitação divida 
                                         ,pr_nmrepres    IN VARCHAR2               --> Representantes
                                         ,pr_dtmvtolt    IN VARCHAR2               --> data do movimento                                     
@@ -128,8 +129,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBRAN IS
   --> Rotina responsavel por gerar o relatorio carta anuencia                         
   PROCEDURE pc_relat_carta_anuencia (pr_cdcooper  IN craptab.cdcooper%TYPE         --> Cooperativa                                  
                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE         --> Número da conta
+                                    ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE         --> Número do convenio                                    
                                     ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE         --> Número do documento
-                                    ,pr_cdbancoc  IN crapcob.cdbandoc%TYPE         --> Código do banco           
+                                    ,pr_cdbandoc  IN crapcob.cdbandoc%TYPE         --> Código do banco           
                                     ,pr_dtcatanu  IN VARCHAR2                      --> Data de liquidação da dívida
                                     ,pr_nmrepres  IN VARCHAR2                      --> Representantes
 																		,pr_cdoperad  IN VARCHAR2 DEFAULT '1'          --> Operador
@@ -1359,8 +1361,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   --> Rotina para disponibilizar uma carta de anuencia - Chamada ayllos Web
   PROCEDURE pc_relat_carta_anuencia_web (pr_cdcooper   IN craptab.cdcooper%TYPE  --> Cooperativa                                  
                                         ,pr_nrdconta    IN crapass.nrdconta%TYPE  --> Número da conta
+                                        ,pr_nrcnvcob    IN crapcob.nrcnvcob%TYPE         --> Número do convenio                                        
                                         ,pr_nrdocmto    IN crapcob.nrdocmto%TYPE  --> Número do documento
-                                        ,pr_cdbancoc    IN crapcob.cdbandoc%TYPE  --> Código do banco
+                                        ,pr_cdbandoc    IN crapcob.cdbandoc%TYPE  --> Código do banco
                                         ,pr_dtcatanu    IN VARCHAR2               --> Data quitação divida
                                         ,pr_nmrepres    IN VARCHAR2               --> Representantes
                                         ,pr_dtmvtolt    IN VARCHAR2               --> data do movimento                                     
@@ -1431,7 +1434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   BEGIN
     OPEN cr_crapcob(pr_cdcooper => pr_cdcooper,
                     pr_nrdconta => pr_nrdconta,
-                    pr_cdbandoc => pr_cdbancoc,
+                    pr_cdbandoc => pr_cdbandoc,
                     pr_nrdocmto => pr_nrdocmto);
     FETCH cr_crapcob INTO rw_crapcob;
   
@@ -1448,8 +1451,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
 
     pc_relat_carta_anuencia (pr_cdcooper  => pr_cdcooper   --> Codigo da cooperativa 
                              ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrcnvcob => pr_nrcnvcob
                              ,pr_nrdocmto => pr_nrdocmto
-                             ,pr_cdbancoc => pr_cdbancoc
+                             ,pr_cdbandoc => pr_cdbandoc
                              ,pr_dtcatanu => pr_dtcatanu
                              ,pr_nmrepres => pr_nmrepres
 														 ,pr_cdoperad => vr_cdoperad
@@ -1525,8 +1529,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   --> Rotina responsavel por gerar o relatorio carta anuência
   PROCEDURE pc_relat_carta_anuencia (pr_cdcooper  IN craptab.cdcooper%TYPE         --> Cooperativa                                  
                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE         --> Número da conta
+                                    ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE         --> Número do convenio                                    
                                     ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE         --> Número do documento
-                                    ,pr_cdbancoc  IN crapcob.cdbandoc%TYPE         --> Código do banco           
+                                    ,pr_cdbandoc  IN crapcob.cdbandoc%TYPE         --> Código do banco           
                                     ,pr_dtcatanu  IN VARCHAR2                      --> Data de liquidação da dívida
                                     ,pr_nmrepres  IN VARCHAR2                      --> Representantes
 																		,pr_cdoperad  IN VARCHAR2 DEFAULT '1'          --> Operador
@@ -1582,8 +1587,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
         WHERE
              cob.cdcooper = pr_cdcooper
          AND cob.nrdconta = pr_nrdconta
+         AND cob.nrcnvcob = pr_nrcnvcob
          AND cob.nrdocmto = pr_nrdocmto 
-         AND cob.cdbandoc = pr_cdbancoc
+         AND cob.cdbandoc = pr_cdbandoc
          AND ass.cdcooper = cob.cdcooper
          AND ass.nrdconta = cob.nrdconta
          AND sab.cdcooper = cob.cdcooper
