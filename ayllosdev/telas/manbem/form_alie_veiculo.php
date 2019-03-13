@@ -1,5 +1,5 @@
 <?
-/*!
+/*
  * FONTE        : form_veiculo.php
  * CRIAÇÃO      : Maykon D. Granemann (Envolti)
  * DATA CRIAÇÃO : 30/07/2018
@@ -13,7 +13,7 @@
  	<script src="../../scripts/jquery.mask.min.js" type="text/javascript"></script>
  	<script src="../../scripts/jquery.maskMoney.js" type="text/javascript"></script>
 
-    <link href="../../css/aditiv_alie_veiculo.css" rel="stylesheet" type="text/css">
+    <link href="../manbem/css/alie_veiculo.css" rel="stylesheet" type="text/css">
 
 	<script type="text/javascript" src="../manbem/scripts/utils.js"></script>
 	<script type="text/javascript" src="../manbem/scripts/aliena_veiculo.js"></script>
@@ -40,6 +40,7 @@
 		<? } else { ?>
 			<div class="cabecalho">
 				<input id="nrctremp" name="nrctremp" type="hidden" value="" />
+				<input id="idseqbem" name="idseqbem" type="hidden" value="<? echo getByTagName($dados,'idseqbem')?>" />
 				<label id="lsbemfin"></label>
 			</div>
 		<? } ?>
@@ -65,11 +66,11 @@
 					<input name="dsbemfin" id="dsbemfinC" type="text" hidden="hidden" value="<? echo getByTagName($dados,'dsbemfin') ?>" />
 				</div>
 				<div>
-                    <label for="nrmodbem" >Ano Modelo:</label>
+					<label for="nranobem" > Ano Fabricação :</label>
+						<input name="nranobem" id="nranobem" type="text" value="<? echo getByTagName($dados,'nranobem')?>" class="menor" onkeypress="return VerificaNumero(event)" maxlength="4" />
+                    <label for="nrmodbem" id="lsanobem">Mod:</label>
 					<select name="nrmodbem" id="nrmodbem"></select>
 					<input name="nrmodbem" id="nrmodbemC" type="text" hidden="hidden" value="<? echo getByTagName($dados,'nrmodbem')?> <? echo getByTagName($dados,'dstpcomb')?>"/>
-					<label for="nranobem" id="lsanobem">Fab:</label>
-					<input name="nranobem" id="nranobem" type="text" value="<? echo getByTagName($dados,'nranobem')?>" class="menor" onkeypress="return VerificaNumero(event)" maxlength="4" />
 				</div>
 				<div>
 					<label for="vlfipbem"> Valor Fipe :</label>

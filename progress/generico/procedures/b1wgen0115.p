@@ -157,7 +157,7 @@
 
                01/11/2017 - Ajustes conforme inclusao do campo tipo de contrato.
                             (Jaison/Marcos Martini - PRJ404)
-
+                            
 			   17/07/2018 - Para impressão de aditivos de contratos, se tpctrato = 90, substituir a
                   	        utilizacao da data do contrato pela data do aditivo, se existir (aux_dtcontra)
                             (Ana - Envolti - INC0019463)
@@ -451,6 +451,7 @@ PROCEDURE Busca_Dados:
                                  tt-aditiv.nrcpfcgc = DECI(xText:NODE-VALUE) WHEN xField:NAME = "nrcpfcgc"
                                  tt-aditiv.nrsequen = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrsequen"
                                  tt-aditiv.idseqbem = INTE(xText:NODE-VALUE) WHEN xField:NAME = "idseqbem"
+                                 tt-aditiv.dschssub = xText:NODE-VALUE WHEN xField:NAME = "dschssub"
                                  tt-aditiv.dssitgrv = xText:NODE-VALUE WHEN xField:NAME = "dssitgrv".
 
                           IF xField:NAME = "promissorias" THEN

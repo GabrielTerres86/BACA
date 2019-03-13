@@ -85,7 +85,7 @@ $(document).ready(function() {
 
 // seletores
 function estadoInicial() {
-
+	
     glb_nriniseq = 1;
 	glb_nrregist = 30;
 	
@@ -246,51 +246,51 @@ function manterRotina( operacao ) {
   
   if(cddopcao == "I" && cdaditiv == 5) {	
   
-	var dscatbem = $('#dscatbem', '#frmTipo').val();	
-	var dstipbem = $('#dstipbem', '#frmTipo').val();
-    var nrmodbem = verificarModBem($('#nrmodbem option:selected', '#frmTipo').text()); 
-	var nranobem = normalizaNumero(  $('#nranobem', '#frmTipo').val()); // inteiro
-	var dsbemfin =  $('#dsbemfin option:selected', '#frmTipo').text(); // string
+		var dscatbem = $('#dscatbem', '#frmTipo').val().toUpperCase();
+		var dstipbem = $('#dstipbem', '#frmTipo').val().toUpperCase();
+		var nrmodbem = verificarModBem($('#nrmodbem option:selected', '#frmTipo').text().toUpperCase());
+		var nranobem = normalizaNumero($('#nranobem', '#frmTipo').val().toUpperCase()); // inteiro
+		var dsbemfin =  $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase(); // string
 	
 	var vlrdobem =  $('#vlrdobem', '#frmTipo').val();
-	var tpchassi = normalizaNumero(  $('#tpchassi', '#frmTipo').val()); // inteiro
-	var dschassi =  $('#dschassi', '#frmTipo').val(); // string
+		var tpchassi = normalizaNumero($('#tpchassi', '#frmTipo').val()); // inteiro
+		var dschassi =  $('#dschassi', '#frmTipo').val().toUpperCase(); // string
 
-	var dscorbem =  $('#dscorbem', '#frmTipo').val();; // string
-	var ufdplaca =  $('#ufdplaca', '#frmTipo').val(); // string
-	var nrdplaca =  $('#nrdplaca', '#frmTipo').val(); // string
+		var dscorbem =  $('#dscorbem', '#frmTipo').val().toUpperCase();; // string
+		var ufdplaca =  $('#ufdplaca', '#frmTipo').val().toUpperCase(); // string
+		var nrdplaca =  $('#nrdplaca', '#frmTipo').val().toUpperCase(); // string
 	nrdplaca =  nrdplaca.replace("-","");
 	var nrrenava = normalizaNumero(  $('#nrrenava', '#frmTipo').val()); // inteiro
-    var uflicenc =  $('#uflicenc option:selected', '#frmTipo').val(); // string
+		var uflicenc =  $('#uflicenc option:selected', '#frmTipo').val().toUpperCase(); // string
     var nrcpfcgc =  normalizaNumero( $('#nrcpfcgc', '#frmTipo').val()); // inteiro
 
-	var dsmarbem =  $('#dsmarbem option:selected', '#frmTipo').text(); 
+		var dsmarbem =  $('#dsmarbem option:selected', '#frmTipo').text().toUpperCase(); 
 	var vlfipbem =  $('#vlfipbem', '#frmTipo').val();
 	vlrdobem = vlrdobem.replace('R$','').replace(/\./g,'').replace(',','.');
 	vlfipbem = vlfipbem.replace('R$','').replace(/\./g,'').replace(',','.');
 
-	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == ""  ||  $('#dssemfip', '#frmTipo').is(':checked')) {
-		dsmarbem = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val()));
-		dsbemfin = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val()));
-		nrmodbem = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val()));
-	}
-
- 	$.trim(dscatbem.toUpperCase());
-	$.trim(dstipbem.toUpperCase());
-	$.trim(nrmodbem.toUpperCase());
+		if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == ""  ||  $('#dssemfip', '#frmTipo').is(':checked')) {
+			dsmarbem = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val().toUpperCase()));
+			dsbemfin = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val().toUpperCase()));
+			nrmodbem = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val().toUpperCase()));
+		}
     
-	$.trim(dsbemfin.toUpperCase());
-	$.trim(vlrdobem.toUpperCase());
-	$.trim(tpchassi.toUpperCase());
-	$.trim(dschassi.toUpperCase());
+		$.trim(dscatbem);
+		$.trim(dstipbem);
+		$.trim(nrmodbem);
 
-	$.trim(dscorbem.toUpperCase());
-	$.trim(ufdplaca.toUpperCase());
-	$.trim(nrdplaca.toUpperCase());
+		$.trim(dsbemfin);
+		$.trim(vlrdobem);
+		$.trim(tpchassi);
+		$.trim(dschassi);
+
+		$.trim(dscorbem);
+		$.trim(ufdplaca);
+		$.trim(nrdplaca);
 	$.trim(nrrenava);
-	$.trim(uflicenc.toUpperCase());
-	$.trim(dsmarbem.toUpperCase());
-	$.trim(vlfipbem.toUpperCase());
+		$.trim(uflicenc);
+		$.trim(dsmarbem);
+		$.trim(vlfipbem);
   }
 
 	var idcobert = normalizaNumero($('#idcobert', '#'+frmCab).val());
@@ -341,6 +341,7 @@ function manterRotina( operacao ) {
 	}
 
 	showMsgAguardo( mensagem );
+
 	if(cddopcao == "I" && cdaditiv == 5)
 	{
 		ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem, dsbemfin, vlrdobem, tpchassi, dschassi, dscorbem,
@@ -575,7 +576,6 @@ function formataCabecalho() {
 
 		if ( cddopcao == 'V' ) {
 			controlaOperacao(1, 50);
-
 		} else {
 
             // Se for Cobertura de Aplicacao Vinculada a Operacao
@@ -878,7 +878,6 @@ function buscaTipo() {
 		}
 	});
 
-
 	return false;
 }
 
@@ -906,14 +905,12 @@ function formataTipo1( tpdescto ) {
 	cFlgpagto.css({'width':'120px'});
 	cDtdpagto.addClass('data').css({'width':'120px'});
 
-
 	if ( cddopcao == 'I' ) {
 		$('select, input', '#'+frmTipo1).habilitaCampo();
 		cDtmvtolt.val('').desabilitaCampo();
 		cDtmvtolt.focus();
 		trocaBotao( 'gravar' );
 
-		//
 		if ( tpdescto == '2' ) {
 			cFlgpagto.desabilitaCampo();
 		}
@@ -983,7 +980,6 @@ function formataTipo2() {
 		arrayAlinha[6] = 'right';
 	//	arrayAlinha[7] = 'right';
 		
-
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 
 	} else if ( cddopcao == 'I' ) {
@@ -1087,8 +1083,8 @@ function formataTipo3() {
 		$('#divRotina').centralizaRotinaH();
 
 		var ordemInicial = new Array();
-
 		var arrayLargura = new Array();
+
 		arrayLargura[0] = '70px';
 		arrayLargura[1] = '150px';
 		arrayLargura[2] = '80px';
@@ -1206,8 +1202,6 @@ function formataTipo4() {
 
 	return false;
 }
-
-
 
 function formataTipo5() {
 	var frmTipo5 = 'frmTipo';
@@ -1457,12 +1451,12 @@ function formataTipo5() {
 						$('#dssemfip').removeAttr('checked').hide();
 						$('#lbsemfip').hide();
 						$("#frmTipo select#dstipbem").css({ "width": "150" });
-		} else {
+					} else {
 						$('#dssemfip').show();
 						$('#lbsemfip').show();
 						$("#frmTipo select#dstipbem").css({ "width": "80" });
 					}
-				} else {
+		} else {
 					removeErroCampo($("#" + idElementMarca, '#'+frmTipo5));
 					$("#" + idElementMarca + "C").show();
 					$("#" + idElementMarca).val('').hide();
@@ -1636,8 +1630,8 @@ function verificarTipoVeiculo(){
 	var tipo = $('#dstipbem option:selected').val();
 	
 	var optionsModBem = $('#nrmodbem option');
-		$.each(optionsModBem, function(){
-			if($(this).text().toUpperCase().search('ZERO KM') != -1){
+		$.each(optionsModBem, function() {
+			if($(this).text().toUpperCase().search('ZERO KM') != -1) {
 				if(modeloBem == '' || modeloBem == null) { modeloBem = 3200; }
 				$(this).remove();
 			}
@@ -2015,7 +2009,6 @@ function formataTipo8() {
 	return false;
 }
 
-
 function selecionaComplemento(tr) {
 
 	$('#idseqbem','#'+frmCab).val( $('#idseqbem', tr).val() );
@@ -2039,7 +2032,6 @@ function selecionaTipo() {
 	}
 
 }
-
 
 function mostraAplicacao(tpaplica) {
 
@@ -2213,7 +2205,6 @@ function continuarAplicacao(tp) {
 	return false;
 }
 
-
 // contrato
 function mostraContrato() {
     var s_tpctrato = normalizaNumero($('#tpctrato','#frmCab').val());
@@ -2318,7 +2309,6 @@ function formataContrato() {
 	arrayLargura[4] = '80px';
 	arrayLargura[5] = '38px';
 
-
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'right';
 	arrayAlinha[1] = 'left';
@@ -2353,7 +2343,6 @@ function selecionaContrato() {
 	return false;
 
 }
-
 
 // senha
 function mostraSenha() {
@@ -2438,8 +2427,6 @@ function formataSenha() {
 	cOperador.addClass('campo').css({'width':'100px'}).attr('maxlength','10').focus();
     cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','10');
 
-
-
 	// centraliza a divRotina
 	$('#divUsoGenerico').css({'width':'355px'});
 	$('#divConteudoSenha').css({'width':'330px', 'height':'110px'});
@@ -2489,7 +2476,6 @@ function validarSenha() {
 
 }
 
-
 // substituir bem
 function substituirBem( i ) {
 
@@ -2519,7 +2505,6 @@ function substituirBem( i ) {
 
 	return false;
 }
-
 
 // botoes
 function btnVoltar() {
@@ -2561,7 +2546,8 @@ function trocaBotao( acao ) {
 
 	if ( acao == 'gravar' ) {
 		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btVoltar" onClick="btnVoltar(); return false;">Voltar</a>');
-		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btSalvar" onClick="manterRotina(\'VD\'); return false;">Continuar</a>');
+		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btSalvar" onClick="manterRotina(\'VD\'); return false;" style="margin:0 3px;">Continuar</a>');
+		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btConsultar" onClick="mostraTabelaHistoricoGravames(1,1000); return false;">Hist&oacute;rico Gravame</a>');
 	} else if ( acao == 'imprimir' ) {
 		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btVoltar" onClick="btnVoltar(); return false;">Cancelar</a>');
 		$('#divBotoes','#divRotina').append('<a href="#" class="botao" id="btSalvar" onClick="Gera_Impressao(); return false;">Imprimir</a>');
@@ -2600,7 +2586,6 @@ function GerenciaPesquisa(opcao) {
 	}
 }
 
-
 function buscaDadosGAROPC() {
 
     $('#codlinha,#vlropera','#'+frmCab).val(0);
@@ -2631,7 +2616,6 @@ function buscaDadosGAROPC() {
 	return false;
 
 }
-
 
 function abrirTelaGAROPC() {
 
@@ -2744,15 +2728,17 @@ function ConsulAditivos(tipsaida,cdcooper) {
 	return false;
 }
 
-
 function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 
 	showMsgAguardo('Aguarde, buscando hist&oacute;rico...');
 	limpaDivGenerica();
-	$('#divUsoGenerico').css('width','750px');
+	//$('#divUsoGenerico').css('width','750px');
 	exibeRotina($('#divUsoGenerico'));
 
-	var dschassi = $("#dschassi","#frmTipo").val();
+	var dschassi = '';
+	if ( $("#dschassi","#frmTipo").length ) {
+		dschassi = $("#dschassi","#frmTipo").val().toUpperCase();
+	}
 	var cdcoptel = cdcooper;
 	var nrctrpro = nrctremp;
 
@@ -2760,8 +2746,7 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		//url: UrlSite + 'telas/manbem/historico_gravames.php',
-		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
+		url: UrlSite + 'telas/manbem/historico_gravames.php',
 		data: {
 			nrdconta: nrdconta,
 			nrctrpro: nrctrpro,
@@ -2784,15 +2769,18 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 }
 
 function controlaLayoutHistoricoGravames() {
-	$('#divUsoGenerico').css({ 'width': '1095px', 'left': '325px' });
+
 	var divRegistro = $('#divDetGravTabela');
 	var tabela      = $('table',divRegistro);
 	var linha       = $('table > tbody > tr', divRegistro);
 	divRegistro.css({'height':'250px'});
+
+	$('#divUsoGenerico').css({ 'width': '1095px'});
 	$('div.divRegistros').css({'height':'200px'});
 	$('div.divRegistros table tr td:nth-of-type(8)').css({'text-transform':'uppercase'});
 	$('div.divRegistros .dtenvgrv').css({'width':'25px'});
 	$('div.divRegistros .dtretgrv').css({'width':'25px'});
+	$('#divUsoGenerico').centralizaRotinaH();
 
 	var ordemInicial = new Array();
 	ordemInicial = [[0,0]];

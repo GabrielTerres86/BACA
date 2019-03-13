@@ -81,6 +81,7 @@
 	$aplicacao	= $xmlObj->roottag->tags[1]->tags;
 	$cdaditiv 	= empty($cdaditiv) ? getByTagName($dados,'cdaditiv') : $cdaditiv;
 	$regtotal	= count($registros);
+	$dschssub   = getByTagName($dados,'dschssub');
 	
 	//------------------------------- Lista Bens ------------------------------
 	$xmlBens  = "<Root>";
@@ -145,6 +146,7 @@
 	cdaditiv = '<? echo $cdaditiv ?>';
 	cdopcao = '<?php echo $cddopcao ?>';
 	data = '<?php echo $glbvars["dtmvtolt"] ?>';
+	dschssub = '<?php echo $dschssub ?>';
 	if ( cdopcao == 'I' ) {
 		$("#dtmvtolt").val(data);
 	}

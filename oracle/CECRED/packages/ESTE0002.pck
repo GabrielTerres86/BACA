@@ -1115,7 +1115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
                     24/05/2018 - Projeto Regulatório de Crédito - Inclusão de cpf/cnpj no objeto contasAvalizadas
                                  Campo documentoAval - Diego Simas - AMcom
-                                 
+
                   01/08/2018 - Adicionado o parâmetro pr_tpprodut para distinguir qual configuração da PAREST 
                                irá buscar (Paulo Penteado GFT)
 
@@ -1125,7 +1125,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 										11/10/2018 - P450 - Correção no cursor que identifica se o contrato de empréstimo está/esteve em prejuízo
 										             (Reginaldo/AMcom)
 
-                   19/12/2018 - P442 - Envio de quantidade dias em Estouro (Marcos Envolti)     
+                   01/11/2018 - P442 - Envio dos Scores Behaviour do Cooperado (MArcos Envolti)  
+				   
+				   19/12/2018 - P442 - Envio de quantidade dias em Estouro (Marcos Envolti)    
 
     ..........................................................................*/
     DECLARE
@@ -1975,7 +1977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
            AND lim.insitlim IN (2,3)
            AND nvl(lim.dtfimvig,pr_dtiniest) >= pr_dtiniest;
       rw_craplim cr_craplim%ROWTYPE;
-      
+			
       -- Busca dos scores do Cooperado
       CURSOR cr_tbcrd_score(pr_cdcooper crapcop.cdcooper%TYPE
                            ,pr_nrdconta crapass.nrdconta%TYPE) IS
@@ -2791,7 +2793,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       END IF;
           
       CLOSE cr_crapepr_preju;
-          
+    
           -- Conta Corrente
           vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, rw_crapass_cpf_cnpj.nrdconta);
           IF vr_inprejuz = TRUE THEN
@@ -3807,7 +3809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       ELSE
         vr_qtdopliq := SUBSTR(vr_dstextab, 52, 3);
       END IF;
-      
+        
       -- Montar objeto para scoreBehaviour
       vr_lst_generic3 := json_list();
     

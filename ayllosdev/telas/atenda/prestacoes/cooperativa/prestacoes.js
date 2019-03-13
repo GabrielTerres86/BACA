@@ -2530,7 +2530,8 @@ $('#divUsoGenerico').css({ 'width': '90em', 'left': '19em' });
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
+		url: UrlSite + 'telas/manbem/historico_gravames.php',
+		//url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
 		data: {
 			operacao: operacao,
 			nrdconta: nrdconta,
@@ -2801,6 +2802,7 @@ function limpaDivGenerica(){
 function mostraExtrato( operacao ) {
 
 	showMsgAguardo('Aguarde, abrindo extrato...');
+	exibeRotina($('#divUsoGenerico'));
 
 	tpemprst = arrayRegistros['tpemprst'];
 
@@ -2829,9 +2831,9 @@ function mostraExtrato( operacao ) {
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
-			hideMsgAguardo();
 			$('#divUsoGenerico').html(response);
-			exibeRotina($('#divUsoGenerico'));
+			layoutPadrao();
+			hideMsgAguardo();
 			bloqueiaFundo($('#divUsoGenerico'));
 		}
 	});

@@ -3,23 +3,23 @@
 	//************************************************************************//
 	//*** Fonte: config.php                                                ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   �ltima Altera��o: 20/08/2018 ***//
+	//*** Data : Julho/2007                   Última Alteração: 20/08/2018 ***//
 	//***                                                                  ***//
-	//*** Objetivo  : Vari�veis globais de controle                        ***//
+	//*** Objetivo  : Variaveis globais de controle                        ***//
 	//***                                                                  ***//	 
-	//*** Altera��es: 22/10/2010 - Eliminar vari�veis da session que s�o   ***//
-	//***                          utilizadas na valida��o para permiss�o  ***//
+	//*** Alteracoes: 22/10/2010 - Eliminar variaveis da session que sao   ***//
+	//***                          utilizadas na validacao para permissao  ***//
 	//***                          de acesso (David).                      ***//
 	//***                                                                  ***//	 
 	//***             21/05/2012 - Adicionado Servidor GED (Guilherme).    ***//
 	//***                                                                  ***//
 	//***             25/06/2013 - Adicionar pkglibera (David).            ***//
 	//***                                                                  ***//
-	//***             03/03/2015 - Incluir tratamento para requisi��es de  ***//
-	//***                          scripts de monitora��o (David).         ***//
+	//***             03/03/2015 - Incluir tratamento para requisicoes de  ***//
+	//***                          scripts de monitoracao (David).         ***//
 	//***                                                                  ***// 
 	//***             07/07/2016 - Correcao do erro de uso da constante    ***// 
-	//***                          $_ENV depreciada.SD 479874 (Carlos R.)  ***//
+	//***                          $_ENV depreciada.SD 479874 (Carlos R.)  ***//	
 	//***                                                                  ***// 
 	//***             12/08/2016 - Criacao das constantes KEY e IV         ***// 
 	//***                          existentes apenas no desen impactou no  ***// 
@@ -29,7 +29,7 @@
 	//***                          conexao com o banco Oracle, para SP e   ***//	
 	//***						   CURITIBA. SD 509174 (Carlos R.)         ***//	
 	//***                                                                  ***//	
-	//***																   ***//	
+	//***																   ***//
 	//***             20/08/2018 - Criacao de variaveis para conexao ao    ***//
 	//***                          servico FIPE (Marcos-Envolti)           ***//
     //***                                                                  ***//	
@@ -37,16 +37,16 @@
 	//***                          Aimaro. Projeto 413 - Mudança de Marca  ***//
 	//***   					   (Elton)                                 ***//
 	//************************************************************************//
-
+	
 	// Nome do servidor com banco de dados PROGRESS
 	$DataServer = "pkgprod";
 	
-	//URL do servi�o WebSpeed do Aimaro Web
+	//URL do servico WebSpeed do Ayllos Web
 	if (isset($ServerMonitoracao) && trim($ServerMonitoracao) <> '') {
 		$url_webspeed_ayllosweb = 'http://'.$ServerMonitoracao.'.cecred.coop.br/cgi-bin/cgiip.exe/WService=ws_ayllos/';
-	} else {
+	} else {		
 		$url_webspeed_ayllosweb = "https://iayllos.cecred.coop.br/cgi-bin/cgiip.exe/WService=ws_ayllos/";
-	}
+	}	
 	
 	// T�tulo do sistema
 	$TituloSistema = ":: Sistema Aimaro ::";
@@ -65,18 +65,21 @@
 	
 	// Servidor do GED (Selbetti)
 	$GEDServidor = "ged.cecred.coop.br";	
+
+	// Variaveis para Fipe
+  // PROD
+  // $Url_SOA = "http://servicosinternos.cecred.coop.br";
+  // Homol 
+  $Url_SOA = "http://servicosinternosint.cecred.coop.br";
+  $Auth_SOA = "Basic aWJzdnJjb3JlOndlbGNvbWUx";
 	
-	// Identificador dos grupos de usu�rios nas m�quinas HP-UX
+	// Identificador dos grupos de usuarios nas maquinas HP-UX
 	$gidNumbers[0] = 103; // Cecred
 	$gidNumbers[1] = 902; // Desenvolvimento
 	$gidNumbers[2] = 903; // Suporte
 	$gidNumbers[3] = 905; // Admin
 	
-    // Variaveis para Fipe
-    $UrlFipe = "http://servicosinternos.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
-    $AuthFipe = "Basic YXlsbG9zOlBhJCQ0bGwwcy4yMDE4";
-	
-	// Identificador de pacotes ambientes nas m�quinas HP-UX
+	// Identificador de pacotes ambientes nas maquinas HP-UX
 	$MTCCServers["pkgprod"]   = 1;
 	$MTCCServers["pkgdesen"]  = 2;
 	$MTCCServers["pkgprodsb"] = 3;
@@ -88,17 +91,17 @@
 	    (strpos($UrlSite."principal.php",$_SERVER["SCRIPT_NAME"]) !== false && isset($_SESSION["sidlogin"]))) { 		
 		$sidlogin = isset($_POST["sidlogin"]) ? $_POST["sidlogin"] : $_SESSION["sidlogin"];		
 		
-		// Define como deve ser feito o redirecionamento no caso da sess�o expirar, ou ocorrer erro na leitura do XML, etc ...		
+		// Define como deve ser feito o redirecionamento no caso da sessao expirar, ou ocorrer erro na leitura do XML, etc ...		
 		$_SESSION["glbvars"][$sidlogin]["redirect"] = isset($_POST["redirect"]) ? $_POST["redirect"] : "html";
 		
-		// Eliminar vari�veis utilizadas para valida��o de permiss�o de acesso se existirem
+		// Eliminar variaveis utilizadas para validacao de permissao de acesso se existirem
 		if  (isset($_SESSION["glbvars"][$sidlogin]["telpermi"])) {
 			unset($_SESSION["glbvars"][$sidlogin]["telpermi"]);
 			unset($_SESSION["glbvars"][$sidlogin]["rotpermi"]);
 			unset($_SESSION["glbvars"][$sidlogin]["opcpermi"]);
 		}
 		
-		$glbvars = $_SESSION["glbvars"][$sidlogin];
+		$glbvars = $_SESSION["glbvars"][$sidlogin];		
 	} else {
 		$glbvars["redirect"] = "html";
 	}
@@ -110,11 +113,11 @@
 	if ( preg_match('/^0303/', trim(SERVERNAMEAPP)) ) { // verifica o servidor
 	// String para Sao Paulo
 	define("HOST", "(DESCRIPTION =(ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = dbprdayllos.cecred.coop.br)(PORT = 1521))) (CONNECT_DATA =(SERVICE_NAME = HA-AYLLOSP) ))");
-        } else {
+	} else {
 	// String para Curitiba
         define("HOST", "(DESCRIPTION =(ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = dbprdayllos.cecred.coop.br)(PORT = 1521))) (CONNECT_DATA =(SERVICE_NAME = HA-AYLLOSP) ))");       
-}	
- 
+	}
+		
 	define("USERE", "YXlsbG9z");
 	define("PASSE", "cGFkc29sbHlhdXN1MjAxNQ==");
     define("KEY"  , "50983417512346753284723840854609576043576094576059437609");

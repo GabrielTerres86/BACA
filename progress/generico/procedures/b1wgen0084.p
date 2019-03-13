@@ -323,7 +323,9 @@
                            
               31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts         
 
-              19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)              
+              19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)     
+			  
+			  13/12/2018 - P442 - Ao checar Chassi alienado em outros contratos, descartar refinanciamentos (Marcos-Envolti)         
                            
 			  03/01/2019 - Ajuste na gravação do IOF do emprestimo (INC0029419) Daniel
 ............................................................................. */
@@ -2406,6 +2408,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
     DEF VAR aux_flgativo AS INTEGER NO-UNDO.
     DEF VAR aux_flgcescr AS LOG INIT FALSE                             NO-UNDO.
 	  /* DEF VAR aux_flimovel AS INTEGER NO-UNDO. 17/02/2017 - Validaçao removida */
+    DEF VAR aux_flgportb AS LOGI INIT FALSE                           NO-UNDO.
 
     DEF BUFFER crabbpr FOR crapbpr.
     
@@ -2624,6 +2627,15 @@ PROCEDURE valida_dados_efetivacao_proposta:
               RETURN "NOK".
         END.
      
+    FOR FIRST tbepr_portabilidade
+       FIELDS (nrdconta)
+        WHERE tbepr_portabilidade.cdcooper = par_cdcooper
+          AND tbepr_portabilidade.nrdconta = par_nrdconta
+          AND tbepr_portabilidade.nrctremp = par_nrctremp
+        NO-LOCK:
+        ASSIGN aux_flgportb = TRUE.
+    END.
+   
    FOR FIRST crapfin FIELDS(tpfinali)
         WHERE crapfin.cdcooper = par_cdcooper AND
               crapfin.cdfinemp = crawepr.cdfinemp
@@ -2716,55 +2728,30 @@ PROCEDURE valida_dados_efetivacao_proposta:
             END.
         END.
 
-        /* Verificar se um dos bens da proposta ja se
-           encontra alienado em outro contrato */
-        FOR EACH crapbpr WHERE crapbpr.cdcooper = par_cdcooper
-                           AND crapbpr.nrdconta = par_nrdconta
-                           AND crapbpr.nrctrpro = par_nrctremp
-                           AND crapbpr.flgalien = TRUE
-                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,OUTROS VEICULOS",crapbpr.dscatbem)
-                           NO-LOCK:
-            FOR EACH crapepr WHERE crapepr.cdcooper = crapbpr.cdcooper
-                               AND crapepr.nrdconta = crapbpr.nrdconta
-                               AND crapepr.inliquid = 0
-                               NO-LOCK:
-                FOR FIRST crabbpr WHERE crabbpr.cdcooper = crapepr.cdcooper
-                                    AND crabbpr.nrdconta = crapepr.nrdconta
-                                    AND crabbpr.nrctrpro = crapepr.nrctremp
-                                    AND crabbpr.flgalien = TRUE
-                                    AND crabbpr.dschassi = crapbpr.dschassi
-                                    AND (crabbpr.cdsitgrv <> 4 AND
-                                         crabbpr.cdsitgrv <> 5)
-                                    NO-LOCK: END.
-                IF AVAIL crabbpr THEN
+        /* Verificar se um dos bens da proposta ja se encontra alienado em outro contrato
+           OBS: Nao eh feito para Portabilidade */
+        IF  aux_flgportb = FALSE THEN
                 DO:
-                    ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Ja existe o mesmo chassi alienado em um contrato liberado!".
-        
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 2,
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-            
-                    RETURN "NOK".
-                END.
-            END.
-        END.
 
-        /* Verificar se um dos bens da proposta ja se
-           encontra alienado em outro contrato */
         FOR EACH crapbpr WHERE crapbpr.cdcooper = par_cdcooper
                            AND crapbpr.nrdconta = par_nrdconta
                            AND crapbpr.nrctrpro = par_nrctremp
                            AND crapbpr.flgalien = TRUE
-                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,OUTROS VEICULOS",crapbpr.dscatbem)
+                               AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,OUTROS VEICULOS",crapbpr.dscatbem)
                            NO-LOCK:
             FOR EACH crapepr WHERE crapepr.cdcooper = crapbpr.cdcooper
                                AND crapepr.nrdconta = crapbpr.nrdconta
                                AND crapepr.inliquid = 0
-                               NO-LOCK:
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[1]  
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[2]  
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[3]
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[4]  
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[5]  
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[6]
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[7]
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[8]
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[9]
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[10] NO-LOCK:
                 FOR FIRST crabbpr WHERE crabbpr.cdcooper = crapepr.cdcooper
                                     AND crabbpr.nrdconta = crapepr.nrdconta
                                     AND crabbpr.nrctrpro = crapepr.nrctremp
@@ -2790,6 +2777,9 @@ PROCEDURE valida_dados_efetivacao_proposta:
             END.
         END.
     END.
+      END.
+
+           
 
 /*
     /* Nao permitir utilizar linha 100, quando possuir acordo de estouro de conta ativo */
@@ -4132,7 +4122,7 @@ PROCEDURE grava_efetivacao_proposta:
                                 tt-erro.dscritic = aux_dscritic.
                            UNDO EFETIVACAO , LEAVE EFETIVACAO.
                         END.
-
+         
                   END. /* NOT CAN-FIND */
 
           END. /* crawepr.tpemprst = 1 */
@@ -4293,7 +4283,7 @@ PROCEDURE grava_efetivacao_proposta:
             IF crawepr.nrliquid <> 0 THEN
                aux_dsctrliq = aux_dsctrliq + 
                  ", " + TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).                           
-          END.
+                 END.
        ELSE
           DO:
             IF crawepr.nrliquid <> 0 THEN
@@ -4828,8 +4818,8 @@ PROCEDURE grava_efetivacao_proposta:
               CREATE tt-erro.
               ASSIGN tt-erro.cdcritic = aux_cdcritic
                      tt-erro.dscritic = aux_dscritic.
-            UNDO EFETIVACAO, LEAVE EFETIVACAO.
-        END.
+               UNDO EFETIVACAO, LEAVE EFETIVACAO.
+           END.
         END.
        
        ASSIGN aux_flgtrans = TRUE.

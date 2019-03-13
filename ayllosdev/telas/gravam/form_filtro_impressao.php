@@ -44,6 +44,7 @@
 				<option value="INCLUSAO"> <? echo utf8ToHtml('Inclus&atilde;o') ?> </option> 
 				<option value="BAIXA"> <? echo utf8ToHtml('Baixa') ?> </option>	
 				<option value="CANCELAMENTO"> <? echo utf8ToHtml('Cancelamento') ?> </option>	
+        <option value="CONSULTA"> <? echo utf8ToHtml('Consulta') ?> </option>	
 				<option value="TODAS"> <? echo utf8ToHtml('Todas') ?> </option>	
 			</select>
 

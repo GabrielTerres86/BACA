@@ -356,6 +356,7 @@ var inobriga = '';
 var booPrimeiroBen = false; //809763
 var booBoxMarcas = true;
 var bemCarregadoUfPa = false;
+var idlsbemfin = false;
 
 // PRJ366
 var vlemprst_antigo = 0;
@@ -452,10 +453,10 @@ function controlaOperacao(operacao) {
     var simula = false;
 
 	// validacao de contingencia Integracao CDC
-			var flintcdc       = $("#divEmpres table tr.corSelecao").find("input[id='flintcdc']").val();
-			var inintegra_cont = $("#divEmpres table tr.corSelecao").find("input[id='inintegra_cont']").val();
-			var tpfinali       = $("#divEmpres table tr.corSelecao").find("input[id='tpfinali']").val();
-			var cdoperad       = $("#divEmpres table tr.corSelecao").find("input[id='cdoperad']").val();
+	var flintcdc       = $("#divEmpres table tr.corSelecao").find("input[id='flintcdc']").val();
+	var inintegra_cont = $("#divEmpres table tr.corSelecao").find("input[id='inintegra_cont']").val();
+	var tpfinali       = $("#divEmpres table tr.corSelecao").find("input[id='tpfinali']").val();
+	var cdoperad       = $("#divEmpres table tr.corSelecao").find("input[id='cdoperad']").val();
 
 	if(tpfinali == 3 && cdoperad=='AUTOCDC'){
 		// botao Registrar GRV
@@ -481,7 +482,7 @@ function controlaOperacao(operacao) {
     // Para isso verifico a linha que está selecionado e pego o valor do INPUT HIDDEN desta linha
     if (in_array(operacao, ['TA', 'TE', 'TC', 'A_NOVA_PROP', 'A_NUMERO', 'A_VALOR', 'A_AVALISTA', 'IMP', 'REG_GRAVAMES', 'VAL_GRAVAMES',
                             'PORTAB_CRED_C', 'VAL_RECALCULAR_EMPRESTIMO', 'RECALCULAR_EMPRESTIMO', 'PORTAB_CRED_A', 'PORTAB_CRED_I', 'ENV_ESTEIRA',
-							'ACIONAMENTOS', 'MOTIVOS'])) {
+							'ACIONAMENTOS', 'A_SOMBENS', 'MOTIVOS'])) {
 
         nrctremp = (nrctremp == '') ? '' : nrctremp;
         tplcremp = (tplcremp == 0) ? 0 : tplcremp;
@@ -1308,8 +1309,8 @@ function controlaOperacao(operacao) {
         		showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Aimaro', '');
         		return false;
         	}
-			      insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
-			      dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
+			insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
+			dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
             mensagem = 'Enviando Proposta para An&aacute;lise de Cr&eacute;dito...';
 			if (dssitest == 'Analise Finalizada' && insitapr == 2){				
 				showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Aimaro', 'pedeSenhaCoordenador(2,\'manterRotina("ENV_ESTEIRA")\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
@@ -1348,11 +1349,56 @@ function controlaOperacao(operacao) {
 			mostraTabelaHistoricoGravames();
 			return false;
 			break;
-		
+		case 'A_SOMBENS' :
+			mensagem = 'abrindo altera ...';
+			cddopcao = 'A';
+            break;
+		case 'A_BENSINI' :
+			if ( idlsbemfin ) {
+				contAlienacao = contAlienacao-1;
+				idlsbemfin = false;
+			} else {
+				contAlienacao = contAlienacao-2;
+			}
+			if (contAlienacao < 0) {
+				controlaOperacao('AT');
+                return false;
+			}
+			
+		case 'A_BENS' :
+			if (arrayProposta['tplcremp'] == 2) {
+                if (contAlienacao < nrAlienacao) {
+                    mensagem = 'abrindo altera ...';
+                    cddopcao = 'A';
+					operacao = 'A_BENS';
+                } else {
+                    if (contAlienacao == nrAlienacao) {
+                        controlaOperacao('AI_BENS');
+                        return false;
+                    } else {
+                        contAlienacao <= 0;
+                        controlaOperacao('I_INICIO');
+                        return false;
+                    }
+                }
+            } else if (arrayProposta['tplcremp'] == 3) {
+                controlaOperacao('A_HIPOTECA');
+                return false;
+            } else {
+                controlaOperacao('I_INICIO');
+                return false;
+            }
+            break;
+		case 'A_BENSFIM' :
+			alteraSomenteBens();
+			//fechaRotina($('#divUsoGenerico'),$('#divRotina'));
+			return false;
+            break;
         case 'MOTIVOS' :
             carregaDadosConsultaMotivos();
-            return false;
+			return false;
             break;
+        
         default:
             operacao = '';
             nrctremp = '';
@@ -1422,7 +1468,7 @@ function controlaOperacao(operacao) {
 			if ( operacao != 'RECALCULAR_EMPRESTIMO') {
 				$('.divRegistros').remove();
 			}
-			
+
             if (response.indexOf('showError("error"') == -1) {
 
                 if (cddopcao == 'G') {
@@ -1437,7 +1483,7 @@ function controlaOperacao(operacao) {
                             bloqueiaFundo(divRotina);
                             eval(response);
                         } else {
-							
+
 							if (nomeAcaoCall == 'A_AVALISTA'){
 								if (operacao == 'A_AVALISTA') {
 									$('#divConteudoOpcao').hide();
@@ -1447,12 +1493,12 @@ function controlaOperacao(operacao) {
 									$('#divRotina').show();
 								}
 							}
-							
+
                             $('#divConteudoOpcao').html(response);
 
 							if (operacao == 'ACIONAMENTOS') {
 								formataAcionamento();
-                        }
+							}
                         }
                         //consulta campos de portabilidade	
                         if (in_array(operacao, ['PORTAB_CRED_C', 'PORTAB_CRED_I', 'PORTAB_CRED_A'])) {
@@ -1465,17 +1511,20 @@ function controlaOperacao(operacao) {
 /*                if (in_array(operacao, ['C_ALIENACAO', 'AI_ALIENACAO', 'A_ALIENACAO', 'E_ALIENACAO', 'I_ALIENACAO', 'IA_ALIENACAO', 'A_BENS', 'AI_BENS']) && !bemCarregadoUfPa) {
                     busca_uf_pa_ass();
                 }*/
-                
+				if (operacao == "A_SOMBENS") {
+					showMsgAguardo('Aguarde, buscando bens...');
+				}
+
                 if ((typeof arrayProposta != typeof undefined) && (arrayProposta['tpemprst']== 0)) {
                     $("#idfiniof").desabilitaCampo();
                     $("#idfiniof").val(0);
                     arrayProposta['tpemprst'] = 0;
                 }
-                
+
                 if (possuiPortabilidade == 'S') {
                     $("#idfiniof").desabilitaCampo();
                 }
-                
+
             } else {
                 eval(response);
             }
@@ -1684,57 +1733,57 @@ function manterRotina(operacao) {
     //vlopescr = parseFloat( vlopescr.replace(',','.') );
 
     if (operacao != 'ENV_ESTEIRA' ) {
-    vlemprst = number_format(parseFloat(vlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    percetop = number_format(parseFloat(percetop.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vltotsfn = number_format(parseFloat(vltotsfn.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlrpreju = number_format(parseFloat(vlrpreju.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlsfnout = number_format(parseFloat(vlsfnout.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vloutras = number_format(parseFloat(vloutras.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlalugue = number_format(parseFloat(vlalugue.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlsalcon = number_format(parseFloat(vlsalcon.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vledvmt2 = number_format(parseFloat(vledvmt2.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlrenme2 = number_format(parseFloat(vlrenme2.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlsalari = number_format(parseFloat(vlsalari.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlmedfat = number_format(parseFloat(vlmedfat.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vledvmt1 = number_format(parseFloat(vledvmt1.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlrenme1 = number_format(parseFloat(vlrenme1.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlemprst = number_format(parseFloat(vlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		percetop = number_format(parseFloat(percetop.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vltotsfn = number_format(parseFloat(vltotsfn.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlrpreju = number_format(parseFloat(vlrpreju.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlsfnout = number_format(parseFloat(vlsfnout.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vloutras = number_format(parseFloat(vloutras.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlalugue = number_format(parseFloat(vlalugue.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlsalcon = number_format(parseFloat(vlsalcon.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vledvmt2 = number_format(parseFloat(vledvmt2.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlrenme2 = number_format(parseFloat(vlrenme2.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlsalari = number_format(parseFloat(vlsalari.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlmedfat = number_format(parseFloat(vlmedfat.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vledvmt1 = number_format(parseFloat(vledvmt1.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlrenme1 = number_format(parseFloat(vlrenme1.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
 
-    dtcnsspc = (dtcnsspc == '') ? '?' : dtcnsspc;
-    dtdpagto = (dtdpagto == '') ? '?' : dtdpagto;
-    dtoutspc = (dtoutspc == '') ? '?' : dtoutspc;
-    dtoutris = (dtoutris == '') ? '?' : dtoutris;
-    nrinfcad = (nrinfcad == '') ? 1 : nrinfcad;
-    idfiniof = (idfiniof == '') ? 1 : idfiniof;
+		dtcnsspc = (dtcnsspc == '') ? '?' : dtcnsspc;
+		dtdpagto = (dtdpagto == '') ? '?' : dtdpagto;
+		dtoutspc = (dtoutspc == '') ? '?' : dtoutspc;
+		dtoutris = (dtoutris == '') ? '?' : dtoutris;
+		nrinfcad = (nrinfcad == '') ? 1 : nrinfcad;
+		idfiniof = (idfiniof == '') ? 1 : idfiniof;
 
-    nrcpfcjg = normalizaNumero(nrcpfcjg);
-    nrcpfav1 = normalizaNumero(nrcpfav1);
-    cpfcjav1 = normalizaNumero(cpfcjav1);
-    nrcpfav2 = normalizaNumero(nrcpfav2);
-    cpfcjav2 = normalizaNumero(cpfcjav2);
-    nrcepav2 = normalizaNumero(nrcepav2);
-    nrctaava = normalizaNumero(nrctaava);
-    nrctaav2 = normalizaNumero(nrctaav2);
+		nrcpfcjg = normalizaNumero(nrcpfcjg);
+		nrcpfav1 = normalizaNumero(nrcpfav1);
+		cpfcjav1 = normalizaNumero(cpfcjav1);
+		nrcpfav2 = normalizaNumero(nrcpfav2);
+		cpfcjav2 = normalizaNumero(cpfcjav2);
+		nrcepav2 = normalizaNumero(nrcepav2);
+		nrctaava = normalizaNumero(nrctaava);
+		nrctaav2 = normalizaNumero(nrctaav2);
 
-    nrcepav1 = normalizaNumero(nrcepav1);
-    nrender1 = normalizaNumero(nrender1);
-    nrcxaps1 = normalizaNumero(nrcxaps1);
+		nrcepav1 = normalizaNumero(nrcepav1);
+		nrender1 = normalizaNumero(nrender1);
+		nrcxaps1 = normalizaNumero(nrcxaps1);
 
-    dsobserv = dsobserv.replace(/\r\n/g, ' ').replace("'", "");
-    dsobserv = removeCaracteresInvalidos(dsobserv);
+		dsobserv = dsobserv.replace(/\r\n/g, ' ').replace("'", "");
+		dsobserv = removeCaracteresInvalidos(dsobserv);
     }   
 
     var dscatbem = "";
     //Carrega a lista de bens para enviar junto no POST
     if (typeof arrayHipotecas != typeof undefined){
-    for (i in arrayHipotecas) {
-        dscatbem += arrayHipotecas[i]['dscatbem'] + '|';
-    }
+		for (i in arrayHipotecas) {
+			dscatbem += arrayHipotecas[i]['dscatbem'] + '|';
+		}
     }
 
     if (typeof arrayAlienacoes != typeof undefined){    
-    for (i in arrayAlienacoes) {
-        dscatbem += arrayAlienacoes[i]['dscatbem'] + '|';
-    }
+		for (i in arrayAlienacoes) {
+			dscatbem += arrayAlienacoes[i]['dscatbem'] + '|';
+		}
     }
 
     // Executa script de confirmação através de ajax
@@ -1794,21 +1843,21 @@ function manterRotina(operacao) {
         },
         success: function(response) {
             try {
-                
+
                 eval(response);
 
-               if (operacao != 'ENV_ESTEIRA'){ 
-                if (typeof arrayDadosPortabilidade['nrcnpjbase_if_origem'] != 'undefined' &&
+				if (operacao != 'ENV_ESTEIRA'){
+					if (typeof arrayDadosPortabilidade['nrcnpjbase_if_origem'] != 'undefined' &&
                         typeof arrayDadosPortabilidade['nrcontrato_if_origem'] != 'undefined' &&
                         typeof arrayDadosPortabilidade['nmif_origem'] != 'undefined' &&
                         cddopcao == 'I') {
 
-                    //cadastra a proposta de portabilidade
-                    cadastraPortabilidade(nrdconta, nrctremp, 1,
+						//cadastra a proposta de portabilidade
+						cadastraPortabilidade(nrdconta, nrctremp, 1,
                             arrayDadosPortabilidade['nrcnpjbase_if_origem'],
                             arrayDadosPortabilidade['nmif_origem'],
                             arrayDadosPortabilidade['nrcontrato_if_origem'])
-                }
+					}
                 }
 
                 return false;
@@ -2295,11 +2344,11 @@ function controlaLayout(operacao) {
                 // PRJ 438 - Adicionado IF para não entrar quando for a opção "Alterar toda a proposta", para assim manter 
             	// o campo Data pagto desabilitado.
             	if(operacao != 'A_NOVA_PROP') {
-                if ($(this).val() == 'yes') {
-                    cDtPgmento.desabilitaCampo();
-                } else {
-                    cDtPgmento.habilitaCampo();
-                }
+					if ($(this).val() == 'yes') {
+						cDtPgmento.desabilitaCampo();
+					} else {
+						cDtPgmento.habilitaCampo();
+					}
             	}
 
                 if ($(this).val() == 'yes') {
@@ -2345,14 +2394,14 @@ function controlaLayout(operacao) {
                 $("#btVoltar", "#divBotoes").unbind('click').bind('click', function() {
                     controlaOperacao('PORTAB_CRED_A');
                 });
-                
+
                 //atribui o novo parametro para o evento click do botao
                 $("#btSalvar", "#divBotoes").attr('onClick', "buscaLiquidacoes('PORTAB_A');");
                 //fiz esta adaptacao tecnica para obrigar o IE a executar a nova funcao se o botao for clicado.
                 $("#btSalvar", "#divBotoes").unbind('click').bind('click', function() {
                     buscaLiquidacoes('PORTAB_A');
                 });
-                
+
                 //desabilita o campo tipo de emprestimo
                 cTipoEmpr.attr('disabled', 'disabled');
                 //carrega finalidade especifica de portabilidade
@@ -2363,7 +2412,7 @@ function controlaLayout(operacao) {
                     controlaOperacao('PORTAB_CRED_C');
                 });
             } else if (operacao == 'TI' || operacao == 'I_INICIO') {
-                //carrega o campo finalidade 
+                //carrega o campo finalidade
                 if ($("#cdfinemp").val() == 0 && $("#dsfinemp").val() == '') {
                     carregaFinalidadePortabilidade();
                 }
@@ -2638,7 +2687,7 @@ function controlaLayout(operacao) {
             }
 
             // Se é a tecla TAB, verificar numero conta e realizar as devidas operações
-            if (e.keyCode == 9) {
+            if (e.keyCode == 13 || e.keyCode == 9) {
 
                 // Armazena o número da conta na variável global
                 nrctaava = normalizaNumero($(this).val());
@@ -2684,7 +2733,7 @@ function controlaLayout(operacao) {
 
             // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
             if (e.keyCode == 9) {
-                
+
                 pessoa = normalizaNumero(cInpessoa.val());
                 if (pessoa == "" ) {
                     showError('error', 'Selecione o tipo de pessoa', 'Aten;&atilde;o', '$("#inpessoa","#frmDadosAval").focus();bloqueiaFundo(divRotina);');
@@ -2697,7 +2746,7 @@ function controlaLayout(operacao) {
                 return false;
             }
         });
-        
+
         // Odirlei PRJ339
         // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação (keydown)
         cCPF.unbind('change').bind('change', function (e) {
@@ -2722,21 +2771,21 @@ function controlaLayout(operacao) {
 
                         Busca_Associado(0, nrcpfcgc, contAvalistas - 1);
 
-                    // Se nao for acessado via CRM, pode habilitar os campos
-                    if ($('#crm_inacesso', '#' + nomeForm).val() != 1 ) {
-                        cTodos.habilitaCampo();
-                        cTodos_1.habilitaCampo();
-                        cTodos_2.habilitaCampo();
-                        cTodos_3.habilitaCampo();
-                        cTodos_4.habilitaCampo();
-                        cConta.desabilitaCampo().val(nrctaava);
-                        cQntd.desabilitaCampo().val(arrayProposta['qtpromis']);
+						// Se nao for acessado via CRM, pode habilitar os campos
+						if ($('#crm_inacesso', '#' + nomeForm).val() != 1 ) {
+							cTodos.habilitaCampo();
+							cTodos_1.habilitaCampo();
+							cTodos_2.habilitaCampo();
+							cTodos_3.habilitaCampo();
+							cTodos_4.habilitaCampo();
+							cConta.desabilitaCampo().val(nrctaava);
+							cQntd.desabilitaCampo().val(arrayProposta['qtpromis']);
 
-                        $('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeForm).desabilitaCampo();
-                        controlaPesquisas();
-                        cNome.focus();
-                        
-                    }
+							$('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeForm).desabilitaCampo();
+							controlaPesquisas();
+							cNome.focus();
+
+						}
 
                     }
 
@@ -2746,7 +2795,7 @@ function controlaLayout(operacao) {
                 }
 
                 return false;
-        
+
         });
 
         var cTodos_1 = $('select,input', '#' + nomeForm + ' fieldset:eq(1)');
@@ -3101,7 +3150,7 @@ function controlaLayout(operacao) {
                 $('#' + nomeForm + ' fieldset:eq(1)').hide();
                 altura = '135px';
 			}
-			
+
             if (arrayProtCred['flgcentr'] == 'no') {
 
                 c1Tit_1.habilitaCampo();
@@ -3215,16 +3264,16 @@ function controlaLayout(operacao) {
 		var cSitGrv = $('#dssitgrv', '#' + nomeForm);
 
 		if($("#dscatbem option[value='EQUIPAMENTO']").length == 0){
-			$('#dscatbem','#frmTipo').append($('<option>', {
-				value: "EQUIPAMENTO",
-				text: "Equipamento"
+		$('#dscatbem','#frmTipo').append($('<option>', {
+			value: "EQUIPAMENTO",
+			text: "Equipamento"
 			}));
 		}
 		if($("#dscatbem option[value='MAQUINA DE COSTURA']").length == 0){
 			$('#dscatbem','#frmTipo').append($('<option>', {
-				value: "MAQUINA DE COSTURA",
-				text: "Máquina de Costura"
-			}));
+			value: "MAQUINA DE COSTURA",
+			text: "Máquina de Costura"
+		}));
 		}
 
         if (operacao == 'C_ALIENACAO') {
@@ -3243,7 +3292,8 @@ function controlaLayout(operacao) {
 			} else if (operacao == 'AI_ALIENACAO' || operacao == 'I_ALIENACAO' || operacao == 'AI_BENS') {
 				//strSelect(lscatbem, 'dscatbem', 'frmTipo');
 				$('#' + nomeForm).limpaFormulario();
-				rNrBem.html('( ' + (contAlienacao + 1) + 'º Bem )');
+				idlsbemfin = contAlienacao + 1;
+				rNrBem.html('( ' + idlsbemfin + '&ordm; Bem )');
 			}
 		}
 
@@ -3263,24 +3313,24 @@ function controlaLayout(operacao) {
 					cTpChassi.habilitaCampo();
 					cCor.habilitaCampo();
 					cUfLicenc.habilitaCampo();
-                cTpBem.unbind('change').bind('change', function() {
-						if (cTpBem.val() != 'USADO') {
-                        cUfPlaca.val('').desabilitaCampo();
-                        cNrPlaca.val('').desabilitaCampo();
-                        cRenavan.val('').desabilitaCampo();
-                    } else {
-                        cUfPlaca.habilitaCampo();
-                        cNrPlaca.habilitaCampo();
-                        cRenavan.habilitaCampo();
-							//busca_uf_pa_ass();
-                    }
-						if ( !in_array(cCateg.val(), ['OUTROS VEICULOS']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
-						if($(this).val() == 'USADO'){ modeloBem = ''; }
-						$('#nrmodbem').val(-1).change();
-						var bemFin = $('#dsbemfin').val();
-						$('#dsbemfin').val(bemFin).change();
+					cTpBem.unbind('change').bind('change', function() {
+						if ( cTpBem.val() != 'USADO' ) {
+							cUfPlaca.val('').desabilitaCampo();
+							cNrPlaca.val('').desabilitaCampo();
+							cRenavan.val('').desabilitaCampo();
+						} else {
+							cUfPlaca.habilitaCampo();
+							cNrPlaca.habilitaCampo();
+							cRenavan.habilitaCampo();
+							busca_uf_pa_ass();
 						}
-                });
+						if ( !in_array(cCateg.val(), ['OUTROS VEICULOS']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
+							if ($(this).val() == 'USADO') { modeloBem = ''; }
+							$('#nrmodbem').val(-1).change();
+							var bemFin = $('#dsbemfin').val();
+							$('#dsbemfin').val(bemFin).change();
+						}
+					});
 
 					$('#dssemfip', '#frmTipo').unbind('change').bind('change', function() {
 						if ( !in_array(cCateg.val(), ['OUTROS VEICULOS']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
@@ -3326,7 +3376,7 @@ function controlaLayout(operacao) {
 						trataCamposFipe($(this));
 					}
 
-					if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
+						if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
 						var urlPagina= "telas/manbem/fipe/busca_marcas.php";
 						var tipoVeiculo = trataTipoVeiculo($(this).val());
 						var data = jQuery.param({ idelhtml: idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax'});
@@ -3336,7 +3386,7 @@ function controlaLayout(operacao) {
 					if (!booBoxMarcas) {
 					    booBoxMarcas = true;
 					}
-					} else {
+				} else {
 					    $("#" + idElementMarca + "C").show();
 					    $("#" + idElementMarca).hide();
 						removeErroCampo($("#" + idElementMarca));
@@ -3349,7 +3399,7 @@ function controlaLayout(operacao) {
 						cVlFipe.val('');
 					}
 
-				} else if ( cCateg.val()=="" ) {
+				} else if ( cCateg.val() == "" ) {
 					cTpBem.val('').desabilitaCampo();
 					cUfLicenc.val('').desabilitaCampo();
 					$("#btHistoricoGravame").hide();
@@ -3364,17 +3414,17 @@ function controlaLayout(operacao) {
 					cAnoFab.val('');
 					cCPF.val('');
 					cChassi.val('');
-					$("#" + idElementMarca + "C").hide();
+					$("#" + idElementMarca + "C").val('').hide();
 					$("#" + idElementMarca).show().html('');
 					removeErroCampo($("#" + idElementMarca + "C"));
-					$("#" + idElementModelo + "C").hide();
+					$("#" + idElementModelo + "C").val('').hide();
 					$("#" + idElementModelo).show().html('');
 					removeErroCampo($("#" + idElementModelo + "C"));
-					$("#" + idElementAno + "C").hide();
+					$("#" + idElementAno + "C").val('').hide();
 					$("#" + idElementAno).show().html('');
 					removeErroCampo($("#" + idElementAno + "C"));
 					busca_uf_pa_ass();
-            } else {
+				} else {
 					cTpBem.val('').desabilitaCampo();
 					cUfLicenc.desabilitaCampo();
 					cChassi.addClass('alphanum').attr('maxlength', '20');//.css('width', '162px')
@@ -3404,8 +3454,8 @@ function controlaLayout(operacao) {
 					$('#dssemfip').removeAttr('checked').hide();
 					$('#lbsemfip').hide();
 					$("#frmTipo select#dstipbem").css({ "width": "150" });
-            }
-        });
+				}
+			});
 
 			$("#"+idElementMarca).unbind('change').bind('change', function() {
 				trataCamposFipe($(this));
@@ -3414,7 +3464,7 @@ function controlaLayout(operacao) {
 					var cdTipoVeiculo = trataTipoVeiculo($("#"+idElementTpVeiulo).val());
 					var cdMarcaFipe = $(this).val();
 					var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe, tipveicu: cdTipoVeiculo, redirect: 'script_ajax' });
-					buscaFipeServico(urlPagina,data);
+					buscaFipeServico(urlPagina,data);	
 				}
 				if ($(this).val() == '-1' && $("#"+idElementModelo+"C").val() != "") {
 					$("#"+idElementModelo+"C").show();
@@ -3466,67 +3516,67 @@ function controlaLayout(operacao) {
 				}
 			});
 
-        // Para chamar o evento de onChange - Ocorria que qndo voltava o campo nao era ajustada a mascara.
-        cCateg.trigger("change");
+			// Para chamar o evento de onChange - Ocorria que qndo voltava o campo nao era ajustada a mascara.
+			cCateg.trigger("change");
 
-        // Se pressionar alguma tecla no campo Chassi/N.Serie, verificar a tecla pressionada e toda a devida ação
-        cChassi.unbind('keydown').bind('keydown', function(event) {
-			
+			// Se pressionar alguma tecla no campo Chassi/N.Serie, verificar a tecla pressionada e toda a devida ação
+			cChassi.unbind('keydown').bind('keydown', function(event) {
+				
 				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
-			
-				var tecla = event.which || event.keyCode;
 				
-				// Se é a tecla "Q" ou "q"
-				if (tecla == 81){
-					return false;
+					var tecla = event.which || event.keyCode;
+					
+					// Se é a tecla "Q" ou "q"
+					if (tecla == 81){
+						return false;
+					}
+					
+					// Se é a tecla "I" ou "i"			
+					if (tecla == 73){
+						return false;
+					}
+					
+					// Se é a tecla "O" ou "o"
+					if (tecla == 79){
+						return false;
+					}			
+					
+				}	
+			});
+
+			//Remover caracteres especiais
+			cChassi.unbind('keyup').bind('keyup', function(e){
+				
+				var re = /[^\w\s]/gi;
+				
+				if(re.test(cChassi.val())){
+					cChassi.val(cChassi.val().replace(re, ''));
+				}		            
+				
+				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
+					re = /[\Q\q\I\i\O\o\_]/g;
+
+					if(re.test(cChassi.val())){
+						cChassi.val(cChassi.val().replace(re, ''));
+					}			
 				}
-				
-				// Se é a tecla "I" ou "i"			
-				if (tecla == 73){
-					return false;
-				}
-				
-				// Se é a tecla "O" ou "o"
-				if (tecla == 79){
-					return false;
+				re = / /g;
+
+				if(re.test(cChassi.val())){
+					cChassi.val(cChassi.val().replace(re, ''));
 				}			
-				
-			}	
-        });
+			});
 
-		//Remover caracteres especiais
-		cChassi.unbind('keyup').bind('keyup', function(e){
-			
-			var re = /[^\w\s]/gi;
-			
-			if(re.test(cChassi.val())){
-				cChassi.val(cChassi.val().replace(re, ''));
-			}		            
-            
+			cChassi.unbind('blur').bind('blur', function(){
+				cChassi.val(cChassi.val().replace(/[^\w\s]/gi, ''));
+
 				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
-                re = /[\Q\q\I\i\O\o\_]/g;
-                
-                if(re.test(cChassi.val())){
-                    cChassi.val(cChassi.val().replace(re, ''));
-                }			
-			}
-			re = / /g;
-			
-			if(re.test(cChassi.val())){
-				cChassi.val(cChassi.val().replace(re, ''));
-			}			
-		});
-		
-		cChassi.unbind('blur').bind('blur', function(){
-			cChassi.val(cChassi.val().replace(/[^\w\s]/gi, ''));
-            
-				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
-			  cChassi.val(cChassi.val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
-            }
-            
-			cChassi.val(cChassi.val().replace(/ /g,''));			
-		});
-		
+				  cChassi.val(cChassi.val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
+				}
+
+				cChassi.val(cChassi.val().replace(/ /g,''));			
+			});
+
 			bemCarregadoUfPa = false;
 			if ($("#"+idElementMarca+"C").val()=="" && (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO']))){ $("#"+idElementMarca+"C").hide(); $("#"+idElementMarca).show(); }
 			if ($("#"+idElementModelo+"C").val()==""){ $("#"+idElementModelo+"C").hide(); $("#"+idElementModelo).show(); }
@@ -3538,7 +3588,7 @@ function controlaLayout(operacao) {
 			$("#" + idElementModelo).hide();
 			$("#" + idElementAno + "C").show();
 			$("#" + idElementAno).hide();
-            }
+		}
 
 		cRenavan.mask('AA.AAA.AAA.AAA', {reverse: true});
 
@@ -3550,7 +3600,7 @@ function controlaLayout(operacao) {
 				valor=valor.replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3");
 				valor=valor.replace(/\.(\d{3})(\d)/,".$1/$2");
 				valor=valor.replace(/(\d{4})(\d)/,"$1-$2");
-			} else {
+        } else {
 				valor=valor.replace(/\D/g,"");
 				valor=valor.replace(/(\d{3})(\d)/,"$1.$2");
 				valor=valor.replace(/(\d{3})(\d)/,"$1.$2");
@@ -3622,7 +3672,8 @@ function controlaLayout(operacao) {
             }
 
             // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
-            if (e.keyCode == 9) {
+            // PRJ 438 - Sprint 4 - Adicionado keyCode == 13
+            if (e.keyCode == 9 || e.keyCode == 13) {
                 // Armazena o número da conta na variável global
                 nrctaava = normalizaNumero($(this).val());
                 nrctaavaOld = nrctaava;
@@ -3662,8 +3713,8 @@ function controlaLayout(operacao) {
                 return false;
             }
 
-            // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
-            if (e.keyCode == 9) {
+            if (e.keyCode == 9 || e.keyCode == 13) {
+
                 // Armazena o número da conta na variável global
                 nrcpfcgc = normalizaNumero(cCPF.val());
                 nrcpfcgcOld = nrcpfcgc;
@@ -4267,8 +4318,8 @@ function atualizaArray(novaOp, cdcooper) {
 	if (novaOp == 'I_DADOS_AVAL' || novaOp == 'A_DADOS_AVAL' || novaOp == 'V_VALOR' || novaOp == 'I_GAROPC' || novaOp == 'A_GAROPC')
 		validaValorAdesaoProdutoEmp(novaOp, cdcooper);
     else {
-    showMsgAguardo('Aguarde, validando dados ...');
-    setTimeout('attArray(\'' + novaOp + '\',\'' + cdcooper + '\')', 400);
+		showMsgAguardo('Aguarde, validando dados ...');
+		setTimeout('attArray(\'' + novaOp + '\',\'' + cdcooper + '\')', 400);
 	}
     return false;
 }
@@ -4444,11 +4495,23 @@ function attArray(novaOp, cdcooper) {
 
         arrayAlienacoes[atual]['dscatbem'] = $('#dscatbem', '#frmTipo').val().toUpperCase();
         arrayAlienacoes[atual]['dstipbem'] = $('#dstipbem', '#frmTipo').val().toUpperCase();
-        arrayAlienacoes[atual]['dscorbem'] = removeAcentos(removeCaracteresInvalidos($('#dscorbem', '#frmTipo').val().replace("<", "").replace(">", "").toUpperCase()));
+
+		if (arrayAlienacoes[atual]['dscatbem'] == "" && arrayAlienacoes[atual]['dstipbem'] == "") {
+
+			deletaAlienacao(operacao);
+			return false;
+
+		} else {
+
+			arrayAlienacoes[atual]['dscorbem'] = removeAcentos(removeCaracteresInvalidos($('#dscorbem', '#frmTipo').val().replace("<", "").replace(">", "")));
         arrayAlienacoes[atual]['dschassi'] = $('#dschassi', '#frmTipo').val().toUpperCase();
-        arrayAlienacoes[atual]['nranobem'] = $('#nranobem', '#frmTipo').val().toUpperCase();
+			arrayAlienacoes[atual]['nranobem'] = $('#nranobem', '#frmTipo').val();
+			arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbem', '#frmTipo').val();
+			if(typeof arrayAlienacoes[atual]['nrmodbem'] == "undefined"){ //PRJ438 - Bruno
+				arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbemC', '#frmTipo').val();
+			}
         arrayAlienacoes[atual]['nrdplaca'] = $('#nrdplaca', '#frmTipo').val().toUpperCase();
-        arrayAlienacoes[atual]['nrrenava'] = normalizaNumero( $('#nrrenava', '#frmTipo').val().toUpperCase() );
+			arrayAlienacoes[atual]['nrrenava'] = $('#nrrenava', '#frmTipo').val();
         arrayAlienacoes[atual]['tpchassi'] = $('#tpchassi', '#frmTipo').val();
         arrayAlienacoes[atual]['ufdplaca'] = $('#ufdplaca', '#frmTipo').val().toUpperCase();
         //arrayAlienacoes[atual]['nrcpfbem'] = $('#nrcpfbem', '#frmTipo').val();
@@ -4460,17 +4523,21 @@ function attArray(novaOp, cdcooper) {
 
 		arrayAlienacoes[atual]['vlfipbem'] = $('#vlfipbem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
 		arrayAlienacoes[atual]['vlrdobem'] = $('#vlrdobem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
+			//bruno - prj 438 - manbem - vlmerbem não alterava
+            arrayAlienacoes[atual]['vlmerbem'] = $('#vlrdobem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
 		arrayAlienacoes[atual]['dssitgrv'] = $('#dssitgrv', '#frmTipo').val().toUpperCase();
 		arrayAlienacoes[atual]['nrcpfcgc'] = normalizaNumero( $('#nrcpfcgc', '#frmTipo').val() );
-		var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
-		if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked') ) {
-			arrayAlienacoes[atual]['dsmarbem'] = removeAcentos(removeCaracteresInvalidos($('#dsmarbemC', '#frmTipo').val().toUpperCase()));
-			arrayAlienacoes[atual]['dsbemfin'] = removeAcentos(removeCaracteresInvalidos($('#dsbemfinC', '#frmTipo').val().toUpperCase()));
-			arrayAlienacoes[atual]['nrmodbem'] = removeAcentos(removeCaracteresInvalidos($('#nrmodbemC', '#frmTipo').val().toUpperCase()));
-		} else {
+			var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
+			if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked') ) {
+				arrayAlienacoes[atual]['dsmarbem'] = removeAcentos(removeCaracteresInvalidos($('#dsmarbemC', '#frmTipo').val().toUpperCase()));
+				arrayAlienacoes[atual]['dsbemfin'] = removeAcentos(removeCaracteresInvalidos($('#dsbemfinC', '#frmTipo').val().toUpperCase()));
+				arrayAlienacoes[atual]['nrmodbem'] = removeAcentos(removeCaracteresInvalidos($('#nrmodbemC', '#frmTipo').val().toUpperCase()));
+			} else {
 			arrayAlienacoes[atual]['dsmarbem'] = $('#dsmarbem option:selected', '#frmTipo').text().toUpperCase();
 			arrayAlienacoes[atual]['dsbemfin'] = $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase();
 			arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbem option:selected', '#frmTipo').text().toUpperCase();
+		}
+
 		}
 
     } else if (in_array(operacao, ['AI_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU', 'I_INTEV_ANU'])) {
@@ -4752,7 +4819,7 @@ function atualizaTela() {
 
         $('legend:first', '#frmDadosAval').html('Dados dos Avalistas/Fiadores ' + contAvalistas);
 
-    } else if (in_array(operacao, ['C_ALIENACAO', 'A_ALIENACAO', 'IA_ALIENACAO'])) {
+    } else if (in_array(operacao, ['C_ALIENACAO', 'A_ALIENACAO', 'IA_ALIENACAO', 'A_BENS'])) {
 
         //strSelect(lscatbem, 'dscatbem', 'frmTipo');
 
@@ -4787,6 +4854,7 @@ function atualizaTela() {
         $('#nrdplaca', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrdplaca']);
         $('#nrrenava', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrrenava']);
         $('#tpchassi', '#frmTipo').val(arrayAlienacoes[contAlienacao]['tpchassi']);
+        $('#idseqbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['idseqbem']);
         //$('#ufdplaca', '#frmTipo').val(arrayAlienacoes[contAlienacao]['ufdplaca']);
         //$('#nrcpfbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrcpfbem']);
         //$('#dscpfbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dscpfbem']);
@@ -4847,13 +4915,13 @@ function atualizaTela() {
 		$("#frmTipo #dscatbem option").each(function() {
 			if (arrayAlienacoes[contAlienacao]['dscatbem'] == $(this).val()) {
 				$(this).attr('selected', 'selected');
-			}
+		}
 		});
 
 		if (arrayAlienacoes[contAlienacao]['tpchassi'] != "") {
 			bemCarregadoUfPa = true;
 		}
-		
+
 		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL', 'CAMINHAO', 'MOTO']) && !in_array(operacao, ['C_ALIENACAO']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
 			urlPagina= "telas/manbem/fipe/busca_marcas.php";
 			tipoVeiculo = trataTipoVeiculo(arrayAlienacoes[contAlienacao]['dscatbem']);
@@ -4867,34 +4935,33 @@ function atualizaTela() {
 
 		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL', 'CAMINHAO', 'MOTO', 'OUTROS VEICULOS'])) {
 			$("#btHistoricoGravame").show();
-			$("#frmTipo #dstipbem option").each(function() {
-				if (arrayAlienacoes[contAlienacao]['dstipbem'] == $(this).val()) {
-					$(this).attr('selected', 'selected');
-				}
-			});
-			$("#frmTipo #tpchassi option").each(function() {
-				if (arrayAlienacoes[contAlienacao]['tpchassi'] == $(this).val()) {
-					$(this).attr('selected', 'selected');
-				}
-			});
-			$("#frmTipo #ufdplaca option").each(function() {
-				if (arrayAlienacoes[contAlienacao]['ufdplaca'] == $(this).val()) {
-					$(this).attr('selected', 'selected');
-				}
-			});
-			$("#frmTipo #uflicenc option").each(function() {
-				if (arrayAlienacoes[contAlienacao]['uflicenc'] == $(this).val()) {
-					$(this).attr('selected', 'selected');
-				}
-			});
+		$("#frmTipo #dstipbem option").each(function() {
+			if (arrayAlienacoes[contAlienacao]['dstipbem'] == $(this).val()) {
+				$(this).attr('selected', 'selected');
+			}
+		});
+		$("#frmTipo #tpchassi option").each(function() {
+			if (arrayAlienacoes[contAlienacao]['tpchassi'] == $(this).val()) {
+				$(this).attr('selected', 'selected');
+			}
+		});
+		$("#frmTipo #ufdplaca option").each(function() {
+			if (arrayAlienacoes[contAlienacao]['ufdplaca'] == $(this).val()) {
+				$(this).attr('selected', 'selected');
+			}
+		});
+		$("#frmTipo #uflicenc option").each(function() {
+			if (arrayAlienacoes[contAlienacao]['uflicenc'] == $(this).val()) {
+				$(this).attr('selected', 'selected');
+			}
+		});
 		} else {
+			$("#btHistoricoGravame").hide();
 			$('#dstipbem', '#frmTipo').desabilitaCampo();
 			$('#uflicenc', '#frmTipo').desabilitaCampo();
 			$('#tpchassi', '#frmTipo').val('').desabilitaCampo();
 			$('#dscorbem', '#frmTipo').val('').desabilitaCampo();
 		}
-
-		$('#lsbemfin','#frmTipo').html( arrayAlienacoes[contAlienacao]['lsbemfin'] );
 
         if (arrayAlienacoes[contAlienacao]['dstipbem'] == 'ZERO KM') {
             $('#ufdplaca', '#frmTipo').val('').desabilitaCampo();
@@ -4904,6 +4971,8 @@ function atualizaTela() {
 		booBoxMarcas = false;
 
         contAlienacao++;
+
+		$('#lsbemfin','#frmTipo').html( '( ' + contAlienacao + '&ordm; Bem )' );
 
     } else if (in_array(operacao, ['C_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU'])) {
 
@@ -5122,6 +5191,7 @@ function insereAlienacao(operacao, opContinua) {
     i = arrayAlienacoes.length;
 
     eval('var arrayAlienacao' + i + ' = new Object();');
+    eval('arrayAlienacao' + i + '["idseqbem"] = $("#idseqbem","#frmTipo").val();');
     eval('arrayAlienacao' + i + '["dscatbem"] = removeAcentos(removeCaracteresInvalidos($("#dscatbem","#frmTipo").val().toUpperCase()));');
     eval('arrayAlienacao' + i + '["dstipbem"] = $("#dstipbem","#frmTipo").val().toUpperCase();');
     //eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfin","#frmTipo").val().replace("<","").replace(">","").toUpperCase()));');
@@ -5135,7 +5205,7 @@ function insereAlienacao(operacao, opContinua) {
     eval('arrayAlienacao' + i + '["ufdplaca"] = $("#ufdplaca","#frmTipo").val().toUpperCase();');
     //eval('arrayAlienacao' + i + '["nrcpfbem"] = $("#nrcpfbem","#frmTipo").val();');
     //eval('arrayAlienacao' + i + '["dscpfbem"] = $("#dscpfbem","#frmTipo").val();');
-    //eval('arrayAlienacao' + i + '["vlmerbem"] = $("#vlmerbem","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["vlmerbem"] = $("#vlrdobem","#frmTipo").val().replace("R$","").replace(".","");');
     eval('arrayAlienacao' + i + '["uflicenc"] = $("#uflicenc","#frmTipo").val().toUpperCase();'); // GRAVAMES*/
 
     eval('arrayAlienacao' + i + '["nrcpfcgc"] = normalizaNumero($("#nrcpfcgc","#frmTipo").val());');
@@ -5571,6 +5641,13 @@ function validaDadosGerais() {
         return false;
     }
 
+    //faria integracao cdc nao permite criar propostas de CDC para cooperativas migradas //finalidade CDC
+    if(tpfinali == 3 && flintcdc == 'yes' && inintegra_cont == 0){
+        hideMsgAguardo();
+        showError('error', 'Finalidade não permitida, Cooperativa com integração CDC habilitada', 'Alerta - Aimaro', "bloqueiaFundo(divRotina)");
+        return false;
+    }
+
     var aux_retorno = false;
 
     // Executa script de confirmação através de ajax
@@ -5848,11 +5925,11 @@ function validaHipoteca(nmfuncao, operacao) {
 }
 
 function validaAlienacao(nmfuncao, operacao) {
-	
+
     if (((typeof $('#dscatbem', '#frmTipo').val() == 'object') || $('#dscatbem', '#frmTipo').val() == '') && $('#dstipbem', '#frmTipo').val() == '' && booPrimeiroBen) {//809763
         eval(nmfuncao);
         return false;
-}
+	}
 
 	showMsgAguardo('Aguarde, validando dados...');
 
@@ -5905,6 +5982,7 @@ function validaAlienacao(nmfuncao, operacao) {
 	var nrrenava = normalizaNumero(  $('#nrrenava', '#frmTipo').val()); // inteiro
 	var uflicenc =  $('#uflicenc option:selected', '#frmTipo').val().toUpperCase(); // string
     var nrcpfcgc =  normalizaNumero( $('#nrcpfcgc', '#frmTipo').val()); // inteiro
+	var idseqbem = $('#idseqbem', '#frmTipo').val();
 	
 	var vlmerbem = vlrdobem;
 	var nrcpfbem = nrcpfcgc;
@@ -5912,14 +5990,14 @@ function validaAlienacao(nmfuncao, operacao) {
 	var dssitgrv = $('#dssitgrv', '#frmTipo').val().toUpperCase();
 
 	var radios = $('input[name=nrbem]');
-	var idseqbem = "";
-	var cdoperad =1;
-	for (var i = 0, length = radios.length; i < length; i++) {
+	var cdoperad = 1;
+	for ( var i = 0, length = radios.length; i < length; i++ ) {
 		if (radios[i].checked) {
 			idseqbem = normalizaNumero($.trim(radios[i].value));			
 			break;
 		}
 	}
+
 	vlrdobem = vlrdobem.replace('R$','').replace(/\./g,'');//.replace(',','.');
 	vlfipbem = vlfipbem.replace('R$','').replace(/\./g,'');//.replace(',','.');
 
@@ -5989,7 +6067,7 @@ function validaAlienacao(nmfuncao, operacao) {
             msgerro = 'Numero Placa';
             camperr = 'nrdplaca';
         } else if (dschassi == '') {
-            msgerro = 'Chassi N.Serie';
+            msgerro = 'Chassi';
             camperr = 'dschassi';
         } else if (dstipbem == 'USADO' && nrrenava == '0') {
             msgerro = 'RENAVAM';
@@ -6458,10 +6536,14 @@ function montaString() {
 
 		var dstpcomb = "";
 		var nrmodbem = arrayAlienacoes[i]['nrmodbem'];
+		if(nrmodbem == "" || nrmodbem == null || typeof nrmodbem == "undefined"){ //PRJ 438 - Bruno
+			nrmodbem =arrayAlienacoes[i]['nranobem'];
+		}else{
 		arrmodbem = nrmodbem.split(" ");
 		if ( arrmodbem[0] !== nrmodbem ) {
 			nrmodbem = arrmodbem[0];
 			dstpcomb = arrmodbem[1];
+		}
 		}
 
         aux_dsdalien = aux_dsdalien +
@@ -6477,9 +6559,9 @@ function montaString() {
                 arrayAlienacoes[i]['tpchassi'] + ';' +
                 arrayAlienacoes[i]['ufdplaca'] + ';' +
                 normalizaNumero(arrayAlienacoes[i]['nrcpfcgc']) + ';' + //altera
-                arrayAlienacoes[i]['uflicenc'] /* GRAVAMES*/ + ';' +
+                arrayAlienacoes[i]['uflicenc'] + ';' + /* GRAVAMES */
                 arrayAlienacoes[i]['dstipbem'] + ';' +
-                arrayAlienacoes[i]['idseqbem'] + ';' + /* GRAVAMES*/
+                arrayAlienacoes[i]['idseqbem'] + ';' + /* GRAVAMES */
                 arrayAlienacoes[i]['cdcoplib'] + ';' + /* OPERADOR DE LIBERACAO */
                 arrayAlienacoes[i]['dsmarbem'] + ';' + //novo
                 number_format(parseFloat(arrayAlienacoes[i]['vlfipbem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //novo
@@ -7356,7 +7438,6 @@ function fechaBens() {
         else {
             controlaOperacao('C_HIPOTECA');
         }
-
 
     }
     return false;
@@ -8895,7 +8976,6 @@ function controlaPesquisas() {
         return false;
     });
 
-
     // Tipo Rendimento
     $('#tpdrend1,#tpdrend2,#tpdrend3,#tpdrend4,#tpdrend5,#tpdrend6', '#' + nomeForm).unbind('change').bind('change', function() {
         bo = 'b1wgen0059.p';
@@ -8932,8 +9012,6 @@ function controlaPesquisas() {
 
     });
 
-
-
     // Finalidade de emprestimo
     $('#cdfinemp', '#' + nomeForm).unbind('change').bind('change', function() {
         bo = 'zoom0001';
@@ -8947,7 +9025,6 @@ function controlaPesquisas() {
             carregaDadosPropostaFinalidade();
         }
     });
-
 
     // Linha de Credito
     $('#cdlcremp', '#' + nomeForm).unbind('change').bind('change', function() {
@@ -9118,15 +9195,21 @@ function limpaForm(form) {
 
 
 function showConfirmacaoEfetiva() {
-    showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'efetivaProposta();', 'bloqueiaFundo( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
+   // showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'efetivaProposta();', 'bloqueiaFundo( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
+	efetivaProposta();
 }
 
-function efetivaProposta() {
+function efetivaProposta(operacao) {
 
-    showMsgAguardo('Aguarde, efetivando a proposta...');
-    exibeRotina($('#divUsoGenerico'));
+	var msgAguarde = ', efetivando a proposta';
+	
+	if (operacao == 'EFE_PRP') {
+		msgAguarde = ", processando requisi&ccedil;&aacute;o";
+	}
 
-    limpaDivGenerica();
+	$.getScript(UrlSite + "telas/manbem/scripts/historico_gravames.js");
+
+    showMsgAguardo('Aguarde' + msgAguarde + '...');
 
     nrdconta = arrayStatusApprov['nrdconta'];
     nrctremp = arrayStatusApprov['nrctremp'];
@@ -9143,12 +9226,12 @@ function efetivaProposta() {
             nrdconta: nrdconta, idseqttl: idseqttl,
             nrctremp: nrctremp, insitapv: insitapv,
             dtdpagto: dtdpagto, idcobope: idcobope, 
-			flliquid: flliquid,
+			flliquid: flliquid, operacao: operacao,
 			redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
             eval(response);
@@ -10437,71 +10520,71 @@ function carregaDadosConsultaMotivos() {
             if (response.indexOf('showError("error"') == -1) {
                 $('#divConteudoOpcao').html(response);
 	            layoutPadrao();
-	            hideMsgAguardo();
+	hideMsgAguardo();
 	            formatarTelaConsultaMotivos();
 	            divRotina.centralizaRotinaH();
 	            bloqueiaFundo(divRotina);
             } else {
                 eval(response);
             }
-        }               
+		}
     });
     return false;
-}
+	}
 
 function formatarTelaConsultaMotivos(){
 
 	divRotina.css('width', '515px');
     $('#divConteudoOpcao').css({'height': '', 'width': '500px'});
     $('#frmDadosMotivos').css('width','500px');
-
+		
     $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px', 'padding': '10px 3px 5px 3px'});
     $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
 
     return false;
-}
+	}
 
 function gravaMotivosAnulacao(){
-    
+
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando alterado o motivo");
-
+	
     var cdmotivo     = $("input[name='cdmotivo']:checked", "#frmDadosMotivos").val();
     var dsmotivo     = $('#dsmotivo'+cdmotivo,'#frmDadosMotivos').val();
     var dsobservacao = $('#dsobservacao'+cdmotivo,'#frmDadosMotivos').val();
 
-    $.ajax({        
+		$.ajax({
         type: "POST", 
         url: UrlSite + "telas/atenda/emprestimos/grava_motivo.php",
-        data: {
+			data: {
             nrdconta: nrdconta,
             nrctremp: nrctremp,
             cdmotivo: cdmotivo,
             dsmotivo: dsmotivo,
             dsobservacao: dsobservacao,
             redirect: "script_ajax"
-        }, 
-        error: function(objAjax,responseError,objExcept) {
-            hideMsgAguardo();
+			},
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
             showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function(response) {
-            try {
-                eval(response);
-            } catch(error) {
-                hideMsgAguardo();
+			},
+			success: function(response) {
+				try {
+					eval(response);
+				} catch(error) {
+					hideMsgAguardo();
                 showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				}
 			}
-		}				
-	});
-}
-
+		});
+	}
+	
 function fechaMotivos(encerrarRotina) {
     $('#divUsoGenerico').html('');
     fechaRotina($('#divUsoGenerico'));
     exibeRotina($('#divRotina'));
     controlaOperacao('');
-    return false;
+	return false;
 }
 
 function controlarMotivos(cdMotivo){
@@ -10535,7 +10618,7 @@ function buscaTipo() {
 			},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',"unblockBackground();");
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
@@ -10576,13 +10659,13 @@ function verificarTipoVeiculo() {
 	var tipo = $('#dstipbem option:selected').val();
 	
 	var optionsModBem = $('#nrmodbem option');
-		$.each(optionsModBem, function(){
-			if($(this).text().toUpperCase().search('ZERO KM') != -1){
+		$.each( optionsModBem, function() {
+			if ($(this).text().toUpperCase().search('ZERO KM') != -1) {
 				if (modeloBem == '' || modeloBem == null) { modeloBem = 3200; }
 				$(this).remove();
 			}
 		});
-	if(tipo != 'ZERO KM'){
+	if (tipo != 'ZERO KM') {
 		modeloBem = '';
 	} 
 }
@@ -10600,24 +10683,74 @@ function selecionaComplemento(tr) {
 }
 
 
-function mostraAplicacao(tpaplica) {
-	showMsgAguardo('Aguarde, buscando ...');
+function alteraSomenteBens() {
+	bloqueiaFundo(divRotina);
+	showMsgAguardo('Aguarde, salvando ...');
+
+    //Bens alienação
+    var aux_dsdalien = '';
+	var aux_dsinterv = '';
+    for (i in arrayAlienacoes) {
+
+        if (aux_dsdalien != '') {
+            aux_dsdalien = aux_dsdalien + '|';
+        }
+
+		var dstpcomb = "";
+		var nrmodbem = arrayAlienacoes[i]['nrmodbem'];
+		arrmodbem = nrmodbem.split(" ");
+		if ( arrmodbem[0] !== nrmodbem ) {
+			nrmodbem = arrmodbem[0];
+			dstpcomb = arrmodbem[1];
+		}
+
+        aux_dsdalien = aux_dsdalien +
+                arrayAlienacoes[i]['dscatbem'] + ';' +
+                removeAcentos(removeCaracteresInvalidos(arrayAlienacoes[i]['dsbemfin'].replace("<", "").replace(">", ""))) + ';' +
+                removeAcentos(removeCaracteresInvalidos(arrayAlienacoes[i]['dscorbem'].replace("<", "").replace(">", ""))) + ';' +
+                number_format(parseFloat(arrayAlienacoes[i]['vlrdobem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //altera
+                arrayAlienacoes[i]['dschassi'] + ';' +
+                arrayAlienacoes[i]['nranobem'] + ';' +
+                nrmodbem.substring(0,4) + ';' +
+                arrayAlienacoes[i]['nrdplaca'].replace('0000000', '') + ';' +
+                normalizaNumero(arrayAlienacoes[i]['nrrenava']) + ';' +
+                arrayAlienacoes[i]['tpchassi'] + ';' +
+                arrayAlienacoes[i]['ufdplaca'] + ';' +
+                normalizaNumero(arrayAlienacoes[i]['nrcpfcgc']) + ';' + //altera
+                arrayAlienacoes[i]['uflicenc'] /* GRAVAMES*/ + ';' +
+                arrayAlienacoes[i]['dstipbem'] + ';' +
+                arrayAlienacoes[i]['idseqbem'] + ';' + /* GRAVAMES */
+                arrayAlienacoes[i]['cdcoplib'] + ';' + /* OPERADOR DE LIBERACAO */
+                arrayAlienacoes[i]['dsmarbem'] + ';' + //novo
+                number_format(parseFloat(arrayAlienacoes[i]['vlfipbem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //novo
+				dstpcomb + ';' ; //novo
+    }
 
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		url: UrlSite + 'telas/atenda/emprestimos//aplicacao.php',
+		url: UrlSite + 'telas/atenda/emprestimos/altera_somente_bens.php',
 		data: {
+			cddopcao: cddopcao,
+			nrdconta: nrdconta,
+			nrctremp: nrctremp,
+			dsdalien: aux_dsdalien,
+			dsinterv: aux_dsinterv,
 			redirect: 'html_ajax'
-			},
+		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
 		},
 		success: function(response) {
-			$('#divUsoGenerico').html(response);
-			buscaAplicacao(tpaplica);
-			return false;
+			try {
+				bloqueiaFundo(divRotina);
+				eval(response);
+				return false;
+			} catch(error) {
+				hideMsgAguardo();
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
+			}
 		}
     });
     

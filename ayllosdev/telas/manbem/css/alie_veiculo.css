@@ -3,10 +3,15 @@
     margin:0 0 15px 0;
     text-align: left;
 }
+	#frmTipo .fieldVeiculos{
+		float: left;
+		width: 50%;
+	}
     #frmTipo .bloco{        
         display:inline-table;
         padding:2px 5px;
         margin:15px 0;
+		width:100%;
     }
     #frmTipo hr{
         margin:20px 0 10px ;
@@ -23,7 +28,7 @@
         text-transform:uppercase
     }
     #frmTipo label{
-        min-width:120px;	
+        min-width:140px;
         display:inline-table;
         text-align:right;
         height: 25px;
@@ -52,12 +57,10 @@
         margin: 3px;
         padding: 0px 3px 5px 3px;
     }
-     #frmTipo fieldset legend{
+    #frmTipo fieldset legend{
        text-align: center;
     }
-    #frmTipo #nrmodbem, #frmTipo #nrmodbemC {
-        width:90px;
-    }
+    #frmTipo #nrmodbem, #frmTipo #nrmodbemC { width:87px; }
     select[readonly] {
         background: #eee;
         pointer-events: none;
@@ -113,7 +116,7 @@
         background: #ccc!important;
     }
     /*************************** Form Interveniente ************************/
-    
+	
 	label#lbsemfip {
 		min-width: 30px;
 		text-indent: -15px;
@@ -136,3 +139,4 @@
 	#frmTipo input#nranobem.menor {
 		width: 30px;
 	}
+	#frmTipo #nrmodbem.errorInput, #frmTipo #nrmodbemC.errorInput { width: 80px; }

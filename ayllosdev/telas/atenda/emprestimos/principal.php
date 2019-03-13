@@ -106,9 +106,9 @@
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 
-	$procedure = (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC'))) ? 'obtem-dados-proposta-emprestimo' : 'obtem-propostas-emprestimo';
+	$procedure = (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC','A_SOMBENS'))) ? 'obtem-dados-proposta-emprestimo' : 'obtem-propostas-emprestimo';
 
-	if (in_array($operacao,array('A_NOVA_PROP','A_NUMERO','A_VALOR','A_AVALISTA','TI','TE','TC',''))) {
+	if (in_array($operacao,array('A_NOVA_PROP','A_NUMERO','A_VALOR','A_AVALISTA','TI','TE','TC','','A_SOMBENS'))) {
 
 		$xml = "<Root>";
 		$xml .= "	<Cabecalho>";
@@ -167,6 +167,32 @@
 			}
 		}
 		
+		if(in_array($operacao,array('CT','','REG_GRAVAMES','VAL_GRAVAMES'))) {
+			// Montar o xml de Requisicao
+			$xmlCarregaDados  = "";
+			$xmlCarregaDados .= "<Root>";
+			$xmlCarregaDados .= " <Dados>";
+			$xmlCarregaDados .= " </Dados>";
+			$xmlCarregaDados .= "</Root>";
+
+			$xmlResult = mensageria($xmlCarregaDados
+								   ,"GRVM0001"
+								   ,"GRAVAME_ONLINE_HABILITADO"
+								   ,$glbvars["cdcooper"]
+								   ,$glbvars["cdagenci"]
+								   ,$glbvars["nrdcaixa"]
+								   ,$glbvars["idorigem"]
+								   ,$glbvars["cdoperad"]
+								   ,"</Root>");
+			$xmlObject = getObjectXML($xmlResult);
+
+			if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
+				$flgGrvOnline = "ERRO";
+			} else if (strtoupper($xmlObject->roottag->tags[0]->name) == "GRVONLINE") {
+				$flgGrvOnline = $xmlObject->roottag->tags[0]->cdata;
+			}
+		}
+		
 		if (in_array($operacao,array(''))){
 
 			$registros = $xmlObjeto->roottag->tags[0]->tags;
@@ -188,7 +214,7 @@
 
 			</script><?php
 
-		}else if (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC'))){
+		} else if (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC','A_SOMBENS'))) {
 
 			$cooperativa  = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 			$associado    = $xmlObjeto->roottag->tags[1]->tags[0]->tags;
@@ -584,7 +610,9 @@
 				arrayFaturamentos[<? echo $i; ?>] = arrayFaturamento<? echo $i; ?>;
 
 			<?}?>
-
+			<? if (in_array($operacao,array('A_SOMBENS'))) { ?>
+			controlaOperacao('A_BENS');
+			<? } ?>
 			</script><?
 
 		}
@@ -1050,7 +1078,7 @@
 		include ('../../../includes/consultas_automatizadas/form_orgaos.php');
 	} else if (in_array($operacao,array('I_MICRO_PERG','A_MICRO_PERG','C_MICRO_PERG'))) {
 		include ('questionario.php');	
-	} else if (in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIENACAO','I_ALIENACAO','IA_ALIENACAO'))){
+	} else if (in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIENACAO','I_ALIENACAO','IA_ALIENACAO','A_BENS','AI_BENS'))){
 		include('form_alienacao.php');
 	}else if (in_array($operacao,array('C_INTEV_ANU','AI_INTEV_ANU','A_INTEV_ANU','E_INTEV_ANU','I_INTEV_ANU','IA_INTEV_ANU'))){
 		include('form_intev_anuente.php');
@@ -1100,11 +1128,10 @@
 
 	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
     if (executandoProdutos && operacao == '' ) {
-	  
+
 		controlaOperacao('I');
-		
+
     }
-	  
 
 </script>
 
