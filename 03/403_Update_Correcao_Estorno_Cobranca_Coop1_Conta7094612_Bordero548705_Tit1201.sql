@@ -40,7 +40,7 @@ BEGIN
      AND lcb.dtmvtolt = to_date('07/03/2019','DD/MM/RRRR');
 
 
-  cecred.DSCT0003_popd.pc_calcula_atraso_tit
+  DSCT0003.pc_calcula_atraso_tit
                                 (pr_cdcooper => 1    
                                 ,pr_nrdconta => 7094612 
                                 ,pr_nrborder => 548705
