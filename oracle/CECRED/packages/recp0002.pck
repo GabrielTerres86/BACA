@@ -222,14 +222,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_qtregist    INTEGER;
     
     CURSOR cr_titcyb IS
-    SELECT (vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) vlsdeved
-          ,0 vlsdprej
-          ,(vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) vlatraso
+    SELECT CASE
+             WHEN bdt.inprejuz = 0 THEN (vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof))
+             ELSE 0
+           END as vlsdeved    
+          ,CASE
+             WHEN bdt.inprejuz = 1 THEN nvl(tdb.vlsdprej + (tdb.vlttjmpr - tdb.vlpgjmpr) + (tdb.vlttmupr - tdb.vlpgmupr) + (tdb.vljraprj - tdb.vlpgjrpr) + (tdb.vliofprj - tdb.vliofppr),0)
+             ELSE 0
+           END as vlsdprej
+          ,CASE
+             WHEN bdt.inprejuz = 0 THEN (vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof))
+             ELSE 0
+           END as vlatraso
     FROM   craptdb tdb
           ,tbdsct_titulo_cyber titcyb
+          ,crapbdt bdt
     WHERE  tdb.dtresgat    IS NULL
     AND    tdb.dtlibbdt    IS NOT NULL
     AND    tdb.dtdpagto    IS NULL
+    AND    bdt.nrborder    = tdb.nrborder
+    AND    bdt.nrdconta    = tdb.nrdconta
+    AND    bdt.cdcooper    = tdb.cdcooper
     AND    tdb.nrtitulo    = titcyb.nrtitulo
     AND    tdb.nrborder    = titcyb.nrborder
     AND    tdb.nrdconta    = titcyb.nrdconta
