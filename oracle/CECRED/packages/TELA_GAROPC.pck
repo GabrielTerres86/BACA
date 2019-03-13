@@ -837,6 +837,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
               ,tco.nrconta_terceiro    
               ,tco.inaplicacao_terceiro
               ,tco.inpoupanca_terceiro 
+              ,tco.inresgate_automatico
+              ,tco.qtdias_atraso_permitido
 			  ,tco.nrcontrato
           FROM tbgar_cobertura_operacao tco
          WHERE tco.idcobertura = pr_idcobert;
@@ -864,6 +866,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
       vr_blupdate BOOLEAN := FALSE;
       vr_idcobert tbgar_cobertura_operacao.idcobertura%TYPE;
 	  vr_nrdconta_aux crapass.nrdconta%TYPE;
+      vr_perde_aprovacao NUMBER(1) := 0; -- 0 Nao perde e 1 Perde aprovacao
+      vr_indx            PLS_INTEGER;
+      vr_nrdrowid        ROWID;
+      --Será utilizado para gravar todas as alterações
+      TYPE typ_reg_alteracoes IS RECORD(dsmotivo varchar2(100)   --> Motivos da Perda
+                                       ,nmcampo  varchar2(200)   --> Nome do campo
+                                       ,dsdadant varchar2(4000)   --> Valor Anterior
+                                       ,dsdadatu varchar2(4000)); --> Valor Atual
+      /* Definição de tabela que compreenderá os registros acima declarados */
+      TYPE typ_tab_alteracoes IS TABLE OF typ_reg_alteracoes INDEX BY PLS_INTEGER;
+      /* Variável que armazenará uma instancia da tabela */
+      vr_tab_alteracoes typ_tab_alteracoes;      
 
     BEGIN
       -- Incluir nome do modulo logado
@@ -997,13 +1011,96 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
 													,pr_tag_nova => 'idcobert'
 													,pr_tag_cont => 0
 													,pr_des_erro => vr_dscritic);				 
+        vr_indx := 1;
+        -- Validar se perde aprovação
+        -- Percentual minimo da cobertura da garantia no momento da contratacao
+        IF nvl(rw_cobertura.perminimo,0) <> nvl(pr_permingr,0) THEN
+          vr_perde_aprovacao := 1;
+        END IF;
+        --
+        -- Utilizacao de aplicacao propria para cobertura da garantia da operacao (0-Nao/ 1-Sim)
+        IF nvl(rw_cobertura.inaplicacao_propria,0) <> nvl(pr_inaplpro,0) THEN
+          vr_perde_aprovacao := 1;
+        END IF;
+        --
+        -- Utilizacao de poupanca programada propria para cobertura (0-Nao/ 1-Sim)
+        IF nvl(rw_cobertura.inpoupanca_propria,0) <> nvl(pr_inpoupro,0) THEN
+          vr_perde_aprovacao := 1;
+        END IF;
+        -- Conta de cooperado terceiro para cobertura da garantia da operacao
+        IF nvl(rw_cobertura.nrconta_terceiro,0) <> nvl(pr_nrctater,0) THEN
+          vr_perde_aprovacao := 1;            
+        END IF;
+        -- Utilizacao de aplicacao terceiro para cobertura da garantia (0-Nao/ 1-Sim)
+        IF nvl(rw_cobertura.inaplicacao_terceiro,0) <> nvl(pr_inaplter,0) THEN
+          vr_perde_aprovacao := 1;            
+        END IF; 
+
+        -- Utilizacao de poupanca programada terceiro para cobertura da garantia (0-Nao/ 1-Sim)
+        IF nvl(rw_cobertura.inpoupanca_terceiro,0) <> nvl(pr_inpouter,0) THEN
+          vr_perde_aprovacao := 1;            
+        END IF;
+        -- Resgate Automatico da Garantia (0-Nao/ 1-Sim)
+        IF nvl(rw_cobertura.inresgate_automatico,0) <> nvl(pr_inresaut,0) THEN
+          vr_perde_aprovacao := 1;            
+        END IF;          
+        -- Quantidade de dias permitidos de atraso antes do resgate automatico
+        IF nvl(rw_cobertura.qtdias_atraso_permitido,0) <> nvl(pr_diatrper,0) THEN
+          vr_perde_aprovacao := 1;            
+        END IF;
+        --
+       GENE0007.pc_insere_tag(pr_xml   => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'ingarapr'
+                          ,pr_tag_cont => vr_perde_aprovacao
+                          ,pr_des_erro => vr_dscritic);  
+                            
          RAISE vr_exc_null;
       END IF;
 
+      vr_indx  := 1;
       -- Grava os dados
       BEGIN
         -- Se for para atualizar
         IF vr_blupdate THEN
+          -- Validar se perde aprovação
+          -- Percentual minimo da cobertura da garantia no momento da contratacao
+          IF nvl(rw_cobertura.perminimo,0) <> nvl(pr_permingr,0) THEN
+            vr_perde_aprovacao := 1;
+          END IF;
+          --
+          -- Utilizacao de aplicacao propria para cobertura da garantia da operacao (0-Nao/ 1-Sim)
+          IF nvl(rw_cobertura.inaplicacao_propria,0) <> nvl(pr_inaplpro,0) THEN
+            vr_perde_aprovacao := 1;
+          END IF;
+          --
+          -- Utilizacao de poupanca programada propria para cobertura (0-Nao/ 1-Sim)
+          IF nvl(rw_cobertura.inpoupanca_propria,0) <> nvl(pr_inpoupro,0) THEN
+            vr_perde_aprovacao := 1;
+          END IF;
+          -- Conta de cooperado terceiro para cobertura da garantia da operacao
+          IF nvl(rw_cobertura.nrconta_terceiro,0) <> nvl(pr_nrctater,0) THEN
+            vr_perde_aprovacao := 1;            
+          END IF;
+          -- Utilizacao de aplicacao terceiro para cobertura da garantia (0-Nao/ 1-Sim)
+          IF nvl(rw_cobertura.inaplicacao_terceiro,0) <> nvl(pr_inaplter,0) THEN
+            vr_perde_aprovacao := 1;            
+          END IF; 
+
+          -- Utilizacao de poupanca programada terceiro para cobertura da garantia (0-Nao/ 1-Sim)
+          IF nvl(rw_cobertura.inpoupanca_terceiro,0) <> nvl(pr_inpouter,0) THEN
+            vr_perde_aprovacao := 1;            
+          END IF;
+          -- Resgate Automatico da Garantia (0-Nao/ 1-Sim)
+          IF nvl(rw_cobertura.inresgate_automatico,0) <> nvl(pr_inresaut,0) THEN
+            vr_perde_aprovacao := 1;            
+          END IF;          
+          -- Quantidade de dias permitidos de atraso antes do resgate automatico
+          IF nvl(rw_cobertura.qtdias_atraso_permitido,0) <> nvl(pr_diatrper,0) THEN
+            vr_perde_aprovacao := 1;            
+          END IF;
+          --
           UPDATE tbgar_cobertura_operacao
              SET perminimo               = pr_permingr
                 ,inaplicacao_propria     = pr_inaplpro
@@ -1015,6 +1112,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
                 ,qtdias_atraso_permitido = pr_diatrper
            WHERE idcobertura             = vr_idcobert;
         ELSE
+          IF nvl(pr_permingr,0) > 0  THEN
+            vr_perde_aprovacao := 1;
+          END IF;
+          --
+          -- Utilizacao de aplicacao propria para cobertura da garantia da operacao (0-Nao/ 1-Sim)
+          IF nvl(pr_inaplpro,0) > 0 THEN
+            vr_perde_aprovacao := 1;
+          END IF;
+          --
+          -- Utilizacao de poupanca programada propria para cobertura (0-Nao/ 1-Sim)
+          IF nvl(pr_inpoupro,0) > 0 THEN
+            vr_perde_aprovacao := 1;
+          END IF;
+          -- Conta de cooperado terceiro para cobertura da garantia da operacao
+          IF nvl(pr_nrctater,0) > 0 THEN
+            vr_perde_aprovacao := 1;            
+          END IF;
+          -- Utilizacao de aplicacao terceiro para cobertura da garantia (0-Nao/ 1-Sim)
+          IF nvl(pr_inaplter,0) > 0 THEN
+            vr_perde_aprovacao := 1;            
+          END IF; 
+
+          -- Utilizacao de poupanca programada terceiro para cobertura da garantia (0-Nao/ 1-Sim)
+          IF nvl(pr_inpouter,0) > 0 THEN            
+            vr_perde_aprovacao := 1;            
+          END IF;
+          -- Resgate Automatico da Garantia (0-Nao/ 1-Sim)
+          IF nvl(pr_inresaut,0) > 0 THEN
+            vr_perde_aprovacao := 1;            
+          END IF;          
+          -- Quantidade de dias permitidos de atraso antes do resgate automatico
+          IF nvl(pr_diatrper,0) > 0 THEN
+            vr_perde_aprovacao := 1;            
+          END IF;
+          --
           INSERT INTO tbgar_cobertura_operacao
                      (cdcooper
                      ,nrdconta
@@ -1069,6 +1201,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
                             ,pr_posicao  => 0
                             ,pr_tag_nova => 'idcobert'
                             ,pr_tag_cont => vr_idcobert
+                            ,pr_des_erro => vr_dscritic);
+                            
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'ingarapr'
+                            ,pr_tag_cont => vr_perde_aprovacao
                             ,pr_des_erro => vr_dscritic);
     EXCEPTION
 	  WHEN vr_exc_null THEN

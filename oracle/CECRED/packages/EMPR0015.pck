@@ -78,6 +78,69 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0015 IS
                                      ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                      ,pr_dscritic  OUT crapcri.dscritic%TYPE);                                  
 
+  PROCEDURE pc_aval_perde_aprov (pr_cdcooper  IN crapdat.cdcooper%TYPE      --> Codigo da Cooperativa
+                                ,pr_avtperda  OUT NUMBER  
+                                ,pr_vlperavt  OUT NUMBER  
+                                ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                ,pr_dscritic  OUT crapcri.dscritic%TYPE);  
+
+  PROCEDURE pc_valida_perda_aprov_proposta(pr_cdcooper        IN crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                          ,pr_cdoperad        IN crapnrc.cdoperad%TYPE      --> Codigo Operador                                                                          
+                                          ,pr_nmdatela        IN craptel.nmdatela%TYPE      --> Nome da tela
+                                          ,pr_nrdconta        IN crapass.nrdconta%TYPE      --> Numero da conta
+                                          ,pr_idseqttl        IN crapttl.idseqttl%TYPE      --> Sequencial do Titular
+                                          ,pr_nrctremp        IN crawepr.nrctremp%TYPE      --> Numero do contrato de emprestimo
+                                          ,pr_dsorigem        IN craplgm.dsorigem%TYPE      --> Descrição da origem
+                                           /** ---------------------- Dados para a crawepr -------------------- */
+                                          ,pr_qtpreemp        IN crawepr.qtpreemp%TYPE      --> quantidade de prestacoes do emprestimo. 
+                                          ,pr_dsnivris        IN crawepr.dsnivris%TYPE      -- risco melhora  
+                                          ,pr_cdlcremp        IN crawepr.cdlcremp%TYPE      -- codigo da linha de credito do emprestimo. 
+                                          ,pr_cdfinemp        IN crawepr.cdfinemp%TYPE      -- codigo da finalidade do emprestimo. 
+                                          ,pr_qtdialib        IN crawepr.qtdialib%TYPE      -- numero de dias para liberacao do emprestimo. 
+                                          ,pr_flgimpnp        IN crawepr.flgimpnp%TYPE      -- emissao de nota promissoria. 
+                                          ,pr_percetop        IN crawepr.percetop%TYPE      -- percentual do cet nas operacoes. 
+                                          ,pr_idquapro        IN crawepr.idquapro%TYPE      -- identificacao da qualificacao da operacao (proposta). 
+                                          ,pr_dtdpagto        IN crawepr.dtdpagto%TYPE      -- data do pagamento da primeira prestacao. 
+                                          ,pr_qtpromis        IN crawepr.qtpromis%TYPE      -- quantidade promissorias a serem emitidas. 
+                                          ,pr_flgpagto        IN crawepr.flgpagto%TYPE      -- Data do pagamento
+                                          ,pr_dsctrliq        IN varchar2                   -- Contratos sendo liquidados
+                                          ,pr_idcarenc        IN crawepr.idcarenc%TYPE      -- identificador da carencia para posfixado 
+                                          ,pr_dtcarenc        IN crawepr.dtcarenc%TYPE      -- data da carencia para posfixado  
+                                           /** ------- Dados para dados do Rating e do Banco central ---------- */                      
+                                          ,pr_nrgarope        IN crapprp.nrgarope%TYPE       --numero da garantia da operacao 
+                                          ,pr_nrperger        IN crapprp.nrperger%TYPE       --percepcao geral com relacao a empresa (rating) 
+                                          ,pr_dtcnsspc        IN crapprp.dtcnsspc%TYPE       --data da consulta ao spc. 
+                                          ,pr_dtdrisco        IN crapprp.dtdrisco%TYPE       --data de entrada na central de risco. 
+                                          ,pr_vltotsfn        IN crapprp.vltotsfn%TYPE       --valor total sfn exceto na cooperativa 
+                                          ,pr_qtopescr        IN crapprp.qtopescr%TYPE       --quantidade de operacoes na central de risco scr. 
+                                          ,pr_qtifoper        IN crapprp.qtifoper%TYPE       --quantidade de instituicoes financeiras que o cooperado ja possui operacao. 
+                                          ,pr_nrliquid        IN crapprp.nrliquid%TYPE       --numero do contrato do limite credito ou adp que esta sendo liquidado 
+                                          ,pr_vlopescr        IN crapprp.vlopescr%TYPE       --valor das operacoes vencidas na central de risco scr. 
+                                          ,pr_vlrpreju        IN crapprp.vlrpreju%TYPE       --valor do prejuizo fora da cooperativa. 
+                                          ,pr_nrpatlvr        IN crapprp.nrpatlvr%TYPE       --sequencia do item relativo ao patrimonio pessoal livre do endividamento (rating) 
+                                          ,pr_dtoutspc        IN crapprp.dtoutspc%TYPE       --contem a data da consulta do conjuge / seg. titular ao spc. 
+                                          ,pr_dtoutris        IN crapprp.dtoutris%TYPE       --contem a data da consulta na central de risco para o conjuge / seg. titular. 
+                                          ,pr_vlsfnout        IN crapprp.vlsfnout%TYPE       --contem o endividamento do conjuge ou do 2. titular. 
+                                          /** ---------------- Dados Salario/Faturamento -------------------- **/
+                                          ,pr_vlsalari        IN crapprp.vlsalari%TYPE       --valor do salario do associado. 
+                                          ,pr_vloutras        IN crapprp.vloutras%TYPE       --valor das outras rendas. 
+                                          ,pr_vlalugue        IN crapprp.vlalugue%TYPE       --valor do aluguel. 
+                                          ,pr_vlsalcon        IN crapprp.vlsalcon%TYPE       --valor do salario do conjuge. 
+                                          ,pr_nmempcje        IN crapprp.nmempcje%TYPE       --nome da empresa onde o conjuge trabalha. 
+                                          ,pr_flgdocje        IN crapprp.flgdocje%TYPE       --conjuge co-responsavel. 
+                                          ,pr_nrctacje        IN crapprp.nrctacje%TYPE       --numero da conta do conjuge. 
+                                          ,pr_nrcpfcje        IN crapprp.nrcpfcje%TYPE       --numero do cpf do conjuge do associado. 
+                                          ,pr_vlmedfat        IN crapprp.vlmedfat%TYPE       --valor medio do faturamento bruto mensal. 
+                                          ,pr_dsdfinan        IN varchar2                    --Faturamento em casp de pessoa física
+                                          ,pr_dsdrendi        IN varchar2                    --Rendimentos
+                                          ,pr_dsjusren        IN varchar2                    --Justificativa rendimento
+                                          ,pr_idfiniof        IN crawepr.idfiniof%TYPE       --Indicador finaciamento de IOF
+                                          --
+                                          ,pr_idpeapro        OUT INTEGER                   --> 0 - Não perdeu aprovação e 1 - Perdeu aprovação
+                                          ,pr_dserro          OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
+                                          ,pr_cdcritic        OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                          ,pr_dscritic        OUT crapcri.dscritic%TYPE); --> Descricao da critica                                                                                      
+  function zeroToNull(p_valor in number) return varchar2;
 END EMPR0015;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
@@ -93,7 +156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
   --
   -- Objetivo  : Centralizar rotinas para perda de aprovação da proposta do empréstimo.
   --
-  -- Alteracoes: 
+  -- Alteracoes: Incluido mascara para formatar valores para VERLOG com duas casas decimais - Rubens Lima - Mouts - 30/01/2019
   --
   ---------------------------------------------------------------------------
 
@@ -396,12 +459,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => 'Valor original do empréstimo',
                                     pr_dsdadant => 'ND',
-                                    pr_dsdadatu => c1.vlempori);
+                                    pr_dsdadatu => to_char(nvl(c1.vlempori,0),'FM999G999G990D00'));
                                             
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => 'Valor Atual do empréstimo',
                                     pr_dsdadant => 'ND',
-                                    pr_dsdadatu => pr_vlemprst);  
+                                    pr_dsdadatu => to_char(nvl(pr_vlemprst,0),'FM999G999G990D00'));
                                          
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => 'Diferença',
@@ -411,17 +474,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => 'Tolerância',
                                     pr_dsdadant => 'ND',
-                                    pr_dsdadatu => nvl(vr_vltolemp,0));
+                                    pr_dsdadatu => to_char(nvl(vr_vltolemp,0),'FM999G999G990D00'));
                                             
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => 'Valor original da parcela',
                                     pr_dsdadant => 'ND',
-                                    pr_dsdadatu => c1.vlpreori);
+                                    pr_dsdadatu => to_char(nvl(c1.vlpreori,0),'FM999G999G990D00'));
 
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => 'Valor atual da parcela',
                                     pr_dsdadant => 'ND',
-                                    pr_dsdadatu => pr_vlpreemp);
+                                    pr_dsdadatu => to_char(nvl(pr_vlpreemp,0),'FM999G999G990D00'));
 
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => '% da Diferença',
@@ -625,6 +688,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
        Objetivo  : Procedure para procesar as regras de expiração da proposta de crédito
 
        Alteracoes: 19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
+				   
+                   Inclusão de GALPAO para garantia de imovel
+                   05/12/2018 - Sprint 7 - Paulo Martins (Mouts)
     ............................................................................. */
 
     DECLARE
@@ -684,7 +750,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           AND bpr.nrctrpro = p_nrctrpro -- Numero proposta contrato
           AND bpr.flgalien = 1          -- garantia alienada a proposta
           AND bpr.tpctrpro IN (90,99)    -- Garantia
-          AND upper(dscatbem) IN ('TERRENO','APARTAMENTO','CASA')
+          AND upper(dscatbem) IN ('TERRENO','APARTAMENTO','CASA','GALPAO')
           AND ROWNUM = 1;
 
       CURSOR cr_crapbpr_automovel(p_cdcooper IN crapcop.cdcooper%type,
@@ -716,7 +782,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           AND bpr.nrctrpro = p_nrctrpro -- Numero proposta contrato
           AND bpr.flgalien = 1  -- garantia alienada a proposta
           AND bpr.tpctrpro IN (90,99) -- Garantia
-          AND upper(dscatbem) IN ('EQUIPAMENTO','MAQUINA DE COSTURA')
+          AND upper(dscatbem) IN ('EQUIPAMENTO','MAQUINA DE COSTURA', 'MAQUINA E EQUIPAMENTO')
           AND ROWNUM = 1;           
           
       CURSOR cr_crapavt_terc(p_cdcooper IN crapcop.cdcooper%type,
@@ -780,7 +846,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
       vr_idencgar    NUMBER(1):= 0; -- Variável que define que encontrou garantia
       vr_qtdiacor    NUMBER(5):= 0; -- Guarda a quantidade de dias CORRIDOS entre a data de aprovação e a data atual
       
+      vr_qtdibaut    INTEGER :=0;
+      vr_qtdibapl    INTEGER :=0;
+      vr_qtdibsem    INTEGER :=0;
+      vr_cdorigem    crawepr.cdorigem%TYPE;
+      vr_setibaut    BOOLEAN := FALSE;  -- indica se achou qtd de dias em que expira proposta para garantia automovel do conta online
+      vr_setibapl    BOOLEAN := FALSE;  -- indica se achou qtd de dias em que expira proposta para garantia apliação do conta online
+      vr_setibsem    BOOLEAN := FALSE;  -- indica se achou qtd de dias em que expira proposta para sem garantia do conta online
+
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
+
+      FUNCTION get_cdorigem(pr_cdcooper crawepr.cdcooper%TYPE
+                           ,pr_nrdconta crawepr.nrdconta%TYPE
+                           ,pr_nrctremp crawepr.nrctremp%TYPE) RETURN crawepr.cdorigem%TYPE IS
+       CURSOR c_origem IS
+         SELECT cwep.cdorigem
+           FROM crawepr cwep      
+          WHERE cwep.cdcooper = pr_cdcooper
+            AND cwep.nrdconta = pr_nrdconta
+            AND cwep.nrctremp = pr_nrctremp;
+         vcd_origem crawepr.cdorigem%TYPE;
+         
+       BEGIN
+          OPEN c_origem;
+          FETCH c_origem INTO vcd_origem;
+          CLOSE c_origem;      
+          RETURN nvl(vcd_origem,-99);
+       EXCEPTION WHEN OTHERS
+         THEN RETURN -99;   
+      END get_cdorigem;
+      
 
     BEGIN
       FOR rw_crapcop IN cr_crapcop LOOP -- Cursor de Cooperativas
@@ -824,9 +919,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             FOR rw_crapbpr_automovel IN cr_crapbpr_automovel(rw_crapcop.cdcooper,
                                                              rw_crawepr.nrdconta,
                                                              rw_crawepr.nrctremp) LOOP
+              --
+              vr_cdorigem := get_cdorigem(rw_crapcop.cdcooper,rw_crawepr.nrdconta,rw_crawepr.nrctremp); -- P438              
+              vr_qtdibaut := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,93,3)),0);  -- automóvel -- P438
+              vr_setibaut := FALSE; -- P438
+              IF vr_cdorigem = 3 AND vr_qtdibaut > 0 -- P438
+               THEN                
+                 IF vr_qtdibaut > vr_qtddiexp THEN   -- P438                  
+                    vr_qtddiexp := vr_qtdibaut; -- P438
+                    vr_setibaut := TRUE; -- P438
+                 END IF;
+              END IF; -- P438
+              --
               -- Verifica se a quantidade de dias para garantia é maior que a quantidade de dias da variável
               -- de dias de expiração, se for, atribuiu a quantidade de dias da garantia na variável
-              IF vr_qtdpaaut > vr_qtddiexp THEN
+              IF vr_qtdpaaut > vr_qtddiexp AND NOT(vr_setibaut) THEN -- P438 THEN
                 -- No caso de um contrato ter mais de uma garantia, considerar do cadastro tab089 o que tem a maior quantidade de dias;                
                 vr_qtddiexp := vr_qtdpaaut;
               END IF;
@@ -865,9 +972,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             FOR rw_aplicacao IN cr_aplicacao(rw_crapcop.cdcooper,
                                              rw_crawepr.nrdconta,
                                              rw_crawepr.nrctremp) LOOP
+              --
+              vr_cdorigem := get_cdorigem(rw_crapcop.cdcooper,rw_crawepr.nrdconta,rw_crawepr.nrctremp); -- P438
+              vr_qtdibapl := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,97,3)),0);  -- aplicação oriunda conta online -- P438
+              vr_setibapl := FALSE; -- P438
+              IF vr_cdorigem = 3 AND vr_qtdibaut > 0 -- P438
+               THEN                
+                 IF vr_qtdibapl > vr_qtddiexp THEN -- P438
+                    vr_qtddiexp := vr_qtdibapl; -- P438
+                    vr_setibapl := TRUE; -- P438
+                 END IF;              
+              END IF; 
+              --
               -- Verifica se a quantidade de dias para garantia é maior que a quantidade de dias da variável
               -- de dias de expiração, se for, atribuiu a quantidade de dias da garantia na variável
-              IF vr_qtdpaapl > vr_qtddiexp THEN
+              IF vr_qtdpaapl > vr_qtddiexp AND NOT(vr_setibapl) THEN
                 -- No caso de um contrato ter mais de uma garantia, considerar do cadastro tab089 o que tem a maior quantidade de dias;                
                 vr_qtddiexp := vr_qtdpaapl;
               END IF;
@@ -887,9 +1006,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
               vr_idencgar := 1;              
             END LOOP;-- Máquins e Equipamentos
                         
+            vr_cdorigem := get_cdorigem(rw_crapcop.cdcooper,rw_crawepr.nrdconta,rw_crawepr.nrctremp); -- P438
+            vr_qtdibsem := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,101,3)),0); -- sem garantia oriunda conta online  -- P438
+             
+            vr_setibsem := FALSE; -- P438
+            IF vr_cdorigem = 3 AND vr_idencgar = 0 THEN -- P438
+              vr_qtddiexp := vr_qtdibsem; -- P438
+              vr_setibsem := TRUE; -- P438
+            END IF;  
+                        
             -- No caso em que a proposta não tem garantias, o sistema deverá considerar somente o parâmetro da 
             -- tela tab089 "Operação sem garantia"
-            IF vr_idencgar = 0 THEN
+            IF vr_idencgar = 0 AND NOT(vr_setibsem) THEN
               vr_qtddiexp:= vr_qtdpasem;
             END IF;
             -- Verificar a quantidade de dias CORRIDOS entre a data de aprovação da proposta e a data atual
@@ -1297,7 +1425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
          AND epr.dtaprova IS NOT NULL  -- Ter data de 
          AND epr.cdcooper = c.cdcooper
          AND epr.cdopeste = c.cdoperad
-         AND c.dsdemail   is not null
+         AND TRIM(c.dsdemail) is not null
          AND NOT EXISTS (SELECT 1 
                            FROM crapepr epr2
                           WHERE epr2.cdcooper = epr.cdcooper
@@ -1489,7 +1617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
          AND epr.nrctremp = pr_nrctremp
          AND epr.cdcooper = c.cdcooper
          AND epr.cdopeste = c.cdoperad
-         AND c.dsdemail   is not null
+         AND TRIM(c.dsdemail) is not null
          AND a.cdcooper = epr.cdcooper
          AND a.nrdconta = epr.nrdconta
          AND NOT EXISTS (SELECT 1 
@@ -1521,6 +1649,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
          AND cp.cdcooper = 0;
     RW_EMAIL_REMETENTE CR_EMAIL_REMETENTE%ROWTYPE;
         
+    CURSOR cr_nls IS
+      SELECT v.parameter
+            ,v.value
+        FROM V$NLS_PARAMETERS v
+       WHERE v.parameter IN ('NLS_TIME_FORMAT',
+                             'NLS_DATE_LANGUAGE',
+                             'NLS_TIMESTAMP_FORMAT');    
+    
     -- Variaveis Excecao
     vr_exc_erro           EXCEPTION;
 
@@ -1534,7 +1670,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
     vr_xml            CLOB;             --> XML do retorno
     vr_texto_completo  VARCHAR2(32600);    
                                                                      
+    vr_nls_time_format VARCHAR2(400);
+    vr_nls_date_language VARCHAR2(400);
+    vr_nls_timestamp_format VARCHAR2(400);
+      
+                                                                     
   BEGIN
+    -- Carregar os parametros atuais 
+    FOR rw_nls IN cr_nls LOOP
+      IF rw_nls.parameter = 'NLS_TIME_FORMAT' THEN
+        vr_nls_time_format := rw_nls.value;
+      ELSIF rw_nls.parameter = 'NLS_DATE_LANGUAGE' THEN
+        vr_nls_date_language    := rw_nls.value;  
+      ELSIF rw_nls.parameter = 'NLS_TIMESTAMP_FORMAT' THEN
+        vr_nls_timestamp_format := rw_nls.value;
+      END IF;
+    END LOOP;
+    --
+    -- Atualizar os parametros para brasil.
+    BEGIN
+      EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_language = ''BRAZILIAN PORTUGUESE''';
+      EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_format = ''HH24:MI:SSXFF''';      
+      EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_format = ''DD/MM/RR HH24:MI:SSXFF''';      
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao atualizar SESSION '||SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+   
 
     -- Busca os endereços de e-mail do remetente
     OPEN cr_email_remetente;
@@ -1686,6 +1849,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
         END IF;
       END IF;        
     END IF;
+    
+    -- Atualizar os parametros para o que estava antes
+    BEGIN
+      EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_format = '''||vr_nls_time_format||'''';
+      EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_language = '''||vr_nls_date_language||'''';
+      EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_format = '''||vr_nls_timestamp_format||'''';
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao atualizar SESSION '||SQLERRM;
+        RAISE vr_exc_erro;
+    END;    
     --gene0002.pc_XML_para_arquivo(pr_retxml
     --                           ,'/usr/coop/cecred/'
     --                           ,'TESTE.txt'
@@ -1704,5 +1878,817 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
       pr_dscritic := 'Erro na procedure EMPR0015.pc_valida_email_proposta: ' || SQLERRM;
         
   END pc_valida_email_proposta;   
+  
+  PROCEDURE pc_aval_perde_aprov (pr_cdcooper  IN crapdat.cdcooper%TYPE      --> Codigo da Cooperativa
+                                ,pr_avtperda  OUT NUMBER  -- 0 Não perde | 1 perde aprovação
+                                ,pr_vlperavt  OUT NUMBER  -- Valor
+                                ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS
+   /* .............................................................................
+
+       Programa: pc_aval_perde_aprov
+       Sistema : Crédito - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Paulo Martins (Mouts)
+       Data    : 30/10/2018          Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+
+       Objetivo  : Procedure para retornar informação referente a perda de aprovação em troca de avalista 
+       onde :
+             pr_avtperda se 0 perde aprovação e 1 não perde.
+             pr_vlperavt valor utilizado como vamor base para perda de aprovação.
+
+       Alteracoes: 
+    ............................................................................. */   
+
+    vr_dstextab craptab.dstextab%TYPE;
+    vr_avtperda NUMBER  :=1; --Não perder | 0 Perde
+    vr_vlperavt NUMBER  :=0; 
+        
+    -- Variaveis Excecao
+    vr_exc_erro           EXCEPTION;
+
+    vr_dscritic              VARCHAR2(4000);
+                                                                     
+  BEGIN
+      if pr_cdcooper is not null then
+
+      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'USUARI'
+                                               ,pr_cdempres => 11
+                                               ,pr_cdacesso => 'PAREMPREST'
+                                               ,pr_tpregist => 01);
+
+      pr_avtperda := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,132,1)),1); 
+      pr_vlperavt := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,134,12)),0); 
+      
+      else
+        vr_dscritic := 'Cooperativa nao informada!';
+        raise vr_exc_erro;
+      end if;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := 0;
+      pr_dscritic := vr_dscritic;
+              
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na procedure EMPR0015.pc_aval_perde_aprov: ' || SQLERRM;
+        
+  END pc_aval_perde_aprov;   
+  
+  PROCEDURE pc_valida_perda_aprov_proposta(pr_cdcooper        IN crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                          ,pr_cdoperad        IN crapnrc.cdoperad%TYPE      --> Codigo Operador                                                                          
+                                          ,pr_nmdatela        IN craptel.nmdatela%TYPE      --> Nome da tela
+                                          ,pr_nrdconta        IN crapass.nrdconta%TYPE      --> Numero da conta
+                                          ,pr_idseqttl        IN crapttl.idseqttl%TYPE      --> Sequencial do Titular
+                                          ,pr_nrctremp        IN crawepr.nrctremp%TYPE      --> Numero do contrato de emprestimo
+                                          ,pr_dsorigem        IN craplgm.dsorigem%TYPE      --> Descrição da origem
+                                           /** ---------------------- Dados para a crawepr -------------------- */
+                                          ,pr_qtpreemp        IN crawepr.qtpreemp%TYPE      --> quantidade de prestacoes do emprestimo. 
+                                          ,pr_dsnivris        IN crawepr.dsnivris%TYPE      -- risco melhora  
+                                          ,pr_cdlcremp        IN crawepr.cdlcremp%TYPE      -- codigo da linha de credito do emprestimo. 
+                                          ,pr_cdfinemp        IN crawepr.cdfinemp%TYPE      -- codigo da finalidade do emprestimo. 
+                                          ,pr_qtdialib        IN crawepr.qtdialib%TYPE      -- numero de dias para liberacao do emprestimo. 
+                                          ,pr_flgimpnp        IN crawepr.flgimpnp%TYPE      -- emissao de nota promissoria. 
+                                          ,pr_percetop        IN crawepr.percetop%TYPE      -- percentual do cet nas operacoes. 
+                                          ,pr_idquapro        IN crawepr.idquapro%TYPE      -- identificacao da qualificacao da operacao (proposta). 
+                                          ,pr_dtdpagto        IN crawepr.dtdpagto%TYPE      -- data do pagamento da primeira prestacao. 
+                                          ,pr_qtpromis        IN crawepr.qtpromis%TYPE      -- quantidade promissorias a serem emitidas. 
+                                          ,pr_flgpagto        IN crawepr.flgpagto%TYPE      -- Data do pagamento
+                                          ,pr_dsctrliq        IN varchar2                   -- Contratos sendo liquidados
+                                          ,pr_idcarenc        IN crawepr.idcarenc%TYPE      -- identificador da carencia para posfixado 
+                                          ,pr_dtcarenc        IN crawepr.dtcarenc%TYPE      -- data da carencia para posfixado  
+                                           /** ------- Dados para dados do Rating e do Banco central ---------- */                      
+                                          ,pr_nrgarope        IN crapprp.nrgarope%TYPE       --numero da garantia da operacao 
+                                          ,pr_nrperger        IN crapprp.nrperger%TYPE       --percepcao geral com relacao a empresa (rating) 
+                                          ,pr_dtcnsspc        IN crapprp.dtcnsspc%TYPE       --data da consulta ao spc. 
+                                          ,pr_dtdrisco        IN crapprp.dtdrisco%TYPE       --data de entrada na central de risco. 
+                                          ,pr_vltotsfn        IN crapprp.vltotsfn%TYPE       --valor total sfn exceto na cooperativa 
+                                          ,pr_qtopescr        IN crapprp.qtopescr%TYPE       --quantidade de operacoes na central de risco scr. 
+                                          ,pr_qtifoper        IN crapprp.qtifoper%TYPE       --quantidade de instituicoes financeiras que o cooperado ja possui operacao. 
+                                          ,pr_nrliquid        IN crapprp.nrliquid%TYPE       --numero do contrato do limite credito ou adp que esta sendo liquidado 
+                                          ,pr_vlopescr        IN crapprp.vlopescr%TYPE       --valor das operacoes vencidas na central de risco scr. 
+                                          ,pr_vlrpreju        IN crapprp.vlrpreju%TYPE       --valor do prejuizo fora da cooperativa. 
+                                          ,pr_nrpatlvr        IN crapprp.nrpatlvr%TYPE       --sequencia do item relativo ao patrimonio pessoal livre do endividamento (rating) 
+                                          ,pr_dtoutspc        IN crapprp.dtoutspc%TYPE       --contem a data da consulta do conjuge / seg. titular ao spc. 
+                                          ,pr_dtoutris        IN crapprp.dtoutris%TYPE       --contem a data da consulta na central de risco para o conjuge / seg. titular. 
+                                          ,pr_vlsfnout        IN crapprp.vlsfnout%TYPE       --contem o endividamento do conjuge ou do 2. titular. 
+                                          /** ---------------- Dados Salario/Faturamento -------------------- **/
+                                          ,pr_vlsalari        IN crapprp.vlsalari%TYPE       --valor do salario do associado. 
+                                          ,pr_vloutras        IN crapprp.vloutras%TYPE       --valor das outras rendas. 
+                                          ,pr_vlalugue        IN crapprp.vlalugue%TYPE       --valor do aluguel. 
+                                          ,pr_vlsalcon        IN crapprp.vlsalcon%TYPE       --valor do salario do conjuge. 
+                                          ,pr_nmempcje        IN crapprp.nmempcje%TYPE       --nome da empresa onde o conjuge trabalha. 
+                                          ,pr_flgdocje        IN crapprp.flgdocje%TYPE       --conjuge co-responsavel. 
+                                          ,pr_nrctacje        IN crapprp.nrctacje%TYPE       --numero da conta do conjuge. 
+                                          ,pr_nrcpfcje        IN crapprp.nrcpfcje%TYPE       --numero do cpf do conjuge do associado. 
+                                          ,pr_vlmedfat        IN crapprp.vlmedfat%TYPE       --valor medio do faturamento bruto mensal. 
+                                          ,pr_dsdfinan        IN varchar2                    --Faturamento em casp de pessoa física
+                                          ,pr_dsdrendi        IN varchar2                    --Rendimentos
+                                          ,pr_dsjusren        IN varchar2                    --Justificativa rendimento
+                                          ,pr_idfiniof        IN crawepr.idfiniof%TYPE       --Indicador finaciamento de IOF
+                                          --
+                                          ,pr_idpeapro        OUT INTEGER                   --> 0 - Não perdeu aprovação e 1 - Perdeu aprovação
+                                          ,pr_dserro          OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
+                                          ,pr_cdcritic        OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                          ,pr_dscritic        OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
+  BEGIN
+    /* .............................................................................
+
+       Programa: pc_valida_perda_aprov_proposta
+       Sistema : Crédito - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Paulo Martins (Mouts)
+       Data    : Novembro/2018                         Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+
+       Objetivo  : Procedure para processaer as regras para perda da aprovação da proposta de empréstimo.
+                   Esta procedure concentra as regras que não estão no Progress (b1wgen0002) referente as 
+                   validações da alteração de propostas aprovadas, após as validações das regras já existentes, 
+                   será validadas as regras contidas nesta procedure.
+                   
+                     
+       Alterações: 
+    ............................................................................. */
+
+    DECLARE
+       /** ---------------------- Dados para a crawepr -------------------- */
+       CURSOR cr_crawepr is
+       SELECT c.qtpreemp, -- quantidade de prestacoes do emprestimo. 
+              c.dsnivris, -- risco melhora  
+              c.cdlcremp, -- codigo da linha de credito do emprestimo. 
+              c.cdfinemp, -- codigo da finalidade do emprestimo. 
+              c.qtdialib, -- numero de dias para liberacao do emprestimo. 
+              c.flgimppr, -- indica se a proposta do emprestimo devera ser impressa ou nao. 
+              c.flgimpnp, -- emissao de nota promissoria. 
+              c.percetop, -- percentual do cet nas operacoes. 
+              c.idquapro, -- identificacao da qualificacao da operacao (proposta). 
+              c.dtdpagto, -- data do pagamento da primeira prestacao. 
+              c.qtpromis, -- quantidade promissorias a serem emitidas. 
+              c.flgpagto, -- Data do pagamento
+              c.idcarenc, -- identificador da carencia para posfixado 
+              c.dtcarenc, -- data da carencia para posfixado  
+              nvl(c.nrctrliq##1,0)+nvl(c.nrctrliq##2,0)+nvl(c.nrctrliq##3,0)+nvl(c.nrctrliq##4,0)+nvl(c.nrctrliq##5,0)+
+              nvl(c.nrctrliq##6,0)+nvl(c.nrctrliq##7,0)+nvl(c.nrctrliq##8,0)+nvl(c.nrctrliq##9,0)+nvl(c.nrctrliq##10,0) smctrliq, --Contratos a serem liquidados
+              zeroToNull(c.nrctrliq##1)||' '||
+              zeroToNull(c.nrctrliq##2)||' '||
+              zeroToNull(c.nrctrliq##3)||' '||
+              zeroToNull(c.nrctrliq##4)||' '||
+              zeroToNull(c.nrctrliq##5)||' '||
+              zeroToNull(c.nrctrliq##6)||' '||
+              zeroToNull(c.nrctrliq##7)||' '||
+              zeroToNull(c.nrctrliq##8)||' '||
+              zeroToNull(c.nrctrliq##9)||' '||
+              zeroToNull(c.nrctrliq##10) nrctrliq,    
+              tpemprst,       
+              decode(c.idfiniof,0,'Não','Sim') idfiniof
+         FROM crawepr c
+        WHERE c.cdcooper = pr_cdcooper
+          AND c.nrdconta = pr_nrdconta
+          AND c.nrctremp = pr_nrctremp;
+          --
+          r_crawepr cr_crawepr%rowtype;
+
+       CURSOR cr_crapprp is
+       SELECT p.nrgarope, --numero da garantia da operacao 
+              p.nrperger, --percepcao geral com relacao a empresa (rating) 
+              p.dtcnsspc, --data da consulta ao spc. 
+              p.nrinfcad, --sequencia do item relacionado a informacoes cadastrais 
+              p.dtdrisco, --data de entrada na central de risco. 
+              p.vltotsfn, --valor total sfn exceto na cooperativa 
+              p.qtopescr, --quantidade de operacoes na central de risco scr. 
+              p.qtifoper, --quantidade de instituicoes financeiras que o cooperado ja possui operacao. 
+              p.nrliquid, --numero do contrato do limite credito ou adp que esta sendo liquidado 
+              p.vlopescr, -- valor das operacoes vencidas na central de risco scr. 
+              p.vlrpreju, --valor do prejuizo fora da cooperativa. 
+              p.nrpatlvr, --sequencia do item relativo ao patrimonio pessoal livre do endividamento (rating) 
+              p.dtoutspc, --contem a data da consulta do conjuge / seg. titular ao spc. 
+              p.dtoutris, --contem a data da consulta na central de risco para o conjuge / seg. titular. 
+              p.vlsfnout, --contem o endividamento do conjuge ou do 2. titular. 
+              /** ---------------- Dados Salario/Faturamento -------------------- **/
+              p.vlsalari, --valor do salario do associado. 
+              p.vloutras, --valor das outras rendas. 
+              p.vlalugue, --valor do aluguel. 
+              p.vlsalcon, --valor do salario do conjuge. 
+              p.nmempcje, --nome da empresa onde o conjuge trabalha. 
+              p.flgdocje, --conjuge co-responsavel. 
+              p.nrctacje, --numero da conta do conjuge. 
+              p.nrcpfcje, --numero do cpf do conjuge do associado. 
+              p.vlmedfat  --valor medio do faturamento bruto mensal. 
+         FROM crapprp p 
+        WHERE p.cdcooper = pr_cdcooper
+          AND p.nrdconta = pr_nrdconta
+          AND p.nrctrato = pr_nrctremp;
+          --AND p.tpctrato = ;
+          --
+          r_crapprp cr_crapprp%rowtype;    
+      
+      /*Quando existe mais de uma renda para o mesmo contrato, a justificativa no banco é a mesma*/
+      CURSOR cr_craprpr IS
+      SELECT r.dsjusren
+            ,sum(r.tpdrendi) Smtpdrendi
+            ,sum(r.vldrendi) Smvldrendi
+        FROM craprpr r
+       WHERE r.cdcooper = pr_cdcooper
+         AND r.nrdconta = pr_nrdconta
+         AND r.nrctrato = pr_nrctremp
+       group by r.dsjusren;
+
+      r_craprpr cr_craprpr%rowtype;        
+
+      CURSOR cr_crapjfn IS       
+      SELECT nvl(f.vlrftbru##1,0)+
+             nvl(f.vlrftbru##2,0)+
+             nvl(f.vlrftbru##3,0)+            
+             nvl(f.vlrftbru##4,0)+             
+             nvl(f.vlrftbru##5,0)+             
+             nvl(f.vlrftbru##6,0)+             
+             nvl(f.vlrftbru##7,0)+
+             nvl(f.vlrftbru##8,0)+
+             nvl(f.vlrftbru##9,0)+
+             nvl(f.vlrftbru##10,0)+
+             nvl(f.vlrftbru##11,0)+
+             nvl(f.vlrftbru##12,0) vlrftbru
+        FROM crapjfn f 
+       WHERE f.cdcooper = pr_cdcooper
+         AND f.nrdconta = pr_nrdconta;       
+         
+      r_crapjfn cr_crapjfn%rowtype; 
+       
+      -- Variaveis tratamento de erros
+      vr_cdcritic             crapcri.cdcritic%TYPE;
+      vr_dscritic             VARCHAR2(4000);
+      vr_exc_erro             EXCEPTION;
+      
+      --Variáveis utilizadas nas validações
+      vr_perde char(1) := 'N';
+      vr_indx PLS_INTEGER;
+      vr_split               gene0002.typ_split := gene0002.typ_split();
+      vr_split_rendimentos   gene0002.typ_split := gene0002.typ_split();
+      vr_split_faturamentos  gene0002.typ_split := gene0002.typ_split();      
+      vr_somaContratos number(10) := 0;
+      vr_somaValoresRendimento number(10,2) := 0;
+      vr_somaTpContratos       number(10) := 0; 
+      vr_somaFaturamentos      number(25,2) := 0;   
+      vr_nrdrowid              ROWID;          
+      vr_idiof_aux             varchar2(5);     
+
+      
+       --Será utilizado para gravar todas as alterações
+       TYPE typ_reg_alteracoes IS RECORD(dsmotivo varchar2(100)   --> Motivos da Perda
+                                        ,nmcampo  varchar2(200)   --> Nome do campo
+                                        ,dsdadant varchar2(4000)   --> Valor Anterior
+                                        ,dsdadatu varchar2(4000)); --> Valor Atual
+        /* Definição de tabela que compreenderá os registros acima declarados */
+        TYPE typ_tab_alteracoes IS TABLE OF typ_reg_alteracoes INDEX BY PLS_INTEGER;
+        /* Variável que armazenará uma instancia da tabela */
+        vr_tab_alteracoes typ_tab_alteracoes;
+        
+      PROCEDURE prc_grava_log IS
+      /*Gravar log*/
+      begin
+
+        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_dscritic => ''
+                            ,pr_dsorigem => pr_dsorigem
+                            ,pr_dstransa => 'A proposta :'||pr_nrctremp
+                                          ||' Perdeu a aprovação devido alteracao em Regra Geral.'
+                            ,pr_dttransa => TRUNC(SYSDATE)
+                            ,pr_flgtrans => 1
+                            ,pr_hrtransa => gene0002.fn_busca_time
+                            ,pr_idseqttl => pr_idseqttl
+                            ,pr_nmdatela => pr_nmdatela
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);
+      exception 
+        when others then
+          vr_dscritic := 'Erro ao gravar log: '||sqlerrm;
+          raise vr_exc_erro;                            
+      end;         
+      
+      PROCEDURE prc_grava_item_log(p_nmcampo in varchar2,
+                                   p_nrdrowid in rowid,
+                                   p_dsdadant in varchar2,
+                                   p_dsdadatu in varchar2) IS
+      /*Gravar Item log*/
+      begin
+
+        GENE0001.pc_gera_log_item(pr_nrdrowid => p_nrdrowid,
+                                  pr_nmdcampo => p_nmcampo,--'Valor Atual do empréstimo',
+                                  pr_dsdadant => p_dsdadant,--'ND',
+                                  pr_dsdadatu => p_dsdadatu); 
+                                  
+      exception 
+        when others then
+          vr_dscritic := 'Erro ao gravar item log: '||sqlerrm;
+          raise vr_exc_erro;                                       
+      end;          
+      
+      PROCEDURE prc_valida_alteracao(p_motivo   in varchar2,
+                                     p_nmcampo  in varchar2,
+                                     p_dsdadant in varchar2,
+                                     p_dsdadatu in varchar2,
+                                     p_index    in out number,
+                                     p_sn_perde in out varchar2) IS
+                                     
+      /*Validar se ocorreu alteração*/
+      
+      vr_dsdadant varchar2(4000);
+      vr_dsdadatu varchar2(4000);
+      
+      begin
+        
+        if p_dsdadant is null then
+          vr_dsdadant := 'ND';
+        else
+          vr_dsdadant := p_dsdadant;
+        end if;
+        --
+        if p_dsdadatu is null then
+          vr_dsdadatu := 'ND';
+        else
+          vr_dsdadatu := p_dsdadatu;
+        end if;
+        
+        --Ocorreu alteração de valores
+        if vr_dsdadant != vr_dsdadatu then
+          vr_tab_alteracoes(p_index).dsmotivo := p_motivo;    --> Motivos da Perda
+          vr_tab_alteracoes(p_index).nmcampo  := p_nmcampo;   --> Nome do campo
+          vr_tab_alteracoes(p_index).dsdadant := vr_dsdadant; --> Valor Anterior
+          vr_tab_alteracoes(p_index).dsdadatu := vr_dsdadatu; --> Valor Atual   
+          p_index := p_index+1;
+          p_sn_perde := 'S';
+        end if; 
+      exception 
+       when others then
+        vr_dscritic := 'Erro ao validar alterações: '||sqlerrm;
+        raise vr_exc_erro;          
+      end;         
+      
+    BEGIN
+      
+      OPEN cr_crawepr;
+       FETCH cr_crawepr INTO r_crawepr;
+        if cr_crawepr%notfound then
+          close cr_crawepr;
+           vr_dscritic := 'Contrato[ '||pr_nrctremp||' ] nao encontrado para validar Regras gerais.';
+           raise vr_exc_erro;    
+        end if;
+      CLOSE cr_crawepr;
+      
+      OPEN cr_crapprp;
+       FETCH cr_crapprp INTO r_crapprp;
+      CLOSE cr_crapprp;
+
+      OPEN cr_craprpr;
+       FETCH cr_craprpr INTO r_craprpr;
+      CLOSE cr_craprpr;
+      
+      OPEN cr_crapjfn;
+       FETCH cr_crapjfn INTO r_crapjfn;
+      CLOSE cr_crapjfn;      
+      
+      vr_indx  := 1;
+      vr_perde := 'N';
+      
+      /**Informações que chegam como String**/
+      
+      --dsctrliq
+/*      if substr(trim(upper(pr_dsctrliq)),1,3) != 'SEM' then -- Sem liquidações
+        vr_split := gene0002.fn_quebra_string(pr_string  => replace(pr_dsctrliq,'.'),
+                                              pr_delimit => ',');
+    
+      IF vr_split.count > 0 THEN
+        FOR x IN vr_split.FIRST .. vr_split.LAST LOOP
+         vr_somaContratos := vr_somaContratos+to_number(vr_split(x));
+        END LOOP;
+      END IF;
+      end if;
+      --
+      if nvl(vr_somaContratos,0) != r_crawepr.smctrliq then
+        --
+        vr_tab_alteracoes(vr_indx).dsmotivo := 'Alterado contratos liquidados.';    --> Motivos da Perda
+        vr_tab_alteracoes(vr_indx).nmcampo  := 'Contratos liquidacoes';   --> Nome do campo
+        vr_tab_alteracoes(vr_indx).dsdadant := r_crawepr.nrctrliq; --> Valor Anterior
+        vr_tab_alteracoes(vr_indx).dsdadatu := pr_dsctrliq; --> Valor Atual
+        vr_indx  := vr_indx+1;
+        vr_perde := 'S';
+        --
+      end if;   
+      
+      --dsdrendi
+      vr_split.delete;
+      \*Como os códigos são numéricos efetuaremos a soma para poder validar a alteração*\
+      vr_split_rendimentos := gene0002.fn_quebra_string(pr_string  => replace(pr_dsdrendi,'.'),
+                                                        pr_delimit => '|');
+      IF vr_split_rendimentos.count > 0 THEN
+        FOR x IN vr_split_rendimentos.FIRST .. vr_split_rendimentos.LAST LOOP
+          
+          vr_split := gene0002.fn_quebra_string(pr_string  => vr_split_rendimentos(x),
+                                                pr_delimit => ';');
+      
+          IF vr_split.count > 0 THEN
+            FOR y IN vr_split.FIRST .. vr_split.LAST LOOP
+              CASE y
+                WHEN 1 THEN
+                  vr_somaTpContratos       := vr_somaTpContratos+vr_split(y);  
+                WHEN 2 THEN
+                  vr_somaValoresRendimento := vr_somaValoresRendimento+vr_split(y);                
+                ELSE
+                  NULL;
+              END CASE;
+            END LOOP;
+          END IF;
+          --
+        END LOOP;
+      END IF;
+      --
+      if vr_somaTpContratos != r_craprpr.Smtpdrendi or vr_somaValoresRendimento != r_craprpr.Smvldrendi  then
+        --
+        vr_tab_alteracoes(vr_indx).dsmotivo := 'Alterado rendimentos.';    --> Motivos da Perda
+        vr_tab_alteracoes(vr_indx).nmcampo  := 'Rendimentos';   --> Nome do campo
+        vr_tab_alteracoes(vr_indx).dsdadant := 'Soma rendimentos atu: '||r_craprpr.Smvldrendi; --> Valor Anterior
+        vr_tab_alteracoes(vr_indx).dsdadatu := 'Soma rendimentos ant: '||vr_somaValoresRendimento; --> Valor Atual
+        vr_indx  := vr_indx+1;
+        vr_perde := 'S';
+        --
+      end if;       
+      --dsdrendi--FIM
+
+      --dsdfinan -- Retirado Paulo
+      vr_split.delete;
+      \*Soma dos faturamentos mensais*\
+      vr_split_faturamentos := gene0002.fn_quebra_string(pr_string  => pr_dsdfinan,
+                                                         pr_delimit => '|');
+      IF vr_split_faturamentos.count > 0 THEN
+        FOR x IN vr_split_faturamentos.FIRST .. vr_split_faturamentos.LAST LOOP
+          
+          vr_split := gene0002.fn_quebra_string(pr_string  => vr_split_faturamentos(x),
+                                                pr_delimit => ';');
+      
+          IF vr_split.count > 0 THEN
+            FOR y IN vr_split.FIRST .. vr_split.LAST LOOP
+              CASE y
+                WHEN 3 THEN -- Somar os valores encontrados
+                  vr_somaFaturamentos  := vr_somaFaturamentos+to_number(vr_split(y));  
+                ELSE
+                  NULL;
+              END CASE;
+            END LOOP;
+          END IF;
+          --
+        END LOOP;
+      END IF;
+      --
+      if vr_somaFaturamentos != r_crapjfn.vlrftbru  then
+        --
+        vr_tab_alteracoes(vr_indx).dsmotivo := 'Alterado Faturamentos.';    --> Motivos da Perda
+        vr_tab_alteracoes(vr_indx).nmcampo  := 'Faturamentos';   --> Nome do campo
+        vr_tab_alteracoes(vr_indx).dsdadant := 'Soma 12 meses atu: '||r_crapjfn.vlrftbru; --> Valor Anterior
+        vr_tab_alteracoes(vr_indx).dsdadatu := 'Soma 12 meses ant: '||vr_somaFaturamentos; --> Valor Atual
+        vr_indx  := vr_indx+1;
+        vr_perde := 'S';
+        --
+      end if; */    
+      --dsdfinan-FIM
+      
+      /*dsjusren* Não sera validado/
+/*      prc_valida_alteracao(p_motivo   => 'Alterada Justificativa Rendimento.'
+                          ,p_nmcampo  => 'Justificativa Rendimento'
+                          ,p_dsdadant => r_craprpr.dsjusren
+                          ,p_dsdadatu => pr_dsjusren
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);  */  
+    
+      /** ---------------------- Dados para a Proposta -------------------- */
+/*      if pr_idfiniof = 0 then
+       vr_idiof_aux := 'Não';
+      else
+       vr_idiof_aux := 'Sim';
+      end if;
+      prc_valida_alteracao(p_motivo   => 'Alterada opcao financiar iof junto ao emprestimo.'
+                          ,p_nmcampo  => 'Finaciar IOF'
+                          ,p_dsdadant => r_crawepr.idfiniof
+                          ,p_dsdadatu => vr_idiof_aux
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);*/
+                          
+/*      prc_valida_alteracao(p_motivo   => 'Alterada quantidade de prestacoes do emprestimo.'
+                          ,p_nmcampo  => 'Quantidade prestacoes'
+                          ,p_dsdadant => r_crawepr.qtpreemp
+                          ,p_dsdadatu => pr_qtpreemp
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);*/
+      --Bug 14170
+/*      prc_valida_alteracao(p_motivo   => 'Alterado risco da operacao.'
+                          ,p_nmcampo  => 'Risco da Operacao'
+                          ,p_dsdadant => r_crawepr.dsnivris
+                          ,p_dsdadatu => pr_dsnivris
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);      */
+
+      prc_valida_alteracao(p_motivo   => 'Alterada codigo da linha de credito do emprestimo.'
+                          ,p_nmcampo  => 'Linha de credito'
+                          ,p_dsdadant => r_crawepr.cdlcremp
+                          ,p_dsdadatu => pr_cdlcremp
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+
+      prc_valida_alteracao(p_motivo   => 'Alterada conjuge co-responsavel.'
+                          ,p_nmcampo  => 'Conjuge co-responsavel'
+                          ,p_dsdadant => r_crapprp.flgdocje
+                          ,p_dsdadatu => pr_flgdocje
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);                           
+
+/*      prc_valida_alteracao(p_motivo   => 'Alterado codigo da finalidade do emprestimo. '
+                          ,p_nmcampo  => 'Finalidade'
+                          ,p_dsdadant => r_crawepr.cdfinemp
+                          ,p_dsdadatu => pr_cdfinemp
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); */
+                          
+/*      prc_valida_alteracao(p_motivo   => 'Alterado numero de dias para liberacao do emprestimo.'
+                          ,p_nmcampo  => 'Dias para liberacao'
+                          ,p_dsdadant => r_crawepr.qtdialib
+                          ,p_dsdadatu => pr_qtdialib
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);*/ 
+
+/*      prc_valida_alteracao(p_motivo   => 'Alterada emissao nota promissoria.'
+                          ,p_nmcampo  => 'Emite Promissoria'
+                          ,p_dsdadant => r_crawepr.flgimpnp
+                          ,p_dsdadatu => pr_flgimpnp
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); */
+
+/*      prc_valida_alteracao(p_motivo   => 'Alterado percentual do cet nas operacoes'
+                          ,p_nmcampo  => 'Percentual cet'
+                          ,p_dsdadant => r_crawepr.percetop
+                          ,p_dsdadatu => pr_percetop
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);   */ 
+
+/*      prc_valida_alteracao(p_motivo   => 'Alterada identificacao da qualificacao da operacao'
+                          ,p_nmcampo  => 'Qualificacao'
+                          ,p_dsdadant => r_crawepr.idquapro
+                          ,p_dsdadatu => pr_idquapro
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); */
+
+/*      prc_valida_alteracao(p_motivo   => 'Alterada data do pagamento da primeira prestacao.'
+                          ,p_nmcampo  => 'Data primeira prestacao'
+                          ,p_dsdadant => r_crawepr.dtdpagto
+                          ,p_dsdadatu => pr_dtdpagto
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); */
+
+/*      prc_valida_alteracao(p_motivo   => 'Alteracao quantidade promissorias a serem emitidas'
+                          ,p_nmcampo  => 'Numero de promissorias'
+                          ,p_dsdadant => r_crawepr.qtpromis
+                          ,p_dsdadatu => pr_qtpromis
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);*/ 
+                          
+/*      prc_valida_alteracao(p_motivo   => 'Alterado pagamento'
+                          ,p_nmcampo  => 'Flag Pagamento'
+                          ,p_dsdadant => r_crawepr.flgpagto
+                          ,p_dsdadatu => pr_flgpagto
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+                          
+      --Valida somente para tpempret = 2
+      if r_crawepr.tpemprst = 2 then                    
+      prc_valida_alteracao(p_motivo   => 'Alterado identificador da carencia para posfixado'
+                          ,p_nmcampo  => 'Indica carencia'
+                          ,p_dsdadant => r_crawepr.idcarenc
+                          ,p_dsdadatu => pr_idcarenc
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);                           
+      end if;                    
+
+      prc_valida_alteracao(p_motivo   => 'Alterada data da carencia'
+                          ,p_nmcampo  => 'Data carencia'
+                          ,p_dsdadant => r_crawepr.dtcarenc
+                          ,p_dsdadatu => pr_dtcarenc
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);  
+            
+      \** ------- Dados para dados do Rating e do Banco central ---------- *\    
+      -- Informação não é mais utilizada
+      \*prc_valida_alteracao(p_motivo   => 'Alterada Valor Total SFN exceto na cooperativa.'
+                          ,p_nmcampo  => 'Valor Total SFN'
+                          ,p_dsdadant => r_crapprp.vltotsfn
+                          ,p_dsdadatu => pr_vltotsfn
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);       
+                          *\      
+      
+      prc_valida_alteracao(p_motivo   => 'Alterada numero da garantia da operacao.'
+                          ,p_nmcampo  => 'Numero Garantia Operacao'
+                          ,p_dsdadant => r_crapprp.nrgarope
+                          ,p_dsdadatu => pr_nrgarope
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+
+      prc_valida_alteracao(p_motivo   => 'Alterada a percepcao geral com relacao a empresa (rating).'
+                          ,p_nmcampo  => 'Rating'
+                          ,p_dsdadant => r_crapprp.nrperger
+                          ,p_dsdadatu => pr_nrperger
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+
+\*      prc_valida_alteracao(p_motivo   => 'Alterada data da consulta ao spc'
+                          ,p_nmcampo  => 'Consulta ao spc'
+                          ,p_dsdadant => r_crapprp.dtcnsspc
+                          ,p_dsdadatu => pr_dtcnsspc
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); *\
+
+      prc_valida_alteracao(p_motivo   => 'Alterada data de entrada na central de risco'
+                          ,p_nmcampo  => 'Data central risco'
+                          ,p_dsdadant => r_crapprp.dtdrisco
+                          ,p_dsdadatu => pr_dtdrisco
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);  
+
+      prc_valida_alteracao(p_motivo   => 'Alterada quantidade de operacoes na central de risco scr.'
+                          ,p_nmcampo  => 'Quantidade operacao scr'
+                          ,p_dsdadant => r_crapprp.qtopescr
+                          ,p_dsdadatu => pr_qtopescr
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+
+      prc_valida_alteracao(p_motivo   => 'Quantidade de instituicoes financeiras que o cooperado ja possui operacao'
+                          ,p_nmcampo  => 'Qtd operacoes financeiras'
+                          ,p_dsdadant => r_crapprp.qtifoper
+                          ,p_dsdadatu => pr_qtifoper
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+
+      prc_valida_alteracao(p_motivo   => 'Numero do contrato do limite credito ou adp que esta sendo liquidado'
+                          ,p_nmcampo  => 'Contratos Liquidados'
+                          ,p_dsdadant => r_crapprp.nrliquid
+                          ,p_dsdadatu => pr_nrliquid
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+                          
+      prc_valida_alteracao(p_motivo   => 'Alterada valor das operacoes vencidas na central de risco scr.'
+                          ,p_nmcampo  => 'Valor vencido central de risco'
+                          ,p_dsdadant => r_crapprp.vlopescr
+                          ,p_dsdadatu => pr_vlopescr
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+                          
+      prc_valida_alteracao(p_motivo   => 'Alterado valor do prejuizo fora da cooperativa'
+                          ,p_nmcampo  => 'Valor prejuizo'
+                          ,p_dsdadant => r_crapprp.vlrpreju
+                          ,p_dsdadatu => pr_vlrpreju
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+
+      prc_valida_alteracao(p_motivo   => 'Alterada sequencia do item relativo ao patrimonio pessoal livre do endividamento (rating).'
+                          ,p_nmcampo  => 'Patrimonio pessoal livre'
+                          ,p_dsdadant => r_crapprp.nrpatlvr
+                          ,p_dsdadatu => pr_nrpatlvr
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);   
+
+      prc_valida_alteracao(p_motivo   => 'Alterada contem a data da consulta do conjuge / seg. titular ao spc.'
+                          ,p_nmcampo  => 'Data consulta conjuge'
+                          ,p_dsdadant => r_crapprp.dtoutspc
+                          ,p_dsdadatu => pr_dtoutspc
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+    
+      prc_valida_alteracao(p_motivo   => 'Alterada data da consulta na central de risco para o conjuge / seg. titular.'
+                          ,p_nmcampo  => 'Consulta central risco ara o conjuge / seg. titular.'
+                          ,p_dsdadant => r_crapprp.dtoutris
+                          ,p_dsdadatu => pr_dtoutris
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+                          
+      prc_valida_alteracao(p_motivo   => 'Alterado endividamento do conjuge ou do 2. titular.'
+                          ,p_nmcampo  => 'Endivdamento Conjuge/2. titular'
+                          ,p_dsdadant => r_crapprp.vlsfnout
+                          ,p_dsdadatu => pr_vlsfnout
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+
+      \** ---------------- Dados Salario/Faturamento -------------------- **\
+      prc_valida_alteracao(p_motivo   => 'Alterado valor do salario do associado.'
+                          ,p_nmcampo  => 'Salario associado'
+                          ,p_dsdadant => r_crapprp.vlsalari
+                          ,p_dsdadatu => pr_vlsalari
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+      
+      prc_valida_alteracao(p_motivo   => 'Alterado valor das outras rendas.'
+                          ,p_nmcampo  => 'Outras rendas'
+                          ,p_dsdadant => r_crapprp.vloutras
+                          ,p_dsdadatu => pr_vloutras
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+
+      prc_valida_alteracao(p_motivo   => 'Alterado valor do aluguel.'
+                          ,p_nmcampo  => 'Valor do Aluguel'
+                          ,p_dsdadant => r_crapprp.vlalugue
+                          ,p_dsdadatu => pr_vlalugue
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+
+      prc_valida_alteracao(p_motivo   => 'Valor do salario do conjuge.'
+                          ,p_nmcampo  => 'Salario conjuge'
+                          ,p_dsdadant => r_crapprp.vlsalcon
+                          ,p_dsdadatu => pr_vlsalcon
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);     
+
+      prc_valida_alteracao(p_motivo   => 'Alterado nome da empresa onde o conjuge trabalha.'
+                          ,p_nmcampo  => 'Empresa conjuge'
+                          ,p_dsdadant => r_crapprp.nmempcje
+                          ,p_dsdadatu => pr_nmempcje
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde);  
+
+    
+
+      prc_valida_alteracao(p_motivo   => 'Alterado o numero da conta do conjuge.'
+                          ,p_nmcampo  => 'Conta conjuge'
+                          ,p_dsdadant => r_crapprp.nrctacje
+                          ,p_dsdadatu => pr_nrctacje
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+
+      prc_valida_alteracao(p_motivo   => 'Alterado numero do cpf do conjuge do associado.'
+                          ,p_nmcampo  => 'Cpf conjuge'
+                          ,p_dsdadant => r_crapprp.nrcpfcje
+                          ,p_dsdadatu => pr_nrcpfcje
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); 
+
+      prc_valida_alteracao(p_motivo   => 'Alterado valor medio do faturamento bruto mensal.'
+                          ,p_nmcampo  => 'Faturamento mensal'
+                          ,p_dsdadant => r_crapprp.vlmedfat
+                          ,p_dsdadatu => pr_vlmedfat
+                          ,p_index    => vr_indx
+                          ,p_sn_perde => vr_perde); */       
+
+      /** -----------------FIM- Dados para a Proposta -FIM---------------- */
+      -- 0 - Não perdeu aprovação e 1 - Perdeu aprovação
+      pr_idpeapro := 0;
+      if vr_perde = 'S' then
+        pr_idpeapro := 1;
+        --Grava Log
+        prc_grava_log; 
+        --Gravar os itens do Log
+        FOR x IN 1..vr_tab_alteracoes.count() LOOP
+          
+         prc_grava_item_log(p_nmcampo  => vr_tab_alteracoes(x).nmcampo,
+                            p_nrdrowid => vr_nrdrowid,
+                            p_dsdadant => vr_tab_alteracoes(x).dsdadant,
+                            p_dsdadatu => vr_tab_alteracoes(x).dsdadatu);
+        END LOOP;     
+      end if;         
+      
+      -- Se chegou até o final sem erro retorna OK
+      pr_dserro := 'OK';
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dserro:= 'NOK';
+        IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+        pr_cdcritic := NVL(vr_cdcritic, 0);
+        pr_dscritic := substr(vr_dscritic,1,250);
+              
+      WHEN OTHERS THEN
+        pr_dserro:= 'NOK';
+        pr_cdcritic := 0;
+        pr_dscritic := substr('Erro na procedure EMPR0015.pc_valida_perda_aprov_proposta: ' || SQLERRM,1,250);
+    END;
+
+  END pc_valida_perda_aprov_proposta;  
+
+  function zeroToNull(p_valor in number) return varchar2 is
+       
+  begin
+    if to_number(p_valor) = 0 then
+      return '';
+    else
+      return p_valor;
+    end if;  
+  end;    
+  
 END EMPR0015;
 /

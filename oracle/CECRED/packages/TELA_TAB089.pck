@@ -62,6 +62,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
                        ,pr_pctaxpre  IN NUMBER  -- Taxa de juros remuneratório de prejuízo - PORCENTAGEM
                        ,pr_qtdictcc  IN INTEGER -- Quantidade de dias para Transferência de valor da conta transitória para a CC
                                              
+                       -- Prj438 -Sprint5
+                       ,pr_avtperda  IN NUMBER  -- Alteração em Avalista perde aprovação - PRJ438 - Paulo (Mouts)
+                       ,pr_vlperavt  IN NUMBER  -- Valor para perda de aprovação referente ao Avalista - PRJ438 - Paulo (Mouts)                       
                        ,pr_xmllog      IN VARCHAR2  --> XML com informações de LOG
                        ,pr_cdcritic   OUT PLS_INTEGER --> Código da crítica
                        ,pr_dscritic   OUT VARCHAR2 --> Descrição da crítica
@@ -153,6 +156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
   --                           PRJ 450 - Diego Simas (AMcom) 
   --              31/07/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
   --                           PRJ 450 - Diego Simas (AMcom)
+  --              30/10/2018 - Parametros de perda de aprovação relacionado ao Avalista - Paulo Martins (Mouts)
   --
   ---------------------------------------------------------------------------
   PROCEDURE pc_consultar(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
@@ -218,6 +222,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
       vr_qtditsem INTEGER :=0; -- PJ438 - Márcio (Mouts)                  
       vr_pctaxpre NUMBER  :=0;
       vr_qtdictcc NUMBER  :=0;                
+      vr_avtperda NUMBER  :=0; -- PJ438 - Paulo (Mouts) Sprint 5
+      vr_vlperavt NUMBER  :=0; -- PJ438 - Paulo (Mouts) Sprint 5      
       
       -- Variaveis retornadas da gene0004.pc_extrai_dados
       vr_cdcooper INTEGER;
@@ -296,6 +302,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
         vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,121,6)),0);
         vr_qtdictcc := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,128,3)),0);
         
+        vr_avtperda := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,132,1)),0); -- PJ438 - Paulo (Mouts) Sprint 5
+        vr_vlperavt := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,134,12)),0); -- PJ438 - Paulo (Mouts) Sprint 5  
       END IF;
 
       -- PASSA OS DADOS PARA O XML RETORNO      
@@ -488,6 +496,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                              pr_tag_cont => to_char(vr_qtdictcc),
                              pr_des_erro => vr_dscritic);
                                    
+      --PRJ438 - Sprint 5 - Paulo (Mouts)
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'avtperda',
+                             pr_tag_cont => to_char(vr_avtperda),
+                             pr_des_erro => vr_dscritic);
+
+	    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'vlperavt',
+                             pr_tag_cont => to_char(vr_vlperavt,
+                                                    '999999999D00',
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
+                             pr_des_erro => vr_dscritic);  
+     --PRJ438 - Sprint 5 - Paulo (Mouts)                                                        
   EXCEPTION
     WHEN vr_exc_saida THEN
 
@@ -545,6 +570,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                        ,pr_pctaxpre  IN NUMBER  -- Taxa de juros remuneratório de prejuízo - PORCENTAGEM
                        ,pr_qtdictcc  IN INTEGER -- Quantidade de dias para Transferência de valor da conta transitória para a CC
 
+                       ,pr_avtperda  IN NUMBER  -- Alteração em Avalista perde aprovação - PRJ438 - Paulo (Mouts)
+                       ,pr_vlperavt  IN NUMBER  -- Valor para perda de aprovação referente ao Avalista - PRJ438 - Paulo (Mouts)
                        ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
                        ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                        ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -617,6 +644,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
     vr_qtditsem INTEGER :=0; --PJ438 - Márcio (Mouts)
     vr_pctaxpre NUMBER  :=0;
     vr_qtdictcc INTEGER :=0;
+    vr_avtperda NUMBER  :=0; -- PJ438 - Paulo (Mouts) Sprint 5
+    vr_vlperavt NUMBER  :=0; -- PJ438 - Paulo (Mouts) Sprint 5 
 
     -- Cursor generico de calendario
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -703,6 +732,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
       vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,121,6)),0);
       vr_qtdictcc := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,128,3)),0);
                   
+      vr_avtperda := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,132,1)),0); -- PJ438 - Paulo (Mouts) Sprint 5
+      vr_vlperavt := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,134,12)),0); -- PJ438 - Paulo (Mouts) Sprint 5          
     END IF;
 
     vr_dstextab := to_char(pr_prtlmult,   'FM000', 'NLS_NUMERIC_CHARACTERS='',.''') || ' ' ||
@@ -730,7 +761,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                    to_char(pr_qtditapl,   'FM000')       || ' ' || --PJ438 - Márcio (Mouts)                                                      
                    to_char(pr_qtditsem,   'FM000')       || ' ' || --PJ438 - Márcio (Mouts)
                    to_char(pr_pctaxpre,   'FM000D00', 'NLS_NUMERIC_CHARACTERS='',.''') || ' ' ||
-                   to_char(pr_qtdictcc,   'FM000') || '';
+                   to_char(pr_qtdictcc,   'FM000') || ' ' ||
+                   to_char(pr_avtperda)|| ' ' || --PJ438 - Paulo (Mouts)  
+                   to_char(pr_vlperavt,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''')|| ''; --PJ438 - Paulo (Mouts)  
 
     BEGIN
       UPDATE craptab tab
@@ -972,6 +1005,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                                     ' para ' || to_char(pr_qtdibsem,'FM000', 'NLS_NUMERIC_CHARACTERS='',.'''));
     END IF;
 
+    -- PRJ438 - Paulo Martins (Mouts)
+    IF vr_avtperda <> pr_avtperda THEN
+
+      --> gerar log da tela
+      pc_log_tab089(pr_cdcooper => vr_cdcooper,
+                    pr_cdoperad => vr_cdoperad,
+                    pr_dscdolog => 'Alterou perda de aprovacao para alteração de avalista de ' ||
+                                    to_char(vr_avtperda) ||
+                                    ' para ' || to_char(pr_avtperda));
+
+    END IF;
+    
+    IF vr_vlperavt <> pr_vlperavt THEN
+
+      --> gerar log da tela
+      pc_log_tab089(pr_cdcooper => vr_cdcooper,
+                    pr_cdoperad => vr_cdoperad,
+                    pr_dscdolog => 'Alterou Valor para perda de aprovação quando altera avalista de ' ||
+                                    to_char(vr_vlperavt,'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
+                                    ' para ' || to_char(pr_vlperavt,'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
+
+    END IF;    
+    --Fim PRJ438    
 
 
     COMMIT;
