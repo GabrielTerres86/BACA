@@ -702,7 +702,7 @@ function carregaDadosAlteraLimiteDscTitPropostas() {
 
 // Função para verificar se deve ser enviado e-mail ao PAC Sede
 function verificaEnvioEmail(idimpres,limorbor) {
-	showConfirmacao("Efetuar envio de e-mail para Sede?","Confirma&ccedil;&atilde;o - Aimaro","gerarImpressao(" + idimpres + "," + limorbor + ",'yes');","gerarImpressao(" + idimpres + "," + limorbor + ",'no');","sim.gif","nao.gif");
+    showConfirmacao("Efetuar envio de e-mail para Sede?","Confirma&ccedil;&atilde;o - Aimaro","verificaImpressaoProposta(" + idimpres + "," + limorbor + ",'yes');","verificaImpressaoProposta(" + idimpres + "," + limorbor + ",'no');","sim.gif","nao.gif");
 }
 
 // Função para gerar impressão em PDF
@@ -725,6 +725,49 @@ function gerarImpressao(idimpres,limorbor,flgemail,fnfinish) {
 	
 	carregaImpressaoAyllos("frmImprimirDscTit",action,callafter);
     return false;
+}
+
+function verificaImpressaoProposta(idimpres,limorbor,flgemail,fnfinish) {
+	
+	if (idimpres == 3) {
+   
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, verificando impressao ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/verifica_impressao.php",
+        data: {
+            nrdconta: nrdconta,
+            nrctrlim: nrctrlim,
+			idimpres: idimpres,
+			limorbor: limorbor,
+			flgemail: flgemail,
+			fnfinish: fnfinish,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            try {
+                hideMsgAguardo();
+				eval(response);
+                //gerarImpressao(idimpres,limorbor,flgemail,fnfinish);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+    return false;
+	} else {
+		
+		gerarImpressao(idimpres,limorbor,flgemail,fnfinish);
+		
+	}
 }
 
 // OPÇÃO ANALISAR
@@ -959,37 +1002,38 @@ function mostraImprimirLimite(tipo) {
 }
 
 // Função para cancelar um limite de desconto de títulos
-function cancelaLimiteDscTit() {	
-	// Se não tiver nenhum limite selecionado
-	if (nrcontrato == "") {
-		return false;
-	}
-	
-	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, cancelando limite ...");
-	
-	// Executa script de cancelamento através de ajax
-	$.ajax({		
-		type: "POST",
-		url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_cancelar.php", 
-		data: {
-			nrdconta: nrdconta,
-			nrctrlim: nrcontrato,
-			redirect: "script_ajax"
-		}, 
-		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-		},
-		success: function(response) {
-			try {
-				eval(response);
-			} catch(error) {
-				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-			}
-		}				
-	});				
+function cancelaLimiteDscTit(confirmacao) { 
+    // Se não tiver nenhum limite selecionado
+    if (nrcontrato == "") {
+        return false;
+    }
+    
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, cancelando limite ...");
+    
+    // Executa script de cancelamento através de ajax
+    $.ajax({        
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_cancelar.php", 
+        data: {
+            nrdconta: nrdconta,
+            nrctrlim: nrcontrato,
+            confirma: confirmacao,
+            redirect: "script_ajax"
+        }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            try {
+                eval(response);
+            } catch(error) {
+                hideMsgAguardo();
+                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }               
+    });             
     return false;
 }
 

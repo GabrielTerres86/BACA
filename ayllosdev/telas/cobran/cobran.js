@@ -1335,10 +1335,10 @@ function imprimirCartaAnuencia(){
         return false;
 	}
 	
-
     $('input,select', '#frmReport').habilitaCampo();
     $('#cdcooper', '#frmReport').val(cdcooper);
     $('#nrdconta', '#frmReport').val(nrdconta);
+    $('#nrcnvcob', '#frmReport').val(nrcnvcob);	
     $('#nrdocmto', '#frmReport').val(nrdocmto);
     $('#cdbandoc', '#frmReport').val(cdbandoc);
     $('#dtcatanu', '#frmReport').val(dtcatanu);

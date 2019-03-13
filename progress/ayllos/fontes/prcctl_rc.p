@@ -48,7 +48,10 @@
 			   
                26/12/2018 - Efetuar copia de arquivo txt para diretorio micros.
                             Chamado SCTASK0036838 - Gabriel Marcos (Mouts).
-                  
+
+               21/02/2019 - Ajustar diretorio de copia do arquivo crrl262. 	  
+                            Chamado SCTASK0047494 - Gabriel Marcos (Mouts).
+					  
 ............................................................................. */
 
 { includes/var_online.i }
@@ -600,20 +603,18 @@ ELSE      /* Gera PDF no CRPS662 */
                 RETURN "NOK".
               END.
 
-         /*** copiar arquivo para o diretorio 'compel' ***/
-         UNIX SILENT VALUE("cp " + aux_nmarqimp + " " + "/micros/" + 
-                           crapcop.dsdircop + "/compel/" + 
-                           REPLACE(SUBSTRING(aux_nmarqimp,R-INDEX(aux_nmarqimp,"/") + 1,
-                           LENGTH(aux_nmarqimp) - R-INDEX(aux_nmarqimp,"/")),"lst","txt")).
-
-         UNIX SILENT VALUE("rm /micros/cecred/compel/crrl262_" + 
-                           STRING(crapcop.cdagectl,"9999") + 
-                           "* 2> /dev/null").
-
          ASSIGN aux_nmarqpdf = "/micros/cecred/compel/crrl262_" + 
                                STRING(crapcop.cdagectl,"9999") + "_" + 
                                STRING(glb_cdagenci) + STRING(TIME,"99999") + 
                                "_" + STRING(crapcop.cdbcoctl,"999") + ".pdf".
+
+         UNIX SILENT VALUE("rm /micros/cecred/compel/crrl262_" + 
+                           STRING(crapcop.cdagectl,"9999") + "* 2> /dev/null").
+
+         /*** copiar arquivo para o diretorio 'compel' ***/
+         UNIX SILENT VALUE("cp " + aux_nmarqimp + " " + "/micros/cecred/compel/" + 
+                           REPLACE(SUBSTRING(aux_nmarqpdf,R-INDEX(aux_nmarqpdf,"/") + 1,
+                           LENGTH(aux_nmarqpdf) - R-INDEX(aux_nmarqpdf,"/")),"pdf","txt")).
 
          /* GERAR PDF */
          RUN gera-pdf-impressao IN h-b1wgen0024(INPUT aux_nmarqimp,

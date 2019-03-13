@@ -233,19 +233,6 @@ PROCEDURE critica-valor.
             RETURN "NOK".
          END.
    
-    IF  p-tp-pagmto = 2 THEN DO:
-        
-        ASSIGN i-cod-erro  = 0
-               c-desc-erro = "É obrigatorio selecionar 'Conta' ou 'Espécie'.".
-        RUN cria-erro (INPUT p-cooper,
-                       INPUT p-cod-agencia,
-                       INPUT p-nro-caixa,
-                       INPUT i-cod-erro,
-                       INPUT c-desc-erro,
-                       INPUT YES).
-        RETURN "NOK".
-    
-    END.
        
     IF  p-vlr-dinheiro = 0  AND
         p-vlr-cheque   = 0 THEN DO:
@@ -2504,7 +2491,6 @@ PROCEDURE validar-valor-limite:
     DEF INPUT PARAM par_nrocaixa  AS INTEGER                         NO-UNDO.
     DEF INPUT PARAM par_vltitfat  AS DECIMAL                         NO-UNDO.
     DEF INPUT PARAM par_senha     AS CHARACTER                       NO-UNDO.
-    DEF INPUT PARAM par_radio     AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_des_erro AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_inssenha AS INTEGER                         NO-UNDO.
@@ -2527,17 +2513,6 @@ PROCEDURE validar-valor-limite:
         RETURN "NOK".
       END.
       
-    IF  par_radio = "3" THEN DO:
-        ASSIGN i-cod-erro  = 0
-               c-desc-erro = "É obrigatorio selecionar 'Título' ou 'Fatura'.".
-        RUN cria-erro (INPUT crapcop.cdcooper,
-                       INPUT par_cdagenci,
-                       INPUT par_nrocaixa,
-                       INPUT i-cod-erro,
-                       INPUT c-desc-erro,
-                       INPUT YES).
-        RETURN "NOK".
-    END.
     
     RUN dbo/b1crap14.p PERSISTENT SET h_b1crap14.
                            

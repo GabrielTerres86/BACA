@@ -101,6 +101,8 @@
                12/04/2018 - Inclusao de novos campo para realizaçao 
                               de analise de fraude. 
                               PRJ381 - AntiFraude (Odirlei-AMcom)
+                              
+               16/02/2019 - Ajuste variável aux_nrrecid para DECI - Paulo Martins - Mouts                              
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -112,7 +114,7 @@ CREATE WIDGET-POOL.
 
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
-def var aux_nrrecid  AS INTE                                           NO-UNDO.
+def var aux_nrrecid  AS DECI                                           NO-UNDO.
 
 DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
 DEF VAR aux_dstrans1 AS CHAR                                           NO-UNDO.

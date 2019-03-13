@@ -198,7 +198,6 @@ DEFINE FRAME Web-Frame
      ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
           "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
           RADIO-BUTTONS 
-           "v_tppagmto 2", "2":U,
            "v_tppagmto 0", "0":U,
            "v_tppagmto 1", "1":U
            SIZE 20 BY 2
@@ -688,7 +687,7 @@ PROCEDURE process-web-request :
                        v_vlrmulta  = ""
                        v_vlrjuros  = ""
                        v_vlrtotal  = ""
-					             v_tppagmto  = "2"
+					             v_tppagmto  = "0"
                        opcao       = ""
                        vh_foco     = "9".
              ELSE
@@ -728,27 +727,6 @@ PROCEDURE process-web-request :
                            /* Reiniciar dscritic */ 
                            ASSIGN aux_dscritic = ?.
                             
-                           /* Garantir a selecao de Especie ou Conta */ 
-                           IF ab_unmap.v_tppagmto = "2" THEN
-                             DO:
-                              /* Limpar as criticas */
-                              RUN elimina-erro(INPUT STRING(ab_unmap.v_coop),
-                                               INPUT INTE(ab_unmap.v_pac),
-                                               INPUT INTE(ab_unmap.v_caixa)).
-                              /* Criar o erro novo */
-                              ASSIGN aux_dscritic = "É obrigatório selecionar 'Conta' ou 'Espécie'.".
-                                     
-                              RUN cria-erro(INPUT STRING(ab_unmap.v_coop),
-                                            INPUT INTE(ab_unmap.v_pac),
-                                            INPUT INTE(ab_unmap.v_caixa),
-                                            INPUT 0,
-                                            INPUT aux_dscritic,
-                                            INPUT YES).
-                              
-                              ASSIGN ab_unmap.vh_foco = "10".
-                              {include/i-erro.i}          
-                              
-                             END.
              
              
                            IF aux_dscritic = ? AND ab_unmap.v_tppagmto = "1" THEN

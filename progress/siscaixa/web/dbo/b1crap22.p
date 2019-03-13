@@ -120,6 +120,9 @@
                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
                            
+               27/02/2019 - Realizar atribuicao do historico 1014 na variavel para geracao de LOG.
+                            INC0031856 - Heitor (Mouts)
+                           
 -----------------------------------------------------------------------------*/
 
 {dbo/bo-erro1.i}
@@ -1473,7 +1476,8 @@ PROCEDURE realiza-transferencia:
                       vr-cdagetfn = p-cod-agencia
                       vr-nrterfin = 0
                       vr-nrsequni = aux_nrseqdig
-                      vr-nrautdoc = p-ult-sequencia-lcm.
+                      vr-nrautdoc  = p-ult-sequencia-lcm
+					  aux_cdhisdeb = 1014.
                
                
                IF  p-idagenda > 1 THEN DO:

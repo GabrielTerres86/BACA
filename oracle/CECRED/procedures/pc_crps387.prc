@@ -469,6 +469,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                25/01/2019 - Projeto de homologacao de convenios (sustentacao). Nao causara 
                             impacto em prod, usado somente em dev. Gabriel Marcos (Mouts).
+                            
+               07/02/2019 - Gravar a data de inclusão de autorização do débito com a data de 
+                            movimento atual SCTASK0038616 - Jose Dill Mouts)
 
 ............................................................................ */
 
@@ -4704,7 +4707,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                              0,
                              rw_gnconve.cdhisdeb,
                              rw_crapatr.ddvencto,
-                             rw_crapatr.dtiniatr,
+                             rw_crapdat.dtmvtolt, --SCTASK0038616 
                              NULL,
                              rw_crapatr.nmfatura,
                              rw_crapatr.dtfimatr,

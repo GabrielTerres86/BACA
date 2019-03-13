@@ -943,6 +943,15 @@ EXCEPTION
        AND tpplaseg = 1
        AND cdsegura = 5011; -- SEGURADORA CHUBB                                     
 
+  CURSOR cr_crawepr (prc_cdcooper IN crawepr.cdcooper%TYPE,
+                     prc_nrdconta IN crawepr.nrdconta%TYPE,
+                     prc_nrctremp IN crawepr.nrctremp%TYPE) IS   
+    SELECT w.vlemprst
+      FROM crawepr w
+     WHERE w.cdcooper = prc_cdcooper
+       AND w.nrdconta = prc_nrdconta 
+       AND w.nrctremp = prc_nrctremp;                                           
+
   -- Tratamento de erros
   vr_exc_saida  EXCEPTION;
   vr_exc_fimprg EXCEPTION;
@@ -1055,7 +1064,17 @@ EXCEPTION
     else
       vr_valor_para_validacao := vr_sld_devedor; -- Valor de emprestimos + proposta
     end if;
-  
+    --
+    IF vr_valor_para_validacao <= 0  THEN
+      FOR rw_crawepr IN cr_crawepr(pr_cdcooper,
+                                   pr_nrdconta,
+                                   pr_nrctremp) LOOP
+                                   
+        vr_valor_para_validacao := rw_crawepr.vlemprst;
+        
+      END LOOP;  
+    END IF;
+    --
     pr_flgprestamista := 'N';
     --Validar Valor 
     if vr_valor_para_validacao > vr_vlminimo /*and vr_valor_para_validacao < vr_vlmaximo*/ then

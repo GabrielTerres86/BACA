@@ -835,15 +835,6 @@ PROCEDURE validar-valor-limite:
         RETURN "NOK".
       END.
       
-    IF  par_tppagmto = 2 THEN DO:
-        RUN cria-erro (INPUT par_nmrescop,
-                       INPUT par_cdagenci,
-                       INPUT par_nrocaixa,
-                       INPUT 0,
-                       INPUT "É obrigatório selecionar 'Conta' ou 'Espécie'.",
-                       INPUT YES).
-        RETURN "NOK".
-    END.
     
     /* Buscar valor limite de pagamentos em especie */
     IF  par_tppagmto = 1 THEN DO:        

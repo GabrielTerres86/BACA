@@ -146,6 +146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
 
   -- Cursor generico de calendario
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+  vr_cdprogra     tbgen_prglog.cdprograma%type := 'AVAL0001';
 
   /* Rotina referente a consulta de avalistas, procuradores e representantes */
   PROCEDURE pc_consulta_proc(pr_tpctrato IN crapavt.tpctrato%TYPE  --> Tipo de Contrato
@@ -314,7 +315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
      Sigla   : CRED
 
      Autor   : Jéssica Laverde Gracino(DB1)
-     Data    : 12/06/2015                        Ultima atualizacao: 
+     Data    : 12/06/2015                        Ultima atualizacao: 14/02/2019
 
      Dados referentes ao programa:
 
@@ -322,6 +323,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
      Objetivo  : Rotina referente a consulta de contratos avalizados
 
      Alteracoes: 12/06/2015 - Conversao Progress >> Oracle (PLSQL) - Jéssica (DB1)
+                 14/02/2019 - Ajuste retorno para busca de contratos com tpcrtato <> 1
+                              Ana - Envolti - INC0032752
     ---------------------------------------------------------------------------------------------------------------*/
 
     ------------------------------- CURSORES ---------------------------------
@@ -645,6 +648,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
     vr_exc_erro  EXCEPTION;                                       
     vr_exc_saida EXCEPTION; 
 
+    --INC0032752
+    vr_idprglog     tbgen_prglog.idprglog%TYPE := 0;
+    vr_dsparame     VARCHAR2(4000);
+
     ------------------------------TEMP TABLES-------------------------------   
     -- PL Table de associados - antiga: b1wgen0145tt.i/w_contas
     TYPE typ_reg_conta IS
@@ -656,6 +663,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
     ------------------------------------------------------------------------
 
     BEGIN
+      -- Inclui nome do modulo logado - 14/02/2019 - INC0032752
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'AVAL0001.pc_busca_dados_contratos'); 
+
+      vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper
+                    ||', pr_cdagenci:'||pr_cdagenci
+                    ||', pr_nrdcaixa:'||pr_nrdcaixa
+                    ||', pr_idorigem:'||pr_idorigem
+                    ||', pr_dtmvtolt:'||pr_dtmvtolt
+                    ||', pr_nmdatela:'||pr_nmdatela
+                    ||', pr_cdoperad:'||pr_cdoperad
+                    ||', pr_nrdconta:'||pr_nrdconta
+                    ||', pr_nrcpfcgc:'||pr_nrcpfcgc
+                    ||', pr_inproces:'||pr_inproces;
       
       --Inicializar Variaveis
       vr_cdcritic := 0;                         
@@ -722,6 +742,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
           -- Sair do programa
           RAISE vr_exc_erro;
         END IF;
+        -- Inclui nome do modulo logado - 14/02/2019 - INC0032752
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'AVAL0001.pc_busca_dados_contratos'); 
        
       END IF; -- IF  par_nrdconta > 0
 
@@ -740,7 +762,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
           
           -- Montar mensagem de critica
           vr_cdcritic := 9;
-          
           -- Busca critica
           vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
           pr_nmdcampo:= 'nrdconta';
@@ -842,6 +863,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
 
             vr_regexist := TRUE;   
 
+            --Os contratos que caem aqui mostram certo na tela
+
             OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
                              pr_nrdconta => rw_crapavl.nrctaavd);
               
@@ -870,7 +893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
               CLOSE btch0001.cr_crapdat;
               -- Montar mensagem de critica
               vr_cdcritic := 1;
-              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
               RAISE vr_exc_erro;
             ELSE
               -- Apenas fechar o cursor
@@ -904,12 +927,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
               IF vr_tab_erro.count > 0 THEN
                 vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
               ELSE
-                vr_dscritic := 'Erro na pck empr0001.';
+                vr_cdcritic := 1051;
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
+                               ||' EMPR0001.pc_saldo_devedor_epr.'; --Erro na pck empr0001
               END IF;
               -- Gerar exceção
               RAISE vr_exc_erro;
-        
             END IF;
+            -- Inclui nome do modulo logado - 14/02/2019 - INC0032752
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'AVAL0001.pc_busca_dados_contratos'); 
 
             IF rw_crapepr.inprejuz = 1 THEN
               vr_epr_vldivida := 'Prejuizo';
@@ -926,16 +952,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
             pr_tab_contras(vr_index).tpdcontr := vr_epr_tpdcontr;
             pr_tab_contras(vr_index).vldivida := vr_epr_vldivida;
 
-          END LOOP; --rw_crapavl
+          END LOOP; --rw_crapavl tpcontrato = 1
+
+          --INC0032752
+          --Verifica se encontrou algum contrato - tpctrato = 1
+          IF vr_epr_nrctremp IS NULL THEN
+             vr_regexist := FALSE;
+          END IF;              
 
           --Proximo Registro
           vr_index_conta:= vr_tab_conta.NEXT(vr_index_conta);
 
-        END LOOP;
+        END LOOP;  --vr_index_conta is not null
 
         --Buscar Primeiro contrato
         vr_index_conta:= vr_tab_conta.FIRST;    
          
+--         
         WHILE vr_index_conta IS NOT NULL LOOP
 
           FOR rw_crapavl1 IN cr_crapavl1(pr_cdcooper, vr_tab_conta(vr_index_conta).nrdconta) LOOP
@@ -966,7 +999,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
                 CLOSE cr_craplim;
                 CONTINUE; 
               END IF;
-  
               CLOSE cr_craplim;
                   
               OPEN cr_crapcdc (pr_cdcooper => pr_cdcooper,
@@ -995,7 +1027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
               CONTINUE;
             END IF;
 
-            vr_regexist := TRUE;              
+           --INC0032752 - comentado e tratado em outros pontos - vr_regexist := TRUE;              
 
             OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
                              pr_nrdconta => rw_crapavl1.nrctaavd);
@@ -1071,7 +1103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
                 CLOSE btch0001.cr_crapdat;
                 -- Montar mensagem de critica
                 vr_cdcritic := 1;
-                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                 RAISE vr_exc_erro;
               ELSE
                 -- Apenas fechar o cursor
@@ -1093,17 +1125,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
                                                 ,pr_cdcritic => vr_cdcritic
                                                 ,pr_dscritic => vr_dscritic
                                                 ,pr_tab_erro => vr_tab_erro);
+
               -- Se retornou erro
               IF vr_des_reto <> 'OK' THEN
                 -- Buscar da tabela de erro
                 IF vr_tab_erro.count > 0 THEN
                   vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
                 ELSE
-                  vr_dscritic := 'Erro na pck DSCT0001.';
+                  vr_cdcritic := 1051;
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
+                                 ||' DSCT0001.pc_busca_total_descto_lim.'; --Erro na pck DSCT0001
                 END IF;
                 -- Gerar exceção
                 RAISE vr_exc_erro;
               ELSE
+                -- Inclui nome do modulo logado - 14/02/2019 - INC0032752
+                GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'AVAL0001.pc_busca_dados_contratos'); 
 
                 --Buscar Primeiro valor
                 vr_index_tot_desc := vr_tab_tot_descontos.FIRST;
@@ -1138,6 +1175,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
 
           END LOOP; --rw_crapavl1                
             
+          --INC0032752
+          --Verifica se encontrou algum contrato tpctrato = 2,3,8
+          IF vr_epr_nrctremp IS NULL THEN
+             vr_regexist := FALSE;
+          END IF;              
+          
           --Proximo Registro
           vr_index_conta:= vr_tab_conta.NEXT(vr_index_conta);
 
@@ -1175,6 +1218,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
         RAISE vr_exc_erro;
      
       END IF;
+      -- Inclui nome do modulo logado - 14/02/2019 - INC0032752
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'AVAL0001.pc_busca_dados_contratos'); 
 
       -- seleciona os avalistas do associado
       OPEN cr_crapavt(pr_cdcooper => pr_cdcooper
@@ -1258,7 +1303,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
               CLOSE btch0001.cr_crapdat;
               -- Montar mensagem de critica
               vr_cdcritic := 1;
-              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
               RAISE vr_exc_erro;
             ELSE
               -- Apenas fechar o cursor
@@ -1290,11 +1335,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
               IF vr_tab_erro.count > 0 THEN
                 vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
               ELSE
-                vr_dscritic := 'Erro na pck empr0001.';
+                vr_cdcritic := 1051;
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
+                               ||' EMPR0001.pc_saldo_devedor_epr.'; --Erro na pck empr0001
               END IF;
               -- Gerar exceção
               RAISE vr_exc_erro;
             END IF;
+            -- Inclui nome do modulo logado - 14/02/2019 - INC0032752
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'AVAL0001.pc_busca_dados_contratos'); 
 
             IF rw_crapepr.inprejuz = 1 THEN
               vr_epr_vldivida := 'Prejuizo';
@@ -1312,6 +1361,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
             pr_tab_contras(vr_index).vldivida := vr_epr_vldivida;
 
           END LOOP; --rw_crapavt
+
+          --INC0032752
+          --Verifica se encontrou algum contrato tpctrato = 1
+          IF vr_epr_nrctremp IS NULL THEN
+             vr_regexist := FALSE;
+          END IF;              
 
         -- verifica as demais situações
         ELSIF rw_crapavt.tpctrato = 2 OR   -- desconto de cheques
@@ -1453,12 +1508,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
                 IF vr_tab_erro.count > 0 THEN
                   vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
                 ELSE
-                  vr_dscritic := 'Erro na pck DSCT0001.';
+                  vr_cdcritic := 1051;
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
+                                 ||' DSCT0001.pc_busca_total_descto_lim.'; --Erro na pck DSCT0001
                 END IF;
                 -- Gerar exceção
                 RAISE vr_exc_erro;
-              
               END IF;                           
+              -- Inclui nome do modulo logado - 14/02/2019 - INC0032752
+              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'AVAL0001.pc_busca_dados_contratos'); 
 
               IF vr_vldsctit = 0 THEN 
                 CONTINUE;
@@ -1480,6 +1538,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
             pr_tab_contras(vr_index).vldivida := vr_epr_vldivida;
 
           END LOOP; --rw_crapavt
+
+          --INC0032752
+          --Verifica se encontrou algum contrato tpctrato = 2,3,8
+          IF vr_epr_nrctremp IS NULL THEN
+             vr_regexist := FALSE;
+          END IF;              
 
         ELSE
 
@@ -1560,6 +1624,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
   
           END LOOP; --for rw_crapavt
 
+          --INC0032752
+          --Verifica se encontrou algum contrato tpctrato <> 1,2,3,8
+          IF vr_epr_nrctremp IS NULL THEN
+             vr_regexist := FALSE;
+          END IF;              
+
         END IF; --IF rw_crapavt.tpctrato = 1 THEN
         
       ELSE
@@ -1587,11 +1657,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
     pr_axnrcont := vr_nrdconta;
     pr_axnrcpfc := vr_nrcpfcgc;
 
+    -- Retira nome do modulo logado - 14/02/2019 - INC0032752
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL); 
+
     EXCEPTION
       WHEN vr_exc_erro THEN
-        
         -- Retorno não OK          
         pr_des_erro:= vr_retornvl;
+        
+        --> Registra o erro - INC0032752
+        CECRED.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdcooper      => pr_cdcooper, 
+                               pr_tpocorrencia  => 1, 
+                               pr_cdprograma    => vr_cdprogra, 
+                               pr_tpexecucao    => 3, --Online
+                               pr_cdcriticidade => 1,
+                               pr_cdmensagem    => vr_cdcritic,    
+                               pr_dsmensagem    => vr_dscritic||vr_dsparame,
+                               pr_idprglog      => vr_idprglog,
+                               pr_nmarqlog      => NULL);
+                             
         
         -- Chamar rotina de gravação de erro
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
@@ -1607,7 +1692,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
         pr_des_erro:= 'NOK';
         
         -- Chamar rotina de gravação de erro
-        vr_dscritic := 'Erro na aval0001.pc_busca_dados_contratos --> '|| SQLERRM;
+        vr_cdcritic := 9999;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0007.pc_busca_dados_contratos. '||SQLERRM;
+
+        --> Registra o erro - INC0032752
+        CECRED.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdcooper      => pr_cdcooper, 
+                               pr_tpocorrencia  => 2, 
+                               pr_cdprograma    => vr_cdprogra, 
+                               pr_tpexecucao    => 3, --Online
+                               pr_cdcriticidade => 2,
+                               pr_cdmensagem    => vr_cdcritic,    
+                               pr_dsmensagem    => vr_dscritic||vr_dsparame,
+                               pr_idprglog      => vr_idprglog,
+                               pr_nmarqlog      => NULL);
 
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci

@@ -6,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 14/01/2019
+   Data    : Fevereiro/2018                    Ultima atualizacao: 06/03/2019
 
    Dados referentes ao programa:
 
@@ -24,6 +24,8 @@
    
    14/01/2019 - Ajuste no campo t13 - nrdocmto para dsdoccop. 
               - Adicionado campo de complemento de endereço no endereço do pagador. (Cechet).
+   
+   06/03/2019 - Executar apenas em dias úteis na Central (Cechet)
    
   ............................................................................. */
   
@@ -535,6 +537,7 @@
             ,crapmun comarca
             ,crapcco
             ,crapcre
+            ,crapdne 
        WHERE crapcco.cdcooper > 0
          AND crapcco.cddbanco = 85
          AND crapcre.cdcooper = crapcco.cdcooper
@@ -544,10 +547,10 @@
          AND craprem.cdcooper = crapcre.cdcooper
          AND craprem.nrcnvcob = crapcre.nrcnvcob
          AND craprem.nrremret = crapcre.nrremret
-         AND craprem.cdcooper = crapcob.cdcooper
-         AND craprem.nrcnvcob = crapcob.nrcnvcob
-         AND craprem.nrdconta = crapcob.nrdconta
-         AND craprem.nrdocmto = crapcob.nrdocmto
+         AND crapcob.cdcooper = craprem.cdcooper
+         AND crapcob.nrdconta = craprem.nrdconta
+         AND crapcob.nrcnvcob = craprem.nrcnvcob
+         AND crapcob.nrdocmto = craprem.nrdocmto
          AND crapdat.cdcooper = crapcob.cdcooper
          AND crapban.cdbccxlt = crapcob.cdbandoc
          AND crapcop.cdcooper = crapcob.cdcooper
@@ -555,17 +558,19 @@
          AND crapass.cdcooper = crapcob.cdcooper
          AND crapenc.cdcooper = crapass.cdcooper
          AND crapenc.nrdconta = crapass.nrdconta
+         AND crapenc.tpendass = 9 -- Comercial
          AND crapsab.cdcooper = crapcob.cdcooper
          AND crapsab.nrdconta = crapcob.nrdconta
          AND crapsab.nrinssac = crapcob.nrinssac
-         AND trim(upper(crapsab.nmcidsac)) = crapmun.dscidade (+)
-	       AND trim(upper(crapsab.cdufsaca)) = crapmun.cdestado (+)
-         AND crapmun.cdcomarc = LPAD(comarca.cdufibge, 2, '0') || LPAD(comarca.cdcidbge, 5, '0')
-         AND crapenc.tpendass = 9 -- Comercial
+         AND crapdne.nrceplog = crapsab.nrcepsac
+         AND crapdne.idoricad = 1 -- CEP dos correios
+         AND crapmun.dscidade (+) = trim(upper(crapdne.nmextcid))
+	       AND crapmun.cdestado (+) = trim(upper(crapdne.cduflogr))
+         AND LPAD(comarca.cdufibge, 2, '0') || LPAD(comarca.cdcidbge, 5, '0') = crapmun.cdcomarc
          AND crapcob.cdbandoc = 85
          AND crapcob.insrvprt = 1
          AND crapcob.insitcrt = 1 -- Com instrução de protesto
-         AND craprem.cdocorre = 9
+         AND craprem.cdocorre = 9 -- Somente boletos c/ instrução de protesto
        ORDER BY crapmun.cdcomarc;
     --
     rw_craprem cr_craprem%ROWTYPE;
@@ -2810,6 +2815,13 @@
   END pc_gera_cancelamento_ieptb;
 	--
 BEGIN
+  
+  -- Executar apenas em dias úteis na Central
+  IF gene0005.fn_valida_dia_util(pr_cdcooper => 3, 
+                                 pr_dtmvtolt => trunc(SYSDATE)) <> trunc(SYSDATE) THEN
+    RETURN;
+  END IF;
+
   -- Incluido controle de Log inicio programa
   pc_controla_log_batch(1, 'Início crps729');
   --

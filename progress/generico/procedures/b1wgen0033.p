@@ -7794,6 +7794,8 @@ PROCEDURE cria_seguro:
                 IF   par_cdsitseg = 3  THEN  /* Renovacao */ 
                      par_dtmvtolt = par_dtprideb.
                 
+                
+				/* REMOCAO LOTE
                 DO WHILE TRUE:
                     DO aux_contador = 1 TO 10: /* Lock da craplot */
             
@@ -7817,8 +7819,18 @@ PROCEDURE cria_seguro:
                     END.
                     LEAVE.
                 END.
+				*/
+				
                 /* verifica validação da craplot*/
-                IF aux_cdcritic <> 0 THEN LEAVE valida.
+               /* REMOCAO LOTE IF aux_cdcritic <> 0 THEN LEAVE valida. */
+               
+  			    FIND craplot WHERE
+                            craplot.cdcooper = par_cdcooper           AND
+                            craplot.dtmvtolt = par_dtmvtolt           AND
+                            craplot.cdagenci = tt-associado.cdagenci  AND
+                            craplot.cdbccxlt = par_cdbccxlt           AND
+                            craplot.nrdolote = par_nrdolote
+                            NO-ERROR NO-WAIT.
         
                 IF   NOT AVAILABLE craplot   THEN
                      DO:
@@ -7836,10 +7848,11 @@ PROCEDURE cria_seguro:
                          VALIDATE craplot.
                      END.
             
+               /* REMOCAO LOTE
                 ASSIGN craplot.qtcompln = craplot.qtcompln + 1
                        craplot.qtinfoln = craplot.qtinfoln + 1
                        craplot.vlcompcr = craplot.vlcompcr + par_vlpreseg
-                       craplot.vlinfocr = craplot.vlinfocr + par_vlpreseg.
+                       craplot.vlinfocr = craplot.vlinfocr + par_vlpreseg.*/
                 
 
                 ASSIGN aux_nrseqdig = par_nrctrseg.

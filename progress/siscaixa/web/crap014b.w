@@ -748,7 +748,7 @@ PROCEDURE process-web-request :
     
     IF  get-value("retorna") <> "" THEN DO:
         {&OUT}
-            '<script>window.location = "crap014.html?v_tppagmto=2"
+            '<script>window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) '"
             </script>'.
     END.
     ELSE  DO:
@@ -1317,14 +1317,14 @@ PROCEDURE process-web-request :
                                    ELSE
                                       DO:
                                        {&OUT}
-                    '<script>window.location = "crap014.html?v_tppagmto=2"
+                    '<script>window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) '"
                      </script>'.
                                       END.                            
                               END.
                             ELSE
                               DO:
                                 {&OUT}
-                                '<script>window.location = "crap014.html?v_tppagmto=2"
+                                '<script>window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) '"
                                  </script>'.
                               END.
                             /******************************************************************/

@@ -145,7 +145,6 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL
           VIEW-AS RADIO-SET VERTICAL
           RADIO-BUTTONS 
-                    "radio 3","3",
                     "radio 1","1",
 "radio 2","2"
           SIZE 20 BY 3
@@ -188,7 +187,6 @@ DEFINE FRAME Web-Frame
      ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
           "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
           RADIO-BUTTONS 
-           "v_tppagmto 2", "2":U,
            "v_tppagmto 0", "0":U,
            "v_tppagmto 1", "1":U 
            SIZE 20 BY 2
@@ -512,9 +510,9 @@ PROCEDURE process-web-request :
       ASSIGN aux_valor = DEC(v_valor) + DEC(v_valor1).
 
       IF  get-value("cancela") <> "" THEN DO:
-          ASSIGN radio       = "3"
+          ASSIGN radio       = "1"
                  v_codbarras = ""
-				 v_tppagmto = "2"
+				 v_tppagmto = "0"
                  vh_foco     = "12".
       END.
       ELSE DO:
@@ -525,7 +523,6 @@ PROCEDURE process-web-request :
                                   INPUT INT(v_caixa),
                                   INPUT (DEC(v_valor) + DEC(v_valor1)),
                                   INPUT STRING(ab_unmap.v_senha),
-								  INPUT get-value("radio"),
                                   OUTPUT aux_des_erro,
                                   OUTPUT aux_dscritic,
                                   OUTPUT aux_inssenha).
@@ -560,8 +557,7 @@ PROCEDURE process-web-request :
                       "' c_dtvencto '"
                       </script>'.
               END.
-              ELSE 
-				IF  get-value("radio") = "2" THEN DO:
+              ELSE DO:
                    ASSIGN p_valor = aux_valor.
             
                    {&OUT}                 /* Fatura Manual */
@@ -608,9 +604,7 @@ PROCEDURE process-web-request :
                   IF  get-value("radio") = "1" THEN 
                       RUN processa_titulos.
                   ELSE 
-				    IF  get-value("radio") = "2" THEN
                       RUN processa_faturas.
-				  
               END.            
           END.
       END.        
@@ -866,7 +860,6 @@ PROCEDURE validar-valor-limite:
     DEF INPUT PARAM par_nrocaixa  AS INTEGER                         NO-UNDO.
     DEF INPUT PARAM par_vltitfat  AS DECIMAL                         NO-UNDO.
     DEF INPUT PARAM par_senha     AS CHARACTER                       NO-UNDO.
-    DEF INPUT PARAM par_radio     AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_des_erro AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHARACTER                       NO-UNDO.
     DEF OUTPUT PARAM par_inssenha AS INTEGER                         NO-UNDO.
@@ -882,7 +875,6 @@ PROCEDURE validar-valor-limite:
                                            INPUT par_nrocaixa,
                                            INPUT par_vltitfat,
                                            INPUT par_senha,
-										   INPUT par_radio,
                                            OUTPUT par_des_erro,
                                            OUTPUT par_dscritic,
                                            OUTPUT par_inssenha).

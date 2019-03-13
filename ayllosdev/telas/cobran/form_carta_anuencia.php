@@ -116,6 +116,7 @@ $nmrotina = $_POST["nmrotina"];
 <form action="<?php echo $UrlSite;?>telas/cobran/imprimir_carta_anuencia.php" method="post" id="frmReport" name="frmReport">
 	<input type="hidden" name="cdcooper" id="cdcooper">
 	<input type="hidden" name="nrdconta" id="nrdconta">
+	<input type="hidden" name="nrcnvcob" id="nrcnvcob">
 	<input type="hidden" name="nrdocmto" id="nrdocmto">
 	<input type="hidden" name="cdbandoc" id="cdbandoc">
 	<input type="hidden" name="dtcatanu" id="dtcatanu">

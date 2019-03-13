@@ -12,7 +12,7 @@ BEGIN
   Programa: pc_lista_tbgen
   Sistema : Rotina de Log
   Autor   : Belli/Envolti
-  Data    : Maio/2018                   Ultima atualizacao: 11/02/2019  
+  Data    : Maio/2018                   Ultima atualizacao: 27/02/2019  
     
   Dados referentes ao programa:
   
@@ -55,6 +55,9 @@ BEGIN
                            
               11/02/2019 - Deu um erro de programa e foi ajustado
                          - Também dia 13/02/2019 foi ajustada uma query para trazer erros não selecionados
+                         - (Envolti - Belli - Chamado - REQ0040359)
+                         
+              27/02/2019 - Ajuste na parametrização e gravação nos minutos da média do tempo dos programas
                          - (Envolti - Belli - Chamado - REQ0040359)
               
   ....................................................................................... */
@@ -1827,6 +1830,9 @@ DECLARE
                            
               21/11/2018 - Ajustar nomenclatura quando não houver minutos e somente segundos
                          - (Envolti - Belli - Chamado - REQ0033876)
+                         
+              27/02/2019 - Ajuste na parametrização dos minutos da média do tempo dos programas
+                         - (Envolti - Belli - Chamado - REQ0040359)
     
   ............................................................................. */  
   
@@ -2794,7 +2800,7 @@ DECLARE
     WHERE  t.cdprograma   LIKE 'CRPS%.P'  
     AND    t.dhinicio     IS NOT NULL 
     AND    t.dhfim        IS NOT NULL		  
-    AND    TRUNC(t.dhfim) < vr_dtmovime
+    AND    TRUNC(t.dhfim) < TRUNC(vr_dtsysdat)
     AND    t.idprglog        = 
     ( SELECT   MAX(t4.idprglog) 
         FROM   tbgen_prglog T4
@@ -3262,7 +3268,8 @@ DECLARE
     -- Posiciona procedure
     vr_cdproint := vr_cdproexe || '.pc_cria_job';
     -- Inclusão do módulo e ação logado
-    GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
+    GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);            
+    -- Mesmo atrasando vai calcular os minutos da média do tempo dos programas - 27/02/2019 - REQ0040359  
     -- Job permanente: JBPRG_LISTA_BATCH
     -- Job reagendado: JBPRG_R_LISTA_BAT_$123456789    
     vr_jobname  := 'JBPRG_R_LISTA_BAT'||'_'||'$';
@@ -3276,7 +3283,7 @@ DECLARE
          ( pr_cdcopprm  => ''0'' 
          , pr_nrcadeia  => ''0'' 
          , pr_dtmovime  => NULL
-         , pr_idatzmed  => ''N''
+         , pr_idatzmed  => ''S''
          , pr_cdcritic  => vr_cdcritic  
          , pr_dscritic  => vr_dscritic
          );
@@ -3734,7 +3741,11 @@ BEGIN                                     --- --- --- INICIO DO PROCESSO
   
   vr_tab_cooper.DELETE;
   
-  vr_cdcooinp := NVL(pr_cdcopprm,0);    
+  vr_cdcooinp := NVL(pr_cdcopprm,0);   
+                         
+  -- Retorno da gravação nos minutos da média do tempo dos programas - 27/02/2019 - REQ0040359
+  COMMIT;
+  
   -- Log de fim de execucao
   pc_controla_log_batch(pr_dstiplog => 'F');
     

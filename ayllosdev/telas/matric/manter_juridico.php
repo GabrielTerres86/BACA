@@ -9,6 +9,7 @@
 				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
 				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  *                16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).
+ *                29/01/2019 - Validar se CNAE informado é válido (PRB0040478 - Márcio/Mouts)
  */
 ?> 
 
@@ -40,6 +41,7 @@
 	$cdufende = (isset($_POST['cdufende'])) ? $_POST['cdufende'] : '' ;
 	$dtdemiss = (isset($_POST['dtdemiss'])) ? $_POST['dtdemiss'] : '' ;
 	$cdcnae   = (isset($_POST['cdcnae'])) ? $_POST['cdcnae'] : '' ;
+	$dscnae	  = (isset($_POST['dscnae'])) ? $_POST['dscnae'] : '' ;
 	$arrayFilhosAvtMatric = (isset($_POST['arrayFilhosAvtMatric'])) ? $_POST['arrayFilhosAvtMatric'] : '';
 	$arrayBensMatric      = (isset($_POST['arrayBensMatric']))      ? $_POST['arrayBensMatric'] 	 : '';
 	$arrayFilhos          = (isset($_POST['arrayFilhos'])) 			? $_POST['arrayFilhos'] 		 : '';
@@ -350,6 +352,14 @@
 		
 		//Ramo atividade
 		if ( $GLOBALS['cdrmativ'] == '' || $GLOBALS['cdrmativ'] == 0 ) exibirErro('error','Ramo de atividade deve ser selecionado.','Alerta - Aimaro','focaCampoErro(\'cdrmativ\',\'frmJuridico\');',false);
+
+	
+		//CNAE
+		if ( $GLOBALS['cdcnae'] != '' || $GLOBALS['cdcnae'] != 0 ) {
+		 if ( $GLOBALS['dscnae'] === '' || $GLOBALS['dscnae'] === 0 || $GLOBALS['dscnae'] === null) {
+			 exibirErro('error','Favor informar um CNAE válido!','Alerta - Aimaro','focaCampoErro(\'cdcnae\',\'frmJuridico\');',false);
+		 }
+        }		
 		
 		//-----------------------------
 		//		    Endereço

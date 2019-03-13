@@ -690,6 +690,17 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
                             -- OUT --
                             ,pr_pc_geral     OUT NUMBER
                             ,pr_qtd_geral    OUT NUMBER);
+
+  PROCEDURE pc_verifica_contrato_bodero (pr_nrdconta  IN craplim.nrdconta%TYPE,
+                              pr_nrctrlim  IN craplim.nrctrlim%TYPE
+                              ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                              --------> OUT <--------
+                              ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                              ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                              ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                              );
 END  DSCT0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
@@ -724,7 +735,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                16/05/2018 - Criacao das procedures de trazer o saldo e efetuar pagamento dos titulos vencidos - Vitor Shimada Assanuma (GFT)
                24/08/2018 - Adicionar novo histórico de credito para desconto de titulo pago a maior (vr_cdhistordsct_creddscttitpgm).
                             Este será usado na pc_pagar_titulo quando o valor pago do boleto for maior que o saldo restante. (Andrew Albuquerque (GFT))
-               23/01/2019 - Ajuste na pc_lanca_credito_bordero (Daniel)             
+               23/01/2019 - Ajuste na pc_lanca_credito_bordero (Daniel) 
+               11/02/2019 - Alteração para REJEITAR em outras situações diferente de Liberado e Liquidado - Cássia de Oliveira (GFT)            
   ---------------------------------------------------------------------------------------------------------------*/
   -- Cursor genérico de calendário
   rw_crapdat btch0001.cr_crapdat%rowtype;
@@ -1633,6 +1645,8 @@ END pc_inserir_lancamento_bordero;
 
     Frequencia: Sempre que for chamado
     Objetivo  : Procedure que realiza validações básicas do borderô para as rotinas de análise e liberação do borderô
+    
+    Alteração : 11/02/2019 - Alteração para REJEITAR em outras situações diferente de Liberado e Liquidado - Cássia de Oliveira (GFT)
   ---------------------------------------------------------------------------------------------------------------------*/
 
    vr_exc_erro exception;
@@ -1698,14 +1712,8 @@ END pc_inserir_lancamento_bordero;
 
            ELSIF pr_cddeacao = 'REJEITAR' THEN
              IF (fn_contigencia_esteira(pr_cdcooper)) THEN
-               IF (rw_crapbdt.insitbdt <> 1) THEN
-                   vr_dscritic := 'Rejeição não permitida. O Borderô deve estar com a situação EM ESTUDO.';
-                   CLOSE cr_crapbdt;
-                   RAISE vr_exc_erro;
-               END IF;
-             ELSE
-               IF  (rw_crapbdt.insitapr <> 5) THEN
-                   vr_dscritic := 'Rejeição não permitida. O Borderô deve estar com a decisão NÃO APROVADO.';
+               IF (rw_crapbdt.insitbdt NOT IN (1, 2)) THEN
+                   vr_dscritic := 'Rejeição não permitida. O Borderô deve estar com a situação EM ESTUDO ou ANALISADO.';
                    CLOSE cr_crapbdt;
                    RAISE vr_exc_erro;
                END IF;
@@ -6571,6 +6579,23 @@ END pc_inserir_lancamento_bordero;
     -- Altera a decisao de todos os titulos daquele bordero para NAO APROVADOS 
     UPDATE craptdb SET insittit = 0, insitapr = 2 WHERE nrborder = pr_nrborder AND cdcooper = vr_cdcooper AND nrdconta = pr_nrdconta;
   
+    
+    ESTE0006.pc_interrompe_proposta_bdt_est(pr_cdcooper => vr_cdcooper
+                                           ,pr_cdagenci => vr_cdagenci
+                                           ,pr_cdoperad => vr_cdoperad
+                                           ,pr_cdorigem => vr_idorigem
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrborder => pr_nrborder
+                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+    
+                                           
+                                           
+    IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF; 
+  
     -- Efetua os inserts para apresentacao na tela VERLOG
     gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                         ,pr_cdoperad => vr_cdoperad
@@ -9840,5 +9865,128 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
   END pc_verifica_impressao;
+  
+  PROCEDURE pc_verifica_contrato_bodero (pr_nrdconta  IN craplim.nrdconta%TYPE,
+                              pr_nrctrlim  IN craplim.nrctrlim%TYPE
+                              ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                              --------> OUT <--------
+                              ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                              ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                              ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                              ) IS
+    /* .............................................................................
+      Programa: pc_verifica_contrato_bodero
+      Sistema : AyllosWeb
+      Sigla   : CRED
+      Autor   : Cássia de Oliveira (GFT)
+      Data    : 20/02/2019                        Ultima atualizacao: --/--/----
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+      Objetivo  : Verifica se há brdero diferente de liberado para este contrato
+      Alterações:
+       
+
+    ............................................................................. */
+    -- Tratamento de erros
+    vr_exc_erro exception;
+    vr_cdcritic number;
+    vr_dscritic VARCHAR2(100);
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
+    vr_fltembdt VARCHAR(1);
+    
+    CURSOR cr_crapbdt(pr_cdcooper IN crapprp.cdcooper%TYPE) IS
+      SELECT (1) 
+        FROM crapbdt 
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrctrlim = pr_nrctrlim 
+         AND insitbdt < 3;
+    rw_crapbdt cr_crapbdt%ROWTYPE;
+    
+    
+    BEGIN
+      pr_nmdcampo := NULL;
+      pr_des_erro := 'OK';
+      -- Extrair dados do xml de entrada
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Incluir nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => vr_nmdatela
+                                ,pr_action => vr_nmeacao);
+                                
+                                
+      OPEN cr_crapbdt(pr_cdcooper => vr_cdcooper);  
+      FETCH cr_crapbdt INTO rw_crapbdt;
+                      
+      IF cr_crapbdt%NOTFOUND THEN
+        -- Fechar o cursor
+        CLOSE cr_crapbdt; 
+        vr_fltembdt := 0;
+      ELSE
+        CLOSE cr_crapbdt;
+        vr_fltembdt := 1;
+      END IF;
+
+
+      -- Inicializar o clob
+       vr_des_xml := null;
+       dbms_lob.createtemporary(vr_des_xml, true);
+       dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+
+       -- inicilizar as informaçoes do xml
+       pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                             '<root><dados>');
+
+       pc_escreve_xml('<fltembdt>' || vr_fltembdt || '</fltembdt>');
+       
+       pc_escreve_xml ('</dados></root>',true);
+       pr_retxml := xmltype.createxml(vr_des_xml);
+
+       /* liberando a memória alocada pro clob */
+       dbms_lob.close(vr_des_xml);
+       dbms_lob.freetemporary(vr_des_xml);
+
+
+    exception
+      when vr_exc_erro then
+           /*  se foi retornado apenas código */
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+               /* buscar a descriçao */
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           /* variavel de erro recebe erro ocorrido */
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      when others then
+           /* montar descriçao de erro não tratado */
+           pr_dscritic := 'erro não tratado na DSCT0003.pc_verifica_contrato_bodero ' ||sqlerrm;
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+  END pc_verifica_contrato_bodero;
 END DSCT0003;
 /

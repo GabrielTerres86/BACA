@@ -14,6 +14,8 @@
    Alteracoes: 05/10/2016 - Incluido tratamento no retorno da procedrure
 							valida_pagamentos_geral, Prj. 302 (Jean Michel).
 
+               16/02/2019 - Ajuste variável aux_nrrecid para DECI - Paulo Martins - Mouts                            
+
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -27,7 +29,7 @@ DEF VAR h-b1wgen0084a AS HANDLE                                        NO-UNDO.
 DEF VAR h-b1wgen0084b AS HANDLE                                        NO-UNDO.
 
 DEF VAR aux_dstransa  AS CHAR                                          NO-UNDO.
-DEF VAR aux_nrrecid   AS INTE                                          NO-UNDO.
+DEF VAR aux_nrrecid   AS DECI                                          NO-UNDO.
 DEF VAR aux_cont      AS INT                                           NO-UNDO.   
 DEF VAR aux_excluir   AS LOGICAL                                       NO-UNDO. 
 DEF VAR aux_totatual  AS DECI                                          NO-UNDO.

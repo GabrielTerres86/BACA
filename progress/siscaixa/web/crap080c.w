@@ -170,7 +170,6 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL
           VIEW-AS RADIO-SET VERTICAL
           RADIO-BUTTONS 
-                      "radio 3", "3":U,
                       "radio 1", "1":U,
                       "radio 2", "2":U
           SIZE 20 BY 3
@@ -237,7 +236,6 @@ DEFINE FRAME Web-Frame
      ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
           "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
           RADIO-BUTTONS 
-           "v_tppagmto 2", "2":U,
            "v_tppagmto 0", "0":U,
            "v_tppagmto 1", "1":U 
            SIZE 20 BY 2

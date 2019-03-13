@@ -113,8 +113,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBRAN IS
   --> Rotina responsavel por gerar o relatorio carta anuencia - Chamada ayllos Web                                    
   PROCEDURE pc_relat_carta_anuencia_web (pr_cdcooper   IN craptab.cdcooper%TYPE  --> Cooperativa                                  
                                         ,pr_nrdconta    IN crapass.nrdconta%TYPE  --> Número da conta
+                                        ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE         --> Número do convenio                                        
                                         ,pr_nrdocmto    IN crapcob.nrdocmto%TYPE  --> Número do documento
-	                                      ,pr_cdbancoc    IN crapcob.cdbandoc%TYPE  --> Código do banco
+	                                      ,pr_cdbandoc    IN crapcob.cdbandoc%TYPE  --> Código do banco
                                         ,pr_dtcatanu    IN VARCHAR2               --> Data quitação divida 
                                         ,pr_nmrepres    IN VARCHAR2               --> Representantes
                                         ,pr_dtmvtolt    IN VARCHAR2               --> data do movimento                                     
@@ -128,8 +129,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBRAN IS
   --> Rotina responsavel por gerar o relatorio carta anuencia                         
   PROCEDURE pc_relat_carta_anuencia (pr_cdcooper  IN craptab.cdcooper%TYPE         --> Cooperativa                                  
                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE         --> Número da conta
+                                    ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE         --> Número do convenio                                    
                                     ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE         --> Número do documento
-                                    ,pr_cdbancoc  IN crapcob.cdbandoc%TYPE         --> Código do banco           
+                                    ,pr_cdbandoc  IN crapcob.cdbandoc%TYPE         --> Código do banco           
                                     ,pr_dtcatanu  IN VARCHAR2                      --> Data de liquidação da dívida
                                     ,pr_nmrepres  IN VARCHAR2                      --> Representantes
 																		,pr_cdoperad  IN VARCHAR2 DEFAULT '1'          --> Operador
@@ -193,7 +195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   --  Sistema  : Rotinas utilizadas pela Tela COBRAN
   --  Sigla    : Cobran
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Maio/2016.                   Ultima atualizacao: 20/08/2018
+  --  Data     : Maio/2016.                   Ultima atualizacao: 01/03/2019
   --
   -- Dados referentes ao programa:
   --
@@ -206,6 +208,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   --             03/04/2018 - Inserido noti0001.pc_cria_notificacao
   --
 	--             20/08/2018 - Inserido 
+	--
+  --             01/03/2019 - Ajuste na impressão da carta de anuência (P352 - Cechet)
 	--
   ---------------------------------------------------------------------------*/
   -- Chamada AyllosWeb Rotina para retornar lista de convenios ceb e suas situações
@@ -1357,8 +1361,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   --> Rotina para disponibilizar uma carta de anuencia - Chamada ayllos Web
   PROCEDURE pc_relat_carta_anuencia_web (pr_cdcooper   IN craptab.cdcooper%TYPE  --> Cooperativa                                  
                                         ,pr_nrdconta    IN crapass.nrdconta%TYPE  --> Número da conta
+                                        ,pr_nrcnvcob    IN crapcob.nrcnvcob%TYPE         --> Número do convenio                                        
                                         ,pr_nrdocmto    IN crapcob.nrdocmto%TYPE  --> Número do documento
-                                        ,pr_cdbancoc    IN crapcob.cdbandoc%TYPE  --> Código do banco
+                                        ,pr_cdbandoc    IN crapcob.cdbandoc%TYPE  --> Código do banco
                                         ,pr_dtcatanu    IN VARCHAR2               --> Data quitação divida
                                         ,pr_nmrepres    IN VARCHAR2               --> Representantes
                                         ,pr_dtmvtolt    IN VARCHAR2               --> data do movimento                                     
@@ -1429,7 +1434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   BEGIN
     OPEN cr_crapcob(pr_cdcooper => pr_cdcooper,
                     pr_nrdconta => pr_nrdconta,
-                    pr_cdbandoc => pr_cdbancoc,
+                    pr_cdbandoc => pr_cdbandoc,
                     pr_nrdocmto => pr_nrdocmto);
     FETCH cr_crapcob INTO rw_crapcob;
   
@@ -1446,8 +1451,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
 
     pc_relat_carta_anuencia (pr_cdcooper  => pr_cdcooper   --> Codigo da cooperativa 
                              ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrcnvcob => pr_nrcnvcob
                              ,pr_nrdocmto => pr_nrdocmto
-                             ,pr_cdbancoc => pr_cdbancoc
+                             ,pr_cdbandoc => pr_cdbandoc
                              ,pr_dtcatanu => pr_dtcatanu
                              ,pr_nmrepres => pr_nmrepres
 														 ,pr_cdoperad => vr_cdoperad
@@ -1523,8 +1529,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   --> Rotina responsavel por gerar o relatorio carta anuência
   PROCEDURE pc_relat_carta_anuencia (pr_cdcooper  IN craptab.cdcooper%TYPE         --> Cooperativa                                  
                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE         --> Número da conta
+                                    ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE         --> Número do convenio                                    
                                     ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE         --> Número do documento
-                                    ,pr_cdbancoc  IN crapcob.cdbandoc%TYPE         --> Código do banco           
+                                    ,pr_cdbandoc  IN crapcob.cdbandoc%TYPE         --> Código do banco           
                                     ,pr_dtcatanu  IN VARCHAR2                      --> Data de liquidação da dívida
                                     ,pr_nmrepres  IN VARCHAR2                      --> Representantes
 																		,pr_cdoperad  IN VARCHAR2 DEFAULT '1'          --> Operador
@@ -1551,18 +1558,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
     ............................................................................ */
     --------------->> CURSORES <<----------------
     -- Cursor para validação da cooperativa
-    cursor cr_crapcop (pr_nrdconta   crapass.nrdconta%TYPE
-                      ,pr_nrdocmto   crapcob.nrdocmto%TYPE
-                      ,pr_cdbancoc   crapcob.cdbandoc%TYPE) is
+    cursor cr_crapcob IS
       SELECT nmprimtl as nmcooper, 
-             sab.nmcidsac as dscidade_cooper, 
+             enc.nmcidade as dscidade_cooper, 
              enc.dsendere as dsrua, 
              enc.nrendere as vlnumero, 
              enc.nmbairro as dsbairro, 
              enc.nmcidade as dscidade,
              enc.cdufende as dsuf, 
              null as nmsocioadm, 
-             gene0002.fn_mask_cpf_cnpj(pas.nrcpfcgc,pas.inpessoa) as cnpj,
+             gene0002.fn_mask_cpf_cnpj(ass.nrcpfcgc,ass.inpessoa) as cnpj,
              sab.nmdsacad as nmpagador,
              sab.cdufsaca as dsufadm, 
              sab.nmcidsac as dscidadeadm, 
@@ -1575,18 +1580,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
              cob.dsdoccop as nrboleto,
              cob.nrnosnum as nrnossonmr,
 						 cob.nrcnvcob AS nrcnvcob
-        FROM crapass pas, 
+        FROM crapass ass, 
              crapcob cob, 
              crapsab sab,
              crapenc enc
         WHERE
-             cob.nrdconta = pas.nrdconta 
-         AND sab.nrdconta = pas.nrdconta 
-         AND sab.nrinssac = cob.nrinssac 
-         AND pas.nrdconta = pr_nrdconta 
+             cob.cdcooper = pr_cdcooper
+         AND cob.nrdconta = pr_nrdconta
+         AND cob.nrcnvcob = pr_nrcnvcob
          AND cob.nrdocmto = pr_nrdocmto 
-         AND cob.cdbandoc = pr_cdbancoc;
-    rw_crapcop cr_crapcop%rowtype;
+         AND cob.cdbandoc = pr_cdbandoc
+         AND ass.cdcooper = cob.cdcooper
+         AND ass.nrdconta = cob.nrdconta
+         AND sab.cdcooper = cob.cdcooper
+         AND sab.nrdconta = cob.nrdconta
+         AND sab.nrinssac = cob.nrinssac
+         AND enc.cdcooper = cob.cdcooper
+         AND enc.nrdconta = cob.nrdconta
+         AND enc.tpendass = 9; -- endereço PJ
+    rw_crapcob cr_crapcob%rowtype;
     --
     -- PL/Table contendo os tipos de dados
     type typ_tipo is record (vr_dscidade_cooper      varchar2(50),
@@ -1683,42 +1695,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
 		END IF;  
 	
     -- Verifica se a cooperativa esta cadastrada
-    OPEN cr_crapcop(pr_nrdconta, pr_nrdocmto, pr_cdbancoc);
-    FETCH cr_crapcop INTO rw_crapcop;
+    OPEN cr_crapcob;
+    FETCH cr_crapcob INTO rw_crapcob;
     -- Se não encontrar
-    IF cr_crapcop%NOTFOUND THEN
+    IF cr_crapcob%NOTFOUND THEN
       -- Fechar o cursor pois haverá raise
-      CLOSE cr_crapcop;
+      CLOSE cr_crapcob;
       -- Montar mensagem de critica
       vr_cdcritic := 651;
       RAISE vr_exc_saida;
     ELSE
       -- Apenas fechar o cursor
-      CLOSE cr_crapcop;
+      CLOSE cr_crapcob;
     END IF;
 
-    vr_dscidade_cooper := rw_crapcop.dscidade_cooper;
-    vr_nmcooper := rw_crapcop.nmcooper;
-    vr_cnpj := rw_crapcop.cnpj;
-    vr_dsrua := rw_crapcop.dsrua;
-    vr_vlnumero := rw_crapcop.vlnumero;
-    vr_dsbairro := rw_crapcop.dsbairro;
-    vr_dscidade := rw_crapcop.dscidade;
-    vr_dsuf := rw_crapcop.dsuf;
-    vr_nmsocioadm := rw_crapcop.nmsocioadm;
-    vr_nmpagador := rw_crapcop.nmpagador;
-    vr_iddocumento := rw_crapcop.iddocumento;
-    vr_dsruaadm := rw_crapcop.dsruaadm;
-    vr_vlnumadm := rw_crapcop.vlnumadm;
-    vr_dsbairroadm := rw_crapcop.dsbairroadm;
-    vr_dscidadeadm := rw_crapcop.dscidadeadm;
-    vr_dsufadm := rw_crapcop.dsufadm;
-    vr_nrboleto := rw_crapcop.nrboleto;
-    vr_vlboleto := rw_crapcop.vlboleto;
-    vr_nrnossonmr := rw_crapcop.nrnossonmr;
-    vr_dtvencimento := rw_crapcop.dtvencimento;
+    vr_dscidade_cooper := rw_crapcob.dscidade_cooper;
+    vr_nmcooper := rw_crapcob.nmcooper;
+    vr_cnpj := rw_crapcob.cnpj;
+    vr_dsrua := rw_crapcob.dsrua;
+    vr_vlnumero := rw_crapcob.vlnumero;
+    vr_dsbairro := rw_crapcob.dsbairro;
+    vr_dscidade := rw_crapcob.dscidade;
+    vr_dsuf := rw_crapcob.dsuf;
+    vr_nmsocioadm := rw_crapcob.nmsocioadm;
+    vr_nmpagador := rw_crapcob.nmpagador;
+    vr_iddocumento := rw_crapcob.iddocumento;
+    vr_dsruaadm := rw_crapcob.dsruaadm;
+    vr_vlnumadm := rw_crapcob.vlnumadm;
+    vr_dsbairroadm := rw_crapcob.dsbairroadm;
+    vr_dscidadeadm := rw_crapcob.dscidadeadm;
+    vr_dsufadm := rw_crapcob.dsufadm;
+    vr_nrboleto := rw_crapcob.nrboleto;
+    vr_vlboleto := rw_crapcob.vlboleto;
+    vr_nrnossonmr := rw_crapcob.nrnossonmr;
+    vr_dtvencimento := rw_crapcob.dtvencimento;
     vr_dtcatanu := pr_dtcatanu;
-		vr_nrcnvcob := rw_crapcop.nrcnvcob;
+		vr_nrcnvcob := rw_crapcob.nrcnvcob;
 
     -- Inicializar o CLOB para armazenar o arquivo XML
     vr_des_xml := null;
