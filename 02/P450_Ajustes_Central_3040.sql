@@ -9,3 +9,11 @@ UPDATE crapris ris
    AND ris.dtrefere = '28/02/2019'
 
 COMMIT;
+
+UPDATE crapprm prm
+   SET prm.dsvlrprm = prm.dsvlrprm || ';1402;1406;2162;2425;2648'
+ WHERE nmsistem = 'CRED' 
+   AND cdcooper = 0 
+   AND cdacesso = 'HISTOR_PREJ_N_SALDO';
+
+COMMIT;
