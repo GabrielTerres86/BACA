@@ -144,6 +144,7 @@
 * 114: [15/09/2018] Alteração da tela de Bens da Atenda Prestação/Empréstimo (Christian / Envolti)
 * 115: [20/09/2018] Inclusão de histórico de Gravames (Christian / Envolti)
 * 116: [29/01/2019] Alteracao da consulta FIPE  (Christian / Envolti)
+* 117: [07/03/2019] Permite inclusao / cadastro de avalista via CRM - Chamado INC0033825 (Gabriel Marcos / Mouts).
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -2722,8 +2723,18 @@ function controlaLayout(operacao) {
 
                         Busca_Associado(0, nrcpfcgc, contAvalistas - 1);
 
+                    /*
+    
+                    Permite que o acesso via CRM faca o cadastro de avalistas.
+                    Ao digitar um cpf/cnpj que nao possui idpessoa, a tela
+                    ira habilitar digitacao nos campos que anteriormente a
+                    esta implementacao, estavam bloqueados / somente leitura.
+
+                    */
+
                     // Se nao for acessado via CRM, pode habilitar os campos
-                    if ($('#crm_inacesso', '#' + nomeForm).val() != 1 ) {
+                    //if ($('#crm_inacesso', '#' + nomeForm).val() != 1 ) {
+
                         cTodos.habilitaCampo();
                         cTodos_1.habilitaCampo();
                         cTodos_2.habilitaCampo();
@@ -2731,12 +2742,12 @@ function controlaLayout(operacao) {
                         cTodos_4.habilitaCampo();
                         cConta.desabilitaCampo().val(nrctaava);
                         cQntd.desabilitaCampo().val(arrayProposta['qtpromis']);
-
+                        
                         $('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeForm).desabilitaCampo();
                         controlaPesquisas();
                         cNome.focus();
                         
-                    }
+                    //}
 
                     }
 
