@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2017-04-27T10:40:16 -->
+<!-- 2018-10-31T18:37:18 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl733" language="groovy" pageWidth="842" pageHeight="595" orientation="Landscape" whenNoDataType="AllSectionsNoDetail" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -60,6 +60,9 @@
 	</field>
 	<field name="qtlinhas" class="java.lang.Integer">
 		<fieldDescription><![CDATA[linhas/@qtlinhas]]></fieldDescription>
+	</field>
+	<field name="tpproduto" class="java.lang.String">
+		<fieldDescription><![CDATA[cabecalho/tpproduto]]></fieldDescription>
 	</field>
 	<background>
 		<band splitType="Stretch"/>
@@ -218,17 +221,6 @@
 					<text><![CDATA[CONTA]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="141" y="0" width="48" height="8" uuid="98ce2e30-4588-4cdd-8004-5b1ac9e349b5">
-						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-					</reportElement>
-					<textElement textAlignment="Right">
-						<font fontName="Courier New" size="6" isBold="false"/>
-					</textElement>
-					<text><![CDATA[CONTRATO]]></text>
-				</staticText>
-				<staticText>
 					<reportElement x="189" y="0" width="50" height="8" uuid="ec5c4958-0422-47c4-b409-c232c2abc36f">
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -295,9 +287,18 @@
 					</textElement>
 					<text><![CDATA[DESTINO]]></text>
 				</staticText>
+				<textField>
+					<reportElement x="139" y="0" width="50" height="8" uuid="c37a4e98-ea8e-4616-b31a-a03ba4c2ed70">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tpproduto}.equals("3")?"BORDERÔ":"CONTRATO"]]></textFieldExpression>
+				</textField>
 			</frame>
 			<frame>
-				<reportElement x="0" y="86" width="842" height="8" isRemoveLineWhenBlank="true" uuid="8bb886b7-8044-4de7-ab3c-3549b16b4520">
+				<reportElement x="10" y="86" width="842" height="8" isRemoveLineWhenBlank="true" uuid="8bb886b7-8044-4de7-ab3c-3549b16b4520">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<printWhenExpression><![CDATA[!$F{dssituacao}.toUpperCase().equals("PENDENTE")  && $F{qtlinhas} > 0]]></printWhenExpression>
 				</reportElement>
@@ -313,7 +314,7 @@
 					<text><![CDATA[COOPERATIVA]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="78" y="0" width="32" height="8" uuid="a28eb0b4-d329-4d82-80f3-bfffb07deede">
+					<reportElement x="70" y="0" width="32" height="8" uuid="a28eb0b4-d329-4d82-80f3-bfffb07deede">
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -324,18 +325,7 @@
 					<text><![CDATA[CONTA]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="131" y="0" width="48" height="8" uuid="0a65d0bc-2fa1-4195-b64a-1ef96fa99946">
-						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-					</reportElement>
-					<textElement textAlignment="Right">
-						<font fontName="Courier New" size="6" isBold="false"/>
-					</textElement>
-					<text><![CDATA[CONTRATO]]></text>
-				</staticText>
-				<staticText>
-					<reportElement x="219" y="0" width="37" height="8" uuid="52c84ea9-1671-4239-a241-633b61faeb44">
+					<reportElement x="195" y="0" width="37" height="8" uuid="52c84ea9-1671-4239-a241-633b61faeb44">
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -346,7 +336,7 @@
 					<text><![CDATA[SACADO]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="408" y="0" width="27" height="8" uuid="d90d82f3-18f8-4051-9b6c-3868e3de7767">
+					<reportElement x="370" y="0" width="46" height="8" uuid="d90d82f3-18f8-4051-9b6c-3868e3de7767">
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					</reportElement>
@@ -356,7 +346,7 @@
 					<text><![CDATA[ENVIO]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="282" y="0" width="106" height="8" uuid="32b88d3e-d938-40ee-b59d-6319b37da93a">
+					<reportElement x="253" y="0" width="106" height="8" uuid="32b88d3e-d938-40ee-b59d-6319b37da93a">
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
@@ -368,7 +358,7 @@
 					<text><![CDATA[NOME SACADO]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="455" y="0" width="64" height="8" uuid="5464438e-510f-4658-869b-712d19b435e1">
+					<reportElement x="431" y="0" width="46" height="8" uuid="5464438e-510f-4658-869b-712d19b435e1">
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Right">
@@ -377,7 +367,7 @@
 					<text><![CDATA[VALOR]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="559" y="0" width="61" height="8" uuid="6e9dca3c-5fe7-47a3-88ae-3052325f7062">
+					<reportElement x="489" y="0" width="48" height="8" uuid="6e9dca3c-5fe7-47a3-88ae-3052325f7062">
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -387,6 +377,60 @@
 					</textElement>
 					<text><![CDATA[VENCIMENTO]]></text>
 				</staticText>
+				<textField>
+					<reportElement x="128" y="0" width="50" height="8" uuid="31a244e9-e1ce-429c-817b-c8b3655f2027">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tpproduto}.equals("3")?"BORDERÔ":"CONTRATO"]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="543" y="0" width="50" height="8" uuid="c7ffb6e5-ae93-4495-a109-3d04fed6b12f">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tpproduto}.equals("3")?"QTD TÍTULOS":""]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="597" y="0" width="50" height="8" uuid="040a33bb-84d7-4a9d-b1a6-e09fadf2c4a6">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tpproduto}.equals("3")?"VALOR ACORDO":""]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="652" y="0" width="53" height="8" uuid="d2edd89d-a083-42d7-8b5c-d8e07a86891b">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tpproduto}.equals("3")?"QTD ACORDO":""]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="718" y="0" width="40" height="8" uuid="486cf234-455d-4af6-8850-a6e4b5f45544">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tpproduto}.equals("3")?"VALOR VIP":""]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="764" y="0" width="50" height="8" uuid="eef0e6bc-65bc-41d7-8363-32d2c5908b95">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tpproduto}.equals("3")?"QTD VIP":""]]></textFieldExpression>
+				</textField>
 			</frame>
 		</band>
 	</pageHeader>
@@ -408,6 +452,9 @@
 				<reportElement isPrintRepeatedValues="false" x="0" y="0" width="842" height="12" isRemoveLineWhenBlank="true" uuid="81ddbdfb-c3cd-410e-9fad-96da280be2f4">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
+				<subreportParameter name="PR_TPPRODUTO">
+					<subreportParameterExpression><![CDATA[$F{tpproduto}]]></subreportParameterExpression>
+				</subreportParameter>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//linha")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["crrl733_boletos.jasper"]]></subreportExpression>
 			</subreport>
@@ -416,6 +463,9 @@
 			<printWhenExpression><![CDATA[!$F{dssituacao}.toUpperCase().equals("PENDENTE") && $F{qtcriticas} > 0]]></printWhenExpression>
 			<subreport>
 				<reportElement isPrintRepeatedValues="false" x="0" y="0" width="842" height="12" isRemoveLineWhenBlank="true" uuid="39ae1083-669c-4abe-a7d4-57fda58e5576"/>
+				<subreportParameter name="PR_TPPRODUTO">
+					<subreportParameterExpression><![CDATA[$F{tpproduto}]]></subreportParameterExpression>
+				</subreportParameter>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//critica")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["crrl733_boletos_criticas.jasper"]]></subreportExpression>
 			</subreport>

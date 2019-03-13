@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-09-05T16:27:50 -->
+<!-- 2018-10-30T14:35:01 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_bordero" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="440" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -69,6 +69,9 @@
 	</field>
 	<field name="flgrestr" class="java.lang.String">
 		<fieldDescription><![CDATA[flgrestr]]></fieldDescription>
+	</field>
+	<field name="flverbor" class="java.lang.String">
+		<fieldDescription><![CDATA[flverbor]]></fieldDescription>
 	</field>
 	<background>
 		<band splitType="Stretch"/>
@@ -147,7 +150,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Borderô: " + $F{nrborder}]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Borderô: 34 BIrl " + $F{nrborder}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="205" y="48" width="100" height="8" uuid="80b0ef15-513a-4644-af01-553f6a552572">
@@ -346,7 +349,7 @@ $F{tpctrlim} == "3"]]></printWhenExpression>
 					<textElement textAlignment="Left" markup="html">
 						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["Operador: " + $F{nmoperad}]]></textFieldExpression>
+					<textFieldExpression><![CDATA["Operador34: " + $F{nmoperad}]]></textFieldExpression>
 				</textField>
 				<line>
 					<reportElement positionType="Float" x="281" y="0" width="250" height="1" uuid="7d4d2de2-8c22-45b6-8b46-3acd6ba24439">
@@ -407,6 +410,7 @@ $F{tpctrlim} == "3"]]></printWhenExpression>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{flverbor} == "1"]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
