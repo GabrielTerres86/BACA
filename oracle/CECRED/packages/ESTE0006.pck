@@ -958,9 +958,9 @@ END pc_incluir_bordero_esteira;
         WHEN pr_dsmetodo = 'POST' THEN
           vr_dscritic_aux := 'Não foi possível enviar Borderô para Análise.';
         WHEN pr_dsmetodo = 'PUT' AND pr_comprecu IS NULL THEN
-          vr_dscritic_aux := 'Não foi possível reenviar a Borderô para Análise.';
+          vr_dscritic_aux := 'Não foi possível reenviar o Borderô para Análise.';
 /*        WHEN pr_dsmetodo = 'PUT' AND pr_comprecu = '/numeroProposta' THEN
-          vr_dscritic_aux := 'Não foi possível alterar número da Borderô de Desconto de Títulos.';*/
+          vr_dscritic_aux := 'Não foi possível alterar número do Borderô de Desconto de Títulos.';*/
         WHEN pr_dsmetodo = 'PUT' AND pr_comprecu = '/cancelar' THEN
           vr_dscritic_aux := 'Não foi possível excluir o Borderô da Análise.';
         WHEN pr_dsmetodo = 'PUT' AND pr_comprecu = '/efetivar' THEN
@@ -2165,8 +2165,6 @@ END pc_incluir_bordero_esteira;
                     pr_nrdconta => pr_nrdconta);
     FETCH cr_crapass INTO rw_crapass;
     
-    vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
-    
     -- Caso nao encontrar abortar proceso
     IF cr_crapass%NOTFOUND THEN
       CLOSE cr_crapass;
@@ -2174,6 +2172,8 @@ END pc_incluir_bordero_esteira;
       RAISE vr_exc_erro;
     END IF;
     CLOSE cr_crapass;  
+    
+    vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
   
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN

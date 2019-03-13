@@ -202,7 +202,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
 
 END CADA0002;
 /
- CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   /*---------------------------------------------------------------------------------------------------------------
   
     Programa : CADA0002
@@ -350,7 +350,8 @@ END CADA0002;
                             ,nrdocpes     VARCHAR2(100)
                             ,cdidenti     VARCHAR2(100)
                             ,nrdocmto_dae VARCHAR2(100)
-                            ,dslinha3     VARCHAR2(4000));
+                            ,dslinha3     VARCHAR2(4000)
+                            ,qttitbor VARCHAR(500));
     
   
   -- REGISTROS
@@ -2188,6 +2189,81 @@ END CADA0002;
 
   END pc_impressao_rec_cel;
   
+  PROCEDURE pc_impressao_bordero(pr_xmldata  IN typ_xmldata
+                                 ,pr_nmrescop IN VARCHAR2
+                                 ,pr_cdbcoctl IN NUMBER
+                                 ,pr_cdagectl IN NUMBER) IS
+    -- ..........................................................................
+    --
+    --  Programa : 
+    --  Sistema  : Rotinas para impressão de dados
+    --  Sigla    : VERPRO
+    --  Autor    : 
+    --  Data     : Outubro/2018.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Agrupa os dados e monta o layout para impressão de dados de pagamentos de Bordero
+    --
+    --   Alteracoes:
+    --
+    -- .............................................................................
+    
+    -- Variáveis
+    vr_nrdlinha     NUMBER := 0;  
+    vr_dsbanco      VARCHAR2(50);
+		vr_dsdcabec     VARCHAR2(50);
+		                          
+  BEGIN
+    vr_dsdcabec := 'Bordero';
+    -- IMPRIMIR O CABEÇALHO
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,1);
+    pc_escreve_xml('     '||pr_nmrescop||' - Comprovante '|| vr_dsdcabec || ' - '||
+                   'Emissao: '||to_char(SYSDATE,'DD/MM/YY')||' as '||to_char(SYSDATE,'HH24:MI:SS')||' Hr',2); 
+    pc_escreve_xml('               Banco: '||to_char(pr_cdbcoctl) ,4);
+    pc_escreve_xml('             Agencia: '||to_char(pr_cdagectl) ,5);
+    pc_escreve_xml('            Conta/DV: '||to_char(pr_xmldata.nrdconta)||' - '||pr_xmldata.nmprimtl,6);
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,7);
+    -- IMPRIMIR O CONTEÚDO
+    -- Contador de linha - Iniciando na sexta linha do XML
+    vr_nrdlinha := 8;
+		
+    
+    -- Imprime a data de transação
+    pc_escreve_xml('     Data Transacao: '||to_char(pr_xmldata.dttransa,'dd/mm/yy') || ' as ' || to_char(to_date(pr_xmldata.hrautent,'SSSSS'),'hh24:mi:ss') ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Se tem informação de valor total
+    IF TRIM(pr_xmldata.valor) IS NOT NULL THEN
+      pc_escreve_xml('         Valor Total: '||to_char(pr_xmldata.valor,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha    
+    END IF;
+		   
+    -- Imprimir documento e sequencia de autenticação
+    pc_escreve_xml('       Nr. Borderô: '||pr_xmldata.nrdocmto,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    pc_escreve_xml('       Qtd. Título: '||pr_xmldata.qttitbor,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+        
+    pc_escreve_xml('   Seq. Autenticacao: '||pr_xmldata.nrseqaut,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+		
+		-- Protocolo
+		pc_escreve_xml('           Protocolo: '||pr_xmldata.dsprotoc,vr_nrdlinha);
+		vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    -- Se vai escrever a linha 20... ou mais
+    IF vr_nrdlinha >= 20 THEN
+      pc_escreve_xml('--------------------------------------------------------------------------------',vr_nrdlinha);
+    ELSE 
+      pc_escreve_xml('--------------------------------------------------------------------------------',20);
+    END IF;
+
+  END pc_impressao_bordero;
+  
   -- TELA: VERPRO - Verificação de Protocolos
   PROCEDURE pc_verpro(pr_cdcooper IN NUMBER                --> Código da cooperativa
                      ,pr_idorigem IN NUMBER                --> ID da origem
@@ -2794,6 +2870,8 @@ END CADA0002;
                               de pagamento em debito automatico (Aline).                      
 							                      
                  09/01/2018 - Incluido tratamento para FGTS e DAE - PRJ406.
+                 
+                 04/10/2018 - Impressão do Borderô (Vitor S Assanuma - GFT)
     ..............................................................................*/ 
     -- CURSORES
     -- Buscar as informações da cooperativa
@@ -2968,6 +3046,7 @@ END CADA0002;
     rw_xmldata.cdidenti := fn_extract('/Root/Dados/cdidenti/text()');
     rw_xmldata.nrdocmto_dae := fn_extract('/Root/Dados/nrdocmto_dae/text()');
     rw_xmldata.dslinha3 := gene0007.fn_caract_acento(gene0007.fn_convert_web_db(fn_extract('/Root/Dados/Inform/Linhas/dslinha3/text()')));
+    rw_xmldata.qttitbor := fn_extract('/Root/Dados/qttitbor/text()');
     
     -- Inicializar o CLOB do XML
     vr_dsxmlrel := null;
@@ -3109,7 +3188,15 @@ END CADA0002;
                            ,pr_nmrescop => rw_crapcop.nmrescop
                            ,pr_cdbcoctl => rw_crapcop.cdbcoctl
                            ,pr_cdagectl => rw_crapcop.cdagectl);      
+    ELSIF rw_xmldata.cdtippro IN (22) THEN --BORDERO
+      -- Guardar o nome da rotina chamada para exibir em caso de erro
+      vr_nmrotina := 'PC_IMPRESSAO_BORDERO';
 													 
+      -- Imprimir pagamento
+      pc_impressao_bordero(pr_xmldata  => rw_xmldata
+                           ,pr_nmrescop => rw_crapcop.nmrescop
+                           ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                           ,pr_cdagectl => rw_crapcop.cdagectl);
     ELSIF rw_xmldata.cdtippro IN (24,23) THEN --FGTS/DAE
       -- Guardar o nome da rotina chamada para exibir em caso de erro
       vr_nmrotina := 'PC_IMPRESSAO_FGTSDAE';
@@ -4443,6 +4530,18 @@ END CADA0002;
                 RAISE vr_exc_error;
             END;
         END IF;
+
+          -- Log de sucesso.
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
+                               , pr_cdcooper => rw_crapope.cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 4 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
+                                                  ' - CADA0002 --> Operador inativado com sucesso na rotina pc_bloqueia_operadores. Detalhes: Operador - ' ||
+                                                  rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
+                               , pr_idprglog => vr_idprglog);                      
+
 
       ELSE
         CLOSE cr_tbcadast_colaborador;

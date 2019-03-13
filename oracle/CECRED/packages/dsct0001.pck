@@ -2261,6 +2261,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --                           o pagamento da operação de desconto, ou seja, do título vencido, através do débito em conta corrente 
     --                           deverá ser atualizada a coluna “Saldo Devedor” ficando zerada.(Paulo Penteado GFT)
     --
+    --              01/11/2018 - Substituído a procedure dsct0003.pc_pagar_titulo pela dsct0003.pc_pagar_titulo_operacao que contempla a
+    --                           a nova maneira de efetuar o pagamento de título de forma que os débitos não estourem a conta do
+    --                           do cooperado (Luis Fernando GFT)
     -- .........................................................................
 
   BEGIN

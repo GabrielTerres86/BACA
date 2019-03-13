@@ -30,6 +30,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                 04/09/2018 - Alteração do type de retorno dos históricos de limite, e da data de inclusão quando é Cancelamento de Limite (Andrew Albuquerque - GFT)
                 11/10/2018 - Ajuste no CURSOR cr_crapcob para carregar situação do título, responsável por buscar informações dos 
                              titulos/boletos (utilizado em outras package) (Andrew Albuquerque - GFT)
+                06/11/2018 - Fabio dos Santos (GFT) - Inclusao da chamada do InterrompeFluxo da Esteira, na pc_altera_bordero
                 23/11/2018 - Adicionado para guardar o usuario que fez a ultima analise do bordero (clicou no botao analisar) para ser enviado para a esteira
 				01/03/2019 - Removido da clausula WHERE o campo cdtpinsc quando efetuar leitura da crapsab (Daniel)
 
@@ -67,6 +68,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                   vltitulo craptdb.vltitulo%TYPE,
                   vlliquid craptdb.vlliquid%TYPE,
                   vlsldtit craptdb.vlsldtit%TYPE,
+                  inprejuz crapbdt.inprejuz%TYPE,
+                  vlsdprej craptdb.vlsdprej%TYPE,
                   nmsacado crapsab.nmdsacad%TYPE,
                   flgregis crapcob.flgregis%TYPE,
                   insittit craptdb.insittit%TYPE,
@@ -273,7 +276,8 @@ TYPE typ_reg_borderos IS RECORD(
      aux_qtsitapr   INTEGER,
      aux_vlsitapr   craptdb.vltitulo%TYPE,
      dsinsitapr     VARCHAR2(50),
-     flrestricao    INTEGER
+     flrestricao    INTEGER,
+     inprejuz       INTEGER
 
 );
 TYPE typ_tab_borderos IS TABLE OF typ_reg_borderos INDEX BY BINARY_INTEGER;
@@ -296,7 +300,21 @@ TYPE typ_reg_titulo IS RECORD(
     vlmulta  NUMBER(15,2),
     vlmora   NUMBER(15,2),
     vliof    NUMBER(15,2),
-    vlpagar  NUMBER(15,2)
+    vlpagar  NUMBER(15,2),
+    dtliqprj crapbdt.dtliqprj%TYPE,
+    dtprejuz crapbdt.dtprejuz%TYPE,
+    vlaboprj crapbdt.vlaboprj%TYPE,
+    vljraprj craptdb.vljraprj%TYPE,
+    vljrmprj craptdb.vljrmprj%TYPE,
+    vlpgjmpr craptdb.vlpgjmpr%TYPE,
+    vlpgmupr craptdb.vlpgmupr%TYPE,
+    vlprejuz craptdb.vlprejuz%TYPE,
+    vlsdprej craptdb.vlsdprej%TYPE,
+    vlsprjat craptdb.vlsprjat%TYPE,
+    vlttjmpr craptdb.vlttjmpr%TYPE,
+    vlttmupr craptdb.vlttmupr%TYPE,
+    inprejuz crapbdt.inprejuz%TYPE,
+    qtdirisc crapbdt.qtdirisc%TYPE
 );
 TYPE typ_tab_titulo IS TABLE OF typ_reg_titulo INDEX BY BINARY_INTEGER;
 
@@ -1335,6 +1353,7 @@ PROCEDURE pc_inserir_contrato_limite(pr_cdcooper in crapcop.cdcooper%type --> Có
     Objetivo  : Procedure para carregar as informações da proposta na type
 
     Alteração : 26/03/2018 - Criação (Paulo Penteado (GFT))
+    Alteração : 13/11/2018 - Adicionado campos idcobope e idcobefe (Lucas Negoseki (GFT))
 
   ---------------------------------------------------------------------------------------------------------------------*/
 
@@ -1412,7 +1431,9 @@ BEGIN
              ,/*49*/ dtinsori
              ,/*50*/ insitblq
              ,/*51*/ dtmanute
-             ,/*52*/ ininadim )
+             ,/*52*/ ininadim
+             ,/*53*/ idcobope
+             ,/*54*/ idcobefe )
       values (/*01*/ rw_crawlim.nrdconta
              ,/*02*/ 2 --Ativo
              ,/*03*/ pr_dtmvtolt
@@ -1464,7 +1485,9 @@ BEGIN
              ,/*49*/ trunc(sysdate)
              ,/*50*/ rw_crawlim.insitblq
              ,/*51*/ trunc(sysdate)
-             ,/*52*/ rw_crawlim.ininadim );
+             ,/*52*/ rw_crawlim.ininadim
+             ,/*53*/ rw_crawlim.idcobope
+             ,/*54*/ rw_crawlim.idcobefe );
    exception
       when others then
            vr_dscritic := 'Erro ao inserir o contrato de limite de desconto de título: '||sqlerrm;
@@ -4189,23 +4212,23 @@ END pc_obtem_proposta_aciona_web;
          if  cr_craptdb%NOTFOUND 
             OR (cr_craptdb%found AND rw_craptdb.nrborder IS NOT NULL AND (rw_craptdb.fl_bordero = 1 OR rw_craptdb.fl_aprovado = 0) AND rw_craptdb.fl_aberto = 0 ) THEN
             IF (pr_nriniseq + pr_nrregist)=0 OR (vr_countpag >= pr_nriniseq AND vr_countpag < (pr_nriniseq + pr_nrregist)) THEN
-            vr_idtabtitulo := pr_tab_dados_titulos.count + 1;
-            pr_tab_dados_titulos(vr_idtabtitulo).progress_recid := rw_crapcob.progress_recid;
-            pr_tab_dados_titulos(vr_idtabtitulo).cdcooper       := rw_crapcob.cdcooper;
-            pr_tab_dados_titulos(vr_idtabtitulo).nrdconta       := rw_crapcob.nrdconta;
-            pr_tab_dados_titulos(vr_idtabtitulo).nrctremp       := rw_crapcob.nrctremp;
-            pr_tab_dados_titulos(vr_idtabtitulo).nrcnvcob       := rw_crapcob.nrcnvcob;
-            pr_tab_dados_titulos(vr_idtabtitulo).nrdocmto       := rw_crapcob.nrdocmto;
-            pr_tab_dados_titulos(vr_idtabtitulo).nrinssac       := rw_crapcob.nrinssac;
-            pr_tab_dados_titulos(vr_idtabtitulo).nmdsacad       := rw_crapcob.nmdsacad;
-            pr_tab_dados_titulos(vr_idtabtitulo).dtvencto       := rw_crapcob.dtvencto;
-            pr_tab_dados_titulos(vr_idtabtitulo).vltitulo       := rw_crapcob.vltitulo;
-            pr_tab_dados_titulos(vr_idtabtitulo).nrnosnum       := rw_crapcob.nrnosnum;
-            pr_tab_dados_titulos(vr_idtabtitulo).flgregis       := rw_crapcob.flgregis;
-            pr_tab_dados_titulos(vr_idtabtitulo).cdtpinsc       := rw_crapcob.cdtpinsc;
-            pr_tab_dados_titulos(vr_idtabtitulo).dssituac       := rw_crapcob.dssituac;
-            pr_tab_dados_titulos(vr_idtabtitulo).nrdctabb       := rw_crapcob.nrdctabb;
-            pr_tab_dados_titulos(vr_idtabtitulo).cdbandoc       := rw_crapcob.cdbandoc;
+              vr_idtabtitulo := pr_tab_dados_titulos.count + 1;
+              pr_tab_dados_titulos(vr_idtabtitulo).progress_recid := rw_crapcob.progress_recid;
+              pr_tab_dados_titulos(vr_idtabtitulo).cdcooper       := rw_crapcob.cdcooper;
+              pr_tab_dados_titulos(vr_idtabtitulo).nrdconta       := rw_crapcob.nrdconta;
+              pr_tab_dados_titulos(vr_idtabtitulo).nrctremp       := rw_crapcob.nrctremp;
+              pr_tab_dados_titulos(vr_idtabtitulo).nrcnvcob       := rw_crapcob.nrcnvcob;
+              pr_tab_dados_titulos(vr_idtabtitulo).nrdocmto       := rw_crapcob.nrdocmto;
+              pr_tab_dados_titulos(vr_idtabtitulo).nrinssac       := rw_crapcob.nrinssac;
+              pr_tab_dados_titulos(vr_idtabtitulo).nmdsacad       := rw_crapcob.nmdsacad;
+              pr_tab_dados_titulos(vr_idtabtitulo).dtvencto       := rw_crapcob.dtvencto;
+              pr_tab_dados_titulos(vr_idtabtitulo).vltitulo       := rw_crapcob.vltitulo;
+              pr_tab_dados_titulos(vr_idtabtitulo).nrnosnum       := rw_crapcob.nrnosnum;
+              pr_tab_dados_titulos(vr_idtabtitulo).flgregis       := rw_crapcob.flgregis;
+              pr_tab_dados_titulos(vr_idtabtitulo).cdtpinsc       := rw_crapcob.cdtpinsc;
+              pr_tab_dados_titulos(vr_idtabtitulo).dssituac       := rw_crapcob.dssituac;
+              pr_tab_dados_titulos(vr_idtabtitulo).nrdctabb       := rw_crapcob.nrdctabb;
+              pr_tab_dados_titulos(vr_idtabtitulo).cdbandoc       := rw_crapcob.cdbandoc;
             END IF;
             vr_countpag := vr_countpag + 1;  
          end if;
@@ -4454,7 +4477,7 @@ END pc_obtem_proposta_aciona_web;
         
       CURSOR cr_craptdb IS
         SELECT 
-             SUM(craptdb.vltitulo) AS vlutiliz,
+             SUM(craptdb.vlsldtit) AS vlutiliz,
              count(1) AS qtutiliz
         FROM
              craptdb
@@ -6728,6 +6751,7 @@ EXCEPTION
               09/04/2018 - Adicionados novos campos na lista de titulos - Luis Fernando (GFT)
               21/07/2018 - Adicionado opção de paginação. Utilizado na dsct0004 do IB (Paulo Penteado GFT)
               19/09/2018 - Adicionado retorno da descrição da situação do titulo dssittit (Paulo Penteado GFT)
+              05/11/2018 - Adicionado retorno de valor prejuízo e inprejuz (Lucas Negoseki GFT)
   ---------------------------------------------------------------------------------------------------------------------*/
 
    -- Variável de críticas
@@ -6736,6 +6760,8 @@ EXCEPTION
    
    vr_index        INTEGER;
    vr_nrinssac    number;
+   
+   vr_tab_criticas dsct0003.typ_tab_critica;
    vr_situacao char(1);   
    vr_ibratan char(1);
    vr_cdbircon crapbir.cdbircon%TYPE;
@@ -6825,17 +6851,21 @@ EXCEPTION
                             WHERE tap.cdcooper=pr_cdcooper AND tap.nrdconta=pr_nrdconta AND tap.nrinssac=vr_tab_tit_bordero(vr_index).nrinssac
                          ),'A')) INTO vr_situacao FROM DUAL ; -- Situacao do pagador com critica ou nao
               
-              vr_nrinssac := vr_tab_tit_bordero(vr_index).nrinssac;
-              
-              IF vr_situacao = 'N' THEN
-                 --Testa se o titulo possui restricao de CNAE
-                restricao_cnae := DSCT0003.fn_calcula_cnae(pr_cdcooper
-                                                       ,vr_tab_tit_bordero(vr_index).nrdconta
-                                                       ,vr_tab_tit_bordero(vr_index).nrdocmto
-                                                       ,vr_tab_tit_bordero(vr_index).nrcnvcob
-                                                       ,vr_tab_tit_bordero(vr_index).nrdctabb
-                                                       ,vr_tab_tit_bordero(vr_index).cdbandoc);
-                vr_situacao := CASE WHEN restricao_cnae THEN 'S' ELSE 'N' END;
+              vr_tab_criticas.delete;
+              dsct0003.pc_calcula_restricao_titulo(pr_cdcooper => rw_crapcob.cdcooper
+                              ,pr_nrdconta => rw_crapcob.nrdconta
+                              ,pr_nrdocmto => rw_crapcob.nrdocmto
+                              ,pr_nrcnvcob => rw_crapcob.nrcnvcob
+                              ,pr_nrdctabb => rw_crapcob.nrdctabb
+                              ,pr_cdbandoc => rw_crapcob.cdbandoc
+                              ,pr_tab_criticas => vr_tab_criticas
+                              ,pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dscritic);
+              IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 RAISE vr_exc_erro;
+              END IF;
+              IF (vr_tab_criticas.count>0) THEN
+                vr_situacao := 'S';
               END IF;
 
               open cr_crapcbd;
@@ -6860,6 +6890,8 @@ EXCEPTION
              pr_tab_tit_bordero(vr_index).vltitulo := vr_tab_tit_bordero(vr_index).vltitulo;
              pr_tab_tit_bordero(vr_index).vlliquid := vr_tab_tit_bordero(vr_index).vlliquid;
              pr_tab_tit_bordero(vr_index).vlsldtit := vr_tab_tit_bordero(vr_index).vlsldtit;
+             pr_tab_tit_bordero(vr_index).inprejuz := vr_tab_tit_bordero(vr_index).inprejuz;
+             pr_tab_tit_bordero(vr_index).vlsdprej := vr_tab_tit_bordero(vr_index).vlsdprej;
              pr_tab_tit_bordero(vr_index).nmsacado := vr_tab_tit_bordero(vr_index).nmsacado;
              pr_tab_tit_bordero(vr_index).insittit := vr_tab_tit_bordero(vr_index).insittit;
              pr_tab_tit_bordero(vr_index).insitapr := vr_tab_tit_bordero(vr_index).insitapr;
@@ -6901,6 +6933,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
     /*
      * Alterações:
      *  23/07/2018 - Vitor Shimada Assanuma: Inserção de tratativa de Não vencido quando Resgatado.
+     *  05/11/2018 - Lucas Negoseki GFT: Alterado Saldo Devedor para valor prejuizo quando em prejuízo.
      */
     -- variaveis de retorno
     vr_tab_tit_bordero typ_tab_tit_bordero;
@@ -6984,7 +7017,12 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
               
               IF vr_tab_tit_bordero(vr_index).insitapr <> 2 THEN
                 vr_dssittit := 'Vencido';
+              END IF;
             END IF;
+            
+            --Ajusta saldo devedor para saldo prejuizo
+            IF vr_tab_tit_bordero(vr_index).inprejuz = 1 THEN
+               vr_tab_tit_bordero(vr_index).vlsldtit := vr_tab_tit_bordero(vr_index).vlsdprej;
             END IF;
             
             pc_escreve_xml('<titulo>'||
@@ -7624,6 +7662,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       Objetivo  : Procedure para Alterar os títulos de um borderô
       Alterações:
         - 13/08/2018 - Vitor Shimada Assanuma (GFT) - Verificar se o título foi resgatado na alteração.
+        - 06/11/2018 - Fabio dos Santos (GFT) - Inclusao da chamada do InterrompeFluxo da Esteira, na pc_altera_bordero
+        - 31/01/2019 - Cássia de Oliveira (GFT) - Alteração no registro de LOG
 
     ---------------------------------------------------------------------------------------------------------------------*/
      -- Variável de críticas
@@ -7652,7 +7692,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       vr_idorigem varchar2(100);
       vr_inseriu boolean;
       
-      vr_dslog        VARCHAR2(4000);
        --TAB
        pr_tab_dados_dsctit cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052
        pr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052
@@ -7885,6 +7924,22 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
           vr_dscritic := 'Borderô deve estar Em estudo ou Aprovado';
           raise vr_exc_erro;
         END IF;
+        
+        -- Chamar geração de LOG
+        gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad
+                        ,pr_dscritic => vr_dscritic
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                        ,pr_dstransa => 'Alteracao do Bordero ' || pr_nrborder
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS'))
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'ATENDA'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+        
+        
         /*
         IF (rw_crapbdt.cdoperad<>vr_cdoperad) THEN
           vr_dscritic := 'Operador deve ser o mesmo que criou o borderô';
@@ -7908,8 +7963,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
             AND craplot.tplotmov = 34
             AND craplot.dtmvtolt = vr_dtmvtolt --Altera o lote apenas se a data de movimentacao seja a mesma do lote
         ;
-        
-        vr_dslog := pr_dtmvtolt || ' ' || ' Operador ' || vr_cdoperad || ' Alterou o bordero ' ||pr_nrborder ;
         
         vr_chave := replace(pr_chave,',',''',''');
         /*Remove títulos do bordero que foram removidos da tela de seleção de titulos na alteração*/
@@ -7940,10 +7993,14 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                    AND craptdb.nrcnvcob = vr_tab_titulos_excluir(vr_idtabtitulo).nrcnvcob
                    AND craptdb.nrdocmto = vr_tab_titulos_excluir(vr_idtabtitulo).nrdocmto;
                   
-                 vr_dslog := vr_dslog || ' Excluindo o titulo ' || 
-                                           vr_tab_titulos_excluir(vr_idtabtitulo).nrdconta || ' ' ||
-                                           vr_tab_titulos_excluir(vr_idtabtitulo).nrcnvcob || ' ' || 
-                                           vr_tab_titulos_excluir(vr_idtabtitulo).nrdocmto || ' ';
+                 gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                          ,pr_nmdcampo => 'Titulo'
+                                          ,pr_dsdadant => ''
+                                          ,pr_dsdadatu => 'Excluindo o titulo ' || 
+                                           				  vr_tab_titulos_excluir(vr_idtabtitulo).nrdconta || ' ' ||
+                                           				  vr_tab_titulos_excluir(vr_idtabtitulo).nrcnvcob || ' ' || 
+                                                          vr_tab_titulos_excluir(vr_idtabtitulo).nrdocmto);
+                 
              vr_idtabtitulo:=vr_idtabtitulo+1;
        end   loop;
        close cr_tab_cob;
@@ -8015,10 +8072,14 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                    null,
                    vr_idtabtitulo
                    );
-                 vr_dslog := vr_dslog || ' Incluindo o titulo ' || 
+                   
+                 gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                          ,pr_nmdcampo => 'Titulo'
+                                          ,pr_dsdadant => ''
+                                          ,pr_dsdadatu => 'Incluindo o titulo ' || 
                                            vr_tab_dados_titulos(vr_index).nrdconta || ' ' ||
                                            vr_tab_dados_titulos(vr_index).nrcnvcob || ' ' || 
-                                           vr_tab_dados_titulos(vr_index).nrdocmto || ' ';
+                                           vr_tab_dados_titulos(vr_index).nrdocmto);
               vr_inseriu := true;
             END IF;
             vr_index  := vr_tab_dados_titulos.next(vr_index);
@@ -8039,26 +8100,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
               AND crapbdt.nrdconta = pr_nrdconta
            ;
 
-        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                  ,pr_ind_tipo_log => 1 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || 'DESCTO_TIT' || ' --> '
-                                                   || vr_dslog
-                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',vr_cdcooper,'NOME_ARQ_LOG_MESSAGE'));
-
-        -- Chamar geração de LOG
-       gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
-                        ,pr_cdoperad => vr_cdoperad
-                        ,pr_dscritic => vr_dscritic
-                        ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
-                        ,pr_dstransa => 'Borderô n ' || pr_nrborder || ' alterado com sucesso.'
-                        ,pr_dttransa => TRUNC(SYSDATE)
-                        ,pr_flgtrans => 1
-                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS'))
-                        ,pr_idseqttl => 1
-                        ,pr_nmdatela => 'ATENDA'
-                        ,pr_nrdconta => pr_nrdconta
-                        ,pr_nrdrowid => vr_nrdrowid);
+       
 
         -- Se encontrar
         open  btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
@@ -8067,6 +8109,24 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
           vr_dtmvtopr:= rw_crapdat.dtmvtopr;
         END IF;
         CLOSE btch0001.cr_crapdat;  
+        
+        
+        ESTE0006.pc_interrompe_proposta_bdt_est(pr_cdcooper => vr_cdcooper,
+                                                 pr_cdagenci => vr_cdagenci,
+                                                 pr_cdoperad => vr_cdoperad,
+                                                 pr_cdorigem => vr_idorigem,
+                                                 pr_nrdconta => pr_nrdconta,
+                                                 pr_nrborder => pr_nrborder,
+                                                 pr_dtmvtolt => vr_dtmvtolt,
+                                                 pr_cdcritic => vr_cdcritic,
+                                                 pr_dscritic => vr_dscritic);
+                                                 
+        IF  nvl(vr_cdcritic,0) > 0 OR vr_dscritic is NOT null then
+          /* buscar a descriçao */
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          raise vr_exc_erro;
+        end if;
+        
         DSCT0003.pc_efetua_analise_bordero (pr_cdcooper => vr_cdcooper
                                         ,pr_cdagenci => vr_cdagenci
                                         ,pr_nrdcaixa => vr_nrdcaixa
@@ -8847,6 +8907,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
        BDT.NRBORDER,
        BDT.CDCOOPER,
        BDT.INSITAPR,
+       BDT.DTULTPAG,
+       BDT.DTLIQPRJ,
 
        CASE BDT.INSITBDT WHEN 1 THEN 'EM ESTUDO'
                          WHEN 2 THEN 'ANALISADO'
@@ -8866,7 +8928,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                          WHEN 6 THEN 'ENVIADO ESTEIRA'
                          WHEN 7 THEN 'PRAZO EXPIRADO'
                          ELSE        'PROBLEMA'
-       END DSINSITAPR
+       END DSINSITAPR,
+       BDT.INPREJUZ
        FROM CRAPBDT BDT
        WHERE
        BDT.CDCOOPER = pr_cdcooper
@@ -8896,7 +8959,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
 
 
         vr_dt_aux_dtmvtolt := pr_dtmvtolt - 120;
-        vr_dt_aux_dtlibbdt := pr_dtmvtolt - 90;
+        vr_dt_aux_dtlibbdt := pr_dtmvtolt - 60;
 
         -- abrindo cursos de títulos
         OPEN  cr_crapbdt;
@@ -8913,7 +8976,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                 END IF;
 
 
-               IF (rw_crapbdt.dtlibbdt is not null and rw_crapbdt.dtmvtolt <= vr_dt_aux_dtlibbdt AND ( rw_crapbdt.insitbdt IN(4))) THEN
+               IF (rw_crapbdt.dtlibbdt is not null and (rw_crapbdt.dtultpag <= vr_dt_aux_dtlibbdt OR rw_crapbdt.dtliqprj <= vr_dt_aux_dtlibbdt) AND ( rw_crapbdt.insitbdt IN(4))) THEN
                   CONTINUE;
                END IF;
 
@@ -8952,6 +9015,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                pr_tab_borderos(vr_idxbordero).aux_vlsitapr := vr_vl_apr;
                pr_tab_borderos(vr_idxbordero).dtlibbdt := rw_crapbdt.dtlibbdt;
                pr_tab_borderos(vr_idxbordero).dsinsitapr :=  rw_crapbdt.dsinsitapr;
+               pr_tab_borderos(vr_idxbordero).inprejuz   :=  rw_crapbdt.inprejuz;
 
 
         END LOOP;
@@ -9070,6 +9134,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                               '<dssitbdt>'     || vr_tab_borderos(vr_index).dssitbdt                          || '</dssitbdt>' ||
                               '<dsinsitapr>'   || vr_tab_borderos(vr_index).dsinsitapr                        || '</dsinsitapr>'  ||
                               '<dtlibbdt>'     || TO_CHAR(vr_tab_borderos(vr_index).dtlibbdt, 'DD/MM/RRRR')   || '</dtlibbdt>'  ||
+                              '<inprejuz>'     || vr_tab_borderos(vr_index).inprejuz                          || '</inprejuz>'  ||
 
                            '</inf>'
             );
@@ -9252,18 +9317,25 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                        pr_nrdctabb IN craptdb.nrdctabb%TYPE,
                        pr_cdbandoc IN crapcob.cdbandoc%TYPE) IS
       SELECT 
-        (tdb.vltitulo - vlsldtit) AS vlpago
-       ,(vlmtatit - vlpagmta) AS vlmulta
-       ,(vlmratit - vlpagmra) AS vlmora
-       ,(vliofcpl - vlpagiof) AS vliof
-       ,(vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) AS  vlpagar
+        (tdb.vltitulo - tdb.vlsldtit + tdb.vlpagmta + tdb.vlpagmra + tdb.vlpagiof) AS vlpago
+       ,(tdb.vlmtatit - tdb.vlpagmta) AS vlmulta
+       ,(tdb.vlmratit - tdb.vlpagmra) AS vlmora
+       ,(tdb.vliofcpl - tdb.vlpagiof) AS vliof
+       ,tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra)+ (tdb.vliofcpl - tdb.vlpagiof) AS vlpagar
        ,tdb.*
        ,cob.nrnosnum
        ,ttc.nrctrdsc
        ,sab.cdtpinsc
        ,sab.nmdsacad
+       ,bdt.dtliqprj
+       ,bdt.dtprejuz
+       ,bdt.inprejuz
+       ,bdt.vlaboprj
+       ,bdt.qtdirisc
       FROM
         craptdb tdb
+        INNER JOIN crapbdt bdt
+          ON bdt.cdcooper = tdb.cdcooper AND bdt.nrborder = tdb.nrborder
         INNER JOIN crapcob cob 
           ON tdb.cdcooper = cob.cdcooper AND tdb.nrdconta = cob.nrdconta AND tdb.nrdocmto = cob.nrdocmto AND tdb.cdbandoc = cob.cdbandoc AND tdb.nrdctabb = cob.nrdctabb AND tdb.nrcnvcob = cob.nrcnvcob
         INNER JOIN crapsab sab
@@ -9316,6 +9388,20 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       pr_tab_titulo(0).diasatr := 0;
     END IF;
     pr_tab_titulo(0).diasprz  := ccet0001.fn_diff_datas(rw_craptdb.dtlibbdt, rw_craptdb.dtvencto);
+    pr_tab_titulo(0).dtvencto := rw_craptdb.dtvencto;
+    pr_tab_titulo(0).dtliqprj := rw_craptdb.dtliqprj;
+    pr_tab_titulo(0).dtprejuz := rw_craptdb.dtprejuz;
+    pr_tab_titulo(0).inprejuz := rw_craptdb.inprejuz;
+    pr_tab_titulo(0).vlaboprj := rw_craptdb.vlaboprj;
+    pr_tab_titulo(0).vljraprj := rw_craptdb.vljraprj;
+    pr_tab_titulo(0).vljrmprj := rw_craptdb.vljrmprj;
+    pr_tab_titulo(0).vlpgjmpr := rw_craptdb.vlpgjmpr;
+    pr_tab_titulo(0).vlpgmupr := rw_craptdb.vlpgmupr;
+    pr_tab_titulo(0).vlprejuz := rw_craptdb.vlprejuz;
+    pr_tab_titulo(0).vlsdprej := rw_craptdb.vlsdprej;
+    pr_tab_titulo(0).vlsprjat := rw_craptdb.vlsprjat;
+    pr_tab_titulo(0).vlttjmpr := rw_craptdb.vlttjmpr;
+    pr_tab_titulo(0).vlttmupr := rw_craptdb.vlttmupr;
     
     EXCEPTION
         WHEN vr_exc_erro THEN
@@ -9345,6 +9431,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       Data     : 14/08/2018
       Frequencia: Sempre que for chamado
       Objetivo  : Listar as informações de um título
+      Alterações:
+        - 24/08/2018 - Vitor Shimada Assanuma (GFT) - Inserção dos campos de prejuizo
     ---------------------------------------------------------------------------------------------------------------------*/
     -- Tratamento de erro
     vr_exc_erro exception;
@@ -9415,7 +9503,20 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                      '<nrinssac>' || vr_tab_titulo(0).nrinssac                                  || '</nrinssac>' ||
                      '<nrctrdsc>' || vr_tab_titulo(0).nrctrdsc                                  || '</nrctrdsc>' ||
                      '<cdtpinsc>' || vr_tab_titulo(0).cdtpinsc                                  || '</cdtpinsc>' ||
-                     '<dtvencto>' || to_char(vr_tab_titulo(0).dtvencto, 'DD/MM/RRRR')           || '</dtvencto>'
+                     '<dtvencto>' || to_char(vr_tab_titulo(0).dtvencto, 'DD/MM/RRRR')           || '</dtvencto>' ||
+                     '<dtliqprj>' || to_char(vr_tab_titulo(0).dtliqprj, 'DD/MM/RRRR')             || '</dtliqprj>' ||
+                     '<dtprejuz>' || to_char(vr_tab_titulo(0).dtprejuz, 'DD/MM/RRRR')             || '</dtprejuz>' ||
+                     '<inprejuz>' || vr_tab_titulo(0).inprejuz                                    || '</inprejuz>' ||
+                     '<vlaboprj>' || to_char(vr_tab_titulo(0).vlaboprj, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlaboprj>' ||
+                     '<vljraprj>' || to_char(vr_tab_titulo(0).vljraprj, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vljraprj>' ||
+                     '<vljrmprj>' || to_char(vr_tab_titulo(0).vljrmprj, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vljrmprj>' ||
+                     '<vlpgjmpr>' || to_char(vr_tab_titulo(0).vlpgjmpr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlpgjmpr>' ||
+                     '<vlpgmupr>' || to_char(vr_tab_titulo(0).vlpgmupr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlpgmupr>' ||
+                     '<vlprejuz>' || to_char(vr_tab_titulo(0).vlprejuz, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlprejuz>' ||
+                     '<vlsdprej>' || to_char(vr_tab_titulo(0).vlsdprej, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlsdprej>' ||
+                     '<vlsprjat>' || to_char(vr_tab_titulo(0).vlsprjat, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlsprjat>' ||
+                     '<vlttjmpr>' || to_char(vr_tab_titulo(0).vlttjmpr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlttjmpr>' ||
+                     '<vlttmupr>' || to_char(vr_tab_titulo(0).vlttmupr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlttmupr>' 
                      );                                       
       pc_escreve_xml ('</dados></root>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);
