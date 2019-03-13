@@ -21,6 +21,10 @@ BEGIN
 
      Alteracoes:
                07/08/2018 - Alterado para paralelismo - Luis Fernando (GFT)
+               05/09/2018 - Alterado para nao incluir titulos em acordo na raspada - Cassia de Oliveira (GFT)
+               17/09/2018 - Adicionada raspada para borderos em prejuizo - Luis Fernando (GFT)
+               27/09/2018 - Alterado para incluir titulos em acordo cancelado na raspada - Cassia de Oliveira (GFT)
+			   10/11/2018 - Correção no cdorigem - Cássia de Oliveira (GFT)
                26/11/2018 - Correção para fazer raspaga de titulos vencido em feriados e pagos parcialmente no proximo dia util - Cássia de Oliveira (GFT)
                30/11/2018 - Alterada regra para se a cobranca estiver paga (mesmo parcialmente) deverá fazer a raspada na conta do cooperado (Luis Fernando - GFT)
   ............................................................................ */
@@ -93,6 +97,7 @@ BEGIN
              craptdb.vlmratit,
              craptdb.vlpagmra,
              craptdb.vlliquid,
+             crapbdt.inprejuz,
              cob.incobran
         FROM crapbdt, craptdb
   INNER JOIN crapcob cob
@@ -102,6 +107,11 @@ BEGIN
          AND cob.nrdocmto = craptdb.nrdocmto   
          AND cob.cdcooper = craptdb.cdcooper
          AND cob.nrdconta = craptdb.nrdconta
+   LEFT JOIN tbdsct_titulo_cyber -- busca codigo de desconto de titulos
+          ON tbdsct_titulo_cyber.cdcooper = craptdb.cdcooper
+         AND tbdsct_titulo_cyber.nrdconta = craptdb.nrdconta
+         AND tbdsct_titulo_cyber.nrborder = craptdb.nrborder
+         AND tbdsct_titulo_cyber.nrtitulo = craptdb.nrtitulo
        WHERE craptdb.cdcooper =  crapbdt.cdcooper
          AND craptdb.nrdconta =  crapbdt.nrdconta
          AND craptdb.nrborder =  crapbdt.nrborder
@@ -110,7 +120,58 @@ BEGIN
          AND craptdb.insittit =  4 -- liberado
          AND crapbdt.cdagenci = nvl(pr_cdagenci,crapbdt.cdagenci)
          AND crapbdt.flverbor =  1 -- bordero liberado na nova versão
+         AND crapbdt.inprejuz = 0
+         AND NOT EXISTS(SELECT 1 
+                          FROM tbrecup_acordo_contrato -- busca titulos em acordo ativo ou quitado
+                     LEFT JOIN tbrecup_acordo
+                            ON tbrecup_acordo.nracordo = tbrecup_acordo_contrato.nracordo
+                         WHERE tbdsct_titulo_cyber.nrctrdsc = tbrecup_acordo_contrato.nrctremp  
+                           AND tbdsct_titulo_cyber.cdcooper = tbrecup_acordo.cdcooper 
+                           AND tbdsct_titulo_cyber.nrdconta = tbrecup_acordo.nrdconta 
+                           AND tbrecup_acordo_contrato.nrgrupo = 1 
+                           AND tbrecup_acordo_contrato.cdorigem = 4
+                           AND tbrecup_acordo.cdsituacao <> 3)
        ORDER BY dtvencto, vlsldtit desc; -- define a ordem de prioridade da raspada
+    
+    CURSOR cr_crapbdt_prejuz (pr_cdcooper crapbdt.cdcooper%TYPE,pr_cdagenci crapbdt.cdagenci%TYPE) IS 
+      SELECT
+        bdt.nrborder
+        ,bdt.cdcooper
+        ,bdt.nrdconta
+        ,SUM(tdb.vlsdprej
+          + (tdb.vlttjmpr - tdb.vlpgjmpr)
+          + (tdb.vlttmupr - tdb.vlpgmupr)
+          + (tdb.vljraprj - tdb.vlpgjrpr)
+          + (tdb.vliofprj - tdb.vliofppr)
+                                ) AS vlsldatu -- Saldo atualizado
+      FROM crapbdt bdt
+        INNER JOIN craptdb tdb ON bdt.cdcooper = tdb.cdcooper AND bdt.nrdconta = tdb.nrdconta AND bdt.nrborder = tdb.nrborder
+        LEFT JOIN tbdsct_titulo_cyber -- busca codigo de desconto de titulos
+               ON tdb.cdcooper = tbdsct_titulo_cyber.cdcooper 
+              AND tdb.nrdconta = tbdsct_titulo_cyber.nrdconta
+              AND tdb.nrborder = tbdsct_titulo_cyber.nrborder
+              AND tdb.nrtitulo = tbdsct_titulo_cyber.nrtitulo
+      WHERE bdt.cdcooper = pr_cdcooper
+        AND bdt.inprejuz = 1
+        AND bdt.dtliqprj IS NULL 
+        AND bdt.cdagenci = nvl(pr_cdagenci,bdt.cdagenci)
+        AND bdt.flverbor =  1 -- bordero liberado na nova versão
+        AND bdt.insitbdt =  3
+        AND tdb.insittit = 4
+        AND NOT EXISTS(SELECT 1 
+                          FROM tbrecup_acordo_contrato -- busca titulos em acordo ativo ou quitado
+                     LEFT JOIN tbrecup_acordo
+                            ON tbrecup_acordo.nracordo = tbrecup_acordo_contrato.nracordo
+                         WHERE tbdsct_titulo_cyber.nrctrdsc = tbrecup_acordo_contrato.nrctremp  
+                           AND tbdsct_titulo_cyber.cdcooper = tbrecup_acordo.cdcooper 
+                           AND tbdsct_titulo_cyber.nrdconta = tbrecup_acordo.nrdconta 
+                           AND tbrecup_acordo_contrato.nrgrupo = 1 
+                           AND tbrecup_acordo_contrato.cdorigem = 4
+                           AND tbrecup_acordo.cdsituacao <> 3)
+      GROUP BY 
+        bdt.nrborder,bdt.cdcooper,bdt.nrdconta,bdt.dtprejuz
+      ORDER BY  bdt.dtprejuz;
+    rw_crapbdt_prejuz cr_crapbdt_prejuz%ROWTYPE;
     
     -- Cursor para verificar se existe algum boleto em aberto (emitido pela tela COBTIT)
     CURSOR cr_cde (pr_cdcooper IN crapcob.cdcooper%TYPE
@@ -182,6 +243,8 @@ BEGIN
     vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
     vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
     
+    vr_vlpagmto NUMBER; -- valor sendo pago de bordero em prejuizo 
+    vr_liquidou INTEGER;
   BEGIN
     -- ainda não comecou a rodar o paralelismo
     IF (nvl(pr_idparale,0)=0) THEN
@@ -299,6 +362,146 @@ BEGIN
       vr_blqresg_cc := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                  pr_cdcooper => pr_cdcooper,
                                                  pr_cdacesso => 'COBTIT_BLQ_RESG_CC');         
+                                                 
+      -- Loop principal dos borderos em prejuizo
+      FOR rw_crapbdt_prejuz IN cr_crapbdt_prejuz(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdagenci => pr_cdagenci) LOOP
+        IF (rw_crapbdt_prejuz.vlsldatu > 0) THEN
+          --Verifica se a conta existe
+          OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => rw_crapbdt_prejuz.nrdconta);
+          FETCH cr_crapass INTO rw_crapass;
+            
+          IF cr_crapass%NOTFOUND THEN
+            CLOSE cr_crapass;
+            vr_cdcritic := 9; --Associado n cadastrado: --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            RAISE vr_exc_erro;
+          END IF;            
+          CLOSE cr_crapass;                                                                    
+          
+          -- Busca os parametros na TAB05                                     
+          DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
+                                              ,pr_cdagenci          => null -- Não utiliza dentro da procedure
+                                              ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
+                                              ,pr_cdoperad          => null -- Não utiliza dentro da procedure
+                                              ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
+                                              ,pr_idorigem          => null -- Não utiliza dentro da procedure
+                                              ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                              ,pr_inpessoa          => rw_crapass.inpessoa
+                                              ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
+                                              ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                              ,pr_cdcritic          => vr_cdcritic
+                                              ,pr_dscritic          => vr_dscritic);     
+                                              
+          
+          -- Condicao para verificar se permite incluir as linhas parametrizadas
+          IF INSTR(',' || vr_dsctajud || ',',',' || rw_crapbdt_prejuz.nrdconta || ',') > 0 THEN
+            CONTINUE;
+          END IF;
+          
+          /* verificar se existe boleto de contrato em aberto e se pode debitar do cooperado */
+          /* 1º) verificar se o parametro está bloqueado para realizar busca de boleto em aberto */
+          IF vr_blqresg_cc = 'S' THEN
+
+            -- inicializar rows de cursores
+            rw_cde := NULL;
+            rw_ret := NULL;
+
+            /* 2º se permitir, verificar se possui boletos em aberto */
+            OPEN cr_cde( pr_cdcooper => pr_cdcooper
+                        ,pr_nrdconta => rw_crapbdt_prejuz.nrdconta
+                        ,pr_nrborder => rw_crapbdt_prejuz.nrborder);
+            FETCH cr_cde INTO rw_cde;
+            CLOSE cr_cde;
+
+            /* 3º se existir boleto de contrato em aberto, nao debitar */
+            IF nvl(rw_cde.nrdocmto,0) > 0 THEN
+               --vr_dsobservacao := vr_dsobservacao||'Boleto de contrato em aberto, nao debitar; ';
+               CONTINUE;
+            ELSE
+               /* 4º cursor para verificar se existe boleto pago pendente de processamento, nao debitar */
+               OPEN cr_ret( pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => rw_crapbdt_prejuz.nrdconta
+                           ,pr_nrborder => rw_crapbdt_prejuz.nrborder
+                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+               FETCH cr_ret INTO rw_ret;
+               CLOSE cr_ret;
+
+               /* 6º se existir boleto de contrato pago pendente de processamento, nao debitar */
+               IF nvl(rw_ret.nrdocmto,0) > 0 THEN
+                  --vr_dsobservacao := vr_dsobservacao||'Boleto de contrato pago pendente de processamento, nao debitar; ';
+                  CONTINUE;
+               END IF;
+
+            END IF;
+          END IF;
+          
+          -- Limpar tabela saldos
+          vr_tab_saldos.DELETE;
+
+          -- Obter Saldo do Dia
+          EXTR0001.pc_obtem_saldo_dia(pr_cdcooper   => pr_cdcooper
+                                     ,pr_rw_crapdat => rw_crapdat
+                                     ,pr_cdagenci   => 1
+                                     ,pr_nrdcaixa   => 100
+                                     ,pr_cdoperad   => 1
+                                     ,pr_nrdconta   => rw_crapbdt_prejuz.nrdconta
+                                     ,pr_vllimcre   => rw_crapass.vllimcre
+                                     ,pr_dtrefere   => rw_crapdat.dtmvtolt
+                                     ,pr_flgcrass   => TRUE
+                                     ,pr_des_reto   => vr_des_reto
+                                     ,pr_tab_sald   => vr_tab_saldos
+                                     ,pr_tipo_busca => 'A'
+                                     ,pr_tab_erro   => vr_tab_erro);
+                                     
+          -- Se retornou erro
+          IF vr_des_reto <> 'OK' THEN
+            IF vr_tab_erro.COUNT > 0 THEN
+              vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            ELSE
+              vr_dscritic := 'Erro na procedure pc_crps735.';
+            END IF;
+            RAISE vr_exc_erro;
+          END IF;
+
+          -- Buscar Indice
+          vr_index_saldo := vr_tab_saldos.FIRST;
+          IF vr_index_saldo IS NOT NULL THEN
+            -- Acumular Saldo
+            vr_vlsldisp := ROUND(NVL(vr_tab_saldos(vr_index_saldo).vlsddisp, 0) + NVL(vr_tab_saldos(vr_index_saldo).vllimcre, 0),2);
+          END IF;
+          
+          -- se não há saldo disponível na conta corrente, pula o título
+          IF vr_vlsldisp <= 0 THEN
+            CONTINUE;
+          END IF;
+          
+          IF (vr_vlsldisp > rw_crapbdt_prejuz.vlsldatu) THEN 
+            vr_vlpagmto := rw_crapbdt_prejuz.vlsldatu;
+          ELSE
+            vr_vlpagmto := vr_vlsldisp;
+          END IF; 
+  --        vr_vlpagmto
+          IF (rw_crapbdt_prejuz.nrborder = 32377) THEN
+            NULL;
+          END IF;
+          PREJ0005.pc_pagar_bordero_prejuizo(pr_cdcooper => rw_crapbdt_prejuz.cdcooper
+                                             ,pr_nrborder => rw_crapbdt_prejuz.nrborder
+                                             ,pr_vlaboorj => 0
+                                             ,pr_vlpagmto => vr_vlpagmto
+                                             ,pr_cdoperad => 1
+                                             ,pr_cdagenci => pr_cdagenci
+                                             ,pr_nrdcaixa => NULL
+                                             ,pr_liquidou => vr_liquidou
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;  
+      END LOOP;
+      
       -- Loop principal dos títulos vencidos
       FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt

@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 23/01/2019
+   Data    : AGOSTO/2013                      Ultima atualizacao: 11/01/2018
 
    Dados referentes ao programa:
 
@@ -250,7 +250,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                23/07/2018 - Projeto Revitalizaçao Sistemas - Execucao paralela por Coop e Agencia (Andreatta - MOUTs)
 
                19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
-                                
+               
+			   23/10/2018 - [Projeto 403] Adicionando tratativa para o tipo de garantia de aplicação para desconto de títulos
+                            (Lucas - GFT)	
+               
+			   11/01/2019 - Adicionado a gravação da carga de baixa para os desconto de titulos que estiverem em prejuizo (Paulo Penteado GFT)
+  
                23/01/2019 - Somar ao valor do saldo prejuizo (vlsdprej) o valor a ser pago de mora, multa
                             e IOF para ser enviado no arquivo de carga_mf ao Cyber - INC0030650. (Fabricio)
                                 
@@ -496,9 +501,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                 ,tdb.nrdocmto
                 ,cyb.nrctremp
                 ,tdb.nrctrlim
-                ,tdb.vlmratit -- juros por atraso de pagamento
-                ,tdb.vlmtatit -- multa por atraso de pagamento
-                ,tdb.vliofcpl -- Valor do IOF Complementar de atraso
+                ,tdb.vlmratit - tdb.vlpagmra as vlmratit -- juros por atraso de pagamento
+                ,tdb.vlmtatit - tdb.vlpagmta as vlmtatit -- multa por atraso de pagamento
+                ,tdb.vliofcpl - tdb.vlpagiof as vliofcpl-- Valor do IOF Complementar de atraso
             FROM craptdb tdb
            INNER JOIN tbdsct_titulo_cyber tcy
               ON tcy.cdcooper = tdb.cdcooper
@@ -747,7 +752,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
             and crapepr.tpemprst = 0 -- TR
             AND craphis.cdcooper = craplcm.cdcooper
             AND craphis.cdhistor = craplcm.cdhistor
-            AND trim(replace(craplcm.cdpesqbb,'.')) = pr_nrctremp
+            AND trim(replace(craplcm.cdpesqbb,'.')) = to_char(pr_nrctremp)
             AND craplcm.cdcooper = pr_cdcooper
             AND craplcm.nrdconta = pr_nrdconta
             AND crapepr.nrctremp = pr_nrctremp
@@ -765,7 +770,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
             AND crapepr.nrdconta = craplcm.nrdconta
             AND craphis.cdcooper = craplcm.cdcooper
             AND craphis.cdhistor = craplcm.cdhistor
-            AND trim(replace(craplcm.cdpesqbb,'.')) = pr_nrctremp
+            AND trim(replace(craplcm.cdpesqbb,'.')) = to_char(pr_nrctremp)
             AND craplcm.cdcooper = pr_cdcooper
             AND craplcm.nrdconta = pr_nrdconta
             AND crapepr.nrctremp = pr_nrctremp
@@ -1816,11 +1821,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
 
            --Carga Financeira
            IF pr_opccarga = 'F' THEN
-             -- Se for desconto de títulos, ou não tem garantia ou a garantia é de avalista
+             -- [Projeto 403] Regras de preenchimento conforme a garantia do contrato de limite
              IF pr_cdorigem = 4 THEN
-               IF trim(vr_avalist1) IS NULL AND
-                  trim(vr_avalist2) IS NULL THEN
+			 -- Se a linha de desconto do contrato de limite for "Aplicação", preencher com o valor "4"
+               IF pr_flgtemlcr AND pr_rw_craplcr.tpctrato = 4 THEN
+                 pc_monta_linha('4',592,pr_idarquivo);  
+               -- Caso contrário, se não for preenchido as informações de avalista, preencher com o valor "0"  
+               ELSIF trim(vr_avalist1) IS NULL AND trim(vr_avalist2) IS NULL THEN
                  pc_monta_linha('0',592,pr_idarquivo);
+               -- Se foi preenchida alguma informação de avalista, preencher com "1"  
                ELSE
                pc_monta_linha('1',592,pr_idarquivo);
                END IF;      
@@ -2286,7 +2295,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
              CLOSE cr_crapcyc1;             
 
            --Se a origem = Conta
-           IF pr_rw_crapcyb.cdorigem = 1 THEN
+           IF pr_rw_crapcyb.cdorigem IN (1,4) THEN
              BEGIN
                -- Caso o contrato estiver em Cobrança Judicial (rw_crapcyc1.flgjudic = 1) nao deve atualizar a data da baixa, apenas os valores para efetuar a regularização do contrato
                UPDATE crapcyb SET crapcyb.dtdbaixa = case when nvl(rw_crapcyc1.flgjudic,0) = 0 and vr_flacordo = 0 then pr_dtmvtolt
@@ -2763,7 +2772,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
              pc_monta_linha(rpad(rw_craplcr.dslcremp,29,' '),110,pr_idarquivo);
            END IF;
 
+             --Caso esteja em prejuizo o valor de Saldo devedor é ZERO
+           IF (pr_rw_crapcyb.cdorigem = 4 AND pr_rw_crapcyb.flgpreju = 1) THEN
+             pc_monta_linha(to_char(pr_rw_crapcyb.vlsdeved,'00000000000000'),139,pr_idarquivo);             
+           ELSE
            pc_monta_linha(to_char((pr_rw_crapcyb.vlsdeved + nvl(pr_rw_crapcyb.vlmrapar, 0) + nvl(pr_rw_crapcyb.vlmtapar, 0) + nvl(pr_rw_crapcyb.vliofcpl, 0))*100,'00000000000000'),139,pr_idarquivo);
+           END IF;
            pc_monta_linha(to_char(pr_rw_crapcyb.vljura60*100,'00000000000000'),154,pr_idarquivo);
            pc_monta_linha(to_char(pr_rw_crapcyb.vlpreemp*100,'00000000000000'),169,pr_idarquivo);
            pc_monta_linha(lpad(pr_rw_crapcyb.qtpreatr,3,' '),184,pr_idarquivo);
@@ -2812,7 +2826,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
            pc_monta_linha(to_char(pr_rw_crapcyb.vlpreapg*100,'00000000000000'),293,pr_idarquivo);
 
            -- Se for do tipo CONTA CORRENTE ou PREJUIZO, faz o calculo antigo
-           IF pr_cdorigem = 1 OR pr_rw_crapcyb.flgpreju = 1 THEN
+           IF pr_cdorigem = 1 OR (pr_rw_crapcyb.flgpreju = 1 AND pr_cdorigem <> 4) THEN
              --Data Pagamento preenchida e Data de Baixa nula
              IF pr_rw_crapcyb.dtdpagto IS NOT NULL AND pr_rw_crapcyb.dtdbaixa IS NULL THEN
                IF pr_rw_crapcyb.cdlcremp = 100 AND pr_rw_crapcyb.flgpreju = 1 THEN
@@ -6017,6 +6031,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                          vr_dscritic IS NOT NULL THEN
                        RAISE vr_exc_saida;
                      END IF;
+
+               ELSE
+                 -- Verifica se o saldo a regularizar e o saldo do prejuizo estao liquidados para
+                 -- gerar a baixa ou se for residuo o saldo devedor deve estar liquidado para gerar uma baixa
+                 IF ((rw_crapcyb.vlpreapg <= 0 AND rw_crapcyb.flgpreju = 0) OR
+                     (rw_crapcyb.flgpreju = 1 AND Nvl(rw_crapcyb.vlsdprej,0) <= 0))  OR
+                     ((rw_crapcyb.flgresid = 1) AND (Nvl(rw_crapcyb.vlsdeved,0) <= 0) AND rw_crapcyb.flgpreju = 0) THEN
+
+                   --Gerar carga de Baixa
+                   pc_gera_carga_baixa(pr_rw_crapcyb => rw_crapcyb   --Registro Cyber
+                                      ,pr_dtmvtolt   => vr_dtatual   --Data Movimento
+                                      ,pr_dtmvtlt2   => vr_dtmvtlt2  --Data Movimento formatada
+                                      ,pr_cdcritic   => vr_cdcritic  --Codigo Erro
+                                      ,pr_dscritic   => vr_dscritic);--Descricao Erro
+                   --Se ocorreu erro
+                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                     RAISE vr_exc_saida;
+                   END IF;
+                 END IF;
 
                END IF;
 						 ELSIF rw_crapcyb.cdorigem = 1

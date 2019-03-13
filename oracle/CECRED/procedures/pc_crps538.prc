@@ -452,7 +452,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                            
                07/01/2019 - Alterações nas regras de devolucao da ABBC, alterado conforme 
                             instrucoes da requisicao. Chamado SCTASK0023401 - Gabriel (Mouts).			   
-                             		     
+               
+			   31/01/2019 - Adicionado parametro para indicar finalizacao do job (Luis Fernando - GFT)	              		     
    .............................................................................*/
 
      DECLARE
@@ -8081,6 +8082,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS538_5');
          END IF;
 
+         -- Atualiza o parametro para informar que a crps538 rodou
+         UPDATE crapprm
+           SET crapprm.dsvlrprm = '1'
+         WHERE nmsistem =  'CRED'
+           AND cdcooper  = pr_cdcooper
+           AND cdacesso =  'FLG_CRPS538_CONCLUIDA';
+         
        WHEN OTHERS THEN
          -- No caso de erro de programa gravar tabela especifica de log - Chamado 714566 - 11/08/2017 
          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);         
