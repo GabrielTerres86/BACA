@@ -4,6 +4,7 @@
  * CRIAÇÃO      : James Prust Júnior
  * DATA CRIAÇÃO : 16/09/2015
  * OBJETIVO     : Rotina para buscar os detalhes do estorno
+ *   16/09/2018 - Inclusão do Desconto de Títulos (Vitor S. Assanuma - GFT)
  */
 ?> 
 <?
@@ -19,15 +20,17 @@
 	}
 	
 	// Guardo os parâmetos do POST em variáveis	
-	$nrdconta  = (isset($_POST['nrdconta']))  ? $_POST['nrdconta'] : 0;	
-	$nrctremp  = (isset($_POST['nrctremp']))  ? $_POST['nrctremp'] : 0;	
+	$nrdconta  = (isset($_POST['nrdconta']))  ? $_POST['nrdconta']  : 0;	
+	$nrctremp  = (isset($_POST['nrctremp']))  ? $_POST['nrctremp']  : 0;	
 	$cdestorno = (isset($_POST['cdestorno'])) ? $_POST['cdestorno'] : 0;	
+	$cdtpprod  = (isset($_POST['cdtpprod']))  ? $_POST['cdtpprod']  : 1;	
 	
 	$xml  = "<Root>";
 	$xml .= " <Dados>";
-	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";	
-	$xml .= "   <nrctremp>".$nrctremp."</nrctremp>";	
+	$xml .= "   <nrdconta>" .$nrdconta. "</nrdconta>";	
+	$xml .= "   <nrctremp>" .$nrctremp. "</nrctremp>";	
 	$xml .= "   <cdestorno>".$cdestorno."</cdestorno>";	
+	$xml .= "   <cdtpprod>" .$cdtpprod. "</cdtpprod>";	
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 

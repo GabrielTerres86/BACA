@@ -6,6 +6,8 @@
  * --------------
  * ALTERAÇÕES   : 29/08/2018 - Tratar o estorno de pagamento da C/C em prejuízo
  *   			               PJ 450 - Diego Simas - AMcom
+ *  - 15/09/2018 - Inclusão do Desconto de Títulos (Vitor S. Assanuma - GFT)
+ *  - 29/10/2018 - Adicionado variavel cdtpprod e adicionada a pesquisa de bordeto na opção E (Cássia de Oliveitra - GFT)
  * --------------
  */
 $(document).ready(function() {
@@ -111,20 +113,33 @@ function formataCampos(){
 		// Estorno
 		case 'E':
 			var cNrdconta = $('#nrdconta', '#frmEstornoPagamento');
-			var cNrctremp = $('#nrctremp', '#frmEstornoPagamento');			
+			var cNrctremp = $('#nrctremp', '#frmEstornoPagamento');		
+			var cCdtpprod = $('#cdtpprod', '#frmEstornoPagamento');			
 			
 			var rNrdconta = $('label[for="nrdconta"]', '#frmEstornoPagamento');
-			var rNrctremp = $('label[for="nrctremp"]', '#frmEstornoPagamento');			
+			var rNrctremp = $('label[for="nrctremp"]', '#frmEstornoPagamento');		
+			var rCdtpprod = $('label[for="cdtpprod"]', '#frmEstornoPagamento');	
 			
 			cNrdconta.addClass('conta pesquisa').css({'width':'80px'});
 			cNrctremp.addClass('pesquisa').css({'width':'80px','text-align':'right'}).setMask('INTEGER','z.zzz.zzz.zzz','.','');
+			cCdtpprod.addClass('rotulo-linha').css({width: "150px"});	
 						
-			rNrdconta.addClass('rotulo').css({width: "60px"});			
+			rCdtpprod.addClass('rotulo').css({width: "50px"});	
+			rNrdconta.addClass('rotulo-linha').css({width: "60px"});			
 			rNrctremp.addClass('rotulo-linha').css({width: "80px"});			
 			
 			highlightObjFocus($('#frmEstornoPagamento'));
 			cNrdconta.habilitaCampo();
 			cNrctremp.habilitaCampo();			
+
+			cCdtpprod.unbind('keypress').bind('keypress', function(e) {
+				if ( divError.css('display') == 'block' ) { return false; }
+				// Se é a tecla ENTER,
+				if ( e.keyCode == 13 ) {
+					cNrdconta.focus();
+					return false;
+				}
+		    });
 			
 			cNrdconta.unbind('keypress').bind('keypress', function(e) {
 				if ( divError.css('display') == 'block' ) { return false; }
@@ -143,17 +158,35 @@ function formataCampos(){
 				if ( divError.css('display') == 'block' ) { return false; }		
 				// Se é a tecla ENTER,
 				if ( e.keyCode == 13 ) {
-					if ( normalizaNumero( cNrctremp.val() ) == 0 ) {
-						mostraContrato();
-					} else {
-						carregaLancamentosPagamentos();						
+					if (cCdtpprod.val() == 1){
+						if ( normalizaNumero( cNrctremp.val() ) == 0 ) {
+							mostraContrato();
+						} else {
+							carregaLancamentosPagamentos();
+						}
+					}else{
+						if ( normalizaNumero( cNrctremp.val() ) == 0 ) {
+							mostrarPesquisaBordero($('#frmEstornoPagamento #nrdconta').val(), $('#frmEstornoPagamento #nrctremp').val());
+						} else {
+							carregaLancamentosPagamentos();
+						}
 					}
 					return false;
 				}
 			});
-			
-			//trocaBotao('estadoInicial()');
-			trocaBotao('estadoInicial();','ajustaBotaoContinuar()','Continuar');	
+
+			cCdtpprod.unbind('change').bind('change',function() {
+		    	//Limpa o campo
+		    	cNrctremp.val('');
+
+		    	//Verifica qual opção foi selecionada: 1 - Emprestimo PP | 2 - Desconto de Títulos
+		    	if (cCdtpprod.val() == 1){ 
+		    		rNrctremp.html("Contrato:")
+		    	}else{
+		    		rNrctremp.html("Border&ocirc;:")	
+				}
+			});
+			trocaBotao('estadoInicial();', 'ajustaBotaoContinuar()', 'Continuar');
 		break;
 		
 		// Estornar Pagamento de Prejuízo C/C
@@ -189,21 +222,25 @@ function formataCampos(){
 			});
 
 			trocaBotao('estadoInicial();', 'ajustaBotaoContinuarCT()', 'Continuar');
-			break;
-
-		// CONSULTAR Estorno
+		break;
+		
+		// Estorno
 		case 'C':
 			var cNrdconta = $('#nrdconta', '#frmEstornoPagamento');
 			var cNrctremp = $('#nrctremp', '#frmEstornoPagamento');			
+			var cCdtpprod = $('#cdtpprod', '#frmEstornoPagamento');			
 			
 			var rNrdconta = $('label[for="nrdconta"]', '#frmEstornoPagamento');
-			var rNrctremp = $('label[for="nrctremp"]', '#frmEstornoPagamento');			
+			var rNrctremp = $('label[for="nrctremp"]', '#frmEstornoPagamento');
+			var rCdtpprod = $('label[for="cdtpprod"]', '#frmEstornoPagamento');
 			
 			cNrdconta.addClass('conta pesquisa').css({'width':'80px'});
 			cNrctremp.addClass('pesquisa').css({'width':'80px','text-align':'right'}).setMask('INTEGER','z.zzz.zzz.zzz','.','');
-						
-			rNrdconta.addClass('rotulo').css({width: "60px"});			
-			rNrctremp.addClass('rotulo-linha').css({width: "80px"});			
+			cCdtpprod.addClass('rotulo-linha').css({width: "150px"});
+
+			rCdtpprod.addClass('rotulo').css({width: "50px"});		
+			rNrdconta.addClass('rotulo-linha').css({width: "60px"});			
+			rNrctremp.addClass('rotulo-linha').css({width: "80px"});	
 			
 			highlightObjFocus($('#frmEstornoPagamento'));
 			cNrdconta.habilitaCampo();
@@ -221,20 +258,45 @@ function formataCampos(){
 					return false;
 				}
 		    });
+
+		    cCdtpprod.unbind('keypress').bind('keypress', function(e) {
+				if ( divError.css('display') == 'block' ) { return false; }
+				// Se é a tecla ENTER,
+				if ( e.keyCode == 13 ) {
+					cNrdconta.focus();
+					return false;
+				}
+		    });
 			
 			cNrctremp.unbind('keypress').bind('keypress', function(e) {
 				if ( divError.css('display') == 'block' ) { return false; }		
 				// Se é a tecla ENTER,
 				if ( e.keyCode == 13 ) {
-					if ( normalizaNumero( cNrctremp.val() ) == 0 ) {
-						mostraContrato();
-					} else {
-						carregaTelaConsultarEstornos();
+					if (cCdtpprod.val() == 1){
+						if ( normalizaNumero( cNrctremp.val() ) == 0 ) {
+							mostraContrato();
+						} else {
+							carregaTelaConsultarEstornos();
+						}
+					}else{
+						mostrarPesquisaBordero($('#frmEstornoPagamento #nrdconta').val(), $('#frmEstornoPagamento #nrctremp').val());
 					}
 					return false;
 				}
 			});
-			
+
+		    cCdtpprod.unbind('change').bind('change',function() {
+		    	//Limpa o campo
+		    	cNrctremp.val('');
+
+		    	//Verifica qual opção foi selecionada: 1 - Emprestimo PP | 2 - Desconto de Títulos
+		    	if (cCdtpprod.val() == 1){ 
+		    		rNrctremp.html("Contrato:")
+		    	}else{
+		    		rNrctremp.html("Border&ocirc;:")
+		    	}
+		    });
+
 			// trocaBotao('estadoInicial()');
 			trocaBotao('estadoInicial();','ajustaBotaoContinuar()','Continuar');	
 			break;
@@ -276,41 +338,59 @@ function formataCampos(){
 		
 		// Relatorio
 		case 'R':
+			var cCdtpprod = $('#cdtpprod', '#frmImpressaoEstorno');
 			var cNrdconta = $('#nrdconta', '#frmImpressaoEstorno');
 			var cNrctremp = $('#nrctremp', '#frmImpressaoEstorno');			
 			var cDtiniest = $('#dtiniest', '#frmImpressaoEstorno');			
 			var cDtfinest = $('#dtfinest', '#frmImpressaoEstorno');			
 			var cCdagenci = $('#cdagenci', '#frmImpressaoEstorno');			
 			
+			var rCdtpprod = $('label[for="cdtpprod"]', '#frmImpressaoEstorno');
 			var rNrdconta = $('label[for="nrdconta"]', '#frmImpressaoEstorno');
 			var rNrctremp = $('label[for="nrctremp"]', '#frmImpressaoEstorno');			
 			var rDtiniest = $('label[for="dtiniest"]', '#frmImpressaoEstorno');			
 			var rDtfinest = $('label[for="dtfinest"]', '#frmImpressaoEstorno');			
 			var rCdagenci = $('label[for="cdagenci"]', '#frmImpressaoEstorno');			
 			
+			cCdtpprod.addClass('campo').css({'width':'150px'});
 			cNrdconta.addClass('conta pesquisa').css({'width':'80px'});
 			cNrctremp.addClass('pesquisa').css({'width':'80px','text-align':'right'}).setMask('INTEGER','z.zzz.zzz.zzz','.','');
 			cDtiniest.addClass('data').css({'width':'80px'});
 			cDtfinest.addClass('data').css({'width':'80px'});
 			cCdagenci.addClass('campo').css({'width':'80px'});
 			
-			rNrdconta.addClass('rotulo').css({width: "80px"});			
-			rNrctremp.addClass('rotulo-linha').css({width: "80px"});			
-			rDtiniest.addClass('rotulo').css({'width':'80px'});				
-			rDtfinest.addClass('rotulo-linha').css({'width':'97px'});				
-			rCdagenci.addClass('rotulo-linha').css({'width':'90px'});				
+			rCdtpprod.addClass('rotulo').css({width: "70px"});
+			rNrdconta.addClass('rotulo-linha').css({width: "70px"});			
+			rNrctremp.addClass('rotulo-linha').css({width: "70px"});			
+			rDtiniest.addClass('rotulo').css({'width':'70px'});				
+			rDtfinest.addClass('rotulo-linha').css({'width':'140px'});				
+			rCdagenci.addClass('rotulo-linha').css({'width':'87px'});				
 			
 			highlightObjFocus($('#frmImpressaoEstorno'));
+			cCdtpprod.habilitaCampo();
 			cNrdconta.habilitaCampo();
 			cNrctremp.habilitaCampo();
 			cDtiniest.habilitaCampo();
 			cDtfinest.habilitaCampo();
 			cCdagenci.habilitaCampo();
-			
-			cNrdconta.unbind('keypress').bind('keypress', function(e) {
+
+			cCdtpprod.unbind('keypress').bind('keypress', function(e) {
 				if ( divError.css('display') == 'block' ) { return false; }
 				// Se é a tecla ENTER,
 				if ( e.keyCode == 13 ) {
+					cNrdconta.focus();
+					return false;
+				}
+		    });
+
+		    cNrdconta.unbind('keypress').bind('keypress', function(e) {
+				if ( divError.css('display') == 'block' ) { return false; }
+				// Se é a tecla ENTER,
+				if ( e.keyCode == 13 ) {
+					if ( normalizaNumero( cNrdconta.val() ) == 0 ) {
+						mostraPesquisaAssociado('nrdconta', 'frmEstornoPagamento');
+						return false;
+					}
 					cNrctremp.focus();
 					return false;
 				}
@@ -319,8 +399,20 @@ function formataCampos(){
 			cNrctremp.unbind('keypress').bind('keypress', function(e) {
 				if (divError.css('display') == 'block' ) { return false; }
 				// Se é a tecla ENTER,
-				if (e.keyCode == 13){
-					cDtiniest.focus();
+				if ( e.keyCode == 13 ) {
+					if (cCdtpprod.val() == 1){
+						if ( normalizaNumero( cNrctremp.val() ) == 0 ) {
+							mostraContrato();
+						} else {
+							cDtiniest.focus();
+						}
+					}else{
+						if ( normalizaNumero( cNrctremp.val() ) == 0 ) {
+							mostrarPesquisaBordero($('#frmImpressaoEstorno #nrdconta').val(), $('#frmImpressaoEstorno #nrctremp').val());
+						} else {
+							cDtiniest.focus();
+						}
+					}
 					return false;
 				}
 			});
@@ -352,6 +444,18 @@ function formataCampos(){
 					return false;
 				}
 			});
+
+			cCdtpprod.unbind('change').bind('change',function() {
+		    	//Limpa o campo
+		    	cNrctremp.val('');
+
+		    	//Verifica qual opção foi selecionada: 1 - Emprestimo PP | 2 - Desconto de Títulos
+		    	if (cCdtpprod.val() == 1){ 
+		    		rNrctremp.html("Contrato:")
+		    	}else{
+		    		rNrctremp.html("Border&ocirc;:")
+		    	}
+		    });
 			
 			trocaBotao('estadoInicial();','geraImpressaoEstorno()','Imprimir');			
 		break;
@@ -442,11 +546,11 @@ function controlaFocus(iOpcao){
 		
 		case 'C':
 		case 'E':
-			$('#nrdconta','#frmEstornoPagamento').focus();
+			$('#cdtpprod','#frmEstornoPagamento').focus();
 		break;
 		
 		case 'R':
-			$('#nrdconta','#frmImpressaoEstorno').focus();
+			$('#cdtpprod','#frmImpressaoEstorno').focus();
 		break;	
 	}	
 }	
@@ -537,7 +641,11 @@ function controlaPesquisas() {
 			if ($("#nrctremp","#" + nmformul).prop("disabled") == true){
 				return;
 			}
-			mostraContrato();
+			if ($('#cdtpprod','#frmEstornoPagamento').val() == 1){
+				mostraContrato();
+			}else{
+				mostrarPesquisaBordero($('#frmEstornoPagamento #nrdconta').val(), $('#frmEstornoPagamento #nrctremp').val());
+			}
 		});
 	}	
 
@@ -671,7 +779,10 @@ function formataTelaLancamentos() {
 
 	var cTotalest = $('#totalest','#frmEstornoPagamento');
 	var cDsjustif = $('#dsjustificativa','#frmEstornoPagamento');
-	
+	var cInprejuz = $('#inprejuz','#divLancamentosPagamento');
+    var cCdtpprod = $('#cdtpprod','#frmEstornoPagamento');
+
+	var Ldsprejuz = $('label[for="dsprejuz"]','#divLancamentosPagamento');
 	var rTotalest = $('label[for="totalest"]', '#frmEstornoPagamento');
 	var rDsjustif = $('label[for="dsjustificativa"]', '#frmEstornoPagamento');
 
@@ -679,6 +790,7 @@ function formataTelaLancamentos() {
     var tabela      = $('table', divRegistro );
     var linha       = $('table > tbody > tr', divRegistro );
 
+	Ldsprejuz.addClass('rotulo').css({'width':'590px','text-align':'center'});
 	rDsjustif.addClass('rotulo').css({width:"75px"});
 	rTotalest.addClass('rotulo-linha').css( {'width':'80px' , 'margin-left':'310px'});
 	
@@ -695,19 +807,34 @@ function formataTelaLancamentos() {
     ordemInicial = [[0,0]];
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '60px';
-    arrayLargura[1] = '80px';
-    arrayLargura[2] = '110px';
-    arrayLargura[3] = '80px';
-    arrayLargura[4] = '60px';
- 
 	var arrayAlinha = new Array();
-    arrayAlinha[0] = 'right';
-    arrayAlinha[1] = 'center';
-    arrayAlinha[2] = 'center';
-    arrayAlinha[3] = 'right';
-    arrayAlinha[4] = 'right';
-    arrayAlinha[5] = 'right';
+    if (cInprejuz.val() == 0 || cCdtpprod.val() == 1){
+      arrayLargura[0] = '60px';
+      arrayLargura[1] = '80px';
+      arrayLargura[2] = '110px';
+      arrayLargura[3] = '80px';
+      arrayLargura[4] = '60px';
+
+      arrayAlinha[0] = 'right';
+	  arrayAlinha[1] = 'center';
+	  arrayAlinha[2] = 'center';
+	  arrayAlinha[3] = 'right';
+	  arrayAlinha[4] = 'right';
+	  arrayAlinha[5] = 'right';
+    }else{
+      arrayLargura[0] = '100px';
+      arrayLargura[1] = '110px';
+      arrayLargura[2] = '110px';
+      arrayLargura[3] = '100px';
+
+      arrayAlinha[0] = 'center';
+	  arrayAlinha[1] = 'center';
+	  arrayAlinha[2] = 'center';
+	  arrayAlinha[3] = 'right';
+	  arrayAlinha[4] = 'right';
+
+  	  trocaBotao('estadoInicial();','efetuarEstornoPrj()','Estornar');	
+    }
  
     tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
     return false;
@@ -772,6 +899,38 @@ function formataTelaLancamentosCT() {
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
 
 	return false;
+}
+
+function formataEstornarPrejuizoTit(){
+	var divRegistro = $('#divLancamentoTitulos');
+	var tabela      = $('table', divRegistro );
+	var linha       = $('table > tbody > tr', divRegistro );
+
+	var cDsjustif   = $('#dsjustif','#frmEstPrjJust');
+
+	// FORMATA O GRID DOS LANCAMENTOS DE PAGAMENTO
+	divRegistro.css({'height':'120px'});
+
+	cDsjustif.addClass('alphanum').css({'width':'450px','height':'80px','float':'left','margin':'3px 0px 3px 3px','padding-right':'1px'});	
+
+	var ordemInicial = new Array();
+    ordemInicial = [[0,0]];
+
+    var arrayLargura = new Array();
+    arrayLargura[0] = '20px';
+    arrayLargura[1] = '100px';
+    arrayLargura[2] = '110px';
+    arrayLargura[3] = '100px';
+
+	var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+	arrayAlinha[1] = 'center';
+	arrayAlinha[2] = 'center';
+	arrayAlinha[3] = 'center';
+	arrayAlinha[4] = 'center';
+ 
+    tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
+    return false;
 }
 
 function formataDetalhesEstorno(){
@@ -910,6 +1069,7 @@ function carregaLancamentosPagamentos(){
 	
 	var cNrdconta = $('#nrdconta','#frmEstornoPagamento');
     var cNrctremp = $('#nrctremp','#frmEstornoPagamento');
+    var cCdtpprod = $('#cdtpprod','#frmEstornoPagamento');
 
     // Carrega dados parametro através de ajax
     $.ajax({
@@ -918,6 +1078,7 @@ function carregaLancamentosPagamentos(){
         url: UrlSite + 'telas/estorn/carrega_lancamentos_pagamentos.php',
         data:{nrdconta: normalizaNumero(cNrdconta.val()),
               nrctremp: normalizaNumero(cNrctremp.val()),
+              cdtpprod: normalizaNumero(cCdtpprod.val()),
               redirect: 'script_ajax'
 		},
         error: function(objAjax, responseError, objExcept) {
@@ -990,18 +1151,20 @@ function carregaLancamentosPagamentosCT(cNrdconta) {
 	return false;
 }
 
-function manterRotina(operacao){
-	
+function manterRotina(operacao, inprejuz){
+    if (inprejuz == undefined || !inprejuz) {
+        inprejuz = 0;
+    }
 	hideMsgAguardo();
 	
+    var cCdtpprod = $('#cdtpprod','#frmEstornoPagamento').val();
 	var cNrdconta = $('#nrdconta', '#frmEstornoPagamento').val();
 	var cNrctremp = $('#nrctremp', '#frmEstornoPagamento').val();
+	var cTotalest = 0;
 	var cQtdlacto = $('#qtdlacto', '#frmEstornoPagamento').val();
 	var cDsjustificativa = $('#dsjustificativa', '#frmEstornoPagamento').val();
-	var cTotalest = 0;
 
 	switch (operacao){
-		
 		case 'VALIDA_DADOS':
 			showMsgAguardo("Aguarde, validando os dados...");
 		break;
@@ -1017,10 +1180,12 @@ function manterRotina(operacao){
 			var cQtdlacto = 0;
 			var cNrctremp = 0;
 			showMsgAguardo("Aguarde, estornando o pagamento de preju&iacute;zo...");		
-			break;
-
+		break;
+		case 'EFETUA_ESTORNO_PREJUIZO':
+			showMsgAguardo("Aguarde, estornando o pagamento de preju&iacute;zo...");
+		break;
 	}
-	
+
 	$.ajax({
 		type: "POST",
 		url: UrlSite + "telas/estorn/manter_rotina.php", 
@@ -1031,6 +1196,8 @@ function manterRotina(operacao){
 			dsjustificativa: removeCaracteresInvalidos(cDsjustificativa),
 			qtdlacto: normalizaNumero(cQtdlacto),
 			totalest: normalizaNumero(cTotalest),
+			cdtpprod: cCdtpprod,
+			inprejuz: inprejuz,
 			redirect: "script_ajax"
 		},
 		error: function(objAjax,responseError,objExcept){
@@ -1060,6 +1227,7 @@ function carregaTelaConsultarEstornos(){
 	
 	var cNrdconta = $('#nrdconta','#frmEstornoPagamento');
     var cNrctremp = $('#nrctremp','#frmEstornoPagamento');
+    var cCdtpprod = $('#cdtpprod','#frmEstornoPagamento');
 
     // Carrega dados parametro através de ajax
     $.ajax({
@@ -1069,6 +1237,7 @@ function carregaTelaConsultarEstornos(){
 		data: {
 			nrdconta: normalizaNumero(cNrdconta.val()),
               nrctremp: normalizaNumero(cNrctremp.val()),
+              cdtpprod: cCdtpprod.val(),
               redirect: 'script_ajax'
 		},
         error: function(objAjax, responseError, objExcept) {
@@ -1170,7 +1339,8 @@ function carregaTelaConsultarDetalhesEstorno(){
 function buscaDetalhesEstorno(){
 	
 	var cNrdconta = $('#nrdconta','#frmEstornoPagamento');
-    var cNrctremp = $('#nrctremp','#frmEstornoPagamento');	
+    var cNrctremp = $('#nrctremp','#frmEstornoPagamento');
+    var cCdtpprod = $('#cdtpprod','#frmEstornoPagamento');	
 	var cdestorno = 0;
 	
 	$('table > tbody > tr', 'div.divRegistros').each( function() {
@@ -1187,6 +1357,7 @@ function buscaDetalhesEstorno(){
             nrdconta:  normalizaNumero(cNrdconta.val()),
             nrctremp:  normalizaNumero(cNrctremp.val()),
 			cdestorno: cdestorno,
+            cdtpprod:  cCdtpprod.val(),
             redirect:  'script_ajax'
         },
         error: function(objAjax,responseError,objExcept) {
@@ -1211,15 +1382,16 @@ function buscaDetalhesEstorno(){
 }
 
 function geraImpressaoEstorno(){
+	var cCdtpprod = $('#cdtpprod', '#frmImpressaoEstorno');
     var cDtiniest = $('#dtiniest', '#frmImpressaoEstorno');
 	var cDtfinest = $('#dtfinest', '#frmImpressaoEstorno');
     
 	if (cDtiniest.val() == '') {
-        showError('error','O campo data inicial n&atilde;o foi preenchida','Alerta - Ayllos','$("#dtiniest", "#frmImpressaoEstorno").focus();');
+        showError('error','O campo data inicial n&atilde;o foi preenchido','Alerta - Ayllos','$("#dtiniest", "#frmImpressaoEstorno").focus();');
         return false;
     }
     if (cDtfinest.val() == '') {
-        showError('error','O campo data final n&atilde;o foi preenchida','Alerta - Ayllos','$("#dtfinest", "#frmImpressaoEstorno").focus();');
+        showError('error','O campo data final n&atilde;o foi preenchido','Alerta - Ayllos','$("#dtfinest", "#frmImpressaoEstorno").focus();');
         return false;
     }
 
@@ -1238,17 +1410,17 @@ function geraImpressaoEstornoCT() {
 	var cDtfinest = $('#dtfinest', '#frmImpressaoEstornoCT');
 
 	if (cNrdconta.val() == '') {
-		showError('error', 'O campo n&uacute;mero da conta n&atilde;o foi preenchida', 'Alerta - Ayllos', '$("#nrdconta", "#frmImpressaoEstornoCT").focus();');
+		showError('error', 'O campo n&uacute;mero da conta n&atilde;o foi preenchido', 'Alerta - Ayllos', '$("#nrdconta", "#frmImpressaoEstornoCT").focus();');
 		return false;
 	}
 
 	if (cDtiniest.val() == '') {
-		showError('error', 'O campo data inicial n&atilde;o foi preenchida', 'Alerta - Ayllos', '$("#dtiniest", "#frmImpressaoEstornoCT").focus();');
+		showError('error', 'O campo data inicial n&atilde;o foi preenchido', 'Alerta - Ayllos', '$("#dtiniest", "#frmImpressaoEstornoCT").focus();');
 		return false;
 	}
 
 	if (cDtfinest.val() == '') {
-		showError('error', 'O campo data final n&atilde;o foi preenchida', 'Alerta - Ayllos', '$("#dtfinest", "#frmImpressaoEstornoCT").focus();');
+		showError('error', 'O campo data final n&atilde;o foi preenchido', 'Alerta - Ayllos', '$("#dtfinest", "#frmImpressaoEstornoCT").focus();');
 		return false;
 	}
 
@@ -1271,14 +1443,19 @@ function ajustaBotaoContinuar(){
 	
 	var cNrdconta = $('#nrdconta', '#frmEstornoPagamento');
 	var cNrctremp = $('#nrctremp', '#frmEstornoPagamento');	
+	var cCdtpprod = $('#cdtpprod', '#frmEstornoPagamento');	
 	
 	if ( normalizaNumero( cNrdconta.val() ) == 0 ) {
-		showError('error','O campo Conta/DV n&atilde;o foi preenchida','Alerta - Ayllos','$("#nrdconta", "#frmEstornoPagamento").focus();');
+		showError('error','O campo Conta/DV n&atilde;o foi preenchido','Alerta - Ayllos','$("#nrdconta", "#frmEstornoPagamento").focus();');
 		return false;
 	}
 	
 	if ( normalizaNumero( cNrctremp.val() ) == 0 ) {
-		showError('error','O campo Contrato n&atilde;o foi preenchida','Alerta - Ayllos','$("#nrctremp", "#frmEstornoPagamento").focus();');
+		if (cCdtpprod.val() == 1){
+			showError('error','O campo Contrato n&atilde;o foi preenchido','Alerta - Ayllos','$("#nrctremp", "#frmEstornoPagamento").focus();');
+		}else if (cCdtpprod.val() == 2){
+			showError('error','O campo Border&ocirc; n&atilde;o foi preenchido','Alerta - Ayllos','$("#nrctremp", "#frmEstornoPagamento").focus();');
+		}
 		return false;
 	}
 	
@@ -1297,7 +1474,7 @@ function ajustaBotaoContinuarCT() {
 		var cNrdconta = normalizaNumero($('#nrdconta', '#frmEstornoPagamentoCT').val());
 
 		if (cNrdconta == 0) {
-			showError('error', 'O campo Conta/DV n&atilde;o foi preenchida', 'Alerta - Ayllos', '$("#nrdconta", "#frmEstornoPagamentoCT").focus();');
+			showError('error', 'O campo Conta/DV n&atilde;o foi preenchido', 'Alerta - Ayllos', '$("#nrdconta", "#frmEstornoPagamentoCT").focus();');
 			return false;
 		}
 
@@ -1310,4 +1487,21 @@ function ajustaBotaoContinuarCT() {
 
 	return false;
 	
+}
+
+// Função para abrir a pesquisa de borderos
+function mostrarPesquisaBordero(nrdconta, nrctremp){
+	var normNrconta = normalizaNumero(nrdconta) > 0 ? normalizaNumero(nrdconta) : '';
+	var nrBorder    = normalizaNumero(nrctremp) > 0 ? normalizaNumero(nrctremp) : '';
+
+	//Definição dos filtros
+	var filtros	= "Conta;nrdconta;100px;S;"+normNrconta+";S;nrdconta|Nr. Bordero;nrctremp;100px;S;"+nrBorder+";S;nrctremp|Dt Venc;dtlibbdt;;N;;N;dtlibbdt|Emprestado;vltottit;;N;;N;vltottit|Qt. Titulos;qttottit;;N;;N;qttottit";
+	//Campos que serão exibidos na tela
+	var colunas = 'Numero da Conta;nrdconta;0%;center;;N|Bordero;nrborder;20%;center|Dt.Lib;dtlibbdt;20%;center|Emprestado;vltottit;30%;center|Qt. Titulos;qttottit;30%;center';
+	//Exibir a pesquisa
+	mostraPesquisa("DSCT0003", "BUSCAR_BORDEROS_LIBERADOS", "Borderos","100",filtros,colunas, null, null, 'frmEstornoPagamento');
+}
+
+function efetuarEstornoPrj(){
+	manterRotina("VALIDA_DADOS", 1);
 }

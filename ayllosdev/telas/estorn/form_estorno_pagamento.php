@@ -6,6 +6,7 @@
  * OBJETIVO     : Formulario para estornar os pagamentos
  * --------------
  * ALTERAÇÕES   : 
+ *   15/09/2018 - Inclusão do Desconto de Títulos (Vitor S. Assanuma - GFT)
  * --------------
  */	
 ?>
@@ -14,6 +15,11 @@
 	<div>
 		<fieldset>	
 			<legend>Dados</legend>
+			<label for="cdtpprod">Tipo:</label>
+			<select id="cdtpprod" name="cdtpprod">
+	   			<option value='1'>1 - Empr&eacute;stimo PP</option>
+				<option value='2'>2 - Desconto de T&iacute;tulos</option>
+    		</select>
 			
 			<label for="nrdconta"><?php echo utf8ToHtml('Conta/DV:') ?></label>
 			<input type="text" id="nrdconta" name="nrdconta" class="conta" value=""/>

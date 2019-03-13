@@ -15,6 +15,9 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0003 AS
 --							   tabela CRAPHIS. Inclusão dos campos flgjudic e flextjud na tabela TBCOBRAN_ASSESSORIAS
 --    
 --                05/06/2018 - Adicionado procedure para inserir registro na tabela tbdsct_titulo_cyber (Paulo Penteado (GFT))
+--
+--                23/08/2018 - Adicionata procedre para atualuzar data de manutenão cadastral pc_atualiza_dtmancad_cyber (Andrew Albuquerque - GFT)
+
 ---------------------------------------------------------------------------------------------------------------
 
   /* Rotina para consultar as assessorias cadastradas */
@@ -139,6 +142,12 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0003 AS
                                     ,pr_retxml   IN OUT NOCOPY xmltype     --> arquivo de retorno do xml
                                     ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);
+
+  PROCEDURE pc_atualiza_dtmancad_cyber (pr_cdcooper  IN craptdb.cdcooper%TYPE --> Codigo da Cooperativa
+                                       ,pr_nrdconta  IN craptdb.nrdconta%TYPE --> Número da Conta do Tìtulo
+                                       ,pr_nrinssac  IN craptdb.nrinssac%TYPE --> número do sacado 
+                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2);
                                    
 END CYBE0003;
 /
@@ -156,6 +165,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
 --    Alteracoes: ??/08/2015 - Criação (Douglas Quisinski)
 --    
 --                05/06/2018 - Adicionado procedure para inserir registro na tabela tbdsct_titulo_cyber (Paulo Penteado (GFT))
+--
+--                23/08/2018 - Adicionata procedre para atualuzar data de manutenão cadastral pc_atualiza_dtmancad_cyber (Andrew Albuquerque - GFT)
 ---------------------------------------------------------------------------------------------------------------
   -- Variáveis para armazenar as informações em XML
   vr_des_xml         clob;
@@ -1388,6 +1399,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
     WHEN OTHERS THEN
          pr_dscritic := 'Erro geral na rotina cybe0003.pc_atualiza_data_avalista_cyber: '||SQLERRM;         
   END pc_atualiza_dtava_cyber;
+  
+  PROCEDURE pc_atualiza_dtmancad_cyber (pr_cdcooper  IN craptdb.cdcooper%TYPE --> Codigo da Cooperativa
+                                       ,pr_nrdconta  IN craptdb.nrdconta%TYPE --> Número da Conta do Tìtulo
+                                       ,pr_nrinssac  IN craptdb.nrinssac%TYPE --> número do sacado 
+                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
+
+      /*---------------------------------------------------------------------------------------------------------------------
+        Programa : pc_atualiza_dtmancad_cyber
+        Sistema  : 
+        Sigla    : CRED
+        Autor    : Andrew Albuquerque (GFT)
+        Data     : 23/08/2018
+        Frequencia: Sempre que for chamado
+        Objetivo  : Atualizar a data de manutenção cadastral da CRAPCYB
+      ---------------------------------------------------------------------------------------------------------------------*/
+      -- Exceção
+      vr_exc_erro  EXCEPTION;
+        
+      -- Variáveis de erro
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+      
+      -- Informações de data do sistema
+      rw_crapdat     btch0001.rw_crapdat%TYPE; --> Tipo de registro de datas
+      
+      BEGIN
+       pr_cdcritic := 0;
+       pr_dscritic := '';
+
+       --Selecionar dados da data
+       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+       -- Apenas fechar o cursor
+       CLOSE BTCH0001.cr_crapdat;
+                               
+        -- Atualiza as datas da crapcyb aonde aquela conta é avalista.
+        BEGIN
+          UPDATE crapcyb cyb
+             SET cyb.dtmancad = rw_crapdat.dtmvtolt
+           WHERE cyb.cdorigem = 4 --> Título de Border
+             AND (cyb.cdcooper, cyb.nrdconta, cyb.nrctremp) IN (
+                SELECT t.cdcooper, t.nrdconta, t.nrctrdsc
+                  FROM tbdsct_titulo_cyber t
+                 INNER JOIN craptdb tdb
+                    ON tdb.cdcooper = t.cdcooper
+                   AND tdb.nrdconta = t.nrdconta
+                   AND tdb.nrborder = t.nrborder
+                   AND tdb.nrtitulo = t.nrtitulo
+                 WHERE tdb.cdcooper = pr_cdcooper
+                   AND tdb.nrdconta = pr_nrdconta
+                   AND tdb.nrinssac = pr_nrinssac);
+        EXCEPTION
+           WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar o registro na crapcyb: '|| sqlerrm;
+            raise vr_exc_erro;
+        END;
+        COMMIT;
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+          IF vr_cdcritic <> 0 THEN
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          END IF;
+          pr_dscritic := vr_dscritic;
+        WHEN OTHERS THEN
+         pr_dscritic := 'Erro geral na rotina cybe0003.pc_atualiza_data_avalista_cyber: '||SQLERRM;         
+  END pc_atualiza_dtmancad_cyber;
 
 END CYBE0003;
 /
