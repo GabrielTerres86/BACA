@@ -45,8 +45,8 @@
  * 028: [30/05/2018] Vitor Shimada Assanuma (GFT): Inclusão do css para alinhar a direita na Manutenção e 
  * 029: [02/06/2018] Vitor Shimada Assanuma (GFT): Criacao da funcao calculaValoresResumoBordero() para calculo do resumo dos valores do bordero
  * 030: [09/08/2018] Vitor Shimada Assanuma (GFT): Validação do parâmetro da #TAB052 de quantidade máxima de títulos ao incluir um título ao borderô
- * 027: [15/08/2018] Criada tela 'Motivos' e botão 'Anular'. PRJ 438 (Mateus Z - Mouts)
- 
+ * 031: [15/08/2018] Criada tela 'Motivos' e botão 'Anular'. PRJ 438 (Mateus Z - Mouts)
+ * 032: [25/08/2018] Cassia de Oliveira (GFT): Criacao da funcao visualizarDetalhesPrejuizo()
  * 033: [05/09/2018] Luis Fernando (GFT): Ajustada rotina de selecao de bordero para incluir prejuizo 
  */
 
@@ -106,6 +106,7 @@ var situacao_analise = ""; // Variável para armazenar a situação da análise 
 var decisao = ""; // Variável para armazenar a decisão atualmente selecionado
 var valor_limite = 0; // Variável para armazenar  o valor do limite atualmente selecionado
 
+var fl_inprejuz = 0;
 
 // ALTERAÇÃO 001: Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
@@ -141,7 +142,7 @@ function carregaBorderosTitulos() {
 }
 
 // Função para seleção do bordero
-function selecionaBorderoTitulos(id, qtBorderos, bordero, contrato, situacao) {
+function selecionaBorderoTitulos(id, qtBorderos, bordero, contrato, situacao, inprejuz) {
 	var cor = "";
 
 	// Formata cor da linha da tabela que lista os borderos de descto titulos
@@ -163,9 +164,16 @@ function selecionaBorderoTitulos(id, qtBorderos, bordero, contrato, situacao) {
 			nrbordero  = retiraCaracteres(bordero,"0123456789",true);
 			nrcontrato = retiraCaracteres(contrato,"0123456789",true);
             fl_sitbordero = situacao;
+            fl_inprejuz = inprejuz;
 			idLinhaB  = id;		
 		}
 	}
+    if (fl_inprejuz) {
+        $("#btnPagar").val("Pagar Prejuizo").text("Pagar Prejuizo");
+    }
+    else{
+        $("#btnPagar").val("Pagar").text("Pagar");
+    }
     return false;
 }
 
@@ -298,11 +306,14 @@ function mostrarBorderoAlterar() {
 function mostrarBorderoPagar() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
-
+    var urlPagar = "telas/atenda/descontos/titulos/titulos_bordero_pagar.php";
+    if (fl_inprejuz) {
+        urlPagar = "telas/atenda/descontos/titulos/titulos_bordero_pagar_prejuizo.php";
+    }
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
-        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_pagar.php",
+        url: UrlSite + urlPagar,
         dataType: "html",
         data: {
             nrdconta: nrdconta,
@@ -370,7 +381,7 @@ function incluiTituloBordero(td){
         /*Soma titulo incluso no valor total de titulos selecionados*/
         var vlseleci = $("#vlseleci","#divIncluirBordero"); //valor titulos selecionados
         var valor = converteMoedaFloat(tr.find("input[name='vltituloselecionado']").val());
-        if(valor>0){
+        if(valor>0 && vlseleci.length > 0){
             var total = 0;
             total = converteMoedaFloat(vlseleci.val());
             total += valor;
@@ -500,7 +511,8 @@ function removeTituloBordero(td){
     var selecionados = $(".divRegistrosTitulosSelecionados table","#divIncluirBordero");
     var tr = td.parent();
     /*Soma titulo incluso no valor total de titulos selecionados*/
-    var vlseleci = $("#vlseleci","#divIncluirBordero"); //valor titulos selecionados
+    var vlseleci = $("#vlseleci" ,"#divIncluirBordero"); //valor titulos selecionados
+    if(vlseleci.length > 0){
     var valor = converteMoedaFloat(tr.find("input[name='vltituloselecionado']").val());
     if(valor>0){
         var total = 0;
@@ -510,6 +522,9 @@ function removeTituloBordero(td){
     }
     tr.remove();
     calculaSaldoBordero();
+    }else{
+        tr.remove();
+    }
     selecionados.zebraTabela();
     selecionados.trigger("update");
     if (typeof arrayLarguraInclusaoBordero != 'undefined') {
@@ -702,7 +717,7 @@ function carregaDadosAlteraLimiteDscTitPropostas() {
 
 // Função para verificar se deve ser enviado e-mail ao PAC Sede
 function verificaEnvioEmail(idimpres,limorbor) {
-    showConfirmacao("Efetuar envio de e-mail para Sede?","Confirma&ccedil;&atilde;o - Aimaro","verificaImpressaoProposta(" + idimpres + "," + limorbor + ",'yes');","verificaImpressaoProposta(" + idimpres + "," + limorbor + ",'no');","sim.gif","nao.gif");
+    showConfirmacao("Efetuar envio de e-mail para Sede?","Confirma&ccedil;&atilde;o - Aimaro","gerarImpressao(" + idimpres + "," + limorbor + ",'yes');","gerarImpressao(" + idimpres + "," + limorbor + ",'no');","sim.gif","nao.gif");
 }
 
 // Função para gerar impressão em PDF
@@ -2394,7 +2409,6 @@ function formataValorLimite() {
 }
 
 function fecharPesquisa(){
-    var vllimite = $('#vllimite','#frmReLimite').val();
     var nrctrlim = $('#nrctrlim','#frmReLimite').val();
     var flgstlcr = $('#flgstlcr','#frmReLimite').val().toLowerCase()  == "Bloqueado".toLowerCase()?0:1;
     var cddlinha = $('#cddlinha','#frmReLimite').val();
@@ -3596,6 +3610,87 @@ function pagarTitulosVencidos(){
     return false;
 }
 
+function pagarPrejuizo(){
+    var msg_confirmacao = 'Confirmar Pagamento de Preju&iacute;zo?';
+    //Caso nada tenha sido selecionado mostra erro
+    showMsgAguardo('Aguarde, calculando saldo em conta...');
+    var vlaboprj = normalizaNumero($("#formDetalhePrejuizoPagar #vlaboprj").val());
+    var vlpagmto = normalizaNumero($("#formDetalhePrejuizoPagar #vlpagmto").val());
+    //Invoca AJAX para verificar se possui Saldo em Conta
+    $.ajax({
+        type    : 'POST',
+        dataType: 'html',
+        url     : UrlSite + 'telas/atenda/descontos/manter_rotina.php',
+        data    : {
+            operacao: 'CALCULAR_SALDO_TITULOS_PREJUIZO',
+            nrdconta: nrdconta,
+            nrborder: nrbordero,
+            vlaboprj: vlaboprj,
+            vlpagmto: vlpagmto,
+            redirect: 'script_ajax'
+        },
+        error   : function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success : function(response) { //Response:: 0 = Sem saldo e alçada | 1 = Possui Saldo | 2 = Sem saldo mas com alçada
+            try{
+                var r = $.parseJSON(response);
+                hideMsgAguardo();
+                //Caso nao possua saldo, altera a mensagem
+                if (r.possui_saldo == 0){
+                    showError("error", "Saldo do cooperado insuficiente e operador n&atilde;o possui al&ccedil;ada.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                }
+                else if (r.possui_saldo == 2){
+                    msg_confirmacao = "Saldo em conta insuficiente para pagamento do preju&iacute;zo. Confirmar pagamento?";
+                    showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Aimaro","efetuarPagamentoPrejuizo();","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+                }else{
+                    //Invoca a funcao
+                    showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Aimaro","efetuarPagamentoPrejuizo();","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+                }
+            }
+            catch(e){
+                eval(response);
+            }
+        }
+    });
+
+    return false;
+}
+
+function efetuarPagamentoPrejuizo(vlaboprj,vlpagmto){
+    var vlaboprj = normalizaNumero($("#formDetalhePrejuizoPagar #vlaboprj").val());
+    var vlpagmto = normalizaNumero($("#formDetalhePrejuizoPagar #vlpagmto").val());
+    showMsgAguardo('Aguarde, efetuando pagamento...');
+    $.ajax({
+        type    : 'POST',
+        dataType: 'html',
+        url     : UrlSite + 'telas/atenda/descontos/manter_rotina.php',
+        data    : {
+            operacao: 'PAGAR_PREJUIZO',
+            nrdconta: nrdconta,
+            nrborder: nrbordero,
+            vlaboprj: vlaboprj,
+            vlpagmto: vlpagmto,
+            redirect: 'script_ajax'
+        },
+        error   : function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            try {
+                var r = $.parseJSON(response);
+                hideMsgAguardo();
+                showError("inform", r.mensagem, "Alerta - Aimaro", "carregaBorderosTitulos();blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+            catch(e){
+                eval(response);
+            }
+        }
+    });
+}
+
 function visualizarDetalhesTitulo(){
     showMsgAguardo("Aguarde, carregando dados do t&iacute;tulo ...");
 
@@ -3620,6 +3715,48 @@ function visualizarDetalhesTitulo(){
     return false;
 }
 
+function formataTabelaCriticas(div) {
+    var tabela = div.find("table");
+    div.zebraTabela();
+    tabela.css("text-align", "center");
+}
+
+function visualizarDetalhesPrejuizo() {
+    showMsgAguardo("Aguarde, carregando dados do preju&iacute;zo...");
+
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_prejuizo.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrborder: nrbordero,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao4").html(response);
+        }
+    });
+    return false;
+}
+
+function calculaSaldoPrejuizo(){
+    var tosdprej = converteMoedaFloat($("#formDetalhePrejuizoPagar #tosdprej").val());
+    var vlsldjur = converteMoedaFloat($("#formDetalhePrejuizoPagar #vlsldjur").val());
+    var vlsldmta = converteMoedaFloat($("#formDetalhePrejuizoPagar #vlsldmta").val());
+    var vliofatr = converteMoedaFloat($("#formDetalhePrejuizoPagar #vliofatr").val());
+    var vlpagmto = converteMoedaFloat($("#formDetalhePrejuizoPagar #vlpagmto").val());
+    var vlaboprj = converteMoedaFloat($("#formDetalhePrejuizoPagar #vlaboprj").val());
+    var vlsldaco = converteMoedaFloat($("#formDetalhePrejuizoPagar #vlsldaco").val());
+
+
+    var valor = tosdprej + vlsldjur + vlsldmta + vliofatr - vlpagmto - vlaboprj - vlsldaco;
+    $("#formDetalhePrejuizoPagar #vlsldprj").val(number_format(valor,2,',','.'));
+}
 
 // PRJ 438 - Inicio
 function carregaDadosConsultaMotivos() {

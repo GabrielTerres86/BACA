@@ -13,6 +13,7 @@
  *
  *                10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)
  *
+ *				   14/09/2018 - Adicionado a div Desconto de Titulos - Estorno de Pagamentos (Cássia de Oliveira - GFT)
  */
 ?>
 
@@ -151,6 +152,14 @@
 		<br style="clear:both" />
 
 	</fieldset>
+
+	<fieldset>
+		<legend>Desconto de T&iacute;tulos - Estorno de Pagamentos</legend>
+		
+		<label for="vlmaxdst" class='labelPri'>Vl. m&aacute;x. de estorno perm. sem autoriza&ccedil;&atilde;o da coordena&ccedil;&atilde;o/ger&ecirc;ncia</label>
+		<input type="text" id="vlmaxdst" name="vlmaxdst" class="moeda" value="<?php echo $vlmaxdst == 0 ? '' : $vlmaxdst ?>" style="text-align:right;"/>
+		<br style="clear:both" />
+	</fieldset> 
 </form>
 
 <div id="divBotoes" name="divBotoes" style="margin-bottom:5px">

@@ -64,6 +64,9 @@ $dslinha1 = $_POST['dslinha1'];
 $dslinha2 = $_POST['dslinha2'];
 $dslinha3 = $_POST['dslinha3'];
 
+//Bordero
+$qttitbor = $_POST['dslinha2'];
+
 $aux_dslinha1 = explode('#', $dslinha1);
 $aux_dslinha2 = explode('#', $dslinha2);
 $aux_dslinha3 = explode('#', $dslinha3);
@@ -516,6 +519,17 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 													<input name="dspacote" id="dspacote" type="text" value="<? echo trim(substr($aux_dslinha2[0], strpos($aux_dslinha2[0], "#"))) ?>" />													
 												
 												<?}?>
+                                                
+                                                <?php if($cdtippro == 22){?>
+                                                    
+                                                    <label for="nrborder"><? echo utf8ToHtml('Nr. do Borderô:') ?></label>
+                                                    <input name="nrborder" id="nrborder" type="text" value="<? echo $nrdocmto ?>" />
+                                                    
+                                                    <label for="qttitbor"><? echo utf8ToHtml('Qtd. de títulos:') ?></label>
+                                                    <input name="qttitbor" id="qttitbor" type="text" value="<? echo $qttitbor ?>" />
+                                                    
+                                                <?php }?>
+                                                
 												<? if($cdtippro != 21){?>
                                                 <label for="dtmvtolt"><? echo utf8ToHtml('Data Pagamento:') ?></label>
                                                 <input name="dtmvtolt" id="dtmvtolt" type="text" value="<? echo $dtmvtolt ?>" />

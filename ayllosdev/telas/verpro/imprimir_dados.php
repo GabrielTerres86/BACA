@@ -114,6 +114,7 @@
 	$hrrecarga    = $_POST['hrrecarga'];
 	$dtdebito     = $_POST['dtdebito'];
 	$nsuopera     = $_POST['nsuopera'];
+	$qttitbor     = $_POST['dslinha2'];
   //FGTS/DAE
   $cdconven     = $_POST['cdconven'];
   $dtvalida     = $_POST['dtvalida'];
@@ -231,6 +232,7 @@
 	$xml .= '		<hrrecarga>'.$hrrecarga.'</hrrecarga>';	
 	$xml .= '		<dtdebito>'.$dtdebito.'</dtdebito>';	
 	$xml .= '		<nsuopera>'.$nsuopera.'</nsuopera>';	
+	$xml .= '		<qttitbor>'.$qttitbor.'</qttitbor>';	
   //FGTS/DAE
   $xml .= '		<cdconven>'.$cdconven.'</cdconven>';
   $xml .= '		<dtvalida>'.$dtvalida.'</dtvalida>';

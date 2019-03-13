@@ -13,6 +13,8 @@
  * 
  * 10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)
  * 22/08/2018 - PJ 438 - Alterado a tela para o modo abas - Mateus Z (Mouts)
+ *                14/09/2018 - Adicionado campo do valor max de estorno para desconto de titulo (Cássia de Oliveira - GFT)
+ *
  * ---------------
  */
 
@@ -110,6 +112,7 @@ function formataCampos() {
     cQtditava = $('#qtditava', '#frmTab089'); //PJ438 - Márcio (Mouts)	
     cQtditapl = $('#qtditapl', '#frmTab089'); //PJ438 - Márcio (Mouts)	
     cQtditsem = $('#qtditsem', '#frmTab089'); //PJ438 - Márcio (Mouts)	
+    cVlmaxdst = $('#vlmaxdst', '#frmTab089');
 
     //Máscara para quantidade de dias
     cPrtlmult.css('width', '40px').setMask('INTEGER','zzz','','');
@@ -138,6 +141,7 @@ function formataCampos() {
     cVlempres.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
     cVlmaxest.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
     cVltolemp.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', '');     
+    cVlmaxdst.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
     
     cTodosFiltro = $('input[type="text"],select', '#frmTab089');
     // Limpa formulário
@@ -326,6 +330,20 @@ function controlaFoco() {
         }
     });
 	
+    $('#qtdictcc', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+
+            $('#vlmaxdst', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#vlmaxdst', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#btContinuar').focus();
+            return false;
+        }
+    });
 }
 
 function controlaOperacao() {
@@ -391,6 +409,7 @@ function manterRotina(cddopcao) {
     var cQtditava = normalizaNumero($('#qtditava', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
     var cQtditapl = normalizaNumero($('#qtditapl', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
     var cQtditsem = normalizaNumero($('#qtditsem', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
+    var cVlmaxdst = normalizaNumero($('#vlmaxdst', '#frmTab089').val());
 
     var mensagem = 'Aguarde, efetuando solicita&ccedil;&atilde;o...';
     showMsgAguardo(mensagem);
@@ -423,6 +442,7 @@ function manterRotina(cddopcao) {
             vltolemp : cVltolemp,
             pcaltpar : cPcaltpar,
             pctaxpre : cPctaxpre,
+			vlmaxdst : cVlmaxdst,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {

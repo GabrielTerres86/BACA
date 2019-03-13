@@ -3,6 +3,7 @@
  * CRIAÇÃO      : Luis Fernando (GFT)
  * DATA CRIAÇÃO : 21/05/2018
  * OBJETIVO     : Biblioteca de funções na rotina COBTIT
+ * ALTERAÇÃO    : 16/10/2018 - Alterado para emitir boleto de borderos em prejuizo (Cássia de Oliveira - GFT)
  * --------------
  */
 
@@ -18,6 +19,7 @@ var flavalis = '';
 var nrdocmto = '';
 var nrctacob = '';
 var nrcnvcob = '';
+var inprejuz = 0;
 
 //Formulários
 var frmCab = 'frmCab';
@@ -709,7 +711,7 @@ function formataBorderos() {
 	arrayAlinha[4] = 'right';
     arrayAlinha[5] = 'center';
     arrayAlinha[6] = 'center';
-    arrayAlinha[7] = 'right';
+    arrayAlinha[7] = 'center';
     arrayAlinha[8] = 'center';
 
     var metodoTabela = '';
@@ -722,6 +724,7 @@ function formataBorderos() {
     $('table > tbody > tr', divRegistro).click(function() {
         nrborder = $(this).find('#nrborder').val();
         flavalis = $(this).find('#flavalis').val();
+        inprejuz = $(this).find('#inprejuz').val();
     });
     
     nrdconta = normalizaNumero($('#nrdconta', '#frmBorderos').val());
@@ -804,39 +807,128 @@ function listaTitulos(){
     }
 
     showMsgAguardo('Aguarde, buscando dados ...');
-    $.ajax({
-        type: 'POST',
-        url: UrlSite + 'telas/cobtit/manter_rotina.php',
-        data: {
-            operacao: 'LISTAR_TITULOS',
-            redirect: 'script_ajax',
-            nrdconta:nrdconta,
-            nrborder:nrborder,
-            dtvencto:data
-        },
-        error: function(objAjax, responseError, objExcept) {
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'cNrdconta.focus();');
-        },
-        success: function(response) {
-            try {
-                habilitaDataVencimentoTR(false);
-                habilitaAvalista(1);
-                $("#frmGerarBoleto input[type='checkbox'],#frmGerarBoleto input[type='radio']").prop("disabled",true);
-                $("#frmGerarBoleto input[type='text']").prop("readonly",true);
-                $("#divBotoesGerarBoleto").hide();
-                var r = $.parseJSON(response);
-                $("#divTitulos").html(r.html);
-                formataTitulos();
-                hideMsgAguardo();
-                bloqueiaFundo(divRotina);
-                return false;
-            } catch (error) {
-                hideMsgAguardo();
+    if(inprejuz == 0){
+        $.ajax({
+            type: 'POST',
+            url: UrlSite + 'telas/cobtit/manter_rotina.php',
+            data: {
+                operacao: 'LISTAR_TITULOS',
+                redirect: 'script_ajax',
+                nrdconta:nrdconta,
+                nrborder:nrborder,
+                dtvencto:data
+            },
+            error: function(objAjax, responseError, objExcept) {
                 showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'cNrdconta.focus();');
+            },
+            success: function(response) {
+                try {
+                    habilitaDataVencimentoTR(false);
+                    habilitaAvalista(1);
+                    $("#frmGerarBoleto input[type='checkbox'],#frmGerarBoleto input[type='radio']").prop("disabled",true);
+                    $("#frmGerarBoleto input[type='text']").prop("readonly",true);
+                    $("#divBotoesGerarBoleto").hide();
+                    var r = $.parseJSON(response);
+                    if (r.status=='erro'){
+                        hideMsgAguardo();
+                        showError('error', r.mensagem, 'Alerta - Ayllos', 'cNrdconta.focus();');
+                    }
+                    else{
+                        $("#divTitulos").html(r.html);
+                        formataTitulos();
+                        hideMsgAguardo();
+                        bloqueiaFundo(divRotina);
+                    }
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'cNrdconta.focus();');
+                }
             }
-        }
-    });
+        });
+    }else {
+        $.ajax({
+            type: 'POST',
+            url: UrlSite + 'telas/cobtit/manter_rotina.php',
+            data: {
+                operacao: 'DADOS_PREJUIZO',
+                redirect: 'script_ajax',
+                nrdconta:nrdconta,
+                nrborder:nrborder,
+                dtvencto:data
+            },
+            error: function(objAjax, responseError, objExcept) {
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'cNrdconta.focus();');
+            },
+            success: function(response) {
+                try {
+                    habilitaDataVencimentoTR(false);
+                    habilitaAvalista(1);
+                    $("#frmGerarBoleto input[type='checkbox'],#frmGerarBoleto input[type='radio']").prop("disabled",true);
+                    $("#frmGerarBoleto input[type='text']").prop("readonly",true);
+                    $("#divBotoesGerarBoleto").hide();
+                    var r = $.parseJSON(response);
+                    if (r.status=='erro'){
+                        hideMsgAguardo();
+                        showError('error', r.mensagem, 'Alerta - Ayllos', 'cNrdconta.focus();');
+                    }
+                    else{
+                        $("#divTitulos").html(r.html);
+                        hideMsgAguardo();
+                        bloqueiaFundo(divRotina);
+                        layoutPadrao();
+                    }
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'cNrdconta.focus();');
+                }
+            }
+        });
+
+    }
     return false;
+}
+
+function habilitaValorParcialPrejuizo(valor,permis) {
+
+    if (valor == 2) {
+        $('#vlrpgto2', '#divTitulos').habilitaCampo().focus();
+        $('#vldescto', '#divTitulos').val('0,00').desabilitaCampo();
+        $('#totpagto', '#divTitulos').val('');
+    } else {
+        $('#vlrpgto2', '#divTitulos').val('').desabilitaCampo();
+        $('#totpagto', '#divTitulos').val($('#vlrpgto1', '#divTitulos').val());
+        if (permis == 1) {
+            $('#vldescto', '#divTitulos').val('0,00').habilitaCampo();
+        } else {
+            $('#vldescto', '#divTitulos').val('0,00').desabilitaCampo();
+        }
+    }
+
+    glbTipoVlr = valor;
+
+    return false;
+}
+
+function exibeValorPrejuizo(tipo) {
+    var totpagto;
+    if (tipo == 'P') { // Parcial
+        totpagto = $('#vlrpgto2', '#divTitulos').val();
+    } else { // Desconto
+        var vltotal  = converteMoedaFloat($('#vlrpgto1', '#divTitulos').val());
+        var vldescto = converteMoedaFloat($('#vldescto', '#divTitulos').val());
+        var descprej = converteMoedaFloat($('#descprej', '#divTitulos').val());
+        if (vldescto <= descprej) {
+            totpagto = vltotal - ((vltotal * vldescto) / 100);
+        } else {
+            showError("inform",'O desconto maximo e de '+descprej+'%','Alerta - Ayllos');
+            totpagto = vltotal;
+            $('#vldescto', '#divTitulos').val('0');
+        }
+        totpagto = number_format(totpagto, 2, ',', '.');
+    }
+    $('#totpagto', '#divTitulos').val(totpagto);
 }
 
 function formataTitulos(){
@@ -963,7 +1055,11 @@ function finalizarBoleto(){
         dt = $("#dtvencto").val();
     }
     var msg = 'Sera gerado um boleto no valor de R$ ' + $("#totpagto").val() + ' <br/> com vencimento em ' +  dt + '. Confirma Geracao?';
-    showConfirmacao(msg, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaGeracaoBoleto();', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif')
+    if(inprejuz == 1){
+        showConfirmacao(msg, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaGeracaoBoletoPrejuizo();', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif')    
+    } else{
+        showConfirmacao(msg, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaGeracaoBoleto();', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif')
+    }
 }
 function confirmaGeracaoBoleto(){
     // Executa script através de ajax
@@ -1017,6 +1113,67 @@ function confirmaGeracaoBoleto(){
     }
     else{
         showError('error', 'Selecione ao menos um t&iacute;tulo.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
+    }
+    return false;
+}
+
+function confirmaGeracaoBoletoPrejuizo(){
+    // Executa script através de ajax
+    var vlboleto = $("#totpagto").val();
+    if($("#tpvlpgto1").prop("checked")){
+        var flvlpagm = 5;
+    }else{
+        var flvlpagm = 6;
+    }
+
+    var dt = $("#dtmvtolt").val();
+    if($("#rdvencto2").prop("checked")){
+        dt = $("#dtvencto").val();
+    }
+    var nrcpfava = $("#nrcpfava").val();
+    var data = {
+        sidlogin: $("#sidlogin", "#frmMenu").val(),
+        nrdconta: nrdconta,
+        operacao: "GERAR_BOLETO_PREJUIZO",
+        nrborder: nrborder,
+        vlboleto: vlboleto,
+        flvlpagm: flvlpagm,
+        redirect: 'html_ajax',
+        dtvencto: dt,
+        nrcpfava: nrcpfava
+    }
+
+    if(parseFloat(vlboleto) > 0){
+        showMsgAguardo('Aguarde, gerando t&iacute;tulo...');
+        $.ajax({
+            type: 'POST',
+            dataType: 'html',
+            url: UrlSite + 'telas/cobtit/manter_rotina.php',
+            data: data,
+            error: function(objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
+            },
+            success: function(response) {
+                try {
+                    hideMsgAguardo();
+                    var r = $.parseJSON(response);
+                    if(r.status=='erro'){
+                        showError("error",r.mensagem,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
+                    }
+                    else{
+                        showError("inform",r.mensagem,'Alerta - Ayllos','carregaManutencao();');
+                    }
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+                }
+            }
+        });
+    }
+    else{
+        showError('error', 'Valor do t&iacute;tulo invalido.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
     }
     return false;
 }

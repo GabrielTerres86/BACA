@@ -51,6 +51,10 @@
 
 				15/08/2018 - Inserido a regra para verificar se a chave está virada e se o borderô foi liberado no processo antigo. (Vitor Shimada Assanuma - GFT)
 
+				25/08/2018 - Adicionado botão prejuizo. (Cassia de Oliveira - GFT)
+
+				27/08/2018 - Adicionada informação mostrando borderô em prejuízo - Luis Fernando (GFT)
+
 				09/10/2018 - Fix na regra de mostrar o botão de extrato, para somente bordero liberados e no processo novo e ter acesso - Vitor S Assanuma (GFT)
 	************************************************************************/
 	
@@ -183,6 +187,14 @@
 
 	<fieldset>
 		<legend><? echo utf8ToHtml('Borderô:') ?></legend>
+    <?php if ($bordero[18]->cdata == 1){ 
+    	if($bordero[19]->cdata){?>
+			<label for="dsprejuz"><? echo utf8ToHtml('Preju&iacute;zo liquidado') ?></label>
+		<?}
+		else{?>
+			<label for="dsprejuz"><? echo utf8ToHtml('Borderô em prejuízo') ?></label>
+		<?}?>
+	<? } ?>	
 		
 	<label for="dspesqui"><? echo utf8ToHtml('Pesquisa:') ?></label>
 	<input type="text" name="dspesqui" id="dspesqui" value="<?php echo $bordero[9]->cdata; ?>" />
@@ -258,6 +270,9 @@
             <input type="image" src="<?php echo $UrlImagens; ?>botoes/extrato.gif" onClick="gerarImpressao(11,3, 'no');return false;" />		
         <?php } ?>
         
+    	<?php if ($bordero[18]->cdata == 1){ ?>
+    		<input type="image" src="<?php echo $UrlImagens; ?>botoes/prejuizo.gif" onClick="visualizarDetalhesPrejuizo();return false;" />
+    	<?php } ?>
 	<?php } 
 	//Form com os dados para fazer a chamada da geração de PDF	
 	include("impressao_form.php"); 

@@ -14,6 +14,7 @@
  *  
  * 10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)
  * 
+ *				  14/09/2018 - Adicionado campo do valor max de estorno para desconto de titulo (Cássia de Oliveira - GFT)
  */
 
 session_start();
@@ -49,6 +50,7 @@ $qtdibsem = isset($_POST['qtdibsem']) ? $_POST['qtdibsem'] : 0;
 $qtditava = isset($_POST['qtditava']) ? $_POST['qtditava'] : 0; //PJ 438 - Márcio (Mouts)
 $qtditapl = isset($_POST['qtditapl']) ? $_POST['qtditapl'] : 0; //PJ 438 - Márcio (Mouts)
 $qtditsem = isset($_POST['qtditsem']) ? $_POST['qtditsem'] : 0; //PJ 438 - Márcio (Mouts)
+$vlmaxdst = isset($_POST['vlmaxdst']) ? $_POST['vlmaxdst'] : 0;
 
 $cdopcao = $cddopcao == 'AC' ? $cdopcao = 'C' : $cdopcao = $cddopcao;
 
@@ -94,6 +96,7 @@ if ($cdopcao == 'C') {
 	$xml .= "   <qtditsem>".$qtditsem."</qtditsem>"; // PJ438 - Márcio (Mouts)	
     $xml .= "   <pctaxpre>".str_replace(',','.', $pctaxpre)."</pctaxpre>";
     $xml .= "   <qtdictcc>".$qtdictcc."</qtdictcc>";    
+	$xml .= "   <vlmaxdst>".str_replace(',','.', $vlmaxdst)."</vlmaxdst>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
@@ -144,6 +147,7 @@ if ($cdopcao == 'C') {
 		echo '$("#qtditava", "#frmTab089").val("' . getByTagName($r->tags, 'qtditava') . '");'; // PJ438 - Márcio (Mouts)
 		echo '$("#qtditapl", "#frmTab089").val("' . getByTagName($r->tags, 'qtditapl') . '");'; // PJ438 - Márcio (Mouts)
 		echo '$("#qtditsem", "#frmTab089").val("' . getByTagName($r->tags, 'qtditsem') . '");'; // PJ438 - Márcio (Mouts)		
+		echo '$("#vlmaxdst", "#frmTab089").val("' . getByTagName($r->tags, 'vlmaxdst') . '");';	
     }
 }
 
