@@ -123,6 +123,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
                            "crapepr.vlsdprej", Prj.302 (Jean Michel)           
                
               25/06/2017 - M324 - Incluir historico de pagamento - Rafael (Mout´S)
+              
+              16/10/2018 - 403 - Incluindo registros de desconto de título em prejuízo (Luis Fernando - GFT)
+              
+              12/02/2018 - P403 - Removido a matriz typ_mat_prej e adicionado o prejuizo do borderô em uma union
+                           no cursor cr_crapepr_crapass com a origem DSCTIT. (Paulo Penteado GFT) 
+
 ................................................................................. */
 
     DECLARE
@@ -228,13 +234,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
                                     --2394, /* 2394 - ESTORNO PAGAMENTO MULTA ATRASO PREJUIZO */
                                     --2476, /* 2476 - ESTORNO PAGAMENTO JUROS MORA PREJUIZO */
                                     --2395 /* 2395 - ESTORNO ABONO DE PREJUIZO */
-                                    );                                      
+                                    );
       rw_craplem cr_craplem%ROWTYPE;
 
       CURSOR cr_crapvri (prc_cdcooper IN crapvri.cdcooper%TYPE,
                          prc_nrdconta IN crapvri.nrdconta%TYPE,
                          prc_nrctremp IN crapvri.nrctremp%TYPE,
-                         prc_dtrefere IN crapdat.dtultdia%TYPE) IS    
+                         prc_dtrefere IN crapdat.dtultdia%TYPE,
+                         prc_cdmodali IN crapvri.cdmodali%TYPE DEFAULT NULL) IS    
         SELECT SUM(DECODE(vri.cdvencto, 310, vldivida,0) ) vlsaldo12
               ,SUM(DECODE(vri.cdvencto, 320, vldivida,  0)) vlsaldo13
               ,SUM(DECODE(vri.cdvencto, 330, vldivida, 0) ) vlsaldo49
@@ -242,7 +249,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
          WHERE vri.cdcooper = prc_cdcooper
            AND vri.nrdconta = prc_nrdconta
            AND vri.nrctremp = prc_nrctremp
-           AND vri.dtrefere = prc_dtrefere;      
+           AND vri.dtrefere = prc_dtrefere
+           AND (prc_cdmodali IS NOT NULL AND vri.cdmodali = prc_cdmodali OR prc_cdmodali IS NULL AND vri.cdmodali <> 0301);
 
       -- Buscar nome da agência
       CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE,
@@ -256,7 +264,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
       -- Cursor para buscar os emprestimos que estao em prejuizo
       CURSOR cr_crapepr_crapass (pr_cdcooper IN crapepr.cdcooper%TYPE,
                                  pr_nrdconta in crapepr.nrdconta%TYPE) IS
-         SELECT crapepr.nrdconta
+         SELECT x.VR_IDORIGEM
+               ,x.nrdconta
+               ,x.nrctremp
+               ,x.vlsdprej
+               ,x.vljraprj
+               ,x.vljrmprj
+               ,x.vlprejuz
+               ,x.cdlcremp
+               ,x.cdfinemp
+               ,x.dtprejuz
+               ,x.dtdpagto
+               ,x.vljurmes
+               ,x.txmensal
+               ,x.tpemprst
+               ,x.linha
+               ,x.vlttmupr
+               ,x.vlttjmpr
+               ,x.cdagenci
+               ,x.nmprimtl
+               ,x.dspessoa
+               ,Row_Number() OVER (PARTITION BY x.cdagenci ORDER BY x.cdagenci) nrseqage
+               ,COUNT(1) OVER (PARTITION BY x.cdagenci) qtdagenc
+           FROM(
+         SELECT 'CRAPEPR' VR_IDORIGEM
+               ,crapepr.nrdconta
                ,crapepr.nrctremp
                ,crapepr.vlsdprej
                ,crapepr.vljraprj
@@ -269,14 +301,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
                ,crapepr.vljurmes
                ,crapepr.txmensal
                ,DECODE(crapepr.tpemprst,0,'TR',1,'PP','-') tpemprst
-               ,crapepr.rowid
+               ,crapepr.rowid linha
                ,crapepr.vlttmupr
                ,crapepr.vlttjmpr
                ,crapass.cdagenci
                ,crapass.nmprimtl
                ,DECODE(crapass.inpessoa,1,'PF',2,'PJ','NA') dspessoa
-               ,Row_Number() OVER (PARTITION BY crapass.cdagenci ORDER BY crapass.cdagenci) nrseqage
-               ,COUNT(1) OVER (PARTITION BY crapass.cdagenci) qtdagenc
            FROM crapepr,
                 crapass
           WHERE crapepr.cdcooper  = crapass.cdcooper
@@ -284,9 +314,41 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
             AND crapepr.cdcooper  = pr_cdcooper
             AND crapepr.nrdconta >= pr_nrdconta
             AND crapepr.inprejuz  = 1
-       ORDER BY crapass.cdagenci,
-                crapepr.nrdconta,
-                crapepr.nrctremp;
+            
+          UNION ALL
+              
+         SELECT 'DSCTIT' VR_IDORIGEM
+               ,crapbdt.nrdconta
+               ,crapbdt.nrborder nrctremp
+               ,0 vlsdprej
+               ,0 vljraprj
+               ,0 vljrmprj
+               ,0 vlprejuz
+               ,NULL cdlcremp
+               ,NULL cdfinemp
+               ,NULL dtprejuz
+               ,NULL dtdpagto
+               ,0 vljurmes
+               ,crapbdt.txmensal
+               ,'DSCTIT' tpemprst
+               ,crapbdt.rowid linha
+               ,0 vlttmupr
+               ,0 vlttjmpr
+               ,crapass.cdagenci
+               ,crapass.nmprimtl
+               ,DECODE(crapass.inpessoa,1,'PF',2,'PJ','NA') dspessoa
+           FROM crapbdt,
+                crapass
+          WHERE crapbdt.cdcooper  = crapass.cdcooper
+            AND crapbdt.nrdconta  = crapass.nrdconta
+            AND crapbdt.cdcooper  = pr_cdcooper
+            AND crapbdt.nrdconta >= pr_nrdconta
+            AND crapbdt.inprejuz  = 1
+          ) x            
+       ORDER BY x.cdagenci
+               ,x.vr_idorigem
+               ,x.nrdconta
+               ,x.nrctremp;
 
       CURSOR cr_craplcr(prc_cdcooper IN craplcr.cdcooper%TYPE,
                         prc_cdlcremp IN craplcr.cdlcremp%TYPE) IS
@@ -325,6 +387,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
       vr_nrctremp INTEGER := 0;               --> Número do contrato do Restart
       vr_qtregres NUMBER  := 0;               --> Quantidade de registros ignorados por terem sido processados antes do restart
 
+      vr_tab_prej prej0005.typ_tab_preju;     --> Lista dados do prejuizo de bordero
       --------------------------- SUBROTINAS INTERNAS --------------------------
       --Escrever no arquivo CLOB
       PROCEDURE pc_escreve_xml(vr_des_xml IN OUT NOCOPY CLOB,
@@ -501,7 +564,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
           END LOOP;
           
           vr_vljurmes := nvl(ROUND((rw_crapepr_crapass.vlsdprej * nvl(vr_txmensal, vr_txdjuros) / 100),2),0);
-          
+
+          IF rw_crapepr_crapass.VR_IDORIGEM = 'CRAPEPR' THEN
           BEGIN
             -- Atualiza os campos da tabela crapepr
             UPDATE crapepr
@@ -509,7 +573,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
 				  ,crapepr.vlsdprej = crapepr.vlsdprej + vr_vljurmes
                   ,crapepr.vljraprj = crapepr.vljraprj + vr_vljurmes
                   ,crapepr.vljrmprj = vr_vljurmes
-            WHERE crapepr.ROWID = rw_crapepr_crapass.ROWID
+             WHERE crapepr.ROWID = rw_crapepr_crapass.linha
               RETURNING vlsdprej
                        ,vljraprj
                        ,vljrmprj
@@ -726,6 +790,91 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
                               <valorTansferidoMais48Meses>'||to_char(vr_credbx49,'fm999g999g990d00')||'</valorTansferidoMais48Meses>
                            </contrato>');
 
+           END IF;
+
+          -- Borderô de Desconto de Títulos
+          ELSIF rw_crapepr_crapass.VR_IDORIGEM = 'DSCTIT' THEN
+            vr_vlrestor := 0;
+            vr_credbx12 := 0; -- Valor transferido a 12 meses
+            vr_credbx13 := 0; -- Valor transferido mais de 12 meses
+            vr_credbx49 := 0; -- Valor transferido mais de 48 meses
+            vr_tpmespre := 0; -- Define o tipo de mês do prejuizo (1-Dentro do Mês;2-Mais de 48 meses)
+
+            PREJ0005.pc_busca_dados_prejuizo(pr_cdcooper => pr_cdcooper
+                                            ,pr_nrborder => rw_crapepr_crapass.nrctremp
+                                            -- OUT --
+                                            ,pr_tab_prej => vr_tab_prej
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic );
+          
+            IF (nvl(vr_cdcritic,0)>0 OR vr_dscritic IS NOT NULL) THEN
+              RAISE vr_exc_saida;
+            END IF;
+
+            rw_crapepr_crapass.vlsdprej := nvl((vr_tab_prej(0).tosdprej + vr_tab_prej(0).tojraprj - vr_tab_prej(0).topgjrpr),0);
+            rw_crapepr_crapass.vlprejuz := nvl(vr_tab_prej(0).toprejuz,0) + nvl(vr_tab_prej(0).tojrpr60,0);
+            rw_crapepr_crapass.dtprejuz := vr_tab_prej(0).dtprejuz;
+            rw_crapepr_crapass.dtdpagto := vr_tab_prej(0).dtliqprj;
+            rw_crapepr_crapass.vljrmprj := nvl(vr_tab_prej(0).tojrmprj,0);
+            rw_crapepr_crapass.vlttmupr := nvl(vr_tab_prej(0).tottmupr - vr_tab_prej(0).topgmupr,0);
+            rw_crapepr_crapass.vlttjmpr := nvl(vr_tab_prej(0).totjur60,0);
+
+            -- Condicao para verificar se o contrato em prejuizo entrou dentro do mes ou eh maior que 48 meses
+            IF to_char(vr_tab_prej(0).dtprejuz,'mmrrrr') = to_char(rw_crapdat.dtmvtolt,'mmrrrr') THEN
+              vr_tpmespre := 1;
+            END IF;
+            --
+            FOR rw_crapvri IN cr_crapvri(prc_cdcooper => pr_cdcooper,
+                                         prc_nrdconta => rw_crapepr_crapass.nrdconta,
+                                         prc_nrctremp => rw_crapepr_crapass.nrctremp,
+                                         prc_dtrefere => rw_crapdat.dtultdia,
+                                         prc_cdmodali => 0301) LOOP
+              vr_credbx12 := nvl(rw_crapvri.vlsaldo12,0);
+              vr_credbx13 := nvl(rw_crapvri.vlsaldo13,0);
+              vr_credbx49 := nvl(rw_crapvri.vlsaldo49,0);
+              IF vr_credbx49 > 0 THEN 
+                vr_tpmespre := 2;
+              END IF;
+            END LOOP;
+            
+            vr_vlrpagos := vr_tab_prej(0).tovlpago;
+            -- Se o valor for zerado, nao deve ser impresso
+            IF vr_vlrpagos = 0 THEN
+              vr_vlrpagos := NULL;
+            END IF;
+            --
+            IF vr_credbx12 <> 0 OR
+               vr_credbx13 <> 0 OR
+               vr_credbx49 <> 0 THEN
+              --Montar tag do contrato para arquivo XML do relatorio 264.lst
+              pc_escreve_xml(vr_des_xml_lst,'
+                             <contrato>
+                                <dspconta>'||vr_dspconta||'</dspconta>
+                                <nrdconta>'||LTrim(gene0002.fn_mask_conta(rw_crapepr_crapass.nrdconta))||'</nrdconta>
+                                <tpemprst>'||rw_crapepr_crapass.tpemprst||'</tpemprst>
+                                <nmprimtl>'||rw_crapepr_crapass.nmprimtl||'</nmprimtl>
+                                <nrctremp>'||LTrim(gene0002.fn_mask_contrato(rw_crapepr_crapass.nrctremp))||'</nrctremp>
+                                <cdfinemp>'||rw_crapepr_crapass.cdfinemp||'</cdfinemp>
+                                <cdlcremp>'||rw_crapepr_crapass.cdlcremp||'</cdlcremp>
+                                <vlsdprej>'||to_char(rw_crapepr_crapass.vlsdprej,'fm999g999g990d00')||'</vlsdprej>
+                                <vlprejuz>'||to_char(rw_crapepr_crapass.vlprejuz,'fm999g999g990d00')||'</vlprejuz>
+                                <vlrpagos>'||to_char(nvl(vr_vlrpagos,0),'fm999g999g990d00')||'</vlrpagos>
+                                <vlrestor>'||to_char(nvl(vr_vlrestor,0),'fm999g999g990d00')||'</vlrestor>
+                                <vlrpgatz>'||to_char(nvl(vr_vlrpagos - vr_vlrestor,0),'fm999g999g990d00')||'</vlrpgatz>
+                                <dtprejuz>'||to_char(rw_crapepr_crapass.dtprejuz,'DD/MM/RR')||'</dtprejuz>
+                                <dtdpagto>'||to_char(rw_crapepr_crapass.dtdpagto,'DD/MM/RR')||'</dtdpagto>
+                                <vljrmprj>'||to_char(rw_crapepr_crapass.vljrmprj,'fm999g999g990d00')||'</vljrmprj>
+                                <vlttmupr>'||to_char(rw_crapepr_crapass.vlttmupr,'fm999g999g990d00')||'</vlttmupr>
+                                <vlttjmpr>'||to_char(rw_crapepr_crapass.vlttjmpr,'fm999g999g990d00')||'</vlttjmpr>
+                                <inpessoa>'||rw_crapepr_crapass.dspessoa||'</inpessoa>
+                                <tipoMesPrejuizo>'||vr_tpmespre||'</tipoMesPrejuizo>
+                                <valorTransferido12Meses>'||to_char(vr_credbx12,'fm999g999g990d00')||'</valorTransferido12Meses>
+                                <valorTransferidoMais12Meses>'||to_char(vr_credbx13,'fm999g999g990d00')||'</valorTransferidoMais12Meses>
+                                <valorTansferidoMais48Meses>'||to_char(vr_credbx49,'fm999g999g990d00')||'</valorTansferidoMais48Meses>
+                             </contrato>');
+            END IF;   
+          END IF;
+
             --Monta o relatorio 264.txt
             pc_escreve_xml(vr_des_xml_txt,rw_crapepr_crapass.nrdconta||';'||
                                           rw_crapepr_crapass.nrctremp||';'||
@@ -738,8 +887,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
                                           to_char(rw_crapepr_crapass.dtdpagto,'DD/MM/RRRR')||';'||
                                           rw_crapepr_crapass.vljrmprj||
                                           chr(10));
-
-          END IF;
 
           -- Quando for a ultima agencia, precisamos fechar a tag do XML
           IF rw_crapepr_crapass.nrseqage = rw_crapepr_crapass.qtdagenc THEN

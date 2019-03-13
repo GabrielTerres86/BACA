@@ -6200,6 +6200,44 @@ PROCEDURE efetua_alteracao_limite:
                 UNDO TRANS_ALTERA, LEAVE TRANS_ALTERA.
            END.
         
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_interrompe_proposta_lim_est
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                        ,INPUT par_cdagenci                                        
+                        ,INPUT par_cdoperad 
+                        ,INPUT par_idorigem
+                        ,INPUT par_nrdconta
+                        ,INPUT par_nrctrlim
+                        ,INPUT 3
+                        ,INPUT par_dtmvtolt
+                        ,0
+                        ,"").
+
+        CLOSE STORED-PROC pc_interrompe_proposta_lim_est
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_cdcritic = 0
+               aux_cdcritic = pc_interrompe_proposta_lim_est.pr_cdcritic
+                              WHEN pc_interrompe_proposta_lim_est.pr_cdcritic <> ?
+               aux_dscritic  = ""
+               aux_dscritic  = pc_interrompe_proposta_lim_est.pr_dscritic 
+                               WHEN pc_interrompe_proposta_lim_est.pr_dscritic <> ?.
+
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+           DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,            /** Sequencia **/
+                              INPUT 0,
+                              INPUT-OUTPUT aux_dscritic).
+
+                ASSIGN aux_flgderro = TRUE.                
+                UNDO TRANS_ALTERA, LEAVE TRANS_ALTERA.
+           END.   
+        
         FIND CURRENT crawlim NO-LOCK NO-ERROR.
         FIND CURRENT crapprp NO-LOCK NO-ERROR.
 
@@ -7684,14 +7722,14 @@ PROCEDURE busca_dados_dsctit:
                                           crapcco.nrconven = craptdb.nrcnvcob
                                                                 NO-LOCK NO-ERROR.
                  
-                 ASSIGN tt-desconto_titulos.vlutiliz = tt-desconto_titulos.vlutiliz + craptdb.vltitulo
+                 ASSIGN tt-desconto_titulos.vlutiliz = tt-desconto_titulos.vlutiliz + craptdb.vlsldtit
                         tt-desconto_titulos.qtutiliz = tt-desconto_titulos.qtutiliz + 1
                         tt-desconto_titulos.vlutilcr = tt-desconto_titulos.vlutilcr +
-                                                       (IF crapcco.flgregis = TRUE THEN craptdb.vltitulo ELSE 0)
+                                                       (IF crapcco.flgregis = TRUE THEN craptdb.vlsldtit ELSE 0)
                         tt-desconto_titulos.qtutilcr = tt-desconto_titulos.qtutilcr + 
                                                        (IF crapcco.flgregis = TRUE THEN 1 ELSE 0)
                         tt-desconto_titulos.vlutilsr = tt-desconto_titulos.vlutilsr + 
-                                                       (IF crapcco.flgregis = FALSE THEN craptdb.vltitulo ELSE 0)
+                                                       (IF crapcco.flgregis = FALSE THEN craptdb.vlsldtit ELSE 0)
                         tt-desconto_titulos.qtutilsr = tt-desconto_titulos.qtutilsr + 
                                                        (IF crapcco.flgregis = FALSE THEN 1 ELSE 0).
 
@@ -7742,14 +7780,14 @@ PROCEDURE busca_dados_dsctit:
                                      crapcco.nrconven = craptdb.nrcnvcob
                                                              NO-LOCK:
 
-                 ASSIGN tt-desconto_titulos.vlutiliz = tt-desconto_titulos.vlutiliz + craptdb.vltitulo
+                 ASSIGN tt-desconto_titulos.vlutiliz = tt-desconto_titulos.vlutiliz + craptdb.vlsldtit
                         tt-desconto_titulos.qtutiliz = tt-desconto_titulos.qtutiliz + 1
                         tt-desconto_titulos.vlutilcr = tt-desconto_titulos.vlutilcr +
-                                                       (IF crapcco.flgregis = TRUE THEN craptdb.vltitulo ELSE 0)
+                                                       (IF crapcco.flgregis = TRUE THEN craptdb.vlsldtit ELSE 0)
                         tt-desconto_titulos.qtutilcr = tt-desconto_titulos.qtutilcr + 
                                                        (IF crapcco.flgregis = TRUE THEN 1 ELSE 0)
                         tt-desconto_titulos.vlutilsr = tt-desconto_titulos.vlutilsr + 
-                                                       (IF crapcco.flgregis = FALSE THEN craptdb.vltitulo ELSE 0)
+                                                       (IF crapcco.flgregis = FALSE THEN craptdb.vlsldtit ELSE 0)
                         tt-desconto_titulos.qtutilsr = tt-desconto_titulos.qtutilsr + 
                                                        (IF crapcco.flgregis = FALSE THEN 1 ELSE 0).
 

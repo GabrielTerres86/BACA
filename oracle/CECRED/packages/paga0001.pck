@@ -18037,8 +18037,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --              15/12/2017 - Incluido nome do módulo logado
     --                           No caso de erro de programa gravar tabela especifica de log                     
     --                           Ajuste mensagem de erro 
-    --                          (Belli - Envolti - Chamado 779415)    
-
+    --                          (Belli - Envolti - Chamado 779415)   
+    --
+    --              13/11/2018 - Caso o sistema identifique o pagamento de um título descontado após o vencimento e o mesmo estiver dentro de 
+    --                           um acordo, deverá ser realizado o crédito do valor pago direto na conta corrente do cooperado. (Paulo Penteado GFT) 
     --
     -- .........................................................................*/
 
@@ -18069,6 +18071,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,craptdb.nrinssac
               ,craptdb.rowid
               ,crapbdt.flverbor
+              ,craptdb.nrtitulo
         FROM crapbdt
             ,craptdb
         WHERE crapbdt.cdcooper = craptdb.cdcooper
@@ -18097,6 +18100,25 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
            AND cde.nrboleto     = pr_nrdocmto
            AND cde.tpproduto    = 0;
       rw_cde cr_cde%ROWTYPE;
+      
+      CURSOR cr_acordoctr(pr_cdcooper IN tbdsct_titulo_cyber.cdcooper%TYPE
+                         ,pr_nrdconta IN tbdsct_titulo_cyber.nrdconta%TYPE
+                         ,pr_nrborder IN tbdsct_titulo_cyber.nrborder%TYPE
+                         ,pr_nrtitulo IN tbdsct_titulo_cyber.nrtitulo%TYPE) IS
+        SELECT ttc.cdcooper, ttc.nrborder
+          FROM tbdsct_titulo_cyber ttc
+         INNER JOIN tbrecup_acordo ta ON ta.cdcooper = ttc.cdcooper 
+                                     AND ta.nrdconta = ttc.nrdconta
+         INNER JOIN tbrecup_acordo_contrato tac ON ttc.nrctrdsc = tac.nrctremp 
+                                               AND tac.nracordo = ta.nracordo
+         WHERE ttc.cdcooper = pr_cdcooper
+           AND ttc.nrdconta = pr_nrdconta
+           AND ttc.nrborder = pr_nrborder
+           AND ttc.nrtitulo = pr_nrtitulo
+           AND tac.nrgrupo  = 1
+           AND tac.cdorigem = 4   -- Desconto de Títulos
+           AND ta.cdsituacao <> 3; -- Diferente de Cancelado 
+      rw_acordoctr cr_acordoctr%ROWTYPE;
 
       --Variaveis Locais
       vr_cdhistor        INTEGER;
@@ -18370,7 +18392,16 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           END IF;
         END IF;
         ELSE
-          vr_flgdesct := TRUE;
+          -- Verificar se o titulo descontado está presente em um contrato de acordo, se sim não realizar a baixa do titulo descontado.
+          OPEN cr_acordoctr(pr_cdcooper => rw_craptdb.cdcooper
+                           ,pr_nrdconta => rw_craptdb.nrdconta
+                           ,pr_nrborder => rw_craptdb.nrborder
+                           ,pr_nrtitulo => rw_craptdb.nrtitulo);
+          FETCH cr_acordoctr INTO rw_acordoctr;
+          IF cr_acordoctr%NOTFOUND THEN
+            vr_flgdesct := TRUE;
+          END IF;
+          CLOSE cr_acordoctr;
         END IF;
         --Se tiver descontado
         IF vr_flgdesct THEN
@@ -24155,9 +24186,9 @@ end;';
                   WHEN 2 THEN vr_cdhistor := 1998;
                   WHEN 3 THEN vr_cdhistor := 1999;
                   --WHEN 4 THEN vr_cdhistor := 2000; Não se aplica para desconto de titulos
-                  --WHEN 5 THEN vr_cdhistor := 2278; Prejuizo será desenvolvido futuramente
-                  --WHEN 6 THEN vr_cdhistor := 2277; Prejuizo será desenvolvido futuramente
-                  --WHEN 7 THEN vr_cdhistor := 2278; Prejuizo será desenvolvido futuramente
+                  WHEN 5 THEN vr_cdhistor := 2278;
+                  WHEN 6 THEN vr_cdhistor := 2277;
+                  WHEN 7 THEN vr_cdhistor := 2278;
                 ELSE
                   vr_cdhistor := vr_cdhistor;
                 END CASE;
