@@ -24721,6 +24721,10 @@ end;';
 	-- 	                         (Jonata - RKAM M311).
     --
 	--               03/09/2018 - Correção para remover lote (Jonata - Mouts).
+    --
+    --               10/03/2019 - Inclusão do indicador de validação do CPF/CNPJ Layout 5.
+    --                            Gabriel Marcos (Mouts) - SCTASK0038352.
+    -- 
     -- ..........................................................................
   BEGIN
     DECLARE
@@ -24878,6 +24882,7 @@ end;';
       CURSOR cr_gnconve (pr_cdhistor craphis.cdhistor%TYPE) IS
         SELECT gnconve.flgdbssd
               ,gnconve.nmempres
+              ,gnconve.flgvlcpf
           FROM gnconve
          WHERE gnconve.cdhisdeb = pr_cdhistor
            AND gnconve.flgativo = 1;           
@@ -25100,6 +25105,12 @@ end;';
       --Fechar Cursor
       CLOSE cr_crapass;
       
+      
+	  -- Busca validacao de cpf / cnpj
+	  OPEN cr_gnconve(rw_craplau.cdhistor);
+      FETCH cr_gnconve INTO rw_gnconve;
+      CLOSE cr_gnconve;
+
       IF rw_craplau.cdtiptra = 6 THEN
 
         -- LEITURA PARA ENCONTRAR DETALHE DO AGENDAMENTO
@@ -25127,28 +25138,32 @@ end;';
           	  
         IF rw_tbconv_det_agendamento.cdlayout = 5 THEN
             
-          vr_existettl := TRUE;         
+          vr_existettl := TRUE;     
+		  
+          IF rw_gnconve.flgvlcpf = 0 THEN		      
                
-          IF rw_tbconv_det_agendamento.tppessoa_dest = 2 THEN
+            IF rw_tbconv_det_agendamento.tppessoa_dest = 2 THEN
               
-            --Selecionar informacoes do associado
-            OPEN cr_crapttl(pr_cdcooper => pr_cdcooper
-                           ,pr_nrdconta => rw_craplau.nrdconta
-                           ,pr_nrcpfcgc => rw_tbconv_det_agendamento.nrcpfcgc_dest);
+              --Selecionar informacoes do associado
+              OPEN cr_crapttl(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => rw_craplau.nrdconta
+                             ,pr_nrcpfcgc => rw_tbconv_det_agendamento.nrcpfcgc_dest);
 
-            FETCH cr_crapttl INTO rw_crapttl;
+              FETCH cr_crapttl INTO rw_crapttl;
                 
-            IF cr_crapttl%NOTFOUND THEN
-              vr_existettl := FALSE;           
-            END IF;
+              IF cr_crapttl%NOTFOUND THEN
+                vr_existettl := FALSE;           
+              END IF;
                 
-            --Fechar Cursor
-            CLOSE cr_crapttl;  
+              --Fechar Cursor
+              CLOSE cr_crapttl;  
             
-          ELSIF rw_crapass.nrcpfcgc <> rw_tbconv_det_agendamento.nrcpfcgc_dest THEN
+            ELSIF rw_crapass.nrcpfcgc <> rw_tbconv_det_agendamento.nrcpfcgc_dest THEN
               
-            vr_existettl := FALSE;
+              vr_existettl := FALSE;
                     
+            END IF;
+
           END IF;
           
         END IF; 

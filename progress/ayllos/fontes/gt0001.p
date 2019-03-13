@@ -122,6 +122,10 @@
                             
 			   29/03/2017 - Ajutes devido ao tratamento da versao do layout FEBRABAN
 							(Jonata RKAM M311)
+                      
+               10/03/2019 - Inclusão do indicador de validação do CPF/CNPJ Layout 5.
+                            Gabriel Marcos (Mouts) - SCTASK0038352.
+
 ............................................................................. */
 
 { includes/var_online.i  }
@@ -177,6 +181,7 @@ DEF        VAR aux_contador AS INT     FORMAT "z9"                   NO-UNDO.
 DEF        VAR aux_cddopcao AS CHAR                                  NO-UNDO.
 DEF        VAR tel_flgenvpa LIKE gnconve.flgenvpa                    NO-UNDO.
 DEF        VAR tel_nrlayout LIKE gnconve.nrlayout                    NO-UNDO.
+DEF        VAR tel_flgvlcpf AS LOGI FORMAT "Sim/Nao" INIT TRUE       NO-UNDO.
 DEF        VAR tel_nrseqpar LIKE gnconve.nrseqpar                    NO-UNDO.
 DEF        VAR tel_nmarqpar LIKE gnconve.nmarqpar                    NO-UNDO.
 
@@ -285,16 +290,18 @@ FORM "Opcao:"       AT 6
      tel_nmarqpar    AT 55  LABEL "Arq.Parc."
                             HELP "Informe o nome do arquivo parcial."
      SKIP
-     tel_flgcvuni           LABEL "Arquivo Unico"
-     tel_nrlayout    AT 21  LABEL "Layout"
+     tel_flgcvuni           LABEL "Arq.Unico"
+     tel_nrlayout    AT 17  LABEL "Layout"
 							VALIDATE(tel_nrlayout = 4 OR tel_nrlayout = 5,
                               "Tipo do layout invalido.")
                             HELP "Tipo do layout FEBRABAN ( Versao 4 / Versao 5 )."
-	 tel_tpdenvio    AT 32  LABEL "Tipo de Envio"
+     tel_flgvlcpf    AT 28  LABEL "Valida CPF"
+                            HELP "Validar CPF/CNPJ na importacao do Arquivo"					
+	 tel_tpdenvio    AT 44  LABEL "Tp.Env"
          HELP "1-MAIL/2-E-SALES/3-NEXXERA/4-MAIL(SENHA)/5-ACCESSTAGE/6-WEBSERVI"
                             VALIDATE (tel_tpdenvio >= 1 AND tel_tpdenvio <= 6,
                                       "380 - Numero errado")
-     tel_dsdiracc    AT 53  LABEL "Dir.Accesstage" FORMAT "X(10)"
+     tel_dsdiracc    AT 58  LABEL "Dir.Access" FORMAT "X(10)"
          HELP "Informe o diretorio da acesstage"
      SKIP
      tel_flgdecla           LABEL "Declaracao"
@@ -357,6 +364,7 @@ DEF FRAME f_convenioc
 
 /**********************************************/
 
+/* Comentado a pedido da area de negocio - Chamado SCTASK0038352 
 
 ON RETURN OF tel_nrlayout IN FRAME f_convenio DO:
 
@@ -368,6 +376,8 @@ ON RETURN OF tel_nrlayout IN FRAME f_convenio DO:
 	  END.
                       
 END.
+
+   Comentado a pedido da area de negocio - Chamado SCTASK0038352 */
 
 ON RETURN OF tel_tprepass DO:
     APPLY "GO".

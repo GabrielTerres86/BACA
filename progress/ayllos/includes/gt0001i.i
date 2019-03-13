@@ -109,6 +109,9 @@
 
 			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+              10/03/2019 - Inclusão do indicador de validação do CPF/CNPJ Layout 5.
+                           Gabriel Marcos (Mouts) - SCTASK0038352.
+
 ............................................................................. */
 
 
@@ -159,6 +162,7 @@ ASSIGN  tel_nrseqatu   = 1
         tel_dsemail5   = ""
         tel_dsemail6   = ""
 		tel_nrlayout   = 4
+        tel_flgvlcpf   = TRUE
         tel_flgativo   = FALSE
         tel_flgcvuni   = FALSE
         tel_flgdecla   = FALSE
@@ -196,6 +200,7 @@ DISPLAY tel_cdconven
         tel_tpdenvio
         tel_dsdiracc
 		tel_nrlayout
+        tel_flgvlcpf
         tel_flgativo
         tel_flgcvuni
         tel_flgdecla
@@ -399,8 +404,11 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
           tel_nmarqpar WHEN tel_flgenvpa = TRUE
           tel_flgcvuni
 		  tel_nrlayout WHEN tel_cdhisdeb > 0
+          tel_flgvlcpf
           tel_tpdenvio
           WITH FRAME f_convenio.
+
+/* Comentado a pedido da area de negocio - Chamado SCTASK0038352 
 
 	  IF tel_nrlayout = 5 AND tel_nmarqatu <> "" THEN
          DO:
@@ -408,6 +416,8 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
             MESSAGE "Convenio nao permite o uso deste layout.".
             NEXT.
          END.
+
+   Comentado a pedido da area de negocio - Chamado SCTASK0038352 */	
 
       SET tel_dsdiracc WHEN tel_tpdenvio = 5
           tel_flgdecla
@@ -585,6 +595,7 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
                                 TRIM(tel_dsemail6)
              gnconve.flgenvpa = tel_flgenvpa
 			 gnconve.nrlayout = tel_nrlayout
+             gnconve.flgvlcpf = IF tel_nrlayout = 5 THEN tel_flgvlcpf ELSE NO
              gnconve.nrseqpar = tel_nrseqpar
              gnconve.nmarqpar = tel_nmarqpar
              gnconve.tprepass = IF tel_tprepass:SCREEN-VALUE = "D+1" THEN
@@ -636,6 +647,9 @@ PROCEDURE gera_incluir_log:
 
 	RUN incluir_log (INPUT "tipo do layout",
                      INPUT STRING(gnconve.nrlayout)).
+
+    RUN incluir_log (INPUT "Valida CPF/CNPF",
+                     INPUT STRING(gnconve.flgvlcpf)).
 
     RUN incluir_log (INPUT "numero sequencial do arquivo de atualizacao",
                      INPUT STRING(gnconve.nrseqatu)).

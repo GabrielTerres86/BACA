@@ -473,6 +473,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                07/02/2019 - Gravar a data de inclusão de autorização do débito com a data de 
                             movimento atual SCTASK0038616 - Jose Dill Mouts)
 
+               10/03/2019 - Inclusão do indicador de validação do CPF/CNPJ Layout 5.
+                            Gabriel Marcos (Mouts) - SCTASK0038352.
+
 ............................................................................ */
 
     DECLARE
@@ -546,6 +549,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                gnconve.flgindeb,
                gnconve.flgdecla,
                gnconve.nrlayout,
+               gnconve.flgvlcpf,
                craphis.inavisar,
                craphis.cdhistor
           FROM craphis,
@@ -980,6 +984,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       vr_nrcpfcgc crapttl.nrcpfcgc%TYPE;                              --> Número do cpf
       vr_cpfvalido BOOLEAN;                                           --> False - CPF inválido / TRUE - CPF válido
       vr_tppesssoa tbconv_det_agendamento.tppessoa_dest%TYPE;         --> Tipo de pessoa 
+      vr_flgvlcpf  VARCHAR2(1);                                       --> Valida CPF/CNPJ para layout v5
       vr_idlancto craplau.idlancto%TYPE;                              --> Código de indetificação do lançamento
       vr_nrdconta_relato VARCHAR2(15);                                --> Conta para exibir no relatorio
       vr_des_anexo VARCHAR2(500) := NULL;                             --> Caminho do anexo do e-mail
@@ -1421,7 +1426,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
         CURSOR cr_gnconve_2(pr_cdconven gnconve.cdconven%TYPE) IS
           SELECT nrcnvfbr,
                  nmempres,
-                 nrlayout
+                 nrlayout,
+                 flgvlcpf
             FROM gnconve
            WHERE cdconven = pr_cdconven;
         rw_gnconve_2 cr_gnconve_2%ROWTYPE;
@@ -4090,7 +4096,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     --Se convênio utiliza layout FEBRABAN na versão 5
                     ELSIF rw_gnconve.nrlayout = 5 THEN
                         
-                      IF cr_crapass%FOUND THEN                                                
+                      -- SCTASK0038352
+                      -- Só irá validar CPF/CNPJ se: Layout 5 e Valida CPF/CNPJ = 'S'
+                      IF cr_crapass%FOUND AND rw_gnconve.flgvlcpf = 1 THEN                                                
                         
                         BEGIN 
                           vr_nrcpfcgc  := nvl(to_number(TRIM(SUBSTR(vr_setlinha,131,15))),0);
@@ -4165,9 +4173,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                         END;
                           
+                        -- SCTASK0038352
+                        -- Se na posição 129 do arquivo vier valor "X", indica que não haverá a validação
+                        -- do CPF ou CNPJ. Se NULO, valida
+                        vr_flgvlcpf := nvl(TRIM(SUBSTR(UPPER(vr_setlinha),129,1)),'S');
+                        
+
                         /*** Se o número do CPF não veio no arquivo ***/
-                        IF vr_nrcpfcgc  = 0 OR
-                           vr_tppesssoa = 0 THEN
+                        IF vr_flgvlcpf <> 'X' AND
+                           (vr_nrcpfcgc  = 0 OR
+                            vr_tppesssoa = 0) THEN
                             
                           -- Caso a referencia do arquivo vier zerada, devera gerar crapndb
                           vr_dtultdia := fn_verifica_ult_dia(vr_cdcooper, rw_crapdat.dtmvtopr);
@@ -4236,57 +4251,61 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                  
                           vr_cpfvalido := TRUE;
                           
-                          IF NOT vr_tppesssoa IN(1,2)                       OR 
-                            (vr_tppesssoa = 1 AND rw_crapass.inpessoa <> 2) OR
-                            (vr_tppesssoa = 2 AND rw_crapass.inpessoa <> 1) THEN
-                                    
-                            vr_cpfvalido := FALSE;
-                                    
-                          ELSIF vr_tppesssoa = 2 THEN
-                                  
-                            -- Valida CPF enviado
-                            GENE0005.pc_valida_cpf(pr_nrcalcul => vr_nrcpfcgc   --Numero a ser verificado
-                                                  ,pr_stsnrcal => vr_stsnrcal);   --Situacao
-                                    
-                            IF NOT vr_stsnrcal THEN
-                                      
-                              vr_cpfvalido := FALSE;
-                                      
-                            ELSE
-                                    
-                              OPEN cr_crapttl(pr_cdcooper => vr_cdcooper
-                                             ,pr_nrdconta => vr_nrdconta
-                                             ,pr_nrcpfcgc => vr_nrcpfcgc);
-                                                     
-                              FETCH cr_crapttl INTO rw_crapttl;
-                                      
-                              IF cr_crapttl%NOTFOUND THEN
+                          IF vr_flgvlcpf <> 'X' THEN
 
+                            IF NOT vr_tppesssoa IN(1,2)                       OR 
+                              (vr_tppesssoa = 1 AND rw_crapass.inpessoa <> 2) OR
+                              (vr_tppesssoa = 2 AND rw_crapass.inpessoa <> 1) THEN
+                                    
+                              vr_cpfvalido := FALSE;
+                                    
+                            ELSIF vr_tppesssoa = 2 THEN
+                                  
+                              -- Valida CPF enviado
+                              GENE0005.pc_valida_cpf(pr_nrcalcul => vr_nrcpfcgc   --Numero a ser verificado
+                                                    ,pr_stsnrcal => vr_stsnrcal);   --Situacao
+                                    
+                              IF NOT vr_stsnrcal THEN
+                                       
                                 vr_cpfvalido := FALSE;
                                         
-                              END IF;
-                                      
-                              CLOSE cr_crapttl;
+                              ELSE
                                     
-                            END IF;
-                                  
-                          ELSE 
+                                OPEN cr_crapttl(pr_cdcooper => vr_cdcooper
+                                               ,pr_nrdconta => vr_nrdconta
+                                               ,pr_nrcpfcgc => vr_nrcpfcgc);
+                                                     
+                                FETCH cr_crapttl INTO rw_crapttl;
+                                        
+                                IF cr_crapttl%NOTFOUND THEN
+
+                                  vr_cpfvalido := FALSE;
+                                         
+                                END IF;
                                       
-                             -- Valida CPF/CNPJ enviado
-                             GENE0005.pc_valida_cnpj(pr_nrcalcul => vr_nrcpfcgc   --Numero a ser verificado
-                                                    ,pr_stsnrcal => vr_stsnrcal);   --Situacao
-                                          
-                             IF NOT vr_stsnrcal THEN
-                                       
-                               vr_cpfvalido := FALSE;
-                                       
-                             ELSIF rw_crapass.nrcpfcgc <> vr_nrcpfcgc THEN
+                                CLOSE cr_crapttl;
                                      
-                               vr_cpfvalido := FALSE;
+                              END IF;
+                                  
+                            ELSE 
+                                      
+                              -- Valida CPF/CNPJ enviado
+                              GENE0005.pc_valida_cnpj(pr_nrcalcul => vr_nrcpfcgc   --Numero a ser verificado
+                                                     ,pr_stsnrcal => vr_stsnrcal);   --Situacao
+                                          
+                              IF NOT vr_stsnrcal THEN
                                        
-                    END IF;
+                                vr_cpfvalido := FALSE;
                                        
-                  END IF;
+                              ELSIF rw_crapass.nrcpfcgc <> vr_nrcpfcgc THEN
+                                     
+                                vr_cpfvalido := FALSE;
+                                       
+                              END IF;
+
+                            END IF;
+                                       
+                          END IF;
                                     
                           /*** Se o cpf for devergen a conta  ***/
                           IF NOT vr_cpfvalido THEN

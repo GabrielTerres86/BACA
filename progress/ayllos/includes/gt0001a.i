@@ -113,6 +113,9 @@
 
 			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+               10/03/2019 - Inclusão do indicador de validação do CPF/CNPJ Layout 5.
+                            Gabriel Marcos (Mouts) - SCTASK0038352.
+
 ............................................................................. */
 DEF VAR log_nrseqatu LIKE gnconve.nrseqatu           NO-UNDO.  
 DEF VAR log_nrseqint LIKE gnconve.nrseqint           NO-UNDO.
@@ -156,6 +159,7 @@ DEF VAR log_dsemail5 LIKE gnconve.dsenddeb           NO-UNDO.
 DEF VAR log_dsemail6 LIKE gnconve.dsenddeb           NO-UNDO.
 DEF VAR log_flgenvpa LIKE gnconve.flgenvpa           NO-UNDO.
 DEF VAR log_nrlayout LIKE gnconve.nrlayout           NO-UNDO.
+DEF VAR log_flgvlcpf LIKE gnconve.flgvlcpf           NO-UNDO.
 DEF VAR log_nrseqpar LIKE gnconve.nrseqpar           NO-UNDO.
 DEF VAR log_nmarqpar LIKE gnconve.nmarqpar           NO-UNDO.
 DEF VAR log_tprepass AS CHAR                         NO-UNDO.
@@ -203,6 +207,7 @@ DEF VAR aux_dsemail5 LIKE gnconve.dsenddeb           NO-UNDO.
 DEF VAR aux_dsemail6 LIKE gnconve.dsenddeb           NO-UNDO.
 DEF VAR aux_flgenvpa LIKE gnconve.flgenvpa           NO-UNDO.
 DEF VAR aux_nrlayout LIKE gnconve.nrlayout           NO-UNDO.
+DEF VAR aux_flgvlcpf LIKE gnconve.flgvlcpf           NO-UNDO.
 DEF VAR aux_nrseqpar LIKE gnconve.nrseqpar           NO-UNDO.
 DEF VAR aux_nmarqpar LIKE gnconve.nmarqpar           NO-UNDO.
 DEF VAR aux_tprepass AS CHAR                         NO-UNDO.
@@ -270,6 +275,7 @@ ASSIGN  tel_nrseqatu   = gnconve.nrseqatu
         tel_dsdiracc   = gnconve.dsdiracc
         tel_flgativo   = gnconve.flgativo
 		tel_nrlayout   = gnconve.nrlayout
+        tel_flgvlcpf   = gnconve.flgvlcpf
         tel_flgcvuni   = gnconve.flgcvuni
         tel_flgdecla   = gnconve.flgdecla
         tel_flggeraj   = gnconve.flggeraj
@@ -346,6 +352,7 @@ ASSIGN  tel_nrseqatu   = gnconve.nrseqatu
         aux_dsemail6 = ENTRY(3, gnconve.dsenddeb)
         aux_flgenvpa = gnconve.flgenvpa
 		aux_nrlayout = gnconve.nrlayout
+        aux_flgvlcpf = gnconve.flgvlcpf
         aux_nrseqpar = gnconve.nrseqpar
         aux_nmarqpar = gnconve.nmarqpar
         aux_flgdbssd = gnconve.flgdbssd.
@@ -378,6 +385,7 @@ DISPLAY tel_cdconven
         tel_dsdiracc
         tel_flgativo
 		tel_nrlayout
+        tel_flgvlcpf
         tel_flgcvuni
         tel_flgdecla
         tel_flggeraj
@@ -639,8 +647,11 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
           tel_nmarqpar WHEN tel_flgenvpa = TRUE
           tel_flgcvuni
 		  tel_nrlayout WHEN tel_cdhisdeb > 0
+          tel_flgvlcpf
           tel_tpdenvio
           WITH FRAME f_convenio.
+
+/* Comentado a pedido da area de negocio - Chamado SCTASK0038352
 
 	  IF tel_nrlayout = 5 AND tel_nmarqatu <> "" THEN
          DO:
@@ -648,6 +659,8 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
             MESSAGE "Convenio nao permite o uso deste layout.".
             NEXT.
          END.
+
+   Comentado a pedido da area de negocio - Chamado SCTASK0038352 */	
 		 
       SET tel_dsdiracc WHEN tel_tpdenvio = 5
           tel_flgdecla
@@ -809,6 +822,7 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
               gnconve.dsdiracc = tel_dsdiracc
               gnconve.flgativo = tel_flgativo
 			  gnconve.nrlayout = tel_nrlayout
+              gnconve.flgvlcpf = IF tel_nrlayout = 5 THEN tel_flgvlcpf ELSE NO
               gnconve.flgcvuni = tel_flgcvuni
               gnconve.flgdecla = tel_flgdecla
               gnconve.flggeraj = tel_flggeraj
@@ -859,6 +873,7 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
               log_dsdiracc = gnconve.dsdiracc
               log_flgativo = gnconve.flgativo
 			  log_nrlayout = gnconve.nrlayout
+              log_flgvlcpf = gnconve.flgvlcpf
               log_flgcvuni = gnconve.flgcvuni
               log_flgdecla = gnconve.flgdecla
               log_flggeraj = gnconve.flggeraj
@@ -962,6 +977,10 @@ PROCEDURE gera_log:
     RUN alterar_log (INPUT "tipo do layout",
                      INPUT STRING(aux_nrlayout),
                      INPUT STRING(log_nrlayout)).
+
+    RUN alterar_log (INPUT "Valida CPF/CNPJ",
+                     INPUT STRING(aux_flgvlcpf),
+                     INPUT STRING(log_flgvlcpf)).
     
     RUN alterar_log (INPUT "pagamento via internet",
                      INPUT STRING(aux_flginter),
