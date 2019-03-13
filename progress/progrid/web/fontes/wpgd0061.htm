@@ -502,6 +502,8 @@
           document.all.tbinscritos.deleteRow(i - 1);
         }
         
+		document.form.aux_qtdregis.value = minscri[1].qtinscri;
+				  
         if (minscri.length <= 0) {
 
           $("#salvaconfirm").hide();
