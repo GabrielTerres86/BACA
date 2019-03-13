@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
       Sistema : Conta-Corrente - Cooperativa de Credito
       Sigla   : CRED
       Autora  : Lucas R.
-      Data    : Setembro/2013                        Ultima atualizacao: 13/02/2017
+      Data    : Setembro/2013                        Ultima atualizacao: 27/11/2017
 
       Dados referentes ao programa:
 
@@ -40,6 +40,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
                                
                   13/02/2017 - Remover envio de e-mail para quando as criticas 190 e 191
                                (Lucas Ranghetti #597333)
+                               
+                  27/11/2017 - Executar o gene0001.pc_fecha_arquivo antes de executar algum 
+                               comando unix (Lucas Ranghetti #792998)
       ............................................................................*/
 
 
@@ -366,6 +369,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
             END IF;
 
             IF vr_cdcritic <> 0 THEN
+            
+              -- Fecha arquivo de dados antes de excutar algum comando
+              BEGIN
+                gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_cdcritic:= 0;
+                  vr_dscritic:= 'Erro ao fechar arquivo dados: '||vr_tab_nmarquiv(idx);
+                  --Levantar Excecao
+                  RAISE vr_exc_saida;
+              END;
+              
               /* gera arquivo erro e nao importa para recebidos */
               vr_nmarquiv_err := 'errconsorcios_' || to_char(rw_crapdat.dtmvtolt,'YYYYMMDD')|| '.' || 
                                  vr_seqarqui || '.txt';
@@ -441,6 +456,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
           
         END LOOP; -- Final da leitura do corpo de cada arquivo
 
+        -- Fecha arquivo de dados antes de excutar algum comando
+        BEGIN
+          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro ao fechar arquivo dados: '||vr_tab_nmarquiv(idx);
+            --Levantar Excecao
+            RAISE vr_exc_saida;
+        END;
+
         -- Verifica se ocorreu erro na leitura do arquivo
         IF vr_cdcritic <> 0 THEN 
           /* gera arquivo erro e nao importa para recebidos */
@@ -456,17 +482,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
           RAISE vr_exc_fimprg;
         END IF;
     
-        -- Fecha arquivo de dados para nova leitura desde o inicio
-        BEGIN
-          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Erro ao fechar arquivo dados: '||vr_tab_nmarquiv(idx);
-            --Levantar Excecao
-            RAISE vr_exc_saida;
-        END;
-
         /************************************************************************/
         /************************ INTEGRA ARQUIVO RECEBIDO **********************/
         /************************************************************************/
@@ -744,6 +759,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
 
         END LOOP; -- Varredura do arquivo
 
+        -- Fecha arquivo de dados antes de executar algum comando
+        BEGIN
+          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro ao fechar arquivo dados: '||vr_tab_nmarquiv(idx);
+            --Levantar Excecao
+            RAISE vr_exc_saida;
+        END;
+        
         -- Verifica se ocorreram criticas
         /* se nao houver erro importa arquivo e exibe critica 190 */
         IF vr_tab_criticas.first IS NULL THEN
@@ -786,17 +812,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
                                                      || gene0001.fn_busca_critica(191)||
                                                      ' --> '||vr_nmarquiv_err); 
         END IF;
-        
-        -- Fecha arquivo de dados
-        BEGIN
-          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Erro ao fechar arquivo dados: '||vr_tab_nmarquiv(idx);
-            --Levantar Excecao
-            RAISE vr_exc_saida;
-        END;
 
         -- Inicializar o CLOB
         vr_des_xml := null;
