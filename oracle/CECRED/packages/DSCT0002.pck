@@ -197,6 +197,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   dsopecoo  VARCHAR2(100),
                   innivris  VARCHAR2(2), 
                   qtdiaatr  NUMBER,
+                  inprejuz  INTEGER,
+                  dtliqprj  crapbdt.dtliqprj%TYPE,
                   flverbor crapbdt.flverbor%TYPE
                   );
   TYPE typ_tab_dados_border IS TABLE OF typ_rec_dados_border
@@ -218,6 +220,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   vltitulo craptdb.vltitulo%TYPE,
                   vlliquid craptdb.vlliquid%TYPE,
                   vlsldtit craptdb.vlsldtit%TYPE,
+                  inprejuz crapbdt.inprejuz%TYPE,
+                  vlsdprej craptdb.vlsdprej%TYPE,
                   nmsacado crapsab.nmdsacad%TYPE,
                   flgregis crapcob.flgregis%TYPE,
                   insittit craptdb.insittit%TYPE,
@@ -2437,7 +2441,11 @@ END fn_letra_risco;
              bdt.cdopcoan,
              DSCT0003.fn_retorna_rating(bdt.nrinrisc) AS dsinrisc ,
              bdt.qtdirisc,
-             bdt.flverbor
+             bdt.inprejuz,
+             bdt.dtliqprj,
+             bdt.flverbor,
+             (SELECT COUNT(1) FROM craptdb tdb WHERE tdb.cdcooper = bdt.cdcooper AND tdb.nrdconta = bdt.nrdconta AND tdb.nrborder = bdt.nrborder AND tdb.insitapr <> 2) as qttitulo,
+             (SELECT SUM(vltitulo) FROM craptdb tdb WHERE tdb.cdcooper = bdt.cdcooper AND tdb.nrdconta = bdt.nrdconta AND tdb.nrborder = bdt.nrborder AND tdb.insitapr <> 2) as vltitulo
         FROM crapbdt bdt
         LEFT JOIN crapris ris ON ris.cdcooper = bdt.cdcooper 
                              AND ris.nrdconta = bdt.nrdconta 
@@ -2646,8 +2654,8 @@ END fn_letra_risco;
     pr_tab_dados_border(vr_idxborde).dtlibbdt := rw_crapbdt.dtlibbdt;
     pr_tab_dados_border(vr_idxborde).txdiaria := rw_crapldc.txdiaria;
     pr_tab_dados_border(vr_idxborde).txjurmor := rw_crapldc.txjurmor;
-    pr_tab_dados_border(vr_idxborde).qttitulo := rw_craplot.qtcompln;
-    pr_tab_dados_border(vr_idxborde).vltitulo := rw_craplot.vlcompcr;
+    pr_tab_dados_border(vr_idxborde).qttitulo := rw_crapbdt.qttitulo;
+    pr_tab_dados_border(vr_idxborde).vltitulo := rw_crapbdt.vltitulo;
     pr_tab_dados_border(vr_idxborde).dspesqui := to_char(rw_crapbdt.dtmvtolt,'DD/MM/RRRR')   ||'-'||
                                                  to_char(rw_crapbdt.cdagenci,'fm000')        ||'-'||
                                                  to_char(rw_crapbdt.cdbccxlt,'fm000')        ||'-'||
@@ -2658,6 +2666,8 @@ END fn_letra_risco;
     pr_tab_dados_border(vr_idxborde).cdtipdoc := vr_cdtipdoc;
     pr_tab_dados_border(vr_idxborde).innivris := rw_crapbdt.dsinrisc;
     pr_tab_dados_border(vr_idxborde).qtdiaatr := NVL(rw_crapbdt.qtdirisc, 0);
+    pr_tab_dados_border(vr_idxborde).inprejuz := rw_crapbdt.inprejuz;
+    pr_tab_dados_border(vr_idxborde).dtliqprj := rw_crapbdt.dtliqprj;
     pr_tab_dados_border(vr_idxborde).flverbor := rw_crapbdt.flverbor;
     
     -- Verifica se tem operador coordenador de liberacao ou analise
@@ -2823,6 +2833,8 @@ END fn_letra_risco;
                             '<dsopecoo>' || vr_tab_dados_border(vr_index).dsopecoo || '</dsopecoo>' ||
                             '<innivris>' || vr_tab_dados_border(vr_index).innivris || '</innivris>' ||
                             '<qtdiaatr>' || vr_tab_dados_border(vr_index).qtdiaatr || '</qtdiaatr>' ||
+                            '<inprejuz>' || vr_tab_dados_border(vr_index).inprejuz || '</inprejuz>' ||
+                            '<dtliqprj>' || vr_tab_dados_border(vr_index).dtliqprj || '</dtliqprj>' ||
                         '</inf>'
                       );
          vr_index := vr_tab_dados_border.next(vr_index);
@@ -3345,6 +3357,8 @@ END fn_letra_risco;
     --   Alteração : 25/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
     --
     --               19/09/2018 - Adicionado retorno da descrição da situação do titulo dssittit (Paulo Penteado GFT)
+    --
+    --               05/11/2018 - Adicionado retorno de valor prejuízo vlsdprej e inprejuz (Lucas Negoseki GFT)
     -- .........................................................................*/
     
     ---------->>> CURSORES <<<---------- 
@@ -3366,6 +3380,12 @@ END fn_letra_risco;
              tdb.vltitulo,
              tdb.vlliquid,
              tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof) as vlsldtit,
+             bdt.inprejuz,
+             tdb.vlsdprej
+               + (tdb.vlttjmpr - tdb.vlpgjmpr)
+               + (tdb.vlttmupr - tdb.vlpgmupr)
+               + (tdb.vljraprj - tdb.vlpgjrpr)
+               + (tdb.vliofprj - tdb.vliofppr) AS vlsdprej,
              sab.nmdsacad,
              tdb.insittit,
              tdb.insitapr,
@@ -3471,6 +3491,8 @@ END fn_letra_risco;
       pr_tab_tit_bordero(vr_idxtitul).vltitulo := rw_craptdb.vltitulo;
       pr_tab_tit_bordero(vr_idxtitul).vlliquid := rw_craptdb.vlliquid;
       pr_tab_tit_bordero(vr_idxtitul).vlsldtit := rw_craptdb.vlsldtit;
+      pr_tab_tit_bordero(vr_idxtitul).inprejuz := rw_craptdb.inprejuz;
+      pr_tab_tit_bordero(vr_idxtitul).vlsdprej := rw_craptdb.vlsdprej;
       pr_tab_tit_bordero(vr_idxtitul).nmsacado := rw_craptdb.nmdsacad;
       pr_tab_tit_bordero(vr_idxtitul).insittit := rw_craptdb.insittit;
       pr_tab_tit_bordero(vr_idxtitul).insitapr := rw_craptdb.insitapr;
@@ -7984,6 +8006,7 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
     --    28/09/2018 - Vitor Shimada Assanuma (GFT) - Valor descontado, somando o valor dos titulos resgatados.
     --    03/10/2018 - Cássia de Oliveira     (GFT) - Alterado regra da situação do titulo.
     --    26/10/2018 - Vitor Shimada Assanuma (GFT) - Retirado o histórico 2763 da listagem.
+    --    30/11/2018 - Lucas Negoseki         (GFT) - Retirado diversos históricos de prejuízo da listagem.
     -- .........................................................................*/
     -- Variável de críticas
     vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -8026,7 +8049,11 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
         ldc.dsdlinha,
         ldc.txjurmor,
         (SELECT COUNT(1)      FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder) AS qttitbor,
-        (SELECT SUM(vltitulo) FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder AND insitapr <> 2) AS vltitbor
+        (SELECT SUM(vltitulo) FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder AND insitapr <> 2) AS vltitbor,
+        (SELECT SUM(tdb.vlsdprej
+          + (tdb.vlttjmpr - tdb.vlpgjmpr)
+          + (tdb.vlttmupr - tdb.vlpgmupr)
+          + (tdb.vljraprj - tdb.vlpgjrpr)) FROM craptdb tdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder AND insitapr <> 2) AS vlprjbor -- Saldo atualizado
       FROM crapbdt bdt
         INNER JOIN crapldc ldc ON bdt.cdcooper = ldc.cdcooper AND bdt.cddlinha = ldc.cddlinha AND ldc.tpdescto = 3
       WHERE bdt.cdcooper = pr_cdcooper
@@ -8044,7 +8071,8 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
         AND tdb.nrdconta = pr_nrdconta
         AND tdb.nrborder = pr_nrborder
       ORDER BY tdb.dtvencto
-    ;rw_craptdb cr_craptdb%ROWTYPE;
+    ;
+    rw_craptdb cr_craptdb%ROWTYPE;
 
     --> Buscar dados de lançamentos de bordero
     CURSOR cr_craptlb IS
@@ -8055,21 +8083,59 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
         tlb.nrtitulo,
         tlb.dtmvtolt,
         tlb.vllanmto,
-        gene0005.fn_valida_dia_util(tdb.cdcooper, tdb.dtvencto) - tlb.dtmvtolt AS qtdiaatr,
+        CASE WHEN gene0005.fn_valida_dia_util(tdb.cdcooper, tdb.dtvencto) = tlb.dtmvtolt
+          THEN 0
+          ELSE tdb.dtvencto - tlb.dtmvtolt
+        END AS qtdiaatr,
         his.cdhistor,
         -- correção do campo de exibição de descrição no extrato.
         his.dsextrat,
         his.indebcre,
         CASE WHEN (his.indebcre = 'D') THEN tlb.vllanmto ELSE (tlb.vllanmto - tlb.vllanmto*2) END AS vlconvertido,
-        DENSE_RANK() OVER (PARTITION BY tlb.nrdconta ORDER BY tlb.nrtitulo)-1 AS seq
+        CASE WHEN tdb.nrtitulo IS NULL THEN 0 ELSE tdb.seq END as seq
       FROM tbdsct_lancamento_bordero tlb
-        LEFT JOIN craptdb tdb ON tlb.cdcooper = tdb.cdcooper AND tlb.nrdconta = tdb.nrdconta AND tlb.nrborder = tdb.nrborder AND tlb.nrtitulo = tdb.nrtitulo
+        LEFT JOIN (SELECT 
+                    DENSE_RANK() OVER (PARTITION BY tdb.nrdconta ORDER BY tdb.dtvencto, tdb.nrtitulo) AS seq,
+                    tdb.cdcooper,
+                    tdb.nrdconta,
+                    tdb.nrborder,
+                    tdb.nrtitulo,
+                    tdb.dtvencto,
+                    tdb.vltitulo
+                  FROM craptdb tdb
+                  WHERE tdb.cdcooper = pr_cdcooper
+                    AND tdb.nrdconta = pr_nrdconta
+                    AND tdb.nrborder = pr_nrborder
+                  ORDER BY tdb.dtvencto, tdb.nrtitulo) tdb ON tlb.cdcooper = tdb.cdcooper AND tlb.nrdconta = tdb.nrdconta AND tlb.nrborder = tdb.nrborder AND tlb.nrtitulo = tdb.nrtitulo
         INNER JOIN craphis his ON tlb.cdcooper = his.cdcooper AND tlb.cdhistor = his.cdhistor
       WHERE tlb.cdcooper = pr_cdcooper
         AND tlb.nrdconta = pr_nrdconta
         AND tlb.nrborder = pr_nrborder
-        AND his.cdhistor NOT IN (2666, 2667, 2678) -- 2666 (Rendas à apropriar) E 2678 (Baixa da carteira ao resgatar título)
-      ORDER BY tlb.dtmvtolt asc, tlb.nrtitulo asc , his.indebcre desc, tlb.progress_recid
+        AND his.cdhistor NOT IN (DSCT0003.vr_cdhistordsct_rendaapropr,
+                                 DSCT0003.vr_cdhistordsct_apropjurrem,
+                                 DSCT0003.vr_cdhistordsct_resgatetitdsc,
+                                 DSCT0003.vr_cdhistordsct_jratuprejuz,
+                                 PREJ0005.vr_cdhistordsct_principal,
+                                 PREJ0005.vr_cdhistordsct_juros_60_rem,
+                                 PREJ0005.vr_cdhistordsct_juros_60_mor,
+                                 PREJ0005.vr_cdhistordsct_juros_60_mul,
+                                 PREJ0005.vr_cdhistordsct_multa_atraso,
+                                 PREJ0005.vr_cdhistordsct_juros_mora,
+                                 PREJ0005.vr_cdhistordsct_juros_atuali,
+                                 -- Retirado para mostrar apenas valor total
+                                 PREJ0005.vr_cdhistordsct_rec_principal,
+                                 PREJ0005.vr_cdhistordsct_rec_jur_60,
+                                 PREJ0005.vr_cdhistordsct_rec_jur_atuali,
+                                 PREJ0005.vr_cdhistordsct_rec_mult_atras,
+                                 PREJ0005.vr_cdhistordsct_rec_jur_mora,
+                                 -- Retirado para mostrar apenas estorno valor total
+                                 PREJ0005.vr_cdhistordsct_est_principal,
+                                 PREJ0005.vr_cdhistordsct_est_jur_60,
+                                 PREJ0005.vr_cdhistordsct_est_jur_prej,
+                                 PREJ0005.vr_cdhistordsct_est_mult_atras,
+                                 PREJ0005.vr_cdhistordsct_est_jur_mor
+                                 )
+      ORDER BY tlb.dtmvtolt asc, his.indebcre desc, tlb.nrtitulo ASC, tlb.progress_recid
     ;rw_craptlb cr_craptlb%ROWTYPE;
     
   BEGIN
@@ -8160,6 +8226,9 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
                       '<nrdconta>'|| TRIM(GENE0002.fn_mask_conta(pr_nrdconta))             ||'</nrdconta>' ||
                       '<cdagenci>'|| rw_crapbdt.cdagenci                                   ||'</cdagenci>' ||
                       '<nrborder>'|| TRIM(GENE0002.fn_mask_contrato(pr_nrborder))          ||'</nrborder>' ||
+                      '<inprejuz>'|| rw_crapbdt.inprejuz                                   ||'</inprejuz>' ||
+                      '<dtprejuz>'|| to_char(rw_crapbdt.dtprejuz, 'DD/MM/RRRR')            ||'</dtprejuz>' ||
+                      '<vlprjbor>'|| to_char(rw_crapbdt.vlprjbor, 'fm999G999G999G990D00')  ||'</vlprjbor>' ||
                       '<dsdlinha>'|| rw_crapbdt.dsdlinha                                   ||'</dsdlinha>' ||
                       '<qttitbor>'|| rw_crapbdt.qttitbor                                   ||'</qttitbor>' ||
                       '<vltitbor>'|| to_char(rw_crapbdt.vltitbor, 'fm999G999G999G990D00')  ||'</vltitbor>' ||
@@ -9081,6 +9150,8 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     vr_jobname             varchar2(30); 
     vr_dsplsql             varchar2(4000); 
     
+    vr_flgcrps538_concluida INT;
+    
     CURSOR cr_crapage IS 
       SELECT  crapage.cdagenci
              ,crapage.nmresage
@@ -9089,6 +9160,11 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
          AND crapage.cdagenci <> 999
     ;
     BEGIN
+      -- Verifica se a cprs538 foi concluida
+      vr_flgcrps538_concluida := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                                   pr_cdcooper => pr_cdcooper,
+                                                                   pr_cdacesso => 'FLG_CRPS538_CONCLUIDA');
+      IF (vr_flgcrps538_concluida = '1') THEN
       vr_idparale := gene0001.fn_gera_id_paralelo;
       vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper --> Código da coopertiva
                                                    ,vr_cdprogra --> Código do programa
@@ -9142,10 +9218,21 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                                    ,pr_qtdproce => 0
                                    ,pr_des_erro => vr_dscritic);
                                   
+         -- zera o parametro para informar que a crps538 rodou
+         UPDATE crapprm
+           SET crapprm.dsvlrprm = '0'
+         WHERE nmsistem =  'CRED'
+           AND cdcooper  = pr_cdcooper
+           AND cdacesso =  'FLG_CRPS538_CONCLUIDA';
+                                    
       -- Testar saida com erro
       IF  vr_dscritic IS NOT NULL THEN 
         -- Levantar exceçao
         RAISE vr_exc_erro;
+        END IF;
+      ELSE
+        NULL;
+        --Adiciona job para rodar em 30 min
       END IF;
     EXCEPTION    
       WHEN vr_exc_erro THEN

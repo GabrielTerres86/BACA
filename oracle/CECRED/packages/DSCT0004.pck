@@ -149,7 +149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0004 IS
   CURSOR cr_craptdb_des(pr_cdcooper IN crapcop.cdcooper%TYPE
                        ,pr_nrdconta IN crapass.nrdconta%TYPE
                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE ) IS
-  SELECT SUM(craptdb.vltitulo) AS vlutiliz
+  SELECT SUM(craptdb.vlsldtit) AS vlutiliz
   FROM   craptdb
          INNER JOIN crapcob ON crapcob.cdcooper = craptdb.cdcooper AND
                                crapcob.cdbandoc = craptdb.cdbandoc AND
@@ -791,6 +791,7 @@ PROCEDURE pc_obtem_titulos_resumo_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --
   vr_tab_nrcnvcob gene0002.typ_split;
   vr_tab_nrdocmto gene0002.typ_split;
   vr_tab_criticas dsct0003.typ_tab_critica;
+  vr_tab_criticas_tit dsct0003.typ_tab_critica;
   vr_inpreapr     VARCHAR2(1); -- Indicado Titulo Pré-Aprovado: 0 Não, 1 Sim
   vr_cdbircon     crapbir.cdbircon%TYPE;
   vr_dsbircon     crapbir.dsbircon%TYPE;
@@ -951,8 +952,9 @@ BEGIN
         END LOOP;
         
         vr_index := vr_tab_dados_titulos.first;
-        WHILE vr_index IS NOT NULL
-        LOOP
+        WHILE vr_index IS NOT NULL LOOP
+          vr_inpreapr := '0';
+          vr_tab_criticas_tit.DELETE;
                   IF vr_tab_criticas.count = 0 THEN
                     -- Verificar se o Título possui critica
                     dsct0003.pc_calcula_restricao_titulo(pr_cdcooper     => pr_cdcooper
@@ -961,7 +963,7 @@ BEGIN
                                                   ,pr_nrcnvcob     => vr_tab_dados_titulos(vr_index).nrcnvcob
                                                   ,pr_nrdctabb     => vr_tab_dados_titulos(vr_index).nrdctabb
                                                   ,pr_cdbandoc     => vr_tab_dados_titulos(vr_index).cdbandoc
-                                                        ,pr_tab_criticas => vr_tab_criticas
+                                                ,pr_tab_criticas => vr_tab_criticas_tit
                                                         ,pr_cdcritic     => vr_cdcritic
                                                         ,pr_dscritic     => vr_dscritic);
 
@@ -970,8 +972,7 @@ BEGIN
                     END IF;
                   END IF;
 
-                  IF vr_tab_criticas.count = 0 THEN
-
+          IF vr_tab_criticas.count = 0 AND vr_tab_criticas_tit.count = 0 THEN
                       --    Verifica resultado do Ibratan
               OPEN  cr_crapcbd(vr_tab_dados_titulos(vr_index).nrinssac);
                       FETCH cr_crapcbd INTO rw_crapcbd;
@@ -1003,7 +1004,7 @@ BEGIN
                                                      ,pr_nrdctabb     => vr_tab_dados_titulos(vr_index).nrdctabb
                                                      ,pr_nrcnvcob     => vr_tab_dados_titulos(vr_index).nrcnvcob
                                                      ,pr_nrdocmto     => vr_tab_dados_titulos(vr_index).nrdocmto
-                                                           ,pr_tab_criticas => vr_tab_criticas
+                                                       ,pr_tab_criticas => vr_tab_criticas_tit
                                                            ,pr_cdcritic     => vr_cdcritic
                                                            ,pr_dscritic     => vr_dscritic);
 
@@ -1013,7 +1014,7 @@ BEGIN
                     END IF;
                   END IF;
 
-                  IF vr_tab_criticas.count = 0 THEN
+          IF vr_tab_criticas.count = 0 AND vr_tab_criticas_tit.count = 0 THEN
                     vr_inpreapr := '1';
                   END IF;
 

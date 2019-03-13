@@ -2549,7 +2549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           -- a efetivar a baixa conforme a versão antiga da funcionalizada do borderô.
           IF rw_crapbdt.flverbor = 1 THEN
             vr_vlpagmto := pr_tab_titulos(vr_index_titulo).vltitulo;
-            dsct0003.pc_pagar_titulo(pr_cdcooper => pr_cdcooper
+            dsct0003.pc_pagar_titulo_operacao(pr_cdcooper => pr_cdcooper
                                     ,pr_cdagenci => vr_cdagenci
                                     ,pr_nrdcaixa => pr_nrdcaixa
                                     ,pr_idorigem => pr_idorigem
@@ -2562,7 +2562,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                     ,pr_nrdocmto => rw_craptdb.nrdocmto
                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                     ,pr_inproces => rw_crapdat.inproces
-                                    ,pr_cdorigpg => 1
                                     ,pr_indpagto => rw_crapcob.indpagto
                                     ,pr_vlpagmto => vr_vlpagmto
                                     ,pr_cdcritic => vr_cdcritic
@@ -4015,6 +4014,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --           08/08/2018 - Zerar o saldo devedor quando resgatado.
     --                        (Vitor Shimada Assanuma [GFT])          
     --
+    --           11/03/2019 - Correção na rotina de restituição de juros remuneratório cobrado apo´s a data de restage.
+    --                        Renomeado variavel rw_crapljt de dentro do loop cr_crapljt2 para rowtype rw_craplj (sem o "t")
+    --                        (Paulo Penteado GFT) 
     -- .........................................................................
     ------------------------------- CURSORES ---------------------------------
     --Buscar informacoes de lote
@@ -4078,6 +4080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             ,craptdb.nrdctabb
             ,craptdb.nrcnvcob
             ,craptdb.vlliquid
+            ,craptdb.nrtitulo
             ,craptdb.rowid
             -- Exclue coluna - COUNT(*) OVER(PARTITION BY craptdb.cdcooper) qtdreg - 15/02/2018 - Chamado 851591           
         FROM craptdb
@@ -4496,6 +4499,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                 ,pr_cdorigem => 5
                                                 ,pr_cdhistor => vr_cdhistordsct_resreap --2679
                                                 ,pr_vllanmto => vr_vldjuros
+                                                ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                                ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                                ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                                ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                                ,pr_nrtitulo => rw_craptdb.nrtitulo
                                                 ,pr_dscritic => vr_dscritic );
           
           IF  vr_dscritic IS NOT NULL THEN
@@ -4664,8 +4672,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           UPDATE crapljt 
              SET crapljt.vlrestit = crapljt.vldjuros
                 ,crapljt.vldjuros = 0
-          WHERE crapljt.ROWID = rw_crapljt.ROWID
-          RETURNING crapljt.vlrestit INTO rw_crapljt.vlrestit;
+          WHERE crapljt.ROWID = rw_craplj.ROWID
+          RETURNING crapljt.vlrestit INTO rw_craplj.vlrestit;
         EXCEPTION
           WHEN OTHERS THEN
             -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
@@ -4676,7 +4684,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                            'crapljt(5):'||
                            ' vlrestit:'  || 'crapljt.vldjuros' ||
                            ', vldjuros:' || '0' ||
-                           ', ROWID:'    || rw_crapljt.ROWID || 
+                           ', ROWID:'    || rw_craplj.ROWID || 
                            '. ' ||sqlerrm; 
             --Levantar Excecao
             RAISE vr_exc_erro;
@@ -4810,6 +4818,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                 ,pr_cdorigem => 5
                                                 ,pr_cdhistor => vr_cdhistordsct_resopcr --2677
                                                 ,pr_vllanmto => vr_vlliqori
+                                                ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                                ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                                ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                                ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                                ,pr_nrtitulo => rw_craptdb.nrtitulo
                                                 ,pr_dscritic => vr_dscritic );
           
           IF vr_dscritic IS NOT NULL THEN
@@ -4824,6 +4837,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                 ,pr_cdorigem => 5
                                                 ,pr_cdhistor => vr_cdhistordsct_resbaix --2678
                                                 ,pr_vllanmto => rw_craptdb.vltitulo
+                                                ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                                ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                                ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                                ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                                ,pr_nrtitulo => rw_craptdb.nrtitulo
                                                 ,pr_dscritic => vr_dscritic );
           
           IF  vr_dscritic IS NOT NULL THEN
@@ -5556,6 +5574,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                               - Incluído tratamento para não duplicar a mensagens na tbgen: vr_ininsoco
                              (Belli - Envolti - Chamado 851591) 
                  
+                 04/03/2019 - Inclusão de tratativa de estorno para o produto novo do desconto de títulos (Lucas Lazari  - GFT)
+
     ..................................................................................*/
     
       --Selecionar informacoes dos titulos do bordero
@@ -5565,29 +5585,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                         ,pr_nrcnvcob IN craptdb.nrcnvcob%type
                         ,pr_nrdconta IN craptdb.nrdconta%type
                         ,pr_nrdocmto IN craptdb.nrdocmto%type
-                        ,pr_insittit IN craptdb.insittit%type) IS
-        SELECT craptdb.dtvencto
-              ,craptdb.vltitulo
-              ,craptdb.nrdconta
-              ,craptdb.nrdocmto
-              ,craptdb.cdcooper
-              ,craptdb.insittit
-              ,craptdb.dtdpagto
-              ,craptdb.nrborder
-              ,craptdb.dtlibbdt
-              ,craptdb.cdbandoc
-              ,craptdb.nrdctabb
-              ,craptdb.nrcnvcob
-              ,craptdb.rowid
-              ,COUNT(*) OVER (PARTITION BY craptdb.cdcooper) qtdreg
-        FROM craptdb
-        WHERE craptdb.cdcooper = pr_cdcooper
-        AND   craptdb.cdbandoc = pr_cdbandoc
-        AND   craptdb.nrdctabb = pr_nrdctabb
-        AND   craptdb.nrcnvcob = pr_nrcnvcob
-        AND   craptdb.nrdconta = pr_nrdconta
-        AND   craptdb.nrdocmto = pr_nrdocmto
-        AND   craptdb.insittit = pr_insittit;
+                        --,pr_insittit IN craptdb.insittit%type
+                        ) IS
+        SELECT tdb.dtvencto
+              ,tdb.vltitulo
+              ,tdb.nrdconta
+              ,tdb.nrdocmto
+              ,tdb.cdcooper
+              ,tdb.insittit
+              ,tdb.dtdpagto
+              ,tdb.nrborder
+              ,tdb.dtlibbdt
+              ,tdb.cdbandoc
+              ,tdb.nrdctabb
+              ,tdb.nrcnvcob
+              ,tdb.rowid
+              ,bdt.flverbor
+              ,COUNT(*) OVER (PARTITION BY tdb.cdcooper) qtdreg
+        FROM craptdb tdb
+        INNER JOIN crapbdt bdt ON bdt.cdcooper = tdb.cdcooper AND bdt.nrdconta = tdb.nrdconta AND bdt.nrborder = tdb.nrborder
+        WHERE tdb.cdcooper = pr_cdcooper
+        AND   tdb.cdbandoc = pr_cdbandoc
+        AND   tdb.nrdctabb = pr_nrdctabb
+        AND   tdb.nrcnvcob = pr_nrcnvcob
+        AND   tdb.nrdconta = pr_nrdconta
+        AND   tdb.nrdocmto = pr_nrdocmto
+        --AND   tdb.insittit = pr_insittit;
+        AND   tdb.dtlibbdt IS NOT NULL -- Verifica se o título foi liberado, independente da situação (Lucas Lazari - GFT)
+        AND   tdb.dtresgat IS NULL;    -- Verifica se o título não foi resgatado (Lucas Lazari - GFT)
       rw_craptdb cr_craptdb%ROWTYPE;
 
       CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE
@@ -5729,7 +5754,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                           ,pr_nrcnvcob => pr_tab_titulos(vr_index_titulo).nrcnvcob
                           ,pr_nrdconta => pr_tab_titulos(vr_index_titulo).nrdconta
                           ,pr_nrdocmto => pr_tab_titulos(vr_index_titulo).nrdocmto
-                          ,pr_insittit => 2); --pago
+                          --,pr_insittit => 2
+                          ); --pago
           FETCH cr_craptdb INTO rw_craptdb;
           --Se Nao encontrou ou encontrou e tem mais de 1
           IF cr_craptdb%NOTFOUND OR
@@ -5743,6 +5769,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             RAISE vr_exc_proximo;
           END IF;
 
+          -- Se o título foi descontado no produto antigo, realiza as tratativas antigas (Lucas Lazari - GFT)
+          IF rw_craptdb.flverbor = 0 AND rw_craptdb.insittit = 2 THEN
+          
           /* procura lcm de ajuste caso tenha acontecido deleta o lcm */
           OPEN cr_craplcm (pr_cdcooper => pr_cdcooper
                           ,pr_dtmvtolt => pr_dtmvtolt
@@ -5819,6 +5848,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                               '. ' ||sqlerrm; 
                --Levantar Excecao
                RAISE vr_exc_erro;
+              END IF;     
+           
            END;
          END IF;
          CLOSE cr_craplcm;
@@ -6197,6 +6228,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
            CLOSE cr_crapbdt;
          END IF;
 
+         ELSIF rw_craptdb.flverbor = 1 THEN
+           -- chama a rotina de estorno do produto novo
+           
+           DSCT0005.pc_realiza_estorno_cob(pr_cdcooper => rw_craptdb.cdcooper
+                                          ,pr_nrborder => rw_craptdb.nrborder 
+                                          ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                          ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                          ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                          ,pr_nrdconta => rw_craptdb.nrdconta
+                                          ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                          ,pr_dtmvtolt => pr_dtmvtolt
+                                          -- OUT --
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic
+                                          );
+           
+           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+             vr_dscritic := 'Erro na rotina de estorno de cobrança';
+             RAISE vr_exc_erro;
+           END IF;
+         
+         END IF;
          /* Corrige os juros que haviam sidos zerados anteriormente */
          BEGIN
            UPDATE crapljt 
