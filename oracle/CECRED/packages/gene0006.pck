@@ -58,6 +58,10 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
 
                06/12/2017 - Adicionado procedure PC_LISTA_PROTOCOLOS_POR_TIPOS 
                             (P285 - Ricardo Linhares).
+
+			   06/02/2019 - INC0032052 - Adicionados comprovantes de agendamento de DARF e DAS.
+			                (F0032175 - Guilherme Kuhnen).
+
 ............................................................................. */
 
   /* Objetos de uso comum */
@@ -431,6 +435,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
 
                06/12/2017 - Adicionado procedure PC_LISTA_PROTOCOLOS_POR_TIPOS 
                             (P285 - Ricardo Linhares).
+							
+			   06/02/2019 - INC0032052 - Adicionados comprovantes de agendamento de DARF e DAS.
+			                (F0032175 - Guilherme Kuhnen).
 
 ............................................................................. */
 
@@ -1706,15 +1713,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                 -- INTERCOOPERATIVA
                 pr_protocolo(vr_index).idlstdom := 6;
               END IF;
-              
-            -- 16 = Pagamento DARF / 18 = Agendamento DARF
-            WHEN pr_protocolo(vr_index).cdtippro IN ( 16, 18 ) THEN
+            
+			/* INC0032052 */
+
+            -- 16 = Pagamento DARF
+            WHEN pr_protocolo(vr_index).cdtippro = 16 THEN
               pr_protocolo(vr_index).idlstdom := 7;
-              
-            -- 17 = Pagamento DAS / 19 = Agendamento DAS
-            WHEN pr_protocolo(vr_index).cdtippro IN ( 17, 19) THEN
+            
+            -- 17 = Pagamento DAS
+            WHEN pr_protocolo(vr_index).cdtippro = 17 THEN
               pr_protocolo(vr_index).idlstdom := 8;
+            
+            -- 18 = Agendamento DARF
+            WHEN pr_protocolo(vr_index).cdtippro = 18 THEN
+              pr_protocolo(vr_index).idlstdom := 16;
+            
+            -- 19 = Agendamento DAS
+            WHEN pr_protocolo(vr_index).cdtippro = 19 THEN
+              pr_protocolo(vr_index).idlstdom := 17;
               
+			/** INC0032052 **/
+
             -- 13 = Pagamento/Agendamento GPS
             WHEN pr_protocolo(vr_index).cdtippro = 13 THEN              
               IF NVL(pr_protocolo(vr_index).flgagend,0) = 0 THEN
@@ -2571,15 +2590,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
               -- INTERCOOPERATIVA
               pr_protocolo(vr_index).idlstdom := 6;
             END IF;
+			          
+			/* INC0032052 */
 
-          -- 16 = Pagamento DARF / 18 = Agendamento DARF
-          WHEN pr_protocolo(vr_index).cdtippro IN ( 16, 18 ) THEN
-            pr_protocolo(vr_index).idlstdom := 7;
-                
-          -- 17 = Pagamento DAS / 19 = Agendamento DAS
-          WHEN pr_protocolo(vr_index).cdtippro IN ( 17, 19) THEN
-            pr_protocolo(vr_index).idlstdom := 8;
-                
+            -- 16 = Pagamento DARF
+            WHEN pr_protocolo(vr_index).cdtippro = 16 THEN
+              pr_protocolo(vr_index).idlstdom := 7;
+            
+            -- 17 = Pagamento DAS
+            WHEN pr_protocolo(vr_index).cdtippro = 17 THEN
+              pr_protocolo(vr_index).idlstdom := 8;
+            
+            -- 18 = Agendamento DARF
+            WHEN pr_protocolo(vr_index).cdtippro = 18 THEN
+              pr_protocolo(vr_index).idlstdom := 16;
+            
+            -- 19 = Agendamento DAS
+            WHEN pr_protocolo(vr_index).cdtippro = 19 THEN
+              pr_protocolo(vr_index).idlstdom := 17;
+              
+			/** INC0032052 **/
+			                
           -- 13 = Pagamento/Agendamento GPS
           WHEN pr_protocolo(vr_index).cdtippro = 13 THEN
             IF NVL(pr_protocolo(vr_index).flgagend,0) = 0 THEN
