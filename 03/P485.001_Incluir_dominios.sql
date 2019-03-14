@@ -76,7 +76,10 @@ BEGIN
 	
 	INSERT INTO tbcc_dominio_campo (nmdominio, cddominio, dscodigo) VALUES 
 	('SIT_PORTAB_CONTESTACAO_RECEBE', 4,'Fechada sem resposta');
-  
+    
+	INSERT INTO tbcc_dominio_campo (nmdominio, cddominio, dscodigo) VALUES 
+	('SIT_PORTAB_CONTESTACAO_RECEBE', 5,'Resposta Rejeitada');
+
   -- SITUAÇÃO DA CONTESTAÇÃO ENVIADA
   INSERT INTO tbcc_dominio_campo (nmdominio, cddominio, dscodigo) VALUES 
 	('SIT_PORTAB_CONTESTACAO_ENVIA', 1,'Solicitada');
@@ -110,7 +113,7 @@ BEGIN
 	('SIT_PORTAB_REGULARIZACAO', 4,'Regularizado Reprovada');
   
   INSERT INTO tbcc_dominio_campo (nmdominio, cddominio, dscodigo) VALUES 
-	('SIT_PORTAB_REGULARIZACAO', 5,'Regularizado Rejeitada');
+	('SIT_PORTAB_REGULARIZACAO', 5,'Regularização Rejeitada');
   
   -- INDICA A REGULARIZAÇÃO
   INSERT INTO tbcc_dominio_campo (nmdominio, cddominio, dscodigo) VALUES 
