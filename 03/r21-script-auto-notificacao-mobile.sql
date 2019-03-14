@@ -20,6 +20,12 @@ declare
   vr_dtexibir_ate        date; -- Tabela Elton
   vr_text1               clob;
   vr_text2               varchar2(255);
+  
+  cursor cr_crapdat is
+  select dat.dtmvtopr
+    from crapdat dat
+   where dat.cdcooper = 1;
+  rw_crapdat cr_crapdat%rowtype;
 
   -- Cursor que busca as agencias
   cursor cr_crapage is
@@ -801,6 +807,10 @@ begin
   if trim(vr_dscritic) is not null or nvl(vr_cdcritic,0) > 0 then
     raise vr_exc_saida;
   end if;
+  
+  open cr_crapdat;
+  fetch cr_crapdat into rw_crapdat;
+  close cr_crapdat;
 
   for rw_crapage in cr_crapage loop
 
@@ -885,7 +895,7 @@ begin
     -- Para eventos que ainda nao aconteceram porem estao
     -- a menos de 10 dias, enviara no dia seguinte da execucao
     else
-      vr_dtenvio_mensagem := trunc(sysdate) + 1;      
+      vr_dtenvio_mensagem := rw_crapdat.dtmvtopr;      
     end if;
 
     -- Titulo do push
