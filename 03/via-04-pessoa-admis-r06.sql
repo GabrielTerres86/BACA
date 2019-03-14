@@ -37,7 +37,7 @@ select (select max(ID) from Pessoa) + 10 + ROW_NUMBER() OVER (order by tbevento_
        , tbevento_pessoa_grupos d
    where c.cdcooper = 1
      and c.dtdemiss is null
-	 and c.dtmvtolt < to_date(''27/02/2019'',''dd/mm/yyyy'')
+	 and c.dtmvtolt < to_date(''15/03/2019'',''dd/mm/yyyy'')
      and d.cdcooper = c.cdcooper
 	 and d.nrdconta = c.nrdconta') tbevento_pessoa_grupos
   where not exists (select 1
