@@ -15,6 +15,12 @@
                25/02/2014 - Adicionado chamada das procedures 
                             valida-dados-alteracao-plano e altera-plano.
                             (Fabricio)
+							
+               29/01/2019 - INC0031623 - Correçao no arquivo IB032 que nao estava alterando ou 
+			                criando corretamente as aplicaçoes, adicionado parâmetro '0' que 
+							faltava nas chamadas das procedures cria-plano / altera-plano da 
+							h-b1wgen0021.
+							(F0032175 - Guilherme Kuhnen).
  
  ............................................................................ */
  
@@ -38,6 +44,7 @@ DEF  INPUT PARAM par_dtdpagto AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_flcadast AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_flcancel AS LOGI                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
+
 RUN sistema/generico/procedures/b1wgen0021.p PERSISTENT 
     SET h-b1wgen0021.
 IF  VALID-HANDLE(h-b1wgen0021)  THEN
@@ -79,6 +86,7 @@ IF  VALID-HANDLE(h-b1wgen0021)  THEN
                                         INPUT par_flgpagto,
                                         INPUT par_qtpremax,
                                         INPUT par_dtdpagto,
+                                        INPUT 0, /** INC0031623 **/
                                        OUTPUT TABLE tt-erro).
         ELSE
         IF par_flcadast = 1 AND par_flcancel THEN
@@ -115,6 +123,7 @@ IF  VALID-HANDLE(h-b1wgen0021)  THEN
                                         INPUT par_flgpagto,
                                         INPUT par_qtpremax,
                                         INPUT par_dtdpagto,
+                                        INPUT 0, /** INC0031623 **/
                                        OUTPUT TABLE tt-erro).
         ELSE
             DO:
