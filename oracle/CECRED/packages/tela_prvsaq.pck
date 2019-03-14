@@ -162,8 +162,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_prvsaq IS
   --
   --              30-01-2019 - INC0031047 Permitir consultar agendamentos no IB (Jose Dill - Mouts)
   --
-  --              22/02/2019 - INC0032317 - 
-  --
+  --              22/02/2019 - INC0032317 - Correção dos parâmetros de cursores que não permitiam 
+  --                           excluir um agendamento de saque em espécie. 
+  --                           (F0032175 - Guilherme Kuhnen).
   --
   ---------------------------------------------------------------------------
 
