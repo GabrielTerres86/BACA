@@ -131,16 +131,16 @@ begin
     
       -- Cria atualizacao do registro
       if cr_crapneg%found then
-        dbms_output.put_line('update crapneg'     ||
-                             ' set flgctitg = 2'||
-                             ' where flgctitg = 1'||
-                             ' and cdcooper = '||rw_crapcop.cdcooper||
-                             ' and cdbanchq = '||rw_crapcop.cdbcoctl||
-                             ' and nrdconta = '||aux_nrdconta||
-                             ' and dtiniest = to_date('''||aux_dtiniest||''','||'''dd/mm/rrrr'''||')'||
-                             ' and cdobserv = '||aux_cdmotivo||
-                             ' and dtectitg = to_date(''08/02/2019'',''dd/mm/yyyy'')'||
-                             ' and to_number(substr(lpad(nrdocmto,7,0),1,6)) = '||aux_nrcheque||';'); 
+        update crapneg
+          set flgctitg = 2
+        where flgctitg = 1
+          and cdcooper = rw_crapcop.cdcooper
+          and cdbanchq = rw_crapcop.cdbcoctl
+          and nrdconta = aux_nrdconta
+          and dtiniest = to_date(aux_dtiniest,'dd/mm/rrrr')
+          and cdobserv = aux_cdmotivo
+          and dtectitg = to_date('08/02/2019','dd/mm/yyyy')
+          and to_number(substr(lpad(nrdocmto,7,0),1,6)) = aux_nrcheque; 
       end if;    
     
       close cr_crapneg;     
@@ -151,14 +151,12 @@ begin
       gene0001.pc_fecha_arquivo(vr_utlfile); 
   end;      
   
-  dbms_output.put_line('');   
-  dbms_output.put_line('---------- Planilha - Jailton - Compe ----------'); 
-  dbms_output.put_line('update crapneg set flgctitg = 2 where flgctitg = 1 and cdcooper = 1 and nrdconta = 8751587 and nrdocmto = 604 and rowid = ''AAAS9aAB9AAAEZdAAA'''||';'); 
-  dbms_output.put_line('update crapneg set flgctitg = 2 where flgctitg = 1 and cdcooper = 1 and nrdconta = 7950934 and nrdocmto = 35 and rowid = ''AAAS9aAB9AAAEZdAAD'''||';'); 
-  dbms_output.put_line('update crapneg set flgctitg = 2 where flgctitg = 1 and cdcooper = 1 and nrdconta = 8686955 and nrdocmto = 396 and rowid = ''AAAS9aAB9AAAEZdAAC'''||';'); 
-  dbms_output.put_line('update crapneg set flgctitg = 2 where flgctitg = 1 and cdcooper = 7 and nrdconta = 135119 and nrdocmto = 345 and rowid = ''AAAS9aAB9AAAEZdAAB'''||';');  
-  dbms_output.put_line('commit;'); 
-  rollback;    
+  ---------- Planilha - Jailton - Compe ---------- 
+  update crapneg set flgctitg = 2 where flgctitg = 1 and cdcooper = 1 and nrdconta = 8751587 and nrdocmto = 604 and rowid = 'AAAS9aAB9AAAEZdAAA'; 
+  update crapneg set flgctitg = 2 where flgctitg = 1 and cdcooper = 1 and nrdconta = 7950934 and nrdocmto = 35 and rowid = 'AAAS9aAB9AAAEZdAAD';
+  update crapneg set flgctitg = 2 where flgctitg = 1 and cdcooper = 1 and nrdconta = 8686955 and nrdocmto = 396 and rowid = 'AAAS9aAB9AAAEZdAAC';
+  update crapneg set flgctitg = 2 where flgctitg = 1 and cdcooper = 7 and nrdconta = 135119 and nrdocmto = 345 and rowid = 'AAAS9aAB9AAAEZdAAB';
+  commit;
 
 exception
   when others then  
