@@ -2365,18 +2365,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 AND crapass.nrdconta = pr_nrdconta;
             rw_crapass_pa cr_crapass_pa%ROWTYPE;
             
-
-			CURSOR cr_crapprm IS
-             SELECT
-                   C.DSVLRPRM
-               FROM 
-                   CRAPPRM C
-              WHERE 
-                   C.NMSISTEM = 'CRED'
-               AND C.CDCOOPER = 0
-               AND C.CDACESSO = 'PC_CRPS533_EMAIL';            
-            rw_crapprm cr_crapprm%ROWTYPE;
-
             /* Variaveis Locais pc_integra_todas_coop */
             vr_input_file utl_file.file_type;
             vr_flgrejei   BOOLEAN;
@@ -2474,7 +2462,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
             vr_vet_nmarquok GENE0002.typ_split := GENE0002.typ_split();
 
             vr_dircop_email VARCHAR2(200);
-            vr_dados_log    VARCHAR2(200);        
+            vr_dados_log    VARCHAR2(200);  
+            vr_dsvlrprm     crapprm.dsvlrprm%type;      
 
           BEGIN
 
@@ -5146,9 +5135,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                           || ' pc_crps533.pc_integra_todas_coop. '||SQLERRM;
                             RAISE vr_exc_erro;
                          END;
-/*
-1.5 - Gerar log detalhado do ocorrido, colocando os dados do cheque e conta que aconteceu o problema, já ajustar todos os pontos de tratamento de exceção da pc_crps533, para apresentar os detalhes do cheque sendo processado e o sqlerrm.
-*/
                          IF rw_crapfdc.incheque - 5 < 0 THEN
                            -- Não deixar fazer o update que deixa a situação negativo;
                            BEGIN
@@ -5185,23 +5171,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                          
                                          
                            -- Buscar o endereço do e-mail para envio                                         
-                           OPEN cr_crapprm;  
-                                        
-                           --Posicionar no proximo registro
-                           FETCH cr_crapprm INTO rw_crapprm;
-                        
-                           --Se encontrou registro
-                           IF cr_crapprm%NOTFOUND THEN
-                             vr_des_erro:= 'Erro ao inserir na tabela craprej. Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
-                             RAISE vr_exc_erro;
-                           ELSE
-                             CLOSE cr_crapprm;
-                           END IF;
-
+                           vr_dsvlrprm:= gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                                   pr_cdcooper => 0,
+                                                                   pr_cdacesso => 'PC_CRPS533_EMAIL');
+                           
                            -- Comando para enviar e-mail a OQS
                            GENE0003.pc_solicita_email(pr_cdcooper        => rw_crapfdc.cdcooper --> Cooperativa conectada
                                                      ,pr_cdprogra        => 'PC_CRPS533.PRC' --> Programa conectado
-                                                     ,pr_des_destino     => rw_crapprm.dsvlrprm --> Um ou mais detinatários separados por ';' ou ','
+                                                     ,pr_des_destino     => vr_dsvlrprm --> Um ou mais detinatários separados por ';' ou ','
                                                      ,pr_des_assunto     => 'PC_CRPS533 - Movimentação de cheque gerou situação inválida (negativa)' --> Assunto do e-mail
                                                      ,pr_des_corpo       => vr_des_corpo --> Corpo (conteudo) do e-mail
                                                      ,pr_des_anexo       => null --> Um ou mais anexos separados por ';' ou ','
@@ -5209,7 +5186,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                      ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
                                                      ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
                                                      ,pr_des_erro        => vr_dscritic);      
-                                                     
+                           IF vr_dscritic IS NOT NULL THEN -- verifica se deu erro mas não aborta
+                             -- Envio centralizado de log de erro
+                             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                                       ,pr_ind_tipo_log => 2 -- Erro tratato
+                                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                                           || vr_cdprogra || ' --> '
+                                                                           || vr_dscritic 
+                                                                           || vr_dados_log);
+                           END IF;                                                     
                          ELSE
                            -- Mudar situacao do cheque contra-ordenado
                            BEGIN
