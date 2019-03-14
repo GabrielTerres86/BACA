@@ -10001,7 +10001,7 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
     SELECT NVL(NVL(ctr.dtinivig, mnt.dtinivig), pro.dtpropos) dtinivig
           ,NVL(ctr.dtfimvig, mnt.dtfimvig) dtfimvig
           ,pro.vllimite
-          ,pro.insitlim
+          ,NVL(ctr.insitlim, pro.insitlim) insitlim
           ,case when nvl(pro.nrctrmnt,0) > 0 then pro.nrctrmnt
              else pro.nrctrlim 
            end nrctrlim_nvl
