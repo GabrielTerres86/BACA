@@ -717,7 +717,8 @@ function carregaDadosAlteraLimiteDscTitPropostas() {
 
 // Função para verificar se deve ser enviado e-mail ao PAC Sede
 function verificaEnvioEmail(idimpres,limorbor) {
-    showConfirmacao("Efetuar envio de e-mail para Sede?","Confirma&ccedil;&atilde;o - Aimaro","gerarImpressao(" + idimpres + "," + limorbor + ",'yes');","gerarImpressao(" + idimpres + "," + limorbor + ",'no');","sim.gif","nao.gif");
+	showConfirmacao("Efetuar envio de e-mail para Sede?","Confirma&ccedil;&atilde;o - Aimaro","verificaImpressaoProposta(" + idimpres + "," + limorbor + ",'yes');","verificaImpressaoProposta(" + idimpres + "," + limorbor + ",'no');","sim.gif","nao.gif");
+
 }
 
 // Função para gerar impressão em PDF
