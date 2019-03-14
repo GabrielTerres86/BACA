@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
     Programa : TELA_ATENDA_DSCTO_TIT
     Sistema  : Ayllos Web
     Autor    : Paulo Penteado (GFT) / Gustavo Sene (GFT)
-    Data     : Março - 2018                 Ultima atualizacao: 01/03/2019
+    Data     : Março - 2018                  Ultima atualizacao: 01/03/2019
 
     Dados referentes ao programa:
 

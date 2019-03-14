@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
   --
   --  Programa:  DSCT0001                       Antiga: generico/procedures/b1wgen0153.p
   --  Autor   : Alisson
-  --  Data    : Julho/2013                     Ultima Atualizacao: 16/02/2018
+  --  Data    : Julho/2013                      Ultima Atualizacao: 16/02/2018
   --
   --  Dados referentes ao programa:
   --

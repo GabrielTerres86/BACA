@@ -5,7 +5,7 @@ create or replace package cecred.ESTE0006 is
       Sistema  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN para Borderô de Títulos
       Sigla    : CADA
       Autor    : Andrew Albuquerque (GFT)
-      Data     : Abril/2018.                   Ultima atualizacao: 21/08/2018
+      Data     : Abril/2018.                    Ultima atualizacao: 21/08/2018
 
       Dados referentes ao programa:
       Frequencia: Sempre que solicitado

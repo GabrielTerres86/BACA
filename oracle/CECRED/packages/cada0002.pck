@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Renato Darosci - Supero
-  --  Data     : Julho/2014.                   Ultima atualizacao: 19/09/2016
+  --  Data     : Julho/2014.                    Ultima atualizacao: 19/09/2016
   --
   -- Dados referentes ao programa:
   --
