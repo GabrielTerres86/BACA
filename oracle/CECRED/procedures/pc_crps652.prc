@@ -2221,6 +2221,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
          vr_tab_categ('MAQUINA DE COSTURA'):= 'MAQCOSTURA';
          vr_tab_categ('AUTOMOVEL'):= 'AUTOMOVEL';
          vr_tab_categ('OUTROS VEICULOS'):= 'OUTROS VEICULOS';
+         vr_tab_categ('GALPAO'):= 'GALPAO';
+         vr_tab_categ('MAQUINA E EQUIPAMENTO'):= 'MAQEQUIP';                  
+         
        EXCEPTION
          WHEN OTHERS THEN
            --Variavel de erro recebe erro ocorrido
@@ -4544,6 +4547,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                    ,crapbpr.nranobem
                    ,crapbpr.nrmodbem
                    ,craplcr.tpctrato
+                   ,crapbpr.nrmatric
+                   ,crapbpr.nrcepend
+                   ,crapbpr.dsendere
+                   ,crapbpr.nrendere
+                   ,crapbpr.nmbairro
+                   ,crapbpr.nmcidade
+                   ,crapbpr.cdufende                   
              FROM crapbpr, crapepr, craplcr
              WHERE  craplcr.cdcooper = crapepr.cdcooper
              AND    craplcr.cdlcremp = crapepr.cdlcremp
@@ -4907,6 +4917,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                        vr_tab_idatribu(idx):= vr_atributo;
                        vr_atributo:= vr_atributo + 1;
                      END LOOP;
+                   WHEN 'GALPAO' THEN
+                     vr_atributo:= 490;
+                     FOR idx IN 1..10 LOOP
+                       vr_tab_idatribu(idx):= vr_atributo;
+                       vr_atributo:= vr_atributo + 1;
+                     END LOOP;                     
+                   WHEN 'MAQUINA E EQUIPAMENTO' THEN
+                     vr_atributo:= 500;
+                     FOR idx IN 1..6 LOOP
+                       vr_tab_idatribu(idx):= vr_atributo;
+                       vr_atributo:= vr_atributo + 1;
+                     END LOOP;                       
                    ELSE NULL;
                  END CASE;
                  --Categoria do Bem
@@ -5052,6 +5074,126 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                          pc_monta_linha(RPad(' ',17,' '),184,4);
                        WHEN 8 THEN
                          pc_monta_linha(RPad(rw_crapbpr.nrmodbem,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                     END CASE;
+                     --Gravar linha no arquivo
+                   pc_escreve_dado(NULL,4,pr_rw_crapcyb.dsdchave);
+                   END LOOP;
+                 END IF;
+                 -- P438 - Incluir Nova categoria GALPAO no arquivo Cyber
+                 IF rw_crapbpr.dscatbem = 'GALPAO' THEN
+                   --Indice
+                   FOR vr_nrindice IN 1..10 LOOP
+                     --Montar Linha
+                     pc_monta_linha('2',1,4);
+                     pc_monta_linha('1',2,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdcooper,'9999'),3,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdorigem,'9999'),7,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrdconta,'99999999'),11,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrctremp,'99999999'),19,4);
+                     pc_monta_linha(gene0002.fn_mask(rw_crapbpr.idseqbem,'zzzzzzzz9'),28,4);
+                     pc_monta_linha(RPad(vr_dscatcyb,10,' '),37,4);
+                     pc_monta_linha(gene0002.fn_mask(vr_tab_idatribu(vr_nrindice),'zzzzzz9'),47,4);
+                     CASE vr_nrindice
+                       WHEN 1 THEN -- 490
+                         -- Categoria Bem
+                         pc_monta_linha(RPad(rw_crapbpr.dscatbem,100,' '),54,4);                         
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 2 THEN -- 491
+                         -- Valor Mercado
+                         pc_monta_linha(RPad(' ',100,' '),54,4);
+                         pc_monta_linha(to_char(rw_crapbpr.vlmerbem*1000000,'00000000000000000000000000000'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                         
+                       WHEN 3 THEN -- 492
+                         -- Descricao                         
+                         pc_monta_linha(RPad(rw_crapbpr.dsbemfin,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 4 THEN -- 493
+                         -- Matricula
+                         pc_monta_linha(RPad(rw_crapbpr.nrmatric,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 5 THEN -- 494
+                         -- CEP
+                         pc_monta_linha(RPad(rw_crapbpr.nrcepend,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                         
+                       WHEN 6 THEN -- 495
+                         -- Rua
+                         pc_monta_linha(RPad(rw_crapbpr.dsendere,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 7 THEN -- 496
+                         -- Numero
+                         pc_monta_linha(RPad(rw_crapbpr.nrendere,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                         
+                       WHEN 8 THEN -- 497
+                         -- Bairro
+                         pc_monta_linha(RPad(rw_crapbpr.nmbairro,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                         
+                       WHEN 9 THEN -- 498     
+                         -- Cidade
+                         pc_monta_linha(RPad(rw_crapbpr.nmcidade,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                                                                                            
+                       WHEN 10 THEN -- 499                         
+                         -- UF
+                         pc_monta_linha(RPad(rw_crapbpr.cdufende,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                         
+                     END CASE;
+                     --Gravar linha no arquivo
+                   pc_escreve_dado(NULL,4,pr_rw_crapcyb.dsdchave);
+                   END LOOP;
+                 END IF;                  
+                 -- P438 - Incluir Nova categoria MAQUINA E EQUIPAMENTO no arquivo Cyber
+                 IF rw_crapbpr.dscatbem = 'MAQUINA E EQUIPAMENTO' THEN
+                   --Indice
+                   FOR vr_nrindice IN 1..6 LOOP
+                     --Montar Linha
+                     pc_monta_linha('2',1,4);
+                     pc_monta_linha('1',2,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdcooper,'9999'),3,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdorigem,'9999'),7,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrdconta,'99999999'),11,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrctremp,'99999999'),19,4);
+                     pc_monta_linha(gene0002.fn_mask(rw_crapbpr.idseqbem,'zzzzzzzz9'),28,4);
+                     pc_monta_linha(RPad(vr_dscatcyb,10,' '),37,4);
+                     pc_monta_linha(gene0002.fn_mask(vr_tab_idatribu(vr_nrindice),'zzzzzz9'),47,4);
+                     CASE vr_nrindice
+                       WHEN 1 THEN -- 500
+                         -- Categoria Bem
+                         pc_monta_linha(RPad(rw_crapbpr.dscatbem,100,' '),54,4);                         
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 2 THEN -- 501
+                         -- Descrição                         
+                         pc_monta_linha(RPad(rw_crapbpr.dsbemfin,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 3 THEN --502
+                         -- Valor Mercado
+                         pc_monta_linha(RPad(' ',100,' '),54,4);
+                         pc_monta_linha(to_char(rw_crapbpr.vlmerbem*1000000,'00000000000000000000000000000'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 4 THEN -- 503
+                         -- Modelo Fab
+                         pc_monta_linha(RPad(rw_crapbpr.nrmodbem,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 5 THEN -- 504
+                         -- Ano Fab
+                         pc_monta_linha(RPad(rw_crapbpr.nranobem,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                         
+                       WHEN 6 THEN -- 505
+                         -- Nr serie
+                         pc_monta_linha(RPad(rw_crapbpr.dschassi,100,' '),54,4);
                          pc_monta_linha(RPad(' ',30,'0'),154,4);
                          pc_monta_linha(RPad(' ',17,' '),184,4);
                      END CASE;
