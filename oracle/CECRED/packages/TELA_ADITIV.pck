@@ -1422,7 +1422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
             ,bpr.nrrenava
             ,bpr.tpchassi
             ,bpr.ufdplaca
-            ,bpr.uflicenc             
+            ,bpr.uflicenc
         FROM crapbpr bpr
        WHERE bpr.cdcooper = pr_cdcooper
          AND bpr.nrdconta = pr_nrdconta
@@ -2858,18 +2858,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     vr_nmendter := vr_dsdireto ||'/rl/'||pr_dsiduser;
     
     IF TRIM(pr_dsiduser) IS NOT NULL THEN
-    vr_dscomand := 'rm '||vr_nmendter||'* 2>/dev/null';
-    
-    --Executar o comando no unix
-    GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                         ,pr_des_comando => vr_dscomand
-                         ,pr_typ_saida   => vr_typsaida
-                         ,pr_des_saida   => vr_dscritic);
-    --Se ocorreu erro dar RAISE
-    IF vr_typsaida = 'ERR' THEN
-      vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
-      RAISE vr_exc_erro;
-    END IF; 
+      vr_dscomand := 'rm '||vr_nmendter||'* 2>/dev/null';
+      
+      --Executar o comando no unix
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_dscomand
+                           ,pr_typ_saida   => vr_typsaida
+                           ,pr_des_saida   => vr_dscritic);
+      --Se ocorreu erro dar RAISE
+      IF vr_typsaida = 'ERR' THEN
+        vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF; 
     END IF;
     
     --> Montar nome do arquivo
@@ -4299,6 +4299,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                                           par_nrendere  => vr_crapass.nrendere,
                                           par_complend  => vr_crapass.complend,
                                           par_nrcxapst  => vr_crapass.nrcxapst,
+                                          par_dtnascto  => null,
                                           par_cdcritic  => pr_cdcritic,
                                           par_dscritic  => pr_dscritic);
       ELSE
