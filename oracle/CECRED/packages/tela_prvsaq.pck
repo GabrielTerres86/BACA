@@ -161,6 +161,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_prvsaq IS
   --                (Guilherme Kuhnen - INC0027494)
   --
   --              30-01-2019 - INC0031047 Permitir consultar agendamentos no IB (Jose Dill - Mouts)
+  --
+  --              22/02/2019 - INC0032317 - 
+  --
+  --
   ---------------------------------------------------------------------------
 
 PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcooper%TYPE      -->CODIGO COOPER
@@ -2196,7 +2200,7 @@ PROCEDURE pc_excluir_provisao(pr_cdcooper       IN tbcc_provisao_especie.cdcoope
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
       vr_valor tbcc_provisao_especie.vlsaque%TYPE;
-      vr_dhsaque tbcc_provisao_especie.dhprevisao_operacao%TYPE;
+      vr_dhsaque timestamp; --tbcc_provisao_especie.dhprevisao_operacao%TYPE; --INC0032317
 
       ---------->> CURSORES <<--------
       --> Buscar dados operador
@@ -2223,14 +2227,14 @@ PROCEDURE pc_excluir_provisao(pr_cdcooper       IN tbcc_provisao_especie.cdcoope
      --CURSOR PROVISAO ESPECIE
       CURSOR cr_tbcc_provisao_especie(pr_cdcooper   IN tbcc_provisao_especie.cdcooper%TYPE,
                                       pr_nrcpfcgc  IN tbcc_provisao_especie.nrcpfcgc%TYPE,
-                                      pr_dhsaque IN tbcc_provisao_especie.dhprevisao_operacao%TYPE,
+                                      pr_dtsaque IN tbcc_provisao_especie.dhprevisao_operacao%TYPE,  --INC0032317
                                       pr_nrdconta IN tbcc_provisao_especie.nrdconta%TYPE) IS
         SELECT m.*
           FROM tbcc_provisao_especie m
          WHERE m.cdcooper = pr_cdcooper AND
                m.nrcpfcgc = pr_nrcpfcgc AND
                m.nrdconta = pr_nrdconta AND
-               m.dhprevisao_operacao  = pr_dhsaque;
+               m.dhprevisao_operacao  = pr_dtsaque;
       rw_tbcc_provisao_especie tbcc_provisao_especie%ROWTYPE;
 
     --------------->>> SUB-ROTINA <<<-----------------
@@ -2257,8 +2261,7 @@ PROCEDURE pc_excluir_provisao(pr_cdcooper       IN tbcc_provisao_especie.cdcoope
     END;
 
     BEGIN
-      
-    
+          
       pr_des_erro := 'OK';
       -- Extrai dados do xml
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
@@ -2297,10 +2300,11 @@ PROCEDURE pc_excluir_provisao(pr_cdcooper       IN tbcc_provisao_especie.cdcoope
       END IF;
 
       vr_dhsaque := TO_DATE(pr_dhsaque,'DD/MM/YYYY HH24:MI:SS');
+      
       --> Buscar dados do PROVISAO
       OPEN cr_tbcc_provisao_especie(pr_cdcooper => pr_cdcooper,
                                     pr_nrcpfcgc => pr_nrcpfcnpj,
-                                    pr_dhsaque  => vr_dhsaque,
+                                    pr_dtsaque  => vr_dhsaque, --INC0032317
                                     pr_nrdconta => pr_nrdconta);
       FETCH cr_tbcc_provisao_especie INTO rw_tbcc_provisao_especie;
       -- Se nao encontrar
