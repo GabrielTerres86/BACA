@@ -55,7 +55,12 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TITCTO IS
           qttitulo    INTEGER,
           vltitulo    NUMBER,
           qtcredit    INTEGER,
-          vlcredit    NUMBER
+          vlcredit    NUMBER,
+          qtprejui    INTEGER,
+          vlprejui    NUMBER,
+          qtestorn    INTEGER,
+          vlestorn    NUMBER
+          
   );
   TYPE typ_tab_dados_conciliacao IS TABLE OF typ_reg_dados_conciliacao INDEX BY BINARY_INTEGER;
 
@@ -1280,10 +1285,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     vr_vlsldant NUMBER;
     vr_qtcredit NUMBER;
     vr_vlcredit NUMBER;
+    vr_qtprejui NUMBER;
+    vr_vlprejui NUMBER;
+    vr_qtestorn NUMBER;
+    vr_vlestorn NUMBER;
     
     vr_cdhisven VARCHAR2(1000);
     vr_cdhisant VARCHAR2(1000);
     vr_cdhisrec VARCHAR2(1000);
+    vr_cdhisprj VARCHAR2(1000);
+    vr_cdhisest VARCHAR2(1000);
     
     -- Resgatados no dia
     CURSOR cr_resgatados IS
@@ -1305,6 +1316,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        AND lcb.dtmvtolt = pr_dtvencto
        AND lcb.cdcooper = pr_cdcooper;
     rw_vencidos_no_dia cr_vencidos_no_dia%ROWTYPE;
+    
+    -- Prejuizo no dia
+    CURSOR cr_prejuizo_no_dia IS
+    SELECT COUNT(1) qtprejui
+          ,nvl(SUM(vllanmto),0) vlprejui
+      FROM tbdsct_lancamento_bordero lcb 
+     WHERE lcb.cdhistor IN (SELECT to_number(regexp_substr(vr_cdhisprj,'[^,]+', 1, LEVEL)) FROM dual
+                            CONNECT BY regexp_substr(vr_cdhisprj, '[^,]+', 1, LEVEL) IS NOT NULL)
+       AND lcb.dtmvtolt = pr_dtvencto
+       AND lcb.cdcooper = pr_cdcooper;
+    rw_prejuizo_no_dia cr_prejuizo_no_dia%ROWTYPE;
+    
+    -- Estorno no dia
+    CURSOR cr_estorno_no_dia IS
+    SELECT COUNT(1) qtestorn
+          ,nvl(SUM(vllanmto),0) vlestorn
+      FROM tbdsct_lancamento_bordero lcb 
+     WHERE lcb.cdhistor IN (SELECT to_number(regexp_substr(vr_cdhisest,'[^,]+', 1, LEVEL)) FROM dual
+                            CONNECT BY regexp_substr(vr_cdhisest, '[^,]+', 1, LEVEL) IS NOT NULL)
+       AND lcb.dtmvtolt = pr_dtvencto
+       AND lcb.cdcooper = pr_cdcooper;
+    rw_estorno_no_dia cr_estorno_no_dia%ROWTYPE;
     
     -- Recebidos no dia
     CURSOR cr_recebidos_dia IS
@@ -1402,6 +1435,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     END IF;
     CLOSE cr_vencidos_no_dia;
     
+    -- Prejuizo no dia
+    vr_cdhisprj := PREJ0005.vr_cdhistordsct_principal    ||','|| --2754
+                   PREJ0005.vr_cdhistordsct_juros_60_rem ||','|| --2755
+                   PREJ0005.vr_cdhistordsct_juros_60_mor ||','|| --2761
+                   PREJ0005.vr_cdhistordsct_juros_60_mul;        --2879
+  
+    OPEN cr_prejuizo_no_dia;
+    FETCH cr_prejuizo_no_dia INTO rw_prejuizo_no_dia;
+    IF cr_prejuizo_no_dia%FOUND THEN
+      vr_qtprejui := rw_prejuizo_no_dia.qtprejui * -1;
+      vr_vlprejui := rw_prejuizo_no_dia.vlprejui * -1;
+    END IF;
+    CLOSE cr_prejuizo_no_dia;
+    
+    -- Estornado no dia
+    vr_cdhisest := DSCT0003.vr_cdhistordsct_est_pgto       ||','|| --2811
+                   DSCT0003.vr_cdhistordsct_est_multa      ||','|| --2812
+                   DSCT0003.vr_cdhistordsct_est_juros      ||','|| --2813
+                   DSCT0003.vr_cdhistordsct_est_pgto_ava   ||','|| --2814
+                   DSCT0003.vr_cdhistordsct_est_multa_ava  ||','|| --2815
+                   DSCT0003.vr_cdhistordsct_est_juros_ava  ||','|| --2816
+                   DSCT0003.vr_cdhistordsct_est_apro_multa ||','|| --2880
+                   DSCT0003.vr_cdhistordsct_est_apro_juros;        --2881
+                   
+    OPEN cr_estorno_no_dia;
+    FETCH cr_estorno_no_dia INTO rw_estorno_no_dia;
+    IF cr_estorno_no_dia%FOUND THEN
+      vr_qtestorn := rw_estorno_no_dia.qtestorn;
+      vr_vlestorn := rw_estorno_no_dia.vlestorn;
+    END IF;
+    CLOSE cr_estorno_no_dia;
+    
     -- Recebidos no dia
     vr_cdhisrec := dsct0003.vr_cdhistordsct_liberacred ||','|| --2665
                    dsct0003.vr_cdhistordsct_apropjurmra||','|| --2668
@@ -1416,7 +1481,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     CLOSE cr_recebidos_dia;
     
     -- Saldo anterior
-    vr_cdhisant := dsct0001.vr_cdhistordsct_resbaix||','||vr_cdhisrec||','||vr_cdhisven;
+    vr_cdhisant := dsct0001.vr_cdhistordsct_resbaix||','||vr_cdhisrec||','||vr_cdhisven||','|| vr_cdhisprj ||',' || vr_cdhisest;
     
     OPEN cr_saldo_anterior;
     FETCH cr_saldo_anterior INTO rw_saldo_anterior;
@@ -1430,8 +1495,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     CLOSE cr_saldo_ant_qtd;
     
     -- Saldo atual
-    vr_qtcredit := vr_qtsldant + vr_qtvencid + vr_qttitulo + vr_qtderesg ;
-    vr_vlcredit := vr_vlsldant + vr_vlvencid + vr_vltitulo + vr_vlderesg ;
+    vr_qtcredit := vr_qtsldant + vr_qtvencid + vr_qttitulo + vr_qtderesg + vr_qtprejui + vr_qtestorn;
+    vr_vlcredit := vr_vlsldant + vr_vlvencid + vr_vltitulo + vr_vlderesg + vr_vlprejui + vr_vlestorn ;
 
     pr_tab_dados_conciliacao(0).dtvencto := pr_dtvencto;
     pr_tab_dados_conciliacao(0).qtsldant := vr_qtsldant; -- Saldo Anterior
@@ -1442,6 +1507,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     pr_tab_dados_conciliacao(0).vlvencid := vr_vlvencid; -- Vencimentos no dia
     pr_tab_dados_conciliacao(0).qttitulo := vr_qttitulo; -- Titulos Recebidos
     pr_tab_dados_conciliacao(0).vltitulo := vr_vltitulo; -- Titulos Recebidos
+    pr_tab_dados_conciliacao(0).qtprejui := vr_qtprejui; -- Prejuizo no dia
+    pr_tab_dados_conciliacao(0).vlprejui := vr_vlprejui; -- Prejuizo no dia
+    pr_tab_dados_conciliacao(0).qtestorn := vr_qtestorn; -- Estorno no dia
+    pr_tab_dados_conciliacao(0).vlestorn := vr_vlestorn; -- Estorno no dia
     pr_tab_dados_conciliacao(0).qtcredit := vr_qtcredit; -- SALDO ATUAL
     pr_tab_dados_conciliacao(0).vlcredit := vr_vlcredit; -- SALDO ATUAL
 
@@ -1584,6 +1653,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                         '<vltitulo>' || vr_tab_dados_novo(0).vltitulo || '</vltitulo>' ||
                         '<qtcredit>' || vr_tab_dados_novo(0).qtcredit || '</qtcredit>' ||
                         '<vlcredit>' || vr_tab_dados_novo(0).vlcredit || '</vlcredit>' ||
+                        '<qtprejui>' || vr_tab_dados_novo(0).qtprejui || '</qtprejui>' ||
+                        '<vlprejui>' || vr_tab_dados_novo(0).vlprejui || '</vlprejui>' ||
+                        '<qtestorn>' || vr_tab_dados_novo(0).qtestorn || '</qtestorn>' ||
+                        '<vlestorn>' || vr_tab_dados_novo(0).vlestorn || '</vlestorn>' ||
                      '</novo>'
                           );
       END IF;

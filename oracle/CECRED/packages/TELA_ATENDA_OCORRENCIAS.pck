@@ -744,7 +744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
     Objetivo  : Retornar a listagem de contratos de acordos e riscos(Daniel AMcom).
 
-    Alteracoes:
+    Alteracoes: 06/09/2018 - Alteracao para reconhecer acordos com desconto de titulo (Cassia de Oliveira - GFT)
     ..............................................................................*/
 
     DECLARE
@@ -758,7 +758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
               ,tbrecup_acordo_contrato.nracordo AS nracordo
               ,tbrecup_acordo.nrdconta AS nrdconta
               ,tbrecup_acordo_contrato.nrctremp AS nrctremp
-              ,DECODE(tbrecup_acordo_contrato.cdorigem,1,'Estouro de Conta',2,'Empréstimo',3,'Empréstimo','Inexistente') AS dsorigem
+              ,DECODE(tbrecup_acordo_contrato.cdorigem,1,'Estouro de Conta',2,'Empréstimo',3,'Empréstimo',4,'Desconto de Título','Inexistente') AS dsorigem
           FROM tbrecup_acordo_contrato
           JOIN tbrecup_acordo
             ON tbrecup_acordo.nracordo = tbrecup_acordo_contrato.nracordo
