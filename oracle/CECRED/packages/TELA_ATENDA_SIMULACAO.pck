@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_SIMULACAO_437 IS
+CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_SIMULACAO IS
 
   /* Type das parcelas do Pos-Fixado */
   TYPE typ_reg_tab_parcelas IS RECORD(
@@ -97,9 +97,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_SIMULACAO_437 IS
                               ,pr_tpemprst	IN INTEGER
                               ,pr_idcarenc	IN INTEGER
                               ,pr_dtcarenc	IN VARCHAR2
-                              ,pr_vlparepr IN tbepr_simulacao_parcela.vlparepr%TYPE -- josiane
-                              ,pr_vliofepr IN crapsim.vliofepr%TYPE -- josiane
                               ,pr_flgerlog IN INTEGER                --> falg para log da operacao
+                              ,pr_vlparepr IN INTEGER DEFAULT NULL 
+                              ,pr_vliofepr IN INTEGER DEFAULT NULL 
                               ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -133,21 +133,22 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_SIMULACAO_437 IS
 
   FUNCTION fn_retorna_coop_consig (pr_cdcooper crapprm.cdcooper%TYPE) RETURN VARCHAR2;                                                                       
  
-END TELA_ATENDA_SIMULACAO_437;
+END TELA_ATENDA_SIMULACAO;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO_437 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
   ---------------------------------------------------------------------------
   --
   --  Programa : TELA_ATENDA_SIMULACAO
   --  Sistema  : Ayllos Web
   --  Autor    : Rafael faria - Supero
-  --  Data     : Marco - 2017                 Ultima atualizacao: 
+  --  Data     : Marco - 2017                 Ultima atualizacao: 14/03/2019
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela Simulacao dentro da ATENDA
   --
-  -- Alteracoes: 
+  -- Alteracoes: 14/03/2019 - Inclusão dos parametros pr_vlparepr e pr_vliofepr
+  --             na rotina pc_grava_simulação ( Josiane Stiehler - AMcom)
   --
   ---------------------------------------------------------------------------
   
@@ -1010,9 +1011,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO_437 IS
                               ,pr_tpemprst IN INTEGER
                               ,pr_idcarenc IN INTEGER
                               ,pr_dtcarenc IN VARCHAR2
-                              ,pr_vlparepr IN tbepr_simulacao_parcela.vlparepr%TYPE -- josiane
-                              ,pr_vliofepr IN crapsim.vliofepr%TYPE -- josiane
                               ,pr_flgerlog IN INTEGER                --> falg para log da operacao
+                              ,pr_vlparepr IN INTEGER DEFAULT NULL   
+                              ,pr_vliofepr IN INTEGER DEFAULT NULL  
                               ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -1120,7 +1121,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO_437 IS
    END IF;
    --
    --/
-   if nvl(pr_vlparepr,0) = 0 then
    empr0018.pc_grava_simulacao(pr_cdcooper => vr_cdcooper,
                                pr_cdagenci => vr_cdagenci,
                                pr_nrdcaixa => vr_nrdcaixa,
@@ -1156,45 +1156,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO_437 IS
                                pr_tpemprst => pr_tpemprst,
                                pr_idcarenc => pr_idcarenc,
                                pr_dtcarenc => vr_dtcarenc,
-                               pr_vlparepr => pr_vlparepr, -- josiane
-                               pr_vliofepr => pr_vliofepr); -- josiane
-    else
- empr0018.pc_grava_simulacao(pr_cdcooper => vr_cdcooper,
-                               pr_cdagenci => vr_cdagenci,
-                               pr_nrdcaixa => vr_nrdcaixa,
-                               pr_cdoperad => vr_cdoperad,
-                               pr_nmdatela => vr_nmdatela,
-                               pr_cdorigem => vr_idorigem,
-                               pr_nrdconta => pr_nrdconta,
-                               pr_idseqttl => pr_idseqttl, 
-                               pr_dtmvtolt => vr_dtmvtolt, 
-                               pr_flgerlog => sys.diutil.int_to_bool(pr_flgerlog),
-                               pr_cddopcao => pr_cddopcao, 
-                               pr_nrsimula => pr_nrsimula, 
-                               pr_cdlcremp => pr_cdlcremp, 
-                               pr_vlemprst => pr_vlemprst,
-                               pr_qtparepr => pr_qtparepr,
-                               pr_dtlibera => vr_dtlibera,
-                               pr_dtdpagto => vr_dtdpagto,
-                               pr_percetop => pr_percetop,
-                               pr_cdfinemp => pr_cdfinemp,
-                               pr_idfiniof => pr_idfiniof,
-                               pr_nrgravad => vr_nrgravad,
-                               pr_txcetano => vr_txcetano,
-                               pr_cdcritic => vr_cdcritic,
-                               pr_des_erro => vr_dscritic, 
-                               pr_des_reto => vr_des_reto, 
-                               pr_tab_erro => vr_tab_erro,
-                               pr_retorno  => vr_retorno,
-                               pr_flggrava => pr_flggrava ,
-                               pr_idpessoa => pr_idpessoa ,
-                               pr_nrseq_email => pr_nrseq_email ,
-                               pr_nrseq_telefone => pr_nrseq_telefone,
-                               pr_idsegmento => pr_idsegmento,
-                               pr_tpemprst => pr_tpemprst,
-                               pr_idcarenc => pr_idcarenc,
-                               pr_dtcarenc => vr_dtcarenc);
-   end if;                                                              
+                               pr_vlparepr => pr_vlparepr, 
+                               pr_vliofepr => pr_vliofepr);
+                                                                
   --
    IF NOT ( vr_des_reto = 'OK' )
      THEN
@@ -1440,7 +1404,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO_437 IS
   --
   vr_cdcritic crapcri.cdcritic%TYPE;
   vr_dscritic crapcri.dscritic%TYPE;        
-
+  rw_crapdat btch0001.cr_crapdat%ROWTYPE; 
+  
   -- tipo da pessoa
   CURSOR cr_crapass (pr_cdcooper IN NUMBER)IS
     SELECT a.inpessoa
@@ -1470,15 +1435,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO_437 IS
                             AND t.idseqttl = 1); 
   
   -- Busca o vencimento da 1ª parcela
-  CURSOR cr_vecto (pr_cdcooper IN NUMBER) IS
+  CURSOR cr_vecto (pr_cdcooper IN NUMBER,
+                   pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
     SELECT MIN(b.dtvencimento) dtvencimento
       FROM tbcadast_empresa_consig a,
            tbcadast_emp_consig_param b
      WHERE a.idemprconsig = b.idemprconsig
        AND a.cdcooper = pr_cdcooper
        AND a.indconsignado = 1
-       AND TO_CHAR(sysdate,'dd/mm') BETWEEN TO_CHAR(b.dtinclpropostade,'dd/mm') 
-                                        AND TO_CHAR(b.dtinclpropostaate,'dd/mm')
+       AND TO_DATE(TO_CHAR(pr_dtmvtolt,'dd/mm'),'dd/mm') BETWEEN TO_DATE(TO_CHAR(b.dtinclpropostade, 'dd/mm'),'dd/mm')
+                                                             AND TO_DATE(TO_CHAR(b.dtinclpropostaate,'dd/mm'),'dd/mm')
        AND a.cdempres IN (SELECT t.cdempres
                             FROM crapttl t
                            WHERE t.cdcooper = pr_cdcooper
@@ -1508,6 +1474,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO_437 IS
        RAISE vr_saida;
     END IF;
     
+        
+    vr_tpmodcon_lcr:= -1;
     -- verifica o modalidade do consignado da linha de crédito 
     FOR rg_craplcr IN cr_craplcr(pr_cdcooper => vr_cdcooper)
     LOOP
@@ -1516,23 +1484,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO_437 IS
       if rg_craplcr.cdmodali <> '02' OR
          rg_craplcr.cdsubmod <> '02'THEN
          vr_cdcritic:= 0;
-         vr_cdcritic:= null;
+         vr_dscritic:= null;
          RAISE vr_saida;
       end if;
-      
       vr_tpmodcon_lcr:= rg_craplcr.tpmodcon;
     END LOOP; 
-   
-    FOR rg_crapass IN cr_crapass (pr_cdcooper => vr_cdcooper)
-    LOOP
-      -- se o tipo de pessoa for diferente de pessoa fisica, não deixa cadastrar
-      IF rg_crapass.inpessoa <> 1 THEN
-         vr_cdcritic:= 0;
-         vr_cdcritic:= 'Operacao nao permitida para este Tipo de Pessoa';
-         RAISE vr_exc_erro;
-      END IF;
-    END LOOP;
     
+    -- valida o tipo de pessoa somente quando a linha de crédito for consignado
+    IF vr_tpmodcon_lcr > 0 THEN
+      FOR rg_crapass IN cr_crapass (pr_cdcooper => vr_cdcooper)
+      LOOP
+        -- se o tipo de pessoa for diferente de pessoa fisica, não deixa cadastrar
+        IF rg_crapass.inpessoa <> 1 THEN
+           vr_cdcritic:= 0;
+           vr_dscritic:= 'Operacao nao permitida para este Tipo de Pessoa';
+           RAISE vr_exc_erro;
+        END IF;
+      END LOOP;
+    END IF;
+   
+    -- Leitura do calendário da cooperativa
+    OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_erro;
+    ELSE
+      -- Fechar o cursor
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+
+    vr_tpmodcon_emp:= -1;
     -- verifica a modalidade do consignado cadastrado para a empresa do cooperado
     FOR rg_tpmodcon IN cr_tpmodcon (pr_cdcooper => vr_cdcooper)
     LOOP
@@ -1548,11 +1534,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO_437 IS
     END IF;
     
     -- busca o 1º vencimento da parcela
-    FOR rg_vecto in cr_vecto (pr_cdcooper => vr_cdcooper)
+    FOR rg_vecto in cr_vecto (pr_cdcooper => vr_cdcooper,
+                              pr_dtmvtolt => rw_crapdat.dtmvtolt)
     LOOP
       vr_dtvencimento:= rg_vecto.dtvencimento;
     END LOOP;
-    vr_dtliberacao:= trunc(sysdate);
+    
+    vr_dtliberacao:= trunc(rw_crapdat.dtmvtolt);
 
     -- Monta documento XML de ERRO
     dbms_lob.createtemporary(vr_clob, TRUE);
@@ -1569,7 +1557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO_437 IS
                            ,pr_texto_completo => vr_xml_temp
                            ,pr_texto_novo     => '<consignado>'||  
                                                  '  <dtliberacao>' ||to_char(vr_dtliberacao,'dd/mm/yyyy') ||'</dtliberacao>'||                                                                                                      
-                                                 '  <dtvencimento>' ||to_char(vr_dtvencimento,'dd/mm/')||to_char(sysdate,'yyyy') ||'</dtvencimento>'||                                                       
+                                                 '  <dtvencimento>' ||to_char(vr_dtvencimento,'dd/mm/')||to_char(rw_crapdat.dtmvtolt,'yyyy') ||'</dtvencimento>'||                                                       
                                                  '</consignado>');
 
     IF vr_dtvencimento is null THEN
@@ -1675,5 +1663,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO_437 IS
     
   END fn_retorna_coop_consig;
 
-END TELA_ATENDA_SIMULACAO_437;
+END TELA_ATENDA_SIMULACAO;
 /
