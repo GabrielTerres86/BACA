@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio
-   Data    : Marco/2005                       Ultima atualizacao: 27/04/2018
+   Data    : Marco/2005                       Ultima atualizacao: 19/11/2018
 
    Dados referentes ao programa:
 
@@ -170,6 +170,8 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
                             Cancelamento automático de seguro para debitos não efetuados;
                             Envio de mensagens para cooperados que tiveram seguros cancelados por inadimplência.
                             Marcel Kohls (AMcom)
+                            
+               19/11/2018 - PRB0040434 Tratamento para gerar o arquivo RM somente no batch (Carlos)
 
                ............................................................................. */
   -- Buscar os dados da cooperativa
@@ -182,6 +184,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
       from crapcop
      where cdcooper = pr_cdcooper;
   rw_crapcop     cr_crapcop%rowtype;
+	
   -- Buscar informações de seguros residenciais que ainda não foram debitados no mês
   CURSOR cr_crapseg (pr_cdcooper in crapseg.cdcooper%TYPE,
                      pr_nrctares in crapseg.nrdconta%TYPE,
@@ -219,6 +222,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        AND sld.nrdconta  = crapseg.nrdconta
      order by dtmvtolt, cdagenci, cdbccxlt, nrdolote, nrdconta, nrctrseg;
   rw_crapseg     cr_crapseg%rowtype;
+	
   -- Buscar informações da seguradora
   cursor cr_crapcsg (pr_cdcooper in crapcsg.cdcooper%type,
                      pr_cdsegura in crapcsg.cdsegura%type) is
@@ -228,6 +232,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
      where crapcsg.cdcooper = pr_cdcooper
        and crapcsg.cdsegura = pr_cdsegura;
   rw_crapcsg     cr_crapcsg%rowtype;
+	
   -- Buscar informações dos planos de seguro
   cursor cr_craptsg (pr_cdcooper in craptsg.cdcooper%type,
                      pr_tpplaseg in craptsg.tpplaseg%type,
@@ -481,6 +486,8 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
   vr_nrcepend      crawseg.nrcepend%type;
   vr_complend      crawseg.complend%type;
   vr_nrendres      crawseg.nrendres%type;
+  vr_nrseqdig      craplot.nrseqdig%type; -- REMOCAO LOTE
+  
   -- PL/Table para armazenar o resumo
   type typ_arquivo is record (tpdlinha  number(1),
                               dsdlinha  varchar2(1000));
@@ -812,11 +819,90 @@ begin
     vr_lcm_nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1;
     vr_lcm_vllanmto := vr_vlpreseg;
 
+	  -- REMOCAO LOTE 
+    -- APENAS CRIAR LOTE CASO NÃO EXISTA 
+		    	
+    -- Posiciona a capa de lote
+    OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+            pr_dtmvtopr => vr_dtmvtolt,
+            pr_cdagenci => 1,
+            pr_cdbccxlt => 100,
+            pr_nrdolote => 4151);
+    FETCH cr_craplot
+    INTO rw_craplot;
+
+    IF cr_craplot%NOTFOUND THEN
+      -- Fechar o cursor pois haverá raise
+      CLOSE cr_craplot;
+    		
+        --Criar lote
+        BEGIN
+        INSERT INTO craplot
+          (craplot.cdcooper
+          ,craplot.dtmvtolt
+          ,craplot.cdagenci
+          ,craplot.cdbccxlt
+          ,craplot.nrdolote
+          ,craplot.tplotmov
+          ,craplot.cdoperad
+          ,craplot.cdhistor
+          ,craplot.dtmvtopg
+          ,craplot.nrseqdig
+          ,craplot.qtcompln
+          ,craplot.qtinfoln
+          ,craplot.vlcompcr
+          ,craplot.vlinfocr
+          ,craplot.vlcompdb
+          ,craplot.vlinfodb)
+        VALUES
+          (pr_cdcooper
+          ,vr_dtmvtolt
+          ,1
+          ,100
+          ,4151
+          ,1
+          ,'1'  -- root
+          ,rw_crapcsg.cdhstcas##2
+          ,vr_dtmvtolt
+          ,0  -- craplot.nrseqdig
+          ,0  -- craplot.qtcompln
+          ,0  -- craplot.qtinfoln
+          ,0  -- craplot.vlcompcr
+          ,0  -- craplot.vlinfocr
+          ,0  -- craplot.vlcompdb
+          ,0) -- craplot.vlinfodb
+          ;
+        EXCEPTION
+        WHEN Dup_Val_On_Index THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Lote ja cadastrado.';
+          RAISE vr_exc_saida;
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao inserir na tabela de lotes. ' ||
+                 sqlerrm;
+          RAISE vr_exc_saida;
+        END;
+    		
+    END IF;
+
+    CLOSE cr_craplot;
+        									 
     --debita apenas se qtde de dias devedor < 60
     IF rw_crapseg.qtddsdev < 60 THEN
+      -- atribuir sequencia de lancamento
+      vr_nrseqdig := fn_sequence('CRAPLOT'
+                                ,'NRSEQDIG'
+                                ,''||pr_cdcooper||';'
+                                   ||to_char(vr_dtmvtolt,'DD/MM/RRRR')||';'
+                                   ||'1;'
+                                   ||'100;'
+                                   ||'4151');
+                                 
       LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => 1 --rw_craplot.cdagenci
                                         , pr_cdbccxlt => 100 --rw_craplot.cdbccxlt
                                         , pr_cdhistor => rw_crapcsg.cdhstcas##2 -- Historico para debito
+										                    , pr_nrseqdig => vr_nrseqdig
                                         , pr_dtmvtolt => vr_dtmvtolt
                                         , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
                                         , pr_nrdconta => rw_crapseg.nrdconta
@@ -826,7 +912,7 @@ begin
                                         , pr_nrdolote => 4151 --rw_craplot.nrdolote
                                         , pr_cdcooper => pr_cdcooper
                                         , pr_vllanmto => vr_vlpreseg
-                                        , pr_inprolot => 1   -- processa o lote na própria procedure
+                                        , pr_inprolot => 0   -- não processa o lote na própria procedure REMOCAO LOTE
                                         , pr_tplotmov => 1
                                         , pr_tab_retorno => vr_tab_retorno
                                         , pr_incrineg => vr_incrineg
@@ -839,6 +925,16 @@ begin
     END IF;
 
     if vr_cdcritic = 92 then -- se critica = Lançamento já existe, então
+     
+      -- atribuir sequencia de lancamento
+      vr_nrseqdig := fn_sequence('CRAPLOT'
+                                ,'NRSEQDIG'
+                                ,''||pr_cdcooper||';'
+                                   ||to_char(vr_dtmvtolt,'DD/MM/RRRR')||';'
+                                   ||'1;'
+                                   ||'100;'
+                                   ||'4151');
+                                 
       --- lançar novamente somente incrementando o nr doc
       --- feito isso pois o debitador executa esse programa várias vezes ao dia e se tiver duas parcelas 
       --- atrasadas, pode ocorrer de na segunda execução do dia, debitar a segunda parcela atrasada e nesse caso 
@@ -846,6 +942,7 @@ begin
               LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => 1 --rw_craplot.cdagenci
                                         , pr_cdbccxlt => 100 --rw_craplot.cdbccxlt
                                         , pr_cdhistor => rw_crapcsg.cdhstcas##2 -- Historico para debito
+										                    , pr_nrseqdig => vr_nrseqdig
                                         , pr_dtmvtolt => vr_dtmvtolt
                                         , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
                                         , pr_nrdconta => rw_crapseg.nrdconta
@@ -855,7 +952,7 @@ begin
                                         , pr_nrdolote => 4151 --rw_craplot.nrdolote
                                         , pr_cdcooper => pr_cdcooper
                                         , pr_vllanmto => vr_vlpreseg
-                                        , pr_inprolot => 1   -- processa o lote na própria procedure
+                                        , pr_inprolot => 0   -- não processa o lote na própria procedure REMOCAO LOTE
                                         , pr_tplotmov => 1
                                         , pr_tab_retorno => vr_tab_retorno
                                         , pr_incrineg => vr_incrineg
@@ -912,7 +1009,7 @@ begin
           GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => '1'
                               ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => 'AYLLOS' --vr_dsorigem
+                              ,pr_dsorigem => 'AIMARO' --vr_dsorigem
                               ,pr_dstransa => 'Envio de mensagem de cancelamento de seguro por inadimplencia'
                               ,pr_dttransa => trunc(SYSDATE)
                               ,pr_flgtrans => 0
@@ -1472,8 +1569,8 @@ begin
     gene0002.pc_escreve_xml(vr_des_xml,vr_des_txt,'</vigencia_tipo></seguradora>');
   end if;
   gene0002.pc_escreve_xml(vr_des_xml,vr_des_txt,'</crrl416>',true);
-  -- Verifica se gerou informação no arquivo
-  if vr_cdsegura <> 0 then
+  -- Verifica se gerou informação no arquivo e se está no batch
+  if vr_cdsegura <> 0 AND rw_crapdat.inproces <> 1 then
     -- Geração do relatório
     -- Nome base do arquivo é crrl416
     vr_nom_arquivo := 'crrl416';
@@ -1670,5 +1767,5 @@ exception
     pr_dscritic := sqlerrm;
     -- Efetuar rollback
     rollback;
-end;
+END;
 /
