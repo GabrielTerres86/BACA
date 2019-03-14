@@ -11,6 +11,7 @@
    001: [10/07/2012] Validar sempre os contratos a serem liquidados (Gabriel).
    002: [25/02/2013] Enviar o numero do contrato para validacao (Gabriel).
    003: [21/02/2018] Incluído campo identificador do empréstimo a liquidar(Simas-AMcom).
+   004: [07/02/2019] Incluindo parametro para controle de abertura e fechamento das mensagens em tela (Bruno Luiz Katzjarowski - Mout's)
  */
 ?>
  
@@ -33,6 +34,10 @@
 	$tosdeved = (isset($_POST['tosdeved'])) ? $_POST['tosdeved'] : '';
 	$nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : '';
 	$idenempr = (isset($_POST['idenempr'])) ? $_POST['idenempr'] : '';
+			
+	//bruno - prj 438 - bug 14400
+	//controle de abertura/fechamento das mensagens de carregamento de alienacões
+	$param1 = (isset($_POST['param1'])) ? $_POST['param1'] : '';
 			
 	$vlsdeved = str_replace(".","",$vlsdeved);
 	$vlemprst = str_replace(".","",$vlemprst);
@@ -101,7 +106,7 @@
 	}
 	else if ($tpdretor == 'C') {
 				
-		echo ('atualizaArray("'.$operacao.'")');
+		echo ('atualizaArray("'.$operacao.'","", "'.$param1.'")'); //bruno - prj 438 - bug 14400
 	
 	}
 	else if( $tpdretor == '' ){ 

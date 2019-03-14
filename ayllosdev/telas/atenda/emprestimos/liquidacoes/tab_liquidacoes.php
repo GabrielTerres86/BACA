@@ -34,6 +34,7 @@
 		</table>
 	</div>	
 	<div id="divBotoes">
-		<a href="#" class="botao" id="btSalvar" onClick="fechaLiquidacoes('<?php echo $prox_tela; ?>'); return false;" >Continuar</a>
+		<?php //bruno - prj 438 - bug 14400 ?>
+		<a href="#" class="botao" id="btSalvar" onClick="fechaLiquidacoes('<?php echo $prox_tela; ?>','LIQUIDACOES'); return false;" >Continuar</a>
 	</div>
 </div>

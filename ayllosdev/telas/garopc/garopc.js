@@ -25,6 +25,9 @@ $(document).ready(function() {
 
 });
 
+//bruno - prj 438 - bug 14235
+var __aux_acao = "";
+
 var rGar_rotulos1 = $('label[for="gar_vlropera"],label[for="gar_codlinha"],label[for="gar_permingr"],label[for="gar_pro_apli"],label[for="gar_pro_poup"],label[for="gar_pro_raut"],label[for="gar_ter_ncta"],label[for="gar_ter_apli"],label[for="gar_ter_poup"]', '#frmGAROPC');
 var rGar_rotulos2 = $('label[for="gar_pro_apli_0"],label[for="gar_pro_apli_1"],label[for="gar_pro_poup_0"],label[for="gar_pro_poup_1"],label[for="gar_pro_raut_0"],label[for="gar_pro_raut_1"],label[for="gar_ter_apli_0"],label[for="gar_ter_apli_1"],label[for="gar_ter_poup_0"],label[for="gar_ter_poup_1"]', '#frmGAROPC');
 var rGar_rotulos3 = $('label[for="gar_pro_apli_sld"],label[for="gar_pro_poup_sld"]', '#frmGAROPC');
@@ -298,6 +301,7 @@ function gravarGAROPC(gar_ret_nomcampo, gar_ret_nomformu, gar_ret_execfunc, gar_
             ret_nomformu : gar_ret_nomformu,
             ret_execfunc : gar_ret_execfunc,
             err_execfunc : gar_err_execfunc,
+            aux_acao: __aux_acao, //prj 438 - bug 14235
             redirect     : 'html_ajax'
         },
         error: function (objAjax, responseError, objExcept) {

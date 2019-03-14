@@ -16,7 +16,7 @@
  *      [12/11/2014] Projeto consultas automatizadas (Jonata-RKAM).
  *      [13/01/2015] Adicionado Tipo de Veiculo. (Jorge/Gielow) - SD 241854.
  *		[25/01/2016] Alterar a chamada do botao Salvar. (James) 
- *
+ *		[31/10/2018] Alterado Chassi/N.Serie para Chassi e Cor/Classe para Cor - Paulo Martins - Mouts
  */
 
 if (!in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIENACAO','I_ALIENACAO','IA_ALIENACAO','A_BENS','AI_BENS'))) {

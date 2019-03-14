@@ -54,6 +54,10 @@ $vlfipbem = (isset($_POST['vlfipbem'])) ? $_POST['vlfipbem'] : '';
 $nrcpfcgc = (isset($_POST['nrcpfcgc'])) ? $_POST['nrcpfcgc'] : '';
 $dstpcomb = (isset($_POST['dstpcomb'])) ? $_POST['dstpcomb'] : '';
 
+//PRJ - 438 - Bruno
+$nrnotanf = (isset($_POST['nrnotanf'])) ? $_POST['nrnotanf'] : '';
+$dsmarceq = (isset($_POST['dsmarceq'])) ? $_POST['dsmarceq'] : '';
+
 $dscatbem = ( $dscatbem == 'null' ) ? '' : $dscatbem;
 $tpchassi = ( $tpchassi == 'null' ) ? '' : $tpchassi;
 $dschassi = ( $dschassi == 'null' ) ? '' : $dschassi;
@@ -112,7 +116,7 @@ if ($operacao == 'A_BENS' || $operacao == 'AI_BENS') {
 		if ($msgErro == '') {
 			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','',false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','',false); //prj - 438 - encode
 	} else if (strtoupper($xmlObject->roottag->tags[0]->name) == "MENSAGEM" && $xmlObject->roottag->tags[0]->cdata != "") {
 		$msgAviso = $xmlObject->roottag->tags[0]->cdata;
 		if (strtoupper($xmlObject->roottag->tags[1]->name) == 'APROVACA' && $xmlObject->roottag->tags[1]->cdata != 0) {
@@ -123,7 +127,7 @@ if ($operacao == 'A_BENS' || $operacao == 'AI_BENS') {
 	}
 
 	if ( $msgAviso != "" ) {
-		exibirErro('inform',$msgAviso,'Alerta - Aimaro',$metodo,false);
+		exibirErro('inform',utf8_encode($msgAviso),'Alerta - Aimaro',$metodo,false);//prj - 438 - encode
 	} else if ( $metodo != "" ) {
 		echo $metodo;
 	} else {
@@ -174,6 +178,10 @@ if ($operacao == 'A_BENS' || $operacao == 'AI_BENS') {
 	$xml .= "		<nrcpfcgc>".$nrcpfcgc."</nrcpfcgc>";
 	$xml .= "		<dstpcomb>".$dstpcomb."</dstpcomb>";
 
+	//PRJ - 438 - Bruno
+	$xml .= "		<nrnotanf>".$nrnotanf."</nrnotanf>";
+	$xml .= "		<dsmarceq>".$dsmarceq."</dsmarceq>";
+
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 
@@ -192,7 +200,7 @@ if ($operacao == 'A_BENS' || $operacao == 'AI_BENS') {
 	}
 
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$mtdErro,false);
+		exibirErro('error',utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Aimaro',$mtdErro,false);//prj - 438 - encode
 	}
 
 	// Condicao para veriricar se apresenta mensagem para o usuario
@@ -206,7 +214,7 @@ if ($operacao == 'A_BENS' || $operacao == 'AI_BENS') {
 		} else {
 			$metodo .= addslashes($nmfuncao);
 		}
-		exibirErro('inform',$xmlObj->roottag->tags[0]->attributes['DSMENSAG'],'Alerta - Aimaro',$metodo,false);
+		exibirErro('inform',utf8_encode($xmlObj->roottag->tags[0]->attributes['DSMENSAG']),'Alerta - Aimaro',$metodo,false);//prj - 438 - encode
 	} else {
 		echo $nmfuncao;
 	}

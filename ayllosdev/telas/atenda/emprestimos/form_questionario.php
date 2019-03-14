@@ -8,6 +8,7 @@
  * ALTERACOES   : 
  * --------------
  * 001: [17/07/2015] Adicionado capitalize nos campos. (Kelvin)
+ * 002: [16/10/2018] Atualizar encoding da string de titulo do formulario ( Bruno Luiz Katzjarowski - Mout's )
  */	
 
  ?>
@@ -58,7 +59,7 @@
 				   if ($flg_fieldset == false) {
 				   ?> 
 					<fieldset>
-					<legend> <?php echo utf8ToHtml ($questionario->titulo); ?> </legend>
+					<legend> <?php echo decodeString($questionario->titulo) ?> </legend>
 					<br/>
 				   <? $flg_fieldset = true; 
 				   } ?>

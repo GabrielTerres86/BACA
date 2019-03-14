@@ -1,8 +1,12 @@
 var errorMessage = "";
-
 $(function () {
 	$('#vlrdobem').maskMoney();
 	$('#vlrdobem').val($('#vlrdobem').val()).trigger('mask.maskMoney');
+
+	//PRJ - 438 - Bruno
+	$('#vlrdobemE').maskMoney();
+	$('#vlrdobemE').val($('#vlrdobem').val()).trigger('mask.maskMoney');
+
 	$('#vlfipbem').maskMoney();
 	$('#vlfipbem').val($('#vlfipbem').val()).trigger('mask.maskMoney');	
     intervenienteValidado = false;
@@ -91,6 +95,7 @@ function validaCamposAditiv() {
 	if(!validaCampo('dsbemfin', '#frmTipo')){invalidos=invalidos+1;}
 	if(!validaCampo('nrmodbem', '#frmTipo')){invalidos=invalidos+1;}
 	}
+	if(!validaCampo('dscatbem', '#frmTipo')){invalidos=invalidos+1;}
 	if(!validaCampo('dstipbem', '#frmTipo')){invalidos=invalidos+1;}
 	if(!validaCampo('nranobem', '#frmTipo')){invalidos=invalidos+1;}	
 	if(!validaCampo('vlrdobem', '#frmTipo')){invalidos=invalidos+1;}
@@ -232,6 +237,18 @@ function SubstituiBem( operacao ) {
     var uflicenc = $('#uflicenc option:selected', '#frmTipo').val(); // string
     var nrcpfcgc = normalizaNumero($('#nrcpfcgc', '#frmTipo').val()); // inteiro
 
+    //PRJ - 438 - Bruno
+    var nrnotanf = $('#nrnotanf', '#frmTipo').val();
+    var dsmarceq = $('#dsmarceq', '#frmTipo').val();
+    if($('#dscatbem', '#frmTipo').val() == "MAUQINA E EQUIPAMENTO"){
+    	dsmarbem = $('#dsmarbemE', "#frmTipo").val().toUpperCase();
+    	dsbemfin = $('#dsbemfinE', "#frmTipo").val().toUpperCase();
+    	dschassi = $('#dschassiE', "#frmTipo").val().toUpperCase();
+    	nrmodbem = $('#nrmodbemE', "#frmTipo").val().toUpperCase();
+    	nrcpfcgc = $('#nrcpfcgcE', "#frmTipo").val().toUpperCase();
+    	vlrdobem = $('#vlrdobemE', '#frmTipo').val();
+    }
+
 	var radios = $('input[name=nrbem]');
 	var idseqbem = "";
     var cdoperad = 1;
@@ -263,7 +280,9 @@ function SubstituiBem( operacao ) {
 	$.trim(nrdplaca);
 	$.trim(nrrenava);
 	$.trim(uflicenc);
-	$.trim(nrcpfcgc);	
+	$.trim(nrcpfcgc);
+    $.trim(nrnotanf); //PRJ - 438 - Bruno
+	$.trim(dsmarceq); //PRJ - 438 - Bruno	
 	
 	if (operacao == "FINAL") {
 
@@ -288,6 +307,9 @@ function SubstituiBem( operacao ) {
 				nrdplaca: nrdplaca, nrrenava: nrrenava,
 				uflicenc: uflicenc, nrcpfcgc: nrcpfcgc,
 				idseqbem: idseqbem, cdoperad: cdoperad,
+				nrnotanf 	: nrnotanf, //PRJ - 438 - Bruno
+				dsmarceq 	: dsmarceq, //PRJ - 438 - Bruno
+				cdoperad 	: cdoperad,
 				redirect: 'script_ajax'
 			},
 			error: function (objAjax, responseError, objExcept) {
@@ -316,13 +338,16 @@ function SubstituiBem( operacao ) {
 function VerificaPessoa(campo) {
     if (verificaTipoPessoa(campo) == 1) {
         $('#nrcpfcgc', '#frmTipo').setMask('INTEGER', '999.999.999-99', '.-', '');
+		$('#nrcpfcgcE', '#frmTipo').setMask('INTEGER','999.999.999-99','.-',''); //PRJ - 438 - Bruno
+
     } else if (verificaTipoPessoa(campo) == 2) {
         $('#nrcpfcgc', '#frmTipo').setMask('INTEGER', 'zz.zzz.zzz/zzzz-zz', '/.-', '');
+		$('#nrcpfcgcE', '#frmTipo').setMask('INTEGER','zz.zzz.zzz/zzzz-zz','/.-',''); //PRJ - 438 - Bruno
 	} else {
         $('#nrcpfcgc', '#frmTipo').setMask('INTEGER', 'zzzzzzzzzzzzzz', '', '');
-    }
+		$('#nrcpfcgcE', '#frmTipo').setMask('INTEGER', 'zzzzzzzzzzzzzz','',''); //PRJ - 438 - Bruno
 	}
-
+}
 function VerificaNumero(evt) {
   var charCode = (evt.which) ? evt.which : event.keyCode
     if (charCode > 31 && (charCode < 48 || charCode > 57))

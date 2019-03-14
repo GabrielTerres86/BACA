@@ -11,6 +11,7 @@
  * 002: [08/04/2014] Alterado fluxo de botao voltar e continuar. (Jorge)
  * 003: [14/08/2014] Ajuste informacoes do avalista, incluso novos campos (Daniel)
  * 004: [02/12/2014] Novas telas de consultas automatizadas (Jonata-RKAM).
+ * 005: [22/11/2018] Mateus Z (Mouts): Alterado o layout da tela - PRJ 438.
  */	
  ?>
 
@@ -21,67 +22,47 @@
 	<fieldset>
 		<legend></legend>
 	
-		<label for="qtpromis">Quant.:</label>
-		<input name="qtpromis" id="qtpromis" type="text" value="" />
-				
 		<label for="nrctaava">Conta:</label>
 		<input name="nrctaava" id="nrctaava" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<br />	
 		
-		<label for="inpessoa">Tp Nat.:</label>
+		<label for="inpessoa">Tipo Natureza:</label>
 		<input name="inpessoa" id="inpessoa" type="text" value="" />
 		<input name="dspessoa" id="dspessoa" type="text" value="" />
-
-		<label for="dtnascto">Data Nasc.:</label>
-		<input name="dtnascto" id="dtnascto" type="text" value="" />
-		
 		<br />		
-				
-		<label for="nmdavali">Nome:</label>
-		<input name="nmdavali" id="nmdavali" type="text" value="" />
-		
 		
 		<label for="nrcpfcgc">C.P.F.:</label>
 		<input name="nrcpfcgc" id="nrcpfcgc" type="text" value="" />
 		<br />	
 
-				
-		<label for="tpdocava">Doc.:</label>
-		<select name="tpdocava" id="tpdocava">
-			<option value=""  > - </option> 
-			<option value="CH">CH</option>
-			<option value="CI">CI</option>
-			<option value="CP">CP</option>
-			<option value="CT">CT</option>
-		</select>
-		<input name="nrdocava" id="nrdocava" type="text" value="" />
+		<label for="nmdavali">Nome:</label>
+		<input name="nmdavali" id="nmdavali" type="text" value="" />
+		<br />
 		
-		<label for="dsnacion">Nacio.:</label>
+		<label for="dsnacion">Nacionalidade:</label>
 		<input name="dsnacion" id="dsnacion" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<br />	
+		
+		<label for="dtnascto">Data Nasc.:</label>
+		<input name="dtnascto" id="dtnascto" type="text" value="" />
+
 	</fieldset>
 	
-	<fieldset>
-		<legend><? echo utf8ToHtml('Dados Conjugê') ?></legend>
+	<fieldset id="fsetConjugeAval">
+		<legend><? echo utf8ToHtml('Dados Cônjuge') ?></legend>
 						
-		<label for="nmconjug"><?php echo utf8ToHtml('Conjugê:') ?></label>
-		<input name="nmconjug" id="nmconjug" type="text" value="" />
+		<label for="nrctacjg">Conta:</label>
+		<input name="nrctacjg" id="nrctacjg" type="text" value="" />
 						
 		<label for="nrcpfcjg">C.P.F.:</label>
 		<input name="nrcpfcjg" id="nrcpfcjg" type="text" value="" />
 		<br />
 			
-		<label for="tpdoccjg">Doc.:</label>
-		<select name="tpdoccjg" id="tpdoccjg">
-			<option value=""  > - </option> 
-			<option value="CH">CH</option>
-			<option value="CI">CI</option>
-			<option value="CP">CP</option>
-			<option value="CT">CT</option>
-		</select>
-		<input name="nrdoccjg" id="nrdoccjg" type="text" value="" />
+		<label for="nmconjug"><?php echo utf8ToHtml('Cônjuge:') ?></label>
+		<input name="nmconjug" id="nmconjug" type="text" value="" />
+			
+		<label for="vlrencjg">Rendimento:</label>
+		<input name="vlrencjg" id="vlrencjg" type="text" value="" />
 		<br />
 		
 	</fieldset>
@@ -120,18 +101,25 @@
 	</fieldset>	
 	
 	<fieldset>
-		<legend><? echo utf8ToHtml('Forma de Contato') ?></legend>					
+		<legend><? echo utf8ToHtml('Contato') ?></legend>					
 		
-		<label for="dsdemail"><? echo utf8ToHtml('E-Mail:') ?></label>
-		<input name="dsdemail" id="dsdemail" type="text" value="" />
-		
-		<label for="nrfonres"><? echo utf8ToHtml('Tel.:') ?></label>
+		<label for="nrfonres">Telefone:</label>
 		<input name="nrfonres" id="nrfonres" type="text" value="" />
+		
+		<label for="dsdemail">E-mail:</label>
+		<input name="dsdemail" id="dsdemail" type="text" value="" />
 		<br />
 				
 	</fieldset>	
 
-	
+	<fieldset>
+		<legend><?php echo utf8ToHtml('Rendimentos') ?></legend>
+					
+		<label for="vlrenmes">Rendimento Mensal:</label>
+		<input name="vlrenmes" id="vlrenmes" type="text" value="" />
+		<br />
+			
+	</fieldset>
 	
   
 </form>

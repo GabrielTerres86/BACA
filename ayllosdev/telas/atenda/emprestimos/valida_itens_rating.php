@@ -13,6 +13,7 @@
 ?>
  
 <?
+
 	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -36,10 +37,11 @@
 	$vlprodut = (isset($_POST['vlprodut'])) ? $_POST['vlprodut'] : '';
 	$cdfinemp = (isset($_POST['cdfinemp'])) ? $_POST['cdfinemp'] : '';
 	$cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : '';
-	$inobriga2 = (isset($_POST['inobriga'])) ? $_POST['inobriga'] : 'N';
+	$inobriga2 = "S";//(isset($_POST['inobriga'])) ? $_POST['inobriga'] : 'N';
 		
 	
 	if ($inobriga2 == 'N'){
+
 		// Monta o xml de requisição
 		$xml  = "";
 		$xml .= "<Root>";
@@ -94,7 +96,6 @@
 	else if ($operacao == 'I_PROT_CRED'){
 	
 		$strnomacao = ' SSPC0001_OBRIGACAO_CNS_CPL';
-	
 		// Montar o xml para requisicao
 		$xml  = "";
 		$xml .= "<Root>";

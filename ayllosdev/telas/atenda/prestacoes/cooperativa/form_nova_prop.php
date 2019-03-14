@@ -18,6 +18,7 @@
  * 008: [08/06/2018] P410 - Incluido campo de financiar IOF (Marcos-Envolti)
  * 009: [12/07/2018] Refazer a alteracao da chamada da operacao C_DADOS_AVAL para C_GAROPC, pois a mesma
  *                   foi sobrescrita. (Renato Darosci - Supero)
+ * 010: [19/11/2018] Alterado layout da tela - PRJ 438. (Mateus Z / Mouts)
  */	
  ?>
 
@@ -26,7 +27,7 @@
 	<input id="nrctremp" name="nrctremp" type="hidden" value="" />
 	
 	<fieldset>
-		<legend><? echo utf8ToHtml('Nova Proposta de Empréstimo') ?></legend>
+		<legend><? echo utf8ToHtml('Dados da Solicitação') ?></legend>
 	
 		<label for="nivrisco"><? echo utf8ToHtml('Nível Risco:') ?></label>
 		<select name="nivrisco" id="nivrisco">
@@ -41,79 +42,80 @@
 			<option value="H">H</option>
 		</select>
 				
-		<label for="nivcalcu">Risco Calc.:</label>
-		<input name="nivcalcu" id="nivcalcu" type="text" value="" />
+		<?php if ($tpemprst == 2) { ?>
+
+			<label for="idfiniof">Financiar IOF e Tarifa:</label>
+		    <select name="idfiniof" id="idfiniof">
+		        <option value="1" selected="selected">Sim</option>
+		        <option value="0">N&atilde;o</option>
+		    </select>
 		<br />
 		
 		<label for="tpemprst">Produto:</label>
 		<select name="tpemprst" id="tpemprst">
 		</select>
 		
-		<label for="cdfinemp">Finalidade:</label>
-		<input name="cdfinemp" id="cdfinemp" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<input name="dsfinemp" id="dsfinemp" type="text" value="" />
-		<br />
-		
-		<label for="vlemprst"><? echo utf8ToHtml('Vl. do Empr.:') ?></label>
-		<input name="vlemprst" id="vlemprst" type="text" value="" />
-		
-		<label for="cdlcremp"><? echo utf8ToHtml('Linha Crédito:') ?></label>
-		<input name="cdlcremp" id="cdlcremp" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<input name="dslcremp" id="dslcremp" type="text" value="" />
-		
-		<br />
-		
-		<label for="vlpreemp"><? echo utf8ToHtml('Vl. da Prest.:') ?></label>
-		<input name="vlpreemp" id="vlpreemp" type="text" value="" />
-		
-		<label for="idquapro"><? echo utf8ToHtml('Qualif. Oper.:') ?></label>
-		<input name="idquapro" id="idquapro" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<input name="dsquapro" id="dsquapro" type="text" value="" />
-		<br />
-
-		<!--- Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) -->
-		<label for="idquaprc"><? echo utf8ToHtml('Qualif. Op. Contr:') ?></label>
-		<input name="idquaprc" id="idquaprc" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<input name="dsquaprc" id="dsquaprc" type="text" value="" />
-		<br/>		
-		
-		<label for="qtpreemp">Qtd. de Parc.:</label>
-		<input name="qtpreemp" id="qtpreemp" type="text" value="" />		
-		
-		<label for="percetop">%CET:</label>
-		<input name="percetop" id="percetop" type="text" value="" />
-		<br />
-		
  		<label for="flgpagto">Debitar em:</label>
  		<select name="flgpagto" id="flgpagto">
  			<option value="no" >Conta</option>
  			<option value="yes">Folha</option>
  		</select>
-		
-		<label for="qtdialib">Liberar em:</label>
-		<input name="qtdialib" id="qtdialib" type="text" value="" />
-		<label id="duteis"><? echo utf8ToHtml('dias úteis') ?></label>
 		<br />
 													
-		<label for="dtlibera"> <? echo utf8ToHtml("Data Liberação:"); ?> </label>
-		<input name="dtlibera" id="dtlibera" type="text" value="">				
-		</br>	
-		
-    <label for="idfiniof">Financiar IOF e Tarifa:</label>
-    <select name="idfiniof" id="idfiniof">
-        <option value="1" selected="selected">Sim</option>
-        <option value="0">N&atilde;o</option>
-    </select>    
-													
-		<label for="dtdpagto">Data pagto:</label>
+			<label for="vlemprst"><? echo utf8ToHtml('Valor do Empréstimo:') ?></label>
+			<input name="vlemprst" id="vlemprst" type="text" value="" />
+
+			<label for="idquapro"><? echo utf8ToHtml('Qualificação da Opereração:') ?></label>
+			<input name="idquapro" id="idquapro" type="text" value="" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="dsquapro" id="dsquapro" type="text" value="" />
+			<br />
+
+			<label for="cdlcremp"><? echo utf8ToHtml('Linha de Crédito:') ?></label>
+			<input name="cdlcremp" id="cdlcremp" type="text" value="" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="dslcremp" id="dslcremp" type="text" value="" />		
+			
+			<!--- Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) -->
+			<label for="idquaprc"><? echo utf8ToHtml('Qualificação da Operação Controle:') ?></label>
+			<input name="idquaprc" id="idquaprc" type="text" value="" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="dsquaprc" id="dsquaprc" type="text" value="" />
+			<br/>
+
+			<label for="cdfinemp">Finalidade:</label>
+			<input name="cdfinemp" id="cdfinemp" type="text" value="" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="dsfinemp" id="dsfinemp" type="text" value="" />
+
+			<label for="dsratpro"> <? echo utf8ToHtml("Rating Proposta:"); ?> </label>
+			<input name="dsratpro" id="dsratpro" type="text" value="">
+			<br />
+			
+			<label for="qtpreemp">Quantidade de Parcelas:</label>
+			<input name="qtpreemp" id="qtpreemp" type="text" value="" />
+
+			<label for="dsratatu"><? echo utf8ToHtml("Rating Atual:"); ?></label>
+			<input name="dsratatu" id="dsratatu" type="text" value="" />
+			<br />
+
+			<label for="vlpreemp"><? echo utf8ToHtml('Valor da Parcela:') ?></label>
+			<input name="vlpreemp" id="vlpreemp" type="text" value="" />
+			
+			<label for="percetop">%CET:</label>
+			<input name="percetop" id="percetop" type="text" value="" />
+			<br />
+														
+			<label for="dtdpagto">Data de Pagamento:</label>
 		<input name="dtdpagto" id="dtdpagto" type="text" value="" />
+
+			<label for="flgdocje"><? echo utf8ToHtml('Co-Responsável:') ?></label>
+			<input name="flgdocje" id="flgYes" type="radio" class="radio" value="yes" />
+			<label for="flgYes" class="radio" >Sim</label>
+			<input name="flgdocje" id="flgNo" type="radio" class="radio" value="no" />
+			<label for="flgNo" class="radio"><? echo utf8ToHtml('Não') ?></label>
 		<br />
 		
-		<div id="linCarencia">
 			<label for="idcarenc"><? echo utf8ToHtml("Carência:") ?></label>
 			<select name="idcarenc" id="idcarenc">
             <?php
@@ -130,38 +132,95 @@
                 }
             ?>
 			</select>
+			<br />
 		
 			<label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1ª Carência:") ?> </label>
 			<input name="dtcarenc" id="dtcarenc" type="text" value="" />
-		</div>
-		
-		<label for="flgimppr">Proposta:</label>
-		<select name="flgimppr" id="flgimppr">
-			<option value=""   > - </option>
-			<option value="yes" >Imprime</option>
-			<option value="no"><? echo utf8ToHtml('Não Imprime') ?></option>
-		</select>
 		<br />
 						
-		<label for="flgimpnp"><? echo utf8ToHtml('Nota Promissória:') ?></label>
-		<select name="flgimpnp" id="flgimpnp">
-			<option value=""   > - </option>
-			<option value="yes" >Imprime</option>
-			<option value="no"><? echo utf8ToHtml('Não Imprime') ?></option>
-		</select>
+			<label for="dsctrliq"><? echo utf8ToHtml('Liquidações:') ?></label>
+			<input name="dsctrliq" id="dsctrliq" type="text" value="" />
 		<br />
 		
-		<label for="dsratpro"> <? echo utf8ToHtml("Rat. Pro:"); ?> </label>
-		<input name="dsratpro" id="dsratpro" type="text" value="">				
+		<?php } else {?>
 
-		<label for="dsratatu"><? echo utf8ToHtml("Rat. Atu:"); ?></label>
+			<label for="idfiniof">Financiar IOF e Tarifa:</label>
+		    <select name="idfiniof" id="idfiniof">
+		        <option value="1" selected="selected">Sim</option>
+		        <option value="0">N&atilde;o</option>
+		    </select>
+		    <br />
+			
+			<label for="tpemprst">Produto:</label>
+			<select name="tpemprst" id="tpemprst">
+			</select>
+
+			<label for="flgpagto">Debitar em:</label>
+	 		<select name="flgpagto" id="flgpagto">
+	 			<option value="no" >Conta</option>
+	 			<option value="yes">Folha</option>
+	 		</select>
+			<br />
+
+			<label for="vlemprst"><? echo utf8ToHtml('Valor do Empréstimo:') ?></label>
+			<input name="vlemprst" id="vlemprst" type="text" value="" />
+
+			<label for="idquapro"><? echo utf8ToHtml('Qualificação da Opereração:') ?></label>
+			<input name="idquapro" id="idquapro" type="text" value="" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="dsquapro" id="dsquapro" type="text" value="" />
+			<br />
+
+			<label for="cdlcremp"><? echo utf8ToHtml('Linha de Crédito:') ?></label>
+			<input name="cdlcremp" id="cdlcremp" type="text" value="" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="dslcremp" id="dslcremp" type="text" value="" />		
+			
+			<!--- Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) -->
+			<label for="idquaprc"><? echo utf8ToHtml('Qualificação da Operação Controle:') ?></label>
+			<input name="idquaprc" id="idquaprc" type="text" value="" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="dsquaprc" id="dsquaprc" type="text" value="" />
+			<br/>
+
+			<label for="cdfinemp">Finalidade:</label>
+			<input name="cdfinemp" id="cdfinemp" type="text" value="" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="dsfinemp" id="dsfinemp" type="text" value="" />
+
+			<label for="dsratpro"> <? echo utf8ToHtml("Rating Proposta:"); ?> </label>
+		<input name="dsratpro" id="dsratpro" type="text" value="">				
+			<br />
+			
+			<label for="qtpreemp">Quantidade de Parcelas:</label>
+			<input name="qtpreemp" id="qtpreemp" type="text" value="" />
+
+			<label for="dsratatu"><? echo utf8ToHtml("Rating Atual:"); ?></label>
 		<input name="dsratatu" id="dsratatu" type="text" value="" />
 		<br />
 		
+			<label for="vlpreemp"><? echo utf8ToHtml('Valor da Parcela:') ?></label>
+			<input name="vlpreemp" id="vlpreemp" type="text" value="" />
+			
+			<label for="percetop">%CET:</label>
+			<input name="percetop" id="percetop" type="text" value="" />
+			<br />
+														
+			<label for="dtdpagto">Data de Pagamento:</label>
+			<input name="dtdpagto" id="dtdpagto" type="text" value="" />
+			<br />
+
+			<label for="flgdocje"><? echo utf8ToHtml('Co-Responsável:') ?></label>
+			<input name="flgdocje" id="flgYes" type="radio" class="radio" value="yes" />
+			<label for="flgYes" class="radio" >Sim</label>
+			<input name="flgdocje" id="flgNo" type="radio" class="radio" value="no" />
+			<label for="flgNo" class="radio"><? echo utf8ToHtml('Não') ?></label>
+			
 		<label for="dsctrliq"><? echo utf8ToHtml('Liquidações:') ?></label>
 		<input name="dsctrliq" id="dsctrliq" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<br />
+
+		<?php } ?>
 		
 	</fieldset>
 </form>

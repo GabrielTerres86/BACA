@@ -6,6 +6,7 @@
  * OBJETIVO     : Formulário de efetivação da proposta
  *
  * ALTERACOES   :  001: [05/09/2012] Mudar para layout padrao (Gabriel)
+ * 				   002: [31/10/2018] Alteração do titulo da página - Bruno - Mout's
  */	
  ?>
 
@@ -14,7 +15,8 @@
 	<input id="nrctremp" name="nrctremp" type="hidden" value="" />
 	
 	<fieldset>
-		<legend><? echo utf8ToHtml('Efetivação da proposta') ?></legend>
+		<?php //PRJ - 438 - Bruno  ?>
+		<legend><? echo utf8ToHtml('Efetivação da Proposta') ?></legend>
 	
 		<label for="cdfinemp"><? echo utf8ToHtml('Final. empréstimo:') ?></label>
 		<input name="cdfinemp" id="cdfinemp" type="text" value="" />

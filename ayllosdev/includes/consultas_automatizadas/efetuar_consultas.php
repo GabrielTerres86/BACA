@@ -17,6 +17,8 @@
  *                              PRJ207 - Esteira (Odirlei-AMcom). 
  *
  *                 30/10/2017 - Alterada rotina ao efetuar inclusão pela tela CADMAT. (PRJ339 - Reinert)
+ * 				   12/12/2018 - Criado condição para retorno de mensagem estritamente em javascript para emprestimo.js 
+ *								em atenda -> emprestimos -> emprestimo.js lin. 10152 - Bruno Luiz Katzjarowski - Mout's
  */
 	session_start();
 	require_once('../config.php');
@@ -35,6 +37,9 @@
     $flvalest = $_POST['flvalest']; //validar se ja esta na Esteira de Credito	
 	$nmdatela = $_POST['nmdatela'];
 	
+	//bruno - prj 438 - sprint 5 - consulta automatizada
+	$nome_acao = isset($_POST['nome_acao']) ? $_POST['nome_acao'] : '';
+
 	if ($insolici == 1) { // Solicitou as consultas
 	
 		$strnomacao = 'SSPC0001_SOLICITA_CONSULTA_BIRO';
@@ -64,10 +69,22 @@
 		// Se retornou erro		   
 		if ($xmlObj->Erro->Registro->dscritic != '') {
 		  $msgErro = utf8ToHtml($xmlObj->Erro->Registro->dscritic);
+			//bruno - prj 438 - sprint 5 - consulta automatizada
+			if($nome_acao == "EMPRESTIMOS_CONSULTA"){
+				echo 'hideMsgAguardo();showError("inform","'.$msgErro.'","Alerta - Aimaro","bloqueiaFundo(divRotina)","NaN");';
+				exit();
+			}else{
 		  exibirErro('inform',$msgErro,'Alerta - Aimaro',$metodo, false);
+		    }
 		}
 		else {
+			//bruno - prj 438 - sprint 5 - consulta automatizada
+			if($nome_acao == "EMPRESTIMOS_CONSULTA"){
+				echo 'hideMsgAguardo();showError("inform","Consultas efetuadas com sucesso!","Alerta - Aimaro","bloqueiaFundo(divRotina)","NaN");';
+				exit();
+			}else{
 			exibirErro('inform','Consultas efetuadas com sucesso!','Alerta - Aimaro',$metodo, false);
+		    }
 		}
 					
 	}
@@ -95,7 +112,16 @@
 		
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xml_analise->roottag->tags[0]->name) == "ERRO") {
-			exibirErro('inform',$xml_analise->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
+
+			//bruno - prj 438 - sprint 5 - consulta automatizada
+			$msgErro = $xml_analise->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			if($nome_acao == "EMPRESTIMOS_CONSULTA"){
+				echo 'hideMsgAguardo();showError("inform","'.$msgErro.'","Alerta - Aimaro","bloqueiaFundo(divRotina)","NaN");';
+			}else{
+				exibirErro('inform',$msgErro,
+					'Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))", 
+					true);
+			}
 			exit();
 		}
 		
@@ -127,7 +153,16 @@
 		
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xml_analise->roottag->tags[0]->name) == "ERRO") {
-			exibirErro('inform',$xml_analise->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
+
+			//bruno - prj 438 - sprint 5 - consulta automatizada
+			$msgErro = $xml_analise->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			if($nome_acao == "EMPRESTIMOS_CONSULTA"){
+				echo 'hideMsgAguardo();showError("inform","'.$msgErro.'","Alerta - Aimaro","bloqueiaFundo(divRotina)","NaN");';
+			}else{
+				exibirErro('inform',$msgErro,
+						   'Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))",
+							true);
+			}	
 			exit();
 		}
 	}

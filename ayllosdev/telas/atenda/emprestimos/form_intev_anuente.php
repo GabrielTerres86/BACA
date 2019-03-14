@@ -7,6 +7,8 @@
  *
  * ALTERACOES   : * 000: [05/09/2012] Mudar para layout padrao (Gabriel) 
  *                  001: [15/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ *                  002: [18/10/2018] Alterado layout da tela Interveniente. PRJ438 (Mateus Z / Mouts)
+ *                  003: [05/02/2019] Inserido campo Data de Nascimento/Abertura - prj 438 - Burno Luiz k. - Mout's
  */	
  ?>
 
@@ -22,15 +24,35 @@
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<br />	
 				
-		<label for="nmdavali">Nome:</label>
-		<input name="nmdavali" id="nmdavali" type="text" value="" />
-		
+		<label for="inpessoa">Tipo Natureza:</label>
+		<select name="inpessoa" id="inpessoa" alt="Entre com 1-Fisica 2-Juridica.">
+			<option value=""  > - </option> 
+			<option value="1" >1 - Fisica</option>
+			<option value="2" >2 - Juridica</option>
+		</select>	
+		<br />
 		
 		<label for="nrcpfcgc">C.P.F.:</label>
 		<input name="nrcpfcgc" id="nrcpfcgc" type="text" value="" />
 		<br />			
 				
-		<label for="tpdocava">Doc.:</label>
+		<label for="nmdavali">Nome:</label>
+		<input name="nmdavali" id="nmdavali" type="text" value="" />
+		<br />
+
+		<label for="cdnacion">Nacionalidade:</label>
+		<div id="divCdnacion">
+	        <input name="cdnacion" id="cdnacion" type="text" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		</div>
+		<input name="dsnacion" id="dsnacion" type="text" value="" />
+		<br />		
+				
+		<!-- bruno - prj 438 - bug 14585 -->
+		<label for="dtnascto">Data Nasc.:</label>
+		<input name="dtnascto" id="dtnascto" type="text" value="" />
+		</br>
+				
 		<select name="tpdocava" id="tpdocava">
 			<option value=""  > - </option> 
 			<option value="CH">CH</option>
@@ -38,28 +60,24 @@
 			<option value="CP">CP</option>
 			<option value="CT">CT</option>
 		</select>
-		<input name="nrdocava" id="nrdocava" type="text" value="" />
-        <br />
-		
-		<label for="cdnacion">Nacio.:</label>
-        <input name="cdnacion" id="cdnacion" type="text" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<input name="dsnacion" id="dsnacion" type="text" value="" />
+		<input name="nrdocava" id="nrdocava" type="hidden" value="" />
 		<br />		
 				
 	</fieldset>
 	
-	<fieldset>
-		<legend><? echo utf8ToHtml('Dados Conjugê') ?></legend>
+	<fieldset id="fsetConjugeInterv">
+		<legend><? echo utf8ToHtml('Informações do Cônjuge') ?></legend>
 				
-		<label for="nmconjug"><?php echo utf8ToHtml('Conjugê:') ?></label>
-		<input name="nmconjug" id="nmconjug" type="text" value="" />
+		<label for="nrctacjg">Conta:</label>
+		<input name="nrctacjg" id="nrctacjg" type="text" value="" />
 						
 		<label for="nrcpfcjg">C.P.F.:</label>
 		<input name="nrcpfcjg" id="nrcpfcjg" type="text" value="" />
 		<br />
 			
-		<label for="tpdoccjg">Doc.:</label>
+		<label for="nmconjug"><?php echo utf8ToHtml('Cônjuge:') ?></label>
+		<input name="nmconjug" id="nmconjug" type="text" value="" />
+			
 		<select name="tpdoccjg" id="tpdoccjg">
 			<option value=""  > - </option> 
 			<option value="CH">CH</option>
@@ -67,7 +85,7 @@
 			<option value="CP">CP</option>
 			<option value="CT">CT</option>
 		</select>
-		<input name="nrdoccjg" id="nrdoccjg" type="text" value="" />
+		<input name="nrdoccjg" id="nrdoccjg" type="hidden" value="" />
 		<br />
 		
 	</fieldset>
@@ -109,11 +127,11 @@
 	<fieldset>
 		<legend><?php echo utf8ToHtml('Contato') ?></legend>
 		
+		<label for="nrfonres">Telefone:</label>
+		<input name="nrfonres" id="nrfonres" type="text" value="" />
+
 		<label for="dsdemail">E-mail:</label>
 		<input name="dsdemail" id="dsdemail" type="text" value="" />
-		
-		<label for="nrfonres">Fone:</label>
-		<input name="nrfonres" id="nrfonres" type="text" value="" />
 		<br />
 			
 	</fieldset>

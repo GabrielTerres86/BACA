@@ -61,6 +61,7 @@
 
 				  04/09/2018 - Alterado a impressão da proposta seguro prestamista PRJ 438 e incluído campo contrato 
 				  			   para o tipo seguro prestamista. PRJ 438 (Mateus Z - MoutS).
+                  04/12/2018 - Retornar saldo devedor para valor do seguro prestamista - Paulo Martins - 438 Sprint 7
  * */
  
 //**************************************************
@@ -2505,8 +2506,8 @@ function controlaPesquisas(operacao) {
 	else if(operacao=='TI'){
 		$('a','#frmNovo').ponteiroMouse();
 		$('#nrctrato','#frmNovo').next().unbind('click').bind('click', function() {			
-            filtrosPesq	= 'Contrato;nrctrato;80px;S;;N|Conta;nrdconta;80px;S;'+nrdconta+';N';
-			colunas 	= 'Contrato;nrctremp;100%;center';
+            filtrosPesq	= 'Contrato;nrctrato;80px;S;;N|;vlpreseg;80px;S;;N|Conta;nrdconta;80px;S;'+nrdconta+';N';
+			colunas 	= 'Contrato;nrctremp;100%;center|;vlpreseg;0%;center;;N';
 			mostraPesquisa("SEGU0003", "BUSCA_CONTRATOS_PRESTAMISTA", "Contratos", "30", filtrosPesq, colunas, divRotina);
 			$('#btPesquisar').hide();
 			return false;

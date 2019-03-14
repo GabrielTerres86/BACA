@@ -14,6 +14,7 @@
  *                10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)
  *
  *				   14/09/2018 - Adicionado a div Desconto de Titulos - Estorno de Pagamentos (Cássia de Oliveira - GFT)
+ *                 30/10/2018 - PJ 438 - Adicionado 2 novos parametros (avtperda e vlperavt) - Mateus Z (Mouts)
  */
 ?>
 
@@ -60,7 +61,17 @@
 		<label for="vltolemp" class='labelPri'>Toler&acirc;ncia por valor de empr&eacute;stimo:</label>
 		<input type="text" id="vltolemp" name="vltolemp" class="moeda" value="<?php echo $vltolemp == 0 ? '' : $vltolemp ?>" style="text-align:right;"/>
 		<br style="clear:both" />
+		<!-- PRJ 438 - Sprint 5 - Mateus -->
+		<label for="avtperda" class='labelPri'>Altera&ccedil;&atilde;o de avalista:</label>
+		<select id="avtperda" name="avtperda" style="width:100px;">
+			<option value='0'> Perde aprova&ccedil;&atilde;o </option>
+			<option value='1'> N&atilde;o perde aprova&ccedil;&atilde;o </option>
+		</select>
+		<br style="clear:both" />
 
+		<label for="vlperavt" class='labelPri'>Valor m&aacute;ximo para altera&ccedil;&atilde;o de avalista sem perda de aprova&ccedil;&atilde;o:</label>
+		<input type="text" id="vlperavt" name="vlperavt" value="<?php echo $vlperavt == 0 ? '' : $vlperavt ?>" style="text-align:right;"/>
+		<!-- FIM PRJ 438 - Sprint 5 - Mateus -->
     </fieldset>
 	
 	<fieldset>

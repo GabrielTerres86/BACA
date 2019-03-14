@@ -24,6 +24,7 @@
  * 013: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364)
  * 014: [14/12/2017] Incluido campos hidden flintcdc e inintegra_cont, Prj. 402 (Jean Michel)
  * 014: [14/08/2018] Incluido botão Anular e input hidden com o valor da situação insitest (Mateus Z - Mouts - P438)
+ * 015: [08/11/2018] Criação do botão de Altera Somente Bens - PRJ438 - Sprint 5 (Mateus Z / Mouts)
  */
 ?>
 
@@ -62,6 +63,11 @@
 					<td><span><? echo getByTagName($registro->tags,'nrctremp') ?></span>
 						<? echo formataNumericos("zzz.zz9",getByTagName($registro->tags,'nrctremp'),".") ?>
 
+						<!-- PRJ - 438 - Consulta Automatizada -->
+						<input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
+						<input type="hidden" id="nrdocmto" name="nrdocmto" value="<? echo getByTagName($registro->tags,'nrdocmto') ?>" />
+						<!-- fim - Consulta Automatizada -->
+
 						<input type="hidden" id="nrctremp" name="nrctremp" value="<? echo getByTagName($registro->tags,'nrctremp') ?>" />
 						<input type="hidden" id="nrdrecid" name="nrdrecid" value="<? echo getByTagName($registro->tags,'nrdrecid') ?>" />
 						<input type="hidden" id="tplcremp" name="tplcremp" value="<? echo getByTagName($registro->tags,'tplcremp') ?>" />
@@ -78,7 +84,8 @@
 						<input type="hidden" id="dssitest" name="dssitest" value="<? echo getByTagName($registro->tags,'dssitest') ?>" />
             <input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
 						<input type="hidden" id="insitest" name="insitest" value="<? echo getByTagName($registro->tags,'insitest') ?>" />
-						
+					    <!-- PRJ - 438 - Rating  -->
+						<input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
 						<input type="hidden" id="flintcdc" name="flintcdc" value="<? echo getByTagName($registro->tags,'flintcdc') ?>" />
 						<input type="hidden" id="inintegra_cont" name="inintegra_cont" value="<? echo getByTagName($registro->tags,'inintegra_cont') ?>" />
 						<input type="hidden" id="tpfinali" name="tpfinali" value="<? echo getByTagName($registro->tags,'tpfinali') ?>" />
@@ -119,6 +126,8 @@
 	<a href="#" class="botao" id="btImprimir"  onClick="controlaOperacao('IMP');">Imprimir</a>
 	<a href="#" class="botao" id="btSimular"   onClick="validaSimulacao();">Simular</a>
   <a href="#" class="botao" id="btRecalcular" onClick="controlaOperacao('VAL_RECALCULAR_EMPRESTIMO');">Atualizar Data</a>
+ 	<a href="#" class="botao" id="btAlterarNumeroContrato" onClick="alteraNumeroContrato();">Alterar o n&uacute;mero do contrato</a> <!-- PRJ - 438 - Contrato -->
+
 	<div style="margin-top:5px;" />
 	<a href="#" class="botao" id="btAprovar"   onClick="controlaOperacao('T_EFETIVA');">Efetivar</a>
 	<?php if ($flgGrvOnline == "N" ) { ?>
@@ -127,9 +136,13 @@
 	<a href="#" class="botao" id="btPortabilidade"  onClick="controlaOperacao('PORTAB_CRED_I');">Portabilidade</a>
 	<a href="#" class="botao" id="btEnvEsteira"  onClick="controlaOperacao('ENV_ESTEIRA')">Analisar</a>
 	<a href="#" class="botao" id="btAcionamentos"  onClick="controlaOperacao('ACIONAMENTOS')">Detalhes Proposta</a>
-	<?php /*
+	<?php
+	//PRJ - 438 - Automatizada
+	?>
+	<a href="#" class="botao" id="btConsultaAutomatizada" style='display: none;' onClick="alteraConsultaAutomatizada();">Consultas Automatizadas</a>
 	<!-- PRJ 438 - Sprint 5 -->
-	<a href="#" class="botao" id="btAlteraSomenteBens" style='display: none;' onClick="botaoAlteraSomenteBens();">Alterar Somente Ve&iacute;culos</a>
-	*/ ?>
+	<!--<a href="#" class="botao" id="btAlteraSomenteBens" style='display: none;' onClick="botaoAlteraSomenteBens();">Alterar Somente Ve&iacute;culos</a>-->
+	<!-- PRJ 438 -->
+	<a href="#" class="botao" id="btAnular"  onClick="controlaOperacao('MOTIVOS')">Anular</a>
 	
 </div>
