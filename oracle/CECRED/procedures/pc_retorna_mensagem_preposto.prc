@@ -1,15 +1,23 @@
+/*
+  Alteracoes:
+  
+  16/01/19 - INC0030735 - Removida pesquisa por preposto para que as informações de operadores 
+             com transação pendente fiquem visiveis para todos os prepostos. (Guilherme Kuhnen)
+*/
+
 CREATE OR REPLACE PROCEDURE CECRED.pc_retorna_mensagem_preposto(pr_cdcooper IN crapopi.cdcooper%TYPE,
                                                                 pr_nrdconta IN crapopi.nrdconta%TYPE,
                                                                 pr_idseqttl IN crapsnh.idseqttl%TYPE,
                                                                 xml_operador OUT VARCHAR2) IS
     CURSOR cr_operad_aprov(pr_cdcooper crapass.cdcooper%TYPE,
-                           pr_nrdconta crapass.nrdconta%TYPE,
-                           pr_nrcpfpre crapass.nrcpfcgc%TYPE) IS
+                           pr_nrdconta crapass.nrdconta%TYPE
+						   --,pr_nrcpfpre crapass.nrcpfcgc%TYPE  --INC0030735
+						   ) IS
         SELECT t.nrcpf_operador
         FROM TBCC_OPERAD_APROV t
         WHERE t.cdcooper = pr_cdcooper AND
               t.nrdconta = pr_nrdconta AND
-              t.nrcpf_preposto = pr_nrcpfpre AND
+              --t.nrcpf_preposto = pr_nrcpfpre AND --INC0030735
               t.flgaprovado = 0;
         rw_operad_aprov cr_operad_aprov%ROWTYPE;
 
@@ -35,21 +43,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_retorna_mensagem_preposto(pr_cdcooper IN c
         rw_crapsnh cr_crapsnh%ROWTYPE;
 
     vr_desclob CLOB;
-    vr_nrcpfpre INTEGER;
+    -- vr_nrcpfpre INTEGER; --INC0030735
 
     BEGIN
 
         vr_desclob := '<OPERADORES>';
         
-        OPEN cr_crapsnh(pr_cdcooper, pr_nrdconta , pr_idseqttl);
-        FETCH cr_crapsnh INTO rw_crapsnh;
-        CLOSE cr_crapsnh;
+        /*
+          --INC0030735
+        --OPEN cr_crapsnh(pr_cdcooper, pr_nrdconta , pr_idseqttl);
+        --FETCH cr_crapsnh INTO rw_crapsnh;
+        --CLOSE cr_crapsnh;
         
-        vr_nrcpfpre := rw_crapsnh.nrcpfcgc;
+        --vr_nrcpfpre := rw_crapsnh.nrcpfcgc;
+        */
 
         FOR rw_operad_aprov IN cr_operad_aprov (pr_cdcooper => pr_cdcooper,
-                                                pr_nrdconta => pr_nrdconta,
-                                                pr_nrcpfpre => vr_nrcpfpre) LOOP
+                                                pr_nrdconta => pr_nrdconta
+												--, pr_nrcpfpre => vr_nrcpfpre --INC0030735
+												) LOOP
 
             FOR rw_crapopi IN cr_crapopi(pr_cdcooper => pr_cdcooper,
                                          pr_nrdconta => pr_nrdconta,
@@ -73,4 +85,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_retorna_mensagem_preposto(pr_cdcooper IN c
         xml_operador := vr_desclob;
 
     END pc_retorna_mensagem_preposto;
-/
