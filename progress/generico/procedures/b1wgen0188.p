@@ -1112,6 +1112,7 @@ PROCEDURE grava_dados:
                                                    INPUT 0,  /* par_nrcxaps1 */
                                                    INPUT 0,
                                                    INPUT ?,
+												   INPUT 0, /* par_vlrecjg1 */
                                                    /* Avalista 2 */
                                                    INPUT "", /* aux_nmdaval2 */
                                                    INPUT 0,  /* aux_nrcpfav2 */
@@ -1136,6 +1137,7 @@ PROCEDURE grava_dados:
                                                    INPUT 0,  /* aux_nrcxaps2 */
                                                    INPUT 0,
                                                    INPUT ?,
+												   INPUT 0, /* par_vlrecjg2 */
                                                    INPUT "",
                                                    INPUT aux_flgerlog,
                                                    INPUT aux_dsjusren,
@@ -1143,7 +1145,9 @@ PROCEDURE grava_dados:
                                                    INPUT 0, /* idcobope */
                                                    INPUT 0, /* idfiniof */
                                                    INPUT "", /* DSCATBEM */
-                                                   INPUT 1, /* par_inresapr */
+												   INPUT 1,
+												   INPUT "TP", /*par_dsdopcao*/
+                                                   INPUT 0,
                                                    OUTPUT TABLE tt-erro,
                                                    OUTPUT TABLE tt-msg-confirma,
                                                    OUTPUT aux_recidepr,

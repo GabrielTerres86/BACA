@@ -4692,6 +4692,24 @@ PROCEDURE impressao-prnf:
         SKIP(1)
         WITH DOWN SIDE-LABELS WIDTH 120 FRAME f_bem_hipoteca.
    
+   FORM "\033\105Bem"   
+        aux_contador     NO-LABEL
+        "\033\106" 
+        SKIP 
+        crapbpr.vlmerbem LABEL "Valor de mercado"
+        SKIP
+        crapbpr.dscatbem NO-LABEL FORMAT "x(30)"
+        SKIP
+        crapbpr.dsmarceq LABEL "Descricao" FORMAT "x(100)" /*descrição*/
+        SKIP
+        crapbpr.dsbemfin LABEL "Modelo" FORMAT "x(100)" /*Modelo*/        
+        SKIP
+        crapbpr.dschassi LABEL "Nr Serie" FORMAT "x(100)" /*nr serie*/
+        SKIP
+        crapbpr.nranobem LABEL "Ano Fabricacao"  /*Ano*/  
+        SKIP(1)
+        WITH DOWN SIDE-LABELS WIDTH 120 FRAME f_bem_maqequip.     
+   
    FORM  SKIP(1)
          "PATR. GARANT./SOCIOS S/ ONUS:"
          rel_ptrpesga 
@@ -7787,7 +7805,7 @@ PROCEDURE impressao-prnf:
        
                          aux_contador = aux_contador + 1.
        
-                         IF   craplcr.tpctrato = 2 THEN
+                         IF   craplcr.tpctrato = 2 AND crapbpr.dscatbem <> "MAQUINA E EQUIPAMENTO" THEN /*prj438 - Bug 13356 - Paulo Martins*/
                               DO:
                                   DISPLAY STREAM str_1 
                                        aux_contador
@@ -7809,6 +7827,22 @@ PROCEDURE impressao-prnf:
                               END.
                          ELSE
                               DO:
+                                IF crapbpr.dscatbem = "MAQUINA E EQUIPAMENTO" THEN
+                                    DO: 
+                                  DISPLAY STREAM str_1
+                                               aux_contador
+                                               crapbpr.dscatbem /*Categoria*/
+                                               crapbpr.dschassi /*nr serie*/
+                                               crapbpr.vlmerbem /*valor de mercado*/
+                                               crapbpr.dsbemfin /*Modelo*/
+                                               crapbpr.dsmarceq /*descrição*/
+                                               crapbpr.nranobem /*Ano bem*/
+                                               WITH FRAME f_bem_maqequip.
+
+                                          DOWN WITH FRAME f_bem_maqequip. 
+                                    END. 
+                                ELSE
+                                  DO:
                                   DISPLAY STREAM str_1
                                            aux_contador
                                            crapbpr.vlmerbem
@@ -7818,6 +7852,8 @@ PROCEDURE impressao-prnf:
                                            WITH FRAME f_bem_hipoteca.
        
                                   DOWN WITH FRAME f_bem_hipoteca.
+                              END.
+       
                               END.
        
                      END. /* Bens alienados */
@@ -9166,7 +9202,8 @@ PROCEDURE valida_impressao:
                            crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
         
         /* Se ainda nao Enviada ou Enviada mas com Erro Consultas */
-        IF  crawepr.insitest < 2 OR crawepr.insitapr = 5 THEN
+        /* IF  crawepr.insitest < 2 OR crawepr.insitapr = 5 THEN */
+		IF  crawepr.insitest < 2 OR CAN-DO ("5,6",STRING(crawepr.insitapr)) THEN /* bug 14748 rubens */
             DO:
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 

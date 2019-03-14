@@ -8047,7 +8047,8 @@ PROCEDURE cria_seguro:
                crapseg.cdageori = par_cdagenci
                crapseg.dtinsori = TODAY
                /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
-               crapseg.vlprepag    = par_vlprepag.
+               crapseg.vlprepag    = par_vlprepag
+			   crapseg.vlslddev    = IF par_tpseguro = 4 THEN par_vlpreseg ELSE 0. /*Sprint 7 - Paulo Martins*/
 
         IF par_tpseguro = 1   OR
            par_tpseguro = 11  THEN
@@ -8538,7 +8539,7 @@ PROCEDURE validar_criacao:
 
         END. /* par_nrpagina <> 1 */
         
-        IF par_tpseguro = 4 /* prestamista */ THEN
+        /*IF par_tpseguro = 4 /* prestamista */ THEN
             DO:
                IF par_vlpreseg <> 0 THEN
                     DO:
@@ -8546,10 +8547,10 @@ PROCEDURE validar_criacao:
                              par_nmdcampo = "seg_vlpreseg".
                         LEAVE valida.
                     END.     
-            END.              
+            END.  Retirado Sprint 7 - Paulo Martins */             
 
-        IF par_tpseguro = 3  OR     /* vida */
-           par_tpseguro = 4  THEN   /* prestamista */
+        IF par_tpseguro = 3  THEN   /* vida */
+           /*par_tpseguro = 4  THEN   /* prestamista */*/
             DO:
                 RUN validar_plano_seguro(INPUT par_cdcooper,
                                          INPUT par_cdagenci,

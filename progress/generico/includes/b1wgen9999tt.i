@@ -25,6 +25,8 @@
                             
                23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-cooper (Oscar).                             
                             
+               23/10/2018 - tt-dados-avais incluido campo vlrencjg renda conjuge (Leonardo).		   
+                            
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-cooper NO-UNDO
@@ -59,7 +61,9 @@ DEF TEMP-TABLE tt-dados-avais NO-UNDO
     FIELD dsendre3 AS CHAR
     FIELD inpessoa AS INTE
     FIELD dtnascto AS DATE
-    FIELD cdnacion AS INTE.
+    FIELD cdnacion AS INTE
+	FIELD vlrencjg AS DECI
+	FIELD nrctacjg AS INTE.
     
 DEF TEMP-TABLE tt-cabrel NO-UNDO
     FIELD nmrescop LIKE crapcop.nmrescop

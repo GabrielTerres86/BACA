@@ -151,6 +151,8 @@
               15/10/2018 - P442 - Não mais passar dados de interveniente e bens na validação
                            de outras propostas (Marcos-Envolti)
               
+              31/10/2018 - P438 - Incluído campos novos para gravação de hipoteca
+              
 ..............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                           NO-UNDO.
@@ -380,8 +382,10 @@ DEF VAR aux_txcetmes AS CHAR                                           NO-UNDO.
 DEF VAR aux_dtnascto AS DATE                                           NO-UNDO.
 DEF VAR aux_inpesso1 AS INTE                                           NO-UNDO.
 DEF VAR aux_dtnasct1 AS DATE                                           NO-UNDO.
+DEF VAR aux_vlrecjg1 AS DECI                                           NO-UNDO.
 DEF VAR aux_inpesso2 AS INTE                                           NO-UNDO.
 DEF VAR aux_dtnasct2 AS DATE                                           NO-UNDO.
+DEF VAR aux_vlrecjg2 AS DECI                                           NO-UNDO.
 DEF VAR aux_flgconsu AS LOGI                                           NO-UNDO.
 DEF VAR aux_flmudfai AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrcpfope AS DECI                                           NO-UNDO. 
@@ -401,6 +405,21 @@ DEF VAR aux_vlrtotal AS DECI                                           NO-UNDO.
 
 DEF VAR aux_idcarenc AS INTE                                           NO-UNDO.
 DEF VAR aux_dtcarenc AS DATE                                           NO-UNDO.
+
+DEF VAR aux_cdufende  AS CHAR                                          NO-UNDO.
+DEF VAR aux_dscompend AS CHAR                                          NO-UNDO.
+DEF VAR aux_dsendere AS CHAR                                           NO-UNDO. 
+DEF VAR aux_nmbairro AS CHAR                                           NO-UNDO. 
+DEF VAR aux_nmcidade2 AS CHAR                                          NO-UNDO.
+DEF VAR aux_nrcepend2 AS CHAR                                          NO-UNDO. 
+DEF VAR aux_nrendere  AS INTE                                          NO-UNDO.
+DEF VAR aux_dsclassi AS CHAR                                           NO-UNDO. 
+DEF VAR aux_vlareuti AS DECI                                           NO-UNDO.
+DEF VAR aux_vlaretot AS DECI                                           NO-UNDO.
+DEF VAR aux_nrmatric AS INTE                                           NO-UNDO.
+DEF VAR aux_vlrdobem AS DECI                                           NO-UNDO.
+DEF VAR aux_idpeapro AS INT                                            NO-UNDO.
+DEF VAR aux_ingarapr AS INT                                            NO-UNDO.
 
 
 { sistema/generico/includes/b1wgen0002tt.i }
@@ -639,6 +658,23 @@ PROCEDURE valores_entrada:
 
             WHEN "idcarenc" THEN aux_idcarenc = INTE(tt-param.valorCampo).
             WHEN "dtcarenc" THEN aux_dtcarenc = DATE(tt-param.valorCampo).
+
+            WHEN "cdufende" THEN aux_cdufende = tt-param.valorCampo.
+            WHEN "dscompend" THEN aux_dscompend = tt-param.valorCampo.
+            WHEN "dsendere" THEN aux_dsendere = tt-param.valorCampo.
+            WHEN "nmbairro" THEN aux_nmbairro = tt-param.valorCampo.
+            WHEN "nmcidade" THEN aux_nmcidade2 = tt-param.valorCampo.
+            WHEN "nrcepend" THEN aux_nrcepend2 = tt-param.valorCampo.
+            WHEN "nrendere" THEN aux_nrendere = INTE(tt-param.valorCampo).
+            WHEN "dsclassi" THEN aux_dsclassi = tt-param.valorCampo.
+            WHEN "vlareuti" THEN aux_vlareuti = DECI(tt-param.valorCampo).
+            WHEN "vlaretot" THEN aux_vlaretot = DECI(tt-param.valorCampo).
+            WHEN "nrmatric" THEN aux_nrmatric = INTE(tt-param.valorCampo).
+            WHEN "vlrdobem" THEN aux_vlrdobem = DECI(tt-param.valorCampo).
+			WHEN "vlrecjg1" THEN aux_vlrecjg1 = DECI(tt-param.valorCampo).
+            WHEN "vlrecjg2" THEN aux_vlrecjg2 = DECI(tt-param.valorCampo).
+            WHEN "ingarapr" THEN aux_ingarapr = INTE(tt-param.valorCampo).
+            
 
         END CASE.
     
@@ -1299,6 +1335,14 @@ PROCEDURE valida-dados-hipoteca:
                               INPUT aux_idcatbem,
                               INPUT FALSE,
                               INPUT aux_vlemprst,
+                              INPUT aux_dsendere,
+                              INPUT aux_dsclassi,
+                              INPUT aux_vlrdobem,
+                              INPUT aux_nrcepend,
+                              INPUT aux_nmbairro,
+                              INPUT aux_nmcidade,
+                              INPUT aux_cdufende,
+                              
                              OUTPUT TABLE tt-erro,
                              OUTPUT aux_nmdcampo,
                              OUTPUT aux_flgsenha,
@@ -1616,6 +1660,7 @@ PROCEDURE grava-proposta-completa:
                                 INPUT aux_nrcxaps1,
                                 INPUT aux_inpesso1,
                                 INPUT aux_dtnasct1,
+								INPUT aux_vlrecjg1,
                                 INPUT aux_nmdaval2,        
                                 INPUT aux_nrcpfav2,        
                                 INPUT aux_tpdocav2,        
@@ -1639,6 +1684,7 @@ PROCEDURE grava-proposta-completa:
                                 INPUT aux_nrcxaps2,
                                 INPUT aux_inpesso2,
                                 INPUT aux_dtnasct2,
+								INPUT aux_vlrecjg2,
                                 INPUT par_dsdbeavt,        
                                 INPUT TRUE,
                                 INPUT aux_dsjusren,
@@ -1647,6 +1693,8 @@ PROCEDURE grava-proposta-completa:
                                 INPUT aux_idfiniof,
                                 INPUT aux_dscatbem,
                                 INPUT 1, /* par_inresapr */
+								INPUT aux_dsdopcao,
+                                INPUT aux_ingarapr,
                                 OUTPUT TABLE tt-erro,                          
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT aux_recidepr,
@@ -1874,7 +1922,7 @@ END.
  E utilizada na Inclusao da proposta.
 **************************************************************************/
 PROCEDURE altera-valor-proposta:
-
+    ASSIGN aux_idpeapro = 0.
     RUN altera-valor-proposta IN hBO
                             ( INPUT aux_cdcooper,
                               INPUT aux_cdagenci,
@@ -1900,6 +1948,7 @@ PROCEDURE altera-valor-proposta:
                               INPUT 1, /* par_inresapr */
                               /* PRJ 438 - Ajuste para alterar a data pagto dentro da proc altera-valor-proposta */
                               INPUT aux_dtdpagto,
+                             INPUT-OUTPUT aux_idpeapro,
                              OUTPUT aux_flmudfai,
                              OUTPUT TABLE tt-erro,
                              OUTPUT TABLE tt-msg-confirma).
@@ -2479,7 +2528,7 @@ END PROCEDURE.
  Opcao de Alterar na rotina Emprestimo da tela ATENDA.
 ***************************************************************************/
 PROCEDURE atualiza_dados_avalista_proposta:
-
+    ASSIGN aux_idpeapro = 0.
     RUN atualiza_dados_avalista_proposta IN hBO
         (INPUT aux_cdcooper,
          INPUT aux_cdagenci,
@@ -2518,6 +2567,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
          INPUT aux_nrcxaps1,
          INPUT aux_inpesso1,
          INPUT aux_dtnasct1,
+		 INPUT aux_vlrecjg1,
          INPUT aux_nmdaval2,
          INPUT aux_nrcpfav2,
          INPUT aux_tpdocav2,
@@ -2541,9 +2591,14 @@ PROCEDURE atualiza_dados_avalista_proposta:
          INPUT aux_nrcxaps2,
          INPUT aux_inpesso2,
          INPUT aux_dtnasct2,
+		 INPUT aux_vlrecjg2,
          INPUT par_dsdbeavt,
          INPUT 1, /* par_inresapr */
+		 INPUT aux_vlemprst, /* PJ438 */
+        INPUT-OUTPUT  aux_idpeapro,
         OUTPUT aux_flmudfai,
+        OUTPUT aux_nrgarope, /*PRJ438 - BUG*/
+        OUTPUT aux_nrliquid, /*PRJ438 - BUG*/        
         OUTPUT TABLE tt-erro,
         OUTPUT TABLE tt-msg-confirma).
 

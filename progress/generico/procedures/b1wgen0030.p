@@ -5212,6 +5212,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nrcxaps1,
                                                     INPUT 0,  /* inpessoa 1o avail */
                                                     INPUT ?,  /* dtnascto 1o avail */ 
+													INPUT 0, /* par_vlrecjg1 */
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -5237,6 +5238,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nrcxaps2,
                                                     INPUT 0,  /* inpessoa 2o avail */
                                                     INPUT ?,  /* dtnascto 2o avail */
+													INPUT 0, /* par_vlrecjg2 */
                                                     INPUT "",
                                                    OUTPUT TABLE tt-erro).
         
@@ -5826,6 +5828,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nrcxaps1,
                                   INPUT 0,  /* inpessoa 1o avail */
                                   INPUT ?,  /* dtnascto 1o avail */
+								  INPUT 0, /* par_vlrecjg1 */
                                   /** 2 avalista **/
                                   INPUT par_nrctaav2, 
                                   INPUT par_nmdaval2, 
@@ -5851,6 +5854,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nrcxaps2,
                                   INPUT 0,  /* inpessoa 2o avail */
                                   INPUT ?,  /* dtnascto 2o avail */
+								  INPUT 0, /* par_vlrecjg2 */
                                   INPUT ""). /* Bens dos aval */ 
 
         DELETE PROCEDURE h-b1wgen9999.

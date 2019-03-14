@@ -882,6 +882,7 @@ PROCEDURE lista_avalistas:
     DEF  INPUT PARAM par_nrctrato AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrctaav1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrctaav2 AS INTE                           NO-UNDO.
+    DEF VAR aux_vlmedfat AS DECI                                    NO-UNDO. /*PRJ438 - Sprint 5*/
     
     DEF OUTPUT PARAM TABLE FOR tt-dados-avais.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -892,6 +893,8 @@ PROCEDURE lista_avalistas:
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
     DEF VAR aux_tpctrato AS INTE                                    NO-UNDO.
 	DEF VAR aux_nrcpfcgc LIKE crapttl.nrcpfcgc					    NO-UNDO.
+	DEF VAR aux_vlrencjg AS DECI                                    NO-UNDO.
+	DEF VAR aux_nrctacjg AS INTE                                    NO-UNDO.
     
     /* Nome do conjuge */
     DEF VAR aux_nmconjug AS CHAR                                    NO-UNDO.
@@ -1059,7 +1062,9 @@ PROCEDURE lista_avalistas:
                 
                 /* Limpar o nome do conjuge */
                 ASSIGN aux_nmconjug = ""
-                       aux_nrcpfcjg = 0.
+                       aux_nrcpfcjg = 0
+					   aux_nrctacjg = 0
+					   aux_vlrencjg = 0.
 
                 FIND  crapcje WHERE crapcje.cdcooper = par_cdcooper AND 
                                     crapcje.nrdconta = crapass.nrdconta AND 
@@ -1078,13 +1083,23 @@ PROCEDURE lista_avalistas:
                        /* Se possuir titular carrega o nome */
                        IF AVAIL crapttl THEN
                            ASSIGN aux_nmconjug = crapttl.nmextttl
-                                  aux_nrcpfcjg = crapttl.nrcpfcgc. 
+                                  aux_nrcpfcjg = crapttl.nrcpfcgc
+								  aux_nrctacjg = crapttl.nrdconta
+								  aux_vlrencjg = crapttl.vlsalari     + 
+                                              crapttl.vldrendi[1]  + 
+                                              crapttl.vldrendi[2]  +
+                                              crapttl.vldrendi[3]  +
+                                              crapttl.vldrendi[4]  +
+                                              crapttl.vldrendi[5]  +
+                                              crapttl.vldrendi[6].
 
                     END.
                     ELSE
                         /* Se o numero da conta não é maior que zero carrega o nome da crapcje */
                         ASSIGN aux_nmconjug = crapcje.nmconjug
-                               aux_nrcpfcjg = crapcje.nrcpfcjg.
+                               aux_nrcpfcjg = crapcje.nrcpfcjg
+							   aux_nrctacjg = crapcje.nrctacje
+							   aux_vlrencjg = crapcje.vlsalari.
                 END.
 
                 /* Buscar nacionalidade */
@@ -1128,7 +1143,9 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nrendere = crapenc.nrendere
                        tt-dados-avais.complend = crapenc.complend
                        tt-dados-avais.nrcxapst = crapenc.nrcxapst
-                       tt-dados-avais.inpessoa = crapass.inpessoa.
+                       tt-dados-avais.inpessoa = crapass.inpessoa
+					   tt-dados-avais.vlrencjg = aux_vlrencjg
+					   tt-dados-avais.nrctacjg = aux_nrctacjg.
 
             END.
         
@@ -1177,7 +1194,9 @@ PROCEDURE lista_avalistas:
                    tt-dados-avais.nrendere = crapavt.nrendere
                    tt-dados-avais.complend = crapavt.complend
                    tt-dados-avais.nrcxapst = crapavt.nrcxapst
-                   tt-dados-avais.inpessoa = crapavt.inpessoa.
+                   tt-dados-avais.inpessoa = crapavt.inpessoa
+				   tt-dados-avais.vlrencjg = crapavt.vlrencjg
+				   tt-dados-avais.nrctacjg = 0.
 
         END. /** Fim do FOR EACH crapavt **/
 
@@ -1288,7 +1307,9 @@ PROCEDURE lista_avalistas:
                 
                 /* Limpar o nome do conjuge */
                 ASSIGN aux_nmconjug = ""
-                       aux_nrcpfcjg = 0.
+                       aux_nrcpfcjg = 0
+					   aux_nrctacjg = 0
+					   aux_vlrencjg = 0.
 
                 FIND  crapcje WHERE crapcje.cdcooper = par_cdcooper AND 
                                     crapcje.nrdconta = crapass.nrdconta AND 
@@ -1307,13 +1328,23 @@ PROCEDURE lista_avalistas:
                        /* Se possuir titular carrega o nome */
                        IF AVAIL crapttl THEN
                            ASSIGN aux_nmconjug = crapttl.nmextttl
-                                  aux_nrcpfcjg = crapttl.nrcpfcgc. 
+                                  aux_nrcpfcjg = crapttl.nrcpfcgc
+								  aux_nrctacjg = crapttl.nrdconta
+								  aux_vlrencjg = crapttl.vlsalari     + 
+                                              crapttl.vldrendi[1]  + 
+                                              crapttl.vldrendi[2]  +
+                                              crapttl.vldrendi[3]  +
+                                              crapttl.vldrendi[4]  +
+                                              crapttl.vldrendi[5]  +
+                                              crapttl.vldrendi[6].
 
                     END.
                     ELSE
                         /* Se o numero da conta não é maior que zero carrega o nome da crapcje */
                         ASSIGN aux_nmconjug = crapcje.nmconjug
-                               aux_nrcpfcjg = crapcje.nrcpfcjg.
+                               aux_nrcpfcjg = crapcje.nrcpfcjg
+							   aux_nrctacjg = crapcje.nrctacje
+							   aux_vlrencjg = crapcje.vlsalari.
                 END.
 
                 /* Buscar nacionalidade */
@@ -1358,7 +1389,9 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nrendere = crapenc.nrendere
                        tt-dados-avais.complend = crapenc.complend
                        tt-dados-avais.nrcxapst = crapenc.nrcxapst
-                       tt-dados-avais.inpessoa = crapass.inpessoa.
+                       tt-dados-avais.inpessoa = crapass.inpessoa
+					   tt-dados-avais.vlrencjg = aux_vlrencjg
+					   tt-dados-avais.nrctacjg = aux_nrctacjg.
             END.
 
 
@@ -1459,6 +1492,19 @@ PROCEDURE lista_avalistas:
 
                ASSIGN aux_vledvmto = 0. 
 
+                IF   crapass.inpessoa = 2 THEN /*Faturamento Avalista PJ - BUG14453*/
+                    DO:
+                    RUN calcula-faturamento (INPUT  par_cdcooper,
+                                             INPUT  par_cdagenci,
+                                             INPUT  par_nrdcaixa,
+                                             INPUT  par_idorigem,
+                                             INPUT  crapass.nrdconta, /*Conta avalista*/
+                                             INPUT  "",
+                                             OUTPUT aux_vlmedfat).
+				     
+					 ASSIGN aux_vlrenmes = aux_vlmedfat.
+                    END.
+
                 /* endevidamento do aval cooperado */
                 FOR EACH crapsdv WHERE crapsdv.cdcooper = par_cdcooper       AND
                                        crapsdv.nrdconta = crapass.nrdconta   AND
@@ -1483,7 +1529,9 @@ PROCEDURE lista_avalistas:
                 
                 /* Limpar nome do conjuge */
                 ASSIGN aux_nmconjug = ""
-                       aux_nrcpfcjg = 0.
+                       aux_nrcpfcjg = 0
+					   aux_nrctacjg = 0
+					   aux_vlrencjg = 0.
 
                 FIND  crapcje WHERE crapcje.cdcooper = par_cdcooper AND 
                                     crapcje.nrdconta = crapass.nrdconta AND 
@@ -1502,13 +1550,23 @@ PROCEDURE lista_avalistas:
                        /* Se possuir titular carrega o nome */
                        IF AVAIL crapttl THEN
                            ASSIGN aux_nmconjug = crapttl.nmextttl
-                                  aux_nrcpfcjg = crapttl.nrcpfcgc. 
+                                  aux_nrcpfcjg = crapttl.nrcpfcgc
+								  aux_nrctacjg = crapttl.nrdconta
+								  aux_vlrencjg = crapttl.vlsalari     + 
+                                              crapttl.vldrendi[1]  + 
+                                              crapttl.vldrendi[2]  +
+                                              crapttl.vldrendi[3]  +
+                                              crapttl.vldrendi[4]  +
+                                              crapttl.vldrendi[5]  +
+                                              crapttl.vldrendi[6].								  
 
                     END.
                     ELSE
                         /* Se o numero da conta não é maior que zero carrega o nome da crapcje */
                         ASSIGN aux_nmconjug = crapcje.nmconjug
-                               aux_nrcpfcjg = crapcje.nrcpfcjg.
+                               aux_nrcpfcjg = crapcje.nrcpfcjg
+							   aux_nrctacjg = crapcje.nrctacje
+							   aux_vlrencjg = crapcje.vlsalari.
                 END.
                           
                 /* Buscar nacionalidade */
@@ -1555,7 +1613,9 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.complend = crapenc.complend
                        tt-dados-avais.nrcxapst = crapenc.nrcxapst
                        tt-dados-avais.inpessoa = crapass.inpessoa
-                       tt-dados-avais.dtnascto = crapass.dtnasctl.
+                       tt-dados-avais.dtnascto = crapass.dtnasctl
+					   tt-dados-avais.vlrencjg = aux_vlrencjg
+					   tt-dados-avais.nrctacjg = aux_nrctacjg.
 
             END.
         
@@ -1604,7 +1664,9 @@ PROCEDURE lista_avalistas:
                    tt-dados-avais.complend = crapavt.complend
                    tt-dados-avais.nrcxapst = crapavt.nrcxapst
                    tt-dados-avais.inpessoa = crapavt.inpessoa
-                   tt-dados-avais.dtnascto = crapavt.dtnascto.
+                   tt-dados-avais.dtnascto = crapavt.dtnascto
+				   tt-dados-avais.vlrencjg = crapavt.vlrencjg
+				   tt-dados-avais.nrctacjg = 0.
         
         END. /** Fim do FOR EACH crapavt **/
         
@@ -1764,9 +1826,24 @@ PROCEDURE lista_avalistas:
                                   NO-LOCK:
                 END.
                 
+                IF   crapass.inpessoa = 2 THEN /*Faturamento Avalista PJ - BUG14453*/
+                    DO:
+                    RUN calcula-faturamento (INPUT  par_cdcooper,
+                                             INPUT  par_cdagenci,
+                                             INPUT  par_nrdcaixa,
+                                             INPUT  par_idorigem,
+                                             INPUT  crapass.nrdconta, /*Conta avalista*/
+                                             INPUT  "",
+                                             OUTPUT aux_vlmedfat).
+				     
+					 ASSIGN aux_vlrenmes = aux_vlmedfat.
+                    END.
+                
                 /* Limpar nome do conjuge */
                 ASSIGN aux_nmconjug = "" 
-                       aux_nrcpfcjg = 0.
+                       aux_nrcpfcjg = 0
+					   aux_nrctacjg = 0
+					   aux_vlrencjg = 0.
 
                 FIND  crapcje WHERE crapcje.cdcooper = par_cdcooper AND 
                                     crapcje.nrdconta = crapass.nrdconta AND 
@@ -1785,13 +1862,24 @@ PROCEDURE lista_avalistas:
                        /* Se possuir titular carrega o nome */
                        IF AVAIL crapttl THEN
                            ASSIGN aux_nmconjug = crapttl.nmextttl
-                                  aux_nrcpfcjg = crapttl.nrcpfcgc. 
+                                  aux_nrcpfcjg = crapttl.nrcpfcgc
+								  aux_nrcpfcjg = crapttl.nrcpfcgc
+								  aux_nrctacjg = crapttl.nrdconta
+                                  aux_vlrencjg = crapttl.vlsalari     + 
+                                              crapttl.vldrendi[1]  + 
+                                              crapttl.vldrendi[2]  +
+                                              crapttl.vldrendi[3]  +
+                                              crapttl.vldrendi[4]  +
+                                              crapttl.vldrendi[5]  +
+                                              crapttl.vldrendi[6].
 
                     END.
                     ELSE
                         /* Se o numero da conta não é maior que zero carrega o nome da crapcje */
                         ASSIGN aux_nmconjug = crapcje.nmconjug
-                               aux_nrcpfcjg = crapcje.nrcpfcjg.
+                               aux_nrcpfcjg = crapcje.nrcpfcjg
+							   aux_vlrencjg = crapcje.vlsalari
+							   aux_nrctacjg = crapcje.nrctacje.
                 END.
                          
                 IF crapass.cdnacion > 0 THEN         
@@ -1838,7 +1926,9 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.complend = crapenc.complend
                        tt-dados-avais.nrcxapst = crapenc.nrcxapst
                        tt-dados-avais.inpessoa = crapass.inpessoa
-                       tt-dados-avais.dtnascto = crapass.dtnasctl.
+                       tt-dados-avais.dtnascto = crapass.dtnasctl
+					   tt-dados-avais.vlrencjg = aux_vlrencjg
+					   tt-dados-avais.nrctacjg = aux_nrctacjg.
 
             END.
 
@@ -1967,7 +2057,9 @@ PROCEDURE lista_avalistas:
                         
                         /* Limpar nome do conjuge */
                         ASSIGN aux_nmconjug = ""
-                               aux_nrcpfcjg = 0.
+                               aux_nrcpfcjg = 0
+							   aux_nrctacjg = 0
+							   aux_vlrencjg = 0.
 
                         FIND  crapcje WHERE crapcje.cdcooper = par_cdcooper AND 
                                             crapcje.nrdconta = crapass.nrdconta AND 
@@ -1986,13 +2078,23 @@ PROCEDURE lista_avalistas:
                                /* Se possuir titular carrega o nome */
                                IF AVAIL crapttl THEN
                                    ASSIGN aux_nmconjug = crapttl.nmextttl
-                                          aux_nrcpfcjg = crapttl.nrcpfcgc. 
+                                          aux_nrcpfcjg = crapttl.nrcpfcgc
+										  aux_nrctacjg = crapttl.nrdconta
+                                          aux_vlrencjg = crapttl.vlsalari     + 
+                                              crapttl.vldrendi[1]  + 
+                                              crapttl.vldrendi[2]  +
+                                              crapttl.vldrendi[3]  +
+                                              crapttl.vldrendi[4]  +
+                                              crapttl.vldrendi[5]  +
+                                              crapttl.vldrendi[6].										  
         
                             END.
                             ELSE
                                 /* Se o numero da conta não é maior que zero carrega o nome da crapcje */
                                 ASSIGN aux_nmconjug = crapcje.nmconjug
-                                       aux_nrcpfcjg = crapcje.nrcpfcjg.
+                                       aux_nrcpfcjg = crapcje.nrcpfcjg
+									   aux_nrctacjg = crapcje.nrctacje
+									   aux_vlrencjg = crapcje.vlsalari.
                         END.
                                   
                         IF crapass.cdnacion > 0 THEN
@@ -2037,7 +2139,9 @@ PROCEDURE lista_avalistas:
                                tt-dados-avais.idavalis = aux_contador
                                tt-dados-avais.nrendere = crapenc.nrendere
                                tt-dados-avais.complend = crapenc.complend
-                               tt-dados-avais.nrcxapst = crapenc.nrcxapst.
+                               tt-dados-avais.nrcxapst = crapenc.nrcxapst
+							   tt-dados-avais.vlrencjg = aux_vlrencjg
+							   tt-dados-avais.nrctacjg = aux_nrctacjg.
 
                     END.
       
@@ -2085,7 +2189,9 @@ PROCEDURE lista_avalistas:
                            tt-dados-avais.idavalis = aux_contador
                            tt-dados-avais.nrendere = crapavt.nrendere
                            tt-dados-avais.complend = crapavt.complend
-                           tt-dados-avais.nrcxapst = crapavt.nrcxapst.
+                           tt-dados-avais.nrcxapst = crapavt.nrcxapst
+						   tt-dados-avais.vlrencjg = crapavt.vlrencjg
+						   tt-dados-avais.nrctacjg = 0.
 
                 END. /** Fim do FOR EACH crapavt **/
 
@@ -2197,7 +2303,9 @@ PROCEDURE lista_avalistas:
                         
                         /* Limpar nome do conjuge */
                         ASSIGN aux_nmconjug = ""
-                               aux_nrcpfcjg = 0.
+                               aux_nrcpfcjg = 0
+							   aux_nrctacjg = 0
+							   aux_vlrencjg = 0.
 
                         FIND  crapcje WHERE crapcje.cdcooper = par_cdcooper AND 
                                             crapcje.nrdconta = crapass.nrdconta AND 
@@ -2216,13 +2324,23 @@ PROCEDURE lista_avalistas:
                                /* Se possuir titular carrega o nome */
                                IF AVAIL crapttl THEN
                                    ASSIGN aux_nmconjug = crapttl.nmextttl
-                                          aux_nrcpfcjg = crapttl.nrcpfcgc. 
+                                          aux_nrcpfcjg = crapttl.nrcpfcgc
+										  aux_nrctacjg = crapttl.nrdconta
+                                          aux_vlrencjg = crapttl.vlsalari     + 
+                                              crapttl.vldrendi[1]  + 
+                                              crapttl.vldrendi[2]  +
+                                              crapttl.vldrendi[3]  +
+                                              crapttl.vldrendi[4]  +
+                                              crapttl.vldrendi[5]  +
+                                              crapttl.vldrendi[6].										  
         
                             END.
                             ELSE
                                 /* Se o numero da conta não é maior que zero carrega o nome da crapcje */
                                 ASSIGN aux_nmconjug = crapcje.nmconjug
-                                       aux_nrcpfcjg = crapcje.nrcpfcjg.
+                                       aux_nrcpfcjg = crapcje.nrcpfcjg
+									   aux_nrctacjg = crapcje.nrctacje
+									   aux_vlrencjg = crapcje.vlsalari.
                         END.
                                   
                         IF crapavt.cdnacion > 0 THEN
@@ -2268,7 +2386,9 @@ PROCEDURE lista_avalistas:
                                tt-dados-avais.idavalis = aux_contador
                                tt-dados-avais.nrendere = crapenc.nrendere
                                tt-dados-avais.complend = crapenc.complend
-                               tt-dados-avais.nrcxapst = crapenc.nrcxapst.
+                               tt-dados-avais.nrcxapst = crapenc.nrcxapst
+							   tt-dados-avais.vlrencjg = aux_vlrencjg
+							   tt-dados-avais.nrctacjg = aux_nrctacjg.
                     END.
 
                 RETURN "OK".
@@ -2395,7 +2515,9 @@ PROCEDURE lista_avalistas:
                                 
                 /* Limpar nome do conjuge */
                 ASSIGN aux_nmconjug = ""
-                       aux_nrcpfcjg = 0.
+                       aux_nrcpfcjg = 0
+					   aux_nrctacjg = 0
+					   aux_vlrencjg = 0.
 
                 FIND  crapcje WHERE crapcje.cdcooper = par_cdcooper AND 
                                     crapcje.nrdconta = crapass.nrdconta AND 
@@ -2414,13 +2536,23 @@ PROCEDURE lista_avalistas:
                        /* Se possuir titular carrega o nome */
                        IF AVAIL crapttl THEN
                            ASSIGN aux_nmconjug = crapttl.nmextttl
-                                  aux_nrcpfcjg = crapttl.nrcpfcgc. 
+                                  aux_nrcpfcjg = crapttl.nrcpfcgc
+								  aux_nrctacjg = crapttl.nrdconta
+								  aux_vlrencjg = crapttl.vlsalari     + 
+                                              crapttl.vldrendi[1]  + 
+                                              crapttl.vldrendi[2]  +
+                                              crapttl.vldrendi[3]  +
+                                              crapttl.vldrendi[4]  +
+                                              crapttl.vldrendi[5]  +
+                                              crapttl.vldrendi[6].
 
                     END.
                     ELSE
                         /* Se o numero da conta não é maior que zero carrega o nome da crapcje */
                         ASSIGN aux_nmconjug = crapcje.nmconjug
-                               aux_nrcpfcjg = crapcje.nrcpfcjg.
+                               aux_nrcpfcjg = crapcje.nrcpfcjg
+							   aux_nrctacjg = crapcje.nrctacje
+							   aux_vlrencjg = crapcje.vlsalari.
                 END.
                                 
                 IF crapass.cdnacion > 0 THEN
@@ -2465,7 +2597,9 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.idavalis = aux_contador
                        tt-dados-avais.nrendere = crapenc.nrendere
                        tt-dados-avais.complend = crapenc.complend
-                       tt-dados-avais.nrcxapst = crapenc.nrcxapst.
+                       tt-dados-avais.nrcxapst = crapenc.nrcxapst
+					   tt-dados-avais.vlrencjg = aux_vlrencjg
+					   tt-dados-avais.nrctacjg = aux_nrctacjg.
 
             END.
      
@@ -2513,7 +2647,9 @@ PROCEDURE lista_avalistas:
                    tt-dados-avais.idavalis = aux_contador
                    tt-dados-avais.nrendere = crapavt.nrendere
                    tt-dados-avais.complend = crapavt.complend
-                   tt-dados-avais.nrcxapst = crapavt.nrcxapst.
+                   tt-dados-avais.nrcxapst = crapavt.nrcxapst
+				   tt-dados-avais.vlrencjg = crapavt.vlrencjg
+				   tt-dados-avais.nrctacjg = 0.
 
         END. /** Fim do FOR EACH crapavt **/
         
@@ -2624,7 +2760,9 @@ PROCEDURE lista_avalistas:
                 
                 /* Limpar nome do conjuge */
                 ASSIGN aux_nmconjug = ""
-                       aux_nrcpfcjg = 0.
+                       aux_nrcpfcjg = 0
+					   aux_nrctacjg = 0
+					   aux_vlrencjg = 0.
 
                 FIND  crapcje WHERE crapcje.cdcooper = par_cdcooper AND 
                                     crapcje.nrdconta = crapass.nrdconta AND 
@@ -2643,13 +2781,23 @@ PROCEDURE lista_avalistas:
                        /* Se possuir titular carrega o nome */
                        IF AVAIL crapttl THEN
                            ASSIGN aux_nmconjug = crapttl.nmextttl
-                                  aux_nrcpfcjg = crapttl.nrcpfcgc. 
+                                  aux_nrcpfcjg = crapttl.nrcpfcgc
+								  aux_nrctacjg = crapttl.nrdconta
+                                  aux_vlrencjg = crapttl.vlsalari     + 
+                                              crapttl.vldrendi[1]  + 
+                                              crapttl.vldrendi[2]  +
+                                              crapttl.vldrendi[3]  +
+                                              crapttl.vldrendi[4]  +
+                                              crapttl.vldrendi[5]  +
+                                              crapttl.vldrendi[6].								  
 
                     END.
                     ELSE
                         /* Se o numero da conta não é maior que zero carrega o nome da crapcje */
                         ASSIGN aux_nmconjug = crapcje.nmconjug
-                               aux_nrcpfcjg = crapcje.nrcpfcjg.
+                               aux_nrcpfcjg = crapcje.nrcpfcjg
+							   aux_nrctacjg = crapcje.nrctacje
+							   aux_vlrencjg = crapcje.vlsalari.
                 END.
 
                 /* Buscar nacionalidade */
@@ -2694,7 +2842,9 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.idavalis = aux_contador
                        tt-dados-avais.nrendere = crapenc.nrendere
                        tt-dados-avais.complend = crapenc.complend
-                       tt-dados-avais.nrcxapst = crapenc.nrcxapst.
+                       tt-dados-avais.nrcxapst = crapenc.nrcxapst
+					   tt-dados-avais.vlrencjg = aux_vlrencjg
+					   tt-dados-avais.nrctacjg = aux_nrctacjg.
 
             END.
 
@@ -2750,12 +2900,15 @@ PROCEDURE consulta-avalista:
     DEF VAR aux_vledvmto AS DECI                                    NO-UNDO.
     DEF VAR aux_inhabmen LIKE crapttl.inhabmen                      NO-UNDO.
 	DEF VAR aux_nrcpfcgc LIKE crapttl.nrcpfcgc				        NO-UNDO.
+	DEF VAR aux_vlrencjg AS DECI                                    NO-UNDO.
+	DEF VAR aux_nrctacjg AS INTE                                    NO-UNDO.
     
     DEF VAR aux_nmconjug AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrcpfcjg LIKE crapcje.nrcpfcjg                      NO-UNDO.
     DEF VAR aux_stsnrcal AS LOGICAL                                 NO-UNDO.
     DEF VAR avt_inpessoa AS INTEGER                                 NO-UNDO.
     DEF VAR aux_nmdavali AS CHAR                                    NO-UNDO.
+	DEF VAR aux_vlmedfat AS DECI                                    NO-UNDO. /*PRJ438 - Sprint 5*/
 
     /* Variaveis para o XML */ 
     DEF VAR xDoc          AS HANDLE                                 NO-UNDO.   
@@ -2914,8 +3067,22 @@ PROCEDURE consulta-avalista:
                             RETURN "NOK".
                         END.
                 END.
+			ELSE
+			IF  crapass.inpessoa = 2 THEN /*PRJ438 - Sprint 5*/
+                DO:
+	
+				    RUN calcula-faturamento (INPUT  par_cdcooper,
+                                             INPUT  par_cdagenci,
+                                             INPUT  par_nrdcaixa,
+                                             INPUT  par_idorigem,
+                                             INPUT  par_nrctaava, /*Conta avalista*/
+                                             INPUT  par_dtmvtolt,
+                                             OUTPUT aux_vlmedfat).
+				     
+					 ASSIGN aux_vlrenmes = aux_vlmedfat.
+				END.
                 
-            FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
+            FIND crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                                crapenc.nrdconta = par_nrctaava AND
                                crapenc.idseqttl = 1
 							   NO-LOCK NO-ERROR.
@@ -2967,7 +3134,9 @@ PROCEDURE consulta-avalista:
 
             /* Limpar nome do conjuge */
             ASSIGN aux_nmconjug = ""
-                   aux_nrcpfcjg = 0.
+                   aux_nrcpfcjg = 0
+				   aux_vlrencjg = 0
+				   aux_nrctacjg = 0.
 
             FIND  crapcje WHERE crapcje.cdcooper = par_cdcooper AND 
                                 crapcje.nrdconta = crapass.nrdconta AND 
@@ -2986,12 +3155,22 @@ PROCEDURE consulta-avalista:
                    /* Se possuir titular carrega o nome */
                    IF AVAIL crapttl THEN
                        ASSIGN aux_nmconjug = crapttl.nmextttl
-                              aux_nrcpfcjg = crapttl.nrcpfcgc. 
+                              aux_nrcpfcjg = crapttl.nrcpfcgc
+							  aux_nrctacjg = crapttl.nrdconta
+							  aux_vlrencjg = crapttl.vlsalari     + 
+                                              crapttl.vldrendi[1]  + 
+                                              crapttl.vldrendi[2]  +
+                                              crapttl.vldrendi[3]  +
+                                              crapttl.vldrendi[4]  +
+                                              crapttl.vldrendi[5]  +
+                                              crapttl.vldrendi[6].
                 END.
                 ELSE
                     /* Se o numero da conta não é maior que zero carrega o nome da crapcje */
                     ASSIGN aux_nmconjug = crapcje.nmconjug
-                           aux_nrcpfcjg = crapcje.nrcpfcjg.
+                           aux_nrcpfcjg = crapcje.nrcpfcjg
+						   aux_vlrencjg = crapcje.vlsalari
+						   aux_nrctacjg = crapcje.nrctacje.
             END.
 
             IF crapass.cdnacion > 0 THEN
@@ -3036,7 +3215,9 @@ PROCEDURE consulta-avalista:
                    tt-dados-avais.nrcxapst = crapenc.nrcxapst                 
                    tt-dados-avais.complend = TRIM(crapenc.complend)
                    tt-dados-avais.inpessoa = crapass.inpessoa
-                   tt-dados-avais.dtnascto = crapass.dtnasctl.
+                   tt-dados-avais.dtnascto = crapass.dtnasctl
+				   tt-dados-avais.vlrencjg = aux_vlrencjg
+				   tt-dados-avais.nrctacjg = aux_nrctacjg.
         END.                
     ELSE
     IF  par_nrcpfcgc > 0  THEN
@@ -3608,6 +3789,7 @@ PROCEDURE cria-tabelas-avalistas.
     DEF  INPUT PARAM par_nrcxaps1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inpesso1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasct1 AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_vlrecjg1 AS DECI                           NO-UNDO.
 
     /** ------------------- Parametros do 2 avalista ------------------- **/
     DEF  INPUT PARAM par_nrctaav2 AS INTE                           NO-UNDO.
@@ -3634,6 +3816,7 @@ PROCEDURE cria-tabelas-avalistas.
     DEF  INPUT PARAM par_nrcxaps2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inpesso2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasct2 AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_vlrecjg2 AS DECI                           NO-UNDO.
 
     DEF  INPUT PARAM par_dsdbeavt AS CHAR                           NO-UNDO.
     
@@ -3853,6 +4036,7 @@ PROCEDURE cria-tabelas-avalistas.
                    crapavt.nrcxapst    = par_nrcxaps1
                    crapavt.inpessoa    = par_inpesso1
                    crapavt.dtnascto    = par_dtnasct1
+				   crapavt.vlrencjg    = par_vlrecjg1
                    aux_contador        = 0.
 
             VALIDATE crapavt.
@@ -3906,6 +4090,7 @@ PROCEDURE cria-tabelas-avalistas.
                    crapavt.nrcxapst    = par_nrcxaps2     
                    crapavt.inpessoa    = par_inpesso2
                    crapavt.dtnascto    = par_dtnasct2
+				   crapavt.vlrencjg    = par_vlrecjg2
                    aux_contador         = 0.
 
             VALIDATE crapavt.
@@ -4076,6 +4261,7 @@ PROCEDURE atualiza_tabela_avalistas:
     DEF  INPUT PARAM par_nrcxaps1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inpesso1 AS INTE                           NO-UNDO.    
     DEF  INPUT PARAM par_dtnasct1 AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_vlrecjg1 AS DECI                           NO-UNDO.
     /** ------------------- Parametros do 2 avalista ------------------- **/   
     DEF  INPUT PARAM par_nrctaav2 AS INTE                           NO-UNDO.    
     DEF  INPUT PARAM par_nmdaval2 AS CHAR                           NO-UNDO.    
@@ -4101,6 +4287,7 @@ PROCEDURE atualiza_tabela_avalistas:
     DEF  INPUT PARAM par_nrcxaps2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inpesso2 AS INTE                           NO-UNDO.    
     DEF  INPUT PARAM par_dtnasct2 AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_vlrecjg2 AS DECI                           NO-UNDO.
 
     DEF  INPUT PARAM par_dsdbeavt AS CHAR                           NO-UNDO.  
 
@@ -4155,6 +4342,7 @@ PROCEDURE atualiza_tabela_avalistas:
                                 INPUT par_nrcxaps1,
                                 INPUT par_inpesso1,
                                 INPUT par_dtnasct1,
+								INPUT par_vlrecjg1,
 
                                 /* 2 avalista */
                                 INPUT par_nrctaav2,
@@ -4181,6 +4369,7 @@ PROCEDURE atualiza_tabela_avalistas:
                                 INPUT par_nrcxaps2,
                                 INPUT par_inpesso2,
                                 INPUT par_dtnasct2,
+								INPUT par_vlrecjg2,
                                 INPUT par_dsdbeavt,
                                OUTPUT TABLE tt-erro).
 

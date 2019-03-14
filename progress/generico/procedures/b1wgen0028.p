@@ -9237,6 +9237,7 @@ PROCEDURE altera_limcred_cartao:
                                  INPUT par_nrcxaps1,
                                  INPUT 0,  /* inpessoa 1o avail */
                                  INPUT ?,  /* dtnascto 1o avail */
+								 INPUT 0, /* par_vlrecjg1 */
                                  /* 2 avalista */
                                  INPUT par_nrctaav2,
                                  INPUT par_nmdaval2,
@@ -9262,6 +9263,7 @@ PROCEDURE altera_limcred_cartao:
                                  INPUT par_nrcxaps2,
                                  INPUT 0,  /* inpessoa 2o avail */
                                  INPUT ?,  /* dtnascto 2o avail */
+								 INPUT 0, /* par_vlrecjg2 */
                                  INPUT ""). /* Bens */                                 
                                  
                 DELETE PROCEDURE h-b1wgen9999.                 
@@ -11696,6 +11698,7 @@ PROCEDURE efetua_entrega2via_cartao:
                                                     INPUT par_nrcxaps1,
                                                     INPUT 0,  /* inpessoa 1o avail */
                                                     INPUT ?,  /* dtnascto 1o avail */
+													INPUT 0, /* par_vlrecjg1 */
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -11721,6 +11724,7 @@ PROCEDURE efetua_entrega2via_cartao:
                                                     INPUT par_nrcxaps2,
                                                     INPUT 0,  /* inpessoa 2o avail */
                                                     INPUT ?,  /* dtnascto 2o avail */
+													INPUT 0, /* par_vlrecjg2 */
                                                     INPUT "",
                                                    OUTPUT TABLE tt-erro). 
 
