@@ -8,7 +8,7 @@
   |   busca_dados                            |	EMPR0002.pc_busca_dados_cpa           |
   |   valida_dados                            |	EMPR0002.pc_valid_dados_cpa           |
   +------------------------------------------+----------------------------------------+
-
+   
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
 

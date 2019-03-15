@@ -17,7 +17,7 @@
   | valida-dados-alienacao              | TELA_MANBEM.pc_valida_dados_alienacao     |
   | grava-alienacao-hipoteca            | TELA_MANBEM.pc_grava_alienacao_hipot_prog |
   +-------------------------------------+-------------------------------------------+
-
+   
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
 

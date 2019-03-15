@@ -22,7 +22,7 @@
   |   busca_dados_impressao_dsctit  | DSCT0002.pc_busca_dados_imp_descont     |
   |   busca_tarifa_desconto_titulo  | DSCT0003.pc_busca_tarifa_desc_titulo    |
   +---------------------------------+-----------------------------------------+
-
+   
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
 

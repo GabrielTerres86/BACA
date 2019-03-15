@@ -1,5 +1,5 @@
 /*..............................................................................
-
+ 
     Programa  : b1wgen0201.p
     Autor     : Lucas Reinert
     Data      : Novembro/2017                Ultima Atualizacao: 19/10/2018

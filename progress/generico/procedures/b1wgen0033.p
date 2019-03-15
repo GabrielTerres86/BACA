@@ -18,7 +18,7 @@
   | buscar_motivo_can                      | SEGU0001.pc_buscar_motivo_can                    |
   | cria-tabela-depara                     | SEGU0001.pc_cria_tabela_depara                   |
   +----------------------------------------+--------------------------------------------------+
-
+   
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
 

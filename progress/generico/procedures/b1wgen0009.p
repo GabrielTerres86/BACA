@@ -1,5 +1,5 @@
 /* ............................................................................
-
+ 
    Programa: b1wgen0009.p
    Autor   : Guilherme
    Data    : Marco/2009                     Última atualizacao: 10/06/2018

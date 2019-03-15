@@ -1,5 +1,5 @@
 /*..............................................................................
-
+ 
    Programa: xb1wgen0002.p
    Autor   : Murilo/David
    Data    : Junho/2007                     Ultima atualizacao: 15/10/2018

@@ -14,7 +14,7 @@
   PESSOAS:
    - GUILHERME STRUBE    (CECRED)
    - MARCOS MARTINI      (SUPERO)
-   - GUILHERME BOETTCHER (SUPERO)
+   - GUILHERME BOETTCHER (SUPERO) 
 
 *******************************************************************************/
 

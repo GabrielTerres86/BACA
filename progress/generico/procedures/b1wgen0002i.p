@@ -8,7 +8,7 @@
   | busca_operacoes                     | EMPR0003.pc_busca_operacoes          |
   | gera_co_responsavel                 | EMPR0003.pc_gera_co_responsavel      |
   +-------------------------------------+--------------------------------------+
-                            
+                             
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
                             

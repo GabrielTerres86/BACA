@@ -1,5 +1,5 @@
 /*..............................................................................
-
+ 
    Programa: b1wgen0196.p
    Autora  : Odirlei Busana - AMcom.
    Data    : 21/03/2017                        Ultima atualizacao: 12/04/2018

@@ -8,7 +8,7 @@
 | retorna-situacao                       | CADA0004.fn_retorna_situacao_cartao |
 | f_verifica_adm                         | CADA0004.fn_verifica_adm            |
 +----------------------------------------+-------------------------------------+
-
+ 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
 

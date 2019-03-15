@@ -18,7 +18,7 @@
   |   busca_cabrel                           | EXTR0002.pc_busca_cabrel        |
   |   calcula-faturamento                    | CADA0001.pc_calcula_faturamento |
   +------------------------------------------+---------------------------------+
-
+   
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
 

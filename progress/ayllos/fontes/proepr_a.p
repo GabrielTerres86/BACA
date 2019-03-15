@@ -1,5 +1,5 @@
 /* ...........................................................................
-
+ 
    Programa: Fontes/proepr_a.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
