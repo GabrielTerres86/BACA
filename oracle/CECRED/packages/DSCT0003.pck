@@ -7580,7 +7580,10 @@ EXCEPTION
     CLOSE cr_crapaco;
 
     -- Busca os titulos selecionados
-    FOR rw_craptdb IN  cr_craptdb(vr_cdcooper) LOOP 
+    OPEN  cr_craptdb(vr_cdcooper);
+    LOOP
+          FETCH cr_craptdb INTO rw_craptdb;
+          EXIT  WHEN cr_craptdb%NOTFOUND;
           
           vr_vlpagmto := rw_craptdb.vlsldtit + rw_craptdb.vlmulta + rw_craptdb.vlmora + rw_craptdb.vliof;
           
@@ -8031,6 +8034,7 @@ EXCEPTION
 
     -- Valor da data parametro para verificar se calcula carencia
     vr_dt_param_carencia DATE;
+    vr_dt_calc_carencia crapprm.dsvlrprm%TYPE;
   BEGIN
   
     -- Leitura do calendario
@@ -8106,12 +8110,17 @@ EXCEPTION
     END IF;                                       
                                           
     -- Busca na tabela de parametros a data
-    vr_dt_param_carencia := gene0001.fn_param_sistema(pr_cdcooper => 0
+    vr_dt_calc_carencia := gene0001.fn_param_sistema(pr_cdcooper => 0
                                                      ,pr_nmsistem => 'CRED'
                                                      ,pr_cdacesso => 'DT_CALC_CARENCIA');
     -- Caso não ache o parametro ou a data do titulo seja menor que a data parametro, não se aplica os dias de carência.
-    IF (vr_dt_param_carencia IS NULL OR rw_craptdb.dtvencto <= vr_dt_param_carencia) THEN
+    IF vr_dt_calc_carencia IS NULL THEN
       vr_tab_dados_dsctit(1).cardbtit_c := 0;
+    ELSE
+      vr_dt_param_carencia := to_date(vr_dt_calc_carencia,'DD/MM/RRRR');
+      IF rw_craptdb.dtvencto <= vr_dt_param_carencia THEN
+      vr_tab_dados_dsctit(1).cardbtit_c := 0;
+    END IF;
     END IF;
     
     -- Não calcular juros caso esteja na carência
