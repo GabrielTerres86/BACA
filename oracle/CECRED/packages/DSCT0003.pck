@@ -751,6 +751,17 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                          ,pr_nmdcampo     OUT VARCHAR2             --> Nome do campo com erro
                                          ,pr_des_erro     OUT VARCHAR2
                                         );
+
+PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
+                              pr_nrctrlim  IN craplim.nrctrlim%TYPE
+                              ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                              --------> OUT <--------
+                              ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                              ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                              ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                              );
                                         
   PROCEDURE pc_lanc_jratu_mensal(pr_cdcooper IN crapbdt.cdcooper%TYPE
                                 ,pr_nrborder IN crapbdt.nrborder%TYPE DEFAULT 0
@@ -7569,10 +7580,7 @@ EXCEPTION
     CLOSE cr_crapaco;
 
     -- Busca os titulos selecionados
-    OPEN  cr_craptdb(vr_cdcooper);
-    LOOP
-          FETCH cr_craptdb INTO rw_craptdb;
-          EXIT  WHEN cr_craptdb%NOTFOUND;
+    FOR rw_craptdb IN  cr_craptdb(vr_cdcooper) LOOP 
           
           vr_vlpagmto := rw_craptdb.vlsldtit + rw_craptdb.vlmulta + rw_craptdb.vlmora + rw_craptdb.vliof;
           
@@ -7920,6 +7928,7 @@ EXCEPTION
      Alteracoes: 16/11/2018 - Adicionado tratativa para não trazer lançamentos estornados - Cássia de Oliveira (GFT)
                  20/11/2018 - Corrigido para arrumar o calculo de juros de mora usando campos novos ao inves dos lancamentos
                  07/03/2019 - Inserção de dias de carência para não calcular juros - Vitor S. Assanuma (GFT)
+                 14/03/2019 - Inserção da data parametro para o novo calculo de juros - Vitor S. Assanuma
   ..................................................................................*/ 
   
     /* cursores */
@@ -8021,6 +8030,8 @@ EXCEPTION
     vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
     vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
 
+    -- Valor da data parametro para verificar se calcula carencia
+    vr_dt_param_carencia DATE;
   BEGIN
   
     -- Leitura do calendario
@@ -8095,6 +8106,15 @@ EXCEPTION
       RAISE vr_exc_erro;
     END IF;                                       
                                           
+    -- Busca na tabela de parametros a data
+    vr_dt_param_carencia := gene0001.fn_param_sistema(pr_cdcooper => 0
+                                                     ,pr_nmsistem => 'CRED'
+                                                     ,pr_cdacesso => 'DT_CALC_CARENCIA');
+    -- Caso não ache o parametro ou a data do titulo seja menor que a data parametro, não se aplica os dias de carência.
+    IF (vr_dt_param_carencia IS NULL OR rw_craptdb.dtvencto <= vr_dt_param_carencia) THEN
+      vr_tab_dados_dsctit(1).cardbtit_c := 0;
+    END IF;
+    
     -- Não calcular juros caso esteja na carência
     IF gene0005.fn_valida_dia_util(pr_cdcooper, rw_craptdb.dtvencto + vr_tab_dados_dsctit(1).cardbtit_c) >= pr_dtmvtolt THEN
       pr_vlmtatit := 0;
