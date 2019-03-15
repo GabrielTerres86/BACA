@@ -4,7 +4,7 @@ create or replace package cecred.TELA_COBTIT is
     Programa : TELA_COBTIT
     Sistema  : Cred
     Autor    : Luis Fernando (GFT)
-    Data     : 22/05/2018
+    Data     : 16/10/2018
 
    Dados referentes ao programa:
 
