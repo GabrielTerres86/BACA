@@ -7623,7 +7623,6 @@ EXCEPTION
                         ,pr_nrdconta => pr_nrdconta
                         ,pr_nrdrowid => vr_rowid_log);
     END LOOP;
-    CLOSE cr_craptdb;
 
     -- Commita toda a transacao     
     COMMIT;
