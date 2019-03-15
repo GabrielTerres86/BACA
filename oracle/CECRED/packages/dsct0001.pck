@@ -5850,8 +5850,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                               'craplcm(1): rowid:' || rw_craplcm.rowid ||
                               '. ' ||sqlerrm; 
                --Levantar Excecao
-               RAISE vr_exc_erro;
-              END IF;     
+               RAISE vr_exc_erro;    
            
            END;
          END IF;

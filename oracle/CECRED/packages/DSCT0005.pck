@@ -2550,24 +2550,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
                              ,pr_cdhistor => vr_dados_tarifa.cdhistor);
       FETCH cr_craplcm_tarifa INTO rw_craplcm_tarifa;
       
-      IF cr_craplcm%FOUND THEN
+      IF cr_craplcm_tarifa%FOUND THEN
         
         -- Exclui o registro da tabela de lançamentos do borderô
         DELETE
           FROM craplcm lcm
-         WHERE lcm.rowid = rw_craplcm.rowid;
+         WHERE lcm.rowid = rw_craplcm_tarifa.rowid;
          
       END IF;                          
-      CLOSE cr_craplcm;
+      CLOSE cr_craplcm_tarifa;
       
     END IF;  
     
     -- Atualiza os saldos das tabela
     UPDATE craptdb tdb
-       SET tdb.vlsldtit = tdb.vlsldtit + vr_vlpgtocc + (vr_vlpagtit - vr_vliofcpl - vr_vlmratit - vr_vlmtatit - vr_vlpagmaior),
-           tdb.vlpagmta = tdb.vlpagmta + vr_vlmtatit,
-           tdb.vlpagmra = tdb.vlpagmra + vr_vlmratit,
-           tdb.vlpagiof = tdb.vlpagiof + vr_vliofcpl,
+       SET tdb.vlsldtit = tdb.vlsldtit + NVL(vr_vlpgtocc,0) + (NVL(vr_vlpagtit,0) - NVL(vr_vliofcpl,0) - NVL(vr_vlmratit,0) - NVL(vr_vlmtatit,0) - NVL(vr_vlpagmaior,0)),
+           tdb.vlpagmta = tdb.vlpagmta + NVL(vr_vlmtatit,0),
+           tdb.vlpagmra = tdb.vlpagmra + NVL(vr_vlmratit,0),
+           tdb.vlpagiof = tdb.vlpagiof + NVL(vr_vliofcpl,0),
            tdb.dtdebito = NULL,
            tdb.dtdpagto = NULL,
            tdb.insittit = 4
