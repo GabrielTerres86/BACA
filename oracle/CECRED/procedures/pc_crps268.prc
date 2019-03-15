@@ -55,6 +55,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                09/07/2018 - Incluido NVL na validação de data do primeiro debito(DTPRIDEB)
                             pois o campo pode estar nulo na tabela(PRJ450 - Odirlei-AMcom)             
 
+			   13/03/2019 - Remoção de Lote de Seguro - Alcemir Mouts
+
   ............................................................................... */
 
   DECLARE
@@ -391,8 +393,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
 			INTO rw_craplot;
 
 			IF cr_craplot%NOTFOUND THEN
-			  -- Fechar o cursor pois haverá raise
-			  CLOSE cr_craplot;
 					
 				--Criar lote
 				BEGIN
@@ -438,15 +438,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
 				  RAISE vr_exc_saida;
 				WHEN OTHERS THEN
 				  vr_cdcritic := 0;
-				  vr_dscritic := 'Erro ao inserir na tabela de lotes. ' ||
-						 sqlerrm;
+					  vr_dscritic := 'Erro ao inserir na tabela de lotes. ' ||sqlerrm;
 				  RAISE vr_exc_saida;
 				END;
 					
 			END IF;
 
 			CLOSE cr_craplot;
-		  
 		  
           --debita apenas se qtde de dias devedor < 60
           IF rw_crapseg.qtddsdev < 60 THEN
@@ -474,7 +472,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                                                  , pr_nrdolote => 4154 --rw_craplot.nrdolote
                                                  , pr_vllanmto => rw_crapseg.vlpreseg
                                                  , pr_cdcooper => pr_cdcooper
-                                                 , pr_inprolot => 1  -- processa o lote na própria procedure
+                                                 , pr_inprolot => 0  -- processa o lote na própria procedure
                                                  , pr_tplotmov => 1
                                                  , pr_tab_retorno => vr_tab_retorno
                                                  , pr_incrineg => vr_incrineg

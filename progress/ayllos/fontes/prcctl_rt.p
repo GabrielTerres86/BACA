@@ -47,10 +47,7 @@
                        
                26/12/2018 - Efetuar copia de arquivo txt para diretorio micros.
                             Chamado SCTASK0036838 - Gabriel Marcos (Mouts).  
-
-               21/02/2019 - Ajuste de remocao do arquivo O239 (processo de limpeza).
-                            Chamado SCTASK0036838 - Gabriel Marcos (Mouts).
- 
+                           
 ............................................................................. */
 
 { includes/var_online.i }
@@ -683,13 +680,13 @@ ELSE
                                STRING(TIME,"99999") + "_" +
                                STRING(crapcop.cdbcoctl,"999") + ".pdf".
 
-         UNIX SILENT VALUE("rm /micros/cecred/compel/O239_" + 
-                           STRING(crapcop.cdagectl,"9999") + "* 2> /dev/null").
-
          /*** copiar arquivo para o diretorio 'compel' ***/
          UNIX SILENT VALUE("cp " + aux_nmarqimp + " " + "/micros/cecred/compel/" + 
                            REPLACE(SUBSTRING(aux_nmarqpdf,R-INDEX(aux_nmarqpdf,"/") + 1,
                            LENGTH(aux_nmarqpdf) - R-INDEX(aux_nmarqpdf,"/")),"pdf","txt")).
+
+         UNIX SILENT VALUE("rm /micros/cecred/compel/0239_" + 
+                           STRING(crapcop.cdagectl,"9999") + "* 2> /dev/null").
 
          /* GERAR PDF */
          RUN gera-pdf-impressao IN h-b1wgen0024(INPUT aux_nmarqimp,

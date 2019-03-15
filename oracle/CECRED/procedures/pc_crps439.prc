@@ -173,6 +173,9 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
                             
                19/11/2018 - PRB0040434 Tratamento para gerar o arquivo RM somente no batch (Carlos)
 
+			   13/03/2019 - Remoção da atualização da capa de lote para seguros
+							Alcemir Mouts
+
                ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -832,8 +835,6 @@ begin
     INTO rw_craplot;
 
     IF cr_craplot%NOTFOUND THEN
-      -- Fechar o cursor pois haverá raise
-      CLOSE cr_craplot;
     		
         --Criar lote
         BEGIN
@@ -879,8 +880,7 @@ begin
           RAISE vr_exc_saida;
         WHEN OTHERS THEN
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao inserir na tabela de lotes. ' ||
-                 sqlerrm;
+			  vr_dscritic := 'Erro ao inserir na tabela de lotes. ' ||sqlerrm;
           RAISE vr_exc_saida;
         END;
     		
