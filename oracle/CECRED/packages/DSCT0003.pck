@@ -63,6 +63,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   vr_cdhistordsct_credpagmaiorIF CONSTANT craphis.cdhistor%TYPE := 2790; --CREDITO DESCONTO DE TITULO PAGO A MAIOR (pagamento em outra IF / COMPE)
   vr_cdhistordsct_jratuprejuz    CONSTANT craphis.cdhistor%TYPE := 2763; --JUROS DE ATUALIZAÇÃO PREJUIZO S/DESCONTO DE TITULO
   vr_cdhistordsct_sumjratuprejuz CONSTANT craphis.cdhistor%TYPE := 2798; --SOMATORIO DOS JUROS DE ATUALIZAÇÃO PREJUIZO S/DESCONTO DE TITULO
+  vr_cdhistordsct_credabonodscto CONSTANT craphis.cdhistor%TYPE := 2799; --ABONO DESCONTO DE TITULO (BOLETAGEM MASSIVA)
   vr_cdhistordsct_deboppagmaior  CONSTANT craphis.cdhistor%TYPE := 2804; --AJUSTE DE VALOR A MAIOR DO PAGAMENTO
   vr_cdhistordsct_iofcompleoper  CONSTANT craphis.cdhistor%TYPE := 2800; --DEBITO DE IOF COMPLEMENTAR NA OPERACAO
   -- Estorno
@@ -152,7 +153,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                   flacordo INTEGER,
                   flgjudic INTEGER,
                   flextjud INTEGER,
-                  flgehvip INTEGER
+                  flgehvip INTEGER,
+                  vlorigem NUMBER(25,2)
                   );
 
   TYPE typ_tab_tit_bordero IS TABLE OF typ_rec_tit_bordero
@@ -9124,6 +9126,7 @@ EXCEPTION
                               processamento do pagamento pr_cdorigpg (Paulo Penteado GFT)
                  22/10/2018 - Retirado o lançamento do saldo remanescente na CC quando COBTIT (Vitor S. Assanuma - GFT)
                  27/11/2018 - Adicionado pagamento de juros60 para futuras contabilizacoes de prejuizo (Luis Fernando - GFT)
+                 16/03/2019 - Corrige tratativa para valor de abono (Cássia de Oliveira - GFT)
   ..................................................................................*/ 
     
     /* CURSORES */
@@ -9384,6 +9387,30 @@ EXCEPTION
     vr_vlpagtit := 0;
     vr_vlpagm60 := 0;
     
+    -- Faz lançamento de abono se tiver
+    -- Se for boletagem massiva e o valor do titulo for maior que o valor do pagamento
+    IF pr_cdorigpg = 5 AND (rw_craptdb.vltitulo_total - pr_vlpagmto) > 0 THEN
+      pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
+                       ,pr_cdagenci => 1
+                       ,pr_cdbccxlt => 100
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_vllanmto => vr_vlabatcc
+                       ,pr_cdhistor => vr_cdhistordsct_credabonodscto
+                       ,pr_cdcooper => pr_cdcooper
+                       ,pr_cdoperad => pr_cdoperad
+                       ,pr_nrborder => pr_nrborder
+                       ,pr_cdpactra => 0
+                       ,pr_nrdocmto => rw_craptdb.nrdocmto
+                       ,pr_cdcritic => vr_cdcritic
+                       ,pr_dscritic => vr_dscritic);
+      -- Condicao para verificar se houve critica
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+      END IF;
+      -- Atualiza valor disponivel para pagamento
+      vr_vlpagmto := rw_craptdb.vltitulo_total;
+    END IF;
+
     -- 1) IOF
     
     vr_vltotal_liquido := 0;
@@ -9710,37 +9737,6 @@ EXCEPTION
                          ,pr_cdhistor => CASE WHEN nvl(pr_flpgtava,0) = 0 THEN 
                                                    vr_cdhistordsct_pgtocc
                                               ELSE vr_cdhistordsct_pgtoavalcc END
-                         ,pr_cdcooper => pr_cdcooper
-                         ,pr_cdoperad => pr_cdoperad
-                         ,pr_nrborder => pr_nrborder
-                         ,pr_cdpactra => 0
-                         ,pr_nrdocmto => rw_craptdb.nrdocmto
-                         ,pr_cdcritic => vr_cdcritic
-                         ,pr_dscritic => vr_dscritic);
-        -- Condicao para verificar se houve critica                             
-        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-      END IF;
-
-      -- Se não for pagamento pela conta-corrente raspada e se o valor pago do boleto for maior que o saldo restante,
-      -- então lançar o saldo restante como crédito na conta corrente do cooperado
-      IF pr_cdorigpg = 5 THEN
-        vr_vlabatcc := rw_craptdb.vltitulo_total - pr_vlpagmto;
-      ELSE
-        vr_vlabatcc := vr_vlpagmto;
-      END IF;    
-      
-      IF (pr_cdorigpg > 0 AND pr_cdorigpg NOT IN (2,4)) AND vr_vlabatcc > 0 THEN
-        pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
-                         ,pr_cdagenci => 1
-                         ,pr_cdbccxlt => 100
-                         ,pr_nrdconta => pr_nrdconta
-                         ,pr_vllanmto => vr_vlabatcc
-                         ,pr_cdhistor => CASE WHEN pr_indpagto = 0 THEN 
-                                                   vr_cdhistordsct_credpagmaiorIF
-                                              ELSE vr_cdhistordsct_credpagmaior
-                                         END
                          ,pr_cdcooper => pr_cdcooper
                          ,pr_cdoperad => pr_cdoperad
                          ,pr_nrborder => pr_nrborder
