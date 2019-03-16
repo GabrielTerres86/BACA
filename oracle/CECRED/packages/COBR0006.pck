@@ -608,6 +608,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
          cob.flgcbdda,
          cob.ininscip,
          cob.nrdident,
+         cob.cddespec,
+         cob.nrinssac,
          cob.rowid
     FROM crapcob cob
    WHERE cob.cdcooper = pr_cdcooper 
@@ -1716,7 +1718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 17/03/2016
+       Data    : Novembro/2015.                   Ultima atualizacao: 15/03/2019
 
        Dados referentes ao programa:
 
@@ -1735,7 +1737,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    17/03/2017 - Removido a validação que verificava se o CEP do pagador do boleto existe no Ayllos. 
                                 Solicitado pelo Leomir e aprovado pelo Victor (cobrança)
-                               (Douglas - Chamado 601436)
+                               (Douglas - Chamado 601436)  
+
+                   15/03/2019 - Utilizar dados do pagador para validar protesto. (INC0031872 - Cechet)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1744,6 +1748,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_exc_saida    EXCEPTION;
 
     ------------------------------- CURSORES ---------------------------------    
+    CURSOR cr_crapsab(pr_cdcooper crapsab.cdcooper%TYPE,
+                      pr_nrdconta crapsab.nrdconta%TYPE,
+                      pr_nrinssac crapsab.nrinssac%TYPE) IS
+      SELECT sab.cdufsaca
+        FROM crapsab sab
+       WHERE sab.cdcooper = pr_cdcooper
+         AND sab.nrdconta = pr_nrdconta
+         AND sab.nrinssac = pr_nrinssac;
+    rw_crapsab cr_crapsab%ROWTYPE;    
     
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     
@@ -1814,6 +1827,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_motivo;
     ELSE
       CLOSE cr_crapcob;
+    END IF;
+
+    -- Sacado possui registro
+    OPEN cr_crapsab (pr_cdcooper => rw_crapcob.cdcooper
+                    ,pr_nrdconta => rw_crapcob.nrdconta
+                    ,pr_nrinssac => rw_crapcob.nrinssac);
+    FETCH cr_crapsab INTO rw_crapsab;
+    
+    IF cr_crapsab%NOTFOUND THEN
+      CLOSE cr_crapsab;
+      RAISE vr_exc_motivo;
+    ELSE
+      CLOSE cr_crapsab;
     END IF;
 
     -- Concessao de Abatimento
@@ -1905,8 +1931,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
         IF pr_rec_header.cdbandoc = 085 AND
            pr_tab_linhas('QTDIAPRT').numero <> 0 AND
-           pr_tab_linhas('CDDESPEC').numero = 2 /*DS*/ THEN
-             vr_cdufsaca := pr_tab_linhas('CDUFSACA').texto;
+           rw_crapcob.cddespec = 2 /*DS*/ THEN
+             vr_cdufsaca := rw_crapsab.cdufsaca;
       
              tela_parprt.pc_validar_dsnegufds_parprt(pr_cdcooper => pr_cdcooper,
                                                       pr_cdufsaca => vr_cdufsaca,
