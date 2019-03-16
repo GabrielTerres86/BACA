@@ -4438,6 +4438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	--                           Inserido regra para verificar se o acordo esta ativo. Caso esteja, pula
 	--                           para proximo registro.
 	--                           Chamado INC0016984 (Gabriel - Mouts).
+    --
     --              27/08/2018 - Adicionado alerta para bordero em prejuizo. - Luis Fernando (GFT)
 	--
 	--              25/10/2018 - Adicionado alerta para títulos descontados em atraso. - Lucas (GFT)
@@ -4916,6 +4917,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 							AND nrdconta = pr_nrdconta;
 		rw_cr_impdecsn cr_impdecsn%ROWTYPE;
 
+    --> Busca contratos de bordero em prejuizo
+    CURSOR cr_crapbdt_preju(pr_cdcooper crapbdt.cdcooper%TYPE
+											      ,pr_nrdconta crapbdt.nrdconta%TYPE) IS
+      SELECT
+        bdt.inprejuz, -- possui prejuizo
+        bdt.dtliqprj  -- prejuizo liquidado
+      FROM 
+        crapbdt bdt
+      WHERE
+        bdt.nrdconta = pr_nrdconta
+        AND bdt.cdcooper = pr_cdcooper
+        AND bdt.inprejuz = 1
+      ;
+    rw_crapbdt_preju cr_crapbdt_preju%ROWTYPE; 
+
     CURSOR cr_tbepr_migracao_empr (pr_cdcooper IN tbepr_migracao_empr.cdcooper%TYPE
                                   ,pr_nrdconta IN tbepr_migracao_empr.nrdconta%TYPE
                                   ,pr_nrctremp IN tbepr_migracao_empr.nrctremp%TYPE) IS
@@ -4952,6 +4968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
              AND tdb.dtvencto <  pr_dtmvtolt  -- borderôs vencidos
              AND tdb.dtvencto <= pr_dtmvtoan; -- desconsidera borderôs com títulos que venceram em dias não úteis e que podem ser pagos na data atual
       rw_craptdb_atrasados cr_craptdb_atrasados%ROWTYPE;
+    
     --------------> VARIAVEIS <----------------
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);

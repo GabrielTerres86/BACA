@@ -343,6 +343,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  19/01/2019 - Ajustado calculo de risco atraso da modalidade 101, para ser igual ao emprestimo.
                               PRJ450 - Regulatorio(Odirlei-Ailos)
 
+				 20/09/2018 - Considerar o valor dos juros de mora no valor da divida do desconto de titulos. (Paulo Penteado GFT)
   ............................................................................ */
 
     DECLARE

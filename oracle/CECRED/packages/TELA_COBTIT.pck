@@ -1497,6 +1497,7 @@ create or replace package body cecred.TELA_COBTIT is
                              ,pr_peracres IN tbrecup_cobranca.peracrescimo%TYPE DEFAULT 0 --> Percentual de acrescimo
                              ,pr_perdesco IN tbrecup_cobranca.perdesconto%TYPE DEFAULT 0 --> Percentual de desconto
                              ,pr_vldescto IN NUMBER DEFAULT 0               --> Valor do desconto
+                             ,pr_vldevedor IN tbrecup_cobranca.vldevedor%TYPE DEFAULT 0 --> Valor do Saldo devedor
                              -->OUT<--
                              ,pr_nrboleto OUT INTEGER                     --> Número do boleto criado
                              ,pr_vltitulo OUT NUMBER                      --> Valor do titulo
@@ -1917,6 +1918,7 @@ create or replace package body cecred.TELA_COBTIT is
              ,/*21*/ qtdacordo
              ,/*22*/ vldvipjur
              ,/*23*/ qtdvipjur
+             ,/*24*/ vldevedor
              )
        VALUES(/*01*/ pr_cdcooper
              ,/*02*/ pr_nrdconta
@@ -1941,6 +1943,7 @@ create or replace package body cecred.TELA_COBTIT is
              ,/*21*/ vr_qtdacordo
              ,/*22*/ vr_vldvipjur
              ,/*23*/ vr_qtdvipjur
+             ,/*24*/ pr_vldevedor
              );
                                 
       pr_vltitulo := vr_tab_cob(1).vltitulo;
@@ -2170,6 +2173,7 @@ create or replace package body cecred.TELA_COBTIT is
                              ,pr_vldescto IN NUMBER DEFAULT 0               --> Valor do desconto
                              ,pr_flvlpagm IN NUMBER                  --> Identifica se é valor parcial ou total (5-Saldo Prejuizo/ 6-Parcial Prejuizo)
                              ,pr_flcomvip IN BOOLEAN DEFAULT TRUE   --> Considera ou não títulos marcados como VIP no Cyber
+                             ,pr_vldevedor IN tbrecup_cobranca.vldevedor%TYPE DEFAULT 0 --> Valor do Saldo devedor
                              -->OUT<--
                              ,pr_nrboleto OUT INTEGER                     --> Número do boleto criado
                              ,pr_vltitulo OUT NUMBER                      --> Valor do titulo
@@ -2626,6 +2630,7 @@ create or replace package body cecred.TELA_COBTIT is
              ,/*21*/ qtdacordo
              ,/*22*/ vldvipjur
              ,/*23*/ qtdvipjur
+             ,/*24*/ vldevedor
              )
        VALUES(/*01*/ pr_cdcooper
              ,/*02*/ pr_nrdconta
@@ -2649,7 +2654,9 @@ create or replace package body cecred.TELA_COBTIT is
              ,/*20*/ rw_craptdb_qtd.vldacordo
              ,/*21*/ rw_craptdb_qtd.qtdacordo
              ,/*22*/ rw_craptdb_qtd.vldvipjur
-             ,/*23*/ rw_craptdb_qtd.qtdvipjur);
+             ,/*23*/ rw_craptdb_qtd.qtdvipjur
+             ,/*24*/ pr_vldevedor
+             );
                                 
       pr_vltitulo := vr_tab_cob(1).vltitulo;
       pr_nrboleto := vr_tab_cob(1).nrdocmto;

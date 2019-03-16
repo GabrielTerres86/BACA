@@ -1014,7 +1014,7 @@ PROCEDURE pc_verifica_regras(pr_cdcooper  IN crawlim.cdcooper%TYPE  --> Codigo d
       IF  rw_crawlim.insitest = 0 
       OR (rw_crawlim.insitest = 3 AND rw_crawlim.insitapr = 5) 
       OR (rw_crawlim.insitest = 3 AND rw_crawlim.insitapr = 8 AND pr_tpenvest = 'I')       
-      /*OR (rw_crawlim.insitest = 3 AND rw_crawlim.insitapr = 5)*/ THEN
+      OR (rw_crawlim.insitest = 2 AND rw_crawlim.insitapr = 0) THEN
         --> Sair pois pode ser enviada
         RETURN;
       END IF;
@@ -1473,7 +1473,7 @@ BEGIN
     vr_hrenvest := to_char(SYSDATE,'sssss');
     BEGIN
       UPDATE crawlim lim 
-         SET lim.insitest = 2, --> Enviada Analise Manual 1, --> Enviada para Analise Autom
+         SET lim.insitest = 1, --> Enviada para Analise Autom
              lim.dtenvmot = trunc(SYSDATE), 
              lim.hrenvmot = vr_hrenvest,
              lim.cdopeste = pr_cdoperad,
@@ -1507,7 +1507,7 @@ BEGIN
       CLOSE cr_crawlim;
         
       --> Se a proposta mudou de situaçao Esteira
-      IF rw_crawlim.insitest <> 2 THEN 
+      IF rw_crawlim.insitest <> 1 THEN
         --> Indica que terminou a analise 
         vr_flganlok := true;
       END IF;

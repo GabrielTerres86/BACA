@@ -1855,7 +1855,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
        - 15/09/2018 - Inserção do Desconto de Títulos (Vitor S. Assanuma - GFT)
      ..............................................................................*/
     DECLARE
-      -- Cursor dos estornos de empréstimo
+      -- Cursor dos estornos de empréstimo PP
       CURSOR cr_tbepr_estorno(pr_cdcooper IN tbepr_estorno.cdcooper%TYPE,
                               pr_nrdconta IN tbepr_estorno.nrdconta%TYPE,
                               pr_nrctremp IN tbepr_estorno.nrctremp%TYPE) IS
@@ -1923,7 +1923,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       -- Criar cabeçalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
       
-      --Empréstimo
+      --Empréstimo PP
       IF (pr_cdtpprod = 1) THEN
       FOR rw_tbepr_estorno IN cr_tbepr_estorno(pr_cdcooper => vr_cdcooper,
                                                pr_nrdconta => pr_nrdconta,
@@ -2029,7 +2029,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
        - 16/09/2018 - Inserção do Desconto de Títulos (Vitor S. Assanuma - GFT)
      ..............................................................................*/
     DECLARE
-      -- Cursor dos estornos de Empréstimos
+      -- Cursor dos estornos de Empréstimos PP
       CURSOR cr_tbepr_estorno(pr_cdcooper  IN tbepr_estorno.cdcooper%TYPE,
                               pr_nrdconta  IN tbepr_estorno.nrdconta%TYPE,
                               pr_nrctremp  IN tbepr_estorno.nrctremp%TYPE,
@@ -2046,7 +2046,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
            AND tbepr_estorno.cdestorno = pr_cdestorno;
       rw_tbepr_estorno cr_tbepr_estorno%ROWTYPE;
       
-      -- Cursor de lançamentos de estornos de Empréstimos
+      -- Cursor de lançamentos de estornos de Empréstimos PP
       CURSOR cr_tbepr_estornolancamento(pr_cdcooper  IN tbepr_estorno.cdcooper%TYPE,
                                         pr_nrdconta  IN tbepr_estorno.nrdconta%TYPE,
                                         pr_nrctremp  IN tbepr_estorno.nrctremp%TYPE,
@@ -2143,7 +2143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
                               
-      -- Caso seja emprestimo
+      -- Caso seja emprestimo PP
       IF pr_cdtpprod = 1 THEN                                                           
       -- Busca os dados do Estorno
       OPEN cr_tbepr_estorno (pr_cdcooper  => vr_cdcooper

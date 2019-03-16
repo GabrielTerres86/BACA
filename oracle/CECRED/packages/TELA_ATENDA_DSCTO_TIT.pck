@@ -6852,12 +6852,12 @@ EXCEPTION
                          ),'A')) INTO vr_situacao FROM DUAL ; -- Situacao do pagador com critica ou nao
               
               vr_tab_criticas.delete;
-              dsct0003.pc_calcula_restricao_titulo(pr_cdcooper => rw_crapcob.cdcooper
-                              ,pr_nrdconta => rw_crapcob.nrdconta
-                              ,pr_nrdocmto => rw_crapcob.nrdocmto
-                              ,pr_nrcnvcob => rw_crapcob.nrcnvcob
-                              ,pr_nrdctabb => rw_crapcob.nrdctabb
-                              ,pr_cdbandoc => rw_crapcob.cdbandoc
+              dsct0003.pc_calcula_restricao_titulo(pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => vr_tab_tit_bordero(vr_index).nrdconta
+                              ,pr_nrdocmto => vr_tab_tit_bordero(vr_index).nrdocmto
+                              ,pr_nrcnvcob => vr_tab_tit_bordero(vr_index).nrcnvcob
+                              ,pr_nrdctabb => vr_tab_tit_bordero(vr_index).nrdctabb
+                              ,pr_cdbandoc => vr_tab_tit_bordero(vr_index).cdbandoc
                               ,pr_tab_criticas => vr_tab_criticas
                               ,pr_cdcritic => vr_cdcritic
                               ,pr_dscritic => vr_dscritic);
@@ -7702,7 +7702,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       vr_ind_inpeditivo  INTEGER;
        vr_tab_erro        GENE0001.typ_tab_erro;
        vr_tab_retorno_analise DSCT0003.typ_tab_retorno_analise;
-      /*Contrato do limite*/
+       
+     -- Contrato do limite 
       CURSOR cr_craplim IS      
         SELECT 
           craplim.dtpropos,
@@ -7749,7 +7750,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       rw_crapass cr_crapass%rowtype;
         
         
-      /*Linha de crédito*/
+      -- Linha de crédito
       CURSOR cr_crapldc IS
         SELECT 
           cddlinha,
@@ -7762,7 +7763,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
           AND crapldc.tpdescto = 3;
        rw_crapldc cr_crapldc%rowtype;
       
-      /*CURSOR para verificar se o titulo ja nao foi usado em algum bordero*/
+      -- Verificar se o titulo ja nao foi usado em algum bordero
       CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%TYPE,
                          pr_nrdconta IN craptdb.nrdconta%TYPE, 
                          pr_nrdocmto IN craptdb.nrdocmto%TYPE, 
@@ -7790,7 +7791,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
             ;
       rw_craptdb cr_craptdb%rowtype;
       
-      /*CURSOR do bordero sendo alterado*/
+      -- Bordero sendo alterado
       CURSOR cr_crapbdt IS
          SELECT
              *
@@ -7823,7 +7824,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                   , pr_cdoperad => vr_cdoperad
                                   , pr_dscritic => vr_dscritic);
                                   
-        /*VERIFICA SE O CONTRATO EXISTE E AINDA ESTÁ ATIVO*/
+        -- VERIFICA SE O CONTRATO EXISTE E AINDA ESTÁ ATIVO
         OPEN cr_craplim;
         FETCH cr_craplim INTO rw_craplim;
         IF (cr_craplim%NOTFOUND) THEN

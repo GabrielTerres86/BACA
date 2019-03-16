@@ -483,9 +483,6 @@ BEGIN
             vr_vlpagmto := vr_vlsldisp;
           END IF; 
   --        vr_vlpagmto
-          IF (rw_crapbdt_prejuz.nrborder = 32377) THEN
-            NULL;
-          END IF;
           PREJ0005.pc_pagar_bordero_prejuizo(pr_cdcooper => rw_crapbdt_prejuz.cdcooper
                                              ,pr_nrborder => rw_crapbdt_prejuz.nrborder
                                              ,pr_vlaboorj => 0
