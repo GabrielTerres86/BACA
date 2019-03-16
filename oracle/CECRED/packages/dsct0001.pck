@@ -4020,6 +4020,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --           11/03/2019 - Correção na rotina de restituição de juros remuneratório cobrado apo´s a data de restage.
     --                        Renomeado variavel rw_crapljt de dentro do loop cr_crapljt2 para rowtype rw_craplj (sem o "t")
     --                        (Paulo Penteado GFT) 
+    --
+    --           14/03/2019 - Alterado o valor de lançamento do histórico 2677 de resgate na operação de crédito, trocado o valor liquido 
+    --                        calculado na liberação do borderô pelo valor liquido calculado no momento do resgate, pois o extrato da
+    --                        operação não estava fechando devido a diferença dos juros (Paulo Penteado GFT) 
     -- .........................................................................
     ------------------------------- CURSORES ---------------------------------
     --Buscar informacoes de lote
@@ -4820,7 +4824,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                 ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
                                                 ,pr_cdorigem => 5
                                                 ,pr_cdhistor => vr_cdhistordsct_resopcr --2677
-                                                ,pr_vllanmto => vr_vlliqori
+                                                ,pr_vllanmto => vr_vlliqnov
                                                 ,pr_cdbandoc => rw_craptdb.cdbandoc
                                                 ,pr_nrdctabb => rw_craptdb.nrdctabb
                                                 ,pr_nrcnvcob => rw_craptdb.nrcnvcob

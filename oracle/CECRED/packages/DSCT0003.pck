@@ -9106,6 +9106,7 @@ EXCEPTION
                             2 - Pagamento COBTIT
                             3 - Tela PAGAR
                             4 - Sistema de Acordos
+                            5 - Pagamento Boletagem Massiva
                             
                pr_indpagto: Indica de onde vem o pagamento
                             0 - COMPE
@@ -9264,6 +9265,7 @@ EXCEPTION
     vr_vlpagmra NUMBER; -- Valor pago dos juros de mora
     vr_vlpagtit NUMBER; -- Valor pago do título
     vr_vlpagm60 NUMBER; -- Valor pago do juros 60
+    vr_vlabatcc NUMBER; -- Valor de abatimento a ser creditado na conta do cooperado
     
     vr_insittit craptdb.insittit%TYPE;
     vr_dtdebito craptdb.dtdebito%TYPE;
@@ -9655,7 +9657,7 @@ EXCEPTION
 
       -- 1 - Pagamento (Baixa de cobrança de títulos, ...)
       -- 2 - COBTIT
-      ELSIF pr_cdorigpg IN (1,2) THEN 
+      ELSIF pr_cdorigpg IN (1,2,5) THEN
         -- Pagamento efetuado pelo avalista
         IF pr_flpgtava = 1 THEN
           vr_cdhistor_opc := vr_cdhistordsct_pgtoavalopc;
@@ -9698,7 +9700,7 @@ EXCEPTION
       vr_vlpagmto := vr_vlpagmto - vr_vlpagtit;
       
       -- 0-Conta-Corrente  2-COBTIT  3-Tela PAGAR - 4-Sistema de Acordos
-      IF pr_cdorigpg IN (0,2,3,4) THEN
+      IF pr_cdorigpg IN (0,2,3,4,5) THEN
         -- Debita o valor do título se o pagamento vier da conta corrente
         pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
                          ,pr_cdagenci => 1
@@ -9723,12 +9725,18 @@ EXCEPTION
 
       -- Se não for pagamento pela conta-corrente raspada e se o valor pago do boleto for maior que o saldo restante,
       -- então lançar o saldo restante como crédito na conta corrente do cooperado
-      IF (pr_cdorigpg > 0 AND pr_cdorigpg NOT IN (2,4)) AND vr_vlpagmto > 0 THEN
+      IF pr_cdorigpg = 5 THEN
+        vr_vlabatcc := rw_craptdb.vltitulo_total - pr_vlpagmto;
+      ELSE
+        vr_vlabatcc := vr_vlpagmto;
+      END IF;    
+      
+      IF (pr_cdorigpg > 0 AND pr_cdorigpg NOT IN (2,4)) AND vr_vlabatcc > 0 THEN
         pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
                          ,pr_cdagenci => 1
                          ,pr_cdbccxlt => 100
                          ,pr_nrdconta => pr_nrdconta
-                         ,pr_vllanmto => vr_vlpagmto
+                         ,pr_vllanmto => vr_vlabatcc
                          ,pr_cdhistor => CASE WHEN pr_indpagto = 0 THEN 
                                                    vr_cdhistordsct_credpagmaiorIF
                                               ELSE vr_cdhistordsct_credpagmaior
@@ -10295,6 +10303,8 @@ EXCEPTION
     -- Tratamento de erros
     vr_exc_erro EXCEPTION;
     
+    vr_cdorigpg NUMBER; -- Indica se foi emitido pela COBTIT ou pela Boletagem Massiva
+    
     CURSOR cr_cde IS
     SELECT cde.nrctremp
           ,cde.nrdconta
@@ -10302,6 +10312,7 @@ EXCEPTION
           ,cde.nrcpfava
           ,cde.vldesconto
           ,cde.tpparcela
+          ,cde.idarquivo
     FROM   tbrecup_cobranca cde
     WHERE  cde.tpproduto    = 3
     AND    cde.nrdconta     = pr_nrctasac
@@ -10348,6 +10359,13 @@ EXCEPTION
           vr_vlpagmto      := pr_vlpagmto;
           vr_vlpagmto_rest := vr_vlpagmto;
 
+          -- Se o boleto possui um IDARQUIVO preenchido, significa que ele foi emitido pela boletagem massiva
+          IF rw_cde.idarquivo <> 0 THEN
+            vr_cdorigpg := 5; -- Boletagem massiva
+          ELSE
+            vr_cdorigpg := 2; -- COBTIT
+          END IF;    
+          
           -- Verifica se o borderô está em prejuízo
           OPEN cr_crapbdt(pr_cdcooper, rw_cde.nrctremp);
           FETCH cr_crapbdt INTO rw_crapbdt;
@@ -10413,7 +10431,7 @@ EXCEPTION
                            ,pr_nrdocmto => vr_tab_tit_bordero(1).nrdocmto
                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                            ,pr_inproces => rw_crapdat.inproces
-                           ,pr_cdorigpg => 2 -- COBTIT
+                               ,pr_cdorigpg => vr_cdorigpg -- COBTIT/Boletagem Massiva
                            ,pr_indpagto => pr_indpagto
                            ,pr_flpgtava => CASE WHEN rw_cde.nrcpfava IS NULL THEN 0 ELSE 1 END
                            ,pr_vlpagmto => vr_vlpagmto
