@@ -14,13 +14,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
   --  Programa : TELA_CADDNE
   --  Sistema  : Ayllos Web
   --  Autor    : Douglas Quisinski
-  --  Data     : Setembro - 2016                  Ultima atualizacao:   /  /    
+  --  Data     : Setembro - 2016                  Ultima atualizacao: 16/03/2019
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela CADDNE
   --
   -- Alteracoes: 
+  --
+  -- 16/03/2019 - Importar cód.ibge e municípios com CEP único (Cechet)
+  --
   ---------------------------------------------------------------------------
 
   -- Identificacao dos Enderecos
@@ -34,7 +37,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     RECORD (codigo   INTEGER
            ,estado   crapdne.cduflogr%TYPE
            ,nome     crapdne.nmextcid%TYPE
-           ,resumido crapdne.nmrescid%TYPE);
+           ,resumido crapdne.nmrescid%TYPE
+           ,cep      crapdne.nrceplog%TYPE
+           ,codibge  crapmun.cdcidbge%TYPE);
   -- O indice da tabela sera o codigo da cidade
   TYPE typ_tab_cidade IS
     TABLE OF typ_reg_cidade
@@ -62,7 +67,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
            ,bairro_nome  crapdne.nmextbai%TYPE
            ,bairro_res   crapdne.nmresbai%TYPE
            ,cidade_nome  crapdne.nmextcid%TYPE
-           ,cidade_res   crapdne.nmrescid%TYPE);
+           ,cidade_res   crapdne.nmrescid%TYPE
+           ,codibge      crapmun.cdcidbge%TYPE);
   -- O indice da tabela sera o codigo da logradouro
   TYPE typ_tab_logradouro IS
     TABLE OF typ_reg_logradouro
@@ -190,6 +196,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       vr_estado   VARCHAR(2);
       vr_nome     VARCHAR2(600);
       vr_resumido VARCHAR2(600);
+      vr_cep      crapdne.nrceplog%TYPE;
+      vr_codibge  crapmun.cdcidbge%TYPE;
       
       -- Variavel de criticas
       vr_dscritic VARCHAR2(10000);
@@ -236,14 +244,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
           vr_estado   := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2));
           vr_nome     := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 3, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,40));
           vr_resumido := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 8, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,25));
+          vr_cep      := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 4, pr_dstext => vr_setlinha, pr_delimitador => '@'));
+          vr_codibge  := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 9, pr_dstext => vr_setlinha, pr_delimitador => '@'));
           
           -- Carregar os dados da Cidade para a PL_TABLE
           pr_tab_cidade(vr_codigo).codigo   := vr_codigo;
           pr_tab_cidade(vr_codigo).estado   := vr_estado;
           pr_tab_cidade(vr_codigo).nome     := vr_nome;
           pr_tab_cidade(vr_codigo).resumido := vr_resumido;
+          pr_tab_cidade(vr_codigo).cep      := vr_cep;
+          pr_tab_cidade(vr_codigo).codibge  := vr_codibge;
           
         END LOOP; -- Loop Arquivo
+        
+        -- processar municipios;
+        BEGIN
+          FORALL idx IN INDICES OF pr_tab_cidade SAVE EXCEPTIONS
+            MERGE 
+              INTO crapdne dne
+              USING (SELECT 1 FROM dual) s
+                 ON (dne.nrceplog = pr_tab_cidade(idx).cep
+                AND  dne.idoricad = 1) 
+    --          WHEN MATCHED THEN
+    --            dbms_output.put_line('CEP ' || vr_tab_cidade(idx).cep || ' - ja existe');
+              WHEN NOT MATCHED THEN             
+                INSERT (nrceplog
+                       ,nmextlog
+                       ,nmreslog
+                       ,dscmplog
+                       ,dstiplog
+                       ,nmextbai
+                       ,nmresbai
+                       ,nmextcid
+                       ,nmrescid
+                       ,cduflogr
+                       ,idoricad
+                       ,idtipdne)
+                 VALUES(pr_tab_cidade(idx).cep
+                       ,substr('MUNICIPIO DE ' || NVL(UPPER(TRIM(pr_tab_cidade(idx).nome)),' '),1,80)
+                       ,substr('MUNICIPIO DE ' || NVL(UPPER(TRIM(pr_tab_cidade(idx).nome)),' '),1,72)
+                       ,'.'
+                       ,' '
+                       ,' '
+                       ,' '
+                       ,substr(NVL(UPPER(TRIM(pr_tab_cidade(idx).nome)),' '),1,40)
+                       ,substr(NVL(UPPER(TRIM(pr_tab_cidade(idx).nome)),' '),1,25)
+                       ,NVL(UPPER(TRIM(pr_tab_cidade(idx).estado)),' ')
+                       ,const_origem_cadastro   -- Origem do Cadastro (1 - CORREIOS)
+                       ,5); -- Tipo de Enderecao 5 = Municipios
+        EXCEPTION
+            WHEN OTHERS THEN
+              dbms_output.put_line('Erro ao inserir na tabela crapdne. '||
+                             SQLERRM(-(SQL%BULK_EXCEPTIONS(1).ERROR_CODE)));      
+        END;                                           
 
       EXCEPTION 
         WHEN no_data_found THEN
@@ -556,9 +609,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
             IF pr_tab_cidade.EXISTS(vr_cidade_cod) THEN
               vr_tab_logradouro(vr_ind).cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
               vr_tab_logradouro(vr_ind).cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
+              vr_tab_logradouro(vr_ind).codibge      := pr_tab_cidade(vr_cidade_cod).codibge;
             ELSE 
               vr_tab_logradouro(vr_ind).cidade_nome  := ' ';
               vr_tab_logradouro(vr_ind).cidade_res   := ' ';
+              vr_tab_logradouro(vr_ind).codibge      := 0;              
             END IF;
             
           EXCEPTION
@@ -820,9 +875,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
             IF pr_tab_cidade.EXISTS(vr_cidade_cod) THEN
               vr_tab_logradouro(vr_ind).cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
               vr_tab_logradouro(vr_ind).cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
+              vr_tab_logradouro(vr_ind).codibge      := pr_tab_cidade(vr_cidade_cod).codibge;              
             ELSE 
               vr_tab_logradouro(vr_ind).cidade_nome  := ' ';
               vr_tab_logradouro(vr_ind).cidade_res   := ' ';
+              vr_tab_logradouro(vr_ind).codibge      := 0;              
             END IF;
           EXCEPTION
             WHEN OTHERS THEN
@@ -1058,9 +1115,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
             IF pr_tab_cidade.EXISTS(vr_cidade_cod) THEN
               vr_tab_logradouro(vr_ind).cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
               vr_tab_logradouro(vr_ind).cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
+              vr_tab_logradouro(vr_ind).codibge      := pr_tab_cidade(vr_cidade_cod).codibge;              
             ELSE 
               vr_tab_logradouro(vr_ind).cidade_nome  := ' ';
               vr_tab_logradouro(vr_ind).cidade_res   := ' ';
+              vr_tab_logradouro(vr_ind).codibge      := 0;
             END IF;
           EXCEPTION
             WHEN OTHERS THEN
@@ -1315,9 +1374,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
             IF pr_tab_cidade.EXISTS(vr_cidade_cod) THEN
               vr_tab_logradouro(vr_ind).cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
               vr_tab_logradouro(vr_ind).cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
+              vr_tab_logradouro(vr_ind).codibge      := pr_tab_cidade(vr_cidade_cod).codibge;              
             ELSE 
               vr_tab_logradouro(vr_ind).cidade_nome  := ' ';
               vr_tab_logradouro(vr_ind).cidade_res   := ' ';
+              vr_tab_logradouro(vr_ind).codibge      := 0;              
             END IF;
           EXCEPTION
             WHEN OTHERS THEN
