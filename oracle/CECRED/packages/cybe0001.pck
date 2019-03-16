@@ -668,8 +668,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
       vr_vlsdeved := pr_vlsdeved;
       vr_vlpreapg := pr_vlpreapg;
       
-      -- Se estiver em prejuizo, zerar o valor de saldo e de a pagar
-      IF pr_flgpreju = 1 THEN
+      -- Se o borderô de desconto de títulos estiver em prejuizo, zerar o valor de saldo a pagar
+      IF pr_flgpreju = 1 AND pr_cdorigem = 4 THEN
         vr_vlsdeved := 0;
         vr_vlpreapg := 0;
       END IF;
