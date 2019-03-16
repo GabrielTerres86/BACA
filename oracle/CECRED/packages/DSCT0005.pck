@@ -2565,9 +2565,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
     -- Atualiza os saldos das tabela
     UPDATE craptdb tdb
        SET tdb.vlsldtit = tdb.vlsldtit + NVL(vr_vlpgtocc,0) + (NVL(vr_vlpagtit,0) - NVL(vr_vliofcpl,0) - NVL(vr_vlmratit,0) - NVL(vr_vlmtatit,0) - NVL(vr_vlpagmaior,0)),
-           tdb.vlpagmta = tdb.vlpagmta + NVL(vr_vlmtatit,0),
-           tdb.vlpagmra = tdb.vlpagmra + NVL(vr_vlmratit,0),
-           tdb.vlpagiof = tdb.vlpagiof + NVL(vr_vliofcpl,0),
+           tdb.vlpagmta = tdb.vlpagmta - NVL(vr_vlmtatit,0),
+           tdb.vlpagmra = tdb.vlpagmra - NVL(vr_vlmratit,0),
+           tdb.vlpagiof = tdb.vlpagiof - NVL(vr_vliofcpl,0),
            tdb.dtdebito = NULL,
            tdb.dtdpagto = NULL,
            tdb.insittit = 4
