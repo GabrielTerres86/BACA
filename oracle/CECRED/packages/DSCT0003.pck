@@ -7580,10 +7580,7 @@ EXCEPTION
     CLOSE cr_crapaco;
 
     -- Busca os titulos selecionados
-    OPEN  cr_craptdb(vr_cdcooper);
-    LOOP
-          FETCH cr_craptdb INTO rw_craptdb;
-          EXIT  WHEN cr_craptdb%NOTFOUND;
+    FOR rw_craptdb IN  cr_craptdb(vr_cdcooper) LOOP 
           
           vr_vlpagmto := rw_craptdb.vlsldtit + rw_craptdb.vlmulta + rw_craptdb.vlmora + rw_craptdb.vliof;
           
