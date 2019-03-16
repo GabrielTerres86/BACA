@@ -470,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 28/11/2018
+    Data     : Novembro/2015.                   Ultima atualizacao: 18/01/2019
   
    Dados referentes ao programa:
   
@@ -573,9 +573,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             19/11/2018 - inc0027103 Na rotina pc_InternetBank69, separadas as execuções em module e action para
                          cada tipo de layout cnab, a fim de identificar melhor os pontos que demandam mais 
                          processamento (Carlos)
-                         
-            28/11/2018 - INC0027972, INC0027984 - Problema de performance/arquivos nas rotinas de integração de
-                         arquivos cnab240 e cnab400 causaram lentidão no servidor e instabilidade nos sistemas (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -1030,7 +1027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         BEGIN
           UPDATE tbgen_resumo_processo 
              SET tbgen_resumo_processo.dhtermino = SYSDATE
-                ,tbgen_resumo_processo.dslog_erro = substr(pr_dslogerro,0,200)
+                ,tbgen_resumo_processo.dslog_erro = pr_dslogerro
                 ,tbgen_resumo_processo.indstatus_processo = (CASE 
                                                                WHEN pr_flgerro = 1  THEN 
                                                                  4 --Com erro
@@ -4226,13 +4223,86 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           
           IF pr_tparquiv = 'CNAB240' THEN
             
+            BEGIN 
             pr_cddbanco := to_number(substr(vr_dslinha,1,3));
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_contaerr:= vr_contaerr + 1;
+          
+                COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                          ,pr_nrlinseq => '99999'
+                                          ,pr_cdseqcri => vr_contaerr
+                                          ,pr_dscritic => 'Codigo do banco invalido.'
+                                          ,pr_tab_rejeita => pr_rec_rejeita 
+                                          ,pr_critica => vr_dscritic      
+                                          ,pr_des_reto => vr_des_reto);
+                
+                pr_des_reto:= 'NOK';                                  
+                RETURN;
+
+            END;
+            
+
+            BEGIN 
 		    pr_nrdconta := to_number(substr(vr_dslinha,59,13));
+            EXCEPTION
+              WHEN OTHERS THEN 
+                vr_contaerr:= vr_contaerr + 1;
+          
+                COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                          ,pr_nrlinseq => '99999'
+                                          ,pr_cdseqcri => vr_contaerr
+                                          ,pr_dscritic => 'Codigo da conta invalido.'
+                                          ,pr_tab_rejeita => pr_rec_rejeita 
+                                          ,pr_critica => vr_dscritic      
+                                          ,pr_des_reto => vr_des_reto);
+                
+                pr_des_reto:= 'NOK';                                  
+                RETURN;
+                
+            END;
+            
+            
             
           ELSIF pr_tparquiv = 'CNAB400' THEN
             
+            BEGIN 
             pr_cddbanco := to_number(substr(vr_dslinha,77,3));
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_contaerr:= vr_contaerr + 1;
+          
+                COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                          ,pr_nrlinseq => '99999'
+                                          ,pr_cdseqcri => vr_contaerr
+                                          ,pr_dscritic => 'Codigo do banco invalido.'
+                                          ,pr_tab_rejeita => pr_rec_rejeita 
+                                          ,pr_critica => vr_dscritic      
+                                          ,pr_des_reto => vr_des_reto);
+                
+                pr_des_reto:= 'NOK';                                  
+                RETURN;
+                
+            END;
+
+            BEGIN 
 			pr_nrdconta := to_number(substr(vr_dslinha,32,9));
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_contaerr:= vr_contaerr + 1;
+          
+                COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                          ,pr_nrlinseq => '99999'
+                                          ,pr_cdseqcri => vr_contaerr
+                                          ,pr_dscritic => 'Codigo da conta invalido.'
+                                          ,pr_tab_rejeita => pr_rec_rejeita 
+                                          ,pr_critica => vr_dscritic      
+                                          ,pr_des_reto => vr_des_reto);
+                
+                pr_des_reto:= 'NOK';                                  
+                RETURN;
+                
+            END;		      
                                 
           END IF;           
         
@@ -4244,7 +4314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
                                       ,pr_nrlinseq => '99999'
                                       ,pr_cdseqcri => vr_contaerr
-                                      ,pr_dscritic => 'Codigo do banco invalido'
+                                      ,pr_dscritic => 'Codigo do banco invalido.'
                                       ,pr_tab_rejeita => pr_rec_rejeita 
                                       ,pr_critica => vr_dscritic      
                                       ,pr_des_reto => vr_des_reto);
@@ -4270,8 +4340,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   
   EXCEPTION 
     WHEN vr_exc_saida  THEN
-      -- Fechar o arquivo
-      gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;      
 
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := pr_dscritic;
@@ -4285,9 +4353,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_des_reto:= 'NOK';        
       
     WHEN OTHERS THEN
-      cecred.pc_internal_exception;
-      -- Fechar o arquivo
-      gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;
       -- Alimenta críticas parametrizadas
       pr_cdcritic := 0;
       pr_dscritic := 'Erro nao tratado na procedure COBR0006.pc_identifica_arq_cnab --> ' || SQLERRM;
@@ -5738,7 +5803,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_rec_cobranca.flgrejei:= TRUE;
       
     WHEN OTHERS THEN
-      cecred.pc_internal_exception;
       -- Erro geral no processamento - codigo 99
       vr_rej_cdmotivo:= '99';
       -- Erro geral do processamento do segmento "P"
@@ -6537,7 +6601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 18/01/2019
 
        Dados referentes ao programa:
 
@@ -6548,6 +6612,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
 	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+
+                   18/01/2019 - INC0027091 - Inclusão de motivo XW para SMS não contratado 
+                   (Douglas Pagel/ AMcom).
 
     ............................................................................ */   
     
@@ -6593,6 +6660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           pr_rec_cobranca.insmsvct := 0;
           pr_rec_cobranca.insmspos := 0;
           -- Insere como rejeitado
+          vr_rej_cdmotivo := 'XW';
           pc_valida_grava_rejeitado(pr_cdcooper      => pr_rec_cobranca.cdcooper --> Codigo da Cooperativa
                                    ,pr_nrdconta      => pr_rec_cobranca.nrdconta --> Numero da Conta
                                    ,pr_nrcnvcob      => pr_rec_cobranca.nrcnvcob --> Numero do Convenio
@@ -6606,7 +6674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                    ,pr_dtmvtolt      => pr_dtmvtolt              --> Data de Movimento
                                    ,pr_cdoperad      => pr_cdoperad              --> Operador
                                    ,pr_cdocorre      => 26                       --> Codigo da Ocorrencia
-                                   ,pr_cdmotivo      => ' '                     --> Motivo da Rejeicao
+                                   ,pr_cdmotivo      => vr_rej_cdmotivo          --> Motivo da Rejeicao
                                    ,pr_tab_rejeitado => pr_tab_rejeitado);       --> Tabela de Rejeitados
         ELSE
           pr_rec_cobranca.inavisms := pr_tab_linhas('INAVISMS').numero;
