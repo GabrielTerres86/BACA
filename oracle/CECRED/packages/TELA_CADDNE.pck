@@ -22,7 +22,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
   --
   -- Alteracoes: 
   --
-  -- 16/03/2019 - Importar cód.ibge e municípios com CEP único (Cechet)
+  -- 16/03/2019 - Importar cód.ibge e municípios com CEP único
+  --            - Processar localidades do tipo Distrito e Povoado (Cechet)
   --
   ---------------------------------------------------------------------------
 
@@ -34,12 +35,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
   -- Tipo de registro para o nome das cidades
   TYPE typ_reg_cidade IS
-    RECORD (codigo   INTEGER
-           ,estado   crapdne.cduflogr%TYPE
-           ,nome     crapdne.nmextcid%TYPE
-           ,resumido crapdne.nmrescid%TYPE
-           ,cep      crapdne.nrceplog%TYPE
-           ,codibge  crapmun.cdcidbge%TYPE);
+    RECORD (codigo     INTEGER
+           ,estado     crapdne.cduflogr%TYPE
+           ,nome       crapdne.nmextcid%TYPE
+           ,resumido   crapdne.nmrescid%TYPE
+           ,cep        crapdne.nrceplog%TYPE
+           ,codibge    crapmun.cdcidbge%TYPE
+           ,tipo       VARCHAR2(10)
+           ,municipio  INTEGER        -- cod municipio de subordinação
+           ,localidade VARCHAR2(72)); -- localidade de subordinação
   -- O indice da tabela sera o codigo da cidade
   TYPE typ_tab_cidade IS
     TABLE OF typ_reg_cidade
@@ -85,7 +89,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     Programa: pc_insere_localidade
     Sistema : Ayllos Web
     Autor   : Douglas Quisinski
-    Data    : Setembro/2016                 Ultima atualizacao: 04/11/2016 
+    Data    : Setembro/2016                 Ultima atualizacao: 18/03/2019 
 
     Dados referentes ao programa:
 
@@ -100,6 +104,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                 16/03/2017 - Adicionar UPPER para os campos de texto no cadastro 
                              de endereço ao importar os arquivos do correio
                              (Douglas - Chamado 601436)
+                             
+                18/03/2019 - Gravar campo do cód. IBGE da Localidade (Cechet)
     ..............................................................................*/
     BEGIN
       --Inserir dados do endereco na tabela em um unico momento
@@ -116,7 +122,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                              ,nmrescid
                              ,cduflogr
                              ,idoricad
-                             ,idtipdne)
+                             ,idtipdne
+--                             ,cdcidibge -- novo campo do código IBGE da localidade
+                             )
                        VALUES(pr_tab_logradouro(idx).cep
                              ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).nome_rua)),' ')
                              ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).nome_rua_res)),' ')
@@ -128,7 +136,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                              ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).cidade_res)),' ')
                              ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).estado)),' ')
                              ,const_origem_cadastro   -- Origem do Cadastro (1 - CORREIOS)
-                             ,pr_idtipdne); -- Tipo de Enderecao
+                             ,pr_idtipdne -- Tipo de Enderecao
+--                             ,pr_tab_logradouro(idx).codibge -- codigo IBGE da Localidade
+                             );
       EXCEPTION
         WHEN OTHERS THEN
           pr_dscritic:=  'Erro ao inserir na tabela crapdne. '||
@@ -175,12 +185,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                 1 - Codigo da Cidade
                 2 - Sigla do Estado
                 3 - Nome da Cidade
-                4 - DESCONHECIDO
-                5 - DESCONHECIDO
-                6 - DESCONHECIDO
-                7 - DESCONHECIDO
+                4 - CEP da localidade
+                5 - Situacao da localide (0=Nao tem CEP por logradouro, 1=Tem logradouro, 2=Distrito ou Povoado)
+                6 - Tipo (P=Povoado, D=Distrito, M=Municipio)
+                7 - Municipio
                 8 - Nome Resumido da Cidade
-                9 - DESCONHECIDO
+                9 - Cód IBGE
+                Fonte: Leiautes_delimitador.doc (eDNE_Basico.zip -> Delimitado)
 
     Alteracoes: 
     ..............................................................................*/
@@ -192,12 +203,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       vr_nmarqprc CONSTANT VARCHAR2(50) := 'LOG_LOCALIDADE.TXT';
 
       -- Campos do arquivo de cidade
-      vr_codigo   INTEGER;
-      vr_estado   VARCHAR(2);
-      vr_nome     VARCHAR2(600);
-      vr_resumido VARCHAR2(600);
-      vr_cep      crapdne.nrceplog%TYPE;
-      vr_codibge  crapmun.cdcidbge%TYPE;
+      vr_codigo    INTEGER;
+      vr_estado    VARCHAR(2);
+      vr_nome      VARCHAR2(600);
+      vr_resumido  VARCHAR2(600);
+      vr_cep       crapdne.nrceplog%TYPE;
+      vr_codibge   crapmun.cdcidbge%TYPE;
+      vr_municipio INTEGER;
+      vr_tipo      VARCHAR2(10);
       
       -- Variavel de criticas
       vr_dscritic VARCHAR2(10000);
@@ -227,13 +240,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
+      
+      -- primeiro deletar todos os municipios com CEP unico
+      DELETE FROM crapdne
+      WHERE idoricad = 1
+        AND idtipdne = 5;
 
       BEGIN
         -- Laco para leitura de linhas do arquivo
         LOOP
           -- Carrega handle do arquivo
-          gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto lido
+          BEGIN
+            gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto lido
+          EXCEPTION
+            WHEN no_data_found THEN
+              EXIT;
+          END;
 
           -- Retirar quebra de linha
           vr_setlinha := REPLACE(REPLACE(vr_setlinha,CHR(10)),CHR(13));
@@ -246,27 +269,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
           vr_resumido := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 8, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,25));
           vr_cep      := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 4, pr_dstext => vr_setlinha, pr_delimitador => '@'));
           vr_codibge  := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 9, pr_dstext => vr_setlinha, pr_delimitador => '@'));
-          
+          vr_municipio:= gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 7, pr_dstext => vr_setlinha, pr_delimitador => '@'));         
+          vr_tipo     := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 6, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,1));
+                   
           -- Carregar os dados da Cidade para a PL_TABLE
-          pr_tab_cidade(vr_codigo).codigo   := vr_codigo;
-          pr_tab_cidade(vr_codigo).estado   := vr_estado;
-          pr_tab_cidade(vr_codigo).nome     := vr_nome;
-          pr_tab_cidade(vr_codigo).resumido := vr_resumido;
-          pr_tab_cidade(vr_codigo).cep      := vr_cep;
-          pr_tab_cidade(vr_codigo).codibge  := vr_codibge;
+          pr_tab_cidade(vr_codigo).codigo    := vr_codigo;
+          pr_tab_cidade(vr_codigo).estado    := vr_estado;
+          pr_tab_cidade(vr_codigo).nome      := vr_nome;
+          pr_tab_cidade(vr_codigo).resumido  := vr_resumido;
+          pr_tab_cidade(vr_codigo).cep       := vr_cep;
+          pr_tab_cidade(vr_codigo).codibge   := vr_codibge;
+          pr_tab_cidade(vr_codigo).municipio := vr_municipio;
+          pr_tab_cidade(vr_codigo).tipo      := vr_tipo;
           
         END LOOP; -- Loop Arquivo
         
-        -- processar municipios;
+        -- separar as localidades que são distritos, povoados e municípios
+        vr_codigo := pr_tab_cidade.first;
+        WHILE vr_codigo IS NOT NULL LOOP
+        
+          -- verificar localidades subordinadas a municípios
+          IF pr_tab_cidade(vr_codigo).municipio > 0 THEN
+            
+            IF pr_tab_cidade(vr_codigo).tipo = 'D' THEN
+              pr_tab_cidade(vr_codigo).localidade := 'DISTRITO DE ' || pr_tab_cidade(vr_codigo).nome;
+            ELSIF pr_tab_cidade(vr_codigo).tipo = 'P' THEN
+              pr_tab_cidade(vr_codigo).localidade := 'POVOADO DE ' || pr_tab_cidade(vr_codigo).nome;
+            ELSE
+              pr_tab_cidade(vr_codigo).localidade := 'MUNICIPIO DE ' || pr_tab_cidade(vr_codigo).nome;
+            END IF;
+            
+            -- trocar o nome da localidade pela subordinada
+            pr_tab_cidade(vr_codigo).nome     := pr_tab_cidade(pr_tab_cidade(vr_codigo).municipio).nome;
+            pr_tab_cidade(vr_codigo).resumido := pr_tab_cidade(pr_tab_cidade(vr_codigo).municipio).resumido;           
+          
+          ELSE
+            -- efeito apenas para municípios com CEP unico
+            pr_tab_cidade(vr_codigo).localidade := 'MUNICIPIO DE ' || pr_tab_cidade(vr_codigo).nome;
+          END IF; 
+        
+          vr_codigo := pr_tab_cidade.next(vr_codigo);
+        END LOOP;
+        
+        -- processar municipios com CEP único, distritos e povoados;
         BEGIN
           FORALL idx IN INDICES OF pr_tab_cidade SAVE EXCEPTIONS
             MERGE 
               INTO crapdne dne
               USING (SELECT 1 FROM dual) s
-                 ON (dne.nrceplog = pr_tab_cidade(idx).cep
-                AND  dne.idoricad = 1) 
-    --          WHEN MATCHED THEN
-    --            dbms_output.put_line('CEP ' || vr_tab_cidade(idx).cep || ' - ja existe');
+                 ON (pr_tab_cidade(idx).cep IS NULL) 
               WHEN NOT MATCHED THEN             
                 INSERT (nrceplog
                        ,nmextlog
@@ -279,11 +330,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                        ,nmrescid
                        ,cduflogr
                        ,idoricad
-                       ,idtipdne)
+                       ,idtipdne
+--                       ,cdcidibge -- Código IBGE do Municipio
+                       )
                  VALUES(pr_tab_cidade(idx).cep
-                       ,substr('MUNICIPIO DE ' || NVL(UPPER(TRIM(pr_tab_cidade(idx).nome)),' '),1,80)
-                       ,substr('MUNICIPIO DE ' || NVL(UPPER(TRIM(pr_tab_cidade(idx).nome)),' '),1,72)
-                       ,'.'
+                       ,substr(NVL(UPPER(TRIM(pr_tab_cidade(idx).localidade)),' '),1,80)
+                       ,substr(NVL(UPPER(TRIM(pr_tab_cidade(idx).localidade)),' '),1,72)
+                       ,(CASE WHEN (pr_tab_cidade(idx).codibge > 0) THEN 'COD.IBGE ' || pr_tab_cidade(idx).codibge ELSE '.' END)
                        ,' '
                        ,' '
                        ,' '
@@ -291,7 +344,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                        ,substr(NVL(UPPER(TRIM(pr_tab_cidade(idx).nome)),' '),1,25)
                        ,NVL(UPPER(TRIM(pr_tab_cidade(idx).estado)),' ')
                        ,const_origem_cadastro   -- Origem do Cadastro (1 - CORREIOS)
-                       ,5); -- Tipo de Enderecao 5 = Municipios
+                       ,5 -- Tipo de Enderecao 5 = Municipios
+--                       ,pr_tab_cidade(idx).codibge
+                       );
         EXCEPTION
             WHEN OTHERS THEN
               dbms_output.put_line('Erro ao inserir na tabela crapdne. '||
