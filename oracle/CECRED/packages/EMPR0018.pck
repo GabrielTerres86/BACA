@@ -52,6 +52,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
       ,cdagenci crapass.cdagenci%TYPE
       ,nrdialib INTEGER
       ,dslcremp VARCHAR2(40)
+      ,cdsubmod craplcr.cdsubmod%TYPE
+      ,tpmodcon craplcr.tpmodcon%TYPE
       ,dsfinemp VARCHAR2(40)
       ,cdmodali VARCHAR2(40)
       ,dsmodali VARCHAR2(40)
@@ -660,7 +662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     --Cursor para Linhas de Crédito
     CURSOR cr_craplcr(pr_cdcooper IN craplcr.cdcooper%TYPE
                      ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
-      SELECT lcr.dslcremp, lcr.cdmodali, lcr.cdsubmod
+      SELECT lcr.dslcremp, lcr.cdmodali, lcr.cdsubmod,lcr.tpmodcon
         FROM craplcr lcr
        WHERE lcr.cdcooper = pr_cdcooper
          AND lcr.cdlcremp = pr_cdlcremp;
@@ -768,6 +770,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
         
         IF cr_craplcr%FOUND THEN
           pr_tcrapsim(pr_nrdconta).dslcremp := rw_craplcr.dslcremp;   
+          pr_tcrapsim(pr_nrdconta).cdmodali := rw_craplcr.cdmodali;
+          pr_tcrapsim(pr_nrdconta).cdsubmod := rw_craplcr.cdsubmod;
+          pr_tcrapsim(pr_nrdconta).tpmodcon := rw_craplcr.tpmodcon;
         END IF; 
         
         --Busca a finalidade
@@ -2601,36 +2606,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                ,pr_tab_erro => pr_tab_erro);
       END;
       
-     END IF; 
-
-      pr_retorno.cdlcremp := pr_cdlcremp;
-      pr_retorno.vlemprst := pr_vlemprst;
-      pr_retorno.qtparepr := pr_qtparepr;
-      pr_retorno.vlparepr := vr_vlpreclc;
-      pr_retorno.dtmvtolt := pr_dtmvtolt;
-      pr_retorno.dtdpagto := pr_dtdpagto;
-      pr_retorno.dtlibera := pr_dtlibera;
-      pr_retorno.txmensal := vr_txmensal;
-      pr_retorno.txdiaria := vr_txdiaria;
-      pr_retorno.vliofepr := vr_valoriof;
-      pr_retorno.vlrtarif := vr_vlrtarif;
-      pr_retorno.vllibera := vr_vllibera;
-      pr_retorno.hrtransa := TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'));
-      pr_retorno.percetop := vr_txcetano;
-      pr_retorno.cdoperad := pr_cdoperad;
-      pr_retorno.vlajuepr := vr_vlajuepr;
-      pr_retorno.cdfinemp := pr_cdfinemp;
-      pr_retorno.idfiniof := pr_idfiniof;
-      pr_retorno.cdcooper := pr_cdcooper;
-      pr_retorno.nrdconta := pr_nrdconta;
-      pr_retorno.nrsimula := vr_nrsimula;
-      pr_retorno.dtvalidade := vr_dt_validade;
-      pr_retorno.nrseq_email := pr_nrseq_email;
-      pr_retorno.nrseq_telefone := pr_nrseq_telefone;
-      pr_retorno.idsegmento := pr_idsegmento;
-      pr_retorno.tpemprst := pr_tpemprst;
-      pr_retorno.idcarenc := pr_idcarenc;
-      pr_retorno.dtcarenc := pr_dtcarenc;
+ 
+     
       
       --Se for alteração limpa a tabela de parcelas simulacao
       IF pr_cddopcao = 'A' THEN
@@ -2667,6 +2644,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
            
         END LOOP;    
       
+     END IF;
+
+      pr_retorno.cdlcremp := pr_cdlcremp;
+      pr_retorno.vlemprst := pr_vlemprst;
+      pr_retorno.qtparepr := pr_qtparepr;
+      pr_retorno.vlparepr := vr_vlpreclc;
+      pr_retorno.dtmvtolt := pr_dtmvtolt;
+      pr_retorno.dtdpagto := pr_dtdpagto;
+      pr_retorno.dtlibera := pr_dtlibera;
+      pr_retorno.txmensal := vr_txmensal;
+      pr_retorno.txdiaria := vr_txdiaria;
+      pr_retorno.vliofepr := vr_valoriof;
+      pr_retorno.vlrtarif := vr_vlrtarif;
+      pr_retorno.vllibera := vr_vllibera;
+      pr_retorno.hrtransa := TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'));
+      pr_retorno.percetop := vr_txcetano;
+      pr_retorno.cdoperad := pr_cdoperad;
+      pr_retorno.vlajuepr := vr_vlajuepr;
+      pr_retorno.cdfinemp := pr_cdfinemp;
+      pr_retorno.idfiniof := pr_idfiniof;
+      pr_retorno.cdcooper := pr_cdcooper;
+      pr_retorno.nrdconta := pr_nrdconta;
+      pr_retorno.nrsimula := vr_nrsimula;
+      pr_retorno.dtvalidade := vr_dt_validade;
+      pr_retorno.nrseq_email := pr_nrseq_email;
+      pr_retorno.nrseq_telefone := pr_nrseq_telefone;
+      pr_retorno.idsegmento := pr_idsegmento;
+      pr_retorno.tpemprst := pr_tpemprst;
+      pr_retorno.idcarenc := pr_idcarenc;
+      pr_retorno.dtcarenc := pr_dtcarenc;
+
       IF pr_flgerlog THEN
         GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper 
                            , pr_cdoperad => pr_cdoperad
