@@ -98,8 +98,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_SIMULACAO IS
                               ,pr_idcarenc	IN INTEGER
                               ,pr_dtcarenc	IN VARCHAR2
                               ,pr_flgerlog IN INTEGER                --> falg para log da operacao
-                              ,pr_vlparepr IN INTEGER DEFAULT NULL 
-                              ,pr_vliofepr IN INTEGER DEFAULT NULL 
+                              ,pr_vlparepr IN NUMBER DEFAULT NULL 
+                              ,pr_vliofepr IN NUMBER DEFAULT NULL 
                               ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -1012,8 +1012,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
                               ,pr_idcarenc IN INTEGER
                               ,pr_dtcarenc IN VARCHAR2
                               ,pr_flgerlog IN INTEGER                --> falg para log da operacao
-                              ,pr_vlparepr IN INTEGER DEFAULT NULL   
-                              ,pr_vliofepr IN INTEGER DEFAULT NULL  
+                              ,pr_vlparepr IN NUMBER DEFAULT NULL   
+                              ,pr_vliofepr IN NUMBER DEFAULT NULL  
                               ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
