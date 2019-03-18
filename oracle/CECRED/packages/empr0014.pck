@@ -98,14 +98,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
   --  Sistema  : Rotinas sobre Efetivação de Proposta
   --  Sigla    : EMPR
   --  Autor    : Renato Raul Cordeiro
-  --  Data     : Junho/2018.                   Ultima atualizacao: Junho/2018
+  --  Data     : Junho/2018.                   Ultima atualizacao: 18/03/2019
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Rotinas para efetivação da Proposta
   --
-  -- Alterações: 
+  -- Alterações: 18/03/2019 : Inclusão do parametro pr_vlrdoiof na chamada da rotina 
+  --             CCET0001.pc_calculo_cet_emprestimos.
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -1567,6 +1568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
                                           ,pr_idfiniof  => rw_crawepr.idfiniof -- Indicador de financiamento do IOF e tarifa
                                           ,pr_dsctrliq  => vr_dsctrliq         -- Numeros dos contratos de liquidacao
                                           ,pr_idgravar  => 'S'                 -- Indicador de gravação ou não na tabela de calculo
+                                          ,pr_vlrdoiof  => null                -- Valor do IOF do consignado
                                           ,pr_txcetano  => vr_txcetano         -- Taxa cet ano
                                           ,pr_txcetmes  => vr_txcetmes         -- Taxa cet mes 
                                           ,pr_cdcritic  => pr_cdcritic         --> Código da crítica
