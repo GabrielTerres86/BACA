@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 09/01/2019
+    Data    : Fevereiro/2011               ultima Atualizacao: 18/03/2019
 
     Dados referentes ao programa:
 
@@ -326,6 +326,9 @@
               19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)              
                            
 			  03/01/2019 - Ajuste na gravação do IOF do emprestimo (INC0029419) Daniel
+        
+              18/03/2019 - P437 - Consignado - incluido parametro valor IOF na chamada da rotina 
+                                  pc_calculo_cet_emprestimos - Josiane Stiehler AMcom
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -4771,6 +4774,7 @@ PROCEDURE grava_efetivacao_proposta:
                              INPUT crawepr.idfiniof, /* */
                              INPUT aux_dsctrliq, /* Contratos Liquidados */
                              INPUT "S", /* Gravar */
+                             INPUT NULL, /*valor IOF */
                             OUTPUT 0,
                             OUTPUT 0,
                             OUTPUT 0,
