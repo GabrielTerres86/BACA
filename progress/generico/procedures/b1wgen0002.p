@@ -1,5 +1,5 @@
 /******************************************************************************
-                           ATENCAO!    CONVERSAO PROGRESS - ORACLE
+                           ATENCAO!    CONVERSAO PROGRESS - ORACLE 
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +-------------------------------------+-------------------------------------------+
   | Rotina Progress                     | Rotina Oracle PLSQL                       |
@@ -4292,26 +4292,6 @@ PROCEDURE valida-dados-gerais:
     
     DO WHILE TRUE:
 	
-	    /* P437 - Projeto Empréstimo Consignado - AMcom Sistemas de Informaçao - 12/03/2019
-			          Objetivo: Validaçoes Gerais (proposta, dados pessoais,...).*/
-        IF par_tpemprst = 1 AND /*Pré-Fixado*/
-           (par_cddopcao = "I" OR par_cddopcao = "A") THEN 
-            DO:
-		      RUN valida-consignado(INPUT par_nrdconta,
-                                    INPUT par_cdlcremp, 
-                                    INPUT par_cdcooper,
-                                    INPUT par_nmdatela,
-                                    INPUT par_cdagenci,
-                                    INPUT par_nrdcaixa,
-                                    INPUT par_idorigem,
-                                    INPUT par_cdoperad,
-                                   OUTPUT TABLE tt-erro).
-			
-			IF TEMP-TABLE tt-erro:HAS-RECORDS THEN             
-                RETURN "NOK".  
-            END.
-		/*Fim*/	
-
         IF  NOT CAN-DO("0,58,59", STRING(par_cdfinemp)) AND
             NOT CAN-DO("100,800,900,6901", STRING(par_cdlcremp)) AND /* CDC */
             NOT CAN-DO("2,4", STRING(par_idquapro)) THEN
@@ -5100,8 +5080,27 @@ PROCEDURE valida-dados-gerais:
            
         IF RETURN-VALUE <> "OK" THEN
            RETURN "NOK".
-
-        LEAVE.
+		
+		/* P437 - Projeto Empréstimo Consignado - AMcom Sistemas de Informaçao - 12/03/2019
+			          Objetivo: Validaçoes Gerais (proposta, dados pessoais,...).*/
+        IF par_tpemprst = 1 AND /*Pré-Fixado*/
+           (par_cddopcao = "I" OR par_cddopcao = "A") THEN 
+            DO:
+		      RUN valida-consignado(INPUT par_nrdconta,
+                                    INPUT par_cdlcremp, 
+                                    INPUT par_cdcooper,
+                                    INPUT par_nmdatela,
+                                    INPUT par_cdagenci,
+                                    INPUT par_nrdcaixa,
+                                    INPUT par_idorigem,
+                                    INPUT par_cdoperad,
+                                   OUTPUT TABLE tt-erro).
+			
+			IF TEMP-TABLE tt-erro:HAS-RECORDS THEN             
+                RETURN "NOK".  
+            END.
+		/*Fim*/	
+        LEAVE.		
 
     END. /* Fim tratamento de criticas */
 
