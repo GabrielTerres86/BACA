@@ -345,17 +345,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
           RAISE vr_exc_erro;
       END;
 
-      --Transfere conta para prejuizo AQUI
-      --substituir o codigo de baixo pela chamada desta procedure
-      PREJ0003.pc_define_situacao_cc_prej(pr_cdcooper => pr_cdcooper
-                                         ,pr_nrdconta => pr_nrdconta
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic );
-
-      if TRIM(vr_dscritic) is not null then
-        RAISE vr_exc_erro;
-      end if;
-
       BEGIN
         UPDATE
           crapmcr
