@@ -22,7 +22,7 @@
   |   busca_dados_impressao_dsctit  | DSCT0002.pc_busca_dados_imp_descont     |
   |   busca_tarifa_desconto_titulo  | DSCT0003.pc_busca_tarifa_desc_titulo    |
   +---------------------------------+-----------------------------------------+
-   
+
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
 
@@ -2508,17 +2508,26 @@ PROCEDURE efetua_liber_anali_bordero:
                    craplcm.cdbccxlt = craplot.cdbccxlt 
                    craplcm.nrdolote = craplot.nrdolote
                    craplcm.nrdconta = crapbdt.nrdconta
-                   craplcm.nrdocmto = aux_nrseqdig 
+                   craplcm.nrdocmto = craplot.nrseqdig + 1
                    craplcm.vllanmto = aux_vlborder
                    craplcm.cdhistor = 686
-                   craplcm.nrseqdig = aux_nrseqdig
+                   craplcm.nrseqdig = craplot.nrseqdig + 1 
                    craplcm.nrdctabb = crapbdt.nrdconta 
 
                    craplcm.nrautdoc = 0
                    craplcm.cdcooper = par_cdcooper
 
                    craplcm.cdpesqbb = "Desconto do bordero " +
-                                        STRING(crapbdt.nrborder,"zzz,zz9").
+                                       STRING(crapbdt.nrborder,"zzz,zz9")
+
+                   craplot.nrseqdig = craplcm.nrseqdig
+                   craplot.qtinfoln = craplot.qtinfoln + 1
+                   craplot.qtcompln = craplot.qtcompln + 1
+
+                   craplot.vlinfocr = craplot.vlinfocr +
+                                      craplcm.vllanmto
+                   craplot.vlcompcr = craplot.vlcompcr +
+                                      craplcm.vllanmto.
 
                             
             VALIDATE craplot.
