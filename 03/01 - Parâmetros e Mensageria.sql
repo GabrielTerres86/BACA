@@ -60,7 +60,7 @@ UPDATE crapaca SET nmpackag = 'TELA_ESTORN', nmproced = 'pc_tela_estornar_web', 
 UPDATE crapaca SET nmpackag = 'TELA_ESTORN', nmproced = 'pc_tela_imprimir_relatorio_web', lstparam = lstparam || ', pr_cdtpprod' WHERE nmdeacao = 'ESTORN_IMPRESSAO'
 
 -- TAB089 - Insere o parametro pr_vlmaxdst para a chamada da procedure pc_alterar da tela TAB089	   
-UPDATE crapaca aca SET aca.lstparam = aca.lstparam || ' ,pr_vlmaxdst' WHERE aca.nmdeacao = 'TAB089_ALTERAR';
+UPDATE crapaca aca SET aca.lstparam = aca.lstparam || ' ,pr_avtperda,pr_vlperavt,pr_vlmaxdst' WHERE aca.nmdeacao = 'TAB089_ALTERAR';
 
 -- COBTIT
 insert into crapaca (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
