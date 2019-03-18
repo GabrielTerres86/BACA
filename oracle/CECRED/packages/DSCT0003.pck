@@ -9389,12 +9389,12 @@ EXCEPTION
     
     -- Faz lançamento de abono se tiver
     -- Se for boletagem massiva e o valor do titulo for maior que o valor do pagamento
-    IF pr_cdorigpg = 5 AND (rw_craptdb.vltitulo_total - pr_vlpagmto) > 0 THEN
+    IF pr_cdorigpg = 5 AND NVL(rw_craptdb.vltitulo_total - pr_vlpagmto,0) > 0 THEN
       pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
                        ,pr_cdagenci => 1
                        ,pr_cdbccxlt => 100
                        ,pr_nrdconta => pr_nrdconta
-                       ,pr_vllanmto => vr_vlabatcc
+                       ,pr_vllanmto => NVL(rw_craptdb.vltitulo_total - pr_vlpagmto,0)
                        ,pr_cdhistor => vr_cdhistordsct_credabonodscto
                        ,pr_cdcooper => pr_cdcooper
                        ,pr_cdoperad => pr_cdoperad
