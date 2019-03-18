@@ -4,6 +4,7 @@
   # Alteração de avalista\
   # Valor máximo para alteração de avalista sem perda de aprovação
   
+
 */ 
 BEGIN
 update craptab
