@@ -1829,19 +1829,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       CLOSE cr_crapcob;
     END IF;
 
-    -- Sacado possui registro
-    OPEN cr_crapsab (pr_cdcooper => rw_crapcob.cdcooper
-                    ,pr_nrdconta => rw_crapcob.nrdconta
-                    ,pr_nrinssac => rw_crapcob.nrinssac);
-    FETCH cr_crapsab INTO rw_crapsab;
-    
-    IF cr_crapsab%NOTFOUND THEN
-      CLOSE cr_crapsab;
-      RAISE vr_exc_motivo;
-    ELSE
-      CLOSE cr_crapsab;
-    END IF;
-
     -- Concessao de Abatimento
     IF pr_cdocorre = 04 THEN 
       IF ( pr_tab_linhas('VLABATIM').numero = 0 ) THEN
@@ -1884,12 +1871,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     -- Protestar
     IF pr_cdocorre = 09 THEN
+      
+      -- Buscar UF do sacado para validar protesto de DS
+      OPEN cr_crapsab (pr_cdcooper => rw_crapcob.cdcooper
+                      ,pr_nrdconta => rw_crapcob.nrdconta
+                      ,pr_nrinssac => rw_crapcob.nrinssac);
+      FETCH cr_crapsab INTO rw_crapsab;
+        
+      IF cr_crapsab%NOTFOUND THEN
+        CLOSE cr_crapsab;
+        RAISE vr_exc_motivo;
+      ELSE
+        CLOSE cr_crapsab;
+      END IF;    
 	
-	  tela_parprt.pc_consulta_periodo_parprt(pr_cdcooper => pr_cdcooper,
-										     pr_qtlimitemin_tolerancia => vr_limitemin,
-										     pr_qtlimitemax_tolerancia => vr_limitemax,
-										     pr_des_erro => vr_des_erro,
-										     pr_dscritic => vr_dscritic);
+      tela_parprt.pc_consulta_periodo_parprt(pr_cdcooper => pr_cdcooper,
+                           pr_qtlimitemin_tolerancia => vr_limitemin,
+                           pr_qtlimitemax_tolerancia => vr_limitemax,
+                           pr_des_erro => vr_des_erro,
+                           pr_dscritic => vr_dscritic);
 	
       IF (vr_des_erro <> 'OK') THEN
         pr_cdmotivo := '38';
