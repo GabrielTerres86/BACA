@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
       Sistema : Conta-Corrente - Cooperativa de Credito
       Sigla   : CRED
       Autora  : Lucas R.
-      Data    : Setembro/2013                        Ultima atualizacao: 27/11/2017
+      Data    : Setembro/2013                        Ultima atualizacao: 13/03/2019
 
       Dados referentes ao programa:
 
@@ -43,6 +43,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
                                
                   27/11/2017 - Executar o gene0001.pc_fecha_arquivo antes de executar algum 
                                comando unix (Lucas Ranghetti #792998)
+                               
+                  13/03/2019 - Pular linha caso o tipo de consorcio não venha preenchido no arquivo
+                               também logar no tbgen_prglog (Lucas Ranghetti PRB0040668)
       ............................................................................*/
 
 
@@ -190,7 +193,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
       vr_texto_email     VARCHAR2(4000);        --> Texto do email de erro
       vr_nmarqimp        VARCHAR2(100);         --> Nome arquivo a ser processado
       vr_idxass          VARCHAR2(20);          --> indice da temp table da crapass
-      
+      vr_idprglog        tbgen_prglog.idprglog%TYPE := 0;
       --------------------------- SUBROTINAS INTERNAS --------------------------
 
     BEGIN
@@ -481,7 +484,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_fimprg;
         END IF;
-            
+    
         /************************************************************************/
         /************************ INTEGRA ARQUIVO RECEBIDO **********************/
         /************************************************************************/
@@ -549,9 +552,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
             vr_nrdgrupo := SUBSTR(vr_setlinha,2,6);
             vr_nrcotcns := SUBSTR(vr_setlinha,8,4);
             vr_nrctrato := SUBSTR(vr_setlinha,14,8);
-            vr_tpconsor := SUBSTR(vr_setlinha,86,2);
             vr_qtparres := SUBSTR(vr_setlinha,101,3);
             vr_nmconsor := REPLACE(SUBSTR(vr_setlinha,22,40),'&','E');
+            BEGIN
+              vr_tpconsor := SUBSTR(vr_setlinha,86,2);            
+            EXCEPTION
+              WHEN OTHERS THEN
+                --> Geração de log                                
+                CECRED.pc_log_programa(  pr_dstiplog      => 'E',
+                                         pr_cdprograma    => 'CRPS658',
+                                         pr_cdcooper      => pr_cdcooper, 
+                                         pr_tpexecucao    => 1,
+                                         pr_tpocorrencia  => 1,
+                                         pr_cdmensagem    => 0,
+                                         pr_dsmensagem    => 'PC_CRPS658 - ERRO - vr_tpconsor(pos 86,2) vr_setlinha:'||vr_setlinha,
+                                         pr_idprglog      => vr_idprglog,
+                                         pr_cdcriticidade => 2);
+              CONTINUE;
+            END;
+            
             BEGIN
               vr_dtinicns := to_date(trim(SUBSTR(vr_setlinha,88,8)) ,'ddmmyyyy');
               vr_dtfimcns := to_date(trim(SUBSTR(vr_setlinha,126,8)),'ddmmyyyy');
@@ -812,7 +831,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%T
                                                      || gene0001.fn_busca_critica(191)||
                                                      ' --> '||vr_nmarquiv_err); 
         END IF;
-        
+
         -- Inicializar o CLOB
         vr_des_xml := null;
         dbms_lob.createtemporary(vr_des_xml, true);
