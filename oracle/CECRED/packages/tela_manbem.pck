@@ -2577,8 +2577,8 @@ create or replace package body cecred.tela_manbem is
                      par_nmbairro||', '|| 
                      par_nmcidade||' - '|| 
                      par_cdufende;
-     end if;
-     v_dscorbem := substr(v_dscorbem,1,100);
+     
+       v_dscorbem := substr(v_dscorbem,1,100);
      end if;
      -- Validar mudança de categoria
      if upper(par_dscatbem) != upper(rw_crapbpr.dscatbem) then
