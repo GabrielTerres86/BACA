@@ -413,8 +413,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
                                 ,pr_tpemprst IN INTEGER
                                 ,pr_idcarenc IN INTEGER
                                 ,pr_dtcarenc IN DATE
-                                ,pr_vlparepr IN INTEGER DEFAULT NULL 
-                                ,pr_vliofepr IN INTEGER DEFAULT NULL);                                
+                                ,pr_vlparepr IN NUMBER DEFAULT NULL 
+                                ,pr_vliofepr IN NUMBER DEFAULT NULL);                                
                                 
     PROCEDURE pc_calcula_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE
                                    ,pr_cdagenci IN crapage.cdagenci%TYPE
@@ -435,8 +435,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
                                    ,pr_flggrava In BOOLEAN
                                    ,pr_dtlibera IN DATE
                                    ,pr_idfiniof IN INTEGER
-                                   ,pr_vlparepr IN INTEGER DEFAULT NULL
-                                   ,pr_vliofepr IN INTEGER DEFAULT NULL
+                                   ,pr_vlparepr IN NUMBER DEFAULT NULL
+                                   ,pr_vliofepr IN NUMBER DEFAULT NULL
                                    ,pr_qtdiacar OUT INTEGER
                                    ,pr_vlajuepr OUT NUMBER
                                    ,pr_txdiaria OUT NUMBER
@@ -2017,8 +2017,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                 ,pr_tpemprst IN INTEGER
                                 ,pr_idcarenc IN INTEGER
                                 ,pr_dtcarenc IN DATE
-                                ,pr_vlparepr IN INTEGER DEFAULT NULL 
-                                ,pr_vliofepr IN INTEGER DEFAULT NULL) IS
+                                ,pr_vlparepr IN NUMBER DEFAULT NULL 
+                                ,pr_vliofepr IN NUMBER DEFAULT NULL) IS
     --CURSORES
     --Cursor para associado
     CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
@@ -2488,6 +2488,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                         , pr_idfiniof => pr_idfiniof
                                         , pr_dsctrliq => ''
                                         , pr_idgravar => 'N' 
+                                        , pr_vlrdoiof =>  CASE WHEN vr_tpmodcon > 0 THEN vr_valoriof ELSE null END  
                                         , pr_txcetano => vr_txcetano
                                         , pr_txcetmes => vr_txcetmes
                                         , pr_cdcritic => vr_cdcritic
@@ -2852,8 +2853,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                 ,pr_flggrava In BOOLEAN
                                 ,pr_dtlibera IN DATE
                                 ,pr_idfiniof IN INTEGER
-                                ,pr_vlparepr IN INTEGER DEFAULT NULL 
-                                ,pr_vliofepr IN INTEGER DEFAULT NULL 
+                                ,pr_vlparepr IN NUMBER DEFAULT NULL 
+                                ,pr_vliofepr IN NUMBER DEFAULT NULL 
                                 ,pr_qtdiacar OUT INTEGER
                                 ,pr_vlajuepr OUT NUMBER
                                 ,pr_txdiaria OUT NUMBER
