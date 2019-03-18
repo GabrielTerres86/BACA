@@ -5319,6 +5319,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                - Incluído tratamento para não duplicar a mensagens na tbgen: vr_ininsoco
                               (Belli - Envolti - Chamado 851591)
                               
+                 18/03/2019 - Ajuste no cursor cr_craptdb para trazer o saldo devedor do título (Paulo Penteado GFT) 
+                              
     ..................................................................................*/
     ------------------> CURSORES <------------------
 
@@ -5346,7 +5348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     
     /*Titulos que estao em desconto liberados ou que foram pagos na data atual*/
     CURSOR cr_craptdb IS
-      SELECT craptdb.vltitulo
+      SELECT craptdb.vlsldtit vltitulo
         FROM craptdb
        WHERE (craptdb.cdcooper = pr_cdcooper AND
               craptdb.nrdconta = pr_nrdconta AND 
