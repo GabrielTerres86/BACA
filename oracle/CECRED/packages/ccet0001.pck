@@ -191,6 +191,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCET0001 IS
                                       ,pr_idfiniof  IN crapepr.idfiniof%TYPE -- Indicador de financiamento do IOF e tarifa
                                       ,pr_dsctrliq  IN VARCHAR2 DEFAULT NULL -- Numeros dos contratos de liquidacao
                                       ,pr_idgravar  IN VARCHAR2 DEFAULT 'N'   -- Indicador de gravação ou não na tabela de calculo
+                                      ,pr_vlrdoiof  IN tbepr_calculo_cet.vlrdoiof%TYPE DEFAULT NULL -- valor do IOF do consignado
                                       ,pr_txcetano OUT NUMBER                -- Taxa cet ano
                                       ,pr_txcetmes OUT NUMBER                -- Taxa cet mes 
                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -233,10 +234,59 @@ create or replace package body cecred.CCET0001 is
   --
   --              05/10/2017 - Correcao no calculo realizado para o valor da tarifa do CET, quando a proposta ainda nao esta
   --                           efetivada. Heitor (Mouts) - Chamado 746478.
+  --             
+  --              15/03/2019 - Inclusão do parâmetro pr_vlrdoiof para ser considerado no cálculo do CET para o consignado
+  --                           JosianeStiehler - AMcom
   ---------------------------------------------------------------------------------------------------------------
 
   pr_cdcritic NUMBER;
   pr_dscritic VARCHAR2(4000); 
+  vr_cdprogra tbgen_prglog.cdprograma%type := 'CCET0001';
+  
+  --> Grava informações para resolver erro de programa/ sistema
+  PROCEDURE pc_gera_log(pr_cdcooper      IN PLS_INTEGER           --> Cooperativa
+                       ,pr_dstiplog      IN VARCHAR2              --> Tipo Log
+                       ,pr_dscritic      IN VARCHAR2 DEFAULT NULL --> Descricao da critica
+                       ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0
+                       ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0
+                       ,pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2
+                       ,pr_nmarqlog      IN tbgen_prglog.nmarqlog%type DEFAULT NULL
+                       ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%type DEFAULT 1 -- cadeia - 12/02/2019 - REQ0035813
+                       ) IS
+    -----------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_gera_log
+    --  Sistema  : Rotina para gravar logs em tabelas
+    --  Sigla    : CRED
+    --  Autor    : Ana Lúcia E. Volles - Envolti
+    --  Data     : Fevereiro/2018           Ultima atualizacao: 18/02/2019
+    --  Chamado  : REQ0041486
+    --
+    -- Dados referentes ao programa:
+    -- Frequencia: Rotina executada em qualquer frequencia.
+    -- Objetivo  : Controla gravação de log em tabelas.
+    --
+    -- Alteracoes:  
+    --             
+    ------------------------------------------------------------------------------------------------------------   
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+    --
+  BEGIN         
+    --> Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
+                           pr_cdcooper      => pr_cdcooper, 
+                           pr_tpocorrencia  => pr_ind_tipo_log, 
+                           pr_cdprograma    => vr_cdprogra, 
+                           pr_tpexecucao    => pr_tpexecucao,
+                           pr_cdcriticidade => pr_cdcriticidade,
+                           pr_cdmensagem    => pr_cdmensagem,    
+                           pr_dsmensagem    => pr_dscritic,               
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => pr_nmarqlog);
+  EXCEPTION
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+  END pc_gera_log;
 
   -- Contar os meses
   FUNCTION fn_qtd_meses(pr_data_1 IN DATE
@@ -1096,6 +1146,8 @@ create or replace package body cecred.CCET0001 is
         -- Monta mensagem de erro
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
+
+
       WHEN OTHERS THEN
         pr_cdcritic := 0;
         pr_dscritic := 'Erro pc_calcula_tarifa_cadastro : ' || SQLERRM;
@@ -1242,7 +1294,7 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas Ranghetti
-  Data    : Julho/2014                        Ultima atualizacao: 19/09/2018
+  Data    : Julho/2014                        Ultima atualizacao: 18/02/2019
 
   Dados referentes ao programa:
 
@@ -1267,6 +1319,9 @@ create or replace package body cecred.CCET0001 is
                            ser calculado o valor do IOF com base em 30 dias, independentemente
                            da qtd de dias de vigencia do contrato - SCTASK0021789.
                            (Fabricio)
+
+              18/02/2019 - Revitalização
+                           Ana - Envolti - 18/02/2019 - SCTASK0045499 (REQ0041846)
   ............................................................................. */
     DECLARE
     
@@ -1301,7 +1356,6 @@ create or replace package body cecred.CCET0001 is
       -- Variavel exceção
       vr_exc_erro EXCEPTION;      
       
-      
       -- Variável de Controle de XML
       vr_des_xml      CLOB;
       vr_path_arquivo VARCHAR2(1000);
@@ -1319,6 +1373,7 @@ create or replace package body cecred.CCET0001 is
       vr_tpregtrb NUMBER := 0;
       
       vr_qtdiavig NUMBER := pr_qtdiavig;
+      vr_dsparame VARCHAR2(4000);
       
       -- CURSORES PARA UTILIZAR NA PACKAGE
       CURSOR cr_crapcop IS 
@@ -1355,6 +1410,24 @@ create or replace package body cecred.CCET0001 is
       END;
     
     BEGIN            
+      -- Inclui nome do modulo logado - REQ0041846
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'CCET00001.pc_imprime_limites_cet');
+
+      vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper
+                    ||', pr_dtmvtolt:'||pr_dtmvtolt
+                    ||', pr_cdprogra:'||pr_cdprogra
+                    ||', pr_nrdconta:'||pr_nrdconta
+                    ||', pr_inpessoa:'||pr_inpessoa
+                    ||', pr_cdusolcr:'||pr_cdusolcr
+                    ||', pr_cdlcremp:'||pr_cdlcremp
+                    ||', pr_tpctrlim:'||pr_tpctrlim
+                    ||', pr_nrctrlim:'||pr_nrctrlim
+                    ||', pr_dtinivig:'||pr_dtinivig
+                    ||', pr_qtdiavig:'||pr_qtdiavig
+                    ||', pr_vlemprst:'||pr_vlemprst
+                    ||', pr_txmensal:'||pr_txmensal
+                    ||', pr_flretxml:'||pr_flretxml;
+
       -- Buscar descrição da cooperativa
       OPEN cr_crapcop;
       FETCH cr_crapcop INTO rw_crapcop;
@@ -1401,6 +1474,8 @@ create or replace package body cecred.CCET0001 is
         RAISE vr_exc_erro;        
       END IF;                                                                                                                         
 
+      -- Inclui nome do modulo logado - REQ0041846
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'CCET00001.pc_imprime_limites_cet');
       
       -- gravar codigo da tarifa e historico de lançamento
       IF pr_inpessoa = 1 THEN -- Fisica
@@ -1432,6 +1507,7 @@ create or replace package body cecred.CCET0001 is
           vr_tpproduto := 3;
         END IF;           
         END IF;           
+
       OPEN cr_crapjur(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta);
       FETCH cr_crapjur INTO rw_crapjur;
@@ -1477,6 +1553,9 @@ create or replace package body cecred.CCET0001 is
         RAISE vr_exc_erro;        
       END IF;
       
+      -- Inclui nome do modulo logado - REQ0041846
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'CCET00001.pc_imprime_limites_cet');
+      
       -- abre cursor da tabela
       OPEN cr_craplat(pr_cdcooper => pr_cdcooper,
                       pr_nrdconta => pr_nrdconta,
@@ -1515,6 +1594,9 @@ create or replace package body cecred.CCET0001 is
           RAISE vr_exc_erro;        
         END IF;                                                                                      
       END IF;           
+
+      -- Inclui nome do modulo logado - REQ0041846
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'CCET00001.pc_imprime_limites_cet');
                             
       -- Valor juros remunerados
       vr_vljurrem := (pr_vlemprst * nvl(vr_txmensal,0) ) / 100;
@@ -1538,6 +1620,9 @@ create or replace package body cecred.CCET0001 is
         RAISE vr_exc_erro;        
       END IF;                                 
             
+      -- Inclui nome do modulo logado - REQ0041846
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'CCET00001.pc_imprime_limites_cet');
+            
       -- Porcentagem do valor do limite
       vr_txjurlim := ((nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0) - nvl(vr_vljurrem,0) ) * 100) / pr_vlemprst;
             
@@ -1552,6 +1637,7 @@ create or replace package body cecred.CCET0001 is
       
       -- Porcentagem  do valor total
       vr_txjuremp := 100;
+      
       
       -- Taxa Mensal
       vr_txmescet := nvl(pr_txmensal,0) + nvl(vr_txjuriof,0) + nvl(vr_txjurtar,0);
@@ -1644,14 +1730,38 @@ create or replace package body cecred.CCET0001 is
       dbms_lob.close(vr_des_xml);
       dbms_lob.freetemporary(vr_des_xml);      
     
+      -- Limpa nome do modulo logado - REQ0041846
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+    
     EXCEPTION
       WHEN vr_exc_erro THEN        
         -- Monta mensagem de erro
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
+
+        --Grava tabela de log - Ch REQ0011728
+        pc_gera_log(pr_cdcooper      => nvl(pr_cdcooper,3),
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
+                    pr_cdcriticidade => 1,
+                    pr_cdmensagem    => pr_cdcritic,
+                    pr_ind_tipo_log  => 1);
+
       WHEN OTHERS THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro pc_imprime_limites_cet : ' || SQLERRM;
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+        -- Erro
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'CCET0001.pc_imprime_limites_cet. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0041846
+        pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
+                    pr_cdcriticidade => 2,
+                    pr_cdmensagem    => pr_cdcritic,
+                    pr_ind_tipo_log  => 2);
+
     END;        
   END pc_imprime_limites_cet;
   
@@ -1774,6 +1884,7 @@ create or replace package body cecred.CCET0001 is
 
       -- Variaveis pdf
       vr_nmarqimp VARCHAR2(100) := '';
+      vr_dsparame VARCHAR2(4000);
             
       -- CURSORES
       CURSOR cr_crapcop IS 
@@ -1883,6 +1994,22 @@ create or replace package body cecred.CCET0001 is
       END;
     
     BEGIN
+      vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper
+                    ||', pr_dtmvtolt:'||pr_dtmvtolt
+                    ||', pr_cdprogra:'||pr_cdprogra
+                    ||', pr_nrdconta:'||pr_nrdconta
+                    ||', pr_inpessoa:'||pr_inpessoa
+                    ||', pr_cdusolcr:'||pr_cdusolcr
+                    ||', pr_cdlcremp:'||pr_cdlcremp
+                    ||', pr_tpemprst:'||pr_tpemprst
+                    ||', pr_nrctremp:'||pr_nrctremp
+                    ||', pr_dtlibera:'||pr_dtlibera
+                    ||', pr_dtultpag:'||pr_dtultpag
+                    ||', pr_vlemprst:'||pr_vlemprst
+                    ||', pr_txmensal:'||pr_txmensal
+                    ||', pr_vlpreemp:'||pr_vlpreemp
+                    ||', pr_qtpreemp:'||pr_qtpreemp
+                    ||', pr_dtdpagto:'||pr_dtdpagto;
 
       -- Buscar descrição da cooperativa
       OPEN cr_crapcop;
@@ -2472,7 +2599,7 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas R.
-  Data    : Setembro/2014                        Ultima atualizacao: 12/04/2018
+  Data    : Setembro/2014                        Ultima atualizacao: 18/02/2019
 
   Dados referentes ao programa:
 
@@ -2481,6 +2608,12 @@ create or replace package body cecred.CCET0001 is
               descontos de cheque e titulo.
 
   Alteracoes: 12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)                 
+
+              18/02/2019 - Quando tipo do contrato for limite de credito (tpctrlim = 1) deve
+                           ser calculado o valor do IOF com base em 30 dias, independentemente
+                           da qtd de dias de vigencia do contrato - SCTASK0021789.
+                           Revitalização
+                           Ana - Envolti - 18/02/2019 - SCTASK0045499 (REQ0041846)
   ............................................................................. */
     DECLARE
     
@@ -2508,8 +2641,6 @@ create or replace package body cecred.CCET0001 is
       -- Variavel exceção
       vr_exc_erro EXCEPTION;      
       
-      
-      
       -- CURSORES PARA UTILIZAR NA PACKAGE
       CURSOR cr_craplat(pr_cdcooper IN crapcop.cdcooper%TYPE
                        ,pr_nrdconta IN crapass.nrdconta%TYPE
@@ -2529,8 +2660,29 @@ create or replace package body cecred.CCET0001 is
        FROM crapjur 
        WHERE crapjur.natjurid = pr_cdcooper AND crapjur.nrdconta = pr_nrdconta;
       rw_crapjur cr_crapjur%ROWTYPE;
+
+    --REQ0041846
+    vr_idprglog     tbgen_prglog.idprglog%TYPE := 0;
+    vr_qtdiavig     NUMBER := 0;
+    vr_dsparame     VARCHAR2(4000);
+      
     BEGIN
+      -- Inclui nome do modulo logado - REQ0041846
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'CCET00001.pc_calculo_cet_limites');
     
+      vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper
+                    ||', pr_dtmvtolt:'||pr_dtmvtolt
+                    ||', pr_cdprogra:'||pr_cdprogra
+                    ||', pr_nrdconta:'||pr_nrdconta
+                    ||', pr_inpessoa:'||pr_inpessoa
+                    ||', pr_cdusolcr:'||pr_cdusolcr
+                    ||', pr_cdlcremp:'||pr_cdlcremp
+                    ||', pr_tpctrlim:'||pr_tpctrlim
+                    ||', pr_nrctrlim:'||pr_nrctrlim
+                    ||', pr_dtinivig:'||pr_dtinivig
+                    ||', pr_qtdiavig:'||pr_qtdiavig
+                    ||', pr_vlemprst:'||pr_vlemprst
+                    ||', pr_txmensal:'||pr_txmensal;
       
       -- gravar codigo da tarifa e historico de lançamento
       IF pr_inpessoa = 1 THEN -- Fisica
@@ -2570,6 +2722,15 @@ create or replace package body cecred.CCET0001 is
          vr_tpregtrb := rw_crapjur.tpregtrb;
       END IF;
       CLOSE cr_crapjur;
+
+      --REQ0041846
+      -- limite de credito deve ter o periodo fixado em 30 dias para impressao da planilha do CET
+      IF pr_tpctrlim = 1 THEN        
+        vr_qtdiavig := 30;
+      ELSE
+        vr_qtdiavig := pr_qtdiavig;
+      END IF; 
+
       --Novo cálculo do IOF
       TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => vr_tpproduto --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
                                    ,pr_tpoperacao => 1 --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso)
@@ -2579,7 +2740,7 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_natjurid   => vr_natjurid --> Natureza Juridica
                                    ,pr_tpregtrb   => vr_tpregtrb --> Tipo de Regime Tributario
                                    ,pr_dtmvtolt   => pr_dtmvtolt --> Data do movimento para busca na tabela de IOF
-                                   ,pr_qtdiaiof   => pr_qtdiavig --> Qde dias em atraso (cálculo IOF atraso)
+                                   ,pr_qtdiaiof   => vr_qtdiavig --REQ0041846.. substituido pr por vr pr_qtdiavig --> Qde dias em atraso (cálculo IOF atraso)
                                    ,pr_vloperacao => pr_vlemprst --> Valor total da operação (pode ser negativo também)
                                    ,pr_vltotalope => pr_vlemprst
                                    ,pr_vliofpri   => vr_vliofpri   --> Retorno do valor do IOF principal
@@ -2588,12 +2749,15 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
                                    ,pr_flgimune   => vr_flgimune
                                    ,pr_dscritic   => vr_dscritic);                                   
+
+      -- Inclui nome do modulo logado - REQ0041846
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'CCET00001.pc_calculo_cet_limites');
+
       IF vr_flgimune <= 0 THEN
       vr_vlrdoiof := NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
       ELSE
         vr_vlrdoiof := 0;
       END IF;
-      
       
       -- abre cursor da tabela
       OPEN cr_craplat(pr_cdcooper => pr_cdcooper,
@@ -2632,6 +2796,9 @@ create or replace package body cecred.CCET0001 is
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;        
         END IF;                                                                                      
+
+        -- Inclui nome do modulo logado - REQ0041846
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'CCET00001.pc_calculo_cet_limites');
       END IF;           
             
       -- Taxa de juros do iof
@@ -2649,14 +2816,38 @@ create or replace package body cecred.CCET0001 is
       pr_txcetmes := vr_txmescet;      
       pr_txcetano := vr_txanocet;
     
+      -- Inclui nome do modulo logado - REQ0041846
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+    
     EXCEPTION
       WHEN vr_exc_erro THEN        
         -- Monta mensagem de erro
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
+
+        --Grava tabela de log - Ch REQ0011728
+        pc_gera_log(pr_cdcooper      => nvl(pr_cdcooper,3),
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
+                    pr_cdcriticidade => 1,
+                    pr_cdmensagem    => pr_cdcritic,
+                    pr_ind_tipo_log  => 1);
+
       WHEN OTHERS THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro pc_calculo_cet_limites : ' || SQLERRM;
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+        -- Erro
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'CCET0001.pc_calculo_cet_limites. '||sqlerrm;
+
+        --Grava tabela de log - Ch REQ0041846
+        pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
+                    pr_cdcriticidade => 2,
+                    pr_cdmensagem    => pr_cdcritic,
+                    pr_ind_tipo_log  => 2);
+
     END;
   END pc_calculo_cet_limites;                   
   
@@ -2681,6 +2872,7 @@ create or replace package body cecred.CCET0001 is
                                       ,pr_idfiniof  IN crapepr.idfiniof%TYPE -- Indicador de financiamento do IOF e tarifa
                                       ,pr_dsctrliq  IN VARCHAR2 DEFAULT NULL -- Numeros dos contratos de liquidacao
                                       ,pr_idgravar  IN VARCHAR2 DEFAULT 'N'  -- Indicador de gravação ou não na tabela de calculo
+                                      ,pr_vlrdoiof  IN tbepr_calculo_cet.vlrdoiof%TYPE DEFAULT NULL -- valor do IOF do consignado
                                       ,pr_txcetano OUT NUMBER                -- Taxa cet ano
                                       ,pr_txcetmes OUT NUMBER                -- Taxa cet mes 
                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -2707,7 +2899,9 @@ create or replace package body cecred.CCET0001 is
               25/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
               
               12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
-
+  
+              15/03/2019 - P437 - Inclusão do parâmetro pr_vlrdoiof para ser considerado no cálculo do CET para o consignado
+                           JosianeStiehler - AMcom
   ............................................................................. */
     DECLARE
       vr_vlpreemp NUMBER;                -- Valor da parcela
@@ -2888,38 +3082,43 @@ create or replace package body cecred.CCET0001 is
       -- Valor da parcela
       vr_vlpreemp := pr_vlpreemp;
       
-      -- Calcular o IOF     
-      TIOF0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
-                                 ,pr_nrdconta        => pr_nrdconta
-                                 ,pr_nrctremp        => pr_nrctremp
-                                 ,pr_dtmvtolt        => pr_dtmvtolt
-                                 ,pr_inpessoa        => pr_inpessoa
-                                 ,pr_cdfinemp        => rw_dados.cdfinemp
-                                 ,pr_cdlcremp        => pr_cdlcremp
-                                 ,pr_qtpreemp        => pr_qtpreemp
-                                 ,pr_vlpreemp        => pr_vlpreemp
-                                 ,pr_vlemprst        => pr_vlemprst
-                                 ,pr_dtdpagto        => pr_dtdpagto
-                                 ,pr_dtlibera        => pr_dtlibera
-                                 ,pr_tpemprst        => pr_tpemprst
-                                 ,pr_dtcarenc        => rw_dados.dtcarenc
-                                 ,pr_qtdias_carencia => vr_qtdias_carencia
-                                 ,pr_dscatbem        => pr_dscatbem
-                                 ,pr_idfiniof        => pr_idfiniof
-                                 ,pr_dsctrliq        => vr_dsctrliq
-                                 ,pr_idgravar        => 'N'
-                                 ,pr_vlpreclc        => vr_vlpreclc
-                                 ,pr_valoriof        => vr_vlrdoiof
-                                 ,pr_vliofpri        => vr_vliofpri
-                                 ,pr_vliofadi        => vr_vliofadi
-                                 ,pr_flgimune        => vr_flgimune
-                                 ,pr_dscritic        => vr_dscritic);
-                                   
-      -- VERIFICA SE OCORREU UMA CRITICA
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;        
-      END IF;             
-
+      IF pr_vlrdoiof IS NULL THEN
+         -- Calcular o IOF     
+         TIOF0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
+                                    ,pr_nrdconta        => pr_nrdconta
+                                    ,pr_nrctremp        => pr_nrctremp
+                                    ,pr_dtmvtolt        => pr_dtmvtolt
+                                    ,pr_inpessoa        => pr_inpessoa
+                                    ,pr_cdfinemp        => rw_dados.cdfinemp
+                                    ,pr_cdlcremp        => pr_cdlcremp
+                                    ,pr_qtpreemp        => pr_qtpreemp
+                                    ,pr_vlpreemp        => pr_vlpreemp
+                                    ,pr_vlemprst        => pr_vlemprst
+                                    ,pr_dtdpagto        => pr_dtdpagto
+                                    ,pr_dtlibera        => pr_dtlibera
+                                    ,pr_tpemprst        => pr_tpemprst
+                                    ,pr_dtcarenc        => rw_dados.dtcarenc
+                                    ,pr_qtdias_carencia => vr_qtdias_carencia
+                                    ,pr_dscatbem        => pr_dscatbem
+                                    ,pr_idfiniof        => pr_idfiniof
+                                    ,pr_dsctrliq        => vr_dsctrliq
+                                    ,pr_idgravar        => 'N'
+                                    ,pr_vlpreclc        => vr_vlpreclc
+                                    ,pr_valoriof        => vr_vlrdoiof
+                                    ,pr_vliofpri        => vr_vliofpri
+                                    ,pr_vliofadi        => vr_vliofadi
+                                    ,pr_flgimune        => vr_flgimune
+                                    ,pr_dscritic        => vr_dscritic);
+                                       
+          -- VERIFICA SE OCORREU UMA CRITICA
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;        
+          END IF;      
+                 
+       ELSE
+          vr_vlrdoiof:= pr_vlrdoiof;-- considera o IOF que vem como parametro para o consignado
+       END IF;
+        
       /* 2 - Avaliacao de garantia de bem movel  */
       /* 3 - Avaliacao de garantia de bem imovel */
       IF ( vr_tpctrato = 2 ) OR ( vr_tpctrato = 3 ) THEN       
