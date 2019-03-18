@@ -6275,8 +6275,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
             IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_erro;
           END IF;
-        END IF;
-
           ELSE
             -- Gravames apenas por arquivo, então criamos a pendência e será aguardando o envio manual
             GRVM0001.pc_registrar_gravames(pr_cdcooper => pr_cdcooper
