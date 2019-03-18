@@ -1004,6 +1004,8 @@ create or replace package body cecred.TELA_COBTIT is
           pr_tab_dados_titulos(vr_index).flgjudic := rw_craptdb.flgjudic;
           pr_tab_dados_titulos(vr_index).flextjud := rw_craptdb.flextjud;
           pr_tab_dados_titulos(vr_index).flgehvip := rw_craptdb.flgehvip;
+          pr_tab_dados_titulos(vr_index).vlorigem := (rw_craptdb.vlsldtit + (rw_craptdb.vlmtatit-rw_craptdb.vlpagmta) + (rw_craptdb.vlmratit-rw_craptdb.vlpagmra)+ (rw_craptdb.vliofcpl-rw_craptdb.vlpagiof));
+          
         END IF;
         END IF;
       END LOOP;
@@ -1180,6 +1182,7 @@ create or replace package body cecred.TELA_COBTIT is
                              ,pr_vltpagar  OUT NUMBER                  --> Valor total em atraso
                              ,pr_vldacordo  OUT craptdb.vlsldtit%TYPE   --> Valor total em acordo
                              ,pr_vldsctmx  OUT NUMBER                  --> Valor max para desconto
+                             ,pr_vlsldatu OUT NUMBER                   --> valor atualizado do prejuizo
                              ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                              ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                              ) IS
@@ -1280,6 +1283,8 @@ create or replace package body cecred.TELA_COBTIT is
         RAISE vr_exc_erro;
       END IF;
       
+      pr_vlsldatu := vr_tab_prej(0).vlsldatu;
+      
       -- Consulta valores dos títulos marcados como VIP
       OPEN cr_crapvip;
       FETCH cr_crapvip INTO rw_crapvip;
@@ -1372,6 +1377,7 @@ create or replace package body cecred.TELA_COBTIT is
     vr_vltpagar          craptdb.vlsldtit%TYPE;
     vr_vldacordo          craptdb.vlsldtit%TYPE;     
     vr_vldsctmx          NUMBER;
+    vr_vlsldatu          NUMBER;
 
     /* tratamento de erro */
     vr_exc_erro exception;
@@ -1430,6 +1436,7 @@ create or replace package body cecred.TELA_COBTIT is
                         ,vr_vldsctmx        --> Valor max de desconto
                         ,vr_cdcritic        --> Código da crítica
                         ,vr_dscritic        --> Descrição da crítica
+                        ,vr_vlsldatu        --> Saldo Prejuizo atualizado
                         );
       IF (vr_cdcritic<>0 OR vr_dscritic IS NOT NULL) THEN
         RAISE vr_exc_erro;
@@ -2329,6 +2336,7 @@ create or replace package body cecred.TELA_COBTIT is
    vr_vldacordo          craptdb.vlsldtit%TYPE; 
    vr_vldsctmx          NUMBER;
    vr_lttitulo          VARCHAR2(4000);
+   vr_vlsldatu          NUMBER;
 
    
    
@@ -2387,6 +2395,7 @@ create or replace package body cecred.TELA_COBTIT is
                         ,vr_vltpagar        --> Valor total em atraso
                         ,vr_vldacordo        --> Valor total em acordo
                         ,vr_vldsctmx        --> Valor max de desconto (%)
+                      ,vr_vlsldatu        --> Saldo prejuizo atualizado
                       ,vr_cdcritic        --> Código da crítica
                       ,vr_dscritic        --> Descrição da crítica
                       );
@@ -7657,6 +7666,23 @@ create or replace package body cecred.TELA_COBTIT is
          AND tpproduto = 3;
     rw_arquivo cr_arquivo%ROWTYPE;
     
+    CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%TYPE
+                      ,pr_nrdconta IN craptdb.nrdconta%TYPE
+                      ,pr_nrborder IN craptdb.nrborder%TYPE
+                      ,pr_cdbandoc IN craptdb.cdbandoc%TYPE
+                      ,pr_nrcnvcob IN craptdb.nrcnvcob%TYPE
+                      ,pr_nrtitulo IN VARCHAR2)IS
+      SELECT listagg(nrdocmto, ', ') WITHIN GROUP (ORDER BY nrdocmto) AS nrdocmto
+        FROM craptdb 
+       WHERE cdcooper = pr_cdcooper 
+         AND nrdconta = pr_nrdconta
+         AND nrborder = pr_nrborder 
+         AND cdbandoc = pr_cdbandoc
+         AND nrcnvcob = pr_nrcnvcob
+         AND nrtitulo IN (SELECT to_number(regexp_substr(pr_nrtitulo,'[^,]+', 1, LEVEL)) FROM dual
+                            CONNECT BY regexp_substr(pr_nrtitulo, '[^,]+', 1, LEVEL) IS NOT NULL);
+    rw_craptdb cr_craptdb%ROWTYPE;
+    
     -- Variáveis de controle de calendário
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     
@@ -7781,6 +7807,25 @@ create or replace package body cecred.TELA_COBTIT is
           COBR0005.pc_calc_linha_digitavel(pr_cdbarras => vr_cdbarras,
                                            pr_lindigit => vr_lindigit);
 
+          OPEN cr_craptdb(pr_cdcooper => rw_crapcob.cdcooper
+                         ,pr_nrdconta => rw_crapcob.nrdconta
+                         ,pr_nrborder => rw_crapcob.nrctremp
+                         ,pr_cdbandoc => rw_crapcob.cdbandoc
+                         ,pr_nrcnvcob => rw_crapcob.nrcnvcob
+                         ,pr_nrtitulo => rw_crapcob.dsparcelas);
+          FETCH cr_craptdb INTO rw_craptdb;
+          -- Se não encontrar
+          IF cr_craptdb%NOTFOUND THEN
+            -- Fechar o cursor pois efetuaremos raise
+            CLOSE cr_craptdb;
+            -- Montar mensagem de critica
+            vr_cdcritic := 1;
+            RAISE vr_exc_saida;
+          ELSE
+            -- Apenas fechar o cursor
+            CLOSE cr_craptdb;
+          END IF;
+                                           
           vr_vltitulo :=  TO_CHAR(rw_crapcob.vltitulo,'FM9G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') ;
           vr_vldevedor  :=  TO_CHAR(rw_crapcob.vldevedor,'FM9G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') ;
           
@@ -7809,7 +7854,7 @@ create or replace package body cecred.TELA_COBTIT is
                           rw_crapcob.nrdconta_cob || ';' ||
                           rw_crapcob.nrinssac || ';' ||
                           rw_crapcob.nrdocmto || ';' ||
-                          rw_crapcob.dsparcelas || ';' ||
+                          rw_craptdb.nrdocmto || ';' ||
                           'DM' || '|' || CHR(13));
           
         END LOOP;
@@ -8058,6 +8103,7 @@ create or replace package body cecred.TELA_COBTIT is
     vr_nmarquiv VARCHAR2(200);
     vr_nrboleto NUMBER;
     vr_vltitulo NUMBER;
+    vr_vlsldatu NUMBER;
     
     vr_vldacordo NUMBER(25,2);
     vr_qtdacordo INTEGER;
@@ -8409,7 +8455,7 @@ create or replace package body cecred.TELA_COBTIT is
             vr_titpagar(vr_index_titulo).vlapagar := vr_tab_dados_titulos(vr_index_titulo).vlpagar;
             vr_titpagar(vr_index_titulo).nrborder := vr_tab_import(vr_index).nrborder;
             
-              vr_vlorigem := vr_vlorigem + vr_tab_dados_titulos(vr_index_titulo).vlsldtit;
+              vr_vlorigem := vr_vlorigem + vr_tab_dados_titulos(vr_index_titulo).vlorigem;
             -- Verificar Desconto e Acrescimo
             -- 1º Desconto
             IF nvl(vr_tab_import(vr_index).perdesconto,0) > 0 THEN             
@@ -8470,6 +8516,7 @@ create or replace package body cecred.TELA_COBTIT is
                              ,pr_peracres => vr_tab_import(vr_index).peracrescimo
                              ,pr_perdesco => vr_tab_import(vr_index).perdesconto
                              ,pr_vldescto => vr_vldescto
+                             ,pr_vldevedor => vr_vlorigem
                              -->OUT<--
                              ,pr_nrboleto => vr_nrboleto
                              ,pr_vltitulo => vr_vltitulo
@@ -8502,6 +8549,7 @@ create or replace package body cecred.TELA_COBTIT is
                                      ,pr_vldsctmx  => vr_vldsctmx  --> Valor max para desconto
                                      ,pr_cdcritic  => vr_cdcritic  --> Código da crítica
                                      ,pr_dscritic  => vr_dscritic  --> Descrição da crítica
+                                     ,pr_vlsldatu  => vr_vlsldatu  --> Saldo prejuizo atualizado
                                      );
             
             IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
@@ -8536,6 +8584,7 @@ create or replace package body cecred.TELA_COBTIT is
                                      ,pr_vldescto => vr_vldescto --> Valor do desconto
                                      ,pr_flvlpagm => 5 --> Identifica se é valor parcial ou total (5-Saldo Prejuizo/ 6-Parcial Prejuizo)
                                      ,pr_flcomvip => FALSE --> não deve considerar títulos marcados como VIP
+                                     ,pr_vldevedor => vr_vlsldatu
                                      -->OUT<--
                                      ,pr_nrboleto => vr_nrboleto --> Número do boleto criado
                                      ,pr_vltitulo => vr_vltitulo --> Valor do titulo
