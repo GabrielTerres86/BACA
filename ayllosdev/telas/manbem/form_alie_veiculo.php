@@ -48,7 +48,7 @@
 		<? } ?>
 			<div class="bloco">
 				<!-- CATEGORIA -->
-				<div>
+				<div style="width:50%;">
 					<label for="dscatbem" > Categoria :</label>
 					<? echo selectCategoria('dscatbem', getByTagName($dados,'dscatbem')) ?>
 				</div>
@@ -134,11 +134,11 @@
 					<label for="dssitgrv"> Situação :</label>
 					<input name="dssitgrv" id="dssitgrv" type="text" value="<?echo getByTagName($dados,'dssitgrv') ?>" />					
 				</div>
-			</div>
+
 			</div>
 
 			<!-- PRJ - 438 - Bruno -->
- 			<div class="bloco fieldVeiculos">
+			<div class="fieldVeiculos">
 				<div>
 					<label for="tpchassi"> Tipo Chassi :</label>
 					<? echo selectTipoChassi('tpchassi', getByTagName($dados,'tpchassi')) ?>
@@ -169,6 +169,8 @@
 					<label for="nrcpfcgc"> CPF/CNPJ Interveniente :</label>
 					<input name="nrcpfcgc" id="nrcpfcgc" class="mascara-cpfcnpj" type="text" value="<? echo getCpfCnpj($dados,'nrcpfcgc')?>" maxlength="18" />
 				</div>
+			</div>
+
 			</div>
 		</fieldset>
 	</form>
