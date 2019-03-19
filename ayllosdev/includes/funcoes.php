@@ -572,13 +572,13 @@ function retornaUFs() {
 
 function retornaCategorias() { //rubens - prj 438 - bug 14626
 	$categorias[0]["IDENTIFICADOR"]  = "AUTOMOVEL";
-	$categorias[0]["DESCRICAO"]   = utf8ToHtml("Automóvel");
+	$categorias[0]["DESCRICAO"]   = "Automóvel";
 	$categorias[1]["IDENTIFICADOR"]  = "CAMINHAO";
-	$categorias[1]["DESCRICAO"]   = utf8ToHtml("Caminhão");
+	$categorias[1]["DESCRICAO"]   = "Caminhão";
 	$categorias[2]["IDENTIFICADOR"]  = "MOTO";
 	$categorias[2]["DESCRICAO"]   = "Moto";	
 	$categorias[3]["IDENTIFICADOR"]  = "OUTROS VEICULOS";
-	$categorias[3]["DESCRICAO"]   = utf8ToHtml("Outros Veículos");
+	$categorias[3]["DESCRICAO"]   = "Outros Veículos";
 	
 	return $categorias;
 }
