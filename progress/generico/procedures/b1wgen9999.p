@@ -3082,7 +3082,7 @@ PROCEDURE consulta-avalista:
 					 ASSIGN aux_vlrenmes = aux_vlmedfat.
 				END.
                 
-            FIND crapenc WHERE crapenc.cdcooper = par_cdcooper AND
+            FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                                crapenc.nrdconta = par_nrctaava AND
                                crapenc.idseqttl = 1
 							   NO-LOCK NO-ERROR.
