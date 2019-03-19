@@ -454,11 +454,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
       Sistema  : Aimaro
       Sigla    : CONSIG
       Autor    : AMcom Sistemas de Informação  - Projeto 437 - Consignado
-      Data     : 08/03/2019
+      Data     : 08/03/2019                                
 
       Objetivo  : Buscar as Críticas de Validação para Inclusão da Proposta.
 
-      Alteração : 
+      Alteração : 19/03/2019 - P437 - Consignado, inclusão das validações data admissão, situação e rendimento.
+                  Josiane Stiehler (AMcom) 
 
     ----------------------------------------------------------------------------------------------------------*/
   BEGIN
@@ -471,7 +472,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
               ,cdsexotl sexo
               ,nrdocttl documento
               ,cdnatopc natureza_operacao
-         FROM cecred.crapttl  --Cadastro de titulares da conta
+              ,dtadmemp dt_admissao
+              ,vlsalari vlsalari
+         FROM cecred.crapttl a  --Cadastro de titulares da conta
         where nrdconta = pr_nrdconta
           and cdcooper = pr_cdcooper
           and idseqttl = 1 ;
@@ -492,7 +495,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
            AND tpendass = 10; --residencial
            
       rw_inf_cadast_crapenc cr_inf_cadast_crapenc%ROWTYPE;           
+     
+     CURSOR cr_inf_cadast_crapass IS
+       SELECT cdsitdct
+         FROM cecred.crapass
+        WHERE cdcooper = pr_cdcooper
+          AND nrdconta = pr_nrdconta;
 
+      rw_inf_cadast_crapass cr_inf_cadast_crapass%ROWTYPE;  
+            
       /* Tratamento de erro */
       vr_exc_erro EXCEPTION;
 
@@ -564,7 +575,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
           pr_tab_dados_crapcri(vr_idtab).tpcritic  := 1; 
           pr_qtregist := nvl(pr_qtregist,0) + 1;     
         end if;
-               
+        --Data Admissao
+        if rw_inf_cadastrais.dt_admissao is null then 
+          vr_idtab := pr_tab_dados_crapcri.count + 1;         
+          pr_tab_dados_crapcri(vr_idtab).cdcritic  := 0;
+          pr_tab_dados_crapcri(vr_idtab).dscritic  := 'Necessario informar a Data de Admissao na tela Contas.';
+          pr_tab_dados_crapcri(vr_idtab).tpcritic  := 1; 
+          pr_qtregist := nvl(pr_qtregist,0) + 1;   
+        end if;               
+        -- Rendimento
+        if rw_inf_cadastrais.vlsalari is null then 
+          vr_idtab := pr_tab_dados_crapcri.count + 1;         
+          pr_tab_dados_crapcri(vr_idtab).cdcritic  := 0;
+          pr_tab_dados_crapcri(vr_idtab).dscritic  := 'Necessario informar o Rendimento na tela Contas.';
+          pr_tab_dados_crapcri(vr_idtab).tpcritic  := 1; 
+          pr_qtregist := nvl(pr_qtregist,0) + 1;   
+        end if;               
       END LOOP;
       CLOSE cr_inf_cadastrais;
       
@@ -625,6 +651,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
                
       END LOOP;
       CLOSE cr_inf_cadast_crapenc;
+
+       --Validar Informações ref. situação do cooperado.
+      OPEN cr_inf_cadast_crapass;
+      LOOP
+        FETCH cr_inf_cadast_crapass INTO rw_inf_cadast_crapass;
+        EXIT WHEN cr_inf_cadast_crapass%NOTFOUND;
+        --Validar situação
+        if rw_inf_cadast_crapass.cdsitdct is null then
+          vr_idtab := pr_tab_dados_crapcri.count + 1;         
+          pr_tab_dados_crapcri(vr_idtab).cdcritic  := 0;
+          pr_tab_dados_crapcri(vr_idtab).dscritic  := 'Necessario verificar a Situacao da Conta na tela Contas.';
+          pr_tab_dados_crapcri(vr_idtab).tpcritic  := 1; 
+          pr_qtregist := nvl(pr_qtregist,0) + 1;  
+        end if;
+      END LOOP;
+      CLOSE cr_inf_cadast_crapass;
                  
     EXCEPTION
       WHEN vr_exc_erro THEN
@@ -734,13 +776,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
        
        --Valida Informações Poposta
        tela_atenda_emprestimo.pc_valida_inf_proposta( pr_cdcooper          => vr_cdcooper
-                                                          ,pr_nrdconta          => pr_nrdconta
-                                                          ,pr_cdlcremp          => pr_cdlcremp
-                                                           --> OUT <--
-                                                          ,pr_qtregist          => vr_qtregist
-                                                          ,pr_tab_dados_crapcri => vr_tab_dados_crapcri
-                                                          ,pr_cdcritic          => vr_cdcritic
-                                                          ,pr_dscritic          => vr_dscritic);                                 
+                                                     ,pr_nrdconta          => pr_nrdconta
+                                                     ,pr_cdlcremp          => pr_cdlcremp
+                                                     --> OUT <--
+                                                     ,pr_qtregist          => vr_qtregist
+                                                     ,pr_tab_dados_crapcri => vr_tab_dados_crapcri
+                                                     ,pr_cdcritic          => vr_cdcritic
+                                                     ,pr_dscritic          => vr_dscritic);                                 
        
        IF (nvl(vr_cdcritic,0) <> 0 OR  vr_dscritic IS NOT NULL) THEN
          raise vr_exc_erro;
@@ -748,12 +790,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
         
        --Valida Informações Cadastrais
        tela_atenda_emprestimo.pc_valida_inf_cadastrais( pr_cdcooper          => vr_cdcooper
-                                                            ,pr_nrdconta          => pr_nrdconta
-                                                             --> OUT <--
-                                                            ,pr_qtregist          => vr_qtregist
-                                                            ,pr_tab_dados_crapcri => vr_tab_dados_crapcri
-                                                            ,pr_cdcritic          => vr_cdcritic
-                                                            ,pr_dscritic          => vr_dscritic);                                 
+                                                       ,pr_nrdconta          => pr_nrdconta
+                                                       --> OUT <--
+                                                       ,pr_qtregist          => vr_qtregist
+                                                       ,pr_tab_dados_crapcri => vr_tab_dados_crapcri
+                                                       ,pr_cdcritic          => vr_cdcritic
+                                                       ,pr_dscritic          => vr_dscritic);                                 
         
        IF (nvl(vr_cdcritic,0) <> 0 OR  vr_dscritic IS NOT NULL) THEN
          raise vr_exc_erro;
@@ -891,13 +933,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
        
        --Valida Informações Poposta
        tela_atenda_emprestimo.pc_valida_inf_proposta( pr_cdcooper          => pr_cdcooper
-                                                          ,pr_nrdconta          => pr_nrdconta
-                                                          ,pr_cdlcremp          => pr_cdlcremp
-                                                           --> OUT <--
-                                                          ,pr_qtregist          => vr_qtregist
-                                                          ,pr_tab_dados_crapcri => vr_tab_dados_crapcri
-                                                          ,pr_cdcritic          => vr_cdcritic
-                                                          ,pr_dscritic          => vr_dscritic);                                 
+                                                     ,pr_nrdconta          => pr_nrdconta
+                                                     ,pr_cdlcremp          => pr_cdlcremp
+                                                     --> OUT <--
+                                                     ,pr_qtregist          => vr_qtregist
+                                                     ,pr_tab_dados_crapcri => vr_tab_dados_crapcri
+                                                     ,pr_cdcritic          => vr_cdcritic
+                                                     ,pr_dscritic          => vr_dscritic);                                 
        
        IF (nvl(vr_cdcritic,0) <> 0 OR  vr_dscritic IS NOT NULL) THEN
          raise vr_exc_erro;
@@ -905,12 +947,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
         
        --Valida Informações Cadastrais
        tela_atenda_emprestimo.pc_valida_inf_cadastrais( pr_cdcooper          => pr_cdcooper
-                                                            ,pr_nrdconta          => pr_nrdconta
-                                                             --> OUT <--
-                                                            ,pr_qtregist          => vr_qtregist
-                                                            ,pr_tab_dados_crapcri => vr_tab_dados_crapcri
-                                                            ,pr_cdcritic          => vr_cdcritic
-                                                            ,pr_dscritic          => vr_dscritic);                                 
+                                                       ,pr_nrdconta          => pr_nrdconta
+                                                       --> OUT <--
+                                                       ,pr_qtregist          => vr_qtregist
+                                                       ,pr_tab_dados_crapcri => vr_tab_dados_crapcri
+                                                       ,pr_cdcritic          => vr_cdcritic
+                                                       ,pr_dscritic          => vr_dscritic);                                 
         
        IF (nvl(vr_cdcritic,0) <> 0 OR  vr_dscritic IS NOT NULL) THEN
          raise vr_exc_erro;
