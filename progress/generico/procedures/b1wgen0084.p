@@ -4774,7 +4774,7 @@ PROCEDURE grava_efetivacao_proposta:
                              INPUT crawepr.idfiniof, /* */
                              INPUT aux_dsctrliq, /* Contratos Liquidados */
                              INPUT "S", /* Gravar */
-                             INPUT NULL, /*valor IOF */
+                             INPUT 0, /*valor IOF */
                             OUTPUT 0,
                             OUTPUT 0,
                             OUTPUT 0,
