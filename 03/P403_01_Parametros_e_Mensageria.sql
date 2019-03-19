@@ -3,7 +3,7 @@
     Projeto     : 403 - Desconto de Títulos - Release 3
     Autor       : Andrew Albuquerque (GFT)
     Data        : Agosto/2018
-    Objetivo    : Cadastra os registros de parâmetros e mensageria para as funcionalidades da Release 4
+    Objetivo    : Cadastra os registros de parâmetros e mensageria para as funcionalidades da Release 4 
   ---------------------------------------------------------------------------------------------------------------------*/
 
 begin

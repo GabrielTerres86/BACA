@@ -3,7 +3,7 @@
     Projeto     : 403 - Desconto de Títulos - Release 4
     Autor       : Cassia de Oliveira (GFT)
     Data        : Agosto/2018
-    Objetivo    : Realiza o cadastro das novas funcionalidades da tela ATENDA->DESCONTOS->TÍTULOS->BORDERÔS->PREJUIZO
+    Objetivo    : Realiza o cadastro das novas funcionalidades da tela ATENDA->DESCONTOS->TÍTULOS->BORDERÔS->PREJUIZO 
   ---------------------------------------------------------------------------------------------------------------------*/
 
 begin

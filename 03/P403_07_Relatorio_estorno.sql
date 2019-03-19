@@ -3,7 +3,7 @@
     Projeto     : 403 - Desconto de Títulos - Release 4
     Autor       : Cassia de Oliveira (GFT)
     Data        : Novembro/2018
-    Objetivo    : Realiza o cadastro do relatorio de estorno de desconto de titulo
+    Objetivo    : Realiza o cadastro do relatorio de estorno de desconto de titulo 
   ---------------------------------------------------------------------------------------------------------------------*/
 begin
 

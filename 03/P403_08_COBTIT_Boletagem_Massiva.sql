@@ -3,7 +3,7 @@
     Projeto     : 403 - Desconto de Títulos - Release 4
     Autor       : Lucas Lazari (GFT)
     Data        : Fevereiro/2019
-    Objetivo    : Libera a funcionalidade de boletagem massiva da tela COBTIT
+    Objetivo    : Libera a funcionalidade de boletagem massiva da tela COBTIT 
   ---------------------------------------------------------------------------------------------------------------------*/
 
 BEGIN

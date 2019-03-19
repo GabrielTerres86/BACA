@@ -3,7 +3,7 @@
     Projeto     : 403 - Desconto de Títulos - Release 4
     Autor       : Cassia de Oliveira (GFT)
     Data        : Setembro/2018
-    Objetivo    : Criar parametro na tabela CRAPPRM para a tela TAB089
+    Objetivo    : Criar parametro na tabela CRAPPRM para a tela TAB089 
   ---------------------------------------------------------------------------------------------------------------------*/
 
 begin

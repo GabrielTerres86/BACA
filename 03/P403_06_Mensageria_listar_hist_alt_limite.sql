@@ -4,7 +4,7 @@ vr_lstparam              varchar2(4000); --> Nome do programa/tela web de execu�
 vr_nmdeacao              varchar2(100);  --> Nome da acao para execucao
 vr_nmpackag              varchar2(100);  --> Nome da package de execucao
 vr_nmproced              varchar2(100);  --> Nome da procedure de execucao
-vr_nmprogra              varchar2(100);  --> Relação dos parâmetros de entrada da procedure
+vr_nmprogra              varchar2(100);  --> Relação dos parâmetros de entrada da procedure 
 
 cursor cr_programa is
 select cr.nrseqrdr
