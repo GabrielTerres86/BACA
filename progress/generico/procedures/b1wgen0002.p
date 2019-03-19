@@ -12956,7 +12956,7 @@ PROCEDURE calcula_cet_novo:
                           INPUT par_idfiniof,
                           INPUT par_dsctrliq,
                           INPUT par_idgravar,
-						  INPUT 0, /*valor do IOF */
+						  INPUT -1, /*valor do IOF */
                          OUTPUT 0,
                          OUTPUT 0,
                          OUTPUT 0,
