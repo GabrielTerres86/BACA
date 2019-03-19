@@ -72,8 +72,5 @@ values (SEQACA_NRSEQACA.NEXTVAL, 'GERAR_BOLETO_PREJUIZO', 'TELA_COBTIT', 'pc_ger
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
   VALUES ((SELECT MAX(NRSEQACA)+1 FROM CRAPACA), 'ESTORN_INC_LANCTO_EST_PRJ', 'TELA_ESTORN', 'pc_efetua_estorno_prj_web', 'pr_nrdconta,pr_nrborder,pr_justificativa', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'ESTORN'));
 
--- Consulta antes de cancelar contrato
-INSERT INTO crapaca(nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) VALUES ('VERIFICA_BORDERO_CONTRATO', 'DSCT0003','pc_verifica_contrato_bodero', 'pr_nrdconta, pr_nrctrlim',724);
-
 COMMIT;
 end;
