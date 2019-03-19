@@ -183,7 +183,7 @@ BEGIN
                                  ' - Fim Processo com sucesso');
   GENE0001.PC_FECHA_ARQUIVO(PR_UTLFILEH => VR_IND_ARQLOG); --> Handle do arquivo aberto;  
 
---  COMMIT;
+  COMMIT;
 
 EXCEPTION
   WHEN VR_EXC_ERRO THEN
