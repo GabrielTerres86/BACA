@@ -3082,7 +3082,7 @@ create or replace package body cecred.CCET0001 is
       -- Valor da parcela
       vr_vlpreemp := pr_vlpreemp;
       
-      IF pr_vlrdoiof IS NULL THEN
+      IF nvl(pr_vlrdoiof, -1) < 0 THEN
          -- Calcular o IOF     
          TIOF0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
                                     ,pr_nrdconta        => pr_nrdconta
