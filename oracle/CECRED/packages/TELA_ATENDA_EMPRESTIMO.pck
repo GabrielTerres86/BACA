@@ -285,15 +285,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
     Alteracoes: 
     ..............................................................................*/ 
          
-  -- Variaveis de log
- /* vr_cdcooper crapcop.cdcooper%TYPE;
-  vr_cdoperad VARCHAR2(100);
-  vr_nmdatela VARCHAR2(100);
-  vr_nmeacao  VARCHAR2(100);
-  vr_cdagenci VARCHAR2(100);
-  vr_nrdcaixa VARCHAR2(100);
-  vr_idorigem VARCHAR2(100);*/   
-
   --Variaveis Locais   
   vr_tpmodcon_emp  tbcadast_empresa_consig.tpmodconvenio%TYPE;
   vr_tpmodcon_lcr  craplcr.tpmodcon%TYPE; 
@@ -360,26 +351,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
                              
   
   BEGIN
-    -- Recupera dados de log para consulta posterior
-   /* gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);
-   
-    -- Verifica se houve erro recuperando informacoes de log
-    IF NOT ( vr_dscritic IS NULL ) THEN
-       RAISE vr_exc_erro;
-    END IF;*/
-    
-    -- verifica se a cooperativa está trabalhando com crédito consignado
-    /*IF fn_retorna_coop_consig(pr_cdcooper => pr_cdcooper) <> 'S' THEN
-       RAISE vr_saida;
-    END IF;*/
     
     -- verifica a modalidade do consignado da linha de crédito 
     FOR rg_craplcr IN cr_craplcr(pr_cdcooper => pr_cdcooper)
@@ -415,9 +386,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
     LOOP
       -- se o tipo de pessoa for diferente de pessoa fisica, não deixa cadastrar
       IF rg_crapass.inpessoa <> 1 THEN
-         /*vr_cdcritic:= 0;
-         vr_cdcritic:= 'Operacao nao permitida para este Tipo de Pessoa';
-         RAISE vr_exc_erro;*/
         vr_idtab := pr_tab_dados_crapcri.count + 1;         
         pr_tab_dados_crapcri(vr_idtab).cdcritic  := 0;
         pr_tab_dados_crapcri(vr_idtab).dscritic  := 'Operacao nao permitida para este Tipo de Pessoa.';
@@ -435,9 +403,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
     -- Caso as modalidades sejam diferentes, o sistema não permite a continuação da simulação 
     -- e apresentar mensagem ao operador
     IF vr_tpmodcon_lcr <> vr_tpmodcon_emp THEN
-       /*vr_cdcritic:= 0;
-       vr_dscritic:= 'Modalidade de Consignado da Linha de Credito diferente da modalidade disponivel para este cooperado';
-       RAISE vr_exc_erro;*/
       vr_idtab := pr_tab_dados_crapcri.count + 1;         
       pr_tab_dados_crapcri(vr_idtab).cdcritic  := 0;
       pr_tab_dados_crapcri(vr_idtab).dscritic  := 'Modalidade de Consignado da Linha de Credito diferente da modalidade disponivel para este cooperado.';
@@ -452,27 +417,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
       vr_dtvencimento:= rg_vecto.dtvencimento;
     END LOOP;
     
-    -- Monta documento XML de ERRO
-    /*dbms_lob.createtemporary(vr_clob, TRUE);
-    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);                                          
-        
-    -- Criar cabeçalho do XML
-    gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                           ,pr_texto_completo => vr_xml_temp
-                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><simulaconsig>');     
-                           
-
-    -- Carrega os dados           
-    gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                           ,pr_texto_completo => vr_xml_temp
-                           ,pr_texto_novo     => '<consignado>'||  
-                                                 '  <dtvencimento>' ||to_char(vr_dtvencimento,'dd/mm/')||to_char(rw_crapdat.dtmvtolt,'yyyy') ||'</dtvencimento>'||                                                       
-                                                 '</consignado>');
-    */
     IF vr_dtvencimento is null THEN
-      /*vr_cdcritic:= 0;
-      vr_dscritic:= 'Vencimento da 1ª parcela nao encontrado!';
-      RAISE vr_exc_erro;*/
       vr_idtab := pr_tab_dados_crapcri.count + 1;         
       pr_tab_dados_crapcri(vr_idtab).cdcritic  := 0;
       pr_tab_dados_crapcri(vr_idtab).dscritic  := 'Vencimento da 1ª parcela nao encontrado.';
@@ -480,32 +425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
       pr_qtregist := nvl(pr_qtregist,0) + 1;
     END IF;
         
-    -- Encerrar a tag raiz
-   /* gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                           ,pr_texto_completo => vr_xml_temp
-                           ,pr_texto_novo     => '</simulaconsig></Root>'
-                           ,pr_fecha_xml      => TRUE);
-     
-    -- Atualiza o XML de retorno
-    pr_retxml := xmltype(vr_clob);
-       
-    -- Libera a memoria do CLOB
-    dbms_lob.close(vr_clob);  
-               
-    -- Insere atributo na tag Dados com a quantidade de registros
-    gene0007.pc_gera_atributo(pr_xml   => pr_retxml          --> XML que irá receber o novo atributo
-                             ,pr_tag   => 'Root'             --> Nome da TAG XML
-                             ,pr_atrib => 'qtregist'          --> Nome do atributo
-                             ,pr_atval => vr_qtregist         --> Valor do atributo
-                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
-                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
-                               
-                             
-    -- Monta documento XML de ERRO
-    dbms_lob.createtemporary(vr_clob, TRUE);
-    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-    
-    pr_des_erro := 'OK';*/
+   
  EXCEPTION
     WHEN vr_exc_erro THEN
       /* busca valores de critica predefinidos */
@@ -516,7 +436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro não tratado na tela_atenda_emprestimo.pc_valida_inf_cadastrais '||sqlerrm;
+      pr_dscritic := 'Erro nao tratado na tela_atenda_emprestimo.pc_valida_inf_proposta '||sqlerrm;
       pr_cdcritic := 0;
   END pc_valida_inf_proposta;  
  
@@ -663,21 +583,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
           pr_qtregist := nvl(pr_qtregist,0) + 1;  
         end if;
         --Validar Rua
-        /*if rw_inf_cadast_crapenc.dsendere is null then
+        if rw_inf_cadast_crapenc.dsendere is null then
           vr_idtab := pr_tab_dados_crapcri.count + 1;         
           pr_tab_dados_crapcri(vr_idtab).cdcritic  := 0;
           pr_tab_dados_crapcri(vr_idtab).dscritic  := 'Necessario informar a Rua na tela Contas.';
           pr_tab_dados_crapcri(vr_idtab).tpcritic  := 1; 
           pr_qtregist := nvl(pr_qtregist,0) + 1;  
-        end if;*/
+        end if;
         --Validar Número
-        if rw_inf_cadast_crapenc.nrendere is null then
+        /*if rw_inf_cadast_crapenc.nrendere is null then
           vr_idtab := pr_tab_dados_crapcri.count + 1;         
           pr_tab_dados_crapcri(vr_idtab).cdcritic  := 0;
           pr_tab_dados_crapcri(vr_idtab).dscritic  := 'Numero nao informado.';
           pr_tab_dados_crapcri(vr_idtab).tpcritic  := 3; --Identifica o tipo de critica (1-Erro de Negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Informacao)                 
           pr_qtregist := nvl(pr_qtregist,0) + 1;  
-        end if;
+        end if;*/
         --Validar Bairro
         if rw_inf_cadast_crapenc.nmbairro is null then
           vr_idtab := pr_tab_dados_crapcri.count + 1;         
@@ -1056,7 +976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
         pr_des_erro := 'NOK';
         /* montar descriçao de erro nao tratado */
         pr_cdcritic := nvl(vr_cdcritic,0);
-        pr_dscritic := 'erro não tratado na tela_atenda_emprestimo.pc_valida_inf_cadastrais ' ||SQLERRM;
+        pr_dscritic := 'Erro nao tratado na tela_atenda_emprestimo.pc_valida_inf_cad_car ' ||SQLERRM;
              
     END;
   END pc_valida_inf_cad_car;
