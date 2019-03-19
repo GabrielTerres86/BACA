@@ -538,6 +538,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
       insere_tag(pr_xml,'Simulacao',vr_count_simulac,'nrdialib',pr_tcrapsim(vr_nrdconta).nrdialib,pr_des_erro);
                   
       insere_tag(pr_xml,'Simulacao',vr_count_simulac,'dslcremp',pr_tcrapsim(vr_nrdconta).dslcremp,pr_des_erro);
+      insere_tag(pr_xml,'Simulacao',vr_count_simulac,'cdsubmod',pr_tcrapsim(vr_nrdconta).cdsubmod,pr_des_erro);
+      insere_tag(pr_xml,'Simulacao',vr_count_simulac,'tpmodcon',pr_tcrapsim(vr_nrdconta).tpmodcon,pr_des_erro);
       insere_tag(pr_xml,'Simulacao',vr_count_simulac,'dsfinemp',pr_tcrapsim(vr_nrdconta).dsfinemp,pr_des_erro);
       insere_tag(pr_xml,'Simulacao',vr_count_simulac,'cdmodali',pr_tcrapsim(vr_nrdconta).cdmodali,pr_des_erro);
       insere_tag(pr_xml,'Simulacao',vr_count_simulac,'dsmodali',pr_tcrapsim(vr_nrdconta).dsmodali,pr_des_erro);
