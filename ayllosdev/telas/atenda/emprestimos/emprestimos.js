@@ -6809,7 +6809,8 @@ function validaAlienacao(nmfuncao, operacao) {
 	var nrrenava = normalizaNumero(  $('#nrrenava', '#frmTipo').val()); // inteiro
 	var uflicenc =  $('#uflicenc option:selected', '#frmTipo').val().toUpperCase(); // string
     var nrcpfcgc =  normalizaNumero( $('#nrcpfcgc', '#frmTipo').val()); // inteiro
-
+	var idseqbem = $('#idseqbem', '#frmTipo').val();
+	
     //PRJ - 438 - Bruno
     var nrnotanf = $('#nrnotanf', '#frmTipo').val();
     var dsmarceq = $('#dsmarceq', '#frmTipo').val();
