@@ -344,6 +344,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
           vr_dscritic := 'Erro ao cancelar senha internet: ' || SQLERRM;
           RAISE vr_exc_erro;
       END;
+      
+      -- Chamada para atualizar a situação da conta. Como esta procedure ainda não está em produção, foi adicionado o update fixo
+      /*
+      PREJ0003.pc_define_situacao_cc_prej(pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic );
+
+      if TRIM(vr_dscritic) is not null then
+        RAISE vr_exc_erro;
+      end if;*/
+      
+      BEGIN
+         UPDATE
+           crapass
+         SET
+           --crapass.CDSITDCT_ORIGINAL = rw_crapass.cdsitdct ,
+           crapass.cdsitdct = 2
+      WHERE
+             crapass.cdcooper = pr_cdcooper
+         AND crapass.nrdconta = pr_nrdconta;
+      EXCEPTION
+         WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao alterar a situacao da conta para prejuizo: ' || SQLERRM;
+         RAISE vr_erro_transfprej;
+      END;
+      -- fim update de substituição
 
       BEGIN
         UPDATE
