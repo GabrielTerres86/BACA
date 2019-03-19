@@ -7620,6 +7620,10 @@ PROCEDURE grava-proposta-completa:
           /*Se teve perda e nas regras anteriores nao tiveram perda, realizar a perda pela alteracao imovel*/
           IF aux_flperapr = "S" AND aux_idpeapro = 0 AND par_inresapr = 1 THEN
           DO:
+            IF crawepr.hrenvest > 0 AND crawepr.insitest <> 0 THEN  
+            DO:
+              ASSIGN aux_interrup = true. /* Interromper na Esteira*/
+            END.
             /* Perder a aprovaçao */
             ASSIGN crawepr.insitapr = 0
                    crawepr.cdopeapr = ""
@@ -7638,10 +7642,7 @@ PROCEDURE grava-proposta-completa:
                                 INPUT par_nmdatela,
                                 INPUT par_nrdconta,
                                OUTPUT aux_nrdrowid).
-            IF crawepr.hrenvest > 0 AND crawepr.insitest <> 0 THEN  
-            DO:
-              ASSIGN aux_interrup = true. /* Interromper na Esteira*/
-             END.
+
           END.
         END.
         /*Se houve a perda de aprovacao pela regra geral*/
@@ -7649,6 +7650,10 @@ PROCEDURE grava-proposta-completa:
         IF ( aux_regrager = 1 AND aux_idpeapro = 1 ) OR 
            ( par_cddopcao = "A" AND NOT aux_fleprCDC AND crawepr.insitapr <> 1 )THEN
         DO:
+          IF crawepr.hrenvest > 0 AND crawepr.insitest <> 0 THEN  
+          DO:
+            ASSIGN aux_interrup = true. /* Interromper na Esteira*/
+          END.
           /*Realizar perda*/
           ASSIGN crawepr.insitapr = 0
                  crawepr.cdopeapr = ""
@@ -7660,10 +7665,8 @@ PROCEDURE grava-proposta-completa:
           CREATE tt-msg-confirma.
           ASSIGN tt-msg-confirma.inconfir = 1
                  tt-msg-confirma.dsmensag = "Essa proposta deve ser " + " enviada para Analise de Credito".
-          IF crawepr.hrenvest > 0 AND crawepr.insitest <> 0 THEN  
-          DO:
-            ASSIGN aux_interrup = true. /* Interromper na Esteira*/
-        END.
+                 
+
         END.
           /* Se devemos interromper a proposta na Esteira */
           IF aux_interrup THEN
