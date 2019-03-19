@@ -4748,8 +4748,9 @@ create or replace package body cecred.tela_manbem is
         return;
       end if;
     else
+      null;
       -- PF
-      if trim(par_tpdocava) is null then
+      /*if trim(par_tpdocava) is null then
         par_dscritic := 'Tipo de documento do interveniente é obrigatorio.';
         par_nmdcampo := 'tpdocava';
         return;
@@ -4759,7 +4760,7 @@ create or replace package body cecred.tela_manbem is
         par_dscritic := 'Número do documento do interveniente é obrigatorio.';
         par_nmdcampo := 'nrdocava';
         return;
-      end if;
+      end if;*/ -- BUG14246
       -- Comentadas as validações dos campos de Conjuge conforme solicitação do Télvio
       /*if trim(par_nmconjug) is not null or
          nvl(trim(par_nrcpfcjg),0) <> 0 or
