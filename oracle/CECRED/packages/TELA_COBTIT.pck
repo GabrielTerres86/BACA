@@ -1434,9 +1434,9 @@ create or replace package body cecred.TELA_COBTIT is
                         ,vr_vltpagar        --> Valor total em atraso
                         ,vr_vldacordo        --> Valor total em acordo
                         ,vr_vldsctmx        --> Valor max de desconto
+                        ,vr_vlsldatu        --> Saldo Prejuizo atualizado
                         ,vr_cdcritic        --> Código da crítica
                         ,vr_dscritic        --> Descrição da crítica
-                        ,vr_vlsldatu        --> Saldo Prejuizo atualizado
                         );
       IF (vr_cdcritic<>0 OR vr_dscritic IS NOT NULL) THEN
         RAISE vr_exc_erro;
@@ -8547,9 +8547,9 @@ create or replace package body cecred.TELA_COBTIT is
                                      ,pr_vltpagar  => vr_vltpagar  --> Valor total em atraso
                                      ,pr_vldacordo => vr_vldacordo --> Valor total em acordo
                                      ,pr_vldsctmx  => vr_vldsctmx  --> Valor max para desconto
+                                     ,pr_vlsldatu  => vr_vlsldatu  --> Saldo prejuizo atualizado
                                      ,pr_cdcritic  => vr_cdcritic  --> Código da crítica
                                      ,pr_dscritic  => vr_dscritic  --> Descrição da crítica
-                                     ,pr_vlsldatu  => vr_vlsldatu  --> Saldo prejuizo atualizado
                                      );
             
             IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
