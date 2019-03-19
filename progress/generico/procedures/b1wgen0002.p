@@ -820,7 +820,13 @@
 
           21/02/2019 - P442 - PreAprovado nova estrutura 
                             + Gravar aceite Online quando operacao nao for AimaroWEB          
-                            (Marcos-Envolti) 
+                            (Marcos-Envolti)
+
+	      18/03/2019 - P437 - Consignado - inclusão da rotina valida-consignado 
+		               (listar erros de validação do emprestimo consignado) - Fernanda K. Oliveira - AMcom
+
+		  18/03/2019 - P437 - Consignado - inclusão do parametro valor do IOF na chamada da rotina pc_calculo_cet_emprestimos
+		               Josiane Stiehler - AMcom
 
           
  ..............................................................................*/
@@ -12950,6 +12956,7 @@ PROCEDURE calcula_cet_novo:
                           INPUT par_idfiniof,
                           INPUT par_dsctrliq,
                           INPUT par_idgravar,
+						  INPUT 0, /*valor do IOF */
                          OUTPUT 0,
                          OUTPUT 0,
                          OUTPUT 0,
