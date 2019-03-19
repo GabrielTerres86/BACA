@@ -2459,6 +2459,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
     END IF;                          
     CLOSE cr_craplcm;
     
+    -- 7) Busca o valor de crédito na conta do cooperado no caso de devolução por pagamento antecipado
+    OPEN cr_craplcm (pr_dtmvtolt => pr_dtmvtolt
+                    ,pr_cdagenci => 1
+                    ,pr_cdbccxlt => 100
+                    ,pr_cdhistor => DSCT0003.vr_cdhistordsct_rendapgtoant
+                    );
+    FETCH cr_craplcm INTO rw_craplcm;
+    
+    IF cr_craplcm%FOUND THEN
+      
+      -- Exclui o registro da tabela de lançamentos do borderô
+      DELETE
+        FROM craplcm lcm
+       WHERE lcm.rowid = rw_craplcm.rowid;
+       
+    END IF;                          
+    CLOSE cr_craplcm;
+    
     -- busca os dados do associado/cooperado para só então encontrar seus dados na tabela de parâmetros
     OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
                     pr_nrdconta => pr_nrdconta);

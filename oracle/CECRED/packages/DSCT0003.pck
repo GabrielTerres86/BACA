@@ -8850,7 +8850,7 @@ EXCEPTION
                                            ,pr_nrcnvcob => pr_nrcnvcob
                                            ,pr_nrdocmto => pr_nrdocmto
                                            ,pr_dtmvtolt => pr_dtmvtolt
-                                           ,pr_cdagenci => pr_cdagenci
+                                           ,pr_cdagenci => 1 -- apenas para o produto novo
                                            ,pr_cdoperad => pr_cdoperad
                                            ,pr_cdorigpg => 1 -- operacao de credito
                                            ,pr_dtdpagto => pr_dtmvtolt
