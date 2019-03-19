@@ -30,13 +30,18 @@
 		<input name="vlemprst" id="vlemprst" type="text" value="" />
 		<br />
 		
-		
 		<!--label for="vlfinanc">Vl. Financiado:</label>
 		<input name="vlfinanc" id="vlfinanc" type="text" value="" /-->
 
 		<label for="vlpreemp">Valor da parcela:</label>
 		<input name="vlpreemp" id="vlpreemp" type="text" value="" />
 		<br />
+
+		<?php if ($tpemprst == 2) { ?>
+		<label for="vlprecar"><? echo utf8ToHtml('Vl. parcela carên.:') ?></label>
+		<input name="vlprecar" id="vlprecar" type="text" value="" />
+		<br />
+		<?php } ?>
 		
 		<label for="qtpreemp">Qtde parcelas:</label>
 		<input name="qtpreemp" id="qtpreemp" type="text" value="" />

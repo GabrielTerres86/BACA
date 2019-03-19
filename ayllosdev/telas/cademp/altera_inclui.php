@@ -55,10 +55,12 @@
     $tpdebcot = ( isset($_POST["tpdebcot"]) ) ? $_POST["tpdebcot"] : '';
     $tpdebppr = ( isset($_POST["tpdebppr"]) ) ? $_POST["tpdebppr"] : '';
 	
-	// -> ID 20190208_437
-    //$indescsg = ( isset($_POST["indescsg"]) ) ? $_POST["indescsg"] : '';
-	$indescsg = ( isset($_POST["flnecont"]) ) ? $_POST["flnecont"] : '';
-	// <-
+	if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
+		$indescsg = ( isset($_POST["indescsg"]) ) ? $_POST["indescsg"] : '';
+	}else {
+		$indescsg = ( isset($_POST["flnecont"]) ) ? $_POST["flnecont"] : '';
+	}
+	
 	
     $flgpagto = ( isset($_POST["flgpagto"]) ) ? $_POST["flgpagto"] : '';
     $flgarqrt = ( isset($_POST["flgarqrt"]) ) ? $_POST["flgarqrt"] : '';
@@ -104,11 +106,12 @@
     $old_tpdebcot = ( isset($_POST["old_tpdebcot"]) ) ? $_POST["old_tpdebcot"] : '';
     $old_tpdebppr = ( isset($_POST["old_tpdebppr"]) ) ? $_POST["old_tpdebppr"] : '';
 	
-	// -> ID 20190208_437
-    //$old_indescsg = ( isset($_POST["old_indescsg"]) ) ? $_POST["old_indescsg"] : '';	
-	$old_indescsg = ( isset($_POST["old_flnecont"]) ) ? $_POST["old_flnecont"] : '';
-    //<-
-	
+	if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
+		$old_indescsg = ( isset($_POST["old_indescsg"]) ) ? $_POST["old_indescsg"] : '';	
+	}else{
+		$old_indescsg = ( isset($_POST["old_flnecont"]) ) ? $_POST["old_flnecont"] : '';
+	}
+    	
 	$old_flgpagto = ( isset($_POST["old_flgpagto"]) ) ? $_POST["old_flgpagto"] : '';
     $old_flgarqrt = ( isset($_POST["old_flgarqrt"]) ) ? $_POST["old_flgarqrt"] : '';
     $old_dtfchfol = ( isset($_POST["old_dtfchfol"]) ) ? $_POST["old_dtfchfol"] : '';
@@ -140,11 +143,12 @@
         $flgdgfib = no;  // Flag de digitalizacao: Se for TRUE, deve mudar pra FALSE
     }
 
-	// -> ID 20190208_437
-    //$auxIndescsg = $indescsg=="2"?"yes":"no";
-	$auxIndescsg = $indescsg=="1"?"yes":"no"; 
-	//<-
-
+	if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
+		$auxIndescsg = $indescsg=="2"?"yes":"no";
+	}else{
+		$auxIndescsg = $indescsg=="1"?"yes":"no"; 
+	}
+	
 	$cdcooper = ( isset($glbvars["cdcooper"]) ) ? $glbvars["cdcooper"] : '';
 	$cdagenci = ( isset($glbvars["cdagenci"]) ) ? $glbvars["cdagenci"] : '';
 	$nrdcaixa = ( isset($glbvars["nrdcaixa"]) ) ? $glbvars["nrdcaixa"] : '';

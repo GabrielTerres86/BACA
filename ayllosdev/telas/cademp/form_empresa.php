@@ -221,11 +221,12 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 
 		<fieldset>
 			<legend>Informacoes Complementares</legend>
-				<!-- -> ID 20190208_437 -->
-				<!--
-				<label for="indescsg">Empr&eacute;stimo Consignado:</label>
-				<input type="checkbox" id = "indescsg" name="indescsg" style="margin-right:10px;"/>
-				-->
+				<?php 
+					if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
+						echo '<label for="indescsg">Empr&eacute;stimo Consignado:</label>';
+						echo '<input type="checkbox" id = "indescsg" name="indescsg" style="margin-right:10px;"/>';
+					}
+				?>
 				<label for="flgarqrt">Gera arq. retorno:</label>
 				<input type="checkbox" id = "flgarqrt" name="flgarqrt"/>
 
@@ -238,14 +239,15 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 				
 				<label for="flgvlddv">Valida DV Cad.Emp:</label>
 				<input type="checkbox" id = "flgvlddv"  name="flgvlddv"/>
-				<!-- -> ID 20190208_437 -->
-				<!--
-				<br style="clear:both" />
-				<br style="clear:both" />
-				
-				<label for="ddmesnov">Dia M&ecirc;s Novo para Empr&eacute;stimo:</label>
-				<input name="ddmesnov" type="text"  id="ddmesnov" class='campo' />
-				-->
+				<?php 
+					if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
+						echo '<br style="clear:both" />';
+						echo '<br style="clear:both" />';				
+						echo '<label for="ddmesnov">Dia M&ecirc;s Novo para Empr&eacute;stimo:</label>';
+						echo '<input name="ddmesnov" type="text"  id="ddmesnov" class="campo" />';
+					}
+				?>
+
 				<label for="dtlimdeb">Dia Limite D&eacute;bitos Vinculados:</label>
 				<input name="dtlimdeb" type="text"  id="dtlimdeb" class='campo' />
 				
@@ -291,28 +293,25 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 				</select>
 				<label for="dtavscot">Data Gera&ccedil;&atilde;o:</label>
 				<input name="dtavscot" type="text"  id="dtavscot" class='campo' />
-			<!-- -> ID 20190208_437 -->	
-			</fieldset>
+			<?php
+				if ($glbvars['VAL_COOPER_CONSIGNADO'] == 'S'){
+					echo '</fieldset> <fieldset>';        
+					echo '<legend>Informa&ccedil;&otilde;es consignado</legend>';
+					echo '<label for="flnecont">Conv&ecirc;nio Consignado:</label>';
+					echo '<input type="checkbox" id = "flnecont" name="flnecont" style="margin-right:10px;"/>';
+					echo '<label for="tpmodcon">Modalidade de Conv&ecirc;nio:</label>';
+					echo '<select name="tpmodcon" id="tpmodcon" class="campo">';
+					echo '	<option value=""></option>';
+					echo '	<option value="1">Privado</option>';
+					echo '	<option value="2">P&uacute;blico</option>';
+					echo '	<option value="3">INSS</option>';
+					echo '</select>';
+					echo '<input name="ddmesnov" type="hidden"  id="ddmesnov" class="campo" />';
+					echo '<input name="indescsg" type="hidden" id="indescsg" />';
+				}
+			?>
 			
-			<fieldset>
-        
-				<legend>Informa&ccedil;&otilde;es consignado</legend>
-				
-				<label for="flnecont">Conv&ecirc;nio Consignado:</label>
-				<input type="checkbox" id = "flnecont" name="flnecont" style="margin-right:10px;"/>
-				
-				<label for="tpmodcon">Modalidade de Conv&ecirc;nio:</label>
-				<select name="tpmodcon" id="tpmodcon" class="campo">
-					<option value=""></option>
-					<option value="1">Privado</option>
-					<option value="2">P&uacute;blico</option>
-					<option value="3">INSS</option>
-				</select>
-				
-				<input name="ddmesnov" type="hidden"  id="ddmesnov" class='campo' />
-				
-				<input name="indescsg" type="hidden" id="indescsg" />
-			<!-- <- -->
+
 				<!-- CAMPOS LOG -->
 				<?php
 					$cdcooper = ( isset($glbvars["cdcooper"]) ) ? $glbvars["cdcooper"] : '';

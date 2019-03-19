@@ -15,6 +15,8 @@
  * 006: [04/08/2014] Ajustes referentes ao projeto CET (Lucas R./Gielow)
  * 007: [30/06/2015] Ajustes referente Projeto 215 - DV 3 (Daniel)
  * 008: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ * 009: [13/12/2018] Projeto 298.2 - Inclusos novos campos tpemprst e campos de carencia (Andre Clemer - Supero)
+ * 010: [03/2018] Projeto 437 - Inclusao do consignado - JDB AMcom
  */
 
 //******************************
@@ -39,10 +41,12 @@ function controlaOperacaoSimulacoes(operacao, nrSimulaInc) {
                 indarray = $('input', $(this)).val();
                 auxind = indarray;
 
+
                 aux_dtlibera = $(this).find('#dtlibera > span').text();
                 aux_dtdpagto = $(this).find('#dtdpagto > span').text();
                 aux_tpfinali = $(this).find('#tpfinali').val();
                 aux_cdmodali_simulacao = $(this).find('#cdmodali').val();
+                aux_tpemprst = $(this).find('#tpemprst').val();
             }
         });
         if (indarray == '') {
@@ -85,6 +89,7 @@ function controlaOperacaoSimulacoes(operacao, nrSimulaInc) {
             showConfirmacao('Deseja excluir simula&ccedil;&atilde;o ' + auxind + ' ?', 'Confirma&ccedil;&atilde;o - Aimaro', 'excluirSimulacao(' + auxind + ')', 'bloqueiaFundo($(\'#divUsoGenerico\'))', 'sim.gif', 'nao.gif');
             break;
         case 'IMP_SIMULACAO':
+            tpemprst = parseInt(aux_tpemprst);
             showMsgAguardo("Aguarde, Gerando impress&atilde;o da simula&ccedil;&atilde;o...");
             carregarImpressaoSimulacao(auxind);
             break;
@@ -140,12 +145,15 @@ function controlaOperacaoSimulacoes(operacao, nrSimulaInc) {
 function controlaLayoutSimulacoes(operacao, nrSimulacao) {
 
     // Operação consultando
-    var cTodos = $('#vlemprst,#qtparepr,#cdlcremp,#cdfinemp,#dtlibera,#dtdpagto,#percetop', '#frmSimulacao');
+    var cTodos = $('#tpemprst,#vlemprst,#qtparepr,#cdlcremp,#cdfinemp,#dtlibera,#dtdpagto,#idcarenc,#dtcarenc,#percetop', '#frmSimulacao');
+    var cTpemprst = $('#tpemprst', '#frmSimulacao');
     var cValor = $('#vlemprst', '#frmSimulacao');
     var cQtdParcela = $('#qtparepr', '#frmSimulacao');
     var cLinhaCredito = $('#cdlcremp', '#frmSimulacao');
     var cDtLiberacao = $('#dtlibera', '#frmSimulacao');
     var cDtPagto = $('#dtdpagto', '#frmSimulacao');
+    var cIdcarenc = $('#idcarenc', '#frmSimulacao');
+    var cDtcarenc = $('#dtcarenc', '#frmSimulacao');
     var cDescLinha = $('#dslcremp', '#frmSimulacao');
     var cPercetop = $('#percetop', '#frmSimulacao');
     var cCdmodali = $('#cdmodali', '#frmSimulacao');
@@ -161,12 +169,15 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
     // Controla largura dos campos
     $('label', '#frmSimulacao').css({'width': '195px'}).addClass('rotulo');
 
+    cTpemprst.addClass('rotulo').css('width', '110px');
     cValor.addClass('rotulo moeda').css('width', '90px');
     cQtdParcela.addClass('rotulo').css('width', '50px').setMask('INTEGER', 'zz9', '', '');
     cPercetop.addClass('porcento').css('width', '45px');
     cLinhaCredito.css('width', '35px').attr('maxlength', '4');
     cDtLiberacao.css('width', '90px').setMask("DATE", "", "", "divRotina");
     cDtPagto.css('width', '90px').setMask("DATE", "", "", "divRotina");
+    cIdcarenc.addClass('rotulo').css('width', '108px');
+    cDtcarenc.css('width', '108px').setMask("DATE", "", "", "divRotina");
     cDescLinha.css('width', '230px').desabilitaCampo();
 
     cFinalidade.css('width', '35px').attr('maxlength', '3');
@@ -267,8 +278,50 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
 
         });
 
+        $('#tpemprst', '#' + nomeForm).unbind('change').bind('change', function() {
+
+            // Reseta os campos Finalidade e Linha de Credito
+            cLinhaCredito.val('');
+            cDescLinha.val('');
+            cFinalidade.val('');
+            cDescFinali.val('');
+
+            verificaQtDiaLib();
+            exibeLinhaCarencia('#' + nomeForm);
+        });
+
+        // @TODO: Verificar regra
+        $('#idcarenc', '#' + nomeForm).unbind('change').bind('change', function() {
+            var dtlibera = $('#dtlibera', '#' + nomeForm).val();
+            var dtdpagto = $('#dtdpagto', '#' + nomeForm).val();
+
+            if ( dtlibera == "" ) {
+                showError('error', 'Data de Libera&ccedil;&atilde;o deve ser informada.', 'Alerta - Aimaro', 'bloqueiaFundo($("#divUsoGenerico"),\'dtlibera\',\'frmSimulacao\')');
+                return this.selectedIndex = 0;
+            }
+
+            if (!validaData(dtlibera)) {
+                showError('error', 'Data de Libera&ccedil;&atilde;o inv&aacute;lida.', 'Alerta - Aimaro', 'bloqueiaFundo($("#divUsoGenerico"),\'dtlibera\',\'frmSimulacao\')');
+                return this.selectedIndex = 0;
+            }
+            
+            if ( dtdpagto == "" ) {
+                showError('error', 'Data do Pagamento da Primeira Parcela deve ser informada.', 'Alerta - Aimaro', 'bloqueiaFundo($("#divUsoGenerico"),\'dtdpagto\',\'frmSimulacao\')');
+                return this.selectedIndex = 0;
+            }
+            
+            calculaDataCarencia('#' + nomeForm);
+        });
+
+        $('#dtdpagto', '#' + nomeForm).unbind('blur').bind('blur', function() {
+                // Se for Pos Fixado
+                if ($('#tpemprst', '#' + nomeForm).val() == 2) {
+                    calculaDataCarencia('#' + nomeForm);
+                }
+         });
+
         // Formata o tamanho do Formulário
-        $('#divProcSimulacoesFormulario').css({'height': '385px', 'width': '560px'});
+        $('#divProcSimulacoesFormulario').css({'height': 'auto', 'width': '560px'});
 
         // Adicionando as classes
         cTodos.removeClass('campoErro').habilitaCampo();
@@ -301,9 +354,10 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
     layoutPadrao();
     hideMsgAguardo();
     removeOpacidade('divConteudoOpcao');
+    exibeLinhaCarencia('#' + nomeForm);
 
     if (operacao != 'C_SIMULACAO') {
-        $('#vlemprst', '#divProcSimulacoesFormulario').focus();
+        $('#tpemprst', '#divProcSimulacoesFormulario').focus();
     } else {
         $('#btContinuar', '#divProcSimulacoesTabela').focus();
     }
@@ -312,10 +366,10 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
     return false;
 }
 
+
 // Inclui/altera uma simulação
 function buscarDadosSimulacao(nrsimula, operacao, tela) {
-
-
+	
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         dataType: "html",
@@ -341,8 +395,10 @@ function buscarDadosSimulacao(nrsimula, operacao, tela) {
 				
                 eval(response);
                 hideMsgAguardo();
-                if (operacao == 'GPR' || operacao == 'TI')
+                if (operacao == 'GPR' || operacao == 'TI'){					
+					buscadtconsig();					
                     bloqueiaFundo($('#divRotina'));
+				}
                 else
                     bloqueiaFundo($('#divUsoGenerico'));
 					
@@ -351,12 +407,13 @@ function buscarDadosSimulacao(nrsimula, operacao, tela) {
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
-    });
-
+    });	
+	
 }
 
 // Inclui/altera uma simulação
 function incluirAlterarSimulacao(operacao, nrsimula) {
+    var tpemprst = $("#tpemprst", "#divProcSimulacoesFormulario").val();
     var vlemprst = $("#vlemprst", "#divProcSimulacoesFormulario").val();
     var qtparepr = $("#qtparepr", "#divProcSimulacoesFormulario").val();
     var cdlcremp = $("#cdlcremp", "#divProcSimulacoesFormulario").val();
@@ -364,6 +421,8 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
     var dtdpagto = $("#dtdpagto", "#divProcSimulacoesFormulario").val();
     var percetop = $("#percetop", "#divProcSimulacoesFormulario").val();
     var cdfinemp = $("#cdfinemp", "#divProcSimulacoesFormulario").val();
+    var idcarenc = $("#idcarenc", "#divProcSimulacoesFormulario").val();
+    var dtcarenc = $("#dtcarenc", "#divProcSimulacoesFormulario").val();
     // Campos de uso da PORTABILIDADE
     var tpfinali = $("#tpfinali", "#divProcSimulacoesFormulario").val();
     var cdmodali = $("#cdmodali option:selected", "#divProcSimulacoesFormulario").val();
@@ -395,6 +454,7 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
         url: UrlSite + "telas/atenda/emprestimos/simulacao/inclusao_alteracao.php",
         data: {
             nrdconta: nrdconta,
+			gconsig: gConsig,
             idseqttl: idseqttl,
             vlemprst: vlemprst,
             qtparepr: qtparepr,
@@ -406,6 +466,9 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
             percetop: percetop,
             cdfinemp: cdfinemp,
             idfiniof: idfiniof,
+            tpemprst: tpemprst,
+            idcarenc: idcarenc,
+            dtcarenc: dtcarenc,
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function(objAjax, responseError, objExcept) {
@@ -463,6 +526,7 @@ function carregarImpressaoSimulacao(nrsimula) {
     $('#idseqttl', '#formImpressao').remove();
     $('#nrsimula', '#formImpressao').remove();
     $('#flgemail', '#formImpressao').remove();
+    $('#tpemprst', '#formImpressao').remove();
 
     // Insiro input do tipo hidden do formulário para enviá-los posteriormente
     $('#formImpressao').append('<input type="hidden" id="sidlogin" name="sidlogin" />');
@@ -470,6 +534,7 @@ function carregarImpressaoSimulacao(nrsimula) {
     $('#formImpressao').append('<input type="hidden" id="idseqttl" name="idseqttl" />');
     $('#formImpressao').append('<input type="hidden" id="nrsimula" name="nrsimula" />');
     $('#formImpressao').append('<input type="hidden" id="flgemail" name="flgemail" />');
+    $('#formImpressao').append('<input type="hidden" id="tpemprst" name="tpemprst" />');
 
     // Agora insiro os devidos valores nos inputs criados
     $('#sidlogin', '#formImpressao').val($('#sidlogin', '#frmMenu').val());
@@ -477,6 +542,7 @@ function carregarImpressaoSimulacao(nrsimula) {
     $('#idseqttl', '#formImpressao').val(idseqttl);
     $('#nrsimula', '#formImpressao').val(nrsimula);
     $('#flgemail', '#formImpressao').val(flgemail);
+    $('#tpemprst', '#formImpressao').val(tpemprst);
 
     var action = UrlSite + 'telas/atenda/emprestimos/simulacao/imprime_simulacao.php';
     var callafter = "bloqueiaFundo($('#divUsoGenerico'));";

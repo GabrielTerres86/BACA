@@ -79,6 +79,7 @@
   $cdhistor = (isset($_POST["cdhistor"])) ? $_POST["cdhistor"] : 0;
   $tpprodut = (isset($_POST["tpprodut"])) ? $_POST["tpprodut"] : 0;
   $cddindex = (isset($_POST["cddindex"])) ? $_POST["cddindex"] : 0;
+  $tpmodcon = (isset($_POST["tpmodcon"])) ? $_POST["tpmodcon"] : '';
 
   validaDados();
   
@@ -129,13 +130,14 @@
   $xml 	   .= "     <tpprodut>".$tpprodut."</tpprodut>";
   $xml 	   .= "     <cddindex>".$cddindex."</cddindex>";
   $xml 	   .= "     <permingr>".$permingr."</permingr>";
+  $xml 	   .= "     <tpmodcon>".$tpmodcon."</tpmodcon>";
   $xml 	   .= "  </Dados>";
   $xml 	   .= "</Root>";
 	
 	// Executa script para envio do XML	
 	$xmlResult = mensageria($xml, "TELA_LCREDI", "ALTLINHA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
-	
+		
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	

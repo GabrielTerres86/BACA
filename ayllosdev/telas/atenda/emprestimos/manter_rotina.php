@@ -35,6 +35,7 @@
  * 024: [21/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 025: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
  * 026: [24/01/2018] Processamento do campo DSNIVORI (risco original da proposta) (Reginaldo - AMcom)
+ * 027: [21/12/2018] P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
  */
 ?>
 
@@ -161,6 +162,7 @@
     $idcarenc = (isset($_POST['idcarenc'])) ? $_POST['idcarenc'] : '' ;
     $dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '' ;
 	$vlfinanc = (isset($_POST['vlfinanc'])) ? $_POST['vlfinanc'] : '' ;
+	$vlprecar = (isset($_POST['vlprecar'])) ? $_POST['vlprecar'] : '' ;
 	
 	// Daniel
 	$inpesso1 = (isset($_POST['inpesso1'])) ? $_POST['inpesso1'] : '' ;

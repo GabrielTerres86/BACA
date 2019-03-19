@@ -18,6 +18,7 @@
 	isPostMethod();
 	
 	require_once("../../includes/carrega_permissoes.php");	
+	include("../../includes/param_session.php");	
 ?>
 
 <html>
@@ -90,6 +91,7 @@
 																				<a href="#" class="botao" id="btSalvar"  onClick="controlaOperacao(); return false;">Prosseguir</a>
 																			</div>																			
 																			<div id="divUsoGenerico"></div>
+																			<input type="hidden" id="glb_val_cooper_consignado" name="glb_val_cooper_consignado" value="<?php echo $glbvars['VAL_COOPER_CONSIGNADO'] ?>" />
 																		</div>
 																	</td>
 																</tr>

@@ -62,6 +62,8 @@
      28/02/2019 - Projeto 437 Consignado AMcom - JDB (ID 20190208_437) - Ajutes conforme changeset feito por outra empresa	 (14/09/2018 - Tratamento para o projeto 437 Consignado (incluir  flnecont e tpmodcon,  remover indescsg))
 ************************************************************************************************/
 
+//Variavel parametro Cooperativa com Consignado
+var CooperConsig ;
 
 // Definição de algumas variáveis globais
 var cddopcao, cTodosCabecalho;
@@ -238,6 +240,8 @@ function estadoInicial() {
 		 $('#cddopcao', '#frmCab').val("I");
 		LiberaFormulario();
 	}	
+	CooperConsig = document.getElementById('glb_val_cooper_consignado').value ;
+	
 }
 
 function formataCabecalho() {
@@ -842,13 +846,18 @@ function controlaOperacao() {
             }
 			
             // Se estiver checado, efetuamos as validacoes necessarias
-            // -> ID 20190208_437
-			//if (cIndescsg.is(":checked") && (cDtfchfol.val()=="" || (cDtfchfol.val() <= 0 || cDtfchfol.val() > 28))){
-			  if (cFlnecont.is(":checked") && (cDtfchfol.val()=="" || (cDtfchfol.val() <= 0 || cDtfchfol.val() > 28))){
-			// <-
-                showError('error','Dia Fechamento Folha deve ser entre 1 e 28.','Campo obrigat&oacute;rio','$("#dtfchfol","#frmInfEmprestimo").focus();');
-                return false;
-        }
+			
+            if (CooperConsig != 'S'){
+				if (cIndescsg.is(":checked") && (cDtfchfol.val()=="" || (cDtfchfol.val() <= 0 || cDtfchfol.val() > 28))){
+					showError('error','Dia Fechamento Folha deve ser entre 1 e 28.','Campo obrigat&oacute;rio','$("#dtfchfol","#frmInfEmprestimo").focus();');
+					return false;
+				}
+			}else{
+				if (cFlnecont.is(":checked") && (cDtfchfol.val()=="" || (cDtfchfol.val() <= 0 || cDtfchfol.val() > 28))){			
+					showError('error','Dia Fechamento Folha deve ser entre 1 e 28.','Campo obrigat&oacute;rio','$("#dtfchfol","#frmInfEmprestimo").focus();');
+					return false;
+				}
+			}
         }
 
         if (cddopcao == "C") {
@@ -1118,15 +1127,23 @@ function controlaFocoFormulariosEmpresa() {
         cDtavsemp.desabilitaCampo();
         cDtavscot.desabilitaCampo();
 		
-		// -> ID 20190208_437
-        //cIndescsg.unbind('keypress').bind('keypress', function(e) {
-		cFlnecont.unbind('keypress').bind('keypress', function(e) {
-		//<-
-            if (e.keyCode == 9 || e.keyCode == 13) {
-                cDtfchfol.focus();
-                return false;
-            }
-        });
+		if (CooperConsig != 'S'){
+			cIndescsg.unbind('keypress').bind('keypress', function(e) {
+				if (e.keyCode == 9 || e.keyCode == 13) {
+					cDtfchfol.focus();
+					return false;
+				}
+			});
+		}else{
+			cFlnecont.unbind('keypress').bind('keypress', function(e) {
+				if (e.keyCode == 9 || e.keyCode == 13) {
+					cDtfchfol.focus();
+					return false;
+				}
+			});
+		}
+		
+		
         cDtfchfol.unbind('keypress').bind('keypress', function(e) {
             if (e.keyCode == 9 || e.keyCode == 13) {
                 cFlgarqrt.focus();
@@ -1196,35 +1213,37 @@ function controlaFocoFormulariosEmpresa() {
 		
 		// -> ID 20190208_437
 		//Informacoes consignado
-
-        //tpmodcon
-        cTpmodcon.unbind('keypress').bind('keypress', function(e) {
-            if (e.keyCode == 9 || e.keyCode == 13) {
-                cDdmesnov.focus();
-                return false;
-            }
-        });
-        cTpmodcon.desabilitaCampo();
-		if (cddopcao == "I") {
-			cTpmodcon.val("");
-		}
 		
-        //ddmesnov
-        cDdmesnov.focus().unbind('keypress').bind('keypress', function(e) {
-            if (e.keyCode == 9 || e.keyCode == 13) {
-                cFlnecont.focus();
-                return false;
-            }
-        });
-        
-        cFlnecont.desabilitaCampo();
-        //flnecont
-        cFlnecont.focus().unbind('keypress').bind('keypress', function(e) {
-            if (e.keyCode == 9 || e.keyCode == 13) {
-                controlaOperacao();
-                return false;
-            }
-        });
+		if (CooperConsig == 'S'){
+			//tpmodcon
+			cTpmodcon.unbind('keypress').bind('keypress', function(e) {
+				if (e.keyCode == 9 || e.keyCode == 13) {
+					cDdmesnov.focus();
+					return false;
+				}
+			});
+			cTpmodcon.desabilitaCampo();
+			if (cddopcao == "I") {
+				cTpmodcon.val("");
+			}
+			
+			//ddmesnov
+			cDdmesnov.focus().unbind('keypress').bind('keypress', function(e) {
+				if (e.keyCode == 9 || e.keyCode == 13) {
+					cFlnecont.focus();
+					return false;
+				}
+			});
+			
+			cFlnecont.desabilitaCampo();
+			//flnecont
+			cFlnecont.focus().unbind('keypress').bind('keypress', function(e) {
+				if (e.keyCode == 9 || e.keyCode == 13) {
+					controlaOperacao();
+					return false;
+				}
+			});
+		}
 		//<-
 		
         /*Formulario Emprestimo */
@@ -1318,8 +1337,11 @@ function alteraInclui() {
 
     /* Altera valor nos campos Checkbox */
     // -> ID 20190208_437
-	//cIndescsg.is(':checked') ? cIndescsg.val(2) : cIndescsg.val(1);
-	cFlnecont.is(':checked') ? cFlnecont.val(1) : cFlnecont.val(0);
+	if (CooperConsig != 'S'){
+		cIndescsg.is(':checked') ? cIndescsg.val(2) : cIndescsg.val(1);
+	}else{
+		cFlnecont.is(':checked') ? cFlnecont.val(1) : cFlnecont.val(0);
+	}
 	//<-
     cFlgpagto.is(':checked') ? cFlgpagto.val("yes") : cFlgpagto.val("no");
     cFlgpgtib.is(':checked') ? cFlgpgtib.val("yes") : cFlgpgtib.val("no");
@@ -1732,7 +1754,9 @@ function selecionaEmpresa() {
                 cTpdebcot.val($('#htpdebcot', $(this)).val());
                 cIndescsg.val($('#hindescsg', $(this)).val());
                 // -> ID 20190208_437
-				//cIndescsg.val() == 2 ? cIndescsg.attr('checked', 'checked') : cIndescsg.removeAttr('checked');
+				if (CooperConsig != 'S'){
+					cIndescsg.val() == 2 ? cIndescsg.attr('checked', 'checked') : cIndescsg.removeAttr('checked');
+				}
                 //<-
 				cFlgpagto.val($('#hflgpagto', $(this)).val());
                 cFlgpagto.val() == 'yes' ? cFlgpagto.attr('checked', 'checked') : cFlgpagto.removeAttr('checked');

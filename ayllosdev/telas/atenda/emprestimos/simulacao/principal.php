@@ -7,6 +7,7 @@
  * ALTERAÇÕES   : 
  * --------------
  * 000: [20/09/2011] Aumentado o tamanho da tabela - Marcelo L. Pereira (GATI)
+ * 001: [28/02/2018] Alterado para buscar os dados na mensageria Oracle (P438 Douglas Pagel / AMcom)
  */
 
 session_start();
@@ -45,38 +46,33 @@ if (!validaInteiro($idseqttl)) {
     exibirErro('error', 'Seq.Ttl inválida.', 'Alerta - Aimaro', 'fechaRotina(divRotina)', false);
 }
 
-$xml = "<Root>";
-$xml .= "	<Cabecalho>";
-$xml .= "		<Bo>b1wgen0097.p</Bo>";
-$xml .= "		<Proc>busca_simulacoes</Proc>";
-$xml .= "	</Cabecalho>";
-$xml .= "	<Dados>";
-$xml .= "       <cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
-$xml .= "		<cdagenci>" . $glbvars["cdagenci"] . "</cdagenci>";
-$xml .= "		<nrdcaixa>" . $glbvars["nrdcaixa"] . "</nrdcaixa>";
-$xml .= "		<cdoperad>" . $glbvars["cdoperad"] . "</cdoperad>";
-$xml .= "		<nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
-$xml .= "		<idorigem>" . $glbvars["idorigem"] . "</idorigem>";
-$xml .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
-$xml .= "		<idseqttl>" . $idseqttl . "</idseqttl>";
+// Monta o xml de requisição
+$xml = "";
+$xml.= "<Root>";
+$xml.= "	<Dados>";
+$xml.= "		<nrdconta>" . $nrdconta . "</nrdconta>";
+$xml.= "		<idseqttl>" . $idseqttl . "</idseqttl>";
 $xml .= "		<dtmvtolt>" . $glbvars["dtmvtolt"] . "</dtmvtolt>";
-$xml .= "		<flgerlog>TRUE</flgerlog>";
-$xml .= "	</Dados>";
-$xml .= "</Root>";
+$xml .= "		<flgerlog>1</flgerlog>";
+$xml.= "	</Dados>";
+$xml.= "</Root>";
 
-$xmlResult = getDataXML($xml);
-$xmlObjeto = getObjectXML($xmlResult);
+// Executa script para envio do XML
+$xmlResult = mensageria($xml, "TELA_ATENDA_SIMULACAO", "SIMULA_BUSCA_SIMULACOES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+// Cria objeto para classe de tratamento de XML
+$xmlObj = getObjectXML($xmlResult);
 
-if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-    exibirErro('error', $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Aimaro', 'fechaSimulacoes()', false);
+if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+    exibirErro('error', $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Aimaro', 'fechaSimulacoes()', false);
 }
 
-$simulacoes = $xmlObjeto->roottag->tags[0]->tags;
+$simulacoes = $xmlObj->roottag->tags[0]->tags;
+
 ?>
 <table id="tbsimulacoes"cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr>
         <td align="center">		
-            <table border="0" cellpadding="0" cellspacing="0" width="645">
+            <table border="0" cellpadding="0" cellspacing="0" width="700">
                 <tr>
                     <td>
                         <table width="100%" border="0" cellspacing="0" cellpadding="0">

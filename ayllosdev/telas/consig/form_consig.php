@@ -21,7 +21,7 @@
 ?>
 
 <form id="frmConsig" name="frmConsig" class="formulario">	
-
+	
 	<input type="hidden" id="tpmodconvenio" name="tpmodconvenio" value="<?php echo getByTagName($inf,'tpmodconvenio'); ?>" />
 	<input type="hidden" id="indautrepassecc" name="indautrepassecc" value="<?php echo getByTagName($inf,'indautrepassecc'); ?>" />
 	<input type="hidden" id="indinterromper" name="indinterromper" value="<?php echo getByTagName($inf,'indinterromper'); ?>"  />
@@ -200,4 +200,8 @@
 		Concluir
 	</a>
 
+</div>
+
+<div id="divVencParc" style="display:none">
+	<? include("form_vencparc.php"); ?>
 </div>

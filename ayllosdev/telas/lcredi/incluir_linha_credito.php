@@ -80,6 +80,7 @@
   $finalidades = (isset($_POST["finalidades"])) ? $_POST["finalidades"] : '';
   $tpprodut = (isset($_POST["tpprodut"])) ? $_POST["tpprodut"] : 0;
   $cddindex = (isset($_POST["cddindex"])) ? $_POST["cddindex"] : 0;
+  $tpmodcon = (isset($_POST["tpmodcon"])) ? $_POST["tpmodcon"] : 0;
     
   validaDados();
   
@@ -163,6 +164,7 @@
   $xml 	   .= "     <tpprodut>".$tpprodut."</tpprodut>";
   $xml 	   .= "     <cddindex>".$cddindex."</cddindex>";
   $xml 	   .= "     <permingr>".$permingr."</permingr>";
+  $xml 	   .= "     <tpmodcon>".$tpmodcon."</tpmodcon>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	

@@ -9,6 +9,9 @@
   ALTERACOES   :  04/08/2014 -  Ajustes referentes ao projeto CET (Lucas R./Gielow)
  *                30/06/2015 - Ajustes referentes Projeto 215 - DV 3 (Daniel)
  *                20/09/2017 - Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+ *                13/12/2018 - Projeto 298 - Inclusos novos campos tpemprst e campos de carencia (Andre Clemer - Supero)
+ * 				  28/02/2018 - Alterado para buscar os dados na mensageria Oracle (P438 Douglas Pagel / AMcom) 
+ * 				  03/2018 - Ajustes para inclusa e alteracao de simulacoes do consignado (P437 JDB / AMcom) 
  * */
 
 session_start();
@@ -16,10 +19,15 @@ require_once('../../../../includes/config.php');
 require_once('../../../../includes/funcoes.php');
 require_once('../../../../includes/controla_secao.php');
 require_once('../../../../class/xmlfile.php');
+
+
 isPostMethod();
 
 // Guardo os parâmetos do POST em variáveis	
 $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
+$gconsig = (isset($_POST['gconsig'])) ? $_POST['gconsig'] : '';
+$vlparepr = '';
+$vliofepr = '';
 $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 $idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '';
 $nrsimula = (isset($_POST['nrsimula'])) ? $_POST['nrsimula'] : '';
@@ -28,55 +36,69 @@ $vlemprst = (isset($_POST['vlemprst'])) ? $_POST['vlemprst'] : '';
 $qtparepr = (isset($_POST['qtparepr'])) ? $_POST['qtparepr'] : '';
 $dtlibera = (isset($_POST['dtlibera'])) ? $_POST['dtlibera'] : '';
 $dtdpagto = (isset($_POST['dtdpagto'])) ? $_POST['dtdpagto'] : '';
-$percetop = (isset($_POST['percetop'])) ? $_POST['percetop'] : '';
+//$percetop = (isset($_POST['percetop'])) ? $_POST['percetop'] : '';
+$percetop = '';
 $cdfinemp = (isset($_POST['cdfinemp'])) ? $_POST['cdfinemp'] : '';
 $idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1';
+$tpemprst = (isset($_POST['tpemprst'])) ? $_POST['tpemprst'] : '';
+$idcarenc = (isset($_POST['idcarenc'])) ? $_POST['idcarenc'] : '';
+$dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '';
 $cddopcao = (($operacao == "A_SIMULACAO") ? "A" : "I");
 
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
     exibirErro('error', $msgError, 'Alerta - Aimaro', '', false);
 }
 
+//se consignado busca valor de parcela e iof consumir soa exemplo tela manbem
+if ($gconsig == '1'){
+	$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis');	
+	$obj = json_decode($raw_data); 	
+	$vlparepr = $obj->vlparepr;
+	$vliofepr = $obj->vliofepr;
+}
+
 // Monta o xml de requisição
 $xml = "";
 $xml.= "<Root>";
-$xml.= "	<Cabecalho>";
-$xml.= "		<Bo>b1wgen0097.p</Bo>";
-$xml.= "		<Proc>grava_simulacao</Proc>";
-$xml.= "	</Cabecalho>";
 $xml.= "	<Dados>";
-$xml.= "		<cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
-$xml.= "		<cdagenci>" . $glbvars["cdagenci"] . "</cdagenci>";
-$xml.= "		<nrdcaixa>" . $glbvars["nrdcaixa"] . "</nrdcaixa>";
-$xml.= "		<cdoperad>" . $glbvars["cdoperad"] . "</cdoperad>";
-$xml.= "		<nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
-$xml.= "		<idorigem>" . $glbvars["idorigem"] . "</idorigem>";
 $xml.= "		<nrdconta>" . $nrdconta . "</nrdconta>";
 $xml.= "		<idseqttl>" . $idseqttl . "</idseqttl>";
 $xml .= "		<dtmvtolt>" . $glbvars["dtmvtolt"] . "</dtmvtolt>";
-$xml .= "		<flgerlog>TRUE</flgerlog>";
 $xml .= "		<cddopcao>" . $cddopcao . "</cddopcao>";
 $xml.= "		<nrsimula>" . $nrsimula . "</nrsimula>";
 $xml.= "		<cdlcremp>" . $cdlcremp . "</cdlcremp>";
-$xml.= "		<vlemprst>" . $vlemprst . "</vlemprst>";
+$xml.= "		<vlemprst>" . str_replace(",", ".",str_replace(".","",$vlemprst)) . "</vlemprst>";
 $xml.= "		<qtparepr>" . $qtparepr . "</qtparepr>";
 $xml.= "		<dtlibera>" . $dtlibera . "</dtlibera>";
 $xml.= "		<dtdpagto>" . $dtdpagto . "</dtdpagto>";
 $xml.= "        <percetop>" . $percetop . "</percetop>";
 $xml.= "        <cdfinemp>" . $cdfinemp . "</cdfinemp>";
 $xml.= "        <idfiniof>" . $idfiniof . "</idfiniof>";
+$xml.= "        <flggrava>1</flggrava>";
+$xml.= "        <idpessoa>0</idpessoa>";
+$xml.= "        <nrseq_email>0</nrseq_email>";
+$xml.= "        <nrseq_telefone>0</nrseq_telefone>";
+$xml.= "        <idsegmento>0</idsegmento>";
+$xml.= "        <tpemprst>" . $tpemprst . "</tpemprst>";
+$xml.= "        <idcarenc>" . $idcarenc . "</idcarenc>";
+$xml.= "        <dtcarenc>" . $dtcarenc . "</dtcarenc>";
+$xml .= "		<flgerlog>1</flgerlog>";
+$xml .= "		<vlparepr>".$vlparepr."</vlparepr>";
+$xml .= "		<vliofepr>".$vliofepr."</vliofepr>";
 $xml.= "	</Dados>";
 $xml.= "</Root>";
 
-// Executa script para envio do XML
-$xmlResult = getDataXML($xml);
 
+// Executa script para envio do XML
+$xmlResult = mensageria($xml, "TELA_ATENDA_SIMULACAO", "SIMULA_GRAVA_SIMULACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 // Cria objeto para classe de tratamento de XML
 $xmlObj = getObjectXML($xmlResult);
 
 // Obtém número da simulação gravada
-$nrgravad = $xmlObj->roottag->tags[0]->attributes["NRGRAVAD"];
-$txcetano = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
+$nrgravad = getByTagName($xmlObj->roottag->tags,'NRGRAVAD');
+//$nrgravad = $xmlObj->roottag->tags[0]->attributes["NRGRAVAD"];
+//$txcetano = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
+$txcetano = getByTagName($xmlObj->roottag->tags,'TXCETANO');
 
 //$vliofepr = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
 //$vlrtarif = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
@@ -96,7 +118,6 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 } else {
 
     if ($operacao == "I_SIMULACAO") {
-        echo 'ajustaTela();';
         echo "controlaOperacaoSimulacoes('C_INCLUSAO'," . $nrgravad . ");";
     } else {
         echo "mostraTabelaSimulacao('TS');";

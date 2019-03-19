@@ -25,7 +25,8 @@
                     <th><? echo utf8ToHtml('Lcr');?></th>
                     <th>Valor</th>
                     <th><? echo utf8ToHtml('N° Parcelas');?></th>
-                    <th>Vl. Parcela</th>                    
+                    <th>Vl. Parcela</th>
+                    <th>Produto</th>
                 </tr>
             </thead>		
             <tbody>
@@ -35,6 +36,7 @@
                         <input type="hidden" id="nrsimula" name="nrsimula" value="<? echo getByTagName($simulacao->tags,'nrsimula') ?>"/>
                         <input type="hidden" id="tpfinali" name="tpfinali" value="<? echo getByTagName($simulacao->tags,'tpfinali') ?>"/>
                         <input type="hidden" id="cdmodali" name="cdmodali" value="<? echo getByTagName($simulacao->tags,'cdmodali') ?>"/>
+                        <input type="hidden" id="tpemprst" name="tpemprst" value="<? echo getByTagName($simulacao->tags,'tpemprst') ?>"/>
                     </td>					
                     <td id="dtlibera"><span><? echo getByTagName($simulacao->tags,'dtlibera') ?></span><? echo getByTagName($simulacao->tags,'dtlibera') ?></td>
                     <td id="dtdpagto"><span><? echo getByTagName($simulacao->tags,'dtdpagto') ?></span><? echo getByTagName($simulacao->tags,'dtdpagto') ?></td>
@@ -43,6 +45,9 @@
                     <td><? echo number_format(str_replace(",",".",getByTagName($simulacao->tags,'vlemprst')),2,",",".") ?></td>
                     <td><? echo getByTagName($simulacao->tags,'qtparepr') ?></td>
                     <td><? echo number_format(str_replace(",",".",getByTagName($simulacao->tags,'vlparepr')),2,",",".") ?></td>
+                    <td><? if (getByTagName($simulacao->tags,'tpemprst') == 0) {echo 'TR';} else
+                           if (getByTagName($simulacao->tags,'tpemprst') == 1) {echo 'PP';} else
+                           if (getByTagName($simulacao->tags,'tpemprst') == 2) {echo 'POS';} ?></td>
                 </tr>
                 <? } ?>
             </tbody>

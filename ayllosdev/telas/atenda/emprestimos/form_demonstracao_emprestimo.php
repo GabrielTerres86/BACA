@@ -32,6 +32,12 @@ ALTERACOES     :
             <label for="vlpreemp">Prest. Estim.:</label>
             <input name="vlpreemp" id="vlpreemp" type="text" value="" />
 
+            <?php if ($tpemprst == 2) { ?>
+            <br />
+            <label for="vlprecar"><?php echo utf8ToHtml('Prest. Carên. Estim.:') ?></label>
+            <input name="vlprecar" id="vlprecar" type="text" value="" />
+            <?php } ?>
+
             <label for="percetop">CET(%a.a.):</label>
             <input name="percetop" id="percetop" type="text" value="" />
             <br />

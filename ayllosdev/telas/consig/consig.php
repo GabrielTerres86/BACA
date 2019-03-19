@@ -28,7 +28,11 @@
 	include("../../includes/carrega_permissoes.php");	
 
 	setVarSession("opcoesTela",$opcoesTela);
-		
+	
+	include("../../includes/param_session.php");			
+	
+	
+			
 ?>
 <html>
 <head>
@@ -100,7 +104,8 @@
 																		</div>															
 																		
 																		<div id="divRotina"></div>
-
+																		<input type="hidden" id="glb_val_cooper_consignado" name="glb_val_cooper_consignado" value="<?php echo $glbvars['VAL_COOPER_CONSIGNADO'] ?>" />
+	
 																	</td>
 																</tr>
 															</table>					

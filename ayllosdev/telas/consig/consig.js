@@ -7,6 +7,8 @@
  Alterações: 
 
 ************************************************************************/
+//
+var CooperConsig = '';
 
 //nomes
 var NomeCabecalho = 'frmCabecalhoConsig';
@@ -16,6 +18,7 @@ var NomeFrmConsig = 'frmConsig';
 var NomeDivConsig = 'divConsig';
 var NomeDivTela = 'divTela';
 var NomeDivBotoesConsig = 'divBotoesConsig';
+var NomeDivVencParc = 'divVencParc';
 
 //componentes tela
 var 
@@ -30,7 +33,9 @@ var
     DivTabPesquisaEmpresas,
     DivPesquisaEmpresa,
     DivTabEmpresas,
-    FecharPesquisa;
+    FecharPesquisa,
+	DivVencParc;
+	
 
 //campos
 var Ccddopcao // * Cabecalho // Código Operação
@@ -47,7 +52,9 @@ var Ccddopcao // * Cabecalho // Código Operação
     ,Cdsdemail // E-mail
     ,Cindalertaemailemp // Alertas (check box)
     ,Cdsdemailconsig // E-mail Consignado
-    ,Cindalertaemailconsig; // Alertas Consignado (check box)
+    ,Cindalertaemailconsig
+	,Cdcooper
+	; // Alertas Consignado (check box)
 
 //labels
 var Lcddopcao // * Cabecalho
@@ -76,6 +83,21 @@ $(document).ready(function () {
 
 });
 
+function validaCooperConsig()
+{
+	CooperConsig = document.getElementById('glb_val_cooper_consignado').value ;
+	if (CooperConsig != 'S'){
+		showError(
+				"error",
+				"Cooperativa sem acesso ao consignado!",
+				"Alerta - Ayllos",
+				"",
+				false);
+			BtnOK.css('display', 'none'); 
+			Ccddopcao.desabilitaCampo(); 
+	}
+}
+
 function estadoInicial() {
 
     formataCabecalho();
@@ -85,13 +107,18 @@ function estadoInicial() {
     DivBotoesFiltro = $('#'+NomeDivBotoesFiltro);
     FrmConsig = $('#'+NomeFrmConsig);
     DivConsig = $('#'+NomeDivConsig);
+	DivVencParc = $('#'+NomeDivVencParc);
 
     //Cabecalho.habilitaCampo().focus().val('C');
     Filtro.css('display', 'none');
     DivBotoesFiltro.css('display', 'none');
     FrmConsig.css('display', 'none');
     DivConsig.html('').css('display', 'none');
+	DivVencParc.css('display','none');
+	
+		
     layoutPadrao();
+	validaCooperConsig();
 }
 
 function formataCabecalho() {
@@ -241,6 +268,7 @@ function formataFiltro(){
 
     //Ao clicar no botao OK
     BtVoltar.unbind('click').bind('click', function () {
+		linhaEmEdicao = null;	
         voltar('1');
         return false;
     });
@@ -295,8 +323,8 @@ function mostraPesquisaEmpresa(){
     var nomeProcedure = 'OBTEM_DADOS_EMP_CONSIGNADO';
     var titulo = 'Empresa';
     var qtReg = '30';
-    var filtros = 'Nome da Empresa;nmextemp;150;S;;S;;|Razão Social;nmresemp;150;S;;S;;|Codigo Empresa;cdempres;;N;-1;N;;|;cddopcao;;N;' + cddopcao + ';N;|Empréstimo Consigando;indconsignado;;N;;N;;|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
-    var colunas = 'Nome da Empresa;nmextemp;150;S;;S;;|Razão Social;nmresemp;150;S;;S;;|Codigo Empresa;cdempres;;S;;S;;|;cddopcao;;N;;N;|Empréstimo Consigando;indconsignado;;N;;N;;|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
+    var filtros = 'Cód. Empresa;cdempres;60;S;;S;;|Nome Empresa;nmextemp;150;S;;S;;|;cddopcao;;N;' + cddopcao + ';N;|Empréstimo Consigando;indconsignado;;N;;N;;|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
+    var colunas = 'Código;cdempres;50;right;;S;;|Empresa;nmextemp;230;left;;S;;|;cddopcao;;N;;N;|Empréstimo Consigando;indconsignado;;N;;N;;|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
     var divBloqueia = '';
     var fncOnClose = 'fecharPesquisa();';
     var nomeRotina =  NomeFiltro;
@@ -375,6 +403,8 @@ function fecharPesquisa(){
         CtextIndconsignado.val("Sim");
     } else if(indconsignado == '0') {
         CtextIndconsignado.val("Não");
+	}else if(indconsignado == '2') {
+        CtextIndconsignado.val("Pend.");
     }else{
         CtextIndconsignado.val('');
     }
@@ -470,10 +500,13 @@ function existeEmpresa(){
 }
 
 function formataTelaConsig(){
-    FrmConsig = $('#'+NomeFrmConsig);
+    DivVencParc = $('#'+NomeDivVencParc);
+	DivVencParc.css('display', 'block');
+	
+	FrmConsig = $('#'+NomeFrmConsig);
     DivConsig = $('#'+NomeDivConsig);
     DivBotoesConsig = $('#'+NomeDivBotoesConsig);
-
+	
     BtConcluir = $('#btConcluir', DivBotoesConsig);
     BtVoltar = $('#btVoltar', DivBotoesConsig);
 
@@ -598,12 +631,14 @@ function formataTelaConsig(){
     });
 
     Cindalertaemailconsig.unbind('change').bind('change', function(e) {
+		linhaEmEdicao = null;	
         var val = Cindalertaemailconsig.attr('checked') ? 1 : 0;
         $('#indalertaemailconsig', FrmConsig).val(val); // Tipo de Convenio INSS/ Publico / Privado
            return false;
     });
 
     BtVoltar.unbind('click').bind('click', function () {
+		linhaEmEdicao = null;
         voltar('2');
         return false;
     });
@@ -617,6 +652,7 @@ function formataTelaConsig(){
        showHideDtInterrupcao(this.value);
     });
 
+	//Cdcooper = document.getElementById('cdcooper').value;
     //controlaOperacao
 
 }
@@ -654,6 +690,7 @@ function atualizaConvenio(){
     Ccddopcao = $('#cddopcao', Cabecalho);
     FrmConsig = $('#'+NomeFrmConsig);
     DivConsig = $('#'+NomeDivConsig);
+	DivVencParc = $('#'+NomeDivVencParc);
 
     Cnmextemp = $('#nmextemp', FrmConsig); // * Form Consignado // Razão Social
     Ctpmodconvenio = $('#select_tpmodconvenio', FrmConsig); // Tipo de Convenio INSS/ Publico / Privado
@@ -725,6 +762,7 @@ function atualizaConvenio(){
     if(tpmodconvenio == 1){
 		if (Cdtfchfol.val() == '')
 			Cdtfchfol.val(dtfchfolOld);
+			DivVencParc.css('display', 'block');
         if(cddopcao == 'H'){
             Cnrdialimiterepasse.val('');
             $('input[name=radio_indautrepassecc]').prop('checked', false);
@@ -736,7 +774,8 @@ function atualizaConvenio(){
         }
 
     }else if(tpmodconvenio == 2){// Publico
-        //Autoriza Débito Repasse em C/C?
+        //Autoriza Débito Repasse em C/C?		
+		DivVencParc.css('display', 'block');
 		if (Cdtfchfol.val() == '')
 			Cdtfchfol.val(dtfchfolOld);
         Cindautrepassecc.desabilitaCampo();
@@ -747,6 +786,7 @@ function atualizaConvenio(){
         }
     } else if ( tpmodconvenio == 3){ // INSS
         // Limpa data de interrupção para INSS
+		DivVencParc.css('display', 'none');
         Cdtfchfol.val('');
         Cdsdemail.val('');
         Cdsdemailconsig.val('');
@@ -883,7 +923,7 @@ function controlaFocoTelaConsig(){
         });
 
     Cindalertaemailconsig.unbind('keypress').bind('keypress', function(e){
-            /*Se foi pressionado a telca ENTER*/
+            /*Se foi pressionado a telca ENTER*/			
             if (e.keyCode == 9 || e.keyCode == 13) {
                 BtConcluir.focus();
                 return false;
@@ -1087,4 +1127,384 @@ function validaPermissao(cddopcao){
 	});
 	return validaPerm;
 }
+
+
+//### tabela de parcelas
+var dadosAtuais; 
+var linhaEmEdicao = null; 
+var linhasNovas = 0; 
+
+function SalvaDados(idLinha){
+	var celulas = document.getElementById(idLinha).cells;
+	dadosAtuais = new Array(celulas.length);
+	for(var i=0; i<celulas.length; i++){
+		dadosAtuais[i] = celulas[i].innerHTML;
+	}
+	linhaEmEdicao = null;
+}
+
+
+function NovoRegistro(){
+	if (Cindconsignado.val() =="1"){
+		if (Ccddopcao.val() == 'A' || Ccddopcao.val() == 'H'){
+			if(linhaEmEdicao){
+				alert("Você está com um registro aberto. Feche-o antes de prosseguir");
+			}else{
+				proxIndice = document.getElementById('tblVencParc').rows.length-1;
+				var novaLinha = document.getElementById('tblVencParc').insertRow(proxIndice);
+				novaLinha.className = 'corSelecao';			
+			}
+			
+			novoId = "nova"+linhasNovas;
+			novaLinha.setAttribute('id', novoId);
+			linhasNovas++; 
+			linhaEmEdicao = novoId;
+			
+			var novasCelulas = new Array(8); 
+			for(var i=0; i<8; i++){
+				novasCelulas[i] = novaLinha.insertCell(i); 
+			}
+			
+			if (proxIndice > 1){
+				novasCelulas[0].innerHTML = '<input type="hidden" name="iLinha" >';
+			}else{
+				novasCelulas[0].innerHTML = '<a href="#" onclick="Replicar(\''+novoId+'\');"><img src="/imagens/icones/ico_reenviar.png" alt="Replicar" title="Replicar" /></a>';
+			}
+			novasCelulas[1].innerHTML = '<input type="hidden" id="iCod" name="iCod" readonly>';
+			novasCelulas[2].innerHTML = '<input type="text" id="iDe" name="iDe"  maxlength="5" autofocus>';
+			novasCelulas[3].innerHTML = '<input type="text" id="iAte" name="iAte" maxlength="5">';
+			novasCelulas[4].innerHTML = '<input type="text" id="idtEnv" name="idtEnv"  maxlength="5">';
+			novasCelulas[5].innerHTML = '<input type="text" id="idtVenc" name="idtVenc" maxlength="5">';
+			novasCelulas[6].innerHTML = '<a href="#" onclick="Cadastrar(\''+novoId+'\');"><img src="/imagens/botoes/ok.gif" alt="Ok" /></a>';
+			novasCelulas[7].innerHTML = '<a href="#" onclick="CancelarInclusao();"><img src="/imagens/botoes/cancelar.gif" alt="Cancelar" /></a>';
+			$('#iDe').setMask("DATEDM", "", "", "divVencParc");
+			$('#iAte').setMask("DATEDM", "", "", "divVencParc");
+			$('#idtEnv').setMask("DATEDM", "", "", "divVencParc");
+			$('#idtVenc').setMask("DATEDM", "", "", "divVencParc");
+		}else{
+			alert("Você precisa estar na Opção H(Habilitar) ou A(Alterar)!");
+		}
+	}else{
+		alert("Você precisa Habilitar a empresa, clique em concluir!");
+	}
+}
+
+function CancelarInclusao(){	
+	
+	var linha = document.getElementById(linhaEmEdicao);
+	linha.parentNode.removeChild(linha);
+	linhasNovas--;
+	linhaEmEdicao = null;
+	
+}
+
+function EditarLinha(idLinha, cod){
+	if (Ccddopcao.val() == 'A' || Ccddopcao.val() == 'H'){
+		if(linhaEmEdicao == null){
+			var linha = document.getElementById(idLinha);
+			linha.className = 'corSelecao';//Altera a cor da linha que será editada
+			
+			var celulas = linha.cells;//Aramazena a célula que será editada
+			
+			//salva os dados atuais para o caso de cancelamento
+			SalvaDados(idLinha);
+
+			linhaEmEdicao = idLinha; 
+
+			celulas[0].innerHTML = '<input type="hidden" name="iLinha" value="'+celulas[0].innerHTML+'">';//Armazena o código do produto num campo oculto de formulário
+			celulas[1].innerHTML = '<input type="hidden" id="iCod" name="iCod" value="'+celulas[1].innerHTML+'" maxlength="5" readonly autofocus>';//Mostrar o campo texto permitindo a edição do nome do produto
+			celulas[2].innerHTML = '<input type="text" id="iDe" name="iDe" value="'+celulas[2].innerHTML+'" maxlength="5" autofocus>';//Mostrar o campo texto permitindo a edição do nome do produto
+			celulas[3].innerHTML = '<input type="text" id="iAte" name="iAte" value="'+celulas[3].innerHTML+'" maxlength="5">';//Mostrar o campo texto permitindo a edição do preço do produto
+			celulas[4].innerHTML = '<input type="text" id="idtEnv" name="idtEnv" value="'+celulas[4].innerHTML+'" maxlength="5">';//Mostrar o campo texto permitindo a edição do preço do produto
+			celulas[5].innerHTML = '<input type="text" id="idtVenc" name="idtVenc" value="'+celulas[5].innerHTML+'" maxlength="5">';//Mostrar o campo texto permitindo a edição do preço do produto
+			celulas[6].innerHTML = '<a href="#" onclick="Cadastrar(\''+idLinha+'\');"><img src="/imagens/botoes/ok.gif" alt="Ok" /></a>';//Monta os links que chamarão as funções para atualizar ou cancelar a edição da linha
+			celulas[7].innerHTML = '<a href="#" onclick="Cancelar(\''+idLinha+'\');"><img src="/imagens/botoes/cancelar.gif" alt="Cancelar" /></a>';//Insere um espaço na última célula
+			$('#iDe').setMask("DATEDM", "", "", "divVencParc");
+			$('#iAte').setMask("DATEDM", "", "", "divVencParc");
+			$('#idtEnv').setMask("DATEDM", "", "", "divVencParc");
+			$('#idtVenc').setMask("DATEDM", "", "", "divVencParc");
+		}
+		else {alert("Você já está digitando um registro.");}
+	}else{
+		alert("Você precisa estar na Opção H(Habilitar) ou A(Alterar)!");
+	}
+}
+
+function Cancelar(idLinha){
+	
+	var linha = document.getElementById(idLinha);
+	
+	if (dadosAtuais[0] % 2 == 0){
+		linha.className = 'odd corPar';
+	}else{
+		linha.className = 'even corImpar';
+	}
+	
+	linha.innerHTML = '<tr id="'+idLinha+'">' + 
+	'<td align="center">'+dadosAtuais[0]+'</td>' +
+	'<td align="center">'+dadosAtuais[1]+'</td>' +
+	'<td align="center">'+dadosAtuais[2]+'</td>' +
+	'<td align="center">'+dadosAtuais[3]+'</td>' +
+	'<td align="center">'+dadosAtuais[4]+'</td>' +
+	'<td align="center">'+dadosAtuais[5]+'</td>' +
+	'<td align="center"><a href="#" onclick="EditarLinha(\''+idLinha+'\',\'' + dadosAtuais[0] + '\');"><img src="/imagens/botoes/alterar.gif" alt="Editar" title="Editar"></a></td>' +
+	'<td align="center"><a href="#" onclick="ExcluirLinha(\''+idLinha+'\',\'' + dadosAtuais[0] + '\');"><img src="/imagens/botoes/excluir.gif" alt="Excluir" title="Excluir"></a></td>' ;
+	linhaEmEdicao = null;
+}
+
+function Cadastrar(idLinha)
+{
+	var iCod,iDe,iAte,idtEnv,idtVenc;
+	dadosAtuais = new Array(8);
+	
+	iCod = document.getElementById('iCod').value;
+	iDe = document.getElementById('iDe').value;
+	iAte = document.getElementById('iAte').value;
+	idtEnv = document.getElementById('idtEnv').value;
+	idtVenc = document.getElementById('idtVenc').value;
+	
+	//var proxIndice = document.getElementById('tblVencParc').rows.length-3;
+	//var proxLinha = document.getElementById('tblVencParc').rows.length-2;	
+	var proxLinha = Number(document.getElementById('total').value) +1;
+	var proxIndice = proxLinha - 1;	
+	dadosAtuais[0] = 'trLinha'+proxIndice;
+	dadosAtuais[1] = proxLinha;
+	dadosAtuais[2] = iCod;
+	dadosAtuais[3] = iDe;
+	dadosAtuais[4] = iAte;
+	dadosAtuais[5] = idtEnv;
+	dadosAtuais[6] = idtVenc;	
+	dadosAtuais[7] = idLinha;
+		
+	if (iCod < 1 ){
+		iCod = 0;
+	}
+	
+	showMsgAguardo("Aguarde gravando dados...");
+	
+	$.ajax({
+				type: 'POST',
+				url: UrlSite + 'telas/consig/manter_rotina.php',
+				data: {
+					cddopcao: 'VPI',
+					cdempres: cdempres,
+					vp_cod: iCod,
+					vp_de: iDe,
+					vp_ate: iAte,
+					vp_dtEnvio: idtEnv,
+					vp_dtVencimento: idtVenc,
+					
+					redirect: 'script_ajax'
+				},
+				error: function (objAjax, responseError, objExcept) {
+					hideMsgAguardo();
+					showError(
+						'error',
+						'Nao foi possivel concluir a operacao.',
+						'Alerta - Ayllos',
+						'$("#nrconven", "#frmFiltro").focus();');
+				},
+				success: function (response) {
+					hideMsgAguardo();
+					try {								
+						linhaEmEdicao = null;	
+						if (response.search('frmVencParc') == -1){
+							showError(
+								'error',
+								response,
+								'Alerta - Ayllos',
+							'');
+						}else{
+							$('#divVencParc').html(response);						
+						}
+											
+					
+					} catch (error) {
+						showError(
+							'error',
+							error,
+							'Alerta - Ayllos',
+							'');
+					}//catch
+				}//success
+			});//ajax
+			return false;
+}
+
+function Replicar(idLinha)
+{
+	var iCod,iDe,iAte,idtEnv,idtVenc;
+	dadosAtuais = new Array(8);
+	
+	iCod = document.getElementById('iCod').value;
+	iDe = document.getElementById('iDe').value;
+	iAte = document.getElementById('iAte').value;
+	idtEnv = document.getElementById('idtEnv').value;
+	idtVenc = document.getElementById('idtVenc').value;
+	
+	//var proxIndice = document.getElementById('tblVencParc').rows.length-3;
+	//var proxLinha = document.getElementById('tblVencParc').rows.length-2;	
+	var proxLinha = Number(document.getElementById('total').value) +1;
+	var proxIndice = proxLinha - 1;	
+	dadosAtuais[0] = 'trLinha'+proxIndice;
+	dadosAtuais[1] = proxLinha;
+	dadosAtuais[2] = iCod;
+	dadosAtuais[3] = iDe;
+	dadosAtuais[4] = iAte;
+	dadosAtuais[5] = idtEnv;
+	dadosAtuais[6] = idtVenc;	
+	dadosAtuais[7] = idLinha;
+		
+	if (iCod < 1 ){
+		iCod = 0;
+	}
+	
+	showMsgAguardo("Aguarde gravando dados...");
+	
+	$.ajax({
+				type: 'POST',
+				url: UrlSite + 'telas/consig/manter_rotina.php',
+				dataType:'html',
+				data: {
+					cddopcao: 'VPR',
+					cdempres: cdempres,
+					vp_cod: iCod,
+					vp_de: iDe,
+					vp_ate: iAte,
+					vp_dtEnvio: idtEnv,
+					vp_dtVencimento: idtVenc,
+					
+					redirect: 'html_ajax'
+				},
+				error: function (objAjax, responseError, objExcept) {
+					hideMsgAguardo();
+					showError(
+						'error',
+						'Nao foi possivel concluir a operacao.',
+						'Alerta - Ayllos',
+						'$("#nrconven", "#frmFiltro").focus();');
+				},
+				success: function (response) {
+					hideMsgAguardo();
+					try {								
+						linhaEmEdicao = null;	
+						if (response.search('frmVencParc') == -1){
+							showError(
+								'error',
+								response,
+								'Alerta - Ayllos',
+							'');
+						}else{
+							$('#divVencParc').html(response);						
+						}
+											
+					
+					} catch (error) {
+						showError(
+							'error',
+							error,
+							'Alerta - Ayllos',
+							'');
+					}//catch
+				}//success
+			});//ajax
+			return false;
+}
+
+function ExcluirLinha(idLinha, cod){
+	if (Ccddopcao.val() == 'A' || Ccddopcao.val() == 'H'){
+		if(!linhaEmEdicao){
+			var linha = document.getElementById(idLinha);
+			linha.className = 'corSelecao';
+			if(confirm("Tem certeza que deseja excluir este registro?")){
+				$.ajax({
+					type: 'POST',
+					dataType:'html',
+					url: UrlSite + 'telas/consig/manter_rotina.php',
+					data: {
+						cddopcao: 'VPE',
+						cdempres: cdempres,
+						vp_cod: cod,
+						redirect: 'html_ajax'
+					},
+					error: function (objAjax, responseError, objExcept) {
+						hideMsgAguardo();
+						showError(
+							'error',
+							'Nao foi possivel concluir a operacao.',
+							'Alerta - Ayllos',
+							'$("#nrconven", "#frmFiltro").focus();');
+					},
+					success: function (response) {
+						hideMsgAguardo();
+						try {								
+							linhaEmEdicao = null;	
+							if (response.search('frmVencParc') == -1){
+								showError(
+									'error',
+									response,
+									'Alerta - Ayllos',
+								'');
+							}else{
+								$('#divVencParc').html(response);						
+							}
+							
+							//document.getElementById('tblVencParc').innerHTML = ret;							
+						
+						} catch (error) {
+							showError(
+							'error',
+							error,
+							'Alerta - Ayllos',
+							'');
+						}//catch
+					}//success
+				});//ajax
+				return false;
+			}else{
+				var celulas = linha.cells;				
+				if (celulas[0].innerHTML % 2 == 0){
+					linha.className = 'odd corPar';
+				}else{
+					linha.className = 'even corImpar';
+				}
+			}
+		}else{
+			alert("Você está com um registro aberto. Feche-o antes de prosseguir.");
+		}
+	}else{
+		alert("Você precisa estar na Opção H(Habilitar) ou A(Alterar)!");
+	}
+}
+
+
+function ajustaStatus(info){	
+    if(info == "1"){
+		Cindconsignado.val("1");
+        CtextIndconsignado.val("Sim");
+    } else if(indconsignado == '0') {
+        Cindconsignado.val("0");
+        CtextIndconsignado.val("Nao");
+	}else if(indconsignado == '2') {
+        Cindconsignado.val("2");
+        CtextIndconsignado.val("Pend.");
+    }else{
+        Cindconsignado.val("");
+        CtextIndconsignado.val("");
+    }
+	
+};
+
+/*
+function Limpar() {
+	var total = document.getElementById('total').value;
+    console.log(total);
+	for(var i = 0; i < total; i++){
+		var linha = document.getElementById('linha'+(i));
+		linha.parentNode.removeChild(linha);
+	}
+};
+*/
+
+
 

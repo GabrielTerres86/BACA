@@ -19,6 +19,8 @@
  * 010: [04/04/2017] Jaison/James: Adicionado parametros de carencia do produto Pos-Fixado.
  * 011: [15/12/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
  * 012: [21/05/2018] Inserção do campo idquapro. PRJ366 (Lombardi)
+ * 013: [20/12/2018] P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
+ * 014: [03/2019] P347 - Validacoes consignado
  */
 ?>
 <?
@@ -62,8 +64,9 @@
 	$dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '';
 	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1';
 	$idquapro = (isset($_POST['idquapro'])) ? $_POST['idquapro'] : 0 ;
+	$vlpreemp = (isset($_POST['vlpreemp'])) ? $_POST['vlpreemp'] : 0 ;
 	$cddopcao = 'A';
-	
+
 	if( $operacao == 'TI' ){ $cddopcao = 'I'; }
 	else if( $operacao == 'I_INICIO' ){ $cddopcao = 'I'; }
 	
@@ -194,11 +197,43 @@
 			<?
 			exit();
 		
-		}else{
+		}else{			
 			echo 'inconfir = 1;';
 			echo 'inconfi2 = 30;';
-			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
-		
+			$xmlaux = simplexml_load_string($xmlResult);			
+			$total = sizeof($xmlaux->Erro->Registro);
+			if ( $total > 1){
+				?>
+				strHTML = '<table class="tituloRegistros" id="tblErrosConsig" cellpadding="1" cellspacing="1"><thead><tr id="trCabecalho" name="trCabecalho"><th class="header" id="tdTitLinha"><strong>Ln</strong></th><th class="header" id="tdMensagem"><strong>Mensagem</strong></th></tr>'; 
+				<?php
+				for($i=0; $i<$total; $i++){									
+					$linha = $i+1;
+					if ($linha % 2 == 0){					
+						$classLinha = 'class= "odd corPar"';
+					}else{
+						$classLinha = 'class= "even corImpar"';
+					}
+					$msg = $xmlaux->Erro->Registro[$i]->dscritic;
+					$idLinha = "trLinha$i";
+					?>					
+					strHTML += '<tr <?php echo $classLinha; ?> id="<?php echo $idLinha; ?>">'; 
+					strHTML += '<td align="center" ><?php echo $linha; ?> </td> '; 
+					strHTML += '<td align="center" ><?php echo $msg; ?> </td> '; 
+					strHTML += '</tr>';
+					<?php
+				}
+				?>
+				strHTML += '</table>'; 			
+				$("#divListaMsgsAlerta").html(strHTML);
+				$("#divMsgsAlerta").css({visibility:"visible",display: "block",});
+				hideMsgAguardo();				
+				blockBackground(parseInt($('#divMsgsAlerta').css('z-index')));
+				<?php		
+				return;				
+			}else{
+				exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+			}			
+					
 		}
 		
 	}
@@ -214,6 +249,7 @@
 	$flgpagto = trim($xmlObj->roottag->tags[0]->attributes['FLGPAGTO']);
 	$dtdpagto = trim($xmlObj->roottag->tags[0]->attributes['DTDPAGTO']);
 	$nivrisco = trim($xmlObj->roottag->tags[0]->attributes['NIVRISCO']);
+	$vlprecar = trim($xmlObj->roottag->tags[0]->attributes['VLPRECAR']);
 	$dsmensag = trim( getByTagName($mensagem,'dsmensag') );
 	$inconfir = trim( getByTagName($mensagem,'inconfir') );
 	
@@ -228,6 +264,7 @@
 	echo "dsmesage = '".$dsmesage."';";
 							
 	echo "arrayProposta['vlpreemp'] = '".$vlpreemp."';";
+	echo "arrayProposta['vlprecar'] = '".$vlprecar."';";
 	echo "arrayProposta['dslcremp'] = '".$dslcremp."';";
 	echo "arrayProposta['dsfinemp'] = '".$dsfinemp."';";
 	echo "arrayProposta['tplcremp'] = '".$tplcremp."';";
@@ -249,4 +286,7 @@
 	echo "$('#dtlibera','#frmNovaProp').val('".$dtlibera."');";
 	echo "$('#idcobope','#frmNovaProp').val('".$idcobope."');";
     echo "$('#idfiniof','#frmNovaProp').val('".$idfiniof."');";
+    echo "$('#vlprecar','#frmNovaProp').val('".$vlprecar."');";
+    echo "$('#vlprecar','#frmNovaProp').trigger('blur');";
+	
 ?>

@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 29/01/2019
+ * FONTE        : emprestimos.js                            Última alteração: 10/10/2018
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -144,11 +144,20 @@
 * 114: [15/09/2018] Alteração da tela de Bens da Atenda Prestação/Empréstimo (Christian / Envolti)
 * 115: [20/09/2018] Inclusão de histórico de Gravames (Christian / Envolti)
 * 116: [29/01/2019] Alteracao da consulta FIPE  (Christian / Envolti)
+* 117: [14/12/2018] P298 - Inclusão da proposta Pós fixado no simulador (Andre Clemer - Supero)
+* 118: [13/02/2019] P298_2_2 - Pos Fixado - Habilitar campo Produto permitindo selecionar PP e POS. 
+*                   Não permitir selecionar Produto TR (Luciano Kienolt - Supero)         
+* 019: [05/02/2019] Tratamento para coluna Origem. P438. (Douglas Pagel / AMcom)
+* 020: [06/02/2019] Inclusao de controle para botoes quando for origem 3. P438. (Douglas Pagel / AMcom)
+* 120: [03/2019] P437 Consignado rotina que valida informacoes do consignado e busca datas vencimento e pagamento (JDB / AMcom)
+
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
  */
 
+var gConsig = 0;
+ 
 var qtmesblq = 0;
 var bloquear_pre_aprovado = false;
  
@@ -448,6 +457,7 @@ function controlaOperacao(operacao) {
     dsctrliq = '';
 	idcarenc = '';
     dtcarenc = '';
+    vlprecar = '';
 
     var simula = false;
 
@@ -617,6 +627,11 @@ function controlaOperacao(operacao) {
         	    showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Aimaro', '');
         		return false;
         	}
+			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
+			if (cdorigem == 3) {
+        	    showError('error', 'Não é permitido alterar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+        		return false;
+        	}
             booPrimeiroBen = false; //809763
             idSocio = 0;
             if (msgDsdidade != '') {
@@ -646,6 +661,11 @@ function controlaOperacao(operacao) {
             return false;
             break;
         case 'A_NUMERO' :
+			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
+			if (cdorigem == 3) {
+        	    showError('error', 'Não é permitido alterar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+        		return false;
+        	}
             mensagem = 'abrindo altera ...';
             cddopcao = 'A';
             break;
@@ -1224,10 +1244,16 @@ function controlaOperacao(operacao) {
             });
 
             // Nao sera permitido efetivar uma proposta de portabilidade manualmente quando o campo flgerro_efetivacao = FALSE
-            if (portabil == 'S' && err_efet == 0) {
+      /*      if (portabil == 'S' && err_efet == 0) {
                 showError('error', 'Não é permitida a efetivação manual de proposta de portabilidade.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);');
                 return false;
             }
+      */			
+			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
+			if (cdorigem == 3) {
+        	    showError('error', 'Não é permitido efetivar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+        		return false;
+        	}
 
             mensagem = 'carregando tela de efetivacao da proposta...';
             cddopcao = 'F';
@@ -1332,6 +1358,7 @@ function controlaOperacao(operacao) {
 			dtcarenc = arrayProposta['dtcarenc'];
             cddopcao = 'C';
             vlpreemp = number_format(parseFloat(arrayProposta['vlpreemp'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+            vlprecar = number_format(parseFloat(arrayProposta['vlprecar'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
             mensagem = 'Carregando Demonstrativo da Proposta...';
             dscatbem = '';
             cdfinemp = arrayProposta['cdfinemp']
@@ -1408,6 +1435,7 @@ function controlaOperacao(operacao) {
 			dtcarenc: dtcarenc, idcarenc:idcarenc, 
             nomeAcaoCall: nomeAcaoCall,
 			executandoProdutos: executandoProdutos,
+			vlprecar: vlprecar,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1430,7 +1458,7 @@ function controlaOperacao(operacao) {
                     showError('inform', 'Registro de alienacao do Gravame incluido com sucesso!', 'Alerta - Aimaro', 'controlaOperacao("");');
                 } else {
                     if (simula == true) {
-                        buscarDadosSimulacao(auxind, operacao, response);
+                        buscarDadosSimulacao(auxind, operacao, response);						
                     } else {
                         if (operacao == 'RECALCULAR_EMPRESTIMO') {
                             hideMsgAguardo();
@@ -1482,6 +1510,7 @@ function controlaOperacao(operacao) {
             return false;
         }
     });
+		
 }
 
 //001: Passado os dados via Ajax para o manter_rotina.php
@@ -1547,6 +1576,7 @@ function manterRotina(operacao) {
 
 			var vlemprst = (typeof arrayProposta['vlemprst'] == 'undefined') ? '' : arrayProposta['vlemprst'];
 			var vlpreemp = (typeof arrayProposta['vlpreemp'] == 'undefined') ? '' : arrayProposta['vlpreemp'];
+			var vlprecar = (typeof arrayProposta['vlprecar'] == 'undefined') ? '' : arrayProposta['vlprecar'];
 			var tpemprst = (typeof arrayProposta['tpemprst'] == 'undefined') ? '' : arrayProposta['tpemprst'];
 			var qtpreemp = (typeof arrayProposta['qtpreemp'] == 'undefined') ? '' : arrayProposta['qtpreemp'];
 			var dsnivris = (typeof arrayProposta['nivrisco'] == 'undefined') ? '' : arrayProposta['nivrisco'];
@@ -1780,7 +1810,7 @@ function manterRotina(operacao) {
             dtlibera: dtlibera, inconcje: inconcje, flgconsu: flgconsu,
             blqpreap: (bloquear_pre_aprovado ? 1 : 0),
             idcobope: idcobope,
-            idcarenc: idcarenc, dtcarenc: dtcarenc,
+            idcarenc: idcarenc, dtcarenc: dtcarenc, vlprecar: vlprecar,
             // Daniel
             inpesso1: inpesso1, dtnasct1: dtnasct1, dscatbem: dscatbem,
             inpesso2: inpesso2, dtnasct2: dtnasct2, cddopcao: cddopcao,
@@ -1944,7 +1974,7 @@ function controlaLayout(operacao) {
         divRegistro.css('height', '150px');
 
         altura = '230px';
-        largura = '950px';
+        largura = '1050px';
 
         var ordemInicial = new Array();
         //ordemInicial = [[0, 0]];
@@ -1961,6 +1991,8 @@ function controlaLayout(operacao) {
         arrayLargura[8] = '35px';
         arrayLargura[9] = '65px';
         arrayLargura[10] = '120px';
+		arrayLargura[11] = '80px';
+		arrayLargura[12] = '65px';
 
         var arrayAlinha = new Array();
         arrayAlinha[0] = 'center';
@@ -1975,6 +2007,7 @@ function controlaLayout(operacao) {
         arrayAlinha[9] = 'center';
         arrayAlinha[10] = 'center';
         arrayAlinha[11] = 'center';
+		arrayAlinha[12] = 'center';
 
         var metodoTabela = 'controlaOperacao(\'TA\')';
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
@@ -1989,7 +2022,7 @@ function controlaLayout(operacao) {
         inconfir = 1;
         inconfi2 = 30;
 
-        var rRotulos = $('label[for="nivrisco"],label[for="qtpreemp"],label[for="vlpreemp"],label[for="vlemprst"],label[for="flgpagto"],label[for="tpemprst"],label[for="dsctrliq"],label[for="vlfinanc"]', '#' + nomeForm);
+        var rRotulos = $('label[for="nivrisco"],label[for="qtpreemp"],label[for="vlpreemp"],label[for="vlemprst"],label[for="flgpagto"],label[for="tpemprst"],label[for="dsctrliq"],label[for="vlfinanc"],label[for="vlprecar"]', '#' + nomeForm);
         var cTodos = $('select,input', '#' + nomeForm);
         var r_Linha1 = $('label[for="cdlcremp"]', '#' + nomeForm);
         var rCet = $('label[for="percetop"]', '#' + nomeForm);
@@ -2024,6 +2057,7 @@ function controlaLayout(operacao) {
         var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
         var rIdcarenc = $('label[for="idcarenc"]', '#' + nomeForm);
         var rDtcarenc = $('label[for="dtcarenc"]', '#' + nomeForm);
+        var rVlPreCar = $('label[for="vlprecar"]', '#' + nomeForm);
 		var rVlFinanc = $('label[for="vlfinanc"]', '#' + nomeForm);
 
         var cNivelRic = $('#nivrisco', '#' + nomeForm);
@@ -2056,6 +2090,7 @@ function controlaLayout(operacao) {
         var rImgCalen = $('#imgcalen', '#' + nomeForm);
         var cIdcarenc = $('#idcarenc', '#' + nomeForm);
         var cDtcarenc = $('#dtcarenc', '#' + nomeForm);
+        var cVlPreCar = $('#vlprecar', '#' + nomeForm);
 
         cNivelRic.addClass('rotulo').css('width', '90px');
         cRiscoCalc.addClass('').css('width', '108px');
@@ -2081,6 +2116,7 @@ function controlaLayout(operacao) {
         cLiquidacoes.addClass('rotulo alphanum').css('width', '320px');
         cIdcarenc.css('width', '108px');
         cDtcarenc.css('width', '108px');
+        cVlPreCar.addClass('moeda').css('width', '108px');
 
         rRotulos.addClass('rotulo').css('width', '75px');
 
@@ -2112,6 +2148,7 @@ function controlaLayout(operacao) {
         rDiasUteis.addClass('rotulo-linha');
         rIdcarenc.addClass('rotulo').css('width', '75px');
         rDtcarenc.addClass('').css('width', '135px');
+        rVlPreCar.addClass('').css('width', '321px');
 
         cTodos.addClass('campo');
         cDescricao.addClass('descricao');
@@ -2127,12 +2164,19 @@ function controlaLayout(operacao) {
             }
 
             $('#tpemprst', '#frmNovaProp').unbind('change').bind('change', function() {
+				if ($('#tpemprst', '#frmNovaProp').val() == 0 && // Price TR
+				   (possuiPortabilidade == 'S')) { 
+                    showError('error', 'Produto TR n&atilde;o permitido para portabilidade, favor selecionar outro produto!', 'Aten;&atilde;o', '$("#tpemprst","#frmNovaProp").focus();bloqueiaFundo(divRotina);');					
+					return false;
+				} 
 
                 // Reseta os campos Finalidade e Linha de Credito
                 cLnCred.val(0);
                 cDsLnCred.val('');
+                if (possuiPortabilidade != 'S') { 
                 cFinali.val(0);
                 cDsFinali.val('');
+                } 
 
                 if ($('#tpemprst', '#frmNovaProp').val() == 1 || // Price Pre-Fixado
                     $('#tpemprst', '#frmNovaProp').val() == 2) { // Pos-Fixado
@@ -2149,17 +2193,17 @@ function controlaLayout(operacao) {
                 rProposta.css('width', '321px');
 
                 verificaQtDiaLib();
-                exibeLinhaCarencia();
+                exibeLinhaCarencia('#' + nomeForm);
             });
 
             $('#idcarenc', '#frmNovaProp').unbind('change').bind('change', function() {
-                calculaDataCarencia();
+                calculaDataCarencia('#' + nomeForm);
             });
 
             $('#dtdpagto', '#frmNovaProp').unbind('blur').bind('blur', function() {
                 // Se for Pos Fixado
                 if ($('#tpemprst', '#frmNovaProp').val() == 2) {
-                    calculaDataCarencia();
+                    calculaDataCarencia('#' + nomeForm);
         }
             });
 
@@ -2179,6 +2223,7 @@ function controlaLayout(operacao) {
             cDtlibera.desabilitaCampo();
             cDtUltPag.desabilitaCampo();
             cPercCET.desabilitaCampo();
+            cVlPreCar.desabilitaCampo();
             if (arrayProposta['tpemprst'] == '1') {
                 $("#qtdialib").desabilitaCampo();
                 $("#qtdialib").datepicker('disable');
@@ -2354,7 +2399,8 @@ function controlaLayout(operacao) {
                 });
                 
                 //desabilita o campo tipo de emprestimo
-                cTipoEmpr.attr('disabled', 'disabled');
+                //cTipoEmpr.attr('disabled', 'disabled');
+				cTipoEmpr.habilitaCampo(); // Portabilidade
                 //carrega finalidade especifica de portabilidade
                 carregaFinalidadePortabilidade();
             } else if (operacao == 'TC') {
@@ -2367,7 +2413,10 @@ function controlaLayout(operacao) {
                 if ($("#cdfinemp").val() == 0 && $("#dsfinemp").val() == '') {
                     carregaFinalidadePortabilidade();
                 }
-                cTipoEmpr.attr('disabled', 'disabled');
+				
+				// P298_2_2 - Habilitar o campo tipo de emprestimo 
+                //cTipoEmpr.attr('disabled', 'disabled');
+				cTipoEmpr.habilitaCampo();
                 
                 $("#btVoltar", "#divBotoes").attr('onClick', "controlaOperacao('PORTAB_CRED_I');");                
                 //seta acao do botao voltar
@@ -3829,6 +3878,7 @@ function controlaLayout(operacao) {
         var cNivelRisco = $('#nivrisco', '#' + nomeForm);
         var cValorEmpr = $('#vlemprst', '#' + nomeForm);
         var cValorParc = $('#vlpreemp', '#' + nomeForm);
+        var cValorCare = $('#vlprecar', '#' + nomeForm);
         var cQtdeParc = $('#qtpreemp', '#' + nomeForm);
         var cDebito = $('#flgpagto', '#' + nomeForm);
         var cDtPagamento = $('#dtdpagto', '#' + nomeForm);
@@ -3843,6 +3893,7 @@ function controlaLayout(operacao) {
         var rNivelRisco = $('label[for="nivrisco"]', '#' + nomeForm);
         var rValorEmpr = $('label[for="vlemprst"]', '#' + nomeForm);
         var rValorParc = $('label[for="vlpreemp"]', '#' + nomeForm);
+        var rValorCare = $('label[for="vlprecar"]', '#' + nomeForm);
         var rQtdeParc = $('label[for="qtpreemp"]', '#' + nomeForm);
         var rDtPagamento = $('label[for="dtdpagto"]', '#' + nomeForm);
         var rDebito = $('label[for="flgpagto"]', '#' + nomeForm);
@@ -3857,6 +3908,7 @@ function controlaLayout(operacao) {
         cNivelRisco.addClass('rotulo').css('width', '30px');
         cValorEmpr.addClass('moeda').css('width', '70px');
         cValorParc.addClass('rotulo moeda').css('width', '70px');
+        cValorCare.addClass('rotulo moeda').css('width', '70px');
         cQtdeParc.addClass('').css('width', '50px').setMask('INTEGER', 'zz9', '', '');
         cDtPagamento.addClass('').css('width', '90px');
         cDebito.addClass('rotulo').css('width', '70px');
@@ -3871,6 +3923,7 @@ function controlaLayout(operacao) {
         rNivelRisco.addClass('rotulo').css('width', '110px');
         rValorEmpr.css('width', '170px');
         rValorParc.addClass('rotulo').css('width', '110px');
+        rValorCare.addClass('rotulo').css('width', '110px');
         rQtdeParc.css('width', '130px');
         rDtPagamento.addClass('rotulo').css('width', '110px');
         rDebito.css('width', '110px');
@@ -3886,6 +3939,7 @@ function controlaLayout(operacao) {
         cNivelRisco.desabilitaCampo();
         cValorEmpr.desabilitaCampo();
         cValorParc.desabilitaCampo();
+        cValorCare.desabilitaCampo();
         cQtdeParc.desabilitaCampo();
         cDebito.desabilitaCampo();
         cDtPagamento.desabilitaCampo();
@@ -3905,6 +3959,7 @@ function controlaLayout(operacao) {
         cNivelRisco.val(arrayStatusApprov['nivriori'] != '' ? arrayStatusApprov['nivriori'] : arrayStatusApprov['nivriris']);
         cValorEmpr.val(arrayStatusApprov['vlemprst']);
         cValorParc.val(arrayStatusApprov['vlpreemp']);
+        cValorCare.val(arrayStatusApprov['vlprecar']);
         cQtdeParc.val(arrayStatusApprov['qtpreemp']);
         cDebito.val(tipoPagamento);
         cDtPagamento.val(arrayStatusApprov['dtdpagto']);
@@ -4150,13 +4205,20 @@ function controlaLayout(operacao) {
 	} else if (in_array(operacao, ['I_DEMONSTRATIVO_EMPRESTIMO', 'A_DEMONSTRATIVO_EMPRESTIMO'])) {
         nomeForm = 'frmDemonstracaoEmprestimo';
         largura = '345px';
-        altura = '205px';
+        if (tpemprst == 2) {
+            altura = '230px';
+        } else {
+            altura = '205px';
+        }
 
         var rVlemprst = $('label[for="vlemprst"]', '#' + nomeForm);
         var rVliofepr = $('label[for="vliofepr"]', '#' + nomeForm);
         var rVlrtarif = $('label[for="vlrtarif"]', '#' + nomeForm);
         var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
         var rVlpreemp = $('label[for="vlpreemp"]', '#' + nomeForm);
+        if (tpemprst == 2) {
+            var rVlprecar = $('label[for="vlprecar"]', '#' + nomeForm);
+        }
         var rPercetop = $('label[for="percetop"]', '#' + nomeForm);
 
         var cVlemprst = $('#vlemprst', '#' + nomeForm);
@@ -4164,20 +4226,29 @@ function controlaLayout(operacao) {
         var cVlrtarif = $('#vlrtarif', '#' + nomeForm);
         var cVlrtotal = $('#vlrtotal', '#' + nomeForm);
         var cVlpreemp = $('#vlpreemp', '#' + nomeForm);
+        if (tpemprst == 2) {
+            var cVlprecar = $('#vlprecar', '#' + nomeForm);
+        }
         var cPercetop = $('#percetop', '#' + nomeForm);
 
-        rVlemprst.addClass('rotulo').css('width', '100px');
-        rVliofepr.addClass('rotulo').css('width', '100px');
-        rVlrtarif.addClass('rotulo').css('width', '100px');
-        rVlrtotal.addClass('rotulo').css('width', '100px');
-        rVlpreemp.addClass('rotulo').css('width', '100px');
-        rPercetop.addClass('rotulo').css('width', '100px');
+        rVlemprst.addClass('rotulo').css('width', '120px');
+        rVliofepr.addClass('rotulo').css('width', '120px');
+        rVlrtarif.addClass('rotulo').css('width', '120px');
+        rVlrtotal.addClass('rotulo').css('width', '120px');
+        rVlpreemp.addClass('rotulo').css('width', '120px');
+        if (tpemprst == 2) {
+            rVlprecar.addClass('rotulo').css('width', '120px');
+        }
+        rPercetop.addClass('rotulo').css('width', '120px');
 
         cVlemprst.addClass('moeda');
         cVliofepr.addClass('moeda');
         cVlrtarif.addClass('moeda');
         cVlrtotal.addClass('moeda');
         cVlpreemp.addClass('moeda');
+        if (tpemprst == 2) {
+            cVlprecar.addClass('moeda');
+        }
         cPercetop.addClass('moeda');
 
         cVlemprst.desabilitaCampo();
@@ -4185,6 +4256,9 @@ function controlaLayout(operacao) {
         cVlrtarif.desabilitaCampo();
         cVlrtotal.desabilitaCampo();
         cVlpreemp.desabilitaCampo();
+        if (tpemprst == 2) {
+            cVlprecar.desabilitaCampo();
+        }
         cPercetop.desabilitaCampo();
     }
     
@@ -4209,8 +4283,7 @@ function controlaLayout(operacao) {
     removeOpacidade('divConteudoOpcao');
     controlaFoco(operacao);
     divRotina.centralizaRotinaH();
-    exibeLinhaCarencia();
-
+    exibeLinhaCarencia("#frmNovaProp");
     return false;
 }
 
@@ -4353,6 +4426,7 @@ function attArray(novaOp, cdcooper) {
         arrayProposta['vlrtotal'] = $('#vlrtotal', '#frmNovaProp').val();
         arrayProposta['idcarenc'] = $('#idcarenc', '#frmNovaProp').val();
         arrayProposta['dtcarenc'] = $('#dtcarenc', '#frmNovaProp').val();
+        arrayProposta['vlprecar'] = $('#vlprecar', '#frmNovaProp').val();
 		arrayProposta['vlfinanc'] = $('#vlfinanc', '#frmNovaProp').val();
 
         flgimppr = arrayProposta['flgimppr'];
@@ -4655,10 +4729,11 @@ function atualizaTela() {
         $('#vlrtotal', '#frmNovaProp').val(arrayProposta['vlrtotal']);
         $('#idcarenc', '#frmNovaProp').val(arrayProposta['idcarenc']);
         $('#dtcarenc', '#frmNovaProp').val(arrayProposta['dtcarenc']);
+        $('#vlprecar', '#frmNovaProp').val(arrayProposta['vlprecar']);
 		$('#vlfinanc', '#frmNovaProp').val(arrayProposta['vlfinanc']);        
 
         vlemprst_antigo = arrayProposta['vlemprst'];
-        dsctrliq_antigo = arrayProposta['dsctrliq'];
+        dsctrliq_antigo = arrayProposta['dsctrliq'];				
 		
         if (operacao == 'TI') {
 
@@ -4994,6 +5069,7 @@ function atualizaTela() {
         $('#percetop', '#frmDemonstracaoEmprestimo').val(arrayProposta['percetop']);
         $('#vlemprst', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlemprst']);
         $('#vlpreemp', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlpreemp']);
+        $('#vlprecar', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlprecar']);
     }
 
     return false;
@@ -5595,6 +5671,7 @@ function validaDadosGerais() {
             cdmodali: cdmodali, idcobope: idcobope,
             idcarenc: idcarenc, dtcarenc: dtcarenc,
             idfiniof: idfiniof, idquapro: idquapro,
+			vlpreemp: vlpreemp,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -5604,7 +5681,7 @@ function validaDadosGerais() {
         },
         success: function(response) {
             try {
-                if (response.indexOf('showError("error"') == -1) {
+                if (response.indexOf('showError("error"') == -1 && response.indexOf('id="tblErrosConsig"') == -1) {
                     aux_retorno = true;
                     eval(response);
 
@@ -6861,6 +6938,7 @@ function controlaLayoutTabelaSimulacao()
     arrayLargura[4] = '40px';
     arrayLargura[5] = '60px';
     arrayLargura[6] = '75px';
+    arrayLargura[7] = '75px';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'right';
@@ -6871,6 +6949,7 @@ function controlaLayoutTabelaSimulacao()
     arrayAlinha[5] = 'right';
     arrayAlinha[6] = 'right';
     arrayAlinha[7] = 'right';
+    arrayAlinha[8] = 'right';
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
     layoutPadrao();
@@ -6883,7 +6962,7 @@ function controlaLayoutTabelaSimulacao()
     });
 
     divRotina.css('width', largura);
-    $('#divConteudoOpcao').css({'height': altura, 'width': largura});
+    $('#divConteudoOpcao').css({'width': largura});
 
     controlaPesquisas();
     bloqueiaFundo(divRotina);
@@ -8426,7 +8505,7 @@ function controlaLayoutLiq(operacao) {
 
     for (var i in arrayLiquidacoes) {
 
-        aux_nrctremp = formataContrato(arrayLiquidacoes[i]['nrctremp'].replace(/[. ]*/g, ''));
+        aux_nrctremp = mascara(arrayLiquidacoes[i]['nrctremp'].replace(/[. ]*/g, ''), '#.###.###.###');
         aux_vlemprst = number_format(parseFloat(arrayLiquidacoes[i]['vlemprst'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
         aux_vlpreemp = number_format(parseFloat(arrayLiquidacoes[i]['vlpreemp'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
         aux_vlsdeved = number_format(parseFloat(arrayLiquidacoes[i]['vlsdeved'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
@@ -8480,14 +8559,14 @@ function controlaLayoutLiq(operacao) {
     ordemInicial = [[0, 0]];
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '15px';
+    arrayLargura[0] = '10px';
     arrayLargura[1] = '30px';
     arrayLargura[2] = '30px';
-    arrayLargura[3] = '35px';
+    arrayLargura[3] = '90px';
     arrayLargura[4] = '58px';
-    arrayLargura[5] = '55px';
-    arrayLargura[6] = '80px';
-    arrayLargura[7] = '37px';
+    arrayLargura[5] = '70px';
+    arrayLargura[6] = '50px';
+    arrayLargura[7] = '50px';
     arrayLargura[8] = '80px';
 
     var arrayAlinha = new Array();
@@ -8534,7 +8613,7 @@ function fechaLiquidacoes(operacao) {
 
     for (var i in arrayLiquidacoes) {
         if (arrayLiquidacoes[i]['idseleca'] == '*') {
-            dsctrliq += formataContrato(arrayLiquidacoes[i]['nrctremp'].replace(/[. ]*/g, '')) + ',';
+            dsctrliq += mascara(arrayLiquidacoes[i]['nrctremp'].replace(/[. ]*/g, ''), '#.###.###.###') + ',';
         }
     }
 
@@ -8678,6 +8757,9 @@ function controlaFoco(operacao) {
 
     $(".FirstInputModal").focus();
 }
+
+
+
 
 function controlaPesquisas() {
 
@@ -8943,7 +9025,6 @@ function controlaPesquisas() {
         buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsfinemp', $(this).val(), 'dsfinemp', filtrosDesc, nomeForm);
 
         if (nomeForm != 'frmSimulacao') {
-
             carregaDadosPropostaFinalidade();
         }
     });
@@ -8979,6 +9060,9 @@ function controlaPesquisas() {
 		if (nomeForm != 'frmSimulacao') {
             carregaDadosPropostaLinhaCredito();
         }
+		if (nomeForm == 'frmSimulacao' || nomeForm == 'frmNovaProp') {
+			buscadtconsig();
+		 }
     });
 
     // Quantidade de dias de liberacao
@@ -10262,23 +10346,23 @@ function abrirTelaGAROPC(operacao) {
     });
 }
 
-function exibeLinhaCarencia() {
-    if ($("#tpemprst", "#frmNovaProp").val() == 2) { // Se for Pos-Fixado
-        $("#linCarencia","#frmNovaProp").show();
-        calculaDataCarencia();
+function exibeLinhaCarencia(idForm) {
+    if ($("#tpemprst", idForm).val() == 2) { // Se for Pos-Fixado
+        $("#linCarencia",idForm).show();
+        calculaDataCarencia(idForm);
     } else {
-        $("#linCarencia","#frmNovaProp").hide();
+        $("#linCarencia",idForm).hide();
     }
 }
 
-function calculaDataCarencia() {
+function calculaDataCarencia(idForm) {
 
     hideMsgAguardo();
 	showMsgAguardo("Aguarde, calculando os dados...");
 
-    var idcarenc = normalizaNumero($("#idcarenc", "#frmNovaProp").val());
-    var dtlibera = $("#dtlibera", "#frmNovaProp").val();
-    var dtdpagto = $("#dtdpagto", "#frmNovaProp").val();
+    var idcarenc = normalizaNumero($("#idcarenc", idForm).val());
+    var dtlibera = $("#dtlibera", idForm).val();
+    var dtdpagto = $("#dtdpagto", idForm).val();
     var dtcarenc = dtdpagto.substr(0, 2) + '/' + dtlibera.substr(3, 2) + '/' + dtmvtolt.substr(6, 4);
 	
 	$.ajax({
@@ -10288,6 +10372,7 @@ function calculaDataCarencia() {
 			acao    : 'CALC_DATA_CARENCIA',
             idcarenc: idcarenc,
 			dtcarenc: dtcarenc,
+            nomeform: idForm,
 			redirect: "script_ajax"
 		},
 		error: function(objAjax,responseError,objExcept){
@@ -10587,6 +10672,14 @@ function verificarTipoVeiculo() {
 	} 
 }
 
+
+function erConsig()
+{
+	$('#cdlcremp', '#' + nomeForm).val('');
+	$('#dslcremp', '#' + nomeForm).val('');
+	gConsig = 0;
+}
+
 function selecionaComplemento(tr) {
 	$('#idseqbem','#'+frmCab).val($('#idseqbem', tr).val());
 	$('#nrdplaca','.complemento').html($('#nrdplaca', tr).val());
@@ -10622,4 +10715,62 @@ function mostraAplicacao(tpaplica) {
     });
     
 	return false;
+}
+
+function buscadtconsig()
+{	
+	gConsig = 0;
+	if ($('#cdlcremp', '#' + nomeForm).val()){
+		if ($('#cdlcremp', '#' + nomeForm).val() != '' && $('#cdlcremp', '#' + nomeForm).val() != '0'){
+			showMsgAguardo('Aguarde validando ...');
+
+			$.ajax({
+				type: 'POST',
+				url: UrlSite + 'telas/atenda/emprestimos/consig_rotina.php',
+				data: {
+					operacao: 'SIMULA_CONSIGNADO',	
+					nrdconta: nrdconta ,
+					cdlcremp: $('#cdlcremp', '#' + nomeForm).val(),
+					redirect: 'script_ajax'
+				},
+				error: function(objAjax, responseError, objExcept) {
+					hideMsgAguardo();
+					showError('error', 'Não foi possível concluir a requisição.'+responseError, 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+					gConsig = 0;
+				},
+				success: function(response) {
+					hideMsgAguardo();
+					try{
+						gConsig = 0;
+						eval(response);						
+						if (typeof ret !== 'undefined') {
+							if (ret == '1'){									
+								$('#dtlibera', '#' + nomeForm).val(dtlibera);		
+								$('#dtdpagto', '#' + nomeForm).val(dtdpagto);	
+								$('#dtlibera', '#' + nomeForm).desabilitaCampo();
+								$('#dtdpagto', '#' + nomeForm).desabilitaCampo();
+								gConsig = 1;
+							}else{								
+								if (nomeForm == 'frmNovaProp'){
+									$('#dtlibera', '#' + nomeForm).desabilitaCampo();
+									$('#dtdpagto', '#' + nomeForm).habilitaCampo();									
+								}else{
+									$('#dtlibera', '#' + nomeForm).habilitaCampo();
+									$('#dtdpagto', '#' + nomeForm).habilitaCampo();									
+								}
+								gConsig = 0;
+							}
+						}												
+					} catch (error) {
+						showError(
+							'error',
+							error,
+							'Alerta - Ayllos',
+							'');
+						gConsig = 0;
+					}					
+				}
+			});
+		 }
+	}
 }

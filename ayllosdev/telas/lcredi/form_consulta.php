@@ -182,6 +182,33 @@
 		<a style="padding: 3px 0 0 3px;" href="#" onClick="controlaPesquisa('3'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>	
 		<input  type="text" id="dssubmod" name="dssubmod"value="<?echo getByTagName($linha->tags,'dssubmod'); ?>" >
 				
+		<br />
+		
+		<!-- tpmodcon -->
+		<label for="tpmodcon"><? echo utf8ToHtml('Modalidade Consignado') ?>:</label>
+		<select id="tpmodcon" name="tpmodcon"	>
+			<option
+				<?php echo (getByTagName($linha->tags,'tpmodcon') == '' ? "selected" : "");?>
+				value="">
+			<? echo utf8ToHtml('Selecione') ?>				
+			</option>
+			<option
+				<?php echo (getByTagName($linha->tags,'tpmodcon') == 1 ? "selected" : "");?>
+				value="1">
+			<? echo utf8ToHtml('Privado') ?>				
+			</option>
+			<option
+				<?php echo (getByTagName($linha->tags,'tpmodcon') == 2 ? "selected" : "");?>
+				value="2">
+			<? echo utf8ToHtml('P&uacute;blico') ?>				
+			</option> 
+			<option
+				<?php echo (getByTagName($linha->tags,'tpmodcon') == 3 ? "selected" : "");?>
+				value="3">
+				<? echo utf8ToHtml('INSS') ?> 
+			</option> 
+		</select>
+
 		<br style="clear:both" />
 							
 		

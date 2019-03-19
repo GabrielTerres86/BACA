@@ -88,6 +88,7 @@
 	$cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : 0;
 	$vlempres = (isset($_POST['vlempres'])) ? $_POST['vlempres'] : 0;
 	$vlpreemp = (isset($_POST['vlpreemp'])) ? $_POST['vlpreemp'] : 0;
+	$vlprecar = (isset($_POST['vlprecar'])) ? $_POST['vlprecar'] : 0;
 	$qtparepr = (isset($_POST['qtparepr'])) ? $_POST['qtparepr'] : 0;
 	$qtdialib = (isset($_POST['qtdialib'])) ? $_POST['qtdialib'] : 0;
 	$dtdpagto = (isset($_POST['dtdpagto'])) ? $_POST['dtdpagto'] : 0;
@@ -260,6 +261,7 @@
 
 			arrayProposta['vlemprst'] = '<? echo getByTagName($proposta,'vlemprst'); ?>';
 			arrayProposta['vlpreemp'] = '<? echo getByTagName($proposta,'vlpreemp'); ?>';
+			arrayProposta['vlprecar'] = '<? echo getByTagName($proposta,'vlprecar'); ?>';
 			arrayProposta['qtpreemp'] = '<? echo getByTagName($proposta,'qtpreemp'); ?>';
 			arrayProposta['nivrisco'] = '<? echo getByTagName($proposta,'nivrisco'); ?>';
 			arrayProposta['nivriori'] = '<? echo $nivrisori; ?>'; // nível de risco original
@@ -693,6 +695,7 @@
 			$mensagem_aval = $xmlObj->roottag->tags[2]->tags;
 			$avalista1     = $xmlObj->roottag->tags[3]->tags;
 			$avalista2     = $xmlObj->roottag->tags[4]->tags;
+			$tpemprst      = getByTagName($insitapv[0]->tags,'tpemprst');
 
 			?>
 			<script>
@@ -729,6 +732,7 @@
 				arrayStatusApprov['cdlcremp'] = '<? echo getByTagName($insitapv[0]->tags,'cdlcremp'); ?>';
 				arrayStatusApprov['nivrisco'] = '<? echo getByTagName($insitapv[0]->tags,'nivrisco'); ?>';
 				arrayStatusApprov['vlemprst'] = '<? echo getByTagName($insitapv[0]->tags,'vlemprst'); ?>';
+				arrayStatusApprov['vlprecar'] = '<? echo getByTagName($insitapv[0]->tags,'vlprecar'); ?>';
 				arrayStatusApprov['vlpreemp'] = '<? echo getByTagName($insitapv[0]->tags,'vlpreemp'); ?>';
 				arrayStatusApprov['qtpreemp'] = '<? echo getByTagName($insitapv[0]->tags,'qtpreemp'); ?>';
 				arrayStatusApprov['flgpagto'] = '<? echo getByTagName($insitapv[0]->tags,'flgpagto'); ?>';
@@ -740,6 +744,7 @@
 				arrayStatusApprov['idcobope'] = '<? echo getByTagName($insitapv[0]->tags,'idcobope'); ?>';
 				arrayStatusApprov['vlfinanc'] = '<? echo getByTagName($insitapv[0]->tags,'vlfinanc'); ?>';				
 				arrayStatusApprov['flliquid'] = '<? echo getByTagName($insitapv[0]->tags,'flliquid'); ?>';				
+				arrayStatusApprov['tpemprst'] = '<? echo getByTagName($insitapv[0]->tags,'tpemprst'); ?>';				
 
 				var arrayMensagemAval = new Array();
 
@@ -884,6 +889,7 @@
         $dsctrliq = isset($_POST['dsctrliq']) ? $_POST['dsctrliq'] : '0';	
         $dtcarenc = isset($_POST['dtcarenc']) ? $_POST['dtcarenc'] : '';	
         $idcarenc = isset($_POST['idcarenc']) ? $_POST['idcarenc'] : '0';	
+        $vlprecar = isset($_POST['vlprecar']) ? $_POST['vlprecar'] : '0';
 
 		//Busca valor da tarifa de empréstimo
 		$xml = "<Root>";
@@ -965,7 +971,6 @@
 			$vlrtotal += $vltarifaF + $valoriofF;
 	}
 
-
 		//Recalcula o CET, levando em consideração o valor da parcela retornado no cálculo do IOF
 		$xml = "<Root>";
 		$xml .= "	<Cabecalho>";
@@ -1014,6 +1019,7 @@
 			arrayProposta['vliofepr'] = '<? echo number_format(str_replace(",",".",$valoriof),2,",",""); ?>';	
 			arrayProposta['vlrtotal'] = '<? echo number_format(str_replace(",",".",$vlrtotal),2,",",""); ?>';
 			arrayProposta['vlpreemp'] = '<? echo number_format(str_replace(",",".",$vlpreemp),2,",",""); ?>';
+			arrayProposta['vlprecar'] = '<? echo number_format(str_replace(",",".",$vlprecar),2,",",""); ?>';
 			arrayProposta['percetop'] = '<? echo number_format(str_replace(",",".",$txcetano),2,",",""); ?>';
 		</script>
 
