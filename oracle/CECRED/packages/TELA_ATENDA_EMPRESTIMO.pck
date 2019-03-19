@@ -533,7 +533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
           pr_qtregist := nvl(pr_qtregist,0) + 1;     
         end if;
         --Naturalidade
-        if rw_inf_cadastrais.nacional is null then
+        if rw_inf_cadastrais.naturalidade is null then
           vr_idtab := pr_tab_dados_crapcri.count + 1;         
           pr_tab_dados_crapcri(vr_idtab).cdcritic  := 0;
           pr_tab_dados_crapcri(vr_idtab).dscritic  := 'Necessario informar a Naturalidade na tela Contas.';
@@ -541,7 +541,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
           pr_qtregist := nvl(pr_qtregist,0) + 1;     
         end if;
         --Sexo
-        if rw_inf_cadastrais.naturalidade is null then
+        if rw_inf_cadastrais.sexo is null then
           vr_idtab := pr_tab_dados_crapcri.count + 1;         
           pr_tab_dados_crapcri(vr_idtab).cdcritic  := 0;
           pr_tab_dados_crapcri(vr_idtab).dscritic  := 'Necessario informar o Sexo na tela Contas.';
@@ -549,7 +549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
           pr_qtregist := nvl(pr_qtregist,0) + 1;     
         end if;
         --Documento (Número e Tipo)
-        if rw_inf_cadastrais.sexo is null then
+        if rw_inf_cadastrais.documento is null then
           vr_idtab := pr_tab_dados_crapcri.count + 1;         
           pr_tab_dados_crapcri(vr_idtab).cdcritic  := 0;
           pr_tab_dados_crapcri(vr_idtab).dscritic  := 'Necessario informar o Documento na tela Contas.';
