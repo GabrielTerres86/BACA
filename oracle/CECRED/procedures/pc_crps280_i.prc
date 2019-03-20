@@ -377,11 +377,11 @@ BEGIN
 
 				 06/09/2018 - Atualizar campos de prejuizo para Desconto de Títulos (Vitor S Assanuma - GFT)                 
 
-				 28/09/2018 - P450 - Ajuste do vliofmes dentro das tabelas do paralelismo (Guilherme/AMcom)
+                 28/09/2018 - P450 - Ajuste do vliofmes dentro das tabelas do paralelismo (Guilherme/AMcom)
 
                  29/10/2018 - P450 - Remoção de bloco do calculo de Risco da Melhora - 6 meses e remoção de 
                               variaveis e chamadas relativas ao relatório 552 (Douglas Pagel/AMcom)
-				 
+							  
 				 21/01/2019 - Ajustes no desconto de títulos para correção do problema quando executado a crps
                               em paralelismo (Paulo Penteado GFT)  				 
 			  
@@ -1838,7 +1838,7 @@ BEGIN
       WHEN vr_exc_erro THEN
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-           pr_dscritic := 'Erro geral na procedure pc_gera_arq_miccred: '||SQLERRM;       
+           pr_dscritic := 'Erro geral na procedure pc_gera_arq_finame: '||SQLERRM;       
     END pc_gera_arq_finame;
 
     PROCEDURE pc_gera_arq_miccred(pr_dscritic OUT VARCHAR2) IS
@@ -1889,7 +1889,7 @@ BEGIN
                   vr_origem := 1780;  
             vr_descricao := '"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO CCB IMOBILIZADO REFAP"';
           ELSIF vr_chave_finalidade = 3 THEN
-                  vr_origem := 5505;  
+            vr_origem := 1621;
             vr_descricao := '"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO CCB MAIS CREDITO"';
           ELSIF vr_chave_finalidade = 4 THEN
                   vr_origem := 1440;  
@@ -1916,7 +1916,7 @@ BEGIN
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
         END IF;
-        --
+
         --Gera no arquivo linhas referente a valor de apropriação de contrato
         IF vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec > 0 THEN
 
@@ -1929,7 +1929,7 @@ BEGIN
                   vr_destino := 7112;                  
             vr_descricao := '"AJUSTE CONTABIL - JUROS CCB IMOBILIZADO REFAP (INVESTIMENTOS)"';
           ELSIF vr_chave_finalidade = 3 THEN
-                  vr_origem := 5505;  
+            vr_origem := 1621;  
                   vr_destino := 7011;                  
             vr_descricao := '"AJUSTE CONTABIL - JUROS CCB MAIS CREDITO"';
           ELSIF vr_chave_finalidade = 4 THEN
@@ -1982,25 +1982,28 @@ BEGIN
                                           ,pr_des_text => vr_setlinha); --> Texto para escrita
           END LOOP;
         END IF;
-        --
+
         --Gera no arquivo linhas referente a valor de provisão de contrato
         IF vr_tab_miccred_fin(vr_chave_finalidade).vlprvper > 0 THEN
 
           IF vr_chave_finalidade = 1 THEN
             --para provisão
             vr_destino := 1438;
+            
             --para reversao
                   vr_origem := 1438;
             vr_descricao := '"AJUSTE CONTABIL - PROVISAO CEF"';
           ELSIF vr_chave_finalidade = 2 THEN
             --para provisão
             vr_destino := 1702;
+            
             --para reversao
                   vr_origem  := 1702;  
             vr_descricao := '"AJUSTE CONTABIL - PROVISAO CCB IMOBILIZADO REFAP"';
           ELSIF vr_chave_finalidade = 4 THEN
             --para provisão
             vr_destino := 1441;
+            
             --para reversao
                   vr_origem  := 1441;  
             vr_descricao := '"AJUSTE CONTABIL - PROVISAO BNDES"';
@@ -2060,7 +2063,7 @@ BEGIN
                   vr_destino := 1780;
             vr_descricao := '"AJUSTE CONTABIL - PAGTO. JUROS CCB IMOBILIZADO REFAP"';
           ELSIF vr_chave_finalidade = 3 THEN
-                  vr_destino := 5505;
+            vr_destino := 1621;
             vr_descricao := '"AJUSTE CONTABIL - PAGTO. JUROS CCB MAIS CREDITO"';
           ELSIF vr_chave_finalidade = 4 THEN
                   vr_destino := 1440;
@@ -2098,7 +2101,7 @@ BEGIN
                   vr_destino := 1780;  
             vr_descricao := '"AJUSTE CONTABIL - PAGTO. MENSAL CCB IMOBILIZADO REFAP"';
           ELSIF vr_chave_finalidade = 3 THEN
-                  vr_destino := 5505;  
+            vr_destino := 1621;  
             vr_descricao := '"AJUSTE CONTABIL - PAGTO. MENSAL CCB MAIS CREDITO"';
           ELSIF vr_chave_finalidade = 4 THEN
                   vr_destino := 1440;  
@@ -2173,6 +2176,7 @@ BEGIN
       END LOOP;
 
       vr_chave_nivris := vr_tab_miccred_nivris.first;
+      
       LOOP
 
         EXIT WHEN vr_chave_nivris IS NULL;

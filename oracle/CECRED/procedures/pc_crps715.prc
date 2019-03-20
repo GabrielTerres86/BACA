@@ -281,17 +281,17 @@ BEGIN
         ELSIF rw_crapris.cdagenci IS NULL THEN
           
           IF rw_crapris.inpessoa = 1 THEN
-            vr_lshistor := '1753,1664';
+            vr_lshistor := '1766,1664';
             vr_dshistor := '"(Cessao) SALDO CESSÃO CARTÃO PESSOA FISICA."';
             
-            vr_lshistor_rev := '1664,1753';
+            vr_lshistor_rev := '1664,1766';
             vr_dshistor_rev := '"(Cessao) REVERSÃO SALDO CESSÃO CARTÃO PESSOA FISICA."';
             
           ELSIF rw_crapris.inpessoa = 2 THEN
-            vr_lshistor := '1754,1664';
+            vr_lshistor := '1766,1664';
             vr_dshistor := '"(Cessao) SALDO CESSÃO CARTÃO PESSOA JURIDICA."';
             
-            vr_lshistor_rev := '1664,1754';
+            vr_lshistor_rev := '1664,1766';
             vr_dshistor_rev := '"(Cessao) REVERSÃO SALDO CESSÃO CARTÃO PESSOA JURIDICA."';
             
           END IF;         
