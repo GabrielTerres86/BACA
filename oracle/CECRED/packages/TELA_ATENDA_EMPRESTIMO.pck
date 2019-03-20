@@ -920,7 +920,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
           INTO vr_consignado
           FROM cecred.craplcr
          WHERE nvl(tpmodcon,0) > 0 --Tipo da modalidade do consignado  
-           AND cdlcremp = pr_cdlcremp;
+           AND cdlcremp = pr_cdlcremp
+           AND cdcooper = pr_cdcooper;
       EXCEPTION
         WHEN NO_DATA_FOUND THEN
           vr_consignado := 0;
