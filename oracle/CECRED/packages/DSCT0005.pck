@@ -39,7 +39,14 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0005 AS
         AND tlb.dtmvtolt BETWEEN vr_dtinimes AND vr_dtultdia
         AND tlb.dtmvtolt >= (SELECT MAX(dtmvtolt) FROM tbdsct_lancamento_bordero WHERE cdcooper = vr_cdcooper AND nrdconta = vr_nrdconta AND nrborder = vr_nrborder AND cdorigem IN (5, 7) AND cdhistor IN (2671,2682,2686,2675,2684,2688,2668,2669))
         AND tlb.dtmvtolt >= NVL((SELECT MAX(dtestorno) FROM tbdsct_estorno WHERE cdcooper = vr_cdcooper AND nrdconta = vr_nrdconta AND nrborder = vr_nrborder),vr_dtinimes)
-        AND tlb.cdhistor IN (2671,2682,2686,2675,2684,2688,2668,2669);
+        AND tlb.cdhistor IN (DSCT0003.vr_cdhistordsct_pgtoopc
+                            ,DSCT0003.vr_cdhistordsct_pgtoavalopc
+                            ,DSCT0003.vr_cdhistordsct_pgtomultaopc
+                            ,DSCT0003.vr_cdhistordsct_pgtomultaavopc
+                            ,DSCT0003.vr_cdhistordsct_pgtojurosopc
+                            ,DSCT0003.vr_cdhistordsct_pgtojurosavopc
+                            ,DSCT0003.vr_cdhistordsct_apropjurmra
+                            ,DSCT0003.vr_cdhistordsct_apropjurmta);
         
   TYPE typ_reg_lancto IS RECORD(
      cdcooper      tbdsct_lancamento_bordero.cdcooper%TYPE
@@ -1086,7 +1093,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
           
           pr_tab_lancto(rw_dsctlcbd.nrtitulo).cdrecid := rw_dsctlcbd.id;
           -- Valor Pago Total
-          pr_vlpagtot := NVL(pr_vlpagtot,0) + NVL(rw_dsctlcbd.vllanmto,0);
+          IF rw_dsctlcbd.cdhistor NOT IN (DSCT0003.vr_cdhistordsct_apropjurmra, DSCT0003.vr_cdhistordsct_apropjurmta) THEN
+             pr_vlpagtot := NVL(pr_vlpagtot,0) + NVL(rw_dsctlcbd.vllanmto,0);
+          END IF;
         END LOOP;
       ELSE
         OPEN cr_craptlb(pr_cdcooper => pr_cdcooper
