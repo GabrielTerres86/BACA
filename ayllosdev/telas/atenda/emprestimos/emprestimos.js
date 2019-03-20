@@ -11700,7 +11700,7 @@ function controlaNavegacaoCamposNovaProposta(){
     });
 
     // Campo Linha de Credito
-    $("#cdlcremp", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
+    $("#cdlcremp", "#frmNovaProp").bind('keydown', function (e) {
 
     	if($(this).val() == "0") //PRJ - 438 - Bruno - zero
     		$(this).val("");
@@ -11736,7 +11736,7 @@ function controlaNavegacaoCamposNovaProposta(){
     });
 
     // Campo Finalidade
-    $("#cdfinemp", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
+    $("#cdfinemp", "#frmNovaProp").bind('keydown', function (e) {
 
     	if($(this).val() == "0") //prj - 438 - bruno - zero
     		$(this).val("");
