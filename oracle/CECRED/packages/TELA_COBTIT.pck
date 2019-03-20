@@ -7853,7 +7853,7 @@ create or replace package body cecred.TELA_COBTIT is
                           rw_crapcob.cdcartei || ';' ||
                           rw_crapcob.nrdconta_cob || ';' ||
                           rw_crapcob.nrinssac || ';' ||
-                          rw_crapcob.nrdocmto || ';' ||
+                          rw_crapcob.nrctremp || ';' ||
                           rw_craptdb.nrdocmto || ';' ||
                           'DM' || '|' || CHR(13));
           

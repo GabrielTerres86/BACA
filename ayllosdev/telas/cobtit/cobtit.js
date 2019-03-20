@@ -919,6 +919,8 @@ function exibeValorPrejuizo(tipo) {
         var vltotal  = converteMoedaFloat($('#vlrpgto1', '#divTitulos').val());
         var vldescto = converteMoedaFloat($('#vldescto', '#divTitulos').val());
         var descprej = converteMoedaFloat($('#descprej', '#divTitulos').val());
+        var vlacordo = converteMoedaFloat($('#vlacordo', '#divTitulos').val());
+        vltotal = vltotal - vlacordo;
         if (vldescto <= descprej) {
             totpagto = vltotal - ((vltotal * vldescto) / 100);
         } else {
