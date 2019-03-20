@@ -165,7 +165,7 @@
 			<label for="vlemprst"><? echo utf8ToHtml('Valor do Empréstimo:') ?></label>
 			<input name="vlemprst" id="vlemprst" type="text" value="" />
 
-			<label for="idquapro"><? echo utf8ToHtml('Qualificação da Opereração:') ?></label>
+			<label for="idquapro"><? echo utf8ToHtml('Qualificação da Operação:') ?></label>
 			<input name="idquapro" id="idquapro" type="text" value="" />
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 			<input name="dsquapro" id="dsquapro" type="text" value="" />
