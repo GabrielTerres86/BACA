@@ -609,6 +609,7 @@
 				// PRJ 438
 				arrayInterv<? echo $i; ?>['inpessoa'] = '<? echo getByTagName($intervs[$i]->tags,'inpessoa'); ?>';
 				arrayInterv<? echo $i; ?>['nrctacjg'] = '<? echo getByTagName($intervs[$i]->tags,'nrctacjg'); ?>';
+				arrayInterv<? echo $i; ?>['dtnascto'] = '<? echo getByTagName($intervs[$i]->tags,'dtnascto'); ?>';
 				
 				arrayIntervs[<? echo $i; ?>] = arrayInterv<? echo $i; ?>;
 				
