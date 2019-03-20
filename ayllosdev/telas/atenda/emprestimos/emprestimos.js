@@ -5181,13 +5181,13 @@ function attArray(novaOp, cdcooper) {
         arrayIntervs[atual]['cdnacion'] = $('#cdnacion', '#frmIntevAnuente').val();
         arrayIntervs[atual]['dsnacion'] = $('#dsnacion', '#frmIntevAnuente').val();
         arrayIntervs[atual]['tpdocava'] = $('#tpdocava', '#frmIntevAnuente').val();
-        arrayIntervs[atual]['nmconjug'] = $('#nmconjug', '#frmIntevAnuente').val();
+        arrayIntervs[atual]['nmconjug'] = $('#nmconjug', '#frmIntevAnuente').val().toUpperCase();
         arrayIntervs[atual]['tpdoccjg'] = $('#tpdoccjg', '#frmIntevAnuente').val();
         arrayIntervs[atual]['dsendre1'] = $('#dsendre1', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrfonres'] = $('#nrfonres', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nmcidade'] = $('#nmcidade', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrcepend'] = $('#nrcepend', '#frmIntevAnuente').val();
-        arrayIntervs[atual]['nmdavali'] = $('#nmdavali', '#frmIntevAnuente').val();
+        arrayIntervs[atual]['nmdavali'] = $('#nmdavali', '#frmIntevAnuente').val().toUpperCase();
         arrayIntervs[atual]['nrcpfcgc'] = $('#nrcpfcgc', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrdocava'] = $('#nrdocava', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrcpfcjg'] = $('#nrcpfcjg', '#frmIntevAnuente').val();
@@ -12426,7 +12426,6 @@ function controlaCamposTelaInterveniente(cooperado){
 
     //bruno - prj 438 - 14962
     //if(operacao == 'C_INTEV_ANU'){ 
-        debugger;
         if($('#nrctaava', '#frmIntevAnuente').val() == '0' || $('#nrctaava', '#frmIntevAnuente').val() == ''){
             $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').show();
 		    $('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').show();
