@@ -105,9 +105,7 @@ DEF TEMP-TABLE tt-cabec-limcredito NO-UNDO
     FIELD tprenova LIKE craplim.tprenova
     FIELD dstprenv AS CHAR
     FIELD dslimpro AS CHAR
-    FIELD idcobope AS INTE
-	FIELD dsdtxfix AS CHAR /* PRJ 438 - Sprint 7 - Retornar a taxa da linha de credito */
-	FIELD nivrisco AS CHAR.
+    FIELD idcobope AS INTE.
 
 
 DEF TEMP-TABLE tt-ultimas-alteracoes NO-UNDO
@@ -132,10 +130,7 @@ DEF TEMP-TABLE tt-proposta-limcredito NO-UNDO
     FIELD nrperger LIKE craplim.nrperger
     FIELD nrcpfcjg AS DECI 
     FIELD nrctacje AS INTE
-    FIELD dtconbir AS DATE
-    FIELD dsdtxfix AS CHAR /* PRJ 438 - Sprint 7 - Retornar a taxa da linha de credito */
-	FIELD nivrisco AS CHAR
-	FIELD inconcje AS INTE.
+    FIELD dtconbir AS DATE.
 
 DEF TEMP-TABLE tt-dados-ctr NO-UNDO
     FIELD nmextcop AS CHAR
