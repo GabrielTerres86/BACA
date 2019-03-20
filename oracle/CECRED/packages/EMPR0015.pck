@@ -2241,7 +2241,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
        FETCH cr_crawepr INTO r_crawepr;
         if cr_crawepr%notfound then
           close cr_crawepr;
-           vr_dscritic := 'Contrato[ '||pr_nrctremp||' ] nao encontrado para validar Regras gerais.';
+		     vr_dscritic := 'Nao foi possivel incluir proposta. Tente novamente!';
+           --vr_dscritic := 'Contrato[ '||pr_nrctremp||' ] nao encontrado para validar Regras gerais.';
            raise vr_exc_erro;    
         end if;
       CLOSE cr_crawepr;
