@@ -552,7 +552,11 @@ function controlaOperacao(operacao) {
 	var tpfinali       = $("#divEmpres table tr.corSelecao").find("input[id='tpfinali']").val();
 	var cdoperad       = $("#divEmpres table tr.corSelecao").find("input[id='cdoperad']").val();
 
-	insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val(); //bug 14667
+    //bug 14667		
+	if (operacao == "IMP") {
+	    insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
+	    inobriga = $("#divEmpres table tr.corSelecao").find("input[id='inobriga']").val();
+	}
 
 	if(tpfinali == 3 && cdoperad=='AUTOCDC'){
 		// botao Registrar GRV

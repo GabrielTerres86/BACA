@@ -118,11 +118,6 @@ function verificaImpressao(par_idimpres){
 
 	idimpres = par_idimpres;
 
-    //bug 14667
-    if (aux_inobriga_rating != inobriga) {
-        inobriga = aux_inobriga_rating;
-    }
-
     //bug 14667 - não permitir imprimir se decisão com erro ou não analisada.
     if ((idimpres == 3 || idimpres == 5 || idimpres == 7) && inobriga == 'S' && (insitapr == 6 || insitapr == 0)) {
 		showError('error','An&aacute;lise de Cr&eacute;dito ainda n&atilde;o foi efetuada! N&atilde;o ser&aacute; poss&iacute;vel gerar \'Proposta\', \'Rating\' ou \'Consultas\'!','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
