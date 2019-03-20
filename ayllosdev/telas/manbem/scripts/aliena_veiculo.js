@@ -240,7 +240,7 @@ function SubstituiBem( operacao ) {
     //PRJ - 438 - Bruno
     var nrnotanf = $('#nrnotanf', '#frmTipo').val();
     var dsmarceq = $('#dsmarceq', '#frmTipo').val();
-    if($('#dscatbem', '#frmTipo').val() == "MAUQINA E EQUIPAMENTO"){
+    if($('#dscatbem', '#frmTipo').val() == "MAQUINA E EQUIPAMENTO"){
     	dsmarbem = $('#dsmarbemE', "#frmTipo").val().toUpperCase();
     	dsbemfin = $('#dsbemfinE', "#frmTipo").val().toUpperCase();
     	dschassi = $('#dschassiE', "#frmTipo").val().toUpperCase();
