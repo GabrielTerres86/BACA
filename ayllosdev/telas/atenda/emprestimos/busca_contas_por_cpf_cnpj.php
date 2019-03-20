@@ -20,6 +20,10 @@ $nrcpfcgc       = (isset($_POST['nrcpfcgc']))       ? $_POST['nrcpfcgc']       :
 $nomeCampoConta = (isset($_POST['nomeCampoConta'])) ? $_POST['nomeCampoConta'] : '';
 $nomeForm       = (isset($_POST['nomeForm']))       ? $_POST['nomeForm']       : '';
 
+//bruno - prj 438 - bug 14962
+$campoFoco       = (isset($_POST['campoFoco']))       ? $_POST['campoFoco']       : array('campo' => '','form' => '');
+$stringObjCampoFoco = "{campo: '".$campoFoco['campo']."',form:'".$campoFoco['form']."'}";
+
 $xml  = '';
 $xml .= '<Root>';
 $xml .= '   <Dados>';
@@ -47,6 +51,7 @@ if (count($contas) == 1) {
     $conta = formataContaDV(getByTagName($contas[0]->tags,'nrdconta'));
     echo "$('#". $nomeCampoConta. "','#". $nomeForm. "').val(\"$conta\");";
     echo "$('#". $nomeCampoConta. "','#". $nomeForm. "').trigger('keydown',{keyCode: 13});";
+    echo "focaCampo(".$stringObjCampoFoco.");"; //bruno - prj 438 - bug 14962
     exit;
 }
 

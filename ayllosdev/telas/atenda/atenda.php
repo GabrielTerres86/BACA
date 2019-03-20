@@ -108,7 +108,7 @@ setVarSession("rotinasTela", $rotinasTela);
         <script type="text/javascript" src="../../scripts/funcoes.js?keyrand=<?php echo mt_rand(); ?>"></script>
         <script type="text/javascript" src="../../scripts/mascara.js"></script>
         <script type="text/javascript" src="../../scripts/menu.js?keyrand=<?php echo mt_rand(); ?>"></script>
-        <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
+        <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js?keyrand=<?php echo mt_rand(); ?>"></script> <!-- prj 438 - bruno - BUG 17929 -->
         <script type="text/javascript" src="../../scripts/ui/jquery.ui.core.js"></script>
         <script type="text/javascript" src="../../scripts/ui/jquery.ui.datepicker.js"></script>
         <script type="text/javascript" src="../../scripts/ui/i18n/jquery.ui.datepicker-pt-BR.js"></script>

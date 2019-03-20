@@ -4293,11 +4293,22 @@ function controlaLayout(operacao) {
                     showError('error', 'CPF inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#nrcpfcjg","#frmDadosAval").focus();bloqueiaFundo(divRotina);');
                     return false;
                 } else {
-
-                    buscarContasPorCpfCnpj('interv-cje');
-
+                        buscarContasPorCpfCnpj('interv-cje',{campo: 'nrcepend', form: nomeForm});
+                    }
                 }
+            }
+        });
 
+        //Bruno - prj 438 - bug 14962
+        cCPF_1.unbind('change').bind('change',function(){
+            nrcpfcgc = normalizaNumero(cCPF_1.val());
+            if (nrcpfcgc != 0) {
+                // Valida o CPF
+                if (!validaCpfCnpj(nrcpfcgc, 1)) {
+                    showError('error', 'CPF inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#nrcpfcjg","#frmDadosAval").focus();bloqueiaFundo(divRotina);');
+                    return false;
+                } else {
+                    buscarContasPorCpfCnpj('interv-cje',{campo: 'nrcepend', form: nomeForm});
             }
             }
         });
@@ -9845,7 +9856,9 @@ function controlaPesquisas() {
                     filtros = 'C&oacuted. Linha Cr&eacutedito;cdlcremp;30px;S;0|Descri&ccedil&atildeo;dslcremp;200px;S|;' + null + ';;N;;N|;' + null + ';;N;;N|;' + null + ';;N;;N|;cdfinemp;;;' + varFin + ';N|;cdmodali;;;' + varMod + ';N|;flgstlcr;;;yes;N|;tpprodut;;;' + varTip + ';N';
                     colunas = 'C&oacutedigo;cdlcremp;15%;right|Linha de Cr&eacutedito;dslcremp;40%;left|Taxa;txbaspre;10%;right|Prest. Max.;nrfimpre;10%;right|Garantia;dsgarant;25%;left';
 
-                    mostraPesquisa(bo, procedure, titulo, qtReg, filtros, colunas, divRotina);
+                    //prj 438 - bruno - BUG 17929
+                    var nada; //Mandar 'nada' para validações na rotina em pesquisa.js
+                    mostraPesquisa(bo, procedure, titulo, qtReg, filtros, colunas, divRotina,nada,nada,nada,'cdfinemp|frmNovaProp');
 
                     return false;
                 } else if (campoAnterior == 'nrgarope') {
@@ -12183,7 +12196,22 @@ function controlaEventoCamposTelaAvalista(){
 
 }
 
-function buscarContasPorCpfCnpj(tipoConsulta){
+/**
+ * Bruno - prj 438 - bug 14962
+ * @param {string} tipoConsulta Tipo da consulta (swith) 
+ * @param {object} campoFoco Configuração de campo para focar após busca
+ * @param {stirng} campoFoco.campo Campo a enviar o foco
+ * @param {string} campoFoco.form Formulario onde está inserido o campo 
+ */
+function buscarContasPorCpfCnpj(tipoConsulta, campoFoco){
+
+    //bruno - prj 438 - bug 14962
+    if(typeof campoFoco == "undefined"){
+        campoFoco = {
+            campo: "",
+            form: ""
+        };
+    }
 
 	switch (tipoConsulta) {
 		case 'aval':
@@ -12220,6 +12248,7 @@ function buscarContasPorCpfCnpj(tipoConsulta){
         	nomeCampoConta: nomeCampoConta,
         	nomeForm: nomeForm,
             nrcpfcgc: nrcpfcgc,
+            campoFoco: campoFoco, //bruno - prj 438 - bug 14962
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -12230,6 +12259,8 @@ function buscarContasPorCpfCnpj(tipoConsulta){
             try {
             	//bruno - prj 438 - bug 13500
             	zeraCamposDadosConjugeAvalista();
+                //bruno - prj 438 - bug 14962
+                zeraCamposDadosConjugeInterveniente();
                 if (response.indexOf('showError("error"') == -1) {
                 	hideMsgAguardo();
                 	// Se o response retornou vazio, ou seja, nenhuma conta, permitir digitação na tela
@@ -12258,7 +12289,9 @@ function buscarContasPorCpfCnpj(tipoConsulta){
                         }
 
                     	eval(response);
-                    	$('#' + nomeCampoConta, '#' + nomeForm).trigger('change');
+                        if(tipoConsulta != "interv-cje"){ //bruno - prj 438 - bug 14962
+                    	     $('#' + nomeCampoConta, '#' + nomeForm).trigger('change');
+                	    }
                 	}
                 } else {
                     hideMsgAguardo();
@@ -12293,7 +12326,15 @@ function controlaLayoutContas(){
     exibeRotina($('#divUsoGenerico'));
 }
 
-function confirmarConta(nomeCampoConta, nomeForm){
+/**
+ * bruno - prj 438 - bug 14962
+ * @param {string} nomeCampoConta 
+ * @param {string} nomeForm 
+ * @param {object} campoFoco Configuração de campo para focar após busca |
+ * @param {stirng} campoFoco.campo Campo a enviar o foco |
+ * @param {string} campoFoco.form Formulario onde está inserido o campo 
+ */
+function confirmarConta(nomeCampoConta, nomeForm, campoFoco){
 	
 	var nrdconta = $("#divTabelaContasPorCpfCnpj table tr.corSelecao").find("input[id='nrdconta']").val();
 
@@ -12302,9 +12343,10 @@ function confirmarConta(nomeCampoConta, nomeForm){
     //prj 438 - bruno - bug 13951
 	//$('#' + nomeCampoConta, '#' + nomeForm).trigger('change');
     $('#' + nomeCampoConta, '#' + nomeForm).trigger('keydown',{keyCode: 13});
-
 	$('#divUsoGenerico').html('');
 
+    //bruno - prj 438 - bug 14962
+    focaCampo(campoFoco);
 }
 
 function controlaCamposTelaInterveniente(cooperado){
@@ -12790,6 +12832,18 @@ function zeraCamposDadosConjugeAvalista(){
 
 }
 
+
+/*
+    Autor: Bruno Luiz Katzjarowski
+    Data: 22/02/2019
+    bruno - prj 438 - bug 14962
+*/
+function zeraCamposDadosConjugeInterveniente(){
+	$('#nmconjug', '#frmIntevAnuente').val("");
+	$('#nrctacjg', '#frmIntevAnuente').val("");
+	$('#vlrencjg', '#frmIntevAnuente').val("");
+}
+
 /** 
  * Autor: Bruno Luiz Katzjarowski
  * Data: 16/01/2019
@@ -12807,4 +12861,14 @@ function restaurarBotoesTelaInicial(verificar){
         $('#btSalvar', '#divBotoes').attr('onClick',aux_botoesTelaInicial.btSalvarOnclick);
         $('#btGravaPropostaCompleta', '#divBotoes').attr('onClick',aux_botoesTelaInicial.btGravarOnclick);
     }
+}
+
+/**
+ * bruno - prj 438 - bug 14962
+ * @param {object} campo Configuração de campo para focar após busca
+ * @param {stirng} campo.campo Campo a enviar o foco
+ * @param {string} campo.form Formulario onde está inserido o campo 
+ */
+function focaCampo(campo){
+    $('#'+campo.campo,'#'+campo.form).focus();
 }
