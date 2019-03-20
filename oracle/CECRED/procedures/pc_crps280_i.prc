@@ -379,6 +379,10 @@ BEGIN
 
                  29/10/2018 - P450 - Remoção de bloco do calculo de Risco da Melhora - 6 meses e remoção de 
                               variaveis e chamadas relativas ao relatório 552 (Douglas Pagel/AMcom)
+							  
+				 29/01/2019 - Projeto Demanda Regulatoria (Contabilidade) - Alteracao em numeracao de contas,
+				              gerar arquivo de compensacao microcredito apenas para as filiadas.
+							  Heitor (Mouts)
 
   ............................................................................. */
 
@@ -639,8 +643,8 @@ BEGIN
               ,rel1731_1_v    NUMBER(14,2) DEFAULT 0  -- Financiamentos Pessoais [Divida(S/Prejuizo)]
               ,rel1731_2      NUMBER(14,2) DEFAULT 0  -- Financiamentos Empresas [Provisao]
               ,rel1731_2_v    NUMBER(14,2) DEFAULT 0  -- Financiamentos Empresas [Divida(S/Prejuizo)]
-              ,rel1721        NUMBER(14,2) DEFAULT 0  -- Emprestimos Pessoais [Provisao]
-              ,rel1721_v      NUMBER(14,2) DEFAULT 0  -- Emprestimos Pessoais [Divida(S/Prejuizo)]
+              ,rel5584        NUMBER(14,2) DEFAULT 0  -- Emprestimos Pessoais [Provisao]
+              ,rel5584_v      NUMBER(14,2) DEFAULT 0  -- Emprestimos Pessoais [Divida(S/Prejuizo)]
               ,rel1723        NUMBER(14,2) DEFAULT 0  -- Emprestimos Empresas [Provisao]
               ,rel1723_v      NUMBER(14,2) DEFAULT 0  -- Emprestimos Empresas [Divida(S/Prejuizo)]
               ,rel1724_c      NUMBER(14,2) DEFAULT 0  -- Cheques Descontados [Provisao]
@@ -818,7 +822,7 @@ BEGIN
          AND tco.tpctatrf <> 3
          AND tco.cdagenci = decode(pr_cdagenci, 0, tco.cdagenci, pr_cdagenci); -- Ligeirinho.
 
-    CURSOR cr_craptco_credimilsul_scrcred IS
+    CURSOR cr_craptco_credimilsul_civia IS /*Alteração scrcred civia - Paulo Martins - Mouts*/
       SELECT tco.nrdconta
         FROM craptco tco
        WHERE tco.cdcooper = pr_cdcooper
@@ -1701,7 +1705,7 @@ BEGIN
             vr_setlinha := fn_set_cabecalho('20'
                                            ,pr_rw_crapdat.dtmvtolt
                                            ,pr_rw_crapdat.dtmvtolt
-                                           ,5589
+                                           ,1722
                                            ,1435
                                            ,vr_tot_prvperdafiname
                                            ,'"AJUSTE CONTABIL – PROVISAO BNDES FINAME"');
@@ -1719,7 +1723,7 @@ BEGIN
                                            ,pr_rw_crapdat.dtmvtopr
                                            ,pr_rw_crapdat.dtmvtopr
                                            ,1435
-                                           ,5589
+                                           ,1722
                                            ,vr_tot_prvperdafiname
                                            ,'"REVERSAO AJUSTE CONTABIL – PROVISAO BNDES FINAME"');
 
@@ -1992,7 +1996,7 @@ BEGIN
                vr_setlinha := fn_set_cabecalho('20'
                                               ,pr_rw_crapdat.dtmvtolt
                                               ,pr_rw_crapdat.dtmvtolt
-                                              ,5595
+                                              ,1731
                                               ,vr_destino
                                               ,vr_tab_miccred_fin(vr_chave_finalidade).vlprvper
                                               ,vr_descricao);
@@ -2014,7 +2018,7 @@ BEGIN
                                               ,pr_rw_crapdat.dtmvtopr
                                               ,pr_rw_crapdat.dtmvtopr
                                               ,vr_origem
-                                              ,5595
+                                              ,1731
                                               ,vr_tab_miccred_fin(vr_chave_finalidade).vlprvper
                                               ,replace(vr_descricao,'PROVISAO','REVERSAO'));
 
@@ -3533,7 +3537,7 @@ BEGIN
 				-- Incorporação da Credimil >> SCR
 		  ELSIF pr_cdcooper = 13 AND pr_dtrefere <= TO_DATE('30/11/2014', 'DD/MM/RRRR') THEN
 				-- Vindas da Credimil
-				FOR regs IN cr_craptco_credimilsul_scrcred LOOP
+				FOR regs IN cr_craptco_credimilsul_civia LOOP
 					vr_tab_craptco(regs.nrdconta) := regs.nrdconta;
 				END LOOP;
 			END IF;
@@ -4240,8 +4244,8 @@ BEGIN
               -- Gravar Emprestimos conforme o tipo de pessoa
               IF vr_tab_crapris(vr_des_chave_crapris).inpessoa = 1 THEN
                 -- Gravar campos
-                vr_vet_contabi.rel1721   := vr_vet_contabi.rel1721 + vr_vlpreatr;
-                vr_vet_contabi.rel1721_v := vr_vet_contabi.rel1721_v + vr_vldivida;
+                vr_vet_contabi.rel5584   := vr_vet_contabi.rel5584 + vr_vlpreatr;
+                vr_vet_contabi.rel5584_v := vr_vet_contabi.rel5584_v + vr_vldivida;
 
                 -- Gravar inf de emprestimos por coluna separando por tipo de pessoa
                 vr_tab_contab(vr_vlempres_pf)(vr_provis)(1).vlempres_pf := vr_tab_contab(vr_vlempres_pf)(vr_provis)(1).vlempres_pf + vr_vlpreatr;
@@ -5174,18 +5178,18 @@ BEGIN
           IF pr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
           END IF;
-          --
+
           --Gera arquivo de operação de finame
           pc_gera_arq_finame(pr_dscritic);
 
           IF pr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
           END IF;
-        END IF;
-        --
+        ELSE
+          --Gerar somente para as filiadas
         --Gera arquivo de compensação de microcredito
         pc_gera_arq_compe_mic(pr_dscritic);
-        --
+        END IF;
       END IF;
 
       -- Agora iremos enviar o PAC 99 como totalizador das informações
@@ -5323,8 +5327,8 @@ BEGIN
 
       pc_cria_node_contab(pr_des_xml    => vr_des_xml_gene
                          ,pr_des_contab => 'Emprestimos Pessoais'
-                         ,pr_num_valor1 => vr_vet_contabi.rel1721
-                         ,pr_num_valor2 => vr_vet_contabi.rel1721_v
+                         ,pr_num_valor1 => vr_vet_contabi.rel5584
+                         ,pr_num_valor2 => vr_vet_contabi.rel5584_v
                          ,pr_num_vlpvpf => vr_tab_contab(vr_vlempres_pf)(vr_provis)(1).vlempres_pf
                          ,pr_num_vlprpj => vr_tab_contab(vr_vlempres_pf)(vr_provis)(2).vlempres_pf
                          ,pr_num_vldvpf => vr_tab_contab(vr_vlempres_pf)(vr_divida)(1).vlempres_pf

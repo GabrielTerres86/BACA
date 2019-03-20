@@ -329,13 +329,13 @@ BEGIN
             --> montar linhas detalhes
             vr_dsdlinha := '999,'|| 
                            to_char(vr_vltotali,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''')||
-                           chr(10);
+                         chr(10);
 
             --> inserir linha de reversao
             pc_escreve_linha(pr_dsdlinha => vr_dsdlinha,
                              pr_flrevers => TRUE);
-          END IF;
-          
+        END IF;
+        
           --> montar linhas detalhes
           vr_dsdlinha := to_char(rw_crapris.cdagenci,'fm000')||','|| 
                          to_char(rw_crapris.vltotdiv,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''')||
@@ -356,8 +356,8 @@ BEGIN
                            chr(10);
           
             pc_escreve_linha(pr_dsdlinha => vr_dsdlinha,
-                             pr_fechaarq => TRUE);  --> descarregar buffer
-          END IF;
+                           pr_fechaarq => TRUE);  --> descarregar buffer
+        END IF;
         END IF;
       
       END LOOP;
