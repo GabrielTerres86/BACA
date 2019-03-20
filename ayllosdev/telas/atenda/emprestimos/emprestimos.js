@@ -12076,7 +12076,7 @@ function controlaCamposTelaAvalista(cooperado){
 	var inpessoa = $('#inpessoa', '#frmDadosAval').val();
 
 	if(cooperado == null){
-		var nrctaava = $('#inpessoa', '#frmDadosAval').val();
+		var nrctaava = $('#nrctaava', '#frmDadosAval').val();
 		if(nrctaava == 0){
 			var cooperado = false;
 		} else {
@@ -12361,7 +12361,7 @@ function controlaCamposTelaInterveniente(cooperado){
     }
 
 	if(cooperado == null){
-		var nrctaava = $('#inpessoa', '#frmDadosAval').val();
+		var nrctaava = $('#nrctaava', '#frmIntevAnuente').val();
 		if(nrctaava == 0){
 			var cooperado = false;
 		} else {
