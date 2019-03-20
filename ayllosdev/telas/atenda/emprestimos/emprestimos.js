@@ -10131,16 +10131,14 @@ function controlaPesquisas() {
 		buscaDescricao('ZOOM0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,'frmDadosAval'); 
     });
     
-    //bruno - prj 438 - bug 13977
-    $('#cdnacion','#frmIntevAnuente').unbind('keypress').bind('keypress',function(e){
-        if(e.keyCode == __BOTAO_ENTER || e.keyCode == __BOTAO_TAB){
-            procedure	= 'BUSCANACIONALIDADES';
-            titulo      = ' Nacionalidade';
-            filtrosDesc = '';
-            buscaDescricao('ZOOM0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,'frmIntevAnuente'); 
-        }
+    //bruno - prj 438 - bug 13977 e 17972
+    $('#cdnacion', '#frmIntevAnuente').unbind('blur').bind('blur', function (e) {
+        procedure = 'BUSCANACIONALIDADES';
+        titulo = ' Nacionalidade';
+        filtrosDesc = '';
+        buscaDescricao('ZOOM0001', procedure, titulo, $(this).attr('name'), 'dsnacion', $(this).val(), 'dsnacion', filtrosDesc, 'frmIntevAnuente');
     });
-    
+
 
     $('#nrcepend', '#' + nomeForm).buscaCEP(nomeForm, camposOrigem, divRotina);
 
