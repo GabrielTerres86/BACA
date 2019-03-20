@@ -368,7 +368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
       EXCEPTION
          WHEN OTHERS THEN
             vr_dscritic := 'Erro ao alterar a situacao da conta para prejuizo: ' || SQLERRM;
-         RAISE vr_erro_transfprej;
+         RAISE vr_exc_erro;
       END;
       -- fim update de substituição
 
