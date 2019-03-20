@@ -6886,7 +6886,7 @@ function validaAlienacao(nmfuncao, operacao) {
 	      return false;
 	    }	
 		if (nrmodbem == ""){
-		  showError('error', 'O campo Ano Fabric&ccedil;&atilde;o &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'dsmarbem\',\'frmTipo\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
+		  showError('error', 'O campo Ano Fabrica&ccedil;&atilde;o &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'dsmarbem\',\'frmTipo\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
 	      return false;
 	    }	
 
