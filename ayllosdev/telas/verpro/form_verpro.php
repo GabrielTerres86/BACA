@@ -23,7 +23,7 @@
  * 014: [29/05/2017] - Ajuste para apresentar valores corretamente - Adriano SD 679022.
  * 015: [05/09/2017] - Alteração referente ao Projeto Assinatura conjunta (Proj 397)
  * 016: [03/01/2018] - Alteração para tratar os tipos 24-FGTS e 23-DAE (Proj 406).
-
+ * 017: [19/03/2019] - Alterado o id do protocolo de desconto de titulo do 22 para o 32 (Paulo Penteado GFT)
  */
 
 session_start();
@@ -520,7 +520,7 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 												
 												<?}?>
                                                 
-                                                <?php if($cdtippro == 22){?>
+                                                <?php if($cdtippro == 32){?>
                                                     
                                                     <label for="nrborder"><? echo utf8ToHtml('Nr. do Borderô:') ?></label>
                                                     <input name="nrborder" id="nrborder" type="text" value="<? echo $nrdocmto ?>" />

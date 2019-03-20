@@ -17,6 +17,7 @@
  * 010: 23/03/2017 - Alterações referente a recarga de celular. (PRJ321 - Reinert)
  * 011: 02/01/2018 - Alterações referente a inclusão das opções 24 - FGTS e 23 - DAE.
  * 011: 26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
+ * 013: 19/03/2019 - Alterado o id do protocolo de desconto de titulo do 22 para o 32 (Paulo Penteado GFT)
  * --------------
  */
 
@@ -1400,7 +1401,7 @@ function formataVerpro() {
 		rDsprotoc.css({'display': 'block'});
 		cDsprotoc.css({'display': 'block'});
     // Desconto de títulos
-    } else if (cdtippro == '22'){
+    } else if (cdtippro == '32'){
         // Esconder Labels
         rNmprepos.css({'display': 'none'});
         rDsdbanco.css({'display': 'none'});

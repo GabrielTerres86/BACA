@@ -2872,6 +2872,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                  09/01/2018 - Incluido tratamento para FGTS e DAE - PRJ406.
                  
                  04/10/2018 - Impressão do Borderô (Vitor S Assanuma - GFT)
+
+                 19/03/2019 - Alterado o id do protocolo de desconto de titulo do 22 para o 32 (Paulo Penteado GFT)
     ..............................................................................*/ 
     -- CURSORES
     -- Buscar as informações da cooperativa
@@ -3188,7 +3190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                            ,pr_nmrescop => rw_crapcop.nmrescop
                            ,pr_cdbcoctl => rw_crapcop.cdbcoctl
                            ,pr_cdagectl => rw_crapcop.cdagectl);      
-    ELSIF rw_xmldata.cdtippro IN (22) THEN --BORDERO
+    ELSIF rw_xmldata.cdtippro IN (32) THEN --BORDERO
       -- Guardar o nome da rotina chamada para exibir em caso de erro
       vr_nmrotina := 'PC_IMPRESSAO_BORDERO';
 													 

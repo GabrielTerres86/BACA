@@ -1274,6 +1274,7 @@ PROCEDURE pc_criar_bordero_dscto_tit(pr_cdcooper          IN crapcop.cdcooper%TY
 
     Alteração : 18/05/2018 - Criação (Paulo Penteado (GFT))
                 10/10/2018 - Ajuste para mensagem de estouro do parametro da TAB052 (Andrew Albuquerque - GFT)
+                19/03/2019 - Alterado o id do protocolo de desconto de titulo do 22 para o 32 (Paulo Penteado GFT)
 
   ---------------------------------------------------------------------------------------------------------------------*/
   vr_tab_borderos tela_atenda_dscto_tit.typ_tab_borderos;
@@ -1406,7 +1407,7 @@ BEGIN
                             ,pr_vllanmto => vr_vltitulo                         --> Valor lançamento
                             ,pr_nrdcaixa => 900                                 --> Número do caixa
                             ,pr_gravapro => TRUE                                --> Controle de gravação
-                            ,pr_cdtippro => 22                                  --> Código de operação
+                            ,pr_cdtippro => 32                                  --> Código de operação
                             ,pr_dsinfor1 => 'Desconto de Titulo'                --> Descrição 1
                             ,pr_dsinfor2 => vr_qttitulo                         --> Descrição 2
                             ,pr_dsinfor3 => NULL                                --> Descrição 3
