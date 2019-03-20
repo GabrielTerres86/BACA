@@ -7785,9 +7785,30 @@ PROCEDURE grava-proposta-completa:
 
       IF aux_idpeapro = 1 THEN
       DO:
+        /* Verificar se a Esteira esta em contigencia para a cooperativa*/
+              { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+          RUN STORED-PROCEDURE pc_param_sistema aux_handproc = PROC-HANDLE
+             (INPUT "CRED",           /* pr_nmsistem */
+              INPUT par_cdcooper,     /* pr_cdcooper */
+              INPUT "CONTIGENCIA_ESTEIRA_IBRA",  /* pr_cdacesso */
+              OUTPUT ""               /* pr_dsvlrprm */
+              ).
+
+          CLOSE STORED-PROCEDURE pc_param_sistema WHERE PROC-HANDLE = aux_handproc.
+          { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_contigen = FALSE.
+              IF pc_param_sistema.pr_dsvlrprm = "1" then
+                 ASSIGN aux_contigen = TRUE.
+                 
         CREATE tt-msg-confirma.
         ASSIGN tt-msg-confirma.inconfir = 1
-               tt-msg-confirma.dsmensag = "Essa proposta deve ser " + " enviada para Analise de Credito".
+               tt-msg-confirma.dsmensag =  IF aux_contigen THEN
+                                           "Essa proposta deve ser" +
+                                           " aprovada na tela CMAPRV"
+                                           ELSE 
+                                           "Essa proposta deve ser" +
+                                           " enviada para Analise de Credito".
       END.
         
       /*Para inclusão, caso a proposta não esteja aprovada no final, deve apresentar a mensagem -- PRJ438*/
@@ -14834,9 +14855,12 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                  INPUT "Contas Avalista 1",
                                    INPUT crawepr.nrctaav1,
                                    INPUT par_nrctaava).
+          ASSIGN aux_avlalter = TRUE.
       END.
         ELSE /*Casos onde são contas de cooperados*/
       DO:
+          IF crawepr.nrctaav1 <> par_nrctaava THEN
+          DO:
         RUN proc_gerar_log (INPUT par_cdcooper,
                             INPUT par_cdoperad,
                             INPUT "",
@@ -14852,9 +14876,17 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                      INPUT "Avalista 1",
                                      INPUT crawepr.nrctaav1,
                                      INPUT par_nrctaava).        
-        END.
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "Nomes Avalista 1",
+                                     INPUT crawepr.nmdaval1,
+                                     INPUT ENCODE(par_nmdaval1)).
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "Nomes Avalista 99",
+                                     INPUT ENCODE(crawepr.nmdaval1),
+                                     INPUT ENCODE(par_nmdaval1)).
            ASSIGN aux_avlalter = TRUE.
-      
+          END.
+        END.
         END.
       
       /*Se houve alteracao do segundo avalista*/
@@ -14884,8 +14916,11 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                      INPUT "Contas Avalista 2",
                                      INPUT crawepr.nrctaav2,
                                      INPUT par_nrctaav2).                                     
+          ASSIGN aux_avlalter = TRUE.
       END.
         ELSE
+        DO:
+          IF crawepr.nrctaav2 <> par_nrctaav2 THEN
           DO:
             RUN proc_gerar_log (INPUT par_cdcooper,
                                 INPUT par_cdoperad,
@@ -14902,10 +14937,9 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                      INPUT "Avalista 2",
                                      INPUT crawepr.nrctaav2,
                                      INPUT par_nrctaav2).
-      END.
-      
         ASSIGN aux_avlalter = TRUE.
-      
+          END.
+        END.
         END.
         
 			IF aux_avlalter THEN

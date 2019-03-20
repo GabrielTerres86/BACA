@@ -598,13 +598,7 @@ PROCEDURE obtem-cabecalho-limite:
                                                   ELSE
                                                   IF craplim.tprenova = "M" THEN
                                                      "Manual"
-                                                  ELSE ""
-					/* PRJ 438 - Sprint 7 - Retornar a taxa da linha de credito */
-				   tt-cabec-limcredito.nivrisco = "A"
-                   tt-cabec-limcredito.dsdtxfix = IF   AVAIL craplrt   THEN
-                                                         STRING(craplrt.txjurfix) + '% + TR'
-                                                    ELSE
-                                                         "".
+                                                  ELSE "".
         END.                                  
     ELSE
         ASSIGN tt-cabec-limcredito.vllimite = 0 
@@ -624,9 +618,7 @@ PROCEDURE obtem-cabecalho-limite:
                tt-cabec-limcredito.qtrenova = 0
                tt-cabec-limcredito.dtrenova = ?
                tt-cabec-limcredito.tprenova = ""
-               tt-cabec-limcredito.dstprenv = ""
-			   tt-cabec-limcredito.nivrisco = "A"
-			   tt-cabec-limcredito.dsdtxfix = "".
+               tt-cabec-limcredito.dstprenv = "".
 
     FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
                              craplim.nrdconta = par_nrdconta AND
@@ -1918,18 +1910,10 @@ PROCEDURE obtem-limite:
                   tt-proposta-limcredito.vltotsfn = craplim.vltotsfn
                   tt-proposta-limcredito.nrperger = craplim.nrperger
                   tt-proposta-limcredito.dtconbir = craplim.dtconbir
-				  tt-proposta-limcredito.nivrisco = "A"
-				  tt-proposta-limcredito.inconcje = craplim.inconcje
                   tt-proposta-limcredito.dsdlinha = IF   AVAIL craplrt   THEN
                                                          craplrt.dsdlinha
                                                     ELSE
-                                                         ""
-                  /* PRJ 438 - Sprint 7 - Retornar a taxa da linha de credito */                                       
-                  tt-proposta-limcredito.dsdtxfix = IF   AVAIL craplrt   THEN
-                                                         STRING(craplrt.txjurfix) + '% + TR'
-                                                    ELSE
-                                                         ""
-                                                         .
+                                                         "".
        ELSE           
            ASSIGN tt-proposta-limcredito.nrctrpro = 0
                   tt-proposta-limcredito.vllimpro = 0
@@ -1941,11 +1925,7 @@ PROCEDURE obtem-limite:
                   tt-proposta-limcredito.nrliquid = 0
                   tt-proposta-limcredito.nrpatlvr = 0
                   tt-proposta-limcredito.vltotsfn = 0
-                  tt-proposta-limcredito.nrperger = 0
-                  /* PRJ 438 - Sprint 7 - Retornar a taxa da linha de credito */
-                  tt-proposta-limcredito.dsdtxfix = ""
-				  tt-proposta-limcredito.nivrisco = "A"
-				  tt-proposta-limcredito.inconcje = 0.
+                  tt-proposta-limcredito.nrperger = 0.
 
        ASSIGN aux_flgtrans = TRUE.
                       
@@ -3616,8 +3596,6 @@ PROCEDURE cadastrar-novo-limite:
     DEF  INPUT PARAM par_complen1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme1 AS DECI                           NO-UNDO.
-	/* Leonardo */
-	DEF  INPUT PARAM par_vlrecjg1 AS DECI                           NO-UNDO.
     /** ------------------- Parametros do 2 avalista ------------------- **/
     DEF  INPUT PARAM par_nrctaav2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdaval2 AS CHAR                           NO-UNDO.
@@ -3639,8 +3617,6 @@ PROCEDURE cadastrar-novo-limite:
     DEF  INPUT PARAM par_complen2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme2 AS DECI                           NO-UNDO.
-	/* Leonardo */
-	DEF  INPUT PARAM par_vlrecjg2 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_inconcje AS INTE                           NO-UNDO.   
     DEF  INPUT PARAM par_dtconbir AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_idcobope AS INTE                           NO-UNDO.
@@ -4069,7 +4045,7 @@ PROCEDURE cadastrar-novo-limite:
                                                     INPUT par_nrcxaps1,
                                                     INPUT 0,  /* inpessoa 1o avail */
                                                     INPUT ?,  /* dtnascto 1o avail */
-													INPUT par_vlrecjg1, /* par_vlrecjg1 */
+													INPUT 0, /* par_vlrecjg1 */
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -4095,7 +4071,7 @@ PROCEDURE cadastrar-novo-limite:
                                                     INPUT par_nrcxaps2,
                                                     INPUT 0,  /* inpessoa 2o avail */
                                                     INPUT ?,  /* dtnascto 2o avail */
-													INPUT par_vlrecjg2, /* par_vlrecjg2 */
+													INPUT 0, /* par_vlrecjg2 */
                                                     INPUT "",
                                                    OUTPUT TABLE tt-erro).
         
