@@ -121,6 +121,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS445 (pr_cdcooper IN crapcop.cdcooper%T
                12/02/2018 - Melhorias no programa para que possibilite a
                             execução do mesmo com paralelismo (Projeto Ligeirinho).
                             (Jonatas - AMCOM)                            
+              
+        18/03/2019 - Remover calculos de aplicações e consumir valores prontos
+                            da tabela intermediária. (Petter Rafael - Envolti) 
 ............................................................................. */
 
 /******************************************************************************
@@ -162,8 +165,18 @@ BEGIN
     TYPE typ_tab_crapsdv IS TABLE OF typ_reg_crapsdv INDEX BY PLS_INTEGER;
     vr_tab_crapsdv typ_tab_crapsdv;
 
-    -- Tipo para instanciar PL TABLE para 10000 evitando estouro no forall
+   -- Tabela para armazenar cálculo prévio para aplicações
+    TYPE typ_reg_calc_aplicacao IS 
+      RECORD(VLSALDO_BRUTO     TBCAPT_SALDO_APLICA.VLSALDO_BRUTO%TYPE
+            ,VLSALDO_CONCILIA  TBCAPT_SALDO_APLICA.VLSALDO_CONCILIA%TYPE
+            ,CDCOOPER          TBCAPT_SALDO_APLICA.CDCOOPER%TYPE
+            ,NRDCONTA          TBCAPT_SALDO_APLICA.NRDCONTA%TYPE);
+            
+    -- Instancia de tabela de cálculo prévio para aplicações
+    TYPE typ_tab_calc_aplicacao IS TABLE OF typ_reg_calc_aplicacao INDEX BY VARCHAR2(50);
+    vr_tab_calc_aplicacao typ_tab_calc_aplicacao;
 
+    -- Tipo para instanciar PL TABLE para 10000 evitando estouro no forall
     TYPE typ_reg_crapsdv2 IS
       RECORD(cdcooper crapsdv.cdcooper%TYPE
             ,nrdconta crapsdv.nrdconta%TYPE
@@ -573,7 +586,6 @@ BEGIN
         AND ass.cdagenci     = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)    
         AND crapsda.dtmvtolt = pr_dtmvtolt;
 
-
     -- Buscar dados saldo diário dos associados para atualização de valores referentes aos avlistas
     CURSOR cr_crapsda_aval(pr_cdcooper IN craptab.cdcooper%TYPE--> Código da cooperativa
                           ,pr_dtmvtolt IN crapsda.dtmvtolt%TYPE--> Data do movimento
@@ -608,7 +620,6 @@ BEGIN
         AND pla.tpdplano = 1
         AND pla.cdsitpla = 1
         AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci);
-
 
     -- Buscar dados do cadastro dos bloquetos de cobrança
     CURSOR cr_crapcob (pr_cdcooper IN crapcob.cdcooper%TYPE
@@ -659,7 +670,6 @@ BEGIN
         AND cl.nrdconta = pr_nrctaavd
         AND cv.dtmvtolt = pr_dtmvtolt;
 
-
     -- Buscar dados de emprestimos
     CURSOR cr_crapepre(pr_cdcooper IN craptab.cdcooper%TYPE         --> Código da cooperativa
                       ,pr_nrdconta IN crapsdv.nrdconta%TYPE         --> Número da conta
@@ -693,6 +703,19 @@ BEGIN
         AND crapneg.dtiniest >= pr_dtmvtolt - 180 /* Ultimos 6 meses */
       GROUP BY crapneg.nrdconta;
 
+   -- Buscar cálculo prévio de aplicações
+    CURSOR CR_TBCAPT_SALDO_APLICA(pr_cooper IN TBCAPT_SALDO_APLICA.cdcooper%TYPE) IS
+      SELECT LPAD(CDCOOPER, 5, '0') CDCOOPER_IDX
+            ,TO_CHAR(DTMVTOLT, 'DDMMRRRR') DTMVTOLT_IDX
+            ,LPAD(NRDCONTA, 10, '0') NRDCONTA_IDX
+            ,LPAD(NRAPLICA, 10, '0') NRAPLICA_IDX
+            ,VLSALDO_BRUTO
+            ,VLSALDO_CONCILIA
+            ,CDCOOPER
+            ,NRDCONTA
+      FROM TBCAPT_SALDO_APLICA
+      WHERE CDCOOPER = pr_cooper;
+    
     -- type para utilizacao no bulk collect
     TYPE typ_tab_crapneg_carga IS TABLE OF cr_crapneg%ROWTYPE index by pls_integer;
     r_crapneg typ_tab_crapneg_carga;
@@ -870,6 +893,23 @@ BEGIN
     vr_index_crapepr  PLS_INTEGER;
     vr_index_rdacta   VARCHAR2(20);
     vr_index_rda      PLS_INTEGER;
+  vr_index_calc     PLS_INTEGER;
+							 
+    
+    -- Retornar a existência do registro na Temp Table de cálculo antecipado
+    FUNCTION fn_exists_tab_calc_aplicacao(vr_idx IN PLS_INTEGER) RETURN BOOLEAN IS
+    BEGIN
+      RETURN vr_tab_calc_aplicacao.exists(vr_idx);
+    END;
+    
+    -- Carregar valores de saldo bruto e saldo liquido do cálculo antecipado
+    PROCEDURE pc_carr_calc_aplicacao(pr_index_calc IN VARCHAR2
+                                    ,pr_vlsrdca    OUT NUMBER
+                                    ,pr_sldpresg   OUT NUMBER) IS
+    BEGIN
+      pr_vlsrdca := vr_tab_calc_aplicacao(pr_index_calc).VLSALDO_BRUTO;
+      pr_sldpresg := vr_tab_calc_aplicacao(pr_index_calc).VLSALDO_CONCILIA;
+    END;
 
     --Procedure para limpar os dados das tabelas de memoria
     PROCEDURE pc_limpa_tabela IS
@@ -896,6 +936,8 @@ BEGIN
       vr_tab_craprda.DELETE;
       vr_tab_crapsdv.DELETE;
       vr_tab_crapsda2.DELETE;
+    vr_tab_calc_aplicacao.delete;
+  
       --vr_tab_crapscd.DELETE;
     EXCEPTION
       WHEN OTHERS THEN
@@ -1859,12 +1901,15 @@ BEGIN
                                 lpad(rw_crapass.nrdconta, 10, '0');
 
              IF vr_tab_craprda.exists(vr_index_rdacta) THEN
+        -- Criar indice de busca pelo registro do calculo antecipado
+               vr_index_calc := lpad(pr_cdcooper, 5, '0') ||
+                                TO_CHAR(rw_crapdat.dtmvtolt, 'DDMMRRRR') ||
+                                lpad(rw_craprda.nrdconta, 10, '0') ||
+                                lpad(rw_craprda.nraplica, 10, '0');
+                    
                 --Selecionar rendimentos das aplicacoes
                FOR idx IN nvl(vr_tab_craprda(vr_index_rdacta).first,0)..nvl(vr_tab_craprda(vr_index_rdacta).last,-1) LOOP
                  rw_craprda := vr_tab_craprda(vr_index_rdacta)(idx);
-
-
-
                  --Zerar variaveis
                  vr_vlsdrdca:= 0;
                  vr_vlsdeved:= 0;
@@ -1873,27 +1918,15 @@ BEGIN
 
                  BEGIN
                    IF rw_craprda.tpaplica = 3 THEN
-
-                     --Zerar variavel cálculo
-                     vr_vlsdrdca:= 0;
-                     -- Cálculo do valor do RDCA
-                     apli0001.pc_consul_saldo_aplic_rdca30(pr_cdcooper => pr_cdcooper
-                                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                                          ,pr_inproces => rw_crapdat.inproces
-                                                          ,pr_dtmvtopr => rw_crapdat.dtmvtopr
-                                                          ,pr_cdprogra => vr_cdprogra
-                                                          ,pr_cdagenci => rw_craprda.cdageass
-                                                          ,pr_nrdcaixa => 99 --> somente para gerar mensagem em caso de erro
-                                                          ,pr_nrdconta => rw_craprda.nrdconta
-                                                          ,pr_nraplica => rw_craprda.nraplica
-                                                          ,pr_vlsdrdca => vr_vlsdrdca
-                                                          ,pr_vlsldapl => vr_vlsldapl
-                                                          ,pr_sldpresg => vr_sldpresg_tmp     --> Valor saldo de resgate
-                                                          ,pr_dup_vlsdrdca => vr_dup_vlsdrdca --> Acumulo do saldo da aplicacao RDCA
-                                                          ,pr_vldperda => vr_vldperda
-                                                          ,pr_txaplica => vr_txaplica
-                                                          ,pr_des_reto => vr_dscritic
-                                                          ,pr_tab_erro => vr_tab_craterr);
+                     -- Validar se o cálculo antecipado existe
+                     IF NOT fn_exists_tab_calc_aplicacao(vr_index_calc) THEN
+                       RAISE vr_continua;
+                     END IF;                     
+                                      
+                     -- Carregar resultado do calculo antecipado
+                     pc_carr_calc_aplicacao(pr_index_calc => vr_index_calc                         
+                                           ,pr_vlsrdca    => vr_vlsdrdca                 
+                                           ,pr_sldpresg   => vr_sldpresg_tmp);
 
                      -- Se o saldo RDCA for zero vai para o próximo registro
                      IF vr_vlsdrdca <= 0 THEN
@@ -1905,22 +1938,15 @@ BEGIN
                      vr_vlsdeved := vr_vlsdrdca;
                      vr_vlsrdc30 := Nvl(vr_vlsrdc30,0) + Nvl(vr_vlsdrdca,0);
                    ELSIF rw_craprda.tpaplica = 5 THEN
+                     -- Validar se o cálculo antecipado existe
+                     IF NOT fn_exists_tab_calc_aplicacao(vr_index_calc) THEN
+                       RAISE vr_continua;
+                     END IF;
 
-                     --Zerar variavel cálculo
-                     vr_rd2_vlsdrdca:= 0;
-
-                     apli0001.pc_consul_saldo_aplic_rdca60(pr_cdcooper => pr_cdcooper
-                                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                                          ,pr_dtmvtopr => rw_crapdat.dtmvtopr
-                                                          ,pr_cdprogra => vr_cdprogra
-                                                          ,pr_cdagenci => rw_craprda.cdageass
-                                                          ,pr_nrdcaixa => 99 --> somente para gerar mensagem em caso de erro
-                                                          ,pr_nrdconta => rw_craprda.nrdconta
-                                                          ,pr_nraplica => rw_craprda.nraplica
-                                                          ,pr_vlsdrdca => vr_rd2_vlsdrdca
-                                                          ,pr_sldpresg => vr_sldpresg
-                                                          ,pr_des_reto => vr_dscritic
-                                                          ,pr_tab_erro => vr_tab_craterr);
+                     -- Carregar resultado do calculo antecipado
+                     pc_carr_calc_aplicacao(pr_index_calc => vr_index_calc                       
+                                           ,pr_vlsrdca    => vr_rd2_vlsdrdca
+                                           ,pr_sldpresg   => vr_sldpresg);
 
                      -- Se o valor do RDCA estiver zerado vai para a próxima iteração do LOOP
                      IF vr_rd2_vlsdrdca <= 0 THEN
@@ -1951,38 +1977,17 @@ BEGIN
 
                      -- Para RDCPRE
                      IF vr_tab_crapdtc(lpad(rw_craprda.tpaplica, 3, '0')).tpaplrdc = 1 THEN
-
                        vr_descricao_linha := 'APLICACAO RDCPRE';
 
-                       --Zerar variavel cálculo
-                       vr_vlsldrdc:= 0;
-
-                       -- Calculo do saldo da RDC Pré-fixada
-                       apli0001.pc_saldo_rdc_pre(pr_cdcooper => pr_cdcooper
-                                                ,pr_nrdconta => rw_craprda.nrdconta
-                                                ,pr_nraplica => rw_craprda.nraplica
-                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                                ,pr_dtiniper => NULL
-                                                ,pr_dtfimper => NULL
-                                                ,pr_txaplica => 0
-                                                ,pr_flggrvir => FALSE
-                                                ,pr_tab_crapdat => rw_crapdat
-                                                ,pr_vlsdrdca => vr_vlsldrdc
-                                                ,pr_vlrdirrf => vr_vlrdirrf
-                                                ,pr_perirrgt => vr_perirrgt
-                                                ,pr_des_reto => vr_dscritic
-                                                ,pr_tab_erro => vr_tab_craterr);
-
-                       -- Caso encontre erros
-                       IF vr_dscritic = 'NOK' THEN
-
-                         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                   ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                   ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - ' || vr_cdprogra || ' --> ' ||
-                                                                       vr_dscritic || '. ' || vr_tab_craterr(vr_tab_craterr.FIRST).CDCRITIC ||
-                                                                       ' - ' || vr_tab_craterr(vr_tab_craterr.FIRST).DSCRITIC);
-                         RAISE vr_exc_erro;
+                       -- Validar se o cálculo antecipado existe
+                       IF NOT fn_exists_tab_calc_aplicacao(vr_index_calc) THEN
+                         RAISE vr_continua;
                        END IF;
+                     
+                       -- Carregar resultado do calculo antecipado
+                       pc_carr_calc_aplicacao(pr_index_calc => vr_index_calc
+                                             ,pr_vlsrdca    => vr_vlsldrdc
+                                             ,pr_sldpresg   => vr_sldpresg);
 
                        IF vr_vlsldrdc > 0 THEN
                          vr_vlsrdcpr := Nvl(vr_vlsrdcpr,0) + Nvl(vr_vlsldrdc,0);
@@ -1990,38 +1995,15 @@ BEGIN
                      ELSIF vr_tab_crapdtc(lpad(rw_craprda.tpaplica, 3, '0')).tpaplrdc = 2 THEN -- RDCPOS
                        vr_descricao_linha := 'APLICACAO RDCPOS';
 
-                       --Zerar variavel cálculo
-                       vr_vlsldrdc:= 0;
-
-                       -- Cálculo de saldo da RDC Pós Fixada
-                       apli0001.pc_saldo_rdc_pos(pr_cdcooper => pr_cdcooper
-                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                                ,pr_dtmvtopr => rw_crapdat.dtmvtopr
-                                                ,pr_nrdconta => rw_craprda.nrdconta
-                                                ,pr_nraplica => rw_craprda.nraplica
-                                                ,pr_dtmvtpap => rw_crapdat.dtmvtolt
-                                                ,pr_dtcalsld => rw_crapdat.dtmvtolt
-                                                ,pr_flantven => FALSE
-                                                ,pr_flggrvir => FALSE
-                                                ,pr_dtinitax => vr_dtinitax
-                                                ,pr_dtfimtax => vr_dtfimtax
-                                                ,pr_vlsdrdca => vr_vlsldrdc
-                                                ,pr_vlrentot => vr_vlrentot
-                                                ,pr_vlrdirrf => vr_vlrdirrf
-                                                ,pr_perirrgt => vr_perirrgt
-                                                ,pr_des_reto => vr_dscritic
-                                                ,pr_tab_erro => vr_tab_craterr);
-
-                       -- Caso encontre erros
-                       IF vr_dscritic = 'NOK' THEN
-                         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                   ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                   ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - ' || vr_cdprogra || ' --> ' ||
-                                                                       vr_dscritic || '. ' || vr_tab_craterr(vr_tab_craterr.FIRST).CDCRITIC ||
-                                                                       ' - ' || vr_tab_craterr(vr_tab_craterr.FIRST).DSCRITIC);
-                         --Levantar Excecao
-                         RAISE vr_exc_erro;
+                       -- Validar se o cálculo antecipado existe
+                       IF NOT fn_exists_tab_calc_aplicacao(vr_index_calc) THEN
+                         RAISE vr_continua;
                        END IF;
+                       
+                       -- Carregar resultado do calculo antecipado
+                       pc_carr_calc_aplicacao(pr_index_calc => vr_index_calc
+                                             ,pr_vlsrdca    => vr_vlsldrdc
+                                             ,pr_sldpresg   => vr_vlrentot);
 
                        IF vr_vlsldrdc > 0 THEN
                          vr_vlsrdcpo := Nvl(vr_vlsrdcpo,0) + Nvl(vr_vlsldrdc,0);
@@ -2043,7 +2025,6 @@ BEGIN
                    vr_tot_vlsdrdca := Nvl(vr_tot_vlsdrdca,0) + Nvl(vr_vlsdeved,0);
                    vr_dtpropos := rw_craprda.dtmvtolt;
                    vr_dtefetiv := rw_craprda.dtmvtolt;
-
 
                    -- Executar bloco de instruções para gravar em tabela
                    pc_atualiza_crapsdv(pr_cdcooper => pr_cdcooper
@@ -2089,55 +2070,53 @@ BEGIN
              FOR rw_craprac IN cr_craprac(pr_cdcooper => pr_cdcooper
                                          ,pr_cdagenci => rw_crapass.cdagenci
                                          ,pr_nrdconta => rw_crapass.nrdconta) LOOP
-
-               -- Procedure para consulta de saldos de aplicação
-                 apli0005.pc_busca_saldo_aplicacoes(pr_cdcooper => pr_cdcooper,         -- Cooperativa
-                                                    pr_cdoperad => '1',                 -- Operador
-                                                    pr_nmdatela => vr_cdprogra,         -- Nome da tela
-                                                    pr_idorigem => 1,                   -- Origem
-                                                    pr_nrdconta => rw_crapass.nrdconta, -- Nr. da conta
-                                                    pr_idseqttl => 1,                   -- Id do titular
-                                                    pr_nraplica => rw_craprac.nraplica, -- Nr. da aplicação
-                                                    pr_dtmvtolt => rw_crapdat.dtmvtolt, -- Data de movimento
-                                                    pr_cdprodut => rw_craprac.cdprodut, -- Cód. produto
-                                                    pr_idblqrgt => 1,                   -- Id bloqueio de resgate - Todas
-                                                    pr_idgerlog => 0,                   -- Não gerar log
-                                                    pr_vlsldtot => vr_vlsldtot,         -- Valor saldo total da aplicação
-                                                    pr_vlsldrgt => vr_vlsldrgt,         -- Valor saldo total de resgate da aplicação
-                                                    pr_cdcritic => vr_cdcritic,         -- Cód. da crítica
-                                                    pr_dscritic => vr_dscritic);        -- Desc. da crítica
+				-- Criar indice de busca pelo registro do calculo antecipado
+               vr_index_calc := lpad(pr_cdcooper, 5, '0') ||
+                                     TO_CHAR(rw_crapdat.dtmvtolt, 'DDMMRRRR') ||
+                                     lpad(rw_crapass.nrdconta, 10, '0') ||
+                                     lpad(rw_craprac.nraplica, 10, '0');
+                                     
+               -- Validar se o cálculo antecipado existe
+               IF NOT fn_exists_tab_calc_aplicacao(vr_index_calc) THEN
+                 RAISE vr_exc_pula;
+               END IF;                      
+               
+               -- Carregar resultado do calculo antecipado
+               pc_carr_calc_aplicacao(pr_index_calc => vr_index_calc																 
+                                     ,pr_vlsrdca    => vr_vlsldtot
+                                     ,pr_sldpresg   => vr_vlsldrgt);
 
                IF rw_craprac.idtippro = 1 THEN  -- Pré
                     vr_vlsrdcpr := NVL(vr_vlsrdcpr, 0) + vr_vlsldtot;
                  ELSIF rw_craprac.idtippro = 2 THEN -- Pós
                     vr_vlsrdcpo := NVL(vr_vlsrdcpo,0) + vr_vlsldtot;
                  END IF;
-
              END LOOP;
 
              /* POUPANCA PROGRAMADA */
              IF vr_tab_craprpp.EXISTS(rw_crapass.nrdconta) THEN
                -- Busca registros para poupança programada
-               FOR rw_craprpp IN cr_craprpp(pr_cdcooper => pr_cdcooper
-                                           ,pr_nrdconta => rw_crapass.nrdconta) LOOP
-
+              FOR rw_craprpp IN cr_craprpp(pr_cdcooper => pr_cdcooper, pr_nrdconta => rw_crapass.nrdconta) LOOP
                  BEGIN
-
                    IF rw_craprpp.cdsitrpp = 1 THEN
                      vr_tot_vlprerpp := Nvl(vr_tot_vlprerpp,0) + rw_craprpp.vlprerpp;
                    END IF;
 
-                   -- Calcular o saldo até a data do movimento
-                   apli0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper
-                                          ,pr_dstextab  => vr_percirtab
-                                          ,pr_cdprogra  => vr_cdprogra
-                                          ,pr_inproces  => rw_crapdat.inproces
-                                          ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
-                                          ,pr_dtmvtopr  => rw_crapdat.dtmvtopr
-                                          ,pr_rpp_rowid => rw_craprpp.rowid
-                                          ,pr_vlsdrdpp  => vr_rpp_vlsdrdpp
-                                          ,pr_cdcritic  => vr_cdcritic
-                                          ,pr_des_erro  => vr_dscritic);
+                 -- Criar indice de busca pelo registro do calculo antecipado
+                   vr_index_calc := lpad(pr_cdcooper, 5, '0') ||					  
+                                         TO_CHAR(rw_crapdat.dtmvtolt, 'DDMMRRRR') ||
+                                         lpad(rw_crapass.nrdconta, 10, '0') ||
+                                         lpad(rw_craprpp.nrctrrpp, 10, '0');
+
+                   -- Validar se o cálculo antecipado existe
+                   IF NOT fn_exists_tab_calc_aplicacao(vr_index_calc) THEN
+                     RAISE vr_exc_pula;
+                   END IF;
+
+                   -- Carregar resultado do calculo antecipado
+                   pc_carr_calc_aplicacao(pr_index_calc => vr_index_calc
+                                         ,pr_vlsrdca    => vr_ppbruto
+                                         ,pr_sldpresg   => vr_rpp_vlsdrdpp);
 
                    -- Se o valor do saldo for menor ou igual a zero passa para a próxima iteração do laço
                    IF vr_rpp_vlsdrdpp <= 0 THEN
@@ -2182,7 +2161,6 @@ BEGIN
                    END IF;
 
                    vr_tot_vlsdrdpp := Nvl(vr_tot_vlsdrdpp,0) + vr_vlsdeved;
-
                  EXCEPTION
                    WHEN vr_exc_erro THEN
                      pr_des_erro:= vr_dscritic;
@@ -2484,11 +2462,28 @@ BEGIN
                                     ,pr_action => 'pc_sub_rotinas');
          --Inicializar mensagem erro
          pr_des_erro:= NULL;
+    
+    -- Carga de temporary table
+         FOR rw_TBCAPT_SALDO_APLICA IN CR_TBCAPT_SALDO_APLICA(pr_cdcooper) LOOP
+           vr_index_calc := rw_TBCAPT_SALDO_APLICA.Cdcooper_Idx || 
+                            rw_TBCAPT_SALDO_APLICA.Dtmvtolt_Idx ||
+                            rw_TBCAPT_SALDO_APLICA.Nrdconta_Idx ||
+                            rw_TBCAPT_SALDO_APLICA.Nraplica_Idx;
+         
+           vr_tab_calc_aplicacao(vr_index_calc).VLSALDO_BRUTO := rw_TBCAPT_SALDO_APLICA.VLSALDO_BRUTO;
+           vr_tab_calc_aplicacao(vr_index_calc).VLSALDO_CONCILIA := rw_TBCAPT_SALDO_APLICA.VLSALDO_CONCILIA;
+           vr_tab_calc_aplicacao(vr_index_calc).CDCOOPER := rw_TBCAPT_SALDO_APLICA.CDCOOPER;
+           vr_tab_calc_aplicacao(vr_index_calc).NRDCONTA := rw_TBCAPT_SALDO_APLICA.NRDCONTA;
+         END LOOP;
+    
 
          -- Executa processo do programa 1
          pc_crps445_1 (pr_cdcooper => pr_cdcooper
                       ,pr_des_erro => vr_dscritic);
 
+     -- Remover temporary table após utilização
+         vr_tab_calc_aplicacao.delete;
+     
          -- Retornar nome do módulo original, para que tire o action gerado pelo programa chamado acima
          GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
                                     ,pr_action => 'pc_sub_rotinas');
@@ -3688,8 +3683,6 @@ BEGIN
       --Zerar tabela de memoria auxiliar
       pc_limpa_tabela;
     end if;
-
-
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Se foi retornado apenas código
@@ -3711,8 +3704,7 @@ BEGIN
                         pr_cdcooper           => pr_cdcooper,
                         pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                         pr_tpocorrencia       => 2,
-                        pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
-                                                 'pr_dscritic:'||pr_dscritic,
+                        pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||'pr_dscritic:'||pr_dscritic,
                         PR_IDPRGLOG           => vr_idlog_ini_par);  
 
         --Grava data fim para o JOB na tabela de LOG 
@@ -3728,11 +3720,9 @@ BEGIN
                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
                                     ,pr_des_erro => vr_dscritic);
       end if;    
-      
 
       -- Efetuar rollback
       ROLLBACK;
-
     WHEN OTHERS THEN
       -- Efetuar retorno do erro nao tratado
       pr_cdcritic := 0;
@@ -3748,8 +3738,7 @@ BEGIN
                         pr_cdcooper           => pr_cdcooper,
                         pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                         pr_tpocorrencia       => 2,
-                        pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
-                                                 'pr_dscritic:'||pr_dscritic,
+                        pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||'pr_dscritic:'||pr_dscritic,
                         PR_IDPRGLOG           => vr_idlog_ini_par);   
 
         --Grava data fim para o JOB na tabela de LOG 
@@ -3765,10 +3754,8 @@ BEGIN
                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
                                     ,pr_des_erro => vr_dscritic);
       end if;  
-        
 
       -- Efetuar rollback
       ROLLBACK;
   END;
 END PC_CRPS445;
-/
