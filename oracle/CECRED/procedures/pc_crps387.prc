@@ -472,6 +472,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                07/02/2019 - Gravar a data de inclusão de autorização do débito com a data de 
                             movimento atual SCTASK0038616 - Jose Dill Mouts)
+                            
+               21/03/2019 - Inclusão de tratamento para evitar erros na leitura do arquivo
+                            quando este vir com deslocamento de posições (critica 1204).        
+                            Wagner - Sustentação - PRB0040703.    
 
 ............................................................................ */
 
@@ -2437,11 +2441,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     vr_cdcritic := 13; -- Data errada
                     EXIT;
                 END;
-                -- Popula a temp/table com os registro de debito cancelado na temp/table
-                IF SUBSTR(vr_setlinha,150,1) = 1 THEN
-                  vr_tab_debcancel(vr_ind_deb).setlinha := SUBSTR(vr_setlinha,1,150);
-                   vr_ind_deb := vr_ind_deb + 1;
-                END IF;
+
+                BEGIN
+                  -- Popula a temp/table com os registro de debito cancelado na temp/table
+                  IF SUBSTR(vr_setlinha,150,1) = 1 THEN
+                    vr_tab_debcancel(vr_ind_deb).setlinha := SUBSTR(vr_setlinha,1,150);
+                    vr_ind_deb := vr_ind_deb + 1;
+                  END IF;
+                  
+                EXCEPTION 
+                  WHEN OTHERS THEN
+                    vr_cdcritic := 1204; -- 1204 - Arquivo incompleto.
+                    EXIT;                    
+                END;
+                
               ELSIF vr_tpregist = 'Z' THEN -- Rodapé
 
                 -- Buscar o total do arquivo no rodapé
