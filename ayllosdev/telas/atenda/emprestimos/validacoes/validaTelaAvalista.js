@@ -141,8 +141,13 @@
     return true;
  }
 
+/** 
+ * --------------------------------------------------------
+ *                  FUNCOES DE APOIO
+ * --------------------------------------------------------
+*/
  function exibirErroAvalista(msg){
-    showError('error', msg, 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
+    showError('error', msg, 'Alerta - Aimaro', 'hideMsgAguardo();bloqueiaFundo($(\'#divRotina\'));'); //bruno - prj 438 - bug 18013
  }
 
  function validaDataAvalista(data){
