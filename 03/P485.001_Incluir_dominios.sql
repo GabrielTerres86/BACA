@@ -43,7 +43,7 @@ BEGIN
   INSERT INTO tbcc_dominio_campo VALUES ('MOTVRESPCONTTCREPVD',  '5','Beneficiário não solicitou a portabilidade');
   INSERT INTO tbcc_dominio_campo VALUES ('MOTVRESPCONTTCREPVD',  '6','Desistência do Cliente');
   INSERT INTO tbcc_dominio_campo VALUES ('MOTVRESPCONTTCREPVD',  '7','Conta informada não permite transferência');
-  INSERT INTO tbcc_dominio_campo VALUES ('MOTVRESPCONTTCREPVD',  '9','Conta pagamento benefício – INSS');
+  INSERT INTO tbcc_dominio_campo VALUES ('MOTVRESPCONTTCREPVD',  '9','Conta pagamento benefício - INSS');
   INSERT INTO tbcc_dominio_campo VALUES ('MOTVRESPCONTTCREPVD', '10','Conta salário não aberta');
   INSERT INTO tbcc_dominio_campo VALUES ('MOTVRESPCONTTCREPVD', '11','Falta de clareza na prestação da informação');
   
@@ -57,7 +57,7 @@ BEGIN
   INSERT INTO tbcc_dominio_campo VALUES ('MOTVREGLZCREPVD',  '5','Beneficiário não solicitou a portabilidade');
   INSERT INTO tbcc_dominio_campo VALUES ('MOTVREGLZCREPVD',  '6','Desistência do Cliente');
   INSERT INTO tbcc_dominio_campo VALUES ('MOTVREGLZCREPVD',  '7','Conta informada não permite transferência');
-  INSERT INTO tbcc_dominio_campo VALUES ('MOTVREGLZCREPVD',  '9','Conta pagamento benefício – INSS');
+  INSERT INTO tbcc_dominio_campo VALUES ('MOTVREGLZCREPVD',  '9','Conta pagamento benefício - INSS');
   INSERT INTO tbcc_dominio_campo VALUES ('MOTVREGLZCREPVD', '10','Conta salário não aberta');
   INSERT INTO tbcc_dominio_campo VALUES ('MOTVREGLZCREPVD', '11','Falta de clareza na prestação da informação');
 
@@ -76,10 +76,7 @@ BEGIN
 	
 	INSERT INTO tbcc_dominio_campo (nmdominio, cddominio, dscodigo) VALUES 
 	('SIT_PORTAB_CONTESTACAO_RECEBE', 4,'Fechada sem resposta');
-    
-	INSERT INTO tbcc_dominio_campo (nmdominio, cddominio, dscodigo) VALUES 
-	('SIT_PORTAB_CONTESTACAO_RECEBE', 5,'Resposta Rejeitada');
-
+  
   -- SITUAÇÃO DA CONTESTAÇÃO ENVIADA
   INSERT INTO tbcc_dominio_campo (nmdominio, cddominio, dscodigo) VALUES 
 	('SIT_PORTAB_CONTESTACAO_ENVIA', 1,'Solicitada');
@@ -113,7 +110,7 @@ BEGIN
 	('SIT_PORTAB_REGULARIZACAO', 4,'Regularizado Reprovada');
   
   INSERT INTO tbcc_dominio_campo (nmdominio, cddominio, dscodigo) VALUES 
-	('SIT_PORTAB_REGULARIZACAO', 5,'Regularização Rejeitada');
+	('SIT_PORTAB_REGULARIZACAO', 5,'Regularizado Rejeitada');
   
   -- INDICA A REGULARIZAÇÃO
   INSERT INTO tbcc_dominio_campo (nmdominio, cddominio, dscodigo) VALUES 
