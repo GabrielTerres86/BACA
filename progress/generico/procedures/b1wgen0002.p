@@ -7590,7 +7590,7 @@ PROCEDURE grava-proposta-completa:
                                                       INPUT par_cddopcao, /* Opcao da tela */
                                                       INPUT par_dsdalien, /* Lista de Alienacoes */
                                                       INPUT par_dsinterv, /* Lista de Intervenientes */
-                                               INPUT aux_idpeapro, /* Identificado de Aprovado ou Perda*/
+                                                      INPUT aux_idpeapro, /* Identificado de Aprovado ou Perda*/
                                                       OUTPUT aux_flperapr,       /* Flag de Perca de Aprovacao */
                                                       OUTPUT 0,                  /* Codigo da critica  */
                                                       OUTPUT "").                /* Descricao da critica */
@@ -7612,11 +7612,9 @@ PROCEDURE grava-proposta-completa:
                                           WHEN pc_grava_alienacao_hipot_prog.par_dscritic <> ?.                 
 
                   IF aux_cdcritic <> 0 OR aux_dscritic <> ""   THEN
-                 DO:
-                        /* Commentado o UNDO pois nao desfazia as alteracoes Oracle na pc_grava_alienacao_hipot_prog
-                           UNDO Gravar, */LEAVE Gravar.
-
-                 END.
+                  DO:
+                     UNDO Gravar, LEAVE Gravar.
+                  END.
           /*Se teve perda e nas regras anteriores nao tiveram perda, realizar a perda pela alteracao imovel*/
           IF aux_flperapr = "S" AND aux_idpeapro = 0 AND par_inresapr = 1 THEN
           DO:
@@ -7759,7 +7757,7 @@ PROCEDURE grava-proposta-completa:
                                    INPUT par_vllimapv,
                                    INPUT par_flgerlog,
                                    /*INPUT "TP",      Altera Toda Proposta */
-								   INPUT par_dsdopcao,
+                                   INPUT par_dsdopcao,
                                    INPUT par_dtlibera,
                                    INPUT par_idfiniof,
                                    INPUT par_dscatbem,
@@ -7812,7 +7810,8 @@ PROCEDURE grava-proposta-completa:
       END.
         
       /*Para inclusão, caso a proposta não esteja aprovada no final, deve apresentar a mensagem -- PRJ438*/
-      IF aux_idpeapro = 0 AND crawepr.insitapr = 0 AND par_cddopcao = "I" THEN
+      IF aux_idpeapro = 0 AND crawepr.insitapr = 0 AND par_cddopcao = "I" 
+         AND par_cdcooper <> 3 THEN
       DO:
         CREATE tt-msg-confirma.
         ASSIGN tt-msg-confirma.inconfir = 1
