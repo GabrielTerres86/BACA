@@ -6,7 +6,7 @@
 //***                                                                  						          ***//
 //*** Objetivo  : Monta a tela C - Configuração da Custódia das Aplicações                  ***//
 //***                                                                  						          ***//
-//*** Alterações: 																			                                    ***//
+//*** Alterações: 		21/03/2019 - Adição de tolerânica para conciliação - projeto 411.3 (Petter Rafael - Envolti)
 //*********************************************************************************************//
 ?>
 <script>
@@ -103,6 +103,14 @@ $(document).ready(function() {
                       <option value="S" <?php echo (getByTagName($xmlRegist->tags,'cnchab') == 'S' ? 'selected' : ''); ?>>Habilitado</option>
                       <option value="N" <?php echo (getByTagName($xmlRegist->tags,'cnchab') == 'N' ? 'selected' : ''); ?>>Desabilitado</option>
                     </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="txtNormalBold" style="width:50%;text-align:right;">
+                    <label for="perctolval" align="right" style="width:100%;"><? echo utf8ToHtml('% Tolerância na Diferença de Valor:') ?></label>
+                  </td>
+                  <td>
+                    <input type="text" class="campo" id="perctolval" name="perctolval" size="10" maxlength = "10" style="text-align:center;" value="<?php echo getByTagName($xmlRegist->tags,'perctolval'); ?>" />
                   </td>
                 </tr>
               </table>

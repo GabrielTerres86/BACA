@@ -49,15 +49,14 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CUSAPL AS
                                 ,pr_des_erro OUT VARCHAR2);        -- Saida OK/NOK        
                                 
   /* Procedimento para retornar os parâmetros gravados em Sistema */
-  PROCEDURE pc_gravac_parametros(/*pr_datab3   in VARCHAR2           -- Data de Habilitação Custódia 
-                                ,pr_vlminb3  IN VARCHAR2           -- Valor mínimo de aplicação para custódia na B3
-                                ,*/pr_nomarq   in VARCHAR2           -- Padrão do nome do arquivo 
+  PROCEDURE pc_gravac_parametros(pr_nomarq   in VARCHAR2           -- Padrão do nome do arquivo 
                                 ,pr_dsmail   in VARCHAR2           -- Lista de email para alertas no processo
                                 ,pr_hrinicio in VARCHAR2           -- Hora de início da comunicação com B3
                                 ,pr_hrfinal  in VARCHAR2           -- Hora final de comunicação com B3
                                 ,pr_reghab   in VARCHAR2           -- Envio Habilitado ? 
                                 ,pr_rgthab   in VARCHAR2           -- Retorno Habilitado ? 
                                 ,pr_cnchab   in VARCHAR2           -- Exclusão Habilitada ? 
+								,pr_perctolval IN NUMBER           -- Parametro de tolerancia de conciliação																			  
                                 ,pr_xmllog   IN VARCHAR2           -- XML com informações de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER       -- Código da crítica
                                 ,pr_dscritic OUT VARCHAR2          -- Descrição da crítica
@@ -632,6 +631,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSAPL AS
       ,pr_tag_cont => gene0001.fn_param_sistema('CRED',0,'FLG_CONCILIA_CUSTODIA_B3')
       ,pr_des_erro => vr_dscritic);
 
+	-- Parâmetro Tolerância Conciliação
+    GENE0007.pc_insere_tag
+      (pr_xml      => pr_retxml
+      ,pr_tag_pai  => 'Dados'
+      ,pr_posicao  => 0
+      ,pr_tag_nova => 'perctolval'
+      ,pr_tag_cont => TO_CHAR(gene0001.fn_param_sistema('CRED',0,'CD_TOLERANCIA_DIF_VALOR'), 'FM990D00')
+      ,pr_des_erro => vr_dscritic);					   
+
     -- Retorno OK
     pr_des_erro := 'OK';
   
@@ -661,15 +669,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSAPL AS
   END pc_busca_parametros;
   
   /* Procedimento para retornar os parâmetros gravados em Sistema */
-  PROCEDURE pc_gravac_parametros(/*pr_datab3   in VARCHAR2           -- Data de Habilitação Custódia 
-                                ,pr_vlminb3  IN VARCHAR2           -- Valor mínimo de aplicação para custódia na B3
-                                ,*/pr_nomarq   in VARCHAR2           -- Padrão do nome do arquivo 
+  PROCEDURE pc_gravac_parametros(pr_nomarq   in VARCHAR2           -- Padrão do nome do arquivo 
                                 ,pr_dsmail   in VARCHAR2           -- Lista de email para alertas no processo
                                 ,pr_hrinicio in VARCHAR2           -- Hora de início da comunicação com B3
                                 ,pr_hrfinal  in VARCHAR2           -- Hora final de comunicação com B3
                                 ,pr_reghab   in VARCHAR2           -- Envio Habilitado ? 
                                 ,pr_rgthab   in VARCHAR2           -- Retorno Habilitado ? 
                                 ,pr_cnchab   in VARCHAR2           -- Exclusão Habilitada ? 
+								,pr_perctolval IN NUMBER           -- Parametro de tolerancia de conciliação 																			   
                                 ,pr_xmllog   IN VARCHAR2           -- XML com informações de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER       -- Código da crítica
                                 ,pr_dscritic OUT VARCHAR2          -- Descrição da crítica
@@ -712,6 +719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSAPL AS
     -- Variaveis para LOG
     vr_dsvlrprm VARCHAR2(4000);
     vr_nmarqlog VARCHAR2(20) := gene0001.fn_param_sistema('CRED',0,'NOM_ARQUIVO_LOG_B3')||'.log';
+	vr_perctolval NUMBER;					 
      
   BEGIN    
     -- Incluir nome do módulo logado
@@ -747,6 +755,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSAPL AS
       RAISE vr_exc_erro;
     END IF;    
     
+	IF TRIM(pr_perctolval) IS NULL THEN
+      vr_dscritic := gene0007.fn_convert_db_web('Parametro de tolerância deve ser informado!');
+      RAISE vr_exc_erro;
+    END IF;   
+	
     -- Converter hora em texto para Date
     BEGIN
       vr_dshorain := TO_DATE(pr_hrinicio, 'hh24:mi');
@@ -755,6 +768,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSAPL AS
       vr_dscritic := gene0007.fn_convert_db_web('Horário de ['||pr_hrinicio||'] de Comunicação com B3 Inválido!');
       RAISE vr_exc_erro;
     END;
+	
     -- Converter Hora em texto para Date
     BEGIN
       vr_dshorafi := TO_DATE(pr_hrfinal, 'hh24:mi');
@@ -940,6 +954,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSAPL AS
              AND cdacesso = 'DAT_CONCILIA_CUSTODIA_B3'; 
         END IF;                                                 
       END IF;   
+	  
+	/* Percentual de tolerância da conciliação */
+      vr_perctolval := gene0001.fn_param_sistema('CRED',0,'CD_TOLERANCIA_DIF_VALOR');                        
+      IF vr_perctolval <> pr_perctolval THEN    
+        UPDATE crapprm
+             SET dsvlrprm = pr_perctolval
+           WHERE nmsistem = 'CRED'
+             AND cdcooper = 0
+             AND cdacesso = 'CD_TOLERANCIA_DIF_VALOR'; 
+      
+        -- Gerar LOG
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => vr_nmarqlog
+                                  ,pr_flfinmsg     => 'N'
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR hh24:mi:ss') 
+                                                   || ' -->  Operador '|| vr_cdoperad || ' - ' 
+                                                   || 'Alterou o parâmetro "Percentual de Tolerância para Conciliação" de ' || vr_perctolval
+                                                   || ' para ' || pr_perctolval || ', para a cooperativa ' || vr_cdcooper || '.');
+      END IF;											  	 
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Erro na gravação dos Parâmetros de Custódia de Aplicação: '
