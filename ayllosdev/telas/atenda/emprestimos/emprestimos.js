@@ -11824,40 +11824,17 @@ function controlaNavegacaoCamposNovaProposta(){
     		$(this).val("");
     });
 
-    /*
+    
 	// Campo Data de Pagamento
     //bruno - prj 438 - bug 17972
     $("#dtdpagto", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
-
-        // Se é a tecla ENTER
-        if (e.keyCode == 13) {
-
-            //bruno - prj 438 - bug 14672
-            $(this).trigger('keypress',{keyCode: 13});
-
-        	if($('#tpemprst', '#frmNovaProp').val() == 0){ // Tipo Produto "Price TR"
-				$("#flgpagto", "#frmNovaProp").focus();
-			} else if ($('#tpemprst', '#frmNovaProp').val() == 1){ // Tipo Produto "Price Pre-Fixado"
-				$("#idfiniof", "#frmNovaProp").focus();
-			} else if ($('#tpemprst', '#frmNovaProp').val() == 2){ // Tipo Produto "Pos-Fixado"
-				$("#idcarenc", "#frmNovaProp").focus();
-			}
-
-            return false;
-        }
-
         // Se é a tecla TAB ou SHIFT + TAB
         if (e.keyCode == 9) {
-
 			if (e.shiftKey) {
-
 				$("#qtpreemp", "#frmNovaProp").focus();
-
 	            return false;
         	}
-
             //prj 438 - bruno - bug 17972 (passou para cima)
-
 	        showMsgAguardo('Aguarde, carregando [1] ...');
         	if($('#tpemprst', '#frmNovaProp').val() == 0){ // Tipo Produto "Price TR"
 	        	$("#flgpagto", "#frmNovaProp").focus();
@@ -11868,13 +11845,10 @@ function controlaNavegacaoCamposNovaProposta(){
 	    	}
             //bruno - prj 438 - bug 14672
             $(this).trigger('keypress',{keyCode: 13});
-
-
-
 	        return false;
         }
     });
-    */
+    
 
     // Campo Carencia
     $("#idcarenc", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
