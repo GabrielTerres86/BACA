@@ -5375,6 +5375,8 @@ END pc_inserir_lancamento_bordero;
 
      Alteracoes: 16/04/2018 - Criação (Andrew Albuquerque (GFT))
                  05/02/2019 - Adicionado tratativa de confirmação de inserção na tabela craplot e craplcm (Cássia de Oliveira - GFT)
+                 21/03/2019 - Adicionado uma verificação na prm CHECK_CREDITO_DSCT_TIT antes de fazer a tratativa de confirmação do insert
+                              corretamente na craplot e craplcm (Paulo Penteado GFT / Daniel Zimmermann)
    ----------------------------------------------------------------------------------------------------------*/
     DECLARE
         
@@ -5524,6 +5526,9 @@ END pc_inserir_lancamento_bordero;
                RAISE vr_exc_erro;
             END;
 
+           IF trim(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_cdacesso => 'CHECK_CREDITO_DSCT_TIT')) IS NULL THEN
             -- Confirma inclusão na craplot
             OPEN cr_lotconf(pr_cdbccxlt => 100
                            ,pr_nrdolote => vr_nrdolote);
@@ -5541,6 +5546,7 @@ END pc_inserir_lancamento_bordero;
            -- Apenas fechar o cursor
               CLOSE cr_lotconf;
             END IF; 
+           END IF; 
         ELSE
           CLOSE cr_craplot;     
         END IF;
@@ -5607,6 +5613,9 @@ END pc_inserir_lancamento_bordero;
           RAISE vr_exc_erro;
       END;
       
+      IF trim(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                       ,pr_cdcooper => pr_cdcooper
+                                       ,pr_cdacesso => 'CHECK_CREDITO_DSCT_TIT')) IS NULL THEN
       -- Confirma inclusão na craplcm
       OPEN cr_lcmconf(pr_dtmvtolt => rw_craplcm.dtmvtolt
                      ,pr_cdagenci => rw_craplcm.cdagenci
@@ -5630,6 +5639,7 @@ END pc_inserir_lancamento_bordero;
       ELSE
         -- Apenas fechar o cursor
         CLOSE cr_lcmconf;
+      END IF;
       END IF;
 
       BEGIN
@@ -7930,6 +7940,10 @@ EXCEPTION
                  20/11/2018 - Corrigido para arrumar o calculo de juros de mora usando campos novos ao inves dos lancamentos
                  07/03/2019 - Inserção de dias de carência para não calcular juros - Vitor S. Assanuma (GFT)
                  14/03/2019 - Inserção da data parametro para o novo calculo de juros - Vitor S. Assanuma
+                 21/03/2019 - Ajuste para não considerar os dias de carência do calculo de juros para a data de ultimo
+                              pagamento dtultpag (Lucas Lazari GFT)
+                 21/03/2019 - Ajuste para não considerar os dias da carência para a cobrança do IOF, pois o mesmo deve ser
+                              cobrado a partir do dia de vencimento (Paulo Penteado GFT) 
   ..................................................................................*/ 
   
     /* cursores */
@@ -8126,7 +8140,6 @@ EXCEPTION
     IF gene0005.fn_valida_dia_util(pr_cdcooper, rw_craptdb.dtvencto + vr_tab_dados_dsctit(1).cardbtit_c) >= pr_dtmvtolt THEN
       pr_vlmtatit := 0;
       pr_vlmratit := 0;
-      pr_vlioftit := 0;
     ELSE
     vr_vltotal_liquido := 0;
     OPEN cr_craptdb_total(pr_cdcooper => pr_cdcooper
@@ -8162,18 +8175,23 @@ EXCEPTION
     
     vr_valormora  := 0;
     IF (vr_vlsldtit > 0) THEN
-      -- Verifica se houve algum pagamento parcial do saldo 
-    vr_dtmvtolt := rw_craptdb.dtvencto;
+        -- Verifica se houve algum pagamento parcial do saldo. Não deve considerar o período de carência para data do ultimo pagamento 
+        vr_dtmvtolt := (rw_craptdb.dtvencto + vr_tab_dados_dsctit(1).cardbtit_c);
         IF rw_craptdb.dtultpag IS NOT NULL AND rw_craptdb.vlultmra > 0 THEN -- houve algum pagamento do saldo parcial      
           vr_dtmvtolt   := rw_craptdb.dtultpag;
           vr_valormora  := rw_craptdb.vlultmra;
     END IF;
         -- Contemplar o tempo de carencia para não calcular os juros daquele período
-        vr_valormora  := vr_valormora + NVL(ROUND(vr_vlsldtit * (pr_dtmvtolt - (vr_dtmvtolt + vr_tab_dados_dsctit(1).cardbtit_c)) * vr_txdiaria,2),0);
+        vr_valormora  := vr_valormora + NVL(ROUND(vr_vlsldtit * (pr_dtmvtolt - vr_dtmvtolt) * vr_txdiaria,2),0);
     END IF;
 
     pr_vlmratit := vr_valormora;
+    END IF;
 
+    -- Calculo de atraso do IOF
+    IF gene0005.fn_valida_dia_util(pr_cdcooper, rw_craptdb.dtvencto) >= pr_dtmvtolt THEN
+      pr_vlioftit := 0;
+    ELSE
     -- Cálculo do IOF
     TIOF0001.pc_calcula_valor_iof_prg (pr_tpproduto            => 2 -- Desconto de títulos
                                       ,pr_tpoperacao           => 2 -- Pagamento em atraso
@@ -8183,7 +8201,7 @@ EXCEPTION
                                       ,pr_natjurid             => rw_crapjur.natjurid
                                       ,pr_tpregtrb             => rw_crapjur.tpregtrb
                                       ,pr_dtmvtolt             => rw_crapdat.dtmvtolt
-                                        ,pr_qtdiaiof             => (pr_dtmvtolt - (rw_craptdb.dtvencto + vr_tab_dados_dsctit(1).cardbtit_c))
+                                        ,pr_qtdiaiof             => (pr_dtmvtolt - rw_craptdb.dtvencto)
                                       ,pr_vloperacao           => rw_craptdb.vlliquid
                                       ,pr_vltotalope           => vr_vltotal_liquido
                                       ,pr_vltaxa_iof_atraso    => NVL(rw_crapbdt.vltaxiof,0)
@@ -8195,7 +8213,7 @@ EXCEPTION
                                       ,pr_dscritic             => vr_dscritic);
     
     IF vr_dscritic IS NOT NULL THEN
-      vr_dscritic := 'Erro realizar cálculo do título em atraso : '||SQLERRM;
+        vr_dscritic := 'Erro realizar cálculo de IOF do título em atraso : '||SQLERRM;
       RAISE vr_exc_erro;
     END IF;
     
