@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-211
+212
 declare 
   -- Local variables here
   i integer;
@@ -82,10 +82,10 @@ declare
          AND crawepr.nrdconta = pr_nrdconta;
   
 BEGIN
+
   vr_cdcooper := 1;
   vr_nrdconta := 3806324;
   vr_nrctremp := 552419;
-  
  
   -- Leitura do calendário da cooperativa
   OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
@@ -207,16 +207,10 @@ BEGIN
     --Sair do programa
       dbms_output.put_line('ERRO: ' || vr_dscritic);
   END IF;
-  
+
+
   COMMIT;
 
-end;
+END;
 0
-8
-rw_crapdat.dtmvtolt
-vr_index_char
-vr_flgtrans
-vr_ind_pag
-rw_crappep.nrparepr
-vr_des_erro
-vr_index_crawepr
+0
