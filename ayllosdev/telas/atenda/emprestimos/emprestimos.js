@@ -3398,9 +3398,9 @@ function controlaLayout(operacao) {
 		var cEst	= $('#cdufende', '#' + nomeForm);
 		var cCid = $('#nmcidade', '#' + nomeForm);
 
-		cMatric.attr('maxlength', '10');
-		cAreaUtil.attr('maxlength', '10');
-		cAreaTot.attr('maxlength', '10');
+		cMatric.attr('maxlength', '10').addClass('inteiro');
+		cAreaUtil.attr('maxlength', '10').addClass('inteiro');
+		cAreaTot.attr('maxlength', '10').addClass('inteiro');
 
         rRotulo.addClass('rotulo').css('width', '80px');
         rRotuloLinha.addClass('rotulo-linha').css('width', '80px');
