@@ -12074,7 +12074,7 @@ function controlaCamposTelaAvalista(cooperado){
         $('#fsetConjugeAval', '#frmDadosAval').hide();
     }
 
-	if (inpessoa == 1 && cooperado == true && operacao != "A_DADOS_AVAL") { //prj 438 - bug 13948
+	if (inpessoa == 1 && cooperado == true) {
 
 		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('C.P.F:');
 		$('label[for="nmdavali"]', '#frmDadosAval').text('Nome:');
@@ -12094,7 +12094,7 @@ function controlaCamposTelaAvalista(cooperado){
 		$('label[for="vlrenmes"]', '#frmDadosAval').css('width', '120px').text('Rendimento Mensal:');
 		$('#fsetConjugeAval', '#frmDadosAval').show();
 
-	} else if (inpessoa == 2 && cooperado == true && operacao != "A_DADOS_AVAL") { //prj 438 - bug 13948
+	} else if (inpessoa == 2 && cooperado == true) {
 
 		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('C.N.P.J:');
 		$('label[for="nmdavali"]', '#frmDadosAval').text('Razão Social:');
