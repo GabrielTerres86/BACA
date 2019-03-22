@@ -6573,6 +6573,7 @@ PROCEDURE grava-proposta-completa:
     DEF VAR          aux_dserro   AS CHAR                           NO-UNDO.
     DEF VAR          aux_nrgarope AS INT                            NO-UNDO. /*PRJ 438 BUG*/
     DEF VAR          aux_nrliquid AS INT                            NO-UNDO. /*PRJ 438 BUG*/
+    DEF VAR          aux_contigen AS LOGI                           NO-UNDO.
     DEF VAR          aux_interrup AS LOGI                           NO-UNDO.
 
     DEF  BUFFER      crabavt FOR  crapavt.
