@@ -2,7 +2,7 @@
 
    Programa: b1wgen0196.p
    Autora  : Odirlei Busana - AMcom.
-   Data    : 21/03/2017                        Ultima atualizacao: 21/03/2019
+   Data    : 21/03/2017                        Ultima atualizacao: 22/03/2019
 
    Dados referentes ao programa:
 
@@ -30,6 +30,9 @@
 
               21/03/2019 - P437 - Consignado - Inclusao dos parametros par_vlpreempi e par_vlrdoiof 
                            na chamada da rotina valida-dados-gerais - Josiane Stiehler - AMcom
+						   
+			  22/03/2019 - P437 - Consignado - Inclusao dos parametros par_vlpreempi e par_vlrdoiof 
+                             na chamada da rotina calcula_emprestimo - Fernanda Kelli de Oliveira - AMcom			   
 
  ..............................................................................*/
 
@@ -455,6 +458,7 @@ PROCEDURE grava_dados:
                                             INPUT FALSE,      /*par_flggrava*/
                                             INPUT par_dtmvtolt,
                                             INPUT 0, /* idfiniof */
+											INPUT 0, /*par_vlpreemp*/
                                             OUTPUT aux_qtdiacar,
                                             OUTPUT aux_vlajuepr,
                                             OUTPUT aux_txdiaria,

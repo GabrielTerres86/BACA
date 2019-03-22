@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 21/03/2019
+    Data      : Julho/2014                Ultima Atualizacao: 22/03/2019
     
     Dados referentes ao programa:
 
@@ -124,6 +124,9 @@
                 
                 21/03/2019 - P437 - Consignado - Inclusao dos parametros par_vlpreempi e par_vlrdoiof 
                              na chamada da rotina valida-dados-gerais - Josiane Stiehler - AMcom
+							 
+				22/03/2019 - P437 - Consignado - Inclusao dos parametros par_vlpreempi e par_vlrdoiof 
+                             na chamada da rotina calcula_emprestimo - Fernanda Kelli de Oliveira - AMcom			 
 ..............................................................................*/
 
 /*................................ DEFINICOES ............................... */
@@ -2215,6 +2218,7 @@ PROCEDURE calcula_parcelas_emprestimo:
                                               INPUT FALSE, /*par_flggrava*/
                                               INPUT par_dtmvtolt,
                                               INPUT 0, /* Indicador de IOF - Deve-se rever */
+											  INPUT 0, /*par_vlpreemp*/
                                               OUTPUT aux_qtdiacar,
                                               OUTPUT aux_vlajuepr,
                                               OUTPUT aux_txdiaria,
