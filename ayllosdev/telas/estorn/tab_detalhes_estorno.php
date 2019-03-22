@@ -52,7 +52,7 @@ isPostMethod();
 				<table width="100%">
 					<thead>
 						<tr>
-							<th><?=$cdtpprod == 1 ? 'Parcela' : 'Nr. Titulo'?></th>
+							<th><?=$cdtpprod == 1 ? 'Parcela' : 'Nr Boleto'?></th>
 							<th>Vencimento</th>
 							<th>Pagamento</th>
 							<th>Hist&oacute;rico</th>

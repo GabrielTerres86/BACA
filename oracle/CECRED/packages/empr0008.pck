@@ -2027,6 +2027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
      Observacao: -----
      Alteracoes:
        - 16/09/2018 - Inserção do Desconto de Títulos (Vitor S. Assanuma - GFT)
+       - 22/03/2019 - Alteração para apresentar o nrdocmto ao invés do nrtitulo (Cássia de Oliveira - GFT)
      ..............................................................................*/
     DECLARE
       -- Cursor dos estornos de Empréstimos PP
@@ -2088,7 +2089,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
                                         pr_nrdconta  IN tbepr_estorno.nrdconta%TYPE,
                                         pr_nrctremp  IN tbepr_estorno.nrctremp%TYPE,
                                         pr_cdestorno IN tbepr_estorno.cdestorno%TYPE) IS
-			  SELECT tbdsct_estornolancamento.nrtitulo,
+			  SELECT tdb.nrdocmto,
                tbdsct_estornolancamento.dtvencto,
                tbdsct_estornolancamento.dtpagamento,
                tbdsct_estornolancamento.cdhistor,
@@ -2098,6 +2099,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
           JOIN craphis
             ON craphis.cdcooper = tbdsct_estornolancamento.cdcooper
            AND craphis.cdhistor = tbdsct_estornolancamento.cdhistor
+    INNER JOIN craptdb tdb 
+            ON tdb.cdcooper = tbdsct_estornolancamento.cdcooper
+           AND tdb.nrdconta = tbdsct_estornolancamento.nrdconta
+           AND tdb.nrborder = tbdsct_estornolancamento.nrborder
+           AND tdb.nrtitulo = tbdsct_estornolancamento.nrtitulo
 				 WHERE tbdsct_estornolancamento.cdcooper  = pr_cdcooper
            AND tbdsct_estornolancamento.nrdconta  = pr_nrdconta
            AND tbdsct_estornolancamento.nrborder  = pr_nrctremp
@@ -2250,7 +2256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
           gene0002.pc_escreve_xml(pr_xml            => vr_clob
                                  ,pr_texto_completo => vr_xml_temp
                                  ,pr_texto_novo     => '<Inf>
-                                                          <nrparepr>'||rw_tbdsct_estornolancamento.nrtitulo||'</nrparepr>
+                                                          <nrparepr>'||rw_tbdsct_estornolancamento.nrdocmto||'</nrparepr>
                                                           <dtvencto>'||TO_CHAR(rw_tbdsct_estornolancamento.dtvencto,'DD/MM/YYYY')||'</dtvencto>
                                                           <dtpagamento>'||TO_CHAR(rw_tbdsct_estornolancamento.dtpagamento,'DD/MM/YYYY')||'</dtpagamento>
                                                           <cdhistor>'||rw_tbdsct_estornolancamento.cdhistor||'</cdhistor>
