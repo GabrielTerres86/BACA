@@ -199,6 +199,7 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                                   ,pr_idfiniof        IN crapepr.idfiniof%TYPE DEFAULT 1  -- Indicador se financia IOF e tarifa
                                   ,pr_dsctrliq        IN VARCHAR2 DEFAULT NULL
                                   ,pr_idgravar        IN VARCHAR2 DEFAULT 'N'             -- Indicador S/N para gravação do IOF calculado na tabela de Parcelas
+                                  ,pr_vlrdoiof        IN NUMBER   DEFAULT -1              --P437 Conignado - Valor do IOF - Emprestimo Consignado 
                                   ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -2488,6 +2489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                                   ,pr_idfiniof        IN crapepr.idfiniof%TYPE DEFAULT 1  -- Indicador se financia IOF e tarifa
                                   ,pr_dsctrliq        IN VARCHAR2 DEFAULT NULL
                                   ,pr_idgravar        IN VARCHAR2 DEFAULT 'N'             -- Indicador S/N para gravação do IOF calculado na tabela de Parcelas
+                                  ,pr_vlrdoiof        IN NUMBER   DEFAULT -1   --P437 Conignado - Valor do IOF - Emprestimo Consignado 
                                   ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -2502,7 +2504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
     --  Sistema  : Cred
     --  Sigla    : EMPR0001
     --  Autor    : Diogo Carlassara (MoutS)
-    --  Data     : 19/01/2015.                      Ultima atualizacao: 12/04/2018
+    --  Data     : 19/01/2015.                      Ultima atualizacao: 20/03/2019
     --
     --  Dados referentes ao programa:
     --
@@ -2510,6 +2512,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
     --   Objetivo  : calcular valor do iof - chamada pela web
     --   Alterações
     --               12/04/2018 - P410 - Melhorias IOF (Marcos-Envolti)
+    --               20/03/2019 - P437 - Inclusão do parametro pr_vlrdoiof 
+    --                                   para Emmprestimo consignado (Fernanda Kelli - Amcom)
     --.............................................................................*/
     DECLARE
 
@@ -2530,12 +2534,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       vr_dtlibera crawepr.dtlibera%TYPE;
       vr_dtcarenc crawepr.dtcarenc%TYPE;
       vr_qtdias_carencia  pls_integer;
+      vr_tpmodcon craplcr.tpmodcon%tYPE; /*P437*/
+      
+      
     BEGIN
 
       vr_dtmvtolt := TO_DATE(pr_dtmvtolt, 'DD/MM/YYYY');
       vr_dtdpagto := TO_DATE(pr_dtdpagto, 'DD/MM/YYYY');
       vr_dtlibera := TO_DATE(pr_dtlibera, 'DD/MM/YYYY');
       vr_dtcarenc := TO_DATE(pr_dtcarenc, 'DD/MM/YYYY');
+
+      --Buscar o Tipo da modalidade do consignado
+      BEGIN
+        SELECT nvl(tpmodcon,0)
+          INTO vr_tpmodcon
+          FROM cecred.craplcr 
+				 WHERE craplcr.cdcooper = pr_cdcooper
+				   AND craplcr.cdlcremp = pr_cdlcremp;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          vr_tpmodcon := 0;
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro na busca da Modalidade do Consignado. '||sqlerrm;
+          RAISE vr_exc_saida;   
+      END;
 
       -- Busca quantidade de dias da carencia
       EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => pr_idcarencia
@@ -2585,14 +2607,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'inpessoa', pr_tag_cont => TO_CHAR(pr_inpessoa), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cdlcremp', pr_tag_cont => TO_CHAR(pr_cdlcremp), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtpreemp', pr_tag_cont => TO_CHAR(pr_qtpreemp), pr_des_erro => vr_dscritic);
-        if nvl(vr_vlpreclc,0) > 0 then
+        /*P437*/
+        /*Se Pre-fixado e Modalidade Consignado*/
+				IF pr_tpemprst = 1 AND vr_tpmodcon > 0 THEN              
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlpreemp', pr_tag_cont => TO_CHAR(nvl(pr_vlpreemp,0), 'fm999g999g990d00'), pr_des_erro => vr_dscritic); 
+        ELSIF nvl(vr_vlpreclc,0) > 0 then
            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlpreemp', pr_tag_cont => TO_CHAR(vr_vlpreclc, 'fm999g999g990d00'), pr_des_erro => vr_dscritic);
-        else
+        ELSE
            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'vlpreemp', pr_tag_cont => TO_CHAR(nvl(pr_vlpreemp,0), 'fm999g999g990d00'), pr_des_erro => vr_dscritic);
-        end if;
+        END IF;
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'tpemprst', pr_tag_cont => TO_CHAR(pr_tpemprst), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdias_carencia', pr_tag_cont => TO_CHAR(vr_qtdias_carencia), pr_des_erro => vr_dscritic);
+        /*Se Pre-fixado e Modalidade Consignado*/
+				IF pr_tpemprst = 1 AND vr_tpmodcon > 0 THEN  
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'valoriof', pr_tag_cont => TO_CHAR(pr_vlrdoiof,'fm999g999g990d00'), pr_des_erro => vr_dscritic);
+        ELSE
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'valoriof', pr_tag_cont => TO_CHAR(vr_valoriof,'fm999g999g990d00'), pr_des_erro => vr_dscritic);
+        END IF;          
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'dsctrliq', pr_tag_cont => TO_CHAR(pr_dsctrliq), pr_des_erro => vr_dscritic);
     EXCEPTION
       WHEN vr_exc_saida THEN
