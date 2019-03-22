@@ -2439,6 +2439,9 @@ function controlaLayout(operacao) {
                 cFinali.val("");
                 cDsFinali.val('');
 
+                cLnCred.attr('aux','');
+                cFinali.attr('aux','');
+
                 if ($('#tpemprst', '#frmNovaProp').val() == 1 || // Price Pre-Fixado
                     $('#tpemprst', '#frmNovaProp').val() == 2) { // Pos-Fixado
                     // no - Conta   yes - Folha
