@@ -2,7 +2,7 @@
 
     Programa  : b1wgen0201.p
     Autor     : Lucas Reinert
-    Data      : Novembro/2017                Ultima Atualizacao: 19/10/2018
+    Data      : Novembro/2017                Ultima Atualizacao: 21/03/2019
     
     Dados referentes ao programa:
 
@@ -10,6 +10,9 @@
 
     Alteracoes: 19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)
                 
+                21/03/2019 - P437 - Consignado - Inclusao dos parametros par_vlpreempi e par_vlrdoiof 
+                             na chamada da rotina valida-dados-gerais - Josiane Stiehler - AMcom
+ 
 ..............................................................................*/
 
 /*................................ DEFINICOES ............................... */
@@ -427,7 +430,9 @@ PROCEDURE integra_proposta:
                                                INPUT  0, /*par_idcarenc*/
                                                INPUT ?, /*par_dtcarenc*/
                                                INPUT 1, /*par_idfiniof*/
-											   INPUT 1, /*par_idquapro*/
+											                         INPUT 1, /*par_idquapro*/
+                                               INPUT 0, /*par_vlpreempi*/
+                                               INPUT -1, /*par_vlrdoiof*/
                                                OUTPUT TABLE tt-erro,
                                                OUTPUT TABLE tt-msg-confirma,
                                                OUTPUT TABLE tt-ge-epr,

@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 08/01/2019
+    Data      : Julho/2014                Ultima Atualizacao: 21/03/2019
     
     Dados referentes ao programa:
 
@@ -122,6 +122,8 @@
                 08/01/2019 - Ajuste da taxa mensal na impressao do contrato 
                              INC0028548 (Douglas Pagel / AMcom).
                 
+                21/03/2019 - P437 - Consignado - Inclusao dos parametros par_vlpreempi e par_vlrdoiof 
+                             na chamada da rotina valida-dados-gerais - Josiane Stiehler - AMcom
 ..............................................................................*/
 
 /*................................ DEFINICOES ............................... */
@@ -937,6 +939,8 @@ PROCEDURE grava_dados:
                                                INPUT ?, /* par_dtcarenc */
                                                INPUT 0,  /* par_idfiniof */
                                                INPUT 1, /* par_idquapro */
+                                               INPUT 0, /*par_vlpreempi*/
+                                               INPUT -1, /*par_vlrdoiof*/
                                                OUTPUT TABLE tt-erro,
                                                OUTPUT TABLE tt-msg-confirma,
                                                OUTPUT TABLE tt-ge-epr,

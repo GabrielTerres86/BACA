@@ -2,7 +2,7 @@
 
    Programa: b1wgen0196.p
    Autora  : Odirlei Busana - AMcom.
-   Data    : 21/03/2017                        Ultima atualizacao: 12/04/2018
+   Data    : 21/03/2017                        Ultima atualizacao: 21/03/2019
 
    Dados referentes ao programa:
 
@@ -27,6 +27,9 @@
                12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
 
 			   28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
+
+              21/03/2019 - P437 - Consignado - Inclusao dos parametros par_vlpreempi e par_vlrdoiof 
+                           na chamada da rotina valida-dados-gerais - Josiane Stiehler - AMcom
 
  ..............................................................................*/
 
@@ -314,6 +317,8 @@ PROCEDURE grava_dados:
                                              INPUT ?, /* par_dtcarenc */
 											                       INPUT 0, /* par_idfiniof */
                                              INPUT 1,            /* par_idquapro */
+                                             INPUT 0, /*par_vlpreempi*/
+                                             INPUT -1, /*par_vlrdoiof*/
                                              OUTPUT TABLE tt-erro,
                                              OUTPUT TABLE tt-msg-confirma,
                                              OUTPUT TABLE tt-ge-epr,
