@@ -24,7 +24,7 @@ if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], 'C'
     exibirErro('error', $msgError, 'Alerta - Aimaro', '', false);
 }
 
-$vlparepr = 0;
+$vlpreemp = 0;
 $vliofepr = 0;
 
 // Guardo os parâmetos do POST em variáveis	
@@ -56,21 +56,23 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
     $dados_simulacao = $xmlObj->roottag->tags;
     if ($operacao == "GPR" || $operacao == "TI") {
 		
-		$vlparepr = getByTagName($dados_simulacao[0]->tags, 'vlparepr');		
-		$retorno = "console.log(".getByTagName($dados_simulacao[0]->tags, 'cdmodali').");";
-		$retorno .= "console.log(".getByTagName($dados_simulacao[0]->tags, 'cdsubmod').");";
-		$retorno .= "console.log(".getByTagName($dados_simulacao[0]->tags, 'tpmodcon').");";
+		$vlpreemp = getByTagName($dados_simulacao[0]->tags, 'vlpreemp');
+        $vliofepr = getByTagName($dados_simulacao[0]->tags, 'vliofepr');        		
+		$retorno = "";				
 		if (getByTagName($dados_simulacao[0]->tags, 'cdmodali') == 2 && getByTagName($dados_simulacao[0]->tags, 'cdsubmod') == 2 && getByTagName($dados_simulacao[0]->tags, 'tpmodcon') > 0 ){
 			$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis&vlparepr=50&vliofepr=2');	
 			$obj = json_decode($raw_data); 	
-			$vlparepr = $obj->vlparepr;
-			$vliofepr = $obj->vliofepr;		
-		}		
-
+			if (isset ($obj->vlparepr)){
+				$vlpreemp = $obj->vlparepr;
+				$vliofepr = $obj->vliofepr;	
+			}					
+		}	
+	
+		
         $retorno .= '$("#tpemprst","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'tpemprst') . '");
         			$("#vlemprst","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'vlemprst') . '");
 					$("#vlemprst","#frmNovaProp").blur();
-					$("#vlpreemp","#frmNovaProp").val("' . $vlparepr  . '");
+					$("#vlpreemp","#frmNovaProp").val("' . $vlpreemp  . '");
                     $("#vlpreemp","#frmNovaProp").blur();
 					$("#qtdialib","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'nrdialib') . '");
 					$("#dtlibera","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'dtlibera') . '");
@@ -85,6 +87,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
                     $("#idcarenc","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'idcarenc') . '");
                     $("#dtcarenc","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'dtcarenc') . '");
                     $("#vlprecar","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'vlprecar') . '");
+					$("#vliofepr","#frmNovaProp").val("' . $vliofepr  . '");
                     if ($("#tpemprst","#frmNovaProp").val() == 2) {
                         $("#linCarencia","#frmNovaProp").show();
                         $("#vlprecar","#frmNovaProp").blur();
@@ -108,7 +111,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
                     $("#idcarenc","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'idcarenc') . '");
                     $("#dtcarenc","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dtcarenc') . '");
                     $("#dsfinemp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dsfinemp') . '");
-                    $("#vliofepr","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vliofepr') . '");
+                    $("#vliofepr","#frmSimulacao").val("' . $vliofepr  . '");
                     $("#vlrtarif","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vlrtarif') . '");
                     $("#vlrtotal","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vlrtotal') . '");                    
                     $("#idfiniof","#frmSimulacao").val("' . $idfiniof . '");

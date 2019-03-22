@@ -33,6 +33,12 @@ $cdfinemp = $_POST['cdfinemp'];
 $dsctrliq = isset($_POST['dsctrliq']) ? $_POST['dsctrliq'] : '';
 $idfiniof = isset($_POST['idfiniof']) ? $_POST['idfiniof'] : '0';
 
+$vliofepr = '-1';
+$gConsig = isset($_POST['gConsig']) ? $_POST['gConsig'] : '0';
+if ($gConsig == '1'){
+	$vliofepr = isset($_POST['vliofepr']) ? $_POST['vliofepr'] : '';
+}
+
 $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 
 // valida se eh uma portabilidade
@@ -65,6 +71,9 @@ $xml .= "		<vlpreemp>" . $vlpreemp . "</vlpreemp>";
 $xml .= "		<qtpreemp>" . $qtpreemp . "</qtpreemp>";
 $xml .= "		<dsctrliq>" . $dsctrliq . "</dsctrliq>";
 $xml .= "		<idfiniof>" . $idfiniof . "</idfiniof>";
+if ($gConsig == '1'){
+	$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
+}	
 $xml .= "	</Dados>";
 $xml .= "</Root>";
 
@@ -81,4 +90,5 @@ if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 }
 echo "arrayProposta['percetop'] = '" . $txcetano . "';";
 echo "$('#percetop','#frmNovaProp').val('" . $txcetano . "');";
+
 ?>	

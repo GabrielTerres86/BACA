@@ -64,7 +64,21 @@
 	$dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '';
 	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1';
 	$idquapro = (isset($_POST['idquapro'])) ? $_POST['idquapro'] : 0 ;
-	$vlpreemp = (isset($_POST['vlpreemp'])) ? $_POST['vlpreemp'] : 0 ;
+
+	$vlpreemp = (isset($_POST['vlpreemp'])) ? $_POST['vlpreemp'] : 0 ;	
+	$gConsig = (isset($_POST['gConsig'])) ? $_POST['gConsig'] : 0 ;
+
+	if($gConsig == 1){
+		$vlpreemp = (isset($_POST['vlpreemp'])) ? $_POST['vlpreemp'] : 0 ;
+		$vliofepr = (isset($_POST['vliofepr'])) ? $_POST['vliofepr'] : 0 ;
+		$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis&vlparepr=97,62&vliofepr=4');	
+		$obj = json_decode($raw_data); 	
+		if (isset ($obj->vlparepr)){
+			$vlpreemp = $obj->vlparepr;
+			$vliofepr = $obj->vliofepr;	
+		}			
+	}
+
 	$cddopcao = 'A';
 
 	if( $operacao == 'TI' ){ $cddopcao = 'I'; }
@@ -121,7 +135,11 @@
     $xml .= "		<idcarenc>".$idcarenc."</idcarenc>";
     $xml .= "		<dtcarenc>".$dtcarenc."</dtcarenc>";
     $xml .= "		<idfiniof>".$idfiniof."</idfiniof>";    
-	$xml .= '		<idquapro>'.$idquapro.'</idquapro>';
+	$xml .= '		<idquapro>'.$idquapro.'</idquapro>';	
+	if ($gConsig == 1){
+		$xml .= '		<vlpreempi>'.$vlpreemp.'</vlpreempi>';
+		$xml .= '		<vlrdoiof>'.$vliofepr.'</vlrdoiof>';
+	}
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	
@@ -274,6 +292,7 @@
 	echo "arrayProposta['dtlibera'] = '".$dtlibera."';";	
 	echo "arrayProposta['idcobope'] = '".$idcobope."';";	
     echo "arrayProposta['idfiniof'] = '".$idfiniof."';";
+	echo "arrayProposta['vliofepr'] = '".$vliofepr."';";
 	echo "aDadosPropostaFinalidade['dsnivris'] = arrayProposta['nivrisco'];";
 	
 	echo "$('#vlpreemp','#frmNovaProp').val('".$vlpreemp."');";
@@ -288,5 +307,6 @@
     echo "$('#idfiniof','#frmNovaProp').val('".$idfiniof."');";
     echo "$('#vlprecar','#frmNovaProp').val('".$vlprecar."');";
     echo "$('#vlprecar','#frmNovaProp').trigger('blur');";
-	
+	echo "$('#vliofepr','#frmNovaProp').val('".$vliofepr."');";
+		
 ?>

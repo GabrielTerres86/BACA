@@ -172,6 +172,16 @@
 	$dscatbem = (isset($_POST['dscatbem'])) ? $_POST['dscatbem'] : '' ;
 	
 	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1' ;
+	$gConsig = isset($_POST['gConsig']) ? $_POST['gConsig'] : '0';	
+	if($gConsig == 1){
+		$vliofepr = (isset($_POST['vliofepr'])) ? $_POST['vliofepr'] : -1 ;
+		$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis&vlparepr=97,62&vliofepr=4');	
+		$obj = json_decode($raw_data); 	
+		if (isset($obj->vlparepr)){
+			$vlpreemp = $obj->vlparepr;
+			$vliofepr = $obj->vliofepr;	
+		}			
+	}
 	
 	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
 	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
@@ -491,6 +501,9 @@
     $xml .= '		<dscatbem>'.$dscatbem.'</dscatbem>';	
 	$xml .= '		<cdcoploj>0</cdcoploj>';
 	$xml .= '		<nrcntloj>0</nrcntloj>';
+	if ($gConsig == '1'){
+		$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
+	}	
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
     
@@ -607,5 +620,6 @@
 	} else {
 		exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\')','verificaCriticasRating(\'\')',false);
 	}
+	
 
 ?>

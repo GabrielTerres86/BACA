@@ -1346,7 +1346,7 @@ function controlaOperacao(operacao) {
             break;
         //case 'DEMONSTRATIVO_EMPRESTIMO':
         case 'A_DEMONSTRATIVO_EMPRESTIMO':
-        case 'I_DEMONSTRATIVO_EMPRESTIMO':
+        case 'I_DEMONSTRATIVO_EMPRESTIMO':        	
             tpemprst = arrayProposta['tpemprst'];
             cdlcremp = arrayProposta['cdlcremp'];
             vlempres = number_format(parseFloat(arrayProposta['vlemprst'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
@@ -1358,7 +1358,9 @@ function controlaOperacao(operacao) {
 			dtcarenc = arrayProposta['dtcarenc'];
             cddopcao = 'C';
             vlpreemp = number_format(parseFloat(arrayProposta['vlpreemp'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-            vlprecar = number_format(parseFloat(arrayProposta['vlprecar'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+			if (typeof arrayProposta['vlprecar'] !== 'undefined'){
+				vlprecar = number_format(parseFloat(arrayProposta['vlprecar'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+			}
             mensagem = 'Carregando Demonstrativo da Proposta...';
             dscatbem = '';
             cdfinemp = arrayProposta['cdfinemp']
@@ -1435,7 +1437,7 @@ function controlaOperacao(operacao) {
 			dtcarenc: dtcarenc, idcarenc:idcarenc, 
             nomeAcaoCall: nomeAcaoCall,
 			executandoProdutos: executandoProdutos,
-			vlprecar: vlprecar,
+			vlprecar: vlprecar, gConsig: gConsig,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1816,6 +1818,7 @@ function manterRotina(operacao) {
             inpesso2: inpesso2, dtnasct2: dtnasct2, cddopcao: cddopcao,
             resposta: resposta, idfiniof: idfiniof, vliofepr: vliofepr,
             vlrtarif: vlrtarif, vlrtotal: vlrtotal, vlfinanc: vlfinanc,
+			vliofepr: vliofepr,  gConsig: gConsig,
             executandoProdutos: executandoProdutos, redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -5609,6 +5612,9 @@ function validaDadosGerais() {
     var idfiniof = $('#idfiniof', '#frmNovaProp').val();
     var idquapro = $('#idquapro', '#frmNovaProp').val();
 
+    var vlpreemp = $('#vlpreemp', '#frmNovaProp').val();
+    var vliofepr = $('#vliofepr', '#frmNovaProp').val();
+
     // PRJ 438 - Alterado para passar sempre tpaltera = 1, com o objetivo de sempre chamar a proc valida-dados-proposta-completa
     var tpaltera = '1';
 
@@ -5671,7 +5677,8 @@ function validaDadosGerais() {
             cdmodali: cdmodali, idcobope: idcobope,
             idcarenc: idcarenc, dtcarenc: dtcarenc,
             idfiniof: idfiniof, idquapro: idquapro,
-			vlpreemp: vlpreemp,
+			vlpreemp: vlpreemp, vliofepr: vliofepr, 
+			gConsig: gConsig,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -9468,7 +9475,8 @@ function calculaCet(operacao) {
     var qtpreemp = $('#qtpreemp', '#frmNovaProp').val();
     var cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
     var tpemprst = $('#tpemprst', '#frmNovaProp').val();
-    var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();    
+    var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();  
+    var vliofepr = $('#vliofepr', '#frmNovaProp').val();  
 
     $.ajax({
         type: 'POST',
@@ -9488,6 +9496,8 @@ function calculaCet(operacao) {
             operacao: operacao,
        portabilidade: possuiPortabilidade,
             dsctrliq: arrayProposta['dsctrliq'],
+            vliofepr: vliofepr,
+             gConsig: gConsig,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {

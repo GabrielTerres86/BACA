@@ -96,6 +96,18 @@
 	$executandoProdutos = $_POST['executandoProdutos'];
 	$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm'])?$_POST['sitaucaoDaContaCrm']:'');
 	
+	$gConsig = isset($_POST['gConsig']) ? $_POST['gConsig'] : '0';	
+	if($gConsig == 1){
+		$vlpreemp = (isset($_POST['vlpreemp'])) ? $_POST['vlpreemp'] : 0 ;
+		$vliofepr = (isset($_POST['vliofepr'])) ? $_POST['vliofepr'] : -1 ;
+		$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis&vlparepr=97,62&vliofepr=4');	
+		$obj = json_decode($raw_data); 	
+		if (isset($obj->vlparepr)){
+			$vlpreemp = $obj->vlparepr;
+			$vliofepr = $obj->vliofepr;	
+		}			
+	}
+	
 	$dateArray = explode("/", $glbvars["dtmvtolt"]);
 	
 	// Adiciona o número de dias informado a data atual
@@ -936,6 +948,9 @@
 		$xml .= "   <idfiniof>".$idfiniof."</idfiniof>";
 		$xml .= "   <dsctrliq>".$dsctrliq."</dsctrliq>";
 		$xml .= "   <idgravar>N</idgravar>";
+		if ($gConsig == '1'){
+			$xml .= "		<vlrdoiof>".str_replace(',', '.', str_replace('.', '', $vliofepr)). "</vlrdoiof>";
+		}
 		$xml .= " </Dados>";
 		$xml .= "</Root>";
 
@@ -998,8 +1013,11 @@
 		$xml .= "		<cdusolcr>" . getByTagName($tagTarifa,'cdusolcr') . "</cdusolcr>";
 		$xml .= "   	<nrctremp>".$nrctremp."</nrctremp>";
 		$xml .= "   	<dscatbem>".$dscatbem."</dscatbem>";
+		$xml .= "		<dsctrliq>" . $dsctrliq . "</dsctrliq>";		
 		$xml .= "   	<idfiniof>".$idfiniof."</idfiniof>";		
-		$xml .= "		<dsctrliq>" . $dsctrliq . "</dsctrliq>";
+		if ($gConsig == '1'){
+			$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
+		}		
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
 
@@ -1015,6 +1033,7 @@
 		//Atualiza o array do javascript para exibir os valores atualizados no formulário do demonstrativo
 		?>
 		<script type="text/javascript">
+			console.log('<? echo $xml; ?>');
 			arrayProposta['vlrtarif'] = '<? echo number_format(str_replace(",",".",$vltarifa),2,",",""); ?>';	
 			arrayProposta['vliofepr'] = '<? echo number_format(str_replace(",",".",$valoriof),2,",",""); ?>';	
 			arrayProposta['vlrtotal'] = '<? echo number_format(str_replace(",",".",$vlrtotal),2,",",""); ?>';
