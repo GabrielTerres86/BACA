@@ -31,3 +31,25 @@ function validaAnulada(linha, operacao_atual){
     }
     return true;
 }
+
+
+/**
+ * Bruno Luiz Katzjarowski - prj 438 - bug 18015
+ * Data: 22/03/2019
+ */
+function preencherTpemprst(){
+    var cTipoEmpr = $('#tpemprst','#frmNovaProp');
+    var tpemprst = arrayProposta['tpemprst'];
+    var cdtpempr = arrayProposta['cdtpempr'];
+    var dstpempr = arrayProposta['dstpempr'];
+    cdtpempr = cdtpempr.split(",");
+    dstpempr = dstpempr.split(",");
+    for (x = 0; x < cdtpempr.length; x++)
+    {
+        if (tpemprst == cdtpempr[x]) {
+            cTipoEmpr.append("<option value='" + cdtpempr[x] + "' selected>" + dstpempr[x] + "</option>");
+        } else {
+            cTipoEmpr.append("<option value='" + cdtpempr[x] + "'>" + dstpempr[x] + "</option>");
+        }
+    }
+}

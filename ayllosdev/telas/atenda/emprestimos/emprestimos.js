@@ -1694,6 +1694,13 @@ function controlaOperacao(operacao) {
                     }
                 }
 
+                //bruno - prj 438 - bug 18015
+                if (in_array(operacao, ['CF', 'TC', 'TE', 'I_CONTRATO', 'I_FINALIZA', 'A_FINALIZA'])){
+                    preencherTpemprst();
+                    exibeLinhaCarencia();
+                    $('#tpemprst','#frmNovaProp').val(arrayProposta['tpemprst']);
+                }
+
 /*                if (in_array(operacao, ['C_ALIENACAO', 'AI_ALIENACAO', 'A_ALIENACAO', 'E_ALIENACAO', 'I_ALIENACAO', 'IA_ALIENACAO', 'A_BENS', 'AI_BENS']) && !bemCarregadoUfPa) {
                     busca_uf_pa_ass();
                 }*/
@@ -11396,7 +11403,16 @@ function abrirTelaGAROPC(operacao) {
 }
 
 function exibeLinhaCarencia() {
-    if ($("#tpemprst", "#frmNovaProp").val() == 2) { // Se for Pos-Fixado
+
+    //bruno - prj 438 - bug 18015
+    var forceLinhaCarencia = false;
+    if(in_array(operacao, ['CF', 'TC', 'TE', 'I_CONTRATO', 'I_FINALIZA', 'A_FINALIZA'])){
+        if(arrayProposta['tpemprst'] == 2){
+            forceLinhaCarencia = true;
+        }
+    }
+
+    if ($("#tpemprst", "#frmNovaProp").val() == 2 || forceLinhaCarencia) { // Se for Pos-Fixado
         $("#divIdcarenc", "#frmNovaProp").show();
         $("#divDtcarenc", "#frmNovaProp").show();
         $("#divIdfiniof", "#frmNovaProp").insertAfter($("#vlemprst", "#frmNovaProp"));
@@ -11406,7 +11422,18 @@ function exibeLinhaCarencia() {
         $('label[for="flgpagto"]', '#frmNovaProp').css('width', '154px');
         $('label[for="idquapro"]', '#frmNovaProp').css('width', '154px');
         $('label[for="flgdocje"]', '#frmNovaProp').css('width', '270px');
+        //bruno - prj 438 - bug 18015
+        if(!forceLinhaCarencia){
         calculaDataCarencia();
+        }
+
+        //bruno - prj 438 - bug 18015
+        if(in_array(operacao, ['CF', 'TC', 'TE', 'I_CONTRATO', 'I_FINALIZA', 'A_FINALIZA'])){
+            if(arrayProposta['tpemprst'] == 2){
+                bloqueiaFundo($('#divError'));
+            }
+        }
+
     } else {
         $("#divIdcarenc", "#frmNovaProp").hide();
         $("#divDtcarenc", "#frmNovaProp").hide();
