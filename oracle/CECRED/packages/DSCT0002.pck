@@ -9150,8 +9150,6 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     vr_jobname             varchar2(30); 
     vr_dsplsql             varchar2(4000); 
     
-    vr_flgcrps538_concluida INT;
-    
     CURSOR cr_crapage IS 
       SELECT  crapage.cdagenci
              ,crapage.nmresage
@@ -9160,11 +9158,6 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
          AND crapage.cdagenci <> 999
     ;
     BEGIN
-      -- Verifica se a cprs538 foi concluida
-      vr_flgcrps538_concluida := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                                                   pr_cdcooper => pr_cdcooper,
-                                                                   pr_cdacesso => 'FLG_CRPS538_CONCLUIDA');
-      IF (vr_flgcrps538_concluida = '1') THEN
       vr_idparale := gene0001.fn_gera_id_paralelo;
       vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper --> Código da coopertiva
                                                    ,vr_cdprogra --> Código do programa
@@ -9217,22 +9210,11 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
       gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
                                    ,pr_qtdproce => 0
                                    ,pr_des_erro => vr_dscritic);
-                                  
-         -- zera o parametro para informar que a crps538 rodou
-         UPDATE crapprm
-           SET crapprm.dsvlrprm = '0'
-         WHERE nmsistem =  'CRED'
-           AND cdcooper  = pr_cdcooper
-           AND cdacesso =  'FLG_CRPS538_CONCLUIDA';
                                     
       -- Testar saida com erro
       IF  vr_dscritic IS NOT NULL THEN 
         -- Levantar exceçao
         RAISE vr_exc_erro;
-        END IF;
-      ELSE
-        NULL;
-        --Adiciona job para rodar em 30 min
       END IF;
     EXCEPTION    
       WHEN vr_exc_erro THEN
