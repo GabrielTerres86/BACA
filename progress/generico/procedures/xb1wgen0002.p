@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0002.p
    Autor   : Murilo/David
-   Data    : Junho/2007                     Ultima atualizacao: 15/10/2018
+   Data    : Junho/2007                     Ultima atualizacao: 21/03/2019
 
    Dados referentes ao programa:
 
@@ -151,6 +151,14 @@
               15/10/2018 - P442 - Não mais passar dados de interveniente e bens na validação
                            de outras propostas (Marcos-Envolti)
               
+              20/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
+			  
+			  20/03/2019 - P437 Consignado - Inclusao de parametros na valida-dados-gerais (aux_vlpreempi, aux_vlrdoiof) (Fernanda Kelli - AMcom)
+			  
+			  20/03/2019 - P437 Consignado - Inclusao de parametros na calcula_cet_novo (aux_vlrdoiof) (Fernanda Kelli - AMcom) 
+			  
+			  21/03/2019 - P437 Consignado - Inclusao de parametros na grava-proposta-completa (aux_vlrdoiof) (Fernanda Kelli - AMcom)
+              
 ..............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                           NO-UNDO.
@@ -188,6 +196,8 @@ DEF VAR aux_idimpres AS INTE                                           NO-UNDO.
 DEF VAR aux_nrpagina AS INTE                                           NO-UNDO.
 DEF VAR aux_promsini AS INTE                                           NO-UNDO.
 DEF VAR aux_idquapro AS INTE                                           NO-UNDO.
+DEF VAR aux_vlpreempi AS DECI                                          NO-UNDO. /*P437*/
+DEF VAR aux_vlrdoiof  AS DECI                                          NO-UNDO. /*P437*/
 DEF VAR aux_nrctaav2 AS INTE                                           NO-UNDO.
 DEF VAR aux_nrgarope AS INTE                                           NO-UNDO.
 DEF VAR aux_nrperger AS INTE                                           NO-UNDO.
@@ -403,6 +413,7 @@ DEF VAR aux_idcarenc AS INTE                                           NO-UNDO.
 DEF VAR aux_dtcarenc AS DATE                                           NO-UNDO.
 
 
+
 { sistema/generico/includes/b1wgen0002tt.i }
 { sistema/generico/includes/b1wgen0024tt.i }
 { sistema/generico/includes/b1wgen0043tt.i }
@@ -500,6 +511,8 @@ PROCEDURE valores_entrada:
             WHEN "flgentrv" THEN aux_flgentrv = LOGICAL(tt-param.valorCampo).
             WHEN "inpessoa" THEN aux_inpessoa = INTE(tt-param.valorCampo).
             WHEN "idquapro" THEN aux_idquapro = INTE(tt-param.valorCampo).
+			WHEN "vlpreempi" THEN aux_vlpreempi = DECI(tt-param.valorCampo).  /*P437*/
+			WHEN "vlrdoiof"  THEN aux_vlrdoiof  = DECI(tt-param.valorCampo).   /*P437*/
             WHEN "nrctaav2" THEN aux_nrctaav2 = INTE(tt-param.valorCampo).
             WHEN "nrgarope" THEN aux_nrgarope = INTE(tt-param.valorCampo).
             WHEN "nrperger" THEN aux_nrperger = INTE(tt-param.valorCampo).
@@ -1169,6 +1182,8 @@ PROCEDURE valida-dados-gerais:
                             INPUT aux_dtcarenc,
                             INPUT aux_idfiniof,
                             INPUT aux_idquapro,
+							INPUT aux_vlpreempi,    /*P437*/
+							INPUT aux_vlrdoiof,     /*P437*/
                             OUTPUT TABLE tt-erro,
                             OUTPUT TABLE tt-msg-confirma,
                             OUTPUT TABLE tt-ge-epr,
@@ -1647,6 +1662,7 @@ PROCEDURE grava-proposta-completa:
                                 INPUT aux_idfiniof,
                                 INPUT aux_dscatbem,
                                 INPUT 1, /* par_inresapr */
+								INPUT aux_vlrdoiof,     /*P437*/
                                 OUTPUT TABLE tt-erro,                          
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT aux_recidepr,
@@ -2274,7 +2290,6 @@ PROCEDURE calcula_cet_novo:
                                  INPUT aux_idorigem, 
                                  INPUT aux_dtmvtolt,
                                  INPUT aux_nrdconta,
-
                                  INPUT aux_inpessoa,
                                  INPUT 2, /* cdusolcr */
                                  INPUT aux_cdlcremp,
@@ -2290,6 +2305,7 @@ PROCEDURE calcula_cet_novo:
                                  INPUT aux_idfiniof,
                                  INPUT aux_dsctrliq,
                                  INPUT "N",
+								 INPUT aux_vlrdoiof,     /*P437*/
                                 OUTPUT aux_txcetano,
                                 OUTPUT aux_txcetmes,
                                 OUTPUT TABLE tt-erro ). 
