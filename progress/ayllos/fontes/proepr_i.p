@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/96.                     Ultima atualizacao: 23/04/2018
+   Data    : Outubro/96.                     Ultima atualizacao: 21/03/2019
 
    Dados referentes ao programa: 
 
@@ -451,7 +451,10 @@
             24/01/2018 - Passagem de parametros nulos. (Jaison/James - PRJ298)
             
             23/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)  
-
+            
+            21/03/2019 - P437 - Consignado - Inclusao dos parametros par_vlpreempi e par_vlrdoiof 
+                         na chamada da rotina valida-dados-gerais - Josiane Stiehler - AMcom
+                         
 ........................................................................... */
 
 DEF INPUT PARAM par_nrdconta AS INTE                                   NO-UNDO.
@@ -909,6 +912,8 @@ IF   FRAME-FIELD = "cdfinemp"  THEN
                                             INPUT ?, /* par_dtcarenc */
 											INPUT tt-proposta-epr.idfiniof,
                                             INPUT tt-proposta-epr.idquapro,
+                                            INPUT 0, /*par_vlpreempi*/
+                                            INPUT -1, /*par_vlrdoiof*/
                                             OUTPUT TABLE tt-erro,
                                             OUTPUT TABLE tt-msg-confirma,
                                             OUTPUT TABLE tt-grupo,
