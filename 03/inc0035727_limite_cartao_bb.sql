@@ -11,3 +11,5 @@ update crawcrd d
  where d.cdcooper = 1
    and d.nrdconta = 2202107
    and d.nrctrcrd = 93742;   
+
+   commit;
