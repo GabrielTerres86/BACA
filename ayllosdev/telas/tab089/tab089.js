@@ -117,7 +117,7 @@ function formataCampos() {
     cQtditava = $('#qtditava', '#frmTab089'); //PJ438 - Márcio (Mouts)	
     cQtditapl = $('#qtditapl', '#frmTab089'); //PJ438 - Márcio (Mouts)	
     cQtditsem = $('#qtditsem', '#frmTab089'); //PJ438 - Márcio (Mouts)	
-
+    cVlmaxdst = $('#vlmaxdst', '#frmTab089');
     cAvtperda = $('#avtperda', '#frmTab089'); // PRJ 438 - Sprint 5 - Mateus
     cVlperavt = $('#vlperavt', '#frmTab089'); // PRJ 438 - Sprint 5 - Mateus	
 
