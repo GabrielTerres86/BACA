@@ -6700,6 +6700,9 @@ function validaHipoteca(nmfuncao, operacao) {
 		eval(nmfuncao);
         return true;
     }
+
+    $('#vlrdobem', '#frmHipoteca').trigger('blur');
+    $('#vlmerbem', '#frmHipoteca').trigger('blur');
 	
 	showMsgAguardo('Aguarde, validando dados...');
 	
