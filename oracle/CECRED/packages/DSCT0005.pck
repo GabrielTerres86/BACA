@@ -1325,15 +1325,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
                lcto.dtpagamento,
                lcto.cdhistor,
                lcto.vllancamento,
+               bdt.inprejuz,
                COUNT(*) over (PARTITION BY lcto.cdcooper, lcto.nrdconta, lcto.nrborder, lcto.cdestorno, lcto.nrtitulo, lcto.dtpagamento) totreg,
                row_number() over (PARTITION BY lcto.cdcooper, lcto.nrdconta, lcto.nrborder, lcto.cdestorno, lcto.nrtitulo, lcto.dtpagamento
                                       ORDER BY lcto.cdcooper, lcto.nrdconta, lcto.nrborder, lcto.cdestorno, lcto.nrtitulo, lcto.dtpagamento) nrseq
           FROM tbdsct_estorno est
-          JOIN tbdsct_estornolancamento lcto
+    INNER JOIN tbdsct_estornolancamento lcto
             ON lcto.cdcooper  = est.cdcooper
            AND lcto.nrdconta  = est.nrdconta
            AND lcto.nrborder  = est.nrborder
            AND lcto.cdestorno = est.cdestorno
+    INNER JOIN crapbdt bdt 
+            ON bdt.cdcooper = est.cdcooper
+           AND bdt.nrdconta = est.nrdconta
+           AND bdt.nrborder = est.nrborder            
          WHERE est.cdcooper = pr_cdcooper 
            AND est.dtestorno BETWEEN pr_dtiniest AND pr_dtfinest
            AND (nvl(pr_nrdconta,0) = 0 OR est.nrdconta = pr_nrdconta)
@@ -1364,12 +1369,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
            AND crapope.cdoperad = pr_cdoperad;
       vr_nmoperad crapope.nmoperad%TYPE;
       
+      /*
       CURSOR cr_crapbdt(pr_cdcooper IN tbepr_estorno.cdcooper%TYPE) IS
       SELECT bdt.inprejuz
+             ,bdt.nrborder
         FROM crapbdt bdt
        WHERE bdt.cdcooper = pr_cdcooper
-        AND bdt.nrborder = pr_nrborder;
-
+        AND (nvl(pr_nrborder,0) = 0 OR bdt.nrborder = pr_nrborder);
+      rw_crapbdt cr_crapbdt%ROWTYPE; 
+      */
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
@@ -1419,12 +1427,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
 
       -- Valida se a data Inicial e Final Foram preenchidas
       IF vr_dtiniest IS NULL THEN
-        vr_dscritic := 'O campo data inicial nao foi preenchida';
+        vr_dscritic := 'O campo data inicial nao foi preenchido';
         RAISE vr_exc_saida;
       END IF;
       
       IF vr_dtfinest IS NULL THEN
-        vr_dscritic := 'O campo data final nao foi preenchida';
+        vr_dscritic := 'O campo data final nao foi preenchido';
         RAISE vr_exc_saida;
       END IF;
       
@@ -1456,17 +1464,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
                                                       <Filtros>
                                                         <data_inicial>'||TO_CHAR(vr_dtiniest,'DD/MM/YYYY')||'</data_inicial>
                                                         <data_final>'||TO_CHAR(vr_dtfinest,'DD/MM/YYYY')||'</data_final>
+      
                                                       </Filtros>');
-      OPEN cr_crapbdt(pr_cdcooper => vr_cdcooper);
-      FETCH cr_crapbdt INTO vr_inprejuz;
-      IF cr_crapbdt%NOTFOUND THEN
-        CLOSE cr_crapbdt;
-        vr_dscritic := 'Borderô não enontrado.';
-        RAISE vr_exc_saida;
-      ELSE
-        CLOSE cr_crapbdt;
-      END IF;
-      IF vr_inprejuz = 0 THEN
+      
         -- Percorre todos os lancamentos que foram estornados
         FOR rw_estorno IN cr_estorno(pr_cdcooper => vr_cdcooper,
                                      pr_nrdconta => pr_nrdconta,
@@ -1474,6 +1474,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
                                      pr_dtiniest => vr_dtiniest,
                                      pr_dtfinest => vr_dtfinest,
                                      pr_cdagenci => pr_cdagenci) LOOP
+            
+        IF rw_estorno.inprejuz = 0 THEN  
+            
           -- Possui registros
           vr_bltemreg := TRUE;
 
@@ -1528,16 +1531,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
             vr_vlpagmra := 0;
                                                   
           END IF; -- END IF rw_estorno.nrseq = rw_estorno.totreg THEN
-            
-        END LOOP; -- END FOR rw_estorno
       ELSE
-        -- Percorre todos os lancamentos que foram estornados
-        FOR rw_estorno IN cr_estorno(pr_cdcooper => vr_cdcooper,
-                                     pr_nrdconta => pr_nrdconta,
-                                     pr_nrctremp => pr_nrborder,
-                                     pr_dtiniest => vr_dtiniest,
-                                     pr_dtfinest => vr_dtfinest,
-                                     pr_cdagenci => pr_cdagenci) LOOP
             -- Possui registros
             vr_bltemreg := TRUE;
             -- Busca o nome da Agencia
@@ -1573,9 +1567,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
                                                             <vlpagmta>'||TO_CHAR(vr_vlpagmta,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.')||'</vlpagmta>
                                                             <vlpagmra>'||TO_CHAR(vr_vlpagmra,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.')||'</vlpagmra>
                                                           </Dados>');
-                                     
-        END LOOP;
       END IF;
+      END LOOP; -- END FOR rw_estorno
 
       -- Caso nao possua registros
       IF NOT vr_bltemreg THEN
