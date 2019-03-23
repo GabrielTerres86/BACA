@@ -820,7 +820,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
        WHERE tab.cdcooper        = vr_cdcooper
          AND upper(tab.nmsistem) = 'CRED'
          AND upper(tab.tptabela) = 'USUARI'
-         AND tab.cdempres        = 11;
+         AND tab.cdempres        = 11
+         AND upper(tab.cdacesso) = 'PAREMPREST'
+         AND tab.tpregist        = 01;
            
        UPDATE crapprm prm
           SET prm.dsvlrprm = vr_dsvlrprm
