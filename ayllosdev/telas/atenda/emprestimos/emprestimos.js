@@ -11424,14 +11424,7 @@ function exibeLinhaCarencia() {
         $('label[for="flgdocje"]', '#frmNovaProp').css('width', '270px');
         //bruno - prj 438 - bug 18015
         if(!forceLinhaCarencia){
-        calculaDataCarencia();
-        }
-
-        //bruno - prj 438 - bug 18015
-        if(in_array(operacao, ['CF', 'TC', 'TE', 'I_CONTRATO', 'I_FINALIZA', 'A_FINALIZA'])){
-            if(arrayProposta['tpemprst'] == 2){
-                bloqueiaFundo($('#divError'));
-            }
+            calculaDataCarencia();
         }
 
     } else {
