@@ -244,7 +244,9 @@
                             para a variável tt-ge-economico (Renato/AMcom)
                             
 			   03/09/2018 - Efetivaçao do seguro prestamista TR -- PRJ438 - Paulo Martins (Mouts)
-                            
+         
+               21/03/2019 - P437 - Consignado - Inclusao do parametro par_vlrdoiof 
+                            na chamada da rotina calcula_cet_novo - Josiane Stiehler - AMcom            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -1429,6 +1431,7 @@ DO WHILE TRUE:
                              INPUT crawepr.idfiniof, /* IDFINIOF */
                              INPUT aux_par_dsctrliq, /* dsctrliq */
                              INPUT "S",
+                             INPUT -1, /*par_vlrdoiof*/
                             OUTPUT aux_percetop, /* taxa cet ano */
                             OUTPUT aux_txcetmes, /* taxa cet mes */
                             OUTPUT TABLE tt-erro).
