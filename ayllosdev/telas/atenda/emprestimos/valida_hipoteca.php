@@ -7,6 +7,7 @@
  
  * ALTERAÇÕES   :
  * 001: [21/01/2016] James (CECRED): Incluido condicao para verificar se apresenta mensagem de aviso, caso o valor da garantia for superior a 5 vezes do valor do emprestimo
+ * 002: [31/10/2018] Paulo (Mouts): Incluido novas colunas para validação 
  */
 ?>
  
@@ -26,6 +27,13 @@
 	$vlmerbem = (isset($_POST['vlmerbem'])) ? $_POST['vlmerbem'] : '';
 	$idcatbem = (isset($_POST['idcatbem'])) ? $_POST['idcatbem'] : '';
 	$vlemprst = (isset($_POST['vlemprst'])) ? $_POST['vlemprst'] : '';
+	$dsendere = (isset($_POST['dsendere'])) ? $_POST['dsendere'] : '';
+	$dsclassi = (isset($_POST['dsclassi'])) ? $_POST['dsclassi'] : '';
+	$vlrdobem = (isset($_POST['vlrdobem'])) ? $_POST['vlrdobem'] : '';
+	$nrcepend = (isset($_POST['nrcepend'])) ? $_POST['nrcepend'] : '';
+	$nmbairro = (isset($_POST['nmbairro'])) ? $_POST['nmbairro'] : '';
+	$nmcidade = (isset($_POST['nmcidade'])) ? $_POST['nmcidade'] : '';
+	$cdufende = (isset($_POST['cdufende'])) ? $_POST['cdufende'] : '';
 	$nomeform = (isset($_POST['nomeform'])) ? $_POST['nomeform'] : '';
 	
 	$dscatbem = ( $dscatbem == 'null' ) ? '' : $dscatbem;
@@ -48,6 +56,13 @@
 	$xml .= "		<vlmerbem>".$vlmerbem."</vlmerbem>";
 	$xml .= "		<idcatbem>".$idcatbem."</idcatbem>";
 	$xml .= "		<vlemprst>".$vlemprst."</vlemprst>";
+    $xml .= "		<dsendere>".$dsendere."</dsendere>";	
+    $xml .= "		<dsclassi>".$dsclassi."</dsclassi>";	
+    $xml .= "		<vlrdobem>".$vlrdobem."</vlrdobem>";	
+	$xml .= "		<nrcepend>".$nrcepend."</nrcepend>";	
+	$xml .= "		<nmbairro>".$nmbairro."</nmbairro>";	
+	$xml .= "		<nmcidade>".$nmcidade."</nmcidade>";	
+	$xml .= "		<cdufende>".$cdufende."</cdufende>";	    
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	

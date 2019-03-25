@@ -2077,4 +2077,49 @@ function buscaSituacoesConta() {
 	
 	return $xmlObj->roottag->tags[0]->tags;
 }
+
+/**
+ * @author Bruno Luiz K. - Mout's;
+ * Descrição: Retorna uma string com encoding correto para exibição com acento
+ * @param string $string
+ * @param bool $desc
+ *
+ * @return mixed|null|string|string[]
+ */
+function decodeString($string, $html = false){
+	if($html){
+		$string = html_entity_decode($string, ENT_QUOTES);
+		$string = strip_tags($string);
+	}
+	$codificacaoAtual = mb_detect_encoding($string, 'auto', true);
+	$content = mb_convert_encoding($string, 'ISO-8859-1', $codificacaoAtual);
+	$content = decodeSpecialCharsHTML($content);
+	$content = str_replace(";",".",$content);
+	
+	return $content;
+}
+
+function decodeSpecialCharsHTML($content){
+	$arrSpecial = array(
+		"&quot;" => "\"",
+		"&#36;" => "$",
+		"&#37;" => "%",
+		"&#40;" => "(",
+		"&#41;" => ")",
+		"&#126;" => "~",
+		"&#39;" => "'",
+		"&lsquo;" => "‘",
+		"&rsquo;" => "’",
+		"&sbquo;" => "‚",
+		"&ldquo;" => "“",
+		"&rdquo;" => "”",
+		"&bdquo;" => "„",
+		"&#64;" => "@",
+		"&#45;" => "-",
+	);
+	foreach ($arrSpecial as $key => $value){
+		$content = str_replace($key, $value, $content);
+	}
+	return $content;
+}
 ?>

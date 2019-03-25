@@ -24,6 +24,8 @@ $.getScript(UrlSite + "includes/rating/rating.js");
 // Função para Mostrar Div de Impressão
 function mostraDivImpressao( operacao ) {
 	
+    temp = $('#nrpromini', '#frmNotaini').val();
+
 	showMsgAguardo('Aguarde, abrindo impressão...');
     
     limpaDivGenerica();
@@ -116,7 +118,8 @@ function verificaImpressao(par_idimpres){
 
 	idimpres = par_idimpres;
 
-	if ((idimpres == 3 || idimpres == 5 || idimpres == 7) && inobriga == 'S'){
+    //bug 14667 - não permitir imprimir se decisão com erro ou não analisada.
+    if ((idimpres == 3 || idimpres == 5 || idimpres == 7) && inobriga == 'S' && (insitapr == 6 || insitapr == 0)) {
 		showError('error','An&aacute;lise de Cr&eacute;dito ainda n&atilde;o foi efetuada! N&atilde;o ser&aacute; poss&iacute;vel gerar \'Proposta\', \'Rating\' ou \'Consultas\'!','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 		return false;
 	}
@@ -268,8 +271,7 @@ function mostraEmail() {
 	var metodoNao = "flgemail=false;carregarImpresso();";
 
 	showConfirmacao("Efetuar envio de e-mail para Sede?","Confirma&ccedil;&atilde;o - Aimaro",metodoSim,metodoNao,"sim.gif","nao.gif");
-    } else  
-        {  
+    } else {
           flgemail=false;
           carregarImpresso();
         }
@@ -311,6 +313,7 @@ function carregarImpresso(){
 	$('#nrctremp','#formEmpres').val( nrctremp );
 	$('#sidlogin','#formEmpres').val( $('#sidlogin','#frmMenu').val() );
 	$('#nrcpfcgc','#formEmpres').val( nrcpfcgc );
+
 
 	var action = UrlSite + 'telas/atenda/emprestimos/imprimir_dados.php';
 	

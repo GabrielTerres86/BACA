@@ -182,6 +182,12 @@
 			$vliofepr = $obj->vliofepr;	
 		}			
 	}
+
+	// PRJ 438
+	$vlrecjg1 = (isset($_POST['vlrecjg1'])) ? $_POST['vlrecjg1'] : '' ;
+	$vlrecjg2 = (isset($_POST['vlrecjg2'])) ? $_POST['vlrecjg2'] : '' ;
+	//bruno - prj 438 - bug 14235
+	$aux_ingarapr = (isset($_POST['aux_ingarapr'])) ? $_POST['aux_ingarapr'] : '' ;
 	
 	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
 	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
@@ -501,6 +507,11 @@
     $xml .= '		<dscatbem>'.$dscatbem.'</dscatbem>';	
 	$xml .= '		<cdcoploj>0</cdcoploj>';
 	$xml .= '		<nrcntloj>0</nrcntloj>';
+	// PRJ 438
+	$xml .= '		<vlrecjg1>'.$vlrecjg1.'</vlrecjg1>';
+	$xml .= '		<vlrecjg2>'.$vlrecjg2.'</vlrecjg2>';
+	//bruno - prj 438 - bug 14235
+	$xml .= '	    <ingarapr>'.$aux_ingarapr.'</ingarapr>';
 	if ($gConsig == '1'){
 		$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
 	}	
@@ -609,15 +620,17 @@
 		$xmlObj    = getObjectXML($xmlResult);
 	}
 	
-	echo 'exibirMensagens("'.$stringArrayMsg.'","bloqueiaFundo($(\"#divConfirm\"))");bloqueiaFundo($("#divError"));';
+		if ($procedure == 'grava-proposta-completa') {
+		echo 'exibirMensagens("'.$stringArrayMsg.'","bloqueiaFundo($(\"#divConfirm\")); verificaCriticasRating(\"\"); ' . $metodoConsultas.'");bloqueiaFundo($("#divError"));';
+	} else {
+	    echo 'exibirMensagens("'.$stringArrayMsg.'","bloqueiaFundo($(\"#divConfirm\"))");bloqueiaFundo($("#divError"));';
+	}
 	
 	$msgAtCad = '764 - Registrar revisao cadastral? (S/N)';
 	$chaveAlt = $glbvars['cdcooper'].','.$nrdconta.','.$glbvars['dtmvtolt'];
 	$tpAtlCad = 2;
 	
-	if ($procedure == 'grava-proposta-completa') {
-		exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\');' . $metodoConsultas ,'verificaCriticasRating(\'\'); ' . $metodoConsultas ,false);
-	} else {
+	if ($procedure != 'grava-proposta-completa') {
 		exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\')','verificaCriticasRating(\'\')',false);
 	}
 	

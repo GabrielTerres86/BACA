@@ -9,6 +9,7 @@
  *    ALTERAÇÕES: 29/10/2013 - Ajuste para alimentar o arrayAvalBusca somente se for encontrado algum 
 							   interveniente (Adriano).
  *                08/05/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ *                22/10/2018 - Adicionado campo Tipo Natureza e Conta Conjuge. (Mateus Z / Mouts)
  */
 ?>
  
@@ -58,7 +59,7 @@
 	$xmlObj = getObjectXML($xmlResult);
 	
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina); $(\'#nrcpfcgc\', \'#frmIntevAnuente\').focus();',false);
 	}
 	
 	$avalista = $xmlObj->roottag->tags[0]->tags[0]->tags;
@@ -91,6 +92,10 @@
 		echo 'arrayAvalBusca[\'complend\'] = "'. getByTagName($avalista,'complend').'" ;';
 		echo 'arrayAvalBusca[\'nrcxapst\'] = "'. getByTagName($avalista,'nrcxapst').'" ;';
 						
+		//PRJ 438
+		echo 'arrayAvalBusca[\'inpessoa\'] = "'. getByTagName($avalista,'inpessoa').'" ;';
+		echo 'arrayAvalBusca[\'nrctacjg\'] = "'. getByTagName($avalista,'nrctacjg').'" ;';				
+
 	}
 		
 ?>

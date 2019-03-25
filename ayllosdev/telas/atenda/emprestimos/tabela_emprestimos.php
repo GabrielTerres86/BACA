@@ -85,6 +85,11 @@
 					<td><span><? echo getByTagName($registro->tags,'nrctremp') ?></span>
 						<? echo formataNumericos("zzz.zz9",getByTagName($registro->tags,'nrctremp'),".") ?>
 
+						<!-- PRJ - 438 - Consulta Automatizada -->
+						<input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
+						<input type="hidden" id="nrdocmto" name="nrdocmto" value="<? echo getByTagName($registro->tags,'nrdocmto') ?>" />
+						<!-- fim - Consulta Automatizada -->
+
 						<input type="hidden" id="nrctremp" name="nrctremp" value="<? echo getByTagName($registro->tags,'nrctremp') ?>" />
 						<input type="hidden" id="nrdrecid" name="nrdrecid" value="<? echo getByTagName($registro->tags,'nrdrecid') ?>" />
 						<input type="hidden" id="tplcremp" name="tplcremp" value="<? echo getByTagName($registro->tags,'tplcremp') ?>" />
@@ -97,11 +102,13 @@
                         <input type="hidden" id="err_efet" name="err_efet" value="<? echo getByTagName($registro->tags,'err_efet') ?>" />
 						<input type="hidden" id="insitapr" name="insitapr" value="<? echo getByTagName($registro->tags,'insitapr') ?>" />
 						<input type="hidden" id="cdlcremp" name="cdlcremp" value="<? echo getByTagName($registro->tags,'cdlcremp') ?>" />
-					    <input type="hidden" id="vlfinanc" name="vlfinanc" value="<? echo getByTagName($registro->tags,'vlfinanc') ?>" />
+					    <input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
+						<input type="hidden" id="vlfinanc" name="vlfinanc" value="<? echo getByTagName($registro->tags,'vlfinanc') ?>" />
 						<input type="hidden" id="dssitest" name="dssitest" value="<? echo getByTagName($registro->tags,'dssitest') ?>" />
             <input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
 						<input type="hidden" id="insitest" name="insitest" value="<? echo getByTagName($registro->tags,'insitest') ?>" />
-						
+					    <!-- PRJ - 438 - Rating  -->
+						<input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
 						<input type="hidden" id="flintcdc" name="flintcdc" value="<? echo getByTagName($registro->tags,'flintcdc') ?>" />
 						<input type="hidden" id="inintegra_cont" name="inintegra_cont" value="<? echo getByTagName($registro->tags,'inintegra_cont') ?>" />
 						<input type="hidden" id="tpfinali" name="tpfinali" value="<? echo getByTagName($registro->tags,'tpfinali') ?>" />
@@ -143,12 +150,24 @@
 	<a href="#" class="botao" id="btImprimir"  onClick="controlaOperacao('IMP');">Imprimir</a>
 	<a href="#" class="botao" id="btSimular"   onClick="validaSimulacao();">Simular</a>
   <a href="#" class="botao" id="btRecalcular" onClick="controlaOperacao('VAL_RECALCULAR_EMPRESTIMO');">Atualizar Data</a>
+ 	<a href="#" class="botao" id="btAlterarNumeroContrato" onClick="alteraNumeroContrato();">Alterar o n&uacute;mero do contrato</a> <!-- PRJ - 438 - Contrato -->
+
 	<div style="margin-top:5px;" />
 	<a href="#" class="botao" id="btAprovar"   onClick="controlaOperacao('T_EFETIVA');">Efetivar</a>
+	<?php if ($flgGrvOnline == "N" ) { ?>
 	<a href="#" class="botao" id="btGravames"  onClick="controlaOperacao('VAL_GRAVAMES');">Registrar GRV</a>    
+	<?php } else { echo "<!-- flgGrvOnline=$flgGrvOnline -->"; } ?>
 	<a href="#" class="botao" id="btPortabilidade"  onClick="controlaOperacao('PORTAB_CRED_I');">Portabilidade</a>
 	<a href="#" class="botao" id="btEnvEsteira"  onClick="controlaOperacao('ENV_ESTEIRA')">Analisar</a>
+	<!-- PRJ 437 -->
+	<a href="#" class="botaoDesativado" id="btAverbar"  onClick="controlaOperacao('AVERBAR')">Averba&ccedil;&atilde;o</a>
 	<a href="#" class="botao" id="btAcionamentos"  onClick="controlaOperacao('ACIONAMENTOS')">Detalhes Proposta</a>
+	<?php
+	//PRJ - 438 - Automatizada
+	?>
+	<a href="#" class="botao" id="btConsultaAutomatizada" style='display: none;' onClick="alteraConsultaAutomatizada();">Consultas Automatizadas</a>
+	<!-- PRJ 438 - Sprint 5 -->
+	<!--<a href="#" class="botao" id="btAlteraSomenteBens" style='display: none;' onClick="botaoAlteraSomenteBens();">Alterar Somente Ve&iacute;culos</a>-->
 	<!-- PRJ 438 -->
 	<a href="#" class="botao" id="btAnular"  onClick="controlaOperacao('MOTIVOS')">Anular</a>
 	

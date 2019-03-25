@@ -414,7 +414,20 @@ function mostraPesquisa(businessObject, nomeProcedure, tituloPesquisa, quantReg,
 		} else {
 			fechaRotina($('#divPesquisa'));			
 		}
-				
+	    //bruno - prj 438 - BUG 17929
+		if (typeof focaCampo !== 'undefined') {
+		    var campo = focaCampo.split('|');
+		    var _campoNome = arrayFiltros = filtros.split("|")[0].split(';')[1];
+		    if (campo.length === 2) {
+		        if ($('#' + _campoNome, '#' + campo[1]).val() !== '') {
+		            $('#' + campo[0], '#' + campo[1]).focus();
+		        } else {
+		            $('#' + _campoNome, '#' + campo[1]).focus();
+		        }
+		    }
+		}
+
+        
 		return false;
 	});		
 	

@@ -6,6 +6,7 @@
  * OBJETIVO     : Tabela que apresenta os bens do titular selecionado
  * 
  * ALTERACOES   : 001: [05/09/2012] Mudar para layout padrao (Gabriel)
+ 				  002: [24/10/2018] Forçar pular tabela de bens (Bruno luiz K. - Mout's - PRJ 438)
  */	
 ?>
 
@@ -42,3 +43,14 @@
 		<?}?>
 	</div>
 </div> 	
+
+<script type='text/javascript'>
+	<?php
+
+		if($qtavalis == 2 && $nomeAcaoCall == 'A_AVALISTA' && $nrAvalistaSalvo < 2)
+			echo 'gravaAvalista();';
+		else
+			echo "fechaBens();";
+
+	?>
+</script>

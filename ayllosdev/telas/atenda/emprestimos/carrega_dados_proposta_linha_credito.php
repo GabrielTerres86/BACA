@@ -49,5 +49,6 @@
 	}else{
 		echo "$('#nivrisco').val('".$xmlObjeto->roottag->tags[0]->attributes['DSNIVRIS']."');";
 		echo "inobriga = '".$xmlObjeto->roottag->tags[0]->attributes['INOBRIGA']."';";
+		echo "aux_inobriga_rating = '".$xmlObjeto->roottag->tags[0]->attributes['INOBRIGA']."';"; //prj - 438 - rating - bruno
 	}
 ?>

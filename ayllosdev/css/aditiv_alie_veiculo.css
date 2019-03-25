@@ -23,7 +23,7 @@
         text-transform:uppercase
     }
     #frmTipo label{
-        min-width:120px;	
+        min-width:140px;	
         display:inline-table;
         text-align:right;
         height: 25px;
@@ -36,12 +36,12 @@
         font-size: 11px;
     }
     #frmTipo input[type="text"].menor, #frmTipo select#ufdplaca{
-        width:45px;
+        width:45px!important;
         padding: 0!important;
         min-width: 30px;
     }
     #frmTipo label.menor{
-        min-width:46px;
+        min-width:46px!important;
     }
     #frmTipo #nrdplaca{
          width:101px!important;
@@ -55,8 +55,9 @@
      #frmTipo fieldset legend{
        text-align: center;
     }
-    #frmTipo #nrmodbem, #frmTipo #nrmodbemC {
-        width:90px;
+    #frmTipo #nrmodbem, #frmTipo #nrmodbemC 
+    {
+        width:102px!important;
     }
     select[readonly] {
         background: #eee;
