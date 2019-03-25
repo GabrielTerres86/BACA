@@ -8,7 +8,7 @@
 | retorna-situacao                       | CADA0004.fn_retorna_situacao_cartao |
 | f_verifica_adm                         | CADA0004.fn_verifica_adm            |
 +----------------------------------------+-------------------------------------+
-
+ 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
 
@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 19/10/2018
+    Data      : Marco/2008                    Ultima Atualizacao: 11/02/2019
     
     Dados referentes ao programa:
 
@@ -141,16 +141,16 @@
                              valida_nova_proposta e 
                              carrega_dados_solicitacao2via_cartao (Irlan).
                                          
-                23/02/2011 - InclusÃ£o da opcÃ£o Encerramento para cartao BB
+                23/02/2011 - Inclusão da opcão Encerramento para cartao BB
                              (Isara - RKAM).
                                          
-                28/03/2011 - IncluÃ­do campo nmresadm na criaÃ§Ã£o da temp-table
+                28/03/2011 - Incluído campo nmresadm na criação da temp-table
                              tt-termocan-cartao (Irlan).
                                          
-                27/04/2011 - CEP integrado. AlteraÃ§Ã£o de parametros em:
+                27/04/2011 - CEP integrado. Alteração de parametros em:
                              grava_dados_habilitacao, renova_cartao, 
                              altera_limcred_cartao, cadastra_novo_cartao e
-                             efetua_entrega2via_cartao. (AndrÃ© - DB1)
+                             efetua_entrega2via_cartao. (André - DB1)
                                          
                 24/05/2011 - Ajuste na impressao dos avalistas, utilizando os
                              novos parametros da alteracao acima (David).
@@ -192,14 +192,14 @@
                                          
                 17/01/2012 - Handle preso na BO99999 (Oscar).
                                          
-                17/04/2012 - InclusÃ£o da Procedure gera_impressao_contrato_bb
+                17/04/2012 - Inclusão da Procedure gera_impressao_contrato_bb
                                          (David Kruger).
                                          
-                01/06/2012 - Alterado funÃ§Ã£o carrega_dados_limcred_cartao para
-                             bloquear alteraÃ§Ã£o de limite para os cartÃµes 
+                01/06/2012 - Alterado função carrega_dados_limcred_cartao para
+                             bloquear alteração de limite para os cartões 
                              CREDICARD MASTERCARD (Guilherme Maba).
                                          
-                10/07/2012 - IncluÃ­do parÃ¢metro par_nmextttl na procedure 
+                10/07/2012 - Incluído parâmetro par_nmextttl na procedure 
                              "cadastra_novo_cartao" (Guilherme Maba).
                                          
                 30/07/2012 - Ajustes para Oracle (Evandro).
@@ -221,7 +221,7 @@
                              de 11/12/2012 (Irlan)
                                          
                 08/11/2012 - Permitir que operadores dos setores de CARTOES e
-                             TI desfaÃ§am a solicitaÃ§Ã£o de 2via de cartao
+                             TI desfaçam a solicitação de 2via de cartao
                              independente da data (Lucas).
                                          
                 16/11/2012 - Quando procurado associado por cpf, verificar 
@@ -278,7 +278,7 @@
                 22/05/2013 - Alterado o caminho de instanciacao da b1wgen9999.p
                              (Adriano).
                                          
-                11/06/2013 - Liberada a solicitaÃ§Ã£o de cartÃµes Bradesco (cdadmcrd = 3) 
+                11/06/2013 - Liberada a solicitação de cartões Bradesco (cdadmcrd = 3) 
                              independente do operador do Ayllos (carrega_dados_inclusao)
                              (Carlos)
                                          
@@ -289,7 +289,7 @@
                              cartao BB - Softdesk 77237 (Rodrigo).
                                          
                 16/09/2013 - Movido o matches da consulta com crapalt.dsaltera, procedure
-                             solicita_revisao_cadastral_cartoes, para uma instruÃ§Ã£o IF.
+                             solicita_revisao_cadastral_cartoes, para uma instrução IF.
                              (Carlos)
                                          
                 30/10/2013 - Alterado atribuicao da variavel aux_nrdofone da crapass
@@ -302,7 +302,7 @@
                 20/12/2013 - Adicionado validate para as tabelas crawcrd,
                              crapalt, crapcrd, craphcj, crapncp (Tiago).
                                          
-                19/02/2014 - Alterado de onde Ã© pego o vlsalari, da crapass para
+                19/02/2014 - Alterado de onde é pego o vlsalari, da crapass para
                              a crapttl (Carlos)
                                          
                 17/03/2014 - Bloqueio de alteracao de limite dos cartoes CECRED 
@@ -338,8 +338,8 @@
                 10/06/2014 - (Chamado 117414) Troca do campo crapass.nmconjug por crapcje.nmconjug
                              (Tiago Castro - RKAM).
                                          
-                17/06/2014 - CorreÃ§Ã£o de tipo de pessoa para calculo de salÃ¡rio em
-                             nova inclusao de cartÃ£o cred. (SD. 165451 - Lunelli) 
+                17/06/2014 - Correção de tipo de pessoa para calculo de salário em
+                             nova inclusao de cartão cred. (SD. 165451 - Lunelli) 
                                          
                 18/06/2014 - Inclusao do parametro par_tpdpagto na procedure
                              cadastra_novo_cartao (Jean Michel).
@@ -358,8 +358,8 @@
                              atualiza_tabela_avalistas e cria-tabelas-avalistas
                              (Daniel/Thiago)  
                                          
-                15/07/2014 - Permitir exclusÃ£o de propostas de cartÃµes bancoob
-                             (Lucas Lunelli - Projeto CartÃµes Bancoob)
+                15/07/2014 - Permitir exclusão de propostas de cartões bancoob
+                             (Lucas Lunelli - Projeto Cartões Bancoob)
                                          
                 18/07/2014 - Incluso regra para nao permitir solicitacao cartao
                              Bancoob para menor de 18 anos e nao emancipado
@@ -371,13 +371,13 @@
                 28/07/2014 - adicionado parametro de saida em chamada da
                              proc. cria-tabelas-avalistas.
                              (Jorge/Gielow) - SD 156112                           
-                             - Novo tratamento para exibiÃ§Ã£o parcial do
-                             nÃºmero do cartÃ£o (Lunelli).    
+                             - Novo tratamento para exibição parcial do
+                             número do cartão (Lunelli).    
                                          
-                07/08/2014 - NÃ£o permitir nova proposta de cartÃ£o bancoob
+                07/08/2014 - Não permitir nova proposta de cartão bancoob
                              para departamento diferente CARTOES na fase de 
                              teste (Lunelli - Projeto Bancoob)
-                             - Alterado valor da validaÃ§Ã£o do limite de cartÃ£o
+                             - Alterado valor da validação do limite de cartão
                              MAESTRO (Lunelli - Projeto Bancoob)
                                          
                 13/08/2014 - Ajustado procedure valida_dados_cartao, parametro cdoperad
@@ -392,18 +392,18 @@
                  21/08/2014 - Incluso novo parametro inpessoa na procedure valida_dados_cartao
                  (Daniel) - SoftDesk  188116.     
                                          
-                11/09/2014 - Removidas restriÃ§Ãµes para Ã¡rea de CARTÃ•ES do Projeto
-                             CartÃµes Bancoob (Lucas Lunelli)
+                11/09/2014 - Removidas restrições para área de CARTÕES do Projeto
+                             Cartões Bancoob (Lucas Lunelli)
                                          
                 24/09/2014 - Incluir parametro nmempres na chamada da cadastra_novo_cartao
                              (Renato - Supero) - SD 204631
                                          
-                26/09/2014 - NÃ£o validar craptlc quando for uma adminstradora entre 10 e 80 na
+                26/09/2014 - Não validar craptlc quando for uma adminstradora entre 10 e 80 na
                              rotina valida_habilitacao ( Renato - Supero ).          
                                          
                 01/10/2014 - Incluir parametro na chamada da rotina carrega_dados_inclusao
-                             para conrolar o botÃ£o habilitar  e alteraÃ§Ã£o na procedure 
-                             valida_nova_proposta o habilitar para nÃ£o verificar para cartÃµes 
+                             para conrolar o botão habilitar  e alteração na procedure 
+                             valida_nova_proposta o habilitar para não verificar para cartões 
                              Bancoob (Vanessa)          
                 09/10/2014 - Alterar a rotina carrega_dados_inclusao, para que retorne as 
                              operadoras de cartoes, conforme o tipo do cadastro do associado. 
@@ -413,7 +413,7 @@
                              segunda via de senha para cartao bancoob encerrados, conforme
                              solicitado no chamado 200560 ( Renato - Supero )
                                          
-                27/10/2014 - Zerar o valor do limite do cartÃ£o de crÃ©dito conforme
+                27/10/2014 - Zerar o valor do limite do cartão de crédito conforme
                              SD 181559 (Vanessa) 
         
                 06/11/2014 - Alterado parametro passado na chamada das procedures
@@ -421,45 +421,45 @@
                              de: 'CARTAO CREDITO' para: 'CARTAO CRED.'.
                              Motivo: Possibilidade de erro ao tentar gravar
                              registro de log (craplgm). (Fabricio)
-                07/11/2014 - NÃ£o efetuar validacao do limite de credito para cartoes Bancoob (Rodrigo)
+                07/11/2014 - Não efetuar validacao do limite de credito para cartoes Bancoob (Rodrigo)
                                          
                 07/11/2014 - Incluir tratamentdo para as contas migradas das 
                              cooperativas Concredi e credimilsul ao listar cartoes
-                             retornar false para nao permitir operaÃ§oes (lista_cartoes) 
+                             retornar false para nao permitir operaçoes (lista_cartoes) 
                              (Odirlei/AMcom).
                                          
                 07/11/2014 - Alterar a data da proposta para a data do processo quando solicitar um 
                              upgrade/downgrade e limpar a data de entrega. Conforme 
                              chamado 217188 ( Renato - Supero )
                                          
-                11/11/2014 - AlteraÃ§ao da rotina de verificaÃ§ao do administrador do cartao para
-                             inclusao do Bancoob, alteraÃ§ao das chamadas desta rotinha, e
-                             correÃ§ao de erro na validaÃ§ao da idade mÃ­nima para obtenÃ§ao do
+                11/11/2014 - Alteraçao da rotina de verificaçao do administrador do cartao para
+                             inclusao do Bancoob, alteraçao das chamadas desta rotinha, e
+                             correçao de erro na validaçao da idade mínima para obtençao do
                              cartao adicional (Dionathan)
                                          
                 11/11/2014 - Nao permitir que seja realizada a exclusao de cartoes bancoob
-                                         do titular, quando hÃ¡ cadastro de adicionais ( Renato - Supero )
+                                         do titular, quando há cadastro de adicionais ( Renato - Supero )
                                          
-                04/12/2014 - Ajuste na regra de limite para cartÃ£o bancoob, afim de permitir limite zero 
+                04/12/2014 - Ajuste na regra de limite para cartão bancoob, afim de permitir limite zero 
                              e ajustar valores conforme progress, conforme SD 226052. ( Renato - Supero )
                              
-                05/12/2014 - Alterar a buscar pelo primeiro registro de cartÃ£o, afim de buscar apenas
+                05/12/2014 - Alterar a buscar pelo primeiro registro de cartão, afim de buscar apenas
                              o First. Conforme chamado 230720 ( Renato - Supero )
                 
                 22/12/2014 - Alterar a procedure lista_cartoes para mostrar o campo crapadc.nmresadm
                              com 30 caracteres. SD 204649 (Vanessa)
                              
-                06/01/2014 - Alterar procedure carrega_avalista exibir automaticamente informaÃ§oes do avalista quando informado o CPF. Chamado 228120      
+                06/01/2014 - Alterar procedure carrega_avalista exibir automaticamente informaçoes do avalista quando informado o CPF. Chamado 228120      
                 
-                12/01/2015 - Alterar as rotinas de busca de dados de cartÃ£o e de validaÃ§Ã£o para permitir que sejam solicitados
-                             cartÃµes de puro dÃ©bito para constas com situaÃ§Ã£o 5. Chamado 231723 ( Renato - Supero )       
+                12/01/2015 - Alterar as rotinas de busca de dados de cartão e de validação para permitir que sejam solicitados
+                             cartões de puro débito para constas com situação 5. Chamado 231723 ( Renato - Supero )       
                              
                 21/01/2015 - Substituida a chamada da procedure consulta-aplicacoes da BO b1wgen0004 
                              pela procedure obtem-dados-aplicacoes da BO b1wgen0081. Foi adicionado o
                              procedimento pc_busca_saldos_aplicacoes da package APLI0005.
                              (Carlos Rafael Tanholi - Projeto Captacao)                             
                              
-                13/02/2015 - NÃ£o deve considerar a idade para cartÃµes Puro dÃ©bito, conforme SD 254668. ( Renato - Supero )
+                13/02/2015 - Não deve considerar a idade para cartões Puro débito, conforme SD 254668. ( Renato - Supero )
                 
                 08/04/2015 - #272659 Inclusao de validacao na procedure 
                              cancela_bloqueia_cartao para nao cancelar quando for cartao BB.
@@ -477,7 +477,7 @@
                              Eliminado o campo nmdsecao (Tiago Castro - RKAM).
                              
                 09/11/2015 - Retirado o alerta de cartao rejeitado ao consultar cartao
-                             alerta serÃ¡ apresentado ao acessar tela ATENDA.
+                             alerta será apresentado ao acessar tela ATENDA.
                              Projeto 126. (Odirlei-AMcom) 
                              
                 25/11/2015 - Liberar consulta do cartao bancoob no Ayllos Web
@@ -488,20 +488,20 @@
                              por problemas de cursores abertos 
                              (Tiago/Rodrigo SD347440).
                              
-                23/02/2016 - AlteraÃ§ao na rotina de alteraÃ§ao de senha 
+                23/02/2016 - Alteraçao na rotina de alteraçao de senha 
                             (Lucas Lunelli - [PROJ290])
                             
-                14/04/2016 - Retirar validaÃ§ao de cooperativa incorporada Credimilsul
+                14/04/2016 - Retirar validaçao de cooperativa incorporada Credimilsul
                              para permitir cancelamento dos cartoes BB (Rodrigo)
                             
                 25/04/2016 - Incluir validacao na procedure "grava_dados_cartao_nao_gerado" (James)
                 
-                17/06/2016 - InclusÃ£o de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
-                07/12/2016 - P341-AutomatizaÃ§Ã£o BACENJUD - Alterar o uso da descriÃ§Ã£o do
-                             departamento passando a considerar o cÃ³digo (Renato Darosci)
+                07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 
-                23/03/2017 - Removendo a possibilidade de solicitar novo cartÃ£o com vencimento para o dia        
+                23/03/2017 - Removendo a possibilidade de solicitar novo cartão com vencimento para o dia        
                              27, conforme solicitado no chamado 636445. (Kelvin)
 							 
                 06/04/2017 - Ajuste realizado para resolver o problema de estouro de sequence, conforme
@@ -520,7 +520,7 @@
                              (Jaison/Elton - M459)
 
                 19/09/2017 - Ajuste na procedure cadastra_novo_cartao para nao permitir que a cooperativa 
-                             solicite cartao CECRED para ela mesma. Por exemplo: Viacredi acessa sua prÃ³pria 
+                             solicite cartao CECRED para ela mesma. Por exemplo: Viacredi acessa sua própria 
                              onta no Ayllos Web e tenta solicitar um cartao Cecred para si mesma. 
                              (Chamado 712927) (Kelvin/Douglas)
 
@@ -539,24 +539,25 @@
                 
 			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                 
-				30/07/2018 - Alterado a procedure verifica_acesso_2via colocando uma nova condiÃ§Ã£o para conta restrita.
+				30/07/2018 - Alterado a procedure verifica_acesso_2via colocando uma nova condição para conta restrita.
 
                 03/10/2018 - Ajuste no flag que indica titularidade 
 				             do cartao. Logica esta conforme sugestao das 
 							 anotacoes de trabalho do Incidente em questao.
                              Chamado PRB0040351 - Gabriel (Mouts).
 
-                19/10/2018 - Permitir a inclusão de cartão quando situação = 6 ou 
-                             conta cartão for zerada (Lucas Ranghetti INC0024543)
-
+                19/10/2018 - Permitir a inclusao de cartao quando situacao = 6 ou 
+                             conta cartao for zerada (Lucas Ranghetti INC0024543)
+                             
 				12/12/2018 - Adicionado campo flgprovi e criado Procedure para validar a assinatura da senha TA Online (Anderson-Alan Supero P432)
 
 
-                19/10/2018 - Permitir a inclusÃ£o de cartÃ£o quando situaÃ§Ã£o = 6 ou 
-                             conta cartÃ£o for zerada (Lucas Ranghetti INC0024543)
-                             
                23/01/2018 - Alteraçao na rotina de alterar_administradora para contemplar o insitdec (deciçao da esteira).
                             INC0027746 Augusto - Supero
+                            
+               11/02/2019 - Validacao para nao permitir exclusao de cartao quando o mesmo estiver em uso
+                            (Lucas Ranghetti #PRB0040556)
+                          - Validar titularidade na entrega da segunda via do cartao (Lucas Ranghetti #PRB0040597)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -601,7 +602,7 @@ DEFINE VARIABLE aux_qtregist AS INTEGER     NO-UNDO.
 /*****************
     FUNCOES
 *****************/
-/* Funcao para verificar qual a administradora do cartÃ£o */
+/* Funcao para verificar qual a administradora do cartão */
 FUNCTION f_verifica_adm RETURN INTEGER(INPUT par_cdadmcrd AS INTEGER):
 
     IF  par_cdadmcrd >= 83  AND  
@@ -961,7 +962,10 @@ PROCEDURE lista_cartoes:
                                                 INPUT crawcrd.dtsol2vi,
                                                 INPUT crawcrd.cdadmcrd).
         
-
+        FIND crapcrd WHERE crapcrd.cdcooper = par_cdcooper      AND
+                           crapcrd.nrdconta = par_nrdconta      AND
+                           crapcrd.nrcrcard = crawcrd.nrcrcard  NO-LOCK NO-ERROR.
+        
         IF   NOT AVAILABLE crapcrd THEN
             ASSIGN aux_flgprovi = 0.
             
@@ -2683,8 +2687,7 @@ PROCEDURE valida_nova_proposta:
                      /*validado o numero do contrato para tratar o modo de edicao da proposta*/
                      crawcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
 
-                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ OR 
-                     crawcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
+                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ THEN
                      NEXT.
                    
                 IF   crawcrd.cdadmcrd = crapadc.cdadmcrd  THEN
@@ -2723,8 +2726,7 @@ PROCEDURE valida_nova_proposta:
                                                /*validado o numero do contrato para tratar o modo de edicao da proposta*/
                                                cratcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
 
-	                        IF   cratcrd.insitcrd = 6 /* Proposta cancelada */ OR 
-                                 cratcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
+	                        IF   cratcrd.insitcrd = 6 /* Proposta cancelada */ THEN
                                  NEXT.
 
                             FIND cratadc WHERE cratadc.cdcooper = par_cdcooper and
@@ -3368,6 +3370,9 @@ PROCEDURE cadastra_novo_cartao:
               colaborador" da tela CONGPR. (Fabricio - 04/05/2012) */
            aux_dstransa = "Cadastrar novo cartao de credito.".
            
+    IF par_nrctrcrd > 0 THEN
+      ASSIGN aux_dstransa = "Alterar cartao de credito.".
+
 
     FOR FIRST crapass FIELDS(nrdconta inpessoa nrcpfcgc vllimdeb)  
                      WHERE crapass.cdcooper = par_cdcooper   AND
@@ -3894,6 +3899,7 @@ PROCEDURE cadastra_novo_cartao:
                                                             INPUT 0, /* Nacao */
                                                             INPUT 0,  /* Vl.Endiv*/
                                                             INPUT 0,  /* Vl.Rend */
+															INPUT 0, /* par_vlrecjg1 */
                                                             INPUT par_nrender1, 
                                                             INPUT par_complen1,
                                                             INPUT par_nrcxaps1,
@@ -3924,6 +3930,7 @@ PROCEDURE cadastra_novo_cartao:
                                                             INPUT par_nrcxaps2,
                                                             INPUT 0,  /* inpessoa 2o avail */
                                                             INPUT ?,  /* dtnascto 2o avail */
+															INPUT 0, /* par_vlrecjg2 */
                                                             INPUT "",
                                                            OUTPUT TABLE tt-erro).        
                 DELETE PROCEDURE h-b1wgen9999.
@@ -9232,6 +9239,7 @@ PROCEDURE altera_limcred_cartao:
                                  INPUT par_nrcxaps1,
                                  INPUT 0,  /* inpessoa 1o avail */
                                  INPUT ?,  /* dtnascto 1o avail */
+								 INPUT 0, /* par_vlrecjg1 */
                                  /* 2 avalista */
                                  INPUT par_nrctaav2,
                                  INPUT par_nmdaval2,
@@ -9257,6 +9265,7 @@ PROCEDURE altera_limcred_cartao:
                                  INPUT par_nrcxaps2,
                                  INPUT 0,  /* inpessoa 2o avail */
                                  INPUT ?,  /* dtnascto 2o avail */
+								 INPUT 0, /* par_vlrecjg2 */
                                  INPUT ""). /* Bens */                                 
                                  
                 DELETE PROCEDURE h-b1wgen9999.                 
@@ -11278,6 +11287,7 @@ PROCEDURE efetua_entrega2via_cartao:
     DEF  VAR   aux_nrctrcrd       AS INTE                           NO-UNDO.
   
     DEF  VAR   aux_flgtrans       AS LOGI                           NO-UNDO.
+    DEF  VAR   aux_flgprcrd       AS INTE INIT 1                    NO-UNDO.
 
     DEF BUFFER crabcrd FOR crawcrd.
     DEF BUFFER cratcrd FOR crapcrd.
@@ -11481,6 +11491,26 @@ PROCEDURE efetua_entrega2via_cartao:
                                        28,
                                        YEAR(aux_dtcalcu2)) + 4)).
         
+        /* Inicio - Busca primeiro cartao do cooperado - dentro da mesma adm */
+        FIND FIRST crawcrd WHERE crawcrd.cdcooper = par_cdcooper 
+                             AND crawcrd.nrdconta = par_nrdconta  
+                             AND crawcrd.cdadmcrd = crabcrd.cdadmcrd 
+                             AND crawcrd.flgprcrd = 1
+                             NO-LOCK NO-ERROR NO-WAIT.
+
+        /* Verifica se registro foi encontrado */
+        IF AVAILABLE crawcrd THEN 
+          DO:
+            /* Verificar se o CPF do titular do primeiro cartao */
+            /* eh o mesmo que esta sendo validado */ 
+            IF crawcrd.nrcpftit = DECI(crabcrd.nrcpftit) THEN 
+              ASSIGN aux_flgprcrd = 1. /* Eh o primeiro cartao Bancoob */ 
+            ELSE 
+              ASSIGN aux_flgprcrd = 0. /* Nao eh o primeiro titular */ 
+          END.
+        /* Se nao encontrado eh o primeiro cartao Bancoob */
+        ELSE 
+          ASSIGN aux_flgprcrd = 1.  
 
         /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
         IF par_cdagenci = 0 THEN
@@ -11493,6 +11523,7 @@ PROCEDURE efetua_entrega2via_cartao:
         ASSIGN crawcrd.dtmvtolt = par_dtmvtolt
                crawcrd.nrdconta = par_nrdconta
                crawcrd.nrctrcrd = aux_nrctrcrd
+               crawcrd.flgprcrd = aux_flgprcrd
                crawcrd.nrcpftit = crabcrd.nrcpftit
                crawcrd.nmtitcrd = crabcrd.nmtitcrd
                crawcrd.cdgraupr = crabcrd.cdgraupr
@@ -11669,6 +11700,7 @@ PROCEDURE efetua_entrega2via_cartao:
                                                     INPUT par_nrcxaps1,
                                                     INPUT 0,  /* inpessoa 1o avail */
                                                     INPUT ?,  /* dtnascto 1o avail */
+													INPUT 0, /* par_vlrecjg1 */
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -11694,6 +11726,7 @@ PROCEDURE efetua_entrega2via_cartao:
                                                     INPUT par_nrcxaps2,
                                                     INPUT 0,  /* inpessoa 2o avail */
                                                     INPUT ?,  /* dtnascto 2o avail */
+													INPUT 0, /* par_vlrecjg2 */
                                                     INPUT "",
                                                    OUTPUT TABLE tt-erro). 
 
@@ -14561,6 +14594,12 @@ PROCEDURE exclui_cartao:
                   ASSIGN aux_dscritic = "Cartao ja solicitado.".
                   LEAVE.
               END.               
+          
+          IF  crawcrd.insitcrd = 4 THEN
+              DO:
+                 ASSIGN aux_dscritic = "Cartao em uso. Exclusao nao permitida.".
+                 LEAVE.
+              END.
           
           /* Para cartoes Cecred (Bancoob) verifica se existem cartoes adicionais
 		     (Fabricio). */
@@ -19214,6 +19253,7 @@ PROCEDURE grava_dados_habilitacao:
                                                       INPUT par_nrcxaps1,
                                                       INPUT 0,  /* inpessoa 1o avail */
                                                       INPUT ?,  /* dtnascto 1o avail */
+													  INPUT 0, /* par_vlrecjg1 */
                                                       /** 2o avalista **/
                                                       INPUT par_nrctaav2,
                                                       INPUT par_nmdaval2, 
@@ -19239,6 +19279,7 @@ PROCEDURE grava_dados_habilitacao:
                                                       INPUT par_nrcxaps2,
                                                       INPUT 0,  /* inpessoa 2o avail */
                                                       INPUT ?,  /* dtnascto 2o avail */
+													  INPUT 0, /* par_vlrecjg2 */
                                                       INPUT "",
                                                      OUTPUT TABLE tt-erro).
           
