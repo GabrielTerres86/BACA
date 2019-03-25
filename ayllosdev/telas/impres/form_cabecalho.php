@@ -13,6 +13,7 @@
  *
  *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  *                28/08/2018 - Adicionado campo bordero para desconto de titulo. (Cássia de Oliveira - GFT)
+ *	              14/11/2018 - Inserção da lupa para borderôs. (Vitor S Assanuma - GFT))
  * --------------
  */
 ?>
@@ -52,9 +53,10 @@
 	<option id="desctit" value="13">13 - Desconto de t&iacutetulos</option>
 	</select>
 	<a href="#" class="botao" id="btnOK2">OK</a>
-	<div id="nrborder">
-		<label for="nrdborde">Border&ocirc:</label>
-		<input type="text" id="nrdborde" name="nrdborde" />
+	<div id="nrborderdiv">
+		<label for="nrborder">Border&ocirc:</label>
+		<input type="text" id="nrborder" name="nrborder" />
+		<a style="padding: 3px 0 0 3px;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<a href="#" class="botao" id="btnOK4">OK</a>
 	</div>
 	<br style="clear:both" />	

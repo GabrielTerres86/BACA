@@ -25,6 +25,7 @@
  * 014: [15/12/2017] Alterações para inserção da nova tela GAROPC. Inserção do campo idcobope. PRJ404 (Lombardi)
  * 015: [31/01/2017] Troca de posicao da Linha de Credito e Finalidade. Criacao dos campos Carencia e Data da primeira Carencia. (Jaison/James - PRJ298)
  * 016: [13/07/2018] Alterada a função chamada ao clicar no botão Concluir. (Mateus Z / Mouts - PRJ438)
+ * 017: [18/10/2018] Alterado layout da tela Nova Proposta. PRJ438 (Mateus Z / Mouts)
  */
  ?> 
 
@@ -36,6 +37,165 @@
 }
 </style> 
  
+ 
+<form name="frmNovaProp" id="frmNovaProp" class="formulario condensado">	
+
+	<input id="nrctremp" name="nrctremp" type="hidden" value="" />
+	<input id="portabilidade" name="portabilidade" type="hidden" value="" />
+	<input id="tpfinali" name="tpfinali" type="hidden" value="" />
+	<input id="idcobope" name="idcobope" type="hidden" value="" />
+	
+	<fieldset>
+		<legend><? echo utf8ToHtml('Dados da Solicitação') ?></legend>
+	
+		<label for="nivrisco"><? echo utf8ToHtml('Nível Risco:') ?></label>
+		<select name="nivrisco" id="nivrisco">
+			<option value="" > - </option>
+			<option value="A">A</option>
+			<option value="B">B</option>
+			<option value="C">C</option>
+			<option value="D">D</option>
+			<option value="E">E</option>
+			<option value="F">F</option>
+			<option value="G">G</option>
+			<option value="H">H</option>
+		</select>
+
+		<div id="divIdfiniof">
+			<label for="idfiniof">Financiar IOF e Tarifa:</label>
+	        <select name="idfiniof" id="idfiniof">
+	            <option value="1" selected="selected">Sim</option>
+	            <option value="0">N&atilde;o</option>
+	        </select>
+		</div>
+
+		<div id="divIdcarenc">
+			<label for="idcarenc"><? echo utf8ToHtml("Carência:") ?></label>
+			<select name="idcarenc" id="idcarenc">
+            <?php
+                $xml  = "<Root>";
+                $xml .= " <Dados>";
+                $xml .= "   <flghabilitado>1</flghabilitado>"; // Habilitado (0-Nao/1-Sim/2-Todos)
+                $xml .= " </Dados>";
+                $xml .= "</Root>";
+                $xmlResult = mensageria($xml, "TELA_PRMPOS", "PRMPOS_BUSCA_CARENCIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+                $xmlObject = getObjectXML($xmlResult);
+                $xmlCarenc = $xmlObject->roottag->tags[0]->tags;
+                foreach ($xmlCarenc as $reg) {
+                    echo '<option value="'.getByTagName($reg->tags,'IDCARENCIA').'">'.getByTagName($reg->tags,'DSCARENCIA').'</option>';
+                }
+            ?>
+			</select>
+			
+		</div>
+
+		<br />
+
+		<label for="tpemprst">Produto:</label>
+		<select name="tpemprst" id="tpemprst">
+		</select>
+
+		<div id="divDtcarenc">
+        	<label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1ª Carência:") ?> </label>
+			<input name="dtcarenc" id="dtcarenc" type="text" value="" />
+        </div>
+
+        <div id="divFlgpagto">
+        	<label for="flgpagto">Debitar em:</label>
+			<select name="flgpagto" id="flgpagto">
+				<option value="no" >Conta</option>
+				<option value="yes">Folha</option>
+			</select>
+        </div>
+
+        <br />
+
+		<label for="vlemprst"><? echo utf8ToHtml('Valor do Empréstimo:') ?></label>
+		<input name="vlemprst" id="vlemprst" type="text" value="" />
+
+		<div id="divIdquapro">
+			<label for="idquapro"><? echo utf8ToHtml('Qualificação da Operação:') ?></label>
+			<input name="idquapro" id="idquapro" type="text" value="" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="dsquapro" id="dsquapro" type="text" value="" />
+		</div>
+
+		<br />
+
+		<label for="cdlcremp"><? echo utf8ToHtml('Linha de Crédito:') ?></label>
+		<input name="cdlcremp" id="cdlcremp" type="text" value="" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dslcremp" id="dslcremp" type="text" value="" />
+
+		<div id="divFlgdocje">
+			<label for="flgdocje"><? echo utf8ToHtml('Co-Responsável:') ?></label>
+			<input name="flgdocje" id="flgYes" type="radio" class="radio" value="yes" />
+			<label for="flgYes" class="radio" >Sim</label>
+			<input name="flgdocje" id="flgNo" type="radio" class="radio" value="no" />
+			<label for="flgNo" class="radio"><? echo utf8ToHtml('Não') ?></label>
+		</div>
+			
+		<input name="nivcalcu" id="nivcalcu" type="hidden" value="" />
+
+		<br />
+
+		<label for="cdfinemp">Finalidade:</label>
+		<input name="cdfinemp" id="cdfinemp" type="text" value="" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dsfinemp" id="dsfinemp" type="text" value="" />
+
+		<br />
+
+		<label for="qtpreemp">Quantidade de Parcelas:</label>
+		<input name="qtpreemp" id="qtpreemp" type="text" value="" />
+
+		<br />
+
+		<label for="vlpreemp">Valor da Parcela:</label>
+		<input name="vlpreemp" id="vlpreemp" type="text" value="" />
+
+		<br />
+
+		<label for="dtdpagto">Data de Pagamento:</label>
+		<input name="dtdpagto" id="dtdpagto" type="text" value="" />
+
+		<br />
+
+		<label for="dsctrliq"><? echo utf8ToHtml('Liquidações:') ?></label>
+		<input name="dsctrliq" id="dsctrliq" type="text" value="" />
+		
+		<input name="vlfinanc" id="vlfinanc" type="hidden" value="" />
+		
+		<input name="qtdialib" id="qtdialib" type="hidden" value=" " />
+		
+		<input name="dtlibera" id="dtlibera" type="hidden" value="">
+		
+        <input name="vliofepr" id="vliofepr" type="hidden" value=""/>
+
+        <input name="dtultpag" id="dtultpag" type="hidden" value="" />
+		
+		<input name="vlrtarif" id="vlrtarif" type="hidden" value=""/>
+
+		<input name="percetop" id="percetop" type="hidden" value="" />
+		
+		<input name="vlrtotal" id="vlrtotal" type="hidden" value=""/>
+		
+		<select name="flgimppr" id="flgimppr">
+			<option value=""   > - </option>
+			<option value="yes" >Imprime</option>
+			<option value="no"><? echo utf8ToHtml('Não Imprime') ?></option>
+		</select>
+						
+		<select name="flgimpnp" id="flgimpnp">
+			<option value=""   > - </option>
+			<option value="yes" >Imprime</option>
+			<option value="no"><? echo utf8ToHtml('Não Imprime') ?></option>
+		</select>
+		
+	</fieldset>
+</form>
+
+
 <script>
 	
 	$(document).ready(function() {
@@ -75,37 +235,40 @@
 						
 		$("#qtdialib").val(" ");		
 
-		$.datepicker.setDefaults( $.datepicker.regional[ "pt-BR" ] );						
+		//$.s.setDefaults( $.datepicker.regional[ "pt-BR" ] );						
 		
-		$( "#qtdialib" ).datepicker({						
-			defaultDate: "<?php echo $glbvars["dtmvtolt"]; ?>",																		
-			onSelect: function(dateText, inst){
+		// $( "#qtdialib" ).datepicker({						
+		// 	defaultDate: "<?php echo $glbvars["dtmvtolt"]; ?>",																		
+		// 	onSelect: function(dateText, inst){
 			
-				$("#qtdialib").val("0"); 
+		// 		$("#qtdialib").val("0"); 
 				
-				if  ( $("#tpemprst").val()  == "0") {
-					calculaDiasUteis(dateText); 
-					$("#dtlibera","#frmNovaProp").val(dateText); 
-					arrayProposta['dtlibera'] = dateText; 		
-				}
-				else {
-					$("#dtlibera","#frmNovaProp").val("<?php echo $glbvars["dtmvtolt"]; ?>"); 
-				}
-			},
-			onClose: function(dateText, inst) {  },
-			minDate: "<?php echo $glbvars["dtmvtolt"]; ?>",
-			maxDate: "+1Y",
-			beforeShowDay: isAvailable,
-			showOn: "button",
-			buttonImage: UrlSite + "imagens/geral/btn_calendario.gif",
-			buttonImageOnly: true,
-			buttonText: "Calendario"
-		});
+		// 		if  ( $("#tpemprst").val()  == "0") {
+		// 			calculaDiasUteis(dateText); 
+		// 			$("#dtlibera","#frmNovaProp").val(dateText); 
+		// 			arrayProposta['dtlibera'] = dateText; 		
+		// 		}
+		// 		else {
+		// 			$("#dtlibera","#frmNovaProp").val("<?php echo $glbvars["dtmvtolt"]; ?>"); 
+		// 		}
+		// 	},
+		// 	onClose: function(dateText, inst) {  },
+		// 	minDate: "<?php echo $glbvars["dtmvtolt"]; ?>",
+		// 	maxDate: "+1Y",
+		// 	beforeShowDay: isAvailable,
+		// 	showOn: "button",
+		// 	buttonImage: UrlSite + "imagens/geral/btn_calendario.gif",
+		// 	buttonImageOnly: true,
+		// 	buttonText: "Calendario"
+		// });
 
-		$( "#qtdialib" ).datepicker( "option", "dateFormat", "dd/mm/yy" );			
-		$( "#qtdialib" ).datepicker( "option", "gotoCurrent", true );
+		//$( "#qtdialib" ).datepicker( "option", "dateFormat", "dd/mm/yy" );			
+		//$( "#qtdialib" ).datepicker( "option", "gotoCurrent", true );
 	 
-	 	$("#dtlibera","#frmNovaProp").val( "<?php echo $glbvars["dtmvtolt"]; ?>" );		
+					$("#dtlibera","#frmNovaProp").val("<?php echo $glbvars["dtmvtolt"]; ?>"); 
+		
+	    //alert('DT=PGT='+ $('#dtdpagto','#frmNovaProp').val());
+	 //   echo 'Antes';
 					
                 /* PORTABILIDADE */
                 $('#dtultpag','#frmNovaProp').desabilitaCampo();
@@ -132,156 +295,9 @@
                     $("#divBotoes #btVoltar").attr('onclick', "controlaOperacao('"+ope+"'); return false;");                    
                 }
 	});	
+	    
 </script>
  
-<form name="frmNovaProp" id="frmNovaProp" class="formulario condensado">	
-
-	<input id="nrctremp" name="nrctremp" type="hidden" value="" />
-	<input id="portabilidade" name="portabilidade" type="hidden" value="" />
-	<input id="tpfinali" name="tpfinali" type="hidden" value="" />
-	<input id="idcobope" name="idcobope" type="hidden" value="" />
-	
-	<fieldset>
-		<legend>Nova Proposta de <? echo utf8ToHtml('Empréstimo') ?></legend>
-	
-		<label for="nivrisco"><? echo utf8ToHtml('Nível Risco:') ?></label>
-		<select name="nivrisco" id="nivrisco">
-			<option value="" > - </option>
-			<option value="A">A</option>
-			<option value="B">B</option>
-			<option value="C">C</option>
-			<option value="D">D</option>
-			<option value="E">E</option>
-			<option value="F">F</option>
-			<option value="G">G</option>
-			<option value="H">H</option>
-		</select>
-				
-		<label for="nivcalcu">Risco Calc.:</label>
-		<input name="nivcalcu" id="nivcalcu" type="text" value="" />
-		<br />
-		
-		<label for="tpemprst">Produto:</label>
-		<select name="tpemprst" id="tpemprst">
-		</select>
-		
-		<label for="cdfinemp">Finalidade:</label>
-		<input name="cdfinemp" id="cdfinemp" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<input name="dsfinemp" id="dsfinemp" type="text" value="" />
-		<br />		
-				
-		<label for="vlemprst"><? echo utf8ToHtml('Vl. do Empr.:') ?></label>
-		<input name="vlemprst" id="vlemprst" type="text" value="" />
-		
-		<label for="cdlcremp"><? echo utf8ToHtml('Linha Crédito:') ?></label>
-		<input name="cdlcremp" id="cdlcremp" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<input name="dslcremp" id="dslcremp" type="text" value="" />
-		<br />
-		
-		<input name="vlfinanc" id="vlfinanc" type="hidden" value="" />
-		
-        <label for="vlpreemp">Prest. Estim.:</label>
-		<input name="vlpreemp" id="vlpreemp" type="text" value="" />
-		
-		<br />
-		
-		<label for="idquapro"><? echo utf8ToHtml('Qualif. Oper.:') ?></label>
-		<input name="idquapro" id="idquapro" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<input name="dsquapro" id="dsquapro" type="text" value="" />
-		<br />
-		
-		<label for="qtpreemp">Qtd. de Parc.:</label>
-		<input name="qtpreemp" id="qtpreemp" type="text" value="" />
-		
-		<label for="qtdialib">Liberar em:</label>		
-		<input name="qtdialib" id="qtdialib" type="text" value=" " />
-	    <label id="duteis"><? echo utf8ToHtml('dias úteis') ?></label>	
-		<br />
-		
-		<label for="flgpagto">Debitar em:</label>
-		<select name="flgpagto" id="flgpagto">
-			<option value="no" >Conta</option>
-			<option value="yes">Folha</option>
-		</select>
-		
-		<label for="dtlibera"> <? echo utf8ToHtml("Data Liberação:") ?> </label>
-		<input name="dtlibera" id="dtlibera" type="text" value="">
-		<br />
-		
-        <label for="idfiniof">Financiar IOF e Tarifa:</label>
-        <select name="idfiniof" id="idfiniof">
-        <option value="1">Sim</option>
-            <option value="0">N&atilde;o</option>
-        </select>
-		<label for="dtdpagto">Data pagto:</label>
-		<input name="dtdpagto" id="dtdpagto" type="text" value="" />
-		<br />
-		
-        <input name="vliofepr" id="vliofepr" type="hidden" value=""/>
-
-                <label for="dtultpag">Data &uacute;lt. pagto:</label>
-                <input name="dtultpag" id="dtultpag" type="text" disabled="disabled" value="" />
-		<br />
-		
-		<input name="vlrtarif" id="vlrtarif" type="hidden" value=""/>
-
-		<input name="percetop" id="percetop" type="hidden" value="" />
-		<br />
-		
-		<input name="vlrtotal" id="vlrtotal" type="hidden" value=""/>
-		
-		<div id="linCarencia">
-			<label for="idcarenc"><? echo utf8ToHtml("Carência:") ?></label>
-			<select name="idcarenc" id="idcarenc">
-            <?php
-                $xml  = "<Root>";
-                $xml .= " <Dados>";
-                $xml .= "   <flghabilitado>1</flghabilitado>"; // Habilitado (0-Nao/1-Sim/2-Todos)
-                $xml .= " </Dados>";
-                $xml .= "</Root>";
-                $xmlResult = mensageria($xml, "TELA_PRMPOS", "PRMPOS_BUSCA_CARENCIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-                $xmlObject = getObjectXML($xmlResult);
-                $xmlCarenc = $xmlObject->roottag->tags[0]->tags;
-                foreach ($xmlCarenc as $reg) {
-                    echo '<option value="'.getByTagName($reg->tags,'IDCARENCIA').'">'.getByTagName($reg->tags,'DSCARENCIA').'</option>';
-                }
-            ?>
-			</select>
-		
-			<label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1ª Carência:") ?> </label>
-			<input name="dtcarenc" id="dtcarenc" type="text" value="" />
-		</div>
-		<br />
-		
-		<label for="flgimppr">Proposta:</label>
-		<select name="flgimppr" id="flgimppr">
-			<option value=""   > - </option>
-			<option value="yes" >Imprime</option>
-			<option value="no"><? echo utf8ToHtml('Não Imprime') ?></option>
-		</select>
-		<br />
-						
-		<label for="flgimpnp"><? echo utf8ToHtml('Nota Promissória:') ?></label>
-		<select name="flgimpnp" id="flgimpnp">
-			<option value=""   > - </option>
-			<option value="yes" >Imprime</option>
-			<option value="no"><? echo utf8ToHtml('Não Imprime') ?></option>
-		</select>
-		<br />
-		
-		<label for="dsctrliq"><? echo utf8ToHtml('Liquidações:') ?></label>
-		<input name="dsctrliq" id="dsctrliq" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<br />
-		
-		
-	</fieldset>
-</form>
-
-
 <div id="divBotoes">
 	<? if ( $operacao == 'A_NOVA_PROP' || $operacao == 'A_INICIO' ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('AT'); return false;">Voltar</a>

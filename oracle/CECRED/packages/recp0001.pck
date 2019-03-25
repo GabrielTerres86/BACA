@@ -121,6 +121,21 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                         ,pr_cdcritic OUT NUMBER                      -- Código de críticia
                                         ,pr_dscritic OUT VARCHAR2);                  -- Descrição da crítica
                                                                                      
+  -- Realizar o calculo e pagamento de desconto de título.
+  PROCEDURE pc_pagar_contrato_desc_tit(pr_cdcooper IN tbdsct_titulo_cyber.cdcooper%TYPE  -- Código da Cooperativa
+                                      ,pr_nrdconta IN tbdsct_titulo_cyber.nrdconta%TYPE  -- Número da Conta
+                                      ,pr_nrctrdsc IN tbdsct_titulo_cyber.nrctrdsc%TYPE  -- Numero de-para tabela cyber
+                                      ,pr_crapdat  IN btch0001.cr_crapdat%ROWTYPE        -- Datas da cooperativa
+                                      ,pr_cdagenci IN INTEGER                            -- Codigo Agencia
+                                      ,pr_nrdcaixa IN INTEGER                            -- Numero Caixa
+                                      ,pr_idorigem IN INTEGER                            -- Origem sistema
+                                      ,pr_cdoperad IN VARCHAR2                           -- Codigo operador
+                                      ,pr_vlparcel IN NUMBER                             -- Valor pago do boleto do acordo
+                                      ,pr_idvlrmin OUT NUMBER                            -- Indica que houve critica do valor minimo
+                                      ,pr_vltotpag OUT NUMBER                            -- Retorno do valor pago
+                                      ,pr_cdcritic OUT NUMBER                            -- Código de críticia
+                                      ,pr_dscritic OUT VARCHAR2);                        -- Descrição da crítica
+
   -- Realizar o pagamentos do acordo                                                 
   PROCEDURE pc_pagar_contrato_acordo(pr_nracordo  IN tbrecup_acordo.nracordo%TYPE          -- Número do acordo
                                     ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
@@ -203,7 +218,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --                                                   -pc_pagar_emprestimo_tr. Rangel Decker (AMcom)
   --                          lancamentos na CRAPLOT e CRAPLCM (LANC0001.pc_gerar_lancamento_conta). 
   --                          (PRJ450 - Teobaldo J - AMcom)
-
+  --
+  --             17/09/2018 - Criação da pc_pagar_contrato_desc_tit, para ser utilizada na pc_pagar_contrato_acordo no
+  --                          pagamento de desconto de título (Andrew Albuquerque - GFT)
+  --
+  --             19/09/2018 - pc_pagar_contrato_acordo -Notificação e tratamento de erro da rotina de pagamento para acordos de.
+  --                          desconto de título - Alteração da String de envio do e-mail (Andrew Albuquerque - GFT)
+  --
+  --             19/09/2018 - pc_pagar_contrato_desc_tit - Fix para não tentar pagar título que já está baixado (Andrew Albuquerque - GFT)
+  --
+  --             25/09/2018 - pc_pagar_contrato_desc_tit  - Revisão de regra para não pagar título baixado (Andrew Albuquerque - GFT)
   --             
   --             07/12/2018 - Ajuste na "pc_pagar_contrato_acordo" para não acrescentar o valor do IOF provisionado no total 
   --                          a pagar quanto a conta corrente está em prejuízo.
@@ -1970,8 +1994,158 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na PC_PAGAR_CONTRATO_EMPRESTIMO: '||SQLERRM;
   END pc_pagar_contrato_emprestimo;
-  
-  
+
+  PROCEDURE pc_pagar_contrato_desc_tit(pr_cdcooper IN tbdsct_titulo_cyber.cdcooper%TYPE  -- Código da Cooperativa
+                                      ,pr_nrdconta IN tbdsct_titulo_cyber.nrdconta%TYPE  -- Número da Conta
+                                      ,pr_nrctrdsc IN tbdsct_titulo_cyber.nrctrdsc%TYPE  -- Numero de-para tabela cyber
+                                      ,pr_crapdat  IN btch0001.cr_crapdat%ROWTYPE        -- Datas da cooperativa
+                                      ,pr_cdagenci IN INTEGER                            -- Codigo Agencia
+                                      ,pr_nrdcaixa IN INTEGER                            -- Numero Caixa
+                                      ,pr_idorigem IN INTEGER                            -- Origem sistema
+                                      ,pr_cdoperad IN VARCHAR2                           -- Codigo operador
+                                      ,pr_vlparcel IN NUMBER                             -- Valor pago do boleto do acordo
+                                      ,pr_idvlrmin OUT NUMBER                            -- Indica que houve critica do valor minimo
+                                      ,pr_vltotpag OUT NUMBER                            -- Retorno do valor pago
+                                      ,pr_cdcritic OUT NUMBER                            -- Código de críticia
+                                      ,pr_dscritic OUT VARCHAR2) IS                      -- Descrição da crítica
+  BEGIN
+    /*---------------------------------------------------------------------------------------------------------------------
+      Programa : pc_pagar_contrato_desc_tit
+      Sistema  :
+      Sigla    : CRED
+      Autor    : Andrew Albuquerque (GFT)
+      Data     : 17/09/2018
+      Frequencia: Sempre que for chamado
+      Objetivo  : Realizar o pagamento de Títulos em um Borderô de Desconto de Tìtulos que estejam em um acordo.
+      Alterações:
+                  19/09/2018 - pc_pagar_contrato_desc_tit - Fix para não tentar pagar título que já está baixado (Andrew Albuquerque - GFT)
+                  25/09/2018 - pc_pagar_contrato_desc_tit  - Revisão de regra para não pagar título baixado (Andrew Albuquerque - GFT)
+    ---------------------------------------------------------------------------------------------------------------------*/
+    DECLARE
+      --Selecionar informacoes dos titulos do bordero
+      CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%type
+                        ,pr_nrdconta IN craptdb.nrdconta%type
+                        ,pr_nrctrdsc IN tbdsct_titulo_cyber.nrctrdsc%type) IS
+        SELECT tdb.dtvencto
+              ,tdb.vltitulo
+              ,tdb.nrdconta
+              ,tdb.nrdocmto
+              ,tdb.cdcooper
+              ,tdb.insittit
+              ,tdb.dtdpagto
+              ,tdb.nrborder
+              ,tdb.dtlibbdt
+              ,tdb.cdbandoc
+              ,tdb.nrdctabb
+              ,tdb.nrcnvcob
+              ,tdb.rowid
+              ,tdb.vlliquid
+              ,tdb.nrtitulo
+              ,tdb.vlsldtit + (tdb.vliofcpl - tdb.vlpagiof) + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) AS vltitulo_total
+              ,bdt.inprejuz
+        FROM craptdb tdb
+       INNER JOIN crapbdt bdt 
+          ON bdt.nrborder = tdb.nrborder
+         AND bdt.cdcooper = tdb.cdcooper
+       INNER JOIN tbdsct_titulo_cyber ttc
+          ON ttc.cdcooper = tdb.cdcooper
+         AND ttc.nrdconta = tdb.nrdconta
+         AND ttc.nrborder = tdb.nrborder
+         AND ttc.nrtitulo = tdb.nrtitulo
+       WHERE ttc.cdcooper = pr_cdcooper
+         AND ttc.nrdconta = pr_nrdconta
+         AND ttc.nrctrdsc = pr_nrctrdsc
+         AND tdb.insittit = 4
+         ;
+      rw_craptdb cr_craptdb%ROWTYPE;
+
+      --Variáveis de processo
+      vr_vllanmto  tbdsct_lancamento_bordero.vllanmto%TYPE;   -- Valor de Lancamento
+      vr_cdcritic  NUMBER;
+      vr_dscritic  VARCHAR2(1000);
+      vr_exp_erro  EXCEPTION;
+    BEGIN
+
+      -- Buscar dados do Título que está no Acordo.
+      OPEN cr_craptdb(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctrdsc => pr_nrctrdsc);
+      FETCH cr_craptdb INTO rw_craptdb;
+
+      IF cr_craptdb%NOTFOUND THEN
+        CLOSE cr_craptdb;
+        pr_vltotpag := 0;
+      ELSE
+        CLOSE cr_craptdb;
+        vr_vllanmto := pr_vlparcel;
+
+
+        IF (rw_craptdb.inprejuz = 1) THEN
+          PREJ0005.pc_pagar_titulo_prejuizo(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdagenci => pr_cdagenci
+                                  ,pr_nrdcaixa => pr_nrdcaixa
+                                  ,pr_cdoperad => pr_cdoperad
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_nrborder => rw_craptdb.nrborder
+                                  ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                  ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                  ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                  ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                  ,pr_dtmvtolt => pr_crapdat.dtmvtolt
+                                  ,pr_vlpagmto => vr_vllanmto
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic );
+
+          -- Se retornar erro da rotina
+          IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+            RAISE vr_exp_erro;
+          END IF;
+        ELSE
+          dsct0003.pc_pagar_titulo(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdagenci => pr_cdagenci
+                                  ,pr_nrdcaixa => pr_nrdcaixa
+                                  ,pr_idorigem => pr_idorigem
+                                  ,pr_cdoperad => pr_cdoperad
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_nrborder => rw_craptdb.nrborder
+                                  ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                  ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                  ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                  ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                  ,pr_dtmvtolt => pr_crapdat.dtmvtolt
+                                  ,pr_inproces => pr_crapdat.inproces
+                                  ,pr_cdorigpg => 4 -- Acordo
+                                  ,pr_indpagto => 0
+                                  ,pr_vlpagmto => vr_vllanmto
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic );
+
+          -- Se retornar erro da rotina
+          IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+            RAISE vr_exp_erro;
+          END IF;
+        END IF;
+        -- Retornar o valor lançado
+        pr_vltotpag := pr_vlparcel - vr_vllanmto;
+        
+      END IF;
+    EXCEPTION
+      WHEN vr_exp_erro THEN
+        -- Retornar total pago como zero
+        pr_vltotpag := 0;
+        -- Deve retornar erro de execução
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        -- Retornar total pago como zero
+        pr_vltotpag := 0;
+        -- Deve retornar erro de execução
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na PC_PAGAR_CONTRATO_DESC_TIT: '||SQLERRM;
+    END;
+  END pc_pagar_contrato_desc_tit;
+
+
   -- Realizar o pagamentos do acordo
   PROCEDURE pc_pagar_contrato_acordo(pr_nracordo  IN tbrecup_acordo.nracordo%TYPE          -- Número do acordo
                                     ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
@@ -2537,7 +2711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                                                                               , pr_cdhistor => 2733)
                                              , pr_cdhistor => 2720
                                              , pr_nrseqdig => vr_nrseqdig
-                                             , pr_vllanmto => pr_vltotpag 
+                                                   , pr_vllanmto => pr_vltotpag 
                                              , pr_nrdctabb => rw_acordo_contrato.nrdconta
                                              , pr_cdpesqbb => 'PAGAMENTO DE PREJUÍZO DE C/C VIA ACORDO'
                                              , pr_dtrefere => BTCH0001.rw_crapdat.dtmvtolt
@@ -2679,6 +2853,74 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           vr_vliofcpl := NVL(vr_vliofcpl, 0);
         END IF;
         
+        -- Somar o valor pago ao montante total de pagamentos
+        pr_vltotpag := NVL(pr_vltotpag,0) + NVL(vr_vltotpag,0);
+        -----------------------------------------------------------------------------------------------
+				
+				IF rw_crapass.inprejuz = 1 THEN				
+					-- Debita da conta transitória o valor utilizado para pagamento do empréstimo
+					PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_acordo_contrato.cdcooper
+																				, pr_nrdconta => rw_acordo_contrato.nrdconta
+																				, pr_vlrlanc => NVL(vr_vltotpag,0)
+																				, pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+																				, pr_cdcritic => vr_cdcritic
+																				, pr_dscritic => vr_dscritic);
+																						
+					IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+						-- Indicar que houve crítica ao processar o pagamento de estouro de conta
+						vr_flagerro := TRUE;
+
+						-- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
+						pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
+														,pr_nrdconta => rw_acordo_contrato.nrdconta
+														,pr_nracordo => pr_nracordo
+														,pr_nrctremp => rw_acordo_contrato.nrctremp
+														,pr_dscritic => vr_dscritic
+														,pr_dsmodule => 'PAGAR_CONTRATO_CONTA');
+
+						-- Voltar ao Loop para processar o próximo pagamento
+						CONTINUE;
+					END IF;
+				END IF;
+
+      -- AWAE: Se a origem estiver indicando DESCONTO DE TÍTULOS
+      ELSIF (rw_acordo_contrato.cdorigem = 4)  THEN
+        pc_pagar_contrato_desc_tit( pr_cdcooper => rw_acordo_contrato.cdcooper
+                                   ,pr_nrdconta => rw_acordo_contrato.nrdconta
+                                   ,pr_nrctrdsc => rw_acordo_contrato.nrctremp
+                                   ,pr_crapdat  => BTCH0001.rw_crapdat
+                                   ,pr_cdagenci => rw_crapass.cdagenci
+                                   ,pr_nrdcaixa => 100 -- TO DO
+                                   ,pr_idorigem => pr_idorigem
+                                   ,pr_cdoperad => pr_cdoperad
+                                   ,pr_vlparcel => vr_vlparcel
+                                   ,pr_idvlrmin => vr_idvlrmin
+                                   ,pr_vltotpag => vr_vltotpag
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
+
+        -- Verifica ocorrencia de erro
+        IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+
+          -- Indicar que houve crítica ao processar o pagamento de estouro de conta
+          vr_flagerro := TRUE;
+
+          -- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
+          pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
+                          ,pr_nrdconta => rw_acordo_contrato.nrdconta
+                          ,pr_nracordo => pr_nracordo
+                          ,pr_nrctremp => rw_acordo_contrato.nrctremp
+                          ,pr_dscritic => vr_dscritic
+                          ,pr_dsmodule => 'PAGAR_CONTRATO_TITULO');
+
+          -- Voltar ao Loop para processar o próximo pagamento
+          CONTINUE;
+        END IF;
+
+        -- Diminuir o valor pago do boleto com o lançamento efetuado na conta corrente
+        vr_vlparcel := vr_vlparcel - NVL(vr_vltotpag,0);
+        -----------------------------------------------------------------------------------------------
+
         -- Somar o valor pago ao montante total de pagamentos
         pr_vltotpag := NVL(pr_vltotpag,0) + NVL(vr_vltotpag,0);
         -----------------------------------------------------------------------------------------------

@@ -23,7 +23,7 @@
  * 014: [29/05/2017] - Ajuste para apresentar valores corretamente - Adriano SD 679022.
  * 015: [05/09/2017] - Alteração referente ao Projeto Assinatura conjunta (Proj 397)
  * 016: [03/01/2018] - Alteração para tratar os tipos 24-FGTS e 23-DAE (Proj 406).
-
+ * 017: [19/03/2019] - Alterado o id do protocolo de desconto de titulo do 22 para o 32 (Paulo Penteado GFT)
  */
 
 session_start();
@@ -63,6 +63,9 @@ $nrdocmto = $_POST['nrdocmto'];
 $dslinha1 = $_POST['dslinha1'];
 $dslinha2 = $_POST['dslinha2'];
 $dslinha3 = $_POST['dslinha3'];
+
+//Bordero
+$qttitbor = $_POST['dslinha2'];
 
 $aux_dslinha1 = explode('#', $dslinha1);
 $aux_dslinha2 = explode('#', $dslinha2);
@@ -185,7 +188,7 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
     $dtpagmto = trim(substr($aux_dslinha3[7], strpos($aux_dslinha3[7], ":") + 1));
     $hrpagmto = trim(substr($aux_dslinha3[8], strpos($aux_dslinha3[8], ":") + 1));
     
-  }
+}
 
 ?>
 <table cellpadding="0" cellspacing="0" border="0" >
@@ -494,20 +497,20 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
                             <input name="hrautdrf" id="hrautdrf" type="text" value="<? echo $hrpagmto ?>" />
                           
                           <?php
-                          }
-                          ?>
+														}
+													?>
 
-                          <label for="dstransf"><? echo utf8ToHtml('Cod.Identificador:') ?></label>
-                          <input name="dstransf" id="dstransf" type="text" value="<? echo $dstransf ?>" />
+                                                <label for="dstransf"><? echo utf8ToHtml('Cod.Identificador:') ?></label>
+                                                <input name="dstransf" id="dstransf" type="text" value="<? echo $dstransf ?>" />
 
-                          <label for="dscedent"><? echo utf8ToHtml('Cedente:') ?></label>
-                          <input name="dscedent" id="dscedent" type="text" value="<? echo $dscedent ?>" />
+                                                <label for="dscedent"><? echo utf8ToHtml('Cedente:') ?></label>
+                                                <input name="dscedent" id="dscedent" type="text" value="<? echo $dscedent ?>" />
 
-                          <label for="dttransa"><? echo utf8ToHtml('Data Transação:') ?></label>
-                          <input name="dttransa" id="dttransa" type="text" value="<? echo $dttransa ?>" />
+                                                <label for="dttransa"><? echo utf8ToHtml('Data Transação:') ?></label>
+                                                <input name="dttransa" id="dttransa" type="text" value="<? echo $dttransa ?>" />
 
-                          <label for="hrautenx"><? echo utf8ToHtml('Hora:') ?></label>
-                          <input name="hrautenx" id="hrautenx" type="text" value="<? echo $hrautenx ?>" />
+                                                <label for="hrautenx"><? echo utf8ToHtml('Hora:') ?></label>
+                                                <input name="hrautenx" id="hrautenx" type="text" value="<? echo $hrautenx ?>" />
 
 												<!-- Pacote de tarfas -->
 												<?php if ($cdtippro == 14){?>
@@ -516,6 +519,17 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 													<input name="dspacote" id="dspacote" type="text" value="<? echo trim(substr($aux_dslinha2[0], strpos($aux_dslinha2[0], "#"))) ?>" />													
 												
 												<?}?>
+                                                
+                                                <?php if($cdtippro == 32){?>
+                                                    
+                                                    <label for="nrborder"><? echo utf8ToHtml('Nr. do Borderô:') ?></label>
+                                                    <input name="nrborder" id="nrborder" type="text" value="<? echo $nrdocmto ?>" />
+                                                    
+                                                    <label for="qttitbor"><? echo utf8ToHtml('Qtd. de títulos:') ?></label>
+                                                    <input name="qttitbor" id="qttitbor" type="text" value="<? echo $qttitbor ?>" />
+                                                    
+                                                <?php }?>
+                                                
 												<? if($cdtippro != 21){?>
                                                 <label for="dtmvtolt"><? echo utf8ToHtml('Data Pagamento:') ?></label>
                                                 <input name="dtmvtolt" id="dtmvtolt" type="text" value="<? echo $dtmvtolt ?>" />

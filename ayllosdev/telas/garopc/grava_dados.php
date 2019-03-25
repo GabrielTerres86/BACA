@@ -42,6 +42,9 @@
     $ret_execfunc = (isset($_POST['ret_execfunc'])) ? $_POST['ret_execfunc'] : '';
     $err_execfunc = (isset($_POST['err_execfunc'])) ? $_POST['err_execfunc'] : '';
 
+    //bruno - prj 438 - bug 14235
+    $aux_acao = (isset($_POST['aux_acao'])) ? $_POST['aux_acao'] : '';
+
     $xml  = "";
     $xml .= "<Root>";
     $xml .= "  <Dados>";
@@ -81,5 +84,14 @@
 
     echo "$('#".$ret_nomcampo."', '#".$ret_nomformu."').val('".getByTagName($registros->tags,'IDCOBERT')."');";
     echo "fechaRotina($('#divUsoGAROPC'));";
+
+
+    //bruno - prj 438 - bug 14235
+    switch ($aux_acao) {
+        case 'EMPRESTIMO':
+            echo '__aux_ingarapr = "'.getByTagName($registros->tags,'ingarapr').'";';
+            break;
+    }
+
     echo $ret_execfunc;
 ?>

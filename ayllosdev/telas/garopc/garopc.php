@@ -34,6 +34,9 @@
     $ret_errofunc = (isset($_POST['ret_errofunc'])) ? $_POST['ret_errofunc'] : '';
     $divanterior  = (isset($_POST['divanterior']))  ? $_POST['divanterior']  : '';
 
+    //bruno - prj 438 - bug 14235
+    $ACAO  = (isset($_POST['ACAO']))  ? $_POST['ACAO']  : '';
+
     $xml  = "";
     $xml .= "<Root>";
     $xml .= "   <Dados>";
@@ -257,4 +260,9 @@
     $('#gar_ter_poup_<?php echo $gar_inpouter; ?>').prop("checked", true);
 
     mostraImagemGAROPC();
+
+    //bruno - prj 438 - bug 14235
+    if('<?php echo $ACAO; ?>' == "EMPRESTIMO"){
+        __aux_acao = '<?php echo $ACAO; ?>'
+    }
 </script>

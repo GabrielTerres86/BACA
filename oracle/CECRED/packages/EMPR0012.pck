@@ -2223,6 +2223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
       -- Inicializa sequencia de segmentos
 
+
       -- Loop sobre a tabela de segmentos
       FOR rw_segmento IN cr_segmento (rw_logista.cdcooper
                                      ,rw_logista.idcooperado_cdc) LOOP
@@ -5689,7 +5690,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
         -- Tratamento de erro de retorno
         if coalesce(vr_dscritic,'OK') != 'OK'  then
-
+          --raise vr_exc_saida;
+          
           -- Gera Log
           GENE0001.pc_gera_log(pr_cdcooper => rw_rapassecdc.cdcooper
                               ,pr_cdoperad => vr_cdoperad
@@ -6137,7 +6139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       Sistema  : CRED
       Sigla    : GRVM
       Autor    : Odirlei Busana - AMcom
-      Data     : Julhi/2018.                   Ultima atualizacao: 19/10/2018
+      Data     : Julhi/2018.                   Ultima atualizacao: 24/10/2018
     
       Dados referentes ao programa:
     
@@ -6156,10 +6158,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
       SELECT epr.cdfinemp
             ,fin.tpfinali
+            ,epr.cdoperad
             ,epr.rowid
+            ,tve.nrcpf
         from crawepr    epr
             ,crapfin    fin 
             ,tbepr_cdc_emprestimo tce 
+            ,tbepr_cdc_vendedor   tve
        where epr.cdcooper = pr_cdcooper
          and epr.nrdconta = pr_nrdconta
          and epr.nrctremp = pr_nrctremp
@@ -6168,7 +6173,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
          and fin.flgstfin = 1
          and tce.cdcooper = epr.cdcooper 
          and tce.nrdconta = epr.nrdconta 
-         and tce.nrctremp = epr.nrctremp;
+         and tce.nrctremp = epr.nrctremp
+         AND tce.idvendedor = tve.idvendedor;
     rw_crawepr cr_crawepr%ROWTYPE;
 
     -- Busca gravames
@@ -6194,6 +6200,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     vr_stprogra INTEGER;
     vr_infimsol INTEGER;
 
+    -- XML para Alienação
+    vr_dsxmlali XMLType;
+    -- ID Evento SOA
+    vr_idevento   tbgen_evento_soa.idevento%type;    
+
     -- Tratamento de erros
     vr_exc_erro  EXCEPTION; 
 
@@ -6209,17 +6220,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     CLOSE cr_crawepr;
 
     --Apenas validar para finalidade CDC Veiculo
-    IF rw_crawepr.tpfinali = 3 AND 
-       rw_crawepr.cdfinemp = 59 THEN
+    IF rw_crawepr.tpfinali = 3 AND  rw_crawepr.cdfinemp = 59 THEN
 
       --> Listar bens alienados 
       FOR rw_crapbpr IN cr_crapbpr (pr_cdcooper  => pr_cdcooper        
                                    ,pr_nrdconta  => pr_nrdconta        
                                    ,pr_nrctrpro  => pr_nrctremp ) LOOP 
 
+        -- Validar a situação do Gravames
         vr_cdsitgrv := NULL;
         vr_dscrigrv := NULL;
-
         GRVM0001.pc_valida_situacao_gravames (pr_cdcooper => pr_cdcooper           -- Cód. cooperativa
                                              ,pr_nrdconta => pr_nrdconta           -- Nr. da conta
                                              ,pr_nrctrpro => pr_nrctremp           -- Nr. contrato
@@ -6237,34 +6247,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
         -- (0- Nao solicitado o gravamos)nao registrado gravames
         IF vr_cdsitgrv = 0 THEN
-          GRVM0001.pc_registrar_gravames(pr_cdcooper => pr_cdcooper
-                                        ,pr_nrdconta => pr_nrdconta
-                                        ,pr_nrctrpro => pr_nrctremp
-                                        ,pr_cddopcao => 'E'
-                                        ,pr_flgresta => 1
-                                        ,pr_stprogra => vr_stprogra
-                                        ,pr_infimsol => vr_infimsol
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-
-          IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-            raise vr_exc_erro;
+          -- Caso gravames Online
+          IF grvm0001.fn_tem_gravame_online(pr_cdcooper) = 'S' THEN
+            -- Gravames Online - Buscar o XML para alienação
+            GRVM0001.pc_busca_xml_gravame_CDC(pr_cdcooper => pr_cdcooper
+                                             ,pr_nrdconta => pr_nrdconta
+                                             ,pr_nrctrpro => pr_nrctremp
+                                             ,pr_nrcpfven => rw_crawepr.nrcpf
+                                             ,pr_cdoperad => rw_crawepr.cdoperad
+                                             ,pr_dsxmlali => vr_dsxmlali
+                                             ,pr_dscritic => vr_dscritic);
+            -- Tratar saida com erro
+            IF vr_dscritic IS NOT NULL THEN
+              raise vr_exc_erro;
+            END IF;            
+            -- Gravar evento SOA
+            soap0003.pc_gerar_evento_soa(pr_cdcooper               => pr_cdcooper
+                                        ,pr_nrdconta               => pr_nrdconta
+                                        ,pr_nrctrprp               => pr_nrctremp
+                                        ,pr_tpevento               => 'REGISTRO_GRAVAME'
+                                        ,pr_tproduto_evento        => 'CDC'
+                                        ,pr_tpoperacao             => 'INSERT'
+                                        ,pr_dsconteudo_requisicao  => vr_dsxmlali.getClobVal()
+                                        ,pr_idevento               => vr_idevento
+                                        ,pr_dscritic               => vr_dscritic);
+            -- Tratar saida com erro                          
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
           END IF;
-        END IF;
-
+          ELSE
+            -- Gravames apenas por arquivo, então criamos a pendência e será aguardando o envio manual
+            GRVM0001.pc_registrar_gravames(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_nrctrpro => pr_nrctremp
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+            -- Tratar saida com erro
+            IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+              raise vr_exc_erro;
+            END IF;                                
+          END IF;
         -- (1 - Em processamento) foi solicitado o gravames
-        IF vr_cdsitgrv = 1 THEN
+        ELSIF vr_cdsitgrv = 1 THEN
           continue;
-        END IF;
-
         -- (2 - alieando) retornar alienado
-        IF vr_cdsitgrv = 2 THEN
+        ELSIF vr_cdsitgrv = 2 THEN
           pr_flaliena := 1; --> se foi alieando retorna 1 TODO O RESTO RETORNA 0 conforme inicio da variavel
-        END IF;
-
         --> (3 - Processado com critica) Processado com Critica
-        IF vr_cdsitgrv = 3 THEN
-
+        ELSIF vr_cdsitgrv = 3 THEN
+          -- Gravação de pendência na proposta
           pc_grava_pedencia_emprestimo (pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_nrctremp => pr_nrctremp
@@ -6278,7 +6309,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
           IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             raise vr_exc_erro;
           END IF;
-
+          -- Reinicia fluxo de efetivação
           pc_reinicia_fluxo_efetivacao (pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_nrctremp => pr_nrctremp
@@ -6289,7 +6320,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
           IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             raise vr_exc_erro;
           END IF;                            
-
+		  -- Retorna situação pro Ibracred
           pc_retorna_situacao_ibracred (pr_cdcooper  => pr_cdcooper      --> Coodigo Cooperativa
                                        ,pr_nrdconta  => pr_nrdconta      --> Numero da Conta do Associado
                                        ,pr_nrctremp  => pr_nrctremp      --> Numero do contrato
@@ -6302,10 +6333,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
           IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEn
             raise vr_exc_erro;
           END IF;
-
-        END IF; --> Fim IF vr_cdsitgrv = 3 THEN
-
-      END LOOP; --> FIM LOOP cr_crapbpr                             
+        END IF; 
+      END LOOP; --> FIM LOOP cr_crapbpr                            
        
     END IF;   
        

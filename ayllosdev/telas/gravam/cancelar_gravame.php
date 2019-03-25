@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Maio/2016 
  * OBJETIVO     : Rotina para cancelar alienação no gravame
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : Outubro/2018 - Alteração para fazer o cancelamento pelo serviço SOA. (Thaise - Envolti)
  */
 ?> 
 
@@ -16,6 +16,7 @@
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
+	require_once('uteis/funcoes_gravame.php');
 	isPostMethod();		
 	
 	// Carrega permissões do operador
@@ -34,7 +35,35 @@
   $idseqbem = (isset($_POST["idseqbem"])) ? $_POST["idseqbem"] : 0;
   $tpcancel = (isset($_POST["tpcancel"])) ? $_POST["tpcancel"] : 0;
   $dsjustif = (isset($_POST["dsjustif"])) ? $_POST["dsjustif"] : '';
+  $tpdopcao = (isset($_POST["tpdopcao"])) ? $_POST["tpdopcao"] : '';
   
+	if($tpdopcao == 'A'){
+		// Montar o xml de Requisicao
+		$xmlCarregaDados  = "";
+		$xmlCarregaDados .= "<Root>";
+		$xmlCarregaDados .= " <Dados>";
+		$xmlCarregaDados .= " </Dados>";
+		$xmlCarregaDados .= "</Root>";
+  
+		$xmlResult = mensageria($xmlCarregaDados
+							   ,"GRVM0001"
+							   ,"GRAVAME_ONLINE_HABILITADO"
+							   ,$glbvars["cdcooper"]
+							   ,$glbvars["cdagenci"]
+							   ,$glbvars["nrdcaixa"]
+							   ,$glbvars["idorigem"]
+							   ,$glbvars["cdoperad"]
+							   ,"</Root>");
+		$xmlObject = getObjectXML($xmlResult);
+
+		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
+			$flgGrvOnline = "ERRO";
+		} else if (strtoupper($xmlObject->roottag->tags[0]->name) == "GRVONLINE") {
+			$flgGrvOnline = $xmlObject->roottag->tags[0]->cdata;
+		}
+	}
+
+	if( ($tpdopcao == 'A' && $flgGrvOnline == 'S') || $tpdopcao == 'M') {
   
   validaDados();
   
@@ -44,10 +73,10 @@
 	$xml 	   .= "  <Dados>";
 	$xml 	   .= "     <nrdconta>".$nrdconta."</nrdconta>";
 	$xml 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
-  $xml 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>"; 
-  $xml 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
-  $xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
-  $xml 	   .= "     <tpcancel>".$tpcancel."</tpcancel>";
+	$xml 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>"; 
+	$xml 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
+	$xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
+	$xml 	   .= "     <tpcancel>".$tpdopcao."</tpcancel>";
 	$xml 	   .= "     <dsjustif>".$dsjustif."</dsjustif>";
 	$xml 	   .= "     <cdopeapr>".$_SESSION['cdopelib']."</cdopeapr>";
 	$xml 	   .= "  </Dados>";
@@ -64,17 +93,22 @@
 		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);		
 					
 	} 
+	}
 		
-  if($tpcancel == "1"){ 
-  
-    echo "showError('inform','Solicita&ccedil;&atilde;o de cancelamento efetuada com sucesso.','Notifica&ccedil;&atilde;o - Aimaro','buscaBens(1, 30);');";
-          
-  }else{
-  
-    echo "showError('inform','Registro de aliena&ccedil;&atilde;o do gravame cancelado com sucesso.','Notifica&ccedil;&atilde;o - Aimaro','buscaBens(1, 30);');";	
-    
+	if($tpdopcao == 'A' && $flgGrvOnline == 'S') {
+		parametrosParaAudit($glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"]);
+		processarBaixaCancel($xmlResult, 2, $Url_SOA, $Auth_SOA);
+	} else if ($tpdopcao == 'M') {
+		/* if($tpcancel == "1"){
+    		echo "showError('inform','Solicita&ccedil;&atilde;o de cancelamento efetuada com sucesso.','Notifica&ccedil;&atilde;o - Aimaro','buscaBens(1, 30);');";
+  		} else{
+    		echo "showError('inform','Registro de aliena&ccedil;&atilde;o do gravame cancelado com sucesso.','Notifica&ccedil;&atilde;o - Aimaro','buscaBens(1, 30);');";	
+  		}*/
+		echo "showError('inform','Registro de cancelamento manual efetuada com sucesso! Ao efetuar o cancelamento manual, &eacute; necess&aacute;rio efetuar o cancelamento manual no sistema CETIP.','Notifica&ccedil;&atilde;o - Aimaro','buscaBens(1, 30);');";
+	} else {
+		echo "showError('error','N&atilde;o &eacute; poss&iacute;vel cancelar automaticamente, o processo on-line n&atilde;o est&aacute; ativado.','Alerta - Aimaro','');";
   }
-	  
+	echo '$(\'#ddl_descrbem', '#frmBens\').change();';
   
   function validaDados(){
 			
@@ -99,9 +133,8 @@
 		}
 		
 	IF($GLOBALS["dsjustif"] == '' ){ 
-		exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dsjustif\',\'frmBens\');',false);
-		}
-				
+			exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Aimaro','$(\'#dsjustif\', \'#divJustificativa\').habilitaCampo();focaCampoErro(\'dsjustif\',\'frmBens\');',false);
+	}
 	}	
   
  ?>

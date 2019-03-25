@@ -22,6 +22,8 @@
 				 28/04/2018 - Inclusão de novas colunas na grid de borderô e migrado chamada de progress para oracle (Alex Sandro  - GFT)
 
 				 07/05/2018 - Adicionada verificação para definir se o bordero vai seguir o fluxo novo ou o antigo (Luis Fernando - GFT)
+				 
+				 05/09/2018 - Adicionado campo de prejuizo para o bordero (Luis Fernando - GFT)
 	************************************************************************/
 	
 	session_start();
@@ -173,7 +175,7 @@
 					<?  for ($i = 0; $i < $qtBorderos; $i++) { 								
 							$cor = "";
 							
-							$mtdClick = "selecionaBorderoTitulos('".($i + 1)."','".$qtBorderos."','".($borderos[$i]->tags[1]->cdata)."','".($borderos[$i]->tags[2]->cdata)."','".($borderos[$i]->tags[7]->cdata)."');";
+							$mtdClick = "selecionaBorderoTitulos('".($i + 1)."','".$qtBorderos."','".($borderos[$i]->tags[1]->cdata)."','".($borderos[$i]->tags[2]->cdata)."','".($borderos[$i]->tags[7]->cdata)."',".$borderos[$i]->tags[10]->cdata.");";
 						?>
 						<tr id="trBordero<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 						
@@ -221,7 +223,7 @@
 		<input type="button" class="botao" value="Analisar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispN.'" onClick="return false;"'; } else { echo 'style="'.$dispN.'" onClick="mostrarBorderoAnalisar();return false;"'; } ?> />
 		<input type="button" class="botao" value="Imprimir" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />
 		<input type="button" class="botao" value="Liberar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostrarBorderoLiberar();return false;"'; } ?> />
-		<input type="button" class="botao" value="Pagar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispP.'" onClick="return false;"'; } else { echo 'style="'.$dispP.'" onClick="mostrarBorderoPagar();return false;"'; } ?> />
+		<input type="button" id="btnPagar" class="botao" value="Pagar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispP.'" onClick="return false;"'; } else { echo 'style="'.$dispP.'" onClick="mostrarBorderoPagar();return false;"'; } ?> />
 
 	</div>
 

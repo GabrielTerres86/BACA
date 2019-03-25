@@ -30,6 +30,8 @@ BEGIN
                             lançava o valor acumulado dos juros de mora calculado no título, agora irá lançar somente o
                             valor do juros apropriado no mês (Paulo Penteado GFT)
 
+               25/10/2018 - Inserção do valor de lançamento de juros de atualização (histor 2798). (Vitor S Assanuma - GFT)                            
+  			   
 			   29/11/2018 - Correção na apropriação de juros de mora mensal (Lucas Lazari - GFT)
 	
   ............................................................................ */
@@ -57,6 +59,9 @@ BEGIN
     -- Cursor generico de calendario
     rw_crapdat   BTCH0001.cr_crapdat%ROWTYPE;
 
+    -- Valor do lançamento
+    vl_juros_atualizacao NUMBER(25,2);
+ 
     -- Cursor para trazer as agencias para o paralelismo
     CURSOR cr_crapage IS 
       SELECT  crapage.cdagenci
@@ -87,6 +92,7 @@ BEGIN
          AND craptdb.dtvencto <= pr_dtmvtolt
          AND craptdb.insittit =  4  -- liberado
          AND crapbdt.cdagenci = nvl(pr_cdagenci,crapbdt.cdagenci)
+         AND crapbdt.inprejuz = 0 -- somente borderôs que não estão em prejuízo
          AND crapbdt.flverbor =  1; -- bordero liberado na nova versão
     
     CURSOR cr_crapljt(pr_cdcooper IN crapcop.cdcooper%TYPE,
@@ -101,6 +107,7 @@ BEGIN
        AND ass.cdcooper = ljt.cdcooper
        AND ass.nrdconta = ljt.nrdconta
        AND bdt.flverbor = 1
+       AND bdt.inprejuz = 0 -- somente borderôs que não estão em prejuízo
        AND bdt.nrborder = ljt.nrborder
        AND bdt.cdcooper = ljt.cdcooper
        AND ljt.cdcooper = pr_cdcooper
@@ -237,6 +244,7 @@ BEGIN
           CONTINUE;
         END IF;
         
+        
         OPEN cr_lancboraprop(pr_cdcooper => pr_cdcooper
                             ,pr_nrdconta => rw_craptdb.nrdconta
                             ,pr_nrborder => rw_craptdb.nrborder
@@ -307,6 +315,14 @@ BEGIN
           RAISE vr_exc_saida;
         END IF;
       END LOOP;
+      
+      -- Efetua o lançamento da Mensal dos juros de atualização
+      DSCT0003.pc_lanc_jratu_mensal(pr_cdcooper => pr_cdcooper
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
       
       -- Processo OK, devemos chamar a fimprg
       BTCH0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper

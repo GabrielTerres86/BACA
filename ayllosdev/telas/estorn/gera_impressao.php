@@ -27,6 +27,7 @@
 	$dtiniest = $_POST['dtiniest'];
 	$dtfinest = $_POST['dtfinest'];
 	$cdagenci = $_POST['cdagenci'];
+	$cdtpprod = $_POST['cdtpprod'];
 
 	$xml  = '<Root>';
 	$xml .= '	<Dados>';
@@ -36,6 +37,7 @@
 	$xml .= '		<dtiniest>'.$dtiniest.'</dtiniest>';
 	$xml .= '		<dtfinest>'.$dtfinest.'</dtfinest>';
 	$xml .= '		<cdagenci>'.$cdagenci.'</cdagenci>';
+	$xml .= '		<cdtpprod>'.$cdtpprod.'</cdtpprod>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 	

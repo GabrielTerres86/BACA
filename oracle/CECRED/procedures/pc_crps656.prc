@@ -11,7 +11,7 @@ BEGIN
      Sistema : CRIA/ATUALIZA PREJUIZO CYBER
      Sigla   : CRED
      Autor   : James Prust Junior
-     Data    : Agosto/2013.                     Ultima atualizacao: 22/08/2018
+     Data    : Agosto/2013.                     Ultima atualizacao: 11/01/2019
 
      Dados referentes ao programa:
 
@@ -60,6 +60,9 @@ BEGIN
                  17/12/2018 - Correção para saldo de prejuizo, apos realizar estorno 
                               do pagamento de prejuízo. (INC0025808 - Gabriel MoutS)
 							  
+                 11/01/2019 - Adicionado no cursor cr_crapepr uma union com select dos dados de
+                              prejuizo do borderô de desconto de títulos (Paulo Penteado GFT)
+
   ............................................................................. */
 
   DECLARE
@@ -85,7 +88,8 @@ BEGIN
             ,qtprecal crapepr.qtprecal%TYPE
             ,vlpreemp crapepr.vlpreemp%TYPE
             ,txjuremp crapepr.txjuremp%TYPE
-            ,txmensal crapepr.txmensal%TYPE);
+            ,txmensal crapepr.txmensal%TYPE
+            ,cdoricyb NUMBER );
     TYPE typ_tab_crapepr IS TABLE OF typ_reg_crapepr INDEX BY VARCHAR2(100);
 
     -- Estrutura para PL Table da tabela CRPACYB
@@ -154,10 +158,11 @@ BEGIN
         AND cop.flgativo = 1
      ORDER BY cop.cdcooper;
 
-   /* Busca contratos e contas em prejuízo por cooperativa */
+   /* Busca contratos, contas e desconto de titulos em prejuízo por cooperativa */
    CURSOR cr_crapepr(pr_cdcooper IN crapcyb.cdcooper%TYPE) IS
      SELECT prej.cdcooper,
             prej.nrdconta,
+            0 nrborder,
             prej.nrdconta          nrctremp,
             0                      cdlcremp,
             prej.dtinclusao        dtprejuz, --
@@ -180,9 +185,10 @@ BEGIN
             0                      qtprecal, -- qtd prestações pagas
             prej.vldivida_original vlpreemp, --
             0                      txjuremp, --
-            0                      txmensal
+            0                      txmensal,
+            1 cdoricyb
      FROM tbcc_prejuizo prej
-		    , crapsld sld
+         ,crapsld sld
         WHERE prej.dtliquidacao is NULL
 				  AND sld.cdcooper = prej.cdcooper
 					AND sld.nrdconta = prej.nrdconta
@@ -190,6 +196,7 @@ BEGIN
      UNION
      SELECT cer.cdcooper
            ,cer.nrdconta
+           ,0 nrborder
            ,cer.nrctremp
            ,cer.cdlcremp
            ,cer.dtprejuz
@@ -208,9 +215,51 @@ BEGIN
            ,cer.vlpreemp
            ,cer.txjuremp
            ,cer.txmensal
+           ,3 cdoricyb
       FROM crapepr cer
       WHERE cer.inprejuz > 0
         AND cer.cdcooper <> pr_cdcooper
+     
+     UNION
+     
+     SELECT tdb.cdcooper
+           ,tdb.nrdconta
+           ,tdb.nrborder
+           ,tcy.nrctrdsc nrctremp
+           ,0 cdlcremp
+           ,bdt.dtprejuz
+           ,(tdb.vlsdprej + (tdb.vlttjmpr - tdb.vlpgjmpr)
+                          + (tdb.vlttmupr - tdb.vlpgmupr)
+                          + (tdb.vljraprj - tdb.vlpgjrpr)
+                          + (tdb.vliofprj - tdb.vliofppr)) vlsdprej
+           ,0 cdfinemp
+           ,NVL(tdb.dtdpagto,tdb.dtdebito) dtmvtolt
+           ,tdb.vltitulo vlemprst
+           ,1 qtpreemp
+           ,0 tpdescto
+           ,0 flgpagto
+           ,bdt.inprejuz
+           ,0 qtmesdec
+           ,0 inliquid
+           ,0 vlsdeved
+           ,0 qtprecal
+           ,tdb.vltitulo vlpreemp
+           ,ROUND(bdt.txmensal/30,7) txjuremp
+           ,bdt.txmensal
+           ,4 cdoricyb
+       FROM tbdsct_titulo_cyber tcy
+           ,craptdb tdb
+           ,crapbdt bdt
+      WHERE tcy.cdcooper = tdb.cdcooper
+        AND tcy.nrdconta = tdb.nrdconta
+        AND tcy.nrborder = tdb.nrborder
+        AND tcy.nrtitulo = tdb.nrtitulo
+        AND tdb.cdcooper = bdt.cdcooper
+        AND tdb.nrdconta = bdt.nrdconta
+        AND tdb.nrborder = bdt.nrborder
+        AND bdt.inprejuz = 1
+        AND bdt.cdcooper <> pr_cdcooper
+
      ORDER BY 1;
 
     /* Buscar todos os registros do sistema CYBER */
@@ -378,6 +427,8 @@ BEGIN
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).vlsdeved := reg.vlsdeved;
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).qtprecal := reg.qtprecal;
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).vlpreemp := reg.vlpreemp;
+      vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).cdoricyb := reg.cdoricyb;
+
 			IF reg.nrdconta = reg.nrctremp AND reg.inprejuz = 1 THEN
 				vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).txjuremp := vr_pctaxpre;
         vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).txmensal := vr_txmensal;
@@ -484,6 +535,8 @@ BEGIN
                   (vr_tab_crapepr(vr_index).cdlcremp = 800 OR
                    vr_tab_crapepr(vr_index).cdlcremp = 900)) THEN
             vr_cdorigem := 2; -- Desconto
+          ELSIF vr_tab_crapepr(vr_index).cdoricyb = 4 THEN
+            vr_cdorigem := 4; -- Borderô Desconto de Título
           ELSE
 						IF vr_tab_crapepr(vr_index).nrdconta = vr_tab_crapepr(vr_index).nrctremp AND
 							 vr_tab_crapepr(vr_index).cdlcremp = 0 THEN
@@ -640,7 +693,7 @@ BEGIN
                       pr_dscritic := 'Erro ao atualizar a tabela CRAPCYB: ' || SQLERRM;
                       RAISE vr_erro_exec;
                   END;
-								ELSIF vr_tab_crapepr(vr_index).inprejuz = 1 AND vr_cdorigem = 1 AND vr_tab_crapepr(vr_index).cdlcremp = 0 THEN
+                ELSIF vr_tab_crapepr(vr_index).inprejuz = 1 AND vr_cdorigem IN (1,4) AND vr_tab_crapepr(vr_index).cdlcremp = 0 THEN
 									BEGIN
                     -- Atualização do registro encontrado
                     UPDATE crapcyb cyb
@@ -816,7 +869,7 @@ BEGIN
                   RAISE vr_exc_saida;
               END;
 
-							IF vr_tab_crapepr(vr_index).inprejuz = 1 AND vr_cdorigem = 1 AND vr_tab_crapepr(vr_index).cdlcremp = 0 THEN
+              IF vr_tab_crapepr(vr_index).inprejuz = 1 AND vr_cdorigem IN (1,4) AND vr_tab_crapepr(vr_index).cdlcremp = 0 THEN
 								UPDATE crapcyb cyb
                 SET cyb.dtdpagto = vr_tab_crapepr(vr_index).dtmvtolt
                 WHERE cyb.cdcooper = vr_tab_crapepr(vr_index).cdcooper

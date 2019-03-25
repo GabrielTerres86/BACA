@@ -98,6 +98,7 @@ create or replace package cecred.tela_manbem is
                              par_vlfipbem in crapbpr.vlfipbem%type,
                              par_dstpcomb in crapbpr.dstpcomb%type,
                              par_dsorigem in varchar2,
+                             par_nrgravam IN crapbpr.nrgravam%TYPE,
                              par_idseqnov OUT crapbpr.idseqbem%type,
                              par_cdcritic out number,
                              par_dscritic out varchar2);
@@ -156,6 +157,7 @@ create or replace package cecred.tela_manbem is
                           ,pr_nrrenava in varchar2 --> Renavam
                           ,pr_uflicenc in varchar2 --> UF Licenciamento
                           ,pr_nrcpfcgc in varchar2 --> CPF Interveniente
+                          ,pr_nmdavali IN VARCHAR2 --> Nome Interveniente
                           ,pr_idseqbem IN VARCHAR2 --> Sequencia do bem em substituição                          
                            -------> OUT <--------
                           ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
@@ -194,6 +196,22 @@ create or replace package cecred.tela_manbem is
                                  ,par_nrdplaca in crapbpr.nrdplaca%TYPE
                                  ,par_nrrenava in crapbpr.nrrenava%TYPE
                                  ,par_ufdplaca in crapbpr.ufdplaca%TYPE
+                                 ,par_nrgravam IN crapbpr.nrgravam%TYPE
+                                  --PRJ438 - Sprint 4                                     
+                                 ,par_cdufende IN crapbpr.cdufende%TYPE  
+                                 ,par_dscompend IN crapbpr.dscompend%TYPE 
+                                 ,par_dsendere IN crapbpr.dsendere%TYPE 
+                                 ,par_nmbairro IN crapbpr.nmbairro%TYPE 
+                                 ,par_nmcidade IN crapbpr.nmcidade%TYPE 
+                                 ,par_nrcepend IN crapbpr.nrcepend%TYPE 
+                                 ,par_nrendere IN crapbpr.nrendere%TYPE 
+                                 ,par_dsclassi IN crapbpr.dsclassi%TYPE 
+                                 ,par_vlareuti IN crapbpr.vlareuti%TYPE 
+                                 ,par_vlaretot IN crapbpr.vlaretot%TYPE 
+                                 ,par_nrmatric IN crapbpr.nrmatric%TYPE 
+                                 ,par_vlrdobem IN crapbpr.vlrdobem%TYPE
+                                 ,par_dsmarceq in crapbpr.dsmarceq%TYPE
+                                 ,par_nrnotanf  in crapbpr.nrnotanf%TYPE
                                  ,par_flperapr OUT VARCHAR2
                                  ,par_cdcritic out NUMBER
                                  ,par_dscritic out varchar2);
@@ -222,6 +240,7 @@ create or replace package cecred.tela_manbem is
                                   par_nrendere in crapavt.nrendere%type,
                                   par_complend in crapavt.complend%type,
                                   par_nrcxapst in crapavt.nrcxapst%type,
+                                  par_dtnascto in crapavt.dtnascto%type,
                                         par_cdcritic out number,
                                         par_dscritic out varchar2);
 
@@ -235,13 +254,14 @@ create or replace package cecred.tela_manbem is
                                        ,par_flsohbem IN VARCHAR2
                                        ,par_cddopcao IN VARCHAR2
                                        ,par_xmlalien IN OUT NOCOPY CLOB
+                                       ,par_idpeapro IN NUMBER
                                        ,par_flperapr OUT VARCHAR2
                                        ,par_cdcritic OUT NUMBER
                                        ,par_dscritic OUT varchar2);
 
   /* Acionamento via tela das informações de Gravação dos Bens */
   procedure pc_grava_alienac_hipotec_web(par_nrdconta in crapbpr.nrdconta%TYPE --> Conta
-                                        ,par_dtmvtolt in crapbpr.dtmvtolt%TYPE --> Data
+                                        ,par_dtmvtolt in VARCHAR2 --> Data
                                         ,par_tpctrato in crapbpr.tpctrpro%TYPE --> Tp Contrato
                                         ,par_nrctrato in crapbpr.nrctrpro%TYPE --> Contrato
                                         ,par_cddopcao IN VARCHAR2         --> Tipo da Ação
@@ -264,6 +284,7 @@ create or replace package cecred.tela_manbem is
                                          ,par_cddopcao IN VARCHAR2                                         
                                          ,par_dsdalien IN VARCHAR2
                                          ,par_dsinterv IN VARCHAR2
+                                         ,par_idpeapro IN NUMBER
                                          ,par_flperapr OUT VARCHAR2
                                          ,par_cdcritic out NUMBER
                                          ,par_dscritic out varchar2);                                  
@@ -362,12 +383,13 @@ create or replace package body cecred.tela_manbem is
       Objetivo  : Package genérica contendo validações e manipulação de dados de bens.
                   Será utilizada pelas telas de empréstimos e de aditivos.
   
-      Alterações: 
+      Alteracoes: 18/10/2018 - Incluídos novas colunas referente aos bens alienados
+                               PRJ438 - Sprint 4 - Paulo Martins (Mouts)
       
   ---------------------------------------------------------------------------------------------------------------*/
   
   -- Vetor com os atributos de alienação conforme posição
-  TYPE typ_tab_atributos_alienacao IS VARRAY(19) OF VARCHAR2(100);
+  TYPE typ_tab_atributos_alienacao IS VARRAY(33) OF VARCHAR2(100);
   vr_vet_atrib_alienac typ_tab_atributos_alienacao 
                        := typ_tab_atributos_alienacao('dscatbem'
                                                      ,'dsbemfin'
@@ -387,10 +409,25 @@ create or replace package body cecred.tela_manbem is
                                                      ,'cdcoplib'
                                                      ,'dsmarbem'
                                                      ,'vlfipbem'
-                                                     ,'dstpcomb');
+                                                     ,'dstpcomb'
+                                                     -- PRJ438 ->
+                                                     ,'cdufende'
+                                                     ,'dscompend'
+                                                     ,'dsendere' 
+                                                     ,'nmbairro' 
+                                                     ,'nmcidade' 
+                                                     ,'nrcepend' 
+                                                     ,'nrendere' 
+                                                     ,'dsclassi' 
+                                                     ,'vlareuti' 
+                                                     ,'vlaretot' 
+                                                     ,'nrmatric'
+                                                     ,'vlrdobem'
+                                                     ,'dsmarceq'
+                                                     ,'nrnotanf');
   
   -- Vetor com os atributos de interveniente conforme posição
-  TYPE typ_tab_atributos_intervenient IS VARRAY(19) OF VARCHAR2(100);
+  TYPE typ_tab_atributos_intervenient IS VARRAY(20) OF VARCHAR2(100);
   vr_vet_atrib_interv typ_tab_atributos_intervenient 
                        := typ_tab_atributos_intervenient('nrcpfcgc'
                                                         ,'nmdavali'
@@ -410,7 +447,8 @@ create or replace package body cecred.tela_manbem is
                                                         ,'cdnacion'
                                                         ,'nrendere'
                                                         ,'complend'
-                                                        ,'nrcxapst');                                                     
+                                                        ,'nrcxapst'
+                                                        ,'dtnascto');
   
   -- Rotina para geração de LOG das alterações de Bens
   procedure pc_gera_log(par_cdcooper in number,
@@ -447,7 +485,23 @@ create or replace package body cecred.tela_manbem is
                         par_idgaropc in number,
                         par_dsorigem in varchar2,
                         par_dscritic in varchar2,
-                        par_dstransa in varchar2) is
+                        par_dstransa in varchar2) IS
+    /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : pc_gera_log             
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Daniel Dallagnese - Envolti
+    Data     : Agosto/2018                           Ultima atualizacao:  
+  
+    Dados referentes ao programa:
+   
+    Frequencia: -----
+    Objetivo   : Rotina para geração de LOG das alterações de Bens
+  
+    Alterações :  
+                
+  ---------------------------------------------------------------------------------------------------------------*/                                 
     v_rowid       ROWID;
     v_nrsequex      number := 0;
     v_nrsequex_aux  varchar2(5);
@@ -940,6 +994,8 @@ create or replace package body cecred.tela_manbem is
             ,bpr.ufdplaca
             ,bpr.uflicenc
             ,bpr.nrcpfbem
+            ,bpr.dsmarceq
+            ,bpr.nrnotanf
         FROM crapbpr bpr
        WHERE bpr.cdcooper = vr_cdcooper
          AND bpr.nrdconta = pr_nrdconta
@@ -1154,6 +1210,21 @@ create or replace package body cecred.tela_manbem is
                                pr_tag_cont => rw_crapbpr.nrcpfbem,
                                pr_des_erro => pr_dscritic);                                   
                                
+        -- PJ438
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Bem',
+                               pr_posicao  => vr_contcont,
+                               pr_tag_nova => 'dsmarceq',
+                               pr_tag_cont => rw_crapbpr.dsmarceq,
+                               pr_des_erro => pr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Bem',
+                               pr_posicao  => vr_contcont,
+                               pr_tag_nova => 'nrnotanf',
+                               pr_tag_cont => rw_crapbpr.nrnotanf,
+                               pr_des_erro => pr_dscritic);
+
         vr_contcont := vr_contcont + 1;          
       END LOOP;
         
@@ -1217,9 +1288,27 @@ create or replace package body cecred.tela_manbem is
                              par_vlfipbem in crapbpr.vlfipbem%type,
                              par_dstpcomb in crapbpr.dstpcomb%type,
                              par_dsorigem in varchar2,
+                             par_nrgravam IN crapbpr.nrgravam%TYPE,
                              par_idseqnov OUT crapbpr.idseqbem%type,
                              par_cdcritic OUT number,
-                             par_dscritic OUT varchar2) is
+                             par_dscritic OUT varchar2) IS
+
+    /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : pc_substitui_bem             
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Daniel Dallagnese - Envolti
+    Data     : Agosto/2018                           Ultima atualizacao:  
+  
+    Dados referentes ao programa:
+   
+    Frequencia: -----
+    Objetivo   : Rotina para desativação do Bem anterior e criação do novo bem alienado
+  
+    Alterações :  
+                
+  ---------------------------------------------------------------------------------------------------------------*/                                 
     -- Buscar bem a substituir
     cursor cr_crapbpr(pr_tpctrpro crapbpr.tpctrpro%TYPE) is
       select crapbpr.nranobem,
@@ -1257,7 +1346,10 @@ create or replace package body cecred.tela_manbem is
     v_flperapr VARCHAR2(1);  
     --
     vr_exc_erro   exception;
-  begin
+    -- 
+    vr_idseqbem   NUMBER := par_idseqbem;
+  BEGIN
+    -- Se foi passado bem a sustituir
     if par_idseqbem > 0 then
       open cr_crapbpr(par_tpctrato);
         fetch cr_crapbpr into v_crapbpr;
@@ -1312,10 +1404,7 @@ create or replace package body cecred.tela_manbem is
                   'Substituicao de Bem Alienado em emprestimo.'); /* dstransa */
       
       /** GRAVAMES - Copia BEM para tipo 99 **/
-      if (par_cdcooper = 1 and par_dtmvtolt >= to_date('18112014', 'ddmmyyyy')) or
-         (par_cdcooper = 4 and par_dtmvtolt >= to_date('23072014', 'ddmmyyyy')) or
-         (par_cdcooper = 7 and par_dtmvtolt >= to_date('06102014', 'ddmmyyyy')) or
-         (par_cdcooper not in (1, 4, 7) and par_dtmvtolt >= to_date('26022015', 'ddmmyyyy')) then
+      
         -- Checar se já não existe outro bem substituido com o mesmo ID do bem em substituição
         open cr_crapbpr(99);
           fetch cr_crapbpr into v_crapbpr99;
@@ -1327,24 +1416,42 @@ create or replace package body cecred.tela_manbem is
             close cr_crapbpr2;            
           end if;
         close cr_crapbpr;
-        -- atualizar o Bem substituido
+      
+      -- Atualizar o Bem substituido
+      -- Caso ele já tenha sido baixado devido ao Gravames Online, não mudaremos a sua situação
         BEGIN
-          update crapbpr
-             set idseqbem = par_idseqbem,
-                 tpctrpro = 99,
-                 flginclu = 0,
-                 flcancel = 0,
-                 flgbaixa = 1,
-                 dtdbaixa = par_dtmvtolt,
-                 tpdbaixa = 'A'
-           where rowid = v_crapbpr.rowid;
+        UPDATE crapbpr
+           set idseqbem = par_idseqbem
+              ,tpctrpro = 99
+              ,flginclu = 0
+              ,flcancel = 0
+              ,flgbaixa = decode(cdsitgrv,4,0,1)                   -- Se não baixado ainda, setamos para baixar
+              ,dtdbaixa = decode(cdsitgrv,4,dtdbaixa,par_dtmvtolt) -- Se não baixado ainda, setamos para baixar
+              ,tpdbaixa = decode(cdsitgrv,4,tpdbaixa,'A')          -- Se não baixado ainda, setamos para baixar
+         WHERE ROWID = v_crapbpr.rowid;
         EXCEPTION
           WHEN OTHERS THEN
             par_dscritic := 'Erro ao atualizar bem sustituido: '||SQLERRM;
             RAISE vr_exc_erro;
         END; 
+      
+      -- Migrar Histórico Gravames do Bem sustituido
+      BEGIN
+        update crapgrv
+           SET idseqbem = par_idseqbem
+              ,tpctrpro = 99
+         WHERE cdcooper = par_cdcooper
+           AND nrdconta = par_nrdconta
+           AND tpctrpro = par_tpctrato
+           AND nrctrpro = par_nrctremp
+           AND idseqbem = vr_idseqbem;
+      EXCEPTION
+        WHEN OTHERS THEN
+          par_dscritic := 'Erro ao atualizar historico gravamos do bem sustituido: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;        
+        
         /** GRAVAMES - Copia BEM para tipo 99 **/
-      end if;
     ELSE
       -- Log apenas de criação
       pc_gera_log(par_cdcooper,
@@ -1422,6 +1529,22 @@ create or replace package body cecred.tela_manbem is
                                      ,par_nrdplaca => par_nrdplaca
                                      ,par_nrrenava => par_nrrenava
                                      ,par_ufdplaca => par_ufdplaca
+                                     ,par_nrgravam => par_nrgravam
+                                     --PRJ438 --Sprint 4
+                                     ,par_cdufende => NULL            
+                                     ,par_dscompend => NULL 
+                                     ,par_dsendere => NULL 
+                                     ,par_nmbairro => NULL
+                                     ,par_nmcidade => NULL
+                                     ,par_nrcepend => NULL
+                                     ,par_nrendere => NULL 
+                                     ,par_dsclassi => NULL 
+                                     ,par_vlareuti => NULL 
+                                     ,par_vlaretot => NULL 
+                                     ,par_nrmatric => NULL        
+                                     ,par_vlrdobem => NULL                              
+                                     ,par_dsmarceq => ' '
+                                     ,par_nrnotanf => ' '
                                      ,par_flperapr => v_flperapr
                                      ,par_cdcritic => par_cdcritic
                                      ,par_dscritic => par_dscritic);
@@ -1429,11 +1552,6 @@ create or replace package body cecred.tela_manbem is
     IF par_cdcritic > 0 OR par_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-
-    -- É necessário atualizar o campo flgokgrv da proposta
-    
-    
-
   exception
     when vr_exc_erro then
       if par_cdcritic <> 0 and
@@ -1477,7 +1595,25 @@ create or replace package body cecred.tela_manbem is
                                       par_dsmensag out varchar2,
                                       par_cdcritic out number,
                                       par_dscritic out varchar2) is
+    /* .............................................................................
     
+        Programa: pc_valida_dados_alienacao
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel Dallagnese (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina responsavel em validar os dados enviados para Alienação de novo bem
+    
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/    
     
     --> Buscar dados da proposta de emprestimo
     CURSOR cr_crawepr IS
@@ -1539,7 +1675,13 @@ create or replace package body cecred.tela_manbem is
     vr_exc_erro     exception;
     v_regtBens_atu  varchar2(4000);
     v_regtBens_par  varchar2(4000);
+    v_maq_equip     boolean default false;
   BEGIN
+
+    IF par_dscatbem is not null and par_dscatbem = 'MAQUINA E EQUIPAMENTO' THEN
+      v_maq_equip := true;
+    END IF;
+
     -- Validar a proposta quando alteração
     IF par_cddopcao = 'A' THEN
       --> Validar emprestimo
@@ -1563,7 +1705,7 @@ create or replace package body cecred.tela_manbem is
       raise vr_exc_erro;
     end if;
     --
-    if grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' then
+    if grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' and not v_maq_equip then
       if trim(par_dstipbem) is null then
         v_dscritic := 'O campo Tipo Veiculo e obrigatorio, preencha-o para continuar.';
         par_nmdcampo := 'dstipbem';
@@ -1578,7 +1720,7 @@ create or replace package body cecred.tela_manbem is
       raise vr_exc_erro;
     end if;
     -- Validar campos para Bens Móveis
-    if grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' then
+    if grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' and not v_maq_equip then
       if trim(par_dscorbem) is null then
         v_dscritic := 'O campo Cor Classe e obrigatorio, preencha-o para continuar.';
         par_nmdcampo := 'dscorbem';
@@ -1665,7 +1807,7 @@ create or replace package body cecred.tela_manbem is
       end if;
     end if;
     --
-    if trim(par_dscatbem) is not null and
+    if trim(par_dscatbem) is not null and not v_maq_equip and
        par_vlmerbem = 0 then
       v_dscritic := 'O campo Valor Mercado e obrigatorio, preencha-o para continuar.';
       par_nmdcampo := 'vlmerbem';
@@ -1687,7 +1829,7 @@ create or replace package body cecred.tela_manbem is
       close cr_crapbpr;
     end if;
     /** GRAVAMES - Nao permitir excluir Bem com sitgrv 1,2 ou 4 **/
-    if trim(par_dscatbem) is null AND trim(par_dsbemfin) is null AND par_idseqbem <> 0 then
+    if trim(par_dscatbem) is null AND trim(par_dsbemfin) is null AND par_idseqbem <> 0 and not v_maq_equip then
       open cr_crapbpr2;
         fetch cr_crapbpr2 into v_crapbpr2;
         if cr_crapbpr2%notfound then
@@ -1712,14 +1854,32 @@ create or replace package body cecred.tela_manbem is
         par_nmdcampo := 'dsbemfin';
         raise vr_exc_erro;
       end if;
+    /*ELSIF par_idseqbem > 0 then
+      open cr_crapbpr2;
+        fetch cr_crapbpr2 into v_crapbpr2;
+        if cr_crapbpr2%notfound then
+          v_cdcritic := 0;
+          v_dscritic := 'Bem selecionado para substituicao nao cadastrado!';
+          par_nmdcampo := 'dsbemfin';
+          close cr_crapbpr2;
+          raise vr_exc_erro;
+    end if;
+      close cr_crapbpr2;
+      -- Nao pode substituir nesses Status 
+      if v_crapbpr2.cdsitgrv = 1 then
+        v_cdcritic := 0;
+        v_dscritic := 'Bem a Substituir em Processamento Gravames! Favor selecionar outro bem!';
+        par_nmdcampo := 'dsbemfin';
+        raise vr_exc_erro;
+      end if;*/
     end if;
     
     --
-    if trim(par_dscatbem) is not null AND trim(par_dscatbem) NOT IN ('MAQUINA DE COSTURA','EQUIPAMENTO') then
+    if trim(par_dscatbem) is not null AND trim(par_dscatbem) NOT IN ('MAQUINA DE COSTURA','EQUIPAMENTO', 'MAQUINA E EQUIPAMENTO') then
       /** GRAVAMES - NAO PERMITIR ALTERAR DETERMINADAS SITUACOES */
       if par_cddopcao = 'A' and
          par_idseqbem <> 0 and
-         (grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S') then
+         (grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S') THEN
         /** Quando 0, significa Bem novo, nao critica */
         open cr_crapbpr2;
           fetch cr_crapbpr2 into v_crapbpr2;
@@ -1817,7 +1977,7 @@ create or replace package body cecred.tela_manbem is
         raise vr_exc_erro;
       end if;
       -- Validar CPF do Bem
-      if par_nrcpfbem > 0 then
+      if nvl(par_nrcpfbem,0) > 0 then
         -- Validação Básica
         gene0005.pc_valida_cpf_cnpj(par_nrcpfbem,
                                     v_stsnrcal,
@@ -1861,7 +2021,8 @@ create or replace package body cecred.tela_manbem is
       raise vr_exc_erro;
     end if;
       -- Em caso da alteração e proposta já aprovadas
-      IF par_cddopcao = 'A' AND rw_crawepr.insitapr = 1 THEN
+      IF par_cddopcao = 'A' AND rw_crawepr.insitapr = 1 AND
+         par_dscatbem NOT IN ('MAQUINA E EQUIPAMENTO','APARTAMENTO','CASA','GALPAO','TERRENO') THEN
         -- Checar se o operador tem acesso a permissão especial 
         -- de alterar somente bens sem perca de aprovação
         gene0004.pc_verifica_permissao_operacao(pr_cdcooper => par_cdcooper
@@ -1876,8 +2037,26 @@ create or replace package body cecred.tela_manbem is
         -- Se retornou critica é pq ele não tem acesso e prosseguiremos com o processo
         -- de checagem de inclusão da mensagem de perca de aprovação
         IF v_dscritic IS NOT NULL OR v_cdcritic <> 0 THEN
-          -- Verificar regras de perca de aprovação
-          IF par_dstipbem = 'ZERO KM' THEN
+          -- Buscar dados do bem anterior
+            open cr_crapbpr2;
+              fetch cr_crapbpr2 into v_crapbpr2;
+              if cr_crapbpr2%notfound then
+                v_cdcritic := 0;
+                v_dscritic := 'Bem nao cadastrado!';
+                par_nmdcampo := 'dsbemfin';
+                close cr_crapbpr2;
+                raise vr_exc_erro;
+              end if;
+            close cr_crapbpr2;
+          -- Se mudamos de ZERO KM para Usado ou Diminuimos Ano Modelo
+          IF par_dstipbem = 'USADO' AND v_crapbpr2.dstipbem = 'ZERO KM' THEN
+            -- Perca aprovação
+            v_flperapr := 'S';  
+          ELSIF par_nrmodbem < v_crapbpr2.nrmodbem THEN
+            -- Perca aprovação
+            v_flperapr := 'S';  
+          -- Verificar outras regras de perca de aprovação
+          ELSIF par_dstipbem = 'ZERO KM' THEN
             -- Se alterar o chassi a proposta deve perder a aprovação visto que não temos a informação de placa e renavam;
             IF par_dschassi <> v_crapbpr2.dschassi THEN
               v_flperapr := 'S';
@@ -1886,14 +2065,18 @@ create or replace package body cecred.tela_manbem is
             -- Se alterar o chassi a proposta NÃO deve perder aprovação;
             -- Se for alterado a placa, ano modelo ou renavam, a proposta deve perder aprovação
             IF par_ufdplaca <> v_crapbpr2.ufdplaca OR par_nrdplaca <> v_crapbpr2.nrdplaca
-            OR par_nrrenava <> v_crapbpr2.nrrenava OR par_nrmodbem <> v_crapbpr2.nranobem THEN
+            OR par_nrrenava <> v_crapbpr2.nrrenava OR par_nrmodbem < v_crapbpr2.nrmodbem THEN
               v_flperapr := 'S';
             END IF;
           END IF;
           -- Se deverá perder a aprovação
           IF v_flperapr = 'S' THEN
+            -- Se já existir algo na mensagem
+            IF par_dsmensag IS NOT NULL THEN
+              par_dsmensag := par_dsmensag ||'<br>';
+            END IF;            
             -- Adicionar a mensagem
-            par_dsmensag := par_dsmensag ||'<br>'||'A alteração do chassi, placa ou ano  irá retirar a aprovação da proposta.';
+            par_dsmensag := par_dsmensag || 'A alteracao deste campo do veiculo ira retirar a aprovacao da proposta. Caso seja necessario alterar sem perder aprovacao, entre em contato com a sua sede.';
           END IF;
         END IF;
       END IF;
@@ -1934,6 +2117,7 @@ create or replace package body cecred.tela_manbem is
                           ,pr_nrrenava in varchar2 --> Renavam
                           ,pr_uflicenc in varchar2 --> UF Licenciamento
                           ,pr_nrcpfcgc in varchar2 --> CPF Interveniente
+                          ,pr_nmdavali IN VARCHAR2 --> Nome Interveniente
                           ,pr_idseqbem IN VARCHAR2 --> Sequencia do bem em substituição                          
                            -------> OUT <--------
                           ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
@@ -1949,7 +2133,7 @@ create or replace package body cecred.tela_manbem is
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Marcos Martini (Envolti)
-        Data    : Agosto/2018.                    Ultima atualizacao:
+        Data    : Agosto/2018.                    Ultima atualizacao: 18/10/2018
     
         Dados referentes ao programa:
     
@@ -1959,7 +2143,8 @@ create or replace package body cecred.tela_manbem is
     
         Observacao: -----
     
-        Alteracoes: 
+        Alteracoes: 18/10/2018 - P442 - Devolver informações para alienação do bem novo 
+                                 e desalienação do bem atual (Marcos-Envolti)
 
     ..............................................................................*/
     
@@ -2006,6 +2191,9 @@ create or replace package body cecred.tela_manbem is
          AND lim.tpctrlim = pr_tpctrato 
          AND lim.nrdconta = pr_nrdconta
          AND lim.nrctrlim = pr_nrctremp;
+    
+    -- XML
+    vr_xmlalien VARCHAR2(32767);
     
     --> SAida da validação
     vr_flgsenha NUMBER;
@@ -2165,11 +2353,40 @@ create or replace package body cecred.tela_manbem is
       RAISE vr_exc_erro;
     -- Em caso de retorno da mensagem
     ELSE
+      -- Caso houver Gravames Online
+      IF grvm0001.fn_tem_gravame_online(vr_cdcooper) = 'S' THEN
+        -- Acionaremos rotina que irá montar as informações
+        -- para desalienação do Bem anterior (já está na base)
+        -- e alienação do novo bem (Preenchido em tela)
+        grvm0001.pc_prepara_alienacao_aditiv(pr_cdcooper => vr_cdcooper -- Cooperativa
+                                            ,pr_nrdconta => pr_nrdconta -- Conta
+                                            ,pr_nrctremp => pr_nrctremp -- Contrato
+                                            ,pr_cdoperad => vr_cdoperad -- Operador
+                                            ,pr_idseqbem => pr_idseqbem -- Bem a substituir
+                                            ,pr_tpchassi => pr_tpchassi -- Tipo Chassi
+                                            ,pr_dschassi => pr_dschassi -- Chassi
+                                            ,pr_ufdplaca => pr_ufdplaca -- UF Placa
+                                            ,pr_nrdplaca => pr_nrdplaca -- Placa
+                                            ,pr_nrrenava => pr_nrrenava -- Renavam 
+                                            ,pr_uflicenc => pr_uflicenc -- UF Licenciamento
+                                            ,pr_nranobem => pr_nranobem -- Ano fabricacao
+                                            ,pr_nrmodbem => upper(SUBSTR(pr_nrmodbem,1,4)) -- Ano Modelo
+                                            ,pr_nrcpfbem => pr_nrcpfcgc -- CPF Interveniente
+                                            ,pr_nmdavali => pr_nmdavali -- Nome Interveniente
+                                            ,pr_dsxmlali => vr_xmlalien   -- XML de saida para alienação/desalienação
+                                            ,pr_dscritic => vr_dscritic); -- Critica de saida
+        
+        -- Tratar saida de erro
+        IF pr_dscritic IS NOT NULL THEN      
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
       -- Montar a mesma no XML de retorno  
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' 
                                    ||'<Root>'
                                    ||'  <mensagem>' ||vr_dsmensag|| '</mensagem>'
                                    ||'  <aprovaca>' ||vr_flgsenha|| '</aprovaca>'
+                                   ||'  '||vr_xmlalien
                                    ||'</Root>');        
     END IF;
            
@@ -2223,11 +2440,27 @@ create or replace package body cecred.tela_manbem is
                                  ,par_nrdplaca in crapbpr.nrdplaca%TYPE
                                  ,par_nrrenava in crapbpr.nrrenava%TYPE
                                  ,par_ufdplaca in crapbpr.ufdplaca%TYPE
+                                 ,par_nrgravam IN crapbpr.nrgravam%TYPE
+                                 --PRJ438 - Sprint 4                                     
+                                 ,par_cdufende IN crapbpr.cdufende%TYPE  
+                                 ,par_dscompend IN crapbpr.dscompend%TYPE 
+                                 ,par_dsendere IN crapbpr.dsendere%TYPE 
+                                 ,par_nmbairro IN crapbpr.nmbairro%TYPE 
+                                 ,par_nmcidade IN crapbpr.nmcidade%TYPE 
+                                 ,par_nrcepend IN crapbpr.nrcepend%TYPE 
+                                 ,par_nrendere IN crapbpr.nrendere%TYPE 
+                                 ,par_dsclassi IN crapbpr.dsclassi%TYPE 
+                                 ,par_vlareuti IN crapbpr.vlareuti%TYPE 
+                                 ,par_vlaretot IN crapbpr.vlaretot%TYPE 
+                                 ,par_nrmatric IN crapbpr.nrmatric%TYPE 
+                                 ,par_vlrdobem IN crapbpr.vlrdobem%TYPE
+                                 ,par_dsmarceq in crapbpr.dsmarceq%TYPE
+                                 ,par_nrnotanf  in crapbpr.nrnotanf%TYPE
                                  ,par_flperapr OUT VARCHAR2
                                  ,par_cdcritic out NUMBER
                                  ,par_dscritic out varchar2) IS
     /* .............................................................................
-    
+  
         Programa: pc_grava_bem_proposta
         Sistema : CECRED
         Sigla   : EMPR
@@ -2252,8 +2485,23 @@ create or replace package body cecred.tela_manbem is
             ,crapbpr.ufdplaca
             ,crapbpr.nrrenava
             ,crapbpr.nranobem
+            ,crapbpr.nrmodbem
             ,crapbpr.dschassi
             ,crapbpr.dstipbem
+            ,crapbpr.dscatbem
+            ,crapbpr.dsmarceq
+            ,crapbpr.vlrdobem
+            ,crapbpr.dsbemfin
+            ,crapbpr.nrcpfbem
+            ,crapbpr.vlmerbem
+            ,crapbpr.dsclassi
+            ,crapbpr.nrcepend
+            ,crapbpr.nrendere
+            ,crapbpr.nmbairro
+            ,crapbpr.nmcidade
+            ,crapbpr.dsendere
+            ,crapbpr.dscompend
+            ,crapbpr.cdufende
         from crapbpr
        where cdcooper = par_cdcooper
          and nrdconta = par_nrdconta
@@ -2270,6 +2518,11 @@ create or replace package body cecred.tela_manbem is
     v_flginclu    crapbpr.flginclu%TYPE := 0;
     v_cdsitgrv    crapbpr.cdsitgrv%TYPE := NULL;
     v_tpinclus    crapbpr.tpinclus%TYPE := ' ';
+    v_dtatugrv    crapbpr.dtatugrv%TYPE;
+    v_flgalfid    crapbpr.flgalfid%TYPE;
+    --PRJ438
+    v_dscorbem    crapbpr.dscorbem%TYPE;
+    v_rowid       rowid;
     --
     vr_exc_erro   exception;
   BEGIN
@@ -2292,21 +2545,65 @@ create or replace package body cecred.tela_manbem is
       v_ufdplaca := ' ';
     end if;
     
-    
     /** GRAVAMES ***/
     if par_tplcrato = 2 AND grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' THEN
-      v_flginclu := 1;
+      -- Valores default alienação
       v_tpinclus := 'A';
-      -- Somente mudar situação gravames quando gravação veio da ADITIV
-      IF par_nmdatela = 'ADITIV' THEN
-      v_cdsitgrv := 0;
-      END IF;
+      -- Se recebemos o numero da alienacao
+      IF par_nrgravam IS NOT NULL THEN
+        v_cdsitgrv := 2; -- Alienado
+        v_flginclu := 0; -- Ja incluso
+        v_dtatugrv := SYSDATE; -- Alienado hoje
+        v_flgalfid := 1; -- Alienado OK
+      ELSE
+        v_cdsitgrv := 0; -- Setar não alienado
+        v_flginclu := 1; -- Pendente inclusão
+        v_dtatugrv := SYSDATE; -- Alienado hoje
+        v_flgalfid := 0; -- Não alienado
+      END IF;  
     end if;
     
     -- Verificar se o bem jah não existe
     OPEN cr_crapbpr;
     FETCH cr_crapbpr
      INTO rw_crapbpr;
+     /*PRJ438 - Gerar DSCORBEM*/
+     if par_dsendere is null then -- Este campo é obrigatório na tela
+       v_dscorbem := par_dscorbem;
+     else
+       v_dscorbem := par_dsendere||', '||
+                     par_nrendere||' '||
+                     par_dscompend||' - '||  
+                     par_nmbairro||', '|| 
+                     par_nmcidade||' - '|| 
+                     par_cdufende;
+     
+       v_dscorbem := substr(v_dscorbem,1,100);
+     end if;
+     -- Validar mudança de categoria
+     if upper(par_dscatbem) != upper(rw_crapbpr.dscatbem) then
+        -- Perca aprovação
+        par_flperapr := 'S';
+        --Gravar log
+        gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                             pr_cdoperad => par_cdoperad,
+                             pr_dscritic => 'Alterada categoria do bem',
+                             pr_dsorigem => 'AIMARO WEB',
+                             pr_dstransa => 'Alterado categoria do bem, perde aprovação.',
+                             pr_dttransa => trunc(SYSDATE),
+                             pr_flgtrans => 1,
+                             pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => par_nmdatela,
+                             pr_nrdconta => par_nrdconta,
+                             pr_nrdrowid => v_rowid);
+
+        gene0001.pc_gera_log_item(v_rowid,
+                                  'Categoria',
+                                  rw_crapbpr.dscatbem,
+                                  par_dscatbem);
+     end if;
+
     CLOSE cr_crapbpr;
     
     -- Se bem jah existir
@@ -2319,7 +2616,7 @@ create or replace package body cecred.tela_manbem is
                dscatbem = par_dscatbem,
                nranobem = par_nranobem,
                nrmodbem = par_nrmodbem,
-               dscorbem = par_dscorbem,
+               dscorbem = v_dscorbem,--par_dscorbem,
                dschassi = par_dschassi,
                nrdplaca = v_nrdplaca,
                flgsegur = v_flgsegur,
@@ -2330,34 +2627,484 @@ create or replace package body cecred.tela_manbem is
                nrcpfbem = par_nrcpfbem,
                vlmerbem = par_vlmerbem,
                dsbemfin = par_dsbemfin,
-               cdsitgrv = nvl(v_cdsitgrv,cdsitgrv),
-               flginclu = v_flginclu,
-               tpinclus = v_tpinclus,
                dstipbem = par_dstipbem,
                dsmarbem = par_dsmarbem,
                vlfipbem = par_vlfipbem,
-               dstpcomb = par_dstpcomb
+               dstpcomb = par_dstpcomb,
+               --PRJ438 - Sprint 4 
+               cdufende = nvl(par_cdufende,' '),
+               dscompend = nvl(par_dscompend,' '),
+               dsendere = nvl(par_dsendere,' '),
+               nmbairro = nvl(par_nmbairro,' '),
+               nmcidade = nvl(par_nmcidade,' '),
+               nrcepend = nvl(par_nrcepend,0),
+               nrendere = nvl(par_nrendere,0),
+               dsclassi = nvl(par_dsclassi,' '),
+               vlareuti = nvl(par_vlareuti,0),
+               vlaretot = nvl(par_vlaretot,0),
+               nrmatric = nvl(par_nrmatric,0),
+               vlrdobem = nvl(par_vlrdobem,0),
+               nrnotanf   = nvl(par_nrnotanf,' '),
+               dsmarceq = nvl(par_dsmarceq,' ')
          where ROWID = rw_crapbpr.nrrowid;
       EXCEPTION
         WHEN OTHERS THEN
           par_dscritic := 'Erro ao atualizar Bem: '||SQLERRM;
           RAISE vr_exc_erro;
       END;   
-      
-      -- Veículos zero KM
-      IF rw_crapbpr.dstipbem = 'ZERO KM' THEN
+      IF par_dscatbem NOT IN ('MAQUINA E EQUIPAMENTO','APARTAMENTO','CASA','GALPAO','TERRENO') THEN
+      -- Se mudamos de ZERO KM para Usado ou Diminuimos Ano Modelo
+      IF par_dstipbem = 'USADO' AND rw_crapbpr.dstipbem = 'ZERO KM' THEN
+        -- Perca aprovação
+        par_flperapr := 'S';  
+          --Gravar log
+          gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => 'Alteração Usado/Zero km',
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alteração Usado/Zero km, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Estado bem',
+                                    rw_crapbpr.dstipbem,
+                                    par_dstipbem);
+      ELSIF par_nrmodbem < rw_crapbpr.nrmodbem THEN
+        -- Perca aprovação
+        par_flperapr := 'S';  
+          --Gravar log
+          gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => 'Alteração modelo.',
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alteração modelo inferior, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Modelo bem',
+                                    rw_crapbpr.nrmodbem,
+                                    par_nrmodbem);
+      -- Verificar outras regras de perca de aprovação
+      ELSIF rw_crapbpr.dstipbem = 'ZERO KM' THEN
         -- Se alterar o chassi a proposta deve perder a aprovação visto que não temos a informação de placa e renavam;
         IF par_dschassi <> rw_crapbpr.dschassi THEN
           par_flperapr := 'S';
+            --Gravar log
+            gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                                 pr_cdoperad => par_cdoperad,
+                                 pr_dscritic => 'Alteração chassi.',
+                                 pr_dsorigem => 'AIMARO WEB',
+                                 pr_dstransa => 'Alteração chassi, perde aprovação.',
+                                 pr_dttransa => trunc(SYSDATE),
+                                 pr_flgtrans => 1,
+                                 pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                                 pr_idseqttl => 1,
+                                 pr_nmdatela => par_nmdatela,
+                                 pr_nrdconta => par_nrdconta,
+                                 pr_nrdrowid => v_rowid);
+
+            gene0001.pc_gera_log_item(v_rowid,
+                                      'Chassi',
+                                      rw_crapbpr.dschassi,
+                                      par_dschassi);
         END IF;
       ELSE -- Veículos usados
         -- Se alterar o chassi a proposta NÃO deve perder aprovação;
         -- Se for alterado a placa, ano modelo ou renavam, a proposta deve perder aprovação
         IF v_ufdplaca <> rw_crapbpr.ufdplaca OR v_nrdplaca <> rw_crapbpr.nrdplaca
-        OR v_nrrenava <> rw_crapbpr.nrrenava OR par_nrmodbem <> rw_crapbpr.nranobem THEN
+          OR v_nrrenava <> rw_crapbpr.nrrenava OR par_nrmodbem < rw_crapbpr.nrmodbem THEN
           par_flperapr := 'S';
+            --Gravar log
+            gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                                 pr_cdoperad => par_cdoperad,
+                                 pr_dscritic => 'Alteração placa/renavam/ano modelo.',
+                                 pr_dsorigem => 'AIMARO WEB',
+                                 pr_dstransa => 'Alteração placa/renavam/ano modelo, perde aprovação.',
+                                 pr_dttransa => trunc(SYSDATE),
+                                 pr_flgtrans => 1,
+                                 pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                                 pr_idseqttl => 1,
+                                 pr_nmdatela => par_nmdatela,
+                                 pr_nrdconta => par_nrdconta,
+                                 pr_nrdrowid => v_rowid);
+
+            gene0001.pc_gera_log_item(v_rowid,
+                                      'Placa',
+                                      rw_crapbpr.ufdplaca||'-'||rw_crapbpr.nrdplaca,
+                                      v_ufdplaca||'-'||v_nrdplaca);
+                                      
+            gene0001.pc_gera_log_item(v_rowid,
+                                      'Renavam',
+                                      rw_crapbpr.nrrenava,
+                                      v_nrrenava);
+                                      
+            gene0001.pc_gera_log_item(v_rowid,
+                                      'Ano Mod.',
+                                      rw_crapbpr.nrmodbem,
+                                      par_nrmodbem);        
         END IF;
 	    END IF;
+      END IF;
+      /*P438 - Incluir tratativa de log e perda de aprovacao para bens de alienacao
+       Sprint 8
+       Inicio*/
+      IF par_dscatbem = 'MAQUINA E EQUIPAMENTO' THEN
+       IF nvl(upper(par_dsmarceq),' ') != nvl(upper(rw_crapbpr.dsmarceq),' ') THEN-- descricao
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alteração descrição, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Descricao',
+                                    rw_crapbpr.dsmarceq,
+                                    par_dsmarceq);
+
+       ELSIF nvl(par_vlmerbem,0) != nvl(rw_crapbpr.vlmerbem,0) THEN-- Valor de Mercado
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alteração Valor de Mercado, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Valor de Mercado',
+                                    rw_crapbpr.vlmerbem,
+                                    par_vlmerbem);
+
+       ELSIF nvl(upper(par_dsbemfin),' ') != nvl(upper(rw_crapbpr.dsbemfin),' ') THEN-- Modelo
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => 'Alteração Modelo',
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alteração modelo, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Modelo',
+                                    rw_crapbpr.dsbemfin,
+                                    par_dsbemfin);
+
+       ELSIF nvl(upper(par_dschassi),' ') != nvl(upper(rw_crapbpr.dschassi),' ') THEN-- numero serie
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => 'Alteração Numero Serie',
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alteração Numero Serie, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Numero Serie',
+                                    rw_crapbpr.dschassi,
+                                    par_dschassi);
+
+       ELSIF nvl(par_nrmodbem,0) != nvl(rw_crapbpr.nrmodbem,0) THEN-- Ano fabricacao
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado o Ano Fabricacao, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Ano Fabricacao',
+                                    rw_crapbpr.nrmodbem,
+                                    par_nrmodbem);
+       ELSIF nvl(par_nrcpfbem,0) != nvl(rw_crapbpr.nrcpfbem,0) THEN-- CPF CNPJ
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado CPF, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'CPF',
+                                    rw_crapbpr.nrcpfbem,
+                                    par_nrcpfbem);
+       END IF;
+
+      END IF;
+
+      IF par_dscatbem IN ('APARTAMENTO','CASA','GALPAO','TERRENO') THEN
+      
+        /*IF nvl(upper(par_dsclassi),' ') != nvl(upper(rw_crapbpr.dsclassi),' ') THEN
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado a classificação, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'classificacao',
+                                    rw_crapbpr.dsclassi,
+                                    par_dsclassi); */
+                                    
+        IF nvl(par_vlmerbem,0) != nvl(rw_crapbpr.vlmerbem,0) THEN
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado o Valor de Mercado, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Valor de Mercado',
+                                    rw_crapbpr.vlmerbem,
+                                    par_vlmerbem);
+        ELSIF nvl(par_vlrdobem,0) != nvl(rw_crapbpr.vlrdobem,0) THEN
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado o Valor de Venda, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Valor de Venda',
+                                    rw_crapbpr.vlrdobem,
+                                    par_vlrdobem);
+
+        ELSIF nvl(upper(par_dsbemfin),' ') != nvl(upper(rw_crapbpr.dsbemfin),' ') THEN -- Descrição
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado a Descrição, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Descrição',
+                                    rw_crapbpr.dsbemfin,
+                                    par_dsbemfin);
+
+       /* ELSIF  nvl(par_nrcepend,0) != nvl(rw_crapbpr.nrcepend,0) THEN
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado o CEP, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'CEP',
+                                    rw_crapbpr.nrcepend,
+                                    par_nrcepend);
+        ELSIF nvl(par_nrendere,0) != nvl(rw_crapbpr.nrendere,0) THEN
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado o Nro Endereco, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Nro Endereco',
+                                    rw_crapbpr.nrendere,
+                                    par_nrendere);
+        ELSIF nvl(upper(par_nmbairro),' ') != nvl(upper(rw_crapbpr.nmbairro),' ') THEN
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado o Nro Endereco, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Nro Endereco',
+                                    rw_crapbpr.nrendere,
+                                    par_nrendere);
+
+        ELSIF nvl(upper(par_nmcidade),' ') != nvl(upper(rw_crapbpr.nmcidade),' ') THEN
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado o nome cidade, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Cidade',
+                                    rw_crapbpr.nmcidade,
+                                    par_nmcidade);
+        ELSIF nvl(upper(par_dsendere),' ') != nvl(upper(rw_crapbpr.dsendere),' ') THEN
+         par_flperapr := 'S';
+         gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado o Endereco, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Endereco',
+                                    rw_crapbpr.dsendere,
+                                    par_dsendere);
+        ELSIF nvl(upper(par_dscompend),' ') != nvl(upper(rw_crapbpr.dscompend),' ') THEN
+          par_flperapr := 'S';
+          gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado o Complemento Endereco, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'Complemento',
+                                    rw_crapbpr.dscompend,
+                                    par_dscompend);
+
+        ELSIF nvl(upper(par_cdufende),' ') != nvl(upper(rw_crapbpr.cdufende),' ') THEN
+          par_flperapr := 'S';
+          gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                               pr_cdoperad => par_cdoperad,
+                               pr_dscritic => NULL,
+                               pr_dsorigem => 'AIMARO WEB',
+                               pr_dstransa => 'Alterado a UF, perde aprovação.',
+                               pr_dttransa => trunc(SYSDATE),
+                               pr_flgtrans => 1,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => par_nmdatela,
+                               pr_nrdconta => par_nrdconta,
+                               pr_nrdrowid => v_rowid);
+
+          gene0001.pc_gera_log_item(v_rowid,
+                                    'UF',
+                                    rw_crapbpr.cdufende,
+                                    par_cdufende);
+        */
+        END IF;
+
+      END IF;
+      /*P438 - FIM*/
+
     ELSE
       BEGIN
         insert into crapbpr(cdcooper,
@@ -2383,12 +3130,29 @@ create or replace package body cecred.tela_manbem is
                             idseqbem,
                             dsbemfin,
                             cdsitgrv,
+                            nrgravam,
+                            dtatugrv,
+                            flgalfid,
                             flginclu,
                             tpinclus,
                             dstipbem,
                             dsmarbem,
                             vlfipbem,
-                            dstpcomb)
+                            dstpcomb,
+                            cdufende,
+                            dscompend,
+                            dsendere,
+                            nmbairro,
+                            nmcidade,
+                            nrcepend,
+                            nrendere,
+                            dsclassi,
+                            vlareuti,
+                            vlaretot,
+                            nrmatric,
+                            vlrdobem,
+                            dsmarceq,
+                            nrnotanf)
         values (par_cdcooper,
                 par_nrdconta,
                 par_tpctrato,
@@ -2399,7 +3163,7 @@ create or replace package body cecred.tela_manbem is
                 par_dscatbem,
                 par_nranobem,
                 par_nrmodbem,
-                par_dscorbem,
+                v_dscorbem, --par_dscorbem,
                 par_dschassi,
                 v_nrdplaca,
                 v_flgsegur,
@@ -2412,17 +3176,81 @@ create or replace package body cecred.tela_manbem is
                 par_idseqbem,
                 par_dsbemfin,
                 nvl(v_cdsitgrv,0),
+                par_nrgravam,
+                v_dtatugrv,
+                v_flgalfid,
                 v_flginclu,
                 v_tpinclus,
                 par_dstipbem,
                 par_dsmarbem,
                 par_vlfipbem,
-                par_dstpcomb);
+                par_dstpcomb,
+                nvl(par_cdufende,' '),
+                nvl(par_dscompend,' '),
+                nvl(par_dsendere,' '),
+                nvl(par_nmbairro,' '),
+                nvl(par_nmcidade,' '),
+                nvl(par_nrcepend,0),
+                nvl(par_nrendere,0),
+                nvl(par_dsclassi,' '),
+                nvl(par_vlareuti,0),
+                nvl(par_vlaretot,0),
+                nvl(par_nrmatric,0),
+                nvl(par_vlrdobem,0),
+                nvl(par_dsmarceq,' '),
+                nvl(par_nrnotanf,' '));
       EXCEPTION
         WHEN OTHERS THEN
           par_dscritic := 'Erro ao inserir Bem: '||SQLERRM;
           RAISE vr_exc_erro;
       END;    
+      
+      -- Caso chamada oriunda da Aditiv
+      IF par_nmdatela = 'ADITIV' THEN
+        
+        -- Migrar histórico Inclusão Gravames para o bem atual gerado no dia
+        BEGIN
+          update crapgrv
+             SET idseqbem = par_idseqbem
+           WHERE cdcooper = par_cdcooper
+             AND nrdconta = par_nrdconta
+             AND tpctrpro = par_tpctrato
+             AND nrctrpro = par_nrctrato
+             AND dschassi = par_dschassi
+             AND trunc(dtenvgrv) = trunc(SYSDATE)
+             AND cdoperac = 1;
+        EXCEPTION
+          WHEN OTHERS THEN
+            par_dscritic := 'Erro ao migrar histórico gravames: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+        
+      END IF;
+      
+    END IF;
+    
+    -- Qualquer alteração nos bens da proposta, desde que estejamos num bem alienável e linha de hipoteca
+    IF par_tplcrato = 2 AND grvm0001.fn_valida_categoria_alienavel(par_dscatbem) = 'S' THEN    
+      -- Irá perder a situação OK de Gravame caso exista algum outro bem não alienado
+      BEGIN        
+        UPDATE crawepr wpr
+           SET wpr.flgokgrv = 0       
+         WHERE wpr.cdcooper = par_cdcooper
+           AND wpr.nrdconta = par_nrdconta
+           AND wpr.nrctremp = par_nrctrato
+           AND NOT EXISTS(SELECT 1
+                            FROM crapbpr bpr
+                           WHERE bpr.cdcooper = wpr.cdcooper
+                             AND bpr.nrdconta = wpr.nrdconta
+                             AND bpr.nrctrpro = wpr.nrctremp
+                             AND bpr.tpctrpro = 90
+                             AND bpr.flgalien = 1
+                             AND bpr.cdsitgrv <> 2);
+      EXCEPTION
+        WHEN OTHERS THEN
+          par_dscritic := 'Erro ao migrar histórico gravames: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END; 
     END IF;
     
   exception
@@ -2446,6 +3274,7 @@ create or replace package body cecred.tela_manbem is
                                        ,par_flsohbem IN VARCHAR2
                                        ,par_cddopcao IN VARCHAR2
                                        ,par_xmlalien IN OUT NOCOPY CLOB
+                                       ,par_idpeapro IN NUMBER
                                        ,par_flperapr OUT VARCHAR2
                                        ,par_cdcritic OUT NUMBER
                                        ,par_dscritic OUT varchar2) is
@@ -2467,7 +3296,8 @@ create or replace package body cecred.tela_manbem is
     
         Observacao: -----
     
-        Alteracoes: 
+        Alteracoes: 18/10/2018 - Incluídos novas colunas referente aos bens alienados
+                                 PRJ438 - Sprint 4 - Paulo Martins (Mouts)
 
     ..............................................................................*/            
   
@@ -2555,6 +3385,7 @@ create or replace package body cecred.tela_manbem is
     
     -- Exceção
     vr_exc_erro   exception;
+    v_rowid       rowid;
   BEGIN
     --> Validar emprestimo
     OPEN cr_crawepr;
@@ -2657,6 +3488,35 @@ create or replace package body cecred.tela_manbem is
                 rw_crapbpr.vlfipbem := gene0002.fn_char_para_number(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));
               ELSIF vr_node_name = 'dstpcomb' THEN
                 rw_crapbpr.dstpcomb := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+              --Incluído PRJ438 - Sprint 4   
+              ELSIF vr_node_name = 'cdufende' THEN
+                rw_crapbpr.cdufende := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));                
+              ELSIF vr_node_name = 'dscompend' THEN 
+                rw_crapbpr.dscompend := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+              ELSIF vr_node_name = 'dsendere' THEN
+                rw_crapbpr.dsendere := substr(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)),1,40); /*Necessario devido casos antigos DSCORBEM*/
+              ELSIF vr_node_name = 'nmbairro' THEN
+                rw_crapbpr.nmbairro := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+              ELSIF vr_node_name = 'nmcidade' THEN
+                rw_crapbpr.nmcidade := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+              ELSIF vr_node_name = 'nrcepend' THEN
+                rw_crapbpr.nrcepend := TO_NUMBER(replace(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)),'-'));                
+              ELSIF vr_node_name = 'nrendere' THEN
+                rw_crapbpr.nrendere := TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));                                
+              ELSIF vr_node_name = 'dsclassi' THEN
+                rw_crapbpr.dsclassi := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+              ELSIF vr_node_name = 'vlareuti' THEN
+                rw_crapbpr.vlareuti := TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));                
+              ELSIF vr_node_name = 'vlaretot' THEN
+                rw_crapbpr.vlaretot := TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));                
+              ELSIF vr_node_name = 'nrmatric' THEN
+                rw_crapbpr.nrmatric := TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));  
+              ELSIF vr_node_name = 'vlrdobem' THEN
+                rw_crapbpr.vlrdobem := gene0002.fn_char_para_number(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));                                  
+              ELSIF vr_node_name = 'dsmarceq' THEN
+                rw_crapbpr.dsmarceq := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+              ELSIF vr_node_name = 'nrnotanf' THEN
+                rw_crapbpr.nrnotanf := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
               END IF;
             END LOOP;
             -- Se vazio, utilizaremos o proximo id livre 
@@ -2696,6 +3556,22 @@ create or replace package body cecred.tela_manbem is
                                              ,par_nrdplaca => rw_crapbpr.nrdplaca
                                              ,par_nrrenava => rw_crapbpr.nrrenava
                                              ,par_ufdplaca => rw_crapbpr.ufdplaca
+                                             ,par_nrgravam => NULL
+                                             --PRJ438 --Sprint 4
+                                             ,par_cdufende => rw_crapbpr.cdufende              
+                                             ,par_dscompend => rw_crapbpr.dscompend 
+                                             ,par_dsendere => rw_crapbpr.dsendere 
+                                             ,par_nmbairro => rw_crapbpr.nmbairro 
+                                             ,par_nmcidade => rw_crapbpr.nmcidade 
+                                             ,par_nrcepend => rw_crapbpr.nrcepend 
+                                             ,par_nrendere => rw_crapbpr.nrendere 
+                                             ,par_dsclassi => rw_crapbpr.dsclassi 
+                                             ,par_vlareuti => rw_crapbpr.vlareuti 
+                                             ,par_vlaretot => rw_crapbpr.vlaretot 
+                                             ,par_nrmatric => rw_crapbpr.nrmatric 
+                                             ,par_vlrdobem => rw_crapbpr.vlrdobem
+                                             ,par_dsmarceq  => rw_crapbpr.dsmarceq
+                                             ,par_nrnotanf   => rw_crapbpr.nrnotanf
                                              ,par_flperapr => vr_aux_flperapr
                                              ,par_cdcritic => par_cdcritic
                                              ,par_dscritic => par_dscritic);
@@ -2769,6 +3645,8 @@ create or replace package body cecred.tela_manbem is
                 rw_crapavt.complend := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
               ELSIF vr_node_name = 'nrcxapst' THEN
                 rw_crapavt.nrcxapst := TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));
+              ELSIF vr_node_name = 'dtnascto' THEN
+                rw_crapavt.dtnascto := to_date(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)),'dd/mm/rrrr');
               END IF;
             END LOOP;          
             -- Validar e buscar o tipo de pessoa
@@ -2803,6 +3681,7 @@ create or replace package body cecred.tela_manbem is
                                              ,par_nrendere  => rw_crapavt.nrendere
                                              ,par_complend  => rw_crapavt.complend
                                              ,par_nrcxapst  => rw_crapavt.nrcxapst
+                                             ,par_dtnascto  => rw_crapavt.dtnascto
                                              ,par_cdcritic  => par_cdcritic
                                              ,par_dscritic  => par_dscritic);
             -- Se houve erro
@@ -2840,6 +3719,11 @@ create or replace package body cecred.tela_manbem is
            AND nrctrpro = par_nrctrato
            AND flgalien = 1
            AND vr_aux_listabem||',' NOT LIKE ('%,'||idseqbem||',%');  -- Somente os que não estão na lista   
+        -- Se deletar algum registro
+        IF SQL%ROWCOUNT > 0 THEN   
+          -- Indica que deverá perder a aprovação
+          par_flperapr := 'S'; 
+        END IF;   
       EXCEPTION
         WHEN OTHERS THEN
           par_dscritic := 'Erro ao limpar Bens Alienados: '||SQLERRM;
@@ -2866,7 +3750,7 @@ create or replace package body cecred.tela_manbem is
     END IF;
     
     /*
-	-- Temos de garantir que os CPFs informados na lista de bens estejam na lista
+    -- Temos de garantir que os CPFs informados na lista de bens estejam na lista
     -- de CPFs informados na lista de Intervenientes, qualquer diferença irá gerar
     -- erro nas CCBs e no GRAVAME
     FOR rw_cpf IN cr_cpfbens LOOP
@@ -2902,14 +3786,12 @@ create or replace package body cecred.tela_manbem is
       par_dscritic := 'O(s) documento(s) '||rtrim(par_dscritic,',')||' foi(ram) cadastrado(s) como Interveniente(s) porem nao foram relacionados a nenhum Bem';
       RAISE vr_exc_erro;
     END IF;
-	*/
+    */
+    -- Se for alteracao, e deve perder aprovacao e nao for imoveis e maquina e equipamento
+    IF par_cddopcao = 'A' AND par_flperapr = 'S' AND
+       rw_crapbpr.dscatbem NOT IN ('MAQUINA E EQUIPAMENTO','APARTAMENTO','CASA','GALPAO','TERRENO') THEN
 
-    -- Novamente somente na alteração
-    IF par_cddopcao = 'A' THEN
-      
-      -- Para uma requisição de alteração somente de Bens com Perca de Aprovação
-      IF par_flperapr = 'S' THEN
-        -- Checar se o operador tem acesso a permissão especial 
+      -- Checar se o operadorx tem acesso a permissão especial
         -- de alterar somente bens sem perca de aprovação
         gene0004.pc_verifica_permissao_operacao(pr_cdcooper => par_cdcooper
                                                ,pr_cdoperad => par_cdoperad
@@ -2922,26 +3804,43 @@ create or replace package body cecred.tela_manbem is
                                                ,pr_cdcritic => par_cdcritic);  
         -- Se retornou critica, então o operador não tem a permissão especial
         IF par_cdcritic <> 0 THEN
-          -- programar aqui a perca de aprovação retornando o texto de que será necessário fazer nova análise de crédito
-          BEGIN
-            -- Perder a aprovação
-            UPDATE crawepr
-               SET insitapr = 0
-                  ,cdopeapr = NULL
-                  ,dtaprova = NULL
-                  ,hraprova = 0
-                  ,insitest = 0
-             WHERE ROWID = rw_crawepr.nrrowid;
-          EXCEPTION
-            WHEN OTHERS THEN
-              par_dscritic := 'Erro ao processar perca da aprovação: '||SQLERRM;
-              RAISE vr_exc_erro;
-          END;
+        --
+        gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                             pr_cdoperad => par_cdoperad,
+                             pr_dscritic => NULL,
+                             pr_dsorigem => 'AIMARO WEB',
+                             pr_dstransa => 'Alteracao de bens, perde aprovação.',
+                             pr_dttransa => trunc(SYSDATE),
+                             pr_flgtrans => 1,
+                             pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => 'ATENDA',
+                             pr_nrdconta => par_nrdconta,
+                             pr_nrdrowid => v_rowid);
           -- Limpar criticas
-          par_cdcritic := NULL;
-          par_dscritic := NULL;
+        par_cdcritic := 0;
+        par_dscritic := '';
+        par_flperapr := 'S';
+      ELSE 
+        gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
+                             pr_cdoperad => par_cdoperad,
+                             pr_dscritic => NULL,
+                             pr_dsorigem => 'AIMARO WEB',
+                             pr_dstransa => 'Operador com permissao especial, nao perde aprovação.',
+                             pr_dttransa => trunc(SYSDATE),
+                             pr_flgtrans => 1,
+                             pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS')),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => 'ATENDA',
+                             pr_nrdconta => par_nrdconta,
+                             pr_nrdrowid => v_rowid);        
+        -- Limpar criticas
+        par_cdcritic := 0;
+        par_dscritic := '';        
+        par_flperapr := 'N';
         END IF;  
-      END IF;
+
+
     END IF;  
     
   exception
@@ -2961,7 +3860,26 @@ create or replace package body cecred.tela_manbem is
                                  ,par_dsinterv IN VARCHAR2         --> Lista de Intervenientes
                                  ,par_xmlalien IN OUT NOCOPY CLOB  --> XML montado
                                  ,pr_dscritic  out VARCHAR2) IS    --> Descricao da critica
-                                 
+    /* .............................................................................
+    
+        Programa: pc_converte_lista_xml
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Marcos Martini (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina responsavel em receber lista de informações de bens e intervenientes
+                    sepadados por ; e | entre cada registro e então converter para XML
+    
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/                                     
     -- Varchar2 temporário de Envio das Informações
     vr_dstextxml VARCHAR2(32767);
     
@@ -2996,8 +3914,8 @@ create or replace package body cecred.tela_manbem is
                                  ,pr_texto_novo     => '<bemalien>');
           -- Para cada coluna
           FOR idxi IN 1..vr_lista_interna.count LOOP
-            -- Utilizar no máximo 19 posições que é o tamanho do array de nomes
-            IF idxi <= 19 THEN
+            -- Utilizar no máximo 30 posições que é o tamanho do array de nomes
+            IF idxi <= 33 THEN
               -- Enviaremos cada coluna mapeada
               gene0002.pc_escreve_xml(pr_xml            => par_xmlalien
                                      ,pr_texto_completo => vr_dstextxml
@@ -3039,7 +3957,7 @@ create or replace package body cecred.tela_manbem is
           -- Para cada coluna
           FOR idxi IN 1..vr_lista_interna.count LOOP
             -- Utilizar no máximo 18 posições que é o tamanho do array de nomes
-            IF idxi <= 19 THEN
+            IF idxi <= 20 THEN
               -- Enviaremos cada coluna mapeada
               gene0002.pc_escreve_xml(pr_xml            => par_xmlalien
                                      ,pr_texto_completo => vr_dstextxml
@@ -3074,7 +3992,7 @@ create or replace package body cecred.tela_manbem is
   
   /* Acionamento via tela das informações de Gravação dos Bens */
   procedure pc_grava_alienac_hipotec_web(par_nrdconta in crapbpr.nrdconta%TYPE --> Conta
-                                        ,par_dtmvtolt in crapbpr.dtmvtolt%TYPE --> Data
+                                        ,par_dtmvtolt in VARCHAR2 --> Data
                                         ,par_tpctrato in crapbpr.tpctrpro%TYPE --> Tp Contrato
                                         ,par_nrctrato in crapbpr.nrctrpro%TYPE --> Contrato
                                         ,par_cddopcao IN VARCHAR2         --> Tipo da Ação
@@ -3086,6 +4004,25 @@ create or replace package body cecred.tela_manbem is
                                         ,pr_retxml  in out nocopy xmltype --> Arquivo de retorno do XML
                                         ,pr_nmdcampo  out VARCHAR2        --> Nome do campo com erro
                                         ,pr_des_erro  out varchar2) is    --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_grava_alienac_hipotec_web
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel Dallagnese (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Acionamento do processo de gravação da Alienação Hipotecária
+    
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/                                     
     -- PArca de aprovação
     vr_flperapr VARCHAR2(1);
     vr_dsmensag VARCHAR2(100);
@@ -3135,12 +4072,13 @@ create or replace package body cecred.tela_manbem is
     pc_grava_alienacao_hipoteca(par_cdcooper => vr_cdcooper
                                ,par_cdoperad => vr_cdoperad
                                ,par_nrdconta => par_nrdconta
-                               ,par_dtmvtolt => par_dtmvtolt
+                               ,par_dtmvtolt => TO_DATE(par_dtmvtolt,'dd/mm/rrrr')
                                ,par_tpctrato => par_tpctrato
                                ,par_nrctrato => par_nrctrato
                                ,par_flsohbem => 'S' --> Somente Bens
                                ,par_cddopcao => par_cddopcao
                                ,par_xmlalien => vr_dsclobxml
+                               ,par_idpeapro => 0 -- validar para perder aprovacao
                                ,par_flperapr => vr_flperapr
                                ,par_cdcritic => vr_cdcritic
                                ,par_dscritic => vr_dscritic);
@@ -3195,6 +4133,7 @@ create or replace package body cecred.tela_manbem is
                                          ,par_cddopcao IN VARCHAR2
                                          ,par_dsdalien IN VARCHAR2
                                          ,par_dsinterv IN VARCHAR2
+                                         ,par_idpeapro IN NUMBER
                                          ,par_flperapr OUT VARCHAR2
                                          ,par_cdcritic out NUMBER
                                          ,par_dscritic out varchar2) is
@@ -3228,23 +4167,6 @@ create or replace package body cecred.tela_manbem is
     vr_dscritic   VARCHAR2(4000);
   BEGIN
   
-/*  
-IF par_nrdconta = 3043525 THEN  
-  
-      UPDATE crapbpr 
-         SET dscorbem = to_char(SYSDATE,'hh24:mi:ss')
-     WHERE crapbpr.cdcooper = 1
-       AND crapbpr.nrdconta = 3043525
-       AND crapbpr.nrctrpro = 1233756
-       AND crapbpr.tpctrpro = 90
-       AND crapbpr.flgalien = 1;
-       
-    par_dscritic := 'teste de saida com erro';
-    RAISE vr_exc_erro;
-      
-
-END IF;*/
-  
     -- Criar documento XML com os textos enviados
     pc_converte_lista_xml(par_dsdalien => par_dsdalien --> Lista de Bens
                          ,par_dsinterv => par_dsinterv --> Lista de Intervenientes
@@ -3253,7 +4175,7 @@ END IF;*/
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;                       
-                           
+               
         
     -- Acionar a rotina convertida e que espera um XML completo com bens e intervenientes
     pc_grava_alienacao_hipoteca(par_cdcooper => par_cdcooper
@@ -3265,6 +4187,7 @@ END IF;*/
                                ,par_cddopcao => par_cddopcao
                                ,par_flsohbem => 'N'
                                ,par_xmlalien => vr_dsclobxml 
+                               ,par_idpeapro => par_idpeapro
                                ,par_flperapr => par_flperapr 
                                ,par_cdcritic => par_cdcritic 
                                ,par_dscritic => par_dscritic);
@@ -3308,8 +4231,28 @@ END IF;*/
                                   par_nrendere in crapavt.nrendere%type,
                                   par_complend in crapavt.complend%type,
                                   par_nrcxapst in crapavt.nrcxapst%type,
+                                  par_dtnascto in crapavt.dtnascto%type,
                                   par_cdcritic out number,
-                                  par_dscritic out varchar2) is
+                                  par_dscritic out varchar2) IS
+  /* .............................................................................
+    
+        Programa: pc_cria_interveniente
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel Dallagnese (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Gravação de novo Interveniente Garantidor
+    
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/                                        
   BEGIN
     DECLARE
       CURSOR cr_crapavt IS
@@ -3331,25 +4274,26 @@ END IF;*/
       -- Se já existir
       IF vr_rowid IS NOT NULL THEN
         UPDATE crapavt
-           SET nmdavali = par_nmdavali
+           SET nmdavali = upper(par_nmdavali)
               ,inpessoa = par_inpessoa
               ,nrcpfcjg = par_nrcpfcjg
-              ,nmconjug = par_nmconjug
+              ,nmconjug = upper(par_nmconjug)
               ,tpdoccjg = par_tpdoccjg
               ,nrdoccjg = par_nrdoccjg
               ,tpdocava = par_tpdocava
               ,nrdocava = par_nrdocava
-              ,dsendres##1 = par_dsendres1
-              ,dsendres##2 = par_dsendres2
+              ,dsendres##1 = upper(par_dsendres1)
+              ,dsendres##2 = upper(par_dsendres2)
               ,nrfonres = par_nrfonres
-              ,dsdemail = par_dsdemail
-              ,nmcidade = par_nmcidade
-              ,cdufresd = par_cdufresd
+              ,dsdemail = upper(par_dsdemail)
+              ,nmcidade = upper(par_nmcidade)
+              ,cdufresd = upper(par_cdufresd)
               ,nrcepend = par_nrcepend
               ,cdnacion = par_cdnacion
               ,nrendere = par_nrendere
-              ,complend = par_complend
+              ,complend = upper(par_complend)
               ,nrcxapst = par_nrcxapst
+              ,dtnascto = par_dtnascto
          WHERE ROWID = vr_rowid;
       ELSE
         -- Criar o registro 
@@ -3376,31 +4320,33 @@ END IF;*/
                         cdnacion,
                         nrendere,
                         complend,
-                        nrcxapst)
+                        nrcxapst,
+                        dtnascto)
     values(par_cdcooper,
            par_nrdconta,
            9,
            par_nrctremp,
            par_nrcpfcgc,
-           par_nmdavali,
+           upper(par_nmdavali),
            par_inpessoa,
            par_nrcpfcjg,
-           par_nmconjug,
+           upper(par_nmconjug),
            par_tpdoccjg,
            par_nrdoccjg,
            par_tpdocava,
            par_nrdocava,
-           par_dsendres1,
-           par_dsendres2,
+           upper(par_dsendres1),
+           upper(par_dsendres2),
            par_nrfonres,
-           par_dsdemail,
-           par_nmcidade,
-           par_cdufresd,
+           upper(par_dsdemail),
+           upper(par_nmcidade),
+           upper(par_cdufresd),
            par_nrcepend,
            par_cdnacion,
            par_nrendere,
-           par_complend,
-           par_nrcxapst);
+           upper(par_complend),
+           par_nrcxapst,
+           par_dtnascto);
       END IF;
     END;
   exception
@@ -3438,6 +4384,26 @@ END IF;*/
                                       pr_retxml   in out nocopy xmltype, --> Arquivo de retorno do XML
                                       pr_nmdcampo out varchar2, --> Nome do campo com erro
                                       pr_des_erro out varchar2) is --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_cria_interveniente_web
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel Dallagnese (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Direcionar para Gravação de novo Interveniente Garantidor
+                    após chamada via AyllosWeb
+    
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/                                          
     vr_numteste   number;
     -- Variável de críticas
     vr_cdcritic   crapcri.cdcritic%type; --> Cód. Erro
@@ -3596,6 +4562,7 @@ END IF;*/
                           par_nrendere  => pr_nrendere,
                           par_complend  => upper(pr_complend),
                           par_nrcxapst  => pr_nrcxapst,
+                          par_dtnascto  => null, /*PRJ438 - não é utlizado aqui*/
                           par_cdcritic  => pr_cdcritic,
                           par_dscritic  => pr_dscritic);
     -- Em caso de erro 
@@ -3781,8 +4748,9 @@ END IF;*/
         return;
       end if;
     else
+      null;
       -- PF
-      if trim(par_tpdocava) is null then
+      /*if trim(par_tpdocava) is null then
         par_dscritic := 'Tipo de documento do interveniente é obrigatorio.';
         par_nmdcampo := 'tpdocava';
         return;
@@ -3792,7 +4760,7 @@ END IF;*/
         par_dscritic := 'Número do documento do interveniente é obrigatorio.';
         par_nmdcampo := 'nrdocava';
         return;
-      end if;
+      end if;*/ -- BUG14246
       -- Comentadas as validações dos campos de Conjuge conforme solicitação do Télvio
       /*if trim(par_nmconjug) is not null or
          nvl(trim(par_nrcpfcjg),0) <> 0 or
@@ -3843,6 +4811,26 @@ END IF;*/
                                  pr_retxml   in out nocopy xmltype, --> Arquivo de retorno do XML
                                  pr_nmdcampo out varchar2, --> Nome do campo com erro
                                  pr_des_erro out varchar2) is --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_valida_interv
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel D. (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina responsavel por direcionar para a validação do preenchimento do Interveniente Garantidor
+  
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/                                      
+                                 
     vr_numteste   number;
     -- Variável de críticas
     vr_cdcritic   crapcri.cdcritic%type; --> Cód. Erro
@@ -3960,6 +4948,27 @@ END IF;*/
                                   pr_retxml   in out nocopy xmltype, --> Arquivo de retorno do XML
                                   pr_nmdcampo out varchar2, --> Nome do campo com erro
                                   pr_des_erro out varchar2) is --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_cpf_cadastrado_web
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel D. (Envolti)
+        Data    : Setembro/2018.                    Ultima atualizacao:
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina responsavel por checar se o CPF enviado é de um COoperado, pois se
+                    for reaproveitaremos suas informações e não é necessário cadastro de 
+                    interveniente Garantidor
+  
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/                                       
     -- Variaveis de log
     vr_cdcooper   integer;
     vr_cdoperad   varchar2(100);

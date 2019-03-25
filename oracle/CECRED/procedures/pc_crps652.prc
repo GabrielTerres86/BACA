@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 23/01/2019
+   Data    : AGOSTO/2013                      Ultima atualizacao: 11/01/2018
 
    Dados referentes ao programa:
 
@@ -250,7 +250,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                23/07/2018 - Projeto Revitalizaçao Sistemas - Execucao paralela por Coop e Agencia (Andreatta - MOUTs)
 
                19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
-                                
+               
+			   23/10/2018 - [Projeto 403] Adicionando tratativa para o tipo de garantia de aplicação para desconto de títulos
+                            (Lucas - GFT)	
+               
+			   11/01/2019 - Adicionado a gravação da carga de baixa para os desconto de titulos que estiverem em prejuizo (Paulo Penteado GFT)
+  
                23/01/2019 - Somar ao valor do saldo prejuizo (vlsdprej) o valor a ser pago de mora, multa
                             e IOF para ser enviado no arquivo de carga_mf ao Cyber - INC0030650. (Fabricio)
                                 
@@ -496,9 +501,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                 ,tdb.nrdocmto
                 ,cyb.nrctremp
                 ,tdb.nrctrlim
-                ,tdb.vlmratit -- juros por atraso de pagamento
-                ,tdb.vlmtatit -- multa por atraso de pagamento
-                ,tdb.vliofcpl -- Valor do IOF Complementar de atraso
+                ,tdb.vlmratit - tdb.vlpagmra as vlmratit -- juros por atraso de pagamento
+                ,tdb.vlmtatit - tdb.vlpagmta as vlmtatit -- multa por atraso de pagamento
+                ,tdb.vliofcpl - tdb.vlpagiof as vliofcpl-- Valor do IOF Complementar de atraso
             FROM craptdb tdb
            INNER JOIN tbdsct_titulo_cyber tcy
               ON tcy.cdcooper = tdb.cdcooper
@@ -747,7 +752,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
             and crapepr.tpemprst = 0 -- TR
             AND craphis.cdcooper = craplcm.cdcooper
             AND craphis.cdhistor = craplcm.cdhistor
-            AND trim(replace(craplcm.cdpesqbb,'.')) = pr_nrctremp
+            AND trim(replace(craplcm.cdpesqbb,'.')) = to_char(pr_nrctremp)
             AND craplcm.cdcooper = pr_cdcooper
             AND craplcm.nrdconta = pr_nrdconta
             AND crapepr.nrctremp = pr_nrctremp
@@ -765,7 +770,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
             AND crapepr.nrdconta = craplcm.nrdconta
             AND craphis.cdcooper = craplcm.cdcooper
             AND craphis.cdhistor = craplcm.cdhistor
-            AND trim(replace(craplcm.cdpesqbb,'.')) = pr_nrctremp
+            AND trim(replace(craplcm.cdpesqbb,'.')) = to_char(pr_nrctremp)
             AND craplcm.cdcooper = pr_cdcooper
             AND craplcm.nrdconta = pr_nrdconta
             AND crapepr.nrctremp = pr_nrctremp
@@ -1816,11 +1821,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
 
            --Carga Financeira
            IF pr_opccarga = 'F' THEN
-             -- Se for desconto de títulos, ou não tem garantia ou a garantia é de avalista
+             -- [Projeto 403] Regras de preenchimento conforme a garantia do contrato de limite
              IF pr_cdorigem = 4 THEN
-               IF trim(vr_avalist1) IS NULL AND
-                  trim(vr_avalist2) IS NULL THEN
+			 -- Se a linha de desconto do contrato de limite for "Aplicação", preencher com o valor "4"
+               IF pr_flgtemlcr AND pr_rw_craplcr.tpctrato = 4 THEN
+                 pc_monta_linha('4',592,pr_idarquivo);  
+               -- Caso contrário, se não for preenchido as informações de avalista, preencher com o valor "0"  
+               ELSIF trim(vr_avalist1) IS NULL AND trim(vr_avalist2) IS NULL THEN
                  pc_monta_linha('0',592,pr_idarquivo);
+               -- Se foi preenchida alguma informação de avalista, preencher com "1"  
                ELSE
                pc_monta_linha('1',592,pr_idarquivo);
                END IF;      
@@ -2212,6 +2221,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
          vr_tab_categ('MAQUINA DE COSTURA'):= 'MAQCOSTURA';
          vr_tab_categ('AUTOMOVEL'):= 'AUTOMOVEL';
          vr_tab_categ('OUTROS VEICULOS'):= 'OUTROS VEICULOS';
+         vr_tab_categ('GALPAO'):= 'GALPAO';
+         vr_tab_categ('MAQUINA E EQUIPAMENTO'):= 'MAQEQUIP';                  
+         
        EXCEPTION
          WHEN OTHERS THEN
            --Variavel de erro recebe erro ocorrido
@@ -2286,7 +2298,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
              CLOSE cr_crapcyc1;             
 
            --Se a origem = Conta
-           IF pr_rw_crapcyb.cdorigem = 1 THEN
+           IF pr_rw_crapcyb.cdorigem IN (1,4) THEN
              BEGIN
                -- Caso o contrato estiver em Cobrança Judicial (rw_crapcyc1.flgjudic = 1) nao deve atualizar a data da baixa, apenas os valores para efetuar a regularização do contrato
                UPDATE crapcyb SET crapcyb.dtdbaixa = case when nvl(rw_crapcyc1.flgjudic,0) = 0 and vr_flacordo = 0 then pr_dtmvtolt
@@ -2763,7 +2775,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
              pc_monta_linha(rpad(rw_craplcr.dslcremp,29,' '),110,pr_idarquivo);
            END IF;
 
+             --Caso esteja em prejuizo o valor de Saldo devedor é ZERO
+           IF (pr_rw_crapcyb.cdorigem = 4 AND pr_rw_crapcyb.flgpreju = 1) THEN
+             pc_monta_linha(to_char(pr_rw_crapcyb.vlsdeved,'00000000000000'),139,pr_idarquivo);             
+           ELSE
            pc_monta_linha(to_char((pr_rw_crapcyb.vlsdeved + nvl(pr_rw_crapcyb.vlmrapar, 0) + nvl(pr_rw_crapcyb.vlmtapar, 0) + nvl(pr_rw_crapcyb.vliofcpl, 0))*100,'00000000000000'),139,pr_idarquivo);
+           END IF;
            pc_monta_linha(to_char(pr_rw_crapcyb.vljura60*100,'00000000000000'),154,pr_idarquivo);
            pc_monta_linha(to_char(pr_rw_crapcyb.vlpreemp*100,'00000000000000'),169,pr_idarquivo);
            pc_monta_linha(lpad(pr_rw_crapcyb.qtpreatr,3,' '),184,pr_idarquivo);
@@ -2812,7 +2829,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
            pc_monta_linha(to_char(pr_rw_crapcyb.vlpreapg*100,'00000000000000'),293,pr_idarquivo);
 
            -- Se for do tipo CONTA CORRENTE ou PREJUIZO, faz o calculo antigo
-           IF pr_cdorigem = 1 OR pr_rw_crapcyb.flgpreju = 1 THEN
+           IF pr_cdorigem = 1 OR (pr_rw_crapcyb.flgpreju = 1 AND pr_cdorigem <> 4) THEN
              --Data Pagamento preenchida e Data de Baixa nula
              IF pr_rw_crapcyb.dtdpagto IS NOT NULL AND pr_rw_crapcyb.dtdbaixa IS NULL THEN
                IF pr_rw_crapcyb.cdlcremp = 100 AND pr_rw_crapcyb.flgpreju = 1 THEN
@@ -4530,6 +4547,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                    ,crapbpr.nranobem
                    ,crapbpr.nrmodbem
                    ,craplcr.tpctrato
+                   ,crapbpr.nrmatric
+                   ,crapbpr.nrcepend
+                   ,crapbpr.dsendere
+                   ,crapbpr.nrendere
+                   ,crapbpr.nmbairro
+                   ,crapbpr.nmcidade
+                   ,crapbpr.cdufende                   
              FROM crapbpr, crapepr, craplcr
              WHERE  craplcr.cdcooper = crapepr.cdcooper
              AND    craplcr.cdlcremp = crapepr.cdlcremp
@@ -4893,6 +4917,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                        vr_tab_idatribu(idx):= vr_atributo;
                        vr_atributo:= vr_atributo + 1;
                      END LOOP;
+                   WHEN 'GALPAO' THEN
+                     vr_atributo:= 490;
+                     FOR idx IN 1..10 LOOP
+                       vr_tab_idatribu(idx):= vr_atributo;
+                       vr_atributo:= vr_atributo + 1;
+                     END LOOP;                     
+                   WHEN 'MAQUINA E EQUIPAMENTO' THEN
+                     vr_atributo:= 500;
+                     FOR idx IN 1..6 LOOP
+                       vr_tab_idatribu(idx):= vr_atributo;
+                       vr_atributo:= vr_atributo + 1;
+                     END LOOP;                       
                    ELSE NULL;
                  END CASE;
                  --Categoria do Bem
@@ -5038,6 +5074,126 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                          pc_monta_linha(RPad(' ',17,' '),184,4);
                        WHEN 8 THEN
                          pc_monta_linha(RPad(rw_crapbpr.nrmodbem,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                     END CASE;
+                     --Gravar linha no arquivo
+                   pc_escreve_dado(NULL,4,pr_rw_crapcyb.dsdchave);
+                   END LOOP;
+                 END IF;
+                 -- P438 - Incluir Nova categoria GALPAO no arquivo Cyber
+                 IF rw_crapbpr.dscatbem = 'GALPAO' THEN
+                   --Indice
+                   FOR vr_nrindice IN 1..10 LOOP
+                     --Montar Linha
+                     pc_monta_linha('2',1,4);
+                     pc_monta_linha('1',2,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdcooper,'9999'),3,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdorigem,'9999'),7,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrdconta,'99999999'),11,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrctremp,'99999999'),19,4);
+                     pc_monta_linha(gene0002.fn_mask(rw_crapbpr.idseqbem,'zzzzzzzz9'),28,4);
+                     pc_monta_linha(RPad(vr_dscatcyb,10,' '),37,4);
+                     pc_monta_linha(gene0002.fn_mask(vr_tab_idatribu(vr_nrindice),'zzzzzz9'),47,4);
+                     CASE vr_nrindice
+                       WHEN 1 THEN -- 490
+                         -- Categoria Bem
+                         pc_monta_linha(RPad(rw_crapbpr.dscatbem,100,' '),54,4);                         
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 2 THEN -- 491
+                         -- Valor Mercado
+                         pc_monta_linha(RPad(' ',100,' '),54,4);
+                         pc_monta_linha(to_char(rw_crapbpr.vlmerbem*1000000,'00000000000000000000000000000'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                         
+                       WHEN 3 THEN -- 492
+                         -- Descricao                         
+                         pc_monta_linha(RPad(rw_crapbpr.dsbemfin,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 4 THEN -- 493
+                         -- Matricula
+                         pc_monta_linha(RPad(rw_crapbpr.nrmatric,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 5 THEN -- 494
+                         -- CEP
+                         pc_monta_linha(RPad(rw_crapbpr.nrcepend,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                         
+                       WHEN 6 THEN -- 495
+                         -- Rua
+                         pc_monta_linha(RPad(rw_crapbpr.dsendere,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 7 THEN -- 496
+                         -- Numero
+                         pc_monta_linha(RPad(rw_crapbpr.nrendere,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                         
+                       WHEN 8 THEN -- 497
+                         -- Bairro
+                         pc_monta_linha(RPad(rw_crapbpr.nmbairro,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                         
+                       WHEN 9 THEN -- 498     
+                         -- Cidade
+                         pc_monta_linha(RPad(rw_crapbpr.nmcidade,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                                                                                            
+                       WHEN 10 THEN -- 499                         
+                         -- UF
+                         pc_monta_linha(RPad(rw_crapbpr.cdufende,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                         
+                     END CASE;
+                     --Gravar linha no arquivo
+                   pc_escreve_dado(NULL,4,pr_rw_crapcyb.dsdchave);
+                   END LOOP;
+                 END IF;                  
+                 -- P438 - Incluir Nova categoria MAQUINA E EQUIPAMENTO no arquivo Cyber
+                 IF rw_crapbpr.dscatbem = 'MAQUINA E EQUIPAMENTO' THEN
+                   --Indice
+                   FOR vr_nrindice IN 1..6 LOOP
+                     --Montar Linha
+                     pc_monta_linha('2',1,4);
+                     pc_monta_linha('1',2,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdcooper,'9999'),3,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdorigem,'9999'),7,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrdconta,'99999999'),11,4);
+                     pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrctremp,'99999999'),19,4);
+                     pc_monta_linha(gene0002.fn_mask(rw_crapbpr.idseqbem,'zzzzzzzz9'),28,4);
+                     pc_monta_linha(RPad(vr_dscatcyb,10,' '),37,4);
+                     pc_monta_linha(gene0002.fn_mask(vr_tab_idatribu(vr_nrindice),'zzzzzz9'),47,4);
+                     CASE vr_nrindice
+                       WHEN 1 THEN -- 500
+                         -- Categoria Bem
+                         pc_monta_linha(RPad(rw_crapbpr.dscatbem,100,' '),54,4);                         
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 2 THEN -- 501
+                         -- Descrição                         
+                         pc_monta_linha(RPad(rw_crapbpr.dsbemfin,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 3 THEN --502
+                         -- Valor Mercado
+                         pc_monta_linha(RPad(' ',100,' '),54,4);
+                         pc_monta_linha(to_char(rw_crapbpr.vlmerbem*1000000,'00000000000000000000000000000'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 4 THEN -- 503
+                         -- Modelo Fab
+                         pc_monta_linha(RPad(rw_crapbpr.nrmodbem,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);
+                       WHEN 5 THEN -- 504
+                         -- Ano Fab
+                         pc_monta_linha(RPad(rw_crapbpr.nranobem,100,' '),54,4);
+                         pc_monta_linha(RPad(' ',30,'0'),154,4);
+                         pc_monta_linha(RPad(' ',17,' '),184,4);                         
+                       WHEN 6 THEN -- 505
+                         -- Nr serie
+                         pc_monta_linha(RPad(rw_crapbpr.dschassi,100,' '),54,4);
                          pc_monta_linha(RPad(' ',30,'0'),154,4);
                          pc_monta_linha(RPad(' ',17,' '),184,4);
                      END CASE;
@@ -6017,6 +6173,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                          vr_dscritic IS NOT NULL THEN
                        RAISE vr_exc_saida;
                      END IF;
+
+               ELSE
+                 -- Verifica se o saldo a regularizar e o saldo do prejuizo estao liquidados para
+                 -- gerar a baixa ou se for residuo o saldo devedor deve estar liquidado para gerar uma baixa
+                 IF ((rw_crapcyb.vlpreapg <= 0 AND rw_crapcyb.flgpreju = 0) OR
+                     (rw_crapcyb.flgpreju = 1 AND Nvl(rw_crapcyb.vlsdprej,0) <= 0))  OR
+                     ((rw_crapcyb.flgresid = 1) AND (Nvl(rw_crapcyb.vlsdeved,0) <= 0) AND rw_crapcyb.flgpreju = 0) THEN
+
+                   --Gerar carga de Baixa
+                   pc_gera_carga_baixa(pr_rw_crapcyb => rw_crapcyb   --Registro Cyber
+                                      ,pr_dtmvtolt   => vr_dtatual   --Data Movimento
+                                      ,pr_dtmvtlt2   => vr_dtmvtlt2  --Data Movimento formatada
+                                      ,pr_cdcritic   => vr_cdcritic  --Codigo Erro
+                                      ,pr_dscritic   => vr_dscritic);--Descricao Erro
+                   --Se ocorreu erro
+                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                     RAISE vr_exc_saida;
+                   END IF;
+                 END IF;
 
                END IF;
 						 ELSIF rw_crapcyb.cdorigem = 1

@@ -141,7 +141,8 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
           ,flgcarne NUMBER
           ,cdbarras VARCHAR2(44)
           ,lindigit VARCHAR2(60)
-          ,rowidcob ROWID);
+          ,rowidcob ROWID
+          ,dsparcelas tbrecup_cobranca.dsparcelas%TYPE);
 
   -- Declaração do tipo para a PL Table de nomes das TAG´s
   TYPE typ_tab_cob IS TABLE OF typ_reg_cob INDEX BY PLS_INTEGER;  

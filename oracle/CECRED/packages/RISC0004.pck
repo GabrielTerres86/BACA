@@ -1242,7 +1242,20 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
      ORDER BY idgrupo, nrdconta;
   rw_grupos cr_grupos%ROWTYPE;
 
-     
+  -- Cursor de buscar o maior risco do borderô
+  CURSOR cr_crapbdt_ris(pr_cdcooper crapbdt.cdcooper%TYPE
+                       ,pr_nrdconta crapbdt.nrdconta%TYPE) IS 
+    SELECT 
+      MAX(bdt.nrinrisc) AS nrinrisc_max,
+      bdt.qtdirisc
+    FROM crapbdt bdt
+    WHERE bdt.cdcooper = pr_cdcooper
+      AND bdt.nrdconta = pr_nrdconta
+      AND nrinrisc > 1
+      AND bdt.insitbdt <> 4
+    GROUP BY qtdirisc
+    ORDER BY  max(nrinrisc) DESC, qtdirisc DESC;
+  rw_crapbdt_ris cr_crapbdt_ris%ROWTYPE;   
      
   ----------- VARIAVEIS ------------------
   rw_crapdat cr_dat%ROWTYPE;     -- Calendário de datas da cooperativa
@@ -1363,6 +1376,16 @@ BEGIN
                                                       ,pr_nrctremp   => vr_nrctremp
                                                       ,pr_tpctrato   => 90);
       vr_qtdias_atraso_refin := rw_crapepr.qtdias_atraso_refin;
+    ELSIF vr_cdmodali IN (301) THEN -- Desconto de Títulos, calcular o pior risco do borderô
+      OPEN cr_crapbdt_ris(pr_cdcooper
+                         ,rw_crapris.nrdconta);
+      FETCH cr_crapbdt_ris INTO rw_crapbdt_ris;
+      CLOSE cr_crapbdt_ris;
+      vr_inrisco_refin    := rw_crapbdt_ris.nrinrisc_max;
+      vr_inrisco_inclusao := rw_crapbdt_ris.nrinrisc_max;
+      vr_inrisco_melhora  := CASE WHEN rw_crapbdt_ris.nrinrisc_max = 2 THEN 2 ELSE NULL END; -- Risco Melhora só melhora para 2(A), se não, não melhora
+      vr_qtdias_atraso_refin := rw_crapbdt_ris.qtdirisc;
+      vr_inrisco_atraso := rw_crapbdt_ris.nrinrisc_max;
     ELSE
       vr_inrisco_refin := NULL;
       vr_inrisco_inclusao := 2;

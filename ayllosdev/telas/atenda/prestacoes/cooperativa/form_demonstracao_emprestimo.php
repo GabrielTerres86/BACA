@@ -40,7 +40,7 @@ ALTERACOES     :
     </form>
     <div id="divBotoesFormSimulacao" style="margin-top:5px; margin-bottom:5px;">
         <? if ( $operacao == 'C_DEMONSTRATIVO_EMPRESTIMO' ) { ?>
-            <a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('C_COMITE_APROV'); return false;">Voltar</a>
+            <a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('C_PROT_CRED'); return false;">Voltar</a>
             <a href="#" class="botao" id="btSalvar"  onClick="controlaOperacao('TC'); return false;">Continuar</a>
         <? } ?>
     </div>

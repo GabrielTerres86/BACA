@@ -12,7 +12,14 @@
  *                             PRJ 450 - Diego Simas (AMcom)
  * 
  * 10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)
+ *
  * 22/08/2018 - PJ 438 - Alterado a tela para o modo abas - Mateus Z (Mouts)
+ *                14/09/2018 - Adicionado campo do valor max de estorno para desconto de titulo (Cássia de Oliveira - GFT)
+ *
+ *                30/10/2018 - PJ 438 - Adicionado 2 novos parametros (avtperda e vlperavt) - Mateus Z (Mouts)
+ *
+ *                12/12/2018 - PRJ 438 - Adicionado critica quando valor for zero no campo de Alteraçao de Avalista - Bruno Luiz
+ *                                       Katzjarowski - Mout's
  * ---------------
  */
 
@@ -110,6 +117,9 @@ function formataCampos() {
     cQtditava = $('#qtditava', '#frmTab089'); //PJ438 - Márcio (Mouts)	
     cQtditapl = $('#qtditapl', '#frmTab089'); //PJ438 - Márcio (Mouts)	
     cQtditsem = $('#qtditsem', '#frmTab089'); //PJ438 - Márcio (Mouts)	
+    cVlmaxdst = $('#vlmaxdst', '#frmTab089');
+    cAvtperda = $('#avtperda', '#frmTab089'); // PRJ 438 - Sprint 5 - Mateus
+    cVlperavt = $('#vlperavt', '#frmTab089'); // PRJ 438 - Sprint 5 - Mateus	
 
     //Máscara para quantidade de dias
     cPrtlmult.css('width', '40px').setMask('INTEGER','zzz','','');
@@ -129,6 +139,7 @@ function formataCampos() {
 	cQtditava.css('width', '40px').setMask('INTEGER','zzz','',''); // PJ438 - Márcio (Mouts)
 	cQtditapl.css('width', '40px').setMask('INTEGER','zzz','',''); // PJ438 - Márcio (Mouts)
 	cQtditsem.css('width', '40px').setMask('INTEGER','zzz','',''); // PJ438 - Márcio (Mouts)
+    cAvtperda.css('width', '150px'); // PRJ 438 - Sprint 5 - Mateus
 	
     //Máscara para porcentagem
     cQtdibsem.css('width', '40px').setMask('INTEGER','zzz','','');
@@ -138,11 +149,35 @@ function formataCampos() {
     cVlempres.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
     cVlmaxest.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
     cVltolemp.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', '');     
-    
+    cVlmaxdst.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
+    cVlperavt.css('width', '100px').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); // PRJ 438 - Sprint 5 - Mateus
+
     cTodosFiltro = $('input[type="text"],select', '#frmTab089');
     // Limpa formulário
     cTodosFiltro.limpaFormulario();
     cTodosFiltro.habilitaCampo();
+
+    cAvtperda.unbind('change').bind('change', function() {
+
+        if(cAvtperda.val() == 0) { // Perde aprovação
+            cVlperavt.desabilitaCampo();
+            cVlperavt.val('');
+        } else if(cAvtperda.val() == 1) { // Não perde aprovação
+            cVlperavt.habilitaCampo();
+        }
+
+    });
+
+    cAvtperda.unbind('keyup').bind('keyup', function() {
+
+        if(cAvtperda.val() == 0) { // Perde aprovação
+            cVlperavt.desabilitaCampo();
+            cVlperavt.val('');
+        } else if(cAvtperda.val() == 1) { // Não perde aprovação
+            cVlperavt.habilitaCampo();
+        }
+
+    });
 
     layoutPadrao();
     controlaFoco();
@@ -326,6 +361,20 @@ function controlaFoco() {
         }
     });
 	
+    $('#qtdictcc', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+
+            $('#vlmaxdst', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#vlmaxdst', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#btContinuar').focus();
+            return false;
+        }
+    });
 }
 
 function controlaOperacao() {
@@ -391,6 +440,9 @@ function manterRotina(cddopcao) {
     var cQtditava = normalizaNumero($('#qtditava', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
     var cQtditapl = normalizaNumero($('#qtditapl', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
     var cQtditsem = normalizaNumero($('#qtditsem', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
+	var cAvtperda = normalizaNumero($('#avtperda', '#frmTab089').val()); // PJ438 - Sprint 5 - Mateus Z (Mouts)
+    var cVlperavt = normalizaNumero($('#vlperavt', '#frmTab089').val()); // PJ438 - Sprint 5 - Mateus Z (Mouts)
+    var cVlmaxdst = normalizaNumero($('#vlmaxdst', '#frmTab089').val());
 
     var mensagem = 'Aguarde, efetuando solicita&ccedil;&atilde;o...';
     showMsgAguardo(mensagem);
@@ -423,6 +475,9 @@ function manterRotina(cddopcao) {
             vltolemp : cVltolemp,
             pcaltpar : cPcaltpar,
             pctaxpre : cPctaxpre,
+			vlmaxdst : cVlmaxdst,
+	        avtperda : cAvtperda, // PJ438 - Sprint 5 - Mateus Z (Mouts)
+            vlperavt : cVlperavt, // PJ438 - Sprint 5 - Mateus Z (Mouts)
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -469,6 +524,13 @@ function liberaCampos() {
 
     if ($('#cddopcao', '#frmCab').val() == 'A') {
         cTodosFiltro.habilitaCampo();
+		
+		if(cAvtperda.val() == 0) { // Perde aprovação
+            cVlperavt.desabilitaCampo();
+            cVlperavt.val('');
+        } else if(cAvtperda.val() == 1) { // Não perde aprovação
+            cVlperavt.habilitaCampo();
+        }
     }
 
     $('#prtlmult', '#frmTab089').focus();
@@ -497,6 +559,17 @@ function confirmaOperacao() {
 }
 
 function validarCampos() {	
+    var formTab = '#frmTab089';
+    //bruno - prj 438 - validar campo alteracao de avalista
+    var vlperavt = $('#vlperavt',formTab);
+    var avtperda = $('#avtperda',formTab);
+
+    if($(avtperda).val() == '1'){
+        if($(vlperavt).val() == '0' || $(vlperavt).val() == ''){
+            showError("error","Favor informar valor para Altera&ccedil;&atilde;o de Avalista.","Alerta - Ayllos","");
+            return false;
+        }
+    }
 	return true;	
 }
 

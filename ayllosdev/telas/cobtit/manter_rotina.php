@@ -4,6 +4,7 @@
  * CRIACAO      : Luis Fernando - (GFT)
  * DATA CRIACAO : 21/05/2018
  * OBJETIVO     : Rotina para manter as operações da tela COBTIT
+ * ALTERAÇÃO    : 16/10/2018 - Alterado para emitir boleto de borderos em prejuizo (Cássia de Oliveira - GFT)
  * --------------
  */
 
@@ -159,6 +160,35 @@ switch ($operacao){
         }
         echo json_encode($json);
     break;
+    case "DADOS_PREJUIZO":
+        $xml = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= "   <nrborder>".$nrborder."</nrborder>";
+        $xml .= "   <dtvencto>".$dtvencto."</dtvencto>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml,"COBTIT","DADOS_PREJUIZO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getClassXML($xmlResult);
+        $root = $xmlObj->roottag;
+        // Se ocorrer um erro, mostra crítica
+        $dados = $root->dados;
+
+        $json = array();
+        if ($root->erro){
+            $json['status'] = 'erro';
+            $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
+        }
+        else{
+            ob_start();
+            require_once("tab_prejuizo.php");
+            $html = ob_get_clean();
+            $json['status'] = 'sucesso';
+            $json['html'] = $html;
+        }
+        echo json_encode($json);
+    break;
     case "GERAR_BOLETO":
         if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"G",false)) <> "") {
             exibeErro($msgError);
@@ -180,6 +210,42 @@ switch ($operacao){
         $xml .= "</Root>";
 
         $xmlResult = mensageria($xml,"COBTIT","GERAR_BOLETO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getClassXML($xmlResult);
+        $root = $xmlObj->roottag;
+
+        // Se ocorrer um erro, mostra crítica
+        $json = array();
+        if ($root->erro){
+            $json['status'] = 'erro';
+            $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
+        }
+        else{
+            $boleto = $root->dados->boleto;
+            $json['status'] = 'sucesso';
+            $json['mensagem'] = 'Boleto n&ordm; '.$boleto->nrdocmto.' gerado com sucesso com <br/> o valor R$ '.formataMoeda($boleto->vltitulo);
+        }
+        echo json_encode($json);
+    break;
+    case "GERAR_BOLETO_PREJUIZO":
+        if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"G",false)) <> "") {
+            exibeErro($msgError);
+        }
+
+        $vlboleto = converteFloat($_POST['vlboleto']);
+        $flvlpagm = $_POST['flvlpagm'];
+
+        $xml = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= "   <nrborder>".$nrborder."</nrborder>";
+        $xml .= "   <vlboleto>".$vlboleto."</vlboleto>";
+        $xml .= "   <flvlpagm>".$flvlpagm."</flvlpagm>";
+        $xml .= "   <dtvencto>".$dtvencto."</dtvencto>";
+        $xml .= "   <nrcpfava>".$nrcpfava."</nrcpfava>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml,"COBTIT","GERAR_BOLETO_PREJUIZO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
         $xmlObj = getClassXML($xmlResult);
         $root = $xmlObj->roottag;
 

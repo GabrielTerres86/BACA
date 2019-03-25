@@ -21,7 +21,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 29/10/2018
+     Data    : Fevereiro/2006                  Ultima atualizacao: 21/01/2019
 
      Dados referentes ao programa:
 
@@ -375,11 +375,16 @@ BEGIN
                               P450 - Acréscimo do valor dos juros +60 aos saldos devedores para a modalidade 0101 (ADP)
                               nos relatórios 227 e 354. (Reginaldo/AMcom - P450)
 
+				 06/09/2018 - Atualizar campos de prejuizo para Desconto de Títulos (Vitor S Assanuma - GFT)                 
+
                  28/09/2018 - P450 - Ajuste do vliofmes dentro das tabelas do paralelismo (Guilherme/AMcom)
 
                  29/10/2018 - P450 - Remoção de bloco do calculo de Risco da Melhora - 6 meses e remoção de 
                               variaveis e chamadas relativas ao relatório 552 (Douglas Pagel/AMcom)
 							  
+				 21/01/2019 - Ajustes no desconto de títulos para correção do problema quando executado a crps
+                              em paralelismo (Paulo Penteado GFT)  				 
+			  
 				 29/01/2019 - Projeto Demanda Regulatoria (Contabilidade) - Alteracao em numeracao de contas,
 				              gerar arquivo de compensacao microcredito apenas para as filiadas.
 							  Heitor (Mouts)
@@ -564,7 +569,12 @@ BEGIN
             ,vlprepag craptdb.vltitulo%TYPE
             ,dsdlinha crapldc.dsdlinha%TYPE
             ,txmensal crapbdt.txmensal%TYPE
-            ,txdiaria crapbdt.txmensal%TYPE);
+            ,txdiaria crapbdt.txmensal%TYPE
+            -- Campos Prejuizo
+            ,inprejuz crapbdt.inprejuz%TYPE
+            ,dtprejuz crapbdt.dtprejuz%TYPE
+            ,vlsdprej craptdb.vlsdprej%TYPE
+    );
 
     -- AWAE: Definição de um tipo de tabela com o registro acima
       TYPE typ_tab_craptdb IS
@@ -948,6 +958,10 @@ BEGIN
           ,ldc.dsdlinha
           ,bdt.txmensal
           ,ROUND(bdt.txmensal/30,7) as txdiaria
+          -- Campos prejuizo
+          ,bdt.inprejuz
+          ,bdt.dtprejuz
+          ,tdb.vlsdprej
       FROM craptdb tdb
      INNER JOIN crapbdt bdt
         ON tdb.cdcooper = bdt.cdcooper
@@ -1824,7 +1838,7 @@ BEGIN
       WHEN vr_exc_erro THEN
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-           pr_dscritic := 'Erro geral na procedure pc_gera_arq_miccred: '||SQLERRM;       
+           pr_dscritic := 'Erro geral na procedure pc_gera_arq_finame: '||SQLERRM;       
     END pc_gera_arq_finame;
 
     PROCEDURE pc_gera_arq_miccred(pr_dscritic OUT VARCHAR2) IS
@@ -1875,7 +1889,7 @@ BEGIN
                   vr_origem := 1780;  
             vr_descricao := '"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO CCB IMOBILIZADO REFAP"';
           ELSIF vr_chave_finalidade = 3 THEN
-                  vr_origem := 5505;  
+            vr_origem := 1621;
             vr_descricao := '"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO CCB MAIS CREDITO"';
           ELSIF vr_chave_finalidade = 4 THEN
                   vr_origem := 1440;  
@@ -1902,7 +1916,7 @@ BEGIN
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
         END IF;
-        --
+
         --Gera no arquivo linhas referente a valor de apropriação de contrato
         IF vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec > 0 THEN
 
@@ -1915,7 +1929,7 @@ BEGIN
                   vr_destino := 7112;                  
             vr_descricao := '"AJUSTE CONTABIL - JUROS CCB IMOBILIZADO REFAP (INVESTIMENTOS)"';
           ELSIF vr_chave_finalidade = 3 THEN
-                  vr_origem := 5505;  
+            vr_origem := 1621;  
                   vr_destino := 7011;                  
             vr_descricao := '"AJUSTE CONTABIL - JUROS CCB MAIS CREDITO"';
           ELSIF vr_chave_finalidade = 4 THEN
@@ -1968,25 +1982,28 @@ BEGIN
                                           ,pr_des_text => vr_setlinha); --> Texto para escrita
           END LOOP;
         END IF;
-        --
+
         --Gera no arquivo linhas referente a valor de provisão de contrato
         IF vr_tab_miccred_fin(vr_chave_finalidade).vlprvper > 0 THEN
 
           IF vr_chave_finalidade = 1 THEN
             --para provisão
             vr_destino := 1438;
+            
             --para reversao
                   vr_origem := 1438;
             vr_descricao := '"AJUSTE CONTABIL - PROVISAO CEF"';
           ELSIF vr_chave_finalidade = 2 THEN
             --para provisão
             vr_destino := 1702;
+            
             --para reversao
                   vr_origem  := 1702;  
             vr_descricao := '"AJUSTE CONTABIL - PROVISAO CCB IMOBILIZADO REFAP"';
           ELSIF vr_chave_finalidade = 4 THEN
             --para provisão
             vr_destino := 1441;
+            
             --para reversao
                   vr_origem  := 1441;  
             vr_descricao := '"AJUSTE CONTABIL - PROVISAO BNDES"';
@@ -2046,7 +2063,7 @@ BEGIN
                   vr_destino := 1780;
             vr_descricao := '"AJUSTE CONTABIL - PAGTO. JUROS CCB IMOBILIZADO REFAP"';
           ELSIF vr_chave_finalidade = 3 THEN
-                  vr_destino := 5505;
+            vr_destino := 1621;
             vr_descricao := '"AJUSTE CONTABIL - PAGTO. JUROS CCB MAIS CREDITO"';
           ELSIF vr_chave_finalidade = 4 THEN
                   vr_destino := 1440;
@@ -2084,7 +2101,7 @@ BEGIN
                   vr_destino := 1780;  
             vr_descricao := '"AJUSTE CONTABIL - PAGTO. MENSAL CCB IMOBILIZADO REFAP"';
           ELSIF vr_chave_finalidade = 3 THEN
-                  vr_destino := 5505;  
+            vr_destino := 1621;  
             vr_descricao := '"AJUSTE CONTABIL - PAGTO. MENSAL CCB MAIS CREDITO"';
           ELSIF vr_chave_finalidade = 4 THEN
                   vr_destino := 1440;  
@@ -2159,6 +2176,7 @@ BEGIN
       END LOOP;
 
       vr_chave_nivris := vr_tab_miccred_nivris.first;
+      
       LOOP
 
         EXIT WHEN vr_chave_nivris IS NULL;
@@ -2898,6 +2916,10 @@ BEGIN
               vr_tab_craptdb(vr_indice_tdb).dsdlinha := rw_craptdb.dsdlinha;
               vr_tab_craptdb(vr_indice_tdb).txmensal := rw_craptdb.txmensal;
               vr_tab_craptdb(vr_indice_tdb).txdiaria := rw_craptdb.txdiaria;
+              -- Campos de Prejuizo
+              vr_tab_craptdb(vr_indice_tdb).inprejuz := rw_craptdb.inprejuz;
+              vr_tab_craptdb(vr_indice_tdb).dtprejuz := rw_craptdb.dtprejuz;
+              vr_tab_craptdb(vr_indice_tdb).vlsdprej := rw_craptdb.vlsdprej;
             END LOOP;
           END IF; -- FIM DOS TITULOS DE BORDERÔ
 
@@ -3243,7 +3265,10 @@ BEGIN
                       vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev || ds_character_separador ||
                       vr_tab_craptdb(vr_indice_dados_tdb).cddlinha || ds_character_separador ||
                       vr_tab_craptdb(vr_indice_dados_tdb).dsdlinha || ds_character_separador ||
-                      vr_tab_craptdb(vr_indice_dados_tdb).txmensal || ds_character_separador;
+                      vr_tab_craptdb(vr_indice_dados_tdb).txmensal || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).inprejuz || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).dtprejuz || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlsdprej || ds_character_separador;
 
         pc_popular_tbgen_batch_rel_wrk(pr_cdcooper     => pr_cdcooper,
                                        pr_nmtabmemoria => 'VR_TAB_CRAPTDB',
@@ -3309,6 +3334,9 @@ BEGIN
                substr(tab.dsxml, instr(tab.dsxml, '#', 1, 41) + 1, instr(tab.dsxml, '#', 1, 42) - instr(tab.dsxml, '#', 1, 41) - 1) cddlinha,
                substr(tab.dsxml, instr(tab.dsxml, '#', 1, 42) + 1, instr(tab.dsxml, '#', 1, 43) - instr(tab.dsxml, '#', 1, 42) - 1) dsdlinha,
                substr(tab.dsxml, instr(tab.dsxml, '#', 1, 43) + 1, instr(tab.dsxml, '#', 1, 44) - instr(tab.dsxml, '#', 1, 43) - 1) txmensal,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 44) + 1, instr(tab.dsxml, '#', 1, 45) - instr(tab.dsxml, '#', 1, 44) - 1) inprejuz,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 45) + 1, instr(tab.dsxml, '#', 1, 46) - instr(tab.dsxml, '#', 1, 45) - 1) dtprejuz,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 46) + 1, instr(tab.dsxml, '#', 1, 47) - instr(tab.dsxml, '#', 1, 46) - 1) vlsdprej,
                tab.dschave vr_indice
           from (select wrk.dscritic dsxml,
                        wrk.dschave
@@ -3371,6 +3399,9 @@ BEGIN
           vr_tab_craptdb(r_dados_tdb.vr_indice).cddlinha := r_dados_tdb.cddlinha;
           vr_tab_craptdb(r_dados_tdb.vr_indice).dsdlinha := r_dados_tdb.dsdlinha;
           vr_tab_craptdb(r_dados_tdb.vr_indice).txmensal := r_dados_tdb.txmensal;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).inprejuz := r_dados_tdb.inprejuz;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).dtprejuz := r_dados_tdb.dtprejuz;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlsdprej := r_dados_tdb.vlsdprej;
         END LOOP;
 
       EXCEPTION
@@ -4825,7 +4856,7 @@ BEGIN
                                                          ,pr_nrctremp => vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc  -- Numero do contrato
                                                          ,pr_cdorigem => 4                                             -- Origem cyber
                                                          ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt                        -- Identifica a data de criacao do reg. de cobranca na CYBER.
-                                                         ,pr_vlsdeved => vr_tab_craptdb(vr_indice_dados_tdb).vltitulo  -- Saldo devedor
+                                                         ,pr_vlsdeved => vr_tab_craptdb(vr_indice_dados_tdb).vlsldtit  -- Saldo devedor
                                                          ,pr_vlpreapg => vr_tab_craptdb(vr_indice_dados_tdb).vlatraso  -- Valor a regularizar
                                                          ,pr_qtprepag => vr_tab_craptdb(vr_indice_dados_tdb).qtprepag  -- Prestacoes Pagas
                                                          ,pr_txmensal => vr_tab_craptdb(vr_indice_dados_tdb).txmensal  -- Taxa mensal
@@ -4850,11 +4881,13 @@ BEGIN
                                                          ,pr_qtdiaris => vr_qtdiaris                                   -- Quantidade dias risco
                                                          ,pr_qtdiaatr => vr_tab_craptdb(vr_indice_dados_tdb).qtdiaatr  -- Dias de atraso
                                                          ,pr_flgrpeco => vr_flgrpeco                                   -- Grupo Economico
-                                                         ,pr_flgpreju => 0                                             -- Esta em prejuizo.
+                                                         ,pr_flgpreju => vr_tab_craptdb(vr_indice_dados_tdb).inprejuz  -- Esta em prejuizo.
                                                          ,pr_flgconsg => 0                                             --Indicador de valor consignado.
                                                          ,pr_flgresid => 0                                             -- Flag de residuo
                                                          ,pr_nrborder => vr_tab_craptdb(vr_indice_dados_tdb).nrborder  --> Numero do bordero do titulo em atraso no cyber
                                                          ,pr_nrtitulo => vr_tab_craptdb(vr_indice_dados_tdb).nrtitulo  --> Numero do titulo em atraso no cyber
+                                                         ,pr_dtprejuz => vr_tab_craptdb(vr_indice_dados_tdb).dtprejuz  --> Data em que o bordero entrou em prejuizo
+                                                         ,pr_vlsdprej => vr_tab_craptdb(vr_indice_dados_tdb).vlsdprej  --> Valor de prejuizo do titulo
                                                          ,pr_dscritic => pr_dscritic);
                     IF pr_dscritic IS NOT NULL  THEN
                       pc_log_programa(PR_DSTIPLOG     => 'O',

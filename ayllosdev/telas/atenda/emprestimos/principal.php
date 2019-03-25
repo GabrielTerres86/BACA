@@ -47,7 +47,10 @@
  * 036: [12/04/2018] P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
  * 037: [16/05/2018] Alterada frase de retorno da verificacao do Tipo de Conta. PRJ366 (Lombardi)
  * 038: [14/12/2017] Inclusão dos campos: flintcdc e inintegra_cont no array de propostas, Prj. 402 (Jean Michel).
-
+ * 039: [19/10/2018] Ajestes nas regras I_PROT_CRED e A_PROT_CRED - Bruno Luiz Katzjarowski - Mout's - PRJ 438
+ * 040: [24/10/2018] Remover tela de rendimentos e bens - Bruno Luiz Katzjarowski - Mout's - PRJ 438
+ * 041: [18/10/2018] Adicionado novos campos nas telas Avalista e Interveniente - PRJ 438. (Mateus Z / Mouts)
+ * 042: [07/11/2018] Esconder tela de Dados da Proposta - Bruno luiz K. - Mout's
  */
 
 	session_start();
@@ -106,9 +109,9 @@
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 
-	$procedure = (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC'))) ? 'obtem-dados-proposta-emprestimo' : 'obtem-propostas-emprestimo';
+	$procedure = (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC','A_SOMBENS'))) ? 'obtem-dados-proposta-emprestimo' : 'obtem-propostas-emprestimo';
 
-	if (in_array($operacao,array('A_NOVA_PROP','A_NUMERO','A_VALOR','A_AVALISTA','TI','TE','TC',''))) {
+	if (in_array($operacao,array('A_NOVA_PROP','A_NUMERO','A_VALOR','A_AVALISTA','TI','TE','TC','','A_SOMBENS'))) {
 
 		$xml = "<Root>";
 		$xml .= "	<Cabecalho>";
@@ -131,7 +134,7 @@
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
 		
-		$xmlResult = getDataXML($xml);
+		$xmlResult = getDataXML($xml,true, true,0, 1);
 		
 		$xmlObjeto = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
 
@@ -167,6 +170,32 @@
 			}
 		}
 		
+		if(in_array($operacao,array('CT','','REG_GRAVAMES','VAL_GRAVAMES'))) {
+			// Montar o xml de Requisicao
+			$xmlCarregaDados  = "";
+			$xmlCarregaDados .= "<Root>";
+			$xmlCarregaDados .= " <Dados>";
+			$xmlCarregaDados .= " </Dados>";
+			$xmlCarregaDados .= "</Root>";
+
+			$xmlResult = mensageria($xmlCarregaDados
+								   ,"GRVM0001"
+								   ,"GRAVAME_ONLINE_HABILITADO"
+								   ,$glbvars["cdcooper"]
+								   ,$glbvars["cdagenci"]
+								   ,$glbvars["nrdcaixa"]
+								   ,$glbvars["idorigem"]
+								   ,$glbvars["cdoperad"]
+								   ,"</Root>");
+			$xmlObject = getObjectXML($xmlResult);
+
+			if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
+				$flgGrvOnline = "ERRO";
+			} else if (strtoupper($xmlObject->roottag->tags[0]->name) == "GRVONLINE") {
+				$flgGrvOnline = $xmlObject->roottag->tags[0]->cdata;
+			}
+		}
+		
 		if (in_array($operacao,array(''))){
 
 			$registros = $xmlObjeto->roottag->tags[0]->tags;
@@ -188,7 +217,7 @@
 
 			</script><?php
 
-		}else if (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC'))){
+		} else if (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC','A_SOMBENS'))) {
 
 			$cooperativa  = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 			$associado    = $xmlObjeto->roottag->tags[1]->tags[0]->tags;
@@ -412,6 +441,10 @@
 				arrayAvalista<? echo $i; ?>['inpessoa'] = '<? echo getByTagName($avalistas[$i]->tags,'inpessoa'); ?>';
 				arrayAvalista<? echo $i; ?>['dtnascto'] = '<? echo getByTagName($avalistas[$i]->tags,'dtnascto'); ?>';
 
+				// PRJ 438
+				arrayAvalista<? echo $i; ?>['nrctacjg'] = '<? echo getByTagName($avalistas[$i]->tags,'nrctacjg'); ?>';
+				arrayAvalista<? echo $i; ?>['vlrencjg'] = '<? echo getByTagName($avalistas[$i]->tags,'vlrencjg'); ?>';
+
 				var arrayBensAval<? echo $i; ?> = new Array();
 
 				<? for($j = 0; $j<count($regBensAval); $j++){
@@ -484,6 +517,10 @@
 				arrayAlienacao<? echo $i; ?>['dstpcomb'] = '<? echo getByTagName($alienacoes[$i]->tags,'dstpcomb'); ?>';
 				arrayAlienacao<? echo $i; ?>['uflicenc'] = '<? echo getByTagName($alienacoes[$i]->tags,'uflicenc'); ?>';
 
+				<?php //PRJ 438 - Bruno ?>
+				arrayAlienacao<? echo $i; ?>['nrnotanf'] = '<? echo getByTagName($alienacoes[$i]->tags,'nrnotanf'); ?>';
+				arrayAlienacao<? echo $i; ?>['dsmarceq'] = '<? echo getByTagName($alienacoes[$i]->tags,'dsmarceq'); ?>';
+
 				arrayAlienacoes[<? echo $i; ?>] = arrayAlienacao<? echo $i; ?>;
 
 			<?}?>
@@ -519,6 +556,13 @@
 				arrayInterv<? echo $i; ?>['nrendere'] = '<? echo getByTagName($intervs[$i]->tags,'nrendere'); ?>';
 				arrayInterv<? echo $i; ?>['complend'] = '<? echo getByTagName($intervs[$i]->tags,'complend'); ?>';
 				arrayInterv<? echo $i; ?>['nrcxapst'] = '<? echo getByTagName($intervs[$i]->tags,'nrcxapst'); ?>';
+
+				// PRJ 438
+				arrayInterv<? echo $i; ?>['inpessoa'] = '<? echo getByTagName($intervs[$i]->tags,'inpessoa'); ?>';
+				arrayInterv<? echo $i; ?>['nrctacjg'] = '<? echo getByTagName($intervs[$i]->tags,'nrctacjg'); ?>';
+
+				//bruno - prj 438 - bug 14585
+				arrayInterv<? echo $i; ?>['dtnascto'] = '<? echo getByTagName($intervs[$i]->tags,'dtnascto'); ?>';
 
 				arrayIntervs[<? echo $i; ?>] = arrayInterv<? echo $i; ?>;
 
@@ -562,6 +606,23 @@
 				arrayHipoteca<? echo $i; ?>['dscorbem'] = '<? echo retiraCharEsp(getByTagName($hipotecas[$i]->tags,'dscorbem')); ?>';
 				arrayHipoteca<? echo $i; ?>['idseqhip'] = '<? echo getByTagName($hipotecas[$i]->tags,'idseqhip'); ?>';
 				arrayHipoteca<? echo $i; ?>['vlmerbem'] = '<? echo getByTagName($hipotecas[$i]->tags,'vlmerbem'); ?>';
+				//Projeto 438 - Sprint 4 
+        		arrayHipoteca<? echo $i; ?>['vlrdobem'] = '<? echo getByTagName($hipotecas[$i]->tags,'vlrdobem'); ?>';
+        		arrayHipoteca<? echo $i; ?>['nrmatric'] = '<? echo getByTagName($hipotecas[$i]->tags,'nrmatric'); ?>';
+        		arrayHipoteca<? echo $i; ?>['vlareuti'] = '<? echo getByTagName($hipotecas[$i]->tags,'vlareuti'); ?>';
+        		arrayHipoteca<? echo $i; ?>['vlaretot'] = '<? echo getByTagName($hipotecas[$i]->tags,'vlaretot'); ?>';
+        		//bruno - prj 438 - BUG 13499
+        		arrayHipoteca<? echo $i; ?>['dsclassi'] = '<? echo retiraCharEsp(getByTagName($hipotecas[$i]->tags,'dsclassi')); ?>';
+				arrayHipoteca<? echo $i; ?>['nrcepend'] = '<? echo getByTagName($hipotecas[$i]->tags,'nrcepend'); ?>';
+				arrayHipoteca<? echo $i; ?>['dsendere'] = '<? echo retiraCharEsp(getByTagName($hipotecas[$i]->tags,'dsendere')); ?>';
+				arrayHipoteca<? echo $i; ?>['nrendere'] = '<? echo getByTagName($hipotecas[$i]->tags,'nrendere'); ?>';
+				arrayHipoteca<? echo $i; ?>['dscompend'] = '<? echo retiraCharEsp(getByTagName($hipotecas[$i]->tags,'dscompend')); ?>';
+				arrayHipoteca<? echo $i; ?>['nmbairro'] = '<? echo retiraCharEsp(getByTagName($hipotecas[$i]->tags,'nmbairro')); ?>';
+				arrayHipoteca<? echo $i; ?>['cdufende'] = '<? echo getByTagName($hipotecas[$i]->tags,'cdufende'); ?>';
+				arrayHipoteca<? echo $i; ?>['nmcidade'] = '<? echo retiraCharEsp(getByTagName($hipotecas[$i]->tags,'nmcidade')); ?>';
+
+				//bruno - prj 438 - duplicacao hipoteca
+				arrayHipoteca<? echo $i; ?>['idseqbem'] = '<? echo getByTagName($hipotecas[$i]->tags,'idseqbem'); ?>';
 
 				arrayHipotecas[<? echo $i; ?>] = arrayHipoteca<? echo $i; ?>;
 
@@ -584,7 +645,9 @@
 				arrayFaturamentos[<? echo $i; ?>] = arrayFaturamento<? echo $i; ?>;
 
 			<?}?>
-
+			<? if (in_array($operacao,array('A_SOMBENS'))) { ?>
+			controlaOperacao('A_BENS');
+			<? } ?>
 			</script><?
 
 		}
@@ -1018,6 +1081,37 @@
 		</script>
 
 	<?
+	}else if (in_array($operacao,array('I_PROTECAO_TIT','A_PROTECAO_AVAL', 'A_PROTECAO_TIT','A_PROTECAO_CONJ',
+										'C_PROTECAO_TIT','C_PROTECAO_AVAL', 'C_PROTECAO_CONJ','C_PROTECAO_SOC','A_PROTECAO_SOC'))){
+		include('valida_operacao_rating.php');
+		exit(); //Manter o exit para nao dar echo em nada, para o eval em emprestimo.js -> controlaOperacao() funcionar. Obrigado.
+	}else if(in_array($operacao,array('C_PROT_CRED','A_PROT_CRED','E_PROT_CRED','I_PROT_CRED'))){
+		
+		$inobriga = isset($_POST['inobriga']) ? $_POST['inobriga'] : 'S';
+		$insitest = isset($_POST['insitest']) ? $_POST['insitest'] : '0';
+		$cdfinemp = isset($_POST['cdfinemp']) ? $_POST['cdfinemp'] : '0';
+		
+		/* PRJ - 438 - Rating */
+		if($inobriga == "N" && !in_array($operacao,array('C_PROT_CRED'))){ //prj - 438 - bruno - rating - 4 //bug 14668 - 14652
+			/* Consultar informaçoes da linha */
+			include('consultar_linha.php');
+
+			$flgdisap = getByTagName($linha->tags,'flgdisap');
+			$inpessoa = isset($_POST['inpessoa']) ? $_POST['inpessoa'] : '0';
+			include('form_org_prot_cred.php');
+		}else{
+
+			if($operacao == 'A_PROT_CRED')
+				$operacao = "A_PROTECAO_TIT";
+			else if($operacao == "I_PROT_CRED")
+				$operacao = "I_PROTECAO_TIT";
+			else if($operacao == "C_PROT_CRED")
+				$operacao = "C_PROTECAO_TIT";
+
+			include('valida_operacao_rating.php');
+			exit;
+		}	
+		
 	}
 
 ?>
@@ -1039,23 +1133,94 @@
 	} else if(in_array($operacao,array('A_INICIO','I_INICIO','A_FINALIZA','I_FINALIZA','A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','I_CONTRATO','TI','TE','TC','CF'))) {
 		include('form_nova_prop.php');
 	} else if (in_array($operacao,array('C_COMITE_APROV','A_COMITE_APROV','E_COMITE_APROV','I_COMITE_APROV'))){
-		include('form_comite_aprov.php');
+		//include('form_comite_aprov.php');
+		//PRJ 438 - Bruno
+		$strComando = "";
+		switch ($operacao) {
+			case 'A_COMITE_APROV':
+				$strComando = "verificaObs('A_ALIENACAO');";
+				break;
+			case 'C_COMITE_APROV':
+				$strComando = "microcredito('C');";
+				break;
+			case 'E_COMITE_APROV':
+				$strComando = "controlaOperacao('')";
+				break;
+			case 'I_COMITE_APROV':
+				$strComando = "verificaObs('I_ALIENACAO')";
+				break;
+		}
+		echo "
+		<div id='frmComiteAprov' style='display: none;'>
+			<textarea name='dsobserv' id='dsobserv' value=''></textarea>
+			<textarea name='dsobscmt' id='dsobscmt' value=''></textarea>
+		</div>
+		<script type='text/javascript'>
+			".$strComando."
+			$('#divRotina').hide();
+		</script>
+		";
 	}else if (in_array($operacao,array('C_DADOS_PROP','A_DADOS_PROP','E_DADOS_PROP','I_DADOS_PROP'))){
+		
+		$strComando = "";//"var operacao = '".$operacao."';";
+		switch($operacao){
+			case 'A_DADOS_PROP': //OK
+				$strComando .= "validaJustificativa('A_BENS_TITULAR');";
+			break;
+			case 'I_DADOS_PROP': //OK
+				$strComando .= "validaJustificativa('I_BENS_TITULAR');";
+			break;
+			case 'E_DADOS_PROP': //OK
+			case 'C_DADOS_PROP':
+				$strComando .= "validaJustificativa('C_BENS_ASSOC');";
+			break;
+		}
+		//echo $strComando;
+		
+		echo "
+		<script type='text/javascript'>
+			".$strComando."
+		</script>
+		";
+		
 		include('form_dados_prop.php');
 	}else if (in_array($operacao,array('C_DADOS_PROP_PJ','A_DADOS_PROP_PJ','E_DADOS_PROP_PJ','I_DADOS_PROP_PJ'))){
+		//PRJ - 438 - Remoção tela Dados da Proposta
+		$strComando = "";
+		switch($operacao){
+			case 'A_DADOS_PROP_PJ':
+				$strComando = "atualizaArray('A_BENS_TITULAR')";
+			break;
+			case 'C_DADOS_PROP_PJ':
+				$strComando = "controlaOperacao('C_BENS_ASSOC')";
+			break;
+			case 'E_DADOS_PROP_PJ':
+				$strComando = "controlaOperacao('')";
+			break;
+			case 'I_DADOS_PROP_PJ':
+				$strComando = "atualizaArray('I_BENS_TITULAR')";
+			break;
+		};
+		echo "
+		<script type='text/javascript'>
+			".$strComando."
+		</script>
+		";
+
 		include('form_dados_prop_pj.php');
 	}else if (in_array($operacao,array('C_DADOS_AVAL','AI_DADOS_AVAL','A_DADOS_AVAL','I_DADOS_AVAL','IA_DADOS_AVAL','E_DADOS_AVAL'))){
 		include('form_dados_aval.php');
-	} else if (in_array($operacao,array('I_PROTECAO_TIT','A_PROTECAO_AVAL','A_PROTECAO_TIT','A_PROTECAO_CONJ','C_PROTECAO_TIT','C_PROTECAO_AVAL','C_PROTECAO_CONJ','C_PROTECAO_SOC','A_PROTECAO_SOC'))) {
-		include ('../../../includes/consultas_automatizadas/form_orgaos.php');
+	} else if (in_array($operacao,array('I_PROTECAO_TIT','A_PROTECAO_AVAL', 'A_PROTECAO_TIT','A_PROTECAO_CONJ', //OBS - Nunca irá entrar, mas deixei aqui por precaução
+										'C_PROTECAO_TIT','C_PROTECAO_AVAL', 'C_PROTECAO_CONJ','C_PROTECAO_SOC','A_PROTECAO_SOC'))) {
+		//include ('../../../includes/consultas_automatizadas/form_orgaos.php');
 	} else if (in_array($operacao,array('I_MICRO_PERG','A_MICRO_PERG','C_MICRO_PERG'))) {
 		include ('questionario.php');	
-	} else if (in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIENACAO','I_ALIENACAO','IA_ALIENACAO'))){
+	} else if (in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIENACAO','I_ALIENACAO','IA_ALIENACAO','A_BENS','AI_BENS'))){
 		include('form_alienacao.php');
 	}else if (in_array($operacao,array('C_INTEV_ANU','AI_INTEV_ANU','A_INTEV_ANU','E_INTEV_ANU','I_INTEV_ANU','IA_INTEV_ANU'))){
 		include('form_intev_anuente.php');
 	}else if (in_array($operacao,array('C_PROT_CRED','A_PROT_CRED','E_PROT_CRED','I_PROT_CRED'))){
-		include('form_org_prot_cred.php');
+		//include('form_org_prot_cred.php');
 	}else if (in_array($operacao,array('C_HIPOTECA','AI_HIPOTECA','A_HIPOTECA','E_HIPOTECA','I_HIPOTECA','IA_HIPOTECA'))){
 		include('form_hipoteca.php');
 	}else if (in_array($operacao,array('A_PARCELAS','V_PARCELAS','C_PARCELAS','I_PARCELAS'))){
@@ -1097,12 +1262,15 @@
 	else if( operacao == 'E_COMITE_APROV' ){ controlaOperacao('EV'); }
 	else if( flgImp == '1' ){ validaImpressao(); }
 	else if( operacao == 'D_EFETIVA'){ controlaOperacao('E_EFETIVA'); }
+  //BUG 14436 - rubens
+  else if( operacao == 'A_DADOS_AVAL' || operacao == 'C_DADOS_AVAL'){ controlaCamposTelaAvalista(); }
+  else if( operacao == 'A_INTEV_ANU' || operacao == 'C_INTEV_ANU'){ controlaCamposTelaInterveniente(); }
 
 	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
     if (executandoProdutos && operacao == '' ) {
-	  
+
 		controlaOperacao('I');
-		
+
     }
 	  
 

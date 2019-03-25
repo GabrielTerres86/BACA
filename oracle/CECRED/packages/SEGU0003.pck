@@ -110,7 +110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0003 IS
   --  Sistema  : Crédito - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Márcio Carvalho - Mouts
-  --  Data     : Agosto - 2018                 Ultima atualizacao: 
+  --  Data     : Agosto - 2018                 Ultima atualizacao: 28/01/2019
   --
   -- Dados referentes ao programa:
   --
@@ -119,6 +119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0003 IS
   -- Alteracoes: 
   --
   --             13/12/2018 - Retirado Commit e Rollback Procedures prestamista chamados via progress - Paulo Martins
+  --             28/01/2019 - pc_validar_prestamista - Retorna flg prestamista=S somente quanto pessoa fisica.
   ---------------------------------------------------------------------------
   
   -- Função que retorna o saldo devedor para utilização no seguro de vida prestamista
@@ -440,10 +441,10 @@ EXCEPTION
     vr_exc_erro        EXCEPTION;
     
     vr_dsorigem        craplgm.dsorigem%TYPE;
-    vr_dstransa        craplgm.dstransa%TYPE;
+    vr_dstransa        craplgm.dstransa%TYPE := 'Impressao contrato prestamista';
     vr_nrdrowid        ROWID;
 
-    vr_idseqttl        crapttl.idseqttl%TYPE;
+    vr_idseqttl        crapttl.idseqttl%TYPE := 1;
     
     vr_dsdireto        VARCHAR2(4000);
     vr_nmendter        VARCHAR2(4000);     
@@ -915,7 +916,7 @@ EXCEPTION
     Programa:  pc_validar_prestamista
     Sistema : Ayllos Web
     Autor   : Paulo Martins(Mouts)
-    Data    : Agosto/2018                 Ultima atualizacao: 
+    Data    : Agosto/2018                 Ultima atualizacao: 28/01/2019
 
     Dados referentes ao programa:
 
@@ -929,6 +930,7 @@ EXCEPTION
   -- Dados Cooperado
    CURSOR cr_crapass IS
       SELECT d.dtnasctl
+            ,d.inpessoa
       FROM crapass d
       WHERE d.cdcooper = pr_cdcooper
       AND   d.nrdconta = pr_nrdconta;
@@ -976,6 +978,7 @@ EXCEPTION
   vr_nrdmeses     PLS_INTEGER;
   vr_dsdidade     VARCHAR2(50);  
   vr_dtnasctl     crawseg.dtnascsg%type;   
+  vr_inpessoa     crapass.inpessoa%type;    
       
   BEGIN
   
@@ -1028,10 +1031,11 @@ EXCEPTION
 
   CLOSE cr_craptsg;
   
-  -- Buscar data de Nascimento - Proposta
+  -- Buscar data de Nascimento e Tipo de Pessoa - Proposta
   OPEN cr_crapass;
   FETCH cr_crapass
-   INTO vr_dtnasctl;
+   INTO vr_dtnasctl
+       ,vr_inpessoa;
   CLOSE cr_crapass;  
   
   -- Leitura do calendário da cooperativa
@@ -1076,6 +1080,8 @@ EXCEPTION
     END IF;
     --
     pr_flgprestamista := 'N';
+    --Validar prestamista apenas para Pessoa Fisica
+    if vr_inpessoa = 1 then
     --Validar Valor 
     if vr_valor_para_validacao > vr_vlminimo /*and vr_valor_para_validacao < vr_vlmaximo*/ then
       pr_flgprestamista := 'S';
@@ -1091,6 +1097,7 @@ EXCEPTION
         pr_dsmotcan := 'Saldo devedor acima do valor máximo';*/
       end if;
     end if;
+    end if;  
 
     pr_flgdps := 'N';
     if pr_flgprestamista = 'S' then
@@ -1269,7 +1276,10 @@ EXCEPTION
 
     Objetivo  : Validaçoes para criação, impressão e efetivação de seguro prestamista
 
-    Alteracoes: -----
+    Alteracoes: 30/11/2018 - Paulo Martins
+    Alterado para que seja validado se a crapwseg já existe, se não existir deve 
+    ser criada.
+    
     ..............................................................................*/         
     
     -- Proposta para efetivar ou excluir
@@ -1304,9 +1314,6 @@ EXCEPTION
     
   BEGIN
     
-   open c_proposta;
-    fetch c_proposta into r_proposta;
-     if c_proposta%found then
        --Validar necessidade de criação
        segu0003.pc_validar_prestamista(pr_cdcooper => pr_cdcooper
                                      , pr_nrdconta => pr_nrdconta
@@ -1329,12 +1336,32 @@ EXCEPTION
           close c_proposta;
           RAISE vr_exc_saida;
         END IF;    
-     end if;
-
-    close c_proposta;
                                       
    --Cria proposta
    if vr_flgprestamista = 'S' then
+     --Verifica se existe a crapwseg
+     open c_proposta;
+      fetch c_proposta into r_proposta;
+       if c_proposta%notfound then
+        --Cria
+        segu0003.pc_cria_proposta_sp(pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_nrctremp => pr_nrctrato
+                                    ,pr_cdagenci => pr_cdagenci
+                                    ,pr_nrdcaixa => pr_nrdcaixa
+                                    ,pr_cdoperad => pr_cdoperad
+                                    ,pr_nmdatela => pr_nmdatela
+                                    ,pr_idorigem => pr_idorigem
+                                    ,pr_cdcritic => vr_cdcritic
+                                    ,pr_dscritic => vr_dscritic);
+        -- Se retornou erro
+        if nvl(vr_cdcritic,0) > 0 or 
+          trim(vr_dscritic) is not null then
+          close c_proposta;
+          raise vr_exc_saida;
+        end if;                
+       end if;
+       --
      segu0001.pc_efetiva_proposta_seguro_p(pr_cdcooper => pr_cdcooper
                                          , pr_nrdconta => pr_nrdconta 
                                          , pr_nrctrato => pr_nrctrato
@@ -1350,6 +1377,8 @@ EXCEPTION
       --Levantar Excecao
       RAISE vr_exc_saida;
     END IF;      
+     close c_proposta;
+     
    else
      -- Validar se existe proposta prestamista para este contrato se encontrar deleta
      open c_proposta;
@@ -1567,6 +1596,7 @@ EXCEPTION
                 e que não estejam associados a uma proposta de seguro prestamista
     
     Alteracoes: 09/10/2018 - Alterado para buscar dados da crapepr (Propostas efetivadas) -- Paulo Martins - Mouts
+                03/12/2018 - Retornar saldo devedor para utilizar na criação manual       -- Paulo Martins - Mouts
     ............................................................................. */
     CURSOR cr_crawepr(p_cdcooper IN crapcop.cdcooper%type) IS             
       SELECT 
@@ -1598,6 +1628,8 @@ EXCEPTION
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
     vr_auxconta PLS_INTEGER := 0;
+    vr_vlsaldodev crawepr.vlemprst%type;
+    vr_vlsaldodev_nok crawepr.vlemprst%type;
 
     --Variaveis de erro
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1640,6 +1672,23 @@ EXCEPTION
 
     FOR rw_crawepr IN cr_crawepr (vr_cdcooper) LOOP
 
+      --Carregar saldo devedor
+      pc_saldo_devedor(pr_cdcooper => vr_cdcooper,
+                       pr_nrdconta => pr_nrdconta,
+                       pr_nrctremp => rw_crawepr.nrctremp,
+                       pr_cdagenci => vr_cdagenci,
+                       pr_nrdcaixa => vr_nrdcaixa,
+                       pr_cdoperad => vr_cdoperad,
+                       pr_nmdatela => vr_nmdatela,
+                       pr_idorigem => vr_idorigem,
+                       pr_saldodevedor => vr_vlsaldodev_nok,
+                       pr_saldodevempr => vr_vlsaldodev,
+                       pr_cdcritic => vr_cdcritic,
+                       pr_dscritic => vr_dscritic);
+       IF pr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_saida; -- encerra programa           
+       END IF;
+
       --Incrementar Quantidade Registros do Parametro
       vr_qtregist:= nvl(vr_qtregist,0) + 1;
 
@@ -1654,6 +1703,7 @@ EXCEPTION
       IF vr_nrregist > 0 THEN
         gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'crawepr'      ,pr_posicao => 0          , pr_tag_nova => 'dados_crawepr', pr_tag_cont => NULL                , pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'dados_crawepr',pr_posicao => vr_auxconta, pr_tag_nova => 'nrctremp'     , pr_tag_cont => rw_crawepr.nrctremp , pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'dados_crawepr',pr_posicao => vr_auxconta, pr_tag_nova => 'vlpreseg'   , pr_tag_cont => vr_vlsaldodev       , pr_des_erro => vr_dscritic);
         -- Incrementa contador p/ posicao no XML
         vr_auxconta := nvl(vr_auxconta,0) + 1;
       END IF;

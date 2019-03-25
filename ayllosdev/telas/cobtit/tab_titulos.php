@@ -4,13 +4,20 @@
  * CRIAÇÃO      : Luis Fernando (GFT)
  * DATA CRIAÇÃO : 23/05/2018
  * OBJETIVO     : Tabela que apresenta a consulta de titulos
+ * ALTERAÇÃO    : 16/10/2018 - Alterado mostrar a quantidade de titulos em acordo (Cássia de Oliveira - GFT)
  * --------------
  */
 $vlpagar = 0;
 ?>
     <br style="clear:both" />
     <div class="">
-        <table class="tituloRegistros divRegistros" style="margin-bottom:20px;">
+		<?php
+		if ($dados->qtacordo > 0) { ?>
+        <div>
+            <b>Existem <?=$dados->qtacordo?> t&iacute;tulos em acordo neste border&ocirc;</b>
+        </div>
+		<?php } ?>
+        <table class="tituloRegistros divRegistros" style="margin-bottom:20px;margin-top:20px;">
             <thead>
                 <tr>
                     <th>                        
@@ -62,8 +69,8 @@ $vlpagar = 0;
     <div id="divVlTit " align="left" >
         <form id="frmVlTit" name="frmVlTit" >
             <div style="float:right;text-align:right;margin-right:10px;">
-                <label for="totpagto" style="margin-left:25px">Total a Pagar:</label><input type="text" id="totpagto" name="totpagto" value="0,00" class="campoTelaSemBorda" style="text-align: right;"/></br>
-                <label for="totatras" style="margin-left:25px">Total Atraso:</label><input type="text" id="totatras" name="totatras" class="campoTelaSemBorda" value="<?=formataMoeda($vlpagar)?>" style="text-align: right;"/></br>
+                <label for="totpagto" style="margin-left:25px">Total a Pagar:</label><input type="text" id="totpagto" name="totpagto" disabled value="0,00" class="campoTelaSemBorda" style="text-align: right;"/></br>
+                <label for="totatras" style="margin-left:25px">Total Atraso:</label><input type="text" id="totatras" name="totatras" class="campoTelaSemBorda" disabled value="<?=formataMoeda($vlpagar)?>" style="text-align: right;"/></br>
             </div>
         </form>
     </div>

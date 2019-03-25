@@ -4438,6 +4438,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	--                           Inserido regra para verificar se o acordo esta ativo. Caso esteja, pula
 	--                           para proximo registro.
 	--                           Chamado INC0016984 (Gabriel - Mouts).
+    --
+    --              27/08/2018 - Adicionado alerta para bordero em prejuizo. - Luis Fernando (GFT)
+	--
+	--              25/10/2018 - Adicionado alerta para títulos descontados em atraso. - Lucas (GFT)
 	--
     --              25/12/2018 - PJ298.2 Adicionado mensagem para contratos migrados (Rafael Faria- Supero)
     --
@@ -4913,6 +4917,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 							AND nrdconta = pr_nrdconta;
 		rw_cr_impdecsn cr_impdecsn%ROWTYPE;
 
+    --> Busca contratos de bordero em prejuizo
+    CURSOR cr_crapbdt_preju(pr_cdcooper crapbdt.cdcooper%TYPE
+											      ,pr_nrdconta crapbdt.nrdconta%TYPE) IS
+      SELECT
+        bdt.inprejuz, -- possui prejuizo
+        bdt.dtliqprj  -- prejuizo liquidado
+      FROM 
+        crapbdt bdt
+      WHERE
+        bdt.nrdconta = pr_nrdconta
+        AND bdt.cdcooper = pr_cdcooper
+        AND bdt.inprejuz = 1
+      ;
+    rw_crapbdt_preju cr_crapbdt_preju%ROWTYPE; 
+
     CURSOR cr_tbepr_migracao_empr (pr_cdcooper IN tbepr_migracao_empr.cdcooper%TYPE
                                   ,pr_nrdconta IN tbepr_migracao_empr.nrdconta%TYPE
                                   ,pr_nrctremp IN tbepr_migracao_empr.nrctremp%TYPE) IS
@@ -4932,7 +4951,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND t.nrdconta = pr_nrdconta;
     rw_prejuizo cr_prejuizo%ROWTYPE;
 
-
+    
+	-- Busca existência de títulos em atraso
+    CURSOR cr_craptdb_atrasados(pr_cdcooper crapbdt.cdcooper%TYPE
+											     	   ,pr_nrdconta crapbdt.nrdconta%TYPE
+                               ,pr_dtmvtolt crapdat.dtmvtolt%TYPE
+                               ,pr_dtmvtoan crapdat.dtmvtoan%TYPE) IS
+          SELECT 1
+            FROM crapbdt bdt
+      INNER JOIN craptdb tdb ON tdb.cdcooper = bdt.cdcooper AND tdb.nrdconta = bdt.nrdconta AND tdb.nrborder = bdt.nrborder
+           WHERE bdt.cdcooper = pr_cdcooper            
+             AND bdt.nrdconta = pr_nrdconta
+             AND bdt.flverbor = 1             -- borderôs do novo produto
+             AND tdb.dtlibbdt IS NOT NULL     -- borderôs que foram liberados em algum momento
+             AND tdb.insittit = 4             -- borderôs em aberto
+             AND tdb.dtvencto <  pr_dtmvtolt  -- borderôs vencidos
+             AND tdb.dtvencto <= pr_dtmvtoan; -- desconsidera borderôs com títulos que venceram em dias não úteis e que podem ser pagos na data atual
+      rw_craptdb_atrasados cr_craptdb_atrasados%ROWTYPE;
+    
     --------------> VARIAVEIS <----------------
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
@@ -4953,6 +4989,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_dsmensag     VARCHAR2(4000);
     vr_flgpreju     BOOLEAN;
     vr_flgpreju_ativo BOOLEAN;
+	vr_flgpreju_bdt BOOLEAN;
+    vr_flgpreju_bdt_liq BOOLEAN;
     vr_dsprejuz     VARCHAR2(1000);
     vr_sralerta     INTEGER;
     vr_tab_alertas  typ_tab_alertas;
@@ -5329,6 +5367,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
       END IF;
     END IF;
+
+	vr_flgpreju_bdt := FALSE;
+    vr_flgpreju_bdt_liq := FALSE;
+    --> Verifica se possui bordero em prejuizo
+    OPEN cr_crapbdt_preju (pr_cdcooper=>pr_cdcooper, pr_nrdconta=>pr_nrdconta);
+    LOOP FETCH cr_crapbdt_preju INTO rw_crapbdt_preju;
+      EXIT WHEN cr_crapbdt_preju%NOTFOUND;
+      vr_flgpreju_bdt_liq := TRUE;
+      IF (rw_crapbdt_preju.inprejuz=1) THEN
+        --Conta possui desconto de título em prejuízo
+        IF (rw_crapbdt_preju.dtliqprj IS NULL) THEN
+          vr_flgpreju_bdt := TRUE;
+          vr_flgpreju_bdt_liq := FALSE;
+          EXIT;
+        END IF;
+      END IF;
+    END LOOP;
+    
+    IF (vr_flgpreju_bdt_liq) THEN
+      -- Incluir na temptable
+      pc_cria_registro_msg(pr_dsmensag             => 'Houve prejuizo de desconto de titulos nesta conta - liquidado',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
+    
+    IF (vr_flgpreju_bdt) THEN
+      -- Incluir na temptable
+      pc_cria_registro_msg(pr_dsmensag             => 'Conta possui desconto de titulo em prejuizo',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
+    
+    -- Verifica se possui títulos em atraso
+    OPEN cr_craptdb_atrasados (pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                              ,pr_dtmvtoan => pr_rw_crapdat.dtmvtoan);
+    FETCH cr_craptdb_atrasados INTO rw_craptdb_atrasados;
+    
+    IF cr_craptdb_atrasados%FOUND THEN
+       -- Incluir na temptable
+      pc_cria_registro_msg(pr_dsmensag             => 'Associado com borderô de desconto de títulos em atraso',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);  
+    END IF;
+    CLOSE cr_craptdb_atrasados;
+
     -- FIM MENSAGENS PREJUÍZO --
 
     IF pr_cdcooper IN (16,1) THEN /* Se Viacredi AltoVale ou Viacredi*/

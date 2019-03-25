@@ -810,6 +810,68 @@
 		//Se possuir saldo positivo o retorno é 1 senão 0
 		echo $possui_saldo;
 
+	}else if($operacao == 'CALCULAR_SALDO_TITULOS_PREJUIZO'){
+		$nrdconta    = $_POST['nrdconta'];
+		$nrborder    = $_POST['nrborder'];
+		$vlaboprj    = isset($_POST['vlaboprj']) ? converteFloat($_POST['vlaboprj']) : 0;
+		$vlpagmto    = isset($_POST['vlpagmto']) ? converteFloat($_POST['vlpagmto']) : 0;
+
+		$xml =  "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrborder>".$nrborder."</nrborder>";
+		$xml .= "		<vlaboprj>".$vlaboprj."</vlaboprj>";
+		$xml .= "		<vlpagmto>".$vlpagmto."</vlpagmto>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "DSCT0003", "CALCULA_POSSUI_SALDO_PREJUIZO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getClassXML($xmlResult);
+	    $root = $xmlObj->roottag;
+	    // Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			exit;
+		}
+		$dados = $root->dados;
+
+		$json = array();
+		$json["possui_saldo"] = $dados->inf->possui_saldo->cdata;
+		
+		//Se possuir saldo positivo o retorno é 1 senão 0
+		echo json_encode($json);
+
+	}else if($operacao == 'PAGAR_PREJUIZO'){
+		$nrdconta    = $_POST['nrdconta'];
+		$nrborder    = $_POST['nrborder'];
+		$vlaboprj    = isset($_POST['vlaboprj']) ? converteFloat($_POST['vlaboprj']) : 0;
+		$vlpagmto    = isset($_POST['vlpagmto']) ? converteFloat($_POST['vlpagmto']) : 0;
+
+		$xml =  "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrborder>".$nrborder."</nrborder>";
+		$xml .= "		<vlaboprj>".$vlaboprj."</vlaboprj>";
+		$xml .= "		<vlpagmto>".$vlpagmto."</vlpagmto>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "DSCT0003", "PAGAR_PREJUIZO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getClassXML($xmlResult);
+	    $root = $xmlObj->roottag;
+	    // Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			exit;
+		}
+		$dados = $root->dados;
+
+		$json = array();
+		$json["mensagem"] = $dados->cdata;
+		
+		//Se possuir saldo positivo o retorno é 1 senão 0
+		echo json_encode($json);
+
 	}else if($operacao == 'PAGAR_TITULOS_VENCIDOS'){
 		$nrdconta     = $_POST['nrdconta'];
 		$nrborder     = $_POST['nrborder'];

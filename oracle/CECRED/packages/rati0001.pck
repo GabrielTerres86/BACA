@@ -719,6 +719,8 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   PROCEDURE pc_atuali_garant_liquid_epr(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Conta do associado
                                        ,pr_nrctrato     IN crapnrc.nrctrrat%TYPE --> Número do contrato de Rating
+                                       ,pr_nrgarope     OUT crapprp.nrgarope%TYPE
+                                       ,pr_nrliquid     OUT crapprp.nrliquid%TYPE
                                        ,pr_dscritic    OUT VARCHAR2);            --> Descrição de erro						   
                                     
   /***************************************************************************     
@@ -12521,6 +12523,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   PROCEDURE pc_atuali_garant_liquid_epr(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Conta do associado
                                        ,pr_nrctrato     IN crapnrc.nrctrrat%TYPE --> Número do contrato de Rating
+                                       ,pr_nrgarope     OUT crapprp.nrgarope%TYPE
+                                       ,pr_nrliquid     OUT crapprp.nrliquid%TYPE
                                        ,pr_dscritic    OUT VARCHAR2) IS          --> Descrição de erro						   
   /* ..........................................................................
 
@@ -12530,13 +12534,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
      Autor   : Marcos - Supero
      Data    : Setembro/2017.                          Ultima Atualizacao: 
 
-     Dados referentes ao programa:
+     Dados referentes ao programa: 
 
      Frequencia: Sempre que chamado por outros programas.
      Objetivo  :  Contar a quantidade de avalistas da proposta
                   e responder as perguntas de garantia e liquidez
 
-     Alteracoes:  
+     Alteracoes: Retornando pr_nrgarope e pr_nrliquid para bo2 PRJ438 - Paulo Martins
 
   ............................................................................. */
     
@@ -12752,7 +12756,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
      WHERE prp.cdcooper = pr_cdcooper
        AND prp.nrdconta = pr_nrdconta
        AND prp.nrctrato = pr_nrctrato;
-    COMMIT;   
+       --
+       pr_nrgarope := vr_nrgarope;
+       pr_nrliquid := vr_nrliquid;
        
   EXCEPTION                                               
     WHEN vr_exc_erro THEN

@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
   --  Sistema  : Rotinas utilizadas pela Tela TAB089
   --  Sigla    : EMPR
   --  Autor    : Guilherme/AMcom
-  --  Data     : Janeiro/2018                 Ultima atualizacao: 31/07/2018
+  --  Data     : Janeiro/2018                 Ultima atualizacao: 14/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -19,6 +19,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
   --                           PRJ 450 - Diego Simas (AMcom)
   --              31/07/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
   --                           PRJ 450 - Diego Simas (AMcom)
+  --			  14/09/2018 - Adicionado parametro valor max de estorno para desconto de titulo - Cássia de Oliveira (GFT)
   --
   ---------------------------------------------------------------------------
 
@@ -62,7 +63,12 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
                        ,pr_pctaxpre  IN NUMBER  -- Taxa de juros remuneratório de prejuízo - PORCENTAGEM
                        ,pr_qtdictcc  IN INTEGER -- Quantidade de dias para Transferência de valor da conta transitória para a CC
                                              
-                       ,pr_xmllog      IN VARCHAR2  --> XML com informações de LOG
+                       -- Prj438 -Sprint5
+                       ,pr_avtperda  IN NUMBER  -- Alteração em Avalista perde aprovação - PRJ438 - Paulo (Mouts)
+                       ,pr_vlperavt  IN NUMBER  -- Valor para perda de aprovação referente ao Avalista - PRJ438 - Paulo (Mouts)                       
+                       ,pr_vlmaxdst  IN NUMBER  -- Valor maximo de estorno par desconto de titulo 
+
+				       ,pr_xmllog      IN VARCHAR2  --> XML com informações de LOG
                        ,pr_cdcritic   OUT PLS_INTEGER --> Código da crítica
                        ,pr_dscritic   OUT VARCHAR2 --> Descrição da crítica
                        ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
@@ -153,6 +159,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
   --                           PRJ 450 - Diego Simas (AMcom) 
   --              31/07/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
   --                           PRJ 450 - Diego Simas (AMcom)
+  --              14/09/2018 - Adicionado parametro valor max de estorno para desconto de titulo - Cássia de Oliveira (GFT)
+  --              30/10/2018 - Parametros de perda de aprovação relacionado ao Avalista - Paulo Martins (Mouts)
   --
   ---------------------------------------------------------------------------
   PROCEDURE pc_consultar(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
@@ -167,7 +175,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Guilherme/AMcom
-        Data    : Janeiro/2018                 Ultima atualizacao: 31/07/2018
+        Data    : Janeiro/2018                 Ultima atualizacao: 14/09/2018
 
         Dados referentes ao programa:
 
@@ -182,6 +190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                                  PRJ 450 - Diego Simas (AMcom)
                     31/07/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
                                  PRJ 450 - Diego Simas (AMcom) 
+					14/09/2018 - Adicionado parametro valor max de estorno para desconto de titulo - Cássia de Oliveira (GFT)
              
     ..............................................................................*/
       ----------->>> VARIAVEIS <<<--------
@@ -195,6 +204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
       vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
       
       vr_dstextab craptab.dstextab%TYPE;
+      vr_dsvlrprm crapprm.dsvlrprm%TYPE;
 
       vr_prtlmult INTEGER :=0;
       vr_prestorn INTEGER :=0;
@@ -218,7 +228,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
       vr_qtditsem INTEGER :=0; -- PJ438 - Márcio (Mouts)                  
       vr_pctaxpre NUMBER  :=0;
       vr_qtdictcc NUMBER  :=0;                
-      
+      vr_avtperda NUMBER  :=0; -- PJ438 - Paulo (Mouts) Sprint 5
+      vr_vlperavt NUMBER  :=0; -- PJ438 - Paulo (Mouts) Sprint 5      
+      vr_vlmaxdst NUMBER  :=0;
+
       -- Variaveis retornadas da gene0004.pc_extrai_dados
       vr_cdcooper INTEGER;
       vr_cdoperad VARCHAR2(100);
@@ -252,6 +265,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
         RAISE vr_exc_saida;
       END IF;
       
+      -- Buscar valor max para desc de titulo
+      vr_dsvlrprm:= gene0001.fn_param_sistema('CRED',vr_cdcooper,'VL_MAX_ESTORN_DST');
+      IF vr_dsvlrprm IS NULL THEN
+        --Montar mensagem de erro
+        vr_cdcritic := 0;
+        vr_dscritic:= 'Parâmetro VL_MAX_ESTORN_DST não cadastrado.';
+        --Levantar Excecao
+        RAISE vr_exc_saida;
+      END IF;
 
       -- Buscar dados da TAB
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
@@ -296,7 +318,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
         vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,121,6)),0);
         vr_qtdictcc := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,128,3)),0);
         
-      END IF;
+        vr_avtperda := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,132,1)),0); -- PJ438 - Paulo (Mouts) Sprint 5
+        vr_vlperavt := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,134,12)),0); -- PJ438 - Paulo (Mouts) Sprint 5  
+      
+		vr_vlmaxdst := gene0002.fn_char_para_number(vr_dsvlrprm);      
+
+	  END IF;
 
       -- PASSA OS DADOS PARA O XML RETORNO      
       -- Criar cabeçalho do XML
@@ -488,6 +515,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                              pr_tag_cont => to_char(vr_qtdictcc),
                              pr_des_erro => vr_dscritic);
                                    
+      --PRJ438 - Sprint 5 - Paulo (Mouts)
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'avtperda',
+                             pr_tag_cont => to_char(vr_avtperda),
+                             pr_des_erro => vr_dscritic);
+
+	    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'vlperavt',
+                             pr_tag_cont => to_char(vr_vlperavt,
+                                                    '999999999D00',
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
+                             pr_des_erro => vr_dscritic);  
+     --PRJ438 - Sprint 5 - Paulo (Mouts)
+	 
+	 gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                            pr_tag_pai  => 'inf',
+                            pr_posicao  => vr_auxconta,
+                            pr_tag_nova => 'vlmaxdst',
+                            pr_tag_cont => to_char(vr_vlmaxdst,
+                                                   '999999999D00',
+                                                   'NLS_NUMERIC_CHARACTERS='',.'''),
+                            pr_des_erro => vr_dscritic); 	                                                        
   EXCEPTION
     WHEN vr_exc_saida THEN
 
@@ -545,7 +598,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                        ,pr_pctaxpre  IN NUMBER  -- Taxa de juros remuneratório de prejuízo - PORCENTAGEM
                        ,pr_qtdictcc  IN INTEGER -- Quantidade de dias para Transferência de valor da conta transitória para a CC
 
-                       ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
+                       ,pr_avtperda  IN NUMBER  -- Alteração em Avalista perde aprovação - PRJ438 - Paulo (Mouts)
+                       ,pr_vlperavt  IN NUMBER  -- Valor para perda de aprovação referente ao Avalista - PRJ438 - Paulo (Mouts)
+                       ,pr_vlmaxdst  IN NUMBER  -- Valor maximo de estorno para desconto de titulo
+
+					   ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
                        ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                        ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
                        ,pr_retxml    IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
@@ -572,6 +629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                                  PRJ 450 - Diego Simas (AMcom)                                 
                     31/07/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
                                  PRJ 450 - Diego Simas (AMcom)               
+					          14/09/2018 - Adicionado parametro valor max de estorno para desconto de titulo - Cássia de Oliveira (GFT)
         
     ..............................................................................*/
 
@@ -594,6 +652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
     vr_cdacesso VARCHAR2(100);
 
     vr_dstextab craptab.dstextab%TYPE;
+    vr_dsvlrprm crapprm.dsvlrprm%TYPE;
 
     vr_prtlmult INTEGER :=0;
     vr_prestorn INTEGER :=0;
@@ -617,6 +676,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
     vr_qtditsem INTEGER :=0; --PJ438 - Márcio (Mouts)
     vr_pctaxpre NUMBER  :=0;
     vr_qtdictcc INTEGER :=0;
+    vr_avtperda NUMBER  :=0; -- PJ438 - Paulo (Mouts) Sprint 5
+    vr_vlperavt NUMBER  :=0; -- PJ438 - Paulo (Mouts) Sprint 5 
+    vr_vlmaxdst NUMBER  :=0;
 
     -- Cursor generico de calendario
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -703,8 +765,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
       vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,121,6)),0);
       vr_qtdictcc := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,128,3)),0);
                   
+      vr_avtperda := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,132,1)),0); -- PJ438 - Paulo (Mouts) Sprint 5
+      vr_vlperavt := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,134,12)),0); -- PJ438 - Paulo (Mouts) Sprint 5          
     END IF;
-
+    
+    -- Buscar valor max para desc de titulo
+    vr_dsvlrprm:= gene0001.fn_param_sistema('CRED',vr_cdcooper,'VL_MAX_ESTORN_DST');
+    
+    --Se encontrou parametro valor max para estorno de desconto de titulo, atribui valor. Caso contrario, mantem Zero
+    IF TRIM(vr_dsvlrprm) IS NOT NULL THEN
+       vr_vlmaxdst := gene0002.fn_char_para_number(vr_dsvlrprm);
+    ELSE
+      --Montar mensagem de erro
+      vr_cdcritic := 0;
+      vr_dscritic:= 'Parâmetro VL_MAX_ESTORN_DST não cadastrado.';
+      --Levantar Excecao
+      RAISE vr_exc_saida;
+    END IF;    
+ 
     vr_dstextab := to_char(pr_prtlmult,   'FM000', 'NLS_NUMERIC_CHARACTERS='',.''') || ' ' ||
                    to_char(0          ,   'FM000')       || ' ' ||  -- POSICAO NAO UTILIZADA
                    to_char(pr_prestorn,   'FM000')       || ' ' ||
@@ -730,7 +808,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                    to_char(pr_qtditapl,   'FM000')       || ' ' || --PJ438 - Márcio (Mouts)                                                      
                    to_char(pr_qtditsem,   'FM000')       || ' ' || --PJ438 - Márcio (Mouts)
                    to_char(pr_pctaxpre,   'FM000D00', 'NLS_NUMERIC_CHARACTERS='',.''') || ' ' ||
-                   to_char(pr_qtdictcc,   'FM000') || '';
+                   to_char(pr_qtdictcc,   'FM000') || ' ' ||
+                   to_char(pr_avtperda)|| ' ' || --PJ438 - Paulo (Mouts)  
+                   to_char(pr_vlperavt,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''')|| ''; --PJ438 - Paulo (Mouts)  
+	
+	vr_dsvlrprm := to_char(pr_vlmaxdst,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''');
 
     BEGIN
       UPDATE craptab tab
@@ -741,11 +823,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
          AND tab.cdempres        = 11
          AND upper(tab.cdacesso) = 'PAREMPREST'
          AND tab.tpregist        = 01;
+           
+       UPDATE crapprm prm
+          SET prm.dsvlrprm = vr_dsvlrprm
+        WHERE prm.cdcooper = vr_cdcooper
+          AND prm.cdacesso = 'VL_MAX_ESTORN_DST';
+
     EXCEPTION
       WHEN OTHERS THEN
         -- Montar mensagem de critica
         vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao atualizar Parametros Emprestimos!';
+        vr_dscritic := 'Erro ao atualizar Parametros!';
         -- volta para o programa chamador
         RAISE vr_exc_saida;
 
@@ -972,7 +1060,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                                     ' para ' || to_char(pr_qtdibsem,'FM000', 'NLS_NUMERIC_CHARACTERS='',.'''));
     END IF;
 
+    -- PRJ438 - Paulo Martins (Mouts)
+    IF vr_avtperda <> pr_avtperda THEN
 
+      --> gerar log da tela
+      pc_log_tab089(pr_cdcooper => vr_cdcooper,
+                    pr_cdoperad => vr_cdoperad,
+                    pr_dscdolog => 'Alterou perda de aprovacao para alteração de avalista de ' ||
+                                    to_char(vr_avtperda) ||
+                                    ' para ' || to_char(pr_avtperda));
+
+    END IF;
+    
+    IF vr_vlperavt <> pr_vlperavt THEN
+
+      --> gerar log da tela
+      pc_log_tab089(pr_cdcooper => vr_cdcooper,
+                    pr_cdoperad => vr_cdoperad,
+                    pr_dscdolog => 'Alterou Valor para perda de aprovação quando altera avalista de ' ||
+                                    to_char(vr_vlperavt,'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
+                                    ' para ' || to_char(pr_vlperavt,'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
+
+    END IF;    
+    --Fim PRJ438    
+
+	
+	IF vr_vlmaxdst <> pr_vlmaxdst THEN
+
+      --> gerar log da tela
+      pc_log_tab089(pr_cdcooper => vr_cdcooper,
+                    pr_cdoperad => vr_cdoperad,
+                    pr_dscdolog => 'Alterou Vl. max. de estorno perm. para desconto de titulo sem autorizacao da coordenacao/gerencia de ' ||
+                                    to_char(vr_vlmaxdst,'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
+                                    ' para ' || to_char(pr_vlmaxdst,'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
+
+    END IF;
 
     COMMIT;
 

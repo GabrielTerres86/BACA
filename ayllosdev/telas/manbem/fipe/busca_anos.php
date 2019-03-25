@@ -1,11 +1,11 @@
 <? 
 /*!
  * FONTE            : busca_anos.php
- * CRIAÃ‡ÃƒO        : Maykon D. Granemann / ENVOLTI
+ * CRIAÇÃO          : Maykon D. Granemann / ENVOLTI
  * DATA CRIAÇÃO     : 14/08/2018
  * OBJETIVO         : 
  * --------------
- * ALTERAÇÕES     :
+ * ALTERAÇÕES   :
  * --------------
  */
 ?> 

@@ -2,7 +2,7 @@
 /*!
  * FONTE        : tab_registros.php                 Última alteração: 24/08/2016
  * CRIAÇÃO      : ANDREI - RKAM
- * DATA CRIAÇÃO : mAIO/2016
+ * DATA CRIAÇÃO : MAIO/2016
  * OBJETIVO     : Tabela que apresenta a consulta de ratings da tela RATING
  * --------------
  * ALTERAÇÕES   :  14/07/2016 - Ajustar nome do renvam (Andrei - RKAM).
@@ -17,9 +17,9 @@
 	require_once('../../includes/controla_secao.php');	
 	require_once('../../class/xmlfile.php');
 	isPostMethod();	
-
+	
 	require_once("../../includes/carrega_permissoes.php");
-?>
+	?>
 
 <form id="frmBens" name="frmBens" class="formulario" style="display:none;">
 
@@ -47,8 +47,8 @@
 	  
 	  <label for="dtmvttel"><? echo utf8ToHtml('Data do registro:') ?></label>
       <input id="dtmvttel" name="dtmvttel" type="text" ></input>
-
-      <label for="dssitgrv"><? echo utf8ToHtml('Situa&ccedil;&atilde;o:') ?></label>
+	  
+	  <label for="dssitgrv"><? echo utf8ToHtml('Situa&ccedil;&atilde;o:') ?></label>
       <select id="dssitgrv" name="dssitgrv">
 		<option value="0">Nao enviado</option>
 		<option value="1">Em processamento</option>
@@ -60,25 +60,25 @@
 
       <label for="nrgravam"><? echo utf8ToHtml('N&uacute;mero de registro:') ?></label>
       <input id="nrgravam" name="nrgravam" type="text" ></input>
-
-      <label for="dsblqjud"><? echo utf8ToHtml('Bloqueado:') ?></label>
+	  
+	  <label for="dsblqjud"><? echo utf8ToHtml('Bloqueado:') ?></label>
       <input id="dsblqjud" name="dsblqjud" type="text" ></input>
 
       <label for="dscatbem"><? echo utf8ToHtml('Categoria:') ?></label>
       <input id="dscatbem" name="dscatbem" type="text" ></input>
-
+	  
 	  <label for="vlmerbem"><? echo utf8ToHtml('Valor de mercado:') ?></label>
       <input id="vlmerbem" name="vlmerbem" type="text" ></input>
 
-      <label for="dscorbem"><? echo utf8ToHtml('Cor/Classe:') ?></label>
+      <label for="dscorbem"><? echo utf8ToHtml('Cor:') ?></label>
       <input id="dscorbem" name="dscorbem" type="text" ></input>
-
+	  
 	  <label for="tpchassi"><? echo utf8ToHtml('Tipo chassi:') ?></label>
       <? echo selectTipoChassi('tpchassi', " - ") ?>
 
-      <label for="dschassi"><? echo utf8ToHtml('Chassi/N&#186;. S&eacute;rie:') ?></label>
+      <label for="dschassi"><? echo utf8ToHtml('Chassi:') ?></label>
       <input id="dschassi" name="dschassi" type="text" ></input>
-
+	  
 	  <label for="nrrenava"><? echo utf8ToHtml('RENAVAM:') ?></label>
       <input id="nrrenava" name="nrrenava" type="text" ></input>
 
@@ -87,13 +87,13 @@
 
       <label for="nrdplaca"></label>
       <input id="nrdplaca" name="nrdplaca" type="text" ></input>
-
-	  <label for="nrmodbem"><? echo utf8ToHtml('Ano/Modelo:') ?></label>
+	  
+	  <label for="nrmodbem"><? echo utf8ToHtml('Ano do Modelo:') ?></label>
       <input id="nrmodbem" name="nrmodbem" type="text" ></input>
-
-      <label for="nranobem"><? echo utf8ToHtml('Ano de Fabrica&ccedil;&atilde;o:') ?></label>
+	  
+	  <label for="nranobem"><? echo utf8ToHtml('Ano de Fabrica&ccedil;&atilde;o:') ?></label>
       <input id="nranobem" name="nranobem" type="text" ></input>
-
+	  
       <label for="uflicenc"><? echo utf8ToHtml('UF Licenciamento:') ?></label>
       <input id="uflicenc" name="uflicenc" type="text" ></input>
 
@@ -124,7 +124,7 @@
 
   </fieldset>
 
-
+ 
   <fieldset id="fsetBens" name="fsetBens" style="margin:0px; padding:10 30 10 30; display: none">
 
     <legend>Bens</legend>
@@ -139,7 +139,7 @@
           < count($bens); $i++){?>
 
           <tr id="<? echo getByTagName($bens[$i]->tags,'idseqbem'); ?>">
-            <td>
+			<td>
 				<input type="hidden" id="hdnrseqbem" name="nrseqbem" value="<? echo getByTagName($bens[$i]->tags,'nrseqbem'); ?>" />
 				<input type="hidden" id="hdnrgravam" name="nrgravam" value="<? echo getByTagName($bens[$i]->tags,'nrgravam'); ?>" />
 				<input type="hidden" id="hddsseqbem" name="dsseqbem" value="<? echo getByTagName($bens[$i]->tags,'dsseqbem'); ?>" />
@@ -168,8 +168,9 @@
 				<input type="hidden" id="hdpossuictr" name="possuictr" value="<? echo $possuictr; ?>" />
 				<input type="hidden" id="hdidseqbem" name="idseqbem" value="<? echo getByTagName($bens[$i]->tags,'idseqbem'); ?>" />
 				<input type="hidden" id="hdtpinclus" name="tpinclus" value="<? echo getByTagName($bens[$i]->tags,'tpinclus'); ?>" />
-          
-            </td>
+				<input type="hidden" id="hdcdultope" name="cdultope" value="<? echo getByTagName($bens[$i]->tags,'cdultope'); ?>" />
+			
+			</td>        
           </tr>
 
           <?}?>
@@ -177,28 +178,28 @@
         </tbody>
       </table>
     </div>
-								  
+
   </fieldset>
-          
+
 </form>
 
 <div id="divBotoesBens" style='text-align:center; margin-bottom: 10px; margin-top: 10px; display:none;' >
 	<a href="#" class="botao" id="btVoltar" 		onclick="controlaVoltar('5'); 		return false;">Voltar</a>
-									
+	
 	<a href="#" class="botao" id="btIncluir" style="display:none;"  onclick="validPermiss('M'); return false;">Incluir</a>
 	<a href="#" class="botao" id="btAlterar" style="display:none;" onclick="validPermiss('A'); return false;">Alterar</a>	
 	<a href="#" class="botao" id="btCancelar" style="display:none;" onclick="validPermiss('X'); return false;">Cancelamento</a>
 	<a href="#" class="botao" id="btBaixar"  style="display:none;" onclick="validPermiss('B'); return false;">Baixar</a>
-						
+	
 	<a href="#" class="botao" id="btLibJudicial" style="display:none;" onclick="validPermiss('L'); 	return false;">Libera&ccedil;&atilde;o Judicial</a>																																			
 	<a href="#" class="botao" id="btBlocJudicial" style="display:none;" onclick="validPermiss('J'); 	return false;">Bloqueio Judicial</a>
-        
+
 	<a href="#" class="botao" id="btBaixaManual" style="display:none;" onclick="validPermiss('Z'); return false;">Baixa Manual</a>	
-
+	
 	<a href="#" class="botao" style="display:none;" id="btConcluirAltera"><? echo utf8ToHtml('Concluir Alterações') ?></a>
-
+	
 	<a href="#" class="botao" id="btHistGravame" style="display:none;" ><? echo utf8ToHtml("Histórico Gravame") ?></a>	
-
+												
 	<a href="#" class="botao" style="display:none;" id="btConcluir">Concluir</a>
 	<!--<a href="#" class="botao" id="btConcluir" onclick="controlaConcluir(); return false;">Concluir</a>
 	<!--<a href="#" class="botao" id="btConcluir" onclick="showConfirmacao('Deseja concluir a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'controlaConcluir();', '', 'sim.gif', 'nao.gif'); return false;">Concluir</a>
@@ -235,3 +236,15 @@
 
 
 </script>
+
+<style type="text/css">
+#frmBens label.rotulo-linha {
+    margin-left: 43px;
+    width: 110px;
+    text-align: left;
+}
+form.formulario label.rotulo {
+	width: 120px;
+	text-align: left;
+}
+</style>

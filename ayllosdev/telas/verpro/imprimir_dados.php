@@ -114,6 +114,7 @@
 	$hrrecarga    = $_POST['hrrecarga'];
 	$dtdebito     = $_POST['dtdebito'];
 	$nsuopera     = $_POST['nsuopera'];
+	$qttitbor     = $_POST['dslinha2'];
   //FGTS/DAE
   $cdconven     = $_POST['cdconven'];
   $dtvalida     = $_POST['dtvalida'];
@@ -147,7 +148,7 @@
 	} elseif ($cdtippro == '24' || $cdtippro == '23') { //FGTS/DAE
     $cdbarras   = $_POST['cdbarrax'];
 		$lndigita   = $_POST['lndigitx'];
-  } else {
+	} else {
 		$cdbarras   = $_POST['cdbarras'];
 		$lndigita   = $_POST['lndigita'];
 	}
@@ -230,7 +231,8 @@
 	$xml .= '		<dtrecarga>'.$dtrecarga.'</dtrecarga>';	
 	$xml .= '		<hrrecarga>'.$hrrecarga.'</hrrecarga>';	
 	$xml .= '		<dtdebito>'.$dtdebito.'</dtdebito>';	
-	$xml .= '		<nsuopera>'.$nsuopera.'</nsuopera>';
+	$xml .= '		<nsuopera>'.$nsuopera.'</nsuopera>';	
+	$xml .= '		<qttitbor>'.$qttitbor.'</qttitbor>';	
   //FGTS/DAE
   $xml .= '		<cdconven>'.$cdconven.'</cdconven>';
   $xml .= '		<dtvalida>'.$dtvalida.'</dtvalida>';

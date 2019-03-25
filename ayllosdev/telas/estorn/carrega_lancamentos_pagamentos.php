@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 14/09/2015
  * OBJETIVO     : Rotina para carregar os lancamentos de pagamentos
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 29/10/2018 - Adicionado variavel cdtpprod no xml (Cássia de Oliveitra - GFT)
  * -------------- 
  */
     session_start();
@@ -21,9 +21,11 @@
 
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 	$nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
+	$cdtpprod = (isset($_POST['cdtpprod'])) ? $_POST['cdtpprod'] : 0;
 	
 	$xml  = "<Root>";
 	$xml .= " <Dados>";
+	$xml .= "	<cdtpprod>".$cdtpprod."</cdtpprod>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <nrctremp>".$nrctremp."</nrctremp>";	
 	$xml .= " </Dados>";
@@ -55,7 +57,7 @@ function exibeErroNew($msgErro) {
 ?>
 <script>
 var operacao = 'VALIDA_DADOS';
-trocaBotao('carregaTelaFiltrarContrato()','showConfirmacao(\'Confirma a operação?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'manterRotina(operacao);\',\'\',\'sim.gif\',\'nao.gif\')','Estornar');
+trocaBotao('carregaTelaFiltrarContrato()','showConfirmacao(\'Confirma a opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'manterRotina(operacao, 0);\',\'\',\'sim.gif\',\'nao.gif\')','Estornar');
 $('#nrdconta','#frmEstornoPagamento').desabilitaCampo();
 $('#nrctremp','#frmEstornoPagamento').desabilitaCampo();
 $('#totalest','#frmEstornoPagamento').val('<?php echo formataMoeda(getByTagName($xmlObj->roottag->tags[1]->tags,'vlpagtot')) ?>');

@@ -4,12 +4,13 @@ create or replace package cecred.TELA_COBTIT is
     Programa : TELA_COBTIT
     Sistema  : Cred
     Autor    : Luis Fernando (GFT)
-    Data     : 22/05/2018
+    Data     : 16/10/2018
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que chamado
    Objetivo  : Package contendo as procedures da tela COBTIT (Cobrança de títulos vencidos)
+   Alterações: 16/10/2018 - Tratamento diferenciado quando bordero esta em prejuizo (Cássia de Oliveira - GFT)
 
  */
 
@@ -25,7 +26,8 @@ create or replace package cecred.TELA_COBTIT is
                   vlvencid NUMBER,
                   nrctrlim crapbdt.nrctrlim%TYPE,
                   dtlibbdt crapbdt.dtlibbdt%TYPE,
-                  flavalis INTEGER
+                  flavalis INTEGER,
+                  inprejuz crapbdt.inprejuz%TYPE
                   );
 
   TYPE typ_tab_dados_borderos IS TABLE OF typ_rec_dados_borderos INDEX BY BINARY_INTEGER;
@@ -159,10 +161,37 @@ create or replace package cecred.TELA_COBTIT is
                              ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                              );
              
+ PROCEDURE pc_busca_dados_prejuizo_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                        ,pr_nrborder IN crapbdt.nrborder%TYPE  --> Número do Bordero
+                                        ,pr_dtvencto IN VARCHAR2               --> Data de vencimento do boleto a ser gerado
+                             ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                             --------> OUT <--------
+                             ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                             ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                             ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                             ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                             );
+             
  PROCEDURE pc_gerar_boleto_web (pr_nrdconta IN crapbdt.nrdconta%TYPE   --> Número da conta
                              ,pr_nrborder IN crapbdt.nrborder%TYPE   --> Número do Borderô
                              ,pr_nrtitulo IN VARCHAR2                --> Números e valores a serem pagos
                              ,pr_dtvencto IN VARCHAR2                --> Data de vencimento que o boleto será geradoleto a ser gerado
+                             ,pr_nrcpfava IN  crapass.nrcpfcgc%TYPE  --> Cpf do avalisa. Null se for o proprio sacado
+                             ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                             --------> OUT <--------
+                             ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                             ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                             ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                             ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                           );
+                           
+PROCEDURE pc_gerar_boleto_prejuizo_web (pr_nrdconta IN crapbdt.nrdconta%TYPE   --> Número da conta
+                             ,pr_nrborder IN crapbdt.nrborder%TYPE   --> Número do Borderô
+                             ,pr_vlboleto IN NUMBER                  --> Valor a ser pago
+                             ,pr_flvlpagm IN NUMBER                  --> Identifica se é valor parcial ou total (5-Saldo Prejuizo/ 6-Parcial Prejuizo)
+                             ,pr_dtvencto IN VARCHAR2                --> Data de vencimento que o boleto será gerado
                              ,pr_nrcpfava IN  crapass.nrcpfcgc%TYPE  --> Cpf do avalisa. Null se for o proprio sacado
                              ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                              --------> OUT <--------
@@ -370,6 +399,7 @@ create or replace package body cecred.TELA_COBTIT is
 
    Frequencia: Sempre que chamado
    Objetivo  : Package contendo as procedures da tela COBTIT (Cobrança de títulos vencidos)
+   Alterações: 16/10/2018 - Tratamento diferenciado quando bordero esta em prejuizo (Cássia de Oliveira - GFT)
 
  */
 
@@ -406,6 +436,7 @@ create or replace package body cecred.TELA_COBTIT is
     Data     : Maio/2018
     Frequencia: Sempre que for chamado
     Objetivo  : Função que retorna os borderos com ao menos um título vencido
+    Alteração : 16/10/2018 - Adicionado flag inprejuz e removido alguns filtros (Cássia de Oliveira - GFT)
   ---------------------------------------------------------------------------------------------------------------------*/
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
@@ -422,6 +453,7 @@ create or replace package body cecred.TELA_COBTIT is
           bdt.nrctrlim,
           bdt.nrdconta,
           bdt.nrborder,
+            bdt.inprejuz,
           (SELECT COUNT(1) FROM craptdb tdb WHERE tdb.nrborder = bdt.nrborder AND tdb.nrdconta=bdt.nrdconta AND tdb.cdcooper=bdt.cdcooper AND tdb.insitapr=1) AS qtaprova,
           (SELECT SUM(vltitulo) FROM craptdb tdb WHERE tdb.nrborder = bdt.nrborder AND tdb.nrdconta=bdt.nrdconta AND tdb.cdcooper=bdt.cdcooper AND tdb.insitapr=1) AS vlaprova,
           (SELECT COUNT(1) FROM craptdb tdb WHERE tdb.nrborder = bdt.nrborder AND tdb.nrdconta=bdt.nrdconta AND tdb.cdcooper=bdt.cdcooper AND tdb.insittit=4 AND  gene0005.fn_valida_dia_util(pr_cdcooper, tdb.dtvencto)<pr_dtmvtolt) AS qtvencid,
@@ -442,13 +474,6 @@ create or replace package body cecred.TELA_COBTIT is
               AND tdb.cdcooper=bdt.cdcooper 
               AND tdb.insittit=4 
               AND gene0005.fn_valida_dia_util(pr_cdcooper, tdb.dtvencto)<pr_dtmvtolt 
-              AND NVL((SELECT cyc.flgjudic + cyc.flextjud + cyc.flgehvip 
-                FROM tbdsct_titulo_cyber ttc 
-                  INNER JOIN crapcyc cyc ON ttc.nrctrdsc = cyc.nrctremp AND ttc.cdcooper = cyc.cdcooper AND ttc.nrdconta = cyc.nrdconta AND cyc.cdorigem = 4
-                  WHERE ttc.cdcooper = tdb.cdcooper
-                  AND   ttc.nrdconta = tdb.nrdconta 
-                  AND   ttc.nrborder = tdb.nrborder
-                  AND   ttc.nrtitulo = tdb.nrtitulo),0) = 0
           ) AS vlvencid,
           bdt.dtlibbdt,
           CASE WHEN (SELECT COUNT(1) FROM craplim WHERE craplim.nrctrlim=bdt.nrctrlim AND craplim.cdcooper = bdt.cdcooper AND craplim.tpctrlim=3 AND (nrctaav1>0 OR nrctaav2>0 OR dscpfav1 IS NOT NULL  OR dscpfav2 IS NOT NULL)) >0 THEN
@@ -466,8 +491,7 @@ create or replace package body cecred.TELA_COBTIT is
             AND flverbor = 1
       )
       WHERE 
-        qtvencid-qtjexvip >0
-    ;
+        qtvencid > 0;
     rw_crapbdt cr_crapbdt%rowtype;
     
     BEGIN
@@ -486,10 +510,11 @@ create or replace package body cecred.TELA_COBTIT is
         pr_tab_dados_bordero(vr_index).vlaprova := rw_crapbdt.vlaprova;
         pr_tab_dados_bordero(vr_index).qtaprova := rw_crapbdt.qtaprova;
         pr_tab_dados_bordero(vr_index).vlvencid := rw_crapbdt.vlvencid;
-        pr_tab_dados_bordero(vr_index).qtvencid := rw_crapbdt.qtvencid - rw_crapbdt.qtjexvip;
+        pr_tab_dados_bordero(vr_index).qtvencid := rw_crapbdt.qtvencid;
         pr_tab_dados_bordero(vr_index).qtjexvip := rw_crapbdt.qtjexvip;
         pr_tab_dados_bordero(vr_index).dtlibbdt := rw_crapbdt.dtlibbdt;
         pr_tab_dados_bordero(vr_index).flavalis := rw_crapbdt.flavalis;
+        pr_tab_dados_bordero(vr_index).inprejuz := rw_crapbdt.inprejuz;
       END LOOP;
 
       IF (pr_qtregist=0) THEN
@@ -547,6 +572,25 @@ create or replace package body cecred.TELA_COBTIT is
     -- Informações de data do sistema
     rw_crapdat  btch0001.rw_crapdat%TYPE;
 
+    -- Cursor de verificar quantidade de titulos em acordo
+     CURSOR cr_qtacord (pr_cdcooper INTEGER,
+                        pr_nrborder tbdsct_titulo_cyber.nrborder%TYPE)IS
+       SELECT
+         COUNT(*) AS qtd_tit_acordo
+       FROM
+         tbdsct_titulo_cyber ttc
+       INNER JOIN tbrecup_acordo_contrato tac ON ttc.nrctrdsc = tac.nrctremp
+       INNER JOIN tbrecup_acordo ta ON tac.nracordo = ta.nracordo
+              AND ta.cdcooper = ttc.cdcooper
+              AND ta.nrdconta = ttc.nrdconta
+       WHERE ttc.cdcooper = pr_cdcooper
+         AND ttc.nrdconta = pr_nrdconta
+         AND ttc.nrborder = pr_nrborder
+         AND tac.cdorigem = 4   -- Desconto de Títulos
+         AND ta.cdsituacao <> 3; -- Diferente de Cancelado
+         
+     rw_qtacord cr_qtacord%ROWTYPE;
+
     BEGIN
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
                               , pr_cdcooper => vr_cdcooper
@@ -595,7 +639,18 @@ create or replace package body cecred.TELA_COBTIT is
 
       -- ler os registros de titulos e incluir no xml
       vr_index := vr_tab_dados_borderos.first;
-      while vr_index is not null loop
+      while vr_index IS NOT NULL LOOP
+        -- Busca quantidade de titulos em acordo
+        OPEN  cr_qtacord(pr_cdcooper => vr_cdcooper,
+                         pr_nrborder => vr_tab_dados_borderos(vr_index).nrborder);
+
+          FETCH cr_qtacord INTO rw_qtacord;
+          IF    cr_qtacord%NOTFOUND THEN
+            CLOSE cr_qtacord;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+            RAISE vr_exc_erro;
+          END IF;
+        CLOSE cr_qtacord;
             pc_escreve_xml('<inf>'||
                               '<dtmvtolt>' || to_char(vr_tab_dados_borderos(vr_index).dtmvtolt,'dd/mm/rrrr') || '</dtmvtolt>' ||
                               '<nrborder>' || vr_tab_dados_borderos(vr_index).nrborder || '</nrborder>' ||
@@ -603,11 +658,12 @@ create or replace package body cecred.TELA_COBTIT is
                               '<vlaprova>' || vr_tab_dados_borderos(vr_index).vlaprova || '</vlaprova>' ||
                               '<qtaprova>' || vr_tab_dados_borderos(vr_index).qtaprova || '</qtaprova>' ||
                               '<qtvencid>' || vr_tab_dados_borderos(vr_index).qtvencid || '</qtvencid>' ||
-                              '<qtjexvip>' || vr_tab_dados_borderos(vr_index).qtjexvip || '</qtjexvip>' ||
+                              '<qtacordo>' || rw_qtacord.qtd_tit_acordo                || '</qtacordo>' ||
                               '<vlvencid>' || vr_tab_dados_borderos(vr_index).vlvencid || '</vlvencid>' ||
                               '<nrctrlim>' || vr_tab_dados_borderos(vr_index).nrctrlim || '</nrctrlim>' ||
                               '<dtlibbdt>' || to_char(vr_tab_dados_borderos(vr_index).dtlibbdt,'dd/mm/rrrr') || '</dtlibbdt>' ||
                               '<flavalis>' || vr_tab_dados_borderos(vr_index).flavalis || '</flavalis>' ||
+                              '<inprejuz>' || vr_tab_dados_borderos(vr_index).inprejuz || '</inprejuz>' ||
                            '</inf>'
                           );
           /* buscar proximo */
@@ -807,8 +863,13 @@ create or replace package body cecred.TELA_COBTIT is
                              ,pr_nrborder IN crapbdt.nrborder%TYPE   --> Número do Borderô
                              ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   --> Data de movimentacao
                              ,pr_dtvencto IN DATE                    --> Data de vencimento que o boleto será gerado
+                             ,pr_cdorigem IN NUMBER DEFAULT 0        --> Origem: 0 - Emissão Normal / 1 - Boletagem Massiva
                              -->OUT<--
                              ,pr_qtregist  OUT NUMBER                  --> Quantidade de registros
+                             ,pr_vldacordo OUT NUMBER                  --> Valor de títulos em acordo
+                             ,pr_qtdacordo OUT INTEGER                 --> Quantidade de títulos em acordo
+                             ,pr_vldvipjur OUT NUMBER                  --> Valor de títulos em vipjur
+                             ,pr_qtdvipjur OUT INTEGER                 --> Quantidade de títulos em vipjur
                              ,pr_tab_dados_titulos OUT DSCT0003.typ_tab_tit_bordero         --> Resultado da consulta
                              ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                              ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -821,6 +882,8 @@ create or replace package body cecred.TELA_COBTIT is
     Data     : Maio/2018
     Frequencia: Sempre que for chamado
     Objetivo  : Função que retorna os titulos vencidos de determinado bordero
+    Alteração : 16/10/2018 - Adcionado a quantidade de titulos em acordo (Cássia de Oliveira - GFT)
+                25/10/2018 - Adicionado para diferenciar os titulos em acordo e vip/jur (Luis Fernando - GFT)
   ---------------------------------------------------------------------------------------------------------------------*/
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
@@ -828,12 +891,18 @@ create or replace package body cecred.TELA_COBTIT is
     vr_exc_erro EXCEPTION;
 
     vr_index PLS_INTEGER;
+    vr_index_blq PLS_INTEGER;
     -- Cursor dos titulos vencidos de um bordero usando a data de movimentacao atual do sistema
     CURSOR cr_craptdb IS
        SELECT  
-           (vltitulo - vlsldtit) AS vlpago
-           ,tdb.*
+           (vltitulo - vlsldtit) AS vlpago,
+           tdb.*,
+           nvl(cyc.flgjudic,0) flgjudic,
+           nvl(cyc.flextjud,0) flextjud,
+           nvl(cyc.flgehvip,0) flgehvip
        FROM  craptdb tdb
+           LEFT JOIN tbdsct_titulo_cyber ttc ON ttc.cdcooper = tdb.cdcooper AND ttc.nrdconta = tdb.nrdconta AND ttc.nrborder = tdb.nrborder AND ttc.nrtitulo = tdb.nrtitulo
+           LEFT JOIN crapcyc cyc ON ttc.nrctrdsc = cyc.nrctremp AND ttc.cdcooper = cyc.cdcooper AND ttc.nrdconta = cyc.nrdconta AND cyc.cdorigem = 4
        WHERE    tdb.dtresgat IS NULL      -- Nao resgatado
          AND    tdb.dtlibbdt IS NOT NULL
          AND    tdb.dtdpagto IS NULL      -- Nao pago
@@ -842,26 +911,40 @@ create or replace package body cecred.TELA_COBTIT is
          AND    tdb.nrdconta = pr_nrdconta
          AND    tdb.cdcooper = pr_cdcooper
          AND    tdb.insittit = 4 
-         AND    NVL((SELECT (cyc.flgjudic + cyc.flextjud + cyc.flgehvip) FROM tbdsct_titulo_cyber ttc 
-                  INNER JOIN crapcyc cyc
-                        ON ttc.nrctrdsc = cyc.nrctremp AND ttc.cdcooper = cyc.cdcooper AND ttc.nrdconta = cyc.nrdconta AND cyc.cdorigem = 4
-                  WHERE ttc.cdcooper = tdb.cdcooper
-                  AND   ttc.nrdconta = tdb.nrdconta 
-                  AND   ttc.nrborder = tdb.nrborder
-                  AND   ttc.nrtitulo = tdb.nrtitulo)
-               ,0) = 0
-         
        ORDER BY tdb.dtvencto ASC, tdb.vltitulo DESC
        ;
     rw_craptdb cr_craptdb%rowtype;
+    
+    -- Cursor de verificar se o titulo está em acordo
+    CURSOR cr_crapaco (pr_cdcooper craptdb.cdcooper%TYPE 
+                       ,pr_nrtitulo craptdb.nrtitulo%TYPE)IS
+      SELECT
+        COUNT(1) AS qtd_acordo
+       FROM
+         tbdsct_titulo_cyber ttc
+       INNER JOIN tbrecup_acordo_contrato tac ON ttc.nrctrdsc = tac.nrctremp
+       INNER JOIN tbrecup_acordo ta ON tac.nracordo = ta.nracordo
+       WHERE ttc.cdcooper = pr_cdcooper
+         AND ttc.nrdconta = pr_nrdconta
+         AND ttc.nrborder = pr_nrborder
+         AND ttc.nrtitulo = pr_nrtitulo
+         AND tac.cdorigem = 4   -- Desconto de Títulos
+         AND ta.cdsituacao <> 3 -- Diferente de Cancelado
+    ;rw_crapaco cr_crapaco%ROWTYPE;
     
     -- Variaveis auxiliares para os valores
     vr_vlmtatit craptdb.vlmtatit%TYPE;
     vr_vlmratit craptdb.vlmratit%TYPE;
     vr_vliofcpl craptdb.vliofcpl%TYPE;
+    vr_flacordo INTEGER;
     
     BEGIN
       pr_qtregist := 0;
+      pr_vldacordo := 0;
+      pr_qtdacordo := 0;
+      pr_vldvipjur := 0;
+      pr_qtdvipjur := 0;
+      
       OPEN cr_craptdb;
       LOOP
         FETCH cr_craptdb INTO rw_craptdb;
@@ -883,7 +966,30 @@ create or replace package body cecred.TELA_COBTIT is
         IF (nvl(vr_cdcritic,0)>0 OR vr_dscritic IS NOT NULL) THEN
           RAISE vr_exc_erro;
         END IF;
+        
+        -- Pesquisa na tabela de acordo para verificar se aquele titulo está em acordo
+        OPEN cr_crapaco(rw_craptdb.cdcooper
+                       ,rw_craptdb.nrtitulo);
+        FETCH cr_crapaco INTO rw_crapaco;
+        CLOSE cr_crapaco;
+        
+        IF rw_crapaco.qtd_acordo = 0 THEN  -- nao esta em acordo
+          vr_flacordo := 0;
+        ELSE -- esta em acordo
+          vr_flacordo := 1;
+        END IF;
+        
         pr_qtregist:=pr_qtregist+1;
+        -- Pesquisa na tabela de acordo para verificar se aquele titulo está em acordo
+        IF (vr_flacordo = 1) THEN
+          pr_qtdacordo := pr_qtdacordo + 1;
+          pr_vldacordo := pr_vldacordo + (rw_craptdb.vlsldtit + (vr_vlmtatit-rw_craptdb.vlpagmta) + (vr_vlmratit-rw_craptdb.vlpagmra)+ (vr_vliofcpl-rw_craptdb.vlpagiof));
+        ELSE 
+          -- Somente considerar as flags da CADCYB quando for boletagem massiva 
+          IF (pr_cdorigem = 1 AND rw_craptdb.flgehvip = 1) THEN
+            pr_qtdvipjur := pr_qtdvipjur + 1;
+            pr_vldvipjur := pr_vldvipjur + (rw_craptdb.vlsldtit + (vr_vlmtatit-rw_craptdb.vlpagmta) + (vr_vlmratit-rw_craptdb.vlpagmra)+ (vr_vliofcpl-rw_craptdb.vlpagiof));
+          ELSE
         vr_index := pr_tab_dados_titulos.count+1;
         pr_tab_dados_titulos(vr_index).nrdocmto := rw_craptdb.nrdocmto;
         pr_tab_dados_titulos(vr_index).dtvencto := rw_craptdb.dtvencto;
@@ -895,7 +1001,13 @@ create or replace package body cecred.TELA_COBTIT is
         pr_tab_dados_titulos(vr_index).vliof    := vr_vliofcpl-rw_craptdb.vlpagiof;
         pr_tab_dados_titulos(vr_index).vlsldtit := rw_craptdb.vlsldtit;
         pr_tab_dados_titulos(vr_index).vlpagar  := (rw_craptdb.vlsldtit + (vr_vlmtatit-rw_craptdb.vlpagmta) + (vr_vlmratit-rw_craptdb.vlpagmra)+ (vr_vliofcpl-rw_craptdb.vlpagiof));
-
+          pr_tab_dados_titulos(vr_index).flgjudic := rw_craptdb.flgjudic;
+          pr_tab_dados_titulos(vr_index).flextjud := rw_craptdb.flextjud;
+          pr_tab_dados_titulos(vr_index).flgehvip := rw_craptdb.flgehvip;
+          pr_tab_dados_titulos(vr_index).vlorigem := (rw_craptdb.vlsldtit + (rw_craptdb.vlmtatit-rw_craptdb.vlpagmta) + (rw_craptdb.vlmratit-rw_craptdb.vlpagmra)+ (rw_craptdb.vliofcpl-rw_craptdb.vlpagiof));
+          
+        END IF;
+        END IF;
       END LOOP;
 
       IF (pr_qtregist=0) THEN
@@ -934,8 +1046,11 @@ create or replace package body cecred.TELA_COBTIT is
     /* tratamento de erro */
     vr_exc_erro exception;
 
-    vr_qtregist         number;
-    vr_des_reto varchar2(3);
+    vr_qtregist     NUMBER;
+    vr_vldacordo     NUMBER;
+    vr_qtdacordo     INTEGER;
+    vr_vldvipjur     NUMBER;
+    vr_qtdvipjur     INTEGER;
 
     -- variaveis de entrada vindas no xml
     vr_cdcooper integer;
@@ -977,16 +1092,20 @@ create or replace package body cecred.TELA_COBTIT is
       
       vr_dtvencto:=to_date(pr_dtvencto, 'DD/MM/RRRR');
       
-      pc_buscar_titulo_vencido(vr_cdcooper         --> Código da Cooperativa
-                        ,pr_nrdconta        --> Número da Conta
-                        ,pr_nrborder        --> Número do bordero
-                        ,rw_crapdat.dtmvtolt--> Data de movimentacao
-                        ,vr_dtvencto        --> Data de vencimento que o boleto será gerado
+      pc_buscar_titulo_vencido(pr_cdcooper => vr_cdcooper         --> Código da Cooperativa
+                        ,pr_nrdconta => pr_nrdconta        --> Número da Conta
+                        ,pr_nrborder => pr_nrborder        --> Número do bordero
+                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt--> Data de movimentacao
+                        ,pr_dtvencto => vr_dtvencto        --> Data de vencimento que o boleto será gerado
                         --------> OUT <--------
-                        ,vr_qtregist        --> Quantidade de registros encontrados
-                        ,vr_tab_dados_titulos --> Tabela de retorno dos títulos encontrados
-                        ,vr_cdcritic        --> Código da crítica
-                        ,vr_dscritic        --> Descrição da crítica
+                        ,pr_qtregist => vr_qtregist        --> Quantidade de registros encontrados
+                        ,pr_vldacordo => vr_vldacordo                  --> Valor de títulos em acordo
+                        ,pr_qtdacordo => vr_qtdacordo                 --> Quantidade de títulos em acordo
+                        ,pr_vldvipjur => vr_vldvipjur                  --> Valor de títulos em vipjur
+                        ,pr_qtdvipjur => vr_qtdvipjur                 --> Quantidade de títulos em vipjur
+                        ,pr_tab_dados_titulos => vr_tab_dados_titulos     --> Tabela de retorno dos títulos encontrados
+                        ,pr_cdcritic => vr_cdcritic        --> Código da crítica
+                        ,pr_dscritic => vr_dscritic        --> Descrição da crítica
                         );
 
       IF (vr_cdcritic<>0 OR vr_dscritic IS NOT NULL) THEN
@@ -1004,7 +1123,8 @@ create or replace package body cecred.TELA_COBTIT is
 
       -- ler os registros de titulos e incluir no xml
       vr_index := vr_tab_dados_titulos.first;
-      while vr_index is not null loop
+      
+      while vr_index is not null LOOP
          pc_escreve_xml('<inf>'||
                            '<nrdocmto>' || vr_tab_dados_titulos(vr_index).nrdocmto || '</nrdocmto>' ||
                            '<dtvencto>' || to_char(vr_tab_dados_titulos(vr_index).dtvencto, 'DD/MM/RRRR') || '</dtvencto>' ||
@@ -1021,7 +1141,8 @@ create or replace package body cecred.TELA_COBTIT is
           /* buscar proximo */
           vr_index := vr_tab_dados_titulos.next(vr_index);
       end loop;
-      pc_escreve_xml ('</dados></root>',true);
+      pc_escreve_xml (  '<qtacordo>' || vr_qtdacordo || '</qtacordo>' ||
+                      '</dados></root>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);
 
       /* liberando a memória alocada pro clob */
@@ -1051,6 +1172,320 @@ create or replace package body cecred.TELA_COBTIT is
 
  END pc_buscar_titulo_vencido_web;
  
+ PROCEDURE pc_busca_dados_prejuizo (pr_cdcooper IN crapbdt.cdcooper%TYPE   --> Código da cooperativa
+                             ,pr_nrdconta IN crapbdt.nrdconta%TYPE   --> Número da conta
+                             ,pr_nrborder IN crapbdt.nrborder%TYPE   --> Número do Borderô
+                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   --> Data de movimentacao
+                             ,pr_dtvencto IN DATE                    --> Data de vencimento que o boleto será gerado
+                             ,pr_flcomvip IN BOOLEAN DEFAULT TRUE    --> Considera ou não títulos marcados como VIP no Cyber
+                             -->OUT<--
+                             ,pr_vltpagar  OUT NUMBER                  --> Valor total em atraso
+                             ,pr_vldacordo  OUT craptdb.vlsldtit%TYPE   --> Valor total em acordo
+                             ,pr_vldsctmx  OUT NUMBER                  --> Valor max para desconto
+                             ,pr_vlsldatu OUT NUMBER                   --> valor atualizado do prejuizo
+                             ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                             ) IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : pc_busca_dados_prejuizo
+    Sistema  : CRED
+    Sigla    : TELA_COBTIT
+    Autor    : Cássia de Oliveira (GFT)
+    Data     : Outubro/2018
+    Frequencia: Sempre que for chamado
+    Objetivo  : Função que retorna os dados de um bordero em prejuizo
+  ---------------------------------------------------------------------------------------------------------------------*/
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
+    vr_dscritic varchar2(1000);        --> Desc. Erro
+    vr_exc_erro EXCEPTION;
+    
+    -- Variaveis auxiliares para os valores
+    vr_tab_prej prej0005.typ_tab_preju;
+    vr_vljraprj NUMBER;
+    vr_vljrmprj NUMBER;
+    vr_vljratua NUMBER;
+    vr_vlsldvip NUMBER;
+    
+    -- Cursor titulos do Bordero
+    CURSOR cr_craptdb IS
+      SELECT
+        tdb.nrdocmto,
+        tdb.cdbandoc,
+        tdb.nrdctabb,
+        tdb.nrcnvcob,
+        ta.nracordo,
+        (tdb.vljraprj) AS totjuratu,
+        cyc.flgjudic,
+        cyc.flextjud,
+        cyc.flgehvip
+      FROM crapbdt bdt
+        INNER JOIN craptdb tdb ON bdt.cdcooper = tdb.cdcooper AND bdt.nrdconta = tdb.nrdconta AND bdt.nrborder = tdb.nrborder
+        LEFT JOIN tbdsct_titulo_cyber ttc
+           ON tdb.cdcooper = ttc.cdcooper AND tdb.nrdconta = ttc.nrdconta AND tdb.nrborder = ttc.nrborder AND tdb.nrtitulo = ttc.nrtitulo
+        LEFT JOIN tbrecup_acordo_contrato tac
+           ON ttc.nrctrdsc = tac.nrctremp
+        LEFT JOIN tbrecup_acordo ta
+           ON tac.nracordo = ta.nracordo AND ttc.cdcooper = ta.cdcooper
+            AND ta.cdcooper = ttc.cdcooper
+            AND ta.nrdconta = ttc.nrdconta
+            AND ta.cdsituacao <> 3 
+        LEFT JOIN crapcyc cyc 
+           ON ttc.cdcooper = cyc.cdcooper 
+           AND ttc.nrdconta = cyc.nrdconta
+           AND ttc.nrctrdsc = cyc.nrctremp
+           AND cyc.cdorigem = 4     
+      WHERE bdt.cdcooper = pr_cdcooper
+        AND bdt.nrborder = pr_nrborder
+        AND (tdb.insittit = 4 OR (tdb.insittit=3 AND bdt.dtliqprj IS NOT NULL))
+        AND bdt.inprejuz = 1
+    ;rw_craptdb cr_craptdb%ROWTYPE;
+    
+    CURSOR cr_crapvip IS
+      SELECT SUM(tdb.vlsdprej
+            + (tdb.vlttjmpr - tdb.vlpgjmpr)
+            + (tdb.vlttmupr - tdb.vlpgmupr)
+            + (tdb.vljraprj - tdb.vlpgjrpr)
+            + (tdb.vliofprj - tdb.vliofppr)
+                                  ) AS vlsldvip -- Saldo vip
+         FROM craptdb tdb
+         INNER JOIN tbdsct_titulo_cyber ttc
+           ON tdb.cdcooper = ttc.cdcooper AND tdb.nrdconta = ttc.nrdconta AND tdb.nrborder = ttc.nrborder AND tdb.nrtitulo = ttc.nrtitulo
+         LEFT JOIN tbrecup_acordo_contrato tac
+           ON ttc.nrctrdsc = tac.nrctremp
+         LEFT JOIN tbrecup_acordo ta
+           ON tac.nracordo = ta.nracordo AND ttc.cdcooper = ta.cdcooper
+          AND ta.cdcooper = ttc.cdcooper
+          AND ta.nrdconta = ttc.nrdconta
+         LEFT JOIN crapcyc cyc
+           ON cyc.cdcooper = ttc.cdcooper AND cyc.nrdconta = ttc.nrdconta AND cyc.nrctremp = ttc.nrctrdsc
+         WHERE cyc.cdorigem   = 4 -- Desconto de Títulos
+           AND (ta.nracordo IS NULL OR ta.cdsituacao = 3) -- Títulos que não estão em nenhum acordo
+           AND (cyc.flgehvip = 1)
+           AND tdb.cdcooper   = pr_cdcooper
+           AND tdb.nrborder   = pr_nrborder;
+    rw_crapvip cr_crapvip%ROWTYPE;
+    
+    BEGIN
+      pr_vldacordo := 0;
+      pr_vltpagar := 0;
+      
+      -- Busca dados do prejuizo      
+      prej0005.pc_busca_dados_prejuizo(pr_cdcooper        --> Código da Cooperativa
+                                      ,pr_nrborder        --> Número do bordero
+                                      -- OUT --
+                                      ,vr_tab_prej        --> tabela de retorno
+                                      ,vr_cdcritic        --> Código da crítica
+                                      ,vr_dscritic        --> Descrição da crítica
+                                      );
+
+      IF (vr_cdcritic<>0 OR vr_dscritic IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      pr_vlsldatu := vr_tab_prej(0).vlsldatu;
+      
+      -- Consulta valores dos títulos marcados como VIP
+      OPEN cr_crapvip;
+      FETCH cr_crapvip INTO rw_crapvip;
+
+      IF rw_crapvip.vlsldvip IS NULL THEN
+        vr_vlsldvip := 0;
+      ELSE
+        vr_vlsldvip := rw_crapvip.vlsldvip;
+      END IF;
+      CLOSE cr_crapvip;
+      
+      -- Se a data de vencimento for maior que a atual
+      IF pr_dtmvtolt < pr_dtvencto THEN
+        vr_vljratua := 0;
+         FOR rw_craptdb IN cr_craptdb
+         LOOP
+           
+           -- Recalcula os juros de atualização para uma data futura
+           PREJ0005.pc_calcula_atraso_prejuizo(pr_cdcooper => pr_cdcooper
+           	                                  ,pr_nrdconta => pr_nrdconta
+               	                              ,pr_nrborder => pr_nrborder
+                                              ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                              ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                              ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                              ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                              ,pr_dtmvtolt => pr_dtvencto
+                                              ,pr_vljraprj => vr_vljraprj
+                                              ,pr_vljrmprj => vr_vljrmprj
+                                              ,pr_cdcritic => vr_cdcritic
+                                              ,pr_dscritic => vr_dscritic
+                                              );
+          IF (vr_cdcritic<>0 OR vr_dscritic IS NOT NULL) THEN
+            RAISE vr_exc_erro;
+          END IF;
+          IF (nvl(rw_craptdb.nracordo,0)=0)
+             AND (pr_flcomvip OR (NOT pr_flcomvip AND (nvl(rw_craptdb.flgehvip,0) = 0))) THEN
+            vr_vljratua := vr_vljratua + vr_vljraprj;
+          ELSE
+            vr_tab_prej(0).tojraprj := vr_tab_prej(0).tojraprj - rw_craptdb.totjuratu; 
+          END IF;
+        END LOOP;
+        -- Remove o valor em acordo
+        pr_vltpagar := vr_tab_prej(0).vlsldatu - vr_tab_prej(0).vlsldaco;
+        -- Atualiza a soma dos juros de atualização
+        pr_vltpagar := pr_vltpagar  - vr_tab_prej(0).tojraprj + vr_vljratua;
+      ELSE
+        -- Remove o valor em acordo
+        pr_vltpagar := vr_tab_prej(0).vlsldatu - vr_tab_prej(0).vlsldaco;
+      END IF;
+      
+      -- Desconta os valores dos títulos marcados como vip
+      IF NOT pr_flcomvip THEN
+        pr_vltpagar := pr_vltpagar - vr_vlsldvip;
+      END IF;  
+      
+      pr_vldacordo := vr_tab_prej(0).vlsldaco;
+      
+      -- busca valor maximo permitido para desconto
+      pr_vldsctmx := to_number(replace(replace(gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
+                                                                       ,pr_nmsistem => 'CRED'
+                                                                       ,pr_cdacesso => 'COBTIT_DSC_MAX_PREJU'),',',''),'.','')/100);
+      
+   EXCEPTION
+     when vr_exc_erro then
+       if  nvl(vr_cdcritic,0) <> 0 and trim(vr_dscritic) is null then
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       else
+         pr_cdcritic := nvl(vr_cdcritic,0);
+         pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
+       end if;
+     when others then
+       pr_cdcritic := vr_cdcritic;
+       pr_dscritic := replace(replace('Erro pc_busca_dados_prejuizo: '|| vr_cdcritic || sqlerrm, chr(13)),chr(10));
+ END pc_busca_dados_prejuizo;
+ 
+ PROCEDURE pc_busca_dados_prejuizo_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                       ,pr_nrborder IN crapbdt.nrborder%TYPE  --> Número do Bordero
+                                       ,pr_dtvencto IN VARCHAR2               --> Data de vencimento do boleto a ser gerado
+                                       ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                       --------> OUT <--------
+                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                       ,pr_retxml   IN OUT NOCOPY xmltype     --> arquivo de retorno do xml
+                                       ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                       ,pr_des_erro OUT VARCHAR2              --> Erros do processo
+                                       ) IS
+                             
+    -- variaveis de retorno
+    vr_vltpagar          craptdb.vlsldtit%TYPE;
+    vr_vldacordo          craptdb.vlsldtit%TYPE;     
+    vr_vldsctmx          NUMBER;
+    vr_vlsldatu          NUMBER;
+
+    /* tratamento de erro */
+    vr_exc_erro exception;
+    
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmdeacao varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
+    vr_dscritic varchar2(1000);        --> Desc. Erro
+    
+    -- Informações de data do sistema
+    rw_crapdat  btch0001.rw_crapdat%TYPE;
+    vr_dtvencto DATE;
+    
+    BEGIN
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmdeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
+                              
+      --    Verifica se a data esta cadastrada
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      IF    btch0001.cr_crapdat%NOTFOUND THEN
+            CLOSE btch0001.cr_crapdat;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+            RAISE vr_exc_erro;
+      END IF;
+      CLOSE btch0001.cr_crapdat;
+      
+      vr_dtvencto:=to_date(pr_dtvencto, 'DD/MM/RRRR');
+      
+      
+       /*Traz os dados do bordero em prejuizo*/
+      pc_busca_dados_prejuizo(vr_cdcooper         --> Código da Cooperativa
+                        ,pr_nrdconta        --> Número da Conta
+                        ,pr_nrborder        --> Número do bordero
+                        ,rw_crapdat.dtmvtolt        --> Data de movimentacao
+                        ,vr_dtvencto        --> Data de vencimento que o boleto será gerado
+                        ,TRUE               --> Desconsiderar títulos marcados como VIP na CADCYB
+                        --------> OUT <--------
+                        ,vr_vltpagar        --> Valor total em atraso
+                        ,vr_vldacordo        --> Valor total em acordo
+                        ,vr_vldsctmx        --> Valor max de desconto
+                        ,vr_vlsldatu        --> Saldo Prejuizo atualizado
+                        ,vr_cdcritic        --> Código da crítica
+                        ,vr_dscritic        --> Descrição da crítica
+                        );
+      IF (vr_cdcritic<>0 OR vr_dscritic IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- inicializar o clob
+      vr_des_xml := NULL;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := NULL;
+      
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                     '<root><dados>' ||
+                     '<vltpagar>' || nvl(vr_vltpagar,0) || '</vltpagar>' ||
+                     '<vldacordo>' || nvl(vr_vldacordo,0) || '</vldacordo>' ||
+                     '<vldsctmx>' || nvl(vr_vldsctmx,0) || '</vldsctmx>' ||
+                     '</dados></root>',TRUE);
+      pr_retxml := xmltype.createxml(vr_des_xml);
+
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+
+    EXCEPTION 
+      WHEN vr_exc_erro THEN
+           /*  se foi retornado apenas código */
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+               /* buscar a descriçao */
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           /* variavel de erro recebe erro ocorrido */
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      when others then
+           /* montar descriçao de erro nao tratado */
+           pr_dscritic := 'erro nao tratado na TELA_COBTIT.pc_busca_dados_prejuizo_web ' ||sqlerrm;
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+       
+     
+ END pc_busca_dados_prejuizo_web;
+ 
  PROCEDURE pc_gerar_boleto (pr_cdcooper IN crapbdt.cdcooper%TYPE   --> Código da cooperativa
                              ,pr_nrdconta IN crapbdt.nrdconta%TYPE   --> Número da conta
                              ,pr_nrborder IN crapbdt.nrborder%TYPE   --> Número do Borderô
@@ -1069,6 +1504,7 @@ create or replace package body cecred.TELA_COBTIT is
                              ,pr_peracres IN tbrecup_cobranca.peracrescimo%TYPE DEFAULT 0 --> Percentual de acrescimo
                              ,pr_perdesco IN tbrecup_cobranca.perdesconto%TYPE DEFAULT 0 --> Percentual de desconto
                              ,pr_vldescto IN NUMBER DEFAULT 0               --> Valor do desconto
+                             ,pr_vldevedor IN tbrecup_cobranca.vldevedor%TYPE DEFAULT 0 --> Valor do Saldo devedor
                              -->OUT<--
                              ,pr_nrboleto OUT INTEGER                     --> Número do boleto criado
                              ,pr_vltitulo OUT NUMBER                      --> Valor do titulo
@@ -1139,6 +1575,7 @@ create or replace package body cecred.TELA_COBTIT is
        AND sab.nrdconta = pr_nrctabnf
        AND sab.nrinssac = pr_nrinssac;
    rw_crapsab cr_crapsab%ROWTYPE;
+   
    --Variaveis locais
    vr_index PLS_INTEGER;
    vr_index_tit PLS_INTEGER;
@@ -1146,7 +1583,7 @@ create or replace package body cecred.TELA_COBTIT is
    vr_nrcnvcob crapcob.nrcnvcob%TYPE;
    vr_tab_cob cobr0005.typ_tab_cob;
    vr_vlmintit craptdb.vltitulo%TYPE; 
-   vr_qtregist         number;   
+   
    vr_tab_dados_titulos DSCT0003.typ_tab_tit_bordero;
    vr_dsinform          VARCHAR2(400);
    vr_dstitulo          VARCHAR2(200);
@@ -1154,6 +1591,7 @@ create or replace package body cecred.TELA_COBTIT is
    vr_dsorigem VARCHAR2(1000) := TRIM(GENE0001.vr_vet_des_origens(pr_idorigem));
    vr_nrdrowid ROWID;
    vr_tpparcela tbrecup_cobranca.tpparcela%TYPE;
+   
    -- Sacado do boleto
    vr_cdtpinsc crapass.inpessoa%TYPE;
    vr_nrinssac crapass.nrcpfcgc%TYPE;
@@ -1167,6 +1605,13 @@ create or replace package body cecred.TELA_COBTIT is
    vr_complend crapenc.complend%TYPE;
    vr_tab_aval        DSCT0002.typ_tab_dados_avais;
    vr_idx_aval        PLS_INTEGER;
+   
+   vr_flbolmas      NUMBER;
+   vr_qtregist     NUMBER;
+   vr_vldacordo     NUMBER;
+   vr_qtdacordo     INTEGER;
+   vr_vldvipjur     NUMBER;
+   vr_qtdvipjur     INTEGER;
  BEGIN
     -- Localizar conta do emitente do boleto, neste caso a cooperativa
     vr_nrdconta_cob := GENE0002.fn_char_para_number(gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
@@ -1198,18 +1643,31 @@ create or replace package body cecred.TELA_COBTIT is
      RAISE vr_exc_erro;
    END IF;
    CLOSE cr_crapbdt;
+   
+   IF nvl(pr_idarquiv,0) <> 0 THEN
+     vr_flbolmas := 1;
+   ELSE
+     vr_flbolmas := 0;  
+   END IF;
+   
    /*Traz os titulos vencidos do bordero na ordem correta a ser paga*/
-   pc_buscar_titulo_vencido(pr_cdcooper         --> Código da Cooperativa
-                      ,pr_nrdconta        --> Número da Conta
-                      ,pr_nrborder        --> Número do bordero
-                      ,pr_dtmvtolt        --> Data de movimentacao
-                      ,pr_dtvencto        --> Data de vencimento que o boleto será gerado
+   pc_buscar_titulo_vencido(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
+                      ,pr_nrdconta => pr_nrdconta        --> Número da Conta
+                      ,pr_nrborder => pr_nrborder        --> Número do bordero
+                      ,pr_dtmvtolt => pr_dtmvtolt        --> Data de movimentacao
+                      ,pr_dtvencto => pr_dtvencto       --> Data de vencimento que o boleto será gerado
                       --------> OUT <--------
-                      ,vr_qtregist        --> Quantidade de registros encontrados
-                      ,vr_tab_dados_titulos --> Tabela de retorno dos títulos encontrados
-                      ,vr_cdcritic        --> Código da crítica
-                      ,vr_dscritic        --> Descrição da crítica
+                      ,pr_qtregist => vr_qtregist        --> Quantidade de registros encontrados
+                      ,pr_vldacordo => vr_vldacordo                  --> Valor de títulos em acordo
+                      ,pr_qtdacordo => vr_qtdacordo                 --> Quantidade de títulos em acordo
+                      ,pr_vldvipjur => vr_vldvipjur                  --> Valor de títulos em vipjur
+                      ,pr_qtdvipjur => vr_qtdvipjur                 --> Quantidade de títulos em vipjur
+                      ,pr_tab_dados_titulos => vr_tab_dados_titulos --> Tabela de retorno dos títulos encontrados
+                      ,pr_cdcritic => vr_cdcritic        --> Código da crítica
+                      ,pr_dscritic => vr_dscritic        --> Descrição da crítica
+                      ,pr_cdorigem => vr_flbolmas -- Boletagem Massiva 
                       );
+                      
    IF (nvl(vr_cdcritic,0)>0 OR vr_dscritic IS NOT NULL) THEN
      RAISE vr_exc_erro;
    END IF;
@@ -1221,7 +1679,7 @@ create or replace package body cecred.TELA_COBTIT is
    vr_tpparcela := 2;
    while vr_index is not null LOOP
      /*Valida a ordem dos títulos selecionados*/
-     IF (pr_titpagar(vr_index).nrtitulo<>vr_tab_dados_titulos(vr_index_tit).nrtitulo) THEN
+     IF (nvl(pr_idarquiv,0)=0 AND pr_titpagar(vr_index).nrtitulo<>vr_tab_dados_titulos(vr_index_tit).nrtitulo) THEN
        vr_dscritic := 'Selecione os títulos na ordem de data de vencimento e valor devido.';
        RAISE vr_exc_erro;
      END IF;
@@ -1389,8 +1847,11 @@ create or replace package body cecred.TELA_COBTIT is
    vr_dsinform := gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
                                               ,pr_nmsistem => 'CRED'
                                               ,pr_cdacesso => 'COBTIT_INSTR_LINHA_1');
-
-   vr_dsinform := vr_dsinform || '  - TÍTULO(S): ' || vr_dstitulo;
+   -- Só mostra a mensagem de títulos caso o pagamento seja parcial
+   IF vr_tpparcela = 3 THEN
+     --vr_dsinform := vr_dsinform || '  - TÍTULO(S): ' || vr_dstitulo;
+     vr_dsinform := 'BOLETO GERADO PARA ' || pr_titpagar.count || ' TÍTULOS DE BORDERÔ QUE POSSUI ' || vr_tab_dados_titulos.count || ' TÍTULOS';
+   END IF;
 
    vr_dsinform := vr_dsinform || '_' ||
                      gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
@@ -1458,7 +1919,14 @@ create or replace package body cecred.TELA_COBTIT is
              ,/*15*/ peracrescimo
              ,/*16*/ perdesconto
              ,/*17*/ vldesconto
-             ,/*18*/ tpproduto)
+             ,/*18*/ tpproduto
+             ,/*19*/ qtdtitulo 
+             ,/*20*/ vldacordo
+             ,/*21*/ qtdacordo
+             ,/*22*/ vldvipjur
+             ,/*23*/ qtdvipjur
+             ,/*24*/ vldevedor
+             )
        VALUES(/*01*/ pr_cdcooper
              ,/*02*/ pr_nrdconta
              ,/*03*/ pr_nrborder
@@ -1476,7 +1944,14 @@ create or replace package body cecred.TELA_COBTIT is
              ,/*15*/ pr_peracres
              ,/*16*/ pr_perdesco
              ,/*17*/ pr_vldescto
-             ,/*18*/ 3);--bordero
+             ,/*18*/ 3
+             ,/*19*/ vr_qtregist
+             ,/*20*/ vr_vldacordo
+             ,/*21*/ vr_qtdacordo
+             ,/*22*/ vr_vldvipjur
+             ,/*23*/ vr_qtdvipjur
+             ,/*24*/ pr_vldevedor
+             );
                                 
       pr_vltitulo := vr_tab_cob(1).vltitulo;
       pr_nrboleto := vr_tab_cob(1).nrdocmto;
@@ -1684,6 +2159,699 @@ create or replace package body cecred.TELA_COBTIT is
           pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
  END pc_gerar_boleto_web;
+ 
+ PROCEDURE pc_gerar_boleto_prejuizo (pr_cdcooper IN crapbdt.cdcooper%TYPE   --> Código da cooperativa
+                             ,pr_nrdconta IN crapbdt.nrdconta%TYPE   --> Número da conta
+                             ,pr_nrborder IN crapbdt.nrborder%TYPE   --> Número do Borderô
+                             ,pr_nrcpfava IN  crapass.nrcpfcgc%TYPE  --> Cpf do avalisa. Null se for o proprio sacado
+                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   --> Data de movimentacao
+                             ,pr_dtvencto IN DATE                    --> Data de vencimento que o boleto será gerado
+                             ,pr_vlboleto IN NUMBER                  --> Número do título,
+                             ,pr_nmdatela IN VARCHAR2                    --> Nome da tela
+                             ,pr_nmeacao  IN VARCHAR2                    --> Nome da ação
+                             ,pr_cdagenci IN VARCHAR2                    --> Agencia de operação
+                             ,pr_nrdcaixa IN VARCHAR2                    --> Número do caixa
+                             ,pr_idorigem IN VARCHAR2                    --> Identificação de origem
+                             ,pr_cdoperad IN VARCHAR2                    --> Operador
+                             ,pr_idarquiv IN INTEGER DEFAULT 0           --> Id do arquivo (boletagem Massiva)
+                             ,pr_idboleto IN tbrecup_cobranca.idboleto%TYPE DEFAULT 0 --> Id a linha do arquivo
+                             ,pr_peracres IN tbrecup_cobranca.peracrescimo%TYPE DEFAULT 0 --> Percentual de acrescimo
+                             ,pr_perdesco IN tbrecup_cobranca.perdesconto%TYPE DEFAULT 0 --> Percentual de desconto
+                             ,pr_vldescto IN NUMBER DEFAULT 0               --> Valor do desconto
+                             ,pr_flvlpagm IN NUMBER                  --> Identifica se é valor parcial ou total (5-Saldo Prejuizo/ 6-Parcial Prejuizo)
+                             ,pr_flcomvip IN BOOLEAN DEFAULT TRUE   --> Considera ou não títulos marcados como VIP no Cyber
+                             ,pr_vldevedor IN tbrecup_cobranca.vldevedor%TYPE DEFAULT 0 --> Valor do Saldo devedor
+                             -->OUT<--
+                             ,pr_nrboleto OUT INTEGER                     --> Número do boleto criado
+                             ,pr_vltitulo OUT NUMBER                      --> Valor do titulo
+                             ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+   
+                           ) IS
+                           
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : pc_gerar_boleto_prejuizo
+    Sistema  : CRED
+    Sigla    : TELA_COBTIT
+    Autor    : Cássia de Oliveira (GFT)
+    Data     : Outubro/2018
+    Frequencia: Sempre que for chamado
+    Objetivo  : Gera boleto para os títulos de borderos em prejuizo 
+  ---------------------------------------------------------------------------------------------------------------------*/
+   --Variaveis de erro
+   vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
+   vr_dscritic varchar2(1000);        --> Desc. Erro
+   vr_exc_erro EXCEPTION;
+	 vr_des_erro VARCHAR2(3); --> Indicador erro      
+    
+    -- Cursor para trazer os borderôs que possuem titulos a serem verificados na mesa de checagem
+   CURSOR cr_crapbdt IS
+     SELECT 
+       *
+     FROM 
+       crapbdt bdt
+     WHERE 
+         bdt.cdcooper = pr_cdcooper
+         AND bdt.nrdconta = pr_nrdconta
+         AND bdt.nrborder = pr_nrborder
+   ;
+   rw_crapbdt cr_crapbdt%rowtype;
+   
+   -- Cursor do remetente
+   CURSOR cr_crapass IS
+      SELECT ass.nrcpfcgc nrcpfcgc
+            ,ass.inpessoa inpessoa              
+            ,SUBSTR(ass.nmprimtl,1,50) nmprimtl
+            ,ass.cdagenci cdagenci
+            ,enc.dsendere dsendere
+            ,enc.nrendere nrendere
+            ,enc.nrcepend nrcepend
+            ,SUBSTR(enc.complend,1,40) complend
+            ,SUBSTR(enc.nmbairro,1,30) nmbairro
+            ,enc.nmcidade nmcidade
+            ,enc.cdufende cdufende
+        FROM crapass ass
+            ,crapenc enc
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta
+         AND enc.cdcooper = ass.cdcooper
+         AND enc.nrdconta = ass.nrdconta
+         AND ((enc.tpendass = 10 AND ass.inpessoa = 1)
+         OR   (enc.tpendass = 9  AND ass.inpessoa IN (2,3))) /* Residencial */
+   ;
+   rw_crapass cr_crapass%ROWTYPE;
+   
+   -- Cursor para busca dos sacados cobrança
+   CURSOR cr_crapsab (pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrctabnf IN crapsab.nrdconta%TYPE
+                     ,pr_nrinssac IN crapass.nrcpfcgc%TYPE) IS
+     SELECT 1
+       FROM crapsab sab
+     WHERE sab.cdcooper = pr_cdcooper
+       AND sab.nrdconta = pr_nrctabnf
+       AND sab.nrinssac = pr_nrinssac;
+   rw_crapsab cr_crapsab%ROWTYPE;
+   
+   -- Cursor titulos do Bordero
+    CURSOR cr_craptdb IS
+      SELECT
+        tdb.nrdocmto,
+        tdb.cdbandoc,
+        tdb.nrdctabb,
+        tdb.nrcnvcob
+      FROM crapbdt bdt
+        INNER JOIN craptdb tdb ON bdt.cdcooper = tdb.cdcooper AND bdt.nrdconta = tdb.nrdconta AND bdt.nrborder = tdb.nrborder
+      WHERE bdt.cdcooper = pr_cdcooper
+        AND bdt.nrborder = pr_nrborder
+        AND (tdb.insittit = 4 OR (tdb.insittit=3 AND bdt.dtliqprj IS NOT NULL))
+        AND bdt.inprejuz = 1
+        AND NOT EXISTS(SELECT 1
+                         FROM craptdb tdb
+                   INNER JOIN tbdsct_titulo_cyber ttc
+                           ON tdb.cdcooper = ttc.cdcooper AND tdb.nrdconta = ttc.nrdconta AND tdb.nrborder = ttc.nrborder AND tdb.nrtitulo = ttc.nrtitulo
+                   INNER JOIN tbrecup_acordo_contrato tac
+                           ON ttc.nrctrdsc = tac.nrctremp
+                   INNER JOIN tbrecup_acordo ta
+                           ON tac.nracordo = ta.nracordo
+                          AND ta.cdcooper = ttc.cdcooper
+                          AND ta.nrdconta = ttc.nrdconta
+                        WHERE tac.cdorigem   = 4 -- Desconto de Títulos
+                          AND ta.cdsituacao <> 3 -- Acordo não está cancelado
+                          AND tdb.cdcooper   = pr_cdcooper
+                          AND tdb.nrborder   = pr_nrborder)
+    	;rw_craptdb cr_craptdb%ROWTYPE;
+   
+   CURSOR cr_craptdb_qtd IS
+     SELECT  COUNT(1) as qtdtitulo,
+             SUM(CASE 
+                   WHEN aco.cdsituacao IN (1,2) THEN tdb.vlsdprej
+                                                     + (tdb.vlttjmpr - tdb.vlpgjmpr)
+                                                     + (tdb.vlttmupr - tdb.vlpgmupr)
+                                                     + (tdb.vljraprj - tdb.vlpgjrpr)
+                                                     + (tdb.vliofprj - tdb.vliofppr)
+                   ELSE 0
+                 END) AS vldacordo,
+             SUM(CASE 
+                   WHEN aco.cdsituacao IN (1,2) THEN 1
+                   ELSE 0
+                 END) AS qtdacordo,
+             SUM(CASE 
+                   WHEN (cyc.flgehvip = 1) THEN tdb.vlsdprej
+                                                 + (tdb.vlttjmpr - tdb.vlpgjmpr)
+                                                 + (tdb.vlttmupr - tdb.vlpgmupr)
+                                                 + (tdb.vljraprj - tdb.vlpgjrpr)
+                                                 + (tdb.vliofprj - tdb.vliofppr)
+                   ELSE 0
+                 END) AS vldvipjur,
+             SUM(CASE 
+                   WHEN (cyc.flgehvip = 1) THEN 1
+                   ELSE 0
+                 END) AS qtdvipjur      
+            FROM crapbdt bdt
+              INNER JOIN craptdb tdb ON bdt.cdcooper = tdb.cdcooper AND bdt.nrdconta = tdb.nrdconta AND bdt.nrborder = tdb.nrborder
+              LEFT JOIN tbdsct_titulo_cyber tcy ON tcy.cdcooper = tdb.cdcooper AND tcy.nrdconta = tdb.nrdconta AND tcy.nrborder = tdb.nrborder AND tcy.nrtitulo = tdb.nrtitulo
+              LEFT JOIN crapcyc cyc ON tcy.cdcooper = cyc.cdcooper AND tcy.nrdconta = cyc.nrdconta AND tcy.nrctrdsc = cyc.nrctremp AND cyc.cdorigem = 4
+              LEFT JOIN tbrecup_acordo_contrato acc ON acc.cdorigem = 4 AND acc.nrctremp = tcy.nrctrdsc 
+              LEFT JOIN tbrecup_acordo aco ON aco.nracordo = acc.nracordo AND aco.cdcooper = tcy.cdcooper AND aco.nrdconta = tcy.nrdconta
+            WHERE bdt.cdcooper = pr_cdcooper
+              AND bdt.nrborder = pr_nrborder
+              AND (tdb.insittit = 4 OR (tdb.insittit=3 AND bdt.dtliqprj IS NOT NULL))
+              AND bdt.inprejuz = 1
+            GROUP BY bdt.dtliqprj, bdt.dtprejuz, bdt.inprejuz, bdt.vlaboprj, bdt.qtdirisc, bdt.nrdconta;
+   
+   rw_craptdb_qtd cr_craptdb_qtd%ROWTYPE;
+   
+   --Variaveis locais
+   vr_nrdconta_cob crapsab.nrdconta%TYPE;
+   vr_nrcnvcob crapcob.nrcnvcob%TYPE;
+   vr_tab_cob cobr0005.typ_tab_cob;
+   vr_vlmintit craptdb.vltitulo%TYPE; 
+   vr_qtregist         number;   
+   vr_dsinform          VARCHAR2(400);
+   vr_dstitulo          VARCHAR2(200);
+   vr_dsorigem VARCHAR2(1000) := TRIM(GENE0001.vr_vet_des_origens(pr_idorigem));
+   vr_nrdrowid ROWID;
+   vr_tpparcela tbrecup_cobranca.tpparcela%TYPE;
+   vr_vltpagar          craptdb.vlsldtit%TYPE;
+   vr_vldacordo          craptdb.vlsldtit%TYPE; 
+   vr_vldsctmx          NUMBER;
+   vr_lttitulo          VARCHAR2(4000);
+   vr_vlsldatu          NUMBER;
+
+   
+   
+   -- Sacado do boleto
+   vr_cdtpinsc crapass.inpessoa%TYPE;
+   vr_nrinssac crapass.nrcpfcgc%TYPE;
+   vr_nmprimtl crapass.nmprimtl%TYPE;
+   vr_dsendere crapenc.dsendere%TYPE;
+   vr_nmbairro crapenc.nmbairro%TYPE;
+   vr_nrcepend crapenc.nrcepend%TYPE;
+   vr_nmcidade crapenc.nmcidade%TYPE;
+   vr_cdufende crapenc.cdufende%TYPE;
+   vr_nrendere crapenc.nrendere%TYPE;
+   vr_complend crapenc.complend%TYPE;
+   vr_tab_aval        DSCT0002.typ_tab_dados_avais;
+   vr_idx_aval        PLS_INTEGER;
+ BEGIN
+    -- Localizar conta do emitente do boleto, neste caso a cooperativa
+    vr_nrdconta_cob := GENE0002.fn_char_para_number(gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
+                                                   ,pr_nmsistem => 'CRED'
+                                                   ,pr_cdacesso => 'COBTIT_NRDCONTA_BNF'));
+
+    -- Localizar convenio de cobrança
+    vr_nrcnvcob := gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
+                                            ,pr_nmsistem => 'CRED'
+                                            ,pr_cdacesso => 'COBTIT_NRCONVEN');  
+         
+   BEGIN
+     vr_vlmintit := to_number(replace(replace(gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
+                                                                       ,pr_nmsistem => 'CRED'
+                                                                       ,pr_cdacesso => 'COBTIT_VLR_MIN'),',',''),'.','')/100);
+   EXCEPTION
+     WHEN OTHERS THEN
+       -- Atribui crítica
+       vr_cdcritic := 0;
+       vr_dscritic := 'Erro ao acessar parametro de valor minimo para boleto.';
+       -- Levanta exceção
+       RAISE vr_exc_erro;
+   END;
+   OPEN cr_crapbdt;
+   FETCH cr_crapbdt INTO rw_crapbdt;
+   IF (cr_crapbdt%NOTFOUND) THEN
+     CLOSE cr_crapbdt;
+     vr_dscritic := 'Borderô não encontrado';
+     RAISE vr_exc_erro;
+   END IF;
+   CLOSE cr_crapbdt;
+   /*Traz os dados do bordero em prejuizo*/
+   pc_busca_dados_prejuizo(pr_cdcooper         --> Código da Cooperativa
+                      ,pr_nrdconta        --> Número da Conta
+                      ,pr_nrborder        --> Número do bordero
+                      ,pr_dtmvtolt        --> Data de movimentacao
+                      ,pr_dtvencto        --> Data de vencimento que o boleto será gerado
+                      ,pr_flcomvip        --> Considerar ou não títulos marcados como VIP na CADCYB
+                      --------> OUT <--------
+                        ,vr_vltpagar        --> Valor total em atraso
+                        ,vr_vldacordo        --> Valor total em acordo
+                        ,vr_vldsctmx        --> Valor max de desconto (%)
+                      ,vr_vlsldatu        --> Saldo prejuizo atualizado
+                      ,vr_cdcritic        --> Código da crítica
+                      ,vr_dscritic        --> Descrição da crítica
+                      );
+                      
+   IF (nvl(vr_cdcritic,0)>0 OR vr_dscritic IS NOT NULL) THEN
+     RAISE vr_exc_erro;
+   END IF;
+   
+     /*Valor acima da dívida*/
+   IF (pr_vlboleto > vr_vltpagar) THEN
+       vr_dscritic := 'Valor pago acima do devido.';
+       RAISE vr_exc_erro;
+     END IF;
+   
+   -- Valor menor que a divida e é pagamento total
+   IF vr_vltpagar > pr_vlboleto AND pr_flvlpagm = 5 THEN
+     -- Pagamento total com desconto
+     vr_tpparcela := 7;
+	 -- Calcula o valor do desconto maximo em reais
+     vr_vldsctmx := ROUND(vr_vltpagar - ((vr_vltpagar * vr_vldsctmx)/100),2);
+	 -- Se o valor do boleto é menor que o valor com desconto maximo
+	 IF vr_vldsctmx > pr_vlboleto THEN
+       vr_dscritic := 'Desconto maior que o permitido.';
+       RAISE vr_exc_erro;
+     END IF;
+   ELSE
+     -- Pagamento total integral(5) ou pagamento parcial(6)
+     vr_tpparcela := pr_flvlpagm;
+   END IF;
+   
+   /* Verifica se o boleto atinge o valor mínimo cadastrado */
+   IF pr_vlboleto < vr_vlmintit THEN
+       vr_dscritic := 'Boleto não atingiu o valor mínimo.';
+       RAISE vr_exc_erro;
+   END IF;
+   
+   -- Busca as quantidades de títulos em acordo e VIP do borderô
+   OPEN cr_craptdb_qtd;
+   FETCH cr_craptdb_qtd INTO rw_craptdb_qtd;
+   IF (cr_craptdb_qtd%NOTFOUND) THEN
+     vr_dscritic := 'Erro ao calcular quantidades de títulos em acordo do borderô';
+     RAISE vr_exc_erro;
+   END IF;
+   
+   /*Verifica se o pagador vai ser o cooperado ou o avalista, em seguida verfica se é um pagador cadastrado para a conta e insere/atualiza o cadastro*/
+   OPEN cr_crapass;
+   FETCH cr_crapass INTO rw_crapass;
+   IF (cr_crapass%NOTFOUND) THEN
+     vr_dscritic := 'Associado não encontrado';
+   END IF;
+   IF (nvl(pr_nrcpfava,0)=0) THEN
+     /*Pagador proprio remetente*/  
+     vr_cdtpinsc := rw_crapass.inpessoa;
+     vr_nrinssac := rw_crapass.nrcpfcgc;
+     vr_nmprimtl := rw_crapass.nmprimtl;
+     vr_dsendere := rw_crapass.dsendere;
+     vr_nmbairro := rw_crapass.nmbairro;
+     vr_nrcepend := rw_crapass.nrcepend;
+     vr_nmcidade := rw_crapass.nmcidade;
+     vr_cdufende := rw_crapass.cdufende;
+     vr_nrendere := rw_crapass.nrendere;
+     vr_complend := rw_crapass.complend;
+     NULL;
+   ELSE
+      /*Pagador é outro avalista*/
+     -- Dados do Avalista
+     DSCT0002.pc_lista_avalistas(pr_cdcooper => pr_cdcooper  --> Código da Cooperativa
+                                   ,pr_cdagenci => rw_crapass.cdagenci --> Código da agencia
+                                   ,pr_nrdcaixa => 1            --> Numero do caixa do operador
+                                   ,pr_cdoperad => pr_cdoperad  --> Código do Operador
+                                   ,pr_nmdatela => pr_nmdatela  --> Nome da tela
+                                   ,pr_idorigem => pr_idorigem  --> Identificador de Origem
+                                   ,pr_nrdconta => pr_nrdconta  --> Numero da conta do cooperado
+                                   ,pr_idseqttl => 1            --> Sequencial do titular
+                                   ,pr_tpctrato => 8             --> Tipo de contrado - Dentro da procedure é trocado para 3
+                                   ,pr_nrctrato => rw_crapbdt.nrctrlim  --> Numero do contrato
+                                   ,pr_nrctaav1 => 0            --> Numero da conta do primeiro avalista
+                                   ,pr_nrctaav2 => 0            --> Numero da conta do segundo avalista
+                                    --------> OUT <--------                                   
+                                   ,pr_tab_dados_avais   => vr_tab_aval   --> retorna dados do avalista
+                                   ,pr_cdcritic          => vr_cdcritic   --> Código da crítica
+                                   ,pr_dscritic          => vr_dscritic); --> Descrição da crítica
+        
+     IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+       RAISE vr_exc_erro;
+     END IF;
+     vr_idx_aval := vr_tab_aval.first;
+     WHILE vr_idx_aval IS NOT NULL LOOP
+        IF pr_nrcpfava = vr_tab_aval(vr_idx_aval).nrcpfcgc THEN
+          vr_cdtpinsc := vr_tab_aval(vr_idx_aval).inpessoa;
+          vr_nrinssac := vr_tab_aval(vr_idx_aval).nrcpfcgc;
+          vr_nmprimtl := vr_tab_aval(vr_idx_aval).nmdavali;
+          vr_dsendere := vr_tab_aval(vr_idx_aval).dsendere;
+          vr_nmbairro := vr_tab_aval(vr_idx_aval).dsendcmp;
+          vr_nrcepend := vr_tab_aval(vr_idx_aval).nrcepend;
+          vr_nmcidade := vr_tab_aval(vr_idx_aval).nmcidade;
+          vr_cdufende := vr_tab_aval(vr_idx_aval).cdufresd;
+          vr_nrendere := vr_tab_aval(vr_idx_aval).nrendere;
+          vr_complend := vr_tab_aval(vr_idx_aval).complend;
+          vr_idx_aval := NULL;
+        END IF;
+     END LOOP;
+   END IF; 
+   
+   -- Verificar se existe o pagador na crapsab, inclui ou atualiza
+   OPEN cr_crapsab (pr_cdcooper => pr_cdcooper
+                   ,pr_nrctabnf => vr_nrdconta_cob
+                   ,pr_nrinssac => vr_nrinssac);
+   FETCH cr_crapsab INTO rw_crapsab;
+   
+   IF (cr_crapsab%NOTFOUND) THEN
+     INSERT INTO crapsab (cdcooper,
+                          nrdconta,
+                          nrinssac,
+                          cdtpinsc,
+                          nmdsacad,
+                          dsendsac,
+                          nmbaisac,
+                          nrcepsac,
+                          nmcidsac,
+                          cdufsaca,
+                          cdoperad,
+                          hrtransa,
+                          dtmvtolt,
+                          nrendsac,
+                          complend,
+                          cdsitsac)
+                  VALUES (pr_cdcooper,
+                          vr_nrdconta_cob,
+                          vr_nrinssac,
+                          vr_cdtpinsc,
+                          vr_nmprimtl,
+                          vr_dsendere,
+                          vr_nmbairro,
+                          vr_nrcepend,
+                          vr_nmcidade,
+                          vr_cdufende,
+                          pr_cdoperad,
+                          GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
+                          pr_dtmvtolt,
+                          vr_nrendere,
+                          vr_complend,
+                          1);
+    ELSE
+     UPDATE crapsab sab
+        SET sab.dsendsac = vr_dsendere,
+            sab.nmbaisac = vr_nmbairro,
+            sab.nrcepsac = vr_nrcepend,
+            sab.nmcidsac = vr_nmcidade,
+            sab.cdufsaca = vr_cdufende
+      WHERE sab.cdcooper = pr_cdcooper
+        AND sab.nrdconta = vr_nrdconta_cob
+        AND sab.nrinssac = vr_nrinssac;
+
+   END IF;
+   CLOSE cr_crapsab;
+   
+   pc_verifica_gerar_boleto (pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+																	 	 ,pr_nrborder => pr_nrborder
+                                     ,pr_cdcritic => vr_cdcritic
+																		 ,pr_dscritic => vr_dscritic
+                                     );
+   IF (nvl(vr_cdcritic,0)>0 OR vr_dscritic IS NOT NULL) THEN
+     RAISE vr_exc_erro;
+   END IF;
+   /*
+   * PREPARA AS Descrições do título */
+   
+   vr_dsinform := gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_cdacesso => 'COBTIT_INSTR_LINHA_1') || '_' ||
+                     gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_cdacesso => 'COBTIT_INSTR_LINHA_2') || '_' ||
+                     gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_cdacesso => 'COBTIT_INSTR_LINHA_3') || '_' ||
+                     gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_cdacesso => 'COBTIT_INSTR_LINHA_4');
+                                              
+   vr_dsinform := REPLACE(vr_dsinform, '#CONTA#', gene0002.fn_mask_conta(pr_nrdconta));
+   vr_dsinform := REPLACE(vr_dsinform, '#conta#', gene0002.fn_mask_conta(pr_nrdconta));      
+   vr_dsinform := REPLACE(vr_dsinform, '#BORDERO#', to_char(pr_nrborder));
+   vr_dsinform := REPLACE(vr_dsinform, '#bordero#', to_char(pr_nrborder));
+   
+   /*
+   *GERA O BOLETO
+   */
+		cobr0005.pc_gerar_titulo_cobranca(pr_cdcooper => pr_cdcooper
+																			 ,pr_nrdconta => vr_nrdconta_cob
+																			 ,pr_nrcnvcob => vr_nrcnvcob
+																			 ,pr_nrctremp => NULL
+																			 ,pr_inemiten => 2                                
+																			 ,pr_cdbandoc => 085                             
+																			 ,pr_cdcartei => 1                               
+																			 ,pr_cddespec => 1                               
+																			 ,pr_nrctasac => pr_nrdconta
+																			 ,pr_cdtpinsc => vr_cdtpinsc
+																			 ,pr_nrinssac => vr_nrinssac
+																			 ,pr_dtmvtolt => pr_dtmvtolt
+																			 ,pr_dtdocmto => pr_dtmvtolt
+																			 ,pr_dtvencto => pr_dtvencto
+																			 ,pr_cdmensag => 0
+																			 ,pr_dsdoccop => to_char(pr_nrborder)
+																			 ,pr_vltitulo => pr_vlboleto
+                                                                             ,pr_dsinform => vr_dsinform
+																			 ,pr_cdoperad => 1
+																			 ,pr_cdcritic => vr_cdcritic
+																			 ,pr_dscritic => vr_dscritic
+																			 ,pr_tab_cob  => vr_tab_cob);
+
+			-- Se retornou alguma crítica
+			IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+				 -- Levanta exceção
+				 RAISE vr_exc_erro;
+			END IF;
+      /*Insere na tabela de ligacao do boleto gerado com os titulos*/
+      INSERT INTO tbrecup_cobranca
+             (/*01*/ cdcooper
+             ,/*02*/ nrdconta
+             ,/*03*/ nrctremp
+             ,/*04*/ nrdconta_cob
+             ,/*05*/ nrcnvcob
+             ,/*06*/ nrboleto
+             ,/*07*/ dsparcelas
+             ,/*08*/ dhtransacao
+             ,/*09*/ tpenvio
+             ,/*10*/ tpparcela
+             ,/*11*/ cdoperad
+             ,/*12*/ nrcpfava
+             ,/*13*/ idarquivo
+             ,/*14*/ idboleto
+             ,/*15*/ peracrescimo
+             ,/*16*/ perdesconto
+             ,/*17*/ vldesconto
+             ,/*18*/ tpproduto
+             ,/*19*/ qtdtitulo 
+             ,/*20*/ vldacordo
+             ,/*21*/ qtdacordo
+             ,/*22*/ vldvipjur
+             ,/*23*/ qtdvipjur
+             ,/*24*/ vldevedor
+             )
+       VALUES(/*01*/ pr_cdcooper
+             ,/*02*/ pr_nrdconta
+             ,/*03*/ pr_nrborder
+             ,/*04*/ vr_nrdconta_cob
+             ,/*05*/ vr_nrcnvcob
+             ,/*06*/ vr_tab_cob(1).nrdocmto
+             ,/*07*/ vr_dstitulo
+             ,/*08*/ SYSDATE
+             ,/*09*/ 0
+             ,/*10*/ vr_tpparcela
+             ,/*11*/ pr_cdoperad
+             ,/*12*/ pr_nrcpfava
+             ,/*13*/ pr_idarquiv
+             ,/*14*/ pr_idboleto
+             ,/*15*/ pr_peracres
+             ,/*16*/ pr_perdesco
+             ,/*17*/ pr_vldescto
+             ,/*18*/ 3 -- borderô
+             ,/*19*/ rw_craptdb_qtd.qtdtitulo
+             ,/*20*/ rw_craptdb_qtd.vldacordo
+             ,/*21*/ rw_craptdb_qtd.qtdacordo
+             ,/*22*/ rw_craptdb_qtd.vldvipjur
+             ,/*23*/ rw_craptdb_qtd.qtdvipjur
+             ,/*24*/ pr_vldevedor
+             );
+                                
+      pr_vltitulo := vr_tab_cob(1).vltitulo;
+      pr_nrboleto := vr_tab_cob(1).nrdocmto;
+      -- Gera log na lgm
+			gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+				                   pr_cdoperad => pr_cdoperad,
+													 pr_dscritic => '',
+													 pr_dsorigem => vr_dsorigem,
+													 pr_dstransa => 'Geracao de boleto bordero',
+													 pr_dttransa => TRUNC(SYSDATE),
+													 pr_flgtrans => 1,
+													 pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
+													 pr_idseqttl => 0,
+													 pr_nmdatela => pr_nmdatela,
+													 pr_nrdconta => pr_nrdconta,
+													 pr_nrdrowid => vr_nrdrowid);
+
+		  -- Bordero
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Bordero',
+																pr_dsdadant => '',
+																pr_dsdadatu => pr_nrborder);
+
+      -- Títulos
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																	pr_nmdcampo => 'Titulos',
+																	pr_dsdadant => '',
+																	pr_dsdadatu => vr_dstitulo);
+			
+      -- Data do vencimento
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Data do vencimento',
+																pr_dsdadant => '',
+																pr_dsdadatu => TO_CHAR(pr_dtvencto, 'DD/MM/RRRR'));
+
+			-- Valor do Boleto
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Vlr do boleto',
+																pr_dsdadant => '',
+																pr_dsdadatu => to_char(pr_vlboleto, 'fm999g999g990d00', 'NLS_NUMERIC_CHARACTERS = '',.'''));
+
+      -- Cria log de cobrança
+      PAGA0001.pc_cria_log_cobranca(pr_idtabcob => vr_tab_cob(1).rowidcob,
+                                    pr_cdoperad => pr_cdoperad,
+                                    pr_dtmvtolt => trunc(SYSDATE),
+                                    pr_dsmensag => 'Titulo referente ao bordero ' || to_char(pr_nrborder),
+                                    pr_des_erro => vr_des_erro,
+                                    pr_dscritic => vr_dscritic);
+
+   EXCEPTION
+     when vr_exc_erro THEN
+       pr_dscritic := vr_dscritic;
+ END pc_gerar_boleto_prejuizo;
+ 
+ PROCEDURE pc_gerar_boleto_prejuizo_web (pr_nrdconta IN crapbdt.nrdconta%TYPE   --> Número da conta
+                             ,pr_nrborder IN crapbdt.nrborder%TYPE   --> Número do Borderô
+                             ,pr_vlboleto IN NUMBER                  --> Valor a ser pago
+                             ,pr_flvlpagm IN NUMBER                  --> Identifica se é valor parcial ou total (5-Saldo Prejuizo/ 6-Parcial Prejuizo)
+                             ,pr_dtvencto IN VARCHAR2                --> Data de vencimento que o boleto será gerado
+                             ,pr_nrcpfava IN  crapass.nrcpfcgc%TYPE  --> Cpf do avalisa. Null se for o proprio sacado
+                             ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                             --------> OUT <--------
+                             ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                             ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                             ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                             ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                           ) IS
+                           
+   -- variaveis de entrada vindas no xml
+   vr_cdcooper integer;
+   vr_cdoperad varchar2(100);
+   vr_nmdatela varchar2(100);
+   vr_nmeacao  varchar2(100);
+   vr_cdagenci varchar2(100);
+   vr_nrdcaixa varchar2(100);
+   vr_idorigem varchar2(100);
+   -- Variável de críticas
+   vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
+   vr_dscritic varchar2(1000);        --> Desc. Erro
+   vr_exc_erro EXCEPTION;
+   
+   -- Variaveis da procedure
+   vr_tab_cobs    gene0002.typ_split;
+   vr_tab_chaves  gene0002.typ_split;
+   vr_index       INTEGER;
+   vr_idtabtitulo INTEGER;
+   vr_nrtitulo    INTEGER;
+   vr_dtvencto    DATE;
+   vr_vltitulo    NUMBER;
+   vr_nrboleto    INTEGER;
+   -- Informações de data do sistema
+   rw_crapdat  btch0001.rw_crapdat%TYPE;
+   vr_dtvencto DATE;
+ BEGIN
+   gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
+                              
+   vr_idtabtitulo:=0;
+      --    Verifica se a data esta cadastrada
+   OPEN  btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+   FETCH btch0001.cr_crapdat INTO rw_crapdat;
+   IF    btch0001.cr_crapdat%NOTFOUND THEN
+           close btch0001.cr_crapdat;
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+           raise vr_exc_erro;
+       END IF;
+   CLOSE btch0001.cr_crapdat;
+     
+     /*Gerar boleto com os titulos selecionados*/
+   pc_gerar_boleto_prejuizo (pr_cdcooper => vr_cdcooper
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrborder => pr_nrborder
+                             ,pr_nrcpfava => pr_nrcpfava
+                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                             ,pr_dtvencto => to_date(pr_dtvencto,'dd/mm/rrrr')
+                            ,pr_vlboleto => pr_vlboleto
+                             ,pr_nmdatela => vr_nmdatela
+                             ,pr_nmeacao  => vr_nmeacao
+                             ,pr_cdagenci => vr_cdagenci
+                             ,pr_nrdcaixa => vr_nrdcaixa
+                             ,pr_idorigem => vr_idorigem
+                             ,pr_cdoperad => vr_cdoperad
+                            ,pr_flvlpagm => pr_flvlpagm
+                             -->OUT<--
+                             ,pr_nrboleto => vr_nrboleto
+                             ,pr_vltitulo => vr_vltitulo
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                           );
+                           
+     IF (nvl(vr_cdcritic,0)>0 OR vr_dscritic IS NOT NULL) THEN
+       RAISE vr_exc_erro;
+     END IF;
+     
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
+      IF (vr_nrboleto > 0) THEN
+        pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                       '<root><dados><boleto>');
+        pc_escreve_xml('  <nrdocmto>' || vr_nrboleto || '</nrdocmto>'||
+                       '  <vltitulo>' || vr_vltitulo || '</vltitulo>');
+        pc_escreve_xml ('</boleto></dados></root>',true);
+        pr_retxml := xmltype.createxml(vr_des_xml);
+
+        /* liberando a memória alocada pro clob */
+        dbms_lob.close(vr_des_xml);
+        dbms_lob.freetemporary(vr_des_xml);
+      ELSE
+        vr_dscritic := 'Não foi possível gerar o boleto.';
+        RAISE vr_exc_erro;
+      END IF;
+   
+   COMMIT;
+   EXCEPTION
+     WHEN vr_exc_erro THEN
+       ROLLBACK;
+          /*  se foi retornado apenas código */
+          IF  nvl(vr_cdcritic,0) > 0 and vr_dscritic IS NULL THEN
+              /* buscar a descriçao */
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          END IF;
+          /* variavel de erro recebe erro ocorrido */
+          pr_cdcritic := nvl(vr_cdcritic,0);
+          pr_dscritic := vr_dscritic;
+          -- Carregar XML padrao para variavel de retorno
+          pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                          '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+     WHEN OTHERS THEN
+       ROLLBACK;
+          /* montar descriçao de erro nao tratado */
+          pr_dscritic := 'erro nao tratado na TELA_COBTIT.pc_gerar_boleto_prejuizo_web ' ||SQLERRM;
+          -- Carregar XML padrao para variavel de retorno
+          pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                          '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+ END pc_gerar_boleto_prejuizo_web;
  
  PROCEDURE pc_lista_avalista_web (pr_nrdconta IN craplim.nrdconta%TYPE
                               ,pr_nrborder IN crapbdt.nrborder%TYPE
@@ -1999,36 +3167,6 @@ create or replace package body cecred.TELA_COBTIT is
            AND bdt.nrborder = pr_nrborder;
       rw_bdt cr_bdt%ROWTYPE;
            
-      -- cursor Cyber - ativos
-      CURSOR cr_cyb (pr_cdcooper IN crapcyb.cdcooper%TYPE
-                    ,pr_nrdconta IN crapcyb.nrdconta%TYPE
-                    ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
-        SELECT 
-          nrctremp
-        FROM 
-          crapcyb cyb
-          INNER JOIN tbdsct_titulo_cyber c ON c.cdcooper=cyb.cdcooper AND c.nrdconta=cyb.nrdconta AND c.nrctrdsc=cyb.nrctremp
-         WHERE cyb.cdcooper = pr_cdcooper
-           AND cyb.nrdconta = pr_nrdconta
-           AND c.nrborder = pr_nrborder
-           AND cyb.cdorigem IN (4)
-           AND cyb.dtdbaixa IS NULL;
-      rw_cyb cr_cyb%ROWTYPE;
-      
-      -- cursor Cyber - Judicial, Extrajudicial ou VIP
-      CURSOR cr_cyc (pr_cdcooper IN crapcyc.cdcooper%TYPE
-                    ,pr_nrdconta IN crapcyc.nrdconta%TYPE
-                    ,pr_nrctremp IN crapcyc.nrctremp%TYPE) IS
-        SELECT flgjudic,
-               flextjud,
-               flgehvip 
-          FROM crapcyc cyc
-         WHERE cyc.cdcooper = pr_cdcooper
-           AND cyc.nrdconta = pr_nrdconta
-           AND cyc.nrctremp = pr_nrctremp
-           AND cyc.cdorigem = 3;
-      rw_cyc cr_cyc%ROWTYPE;
-
 		BEGIN
 	    -- Verifica se existe algum boleto em aberto
 		  OPEN cr_crapcob(pr_cdcooper, pr_nrdconta, pr_nrborder);
@@ -2133,53 +3271,6 @@ create or replace package body cecred.TELA_COBTIT is
 				RAISE vr_exc_erro;
  		  END IF;
       
-      -- verificar se o contrato esta ativo no Cyber
-      OPEN cr_cyb (pr_cdcooper => pr_cdcooper
-                  ,pr_nrdconta => pr_nrdconta
-                  ,pr_nrborder => pr_nrborder);
-      IF (cr_cyb%FOUND) THEN
-        LOOP
-        FETCH cr_cyb INTO rw_cyb;
-          EXIT WHEN cr_cyb%NOTFOUND;         
-            -- verificar que tipo contrato esta no Cyber
-            OPEN cr_cyc (pr_cdcooper => pr_cdcooper
-                        ,pr_nrdconta => pr_nrdconta
-                        ,pr_nrctremp => rw_cyb.nrctremp);
-            FETCH cr_cyc INTO rw_cyc;
-
-            IF cr_cyc%FOUND THEN
-              CLOSE cr_cyc;     
-              IF nvl(rw_cyc.flgjudic,0) = 1 THEN
-                -- Atribui crítica
-                vr_cdcritic := 0;
-                vr_dscritic := 'Não é permitido gerar boleto de títulos em Cobranca Judicial.';
-                -- Levanta exceção
-                RAISE vr_exc_erro;              
-              END IF;
-                              
-              IF nvl(rw_cyc.flextjud,0) = 1 THEN
-                -- Atribui crítica
-                vr_cdcritic := 0;
-                vr_dscritic := 'Não é permitido gerar boleto de títulos em Cobranca Extrajudicial.';
-                -- Levanta exceção
-                RAISE vr_exc_erro;              
-              END IF;
-                              
-              IF nvl(rw_cyc.flgehvip,0) = 1 THEN
-                -- Atribui crítica
-                vr_cdcritic := 0;
-                vr_dscritic := 'Não é permitido gerar boleto de títulos VIP.';
-                -- Levanta exceção
-                RAISE vr_exc_erro;              
-              END IF;                       
-            ELSE
-              CLOSE cr_cyc;                             
-            END IF;
-        END LOOP;
-      END IF;
-      
-      CLOSE cr_cyb;
-
 		EXCEPTION
 			WHEN vr_exc_erro THEN
 				-- Se possui código de crítica e não foi informado a descrição
@@ -5266,12 +6357,13 @@ create or replace package body cecred.TELA_COBTIT is
             ,arq.nmarq_gerado
             ,arq.insitarq idsituacao
             ,DECODE(arq.insitarq, 0, 'Pendente', 'Processado') dssituacao
-            ,3 AS tpproduto
+            ,arq.tpproduto
         FROM tbrecup_boleto_arq arq
             ,crapope ope
        WHERE arq.idarquivo = pr_idarquiv
          AND ope.cdcooper = pr_cdcooper
-         AND UPPER(ope.cdoperad) = UPPER(arq.cdoperad);
+         AND UPPER(ope.cdoperad) = UPPER(arq.cdoperad)
+         AND tpproduto = 3;
 		rw_arquivo cr_arquivo%ROWTYPE;
 
     -- Busca linhas de importação do boleto
@@ -5340,6 +6432,11 @@ create or replace package body cecred.TELA_COBTIT is
             ,imp.dserrger
             ,imp.nrcpfaval
             ,ass.nrcpfcgc
+            ,epr.qtdtitulo
+            ,epr.vldacordo
+            ,epr.qtdacordo
+            ,epr.vldvipjur
+            ,epr.qtdvipjur
         FROM tbrecup_boleto_import imp
             ,tbrecup_cobranca epr
             ,crapcob cob
@@ -5560,6 +6657,11 @@ create or replace package body cecred.TELA_COBTIT is
                                 '<tpenvio>'  || rw_boleto.tpenvio    || '</tpenvio>'  ||
                                 '<vltitulo>' || rw_boleto.vltitulo   || '</vltitulo>' ||
                                 '<dtvencto>' || rw_boleto.dtvencto   || '</dtvencto>' ||
+                                '<qtdtitulo>'|| nvl(rw_boleto.qtdtitulo,0)  || '</qtdtitulo>'||
+                                '<vldacordo>' || nvl(rw_boleto.vldacordo,0)   || '</vldacordo>' ||
+                                '<qtdacordo>' || nvl(rw_boleto.qtdacordo,0)   || '</qtdacordo>' ||
+                                '<vldvipjur>' || nvl(rw_boleto.vldvipjur,0)   || '</vldvipjur>' ||
+                                '<qtdvipjur>' || nvl(rw_boleto.qtdvipjur,0)   || '</qtdvipjur>' ||
                          '</linha>');
         END LOOP;
         
@@ -5886,7 +6988,8 @@ create or replace package body cecred.TELA_COBTIT is
       SELECT arq.idarquivo,
              arq.insitarq
         FROM tbrecup_boleto_arq arq
-       WHERE UPPER(arq.nmarq_import) = UPPER(pr_nmarquiv);
+       WHERE UPPER(arq.nmarq_import) = UPPER(pr_nmarquiv)
+         AND tpproduto = 3;
 		rw_arquivo cr_arquivo%ROWTYPE;
 
 		-- Cursor para consultar cooperativa
@@ -6025,7 +7128,7 @@ create or replace package body cecred.TELA_COBTIT is
         /*Atualiza data e operador da reimportação*/
         BEGIN
           UPDATE tbrecup_boleto_arq
-             SET dtarquivo = rw_crapdat.dtmvtolt
+             SET dtarquivo = SYSDATE
                 ,cdoperad  = vr_cdoperad
            WHERE idarquivo = rw_arquivo.idarquivo;
         EXCEPTION
@@ -6040,7 +7143,7 @@ create or replace package body cecred.TELA_COBTIT is
           -- Inclui registro de novo arquivo
           INSERT INTO tbrecup_boleto_arq (idarquivo,dtarquivo,cdoperad,nmarq_import,insitarq,tpproduto)
                VALUES ((SELECT (NVL(MAX(idarquivo), 0) + 1) FROM tbrecup_boleto_arq),
-                        rw_crapdat.dtmvtolt,vr_cdoperad,vr_nmarquiv,0,3) -- 0 = Pendente, 3= Desc de Título
+                        SYSDATE,vr_cdoperad,vr_nmarquiv,0,3) -- 0 = Pendente, 3= Desc de Título
             RETURNING idarquivo INTO rw_arquivo.idarquivo;
         EXCEPTION
           WHEN OTHERS THEN
@@ -6457,6 +7560,7 @@ create or replace package body cecred.TELA_COBTIT is
       Dados referentes ao programa:
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina referente a geracao de arquivo csv para aprceiro no ayllos web.
+      Alterações: 07/03/2019 - atualização para deixar igual a geração da cobemp (Cássia de Oliveira - GFT) 
     ..............................................................................*/
 		DECLARE
 
@@ -6469,21 +7573,39 @@ create or replace package body cecred.TELA_COBTIT is
     vr_exc_critica EXCEPTION;
      
     -- Variaveis auxiliares
-    vr_tab_cob      cobr0005.typ_tab_cob;
+    --vr_tab_cob      cobr0005.typ_tab_cob;
     vr_arquivo      CLOB;
     vr_dsnmarq      VARCHAR2(100);
     vr_caminho_arq  VARCHAR2(200);
     
+    
+  --  vr_dsdinstr VARCHAR2(2000);
+    vr_cdagediv NUMBER;
+    vr_retorno  BOOLEAN;
+    vr_dsagebnf VARCHAR2(10);
+    
+    vr_cdbarras VARCHAR2(2000);
+    vr_lindigit VARCHAR2(2000);
+    
+    vr_dsdinst1 VARCHAR2(2000);
+    vr_dsdinst2 VARCHAR2(2000);
+    vr_dsdinst3 VARCHAR2(2000);
+    vr_dsdinst4 VARCHAR2(2000);
+    vr_dsdinst5 VARCHAR2(2000);
+    
+    vr_vltitulo  VARCHAR2(100);
+    vr_vldevedor VARCHAR2(100);
+        
     -------------------------------- CURSORES --------------------------------------
 
 		-- Cursor para consultar arquivo
 		CURSOR cr_crapcob(pr_idarquiv IN tbrecup_cobranca.idarquivo%TYPE) IS       
-      SELECT epr.cdcooper
-            ,epr.nrdconta
-            ,epr.nrdconta_cob
-            ,epr.nrctremp
+      SELECT tit.cdcooper
+            ,tit.nrdconta
+            ,tit.nrdconta_cob
+            ,tit.nrctremp
+            ,tit.dsparcelas
             ,imp.nrcpfaval
-            ,cob.nmdsacad
             ,DECODE(imp.tpenvio,1,'E-mail',2,'SMS',3,'Carta') tpenvio
             ,cob.vltitulo
             ,cob.dtvencto
@@ -6493,24 +7615,73 @@ create or replace package body cecred.TELA_COBTIT is
             ,imp.nrfone_envio
             ,imp.dsemail_envio
             ,imp.dsendereco_envio
+            ,cob.cdmensag
+            ,cob.tpjurmor
+            ,cob.flgdprot
+            ,cob.flserasa
+            ,cob.tpdmulta
+            ,cob.qtdiaprt
+            ,cob.qtdianeg
+            ,cob.vljurdia
+            ,cob.vlrmulta
+            ,cob.dsdinstr
+            ,cob.nrnosnum
+            ,cob.cdbandoc
+            ,cob.cdcartei
+            ,sab.nmdsacad
+            ,sab.nrinssac
+            ,cop.cdagectl
+            ,tit.vldevedor
+            ,imp.dscep_envio
         FROM tbrecup_boleto_import imp
-            ,tbrecup_cobranca epr
+            ,tbrecup_cobranca tit
             ,crapcob cob
+            ,crapcco cco
+            ,crapsab sab
+            ,crapcop cop
        WHERE imp.idarquivo = pr_idarquiv
-         AND epr.idarquivo = imp.idarquivo
-         AND epr.idboleto  = imp.idboleto
-         AND epr.tpproduto = 3
-         AND cob.cdcooper = epr.cdcooper
-         AND cob.nrdconta = epr.nrdconta_cob
-         AND cob.nrcnvcob = epr.nrcnvcob
-         AND cob.nrdocmto = epr.nrboleto;
+         AND tit.idarquivo = imp.idarquivo
+         AND tit.idboleto  = imp.idboleto
+         AND tit.tpproduto = 3
+         AND cco.cdcooper = tit.cdcooper
+         AND cco.nrconven = tit.nrcnvcob											   
+         AND cop.cdcooper = tit.cdcooper
+         AND cob.cdcooper = tit.cdcooper
+         AND cob.nrdconta = tit.nrdconta_cob
+         AND cob.cdbandoc = cco.cddbanco
+         AND cob.nrdctabb = cco.nrdctabb
+         AND cob.nrcnvcob = tit.nrcnvcob
+         AND cob.nrdocmto = tit.nrboleto
+       --  AND cob.incobran = 0 -- Apenas titulos em aberto
+         AND sab.cdcooper = cob.cdcooper
+         AND sab.nrdconta = cob.nrdconta
+         AND sab.nrinssac = cob.nrinssac
+         ORDER BY cob.nrdconta, cob.nrctremp;
     
     CURSOR cr_arquivo(pr_idarquiv IN tbrecup_cobranca.idarquivo%TYPE) IS       
        SELECT arq.dsarq_gerado
              ,arq.nmarq_gerado
         FROM tbrecup_boleto_arq arq
-       WHERE arq.idarquivo = pr_idarquiv;
+       WHERE arq.idarquivo = pr_idarquiv
+         AND tpproduto = 3;
     rw_arquivo cr_arquivo%ROWTYPE;
+    
+    CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%TYPE
+                      ,pr_nrdconta IN craptdb.nrdconta%TYPE
+                      ,pr_nrborder IN craptdb.nrborder%TYPE
+                      ,pr_cdbandoc IN craptdb.cdbandoc%TYPE
+                      ,pr_nrcnvcob IN craptdb.nrcnvcob%TYPE
+                      ,pr_nrtitulo IN VARCHAR2)IS
+      SELECT listagg(nrdocmto, ', ') WITHIN GROUP (ORDER BY nrdocmto) AS nrdocmto
+        FROM craptdb 
+       WHERE cdcooper = pr_cdcooper 
+         AND nrdconta = pr_nrdconta
+         AND nrborder = pr_nrborder 
+         AND cdbandoc = pr_cdbandoc
+         AND nrcnvcob = pr_nrcnvcob
+         AND nrtitulo IN (SELECT to_number(regexp_substr(pr_nrtitulo,'[^,]+', 1, LEVEL)) FROM dual
+                            CONNECT BY regexp_substr(pr_nrtitulo, '[^,]+', 1, LEVEL) IS NOT NULL);
+    rw_craptdb cr_craptdb%ROWTYPE;
     
     -- Variáveis de controle de calendário
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -6564,41 +7735,128 @@ create or replace package body cecred.TELA_COBTIT is
 
         FOR rw_crapcob IN cr_crapcob(pr_idarquiv => pr_idarquiv) LOOP
           
-          COBR0005.pc_buscar_titulo_cobranca(pr_cdcooper => rw_crapcob.cdcooper
-                                            ,pr_nrdconta => rw_crapcob.nrdconta_cob
-                                            ,pr_nrcnvcob => rw_crapcob.nrcnvcob
-                                            ,pr_nrdocmto => rw_crapcob.nrdocmto
-                                            ,pr_cdoperad => pr_cdoperad
-                                            ,pr_nriniseq => 1
-                                            ,pr_nrregist => 1
-                                            ,pr_cdcritic => vr_cdcritic
-                                            ,pr_dscritic => vr_dscritic
-                                            ,pr_tab_cob  => vr_tab_cob);
+          vr_dsdinst1 := ' ';
+          vr_dsdinst2 := ' ';
+          vr_dsdinst3 := ' ';
+          vr_dsdinst4 := ' ';
+          vr_dsdinst5 := ' ';
 
-          -- Verifica se retornou alguma crítica
-          IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-             -- Gera exceção
-             RAISE vr_exc_saida;
+          CASE rw_crapcob.cdmensag 
+             WHEN 0 THEN vr_dsdinst1 := ' ';
+             WHEN 1 THEN vr_dsdinst1 := 'MANTER DESCONTO ATE O VENCIMENTO';
+             WHEN 2 THEN vr_dsdinst1 := 'MANTER DESCONTO APOS O VENCIMENTO';
+          ELSE 
+             vr_dsdinst1 := ' ';             
+          END CASE;
+          
+          IF nvl(rw_crapcob.nrctremp,0) > 0 THEN
+             vr_dsdinst1 := '*** NAO ACEITAR PAGAMENTO APOS O VENCIMENTO ***';
           END IF;
           
-          IF vr_tab_cob.EXISTS(vr_tab_cob.FIRST) IS NOT NULL THEN
+          IF (rw_crapcob.tpjurmor <> 3) OR (rw_crapcob.tpdmulta <> 3) THEN
+            
+            vr_dsdinst2 := 'APOS VENCIMENTO, COBRAR: ';
+            
+            IF rw_crapcob.tpjurmor = 1 THEN 
+               vr_dsdinst2 := vr_dsdinst2 || 'R$ ' || to_char(rw_crapcob.vljurdia, 'fm999g999g990d00') || ' JUROS AO DIA';
+            ELSIF rw_crapcob.tpjurmor = 2 THEN 
+               vr_dsdinst2 := vr_dsdinst2 || to_char(rw_crapcob.vljurdia, 'fm999g999g990d00') || '% JUROS AO MES';
+            END IF;
+      			
+            IF rw_crapcob.tpjurmor <> 3 AND
+               rw_crapcob.tpdmulta <> 3 THEN
+               vr_dsdinst2 := vr_dsdinst2 || ' E ';
+            END IF;
+
+            IF rw_crapcob.tpdmulta = 1 THEN 
+               vr_dsdinst2 := vr_dsdinst2 || 'MULTA DE R$ ' || to_char(rw_crapcob.vlrmulta, 'fm999g999g990d00');
+            ELSIF rw_crapcob.tpdmulta = 2 THEN 
+               vr_dsdinst2 := vr_dsdinst2 || 'MULTA DE ' || to_char(rw_crapcob.vlrmulta, 'fm999g999g990d00') || '%';
+            END IF;
+      			      			
+          END IF;
+          
+          IF rw_crapcob.flgdprot = 1 THEN
+             vr_dsdinst3 := 'PROTESTAR APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS CORRIDOS DO VENCIMENTO.';
+             vr_dsdinst4 := ' ';
+          END IF;
+                    
+          IF rw_crapcob.flserasa = 1 AND rw_crapcob.qtdianeg > 0  THEN
+             vr_dsdinst3 := 'NEGATIVAR NA SERASA APOS ' || to_char(rw_crapcob.qtdianeg,'fm00') || ' DIAS CORRIDOS DO VENCIMENTO.';
+             vr_dsdinst4 := ' ';
+          END IF;
+          
+          -- Calcula digito agencia
+          vr_cdagediv := rw_crapcob.cdagectl * 10;
+          vr_retorno  := gene0005.fn_calc_digito(pr_nrcalcul => vr_cdagediv, pr_reqweb => FALSE);
+          vr_dsagebnf := gene0002.fn_mask(vr_cdagediv, '9999-9');
+          
+          
+          -- Monta codigo de barra
+          COBR0005.pc_calc_codigo_barras ( pr_dtvencto => rw_crapcob.dtvencto
+                                          ,pr_cdbandoc => rw_crapcob.cdbandoc
+                                          ,pr_vltitulo => rw_crapcob.vltitulo
+                                            ,pr_nrcnvcob => rw_crapcob.nrcnvcob
+                                          ,pr_nrcnvceb => 0
+                                            ,pr_nrdconta => rw_crapcob.nrdconta_cob
+                                            ,pr_nrdocmto => rw_crapcob.nrdocmto
+                                          ,pr_cdcartei => rw_crapcob.cdcartei
+                                          ,pr_cdbarras => vr_cdbarras);
+
+          -- Monta Linha Digitavel
+          COBR0005.pc_calc_linha_digitavel(pr_cdbarras => vr_cdbarras,
+                                           pr_lindigit => vr_lindigit);
+
+          OPEN cr_craptdb(pr_cdcooper => rw_crapcob.cdcooper
+                         ,pr_nrdconta => rw_crapcob.nrdconta
+                         ,pr_nrborder => rw_crapcob.nrctremp
+                         ,pr_cdbandoc => rw_crapcob.cdbandoc
+                         ,pr_nrcnvcob => rw_crapcob.nrcnvcob
+                         ,pr_nrtitulo => rw_crapcob.dsparcelas);
+          FETCH cr_craptdb INTO rw_craptdb;
+          -- Se não encontrar
+          IF cr_craptdb%NOTFOUND THEN
+            -- Fechar o cursor pois efetuaremos raise
+            CLOSE cr_craptdb;
+            -- Montar mensagem de critica
+            vr_cdcritic := 1;
+            RAISE vr_exc_saida;
+          ELSE
+            -- Apenas fechar o cursor
+            CLOSE cr_craptdb;
+          END IF;
+                                           
+          vr_vltitulo :=  TO_CHAR(rw_crapcob.vltitulo,'FM9G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') ;
+          vr_vldevedor  :=  TO_CHAR(rw_crapcob.vldevedor,'FM9G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') ;
+          
             
             pc_escreve_xml(rw_crapcob.cdcooper || ';' ||
                            rw_crapcob.nrdconta || ';' ||
                            rw_crapcob.nrctremp || ';' ||
-                           vr_tab_cob(vr_tab_cob.FIRST).nmdsacad || ';' ||
-                           vr_tab_cob(vr_tab_cob.FIRST).lindigit || ';' ||
-                           to_char(vr_tab_cob(vr_tab_cob.FIRST).dtvencto,'DD/MM/RRRR') || ';' ||
-                           vr_tab_cob(vr_tab_cob.FIRST).dsdinstr ||
-                           vr_tab_cob(vr_tab_cob.FIRST).dsdinst1 ||
-                           vr_tab_cob(vr_tab_cob.FIRST).dsdinst2 ||
-                           vr_tab_cob(vr_tab_cob.FIRST).dsdinst3 ||
-                           vr_tab_cob(vr_tab_cob.FIRST).dsdinst4 ||
-                           vr_tab_cob(vr_tab_cob.FIRST).dsdinst5 || ';' ||
+                          substr(rw_crapcob.nmdsacad,1,40) || ';' ||
+                          vr_lindigit || ';' ||
+                          to_char(rw_crapcob.dtvencto,'DD/MM/RRRR') || ';' ||
+                          rw_crapcob.dsdinstr ||
+                          vr_dsdinst1 ||
+                          vr_dsdinst2 ||
+                          vr_dsdinst3 ||
+                          vr_dsdinst4 ||
+                          vr_dsdinst5 || ';' ||
+                          REPLACE(rw_crapcob.dsendereco_envio,CHR(13),'') || ';' ||
+                          REPLACE(rw_crapcob.dscep_envio,CHR(13),'') || ';' ||
+                          vr_vldevedor || ';' ||
+                          vr_vltitulo || ';' ||
                            '(' || rw_crapcob.nrddd_envio || ') ' || gene0002.fn_mask(rw_crapcob.nrfone_envio,'99999-9999') || ';' ||
-                           rw_crapcob.dsemail_envio || ';' ||
-                           rw_crapcob.dsendereco_envio || '|');
-          END IF;
+                          rw_crapcob.nrnosnum || ';' ||
+                          rw_crapcob.cdbandoc || ';' ||
+                          vr_dsagebnf || ';' ||
+                          rw_crapcob.cdcartei || ';' ||
+                          rw_crapcob.nrdconta_cob || ';' ||
+                          rw_crapcob.nrinssac || ';' ||
+                          rw_crapcob.nrctremp || ';' ||
+                          rw_craptdb.nrdocmto || ';' ||
+                          'DM' || '|' || CHR(13));
+          
         END LOOP;
         vr_dsnmarq := 'BPC_CECRED_' || lpad(pr_idarquiv,6,0) || '.csv';
         
@@ -6845,6 +8103,12 @@ create or replace package body cecred.TELA_COBTIT is
     vr_nmarquiv VARCHAR2(200);
     vr_nrboleto NUMBER;
     vr_vltitulo NUMBER;
+    vr_vlsldatu NUMBER;
+    
+    vr_vldacordo NUMBER(25,2);
+    vr_qtdacordo INTEGER;
+    vr_vldvipjur NUMBER(25,2);
+    vr_qtdvipjur INTEGER;
     
     -- Tratamento de erros
     vr_exc_erro EXCEPTION;
@@ -6855,6 +8119,12 @@ create or replace package body cecred.TELA_COBTIT is
     
     -- Retorno OK/NOK
     vr_des_erro VARCHAR(3);            
+    
+    vr_vldsctmx NUMBER;
+    vr_vltpagar NUMBER;
+    vr_vlboleto NUMBER;
+    vr_dtvencto DATE;
+    
     
     -- Tabela temporaria para os vencimento
     TYPE typ_reg_crapprm IS
@@ -6903,7 +8173,8 @@ create or replace package body cecred.TELA_COBTIT is
             ,arq.nmarq_gerado
             ,arq.insitarq
         FROM tbrecup_boleto_arq arq
-       WHERE arq.idarquivo = pr_idarquiv;
+       WHERE arq.idarquivo = pr_idarquiv
+         AND tpproduto = 3;
 		rw_arquivo cr_arquivo%ROWTYPE;
 
     -- Busca linhas de importação do boleto
@@ -6941,42 +8212,20 @@ create or replace package body cecred.TELA_COBTIT is
     -- Cursor para localizar contrato de emprestimo
 		CURSOR cr_crapbdt(pr_cdcooper IN crapbdt.cdcooper%TYPE
                      ,pr_nrdconta IN crapbdt.nrdconta%TYPE
-                     ,pr_nrborder IN crapbdt.nrborder%TYPE
-                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
-			SELECT 
-        bdt.insitbdt
-		  FROM 
-        crapbdt bdt
-			WHERE 
-        bdt.cdcooper = pr_cdcooper
+                     ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
+			SELECT bdt.insitbdt,
+             bdt.inprejuz 
+		    FROM crapbdt bdt
+			 WHERE bdt.cdcooper = pr_cdcooper
 				  AND bdt.nrdconta = pr_nrdconta
 				  AND bdt.nrborder = pr_nrborder;
 		rw_crapbdt cr_crapbdt%ROWTYPE;   
 
     vr_titpagar    typ_tab_dados_vencidos;
     
-    
     vr_qtregist         number;
     vr_tab_dados_titulos DSCT0003.typ_tab_tit_bordero;
-/*    CURSOR cr_craptdb(pr_cdcooper  IN craptdb.cdcooper%TYPE
-                      ,pr_nrdconta IN craptdb.nrdconta%TYPE
-                      ,pr_nrborder IN craptdb.nrborder%TYPE
-                      ,pr_dtmvtolt IN craptdb.dtvencto%TYPE
-                      ) IS
-      SELECT
-        tdb.nrtitulo,
-        tdb.vlsldtit,
-        tdb.nrborder
-      FROM 
-        craptdb tdb 
-      WHERE 
-        tdb.nrborder = pr_nrborder
-        AND tdb.cdcooper = pr_cdcooper
-        AND tdb.nrdconta = pr_nrdconta
-        AND tdb.insittit = 4
-        AND gene0005.fn_valida_dia_util(pr_cdcooper, tdb.dtvencto)<pr_dtmvtolt
-      ;*/
---    rw_craptdb cr_craptdb%ROWTYPE;
+
     -- Variáveis de controle de calendário
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
       
@@ -7106,26 +8355,6 @@ create or replace package body cecred.TELA_COBTIT is
             END IF;
             RAISE vr_exc_critica;
           END IF;
-        /*
-          -- Verifica contratos de acordo
-          RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_tab_import(vr_index).cdcooper
-                                           ,pr_nrdconta => vr_tab_import(vr_index).nrdconta
-                                           ,pr_nrctremp => vr_tab_import(vr_index).nrborder
-                                           ,pr_cdorigem => 3
-                                           ,pr_flgativo => vr_flgativo
-                                           ,pr_cdcritic => vr_cdcritic
-                                           ,pr_dscritic => vr_dscritic);
-
-          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-            -- Gerar exceção
-            RAISE vr_exc_critica;
-          END IF;
-*/         
-          IF vr_flgativo = 1 THEN
-            vr_dscritic := 'Geração de boleto não permitido, emprestimo em acordo.';
-            -- Gerar exceção
-            RAISE vr_exc_critica;
-          END IF;
           
           -- Leitura do calendário da cooperativa
           OPEN btch0001.cr_crapdat(pr_cdcooper => vr_tab_import(vr_index).cdcooper);
@@ -7144,9 +8373,9 @@ create or replace package body cecred.TELA_COBTIT is
           
           OPEN cr_crapbdt(pr_cdcooper => vr_tab_import(vr_index).cdcooper
                          ,pr_nrdconta => vr_tab_import(vr_index).nrdconta
-                         ,pr_nrborder => vr_tab_import(vr_index).nrborder
-                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+                         ,pr_nrborder => vr_tab_import(vr_index).nrborder);
           FETCH cr_crapbdt INTO rw_crapbdt;
+          
           IF cr_crapbdt%NOTFOUND THEN
             --Fecha cursor
             CLOSE cr_crapbdt;
@@ -7158,24 +8387,62 @@ create or replace package body cecred.TELA_COBTIT is
           END IF;
           --Fecha cursor
           CLOSE cr_crapbdt;
-          IF (vr_tab_import(vr_index).nrdconta=128651) THEN
-            NULL;
+                      
+          IF (rw_crapbdt.insitbdt<>3) THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Borderô deve estar na situação Liberado.';
+            RAISE vr_exc_critica;
           END IF;
-          pc_buscar_titulo_vencido(vr_tab_import(vr_index).cdcooper         --> Código da Cooperativa
-                        ,vr_tab_import(vr_index).nrdconta        --> Número da Conta
-                        ,vr_tab_import(vr_index).nrborder        --> Número do bordero
-                        ,rw_crapdat.dtmvtolt                     --> Data de movimentacao
-                        ,vr_tab_import(vr_index).dtvencto        --> Data de vencimento que o boleto será gerado
+          
+          IF nvl(vr_tab_import(vr_index).perdesconto,0) = 0 THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Percentual de Desconto nao Informado.';
+            RAISE vr_exc_critica;
+          END IF;
+          
+          -- Busca os dados dos títulos do borderô
+          pc_buscar_titulo_vencido(pr_cdcooper => vr_tab_import(vr_index).cdcooper         --> Código da Cooperativa
+                        ,pr_nrdconta => vr_tab_import(vr_index).nrdconta        --> Número da Conta
+                        ,pr_nrborder => vr_tab_import(vr_index).nrborder        --> Número do bordero
+                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt                     --> Data de movimentacao
+                        ,pr_dtvencto => vr_tab_import(vr_index).dtvencto        --> Data de vencimento que o boleto será gerado
                         --------> OUT <--------
-                        ,vr_qtregist        --> Quantidade de registros encontrados
-                        ,vr_tab_dados_titulos --> Tabela de retorno dos títulos encontrados
-                        ,vr_cdcritic        --> Código da crítica
-                        ,vr_dscritic        --> Descrição da crítica
+                        ,pr_qtregist => vr_qtregist                             --> Quantidade de registros encontrados
+                        ,pr_vldacordo => vr_vldacordo                             --> Valor de títulos em acordo
+                        ,pr_qtdacordo => vr_qtdacordo                             --> Quantidade de títulos em acordo
+                        ,pr_vldvipjur => vr_vldvipjur                             --> Valor de títulos em vipjur
+                        ,pr_qtdvipjur => vr_qtdvipjur                             --> Quantidade de títulos em vipjur
+                        ,pr_tab_dados_titulos => vr_tab_dados_titulos           --> Tabela de retorno dos títulos encontrados
+                        ,pr_cdcritic => vr_cdcritic                             --> Código da crítica
+                        ,pr_dscritic => vr_dscritic                             --> Descrição da crítica
+                                  ,pr_cdorigem => 1 -- Boletagem Massiva 
                         );
+                          
           IF(nvl(vr_cdcritic,0)>0 OR vr_dscritic IS NOT NULL) THEN
             RAISE vr_exc_critica;
           END IF;
            
+              
+          IF (vr_qtdacordo = vr_qtregist) THEN 
+            vr_cdcritic := 0;
+            vr_dscritic := 'Todos os títulos do borderô estão em acordo';
+            RAISE vr_exc_critica;
+          END IF;
+
+          IF (vr_qtdvipjur = vr_qtregist) THEN 
+            vr_cdcritic := 0;
+            vr_dscritic := 'Todos os títulos do borderô estão marcados como VIP';
+            RAISE vr_exc_critica;
+          END IF;
+
+          IF ((vr_qtdvipjur+vr_qtdacordo) = vr_qtregist) THEN 
+            vr_cdcritic := 0;
+            vr_dscritic := 'Existem '|| vr_qtdacordo ||' títulos em acordo e '|| vr_qtdvipjur ||' títulos marcados como VIP';
+            RAISE vr_exc_critica;
+          END IF;
+          
+          -- Borderô não está em prejuízo
+          IF rw_crapbdt.inprejuz = 0 THEN
           vr_vlsdeved     := 0;
           vr_vlparbdt     := 0;
           vr_vlorigem     := 0;
@@ -7183,12 +8450,12 @@ create or replace package body cecred.TELA_COBTIT is
           vr_vlacresc     := 0;
           vr_index_titulo := vr_tab_dados_titulos.first;
           vr_titpagar.delete;
-          while vr_index_titulo is not null loop
+          WHILE vr_index_titulo IS NOT NULL LOOP
             vr_titpagar(vr_index_titulo).nrtitulo := vr_tab_dados_titulos(vr_index_titulo).nrtitulo;
             vr_titpagar(vr_index_titulo).vlapagar := vr_tab_dados_titulos(vr_index_titulo).vlpagar;
             vr_titpagar(vr_index_titulo).nrborder := vr_tab_import(vr_index).nrborder;
             
-            vr_vlorigem := vr_vlorigem+vr_tab_dados_titulos(vr_index_titulo).vlsldtit;
+              vr_vlorigem := vr_vlorigem + vr_tab_dados_titulos(vr_index_titulo).vlorigem;
             -- Verificar Desconto e Acrescimo
             -- 1º Desconto
             IF nvl(vr_tab_import(vr_index).perdesconto,0) > 0 THEN             
@@ -7206,23 +8473,13 @@ create or replace package body cecred.TELA_COBTIT is
             
             /* buscar proximo */
             vr_index_titulo := vr_tab_dados_titulos.next(vr_index_titulo);
-          end loop;
+          END LOOP;
           
           vr_vlsdeved := vr_vlparbdt;
           
-          IF (rw_crapbdt.insitbdt<>3) THEN
-            vr_cdcritic := 0;
-            vr_dscritic := 'Borderô deve estar na situação Liberado.';
-            RAISE vr_exc_critica;
-          END IF;
           IF (nvl(vr_vlsdeved,0)<=0) THEN 
             vr_cdcritic := 0;
             vr_dscritic := 'Borderô não possui saldo devedor.';
-            RAISE vr_exc_critica;
-          END IF;
-          IF nvl(vr_tab_import(vr_index).perdesconto,0) = 0 THEN
-            vr_cdcritic := 0;
-            vr_dscritic := 'Percentual de Desconto nao Informado.';
             RAISE vr_exc_critica;
           END IF;
           
@@ -7259,6 +8516,7 @@ create or replace package body cecred.TELA_COBTIT is
                              ,pr_peracres => vr_tab_import(vr_index).peracrescimo
                              ,pr_perdesco => vr_tab_import(vr_index).perdesconto
                              ,pr_vldescto => vr_vldescto
+                             ,pr_vldevedor => vr_vlorigem
                              -->OUT<--
                              ,pr_nrboleto => vr_nrboleto
                              ,pr_vltitulo => vr_vltitulo
@@ -7271,6 +8529,74 @@ create or replace package body cecred.TELA_COBTIT is
              TRIM(vr_dscritic) IS NOT NULL THEN
              -- Levanta exceção
              RAISE vr_exc_critica;
+            END IF;
+        
+          ELSE -- borderô em prejuízo
+            
+            vr_dtvencto:=to_date(vr_tab_import(vr_index).dtvencto, 'DD/MM/RRRR');
+      
+          
+            -- Busca as informações de prejuízo do borderô
+            pc_busca_dados_prejuizo ( pr_cdcooper  => vr_tab_import(vr_index).cdcooper --> Código da cooperativa
+                                     ,pr_nrdconta  => vr_tab_import(vr_index).nrdconta --> Número da conta
+                                     ,pr_nrborder  => vr_tab_import(vr_index).nrborder --> Número do Borderô
+                                     ,pr_dtmvtolt  => rw_crapdat.dtmvtolt              --> Data de movimentacao
+                                     ,pr_dtvencto  => vr_dtvencto --> Data de vencimento que o boleto será gerado
+                                     ,pr_flcomvip  => FALSE --> Desconsiderar títulos marcados como VIP
+                                     -->OUT<--
+                                     ,pr_vltpagar  => vr_vltpagar  --> Valor total em atraso
+                                     ,pr_vldacordo => vr_vldacordo --> Valor total em acordo
+                                     ,pr_vldsctmx  => vr_vldsctmx  --> Valor max para desconto
+                                     ,pr_vlsldatu  => vr_vlsldatu  --> Saldo prejuizo atualizado
+                                     ,pr_cdcritic  => vr_cdcritic  --> Código da crítica
+                                     ,pr_dscritic  => vr_dscritic  --> Descrição da crítica
+                                     );
+            
+            IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+               -- Levanta exceção
+               RAISE vr_exc_critica;
+            END IF;
+            
+            -- Calcula os valores de desconto do boleto
+            IF vr_tab_import(vr_index).perdesconto > 0 THEN
+              vr_vldescto := (vr_vltpagar * nvl(vr_tab_import(vr_index).perdesconto,0)) / 100;
+              vr_vlboleto := vr_vltpagar - vr_vldescto;
+            END IF;
+                 
+            -- gera o boleto do prejuízo
+            pc_gerar_boleto_prejuizo (pr_cdcooper => vr_tab_import(vr_index).cdcooper    	--> Código da cooperativa
+                                     ,pr_nrdconta => vr_tab_import(vr_index).nrdconta    	--> Número da conta
+                                     ,pr_nrborder => vr_tab_import(vr_index).nrborder     --> Número do Borderô
+                                     ,pr_nrcpfava => vr_tab_import(vr_index).nrcpfaval    --> Cpf do avalisa. Null se for o proprio sacado
+                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt                  --> Data de movimentacao
+                                     ,pr_dtvencto => vr_tab_import(vr_index).dtvencto     --> Data de vencimento que o boleto será gerado
+                                     ,pr_vlboleto => vr_vlboleto                          --> Valor do boleto
+                                     ,pr_nmdatela => vr_nmdatela                          --> Nome da tela
+                                     ,pr_nmeacao  => vr_nmeacao                           --> Nome da ação
+                                     ,pr_cdagenci => vr_cdagenci                          --> Agencia de operação
+                                     ,pr_nrdcaixa => vr_nrdcaixa                          --> Número do caixa
+                                     ,pr_idorigem => vr_idorigem                          --> Identificação de origem
+                                     ,pr_cdoperad => vr_cdoperad                          --> Operador
+                                     ,pr_idarquiv => pr_idarquiv                          --> Id do arquivo (boletagem Massiva)
+                                     ,pr_idboleto => vr_tab_import(vr_index).idboleto     --> Id a linha do arquivo
+                                     ,pr_peracres => vr_tab_import(vr_index).peracrescimo --> Percentual de acrescimo
+                                     ,pr_perdesco => vr_tab_import(vr_index).perdesconto  --> Percentual de desconto
+                                     ,pr_vldescto => vr_vldescto --> Valor do desconto
+                                     ,pr_flvlpagm => 5 --> Identifica se é valor parcial ou total (5-Saldo Prejuizo/ 6-Parcial Prejuizo)
+                                     ,pr_flcomvip => FALSE --> não deve considerar títulos marcados como VIP
+                                     ,pr_vldevedor => vr_vlsldatu
+                                     -->OUT<--
+                                     ,pr_nrboleto => vr_nrboleto --> Número do boleto criado
+                                     ,pr_vltitulo => vr_vltitulo --> Valor do titulo
+                                     ,pr_cdcritic => vr_cdcritic --> Código da crítica
+                                     ,pr_dscritic => vr_dscritic --> Descrição da crítica
+                                   );
+            
+            IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+               -- Levanta exceção
+               RAISE vr_exc_critica;
+            END IF;
+                
           END IF;
         
         EXCEPTION

@@ -35,6 +35,8 @@
  * 024: [21/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 025: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
  * 026: [24/01/2018] Processamento do campo DSNIVORI (risco original da proposta) (Reginaldo - AMcom)
+ * 027: [18/10/2018] Adicionado novos campos nas telas Avalista e Interveniente - PRJ 438. (Mateus Z / Mouts)
+ * 028: [07/11/2018] Retirado Revisão Cadastral quando for a proc grava-proposta-completa - PRJ 438 - Sprint 4. (Mateus Z / Mouts)
  */
 ?>
 
@@ -170,6 +172,12 @@
 	$dscatbem = (isset($_POST['dscatbem'])) ? $_POST['dscatbem'] : '' ;
 	
 	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1' ;
+	
+	// PRJ 438
+	$vlrecjg1 = (isset($_POST['vlrecjg1'])) ? $_POST['vlrecjg1'] : '' ;
+	$vlrecjg2 = (isset($_POST['vlrecjg2'])) ? $_POST['vlrecjg2'] : '' ;
+	//bruno - prj 438 - bug 14235
+	$aux_ingarapr = (isset($_POST['aux_ingarapr'])) ? $_POST['aux_ingarapr'] : '' ;
 	
 	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
 	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
@@ -489,6 +497,12 @@
     $xml .= '		<dscatbem>'.$dscatbem.'</dscatbem>';	
 	$xml .= '		<cdcoploj>0</cdcoploj>';
 	$xml .= '		<nrcntloj>0</nrcntloj>';
+	// PRJ 438
+	$xml .= '		<vlrecjg1>'.$vlrecjg1.'</vlrecjg1>';
+	$xml .= '		<vlrecjg2>'.$vlrecjg2.'</vlrecjg2>';
+	//bruno - prj 438 - bug 14235
+	$xml .= '	    <ingarapr>'.$aux_ingarapr.'</ingarapr>';
+
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
     
@@ -550,7 +564,7 @@
 	if ($procedure == 'grava-proposta-completa' || $operacao == 'F_VALOR'){
 		
 		if ($procedure == 'grava-proposta-completa') {
-			$metodoConsultas = "confirmaConsultas('" . $flmudfai . "', 'AT')";
+			$metodoConsultas = 'confirmaConsultas(\"' . $flmudfai . '\", \"AT\")';
 		}
 		
 		if ($resposta != '') {
@@ -594,15 +608,17 @@
 		$xmlObj    = getObjectXML($xmlResult);
 	}
 	
-	echo 'exibirMensagens("'.$stringArrayMsg.'","bloqueiaFundo($(\"#divConfirm\"))");bloqueiaFundo($("#divError"));';
+	if ($procedure == 'grava-proposta-completa') {
+		echo 'exibirMensagens("'.$stringArrayMsg.'","bloqueiaFundo($(\"#divConfirm\")); verificaCriticasRating(\"\"); ' . $metodoConsultas.'");bloqueiaFundo($("#divError"));';
+	} else {
+	    echo 'exibirMensagens("'.$stringArrayMsg.'","bloqueiaFundo($(\"#divConfirm\"))");bloqueiaFundo($("#divError"));';
+	}
 	
 	$msgAtCad = '764 - Registrar revisao cadastral? (S/N)';
 	$chaveAlt = $glbvars['cdcooper'].','.$nrdconta.','.$glbvars['dtmvtolt'];
 	$tpAtlCad = 2;
 	
-	if ($procedure == 'grava-proposta-completa') {
-		exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\');' . $metodoConsultas ,'verificaCriticasRating(\'\'); ' . $metodoConsultas ,false);
-	} else {
+	if ($procedure != 'grava-proposta-completa') {
 		exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\')','verificaCriticasRating(\'\')',false);
 	}
 

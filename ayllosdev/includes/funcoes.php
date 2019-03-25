@@ -72,6 +72,7 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 050:	[26/04/2018] Lombardi (CECRED)		: Criada nova rotina buscaSituacoesConta. Projeto 366 - Reestruturação dos tipos e situações de conta.
  * 051: [10/04/2018] Luis Fernando (Gft)	: Criada nova função getClassXml que devolve um objeto modificado do xmlFile fazendo algumas alterações em métodos para facilitar a construção
  * 052: [20/08/2018] Maykon (Envolti) : P442 - Criadas funcoes para Fipe, Aditiv e Manbem
+ * 053: [16/10/2018] Bruno Luiz Katzjarowski (Mout's) : Criar rotina para detectar encode da string e converter para o encode da página
   */
 
 // Função para requisição de dados através de XML 
@@ -569,7 +570,7 @@ function retornaUFs() {
 	return $estados;
 }
 
-function retornaCategorias() {
+function retornaCategorias() { //rubens - prj 438 - bug 14626
 	$categorias[0]["IDENTIFICADOR"]  = "AUTOMOVEL";
 	$categorias[0]["DESCRICAO"]   = "Automóvel";
 	$categorias[1]["IDENTIFICADOR"]  = "CAMINHAO";
@@ -2076,5 +2077,50 @@ function buscaSituacoesConta() {
 	}
 	
 	return $xmlObj->roottag->tags[0]->tags;
+}
+
+/**
+ * @author Bruno Luiz K. - Mout's;
+ * Descrição: Retorna uma string com encoding correto para exibição com acento
+ * @param string $string
+ * @param bool $desc
+ *
+ * @return mixed|null|string|string[]
+ */
+function decodeString($string, $html = false){
+	if($html){
+		$string = html_entity_decode($string, ENT_QUOTES);
+		$string = strip_tags($string);
+	}
+	$codificacaoAtual = mb_detect_encoding($string, 'auto', true);
+	$content = mb_convert_encoding($string, 'ISO-8859-1', $codificacaoAtual);
+	$content = decodeSpecialCharsHTML($content);
+	$content = str_replace(";",".",$content);
+	
+	return $content;
+}
+
+function decodeSpecialCharsHTML($content){
+	$arrSpecial = array(
+		"&quot;" => "\"",
+		"&#36;" => "$",
+		"&#37;" => "%",
+		"&#40;" => "(",
+		"&#41;" => ")",
+		"&#126;" => "~",
+		"&#39;" => "'",
+		"&lsquo;" => "‘",
+		"&rsquo;" => "’",
+		"&sbquo;" => "‚",
+		"&ldquo;" => "“",
+		"&rdquo;" => "”",
+		"&bdquo;" => "„",
+		"&#64;" => "@",
+		"&#45;" => "-",
+	);
+	foreach ($arrSpecial as $key => $value){
+		$content = str_replace($key, $value, $content);
+	}
+	return $content;
 }
 ?>

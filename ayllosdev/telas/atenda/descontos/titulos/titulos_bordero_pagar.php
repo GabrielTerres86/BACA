@@ -8,6 +8,7 @@
 	 Objetivo  : Fazer o pagamento dos titulos vencidos
 	                                                                  	 
 	 Alterações: 
+	  - 17/09/2018 - Inserção do campo de Acordo (Vitor S. Assanuma - GFT)
 	************************************************************************/
 	session_start();
 	
@@ -90,12 +91,13 @@
 					<th>IOF Atraso</th>
 					<th>Valor Atual</th>
 					<th>Valor a Pagar</th>
+					<th>Em Acordo</th>
 				</tr>			
 			</thead>
 			<tbody>
 				<?php foreach($dados->find("inf") as $t) {?>
 					<tr>
-						<td><input class="pagar-pgto-tit" type="checkbox" value="<?=$t->nrtitulo?>" /></td>
+						<td><input class="pagar-pgto-tit" type="checkbox" value="<?=$t->nrtitulo?>" <?=$t->flacordo->cdata == 1 ? 'hidden' : '' ?>/></td>
 						<td><?=$t->nrdocmto?></td>
 						<td><?=$t->dtvencto?></td>
 						<td><?=formataMoeda($t->vltitulo)?></td>
@@ -105,6 +107,7 @@
 						<td><?=formataMoeda($t->vliof)?></td>
 						<td><?=formataMoeda($t->vlsldtit)?></td>
 						<td><?=formataMoeda($t->vlpagar)?></td>
+						<td><?=$t->dsacordo?></td>
 					</tr>
 				<?php } ?>
 			</tbody>

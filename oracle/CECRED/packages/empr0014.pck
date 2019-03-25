@@ -184,7 +184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : 
-       Data    :                            Ultima atualizacao: 22/06/2018
+       Data    :                            Ultima atualizacao: 24/10/2018
 
        Dados referentes ao programa:
 
@@ -192,6 +192,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
        Objetivo  : Rotina responsavel por gravar efetivação da proposta
 
        Alteracoes: 22/06/2018 - Conversao Progress -> Oracle. (Renato Cordeito/Odirlei AMcom)
+
+                   24/10/2018 - P442 - AJustes na chamada da Valida Bens Alienados (Marcos-Envolti)
                   
     ............................................................................. */
       ----->> CURSORES <<-----
@@ -440,10 +442,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
         grvm0001.pc_valida_bens_alienados( pr_cdcooper => pr_cdcooper,
                                            pr_nrdconta => pr_nrdconta,
                                            pr_nrctrpro => pr_nrctremp,
-                                           pr_cdopcao  => '',
                                            pr_cdcritic => pr_cdcritic,
-                                           pr_dscritic => pr_dscritic,
-                                           pr_tab_erro => vr_tab_erro);
+                                           pr_dscritic => pr_dscritic); 
 
         if nvl(pr_cdcritic,0) <> 0 OR 
            nvl(pr_dscritic,'OK') <> 'OK' then
@@ -2359,8 +2359,6 @@ TYPE typ_tab_ratings IS
     
       --Variaveis Erro
       vr_cdcritic INTEGER;
-      vr_des_erro VARCHAR2(3);
-      vr_tab_erro GENE0001.typ_tab_erro;
       vr_dscritic VARCHAR2(4000);
     
       --Variaveis Excecao

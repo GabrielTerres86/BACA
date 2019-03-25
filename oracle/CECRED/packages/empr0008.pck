@@ -91,6 +91,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0008 IS
    -- Procedure da Tela: ESTORN, Acao: Consultar
    PROCEDURE pc_tela_consultar_estornos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
                                        ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Numero do Contrato
+                                       ,pr_cdtpprod IN INTEGER DEFAULT 1     --> Tipo do produto: 1 - Emprestimo PP ; 2 - Desconto de Títulos
               						 			 			 ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
  				    	          	 			 			 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
 						    				         			 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -102,6 +103,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0008 IS
    PROCEDURE pc_tela_consultar_detalhe_est(pr_nrdconta  IN crapepr.nrdconta%TYPE        --> Numero da Conta
                                           ,pr_nrctremp  IN crapepr.nrctremp%TYPE        --> Numero do Contrato
                                           ,pr_cdestorno IN tbepr_estorno.cdestorno%TYPE --> Codigo do Estorno
+                                          ,pr_cdtpprod IN INTEGER DEFAULT 1     --> Tipo do produto: 1 - Emprestimo PP ; 2 - Desconto de Títulos
                 						 			 			  ,pr_xmllog   IN VARCHAR2                      --> XML com informações de LOG
  	  			    	          	 			 			  ,pr_cdcritic OUT PLS_INTEGER                  --> Código da crítica
 		  				    				         			  ,pr_dscritic OUT VARCHAR2                     --> Descrição da crítica
@@ -1826,6 +1828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
 
   PROCEDURE pc_tela_consultar_estornos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
                                       ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Numero do Contrato
+                                      ,pr_cdtpprod IN INTEGER DEFAULT 1     --> Tipo do produto: 1 - Emprestimo PP ; 2 - Desconto de Títulos
               						 		 			  ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
  				    	          	 		 			  ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
 						    				         			,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -1849,9 +1852,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
 
      Observacao: -----
      Alteracoes:
+       - 15/09/2018 - Inserção do Desconto de Títulos (Vitor S. Assanuma - GFT)
      ..............................................................................*/
     DECLARE
-      -- Cursor dos estornos
+      -- Cursor dos estornos de empréstimo PP
       CURSOR cr_tbepr_estorno(pr_cdcooper IN tbepr_estorno.cdcooper%TYPE,
                               pr_nrdconta IN tbepr_estorno.nrdconta%TYPE,
                               pr_nrctremp IN tbepr_estorno.nrctremp%TYPE) IS
@@ -1863,6 +1867,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
 				 WHERE tbepr_estorno.cdcooper = pr_cdcooper
            AND tbepr_estorno.nrdconta = pr_nrdconta
            AND tbepr_estorno.nrctremp = pr_nrctremp;
+           
+       -- Cursor dos estornos de Desconto de Títulos
+      CURSOR cr_tbdsct_estorno(pr_cdcooper IN tbdsct_estorno.cdcooper%TYPE,
+                               pr_nrdconta IN tbdsct_estorno.nrdconta%TYPE,
+                               pr_nrborder IN tbdsct_estorno.nrborder%TYPE) IS
+			  SELECT te.cdestorno,
+               te.cdoperad,
+               te.dtestorno,
+               te.hrestorno
+				  FROM tbdsct_estorno te
+				 WHERE te.cdcooper = pr_cdcooper
+           AND te.nrdconta = pr_nrdconta
+           AND te.nrborder = pr_nrborder
+      ;rw_tbdsct_estorno cr_tbdsct_estorno%ROWTYPE;
            
       -- Cursor do Operador
       CURSOR cr_crapope(pr_cdcooper crapope.cdcooper%TYPE,
@@ -1905,6 +1923,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       -- Criar cabeçalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
       
+      --Empréstimo PP
+      IF (pr_cdtpprod = 1) THEN
       FOR rw_tbepr_estorno IN cr_tbepr_estorno(pr_cdcooper => vr_cdcooper,
                                                pr_nrdconta => pr_nrdconta,
                                                pr_nrctremp => pr_nrctremp) LOOP
@@ -1922,6 +1942,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
         vr_contador := vr_contador + 1;
 
       END LOOP; /* END FOR rw_tbepr_estorno */
+      
+      -- Desconto de Títulos
+      ELSIF (pr_cdtpprod = 2) THEN
+          FOR rw_tbdsct_estorno IN cr_tbdsct_estorno(pr_cdcooper => vr_cdcooper,
+                                                 pr_nrdconta => pr_nrdconta,
+                                                 pr_nrborder => pr_nrctremp) LOOP
+          -- Busca o nome do Operador                                       
+          OPEN cr_crapope(vr_cdcooper, rw_tbdsct_estorno.cdoperad);
+          FETCH cr_crapope INTO vr_nmoperad;        
+          CLOSE cr_crapope;
+
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdestorno', pr_tag_cont => rw_tbdsct_estorno.cdestorno, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdoperad',  pr_tag_cont => rw_tbdsct_estorno.cdoperad, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmoperad',  pr_tag_cont => vr_nmoperad, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtestorno', pr_tag_cont => TO_CHAR(rw_tbdsct_estorno.dtestorno,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'hrestorno', pr_tag_cont => GENE0002.fn_calc_hora(rw_tbdsct_estorno.hrestorno), pr_des_erro => vr_dscritic);
+
+          vr_contador := vr_contador + 1;
+
+        END LOOP;
+      END IF;
       
       IF vr_contador <= 0 THEN
         vr_dscritic := 'Nao existe estorno para a conta informada.';
@@ -1960,6 +2002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
   PROCEDURE pc_tela_consultar_detalhe_est(pr_nrdconta  IN crapepr.nrdconta%TYPE        --> Numero da Conta
                                          ,pr_nrctremp  IN crapepr.nrctremp%TYPE        --> Numero do Contrato
                                          ,pr_cdestorno IN tbepr_estorno.cdestorno%TYPE --> Codigo do Estorno
+                                         ,pr_cdtpprod  IN INTEGER DEFAULT 1            --> Tipo do produto: 1 - Emprestimo PP ; 2 - Desconto de Títulos
                						 			 			   ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
 	  			    	          	 			 			 ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
 		  				    				         			 ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
@@ -1983,9 +2026,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
 
      Observacao: -----
      Alteracoes:
+       - 16/09/2018 - Inserção do Desconto de Títulos (Vitor S. Assanuma - GFT)
+       - 22/03/2019 - Alteração para apresentar o nrdocmto ao invés do nrtitulo (Cássia de Oliveira - GFT)
      ..............................................................................*/
     DECLARE
-      -- Cursor dos estornos
+      -- Cursor dos estornos de Empréstimos PP
       CURSOR cr_tbepr_estorno(pr_cdcooper  IN tbepr_estorno.cdcooper%TYPE,
                               pr_nrdconta  IN tbepr_estorno.nrdconta%TYPE,
                               pr_nrctremp  IN tbepr_estorno.nrctremp%TYPE,
@@ -2002,6 +2047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
            AND tbepr_estorno.cdestorno = pr_cdestorno;
       rw_tbepr_estorno cr_tbepr_estorno%ROWTYPE;
       
+      -- Cursor de lançamentos de estornos de Empréstimos PP
       CURSOR cr_tbepr_estornolancamento(pr_cdcooper  IN tbepr_estorno.cdcooper%TYPE,
                                         pr_nrdconta  IN tbepr_estorno.nrdconta%TYPE,
                                         pr_nrctremp  IN tbepr_estorno.nrctremp%TYPE,
@@ -2020,6 +2066,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
            AND tbepr_estornolancamento.nrdconta  = pr_nrdconta
            AND tbepr_estornolancamento.nrctremp  = pr_nrctremp
            AND tbepr_estornolancamento.cdestorno = pr_cdestorno;
+           
+      -- Cursor dos estornos de Desconto de Títulos
+      CURSOR cr_tbdsct_estorno(pr_cdcooper  IN tbepr_estorno.cdcooper%TYPE,
+                              pr_nrdconta  IN tbepr_estorno.nrdconta%TYPE,
+                              pr_nrctremp  IN tbepr_estorno.nrctremp%TYPE,
+                              pr_cdestorno IN tbepr_estorno.cdestorno%TYPE) IS
+			  SELECT cdestorno,
+               cdoperad,
+               dsjustificativa,
+               dtestorno,
+               hrestorno
+				  FROM tbdsct_estorno
+				 WHERE tbdsct_estorno.cdcooper  = pr_cdcooper
+           AND tbdsct_estorno.nrdconta  = pr_nrdconta
+           AND tbdsct_estorno.nrborder  = pr_nrctremp
+           AND tbdsct_estorno.cdestorno = pr_cdestorno
+      ;rw_tbdsct_estorno cr_tbdsct_estorno%ROWTYPE;
+      
+      -- Cursor de lançamentos de estornos de Desconto de Títulos
+      CURSOR cr_tbdsct_estornolancamento(pr_cdcooper  IN tbepr_estorno.cdcooper%TYPE,
+                                        pr_nrdconta  IN tbepr_estorno.nrdconta%TYPE,
+                                        pr_nrctremp  IN tbepr_estorno.nrctremp%TYPE,
+                                        pr_cdestorno IN tbepr_estorno.cdestorno%TYPE) IS
+			  SELECT tdb.nrdocmto,
+               tbdsct_estornolancamento.dtvencto,
+               tbdsct_estornolancamento.dtpagamento,
+               tbdsct_estornolancamento.cdhistor,
+               craphis.dshistor,
+               tbdsct_estornolancamento.vllancamento
+				  FROM tbdsct_estornolancamento
+          JOIN craphis
+            ON craphis.cdcooper = tbdsct_estornolancamento.cdcooper
+           AND craphis.cdhistor = tbdsct_estornolancamento.cdhistor
+    INNER JOIN craptdb tdb 
+            ON tdb.cdcooper = tbdsct_estornolancamento.cdcooper
+           AND tdb.nrdconta = tbdsct_estornolancamento.nrdconta
+           AND tdb.nrborder = tbdsct_estornolancamento.nrborder
+           AND tdb.nrtitulo = tbdsct_estornolancamento.nrtitulo
+				 WHERE tbdsct_estornolancamento.cdcooper  = pr_cdcooper
+           AND tbdsct_estornolancamento.nrdconta  = pr_nrdconta
+           AND tbdsct_estornolancamento.nrborder  = pr_nrctremp
+           AND tbdsct_estornolancamento.cdestorno = pr_cdestorno
+      ;rw_tbdsct_estornolancamento cr_tbdsct_estornolancamento%ROWTYPE;        
            
       -- Cursor do Operador
       CURSOR cr_crapope(pr_cdcooper crapope.cdcooper%TYPE,
@@ -2060,6 +2149,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
                               
+      -- Caso seja emprestimo PP
+      IF pr_cdtpprod = 1 THEN                                                           
       -- Busca os dados do Estorno
       OPEN cr_tbepr_estorno (pr_cdcooper  => vr_cdcooper
                             ,pr_nrdconta  => pr_nrdconta
@@ -2116,7 +2207,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
                                                       </Inf>');
 
       END LOOP; /* END FOR rw_tbepr_estornolancamento */
+      -- Caso seja Desconto de Título
+      ELSIF pr_cdtpprod = 2 THEN
+        -- Busca os dados do Estorno
+        OPEN cr_tbdsct_estorno (pr_cdcooper  => vr_cdcooper
+                              ,pr_nrdconta  => pr_nrdconta
+                              ,pr_nrctremp  => pr_nrctremp
+                              ,pr_cdestorno => pr_cdestorno);
+        FETCH cr_tbdsct_estorno INTO rw_tbdsct_estorno;
+        -- Verifica se a retornou registro
+        IF cr_tbdsct_estorno%NOTFOUND THEN
+          CLOSE cr_tbdsct_estorno;
+          vr_dscritic := 'Estorno nao cadastrado. Codigo: ' || TO_CHAR(pr_cdestorno);
+          RAISE vr_exc_saida;
+        ELSE
+          -- Apenas Fecha o Cursor
+          CLOSE cr_tbdsct_estorno;
+        END IF;                              
       
+        -- Busca o nome do Operador                                       
+        OPEN cr_crapope(vr_cdcooper, rw_tbdsct_estorno.cdoperad);
+        FETCH cr_crapope INTO vr_nmoperad;        
+        CLOSE cr_crapope;
+          
+        -- Monta documento XML
+        dbms_lob.createtemporary(vr_clob, TRUE);
+        dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+        -- Criar cabeçalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>
+                                                        <Estorno>
+                                                          <cdestorno>'||rw_tbdsct_estorno.cdestorno||'</cdestorno>
+                                                          <cdoperad>'||rw_tbdsct_estorno.cdoperad||'</cdoperad>
+                                                          <nmoperad>'||vr_nmoperad||'</nmoperad>
+                                                          <dtestorno>'||TO_CHAR(rw_tbdsct_estorno.dtestorno,'DD/MM/YYYY')||'</dtestorno>
+                                                          <hrestorno>'||GENE0002.fn_calc_hora(rw_tbdsct_estorno.hrestorno)||'</hrestorno>
+                                                          <dsjustificativa>'||rw_tbdsct_estorno.dsjustificativa||'</dsjustificativa>                                                        
+                                                        </Estorno>
+                                                        <Detalhes>');
+        
+        -- Percorre todos os lancamentos que foram estornados                       
+        FOR rw_tbdsct_estornolancamento IN cr_tbdsct_estornolancamento(pr_cdcooper  => vr_cdcooper,
+                                                                       pr_nrdconta  => pr_nrdconta,
+                                                                       pr_nrctremp  => pr_nrctremp,
+                                                                       pr_cdestorno => pr_cdestorno) LOOP
+
+          gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                 ,pr_texto_completo => vr_xml_temp
+                                 ,pr_texto_novo     => '<Inf>
+                                                          <nrparepr>'||rw_tbdsct_estornolancamento.nrdocmto||'</nrparepr>
+                                                          <dtvencto>'||TO_CHAR(rw_tbdsct_estornolancamento.dtvencto,'DD/MM/YYYY')||'</dtvencto>
+                                                          <dtpagamento>'||TO_CHAR(rw_tbdsct_estornolancamento.dtpagamento,'DD/MM/YYYY')||'</dtpagamento>
+                                                          <cdhistor>'||rw_tbdsct_estornolancamento.cdhistor||'</cdhistor>
+                                                          <dshistor>'||rw_tbdsct_estornolancamento.dshistor||'</dshistor>
+                                                          <vllanmto>'||rw_tbdsct_estornolancamento.vllancamento||'</vllanmto>
+                                                        </Inf>');
+
+        END LOOP; /* END FOR rw_tbepr_estornolancamento */
+      END IF;
       -- Cria a Tag com os Totais
       gene0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp

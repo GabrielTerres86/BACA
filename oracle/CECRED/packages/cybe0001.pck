@@ -104,6 +104,9 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0001 AS
                                     ,pr_flgconsg IN crapcyb.flgconsg%TYPE --Indicador de valor consignado.
                                     ,pr_nrborder IN crapbdt.nrborder%TYPE DEFAULT NULL --> Numero do bordero do titulo em atraso no cyber
                                     ,pr_nrtitulo IN craptdb.nrtitulo%TYPE DEFAULT NULL --> Numero do titulo em atraso no cyber
+                                    --Campos atualizar prejuizo (Vitor - GFT)
+                                    ,pr_dtprejuz IN DATE DEFAULT NULL --> Numero do titulo em atraso no cyber
+                                    ,pr_vlsdprej IN crapcyb.vlsdprej%TYPE DEFAULT 0 --> Numero do titulo em atraso no cyber
                                     ,pr_dscritic OUT VARCHAR2);
 
 
@@ -227,6 +230,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                              crapass, crapttl, crapjur (Adriano - P339).
 
                 05/06/2018 - Ajuste para adicionar Desconto de Titulos (Andrew Albuquerque - GFT)
+                
+                11/09/2018 - Ajuste para adicionar atualização de prejuizo (Vitor S Assanuma - GFT)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -580,6 +585,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                                     ,pr_flgconsg IN crapcyb.flgconsg%TYPE --Indicador de valor consignado.
                                     ,pr_nrborder IN crapbdt.nrborder%TYPE DEFAULT NULL --> Numero do bordero do titulo em atraso no cyber
                                     ,pr_nrtitulo IN craptdb.nrtitulo%TYPE DEFAULT NULL --> Numero do titulo em atraso no cyber
+                                    --Campos atualizar prejuizo (Vitor - GFT)
+                                    ,pr_dtprejuz IN DATE                  DEFAULT NULL --> Data do prejuizo
+                                    ,pr_vlsdprej IN crapcyb.vlsdprej%TYPE DEFAULT 0    --> Valor do prejuizo
                                     ,pr_dscritic OUT VARCHAR2) AS
 
     -- ........................................................................
@@ -612,6 +620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
     --
     --                05/06/2018 - Adicionado a procedure pc_inserir_titulo_cyber (Paulo Penteado (GFT)) 
     --
+    --                06/09/2018 - Adicionar campos de Prejuizo (Vitor S Assanuma - GFT)
     -- ...................................................................................................
   BEGIN
     DECLARE
@@ -623,6 +632,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
       vr_dtatufin DATE;
       vr_vlprapga crapcyb.vlprapga%TYPE;
       vr_nrctremp crapcyb.nrctremp%TYPE;
+      vr_vlsdeved NUMBER;
+      vr_vlpreapg NUMBER;
+      
 
       --Variaveis De Erro
       vr_dscritic VARCHAR2(4000);
@@ -653,6 +665,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
 
     BEGIN
       vr_nrctremp := pr_nrctremp;
+      vr_vlsdeved := pr_vlsdeved;
+      vr_vlpreapg := pr_vlpreapg;
+      
+      -- Se o borderô de desconto de títulos estiver em prejuizo, zerar o valor de saldo a pagar
+      IF pr_flgpreju = 1 AND pr_cdorigem = 4 THEN
+        vr_vlsdeved := 0;
+        vr_vlpreapg := 0;
+      END IF;
+      
       -- Abrir cursor com os contrato do Cyber
       OPEN cr_crapcyb (pr_cdcooper => pr_cdcooper
                       ,pr_cdorigem => pr_cdorigem
@@ -664,8 +685,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
         --Fechar Cursor
         CLOSE cr_crapcyb;
 
-        --Se valor a pagar maior zero
-        IF nvl(pr_vlpreapg,0) > 0 THEN
+        --Se valor a pagar ou o de prejuizo for maior zero
+        IF (nvl(vr_vlpreapg,0) > 0) OR (nvl(pr_vlsdprej, 0) > 0) THEN
           -- Desconto de Titulos
           IF  pr_cdorigem = 4 THEN
               cybe0003.pc_inserir_titulo_cyber(pr_cdcooper => pr_cdcooper
@@ -722,6 +743,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               ,/*37*/ cyb.flgfolha --O pagamento e por Folha
               ,/*38*/ cyb.flgpreju --Esta em prejuizo.
               ,/*39*/ cyb.flgconsg --Indicador de valor consignado.
+              ,/*40*/ cyb.dtprejuz --Data que entrou em prejuizo
+              ,/*41*/ cyb.vlsdprej --Valor do prejuizo
               )
             VALUES
               (/*01*/ pr_cdcooper
@@ -732,12 +755,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               ,/*06*/ nvl(vr_flextjud,0)
               ,/*07*/ nvl(vr_flgehvip,0)
               ,/*08*/ 0
-              ,/*09*/ nvl(pr_vlsdeved,0)
+              ,/*09*/ nvl(vr_vlsdeved,0)
               ,/*10*/ nvl(pr_vljura60,0)
               ,/*11*/ nvl(pr_vlpreemp,0)
               ,/*12*/ nvl(pr_qtpreatr,0)
               ,/*13*/ 0
-              ,/*14*/ nvl(pr_vlpreapg,0)
+              ,/*14*/ nvl(vr_vlpreapg,0)
               ,/*15*/ nvl(pr_vldespes,0)
               ,/*16*/ nvl(pr_vlperris,0)
               ,/*17*/ pr_nivrisat
@@ -764,6 +787,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               ,/*37*/ nvl(pr_flgfolha,0) --O pagamento e por Folha
               ,/*38*/ nvl(pr_flgpreju,0) --Esta em prejuizo.
               ,/*39*/ nvl(pr_flgconsg,0) --Indicador de valor consignado.
+              --Inserção das atualizações de Prejuzio (Vitor - GFT)
+              ,/*40*/ pr_dtprejuz -- Data em que entrou em prejuizo
+              ,/*41*/ pr_vlsdprej -- Valor do prejuizo
               );
 
           EXCEPTION
@@ -778,7 +804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
         CLOSE cr_crapcyb;
 
         /* Caso jah estiver baixado, vamos reativar */
-        IF rw_crapcyb.dtdbaixa IS NOT NULL AND nvl(pr_vlpreapg,0) > 0 THEN
+        IF rw_crapcyb.dtdbaixa IS NOT NULL AND nvl(vr_vlpreapg,0) > 0 THEN
           --Atualizar Dados Cyber
           BEGIN
             UPDATE crapcyb SET crapcyb.dtdbaixa = NULL
@@ -800,7 +826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
         END IF;
 
         --Data do Moveimento
-        IF rw_crapcyb.dtmvtolt = pr_dtmvtolt AND nvl(pr_vlpreapg,0) = 0 THEN
+        IF rw_crapcyb.dtmvtolt = pr_dtmvtolt AND nvl(vr_vlpreapg,0) = 0 THEN
           vr_dtatufin := NULL;
         ELSE
           vr_dtatufin := pr_dtmvtolt;
@@ -819,12 +845,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
             -- Atualizar contratos que estao em cobrança no CYBER
             UPDATE crapcyb cyb
               SET cyb.vlsdevan = nvl(rw_crapcyb.vlsdeved,0)
-                 ,cyb.vlsdeved = nvl(pr_vlsdeved,0)
+                 ,cyb.vlsdeved = nvl(vr_vlsdeved,0) -- Saldo Devedor
                  ,cyb.vljura60 = nvl(pr_vljura60,0)
                  ,cyb.vlpreemp = nvl(pr_vlpreemp,0)
                  ,cyb.qtpreatr = nvl(pr_qtpreatr,0)
                  ,cyb.vlprapga = nvl(rw_crapcyb.vlpreapg,0)
-                 ,cyb.vlpreapg = nvl(pr_vlpreapg,0)
+                 ,cyb.vlpreapg = nvl(vr_vlpreapg,0) -- Valor total do Atraso
                  ,cyb.vldespes = nvl(pr_vldespes,0)
                  ,cyb.vlperris = nvl(pr_vlperris,0)
                  ,cyb.nivrisat = pr_nivrisat
@@ -842,6 +868,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                  ,cyb.dtatufin = vr_dtatufin
                  ,cyb.dtdpagto = vr_dtdpagto
                  ,cyb.flgfolha = nvl(pr_flgfolha,0)
+                 ,cyb.flgpreju = nvl(pr_flgpreju,0) -- Flag de Prejuizo
+                 ,cyb.dtprejuz = pr_dtprejuz        -- Data em que entrou em prejuizo
+                 ,cyb.vlsdprej = pr_vlsdprej        -- Valor do prejuizo
             WHERE cyb.rowid = rw_crapcyb.rowid;
           END IF;
         EXCEPTION

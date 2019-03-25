@@ -56,6 +56,18 @@
 			 13/08/2018 - Novo formulário formDetalheTitulo (Vitor Shimada Assanuma - GFT)
 
 			 22/08/2018 - Adicionado abas na tela de títulos e histórico de contrato de limite. (Vitor Shimada Assanuma - GFT)
+
+			 25/08/2018 - Adicionado tela de prejuizo de bordero e campo na tela detalhes de titulo. (Cassia de Oliveira - GFT)
+             
+			 27/08/2018 - Adicionada informação mostrando borderô em prejuízo - Luis Fernando (GFT)
+	        
+	         04/09/2018 - Alteração do saldo do prejuizo - Vitor Shimada Assanuma (GFT)
+             
+	         11/09/2018 - Reformulação dos campos de prejuizo - Vitor Shimada Assanuma (GFT)
+
+	         17/09/2018 - Inserção do campo de Acordo - Vitor S. Assanuma (GFT)
+
+	         20/09/2018 - Inserção do campo de Acordo - Vitor S. Assanuma (GFT)
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -489,6 +501,7 @@ function formataLayout(nomeForm){
 		arrayAlinha[7] = 'center';
 		arrayAlinha[8] = 'center';
 		arrayAlinha[9] = 'center';
+		arrayAlinha[10] = 'center';
 		
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 
@@ -625,6 +638,7 @@ function formataLayout(nomeForm){
 	
 	}else if( nomeForm == 'frmBordero' ){
 	
+		var Ldsprejuz = $('label[for="dsprejuz"]','#'+nomeForm);
 		var Ldspesqui = $('label[for="dspesqui"]','#'+nomeForm);
 		var Lnrborder = $('label[for="nrborder"]','#'+nomeForm);
 		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
@@ -658,6 +672,7 @@ function formataLayout(nomeForm){
 		$('#'+nomeForm).css('width','480px');
 		
 		Ldspesqui.addClass('rotulo').css('width','170px');
+		Ldsprejuz.addClass('rotulo').css({'width':'450px','text-align':'center'});
 		Lnrborder.addClass('rotulo').css('width','170px');
 		Lnrctrlim.css('width','72px');
 		Ldsdlinha.addClass('rotulo').css('width','170px');
@@ -1570,6 +1585,7 @@ function formataLayout(nomeForm){
 		var Ldiasdatr = $('label[for="diasdatr"]','#'+nomeForm);
 		var Lvljrmora = $('label[for="vljrmora"]','#'+nomeForm);
 		var Lvlorpago = $('label[for="vlorpago"]','#'+nomeForm);
+		var Lvlsdprej = $('label[for="vlsdprej"]','#'+nomeForm);
 
 		var Cnrborder = $('#nrborder','#'+nomeForm);
 		var Cnrnosnum = $('#nrnosnum','#'+nomeForm);
@@ -1585,6 +1601,7 @@ function formataLayout(nomeForm){
 		var Cdiasdatr = $('#diasdatr','#'+nomeForm);
 		var Cvljrmora = $('#vljrmora','#'+nomeForm);
 		var Cvlorpago = $('#vlorpago','#'+nomeForm);
+		var Cvlsdprej = $('#vlsdprej','#'+nomeForm);
 
 		Lnrborder.addClass('rotulo').css('width','120px');
 		Ldtdvenct.addClass('rotulo-linha').css('width','140px');
@@ -1596,6 +1613,7 @@ function formataLayout(nomeForm){
 		Lvljrmora.addClass('rotulo-linha').css('width','140px');
 		Lvliofatr.addClass('rotulo').css('width','120px');
 		Lvlorpago.addClass('rotulo-linha').css('width','140px');
+		Lvlsdprej.addClass('rotulo-linha').css('width','140px');
 		Lvlslddvd.addClass('rotulo').css('width','120px');
 		Lnrctrcyb.addClass('rotulo').css('width','120px');
 		Lnmdpagad.addClass('rotulo').css('width','120px');
@@ -1611,6 +1629,7 @@ function formataLayout(nomeForm){
 		Cvljrmora.css({'width':'80px','text-align':'right'});
 		Cvliofatr.css({'width':'80px','text-align':'right'});
 		Cvlorpago.css({'width':'80px','text-align':'right'});
+		Cvlsdprej.css({'width':'80px','text-align':'right'});
 		Cvlslddvd.css({'width':'80px','text-align':'right'});
 		Cnrctrcyb.css({'width':'80px','text-align':'right'});
 		Cnmdpagad.css({'width':'308px','text-align':'left'});
@@ -1630,6 +1649,7 @@ function formataLayout(nomeForm){
 		Cdiasdatr.desabilitaCampo();
 		Cvljrmora.desabilitaCampo();
 		Cvlorpago.desabilitaCampo();
+		Cvlsdprej.desabilitaCampo();
 	}else if ( nomeForm == 'divResumoBordero' ){
 	
 		$('#'+nomeForm).css('width','940px');
@@ -1728,6 +1748,151 @@ function formataLayout(nomeForm){
 		layoutPadrao();
 		ajustarCentralizacao();
 	
+	} else if (nomeForm == 'formDetalhePrejuizo') {
+	    $('#' + nomeForm).css('width', '600px');
+	    var Ldtprejuz = $('label[for="dtprejuz"]', '#' + nomeForm);
+	    var Ltoprejuz = $('label[for="toprejuz"]', '#' + nomeForm);
+	    var Ltosdprej = $('label[for="tosdprej"]', '#' + nomeForm);
+	    var Ltopgmupr = $('label[for="topgmupr"]', '#' + nomeForm);
+	    var Ltottmupr = $('label[for="tottmupr"]', '#' + nomeForm);
+	    var Ltopgjmpr = $('label[for="topgjmpr"]', '#' + nomeForm);
+	    var Lvlsldatu = $('label[for="vlsldatu"]', '#' + nomeForm);
+	    var Ldiasatrs = $('label[for="diasatrs"]', '#' + nomeForm);
+	    var Lvlaboprj = $('label[for="vlaboprj"]', '#' + nomeForm);
+	    var Ltojrmprj = $('label[for="tojrmprj"]', '#' + nomeForm);
+	    var Ltojraprj = $('label[for="tojraprj"]', '#' + nomeForm);
+	    var Lvlacrprj = $('label[for="vlacrprj"]', '#' + nomeForm);
+	    var Ltottjmpr = $('label[for="tottjmpr"]', '#' + nomeForm);
+	    var Ltovlpago = $('label[for="tovlpago"]', '#' + nomeForm);
+	    var Ltopgjrpr = $('label[for="topgjrpr"]', '#' + nomeForm);
+	    var Ltoiofprj = $('label[for="toiofprj"]', '#' + nomeForm);
+	    var Ltoiofppr = $('label[for="toiofppr"]', '#' + nomeForm);
+
+	    var Cdtprejuz = $('#dtprejuz', '#' + nomeForm);
+	    var Ctoprejuz = $('#toprejuz', '#' + nomeForm);
+	    var Ctosdprej = $('#tosdprej', '#' + nomeForm);
+	    var Ctopgmupr = $('#topgmupr', '#' + nomeForm);
+	    var Ctottmupr = $('#tottmupr', '#' + nomeForm);
+	    var Ctopgjmpr = $('#topgjmpr', '#' + nomeForm);
+	    var Cvlsldatu = $('#vlsldatu', '#' + nomeForm);
+	    var Cdiasatrs = $('#diasatrs', '#' + nomeForm);
+	    var Cvlaboprj = $('#vlaboprj', '#' + nomeForm);
+	    var Ctojrmprj = $('#tojrmprj', '#' + nomeForm);
+	    var Ctojraprj = $('#tojraprj', '#' + nomeForm);
+	    var Cvlacrprj = $('#vlacrprj', '#' + nomeForm);
+	    var Ctottjmpr = $('#tottjmpr', '#' + nomeForm);
+	    var Ctovlpago = $('#tovlpago', '#' + nomeForm);
+	    var Ctopgjrpr = $('#topgjrpr', '#' + nomeForm);
+	    var Ctoiofprj = $('#toiofprj', '#' + nomeForm);
+	    var Ctoiofppr = $('#toiofppr', '#' + nomeForm);
+
+	    Ldtprejuz.addClass('rotulo').css('width', '190px');
+	    Lvlaboprj.addClass('rotulo-linha').css('width', '150px');
+	    Ltoprejuz.addClass('rotulo').css('width', '190px');
+	    Ltojrmprj.addClass('rotulo-linha').css('width', '150px');
+	    Ltosdprej.addClass('rotulo').css('width', '190px');
+	    Lvlacrprj.addClass('rotulo').css('width', '190px');
+	    Ltopgmupr.addClass('rotulo-linha').css('width', '150px');
+	    Ltottmupr.addClass('rotulo').css('width', '190px');
+	    Ltopgjmpr.addClass('rotulo-linha').css('width', '150px');
+	    Ltottjmpr.addClass('rotulo').css('width', '190px');
+	    Lvlsldatu.addClass('rotulo-linha').css('width', '150px');
+	    Ldiasatrs.addClass('rotulo').css('width', '190px');
+	    Ltovlpago.addClass('rotulo-linha').css('width', '150px');
+	    Ltojraprj.addClass('rotulo').css('width', '190px');
+	    Ltopgjrpr.addClass('rotulo-linha').css('width', '150px');
+	    Ltoiofprj.addClass('rotulo').css('width', '190px');
+	    Ltoiofppr.addClass('rotulo-linha').css('width', '150px');
+
+	    Cdtprejuz.css({ 'width': '70px', 'text-align': 'right' });
+	    Cvlaboprj.css({ 'width': '70px', 'text-align': 'right' });
+	    Ctoprejuz.css({ 'width': '70px', 'text-align': 'right' });
+	    Ctojrmprj.css({ 'width': '70px', 'text-align': 'right' });
+	    Ctosdprej.css({ 'width': '70px', 'text-align': 'right' });
+	    Ctojraprj.css({ 'width': '70px', 'text-align': 'right' });
+	    Ctopgmupr.css({ 'width': '70px', 'text-align': 'right' });
+	    Cvlacrprj.css({ 'width': '70px', 'text-align': 'right' });
+	    Ctottmupr.css({ 'width': '70px', 'text-align': 'right' });
+	    Ctottjmpr.css({ 'width': '70px', 'text-align': 'right' });
+	    Ctopgjmpr.css({ 'width': '70px', 'text-align': 'right' });
+	    Cvlsldatu.css({ 'width': '70px', 'text-align': 'right' });
+	    Cdiasatrs.css({ 'width': '70px', 'text-align': 'right' });
+	    Ctovlpago.css({ 'width': '70px', 'text-align': 'right' });
+	    Ctopgjrpr.css({ 'width': '70px', 'text-align': 'right' });
+	    Ctoiofprj.css({ 'width': '70px', 'text-align': 'right' });
+	    Ctoiofppr.css({ 'width': '70px', 'text-align': 'right' });
+
+	    Cdtprejuz.desabilitaCampo();
+	    Ctoprejuz.desabilitaCampo();
+	    Ctosdprej.desabilitaCampo();
+	    Ctopgmupr.desabilitaCampo();
+	    Ctottmupr.desabilitaCampo();
+	    Ctopgjmpr.desabilitaCampo();
+	    Cvlsldatu.desabilitaCampo();
+	    Cdiasatrs.desabilitaCampo();
+	    Cvlaboprj.desabilitaCampo();
+	    Ctojrmprj.desabilitaCampo();
+	    Ctojraprj.desabilitaCampo();
+	    Cvlacrprj.desabilitaCampo();
+	    Ctottjmpr.desabilitaCampo();
+	    Ctovlpago.desabilitaCampo();
+	    Ctopgjrpr.desabilitaCampo();
+	    Ctoiofprj.desabilitaCampo();
+	    Ctoiofppr.desabilitaCampo();
+
+		layoutPadrao();
+		ajustarCentralizacao();
+
+	}else if ( nomeForm == 'formDetalhePrejuizoPagar' ){
+		$('#'+nomeForm).css('width','300px');
+		var Ltosdprej = $('label[for="tosdprej"]','#'+nomeForm);
+		var Lvlsldjur = $('label[for="vlsldjur"]','#'+nomeForm);
+		var Lvlsldmta = $('label[for="vlsldmta"]','#'+nomeForm);
+		var Lvlpagmto = $('label[for="vlpagmto"]','#'+nomeForm);
+		var Lvlaboprj = $('label[for="vlaboprj"]','#'+nomeForm);
+		var Lvlsldprj = $('label[for="vlsldprj"]','#'+nomeForm);
+		var Lvliofatr = $('label[for="vliofatr"]','#'+nomeForm);
+		var Lvlsldaco = $('label[for="vlsldaco"]','#'+nomeForm);
+
+		var Ctosdprej = $('#tosdprej','#'+nomeForm);
+		var Cvlsldjur = $('#vlsldjur','#'+nomeForm);
+		var Cvlsldmta = $('#vlsldmta','#'+nomeForm);
+		var Cvlpagmto = $('#vlpagmto','#'+nomeForm);
+		var Cvlaboprj = $('#vlaboprj','#'+nomeForm);
+		var Cvlsldprj = $('#vlsldprj','#'+nomeForm);
+		var Cvliofatr = $('#vliofatr','#'+nomeForm);
+		var Cvlsldaco = $('#vlsldaco','#'+nomeForm);
+
+		Ltosdprej.addClass('rotulo').css({'width':'160px','text-align':'left'});
+		Lvlsldjur.addClass('rotulo').css({'width':'160px','text-align':'left'});
+		Lvlsldmta.addClass('rotulo').css({'width':'160px','text-align':'left'});
+		Lvlpagmto.addClass('rotulo').css({'width':'160px','text-align':'left'});
+		Lvlaboprj.addClass('rotulo').css({'width':'160px','text-align':'left'});
+		Lvlsldprj.addClass('rotulo').css({'width':'160px','text-align':'left'});
+		Lvliofatr.addClass('rotulo').css({'width':'160px','text-align':'left'});
+		Lvlsldaco.addClass('rotulo').css({'width':'160px','text-align':'left'});
+
+
+		Ctosdprej.css({'width':'110px','text-align':'right'});
+		Cvlsldjur.css({'width':'110px','text-align':'right'});
+		Cvlsldmta.css({'width':'110px','text-align':'right'});
+		Cvlpagmto.css({'width':'110px','text-align':'right'}).addClass('monetario').keyup(function(){calculaSaldoPrejuizo()});
+		Cvlaboprj.css({'width':'110px','text-align':'right'}).addClass('monetario').keyup(function(){calculaSaldoPrejuizo()});
+		Cvlsldprj.css({'width':'110px','text-align':'right'});
+		Cvliofatr.css({'width':'110px','text-align':'right'});
+		Cvlsldaco.css({'width':'110px','text-align':'right'});
+
+		Ctosdprej.desabilitaCampo();
+		Cvlsldjur.desabilitaCampo();
+		Cvlsldmta.desabilitaCampo();
+		// Cvlpagmto.desabilitaCampo();
+		// Cvlaboprj.desabilitaCampo();
+		Cvlsldprj.desabilitaCampo();
+		Cvliofatr.desabilitaCampo();
+		Cvlsldaco.desabilitaCampo();
+		
+		layoutPadrao();
+		ajustarCentralizacao();
 	}
 	return false;
 }

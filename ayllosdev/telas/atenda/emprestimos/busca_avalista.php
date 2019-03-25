@@ -7,6 +7,7 @@
  *
  * 000: [15/07/2014] Incluso novos campos( inpessoa e dtnascto ) na carga array (Daniel).
  * 001: [08/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ * 002: [22/10/2018] Adicionado campo Conta Conjuge e Renda Conjuge. (Mateus Z / Mouts) 
  */	
 ?>
  
@@ -59,7 +60,8 @@
 	$xmlObj = getObjectXML($xmlResult);
 	
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+		echo '__last_avalista.lastMessage = "'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'";'; //bruno - prj 438 - bug 14444
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina); $(\'#nrcpfcgc\', \'#frmDadosAval\').focus();',false);
 	}
 	
 	$avalista = $xmlObj->roottag->tags[0]->tags[0]->tags;
@@ -100,6 +102,10 @@
 		echo 'arrayAvalBusca[\'inpessoa\'] = "'. getByTagName($avalista,'inpessoa').'" ;';
 		echo 'arrayAvalBusca[\'dtnascto\'] = "'. getByTagName($avalista,'dtnascto').'" ;';
 		
+		// PRJ 438
+		echo 'arrayAvalBusca[\'vlrencjg\'] = "'. getByTagName($avalista,'vlrencjg').'" ;';
+		echo 'arrayAvalBusca[\'nrctacjg\'] = "'. getByTagName($avalista,'nrctacjg').'" ;';
+
 		echo 'arrayFiadores.length = 0;';
 		
 		for($i = 0; $i<count($fiadores); $i++){

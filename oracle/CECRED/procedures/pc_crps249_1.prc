@@ -153,7 +153,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
   vr_nmcolsql      VARCHAR2(100);
   -- Variável lógica que define se credita em conta corrente
   vr_flgcrcta      boolean;
-  
+  vr_cdhistor_tdb      VARCHAR2(4000);
   vr_ind_microcred     varchar2(100);
   vr_ind_microcred_999 varchar2(100); 
   
@@ -705,6 +705,18 @@ BEGIN
 
   -- Lançamentos de operação de crédito do borderô de desconto de títulos
   IF upper(pr_nmestrut) = 'TBDSCT_LANCAMENTO_BORDERO'  THEN
+    -- Garantir que somente os históricos da lista gerem o arquivo "_OPECRED". Quando esses históricos estiverem aqui na procedure 249_1, não
+    -- precisa desses mesmos estarem no vetor vr_tab_craphis da procedure 249.
+    vr_cdhistor_tdb := DSCT0003.vr_cdhistordsct_apropjurrem   ||','|| --2667   
+                       DSCT0003.vr_cdhistordsct_apropjurmra   ||','|| --2668
+                       DSCT0003.vr_cdhistordsct_apropjurmta   ||','|| --2669
+                       PREJ0005.vr_cdhistordsct_principal     ||','|| --2754
+                       PREJ0005.vr_cdhistordsct_juros_60_rem  ||','|| --2755
+                       PREJ0005.vr_cdhistordsct_juros_60_mor  ||','|| --2761
+                       PREJ0005.vr_cdhistordsct_juros_60_mul  ||','|| --2879
+                       DSCT0003.vr_cdhistordsct_est_apro_multa||','|| --2880
+                       DSCT0003.vr_cdhistordsct_est_apro_juros;       --2881
+    
     vr_cursor :=   'SELECT ass.cdagenci '||
                    '      ,100 cdbccxlt '||
                    '      ,lcb.nrdconta '||
@@ -715,7 +727,7 @@ BEGIN
                    '      ,ass.inpessoa '||
                    ' FROM  tbdsct_lancamento_bordero lcb '||
                    '      ,crapass ass '||
-                   ' WHERE lcb.cdhistor IN (2667,2668,2669)  '||
+                   ' WHERE lcb.cdhistor IN ('||vr_cdhistor_tdb||') '||
                    '   AND lcb.cdcooper = '||pr_cdcooper||
                    '   AND lcb.cdhistor = '||pr_cdhistor||
                    '   AND lcb.dtmvtolt = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')'||
@@ -738,21 +750,21 @@ BEGIN
                    '  and    pd.nrdconta = c.nrdconta  '|| 
                    '  and   pd.dtmvtolt  = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')';
   ELSE
-  -- Define a query do cursor dinâmico
-  vr_cursor := 'select x.cdagenci,'||
-                     ' x.cdbccxlt,'||
-                     ' x.nrdolote,'||
-                     ' x.nrdconta,'||
-                     ' x.nrdocmto,'||
-                     ' x.vllanmto,'||
-                     ' c.cdagenci,'||
-                     ' c.inpessoa' || vr_nmcolsql ||
-                ' from crapass c, '||pr_nmestrut||' x'||
-               ' where x.cdcooper = '||pr_cdcooper||
-                 ' and x.dtmvtolt = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')'||
-                 ' and x.cdhistor = '||pr_cdhistor||
-                 ' and c.cdcooper = x.cdcooper'||
-                 ' and c.nrdconta = x.nrdconta';
+    -- Define a query do cursor dinâmico
+    vr_cursor := 'select x.cdagenci,'||
+                       ' x.cdbccxlt,'||
+                       ' x.nrdolote,'||
+                       ' x.nrdconta,'||
+                       ' x.nrdocmto,'||
+                       ' x.vllanmto,'||
+                       ' c.cdagenci,'||
+                       ' c.inpessoa' || vr_nmcolsql ||
+                  ' from crapass c, '||pr_nmestrut||' x'||
+                 ' where x.cdcooper = '||pr_cdcooper||
+                   ' and x.dtmvtolt = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')'||
+                   ' and x.cdhistor = '||pr_cdhistor||
+                   ' and c.cdcooper = x.cdcooper'||
+                   ' and c.nrdconta = x.nrdconta';
   END IF;
   -- Cria cursor dinâmico
   vr_num_cursor := dbms_sql.open_cursor;

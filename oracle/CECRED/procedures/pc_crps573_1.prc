@@ -64,8 +64,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                                   onde há Caminhao apenas, utilizar também Outros Veiculos (Marcos-Envolti)
                      
 					 09/11/2018 - P450 - Correção na geração dos vencimentos para a modalidade 101 nas tags <Agreg>
-							      (Reginaldo/AMcom)
-                     
+							      (Reginaldo/AMcom)			
+
+                     05/12/2018 - P438 - Sprint 7 - Paulo Martins
+                                   Incluído Galpão, MAQUINA E EQUIPAMENTO                     
                      15/01/2019 - P450 - Ajuste BNDES / Taxa Mensal (Guilherme/AMcom)
                      
     .............................................................................................................................*/
@@ -3215,9 +3217,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                 vr_tpatribu := 0426;
               ELSIF rw_tbepr_bens_hst.dscatbem = 'TERRENO' THEN
                 vr_tpatribu := 0427;
+              ELSIF rw_tbepr_bens_hst.dscatbem = 'GALPAO' THEN
+                vr_tpatribu := 0427;
               ELSIF rw_tbepr_bens_hst.dscatbem = 'MOTO' THEN
                 vr_tpatribu := 0424;
-              ELSIF rw_tbepr_bens_hst.dscatbem = 'EQUIPAMENTO' THEN
+              ELSIF rw_tbepr_bens_hst.dscatbem IN('EQUIPAMENTO','MAQUINA E EQUIPAMENTO') THEN /*Adicionado MAQUINA E EQUIPAMENTO - PRJ438*/
                 vr_tpatribu := 0423;
               ELSIF rw_tbepr_bens_hst.dscatbem IN('CAMINHAO','OUTROS VEICULOS') THEN
                 vr_tpatribu := 0424;

@@ -1266,7 +1266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0005 AS
     -- Busca os titulos do questionario
     CURSOR cr_craptqs IS
       SELECT nrseqtit,
-             gene0007.fn_caract_acento(dstitulo) dstitulo
+             dstitulo
         FROM craptqs
        WHERE nrversao = pr_nrversao
        ORDER BY nrordtit;
@@ -1344,7 +1344,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0005 AS
     ELSE
       -- Inicilizar as informações do XML
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
-                              '<?xml version="1.0" encoding="utf-8"?><Dados>');
+                              '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
     END IF;
 
     -- Loop sobre os titulos do questionario
