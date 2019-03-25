@@ -225,86 +225,81 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
             bCartaoSituacaoSolicitado = false;
         }
 
-        $("#btnupdo").prop("disabled", true);
+        $("#btnupdo").attr("onclick", "").unbind("click").bind('click', function () { return false; });
         $("#btnupdo").css('cursor', 'default');
 
-        $("#btnaltr").prop("disabled", false);
+        $("#btnaltr").attr("onclick", "").unbind("click").bind('click', function () { opcaoAlterar();return false; });
         $("#btnaltr").css('cursor', 'pointer');
 
-        $("#btnreno").prop("disabled", false);
+        $("#btnreno").attr("onclick", "").unbind("click").bind('click', function () { opcaoRenovar();return false; });
         $("#btnreno").css('cursor', 'pointer');
 
-        $("#btncanc").prop("disabled", false);
+        $("#btncanc").attr("onclick", "").unbind("click").bind('click', function () { opcaoCancBloq();return false; });
         $("#btncanc").css('cursor', 'pointer');
 
-        $("#btnence").prop("disabled", false);
+        $("#btnence").attr("onclick", "").unbind("click").bind('click', function () { opcaoEncerrar();return false; });
         $("#btnence").css('cursor', 'pointer');
 
-        $("#btnexcl").prop("disabled", false);
+        $("#btnexcl").attr("onclick", "").unbind("click").bind('click', function () { opcaoExcluir();return false; });
         $("#btnexcl").css('cursor', 'pointer');
 
-        $("#btnextr").prop("disabled", false);
+        $("#btnextr").attr("onclick", "").unbind("click").bind('click', function () { opcaoExtrato();return false; }); //NOK
         $("#btnextr").css('cursor', 'pointer');
 
         if (cdadmcrd > 9 && cdadmcrd < 81) {
 
-            $("#btnaltr").prop("disabled", true);
+            $("#btnaltr").attr("onclick", "").unbind("click").bind('click', function () { return false; });
             $("#btnaltr").css('cursor', 'default');
 
-            $("#btnreno").prop("disabled", true);
+            $("#btnreno").attr("onclick", "").unbind("click").bind('click', function () { return false; });
             $("#btnreno").css('cursor', 'default');
 
-            $("#btncanc").prop("disabled", true);
+            $("#btncanc").attr("onclick", "").unbind("click").bind('click', function () { return false; });
             $("#btncanc").css('cursor', 'default');
 
-            $("#btnence").prop("disabled", true);
+            $("#btnence").attr("onclick", "").unbind("click").bind('click', function () { return false; });
             $("#btnence").css('cursor', 'default');
 
 
             if (!(situacao == "ESTUDO" && decisaoMotorEsteira == 'SEM APROVACAO')) {
-                $("#btnexcl").prop("disabled", true);
+                $("#btnexcl").attr("onclick", "").unbind("click").bind('click', function () { return false; });
                 $("#btnexcl").css('cursor', 'default');
             }
 			// Codigo temporario - Se NAO for piloto deve habilitar para excluir como era antes.
 			if (iPiloto == 0 && situacao == "APROV."){
-				$("#btnexcl").prop("disabled", false);
+                $("#btnexcl").attr("onclick", "").unbind("click").bind('click', function () { opcaoExcluir();return false; });
                 $("#btnexcl").css('cursor', 'default');
 			}
 
 			
             if ((cdadmcrd > 10 && cdadmcrd < 17) &&  (situacao == "EM USO" ) && (cdadmcrd != 16 && cdadmcrd != 17)){
-			//if ( true){
-                $("#btnalterarLimite").unbind('click').bind('click', function () { return false; });
 				$("#btnalterarLimite").removeAttr("situacao");
                 $("#btnalterarLimite").attr("nrcrcard", nrcrcard);
                 $("#btnalterarLimite").attr("cdAdmCartao", cdAdmCartao);
             }  
             else{
-                 //$("#btnalterarLimite").prop("disabled", true);
-				 $("#btnalterarLimite").unbind('click').bind('click', function () { alteraCartao(); });
 				 $("#btnalterarLimite").attr("situacao", "situacao");
 				 
             }
 			
 			if((cdadmcrd > 10 && cdadmcrd < 17) && situacao == "APROV."){
-				$("#btncanc").removeAttr("disabled");
+                $("#btncanc").attr("onclick", "").unbind("click").bind('click', function () { opcaoCancBloq();return false; });
 				$("#btncanc").css('cursor', 'pointer');
 			}
 
-
-            $("#btnextr").prop("disabled", true);
+            $("#btnextr").attr("onclick", "").unbind("click").bind('click', function () { return false; });
             $("#btnextr").css('cursor', 'default');
             
-            $("#btnimpr").prop("disabled", true);
+            $("#btnimpr").attr("onclick", "").unbind("click").bind('click', function () { return false; });
             $("#btnimpr").css('cursor', 'default');
 
             if (situacao == "EM USO" && nrcrcard != 0) {
-                $("#btnupdo").prop("disabled", false);
+                $("#btnupdo").attr("onclick", "").unbind("click").bind('click', function () { opcaoAlteraAdm();return false; });
                 $("#btnupdo").css('cursor', 'default');
             }
         }else{
 			// Habilitar botao de impressao para cartoes BB
-			$("#btnimpr").prop("disabled", false);            
+            $("#btnimpr").attr("onclick", "").unbind("click").bind('click', function () { opcaoImprimir();return false; });
 			$("#btnimpr").css('cursor', 'pointer');
         }
 
@@ -320,7 +315,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
                 cdadmcrd == 15 ||
                 cdadmcrd == 16 ||
                 cdadmcrd == 17)) {
-            $("#btncanc").prop("disabled", false);
+            $("#btncanc").attr("onclick", "").unbind("click").bind('click', function () { opcaoCancBloq();return false; });
             $("#btncanc").css('cursor', 'default');
 
         }
