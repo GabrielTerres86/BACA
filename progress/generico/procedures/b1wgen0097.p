@@ -115,6 +115,8 @@
                 
                 12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
                 
+                25/03/2019 - P437 - Consignado - incluido parametro par_vlpreemp na chamada da rotina 
+                                  calcula_emprestimo - Josiane Stiehler AMcom
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -704,6 +706,7 @@ PROCEDURE grava_simulacao:
                                             INPUT  NO,            
                                             INPUT  par_dtlibera,
                                             INPUT  par_idfiniof,
+                                            INPUT  0, /*par_vlpreemp*/
                                             OUTPUT var_qtdiacar,  
                                             OUTPUT var_vlajuepr,  
                                             OUTPUT var_txdiaria,  
