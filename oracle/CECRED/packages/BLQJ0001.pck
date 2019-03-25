@@ -185,6 +185,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
 		
                 29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
                              PRJ450 - Renato Cordeiro (AMcom)         
+                
+                22/03/2019 - Ajustes para que ao tratar raiz de CNPJ, somente procurar na base
+                             de PJ. Wagner - Sustentação - INC0035725.
  
   .............................................................................*/
   
@@ -240,7 +243,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
            , ass.nmprimtl
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
-         AND ass.nrcpfcgc BETWEEN to_number(substr(lpad(pr_nrctadoc,14,'0'),1,8)||'000000') AND to_number(substr(lpad(pr_nrctadoc,14,'0'),1,8)||'999999');
+         AND ass.inpessoa = 2 -- Somente PJ
+         AND ass.nrcpfcgc BETWEEN to_number(substr(lpad(pr_nrctadoc,14,'0'),1,8)||'000000') 
+                              AND to_number(substr(lpad(pr_nrctadoc,14,'0'),1,8)||'999999');
         
     -- VARIÁVEIS
     vr_nrcpfcgc    crapass.nrcpfcgc%TYPE;
@@ -502,7 +507,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
        WHERE ass.cdcooper = pr_cdcooper 
          -- quando o tipo do registro for 1, pesquisa diretamente pela conta
          AND ((ass.nrcpfcgc = pr_nrcpfcgc AND NVL(pr_tpcooperad,0) NOT IN (1,3)) OR
-              (ass.nrcpfcgc BETWEEN to_number(to_number(substr(lpad(pr_cooperad,14,'0'),1,8))||'000000') AND to_number(to_number(substr(lpad(pr_cooperad,14,'0'),1,8))||'999999') AND NVL(pr_tpcooperad,0) = 3) OR
+              (ass.nrcpfcgc BETWEEN to_number(to_number(substr(lpad(pr_cooperad,14,'0'),1,8))||'000000') 
+                                AND to_number(to_number(substr(lpad(pr_cooperad,14,'0'),1,8))||'999999') 
+                                AND NVL(pr_tpcooperad,0) = 3
+                                AND ass.inpessoa         = 2 -- Somente PJ
+                                ) OR
               (ass.nrdconta = pr_cooperad AND NVL(pr_tpcooperad,0) = 1))
       UNION    -- Cláusula UNION é excludente de repetições
       SELECT ttl.cdcooper
@@ -1352,8 +1361,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         vr_flblcrft := 0;
       END IF;
       
+      
 
-        
       FOR vr_indice IN vr_tbcontas.FIRST()..vr_tbcontas.LAST() LOOP
         
         -- Buscar dados da conta
@@ -1573,7 +1582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                RAISE vr_exp_erro;
             end if;
 
-          EXCEPTION 
+          EXCEPTION
             WHEN vr_exp_erro THEN
               raise vr_exp_erro;
             WHEN OTHERS THEN
@@ -2006,7 +2015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
        WHERE ass.cdcooper = blj.cdcooper 
          AND ass.nrdconta = blj.nrdconta
          AND blj.cdcooper = pr_cdcooper
-         AND blj.nroficio = pr_nroficio  
+         AND blj.nroficio = pr_nroficio
          AND blj.nrdconta = pr_nrctacon 
          AND ((blj.nrcpfcgc = pr_nrcpfcgc AND pr_tpcooperad = 0) 
            OR (blj.nrdconta = pr_nrctacon AND pr_tpcooperad = 1) )
@@ -2080,7 +2089,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     ELSE 
       vr_fldestrf := 0; -- FALSE
     END IF;
-    
+
     -- verificar se valor informado na tela maior que bloqueado
     OPEN  cr_crapbljtot(vr_nrcpfcgc);
     FETCH cr_crapbljtot INTO vr_vltotblq;
@@ -2101,7 +2110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
       AND NVL(rw_crapblj.vlbloque,0) > vr_vldesblo THEN
         -- para fazer demais atualizações com valor de desbloqueio menor
         ww_vldesblo := vr_vldesblo;
-      
+
         -- inserir novo registro com valor de desbloqueio
         BEGIN
           INSERT INTO crapblj(cdcooper
@@ -2153,62 +2162,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
       END IF;
 
       IF ww_vldesblo > 0 THEN
-      -- Atualizar o registro de bloqueio
-      BEGIN
-        UPDATE crapblj blj
-           SET blj.cdopddes = pr_cdoperad  /* operador desbloqueio    */
-             , blj.dtblqfim = pr_dtmvtolt  /* data desbloqueio        */
-             , blj.nrofides = pr_nrofides  /* nro oficio desbloqueio  */
-             , blj.dtenvdes = pr_dtenvdes  /*dt envio resp desbloqueio*/
-             , blj.dsinfdes = pr_dsinfdes  /*inf adicional desbloqueio*/
-             , blj.fldestrf = vr_fldestrf  /*desbloqueio para transf. */
-         WHERE rowid = rw_crapblj.dsdrowid;
-      
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atulizar CRAPBLJ: '||SQLERRM;
-          RAISE vr_exp_erro;
-      END;
-      
-      -- Verificar se deve cria o lançamento
-      IF rw_crapblj.cdmodali = 1 AND rw_crapblj.vlbloque > 0 THEN
+        -- Atualizar o registro de bloqueio
+        BEGIN
+          UPDATE crapblj blj
+             SET blj.cdopddes = pr_cdoperad  /* operador desbloqueio    */
+               , blj.dtblqfim = pr_dtmvtolt  /* data desbloqueio        */
+               , blj.nrofides = pr_nrofides  /* nro oficio desbloqueio  */
+               , blj.dtenvdes = pr_dtenvdes  /*dt envio resp desbloqueio*/
+               , blj.dsinfdes = pr_dsinfdes  /*inf adicional desbloqueio*/
+               , blj.fldestrf = vr_fldestrf  /*desbloqueio para transf. */
+           WHERE rowid = rw_crapblj.dsdrowid;
         
-        -- Buscar o lote para o lançamento
-        OPEN  cr_craplot(pr_cdcooper
-                        ,pr_dtmvtolt
-                        ,6880);
-        FETCH cr_craplot INTO rw_craplot;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atulizar CRAPBLJ: '||SQLERRM;
+            RAISE vr_exp_erro;
+        END;
+        
+        -- Verificar se deve cria o lançamento
+        IF rw_crapblj.cdmodali = 1 AND rw_crapblj.vlbloque > 0 THEN
           
-        -- Se não encontrar o registro do lote
-        IF cr_craplot%NOTFOUND THEN
-          -- Cria o lote
-          BEGIN
-            INSERT INTO craplot(cdcooper
-                               ,dtmvtolt
-                               ,cdagenci
-                               ,cdbccxlt
-                               ,nrdolote
-                               ,tplotmov
-                               ,nrseqdig)
-                         VALUES(pr_cdcooper
-                               ,pr_dtmvtolt
-                               ,1           
-                               ,100          
-                               ,6880
-                               ,1
-                               ,0) 
-                       RETURNING ROWID INTO rw_craplot.dsdrowid;
-                         
-            -- Atualizar o registro do lote        
-            rw_craplot.cdcooper := pr_cdcooper;
-            rw_craplot.dtmvtolt := pr_dtmvtolt;
-            rw_craplot.cdagenci := 1;
-            rw_craplot.cdbccxlt := 100;        
-            rw_craplot.nrdolote := 6880;
-            rw_craplot.tplotmov := 1;               
-            rw_craplot.nrseqdig := 0;
-               
-          EXCEPTION 
+          -- Buscar o lote para o lançamento
+          OPEN  cr_craplot(pr_cdcooper
+                          ,pr_dtmvtolt
+                          ,6880);
+          FETCH cr_craplot INTO rw_craplot;
+            
+          -- Se não encontrar o registro do lote
+          IF cr_craplot%NOTFOUND THEN
+            -- Cria o lote
+            BEGIN
+              INSERT INTO craplot(cdcooper
+                                 ,dtmvtolt
+                                 ,cdagenci
+                                 ,cdbccxlt
+                                 ,nrdolote
+                                 ,tplotmov
+                                 ,nrseqdig)
+                           VALUES(pr_cdcooper
+                                 ,pr_dtmvtolt
+                                 ,1           
+                                 ,100          
+                                 ,6880
+                                 ,1
+                                 ,0) 
+                         RETURNING ROWID INTO rw_craplot.dsdrowid;
+                           
+              -- Atualizar o registro do lote        
+              rw_craplot.cdcooper := pr_cdcooper;
+              rw_craplot.dtmvtolt := pr_dtmvtolt;
+              rw_craplot.cdagenci := 1;
+              rw_craplot.cdbccxlt := 100;        
+              rw_craplot.nrdolote := 6880;
+              rw_craplot.tplotmov := 1;               
+              rw_craplot.nrseqdig := 0;
+                 
+            EXCEPTION 
             -- Início Chamado - SCTASK0018254
             WHEN DUP_VAL_ON_INDEX THEN
               -- As rotinas de bloqueio são executadas via job e em alguns casoso 
@@ -2223,41 +2232,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                               ,6880);
               FETCH cr_craplot INTO rw_craplot;                
             -- Fim Chamado - SCTASK0018254                
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir Lote: '||SQLERRM;
-              RAISE vr_exp_erro;
-          END;
-        END IF;
-          
-        -- Fechar o cursor
-        CLOSE cr_craplot;
-
-        -- Montar o número do documento com base no NRSEQDIG
-        vr_nrdocmto := rw_craplot.nrseqdig + 1;
-        -------------             
-        LOOP
-          -- Buscar por lançamento pelo número do documento
-          OPEN  cr_craplcm(rw_crapblj.nrdconta
-                          ,vr_nrdocmto);
-          FETCH cr_craplcm INTO vr_nrdregis;
-            
-          -- Se encontrou registro
-          IF cr_craplcm%NOTFOUND THEN 
-            -- Fechar o cursor
-            CLOSE cr_craplcm;
-            -- Encerra o LOOP
-            EXIT;              
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir Lote: '||SQLERRM;
+                RAISE vr_exp_erro;
+            END;
           END IF;
             
           -- Fechar o cursor
-          CLOSE cr_craplcm;
-            
-          -- Ajusta o número do documento para reconsultar
-          vr_nrdocmto := vr_nrdocmto + 100000;
-        END LOOP;
-        -------------
-        -- Inserir registro na CRAPLCM 
-        BEGIN
+          CLOSE cr_craplot;
+
+          -- Montar o número do documento com base no NRSEQDIG
+          vr_nrdocmto := rw_craplot.nrseqdig + 1;
+          -------------             
+          LOOP
+            -- Buscar por lançamento pelo número do documento
+            OPEN  cr_craplcm(rw_crapblj.nrdconta
+                            ,vr_nrdocmto);
+            FETCH cr_craplcm INTO vr_nrdregis;
+              
+            -- Se encontrou registro
+            IF cr_craplcm%NOTFOUND THEN 
+              -- Fechar o cursor
+              CLOSE cr_craplcm;
+              -- Encerra o LOOP
+              EXIT;              
+            END IF;
+              
+            -- Fechar o cursor
+            CLOSE cr_craplcm;
+              
+            -- Ajusta o número do documento para reconsultar
+            vr_nrdocmto := vr_nrdocmto + 100000;
+          END LOOP;
+          -------------
+          -- Inserir registro na CRAPLCM
+          BEGIN
             -- Demetrius
 --            UPDATE craplcm lcm
 --               SET lcm.vllanmto = lcm.vllanmto + ww_vldesblo
@@ -2306,76 +2315,76 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
 
 --            END IF;
             END IF;
-        EXCEPTION		 
+          EXCEPTION
           when vr_exp_erro then
             raise vr_exp_erro;
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir Lancamento: '||SQLERRM;
-            RAISE vr_exp_erro;
-        END;
-          
-        -- Atualizar o registro da CRAPLOT
-        BEGIN
-          UPDATE craplot 
-             SET qtcompln = NVL(qtcompln,0) + 1
-               , qtinfoln = NVL(qtinfoln,0) + 1
-               , nrseqdig = NVL(nrseqdig,0) + 1   
-                 , vlinfodb = NVL(vlinfodb,0) + ww_vldesblo --NVL(rw_crapblj.vlbloque,0)
-                 , vlcompdb = NVL(vlcompdb,0) + ww_vldesblo --NVL(rw_crapblj.vlbloque,0)
-           WHERE ROWID = rw_craplot.dsdrowid;
-        EXCEPTION           
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar Lote: '||SQLERRM;
-            RAISE vr_exp_erro;
-        END;
-          
-        -- Atualizar o registro de saldo
-        BEGIN
-          UPDATE crapsld 
-               SET vlblqjud = NVL(vlblqjud,0) - ww_vldesblo --NVL(rw_crapblj.vlbloque,0)
-           WHERE cdcooper = pr_cdcooper     
-             AND nrdconta = rw_crapblj.nrdconta;
-
-          -- Se nenhuma linha foi atualizada
-          IF SQL%ROWCOUNT = 0 THEN
-            vr_cdcritic := 10;
-            vr_dscritic := NULL;
-          END IF;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar saldo cooperado: '||SQLERRM;
-        END;
-          
-        -- Se ocorreu algum erro no update do saldo
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exp_erro;
-        END IF;
-        
-      END IF; -- rw_crapblj.cdmodali = 1 AND rw_crapblj.vlbloque > 0
-      
-      -- Verifica os Lancamentos Futuros - quando for o último registros da modalidade
-      IF rw_crapblj.qtdreg_ag = rw_crapblj.nrseqreg_ag THEN     
-        -- Se contem a situacao do bloqueio para creditos futuros (SIM/NAO).
-        IF rw_crapblj.flblcrft = 1 THEN
-          BEGIN
-            UPDATE craplau  lau
-               SET lau.insitlau = 3
-                 , lau.dtdebito = pr_dtmvtolt
-             WHERE lau.cdcooper = pr_cdcooper
-               AND lau.dtmvtolt = rw_crapblj.dtblqini 
-               AND lau.cdagenci = 1
-               AND lau.cdbccxlt = 100
-               AND lau.nrdolote = 6870
-               AND lau.dsorigem = 'BLOQJUD'
-               AND lau.cdseqtel = pr_nroficio;
-          EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar CRAPLAU: '||SQLERRM;
+              vr_dscritic := 'Erro ao inserir Lancamento: '||SQLERRM;
               RAISE vr_exp_erro;
           END;
+            
+          -- Atualizar o registro da CRAPLOT
+          BEGIN
+            UPDATE craplot 
+               SET qtcompln = NVL(qtcompln,0) + 1
+                 , qtinfoln = NVL(qtinfoln,0) + 1
+                 , nrseqdig = NVL(nrseqdig,0) + 1   
+                 , vlinfodb = NVL(vlinfodb,0) + ww_vldesblo --NVL(rw_crapblj.vlbloque,0)
+                 , vlcompdb = NVL(vlcompdb,0) + ww_vldesblo --NVL(rw_crapblj.vlbloque,0)
+             WHERE ROWID = rw_craplot.dsdrowid;
+          EXCEPTION           
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao atualizar Lote: '||SQLERRM;
+              RAISE vr_exp_erro;
+          END;
+            
+          -- Atualizar o registro de saldo
+          BEGIN
+            UPDATE crapsld 
+               SET vlblqjud = NVL(vlblqjud,0) - ww_vldesblo --NVL(rw_crapblj.vlbloque,0)
+             WHERE cdcooper = pr_cdcooper     
+               AND nrdconta = rw_crapblj.nrdconta;
+
+            -- Se nenhuma linha foi atualizada
+            IF SQL%ROWCOUNT = 0 THEN
+              vr_cdcritic := 10;
+              vr_dscritic := NULL;
+            END IF;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao atualizar saldo cooperado: '||SQLERRM;
+          END;
+            
+          -- Se ocorreu algum erro no update do saldo
+          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exp_erro;
+          END IF;
           
-        END IF; -- rw_crapblj.flblcrft = 1
-      END IF; -- rw_crapblj.qtdreg_ag = rw_crapblj.nrseqreg_ag
+        END IF; -- rw_crapblj.cdmodali = 1 AND rw_crapblj.vlbloque > 0
+        
+        -- Verifica os Lancamentos Futuros - quando for o último registros da modalidade
+        IF rw_crapblj.qtdreg_ag = rw_crapblj.nrseqreg_ag THEN     
+          -- Se contem a situacao do bloqueio para creditos futuros (SIM/NAO).
+          IF rw_crapblj.flblcrft = 1 THEN
+            BEGIN
+              UPDATE craplau  lau
+                 SET lau.insitlau = 3
+                   , lau.dtdebito = pr_dtmvtolt
+               WHERE lau.cdcooper = pr_cdcooper
+                 AND lau.dtmvtolt = rw_crapblj.dtblqini 
+                 AND lau.cdagenci = 1
+                 AND lau.cdbccxlt = 100
+                 AND lau.nrdolote = 6870
+                 AND lau.dsorigem = 'BLOQJUD'
+                 AND lau.cdseqtel = pr_nroficio;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar CRAPLAU: '||SQLERRM;
+                RAISE vr_exp_erro;
+            END;
+            
+          END IF; -- rw_crapblj.flblcrft = 1
+        END IF; -- rw_crapblj.qtdreg_ag = rw_crapblj.nrseqreg_ag
         vr_vldesblo := vr_vldesblo - ww_vldesblo; --rw_crapblj.vlbloque;
         IF vr_vldesblo <= 0 THEN
           EXIT;
