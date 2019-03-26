@@ -42,6 +42,17 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONSIG IS
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_emp_consig IS TABLE OF typ_reg_dados_emp_consig INDEX BY BINARY_INTEGER;
 
+  /* Tipo que compreende o registro da tab. temporaria tt-proposta-epr */
+  TYPE typ_reg_dados_param_consig IS RECORD (
+     idemprconsigparam   NUMBER
+    ,cdempres            crapemp.cdempres%TYPE
+    ,dtinclpropostade    VARCHAR2(10)
+    ,dtinclpropostaate   VARCHAR2(10)
+    ,dtenvioarquivo      VARCHAR2(10)
+    ,dtvencimento        VARCHAR2(10)
+  );
+  /* Definicao de tabela que compreende os registros acima declarados */
+  TYPE typ_tab_dados_param_consig IS TABLE OF typ_reg_dados_param_consig INDEX BY BINARY_INTEGER;
 
   PROCEDURE pc_busca_empr_consig_web(pr_nmextemp IN crapemp.nmextemp%TYPE DEFAULT NULL --> Nome da empresa
                                     ,pr_nmresemp IN crapemp.nmresemp%TYPE DEFAULT NULL --> Nome reduzido da empresa
@@ -59,18 +70,18 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONSIG IS
                                     );
 
   PROCEDURE pc_busca_dados_empr_consig_car (
-                                     pr_cdcooper IN crapemp.cdcooper%TYPE                  -- Código da Cooperativa
+                                     pr_cdcooper IN crapemp.cdcooper%TYPE              --> Código da Cooperativa
                                     ,pr_nmextemp IN crapemp.nmextemp%TYPE DEFAULT NULL --> Nome da empresa
                                     ,pr_nmresemp IN crapemp.nmresemp%TYPE DEFAULT NULL --> Nome reduzido da empresa
                                     ,pr_cdempres IN crapemp.cdempres%TYPE DEFAULT -1   --> Codigo da empresa (-1 todas)
                                     ,pr_cddopcao IN VARCHAR2 DEFAULT 'C'               --> Opção da Tela C-Consultar, A-Alterar, H-Habilitar, D-Desabilitar
                                     ,pr_nriniseq IN INTEGER DEFAULT 0                  --> Paginação - Inicio de sequencia
                                     ,pr_nrregist IN INTEGER DEFAULT 0                  --> Paginação - Número de registros
-                                    ,pr_nmdatela IN craptel.nmdatela%TYPE                  -- Nome da Tela
-                                    ,pr_idorigem IN NUMBER   -- Código de Origem
-                                    ,pr_xmllog   IN VARCHAR2                -- XML com informacoes de LOG
+                                    ,pr_nmdatela IN craptel.nmdatela%TYPE              --> Nome da Tela
+                                    ,pr_idorigem IN NUMBER                             --> Código de Origem
+                                    ,pr_xmllog   IN VARCHAR2                           --> XML com informacoes de LOG
                                   --> OUT <--
-                                 ,pr_clobxmlc   OUT CLOB                           -- Arquivo de retorno do XML
+                                    ,pr_clobxmlc   OUT CLOB                            --> Arquivo de retorno do XML
                                  ,pr_cdcritic OUT PLS_INTEGER                          --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2                             --> Descrição da crítica
                                  );
@@ -125,17 +136,80 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONSIG IS
                                           ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                           ,pr_des_erro OUT VARCHAR2              --> Erros do processo
                                           );
+  
+  --Aterar/Inserir Parâmetros para Emprestimos Consignado por Empresa                                        
+  PROCEDURE pc_inc_alt_param_consig_web( pr_idemprconsigparam  IN NUMBER   
+                                        ,pr_cdempres           IN tbcadast_empresa_consig.cdempres%TYPE --> codigo da empresa
+                                        ,pr_dtinclpropostade   IN VARCHAR2                              --> Data de inclusão da proposta De (DD/MM)
+                                        ,pr_dtinclpropostaate  IN VARCHAR2                              --> Data de inclusão da proposta Até(DD/MM)
+                                        ,pr_dtenvioarquivo     IN VARCHAR2                              --> Data do envio do arquivo (DD/MM)
+                                        ,pr_dtvencimento       IN VARCHAR2                              --> Data do vencimento (DD/MM)
+                                        -- campos padrões  
+                                        ,pr_xmllog             IN VARCHAR2                              --> XML com informacoes de LOG
+                                        ,pr_cdcritic          OUT PLS_INTEGER                           --> Codigo da critica
+                                        ,pr_dscritic          OUT VARCHAR2                              --> Descricao da critica
+                                        ,pr_retxml             IN OUT NOCOPY XMLType                    --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo          OUT VARCHAR2                              --> Nome do campo com erro
+                                        ,pr_des_erro          OUT VARCHAR2                              --> Erros do processo
+                                        );
+   
+  --Excluir Parâmetros para Emprestimos Consignado por Empresa                                       
+  PROCEDURE pc_excluir_param_consig_web( pr_idemprconsigparam   IN NUMBER   
+                                        ,pr_cdempres            IN tbcadast_empresa_consig.cdempres%TYPE --> codigo da empresa
+                                        -- campos padrões  
+                                        ,pr_xmllog              IN VARCHAR2                              --> XML com informacoes de LOG
+                                        ,pr_cdcritic           OUT PLS_INTEGER                           --> Codigo da critica
+                                        ,pr_dscritic           OUT VARCHAR2                              --> Descricao da critica
+                                        ,pr_retxml              IN OUT NOCOPY XMLType                    --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo           OUT VARCHAR2                              --> Nome do campo com erro
+                                        ,pr_des_erro           OUT VARCHAR2                              --> Erros do processo
+                                        );  
+
+                                         
+  PROCEDURE pc_val_cooper_consignado_web( pr_cdcooper          IN NUMBER             --> codcooper
+                                         -- campos padrões  
+                                         ,pr_xmllog            IN VARCHAR2           --> XML com informacoes de LOG
+                                         ,pr_cdcritic         OUT PLS_INTEGER        --> Codigo da critica
+                                         ,pr_dscritic         OUT VARCHAR2           --> Descricao da critica
+                                         ,pr_retxml            IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo         OUT VARCHAR2           --> Nome do campo com erro
+                                         ,pr_des_erro         OUT VARCHAR2           --> Erros do processo
+                                         ); 
+                                         
+  PROCEDURE pc_busca_param_consig_web(pr_cdempres           IN tbcadast_empresa_consig.cdempres%TYPE --> codigo da empresa-- campos padrões  
+                                     ,pr_xmllog             IN VARCHAR2                              --> XML com informacoes de LOG
+                                     ,pr_cdcritic          OUT PLS_INTEGER                           --> Codigo da critica
+                                     ,pr_dscritic          OUT VARCHAR2                              --> Descricao da critica
+                                     ,pr_retxml             IN OUT NOCOPY XMLType                    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo          OUT VARCHAR2                              --> Nome do campo com erro
+                                     ,pr_des_erro          OUT VARCHAR2                              --> Erros do processo
+                                     );   
+
+  PROCEDURE pc_replicar_param_consig_web(pr_idemprconsigparam  IN NUMBER   
+                                        ,pr_cdempres           IN tbcadast_empresa_consig.cdempres%TYPE --> codigo da empresa
+                                        ,pr_dtinclpropostade   IN VARCHAR2                              --> Data de inclusão da proposta De (DD/MM)
+                                        ,pr_dtinclpropostaate  IN VARCHAR2                              --> Data de inclusão da proposta Até(DD/MM)
+                                        ,pr_dtenvioarquivo     IN VARCHAR2                              --> Data do envio do arquivo (DD/MM)
+                                        ,pr_dtvencimento       IN VARCHAR2                              --> Data do vencimento (DD/MM)
+                                         -- campos padrões  
+                                        ,pr_xmllog             IN VARCHAR2                              --> XML com informacoes de LOG
+                                        ,pr_cdcritic          OUT PLS_INTEGER                           --> Codigo da critica
+                                        ,pr_dscritic          OUT VARCHAR2                              --> Descricao da critica
+                                        ,pr_retxml             IN OUT NOCOPY XMLType                    --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo          OUT VARCHAR2                              --> Nome do campo com erro
+                                        ,pr_des_erro          OUT VARCHAR2                              --> Erros do processo
+                                        );                                                                                                                                                              
+                                                                                   
 end TELA_CONSIG;
 /
-
-CREATE OR REPLACE package body CECRED.TELA_CONSIG is
+CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : TELA_CONSIG
   --  Sistema  : Rotinas focando nas funcionalidades da tela CONSIG
   --  Sigla    : TELA
   --  Autor    : CIS Corporate
-  --  Data     : Setembro/2018.                   Ultima atualizacao: 11/09/2018
+  --  Data     : Setembro/2018.                   Ultima atualizacao: 26/03/2019
   --
   -- Dados referentes ao programa:
   --
@@ -143,7 +217,17 @@ CREATE OR REPLACE package body CECRED.TELA_CONSIG is
   -- Objetivo  : Agrupar rotinas que venham a ser utilizadas pela tela CONSIG.
   --
   -- Alteração : 11/09/2018 Criação da package (CIS Corporate)
-  --
+  --             
+  -- Alteração : 26/03/2019 Criação das packages:
+  --                        - pc_validar_datas_consig_param
+  --                        - pc_alt_empr_consig_param_web
+  --                        - pc_inc_alt_param_consig
+  --                        - pc_inc_alt_param_consig_web
+  --                        - pc_excluir_param_consig_web
+  --                        - pc_busca_param_consig
+  --                        - pc_busca_param_consig_web
+  --                        - pc_replicar_param_consig_web  (Fernanda Kelli - AMcom)
+  --   
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -217,7 +301,7 @@ CREATE OR REPLACE package body CECRED.TELA_CONSIG is
          pr_dscritic := vr_dscritic;
 
     WHEN OTHERS THEN
-         pr_dscritic := 'Erro geral na rotina TELA_CONSIG.pc_validar_dia: '||SQLERRM;
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_validar_dia: '||SQLERRM;
   END pc_validar_dia;
 
 
@@ -279,7 +363,7 @@ CREATE OR REPLACE package body CECRED.TELA_CONSIG is
          WHERE p.cdcooper = pr_cdcooper
            AND CASE
                  WHEN pr_cdempres >= 0 AND p.cdempres = pr_cdempres THEN 1
-                 WHEN pr_cdempres = -1 THEN
+                 WHEN pr_cdempres is null THEN
                    CASE
                      WHEN (pr_nmextemp IS NULL AND pr_nmresemp IS NULL) THEN 1
                      WHEN (pr_nmextemp IS NOT NULL AND (upper(p.nmextemp) LIKE '%'|| upper(pr_nmextemp) ||'%')) THEN 1
@@ -293,7 +377,8 @@ CREATE OR REPLACE package body CECRED.TELA_CONSIG is
                   WHEN (pr_nriniseq + pr_nrregist) > 0 AND
                        numero_linha >= pr_nriniseq AND numero_linha < (pr_nriniseq + pr_nrregist) THEN 1
                   ELSE 0
-             END = 1;
+             END = 1
+         ORDER BY nmextemp;
 
       rw_empr_consig cr_empr_consig%ROWTYPE;
 
@@ -754,7 +839,7 @@ BEGIN
 
     WHEN OTHERS THEN
          pr_cdcritic := nvl(vr_cdcritic,0);
-         pr_dscritic := 'Erro geral na rotina TELA_CONSIG.pc_alterar_empr_consig: '||SQLERRM;
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_alterar_empr_consig: '||SQLERRM;
   END pc_alterar_empr_consig;
 
   PROCEDURE pc_alterar_empr_consig_web(pr_cdempres                IN tbcadast_empresa_consig.cdempres%TYPE             --> codigo da empresa.
@@ -881,7 +966,7 @@ BEGIN
     WHEN OTHERS THEN
          pr_des_erro := 'NOK';
          pr_cdcritic := vr_cdcritic;
-         pr_dscritic := 'Erro geral na rotina TELA_CONSIG.pc_alterar_empr_consig_web: '||SQLERRM;
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_alterar_empr_consig_web: '||SQLERRM;
          pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
                                           '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
          ROLLBACK;
@@ -1015,7 +1100,7 @@ BEGIN
 
     WHEN OTHERS THEN
          pr_cdcritic := nvl(vr_cdcritic,0);
-         pr_dscritic := 'Erro geral na rotina TELA_CONSIG.pc_habilitar_empr_consig: '||SQLERRM;
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_habilitar_empr_consig: '||SQLERRM;
   END pc_habilitar_empr_consig;
 
 
@@ -1144,7 +1229,7 @@ BEGIN
     WHEN OTHERS THEN
          pr_des_erro := 'NOK';
          pr_cdcritic := vr_cdcritic;
-         pr_dscritic := 'Erro geral na rotina TELA_CONSIG.pc_habilitar_empr_consig_web: '||SQLERRM;
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_habilitar_empr_consig_web: '||SQLERRM;
          pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
                                           '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
          ROLLBACK;
@@ -1197,7 +1282,7 @@ BEGIN
 
     WHEN OTHERS THEN
          pr_cdcritic := nvl(vr_cdcritic,0);
-         pr_dscritic := 'Erro geral na rotina TELA_CONSIG.pc_desabilitar_empr_consig: '||SQLERRM;
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_desabilitar_empr_consig: '||SQLERRM;
   END pc_desabilitar_empr_consig;
 
 
@@ -1284,12 +1369,957 @@ BEGIN
     WHEN OTHERS THEN
          pr_des_erro := 'NOK';
          pr_cdcritic := vr_cdcritic;
-         pr_dscritic := 'Erro geral na rotina TELA_CONSIG.pc_desabilitar_empr_consig_web: '||SQLERRM;
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_desabilitar_empr_consig_web: '||SQLERRM;
          pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
                                           '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
          ROLLBACK;
   END pc_desabilitar_empr_consig_web;
 
+  PROCEDURE pc_validar_datas_consig_param(pr_cdempres   IN NUMBER
+                                         ,pr_dscritic  OUT VARCHAR2   --> Descricao da critica
+                                          ) IS
+    /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_validar_datas_consig_param
+      Sistema  : Aimaro
+      Sigla    : CONSIG
+      Autor    : Fernanda Kelli - AMcom
+      Data     : 26/03/2019
 
-end TELA_CONSIG;
+      Objetivo : Verificar se falta algum dia do ano cadastrado nos parametros
+
+      Alteração : 
+
+    ----------------------------------------------------------------------------------------------------------*/
+
+    -- Variável de críticas
+    vr_dscritic VARCHAR2(10000);
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    
+    vr_nrdia number := 0;
+    vr_nrmes number := 0;
+
+  BEGIN
+    null;
+ /* select trunc(pr_dtmmdd,'MM')
+        ,last_day(pr_dtmmdd)
+    from dual;*/
+        
+   -- vr_nrdia := to_char(pr_dtmmdd,'DD');
+   -- vr_nrmes := to_char(pr_dtmmdd,'MM');
+    
+    /*IF nvl(pr_nrdia,0) <> 0 THEN
+      IF NOT(pr_nrdia BETWEEN 1 AND 31) THEN
+        vr_dscritic := 'O dia informado deve estar entre o intervalo de 1 a 31';
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;*/
+    
+  EXCEPTION
+    WHEN vr_exc_erro then
+         pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_validar_datas_consig_param: '||SQLERRM;
+  END pc_validar_datas_consig_param;
+  
+  PROCEDURE pc_inc_alt_param_consig( pr_cdcooper              IN NUMBER
+                                    ,pr_cdempres              IN NUMBER  
+                                    ,pr_cdoperad              IN VARCHAR2
+                                    ,pr_idemprconsigparam     IN NUMBER
+                                    ,pr_dtinclpropostade      IN VARCHAR2
+                                    ,pr_dtinclpropostaate     IN VARCHAR2
+                                    ,pr_dtenvioarquivo        IN VARCHAR2
+                                    ,pr_dtvencimento          IN VARCHAR2
+                                    ,pr_dsmensag             OUT VARCHAR2       --> Mensagem                                   --> Mensagem
+                                    ,pr_cdcritic             OUT PLS_INTEGER    --> Codigo da critica                                    --> Codigo da critica
+                                    ,pr_dscritic             OUT VARCHAR2       --> Descricao da critica                                      --> Descricao da critica
+                                    ) IS
+                                    
+    /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_alt_empr_consig_param_web
+      Sistema  : AIMARO
+      Sigla    : CONSIG
+      Autor    : Fernanda Kelli - AMcom
+      Data     : 04/03/2019
+
+      Objetivo : Alterar as informações do convênio do Consignado referente a
+                 data de corte do vencimento da parcela, em relação à data de inclusão da proposta.
+
+      Alteração : 
+
+    ----------------------------------------------------------------------------------------------------------*/
+  
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    
+    vr_dtinclpropostade   DATE;
+    vr_dtinclpropostaate  DATE;
+    vr_dtenvioarquivo     DATE;
+    vr_dtvencimento       DATE;
+    vr_dtfchfol           crapemp.dtfchfol%type;
+    vr_diaenvioarquivo    NUMBER;
+    vr_idemprconsig       tbcadast_empresa_consig.idemprconsig%type; 
+    
+    vr_idemprconsigparam  NUMBER;
+    
+    cursor cr_param_consig(pr_idemprconsigparam in number) is
+      select to_char(t.dtinclpropostade,'DD/MM') dtinclpropostade
+            ,to_char(t.dtinclpropostaate,'DD/MM') dtinclpropostaate
+            ,to_char(t.dtenvioarquivo,'DD/MM') dtenvioarquivo
+            ,to_char(t.dtvencimento,'DD/MM') dtvencimento 
+        from cecred.tbcadast_emp_consig_param  t
+       where t.idemprconsigparam = pr_idemprconsigparam;
+       
+     rw_param_consig cr_param_consig%ROWTYPE; 
+                          
+  BEGIN
+    
+    pr_dsmensag := NULL;
+    
+    --Converter para data para verificar se tem alguma data inválida
+    BEGIN
+      vr_dtinclpropostade  := to_date(pr_dtinclpropostade||'/2999', 'DD/MM/RRRR');
+      vr_dtinclpropostaate := to_date(pr_dtinclpropostaate||'/2999','DD/MM/RRRR');
+      vr_dtenvioarquivo    := to_date(pr_dtenvioarquivo||'/2999',   'DD/MM/RRRR');
+      vr_diaenvioarquivo   := substr(pr_dtenvioarquivo,0,2) ;                            
+      vr_dtvencimento      := to_date(pr_dtvencimento||'/2999',     'DD/MM/RRRR');
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Data invalida, deve ser utilizado o formato (DD/MM).';
+        RAISE vr_exc_erro;
+    END;
+    
+    --Regra: A data do campo envio do arquivo deverá ser igual ou maior que a data do campo até; 
+    IF vr_dtenvioarquivo < vr_dtinclpropostaate THEN
+      vr_dscritic := 'Data do envio do arquivo deve ser igual ou maior que a Data de inclusao da proposta Ate .  '|| sqlerrm;
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    --Buscar a Dia de Fechamento da Folha
+    SELECT p.dtfchfol
+      INTO vr_dtfchfol
+      FROM cecred.crapemp p
+          ,cecred.tbcadast_empresa_consig tec
+     WHERE tec.cdcooper = p.cdcooper
+       AND tec.cdempres = p.cdempres
+       AND tec.cdcooper = pr_cdcooper
+       AND tec.cdempres = pr_cdempres;
+    
+    --Regra: O dia do envio do arquivo deverá ser igual ou menor que a da data cadastrada no campo “Dia fechamento folha”; 
+    IF vr_diaenvioarquivo > vr_dtfchfol THEN
+      vr_dscritic := 'Data do envio do arquivo deve ser igual ou menor a Data de fechamento da folha.  '|| sqlerrm;
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    --Se for uma atualização
+    IF nvl(pr_idemprconsigparam,0) > 0 THEN
+      
+      --recuperar os dados para fazer o log - OLD
+      OPEN cr_param_consig(pr_idemprconsigparam);
+      FETCH cr_param_consig INTO rw_param_consig;
+      CLOSE cr_param_consig;
+            
+      UPDATE cecred.tbcadast_emp_consig_param consig_param
+         SET consig_param.dtinclpropostade  = nvl(vr_dtinclpropostade, dtinclpropostade)
+            ,consig_param.dtinclpropostaate = nvl(vr_dtinclpropostaate, dtinclpropostaate)
+            ,consig_param.dtenvioarquivo    = nvl(vr_dtenvioarquivo, dtenvioarquivo)
+            ,consig_param.dtvencimento      = nvl(vr_dtvencimento, dtvencimento)         
+       WHERE consig_param.idemprconsigparam = pr_idemprconsigparam;
+       
+       vr_idemprconsigparam := pr_idemprconsigparam;
+       
+      -- Gera log
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 --  erro nao tratado 
+                                ,pr_nmarqlog     => 'tela_consig.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' -->  Operador '|| pr_cdoperad || ' - ' || 
+                                                    'Alterou parametro do Emprestimo Consignado. ' || 
+                                                    ' DtInclPropostaDe: OLD - '  ||rw_param_consig.dtinclpropostade  || ' NEW - '|| pr_dtinclpropostade  ||
+                                                    ' DtInclPropostaAte: OLD -  '||rw_param_consig.Dtinclpropostaate || ' NEW - '|| pr_dtinclpropostaate ||
+                                                    ' DtEnvioArquivo: OLD - '    ||rw_param_consig.Dtenvioarquivo    || ' NEW - '|| pr_dtenvioarquivo ||
+                                                    ' DtVencimento: OLD - '      ||rw_param_consig.dtvencimento      || ' NEW - '|| pr_dtvencimento   ||'.');
+                                                    
+    --Se for para inserir          
+    ELSE
+      
+      SELECT idemprconsig
+        INTO vr_idemprconsig 
+        FROM tbcadast_empresa_consig
+       WHERE cdcooper = pr_cdcooper
+         AND cdempres = pr_cdempres;      
+      
+      INSERT INTO tbcadast_emp_consig_param t
+        (idemprconsig
+        ,dtinclpropostade
+        ,dtinclpropostaate 
+        ,dtenvioarquivo 
+        ,dtvencimento)
+      VALUES
+        (vr_idemprconsig
+        ,vr_dtinclpropostade
+        ,vr_dtinclpropostaate
+        ,vr_dtenvioarquivo
+        ,vr_dtvencimento)
+        
+        RETURNING idemprconsigparam
+             INTO vr_idemprconsigparam; 
+             
+      -- Gera log
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 --  erro nao tratado 
+                                ,pr_nmarqlog     => 'tela_consig.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' -->  Operador '|| pr_cdoperad || ' - ' || 
+                                                    'Inseriu parametro do Emprestimo Consignado. ' || 
+                                                    ' DtInclPropostaDe: '  || pr_dtinclpropostade ||
+                                                    ' DtInclPropostaAte: ' || pr_dtinclpropostaate ||
+                                                    ' DtEnvioArquivo: '    || pr_dtenvioarquivo ||
+                                                    ' DtVencimento: '      || pr_dtvencimento   ||'.');
+                              
+    END IF;
+    
+    pr_dsmensag := coalesce(vr_idemprconsigparam,0);
+
+  EXCEPTION
+    WHEN vr_exc_erro then
+         IF  vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+         END IF;
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN
+         pr_cdcritic := nvl(vr_cdcritic,0);
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_alt_empr_consig_param: '||SQLERRM;
+  END pc_inc_alt_param_consig;
+
+  PROCEDURE pc_inc_alt_param_consig_web(pr_idemprconsigparam  IN NUMBER   
+                                       ,pr_cdempres           IN tbcadast_empresa_consig.cdempres%TYPE --> codigo da empresa
+                                       ,pr_dtinclpropostade   IN VARCHAR2 --Data de inclusão da proposta De (DD/MM)
+                                       ,pr_dtinclpropostaate  IN VARCHAR2 --Data de inclusão da proposta Até(DD/MM)
+                                       ,pr_dtenvioarquivo     IN VARCHAR2 --Data do envio do arquivo (DD/MM)
+                                       ,pr_dtvencimento       IN VARCHAR2 --Data do vencimento (DD/MM)
+                                       -- campos padrões  
+                                       ,pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
+                                       ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
+                                       ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
+                                       ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
+                                       ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
+                                       ) IS
+  
+  /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_alt_empr_consig_param_web
+      Sistema  : AIMARO
+      Sigla    : CONSIG
+      Autor    : Fernanda Kelli - AMcom Sistemas de Informação
+      Data     : 04/03/2019
+
+      Objetivo : Alterar as informações do convênio do Consignado referente a
+                 data de corte do vencimento da parcela, em relação à data de inclusão da proposta.
+
+      Alteração : 
+
+    ----------------------------------------------------------------------------------------------------------*/
+    vr_dsmensag           VARCHAR2(4000);
+    
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    
+    -- Variaveis de dados vindos do XML pr_retxml
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);    
+    
+  BEGIN
+  
+    -- Extrai os dados vindos do XML pr_retxml na tabela 
+    pr_des_erro := 'OK';
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper    --OUT
+                            ,pr_nmdatela => vr_nmdatela    --OUT
+                            ,pr_nmeacao  => vr_nmeacao     --OUT 
+                            ,pr_cdagenci => vr_cdagenci    --OUT
+                            ,pr_nrdcaixa => vr_nrdcaixa    --OUT
+                            ,pr_idorigem => vr_idorigem    --OUT 
+                            ,pr_cdoperad => vr_cdoperad    --OUT
+                            ,pr_dscritic => vr_dscritic);
+    IF  TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+    END IF;
+    
+    --Inserir ou Alterar os Parâmetros para Emprestimos Consignado por Empresa   
+    pc_inc_alt_param_consig(pr_cdcooper            => vr_cdcooper
+                            ,pr_cdempres           => pr_cdempres
+                            ,pr_cdoperad           => vr_cdoperad
+                            ,pr_idemprconsigparam  => pr_idemprconsigparam                             
+                            ,pr_dtinclpropostade   => pr_dtinclpropostade
+                            ,pr_dtinclpropostaate  => pr_dtinclpropostaate
+                            ,pr_dtenvioarquivo     => pr_dtenvioarquivo
+                            ,pr_dtvencimento       => pr_dtvencimento
+                            ,pr_dsmensag           => vr_dsmensag    --> Mensagem  
+                            ,pr_cdcritic           => vr_cdcritic    --> Codigo da critica
+                            ,pr_dscritic           => vr_dscritic ); --> Descricao da critica
+
+    IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmensag>'||vr_dsmensag||'</dsmensag></Root>');
+
+    COMMIT;    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+         IF  vr_cdcritic <> 0 THEN
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         END IF;
+         pr_des_erro := 'NOK';
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := vr_dscritic;
+         pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
+                                          '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
+         ROLLBACK;
+    WHEN OTHERS THEN
+         pr_des_erro := 'NOK';
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_inc_alt_param_consig_web: '||SQLERRM;
+         pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
+                                          '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
+         ROLLBACK;                                         
+  END pc_inc_alt_param_consig_web;      
+                       
+  PROCEDURE pc_excluir_param_consig_web(pr_idemprconsigparam  IN NUMBER   --??? DEPOIS QUE A TABELA FOR CRIADA, SUBSTITUIR PELO CAMPO DA TABELA
+                                       ,pr_cdempres     IN tbcadast_empresa_consig.cdempres%TYPE --> codigo da empresa
+                                       -- campos padrões  
+                                       ,pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
+                                       ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
+                                       ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
+                                       ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
+                                       ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
+                                       )IS
+   /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_busca_param_consig_web
+      Sistema  : AIMARO
+      Sigla    : CONSIG
+      Autor    : Fernanda Kelli - AMcom Sistemas de Informação
+      Data     : 05/03/2019
+
+      Objetivo : Buscar as informações da tabela para retorna ao PHP.
+
+      Alteração : 
+
+    ----------------------------------------------------------------------------------------------------------*/
+                                            
+    vr_dsmensag           VARCHAR2(4000);
+    
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    
+    -- Variaveis de dados vindos do XML pr_retxml
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100); 
+    
+    cursor cr_param_consig(pr_idemprconsigparam in number) is
+      select to_char(t.dtinclpropostade,'DD/MM') dtinclpropostade
+            ,to_char(t.dtinclpropostaate,'DD/MM') dtinclpropostaate
+            ,to_char(t.dtenvioarquivo,'DD/MM') dtenvioarquivo
+            ,to_char(t.dtvencimento,'DD/MM') dtvencimento 
+        from cecred.tbcadast_emp_consig_param  t
+       where t.idemprconsigparam = pr_idemprconsigparam;
+       
+     rw_param_consig cr_param_consig%ROWTYPE;  
+    
+  BEGIN
+  
+    -- Extrai os dados vindos do XML pr_retxml na tabela 
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper    --OUT
+                            ,pr_nmdatela => vr_nmdatela    --OUT
+                            ,pr_nmeacao  => vr_nmeacao     --OUT 
+                            ,pr_cdagenci => vr_cdagenci    --OUT
+                            ,pr_nrdcaixa => vr_nrdcaixa    --OUT
+                            ,pr_idorigem => vr_idorigem    --OUT 
+                            ,pr_cdoperad => vr_cdoperad    --OUT
+                            ,pr_dscritic => vr_dscritic);
+    IF  TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+    END IF;
+    
+    --recuperar os dados para fazer o log
+    OPEN cr_param_consig(pr_idemprconsigparam);
+    FETCH cr_param_consig INTO rw_param_consig;
+    IF cr_param_consig%NOTFOUND THEN 
+      CLOSE cr_param_consig;
+    ELSE
+      --Excluir os Parâmetros para Emprestimos Consignado por Empresa   
+      BEGIN
+        DELETE tbcadast_emp_consig_param
+         WHERE idemprconsigparam = pr_idemprconsigparam;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao tentar excluir os parametros do Emprestimo Consignado.';
+          RAISE vr_exc_erro;
+      END; 
+      
+      -- Gera log
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 2 --  erro nao tratado 
+                                ,pr_nmarqlog     => 'tela_consig.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' -->  Operador '|| vr_cdoperad || ' - ' || 
+                                                    ' Excluiu parametro do Emprestimo Consignado. ' || 
+                                                    ' DtInclPropostaDe: '  || rw_param_consig.dtinclpropostade ||
+                                                    ' DtInclPropostaAte: ' || rw_param_consig.dtinclpropostaate ||
+                                                    ' DtEnvioArquivo: '    || rw_param_consig.dtenvioarquivo ||
+                                                    ' DtVencimento: '      || rw_param_consig.dtvencimento ||'.');
+      
+      CLOSE cr_param_consig; 
+    END IF;
+      
+    pr_des_erro := 'OK';
+    
+    pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmensag>'||vr_dsmensag||'</dsmensag></Root>');
+
+    --Efetua commit das alterações       
+    COMMIT;    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+         IF  vr_cdcritic <> 0 THEN
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         END IF;
+         pr_des_erro := 'NOK';
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := vr_dscritic;
+         pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
+                                          '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
+         ROLLBACK;
+    WHEN OTHERS THEN
+         pr_des_erro := 'NOK';
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_excluir_param_consig_web: '||SQLERRM;
+         pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
+                                          '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
+         ROLLBACK; 
+  END pc_excluir_param_consig_web;
+  
+  PROCEDURE pc_val_cooper_consignado_web( pr_cdcooper  IN NUMBER   -- codcooper
+                                         -- campos padrões  
+                                         ,pr_xmllog           IN VARCHAR2              --> XML com informacoes de LOG
+                                         ,pr_cdcritic        OUT PLS_INTEGER           --> Codigo da critica
+                                         ,pr_dscritic        OUT VARCHAR2              --> Descricao da critica
+                                         ,pr_retxml           IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo        OUT VARCHAR2              --> Nome do campo com erro
+                                         ,pr_des_erro        OUT VARCHAR2              --> Erros do processo
+                                         ) is
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    V_RET  crapprm.dsvlrprm%TYPE;
+    
+    -- Variaveis de dados vindos do XML pr_retxml
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;    
+    
+  BEGIN
+    pr_nmdcampo := NULL;
+    pr_des_erro := 'OK';
+    
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+    IF  TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+    END IF;
+
+    
+    gene0001.pc_param_sistema(pr_nmsistem => 'CRED'
+                            ,pr_cdcooper  => pr_cdcooper 
+                            ,pr_cdacesso  => 'COOPER_CONSIGNADO'
+                            ,pr_dsvlrprm => V_RET);
+    pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmensag>'||V_RET||'</dsmensag></Root>');
+  EXCEPTION 
+    WHEN vr_exc_erro THEN
+         IF  vr_cdcritic <> 0 THEN
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         END IF;
+         pr_des_erro := 'NOK';
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := vr_dscritic;
+         pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
+                                          '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_des_erro := 'NOK';
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral na rotina TELA_CONSIG.pc_val_cooper_consignado_web: '||SQLERRM;
+      pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
+                                          '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
+  END; 
+  
+  PROCEDURE pc_busca_param_consig(pr_cdcooper               IN crapemp.cdcooper%TYPE                 --> Código da Cooperativa
+                                 ,pr_cdempres               IN tbcadast_empresa_consig.cdempres%TYPE --> Codigo da empresa 
+                                  --> OUT <--
+                                 ,pr_qtregist               OUT integer                              --> Quantidade de registros encontrados
+                                 ,pr_tab_dados_param_consig OUT typ_tab_dados_param_consig           --> Tabela de retorno
+                                 ,pr_cdcritic               OUT PLS_INTEGER                          --> Código da crítica
+                                 ,pr_dscritic               OUT VARCHAR2                             --> Descrição da crítica
+                                 ) IS
+    /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_busca_param_consig
+      Sistema  : Aimaro
+      Sigla    : CONSIG
+      Autor    : Fernanda Kelli - AMcom Sistemas de Informação
+      Data     : 06/03/2019
+
+      Objetivo  : Buscar os Dados da 'Parâmetros para Emprestimos Consignado por Empresa' para retorna ao PHP.
+
+      Alteração : 
+
+    ----------------------------------------------------------------------------------------------------------*/
+  BEGIN
+    DECLARE
+      CURSOR cr_param_consig IS
+        SELECT idemprconsigparam,
+               to_char(dtinclpropostade,'DD/MM')  dtinclpropostade,
+               to_char(dtinclpropostaate,'DD/MM') dtinclpropostaate,
+               to_char(dtenvioarquivo,'DD/MM')    dtenvioarquivo,
+               to_char(dtvencimento,'DD/MM')      dtvencimento
+          FROM cecred.tbcadast_emp_consig_param
+         WHERE idemprconsig = ( SELECT idemprconsig
+                                  FROM cecred.tbcadast_empresa_consig
+                                 WHERE cdcooper = pr_cdcooper
+                                   AND cdempres = pr_cdempres
+                                );
+
+      rw_param_consig cr_param_consig%ROWTYPE;
+
+      /* Tratamento de erro */
+      vr_exc_erro EXCEPTION;
+
+      /* Descrição e código da critica */
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
+
+      vr_idtab number;
+    BEGIN
+
+      OPEN cr_param_consig;
+      LOOP
+        FETCH cr_param_consig INTO rw_param_consig;
+        EXIT WHEN cr_param_consig%NOTFOUND;
+
+        vr_idtab := pr_tab_dados_param_consig.count + 1;
+       
+        pr_tab_dados_param_consig(vr_idtab).idemprconsigparam    := rw_param_consig.idemprconsigparam;
+        pr_tab_dados_param_consig(vr_idtab).cdempres             := pr_cdempres;
+        pr_tab_dados_param_consig(vr_idtab).dtinclpropostade     := rw_param_consig.dtinclpropostade;
+        pr_tab_dados_param_consig(vr_idtab).dtinclpropostaate    := rw_param_consig.dtinclpropostaate;
+        pr_tab_dados_param_consig(vr_idtab).dtenvioarquivo       := rw_param_consig.dtenvioarquivo;
+        pr_tab_dados_param_consig(vr_idtab).dtvencimento         := rw_param_consig.dtvencimento;
+        
+        pr_qtregist := nvl(pr_qtregist,0) + 1;
+      END LOOP;
+      CLOSE cr_param_consig;
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        /* busca valores de critica predefinidos */
+        IF NVL(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+          /* busca a descriçao da crítica baseado no código */
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro não tratado na tela_consig.pc_busca_param_consig '||sqlerrm;
+        pr_cdcritic := 0;
+    END;
+  END pc_busca_param_consig;
+
+  PROCEDURE pc_busca_param_consig_web(pr_cdempres           IN tbcadast_empresa_consig.cdempres%TYPE --> codigo da empresa
+                                     -- campos padrões  
+                                     ,pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
+                                     ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
+                                     ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
+                                     ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
+                                     ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
+                                     ) IS
+    /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_busca_param_consig_web
+      Sistema  : AIMARO
+      Sigla    : CONSIG
+      Autor    : Fernanda Kelli - AMcom Sistemas de Informação
+      Data     : 05/03/2019
+
+      Objetivo : Buscar os Dados da 'Parâmetros para Emprestimos Consignado por Empresa' para retorna ao PHP.
+
+      Alteração : 
+
+    ----------------------------------------------------------------------------------------------------------*/
+    BEGIN
+    DECLARE
+      /* Tratamento de erro */
+      vr_exc_erro EXCEPTION;
+
+      /* Descrição e código da critica */
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
+
+      -- variaveis de retorno
+      vr_tab_dados_param_consig typ_tab_dados_param_consig;
+      vr_qtregist         number;
+
+      -- variaveis de entrada vindas no xml
+      vr_cdcooper integer;
+      vr_cdoperad varchar2(100);
+      vr_nmdatela varchar2(100);
+      vr_nmeacao  varchar2(100);
+      vr_cdagenci varchar2(100);
+      vr_nrdcaixa varchar2(100);
+      vr_idorigem varchar2(100);
+
+      -- variáveis para armazenar as informaçoes em xml
+      vr_des_xml        clob;
+      vr_texto_completo varchar2(32600);
+      vr_index          varchar2(100);
+
+      procedure pc_escreve_xml( pr_des_dados in varchar2
+                              , pr_fecha_xml in boolean default false
+                              ) is
+      begin
+          gene0002.pc_escreve_xml( vr_des_xml
+                                 , vr_texto_completo
+                                 , pr_des_dados
+                                 , pr_fecha_xml );
+      end;
+
+    BEGIN
+      pr_nmdcampo := NULL;
+      pr_des_erro := 'OK';
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
+
+      tela_consig.pc_busca_param_consig( pr_cdcooper               => vr_cdcooper
+                                                    ,pr_cdempres               => pr_cdempres
+                                                     --> OUT <--
+                                                    ,pr_qtregist               => vr_qtregist
+                                                    ,pr_tab_dados_param_consig => vr_tab_dados_param_consig
+                                                    ,pr_cdcritic               => vr_cdcritic
+                                                    ,pr_dscritic               => vr_dscritic);                                 
+
+      IF (nvl(vr_cdcritic,0) <> 0 OR  vr_dscritic IS NOT NULL) THEN
+          raise vr_exc_erro;
+      END IF;
+
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
+
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                     '<root><dados qtregist="' || vr_qtregist ||'" >');
+
+      -- ler os registros do consignado e incluir no xml
+      vr_index := vr_tab_dados_param_consig.first;
+      while vr_index is not null loop
+            pc_escreve_xml('<inf>'||
+                             '<idemprconsigparam>'||    vr_tab_dados_param_consig(vr_index).idemprconsigparam    ||'</idemprconsigparam>'||
+                             '<dtinclpropostade>'||     vr_tab_dados_param_consig(vr_index).dtinclpropostade     ||'</dtinclpropostade>'||
+                             '<dtinclpropostaate>'||    vr_tab_dados_param_consig(vr_index).dtinclpropostaate    ||'</dtinclpropostaate>'||
+                             '<dtenvioarquivo>'||       vr_tab_dados_param_consig(vr_index).dtenvioarquivo       ||'</dtenvioarquivo>'||
+                             '<dtvencimento>'||         vr_tab_dados_param_consig(vr_index).dtvencimento         ||'</dtvencimento>'||
+                           '</inf>');
+          /* buscar proximo */
+          vr_index := vr_tab_dados_param_consig.next(vr_index);
+      end loop;
+      pc_escreve_xml ('</dados></root>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
+
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+           /*  se foi retornado apenas código */
+           IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+               /* buscar a descriçao */
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           END IF;
+           /* variavel de erro recebe erro ocorrido */
+           pr_des_erro := 'NOK';
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+             -- Carregar XML padrao para variavel de retorno
+              pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                             '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+             pr_des_erro := 'NOK';
+           /* montar descriçao de erro nao tratado */
+             pr_dscritic := 'erro não tratado na tela_consig.pc_busca_param_consig_web ' ||SQLERRM;
+             -- Carregar XML padrao para variavel de retorno
+              pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                             '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+  END pc_busca_param_consig_web;
+  
+  PROCEDURE pc_replicar_param_consig_web(pr_idemprconsigparam  IN NUMBER   
+                                        ,pr_cdempres           IN tbcadast_empresa_consig.cdempres%TYPE --> codigo da empresa
+                                        ,pr_dtinclpropostade   IN VARCHAR2 --Data de inclusão da proposta De (DD/MM)
+                                        ,pr_dtinclpropostaate  IN VARCHAR2 --Data de inclusão da proposta Até(DD/MM)
+                                        ,pr_dtenvioarquivo     IN VARCHAR2 --Data do envio do arquivo (DD/MM)
+                                        ,pr_dtvencimento       IN VARCHAR2 --Data do vencimento (DD/MM)
+                                         -- campos padrões  
+                                        ,pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
+                                        ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
+                                        ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
+                                        ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
+                                        ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
+                                        ) IS
+  
+  /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_replicar_param_consig_web
+      Sistema  : AIMARO
+      Sigla    : CONSIG
+      Autor    : Fernanda Kelli - AMcom Sistemas de Informação
+      Data     : 07/03/2019
+
+      Objetivo : Depois da inclusão do primeiro registro referente a parâmetrização da inclusão da Proposta 
+                 do Consignado, será replicado para os demais mêses do Ano.
+                 DT FECHAMENTO DA FOLHA = 25/03
+                 DE     ATE     DT ARQUIVO   DT VENCIMENTO
+                 16/01  15/02   15/02        12/03 
+
+      Alteração : 
+
+    ----------------------------------------------------------------------------------------------------------*/
+    vr_dsmensag    VARCHAR2(4000);
+    
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    
+    -- Variaveis de dados vindos do XML pr_retxml
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);  
+    
+  CURSOR cr_tbcadast_emp_consig_param(pr_cdcooper1 in number) IS
+    SELECT to_char(dtinclpropostade,'MM')  mes_inicial_de
+          ,to_char(dtinclpropostaate,'MM') mes_inicial_ate
+          ,to_char(dtenvioarquivo,'MM')    mes_inicial_arq
+          ,to_char(dtvencimento,'MM')      mes_inicial_venc  
+          ,dtinclpropostade
+          ,dtinclpropostaate
+          ,dtenvioarquivo
+          ,dtvencimento
+    FROM cecred.tbcadast_emp_consig_param
+   WHERE idemprconsig = ( SELECT idemprconsig
+                            FROM cecred.tbcadast_empresa_consig
+                           WHERE cdcooper = pr_cdcooper1
+                             AND cdempres = pr_cdempres); 
+                             
+    rw_param     cr_tbcadast_emp_consig_param%ROWTYPE;
+    vr_mes_novo_de   number;
+    vr_mes_novo_ate  number;
+    vr_mes_novo_arq  number;
+    vr_mes_novo_venc number;            
+    
+  BEGIN
+  
+    -- Extrai os dados vindos do XML pr_retxml na tabela 
+    pr_des_erro := 'OK';
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper    --OUT
+                            ,pr_nmdatela => vr_nmdatela    --OUT
+                            ,pr_nmeacao  => vr_nmeacao     --OUT 
+                            ,pr_cdagenci => vr_cdagenci    --OUT
+                            ,pr_nrdcaixa => vr_nrdcaixa    --OUT
+                            ,pr_idorigem => vr_idorigem    --OUT 
+                            ,pr_cdoperad => vr_cdoperad    --OUT
+                            ,pr_dscritic => vr_dscritic);
+    IF  TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+    END IF;
+    
+    --Inserir ou Alterar os Parâmetros para Emprestimos Consignado por Empresa   
+    pc_inc_alt_param_consig( pr_cdcooper           => vr_cdcooper
+                            ,pr_cdempres           => pr_cdempres
+                            ,pr_cdoperad           => vr_cdoperad
+                            ,pr_idemprconsigparam  => pr_idemprconsigparam                             
+                            ,pr_dtinclpropostade   => pr_dtinclpropostade
+                            ,pr_dtinclpropostaate  => pr_dtinclpropostaate
+                            ,pr_dtenvioarquivo     => pr_dtenvioarquivo
+                            ,pr_dtvencimento       => pr_dtvencimento
+                            ,pr_dsmensag           => vr_dsmensag    --> Mensagem  
+                            ,pr_cdcritic           => vr_cdcritic    --> Codigo da critica
+                            ,pr_dscritic           => vr_dscritic ); --> Descricao da critica
+
+    IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    COMMIT;
+    
+    --Depois de Inserir a primeiro registro, fazer a replicação para os demais mêses do ano
+    OPEN cr_tbcadast_emp_consig_param(vr_cdcooper);
+    FETCH cr_tbcadast_emp_consig_param INTO rw_param;
+    CLOSE cr_tbcadast_emp_consig_param;
+    
+    vr_mes_novo_de   := rw_param.mes_inicial_de;
+    vr_mes_novo_ate  := rw_param.mes_inicial_ate;
+    vr_mes_novo_arq  := rw_param.mes_inicial_arq;
+    vr_mes_novo_venc := rw_param.mes_inicial_venc;
+  
+    FOR CONTADOR IN 1..11 LOOP
+      
+      --Mês de inclusão da proposta De (DD/MM)
+      IF vr_mes_novo_de < 12 THEN
+        vr_mes_novo_de := vr_mes_novo_de + 1;
+      ELSIF vr_mes_novo_de = 12 THEN  
+        vr_mes_novo_de := 1;
+      ELSE
+        vr_mes_novo_de := vr_mes_novo_de + 1;
+      END IF;
+      
+      --Mês de inclusao da proposta Ate(DD/MM).
+      IF vr_mes_novo_ate < 12 THEN
+        vr_mes_novo_ate := vr_mes_novo_ate + 1;
+      ELSIF vr_mes_novo_ate = 12 THEN  
+        vr_mes_novo_ate := 1;
+      ELSE
+        vr_mes_novo_ate := vr_mes_novo_ate + 1;
+      END IF;
+      
+      --Mês do envio do arquivo (DD/MM).
+      IF vr_mes_novo_arq < 12 THEN
+        vr_mes_novo_arq := vr_mes_novo_arq + 1;
+      ELSIF vr_mes_novo_arq = 12 THEN  
+        vr_mes_novo_arq := 1;
+      ELSE
+        vr_mes_novo_arq := vr_mes_novo_arq + 1;
+      END IF;
+      
+      --Data do vencimento (DD/MM).
+      IF vr_mes_novo_venc < 12 THEN
+        vr_mes_novo_venc := vr_mes_novo_venc + 1;
+      ELSIF vr_mes_novo_venc = 12 THEN  
+        vr_mes_novo_venc := 1;
+      ELSE
+        vr_mes_novo_venc := vr_mes_novo_venc + 1;
+      END IF;
+          
+      --DBMS_OUTPUT.put_line(CONTADOR||' '||to_char(rw_param.dtinclpropostade,'DD')||'/'|| LPAD(vr_mes_novo,2,'0')||'/'||to_char(rw_param.dtinclpropostade,'RRRR'));
+      --Inserir ou Alterar os Parâmetros para Emprestimos Consignado por Empresa   
+      pc_inc_alt_param_consig( pr_cdcooper           => vr_cdcooper
+                              ,pr_cdempres           => pr_cdempres
+                              ,pr_cdoperad           => vr_cdoperad
+                              ,pr_idemprconsigparam  => pr_idemprconsigparam                             
+                              ,pr_dtinclpropostade   => to_char(rw_param.dtinclpropostade,'DD') ||'/'|| LPAD(vr_mes_novo_de,2,'0')  
+                              ,pr_dtinclpropostaate  => to_char(rw_param.dtinclpropostaate,'DD')||'/'|| LPAD(vr_mes_novo_ate,2,'0') --||'/'||to_char(rw_param.dtinclpropostaate,'RRRR') 
+                              ,pr_dtenvioarquivo     => to_char(rw_param.dtenvioarquivo,'DD')   ||'/'|| LPAD(vr_mes_novo_arq,2,'0') --||'/'||to_char(rw_param.dtenvioarquivo,'RRRR') 
+                              ,pr_dtvencimento       => to_char(rw_param.dtvencimento,'DD')     ||'/'|| LPAD(vr_mes_novo_venc,2,'0')--||'/'||to_char(rw_param.dtvencimento,'RRRR') 
+                              ,pr_dsmensag           => vr_dsmensag    --> Mensagem  
+                              ,pr_cdcritic           => vr_cdcritic    --> Codigo da critica
+                              ,pr_dscritic           => vr_dscritic ); --> Descricao da critica
+
+      IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+    END LOOP;
+    
+    COMMIT;
+    
+    --Preparar o Retorno de todas as linhas
+    pc_busca_param_consig_web(pr_cdempres 
+                              -- campos padrões  
+                             ,pr_xmllog 
+                             ,pr_cdcritic
+                             ,pr_dscritic
+                             ,pr_retxml  
+                             ,pr_nmdcampo
+                             ,pr_des_erro );
+                                     
+    --pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmensag>'||vr_dsmensag||'</dsmensag></Root>');
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+         IF  vr_cdcritic <> 0 THEN
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         END IF;
+         pr_des_erro := 'NOK';
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := vr_dscritic;
+         pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
+                                          '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
+         ROLLBACK;
+    WHEN OTHERS THEN
+         pr_des_erro := 'NOK';
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_replicar_param_consig_web: '||SQLERRM;
+         pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
+                                          '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
+         ROLLBACK;                                         
+  END pc_replicar_param_consig_web;      
+  
+                                                 
+END TELA_CONSIG;
 /
