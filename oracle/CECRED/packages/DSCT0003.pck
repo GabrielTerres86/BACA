@@ -767,6 +767,7 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
                                         
   PROCEDURE pc_lanc_jratu_mensal(pr_cdcooper IN crapbdt.cdcooper%TYPE
                                 ,pr_nrborder IN crapbdt.nrborder%TYPE DEFAULT 0
+                                ,pr_nrdconta IN crapbdt.nrdconta%TYPE DEFAULT 0
                               --------> OUT <--------
                                 ,pr_cdcritic OUT PLS_INTEGER                 --> código da crítica
                                 ,pr_dscritic OUT VARCHAR2                    --> descrição da crítica
@@ -8268,8 +8269,8 @@ EXCEPTION
               FROM craptdb mvenc
              WHERE mvenc.insittit = 4 
                AND mvenc.cdcooper = tdb.cdcooper 
-               AND mvenc.nrdconta = tdb.nrdconta 
                AND mvenc.nrborder = tdb.nrborder
+               AND mvenc.nrdconta = tdb.nrdconta
              GROUP BY mvenc.nrborder 
            ) maisvencido
           ,(POWER((bdt.vltxmora / 100) + 1,(1 / 30)) - 1) txdiariamora
@@ -8296,18 +8297,21 @@ EXCEPTION
                  ,tdb.vltitulo
              FROM craptdb tdb
             INNER JOIN( SELECT cdcooper
+                              ,nrdconta
                               ,nrborder
                               ,MIN(dtvencto) dtvenmin 
                           FROM craptdb 
                          WHERE (dtvencto +60) < pr_dtmvtolt
                            AND insittit = 4 
                            AND nrborder = pr_nrborder
-                           AND nrdconta = pr_nrdconta
                            AND cdcooper = pr_cdcooper
+                           AND nrdconta = pr_nrdconta
                          GROUP BY cdcooper
+                                 ,nrdconta
                                  ,nrborder
                       ) tdv ON tdb.cdcooper = tdv.cdcooper 
                            AND tdb.nrborder = tdv.nrborder
+                           AND tdb.nrdconta = tdv.nrdconta
             INNER JOIN crapbdt bdt ON bdt.nrborder = tdb.nrborder 
                                   AND bdt.cdcooper = tdb.cdcooper 
                                   AND bdt.flverbor = 1 
@@ -10351,7 +10355,10 @@ EXCEPTION
          + (tdb.vljraprj - tdb.vlpgjrpr)
          + (tdb.vliofprj - tdb.vliofppr)),0) AS vl_prejuz
       FROM crapbdt bdt
-        LEFT JOIN craptdb tdb ON bdt.cdcooper = tdb.cdcooper AND bdt.nrborder = tdb.nrborder AND tdb.insittit = 4
+        LEFT JOIN craptdb tdb ON bdt.cdcooper = tdb.cdcooper
+ 		                     AND bdt.nrborder = tdb.nrborder
+							 AND bdt.nrdconta = tdb.nrdconta 
+							 AND tdb.insittit = 4
       WHERE bdt.cdcooper = pr_cdcooper
         AND bdt.nrborder = pr_nrborder
       GROUP BY bdt.inprejuz, bdt.nrborder, bdt.cdcooper;
@@ -11212,6 +11219,7 @@ EXCEPTION
   
   PROCEDURE pc_lanc_jratu_mensal(pr_cdcooper IN crapbdt.cdcooper%TYPE
                                 ,pr_nrborder IN crapbdt.nrborder%TYPE DEFAULT 0
+                                ,pr_nrdconta IN crapbdt.nrdconta%TYPE DEFAULT 0
                                  --------> OUT <--------
                                 ,pr_cdcritic OUT PLS_INTEGER                 --> código da crítica
                                 ,pr_dscritic OUT VARCHAR2                    --> descrição da crítica
@@ -11261,6 +11269,7 @@ EXCEPTION
       FROM  craptdb tdb
       WHERE tdb.cdcooper = pr_cdcooper
         AND tdb.nrborder = DECODE(pr_nrborder, 0,  tdb.nrborder, pr_nrborder)
+        AND tdb.nrdconta = DECODE(pr_nrdconta, 0,  tdb.nrdconta, pr_nrdconta)
         AND tdb.dtlibbdt IS NOT NULL -- Liberado
       GROUP BY tdb.nrdconta, tdb.nrborder;
     rw_craptdb_lib cr_craptdb_lib%ROWTYPE;
