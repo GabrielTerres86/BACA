@@ -8268,6 +8268,7 @@ EXCEPTION
               FROM craptdb mvenc
              WHERE mvenc.insittit = 4 
                AND mvenc.cdcooper = tdb.cdcooper 
+               AND mvenc.nrdconta = tdb.nrdconta 
                AND mvenc.nrborder = tdb.nrborder
              GROUP BY mvenc.nrborder 
            ) maisvencido
@@ -8301,6 +8302,7 @@ EXCEPTION
                          WHERE (dtvencto +60) < pr_dtmvtolt
                            AND insittit = 4 
                            AND nrborder = pr_nrborder
+                           AND nrdconta = pr_nrdconta
                            AND cdcooper = pr_cdcooper
                          GROUP BY cdcooper
                                  ,nrborder
