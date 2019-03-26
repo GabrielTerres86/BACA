@@ -8,7 +8,7 @@
 | retorna-situacao                       | CADA0004.fn_retorna_situacao_cartao |
 | f_verifica_adm                         | CADA0004.fn_verifica_adm            |
 +----------------------------------------+-------------------------------------+
-
+ 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
 
@@ -3899,6 +3899,7 @@ PROCEDURE cadastra_novo_cartao:
                                                             INPUT 0, /* Nacao */
                                                             INPUT 0,  /* Vl.Endiv*/
                                                             INPUT 0,  /* Vl.Rend */
+															INPUT 0, /* par_vlrecjg1 */
                                                             INPUT par_nrender1, 
                                                             INPUT par_complen1,
                                                             INPUT par_nrcxaps1,
@@ -3929,6 +3930,7 @@ PROCEDURE cadastra_novo_cartao:
                                                             INPUT par_nrcxaps2,
                                                             INPUT 0,  /* inpessoa 2o avail */
                                                             INPUT ?,  /* dtnascto 2o avail */
+															INPUT 0, /* par_vlrecjg2 */
                                                             INPUT "",
                                                            OUTPUT TABLE tt-erro).        
                 DELETE PROCEDURE h-b1wgen9999.
@@ -9237,6 +9239,7 @@ PROCEDURE altera_limcred_cartao:
                                  INPUT par_nrcxaps1,
                                  INPUT 0,  /* inpessoa 1o avail */
                                  INPUT ?,  /* dtnascto 1o avail */
+								 INPUT 0, /* par_vlrecjg1 */
                                  /* 2 avalista */
                                  INPUT par_nrctaav2,
                                  INPUT par_nmdaval2,
@@ -9262,6 +9265,7 @@ PROCEDURE altera_limcred_cartao:
                                  INPUT par_nrcxaps2,
                                  INPUT 0,  /* inpessoa 2o avail */
                                  INPUT ?,  /* dtnascto 2o avail */
+								 INPUT 0, /* par_vlrecjg2 */
                                  INPUT ""). /* Bens */                                 
                                  
                 DELETE PROCEDURE h-b1wgen9999.                 
@@ -11696,6 +11700,7 @@ PROCEDURE efetua_entrega2via_cartao:
                                                     INPUT par_nrcxaps1,
                                                     INPUT 0,  /* inpessoa 1o avail */
                                                     INPUT ?,  /* dtnascto 1o avail */
+													INPUT 0, /* par_vlrecjg1 */
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -11721,6 +11726,7 @@ PROCEDURE efetua_entrega2via_cartao:
                                                     INPUT par_nrcxaps2,
                                                     INPUT 0,  /* inpessoa 2o avail */
                                                     INPUT ?,  /* dtnascto 2o avail */
+													INPUT 0, /* par_vlrecjg2 */
                                                     INPUT "",
                                                    OUTPUT TABLE tt-erro). 
 
@@ -19247,6 +19253,7 @@ PROCEDURE grava_dados_habilitacao:
                                                       INPUT par_nrcxaps1,
                                                       INPUT 0,  /* inpessoa 1o avail */
                                                       INPUT ?,  /* dtnascto 1o avail */
+													  INPUT 0, /* par_vlrecjg1 */
                                                       /** 2o avalista **/
                                                       INPUT par_nrctaav2,
                                                       INPUT par_nmdaval2, 
@@ -19272,6 +19279,7 @@ PROCEDURE grava_dados_habilitacao:
                                                       INPUT par_nrcxaps2,
                                                       INPUT 0,  /* inpessoa 2o avail */
                                                       INPUT ?,  /* dtnascto 2o avail */
+													  INPUT 0, /* par_vlrecjg2 */
                                                       INPUT "",
                                                      OUTPUT TABLE tt-erro).
           

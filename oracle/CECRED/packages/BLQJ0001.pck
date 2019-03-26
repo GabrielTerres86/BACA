@@ -185,6 +185,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
 		
                 29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
                              PRJ450 - Renato Cordeiro (AMcom)         
+                
+                22/03/2019 - Ajustes para que ao tratar raiz de CNPJ, somente procurar na base
+                             de PJ. Wagner - Sustentação - INC0035725.
  
   .............................................................................*/
   
@@ -240,7 +243,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
            , ass.nmprimtl
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
-         AND ass.nrcpfcgc BETWEEN to_number(substr(lpad(pr_nrctadoc,14,'0'),1,8)||'000000') AND to_number(substr(lpad(pr_nrctadoc,14,'0'),1,8)||'999999');
+         AND ass.inpessoa = 2 -- Somente PJ
+         AND ass.nrcpfcgc BETWEEN to_number(substr(lpad(pr_nrctadoc,14,'0'),1,8)||'000000') 
+                              AND to_number(substr(lpad(pr_nrctadoc,14,'0'),1,8)||'999999');
         
     -- VARIÁVEIS
     vr_nrcpfcgc    crapass.nrcpfcgc%TYPE;
@@ -502,7 +507,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
        WHERE ass.cdcooper = pr_cdcooper 
          -- quando o tipo do registro for 1, pesquisa diretamente pela conta
          AND ((ass.nrcpfcgc = pr_nrcpfcgc AND NVL(pr_tpcooperad,0) NOT IN (1,3)) OR
-              (ass.nrcpfcgc BETWEEN to_number(to_number(substr(lpad(pr_cooperad,14,'0'),1,8))||'000000') AND to_number(to_number(substr(lpad(pr_cooperad,14,'0'),1,8))||'999999') AND NVL(pr_tpcooperad,0) = 3) OR
+              (ass.nrcpfcgc BETWEEN to_number(to_number(substr(lpad(pr_cooperad,14,'0'),1,8))||'000000') 
+                                AND to_number(to_number(substr(lpad(pr_cooperad,14,'0'),1,8))||'999999') 
+                                AND NVL(pr_tpcooperad,0) = 3
+                                AND ass.inpessoa         = 2 -- Somente PJ
+                                ) OR
               (ass.nrdconta = pr_cooperad AND NVL(pr_tpcooperad,0) = 1))
       UNION    -- Cláusula UNION é excludente de repetições
       SELECT ttl.cdcooper
@@ -1573,7 +1582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                RAISE vr_exp_erro;
             end if;
 
-          EXCEPTION 
+          EXCEPTION
             WHEN vr_exp_erro THEN
               raise vr_exp_erro;
             WHEN OTHERS THEN
@@ -2151,7 +2160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         END;
 
       END IF;
-
+      
       IF ww_vldesblo > 0 THEN
       -- Atualizar o registro de bloqueio
       BEGIN
@@ -2306,7 +2315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
 
 --            END IF;
             END IF;
-        EXCEPTION		 
+        EXCEPTION
           when vr_exp_erro then
             raise vr_exp_erro;
           WHEN OTHERS THEN
