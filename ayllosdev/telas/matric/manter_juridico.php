@@ -10,6 +10,8 @@
 				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  *                16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).
  *                29/01/2019 - Validar se CNAE informado é válido (PRB0040478 - Márcio/Mouts)
+ *				  26/03/2019 - Adicionado tratamento para remover caracteres inválidos dos campos
+ *                             Endereço e Complemento (PRB0040594 - Jefferson - MoutS)
  */
 ?> 
 
@@ -91,10 +93,8 @@
 		
 		// Retirar caracteres nao desejados
 		if ($key == 'complend' || $key == 'dsendere') {
-			$array1 = array("=","%","&","#","+","?","'",",",".","/",";","[","]","!","@","$","(",")","*","|",":","<",">","~","{","~","}","~");
-
 			// limpeza dos caracteres nos campos 
-			$value = trim(str_replace( $array1, " " , $value));
+			$value = removeCaracteresInvalidos($value, true);
 		}
 	
 		$xml .= "<$key>$value</$key>";   
