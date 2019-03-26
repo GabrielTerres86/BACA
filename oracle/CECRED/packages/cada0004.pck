@@ -921,7 +921,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 03/04/2018
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 11/01/2019
   --
   -- Dados referentes ao programa:
   --
@@ -990,6 +990,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 															    --
   --               05/12/2018 - SCTASK0038225 (Yuri - Mouts)
   --                            substituição do método XSLProcessor pela chamada da GENE0002
+  --
+  --               11/01/2019 - Adicionada tratativa para ANOTA para alertar cadastro de cooperado vencido (Luis Fernando - GFT)             
+
 
 ---------------------------------------------------------------------------------------------------------------
 
@@ -4447,6 +4450,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --              24/01/2019 - PJ298.2.2 - Ajustado mensagem de prejuizo de emprestimo (Rafael Faria - Supero)              
     --
+    -- 
+    --              07/03/2019 - Correcao na mensagem de cadastro vencido (Cassia de Oliveira - GFT)
     -- ..........................................................................*/
 
     ---------------> CURSORES <----------------
@@ -4471,7 +4476,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
              crapass.idastcjt,
              crapass.cdsitdct,
              crapass.cdcatego,
-             crapass.inprejuz
+             crapass.inprejuz,
+             crapass.dtultalt
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
@@ -4793,7 +4799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --> Buscar alterações
     CURSOR cr_crapalt IS
       SELECT /*+index_desc (crapalt CRAPALT##CRAPALT1)*/
-             crapalt.dtaltera
+             MAX(crapalt.dtaltera) AS dtaltera
         FROM crapalt
        WHERE crapalt.cdcooper = pr_cdcooper
          AND crapalt.nrdconta = pr_nrdconta
@@ -6008,6 +6014,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     ELSE
       CLOSE cr_crapalt;
 
+      -- Verifica a data da ultima alteração do cooperado
+      IF months_between(pr_rw_crapdat.dtmvtolt,rw_crapalt.dtaltera) > 12 THEN
+        pc_cria_registro_msg(pr_dsmensag => 'Cooperado com cadastro vencido.'
+                            ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+      END IF;
+      
       /* Somente para pessoa fisica */
       IF rw_crapass.inpessoa = 1 THEN
         -- ler avalistas

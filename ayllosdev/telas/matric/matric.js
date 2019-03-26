@@ -63,6 +63,7 @@
  * 037: [16/01/2018] Lucas Reinert			 : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
  * 038: [13/07/2018] Andrey Formigari (Mouts): Novo campo Nome Social (#SCTASK0017525)
  * 039: [04/09/2018] Alcemir          (Mouts): alterado atualizarContasAntigasDemitidas(), incluido parametro operauto (operador autorizador). (SM 364) 
+ * 040: [16/01/2019] Cássia de Oliveira (GFT): Remoção de impressão automatica quando pessoa fisica
  * 049: [29/01/2019] Márcio           (Mouts): Validar se CNAE informado é válido (PRB0040478) 
  */
 
@@ -2561,8 +2562,14 @@ function verificaRelatorio() {
 
                 // Se esta incluindo, efetuar consultas
 						var metodo = ($('#opcao', '#frmCabMatric').val() == 'CI') ? 'efetuar_consultas();' : 'controlaVoltar()';
-
+				// Inicio - Ficha-Proposta - Cássia de Oliveira (GFT)
+				$inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
+				if($inpessoa == 2){
                 showConfirmacao("Deseja visualizar a impress&atilde;o?", "Confirma&ccedil;&atilde;o - Aimaro", "imprime();", metodo, "sim.gif", "nao.gif");
+				}else{
+					eval(metodo);
+				}
+				// Fim - Ficha-Proposta - Cássia de Oliveira (GFT)
             } else {
                 try {
                     eval(response);
