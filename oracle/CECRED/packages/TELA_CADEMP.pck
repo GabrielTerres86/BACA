@@ -1,4 +1,4 @@
-create or replace package cecred.TELA_CADEMP_P437_CONSIG is
+create or replace package cecred.TELA_CADEMP is
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : TELA_CADEMP
@@ -85,9 +85,9 @@ create or replace package cecred.TELA_CADEMP_P437_CONSIG is
                                     ,pr_nmdcampo OUT VARCHAR2                          --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2                          --> Erros do processo
                                     );
-end TELA_CADEMP_P437_CONSIG;
+end TELA_CADEMP; 
 /
-create or replace package body cecred.TELA_CADEMP_P437_CONSIG is
+create or replace package body cecred.TELA_CADEMP is
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : TELA_CADEMP
@@ -376,7 +376,7 @@ create or replace package body cecred.TELA_CADEMP_P437_CONSIG is
                               , pr_cdoperad => vr_cdoperad
                               , pr_dscritic => vr_dscritic);
 
-      tela_cademp_p437_consig.pc_busca_empresa(pr_cdcooper => vr_cdcooper
+      tela_cademp.pc_busca_empresa(pr_cdcooper => vr_cdcooper
                                               ,pr_nmextemp => pr_nmextemp
                                               ,pr_nmresemp => pr_nmresemp
                                               ,pr_nrdocnpj => pr_nrdocnpj
@@ -489,5 +489,5 @@ create or replace package body cecred.TELA_CADEMP_P437_CONSIG is
     END;
   END pc_busca_empresa_web;
 
-end TELA_CADEMP_P437_CONSIG;
+end TELA_CADEMP; 
 /
