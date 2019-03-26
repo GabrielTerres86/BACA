@@ -1421,6 +1421,9 @@ PROCEDURE importar_icf616.
        DO WHILE TRUE TRANSACTION ON ENDKEY UNDO TRANS_1, LEAVE TRANS_1
                                  ON ERROR UNDO TRANS_1, LEAVE TRANS_1:
 
+          /* FIND PARA LIMPAR ERROR-STATUS:ERROR - NAO REMOVER */
+          FIND CURRENT crapcop NO-LOCK NO-ERROR.
+
           SET STREAM str_2 aux_setlinha WITH FRAME AA WIDTH 216.
 
           /* Verifica se é a ultima linha do Arquivo */
