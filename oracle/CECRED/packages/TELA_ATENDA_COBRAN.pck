@@ -540,6 +540,31 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
            AND nrdconta = pr_nrdconta;
     rw_convenios cr_convenios%ROWTYPE;
     --
+		FUNCTION fn_nova_reciprocidade(pr_cdcooper IN  crapceb.cdcooper%TYPE
+			                            ) RETURN BOOLEAN IS
+		  --
+			vr_qt_reg NUMBER;
+			--
+		BEGIN
+			--
+			SELECT COUNT(1)
+			  INTO vr_qt_reg
+				FROM crapprm prm
+			 WHERE prm.cdacesso = 'RECIPROCIDADE_PILOTO'
+			   AND prm.cdcooper = pr_cdcooper;
+			--
+			IF nvl(vr_qt_reg, 0) > 0 THEN
+				--
+				RETURN TRUE;
+				--
+			ELSE
+				--
+				RETURN FALSE;
+				--
+			END IF;
+			--
+		END fn_nova_reciprocidade;
+		--
 		PROCEDURE pc_grava_auxiliar_crapceb(pr_cdcooper IN  crapceb.cdcooper%TYPE
                                        ,pr_nrdconta IN  crapceb.nrdconta%TYPE
                                        ,pr_nrconven IN  crapceb.nrconven%TYPE
@@ -2473,10 +2498,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                     RAISE vr_exc_saida;
                 END IF;
             
+								-- Verifica se a nova reciprocidade esta ativa para a cooperativa informada
+								IF fn_nova_reciprocidade(vr_cdcooper
+			                                  ) THEN
+									--
                 BEGIN
 								--
-								INSERT INTO tbcobran_crapceb
-                        (cdcooper
+										INSERT INTO tbcobran_crapceb(cdcooper
                         ,nrdconta
                         ,nrconven
                         ,nrcnvceb
@@ -2487,8 +2515,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 											,dtinsori
 											,insitceb
 											)
-                    VALUES
-                        (vr_cdcooper
+																					VALUES(vr_cdcooper
                         ,pr_nrdconta
                         ,pr_nrconven
                         ,vr_nrcnvceb
@@ -2499,15 +2526,46 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 											,SYSDATE
 											,vr_insitceb
 											);
+									  --
+									EXCEPTION
+										WHEN OTHERS THEN
+											vr_dscritic := 'Erro ao inserir o registro na CRAPCEB: ' || SQLERRM;
+											RAISE vr_exc_saida;
+									END;
+							    --
+								ELSE
+									--
+									BEGIN
+										--
+										INSERT INTO crapceb(cdcooper
+																			 ,nrdconta
+																			 ,nrconven
+																			 ,nrcnvceb
+																			 ,cdoperad
+																			 ,cdopeori
+																			 ,cdageori
+																			 ,dtinsori
+																			 )
+																 VALUES(vr_cdcooper
+																			 ,pr_nrdconta
+																			 ,pr_nrconven
+																			 ,vr_nrcnvceb
+																			 ,vr_cdoperad
+																			 ,vr_cdoperad
+																			 ,vr_cdagenci
+																			 ,SYSDATE
+																			 );
+										--
+									EXCEPTION
+										WHEN OTHERS THEN
+											vr_dscritic := 'Erro ao inserir o registro na CRAPCEB: ' || SQLERRM;
+											RAISE vr_exc_saida;
+									END;
+									--
+								END IF;
                     -- Seta como registro novo
                     vr_blnewreg_cip := TRUE;
 								--
-                EXCEPTION
-                    WHEN OTHERS THEN
-                        vr_dscritic := 'Erro ao inserir o registro na CRAPCEB: ' || SQLERRM;
-                        RAISE vr_exc_saida;
-                END;
-							--
             END IF;
         
             -- Verificar se o convenio esta sendo atualizado 
@@ -2972,8 +3030,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 								vr_dscritic := 'Erro ao alterar o registro na TBCOBRAN_CRAPCEB: ' || SQLERRM;
 								RAISE vr_exc_saida;
 						END;
-						--
         
+            -- Verifica se a nova reciprocidade esta ativa para a cooperativa informada
+						IF fn_nova_reciprocidade(vr_cdcooper
+																		) THEN
 						-- Verifica se está ativo e joga para a CRAPCEB
 						IF vr_insitceb IN(1, 5) THEN
 							--
@@ -3006,6 +3066,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 								IF vr_dscritic IS NOT NULL THEN
 									--
 									RAISE vr_exc_saida;
+										--
+									END IF;
 									--
 								END IF;
 								--
