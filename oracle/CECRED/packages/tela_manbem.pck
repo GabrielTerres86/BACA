@@ -2469,6 +2469,7 @@ create or replace package body cecred.tela_manbem is
     
         Alteracoes: 
         26/03/2019 - Tratamento do erro oracle (ORA06502), PRB0040687 - ERRO CHASSI E PROPOSTA (Bruno C, Mout'S)
+        27/03/2019 - Tratamento para impedir a existência de dados orfão na tabela CRAPBPR em casos do erro, PRB0040657 - Erro ao incluir veículo (Bruno C, Mout'S)
 
     ..............................................................................*/            
   
@@ -2825,7 +2826,18 @@ create or replace package body cecred.tela_manbem is
         WHEN OTHERS THEN
           CECRED.pc_internal_exception(pr_cdcooper => par_cdcooper);
           
-          par_dscritic := 'Erro na leitura do XML. Rotina PC_GRAVA_ALIENACAO_HIPOTECA: '||SQLERRM;
+          DELETE FROM crapbpr
+           WHERE cdcooper = par_cdcooper
+             AND nrdconta = par_nrdconta
+             AND tpctrpro = par_tpctrato
+             AND nrctrpro = par_nrctrato
+             AND flgalien = 1;
+          /*Exclusão do bem anexado à proposta em caso de erro*/
+        
+          par_dscritic := vr_aux_listabem ||
+                          'Erro na leitura do XML. Rotina PC_GRAVA_ALIENACAO_HIPOTECA: ' ||
+                          SQLERRM;
+        
           RAISE vr_exc_erro;
       END;
     END IF;
