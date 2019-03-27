@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
       Autor     : David
-      Data      : Dezembro/2010                Ultima Atualizacao: 02/05/2013
+      Data      : Dezembro/2010                Ultima Atualizacao: 26/02/2019
   
       Dados referentes ao programa:
   
@@ -61,7 +61,11 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
       13/06/2018 - Criado assinatura da fn_datamov para ser chamada no CRPS618.
                    Chamado SCTASK0015832 - Gabriel (Mouts).
 
-      08/08/2018 - Adicionado o conveio de desconto de titulo para seguir a mesma regra do de emprestimo na definicao da data (Luis Fernando - GFT)
+      08/08/2018 - Adicionado o conveio de desconto de titulo para seguir a mesma regra do de emprestimo na definicao da data (Luis Fernando - GFT)   
+  
+      26/02/2019 - Eliminar geração de arquivo especial npc_RRRRMM.log -- nome do arquivo de log mensal
+                  (Belli - Envolti - PRB0040398)
+                  
   ..............................................................................*/
 
 
@@ -427,12 +431,23 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
 
   -- Procedure para criação de notificação e Push para DDA                                   
   PROCEDURE pc_notif_novo_dda (pr_cdcooper IN crapcop.cdcooper%TYPE
-                                ,pr_nrdconta IN crapass.nrdconta%TYPE
-                                ,pr_notif_dda IN typ_reg_notif_dda);
-
+                              ,pr_nrdconta IN crapass.nrdconta%TYPE
+                              ,pr_notif_dda IN typ_reg_notif_dda
+                              ,pr_cdcritic  OUT crapcri.cdcritic%TYPE
+                              ,pr_dscritic  OUT crapcri.dscritic%TYPE);
   -- Procedure para processar pendencia de cancelamento de baixa operacional 
   PROCEDURE pc_pendencia_cancel_baixa(pr_dsrowid   IN VARCHAR2);   -- Rowid do registro a ser processado
 
+  -- Rotina de Log - tabela: tbgen prglog ocorrencia
+  PROCEDURE pc_log(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                  ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                  ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                  ,pr_tpexecuc IN NUMBER   DEFAULT 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                  ,pr_dscritic IN VARCHAR2 DEFAULT NULL
+                  ,pr_cdcritic IN VARCHAR2 DEFAULT NULL
+                  ,pr_nmrotina IN VARCHAR2 DEFAULT 'DDDA0001'
+                  ,pr_cdcooper IN VARCHAR2 DEFAULT 0
+                  );
 END ddda0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
@@ -442,7 +457,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0079.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 30/11/2018
+  --  Data     : Julho/2013.                   Ultima atualizacao: 26/02/2019
   --
   -- Dados referentes ao programa:
   --
@@ -478,6 +493,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --                          (Tiago - INC0026317)   
   --
   --             20/12/2018 - Chamado INC0028955 Erro de cursor invalido (Fabio - Amcom).   
+  --
+  --             26/02/2019 - Eliminar geração de arquivo especial npc_RRRRMM.log -- nome do arquivo de log mensal
+  --                          Revitalização
+  --                          (Belli - Envolti - PRB0040398)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   
@@ -613,7 +633,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
        AND ceb.nrconven = pr_nrconven;
   rw_crapceb cr_crapceb%ROWTYPE;  
   
-  vr_dsarqlg         CONSTANT VARCHAR2(20) := 'npc_'||to_char(SYSDATE,'RRRRMM')||'.log'; -- nome do arquivo de log mensal  
+  -- vr_dsarqlg CONSTANT VARCHAR2(20) := 'npc_'||to_char(SYSDATE,'RRRRMM')||'.log'; -- nome do arquivo de log mensal 
+  -- Não mais necessário -  26/02/2019 - PRB0040398 
 
   function fn_datamov return number is
     /******************************************************************************
@@ -649,123 +670,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     when others then
       raise_application_error(-20001,'ddda0001.fn_datamov',true);
   end fn_datamov;
-
-  /* Procedure para buscar dados legado */
-  PROCEDURE pc_obtem_dados_legado(pr_cdcooper IN INTEGER --Codigo Cooperativa
-                                 ,pr_nrdconta IN INTEGER --Numero da Conta
-                                 ,pr_idseqttl IN INTEGER --Identificador sequencial titular
-                                 ,pr_cdagecxa IN INTEGER --Codigo Agencia Caixa
-                                 ,pr_nrdcaixa IN INTEGER --Numero do Caixa
-                                 ,pr_nmrescop OUT VARCHAR2 --Nome resumido cooperativa
-                                 ,pr_cdlegado OUT VARCHAR2 --Codigo Legado
-                                 ,pr_nmarqlog OUT VARCHAR2 --Nome Arquivo Log
-                                 ,pr_nmdirlog OUT VARCHAR2 --Nome Diretorio Log
-                                 ,pr_msgenvio OUT VARCHAR2 --Mensagem envio
-                                 ,pr_msgreceb OUT VARCHAR2 --Mensagem Recebimento
-                                 ,pr_nrispbif OUT VARCHAR2 --Numero ispb IF
-                                 ,pr_des_erro OUT VARCHAR2 --Indicador de erro OK/NOK
-                                 ,pr_dscritic OUT VARCHAR2) IS --Descricao erro
-    ---------------------------------------------------------------------------------------------------------------
-    --
-    --  Programa : pc_obtem_dados_legado    Antigo: procedures/b1wgen0079.p/obtem-dados-legado
-    --  Sistema  : Procedure para atualizar situacao do titulo do sacado eletronico
-    --  Sigla    : CRED
-    --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: --/--/----
-    --
-    -- Dados referentes ao programa:
-    --
-    -- Frequencia: -----
-    -- Objetivo  : Procedure para buscar dados legado
-    ---------------------------------------------------------------------------------------------------------------
-  BEGIN
-    DECLARE
-      --Variaveis Locais
-      vr_datdodia DATE;
-    
-      --Variaveis Erro
-      vr_cdcritic crapcri.cdcritic%TYPE;
-      vr_dscritic VARCHAR2(4000);
-      --Variaveis Excecao
-      vr_exc_erro EXCEPTION;
-    BEGIN
-      --Verificar se a cooperativa existe
-      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
-      FETCH cr_crapcop
-        INTO rw_crapcop;
-      --Se nao encontrou
-      IF cr_crapcop%NOTFOUND THEN
-        --Fechar Cursor
-        CLOSE cr_crapcop;
-        vr_cdcritic := 651;
-        vr_dscritic := 'Registro de cooperativa nao encontrado.';
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-      --Fechar Cursor
-      CLOSE cr_crapcop;
-    
-      --Selecionar Banco
-      OPEN cr_crapban(pr_cdbccxlt => rw_crapcop.cdbcoctl);
-      --Posicionar no proximo registro
-      FETCH cr_crapban
-        INTO rw_crapban;
-      --Se nao encontrar
-      IF cr_crapban%NOTFOUND THEN
-        --Fechar Cursor
-        CLOSE cr_crapban;
-        vr_cdcritic := 57;
-        vr_dscritic := ' ';
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-      --Fechar Cursor
-      CLOSE cr_crapban;
-    
-      --Retornar nome cooperativa
-      pr_nmrescop := rw_crapcop.nmrescop;
-      pr_cdlegado := 'LEG';
-      --Buscar diretorio padrao cooperativa
-      pr_nmdirlog := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
-                                          ,pr_cdcooper => pr_cdcooper
-                                          ,pr_nmsubdir => '/log') || '/'; --> ir para diretorio log
-      --Buscar data do dia
-      vr_datdodia := trunc(sysdate); /*PAGA0001.fn_busca_datdodia(pr_cdcooper => pr_cdcooper);*/
-      --Nome arquivo log
-      pr_nmarqlog := 'JDDDA_LogErros_' || to_char(vr_datdodia, 'DDMMRRRR') ||
-                     '.log';
-      --Mensagem de envio
-      pr_msgenvio := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
-                                          ,pr_cdcooper => pr_cdcooper
-                                          ,pr_nmsubdir => '/arq') || '/' ||
-                     'SOAP.MESSAGE.ENVIO.' ||
-                     to_char(vr_datdodia, 'DDMMRRRR') ||
-                     To_Char(GENE0002.fn_busca_time, 'fm00000') ||
-                     to_char(pr_nrdconta, 'fm00000000') || pr_idseqttl;
-      --Mensagem recebimento
-      pr_msgreceb := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
-                                          ,pr_cdcooper => pr_cdcooper
-                                          ,pr_nmsubdir => '/arq') || '/' ||
-                     'SOAP.MESSAGE.RECEBIMENTO.' ||
-                     To_Char(vr_datdodia, 'DDMMRRRR') ||
-                     To_Char(GENE0002.fn_busca_time, 'fm00000') ||
-                     to_char(pr_nrdconta, 'fm00000000') || pr_idseqttl;
-    
-      --Numero ISPB IF
-      pr_nrispbif := TO_CHAR(rw_crapban.nrispbif, 'fm00000000');
-    
-      --Retornar OK
-      pr_des_erro := 'OK';
-    EXCEPTION
-      WHEN vr_exc_erro THEN
-        pr_des_erro := 'NOK';
-      WHEN OTHERS THEN
-        pr_des_erro := 'NOK';
-        pr_dscritic := 'Erro na rotina DDDA0001.pc_obtem_dados_legado. ' ||
-                       SQLERRM;
-    END;
-  END pc_obtem_dados_legado;
-
+ 
+  -- Eliminada a procedure pc_obtem_dados_legado apenas gera log não necessário - 26/02/2019 - PRB0040398                       
 
   /* Procedure para criar tags no XML */
   PROCEDURE pc_cria_tag(pr_dsnomtag IN VARCHAR2 --> Nome TAG que será criada
@@ -1093,120 +999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     END;
   END pc_requis_atualizar_situacao;
 
-  /* Procedure para gravar linha log */
-  PROCEDURE pc_grava_linha_log(pr_cdcooper IN INTEGER --> Codigo Cooperativa
-                              ,pr_nrdconta IN INTEGER --> Numero da Conta
-                              ,pr_nmmetodo IN VARCHAR2 --> Nome metodo
-                              ,pr_cdderror IN VARCHAR2 --> Codigo erro
-                              ,pr_dsderror IN VARCHAR2 --> Descricao erro
-                              ,pr_nmarqlog IN VARCHAR2 --> Nome arquivo log
-                              ,pr_nmdirlog IN VARCHAR2 --> Diretorio do log
-                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE --Codigo do erro
-                              ,pr_dscritic OUT VARCHAR2) IS --Mensagem de erro
-  
-    ---------------------------------------------------------------------------------------------------------------
-    --
-    --  Programa : pc_grava_linha_log    Antigo: procedures/b1wgen0079.p/retorna-linha-log
-    --  Sistema  : Procedure para gravar linha log
-    --  Sigla    : CRED
-    --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: --/--/----
-    --
-    -- Dados referentes ao programa:
-    --
-    -- Frequencia: -----
-    -- Objetivo  : Procedure para gravar linha log
-    --
-    -- Alteracoes : 20/12/2018 - Chamado INC0028955 Erro de cursor invalido (Fabio - Amcom).
-  
-    ---------------------------------------------------------------------------------------------------------------
-  BEGIN
-    DECLARE
-      --Variaveis Locais
-      vr_datdodia DATE;
-      vr_nmprimtl VARCHAR2(100);
-      vr_dscpfcgc VARCHAR2(100);
-      --Variaveis de Arquivo
-      vr_input_file utl_file.file_type;
-      vr_setlinha   VARCHAR2(4000);
-      --Variaveis Erro
-      vr_des_erro VARCHAR2(1000);
-      --Variaveis Excecao
-      vr_exc_saida EXCEPTION;
-      vr_exc_erro  EXCEPTION;
-    BEGIN
-    
-      --Inicializar parametros de erro
-      pr_cdcritic := NULL;
-      pr_dscritic := NULL;
-      --Se o nome do arquivo de log estiver vazio
-      IF pr_nmarqlog IS NULL
-         OR pr_nmarqlog IS NULL THEN
-        --Sair
-        RAISE vr_exc_saida;
-      END IF;
-      --Selecionar associado
-      OPEN cr_crapass(pr_cdcooper => pr_cdcooper
-                     ,pr_nrdconta => pr_nrdconta);
-      --Posicionar no proximo registro
-      FETCH cr_crapass
-        INTO rw_crapass;
-      --Se nao encontrar
-      IF cr_crapass%NOTFOUND THEN
-        --Fechar Cursor
-        CLOSE cr_crapass;
-        vr_nmprimtl := NULL;
-        vr_dscpfcgc := NULL;
-      ELSE
-        vr_nmprimtl := rw_crapass.nmprimtl;
-        vr_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc
-                                                ,pr_inpessoa => rw_crapass.inpessoa);
-      END IF;
-      --Fechar Cursor
-      if cr_crapass%isopen then
-      CLOSE cr_crapass;
-      end if;   
-      --Abrir arquivo modo append
-      gene0001.pc_abre_arquivo(pr_nmdireto => pr_nmdirlog --> Diretório do arquivo
-                              ,pr_nmarquiv => pr_nmarqlog --> Nome do arquivo
-                              ,pr_tipabert => 'A' --> Modo de abertura (R,W,A)
-                              ,pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                              ,pr_des_erro => vr_des_erro); --> Erro
-      IF vr_des_erro IS NOT NULL THEN
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-      --Buscar data do dia
-      vr_datdodia := PAGA0001.fn_busca_datdodia(pr_cdcooper => pr_cdcooper);
-      --Montar linha que sera gravada no log
-      vr_setlinha := to_char(vr_datdodia, 'DD/MM/YYYY') || ' ' ||
-                     To_Char(SYSDATE, 'HH24:MI:SS') || ' --> ' ||
-                     GENE0002.fn_mask_conta(pr_nrdconta) || ' | ' ||
-                     SUBSTR(vr_nmprimtl, 1, 50) || ' | ' ||
-                     SUBSTR(vr_dscpfcgc, 1, 18) || ' | ' ||
-                     SUBSTR(pr_nmmetodo, 1, 40) || ' | ' ||
-                     SUBSTR(pr_cdderror, 1, 30) || ' | ' || pr_dsderror;
-      --Escrever linha log
-      gene0001.pc_escr_linha_arquivo(vr_input_file, vr_setlinha);
-      --Fechar Arquivo
-      BEGIN
-        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
-      EXCEPTION
-        WHEN OTHERS THEN
-          RAISE vr_exc_saida;
-      END;
-    EXCEPTION
-      WHEN vr_exc_saida THEN
-        NULL;
-      WHEN vr_exc_erro THEN
-        pr_cdcritic := 0;
-        pr_dscritic := vr_des_erro;
-      WHEN OTHERS THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro ao processar a rotina DDDA0001.pc_grava_linha_log ' ||
-                       sqlerrm;
-    END;
-  END pc_grava_linha_log;
+  -- Eliminada a procedure pc_grava_linha_log apenas gera log não necessário - 26/02/2019 - PRB0040398           
 
   /* Procedure para atualizar situacao do titulo do sacado eletronico */
   PROCEDURE pc_atualz_situac_titulo_sacado(pr_cdcooper IN INTEGER  --Codigo da Cooperativa
@@ -1227,11 +1020,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                           ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da critica
     ---------------------------------------------------------------------------------------------------------------
     --
-    --  Programa : pc_atualz_situac_titulo_sacado    Antigo: procedures/b1wgen0079.p/atualizar-situacao-titulo-sacado
+    --  Programa : pc atualz situac titulo sacado    Antigo: procedures/b1wgen0079.p/atualizar-situacao-titulo-sacado
     --  Sistema  : Procedure para atualizar situacao do titulo do sacado eletronico
     --  Sigla    : CRED
     --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 01/07/2016
+    --  Data     : Julho/2013.                   Ultima atualizacao: 26/02/2019
     --
     -- Dados referentes ao programa:
     --
@@ -1249,7 +1042,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --                           Chamado 229313 (Jean Reddiga - RKAM).
     --
     --             01/07/2016 - Adicionado o valor do parametro pr_idtitdda no log de erros da 
-    --                          atualização da situação do titulo (Douglas - Chamado 462368)
+    --                          atualização da situação do titulo (Douglas - Chamado 462368)  
+    --
+    --             26/02/2019 - Eliminar gearção de arquivo especial npc_RRRRMM.log; nome do arquivo de log mensal
+    --                          Revitalização
+    --                          (Belli - Envolti - PRB0040398)
+    --
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1273,10 +1071,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_xml      xmltype;
       --Variaveis da pc_obtem_dados_legado
       vr_cdlegado VARCHAR2(1000);
-      vr_nmarqlog VARCHAR2(1000);
-      vr_nmdirlog VARCHAR2(1000);
-      vr_msgenvio VARCHAR2(1000);
-      vr_msgreceb VARCHAR2(1000);
+      --vr_nmarqlog VARCHAR2(1000); - Variavel não mais utilizada - 26/02/2019 - PRB0040398
+      --vr_nmdirlog VARCHAR2(1000); - Variavel não mais utilizada - 26/02/2019 - PRB0040398
+      --vr_msgenvio VARCHAR2(1000); - Variavel não mais utilizada - 26/02/2019 - PRB0040398
+      --vr_msgreceb VARCHAR2(1000); - Variavel não mais utilizada - 26/02/2019 - PRB0040398
       vr_nrispbif VARCHAR2(1000);
     
       --Variaveis Erro
@@ -1291,10 +1089,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_idtitdda NUMBER;
     
       --Variaveis Excecao
-      vr_exc_saida EXCEPTION;
+      vr_exc_saida_logica EXCEPTION; -- Alterado nome vr_exc_saida para reforçar a logica - 26/02/2019 - PRB0040398
       vr_exc_erro  EXCEPTION;
+      vr_exc_contingencia EXCEPTION; -- Variavel de contingencia - 26/02/2019 - PRB0040398
       
-    BEGIN
+      -- Variaveis de controle de erro e modulo - 26/02/2019 - PRB0040398
+      vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs
+      vr_nmrotpro  VARCHAR2  (100) := 'DDDA0001.pc_atualz_situac_titulo_sacado'; -- Rotina e programa 
+      
+    BEGIN    
+      -- Incluido nome do módulo logado - 26/02/2019 - PRB0040398
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+      vr_dsparame := ' pr_cdcooper:'   || pr_cdcooper  || 
+                     ', pr_cdagecxa:'  || pr_cdagecxa  ||
+                     ', pr_nrdcaixa:'  || pr_nrdcaixa  ||
+                     ', pr_cdopecxa:'  || pr_cdopecxa  ||
+                     ', pr_nmdatela:'  || pr_nmdatela  ||
+                     ', pr_idorigem:'  || pr_idorigem  ||
+                     ', pr_nrdconta:'  || pr_nrdconta  ||
+                     ', pr_idseqttl:'  || pr_idseqttl  ||
+                     ', pr_idtitdda:'  || pr_idtitdda  ||
+                     ', pr_cdsittit:'  || pr_cdsittit  ||
+                     ', pr_flgerlog:'  || pr_flgerlog  ||
+                     ', pr_dtmvtolt:'  || pr_dtmvtolt  ||
+                     ', pr_dscodbar:'  || pr_dscodbar  ||
+                     ', pr_cdctrlcs:'  || pr_cdctrlcs;
       
       vr_idtitdda := TRIM(pr_idtitdda);      
       
@@ -1315,9 +1134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       --Situacao titulo invalida
       IF pr_cdsittit < 1
          OR pr_cdsittit > 4 THEN
-        --Descricao da Critica
-        vr_dscritic := 'Situacao do titulo invalida.';
-        --Sair
+        vr_cdcritic := 1487; -- Situacao do titulo invalida - 26/02/2019 - PRB0040398
         RAISE vr_exc_erro;
       END IF;
       
@@ -1329,7 +1146,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             
         IF cr_cons_titulo%NOTFOUND THEN
           CLOSE cr_cons_titulo;
-          vr_dscritic := 'Não foi possivel localizar consulta NPC '||pr_cdctrlcs;    
+          vr_cdcritic := 1488; -- Não foi possivel localizar consulta NPC - 26/02/2019 - PRB0040398
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) || pr_cdctrlcs;    
           RAISE vr_exc_erro;  
         ELSE
           CLOSE cr_cons_titulo;
@@ -1339,10 +1157,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         --> e não é pagamento pelo menu DDA
         IF rw_cons_titulo.flgcontingencia = 1 AND vr_idtitdda IS NULL THEN
           --> Caso esteja deve sair do programa sem critica
-          --> pois atualização da cabine e CIP ocorrerá quando for normalizado
+          --> pois atualização da cabine e CIP ocorrerá quando for normalizado          
           vr_cdcritic := 0;
           vr_dscritic := NULL;
-          RAISE vr_exc_erro;
+          RAISE vr_exc_contingencia; -- Execeção especifica - 26/02/2019 - PRB0040398
             
         END IF;
             
@@ -1358,6 +1176,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           IF vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN	  
             RAISE vr_exc_erro;       
           END IF; 
+          -- Retorna nome do módulo logado - 26/02/2019 - PRB0040398
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro ); 
        
           vr_idtitdda := vr_tituloCIP.NumIdentcTit;
         END IF;
@@ -1371,38 +1191,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       --> os demais não econtrara o titulo para o ISPB da coop
       IF nvl(TRIM(pr_idtitdda),0) <> 0 THEN
       
-        BEGIN
-          --Obter dados legado
-          DDDA0001.pc_obtem_dados_legado(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
-                                        ,pr_nrdconta => pr_nrdconta --Numero da Conta
-                                        ,pr_idseqttl => pr_idseqttl --Identificador sequencial titular
-                                        ,pr_cdagecxa => pr_cdagecxa --Codigo Agencia Caixa
-                                        ,pr_nrdcaixa => pr_nrdcaixa --Numero do Caixa
-                                         --Parametros saida
-                                        ,pr_nmrescop => rw_crapcop.nmrescop --Nome resumido cooperativa
-                                        ,pr_cdlegado => vr_cdlegado --Codigo Legado
-                                        ,pr_nmarqlog => vr_nmarqlog --Nome Arquivo Log
-                                        ,pr_nmdirlog => vr_nmdirlog --Nome Diretorio Log
-                                        ,pr_msgenvio => vr_msgenvio --Mensagem envio
-                                        ,pr_msgreceb => vr_msgreceb --Mensagem Recebimento
-                                        ,pr_nrispbif => vr_nrispbif --Numero ispb IF
-                                        ,pr_des_erro => vr_dsreturn --Indicador erro OK/NOK
-                                        ,pr_dscritic => vr_des_erro); --Descricao erro          
-        
-          --Atualizar Situação
-          DDDA0001.pc_requis_atualizar_situacao(pr_cdlegado => vr_cdlegado --Codigo Legado
-                                               ,pr_nrispbif => vr_nrispbif --Numero ISPB IF
-                                               ,pr_idtitdda => vr_idtitdda --Identificador Titulo DDA
-                                               ,pr_cdsittit => pr_cdsittit --Codigo Situacao Titulo
-                                               ,pr_xml_frag => vr_xml --Documento XML do fragmento do retorno SOAP
-                                               ,pr_des_erro => vr_dsreturn --Indicador erro OK/NOK
-                                               ,pr_dscritic => vr_des_erro); --Descricao erro
-        
-        EXCEPTION
-          WHEN vr_exc_saida THEN
-            NULL;
-        END;
-      
+        --BEGIN   -- Retirado - 26/02/2019 - PRB0040398
+        --Eliminada a procedure pc_obtem_dados_legado apeans gera log não necessário - 26/02/2019 - PRB0040398                                      
+        --Atualizar Situação
+        DDDA0001.pc_requis_atualizar_situacao(pr_cdlegado => vr_cdlegado --Codigo Legado
+                                             ,pr_nrispbif => vr_nrispbif --Numero ISPB IF
+                                             ,pr_idtitdda => vr_idtitdda --Identificador Titulo DDA
+                                             ,pr_cdsittit => pr_cdsittit --Codigo Situacao Titulo
+                                             ,pr_xml_frag => vr_xml --Documento XML do fragmento do retorno SOAP
+                                             ,pr_des_erro => vr_dsreturn --Indicador erro OK/NOK
+                                             ,pr_dscritic => vr_des_erro); --Descricao erro        
+        --  WHEN vr_exc_saida THEN -- Tratamento não utilizado - 26/02/2019 - PRB0040398      
         --Se ocorreu eror
         IF vr_dsreturn = 'NOK' THEN
           IF vr_cdcritic = 0
@@ -1410,24 +1209,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             vr_dscritic := 'Falha DDA: ' || substr(vr_des_erro, 1, 900);
             -- Verificar a mensagem de erro que retornou
             IF vr_des_erro NOT LIKE
-               'Falha na execucao do metodo DDA SOAP-ENV:-722%' THEN
-              --Se não for a crítica 722, geramos a informação no log
-              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                        ,pr_nmarqlog     => vr_dsarqlg
-                                        ,pr_ind_tipo_log => 2 -- Erro tratato
-                                        ,pr_des_log      => to_char(sysdate
-                                                                   ,'hh24:mi:ss') ||
-                                                            ' - ' ||
-                                                            'DDDA0001' ||
-                                                            ' --> ' ||
-                                                            vr_des_erro);
+               'Falha na execucao do metodo DDA SOAP-ENV:-722%' THEN              
+              -- Se não for a crítica 722 - Gerar log apenas no BD - 26/02/2019 - PRB0040398
+              ddda0001.pc_log(pr_cdcooper => pr_cdcooper
+                             ,pr_dscritic => vr_des_erro || '- Ponto 1 - ' ||
+                                             ', vr_dsreturn:' || vr_dsreturn ||
+                                             vr_dsparame
+                             );   
             END IF;
           ELSIF nvl(vr_cdcritic,0) <> 0 AND 
                 vr_dscritic IS NULL THEN
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                 
-          END IF;
-          
+          END IF;             
         
           --verificar qual mensagem sera logada
           IF vr_cdderror IS NOT NULL THEN
@@ -1444,23 +1238,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           
           --Adicionar o idtitdda na mensagem do log
           vr_dserrlog := vr_dserrlog || ' - ID Titulo DDA: ' || to_char(vr_idtitdda);
-          
-          --Gravar Linha Log
-          DDDA0001.pc_grava_linha_log(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
-                                     ,pr_nrdconta => pr_nrdconta --Numero da Conta
-                                     ,pr_nmmetodo => 'AtualizarSituacao' --Nome metodo
-                                     ,pr_cdderror => vr_cderrlog --Codigo erro
-                                     ,pr_dsderror => vr_dserrlog --Descricao erro
-                                     ,pr_nmarqlog => vr_nmarqlog --Nome arquivo log
-                                     ,pr_nmdirlog => vr_nmdirlog --Diretorio do log
-                                     ,pr_cdcritic => vr_cdcritic --Codigo do erro
-                                     ,pr_dscritic => vr_dscritic); --Mensagem de erro
-          --Se ocorreu erro
-          IF vr_cdcritic IS NOT NULL
-             OR vr_dscritic IS NOT NULL THEN
-            --Retornar erro
-            RAISE vr_exc_erro;
-          END IF;
+          -- Eliminada a procedure pc_grava_linha_log apenas gera log não necessário - 26/02/2019 - PRB0040398                     
         
           RAISE vr_exc_erro;
         END IF;
@@ -1472,10 +1250,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           ELSE
             vr_indtrans := 0;
           END IF;
-          -- Chamar geração de LOG
+          -- Chamar geração de LOG - Ajusta critica - 26/02/2019 - PRB0040398
           gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => pr_cdopecxa
-                              ,pr_dscritic => vr_dscritic
+                              ,pr_dscritic => SUBSTR((vr_dscritic || vr_dsparame), 1, 245)
                               ,pr_dsorigem => vr_dsorigem
                               ,pr_dstransa => vr_dstransa
                               ,pr_dttransa => TRUNC(SYSDATE)
@@ -1485,6 +1263,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                               ,pr_nmdatela => pr_nmdatela
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
+          -- Retorna nome do módulo logado - 26/02/2019 - PRB0040398
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro ); 
         END IF;
       END IF;
       --Inicializar variaveis
@@ -1501,34 +1281,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           
           --Dado retorno
           vr_dsreturn := 'NOK';
-          --Obter dados legado
-          DDDA0001.pc_obtem_dados_legado(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
-                                        ,pr_nrdconta => pr_nrdconta --Numero da Conta
-                                        ,pr_idseqttl => pr_idseqttl --Identificador sequencial titular
-                                        ,pr_cdagecxa => pr_cdagecxa --Codigo Agencia Caixa
-                                        ,pr_nrdcaixa => pr_nrdcaixa --Numero do Caixa
-                                         --Parametros saida
-                                        ,pr_nmrescop => rw_crapcop.nmrescop --Nome resumido cooperativa
-                                        ,pr_cdlegado => vr_cdlegado --Codigo Legado
-                                        ,pr_nmarqlog => vr_nmarqlog --Nome Arquivo Log
-                                        ,pr_nmdirlog => vr_nmdirlog --Nome Diretorio Log
-                                        ,pr_msgenvio => vr_msgenvio --Mensagem envio
-                                        ,pr_msgreceb => vr_msgreceb --Mensagem Recebimento
-                                        ,pr_nrispbif => vr_nrispbif --Numero ispb IF
-                                        ,pr_des_erro => vr_dsreturn --Indicador erro OK/NOK
-                                        ,pr_dscritic => vr_des_erro); --Descricao erro
-          --Se retornou erro
-          IF vr_dsreturn = 'NOK' THEN
-            --sair
-            RAISE vr_exc_saida;
-          END IF;
+          
+          --Eliminada a procedure pc_obtem_dados_legado apeans gera log não necessário - 26/02/2019 - PRB0040398
+          
           --Situacao titulo invalida
           IF pr_cdsittit < 1
              OR pr_cdsittit > 4 THEN
             --Descricao da Critica
             vr_dscritic := 'Situacao do titulo invalida.';
             --Sair
-            RAISE vr_exc_saida;
+            RAISE vr_exc_saida_logica; -- Alterado nome vr_exc_saida para reforçar a logica - 26/02/2019 - PRB0040398
           END IF;
           --Executar Baixa Operacional
           NPCB0003.pc_wscip_requisitar_baixa(pr_cdcooper => pr_cdcooper  --> Codigo da cooperativa
@@ -1543,7 +1305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                             ,pr_dscritic => vr_des_erro); --Descricao erro
         
         EXCEPTION
-          WHEN vr_exc_saida THEN
+          WHEN vr_exc_saida_logica THEN -- Alterado nome vr_exc_saida para reforçar a logica - 26/02/2019 - PRB0040398
             NULL;
         END;
 
@@ -1569,23 +1331,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           --Limpar Variaveis erro
           vr_cdcritic := NULL;
           vr_dscritic := NULL;
-          --Gravar Linha Log
-          DDDA0001.pc_grava_linha_log(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
-                                     ,pr_nrdconta => pr_nrdconta --Numero da Conta
-                                     ,pr_nmmetodo => 'AtualizarSituacao' --Nome metodo
-                                     ,pr_cdderror => vr_cderrlog --Codigo erro
-                                     ,pr_dsderror => vr_dserrlog --Descricao erro
-                                     ,pr_nmarqlog => vr_nmarqlog --Nome arquivo log
-                                     ,pr_nmdirlog => vr_nmdirlog --Diretorio do log
-                                     ,pr_cdcritic => vr_cdcritic --Codigo do erro
-                                     ,pr_dscritic => vr_dscritic); --Mensagem de erro
-          --Se ocorreu erro
-          IF vr_cdcritic IS NOT NULL
-             OR vr_dscritic IS NOT NULL THEN
-            --Retornar erro
-            RAISE vr_exc_erro;
-          END IF;
+          
+          -- Eliminada a procedure pc_grava_linha_log apenas gera log não necessário - 26/02/2019 - PRB0040398         
+          -- Gerar log apenas no BD - 26/02/2019 - PRB0040398
+          ddda0001.pc_log(pr_cdcooper => pr_cdcooper
+                         ,pr_dscritic => vr_des_erro || '- Ponto 2 - '   ||
+                                         ', vr_cderrlog:' || vr_cderrlog ||
+                                         ', vr_dserrlog:' || vr_dserrlog ||
+                                         ', vr_dsreturn:' || vr_dsreturn ||
+                                         vr_dsparame
+                         );             
         END IF;
+        -- Retorna nome do módulo logado - 26/02/2019 - PRB0040398
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
+          
         --Se for para gerar log erro
         IF nvl(pr_flgerlog,0) = 1 THEN
           --Transformar boolean em number
@@ -1594,10 +1353,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           ELSE
             vr_indtrans := 0;
           END IF;
-          -- Chamar geração de LOG
+          -- Chamar geração de LOG - Ajusta critica - 26/02/2019 - PRB0040398
           gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => pr_cdopecxa
-                              ,pr_dscritic => vr_dscritic
+                              ,pr_dscritic => SUBSTR((vr_dscritic || vr_dsparame), 1, 245)
                               ,pr_dsorigem => vr_dsorigem
                               ,pr_dstransa => vr_dstransa
                               ,pr_dttransa => TRUNC(SYSDATE)
@@ -1610,14 +1369,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         END IF;
       END IF;
       
+      -- Limpa nome do módulo logado - 26/02/2019 - PRB0040398
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );       
     EXCEPTION
-      WHEN vr_exc_erro THEN
+      -- Tratamento de erro - 26/02/2019 - PRB0040398
+      WHEN vr_exc_contingencia THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
+      WHEN vr_exc_erro THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic);
+        --Grava tabela de log
+        ddda0001.pc_log(pr_cdcooper => pr_cdcooper
+                       ,pr_dscritic => pr_dscritic ||
+                                       ', vr_des_erro:' || vr_des_erro ||
+                                       ', vr_cderrlog:' || vr_cderrlog ||
+                                       ', vr_dserrlog:' || vr_dserrlog ||
+                                       ' - ' || vr_dsparame
+                       ,pr_cdcritic => NVL(pr_cdcritic,0)
+                       ,pr_tpocorre => 1
+                       ,pr_cdcricid => 1
+                       );
+        -- Ajuste mensagem
+        IF nvl(pr_cdcritic,0) IN ( 1197, 9999, 1034, 1035, 1036, 1037 ) THEN
+          pr_cdcritic := 1224; -- Nao foi possivel efetuar o procedimento. Tente novamente ou contacte seu PA
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+        ELSIF nvl(pr_cdcritic,0) = 0 AND
+            SUBSTR(pr_dscritic, 1, 7 ) IN ( '1197 - ', '9999 - ', '1034 - ', '1035 - ', '1036 - ', '1037 - ' ) THEN
+          pr_cdcritic := 1224; -- Nao foi possivel efetuar o procedimento. Tente novamente ou contacte seu PA
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+        END IF;            
         
       WHEN OTHERS THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro na rotina DDDA0001.pc_atualz_situac_titulo_sacado. ' ||SQLERRM;
+        -- No caso de erro de programa gravar tabela especifica de log 
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);        
+        -- Efetuar retorno do erro não tratado
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ' '  || vr_nmrotpro || 
+                       ' '  || SQLERRM     ||
+                       '. ' || vr_dsparame; 
+        -- Controlar geração de log   
+        ddda0001.pc_log(pr_cdcooper => pr_cdcooper
+                       ,pr_dscritic => pr_dscritic
+                       ,pr_cdcritic => pr_cdcritic);
+                       
+        pr_cdcritic := 1224; -- Nao foi possivel efetuar o procedimento. Tente novamente ou contacte seu PA.
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
       
     END;
   END pc_atualz_situac_titulo_sacado;
@@ -2777,16 +2576,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                   ,pr_dtemiini IN DATE -- Data inicial de emissao
                                   ,pr_dtemifim IN DATE -- Data final de emissao
                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE -- Codigo de Erro
-                                  ,pr_dscritic OUT VARCHAR2) IS
-    -- Descricao de Erro
-  
+                                  ,pr_dscritic OUT VARCHAR2              -- Descricao de Erro
+                                  ) 
+ IS      
     ---------------------------------------------------------------------------------------------------------------
     --
-    --  Programa : pc_chegada_titulos_DDA        Antigo: sistema/generico/procedures/b1wgen0087.p/chegada-titulos-dda
+    --  Programa : pc chegada titulos DDA        Antigo: sistema/generico/procedures/b1wgen0087.p/chegada-titulos-dda
     --  Sistema  : Procedimentos e funcoes da BO b1wgen0087.p
     --  Sigla    : CRED
     --  Autor    : Andrino Carlos de Souza Junior - RKAM
-    --  Data     : Dezembro/2013.                   Ultima atualizacao: 22/02/2015
+    --  Data     : Dezembro/2013.                   Ultima atualizacao: 26/02/2019
     --
     -- Dados referentes ao programa:
     --
@@ -2810,7 +2609,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --              
     --             16/11/2017 - Ajustado mascara no filtro de data para consulta no dblink
     --                          Criado chamada pra procedure de notificação / PUSH DDA
-    --                          P356.4 (Ricardo Linhares)                 
+    --                          P356.4 (Ricardo Linhares)    
+    --
+    --             26/02/2019 - Eliminar geração de arquivo especial npc_RRRRMM.log; nome do arquivo de log mensal
+    --                          Revitalização
+    --                          (Belli - Envolti - PRB0040398)               
     ---------------------------------------------------------------------------------------------------------------
   
     /* Busca dos dados do associado */
@@ -2865,14 +2668,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     vr_dsdmensg VARCHAR2(32000) := ' ';
     vr_dscedent VARCHAR2(40) := ' ';
     vr_nrddocto VARCHAR2(14) := ' ';
-    vr_dscritic VARCHAR2(500) := ' ';
+    vr_dscritic crapcri.dscritic%TYPE := NULL;
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
   
     vr_notifi_dda DDDA0001.typ_reg_notif_dda;
   
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
-  
-  BEGIN
+      
+    -- Variaveis de controle de erro e modulo - 26/02/2019 - PRB0040398
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs
+    vr_nmrotpro  VARCHAR2  (100) := 'DDDA0001.pc_chegada_titulos_DDA'; -- Rotina e programa       
+  BEGIN    
+    -- Incluido nome do módulo logado - 26/02/2019 - PRB0040398
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := ' pr_cdcooper:'   || pr_cdcooper  || 
+                   ', pr_cdprogra:'  || pr_cdprogra  ||
+                   ', pr_dtemiini:'  || pr_dtemiini  ||
+                   ', pr_dtemifim:'  || pr_dtemifim;
   
     -- Busca os dados da cooperativa
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
@@ -2918,6 +2731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                         ,pr_dtemiini => pr_dtemiini
                                         ,pr_dtemifim => pr_dtemifim
                                         ,pr_cdagectl => rw_crapcop.cdagectl) LOOP
+    
       -- Se for a primeira repeticao da conta
       IF rw_dadostitulo.nrcontador = 1 THEN
         vr_dsdmensg := '\c' || /* converte espacos para nbsp; */
@@ -2941,11 +2755,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
          vr_notifi_dda.motivo := MOTIVO_NOVO_TITULO_DDA;
       END IF;
 
-         vr_notifi_dda.quantidade := rw_dadostitulo.qttotreg;
-       vr_notifi_dda.nomecooperado := rw_dadostitulo.pagador;
-       pc_notif_novo_dda(pr_cdcooper  => pr_cdcooper
-                  ,pr_nrdconta  => rw_dadostitulo.ctclipagdr
-                  ,pr_notif_dda => vr_notifi_dda);
+         vr_notifi_dda.quantidade    := rw_dadostitulo.qttotreg;
+         vr_notifi_dda.nomecooperado := rw_dadostitulo.pagador;
+         --
+         pc_notif_novo_dda(pr_cdcooper  => pr_cdcooper
+                          ,pr_nrdconta  => rw_dadostitulo.ctclipagdr
+                          ,pr_notif_dda => vr_notifi_dda
+                          ,pr_cdcritic  => vr_cdcritic
+                          ,pr_dscritic  => vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        -- Retorna nome do módulo logado - 26/02/2019 - PRB0040398
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro ); 
       END IF;
     
     
@@ -3002,33 +2824,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
         END IF;
-      
-        -- Se encontrou erro gera o log no arquivo batch
-        IF vr_dscritic IS NOT NULL THEN
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_nmarqlog     => vr_dsarqlg          
-                                    ,pr_ind_tipo_log => 1
-                                    ,pr_des_log      => to_char(sysdate
-                                                               ,'hh24:mi:ss') ||
-                                                        ' - ' || 'DDDA0001' ||
-                                                        ' --> ' ||
-                                                        'Conta: ' ||
-                                                        rw_crapass.nrdconta ||
-                                                        ' Erro ao gerar a mensagem.');
-        END IF;
+        -- Retorna nome do módulo logado - 26/02/2019 - PRB0040398
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );   
+               
+        -- Eliminada critica por não ser executada nesse ponto btch0001.pc_gera_log_batch - 26/02/2019 - PRB0040398
       
       END IF;
     
     END LOOP; -- Final da repeticao do cursor sobre os dados do titulo
+    
+    -- Limpa nome do módulo logado - 26/02/2019 - PRB0040398
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );   
   EXCEPTION
     WHEN vr_exc_saida THEN
       pr_cdcritic := 0;
-      pr_dscritic := vr_dscritic;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic
+                                              ,pr_dscritic => vr_dscritic) ||
+                     vr_dsparame;
+      -- Origem do CRPS612 já tem Log
+      IF pr_cdprogra <> 'CRPS612' THEN
+        -- Controlar geração de log
+        ddda0001.pc_log(pr_dscritic => pr_dscritic
+                       ,pr_cdcritic => pr_cdcritic
+                       ,pr_cdcooper => pr_cdcooper
+                       );                   
+      END IF;               
     WHEN OTHERS THEN
-      pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral rotina DDDA0001.pc_chegada_titulos_dda: ' ||
-                     SQLERRM;
-  END;
+      -- No caso de erro de programa gravar tabela especifica de log 
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);        
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     ' '  || vr_nmrotpro || 
+                     ' '  || SQLERRM     ||
+                     '. ' || vr_dsparame;
+      -- Origem do CRPS612 já tem Log
+      IF pr_cdprogra <> 'CRPS612' THEN
+        -- Controlar geração de log
+        ddda0001.pc_log(pr_dscritic => pr_dscritic
+                       ,pr_cdcritic => pr_cdcritic
+                       ,pr_cdcooper => pr_cdcooper
+                       );                   
+      END IF;               
+  END pc_chegada_titulos_DDA;
 
   /**
     Popula tt-pagar com os titulos a pagar a partir de R$ 250.000 de todas as
@@ -3297,14 +3135,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --  Sistema  : DDDA
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Janeiro/2017.                   Ultima atualizacao: 
+    --  Data     : Janeiro/2017.                   Ultima atualizacao: 26/02/2019
     --
     -- Dados referentes ao programa:
     --
     -- Frequencia: -----
     -- Objetivo  : Procedure para tratar as criticas no retorno da CIP-NPC
     --
-    -- Alteracoes: 
+    -- Alteracoes:    
+    --
+    --  26/02/2019 - Eliminar geração de arquivo especial npc_RRRRMM.log; nome do arquivo de log mensal
+    --               Revitalização
+    --              (Belli - Envolti - PRB0040398)
+    --
     ---------------------------------------------------------------------------------------------------------------
   
     ---------->>> CURSORES <<<-----------
@@ -3324,25 +3167,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
        AND err."CdErro"      = dsc2."CD_ERRO"(+); 
     
      ---------->>> VARIAVEIS <<<-----------   
-    vr_dscritic   VARCHAR2(2000);   
-       
-  BEGIN
+    vr_dscritic   VARCHAR2(2000);
+    
+    -- Variaveis de controle de erro e modulo - 26/02/2019 - PRB0040398
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs
+    vr_nmrotpro  VARCHAR2  (100) := 'DDDA0001.pc_trata_retorno_erro'; -- Rotina e programa
+    vr_cdcritic  NUMBER     (10);   
+  BEGIN    
+    -- Incluido nome do módulo logado - 26/02/2019 - PRB0040398
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := ', pr_cdcooper:'  || pr_cdcooper  || 
+                   ', pr_tpdopera:'  || pr_tpdopera  ||
+                   ', pr_idtitleg:'  || pr_idtitleg  ||
+                   ', pr_idopeleg:'  || pr_idopeleg  ||
+                   ', pr_iddopeJD:'  || pr_iddopeJD;
     
     CASE pr_tpdopera
       WHEN 'I' THEN
-        vr_dscritic := 'Inclusao';
+        vr_cdcritic := 1489;
       WHEN 'A' THEN
-        vr_dscritic := 'Alteracao';
+        vr_cdcritic := 1490;
       WHEN 'B' THEN
-        vr_dscritic := 'Baixa';    
+        vr_cdcritic := 1491;  
       ELSE        
-        vr_dscritic := 'Operacao';
-    END CASE;    
-  
-    vr_dscritic := vr_dscritic ||
-                   ' Rejeitada operacao de envio para a CIP ->'||
-                   ' idtitleg: '||pr_idtitleg ||
-                   ' idopeleg: '||pr_idopeleg ;
+        vr_cdcritic := 1492;
+    END CASE;     
+    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                   vr_dsparame ;
     
     --> Listar criticas por campo
     FOR rw_optiterr IN cr_optiterr LOOP
@@ -3350,14 +3201,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                      rw_optiterr.nmcoluna||': '|| 
                      rw_optiterr.codderro||' - '||rw_optiterr.dsdoerro;    
     END LOOP;  
-    
-    
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                              ,pr_nmarqlog     => vr_dsarqlg    
-                              ,pr_ind_tipo_log => 2
-                              ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                  ' - DDDA0001 -> ' || vr_dscritic);                               
-  
+        
+    -- Controlar geração de log - 26/02/2019 - PRB0040398
+    ddda0001.pc_log(pr_dscritic => vr_dscritic
+                   ,pr_cdcritic => 0
+                   ,pr_tpocorre => 1
+                   ,pr_cdcricid => 1
+                   ,pr_cdcooper => pr_cdcooper
+                   );                       
+    -- Limpa nome do módulo logado - 26/02/2019 - PRB0040398
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );  
+  EXCEPTION -- Trata erro- 26/02/2019 - PRB0040398
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log 
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);        
+      -- Efetuar retorno do erro não tratado
+      vr_cdcritic := 9999;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                     ' '  || vr_nmrotpro || 
+                     ' '  || SQLERRM     ||
+                     '. ' || vr_dsparame;           
+      -- Controlar geração de log
+      ddda0001.pc_log(pr_dscritic => vr_dscritic
+                     ,pr_cdcritic => vr_cdcritic
+                     ,pr_cdcooper => pr_cdcooper
+                     );                             
   END pc_trata_retorno_erro;   
   
   
@@ -3806,11 +3674,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                        ,pr_dscritic        OUT VARCHAR2) IS --Descricao de Erro
     ---------------------------------------------------------------------------------------------------------------
     --
-    --  Programa : pc_retorno_operacao_tit_NPC    Antigo: procedures/b1wgen0087.p/Retorno-Operacao-Titulos-DDA
+    --  Programa : pc retorno operacao tit NPC    Antigo: procedures/b1wgen0087.p/Retorno-Operacao-Titulos-DDA
     --  Sistema  : PProcedure para Executar retorno operacao Titulos NPC
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Janeiro/2017.                   Ultima atualizacao: 07/07/2017
+    --  Data     : Janeiro/2017.                   Ultima atualizacao: 26/02/2019
     --
     -- Dados referentes ao programa:
     --
@@ -3818,6 +3686,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     -- Objetivo  : Procedure para Executar retorno operacao Titulos NPC
     --
     -- Alteracoes: 07/07/2017 - Ajustado rotina para buscar confirmação/rejeição de títulos da CIP (Rafael)
+    --
+    --             26/02/2019 - Eliminar geração de arquivo especial npc_RRRRMM.log -- nome do arquivo de log mensal
+    --                         (Belli - Envolti - PRB0040398)
+    --
     --
     ---------------------------------------------------------------------------------------------------------------
     --> Buscar retornos 
@@ -3891,7 +3763,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --Variaveis Excecao
     vr_exc_erro EXCEPTION;   
       
-  BEGIN  
+    -- Variaveis de controle de erro e modulo - 26/02/2019 - PRB0040398
+    vr_nmrotpro  VARCHAR2  (100) := 'DDDA0001.pc_retorno_operacao_tit_NPC'; -- Rotina e programa       
+  BEGIN
+    -- Gravação realizada antes de mudar o modulo para ver se captura algum chamador da rotina       
+    -- Forçado Log por não encontrar programa que dispara esta procedure - 26/02/2019 - PRB0040398
+    ddda0001.pc_log(pr_dscritic => gene0001.fn_busca_critica(1201) || 
+                                   ' ' || vr_nmrotpro
+                   ,pr_cdcritic => 1201
+                   ,pr_tpocorre => 4
+                   ,pr_cdcricid => 0
+                   );                    
+    -- Incluido nome do módulo logado - 26/02/2019 - PRB0040398
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro ); 
     
     FOR rw_crapcop IN cr_crapcop LOOP
   
@@ -3958,11 +3842,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             vr_dscritic := 'Erro ao processar retorno idtitleg: '||rw_retnpc.idtitleg||' -> '||
                            vr_dscritic;
                       
-            btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                      ,pr_nmarqlog     => vr_dsarqlg            
-                                      ,pr_ind_tipo_log => 2 
-                                      ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                      ' - DDDA0001 -> ' || vr_dscritic);
+            -- Controlar geração de log - 26/02/2019 - PRB0040398
+            ddda0001.pc_log(pr_dscritic => vr_dscritic
+                           ,pr_cdcritic => 0
+                           ,pr_tpocorre => 1
+                           ,pr_cdcricid => 1
+                           ,pr_cdcooper => 3
+                   );                               
              
           END IF; 
                     
@@ -3986,7 +3872,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
       
-    WHEN OTHERS THEN     
+    WHEN OTHERS THEN    
       ROLLBACK;      
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic || ' - ' || SQLERRM;      
@@ -4000,11 +3886,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                   ,pr_dscritic        OUT VARCHAR2) IS --Descricao de Erro
     ---------------------------------------------------------------------------------------------------------------
     --
-    --  Programa : pc_remessa_titulos_dda    Antigo: procedures/b1wgen0087.p/remessa-titulos-DDA
+    --  Programa : pc remessa titulos dda    Antigo: procedures/b1wgen0087.p/remessa-titulos-DDA
     --  Sistema  : Procedure para retorno remessa DDA
     --  Sigla    : CRED
     --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 15/10/2015
+    --  Data     : Julho/2013.                   Ultima atualizacao: 26/02/2019
     --
     -- Dados referentes ao programa:
     --
@@ -4025,6 +3911,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --
     --             02/08/2018 - Alterado mensagem de erro ao gravar no LOG (Alcemir - Mouts / PRB0040064).
     --
+    --             26/02/2019 - Eliminar geração de arquivo especial npc_RRRRMM.log -- nome do arquivo de log mensal
+    --                          Revitalização
+    --                         (Belli - Envolti - PRB0040398)
+    --
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -4041,10 +3931,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_dscritic VARCHAR2(4000);
       vr_des_erro VARCHAR2(100);
       --Variaveis Excecao
-      vr_exc_erro EXCEPTION;
+      -- vr_exc_erro EXCEPTION; - Não utilizado - 26/02/2019 - PRB0040398
       vr_flg_erro BOOLEAN;
-    BEGIN
-      --Inicializar variaveis retorno
+    
+      -- Variaveis de controle de erro e modulo - 26/02/2019 - PRB0040398
+      vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs
+      vr_nmrotpro  VARCHAR2  (100) := 'DDDA0001.pc_remessa_titulos_dda'; -- Rotina e programa 
+    BEGIN    
+      -- Incluido nome do módulo logado - 26/02/2019 - PRB0040398
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro ); 
+      IF pr_tab_remessa_dda.FIRST IS NOT NULL THEN       
+        vr_dsparame := ' cdcooper:'    || pr_tab_remessa_dda(1).cdcooper  || 
+                       ', rowidcob:'   || pr_tab_remessa_dda(1).rowidcob  ||
+                       ', nrispbif:'   || pr_tab_remessa_dda(1).nrispbif  ||
+                       ', cdlegado:'   || pr_tab_remessa_dda(1).cdlegado  ||
+                       ', idopeleg:'   || pr_tab_remessa_dda(1).idopeleg  ||
+                       ', idtitleg:'   || pr_tab_remessa_dda(1).idtitleg  ||
+                       ', tpoperad:'   || pr_tab_remessa_dda(1).tpoperad  ||
+                       ', dtoperac:'   || pr_tab_remessa_dda(1).dtoperac  ||
+                       ', hroperac:'   || pr_tab_remessa_dda(1).hroperac;
+      END IF;
+      IF pr_tab_retorno_dda.FIRST IS NOT NULL THEN
+        IF vr_dsparame IS NULL THEN
+          vr_dsparame := ' ';
+        ELSE 
+          vr_dsparame := ',';
+        END IF;      
+        vr_dsparame := vr_dsparame ||
+                        ' nratutit:'   || pr_tab_retorno_dda(1).nratutit || 
+                       ', nrdident:'   || pr_tab_retorno_dda(1).nrdident ||
+                       ', insitpro:'   || pr_tab_retorno_dda(1).insitpro ||
+                       ', idopeleg:'   || pr_tab_retorno_dda(1).idopeleg ||
+                       ', idtitleg:'   || pr_tab_retorno_dda(1).idtitleg;
+      END IF;
+      -- Inicializar variaveis retorno
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
     
@@ -4161,6 +4081,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         --> Gerar linha digitavel
         cobr0005.pc_calc_linha_digitavel(pr_cdbarras => pr_tab_remessa_dda(vr_index).dscodbar , 
                                          pr_lindigit => pr_tab_remessa_dda(vr_index).dslindig);
+        -- Retorna nome do módulo logado - 26/02/2019 - PRB0040398
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro ); 
          
         pr_tab_remessa_dda(vr_index).dslindig := REPLACE(REPLACE(pr_tab_remessa_dda(vr_index).dslindig,'.'),' ');
         
@@ -4359,19 +4281,87 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             
         EXCEPTION
           WHEN Others THEN
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao inserir na tabela TBJDNPCDSTLEG_LG2JD_OPTIT. ' ||
-                           sqlerrm;
+            -- No caso de erro de programa gravar tabela especifica de log
+            CECRED.pc_internal_exception(pr_cdcooper => NVL(vr_cdcooper,0));
+            vr_cdcritic := 1034;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                         'TBJDNPCDSTLEG_LG2JD_OPTIT(1):' ||  
+                         ' cdcooper:'     || vr_cdcooper ||
+                         ', vr_index:'    || vr_index    ||       
+                         ', cdlegado:'   ||  pr_tab_remessa_dda(vr_index).cdlegado || 
+                         ', idtitleg:'   ||  pr_tab_remessa_dda(vr_index).idtitleg || 
+                         ', idopeleg:'   ||  pr_tab_remessa_dda(vr_index).idopeleg || 
+                         ', nrispbif:'   ||  pr_tab_remessa_dda(vr_index).nrispbif || 
+                         ', nrispbif:'   ||  pr_tab_remessa_dda(vr_index).nrispbif || 
+                         ', tpoperad:'   ||  pr_tab_remessa_dda(vr_index).tpoperad || 
+                         ', DtHrOper:'   ||  vr_data                               || 
+                         ', tppesced:'   ||  pr_tab_remessa_dda(vr_index).tppesced || 
+                         ', nrdocced:'   ||  pr_tab_remessa_dda(vr_index).nrdocced || 
+                         ', nmdocede:'   ||  pr_tab_remessa_dda(vr_index).nmdocede || 
+                         ', nmfansia:'   ||  pr_tab_remessa_dda(vr_index).nmfansia || 
+                         ', tppessac:'   ||  pr_tab_remessa_dda(vr_index).tppessac || 
+                         ', nrdocsac:'   ||  pr_tab_remessa_dda(vr_index).nrdocsac || 
+                         ', nmdosaca:'   ||  pr_tab_remessa_dda(vr_index).nmdosaca || 
+                         ', NomFants:'   ||  vr_nmfansia_pag                       || 
+                         ', dsendsac:'   ||  pr_tab_remessa_dda(vr_index).dsendsac || 
+                         ', dscidsac:'   ||  pr_tab_remessa_dda(vr_index).dscidsac || 
+                         ', dsufsaca:'   ||  pr_tab_remessa_dda(vr_index).dsufsaca || 
+                         ', Nrcepsac:'   ||  pr_tab_remessa_dda(vr_index).Nrcepsac || 
+                         ', tpdocava:'   ||  pr_tab_remessa_dda(vr_index).tpdocava || 
+                         ', nrdocava:'   ||  pr_tab_remessa_dda(vr_index).nrdocava || 
+                         ', nmdoaval:'   ||  pr_tab_remessa_dda(vr_index).nmdoaval || 
+                         ', cdcartei:'   ||  pr_tab_remessa_dda(vr_index).cdcartei || 
+                         ', cddmoeda:'   ||  pr_tab_remessa_dda(vr_index).cddmoeda || 
+                         ', dsnosnum:'   ||  pr_tab_remessa_dda(vr_index).dsnosnum || 
+                         ', dscodbar:'   ||  pr_tab_remessa_dda(vr_index).dscodbar || 
+                         ', dslindig:'   ||  pr_tab_remessa_dda(vr_index).dslindig || 
+                         ', dtvencto:'   ||  pr_tab_remessa_dda(vr_index).dtvencto || 
+                         ', vlrtitul:'   ||  pr_tab_remessa_dda(vr_index).vlrtitul || 
+                         ', nrddocto:'   ||  pr_tab_remessa_dda(vr_index).nrddocto || 
+                         ', cdespeci:'   ||  pr_tab_remessa_dda(vr_index).cdespeci || 
+                         ', dtemissa:'   ||  pr_tab_remessa_dda(vr_index).dtemissa || 
+                         ', nrdiapro:'   ||  pr_tab_remessa_dda(vr_index).nrdiapro || 
+                         ', dtlipgto:'   ||  pr_tab_remessa_dda(vr_index).dtlipgto || 
+                         ', tpdepgto:'   ||  pr_tab_remessa_dda(vr_index).tpdepgto || 
+                         ', indnegoc:'   ||  pr_tab_remessa_dda(vr_index).indnegoc || 
+                         ', idbloque:'   ||  pr_tab_remessa_dda(vr_index).idbloque || 
+                         ', IndrPgto:'   ||  'N'                                   || 
+                         ', vlrabati:'   ||  pr_tab_remessa_dda(vr_index).vlrabati || 
+                         ', dtdjuros:'   ||  pr_tab_remessa_dda(vr_index).dtdjuros || 
+                         ', dsdjuros:'   ||  pr_tab_remessa_dda(vr_index).dsdjuros || 
+                         ', vlrjuros:'   ||  pr_tab_remessa_dda(vr_index).vlrjuros || 
+                         ', dtdmulta:'   ||  pr_tab_remessa_dda(vr_index).dtdmulta || 
+                         ', cddmulta:'   ||  pr_tab_remessa_dda(vr_index).cddmulta || 
+                         ', vlrmulta:'   ||  pr_tab_remessa_dda(vr_index).vlrmulta || 
+                         ', dtddesct:'   ||  pr_tab_remessa_dda(vr_index).dtddesct || 
+                         ', cdddesct:'   ||  pr_tab_remessa_dda(vr_index).cdddesct || 
+                         ', vlrdesct:'   ||  pr_tab_remessa_dda(vr_index).vlrdesct || 
+                         ', IndrNota:'   ||  'N'                                   || 
+                         ', tpvlmini:'   ||  pr_tab_remessa_dda(vr_index).tpvlmini || 
+                         ', vlminimo:'   ||  pr_tab_remessa_dda(vr_index).vlminimo || 
+                         ', TpVlrPer:'   ||  'V'                                   || 
+                         ', vlrtitul:'   ||  pr_tab_remessa_dda(vr_index).vlrtitul || 
+                         ', tpmodcal:'   ||  pr_tab_remessa_dda(vr_index).tpmodcal || 
+                         ', inpagdiv:'   ||  pr_tab_remessa_dda(vr_index).inpagdiv || 
+                         ', IndrCalc:'   ||  'N'                                   || 
+                         ', nrdident:'   ||  pr_tab_remessa_dda(vr_index).nrdident || 
+                         ', nratutit:'   ||  pr_tab_remessa_dda(vr_index).nratutit || 
+                         ', tpdBaixa:'   ||  pr_tab_remessa_dda(vr_index).tpdBaixa || 
+                         ', nrispbrc:'   ||  pr_tab_remessa_dda(vr_index).nrispbrc || 
+                         ', cdpartrc:'   ||  pr_tab_remessa_dda(vr_index).cdpartrc || 
+                         ', dhdbaixa:'   ||  pr_tab_remessa_dda(vr_index).dhdbaixa || 
+                         ', dtdbaixa:'   ||  pr_tab_remessa_dda(vr_index).dtdbaixa || 
+                         ', vldpagto:'   ||  pr_tab_remessa_dda(vr_index).vldpagto || 
+                         ', cdCanpgt:'   ||  pr_tab_remessa_dda(vr_index).cdCanpgt || 
+                         ', cdmeiopg:'   ||  pr_tab_remessa_dda(vr_index).cdmeiopg || 
+                         '. ' ||SQLERRM;                   
 
-            --> Gerar log para facilitar identificação de erros SD#769996
-            BEGIN
-              NPCB0001.pc_gera_log_npc( pr_cdcooper => vr_cdcooper,
-                                        pr_nmrotina => 'pc_remessa_titulos_dda',
-                                        pr_dsdolog  => 'CodBar:'||pr_tab_remessa_dda(vr_index).dscodbar||'-'||vr_dscritic);
-            EXCEPTION
-              WHEN OTHERS THEN
-                NULL;
-            END; 
+            --BEGIN NPCB0001.pc_gera_log_npc - modificado - 26/02/2019 - PRB0040398          
+            -- Controlar geração de log
+            ddda0001.pc_log(pr_dscritic => vr_dscritic
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_cdcooper => vr_cdcooper
+                           );                          
 
             pr_tab_remessa_dda(vr_index).cdcritic := vr_cdcritic;
             pr_tab_remessa_dda(vr_index).dscritic := vr_dscritic;
@@ -4382,7 +4372,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                          ,pr_dsmensag => 'Erro ao integrar instrução na cabine JDNPC (OPTIT)'
                                          ,pr_des_erro => vr_des_erro
                                          ,pr_dscritic => vr_dscritic);
-            
+            IF vr_des_erro = 'NOK'    OR
+               vr_dscritic IS NOT NULL  THEN -- Trata erro - 26/02/2019 - PRB0040398                       
+              ddda0001.pc_log(pr_cdcooper => vr_cdcooper
+                             ,pr_dscritic => vr_dscritic ||
+                                             vr_dsparame
+                             );                   
+            END IF;             
+            -- Retorna nome do módulo logado - 26/02/2019 - PRB0040398
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );             
             
             --Levantar Excecao
             vr_flg_erro := TRUE;
@@ -4404,20 +4402,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                     ,pr_tab_remessa_dda(vr_index).nrispbif        --> ISPBAdministrado
                     ,pr_tab_remessa_dda(vr_index).flonline);      --> EnvioImediato
           
-          EXCEPTION
+          EXCEPTION -- Ajuste mensagem - 26/02/2019 - PRB0040398
             WHEN Others THEN
-              vr_cdcritic := 0;
-              vr_dscritic := 'Erro ao inserir na tabela TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL. '||SQLERRM;
-
-              --> Gerar log para facilitar identificação de erros SD#769996
-              BEGIN
-                NPCB0001.pc_gera_log_npc( pr_cdcooper => vr_cdcooper,
-                                          pr_nmrotina => 'pc_remessa_titulos_dda',
-                                          pr_dsdolog  => 'CodBar:'||pr_tab_remessa_dda(vr_index).dscodbar||'-'||vr_dscritic);
-              EXCEPTION
-                WHEN OTHERS THEN
-                  NULL;
-              END;
+              -- No caso de erro de programa gravar tabela especifica de log
+              CECRED.pc_internal_exception(pr_cdcooper => NVL(vr_cdcooper,0));
+              vr_cdcritic := 1034;
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                             'TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL(1):' ||  
+                             ' cdcooper:'    || vr_cdcooper ||
+                             ', vr_index:'   || vr_index    ||
+                             ', cdlegado:'   || pr_tab_remessa_dda(vr_index).cdlegado ||
+                             ', idtitleg:'   || pr_tab_remessa_dda(vr_index).idtitleg ||
+                             ', idopeleg:'   || pr_tab_remessa_dda(vr_index).idopeleg ||
+                             ', nrispbif:'   || pr_tab_remessa_dda(vr_index).nrispbif ||
+                             ', flonline:'   || pr_tab_remessa_dda(vr_index).flonline ||
+                             '. ' || SQLERRM;
+              --BEGIN NPCB0001.pc_gera_log_npc - modificado - 26/02/2019 - PRB0040398         
+              -- Controlar geração de log
+              ddda0001.pc_log(pr_dscritic => vr_dscritic
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_cdcooper => vr_cdcooper
+                           );                          
 
               pr_tab_remessa_dda(vr_index).cdcritic := vr_cdcritic;
               pr_tab_remessa_dda(vr_index).dscritic := vr_dscritic;                           
@@ -4427,7 +4432,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                            ,pr_dtmvtolt => SYSDATE
                                            ,pr_dsmensag => 'Erro ao integrar instrução na cabine JDNPC (CTRL)'
                                            ,pr_des_erro => vr_des_erro
-                                           ,pr_dscritic => vr_dscritic);                        
+                                           ,pr_dscritic => vr_dscritic);  
+              IF vr_des_erro = 'NOK'    OR
+                 vr_dscritic IS NOT NULL  THEN -- Trata erro                       
+                ddda0001.pc_log(pr_cdcooper => vr_cdcooper
+                               ,pr_dscritic => vr_dscritic ||
+                                               vr_dsparame
+                               );                   
+              END IF;             
+              -- Retorna nome do módulo logado
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );                       
               --Levantar Excecao
               vr_flg_erro := TRUE;
           END;
@@ -4436,22 +4450,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         --Encontrar proximo registro
         vr_index := pr_tab_remessa_dda.NEXT(vr_index);
       END LOOP;
-        
-    EXCEPTION
-      WHEN vr_exc_erro THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
+      
+      -- Limpa nome do módulo logado - 26/02/2019 - PRB0040398
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );         
+    EXCEPTION -- Ajuste mensagem - 26/02/2019 - PRB0040398
+      -- WHEN vr_exc_erro THEN - Não utilizado - 26/02/2019 - PRB0040398
       
       WHEN OTHERS THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro na rotina DDDA0001.pc_remessa_titulos_dda. ' ||
-                       SQLERRM;
-
-        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                  ,pr_nmarqlog     => vr_dsarqlg        
-                                  ,pr_ind_tipo_log => 2
-                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                      ' - DDDA0001 -> ' || pr_dscritic);                       
+        -- No caso de erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception(pr_cdcooper => 0);   
+        -- Efetuar retorno do erro não tratado
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       vr_nmrotpro     || 
+                       '. ' || SQLERRM ||
+                       '. ' || vr_dsparame; 
+        -- Controlar geração de log
+        ddda0001.pc_log(pr_dscritic => pr_dscritic
+                       ,pr_cdcritic => pr_cdcritic
+                       ,pr_cdcooper => 0
+                       );                                                    
     END;
   END pc_remessa_titulos_dda;
   
@@ -6213,12 +6231,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
 
   PROCEDURE pc_notif_novo_dda (pr_cdcooper IN crapcop.cdcooper%TYPE
                               ,pr_nrdconta IN crapass.nrdconta%TYPE
-                              ,pr_notif_dda IN typ_reg_notif_dda) IS 
+                              ,pr_notif_dda IN typ_reg_notif_dda
+                              ,pr_cdcritic  OUT crapcri.cdcritic%TYPE
+                              ,pr_dscritic  OUT crapcri.dscritic%TYPE
+                              ) 
+  IS       
+    ---------------------------------------------------------------------------------------------------------------    
+    --  Programa : pc notif novo dda
+    --  Sistema  : 
+    --  Sigla    : CRED
+    --  Autor    : 
+    --  Data     : xxxxxxxxx/0000.                   Ultima atualizacao: 26/02/2019
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia:
+    -- Objetivo  :
+    --
+    -- Alteracoes: 
+    --             26/02/2019 - Revitalização
+    --                          (Belli - Envolti - PRB0040398)               
+    ---------------------------------------------------------------------------------------------------------------  
   BEGIN
     DECLARE
       ORIGEM_NOVO_DDA CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 4;
       vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+      
+      -- Variaveis de controle de erro e modulo - 26/02/2019 - PRB0040398
+      vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs
+      vr_nmrotpro  VARCHAR2  (100) := 'DDDA0001.pc_notif_novo_dda'; -- Rotina e programa 
     BEGIN
+      -- Incluido nome do módulo logado - 26/02/2019 - PRB0040398
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+      vr_dsparame := ' pr_cdcooper:'   || pr_cdcooper  || 
+                     ', pr_nrdconta:'  || pr_nrdconta  ||
+                     ', bancobeneficiario:' || pr_notif_dda.bancobeneficiario  ||
+                     ', nomecooperado:'     || pr_notif_dda.nomecooperado  ||
+                     ', beneficiario:'      || pr_notif_dda.beneficiario  ||
+                     ', datavencimento:'    || pr_notif_dda.datavencimento  ||
+                     ', situacao:'          || pr_notif_dda.situacao  ||
+                     ', valor:'             || pr_notif_dda.valor  ||
+                     ', motivo:'            || pr_notif_dda.motivo  ||
+                     ', quantidade:'        || pr_notif_dda.quantidade;
 
       vr_variaveis_notif('#nomecooperado') := pr_notif_dda.nomecooperado;
       vr_variaveis_notif('#quantidade') := pr_notif_dda.quantidade;
@@ -6237,8 +6291,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                   ,pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_variaveis => vr_variaveis_notif);      
-
-
+    
+      -- Limpa nome do módulo logado - 26/02/2019 - PRB0040398
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );   
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log 
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);        
+        -- Efetuar retorno do erro não tratado
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ' '  || vr_nmrotpro || 
+                       ' '  || SQLERRM     ||
+                       '. ' || vr_dsparame; 
     END;
   END pc_notif_novo_dda;
 
@@ -6476,6 +6541,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_dscritic := 'Erro na rotina DDDA0001.pc_pendencia_cancel_baixa. '||SQLERRM;
       RAISE_APPLICATION_ERROR(-20000,vr_dscritic);
   END pc_pendencia_cancel_baixa;
-  
+
+  --Procedures Rotina de Log - tabela: tbgen prglog ocorrencia
+  PROCEDURE pc_log(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                  ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                  ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                  ,pr_tpexecuc IN NUMBER   DEFAULT 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                  ,pr_dscritic IN VARCHAR2 DEFAULT NULL
+                  ,pr_cdcritic IN VARCHAR2 DEFAULT NULL
+                  ,pr_nmrotina IN VARCHAR2 DEFAULT 'DDDA0001'
+                  ,pr_cdcooper IN VARCHAR2 DEFAULT 0
+                  ) 
+  IS
+    -- ..........................................................................
+    --
+    --  Programa : pc_log
+    --  Sistema  : Rotina de Log - tabela: tbgen prglog ocorrencia
+    --  Sigla    : GENE
+    --  Autor    : Envolti - Belli - Chamado PRB0040398
+    --  Data     : 26/02/2019                       Ultima atualizacao: 
+    --
+    --   Dados referentes ao programa:    
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Chamar a rotina de Log para gravação de criticas.
+    --
+    --   Alteracoes: 
+    --
+    -- .............................................................................
+    --
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;        
+  BEGIN   
+    -- Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => pr_dstiplog -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                          ,pr_tpocorrencia  => pr_tpocorre -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                          ,pr_cdcriticidade => pr_cdcricid -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                          ,pr_tpexecucao    => pr_tpexecuc -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                          ,pr_dsmensagem    => pr_dscritic
+                          ,pr_cdmensagem    => pr_cdcritic
+                          ,pr_cdprograma    => pr_nmrotina
+                          ,pr_cdcooper      => pr_cdcooper 
+                          ,pr_idprglog      => vr_idprglog
+                          );   
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log  
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+  END pc_log;
+    
 END ddda0001;
 /
