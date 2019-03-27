@@ -3,7 +3,7 @@
 	/**************************************************************************************
 	  Fonte: solicita_comprovacao_vida.php                                               
 	  Autor: Adriano                                                  
-	  Data : Junho/2013                      		 	Última Alteração: 25/11/2015
+	  Data : Junho/2013                      		 	Última Alteração: 22/03/2019
 	                                                                   
 	  Objetivo  : Solicita comprovação de vida
 	                                                                 
@@ -13,6 +13,9 @@
                 25/11/2015 - Adicionada verificacao para gerar contrato
                              somente quando o beneficiario não tiver senha
                              de internet cadastrada. Projeto 255 (Lombardi).
+							 
+				22/03/2019 - Ajuste para desbloquear a tela corretamente
+                              (Adriano - SCTASK0052896).
 	                                                                  
 	**************************************************************************************/
 
@@ -56,7 +59,11 @@
 	$nrdocpro = (isset($_POST["nrdocpro"])) ? $_POST["nrdocpro"] : '';	
 	$dtvalprc = (isset($_POST["dtvalprc"])) ? $_POST["dtvalprc"] : '';	
 	$temsenha = (isset($_POST["temsenha"])) ? $_POST["temsenha"] : false;
-		
+	
+	/*Se a chamda deste fonte veio através do processo de validação de senha ou não,  deverá ter o retorno conforme abaixo para desbloquear corretamente
+	o fundo. Caso contrário, a tela permanece bloqueada impedindo que o operador possa navegar nela.*/
+	$metodoErro = $temsenha != 'true' ? 'blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));' : 'unblockBackground();';
+	
 	$dsiduser = session_id();	
 	
 	validaDados();
@@ -89,14 +96,17 @@
 	// Executa script para envio do XML	
 	$xmlResult = mensageria($xmlSolicitaComprovacaoVida, "INSS", "CMPVIDAINSS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjSolicitaComprovacaoVida = getObjectXML($xmlResult);
-	
+	 
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjSolicitaComprovacaoVida->roottag->tags[0]->name) == "ERRO") {
 	
 		//Esta sendo utilizado a função utf8_encode devido ao SICREDI nos retornar mensagens com acentuação.
 		$msgErro = utf8_encode($xmlObjSolicitaComprovacaoVida->roottag->tags[0]->tags[0]->tags[4]->cdata);
-		exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
-					
+		if($temsenha == 'true'){
+			exibirErro('error',$msgErro,'Alerta - Aimaro',$metodoErro,false);	
+		}else{		
+			exibirErro('error',$msgErro,'Alerta - Aimaro',$metodoErro,false);		
+		}			
 	}   	
 	
 	include('altera_secao_nmrotina.php');	
@@ -104,7 +114,7 @@
 	$nmarqpdf = $xmlObjSolicitaComprovacaoVida->roottag->tags[0]->tags[1]->cdata;
 	$msgretor = $xmlObjSolicitaComprovacaoVida->roottag->tags[0]->tags[2]->cdata;
 	
-  $strGeraImpressao = $temsenha != 'true' ? 'Gera_Impressao(\''.$nmarqpdf.'\',\'fechaRotina($(\"#divRotina\"));solicitaConsultaBeneficiario(\"C\");\');' : 'fechaRotina($(\"#divRotina\"));solicitaConsultaBeneficiario(\"C\");';
+	$strGeraImpressao = $temsenha != 'true' ? 'Gera_Impressao(\''.$nmarqpdf.'\',\'fechaRotina($(\"#divRotina\"));solicitaConsultaBeneficiario(\"C\");\');' : 'fechaRotina($(\"#divRotina\"));solicitaConsultaBeneficiario(\"C\");';
   
   
 	if($msgretor != ''){
@@ -119,68 +129,68 @@
 		
 		//Conta
 		if ( $GLOBALS["nrdconta"] == 0){ 
-			exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);
 		}
 		
 		//CPF
 		if ( $GLOBALS["nrcpfcgc"] == 0){ 
-			exibirErro('error','CPF inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','CPF inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);
 		}
 		
 		//Nome do beneficiário
 		if ( $GLOBALS["nmextttl"] == ""){ 
-			exibirErro('error','Nome inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','Nome inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);			
 		}
 		
 		//Orgão pagador
 		if ( $GLOBALS["cdorgins"] == 0){ 
-			exibirErro('error','&Oacute;rg&atilde;o pagador inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','&Oacute;rg&atilde;o pagador inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);			
 		}
 		
 		//NB
 		if ( $GLOBALS["nrrecben"] == 0){ 
-			exibirErro('error','NB inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','NB inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);			
 		}
 		
 		//Tipo do NB
 		if ( $GLOBALS["tpnrbene"] == ""){ 
-			exibirErro('error','Tipo do NB inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','Tipo do NB inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);			
 		}
 		
 		//Unidade de atendimento
 		if ( $GLOBALS["cdagepac"] == ""){ 
-			exibirErro('error','Unidade de atendimento inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','Unidade de atendimento inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);			
 		}
 		
 		//ID do beneficiário
 		if ( $GLOBALS["idbenefi"] == 0){ 
-			exibirErro('error','ID do benefici&aacute;rio inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','ID do benefici&aacute;rio inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);			
 		}
 		
 		//Agência SICREDI
 		if ( $GLOBALS["cdagesic"] == 0){ 
-			exibirErro('error','Ag&ecirc;ncia SCIREDI inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','Ag&ecirc;ncia SCIREDI inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);			
 		}
 		
 		//Responsavel pela renovacao
 		if ( $GLOBALS["respreno"] != 'PROCURADOR' && $GLOBALS["respreno"] != 'BENEFICIARIO'){ 
-			exibirErro('error','Respons&aacute;vel pela renova&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','Respons&aacute;vel pela renova&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);			
 		}
 		
 		if ( $GLOBALS["respreno"] == 'PROCURADOR'){ 
 			
 			//Nome do procurador
 			if ( $GLOBALS["nmprocur"] == ''){ 
-				exibirErro('error','Nome do procurador inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+				exibirErro('error','Nome do procurador inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);			
 			}
 			
 			//CPF do procurador
 			if ( $GLOBALS["nrdocpro"] == ''){ 
-				exibirErro('error','C.P.F. do procurador inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+				exibirErro('error','C.P.F. do procurador inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);			
 			}
 				
 			if ($GLOBALS["dtvalprc"] == '' ){
-				exibirErro('error','Validade do procurador inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+				exibirErro('error','Validade do procurador inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();'.$GLOBALS["metodoErro"],false);			
 			}
 							
 		}

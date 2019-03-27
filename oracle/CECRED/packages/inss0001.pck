@@ -554,6 +554,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
                                    ,pr_msgreceb IN VARCHAR2              --Mensagem Recebimento
                                    ,pr_movarqto IN VARCHAR2              --Nome Arquivo mover
                                    ,pr_nmarqlog IN VARCHAR2              --Nome Arquivo LOG
+                                   ,pr_idservic IN INTEGER DEFAULT 0     --Identificador Servico
                                    ,pr_des_reto OUT VARCHAR2             --Saida OK/NOK
                                    ,pr_dscritic OUT VARCHAR2);           --Descricao Erro
   
@@ -1128,7 +1129,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 07/01/2019
+   Data    : 27/08/2013                        Ultima atualizacao: 22/03/2019
 
    Dados referentes ao programa:
 
@@ -1257,6 +1258,10 @@ create or replace package body cecred.INSS0001 as
 		 07/01/2019 - Inclusão das rotinas para uso do serviço de "Reenvio cadastral"
 			          (Jonata - Mouts - SCTASK0030602).
                       
+        22/03/2019 - Ajuste para que, se não vier a tag “OutEfetivarProvaDeVida” no
+                     retorna da prova de vida, seja gerado uma critica informando
+                     que o processo não foi efetuado.
+                     (Adriano - SCTASK0052896).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /*Procedimento para gerar lote e lancamento, para gerar credito em conta*/
@@ -6308,10 +6313,10 @@ create or replace package body cecred.INSS0001 as
                               pagos/a pagar seja devolvido todo o xml e não somente
                               o couteúdo já decriptografado. Com isto, foi-se
                               necessário alterar esta rotina para atender esse ajuste
-                              (Adriano).
-                             
-    
-                
+                              (Adriano).   
+							  
+							  
+							                  
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 664301
@@ -6452,7 +6457,7 @@ create or replace package body cecred.INSS0001 as
           --Levantar Excecao
           RAISE vr_exc_saida;
         END IF;  
-                
+                               
       EXCEPTION
         WHEN vr_exc_saida THEN
           NULL;
@@ -6508,6 +6513,7 @@ create or replace package body cecred.INSS0001 as
                                    ,pr_msgreceb IN VARCHAR2                --Mensagem Recebimento
                                    ,pr_movarqto IN VARCHAR2                --Nome Arquivo mover
                                    ,pr_nmarqlog IN VARCHAR2                --Nome Arquivo LOG
+                                   ,pr_idservic IN INTEGER DEFAULT 0       --Identificador Servico
                                    ,pr_des_reto OUT VARCHAR2               --Saida OK/NOK
                                    ,pr_dscritic OUT VARCHAR2) IS           --Descricao Erro
   /*---------------------------------------------------------------------------------------------------------------
@@ -6516,7 +6522,7 @@ create or replace package body cecred.INSS0001 as
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Alisson C. Berrido - AMcom
-    Data     : Fevereiro/2015                           Ultima atualizacao: 30/03/2015
+    Data     : Fevereiro/2015                           Ultima atualizacao: 22/03/2019
   
     Dados referentes ao programa:
    
@@ -6525,7 +6531,12 @@ create or replace package body cecred.INSS0001 as
   
     Alterações : 10/02/2015 Conversao Progress -> Oracle (Alisson-AMcom)
     
-                 30/03/2015 - Ajuste na organização e identação da escrita (Adriano).            
+                 30/03/2015 - Ajuste na organização e identação da escrita (Adriano).
+                 
+                 22/03/2019 - Ajuste para que, se não vier a tag “OutEfetivarProvaDeVida” no
+                              retorna da prova de vida, seja gerado uma critica informando
+                              que o processo não foi efetuado.
+                              (Adriano - SCTASK0052896).            
     
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
@@ -6551,6 +6562,7 @@ create or replace package body cecred.INSS0001 as
     
       --Variaveis Excecao
       vr_exc_erro EXCEPTION;
+      vr_exc_saida EXCEPTION;
       
     BEGIN
       
@@ -6644,14 +6656,37 @@ create or replace package body cecred.INSS0001 as
         END IF;  
         
       ELSE  
+        --Apenas para prova de vida
+        IF pr_idservic = 2 THEN
+          
+          --Verificar se existe tag "Body"
+          vr_lista_nodo:= xmldom.getElementsByTagName(vr_xmldoc,'OutEfetivarProvaDeVida');
+          
+          --Se nao existir a tag "OutEfetivarProvaDeVida" será considerado que o processo
+          --não foi efetuado com sucesso. Este tratamento foi alinhado junto ao SICREDI.
+          IF dbms_xmldom.getlength(vr_lista_nodo) = 0 THEN
+            
+            vr_dscritic:= 'Prova de vida nao concluida, tentar novamente.';
+            
+            --Levantar Excecao
+            RAISE vr_exc_saida;
+          END IF;  
+          
+        END IF;
+        
         --Retorno OK  
-        pr_des_reto:= 'OK';    
+        pr_des_reto:= 'OK';  
+          
       END IF; 
       
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_des_reto:= 'NOK';
         pr_dscritic:= 'Erro na inss0001.pc_obtem_fault_packet. '||vr_dscritic;
+        
+      WHEN vr_exc_saida THEN
+        pr_des_reto:= 'NOK';
+        pr_dscritic:= vr_dscritic;
       
       WHEN OTHERS THEN
         pr_des_reto:= 'NOK';
@@ -13289,6 +13324,7 @@ create or replace package body cecred.INSS0001 as
                                        ,pr_msgreceb => vr_msgreceb   --Mensagem Recebimento
                                        ,pr_movarqto => vr_movarqto   --Nome Arquivo mover
                                        ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo log
+                                       ,pr_idservic => 2             --Identificador Servico                                           
                                        ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                        ,pr_dscritic => vr_dscritic); --Mensagem Erro
         
