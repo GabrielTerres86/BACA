@@ -177,6 +177,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
 
                 27/08/2018 - Inclusão de regra do BACENJUD 
                              PJ 450 - Diego Simas - AMcom             
+          13/02/2019 - Inclusao de regras para contas com bloqueio judicial
+                     - Projeto 530 BACENJUD - Everton(AMcom).
 
   .............................................................................*/
 
@@ -3628,6 +3630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         AND D.CDCOOPER = B.CDCOOPER
         AND D.NRDCONTA = A.NRDCONTA
         AND E.CDCOOPER = B.CDCOOPER
+        and d.inprejuz = 0
    ORDER BY
             C.NRCPFCNPJ,
             C.DSOFICIO,
@@ -3656,6 +3659,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
   ORDER BY
            lcm.progress_recid;
     
+   -- Busca de lançamentos com historicos que nao podem ser utilizados para o bloqueio judicial Everton(AMcom).
+
+      CURSOR cr_lancamento_nblq(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Cooperativa conectada
+                         ,pr_nrdconta       IN crapass.nrdconta%TYPE    --> Número da conta
+                         ,pr_dtmvtolt       IN crapdat.dtmvtolt%TYPE    -- Data
+                         ,pr_progress_recid IN craplcm.progress_recid%TYPE ) IS
+    SELECT sum(lcm.vllanmto) vllanmto
+          ,max(lcm.progress_recid) progress_recid
+      FROM craplcm lcm
+          ,craphis his
+     WHERE lcm.cdcooper = his.cdcooper
+       AND lcm.cdhistor = his.cdhistor
+       AND lcm.cdcooper = pr_cdcooper
+       AND lcm.nrdconta = pr_nrdconta
+       AND lcm.dtmvtolt = pr_dtmvtolt
+       AND his.indebcre = 'C' -- Somente históricos de crédito
+       AND his.indutblq <> 'S'
+       and lcm.progress_recid+0 > pr_progress_recid -- Lancamentos do dia que são maiores que o último lançamento utilizado
+  ORDER BY
+           lcm.progress_recid;
+
   -- Busca de lançamentos de debito na data para verificar se foi utilizado indevidamento
     CURSOR cr_lancamento_deb(pr_cdcooper           IN crapcop.cdcooper%TYPE    --> Cooperativa conectada
                             ,pr_nrdconta           IN crapass.nrdconta%TYPE    --> Número da conta
@@ -3791,6 +3815,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     vr_monitoramento_encerrado VARCHAR2(1):='N';
     vr_sld_cta_prj             tbcc_prejuizo.vlsdprej%TYPE;
     vr_inprejuz                BOOLEAN;
+    vr_saldocc                 NUMBER := 0; -- Valor de saldo da correte do dia - Everton(AMcom)P530.
+    vr_idx                     PLS_INTEGER; -- Indice PL/SQL - Everton(AMcom)P530.
+    vr_vl_lanc_disp            NUMBER := 0; --Valor disponivel do lacamento de credito - Everton(Amcom)P530.
+    vr_vl_neg                  NUMBER := 0;
+    vr_nrdconta                tbblqj_monitora_ordem_bloq.nrdconta%TYPE; --Everton(Amcom).
+    -- Variaveis Pl/Tables
+    vr_tab_saldos    EXTR0001.typ_tab_saldos;
+    vr_tab_erro      GENE0001.typ_tab_erro;
+
     -- Handle para arquivo
     vr_ind_arq                 UTL_FILE.FILE_TYPE;   
     vr_des_erro                VARCHAR2(4000);    
@@ -3926,6 +3959,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        vr_dsoficio  := rw_monitoramento.dsoficio;
          
        vr_idordem  := rw_monitoramento.idordem;
+
+
        -- Só vai verificar se tem lançamento se ainda restar saldo
        IF nvl(vr_saldo,0) > 0 THEN         
           
@@ -3985,6 +4020,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
           -- PJ 450 - Regulatório de Crédito  --
           -- Diego Simas -- AMcom -- BACENJUD -- 
                    
+         --- PJ 530 - Regulatório BACENJUD --------
+         --- Everton Deserto -- AMcom ----
+
+         -- Buscar o saldo da conta corrente
+            EXTR0001.pc_obtem_saldo_dia(pr_cdcooper   => rw_monitoramento.cdcooper,
+                                        pr_rw_crapdat => rw_crapdat,
+                                        pr_cdagenci   => rw_monitoramento.cdagenci,
+                                        pr_nrdcaixa   => 1,
+                                        pr_cdoperad   => 1,
+                                        pr_nrdconta   => rw_monitoramento.nrdconta,
+                                        pr_vllimcre   => 0,---c1.vllimcre,
+                                        pr_dtrefere   => rw_crapdat.dtmvtolt,
+                                        pr_flgcrass   => null,
+                                        pr_tipo_busca => 'A',
+                                        pr_des_reto   => vr_dscritic,
+                                        pr_tab_sald   => vr_tab_saldos,
+                                        pr_tab_erro   => vr_tab_erro);
+
+        -- Verifica se ocorreu erro na rotina - Everton(AMcom) P530.
+           IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+             vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+             RAISE vr_exc_saida;
+           END IF;
+        --Buscar o Índice
+           vr_idx := vr_tab_saldos.FIRST;
+        -- Se existir tabela de saldos, armezena o saldo disponível - Everton(AMcom) P530.
+           vr_saldocc := NVL(vr_tab_saldos(vr_idx).vlsddisp,0);
+
        -- Verifica se houve crédito na conta entre a última execução e esta
        FOR rw_lancamento in cr_lancamento(rw_monitoramento.cdcooper,
                                           rw_monitoramento.nrdconta,
@@ -4001,10 +4064,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
               rw_lancamento.vllanmto := nvl(rw_lancamento.vllanmto,0) - nvl(rw_lancamento_blq.vllanmto,0);
            END LOOP;
          
+           --Cursor pra somar os lancamentos que nao pode ser bloqueados judicialmente
+           FOR rw_lancamento_nblq in cr_lancamento_nblq(rw_monitoramento.cdcooper,
+                                                        rw_monitoramento.nrdconta,
+                                                        rw_crapdat.dtmvtolt,
+                                                        rw_monitoramento.progress_recid_mon) LOOP
+
+           --Como o saldo considera todos os creditos, abater o valor que nao pode ser bloquado
+             IF rw_lancamento_nblq.vllanmto > 0 THEN
+               vr_saldocc := vr_saldocc - rw_lancamento_nblq.vllanmto;
+             END IF;
+           END LOOP;
+
+
+         IF vr_saldocc < 0 THEN --Saldo Negativo
+           vr_valor_bloquear := 0;  -- Bloqueia nenhum valor
+         ELSE --Se o saldo ja estiver positivo
+           IF vr_saldocc > vr_saldo THEN
+             vr_valor_bloquear := vr_saldo;
+             ELSE
+               vr_valor_bloquear := vr_saldocc;
+           END IF;
+         END IF;
+
+   /*---------------Comentado devido alteração do projeto P530 - Everton(AMcom)-------------------------
          -- Se existir lançamento de crédito, efetuar o bloqueio.
          -- Verificar se o valo do lançamento é menor que o saldo que
          -- precisa ser bloqueado, se for, bloquear o valor total do lançamento de crédito
            IF rw_lancamento.vllanmto > 0 THEN
+
          IF rw_lancamento.vllanmto < vr_saldo THEN
            vr_valor_bloquear := rw_lancamento.vllanmto;
          ELSE
@@ -4012,7 +4100,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          -- cursor de monitoramento para fazer o bloqueio.
            vr_valor_bloquear := vr_saldo;
          END IF;
-        
+   -------------------------------------------------------------------------------------------------*/
+          IF vr_valor_bloquear > 0 THEN --Tratativa P530 BANCEJUD Everton(AMcom).
          pc_bloqueio(pr_cdcooper => rw_monitoramento.cdcooper,
                      pr_nrdconta => rw_monitoramento.nrdconta,
                      pr_cdmodali => rw_monitoramento.cdmodali,
@@ -4022,15 +4111,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                      pr_dsresord => 'BACENJUD ATE R$ '||to_char(vr_valor_bloquear,'fm999G999G990D00'),
                      pr_vlbloque => vr_valor_bloquear,
                      pr_dscritic => vr_dscritic);
+
          -- Verifica se ocorreu erro
          IF vr_dscritic IS NOT NULL THEN
              RAISE vr_exc_saida;
          END IF;        
            END IF;
+
          -- Se não ocorreu erro no bloqueio
          -- Se o valor bloqueado for suficiente para atender o bloqueio judicial
          -- Atualizar a tabela de bloqueio e excluir o monitoramento.
-         IF rw_lancamento.vllanmto >= vr_saldo THEN       
+         --IF rw_lancamento.vllanmto >= vr_saldo THEN
+         IF vr_saldocc >= vr_saldo THEN --Substituido o lancamento pelo saldo da conta - Everton(Amcom).
            -- Zera o saldo pois conseguiu bloquear tudo
            vr_saldo:=0;
            -- Atualiza na tabela de bloqueios
@@ -4064,10 +4156,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
            EXIT;            
             
          ELSE
+           --Tratativa para zerar o saldo, quando estiver negativo e nao afetar o valor restante para bloquear - Everton(AMCom).
+           IF vr_saldocc < 0 THEN
+             vr_saldocc := 0;
+           END IF;
            -- Atualiza o valor da operação com o valor bloqueado
            BEGIN
              UPDATE tbblqj_ordem_bloq_desbloq
-                SET vloperacao = nvl(vloperacao,0) + rw_lancamento.vllanmto
+                SET vloperacao = nvl(vloperacao,0) + vr_saldocc --rw_lancamento.vllanmto PJ530 BANCENJUD - Everton(AMCom).
               WHERE idordem = rw_monitoramento.idordem;
            EXCEPTION
              WHEN OTHERS THEN
@@ -4078,9 +4174,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
            BEGIN
              UPDATE tbblqj_monitora_ordem_bloq t
                 SET 
-                    t.vlsaldo          = t.vlsaldo     - rw_lancamento.vllanmto,                
+                    t.vlsaldo          = t.vlsaldo    -  vr_saldocc, -- rw_lancamento.vllanmto,
                     -- Atualiza o PROGRESS_RECID e valor bloqueado somente para o registro da ordem que está sendo monitorada agora                                        
-                    t.vlbloqueado      = decode(t.idordem,rw_monitoramento.idordem,t.vlbloqueado + rw_lancamento.vllanmto,t.vlbloqueado),
+                    --t.vlbloqueado      = decode(t.idordem,rw_monitoramento.idordem,t.vlbloqueado + rw_lancamento.vllanmto,t.vlbloqueado),
+                    t.vlbloqueado      = decode(t.idordem,rw_monitoramento.idordem,t.vlbloqueado + vr_saldocc,t.vlbloqueado), --PJ530 BANCENJUD Everton(AMCom).
                     t.idprogres_recid  = decode(t.idordem,rw_monitoramento.idordem,rw_lancamento.progress_recid,t.idprogres_recid)
               WHERE t.nrcpfcnpj = rw_monitoramento.nrcpfcnpj
                 AND t.dsoficio  = rw_monitoramento.dsoficio;
@@ -4090,7 +4187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                RAISE vr_exc_saida;
            END; 
            -- deduz o valor bloqueado do valor que está sendo monitorado.
-           vr_saldo := vr_saldo -  rw_lancamento.vllanmto;
+           vr_saldo := vr_saldo - vr_saldocc; --rw_lancamento.vllanmto;
          END IF;
            
          -- Verificar se houve algum lançamento de débito entre este lançamento de crédito 

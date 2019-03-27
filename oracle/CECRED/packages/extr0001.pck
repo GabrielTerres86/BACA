@@ -1992,6 +1992,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --                            apresentação da crítica 983 para o usuário.
     --                            Chamado SCTASK0015964 - Gabriel (Mouts).
     --
+    --               13/02/2019 - Inclusao de regras para contas com bloqueio judicial
+    --                          - Projeto 530 BACENJUD - Everton(AMcom).
+    --
+    
     DECLARE
       -- Descrição e código da critica
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2147,6 +2151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       END LOOP;
       --Fim PJ 416
       
+   
       IF vr_conta_monitorada = 'N'THEN -- PJ 416 Verifica se a conta está sendo monitorada
       -- Se a conta não estiver sendo monitorada, mantem a verificação dos lançamentos como era antes
       -- Busca de todos os lançamentos
@@ -2195,10 +2200,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           -- e se o progress_recid é maior que o último lançamento utilizado pelo monitoramento
           IF rw_craplcm_ign.inhistor = 1 AND rw_craplcm_ign.indebcre = 'C' AND rw_craplcm_ign.indutblq = 'S' and rw_craplcm_ign.progress_recid > vr_idprogress_recid THEN
           -- controlar o valor do lançamento em relação ao valor do saldo do monitoramento
-          
+           /*-----Comentado para buscar sempre o saldo atual - P530 BANCEJUD-------
             IF rw_craplcm_ign.vllanmto >= vr_saldo_monitoramento THEN
               rw_craplcm_ign.vllanmto:= rw_craplcm_ign.vllanmto - vr_saldo_monitoramento;
-              vr_saldo_monitoramento:=0;
+              vr_saldo_monitoramento:=0;*/
               -- Chama rotina que compõe o saldo do dia
               pc_compor_saldo_dia(pr_vllanmto => rw_craplcm_ign.vllanmto
                                  ,pr_inhistor => rw_craplcm_ign.inhistor
@@ -2223,9 +2228,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                 -- Levantar exceção
                 RAISE vr_exc_erro;
               END IF;
-            ELSE
+           -- ELSE
               vr_saldo_monitoramento:= vr_saldo_monitoramento - rw_craplcm_ign.vllanmto;
-            END IF;
+            --END IF;
          
           ELSE
             -- Chama rotina que compõe o saldo do dia
@@ -4167,7 +4172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_ds_historico_deb :=  gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                         pr_cdacesso => 'HIST_CARTAO_DEBITO');
 										  
-      vr_ds_historico_est := 	gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+      vr_ds_historico_est :=   gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                         pr_cdacesso => 'HIST_EST_CARTAO_DEBITO');	
                                          
       -- Busca de todos os lançamentos
