@@ -59,21 +59,21 @@
 					<text><![CDATA[NOME DO CONSUMIDOR]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="363caf92-a356-4c6a-abc7-dc38ac9fe565" x="275" y="32" width="64" height="8"/>
+					<reportElement uuid="363caf92-a356-4c6a-abc7-dc38ac9fe565" x="275" y="32" width="68" height="8"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="7"/>
 					</textElement>
 					<text><![CDATA[FATURA]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="5838d136-e396-4dbc-906c-1b11c87e6427" x="350" y="32" width="48" height="8"/>
+					<reportElement uuid="5838d136-e396-4dbc-906c-1b11c87e6427" x="354" y="32" width="48" height="8"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="7"/>
 					</textElement>
 					<text><![CDATA[CONTA/DV]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="ec7f0442-d110-42da-af47-a2ef9c80dc00" x="408" y="32" width="50" height="8"/>
+					<reportElement uuid="ec7f0442-d110-42da-af47-a2ef9c80dc00" x="412" y="32" width="50" height="8"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="7"/>
 					</textElement>
@@ -163,21 +163,21 @@
 				<textFieldExpression><![CDATA[$F{nmfatura}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement uuid="fad9b239-fa22-44bb-9d11-6c9b4e73c9b3" x="275" y="8" width="64" height="8"/>
+				<reportElement uuid="fad9b239-fa22-44bb-9d11-6c9b4e73c9b3" x="275" y="8" width="68" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{cdrefere}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement uuid="f0a92f48-3445-49c7-baa5-14831d277879" x="350" y="8" width="48" height="8"/>
+				<reportElement uuid="f0a92f48-3445-49c7-baa5-14831d277879" x="354" y="8" width="48" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement uuid="254f0996-288e-43dd-a90b-7071a8729546" x="408" y="8" width="50" height="8"/>
+				<reportElement uuid="254f0996-288e-43dd-a90b-7071a8729546" x="412" y="8" width="50" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
