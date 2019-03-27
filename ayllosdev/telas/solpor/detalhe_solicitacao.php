@@ -69,6 +69,8 @@ $situacao = getByTagName($solicitacao,"situacao");
 $dtretorno = getByTagName($solicitacao,"dtretorno");
 $dtavaliacao = getByTagName($solicitacao,"dtavaliacao");
 $motivo = getByTagName($solicitacao,"motivo");
+$nrsolicitacao = getByTagName($solicitacao,"nrsolicitacao");
+
 ?>
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -109,10 +111,10 @@ $motivo = getByTagName($solicitacao,"motivo");
                                             <fieldset style="margin-top:10px">
                                                 <legend>Portabilidade</legend>
 
-                                                <label style="margin-left: 15px;width: 105px;">Data Solicita&ccedil;&atilde;o:</label>
+                                                <label style="margin-left: 15px;width: 106px;">Data Solicita&ccedil;&atilde;o:</label>
                                                 <input value="<?=$dtsolicitacao?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;">
 
-                                                <label style="margin-left: 15px;width: 121px;">NU:</label>
+                                                <label style="margin-left: 15px;width: 120px;">NU:</label>
                                                 <input value="<?=$nusolicitacao?>" type="text" class="campoTelaSemBorda" style="width: 160px;" readonly disabled>
 
                                                 <br style="clear:both" />
@@ -172,7 +174,7 @@ $motivo = getByTagName($solicitacao,"motivo");
                                                     <input value="<?=$cdagencia_destinataria?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;width: 50px;">
 
 
-                                                    <label style="margin-left: 15px;">Conta:</label>
+                                                    <label style="margin-left: 15px;width: 288px;">Conta:</label>
                                                     <input value="<?=$nrdconta_destinataria?>" type="text" class="campoTelaSemBorda" style="width: 85px;" readonly disabled>
                                                 <?php } ?>
 
@@ -182,28 +184,192 @@ $motivo = getByTagName($solicitacao,"motivo");
                                                 <legend>Status da Solicita&ccedil;&atilde;o</legend>
 
                                                 <label style="margin-left: 15px;width: 105px;">Situa&ccedil;&atilde;o:</label>
-                                                <input value="<?=$situacao?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;width: 112px;">
+                                                <input value="<?=$situacao?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;width: 145px;">
 
                                                 <?php if ($cddopcao != 'E') { ?>
                                                     <br style="clear:both" />                                                
                                                     
                                                     <label style="margin-left: 15px;width: 105px;">Data Avalia&ccedil;&atilde;o:</label>
-                                                    <input value="<?=$dtavaliacao?>" style="width: 112px;" type="text" class="campoTelaSemBorda" readonly disabled>
+                                                    <input value="<?=$dtavaliacao?>" style="width: 145px;" type="text" class="campoTelaSemBorda" readonly disabled>
                                                     
-                                                    <label style="margin-left: 15px; width: 204px;">Data Retorno:</label>
-                                                    <input value="<?=$dtretorno?>" type="text" style="width: 112px;" class="campoTelaSemBorda" readonly disabled>
+                                                    <label style="margin-left: 15px; width: 118px;">Data Retorno:</label>
+                                                    <input value="<?=$dtretorno?>" type="text" style="width: 165px;" class="campoTelaSemBorda" readonly disabled>
                                                 <?php } else { ?>
-                                                    <label style="margin-left: 15px; width: 199px;">Data Retorno:</label>
-                                                    <input value="<?=$dtretorno?>" type="text" style="width: 112px;" class="campoTelaSemBorda" readonly disabled>
+                                                    <label style="margin-left: 15px; width: 113px;">Data Retorno:</label>
+                                                    <input value="<?=$dtretorno?>" type="text" style="width: 165px;" class="campoTelaSemBorda" readonly disabled>
                                                 <?php } ?>
 
                                                 <br style="clear:both" />
 
                                                 <label style="margin-left: 15px;width: 105px;">Motivo(s):</label>
-                                                <textarea class="campoTelaSemBorda" readonly disabled style="width: 447px;height: 60px;margin-right: 52px;"><?=utf8_decode($motivo)?></textarea>
-
+                                                <textarea class="campoTelaSemBorda" readonly disabled style="width: 447px;height: 60px;margin-right: 52px;"><?=utf8_decode($motivo);?></textarea>
 
                                             </fieldset>
+											
+											<?php
+												/*
+												*** Busca dados da contestação
+												*/
+												
+												if($cddopcao == 'E') {
+												
+													$nrdconta = preg_replace("/[^0-9]/", "", $nrdconta);
+													
+													$xml  = "<Root>";
+													$xml .= " <Dados>";
+													$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+													$xml .= "   <nrsolicitacao>".$nrsolicitacao."</nrsolicitacao>";
+													$xml .= " </Dados>";
+													$xml .= "</Root>";
+													
+													$xmlResult = mensageria($xml, "ATENDA", "BUSCA_DADOS_CONTESTACAO_ENVIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+													$xmlObject = getObjectXML($xmlResult);
+													
+													if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
+														$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+														exibirErro('error',$msgErro,'Alerta - Aimaro','acessaOpcaoAba(2,0,"0")', false);
+													}
+													
+													$contestacao = $xmlObject->roottag->tags[0];
+													
+													$dssituacao = getByTagName($contestacao->tags,'dssituacao');
+													$identificador = getByTagName($contestacao->tags,'identificador');
+													$dtsolicita = getByTagName($contestacao->tags,'dtsolicita');
+													$dtretorno = getByTagName($contestacao->tags,'dtretorno');
+													$dsmotivo = getByTagName($contestacao->tags,'dsmotivo');
+													$dsretornno = getByTagName($contestacao->tags,'dsretorno');
+											?>
+											
+											<fieldset style="margin-top:10px">
+												<legend>Status da Contesta&ccedil;&atilde;o</legend>
+												<label style="margin-left: 15px;width: 105px;" for="dssituacao" class="clsCampos">Situa&ccedil;&atilde;o:</label>
+												<input style="margin-right: 5px;width: 145px;" type="text" id="dssituacao" name="dssituacao" disabled readonly="readonly" class="campoTelaSemBorda" value="<?php echo $dssituacao; ?>" />
+
+												<label style="margin-left: 15px;width: 115px;" for="nr_identificador" class="clsCampos">Identificador:</label>
+												<input style="margin-right: 5px;width: 165px;" type="text" id="nr_identificador" name="nr_identificador" readonly="readonly" class="campoTelaSemBorda" value="<?php echo $identificador; ?>" />
+												
+												<br style="clear:both"/>
+												
+												<label style="margin-left: 15px;width: 105px;" for="dtsolicita" class="clsCampos">Data Solicita&ccedil;&atilde;o:</label>
+												<input style="margin-right: 5px;width: 145px;" type="text" id="dtsolicita" name="dtsolicita" readonly="readonly" class="campoTelaSemBorda" value="<?php echo $dtsolicita; ?>" />
+												
+												<label style="margin-left: 15px;width: 115px;" for="dtretorno" class="clsCampos">Data Retorno:</label>
+												<input style="margin-right: 5px;width: 165px;" type="text" id="dtretorno" name="dtretorno" readonly="readonly" class="campoTelaSemBorda" value="<?php echo $dtretorno; ?>" />
+												
+												<br style="clear:both"/>
+												
+												<label style="margin-left: 15px;width: 104px;" for="dsmotivo" class="clsCampos">Motivo:</label>
+												<textarea style="width: 448px;height: 60px;margin-right: 47px;" id="dsmotivo" class="campoTelaSemBorda" readonly disabled><?=$dsmotivo?></textarea>
+												
+												<label style="margin-left: 15px;width: 104px;margin-top:5px;" for="dsretornno" class="clsCampos">Retorno:</label>
+												<textarea style="width: 448px;height: 60px;margin-right: 47px;margin-top:5px;" id="dsretornno" class="campoTelaSemBorda" readonly disabled><?=$dsretornno?></textarea>
+											</fieldset>
+											
+											<?php
+												}else if ($cddopcao == 'M' || $cddopcao == 'R'){
+											?>
+											
+											<?php
+												/*
+												*** Busca dados da contestação
+												*/
+												
+												$xml  = "<Root>";
+												$xml .= " <Dados>";
+												$xml .= "   <nrnuportabilidade>".$nusolicitacao."</nrnuportabilidade>";
+												$xml .= " </Dados>";
+												$xml .= "</Root>";
+												
+												$xmlResult = mensageria($xml, "ATENDA", "BUSCA_DADOS_CONTESTACAO_RECEBE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+												$xmlObject = getObjectXML($xmlResult);
+												
+												if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
+													$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+													exibirErro('error',$msgErro,'Alerta - Aimaro','acessaOpcaoAba(2,0,"0")', false);
+												}
+												
+												$contestacao = $xmlObject->roottag->tags[0];
+												
+												$dssituacao = getByTagName($contestacao->tags,'dssituacao');
+												$identificador = getByTagName($contestacao->tags,'identificador');
+												$dtsolicita = getByTagName($contestacao->tags,'dtsolicita');
+												$dtretorno = getByTagName($contestacao->tags,'dtretorno');
+												$dsmotivo = getByTagName($contestacao->tags,'dsmotivo');
+												$dsretornno = getByTagName($contestacao->tags,'dsretorno');
+												
+											?>
+											
+											<fieldset style="margin-top:10px">
+												<legend>Status da Contesta&ccedil;&atilde;o</legend>
+												<label style="margin-left: 15px;width: 105px;" for="dssituacao" class="clsCampos">Situa&ccedil;&atilde;o:</label>
+												<input style="margin-right: 5px;width: 145px;" type="text" id="dssituacao" name="dssituacao" disabled readonly="readonly" class="campoTelaSemBorda" value="<?php echo $dssituacao; ?>" />
+
+												<label style="margin-left: 15px;width: 115px;" for="nr_identificador" class="clsCampos">Identificador:</label>
+												<input style="margin-right: 5px;width: 165px;" type="text" id="nr_identificador" name="nr_identificador" readonly="readonly" class="campoTelaSemBorda" value="<?php echo $identificador; ?>" />
+												
+												<br style="clear:both"/>
+												
+												<label style="margin-left: 15px;width: 105px;" for="dtsolicita" class="clsCampos">Data Solicita&ccedil;&atilde;o:</label>
+												<input style="margin-right: 5px;width: 145px;" type="text" id="dtsolicita" name="dtsolicita" readonly="readonly" class="campoTelaSemBorda" value="<?php echo $dtsolicita; ?>" />
+												
+												<label style="margin-left: 15px;width: 115px;" for="dtretorno" class="clsCampos">Data Retorno:</label>
+												<input style="margin-right: 5px;width: 165px;" type="text" id="dtretorno" name="dtretorno" readonly="readonly" class="campoTelaSemBorda" value="<?php echo $dtretorno; ?>" />
+												
+												<br style="clear:both"/>
+												
+												<label style="margin-left: 15px;width: 104px;" for="dsmotivo" class="clsCampos">Motivo:</label>
+												<textarea style="width: 448px;height: 60px;margin-right: 47px;" id="dsmotivo" class="campoTelaSemBorda" readonly disabled><?=$dsmotivo?></textarea>
+												
+												<label style="margin-left: 15px;width: 104px;margin-top: 5px;" for="dsretornno" class="clsCampos">Retorno:</label>
+												<textarea style="width: 448px;height: 60px;margin-right: 47px;margin-top: 5px;" id="dsretornno" class="campoTelaSemBorda" readonly disabled><?=$dsretornno?></textarea>
+											</fieldset>
+											
+											<?php
+												}
+												
+												if ($cddopcao == 'M' || $cddopcao == 'R'){
+													
+													/*
+													*** Busca dados da regularização
+													*/
+													
+													$xml  = "<Root>";
+													$xml .= " <Dados>";
+													$xml .= "   <nrnu_portabilidade>".$nusolicitacao."</nrnu_portabilidade>";
+													$xml .= " </Dados>";
+													$xml .= "</Root>";
+													
+													$xmlResult = mensageria($xml, "ATENDA", "BUSCA_DADOS_REGULARIZACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+													$xmlObject = getObjectXML($xmlResult);
+													
+													if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
+														$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+														exibirErro('error',$msgErro,'Alerta - Aimaro','acessaOpcaoAba(2,0,"0")', false);
+													}
+													
+													$regularizacao = $xmlObject->roottag->tags[0];
+													
+													$dssituacao = getByTagName($regularizacao->tags,'dssituacao');
+													$dsmotivo = getByTagName($regularizacao->tags,'dsmotivo');
+													$dtregularizacao = getByTagName($regularizacao->tags,'dtregularizacao');
+											?>
+											
+											<fieldset style="margin-top:10px">
+												<legend>Status da Regulariza&ccedil;&atilde;o</legend>
+												<label style="margin-left: 15px;width: 105px;" for="dssituacao" class="clsCampos">Situa&ccedil;&atilde;o:</label>
+												<input style="margin-right: 5px;width: 145px;" type="text" id="dssituacao" name="dssituacao" disabled readonly="readonly" class="campoTelaSemBorda" value="<?=$dssituacao?>" />
+
+												<label style="margin-left: 15px;width: 160px;" for="dt_regularizacao" class="clsCampos">Data:</label>
+												<input style="margin-right: 5px;width: 120px;" type="text" id="dt_regularizacao" name="dt_regularizacao" readonly="readonly" class="campoTelaSemBorda" value="<?=$dtregularizacao?>" />
+												
+												<label style="margin-left: 15px;width: 105px;" for="dsmotivo" class="clsCampos">Motivo:</label>
+												<textarea style="width: 448px;height: 60px;margin-right: 48px;" id="dsmotivo" class="campoTelaSemBorda" readonly disabled style="width: 513px;height: 60px;margin-right: 19px;"><?=$dsmotivo?></textarea>
+											</fieldset>
+											
+											<?php
+												}
+											?>
+											
                                         </form>
                                     </div>
                                     <div style="margin-top:8px">

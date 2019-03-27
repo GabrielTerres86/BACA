@@ -112,14 +112,15 @@ $solicitacoes = $xmlObj->roottag->tags[0]->tags[0]->tags;
             $motivo = getByTagName($solicitacao->tags,"MOTIVO");
             $nrdconta = getByTagName($solicitacao->tags,"nrdconta");
             $dsrowid = getByTagName($solicitacao->tags,"dsrowid");
-
+            $idsituacao_contestacao = getByTagName($solicitacao,"idsituacao_contestacao");
             ?>
+            
             <tr>
                 <td style="width: 25px;"><?=$rownum?></td>
                 <td style="width: 137px;"><?=$nusolicitacao?></td>
                 <td style="width: 95px;"><?=$participante?></td>
                 <td style="width: 67px;"><?=$dtsolicitacao?></td>
-                <td style="width: 70px;"><?=$situacao?></td>
+                <td style="width: 70px;"><?=(($idsituacao_contestacao == 1) ? 'Contestada' : $situacao)?></td>
                 <td style="width: 67px;"><?=$dtretorno?></td>
                 <td style="width: 150px;"><?=$motivo?></td>
                 <td>
@@ -128,21 +129,26 @@ $solicitacoes = $xmlObj->roottag->tags[0]->tags[0]->tags;
                     if ($cddopcao == 'M') {
                         if (!empty($nrdconta) && $nrdconta > 0) {
                             if ($idsituacao == 1 || $idsituacao == 4) {
-                                echo '<a title="Aprovar" onclick="validarAprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_APROVAR.png"></a>';
-                                echo '<a title="Reprovar" onclick="exibirReprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_REPROVAR.png"></a>';
-                                echo '<a title="Devolver" onclick="exibirDevolucaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_DERIVAR.png"></a>';
+									          echo '<a title="Aprovar" onclick="validarAprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/portabilidade_APROVAR.png"></a>';
+									          echo '<a title="Reprovar" onclick="exibirReprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/portabilidade_REPROVAR.png"></a>';
+									          echo '<a title="Devolver" onclick="exibirDevolucaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/portabilidade_DERIVAR.png"></a>';
                             }
                         } else {
 							if ($idsituacao == 1 || $idsituacao == 4) {
-                              echo '<a title="Direcionar" onclick="exibirDirecionanamentoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_DERIVAR.png"></a>';
-                              echo '<a title="Reprovar" onclick="exibirReprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/motor_REPROVAR.png"></a>';
-						    }
+								            echo '<a title="Direcionar" onclick="exibirDirecionanamentoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/portabilidade_DERIVAR.png"></a>';
+								            echo '<a title="Reprovar" onclick="exibirReprovacaoPortabilidade(\''.$dsrowid.'\'); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/portabilidade_REPROVAR.png"></a>';
+								          }
+							          }
+							
+							          // botão responder apenas se a contestação está pendente
+							          if ($idsituacao_contestacao == 1){
+								          echo '<a title="Responder Contesta&ccedil;&atilde;o" onclick="responderContestacao(\''.$dsrowid.'\', 2); return false;" style="cursor: pointer;margin-left:10px;"><img src="'.$UrlImagens.'geral/portabilidade_RESPONDER.png"></a>';
                         }
                     }
                     ?>
                 </td>
             </tr>
-            <?
+          <?php
         }
         ?>
         </tbody>
