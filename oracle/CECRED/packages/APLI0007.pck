@@ -1441,16 +1441,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
               END IF;*/
             END IF;
             
-			  
-									
-							
-
-            -- Cuantidade de cotas referente a operação atual																 
-													 
-																			 
-            vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
-			  
-																	  
+/*
+               Autor : David Valente
+               Em 05/03/2019
+               Calculo da quantidade de cotas referente a operação atual
+               alterado para compatibilizar com a B3;
+               vr_qtftcota é uma CONSTANTE COM O VALOR  = R$0,01 (1 Centavo)
+               REGRA ANTIGA -> vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
+            */
+            vr_qtcotas_resg := trunc(rw_lcto.valorbase / vr_qtftcota);
 
             -- Devemos gerar o registro de CUstódia do Lançamento
             BEGIN
@@ -4033,7 +4032,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     -- 
     --             12/12/2018 - P411 - Ajustes para o Layout para 15 posições (Marcos-Envolti)
 	--
-	--				19/03/2019 - P442 - Ajustes na conciliação para considerar percentuais de tolerancia (Martini)																											   
+	--				19/03/2019 - P441 - Ajustes na conciliação para considerar percentuais de tolerancia (Martini)																											   
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Variaveis auxiliares
@@ -4142,6 +4141,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       -- Busca do dia util anterior
       vr_dtmvtoan DATE;
       
+	  -- Tipo de aplicação da tabela TBCAPT_SALDO_APLICA
+	  -- tipo de aplicacao (1 - rdc pos e pre / 2 - pcapta / 3 - aplic programada) 
+      vr_tpaplicacao NUMBER(2);
+	
     BEGIN
   	  -- Inclusão do módulo e ação logado
     	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0007.pc_processa_conciliacao'); 
@@ -4280,6 +4283,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                     vr_dscritic := 'Aplicação '||vr_txretorn(5) ||' com Qtde Cotas igual a zero!';
                   ELSE
                     CLOSE cr_aplica;
+					
+					-- Variavel de controle com o tipo de aplicação
+                    -- se for 3 ou 4, recebe 2 senão recebe 1 
+                    -- pra compatibilizar com os dados da tbcapt_saldo_aplica que recebe somente 1,2 ou 3
+                    vr_tpaplicacao := 0; 
+					
                     -- Buscar aplicação RDA ou RAC relacionada
                     IF rw_aplica.tpaplicacao IN(3,4) THEN 
                       -- Buscar aplicação RAC
@@ -4292,6 +4301,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                            ,rw_aplica.dtmvtolt
                            ,rw_aplica.dtvencto;
                       CLOSE cr_craprac;
+					  
+					  vr_tpaplicacao := 2;				  
+					  
                     ELSE
                       -- Buscar aplicação RDA
                       OPEN cr_craprda(rw_aplica.idaplicacao);
@@ -4302,6 +4314,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                            ,rw_aplica.dtmvtolt
                            ,rw_aplica.dtvencto;
                       CLOSE cr_craprda;                
+					  
+					  vr_tpaplicacao := 1;				  
+					  
                     END IF;
                     -- Caso não tenha encontrado a aplicação correspondente
                     IF rw_aplica.cdcooper + rw_aplica.nrdconta + rw_aplica.nraplica = 0 THEN 
@@ -4323,7 +4338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                         OPEN cr_saldo(rw_aplica.cdcooper
                                      ,rw_aplica.nrdconta
                                      ,rw_aplica.nraplica
-                                     ,rw_aplica.tpaplicacao
+                                     ,vr_tpaplicacao
                                      ,vr_dtmvtoan);																		  
                         FETCH cr_saldo																			 
                          INTO vr_sldaplic;   
