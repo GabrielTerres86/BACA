@@ -131,8 +131,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_SIMULACAO IS
                                    ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
                                    ,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK  
 
-  FUNCTION fn_retorna_coop_consig (pr_cdcooper crapprm.cdcooper%TYPE) RETURN VARCHAR2;                                                                       
- 
+
 END TELA_ATENDA_SIMULACAO;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
@@ -1472,10 +1471,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
     END IF;
     
     -- verifica se a cooperativa está trabalhando com crédito consignado
-    IF fn_retorna_coop_consig(pr_cdcooper => vr_cdcooper) <> 'S' THEN
+    IF NVL(gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                     pr_cdcooper => vr_cdcooper,
+                                     pr_cdacesso => 'COOPER_CONSIGNADO'),'N') <> 'S' THEN
        RAISE vr_saida;
     END IF;
-    
         
     vr_tpmodcon_lcr:= -1;
     -- verifica o modalidade do consignado da linha de crédito 
@@ -1630,40 +1630,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
                                      pr_dscritic || '</Erro></Root>');  
  END pc_valida_simul_consig;    
  
-  
- FUNCTION fn_retorna_coop_consig (pr_cdcooper crapprm.cdcooper%TYPE) RETURN VARCHAR2 IS
-  /* .............................................................................
-    Programa: fn_coop_consig
-    Sistema : Ayllos Web
-    Autor   : Josiane Stiehler - AMcom
-    Data    : 07/03/2019                       Ultima atualizacao: 
-
-    Dados referentes ao programa:
-
-    Frequencia: Sempre que for chamado
-
-    Objetivo  : Retorna  aflag se a cooperativa trabalha com crédito consignado
-
-    Alteracoes: 
-    ..............................................................................*/    
-  
-  CURSOR cr_consig IS
-  SELECT a.dsvlrprm
-    FROM crapprm a
-   WHERE a.cdacesso = 'COOPER_CONSIGNADO'
-     AND a.cdcooper = pr_cdcooper;
-
-   vr_consignado crapprm.dsvlrprm%TYPE;
-  BEGIN
-    vr_consignado:= 'N';
-    FOR rg_consig IN cr_consig
-    LOOP
-      vr_consignado:= rg_consig.dsvlrprm;
-    END LOOP;
-    
-    RETURN(vr_consignado);
-    
-  END fn_retorna_coop_consig;
-
 END TELA_ATENDA_SIMULACAO;
 /
