@@ -4361,11 +4361,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Cursor para verificar se existe bordero de cheques ativo
       CURSOR cr_crapbdc(pr_cdcooper IN crapbdc.cdcooper%TYPE
                        ,pr_nrdconta IN crapbdc.nrdconta%TYPE)IS
-      SELECT 1 
-        FROM crapbdc
-       WHERE crapbdc.cdcooper = pr_cdcooper 
-         AND crapbdc.nrdconta = pr_nrdconta
-         AND crapbdc.insitbdc = 3; --Liberado
+      SELECT 1
+        FROM craplim lim
+            ,crapbdc bdc
+            ,crapcdb cdb
+       WHERE lim.cdcooper = pr_cdcooper
+         AND lim.nrdconta = pr_nrdconta
+         AND lim.tpctrlim = 2
+         AND lim.insitlim = 2 -- Ativa
+         AND bdc.cdcooper = lim.cdcooper
+         AND bdc.nrdconta = lim.nrdconta
+         AND bdc.nrctrlim = lim.nrctrlim
+         AND cdb.cdcooper = bdc.cdcooper
+         AND cdb.nrdconta = bdc.nrdconta
+         AND cdb.nrborder = bdc.nrborder
+         AND cdb.dtlibera >= rw_crapdat.dtmvtolt
+         AND cdb.insitchq = 2 -- Processado
+         AND ROWNUM = 1; -- Processado
       rw_crapbdc cr_crapbdc%ROWTYPE;
       
       --Cursor para buscar emprestimos ativos
