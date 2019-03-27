@@ -12,7 +12,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0008 is
   -- Frequencia: -----
   -- Objetivo  : Rotinas utilizadas para as telas CADCTA referente a cadastros
   --
-  --  Alteracoes:
+  --  Alteracoes: 07/03/2019 - Novas regras para alteracao de cadastro. Alteracao no retorno das variaveis
+  --                           de alteracao e razao social. Gabriel Marcos (Mouts) - Chamado PRB0040571.
   --
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -1685,6 +1686,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
         FROM tbcadast_pessoa a
        WHERE a.nrcpfcgc = pr_nrcpfcgc;                                 
     rw_pessoa cr_pessoa%ROWTYPE;
+    -- Cursor sobre o cadastro de empresa
+    CURSOR cr_crapemp (pr_nrcpfcgc IN tbcadast_pessoa.nrcpfcgc%TYPE) IS
+    SELECT emp.cdempres
+      FROM crapemp emp
+     WHERE emp.nrdocnpj = pr_nrcpfcgc;                                 
+    rw_crapemp cr_crapemp%ROWTYPE;    
   BEGIN
     -- Busca os dados da pessoa
     OPEN cr_pessoa;
@@ -1698,8 +1705,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
       IF rw_pessoa.tpcadastro IN (3,4) THEN
         pr_idaltera := 0; -- Nao permite alterar
       ELSE -- Nao possui conta
+        OPEN cr_crapemp (pr_nrcpfcgc);
+        FETCH cr_crapemp INTO rw_crapemp;
+        CLOSE cr_crapemp;
+        IF rw_crapemp.cdempres IS NOT NULL THEN
+          pr_idaltera := 0; -- Nao permite alterar
+        ELSE	
         pr_idaltera := 1; -- Permite alterar
       END IF;
+    END IF;
     END IF;
     CLOSE cr_pessoa;
   EXCEPTION
@@ -1880,8 +1894,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_saida;
           END IF; 
-          pr_nmpessot := NVL(vr_nmpessoa,pr_nmpessoa);
+
           pr_idaltera := vr_idaltera; 
+          
+          -- Ajuste para retornar o nome digitado em tela
+          -- caso o cadastro permita alteracao (alt = 1)
+          if pr_idaltera = 1 then
+            pr_nmpessot := NVL(pr_nmpessoa,vr_nmpessoa);
+          else
+          pr_nmpessot := NVL(vr_nmpessoa,pr_nmpessoa);
+          end if;
           
           pr_cdemprot := pr_cdempres;
           pr_nmempout := rw_crapemp.nmresemp;          
@@ -1925,9 +1947,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
         RAISE vr_exc_saida;
       END IF; 
        
-        
-      pr_nmpessot := vr_nmpessoa;
       pr_idaltera := vr_idaltera;
+
+      -- Ajuste para retornar o nome digitado em tela
+      -- caso o cadastro permita alteracao (alt = 1)
+      if pr_idaltera = 1 then
+        pr_nmpessot := NVL(pr_nmpessoa,vr_nmpessoa);
+      else
+        pr_nmpessot := NVL(vr_nmpessoa,pr_nmpessoa);
+      end if; 
+        
       pr_nrcnpjot := rw_crapemp.nrdocnpj;
       pr_cdemprot := pr_cdempres;  
       pr_nmempout := rw_crapemp.nmresemp;

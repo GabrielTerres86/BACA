@@ -70,6 +70,11 @@
                 12/03/2018 - Alterado para buscar descricao do tipo de conta do oracle.
                              Substituida verificacao "cdtipcta = 1,2,7,8,9,..." por "cdcatego = 1".
                              Retirada regra que apresentava a critica 830. PRJ366 (Lombardi).
+
+                07/03/2019 - Permitir alteracao de nome / razao social de cooperados
+                             que constam com o status de demitido.
+                             Chamado PRB0040571 - Gabriel Marcos (Mouts).
+
 .............................................................................*/
 
 
@@ -1784,13 +1789,13 @@ PROCEDURE Verifica_Altera PRIVATE :
                ASSIGN par_cdcritic = 9.
                LEAVE VerificaA.
             END.
-
+/*
         IF  crabass.dtelimin <> ? THEN
             DO:
                ASSIGN par_cdcritic = 410.
                LEAVE VerificaA.
             END.
-
+*/
         CASE crabass.inpessoa:
             WHEN 1 THEN DO:
                 /* Primeiro titular */

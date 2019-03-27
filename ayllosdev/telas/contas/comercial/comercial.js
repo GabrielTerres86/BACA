@@ -27,6 +27,8 @@
  *				  06/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para	
  *                             corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
  *                01/03/2019 - Tratamento de caracteres invalidos no campo complemento de endereco (PRB0040642 - Gabriel Mouts).
+ *                07/03/2019 - Ajuste no blur, para retornar razao social do cnpj digitado, ao inves de manter nome anterior.
+ *                             Gabriel Marcos (Mouts) - Chamado PRB0040571.
  *
  * --------------
  */
@@ -614,7 +616,22 @@ function controlaLayout(operacao) {
 		
 		cCodCnpj.unbind('blur').bind('blur', function () {
 			
+		    /* 
+            
+            buscaInfEmpresa() ira balizar permissoes de alteracoes 
+            do cnpj, visto a existencia de cadastro na crapemp, 
+            bem como o tipo de cadastro que a empresa possui no
+            cadastro unificado tbcadast_pessoa.tpcadastro.   
+            
+		    buscaNomePessoa() fara o retorno da razao social do cnpj 
+            digitado, ou seja, no blur ela sera acionada e sempre que 
+            houver alteracao no cnpj, estaremos garantindo que a razao 
+            social seja carregada corretamente. 
+            
+            */
+
 			buscaInfEmpresa();
+            buscaNomePessoa();
 			
         });
 
