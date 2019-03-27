@@ -149,6 +149,7 @@
 * 119: [18/10/2018] Alterado layout das telas Nova Proposta, Avalista e Interveniente - PRJ 438. (Mateus Z / Mouts)
 * 120: [31/10/2018] Criacao de alteraNumeroContrato para iniciar a mesma funcao em alterar.php do botão alterar numero de proposta - PRJ - 438 - Bruno Luiz k - Mout's
 * 121: [31/10/2018] Criada função alteraProposta para abrir diretamente o fluxo para alterar a proposta, removendo a tela de opções de alteração - PRJ - 438 (Mateus Z - Mouts)
+* 122: [07/03/2019] Permite inclusao / cadastro de avalista via CRM - Chamado INC0033825 (Gabriel Marcos / Jefferson / Mouts).
  
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
@@ -12802,8 +12803,16 @@ function habilitarCamposAvalistaInterveniente(nomeForm){
     var cConta = $('#nrctaava', '#' + nomeForm);
     var cNome = $('#nmdavali', '#' + nomeForm);
 
-	// Se nao for acessado via CRM, pode habilitar os campos
-    if ($('#crm_inacesso', '#' + nomeForm).val() != 1 ) {
+    /*
+
+    Permite que o acesso via CRM faca o cadastro de avalistas.
+    Ao digitar um cpf/cnpj que nao possui idpessoa, a tela
+    ira habilitar digitacao nos campos que anteriormente a
+    esta implementacao, estavam bloqueados / somente leitura.
+
+    */
+    // Se nao for acessado via CRM, pode habilitar os campos
+    //if ($('#crm_inacesso', '#' + nomeForm).val() != 1 ) {
         cTodos.habilitaCampo();
         cTodos_1.habilitaCampo();
         cTodos_2.habilitaCampo();
@@ -12814,13 +12823,13 @@ function habilitarCamposAvalistaInterveniente(nomeForm){
 	        cQntd.desabilitaCampo().val(arrayProposta['qtpromis']);
         } else if (nomeForm == 'frmIntevAnuente'){
         	cConta.desabilitaCampo();
-}
+        }
 
         $('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeForm).desabilitaCampo();
         controlaPesquisas();
         cNome.focus();
         
-    }
+    //}
 }
 
 /*
