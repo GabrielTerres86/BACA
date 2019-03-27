@@ -276,8 +276,6 @@ PROCEDURE pc_debito_prejuizo  ( pr_cdcooper IN  craplcm.cdcooper%TYPE
                               , pr_dscritic  OUT VARCHAR2);
 
 END LANC0001;
-
-
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
   ---------------------------------------------------------------------------------------------------------------
@@ -541,6 +539,8 @@ BEGIN
                                  chamar a rotina para aumentar prejuizo.
                                  PRJ450 - Regulatorio (Odirlei-AMcom)
                                  
+                    13/02/2019 - Inclusao de regras para contas com bloqueio judicial
+                               - Projeto 530 BACENJUD - Everton(AMcom).
     ..............................................................................*/
 
 DECLARE
@@ -549,8 +549,10 @@ DECLARE
     vr_nrseqdig       craplot.nrseqdig%TYPE;   -- Aramazena o valor do campo "nrseqdig" da CRAPLOT para referência na CRAPLCM
     vr_flgcredi       BOOLEAN;                 -- Flag indicadora para Crédito/Débito
 		vr_inprejuz       BOOLEAN;                 -- Indicador de conta em prejuízo
-		vr_vlsldblq       tbblqj_monitora_ordem_bloq.vlsaldo%TYPE; -- Saldo bloqueado por BACENJUD (somente para Créditos)
+--		vr_vlsldblq       tbblqj_monitora_ordem_bloq.vlsaldo%TYPE; -- Saldo bloqueado por BACENJUD (somente para Créditos)
 		vr_vltransf       NUMBER;                  -- Valor a transferir para Conta Transitória (somente para Créditos)
+
+    vr_dsidenti       craplcm.dsidenti%type;
 
     vr_exc_erro       EXCEPTION;
 BEGIN
@@ -710,27 +712,27 @@ BEGIN
 				vr_vltransf := pr_vllanmto;
 
 				-- Processar bloqueio BACENJUD
-				vr_vlsldblq := fn_obtem_saldo_blq_bacenjud(pr_cdcooper
-				                                         , pr_nrdconta);
+--				vr_vlsldblq := fn_obtem_saldo_blq_bacenjud(pr_cdcooper
+--				                                         , pr_nrdconta);
 
-				IF vr_vlsldblq > 0 THEN
-					IF vr_vltransf > vr_vlsldblq THEN
-						vr_vltransf := vr_vltransf - vr_vlsldblq;
-					ELSE
-						vr_vltransf := 0;
-					END IF;
-			  END IF;
+--				IF vr_vlsldblq > 0 THEN
+--					IF vr_vltransf > vr_vlsldblq THEN
+--						vr_vltransf := vr_vltransf - vr_vlsldblq;
+--					ELSE
+--						vr_vltransf := 0;
+--					END IF;
+--			  END IF;
 
         --> Verificar se for os historicos de desbloqueio
-        IF pr_cdhistor IN (1404,1405) THEN
+--        IF pr_cdhistor IN (1404,1405) THEN
 
           -- Verificar se possui TED de bloqueio judicial pendente e retornar saldo
           -- para bloquio prejuixo caso possua
-          vr_vltransf :=  fn_retorna_val_bloq_transf( pr_cdcooper => pr_cdcooper
-                                                    , pr_nrdconta => pr_nrdconta
-                                                    , pr_cdhistor => pr_cdhistor
-                                                    , pr_dtmvtolt => pr_dtmvtolt);
-        END IF;
+--          vr_vltransf :=  fn_retorna_val_bloq_transf( pr_cdcooper => pr_cdcooper
+--                                                    , pr_nrdconta => pr_nrdconta
+--                                                    , pr_cdhistor => pr_cdhistor
+--                                                    , pr_dtmvtolt => pr_dtmvtolt);
+--        END IF;
 
 				-- Se há valor a transferir após verificação de bloqueio por BACENJUD
 				IF vr_vltransf > 0 THEN
