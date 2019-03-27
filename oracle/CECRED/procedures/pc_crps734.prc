@@ -79,6 +79,7 @@ BEGIN
                              WHERE  tdb.insittit = 4 
                                           AND tdb.cdcooper=pr_cdcooper 
                                           AND tdb.nrborder=craptdb.nrborder
+					   AND tdb.nrdconta = craptdb.nrdconta
                              GROUP BY tdb.nrborder 
                                         ) AS  maisvencido, -- verifica se o bordero desse titulo possui 1 titulo vencido ha mais de 60 dias
                      (POWER((crapbdt.vltxmora / 100) + 1,(1 / 30)) - 1) AS txdiariamora
