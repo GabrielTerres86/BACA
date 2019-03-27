@@ -6,7 +6,8 @@
  * OBJETIVO     : Mostrar opção de Novos Cartões da rotina de Cartões de Crédito da tela ATENDA obtidas na consulta Bancoob
  * --------------
  * ALTERAÇÕES   : 11/07/2018 - Paulo Silva (Supero): Alterado campo Justificativa para limitar em 235 caracteres.
- * --------------
+ * -------------- 18/03/2019 - PJ429 - Implementado tipo de envio do cartão - Anderson-Alan (Supero)
+ * 
  *
  *
  */

@@ -6,7 +6,7 @@
  * DATA CRIAÇÃO : Setembro/2018
  * OBJETIVO     : Alterar as propostas de cartão de crédito
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 18/03/2019 - PJ429 - Implementado tipo de envio do cartão - Anderson-Alan (Supero)
  * --------------
  *
  *

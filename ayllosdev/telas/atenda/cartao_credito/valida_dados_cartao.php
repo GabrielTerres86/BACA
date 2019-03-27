@@ -32,6 +32,8 @@
  *                                            Não há solicitação de cartão Puro Crédito para PF. (Chamado 545667)
  *				  
  *				  012: [01/03/2017] Kelvin: Realizado ajuste para não desabilitar o campo "Nome da empresa" caso cooperado já tenha cartão. (SD 609533)
+ *
+ *                013: [18/03/2019] Anderson: Implementado tipo de envio do cartão (Supero)
  * --------------
  */
 

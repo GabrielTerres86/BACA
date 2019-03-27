@@ -70,6 +70,15 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0008 AS
                                          ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro 
                                          ,pr_des_erro  OUT VARCHAR2);           --> Erros do processo
 
+  --> Rotina para retornar o tipo de envio
+  PROCEDURE pc_retorna_tipo_envio(pr_nrdconta   IN crapass.nrdconta%TYPE  --> Número da Conta
+                                 ,pr_nrctrcrd   IN crapcrd.nrctrcrd%TYPE  --> Contrato
+                                 ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
+                                 ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+                                 ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+                                 ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                 ,pr_des_erro  OUT VARCHAR2);             --> Erros do processo
 
 END CCRD0008;
 /
@@ -160,7 +169,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                   nrctrcrd         tbcrd_aprovacao_cartao.nrctrcrd%TYPE,
                   indtipo_senha    tbcrd_aprovacao_cartao.indtipo_senha%TYPE,
                   nrcpf            tbcrd_aprovacao_cartao.nrcpf%TYPE,
-                  nmtextoassinatura VARCHAR2(4000));   
+                  nmtextoassinatura VARCHAR2(4000),
+                  nmtextoasssuperv  VARCHAR2(4000));
                                   
   TYPE typ_tab_assinaturas_ctr IS TABLE OF typ_rec_assinaturas_ctr
        INDEX BY PLS_INTEGER;
@@ -305,7 +315,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
              enc.nmbairro,
              enc.nmcidade,
              enc.nrendere,
-             enc.cdufende
+             enc.cdufende,
+             enc.tpendass
         FROM crapenc enc
        WHERE enc.cdcooper = pr_cdcooper
          AND enc.nrdconta = pr_nrdconta
@@ -329,7 +340,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                       pr_cdagenci crapage.cdagenci%TYPE) IS
       SELECT age.nmcidade
             ,age.nmresage
-			
         FROM crapage age
        WHERE age.cdcooper = pr_cdcooper
          AND age.cdagenci = pr_cdagenci;
@@ -511,14 +521,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
 		 ' - ' || crapmun.cdestado || ' CEP: ' ||
 		 gene0002.fn_mask_cep(tbend.nrcep) as dsendereco
   FROM tbcrd_endereco_entrega tbend
-    ,tbcadast_dominio_campo tbdom
+    ,tbcrd_dominio_campo tbdom
     ,crapmun
    WHERE tbend.idtipoenvio = tbdom.cddominio  
-	 AND tbdom.nmdominio = 'TPENDERECO'
+	 AND tbdom.nmdominio = 'TPENDERECOENTREGA'
 	 AND tbend.cdcooper = pr_cdcooper
 	 AND tbend.nrdconta = pr_nrdconta
 	 AND tbend.nrctrcrd = pr_nrctrcrd
-	 AND crapmun.idcidade = tbend.idcidade;
+	 AND crapmun.dscidade = tbend.nmcidade;
 	 rw_tbcrd_endereco_entrega cr_tbcrd_endereco_entrega%rowtype;    
    
    CURSOR cr_tbgen_versao_termo(pr_cdcooper crapage.cdcooper%TYPE,
@@ -809,15 +819,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     CLOSE cr_representante_legal;  
   
     -- Buscar assinatura
+    -- Necessário verificação na tbcrd_aprovacao_cartao para garantir que a proposta foi assinada.
     BEGIN
       select 'S'
       INTO  vr_existe_cartao
-      from  crawcrd 
-      where nrcrcard <> '0'
-      and   insitcrd <> '0' 
-      AND   nrdconta = pr_nrdconta
-      AND   nrctrcrd = pr_nrctrlim
-      and   cdcooper = pr_cdcooper;
+      from  crawcrd crd
+      where crd.nrcrcard <> '0'
+      and   crd.insitcrd <> '0'
+      AND NOT EXISTS (SELECT 1 FROM tbcrd_aprovacao_cartao tbac
+                       WHERE tbac.nrctrcrd = pr_nrctrlim
+                         AND tbac.nrdconta = pr_nrdconta
+                         AND tbac.cdcooper = pr_cdcooper)
+      AND   crd.nrdconta = pr_nrdconta
+      AND   crd.nrctrcrd = pr_nrctrlim
+      AND   crd.cdcooper = pr_cdcooper;
     EXCEPTION
       WHEN no_data_found THEN
         NULL;
@@ -849,7 +864,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                                                               ||rw_tbaprc.nmaprovador||', no dia '||to_char(rw_tbaprc.dtaprovacao,'DD/MM/YYYY')
                                                               ||' e na hora '||rw_tbaprc.hraprovacao;
           ELSE
-            vr_tab_assinaturas_ctr(vr_idxassinaturas).nmtextoassinatura := 'Solicitado pelo '||rw_tbaprc.cdaprovador||' - '
+            vr_tab_assinaturas_ctr(vr_idxassinaturas).nmtextoasssuperv := 'Solicitado pelo '||rw_tbaprc.cdaprovador||' - '
                                                               ||rw_tbaprc.nmaprovador||', no dia '||to_char(rw_tbaprc.dtaprovacao,'DD/MM/YYYY')
                                                               ||' e na hora '||rw_tbaprc.hraprovacao;
           END IF;
@@ -864,6 +879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
       IF vr_idxassinaturas = 0 THEN
          vr_dscritic := 'Assinatura não encontrada.';
          vr_tab_assinaturas_ctr(1).nmtextoassinatura := 'Proposta assinada manualmente, termo pré impresso.';
+         vr_tab_assinaturas_ctr(1).nmtextoasssuperv := '';
       END IF;
       
     END IF;
@@ -1177,7 +1193,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
       vr_tab_dados_ctr(vr_idxctr).indserasa := 'N';
     END IF;  
 	
-	vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := nvl(rw_tbcrd_endereco_entrega.dsendereco, ' ');  
+	  IF TRIM(rw_tbcrd_endereco_entrega.dsendereco) IS NOT NULL THEN
+        vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := rw_tbcrd_endereco_entrega.dsendereco;
+    ELSE
+        IF rw_crapenc.tpendass = 9 THEN
+            vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := 'Comercial';
+        ELSIF rw_crapenc.tpendass = 10 THEN
+            vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := 'Residencial';
+        END IF;
+        
+        vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega||': '||rw_crapenc.dsendere||
+                                                         ', '||rw_crapenc.nrendere||' - '||rw_crapenc.nmbairro||' - '||rw_crapenc.nmcidade||' - '||
+                                                         rw_crapenc.cdufende||' CEP: '||rw_crapenc.nrcepend;
+    END IF;
 	vr_tab_dados_ctr(vr_idxctr).dsnovotermo := rw_tbgen_versao_termo.dsnovotermo;
 	vr_tab_dados_ctr(vr_idxctr).dsrepresentante := rw_representante_legal.dsrepresentante;
 	
@@ -1276,6 +1304,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_dstransa        craplgm.dstransa%TYPE;
     vr_nrdrowid        ROWID;
 
+    vr_localdata       VARCHAR2(200);
+    vr_localdatasup    VARCHAR2(200);
+    
     vr_idseqttl        crapttl.idseqttl%TYPE;
     
     vr_dsdireto        VARCHAR2(4000);
@@ -1387,6 +1418,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     
     vr_txtcompl := NULL;
    
+    IF vr_tab_assinaturas_ctr(1).nmtextoasssuperv IS NOT NULL THEN
+        vr_localdatasup := vr_tab_dados_ctr(vr_idxctr).nmlocaldata;
+        vr_localdata    := ' ';
+    ELSE
+        vr_localdatasup := ' ';
+        vr_localdata    := vr_tab_dados_ctr(vr_idxctr).nmlocaldata;
+    END IF;
+  
     --> INICIO
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>
                     <nmprimtl>'|| vr_tab_dados_ctr(vr_idxctr).nmprimtl ||'</nmprimtl>'); 
@@ -1423,9 +1462,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                    '<limiteEsteira>'|| 'R$ '|| to_char(vr_tab_dados_ctr(vr_idxctr).vllimest,'FM99G999G990D00') ||'</limiteEsteira>'||
                    '<dadosSolicitacao>'|| vr_tab_dados_ctr(vr_idxctr).dsdadosSolicitacao ||'</dadosSolicitacao>'||
                    '<dadosAprovacao>'|| vr_tab_dados_ctr(vr_idxctr).dsdadosAprovacao ||'</dadosAprovacao>'||
-                   '<localEData>'|| vr_tab_dados_ctr(vr_idxctr).nmlocaldata ||'</localEData>'||
+                   '<localEData>'|| vr_localdata ||'</localEData>'||
+                   '<localEDataSup>'|| vr_localdatasup ||'</localEDataSup>'||
                    '<formaPagamento>'|| vr_tab_dados_ctr(vr_idxctr).tpforma_pagamento ||'</formaPagamento>'||
                    '<assinatura>'||vr_tab_assinaturas_ctr(1).nmtextoassinatura||'</assinatura>'||
+                   '<asssuperv>'||vr_tab_assinaturas_ctr(1).nmtextoasssuperv||'</asssuperv>'||
                    '<spc>'|| vr_tab_dados_ctr(vr_idxctr).indspc ||'</spc>'||
                    '<serasa>'|| vr_tab_dados_ctr(vr_idxctr).indserasa ||'</serasa>'||
                    '<diaPagamento>'|| vr_tab_dados_ctr(vr_idxctr).nrdia_pagamento ||'</diaPagamento>'||
@@ -1669,6 +1710,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_tab_assinaturas_ctr  typ_tab_assinaturas_ctr;
     vr_tab_cartoes_ctr typ_tab_cartoes_ctr;
     
+    vr_localdata       VARCHAR2(200);
+    vr_localdatasup    VARCHAR2(200);
     
     vr_idxctr          PLS_INTEGER;
     vr_idxass          PLS_INTEGER;    
@@ -1768,6 +1811,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     
     vr_txtcompl := NULL;
    
+    IF vr_tab_assinaturas_ctr(1).nmtextoasssuperv IS NOT NULL THEN
+        vr_localdatasup := vr_tab_dados_ctr(vr_idxctr).nmlocaldata;
+        vr_localdata    := ' ';
+    ELSE
+        vr_localdatasup := ' ';
+        vr_localdata    := vr_tab_dados_ctr(vr_idxctr).nmlocaldata;
+    END IF;
+   
     --> INICIO
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>
                     <nmprimtl>'|| vr_tab_dados_ctr(vr_idxctr).nmprimtl ||'</nmprimtl>'); 
@@ -1805,7 +1856,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                    '<formaPagamento>'|| vr_tab_dados_ctr(vr_idxctr).tpforma_pagamento ||'</formaPagamento>'||
                    '<dadosSolicitacao>'|| vr_tab_dados_ctr(vr_idxctr).dsdadosSolicitacao ||'</dadosSolicitacao>'||
                    '<dadosAprovacao>'|| vr_tab_dados_ctr(vr_idxctr).dsdadosAprovacao ||'</dadosAprovacao>'||
-                   '<localEData>'|| vr_tab_dados_ctr(vr_idxctr).nmlocaldata ||'</localEData>'||
+                   '<localEData>'|| vr_localdata ||'</localEData>'||
+                   '<localEDataSup>'|| vr_localdatasup ||'</localEDataSup>'||
                    '<spc>'|| vr_tab_dados_ctr(vr_idxctr).indspc ||'</spc>'||
                    '<serasa>'|| vr_tab_dados_ctr(vr_idxctr).indserasa ||'</serasa>'||
                    '<diaPagamento>'|| vr_tab_dados_ctr(vr_idxctr).nrdia_pagamento ||'</diaPagamento>'||
@@ -1870,6 +1922,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
       pc_escreve_xml('<txtassinatura>'||vr_tab_assinaturas_ctr(rindex).nmtextoassinatura||'</txtassinatura>');
       pc_escreve_xml('</assinatura>');
     END LOOP;
+    
+    IF vr_tab_assinaturas_ctr(1).nmtextoasssuperv IS NOT NULL THEN
+        pc_escreve_xml('<asssuperv>'||vr_tab_assinaturas_ctr(1).nmtextoasssuperv||'</asssuperv>');
+
+    END IF;
     
     pc_escreve_xml('</assinaturas>');
         
@@ -2294,5 +2351,122 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     END;
 
   END pc_impres_termo_adesao_pj_web;
+  
+  --> Rotina para retornar o tipo de envio
+  PROCEDURE pc_retorna_tipo_envio(pr_nrdconta   IN crapass.nrdconta%TYPE  --> Número da Conta
+                                 ,pr_nrctrcrd   IN crapcrd.nrctrcrd%TYPE  --> Contrato
+                                 ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
+                                 ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+                                 ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+                                 ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                 ,pr_des_erro  OUT VARCHAR2) IS           --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_retorna_tipo_envio
+    Sistema : Ayllos Web
+    Autor   : Anderson - Supero
+    Data    : Março/2019                 Ultima atualizacao: 00/00/0000
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para chamar as impressoes pelo Ayllos Web
+
+    Alteracoes:
+    ..............................................................................*/
+    DECLARE
+      
+      CURSOR cr_tbcrd_endereco_entrega(pr_cdcooper crapage.cdcooper%TYPE,
+                                       pr_nrdconta crapass.nrdconta%TYPE,
+                                       pr_nrctrcrd crapcrd.nrctrcrd%TYPE) IS
+      SELECT tbend.idtipoenvio
+      FROM tbcrd_endereco_entrega tbend
+          ,tbcrd_dominio_campo tbdom
+       WHERE tbend.idtipoenvio = tbdom.cddominio
+       AND tbdom.nmdominio = 'TPENDERECOENTREGA'
+       AND tbend.cdcooper = pr_cdcooper
+       AND tbend.nrdconta = pr_nrdconta
+       AND tbend.nrctrcrd = pr_nrctrcrd;
+       rw_tbcrd_endereco_entrega cr_tbcrd_endereco_entrega%rowtype;
+    
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+      
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+    BEGIN
+      
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      OPEN cr_tbcrd_endereco_entrega(pr_cdcooper => vr_cdcooper ,
+                                     pr_nrdconta => pr_nrdconta,
+                                     pr_nrctrcrd => pr_nrctrcrd);
+      FETCH cr_tbcrd_endereco_entrega 
+       INTO rw_tbcrd_endereco_entrega;
+      CLOSE cr_tbcrd_endereco_entrega;
+      
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Root',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'Dados',
+                             pr_tag_cont => NULL,
+                             pr_des_erro => vr_dscritic);
+      -- Insere as tags
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Dados',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'tipo_envio',
+                             pr_tag_cont => rw_tbcrd_endereco_entrega.idtipoenvio,
+                             pr_des_erro => vr_dscritic);
+    
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela pc_retorna_tipo_envio: ' || SQLERRM;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+
+  END pc_retorna_tipo_envio;
 END CCRD0008;
 /

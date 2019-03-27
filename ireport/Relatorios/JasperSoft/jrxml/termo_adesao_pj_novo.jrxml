@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-02-27T17:14:11 -->
+<!-- 2019-03-27T10:33:06 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_adesao_pfjrxml" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="32817cf7-217d-4d56-9fe9-f759e1107bf2">
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="New Data Adapter "/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<queryString language="xPath">
 		<![CDATA[/raiz]]>
 	</queryString>
@@ -210,11 +210,17 @@
 	<field name="/portadores/portador/tagCont" class="java.lang.String">
 		<fieldDescription><![CDATA[tagCont]]></fieldDescription>
 	</field>
+	<field name="localEDataSup" class="java.lang.String">
+		<fieldDescription><![CDATA[localEDataSup]]></fieldDescription>
+	</field>
+	<field name="asssuperv" class="java.lang.String">
+		<fieldDescription><![CDATA[asssuperv]]></fieldDescription>
+	</field>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
 	<detail>
-		<band height="368" splitType="Stretch">
+		<band height="381" splitType="Stretch">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<rectangle>
 				<reportElement x="0" y="11" width="550" height="46" backcolor="#EEECE1" uuid="13a4f2e2-6300-4696-91fd-e6489294398c"/>
@@ -230,8 +236,8 @@
 				<text><![CDATA[Termo de Contratação do Cartão Ailos - Pessoa Jurídica]]></text>
 			</staticText>
 			<image>
-				<reportElement positionType="Float" stretchType="RelativeToTallestObject" mode="Transparent" x="10" y="23" width="180" height="30" uuid="c49488c0-e568-4f8f-8b0b-58e8e7e7bbd0"/>
-				<imageExpression><![CDATA["/logo-cecred-cartoes.png"]]></imageExpression>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" mode="Transparent" x="10" y="19" width="180" height="30" uuid="c49488c0-e568-4f8f-8b0b-58e8e7e7bbd0"/>
+				<imageExpression><![CDATA["//LogoAilos.png"]]></imageExpression>
 			</image>
 			<staticText>
 				<reportElement mode="Opaque" x="0" y="57" width="550" height="15" forecolor="#000000" backcolor="#EEECE1" uuid="e732d281-0f46-4dbe-8606-d94df711c79b">
@@ -247,7 +253,7 @@
 				<text><![CDATA[1 - Cooperativa]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="100" width="280" height="20" uuid="3edc6185-0950-443f-98ce-b64d5db5a9b9"/>
+				<reportElement x="0" y="113" width="280" height="20" uuid="3edc6185-0950-443f-98ce-b64d5db5a9b9"/>
 				<box leftPadding="2">
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -257,7 +263,7 @@
 				<text><![CDATA[1.2 Posto de Atendimento:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="280" y="100" width="270" height="20" uuid="608ac760-2e30-4db6-b7a6-b08741a61cf1"/>
+				<reportElement x="280" y="113" width="270" height="20" uuid="608ac760-2e30-4db6-b7a6-b08741a61cf1"/>
 				<box leftPadding="2">
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -267,7 +273,7 @@
 				<text><![CDATA[1.3 Conta corrente do(a) Cooperado(a):]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="280" y="120" width="270" height="20" uuid="8378fde8-ffbc-4e3c-8d33-88a8d0c9c8f6"/>
+				<reportElement x="280" y="133" width="270" height="20" uuid="8378fde8-ffbc-4e3c-8d33-88a8d0c9c8f6"/>
 				<box leftPadding="2">
 					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -278,7 +284,7 @@
 				<textFieldExpression><![CDATA[$F{contaCorrente}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="0" y="120" width="280" height="20" uuid="173c5897-fcfe-414d-87d5-0733446e2851"/>
+				<reportElement x="0" y="133" width="280" height="20" uuid="173c5897-fcfe-414d-87d5-0733446e2851"/>
 				<box leftPadding="2">
 					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -289,7 +295,7 @@
 				<textFieldExpression><![CDATA[$F{postoAtendimento}]]></textFieldExpression>
 			</textField>
 			<rectangle>
-				<reportElement x="0" y="288" width="550" height="20" uuid="5c43ec4b-b3aa-42d7-9dd9-45f28d1f67ab">
+				<reportElement x="0" y="301" width="550" height="20" uuid="5c43ec4b-b3aa-42d7-9dd9-45f28d1f67ab">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<graphicElement>
@@ -297,7 +303,7 @@
 				</graphicElement>
 			</rectangle>
 			<staticText>
-				<reportElement x="39" y="289" width="83" height="18" uuid="6b7e0d7f-5f57-4c59-97a4-5774defbd960">
+				<reportElement x="39" y="302" width="83" height="18" uuid="6b7e0d7f-5f57-4c59-97a4-5774defbd960">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<box leftPadding="1"/>
@@ -307,7 +313,7 @@
 				<text><![CDATA[3.1 AILOS Empresas]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="192" y="289" width="146" height="18" uuid="226d34f7-e476-454a-873d-396e4471ea97">
+				<reportElement x="192" y="302" width="146" height="18" uuid="226d34f7-e476-454a-873d-396e4471ea97">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -318,7 +324,7 @@
 				<text><![CDATA[3.2 AILOS Empresas - Débito]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="364" y="289" width="131" height="18" uuid="70545890-9790-47ab-b842-92b02923417a">
+				<reportElement x="364" y="302" width="131" height="18" uuid="70545890-9790-47ab-b842-92b02923417a">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<box leftPadding="1"/>
@@ -328,7 +334,7 @@
 				<text><![CDATA[3.3 AILOS Empresas - Puro Crédito]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="21" y="292" width="15" height="13" uuid="2da93538-d09c-43f1-9a76-462982e57e24">
+				<reportElement x="21" y="305" width="15" height="13" uuid="2da93538-d09c-43f1-9a76-462982e57e24">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -344,7 +350,7 @@
 				<textFieldExpression><![CDATA[($F{tipoCartao}.equalsIgnoreCase( "15" ) &&!( $F{cdgraupr}.equals("9")))? "X":""]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="173" y="292" width="15" height="13" uuid="be385b0e-5107-49a3-8602-65f8bb8341cb">
+				<reportElement x="173" y="305" width="15" height="13" uuid="be385b0e-5107-49a3-8602-65f8bb8341cb">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -360,7 +366,7 @@
 				<textFieldExpression><![CDATA[$F{tipoCartao}.equalsIgnoreCase( "17" )? "X":""]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="345" y="292" width="15" height="13" uuid="b7cc300a-1b61-4a2b-b4d7-3d3e2e6f6e42">
+				<reportElement x="345" y="305" width="15" height="13" uuid="b7cc300a-1b61-4a2b-b4d7-3d3e2e6f6e42">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -376,7 +382,7 @@
 				<textFieldExpression><![CDATA[($F{tipoCartao}.equalsIgnoreCase( "15" ) && $F{cdgraupr}.equals("9"))? "X":""]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement mode="Opaque" x="0" y="141" width="550" height="15" forecolor="#000000" backcolor="#EEECE1" uuid="fad978db-e378-4e14-a2fd-35d72612d960">
+				<reportElement mode="Opaque" x="0" y="154" width="550" height="15" forecolor="#000000" backcolor="#EEECE1" uuid="fad978db-e378-4e14-a2fd-35d72612d960">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<box leftPadding="2">
@@ -391,7 +397,7 @@
 				<text><![CDATA[2 -  Cooperado(a)]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="0" y="200" width="550" height="39" uuid="8b2109eb-b3d6-4863-86e7-00f751b73a5e">
+				<reportElement x="0" y="213" width="550" height="39" uuid="8b2109eb-b3d6-4863-86e7-00f751b73a5e">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<box leftPadding="2">
@@ -403,7 +409,7 @@
 				<textFieldExpression><![CDATA[$F{dsrepresentante}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="0" y="338" width="550" height="15" uuid="a5b9edce-94c8-425b-936b-62345f0e8050">
+				<reportElement x="0" y="351" width="550" height="15" uuid="a5b9edce-94c8-425b-936b-62345f0e8050">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<box leftPadding="1">
@@ -415,7 +421,7 @@
 				<textFieldExpression><![CDATA[$F{nomeImpresso}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement mode="Opaque" x="0" y="308" width="550" height="15" backcolor="#EEECE1" uuid="6bcffb95-d160-4438-b595-42b5f68a7204"/>
+				<reportElement mode="Opaque" x="0" y="321" width="550" height="15" backcolor="#EEECE1" uuid="6bcffb95-d160-4438-b595-42b5f68a7204"/>
 				<box leftPadding="2">
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -428,7 +434,7 @@
 				<text><![CDATA[4 - Dados do Cartão Ailos]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="240" width="183" height="15" uuid="ca0dcf1b-217c-441a-9cde-7c8828a1cc99">
+				<reportElement x="0" y="253" width="183" height="15" uuid="ca0dcf1b-217c-441a-9cde-7c8828a1cc99">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<box leftPadding="2">
@@ -438,7 +444,7 @@
 				<text><![CDATA[2.3 Faturamento anual:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="183" y="255" width="183" height="15" uuid="f50eda46-34c3-464a-ae55-2f3d656a74e9"/>
+				<reportElement x="183" y="268" width="183" height="15" uuid="f50eda46-34c3-464a-ae55-2f3d656a74e9"/>
 				<box leftPadding="1">
 					<leftPen lineWidth="0.5"/>
 					<bottomPen lineWidth="0.5"/>
@@ -448,7 +454,7 @@
 				<textFieldExpression><![CDATA[$F{foneComercial}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="183" y="240" width="183" height="15" uuid="6d2466dc-07cc-43ff-b9ef-466c8e0ec9b7">
+				<reportElement x="183" y="253" width="183" height="15" uuid="6d2466dc-07cc-43ff-b9ef-466c8e0ec9b7">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
 				<box leftPadding="2">
@@ -458,7 +464,7 @@
 				<text><![CDATA[2.4 Telefone comercial:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="366" y="255" width="184" height="15" uuid="aa960ee7-77f9-4e1e-a8db-28a4a2c28a13"/>
+				<reportElement x="366" y="268" width="184" height="15" uuid="aa960ee7-77f9-4e1e-a8db-28a4a2c28a13"/>
 				<box leftPadding="1">
 					<leftPen lineWidth="0.5"/>
 					<bottomPen lineWidth="0.5"/>
@@ -468,7 +474,7 @@
 				<textFieldExpression><![CDATA[$F{foneCelular}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="366" y="240" width="184" height="15" uuid="8626f451-c7af-4a1b-8302-aa3a69f2a371"/>
+				<reportElement x="366" y="253" width="184" height="15" uuid="8626f451-c7af-4a1b-8302-aa3a69f2a371"/>
 				<box leftPadding="2">
 					<leftPen lineWidth="0.5"/>
 					<rightPen lineWidth="0.5"/>
@@ -476,7 +482,7 @@
 				<text><![CDATA[2.5 Celular:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Opaque" x="0" y="270" width="550" height="18" backcolor="#EEECE1" uuid="52eb6657-1bbe-430f-a34e-d2f7bbca047e"/>
+				<reportElement mode="Opaque" x="0" y="283" width="550" height="18" backcolor="#EEECE1" uuid="52eb6657-1bbe-430f-a34e-d2f7bbca047e"/>
 				<box leftPadding="2">
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -489,7 +495,7 @@
 				<text><![CDATA[3 - Modalidade do Cartão Ailos]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="323" width="550" height="15" uuid="3f8e841a-13eb-4a4f-b6cc-7968714da28e"/>
+				<reportElement x="0" y="336" width="550" height="15" uuid="3f8e841a-13eb-4a4f-b6cc-7968714da28e"/>
 				<box leftPadding="2">
 					<leftPen lineWidth="0.5"/>
 					<rightPen lineWidth="0.5"/>
@@ -497,7 +503,7 @@
 				<text><![CDATA[4.1 Nome a ser impresso no cartão:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="353" width="550" height="15" uuid="0670ae1d-1193-4f1a-a080-034a65cdcaf1"/>
+				<reportElement x="0" y="366" width="550" height="15" uuid="0670ae1d-1193-4f1a-a080-034a65cdcaf1"/>
 				<box leftPadding="2">
 					<leftPen lineWidth="0.5"/>
 					<rightPen lineWidth="0.5"/>
@@ -505,7 +511,7 @@
 				<text><![CDATA[4.2 Endereço de Envio:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="0" y="73" width="550" height="27" uuid="8e71beef-beb8-47fc-967f-0b296754ee86">
+				<reportElement x="0" y="73" width="550" height="40" uuid="8e71beef-beb8-47fc-967f-0b296754ee86">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<box leftPadding="2">
@@ -517,7 +523,7 @@
 				<textFieldExpression><![CDATA["1.1 "+$F{nmextcopcop}+", sociedade cooperativa de crédito, inscrita no CNPJ sob o nº "+$F{nrdocnpjcop}+", estabelecida na Rua "+$F{dsendcopcop}+", CEP "+ $F{nrcependcop}+", cidade de " +$F{nmcidadecop}+"."]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="115" y="353" width="435" height="15" uuid="c091740b-9d53-4701-86de-792c93787984"/>
+				<reportElement x="115" y="366" width="435" height="15" uuid="c091740b-9d53-4701-86de-792c93787984"/>
 				<box leftPadding="1">
 					<leftPen lineWidth="0.5"/>
 					<bottomPen lineWidth="0.5"/>
@@ -527,7 +533,7 @@
 				<textFieldExpression><![CDATA[$F{dsenderecoentrega}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="0" y="156" width="550" height="44" uuid="bd22c0a4-2dc4-4452-9ce5-c8d03f0121e5">
+				<reportElement x="0" y="169" width="550" height="44" uuid="bd22c0a4-2dc4-4452-9ce5-c8d03f0121e5">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<box leftPadding="2">
@@ -538,7 +544,7 @@
 				<textFieldExpression><![CDATA["2.1  "+$F{razaoSocial}+", pessoa jurídica de direito privado, constituida em "+$F{dataConstituicao}+", inscrito(a) no CNPJ sob o nº "+$F{cnpj}+", sediada na Rua "+$F{endere}+", nº "+$F{nrende}+", bairro "+$F{bairro}+", cidade de "+$F{cidade}+"/"+$F{ufend}+", CEP "+$F{cep}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="0" y="255" width="183" height="15" uuid="1ce56bfa-db3e-41d3-801e-da8ab6aad830"/>
+				<reportElement x="0" y="268" width="183" height="15" uuid="1ce56bfa-db3e-41d3-801e-da8ab6aad830"/>
 				<box leftPadding="1">
 					<leftPen lineWidth="0.5"/>
 					<bottomPen lineWidth="0.5"/>
@@ -548,35 +554,10 @@
 				<textFieldExpression><![CDATA[$F{rendimentos}]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="108">
-			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
-			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<subreport>
-				<reportElement x="0" y="18" width="555" height="90" uuid="3e9b495c-8686-4096-a935-046f2a5dc19b">
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-				</reportElement>
-				<dataSourceExpression><![CDATA[((net.sf.jasperreports.engine.data.JRXmlDataSource)$P{REPORT_DATA_SOURCE}).subDataSource("//cartoes/cartao")]]></dataSourceExpression>
-				<subreportExpression><![CDATA["termo_adesao_cartoes_adicionais_novo.jasper"]]></subreportExpression>
-			</subreport>
-			<staticText>
-				<reportElement mode="Opaque" x="0" y="0" width="550" height="18" backcolor="#EEECE1" uuid="9783e5f8-3f75-46cc-8b5e-ad657be5359f"/>
-				<box leftPadding="2">
-					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
-					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
-					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
-					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
-				</box>
-				<textElement>
-					<font isBold="true"/>
-				</textElement>
-				<text><![CDATA[5 - Cartões Adicionais]]></text>
-			</staticText>
-		</band>
-		<band height="384" splitType="Stretch">
+		<band height="363" splitType="Stretch">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<staticText>
-				<reportElement x="0" y="75" width="550" height="307" uuid="dea45eff-b839-4939-b6f7-e67adba40ab0">
+				<reportElement x="0" y="56" width="550" height="307" uuid="dea45eff-b839-4939-b6f7-e67adba40ab0">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
 				<box topPadding="5" leftPadding="2" rightPadding="5">
@@ -587,26 +568,10 @@
 				<textElement textAlignment="Justified">
 					<font size="8"/>
 				</textElement>
-				<text><![CDATA[8.1. O(A) Cooperado(a) declara conhecer e aceitar as cláusulas e condições gerais constantes no Instrumento Particular de Prestação de Serviços de Emissão, Administração e Utilização do Cartão AILOS, registradas no Cartório do 2º Ofício de Registro de Títulos e Documentos de Brasília-DF, sob o número 0004026580 em 06 de setembro de 2017. Tal instrumento encontra-se disponível para consulta no site da Cooperativa. 8.2. Havendo aprovação desta proposta, o(a) Cooperado(a) declara aceitar o limite de crédito concedido pela Cooperativa, no valor constante neste Termo, para o fim exclusivo de utilização do Cartão AILOS, sabendo que o limite de compra à vista será em valor equivalente ao de compras parceladas. 8.3. Os valores representados nas faturas mensais, correspondentes à utilização do cartão, inclusive os apurados em decorrência de seu financiamento/parcelamento automático, são considerados líquidos, certos e exigíveis. 8.4. O(a) Cooperado(a) assume o pagamento dos valores relativos à anuidade do Cartão AILOS, podendo a Cooperativa isentar ou proporcionar desconto na referida cobrança, conforme tabela "Vantagem Progressiva" publicada em site específico para acesso do(a) Cooperado(a). 8.5. A eventual redução e/ou isenção nas tarifas pactuadas, por iniciativa da Cooperativa, não importará em direito adquirido do(a) Cooperado(a), podendo essa, a qualquer tempo, restabelecer a cobrança das tarifas pela prestação do serviço. 8.6. O(a) Cooperado(a) autoriza a Cooperativa debitar de sua conta acima identificada, o valor decorrente do uso do Cartão AILOS, quando houver escolha das opções constantes nos itens 6.1 ou 6.2. 8.7. Não havendo saldo disponível para pagamento da fatura na data do vencimento, a tentativa de débito será realizada pelo prazo de 01 (um) dia, com objetivo de atingir o valor correspondente. 8.8. Declara estar ciente que na hipótese de inadimplemento de 03 (três) faturas, o saldo devedor total, acrescido das parcelas vincendas, será debitado da conta indicada neste Termo. 8.9. Na hipótese do item anterior, na ausência de saldo suficiente para pagamento integral, a Cooperativa verificará diariamente a existência de saldos e, a partir do momento em que a conta apresentar saldo disponível, independentemente do valor, realizará o débito total ou parcial, até o limite disponível na conta corrente, utilizando limite de crédito, se contratado. 8.10. Caso não seja verificado o pagamento, o(a) Cooperado(a) estará inadimplente no cumprimento das obrigações contratuais do Cartão AILOS, podendo a Cooperativa inscrever o nome do(a) Cooperado(a) nos Órgãos de Proteção ao Crédito. 8.11. O(a) Cooperado (a) declara estar ciente que poderá ter seu cartão bloqueado e/ou cancelado, a critério da Cooperativa, nas hipóteses de excesso de limite, atraso no pagamento ou suspeita de fraude. 8.12. Declara, ainda, estar ciente que, quando optar pelo cancelamento do Cartão AILOS diretamente em seu Posto de Atendimento (PA), deverá formalizar tal pedido, através de termo devidamente assinado. 8.13. Declara estar ciente que no caso de recebimento do Cartão fora do PA da Coopertaiva, deverá comparecer ao PA para realizar o cadastro da senha de utilização dos terminais de autoatendimento. 8.14. Todos os atos praticados pelo(a) Cooperado(a) na conta online (site da Cooperativa) ou no Posto de Atendimento, mediante aposição de senha numérica e letras de segurança, serão registrados e arquivados em meios magnéticos, sendo reconhecidas, para todos os fins de direito, como válidos, verdadeiros, processados por meios seguros e como assinatura digital. 8.15. A critério exclusivo da Cooperativa, poderá ser disponibilizado Cartão Ailos Provisório para realização de operações nas modalidades crédito e débito, além de saques nos terminais de autoatendimento. 8.16. O Cartão Provisório terá validade máxima de 90 (noventa) dias e será automaticamente cancelado após este prazo ou após o desbloqueio do Cartão Ailos Definitivo 8.17. Declara que, o cartão provisório e eventuais cartões adicionais solicitados posteriormente à assinatura do presente Termo de Adesão, reger-se-ão pelas mesmas regras e condições ora definidas. 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-]]></text>
+				<text><![CDATA[7.1. O(A) Cooperado(a) declara conhecer e aceitar as cláusulas e condições gerais constantes no Instrumento Particular de Prestação de Serviços de Emissão, Administração e Utilização do Cartão AILOS, registradas no Cartório do 2º Ofício de Registro de Títulos e Documentos de Brasília-DF, sob o número 0004026580 em 06 de setembro de 2017. Tal instrumento encontra-se disponível para consulta no site da Cooperativa. 7.2. Havendo aprovação desta proposta, o(a) Cooperado(a) declara aceitar o limite de crédito concedido pela Cooperativa, no valor constante neste Termo, para o fim exclusivo de utilização do Cartão AILOS, sabendo que o limite de compra à vista será em valor equivalente ao de compras parceladas. 7.3. Os valores representados nas faturas mensais, correspondentes à utilização do cartão, inclusive os apurados em decorrência de seu financiamento/parcelamento automático, são considerados líquidos, certos e exigíveis. 7.4. O(a) Cooperado(a) assume o pagamento dos valores relativos à anuidade do Cartão AILOS, podendo a Cooperativa isentar ou proporcionar desconto na referida cobrança, conforme tabela "Vantagem Progressiva" publicada em site específico para acesso do(a) Cooperado(a). 7.5. A eventual redução e/ou isenção nas tarifas pactuadas, por iniciativa da Cooperativa, não importará em direito adquirido do(a) Cooperado(a), podendo essa, a qualquer tempo, restabelecer a cobrança das tarifas pela prestação do serviço. 7.6. O(a) Cooperado(a) autoriza a Cooperativa debitar de sua conta acima identificada, o valor decorrente do uso do Cartão AILOS, quando houver escolha das opções constantes nos itens 5.1 ou 5.2. 7.7. Não havendo saldo disponível para pagamento da fatura na data do vencimento, a tentativa de débito será realizada pelo prazo de 01 (um) dia, com objetivo de atingir o valor correspondente. 7.8. Declara estar ciente que na hipótese de inadimplemento de 03 (três) faturas, o saldo devedor total, acrescido das parcelas vincendas, será debitado da conta indicada neste Termo. 7.9. Na hipótese do item anterior, na ausência de saldo suficiente para pagamento integral, a Cooperativa verificará diariamente a existência de saldos e, a partir do momento em que a conta apresentar saldo disponível, independentemente do valor, realizará o débito total ou parcial, até o limite disponível na conta corrente, utilizando limite de crédito, se contratado. 7.10. Caso não seja verificado o pagamento, o(a) Cooperado(a) estará inadimplente no cumprimento das obrigações contratuais do Cartão AILOS, podendo a Cooperativa inscrever o nome do(a) Cooperado(a) nos Órgãos de Proteção ao Crédito. 7.11. O(a) Cooperado (a) declara estar ciente que poderá ter seu cartão bloqueado e/ou cancelado, a critério da Cooperativa, nas hipóteses de excesso de limite, atraso no pagamento ou suspeita de fraude. 7.12. Declara, ainda, estar ciente que, quando optar pelo cancelamento do Cartão AILOS diretamente em seu Posto de Atendimento (PA), deverá formalizar tal pedido, através de termo devidamente assinado. 7.13. Declara estar ciente que no caso de recebimento do Cartão fora do PA da Coopertaiva, deverá comparecer ao PA para realizar o cadastro da senha de utilização dos terminais de autoatendimento. 7.14. Todos os atos praticados pelo(a) Cooperado(a) na conta online (site da Cooperativa) ou no Posto de Atendimento, mediante aposição de senha numérica e letras de segurança, serão registrados e arquivados em meios magnéticos, sendo reconhecidas, para todos os fins de direito, como válidos, verdadeiros, processados por meios seguros e como assinatura digital. 7.15. A critério exclusivo da Cooperativa, poderá ser disponibilizado Cartão Ailos Provisório para realização de operações nas modalidades crédito e débito, além de saques nos terminais de autoatendimento. 7.16. O Cartão Provisório terá validade máxima de 90 (noventa) dias e será automaticamente cancelado após este prazo ou após o desbloqueio do Cartão Ailos Definitivo 7.17. Declara que, o cartão provisório e eventuais cartões adicionais solicitados posteriormente à assinatura do presente Termo de Adesão, reger-se-ão pelas mesmas regras e condições ora definidas.]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Opaque" x="0" y="60" width="550" height="18" backcolor="#EEECE1" uuid="b140ae4c-4d30-4e6b-b9cc-480e42fb96e0"/>
+				<reportElement mode="Opaque" x="0" y="41" width="550" height="18" backcolor="#EEECE1" uuid="b140ae4c-4d30-4e6b-b9cc-480e42fb96e0"/>
 				<box leftPadding="2">
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -616,13 +581,10 @@
 				<textElement>
 					<font isBold="true"/>
 				</textElement>
-				<text><![CDATA[8 - Declarações Gerais]]></text>
+				<text><![CDATA[7 - Declarações Gerais]]></text>
 			</staticText>
-			<break>
-				<reportElement x="0" y="10" width="549" height="1" uuid="2a8832ed-ca32-416b-ab5f-edf61d829836"/>
-			</break>
 			<staticText>
-				<reportElement mode="Opaque" x="0" y="20" width="280" height="15" forecolor="#000000" backcolor="#EEECE1" uuid="7aa346d2-1314-46e5-b0df-303e5e93ae4a">
+				<reportElement mode="Opaque" x="0" y="1" width="280" height="15" forecolor="#000000" backcolor="#EEECE1" uuid="7aa346d2-1314-46e5-b0df-303e5e93ae4a">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -635,10 +597,10 @@
 				<textElement verticalAlignment="Middle">
 					<font isBold="true"/>
 				</textElement>
-				<text><![CDATA[6 - Forma de Pagamento do Cartão Ailos]]></text>
+				<text><![CDATA[5 - Forma de Pagamento do Cartão Ailos]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Opaque" x="280" y="20" width="270" height="15" forecolor="#000000" backcolor="#EEECE1" uuid="63413224-5251-4d37-94a3-3a9c402b1cab">
+				<reportElement mode="Opaque" x="280" y="1" width="270" height="15" forecolor="#000000" backcolor="#EEECE1" uuid="63413224-5251-4d37-94a3-3a9c402b1cab">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -651,10 +613,10 @@
 				<textElement verticalAlignment="Middle">
 					<font isBold="true"/>
 				</textElement>
-				<text><![CDATA[7 - Dia escolhido para Pagamento da Fatura]]></text>
+				<text><![CDATA[6 - Dia escolhido para Pagamento da Fatura]]></text>
 			</staticText>
 			<rectangle>
-				<reportElement x="0" y="35" width="280" height="25" uuid="9a5cc65e-918a-4d31-aae0-76116fde8027">
+				<reportElement x="0" y="16" width="280" height="25" uuid="9a5cc65e-918a-4d31-aae0-76116fde8027">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<graphicElement>
@@ -662,13 +624,13 @@
 				</graphicElement>
 			</rectangle>
 			<rectangle>
-				<reportElement x="280" y="35" width="270" height="25" uuid="82581324-20ac-40ce-85f9-962f354901fd"/>
+				<reportElement x="280" y="16" width="270" height="25" uuid="82581324-20ac-40ce-85f9-962f354901fd"/>
 				<graphicElement>
 					<pen lineWidth="0.5"/>
 				</graphicElement>
 			</rectangle>
 			<textField>
-				<reportElement x="3" y="41" width="13" height="13" uuid="315d0ad8-2b75-4c17-ba6b-138e03560014">
+				<reportElement x="3" y="22" width="13" height="13" uuid="315d0ad8-2b75-4c17-ba6b-138e03560014">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -684,7 +646,7 @@
 				<textFieldExpression><![CDATA[$F{formaPagamento}.equals( "debitoTotal" )? "X":" "]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="18" y="41" width="75" height="13" uuid="d09e1dc7-9864-43c7-83d7-9fed16a2adef">
+				<reportElement x="18" y="22" width="75" height="13" uuid="d09e1dc7-9864-43c7-83d7-9fed16a2adef">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -692,10 +654,10 @@
 				<textElement verticalAlignment="Middle">
 					<font size="7"/>
 				</textElement>
-				<text><![CDATA[6.1 Débito aut. (total)]]></text>
+				<text><![CDATA[5.1 Débito aut. (total)]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="110" y="41" width="85" height="13" uuid="4bb18c08-47e0-4227-978d-bced1ce5b552">
+				<reportElement x="110" y="22" width="85" height="13" uuid="4bb18c08-47e0-4227-978d-bced1ce5b552">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -703,10 +665,10 @@
 				<textElement verticalAlignment="Middle">
 					<font size="7"/>
 				</textElement>
-				<text><![CDATA[6.2 Débito aut. (mínimo)]]></text>
+				<text><![CDATA[5.2 Débito aut. (mínimo)]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="95" y="41" width="13" height="13" uuid="8d544e65-5a11-4997-9f20-8db3d81ae24a">
+				<reportElement x="95" y="22" width="13" height="13" uuid="8d544e65-5a11-4997-9f20-8db3d81ae24a">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -722,7 +684,7 @@
 				<textFieldExpression><![CDATA[$F{formaPagamento}.equals( "debitoMinimo" )? "X":" "]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="211" y="41" width="65" height="13" uuid="7093f10d-56e4-41da-b155-8b9969ea06b8">
+				<reportElement x="211" y="22" width="65" height="13" uuid="7093f10d-56e4-41da-b155-8b9969ea06b8">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -730,10 +692,10 @@
 				<textElement verticalAlignment="Middle">
 					<font size="7"/>
 				</textElement>
-				<text><![CDATA[6.3 Fatura (Boleto)]]></text>
+				<text><![CDATA[5.3 Fatura (Boleto)]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="196" y="41" width="13" height="13" uuid="f465c665-a0b8-417f-89be-acba89d150f9">
+				<reportElement x="196" y="22" width="13" height="13" uuid="f465c665-a0b8-417f-89be-acba89d150f9">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -749,7 +711,7 @@
 				<textFieldExpression><![CDATA[$F{formaPagamento}.equals( "fatura" )? "X":" "]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="304" y="38" width="20" height="18" uuid="7c413be1-926a-42a9-b78b-eff4021a07cf">
+				<reportElement x="304" y="19" width="20" height="18" uuid="7c413be1-926a-42a9-b78b-eff4021a07cf">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -760,7 +722,7 @@
 				<text><![CDATA[03]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="288" y="41" width="15" height="13" uuid="bdb3c756-4a53-46bf-971b-b4d15e8cd77f">
+				<reportElement x="288" y="22" width="15" height="13" uuid="bdb3c756-4a53-46bf-971b-b4d15e8cd77f">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -776,7 +738,7 @@
 				<textFieldExpression><![CDATA[$F{diaPagamento}.equals( "3" )? "X":" "]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="358" y="38" width="20" height="18" uuid="11b3f37c-07b3-46ee-a49c-f70b85ee893d">
+				<reportElement x="358" y="19" width="20" height="18" uuid="11b3f37c-07b3-46ee-a49c-f70b85ee893d">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -787,7 +749,7 @@
 				<text><![CDATA[07]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="342" y="41" width="15" height="13" uuid="5d9b9b4f-8e09-4b06-b75a-414ad15dc831">
+				<reportElement x="342" y="22" width="15" height="13" uuid="5d9b9b4f-8e09-4b06-b75a-414ad15dc831">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -803,7 +765,7 @@
 				<textFieldExpression><![CDATA[$F{diaPagamento}.equals( "7" )? "X":" "]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="419" y="38" width="20" height="18" uuid="2f944240-5dbb-43b9-aa65-044c67aeb2f7">
+				<reportElement x="419" y="19" width="20" height="18" uuid="2f944240-5dbb-43b9-aa65-044c67aeb2f7">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -814,7 +776,7 @@
 				<text><![CDATA[11]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="403" y="41" width="15" height="13" uuid="db335b5f-0caf-4164-9f81-ca08c5dc78bb">
+				<reportElement x="403" y="22" width="15" height="13" uuid="db335b5f-0caf-4164-9f81-ca08c5dc78bb">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -830,7 +792,7 @@
 				<textFieldExpression><![CDATA[$F{diaPagamento}.equals( "11" )? "X":" "]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="475" y="38" width="20" height="18" uuid="f56e64cd-d9d6-46dc-a4e3-2decb8c480ce">
+				<reportElement x="475" y="19" width="20" height="18" uuid="f56e64cd-d9d6-46dc-a4e3-2decb8c480ce">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -841,7 +803,7 @@
 				<text><![CDATA[19]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="459" y="41" width="15" height="13" uuid="88ae69f0-04e4-4d77-b7d4-58304f592041">
+				<reportElement x="459" y="22" width="15" height="13" uuid="88ae69f0-04e4-4d77-b7d4-58304f592041">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -857,7 +819,7 @@
 				<textFieldExpression><![CDATA[$F{diaPagamento}.equals( "19" )? "X":" "]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="523" y="38" width="20" height="18" uuid="13339a6d-94cf-466e-a435-bc972a76f21b">
+				<reportElement x="523" y="19" width="20" height="18" uuid="13339a6d-94cf-466e-a435-bc972a76f21b">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -868,7 +830,7 @@
 				<text><![CDATA[22]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="507" y="41" width="15" height="13" uuid="91ddd437-7939-412f-b046-969de5a0163e">
+				<reportElement x="507" y="22" width="15" height="13" uuid="91ddd437-7939-412f-b046-969de5a0163e">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -883,8 +845,18 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$F{diaPagamento}.equals( "22" )? "X":" "]]></textFieldExpression>
 			</textField>
+			<line>
+				<reportElement x="0" y="360" width="550" height="1" uuid="1c7d0139-6f0d-47dc-8434-076ffcdf0e2f">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+			</line>
+			<break>
+				<reportElement x="0" y="362" width="550" height="1" uuid="25e1158c-8b0a-4691-b405-aaac7c4f241c">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+			</break>
 		</band>
-		<band height="48">
+		<band height="79">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<subreport>
 				<reportElement x="0" y="17" width="549" height="30" uuid="fa9826ab-e2e6-4165-9937-eaea788566c0">
@@ -905,13 +877,89 @@
 				<textElement>
 					<font isBold="true"/>
 				</textElement>
-				<text><![CDATA[ 9 - Assinatura do(a) Cooperado(a)]]></text>
+				<text><![CDATA[ 8 - Assinatura do(a) Cooperado(a)]]></text>
 			</staticText>
+			<textField>
+				<reportElement x="0" y="63" width="550" height="15" uuid="7e1f34c0-9eb1-4af2-be55-52ede3873da2">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="1">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{localEData}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="47" width="550" height="15" uuid="da2c284f-4cf0-433f-a033-d902bef090f7">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="1">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<text><![CDATA[Local e Data:]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement mode="Transparent" x="0" y="17" width="550" height="30" uuid="42dcf30f-9b9e-4725-9c7b-d3f6482b6f90"/>
+			</rectangle>
 		</band>
-		<band height="157">
+		<band height="78">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<subreport>
+				<reportElement x="0" y="17" width="549" height="30" uuid="1f2e6b68-830a-4210-80f7-3eacc6fe17d9">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//assinaturas/asssuperv")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["termo_adesao_assinaturas_novo.jasper"]]></subreportExpression>
+			</subreport>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="-1" width="550" height="18" forecolor="#000000" backcolor="#EEECE1" uuid="35fe7afa-e82b-4f86-9737-d5b8237e712d"/>
+				<box leftPadding="2">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[9 - Assinatura do(a) Supervisor(a)]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="62" width="550" height="15" uuid="f17bb53a-7c0b-4218-baba-5745165e8774">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="1">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{localEDataSup}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="47" width="550" height="15" uuid="a821ffa6-457e-4819-973c-03d070da0e8e">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="1">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<text><![CDATA[Local e Data:]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement mode="Transparent" x="0" y="17" width="550" height="30" uuid="39f185c2-f299-40ee-aa65-9b5f88ab1715"/>
+			</rectangle>
+		</band>
+		<band height="130">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField>
-				<reportElement x="191" y="137" width="15" height="13" uuid="7083d6c5-3bf5-4318-b58a-e72321f8b5c0">
+				<reportElement x="191" y="106" width="15" height="13" uuid="7083d6c5-3bf5-4318-b58a-e72321f8b5c0">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -927,7 +975,7 @@
 				<textFieldExpression><![CDATA[$F{serasa}.equalsIgnoreCase("S")? "X":" "]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="107" y="132" width="39" height="18" uuid="d0bc77b2-ff7a-40e6-8f19-1455fbb336ff">
+				<reportElement x="107" y="101" width="39" height="18" uuid="d0bc77b2-ff7a-40e6-8f19-1455fbb336ff">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<box leftPadding="1"/>
@@ -937,7 +985,7 @@
 				<text><![CDATA[SPC]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="89" y="137" width="15" height="13" uuid="40991ca1-3438-4db9-892d-247c4d524206">
+				<reportElement x="89" y="106" width="15" height="13" uuid="40991ca1-3438-4db9-892d-247c4d524206">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -953,7 +1001,7 @@
 				<textFieldExpression><![CDATA[$F{spc}.equalsIgnoreCase("S")? "X":" "]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="210" y="132" width="86" height="18" uuid="c23f2417-acbe-4c85-a666-9347d06ed2d3">
+				<reportElement x="210" y="101" width="86" height="18" uuid="c23f2417-acbe-4c85-a666-9347d06ed2d3">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<box leftPadding="1"/>
@@ -963,7 +1011,7 @@
 				<text><![CDATA[SERASA]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="129" width="550" height="28" uuid="0ab264d9-412d-41b0-a10b-1dc2939dd666"/>
+				<reportElement x="0" y="98" width="550" height="28" uuid="0ab264d9-412d-41b0-a10b-1dc2939dd666"/>
 				<box topPadding="7" leftPadding="1">
 					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -973,7 +1021,7 @@
 				<text><![CDATA[10.7 Restrições:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="275" y="74" width="138" height="15" uuid="96f4c451-ee87-4d20-a4b5-3b0e6ef480c6">
+				<reportElement x="275" y="43" width="138" height="15" uuid="96f4c451-ee87-4d20-a4b5-3b0e6ef480c6">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -986,7 +1034,7 @@
 				<textFieldExpression><![CDATA[$F{limiteEsteira}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="413" y="45" width="137" height="39" uuid="35f003f1-1285-44ca-bbb9-5e826415b7a6"/>
+				<reportElement x="413" y="14" width="137" height="29" uuid="35f003f1-1285-44ca-bbb9-5e826415b7a6"/>
 				<box leftPadding="1">
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -996,7 +1044,7 @@
 				<text><![CDATA[10.4 Limite Contratado:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="413" y="74" width="137" height="15" uuid="9d8b1a44-9af5-4401-afb8-ee53d5c64100">
+				<reportElement x="413" y="43" width="137" height="15" uuid="9d8b1a44-9af5-4401-afb8-ee53d5c64100">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
@@ -1009,7 +1057,7 @@
 				<textFieldExpression><![CDATA[$F{limiteContratado}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="275" y="45" width="138" height="39" uuid="a3ca3950-390a-4774-972a-fb4d54b34378">
+				<reportElement x="275" y="14" width="138" height="29" uuid="a3ca3950-390a-4774-972a-fb4d54b34378">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
@@ -1022,7 +1070,7 @@
 				<text><![CDATA[10.3 Limite Aprovado na Esteira de Crédito:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="275" y="89" width="275" height="15" uuid="38501a6d-dab5-4893-a34e-75c17c6a2821">
+				<reportElement x="275" y="58" width="275" height="15" uuid="38501a6d-dab5-4893-a34e-75c17c6a2821">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<box leftPadding="1">
@@ -1032,7 +1080,7 @@
 				<text><![CDATA[10.6 Responsável pela aprovação:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="89" width="275" height="15" uuid="898d420d-8a47-43f9-a265-0df4c895d4d6">
+				<reportElement x="0" y="58" width="275" height="15" uuid="898d420d-8a47-43f9-a265-0df4c895d4d6">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<box leftPadding="1">
@@ -1042,7 +1090,7 @@
 				<text><![CDATA[10.5 Responsável pela solicitação:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="0" y="104" width="275" height="25" uuid="52f93ce2-1a7f-463e-b6a8-22a5e27efdea">
+				<reportElement x="0" y="73" width="275" height="25" uuid="52f93ce2-1a7f-463e-b6a8-22a5e27efdea">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<box leftPadding="1">
@@ -1056,7 +1104,7 @@
 				<textFieldExpression><![CDATA[$F{dadosSolicitacao}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="275" y="104" width="275" height="25" uuid="183101de-7554-4611-a352-95971d9ce1ee">
+				<reportElement x="275" y="73" width="275" height="25" uuid="183101de-7554-4611-a352-95971d9ce1ee">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<box leftPadding="1">
@@ -1070,7 +1118,7 @@
 				<textFieldExpression><![CDATA[$F{dadosAprovacao}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="138" y="74" width="137" height="15" uuid="5af1f510-2134-4a54-a22d-e8c0d40c92a6">
+				<reportElement x="138" y="43" width="137" height="15" uuid="5af1f510-2134-4a54-a22d-e8c0d40c92a6">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -1083,7 +1131,7 @@
 				<textFieldExpression><![CDATA[$F{limiteSugerido}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="138" y="45" width="137" height="39" uuid="2f31bf08-fef9-4f63-8451-7602a68066cd"/>
+				<reportElement x="138" y="14" width="137" height="29" uuid="2f31bf08-fef9-4f63-8451-7602a68066cd"/>
 				<box leftPadding="1">
 					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1093,7 +1141,7 @@
 				<text><![CDATA[10.2 Limite Pré-Aprovado pelo Motor de Crédito:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="0" y="74" width="138" height="15" uuid="21796a87-1db8-4230-a9d7-2e6505bf4bc8">
+				<reportElement x="0" y="43" width="138" height="15" uuid="21796a87-1db8-4230-a9d7-2e6505bf4bc8">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<box leftPadding="1">
@@ -1105,7 +1153,7 @@
 				<textFieldExpression><![CDATA[$F{renda}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="0" y="45" width="138" height="44" uuid="7194547f-e8d5-49a3-a278-562c6be5b0d0">
+				<reportElement x="0" y="14" width="138" height="29" uuid="7194547f-e8d5-49a3-a278-562c6be5b0d0">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<box leftPadding="1">
@@ -1116,7 +1164,7 @@
 				<text><![CDATA[10.1 Renda do Cooperado:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Opaque" x="0" y="30" width="550" height="15" forecolor="#000000" backcolor="#EEECE1" uuid="8ce3ae1e-5395-4e60-9172-5d737c77c0da">
+				<reportElement mode="Opaque" x="0" y="-1" width="550" height="15" forecolor="#000000" backcolor="#EEECE1" uuid="8ce3ae1e-5395-4e60-9172-5d737c77c0da">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
@@ -1130,29 +1178,6 @@
 					<font isBold="true"/>
 				</textElement>
 				<text><![CDATA[10 - Para uso exclusivo da Cooperativa]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="0" y="15" width="550" height="15" uuid="7e1f34c0-9eb1-4af2-be55-52ede3873da2">
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-				</reportElement>
-				<box leftPadding="1">
-					<leftPen lineWidth="0.5"/>
-					<bottomPen lineWidth="0.5"/>
-					<rightPen lineWidth="0.5"/>
-				</box>
-				<textElement verticalAlignment="Middle"/>
-				<textFieldExpression><![CDATA[$F{localEData}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="0" y="0" width="550" height="15" uuid="7c178a3b-a57e-422a-afcc-bb4b37a7fc90">
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-				</reportElement>
-				<box leftPadding="1">
-					<leftPen lineWidth="0.5"/>
-					<rightPen lineWidth="0.5"/>
-				</box>
-				<text><![CDATA[Local e Data:]]></text>
 			</staticText>
 		</band>
 	</detail>

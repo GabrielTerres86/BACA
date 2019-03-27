@@ -11,14 +11,15 @@
  * 002: [04/08/2015] Gabriel (Rkam)	    - Reformulacao cadastral.
  * 003: [15/09/2017] Alterações referente a melhoria 339 (Kelvin).
  * 004: [27/09/2017] Kelvin  (CECRED)	- Removido campos nrdoapto, cddbloco e nrcxapst (PRJ339).
+ * 005: [15/03/2019] Anderson (SUPERO)  - Implementado titulo dinamico Comercial/Residencial (PJ429).
  */	 
 ?>
 <form name="frmEndereco" id="frmEndereco" class="formulario">
 
 	<fieldset name="fieldResidencial" id="fieldResidencial">
 	
-		<legend> <?php if ($tpendass ==  9) { echo 'Comercial'; }
-		          else if ($tpendass == 10) { echo 'Residencial'; } ?></legend>
+		<legend> <?php if ($inpessoa == 2) { echo 'Comercial'; }
+		          else if ($inpessoa == 1) { echo 'Residencial'; } ?></legend>
 
 		<label for="incasprp"><? echo utf8ToHtml(' Tipo do Imóvel:') ?></label>
 		<select name="incasprp" id="incasprp" >

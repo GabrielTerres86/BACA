@@ -26,6 +26,7 @@
  * 014: [26/08/2015] James					  : Remover o form da impressao.
  * 015: [09/10/2015] James					  : Desenvolvimento do projeto 126.
  * 016: [21/06/2016] Douglas         (CECRED) : Removido aspas simples dos parametros do campo Titularidade (Chamado 457339)
+ * 017: [18/03/2019] Anderson-Alan   (SUPERO) : Implementado tipo de envio do cartão - PJ429
  */
 
 	session_start();
