@@ -5163,11 +5163,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                   ,pr_nmsubdir => 'salvar');                                         
                            
                            -- Corpo do e-mail para enviar para a área de compensação
-                           vr_des_corpo:= 'A movimentação do cheque abaixo iria gerar uma situação de cheque negativa. Favor abrir um incidente para a sustentação analisar o problema!'||chr(10)||
-                                         'Cooperativa= '||rw_crapfdc.cdcooper||chr(10)||
-                                         'Conta= '||rw_crapfdc.nrctachq||chr(10)||
-                                         'Cheque= '||vr_nrdocmto||chr(10)||
-                                         'Arquivo= '||vr_dircop_email||'/'||replace(vr_nmarquiv,'.q','');
+                           vr_des_corpo:= 'ATENÇÃO a movimentação do cheque abaixo iria gerar uma situação de cheque negativa. Favor abrir um incidente para a sustentação analisar o problema!'||chr(10)||
+                                         'Cooperativa: '||rw_crapfdc.cdcooper||chr(10)||
+                                         'Conta: '||rw_crapfdc.nrctachq||chr(10)||
+                                         'Cheque: '||vr_nrdocmto||chr(10)||
+                                         'Arquivo: '||vr_dircop_email||'/'||replace(vr_nmarquiv,'.q','');
                                          
                                          
                            -- Buscar o endereço do e-mail para envio                                         
