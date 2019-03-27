@@ -1,5 +1,5 @@
 /*..............................................................................
-
+ 
    Programa: b1wgen0019.p
    Autor   : Murilo/David
    Data    : 21/06/2007                        Ultima atualizacao: 26/05/2018
@@ -4045,6 +4045,7 @@ PROCEDURE cadastrar-novo-limite:
                                                     INPUT par_nrcxaps1,
                                                     INPUT 0,  /* inpessoa 1o avail */
                                                     INPUT ?,  /* dtnascto 1o avail */
+													INPUT 0, /* par_vlrecjg1 */
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -4070,6 +4071,7 @@ PROCEDURE cadastrar-novo-limite:
                                                     INPUT par_nrcxaps2,
                                                     INPUT 0,  /* inpessoa 2o avail */
                                                     INPUT ?,  /* dtnascto 2o avail */
+													INPUT 0, /* par_vlrecjg2 */
                                                     INPUT "",
                                                    OUTPUT TABLE tt-erro).
         
@@ -6866,7 +6868,7 @@ PROCEDURE obtem-dados-contrato:
 
         IF  NOT AVAILABLE crapenc  THEN
             DO: 
-                ASSIGN aux_dscritic = "Endereco nao cadastrado.".
+                ASSIGN aux_dscritic = "10 - Endereco nao cadastrado.".
                 LEAVE.
             END.
             
@@ -9968,6 +9970,7 @@ PROCEDURE alterar-novo-limite:
                                                     INPUT par_nrcxaps1,
                                                     INPUT 0,  /* inpessoa 1o avail */
                                                     INPUT ?,  /* dtnascto 1o avail */
+													INPUT 0, /* par_vlrecjg1 */
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -9993,6 +9996,7 @@ PROCEDURE alterar-novo-limite:
                                                     INPUT par_nrcxaps2,
                                                     INPUT 0,  /* inpessoa 2o avail */
                                                     INPUT ?,  /* dtnascto 2o avail */
+													INPUT 0, /* par_vlrecjg2 */
                                                     INPUT "").
         
         DELETE PROCEDURE h-b1wgen9999.

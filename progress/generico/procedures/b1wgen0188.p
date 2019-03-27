@@ -8,7 +8,7 @@
   |   busca_dados                            |	EMPR0002.pc_busca_dados_cpa           |
   |   valida_dados                            |	EMPR0002.pc_valid_dados_cpa           |
   +------------------------------------------+----------------------------------------+
-
+   
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
 
@@ -1112,6 +1112,7 @@ PROCEDURE grava_dados:
                                                    INPUT 0,  /* par_nrcxaps1 */
                                                    INPUT 0,
                                                    INPUT ?,
+												   INPUT 0, /* par_vlrecjg1 */
                                                    /* Avalista 2 */
                                                    INPUT "", /* aux_nmdaval2 */
                                                    INPUT 0,  /* aux_nrcpfav2 */
@@ -1136,6 +1137,7 @@ PROCEDURE grava_dados:
                                                    INPUT 0,  /* aux_nrcxaps2 */
                                                    INPUT 0,
                                                    INPUT ?,
+												   INPUT 0, /* par_vlrecjg2 */
                                                    INPUT "",
                                                    INPUT aux_flgerlog,
                                                    INPUT aux_dsjusren,
@@ -1143,7 +1145,9 @@ PROCEDURE grava_dados:
                                                    INPUT 0, /* idcobope */
                                                    INPUT 0, /* idfiniof */
                                                    INPUT "", /* DSCATBEM */
-                                                   INPUT 1, /* par_inresapr */
+												   INPUT 1,
+												   INPUT "TP", /*par_dsdopcao*/
+                                                   INPUT 0,
                                                    OUTPUT TABLE tt-erro,
                                                    OUTPUT TABLE tt-msg-confirma,
                                                    OUTPUT aux_recidepr,
@@ -1179,7 +1183,7 @@ PROCEDURE grava_dados:
 
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
-      
+
        RUN grava_efetivacao_proposta IN h-b1wgen0084(INPUT par_cdcooper,
                                                      INPUT par_cdagenci,
                                                      INPUT par_nrdcaixa,
@@ -1207,14 +1211,14 @@ PROCEDURE grava_dados:
                                                      OUTPUT aux_dsmesage,
                                                      OUTPUT TABLE tt-ratings,
                                                      OUTPUT TABLE tt-erro).
-       
+
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
-       
+
        ASSIGN aux_flgtrans = TRUE.
-       
+
     END. /* END GRAVA: DO TRANSACTION */
-  
+
     IF NOT TEMP-TABLE tt-erro:HAS-RECORDS AND
        (aux_cdcritic > 0 OR aux_dscritic <> "") THEN
        DO:

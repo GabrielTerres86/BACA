@@ -5503,7 +5503,7 @@ PROCEDURE pc_insere_bordero(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Co
         craplim.cddlinha,
         craplim.tpctrlim,
         craplim.dtfimvig,
-        (SELECT SUM(craptdb.vltitulo) 
+        (SELECT SUM(craptdb.vlsldtit) 
            FROM
              craptdb
            INNER JOIN crapcob ON crapcob.cdcooper = craptdb.cdcooper AND
@@ -7714,7 +7714,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
           craplim.cddlinha,
           craplim.tpctrlim,
           craplim.dtfimvig,
-          (SELECT SUM(craptdb.vltitulo) 
+          (SELECT SUM(craptdb.vlsldtit) 
              FROM
                craptdb
              INNER JOIN crapcob ON crapcob.cdcooper = craptdb.cdcooper AND

@@ -14,7 +14,7 @@
   PESSOAS:
    - GUILHERME STRUBE    (CECRED)
    - MARCOS MARTINI      (SUPERO)
-   - GUILHERME BOETTCHER (SUPERO)
+   - GUILHERME BOETTCHER (SUPERO) 
 
 *******************************************************************************/
 
@@ -200,6 +200,8 @@
               04/07/2018 - P410 - Inclusão dos campos vltiofpr e vlpiofpr (Marcos-Envolti)
               
               17/09/2018 - P442 - Inclusao de campos dos bens da Proposta (Marcos-Envolti)
+              
+              22/10/2018 - P438 - Inclusao de campos alienação hipoteca (Paulo-Martins)
               
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
@@ -428,7 +430,9 @@ DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD dsmarbem AS CHAR
     FIELD vlfipbem AS DECI
     FIELD dstpcomb AS CHAR
-    FIELD dssitgrv AS CHAR.
+    FIELD dssitgrv AS CHAR
+	FIELD nrnotanf AS CHAR  /* PRJ 438 - Sprint 4 */
+    FIELD dsmarceq AS CHAR. /* PRJ 438 - Sprint 4 */
     
 DEF TEMP-TABLE tt-interv-anuentes NO-UNDO
     FIELD nrctaava LIKE crapavt.nrdconta
@@ -453,7 +457,9 @@ DEF TEMP-TABLE tt-interv-anuentes NO-UNDO
     FIELD nrcxapst LIKE crapavt.nrcxapst
     FIELD dsendlog AS   CHAR
     FIELD dsbarlog AS   CHAR
-    FIELD cdnacion LIKE crapnac.cdnacion.
+    FIELD cdnacion LIKE crapnac.cdnacion
+    FIELD inpessoa LIKE crapavt.inpessoa
+    FIELD dtnascto LIKE crapavt.dtnascto. /*PRJ438*/
        
 DEF TEMP-TABLE tt-hipoteca NO-UNDO
     FIELD lsbemfin AS CHAR
@@ -461,7 +467,20 @@ DEF TEMP-TABLE tt-hipoteca NO-UNDO
     FIELD dsbemfin AS CHAR VIEW-AS EDITOR SIZE 50 BY 2 BUFFER-LINES 2 PFCOLOR 1 
     FIELD dscorbem AS CHAR VIEW-AS EDITOR SIZE 50 BY 2 BUFFER-LINES 2 PFCOLOR 1 
     FIELD idseqhip AS INTE
-    FIELD vlmerbem AS DECI.
+    FIELD vlmerbem AS DECI
+    FIELD vlrdobem AS DECI 
+    FIELD cdufende LIKE crapbpr.cdufende 
+    FIELD dscompend LIKE crapbpr.dscompend 
+    FIELD dsendere LIKE crapbpr.dsendere
+    FIELD nmbairro LIKE crapbpr.nmbairro 
+    FIELD nmcidade LIKE crapbpr.nmcidade 
+    FIELD nrcepend LIKE crapbpr.nrcepend 
+    FIELD nrendere LIKE crapbpr.nrendere 
+    FIELD dsclassi LIKE crapbpr.dsclassi 
+    FIELD vlareuti LIKE crapbpr.vlareuti 
+    FIELD vlaretot LIKE crapbpr.vlaretot 
+    FIELD nrmatric LIKE crapbpr.nrmatric
+    FIELD idseqbem LIKE crapbpr.idseqbem. /*PRJ438 - BUG 13721 - Paulo Martins*/
 
 DEF TEMP-TABLE tt-impprop-epr NO-UNDO
     FIELD nmextcop LIKE crapcop.nmextcop

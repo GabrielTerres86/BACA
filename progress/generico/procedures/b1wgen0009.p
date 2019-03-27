@@ -1,5 +1,5 @@
 /* ............................................................................
-
+ 
    Programa: b1wgen0009.p
    Autor   : Guilherme
    Data    : Marco/2009                     Última atualizacao: 10/06/2018
@@ -1974,7 +1974,7 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE INPUT  PARAMETER par_nrperger AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgerlog AS LOGICAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_idcobope AS INTEGER     NO-UNDO.
-
+    
     DEFINE OUTPUT PARAMETER par_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     DEFINE OUTPUT PARAM TABLE FOR tt-msg-confirma.
@@ -2156,6 +2156,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nrcxaps1,
                                                     INPUT 0,            /* inpessoa 1o avail */
                                                     INPUT ?,            /* dtnascto 1o avail */
+													INPUT 0, /* par_vlrecjg1 */
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -2181,6 +2182,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nrcxaps2,
                                                     INPUT 0,            /* inpessoa 2o avail */
                                                     INPUT ?,            /* dtnascto 2o avail */
+													INPUT 0, /* par_vlrecjg2 */
                                                     INPUT "",
                                                    OUTPUT TABLE tt-erro).
         
@@ -4287,7 +4289,7 @@ PROCEDURE efetua_alteracao_limite:
     DEFINE INPUT  PARAMETER par_nrperger AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgerlog AS LOGICAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_idcobope AS INTEGER     NO-UNDO.
-
+    
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     
     DEFINE VARIABLE h-b1wgen0021 AS HANDLE  NO-UNDO.
@@ -4420,6 +4422,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nrcxaps1,
                                   INPUT 0, /* inpessoa 1o aval */
                                   INPUT ?, /* dtnascto 1o aval */
+								  INPUT 0, /* par_vlrecjg1 */
 
                                   /** 2 avalista **/
                                   INPUT par_nrctaav2, 
@@ -4446,6 +4449,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nrcxaps2,
                                   INPUT 0, /* inpessoa 2o aval */
                                   INPUT ?, /* dtnascto 2o aval */
+								  INPUT 0, /* par_vlrecjg2 */
                                   INPUT ""). /* Renda mensal */
                         
         DELETE PROCEDURE h-b1wgen9999.
@@ -12419,7 +12423,7 @@ PROCEDURE efetua_liber_anali_bordero:
                 DO:
                   ASSIGN aux_vltotiofcpl = aux_vltotiofcpl + ROUND(DECI(pc_calcula_valor_iof.pr_vliofcpl),2).
                 END.
-              
+             
               /* Soma IOF complementar */
               IF pc_calcula_valor_iof.pr_flgimune <> ? THEN
                   DO:

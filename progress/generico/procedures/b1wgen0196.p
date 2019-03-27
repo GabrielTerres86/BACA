@@ -1,5 +1,5 @@
 /*..............................................................................
-
+ 
    Programa: b1wgen0196.p
    Autora  : Odirlei Busana - AMcom.
    Data    : 21/03/2017                        Ultima atualizacao: 12/04/2018
@@ -600,6 +600,7 @@ PROCEDURE grava_dados:
                         INPUT 0,                         /* par_nrcxaps1 INTE */
                         INPUT 0,                         /* par_inpesso1 INTE */
                         INPUT ?,                         /* par_dtnasct1 DATE */
+						INPUT 0,                        /* par_vlrecjg1 */
 
                         /*------------------ Parametros do Avalista 2 -------  */
                         INPUT "",                        /* par_nmdaval2 CHAR */
@@ -625,6 +626,7 @@ PROCEDURE grava_dados:
                         INPUT 0,                         /* par_nrcxaps2 INTE */
                         INPUT 0,                         /* par_inpesso2 INTE */
                         INPUT ?,                         /* par_dtnasct2 DATE */
+						INPUT 0,                         /* par_vlrecjg2 */
 
                         INPUT "",                        /* par_dsdbeavt CHAR */
                         INPUT aux_flgerlog,              /* par_flgerlog LOGI */
@@ -635,7 +637,9 @@ PROCEDURE grava_dados:
                         /* INPUT 0,                         nrcntloj */
                         INPUT 0,						 /* idfiniof */
 						INPUT "",                        /* dscatbem */
-                       INPUT 1, /* par_inresapr */
+						INPUT 1,
+						INPUT "TP", /* par_dsdopcao */
+                        INPUT 0,
                        OUTPUT TABLE tt-erro,
                        OUTPUT TABLE tt-msg-confirma,
                        OUTPUT aux_recidepr,

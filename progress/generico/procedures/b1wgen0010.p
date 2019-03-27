@@ -488,6 +488,7 @@
                
                30/11/2018 - Na procedure calcula_multa_juros_boleto alterar o ROUND por TRUNCATE 
                             (Lucas Ranghetti INC0027138)
+06/03/2019 - Adicionado condicao para apresentar o status do titulo corretamente na COBRAN (Cassia de Oliveira - GFT)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -4635,7 +4636,7 @@ PROCEDURE cria_tt-consulta-blt.
          ASSIGN tt-consulta-blt.dssituac = tt-consulta-blt.dssituac + "/" +
                                            ENTRY(1,crapcob.dcmc7chq,";").
 
-     IF   AVAILABLE craptdb THEN
+     IF   AVAILABLE craptdb AND craptdb.insitapr <> 2 THEN
           DO:
               ASSIGN tt-consulta-blt.nrborder = craptdb.nrborder.
 
