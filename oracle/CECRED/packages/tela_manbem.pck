@@ -3298,6 +3298,7 @@ create or replace package body cecred.tela_manbem is
     
         Alteracoes: 18/10/2018 - Incluídos novas colunas referente aos bens alienados
                                  PRJ438 - Sprint 4 - Paulo Martins (Mouts)
+					26/03/2019 - Tratamento do erro oracle (ORA06502), PRB0040687 - ERRO CHASSI E PROPOSTA (Bruno C, Mout'S)
 
     ..............................................................................*/            
   
@@ -3642,7 +3643,9 @@ create or replace package body cecred.tela_manbem is
               ELSIF vr_node_name = 'nrendere' THEN
                 rw_crapavt.nrendere := TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));
               ELSIF vr_node_name = 'complend' THEN
-                rw_crapavt.complend := xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node));
+                rw_crapavt.complend := substr(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)),
+                                              1,
+                                              47);
               ELSIF vr_node_name = 'nrcxapst' THEN
                 rw_crapavt.nrcxapst := TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));
               ELSIF vr_node_name = 'dtnascto' THEN
