@@ -717,7 +717,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                            ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                            ,pr_des_erro OUT VARCHAR2);        --> Erros do processo                                                             
-                                                                                                           
+                                                                                                                                                           
   PROCEDURE pc_busca_dados_cjg_ass(pr_nrdconta IN crapass.nrdconta%TYPE, -- Numero da conta
                                    pr_xmllog   IN VARCHAR2, --> XML com informações de LOG
                                    pr_cdcritic OUT PLS_INTEGER, --> Código da crítica
@@ -851,7 +851,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             20/08/2018 - Não considerar cheque cancelado como sendo um produto contratado.
   --                          Rotina fn_produto_habilitado, cursor cr_crapfdc (Wagner, INC0021862).  
-  --
+  --                        
   --             12/12/2018 - Remoção da atualização da capa de lote
   --                          Yuri - Mouts
   --
@@ -4377,11 +4377,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Cursor para verificar se existe bordero de cheques ativo
       CURSOR cr_crapbdc(pr_cdcooper IN crapbdc.cdcooper%TYPE
                        ,pr_nrdconta IN crapbdc.nrdconta%TYPE)IS
-      SELECT 1 
-        FROM crapbdc
-       WHERE crapbdc.cdcooper = pr_cdcooper 
-         AND crapbdc.nrdconta = pr_nrdconta
-         AND crapbdc.insitbdc = 3; --Liberado
+      SELECT 1
+        FROM craplim lim
+            ,crapbdc bdc
+            ,crapcdb cdb
+       WHERE lim.cdcooper = pr_cdcooper
+         AND lim.nrdconta = pr_nrdconta
+         AND lim.tpctrlim = 2
+         AND lim.insitlim = 2 -- Ativa
+         AND bdc.cdcooper = lim.cdcooper
+         AND bdc.nrdconta = lim.nrdconta
+         AND bdc.nrctrlim = lim.nrctrlim
+         AND cdb.cdcooper = bdc.cdcooper
+         AND cdb.nrdconta = bdc.nrdconta
+         AND cdb.nrborder = bdc.nrborder
+         AND cdb.dtlibera >= rw_crapdat.dtmvtolt
+         AND cdb.insitchq = 2 -- Processado
+         AND ROWNUM = 1; -- Processado
       rw_crapbdc cr_crapbdc%ROWTYPE;
       
       --Cursor para buscar emprestimos ativos
