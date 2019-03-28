@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps525
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Fernando
-    Data    : Abril/2009                      Ultima Atualizacao: 26/09/2016
+    Data    : Abril/2009                      Ultima Atualizacao: 12/03/2019
     Dados referente ao programa:
 
     Frequencia: Diario.
@@ -24,6 +24,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps525
                 26/09/2016 - Programa reformulado para cobrar tarifa, geração do relatorio
                              não ocorrerá mais no batch e sim via tela.
                              PRJ300 - Desconto de cheque (Odirlei-AMcom)
+                             
+                12/03/2019 - PRB0040599 Feito o tratamento de erros de exception (Carlos)
                              
 ..............................................................................*/
 
@@ -352,6 +354,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps525
         ROLLBACK;
 
       WHEN OTHERS THEN
+        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
         -- Efetuar retorno do erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := sqlerrm;
