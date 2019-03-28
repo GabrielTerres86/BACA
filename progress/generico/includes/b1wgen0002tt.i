@@ -201,6 +201,8 @@
               
               17/09/2018 - P442 - Inclusao de campos dos bens da Proposta (Marcos-Envolti)
               
+              27/03/2019 - P437 - Consignado - Inclusão do FIELD INAVERBA na tt-proposta-epr. 
+                           Josiane stiehler - AMcom.
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
     FIELD nrdconta LIKE crapass.nrdconta
@@ -404,7 +406,8 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
 	FIELD nivriori LIKE crawepr.dsnivori
     FIELD flintcdc LIKE crapcop.flintcdc
     FIELD inintegra_cont AS INT
-    FIELD tpfinali LIKE crapfin.tpfinali.
+    FIELD tpfinali LIKE crapfin.tpfinali
+    FIELD inaverba LIKE crawepr.inaverba.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR
