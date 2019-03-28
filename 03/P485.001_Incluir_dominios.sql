@@ -1,4 +1,4 @@
-BEGIN
+BEGIN 
 	
   -- Limpar os dominios para reinserção
   DELETE tbcc_dominio_campo
