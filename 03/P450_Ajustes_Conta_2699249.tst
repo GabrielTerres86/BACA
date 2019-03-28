@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-60
+49
 -- Created on 26/03/2019 by T0031667 
 declare 
   rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -39,17 +39,6 @@ BEGIN
    WHERE cdcooper = 1
      AND nrdconta = 2699249
      AND dtliquidacao IS NULL;
-     
-  PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => 1
-                              , pr_nrdconta => 2699249
-                              , pr_vlrlanc => 4834.65
-                              , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                              , pr_cdcritic => :pr_cdcritic
-                              , pr_dscritic => :pr_dscritic);
-     
-  IF TRIM(:pr_dscritic) IS NOT NULL OR nvl(:pr_cdcritic, 0) > 0 THEN
-    RETURN;
-  END IF;
      
   -- Redefine a data do último estorno do contrato para permitir estornas parcelas pagas em '19/03/2019'
   UPDATE crapepr
