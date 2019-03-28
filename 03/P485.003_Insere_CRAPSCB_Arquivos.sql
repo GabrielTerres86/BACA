@@ -1,4 +1,4 @@
-BEGIN
+BEGIN 
   -- Inserir o parametro de controle do arquivo
   INSERT INTO cecred.crapscb(tparquiv
                             ,dsdsigla

@@ -1,4 +1,4 @@
-BEGIN
+BEGIN 
 	INSERT INTO crapaca
 		  (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
 	  VALUES
