@@ -477,20 +477,21 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
       vr_idassembleia  NUMBER;      -- IDassembleia  - ID assembleia da AILOS(idintegracao da assembleia)
       vr_idpessoaint   NUMBER;      -- IDpessoaintegracao - ID pessoa da AILOS (idintegracao da pessoa)
       vr_idpessoasoc   NUMBER;      -- IDpessoasocio - ID pessoa AILOS, quando o sócio tiver  IDpessoapf
-      vr_nome          VARCHAR2(50);-- Nome - Nome do Sócio
+      vr_nome          VARCHAR2(150);-- Nome - Nome do Sócio
       vr_cpf           NUMBER;      -- CPF - CPF do Sócio
       vr_telefone      NUMBER;      -- Telefone - Campo comunidade
       vr_tptelefone    NUMBER;      -- Tipotelefone - Campo comunidade
       vr_ddd           NUMBER;      -- DDD
       vr_tppessoa      NUMBER;      -- Tipopessoa - 0 - PF / 1 - PJ
-      vr_crianca       VARCHAR2(50);-- Crianca - Campo comunidade
+      vr_crianca       VARCHAR2(150);-- Crianca - Campo comunidade
       vr_idvoto        VARCHAR2(1); -- Votou (Y/N) Default = N      
       vr_keypad        NUMBER;
-      vr_dhentrada     VARCHAR2(12);
-      vr_dhsaida       VARCHAR2(12);      
-      vr_grupo         VARCHAR2(10);
+      vr_dhentrada     VARCHAR2(50);
+      vr_dhsaida       VARCHAR2(50);      
+      vr_grupo         VARCHAR2(50);
       vr_PA            NUMBER;
       vr_tpcadastro    NUMBER;      -- 0 - Cooperado / 1 - Comunidade
+      vr_linha_arquivo NUMBER:=0;
 
       --Variaveis de excecao
       vr_exc_conta  exception;
@@ -561,7 +562,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
             AND c.nrseqeve = rw_crapadp.nrseqdig;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_sqlerrm := sqlerrm;
+            vr_dscritic := 'Erro ao excluir os dados da tabela CRAPIDP! '|| sqlerrm;
             raise vr_exc_saida;          
         END;
         CLOSE cr_crapadp;
@@ -571,6 +572,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
         begin
           vr_dsmotivo := '';
           vr_dserro   := '';
+          vr_linha_arquivo:= vr_linha_arquivo+1;
 
           --Leitura da linha do arquivo
           gene0001.pc_le_linha_arquivo(vr_arquivo,vr_texto);
@@ -591,15 +593,79 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
               when x =  8 then vr_crianca       := vr_tabtexto(x);
               when x =  9 then vr_idvoto        := vr_tabtexto(x);
               when x = 10 then vr_keypad        := to_number(vr_tabtexto(x));
-              when x = 11 then vr_dhentrada     := substr(vr_tabtexto(x),1,10);
-              when x = 12 then vr_dhsaida       := substr(vr_tabtexto(x),1,10);
+              when x = 11 then vr_dhentrada     := vr_tabtexto(x);
+              when x = 12 then vr_dhsaida       := vr_tabtexto(x);
               when x = 13 then vr_grupo         := vr_tabtexto(x);
               when x = 14 then vr_PA            := to_number(vr_tabtexto(x));
               when x = 15 then vr_tpcadastro    := to_number(vr_tabtexto(x));
               else null;
             end case;
           end loop;
-        
+
+        -- Validações dos dados recebidos
+        -- Nome
+        IF length(vr_nome) > 50 THEN
+          vr_dscritic := 'Nome do inscrito não pode ser maior que 50 caracteres! Linha do Arquivo= '||vr_linha_arquivo||'Nome= '||vr_nome;
+          RAISE vr_exc_saida;
+        END IF;
+        -- CPF/CNPJ
+        IF length(vr_cpf) > 25 THEN
+          vr_dscritic := 'CPF/CNPJ do inscrito não pode ser maior que 25 caracteres! Linha do Arquivo= '||vr_linha_arquivo||' CPF/CNPJ= '||vr_cpf;
+          RAISE vr_exc_saida;
+        END IF;
+        -- Telefone
+        IF length(vr_telefone) > 10 THEN
+          vr_dscritic := 'Número do Telefone não pode ser maior que 10 caracteres! Linha do Arquivo= '||vr_linha_arquivo||' Telefone: '||vr_telefone;
+          RAISE vr_exc_saida;
+        END IF;
+        -- Tipo de Pessoa
+        IF vr_tppessoa NOT IN (0,1) THEN
+          vr_dscritic := 'Tipo de Pessoa deve ser igual a 0-PF ou 1-PJ! Linha do Arquivo= '||vr_linha_arquivo||' Tipo de Pessoa = '||vr_tppessoa;
+          RAISE vr_exc_saida;
+        END IF;
+        -- Identificador de Voto
+        IF vr_idvoto NOT IN ('Y','N') THEN
+          vr_dscritic := 'Identificador de Voto deve ser igual a Y-Yes ou N - No! Linha do Arquivo= '||vr_linha_arquivo||' Identificador de Voto = '||vr_idvoto;
+          RAISE vr_exc_saida;
+        END IF;
+        -- Data de Entrada
+        IF length(vr_dhentrada) > 16 THEN
+          vr_dscritic := 'Data de Entrada não pode ser maior que 16 caracteres! Linha do Arquivo= '||vr_linha_arquivo||' Data = '||vr_dhentrada;
+          RAISE vr_exc_saida;
+        END IF;
+        vr_dhentrada := substr(vr_dhentrada,1,10);
+        IF substr(vr_dhentrada,5,1)||substr(vr_dhentrada,8,1) <> '--' THEN
+          vr_dscritic := 'Formato da Data de Entrada incorreto. Data de Entrada deve estar no formato (AAAA-MM-DD)! Linha do Arquivo = '||vr_linha_arquivo||' Data = '||vr_dhentrada;
+          RAISE vr_exc_saida;
+        END IF;
+        -- Data de Saída
+        IF length(vr_dhsaida) > 16 THEN
+          vr_dscritic := 'Data de Saída não pode ser maior que 16 caracteres! Linha do Arquivo= '||vr_linha_arquivo||' Data = '||vr_dhsaida;
+          RAISE vr_exc_saida;
+        END IF;
+        vr_dhsaida := substr(vr_dhsaida,1,10);        
+        IF substr(vr_dhsaida,5,1)||substr(vr_dhsaida,8,1) <> '--' THEN
+          vr_dscritic := 'Formato da Data de Saída incorreto. Data de Saída deve estar no formato (AAAA-MM-DD)! Linha do Arquivo= '||vr_linha_arquivo||' Data = '||vr_dhsaida;
+          RAISE vr_exc_saida;
+        END IF;
+
+        -- Grupo
+        IF length(vr_grupo) > 10 THEN
+          vr_dscritic := 'Grupo não pode ser maior que 10 caracteres! Linha do Arquivo= '||vr_linha_arquivo||' Grupo = '||vr_grupo;
+          RAISE vr_exc_saida;
+        END IF;
+        -- PA
+        IF length(vr_PA) > 5 THEN
+          vr_dscritic := 'PA não pode ser maior que 5 caracteres! Linha do Arquivo= '||vr_linha_arquivo||' PA = '||vr_PA;
+          RAISE vr_exc_saida;
+        END IF;
+        -- Tipo de Cadastro
+        IF vr_tpcadastro NOT IN (0,1) THEN
+          vr_dscritic := 'Tipo de Cadastro deve ser igual a 0-Cooperado ou 1-Comunidade! Linha do Arquivo= '||vr_linha_arquivo||' Tipo de Cadastro = '||vr_tpcadastro;
+          RAISE vr_exc_saida;
+        END IF;
+
+
         -- Se for cooperado 
         IF vr_tpcadastro = 0 THEN  -- Cooperado
 
@@ -785,7 +851,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
                       );
       EXCEPTION
         when others then
-          vr_sqlerrm := sqlerrm;
+          vr_dscritic := 'Erro ao incluir os dados da tabela CRAPIDP! '|| sqlerrm;          
           raise vr_exc_saida;
       END;  
         exception
@@ -935,7 +1001,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
 
     -- Busca o diretorio onde esta os arquivos BRC '/micros/viacredi/'
     vr_dsdiretorio :=gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                                pr_cdacesso => 'DIRETORIO_ARQUIVO_BRC');
+                                               pr_cdcooper => vr_cdcooper,
+                                               pr_cdacesso => 'DIRETORIO_ARQUIVO_BRC');
 
     -- Listar arquivos
     gene0001.pc_lista_arquivos( pr_path     => vr_dsdiretorio
@@ -946,7 +1013,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
     IF pr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
-
+    
     -- Se possuir arquivos para serem processados
     IF vr_listaarq IS NOT NULL THEN
 
