@@ -20,6 +20,7 @@
  * 011: [13/07/2017] Diogo			  	  : Incluido campo Identificador do Regime tributário 'tpregtrb' (Projeto 410) 
  * 012: [12/08/2017] Lombardi             : Alterado botão “Dossiê Digidoc” para abrir uma outra tela contendo os botões 
  *                                          Documentos Cadastrais e Documentos de Conta.
+ * 013: [27/03/2019] Daniel               : Incluso tributação MEI 
  */
 ?>
 
@@ -61,6 +62,7 @@
 		<option value="1" <? if (getByTagName($identificacao,'tpregtrb') == "1"){ echo " selected"; } ?>> 1 - Simples Nacional</option>
 		<option value="2" <? if (getByTagName($identificacao,'tpregtrb') == "2"){ echo " selected"; } ?>> 2 - Lucro Real</option>
 		<option value="3" <? if (getByTagName($identificacao,'tpregtrb') == "3"){ echo " selected"; } ?>> 3 - Lucro Presumido</option>
+		<option value="4" <? if (getByTagName($identificacao,'tpregtrb') == "4"){ echo " selected"; } ?>> 4 - MEI</option>
 	</select>		
 	<br />
 	<? endif; ?>
