@@ -14,8 +14,6 @@
 
 <div id="divIncLancamento" name="divIncLancamento">
 	<form id="frmIncLancamento" name="frmIncLancamento" class="formulario" onSubmit="return false;" style="display:block">
-	
-
 		<fieldset style="display:block;">
 
 			<label for="dtmvtolt"><? echo utf8ToHtml("Data:") ?></label>
@@ -29,7 +27,6 @@
 			<fieldset id="fsIncLancamento" style="display:block">
 			<legend><? echo utf8ToHtml("Inclusão de Lançamentos") ?></legend>
 				<fieldset>			
-						            
 					<label for="cdhistor"><? echo utf8ToHtml("Hist. Aimaro:") ?></label>
 					<input name="cdhistor" type="text"  id="cdhistor" class="inteiro campo" style="width: 55px;">
 
@@ -46,7 +43,7 @@
 					<input name="cdhistor_padrao" type="text"  id="cdhistor_padrao" class="inteiro campo" style="width: 50px;">
 							
 					<label for="dslancamento"><? echo utf8ToHtml("Descrição:") ?></label>
-					<input name="dslancamento" type="text"  id="dslancamento" class="campo" style="width: 380px;">
+					<input name="dslancamento" type="text"  id="dslancamento" class="campo" style="width: 380px; text-transform: uppercase;">
 				</fieldset>				          			 	
 
 				<div id="divTabBotoesGerRis">
@@ -59,7 +56,6 @@
 						</tr>
 					</tbody></table>
 				</div>
-				
 				
 				<div id="divRateio" style="display:none">	
 
@@ -76,7 +72,6 @@
 						<div id="tabRiscoRat">
 							<fieldset id="fsTabRiscolRat" style="display:block">			
 							<div class="divRegistros">
-								
 								<table class="tituloRegistros" id="tbRiscoRat">
 									<thead>								
 										<tr>
@@ -92,10 +87,8 @@
 						</div>	        
 					</fieldset>	
 
-										
 					<fieldset id="fsGerencialRat" style="display:none">
 					<legend style="text-align: center" ><? echo utf8ToHtml("Rateio Gerencial") ?></legend>								    		
-						
 						<div id="incGerencialRat">
 							<label for="cdgerencialRat"><? echo utf8ToHtml("Gerencial:") ?></label>
 							<input name="cdgerencialRat" type="text"  id="cdgerencialRat" class="inteiro campo" style="width: 55px;">
@@ -144,8 +137,6 @@
 				</tr>
 			</tbody></table>
 		</div>
-
-	    	
 	</form>		
 </div>	
 

@@ -23,7 +23,7 @@
 	$nrctadeb   = (isset($_POST["nrctadeb"]))    ? $_POST["nrctadeb"]    : ""; // 
 	$nrctacrd   = (isset($_POST["nrctacrd"]))    ? $_POST["nrctacrd"]    : ""; // 
 	$vllanmto   = (isset($_POST["vllanmto"]))    ? $_POST["vllanmto"]    : ""; // 
-	$dslancamento   = (isset($_POST["dslancamento"]))    ? $_POST["dslancamento"]    : ""; // 
+	$dslancamento   = (isset($_POST["dslancamento"])) ? strtoupper($_POST["dslancamento"]) : ""; // 
 	$vltotrat = (isset($_POST["vltotrat"]))    ? $_POST["vltotrat"]    : ""; // valor total do rateio
 	$cdhistor_padrao = (isset($_POST["cdhistor_padrao"]))    ? $_POST["cdhistor_padrao"]    : ""; 
     $nrseqlan = (isset($_POST["nrseqlan"]))    ? $_POST["nrseqlan"]    : ""; 

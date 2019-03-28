@@ -78,10 +78,6 @@
 			    <input type="hidden" id="dslancamentoh" name="dslancamentoh" value="<? echo getByTagName($lancamentos[$i]->tags,'dslancamento'); ?>" /> 
 				<input type="hidden" id="cdoperadh" name="cdoperadh" value="<? echo getByTagName($lancamentos[$i]->tags,'cdoperad'); ?>" /> 
 		        <input type="hidden" id="dsoperadorh" name="dsoperadorh" value="<? echo getByTagName($lancamentos[$i]->tags,'dsoperador'); ?>" /> 
-
-
-
-					
 						</tr>
 						<? } ?>
 
@@ -89,34 +85,6 @@
 			</table>				
 		</div> 
 
-		<div id="divRegistrosRodape" class="divRegistrosRodape">	
-			<table>	
-				<tr>
-					<td>
-						<? if (isset($qtregist) and $qtregist == 0){ $nriniseq = 0;} ?>
-						<? if ($nriniseq > 1){ ?>
-							   <a class="paginacaoAnt"><<< Anterior</a>
-						<? }else{ ?>
-								&nbsp;
-						<? } ?>
-					</td>
-					<td>
-						<? if (isset($nriniseq)) { ?>
-							   Exibindo <? echo $nriniseq; ?> at&eacute; <? if (($nriniseq + $nrregist) > $qtregist) { echo $qtregist; } else { echo ($nriniseq + $nrregist - 1); } ?> de <? echo $qtregist; ?>
-						<? } ?>
-					</td>
-					<td>
-						<? if($qtregist > ($nriniseq + $nrregist - 1)) { ?>
-							  <a class="paginacaoProx">Pr&oacute;ximo >>></a>
-						<? }else{ ?>
-								&nbsp;
-						<? } ?>
-					</td>
-				</tr>
-			</table>
-		</div>	
-
-		
 		<fieldset id="fsTabIncLancamentot" style="vertical-align: bottom;">			    				
 			
 			<label for="dslancamentot"><? echo utf8ToHtml("Descrição:") ?></label>
