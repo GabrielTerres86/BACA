@@ -496,6 +496,8 @@ procedure pc_calc_app_programada (pr_cdcooper  in crapcop.cdcooper%type,        
                                      ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE  --> Contrato
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Nome do PDF                           
+                                     ,pr_dssrvarq OUT VARCHAR2              --> Diretorio do servidor do PDF                           
+                                     ,pr_dsdirarq OUT VARCHAR2              --> Diretorio do PDF                           
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
 
@@ -641,6 +643,7 @@ procedure pc_calc_app_programada (pr_cdcooper  in crapcop.cdcooper%type,        
 
 END APLI0008;
 /
+
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
   /* ------------------------------------------------------------------------------------
   Programa: APLI0008
@@ -1001,7 +1004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
             pr_dscritic := 'Erro atualizacao CRAPLOT';
             raise vr_exc_erro_rb;
         End;
-        
+
         -- Recuperar próximo número RPP
         vr_nrseqted := cecred.fn_sequence(pr_nmtabela => 'CRAPMAT',
                                            pr_nmdcampo => 'NRRDCAPP',
@@ -1009,6 +1012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                                            pr_flgdecre => 'N');
 
         -- Efetuar Inclusao na RPP
+
         Begin
           Insert into craprpp
             (nrctrrpp,         -- Numero da poupanca programada.
@@ -1059,7 +1063,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
              pr_dtvctopp,      -- Data de vencimento da poupanca programada. - prov. Tela
              pr_cdoperad,      
              pr_cdagenci,
-             to_date(sysdate,'DD/MM/YYYY'), -- Data  de criação do registro
+             TRUNC(sysdate), -- Data  de criação do registro
              pr_dtinirpp,      -- Data de início do periodo.
              add_months(pr_dtinirpp,1),      -- Data de fim do periodo.
              pr_dtinirpp,      -- Data de inicio da poupanca programada.
@@ -1087,7 +1091,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
              Returning rowid into pr_rpprowid;
         Exception
           When Others Then
-            pr_dscritic := 'Erro insercao craprpp';
+            pr_dscritic := 'Erro insercao craprpp: ' || SQLERRM;
             raise vr_exc_erro_rb;
         End;
 
@@ -1112,7 +1116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
               );
         Exception
             When Others Then
-              pr_dscritic := 'Erro atualizacao CRAPSPP';
+              pr_dscritic := 'Erro atualizacao CRAPSPP: ' || SQLERRM;
               raise vr_exc_erro_rb;
         End;
         -- Se for necessário gerar log
@@ -1209,7 +1213,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
       -- Variaveis de entrada
       vr_dtmvtolt Date := TO_DATE(pr_dtmvtolt,'DD/MM/YYYY');  
       vr_dtinirpp Date := TO_DATE (pr_dtinirpp,'DD/MM/YYYY'); 
-      vr_dtvctopp Date := TO_DATE(pr_dtvctopp,'DD/MM/YYYY');  
+      vr_dtvctopp Date;
+      vr_pzmaxpro pls_integer := 0;      -- Prazo 
 
       -- Variaveis de retorno
       vr_nrctrrpp craprpp.nrctrrpp%TYPE;
@@ -1229,6 +1234,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
       vr_xml_temp VARCHAR2(32767);
       vr_clobxmlc CLOB;
     
+      CURSOR cr_craptab (pr_cdcooper crapcop.cdcooper%TYPE) IS
+        SELECT * 
+        FROM   craptab tab
+        WHERE  tab.cdcooper = pr_cdcooper
+        AND    tab.nmsistem = 'CRED'
+        AND    tab.tptabela = 'GENERI'     
+        AND    tab.cdempres = 0           
+        AND    tab.cdacesso = 'PZMAXPPROG' 
+        AND    tab.tpregist = 2;                
+      rw_craptab cr_craptab%ROWTYPE;
+
     BEGIN
        -- Recupera dados de log para consulta posterior
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -1246,6 +1262,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
         RAISE vr_exc_erro;
       END IF;     
 
+      IF pr_dtvctopp IS NULL THEN
+            Open cr_craptab (vr_cdcooper);
+            Fetch cr_craptab Into rw_craptab;
+            CLOSE cr_craptab;
+            IF (rw_craptab.dstextab IS NULL) THEN
+                vr_pzmaxpro := 0;
+            ELSE
+                    vr_pzmaxpro := rw_craptab.dstextab;
+                END IF;
+                vr_dtvctopp := add_months(vr_dtinirpp,vr_pzmaxpro);
+       ELSE
+         vr_dtvctopp := TO_DATE(pr_dtvctopp,'DD/MM/YYYY');  
+       END IF;
       
       -- Efetua a inclusão da Aplicação Programada
       apli0008.pc_incluir_apl_prog(pr_cdcooper => vr_cdcooper,
@@ -1305,7 +1334,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
     Exception
       When vr_exc_erro Then
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
-			  pr_cdcritic := vr_cdcritic;
+              pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
@@ -1987,7 +2016,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                                ,pr_inrendim => 0             -- Nao precisa carregar rendimento
                                ,pr_vlbascal => vr_vlbascal
                                ,pr_vlsdtoap => vr_vlsdtoap
-                               ,pr_vlsdrgap => pr_vlsdrdpp
+                               ,pr_vlsdrgap => pr_vlsdrdpp 
+                          /*   ,pr_vlsdtoap => pr_vlsdrdpp
+                               ,pr_vlsdrgap => vr_vlsdtoap   */-- retornar valor bruto
+                               
                                ,pr_vlrebtap => vr_vlrebtap
                                ,pr_vlrdirrf => vr_vlrdirrf
                                ,pr_des_erro => pr_des_erro);
@@ -2491,7 +2523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
      Alteracoes: 20/12/2018 - Adequação do ROLLBACK no tratamento de excecao (Anderson)
 
                  16/01/2019 - Remocao da chamada das procedures apli0006.pc_taxa_acumul_aplic_pos e _pre
-	                          pois seu output nao eh utilizado (Anderson).
+                              pois seu output nao eh utilizado (Anderson).
     ..............................................................................*/                
       
       DECLARE
@@ -2844,7 +2876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
 
                  -- Verifica se deve gerar log
                  IF pr_idgerlog = 1 THEN
-				    ROLLBACK;
+                    ROLLBACK;
                     GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                         ,pr_cdoperad => pr_cdoperad
                                         ,pr_dscritic => vr_dscritic
@@ -2864,7 +2896,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                  pr_dscritic := 'Erro nao tratado APLI0008.pc_buscar_extrato_apl_prog: ' || SQLERRM;
                  -- Verifica se deve gerar log
                  IF pr_idgerlog = 1 THEN
-				    ROLLBACK;
+                    ROLLBACK;
                     GENE0001.pc_gera_log (pr_cdcooper => pr_cdcooper
                                          ,pr_cdoperad => pr_cdoperad
                                          ,pr_dscritic => vr_dscritic
@@ -6816,6 +6848,8 @@ END pc_calc_app_programada;
                                      ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE  --> Contrato
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Nome do PDF                           
+                                     ,pr_dssrvarq OUT VARCHAR2              --> Diretorio do servidor do PDF                           
+                                     ,pr_dsdirarq OUT VARCHAR2              --> Diretorio do PDF                           
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
     /* .............................................................................
@@ -7059,6 +7093,15 @@ END pc_calc_app_programada;
         vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
         RAISE vr_exc_erro; -- encerra programa
       END IF;
+    ELSE
+          gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper, 
+                                          pr_dsdirecp => vr_dsdireto ||'/rl/', 
+                                          pr_nmarqucp => pr_nmarqpdf, 
+                                          pr_flgcopia => 1, 
+                                          pr_dssrvarq => pr_dssrvarq, 
+                                          pr_dsdirarq => pr_dsdirarq,
+                                          pr_des_erro => vr_dscritic);
+
     END IF;        
     
     --> Gerar log de sucesso
@@ -7177,6 +7220,8 @@ END pc_calc_app_programada;
     vr_dscritic crapcri.dscritic%TYPE;
     
     vr_nmarqpdf VARCHAR2(100);
+    vr_dssrvarq VARCHAR2(200);
+    vr_dsdirarq VARCHAR2(200);
     
     -- Variaveis auxiliares
     vr_exc_erro EXCEPTION;
@@ -7227,6 +7272,8 @@ END pc_calc_app_programada;
                               ,pr_nrctrrpp => pr_nrctrrpp
                               ,pr_flgerlog => pr_flgerlog
                               ,pr_nmarqpdf => vr_nmarqpdf
+                              ,pr_dssrvarq => vr_dssrvarq
+                              ,pr_dsdirarq => vr_dsdirarq
                               ,pr_cdcritic => vr_cdcritic
                               ,pr_dscritic => vr_dscritic);
 
@@ -7247,6 +7294,8 @@ END pc_calc_app_programada;
                             ,pr_texto_novo     => 
                             '<Registro>'||
                             '<nmarqpdf>'||vr_nmarqpdf||'</nmarqpdf>'||
+                            '<dssrvarq>'||NVL(vr_dssrvarq,'')||'</dssrvarq>'||
+                            '<dsdirarq>'||NVL(vr_dsdirarq,'')||'</dsdirarq>'||
                             '</Registro>'
                             );
      -- Encerrar a tag raiz 
@@ -7807,6 +7856,10 @@ END pc_calc_app_programada;
 
       vr_dstextab_apli  craptab.dstextab%TYPE;
       vr_percenir       NUMBER;
+      
+      vr_perirapl NUMBER := 0;
+      vr_valortir  NUMBER := 0;
+      
       vr_vlsdrdppe      NUMBER;
       vr_vlresgat       NUMBER;
       vr_saldorpp       NUMBER;
@@ -7823,6 +7876,21 @@ END pc_calc_app_programada;
       vr_rpp_txaplmes   NUMBER := 0;
       vr_dtmvtopr       DATE := pr_dtmvtolt; -- data da operação deve ser igual a do movimento para que o crédito seja efetivado no mesmo dia
       vr_fase           PLS_INTEGER:=0;
+
+      vr_dsinfor1 VARCHAR2(1000);
+      vr_dsinfor2 VARCHAR2(1000);
+      vr_dsinfor3 VARCHAR2(1000);
+      vr_nrdconta VARCHAR2(1000);
+      vr_nmextttl VARCHAR2(1000);      
+      vr_dsprotoc crappro.dsprotoc%TYPE;
+      vr_nmcidade crapage.nmcidade%TYPE;
+
+      -- Variaveis Erro
+      vr_des_erro VARCHAR2(1000);
+
+      --Registro do tipo calendario
+      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+
       -- Cursores
       -- Lote
       CURSOR cr_craplot IS
@@ -7866,6 +7934,58 @@ END pc_calc_app_programada;
          AND craprpp.nrctrrpp = pr_nrctrrpp
          FOR UPDATE NOWAIT;
     rw_craprpp cr_craprpp%ROWTYPE;   
+
+    -- Cursor para encontrar o associado
+    CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    SELECT ass.nrdconta
+          ,ass.nmprimtl
+          ,ass.vllimcre
+          ,ass.nrcpfcgc
+          ,ass.inpessoa
+          ,ass.cdcooper
+          ,ass.cdagenci
+          ,ass.idastcjt
+      FROM crapass ass
+     WHERE ass.cdcooper = pr_cdcooper
+       AND ass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;   
+
+    --Selecionar informacoes do titular
+    CURSOR cr_crapttl (pr_cdcooper IN crapttl.cdcooper%type
+                      ,pr_nrdconta IN crapttl.nrdconta%type
+                      ,pr_idseqttl IN crapttl.idseqttl%type) IS
+    SELECT ttl.nmextttl
+          ,ttl.nrcpfcgc
+      FROM crapttl ttl
+     WHERE ttl.cdcooper = pr_cdcooper
+       AND ttl.nrdconta = pr_nrdconta
+       AND ttl.idseqttl = pr_idseqttl;
+    rw_crapttl cr_crapttl%ROWTYPE;
+    
+    -- Busca as informações da cooperativa conectada
+    CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+    SELECT crapcop.cdcooper
+          ,crapcop.dsdircop
+          ,crapcop.cdbcoctl
+          ,crapcop.cdagectl
+          ,crapcop.nmrescop
+          ,crapcop.vlinimon
+          ,crapcop.vllmonip
+          ,crapcop.nmextcop
+          ,crapcop.nrdocnpj
+          ,crapcop.nrtelura
+     FROM crapcop crapcop
+    WHERE crapcop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;
+    
+    -- Cursosr para encontrar a cidade do PA do associado
+    CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE
+                     ,pr_cdagenci IN crapage.cdagenci%TYPE) IS
+    SELECT age.nmcidade
+      FROM crapage age
+     WHERE age.cdcooper = pr_cdcooper 
+       AND age.cdagenci = pr_cdagenci;
 
     -- Procedures Internas
     PROCEDURE pc_gera_resgate_apl_prog (pr_cdcooper crapcop.cdcooper%TYPE
@@ -8885,6 +9005,179 @@ END pc_calc_app_programada;
             END IF;
 
          END IF; -- Resgate não agendado
+
+     /*##############################
+         INICIO GERA PROTOCOLO
+     ###############################*/
+     -- Verifica se a cooperativa esta cadastrada
+     OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+     
+     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+     
+     -- Se não encontrar
+     IF BTCH0001.cr_crapdat%NOTFOUND THEN
+       
+       -- Fechar o cursor pois haverá raise
+       CLOSE BTCH0001.cr_crapdat;
+       
+       -- Montar mensagem de critica
+       vr_cdcritic := 1;
+       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       
+       -- Gera exceção
+       RAISE vr_exc_saida;
+       
+     ELSE
+       -- Apenas fechar o cursor
+       CLOSE BTCH0001.cr_crapdat;
+       
+     END IF;
+    
+     -- Encontra registro do associado
+     OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta);
+                      
+     FETCH cr_crapass INTO rw_crapass;
+       
+     IF cr_crapass%NOTFOUND THEN
+         
+       -- Fecha o cursor
+       CLOSE cr_crapass;
+         
+       -- Monta critica
+       vr_cdcritic := 9;
+       vr_dscritic := NULL;
+         
+       -- Gera exceção
+       RAISE vr_exc_saida;
+         
+     ELSE
+       -- Fecha o cursor
+       CLOSE cr_crapass;   
+       
+     END IF;        
+    
+       -- Busca cooperativa
+     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+     
+     FETCH cr_crapcop INTO rw_crapcop;
+     
+     --Se nao encontrou
+     IF cr_crapcop%NOTFOUND THEN
+       
+       --Fechar Cursor
+       CLOSE cr_crapcop;
+       
+       vr_cdcritic:= 651;
+       vr_dscritic:= NULL;
+       
+       -- Gera exceção
+       RAISE vr_exc_saida;
+       
+     END IF;
+     
+     --Fechar Cursor
+     CLOSE cr_crapcop;
+    
+     -- Busca a cidade do PA do associado
+     OPEN cr_crapage(pr_cdcooper => rw_crapass.cdcooper
+                    ,pr_cdagenci => rw_crapass.cdagenci);
+                          
+     FETCH cr_crapage INTO vr_nmcidade;
+           
+     IF cr_crapage%NOTFOUND THEN
+       --Fechar Cursor
+       CLOSE cr_crapage;
+               
+       vr_cdcritic:= 962;
+       vr_dscritic:= NULL;
+               
+       -- Gera exceção
+       RAISE vr_exc_saida;
+     ELSE
+       -- Fechar o cursor
+       CLOSE cr_crapage;
+             
+     END IF; 
+    
+     --Formata nrdconta para visualizacao na internet 
+     vr_nrdconta:= GENE0002.fn_mask_conta(rw_crapass.nrdconta);
+       
+     --Trocar o ultimo ponto por traco
+     vr_nrdconta:= SubStr(vr_nrdconta,1,Length(vr_nrdconta)-2)||'-'||
+                   SubStr(vr_nrdconta,Length(vr_nrdconta),1);
+       
+     --Se for pessoa fisica
+     IF rw_crapass.inpessoa = 1 THEN
+         
+       --ome do titular que fez a transferencia
+       OPEN cr_crapttl (pr_cdcooper => rw_crapass.cdcooper
+                       ,pr_nrdconta => rw_crapass.nrdconta
+                       ,pr_idseqttl => pr_idseqttl);
+         
+       --Posicionar no proximo registro
+       FETCH cr_crapttl INTO rw_crapttl;
+         
+       --Se nao encontrar
+       IF cr_crapttl%NOTFOUND THEN
+         --Fechar Cursor
+         CLOSE cr_crapttl;
+           
+         vr_cdcritic:= 0;
+         vr_dscritic:= 'Titular nao encontrado.';
+           
+         -- Gera exceção
+         RAISE vr_exc_saida;
+       END IF;
+         
+       --Fechar Cursor
+       CLOSE cr_crapttl;
+         
+       --Nome titular
+       vr_nmextttl:= rw_crapttl.nmextttl;
+         
+     ELSE
+       vr_nmextttl:= rw_crapass.nmprimtl;
+     END IF;
+    
+     vr_dsinfor1:= 'Resgate Aplic. Programada';          
+    
+     vr_dsinfor2:= vr_nmextttl ||'#' ||
+                   'Conta/dv: ' ||vr_nrdconta ||' - '||
+                   rw_crapass.nmprimtl||'#'|| gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
+                   ' - '|| rw_crapcop.nmrescop;
+     vr_dsinfor3:= 'Data do Resgate: '   || TO_CHAR(pr_dtmvtolt,'dd/mm/yyyy')           || '#' ||
+                   'Numero do Resgate: ' || TO_CHAR(pr_nrctrrpp,'9G999G990')    || '#' ||
+           'IRRF (Imposto de Renda Retido na Fonte): ' || gene0002.fn_mask(NVL(vr_valortir, '0'),'zzz.zzz.zz9,99' ) || '#' ||
+                   'Aliquota IRRF: '       || TO_CHAR(NVL(vr_perirapl, '0'), 'fm990D00') || '%' || '#'  ||
+                   'Valor Bruto: '         || TO_CHAR(pr_vlresgat  + vr_valortir,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') || '#'  ||                                 
+                   'Cooperativa: '         || UPPER(rw_crapcop.nmextcop) || '#' || 
+                   'CNPJ: '                || TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) || '#' ||
+                   UPPER(TRIM(vr_nmcidade)) || ', ' || TO_CHAR(pr_dtmvtolt,'dd') || ' DE ' || GENE0001.vr_vet_nmmesano(TO_CHAR(pr_dtmvtolt,'mm')) || ' DE ' || TO_CHAR(pr_dtmvtolt,'RRRR') || '.';                             
+    
+     --Gerar protocolo
+     GENE0006.pc_gera_protocolo(pr_cdcooper => pr_cdcooper                         --> Código da cooperativa
+                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt                 --> Data movimento
+                               ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) --> Hora da transação NOK
+                               ,pr_nrdconta => pr_nrdconta                         --> Número da conta
+                               ,pr_nrdocmto => pr_nrctrrpp                         --> Número do documento
+                               ,pr_nrseqaut => 0                                   --> Número da sequencia
+                               ,pr_vllanmto => pr_vlresgat                         --> Valor lançamento
+                               ,pr_nrdcaixa => pr_nrdcaixa                                   --> Número do caixa NOK
+                               ,pr_gravapro => TRUE                                --> Controle de gravação
+                               ,pr_cdtippro => 12                                  --> Código de operação
+                               ,pr_dsinfor1 => vr_dsinfor1                         --> Descrição 1
+                               ,pr_dsinfor2 => vr_dsinfor2                         --> Descrição 2
+                               ,pr_dsinfor3 => vr_dsinfor3                         --> Descrição 3
+                               ,pr_dscedent => NULL                                --> Descritivo
+                               ,pr_flgagend => FALSE                               --> Controle de agenda
+                               ,pr_nrcpfope => 0                                   --> Número de operação
+                               ,pr_nrcpfpre => 0                                   --> Número pré operação
+                               ,pr_nmprepos => ''                                  --> Nome
+                               ,pr_dsprotoc => vr_dsprotoc                         --> Descrição do protocolo
+                               ,pr_dscritic => vr_dscritic                         --> Descrição crítica
+                               ,pr_des_erro => vr_des_erro);                       --> Descrição dos erros de processo
+                             
          IF (vr_cdcritic IS NOT NULL ) OR (vr_dscritic IS NOT NULL) THEN
             RAISE vr_exc_saida;
          END IF;
@@ -9734,5 +10027,319 @@ END pc_calc_app_programada;
 
   END pc_manter_conf_apl_prog_web;
 
-END APLI0008; 
+  PROCEDURE pc_ObterListaPlanoAplProg (pr_cdcooper IN crapcop.cdcooper%TYPE            --> Cooperativa
+                                      ,pr_idorigem IN INTEGER                          --> Identificador da Origem
+                                      ,pr_nrdconta IN craprda.nrdconta%TYPE            --> Nro da conta da aplicacao RDCA
+                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE            --> Data do movimento atual
+                                      ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE            --> Data do proximo movimento
+                                      ,pr_idseqttl IN INTEGER                          --> Identificador Sequencial
+                                      ,pr_situacao IN INTEGER                          --> (0 = Todos, 1 = Ativos, 2 = Suspensos, 3 = Desativado: Não ativos, cancelados e vencidos)
+                                      ,pr_tpinvest IN INTEGER                          --> (0 = Todos, 1/2 = Poupança Programada de planos antigos, 3 = Indexador Pre, 4 = Indexador POS)
+                                      ,pr_cdagenci IN crapage.cdagenci%TYPE            --> Codigo da Agencia
+                                      ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE            --> Numero do caixa
+                                      ,pr_cdoperad IN craplrg.cdoperad%TYPE            --> Codigo do Operador
+                                      ,pr_cdprogra IN crapprg.cdprogra%TYPE            --> Nome do programa chamador
+                                      ,pr_flgerlog IN INTEGER                          --> Flag erro log
+                                      ,pr_cdcritic OUT PLS_INTEGER                     --> Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2                        --> Descrição da crítica
+                                      ,pr_retxml   IN OUT NOCOPY XMLType) IS               --> Arquivo de retorno do XML
+  BEGIN
+  /* .............................................................................
+
+   Programa: pc_ObterListaPlanoAplProg               
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : CIS Corporate
+   Data    : Outubro/2018.                        Ultima atualizacao: 10/10/2018
+
+   Dados referentes ao programa:
+
+   Frequencia: Sempre que necessário
+   Objetivo  : Rotina para consultar saldo e demais dados de poupancas programadas e aplicações programadas pelo IB
+
+   Alteracoes: 
+  ............................................................................. */
+    DECLARE
+
+      --Selecionar informacoes das poupancas programadas e/ou aplicações programadas
+      CURSOR cr_craprpp (pr_cdcooper craprpp.cdcooper%TYPE,
+                         pr_nrdconta craprpp.nrdconta%TYPE,
+                         pr_situacao INTEGER, -- (1 = Ativos, 2 = Suspensos, 3 = Desativado: Não ativos, cancelados e vencidos, 4 = Todos)
+                         pr_tpinvest INTEGER  -- (0 = Antigas, 1 = Pre, 2 = Pos, 3 = Todas
+                         ) IS
+        SELECT rpp.nrctrrpp    -- Numero do contrato
+              ,rpp.nrdconta    -- Numero da conta
+              ,rpp.vlprerpp    -- Valor da parcela
+              ,rpp.dtinirpp    -- Data de início do plano
+              ,rpp.cdsitrpp    -- Situacao do plano (1 =  Ativa, 2 = Suspensa, 3/4 = Cancelada, 5 = Vencida)
+              ,rpp.cdprodut    -- Código Produto
+              ,rpp.dtiniper    -- Inicio do periodo - necessário para calculo
+              ,rpp.dtfimper    -- Fim do periodo - necessário para calculo
+              ,rpp.cdopeori    -- Código do operador
+              ,NVL(rpp.vlabcpmf,0) vlabcpmf -- CPMF - necessário para calculo
+              ,(CASE 
+                     WHEN ((rpp.dsfinali IS NULL) and (cpc.nmprodut IS NOT NULL)) OR ((rpp.dsfinali IS NOT NULL) and (trim(rpp.dsfinali))is null)  THEN cpc.nmprodut
+                     WHEN (rpp.dsfinali IS NULL) and (cpc.nmprodut IS NULL) OR ((rpp.dsfinali IS NOT NULL) and (trim(rpp.dsfinali))is null) THEN 'Poupança Programada'
+                     WHEN ((rpp.dsfinali IS NOT NULL) and (trim(rpp.dsfinali))is not null) THEN rpp.dsfinali
+                     END) dsfinali -- Finalidade
+              ,(CASE 
+                    WHEN (rpp.diadebit IS NOT NULL) THEN rpp.diadebit
+                    ELSE extract (day from dtdebito)
+                    END) diadebit -- Dia de débito
+              ,rpp.ROWID
+        FROM craprpp rpp, crapcpc cpc
+        WHERE rpp.cdcooper = pr_cdcooper
+        AND   rpp.nrdconta = pr_nrdconta
+        AND   cpc.cdprodut(+) = rpp.cdprodut -- Para trazer tudo, antigo ou novos
+        AND   ( -- Tipo do investimento
+               (pr_tpinvest = 0 AND rpp.cdprodut < 1) OR -- aplicacoes antigas
+               (pr_tpinvest = cpc.idtippro AND rpp.cdprodut >0) OR -- aplicacoes novas (PRE ou POS)
+               (pr_tpinvest = 3)) -- TODAS
+        AND   ( -- Situacao
+               (rpp.cdsitrpp = 1 AND pr_situacao = 1) OR -- Ativos
+               (rpp.cdsitrpp = 2 AND pr_situacao = 2) OR -- Suspensos
+               (rpp.cdsitrpp in (0,3,4,5) AND pr_situacao = 3) OR -- Não ativos
+               (pr_situacao = 4)); -- Todas;
+        
+      rw_craprpp cr_craprpp%ROWTYPE;
+    
+       --Variaveis Locais
+      vr_vlsdrdpp NUMBER(25,8); -- saldo total
+      vr_vlrgtrpp NUMBER(25,8); -- saldo resgate
+      vr_dsorigem VARCHAR2(40);
+      vr_dstransa VARCHAR2(100);
+
+      vr_situacao INTEGER;
+      vr_tpinvest INTEGER;
+
+      --Variaveis de retorno de erro
+      vr_des_erro VARCHAR2(4000);
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(4000);
+
+      --Variaveis de Indice para tabela memoria
+
+      vr_tab_dados_rpp typ_tab_dados_rpp;
+      vr_tab_erro GENE0001.typ_tab_erro;
+
+        
+      vr_texto_novo VARCHAR2(5000);
+
+      -- Variaveis de XML 
+      vr_xml_temp VARCHAR2(32767);
+      vr_clobxmlc CLOB;
+
+
+      -- Rowid para tabela de log
+      vr_nrdrowid ROWID;
+
+      --Variaveis de Excecao
+      vr_exc_erro EXCEPTION; --ERRO
+      vr_exc_pula EXCEPTION; --NEXT
+      vr_exc_sair EXCEPTION; --LEAVE
+
+    BEGIN
+
+      --Limpar tabela de memoria
+      vr_tab_erro.delete;
+      --Se for para gerar log
+      IF pr_flgerlog = 1  THEN
+        --Atribuir Descricao da Origem
+        vr_dsorigem:= GENE0001.vr_vet_des_origens(pr_idorigem);
+        --Atribuir Descricao da Transacao
+        vr_dstransa:= 'Consulta de poupanca programada SOA';
+      END IF;
+
+      --Inicializar variaveis
+      vr_cdcritic:= 0;
+      vr_dscritic:= NULL;
+      
+      -- Verifica se os parâmetros são válidos
+      if pr_situacao not in (1,2,3,4) THEN
+         vr_dscritic := 'Valor invalido para pr_situacao';
+         RAISE vr_exc_erro;
+      END IF;
+
+      if pr_tpinvest not in (0,1,2,3) THEN
+         vr_dscritic := 'Valor invalido para pr_tpinvest';
+         RAISE vr_exc_erro;
+      END IF;
+      
+      IF ((pr_situacao IS NULL) OR (pr_situacao = 0)) THEN
+        vr_situacao := 4;
+      ELSE 
+        vr_situacao := pr_situacao;
+      END IF;
+      
+      IF pr_tpinvest = 0 THEN  
+        vr_tpinvest := 3;
+      ELSIF pr_tpinvest IN (1,2) THEN
+        vr_tpinvest := 2; -- PRE OU POS (1 E 2)
+      ELSE
+        vr_tpinvest := 0; 
+      END IF;
+
+      --Selecionar informacoes das poupancas programadas
+      OPEN cr_craprpp (pr_cdcooper => pr_cdcooper,
+                       pr_nrdconta => pr_nrdconta,
+                       pr_situacao => vr_situacao,
+                       pr_tpinvest => vr_tpinvest);
+
+      -- Criar cabeçalho do XML
+      dbms_lob.createtemporary(vr_clobxmlc, TRUE); 
+      dbms_lob.open(vr_clobxmlc, dbms_lob.lob_readwrite);
+      -- Insere o cabeçalho do XML 
+      gene0002.pc_escreve_xml (pr_xml            => vr_clobxmlc 
+                              ,pr_texto_completo => vr_xml_temp 
+                              ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados>');
+
+      LOOP
+        --Posicionar no proximo registro
+        FETCH cr_craprpp INTO rw_craprpp;
+        --Sair quando nao encontrar mais registros
+        EXIT WHEN cr_craprpp%NOTFOUND;
+
+        BEGIN
+              vr_vlsdrdpp := 0;
+              If rw_craprpp.cdprodut < 1 Then 
+                --Executar rotina para calcular saldo poupanca programada
+                apli0001.pc_calc_saldo_rpp (pr_cdcooper => pr_cdcooper
+                                           ,pr_cdprogra => pr_cdprogra
+                                           ,pr_inproces => 0
+                                           ,pr_percenir => 0
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctrrpp => rw_craprpp.nrctrrpp
+                                           ,pr_dtiniper => rw_craprpp.dtiniper
+                                           ,pr_dtfimper => rw_craprpp.dtfimper
+                                           ,pr_vlabcpmf => rw_craprpp.vlabcpmf
+                                           ,pr_dtmvtolt => pr_dtmvtolt
+                                           ,pr_dtmvtopr => pr_dtmvtopr
+                                           ,pr_vlsdrdpp => vr_vlsdrdpp
+                                           ,pr_des_erro => vr_des_erro);
+                                             
+              Else -- Aplicacao Programada
+                pc_buscar_detalhe_apl_prog (pr_cdcooper => pr_cdcooper
+                                           ,pr_cdoperad => pr_cdoperad
+                                           ,pr_nmdatela => pr_cdprogra
+                                           ,pr_idorigem => pr_idorigem
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_idseqttl => pr_idseqttl
+                                           ,pr_nrctrrpp => rw_craprpp.nrctrrpp
+                                           ,pr_dtmvtolt => pr_dtmvtolt
+                                           ,pr_tab_dados_rpp => vr_tab_dados_rpp
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+
+                 IF vr_dscritic IS NULL AND vr_tab_dados_rpp.COUNT>0 THEN
+                    vr_vlsdrdpp:=vr_tab_dados_rpp(1).vlsdtoap; -- saldo total
+                    vr_vlrgtrpp:=vr_tab_dados_rpp(1).vlsdrdpp; -- saldo resgate
+                 END IF;
+              END IF; -- Aplicacao Programada
+
+              vr_texto_novo := vr_texto_novo ||
+                              '<Registro>'||
+                              '<nrctrrpp>'||rw_craprpp.nrctrrpp||'</nrctrrpp>'||
+                              '<cdsitrpp>'||rw_craprpp.cdsitrpp||'</cdsitrpp>'||
+                              '<dtinirpp>'||TO_CHAR(rw_craprpp.dtinirpp, 'DD/MM/YYYY')||'</dtinirpp>'||
+                              '<diadebit>'||rw_craprpp.diadebit||'</diadebit>'||
+                              '<vlprerpp>'||rw_craprpp.vlprerpp||'</vlprerpp>'||
+                              '<dsfinali>'||rw_craprpp.dsfinali||'</dsfinali>'||
+                              '<cdopeori>'||rw_craprpp.cdopeori||'</cdopeori>'||
+                              '<sldtotal>'||vr_vlsdrdpp||'</sldtotal>'||
+                              '<sldresga>'||vr_vlrgtrpp||'</sldresga>'||
+                              '</Registro>';
+             gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc
+                                    ,pr_texto_completo => vr_xml_temp 
+                                    ,pr_texto_novo     => vr_texto_novo);
+             vr_texto_novo :='';                                                           
+
+/*
+              --Encontrar o proximo indice para a tabela
+              vr_index_tab:= vr_tab_dados_rpp.Count+1;
+              --Atualizar informacoes na tabela de memoria
+              vr_tab_dados_rpp(vr_index_tab).nrctrrpp:= rw_craprpp.nrctrrpp;
+              vr_tab_dados_rpp(vr_index_tab).indiadeb:= rw_craprpp.diadebit;
+              vr_tab_dados_rpp(vr_index_tab).vlprerpp:= rw_craprpp.vlprerpp;
+              vr_tab_dados_rpp(vr_index_tab).vlsdrdpp:= vr_vlsdrdpp;
+              vr_tab_dados_rpp(vr_index_tab).vlrgtrpp:= vr_vlrgtrpp;
+              vr_tab_dados_rpp(vr_index_tab).dtinirpp:= rw_craprpp.dtinirpp;
+              vr_tab_dados_rpp(vr_index_tab).cdtiparq:= 0;
+              vr_tab_dados_rpp(vr_index_tab).cdprodut:= rw_craprpp.cdprodut;          
+              vr_tab_dados_rpp(vr_index_tab).dsfinali:= rw_craprpp.dsfinali;          
+              vr_tab_dados_rpp(vr_index_tab).nrdrowid:= rw_craprpp.ROWID;
+*/
+    
+        EXCEPTION
+          WHEN vr_exc_erro THEN
+            vr_dscritic := 'Erro';
+            RAISE vr_exc_erro;
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro';
+            RAISE vr_exc_erro;
+        END;
+      END LOOP;  --cr_craprpp
+      --Fechar Cursor
+      CLOSE cr_craprpp;
+
+        -- Encerrar a tag raiz 
+        gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '</Dados></Root>' 
+                               ,pr_fecha_xml      => TRUE);
+        
+        pr_retxml := XMLType.createXML(vr_clobxmlc);
+      --Se for para gerar log
+            IF pr_flgerlog = 1 THEN
+          --Executar rotina geracao log
+          gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => SubStr(pr_cdoperad,1,10)
+                              ,pr_dscritic => SubStr(vr_dscritic,1,159)
+                              ,pr_dsorigem => SubStr(vr_dsorigem,1,13)
+                              ,pr_dstransa => SubStr(vr_dstransa,1,121)
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 0
+                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                              ,pr_idseqttl => pr_idseqttl
+                              ,pr_nmdatela => SubStr(pr_cdprogra,1,12)
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
+        END IF;
+      --Indicar que nao ocorreu erro
+        pr_dscritic := NULL;
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        -- Retorno não OK
+        pr_dscritic := vr_dscritic;
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
+      --Executar rotina geracao erro
+      gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_nrsequen => 1 --> Fixo
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic
+                           ,pr_tab_erro => vr_tab_erro);
+      WHEN OTHERS THEN
+        -- Gerar erro montado
+        vr_dscritic := 'APLI0008.pc_ObterListaPlanoAplProg --> Erro não tratado na rotina: '||sqlerrm;
+        pr_dscritic := vr_dscritic;
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic ||
+                                         '</Erro></Root>');
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => 1
+                             ,pr_nrdcaixa => 999
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => 0 --> Critica 0
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => vr_tab_erro);
+    END;
+  END pc_ObterListaPlanoAplProg;
+
+END APLI0008;
 /
