@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 26/05/2018
+    Data    : Maio/2010                   Ultima atualizacao: 28/03/2019
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -278,6 +278,9 @@
                 16/01/2019 - Tratamento temporario para nao permitir solicitacao
                              ou encerramento de conta ITG devido a migracao do BB.
                              (Lombardi/Elton)
+
+                28/03/2019 - PRB0040591 - Tratamento para eliminar tambem a CRAPSNH quando eliminar 
+                             os titulares (Andreatta-Mouts)
 
 .............................................................................*/
 
@@ -4912,6 +4915,7 @@ PROCEDURE Grava_Dados_Exclui:
     DEF BUFFER crabcra FOR crapcra.
     DEF BUFFER crabcrl FOR crapcrl.
     DEF BUFFER crabdoc FOR crapdoc.
+    DEF BUFFER crabsnh FOR crapsnh.
 
     ASSIGN aux_returnvl = "NOK".
 
@@ -5417,6 +5421,45 @@ PROCEDURE Grava_Dados_Exclui:
                     ELSE 
                         DO:
                            DELETE crabdoc.
+                           LEAVE ContadorDoc.
+                        END.
+                
+                END. /* ContadorDoc */
+                
+                IF  par_cdcritic <> 0 THEN
+                    UNDO GravaExclui, LEAVE GravaExclui.                               
+            END.
+
+            /* Apagar senhas e limites de acesso ao InternetBanking e Mobile */
+            FOR EACH crapsnh WHERE crapsnh.cdcooper = crabttl.cdcooper 
+                               AND crapsnh.nrdconta = crabttl.nrdconta
+                               AND crapsnh.idseqttl = crabttl.idseqttl
+                               NO-LOCK:
+                               
+                ContadorDoc: DO aux_contador = 1 TO 10:
+                
+                  FIND crabsnh WHERE ROWID(crabsnh) = ROWID(crapsnh)
+                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+                    IF  NOT AVAILABLE crabsnh THEN
+                        DO:
+                           IF  LOCKED(crabsnh) THEN
+                               DO:
+                                  IF  aux_contador = 10 THEN
+                                      DO:
+                                         ASSIGN par_cdcritic = 72.
+                                         LEAVE ContadorDoc.
+                                      END.
+                                  ELSE 
+                                      DO:
+                                         PAUSE 1 NO-MESSAGE.
+                                         NEXT ContadorDoc.
+                                      END.
+                               END.
+                        END.
+                    ELSE 
+                        DO:
+                           DELETE crabsnh.
                            LEAVE ContadorDoc.
                         END.
                 
