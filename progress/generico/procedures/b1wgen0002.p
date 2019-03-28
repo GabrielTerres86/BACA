@@ -13750,10 +13750,10 @@ PROCEDURE carrega_dados_proposta_finalidade:
                          tt-dados-proposta-fin.nrgarope = 10
                          tt-dados-proposta-fin.nrliquid = 9.
 
-                  IF crapttl.nrinfcad < 3 THEN
+                  IF crapttl.nrinfcad < 3 OR crapttl.nrinfcad = ? THEN
                      ASSIGN tt-dados-proposta-fin.nrinfcad = 3.
 
-                  IF crapttl.nrpatlvr = 0 THEN
+                  IF crapttl.nrpatlvr = 0 OR crapttl.nrpatlvr = ? THEN
                      ASSIGN tt-dados-proposta-fin.nrpatlvr = 3.
 
                   /* Descricao da Garantia */
@@ -13854,10 +13854,10 @@ PROCEDURE carrega_dados_proposta_finalidade:
                          tt-dados-proposta-fin.nrliquid = 11
                          tt-dados-proposta-fin.nrperger = 4.
 
-                  IF crapjur.nrinfcad < 3 THEN
+                  IF crapjur.nrinfcad < 3 OR crapjur.nrinfcad = ? THEN
                      ASSIGN tt-dados-proposta-fin.nrinfcad = 3.
 
-                  IF crapjur.nrpatlvr = 0 THEN
+                  IF crapjur.nrpatlvr = 0 OR crapjur.nrpatlvr = ? THEN
                      ASSIGN tt-dados-proposta-fin.nrpatlvr = 5.
 
                   /* Descricao da Garantia */
