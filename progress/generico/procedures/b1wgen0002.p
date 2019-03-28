@@ -818,12 +818,14 @@
 
 		  23/10/2018 - PJ298.2 - Validar emprestimo migrado para listar na tela prestacoes (Rafael Faria-Supero)
           
-      13/12/2018  HANDLE sem delete h-b1wgen0059 INC0027352 (Oscar).
+          13/12/2018  HANDLE sem delete h-b1wgen0059 INC0027352 (Oscar).
           
           19/12/2018 -  P438 nova regra perda de aprovacao 
                         aux_idpeapro: 0 = Nao Perde Aprovacao 
                                       1 = Perde Aprovacao 
                                       2 = Aprovacao Auto.
+									  
+	      29/03/2019 - Incidente 0033759 - Erro na geracao automatica da cessao de credito - Ramon
           
  ..............................................................................*/
 
