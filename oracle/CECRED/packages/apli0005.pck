@@ -5096,6 +5096,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                                  ,pr_dsdadant => ''
                                  ,pr_dsdadatu => TO_CHAR(pr_dtvencto,'dd/MM/RRRR'));
 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'VLAPLICA'
+                                 ,pr_dsdadant => ''
+                                 ,pr_dsdadatu => pr_vlaplica);
+
       END IF;
 
       /* Comitar apenas se não for via batch */
