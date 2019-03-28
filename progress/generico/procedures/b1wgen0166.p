@@ -859,6 +859,7 @@ PROCEDURE Valida_empresa:
 
     /* DEF VAR aux_cdcritic AS INT NO-UNDO. */
 
+	/* P437 Validacao na tela
     IF  par_indescsg = FALSE AND
         par_dtfchfol > 0     THEN DO:
 
@@ -873,6 +874,7 @@ PROCEDURE Valida_empresa:
 
         RETURN "NOK".
     END.
+	*/
 
     /* Para emprestimo consignado em folha */
     IF  par_indescsg = TRUE THEN DO:
