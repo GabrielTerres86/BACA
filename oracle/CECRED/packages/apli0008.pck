@@ -651,7 +651,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
   Sigla   : APLI
 
   Autor   : CIS Corporate
-  Data    : Julho/2018                       Ultima atualizacao: 05/10/2018
+  Data    : Julho/2018                       Ultima atualizacao: 18/03/2019
   
   Dados referentes ao programa:
   
@@ -659,6 +659,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
   Objetivo  : Rotinas genéricas referente às aplicações programadas
               
   Alteracoes: 05/10/2018 - Inclusão rotinas para manutenção da configuração das APs - Proj. 411.2 - Fase 2 - (CIS Corporate)    
+  
+  18/03/2019 - PRB0040683 na rotina pc_calc_saldo_apl_prog, feitos os tratamentos de erros para que sejam identificados 
+               os possíveis pontos de correção (Carlos)
   ----------------------------------------------------------------------------------- */
     
   FUNCTION fn_val_cooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE) --> Código da Cooperativa
@@ -1004,7 +1007,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
             pr_dscritic := 'Erro atualizacao CRAPLOT';
             raise vr_exc_erro_rb;
         End;
-
+        
         -- Recuperar próximo número RPP
         vr_nrseqted := cecred.fn_sequence(pr_nmtabela => 'CRAPMAT',
                                            pr_nmdcampo => 'NRRDCAPP',
@@ -1334,7 +1337,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
     Exception
       When vr_exc_erro Then
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
-              pr_cdcritic := vr_cdcritic;
+			  pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
@@ -1967,6 +1970,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
           END IF;
       END IF;
       END IF;
+    
+    EXCEPTION
+      WHEN OTHERS THEN
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper, 
+                                     pr_compleme => 'Conta: ' || pr_nrdconta ||
+                                                    ' Contrato poupanca: ' || pr_nrctrrpp);
     END;
   END pc_posicao_saldo_apl_prog;
  
@@ -2016,7 +2025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                                ,pr_inrendim => 0             -- Nao precisa carregar rendimento
                                ,pr_vlbascal => vr_vlbascal
                                ,pr_vlsdtoap => vr_vlsdtoap
-                               ,pr_vlsdrgap => pr_vlsdrdpp 
+                               ,pr_vlsdrgap => pr_vlsdrdpp
                           /*   ,pr_vlsdtoap => pr_vlsdrdpp
                                ,pr_vlsdrgap => vr_vlsdtoap   */-- retornar valor bruto
                                
@@ -2523,7 +2532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
      Alteracoes: 20/12/2018 - Adequação do ROLLBACK no tratamento de excecao (Anderson)
 
                  16/01/2019 - Remocao da chamada das procedures apli0006.pc_taxa_acumul_aplic_pos e _pre
-                              pois seu output nao eh utilizado (Anderson).
+	                          pois seu output nao eh utilizado (Anderson).
     ..............................................................................*/                
       
       DECLARE
@@ -2876,7 +2885,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
 
                  -- Verifica se deve gerar log
                  IF pr_idgerlog = 1 THEN
-                    ROLLBACK;
+				    ROLLBACK;
                     GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                         ,pr_cdoperad => pr_cdoperad
                                         ,pr_dscritic => vr_dscritic
@@ -2892,11 +2901,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                     COMMIT;
                  END IF;
             WHEN OTHERS THEN
+                 CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper, 
+                                              pr_compleme => 'Conta: ' || pr_nrdconta ||
+                                                             ' Contrato poupanca: ' || pr_nrctrrpp);
                  pr_cdcritic := vr_cdcritic;
                  pr_dscritic := 'Erro nao tratado APLI0008.pc_buscar_extrato_apl_prog: ' || SQLERRM;
                  -- Verifica se deve gerar log
                  IF pr_idgerlog = 1 THEN
-                    ROLLBACK;
+				    ROLLBACK;
                     GENE0001.pc_gera_log (pr_cdcooper => pr_cdcooper
                                          ,pr_cdoperad => pr_cdoperad
                                          ,pr_dscritic => vr_dscritic
@@ -10341,5 +10353,5 @@ END pc_calc_app_programada;
     END;
   END pc_ObterListaPlanoAplProg;
 
-END APLI0008;
+END APLI0008; 
 /
