@@ -502,8 +502,6 @@
           document.all.tbinscritos.deleteRow(i - 1);
         }
         
-		document.form.aux_qtdregis.value = minscri[0].qtinscri;
-				  
         if (minscri.length <= 0) {
 
           $("#salvaconfirm").hide();
@@ -511,6 +509,7 @@
           $("#btnAnterior").hide();
           $("#btnProximo").hide();
         }else{
+		  document.form.aux_qtdregis.value = minscri[0].qtinscri;				
           if($("#aux_nriniseq").val() == 1){
             $("#btnAnterior").hide();
           }else{
