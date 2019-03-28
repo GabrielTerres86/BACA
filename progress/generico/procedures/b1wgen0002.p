@@ -828,7 +828,7 @@
 		  18/03/2019 - P437 - Consignado - inclusão do parametro valor do IOF na chamada da rotina pc_calculo_cet_emprestimos
 		               Josiane Stiehler - AMcom
 
-          
+      27/03/2019 - P437 - Consignado - Alterado a rotina "obtem-propostas-emprestimo" para retornar o campo inaverba        
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -2397,7 +2397,9 @@ PROCEDURE obtem-propostas-emprestimo:
                tt-proposta-epr.vlrtotal = 0
                /* PRJ 438 */
                tt-proposta-epr.insitest = crawepr.insitest.
-
+               /*P437*/
+               tt-proposta-epr.inaverba = crawepr.inaverba.
+               
                IF crawepr.idfiniof > 0 THEN
                   DO:
                     
