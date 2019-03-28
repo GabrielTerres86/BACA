@@ -1,18 +1,9 @@
 --========================================================================================--
 
-SPOOL INC0036234.log
-
-SET DEFINE OFF;
-SET ESCAPE \;
---SET ECHO OFF;
---SET RETURN OFF;
 
 
 BEGIN
 
-dbms_output.put_line('======================================================');
-dbms_output.put_line('Inicio '|| sysdate);
-dbms_output.put_line('======================================================');
 
 
 update crapepr e set e.dtdpagto = to_date('10/04/2019','DD/MM/YYYY') where cdcooper = 1 and nrdconta =8041830 and  nrctremp = 580502;
@@ -46,15 +37,7 @@ update crapepr e set e.dtdpagto = to_date('25/12/2018','DD/MM/YYYY') where cdcoo
 update crapepr e set e.dtdpagto = to_date('20/01/2019','DD/MM/YYYY') where cdcooper = 1 and nrdconta =7112955 and  nrctremp = 296245;
 
 
-dbms_output.put_line('======================================================');
-dbms_output.put_line('fim '|| sysdate ) ;
-dbms_output.put_line('Linhas retornadas '|| sql%rowcount);
-dbms_output.put_line('======================================================');
-
 	
 END;
 /
 COMMIT;
-
-SET ESCAPE OFF;
-SPOOL OFF;
