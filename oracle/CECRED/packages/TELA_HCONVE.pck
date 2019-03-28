@@ -2114,7 +2114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
                ,pr_infimsol => vr_infimsol
                ,pr_cdcritic => vr_cdcritic
                ,pr_dscritic => vr_dscritic
-               ,pr_inpriori => 'N');
+               ,pr_inpriori => 'T');
     
     -- Aborta em caso de critica      
     if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
@@ -3286,6 +3286,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
        and lau.nrdconta = pr_nrdconta
        and lau.nrdocmto in (pr_nrdocmto,trim(pr_nrdocmto)*10);
 
+    -- Busca parametros do debitador       
+    cursor cr_crapprm (pr_cdcooper in crapprm.cdcooper%type
+                      ,pr_cdacesso in crapprm.cdacesso%type) is
+    select 1
+      from crapprm prm
+     where prm.cdcooper = pr_cdcooper
+       and prm.cdacesso = pr_cdacesso;
+    rw_crapprm cr_crapprm%rowtype;
+
     -- Declaracao de variaveis
     vr_index     integer := 0;
     vr_dscritic  varchar2(1000);
@@ -3478,17 +3487,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
         raise vr_exc_saida;
     end; 
 
-    begin
-      -- Fazer limpeza dos registros pendentes
-      update crapprm prm
-         set prm.dsvlrprm = substr(prm.dsvlrprm,1,length(prm.dsvlrprm)-1)||'3'
-       where prm.cdacesso = 'CTRL_DEBNET_EXEC';
-    exception
-      when others then
-        vr_dscritic := 'Ao atualizar dados da tabela crapprm: '||sqlerrm;
-        raise vr_exc_saida;
-    end; 
-    
     -- Busca sequencial para atualizar gnconve
     open cr_gncontr (pr_cdcooper
                     ,rw_cdconve.cdconven
@@ -3501,6 +3499,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
            set ntr.nrsequen = rw_cdconve.nrseqint - 1
          where ntr.rowid    = rw_gncontr.rowid;
       exception
+        when dup_val_on_index then
+          null;
         when others then
           vr_dscritic := 'Ao atualizar dados da tabela gnconve: '||sqlerrm;
           raise vr_exc_saida;
@@ -3543,6 +3543,87 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_HCONVE IS
     
     close cr_gncontr;
     
+    begin
+      -- Tratamento do sequencial (nrseqdig)
+      delete
+        from craplcm c
+       where c.cdcooper = pr_cdcooper
+         and c.dtmvtolt = pr_dtmvtolt
+         and c.nrdolote = 7050;
+      exception
+        when others then
+          vr_dscritic := 'Erro ao atualizar craplcm: '||sqlerrm;
+          raise vr_exc_saida;
+    end;
+
+    -- Controle de execucoes do dia
+    open cr_crapprm (pr_cdcooper
+                    ,'CTRL_DEBNET_EXEC');
+    fetch cr_crapprm into rw_crapprm;
+    
+    if cr_crapprm%notfound then
+      begin
+        -- Insere parametros caso nao exista
+        insert
+          into crapprm 
+              (nmsistem
+              ,cdcooper
+              ,cdacesso
+              ,dstexprm
+              ,dsvlrprm)
+        values('CRED'
+              ,pr_cdcooper
+              ,'CTRL_DEBNET_EXEC'
+              ,'Controle de execução da DEBNET'
+              ,pr_dtmvtolt||'#3'); 
+      exception
+        when others then
+          vr_dscritic := 'Erro ao inserir crapprm (CTRL): '||sqlerrm;
+          raise vr_exc_saida;
+      end;
+    else
+      begin
+        -- Ajuste do numero da execucao
+        update crapprm prm
+           set prm.dsvlrprm = substr(prm.dsvlrprm,1,length(prm.dsvlrprm)-1)||'3'
+         where prm.cdacesso = 'CTRL_DEBNET_EXEC';
+      exception
+        when others then
+          vr_dscritic := 'Ao atualizar dados da tabela crapprm: '||sqlerrm;
+          raise vr_exc_saida;
+      end;
+    end if;
+    
+    close cr_crapprm;
+
+    open cr_crapprm (pr_cdcooper
+                    ,'QTD_EXEC_DEBNET');
+    fetch cr_crapprm into rw_crapprm;
+    
+    if cr_crapprm%notfound then
+      begin
+        -- Insere parametros caso nao exista
+        insert 
+          into crapprm 
+              (nmsistem
+              ,cdcooper
+              ,cdacesso
+              ,dstexprm
+              ,dsvlrprm)
+        values('CRED'
+              ,pr_cdcooper
+              ,'QTD_EXEC_DEBNET'
+              ,'Quantidade de execuções da DEBNET durante o dia'
+              ,'4');
+      exception
+        when others then
+          vr_dscritic := 'Erro ao inserir crapprm (QTD): '||sqlerrm;
+          raise vr_exc_saida;
+      end;
+    end if;
+
+    close cr_crapprm;
+      
     commit;
 
   exception

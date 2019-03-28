@@ -76,6 +76,9 @@
 			   29/03/2017 - Ajutes devido ao tratamento da versao do layout FEBRABAN
 							(Jonata RKAM M311)
 
+               10/03/2019 - Inclusão do indicador de validação do CPF/CNPJ Layout 5.
+                            Gabriel Marcos (Mouts) - SCTASK0038352.
+
 ............................................................................. */
 
 IF   tel_cdconven = 0   THEN
@@ -138,6 +141,7 @@ ASSIGN
         tel_tpdenvio   = gnconve.tpdenvio  
         tel_dsdiracc   = gnconve.dsdiracc
 		tel_nrlayout   = gnconve.nrlayout
+        tel_flgvlcpf   = gnconve.flgvlcpf
         tel_flgativo   = gnconve.flgativo
         tel_flgcvuni   = gnconve.flgcvuni
         tel_flgdecla   = gnconve.flgdecla
@@ -188,6 +192,7 @@ DISPLAY tel_cdconven
         tel_tpdenvio  
         tel_dsdiracc
 		tel_nrlayout
+        tel_flgvlcpf
         tel_flgativo
         tel_flgcvuni
         tel_flgdecla
