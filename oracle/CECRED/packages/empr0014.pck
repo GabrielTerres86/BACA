@@ -88,6 +88,14 @@ CREATE OR REPLACE PACKAGE CECRED.empr0014 AS
                                            ,pr_nmdcampo OUT VARCHAR2                            --> Nome do Campo
                                            ,pr_des_erro OUT VARCHAR2);
                                            
+PROCEDURE pc_valida_averbacao(pr_nrdconta IN crawepr.nrdconta%type  --> Conta
+                             ,pr_nrctremp IN crawepr.nrctremp%type  --> contrato
+                             ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                             ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                             ,pr_retxml   IN OUT NOCOPY xmltype     --> Arquivo de retorno do XML
+                             ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
+                             ,pr_des_erro OUT VARCHAR2) ;
 END empr0014;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
@@ -107,6 +115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
   --
   -- Alterações: 18/03/2019 : Inclusão do parametro pr_vlrdoiof na chamada da rotina 
   --             CCET0001.pc_calculo_cet_emprestimos.
+ 
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -185,7 +194,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : 
-       Data    :                            Ultima atualizacao: 22/06/2018
+       Data    :                            Ultima atualizacao: 12/02/2019
 
        Dados referentes ao programa:
 
@@ -193,6 +202,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
        Objetivo  : Rotina responsavel por gravar efetivação da proposta
 
        Alteracoes: 22/06/2018 - Conversao Progress -> Oracle. (Renato Cordeito/Odirlei AMcom)
+       
+                   24/10/2018 - P442 - AJustes na chamada da Valida Bens Alienados (Marcos-Envolti)
+                   
+                   12/02/2019 - P442 - PreAprovado nova estrutura (Marcos-Envolti)
                   
     ............................................................................. */
       ----->> CURSORES <<-----
@@ -245,13 +258,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
            AND crappre.cdfinemp = decode(pr_inpreapr,1,crappre.cdfinemp,pr_cdfinemp);
       rw_crappre cr_crappre%ROWTYPE;
 
-      cursor cr_crapcpa (pr_idcarga in tbepr_carga_pre_aprv.idcarga%TYPE) IS 
+      cursor cr_crapcpa (pr_idcarga        tbepr_carga_pre_aprv.idcarga%TYPE
+                        ,pr_tppessoa       crapcpa.tppessoa%TYPE
+                        ,pr_nrcpfcnpj_base crapcpa.nrcpfcnpj_base%TYPE) IS 
         SELECT a.iddcarga
               ,a.rowid
           FROM crapcpa a
-         WHERE a.cdcooper = pr_cdcooper
-           AND a.nrdconta = pr_nrdconta
-           AND a.iddcarga = pr_idcarga;
+         WHERE a.cdcooper       = pr_cdcooper
+           AND a.tppessoa       = pr_tppessoa
+           AND a.nrcpfcnpj_base = pr_nrcpfcnpj_base
+           AND a.iddcarga       = pr_idcarga
+           FOR UPDATE;
       rw_crapcpa cr_crapcpa%ROWTYPE;
 
       cursor cr_crapjur is 
@@ -273,7 +290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
       rw_crapbpr cr_crapbpr%ROWTYPE;
 
       cursor cr_crapass is (
-          select a.inpessoa, a.nrcadast, a.nrcpfcgc, a.nrdconta
+          select a.inpessoa, a.nrcadast, a.nrcpfcgc, a.nrdconta, a.nrcpfcnpj_base
           from crapass a
           where a.CDCOOPER = pr_cdcooper
             and a.NRDCONTA = pr_nrdconta);
@@ -435,23 +452,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
           when no_data_found then
              vr_flgportb := 0;
       end;
-
+/*
       if vr_flgportb = 0 then
         -- chamar VALIDA_BENS_ALIENADOS - grvm0001
         grvm0001.pc_valida_bens_alienados( pr_cdcooper => pr_cdcooper,
                                            pr_nrdconta => pr_nrdconta,
                                            pr_nrctrpro => pr_nrctremp,
-                                           pr_cdopcao  => '',
                                            pr_cdcritic => pr_cdcritic,
                                            pr_dscritic => pr_dscritic,
-                                           pr_tab_erro => vr_tab_erro);
+                                           pr_tab_erro => vr_tab_erro); 
 
         if nvl(pr_cdcritic,0) <> 0 OR 
            nvl(pr_dscritic,'OK') <> 'OK' then
           raise vr_exc_saida;
         end if;
       END IF; 
-
+*/
 -- PONTO 3
 
       pc_valida_dados_efet_proposta( pr_cdcooper => pr_cdcooper,
@@ -510,6 +526,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
       end if;
       close cr_craplcr;
       
+      
+      
       vr_vltotemp := rw_crawepr.vlemprst;
       vr_vltotctr := rw_crawepr.qtpreemp * rw_crawepr.vlpreemp;
       vr_vltotjur := vr_vltotctr - rw_crawepr.vlemprst;
@@ -546,11 +564,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
         CLOSE cr_crappre;
         --> Verifica se o emprestimo eh pre-aprovado
         -- PONTO 6
-        empr0002.pc_busca_carga_ativa(pr_cdcooper => pr_cdcooper,
-                                      pr_nrdconta => pr_nrdconta,
-                                      pr_idcarga  => vr_idcarga);
-                     
-        open cr_crapcpa(vr_idcarga);
+         vr_idcarga := EMPR0002.fn_idcarga_pre_aprovado_cta(pr_cdcooper => pr_cdcooper
+                                                           ,pr_nrdconta => pr_nrdconta);
+        open cr_crapcpa(vr_idcarga,rw_crapass.inpessoa,rw_crapass.nrcpfcnpj_base);
         fetch cr_crapcpa into rw_crapcpa;
         if cr_crapcpa%NOTFOUND THEN
           close cr_crapcpa;
@@ -582,35 +598,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
         /* Atualiza o valor contratado do credito pre-aprovado */
         BEGIN
           update crapcpa a
-            set a.vlctrpre = a.vlctrpre + rw_crawepr.vlemprst,
-                a.vllimdis = (TRUNC(((a.vllimdis -
-                                              rw_crawepr.vlemprst) /
-                                            rw_crappre.vlmulpli),0)) * rw_crappre.vlmulpli
+            set a.vlctrpre = a.vlctrpre + rw_crawepr.vlemprst
             where rowid = rw_crapcpa.rowid;
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao atualizar pre-aprovado:'||SQLERRM;
             RAISE vr_exc_saida;
-        END;  
-        -- antes:----------------------------------------------------------------------
-        --ASSIGN crapcpa.vlctrpre = crapcpa.vlctrpre + crawepr.vlemprst
-        --       crapcpa.vllimdis = TRUNC(((crapcpa.vllimdis -
-        --                                  crawepr.vlemprst) /
-        --                                crappre.vlmulpli),0)
-        --       crapcpa.vllimdis = crapcpa.vllimdis * crappre.vlmulpli.
-        -------------------------------------------------------------------------------    
-        BEGIN
-          update crapcpa a
-          set a.vllimdis = case when (rw_crappre.vllimmin > a.vllimdis) then 0 else a.vllimdis end
-          where rowid = rw_crapcpa.rowid;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar pre-aprovado2:'||SQLERRM;
-        END;    
-        -- antes-----------------------------------------------------------------------
-        -- IF rw_crappre.vllimmin > crapcpa.vllimdis THEN
-        --   ASSIGN crapcpa.vllimdis = 0.
-        -------------------------------------------------------------------------------
+        END;
       end if;
       
       IF cr_crappre%ISOPEN THEN
@@ -1568,7 +1562,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
                                           ,pr_idfiniof  => rw_crawepr.idfiniof -- Indicador de financiamento do IOF e tarifa
                                           ,pr_dsctrliq  => vr_dsctrliq         -- Numeros dos contratos de liquidacao
                                           ,pr_idgravar  => 'S'                 -- Indicador de gravação ou não na tabela de calculo
-                                          ,pr_vlrdoiof  => null                -- Valor do IOF do consignado
+                                          ,pr_vlrdoiof  => null                -- Valor do IOF do consignado  
                                           ,pr_txcetano  => vr_txcetano         -- Taxa cet ano
                                           ,pr_txcetmes  => vr_txcetmes         -- Taxa cet mes 
                                           ,pr_cdcritic  => pr_cdcritic         --> Código da crítica
@@ -1677,7 +1671,8 @@ TYPE typ_tab_ratings IS
        Alteracoes: 22/06/2018 - Conversao Progress -> Oracle. (Renato Cordeito/Odirlei AMcom)
        
                    19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
-                  
+
+                   26/03/2019 - P437- Consignado - incluindo a validação "Não é possível efetivar esta operação. Verifique averbação"                  
     ............................................................................. */
 
        ----->> CURSORES <<-----
@@ -1727,7 +1722,7 @@ TYPE typ_tab_ratings IS
                  a.nrctrliq##1, 
                  a.nrctrliq##2, a.nrctrliq##3,
                  a.nrctrliq##4, a.nrctrliq##5, a.nrctrliq##6, a.nrctrliq##7, a.nrctrliq##8,
-                 a.nrctrliq##9, a.nrctrliq##10
+                 a.nrctrliq##9, a.nrctrliq##10,nvl(a.inaverba,0) inaverba
           from crawepr a
           where a.cdcooper = pr_cdcooper
             and a.nrdconta = pr_nrdconta
@@ -2001,6 +1996,12 @@ TYPE typ_tab_ratings IS
         pr_dscritic := 'A proposta deve estar aprovada...';
         raise vr_exc_saida;
       END IF;    
+      
+      IF rw_crawepr.inaverba <> 1 THEN
+         pr_cdcritic := 0;
+         pr_dscritic := 'NAo e possivel efetivar esta operacao. Verifique averbacao!';
+         raise vr_exc_saida;
+      END IF;
       
       vr_insitest := rw_crawepr.insitest;
       vr_cdlcremp := rw_crawepr.cdlcremp;
@@ -2361,8 +2362,6 @@ TYPE typ_tab_ratings IS
     
       --Variaveis Erro
       vr_cdcritic INTEGER;
-      vr_des_erro VARCHAR2(3);
-      vr_tab_erro GENE0001.typ_tab_erro;
       vr_dscritic VARCHAR2(4000);
     
       --Variaveis Excecao
@@ -2438,6 +2437,158 @@ TYPE typ_tab_ratings IS
         pr_dscritic := 'Nao foi possivel efetivar proposta(web): '||SQLERRM;  
   END pc_grava_efetiv_proposta_web;
 
+PROCEDURE pc_valida_averbacao(pr_nrdconta IN crawepr.nrdconta%type  --> Conta
+                             ,pr_nrctremp IN crawepr.nrctremp%type  --> contrato
+                             ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                             ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                             ,pr_retxml   IN OUT NOCOPY xmltype     --> Arquivo de retorno do XML
+                             ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
+                             ,pr_des_erro OUT VARCHAR2) IS          --> Saida OK/NOK  --
 
+  /* .............................................................................
+
+    Programa: pc_valida_averbacao
+    Sistema : Ayllos Web
+    Autor   : Josiane Stiehler
+    Data    : 26/03/2019                       Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Validação e atualização da averbação
+
+    Alteracoes: 
+    ..............................................................................*/ 
+         
+  -- Variaveis de log
+  vr_cdcooper crapcop.cdcooper%TYPE;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);   
+
+  --Variaveis Locais   
+  vr_clob          CLOB;   
+  vr_xml_temp      VARCHAR2(32726) := '';      
+  vr_qtregist      INTEGER := 0; 
+  vr_mensagem      varchar2(2000);
+  vr_nrdrowid      rowid;
+  
+  --Controle de erro
+  vr_exc_erro EXCEPTION;
+  vr_saida    EXCEPTION;
+  --
+  vr_cdcritic crapcri.cdcritic%TYPE;
+  vr_dscritic crapcri.dscritic%TYPE;        
+  rw_crapdat btch0001.cr_crapdat%ROWTYPE; 
+  
+  CURSOR cr_averb (pr_cdcooper IN  crawepr.cdcooper%type) IS
+  SELECT nvl(a.insitapr,0) insitapr,
+         nvl(a.insitest,0) insitest , 
+         nvl(a.inaverba,0) inaverba
+    FROM crawepr a
+   WHERE a.cdcooper = pr_cdcooper
+     AND a.nrdconta = pr_nrdconta
+     AND a.nrctremp = pr_nrctremp;
+
+  BEGIN
+    pr_des_erro := 'OK';
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+   
+    -- Verifica se houve erro recuperando informacoes de log
+    IF NOT ( vr_dscritic IS NULL ) THEN
+       RAISE vr_exc_erro;
+    END IF;
+    
+    FOR rw_averb IN cr_averb (pr_cdcooper => vr_cdcooper)
+    LOOP
+      IF rw_averb.insitapr <> 1 OR -- Situação <> 1 -"Análise Finalizada"
+         rw_averb.insitest <> 3 THEN -- Decisão <> 3 -"Aprovada"
+         vr_cdcritic:= 0;
+         vr_dscritic:= 'Nao e possivel averbar, verifique resultado da analise';
+         RAISE vr_exc_erro;
+       END IF;
+       
+       IF NVL(rw_averb.inaverba,0) = 1 THEN -- já esta averbado
+         vr_cdcritic:= 0;
+         vr_dscritic:= 'Proposta já esta averbada!';
+         RAISE vr_exc_erro;
+       END IF;
+    END LOOP;
+        
+    -- Atualiza o indicador de averbação da proposta
+    BEGIN
+      UPDATE crawepr
+         SET inaverba = 1 -- (0- Não, 1- Sim)
+       WHERE cdcooper = vr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrctremp = pr_nrctremp;
+    EXCEPTION
+      WHEN OTHERS THEN
+       vr_cdcritic:= 0;
+       vr_dscritic:= 'Erro ao atualizar indicador de averbação - '||sqlerrm;
+       RAISE vr_exc_erro;
+    END;
+
+    -- gera log quando for averbado
+    vr_mensagem := substr('Proposta averbada',1,2000);
+    gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper, 
+                         pr_cdoperad => Vr_cdoperad, 
+                         pr_dscritic => null, 
+                         pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem), 
+                         pr_dstransa => vr_mensagem, 
+                         pr_dttransa => trunc(sysdate), 
+                         pr_flgtrans => 1, 
+                         pr_hrtransa => GENE0002.fn_busca_time, 
+                         pr_idseqttl => 1, 
+                         pr_nmdatela => vr_nmdatela, 
+                         pr_nrdconta => pr_nrdconta, 
+                         pr_nrdrowid => vr_nrdrowid );
+   
+      -- Monta documento XML de ERRO
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite); 
+   
+   -- Atualiza o XML de retorno
+    pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Mensagem>' || 'Gravado com sucesso!' || '</Mensagem></Root>');  
+   EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro := 'NOK';
+      --/
+      IF NVL(vr_cdcritic,0) > 0 THEN
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      -- Erro
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;    
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || vr_dscritic || '</Erro></Root>');    
+   WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro := 'NOK';      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro nao tratado na pc_valida_averbacao '|| pr_nrctremp||' : ' || SQLERRM;      
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic || '-' ||
+                                     pr_dscritic || '</Erro></Root>');  
+ END pc_valida_averbacao; 
 END empr0014;
 /
