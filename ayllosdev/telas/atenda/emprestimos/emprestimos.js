@@ -503,17 +503,50 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
     });
 }
 
+// Averbar P437 s3
+function confirmaAverbacao(){
+	nrctremp = $("#divEmpres table tr.corSelecao").find("input[id='nrctremp']").val()
+	$.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/emprestimos/principal.php',
+        data: {
+            nrdconta: nrdconta,
+            nrctremp: nrctremp,
+			idseqttl: idseqttl,
+			inconfir: inconfir,
+            operacao: 'AVERBACAO',
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
+        },
+        success: function(response) {
+            hideMsgAguardo();
+            eval(response);                
+            return false;
+        }
+    });
+	return false;
+}
+
 function controlaOperacao(operacao) {
 
 	//console.log('Operacao: '+operacao);
-
+	
+	// Averbar P437 s3
+	if ((operacao == 'T_EFETIVA') && ($("#divEmpres table tr.corSelecao").find("input[id='cdfinemp']").val() == '57') && ($("#divEmpres table tr.corSelecao").find("input[id='inaverba']").val() != 'yes')){
+		showError('error', 'N&atilde;o &eacute; poss&iacute;vel efetivar esta opera&ccedil;&atilde;o. Verifique averba&ccedil;&atilde;o.', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+		return false;
+	}
+	
     //bruno - prj 438 - bug 14750
-    if(in_array(operacao,['VAL_RECALCULAR_EMPRESTIMO','T_EFETIVA','ACIONAMENTOS'])){
+    if(in_array(operacao,['VAL_RECALCULAR_EMPRESTIMO','T_EFETIVA','ACIONAMENTOS'])){		
         if(!validaAnulada($("#divEmpres table tr.corSelecao"), operacao)){
             return false;
         }
-    }
-
+    }	
 
 	//PRJ - 438 - Rating - 3 - bruno
 	if(aux_cdfinemp_rating == "" || in_array(operacao,['TC','TA'])){
@@ -553,8 +586,12 @@ function controlaOperacao(operacao) {
             if ($(this).hasClass('corSelecao')) {
                 if ($('#cdfinemp', $(this)).val() == 57){
 					if($('#btAverbar').hasClass('botao')){
-						showConfirmacao('Confirma que o cooperado possui margem consign&aacute;vel dispon&iacute;vel para esta opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', '', 'bloqueiaFundo( $(\'#divUsoGenerico\') );$(\'#new_nrctremp\',\'#frmNumero\').focus();', 'sim.gif', 'nao.gif');
-						return false;
+						if (($('#insitapr', $(this)).val() == '1' && $('#insitest', $(this)).val() == '3') ){
+							showConfirmacao('Confirma que o cooperado possui margem consign&aacute;vel dispon&iacute;vel para esta opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'confirmaAverbacao();', '', 'sim.gif', 'nao.gif');												
+						}else{
+							showError('error', 'N&atilde;o &eacute; poss&iacute;vel averbar, verifique resultado da an&aacute;lise.', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+							return false;
+						}
 					}
 				}
             }
@@ -4936,7 +4973,7 @@ function controlaLayout(operacao) {
 	if (operacao == ''){
 		$('table > tbody > tr', 'div.divRegistros').each(function() {
             if ($(this).hasClass('corSelecao')) {
-                if ($('#cdfinemp', $(this)).val() == 57){
+                if (($('#cdfinemp', $(this)).val() == 57) && ($('#inaverba', $(this)).val() != 'yes')){
 					$('#btAverbar').trocaClass("botaoDesativado","botao");
 				}
             }
@@ -4948,11 +4985,11 @@ function controlaLayout(operacao) {
 
     return false;
 }
-
+// Averbar P437 s3
 function validaClickDivEmpres(){
 	$('table > tbody > tr', 'div.divRegistros').each(function() {
             if ($(this).hasClass('corSelecao')) {
-                if ($('#cdfinemp', $(this)).val() == 57){
+                if (($('#cdfinemp', $(this)).val() == 57) && ($('#inaverba', $(this)).val() != 'yes')){
 					$('#btAverbar').trocaClass("botaoDesativado","botao");
 				}else{
 					$('#btAverbar').trocaClass("botao","botaoDesativado");

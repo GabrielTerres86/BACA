@@ -123,8 +123,29 @@
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 
 	$procedure = (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC','A_SOMBENS'))) ? 'obtem-dados-proposta-emprestimo' : 'obtem-propostas-emprestimo';
+	
+	// PRJ - 437 - Consignado s3 
+	if(in_array($operacao,array('AVERBACAO'))) {
+	
+		$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
+		$xml .= "   <nrctremp>" . $nrctremp . "</nrctremp>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
 
-	if (in_array($operacao,array('A_NOVA_PROP','A_NUMERO','A_VALOR','A_AVALISTA','TI','TE','TC','','A_SOMBENS'))) {
+		$xmlResult = mensageria($xml, "EMPR0014", "VALIDA_AVERBACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getObjectXML($xmlResult);
+
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {			
+		   echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina);controlaOperacao();");';
+           exit;
+		}else{
+			echo 'showError("error","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina);controlaOperacao();");';			
+			exit;
+		}
+	}
+	else if (in_array($operacao,array('A_NOVA_PROP','A_NUMERO','A_VALOR','A_AVALISTA','TI','TE','TC','','A_SOMBENS'))) {
 
 		$xml = "<Root>";
 		$xml .= "	<Cabecalho>";

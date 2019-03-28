@@ -105,8 +105,10 @@
 					    <input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
 						<input type="hidden" id="vlfinanc" name="vlfinanc" value="<? echo getByTagName($registro->tags,'vlfinanc') ?>" />
 						<input type="hidden" id="dssitest" name="dssitest" value="<? echo getByTagName($registro->tags,'dssitest') ?>" />
-            <input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
+						<input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
 						<input type="hidden" id="insitest" name="insitest" value="<? echo getByTagName($registro->tags,'insitest') ?>" />
+						<!-- PRJ - 437 - Consignado s3 -->
+						<input type="hidden" id="inaverba" name="inaverba" value="<? echo getByTagName($registro->tags,'inaverba') ?>" />
 					    <!-- PRJ - 438 - Rating  -->
 						<input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
 						<input type="hidden" id="flintcdc" name="flintcdc" value="<? echo getByTagName($registro->tags,'flintcdc') ?>" />
@@ -159,7 +161,7 @@
 	<?php } else { echo "<!-- flgGrvOnline=$flgGrvOnline -->"; } ?>
 	<a href="#" class="botao" id="btPortabilidade"  onClick="controlaOperacao('PORTAB_CRED_I');">Portabilidade</a>
 	<a href="#" class="botao" id="btEnvEsteira"  onClick="controlaOperacao('ENV_ESTEIRA')">Analisar</a>
-	<!-- PRJ 437 -->
+	<!-- PRJ 437 s3-->
 	<a href="#" class="botaoDesativado" id="btAverbar"  onClick="controlaOperacao('AVERBAR')">Averba&ccedil;&atilde;o</a>
 	<a href="#" class="botao" id="btAcionamentos"  onClick="controlaOperacao('ACIONAMENTOS')">Detalhes Proposta</a>
 	<?php
