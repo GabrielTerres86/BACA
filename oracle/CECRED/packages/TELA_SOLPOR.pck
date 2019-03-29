@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_SOLPOR is
       Sistema  : Rotinas referentes a tela SOLPOR (PLATAFORMA CENTRALIZADA DE PORTABILIDADE DE SALÁRIO)
       Sigla    : SOLPOR
       Autor    : Augusto - Supero
-      Data     : Outubro/2018
+      Data     : Outubro/2018.
 
       Dados referentes ao programa:
 
@@ -187,7 +187,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
                                     ,pr_dtretorno_fim tbcc_portabilidade_recebe.dtretorno%TYPE
                                     ,pr_idsituacao tbcc_portabilidade_recebe.nrnu_portabilidade%TYPE
                                     ,pr_nuportabilidade tbcc_portabilidade_recebe.nrnu_portabilidade%TYPE) IS        
-            
         SELECT *
           FROM (SELECT a.*
                       ,rownum nrrownum
@@ -201,6 +200,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
                               ,dcp.dscodigo           motivo
                               ,COUNT(1)               over (PARTITION BY 1) qtdesolicitacoes
 															,tpr.ROWID              dsrowid
+                              ,(SELECT tprc.idsituacao
+                                  FROM (SELECT t.nrnu_portabilidade
+                                             , t.idsituacao
+                                             , t.dtcontestacao
+                                             , MAX(t.dtcontestacao) OVER (PARTITION BY t.nrnu_portabilidade) dtmaxcontest
+                                          FROM tbcc_portab_rec_contestacao t) tprc
+                                 WHERE tprc.dtcontestacao        = tprc.dtmaxcontest 
+                                   AND tprc.nrnu_portabilidade   = tpr.nrnu_portabilidade
+                                   AND rownum = 1) AS idsituacao_contestacao
                           FROM tbcc_portabilidade_recebe tpr
                               ,crapban                   ban
                               ,tbcc_dominio_campo        dom
@@ -225,10 +233,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
                            AND nvl(trunc(tpr.dtretorno), trunc(SYSDATE)) BETWEEN
                                nvl(pr_dtretorno_ini, nvl(trunc(tpr.dtretorno), trunc(SYSDATE))) AND
                                nvl(pr_dtretorno_fim, nvl(trunc(tpr.dtretorno), trunc(SYSDATE)))
-                           AND tpr.idsituacao = nvl(pr_idsituacao, tpr.idsituacao)
+                           AND tpr.idsituacao = nvl(DECODE(pr_idsituacao,6,'',pr_idsituacao), tpr.idsituacao)
                            AND tpr.nrnu_portabilidade = nvl(pr_nuportabilidade, tpr.nrnu_portabilidade)
                            ORDER BY tpr.nrnu_portabilidade) a
-                 WHERE rownum < ((pr_pagina * pr_tamanho_pagina) + 1))
+                 WHERE ((NVL(pr_idsituacao,0)  = 6 AND NVL(a.idsituacao_contestacao,0)  = 1)  OR 
+                        (NVL(pr_idsituacao,0) <> 6 AND NVL(a.idsituacao_contestacao,0) <> 1) OR
+                         NVL(pr_idsituacao,0)  = 0)
+                   AND rownum < ((pr_pagina * pr_tamanho_pagina) + 1))
          WHERE nrrownum >= (((pr_pagina - 1) * pr_tamanho_pagina) + 1);
         rw_lista_solicitacoes cr_lista_solicitacoes%ROWTYPE;
     BEGIN
@@ -290,7 +301,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
                             ,pr_tag_nova => 'Solicitacao'
                             ,pr_tag_cont => NULL
                             ,pr_des_erro => vr_dscritic);
-                            
                             
           GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                                 ,pr_tag_pai  => 'Solicitacao'
@@ -367,6 +377,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
                                 ,pr_posicao  => vr_cont_tag
                                 ,pr_tag_nova => 'dsrowid'
                                 ,pr_tag_cont => rw_lista_solicitacoes.dsrowid
+                               ,pr_des_erro => vr_dscritic);
+
+		 GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                               ,pr_tag_pai  => 'Solicitacao'
+                               ,pr_posicao  => vr_cont_tag
+                               ,pr_tag_nova => 'idsituacao_contestacao'
+                               ,pr_tag_cont => rw_lista_solicitacoes.idsituacao_contestacao
                                 ,pr_des_erro => vr_dscritic);
 
           -- Incrementa o contador de tags
@@ -716,14 +733,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         vr_cdagenci VARCHAR2(100);
         vr_nrdcaixa VARCHAR2(100);
         vr_idorigem VARCHAR2(100);
-        vr_dsmotivo VARCHAR2(1000);
     
         -- Variaveis internas
     
         CURSOR cr_solicitacao(pr_dsrowid VARCHAR2) IS
 					SELECT tpr.dtsolicitacao
 								,tpr.nrnu_portabilidade nusolicitacao
-								,GENE0002.fn_mask_conta(DECODE(tpr.nrdconta,0, NULL,tpr.nrdconta)) nrdconta
+				  ,GENE0002.fn_mask_conta(tpr.nrdconta) nrdconta
 								,GENE0002.fn_mask_cpf_cnpj(tpr.nrcpfcgc, 1) nrcpfcgc
 								,tpr.dstelefone telefone
 								,tpr.dsdemail email
@@ -736,7 +752,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 								,dom.dscodigo situacao
 								,tpr.dtavaliacao
 								,tpr.dtretorno
-                ,tpr.cdmotivo
 								,dcp.dscodigo motivo
 						FROM tbcc_portabilidade_recebe tpr
 								,crapban                   ban
@@ -750,17 +765,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 						 AND dcp.cddominio(+) = tpr.cdmotivo
              AND tpr.rowid = pr_dsrowid;
 				rw_solicitacao cr_solicitacao%ROWTYPE;
-        
-        CURSOR cr_erros(pr_nuportab tbcc_portabilidade_rcb_erros.nrnu_portabilidade%TYPE) IS
-					SELECT dom.dscodigo
-					      ,dom.cddominio
-						FROM tbcc_portabilidade_rcb_erros tee
-								,tbcc_dominio_campo           dom
-					 WHERE tee.cdmotivo           = dom.cddominio
-						 AND tee.dsdominio_motivo   = dom.nmdominio
-						 AND tee.nrnu_portabilidade = pr_nuportab;
-	      rw_erros cr_erros%ROWTYPE;
-        
     BEGIN
         pr_des_erro := 'OK';
         -- Extrai dados do xml
@@ -830,7 +834,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 									,pr_posicao  => 0
 									,pr_tag_nova => 'nrdconta'
 									,pr_tag_cont => rw_solicitacao.nrdconta
-
 									,pr_des_erro => vr_dscritic);
 
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -880,7 +883,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 									,pr_posicao  => 0
 									,pr_tag_nova => 'banco'
 									,pr_tag_cont => rw_solicitacao.banco
-
 									,pr_des_erro => vr_dscritic);
 
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -908,36 +910,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 									,pr_tag_pai  => 'Solicitacao'
 									,pr_posicao  => 0
 									,pr_tag_nova => 'dtavaliacao'
-									,pr_tag_cont => REPLACE(to_char(rw_solicitacao.dtavaliacao, 'DD/MM/RRRR HH24:MI'),' 00:00', NULL)
+							  ,pr_tag_cont => to_char(rw_solicitacao.dtavaliacao, 'DD/MM/RRRR HH24:MI')
 									,pr_des_erro => vr_dscritic);
 
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
 									,pr_tag_pai  => 'Solicitacao'
 									,pr_posicao  => 0
 									,pr_tag_nova => 'dtretorno'
-									,pr_tag_cont => REPLACE(to_char(rw_solicitacao.dtretorno, 'DD/MM/RRRR HH24:MI'),' 00:00', NULL)
+							  ,pr_tag_cont => to_char(rw_solicitacao.dtretorno, 'DD/MM/RRRR HH24:MI')
 									,pr_des_erro => vr_dscritic);
-
-        vr_dsmotivo := gene0007.fn_convert_db_web(rw_solicitacao.motivo);
-				--
-				IF upper(rw_solicitacao.cdmotivo) = 'EGENPCPS' THEN
-					vr_dsmotivo := '';
-					FOR rw_erros IN cr_erros(rw_solicitacao.nusolicitacao) LOOP
-						--
-						vr_dsmotivo := vr_dsmotivo || chr(10) || rw_erros.cddominio || ' - ' || gene0007.fn_convert_db_web(rw_erros.dscodigo);
-						--
-					END LOOP;
-					--
-					IF trim(vr_dsmotivo) IS NULL THEN
-						vr_dsmotivo := gene0007.fn_convert_db_web(rw_solicitacao.motivo);
-					END IF;
-				END IF;
         
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
 									,pr_tag_pai  => 'Solicitacao'
 									,pr_posicao => 0
 									,pr_tag_nova => 'motivo'
-									,pr_tag_cont => vr_dsmotivo
+							  ,pr_tag_cont => gene0007.fn_convert_db_web(rw_solicitacao.motivo)
 									,pr_des_erro => vr_dscritic);
     
     EXCEPTION
@@ -1016,7 +1003,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         CURSOR cr_solicitacao(pr_dsrowid VARCHAR2) IS
 					SELECT tpe.dtsolicitacao
 								,tpe.nrnu_portabilidade nusolicitacao
-								,decode(tpe.nrdconta, 0, NULL, tpe.nrdconta) nrdconta
+						,tpe.nrdconta
 								,GENE0002.fn_mask_cpf_cnpj(tpe.nrcpfcgc, 1) nrcpfcgc
 								,'(' || lpad(tpe.nrddd_telefone, 2, '0') || ')' || tpe.nrtelefone telefone
 								,tpe.nmprimtl
@@ -1051,13 +1038,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 					SELECT dom.dscodigo
 					      ,dom.cddominio
 						FROM tbcc_portabilidade_env_erros tee
+						,tbcc_portabilidade_envia tpe
 								,tbcc_dominio_campo dom
-					 WHERE tee.cdmotivo         = dom.cddominio
+				WHERE tpe.cdcooper = tee.cdcooper
+					AND tpe.nrdconta = tee.nrdconta
+					AND tpe.nrsolicitacao = tee.nrsolicitacao
+					AND tee.cdmotivo = dom.cddominio
 						 AND tee.dsdominio_motivo = dom.nmdominio
 						 AND tee.cdcooper         = pr_cdcooper
 						 AND tee.nrdconta         = pr_nrdconta
 						 AND tee.nrsolicitacao    = pr_nrsolici;
 	      rw_erros cr_erros%ROWTYPE;
+          
     BEGIN
         pr_des_erro := 'OK';
         -- Extrai dados do xml
@@ -1203,7 +1195,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 													,pr_tag_pai  => 'Solicitacao'
 													,pr_posicao  => 0
 													,pr_tag_nova => 'dtretorno'
-													,pr_tag_cont => REPLACE(to_char(rw_solicitacao.dtretorno, 'DD/MM/RRRR HH24:MI'), ' 00:00', NULL)
+								,pr_tag_cont => to_char(rw_solicitacao.dtretorno, 'DD/MM/RRRR HH24:MI')
+								,pr_des_erro => vr_dscritic);
+                                                    
+		GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+								,pr_tag_pai  => 'Solicitacao'
+								,pr_posicao  => 0
+								,pr_tag_nova => 'nrsolicitacao'
+								,pr_tag_cont => rw_solicitacao.nrsolicitacao
 													,pr_des_erro => vr_dscritic);
 
         vr_dsmotivo := rw_solicitacao.motivo;
@@ -1746,9 +1745,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 						vr_dscritic := 'Divergencia no CNPJ do empregador.';
 						RAISE vr_exc_saida;
 					END IF;
-          --
+
 					CLOSE cr_sol_emp;
-          --
+
 					UPDATE tbcc_portabilidade_recebe
 						 SET idsituacao = 2
 								,cdoperador = vr_cdoperad
@@ -1782,21 +1781,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 																	 ,pr_dsdadant => rw_solicitacao.idsituacao
 																	 ,pr_dsdadatu => 3);
 
-
           OPEN cr_dominio(pr_cdmotivo => pr_cdmotivo);
 					FETCH cr_dominio INTO rw_dominio;
 					CLOSE cr_dominio;
 
-																	 
 					GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
 																 	 ,pr_nmdcampo => 'Motivo'
 																	 ,pr_dsdadant => NULL
 																	 ,pr_dsdadatu => rw_dominio.dscodigo);																	 					
-				END IF;
-				
-				
 
-				
+				END IF;
         
         -- Criar cabecalho do XML
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados><Retorno>1</Retorno></Dados></Root>');
@@ -1898,14 +1892,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 					  ORDER BY cop.cdcooper, ass.nrdconta;
         rw_lista_contas cr_lista_contas%ROWTYPE;
 				
-				
 			  CURSOR cr_crapcop IS
 					SELECT c.nmrescop
 					      ,c.cdcooper
 						FROM crapcop c
 					 WHERE c.cdcooper = 3;
 			  rw_crapcop cr_crapcop%ROWTYPE;
-			  
 			  
     BEGIN
         pr_des_erro := 'OK';
