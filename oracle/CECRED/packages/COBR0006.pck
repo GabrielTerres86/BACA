@@ -470,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 18/01/2019
+    Data     : Novembro/2015.                   Ultima atualizacao: 12/03/2019
   
    Dados referentes ao programa:
   
@@ -573,6 +573,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             19/11/2018 - inc0027103 Na rotina pc_InternetBank69, separadas as execuções em module e action para
                          cada tipo de layout cnab, a fim de identificar melhor os pontos que demandam mais 
                          processamento (Carlos)
+                         
+                 12/03/2019 - Validar numero do boleto zero no arquivo de remessa
+                              (Lucas Ranghetti INC0031367)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -6601,7 +6604,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 18/01/2019
+       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
 
        Dados referentes ao programa:
 
@@ -12499,7 +12502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei -RKAM
-       Data    : Marco/2016.                   Ultima atualizacao:  
+       Data    : Marco/2016.                   Ultima atualizacao: 12/03/2019 
 
        Dados referentes ao programa:
 
@@ -12513,6 +12516,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 de exceção carregar o parâmetro pr_rec_rejeita, que é
                                 tratado no pc_crps778. A falta do retorno estava interrompendo
                                 a execução da carga de arquivos por FTP. (SD#718122-AJFink)
+                                
+                   12/03/2019 - Validar numero do boleto zero no arquivo de remessa
+                                (Lucas Ranghetti INC0031367)
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------    
@@ -13223,7 +13229,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             END IF;
             
             --> Numero do documento
-            IF vr_tab_campos('NRDOCMTO').texto IS NULL THEN 
+            IF vr_tab_campos('NRDOCMTO').texto IS NULL OR
+               vr_tab_campos('NRDOCMTO').texto = 0 THEN 
 
               vr_contaerr := vr_contaerr + 1;
                 
@@ -13815,7 +13822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei
-       Data    : Marco/2016.                   Ultima atualizacao: 17/08/2016
+       Data    : Marco/2016.                   Ultima atualizacao: 12/03/2019
 
        Dados referentes ao programa:
 
@@ -13831,6 +13838,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 de exceção carregar o parâmetro pr_rec_rejeita, que é
                                 tratado no pc_crps778. A falta do retorno estava interrompendo
                                 a execução da carga de arquivos por FTP. (SD#718122-AJFink)
+                                
+                   12/03/2019 - Validar numero do boleto zero no arquivo de remessa
+                                (Lucas Ranghetti INC0031367)
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------    
@@ -14584,7 +14594,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             END IF;
             
             --> Numero do documento
-            IF vr_tab_campos('NRDOCMTO').texto IS NULL THEN 
+            IF vr_tab_campos('NRDOCMTO').texto IS NULL OR
+               vr_tab_campos('NRDOCMTO').texto = 0 THEN
 
               vr_contaerr := vr_contaerr + 1;
                 
@@ -15296,14 +15307,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM 
-       Data    : Marco/2016.                   Ultima atualizacao:  
+       Data    : Marco/2016.                   Ultima atualizacao: 12/03/2019
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Realiza a validação do arquivo cnab400_085
 
-       Alteracoes: 
+       Alteracoes: 12/03/2019 - Validar numero do boleto zero no arquivo de remessa
+                                (Lucas Ranghetti INC0031367)
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------    
@@ -15795,7 +15807,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             END IF;
             
             --> Numero do titulo
-            IF vr_tab_campos('NRDOCMTO').texto IS NULL THEN 
+            IF vr_tab_campos('NRDOCMTO').texto IS NULL OR
+               vr_tab_campos('NRDOCMTO').texto = 0 THEN
 
               vr_contaerr := vr_contaerr + 1;
                 
