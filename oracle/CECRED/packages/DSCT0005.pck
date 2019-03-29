@@ -29,6 +29,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0005 AS
            AND tdb.nrdconta = tlb.nrdconta
            AND tdb.nrborder = tlb.nrborder
            AND tdb.nrdocmto = tlb.nrdocmto
+           AND tdb.cdbandoc = tlb.cdbandoc
+           AND tdb.nrdctabb = tlb.nrdctabb
+           AND tdb.nrcnvcob = tlb.nrcnvcob
        INNER JOIN crapbdt bdt
          ON    bdt.cdcooper = tdb.cdcooper
            AND bdt.nrborder = tdb.nrborder

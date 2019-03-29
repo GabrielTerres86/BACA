@@ -1468,9 +1468,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     CLOSE cr_estorno_no_dia;
     
     -- Recebidos no dia
-    vr_cdhisrec := dsct0003.vr_cdhistordsct_liberacred ||','|| --2665
-                   dsct0003.vr_cdhistordsct_apropjurmra||','|| --2668
-                   dsct0003.vr_cdhistordsct_apropjurmta;       --2669
+    vr_cdhisrec := dsct0003.vr_cdhistordsct_liberacred    ||','|| --2665
+                   dsct0003.vr_cdhistordsct_apropjurmra   ||','|| --2668
+                   dsct0003.vr_cdhistordsct_apropjurmta   ||','|| --2669
+                   dsct0003.vr_cdhistordsct_deboppagmaior ||','|| --2804
+                   dsct0003.vr_cdhistordsct_iofcompleoper;        --2800
     
     OPEN cr_recebidos_dia;
     FETCH cr_recebidos_dia INTO rw_recebidos_dia;

@@ -281,7 +281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
   --  Programa : TELA_MANPRT
   --  Sistema  : Ayllos Web
   --  Autor    : Helinton Steffens (Supero)
-  --  Data     : Janeiro - 2018                 Ultima atualizacao: 23/01/2019
+  --  Data     : Janeiro - 2018                 Ultima atualizacao: 27/03/2019
   --
   -- Dados referentes ao programa:
   --
@@ -305,6 +305,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
      
      23/01/2019 - Tratamento para histórico 2917 - Liq de boleto em cartório via DOC 
                 - Desvinculado o cadastro de cartórios no processo de conciliação. (P352 - Cechet)
+                
+     27/03/2019 - Colocar o tpocorre como texto pois pode haver casos em 
+                  que vem campo texto (Lucas Ranghetti INC0036169)
    ---------------------------------------------------------------------------*/
     
     
@@ -1615,7 +1618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : André Clemer (Supero)
-    Data     : Abril/2018                           Ultima atualizacao: 12/12/2018
+    Data     : Abril/2018                           Ultima atualizacao: 27/03/2019
 
     Dados referentes ao programa:
 
@@ -1626,6 +1629,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     
     12/12/2018 - Filtrar apenas titulos pagos em cartório no processo de 
                  conciliação (tpocorre=1) (Cechet/Fabio Supero)
+                 
+    27/03/2019 - Colocar o tpocorre como texto pois pode haver casos em 
+                 que vem campo texto (Lucas Ranghetti INC0036169)
     -------------------------------------------------------------------------------------------------------------*/
     
     CURSOR cr_titulos(pr_dtinicial     IN VARCHAR2
@@ -1645,7 +1651,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
            LEFT JOIN crapmun mun ON mun.cdufibge || LPAD(mun.cdcidbge,5,'0') = ret.cdcomarc
            INNER JOIN crapcop cop ON cop.cdcooper = ret.cdcooper
      WHERE ret.dtconciliacao IS NULL
-       AND ret.tpocorre = 1 -- titulo pago em cartorio
+       AND ret.tpocorre = '1' -- titulo pago em cartorio
        AND (
                (pr_dtinicial IS NOT NULL AND ret.dtocorre >= to_date(pr_dtinicial,'DD/MM/RRRR'))
            OR

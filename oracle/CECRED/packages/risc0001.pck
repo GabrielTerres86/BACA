@@ -429,15 +429,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
             ass.inpessoa
           FROM 
             craptdb tdb
-            INNER JOIN (SELECT 
-                          cdcooper,nrborder,MIN(dtvencto) AS dtvenmin 
-                        FROM craptdb 
-                        WHERE (dtvencto+60) < par_dtrefere 
-                          AND insittit = 4 
-                          AND cdcooper=par_cdcooper 
-                        GROUP BY cdcooper,nrborder
-                        ) tdv ON tdb.cdcooper=tdv.cdcooper AND tdb.nrborder=tdv.nrborder
-            INNER JOIN crapbdt bdt ON bdt.nrborder=tdb.nrborder AND bdt.cdcooper=tdb.cdcooper AND bdt.flverbor=1 
+            INNER JOIN (SELECT cdcooper
+                              ,nrdconta
+                              ,nrborder
+                              ,MIN(dtvencto) dtvenmin
+                          FROM craptdb
+                         WHERE (dtvencto+60) < par_dtrefere
+                           AND insittit      = 4
+                           AND cdcooper      = par_cdcooper
+                         GROUP BY cdcooper
+                                ,nrdconta
+                                ,nrborder
+                       ) tdv ON tdb.cdcooper = tdv.cdcooper 
+                            AND tdb.nrdconta = tdv.nrdconta 
+                            AND tdb.nrborder = tdv.nrborder
+            INNER JOIN crapbdt bdt ON bdt.nrborder=tdb.nrborder AND bdt.cdcooper=tdb.cdcooper AND bdt.flverbor=1
             INNER JOIN crapass ass ON bdt.nrdconta=ass.nrdconta AND bdt.cdcooper=ass.cdcooper
           WHERE 1=1
             AND tdb.insittit = 4
