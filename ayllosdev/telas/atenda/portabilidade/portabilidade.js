@@ -18,7 +18,6 @@ var nomeForm = '';
 
 var vintegra = 0;
 
-
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 	glb_opcao = opcao;
@@ -87,9 +86,7 @@ function controlaFoco(opcao) {
     if (opcao == "@") { //Envio de Solicitação
         $('.FirstInput:first ').focus();
 	}
-
 }
-
 
 
 //
@@ -102,10 +99,10 @@ function controlaLayout(cddopcao) {
 		
 		nomeForm = 'frmDadosPortabilidade';		
 		if (glb_opcao == '0') {
-			altura = '465px';
+			altura = '650px';
         	largura = '555px';
 		} else {
-			altura = '305px';
+			altura = '580px';
         	largura = '555px';
 		}
         
@@ -132,6 +129,8 @@ function controlaLayout(cddopcao) {
 		var rDtretorno = $('label[for="dtretorno"]', '#'+nomeForm);
 		var rNrnu_portabilidade = $('label[for="nrnu_portabilidade"]', '#'+nomeForm);
 		var rDsmotivo = $('label[for="dsmotivo"]', '#'+nomeForm);
+		var rDsretorno = $('label[for="dsretornno"]', '#'+nomeForm);
+		var rIdentificador = $('label[for="nr_identificador"]', '#'+nomeForm);
 		
 		var cNrcpfcgc = $('#nrcpfcgc', '#'+nomeForm);
 		var cNmprimtl = $('#nmprimtl', '#'+nomeForm);
@@ -153,6 +152,8 @@ function controlaLayout(cddopcao) {
 		var cDtretorno = $('#dtretorno', '#'+nomeForm);
 		var cNrnu_portabilidade = $('#nrnu_portabilidade', '#'+nomeForm);
 		var cDsmotivo = $('#dsmotivo', '#'+nomeForm);
+		var cDsretorno = $('#dsretornno', '#'+nomeForm);
+		var cIdentificador = $('#nr_identificador', '#'+nomeForm);
 		
 		rNrcpfcgc.addClass('rotulo').css({ 'width': '98px' });
 		cNrcpfcgc.css({ 'width': '112px' });
@@ -167,7 +168,7 @@ function controlaLayout(cddopcao) {
 		cDsdemail.css({ 'width': '250px' });
 		
 		rDsdbanco.addClass('rotulo').css({ 'width': '98px' });
-		cDsdbanco.css({ 'width': '413px' });
+		cDsdbanco.css({ 'width': '415px' });
 		
 		rCdageban.css({ 'width': '80px' });
 		cCdageban.css({ 'width': '80px' });
@@ -175,41 +176,47 @@ function controlaLayout(cddopcao) {
 		rNrispbif_banco_folha.addClass('rotulo').css({ 'width': '98px' });
 		cNrispbif_banco_folha.css({ 'width': '112px' });
 		
-		rNrcnpjif.css({ 'width': '50px' });
-		cNrcnpjif.css({ 'width': '200px' });
+		rNrcnpjif.css({ 'width': '165px' });
+		cNrcnpjif.css({ 'width': '135px' });
 		
 		rNrdocnpj_emp.addClass('rotulo').css({ 'width': '98px' });
 		cNrdocnpj_emp.css({ 'width': '112px' });
 		
-		rNmprimtl_emp.css({ 'width': '50px' });
+		rNmprimtl_emp.css({ 'width': '52px' });
 		cNmprimtl_emp.css({ 'width': '250px' });
 		
 		rNrispbif.addClass('rotulo').css({ 'width': '98px' });
 		cNrispbif.css({ 'width': '112px' });
 		
-		rNrdocnpj.css({ 'width': '50px' });
+		rNrdocnpj.css({ 'width': '52px' });
 		cNrdocnpj.css({ 'width': '248px' });
 		
 		rTpconta.addClass('rotulo').css({ 'width': '98px' });
 		cTpconta.css({ 'width': '110px' });
 		
-		rNrdconta.css({ 'width': '60px' });
+		rNrdconta.css({ 'width': '72px' });
 		cNrdconta.css({ 'width': '110px' });
 		
 		rDscodigo.addClass('rotulo').css({ 'width': '98px' });
-		cDscodigo.css({ 'width': '112px' });
+		cDscodigo.css({ 'width': '135px' });
 		
 		rDtsolicitacao.addClass('rotulo').css({ 'width': '98px' });
-		cDtsolicitacao.css({ 'width': '112px' });
+		cDtsolicitacao.css({ 'width': '135px' });
 		
-		rDtretorno.css({ 'width': '98px' });
-		cDtretorno.css({ 'width': '200px' });
+		rDtretorno.css({ 'width': '132px' });
+		cDtretorno.css({ 'width': '145px' });
 
-		rNrnu_portabilidade.css({ 'width': '98px' });
-		cNrnu_portabilidade.css({ 'width': '200px' });
+		rNrnu_portabilidade.css({ 'width': '132px' });
+		cNrnu_portabilidade.css({ 'width': '145px' });
 		
 		rDsmotivo.addClass('rotulo').css({ 'width': '98px' });
-		cDsmotivo.css({ 'width': '412px' });
+		cDsmotivo.css({ 'width': '416px', 'height': '45px' });
+		
+		rDsretorno.addClass('rotulo').css({ 'width': '98px' });
+		cDsretorno.css({ 'width': '416px', 'height': '45px', 'margin-top': '5px' });
+		
+		rIdentificador.css({ 'width': '132px' });
+		cIdentificador.css({ 'width': '145px' });
 
 
 		if (cddopcao == 'C') {
@@ -271,6 +278,10 @@ function controlaOperacao(cddopcao) {
 		case 'E':
 			exibeCancelamento();
 		break;
+		// Contesta Portabilidade
+		case 'CP':
+			contestaPortabilidade();
+			break;
 	}
 	return;
 }
@@ -338,6 +349,200 @@ function exibeCancelamento() {
 	});
 }
 
+function contestaPortabilidade() {
+	exibeRotina($('#divUsoGenerico'));
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando motivos de contesta&ccedil;&atilde;o...");
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/portabilidade/form_contesta_portabilidade.php",
+		data: {
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			if (response.substr(0, 14) == 'hideMsgAguardo') {
+				eval(response);
+			} else {
+				fechaRotina($('#divRotina'));
+				$("#divUsoGenerico").html(response);
+			}
+		}
+	});
+}
+
+function responderContestacao(rowid, idstatus) {
+	exibeRotina($('#divUsoGenerico'));
+	
+	var dsmotivo_contestacao = $('input#dsmotivo_contestacao').val();
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/portabilidade/form_responde_contestacao.php",
+		data: {
+			idstatus: idstatus,
+			dsrowid: rowid,
+			dsmotivo: dsmotivo_contestacao,
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			if (response.substr(0, 14) == 'hideMsgAguardo') {
+				eval(response);
+			} else {
+				fechaRotina($('#divRotina'));
+				$("#divUsoGenerico").html(response);
+			}
+		}
+	});
+}
+
+function regularizarContestacao(rowid, idstatus) {
+	exibeRotina($('#divUsoGenerico'));
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando motivos de regulariza&ccedil;&atilde;o...");
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/portabilidade/form_regularizacao_portabilidade.php",
+		data: {
+			idstatus: idstatus,
+			dsrowid: rowid,
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			if (response.substr(0, 14) == 'hideMsgAguardo') {
+				eval(response);
+			} else {
+				fechaRotina($('#divRotina'));
+				$("#divUsoGenerico").html(response);
+			}
+		}
+	});
+}
+
+
+function confirmaCantestacaoPortabilidade(skipConfirm) {
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, contestando portabilidade...");
+
+	var cdmotivo = $('#cdmotivo', '#frmContestaPortabilidade').val();
+	
+	if (!cdmotivo){
+		hideMsgAguardo();
+		showError("error", "Selecione um motivo para continuar.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return;
+	}
+	
+	if (!skipConfirm) {
+		showConfirmacao('Confirma a Contesta&ccedil;&atilde;o de Portabilidade?', 'Confirma&ccedil;&atilde;o - Aimaro', 'confirmaCantestacaoPortabilidade(true)', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+		return;
+	}
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/portabilidade/contesta_portabilidade.php",
+		data: {
+			nrdconta: nrdconta,
+            cdmotivo: cdmotivo,
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			eval(response);
+		}
+	});
+}
+
+function buscaMotivosRespondeContestacao(){
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando motivos...");
+
+	var idsituacao = $('input[name="idsituacao"]', '#frmResponderContestacao').val();
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/portabilidade/responde_contestacao.php",
+		data: {
+            idsituacao: idsituacao,
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			eval(response);
+		}
+	});
+}
+
+function confirmaRespondeContestacao(skipConfirm, rowid) {
+
+	var cdmotivo = $('#cdmotivo', '#frmResponderContestacao').val();
+	var idsituacao = $('input[name="idsituacao"]:checked', '#frmResponderContestacao').val();
+	
+	if (!cdmotivo){
+		showError("error", "Selecione um motivo para continuar.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return;
+	}
+	
+	if (!skipConfirm) {
+		showConfirmacao('Confirma o envio da resposta de contesta&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'confirmaRespondeContestacao(true, \''+rowid+'\')', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+		return;
+	}
+	
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, respondendo contesta&ccedil;&atilde;o...");
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/portabilidade/responde_contestacao.php",
+		data: {
+			dsrowid: rowid,
+            cdmotivo: cdmotivo,
+            idsituacao: idsituacao,
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			eval(response);
+		}
+	});
+}
+
 function confirmaCancelamento(skipConfirm) {
 	if (!skipConfirm) {
 		showConfirmacao('Confirma o cancelamento de Portabilidade de Sal&aacute;rio para o cooperado?', 'Confirma&ccedil;&atilde;o - Aimaro', 'confirmaCancelamento(true)', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
@@ -369,6 +574,44 @@ function confirmaCancelamento(skipConfirm) {
 	});
 }
 
+function confirmaRegularizarPortabilidade(skipConfirm, rowid) {
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, regularizando portabilidade...");
+
+	var cdmotivo = $('#cdmotivo', '#frmRegularizarPortabilidade').val();
+	
+	if (!cdmotivo){
+		hideMsgAguardo();
+		showError("error", "Selecione um motivo para continuar.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return;
+	}
+	
+	if (!skipConfirm) {
+		showConfirmacao('Confirma a Regulariza&ccedil;&atilde;o de Portabilidade?', 'Confirma&ccedil;&atilde;o - Aimaro', 'confirmaRegularizarPortabilidade(true, \''+rowid+'\')', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+		return;
+	}
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/portabilidade/regulariza_portabilidade.php",
+		data: {
+			dsrowid: rowid,
+            cdmotivo: cdmotivo,
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			eval(response);
+		}
+	});
+}
+
 function imprimirTermoAdesao(dsrowid) {
     $("#dsrowid", "#frmTermo").val(dsrowid);
 
@@ -382,3 +625,15 @@ function lpad (str, max) {
   str = str.toString();
   return str.length < max ? lpad("0" + str, max) : str;
 }
+
+$(document.body).unbind('keydown').bind('keydown', function (e) {
+	var target = e.target;
+
+	switch (e.keyCode) {
+		case 27:
+			//fechaRotina($('#divUsoGenerico'));
+			//fechaRotina(divRotina);
+			//encerraRotina();
+			break;
+	}
+ });
