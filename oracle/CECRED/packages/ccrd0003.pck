@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 11/02/2019
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 08/03/2019
   --
   -- Dados referentes ao programa:
   --
@@ -122,6 +122,10 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --                          (Lucas Ranghetti #PRB0040597)
   --                        - Limpar data de rejeicao ao alterar a situação para 
   --                          3 - liberado (Lucas Ranghetti PRB0040596)
+  --
+  --             08/03/2019 - Verificar se processo batch ainda está rodando na central
+  --                          pois vamos rodar o programa mesmo com a central rodando
+  --                          (Lucas Ranghetti PRB0040618)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6426,7 +6430,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
      Sistema : Cartoes de Credito - Cooperativa de Credito
      Sigla   : CRRD
      Autor   : Lucas Lunelli
-     Data    : Maio/14.                    Ultima atualizacao: 10/07/2017
+     Data    : Maio/14.                    Ultima atualizacao: 08/03/2019
 
      Dados referentes ao programa:
 
@@ -6536,6 +6540,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              
                 10/07/2018 - Validar valores nulos na geracao das linhas do arquivo ccb3 e 
                              enviar e-mail caso nao gere arquivo (Lucas Ranghetti PRB0040160)
+                             
+                08/03/2019 - Verificar se processo batch ainda está rodando na central
+                             pois vamos rodar o programa mesmo com a central rodando
+                             (Lucas Ranghetti PRB0040618)
      ..............................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -6581,7 +6589,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_inpessoa   crapavt.inpessoa%TYPE;      
       vr_qtdconta   pls_integer; -- Contar quantidade de registros por conta no arquivo
       vr_cdprogra   VARCHAR2(19) := 'CCRD0003.PC_CRPS671';
-      
+      vr_dtmvtolt   DATE;
+      vr_dtmvtoan   DATE;
       -- Upgrade no cartao do TITULAR 1
       vr_flupgrad   BOOLEAN := FALSE;
       vr_nrctaant   crapass.nrdconta%TYPE;
@@ -7134,7 +7143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                               '01'                                    /* Dados Conta Cartão (Tipo 1 ) */                             ||
                               pr_tipooper                             /* Tp. Operac.                  */                             ||
                               lpad(rw_crawcrd.nrseqcrd,8,'0')         /* Nrd. Operac.                 */                             ||
-                              TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYYYY')                                                                ||
+                              TO_CHAR(vr_dtmvtolt,'DDMMYYYY')                                                                ||
                               rpad(pr_nrctacrd,13,'0')                /* Nr. Conta Cart.              */                             ||
                               lpad(nvl(rw_crawcrd.nrempcrd,0),4,'0')  /* Nr. da Empresa               */                             ||
                               lpad(nvl(pr_cdgrafin,0),7,'0')          /* Nr. Grupo de Afinidade       */                             ||
@@ -7290,7 +7299,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                               '01'                                    /* Dados Conta Cartão (Tipo 1 ) */                             ||
                               pr_tipooper                             /* Tp. Operac.                  */                             ||
                               lpad(rw_crawcrd.nrseqcrd,8,'0')         /* Nrd. Operac.                 */                             ||
-                              TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYYYY') /* Data da operação             */                             ||
+                              TO_CHAR(vr_dtmvtolt,'DDMMYYYY') /* Data da operação             */                             ||
                               rpad(pr_nrctacrd,13,'0')                /* Nr. Conta Cart.              */                             ||
                               '____'                                  /* Nr. da Empresa               */                             ||
                               vr_aux_cdgrafin                         /* Nr. Grupo de Afinidade       */                             ||
@@ -7429,7 +7438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             '02'                             /* Dados do Cartão                    */                      ||
                             pr_tipooper                      /* Tp. Operac.                        */                      ||
                             lpad(rw_crawcrd.nrseqcrd,8,'0')  /* Nrd. Operac.                       */                      ||
-                            TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYYYY')                                                        ||
+                            TO_CHAR(vr_dtmvtolt,'DDMMYYYY')                                                        ||
                             rpad(pr_nrctacrd,13,'0')         /* Nr. Conta Cart.                    */                      ||
                             rpad('0',19,'0')                 /* Número do Cartão (Nao Informar)    */                      ||
                             rpad(pc_nmtitcrd,23,' ')         /* Nome Embossado no Cartão           */                      ||
@@ -7513,6 +7522,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           CLOSE btch0001.cr_crapdat;
         END IF;
 
+        -- Verificar se cooperativa esta no processo ainda
+        if rw_crapdat.inproces > 1 AND 
+           trunc(sysdate) > rw_crapdat.dtmvtolt THEN
+           vr_dtmvtolt := rw_crapdat.dtmvtopr;
+           vr_dtmvtoan := rw_crapdat.dtmvtolt;
+        ELSE
+           vr_dtmvtolt := rw_crapdat.dtmvtolt;
+           vr_dtmvtoan := rw_crapdat.dtmvtoan;
+        END IF;
+
         -- Busca sequencial do arquivo
         CCRD0003.pc_ult_seq_arq(pr_tparquiv => 3
                                ,pr_nrseqinc => TRUE
@@ -7538,7 +7557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         -- buscar caminho de arquivos do Bancoob/CABAL
         vr_dsdireto := rw_crapscb.dsdirarq;
-        vr_dtultenv := NVL(rw_crapscb.dtultint, rw_crapdat.dtmvtoan);
+        vr_dtultenv := NVL(rw_crapscb.dtultint, vr_dtmvtoan);
 
         -- buscar caminho de arquivos do Bancoob/CABAL
         vr_direto_connect := vr_dsdireto;
@@ -7564,7 +7583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                        '0756'                                       ||
                        TO_CHAR(lpad(rw_crapcop.cdagebcb,4,'0'))     ||
                        lpad(vr_nrseqarq,7,0)                        ||
-                       TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYYYY')      ||
+                       TO_CHAR(vr_dtmvtolt,'DDMMYYYY')      ||
                        '1'                                          ||
                        lpad('0',70,'0');
 
@@ -7622,7 +7641,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             OPEN cr_crapalt(pr_cdcooper => rw_crapcrd_loop_alt.cdcooper,
                             pr_nrdconta => rw_crapcrd_loop_alt.nrdconta,
                             pr_dtaltini => vr_dtultenv,   -- Desde a data do ultimo envio do arquivo
-                            pr_dtaltfim => rw_crapdat.dtmvtoan);
+                            pr_dtaltfim => vr_dtmvtoan);
             FETCH cr_crapalt INTO rw_crapalt;
             
             -- Busca alterações de limite ainda pendentes de processamento
@@ -8471,7 +8490,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 11/02/2019
+       Data    : Abril/2014.                     Ultima atualizacao: 08/03/2019
 
        Dados referentes ao programa:
 
@@ -8644,6 +8663,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 (Lucas Ranghetti #PRB0040597)
                               - Limpar data de rejeicao ao alterar a situação para 
                                 3 - liberado (Lucas Ranghetti PRB0040596)
+                                
+                   08/03/2019 - Verificar se processo batch ainda está rodando na central
+                                pois vamos rodar o programa mesmo com a central rodando
+                                (Lucas Ranghetti PRB0040618)
     ............................................................................ */
 
     DECLARE
@@ -8711,6 +8734,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_indice     NUMBER;
       vr_limitsms   NUMBER;
 	  vr_cpf        NUMBER;                                           --> Recebe o CPF do cooperado 
+      vr_dtmvtolt   DATE;
 
       vr_tplimcrd   NUMBER(1) :=  0; -- 0=concessao, 1=alteracao
       vr_origemws   boolean;         -- Solicitacao por WS
@@ -10162,6 +10186,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         CLOSE btch0001.cr_crapdat;
       END IF;
                   
+      -- Verificar se cooperativa esta no processo ainda
+      if rw_crapdat.inproces > 1 AND 
+         trunc(sysdate) > rw_crapdat.dtmvtolt THEN
+         vr_dtmvtolt := rw_crapdat.dtmvtopr;
+      ELSE
+         vr_dtmvtolt := rw_crapdat.dtmvtolt;
+      END IF;
+
       -- buscar informações do arquivo a ser processado
       OPEN cr_crapscb;
       FETCH cr_crapscb INTO rw_crapscb;
@@ -10646,7 +10678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                            rw_crapass.cdagenci,
                            '',
                            'CCR3',
-                           rw_crapdat.dtmvtolt,
+                           vr_dtmvtolt,
                            vr_codrejei,
                            vr_dtoperac,
                            vr_nrdconta,
@@ -10667,7 +10699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                      altera_data_rejeicao(pr_cdcooper => vr_cdcooper,
                                           pr_nrdconta => vr_nrdconta,
                                           pr_nrseqcrd => vr_nroperac,
-                                          pr_dtmvtolt => rw_crapdat.dtmvtolt);
+                                          pr_dtmvtolt => vr_dtmvtolt);
                   
                   END IF;
                   
@@ -11103,7 +11135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                            rw_crapass.cdagenci,
                            vr_nmtitcrd,
                            'CCR3',
-                           rw_crapdat.dtmvtolt,
+                           vr_dtmvtolt,
                            vr_codrejei,
                            vr_dtoperac,
                            vr_nrdconta,
@@ -11126,7 +11158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     atualiza_nmtitcrd(vr_cdcooper,
                                       rw_crapass.cdagenci,
                                       vr_nrdconta,
-                                      rw_crapdat.dtmvtolt,
+                                      vr_dtmvtolt,
                                       vr_nmtitcrd); 
                         
                     -- Altera a situação da Proposta de Cartão para 1 (Aprovado)
@@ -11137,7 +11169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     altera_data_rejeicao(pr_cdcooper => vr_cdcooper,
                                          pr_nrdconta => vr_nrdconta,
                                          pr_nrseqcrd => vr_nroperac,
-                                         pr_dtmvtolt => rw_crapdat.dtmvtolt);
+                                         pr_dtmvtolt => vr_dtmvtolt);
                     
                     CONTINUE;
                   ELSE
@@ -11145,7 +11177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     atualiza_nmtitcrd(vr_cdcooper,
                                       rw_crapass.cdagenci,
                                       vr_nrdconta,
-                                      rw_crapdat.dtmvtolt,
+                                      vr_dtmvtolt,
                                       vr_nmtitcrd);
                                          
                     CONTINUE;                      
@@ -11162,7 +11194,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                              pr_nrdconta => vr_nrdconta,
                                              pr_nrcrcard => vr_nrcrcard,                                           
                                              pr_insitcrd => vr_sitcarta,                                    
-                                             pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                             pr_dtmvtolt => vr_dtmvtolt,
                                              pr_des_erro => vr_des_erro,
                                              pr_cdcritic => vr_cdcritic,
                                              pr_dscritic => vr_dscritic);
@@ -11192,7 +11224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                            pr_nrdconta => vr_nrdconta,
                                            pr_nrcrcard => vr_nrcrcard,                                           
                                            pr_insitcrd => vr_sitcarta,                                    
-                                           pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                           pr_dtmvtolt => vr_dtmvtolt,
                                            pr_des_erro => vr_des_erro,
                                            pr_cdcritic => vr_cdcritic,
                                            pr_dscritic => vr_dscritic);
@@ -11320,7 +11352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                  ,vr_nrdconta                 -- pr_nrdconta
                                                  ,vr_nrdctitg   -- pr_nrcctitg
                                                  ,3                           -- pr_insitcrd
-                                                 ,rw_crapdat.dtmvtolt);       -- pr_dtmvtolt
+                                                 ,vr_dtmvtolt);       -- pr_dtmvtolt
                           FETCH cr_crawcrd_cancel INTO rw_crapacb.cdadmcrd
                                                      , vr_dddebito
                                                      , vr_vllimcrd
@@ -11333,7 +11365,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             OPEN cr_crawcrd_cdgrafin_conta(vr_cdcooper               -- pr_cdcooper
                                                           ,vr_nrdconta               -- pr_nrdconta
                                                           ,vr_nrdctitg               -- pr_nrcctitg
-                                                          ,rw_crapdat.dtmvtolt);     -- pr_dtmvtolt
+                                                          ,vr_dtmvtolt);     -- pr_dtmvtolt
                             -- Buscar os dados                              
                             FETCH cr_crawcrd_cdgrafin_conta INTO rw_crawcrd_cdgrafin_conta;
                             IF cr_crawcrd_cdgrafin_conta%FOUND THEN
@@ -11478,7 +11510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                    ,vr_nrdconta                 -- pr_nrdconta
                                                    ,vr_nrdctitg   -- pr_nrcctitg
                                                    ,3                           -- pr_insitcrd
-                                                   ,rw_crapdat.dtmvtolt);       -- pr_dtmvtolt
+                                                   ,vr_dtmvtolt);       -- pr_dtmvtolt
                             FETCH cr_crawcrd_cancel INTO rw_crapacb.cdadmcrd
                                                        , vr_dddebito
                                                        , vr_vllimcrd
@@ -11491,7 +11523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                               OPEN cr_crawcrd_cdgrafin_conta(vr_cdcooper               -- pr_cdcooper
                                                             ,vr_nrdconta               -- pr_nrdconta
                                                             ,vr_nrdctitg               -- pr_nrcctitg
-                                                            ,rw_crapdat.dtmvtolt);     -- pr_dtmvtolt
+                                                            ,vr_dtmvtolt);     -- pr_dtmvtolt
                               -- Buscar os dados                              
                               FETCH cr_crawcrd_cdgrafin_conta INTO rw_crawcrd_cdgrafin_conta;
                               IF cr_crawcrd_cdgrafin_conta%FOUND THEN
@@ -11584,7 +11616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                          rw_crapass.cdagenci,
                          vr_nmtitcrd,
                          'CCR3',
-                         rw_crapdat.dtmvtolt,
+                         vr_dtmvtolt,
                          vr_codrejei,
                          vr_dtoperac,
                          vr_nrdconta,
@@ -11607,7 +11639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   atualiza_nmtitcrd(vr_cdcooper,
                                     rw_crapass.cdagenci,
                                     vr_nrdconta,
-                                    rw_crapdat.dtmvtolt,
+                                    vr_dtmvtolt,
                                     vr_nmtitcrd); 
                       
                   -- Altera a situação da Proposta de Cartão para 1 (Aprovado)
@@ -11618,7 +11650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   altera_data_rejeicao(pr_cdcooper => vr_cdcooper,
                                        pr_nrdconta => vr_nrdconta,
                                        pr_nrseqcrd => vr_nroperac,
-                                       pr_dtmvtolt => rw_crapdat.dtmvtolt);
+                                       pr_dtmvtolt => vr_dtmvtolt);
                   
                   CONTINUE;
                 ELSE
@@ -11775,7 +11807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                          rw_crapass.cdagenci,
                                          vr_nmtitcrd,
                                          'CCR3',
-                                         rw_crapdat.dtmvtolt,
+                                         vr_dtmvtolt,
                                          999, -- Representante nao encontrado
                                          vr_dtoperac,
                                          vr_nrdconta,
@@ -11899,7 +11931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         vr_nrcpfcgc,                                      -- nrcpftit
                         vr_vllimcrd,                                      -- vllimcrd
                         3,                                                -- flgctitg
-                        rw_crapdat.dtmvtolt,                              -- dtmvtolt
+                        vr_dtmvtolt,                                      -- dtmvtolt
                         vr_nmextttl,                                      -- nmextttl
                         vr_flgprcrd,                                      -- flgprcrd
                         vr_tpdpagto,                                      -- tpdpagto
@@ -11916,8 +11948,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         rw_crapacb.cdadmcrd,                              -- cdadmcrd
                         vr_cdcooper,                                      -- cdcooper
                         vr_nrseqcrd,                                      -- nrseqcrd
-                        rw_crapdat.dtmvtolt,                              -- dtpropos
-                        rw_crapdat.dtmvtolt,                              -- dtsolici
+                        vr_dtmvtolt,                                      -- dtpropos
+                        vr_dtmvtolt,                                      -- dtsolici
                         vr_flgdebit)                                      -- flgdebit
                         RETURNING ROWID INTO rw_crawcrd.rowid;
                   EXCEPTION
@@ -12170,7 +12202,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                        (cr_crawcrd_ativo%FOUND AND 
                         vr_nrcrcard <> rw_crawcrd.nrcrcard AND 
                         rw_crawcrd.nrcrcard <> 0) THEN
-                      vr_dtentr2v := rw_crapdat.dtmvtolt;
+                      vr_dtentr2v := vr_dtmvtolt;
                     ELSE
                       vr_dtentr2v := NULL;
                     END IF;                    
@@ -12286,7 +12318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             rw_crawcrd.cdcooper,
                             vr_nrseqcrd,
                             vr_dtentr2v,
-                            rw_crapdat.dtmvtolt,
+                            vr_dtmvtolt,
                             vr_flgdebit,
                             rw_crawcrd.nmempcrd)
                             RETURNING ROWID INTO rw_crawcrd.rowid;
@@ -12582,7 +12614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         vr_pa_anterior  := 0;
        
         vr_pa_proximo   := false;
-        FOR rw_craprej IN cr_craprej(pr_dtmvtolt => rw_crapdat.dtmvtolt
+        FOR rw_craprej IN cr_craprej(pr_dtmvtolt => vr_dtmvtolt
                                     ,pr_cdcooper => rw_crapcop_todas.cdcooper) LOOP          
          
           
@@ -12635,12 +12667,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                ,pr_cdcooper => rw_crapcop_todas.cdcooper
                                                ,pr_nmsubdir => 'rlnsv');
       
-      vr_dsdirarq := vr_dsdireto||'/cecred_cartoes/crrl676_'||to_char(rw_crapdat.dtmvtolt,'DDMMYYYY')||'.pdf';                                
+      vr_dsdirarq := vr_dsdireto||'/cecred_cartoes/crrl676_'||to_char(vr_dtmvtolt,'DDMMYYYY')||'.pdf';                                
       
       -- Submeter o relatório 676
       gene0002.pc_solicita_relato(pr_cdcooper  => rw_crapcop_todas.cdcooper            --> Cooperativa conectada
                                  ,pr_cdprogra  => vr_cdprogra                          --> Programa chamador
-                                 ,pr_dtmvtolt  => rw_crapdat.dtmvtolt                  --> Data do movimento atual
+                                 ,pr_dtmvtolt  => vr_dtmvtolt                          --> Data do movimento atual
                                  ,pr_dsxml     => vr_xml_clobxml                       --> Arquivo XML de dados
                                  ,pr_dsxmlnode => '/crrl676/agencia   '                --> Nó base do XML para leitura dos dados
                                  ,pr_dsjasper  => 'crrl676.jasper'                     --> Arquivo de layout do iReport
@@ -12673,12 +12705,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                           ,pr_cdcooper => vr_cdcooper_ori
                                           ,pr_nmsubdir => null); 
                                           
-      vr_dsdirarq := vr_dsdireto || '/cecred_cartoes/crrl707_'||to_char(rw_crapdat.dtmvtolt,'DDMMYYYY');
+      vr_dsdirarq := vr_dsdireto || '/cecred_cartoes/crrl707_'||to_char(vr_dtmvtolt,'DDMMYYYY');
       
       -- Submeter o relatório 676
       gene0002.pc_solicita_relato(pr_cdcooper  => vr_cdcooper_ori     --> Cooperativa conectada
                                  ,pr_cdprogra  => vr_cdprogra         --> Programa chamador
-                                 ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
+                                 ,pr_dtmvtolt  => vr_dtmvtolt         --> Data do movimento atual
                                  ,pr_dsxml     => vr_xml_lim_cartao   --> Arquivo XML de dados
                                  ,pr_dsxmlnode => '/crrl707/Dados'    --> Nó base do XML para leitura dos dados
                                  ,pr_dsjasper  => 'crrl707.jasper'    --> Arquivo de layout do iReport
@@ -12713,7 +12745,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       BEGIN
         -- Excluir registros
         DELETE craprej
-         WHERE craprej.dtmvtolt = rw_crapdat.dtmvtolt
+         WHERE craprej.dtmvtolt = vr_dtmvtolt
            AND craprej.dshistor = 'CCR3';
 
       EXCEPTION
