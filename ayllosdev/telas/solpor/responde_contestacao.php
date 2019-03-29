@@ -13,10 +13,6 @@ require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 isPostMethod();	
 	
-// Verifica permissões de acessa a tela
-if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C',false)) <> '')
-	exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
-	
 $dsrowid    = ( ( !empty($_POST['dsrowid']) )      ? $_POST['dsrowid']    : '' );
 $cdmotivo   = ( ( !empty($_POST['cdmotivo']) )     ? $_POST['cdmotivo']   : 0 );
 $idstatus   = ( ( !empty($_POST['idsituacao']) )   ? $_POST['idsituacao'] : 0 );
