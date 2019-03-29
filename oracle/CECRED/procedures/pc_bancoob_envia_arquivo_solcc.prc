@@ -65,7 +65,7 @@ BEGIN
      
     gene0004.pc_executa_job( pr_cdcooper => 3   --> Codigo da cooperativa
                             ,pr_fldiautl => 0   --> Flag se deve validar dia util
-                            ,pr_flproces => 1   --> Flag se deve validar se esta no processo    
+                            ,pr_flproces => 0   --> Flag se deve validar se esta no processo    
                             ,pr_flrepjob => 1   --> Flag para reprogramar o job
                             ,pr_flgerlog => 1   --> indicador se deve gerar log
                             ,pr_nmprogra => 'PC_BANCOOB_ENVIA_ARQUIVO_SOLCC'   --> Nome do programa que esta sendo executado no job

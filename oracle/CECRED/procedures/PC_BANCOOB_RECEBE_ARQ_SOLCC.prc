@@ -4,7 +4,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_RECEBE_ARQ_SOLCC IS
    JOB: PC_BANCOOB_RECEBE_ARQ_SOLCC
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Lucas Ranghetti
-   Data    : Abril/2017.                     Ultima atualizacao: 
+   Data    : Abril/2017.                     Ultima atualizacao: 08/03/2019
 
    Dados referentes ao programa:
 
@@ -13,7 +13,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_RECEBE_ARQ_SOLCC IS
    Objetivo  : Procedimento para a Importacao do arquivo de Interface Cadastral
              dos Cartões de Crédito BANCOOB/CABAL - CCR3.
 
-   Alteracoes: 
+   Alteracoes: 08/03/2019 - Nao verificar se processo batch ainda está rodando na central
+                            pois vamos rodar o programa mesmo com a central rodando
+                            Lucas Ranghetti PRB0040618)
 
   ..........................................................................*/
   
@@ -55,7 +57,7 @@ BEGIN
      
     gene0004.pc_executa_job( pr_cdcooper => 3   --> Codigo da cooperativa
                             ,pr_fldiautl => 0   --> Flag se deve validar dia util
-                            ,pr_flproces => 1   --> Flag se deve validar se esta no processo    
+                            ,pr_flproces => 0   --> Flag se deve validar se esta no processo    
                             ,pr_flrepjob => 1   --> Flag para reprogramar o job
                             ,pr_flgerlog => 1   --> indicador se deve gerar log
                             ,pr_nmprogra => 'PC_BANCOOB_RECEBE_ARQ_SOLCC' --> Nome do programa que esta sendo executado no job
