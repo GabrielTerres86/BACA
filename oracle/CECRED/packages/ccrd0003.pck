@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 08/03/2019
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 29/03/2019
   --
   -- Dados referentes ao programa:
   --
@@ -126,6 +126,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             08/03/2019 - Verificar se processo batch ainda está rodando na central
   --                          pois vamos rodar o programa mesmo com a central rodando
   --                          (Lucas Ranghetti PRB0040618)
+  --
+  --             29/03/2019 - Ajustar cursor cr_nrctaitg para buscar somente cartoes em uso
+  --                          na procedure pc_crps671 (Lucas Ranghetti PRB0040697)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6430,7 +6433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
      Sistema : Cartoes de Credito - Cooperativa de Credito
      Sigla   : CRRD
      Autor   : Lucas Lunelli
-     Data    : Maio/14.                    Ultima atualizacao: 08/03/2019
+     Data    : Maio/14.                    Ultima atualizacao: 29/03/2019
 
      Dados referentes ao programa:
 
@@ -6544,6 +6547,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 08/03/2019 - Verificar se processo batch ainda está rodando na central
                              pois vamos rodar o programa mesmo com a central rodando
                              (Lucas Ranghetti PRB0040618)
+                             
+                29/03/2019 - Ajustar cursor cr_nrctaitg para buscar somente cartoes em uso
+                             (Lucas Ranghetti PRB0040697)
      ..............................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -6930,22 +6936,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       CURSOR cr_nrctaitg(pr_cdcooper IN crawcrd.cdcooper%TYPE,
                          pr_nrdconta IN crawcrd.nrdconta%TYPE,
                          pr_cdadmcrd IN crawcrd.cdadmcrd%TYPE) IS
-        SELECT c.nrcctitg
-          FROM crapttl  t
-             , crawcrd  c
-             , crawcrd  w
-         WHERE w.nrcpftit = t.nrcpfcgc
-           AND t.nrcpfcgc = c.nrcpftit
-           AND t.idseqttl = 1 -- Titular
-           AND t.nrdconta = c.nrdconta
-           AND t.cdcooper = c.cdcooper
-           AND c.cdadmcrd BETWEEN 10 AND 80
-           AND c.cdadmcrd = w.cdadmcrd
-           AND c.nrdconta = w.nrdconta
-           AND c.cdcooper = w.cdcooper
-           AND w.cdadmcrd = pr_cdadmcrd
-           AND w.nrdconta = pr_nrdconta
-           AND w.cdcooper = pr_cdcooper;
+      SELECT c.nrcctitg
+        FROM crapttl t, 
+             crawcrd c, 
+             crawcrd w
+       WHERE w.nrcpftit = t.nrcpfcgc
+         AND t.nrcpfcgc = c.nrcpftit
+         AND t.idseqttl = 1 -- Titular
+         AND t.nrdconta = c.nrdconta
+         AND t.cdcooper = c.cdcooper
+         AND c.cdadmcrd BETWEEN 10 AND 80
+         AND c.cdadmcrd = w.cdadmcrd
+         AND c.nrdconta = w.nrdconta
+         AND c.cdcooper = w.cdcooper
+         and c.insitcrd = w.insitcrd
+         and c.flgprcrd = w.flgprcrd
+         AND w.cdadmcrd = pr_cdadmcrd
+         AND w.nrdconta = pr_nrdconta
+         AND w.cdcooper = pr_cdcooper
+         and w.insitcrd = 4;
       rw_nrctaitg    cr_nrctaitg%ROWTYPE;
 
       -- Buscar as informações do primeiro cartão empresarial da conta
