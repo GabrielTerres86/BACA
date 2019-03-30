@@ -1603,7 +1603,7 @@ create or replace package body cecred.PAGA0002 is
     END IF;
 		
 		/* Transf. intercoop. */
-		IF pr_tpoperac = 1   THEN
+		IF pr_tpoperac IN (1,5) THEN
 			PCPS0001.pc_valida_transf_conta_salario(pr_cdcooper => pr_cdcooper
 																						 ,pr_nrdconta => pr_nrdconta
 																						 ,pr_cdageban => pr_cdageban
