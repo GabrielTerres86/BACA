@@ -3704,6 +3704,8 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
     vr_tab_craphis(33).cdhistor := PREJ0005.vr_cdhistordsct_est_jur_mor;    --2779 ESTORNO JUROS MORA
     vr_tab_craphis(34).cdhistor := PREJ0005.vr_cdhistordsct_est_abono;      --2690 ESTORNO ABONO
     vr_tab_craphis(35).cdhistor := PREJ0005.vr_cdhistordsct_est_preju;      --2877 ESTORNO RECUPERAÇÃO DE PREJUIZO
+    --
+    vr_tab_craphis(36).cdhistor := DSCT0003.vr_cdhistordsct_iofcompleoper;  --2800 DEBITO DE IOF COMPLEMENTAR NA OPERACAO
 
     vr_indice   := vr_tab_craphis.first;
     WHILE vr_indice IS NOT NULL LOOP

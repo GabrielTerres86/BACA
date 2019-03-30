@@ -228,16 +228,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
         ((bdt.txmensal/100)/30) AS txdiaria
       FROM 
         craptdb tdb
-        INNER JOIN (SELECT 
-                      cdcooper,nrborder,MIN(dtvencto) AS dtvenmin ,nrdconta
+        INNER JOIN (SELECT cdcooper
+                          ,nrdconta
+                          ,nrborder
+                          ,MIN(dtvencto) dtvenmin
                     FROM craptdb 
                     WHERE (dtvencto+60) < pr_dtmvtolt 
                       AND insittit = 4 
                       AND cdcooper = pr_cdcooper
                       AND nrborder = pr_nrborder
                       AND nrdconta = pr_nrdconta
-                    GROUP BY cdcooper,nrborder,nrdconta
-                    ) tdv ON tdb.cdcooper=tdv.cdcooper AND tdb.nrborder=tdv.nrborder
+                     GROUP BY cdcooper
+                             ,nrdconta
+                             ,nrborder
+                    ) tdv ON tdb.cdcooper = tdv.cdcooper 
+                         AND tdb.nrdconta = tdv.nrdconta 
+                         AND tdb.nrborder = tdv.nrborder
         INNER JOIN crapbdt bdt ON bdt.nrborder=tdb.nrborder AND bdt.cdcooper=tdb.cdcooper AND bdt.flverbor=1 
         INNER JOIN crapass ass ON bdt.nrdconta=ass.nrdconta AND bdt.cdcooper=ass.cdcooper
       WHERE 1=1
@@ -571,16 +577,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
             tdb.rowid rowtdb
           FROM
             craptdb tdb
-            INNER JOIN (SELECT
-                          cdcooper,nrborder,MIN(dtvencto) AS dtvenmin ,nrdconta
+            INNER JOIN (SELECT cdcooper
+                              ,nrdconta
+                              ,nrborder
+                              ,MIN(dtvencto) dtvenmin
                         FROM craptdb
                         WHERE (dtvencto+60) < pr_dtmvtolt
                           AND insittit = 4
                           AND cdcooper = pr_cdcooper
                           AND nrborder = pr_nrborder
                           AND nrdconta = pr_nrdconta
-                        GROUP BY cdcooper,nrborder,nrdconta
-                        ) tdv ON tdb.cdcooper=tdv.cdcooper AND tdb.nrborder=tdv.nrborder
+                         GROUP BY cdcooper
+                                 ,nrdconta
+                                 ,nrborder
+                        ) tdv ON tdb.cdcooper = tdv.cdcooper 
+                             AND tdb.nrdconta = tdv.nrdconta 
+                             AND tdb.nrborder = tdv.nrborder
             INNER JOIN crapbdt bdt ON bdt.nrborder=tdb.nrborder AND bdt.cdcooper=tdb.cdcooper AND bdt.flverbor=1
             INNER JOIN crapass ass ON bdt.nrdconta=ass.nrdconta AND bdt.cdcooper=ass.cdcooper
           WHERE 1=1
@@ -1300,7 +1312,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
     ;rw_crapbdt cr_crapbdt%ROWTYPE;
 
     -- Cursor de saldo do acordo
-    CURSOR cr_crapaco IS
+    CURSOR cr_crapaco (pr_nrdconta IN craptdb.nrdconta%TYPE) IS
     SELECT SUM(tdb.vlsdprej
           + (tdb.vlttjmpr - tdb.vlpgjmpr)
           + (tdb.vlttmupr - tdb.vlpgmupr)
@@ -1320,7 +1332,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
        WHERE tac.cdorigem   = 4 -- Desconto de Títulos
          AND ta.cdsituacao <> 3 -- Acordo não está cancelado
          AND tdb.cdcooper   = pr_cdcooper
-         AND tdb.nrborder   = pr_nrborder;
+         AND tdb.nrborder   = pr_nrborder
+         AND tdb.nrdconta   = pr_nrdconta;
     rw_crapaco cr_crapaco%ROWTYPE;
 
     BEGIN
@@ -1348,7 +1361,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
       END IF;*/
 
       -- Busca para verificar se há algum titulo em acordo
-      OPEN cr_crapaco;
+      OPEN cr_crapaco(pr_nrdconta => rw_crapbdt.nrdconta);
       FETCH cr_crapaco INTO rw_crapaco;
 
       IF rw_crapaco.vlsldaco IS NULL THEN
@@ -1480,7 +1493,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
         AND bdt.nrborder = pr_nrborder;
       rw_crapbdt cr_crapbdt%ROWTYPE;
 
-      CURSOR cr_craptdb IS
+      CURSOR cr_craptdb(pr_nrdconta IN craptdb.nrdconta%TYPE) IS
       SELECT
         tdb.rowid AS id
         ,tdb.insittit
@@ -1514,15 +1527,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
         ,0 AS vlpago60atual
       FROM craptdb tdb
       WHERE tdb.cdcooper = pr_cdcooper
+        AND tdb.nrdconta = pr_nrdconta
         AND tdb.nrborder = pr_nrborder
         AND tdb.insittit = 4
         -- E não está em nenhum Acordo em aberto
-        AND (tdb.nrborder, tdb.nrtitulo) NOT IN (
-          SELECT ttc.nrborder, ttc.nrtitulo
+        AND (tdb.cdcooper, tdb.nrdconta, tdb.nrborder, tdb.nrtitulo) NOT IN (
+             SELECT ttc.cdcooper, ttc.nrdconta, ttc.nrborder, ttc.nrtitulo
           FROM tbdsct_titulo_cyber ttc
             INNER JOIN tbrecup_acordo_contrato tac ON ttc.nrctrdsc = tac.nrctremp
             INNER JOIN tbrecup_acordo ta           ON tac.nracordo = ta.nracordo
-               -- FALTAVAM ESTES CAMPOS NA CLAUSULA
               AND ta.cdcooper = ttc.cdcooper
               AND ta.nrdconta = ttc.nrdconta
           WHERE tac.cdorigem   = 4 -- Desconto de Títulos
@@ -1530,8 +1543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
             AND tdb.cdcooper = ttc.cdcooper
             AND tdb.nrdconta = ttc.nrdconta
             AND tdb.nrborder = ttc.nrborder
-            AND tdb.nrtitulo = ttc.nrtitulo
-       )
+                AND tdb.nrtitulo = ttc.nrtitulo )
       ORDER BY dtvencto ASC, vlsdprej DESC
       ;
       TYPE typ_tab_craptdb IS TABLE OF cr_craptdb%ROWTYPE INDEX BY PLS_INTEGER;
@@ -1541,11 +1553,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
       CURSOR cr_tbdsct_lancamento_bordero (pr_cdcooper IN tbdsct_lancamento_bordero.cdcooper%TYPE,
                           pr_cdhistor IN tbdsct_lancamento_bordero.cdhistor%TYPE,
                           pr_nrtitulo IN tbdsct_lancamento_bordero.nrtitulo%TYPE,
-                          pr_nrborder IN tbdsct_lancamento_bordero.nrborder%TYPE) IS
+                                          pr_nrborder IN tbdsct_lancamento_bordero.nrborder%TYPE,
+                                          pr_nrdconta IN tbdsct_lancamento_bordero.nrdconta%TYPE) IS
         SELECT tlb.cdcooper,
                SUM(vllanmto) vllanmto
           FROM tbdsct_lancamento_bordero tlb
          WHERE tlb.cdcooper = pr_cdcooper
+           AND tlb.nrdconta = pr_nrdconta
            AND tlb.nrborder = pr_nrborder
            AND tlb.cdhistor in (pr_cdhistor)
            AND tlb.dtestorn IS NULL
@@ -1615,7 +1629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
         -- Valor total que esta sendo pago do prejuizo do bordero
         vr_total :=  pr_vlpagmto + nvl(pr_vlaboorj,0);
 
-        OPEN cr_craptdb;
+        OPEN cr_craptdb(pr_nrdconta => rw_crapbdt.nrdconta);
         FETCH cr_craptdb BULK COLLECT INTO vr_tab_craptdb;
         CLOSE cr_craptdb;
 
@@ -1795,7 +1809,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
                 OPEN cr_tbdsct_lancamento_bordero(pr_cdcooper => pr_cdcooper,
                                                   pr_cdhistor => vr_cdhistordsct_rec_jur_60,
                                                   pr_nrtitulo => vr_tab_craptdb(vr_index).nrtitulo,
-                                                  pr_nrborder => vr_tab_craptdb(vr_index).nrborder);
+                                                  pr_nrborder => vr_tab_craptdb(vr_index).nrborder,
+                                                  pr_nrdconta => vr_tab_craptdb(vr_index).nrdconta);
                 FETCH cr_tbdsct_lancamento_bordero INTO rw_tbdsct_lancamento_bordero; -- tudo o que foi pago de juros 60 desse titulo
                 CLOSE cr_tbdsct_lancamento_bordero;
                 vr_saldo_60 := rw_craptdb60.vljurrec - nvl(rw_tbdsct_lancamento_bordero.vllanmto,0);
@@ -1910,6 +1925,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
         -- Efetua o lançamento da Mensal dos juros de atualização
         DSCT0003.pc_lanc_jratu_mensal(pr_cdcooper => pr_cdcooper
                                      ,pr_nrborder => pr_nrborder
+                                     ,pr_nrdconta => rw_crapbdt.nrdconta
                                      ,pr_cdcritic => vr_cdcritic
                                      ,pr_dscritic => vr_dscritic);
         IF TRIM(vr_dscritic) IS NOT NULL THEN
@@ -2099,26 +2115,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
 
       -- CURSORES
       CURSOR cr_crapbdt IS
-      SELECT
-        bdt.rowid AS id,
+      SELECT bdt.rowid AS id,
         bdt.insitbdt,
-        bdt.dtliqprj
+             bdt.dtliqprj,
+             bdt.nrdconta
       FROM crapbdt bdt
-      WHERE
-        bdt.cdcooper = pr_cdcooper
-        AND bdt.nrborder = pr_nrborder
-      ;
+       WHERE bdt.cdcooper = pr_cdcooper
+         AND bdt.nrborder = pr_nrborder;
       rw_crapbdt cr_crapbdt%ROWTYPE;
 
-      CURSOR cr_craptdb IS
-      SELECT
-        1
+      CURSOR cr_craptdb(pr_nrdconta craptdb.nrdconta%TYPE) IS
+      SELECT 1
       FROM craptdb tdb
-      WHERE
-        tdb.cdcooper = pr_cdcooper
+       WHERE tdb.cdcooper = pr_cdcooper
+         AND tdb.nrdconta = pr_nrdconta
         AND tdb.nrborder = pr_nrborder
-        AND tdb.insittit = 4
-      ;
+         AND tdb.insittit = 4;
       rw_craptdb cr_craptdb%ROWTYPE;
 
       BEGIN
@@ -2149,7 +2161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
         END IF;
 
         -- Verifica se possui titulos abertos
-        OPEN cr_craptdb;
+        OPEN cr_craptdb(pr_nrdconta => rw_crapbdt.nrdconta);
         FETCH cr_craptdb INTO rw_craptdb;
         -- Nao possui nenhum titulo aberto entao liquida o bordero em prejuizo
         IF cr_craptdb%NOTFOUND THEN
@@ -2476,12 +2488,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
         AND tdb.nrdctabb = pr_nrdctabb
         AND tdb.insittit = 4
         -- E está em acordo
-        AND (tdb.nrborder, tdb.nrtitulo) IN (
-          SELECT ttc.nrborder, ttc.nrtitulo
+        AND (tdb.cdcooper, tdb.nrdconta, tdb.nrborder, tdb.nrtitulo) IN (
+             SELECT ttc.cdcooper, ttc.nrdconta, ttc.nrborder, ttc.nrtitulo
           FROM tbdsct_titulo_cyber ttc
             INNER JOIN tbrecup_acordo_contrato tac ON ttc.nrctrdsc = tac.nrctremp
             INNER JOIN tbrecup_acordo ta           ON tac.nracordo = ta.nracordo
-               -- FALTAVAM ESTES CAMPOS NA CLAUSULA
               AND ta.cdcooper = ttc.cdcooper
               AND ta.nrdconta = ttc.nrdconta
           WHERE tac.cdorigem   = 4 -- Desconto de Títulos
@@ -2489,8 +2500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
             AND tdb.cdcooper = ttc.cdcooper
             AND tdb.nrdconta = ttc.nrdconta
             AND tdb.nrborder = ttc.nrborder
-            AND tdb.nrtitulo = ttc.nrtitulo
-       )
+                AND tdb.nrtitulo = ttc.nrtitulo )
       ORDER BY dtvencto ASC, vlsdprej DESC
       ;
       rw_craptdb cr_craptdb%ROWTYPE;
@@ -2940,13 +2950,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
     -- Busca o saldo do prejuízo original dos títulos
     CURSOR cr_craptdb IS
       SELECT SUM(tdb.vlsdprej + (tdb.vlttjmpr - tdb.vljura60) - (tdb.vlpgjmpr - tdb.vlpgjm60)) AS vlprejtotal
-        FROM craptdb tdb
-  INNER JOIN crapbdt bdt ON bdt.cdcooper = tdb.cdcooper AND bdt.nrborder = tdb.nrborder
-       WHERE bdt.cdcooper = pr_cdcooper
-         AND bdt.nrborder = pr_nrborder
+        FROM crapbdt bdt
+       INNER JOIN craptdb tdb ON tdb.cdcooper = bdt.cdcooper 
+                             AND tdb.nrborder = bdt.nrborder
+                             AND tdb.nrdconta = bdt.nrdconta
+       WHERE tdb.insittit = 4
          AND bdt.inprejuz = 1
          AND bdt.flverbor = 1
-         AND tdb.insittit = 4;
+         AND bdt.nrborder = pr_nrborder
+         AND bdt.cdcooper = pr_cdcooper;
     rw_craptdb cr_craptdb%ROWTYPE;
 
     vr_vljura60remun NUMBER :=0 ;
