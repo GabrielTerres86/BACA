@@ -42,7 +42,7 @@ declare
   vr_dsxmldad_dir     CLOB;
   vr_dsxmldad_operac  CLOB;
   vr_des_erro         varchar2(4000);
-  vr_caminho          varchar2(200) := '/microsd3/cecred/odirlei';
+  vr_caminho          varchar2(200) := '/micros/cecred/odirlei';
   vr_vlprepag_novo number;
   
   -- Subrotina para escrever texto na variável CLOB do XML
