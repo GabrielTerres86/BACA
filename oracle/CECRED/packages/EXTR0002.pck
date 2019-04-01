@@ -5333,7 +5333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_incancel INTEGER;
       vr_possuipr VARCHAR2(1);				  
       vr_inimpede_talionario INTEGER;
-	  vr_vlprerpp craprpp.vlprerpp%TYPE;;
+	  vr_vlprerpp craprpp.vlprerpp%TYPE;
       --Variaveis para uso na craptab
       vr_dstextab    craptab.dstextab%TYPE;
       vr_lshistor    craptab.dstextab%TYPE;
