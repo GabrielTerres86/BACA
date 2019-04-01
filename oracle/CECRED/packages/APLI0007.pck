@@ -1444,6 +1444,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
 /*
                Autor : David Valente
                Em 05/03/2019
+
                Calculo da quantidade de cotas referente a operação atual
                alterado para compatibilizar com a B3;
                vr_qtftcota é uma CONSTANTE COM O VALOR  = R$0,01 (1 Centavo)
@@ -4032,7 +4033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     -- 
     --             12/12/2018 - P411 - Ajustes para o Layout para 15 posições (Marcos-Envolti)
 	--
-	--				19/03/2019 - P441 - Ajustes na conciliação para considerar percentuais de tolerancia (Martini)																											   
+	--				19/03/2019 - P411 - Ajustes na conciliação para considerar percentuais de tolerancia (Martini)																											   
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Variaveis auxiliares
@@ -4143,6 +4144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       
 	  -- Tipo de aplicação da tabela TBCAPT_SALDO_APLICA
 	  -- tipo de aplicacao (1 - rdc pos e pre / 2 - pcapta / 3 - aplic programada) 
+	  -- David Valente (Envolti) 							 
       vr_tpaplicacao NUMBER(2);
 	
     BEGIN
@@ -4150,8 +4152,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0007.pc_processa_conciliacao'); 
       -- Incluir LOG
       pr_dsdaviso := fn_get_time_char || 'Iniciando Processamento e Integração de Arquivos Conciliação Devolvidos pela B3...';      
+	  
       -- Somente proceder se conciliação estiver ativa e ainda não efetuada para o dia
       IF pr_flprccnc = 'S' AND pr_dtultcnc < trunc(SYSDATE) THEN 
+	  
         -- Busca do dia util anterior
         vr_dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper  => 3
                                                   ,pr_dtmvtolt  => trunc(SYSDATE)-1
@@ -4184,6 +4188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao definir data a partir do nome do Arquivo';
           END;
+		 
           -- A data do arquivo não pode ser inferior ao dia util anterior
           IF vr_dtmvtoan > vr_dtmvtolt THEN
             -- Gerar critica
@@ -4285,8 +4290,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                     CLOSE cr_aplica;
 					
 					-- Variavel de controle com o tipo de aplicação
-                    -- se for 3 ou 4, recebe 2 senão recebe 1 
-                    -- pra compatibilizar com os dados da tbcapt_saldo_aplica que recebe somente 1,2 ou 3
+                    -- se for aplicações do tipo 3 ou 4, recebe 2 senão recebe 1 
+                    -- para compatibilizar com os dados da tbcapt_saldo_aplica que recebe somente 1,2 ou 3
                     vr_tpaplicacao := 0; 
 					
                     -- Buscar aplicação RDA ou RAC relacionada
@@ -4329,9 +4334,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                         vr_dscritic := 'Data de Emissão ('||vr_txretorn(9)||') diferente da Data Emissão Aplicação ('||TO_CHAR(rw_aplica.dtmvtolt,'RRRRMMDD')||').';
                       ELSIF TO_CHAR(rw_aplica.dtvencto,'RRRRMMDD') <> vr_txretorn(10) THEN 
                         vr_dscritic := 'Data de Vencimento ('||vr_txretorn(10)||') diferente da Data Vencimento Aplicação ('||TO_CHAR(rw_aplica.dtvencto,'RRRRMMDD')||').';
-					   /* Conciliar quantidade em cotas considerando o percentual de tolerancia */
-                      ELSIF ABS(((rw_aplica.qtcotas - vr_txretorn(14)) / vr_txretorn(14)) * 100) < vr_vlpertol THEN
-                        vr_dscritic := 'Quantidade em Carteira ('||vr_txretorn(14)||') diferente da Quantidade de Cotas da Aplicação ('||rw_aplica.qtcotas||'), tolerancia ('||vr_vlpertol||'%).';
+					  /* Conciliar quantidade em cotas */
+                      ELSIF TO_NUMBER(rw_aplica.qtcotas) <> TO_NUMBER(vr_txretorn(14)) THEN
+                        vr_dscritic := 'Quantidade em Carteira ('||vr_txretorn(14)||') diferente da Quantidade de Cotas da Aplicação ('||rw_aplica.qtcotas||').';
                       ELSE
                         -- Buscar  saldo calculado da aplicação
                         vr_sldaplic := 0;
@@ -4347,8 +4352,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                         -- Calcular valor unitário novamente com base no Saldo Ayllos X Quantidade de cotas
                         vr_vlpreco_unit := vr_sldaplic / rw_aplica.qtcotas; 
                         
-                        -- Validar valor nominal considerando o percentual da tolerância
-                        IF ABS(((rw_aplica.vlpreco_registro - vr_txretorn(15)) / vr_txretorn(15)) * 100) < vr_vlpertol THEN
+                        -- Validar valor nominal 
+                        IF rw_aplica.vlpreco_registro <> vr_txretorn(15) THEN
                           vr_dscritic := 'Valor Nominal ('||vr_txretorn(15)||') diferente do Registrado da Aplicação ('||rw_aplica.vlpreco_registro||'), tolerancia ('||vr_vlpertol||'%).';
                         -- Validar a PA atual recebida versus a calculada no 445 no processo
                         ELSIF ABS(((vr_vlpreco_unit - vr_txretorn(16)) / vr_txretorn(16)) * 100) < vr_vlpertol THEN
@@ -4581,7 +4586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
   
   -- Rotina para processar retorno de conciliação pendentes de processamento
   PROCEDURE pc_processo_controle(pr_tipexec   IN NUMBER       --> Tipo da Execução
-                                ,pr_dsinform OUT VARCHAR2     --> Descrição de informativos na execução
+                                ,pr_dsinform OUT CLOB     --> Descrição de informativos na execução
                                 ,pr_dscritic OUT VARCHAR2) IS --> Retorno de crítica
   BEGIN
     ---------------------------------------------------------------------------------------------------------------
@@ -4652,6 +4657,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       vr_flprccnc := gene0001.fn_param_sistema('CRED',0,'FLG_CONCILIA_CUSTODIA_B3'); 
       vr_dtultcnc := to_date(gene0001.fn_param_sistema('CRED',0,'DAT_CONCILIA_CUSTODIA_B3'),'dd/mm/rrrr'); 
       
+											
+
       -- Montar o texto da janela de execução
       vr_dsjanexe := 'das '||to_char(vr_hriniprc,'hh24:mi')||' até as '||to_char(vr_hrfimprc,'hh24:mi');
       
