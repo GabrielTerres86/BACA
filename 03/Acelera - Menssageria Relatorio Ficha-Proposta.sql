@@ -55,8 +55,7 @@ INSERT INTO
 VALUES ('IMPRESSAO_FICHA_PROPOSTA',
         'CADA0002',
         'pc_impressao_ficha_prop',
-        'pr_nrdconta,
-        pr_idseqttl',
+        'pr_nrdconta',
         246);
 COMMIT;
 END;
