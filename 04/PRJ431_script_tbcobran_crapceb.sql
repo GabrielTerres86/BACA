@@ -39,10 +39,10 @@ DECLARE
 					,ROWID
 			FROM tbcobran_crapceb tc
 		 WHERE tc.cdcooper <> 16
-			 AND NOT EXISTS(SELECT 1
+			/* AND NOT EXISTS(SELECT 1
 												FROM crapceb ceb
 											 WHERE ceb.cdcooper = tc.cdcooper
-												 AND ceb.nrdconta = tc.nrdconta);
+												 AND ceb.nrdconta = tc.nrdconta)*/;
   --
 BEGIN
 	--
@@ -90,7 +90,7 @@ BEGIN
 											 ,rg_tbcobran.nrcnvceb
 											 ,rg_tbcobran.dtcadast
 											 ,rg_tbcobran.cdoperad
-											 ,rg_tbcobran.insitceb
+											 ,2--rg_tbcobran.insitceb
 											 ,rg_tbcobran.inarqcbr
 											 ,rg_tbcobran.cddemail
 											 ,rg_tbcobran.flgcruni
