@@ -5,7 +5,7 @@
 */
 
 UPDATE CRAPPRM T SET 
-T.DSVLRPRM = 'ana.volles@ailos.coop.br, cesar.belli@envolti.com.br'
+T.DSVLRPRM = 'ana.volles@ailos.coop.br'
 WHERE T.NMSISTEM = 'CRED' AND T.CDACESSO = 'PC_LISTA_TBGEN_EMAIL_2';
 
 COMMIT;
