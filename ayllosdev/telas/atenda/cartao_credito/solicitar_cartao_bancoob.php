@@ -249,4 +249,25 @@
 			}
 		}
 		
+
+		// Montar o xml de Requisicao
+		$xml  = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "CCRD0008", "RETORNA_TIPO_ENVIO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjeto = getObjectXML($xmlResult);
+		
+		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+			echo "showError(\"error\", \"".$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata."\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+		}
+
+		$tipo_envio = $xmlObjeto->roottag->tags[0]->tags[0]->cdata;
+
+		if (!empty($tipo_envio)) {
+			echo "showError(\"error\", \"Aten&ccedil;&atilde;o: A carta senha e o cart&atilde;o ser&atilde;o encaminhados para o endere&ccedil;o escolhido e o cart&atilde;o<br>n&atilde;o estar&aacute; habilitado para utiliza&ccedil;&atilde;o no TA at&eacute; que seja cadastrada a senha de 6 d&iacute;gitos.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+		}
 ?>

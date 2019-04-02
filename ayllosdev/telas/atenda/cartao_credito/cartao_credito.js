@@ -2322,6 +2322,25 @@ function gerarImpressao(tpimpressao, idimpres, administradora, nrcontrato, codmo
         var msg = "termo de entrega";
     }
 
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/cartao_credito/valida_imprimir_dados.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrctrcrd: nrctrcrd,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            eval(response);
+        }
+    });
+
     $("#nrdconta", "#frmImprimir").val(nrdconta);
     $("#idimpres", "#frmImprimir").val(idimpres);
     $("#cdadmcrd", "#frmImprimir").val(administradora);

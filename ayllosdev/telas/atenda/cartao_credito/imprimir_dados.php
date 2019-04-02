@@ -83,28 +83,6 @@
 	if (!validaInteiro($cdmotivo)) {
 		?><script language="javascript">alert('C&oacute;digo da solicita&ccedil;&atilde;o de segunda via inv&aacute;lido.');</script><?php
 		exit();
-	}	
-
-	
-	// Montar o xml de Requisicao
-	$xml  = "<Root>";
-	$xml .= " <Dados>";
-	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
-	$xml .= " </Dados>";
-	$xml .= "</Root>";
-	
-	$xmlResult = mensageria($xml, "CCRD0008", "RETORNA_TIPO_ENVIO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObjeto = getObjectXML($xmlResult);
-	
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"fechaRotina($('#divUsoGenerico'),divRotina);",false);
-	}
-
-	$tipo_envio = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
-
-	if (in_array($tipo_envio, [90, 91])) {
-		?><script language="javascript">alert(utf8ToHTML('Para recebimento da fatura e troca de pontos, atualize o endere&ccedil;o do cooperado no Sipag Net.'));</script><?php
 	}
 	
 
