@@ -1,5 +1,15 @@
-INSERT INTO CRAPACA VALUES (SEQACA_NRSEQACA.NEXTVAL,'SIMULA_VALIDA_CONSIGNADO',
-'TELA_ATENDA_SIMULACAO','pc_valida_simul_consig','pr_nrdconta,pr_cdlcremp',1893)
+INSERT INTO 
+  crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+VALUES 
+  (
+  SEQACA_NRSEQACA.NEXTVAL,    -- nrseqaca
+  'SIMULA_VALIDA_CONSIGNADO', -- nmdeacao
+  'TELA_ATENDA_SIMULACAO',    -- nmpackag
+  'pc_valida_simul_consig',   -- nmproced
+  'pr_cdlcremp',              -- lstparam
+  (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_SIMULACAO')); -- nrseqrdr
+/
+commit
 /
 UPDATE  crapaca  a
 set a.lstparam = a.lstparam||',pr_vlparepr,pr_vliofepr'
