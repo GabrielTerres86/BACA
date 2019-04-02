@@ -13,6 +13,7 @@
 $(document).ready(function() {
   $('#dataB3', '#frmCusApl').setMask("INTEGER", "99/99/9999", "");
   $('#vlminB3', '#frmCusApl').setMask("DECIMAL", "zzz.zz9,99", ".", "");
+  $('#perctolval', '#frmCusApl').setMask("DECIMAL", "zzz.zz9,99999999", ".", "");
   return false;
 });
 </script>

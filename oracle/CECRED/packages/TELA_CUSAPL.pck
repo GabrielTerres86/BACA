@@ -637,7 +637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSAPL AS
       ,pr_tag_pai  => 'Dados'
       ,pr_posicao  => 0
       ,pr_tag_nova => 'perctolval'
-      ,pr_tag_cont => TO_CHAR(gene0001.fn_param_sistema('CRED',0,'CD_TOLERANCIA_DIF_VALOR'), 'FM990D00')
+      ,pr_tag_cont => TO_CHAR(gene0001.fn_param_sistema('CRED',0,'CD_TOLERANCIA_DIF_VALOR'), 'FM990D00000000')
       ,pr_des_erro => vr_dscritic);					   
 
     -- Retorno OK
