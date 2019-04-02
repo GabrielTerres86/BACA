@@ -23,6 +23,7 @@
  *							   (CODIGO, NOME E CNPJ DA EMPRESA). (INC0018113 - Kelvin)
  *				   20/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
  *	                           corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
+ *   			   03/2019 	  - Projeto 437 Ajuste label matricula
  */
 ?>
 <form name="frmDadosComercial" id="frmDadosComercial" class="formulario">	

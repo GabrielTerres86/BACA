@@ -221,6 +221,7 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 
 		<fieldset>
 			<legend>Informacoes Complementares</legend>
+				<!-- P437 -->
 				<?php 
 					if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
 						echo '<label for="indescsg">Empr&eacute;stimo Consignado:</label>';
@@ -293,6 +294,7 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 				</select>
 				<label for="dtavscot">Data Gera&ccedil;&atilde;o:</label>
 				<input name="dtavscot" type="text"  id="dtavscot" class='campo' />
+			<!-- P437 -->
 			<?php
 				if ($glbvars['VAL_COOPER_CONSIGNADO'] == 'S'){
 					echo '</fieldset> <fieldset>';        

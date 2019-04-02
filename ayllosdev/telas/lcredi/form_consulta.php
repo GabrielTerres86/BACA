@@ -18,6 +18,7 @@
 
  			  10/10/2017 - Inclusao do campos % Mínimo Garantia e adicionado 
 						   opção 4 no campo Modelo. (Lombardi - PRJ404)
+					  03/2019 - Projeto 437 AMcom JDB
 
  * ********************************************************************* */
 

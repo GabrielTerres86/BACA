@@ -62,6 +62,7 @@
      28/02/2019 - Projeto 437 Consignado AMcom - JDB (ID 20190208_437) - Ajutes conforme changeset feito por outra empresa	 (14/09/2018 - Tratamento para o projeto 437 Consignado (incluir  flnecont e tpmodcon,  remover indescsg))
 ************************************************************************************************/
 
+//P437 s2
 //Variavel parametro Cooperativa com Consignado
 var CooperConsig ;
 
@@ -240,6 +241,7 @@ function estadoInicial() {
 		 $('#cddopcao', '#frmCab').val("I");
 		LiberaFormulario();
 	}	
+	//P437 s2
 	CooperConsig = document.getElementById('glb_val_cooper_consignado').value ;
 	
 }
@@ -846,7 +848,7 @@ function controlaOperacao() {
             }
 			
             // Se estiver checado, efetuamos as validacoes necessarias
-			
+			//P437 s2
             if (CooperConsig != 'S'){
 				if (cIndescsg.is(":checked") && (cDtfchfol.val()=="" || (cDtfchfol.val() <= 0 || cDtfchfol.val() > 28))){
 					showError('error','Dia Fechamento Folha deve ser entre 1 e 28.','Campo obrigat&oacute;rio','$("#dtfchfol","#frmInfEmprestimo").focus();');
@@ -1126,7 +1128,7 @@ function controlaFocoFormulariosEmpresa() {
         cTodosFormEmprestimo.habilitaCampo();
         cDtavsemp.desabilitaCampo();
         cDtavscot.desabilitaCampo();
-		
+		//P437 s2
 		if (CooperConsig != 'S'){
 			cIndescsg.unbind('keypress').bind('keypress', function(e) {
 				if (e.keyCode == 9 || e.keyCode == 13) {

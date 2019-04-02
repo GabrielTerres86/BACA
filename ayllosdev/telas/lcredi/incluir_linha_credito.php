@@ -14,6 +14,7 @@
                    27/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298)
 
                    10/10/2017 - Inclusao do campo % Mínimo Garantia e opção 4 no campo Modelo. (Lombardi - PRJ404)
+					  03/2019 - Projeto 437 AMcom JDB
  */
 ?>
 

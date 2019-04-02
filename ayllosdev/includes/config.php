@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: config.php                                                ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   Ultima Alteracao: 22/11/2016 ***//
+	//*** Data : Julho/2007                   Ultima Alteracao: 04/10/2018 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Variaveis globais de controle                        ***//
 	//***                                                                  ***//	 
@@ -35,6 +35,8 @@
 	//***						   configuracoes de producao criptografadas***//
 	//***						   (Carlos Rafael Tanholi) SD 489051       ***//	
 	//***																   ***//	
+ 	//***       04/10/2018 - Definição da variavel de ambiente NMSISTEMA   ***// 
+	//***                    (Guilherme/AMcom)                             ***//	
 	//************************************************************************//
 	
 	// carrega o arquivo .cfg de dados do sistema Ayllos
@@ -59,6 +61,10 @@
 
 	// Pega o nome do server 
 	define("SERVERNAMECFG", $serverCFG);    
+
+  // Definir nome do Sistema
+	define("NMSISTEMA", "AIMARO");
+  // Padronizar o uso da variavel de ambiente no sistema
 
 	// Nome do servidor com banco de dados PROGRESS
 	$DataServer = ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['DATA_SERVER']) : $array_dados_ini[SERVERNAMECFG]['DATA_SERVER'];

@@ -51,6 +51,9 @@
  * 040: [24/10/2018] Remover tela de rendimentos e bens - Bruno Luiz Katzjarowski - Mout's - PRJ 438
  * 041: [18/10/2018] Adicionado novos campos nas telas Avalista e Interveniente - PRJ 438. (Mateus Z / Mouts)
  * 042: [07/11/2018] Esconder tela de Dados da Proposta - Bruno luiz K. - Mout's
+ * 043: [14/02/2019] Inclusão dos campos nota do rating, origem da nota e status da análise P450 (Luiz Otávio Olinger Momm - AMCOM).
+ * 044: [07/03/2019] Inclusão da consulta do parametro se a coopoerativa pode Alterar Rating P450 (Luiz Otávio Olinger Momm - AMCOM).
+ * 045:    [03/2019] Projeto 437 adicionado informações do consignado AMcom JDB
  */
 
 	session_start();
@@ -1175,6 +1178,22 @@
 
 	// Se estiver consultando, chamar a TABELA
 	if(in_array($operacao,array('CT','','REG_GRAVAMES','VAL_GRAVAMES'))) {
+        
+        // [044]
+        $permiteAlterarRating = false;
+        $oXML = new XmlMensageria();
+        $oXML->add('cooperat', $glbvars["cdcooper"]);
+
+        $xmlResult = mensageria($oXML, "TELA_PARRAT", "CONSULTA_PARAM_RATING", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getObjectXML($xmlResult);
+
+        $registrosPARRAT = $xmlObj->roottag->tags[0]->tags;
+        foreach ($registrosPARRAT as $r) {
+            if (getByTagName($r->tags, 'pr_inpermite_alterar') == '1') {
+                $permiteAlterarRating = true;
+            }
+        }
+        // [044]
 		include('tabela_emprestimos.php');
 	} else if(in_array($operacao,array('A_INICIO','I_INICIO','A_FINALIZA','I_FINALIZA','A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','I_CONTRATO','TI','TE','TC','CF'))) {
 		include('form_nova_prop.php');

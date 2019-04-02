@@ -26,6 +26,7 @@
  * 015: [31/01/2017] Troca de posicao da Linha de Credito e Finalidade. Criacao dos campos Carencia e Data da primeira Carencia. (Jaison/James - PRJ298)
  * 016: [13/07/2018] Alterada a função chamada ao clicar no botão Concluir. (Mateus Z / Mouts - PRJ438)
  * 017: [18/10/2018] Alterado layout da tela Nova Proposta. PRJ438 (Mateus Z / Mouts)
+ * 018: [03/2019]    Inclusão do input hidden com o valor do IOF P437 AMcom JDB
  */
  ?> 
 

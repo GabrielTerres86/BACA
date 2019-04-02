@@ -1,8 +1,8 @@
 <?php
 /*!
  * FONTE        : salvar_dados.php
- * CRIAÃ‡ÃƒO      : Michel Candido Gati Tecnologia
- * DATA CRIAÃ‡ÃƒO : 21/08/2013
+ * CRIAÇÃO      : Michel Candido Gati Tecnologia
+ * DATA CRIAÇÃO : 21/08/2013
  *
  * ALTERACAO    : 08/07/2015 - Adicionado validacao de campos referente a dias da tela de tarifas. (Jorge/Elton) - Emergencial
  *                18/05/2016 - Adicionado o campo dtlimdeb. (Jaison/Marcos)
@@ -217,7 +217,7 @@
     /*VALIDA SE OS DADOS DA EMPRESA ESTAO CORRETOS*/
 	//P437 s2
 	if ($opcao == 'A') {
-		//Enviar informaÃ§Ãµes para FIS
+		//Enviar informações para FIS
 		$xml  = '';
 		$xml .= '<Root>';
 		$xml .= '	<dto>';

@@ -35,7 +35,9 @@
  * 024: [21/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 025: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
  * 026: [24/01/2018] Processamento do campo DSNIVORI (risco original da proposta) (Reginaldo - AMcom)
- * 027: [21/12/2018] P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
+ * 027: [18/10/2018] Adicionado novos campos nas telas Avalista e Interveniente - PRJ 438. (Mateus Z / Mouts)
+ * 028: [07/11/2018] Retirado Revisão Cadastral quando for a proc grava-proposta-completa - PRJ 438 - Sprint 4. (Mateus Z / Mouts)
+ * 029:    [03/2019] Projeto 437 adicionado informações do consignado AMcom JDB
  */
 ?>
 

@@ -8,7 +8,7 @@
 //***                                                                  ***//	 
 //*** Alterações: 13/08/2009 - Considerar ENTER tecla válida na        ***//
 //***                          validação de numéricos (Guilherme).     ***//
-//*** 			  03/2019 - AMcom inclusão de mascara DD/MM(DATEDM) JDB***//	 
+//*** 			  03/2019 - P437 s2 AMcom inclusão de mascara DD/MM(DATEDM) JDB***//	 
 //************************************************************************//
 
 var pasteVar = ($.browser.msie ? 'paste' : 'input') + ".mascara";
@@ -116,7 +116,8 @@ jQuery.fn.extend({
 				$(this).val('').focus();
 				return false;
 			}			
-		} else if (tipo.toUpperCase() == "DATEDM") {
+		} //P437 s2
+		else if (tipo.toUpperCase() == "DATEDM") {
 
 			
 			if ($(this).val().length != 4 && $(this).val().length != 5 && $(this).val() != "") {
@@ -184,7 +185,8 @@ jQuery.fn.extend({
 				// Valida se tecla pressionada é um número e o tamanho da string
 				return false;
 			}
-		} else if (tipo.toUpperCase() == "DATEDM") { // Se for um campo de data
+		} //P437 s2
+			else if (tipo.toUpperCase() == "DATEDM") { // Se for um campo de data
 			if (!$(this).validaInteiroAndTamanho(4,e)) {
 				// Valida se tecla pressionada é um número e o tamanho da string
 				return false;
@@ -273,7 +275,8 @@ jQuery.fn.extend({
 				$(this).val(value.substr(0,2) + "/" + value.substr(2,2) + "/" + value.substr(4));
 				caret_pos += $(this).val().length;
 			}
-		}	else if (tipo.toUpperCase() == "DATEDM") { // Se for campo de data
+		} //P437 s2
+	else if (tipo.toUpperCase() == "DATEDM") { // Se for campo de data
 			var value = retiraCaracteres($(this).val(),"0123456789",true);
 			var size  = value.length;			
 			

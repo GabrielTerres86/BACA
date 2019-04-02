@@ -24,7 +24,12 @@
  * 013: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364)
  * 014: [14/12/2017] Incluido campos hidden flintcdc e inintegra_cont, Prj. 402 (Jean Michel)
  * 014: [14/08/2018] Incluido botão Anular e input hidden com o valor da situação insitest (Mateus Z - Mouts - P438)
- * 015: [05/02/2019] Inclusao da coluna origem. P438. (Douglas Pagel / AMcom)
+ * 015: [08/11/2018] Criação do botão de Altera Somente Bens - PRJ438 - Sprint 5 (Mateus Z / Mouts)
+ * 016: [14/02/2019] Inclusão dos campos nota do rating, origem da nota e status da análise P450 (Luiz Otávio Olinger Momm - AMCOM).
+ * 017: [25/02/2019] Inclusão do botão Alterar Rating P450 (Luiz Otávio Olinger Momm - AMCOM).
+ * 018: [07/03/2019] Adicionado verificação se Cooperativa pode ou não Alterar Rating P450 (Luiz Otávio Olinger Momm - AMCOM).
+ * 019: [15/03/2019] P450 - Inclusão da consulta Rating (Luiz Otávio Olinger Momm - AMCOM).
+ * 020: [05/02/2019] Inclusao da coluna origem. P438. (Douglas Pagel / AMcom).
  */
 ?>
 
@@ -44,10 +49,53 @@
 				<th>Ac</th>
 				<th><? echo utf8ToHtml('Situação');?></th>
 				<th><? echo utf8ToHtml('Decisão');?></th>
-				<th>Origem</th></tr>
+                <th><? echo utf8ToHtml('Nota<br>Rating');?></th>
+                <th><? echo utf8ToHtml('Origem');?></th>
+                <th><? echo utf8ToHtml('Status');?></th>
+				<th><? echo utf8ToHtml('Canal');?></th>
+                <!-- [017] -->
+            </tr>
 		</thead>
 		<tbody>
 			<? foreach( $registros as $registro ) {
+
+                /* [019] */
+                $msgErro = '';
+                $notaRating = '';
+                $origemRating = '';
+                $situacaoRating = '';
+                if ((int)$nrdconta > 0) {
+                    $xml = "<Root>";
+                    $xml .= "<Dados>";
+                    $xml .= "	<nrdconta>".$nrdconta."</nrdconta>";
+                    $xml .= "	<nrctro>".getByTagName($registro->tags,'nrctremp')."</nrctro>";
+                    $xml .= "	<tpctro>90</tpctro>";
+                    $xml .= "</Dados>";
+                    $xml .= "</Root>";
+
+                    $xmlResult = mensageria($xml, "RATI0003", "CONSULTAR_RISCO_RATING", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+                    $xmlObj = getObjectXML($xmlResult);
+
+                    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+                        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+
+                        if ($msgErro == "") {
+                            $msgErro = $xmlObj->roottag->tags[0]->cdata;
+                        }
+                    } else {
+                        // Aguardando estória para a implantação da impressão do rating motor
+                        $retornoRating = $xmlObj->roottag->tags[0]->tags;
+                        foreach ($retornoRating as $rating) {
+                            $notaRating = getByTagName($rating->tags,'PR_DESC_RATING');
+                            $origemRating = getByTagName($rating->tags,'PR_ORIGEM_RATING');
+                            $situacaoRating = getByTagName($rating->tags,'PR_DESC_SIT');
+                        }
+                    }
+
+                    unset($xmlResult);
+                }
+                /* [019] */
+
                 switch (getByTagName($registro->tags,'tpemprst')) {
                     case 0:
                         $tipo = "Price TR";
@@ -59,6 +107,7 @@
                         $tipo = "Pos-fixado";
                         break;
                 } 
+				} 
 				switch (getByTagName($registro->tags,'cdorigem')) {
                     case 1:
                         $tipoOrigem = "Aimaro";
@@ -131,6 +180,13 @@
 					<td><? echo getByTagName($registro->tags,'dssitest') ?></td>
 					<td><? echo getByTagName($registro->tags,'dssitapr') ?></td>
 					<td><? echo stringTabela($tipoOrigem,40,'maiuscula'); ?></td></tr>
+                    <!-- [016][019] -->
+                    <td><? echo $notaRating; ?></td>
+                    <td><? echo $origemRating; ?></td>
+                    <td><? echo $situacaoRating; ?></td>
+                    <!-- [016][019] -->
+                    </tr>
+
 			<? } ?>
 		</tbody>
 	</table>
@@ -172,5 +228,15 @@
 	<!--<a href="#" class="botao" id="btAlteraSomenteBens" style='display: none;' onClick="botaoAlteraSomenteBens();">Alterar Somente Ve&iacute;culos</a>-->
 	<!-- PRJ 438 -->
 	<a href="#" class="botao" id="btAnular"  onClick="controlaOperacao('MOTIVOS')">Anular</a>
-	
+	<?php
+    // 018
+    if ($permiteAlterarRating) {
+    ?>
+    <!-- 017 -->
+    <a href="#" class="botao" id="btAlterarRating"  onClick="controlaOperacao('ALTERAR_RATING')">Alterar Rating</a>
+    <!-- 017 -->
+    <?php
+    }
+    // 018
+    ?>
 </div>

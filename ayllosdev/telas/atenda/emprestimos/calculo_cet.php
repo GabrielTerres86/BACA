@@ -9,6 +9,7 @@
  * ALTERAÇÕES   : 12/11/2015 - Implementacao do parametro cdfinemp na chamada da
  *                             procedure calcula_cet_novo. (Projeto Portabilidade -
  *                             Carlos Rafael Tanholi)
+ *				   03/2019 - Projeto 437 - AMcom JDB Calculo do CET com consignado
  * --------------
  * 
  */
@@ -33,6 +34,7 @@ $cdfinemp = $_POST['cdfinemp'];
 $dsctrliq = isset($_POST['dsctrliq']) ? $_POST['dsctrliq'] : '';
 $idfiniof = isset($_POST['idfiniof']) ? $_POST['idfiniof'] : '0';
 
+//P437
 $vliofepr = '-1';
 $gConsig = isset($_POST['gConsig']) ? $_POST['gConsig'] : '0';
 if ($gConsig == '1'){
@@ -71,6 +73,7 @@ $xml .= "		<vlpreemp>" . $vlpreemp . "</vlpreemp>";
 $xml .= "		<qtpreemp>" . $qtpreemp . "</qtpreemp>";
 $xml .= "		<dsctrliq>" . $dsctrliq . "</dsctrliq>";
 $xml .= "		<idfiniof>" . $idfiniof . "</idfiniof>";
+//P437
 if ($gConsig == '1'){
 	$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
 }	
@@ -90,5 +93,4 @@ if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 }
 echo "arrayProposta['percetop'] = '" . $txcetano . "';";
 echo "$('#percetop','#frmNovaProp').val('" . $txcetano . "');";
-
 ?>	

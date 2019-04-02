@@ -16,6 +16,7 @@
               28/05/2018 - Aumentado o limite de 3 para 4 o campo Grupo. (Andrey Formigari- Mout's)
               
               10/07/2018 - sctask0014375 uso da funcao removeCaracteresInvalidos (Carlos)
+					  03/2019 - Projeto 437 AMcom JDB
 
 ************************************************************************/
 

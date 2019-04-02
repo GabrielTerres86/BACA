@@ -149,7 +149,9 @@
 * 119: [18/10/2018] Alterado layout das telas Nova Proposta, Avalista e Interveniente - PRJ 438. (Mateus Z / Mouts)
 * 120: [31/10/2018] Criacao de alteraNumeroContrato para iniciar a mesma funcao em alterar.php do botão alterar numero de proposta - PRJ - 438 - Bruno Luiz k - Mout's
 * 121: [31/10/2018] Criada função alteraProposta para abrir diretamente o fluxo para alterar a proposta, removendo a tela de opções de alteração - PRJ - 438 (Mateus Z - Mouts)
- 
+* 122: [14/02/2019] Adicionado na tabela controlaLayout na divEmpres as 3 novas colunas do crédito rating P450 (Luiz Otávio Olinger Momm - AMCOM)
+* 123: [25/02/2019] Inclusão do botão Alterar Rating P450 (Luiz Otávio Olinger Momm - AMCOM).
+
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -542,11 +544,12 @@ function controlaOperacao(operacao) {
 	}
 	
     //bruno - prj 438 - bug 14750
-    if(in_array(operacao,['VAL_RECALCULAR_EMPRESTIMO','T_EFETIVA','ACIONAMENTOS'])){		
+    if(in_array(operacao,['VAL_RECALCULAR_EMPRESTIMO','T_EFETIVA','ACIONAMENTOS'])){
         if(!validaAnulada($("#divEmpres table tr.corSelecao"), operacao)){
             return false;
         }
-    }	
+    }
+
 
 	//PRJ - 438 - Rating - 3 - bruno
 	if(aux_cdfinemp_rating == "" || in_array(operacao,['TC','TA'])){
@@ -779,11 +782,6 @@ function controlaOperacao(operacao) {
         	    showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Aimaro', '');
         		return false;
         	}
-			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
-			if (cdorigem == 3) {
-        	    showError('error', 'Não é permitido alterar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
-        		return false;
-        	}
             booPrimeiroBen = false; //809763
             idSocio = 0;
             if (msgDsdidade != '') {
@@ -821,11 +819,6 @@ function controlaOperacao(operacao) {
             return false;
             break;
         case 'A_NUMERO' :
-			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
-			if (cdorigem == 3) {
-        	    showError('error', 'Não é permitido alterar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
-        		return false;
-        	}
             mensagem = 'abrindo altera ...';
             cddopcao = 'A';
             break;
@@ -1428,11 +1421,6 @@ function controlaOperacao(operacao) {
                 showError('error', 'Não é permitida a efetivação manual de proposta de portabilidade.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);');
                 return false;
             }
-			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
-			if (cdorigem == 3) {
-        	    showError('error', 'Não é permitido efetivar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
-        		return false;
-        	}
 
             mensagem = 'carregando tela de efetivacao da proposta...';
             cddopcao = 'F';
@@ -1610,6 +1598,12 @@ function controlaOperacao(operacao) {
             carregaDadosConsultaMotivos();
 			return false;
             break;
+/* [123] */
+        case 'ALTERAR_RATING':
+            carregarAlteracaoRating(nrdconta, nrctremp, '90');
+            return false;
+            break;
+/* [123] */
         default:
             operacao = '';
             nrctremp = '';
@@ -2274,7 +2268,9 @@ function controlaLayout(operacao) {
         divRegistro.css('height', '150px');
 
         altura = '230px';
-        largura = '950px';
+        // [122]
+        largura = '1200px';
+        // [122]
 
         var ordemInicial = new Array();
         //ordemInicial = [[0, 0]];
@@ -2291,8 +2287,14 @@ function controlaLayout(operacao) {
         arrayLargura[8] = '35px';
         arrayLargura[9] = '65px';
         arrayLargura[10] = '120px';
-		arrayLargura[11] = '80px';
-		arrayLargura[12] = '65px';
+        arrayLargura[11] = '80px';
+        // [122]
+        arrayLargura[12] = '50px';  // Nota Rating
+/*
+        arrayLargura[13] = '50px';  // Origem
+        arrayLargura[14] = '50px';  // Status Rating
+*/
+        // [122]
 
         var arrayAlinha = new Array();
         arrayAlinha[0] = 'center';
@@ -2307,7 +2309,12 @@ function controlaLayout(operacao) {
         arrayAlinha[9] = 'center';
         arrayAlinha[10] = 'center';
         arrayAlinha[11] = 'center';
-		arrayAlinha[12] = 'center';
+        // [122]
+        arrayAlinha[11] = 'center';
+        arrayAlinha[12] = 'center';
+//        arrayAlinha[13] = 'center';
+//        arrayAlinha[14] = 'center';
+        // [122]
 
         var metodoTabela = 'controlaOperacao(\'TA\')';
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
