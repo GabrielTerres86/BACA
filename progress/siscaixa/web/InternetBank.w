@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 20/12/2018
+   Data    : Julho/2004.                       Ultima atualizacao: 02/04/2019
 
    Dados referentes ao programa:
 
@@ -744,6 +744,10 @@
 
                  20/12/2018 - Adicionar validação de senha na Inclusão de Custódia de cheque e Aprovação de Pagamento 
 				             (Douglas - INC0025643 e INC0025728)
+
+                 02/04/2019 - PRB0040682 - Correcao na rotina 45 para receber numero de logradouro com mais do que
+                              9 posicoes para entao tratar na rotina 45 (Andreatta-Mouts)
+
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -906,7 +910,7 @@ DEF VAR aux_nrdocmto AS INTE                                           NO-UNDO.
 DEF VAR aux_idtpdpag AS INTE                                           NO-UNDO.
 DEF VAR aux_idsituac AS INTE                                           NO-UNDO.
 DEF VAR aux_indtrans AS INTE                                           NO-UNDO.
-DEF VAR aux_nrendere AS INTE                                           NO-UNDO.
+DEF VAR aux_nrendere AS INT64                                          NO-UNDO.
 DEF VAR aux_nrcepend AS INTE                                           NO-UNDO.
 DEF VAR aux_nrcxapst AS INTE                                           NO-UNDO.
 DEF VAR aux_cdseqinc AS INTE                                           NO-UNDO.
@@ -4536,7 +4540,7 @@ PROCEDURE proc_operacao45:
 
     ASSIGN aux_flgtpenc = LOGICAL(GET-VALUE("flgtpenc"))
            aux_dsendere = GET-VALUE("dsendere")
-           aux_nrendere = INTE(GET-VALUE("nrendere"))
+           aux_nrendere = INT64(GET-VALUE("nrendere"))
            aux_complend = GET-VALUE("complend")
            aux_nrdoapto = INTE(GET-VALUE("nrdoapto")) 
            aux_cddbloco = GET-VALUE("cddbloco")       

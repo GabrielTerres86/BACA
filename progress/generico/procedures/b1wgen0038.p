@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0038.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 26/05/2018
+    Data      : Janeiro/2009                  Ultima Atualizacao: 02/04/2019
     
     Dados referentes ao programa:
 
@@ -118,6 +118,11 @@
                              PRJ366 - tipo de conta (Odirlei-AMcom)             
 
 			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+               02/04/2019 - PRB0040682 - Correcao na rotina alterar-endereco-viainternetbank para receber numero 
+                            de logradouro com mais do que 9 posicoes para entao tratar o valor
+                            recebido da rotina 45 (Andreatta-Mouts)
+
 .............................................................................*/
 
 
@@ -292,7 +297,7 @@ PROCEDURE alterar-endereco-viainternetbank:
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgtpenc AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrendere AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrendere AS INT64                          NO-UNDO.
     DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_complend AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrdoapto AS INTE                           NO-UNDO.
@@ -348,6 +353,16 @@ PROCEDURE alterar-endereco-viainternetbank:
                 UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
             END.
     
+        /* Nao permitir logradou com mais do que 9 posicoes */
+        IF  LENGTH(par_nrendere) > 9 THEN 
+            DO:
+				ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Numero invalido!".
+
+                UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
+            END.          
+       
+ 
         IF  par_flgtpenc  THEN /** Residencial **/
             DO:
                 IF  par_tpendass <> 12  THEN
