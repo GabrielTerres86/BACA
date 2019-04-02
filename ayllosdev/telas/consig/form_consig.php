@@ -185,7 +185,11 @@
 	</fieldset>
 </form>
 
-<div id="divBotoesConsig" style="margin-top:5px; margin-bottom :10px; text-align: center;">	
+<div id="divVencParc" style="display:none">
+	<? include("form_vencparc.php"); ?>
+</div>
+
+<div id="divBotoesConsig" name="divBotoesConsig" style="margin-top:5px; margin-bottom :10px; text-align: center;">	
 	
 	<a 
 		href="#"
@@ -200,8 +204,4 @@
 		Concluir
 	</a>
 
-</div>
-
-<div id="divVencParc" style="display:none">
-	<? include("form_vencparc.php"); ?>
 </div>

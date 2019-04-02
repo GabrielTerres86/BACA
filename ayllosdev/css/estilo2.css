@@ -225,6 +225,7 @@ th.headerSortUp {background-image:url(../imagens/geral/ordem_cresc.gif);}
 th.headerSortDown {background-image:url(../imagens/geral/ordem_decres.gif);}   
 
 tr.corPar{background-color:#fff;}
+tr.corParAux{background-color:#d4d4d4;}
 tr.corImpar{background-color:#eeeaee;}
 tr.corSelecao{background-color:#ffbaad;}
 

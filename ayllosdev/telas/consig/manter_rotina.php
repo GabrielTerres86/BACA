@@ -23,7 +23,10 @@
 	$consulta_cddopcao = (isset($_POST['consulta_cddopcao'])) ? $_POST['consulta_cddopcao'] : '' ;
 	$cdempres = (isset($_POST['cdempres'])) ? $_POST['cdempres'] : '' ;
 	$indconsignado = (isset($_POST['indconsignado'])) ? $_POST['indconsignado'] : '' ;
-	$dtativconsignado = (isset($_POST['dtativconsignado'])) ? $_POST['dtativconsignado'] : '' ;
+	$dtativconsignado = (isset($_POST['dtativconsignado'])) ? $_POST['dtativconsignado'] : date("d/m/Y") ;
+	if ($dtativconsignado == '' ){
+		$dtativconsignado = date("d/m/Y");
+	}
 	$nmextemp = (isset($_POST['nmextemp'])) ? $_POST['nmextemp'] : '' ;
 	$tpmodconvenio = (isset($_POST['tpmodconvenio'])) ? $_POST['tpmodconvenio'] : '' ;
 	$dtfchfol = (isset($_POST['dtfchfol'])) ? $_POST['dtfchfol'] : '' ;
@@ -37,10 +40,7 @@
 	$indalertaemailconsig = (isset($_POST['indalertaemailconsig'])) ? $_POST['indalertaemailconsig'] : '' ;
 	
 	$vp_cod = (isset($_POST['vp_cod'])) ? $_POST['vp_cod'] : '' ;
-	$vp_de = (isset($_POST['vp_de'])) ? $_POST['vp_de'] : '' ;
-	$vp_ate = (isset($_POST['vp_ate'])) ? $_POST['vp_ate'] : '' ;
-	$vp_dtEnvio = (isset($_POST['vp_dtEnvio'])) ? $_POST['vp_dtEnvio'] : '' ;
-	$vp_dtVencimento = (isset($_POST['vp_dtVencimento'])) ? $_POST['vp_dtVencimento'] : '' ;
+	$vencimentos = (isset($_POST['vencimentos'])) ? $_POST['vencimentos'] : '' ;
 	
 
 	if ($cddopcao =='') {// CONSULTA
@@ -85,30 +85,28 @@
 		echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","estadoInicial();");';
 		return;
 
-	} else if ($cddopcao == 'A' ) {// ALTERAR
-
+	} else if ($cddopcao == 'A' ) {// ALTERAR		
+		//Enviar informações para FIS
+		$vencimentosFis = str_replace("dtinclpropostade", "diaMesDe", $vencimentos);
+		$vencimentosFis = str_replace("dtinclpropostaate", "diaMesAte", $vencimentosFis);
+		$vencimentosFis = str_replace("dtenvioarquivo", "diaMesEnvio", $vencimentosFis);
+		$vencimentosFis = str_replace("dtvencimento", "diaMesVencto", $vencimentosFis);
 		$xml  = '';
 		$xml .= '<Root>';
-		$xml .= '	<Dados>';
-		$xml .= '       <cdempres>'.$cdempres.'</cdempres>';// cdempres
-		$xml .= '       <indconsignado>'.$indconsignado.'</indconsignado>'; // indconsignado
-		$xml .= '       <dtativconsignado>'.$dtativconsignado.'</dtativconsignado>'; //dtativconsignado
-		$xml .= '       <tpmodconvenio>'.$tpmodconvenio.'</tpmodconvenio>'; //tpmodconvenio
-		$xml .= '       <nrdialimiterepasse>'.$nrdialimiterepasse.'</nrdialimiterepasse>'; //nrdialimiterepasse
-		$xml .= '       <indautrepassecc>'.$indautrepassecc.'</indautrepassecc>'; //indautrepassecc
-		$xml .= '       <indinterromper>'.$indinterromper.'</indinterromper>'; //indinterromper
-		$xml .= '       <dsdemailconsig>'.$dsdemailconsig.'</dsdemailconsig>'; //dsdemailconsig
-		$xml .= '       <indalertaemailemp>'.$indalertaemailemp.'</indalertaemailemp>'; //indalertaemailemp
-		$xml .= '       <indalertaemailconsig>'.$indalertaemailconsig.'</indalertaemailconsig>'; //indalertaemailconsig
-		$xml .= '       <dtinterromper>'.$dtinterromper.'</dtinterromper>'; //dtinterromper
-		$xml .= '       <dtfchfol>'.$dtfchfol.'</dtfchfol>'; //dtfchfol
-		$xml .= '	</Dados>';
+		$xml .= '	<dto>';
+		$xml .= '       <cdempres>'.$cdempres.'</cdempres>';
+		$xml .= '       <datainicio>'.$dtativconsignado.'</datainicio>';
+		$xml .= '       <indconsignado>'.$indconsignado.'</indconsignado>';
+		$xml .= '       <tipoPadrao>'.$tpmodconvenio.'</tipoPadrao>';
+		$xml .= '       <idemprconsig>'.$cdempres.'</idemprconsig>';
+		$xml .= '       '.$vencimentosFis.'';
+		$xml .= '	</dto>';
 		$xml .= '</Root>';
 		
 		$xmlResult = mensageria(
 			$xml,
 			"TELA_CONSIG",
-			"ALTERAR_EMPR_CONSIG",
+			"BUSCA_EMPRESA",
 			$glbvars["cdcooper"],
 			$glbvars["cdagenci"],
 			$glbvars["nrdcaixa"],
@@ -127,45 +125,101 @@
 				false);
 			
 			exit();
-		} //erro
+		}else{
+			//cham SOA x FIS
+			$xml = simplexml_load_string($xmlResult);
+			$json = json_encode($xml);		
+		}		
+		
+		if($retSOAxFIS == "ERRO"){
+			exibirErro(
+				"error",
+				$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
+				"Alerta - Ayllos",
+				"estadoInicial();",
+				false);
+			
+			exit();
+		}else{
+			
+			$xml  = '';
+			$xml .= '<Root>';
+			$xml .= '	<Dados>';
+			$xml .= '       <cdempres>'.$cdempres.'</cdempres>';// cdempres
+			$xml .= '       <indconsignado>'.$indconsignado.'</indconsignado>'; // indconsignado
+			$xml .= '       <dtativconsignado>'.$dtativconsignado.'</dtativconsignado>'; //dtativconsignado
+			$xml .= '       <tpmodconvenio>'.$tpmodconvenio.'</tpmodconvenio>'; //tpmodconvenio
+			$xml .= '       <nrdialimiterepasse>'.$nrdialimiterepasse.'</nrdialimiterepasse>'; //nrdialimiterepasse
+			$xml .= '       <indautrepassecc>'.$indautrepassecc.'</indautrepassecc>'; //indautrepassecc
+			$xml .= '       <indinterromper>'.$indinterromper.'</indinterromper>'; //indinterromper
+			$xml .= '       <dsdemailconsig>'.$dsdemailconsig.'</dsdemailconsig>'; //dsdemailconsig
+			$xml .= '       <indalertaemailemp>'.$indalertaemailemp.'</indalertaemailemp>'; //indalertaemailemp
+			$xml .= '       <indalertaemailconsig>'.$indalertaemailconsig.'</indalertaemailconsig>'; //indalertaemailconsig
+			$xml .= '       <dtinterromper>'.$dtinterromper.'</dtinterromper>'; //dtinterromper
+			$xml .= '       <dtfchfol>'.$dtfchfol.'</dtfchfol>'; //dtfchfol
+			$xml .= '       '.$vencimentos.''; //vencimentos
+			$xml .= '	</Dados>';
+			$xml .= '</Root>';
+			
+			$xmlResult = mensageria(
+				$xml,
+				"TELA_CONSIG",
+				"ALTERAR_EMPR_CONSIG",
+				$glbvars["cdcooper"],
+				$glbvars["cdagenci"],
+				$glbvars["nrdcaixa"],
+				$glbvars["idorigem"],
+				$glbvars["cdoperad"],
+				"</Root>");
+			$xmlObj = getObjectXML($xmlResult);
 
-		if($xmlObj->roottag->tags[0]){
-			echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","estadoInicial();");';
-		} else{
-			echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","ajustaStatus(1);");';
+			if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
+
+				exibirErro(
+					"error",
+					$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
+					"Alerta - Ayllos",
+					"estadoInicial();",
+					false);
+				
+				exit();
+			} //erro
+
+			if($xmlObj->roottag->tags[0]){
+				echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","estadoInicial();");';
+			} else{
+				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","ajustaStatus(1);");';
+			}
 		}
 
 	} else if ($cddopcao == 'H' ) {// HABILITAR
-
+		//Enviar informações para FIS
+		$vencimentosFis = str_replace("dtinclpropostade", "diaMesDe", $vencimentos);
+		$vencimentosFis = str_replace("dtinclpropostaate", "diaMesAte", $vencimentosFis);
+		$vencimentosFis = str_replace("dtenvioarquivo", "diaMesEnvio", $vencimentosFis);
+		$vencimentosFis = str_replace("dtvencimento", "diaMesVencto", $vencimentosFis);		
 		$xml  = '';
 		$xml .= '<Root>';
-		$xml .= '	<Dados>';
-		$xml .= '       <cdempres>'.$cdempres.'</cdempres>';// cdempres
-		$xml .= '       <indconsignado>'.$indconsignado.'</indconsignado>'; // indconsignado
-		$xml .= '       <dtativconsignado>'.$glbvars["dtmvtolt"].'</dtativconsignado>'; //dtativconsignado
-		$xml .= '       <tpmodconvenio>'.$tpmodconvenio.'</tpmodconvenio>'; //tpmodconvenio
-		$xml .= '       <nrdialimiterepasse>'.$nrdialimiterepasse.'</nrdialimiterepasse>'; //nrdialimiterepasse
-		$xml .= '       <indautrepassecc>'.$indautrepassecc.'</indautrepassecc>'; //indautrepassecc
-		$xml .= '       <indinterromper>'.$indinterromper.'</indinterromper>'; //indinterromper
-		$xml .= '       <dsdemailconsig>'.$dsdemailconsig.'</dsdemailconsig>'; //dsdemailconsig
-		$xml .= '       <indalertaemailemp>'.$indalertaemailemp.'</indalertaemailemp>'; //indalertaemailemp
-		$xml .= '       <indalertaemailconsig>'.$indalertaemailconsig.'</indalertaemailconsig>'; //indalertaemailconsig
-		$xml .= '       <dtinterromper>'.$dtinterromper.'</dtinterromper>'; //dtinterromper
-		$xml .= '       <dtfchfol>'.$dtfchfol.'</dtfchfol>'; //dtfchfol
-		$xml .= '	</Dados>';
+		$xml .= '	<dto>';
+		$xml .= '       <cdempres>'.$cdempres.'</cdempres>';
+		$xml .= '       <datainicio>'.$dtativconsignado.'</datainicio>';
+		$xml .= '       <indconsignado>'.$indconsignado.'</indconsignado>';
+		$xml .= '       <tipoPadrao>'.$tpmodconvenio.'</tipoPadrao>';
+		$xml .= '       <idemprconsig>'.$cdempres.'</idemprconsig>';
+		$xml .= '       '.$vencimentosFis.'';
+		$xml .= '	</dto>';
 		$xml .= '</Root>';
-
+		
 		$xmlResult = mensageria(
 			$xml,
 			"TELA_CONSIG",
-			"HABILITAR_EMPR_CONSIG",
+			"BUSCA_EMPRESA",
 			$glbvars["cdcooper"],
 			$glbvars["cdagenci"],
 			$glbvars["nrdcaixa"],
 			$glbvars["idorigem"],
 			$glbvars["cdoperad"],
 			"</Root>");
-
 		$xmlObj = getObjectXML($xmlResult);
 
 		if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
@@ -178,14 +232,70 @@
 				false);
 			
 			exit();
-		} //erro
+		}else{
+			//cham SOA x FIS
+		}		
+		
+		if($retSOAxFIS == "ERRO"){
+			exibirErro(
+				"error",
+				$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
+				"Alerta - Ayllos",
+				"estadoInicial();",
+				false);
+			
+			exit();
+		}else{
+			$xml  = '';
+			$xml .= '<Root>';
+			$xml .= '	<Dados>';
+			$xml .= '       <cdempres>'.$cdempres.'</cdempres>';// cdempres
+			$xml .= '       <indconsignado>'.$indconsignado.'</indconsignado>'; // indconsignado
+			$xml .= '       <dtativconsignado>'.$glbvars["dtmvtolt"].'</dtativconsignado>'; //dtativconsignado
+			$xml .= '       <tpmodconvenio>'.$tpmodconvenio.'</tpmodconvenio>'; //tpmodconvenio
+			$xml .= '       <nrdialimiterepasse>'.$nrdialimiterepasse.'</nrdialimiterepasse>'; //nrdialimiterepasse
+			$xml .= '       <indautrepassecc>'.$indautrepassecc.'</indautrepassecc>'; //indautrepassecc
+			$xml .= '       <indinterromper>'.$indinterromper.'</indinterromper>'; //indinterromper
+			$xml .= '       <dsdemailconsig>'.$dsdemailconsig.'</dsdemailconsig>'; //dsdemailconsig
+			$xml .= '       <indalertaemailemp>'.$indalertaemailemp.'</indalertaemailemp>'; //indalertaemailemp
+			$xml .= '       <indalertaemailconsig>'.$indalertaemailconsig.'</indalertaemailconsig>'; //indalertaemailconsig
+			$xml .= '       <dtinterromper>'.$dtinterromper.'</dtinterromper>'; //dtinterromper
+			$xml .= '       <dtfchfol>'.$dtfchfol.'</dtfchfol>'; //dtfchfol
+			$xml .= '       '.$vencimentos.''; //vencimentos
+			$xml .= '	</Dados>';
+			$xml .= '</Root>';
 
-		if($xmlObj->roottag->tags[0]){
-			echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","ajustaStatus(1);");';
-		} else{
-			echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","ajustaStatus(1);");';
+			$xmlResult = mensageria(
+				$xml,
+				"TELA_CONSIG",
+				"HABILITAR_EMPR_CONSIG",
+				$glbvars["cdcooper"],
+				$glbvars["cdagenci"],
+				$glbvars["nrdcaixa"],
+				$glbvars["idorigem"],
+				$glbvars["cdoperad"],
+				"</Root>");
+
+			$xmlObj = getObjectXML($xmlResult);
+
+			if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
+
+				exibirErro(
+					"error",
+					$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
+					"Alerta - Ayllos",
+					"estadoInicial();",
+					false);
+				
+				exit();
+			} //erro
+
+			if($xmlObj->roottag->tags[0]){
+				echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","estadoInicial();");';
+			} else{
+				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","estadoInicial();");';
+			}
 		}
-
 	} else if ($cddopcao == 'D' ) {// DESABILITAR
 
 		$xml  = '';
@@ -285,107 +395,6 @@
 		}
 
 
-	}else if ($cddopcao == 'VPI' ){
-		//incluir vencimento parcela CAMPO CODIGO ENVIAR 0 SE FOR INCLUIR
-		$xml  = '';
-		$xml .= '<Root>';
-		$xml .= '	<Dados>';
-		$xml .= '       <idemprconsigparam>'.$vp_cod.'</idemprconsigparam>';// cdempres
-		$xml .= '       <cdempres>'.$cdempres.'</cdempres>';// 
-		$xml .= '       <dtinclpropostade>'.$vp_de.'</dtinclpropostade>';// 
-		$xml .= '       <dtinclpropostaate>'.$vp_ate.'</dtinclpropostaate>';// 
-		$xml .= '       <dtenvioarquivo>'.$vp_dtEnvio.'</dtenvioarquivo>';// 
-		$xml .= '       <dtvencimento>'.$vp_dtVencimento.'</dtvencimento>';// 
-		$xml .= '	</Dados>';
-		$xml .= '</Root>';
-
-		$xmlResult = mensageria(
-			$xml,
-			"TELA_CONSIG",
-			"INC_ALT_VENC_PARCELA",
-			$glbvars["cdcooper"],
-			$glbvars["cdagenci"],
-			$glbvars["nrdcaixa"],
-			$glbvars["idorigem"],
-			$glbvars["cdoperad"],
-			"</Root>");
-				
-		$xmlObj = getObjectXML($xmlResult);
-		
-		if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
-			$js = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			echo $js;
-			return;
-		} else {			
-			 include('form_vencparc.php');
-		}
-		
-		
-	}else if ($cddopcao == 'VPE' ){
-		//excluir vencimento parcela
-		$xml  = '';
-		$xml .= '<Root>';
-		$xml .= '	<Dados>';
-		$xml .= '       <idemprconsigparam>'.$vp_cod.'</idemprconsigparam>';
-		$xml .= '       <cdempres>'.$cdempres.'</cdempres>';
-		$xml .= '	</Dados>';
-		$xml .= '</Root>';
-
-		$xmlResult = mensageria(
-			$xml,
-			"TELA_CONSIG",
-			"EXCLUIR_VENC_PARCELA",
-			$glbvars["cdcooper"],
-			$glbvars["cdagenci"],
-			$glbvars["nrdcaixa"],
-			$glbvars["idorigem"],
-			$glbvars["cdoperad"],
-			"</Root>");
-
-		$xmlObj = getObjectXML($xmlResult);
-		
-		if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
-			$js = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			echo $js;
-			return;
-		} else {			
-			 include('form_vencparc.php');
-		}
-		
-	}else if ($cddopcao == 'VPR' ){
-		$xml  = '';
-		$xml .= '<Root>';
-		$xml .= '	<Dados>';
-		$xml .= '       <idemprconsigparam>'.$vp_cod.'</idemprconsigparam>';// cdempres
-		$xml .= '       <cdempres>'.$cdempres.'</cdempres>';// 
-		$xml .= '       <dtinclpropostade>'.$vp_de.'</dtinclpropostade>';// 
-		$xml .= '       <dtinclpropostaate>'.$vp_ate.'</dtinclpropostaate>';// 
-		$xml .= '       <dtenvioarquivo>'.$vp_dtEnvio.'</dtenvioarquivo>';// 
-		$xml .= '       <dtvencimento>'.$vp_dtVencimento.'</dtvencimento>';// 
-		$xml .= '	</Dados>';
-		$xml .= '</Root>';
-		//replicar vencimento parcela
-		$xmlResult = mensageria(
-			$xml,
-			"TELA_CONSIG",
-			"REPLICAR_VENC_PARCELA",
-			$glbvars["cdcooper"],
-			$glbvars["cdagenci"],
-			$glbvars["nrdcaixa"],
-			$glbvars["idorigem"],
-			$glbvars["cdoperad"],
-			"</Root>");
-
-		$xmlObj = getObjectXML($xmlResult);
-		
-		if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
-			$js = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			echo $js;
-			return;
-		} else {			
-			 include('form_vencparc.php');
-		}
-		
 	}else if ($cddopcao == 'VCC'){
 		//Valida se a cooperativa pode ter acesso a consignados
 		$xml  = '';

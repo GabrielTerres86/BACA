@@ -54,7 +54,7 @@
     $tpdebemp = ( isset($_POST["tpdebemp"]) ) ? $_POST["tpdebemp"] : '';
     $tpdebcot = ( isset($_POST["tpdebcot"]) ) ? $_POST["tpdebcot"] : '';
     $tpdebppr = ( isset($_POST["tpdebppr"]) ) ? $_POST["tpdebppr"] : '';
-	
+	//P437 s2
 	if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
 		$indescsg = ( isset($_POST["indescsg"]) ) ? $_POST["indescsg"] : '';
 	}else {
@@ -105,7 +105,7 @@
     $old_tpdebemp = ( isset($_POST["old_tpdebemp"]) ) ? $_POST["old_tpdebemp"] : '';
     $old_tpdebcot = ( isset($_POST["old_tpdebcot"]) ) ? $_POST["old_tpdebcot"] : '';
     $old_tpdebppr = ( isset($_POST["old_tpdebppr"]) ) ? $_POST["old_tpdebppr"] : '';
-	
+	//P437 s2
 	if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
 		$old_indescsg = ( isset($_POST["old_indescsg"]) ) ? $_POST["old_indescsg"] : '';	
 	}else{
@@ -142,7 +142,7 @@
     } else {
         $flgdgfib = no;  // Flag de digitalizacao: Se for TRUE, deve mudar pra FALSE
     }
-
+	//P437 s2
 	if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
 		$auxIndescsg = $indescsg=="2"?"yes":"no";
 	}else{
@@ -215,6 +215,66 @@
     }
 
     /*VALIDA SE OS DADOS DA EMPRESA ESTAO CORRETOS*/
+	//P437 s2
+	if ($opcao == 'A') {
+		//Enviar informações para FIS
+		$xml  = '';
+		$xml .= '<Root>';
+		$xml .= '	<dto>';
+		$xml .= '       <cdempres>'.$cdempres.'</cdempres>';
+		$xml .= '       <codconvenio>'.$cdempres.'</codconvenio>';
+		$xml .= '       <numcnpjloja>'.$nrdocnpj.'</numcnpjloja>';
+		$xml .= '       <descnomeloja>'.$nmresemp.'</descnomeloja>';
+		$xml .= '       <descrazaoloja>'.$nmextemp.'</descrazaoloja>';
+		$xml .= '       <ceplogradouro>'.$nrcepend.'</ceplogradouro>';
+		$xml .= '       <desclogradouro>'.$dsendemp.'</desclogradouro>';
+		$xml .= '       <desccompllogradouro>'.$dscomple.'</desccompllogradouro>';
+		$xml .= '       <descbairrologradouro>'.$nmbairro.'</descbairrologradouro>';
+		$xml .= '       <desccidadelogradouro>'.$nmcidade.'</desccidadelogradouro>';
+		$xml .= '       <uflogradouro>'.$cdufdemp.'</uflogradouro>';
+		$xml .= '       <dddloja>47</dddloja>';
+		$xml .= '       <telloja>'.$nrfonemp.'</telloja>';
+		$xml .= '       <numConta>'.$nrdconta.'</numConta>';
+		$xml .= '	</dto>';
+		$xml .= '</Root>';
+	
+		$xmlResult = mensageria(
+			$xml,
+			"TELA_CADEMP",
+			"BUSCA_CONSIG",
+			$glbvars["cdcooper"],
+			$glbvars["cdagenci"],
+			$glbvars["nrdcaixa"],
+			$glbvars["idorigem"],
+			$glbvars["cdoperad"],
+			"</Root>");
+		$xmlObj = getObjectXML($xmlResult);
+
+		if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
+
+			exibirErro(
+				"error",
+				$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
+				"Alerta - Ayllos",
+				"estadoInicial();",
+				false);
+			
+			exit();
+		}else{
+			//cham SOA x FIS
+		}		
+		
+		if($retSOAxFIS == "ERRO"){
+			exibirErro(
+				"error",
+				$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
+				"Alerta - Ayllos",
+				"estadoInicial();",
+				false);
+			
+			exit();
+		}
+	}
 
     $xml  = "";
     $xml .= "<Root>";

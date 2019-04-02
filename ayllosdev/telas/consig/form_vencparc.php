@@ -23,17 +23,15 @@
 <form name="frmVencParc" id="frmVencParc" class="formulario frmVencParc" >
 	<fieldset id="fsetVencParc" name="fsetVencParc" style="padding:0px; padding-bottom:10px;">
 		<legend> <? echo utf8ToHtml('Vencimentos')?> </legend>
+		<br style="clear:both" />
 		<table class="tituloRegistros" id="tblVencParc" cellpadding="1" cellspacing="1">
 		<thead>		
 			<tr id="trCabecalho" name="trCabecalho">
-				<th class="header" id="tdTitLinha"><strong>Ln</strong></td>
-				<th class="header" id="tdTitCod"><strong>Cod.</strong></td>
-				<th class="header" id="tdTitDe"><strong>Dia/M&ecirc;s In&iacute;cio</strong></td>
-				<th class="header" id="tdTitAte"><strong>Dia/M&ecirc;s Fim</strong></td>
-				<th class="header" id="tdTitDtEnvio"><strong>Data Envio Arquivo</strong></td>
-				<th class="header" id="tdTitDtVencimento"><strong>Data Vencimento</strong></td>
-				<th class="header" id="tdTitEditar"><strong>&nbsp;</strong></td>
-				<th class="header" id="tdTitExcluir"><strong>&nbsp;</strong></td>
+				<th class="header" id="tdTitDe" width="23%"><strong>Dia/M&ecirc;s In&iacute;cio</strong></td>
+				<th class="header" id="tdTitAte" width="23%"><strong>Dia/M&ecirc;s Fim</strong></td>
+				<th class="header" id="tdTitDtEnvio" width="23%"><strong>Data Envio Arquivo</strong></td>
+				<th class="header" id="tdTitDtVencimento" width="23%"><strong>Data Vencimento</strong></td>
+				<th class="header" id="tdTitEditar" width="8%"><strong>&nbsp;</strong></td>
 			</tr>
 		</thead>
 		<?php	
@@ -62,35 +60,32 @@
 			$total = ( isset($xmlObj->roottag->tags[0]->attributes["QTREGIST"]) ) ? $xmlObj->roottag->tags[0]->attributes["QTREGIST"] : 0;			
 			//print_r($ret);
 			for($i=0; $i<$total; $i++){								
-				
-				$linha = $i+1;
-				if ($linha % 2 == 0){					
-					$classLinha = "class= 'odd corPar'";
+				if ($i+1 % 2 == 0){					
+					$classLinha = "class= 'odd corParAux'";
 				}else{
 					$classLinha = "class= 'even corImpar'";
-				}
-				$cod = getByTagName($ret[0]->tags[$i]->tags,'IDEMPRCONSIGPARAM');
-				$de = getByTagName($ret[0]->tags[$i]->tags,'DTINCLPROPOSTADE');
-				$ate = getByTagName($ret[0]->tags[$i]->tags,'DTINCLPROPOSTAATE');
-				$dtEnvio = getByTagName($ret[0]->tags[$i]->tags,'DTENVIOARQUIVO');
-				$dtVencimento = getByTagName($ret[0]->tags[$i]->tags,'DTVENCIMENTO');
-				$idLinha = "trLinha$i";
+				}				
+				$idLinha = "$i";
 				echo "<tr ".$classLinha." id='".$idLinha."'>";
-				echo "<td align='center'>".$linha."</td>";
-				echo "<td align='center' >$cod</td>";
-				echo "<td align='center'>$de</td>";
-				echo "<td align='center'>$ate</td>";
-				echo "<td align='center'>$dtEnvio</td>";
-				echo "<td align='center'>$dtVencimento</td>";
-				echo "<td align='center'><a href=\"#\" onclick=\"EditarLinha('$idLinha', '$linha');\"><img src=\"".$UrlImagens."botoes/alterar.gif\" alt=\"Editar\" title=\"Editar\"></a></td>";
-				echo "<td align='center'><a href=\"#\" onclick=\"ExcluirLinha('$idLinha', '$cod');\"><img src=\"".$UrlImagens."botoes/excluir.gif\" alt=\"Excluir\" title=\"Excluir\"></a></td>";
+				echo "<td> <input type=\"hidden\" id=\"idemprconsigparam_".$i."\" name=\"idemprconsigparam_".$i."\" value=\"".getByTagName($ret[0]->tags[$i]->tags,'IDEMPRCONSIGPARAM')."\" />
+					       <input type=\"text\" style=\"text-align:center\" maxlength=5 id=\"dtinclpropostade_".$i."\" name=\"dtinclpropostade_".$i."\" value=\"".getByTagName($ret[0]->tags[$i]->tags,'DTINCLPROPOSTADE')."\" /> </center>
+					  </td>";
+				echo "<td> <input type=\"text\" style=\"text-align:center\" maxlength=5 id=\"dtinclpropostaate_".$i."\" name=\"dtinclpropostaate_".$i."\" value=\"".getByTagName($ret[0]->tags[$i]->tags,'DTINCLPROPOSTAATE')."\" /></td>";
+				echo "<td> <input type=\"text\" style=\"text-align:center\" maxlength=5 id=\"dtenvioarquivo_".$i."\" name=\"dtenvioarquivo_".$i."\" value=\"".getByTagName($ret[0]->tags[$i]->tags,'DTENVIOARQUIVO')."\" /></td>";
+				echo "<td> <input type=\"text\" style=\"text-align:center\" maxlength=5 id=\"dtvencimento_".$i."\" name=\"dtvencimento_".$i."\" value=\"".getByTagName($ret[0]->tags[$i]->tags,'DTVENCIMENTO')."\" /></td>";				
+				echo "<td align='center'> <a href=\"javascript:Cancelar('".$idLinha."');\" class=\"botao\" id=\"btexcluir_".$i."\" name=\"btexcluir_".$i."\">Excluir</a></td>";				
+			
 			}
-		?>
+		?>		
 <tr class="footer">	
-	<td colspan="6" id="tdNovo"><a href="javascript:NovoRegistro();"><img src="<? echo $UrlImagens; ?>botoes/novo.gif" alt="Nova Linha" title="Nova Linha" /></a></td>
-	<!-- <td colspan="2" id="tdLimpar"><a href="javascript:Limpar();"><img src=" echo $UrlImagens; botoes/limpar.gif" alt="Limpar" title="Limpar" /></a></td> -->
-	<td colspan="2" ><?php echo "<input type='hidden' id='total' name='total' value='$total'>"; ?></td>
+	<td colspan="1" id="tdNovo"><a href="javascript:NovoRegistro();" id="btincluir" name="btincluir" class="botao">Incluir</a></td>
+	<td colspan="1" id="tdReplicar"><strong>&nbsp;</strong></td>
+	<td colspan="3"><?php echo "<input type='hidden' id='total' name='total' value='$total'>"; ?></td>
 </tr>
 </table>
 	</fieldset>
 </form>
+
+<script type="text/javascript">
+mascara('<?php echo $total; ?>');
+</script>

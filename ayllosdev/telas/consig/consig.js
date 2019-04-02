@@ -4,11 +4,12 @@
  Data : Agoso/2018                Ultima Alteração:                                                                    
  Objetivo  : Cadastro de servicos ofertados na tela CADCCO
                                                                    	 
- Alterações: 
+ Alterações: 03/2019 - JDB AMcom P437
 
 ************************************************************************/
 //
 var CooperConsig = '';
+var linhasNovas = 0; 
 
 //nomes
 var NomeCabecalho = 'frmCabecalhoConsig';
@@ -85,6 +86,7 @@ $(document).ready(function () {
 
 function validaCooperConsig()
 {
+	linhasNovas = 0; 
 	CooperConsig = document.getElementById('glb_val_cooper_consignado').value ;
 	if (CooperConsig != 'S'){
 		showError(
@@ -249,6 +251,7 @@ function formataFiltro(){
     Ccdempres.unbind('keypress').bind('keypress',function(e) {      
         if(e.keyCode == 13 || e.keyCode == 9){
             buscarDescricao();
+			BtProsseguir.focus();
             return false;
         }
     });
@@ -1057,7 +1060,9 @@ function controlaOperacao(){
         }
 
     }
-
+	
+	var vencimentos = retVencimentos();
+	
      $.ajax({
         type: 'POST',
         url: UrlSite + 'telas/consig/manter_rotina.php',
@@ -1077,6 +1082,7 @@ function controlaOperacao(){
             indalertaemailemp: indalertaemailemp,
             dsdemailconsig: dsdemailconsig,
             indalertaemailconsig: indalertaemailconsig,
+			vencimentos: vencimentos,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1130,381 +1136,235 @@ function validaPermissao(cddopcao){
 
 
 //### tabela de parcelas
-var dadosAtuais; 
-var linhaEmEdicao = null; 
-var linhasNovas = 0; 
-
-function SalvaDados(idLinha){
-	var celulas = document.getElementById(idLinha).cells;
-	dadosAtuais = new Array(celulas.length);
-	for(var i=0; i<celulas.length; i++){
-		dadosAtuais[i] = celulas[i].innerHTML;
-	}
-	linhaEmEdicao = null;
-}
-
 
 function NovoRegistro(){
-	if (Cindconsignado.val() =="1"){
 		if (Ccddopcao.val() == 'A' || Ccddopcao.val() == 'H'){
-			if(linhaEmEdicao){
-				alert("Você está com um registro aberto. Feche-o antes de prosseguir");
-			}else{
-				proxIndice = document.getElementById('tblVencParc').rows.length-1;
-				var novaLinha = document.getElementById('tblVencParc').insertRow(proxIndice);
-				novaLinha.className = 'corSelecao';			
+			proxIndice = document.getElementById('tblVencParc').rows.length-1;
+			var novaLinha = document.getElementById('tblVencParc').insertRow(proxIndice);
+			novaLinha.className = 'corSelecao';	
+			if (linhasNovas == 0){			
+				linhasNovas = proxIndice;
 			}
-			
-			novoId = "nova"+linhasNovas;
+			novoId = linhasNovas;
 			novaLinha.setAttribute('id', novoId);
-			linhasNovas++; 
-			linhaEmEdicao = novoId;
 			
-			var novasCelulas = new Array(8); 
-			for(var i=0; i<8; i++){
+			var novasCelulas = new Array(5); 
+			for(var i=0; i<5; i++){
 				novasCelulas[i] = novaLinha.insertCell(i); 
 			}
 			
-			if (proxIndice > 1){
-				novasCelulas[0].innerHTML = '<input type="hidden" name="iLinha" >';
+			if (proxIndice == 1){
+				document.getElementById('tdReplicar').innerHTML = '<a href="javascript:Replicar();"  class="botao">Replicar</a>';
 			}else{
-				novasCelulas[0].innerHTML = '<a href="#" onclick="Replicar(\''+novoId+'\');"><img src="/imagens/icones/ico_reenviar.png" alt="Replicar" title="Replicar" /></a>';
+				document.getElementById('tdReplicar').innerHTML = '&nbsp;';
 			}
-			novasCelulas[1].innerHTML = '<input type="hidden" id="iCod" name="iCod" readonly>';
-			novasCelulas[2].innerHTML = '<input type="text" id="iDe" name="iDe"  maxlength="5" autofocus>';
-			novasCelulas[3].innerHTML = '<input type="text" id="iAte" name="iAte" maxlength="5">';
-			novasCelulas[4].innerHTML = '<input type="text" id="idtEnv" name="idtEnv"  maxlength="5">';
-			novasCelulas[5].innerHTML = '<input type="text" id="idtVenc" name="idtVenc" maxlength="5">';
-			novasCelulas[6].innerHTML = '<a href="#" onclick="Cadastrar(\''+novoId+'\');"><img src="/imagens/botoes/ok.gif" alt="Ok" /></a>';
-			novasCelulas[7].innerHTML = '<a href="#" onclick="CancelarInclusao();"><img src="/imagens/botoes/cancelar.gif" alt="Cancelar" /></a>';
-			$('#iDe').setMask("DATEDM", "", "", "divVencParc");
-			$('#iAte').setMask("DATEDM", "", "", "divVencParc");
-			$('#idtEnv').setMask("DATEDM", "", "", "divVencParc");
-			$('#idtVenc').setMask("DATEDM", "", "", "divVencParc");
-		}else{
-			alert("Você precisa estar na Opção H(Habilitar) ou A(Alterar)!");
-		}
-	}else{
-		alert("Você precisa Habilitar a empresa, clique em concluir!");
-	}
-}
-
-function CancelarInclusao(){	
-	
-	var linha = document.getElementById(linhaEmEdicao);
-	linha.parentNode.removeChild(linha);
-	linhasNovas--;
-	linhaEmEdicao = null;
-	
-}
-
-function EditarLinha(idLinha, cod){
-	if (Ccddopcao.val() == 'A' || Ccddopcao.val() == 'H'){
-		if(linhaEmEdicao == null){
-			var linha = document.getElementById(idLinha);
-			linha.className = 'corSelecao';//Altera a cor da linha que será editada
+			novasCelulas[0].innerHTML = '<input type="hidden" id="idemprconsigparam_'+linhasNovas+'" name="idemprconsigparam_'+linhasNovas+'" readonly>';
+			novasCelulas[0].innerHTML += '<input type="text"  class="campo" style=\"text-align:center\" id="dtinclpropostade_'+linhasNovas+'" name="dtinclpropostade_'+linhasNovas+'"  maxlength="5" autofocus>';
+			novasCelulas[1].innerHTML = '<input type="text"  class="campo" style=\"text-align:center\" id="dtinclpropostaate_'+linhasNovas+'" name="dtinclpropostaate_'+linhasNovas+'" maxlength="5">';
+			novasCelulas[2].innerHTML = '<input type="text"  class="campo" style=\"text-align:center\" id="dtenvioarquivo_'+linhasNovas+'" name="dtenvioarquivo_'+linhasNovas+'"  maxlength="5">';
+			novasCelulas[3].innerHTML = '<input type="text" class="campo" style=\"text-align:center\" id="dtvencimento_'+linhasNovas+'" name="dtvencimento_'+linhasNovas+'" maxlength="5">';
+			novasCelulas[4].innerHTML = '<a href="javascript:Cancelar(\''+novoId+'\');" class="botao" >Excluir</a>';
 			
-			var celulas = linha.cells;//Aramazena a célula que será editada
-			
-			//salva os dados atuais para o caso de cancelamento
-			SalvaDados(idLinha);
-
-			linhaEmEdicao = idLinha; 
-
-			celulas[0].innerHTML = '<input type="hidden" name="iLinha" value="'+celulas[0].innerHTML+'">';//Armazena o código do produto num campo oculto de formulário
-			celulas[1].innerHTML = '<input type="hidden" id="iCod" name="iCod" value="'+celulas[1].innerHTML+'" maxlength="5" readonly autofocus>';//Mostrar o campo texto permitindo a edição do nome do produto
-			celulas[2].innerHTML = '<input type="text" id="iDe" name="iDe" value="'+celulas[2].innerHTML+'" maxlength="5" autofocus>';//Mostrar o campo texto permitindo a edição do nome do produto
-			celulas[3].innerHTML = '<input type="text" id="iAte" name="iAte" value="'+celulas[3].innerHTML+'" maxlength="5">';//Mostrar o campo texto permitindo a edição do preço do produto
-			celulas[4].innerHTML = '<input type="text" id="idtEnv" name="idtEnv" value="'+celulas[4].innerHTML+'" maxlength="5">';//Mostrar o campo texto permitindo a edição do preço do produto
-			celulas[5].innerHTML = '<input type="text" id="idtVenc" name="idtVenc" value="'+celulas[5].innerHTML+'" maxlength="5">';//Mostrar o campo texto permitindo a edição do preço do produto
-			celulas[6].innerHTML = '<a href="#" onclick="Cadastrar(\''+idLinha+'\');"><img src="/imagens/botoes/ok.gif" alt="Ok" /></a>';//Monta os links que chamarão as funções para atualizar ou cancelar a edição da linha
-			celulas[7].innerHTML = '<a href="#" onclick="Cancelar(\''+idLinha+'\');"><img src="/imagens/botoes/cancelar.gif" alt="Cancelar" /></a>';//Insere um espaço na última célula
-			$('#iDe').setMask("DATEDM", "", "", "divVencParc");
-			$('#iAte').setMask("DATEDM", "", "", "divVencParc");
-			$('#idtEnv').setMask("DATEDM", "", "", "divVencParc");
-			$('#idtVenc').setMask("DATEDM", "", "", "divVencParc");
-		}
-		else {alert("Você já está digitando um registro.");}
-	}else{
-		alert("Você precisa estar na Opção H(Habilitar) ou A(Alterar)!");
-	}
-}
-
-function Cancelar(idLinha){
-	
-	var linha = document.getElementById(idLinha);
-	
-	if (dadosAtuais[0] % 2 == 0){
-		linha.className = 'odd corPar';
-	}else{
-		linha.className = 'even corImpar';
-	}
-	
-	linha.innerHTML = '<tr id="'+idLinha+'">' + 
-	'<td align="center">'+dadosAtuais[0]+'</td>' +
-	'<td align="center">'+dadosAtuais[1]+'</td>' +
-	'<td align="center">'+dadosAtuais[2]+'</td>' +
-	'<td align="center">'+dadosAtuais[3]+'</td>' +
-	'<td align="center">'+dadosAtuais[4]+'</td>' +
-	'<td align="center">'+dadosAtuais[5]+'</td>' +
-	'<td align="center"><a href="#" onclick="EditarLinha(\''+idLinha+'\',\'' + dadosAtuais[0] + '\');"><img src="/imagens/botoes/alterar.gif" alt="Editar" title="Editar"></a></td>' +
-	'<td align="center"><a href="#" onclick="ExcluirLinha(\''+idLinha+'\',\'' + dadosAtuais[0] + '\');"><img src="/imagens/botoes/excluir.gif" alt="Excluir" title="Excluir"></a></td>' ;
-	linhaEmEdicao = null;
-}
-
-function Cadastrar(idLinha)
-{
-	var iCod,iDe,iAte,idtEnv,idtVenc;
-	dadosAtuais = new Array(8);
-	
-	iCod = document.getElementById('iCod').value;
-	iDe = document.getElementById('iDe').value;
-	iAte = document.getElementById('iAte').value;
-	idtEnv = document.getElementById('idtEnv').value;
-	idtVenc = document.getElementById('idtVenc').value;
-	
-	//var proxIndice = document.getElementById('tblVencParc').rows.length-3;
-	//var proxLinha = document.getElementById('tblVencParc').rows.length-2;	
-	var proxLinha = Number(document.getElementById('total').value) +1;
-	var proxIndice = proxLinha - 1;	
-	dadosAtuais[0] = 'trLinha'+proxIndice;
-	dadosAtuais[1] = proxLinha;
-	dadosAtuais[2] = iCod;
-	dadosAtuais[3] = iDe;
-	dadosAtuais[4] = iAte;
-	dadosAtuais[5] = idtEnv;
-	dadosAtuais[6] = idtVenc;	
-	dadosAtuais[7] = idLinha;
-		
-	if (iCod < 1 ){
-		iCod = 0;
-	}
-	
-	showMsgAguardo("Aguarde gravando dados...");
-	
-	$.ajax({
-				type: 'POST',
-				url: UrlSite + 'telas/consig/manter_rotina.php',
-				data: {
-					cddopcao: 'VPI',
-					cdempres: cdempres,
-					vp_cod: iCod,
-					vp_de: iDe,
-					vp_ate: iAte,
-					vp_dtEnvio: idtEnv,
-					vp_dtVencimento: idtVenc,
-					
-					redirect: 'script_ajax'
-				},
-				error: function (objAjax, responseError, objExcept) {
-					hideMsgAguardo();
-					showError(
-						'error',
-						'Nao foi possivel concluir a operacao.',
-						'Alerta - Ayllos',
-						'$("#nrconven", "#frmFiltro").focus();');
-				},
-				success: function (response) {
-					hideMsgAguardo();
-					try {								
-						linhaEmEdicao = null;	
-						if (response.search('frmVencParc') == -1){
-							showError(
-								'error',
-								response,
-								'Alerta - Ayllos',
-							'');
-						}else{
-							$('#divVencParc').html(response);						
-						}
-											
-					
-					} catch (error) {
-						showError(
-							'error',
-							error,
-							'Alerta - Ayllos',
-							'');
-					}//catch
-				}//success
-			});//ajax
-			return false;
-}
-
-function Replicar(idLinha)
-{
-	var iCod,iDe,iAte,idtEnv,idtVenc;
-	dadosAtuais = new Array(8);
-	
-	iCod = document.getElementById('iCod').value;
-	iDe = document.getElementById('iDe').value;
-	iAte = document.getElementById('iAte').value;
-	idtEnv = document.getElementById('idtEnv').value;
-	idtVenc = document.getElementById('idtVenc').value;
-	
-	//var proxIndice = document.getElementById('tblVencParc').rows.length-3;
-	//var proxLinha = document.getElementById('tblVencParc').rows.length-2;	
-	var proxLinha = Number(document.getElementById('total').value) +1;
-	var proxIndice = proxLinha - 1;	
-	dadosAtuais[0] = 'trLinha'+proxIndice;
-	dadosAtuais[1] = proxLinha;
-	dadosAtuais[2] = iCod;
-	dadosAtuais[3] = iDe;
-	dadosAtuais[4] = iAte;
-	dadosAtuais[5] = idtEnv;
-	dadosAtuais[6] = idtVenc;	
-	dadosAtuais[7] = idLinha;
-		
-	if (iCod < 1 ){
-		iCod = 0;
-	}
-	
-	showMsgAguardo("Aguarde gravando dados...");
-	
-	$.ajax({
-				type: 'POST',
-				url: UrlSite + 'telas/consig/manter_rotina.php',
-				dataType:'html',
-				data: {
-					cddopcao: 'VPR',
-					cdempres: cdempres,
-					vp_cod: iCod,
-					vp_de: iDe,
-					vp_ate: iAte,
-					vp_dtEnvio: idtEnv,
-					vp_dtVencimento: idtVenc,
-					
-					redirect: 'html_ajax'
-				},
-				error: function (objAjax, responseError, objExcept) {
-					hideMsgAguardo();
-					showError(
-						'error',
-						'Nao foi possivel concluir a operacao.',
-						'Alerta - Ayllos',
-						'$("#nrconven", "#frmFiltro").focus();');
-				},
-				success: function (response) {
-					hideMsgAguardo();
-					try {								
-						linhaEmEdicao = null;	
-						if (response.search('frmVencParc') == -1){
-							showError(
-								'error',
-								response,
-								'Alerta - Ayllos',
-							'');
-						}else{
-							$('#divVencParc').html(response);						
-						}
-											
-					
-					} catch (error) {
-						showError(
-							'error',
-							error,
-							'Alerta - Ayllos',
-							'');
-					}//catch
-				}//success
-			});//ajax
-			return false;
-}
-
-function ExcluirLinha(idLinha, cod){
-	if (Ccddopcao.val() == 'A' || Ccddopcao.val() == 'H'){
-		if(!linhaEmEdicao){
-			var linha = document.getElementById(idLinha);
-			linha.className = 'corSelecao';
-			if(confirm("Tem certeza que deseja excluir este registro?")){
-				$.ajax({
-					type: 'POST',
-					dataType:'html',
-					url: UrlSite + 'telas/consig/manter_rotina.php',
-					data: {
-						cddopcao: 'VPE',
-						cdempres: cdempres,
-						vp_cod: cod,
-						redirect: 'html_ajax'
-					},
-					error: function (objAjax, responseError, objExcept) {
-						hideMsgAguardo();
-						showError(
-							'error',
-							'Nao foi possivel concluir a operacao.',
-							'Alerta - Ayllos',
-							'$("#nrconven", "#frmFiltro").focus();');
-					},
-					success: function (response) {
-						hideMsgAguardo();
-						try {								
-							linhaEmEdicao = null;	
-							if (response.search('frmVencParc') == -1){
-								showError(
-									'error',
-									response,
-									'Alerta - Ayllos',
-								'');
-							}else{
-								$('#divVencParc').html(response);						
-							}
-							
-							//document.getElementById('tblVencParc').innerHTML = ret;							
-						
-						} catch (error) {
-							showError(
-							'error',
-							error,
-							'Alerta - Ayllos',
-							'');
-						}//catch
-					}//success
-				});//ajax
-				return false;
-			}else{
-				var celulas = linha.cells;				
-				if (celulas[0].innerHTML % 2 == 0){
-					linha.className = 'odd corPar';
-				}else{
-					linha.className = 'even corImpar';
-				}
-			}
+			$('#dtinclpropostade_'+linhasNovas).setMask("DATEDM", "", "", "divVencParc");
+			$('#dtinclpropostaate_'+linhasNovas).setMask("DATEDM", "", "", "divVencParc");
+			$('#dtenvioarquivo_'+linhasNovas).setMask("DATEDM", "", "", "divVencParc");
+			$('#dtvencimento_'+linhasNovas).setMask("DATEDM", "", "", "divVencParc");
+			linhasNovas = linhasNovas +1;
 		}else{
-			alert("Você está com um registro aberto. Feche-o antes de prosseguir.");
+			showError("info","Voc&ecirc; precisa estar na Op&ccedil;&atilde;o H - (Habilitar) ou A - (Alterar)! ","Alerta - Ayllos","");			
 		}
+	
+}
+
+function mascara(total){
+	if(Ccddopcao.val() == 'A' || Ccddopcao.val() == 'H'){
+		$('#btincluir').css('display', 'block');	
 	}else{
-		alert("Você precisa estar na Opção H(Habilitar) ou A(Alterar)!");
+		$('#btincluir').css('display', 'none');	
+	}
+	for(var i=0; i<total; i++){
+		$('#dtinclpropostade_'+i).setMask("DATEDM", "", "", "divVencParc");
+		$('#dtinclpropostaate_'+i).setMask("DATEDM", "", "", "divVencParc");
+		$('#dtenvioarquivo_'+i).setMask("DATEDM", "", "", "divVencParc");
+		$('#dtvencimento_'+i).setMask("DATEDM", "", "", "divVencParc");
+		$('#dtinclpropostade_'+i).desabilitaCampo();
+		$('#dtinclpropostaate_'+i).desabilitaCampo();
+		$('#dtenvioarquivo_'+i).desabilitaCampo();
+		$('#dtvencimento_'+i).desabilitaCampo();
+		$('#btexcluir_'+i).css('display', 'none');		
+		if(Ccddopcao.val() == 'A' || Ccddopcao.val() == 'H'){
+			$('#dtinclpropostade_'+i).habilitaCampo();
+			$('#dtinclpropostaate_'+i).habilitaCampo();
+			$('#dtenvioarquivo_'+i).habilitaCampo();
+			$('#dtvencimento_'+i).habilitaCampo();
+			$('#btexcluir_'+i).css('display', 'block');	
+		}
 	}
 }
 
-
-function ajustaStatus(info){	
-    if(info == "1"){
-		Cindconsignado.val("1");
-        CtextIndconsignado.val("Sim");
-    } else if(indconsignado == '0') {
-        Cindconsignado.val("0");
-        CtextIndconsignado.val("Nao");
-	}else if(indconsignado == '2') {
-        Cindconsignado.val("2");
-        CtextIndconsignado.val("Pend.");
-    }else{
-        Cindconsignado.val("");
-        CtextIndconsignado.val("");
-    }
-	
-};
-
-/*
-function Limpar() {
-	var total = document.getElementById('total').value;
-    console.log(total);
-	for(var i = 0; i < total; i++){
-		var linha = document.getElementById('linha'+(i));
+function Cancelar(linhaEmEdicao){	
+	if (Ccddopcao.val() == 'A' || Ccddopcao.val() == 'H'){
+		var linha = document.getElementById(linhaEmEdicao);
 		linha.parentNode.removeChild(linha);
+		var proxIndice = document.getElementById('tblVencParc').rows.length-1;
+		if (proxIndice == 2){
+			document.getElementById('tdReplicar').innerHTML = '<a href="javascript:Replicar();"  class="botao">Replicar</a>';
+		}else{
+			document.getElementById('tdReplicar').innerHTML = '&nbsp;';
+		}
+	}else{
+		showError("info","Voc&ecirc; precisa estar na Op&ccedil;&atilde;o H - (Habilitar) ou A - (Alterar)! ","Alerta - Ayllos","");
 	}
-};
-*/
+	
+}
 
+function retVencimentos(){
+	 var tabela = document.getElementById('tblVencParc');
+	 var nlinhas = tabela.rows.length;
+	 var tbLinhas = tabela.rows;
+	 var ret,idLinha,dtinclpropostade,dtinclpropostaate,dtenvioarquivo,dtvencimento;
+	 var cnt = 0;
+	 ret = '<vencimentos>';
+	 for(var i=0; i< nlinhas; i++){		
+		idLinha = tbLinhas[i].getAttribute('id');
+		dtinclpropostade = $('#dtinclpropostade_'+idLinha).val();
+		dtinclpropostaate = $('#dtinclpropostaate_'+idLinha).val();
+		dtenvioarquivo = $('#dtenvioarquivo_'+idLinha).val();
+		dtvencimento = $('#dtvencimento_'+idLinha).val();		
+		if((typeof dtinclpropostade != 'undefined')&&(typeof dtinclpropostaate != 'undefined')&&(typeof dtenvioarquivo != 'undefined')&&(typeof dtvencimento != 'undefined')){
+			if ((dtinclpropostade != "") && (dtinclpropostaate != "") && (dtenvioarquivo != "") && (dtvencimento != "")){
+				cnt++;
+				ret += '<vencimento'+cnt+'>';
+				ret += '<dtinclpropostade>'+dtinclpropostade+'</dtinclpropostade>';
+				ret += '<dtinclpropostaate>'+dtinclpropostaate+'</dtinclpropostaate>';
+				ret += '<dtenvioarquivo>'+dtenvioarquivo+'</dtenvioarquivo>';
+				ret += '<dtvencimento>'+dtvencimento+'</dtvencimento>';									
+				ret += '</vencimento'+cnt+'>';
+			}
+		}		
+	 }	 
+	 ret += '<total>'+cnt+'</total>'
+	 ret += '</vencimentos>';
+	 //console.log(ret);
+	 return ret;
+	
+}
 
-
+function Replicar()
+{
+	if (Ccddopcao.val() == 'A' || Ccddopcao.val() == 'H'){
+		document.getElementById('tdReplicar').innerHTML = '&nbsp;';
+		
+		var tabela = document.getElementById('tblVencParc');
+		var nlinhas = tabela.rows.length;
+		var tbLinhas = tabela.rows;
+		var idLinha,dtinclpropostade,dtinclpropostaate,dtenvioarquivo,dtvencimento,made,maate,maarq,maven,dtde,dtate,dtarq,dtven,diade,diaate,diaarq,diaven;
+		tbLinhas[1].className = 'even corImpar';	
+		idLinha = tbLinhas[1].getAttribute('id');
+		dtinclpropostade = $('#dtinclpropostade_'+idLinha).val();
+		made = dtinclpropostade.substring(3, 5);
+		diade = dtinclpropostade.substring(0, 2);
+		dtinclpropostaate = $('#dtinclpropostaate_'+idLinha).val();
+		maate = dtinclpropostaate.substring(3, 5);
+		diaate = dtinclpropostaate.substring(0, 2);
+		dtenvioarquivo = $('#dtenvioarquivo_'+idLinha).val();
+		maarq = dtenvioarquivo.substring(3, 5);
+		diaarq = dtenvioarquivo.substring(0, 2);
+		dtvencimento = $('#dtvencimento_'+idLinha).val();		
+		maven = dtvencimento.substring(3, 5);
+		diaven = dtvencimento.substring(0, 2);
+		if((typeof dtinclpropostade != 'undefined')&&(typeof dtinclpropostaate != 'undefined')&&(typeof dtenvioarquivo != 'undefined')&&(typeof dtvencimento != 'undefined')){
+			if ((dtinclpropostade != "") && (dtinclpropostaate != "") && (dtenvioarquivo != "") && (dtvencimento != "")){
+				for(var x=0; x<11; x++){
+					console.log
+					proxIndice = document.getElementById('tblVencParc').rows.length-1;
+					var novaLinha = document.getElementById('tblVencParc').insertRow(proxIndice);
+					novaLinha.className = 'even corImpar';	
+					if (linhasNovas == 0){			
+						linhasNovas = proxIndice;
+					}
+					novoId = linhasNovas;
+					novaLinha.setAttribute('id', novoId);
+					
+					var novasCelulas = new Array(5); 
+					for(var i=0; i<5; i++){
+						novasCelulas[i] = novaLinha.insertCell(i); 
+					}	
+					
+					if (made < 12){
+						made = Number(made) + 1;				
+					}else if (made == 12){
+						made = 1;
+					}
+					if (([4,6,9,11].indexOf(made) >= 0) && (diade > 30)){
+						dtde = 30 + '/' + ('00' + made).slice(-2); 
+					}else if ((made == 2) && (diade >28)){
+						dtde = 28 + '/' + ('00' + made).slice(-2); 
+					}else{	
+						dtde = diade + '/' + ('00' + made).slice(-2); 
+					}
+					
+					if (maate < 12){
+						maate = Number(maate) + 1;				
+					}else if (maate == 12){
+						maate = 1;
+					}
+					if (([4,6,9,11].indexOf(maate) >= 0) && (diaate > 30)){
+						dtate = 30 + '/' + ('00' + maate).slice(-2); 
+					}else if ((maate == 2) && (diaate >28)){
+						dtate = 28 + '/' + ('00' + maate).slice(-2); 
+					}else{	
+						dtate = diaate + '/' + ('00' + maate).slice(-2); 
+					}
+					
+					if (maarq < 12){
+						maarq = Number(maarq) + 1;				
+					}else if (maarq == 12){
+						maarq = 1;				
+					}
+					if (([4,6,9,11].indexOf(maarq) >= 0) && (diaarq > 30)){
+						dtarq = 30 + '/' + ('00' + maarq).slice(-2); 
+					}else if ((maarq == 2) && (diaarq >28)){
+						dtarq = 28 + '/' + ('00' + maarq).slice(-2); 
+					}else{	
+						dtarq = diaarq + '/' + ('00' + maarq).slice(-2); 
+					}
+					
+					if (maven < 12){
+						maven = Number(maven) + 1;				
+					}else if  (maven == 12){
+						maven = 1;
+					}
+					if (([4,6,9,11].indexOf(maven) >= 0) && (diaven > 30)){
+						dtven = 30 + '/' + ('00' + maven).slice(-2); 
+					}else if ((maven == 2) && (diaven >28)){
+						dtven = 28 + '/' + ('00' + maven).slice(-2); 
+					}else{	
+						dtven = diaven + '/' + ('00' + maven).slice(-2); 
+					}
+					
+					novasCelulas[0].innerHTML = '<input type="hidden" id="idemprconsigparam_'+linhasNovas+'" name="idemprconsigparam_'+linhasNovas+'" readonly>';
+					novasCelulas[0].innerHTML += '<input type="text" class="campo" value="'+dtde+'" style=\"text-align:center\" id="dtinclpropostade_'+linhasNovas+'" name="dtinclpropostade_'+linhasNovas+'"  maxlength="5" autofocus>';
+					novasCelulas[1].innerHTML = '<input type="text" class="campo" value="'+dtate+'" style=\"text-align:center\" id="dtinclpropostaate_'+linhasNovas+'" name="dtinclpropostaate_'+linhasNovas+'" maxlength="5">';
+					novasCelulas[2].innerHTML = '<input type="text" class="campo" value="'+dtarq+'" style=\"text-align:center\" id="dtenvioarquivo_'+linhasNovas+'" name="dtenvioarquivo_'+linhasNovas+'"  maxlength="5">';
+					novasCelulas[3].innerHTML = '<input type="text" class="campo" value="'+dtven+'" style=\"text-align:center\" id="dtvencimento_'+linhasNovas+'" name="dtvencimento_'+linhasNovas+'" maxlength="5">';
+					novasCelulas[4].innerHTML = '<a href="javascript:Cancelar(\''+novoId+'\');" class="botao" >Excluir</a>';
+					
+					$('#dtinclpropostade_'+linhasNovas).setMask("DATEDM", "", "", "divVencParc");
+					$('#dtinclpropostaate_'+linhasNovas).setMask("DATEDM", "", "", "divVencParc");
+					$('#dtenvioarquivo_'+linhasNovas).setMask("DATEDM", "", "", "divVencParc");
+					$('#dtvencimento_'+linhasNovas).setMask("DATEDM", "", "", "divVencParc");
+					linhasNovas = linhasNovas +1;
+				}
+			}else{
+				document.getElementById('tdReplicar').innerHTML = '<a href="javascript:Replicar();"  class="botao">Replicar</a>';
+				showError("info","Valor Inv&aacute;lidos para Replicar!","Alerta - Ayllos","");			
+			}
+		}else{
+			document.getElementById('tdReplicar').innerHTML = '<a href="javascript:Replicar();"  class="botao">Replicar</a>';
+			showError("info","Valor Inv&aacute;lidos para Replicar!","Alerta - Ayllos","");
+		}
+	}else{
+		showError("info","Voc&ecirc; precisa estar na Op&ccedil;&atilde;o H - (Habilitar) ou A - (Alterar)! ","Alerta - Ayllos","");			
+	}
+}
