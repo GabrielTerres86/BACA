@@ -574,10 +574,10 @@ PROCEDURE pc_crps388_i(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa so
     FETCH btch0001.cr_crapdat
      INTO rw_crapdat;
      
-    rw_crapdat.dtmvtolt := to_date('03042019','ddmmyyyy');
-    rw_crapdat.dtmvtopr := to_date('04042019','ddmmyyyy'); 
-    rw_crapdat.dtmvtoan := to_date('02042019','ddmmyyyy'); 
-    rw_crapdat.dtmvtocd := to_date('03042019','ddmmyyyy');
+    rw_crapdat.dtmvtolt := to_date('02042019','ddmmyyyy');
+    rw_crapdat.dtmvtopr := to_date('03042019','ddmmyyyy'); 
+    rw_crapdat.dtmvtoan := to_date('01042019','ddmmyyyy'); 
+    rw_crapdat.dtmvtocd := to_date('02042019','ddmmyyyy');
     
     -- Se não encontrar
     IF btch0001.cr_crapdat%NOTFOUND THEN

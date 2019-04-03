@@ -191,8 +191,8 @@ IF   NOT AVAILABLE crabcop   THEN
 
 ASSIGN aux_nmcidade = TRIM(crabcop.nmcidade).
 
-glb_dtmvtolt = 02/07/2019.
-glb_dtmvtopr = 02/08/2019.
+glb_dtmvtolt = 04/02/2019.
+glb_dtmvtopr = 04/03/2019.
 
 aux_dtproxim = glb_dtmvtopr + 1.
 
