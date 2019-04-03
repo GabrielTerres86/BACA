@@ -1,3 +1,13 @@
+/*TELA_ATENDA_SIMULACAO*/
+INSERT INTO 
+       craprdr (NRSEQRDR, NMPROGRA, DTSOLICI)
+VALUES (
+       SEQRDR_NRSEQRDR.NEXTVAL,
+       'TELA_ATENDA_SIMULACAO',
+       SYSDATE);
+/
+commit
+/
 INSERT INTO 
   crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
 VALUES 
