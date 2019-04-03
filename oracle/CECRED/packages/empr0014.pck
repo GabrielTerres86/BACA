@@ -194,7 +194,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : 
-       Data    :                            Ultima atualizacao: 12/02/2019
+       Data    :                            Ultima atualizacao: 24/10/2018
 
        Dados referentes ao programa:
 
@@ -205,8 +205,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
        
                    24/10/2018 - P442 - AJustes na chamada da Valida Bens Alienados (Marcos-Envolti)
                    
-                   12/02/2019 - P442 - PreAprovado nova estrutura (Marcos-Envolti)
-                  
     ............................................................................. */
       ----->> CURSORES <<-----
       cursor cr_crawepr is (
@@ -258,17 +256,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
            AND crappre.cdfinemp = decode(pr_inpreapr,1,crappre.cdfinemp,pr_cdfinemp);
       rw_crappre cr_crappre%ROWTYPE;
 
-      cursor cr_crapcpa (pr_idcarga        tbepr_carga_pre_aprv.idcarga%TYPE
-                        ,pr_tppessoa       crapcpa.tppessoa%TYPE
-                        ,pr_nrcpfcnpj_base crapcpa.nrcpfcnpj_base%TYPE) IS 
+      cursor cr_crapcpa (pr_idcarga in tbepr_carga_pre_aprv.idcarga%TYPE) IS 
         SELECT a.iddcarga
               ,a.rowid
           FROM crapcpa a
          WHERE a.cdcooper       = pr_cdcooper
-           AND a.tppessoa       = pr_tppessoa
-           AND a.nrcpfcnpj_base = pr_nrcpfcnpj_base
-           AND a.iddcarga       = pr_idcarga
-           FOR UPDATE;
+           AND a.nrdconta = pr_nrdconta
+           AND a.iddcarga = pr_idcarga;
       rw_crapcpa cr_crapcpa%ROWTYPE;
 
       cursor cr_crapjur is 
@@ -290,7 +284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
       rw_crapbpr cr_crapbpr%ROWTYPE;
 
       cursor cr_crapass is (
-          select a.inpessoa, a.nrcadast, a.nrcpfcgc, a.nrdconta, a.nrcpfcnpj_base
+          select a.inpessoa, a.nrcadast, a.nrcpfcgc, a.nrdconta
           from crapass a
           where a.CDCOOPER = pr_cdcooper
             and a.NRDCONTA = pr_nrdconta);
@@ -452,22 +446,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
           when no_data_found then
              vr_flgportb := 0;
       end;
-/*
+
       if vr_flgportb = 0 then
         -- chamar VALIDA_BENS_ALIENADOS - grvm0001
         grvm0001.pc_valida_bens_alienados( pr_cdcooper => pr_cdcooper,
                                            pr_nrdconta => pr_nrdconta,
                                            pr_nrctrpro => pr_nrctremp,
                                            pr_cdcritic => pr_cdcritic,
-                                           pr_dscritic => pr_dscritic,
-                                           pr_tab_erro => vr_tab_erro); 
+                                           pr_dscritic => pr_dscritic); 
 
         if nvl(pr_cdcritic,0) <> 0 OR 
            nvl(pr_dscritic,'OK') <> 'OK' then
           raise vr_exc_saida;
         end if;
       END IF; 
-*/
+
 -- PONTO 3
 
       pc_valida_dados_efet_proposta( pr_cdcooper => pr_cdcooper,
@@ -564,9 +557,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
         CLOSE cr_crappre;
         --> Verifica se o emprestimo eh pre-aprovado
         -- PONTO 6
-         vr_idcarga := EMPR0002.fn_idcarga_pre_aprovado_cta(pr_cdcooper => pr_cdcooper
-                                                           ,pr_nrdconta => pr_nrdconta);
-        open cr_crapcpa(vr_idcarga,rw_crapass.inpessoa,rw_crapass.nrcpfcnpj_base);
+        empr0002.pc_busca_carga_ativa(pr_cdcooper => pr_cdcooper,
+                                      pr_nrdconta => pr_nrdconta,
+                                      pr_idcarga  => vr_idcarga);
+                     
+        open cr_crapcpa(vr_idcarga);
         fetch cr_crapcpa into rw_crapcpa;
         if cr_crapcpa%NOTFOUND THEN
           close cr_crapcpa;
@@ -598,13 +593,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
         /* Atualiza o valor contratado do credito pre-aprovado */
         BEGIN
           update crapcpa a
-            set a.vlctrpre = a.vlctrpre + rw_crawepr.vlemprst
+            set a.vlctrpre = a.vlctrpre + rw_crawepr.vlemprst,
+                a.vllimdis = (TRUNC(((a.vllimdis -
+                                              rw_crawepr.vlemprst) /
+                                            rw_crappre.vlmulpli),0)) * rw_crappre.vlmulpli
             where rowid = rw_crapcpa.rowid;
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao atualizar pre-aprovado:'||SQLERRM;
             RAISE vr_exc_saida;
         END;
+        -- antes:----------------------------------------------------------------------
+        --ASSIGN crapcpa.vlctrpre = crapcpa.vlctrpre + crawepr.vlemprst
+        --       crapcpa.vllimdis = TRUNC(((crapcpa.vllimdis -
+        --                                  crawepr.vlemprst) /
+        --                                crappre.vlmulpli),0)
+        --       crapcpa.vllimdis = crapcpa.vllimdis * crappre.vlmulpli.
+        -------------------------------------------------------------------------------    
+        BEGIN
+          update crapcpa a
+          set a.vllimdis = case when (rw_crappre.vllimmin > a.vllimdis) then 0 else a.vllimdis end
+          where rowid = rw_crapcpa.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar pre-aprovado2:'||SQLERRM;
+        END;    
+        -- antes-----------------------------------------------------------------------
+        -- IF rw_crappre.vllimmin > crapcpa.vllimdis THEN
+        --   ASSIGN crapcpa.vllimdis = 0.
+        -------------------------------------------------------------------------------
       end if;
       
       IF cr_crappre%ISOPEN THEN
