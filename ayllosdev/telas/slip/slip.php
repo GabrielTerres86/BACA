@@ -25,7 +25,7 @@
 		<link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
 		<script type="text/javascript" src="../../scripts/scripts.js" charset="utf-8"></script>
 		<script type="text/javascript" src="../../scripts/dimensions.js"></script>
-		<script type="text/javascript" src="../../scripts/funcoes.js"></script>
+		<script type="text/javascript" src="../../scripts/funcoes.js?keyrand=<?php echo mt_rand(); ?>"></script>
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>

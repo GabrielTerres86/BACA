@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 07/11/2017
+  Data    : Abril/2004                          Ultima atualizacao: 03/01/2019
 
   Dados referentes ao programa:
 
@@ -278,6 +278,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
 
               08/02/2019 - Ajuste na declaracao da variavel vr_cdconven - Gabriel Marcos (Mouts).
 
+              10/03/2019 - Inclusão do indicador de validação do CPF/CNPJ Layout 5.
+                           Gabriel Marcos (Mouts) - SCTASK0038352.
+
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -352,7 +355,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   vr_vltotarq     NUMBER;
   vr_nrrefere     VARCHAR2(25);
   vr_qtdigito     INTEGER;
-  vr_cdconven     gnconve.cdconven%type := 0;
+  vr_cdconven     gnconve.cdconven%type;
 
   ---------------------------------- CURSORES  ----------------------------------
   
@@ -1247,8 +1250,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
                     || '00'                                   
                     || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || nvl(to_char(rw_craplau.tppessoa_dest,'fm0'),' ')
+                    || nvl(to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000'),'               ')
                     || RPAD(' ',4,' ') || '0';
 
           /* Celesc Distribuicao */  
@@ -1263,8 +1266,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
                     || '00'                                   
                     || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || nvl(to_char(rw_craplau.tppessoa_dest,'fm0'),' ')
+                    || nvl(to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000'),'               ')
                     || RPAD(' ',4,' ') || '0';
                     
           /* CASAN */           
@@ -1286,8 +1289,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
                     || '00'                                   
                     || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || nvl(to_char(rw_craplau.tppessoa_dest,'fm0'),' ')
+                    || nvl(to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000'),'               ')
                     || RPAD(' ',4,' ') || '0';
                     
           /* TIM Celular */          
@@ -1306,8 +1309,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
                     || '00'                                   
                     || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || nvl(to_char(rw_craplau.tppessoa_dest,'fm0'),' ')
+                    || nvl(to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000'),'               ')
                     || RPAD(' ',4,' ') || '0';
                     
           /* UNIMED CREDCREA */          
@@ -1323,8 +1326,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
                     || '00'                                   
                     || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || nvl(to_char(rw_craplau.tppessoa_dest,'fm0'),' ')
+                    || nvl(to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000'),'               ')
                     || RPAD(' ',4,' ') || '0';
                     
           /* UNIMED */          
@@ -1342,8 +1345,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
                     || '00'                                   
                     || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || nvl(to_char(rw_craplau.tppessoa_dest,'fm0'),' ')
+                    || nvl(to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000'),'               ')
                     || RPAD(' ',4,' ') || '0';
              
           /* VIVO */       
@@ -1358,8 +1361,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
                     || '00'                                   
                     || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || nvl(to_char(rw_craplau.tppessoa_dest,'fm0'),' ')
+                    || nvl(to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000'),'               ')
                     || RPAD(' ',4,' ') || '0';
                     
           /*SAMAE Jaragua*/           
@@ -1378,8 +1381,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
                     ||'00'
                     || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || nvl(to_char(rw_craplau.tppessoa_dest,'fm0'),' ')
+                    || nvl(to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000'),'               ')
                     || RPAD(' ',4,' ') || '0';
           
           /* BRASIL TELECOM/SC */
@@ -1401,8 +1404,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
                     || '00' 
                     || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || nvl(to_char(rw_craplau.tppessoa_dest,'fm0'),' ')
+                    || nvl(to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000'),'               ')
                     || RPAD(' ',4,' ') || '0';
             
           /* MAPFRE VERA CRUZ SEG */        
@@ -1417,8 +1420,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
                     || '00' 
                     || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || nvl(to_char(rw_craplau.tppessoa_dest,'fm0'),' ')
+                    || nvl(to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000'),'               ')
                     || RPAD(' ',4,' ') || '0';
                     
           ELSIF rw_gnconve.cdconven = 112 THEN -- chubb seguros
@@ -1431,8 +1434,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
                     || '00' 
                     || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || nvl(to_char(rw_craplau.tppessoa_dest,'fm0'),' ')
+                    || nvl(to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000'),'               ')
                     || RPAD(' ',4,' ') || '0';
           ELSE
               vr_dslinreg := 'F'
@@ -1444,8 +1447,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                     || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
                     || '00' 
                     || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
+                    || nvl(to_char(rw_craplau.tppessoa_dest,'fm0'),' ')
+                    || nvl(to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000'),'               ')
                     || RPAD(' ',4,' ') || '0';
           END IF;
        

@@ -8,6 +8,9 @@
  * ALTERACOES   : 09/08/2018 - Incluir conta e titular na chamada da rotina INC0021468 (Heitor - Mouts)
  *				  20/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para	
  *                             corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
+ *                07/03/2019 - Nome da empresa sera retornado pelo fonte busca_nome_pessoa.php,
+ *                             este fonte ira fazer controle de permissao ou nao de alteracoes.
+ *                             Gabriel Marcos (Mouts) - Chamado PRB0040571.
  */
 ?>
  
@@ -66,7 +69,7 @@
 		if($idaltera == 1){			
 			echo "$('#nmresemp').val('".$nmempout."');";
 			echo "$('#cdempres').val('".$cdemprot."');";
-			echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
+			//echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
 			echo "$('#nrcpfemp').val('".$nrcnpjot."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
 		}else{			
 			echo "$('#nmresemp').val('".$nmempout."');";		

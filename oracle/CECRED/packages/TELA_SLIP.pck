@@ -381,7 +381,8 @@ create or replace package body cecred.TELA_SLIP IS
     CURSOR cr_conta_contab (pr_conta_contabil IN tbcontab_prm_cta_ctb_slip.nrconta_contabil%TYPE) IS 
      SELECT cta.nrconta_contabil,
             cta.idexige_rateio_gerencial  AS idger, 
-            cta.idexige_risco_operacional AS idris FROM tbcontab_prm_cta_ctb_slip cta
+            cta.idexige_risco_operacional AS idris 
+       FROM tbcontab_prm_cta_ctb_slip cta
        WHERE cta.nrconta_contabil = pr_conta_contabil;     
      rw_conta_contab  cr_conta_contab%ROWTYPE;
                                 
@@ -397,26 +398,39 @@ create or replace package body cecred.TELA_SLIP IS
      
      OPEN cr_conta_contab(pr_nrctadeb);
       FETCH cr_conta_contab INTO rw_conta_contab;
+    IF cr_conta_contab%NOTFOUND THEN
      CLOSE cr_conta_contab;
                
+      vr_cdcritic := 0;
+      vr_dscritic := 'Conta contabil: ' || pr_nrctadeb || ' nao parametrizada para utilizacao.' ;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_conta_contab;  
+    END IF;
+    
+               
      IF (rw_conta_contab.idger = 'S') AND (nvl(pr_lscdgerencial,' ') = ' ') THEN  
-        
         vr_cdcritic := 0;
         vr_dscritic := 'Conta contabil: ' || pr_nrctadeb || ' exige rateio gerencial. Favor informar para concluir o lancamento.' ;
         RAISE vr_exc_erro;
-               
      END IF;
      
      OPEN cr_conta_contab(pr_nrctacrd);
       FETCH cr_conta_contab INTO rw_conta_contab;
+    IF cr_conta_contab%NOTFOUND THEN
+      CLOSE cr_conta_contab;
+      
+      vr_cdcritic := 0;
+      vr_dscritic := 'Conta contabil: ' || pr_nrctacrd || ' nao parametrizada para utilizacao.' ;
+      RAISE vr_exc_erro;
+    ELSE
      CLOSE cr_conta_contab;
+    END IF;
                
      IF (rw_conta_contab.idger = 'S') AND (nvl(pr_lscdgerencial,' ') = ' ') THEN  
-        
         vr_cdcritic := 0;
         vr_dscritic := 'Conta contabil: ' || pr_nrctacrd || ' exige rateio gerencial. Favor informar para concluir o lancamento.' ;
         RAISE vr_exc_erro;
-               
      END IF;
      
      OPEN cr_conta_contab(pr_nrctadeb);
@@ -424,11 +438,9 @@ create or replace package body cecred.TELA_SLIP IS
      CLOSE cr_conta_contab;
                
      IF (rw_conta_contab.idris = 'S') AND (nvl(pr_lscdrisco_operacional,' ') = ' ') THEN  
-        
         vr_cdcritic := 0;
         vr_dscritic := 'Conta contabil: ' || pr_nrctadeb || ' exige risco operacional. Favor informar para finalizar o lancamento.' ;
         RAISE vr_exc_erro;
-               
      END IF;
      
      OPEN cr_conta_contab(pr_nrctacrd);
@@ -436,24 +448,17 @@ create or replace package body cecred.TELA_SLIP IS
      CLOSE cr_conta_contab;
                
      IF (rw_conta_contab.idris = 'S') AND (nvl(pr_lscdrisco_operacional,' ') = ' ') THEN  
-        
         vr_cdcritic := 0;
         vr_dscritic := 'Conta contabil: ' || pr_nrctacrd ||  ' exige risco operacional. Favor informar para finalizar o lancamento.' ;
         RAISE vr_exc_erro;
-               
      END IF;
-                        
-                                  
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
-                                                      
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Erro nao tratado na rotina que valida conta contabil.' || SQLERRM ;
-      
-       
   end pc_valida_lancamento;
                 
  PROCEDURE pc_valida_gerencial(pr_cdcooper  IN crapass.cdcooper%TYPE --> cooperativa
@@ -2392,8 +2397,8 @@ PROCEDURE pc_busca_riscos_lanc(pr_cdcooper IN crapass.cdcooper%TYPE
                                ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                ,pr_des_erro OUT VARCHAR2) IS
                             
-  
-   CURSOR cr_lancamentos (pr_dtmvtolt IN crapdat.dtmvtolt%TYPE)IS
+   CURSOR cr_lancamentos (pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                         ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
      SELECT lan.nrsequencia_slip,
         lan.cdhistor,
         lan.nrctadeb,
@@ -2405,10 +2410,9 @@ PROCEDURE pc_busca_riscos_lanc(pr_cdcooper IN crapass.cdcooper%TYPE
         lan.cdoperad || ' - ' || ope.nmoperad AS dsoperador
       FROM tbcontab_slip_lancamento lan
       LEFT JOIN crapope ope ON (ope.cdoperad = lan.cdoperad AND ope.cdcooper = lan.cdcooper)
-      WHERE lan.nrsequencia_slip <= pr_nrregist
-       AND  lan.nrsequencia_slip >= pr_nriniseq
-       AND  lan.cdcooper = pr_cdcooper
+      WHERE lan.cdcooper = pr_cdcooper
        AND  lan.dtmvtolt = pr_dtmvtolt
+       AND  upper(lan.cdoperad) = upper(pr_cdoperad)
       ORDER BY lan.nrsequencia_slip;
    
    vr_cdcritic crapcri.cdcritic%TYPE := NULL ; --> Cód. Erro
@@ -2422,16 +2426,41 @@ PROCEDURE pc_busca_riscos_lanc(pr_cdcooper IN crapass.cdcooper%TYPE
    vr_des_xml         CLOB;  
    vr_texto_completo  VARCHAR2(32600); 
    
+   -- Variaveis retornadas da gene0004.pc_extrai_dados
+  vr_cdcoplog INTEGER;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+   
    -- Subrotina para escrever texto na variável CLOB do XML
    procedure pc_escreve_xml(pr_des_dados in varchar2,
                                pr_fecha_xml in boolean default false) is
    begin
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
    end;   
-                             
   BEGIN
     pr_des_erro := 'OK';
      
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcoplog,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_erro;
+    END IF;
+
     vr_des_xml := null;
     dbms_lob.createtemporary(vr_des_xml, true);
     dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
@@ -2444,7 +2473,7 @@ PROCEDURE pc_busca_riscos_lanc(pr_cdcooper IN crapass.cdcooper%TYPE
     vr_count := 0;    
     
           --Utilizar as datas da CENTRAL
-    OPEN btch0001.cr_crapdat(3);
+    OPEN btch0001.cr_crapdat(pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO btch0001.rw_crapdat;
     CLOSE btch0001.cr_crapdat;
     
@@ -2452,11 +2481,8 @@ PROCEDURE pc_busca_riscos_lanc(pr_cdcooper IN crapass.cdcooper%TYPE
     
     pc_escreve_xml('<lancamentos>');       
     
-    
-    FOR rw_lancamentos  IN cr_lancamentos(vr_dtmvtolt) LOOP
-
+    FOR rw_lancamentos  IN cr_lancamentos(vr_dtmvtolt, vr_cdoperad) LOOP
       BEGIN
-                               
         pc_escreve_xml( '<registro>
                          <nrseq_slip>'|| rw_lancamentos.nrsequencia_slip ||'</nrseq_slip>'||
                         '<cdhistor>'|| rw_lancamentos.cdhistor ||'</cdhistor>'||
@@ -2485,9 +2511,6 @@ PROCEDURE pc_busca_riscos_lanc(pr_cdcooper IN crapass.cdcooper%TYPE
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);
-                           
-    
-               
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
@@ -2565,9 +2588,8 @@ PROCEDURE pc_consulta_lancamentos(pr_cdcooper IN crapass.cdcooper%TYPE
              OR lan.vllanmto  > pr_vllanmtoMA
              OR lan.vllanmto  < pr_vllanmtoME)
     ORDER BY lan.dtmvtolt,lan.nrsequencia_slip) con
-    WHERE con.seqlanc BETWEEN pr_nriniseq AND pr_nrregist;
-       
-                  
+--    WHERE con.seqlanc BETWEEN pr_nriniseq AND pr_nrregist
+    ;
    
    vr_cdcritic crapcri.cdcritic%TYPE := NULL ; --> Cód. Erro
    vr_dscritic VARCHAR2(1000) := NULL;   --> Desc. Erro
@@ -2624,7 +2646,6 @@ PROCEDURE pc_consulta_lancamentos(pr_cdcooper IN crapass.cdcooper%TYPE
        END IF;     
     END IF;
     
-     
     pc_escreve_xml('<lancamentos>');       
     
     FOR rw_lancamentos  IN cr_lancamentos (pr_vllanmtoI   => vr_vllanmtoI
@@ -2632,7 +2653,6 @@ PROCEDURE pc_consulta_lancamentos(pr_cdcooper IN crapass.cdcooper%TYPE
                                            ,pr_vllanmtoME => vr_vllanmtoME) LOOP
 
       BEGIN
-                               
         pc_escreve_xml( '<registro>
                          <nrseq_slip>'|| rw_lancamentos.nrsequencia_slip ||'</nrseq_slip>'||
                         '<cdhistor>'|| rw_lancamentos.cdhistor ||'</cdhistor>'||
@@ -2661,9 +2681,6 @@ PROCEDURE pc_consulta_lancamentos(pr_cdcooper IN crapass.cdcooper%TYPE
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);
-                           
-    
-               
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
@@ -2684,8 +2701,5 @@ PROCEDURE pc_consulta_lancamentos(pr_cdcooper IN crapass.cdcooper%TYPE
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');    
   END pc_consulta_lancamentos;
-    
-                                                          
-                          
 end TELA_SLIP;
 /

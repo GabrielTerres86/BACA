@@ -205,6 +205,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                     ,pr_idvendedor      IN tbepr_cdc_emprestimo.idvendedor%type --> identificacao do vendedor
                                     ,pr_idcooperado_cdc IN tbepr_cdc_emprestimo.idcooperado_cdc%type  --> Identificacao do lojista
                                     ,pr_vlrepasse       IN tbepr_cdc_emprestimo.vlrepasse%type  --> Valor de repasse pro lojista
+                                    ,pr_cdcooper_cred    IN tbepr_cdc_emprestimo.cdcooper_cred%type  --> Codigo da cooperativa de credito
+                                    ,pr_nrdconta_cred    IN tbepr_cdc_emprestimo.nrdconta_cred%type  --> Numero da conta de credito
                                     ,pr_dscritic        OUT VARCHAR2) ;                         --> Retorno de OK/NOK 
 
   --> Rotina para listar do vendedor
@@ -3352,10 +3354,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                     pr_cdcooper tbsite_cooperado_cdc.cdcooper%TYPE)IS
       SELECT t.idcooperado_cdc
         FROM tbsite_cooperado_cdc t
-       WHERE t.nrdconta = pr_nrdconta
-         AND t.cdcooper = pr_cdcooper;
+            ,crapcdr c
+       WHERE c.cdcooper = t.cdcooper
+         AND c.nrdconta = t.nrdconta
+         AND c.flgconve = 1 -- convenio ativo
+         AND t.nrdconta = pr_nrdconta
+         AND t.cdcooper = pr_cdcooper
+         AND t.idmatriz IS NULL;
 
      rw_tbsite_cooperado_cdc cr_tbsite_cooperado_cdc%ROWTYPE;   
+
+    CURSOR cr_tbsite_cooperado_cdc_2 (pr_nrdconta tbsite_cooperado_cdc.nrdconta%TYPE,
+                                      pr_cdcooper tbsite_cooperado_cdc.cdcooper%TYPE)IS
+     SELECT cdc.idcooperado_cdc
+       FROM crapass              ass,
+            crapcdr              crd,
+            tbsite_cooperado_cdc cdc,
+            crapass              as2
+      WHERE ass.nrcpfcgc = as2.nrcpfcgc
+        AND ass.cdcooper <> as2.cdcooper
+        AND crd.cdcooper = ass.cdcooper
+        AND crd.nrdconta = ass.nrdconta
+        AND crd.flgconve = 1
+        AND cdc.cdcooper = ass.cdcooper
+        AND cdc.nrdconta = ass.nrdconta
+        AND cdc.idmatriz IS NULL
+        AND as2.cdcooper = pr_cdcooper
+        AND as2.nrdconta = pr_nrdconta
+        AND EXISTS (SELECT 1
+               FROM tbepr_cdc_vendedor
+              WHERE idcooperado_cdc = cdc.idcooperado_cdc);
+ 
+   
 
     -- Buscar os vendedores cdc
     CURSOR cr_vendedor ( pr_idcooperado_cdc tbepr_cdc_vendedor.idcooperado_cdc%TYPE,
@@ -3383,14 +3413,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     IF cr_tbsite_cooperado_cdc%NOTFOUND THEN
       -- Fechar cursor
       CLOSE cr_tbsite_cooperado_cdc;
-      -- Gerar crítica
-      vr_dscritic := 'Lojista não cadastrado';
-      -- Levantar exceção
-      RAISE vr_exc_erro;
-    END IF;
-
+      
+      -- verifica existência de convenio ativo para o cnpj da conta recebida
+      OPEN cr_tbsite_cooperado_cdc_2(pr_nrdconta => pr_nrctaloj,
+                                     pr_cdcooper => pr_cdcoploj);
+      FETCH cr_tbsite_cooperado_cdc_2 INTO rw_tbsite_cooperado_cdc;
+      
+      IF cr_tbsite_cooperado_cdc_2%NOTFOUND THEN
+        -- Fechar cursor
+        CLOSE cr_tbsite_cooperado_cdc_2;
+        
+        -- Gerar crítica
+        vr_dscritic := 'Lojista não cadastrado';
+        
+        -- Levantar exceção
+        RAISE vr_exc_erro;
+      ELSE
+        -- Fechar cursor
+        CLOSE cr_tbsite_cooperado_cdc_2;
+      END IF;
+    ELSE
     -- Fechar cursor
     CLOSE cr_tbsite_cooperado_cdc;
+    END IF;
+ 
     
     IF TRIM(vr_idvendedor) IS NULL THEN
     BEGIN
@@ -3422,6 +3468,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                             ,pr_idvendedor       => vr_idvendedor --> identificacao do vendedor
                             ,pr_idcooperado_cdc  => rw_tbsite_cooperado_cdc.idcooperado_cdc --> Identificacao do lojista
                             ,pr_vlrepasse        => pr_vlrepasse --> valor do repasse lojista
+                            ,pr_cdcooper_cred    => pr_cdcoploj   --> Codigo da cooperativa
+                            ,pr_nrdconta_cred    => pr_nrctaloj   --> Numero da conta
                             ,pr_dscritic         => vr_dscritic); --> Retorno de OK/NOK 
 
     IF vr_dscritic IS NOT NULL THEN
@@ -3442,6 +3490,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                     ,pr_idvendedor       IN tbepr_cdc_emprestimo.idvendedor%type --> identificacao do vendedor
                                     ,pr_idcooperado_cdc  IN tbepr_cdc_emprestimo.idcooperado_cdc%type  --> Identificacao do lojista
                                     ,pr_vlrepasse        IN tbepr_cdc_emprestimo.vlrepasse%type        --> Valor repasse lojista
+                                    ,pr_cdcooper_cred    IN tbepr_cdc_emprestimo.cdcooper_cred%type  --> Codigo da cooperativa de credito
+                                    ,pr_nrdconta_cred    IN tbepr_cdc_emprestimo.nrdconta_cred%type  --> Numero da conta de credito
                                     ,pr_dscritic         OUT VARCHAR2) IS                              --> Retorno de OK/NOK 
 
     -- Tratamento de erros
@@ -3456,13 +3506,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                  ,nrctremp
                  ,idvendedor
                  ,idcooperado_cdc
-                 ,vlrepasse)
+                 ,vlrepasse
+                 ,cdcooper_cred
+                 ,nrdconta_cred)
            values(pr_cdcooper
                  ,pr_nrdconta
                  ,pr_nrctremp
                  ,decode(pr_idvendedor,0,null,pr_idvendedor)
                  ,pr_idcooperado_cdc
-                 ,pr_vlrepasse);
+                 ,pr_vlrepasse
+                 ,pr_cdcooper_cred
+                 ,pr_nrdconta_cred);
     EXCEPTION
       WHEN dup_val_on_index THEN
         BEGIN
@@ -4907,8 +4961,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                          ,pr_nrctremp  IN crapepr.nrctremp%type     --> numero do contrato
                          ,pr_dtinicial IN crapdat.dtmvtolt%TYPE     -->
                          ,pr_dtfinal   IN crapdat.dtmvtolt%TYPE) IS -->
-      select cdr.cdcooper  cdcooper_lojista
-            ,cdr.nrdconta  nrdconta_lojista
+      select tce.cdcooper_cred  cdcooper_lojista
+            ,tce.nrdconta_cred  nrdconta_lojista
             ,tce.vlrepasse
             ,tce.rowid as tbemp_rowid
             ,epr.*
@@ -5690,7 +5744,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
         -- Tratamento de erro de retorno
         if coalesce(vr_dscritic,'OK') != 'OK'  then
-          --raise vr_exc_saida;
           
           -- Gera Log
           GENE0001.pc_gera_log(pr_cdcooper => rw_rapassecdc.cdcooper

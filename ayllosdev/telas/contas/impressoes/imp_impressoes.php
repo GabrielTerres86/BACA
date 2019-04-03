@@ -12,6 +12,7 @@
  *
  *                25/04/2018 - Adicionado nova opcao de impresssao Declaracao de FATCA/CRS
  *							   PRJ 414 (Mateus Z - Mouts)
+ *				  16/01/2019 - Adicionado chamada para o relatorio Ficha-Proposta (Cássia de Oliveira - GFT)
  */	 
 ?>
 
@@ -42,6 +43,37 @@
 	$idseqttl = (isset($_POST['_idseqttl'])) ? $_POST['_idseqttl'] : '';
 	$GLOBALS['nrcpfcgc'] = (isset($_POST['_nrcpfcgc'])) ? $_POST['_nrcpfcgc'] : '';			
 	
+	// Inicio - Ficha-proposta - Cásssia de Oliveira (GFT)
+	// Função para exibir erros na tela através de javascript
+    function exibeErro($msgErro) { 
+	  echo '<script>alert("'.$msgErro.'");</script>';	
+	  exit();
+    }
+
+	if($GLOBALS['tprelato'] == 'ficha_proposta'){
+
+		// Monta o xml de requisição
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= "	<Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
+		$xml .= "	</Dados>";
+		$xml .= "</Root>";	
+
+		// Executa script para envio do XML
+		$xmlResult = mensageria($xml, "CONTAS", "IMPRESSAO_FICHA_PROPOSTA", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		// Cria objeto para classe de tratamento de XML
+		$xmlObj = simplexml_load_string($xmlResult);
+		// Se ocorrer um erro, mostra crítica
+		if ($xmlObj->Erro->Registro->dscritic != ''){
+			exibeErro($xmlObj->Erro->Registro->dscritic);
+		}
+		// Obtém nome do arquivo PDF 
+		$nmarqpdf = $xmlObj;
+		// Chama função para mostrar PDF do impresso gerado no browser
+		visualizaPDF($nmarqpdf);	
+	}else{
 	// Gerando uma chave do formulário
 	$impchave = $GLOBALS['tprelato'].$nrdconta.$idseqttl;
 	setcookie('impchave', $impchave, time()+60 );
@@ -103,5 +135,7 @@
 	$dompdf->set_paper('a4');
 	$dompdf->render();
 	$dompdf->stream('impressoes_'.$impchave.'.pdf', $opcoes );
+	}
+	// Fim - Ficha-proposta - Cásssia de Oliveira (GFT)
 		
 ?>

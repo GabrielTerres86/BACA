@@ -769,7 +769,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                                               pr_vlaplica => vr_vlaplica,
                                               pr_iddebcti => 0,
                                               pr_idorirec => 0,
-                                              pr_idgerlog => 0,
+                                              pr_idgerlog => 1,
                                               pr_nrctrrpp => rw_craprpp.nrctrrpp, -- Número da RPP
                                               pr_nraplica => vr_nraplica,
                                               pr_cdcritic => vr_cdcritic,

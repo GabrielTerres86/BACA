@@ -59,6 +59,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
 
       Alteracoes:
 
+      22/03/2019 - inc0031490 Inclusão da rotina pc_internal_exception na rotina pc_email_pa_portabilidade para 
+                   identificar o ponto do programa que ocasionou o erro; correção do controle do tamanho do corpo do
+                   email, de 30 para 30000; correção do controle de existência de e-mail do PA (Carlos)
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   --> Declaração geral de exception
@@ -2131,7 +2135,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     WHEN OTHERS THEN
       pr_dscritic := 'Erro na rotina PCPS.pc_proc_ERR_APCS103. ' ||SQLERRM;
   END pc_proc_ERR_APCS103;
-  --
+  
+  
   PROCEDURE pc_proc_XML_APCS104(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
                                ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
     ---------------------------------------------------------------------------------------------------------------
@@ -6195,7 +6200,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
         
         -- Carregar o conteúdo extraído do arquivo criptografado
         vr_dsarqLOB := PCPS0001.fn_arq_utf_para_clob(pr_caminho => pr_dsdirarq||'/recebidos'
-                                                    ,pr_arquivo => vr_nmarqERR||'.xml');  -- XML extraído
+                                                ,pr_arquivo => vr_nmarqERR||'.xml');  -- XML extraído
         
         -- Chama a rotina para processamento do arquivo de erro
         CASE pr_dsdsigla
@@ -6447,7 +6452,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
         
         -- Carregar o conteúdo extraído do arquivo criptografado
         vr_dsarqLOB := PCPS0001.fn_arq_utf_para_clob(pr_caminho => pr_dsdirarq||'/recebidos'
-                                                    ,pr_arquivo => vr_nmarqRET||'.xml');  -- XML extraído
+                                                ,pr_arquivo => vr_nmarqRET||'.xml');  -- XML extraído
         
         -- Chama a rotina para processamento do arquivo de erro
         CASE pr_dsdsigla
@@ -7120,7 +7125,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
       
       -- Carregar o arquivo XML descriptografado 
       vr_dsxmlarq := PCPS0001.fn_arq_utf_para_clob(pr_caminho => rg_crapscb.dsdirarq||'/recebidos'
-                                              	  ,pr_arquivo => vr_tbarquiv(vr_index)||'.xml');  -- XML extraído  
+                                              ,pr_arquivo => vr_tbarquiv(vr_index)||'.xml');  -- XML extraído  
       
       -- Verifica qual o conteúdo de arquivo deve ser gerado
       CASE rg_crapscb.dsdsigla
@@ -7410,7 +7415,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
         CLOSE cr_agencia;
       
         -- Se não tiver endereço de email
-        IF vr_dsdemail IS NULL THEN
+        IF trim(vr_dsdemail) IS NULL THEN
           -- Registrar mensagem no log e pular para o próximo registro
           BEGIN
             vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
@@ -7425,6 +7430,10 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
             
             -- Próxima agência
             vr_cdagatual := vr_tbddados.NEXT(vr_cdagatual);
+
+            IF vr_cdagatual IS NULL THEN
+              EXIT;
+            END IF;
             
             -- Próximo registro
             CONTINUE;
@@ -7459,7 +7468,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
                                       '</tr>';
           
           -- Controle do conteúdo, para evitar estouro de variável
-          IF length(vr_dsmensag) > 30.000 THEN
+          IF length(vr_dsmensag) > 30000 THEN
             EXIT; -- sai do for
           END IF;
           
@@ -7497,6 +7506,10 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
             -- Próxima agência
             vr_cdagatual := vr_tbddados.NEXT(vr_cdagatual);
             
+            IF vr_cdagatual IS NULL THEN
+              EXIT;
+            END IF;
+            
             -- Verificar se percorreu todas as agencias da coop
             EXIT WHEN vr_cdagatual = vr_tbddados.LAST();
             
@@ -7520,6 +7533,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
     WHEN vr_exc_erro THEN
       raise_application_error(-20001, vr_dscritic);
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception(pr_compleme => 'vr_cdagatual:' || vr_cdagatual || ' dsassunt' || vr_dsassunt);
       raise_application_error(-20002, 'Erro na rotina PC_EMAIL_PA_PORTABILIDADE: '||SQLERRM);
   END pc_email_pa_portabilidade;
 	

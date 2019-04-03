@@ -7171,7 +7171,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           END; 
           
         END LOOP; 
-        END IF;
 
         -- Excluir lancamentos conta investimento
         BEGIN
@@ -7679,6 +7678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           END IF;                                 
         END;
           
+      END IF;
       /** Gera registros para log **/
       IF rw_craprda.flgdebci = 1 THEN
          vr_flgdebci := 0;

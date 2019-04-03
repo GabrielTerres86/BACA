@@ -527,18 +527,20 @@ function formataTabela(nmdivform) {
 	{
 		arrayLargura[0] = '15px';
 		arrayLargura[1] = '70px';
-		arrayLargura[2] = '70px';
+		arrayLargura[2] = '50px';
 		arrayLargura[3] = '70px';
-		arrayLargura[4] = '70px';
-		arrayLargura[5] = '70px';
+		arrayLargura[4] = '100px';
+		arrayLargura[5] = '100px';
+		arrayLargura[6] = '70px';
 
 		arrayAlinha[0] = 'center';
 		arrayAlinha[1] = 'right';
 		arrayAlinha[2] = 'right';
 		arrayAlinha[3] = 'right';
-		arrayAlinha[4] = 'right';
-		arrayAlinha[5] = 'left';
+		arrayAlinha[4] = 'left';
+		arrayAlinha[5] = 'right';
 		arrayAlinha[6] = 'left';
+		arrayAlinha[7] = 'left';
 	}
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );

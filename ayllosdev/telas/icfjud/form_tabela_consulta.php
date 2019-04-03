@@ -24,6 +24,7 @@ strHTML += '				<tr><th>&nbsp;</th>';
 strHTML += '                    <th><? echo utf8ToHtml('Dt. Solicit.'); ?></th>';
 strHTML += '					<th><? echo utf8ToHtml('Banco');  ?></th>';
 strHTML += '					<th><? echo utf8ToHtml('Conta Cheque');  ?></th>';
+strHTML += '					<th><? echo utf8ToHtml('Nome');  ?></th>';
 strHTML += '					<th><? echo utf8ToHtml('CPF / CNPJ');  ?></th>';
 strHTML += '					<th><? echo utf8ToHtml('Situacao');  ?></th>';
 strHTML += '					<th><? echo utf8ToHtml('CMC7');  ?></th>';
@@ -74,17 +75,18 @@ for ($i = 0; $i < $dados_count; $i++){
 	
 	strHTML += '<tr id="trArquivosProcessados<?php echo $i; ?>" style="cursor: pointer;">';
 	
-	strHTML += '	<td width="15">';
+	strHTML += '	<td>';
 	strHTML += '	<input type="checkbox" id="chkReenviarICF_<?php echo $i; ?>" />';
 	strHTML += '	<input type="hidden" name="hddNrctareqICF_<?php echo $i; ?>" id="hddNrctareqICF_<?php echo $i; ?>" value="<?php echo $nrctareq; ?>">';
 	strHTML += '	<input type="hidden" name="hddDacaojudICF_<?php echo $i; ?>" id="hddDacaojudICF_<?php echo $i; ?>" value="<?php echo $dacaojud; ?>">';
 	strHTML += '	</td>';
 
-	strHTML += '	<td width="70"><?php echo $dtinireq; ?></td>';
-	strHTML += '	<td width="70"><?php echo $intipreq == 1 ? $cdbanreq : $cdbanori; ?></td>';
-	strHTML += '	<td width="70"><?php echo $nrctareq; ?></td>';
-	strHTML += '	<td width="70"><?php echo $nrcpfcgc; ?></td>';
-	strHTML += '	<td width="70"><?php echo $dsstatus; ?></td>';
+	strHTML += '	<td><?php echo $dtinireq; ?></td>';
+	strHTML += '	<td><?php echo $intipreq == 1 ? $cdbanreq : $cdbanori; ?></td>';
+	strHTML += '	<td><?php echo $nrctareq; ?></td>';
+	strHTML += '	<td><?php echo $nmprimtl; ?></td>';
+	strHTML += '	<td><?php echo $nrcpfcgc; ?></td>';
+	strHTML += '	<td><?php echo $dsstatus; ?></td>';
 	strHTML += '	<td><?php echo $dsdocmc7; ?></td>';
 	strHTML += '</tr>';
 	

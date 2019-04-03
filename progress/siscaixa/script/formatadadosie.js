@@ -55,6 +55,8 @@ Alteracoes: 15/12/2008 - Alteracoes para unificacao dos bancos de dados (Evandro
 		    16/11/2017 - Inclusao da rotina 97. (SD 788441 - Kelvin).
 		   
 			02/05/2018 - Bloqueio da rotina 66. (SCTASK00113081 - Kelvin)
+			 
+			06/02/2019 - Bloqueio das rotinas 05 e 06. Acelera - Entrega de Talonarios no Ayllos. (Lombardi)
 */
 
 // < ! --
@@ -584,12 +586,6 @@ function change_page(e) {
 function change_location() {
     if(document.forms[0].v_rotina.value == 2) {
         top.frames[1].window.location.href="crap002.html" ;
-    }
-    else if(document.forms[0].v_rotina.value == 5) {
-        top.frames[1].window.location.href="crap005.html" ;
-    }
-    else if(document.forms[0].v_rotina.value == 6) {
-        top.frames[1].window.location.href='crap006.w' ;
     }
     else if(document.forms[0].v_rotina.value == 7) {
         top.frames[1].window.location.href="crap007.html" ;

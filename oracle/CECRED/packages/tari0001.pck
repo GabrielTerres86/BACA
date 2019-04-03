@@ -640,7 +640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
   --  Sistema  : Procedimentos envolvendo tarifas bancarias
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 23/10/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 13/03/2019
   --
   -- Dados referentes ao programa:
   --
@@ -725,7 +725,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                 20/11/2018 - incluido procedure  pc_estorno_tarifa_saque para estorno de tarifa de saque.
                              (Fabio Stein - Supero)
                              
-
+                13/03/2019 - PRB0040599 Tratamento de exception na rotina pc_verifica_tarifa_operacao (Carlos)
   */
  
   ---------------------------------------------------------------------------------------------------------------
@@ -7740,6 +7740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       END IF;
       ROLLBACK;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper, pr_compleme => 'Conta: '||pr_nrdconta);
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na TARI0001.pc_verifica_tarifa_operacao_v para conta '||pr_nrdconta||':'||SQLERRM;
       ROLLBACK;

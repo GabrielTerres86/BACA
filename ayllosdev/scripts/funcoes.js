@@ -2564,6 +2564,13 @@ function removeCaracteresInvalidos(str, flgRemAcentos){
 	
 }
 
+/*! OBJETIVO  : Remover caracteres indevidos da tela SLIP contabil
+	PARAMETROS: str           -> Texto que contera os caracteres invalidos que irao ser removidos
+*/
+function removeCaracteresSlip(str, flgRemAcentos){
+	return str.replace(/[\,\°\º\ª]/g, "");
+}
+
 //Função para remover Todos os Caracteres epeciais e acentos
 function removeTodosCaracteresInvalidos(str) {
     return str.replace(/[^\w\s\.]/g, "");

@@ -510,6 +510,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --                          (Lucas Ranghetti #840602)
   --
   --             04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
+  --
+  --             10/03/2019 - Inclusão do indicador de validação do CPF/CNPJ Layout 5.
+  --                          Gabriel Marcos (Mouts) - SCTASK0038352.
+  -- 
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -2167,8 +2171,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
                          gene0002.fn_mask((pr_vllanaut * 100),'999999999999999') ||
                          vr_auxcdcri ||                          
                          RPAD(pr_cdseqtel,60) ||
-                         rw_tbconv_det_agendamento.tppessoa_dest ||
-                         LPAD(rw_tbconv_det_agendamento.nrcpfcgc_dest,15,'0') ||
+                         nvl(to_char(rw_tbconv_det_agendamento.tppessoa_dest,'fm0'),' ') ||
+                         nvl(to_char(rw_tbconv_det_agendamento.nrcpfcgc_dest,'fm000000000000000'),'               ') ||
                          RPAD(' ',4)                         
                          || '0';
                                                     

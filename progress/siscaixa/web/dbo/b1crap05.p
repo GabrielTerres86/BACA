@@ -1,3 +1,27 @@
+/******************************************************************************
+                 ATENCAO!    CONVERSAO PROGRESS - ORACLE
+            PARTE DESTE FONTE FOI CONVERTIDO PROGRESS->ORACLE!
+  +------------------------------------+------------------------------------+
+  | Rotina Progress                    | Rotina Oracle PLSQL                |
+  +------------------------------------+------------------------------------+
+  | blcrap05.valida-dados              | CHEQ0001.pc_entrega_talonario_web  |
+  | blcrap05.solicita-entrega-talao    | CHEQ0001.pc_entrega_talonario_web  |
+  | blcrap05.retorna-taloes            | CHEQ0001.pc_listar_talonarios_web  |
+  | blcrap05.busca-info-terceiro       | CHEQ0001.pc_busca_conta_pelo_cpf   |
+  +------------------------------------+------------------------------------+
+  
+  TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 06/02/2019 DEVERA
+  SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
+  
+  ESSA BO FOI MANTIDA POIS É UTILIZADA NA TELA LANREQ. ESSA TELA NAO FOI 
+  CONVERTIDA AINDA.
+  
+  PARA DETALHES DE COMO PROCEDER, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES
+  PESSOAS:
+   - LUCAS AFONSO LOMBARDI MOREIRA (AILOS)
+  
+*******************************************************************************/
+
 /* .............................................................................
  
    Programa: siscaixa/web/dbo/b1crap05.p
@@ -84,6 +108,9 @@
                             
                18/05/2018 - Adicionada chamada pc_ind_impede_talonario para verificar se a 
                             situacao de conta permite a solicitacao de talionario. PRJ366 (Lombardi).
+                            
+               06/02/2019 - CONVERSAO DAS ROTINAS DO PROGRESS PARA O ORACLE. 
+                            Projeto Acelera - Entrega de talonario no Ayllos (Lombardi).
                             
 ............................................................................ */
 /*----------------------------------------------------------------------*/

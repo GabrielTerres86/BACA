@@ -1009,6 +1009,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                                            pr_flgdecre => 'N');
 
         -- Efetuar Inclusao na RPP
+
         Begin
           Insert into craprpp
             (nrctrrpp,         -- Numero da poupanca programada.
@@ -1087,7 +1088,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
              Returning rowid into pr_rpprowid;
         Exception
           When Others Then
-            pr_dscritic := 'Erro insercao craprpp';
+            pr_dscritic := 'Erro insercao craprpp: ' || SQLERRM;
             raise vr_exc_erro_rb;
         End;
 
@@ -1112,7 +1113,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
               );
         Exception
             When Others Then
-              pr_dscritic := 'Erro atualizacao CRAPSPP';
+              pr_dscritic := 'Erro atualizacao CRAPSPP: ' || SQLERRM;
               raise vr_exc_erro_rb;
         End;
         -- Se for necessário gerar log
@@ -1209,7 +1210,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
       -- Variaveis de entrada
       vr_dtmvtolt Date := TO_DATE(pr_dtmvtolt,'DD/MM/YYYY');  
       vr_dtinirpp Date := TO_DATE (pr_dtinirpp,'DD/MM/YYYY'); 
-      vr_dtvctopp Date := TO_DATE(pr_dtvctopp,'DD/MM/YYYY');  
+      vr_dtvctopp Date;
+      vr_pzmaxpro pls_integer := 0;      -- Prazo 
 
       -- Variaveis de retorno
       vr_nrctrrpp craprpp.nrctrrpp%TYPE;
@@ -1229,6 +1231,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
       vr_xml_temp VARCHAR2(32767);
       vr_clobxmlc CLOB;
     
+      CURSOR cr_craptab (pr_cdcooper crapcop.cdcooper%TYPE) IS
+        SELECT * 
+        FROM   craptab tab
+        WHERE  tab.cdcooper = pr_cdcooper
+        AND    tab.nmsistem = 'CRED'
+        AND    tab.tptabela = 'GENERI'     
+        AND    tab.cdempres = 0           
+        AND    tab.cdacesso = 'PZMAXPPROG' 
+        AND    tab.tpregist = 2;                
+      rw_craptab cr_craptab%ROWTYPE;
+
     BEGIN
        -- Recupera dados de log para consulta posterior
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -1246,6 +1259,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
         RAISE vr_exc_erro;
       END IF;     
 
+      IF pr_dtvctopp IS NULL THEN
+            Open cr_craptab (vr_cdcooper);
+            Fetch cr_craptab Into rw_craptab;
+            CLOSE cr_craptab;
+            IF (rw_craptab.dstextab IS NULL) THEN
+                vr_pzmaxpro := 0;
+            ELSE
+                    vr_pzmaxpro := rw_craptab.dstextab;
+                END IF;
+                vr_dtvctopp := add_months(vr_dtinirpp,vr_pzmaxpro);
+       ELSE
+         vr_dtvctopp := TO_DATE(pr_dtvctopp,'DD/MM/YYYY');  
+       END IF;
       
       -- Efetua a inclusão da Aplicação Programada
       apli0008.pc_incluir_apl_prog(pr_cdcooper => vr_cdcooper,

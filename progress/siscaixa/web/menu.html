@@ -33,6 +33,8 @@ Alterações:  17/03/2010 - Incluida a rotina 61 (Evandro).
 			 16/11/2017 - Iclusao da rotina 97. (SD 788441 - Kelvin).
 			 
 			 02/05/2018 - Bloqueio da rotina 66. (SCTASK00113081 - Kelvin)
+			 
+			 06/02/2019 - Bloqueio das rotinas 05 e 06. Acelera - Entrega de Talonarios no Ayllos. (Lombardi)
 -->
 
 <head>
@@ -114,10 +116,9 @@ function init(){
         oTop[4]=new makeMenu('divTop5','divCont')
         oTop[5]=new makeMenu('divTop6','divCont')
         oTop[6]=new makeMenu('divTop7','divCont')
-        oTop[7]=new makeMenu('divTop8','divCont')
-        oTop[8]=new makeMenu('divTop9','divCont')
-        oTop[9]=new makeMenu('divTop10','divCont')
-        oTop[10]=new makeMenu('divTop11','divCont')
+        oTop[7]=new makeMenu('divTop9','divCont')
+        oTop[8]=new makeMenu('divTop10','divCont')
+        oTop[9]=new makeMenu('divTop11','divCont')
         oSub=new Array()
         oSub[0]=new makeMenu('divSub1','divCont.document.divTop1')
         oSub[1]=new makeMenu('divSub2','divCont.document.divTop2')
@@ -126,10 +127,9 @@ function init(){
         oSub[4]=new makeMenu('divSub5','divCont.document.divTop5')
         oSub[5]=new makeMenu('divSub6','divCont.document.divTop6')
         oSub[6]=new makeMenu('divSub7','divCont.document.divTop7')
-        oSub[7]=new makeMenu('divSub8','divCont.document.divTop8')
-        oSub[8]=new makeMenu('divSub9','divCont.document.divTop9')
-        oSub[9]=new makeMenu('divSub10','divCont.document.divTop10')
-        oSub[10]=new makeMenu('divSub11','divCont.document.divTop11')
+        oSub[7]=new makeMenu('divSub9','divCont.document.divTop9')
+        oSub[8]=new makeMenu('divSub10','divCont.document.divTop10')
+        oSub[9]=new makeMenu('divSub11','divCont.document.divTop11')
         for(i=0;i<oSub.length;i++){ oSub[i].hideIt() }
         for(i=1;i<oTop.length;i++){ oTop[i].moveIt(0,oTop[i-1].y+oTop[i-1].height-10)}
 }
@@ -259,15 +259,8 @@ if(browser) onload=init;
                 &nbsp;<a href="crap038.html" target="pane" class="clSubb" onmouseover="window.status='038 - Talonários';return true;" onmouseout="window.status='';return true;">038 - Talonários</a><br>
             </div><br>
         </div>
-        <div id="divTop8" class="clTop">
-            <a href="" onclick="menu(7); return false" class="clMain" onmousedown="window.focus()" onmouseup="window.focus()" onmouseover="window.status='Controle Talões';return true;" onmouseout="window.status='';return true;"><img src="/images/arrow.gif" name="imgA7" width=12 height=12 alt="" border="0"> Controle de Talões</a><br>
-            <div id="divSub8" class="clSub">
-                &nbsp;<a href="crap005.html" target="pane" class="clSubb" onmouseover="window.status='Liberação';return true;" onmouseout="window.status='';return true;">005 - Solicitação</a><br>
-                &nbsp;<a href="crap006.w" target="pane" class="clSubb" onmouseover="window.status='Estorno';return true;" onmouseout="window.status='';return true;">006 - Estorno</a><br>
-            </div><br>
-        </div>
         <div id="divTop9" class="clTop">
-            <a href="" onclick="menu(8); return false" class="clMain" onmousedown="window.focus()" onmouseup="window.focus()" onmouseover="window.status='Estorno Movimentações';return true;" onmouseout="window.status='';return true;"><img src="/images/arrow.gif" name="imgA8" width=12 height=12 alt="" border="0"> Estorno Movtos</a><br>
+            <a href="" onclick="menu(7); return false" class="clMain" onmousedown="window.focus()" onmouseup="window.focus()" onmouseover="window.status='Estorno Movimentações';return true;" onmouseout="window.status='';return true;"><img src="/images/arrow.gif" name="imgA7" width=12 height=12 alt="" border="0"> Estorno Movtos</a><br>
             <div id="divSub9" class="clSub">
                 &nbsp;<a href="login.w?v_prog=crap071.w" target="pane" class="clSubb" onmouseover="window.status='Depósitos com Captura';return true;" onmouseout="window.status='';return true;">071 - Dep. com Captura</a><br>
                 &nbsp;<a href="login.w?v_prog=crap072.w" target="pane" class="clSubb" onmouseover="window.status='Depósitos sem Captura';return true;" onmouseout="window.status='';return true;">072 - Dep. sem Captura</a><br>
@@ -284,13 +277,13 @@ if(browser) onload=init;
             </div><br>
         </div>
         <div id="divTop10" class="clTop">
-            <a href="" onclick="menu(9); return false" class="clMain" onmousedown="window.focus()" onmouseup="window.focus()" onmouseover="window.status='Importação Off-line';return true;" onmouseout="window.status='';return true;"><img src="/images/arrow.gif" name="imgA9" width=12 height=12 alt="" border="0"> Importação Off-line</a><br>
+            <a href="" onclick="menu(8); return false" class="clMain" onmousedown="window.focus()" onmouseup="window.focus()" onmouseover="window.status='Importação Off-line';return true;" onmouseout="window.status='';return true;"><img src="/images/arrow.gif" name="imgA8" width=12 height=12 alt="" border="0"> Importação Off-line</a><br>
             <div id="divSub10" class="clSub">
                 &nbsp;<a href="crap040.html" target="pane" class="clSubb" onmouseover="window.status='040 - Importação';return true;" onmouseout="window.status='';return true;">040 - Importação</a><br>
             </div><br>
         </div>
         <div id="divTop11" class="clTop">
-            <a href="" onclick="menu(10); return false" class="clMain" onmousedown="window.focus()" onmouseup="window.focus()" onmouseover="window.status='Funcao';return true;" onmouseout="window.status='';return true;"><img src="/images/arrow.gif" name="imgA10" width=12 height=12 alt="" border="0"> Funções</a><br>
+            <a href="" onclick="menu(9); return false" class="clMain" onmousedown="window.focus()" onmouseup="window.focus()" onmouseover="window.status='Funcao';return true;" onmouseout="window.status='';return true;"><img src="/images/arrow.gif" name="imgA9" width=12 height=12 alt="" border="0"> Funções</a><br>
             <div id="divSub11" class="clSub">
                 &nbsp;<a href="login.w?v_prog=autentmenu.w" target="pane" class="clSubb" onmouseover="window.status='AT - Autenticação';return true;" onmouseout="window.status='';return true;">AT - Autenticação</a><br>
                 &nbsp;<a href="logingerente.w?v_prog=autantmenu.w" target="pane" class="clSubb" onmouseover="window.status='AT - Autenticação';return true;" onmouseout="window.status='';return true;">AA - Autenticação Anterior</a><br>

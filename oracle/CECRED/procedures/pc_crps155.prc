@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS155(pr_cdcooper in craptab.cdcooper%ty
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Janeiro/95.                     Ultima atualizacao: 19/12/2017
+   Data    : Janeiro/95.                     Ultima atualizacao: 14/03/2019
 
    Dados referentes ao programa:
 
@@ -88,6 +88,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS155(pr_cdcooper in craptab.cdcooper%ty
                             através da gene0002.pc_escreve_xml. (Alisson - AMcom)
 
                19/12/2017 - Alteração para permitir paralelismo. Projeto Ligeirinho. (Jonatas - AMcom)
+
+               14/03/2019 - PRB0040598 Feito o tratamento de erros para os jobs do paralelismo e exception others.
+                            Erros no job do paralelismo disponíveis na view vw_consulta_execucao_jobs (Carlos)
 
 ............................................................................. */
 /****** Decisoes sobre o VAR ************************************************
@@ -425,6 +428,9 @@ begin
                                        rw_craprpp_age.cdagenci || ',' ||
                                        vr_idparale || ',' ||
                                        ' wpr_stprogra, wpr_infimsol, wpr_cdcritic, wpr_dscritic);' ||
+                    '  IF wpr_dscritic IS NOT NULL THEN ' || chr(13) ||
+                    '    raise_application_error(-20001, wpr_dscritic);' || chr(13) ||
+                    '  END IF;' ||
                     chr(13) || --
                     'END;'; --  
                     
@@ -899,6 +905,8 @@ exception
     end if;    
 
   WHEN OTHERS THEN
+    cecred.pc_internal_exception;
+  
     -- Efetuar retorno do erro não tratado
     pr_cdcritic := 0;
     pr_dscritic := sqlerrm;

@@ -1610,22 +1610,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
     
     CURSOR cr_lancamentos (pr_cdcooper IN crapcop.cdcooper%TYPE,
                            pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS 
-     SELECT lan.cdcooper,
-        lan.dtmvtolt,
-        lan.nrsequencia_slip,
-        lan.nrctadeb,
-        lan.nrctacrd,
-        lan.vllanmto,
-        lan.cdhistor_padrao,
-        lan.dslancamento,
-        lan.cdoperad FROM tbcontab_slip_lancamento lan 
+      SELECT lan.cdcooper
+           , lan.dtmvtolt
+           , lan.nrsequencia_slip
+           , lan.nrctadeb
+           , lan.nrctacrd
+           , lan.vllanmto
+           , lpad(lan.cdhistor_padrao,4,'0') cdhistor_padrao
+           , lan.dslancamento
+           , lan.cdoperad 
+        FROM tbcontab_slip_lancamento lan 
      WHERE lan.cdcooper = pr_cdcooper
       AND  lan.dtmvtolt = pr_dtmvtolt;
       
     CURSOR cr_rateio (pr_cdcooper IN crapcop.cdcooper%TYPE,
                       pr_nseqslip IN tbcontab_slip_rateio.nrsequencia_slip%TYPE,
                       pr_dtmvtolt IN tbcontab_slip_rateio.dtmvtolt%TYPE) IS 
-     SELECT rat.cdgerencial,rat.vllanmto FROM tbcontab_slip_rateio rat
+      SELECT rat.cdgerencial
+           , rat.vllanmto 
+        FROM tbcontab_slip_rateio rat
       WHERE rat.cdcooper = pr_cdcooper
        AND  rat.dtmvtolt = pr_dtmvtolt
        AND  rat.nrsequencia_slip = pr_nseqslip;

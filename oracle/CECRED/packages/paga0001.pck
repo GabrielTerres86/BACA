@@ -18037,7 +18037,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --              15/12/2017 - Incluido nome do módulo logado
     --                           No caso de erro de programa gravar tabela especifica de log                     
     --                           Ajuste mensagem de erro 
-    --                          (Belli - Envolti - Chamado 779415)   
+    --                          (Belli - Envolti - Chamado 779415)    
     --
     --              13/11/2018 - Caso o sistema identifique o pagamento de um título descontado após o vencimento e o mesmo estiver dentro de 
     --                           um acordo, deverá ser realizado o crédito do valor pago direto na conta corrente do cooperado. (Paulo Penteado GFT) 
@@ -18100,7 +18100,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
            AND cde.nrboleto     = pr_nrdocmto
            AND cde.tpproduto    = 0;
       rw_cde cr_cde%ROWTYPE;
-      
+
       CURSOR cr_acordoctr(pr_cdcooper IN tbdsct_titulo_cyber.cdcooper%TYPE
                          ,pr_nrdconta IN tbdsct_titulo_cyber.nrdconta%TYPE
                          ,pr_nrborder IN tbdsct_titulo_cyber.nrborder%TYPE
@@ -18399,8 +18399,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                            ,pr_nrtitulo => rw_craptdb.nrtitulo);
           FETCH cr_acordoctr INTO rw_acordoctr;
           IF cr_acordoctr%NOTFOUND THEN
-            vr_flgdesct := TRUE;
-          END IF;
+          vr_flgdesct := TRUE;
+        END IF;
           CLOSE cr_acordoctr;
         END IF;
         --Se tiver descontado
@@ -24752,6 +24752,10 @@ end;';
 	-- 	                         (Jonata - RKAM M311).
     --
 	--               03/09/2018 - Correção para remover lote (Jonata - Mouts).
+    --
+    --               10/03/2019 - Inclusão do indicador de validação do CPF/CNPJ Layout 5.
+    --                            Gabriel Marcos (Mouts) - SCTASK0038352.
+    -- 
     -- ..........................................................................
   BEGIN
     DECLARE
@@ -24909,6 +24913,7 @@ end;';
       CURSOR cr_gnconve (pr_cdhistor craphis.cdhistor%TYPE) IS
         SELECT gnconve.flgdbssd
               ,gnconve.nmempres
+              ,gnconve.flgvlcpf
           FROM gnconve
          WHERE gnconve.cdhisdeb = pr_cdhistor
            AND gnconve.flgativo = 1;           
@@ -25131,6 +25136,12 @@ end;';
       --Fechar Cursor
       CLOSE cr_crapass;
       
+      
+	  -- Busca validacao de cpf / cnpj
+	  OPEN cr_gnconve(rw_craplau.cdhistor);
+      FETCH cr_gnconve INTO rw_gnconve;
+      CLOSE cr_gnconve;
+
       IF rw_craplau.cdtiptra = 6 THEN
 
         -- LEITURA PARA ENCONTRAR DETALHE DO AGENDAMENTO
@@ -25160,6 +25171,8 @@ end;';
             
           vr_existettl := TRUE;         
                
+          IF rw_gnconve.flgvlcpf = 0 THEN		      
+               
           IF rw_tbconv_det_agendamento.tppessoa_dest = 2 THEN
               
             --Selecionar informacoes do associado
@@ -25184,6 +25197,8 @@ end;';
           
         END IF; 
         
+      END IF;
+
       END IF;
 
       --> Verificar a execução da DEBNET/DEBSIC 

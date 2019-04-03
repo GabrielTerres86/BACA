@@ -4761,6 +4761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         SELECT craprpp.vlprerpp
               ,craprpp.dtdebito
               ,craprpp.nrctrrpp
+			  ,craprpp.vlsppant
         FROM craprpp craprpp
         WHERE craprpp.cdcooper = pr_cdcooper       
         AND   craprpp.nrdconta = pr_nrdconta
@@ -5332,6 +5333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_incancel INTEGER;
       vr_possuipr VARCHAR2(1);				  
       vr_inimpede_talionario INTEGER;
+	  vr_vlprerpp craprpp.vlprerpp%TYPE;;
       --Variaveis para uso na craptab
       vr_dstextab    craptab.dstextab%TYPE;
       vr_lshistor    craptab.dstextab%TYPE;
@@ -5974,6 +5976,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            continue;
         END IF;
         
+        -- Se existe saldo de teimosinha
+        IF (rw_craprpp.vlsppant > 0) THEN
+           vr_vlprerpp := rw_craprpp.vlsppant;
+        ELSE
+           vr_vlprerpp := rw_craprpp.vlprerpp;
+        END IF;
+        
         --Incrementar contador lancamentos na tabela
         vr_index:= pr_tab_lancamento_futuro.COUNT+1;
         --Criar Lancamento Futuro na tabela
@@ -5982,11 +5991,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         pr_tab_lancamento_futuro(vr_index).dshistor:= 'DB.POUP.PROGR';
         pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(rw_craprpp.nrctrrpp,'fm999g999g990');
         pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
-        pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_craprpp.vlprerpp;
+        pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_vlprerpp;
         --Valor Lancamento Automatico
-        vr_vllautom:= nvl(vr_vllautom,0) - rw_craprpp.vlprerpp;
+        vr_vllautom:= nvl(vr_vllautom,0) - vr_vlprerpp;
         --Valor Lancamento Debito
-        vr_vllaudeb:= nvl(vr_vllaudeb,0) + rw_craprpp.vlprerpp;
+        vr_vllaudeb:= nvl(vr_vllaudeb,0) + vr_vlprerpp;
       END LOOP;
       
       --Buscar Indicador Uso Taxa da tabela

@@ -818,12 +818,14 @@
 
 		  23/10/2018 - PJ298.2 - Validar emprestimo migrado para listar na tela prestacoes (Rafael Faria-Supero)
           
-      13/12/2018  HANDLE sem delete h-b1wgen0059 INC0027352 (Oscar).
+          13/12/2018  HANDLE sem delete h-b1wgen0059 INC0027352 (Oscar).
           
           19/12/2018 -  P438 nova regra perda de aprovacao 
                         aux_idpeapro: 0 = Nao Perde Aprovacao 
                                       1 = Perde Aprovacao 
                                       2 = Aprovacao Auto.
+									  
+	      29/03/2019 - Incidente 0033759 - Erro na geracao automatica da cessao de credito - Ramon
           
  ..............................................................................*/
 
@@ -13750,10 +13752,10 @@ PROCEDURE carrega_dados_proposta_finalidade:
                          tt-dados-proposta-fin.nrgarope = 10
                          tt-dados-proposta-fin.nrliquid = 9.
 
-                  IF crapttl.nrinfcad < 3 THEN
+                  IF crapttl.nrinfcad < 3 OR crapttl.nrinfcad = ? THEN
                      ASSIGN tt-dados-proposta-fin.nrinfcad = 3.
 
-                  IF crapttl.nrpatlvr = 0 THEN
+                  IF crapttl.nrpatlvr = 0 OR crapttl.nrpatlvr = ? THEN
                      ASSIGN tt-dados-proposta-fin.nrpatlvr = 3.
 
                   /* Descricao da Garantia */
@@ -13854,10 +13856,10 @@ PROCEDURE carrega_dados_proposta_finalidade:
                          tt-dados-proposta-fin.nrliquid = 11
                          tt-dados-proposta-fin.nrperger = 4.
 
-                  IF crapjur.nrinfcad < 3 THEN
+                  IF crapjur.nrinfcad < 3 OR crapjur.nrinfcad = ? THEN
                      ASSIGN tt-dados-proposta-fin.nrinfcad = 3.
 
-                  IF crapjur.nrpatlvr = 0 THEN
+                  IF crapjur.nrpatlvr = 0 OR crapjur.nrpatlvr = ? THEN
                      ASSIGN tt-dados-proposta-fin.nrpatlvr = 5.
 
                   /* Descricao da Garantia */
