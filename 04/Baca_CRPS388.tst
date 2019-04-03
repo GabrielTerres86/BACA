@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-1801
+1821
 -- Created on 08/02/2019 by F0031800 
 declare 
 
@@ -1801,5 +1801,25 @@ End pc_crps388_i;
 
 
 begin
+  FOR reg IN (SELECT a.cdcooper
+              FROM crapcop a 
+              WHERE a.flgativo = 1 
+                ORDER BY a.cdcooper) LOOP
+              
+    pc_crps388_i(pr_cdcooper => reg.cdcooper
+                ,pr_flgresta => 0
+                ,pr_stprogra => wpr_stprogra
+                ,pr_infimsol => wpr_infimsol
+                ,pr_cdcritic => wpr_cdcritic
+                ,pr_dscritic => wpr_dscritic);
+    IF wpr_cdcritic IS NOT NULL THEN
+      dbms_output.put_line('Erro: '||SQLERRM||' e '||wpr_dscritic);
+    END IF;
+    
+    dbms_output.put_line('Gerou coop '||reg.cdcooper);
+      
+  END LOOP;
+  
+end;
 0
 0
