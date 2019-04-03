@@ -1901,6 +1901,7 @@ RUN grava-proposta-completa IN h-b1wgen0002
                                 INPUT aux_nrcxaps1,
                                 INPUT aux_inpesso1,
                                 INPUT aux_dtnasct1,
+								INPUT 0, /* par_vlrecjg1 */
 
                                 /* Dados do 2 Aval */
                                 INPUT aux_nmdaval2,
@@ -1926,6 +1927,7 @@ RUN grava-proposta-completa IN h-b1wgen0002
                                 INPUT aux_nrcxaps2,
                                 INPUT aux_inpesso2,
                                 INPUT aux_dtnasct2,
+								INPUT 0, /* par_vlrecjg2 */
 
                                 /* Bens dos avalistas terceiros */
                                 INPUT par_dsdbeavt,
@@ -1936,6 +1938,7 @@ RUN grava-proposta-completa IN h-b1wgen0002
 								INPUT tt-proposta-epr.idfiniof, /* par_idfiniof */
 								INPUT "", /* par_dscatbem */
 								INPUT 1, /* par_inresapr */
+                                INPUT 0,
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT tt-proposta-epr.nrdrecid,

@@ -441,6 +441,7 @@ DEF VAR aux_nsenhaok AS LOGI                                           NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
 DEF VAR aux_dscatbem AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsctrliq AS CHAR                                           NO-UNDO.
+DEF VAR aux_idpeapro AS INT                                            NO-UNDO.
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/b1wgen0056tt.i }
@@ -1149,6 +1150,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 
              HIDE MESSAGE NO-PAUSE.
 
+             ASSIGN aux_idpeapro = 0.
              RUN sistema/generico/procedures/b1wgen0002.p
                  PERSISTENT SET h-b1wgen0002.
 
@@ -1178,6 +1180,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 										INPUT glb_dtmvtolt, /*par_dtdpagto*/
 										INPUT 0,  /*par_vlrdoiof */ /* P437 Consignado */
                                         OUTPUT aux_flmudfai,
+                                        INPUT-OUTPUT aux_idpeapro,
                                         OUTPUT TABLE tt-erro,
                                         OUTPUT TABLE tt-msg-confirma).
 
@@ -2115,6 +2118,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                 INPUT aux_nrcxaps1,
                                 INPUT aux_inpesso1,
                                 INPUT aux_dtnasct1,
+								INPUT 0, /* par_vlrecjg1 */
                                 /* Dados do 2 Aval */
                                 INPUT aux_nmdaval2,
                                 INPUT aux_nrcpfav2,
@@ -2139,6 +2143,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                 INPUT aux_nrcxaps2,
                                 INPUT aux_inpesso2,
                                 INPUT aux_dtnasct2,
+								INPUT 0, /* par_vlrecjg2 */
                                 /* Bens dos avalistas terceiros */
                                 INPUT par_dsdbeavt,
                                 INPUT TRUE,
@@ -2148,6 +2153,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 								INPUT tt-proposta-epr.idfiniof, /* par_idfiniof */
 								INPUT "", /* par_dscatbem */
 								INPUT 1, /* par_inresapr */
+                                INPUT 0,
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT tt-proposta-epr.nrdrecid,
