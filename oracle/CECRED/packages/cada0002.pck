@@ -28,6 +28,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
   --
   --			  23/03/2017 - Incluido procedure pc_impressao_rec_cel. (PRJ321 - Reinert)
   --
+  --        11/01/2019 - Criada rotina que gera Ficha-Proposta (C·ssia de Oliveira - GFT)
   ---------------------------------------------------------------------------------------------------------------
   
   ---------------------- TEMPTABLE ----------------------------
@@ -63,7 +64,15 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
   
   TYPE typ_tab_autorizacao_favorecido IS TABLE OF typ_reg_autorizacao_favorecido
     INDEX BY PLS_INTEGER;
-  
+  -- Inicio (C·ssia de Oliveira - GFT)
+  PROCEDURE pc_impressao_ficha_prop(pr_nrdconta IN crapass.nrdconta%TYPE        --> Numero da Conta
+                                   ,pr_xmllog   IN VARCHAR2                     --> XML com informaÁıes de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER                 --> CÛdigo da crÌtica
+                                   ,pr_dscritic OUT VARCHAR2                    --> DescriÁ„o da crÌtica
+                                   ,pr_retxml   IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2                    --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2);                  --> Erros do processo;
+  -- Fim (C·ssia de Oliveira - GFT)
   -- TELA: VERPRO - VerificaÁ„o de Protocolos
   PROCEDURE pc_verpro(pr_cdcooper IN     NUMBER          --> CÛdigo da cooperativa
                      ,pr_idorigem IN     NUMBER          --> ID da origem
@@ -263,6 +272,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                
                09/08/2018 - sctask0012741 Gerar log de operadores apenas quando inativados, pelo job 
                             JBOPE_BLOQUEIA_OPERADORES, podendo ser consultado na tela LOGTEL (Carlos)
+
+			   11/01/2019 - Criada rotina que gera Ficha-Proposta (C·ssia de Oliveira - GFT)
   ---------------------------------------------------------------------------------------------------------------------------*/
 
   /****************** OBJETOS COMUNS A SEREM UTILIZADOS PELAS ROTINAS DA PACKAGE *******************/
@@ -2081,6 +2092,614 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     pc_escreve_xml('--------------------------------------------------------------------------------'        ,vr_nrdlinha);
 
   END pc_impressao_rec_cel;
+  -- Inicio (C·ssia de Oliveira - GFT)
+  -- Imprimir ficha-proposta
+  PROCEDURE pc_impressao_ficha_prop(pr_nrdconta IN crapass.nrdconta%TYPE        --> Numero da Conta
+                                   ,pr_xmllog   IN VARCHAR2                     --> XML com informaÁıes de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER                 --> CÛdigo da crÌtica
+                                   ,pr_dscritic OUT VARCHAR2                    --> DescriÁ„o da crÌtica
+                                   ,pr_retxml   IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2                    --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2) IS                --> Erros do processo
+    BEGIN
+    -- ..........................................................................
+    --
+    --  Programa : pc_impressao_ficha_prop
+    --  Sistema  : Rotinas para impress„o de dados
+    --  Autor    : C·ssia de Oliveira - GFT
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    -- 	
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Agrupa os dados e monta o layout para impress„o de Ficha-Proposta
+    --
+    --   Alteracoes: 
+    --
+    -- .............................................................................
+      DECLARE
+      -- Variaveis padrao
+      vr_cdcooper        PLS_INTEGER;
+      vr_cdoperad        VARCHAR2(100);
+      vr_nmdatela        VARCHAR2(100);
+      vr_nmeacao         VARCHAR2(100);
+      vr_cdagenci        VARCHAR2(100);
+      vr_nrdcaixa        VARCHAR2(100);
+      vr_idorigem        VARCHAR2(100);      
+      vr_xml_temp        VARCHAR2(32726) := '';
+      vr_xml             CLOB;
+      vr_nom_direto      VARCHAR2(500);
+      vr_nmarqimp        VARCHAR2(100);
+      vr_dtmvtolt        DATE;
+      vr_cotas           VARCHAR(1);
+      vr_poupanca        VARCHAR(1);
+      vr_aplicacao       VARCHAR(1);
+      vr_cheque          VARCHAR(1);
+      vr_internet        VARCHAR(1);
+      rw_crapdat         btch0001.cr_crapdat%ROWTYPE; -- InformaÁıes de data
+      vr_flservic        VARCHAR(100);
+      vr_aux             INTEGER := 1;
+      vr_fldebaut        VARCHAR(1) := 'N';
+      vr_cod01           crapatr.cdrefere%TYPE;
+      vr_conv01          craphis.dshistor%TYPE;
+      vr_cod02           crapatr.cdrefere%TYPE;
+      vr_conv02          craphis.dshistor%TYPE;
+      vr_cod03           crapatr.cdrefere%TYPE;
+      vr_conv03          craphis.dshistor%TYPE;
+
+      
+      -- Vari·vel de crÌticas
+      vr_cdcritic      crapcri.cdcritic%TYPE;
+      vr_dscritic      VARCHAR2(10000);
+      vr_des_reto      VARCHAR2(3);
+      vr_typ_saida     VARCHAR2(3);
+      
+      vr_tab_erro      GENE0001.typ_tab_erro;
+
+      -- Tratamento de erros
+      vr_exc_saida     EXCEPTION;
+    
+      --Busca dados da conta
+      CURSOR cr_crapass IS 
+        SELECT ass.dtadmiss
+              ,ass.cdcatego
+              ,CASE ass.cdtipcta
+                  WHEN 1  THEN 'NORMAL' 
+                  WHEN 2  THEN 'ESPECIAL'
+                  WHEN 3  THEN 'NORMAL CONJUNTA' 
+                  WHEN 4  THEN 'ESPECIAL CONJUNTA'
+                  WHEN 8  THEN 'NORMAL CONVENIO'
+                  WHEN 9  THEN 'ESPECIAL CONVENIO'
+                  WHEN 10 THEN 'CONJUNTA CONVENIO'
+                  WHEN 11 THEN 'CONJUNTA ESPECIAL CONVENIO'
+               END AS dstipcta
+          FROM crapass ass
+         WHERE ass.cdcooper = vr_cdcooper
+           AND ass.nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+          
+      --Busca dados Titular
+      CURSOR cr_crapttl(pr_idseqttl IN crapttl.idseqttl%TYPE) IS 
+        SELECT pes.nmpessoa
+              ,pes.nrcpfcgc
+              ,pfs.tpsexo
+              ,nac.dsnacion
+              ,pfs.dtnascimento
+              ,translate(upper(mun.dscidesp),
+                        '¡«…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’À‹',
+                        'ACEIOUAEIOUAEIOUAOEU') AS dscidesp
+              ,mun.cdestado
+              ,pfs.nrdocumento AS nrdocmto
+              ,pfs.dtemissao_documento
+              ,oep.cdorgao_expedidor AS cdorgexp
+              ,pfs.cduf_orgao_expedidor AS cduforge
+              ,pfs.dsprofissao AS dsprofis
+              ,emp.nmpessoa AS nmempres
+              ,cvl.dsestcvl
+              ,(SELECT coj.nmpessoa 
+                  FROM tbcadast_pessoa coj 
+            INNER JOIN tbcadast_pessoa_relacao rel 
+                    ON rel.idpessoa_relacao = coj.idpessoa 
+                 WHERE rel.idpessoa = pes.idpessoa 
+                   AND rel.tprelacao = 1) AS nmconjug
+              ,(SELECT coj.nmpessoa 
+                  FROM tbcadast_pessoa coj 
+            INNER JOIN tbcadast_pessoa_relacao rel 
+                    ON rel.idpessoa_relacao = coj.idpessoa 
+                 WHERE rel.idpessoa = pes.idpessoa 
+                   AND rel.tprelacao = 4) AS nmfilmae
+              ,(SELECT coj.nmpessoa 
+                  FROM tbcadast_pessoa coj 
+            INNER JOIN tbcadast_pessoa_relacao rel 
+                    ON rel.idpessoa_relacao = coj.idpessoa 
+                 WHERE rel.idpessoa = pes.idpessoa 
+                   AND rel.tprelacao = 3) AS nmfilpai
+          FROM crapttl ttl, tbcadast_pessoa pes
+    INNER JOIN tbcadast_pessoa_fisica pfs
+            ON pfs.idpessoa = pes.idpessoa
+     LEFT JOIN crapnac nac
+            ON nac.cdnacion = pfs.cdnacionalidade
+     LEFT JOIN crapmun mun
+            ON mun.idcidade = pfs.cdnaturalidade
+     LEFT JOIN tbgen_orgao_expedidor oep
+            ON oep.idorgao_expedidor = pfs.idorgao_expedidor
+     LEFT JOIN tbcadast_pessoa_renda ren
+            ON ren.idpessoa = pes.idpessoa
+     LEFT JOIN tbcadast_pessoa emp
+            ON emp.idpessoa = ren.idpessoa_fonte_renda
+     LEFT JOIN gnetcvl cvl
+            ON cvl.cdestcvl = pfs.cdestado_civil
+         WHERE ttl.cdcooper = vr_cdcooper
+           AND ttl.nrdconta = pr_nrdconta
+           AND ttl.idseqttl = pr_idseqttl
+           AND pes.nrcpfcgc = ttl.nrcpfcgc;
+      rw_primttl cr_crapttl%ROWTYPE;
+      rw_seguttl cr_crapttl%ROWTYPE;
+      
+      --Busca endereÁo
+      CURSOR cr_crapenc(pr_idseqttl IN crapttl.idseqttl%TYPE) IS
+        SELECT enc.dsendere
+              ,enc.nrendere
+              ,enc.complend
+              ,enc.nmbairro
+              ,enc.nrcepend
+              ,enc.nmcidade
+              ,enc.cdufende
+          FROM crapenc enc
+         WHERE enc.nrdconta = pr_nrdconta
+           AND enc.cdcooper = vr_cdcooper
+           AND enc.idseqttl = pr_idseqttl
+           AND ROWNUM = 1
+      ORDER BY enc.cdseqinc;
+      rw_primenc cr_crapenc%ROWTYPE;
+      rw_seguenc cr_crapenc%ROWTYPE;
+      
+      --Busca telefone
+      CURSOR cr_craptfc(pr_idseqttl IN crapttl.idseqttl%TYPE) IS
+        SELECT tfc.nrdddtfc
+              ,tfc.nrtelefo
+          FROM craptfc tfc
+         WHERE tfc.nrdconta = pr_nrdconta
+           AND tfc.cdcooper = vr_cdcooper
+           AND tfc.idseqttl = pr_idseqttl
+           AND ROWNUM = 1
+      ORDER BY tfc.cdseqtfc;
+      rw_primtfc cr_craptfc%ROWTYPE; 
+      rw_segutfc cr_craptfc%ROWTYPE;   
+      
+      --Busca plano de cotas
+      CURSOR cr_crappla IS
+        SELECT (1) 
+          FROM crappla 
+         WHERE cdcooper = vr_cdcooper 
+           AND nrdconta = pr_nrdconta 
+           AND dtcancel IS NULL;
+      rw_crappla cr_crappla%ROWTYPE;
+      
+      --Busca PoupanÁa Programada
+      CURSOR cr_craprpp IS
+        SELECT (1) 
+          FROM craprpp 
+         WHERE cdcooper = vr_cdcooper 
+           AND nrdconta = pr_nrdconta 
+           AND cdsitrpp = 1;
+      rw_craprpp cr_craprpp%ROWTYPE;
+             
+      --Busca AplicaÁ„o 
+      CURSOR cr_craprda IS 
+        SELECT (1) 
+          FROM craprda 
+         WHERE cdcooper = vr_cdcooper
+           AND nrdconta = pr_nrdconta;
+      rw_craprda cr_craprda%ROWTYPE;
+           
+      --Busca Cheque Especial
+      CURSOR cr_craplim IS
+        SELECT (1) 
+          FROM craplim 
+         WHERE cdcooper = vr_cdcooper 
+           AND nrdconta = pr_nrdconta 
+           AND insitlim = 2;
+           rw_craplim cr_craplim%ROWTYPE;
+           
+      --Busca Cart„o
+      CURSOR cr_crawcrd IS
+        SELECT CASE crd.tpcartao  
+                  WHEN 1 THEN 'NACIONAL' 
+                  WHEN 2 THEN 'INTERNACIONAL'
+                  WHEN 3 THEN 'GOLD' 
+               END AS tpcartao
+              ,crd.tpdpagto
+              ,crd.nmtitcrd
+              ,crd.dddebito
+              ,adc.nmbandei
+          FROM crawcrd crd 
+    INNER JOIN crapass ass 
+            ON ass.cdcooper = crd.cdcooper
+           AND ass.nrdconta = crd.nrdconta
+           AND ass.nrcpfcgc = crd.nrcpftit 
+     LEFT JOIN crapadc adc
+            ON adc.cdadmcrd = crd.cdadmcrd
+           AND adc.cdcooper = crd.cdcooper
+         WHERE crd.cdcooper = vr_cdcooper
+           AND crd.nrdconta = pr_nrdconta
+           AND crd.insitcrd IN (1,2,3,4)
+           AND ROWNUM = 1;     
+      rw_crawcrd cr_crawcrd%ROWTYPE;
+      
+      --Busca convenio
+      CURSOR cr_crapatr IS
+        SELECT atr.cdrefere
+              ,his.dshistor 
+          FROM crapatr atr 
+     LEFT JOIN craphis his 
+            ON his.cdhistor = atr.cdhistor 
+            AND his.cdcooper = atr.cdcooper 
+          WHERE atr.cdcooper = vr_cdcooper 
+            AND atr.nrdconta = pr_nrdconta
+            AND atr.dtinsexc IS NULL
+            AND ROWNUM <= 3;
+      rw_crapatr cr_crapatr%ROWTYPE;
+      
+      --Busca Internet
+      CURSOR cr_crapsnh IS
+        SELECT (1) 
+          FROM crapsnh 
+         WHERE cdcooper = vr_cdcooper 
+           AND nrdconta = pr_nrdconta 
+           AND tpdsenha = 1 
+           AND cdsitsnh IN (1,2);
+      rw_crapsnh cr_crapsnh%ROWTYPE;
+           
+      --Busca Pacote de ServiÁo
+      CURSOR cr_tbtarif_contas_pacote IS
+        SELECT cdpacote 
+          FROM tbtarif_contas_pacote 
+         WHERE cdcooper = vr_cdcooper 
+           AND nrdconta = pr_nrdconta 
+           AND flgsituacao = 1;
+      rw_tbtarif_contas_pacote cr_tbtarif_contas_pacote%ROWTYPE;
+      
+      --Busca Local
+      CURSOR cr_crapage IS
+        SELECT nmcidade
+              ,cdufdcop 
+          FROM crapage 
+         WHERE cdcooper = vr_cdcooper 
+           AND cdagenci = vr_cdagenci;
+      rw_crapage cr_crapage%ROWTYPE;
+      
+      --Busca Representante Legal
+      CURSOR cr_crapcrl IS
+        SELECT nmrespon 
+          FROM crapcrl 
+         WHERE cdcooper = vr_cdcooper
+           AND nrdconta = pr_nrdconta;
+      rw_crapcrl cr_crapcrl%ROWTYPE;
+    BEGIN
+         
+      -- extrair informaÁıes padr„o do xml - parametros
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml 
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao 
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => pr_dscritic);
+                              
+      -- Busca a data de execuÁ„o
+      OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Se n„o encontrar dados
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        CLOSE BTCH0001.cr_crapdat;
+        pr_des_erro := 'Data do sistema nao encontrada. PR_CDCOOPER = '||vr_cdcooper;
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE BTCH0001.cr_crapdat; 
+      --Busca dados associado                  
+      OPEN cr_crapass;
+      FETCH cr_crapass INTO rw_crapass;
+      IF cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;
+        vr_dscritic := 'Associado nao encontrado.';
+        RAISE vr_exc_saida;
+      ELSE
+        CLOSE cr_crapass;
+      END IF;
+      --Busca dados Pessoais Primeiro titular
+      OPEN cr_crapttl(pr_idseqttl => 1);
+      FETCH cr_crapttl INTO rw_primttl;
+      CLOSE cr_crapttl;
+      --Busca endereÁo Primeiro titular
+      OPEN cr_crapenc(pr_idseqttl => 1);
+      FETCH cr_crapenc INTO rw_primenc;
+      CLOSE cr_crapenc;
+      --Busca telefone Primeiro titular
+      OPEN cr_craptfc(pr_idseqttl => 1);
+      FETCH cr_craptfc INTO rw_primtfc;
+      CLOSE cr_craptfc;
+      --Busca dados Pessoais Segundo titular
+      OPEN cr_crapttl(pr_idseqttl => 2);
+      FETCH cr_crapttl INTO rw_seguttl;
+      CLOSE cr_crapttl;
+      --Busca endereÁo Segundo titular
+      OPEN cr_crapenc(2);
+      FETCH cr_crapenc INTO rw_seguenc;
+      CLOSE cr_crapenc;
+      --Busca telefone Segundo titular
+      OPEN cr_craptfc(pr_idseqttl => 2);
+      FETCH cr_craptfc INTO rw_segutfc;
+      CLOSE cr_craptfc;
+      --Busca plano de cotas
+      OPEN cr_crappla;
+      FETCH cr_crappla INTO rw_crappla;
+      IF cr_crappla%NOTFOUND THEN
+        vr_cotas := 'N';
+      ELSE
+        vr_cotas := 'S';
+      END IF;
+      CLOSE cr_crappla;
+      --Busca PoupanÁa Programada
+      OPEN cr_craprpp;
+      FETCH cr_craprpp INTO rw_craprpp;
+      IF cr_craprpp%NOTFOUND THEN
+        vr_poupanca := 'N';
+      ELSE
+        vr_poupanca := 'S';
+      END IF;
+      CLOSE cr_craprpp;
+      --Busca AplicaÁ„o
+      OPEN cr_craprda;
+      FETCH cr_craprda INTO rw_craprda;
+      IF cr_craprda%NOTFOUND THEN
+        vr_aplicacao := 'N';
+      ELSE
+        vr_aplicacao := 'S';
+      END IF;
+      CLOSE cr_craprda;
+      --Busca Cheque Especial
+      OPEN cr_craplim;
+      FETCH cr_craplim INTO rw_craplim;
+      IF cr_craplim%NOTFOUND THEN
+        vr_cheque := 'N';
+      ELSE
+        vr_cheque := 'S';
+      END IF;
+      CLOSE cr_craplim;
+      --Busca Crat„o
+      OPEN cr_crawcrd;
+      FETCH cr_crawcrd INTO rw_crawcrd;
+      CLOSE cr_crawcrd;
+      --Busca convenio
+      FOR rw_crapatr IN cr_crapatr LOOP
+        IF vr_aux = 1 THEN
+          vr_fldebaut := 'S';
+          vr_cod01 := rw_crapatr.cdrefere;
+          vr_conv01 := rw_crapatr.dshistor;
+        ELSIF vr_aux = 2 THEN
+          vr_cod02 := rw_crapatr.cdrefere;
+          vr_conv02 := rw_crapatr.dshistor;
+        ELSE 
+          vr_cod03 := rw_crapatr.cdrefere;
+          vr_conv03 := rw_crapatr.dshistor;
+        END IF;
+        vr_aux := vr_aux + 1;
+      END LOOP;
+      --Busca internet
+      OPEN cr_crapsnh;
+      FETCH cr_crapsnh INTO rw_crapsnh;
+      IF cr_crapsnh%NOTFOUND THEN
+        vr_internet := 'N';
+      ELSE
+        vr_internet := 'S';
+      END IF;
+      CLOSE cr_crapsnh;
+      --Busca Pacote de ServiÁo
+      OPEN cr_tbtarif_contas_pacote;
+      FETCH cr_tbtarif_contas_pacote INTO rw_tbtarif_contas_pacote;
+      IF cr_tbtarif_contas_pacote%NOTFOUND THEN
+        vr_flservic := 'N';
+      ELSE
+        vr_flservic := TO_CHAR(rw_tbtarif_contas_pacote.cdpacote);
+      END IF;
+      CLOSE cr_tbtarif_contas_pacote;
+      --Busca local
+      OPEN cr_crapage;
+      FETCH cr_crapage INTO rw_crapage;
+      CLOSE cr_crapage;
+      --Busca Representante Legal
+      OPEN cr_crapcrl;
+      FETCH cr_crapcrl INTO rw_crapcrl;
+      CLOSE cr_crapcrl;
+      vr_dscritic := rw_crapcrl.nmrespon;
+      -- Monta documento XML
+      dbms_lob.createtemporary(vr_xml, TRUE);
+      dbms_lob.open(vr_xml, dbms_lob.lob_readwrite);
+      -- Criar cabeÁalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => vr_xml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Relatorio>"
+                                                      <Dados>
+                                                        <nrdconta>'||pr_nrdconta        ||'</nrdconta>
+                                                        <dtabtcct>'||TO_CHAR(rw_crapass.dtadmiss,'DD/MM/YYYY')||'</dtabtcct>
+                                                        <cdcatego>'||rw_crapass.cdcatego||'</cdcatego>
+                                                        <dstipcta>'||rw_crapass.dstipcta||'</dstipcta>
+                                                        <nmpessoa>'||rw_primttl.nmpessoa||'</nmpessoa>
+                                                        <nrcpfcgc>'||gene0002.fn_mask_cpf_cnpj(rw_primttl.nrcpfcgc,1)||'</nrcpfcgc>
+                                                        <cdsexotl>'||rw_primttl.tpsexo  ||'</cdsexotl>
+                                                        <dsnacion>'||rw_primttl.dsnacion||'</dsnacion>
+                                                        <dtnascmt>'||TO_CHAR(rw_primttl.dtnascimento,'DD/MM/YYYY')||'</dtnascmt>
+                                                        <nrdocmto>'||rw_primttl.nrdocmto||'</nrdocmto>
+                                                        <dtemdoct>'||TO_CHAR(rw_primttl.dtemissao_documento,'DD/MM/YYYY')||'</dtemdoct>
+                                                        <cdorgexp>'||rw_primttl.cdorgexp||'</cdorgexp>
+                                                        <cduforge>'||rw_primttl.cduforge||'</cduforge>
+                                                        <dsprofis>'||rw_primttl.dsprofis||'</dsprofis>
+                                                        <nmempres>'||rw_primttl.nmempres||'</nmempres>
+                                                        <nmconjug>'||rw_primttl.nmconjug||'</nmconjug>
+                                                        <nmfilmae>'||rw_primttl.nmfilmae||'</nmfilmae>
+                                                        <nmfilpai>'||rw_primttl.nmfilpai||'</nmfilpai>
+                                                        <dsnatura>'||rw_primttl.dscidesp||'</dsnatura>
+                                                        <cdufnatu>'||rw_primttl.cdestado||'</cdufnatu>
+                                                        <dsestcvl>'||rw_primttl.dsestcvl||'</dsestcvl>
+                                                        <dsendere>'||rw_primenc.dsendere||'</dsendere>
+                                                        <nrendere>'||rw_primenc.nrendere||'</nrendere>
+                                                        <complend>'||rw_primenc.complend||'</complend>
+                                                        <nmbairro>'||rw_primenc.nmbairro||'</nmbairro>
+                                                        <nrcepend>'||rw_primenc.nrcepend||'</nrcepend>
+                                                        <nmcidade>'||rw_primenc.nmcidade||'</nmcidade>
+                                                        <cdufende>'||rw_primenc.cdufende||'</cdufende>
+                                                        <nrdddtfc>'||rw_primtfc.nrdddtfc||'</nrdddtfc>
+                                                        <nrtelefo>'||rw_primtfc.nrtelefo||'</nrtelefo>
+                                                        <nmspesso>'||rw_seguttl.nmpessoa||'</nmspesso>
+                                                        <nrscpfcg>'||gene0002.fn_mask_cpf_cnpj(rw_seguttl.nrcpfcgc,1)||'</nrscpfcg>
+                                                        <cdssexot>'||rw_seguttl.tpsexo  ||'</cdssexot>
+                                                        <dssnacio>'||rw_seguttl.dsnacion||'</dssnacio>
+                                                        <dtsnascm>'||TO_CHAR(rw_seguttl.dtnascimento,'DD/MM/YYYY')||'</dtsnascm>
+                                                        <nrsdocmt>'||rw_seguttl.nrdocmto||'</nrsdocmt>
+                                                        <dtsemdoc>'||TO_CHAR(rw_seguttl.dtemissao_documento,'DD/MM/YYYY')||'</dtsemdoc>
+                                                        <cdsorgex>'||rw_seguttl.cdorgexp||'</cdsorgex>
+                                                        <cdsuforg>'||rw_seguttl.cduforge||'</cdsuforg>
+                                                        <dssprofi>'||rw_seguttl.dsprofis||'</dssprofi>
+                                                        <nmsempre>'||rw_seguttl.nmempres||'</nmsempre>
+                                                        <nmsconju>'||rw_seguttl.nmconjug||'</nmsconju>
+                                                        <nmsfilma>'||rw_seguttl.nmfilmae||'</nmsfilma>
+                                                        <nmsfilpa>'||rw_seguttl.nmfilpai||'</nmsfilpa>
+                                                        <dssnatur>'||rw_seguttl.dscidesp||'</dssnatur>
+                                                        <cdsufnat>'||rw_seguttl.cdestado||'</cdsufnat>
+                                                        <dssestcv>'||rw_seguttl.dsestcvl||'</dssestcv>
+                                                        <dssender>'||rw_seguenc.dsendere||'</dssender>
+                                                        <nrsender>'||rw_seguenc.nrendere||'</nrsender>
+                                                        <cosmplen>'||rw_seguenc.complend||'</cosmplen>
+                                                        <nmsbairr>'||rw_seguenc.nmbairro||'</nmsbairr>
+                                                        <nrscepen>'||rw_seguenc.nrcepend||'</nrscepen>
+                                                        <nmscidad>'||rw_seguenc.nmcidade||'</nmscidad>
+                                                        <cdsufend>'||rw_seguenc.cdufende||'</cdsufend>
+                                                        <nrsdddtf>'||rw_segutfc.nrdddtfc||'</nrsdddtf>
+                                                        <nrstelef>'||rw_segutfc.nrtelefo||'</nrstelef>
+                                                        <flpcotas>'||vr_cotas           ||'</flpcotas>
+                                                        <flpoupan>'||vr_poupanca        ||'</flpoupan>
+                                                        <flaplica>'||vr_aplicacao       ||'</flaplica>
+                                                        <flcheque>'||vr_cheque          ||'</flcheque>
+                                                        <tpcartao>'||rw_crawcrd.tpcartao||'</tpcartao>
+                                                        <tpdpagto>'||rw_crawcrd.tpdpagto||'</tpdpagto>
+                                                        <dddebito>'||rw_crawcrd.dddebito||'</dddebito>
+                                                        <nmbandei>'||rw_crawcrd.nmbandei||'</nmbandei>
+                                                        <fldebaut>'||vr_fldebaut        ||'</fldebaut>
+                                                        <cdconve1>'||vr_cod01           ||'</cdconve1>
+                                                        <dsconve1>'||vr_conv01          ||'</dsconve1>
+                                                        <cdconve2>'||vr_cod02           ||'</cdconve2>
+                                                        <dsconve2>'||vr_conv02          ||'</dsconve2>
+                                                        <cdconve3>'||vr_cod03           ||'</cdconve3>
+                                                        <dsconve3>'||vr_conv03          ||'</dsconve3>
+                                                        <flintern>'||vr_internet        ||'</flintern>
+                                                        <flservic>'||vr_flservic        ||'</flservic>
+                                                        <nmcidcop>'||rw_crapage.nmcidade||'</nmcidcop>
+                                                        <cdufdcop>'||rw_crapage.cdufdcop||'</cdufdcop>
+                                                        <dtmvtolt>'||TO_CHAR(rw_crapdat.dtmvtolt,'DD/MM/YYYY')||'</dtmvtolt>
+                                                        <nmrespon>'||rw_crapcrl.nmrespon||'</nmrespon>
+                                                      </Dados>
+                                                    </Relatorio>'
+                             ,pr_fecha_xml      => TRUE);
+                             
+      -- Busca do diretÛrio base da cooperativa para PDF
+      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
+                                            ,pr_cdcooper => vr_cdcooper
+                                            ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
+      
+      -- Definir nome do relatorio
+      vr_nmarqimp := 'crrl773_' || TO_CHAR(SYSTIMESTAMP,'SSSSSFF5') || '.pdf';
+      
+      -- Solicitar geraÁ„o do relatorio
+      gene0002.pc_solicita_relato(pr_cdcooper  => vr_cdcooper --> Cooperativa conectada
+                                 ,pr_cdprogra  => 'CONTAS' --> Programa chamador
+                                 ,pr_dtmvtolt  => vr_dtmvtolt --> Data do movimento atual
+                                 ,pr_dsxml     => vr_xml --> Arquivo XML de dados
+                                 ,pr_dsxmlnode => '/Relatorio/Dados' --> NÛ base do XML para leitura dos dados
+                                 ,pr_dsjasper  => 'crrl773.jasper' --> Arquivo de layout do iReport
+                                 ,pr_dsparams  => null --> Sem par‚metros
+                                 ,pr_dsarqsaid => vr_nom_direto || '/' ||vr_nmarqimp --> Arquivo final com o path
+                                 ,pr_cdrelato  => 773
+                                 ,pr_qtcoluna  => 132 --> 80 colunas
+                                 ,pr_flg_gerar => 'S' --> GeraÁao na hora
+                                 ,pr_flg_impri => 'N' --> Chamar a impress„o (Imprim.p)
+                                 ,pr_nmformul  => ''  --> Nome do formul·rio para impress„o
+                                 ,pr_nrcopias  => 1   --> N˙mero de cÛpias
+                                 ,pr_sqcabrel  => 1   --> Qual a seq do cabrel
+                                 ,pr_des_erro  => vr_dscritic); --> SaÌda com erro
+      -- Tratar erro
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Enviar relatorio para intranet
+      gene0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper --> Cooperativa conectada
+                                  ,pr_cdagenci => vr_cdagenci --> Codigo da agencia para erros
+                                  ,pr_nrdcaixa => vr_nrdcaixa --> Codigo do caixa para erros
+                                  ,pr_nmarqpdf => vr_nom_direto || '/' ||vr_nmarqimp --> Arquivo PDF  a ser gerado
+                                  ,pr_des_reto => vr_des_reto --> SaÌda com erro
+                                  ,pr_tab_erro => vr_tab_erro); --> tabela de erros
+      
+      -- caso apresente erro na operaÁ„o
+      IF nvl(vr_des_reto, 'OK') <> 'OK' THEN
+        IF vr_tab_erro.COUNT > 0 THEN
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;          
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;
+
+      -- Remover relatorio da pasta rl apos gerar
+      gene0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => 'rm ' || vr_nom_direto || '/' ||vr_nmarqimp
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => vr_dscritic);
+      -- Se retornou erro
+      IF vr_typ_saida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+        -- Concatena o erro que veio
+        vr_dscritic := 'Erro ao remover arquivo: ' || vr_dscritic;
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Libera a memoria do CLOB
+      dbms_lob.close(vr_xml);
+      dbms_lob.freetemporary(vr_xml);
+      
+      -- Criar XML de retorno
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||vr_nmarqimp || '</nmarqpdf>');
+      
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        -- Se foi retornado apenas cÛdigo
+        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+          -- Buscar a descriÁ„o
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+        -- Existe para satisfazer exigÍncia da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0002.pc_impressao_ficha_prop: ' || SQLERRM;
+
+        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+        -- Existe para satisfazer exigÍncia da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+
+  END pc_impressao_ficha_prop;
+  -- Fim (C·ssia de Oliveira - GFT)
   
   -- TELA: VERPRO - VerificaÁ„o de Protocolos
   PROCEDURE pc_verpro(pr_cdcooper IN NUMBER                --> CÛdigo da cooperativa
