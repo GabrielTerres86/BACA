@@ -2149,9 +2149,7 @@ PROCEDURE busca_dados_efetivacao_proposta:
            tt-efetiv-epr.avalist2 = " "
            tt-efetiv-epr.dtdpagto = crawepr.dtdpagto
            tt-efetiv-epr.idcobope = crawepr.idcobope
-           tt-efetiv-epr.idfiniof = crawepr.idfiniof
-           tt-efetiv-epr.tpemprst = crawepr.tpemprst
-           tt-efetiv-epr.vlprecar = crawepr.vlprecar.
+           tt-efetiv-epr.idfiniof = crawepr.idfiniof.
 
     /* Se tiver contrato em liquidacao, envia para efetivacao da proposta para refinanciamento */	
     IF (crawepr.nrctrliq[1] > 0 OR crawepr.nrctrliq[2] > 0 OR crawepr.nrctrliq[3] > 0
