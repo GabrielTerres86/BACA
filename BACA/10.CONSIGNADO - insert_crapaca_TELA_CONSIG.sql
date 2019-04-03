@@ -72,7 +72,7 @@ BEGIN
   VALUES
     ('VAL_COOPER_CONSIGNADO'
     ,'TELA_CONSIG'
-    ,'pc_val_cooper_consignado_web',
+    ,'pc_val_cooper_consignado_web'
     ,'pr_cdcooper'
     ,v_nrseqrdr);
 -------------------------------------------------------------------------
