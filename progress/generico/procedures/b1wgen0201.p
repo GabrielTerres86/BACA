@@ -657,6 +657,7 @@ PROCEDURE integra_proposta:
                                                    INPUT aux_nrcxaps1,
                                                    INPUT aux_inpesso1,
                                                    INPUT aux_dtnasct1,
+												   INPUT 0, /* par_vlrecjg1 */
                                                    /* Avalista 2 */
                                                    INPUT aux_nmdaval2,
                                                    INPUT aux_nrcpfav2,
@@ -681,6 +682,7 @@ PROCEDURE integra_proposta:
                                                    INPUT aux_nrcxaps2,
                                                    INPUT aux_inpesso2,
                                                    INPUT aux_dtnasct2,
+												   INPUT 0, /* par_vlrecjg2 */
                                                    INPUT "",
                                                    INPUT aux_flgerlog,
                                                    INPUT aux_dsjusren,
@@ -689,6 +691,8 @@ PROCEDURE integra_proposta:
 												   INPUT 1, /*par_idfiniof*/
                                                    INPUT "", /*par_dscatbem*/
                                                    INPUT par_inresapr, /* par_inresapr */
+												   INPUT "TP", /* par_dsdopcao */
+                                                   INPUT 0,
                                                    OUTPUT TABLE tt-erro,
                                                    OUTPUT TABLE tt-msg-confirma,
                                                    OUTPUT aux_recidepr,
@@ -879,7 +883,9 @@ PROCEDURE integra_dados_avalista:
     DEF VAR aux_flmudfai AS CHAR                           NO-UNDO.
 
     DEF VAR aux_flgtrans AS LOGI                           NO-UNDO.
-
+    DEF VAR aux_idpeapro AS INT                            NO-UNDO.
+    DEF VAR aux_nrgarope LIKE crapprp.nrgarope             NO-UNDO. /*PRJ438 - BUG*/
+    DEF VAR aux_nrliquid LIKE crapprp.nrliquid             NO-UNDO. /*PRJ438 - BUG*/
     ASSIGN aux_flgtrans = FALSE.
 
     /* Buscar data atual */
@@ -970,6 +976,8 @@ PROCEDURE integra_dados_avalista:
        RUN sistema/generico/procedures/b1wgen0002.p 
            PERSISTENT SET h-b1wgen0002.    
     
+    ASSIGN aux_idpeapro = 0. /*Nao perde aprovacao*/
+    
     RUN atualiza_dados_avalista_proposta IN h-b1wgen0002
             (INPUT par_cdcooper,
              INPUT par_cdagenci,
@@ -1008,6 +1016,7 @@ PROCEDURE integra_dados_avalista:
              INPUT aux_nrcxaps1,
              INPUT aux_inpesso1,
              INPUT aux_dtnasct1,
+             INPUT 0,
              INPUT aux_nmdaval2,
              INPUT aux_nrcpfav2,
              INPUT aux_tpdocav2,
@@ -1031,9 +1040,14 @@ PROCEDURE integra_dados_avalista:
              INPUT aux_nrcxaps2,
              INPUT aux_inpesso2,
              INPUT aux_dtnasct2,
+             INPUT 0,
              INPUT "", /*par_dsdbeavt*/
              INPUT par_inresapr, /* par_inresapr */
+             INPUT 0,
+             INPUT-OUTPUT aux_idpeapro,
             OUTPUT aux_flmudfai,
+            OUTPUT aux_nrgarope, /*PRJ438 - BUG*/
+            OUTPUT aux_nrliquid, /*PRJ438 - BUG*/  
             OUTPUT TABLE tt-erro,
             OUTPUT TABLE tt-msg-confirma).
 
