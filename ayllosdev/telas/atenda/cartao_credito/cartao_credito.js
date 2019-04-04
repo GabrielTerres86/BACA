@@ -6664,6 +6664,27 @@ function alterarBancoob(autorizado,inpessoa,tipo, contrato){
 
 }
 
+function alertarCooperado() {
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/cartao_credito/alertar_cooperado.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrctrcrd: nrctrcrd,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            eval(response);
+        }
+    });
+}
+
 function atualizaLimite(){
     var vllimite_anterior = converteNumero($("#vllimtit", "#frmNovoCartao").val());
     var vllimite_alterado = converteNumero($("#vlnovlim", "#frmNovoCartao").val());

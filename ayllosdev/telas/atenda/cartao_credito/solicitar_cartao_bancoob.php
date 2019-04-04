@@ -35,7 +35,7 @@
 				if($bancoob  == 2){
 					$admresult = mensageria($bancoobXML, "ATENDA_CRD", "INCLUIR_PROPOSTA_ESTEIRA", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 					$procXML = simplexml_load_string($admresult);
-					echo "showError(\"inform\", \"".utf8ToHtml("Solicitação enviada para esteira com sucesso.")."\", \"Alerta - Aimaro\", \"voltarParaTelaPrincipal();\");";
+					echo "showError(\"inform\", \"".utf8ToHtml("Solicitação enviada para esteira com sucesso.")."\", \"Alerta - Aimaro\", \"alertarCooperado();voltarParaTelaPrincipal();\");";
 					echo "/* Encaminhado para a esteira \n $bancoobXML \n Retorno \n $admresult */";
 				}else{
 					$admresult = mensageria($bancoobXML, "CCRD0007", "SOLICITAR_CARTAO_BANCOOB", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
@@ -238,36 +238,15 @@
 			}else{
 				if($bancoob){
 					?>
-					showError("inform", "<? echo utf8ToHtml( "Alteração Efetuada com Sucesso."); ?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("inform", "<? echo utf8ToHtml( "Alteração Efetuada com Sucesso."); ?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));alertarCooperado();");
 					<?
 				}else{
 					?>
-					showError("inform", "<? echo utf8ToHtml( "Alteração enviada para esteira com sucesso."); ?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("inform", "<? echo utf8ToHtml( "Alteração enviada para esteira com sucesso."); ?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));alertarCooperado();");
 					<?
 				}
 				
 			}
 		}
 		
-
-		// Montar o xml de Requisicao
-		$xml  = "<Root>";
-		$xml .= " <Dados>";
-		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-		$xml .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
-		$xml .= " </Dados>";
-		$xml .= "</Root>";
-
-		$xmlResult = mensageria($xml, "CCRD0008", "RETORNA_TIPO_ENVIO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-		$xmlObjeto = getObjectXML($xmlResult);
-		
-		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-			echo "showError(\"error\", \"".$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata."\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
-		}
-
-		$tipo_envio = $xmlObjeto->roottag->tags[0]->tags[0]->cdata;
-
-		if (!empty($tipo_envio)) {
-			echo "showError(\"error\", \"Aten&ccedil;&atilde;o: A carta senha e o cart&atilde;o ser&atilde;o encaminhados para o endere&ccedil;o escolhido e o cart&atilde;o<br>n&atilde;o estar&aacute; habilitado para utiliza&ccedil;&atilde;o no TA at&eacute; que seja cadastrada a senha de 6 d&iacute;gitos.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
-		}
 ?>
