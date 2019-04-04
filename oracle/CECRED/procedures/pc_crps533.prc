@@ -2214,6 +2214,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
               AND   crapfdc.nrctachq = pr_nrctachq
               AND   crapfdc.nrcheque = pr_nrcheque;
             rw_crapfdc cr_crapfdc%ROWTYPE;
+            
+            --Selecionar o indicador do estado do cheque atualizado
+            CURSOR cr_crapfdc_incheque(pr_crapfdc_rowid ROWID) IS
+              SELECT crapfdc.incheque
+                FROM crapfdc
+               WHERE crapfdc.rowid = pr_crapfdc_rowid;
+            rw_crapfdc_incheque cr_crapfdc_incheque%ROWTYPE;
 
             --Selecionar Custodia de Cheques
             CURSOR cr_crapcst   (pr_cdcooper IN crapfdc.cdcooper%TYPE
@@ -5135,7 +5142,29 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                           || ' pc_crps533.pc_integra_todas_coop. '||SQLERRM;
                             RAISE vr_exc_erro;
                          END;
-                         IF rw_crapfdc.incheque - 5 < 0 THEN
+                         -- Busca incheque atualizado
+                         BEGIN
+                           IF cr_crapfdc_incheque%ISOPEN THEN
+                             CLOSE cr_crapfdc_incheque;
+                           END IF;
+                           OPEN cr_crapfdc_incheque(rw_crapfdc.rowid);
+                           FETCH cr_crapfdc_incheque INTO rw_crapfdc_incheque;
+                           IF cr_crapfdc_incheque%NOTFOUND THEN
+                             RAISE vr_exc_erro;
+                           END IF;
+                           IF cr_crapfdc_incheque%ISOPEN THEN
+                             CLOSE cr_crapfdc_incheque;
+                           END IF;
+                         EXCEPTION
+                           WHEN vr_exc_erro THEN
+                             IF cr_crapfdc_incheque%ISOPEN THEN
+                               CLOSE cr_crapfdc_incheque;
+                             END IF;
+                             vr_des_erro:= 'Erro ao buscar incheque atualizado. Rotina'
+                                           || ' pc_crps533.pc_integra_todas_coop. '||SQLERRM;
+                             RAISE vr_exc_erro;
+                         END;
+                         IF (rw_crapfdc_incheque.incheque - 5) < 0 THEN
                            -- Não deixar fazer o update que deixa a situação negativo;
                            BEGIN
                              UPDATE crapfdc

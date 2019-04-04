@@ -280,6 +280,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
 
               10/03/2019 - Inclusão do indicador de validação do CPF/CNPJ Layout 5.
                            Gabriel Marcos (Mouts) - SCTASK0038352.
+						   
+			  03/04/2019 - Ajuste realizado para corrigir problema de merge da liberação anterior. (Kelvin)
 
   ..............................................................................*/
 
@@ -355,7 +357,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   vr_vltotarq     NUMBER;
   vr_nrrefere     VARCHAR2(25);
   vr_qtdigito     INTEGER;
-  vr_cdconven     gnconve.cdconven%type;
+  vr_cdconven     gnconve.cdconven%type := 0;
 
   ---------------------------------- CURSORES  ----------------------------------
   
