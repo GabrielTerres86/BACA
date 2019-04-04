@@ -70,7 +70,7 @@ create or replace package cecred.TELA_CADEMP is
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_emp IS TABLE OF typ_reg_dados_emp INDEX BY BINARY_INTEGER;
 
-    PROCEDURE pc_busca_empresa_web(pr_nmextemp IN crapemp.nmextemp%TYPE DEFAULT NULL --> Nome da empresa
+  PROCEDURE pc_busca_empresa_web(pr_nmextemp IN crapemp.nmextemp%TYPE DEFAULT NULL --> Nome da empresa
                                     ,pr_nmresemp IN crapemp.nmresemp%TYPE DEFAULT NULL --> Nome reduzido da empresa
                                     ,pr_nrdocnpj IN crapemp.nrdocnpj%TYPE DEFAULT NULL   --> Numero de CNPJ
                                     ,pr_cdempres IN crapemp.cdempres%TYPE DEFAULT -1   --> Codigo da empresa (-1 todas)
@@ -85,6 +85,15 @@ create or replace package cecred.TELA_CADEMP is
                                     ,pr_nmdcampo OUT VARCHAR2                          --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2                          --> Erros do processo
                                     );
+  
+  PROCEDURE pc_busca_dados_consig_fis (-- campos padrões  
+                                       pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
+                                      ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
+                                      ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
+                                      ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
+                                      ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
+                                      );                                    
 end TELA_CADEMP; 
 /
 create or replace package body cecred.TELA_CADEMP is
@@ -490,14 +499,14 @@ create or replace package body cecred.TELA_CADEMP is
   END pc_busca_empresa_web;
 
    
-  PROCEDURE pc_busca_dados_emp_fis (-- campos padrões  
-                                     pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
-                                    ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
-                                    ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
-                                    ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                    ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
-                                    ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
-                                    ) IS
+  PROCEDURE pc_busca_dados_consig_fis (-- campos padrões  
+                                       pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
+                                      ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
+                                      ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
+                                      ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
+                                      ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
+                                      ) IS
 
 /*---------------------------------------------------------------------------------------------------------
       Programa : pc_busca_dados_emp_fis
@@ -506,7 +515,7 @@ create or replace package body cecred.TELA_CADEMP is
       Autor    : Josiane Stiehler - AMcom Sistemas de Informação
       Data     : 29/03/2019
 
-      Objetivo : Recebe os dados da tela Ccademp e lê os dados da consig e gera
+      Objetivo : Recebe os dados da tela cademp e lê os dados da consig e gera
                  XML com as duas informações retornando um XLM para tela CADEMP validar os dados na FIS.
 
       Alteração : 
@@ -563,8 +572,8 @@ create or replace package body cecred.TELA_CADEMP is
     vr_descBairroLogradouro crapemp.nmbairro%TYPE;
     vr_descCidadeLogradouro crapemp.nmcidade%TYPE;
     vr_ufLogradouro         crapemp.cdufdemp%TYPE;
-    vr_dddLoja              number;  ---crapemp. derá adicionada nrdddemp
-    vr_telLoja              crapemp.nrfonemp%TYPE;
+    vr_dddLoja              varchar2(10);  ---crapemp. derá adicionada nrdddemp
+    vr_telLoja              varchar2(20);
     vr_codbanco             crapcop.cdbcoctl%TYPE;
     vr_codAgencia           crapcop.cdagectl%TYPE;
     vr_numConta             crapemp.nrdconta%TYPE;
@@ -578,13 +587,13 @@ create or replace package body cecred.TELA_CADEMP is
            decode(c.indconsignado,0,sysdate,null) datafim,
            null descEmail,
            null descContatoLoja,  
-           p.cdbcoctl codbanco,
-           p.cdagectl codAgencia,
            null numContaDigito,
            '1' tipoOperador,
            c.tpmodconvenio tipoPadrao, 
            c.idemprconsig,
-           c.indconsignado
+           c.indconsignado,
+           p.cdbcoctl codbanco,
+           p.cdagectl codAgencia
      FROM crapemp e,
           tbcadast_empresa_consig c,
           crapcop p
@@ -639,24 +648,24 @@ create or replace package body cecred.TELA_CADEMP is
           raise vr_exc_erro;
       END IF;
 
+      vr_codPromotora:= vr_cdcooper;
+
+
       -- Extraindo os dados do XML que vem da tela EMP    
       vr_cdempres        := TRIM(pr_retxml.extract('/Root/dto/cdempres/text()').getstringval());      
-      vr_codPromotora    := TRIM(pr_retxml.extract('/Root/dto/codPromotora/text()').getstringval());      
-      vr_codConvenio     := TRIM(pr_retxml.extract('/Root/dto/codConvenio/text()').getstringval());      
-      vr_numCNPJLoja     := TRIM(pr_retxml.extract('/Root/dto/numCNPJLoja/text()').getstringval());      
-      vr_descNomeLoja    := TRIM(pr_retxml.extract('/Root/dto/descNomeLoja/text()').getstringval());      
-      vr_descRazaoLoja   := TRIM(pr_retxml.extract('/Root/dto/descRazaoLoja/text()').getstringval());      
-      vr_cepLogradouro   := TRIM(pr_retxml.extract('/Root/dto/cepLogradouro/text()').getstringval());      
-      vr_descLogradouro  := TRIM(pr_retxml.extract('/Root/dto/descLogradouro/text()').getstringval());      
-      vr_numLogradouro   := TRIM(pr_retxml.extract('/Root/dto/numLogradouro/text()').getstringval());      
-      vr_desccompllogradouro := TRIM(pr_retxml.extract('/Root/dto/descComplementoLogradouro/text()').getstringval());      
-      vr_descBairroLogradouro:= TRIM(pr_retxml.extract('/Root/dto/descBairroLogradouro/text()').getstringval());      
-      vr_descCidadeLogradouro:= TRIM(pr_retxml.extract('/Root/dto/descCidadeLogradouro/text()').getstringval());      
-      vr_ufLogradouro        := TRIM(pr_retxml.extract('/Root/dto/ufLogradouro/text()').getstringval());      
-      vr_dddLoja             := TRIM(pr_retxml.extract('/Root/dto/dddLoja/text()').getstringval());      
-      vr_telLoja             := TRIM(pr_retxml.extract('/Root/dto/telLoja/text()').getstringval());      
-      vr_codbanco            := TRIM(pr_retxml.extract('/Root/dto/codbanco/text()').getstringval());      
-      vr_codAgencia          := TRIM(pr_retxml.extract('/Root/dto/codAgencia/text()').getstringval());      
+      vr_codConvenio     := TRIM(pr_retxml.extract('/Root/dto/codconvenio/text()').getstringval());      
+      vr_numCNPJLoja     := TRIM(pr_retxml.extract('/Root/dto/numcnpjloja/text()').getstringval());      
+      vr_descNomeLoja    := TRIM(pr_retxml.extract('/Root/dto/descnomeloja/text()').getstringval());      
+      vr_descRazaoLoja   := TRIM(pr_retxml.extract('/Root/dto/descrazaoloja/text()').getstringval());      
+      vr_cepLogradouro   := TRIM(pr_retxml.extract('/Root/dto/ceplogradouro/text()').getstringval());      
+      vr_descLogradouro  := TRIM(pr_retxml.extract('/Root/dto/desclogradouro/text()').getstringval());      
+      vr_numLogradouro   := TRIM(pr_retxml.extract('/Root/dto/numlogradouro/text()').getstringval());      
+      vr_desccompllogradouro := TRIM(pr_retxml.extract('/Root/dto/desccompllogradouro/text()').getstringval());      
+      vr_descBairroLogradouro:= TRIM(pr_retxml.extract('/Root/dto/descbairrologradouro/text()').getstringval());      
+      vr_descCidadeLogradouro:= TRIM(pr_retxml.extract('/Root/dto/desccidadelogradouro/text()').getstringval());      
+      vr_ufLogradouro        := TRIM(pr_retxml.extract('/Root/dto/uflogradouro/text()').getstringval());      
+      vr_dddLoja             := TRIM(pr_retxml.extract('/Root/dto/dddloja/text()').getstringval());      
+      vr_telLoja             := TRIM(pr_retxml.extract('/Root/dto/telloja/text()').getstringval());      
       vr_numConta            := TRIM(pr_retxml.extract('/Root/dto/numConta/text()').getstringval());      
 
       -- retirar acentuação e caracteres especiasi
@@ -671,8 +680,11 @@ create or replace package body cecred.TELA_CADEMP is
       vr_descBairroLogradouro:= gene0007.fn_caract_acento (pr_texto   => vr_descBairroLogradouro,
                                                            pr_insubsti=> 1) ;
       vr_descCidadeLogradouro:= gene0007.fn_caract_acento (pr_texto   => vr_descCidadeLogradouro,
-                                                           pr_insubsti=> 1) ;                                    
-      
+                                                           pr_insubsti=> 1) ;                    
+      vr_telLoja             := gene0007.fn_caract_acento (pr_texto   => vr_telLoja,
+                                                           pr_dssubsin=> '@#$&%¹²³ªº°*!?<>/\|-().,=_',
+                                                           pr_insubsti=> 1);                                                                            
+
       
       -- inicializar o clob
       vr_des_xml := null;
@@ -696,17 +708,19 @@ create or replace package body cecred.TELA_CADEMP is
       END IF;
       
       
-      OPEN cr_dados_consig(pr_cdcooper => vr_cdcooper,
-                           pr_cdempres => vr_cdempres);
+      OPEN cr_dados_consig(pr_cdcooper => to_number(vr_cdcooper),
+                           pr_cdempres => to_number(vr_cdempres));
       LOOP
         FETCH cr_dados_consig INTO rw_dados_consig;
+        EXIT WHEN cr_dados_consig%NOTFOUND;
         IF cr_dados_consig%NOTFOUND THEN
            vr_cdcritic:= 0;
-           vr_dscritic:= 'Empresa não trabalha com consignado';
+           vr_dscritic:= 'Empresa nao trabalha com consignado';
            CLOSE cr_dados_consig;
            raise vr_saida;
         END IF;
-         
+
+                 
         pc_escreve_xml('<gravaDadosConvenio>'||
                        '<dto>'||
                             '<codUsuario>'||vr_usuario||'</codUsuario>'||
@@ -731,8 +745,8 @@ create or replace package body cecred.TELA_CADEMP is
                             '<telLoja>'||vr_telloja||'</telLoja>'||
                             '<descEmail>'||rw_dados_consig.descemail||'</descEmail>'||
                             '<descContatoLoja>'||rw_dados_consig.desccontatoloja||'</descContatoLoja>'||
-                            '<codbanco>'||vr_codbanco||'</codbanco>'||
-                            '<codAgencia>'||vr_codagencia||'</codAgencia>'||
+                            '<codbanco>'||rw_dados_consig.codbanco||'</codbanco>'||
+                            '<codAgencia>'||rw_dados_consig.codagencia||'</codAgencia>'||
                             '<numConta>'||vr_numconta||'</numConta>'||
                             '<numContaDigito>'||rw_dados_consig.numcontadigito||'</numContaDigito>'||
                             '<tipoOperador>'||rw_dados_consig.tipooperador||'</tipoOperador>'||
@@ -804,7 +818,7 @@ create or replace package body cecred.TELA_CADEMP is
             pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
-  END pc_busca_dados_emp_fis;
+  END pc_busca_dados_consig_fis;
 
 end TELA_CADEMP; 
 /
