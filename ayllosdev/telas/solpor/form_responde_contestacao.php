@@ -21,10 +21,6 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../class/xmlfile.php");
 
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"C")) <> "") {
-		exibeErro($msgError);
-	}
-	
 	$idstatus   = ( ( !empty($_POST['idstatus']) )   ? $_POST['idstatus']   : 2 );
 	$dsrowid   =  ( ( !empty($_POST['rowid']) )   	 ? $_POST['rowid']   	: '' );
 	
