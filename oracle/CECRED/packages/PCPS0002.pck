@@ -59,6 +59,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
 
       Alteracoes:
 
+      22/03/2019 - inc0031490 Inclusão da rotina pc_internal_exception na rotina pc_email_pa_portabilidade para 
+                   identificar o ponto do programa que ocasionou o erro; correção do controle do tamanho do corpo do
+                   email, de 30 para 30000; correção do controle de existência de e-mail do PA (Carlos)
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   --> Declaração geral de exception
@@ -83,6 +87,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
   vr_dsmotivoreprv   CONSTANT VARCHAR2(30) := 'MOTVREPRVCPORTDDCTSALR';
   vr_dsmotivocancel  CONSTANT VARCHAR2(30) := 'MOTVCANCELTPORTDDCTSALR';
   vr_dsmotivoaceite  CONSTANT VARCHAR2(30) := 'MOTVACTECOMPRIOPORTDDCTSALR';
+  vr_dsmotivoconttc  CONSTANT VARCHAR2(30) := 'MOTVCONTTC'; 
+  vr_dsmotivoencerr  CONSTANT VARCHAR2(30) := 'MOTVENCRMNTCONTTC'; 
+  vr_dsmotivoresrep  CONSTANT VARCHAR2(30) := 'MOTVRESPCONTTCREPVD'; 
+  vr_dsmotivoresapv  CONSTANT VARCHAR2(30) := 'MOTVRESPCONTTCAPROVD';
   
   -- Montar o Número de controle do Emissor do arquivo
   FUNCTION fn_gera_NumCtrlEmis(pr_dsdsigla  IN crapscb.dsdsigla%TYPE  -- Sigla do arquivo
@@ -1097,7 +1105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     -- Objetivo  : Realizar a leitura do arquivo atualizando os registros de solicitação conforme situação.
     --
     -- Alteracoes: 
-    --             
+    --
     ---------------------------------------------------------------------------------------------------------------
 
     -- CONTANTES
@@ -1778,6 +1786,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
            , ercdagedst
            , ernrctadst
            , ernrctapgt
+           , ernrmotrep
+           , erdtrepprt
         FROM DATA 
            , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'RET/Grupo_'||vr_dsapcsdoc||'RET_PortddCtSalrRecsd')
                       PASSING XMLTYPE(xml)
@@ -1804,7 +1814,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                             , ercdtipcta  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_Dest/TpCtDest/@CodErro'
                             , ercdagedst  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_Dest/AgCliDest/@CodErro'
                             , ernrctadst  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_Dest/CtCliDest/@CodErro'
-                            , ernrctapgt  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_Dest/CtPagtoDest/@CodErro');
+                            , ernrctapgt  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_Dest/CtPagtoDest/@CodErro'
+                            , ernrmotrep  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrReprvd/MotvReprvcPortddCtSalr/@CodErro'
+                            , erdtrepprt  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrReprvd/DtReprvcPortddCtSalr/@CodErro');
     
     -- Retornar o registro correspondente enviado
     CURSOR cr_prtreceb(pr_nrnuport   tbcc_portabilidade_recebe.nrnu_portabilidade%TYPE) IS
@@ -2018,6 +2030,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         -- Inserir registro de erro
         pc_insere_erro(pr_nrnuport => rg_dados.nrnuportab
                       ,pr_cddoerro => rg_dados.ernrctapgt);
+      END IF; 
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.ernrmotrep IS NOT NULL THEN
+        -- Inserir registro de erro
+        pc_insere_erro(pr_nrnuport => rg_dados.nrnuportab
+                      ,pr_cddoerro => rg_dados.ernrmotrep);
+      END IF; 
+        
+      -- Verifica se encontrou erro
+      IF rg_dados.erdtrepprt IS NOT NULL THEN
+        -- Inserir registro de erro
+        pc_insere_erro(pr_nrnuport => rg_dados.nrnuportab
+                      ,pr_cddoerro => rg_dados.erdtrepprt);
       END IF; 
       
     END LOOP;
@@ -3033,7 +3059,2895 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     WHEN OTHERS THEN
       pr_dscritic := 'Erro na rotina PCPS.pc_proc_xml_APCS108. ' ||SQLERRM;
   END pc_proc_xml_APCS108;
+  PROCEDURE pc_gera_XML_APCS201(pr_nmarqenv IN     VARCHAR2      --> Nome do arquivo 
+                               ,pr_dsxmlarq IN OUT XMLTYPE       --> XML gerado
+                               ,pr_inddados    OUT BOOLEAN       --> Indica se o arquivo possui dados
+                               ,pr_idfimreg    OUT BOOLEAN       --> Indica que finalizou os registros
+                               ,pr_dscritic    OUT VARCHAR2) IS  --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_gera_XML_APCS201
+    --  Sistema  : Procedure para gerar o arquivo: 
+    --                        APCS201 - Contestação de Portabilidade de Conta Salário
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura das Contestações pendentes e enviar via arquivo
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+    
+    -- Buscar os dados das solicitações que estão para ser enviadas
+    CURSOR cr_dados IS 
+      SELECT a.ROWID dsdrowid
+            ,a.cdcooper
+            ,a.nrdconta
+            ,a.nrsolicitacao
+           , t.nrispb_destinataria 
+           , t.nrnu_portabilidade
+           , a.cdmotivo cdmotivo_contes
+           , a.dtcontestacao
+           , a.nmarquivo_envia 
+        FROM tbcc_portabilidade_envia t
+            ,tbcc_portab_env_contestacao a
+       WHERE t.cdcooper      = a.cdcooper
+         AND t.nrdconta      = a.nrdconta
+         AND t.nrsolicitacao = a.nrsolicitacao
+         AND a.idsituacao    = 1  -- A Contestar
+         FOR UPDATE;   -- Lock dos registros para evitar atualizações no momento de processamento
+    
+    vr_dsapcsdoc     CONSTANT VARCHAR2(10) := 'APCS201';
+    
+    vr_dsxmlarq      xmltype;         --> XML do arquivo
+    vr_exc_erro      EXCEPTION;       --> Controle de exceção
+    
+    vr_nrctpart      VARCHAR2(20); -- 
+    vr_dscritic      VARCHAR2(1000);
+    vr_nrposxml      NUMBER;
+    
+    -- Procedure para atualizar o registro de contestação para Aguardando Retorno Contestação
+    PROCEDURE pc_envia_contestacao(pr_dsdrowid  IN VARCHAR2) IS
+    BEGIN
+      
+      UPDATE tbcc_portab_env_contestacao  t
+         SET t.idsituacao       = 2 -- Contestado
+           , t.nmarquivo_envia  = pr_nmarqenv
+           , t.dsdominio_motivo_retorno   = null
+           , t.cdmotivo_retorno           = NULL
+           , t.nmarquivo_retorno          = NULL
+       WHERE ROWID = pr_dsdrowid;
+       
+    END;
+    -- Rotina generica para inserir os tags - Reduzir parametros e centralizar tratamento de erros
+    PROCEDURE pc_insere_tag(pr_tag_pai  IN VARCHAR2 
+                           ,pr_tag_nova IN VARCHAR2
+                           ,pr_tag_cont IN VARCHAR2
+                           ,pr_posicao  IN NUMBER DEFAULT 0)  IS
+      
+    BEGIN
+      
+      -- Inserir a tag
+      GENE0007.pc_insere_tag(pr_xml      => vr_dsxmlarq
+                            ,pr_tag_pai  => pr_tag_pai
+                            ,pr_posicao  => pr_posicao
+                            ,pr_tag_nova => pr_tag_nova
+                            ,pr_tag_cont => pr_tag_cont
+                            ,pr_des_erro => vr_dscritic);
+       
+      -- Se ocorrer erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;  
+    
+    END pc_insere_tag;
+    
+  BEGIN
+    
+    -- Indicar que não foram inclusos dados
+    pr_inddados := FALSE;
+    
+    -- Indica que todos os registros foram processados
+    pr_idfimreg := TRUE;
   
+    -- Montar a estrutura do XML
+    vr_dsxmlarq := pr_dsxmlarq;
+    
+    -- Inserir tag base do arquivo
+    pc_insere_tag(pr_tag_pai  => 'SISARQ'
+                 ,pr_tag_nova => vr_dsapcsdoc
+                 ,pr_tag_cont => NULL);
+
+    -- Percorrer todas as solicitações que estão aguardando para serem enviadas
+    FOR rg_dados IN cr_dados LOOP
+
+      -- Indicar que foram inclusos dados
+      pr_inddados := TRUE;
+      
+      -- Definir o indice da tag
+      vr_nrposxml := NVL((vr_nrposxml+1),0);
+
+      /******************* INICIO - Grupo Contestação Portabilidade Conta Salário *******************/
+      pc_insere_tag(pr_tag_pai  => vr_dsapcsdoc
+                   ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_ConttcPortddCtSalr'
+                   ,pr_tag_cont => NULL);
+
+      -- Identificador Participante Administrativo - CNPJ Base
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ConttcPortddCtSalr'
+                   ,pr_tag_nova => 'IdentdPartAdmtd'
+                   ,pr_tag_cont => lpad(rg_dados.nrispb_destinataria,8,'0') 
+                   ,pr_posicao  => vr_nrposxml);
+      
+      -- Formar o número de controle, conforme chave da tabela
+      vr_nrctpart := fn_gera_NumCtrlPart(rg_dados.cdcooper
+                                        ,rg_dados.nrdconta
+                                        ,rg_dados.nrsolicitacao);
+      
+      -- Número de Controle do Participante                                  
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ConttcPortddCtSalr'
+                   ,pr_tag_nova => 'NumCtrlPart'
+                   ,pr_tag_cont => vr_nrctpart
+                   ,pr_posicao  => vr_nrposxml);
+      
+      -- Número único da Portabilidade PCS
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ConttcPortddCtSalr'
+                   ,pr_tag_nova => 'NUPortddPCS'
+                   ,pr_tag_cont => rg_dados.nrnu_portabilidade
+                   ,pr_posicao  => vr_nrposxml);
+      
+      -- Motivo Contestação Portabilidade de Conta Salário
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ConttcPortddCtSalr'
+                   ,pr_tag_nova => 'MotvConttc'
+                   ,pr_tag_cont => LPAD(rg_dados.cdmotivo_contes,3,'0') 
+                   ,pr_posicao  => vr_nrposxml);
+    
+      -- Data Contestação Portabilidade de Conta Salário
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ConttcPortddCtSalr'
+                   ,pr_tag_nova => 'DtConttc'
+                   ,pr_tag_cont => to_char(SYSDATE,vr_dateformat) 
+                   ,pr_posicao  => vr_nrposxml);
+          
+      /******************* FIM - Grupo Portabilidade Conta Salário *******************/
+      
+      -- Atualizar registro processado
+      pc_envia_contestacao(rg_dados.dsdrowid);
+      
+      -- Verificar o tamanho do arquivo que está sendo gerado
+      IF length(vr_dsxmlarq.getClobVal()) > 30000 THEN
+        -- Indica que ainda faltam registros a processar
+        pr_idfimreg := FALSE;
+        -- demais registros serão enviados posteriormente
+        EXIT;
+      END IF;
+      
+    END LOOP;
+    
+    -- Retorna o XML do arquivo
+    pr_dsxmlarq := vr_dsxmlarq;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_gera_XML_APCS201. ' ||SQLERRM;
+  END pc_gera_XML_APCS201;
+
+  ----
+ PROCEDURE pc_proc_ERR_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
+                              ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_proc_ERR_APCS201
+    --  Sistema  : Procedure para ler o arquivo: 
+    --                        APCS201ERR - Instituição Banco da Folha responde solicitação de Contestação
+    --                                     de Portabilidade 
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura do arquivo com erro, retornando os registros que haviam sido enviados
+    --             para rejeitado;
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+
+    -- CURSORES
+    -- Retorna o código do erro
+    CURSOR cr_ret_erro(pr_dsxmlarq  CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT nmarquiv
+           , cderrret
+        FROM DATA 
+           , XMLTABLE('/APCSDOC/BCARQ'
+                      PASSING XMLTYPE(xml)
+                      COLUMNS nmarquiv  VARCHAR2(100) PATH 'NomArq'
+                            , cderrret  VARCHAR2(10)  PATH 'NomArq/@CodErro');
+    
+    -- Variáveis
+    vr_dsarqxml      CLOB;
+    vr_nmarquiv      VARCHAR2(100);
+    vr_nmarqenv      VARCHAR2(100);
+    vr_cderrret      VARCHAR2(10);
+    
+  BEGIN
+    
+    -- Remover o xmlns do arquivo
+    vr_dsarqxml := fn_remove_xmlns(pr_dsxmlarq);
+  
+    -- Percorrer todas as aprovações retornadas
+    OPEN  cr_ret_erro(vr_dsarqxml);
+    FETCH cr_ret_erro INTO vr_nmarquiv
+                         , vr_cderrret;
+                         
+    -- Se não encontrar dados
+    IF cr_ret_erro%NOTFOUND THEN
+      -- Crítica
+      pr_dscritic := 'Não foi possível extrair conteúdo do arquivo.';
+      
+      -- Fechar o cursor
+      CLOSE cr_ret_erro;
+    
+      -- Encerrar a rotina
+      RETURN;
+    END IF;
+    
+    -- Fechar o cursor
+    CLOSE cr_ret_erro;
+    
+    -- Remover o "_ERR" da informação do nome do arquivo
+    vr_nmarqenv := REPLACE(vr_nmarquiv, '_ERR', NULL);
+    
+    -- ATUALIZAR TODOS OS REGISTROS QUE FORAM ENVIADOS NO ARQUIVO 
+    UPDATE tbcc_portab_env_contestacao   T
+       SET t.idsituacao                = 1 -- Solicitada
+         , t.nmarquivo_retorno         = vr_nmarquiv -- Para identificar a última ocorrencia de problema
+         , t.dsdominio_motivo_retorno  = vr_dsdominioerro
+         , t.cdmotivo_retorno          = vr_cderrret
+     WHERE t.idsituacao                = 2 -- Atualizar apenas as que ainda estão como solicitadas
+       AND t.nmarquivo_envia           = vr_nmarqenv;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_proc_ERR_APCS201. ' ||SQLERRM;
+  END pc_proc_ERR_APCS201;
+
+PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
+                             ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
+   ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_proc_RET_APCS201
+    --  Sistema  : Procedure para ler o arquivo: 
+    --                        APCS201RET - PCPS Informa Resposta a Contestação de Portabilidade de Conta Salário
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura do arquivo de retorno, atualizando registros que apresentaram problemas
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+
+    -- CONTANTES
+     vr_dsapcsdoc     CONSTANT VARCHAR2(10) := 'APCS201';
+    -- Retorna as contestações aceitas
+    CURSOR cr_ret_aprova(pr_dsxmlarq  CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT nrctrlpart
+           , nrportdpcs
+           , nrcontcpcs
+        FROM DATA 
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'RET/Grupo_'||vr_dsapcsdoc||'RET_ConttcPortddCtSalrActo')
+                      PASSING XMLTYPE(xml)
+                      COLUMNS nrctrlpart  VARCHAR2(20) PATH 'NumCtrlPart'
+                            , nrportdpcs  NUMBER       PATH 'NUPortddPCS'
+                            , nrcontcpcs  VARCHAR2(21) PATH 'NUConttcPCS');
+
+    -- Retorna as rejeições que ocorreram no arquivo
+    CURSOR cr_ret_reprova(pr_dsxmlarq  CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT dscoderro 
+           , erindpart 
+           , nrindpart 
+           , nrctrlpart
+           , erctrlpart
+           , nuportddpcs
+           , errportdpcs  
+           , nrmotvconttc         
+           , ermotvconttc
+           , nrdtconttc
+           , erdtconttc
+        FROM DATA 
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'RET/Grupo_'||vr_dsapcsdoc||'RET_ConttcPortddCtSalrRecsd')
+                      PASSING XMLTYPE(xml)
+                      COLUMNS dscoderro   VARCHAR2(20) PATH '@CodErro'
+                            , nrindpart   VARCHAR2(50) PATH 'IdentdPartAdmtd'
+                            , erindpart   VARCHAR2(20) PATH 'IdentdPartAdmtd/@CodErro' 
+                            , nrctrlpart  VARCHAR2(20) PATH 'NumCtrlPart'
+                            , erctrlpart  VARCHAR2(20) PATH 'NumCtrlPart/@CodErro'
+                            , nuportddpcs  VARCHAR2(20) PATH 'NUPortddPCS'
+                            , errportdpcs  VARCHAR2(20) PATH 'NUPortddPCS/@CodErro'
+                            , nrmotvconttc VARCHAR2(20) PATH 'MotvConttc'
+                            , ermotvconttc VARCHAR2(20) PATH 'MotvConttc/@CodErro'
+                            , nrdtconttc   VARCHAR2(20) PATH 'DtConttc'
+                            , erdtconttc   VARCHAR2(20) PATH 'DtConttc/@CodErro');
+    -- Retornar o registro correnpondente enviado
+    CURSOR cr_prtenvia(pr_cdcooper   tbcc_portab_env_contestacao.cdcooper%TYPE
+                      ,pr_nrdconta   tbcc_portab_env_contestacao.nrdconta%TYPE
+                      ,pr_nrsolici   tbcc_portab_env_contestacao.nrsolicitacao%TYPE
+                      ) IS
+
+      SELECT ROWID dsdrowid
+            ,t.dsnu_contestacao
+           --, t.nrcontestacao
+        FROM tbcc_portab_env_contestacao t
+       WHERE t.cdcooper      = pr_cdcooper
+         AND t.nrdconta      = pr_nrdconta
+         AND t.nrsolicitacao = pr_nrsolici
+         AND t.dsnu_contestacao is null;
+    rg_prtenvia   cr_prtenvia%ROWTYPE;
+         
+    
+    -- Variáveis
+    vr_cdcooper      tbcc_portabilidade_envia.cdcooper%TYPE;
+    vr_nrdconta      tbcc_portabilidade_envia.nrdconta%TYPE;
+    vr_nrsolici      tbcc_portabilidade_envia.nrsolicitacao%TYPE;
+    vr_dsxmlarq      CLOB;
+    
+    vr_dsmsglog      VARCHAR2(1000);
+    vr_nmarquiv      VARCHAR2(100);
+    vr_dtarquiv      DATE;
+    vr_cdmotivo_retorno   tbcc_portab_env_contestacao.cdmotivo_retorno%TYPE := null;  
+    
+  BEGIN
+    
+    -- Remover o xmlns do arquivo
+    vr_dsxmlarq := fn_remove_xmlns(pr_dsxmlarq);
+    
+    -- Guardar o nome e a data do arquivo
+    pc_extrai_dados_arq(pr_dsxmlarq => vr_dsxmlarq
+                       ,pr_nmarquiv => vr_nmarquiv
+                       ,pr_dtarquiv => vr_dtarquiv);
+    
+    -- Percorrer todas as aprovações retornadas
+    FOR rg_dados IN cr_ret_aprova(vr_dsxmlarq) LOOP
+      
+      -- Quebrar a chave para encontrar o registro referente a mesma
+      pc_quebra_NumCtrlPart(pr_nrctpart => rg_dados.nrctrlpart
+                           ,pr_cdcooper => vr_cdcooper
+                           ,pr_nrdconta => vr_nrdconta 
+                           ,pr_nrsolici => vr_nrsolici);
+    
+      -- Buscar o registro de envio
+      OPEN  cr_prtenvia(vr_cdcooper
+                       ,vr_nrdconta
+                       ,vr_nrsolici);
+      FETCH cr_prtenvia INTO rg_prtenvia;
+      
+      -- Se não encontrar registro
+      IF cr_prtenvia%NOTFOUND THEN
+        
+        -- Fechar o cursor
+        CLOSE cr_prtenvia;
+      
+        -- Registrar mensagem no log e pular para o próximo registro
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_RET_APCS101'
+                         || ' --> Nao encontrado registro de envio para a chave: '||rg_dados.nrctrlpart;
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        
+          -- Próximo registro
+          CONTINUE;
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+        
+      END IF;
+       
+      -- Fechar o cursor
+      CLOSE cr_prtenvia;
+       
+      -- Verificar se o registro já possui NUCONTESTACAO
+      IF rg_prtenvia.dsnu_contestacao /*nrcontestacao*/ IS NOT NULL THEN
+          
+        -- Registrar mensagem no log e pular para o próximo registro
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_RET_APCS201'
+                         || ' --> Registro de envio ja possui NU contestação: '||rg_dados.nrctrlpart;
+            
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+          
+          -- Próximo registro
+          CONTINUE;
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+        
+      END IF;
+        
+      -- Atualizar o número da contestação do registro - APENAS
+      UPDATE tbcc_portab_env_contestacao t
+         SET t.dsnu_contestacao         = rg_dados.nrcontcpcs
+       WHERE ROWID = rg_prtenvia.dsdrowid;
+      
+    END LOOP;
+  
+    -- Percorrer todas as aprovações retornadas
+    FOR rg_dados IN cr_ret_reprova(vr_dsxmlarq) LOOP
+      
+      -- Limpar motivo do registro anterior
+      vr_cdmotivo_retorno := NULL; 
+        
+      -- Quebrar a chave para encontrar o registro referente a mesma
+      pc_quebra_NumCtrlPart(pr_nrctpart => rg_dados.nrctrlpart
+                           ,pr_cdcooper => vr_cdcooper
+                           ,pr_nrdconta => vr_nrdconta 
+                           ,pr_nrsolici => vr_nrsolici);
+    
+      -- Buscar o registro de envio
+      OPEN  cr_prtenvia(vr_cdcooper
+                       ,vr_nrdconta
+                       ,vr_nrsolici);
+      FETCH cr_prtenvia INTO rg_prtenvia;
+      
+      -- Se não encontrar registro
+      IF cr_prtenvia%NOTFOUND THEN
+        
+        -- Fechar o cursor
+        CLOSE cr_prtenvia;
+      
+        -- Registrar mensagem no log e pular para o próximo registro
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_RET_APCS101'
+                         || ' --> Nao encontrado registro de envio para a chave: '||rg_dados.nrctrlpart;
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        
+          -- Próximo registro
+          CONTINUE;
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+        
+      END IF;
+       
+      -- Fechar o cursor
+      CLOSE cr_prtenvia;
+        
+      -- Verifica se encontrou erro
+      IF rg_dados.dscoderro IS NOT NULL THEN
+        -- Inserir registro de erro
+        vr_cdmotivo_retorno := rg_dados.dscoderro;
+      END IF;
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.erindpart IS NOT NULL AND vr_cdmotivo_retorno IS NULL THEN
+        -- Inserir registro de erro
+        vr_cdmotivo_retorno := rg_dados.erindpart;
+      END IF;
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.erctrlpart IS NOT NULL AND vr_cdmotivo_retorno IS NULL THEN
+        -- Inserir registro de erro
+        vr_cdmotivo_retorno := rg_dados.erctrlpart;
+      END IF; 
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.errportdpcs IS NOT NULL AND vr_cdmotivo_retorno IS NULL THEN
+        -- Inserir registro de erro
+        vr_cdmotivo_retorno := rg_dados.errportdpcs;
+      END IF; 
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.ermotvconttc IS NOT NULL AND vr_cdmotivo_retorno IS NULL THEN
+        -- Inserir registro de erro
+       vr_cdmotivo_retorno := rg_dados.ermotvconttc;
+      END IF; 
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.erdtconttc IS NOT NULL AND vr_cdmotivo_retorno IS NULL THEN
+        -- Inserir registro de erro
+        vr_cdmotivo_retorno :=  rg_dados.erdtconttc;
+      END IF; 
+
+      -- Atualizar o número da contestação do registro
+      UPDATE tbcc_portab_env_contestacao t
+         SET t.dsnu_contestacao   = null
+           , t.idsituacao         = 4 -- Reprovada
+           , t.dtretorno          = vr_dtarquiv
+           , t.cdmotivo_retorno   = vr_cdmotivo_retorno
+           , t.dsdominio_motivo_retorno = vr_dsdominioerro
+           , t.nmarquivo_retorno  = vr_nmarquiv
+       WHERE ROWID = rg_prtenvia.dsdrowid;
+
+    END LOOP;
+  
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_proc_RET_APCS201. ' ||SQLERRM;
+  END pc_proc_RET_APCS201;
+  ---
+  PROCEDURE pc_proc_XML_APCS202(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
+                               ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_proc_xml_APCS202
+    --  Sistema  : Procedure para ler o arquivo: 
+    --                        APCS202 - PCS Informa contestação de portabilidade de conta salário
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura do arquivo atualizando os registros de contestação conforme situação.
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+    -- CONTANTES
+    vr_dsapcsdoc     CONSTANT VARCHAR2(10) := 'APCS202';
+        
+    -- CURSOR
+    CURSOR cr_dadosapr(pr_dsxmlarq CLOB) IS
+     WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT nridenti
+           , nrnuport
+           , nrconttc   
+           , motvcont
+           , dtconttc
+           , nrcpfcgc
+           , dsnomcli
+           , dstelefo
+           , dsdemail
+           , codauttc
+           , nrispbfl
+           , nrcnpjfl
+           , nrcnpjep
+           , nmdoempr
+           , nrispbdt
+           , nrcnpjdt
+           , cdtipcta
+           , cdagedst
+           , nrctadst
+           , nrctapgt
+        FROM DATA
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'/Grupo_'||vr_dsapcsdoc||'_ConttcPortddCtSalr')
+                      PASSING XMLTYPE(xml)
+                      COLUMNS nridenti  NUMBER       PATH 'IdentdPartAdmtd'
+                            , nrnuport  NUMBER       PATH 'NUPortddPCS'
+                            , nrconttc  VARCHAR2(21) PATH 'NUConttcPCS'
+                            , motvcont  NUMBER       PATH 'MotvConttc'
+                            , dtconttc  DATE         PATH 'DtConttc'
+                            , nrcpfcgc  NUMBER       PATH 'Grupo_APCS202_Cli/CPFCli'
+                            , dsnomcli  VARCHAR2(80) PATH 'Grupo_APCS202_Cli/NomCli'
+                            , dstelefo  VARCHAR2(20) PATH 'Grupo_APCS202_Cli/TelCli'
+                            , dsdemail  VARCHAR2(50) PATH 'Grupo_APCS202_Cli/EmailCli'
+                            , codauttc  VARCHAR2(50) PATH 'Grupo_APCS202_Cli/CodAuttcBenfcrio'
+                            , nrispbfl  NUMBER       PATH 'Grupo_APCS202_FolhaPgto/ISPBPartFolhaPgto'
+                            , nrcnpjfl  NUMBER       PATH 'Grupo_APCS202_FolhaPgto/CNPJPartFolhaPgto'
+                            , nrcnpjep  NUMBER       PATH 'Grupo_APCS202_FolhaPgto/CNPJEmprdr'
+                            , nmdoempr  VARCHAR2(50) PATH 'Grupo_APCS202_FolhaPgto/DenSocEmprdr'
+                            , nrispbdt  NUMBER       PATH 'Grupo_APCS202_Dest/ISPBPartDest'
+                            , nrcnpjdt  NUMBER       PATH 'Grupo_APCS202_Dest/CNPJPartDest'
+                            , cdtipcta  VARCHAR2(5)  PATH 'Grupo_APCS202_Dest/TpCtDest'
+                            , cdagedst  NUMBER       PATH 'Grupo_APCS202_Dest/AgCliDest'
+                            , nrctadst  NUMBER       PATH 'Grupo_APCS202_Dest/CtCliDest'
+                            , nrctapgt  NUMBER       PATH 'Grupo_APCS202_Dest/CtPagtoDest' );
+
+     -- Buscar a solicitação da contestação 
+    CURSOR cr_portab(pr_nrnuport  tbcc_portabilidade_recebe.nrnu_portabilidade%TYPE) IS
+      SELECT t.nrnu_portabilidade
+           , ROWID   dsdrowid
+        FROM tbcc_portabilidade_recebe t
+       WHERE t.nrnu_portabilidade = pr_nrnuport;
+
+    rg_portab   cr_portab%ROWTYPE;
+
+    -- Variáveis 
+    vr_dsxmlarq     CLOB;
+    vr_dsmsglog     VARCHAR2(1000);
+    vr_nmarquiv     VARCHAR2(100);
+    vr_dtarquiv     DATE;
+    vr_dscritic     VARCHAR2(1000);
+    vr_exc_erro     EXCEPTION;
+    vr_cdoperad     tbcc_portabilidade_recebe.cdoperador%TYPE;
+
+  BEGIN
+    -- Retirar o XMLNS
+    vr_dsxmlarq := fn_remove_xmlns(pr_dsxmlarq);
+
+    -- Guardar o nome e a data do arquivo
+    pc_extrai_dados_arq(pr_dsxmlarq => vr_dsxmlarq
+                       ,pr_nmarquiv => vr_nmarquiv
+                       ,pr_dtarquiv => vr_dtarquiv);
+    
+    -- Percorrer todos os dados retornados no arquivo com aprovações
+    FOR rg_dadosret IN cr_dadosapr(vr_dsxmlarq) LOOP
+  
+      -- Buscar o registro pelo código da NU contestação
+      OPEN  cr_portab(rg_dadosret.nrnuport);
+      FETCH cr_portab INTO rg_portab;
+      
+      -- Se não encontrar a solicitação de contestação
+      IF cr_portab%NOTFOUND THEN
+        -- LOGS DE EXECUCAO
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_xml_APCS202'
+                         || ' --> Não encontrado NU Portabilidade '||rg_dadosret.nrnuport;
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+        
+        -- Fechar o cursor
+        CLOSE cr_portab;
+    
+        -- Processar o próximo registro
+        CONTINUE;
+        
+      END IF;
+      
+      -- Fechar o cursor
+      CLOSE cr_portab;
+        -- INSERIR REGISTRO DE CONTESTAÇÃO SOLICITADA
+      vr_cdoperad := '1';
+      BEGIN
+        
+         INSERT INTO tbcc_portab_rec_contestacao 
+                          (nrnu_portabilidade       
+                          ,dsnu_contestacao         
+                          ,idsituacao               
+                          ,dtcontestacao            
+                          ,dsdominio_motivo         
+                          ,cdmotivo                 
+                          ,dtretorno                
+                          ,dsdominio_motivo_retorno 
+                          ,cdmotivo_retorno         
+                          ,cdoperador               
+                          ,nmarquivo_contestacao    
+                          ,nmarquivo_retorno )       
+                   VALUES (rg_dadosret.nrnuport -- nrnu_portabilidade
+                          ,rg_dadosret.nrconttc
+                          ,1 --Pendente                   
+                          ,rg_dadosret.dtconttc
+                          ,vr_dsmotivoconttc  --dsdominio_motivo
+                          ,1 --cdmotivo (Pendente)                
+                          ,null --dtretorno                
+                          ,null --dsdominio_motivo_retorno 
+                          ,null --cdmotivo_retorno         
+                          ,vr_cdoperad          -- cdoperador
+                          ,vr_nmarquiv          --nmarquivo_contestacao     
+                          ,null       );
+
+      
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Monta a mensagem de erro
+          vr_dscritic := 'Erro ao inserir registro de contestação: '||SQLERRM;
+          
+          -- LOGS DE EXECUCAO
+          BEGIN
+            vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                           || 'PCPS0002.pc_proc_xml_APCS102'
+                           || ' --> Erro ao incluir registro de contestação: '||rg_dadosret.nrconttc;
+            
+            -- Incluir log de execução.
+            BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                      ,pr_ind_tipo_log => 1
+                                      ,pr_des_log      => vr_dsmsglog
+                                      ,pr_nmarqlog     => vr_dsarqlg);
+          EXCEPTION
+            WHEN OTHERS THEN
+              NULL;
+          END;
+          
+        END;  
+      
+    END LOOP;
+  
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_proc_xml_APCS202. ' ||SQLERRM;
+  END pc_proc_xml_APCS202;
+  --
+  PROCEDURE pc_gera_XML_APCS203(pr_nmarqenv IN     VARCHAR2      --> Nome do arquivo 
+                               ,pr_dsxmlarq IN OUT XMLTYPE       --> Conteúdo do arquivo
+                               ,pr_inddados    OUT BOOLEAN       --> Indica se o arquivo possui dados
+                               ,pr_idfimreg    OUT BOOLEAN       --> Indica que finalizou os registros
+                               ,pr_dscritic    OUT VARCHAR2) IS  --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_gera_XML_APCS203
+    --  Sistema  : Procedure para gerar o arquivo: 
+    --                        APCS203 - Instituição Banco da Folha responde solicitação de Contestação 
+    --                                  Aprovada ou Reprovada.
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura dos retornos pendentes e enviar via arquivo
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+    
+    -- Buscar os dados das solicitações que estão para ser enviadas
+    CURSOR cr_dados IS 
+    SELECT t.ROWID dsdrowid
+           , a.cdcooper
+           , a.nrdconta
+           , a.nrispb_destinataria 
+           , t.nrnu_portabilidade
+           , a.nrispb_banco_folha
+           , t.idsituacao
+           , t.dsnu_contestacao
+           , t.cdmotivo cdmotivo
+        FROM tbcc_portab_rec_contestacao t
+            ,tbcc_portabilidade_recebe a
+        WHERE a.nrnu_portabilidade = t.nrnu_portabilidade
+          AND t.idsituacao  in (2,3)  -- 1 = Pendente / 2 = Aprovada / 3 = Reprovada
+          AND t.dtretorno   IS NULL;
+
+    vr_dsapcsdoc     CONSTANT VARCHAR2(10) := 'APCS203';
+
+    vr_dsxmlarq      xmltype;         --> XML do arquivo
+    vr_exc_erro      EXCEPTION;       --> Controle de exceção
+    
+    vr_nrctpart      VARCHAR2(20); 
+    vr_dscritic      VARCHAR2(1000);
+    vr_nrposxml      NUMBER;
+    vr_nrposapr      NUMBER;
+    vr_nrposrep      NUMBER;
+    
+    -- Procedure para atualizar o registro de contestação retornado
+    PROCEDURE pc_atualiza_retorno(pr_dsdrowid  IN VARCHAR2) IS
+
+      vr_nrnuportab   NUMBER;
+    
+    BEGIN
+      
+      UPDATE tbcc_portab_rec_contestacao  t
+         SET t.dtretorno          = SYSDATE
+           , t.nmarquivo_retorno = pr_nmarqenv
+      WHERE ROWID = pr_dsdrowid
+
+       RETURNING t.nrnu_portabilidade  INTO vr_nrnuportab;
+      
+    END;
+    
+    -- Rotina generica para inserir os tags - Reduzir parametros e centralizar tratamento de erros
+    PROCEDURE pc_insere_tag(pr_tag_pai  IN VARCHAR2 
+                           ,pr_tag_nova IN VARCHAR2
+                           ,pr_tag_cont IN VARCHAR2
+                           ,pr_posicao  IN NUMBER DEFAULT 0)  IS
+      
+    BEGIN
+      
+      -- Inserir a tag
+      GENE0007.pc_insere_tag(pr_xml      => vr_dsxmlarq
+                            ,pr_tag_pai  => pr_tag_pai
+                            ,pr_posicao  => pr_posicao
+                            ,pr_tag_nova => pr_tag_nova
+                            ,pr_tag_cont => pr_tag_cont
+                            ,pr_des_erro => vr_dscritic);
+       
+      -- Se ocorrer erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;  
+    
+    END pc_insere_tag;
+    
+  BEGIN
+    
+    -- Indicar que não foram inclusos dados
+    pr_inddados := FALSE;
+    
+    -- Indica que todos os registros foram processados
+    pr_idfimreg := TRUE;
+    
+    -- Montar a estrutura do XML
+    vr_dsxmlarq := pr_dsxmlarq;
+    
+    -- Inserir tag base do arquivo
+    pc_insere_tag(pr_tag_pai  => 'SISARQ'
+                 ,pr_tag_nova => vr_dsapcsdoc
+                 ,pr_tag_cont => NULL);
+    
+    -- Percorrer todas as solicitações que estão aguardando para serem enviadas
+    FOR rg_dados IN cr_dados LOOP
+    
+      -- Indicar que foram inclusos dados
+      pr_inddados := TRUE;
+      
+      -- Definir o indice da tag
+      vr_nrposxml := NVL((vr_nrposxml+1),0);
+      
+      /*************** INICIO - Grupo Portabilidade Conta Salário ***************/
+      pc_insere_tag(pr_tag_pai  => vr_dsapcsdoc
+                   ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_RespConttcPortddCtSalr'
+                   ,pr_tag_cont => NULL);
+
+      -- Identificador Participante Administrativo - CNPJ Base
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_RespConttcPortddCtSalr'
+                   ,pr_tag_nova => 'IdentdPartAdmtd'
+                   ,pr_tag_cont => LPAD(rg_dados.nrispb_banco_folha,8,'0')
+                   ,pr_posicao  => vr_nrposxml );
+      
+      -- Formar o número de controle, conforme chave da tabela
+      vr_nrctpart := fn_gera_NumCtrlPart(rg_dados.cdcooper
+                                        ,rg_dados.nrdconta
+                                        ,0); -- Passar zero, pois não tem contador nos recebidos, o controle é
+                                             -- feito através do NU Portabilidade
+      
+      -- Número de Controle do Participante
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_RespConttcPortddCtSalr'
+                   ,pr_tag_nova => 'NumCtrlPart'
+                   ,pr_tag_cont => vr_nrctpart 
+                   ,pr_posicao  => vr_nrposxml);
+      
+      -- Número único da Portabilidade PCS
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_RespConttcPortddCtSalr'
+                   ,pr_tag_nova => 'NUPortddPCS'
+                   ,pr_tag_cont => rg_dados.nrnu_portabilidade 
+                   ,pr_posicao  => vr_nrposxml);
+
+      -- Número único da Contestação PCS
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_RespConttcPortddCtSalr'
+                   ,pr_tag_nova => 'NUConttcPCS'
+                   ,pr_tag_cont => rg_dados.dsnu_contestacao 
+                   ,pr_posicao  => vr_nrposxml);
+      
+      -- Se a solicitação foi reprovada
+      IF rg_dados.idsituacao = 3 THEN
+        
+        vr_nrposrep := NVL((vr_nrposrep+1),0);
+      
+        /*************** INICIO - Grupo Reprova Portabilidade Conta Salário ***************/
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_RespConttcPortddCtSalr'
+                     ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_RespConttcRepvd'
+                     ,pr_tag_cont => NULL 
+                     ,pr_posicao  => vr_nrposxml);
+      
+        -- Motivo Reprovação Contestação de Conta Salário
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_RespConttcRepvd'
+                     ,pr_tag_nova => 'MotvRespConttcRepvd'
+                     ,pr_tag_cont => LPAD(rg_dados.cdmotivo,3,'0')
+                     ,pr_posicao  => vr_nrposrep );
+    
+        -- Data Cancelamento Contestação de Conta Salário
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_RespConttcRepvd'
+                     ,pr_tag_nova => 'DtRespConttcRepvd'
+                     ,pr_tag_cont => to_char(SYSDATE,vr_dateformat)
+                     ,pr_posicao  => vr_nrposrep );
+      
+        /*************** FIM - Grupo Reprova Portabilidade Conta Salário ***************/
+      
+      ELSE 
+        
+        vr_nrposapr := NVL((vr_nrposapr+1),0);
+      
+       /*************** INICIO - Grupo Aprova Contestação Conta Salário ***************/
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_RespConttcPortddCtSalr'
+                     ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_RespConttcAprovd'
+                     ,pr_tag_cont => NULL 
+                     ,pr_posicao  => vr_nrposxml);
+      
+        -- Motivo Reprovação Contestação de Conta Salário
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_RespConttcAprovd'
+                     ,pr_tag_nova => 'MotvRespConttcAprovd'
+                     ,pr_tag_cont => LPAD(rg_dados.cdmotivo,3,'0')
+                     ,pr_posicao  => vr_nrposapr );
+    
+        -- Data Cancelamento Contestação de Conta Salário
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_RespConttcAprovd'
+                     ,pr_tag_nova => 'DtRespConttcAprovd'
+                     ,pr_tag_cont => to_char(SYSDATE,vr_dateformat)
+                     ,pr_posicao  => vr_nrposapr );
+       /******************* FIM - Grupo Aprova Portabilidade Conta Salário  *******************/
+        
+      END IF;
+      
+      -- Atualizar registro processado
+      pc_atualiza_retorno(rg_dados.dsdrowid);
+      
+      -- Verificar o tamanho do arquivo que está sendo gerado
+      IF length(vr_dsxmlarq.getClobVal()) > 30000 THEN
+        -- Indica que ainda faltam registros a processar
+        pr_idfimreg := FALSE;
+        -- demais registros serão enviados posteriormente
+        EXIT;
+      END IF;
+      
+    END LOOP;
+    
+    -- Retorna o XML do arquivo
+    pr_dsxmlarq := vr_dsxmlarq;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_gera_XML_APCS203. ' ||SQLERRM;
+  END pc_gera_XML_APCS203;
+  --
+  PROCEDURE pc_proc_RET_APCS203(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
+                               ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_proc_RET_APCS203
+    --  Sistema  : Procedure para ler o arquivo: 
+    --                        APCS201RET - PCPS Informa Resposta a Contestação de Portabilidade de Conta Salário
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura do arquivo de retorno, atualizando registros que apresentaram problemas
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+
+    -- CONTANTES
+    vr_dsapcsdoc     CONSTANT VARCHAR2(10) := 'APCS203';
+    
+    -- CURSORES
+    -- Retorna as rejeições que ocorreram no arquivo
+    CURSOR cr_rejeitada(pr_dsxmlarq  CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT dscoderro 
+           , nrindpart 
+           , erindpart 
+           , nrctrlpart
+           , erctrlpart
+           , nrnuportab
+           , ernuportab
+           , nrnuconttc
+           , ernuconttc
+           , nrmotrep  
+           , ermotvcont
+           , erdtconttc
+        FROM DATA 
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'RET/Grupo_'||vr_dsapcsdoc||'RET_RespContccPortddCtSalrRecsd')
+                      PASSING XMLTYPE(xml)
+                      COLUMNS dscoderro   VARCHAR2(20) PATH '@CodErro'
+                            , nrindpart   VARCHAR2(50) PATH 'IdentdPartAdmtd'
+                            , erindpart   VARCHAR2(20) PATH 'IdentdPartAdmtd/@CodErro' 
+                            , nrctrlpart  VARCHAR2(20) PATH 'NumCtrlPart'
+                            , erctrlpart  VARCHAR2(20) PATH 'NumCtrlPart/@CodErro'
+                            , nrnuportab  NUMBER       PATH 'NUPortddPCS'
+                            , ernuportab  VARCHAR2(20) PATH 'NUPortddPCS/@CodErro'
+                            , nrnuconttc  VARCHAR2(21) PATH 'NUConttcPCS'
+                            , ernuconttc  VARCHAR2(20) PATH 'NUConttcPCS/@CodErro'
+                            , nrmotrep    NUMBER       PATH 'Grupo_APCS203RET_RespConttcRepvd/MotvRespConttcRepvd'
+                            , ermotvcont  NUMBER       PATH 'Grupo_APCS203RET_RespConttcRepvd/MotvRespConttcRepvd/@CodErro'
+                            , erdtconttc  VARCHAR2(20) PATH 'Grupo_APCS203RET_RespConttcRepvd/DtRespConttcRepvd/@CodErro');
+    
+    -- Percorrer os registros de aceite   
+    CURSOR cr_aceita(pr_dsxmlarq  CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT nrindpart 
+           , nrctrlpart
+           , nrnuportab
+           , nrnuconttc
+        FROM DATA 
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'RET/Grupo_'||vr_dsapcsdoc||'RET_RespConttcPortddCtSalrActo')
+                      PASSING XMLTYPE(xml)
+                      COLUMNS nrindpart   VARCHAR2(50) PATH 'IdentdPartAdmtd'
+                            , nrctrlpart  VARCHAR2(20) PATH 'NumCtrlPart'
+                            , nrnuportab  NUMBER       PATH 'NUPortddPCS'
+                            , nrnuconttc  VARCHAR2(21) PATH 'NUConttcPCS');
+    
+    -- Retornar o registro correspondente enviado
+    CURSOR cr_prtreceb(pr_nrnuport  tbcc_portab_rec_contestacao.nrnu_portabilidade%TYPE
+                      ,pr_nrnucont  tbcc_portab_rec_contestacao.dsnu_contestacao%TYPE) IS
+      SELECT t.ROWID dsdrowid
+           , t.idsituacao 
+           , t.dsdominio_motivo_retorno   dsdominio
+           , t.cdmotivo_retorno           cdmotivo
+           , r.cdcooper
+           , r.nrdconta
+           , r.idsituacao  idsitport
+        FROM tbcc_portabilidade_recebe    r
+           , tbcc_portab_rec_contestacao  t
+       WHERE r.nrnu_portabilidade = t.nrnu_portabilidade
+         AND t.nrnu_portabilidade = pr_nrnuport
+         AND t.dsnu_contestacao   = pr_nrnucont;
+    rg_prtreceb   cr_prtreceb%ROWTYPE;
+    
+    -- Variáveis
+    vr_dsxmlarq   	 CLOB;
+    vr_dsmsglog      VARCHAR2(1000);
+    vr_nmarquiv      VARCHAR2(100);
+    vr_cdmoterr      VARCHAR2(100);
+    vr_nrdrowid      VARCHAR2(100);
+    vr_dtarquiv      DATE;
+     
+  BEGIN
+    
+    -- Remover o XMLNS
+    vr_dsxmlarq := fn_remove_xmlns(pr_dsxmlarq);  
+    
+    -- Guardar o nome e a data do arquivo
+    pc_extrai_dados_arq(pr_dsxmlarq => vr_dsxmlarq
+                       ,pr_nmarquiv => vr_nmarquiv
+                       ,pr_dtarquiv => vr_dtarquiv);
+    
+    -- Percorrer todas as rejeições
+    FOR rg_dados IN cr_rejeitada(vr_dsxmlarq) LOOP
+      -- Limpar erros do registro anterior
+      vr_cdmoterr := NULL;
+    
+      -- Buscar o registro de envio
+      OPEN  cr_prtreceb(rg_dados.nrnuportab,rg_dados.nrnuconttc);
+      FETCH cr_prtreceb INTO rg_prtreceb;
+      
+      -- Se não encontrar registro
+      IF cr_prtreceb%NOTFOUND THEN
+        
+        -- Fechar o cursor
+        CLOSE cr_prtreceb;
+      
+        -- Registrar mensagem no log e pular para o próximo registro
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_RET_APCS203'
+                         || ' --> Nao encontrado registro de retorno para o NU Portabilidade: '||rg_dados.nrnuportab;
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        
+          -- Próximo registro
+          CONTINUE;
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+        
+      END IF;
+      -- Fechar o cursor
+      CLOSE cr_prtreceb;
+      
+      DECLARE
+        vr_achouerro  EXCEPTION;
+      BEGIN
+        -- Valida a ocorrencia de algum erro
+        IF rg_dados.dscoderro IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.dscoderro;
+          RAISE vr_achouerro;
+        END IF;
+        
+        IF rg_dados.erindpart  IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.erindpart;
+          RAISE vr_achouerro;
+        END IF;
+        
+        IF rg_dados.erctrlpart IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.erctrlpart;
+          RAISE vr_achouerro;
+        END IF;
+        
+        IF rg_dados.ernuportab IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernuportab;
+          RAISE vr_achouerro;
+        END IF;
+        
+        IF rg_dados.ernuconttc IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernuconttc;
+          RAISE vr_achouerro;
+        END IF;
+        
+        IF rg_dados.ermotvcont IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ermotvcont;
+          RAISE vr_achouerro;
+        END IF;
+        
+        IF rg_dados.erdtconttc IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.erdtconttc;
+          RAISE vr_achouerro;
+        END IF;
+        
+      EXCEPTION
+        WHEN vr_achouerro THEN
+          NULL;
+      END;
+      
+      -- Se tem motivo de erro
+      IF vr_cdmoterr IS NOT NULL THEN
+        -- Atualiza a solicitação para Rejeitada
+        UPDATE tbcc_portab_rec_contestacao t
+           SET t.idsituacao               = 5 -- Rejeitada (dominio: SIT_PORTAB_CONTESTACAO_RECEBE)
+             , t.dtretorno                = vr_dtarquiv
+             , t.dsdominio_motivo_retorno = vr_dsdominioerro -- Dominio dos erros da CIP
+             , t.cdmotivo_retorno         = vr_cdmoterr  
+             , t.nmarquivo_retorno        = vr_nmarquiv
+         WHERE ROWID = rg_prtreceb.dsdrowid;
+      END IF; 
+      
+    END LOOP;
+    
+    -- Percorrer todas as rejeições
+    FOR rg_dados IN cr_aceita(vr_dsxmlarq) LOOP
+      
+      -- Buscar o registro de envio
+      OPEN  cr_prtreceb(rg_dados.nrnuportab,rg_dados.nrnuconttc);
+      FETCH cr_prtreceb INTO rg_prtreceb;
+      
+      -- Se não encontrar registro
+      IF cr_prtreceb%NOTFOUND THEN
+        
+        -- Fechar o cursor
+        CLOSE cr_prtreceb;
+      
+        -- Registrar mensagem no log e pular para o próximo registro
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_RET_APCS203'
+                         || ' --> Nao encontrado registro de retorno para o NU Portabilidade: '||rg_dados.nrnuportab;
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        
+          -- Próximo registro
+          CONTINUE;
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+        
+      END IF;
+      -- Fechar o cursor
+      CLOSE cr_prtreceb;
+      
+      -- Verificar se a resposta enviada foi REPROVAÇÃO
+      IF rg_prtreceb.idsituacao = 3 THEN
+        
+        -- Deve reprovar a portabilidade
+        UPDATE tbcc_portabilidade_recebe t
+           SET t.idsituacao         = 3 -- Reprova
+             , t.dsdominio_motivo   = rg_prtreceb.dsdominio
+             , t.cdmotivo           = rg_prtreceb.cdmotivo
+         WHERE t.nrnu_portabilidade = rg_dados.nrnuportab;
+        
+        -- Gerar log de reprovação
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log(pr_cdcooper => rg_prtreceb.cdcooper ,
+                             pr_cdoperad => '1',
+                             pr_dscritic => ' ',
+                             pr_dsorigem => '',
+                             pr_dstransa => 'Reprovacao por Contestacao de Portabilidade',
+                             pr_dttransa => TRUNC(SYSDATE),
+                             pr_flgtrans => 1,
+                             pr_hrtransa => to_char(SYSDATE, 'SSSSS'),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => ' ',
+                             pr_nrdconta => rg_prtreceb.nrdconta,
+                             pr_nrdrowid => vr_nrdrowid);
+    
+        -- Gravar o Nu Portabilidade
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Nu Portabilidade',
+                                  pr_dsdadant => to_char(rg_dados.nrnuportab),
+                                  pr_dsdadatu => to_char(rg_dados.nrnuportab));
+        
+        -- Gravar NU Contestação
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Nu Contestacao',
+                                  pr_dsdadant => rg_dados.nrnuconttc,
+                                  pr_dsdadatu => rg_dados.nrnuconttc);
+                               
+        -- Gravar a Situação
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Situacao',
+                                  pr_dsdadant => rg_prtreceb.idsitport,
+                                  pr_dsdadatu => 3 ); -- Nova situação : Reprovada
+        
+        -- Gravar o dominio do motivo 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Dominio Motivo',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => rg_prtreceb.dsdominio ); 
+        
+        -- Gravar o motivo 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Motivo',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => rg_prtreceb.cdmotivo ); 
+      END IF;
+      
+    END LOOP; 
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_proc_RET_APCS203. ' ||SQLERRM;
+  END pc_proc_RET_APCS203;
+  
+  
+  PROCEDURE pc_proc_ERR_APCS203(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
+                               ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_proc_ERR_APCS203
+    --  Sistema  : Procedure para ler o arquivo: 
+    --             APCS203ERR - Instituição Banco da Folha responde solicitação de Portabilidade 
+    --                                     Aprovada ou Reprovada.
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura do arquivo com erro, retornando os registros que haviam sido enviados
+    --             para serem reenviados;
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+
+    -- CURSORES
+    -- Retorna o código do erro
+    CURSOR cr_ret_erro(pr_dsxmlarq  CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT nmarquiv
+           , cderrret
+        FROM DATA 
+           , XMLTABLE('/APCSDOC/BCARQ'
+                      PASSING XMLTYPE(xml)
+                      COLUMNS nmarquiv  VARCHAR2(100) PATH 'NomArq'
+                            , cderrret  VARCHAR2(10)  PATH 'NomArq/@CodErro');
+    
+    -- Variáveis
+    vr_dsarqxml      CLOB;
+    vr_nmarquiv      VARCHAR2(100);
+    vr_nmarqenv      VARCHAR2(100);
+    vr_cderrret      VARCHAR2(10);
+    
+  BEGIN
+    
+    -- Remover o xmlns do arquivo
+    vr_dsarqxml := fn_remove_xmlns(pr_dsxmlarq);
+  
+    -- Percorrer todas as aprovações retornadas
+    OPEN  cr_ret_erro(vr_dsarqxml);
+    FETCH cr_ret_erro INTO vr_nmarquiv
+                         , vr_cderrret;
+                         
+    -- Se não encontrar dados
+    IF cr_ret_erro%NOTFOUND THEN
+      -- Crítica
+      pr_dscritic := 'Não foi possível extrair conteúdo do arquivo.';
+      
+      -- Fechar o cursor
+      CLOSE cr_ret_erro;
+    
+      -- Encerrar a rotina
+      RETURN;
+    END IF;
+    
+    -- Fechar o cursor
+    CLOSE cr_ret_erro;
+    
+    -- Remover o "_ERR" da informação do nome do arquivo
+    vr_nmarqenv := REPLACE(vr_nmarquiv, '_ERR', NULL);
+    
+    -- ATUALIZAR TODOS OS REGISTROS QUE FORAM ENVIADOS NO ARQUIVO 
+    UPDATE tbcc_portab_rec_contestacao T
+       SET t.dtretorno                 = NULL
+         , t.nmarquivo_retorno         = NULL
+     WHERE t.nmarquivo_retorno         = vr_nmarqenv;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_proc_ERR_APCS203. ' ||SQLERRM;
+  END pc_proc_ERR_APCS203;
+  --
+  PROCEDURE pc_proc_XML_APCS204(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
+                               ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_proc_xml_APCS204
+    --  Sistema  : Procedure para ler o arquivo: 
+    --                        APCS404 - CIP informa a resposta da Solicitação de Contestação Aprovada ou Reprovada
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura do arquivo atualizando os registros de Contestação conforme situação.
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+
+    -- CONTANTES
+    vr_dsapcsdoc     CONSTANT VARCHAR2(10) := 'APCS204';
+        
+    -- CURSOR
+    CURSOR cr_dados(pr_dsxmlarq CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT nrconttc
+           , nrmotapr
+           , to_date(dtaprova, vr_dateformat) dtaprova 
+           , nrmotrep
+           , to_date(dtreprova, vr_dateformat) dtreprova
+        FROM DATA
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'/Grupo_'||vr_dsapcsdoc||'_RespConttcPortddCtSalr')
+                      PASSING XMLTYPE(xml)
+                      COLUMNS nrconttc  VARCHAR2(21) PATH 'NUConttcPCS'
+                            , nrmotapr  VARCHAR2(20) PATH 'Grupo_APCS204_RespConttcAprovd/MotvRespConttcAprovd'
+                            , dtaprova  VARCHAR2(20) PATH 'Grupo_APCS204_RespConttcAprovd/DtRespConttcAprovd'
+                            , nrmotrep  NUMBER       PATH 'Grupo_APCS204_RespConttcRepvd/MotvRespConttcRepvd'
+                            , dtreprova VARCHAR2(30) PATH 'Grupo_APCS204_RespConttcRepvd/DtRespConttcRepvd'  );
+                                                     
+    -- Buscar a solicitação da contestação 
+    CURSOR cr_portab(pr_nrnuport  tbcc_portab_env_contestacao.dsnu_contestacao%TYPE) IS
+      SELECT t.cdcooper
+           , t.nrdconta
+           , t.nrsolicitacao nrsolici
+           , t.nrcontestacao
+           , e.nrnu_portabilidade
+           , t.idsituacao
+           , t.ROWID   dsdrowid
+        FROM tbcc_portabilidade_envia    e
+           , tbcc_portab_env_contestacao t
+       WHERE e.nrsolicitacao             = t.nrsolicitacao
+         AND e.nrdconta                  = t.nrdconta
+         AND e.cdcooper                  = t.cdcooper
+         AND to_char(t.dsnu_contestacao) = pr_nrnuport;
+    rg_portab   cr_portab%ROWTYPE;
+    
+    -- Variáveis 
+    vr_dsxmlarq     CLOB;
+    vr_dsmsglog     VARCHAR2(1000);
+    vr_nmarquiv     VARCHAR2(100);
+    vr_dtarquiv     DATE;
+    vr_nrdrowid     VARCHAR2(100);
+    
+  BEGIN
+    
+    -- Retirar o XMLNS
+    vr_dsxmlarq := fn_remove_xmlns(pr_dsxmlarq);
+    
+    -- Guardar o nome e a data do arquivo
+    pc_extrai_dados_arq(pr_dsxmlarq => vr_dsxmlarq
+                       ,pr_nmarquiv => vr_nmarquiv
+                       ,pr_dtarquiv => vr_dtarquiv);
+    
+    -- Percorrer todos os dados retornados no arquivo com aprovações
+    FOR rg_dados IN cr_dados(vr_dsxmlarq) LOOP
+  
+      -- Buscar o registro pelo código da NU contestação
+      OPEN  cr_portab(rg_dados.nrconttc);
+      FETCH cr_portab INTO rg_portab;
+      
+      -- Se não encontrar a solicitação de contestação
+      IF cr_portab%NOTFOUND THEN
+        -- LOGS DE EXECUCAO
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_xml_APCS204'
+                         || ' --> Não encontrado NU Contestação '||rg_dados.nrconttc;
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+        
+        -- Fechar o cursor
+        CLOSE cr_portab;
+    
+        -- Processar o próximo registro
+        CONTINUE;
+        
+      END IF;
+      
+      -- Fechar o cursor
+      CLOSE cr_portab;
+    
+      -- Se tem motivo de aprovação -------------------------
+      IF  rg_dados.nrmotapr IS NOT NULL THEN
+        
+        -- Atualiza a contestação para aprovada 
+        UPDATE tbcc_portab_env_contestacao t
+           SET t.idsituacao               = 3 -- Aprovada
+             , t.dsdominio_motivo_retorno = vr_dsmotivoresapv
+             , t.cdmotivo_retorno         = rg_dados.nrmotapr
+             , t.dtretorno                = vr_dtarquiv
+             , t.nmarquivo_retorno        = vr_nmarquiv
+         WHERE ROWID = rg_portab.dsdrowid;
+      
+      END IF;
+      
+      -- Se tem motivo de reprovação ------------------------
+      IF  rg_dados.nrmotrep IS NOT NULL THEN
+        
+        -- Atualiza a contestação para Reprovada
+        UPDATE tbcc_portab_env_contestacao t
+           SET t.idsituacao               = 4 -- Reprovada
+             , t.dsdominio_motivo_retorno = vr_dsmotivoresrep
+             , t.cdmotivo_retorno         = rg_dados.nrmotrep
+             , t.dtretorno                = rg_dados.dtreprova --vr_dtarquiv
+             , t.nmarquivo_retorno        = vr_nmarquiv
+         WHERE ROWID = rg_portab.dsdrowid;
+        
+        -- Apagar possíveis erros de envio
+        DELETE FROM tbcc_portabilidade_env_erros t
+         WHERE t.cdcooper      = rg_portab.cdcooper
+           AND t.nrdconta      = rg_portab.nrdconta
+           AND t.nrsolicitacao = rg_portab.nrsolici;
+           
+        -- Reprova a portabilidade de salário
+        UPDATE tbcc_portabilidade_envia t
+           SET t.idsituacao         = 4 -- Reprovada
+             , t.dsdominio_motivo   = vr_dsmotivoresrep -- Motivo de contestacao reprovada
+             , t.cdmotivo           = rg_dados.nrmotrep
+         WHERE t.nrnu_portabilidade = rg_portab.nrnu_portabilidade;
+      
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log(pr_cdcooper => rg_portab.cdcooper ,
+                             pr_cdoperad => '1',
+                             pr_dscritic => ' ',
+                             pr_dsorigem => '',
+                             pr_dstransa => 'Reprovacao por Contestacao de Portabilidade',
+                             pr_dttransa => TRUNC(SYSDATE),
+                             pr_flgtrans => 1,
+                             pr_hrtransa => to_char(SYSDATE, 'SSSSS'),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => ' ',
+                             pr_nrdconta => rg_portab.nrdconta,
+                             pr_nrdrowid => vr_nrdrowid);
+    
+        -- Gravar o Nu Portabilidade
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Nu Portabilidade',
+                                  pr_dsdadant => to_char(rg_portab.nrnu_portabilidade),
+                                  pr_dsdadatu => to_char(rg_portab.nrnu_portabilidade));
+                                  
+        -- Gravar a Situação
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Situacao',
+                                  pr_dsdadant => rg_portab.idsituacao,
+                                  pr_dsdadatu => 4 ); -- Nova situação : Reprovada
+        
+        -- Gravar o dominio do motivo 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Dominio Motivo',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => vr_dsmotivoresrep ); 
+        
+        -- Gravar o motivo 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Motivo',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => rg_dados.nrmotrep ); 
+        
+      END IF;
+    
+    END LOOP;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_proc_xml_APCS204. ' ||SQLERRM;
+  END pc_proc_xml_APCS204;
+  --
+  PROCEDURE pc_proc_XML_APCS205(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
+                                 ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_proc_xml_APCS208
+    --  Sistema  : Procedure para ler o arquivo: 
+    --                        APCS205 - encerramento da contestação da portabilidade salário por falta de
+    --                        resposta do Participante Folha de Pagamento.
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura do arquivo atualizando os registros de solicitação conforme situação.
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+
+    -- CONTANTES
+    vr_dsapcsdoc     CONSTANT VARCHAR2(10) := 'APCS205';
+        
+    -- CURSOR
+    CURSOR cr_dadosret(pr_dsxmlarq   CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT nridenti
+           , nrnuport
+           , nrconttc   
+           , nrmotact
+           , to_date(dtaceite, vr_dateformat) dtaceite
+        FROM DATA
+           , XMLTABLE(('APCSDOC/SISARQ/'||vr_dsapcsdoc||'/Grupo_'||vr_dsapcsdoc||'_EncrmntConttcPortddCtSalr')
+                      PASSING XMLTYPE(xml)
+                      COLUMNS nridenti  NUMBER       PATH 'dentdPartAdmtd'
+                            , nrnuport  NUMBER       PATH 'NUPortddPCS'
+                            , nrconttc  VARCHAR2(21) PATH 'NUConttcPCS'
+                            , nrmotact  NUMBER       PATH 'MotvEncrmntConttc'
+                            , dtaceite  VARCHAR2(50) PATH 'DtEncrmntConttc' );
+
+    -- Buscar a solicitação da portabilidade recebidas
+    CURSOR cr_portab_recebe(pr_nrnuport  tbcc_portab_rec_contestacao.nrnu_portabilidade%TYPE
+                           ,pr_nrconttc  tbcc_portab_rec_contestacao.dsnu_contestacao%TYPE ) IS
+      SELECT t.dsnu_contestacao
+           , ROWID   dsdrowid
+        FROM tbcc_portab_rec_contestacao t
+       WHERE t.nrnu_portabilidade = pr_nrnuport
+         AND t.dsnu_contestacao   = pr_nrconttc;
+    
+    -- Buscar a solicitação da contestação enviadas
+    CURSOR cr_portab_envia(pr_nrconttc  tbcc_portab_env_contestacao.dsnu_contestacao%TYPE) IS
+      SELECT t.dsnu_contestacao
+           , ROWID   dsdrowid
+        FROM tbcc_portab_env_contestacao t
+       WHERE t.dsnu_contestacao  = pr_nrconttc;
+    
+    -- Variáveis 
+    vr_dsxmlarq     CLOB;
+    vr_dsmsglog     VARCHAR2(1000);
+    vr_dsnucont     VARCHAR2(30);
+    vr_dsdrowid     VARCHAR2(100);
+    vr_nmarquiv     VARCHAR2(100);
+    vr_dtarquiv     DATE;
+    
+  BEGIN
+    
+    -- Retirar o xmlns do xml
+    vr_dsxmlarq := fn_remove_xmlns(pr_dsxmlarq);  
+    
+    -- Guardar o nome e a data do arquivo
+    pc_extrai_dados_arq(pr_dsxmlarq => vr_dsxmlarq
+                       ,pr_nmarquiv => vr_nmarquiv
+                       ,pr_dtarquiv => vr_dtarquiv);
+    
+    -- Percorrer todos os dados retornados no arquivo 
+    FOR rg_dadosret IN cr_dadosret(vr_dsxmlarq) LOOP
+  
+      -- Buscar o registro pelo código da NU portabilidade/contestação
+      OPEN  cr_portab_recebe(rg_dadosret.nrnuport,rg_dadosret.nrconttc);
+      FETCH cr_portab_recebe INTO vr_dsnucont, vr_dsdrowid;
+      
+      -- Se não encontrar a solicitação de portabilidade
+      IF cr_portab_recebe%NOTFOUND THEN
+        vr_dsnucont := NULL;
+        vr_dsdrowid := NULL;
+        
+        -- Buscar o registro pelo código da NU contestação
+        OPEN  cr_portab_envia(rg_dadosret.nrconttc);
+        FETCH cr_portab_envia INTO vr_dsnucont, vr_dsdrowid;
+        
+        -- Se não encontrar a solicitação de portabilidade
+        IF cr_portab_envia%NOTFOUND THEN
+          vr_dsnucont := NULL;
+          vr_dsdrowid := NULL;
+        ELSE
+          -- Atualiza a solicitação para Fechada
+          UPDATE tbcc_portab_env_contestacao t
+             SET t.idsituacao        = 5 -- Fechada sem resposta
+               , t.dsdominio_motivo  = vr_dsmotivoencerr
+               , t.cdmotivo          = rg_dadosret.nrmotact
+               , t.dtretorno         = vr_dtarquiv
+               , t.nmarquivo_retorno = vr_nmarquiv
+           WHERE ROWID = vr_dsdrowid;
+         
+        END IF;
+        
+        -- Fechar o cursor
+        CLOSE cr_portab_envia;
+      
+      ELSE 
+        
+        -- Atualiza a solicitação para Fecha sem resposta
+        UPDATE tbcc_portab_rec_contestacao t
+           SET t.idsituacao         = 4 -- Fechada sem resposta
+             , t.dsdominio_motivo   = vr_dsmotivoencerr 
+             , t.cdmotivo           = rg_dadosret.nrmotact
+             , t.dtretorno          = vr_dtarquiv
+             , t.nmarquivo_retorno  = vr_nmarquiv
+         WHERE ROWID = vr_dsdrowid;
+       
+      END IF;
+      
+      -- Fechar o cursor
+      CLOSE cr_portab_recebe;
+        
+      
+      -- Se não encontrar a solicitação de portabilidade
+      IF vr_dsnucont IS NULL THEN
+        -- LOGS DE EXECUCAO
+        BEGIN
+          vr_dsmsglog := to_char(SYSDATE,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_xml_APCS205'
+                         || ' --> Não encontrado NU Contestação '||rg_dadosret.nrconttc;
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+        
+        -- Processar o próximo registro
+        CONTINUE;
+        
+      END IF;
+      
+    END LOOP;
+        
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_proc_xml_APCS205. ' ||SQLERRM;
+  END pc_proc_xml_APCS205;
+  --
+  PROCEDURE pc_gera_XML_APCS301(pr_nmarqenv IN     VARCHAR2      --> Nome do arquivo 
+                               ,pr_dsxmlarq IN OUT XMLTYPE       --> Conteúdo do arquivo
+                               ,pr_inddados    OUT BOOLEAN       --> Indica se o arquivo possui dados
+                               ,pr_idfimreg    OUT BOOLEAN       --> Indica que finalizou os registros
+                               ,pr_dscritic    OUT VARCHAR2) IS  --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_gera_XML_APCS301
+    --  Sistema  : Procedure para gerar o arquivo: 
+    --                        APCS301 - Destinado ao Participante Folha regularizar as solicitações de portabilidade
+    --                                  de conta salário.
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Fevereiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura dos retornos pendentes e enviar via arquivo
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+    
+    -- Buscar os dados das solicitações que estão para ser enviadas
+    CURSOR cr_dados IS 
+      SELECT a.ROWID dsdrowid
+          ,a.idaprova_reprova
+          ,a.dtregularizacao
+          ,a.dsdominio_motivo
+          ,a.cdmotivo
+          ,t.nrispb_banco_folha
+          ,t.cdcooper
+          ,t.nrdconta
+          ,t.nrnu_portabilidade
+          ,t.nrcpfcgc
+          ,t.nmprimtl
+          ,t.dstelefone
+          ,t.dsdemail
+          ,t.nrcnpj_banco_folha
+          ,t.nrcnpj_empregador
+          ,t.dsnome_empregador
+          ,t.nrispb_destinataria
+          ,t.nrcnpj_destinataria
+          ,t.cdtipo_cta_destinataria
+          ,t.cdagencia_destinataria
+          ,t.nrdconta_destinataria
+      FROM tbcc_portabilidade_recebe t
+          ,tbcc_portab_regularizacao a
+     WHERE t.nrnu_portabilidade      =  a.nrnu_portabilidade
+       AND a.idsituacao  = 1  -- 1 = Pendente / 2 = Aprovada / 3 = Reprovada
+       AND a.dtretorno IS NULL
+       ORDER BY a.dtregularizacao;
+    
+    vr_dsapcsdoc     CONSTANT VARCHAR2(10) := 'APCS301';
+
+    vr_dsxmlarq      xmltype;         --> XML do arquivo
+    vr_exc_erro      EXCEPTION;       --> Controle de exceção
+    
+    vr_nrctpart      VARCHAR2(20); 
+    vr_dscritic      VARCHAR2(1000);
+    vr_nrposxml      NUMBER;
+    vr_nrposapr      NUMBER;
+    vr_nrposrep      NUMBER;
+    
+    -- Procedure para atualizar o registro de portabilidade retornado
+    PROCEDURE pc_atualiza_retorno(pr_dsdrowid  IN VARCHAR2) IS
+
+      vr_nrnuportab   NUMBER;
+    
+    BEGIN
+      
+      UPDATE tbcc_portab_regularizacao t
+         SET t.dtretorno         = NULL
+         , t.cdmotivo_retorno    = NULL
+         , t.nmarquivo_retorno   = NULL
+         , t.idsituacao          = 2
+         , t.dsdominio_motivo_retorno = NULL
+         , t.nmarquivo_regularizacao = pr_nmarqenv
+       WHERE ROWID = pr_dsdrowid
+       RETURNING t.nrnu_portabilidade INTO vr_nrnuportab;
+       
+    END;
+    
+    -- Rotina generica para inserir os tags - Reduzir parametros e centralizar tratamento de erros
+    PROCEDURE pc_insere_tag(pr_tag_pai  IN VARCHAR2 
+                           ,pr_tag_nova IN VARCHAR2
+                           ,pr_tag_cont IN VARCHAR2
+                           ,pr_posicao  IN NUMBER DEFAULT 0)  IS
+      
+    BEGIN
+      
+      -- Inserir a tag
+      GENE0007.pc_insere_tag(pr_xml      => vr_dsxmlarq
+                            ,pr_tag_pai  => pr_tag_pai
+                            ,pr_posicao  => pr_posicao
+                            ,pr_tag_nova => pr_tag_nova
+                            ,pr_tag_cont => pr_tag_cont
+                            ,pr_des_erro => vr_dscritic);
+       
+      -- Se ocorrer erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;  
+    
+    END pc_insere_tag;
+    
+  BEGIN
+    
+    -- Indicar que não foram inclusos dados
+    pr_inddados := FALSE;
+    
+    -- Indica que todos os registros foram processados
+    pr_idfimreg := TRUE;
+    
+    -- Montar a estrutura do XML
+    vr_dsxmlarq := pr_dsxmlarq;
+    
+    -- Inserir tag base do arquivo
+    pc_insere_tag(pr_tag_pai  => 'SISARQ'
+                 ,pr_tag_nova => vr_dsapcsdoc
+                 ,pr_tag_cont => NULL);
+    
+    -- Percorrer todas as solicitações que estão aguardando para serem enviadas
+    FOR rg_dados IN cr_dados LOOP
+    
+      -- Indicar que foram inclusos dados
+      pr_inddados := TRUE;
+      
+      -- Definir o indice da tag
+      vr_nrposxml := NVL((vr_nrposxml+1),0);
+      
+      /*************** INICIO - Grupo Portabilidade Conta Salário ***************/
+      pc_insere_tag(pr_tag_pai  => vr_dsapcsdoc
+                   ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_ReglzcPortddCtSalr'
+                   ,pr_tag_cont => NULL);
+
+      -- Identificador Participante Administrativo - CNPJ Base
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcPortddCtSalr'
+                   ,pr_tag_nova => 'IdentdPartAdmtd'
+                   ,pr_tag_cont => LPAD(rg_dados.nrispb_banco_folha,8,'0')
+                   ,pr_posicao  => vr_nrposxml );
+      
+      -- Formar o número de controle, conforme chave da tabela
+      vr_nrctpart := fn_gera_NumCtrlPart(rg_dados.cdcooper
+                                        ,rg_dados.nrdconta
+                                        ,0); -- Passar zero, pois não tem contador nos recebidos, o controle é
+                                             -- feito através do NU Portabilidade
+      
+      -- Número de Controle do Participante
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcPortddCtSalr'
+                   ,pr_tag_nova => 'NumCtrlPart'
+                   ,pr_tag_cont => vr_nrctpart 
+                   ,pr_posicao  => vr_nrposxml);
+      
+      -- Número único da Portabilidade PCS
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcPortddCtSalr'
+                   ,pr_tag_nova => 'NUPortddPCS'
+                   ,pr_tag_cont => rg_dados.nrnu_portabilidade 
+                   ,pr_posicao  => vr_nrposxml);
+      -- Justificativa da Regularização
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcPortddCtSalr'
+                   ,pr_tag_nova => 'JusttvReglzc'
+                   ,pr_tag_cont => '001' -- Fixo - Erro operacional
+                   ,pr_posicao  => vr_nrposxml);
+      
+      -- Se a solicitação foi reprovada
+      IF rg_dados.idaprova_reprova = 2 THEN
+      
+        vr_nrposrep := NVL((vr_nrposrep+1),0);
+      
+        /*************** INICIO - Grupo Reprova Portabilidade Conta Salário ***************/
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcPortddCtSalr'
+                     ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_ReglzcRepvd'
+                     ,pr_tag_cont => NULL 
+                     ,pr_posicao  => vr_nrposxml);
+      
+        -- Motivo Reprovação Portabilidade de Conta Salário
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcRepvd'
+                     ,pr_tag_nova => 'MotvReglzcRepvd'
+                     ,pr_tag_cont => LPAD(rg_dados.cdmotivo,3,'0')
+                     ,pr_posicao  => vr_nrposrep );
+    
+        -- Data Cancelamento Portabilidade de Conta Salário
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcRepvd'
+                     ,pr_tag_nova => 'DtReglzcRepvd'
+                     ,pr_tag_cont => to_char(SYSDATE,vr_dateformat)
+                     ,pr_posicao  => vr_nrposrep );
+      
+        /*************** FIM - Grupo Reprova Portabilidade Conta Salário ***************/
+      
+      ELSE 
+        
+        vr_nrposapr := NVL((vr_nrposapr+1),0);
+        
+        /*************** INICIO - Grupo Aprova Portabilidade Conta Salário ***************/
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcPortddCtSalr'
+                     ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_ReglzcAprovd'
+                     ,pr_tag_cont => NULL
+                     ,pr_posicao  => vr_nrposxml );
+
+        -- Motivo Aprova Portabilidade de Conta Salário
+       /* pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcAprovd'
+                     ,pr_tag_nova => 'MotvReglzcAprovd'
+                     ,pr_tag_cont => LPAD(rg_dados.cdmotivo,3,'0')
+                     ,pr_posicao  => vr_nrposxml );*/
+    
+        -- Data Aprova Portabilidade de Conta Salário
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcAprovd'
+                     ,pr_tag_nova => 'DtReglzcAprovd'
+                     ,pr_tag_cont => to_char(SYSDATE,vr_dateformat)
+                     ,pr_posicao  => vr_nrposapr );
+        
+      
+        /******************* INICIO - Grupo Cliente *******************/
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcAprovd'
+                     ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_Cli'
+                     ,pr_tag_cont => NULL
+                     ,pr_posicao  => vr_nrposapr);
+      
+        -- CPF Cliente
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Cli'
+                     ,pr_tag_nova => 'CPFCli'
+                     ,pr_tag_cont => LPAD(rg_dados.nrcpfcgc,11,'0')
+                     ,pr_posicao  => vr_nrposapr);
+            
+        -- Nome Cliente
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Cli'
+                     ,pr_tag_nova => 'NomCli'
+                     ,pr_tag_cont => SUBSTR(rg_dados.nmprimtl,1,80)
+                     ,pr_posicao  => vr_nrposapr);
+      
+        -- Se tem informação de telefone
+        IF TRIM(rg_dados.dstelefone) IS NOT NULL THEN
+          -- Telefone Cliente
+          pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Cli'
+                       ,pr_tag_nova => 'TelCli'
+                       ,pr_tag_cont => rg_dados.dstelefone
+                       ,pr_posicao  => vr_nrposapr);
+        END IF;
+      
+        -- Se tem informação de email
+        IF TRIM(rg_dados.dsdemail) IS NOT NULL THEN
+          -- E-mail Cliente
+          pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Cli'
+                       ,pr_tag_nova => 'EmailCli'
+                       ,pr_tag_cont => rg_dados.dsdemail
+                       ,pr_posicao  => vr_nrposapr);
+        END IF;
+
+        /******************* FIM - Grupo Cliente *******************/
+      
+        /******************* INICIO - Grupo Participante Folha Pagamento *******************/
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcAprovd'
+                     ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
+                     ,pr_tag_cont => NULL
+                     ,pr_posicao  => vr_nrposapr);
+      
+        -- ISPB Participante Folha Pagamento
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
+                     ,pr_tag_nova => 'ISPBPartFolhaPgto'
+                     ,pr_tag_cont => LPAD(rg_dados.nrispb_banco_folha,8,'0')
+                     ,pr_posicao  => vr_nrposapr );
+        
+        -- CNPJ Participante Folha Pagamento
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
+                     ,pr_tag_nova => 'CNPJPartFolhaPgto'
+                     ,pr_tag_cont => LPAD(rg_dados.nrcnpj_banco_folha,14,'0')
+                     ,pr_posicao  => vr_nrposapr );
+        
+        -- CNPJ do Empregador
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
+                     ,pr_tag_nova => 'CNPJEmprdr'
+                     ,pr_tag_cont => LPAD(rg_dados.nrcnpj_empregador,14,'0')
+                     ,pr_posicao  => vr_nrposapr );
+        
+        -- CNPJ Participante Folha Pagamento
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
+                     ,pr_tag_nova => 'DenSocEmprdr'
+                     ,pr_tag_cont => rg_dados.dsnome_empregador
+                     ,pr_posicao  => vr_nrposapr );
+        
+        /******************* FIM - Grupo Participante Folha Pagamento *******************/
+            
+        /******************* INICIO - Grupo Destino *******************/
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_ReglzcAprovd'
+                     ,pr_tag_nova => 'Grupo_'||vr_dsapcsdoc||'_Dest'
+                     ,pr_tag_cont => NULL
+                     ,pr_posicao  => vr_nrposapr);
+        
+        -- ISPB Participante Destino
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Dest'
+                     ,pr_tag_nova => 'ISPBPartDest'
+                     ,pr_tag_cont => LPAD(rg_dados.nrispb_destinataria,8,'0')
+                     ,pr_posicao  => vr_nrposapr );
+        
+        -- CNPJ Participante Destino
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Dest'
+                     ,pr_tag_nova => 'CNPJPartDest'
+                     ,pr_tag_cont => LPAD(rg_dados.nrcnpj_destinataria,14,'0') 
+                     ,pr_posicao  => vr_nrposapr);
+        
+        -- Tipo de Conta Destino
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Dest'
+                     ,pr_tag_nova => 'TpCtDest'
+                     ,pr_tag_cont => rg_dados.cdtipo_cta_destinataria 
+                     ,pr_posicao  => vr_nrposapr);
+        
+        -- Agência Destino
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Dest'
+                     ,pr_tag_nova => 'AgCliDest'
+                     ,pr_tag_cont => rg_dados.cdagencia_destinataria
+                     ,pr_posicao  => vr_nrposapr );
+        
+        -- Conta Corrente Destino
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Dest'
+                     ,pr_tag_nova => 'CtCliDest'
+                     ,pr_tag_cont => rg_dados.nrdconta_destinataria
+                     ,pr_posicao  => vr_nrposapr);
+        
+        /******************* FIM - Grupo Destino *******************/
+        /******************* FIM - Grupo Aprova Portabilidade Conta Salário  *******************/
+        
+      END IF;
+      
+      -- Atualizar registro processado
+      pc_atualiza_retorno(rg_dados.dsdrowid);
+      
+      -- Verificar o tamanho do arquivo que está sendo gerado
+      IF length(vr_dsxmlarq.getClobVal()) > 30000 THEN
+        -- Indica que ainda faltam registros a processar
+        pr_idfimreg := FALSE;
+        -- demais registros serão enviados posteriormente
+        EXIT;
+      END IF;
+      
+    END LOOP;
+    
+    -- Retorna o XML do arquivo
+    pr_dsxmlarq := vr_dsxmlarq;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_gera_XML_APCS301. ' ||SQLERRM;
+  END pc_gera_XML_APCS301;
+  --
+  PROCEDURE pc_proc_RET_APCS301(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
+                               ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_proc_RET_APCS301
+    --  Sistema  : Procedure para ler o arquivo: 
+    --                        APCS301RET - PCPS retorna resultado de processamento.
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Fevereiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura do arquivo atualizando os registros de solicitação com os seus
+    --             respectivos NU Portabilidades.
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+
+    -- CONTANTES
+    vr_dsapcsdoc     CONSTANT VARCHAR2(10) := 'APCS301';
+    
+    -- CURSORES
+    -- Retorna as rejeições que ocorreram no arquivo
+    CURSOR cr_ret_erros(pr_dsxmlarq  CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT dscoderro 
+           , erindpart 
+           , nrindpart 
+           , nrctrlpart
+           , erctrlpart
+           , nrnuportab
+           , dtreglzapv
+           , ernuportab
+           , ernrcpfcgc
+           , erdsnomcli
+           , erdstelefo
+           , erdsdemail
+           , ernrispbfl
+           , ernrcnpjfl
+           , ernrcnpjep
+           , ernmdoempr
+           , ernrispbdt
+           , ernrcnpjdt
+           , ercdtipcta
+           , ercdagedst
+           , ernrctadst
+           , ernrctapgt
+           , nrmotrepvd
+           , ermotvcont
+           , erdtconttc
+       FROM DATA                                                                        
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'RET/Grupo_'||vr_dsapcsdoc||'RET_ReglzcPortddCtSalrRecsd')
+                      PASSING XMLTYPE(xml)
+                      COLUMNS dscoderro   VARCHAR2(20) PATH '@CodErro'
+                            , nrindpart   VARCHAR2(50) PATH 'IdentdPartAdmtd'
+                            , erindpart   VARCHAR2(20) PATH 'IdentdPartAdmtd/@CodErro' 
+                            , nrctrlpart  VARCHAR2(20) PATH 'NumCtrlPart'
+                            , erctrlpart  VARCHAR2(20) PATH 'NumCtrlPart/@CodErro'
+                            , nrnuportab  NUMBER       PATH 'NUPortddPCS'
+                            , ernuportab  VARCHAR2(20) PATH 'NUPortddPCS/@CodErro'
+                            , dtreglzapv  date         PATH 'Grupo_APCS301RET_ReglzcAprovd/DtReglzcAprovd'
+                            , ergrupocli  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Cli/@CodErro'
+                            , ernrcpfcgc  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Cli/CPFCli/@CodErro'
+                            , erdsnomcli  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Cli/NomCli/@CodErro'
+                            , erdstelefo  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Cli/TelCli/@CodErro'
+                            , erdsdemail  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Cli/EmailCli/@CodErro'
+                            , ergrupofol  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_FolhaPgto/@CodErro'
+                            , ernrispbfl  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_FolhaPgto/ISPBPartFolhaPgto/@CodErro'
+                            , ernrcnpjfl  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_FolhaPgto/CNPJPartFolhaPgto/@CodErro'
+                            , ernrcnpjep  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_FolhaPgto/CNPJEmprdr/@CodErro'
+                            , ernmdoempr  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_FolhaPgto/DenSocEmprdr/@CodErro'
+                            , ergrupodst  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Dest/@CodErro'
+                            , ernrispbdt  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Dest/ISPBPartDest/@CodErro'
+                            , ernrcnpjdt  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Dest/CNPJPartDest/@CodErro'
+                            , ercdtipcta  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Dest/TpCtDest/@CodErro'
+                            , ercdagedst  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Dest/AgCliDest/@CodErro'
+                            , ernrctadst  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Dest/CtCliDest/@CodErro'
+                            , ernrctapgt  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Dest/CtPagtoDest/@CodErro'
+                            , nrmotrepvd  NUMBER       PATH 'Grupo_APCS301RET_ReglzcRepvd/MotvReglzcRepvd'
+                            , ermotvcont  NUMBER       PATH 'Grupo_APCS301RET_ReglzcRepvd/MotvReglzcRepvd/@CodErro'
+                            , erdtconttc  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcRepvd/DtReglzcRepvd/@CodErro'
+                            
+                            );
+    
+    -- Retorna os aceites que ocorreram no arquivo
+    CURSOR cr_ret_aceite(pr_dsxmlarq  CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT nrindpart 
+           , nrctrlpart
+           , nrnuportab
+       FROM DATA                                                                        
+          , XMLTABLE(('/APCSDOC/SISARQ/APCS301RET/Grupo_APCS301RET_ReglzcPortddCtSalrActo')
+                      PASSING XMLTYPE(xml)
+                      COLUMNS nrindpart   VARCHAR2(50) PATH 'IdentdPartAdmtd'
+                            , nrctrlpart  VARCHAR2(20) PATH 'NumCtrlPart'
+                            , nrnuportab  NUMBER       PATH 'NUPortddPCS');
+    
+    -- Retornar o registro correspondente enviado
+    CURSOR cr_prtreceb(pr_nrnuport   tbcc_portab_regularizacao.nrnu_portabilidade%TYPE) IS
+      SELECT a.ROWID dsdrowid
+           , a.idsituacao
+           , a.idaprova_reprova
+           , a.dtregularizacao
+           , a.dsdominio_motivo
+           , a.cdmotivo
+           , t.nrnu_portabilidade
+           , t.cdcooper
+           , t.nrdconta
+           , t.idsituacao idsitsol
+        FROM tbcc_portabilidade_recebe t
+            ,tbcc_portab_regularizacao a
+       WHERE a.dtretorno        IS NULL -- Ainda não teve retorno
+         AND a.idsituacao              = 2 -- Comunicada CIP
+         AND t.nrnu_portabilidade      = a.nrnu_portabilidade
+         AND a.nrnu_portabilidade      = pr_nrnuport;
+
+    rg_prtreceb   cr_prtreceb%ROWTYPE;
+    
+    -- Variáveis
+    vr_dsxmlarq   	 CLOB;
+    vr_dsmsglog      VARCHAR2(1000);
+    vr_nmarquiv      VARCHAR2(100);
+    vr_dtarquiv      DATE;
+    vr_cdmoterr      tbcc_portab_regularizacao.cdmotivo_retorno%TYPE := null;
+    vr_nrdrowid      VARCHAR2(100);
+    
+  BEGIN
+    
+    -- Remover o XMLNS
+    vr_dsxmlarq := fn_remove_xmlns(pr_dsxmlarq);  
+    
+    -- Guardar o nome e a data do arquivo
+    pc_extrai_dados_arq(pr_dsxmlarq => vr_dsxmlarq
+                       ,pr_nmarquiv => vr_nmarquiv
+                       ,pr_dtarquiv => vr_dtarquiv);
+    
+    -- Percorrer todas as rejeições
+    FOR rg_dados IN cr_ret_erros(vr_dsxmlarq) LOOP
+      
+      -- Buscar o registro de envio
+      OPEN  cr_prtreceb(rg_dados.nrnuportab);
+      FETCH cr_prtreceb INTO rg_prtreceb;
+      
+      -- Se não encontrar registro
+      IF cr_prtreceb%NOTFOUND THEN
+        
+        -- Fechar o cursor
+        CLOSE cr_prtreceb;
+      
+        -- Registrar mensagem no log e pular para o próximo registro
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_RET_APCS301'
+                         || ' --> Nao encontrado registro de retorno para o NU Portabilidade: '||rg_dados.nrnuportab;
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        
+          -- Próximo registro
+          CONTINUE;
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+        
+      END IF;
+       
+      -- Fechar o cursor
+      CLOSE cr_prtreceb;
+      
+      -- Limpar o erro encontrado para o registro anterior
+      vr_cdmoterr := NULL;
+      
+      DECLARE 
+        vr_achouerro  EXCEPTION;
+      BEGIN
+        -- Verifica se encontrou erro
+        IF rg_dados.dscoderro IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.dscoderro;
+          RAISE vr_achouerro;
+        END IF;
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.erindpart IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.erindpart;
+          RAISE vr_achouerro;
+        END IF;
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.erctrlpart IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.erctrlpart;
+          RAISE vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ernuportab IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernuportab;
+          RAISE vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ernrcpfcgc IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernrcpfcgc;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.erdsnomcli IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.erdsnomcli;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.erdstelefo IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.erdstelefo;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.erdsdemail IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.erdsdemail;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ernrispbfl IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernrispbfl;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ernrcnpjfl IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernrcnpjfl;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ernrcnpjep IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernrcnpjep;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ernmdoempr IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernmdoempr;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ernrispbdt IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernrispbdt;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ernrcnpjdt IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernrcnpjdt;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ercdtipcta IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ercdtipcta;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ercdagedst IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ercdagedst;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ernrctadst IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernrctadst;
+          raise vr_achouerro;
+        END IF; 
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ernrctapgt IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernrctapgt;
+          raise vr_achouerro;
+        END IF; 
+        
+      EXCEPTION
+        WHEN vr_achouerro THEN
+          NULL; -- continua o processo normal
+      END;
+      
+      IF vr_cdmoterr IS NOT NULL THEN
+      
+        -- Atualiza a solicitação para Reprovada
+        UPDATE tbcc_portab_regularizacao t
+           SET t.idsituacao               = 5 -- Regularizado Rejeitada 
+             , t.dtretorno                = vr_dtarquiv
+             , t.dsdominio_motivo_retorno = vr_dsdominioerro -- Dominio dos erros da CIP
+             , t.cdmotivo_retorno         = vr_cdmoterr 
+             , t.nmarquivo_retorno        = vr_nmarquiv
+         WHERE ROWID = rg_prtreceb.dsdrowid;
+        
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log(pr_cdcooper => rg_prtreceb.cdcooper ,
+                             pr_cdoperad => '1',
+                             pr_dscritic => ' ',
+                             pr_dsorigem => '',
+                             pr_dstransa => 'Rejeicao de Regularizacao de Portabilidade',
+                             pr_dttransa => TRUNC(SYSDATE),
+                             pr_flgtrans => 1,
+                             pr_hrtransa => to_char(SYSDATE, 'SSSSS'),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => ' ',
+                             pr_nrdconta => rg_prtreceb.nrdconta,
+                             pr_nrdrowid => vr_nrdrowid);
+    
+        -- Gravar o Nu Portabilidade
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Nu Portabilidade',
+                                  pr_dsdadant => to_char(rg_prtreceb.nrnu_portabilidade),
+                                  pr_dsdadatu => to_char(rg_prtreceb.nrnu_portabilidade));
+        
+        -- Gravar o dominio do motivo de rejeição 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Dominio Motivo',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => vr_dsdominioerro ); 
+        
+        -- Gravar o motivo de rejeição 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Motivo',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => vr_cdmoterr ); 
+        
+      END IF; -- IF vr_cdmoterr IS NOT NULL
+           
+    END LOOP;
+    
+    -- Percorrer todas as rejeições
+    FOR rg_dados IN cr_ret_aceite(vr_dsxmlarq) LOOP
+      
+      -- Buscar o registro de envio
+      OPEN  cr_prtreceb(rg_dados.nrnuportab);
+      FETCH cr_prtreceb INTO rg_prtreceb;
+      
+      -- Se não encontrar registro
+      IF cr_prtreceb%NOTFOUND THEN
+        
+        -- Fechar o cursor
+        CLOSE cr_prtreceb;
+      
+        -- Registrar mensagem no log e pular para o próximo registro
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_RET_APCS301'
+                         || ' --> Nao encontrado registro de retorno para o NU Portabilidade: '||rg_dados.nrnuportab;
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        
+          -- Próximo registro
+          CONTINUE;
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+        
+      END IF;
+       
+      -- Fechar o cursor
+      CLOSE cr_prtreceb;
+      
+      -- Se foi enviado uma regularização de aprovação
+      IF rg_prtreceb.idaprova_reprova = 1 THEN
+        -- Atualiza a solicitação 
+        UPDATE tbcc_portab_regularizacao t
+           SET t.idsituacao                 = 3 -- Regularizado Aprovada
+             , t.dtretorno                  = vr_dtarquiv
+             , t.dsdominio_motivo_retorno   = NULL
+             , t.cdmotivo_retorno           = NULL
+             , t.nmarquivo_retorno          = vr_nmarquiv
+         WHERE ROWID = rg_prtreceb.dsdrowid;
+           
+        -- Excluir todos os possiveis registros de erro
+        DELETE tbcc_portabilidade_rcb_erros t
+         WHERE t.nrnu_portabilidade = rg_prtreceb.nrnu_portabilidade;
+           
+        -- Atualiza portabilidade de salário para aprovada
+        UPDATE tbcc_portabilidade_recebe t
+           SET t.idsituacao         = 2 -- Aprovada
+             , t.dtavaliacao        = SYSDATE 
+             , t.dsdominio_motivo   = NULL
+             , t.cdmotivo           = NULL 
+         WHERE t.nrnu_portabilidade = rg_prtreceb.nrnu_portabilidade;
+        
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log(pr_cdcooper => rg_prtreceb.cdcooper ,
+                             pr_cdoperad => '1',
+                             pr_dscritic => ' ',
+                             pr_dsorigem => '',
+                             pr_dstransa => 'Aprovacao por Regularizacao de Portabilidade',
+                             pr_dttransa => TRUNC(SYSDATE),
+                             pr_flgtrans => 1,
+                             pr_hrtransa => to_char(SYSDATE, 'SSSSS'),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => ' ',
+                             pr_nrdconta => rg_prtreceb.nrdconta,
+                             pr_nrdrowid => vr_nrdrowid);
+    
+        -- Gravar o Nu Portabilidade
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Nu Portabilidade',
+                                  pr_dsdadant => to_char(rg_prtreceb.nrnu_portabilidade),
+                                  pr_dsdadatu => to_char(rg_prtreceb.nrnu_portabilidade));
+                                  
+        -- Gravar a Situação
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Situacao',
+                                  pr_dsdadant => rg_prtreceb.idsitsol,
+                                  pr_dsdadatu => 2 ); -- Nova situação : Aprovada
+        
+        -- Gravar o dominio do motivo 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Dominio Motivo',
+                                  pr_dsdadant => rg_prtreceb.dsdominio_motivo,
+                                  pr_dsdadatu => ' ' ); 
+        
+        -- Gravar o motivo 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Motivo',
+                                  pr_dsdadant => rg_prtreceb.cdmotivo,
+                                  pr_dsdadatu => ' ' ); 
+        
+      ELSE
+          
+        -- Atualiza a solicitação 
+        UPDATE tbcc_portab_regularizacao t
+           SET t.idsituacao                 = 4 -- Regularizado Reprovada
+             , t.dtretorno                  = vr_dtarquiv
+             , t.dsdominio_motivo_retorno   = NULL
+             , t.cdmotivo_retorno           = NULL
+             , t.nmarquivo_retorno          = vr_nmarquiv
+         WHERE ROWID = rg_prtreceb.dsdrowid;
+           
+        -- Excluir todos os possiveis registros de erro
+        DELETE tbcc_portabilidade_rcb_erros t
+         WHERE t.nrnu_portabilidade = rg_prtreceb.nrnu_portabilidade;
+           
+        -- Atualiza portabilidade de salário para reprovada
+        UPDATE tbcc_portabilidade_recebe t
+           SET t.idsituacao         = 3 -- Reprovada
+             , t.dtavaliacao        = SYSDATE 
+             , t.dsdominio_motivo   = rg_prtreceb.dsdominio_motivo
+             , t.cdmotivo           = rg_prtreceb.cdmotivo
+         WHERE t.nrnu_portabilidade = rg_prtreceb.nrnu_portabilidade;
+       
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log(pr_cdcooper => rg_prtreceb.cdcooper ,
+                             pr_cdoperad => '1',
+                             pr_dscritic => ' ',
+                             pr_dsorigem => '',
+                             pr_dstransa => 'Reprovacao por Regularizacao de Portabilidade',
+                             pr_dttransa => TRUNC(SYSDATE),
+                             pr_flgtrans => 1,
+                             pr_hrtransa => to_char(SYSDATE, 'SSSSS'),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => ' ',
+                             pr_nrdconta => rg_prtreceb.nrdconta,
+                             pr_nrdrowid => vr_nrdrowid);
+    
+        -- Gravar o Nu Portabilidade
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Nu Portabilidade',
+                                  pr_dsdadant => to_char(rg_prtreceb.nrnu_portabilidade),
+                                  pr_dsdadatu => to_char(rg_prtreceb.nrnu_portabilidade));
+                                  
+        -- Gravar a Situação
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Situacao',
+                                  pr_dsdadant => rg_prtreceb.idsitsol,
+                                  pr_dsdadatu => 3 ); -- Nova situação : Reprovada
+        
+        -- Gravar o dominio do motivo 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Dominio Motivo',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => rg_prtreceb.dsdominio_motivo ); 
+        
+        -- Gravar o motivo 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Motivo',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => rg_prtreceb.cdmotivo ); 
+       
+      END IF; -- IF rg_prtreceb.idaprova_reprova = 1
+    
+    END LOOP;
+  
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_proc_RET_APCS301. ' ||SQLERRM;
+  END pc_proc_RET_APCS301;
+  --
+  PROCEDURE pc_proc_ERR_APCS301(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
+                               ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_proc_ERR_APCS301
+    --  Sistema  : Procedure para gerar o arquivo: 
+    --                        APCS301ERR - Instituição Banco da Folha responde regularizar as solicitações de portabilidade
+    --                                  de conta salário.
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Fevereiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura dos retornos pendentes e enviar via arquivo
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+    -- CURSORES
+    -- Retorna o código do erro
+    CURSOR cr_ret_erro(pr_dsxmlarq  CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT nmarquiv
+           , cderrret
+        FROM DATA 
+           , XMLTABLE('/APCSDOC/BCARQ'
+                      PASSING XMLTYPE(xml)
+                      COLUMNS nmarquiv  VARCHAR2(100) PATH 'NomArq'
+                            , cderrret  VARCHAR2(10)  PATH 'NomArq/@CodErro');
+    
+    -- Variáveis
+    vr_dsarqxml      CLOB;
+    vr_nmarquiv      VARCHAR2(100);
+    vr_nmarqenv      VARCHAR2(100);
+    vr_cderrret      VARCHAR2(10);
+    
+  BEGIN
+    
+    -- Remover o xmlns do arquivo
+    vr_dsarqxml := fn_remove_xmlns(pr_dsxmlarq);
+  
+    -- Percorrer todas as aprovações retornadas
+    OPEN  cr_ret_erro(vr_dsarqxml);
+    FETCH cr_ret_erro INTO vr_nmarquiv
+                         , vr_cderrret;
+                         
+    -- Se não encontrar dados
+    IF cr_ret_erro%NOTFOUND THEN
+      -- Crítica
+      pr_dscritic := 'Não foi possível extrair conteúdo do arquivo.';
+      
+      -- Fechar o cursor
+      CLOSE cr_ret_erro;
+    
+      -- Encerrar a rotina
+      RETURN;
+    END IF;
+    
+    -- Fechar o cursor
+    CLOSE cr_ret_erro;
+    
+    -- Remover o "_ERR" da informação do nome do arquivo
+    vr_nmarqenv := REPLACE(vr_nmarquiv, '_ERR', NULL);
+    
+    -- ATUALIZAR TODOS OS REGISTROS QUE FORAM ENVIADOS NO ARQUIVO 
+    UPDATE tbcc_portab_regularizacao   T
+       SET t.nmarquivo_retorno        = vr_nmarquiv
+         , t.idsituacao               = 1
+         , t.dsdominio_motivo_retorno = vr_dsdominioerro
+         , t.cdmotivo_retorno         = vr_cderrret
+     WHERE t.idsituacao               = 2 
+       AND t.nmarquivo_regularizacao  = vr_nmarqenv;
+       
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_proc_ERR_APCS301. ' ||SQLERRM;
+  END pc_proc_ERR_APCS301;
+  --
+  PROCEDURE pc_proc_XML_APCS302(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
+                               ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_proc_xml_APCS302
+    --  Sistema  : Procedure para ler o arquivo: 
+    --             APCS302 - Destinado ao PCPS informar e regularizar a situação da portabilidade aos Participantes envolvidos
+    --  Sigla    : PCPS
+    --  Autor    : Gilberto - Supero
+    --  Data     : Fevereiro/2019.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Realizar a leitura do arquivo atualizando os registros de solicitação conforme situação.
+    --
+    -- Alteracoes: 
+    --             
+    ---------------------------------------------------------------------------------------------------------------
+
+    -- CONTANTES
+    vr_dsapcsdoc     CONSTANT VARCHAR2(10) := 'APCS302';
+        
+    -- CURSOR
+    CURSOR cr_dadosapr(pr_dsxmlarq CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT nrnuport
+           , idaprova
+        FROM DATA
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'/Grupo_'||vr_dsapcsdoc||'_ReglzcPortddCtSalr')
+                      PASSING XMLTYPE(xml)
+                      COLUMNS nrnuport  NUMBER       PATH 'NUPortddPCS'
+                            , idaprova  NUMBER       PATH 'Grupo_APCS302_ReglzcAprovd/Grupo_APCS302_Cli/1' );
+    
+    CURSOR cr_dadosrep(pr_dsxmlarq CLOB) IS
+      WITH DATA AS (SELECT pr_dsxmlarq xml FROM dual)
+      SELECT nrnuport
+           , nrmotrep
+           , to_date(dtreprova, vr_dateformat) dtreprova
+        FROM DATA
+           , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'/Grupo_'||vr_dsapcsdoc||'_ReglzcPortddCtSalr')
+                      PASSING XMLTYPE(xml)
+                      COLUMNS nrnuport  NUMBER       PATH 'NUPortddPCS'
+                            , nrmotrep  NUMBER       PATH 'Grupo_APCS302_ReglzcRepvd/MotvReglzcRepvd'
+                            , dtreprova VARCHAR2(30) PATH 'Grupo_APCS302_ReglzcRepvd/DtReglzcRepvd' );
+    
+    -- Buscar a solicitação da portabilidade 
+    CURSOR cr_portab(pr_nrnuport  tbcc_portab_regularizacao.nrnu_portabilidade%TYPE) IS
+      SELECT t.nrnu_portabilidade
+           , t.cdcooper
+           , t.nrdconta
+           , t.nrsolicitacao nrsolici
+           , ROWID   dsdrowid
+           , t.idsituacao
+           , t.dsdominio_motivo
+           , t.cdmotivo
+        FROM tbcc_portabilidade_envia  t
+       WHERE t.nrnu_portabilidade = pr_nrnuport;
+    rg_portab   cr_portab%ROWTYPE;
+    
+    -- Variáveis 
+    
+    vr_dsxmlarq     CLOB;
+    vr_dsmsglog     VARCHAR2(1000);
+    vr_nmarquiv     VARCHAR2(100);
+    vr_nrdrowid     VARCHAR2(100);
+    vr_dtarquiv     DATE;
+    
+  BEGIN
+    
+    -- Retirar o XMLNS
+    vr_dsxmlarq := fn_remove_xmlns(pr_dsxmlarq);
+    
+    -- Guardar o nome e a data do arquivo
+    pc_extrai_dados_arq(pr_dsxmlarq => vr_dsxmlarq
+                       ,pr_nmarquiv => vr_nmarquiv
+                       ,pr_dtarquiv => vr_dtarquiv);
+    
+    -- Percorrer todos os dados retornados no arquivo com aprovações
+    FOR rg_dadosapr IN cr_dadosapr(vr_dsxmlarq) LOOP
+  
+      -- Buscar o registro pelo código da NU portabilidade
+      OPEN  cr_portab(rg_dadosapr.nrnuport);
+      FETCH cr_portab INTO rg_portab;
+      
+      -- Se não encontrar a solicitação de portabilidade
+      IF cr_portab%NOTFOUND THEN
+        -- LOGS DE EXECUCAO
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_xml_APCS302'
+                         || ' --> Não encontrado NU Portabilidade '||rg_dadosapr.nrnuport;
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+        
+        -- Fechar o cursor
+        CLOSE cr_portab;
+    
+        -- Processar o próximo registro
+        CONTINUE;
+        
+      END IF;
+      
+      -- Fechar o cursor
+      CLOSE cr_portab;
+    
+      -- Se o registro está indicando aprovação
+      IF NVL(rg_dadosapr.idaprova,0) = 1 THEN
+
+        -- Limpar tabela de erros 
+        DELETE tbcc_portabilidade_env_erros t
+         WHERE t.cdcooper      = rg_portab.cdcooper 
+           AND t.nrdconta      = rg_portab.nrdconta
+           AND t.nrsolicitacao = rg_portab.nrsolici;
+        
+        -- Atualiza a solicitação para aprovada 
+        UPDATE tbcc_portabilidade_envia t
+           SET t.idsituacao        = 3 -- Aprovada
+             , t.dsdominio_motivo  = NULL
+             , t.cdmotivo          = NULL
+         WHERE ROWID = rg_portab.dsdrowid;
+        
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log(pr_cdcooper => rg_portab.cdcooper ,
+                             pr_cdoperad => '1',
+                             pr_dscritic => ' ',
+                             pr_dsorigem => '',
+                             pr_dstransa => 'Aprovacao por Regularizacao de Portabilidade',
+                             pr_dttransa => TRUNC(SYSDATE),
+                             pr_flgtrans => 1,
+                             pr_hrtransa => to_char(SYSDATE, 'SSSSS'),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => ' ',
+                             pr_nrdconta => rg_portab.nrdconta,
+                             pr_nrdrowid => vr_nrdrowid);
+    
+        -- Gravar o Nu Portabilidade
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Nu Portabilidade',
+                                  pr_dsdadant => to_char(rg_portab.nrnu_portabilidade),
+                                  pr_dsdadatu => to_char(rg_portab.nrnu_portabilidade));
+                                  
+        -- Gravar a Situação
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Situacao',
+                                  pr_dsdadant => rg_portab.idsituacao,
+                                  pr_dsdadatu => 3 ); -- Nova situação : Aprovada
+        
+        -- Gravar o dominio do motivo 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Dominio Motivo',
+                                  pr_dsdadant => rg_portab.dsdominio_motivo,
+                                  pr_dsdadatu => ' ' ); 
+        
+        -- Gravar o motivo 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Motivo',
+                                  pr_dsdadant => rg_portab.cdmotivo,
+                                  pr_dsdadatu => ' ' ); 
+        
+      END IF;
+    
+    END LOOP;
+    
+    -- Percorrer todos os dados retornados no arquivo com reprovações
+    FOR rg_dadosrep IN cr_dadosrep(vr_dsxmlarq) LOOP
+  
+      -- Buscar o registro pelo código da NU portabilidade
+      OPEN  cr_portab(rg_dadosrep.nrnuport);
+      FETCH cr_portab INTO rg_portab;
+      
+      -- Se não encontrar a solicitação de portabilidade
+      IF cr_portab%NOTFOUND THEN
+        -- LOGS DE EXECUCAO
+        BEGIN
+          vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
+                         || 'PCPS0002.pc_proc_xml_APCS302'
+                         || ' --> Não encontrado NU Portabilidade '||rg_dadosrep.nrnuport;
+          
+          -- Incluir log de execução.
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+                                    ,pr_ind_tipo_log => 1
+                                    ,pr_des_log      => vr_dsmsglog
+                                    ,pr_nmarqlog     => vr_dsarqlg);
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END;
+        
+        -- Fechar o cursor
+        CLOSE cr_portab;
+    
+        -- Processar o próximo registro
+        CONTINUE;
+        
+      END IF;
+      
+      -- Fechar o cursor
+      CLOSE cr_portab;
+      
+      -- Se tem motivo de reprovação 
+      IF rg_dadosrep.nrmotrep IS NOT NULL THEN
+        
+        -- Atualiza a solicitação para Reprovada
+        UPDATE tbcc_portabilidade_envia t
+           SET t.idsituacao        = 4 -- Reprovada
+             , t.dsdominio_motivo  = 'MOTVREGLZCREPVD' -- Motivo de regularização reprovada
+             , t.cdmotivo          = rg_dadosrep.nrmotrep
+         WHERE ROWID = rg_portab.dsdrowid;
+      
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log(pr_cdcooper => rg_portab.cdcooper ,
+                             pr_cdoperad => '1',
+                             pr_dscritic => ' ',
+                             pr_dsorigem => '',
+                             pr_dstransa => 'Reprovacao por Regularizacao de Portabilidade',
+                             pr_dttransa => TRUNC(SYSDATE),
+                             pr_flgtrans => 1,
+                             pr_hrtransa => to_char(SYSDATE, 'SSSSS'),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => ' ',
+                             pr_nrdconta => rg_portab.nrdconta,
+                             pr_nrdrowid => vr_nrdrowid);
+    
+        -- Gravar o Nu Portabilidade
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Nu Portabilidade',
+                                  pr_dsdadant => to_char(rg_portab.nrnu_portabilidade),
+                                  pr_dsdadatu => to_char(rg_portab.nrnu_portabilidade));
+                                  
+        -- Gravar a Situação
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Situacao',
+                                  pr_dsdadant => rg_portab.idsituacao,
+                                  pr_dsdadatu => 4 ); -- Nova situação : Reprovada
+        
+        -- Gravar o dominio do motivo 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Dominio Motivo',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => 'MOTVREGLZCREPVD' ); 
+        
+        -- Gravar o motivo 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Motivo',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => rg_dadosrep.nrmotrep ); 
+      
+      END IF;
+      
+    END LOOP;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina PCPS.pc_proc_xml_APCS302. ' ||SQLERRM;
+  END pc_proc_xml_APCS302;
   --
   PROCEDURE pc_monitorar_ret_PCPS(pr_nmarquiv  IN VARCHAR2
                                  ,pr_dsdsigla  IN crapscb.dsdsigla%TYPE
@@ -3068,7 +5982,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
 	  
 			Alteracoes:
 		..............................................................................*/		
-    
+    -- Tabela para receber arquivos lidos no unix
 		-- Variáveis
     vr_tbarquiv    TYP_SIMPLESTRINGARRAY := TYP_SIMPLESTRINGARRAY();
     vr_dthrexec    TIMESTAMP;
@@ -3225,6 +6139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         
         END IF;
         
+        
       END LOOP;
       
       /**********************************************************************************
@@ -3274,12 +6189,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
           WHEN OTHERS THEN
             NULL;
         END;
-      
         -- Executar a descriptografia do arquivo
         PCPS0003.PC_LEITURA_ARQ_PCPS(pr_nmarqori => pr_dsdirarq||'/recebe/'||vr_nmarqERR
                                     ,pr_nmarqout => pr_dsdirarq||'/recebidos/'||vr_nmarqERR||'.xml'
                                     ,pr_dscritic => vr_dscritic);
-        
         -- Em caso de erro
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
@@ -3287,7 +6200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         
         -- Carregar o conteúdo extraído do arquivo criptografado
         vr_dsarqLOB := PCPS0001.fn_arq_utf_para_clob(pr_caminho => pr_dsdirarq||'/recebidos'
-                                                    ,pr_arquivo => vr_nmarqERR||'.xml');  -- XML extraído
+                                                ,pr_arquivo => vr_nmarqERR||'.xml');  -- XML extraído
         
         -- Chama a rotina para processamento do arquivo de erro
         CASE pr_dsdsigla
@@ -3302,6 +6215,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
           WHEN 'APCS105' THEN
             -- Processar retorno do arquivo
             pc_proc_ERR_APCS105(pr_dsxmlarq => vr_dsarqLOB
+                               ,pr_dscritic => vr_dscritic);
+          WHEN 'APCS201' THEN -- Gilberto - Supero Janeiro/2019 
+            -- Processar retorno do arquivo
+            pc_proc_ERR_APCS201(pr_dsxmlarq => vr_dsarqLOB
+                               ,pr_dscritic => vr_dscritic);
+          WHEN 'APCS203' THEN -- Gilberto - Supero Janeiro/2019 
+            -- Processar retorno do arquivo
+            pc_proc_ERR_APCS203(pr_dsxmlarq => vr_dsarqLOB
+                               ,pr_dscritic => vr_dscritic);
+          WHEN 'APCS301' THEN -- Gilberto - Supero Janeiro/2019 
+            -- Processar retorno do arquivo
+            pc_proc_ERR_APCS301(pr_dsxmlarq => vr_dsarqLOB
                                ,pr_dscritic => vr_dscritic);
           ELSE
             vr_dscritic := 'Rotina não especificada para processar arquivos: '||pr_dsdsigla;
@@ -3515,7 +6440,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
           WHEN OTHERS THEN
             NULL;
         END;
-      
         -- Executar a descriptografia do arquivo
         PCPS0003.PC_LEITURA_ARQ_PCPS(pr_nmarqori => pr_dsdirarq||'/recebe/'||vr_nmarqRET
                                     ,pr_nmarqout => pr_dsdirarq||'/recebidos/'||vr_nmarqRET||'.xml'
@@ -3528,7 +6452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         
         -- Carregar o conteúdo extraído do arquivo criptografado
         vr_dsarqLOB := PCPS0001.fn_arq_utf_para_clob(pr_caminho => pr_dsdirarq||'/recebidos'
-                                                    ,pr_arquivo => vr_nmarqRET||'.xml');  -- XML extraído
+                                                ,pr_arquivo => vr_nmarqRET||'.xml');  -- XML extraído
         
         -- Chama a rotina para processamento do arquivo de erro
         CASE pr_dsdsigla
@@ -3544,6 +6468,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
             -- Processar retorno do arquivo
             pc_proc_RET_APCS105(pr_dsxmlarq => vr_dsarqLOB
                                ,pr_dscritic => vr_dscritic);
+          WHEN 'APCS201' THEN -- Janeiro/2019 Gilberto/Supero
+            -- Processar retorno do arquivo
+            pc_proc_RET_APCS201(pr_dsxmlarq => vr_dsarqLOB
+                               ,pr_dscritic => vr_dscritic);
+          WHEN 'APCS203' THEN  -- Janeiro/2019 Gilberto/Supero
+            -- Processar retorno do arquivo
+            pc_proc_RET_APCS203(pr_dsxmlarq => vr_dsarqLOB
+                               ,pr_dscritic => vr_dscritic);
+          WHEN 'APCS301' THEN  -- Fevereiro/2019 Gilberto/Supero
+            -- Processar retorno do arquivo
+            pc_proc_RET_APCS301(pr_dsxmlarq => vr_dsarqLOB
+                               ,pr_dscritic => vr_dscritic);
+
           ELSE
             vr_dscritic := 'Rotina não especificada para processar arquivos: '||pr_dsdsigla;
             RAISE vr_exc_erro;
@@ -3791,6 +6728,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                            ,pr_inddados => vr_inddados
                            ,pr_idfimreg => vr_idfimreg
                            ,pr_dscritic => vr_dscritic);
+      WHEN 'APCS201' THEN
+        -- Janeiro/2019 Gilberto/Supero
+        -- Gerar o conteudo do arquivo
+        pc_gera_XML_APCS201(pr_nmarqenv => vr_nmarquiv
+                           ,pr_dsxmlarq => vr_dsxmlarq 
+                           ,pr_inddados => vr_inddados
+                           ,pr_idfimreg => vr_idfimreg
+                           ,pr_dscritic => vr_dscritic);
+     WHEN 'APCS203' THEN
+        -- Gerar o conteudo do arquivo
+        pc_gera_XML_APCS203(pr_nmarqenv => vr_nmarquiv
+                           ,pr_dsxmlarq => vr_dsxmlarq 
+                           ,pr_inddados => vr_inddados
+                           ,pr_idfimreg => vr_idfimreg
+                           ,pr_dscritic => vr_dscritic);
+     WHEN 'APCS301' THEN
+        -- Gerar o conteudo do arquivo
+        pc_gera_XML_APCS301(pr_nmarqenv => vr_nmarquiv
+                           ,pr_dsxmlarq => vr_dsxmlarq 
+                           ,pr_inddados => vr_inddados
+                           ,pr_idfimreg => vr_idfimreg
+                           ,pr_dscritic => vr_dscritic);
       ELSE
         vr_dscritic := 'Rotina não especificada para gerar este arquivo.';
         RAISE vr_exc_erro;
@@ -3833,7 +6792,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-    
     /********** CRIPTOGRAFAR O ARQUIVO PARA ENVIAR A CIP **************/
     PCPS0003.PC_ESCRITA_ARQ_PCPS(pr_nmarqori => rg_crapscb.dsdirarq||'/enviados/'||vr_nmarquiv||'.xml'
                                 ,pr_nmarqout => rg_crapscb.dsdirarq||'/envia/'||vr_nmarquiv
@@ -4107,7 +7065,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       WHEN OTHERS THEN
         NULL;
     END;
-    
     -- Busca os arquivos para leitura
     vr_dspesqfl := rg_crapscb.dsdsigla||'%';
     
@@ -4138,10 +7095,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       RETURN;
       
     END IF;     
-    
     -- Percorrer todos os arquivos encontrados
     FOR vr_index IN vr_tbarquiv.FIRST..vr_tbarquiv.LAST LOOP
-    
       -- LOGS DE EXECUCAO
       BEGIN
         vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
@@ -4170,7 +7125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       
       -- Carregar o arquivo XML descriptografado 
       vr_dsxmlarq := PCPS0001.fn_arq_utf_para_clob(pr_caminho => rg_crapscb.dsdirarq||'/recebidos'
-                                              	  ,pr_arquivo => vr_tbarquiv(vr_index)||'.xml');  -- XML extraído  
+                                              ,pr_arquivo => vr_tbarquiv(vr_index)||'.xml');  -- XML extraído  
       
       -- Verifica qual o conteúdo de arquivo deve ser gerado
       CASE rg_crapscb.dsdsigla
@@ -4193,6 +7148,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         WHEN 'APCS109' THEN
           -- Não realiza processamento especifico, apenas descompacta e move o arquivo
           NULL;
+        WHEN 'APCS202' THEN 
+          --- Janeiro/2019 Gilberto/Supero 
+          -- Processar arquivo
+          pc_proc_xml_APCS202(pr_dsxmlarq => vr_dsxmlarq
+                             ,pr_dscritic => vr_dscritic);
+        WHEN 'APCS204' THEN
+          -- Processar arquivo
+          pc_proc_xml_APCS204(pr_dsxmlarq => vr_dsxmlarq
+                             ,pr_dscritic => vr_dscritic);
+        WHEN 'APCS205' THEN
+          -- Processar arquivo
+          pc_proc_xml_APCS205(pr_dsxmlarq => vr_dsxmlarq
+                             ,pr_dscritic => vr_dscritic);
+        WHEN 'APCS302' THEN
+          -- Processar arquivo
+          pc_proc_xml_APCS302(pr_dsxmlarq => vr_dsxmlarq
+                             ,pr_dscritic => vr_dscritic);
         ELSE
           vr_dscritic := 'Rotina não especificada para processar este arquivo.';
           RAISE vr_exc_erro;
@@ -4443,7 +7415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         CLOSE cr_agencia;
       
         -- Se não tiver endereço de email
-        IF vr_dsdemail IS NULL THEN
+        IF trim(vr_dsdemail) IS NULL THEN
           -- Registrar mensagem no log e pular para o próximo registro
           BEGIN
             vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
@@ -4458,6 +7430,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
             
             -- Próxima agência
             vr_cdagatual := vr_tbddados.NEXT(vr_cdagatual);
+
+            IF vr_cdagatual IS NULL THEN
+              EXIT;
+            END IF;
             
             -- Próximo registro
             CONTINUE;
@@ -4492,7 +7468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                                       '</tr>';
           
           -- Controle do conteúdo, para evitar estouro de variável
-          IF length(vr_dsmensag) > 30.000 THEN
+          IF length(vr_dsmensag) > 30000 THEN
             EXIT; -- sai do for
           END IF;
           
@@ -4530,6 +7506,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
             -- Próxima agência
             vr_cdagatual := vr_tbddados.NEXT(vr_cdagatual);
             
+            IF vr_cdagatual IS NULL THEN
+              EXIT;
+            END IF;
+            
             -- Verificar se percorreu todas as agencias da coop
             EXIT WHEN vr_cdagatual = vr_tbddados.LAST();
             
@@ -4553,6 +7533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     WHEN vr_exc_erro THEN
       raise_application_error(-20001, vr_dscritic);
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception(pr_compleme => 'vr_cdagatual:' || vr_cdagatual || ' dsassunt' || vr_dsassunt);
       raise_application_error(-20002, 'Erro na rotina PC_EMAIL_PA_PORTABILIDADE: '||SQLERRM);
   END pc_email_pa_portabilidade;
 	
@@ -4781,7 +7762,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         -- Não apresentar erro no JOB, erros serão gerados no LOG
         NULL;
     END;
-    
+    -- Alteração - Gilberto/Supero Janeiro 2019
+    -- Chamar a rotina de processamento de envio de contestação
+    BEGIN
+      PCPS0002.pc_gera_arquivo_APCS(18); 
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Não apresentar erro no JOB, erros serão gerados no LOG
+        NULL;
+    END;
+    -- Chamar a rotina de processamento de envio de resposta de contestação
+    BEGIN
+      PCPS0002.pc_gera_arquivo_APCS(20); 
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Não apresentar erro no JOB, erros serão gerados no LOG
+        NULL;
+    END;
+    --
+    BEGIN
+      PCPS0002.pc_gera_arquivo_APCS(23); 
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Não apresentar erro no JOB, erros serão gerados no LOG
+        NULL;
+    END;
 	EXCEPTION
     WHEN OTHERS THEN
       raise_application_error(-20000, 'Erro na rotina PC_PROCESSA_ENVIO_PCPS: '||SQLERRM);
@@ -4839,7 +7844,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         -- Não apresentar erro no JOB, erros serão gerados no LOG
         NULL;
     END;
-    
+    -- Alteração - Gilberto/Supero Janeiro 2019
+    -- Chamar a rotina de envio de retorno da contestação
+    BEGIN
+      /*********************************/
+      PCPS0002.pc_proc_arquivo_APCS(19); 
+      /*********************************/
+   EXCEPTION
+      WHEN OTHERS THEN
+        -- Não apresentar erro no JOB, erros serão gerados no LOG
+        NULL;
+    END;
+    -- Alteração - Gilberto/Supero Janeiro 2019
+    BEGIN
+      /*********************************/
+      PCPS0002.pc_proc_arquivo_APCS(21);
+      /*********************************/
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Não apresentar erro no JOB, erros serão gerados no LOG
+        NULL;
+    END;
+    -- Alteração - Gilberto/Supero Janeiro 2019
+    BEGIN
+      /*********************************/
+      PCPS0002.pc_proc_arquivo_APCS(22);
+      /*********************************/
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Não apresentar erro no JOB, erros serão gerados no LOG
+        NULL;
+    END;
+    -- Alteração - Gilberto/Supero Fevereiro 2019
+    BEGIN
+      /*********************************/
+      PCPS0002.pc_proc_arquivo_APCS(24);
+      /*********************************/
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Não apresentar erro no JOB, erros serão gerados no LOG
+        NULL;
+    END;
 	EXCEPTION
     WHEN OTHERS THEN
       raise_application_error(-20000, 'Erro na rotina PC_PROCESSA_RECEB_PCPS: '||SQLERRM);
