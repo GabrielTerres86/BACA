@@ -3194,7 +3194,9 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.vlrtarif = aux_vlrtarif
                        tt-proposta-epr.vliofepr = 0
 					   tt-proposta-epr.idfiniof = crawepr.idfiniof
-                       tt-proposta-epr.flintcdc = crapcop.flintcdc.
+                       tt-proposta-epr.flintcdc = crapcop.flintcdc
+					   /*P437*/
+					   tt-proposta-epr.inaverba = crawepr.inaverba.
 
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                        
