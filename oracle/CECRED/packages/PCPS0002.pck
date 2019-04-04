@@ -1105,6 +1105,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     -- Objetivo  : Realizar a leitura do arquivo atualizando os registros de solicitação conforme situação.
     --
     -- Alteracoes: 
+    --             04/04/2019 - Ajustar regra de validação da modalidade da conta, pois estava invertida, reprovando 
+    --                          assim as solicitações para contas salário (Renato Darosci - SUPERO - INC0036168)
     --
     ---------------------------------------------------------------------------------------------------------------
 
@@ -1316,7 +1318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         END IF;
         
         -- Verificar se o tipo de conta não permite transferencias - Se é conta salário
-        IF rg_crapass.cdmodali = 2 THEN
+        IF rg_crapass.cdmodali <> 2 THEN
           -- Deve marcar os registro como reprovado
           vr_idsituac := 3; -- Reprovada
           vr_dsdomrep := vr_dsmotivoreprv;
