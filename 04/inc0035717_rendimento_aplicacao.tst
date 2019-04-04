@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-739
+741
 /* Ajusta aplicacoes nao resgatadas 
  
  Obs.: Considera fixo CDI 6.40
@@ -564,7 +564,9 @@ begin
                                                    vr_vlrendim||';'||
                                                    vr_vltotal);
     /*******************/
-    
+    if cr_craplap%isopen then    
+      CLOSE cr_craplap;
+    end if;
    /*     
     vr_nrseqdig := nvl(vr_nrseqdig,0) + 1;
     vr_nrdocmto := vr_nrdocmto_inicial + vr_nrseqdig;
