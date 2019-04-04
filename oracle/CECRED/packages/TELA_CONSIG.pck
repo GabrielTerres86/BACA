@@ -209,6 +209,13 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONSIG IS
                                    ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
                                    ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
                                    );                                                                                   
+  
+  PROCEDURE pc_validar_venctos_consig( pr_retxml      IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                      ,pr_cdcritic   OUT PLS_INTEGER        --> Codigo da critica
+                                      ,pr_dscritic   OUT VARCHAR2           --> Descricao da critica
+                                      ,pr_des_erro   OUT VARCHAR2           --> Erros do processo
+                                      );
+
 end TELA_CONSIG;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
@@ -227,7 +234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
   --
   -- Alteração : 11/09/2018 Criação da package (CIS Corporate)
   --             
-  -- Alteração : 26/03/2019 Criação das packages:
+  -- Alteração : 26/03/2019 Criação das procedures:
   --                        - pc_validar_datas_consig_param
   --                        - pc_alt_empr_consig_param_web
   --                        - pc_inc_alt_param_consig
@@ -237,7 +244,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
   --                        - pc_busca_param_consig_web
   --                        - pc_replicar_param_consig_web  (Fernanda Kelli - AMcom)
   --   
-  --             29/03/2019 - Criação da rotina pc_busca_dados_emp_fis
+  --             29/03/2019 - Criação da rotina pc_busca_dados_emp_fis (Josiane Stiehler - AMcom)
+  --
+  --             04/04/2019 - Criação da rotina pc_validar_venctos_consig (Fernanda Kelli - AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -2329,7 +2338,6 @@ BEGIN
                                           '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
          ROLLBACK;                                         
   END pc_replicar_param_consig_web;      
-  
  
   PROCEDURE pc_busca_dados_emp_fis (-- campos padrões  
                                     pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
@@ -2363,6 +2371,7 @@ BEGIN
     /* Descrição e código da critica */
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
+    vr_des_erro VARCHAR2(10);
 
     -- variaveis de retorno
     vr_tab_dados_param_consig typ_tab_dados_param_consig;
@@ -2448,6 +2457,17 @@ BEGIN
   
 
     BEGIN
+      
+      /*Validação do Range dos Vencimentos*/ 
+      pc_validar_venctos_consig( pr_retxml   => pr_retxml   --IN
+                                ,pr_cdcritic => vr_cdcritic --OUT
+                                ,pr_dscritic => vr_dscritic --OUT
+                                ,pr_des_erro => vr_des_erro --OUT
+                                );
+
+      IF vr_des_erro = 'NOK' THEN         
+        raise vr_exc_erro;
+      END IF;                          
     
       pr_nmdcampo := NULL;
       pr_des_erro := 'OK';
@@ -2496,8 +2516,7 @@ BEGIN
                           '<qtdeVenctos>1</qtdeVenctos>'||
                         '</vencimento'||to_char(vr_nrvencto)||'>';
       END LOOP;
-      
-     
+            
       -- inicializar o clob
       vr_des_xml := null;
       dbms_lob.createtemporary(vr_des_xml, true);
@@ -2591,5 +2610,101 @@ BEGIN
     END;
   END pc_busca_dados_emp_fis;
                                                   
+
+  PROCEDURE pc_validar_venctos_consig( pr_retxml      IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                      ,pr_cdcritic   OUT PLS_INTEGER           --> Codigo da critica
+                                      ,pr_dscritic   OUT VARCHAR2              --> Descricao da critica
+                                      ,pr_des_erro   OUT VARCHAR2              --> Erros do processo
+                                      ) IS
+ /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_validar_venctos_consig
+      Sistema  : AIMARO
+      Sigla    : CONSIG
+      Autor    : Fernanda Kelli de Oliveira - AMcom Sistemas de Informação
+      Data     : 04/04/2019
+  
+      Objetivo : Recebe em XML os dados da tela Consig, lê o range vencimentos DE/ATE
+                 e verifica se esta faltando algum dia do ano na parametrização do Grid. 
+                 Ex.: 
+                 DE         ATE
+                 11/01      10/02
+                 11/03      10/04
+                 11/04      10/05
+                 ...
+                 11/12      10/01
+  
+      Alteração : 
+  
+  ----------------------------------------------------------------------------------------------------------*/
+  BEGIN
+    DECLARE
+    
+    /* Tratamento de erro */
+    vr_exc_erro EXCEPTION;
+
+    /* Descrição e código da critica */
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);
+
+    vr_nrvencto           NUMBER;
+    vr_qtdtotal           NUMBER;
+    vr_dtinclpropostade   DATE := NULL;
+    vr_diaMesDe           VARCHAR2(10);
+    vr_dtinclpropostaate  DATE := NULL;
+    vr_diaMesAte           VARCHAR2(10);
+    vr_dtate_ant          DATE := NULL;
+        
+    BEGIN
+
+      pr_des_erro := 'OK';
+      
+      -- Extraindo os dados do XML o valor da tag <total>   
+      vr_qtdtotal     := TO_NUMBER(TRIM(pr_retxml.extract('/Root/dto/vencimentos/total/text()').getstringval()));      
+
+      vr_nrvencto := 0;
+     -- vr_xmlvencto:= null;
+      FOR x in 1 .. vr_qtdtotal LOOP
+        vr_nrvencto:= vr_nrvencto + 1;  
+        vr_diaMesDe  := TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto||'/'||'diaMesDe/text()').getstringval());    
+        vr_dtinclpropostade  := TO_DATE(vr_diaMesDe,'DD/MM');
+        
+        vr_diaMesAte := TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto||'/'||'diaMesAte/text()').getstringval());
+        vr_dtinclpropostaate := TO_DATE(vr_diaMesAte,'DD/MM');
+        
+        IF vr_nrvencto = 1 THEN
+          vr_dtate_ant := vr_dtinclpropostaate;
+        ELSIF vr_nrvencto > 1 THEN
+          IF vr_dtate_ant + 1 <> vr_dtinclpropostade  THEN
+            vr_dscritic := 'Nao esta completo o Grid de Vencimentos com todas os dias do Ano.';
+            raise vr_exc_erro; 
+          END IF;
+          vr_dtate_ant := vr_dtinclpropostaate;           
+        END IF;        
+      END LOOP;      
+    
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+         /*  se foi retornado apenas código */
+         IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+             /* buscar a descriçao */
+             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+         END IF;
+         /* variavel de erro recebe erro ocorrido */
+         pr_des_erro := 'NOK';
+         pr_cdcritic := nvl(vr_cdcritic,0);
+         pr_dscritic := vr_dscritic;
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+           pr_des_erro := 'NOK';
+         /* montar descriçao de erro nao tratado */
+           pr_dscritic := 'erro não tratado na tela_consig.pc_validar_venctos_consig ' ||SQLERRM;
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+  END pc_validar_venctos_consig;
+  
 END TELA_CONSIG;
 /
