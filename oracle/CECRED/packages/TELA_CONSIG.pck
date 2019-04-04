@@ -225,7 +225,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
   --  Sistema  : Rotinas focando nas funcionalidades da tela CONSIG
   --  Sigla    : TELA
   --  Autor    : CIS Corporate
-  --  Data     : Setembro/2018.                   Ultima atualizacao: 29/03/2019
+  --  Data     : Setembro/2018.                   Ultima atualizacao: 04/04/2019
   --
   -- Dados referentes ao programa:
   --
