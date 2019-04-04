@@ -3905,23 +3905,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                 CLOSE cr_craplcm_ali28;
                               END IF;
 
-                              -- PRB0040576
-                              IF  vr_cdalinea = 28 THEN
-                                /* Se ja existir devolucao com a alinea 28, devolver com a alinea 49 */
-                                --Selecionar os lancamentos
-                                OPEN cr_craplcm_ali28 (pr_cdcooper => pr_cdcooper
-                                                 ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                 ,pr_nrdocmto => vr_nrdocmto);
-                                --Posicionar no proximo registro
-                                FETCH cr_craplcm_ali28 INTO rw_cr_craplcm_ali28;
-                                --Se encontrou registro
-                                IF cr_craplcm_ali28%FOUND THEN
-                                  vr_cdalinea:= 49;
-                                END IF;
-                                --Fechar cursor
-                                CLOSE cr_craplcm_ali28;
-                              END IF;
-
                               --Executar rotina para criar registros de devolucao/taxa de cheques.
                               cheq0001.pc_gera_devolucao_cheque (pr_cdcooper => pr_cdcooper
                                                                 ,pr_dtmvtolt => pr_dtmvtolt
