@@ -23,6 +23,7 @@
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '' ;
 	$cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : '' ;
+		
 	
 	
 if ($operacao == 'SIMULA_CONSIGNADO'){
@@ -55,10 +56,11 @@ if ($operacao == 'SIMULA_CONSIGNADO'){
 			echo $js;
 			return;
 		}
-		else{
-			$js  = 'ret = 1;';			
-			$js .= 'dtlibera = "'.getByTagName($xmlObj->roottag->tags[0]->tags[0]->tags,'dtliberacao').'";';			
-			$js .= 'dtdpagto = "'.getByTagName($xmlObj->roottag->tags[0]->tags[0]->tags,'dtvencimento').'";';	
+		else{			
+			$js  = 'ret = 1;';									
+			
+			$js .= '_dtlibera = "'.getByTagName($xmlObj->roottag->tags[0]->tags[0]->tags,'dtliberacao').'";';			
+			$js .= '_dtdpagto = "'.getByTagName($xmlObj->roottag->tags[0]->tags[0]->tags,'dtvencimento').'";';	
 			echo $js;
 			return;				
 		} 

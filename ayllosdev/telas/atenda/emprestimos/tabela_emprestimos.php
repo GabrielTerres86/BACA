@@ -50,9 +50,9 @@
 				<th><? echo utf8ToHtml('Situação');?></th>
 				<th><? echo utf8ToHtml('Decisão');?></th>
                 <th><? echo utf8ToHtml('Nota<br>Rating');?></th>
-                <th><? echo utf8ToHtml('Origem');?></th>
+                <th><? echo utf8ToHtml('OrigemRat');?></th>
                 <th><? echo utf8ToHtml('Status');?></th>
-				<th><? echo utf8ToHtml('Canal');?></th>
+				<th><? echo utf8ToHtml('Origem');?></th>
                 <!-- [017] -->
             </tr>
 		</thead>
@@ -107,7 +107,7 @@
                         $tipo = "Pos-fixado";
                         break;
                 } 
-				} 
+				 
 				switch (getByTagName($registro->tags,'cdorigem')) {
                     case 1:
                         $tipoOrigem = "Aimaro";
@@ -158,6 +158,8 @@
 						<input type="hidden" id="insitest" name="insitest" value="<? echo getByTagName($registro->tags,'insitest') ?>" />
 						<!-- PRJ - 437 - Consignado s3 -->
 						<input type="hidden" id="inaverba" name="inaverba" value="<? echo getByTagName($registro->tags,'inaverba') ?>" />
+						<input type="hidden" id="tpemprst" name="tpemprst" value="<? echo getByTagName($registro->tags,'tpemprst') ?>" />
+						<input type="hidden" id="tpmodcon" name="tpmodcon" value="<? echo getByTagName($registro->tags,'tpmodcon') ?>" />
 					    <!-- PRJ - 438 - Rating  -->
 						<input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
 						<input type="hidden" id="flintcdc" name="flintcdc" value="<? echo getByTagName($registro->tags,'flintcdc') ?>" />
@@ -179,19 +181,18 @@
 					<td><? echo stringTabela(getByTagName($registro->tags,'cdoperad'),10,'maiuscula') ?></td>					
 					<td><? echo getByTagName($registro->tags,'dssitest') ?></td>
 					<td><? echo getByTagName($registro->tags,'dssitapr') ?></td>
-					<td><? echo stringTabela($tipoOrigem,40,'maiuscula'); ?></td></tr>
-                    <!-- [016][019] -->
+					<!-- [016][019] -->
                     <td><? echo $notaRating; ?></td>
                     <td><? echo $origemRating; ?></td>
                     <td><? echo $situacaoRating; ?></td>
+					<td><? echo stringTabela($tipoOrigem,40,'maiuscula'); ?></td></tr>
                     <!-- [016][019] -->
                     </tr>
-
 			<? } ?>
+
 		</tbody>
 	</table>
 </div>
-
 <div id="divBotoes">
 	<a href="#" class="botao" id="btVoltar"    onclick="encerraRotina(true); return false;">Voltar</a>
 	<a href="#" class="botao" id="btAlterar"   onclick="controlaOperacao('TA');">Alterar</a>

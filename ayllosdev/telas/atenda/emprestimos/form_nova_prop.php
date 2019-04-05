@@ -135,7 +135,7 @@
 			<input name="flgdocje" id="flgNo" type="radio" class="radio" value="no" />
 			<label for="flgNo" class="radio"><? echo utf8ToHtml('Não') ?></label>
 		</div>
-			
+							
 		<input name="nivcalcu" id="nivcalcu" type="hidden" value="" />
 
 		<br />
@@ -144,6 +144,11 @@
 		<input name="cdfinemp" id="cdfinemp" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsfinemp" id="dsfinemp" type="text" value="" />
+
+		<div id="divInaverba">			
+			<label for="inaverba"><? echo utf8ToHtml('Averbado:') ?></label>
+			<input name="inaverba" readonly id="inaverba" type="text" value=""  />			
+		</div>
 
 		<br />
 

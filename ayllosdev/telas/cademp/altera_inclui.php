@@ -1,8 +1,8 @@
 <?php
 /*!
  * FONTE        : salvar_dados.php
- * CRIAÇÃO      : Michel Candido Gati Tecnologia
- * DATA CRIAÇÃO : 21/08/2013
+ * CRIAï¿½ï¿½O      : Michel Candido Gati Tecnologia
+ * DATA CRIAï¿½ï¿½O : 21/08/2013
  *
  * ALTERACAO    : 08/07/2015 - Adicionado validacao de campos referente a dias da tela de tarifas. (Jorge/Elton) - Emergencial
  *                18/05/2016 - Adicionado o campo dtlimdeb. (Jaison/Marcos)
@@ -217,7 +217,10 @@
     /*VALIDA SE OS DADOS DA EMPRESA ESTAO CORRETOS*/
 	//P437 s2
 	if ($opcao == 'A') {
-		//Enviar informações para FIS
+        if ($dscomple == '' || $dscomple == ' ') {
+            $dscomple = '-';
+        }
+		//Enviar informacoes para FIS
 		$xml  = '';
 		$xml .= '<Root>';
 		$xml .= '	<dto>';
@@ -228,6 +231,7 @@
 		$xml .= '       <descrazaoloja>'.$nmextemp.'</descrazaoloja>';
 		$xml .= '       <ceplogradouro>'.$nrcepend.'</ceplogradouro>';
 		$xml .= '       <desclogradouro>'.$dsendemp.'</desclogradouro>';
+        $xml .= '       <numlogradouro>'.$nrendemp.'</numlogradouro>';
 		$xml .= '       <desccompllogradouro>'.$dscomple.'</desccompllogradouro>';
 		$xml .= '       <descbairrologradouro>'.$nmbairro.'</descbairrologradouro>';
 		$xml .= '       <desccidadelogradouro>'.$nmcidade.'</desccidadelogradouro>';
@@ -261,7 +265,7 @@
 			
 			exit();
 		}else{
-			//cham SOA x FIS
+			//cham SOA x FIS          
 		}		
 		
 		if($retSOAxFIS == "ERRO"){

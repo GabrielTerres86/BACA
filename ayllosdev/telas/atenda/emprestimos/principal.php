@@ -377,8 +377,10 @@
 			arrayProposta['flintcdc'] = '<? echo getByTagName($proposta,'flintcdc'); ?>';
 			arrayProposta['inintegra_cont'] = '<? echo getByTagName($proposta,'inintegra_cont'); ?>';
 			arrayProposta['tpfinali'] = '<? echo getByTagName($proposta,'tpfinali'); ?>';
-
-      vleprori 	 = arrayProposta['vlemprst'];
+			//P437
+			arrayProposta['inaverba'] = '<? echo getByTagName($proposta,'inaverba') != '' ? getByTagName($proposta,'inaverba') : '0'; ?>';
+			arrayProposta['tpmodcon'] = '<? echo getByTagName($proposta,'tpmodcon'); ?>';			
+            vleprori 	 = arrayProposta['vlemprst'];
 			bkp_vlpreemp = arrayProposta["vlpreemp"];
 			bkp_dslcremp = arrayProposta["dslcremp"];
 			bkp_dsfinemp = arrayProposta["dsfinemp"];
@@ -1035,9 +1037,7 @@
 		$xml .= "   <idfiniof>".$idfiniof."</idfiniof>";
 		$xml .= "   <dsctrliq>".$dsctrliq."</dsctrliq>";
 		$xml .= "   <idgravar>N</idgravar>";
-		if ($gConsig == '1'){
-			$xml .= "		<vlrdoiof>".str_replace(',', '.', str_replace('.', '', $vliofepr)). "</vlrdoiof>";
-		}
+		$xml .= "	<vlrdoiof>".str_replace(',', '.', str_replace('.', '', $vliofepr)). "</vlrdoiof>";
 		$xml .= " </Dados>";
 		$xml .= "</Root>";
 
@@ -1103,9 +1103,7 @@
 		$xml .= "   	<dscatbem>".$dscatbem."</dscatbem>";
 		$xml .= "		<dsctrliq>" . $dsctrliq . "</dsctrliq>";		
 		$xml .= "   	<idfiniof>".$idfiniof."</idfiniof>";		
-		if ($gConsig == '1'){
-			$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
-		}		
+		$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
 

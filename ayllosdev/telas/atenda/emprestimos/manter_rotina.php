@@ -578,7 +578,7 @@
 	if ($procedure == 'grava-proposta-completa' || $operacao == 'F_VALOR'){
 		
 		if ($procedure == 'grava-proposta-completa') {
-			$metodoConsultas = "confirmaConsultas('" . $flmudfai . "', 'AT')";
+			$metodoConsultas = 'confirmaConsultas(\"' . $flmudfai . '\", \"AT\")';
 		}
 		
 		if ($resposta != '') {
@@ -622,7 +622,7 @@
 		$xmlObj    = getObjectXML($xmlResult);
 	}
 	
-		if ($procedure == 'grava-proposta-completa') {
+	if ($procedure == 'grava-proposta-completa') {
 		echo 'exibirMensagens("'.$stringArrayMsg.'","bloqueiaFundo($(\"#divConfirm\")); verificaCriticasRating(\"\"); ' . $metodoConsultas.'");bloqueiaFundo($("#divError"));';
 	} else {
 	    echo 'exibirMensagens("'.$stringArrayMsg.'","bloqueiaFundo($(\"#divConfirm\"))");bloqueiaFundo($("#divError"));';

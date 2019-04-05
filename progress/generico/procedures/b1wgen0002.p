@@ -2143,6 +2143,8 @@ PROCEDURE obtem-propostas-emprestimo:
     DEF  VAR        aux_dscatbem AS CHAR                           NO-UNDO.
     DEF  VAR        i            AS INTE                           NO-UNDO.    
     DEF  VAR        aux_qtdias_carencia AS INTE                    NO-UNDO.
+	DEF  VAR        aux_tpmodcon AS INTE                           NO-UNDO.
+	
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""
@@ -2305,6 +2307,13 @@ PROCEDURE obtem-propostas-emprestimo:
                            craplcr.cdlcremp = crawepr.cdlcremp
                            NO-LOCK NO-ERROR.
 
+		/*P437*/
+		IF AVAIL craplcr THEN				
+			IF craplcr.tpmodcon <> ? THEN
+				aux_tpmodcon = craplcr.tpmodcon.
+			ELSE
+				aux_tpmodcon = 0.
+		
 
         /*** GRAVAMES - Verifica se permite excluir proposta **/
         ASSIGN aux_flexclui = TRUE.
@@ -2420,7 +2429,8 @@ PROCEDURE obtem-propostas-emprestimo:
                /* PRJ 438 */
                tt-proposta-epr.insitest = crawepr.insitest
                /*P437*/
-               tt-proposta-epr.inaverba = crawepr.inaverba.
+               tt-proposta-epr.inaverba = crawepr.inaverba
+			   tt-proposta-epr.tpmodcon = aux_tpmodcon.
 
                IF crawepr.idfiniof > 0 THEN
                   DO:
@@ -2742,6 +2752,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
     DEF VAR aux_qtdias_carencia AS INTE                             NO-UNDO.
     DEF VAR aux_incdccon AS INTE                                    NO-UNDO.
     DEF VAR aux_endereco AS CHAR                                    NO-UNDO.
+	DEF VAR aux_tpmodcon     AS INTE                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dados-coope.
@@ -2952,6 +2963,12 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                         aux_cdcritic = 363.
                         LEAVE.
                     END.
+
+				/*P437*/
+				IF craplcr.tpmodcon <> ? THEN
+					aux_tpmodcon = craplcr.tpmodcon.
+				ELSE
+					aux_tpmodcon = 0.			
 
 
                 /*** GRAVAMES - Verifica se permite excluir proposta WEB **/
@@ -3197,7 +3214,8 @@ PROCEDURE obtem-dados-proposta-emprestimo:
 					   tt-proposta-epr.idfiniof = crawepr.idfiniof
                        tt-proposta-epr.flintcdc = crapcop.flintcdc
 					   /*P437*/
-					   tt-proposta-epr.inaverba = crawepr.inaverba.
+					   tt-proposta-epr.inaverba = crawepr.inaverba					  
+					   tt-proposta-epr.tpmodcon = aux_tpmodcon.
 
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                        
@@ -4217,6 +4235,7 @@ PROCEDURE valida-dados-gerais:
 		
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
+
 
     /* Carregar flag de cessao de credito */
     IF par_nmdatela = "CRPS714" THEN
@@ -6801,6 +6820,8 @@ PROCEDURE grava-proposta-completa:
     DEF VAR          aux_nrliquid AS INT                            NO-UNDO. /*PRJ 438 BUG*/
     DEF VAR          aux_contigen AS LOGI                           NO-UNDO.
     DEF VAR          aux_interrup AS LOGI                           NO-UNDO.
+	DEF VAR          aux_dtdpagto AS DATE							NO-UNDO. /*P437 VALIDA SE A DATA DE PAGTO FOI ALTERADA*/
+	DEF VAR 		 aux_tpmodcon AS INT							NO-UNDO. /*P437 VALIDA SE A DATA DE PAGTO FOI ALTERADA*/
 
     DEF  BUFFER      crabavt FOR  crapavt.
 
@@ -7377,6 +7398,17 @@ PROCEDURE grava-proposta-completa:
                               crawepr.nrctremp = par_nrctremp
                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
+			/*P437 VALIDA SE A DATA DE PAGTO FOI ALTERADA*/
+			IF AVAIL crawepr THEN
+			DO:
+				aux_dtdpagto = crawepr.dtdpagto.
+				FIND FIRST craplcr 
+				WHERE craplcr.cdcooper = par_cdcooper
+				AND craplcr.cdlcremp = par_cdlcremp NO-LOCK NO-ERROR.
+				IF AVAILABLE craplcr THEN
+					ASSIGN aux_tpmodcon = craplcr.tpmodcon.
+			END.
+
            IF   NOT AVAIL crawepr   THEN
                 IF   LOCKED crawepr   THEN
                      DO:
@@ -7605,6 +7637,7 @@ PROCEDURE grava-proposta-completa:
 		  DO:
 		   ASSIGN aux_opcaoalt = "ASA".
 		END.
+        
         
         RUN atualiza_dados_avalista_proposta 
             (INPUT par_cdcooper,
@@ -8339,6 +8372,15 @@ PROCEDURE grava-proposta-completa:
                           RETURN "NOK".
 
         END.                   
+        END. 
+
+		/*P437 VALIDA SE A DATA DE PAGTO FOI ALTERADA*/
+		IF aux_dtdpagto <> ? AND par_tpemprst = 1 AND aux_tpmodcon <> ? THEN
+			IF aux_dtdpagto <> par_dtdpagto AND aux_tpmodcon > 0 THEN
+			DO:
+				CREATE tt-msg-confirma.
+				ASSIGN tt-msg-confirma.inconfir = 1
+					tt-msg-confirma.dsmensag = "Data de Primeiro Vencimento alterada automaticamente, imprima nova CCB.".
         END.                   
     
 

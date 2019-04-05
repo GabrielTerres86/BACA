@@ -74,9 +74,7 @@ $xml .= "		<qtpreemp>" . $qtpreemp . "</qtpreemp>";
 $xml .= "		<dsctrliq>" . $dsctrliq . "</dsctrliq>";
 $xml .= "		<idfiniof>" . $idfiniof . "</idfiniof>";
 //P437
-if ($gConsig == '1'){
-	$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
-}	
+$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
 $xml .= "	</Dados>";
 $xml .= "</Root>";
 
