@@ -345,6 +345,8 @@
 				
 				08/01/2019 - Incluso tratativa para não gerar pendencia de borderos inclusos no IB com
 				             valor inferior ao parametro de assinatura (Daniel).				  
+
+                05/04/2019 - Adicionado novos documentos (159, 163, 176, 177) (Jefferson - MoutS)
 				  
 
 .............................................................................*/

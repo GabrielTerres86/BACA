@@ -2520,6 +2520,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 	--
 	--				 28/08/2018 - Fixar o código de emissao de cheque na proc
 	--							  pc_duplica_conta (Andrey Formigari - Mouts)
+	--
+	--				 05/04/2019 - Alterado o documento de Ficha Cadastral
+	--                            de 7 para 54 (Jefferson - MoutS)
     -- .............................................................................*/
 
       -- Cursor sobre a tabela de associados

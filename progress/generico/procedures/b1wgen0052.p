@@ -135,6 +135,9 @@
 
 			   10/09/2018 - Ajuste na busca pelo Nome Social (Andrey Formigari - Mouts)
 
+			   05/04/2019 - Alterado o documento de Ficha Cadastral
+                            de 7 para 54 (Jefferson - MoutS)
+
 ............................................................................*/
 
 

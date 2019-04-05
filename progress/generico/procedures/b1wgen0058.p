@@ -213,6 +213,9 @@
                 13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
                              PRJ366 - tipo de conta (Odirlei-AMcom)                          
 
+                05/04/2019 - Alterado o documento de Ficha Cadastral
+                             de 7 para 54 (Jefferson - MoutS)
+
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
