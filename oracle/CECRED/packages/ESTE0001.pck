@@ -270,7 +270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Março/2016.                   Ultima atualizacao: 25/07/2018
+      Data     : Março/2016.                   Ultima atualizacao: 05/04/2019
 
       Dados referentes ao programa:
 
@@ -285,6 +285,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 							   Fluxo Atraso (quantidadeDiasAtraso)
 							   PJ 450 - Diego Simas (AMcom)		
 
+              	  05/04/2019 - P437 - Consignado - Fernanda Kelli de Oliveira (AMcom)
+                                      Alteração na procedure para enviar Consignado para Análise de Crédito (Esteira) :
+                                       - pc_gera_json_proposta
+                                       - pc_efetivar_proposta_est  
+                                       
+                 05/04/2019 - P437 - Consigando - Josiane Stiehler (AMcom)
+                                     Altera o campo INAVERBA da tabela CRWEPR quando perder aprovação da proposta
+                                      - pc_incluir_proposta_est
+                                      - pc_alterar_proposta_est
   ---------------------------------------------------------------------------------------------------------------*/
   --> Funcao para formatar o numero em decimal conforme padrao da IBRATAN
   FUNCTION fn_decimal_ibra (pr_numero IN number) RETURN NUMBER IS --RETURN VARCHAR2 is
@@ -1358,7 +1367,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Março/2016.                   Ultima atualizacao: 26/07/2018
+      Data     : Março/2016.                   Ultima atualizacao: 05/04/2019
     
       Dados referentes ao programa:
     
@@ -1393,6 +1402,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                   26/07/2018 - Correção para quando a quantidade de meses do histórico de empréstimo for nula receber zero 
 							   PJ 450 - Diego Simas (AMcom) (Fluxo Atraso)							   
 
+                 05/04/2019 - P437 - Consignado - Enviar para Análise de Crédito (Esteira) a proposta de Consignado.
+                              (Fernanda Kelli de Oliveira - AMcom)           
     ..........................................................................*/
     -----------> CURSORES <-----------
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
@@ -1597,6 +1608,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     --- variavel cartoes
     vr_vltotccr NUMBER;
 
+    vr_cooper_consignado VARCHAR2(1) := 'N'; /*P437*/
   BEGIN
     
     --Verificar se a data existe
@@ -1686,10 +1698,20 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
        3 – Desconto Cheques 
        4 – Desconto Títulos 
        5 – Cartão de Crédito 
-       6 – Limite de Crédito) */
+       6 – Limite de Crédito 
+       9 – Consignado)
+     */
        
+    -- Se for CONSIGNADO e Cooperativa Piloto - P437
+    vr_cooper_consignado := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                      pr_cdcooper => pr_cdcooper,
+                                                      pr_cdacesso => 'COOPER_CONSIGNADO');
+
+    IF rw_crawepr.cdfinemp = 57 AND vr_cooper_consignado = 'S' THEN
+      vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    ,9);
+      vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'Consignado');
     -- Se for CDC e diversos
-    IF rw_crawepr.cdfinemp = 58 AND rw_crawepr.inlcrcdc = 1 THEN
+    ELSIF rw_crawepr.cdfinemp = 58 AND rw_crawepr.inlcrcdc = 1 THEN
       vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    ,0); -- CDC Diversos
       vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'CDC Diversos');
     -- Se for CDC e veiculos
@@ -2064,7 +2086,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Março/2016.                   Ultima atualizacao: 13/07/2017
+      Data     : Março/2016.                   Ultima atualizacao: 05/04/2019
     
       Dados referentes ao programa:
     
@@ -2075,6 +2097,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
         
                   15/12/2017 - P337 - SM - Ajustes no envio para retormar reinício 
                                de fluxo (Marcos-Supero)        
+                               
+                  05/04/2019 - P437 - Consigando - Altera o campo INAVERBA da tabela CRWEPR
+                               quando perder aprovação da proposta
     ..........................................................................*/
     
     -----------> VARIAVEIS <-----------
@@ -2296,7 +2321,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                wpr.insitapr = 0,
                wpr.cdopeapr = NULL,
                wpr.dtaprova = NULL,
-               wpr.hraprova = 0
+               wpr.hraprova = 0,
+               wpr.inaverba = 0 -- P437 - Consignado
 				 WHERE wpr.rowid = rw_crawepr.rowid;      
 			EXCEPTION    
 				WHEN OTHERS THEN
@@ -2555,7 +2581,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                wpr.insitapr = 0,
                wpr.cdopeapr = NULL,
                wpr.dtaprova = NULL,
-               wpr.hraprova = 0
+               wpr.hraprova = 0,
+               wpr.inaverba = 0 -- P437 - Consignado
          WHERE wpr.rowid = rw_crawepr.rowid;      
       EXCEPTION    
         WHEN OTHERS THEN
@@ -2639,13 +2666,14 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Março/2016.                   Ultima atualizacao: 09/03/2016
+      Data     : Março/2016.                   Ultima atualizacao: 05/04/2019
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por gerar a alteracao da proposta para a esteira    
-      Alteração : 
+      Alteração :  05/04/2019 - P437 - Consigando - Altera o campo INAVERBA da tabela CRWEPR
+                               quando perder aprovação da proposta
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -2816,7 +2844,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                epr.insitapr = 0,
                epr.cdopeapr = NULL,
                epr.dtaprova = NULL,
-               epr.hraprova = 0
+               epr.hraprova = 0,
+               epr.inaverba = 0 -- P437 - Consigando
        WHERE epr.cdcooper = pr_cdcooper
          AND epr.nrdconta = pr_nrdconta
          AND epr.nrctremp = pr_nrctremp;      
@@ -4030,6 +4059,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
        				   20/12/2017 - Incluídos históricos 2013 e 2014 no cursor cr_craplem Prj. 402 (Jean Michel).
 
                   30/10/2018 - Adicionado novos campos projeto 439 (Rafael Faria - Supero)
+                  05/04/2019 - P437 - Consignado - Enviar para Análise de Crédito (Esteira) a proposta de Consignado.
+                              (Fernanda Kelli de Oliveira - AMcom)       
+
     ..........................................................................*/ 
     
     -----------> CURSORES <-----------
@@ -4170,6 +4202,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_vliofadi      NUMBER;
     vr_vlpertar      NUMBER;
     
+    vr_cooper_consignado VARCHAR2(1) := 'N'; /*P437*/
+    
   BEGIN
     
     -- Se o DEBUG estiver habilitado
@@ -4293,7 +4327,14 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
      , 9 – Consignado)
      */
 
-    IF rw_crawepr.cdfinemp = 58 and rw_crawepr.inlcrcdc = 1 THEN
+    -- Se for CONSIGNADO - P437
+    vr_cooper_consignado := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                      pr_cdcooper => pr_cdcooper,
+                                                      pr_cdacesso => 'COOPER_CONSIGNADO');
+
+    IF rw_crawepr.cdfinemp = 57 AND vr_cooper_consignado = 'S'THEN
+      vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 9);
+    ELSIF rw_crawepr.cdfinemp = 58 and rw_crawepr.inlcrcdc = 1 THEN
       vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 0);
     ELSIF rw_crawepr.cdfinemp = 59 and rw_crawepr.inlcrcdc = 1 THEN
       vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 1);
@@ -5043,14 +5084,15 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Marcos Martini
-    Data     : Agosto/2017                    Ultima atualizacao: --/--/----
+    Data     : Agosto/2017                    Ultima atualizacao: 05/04/2019
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     Objetivo  : Tem como objetivo solicitar o retorno da analise no Motor
     Alteração : 
-        
+                05/04/2019 - P437 - Consigando - Altera o campo INAVERBA da tabela CRWEPR
+                               quando perder aprovação da proposta
   ..........................................................................*/
 
   
@@ -5331,6 +5373,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                 UPDATE crawepr epr
                    SET epr.insitest = 3 --> Analise Finalizada
                       ,epr.insitapr = 6 --> Erro na análise
+                      ,epr.inaverba = 0 -- P437 - Consignado
                  WHERE epr.rowid = rw_crawepr.rowid;
               EXCEPTION
                 WHEN OTHERS THEN 
