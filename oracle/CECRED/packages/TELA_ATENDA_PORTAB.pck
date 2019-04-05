@@ -1698,6 +1698,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       FETCH cr_portab_envia
         INTO rw_portab_envia;
 			CLOSE cr_portab_envia;
+
+	  IF TRIM(rw_portab_envia.nrnu_portabilidade) IS NULL AND rw_portab_envia.cdsituacao = 2 THEN
+        vr_dscritic := 'Portabilidade com situação: Solicitada, não pode ser cancelada sem o NU.';
+        RAISE vr_exc_erro;
+      END IF;
     
       IF rw_portab_envia.cdsituacao = 1 THEN
         -- A solicitar
