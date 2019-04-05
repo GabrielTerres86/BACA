@@ -3313,8 +3313,8 @@ PROCEDURE Grava_Dados:
                       INPUT par_dtmvtolt,
                       /* 9 - DOCUMENTO DE IDENTIFICAÇAO - PROC
                          6 - CARTAO DE ASSINATURA
-                         7 - FICHA CADASTRAL */
-                      INPUT "9;6;7", 
+                        54 - FICHA CADASTRAL */
+                      INPUT "9;6;54", 
                       INPUT par_cdoperad,
                      OUTPUT aux_cdcritic,
                      OUTPUT aux_dscritic).
