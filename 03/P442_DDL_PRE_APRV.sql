@@ -61,12 +61,12 @@ begin
   update TBEPR_MOTIVO_NAO_APRV set idregistro = SEQ_EPR_MOTIVO_NAO_APRV_IDREG.NEXTVAL
                                   ,nrcpfcnpj_base = nvl((select nrcpfcnpj_base 
                                                       from crapass 
-                                                     where crapass.cdcooper = TBEPR_MOTIVO_NAO_APROV.cdcooper
-                                                       and crapass.nrdconta = TBEPR_MOTIVO_NAO_APROV.nrdconta),0)
+                                                     where crapass.cdcooper = TBEPR_MOTIVO_NAO_APRV.cdcooper
+                                                       and crapass.nrdconta = TBEPR_MOTIVO_NAO_APRV.nrdconta),0)
                                   ,tppessoa = nvl((select inpessoa 
                                                   from crapass 
-                                                 where crapass.cdcooper = TBEPR_MOTIVO_NAO_APROV.cdcooper
-                                                   and crapass.nrdconta = TBEPR_MOTIVO_NAO_APROV.nrdconta),0);
+                                                 where crapass.cdcooper = TBEPR_MOTIVO_NAO_APRV.cdcooper
+                                                   and crapass.nrdconta = TBEPR_MOTIVO_NAO_APRV.nrdconta),0);
   commit;
 end;
 
@@ -77,7 +77,7 @@ alter table TBEPR_MOTIVO_NAO_APRV modify tppessoa not null;
 alter table TBEPR_MOTIVO_NAO_APRV
   add constraint TBEPR_MOTIVO_NAO_APRV_PK primary key (IDREGISTRO);
 
-alter table TBBI_CPA_POSICAO_DIARIA ADD tppessoa;
+alter table TBBI_CPA_POSICAO_DIARIA add tppessoa NUMBER(1);
 alter table TBBI_CPA_POSICAO_DIARIA add nrcpfcnpj_base number(12);
 
 comment on column TBBI_CPA_POSICAO_DIARIA.tppessoa
@@ -117,7 +117,7 @@ comment on column CRAPLCR.flprapol
 -- Add/modify columns 
 alter table TBGEN_MOTIVO add flgreserva_sistema number default 0;
 -- Add comments to the columns 
-comment on column TBGEN_MOTIVO.flgreserv_sistema
+comment on column TBGEN_MOTIVO.flgreserva_sistema
   is 'Flag que indica se o motivo é reservado para sistema, ou seja, não será apresentado em telas para seleção';
   
   
@@ -223,11 +223,11 @@ create table TBCC_OPERACOES_PRODUTO
 comment on table TBCC_OPERACOES_PRODUTO
   is 'Tabela de operacoes do Produto';
 -- Add comments to the columns 
-comment on column TBCC_OPCOES_PRODUTO.cdproduto
+comment on column TBCC_OPERACOES_PRODUTO.cdproduto
   is 'Código da cooperativa';
-comment on column TBCC_OPCOES_PRODUTO.cdoperac_produto
+comment on column TBCC_OPERACOES_PRODUTO.cdoperac_produto
   is 'Codigo da operacao no produto';
-comment on column TBCC_OPCOES_PRODUTO.dsoperac_produto
+comment on column TBCC_OPERACOES_PRODUTO.dsoperac_produto
   is 'Descricao da operacao no produto'; 
 comment on column TBCC_OPERACOES_PRODUTO.tpcontrole
   is 'Tipo de controle da operação ([C]onta ou [D]ocumento)';  
@@ -252,7 +252,7 @@ create table TBCC_PARAM_PESSOA_PRODUTO
   nrcpfcnpj_base         number(12) not null,
   cdproduto              NUMBER(5) NOT NULL,
   cdoperac_produto       NUMBER(5) not null,
-  flglibera              NUMBER(1) not null default 0,
+  flglibera              NUMBER(1) default 0 not null,
   idmotivo               number(10),
   dtvigencia_paramet     DATE null
 );
@@ -329,7 +329,7 @@ create table TBCC_HIST_PARAM_PESSOA_PROD
   cdproduto              NUMBER(5) NOT NULL,
   cdoperac_produto       NUMBER(5) not null,
   flglibera              number(1) not null,
-  idmotivo               NUMBER NOT NULL,
+  idmotivo               NUMBER(10) NOT NULL,
   cdoperad               VARCHAR2(10) NOT NULL
 );
 -- Add comments to the table 
@@ -345,9 +345,9 @@ comment on column TBCC_HIST_PARAM_PESSOA_PROD.tppessoa
 comment on column TBCC_HIST_PARAM_PESSOA_PROD.nrcpfcnpj_base
   is 'CPF/CNPJ base da pessoa'; 
 comment on column TBCC_HIST_PARAM_PESSOA_PROD.dtoperac
-  is 'CPF/CNPJ base da pessoa';   
+  is 'Data da operacao';
 comment on column TBCC_HIST_PARAM_PESSOA_PROD.dtvigencia_paramet
-  is 'CPF/CNPJ base da pessoa';   
+  is 'Data da vigencia';
 comment on column TBCC_HIST_PARAM_PESSOA_PROD.cdproduto
   is 'Codigo Produto'; 
 comment on column TBCC_HIST_PARAM_PESSOA_PROD.cdoperac_produto
@@ -512,7 +512,7 @@ alter table CRAPPRE add vlepratr NUMBER(15,2);
 
 
 -- Add comments to the columns 
-comment on column CRAPPRE.qtdtitul
+comment on column CRAPPRE.qtdiavig
   is 'Qtd dias maximo de vigencia';
 comment on column CRAPPRE.qtdtitul
   is 'Qtd dias em atraso de Titulos';
@@ -683,11 +683,7 @@ comment on column TBEPR_PARAM_CONTA.flg_desat_majora_auto
 comment on column TBEPR_PARAM_CONTA.dtatualiza_majora_auto
   is 'Data da atualizacao da majoracao automatica de credito';
   
-  
-  
-  
---- Remover tabelas substituidas  
-DROP TABLE tbepr_param_conta;
-DROP TABLE tbepr_linha_pre_aprv;  
-  
-  
+-- Ajustar campos detectados faltantes nos demais ambientes
+alter table TBGEN_MOTIVO add flgativo NUMBER default 1;
+alter table CRAPASS add flgativo nrcpfcnpj_base NUMBER(11) default 0 not null;
+alter table TBGEN_MOTIVO add flgativo NUMBER default 1;
