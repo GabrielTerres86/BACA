@@ -1000,6 +1000,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
            --> Valor de aplicação maior ou igual ao valor mínimo
            AND lac.vllanmto >= nvl(pr_vlminctd,0); 
            
+
       -- Busca das Operações nas aplicações custodiadas não enviados a B3
       CURSOR cr_lctos_rgt(pr_cdcooper NUMBER
                          ,pr_dtmvtoan DATE
@@ -1025,6 +1026,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,decode(capl.tpaplicacao,1,rda.qtdiaapl,rda.qtdiauti) qtdiacar
                       ,lap.progress_recid
 					  ,lap.vlpvlrgt valorbase						 
+									  
                   FROM craplap lap
                       ,craprda rda
                       ,crapdtc dtc
@@ -1073,6 +1075,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,rac.qtdiacar
                       ,lac.progress_recid
 					  ,lac.vlbasren valorbase				 
+															
                   FROM craplac lac
                       ,craprac rac
                       ,tbcapt_custodia_aplicacao capl
@@ -1099,6 +1102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                    --> Aplicação já custodiada
                    AND nvl(rac.idaplcus,0) > 0
                    AND capl.dscodigo_b3 IS NOT NULL) lct
+																										 
          ORDER BY lct.dtmvtolt
                  ,lct.nrdconta
                  ,lct.nraplica
@@ -1211,8 +1215,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           -- Buscar todos os movimentos de aplicação dos últimos 2 dias  
           -- que ainda não estejam marcados para envio (idlctcus is null)
           FOR rw_lcto IN cr_lctos(rw_cop.cdcooper,vr_dtmvto2a,rw_crapdat.dtmvtolt,vr_dtinictd,vr_vlinictd) LOOP
+			
             -- Converter valor aplicação em contas
             vr_qtcotas := fn_converte_valor_em_cota(rw_lcto.vllanmto);
+			
+		   
             -- Devemos gerar o registro de Custódia Aplicação
             BEGIN
               INSERT INTO TBCAPT_CUSTODIA_APLICACAO
@@ -1395,6 +1402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                               ||' -> '|| vr_dscritic;
                   RAISE vr_exc_saida;
                 END IF;
+				
                 -- Se o saldo for zero, significa que houve um resgate total, então precisamos buscar 
                 -- o valor dos resgates efetuados neste dia para a conta e aplicação
                 IF vr_sldaplic = 0 THEN
@@ -1408,6 +1416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                    INTO vr_sldaplic;
                   CLOSE cr_resgat;
                 END IF; 
+				
                 -- Se mesmo assim ainda está zero, vamos usar o próprio valor do lançamento como saldo
                 IF vr_sldaplic = 0 THEN
                   vr_sldaplic := rw_lcto.vllanmto;
@@ -1417,16 +1426,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
 				            pr_dsdaviso := pr_dsdaviso || vr_dscarque || fn_get_time_char || ' Resgate com cotas zerada! '||  rw_cop.cdcooper ||' '|| rw_lcto.nrdconta ||' '|| rw_lcto.nraplica;
 				            continue;
 				          ELSE
-                    vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
-			            END IF;
+							vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
+						  END IF;
+						  vr_qtcotas_resg := fn_converte_valor_em_cota(rw_lcto.valorbase);
+																				  
               ELSE
                 -- Quando carencia usar sempre a pu da emissão
                 vr_vlpreco_unit := rw_lcto.vlpreco_registro;
+				vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);															 
               END IF;
               -- Armazena informações do registro atual
               vr_dtmvtolt := rw_lcto.dtmvtolt;
               vr_nrdconta := rw_lcto.nrdconta;
               vr_nraplica := rw_lcto.nraplica;  
+		   
             /*  vr_cdhistor_ant := rw_lcto.cdhistor;
               vr_idlancto_ant := NULL;
             ELSE
@@ -1441,6 +1454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
               END IF;*/
             END IF;
             
+		   
 /*
                Autor : David Valente
                Em 05/03/2019
@@ -1450,7 +1464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                vr_qtftcota é uma CONSTANTE COM O VALOR  = R$0,01 (1 Centavo)
                REGRA ANTIGA -> vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
             */
-            vr_qtcotas_resg := trunc(rw_lcto.valorbase / vr_qtftcota);
+            --vr_qtcotas_resg := trunc(rw_lcto.valorbase / vr_qtftcota);
 
             -- Devemos gerar o registro de CUstódia do Lançamento
             BEGIN
