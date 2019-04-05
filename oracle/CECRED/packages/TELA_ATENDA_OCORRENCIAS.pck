@@ -290,6 +290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                   
                      10/09/2018 - Inclusão da coluna numero do grupo economico 
                                   PJ 450 - Diego Simas - AMcom
+                     05/04/2019 - INC0011316 - Risco apresenta dados duplicados de grupo economico - Ramon              
 
       ..............................................................................*/
 
@@ -315,6 +316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       vr_auxconta          INTEGER := 0;           -- Contador auxiliar para posicão no XML
       vr_risco_ult_central crawepr.dsnivris%TYPE;  -- Risco da última central
       vr_data_risco_final  crapris.dtdrisco%TYPE;  -- Data do risco final
+      vr_contas   VARCHAR2(2000);
 
       ---------->> CURSORES <<--------
 
@@ -610,6 +612,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                                       , rw_contas_do_titular.nrdconta
                                                       , rw_dat.dtmvtoan) LOOP
 
+                vr_contas := vr_contas || pr_cdcooper || rw_contas_do_titular.nrdconta || rw_tabrisco_central.nrctremp || '_';
+
 					      -- Adiciona registro para a conta/contrato no XML de retorno
                 pc_monta_reg_conta_xml(pr_retxml
                                      , vr_auxconta
@@ -651,28 +655,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         FOR rw_tabrisco_central IN cr_tbrisco_central(pr_cdcooper
                                                     , rw_contas_grupo.nrdconta
 																 , rw_dat.dtmvtoan) LOOP
-								-- Adiciona registro para a conta/contrato no XML de retorno
-                pc_monta_reg_conta_xml(pr_retxml
-                                     , vr_auxconta
-                                     , vr_dscritic
-                                     , rw_contas_grupo.nrdconta
-                                     , rw_contas_grupo.nrcpfcgc
-                                     , rw_tabrisco_central.nrctremp
-                                     , rw_tabrisco_central.risco_inclusao
-                                     , rw_tabrisco_central.risco_grupo
-                                     , rw_tabrisco_central.risco_rating
-                                     , rw_tabrisco_central.risco_atraso
-                                     , rw_tabrisco_central.risco_refin
-                                     , rw_tabrisco_central.risco_agravado
-                                     , rw_tabrisco_central.risco_operacao
-                                     , rw_tabrisco_central.risco_cpf
-                                     , rw_tabrisco_central.nrdgrupo
-                                     , rw_tabrisco_central.risco_melhora
-                                     , rw_tabrisco_central.risco_final
-                                     , rw_tabrisco_central.qtdiaatr
-                                     , rw_tabrisco_central.tipo_registro
-                                   );
-					     vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
+              --Adiciona apenas se a conta e contrato já não foram adicionados anteriormente
+              --INC0011316 - Registro do risco duplicados                                 
+              If INSTR( vr_contas, pr_cdcooper || rw_contas_grupo.nrdconta || rw_tabrisco_central.nrctremp ) <= 0 Then
+
+                  -- Adiciona registro para a conta/contrato no XML de retorno
+                  pc_monta_reg_conta_xml(pr_retxml
+                                       , vr_auxconta
+                                       , vr_dscritic
+                                       , rw_contas_grupo.nrdconta
+                                       , rw_contas_grupo.nrcpfcgc
+                                       , rw_tabrisco_central.nrctremp
+                                       , rw_tabrisco_central.risco_inclusao
+                                       , rw_tabrisco_central.risco_grupo
+                                       , rw_tabrisco_central.risco_rating
+                                       , rw_tabrisco_central.risco_atraso
+                                       , rw_tabrisco_central.risco_refin
+                                       , rw_tabrisco_central.risco_agravado
+                                       , rw_tabrisco_central.risco_operacao
+                                       , rw_tabrisco_central.risco_cpf
+                                       , rw_tabrisco_central.nrdgrupo
+                                       , rw_tabrisco_central.risco_melhora
+                                       , rw_tabrisco_central.risco_final
+                                       , rw_tabrisco_central.qtdiaatr
+                                       , rw_tabrisco_central.tipo_registro
+                                     );
+                 vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
+
+              End if;
+
 			   END LOOP; -- contratos
       END LOOP; -- contas do grupo econômico
 
