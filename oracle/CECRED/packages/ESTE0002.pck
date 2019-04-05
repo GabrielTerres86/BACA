@@ -149,7 +149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 03/09/2018
+      Data     : Maio/2017.                   Ultima atualizacao: 05/04/2019
 
       Dados referentes ao programa:
 
@@ -184,6 +184,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 							   se o contrato de empréstimo está/esteve em prejuízo
 							   (Reginaldo/AMcom)
 
+                  05/04/2019 - P437 - Consignado - Enviar para Análise de Crédito (Motor) a proposta de Consignado.
+                              (Fernanda Kelli de Oliveira - AMcom)              
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -1115,7 +1117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
                     24/05/2018 - Projeto Regulatório de Crédito - Inclusão de cpf/cnpj no objeto contasAvalizadas
                                  Campo documentoAval - Diego Simas - AMcom
-                                 
+
                   01/08/2018 - Adicionado o parâmetro pr_tpprodut para distinguir qual configuração da PAREST 
                                irá buscar (Paulo Penteado GFT)
 
@@ -1125,7 +1127,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 										11/10/2018 - P450 - Correção no cursor que identifica se o contrato de empréstimo está/esteve em prejuízo
 										             (Reginaldo/AMcom)
 
-                   19/12/2018 - P442 - Envio de quantidade dias em Estouro (Marcos Envolti)     
+                   01/11/2018 - P442 - Envio dos Scores Behaviour do Cooperado (MArcos Envolti)  
+				   
+				   19/12/2018 - P442 - Envio de quantidade dias em Estouro (Marcos Envolti)    
 
     ..........................................................................*/
     DECLARE
@@ -1975,7 +1979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
            AND lim.insitlim IN (2,3)
            AND nvl(lim.dtfimvig,pr_dtiniest) >= pr_dtiniest;
       rw_craplim cr_craplim%ROWTYPE;
-      
+			
       -- Busca dos scores do Cooperado
       CURSOR cr_tbcrd_score(pr_cdcooper crapcop.cdcooper%TYPE
                            ,pr_nrdconta crapass.nrdconta%TYPE) IS
@@ -2791,7 +2795,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       END IF;
           
       CLOSE cr_crapepr_preju;
-          
+    
           -- Conta Corrente
           vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, rw_crapass_cpf_cnpj.nrdconta);
           IF vr_inprejuz = TRUE THEN
@@ -3807,7 +3811,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       ELSE
         vr_qtdopliq := SUBSTR(vr_dstextab, 52, 3);
       END IF;
-      
+        
       -- Montar objeto para scoreBehaviour
       vr_lst_generic3 := json_list();
     
@@ -4345,7 +4349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(AMcom)
-      Data     : Maio/2017.                   Ultima atualizacao: 12/04/2018
+      Data     : Maio/2017.                   Ultima atualizacao: 05/04/2019
     
       Dados referentes ao programa:
     
@@ -4360,6 +4364,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                   09/07/2018 - Inclusao de campos para projeto CDC.
                                PRJ439 - CDC(Odirlei-AMcom)
         
+                  05/04/2019 - P437 - Consignado - Enviar para Análise de Crédito (Motor) a proposta de Consignado.
+                              (Fernanda Kelli de Oliveira - AMcom)             
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -4718,6 +4724,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_prtlmult      NUMBER;
     vr_txdjuros      NUMBER;
       
+    vr_cooper_consignado VARCHAR2(1) := 'N'; /*P437*/
   BEGIN
   
     --Verificar se a data existe
@@ -4802,9 +4809,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
        3 – Desconto Cheques 
        4 – Desconto Títulos 
        5 – Cartão de Crédito 
-       6 – Limite de Crédito) */
+       6 – Limite de Crédito
+       9 – Consignado) */
+       
+    -- Se for CONSIGNADO e Cooperativa Piloto - P437
+    vr_cooper_consignado := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                      pr_cdcooper => pr_cdcooper,
+                                                      pr_cdacesso => 'COOPER_CONSIGNADO');
+
+    IF rw_crawepr.cdfinemp = 57 AND vr_cooper_consignado = 'S' THEN
+      vr_obj_generico.put('segmentoCodigo'    ,9);
+      vr_obj_generico.put('segmentoDescricao' ,'Consignado');
     -- Se for CDC
-    IF rw_crawepr.cdfinemp = 58 and rw_crawepr.inlcrcdc = 1 THEN
+    ELSIF rw_crawepr.cdfinemp = 58 and rw_crawepr.inlcrcdc = 1 THEN
       vr_obj_generico.put('segmentoCodigo'    ,0); 
       vr_obj_generico.put('segmentoDescricao' ,'CDC Diversos');  
     ELSIF rw_crawepr.cdfinemp = 59 and rw_crawepr.inlcrcdc = 1 THEN
