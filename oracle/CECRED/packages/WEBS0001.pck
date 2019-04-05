@@ -793,7 +793,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      Sistema : Rotinas referentes ao WebService
      Sigla   : WEBS
      Autor   : James Prust Junior
-     Data    : Janeiro/16.                    Ultima atualizacao: 01/08/2018
+     Data    : Janeiro/16.                    Ultima atualizacao: 05/04/2019
 
      Dados referentes ao programa:
 
@@ -823,6 +823,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 				 
 				 26/09/2018 - Incluso coalesce ao atualizar crawpepr campo  dsratori  
 				              Alcemir Mout's - INC0023901.
+         
+         05/04/2019 - P437 - Consignado -Atualização do campo INAVERBA da tabela CRAWEPR, 
+                      quando perder aprovação da proposta
      ..............................................................................*/
     DECLARE
       CURSOR cr_crawepr(pr_cdcooper IN crawepr.cdcooper%TYPE
@@ -1175,6 +1178,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                 ,crawepr.vlpreori = crawepr.vlpreemp /*M438*/
                 ,crawepr.dsratori = coalesce(vr_rating,crawepr.dsratori,' ') /* M438 */
                 ,crawepr.flgpreap = NVL(pr_flgpreap,crawepr.flgpreap)
+                ,crawepr.inaverba = case when pr_insitapr in (0,2,4,5,6) THEN
+                                    0
+                                    END  -- P437 - Consignado
            WHERE crawepr.cdcooper = pr_cdcooper
              AND crawepr.nrdconta = pr_nrdconta
              AND crawepr.nrctremp = pr_nrctremp
@@ -3263,7 +3269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 	 Sistema : Rotinas referentes ao WebService
 	 Sigla   : WEBS
 	 Autor   : Lucas Reinert
-   Data    : Maio/17.                    Ultima atualizacao: 01/08/2018
+   Data    : Maio/17.                    Ultima atualizacao: 05/04/2019
 
 	 Dados referentes ao programa:
 
@@ -3279,7 +3285,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                   01/08/2018 - P450 - Incluir novo campo liquidOpCredAtraso no retorno do 
                                motor de credito - Diego Simas (AMcom)              
         
-                  21/11/2017 - Alterações referente ao Prj. 402 (Jean Michel).           
+                  21/11/2017 - Alterações referente ao Prj. 402 (Jean Michel).    
+                  
+                  05/04/2019 - P437 - Consignado -Atualização do campo INAVERBA da tabela CRAWEPR, 
+                               quando perder aprovação da proposta       
 	 ..............................................................................*/	
 		DECLARE
 		  -- Tratamento de críticas
@@ -3898,6 +3907,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                   ,crawepr.hraprova = gene0002.fn_busca_time
                   ,crawepr.cdcomite = 3
                   ,crawepr.insitest = 3 -- Finalizada
+                  ,crawepr.inaverba = 0  -- P437 - Consignao
              WHERE crawepr.rowid = rw_crawepr.rowid;
           EXCEPTION
             WHEN OTHERS THEN
@@ -3965,6 +3975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                   ,crawepr.hraprova = gene0002.fn_busca_time
                   ,crawepr.cdcomite = 3
                   ,crawepr.insitest = 3 -- Finalizada
+                  ,crawepr.inaverba = 0 --P437 - consignado
              WHERE crawepr.rowid = rw_crawepr.rowid;
           EXCEPTION
             WHEN OTHERS THEN
