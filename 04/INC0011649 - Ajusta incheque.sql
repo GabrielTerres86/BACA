@@ -46,7 +46,62 @@ BEGIN
     ROLLBACK;
   END IF;
 
+  INSERT INTO CRAPNEG
+    (NRDCONTA,
+     NRSEQDIG,
+     DTINIEST,
+     CDHISEST,
+     CDOBSERV,
+     NRDCTABB,
+     NRDOCMTO,
+     VLESTOUR,
+     QTDIAEST,
+     VLLIMCRE,
+     CDBANCHQ,
+     CDTCTANT,
+     CDAGECHQ,
+     CDTCTATU,
+     NRCTACHQ,
+     DTFIMEST,
+     CDOPERAD,
+     CDCOOPER,
+     FLGCTITG,
+     DTECTITG,
+     IDSEQTTL,
+     DTIMPREG,
+     CDOPEIMP)
+  VALUES
+    (6391117,
+     FN_SEQUENCE('CRAPNEG', 'NRSEQDIG', 1 || ';' || 6391117),
+     TO_DATE('05-04-2019', 'dd-mm-yyyy'),
+     1,
+     12,
+     6391117,
+     13986,
+     4560,
+     0,
+     15000,
+     85,
+     0,
+     101,
+     0,
+     6391117,
+     NULL,
+     '1',
+     1,
+     0,
+     NULL,
+     0,
+     NULL,
+     ' ');
+  IF SQL%ROWCOUNT = 1 THEN
+    COMMIT;
+  ELSE
+    ROLLBACK;
+  END IF;
+
 EXCEPTION
   WHEN OTHERS THEN
+    CECRED.PC_INTERNAL_EXCEPTION;
     ROLLBACK;
 END;
