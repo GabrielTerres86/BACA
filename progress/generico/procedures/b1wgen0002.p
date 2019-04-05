@@ -850,7 +850,8 @@
 																
 		 27/03/2019 - P437 -  Consignado - Alterado a rotina "obtem-propostas-emprestimo" para retornar o campo inaverba
                               Josiane Stiehler - AMcom 
-          
+     04/04/2018 - P437 - Consignado - Alterada rotina grava-proposta-completa, alterar o indicdor de averbaçao "INAVERBA = 0",
+                         quando a proposta perder a aprovaçao.
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -7854,6 +7855,7 @@ PROCEDURE grava-proposta-completa:
                    crawepr.dtaprova = ?
                    crawepr.hraprova = 0
                    crawepr.insitest = 0
+                   crawepr.inaverba = 0 /*P437-Consignado */
                    aux_idpeapro     = 1. /*Perde aprovacao para as demais regras*/       
              
             RUN proc_gerar_log (INPUT par_cdcooper,
@@ -7885,6 +7887,7 @@ PROCEDURE grava-proposta-completa:
                  crawepr.hraprova = 0
                  crawepr.insitest = 0
                  crawepr.cdopealt = par_cdoperad
+                 crawepr.inaverba = 0 /*P437-Consignado */
                  aux_idpeapro     = 1.
           CREATE tt-msg-confirma.
           ASSIGN tt-msg-confirma.inconfir = 1
@@ -7960,6 +7963,7 @@ PROCEDURE grava-proposta-completa:
                  crawepr.hraprova = 0
                  crawepr.insitest = 0
                  crawepr.cdopealt = par_cdoperad
+                 crawepr.inaverba = 0 /* P437 - Consignado*/
                  aux_idpeapro     = 1.
 
                          
@@ -8834,6 +8838,7 @@ PROCEDURE altera-valor-proposta:
                                                crawepr.dtaprova = ?
                                                              crawepr.hraprova = 0
                            crawepr.insitest = 0
+                           crawepr.inaverba = 0 /*P437-Consignado */
                            par_idpeapro     = 1.
 															 
 										ASSIGN aux_msg_log = "Aprovar na tela CMAPRV perc de aumento maior que permitido".
@@ -8919,6 +8924,7 @@ PROCEDURE altera-valor-proposta:
                               crawepr.dtaprova = ?
                                             crawepr.hraprova = 0
                               crawepr.insitest = 0
+                              crawepr.inaverba = 0 /*P437-Consignado */
                               par_idpeapro     = 1.
 											
 						ASSIGN aux_msg_log = "Essa proposta deve ser aprovada tpfinali = 2".
@@ -9015,6 +9021,7 @@ PROCEDURE altera-valor-proposta:
                        crawepr.hraprova = 0
                        crawepr.insitest = 0
                        crawepr.cdopealt = par_cdoperad
+                       crawepr.inaverba = 0 /*P437 - Consignado*/
                        par_idpeapro     = 1.
                 
                 /*                
@@ -9067,6 +9074,7 @@ PROCEDURE altera-valor-proposta:
                                                   crawepr.hraprova = 0
                          crawepr.insitest = 0
                            crawepr.cdopealt = par_cdoperad
+                           crawepr.inaverba = 0 /*P437-Consignado */
                            par_idpeapro     = 1.
 
                   /*Salvar operador da alteraçao*/
@@ -9122,6 +9130,7 @@ PROCEDURE altera-valor-proposta:
                         crawepr.dtaprova = ?
                                                       crawepr.hraprova = 0
                            crawepr.insitest = 0
+                           crawepr.inaverba = 0 /*P437-Consignado */
                            par_idpeapro     = 1.
 
                            /*
@@ -9168,6 +9177,7 @@ PROCEDURE altera-valor-proposta:
                                           crawepr.dtaprova = ?
                                           crawepr.hraprova = 0
                          crawepr.insitest = 0
+                         crawepr.inaverba = 0 /*P437-Consignado */
                          par_idpeapro     = 1.
 
                                   /* CREATE tt-msg-confirma.
@@ -15630,6 +15640,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                       crawepr.dtaprova = ?
                                       crawepr.hraprova = 0
                           crawepr.insitest = 0
+                          crawepr.inaverba = 0 /*P437 - Consignado*/
                           par_idpeapro     = 1. /*Perde aprovacao para as demais regras*/
 
                                CREATE tt-msg-confirma.
@@ -15695,6 +15706,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                             crawepr.dtaprova = ?
                             crawepr.hraprova = 0
                             crawepr.insitest = 0
+                            crawepr.inaverba = 0 /*P437 - Consignado*/
                             par_idpeapro     = 1. /*Perde aprovacao para as demais regras*/
                            
                      CREATE tt-msg-confirma.
