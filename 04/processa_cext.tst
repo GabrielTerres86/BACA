@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-1955
+1956
 DECLARE
   -- Buscar data base para transacoes com contas migradas no periodo da migracao
   vr_dtcxtmig DATE;
@@ -152,12 +152,13 @@ PROCEDURE pc_proces_arq_cet_bancoob(pr_cdcooper IN NUMBER                --> Coo
               ,a.nrdconta nrdlinha
               ,a.dscritic des_text
           from tbgen_batch_relatorio_wrk a
-         WHERE a.cdcooper = 3
-           and a.cdagenci in (39)
+         where a.cdcooper = 3
+           and a.cdagenci in (34)
            and a.cdprograma = 'CRPS670'
            and a.dsrelatorio = 'DADOS_ARQ'
-           and a.dtmvtolt = TO_DATE('01/04/2019','DD/MM/RRRR')
-           and SUBSTR(a.dscritic, 1, 5) not in ('CEXT0', 'CEXT9') -- Ignorar Header e Trailler
+           and a.dtmvtolt = '04/04/2019'
+           and a.dscritic like '%50213%'
+           and SUBSTR(a.dscritic, 1, 5) not in ('CEXT0', 'CEXT9')
          order by a.nrdconta;
 
       -- busca registro de Debito efetuado com cartão Bancoob
