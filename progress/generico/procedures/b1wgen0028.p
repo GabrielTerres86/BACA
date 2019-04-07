@@ -875,7 +875,7 @@ PROCEDURE lista_cartoes:
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Listar cartoes de credito.".    
            
-    FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd  
+    FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd flgprcrd 
                                dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
                          WHERE crawcrd.cdcooper = par_cdcooper    AND
                            crawcrd.nrdconta = par_nrdconta    NO-LOCK:
@@ -956,7 +956,8 @@ PROCEDURE lista_cartoes:
                tt-cartoes.dssitcrd = aux_dssitcrd
                tt-cartoes.nrctrcrd = crawcrd.nrctrcrd
                tt-cartoes.cdadmcrd = crawcrd.cdadmcrd
-               tt-cartoes.flgcchip = crapadc.flgcchip.
+               tt-cartoes.flgcchip = crapadc.flgcchip
+			   tt-cartoes.flgprcrd = crawcrd.flgprcrd.
 
         /* Mascara número de cartão de for Bancoob */
         IF  f_verifica_adm(crawcrd.cdadmcrd) = 2 THEN
@@ -23858,6 +23859,7 @@ PROCEDURE altera_administradora:
    DEF  INPUT PARAM par_codnadmi AS INTE NO-UNDO.
                     
    DEF OUTPUT PARAM TABLE FOR tt-erro.      
+   DEF OUTPUT PARAM par_nrctrcrd AS DECI NO-UNDO.
    
    DEF VAR aux_flgexist AS INTE INIT 0 NO-UNDO.
    DEF VAR aux_contador AS INTE INIT 0 NO-UNDO.
@@ -24087,7 +24089,8 @@ PROCEDURE altera_administradora:
                  crabcrd.dtentreg = ?              /* Inclusao Renato - Supero - 07/11/2014 */
                  aux_flgexist = 1
                  crabcrd.inupgrad = 1              /* Flag indicativa de upgrade  */
-                 nrctrcrd = aux_nrctrcrd.
+                 nrctrcrd = aux_nrctrcrd
+                 par_nrctrcrd = aux_nrctrcrd.
                  
           /* Buscar o codigo do limite de credito da nova administradora */       
           IF AVAILABLE craptlc THEN

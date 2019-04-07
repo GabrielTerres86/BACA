@@ -66,8 +66,6 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
 							  pc_carrega_dados_atenda (Andre Clemer - Supero)
 
                  23/11/2018 - P442 - Retorno do Score Behaviour do Cooperado (Marcos-Envolti)
-				 
-                 26/12/2019 - P429 - Detalhes de Cartões de Crédito Informações do endereço do cooperado (Lucas-Supero)
 
                  
   ---------------------------------------------------------------------------------------------------------------*/
@@ -914,8 +912,7 @@ PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA
                                            ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                            ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                           ,pr_des_erro OUT VARCHAR2);            --> Erros do processo   
-										   
+                                           ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
 END CADA0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
@@ -13774,9 +13771,9 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
       END IF;
       pr_des_reto := 'NOK';
 
-    END pc_bloquear_cartao_magnetico;
-  
-  PROCEDURE pc_retorna_dados_entrg_crt_web(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código da cooperativa
+  END pc_bloquear_cartao_magnetico;
+
+	PROCEDURE pc_retorna_dados_entrg_crt_web(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código da cooperativa
                                            ,pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código CONTA
                                            ,pr_nrctrcrd IN VARCHAR2 --crapcrm.nrcartao%TYPE  --> Número do cartão
                                            ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
@@ -13788,10 +13785,10 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
                                                
   /* .............................................................................
 
-      Programa: pc_retorna_dados_entrega_cartao_web
+      Programa: pc_retorna_dados_entrg_crt_web
       Sistema : CECRED
       Sigla   : CRD
-      Autor   : Lucas (Supero)
+      Autor   : Augusto (Supero)
       Data    : Fevereiro/2019                 Ultima atualizacao: 
 
       Dados referentes ao programa:
@@ -13808,54 +13805,161 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
   -- Tratamento de erros
   vr_cdcritic NUMBER := 0;
   vr_dscritic VARCHAR2(4000);
-  vr_incrdent NUMBER := 0;  
+  vr_incrdent NUMBER := 0;
+	vr_nmresage crapage.nmresage%TYPE;
+	
+	-- Variaveis locais
+	vr_nrctrcrd_tit crawcrd.nrctrcrd%TYPE;
+	vr_flgAdicional NUMBER := 0;
+	vr_idtipoenvio tbcrd_endereco_entrega.idtipoenvio%TYPE;
+	
+	CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
+	                 ,pr_nrdconta crapass.nrdconta%TYPE) IS
+		SELECT decode(s.inpessoa, 1, 10, 9) idtipoenvio
+		  FROM crapass s
+		 WHERE s.cdcooper = pr_cdcooper
+		   AND s.nrdconta = pr_nrdconta;
+	rw_crapass cr_crapass%ROWTYPE;
   
-  CURSOR cr_busca_dados_entrega IS
-  SELECT 1 as incrdent, tbdom.dscodigo, tbend.nmlogradouro || ', ' || tbend.nrlogradouro ||
-     nvl2(trim(tbend.dscomplemento), ', ' || tbend.dscomplemento || ' ', '') as dsendere,
-     tbend.nmbairro, crapmun.dscidade, tbcadast_uf.cduf,
-     gene0002.fn_mask_cep(tbend.nrcep) as nrcepend
-  FROM tbcrd_endereco_entrega tbend
-    ,tbcrd_dominio_campo tbdom
-    ,crapmun
-    ,tbcadast_uf 
-   WHERE tbend.idtipoenvio = tbdom.cddominio  
-     AND tbdom.nmdominio = 'TPENDERECOENTREGA'
-     AND tbend.cdcooper = pr_cdcooper
-     AND tbend.nrdconta = pr_nrdconta
-     AND tbend.nrctrcrd = pr_nrctrcrd
-     AND crapmun.idcidade = tbend.idcidade
-     AND tbcadast_uf.cduf = crapmun.cdestado; 
-     rw_busca_dados_entrega  cr_busca_dados_entrega%rowtype;
+  CURSOR cr_busca_dados_entrega(pr_cdcooper tbcrd_endereco_entrega.cdcooper%TYPE
+	                             ,pr_nrdconta tbcrd_endereco_entrega.nrdconta%TYPE
+															 ,pr_nrctrcrd tbcrd_endereco_entrega.nrctrcrd%TYPE) IS
+		SELECT tbdom.dscodigo
+				  ,tbend.cdagenci
+				  ,tbend.nmlogradouro || ', ' || tbend.nrlogradouro ||
+				   nvl2(TRIM(tbend.dscomplemento), ', ' || tbend.dscomplemento || ' ', '') AS dsendere
+				  ,tbend.nmbairro
+				  ,tbend.nmcidade
+				  ,tbcadast_uf.cduf
+				  ,gene0002.fn_mask_cep(tbend.nrcep) AS nrcepend
+					,tbend.idtipoenvio
+		  FROM tbcrd_endereco_entrega tbend
+				  ,tbcrd_dominio_campo    tbdom
+				  ,tbcadast_uf
+	   WHERE tbend.idtipoenvio = tbdom.cddominio
+		   AND tbdom.nmdominio = 'TPENDERECOENTREGA'
+		   AND tbend.cdcooper = pr_cdcooper
+		   AND tbend.nrdconta = pr_nrdconta
+		   AND tbend.nrctrcrd = pr_nrctrcrd;
+  rw_busca_dados_entrega  cr_busca_dados_entrega%ROWTYPE;
   
+	CURSOR cr_crapage (pr_cdagenci crapage.cdagenci%TYPE) IS
+	  SELECT age.nmresage
+		  FROM crapage age
+		 WHERE age.cdcooper = pr_cdcooper
+		   AND age.cdagenci = pr_cdagenci;
+	rw_crapage cr_crapage%ROWTYPE;
+	
+	CURSOR cr_cdadmcrd(pr_cdcooper crawcrd.cdcooper%TYPE
+									  ,pr_nrctrcrd crawcrd.nrctrcrd%TYPE
+									  ,pr_nrdconta crawcrd.nrdconta%TYPE) IS
+		SELECT d.cdadmcrd
+			FROM crawcrd d
+		 WHERE d.cdcooper = pr_cdcooper
+			 AND d.nrctrcrd = pr_nrctrcrd
+			 AND d.nrdconta = pr_nrdconta;
+	rw_cdadmcrd cr_cdadmcrd%ROWTYPE;
+
+	CURSOR cr_cartoes(pr_cdcooper crawcrd.cdcooper%TYPE
+									 ,pr_cdadmcrd crawcrd.cdadmcrd%TYPE
+									 ,pr_nrctrcrd crawcrd.nrctrcrd%TYPE
+									 ,pr_nrdconta crawcrd.nrdconta%TYPE) IS
+		 SELECT d.nrctrcrd
+			 FROM crawcrd d
+			WHERE d.cdcooper = pr_cdcooper
+				AND	d.cdadmcrd = pr_cdadmcrd
+				AND d.nrctrcrd <> pr_nrctrcrd
+				AND d.insitcrd NOT IN (5,6) -- bloqueado,cancelado
+				AND d.nrdconta = pr_nrdconta;
+	rw_cartoes cr_cartoes%ROWTYPE;
+	
 	BEGIN  
         
-    OPEN cr_busca_dados_entrega;
+	  -- A principio dizemos que o proprio cartao é titular
+		vr_nrctrcrd_tit := pr_nrctrcrd;
+	
+	  -- Retornarmos a administradora do cartao
+	  OPEN cr_cdadmcrd(pr_cdcooper => pr_cdcooper
+			            ,pr_nrctrcrd => pr_nrctrcrd
+									,pr_nrdconta => pr_nrdconta);
+		FETCH cr_cdadmcrd INTO rw_cdadmcrd;
+		--
+		IF cr_cdadmcrd%NOTFOUND THEN
+			CLOSE cr_cdadmcrd;
+			vr_dscritic := 'Proposta nao localizada.';
+		END IF;
+		CLOSE cr_cdadmcrd;
+
+		-- Retornamos os cartoes da conta cartao que nao seja o cartao atual
+		OPEN cr_cartoes(pr_cdcooper => pr_cdcooper
+					         ,pr_cdadmcrd => nvl(rw_cdadmcrd.cdadmcrd, 0)
+									 ,pr_nrctrcrd => pr_nrctrcrd
+									 ,pr_nrdconta => pr_nrdconta);
+		FETCH cr_cartoes INTO rw_cartoes;
+		-- Se encontrar significa que o cartao atual nao é titular
+		IF cr_cartoes%FOUND THEN
+		   vr_nrctrcrd_tit := rw_cartoes.nrctrcrd;
+			 vr_flgAdicional := 1;
+		END IF;
+		--
+		CLOSE cr_cartoes;
+
+    --
+    OPEN cr_busca_dados_entrega(pr_cdcooper => pr_cdcooper
+		                           ,pr_nrdconta => pr_nrdconta
+															 ,pr_nrctrcrd => vr_nrctrcrd_tit);
     FETCH cr_busca_dados_entrega INTO rw_busca_dados_entrega;
-    IF cr_busca_dados_entrega%FOUND THEN
-        vr_incrdent := rw_busca_dados_entrega.incrdent;
-        CLOSE cr_busca_dados_entrega;        
-    END IF;
-    pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><Dados> ' ||
-                                   '<incrdent>' || vr_incrdent || '</incrdent>' ||
-                                   '<dstipend>' || nvl(rw_busca_dados_entrega.dscodigo, '') || '</dstipend>' ||
-                                   '<dsendere>' || nvl(rw_busca_dados_entrega.dsendere, '') || '</dsendere>' ||
-                                   '<dsbairro>' || nvl(rw_busca_dados_entrega.nmbairro, '') || '</dsbairro>' ||
-                                   '<dscidade>' || nvl(rw_busca_dados_entrega.dscidade, '') || '</dscidade>' ||
-                                   '<nrcepend>' || nvl(rw_busca_dados_entrega.nrcepend, '') || '</nrcepend>' ||
-                                   '<dsufende>' || nvl(rw_busca_dados_entrega.cduf, '') || '</dsufende>' ||
-																	 '</Dados></Root>');                           
+    --
+		IF cr_busca_dados_entrega%FOUND THEN
+			vr_incrdent := 1;
+			vr_idtipoenvio := rw_busca_dados_entrega.idtipoenvio;
+			--
+			IF NVL(rw_busca_dados_entrega.cdagenci, 0) > 0 THEN
+			   --
+				 OPEN cr_crapage(rw_busca_dados_entrega.cdagenci);
+				 FETCH cr_crapage INTO rw_crapage;
+				 CLOSE cr_crapage;
+				 --
+				 vr_nmresage := nvl(rw_crapage.nmresage, '');
+				 --
+			END IF;
+			--
+		ELSE
+			IF vr_flgAdicional = 1 THEN
+				OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+											 ,pr_nrdconta => pr_nrdconta);
+				FETCH cr_crapass INTO rw_crapass;
+				CLOSE cr_crapass;
+				vr_idtipoenvio := rw_crapass.idtipoenvio;
+		END IF;
+		END IF;
+		--
+    CLOSE cr_busca_dados_entrega;
+
+	  pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><Dados> ' ||
+																	 '<incrdent>' || vr_incrdent || '</incrdent>' ||
+																	 '<dstipend>' || nvl(rw_busca_dados_entrega.dscodigo, '') || '</dstipend>' ||
+																	 '<dsendere>' || nvl(rw_busca_dados_entrega.dsendere, '') || '</dsendere>' ||
+																	 '<dsbairro>' || nvl(rw_busca_dados_entrega.nmbairro, '') || '</dsbairro>' ||
+																	 '<dscidade>' || nvl(rw_busca_dados_entrega.nmcidade, '') || '</dscidade>' ||
+																	 '<nrcepend>' || nvl(rw_busca_dados_entrega.nrcepend, '') || '</nrcepend>' ||
+																	 '<dsufende>' || nvl(rw_busca_dados_entrega.cduf, '') || '</dsufende>' ||
+																	 '<nmresage>' || nvl(vr_nmresage, '') || '</nmresage>' ||
+																	 '<idtipoenvio>' || nvl(vr_idtipoenvio, 0) || '</idtipoenvio>' ||
+                                   '<cdagenci>' || nvl(rw_busca_dados_entrega.cdagenci, 0) || '</cdagenci>' ||
+																	 '<flgadicional>' || vr_flgAdicional || '</flgadicional>' ||
+																	 '</Dados></Root>');
 	EXCEPTION
 			WHEN OTHERS THEN
 
 					pr_cdcritic := vr_cdcritic;
-					pr_dscritic := 'Erro geral na rotina na procedure CADA0004.pc_retorna_dados_entrega_cartao_web. Erro: ' || SQLERRM;
+					pr_dscritic := 'Erro geral na rotina na procedure CADA0004.pc_retorna_dados_entrg_crt_web. Erro: ' || SQLERRM;
 					pr_des_erro := 'NOK';
 					-- Carregar XML padrão para variável de retorno não utilizada.
 					-- Existe para satisfazer exigência da interface.
 					pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
 																				 pr_dscritic || '</Erro></Root>');                                             
                                                
-  END pc_retorna_dados_entrg_crt_web;   
+  END pc_retorna_dados_entrg_crt_web;                               
 END CADA0004;
 /

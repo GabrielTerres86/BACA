@@ -6741,6 +6741,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              tfc.tptelefo = pr_tptelefo;
       rw_craptfc cr_craptfc%ROWTYPE;
 
+      -- cursor para endereco da agencia
+			CURSOR cr_end_agencia(pr_cdcooper IN crapenc.cdcooper%TYPE
+											     ,pr_cdagenci IN crapage.cdagenci%TYPE) IS
+				SELECT crapage.dsendcop
+							,crapage.nrendere
+							,crapage.dscomple
+							,crapage.nmbairro
+							,crapage.nmcidade
+							,crapage.cdufdcop
+							,crapage.cdagenci
+							,crapage.idcidade
+							,crapage.nrcepend
+							,crapage.dsendcop||decode(crapage.nrendere,0,null,','||crapage.nrendere) dsender_compl
+					FROM crapage
+				 WHERE crapage.cdcooper = pr_cdcooper
+					 AND crapage.cdagenci = pr_cdagenci;
+		  rw_end_agencia cr_end_agencia%ROWTYPE;			
+
       -- cursor para adquirir alterações da conta
       CURSOR cr_crapalt (pr_cdcooper IN crapalt.cdcooper%TYPE,
                          pr_nrdconta IN crapalt.nrdconta%TYPE,
@@ -6771,10 +6789,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             a mais recente.   */
       rw_altlimit   cr_altlimit%ROWTYPE;
       
+			CURSOR cr_endereco_entrega(pr_cdcooper IN tbcrd_endereco_entrega.cdcooper%TYPE,
+                                 pr_nrdconta IN tbcrd_endereco_entrega.nrdconta%TYPE,
+																 pr_nrctrcrd IN tbcrd_endereco_entrega.nrctrcrd%TYPE) IS
+					SELECT tee.idtipoenvio
+					      ,tee.cdagenci
+					  FROM tbcrd_endereco_entrega tee
+					 WHERE tee.cdcooper = pr_cdcooper
+					   AND tee.nrdconta = pr_nrdconta
+						 AND tee.nrctrcrd = pr_nrctrcrd;
+			rw_endereco_entrega cr_endereco_entrega%ROWTYPE;
+      
       -- cursor para adquirir endereço do cooperado
       CURSOR cr_crapenc (pr_cdcooper IN crapenc.cdcooper%TYPE,
                          pr_nrdconta IN crapenc.nrdconta%TYPE,
-                         pr_inpessoa IN crapass.inpessoa%TYPE) IS
+                         pr_tpendass IN crapenc.tpendass%TYPE) IS
       SELECT enc.nrcepend
             ,enc.nmcidade
             ,enc.nmbairro
@@ -6790,7 +6819,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         FROM crapenc enc
        WHERE enc.cdcooper = pr_cdcooper     AND
              enc.nrdconta = pr_nrdconta     AND
-             enc.tpendass = DECODE(pr_inpessoa,1,10,2,9);
+             enc.tpendass = pr_tpendass;
       rw_crapenc cr_crapenc%ROWTYPE;
 
        -- Informações arquivo bancoob
@@ -6900,13 +6929,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_aux_dddebito  VARCHAR2( 2);
           vr_aux_vllimcrd  VARCHAR2( 9);
           vr_aux_dsendcom  VARCHAR2(50);
+					vr_tpendass      crapenc.tpendass%TYPE;
+					vr_cdagenci      tbcrd_endereco_entrega.cdagenci%TYPE := 0;
+					
+					-- variaveis de endereço
+					vr_dsendere VARCHAR2(60) := '';
+					vr_dsender_apbl VARCHAR2(200) := NULL;
+					vr_dsender_compl VARCHAR2(200) := '';
+					vr_nrendere VARCHAR2(5) := '';
+					vr_ufendere VARCHAR2(5) := '';
+					vr_nmcidade VARCHAR2(50) := '';
+					vr_nmbairro VARCHAR2(50) := '';
+					vr_nrcepend VARCHAR2(15) := '';					
 
         BEGIN
           BEGIN
+					  /*
+						Validar se existe registro na tbcrd_endereco_entrega pelo rw_crawcrd.nrctrcrd
+						Se não houver segue a vida c/ cr_crapenc
+						Se houver, enviamos o endereço da crapenc com crapenc.tpendass baseado na tbcrd_endereco_entrega.idtipoenvio
+						*/
+						
+						IF pr_inpessoa = 1 THEN
+							vr_tpendass := 10;
+						ELSIF pr_inpessoa = 2 THEN
+							vr_tpendass := 9;
+						END IF;
+						--
+						OPEN cr_endereco_entrega(pr_cdcooper => rw_crawcrd.cdcooper,
+                                     pr_nrdconta => rw_crawcrd.nrdconta,
+																		 pr_nrctrcrd => pr_nrctrcrd);
+						FETCH cr_endereco_entrega INTO rw_endereco_entrega;
+						--
+						IF cr_endereco_entrega%FOUND THEN
+							vr_tpendass := rw_endereco_entrega.idtipoenvio;
+							IF vr_tpendass IN (90, 91) THEN
+							   vr_cdagenci := nvl(rw_endereco_entrega.cdagenci, 0);
+						END IF;
+						END IF;
+						--
+						CLOSE cr_endereco_entrega;
+						
+						
+						IF vr_cdagenci > 0 THEN
+							-- Busca endereço do PA
+							OPEN cr_end_agencia(pr_cdcooper => rw_crawcrd.cdcooper,
+																	pr_cdagenci => vr_cdagenci);
+							FETCH cr_end_agencia INTO rw_end_agencia;
+							CLOSE cr_end_agencia;
+
+							vr_dsender_compl := rw_end_agencia.dsender_compl;
+							vr_ufendere := rw_end_agencia.cdufdcop;
+							vr_nmcidade := rw_end_agencia.nmcidade;
+							vr_nmbairro := rw_end_agencia.nmbairro;
+							vr_nrcepend := rw_end_agencia.nrcepend;							
+							
+						ELSE
+
             -- Busca Endereço do Cooperado
             OPEN cr_crapenc(pr_cdcooper => rw_crawcrd.cdcooper,
                             pr_nrdconta => rw_crawcrd.nrdconta,
-                            pr_inpessoa => pr_inpessoa);
+                            pr_tpendass => vr_tpendass);
             FETCH cr_crapenc INTO rw_crapenc;
 
             -- Se nao encontrar Endereço
@@ -6922,18 +7005,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             ELSE
               -- Apenas fechar o cursor
               CLOSE cr_crapenc;
+								
+								vr_dsender_apbl := rw_crapenc.dsender_apbl;
+								vr_dsender_compl := rw_crapenc.dsender_compl;
+								vr_dsendere := rw_crapenc.dsendere;
+								vr_nrendere := rw_crapenc.nrendere; 
+								vr_ufendere := rw_crapenc.cdufende;
+								vr_nmcidade := rw_crapenc.nmcidade;
+								vr_nmbairro := rw_crapenc.nmbairro;
+								vr_nrcepend := rw_crapenc.nrcepend;
+								
             END IF;
+						
+						END IF;
 
 
        -- VERIFICAR QUANTOS CARACTERES SERÃO DESTINADOS AO ENDEREÇO SD204641
-            IF rw_crapenc.dsender_apbl IS NULL THEN
+            IF vr_dsender_apbl IS NULL THEN
               --USA OS 50 CARACTERES PARA O ENDEREÇO
-              vr_aux_dsendcom := rpad(substr(nvl(rw_crapenc.dsender_compl,' '),1,50),50,' ');
+              vr_aux_dsendcom := rpad(substr(nvl(vr_dsender_compl,' '),1,50),50,' ');
             ELSE
               -- SEPARA 29 CARACTERES PARA ENDEREÇO E 21 PARA COMPLEMENTO
-              vr_aux_dsendcom := rpad(nvl((TRIM(substr(nvl(rw_crapenc.dsendere,' '),1,29)) || 
-                                           TRIM(substr(nvl(rw_crapenc.nrendere,' '),1,6)||
-                                           substr(nvl(rw_crapenc.dsender_apbl,' '),1,15))),' '),50,' ');
+              vr_aux_dsendcom := rpad(nvl((TRIM(substr(nvl(vr_dsendere,' '),1,29)) || 
+                                           TRIM(substr(nvl(vr_nrendere,' '),1,6)||
+                                           substr(nvl(vr_dsender_apbl,' '),1,15))),' '),50,' ');
             END IF;
 
       -- Gerar código sequencial de controle para o contrato (Renato-Supero)
@@ -7027,10 +7122,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                               '  '                                    /* Uso Futuro                   */                             ||
                               '1'                                     /* Tp. Endere. - Residencial    */                             ||
                               vr_aux_dsendcom                /* Endereço Completo            */                             ||
-                              rpad(nvl(rw_crapenc.cdufende,' '),2,' ' )        /* UF                           */                             ||
-                              rpad(nvl(rw_crapenc.nmcidade,' '),40,' ')        /* Cidade                       */                             ||
-                              rpad(nvl(rw_crapenc.nmbairro,' '),25,' ')        /* Bairro                       */                             ||
-                              lpad(nvl(rw_crapenc.nrcepend,'0'),8,'0' )        /* CEP                          */                             ||
+                              rpad(nvl(vr_ufendere,' '),2,' ' )        /* UF                           */                             ||
+                              rpad(nvl(vr_nmcidade,' '),40,' ')        /* Cidade                       */                             ||
+                              rpad(nvl(vr_nmbairro,' '),25,' ')        /* Bairro                       */                             ||
+                              lpad(nvl(vr_nrcepend,'0'),8,'0' )        /* CEP                          */                             ||
                               lpad(NVL(vr_dstelres,'0'),9,'0' )       /* Telefone Residencial         */                             ||
                               ' '                                     /* Uso Futuro                   */                             ||
                               ' '                                     /* Uso Futuro                   */                             ||
@@ -7103,7 +7198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               IF pr_flalttpe THEN
                 vr_aux_tpendere := '1';
                 vr_aux_dsendere := vr_aux_dsendcom;
-                vr_aux_nmbairro := rpad(rw_crapenc.nmbairro,25,' ');
+                vr_aux_nmbairro := rpad(vr_nmbairro,25,' ');
               ELSE
                 vr_aux_tpendere := '_';
                 vr_aux_dsendere := LPAD('_',50,'_');
@@ -7112,9 +7207,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
               -- Se alterou o cep, estado ou cidade
               IF pr_flaltcep THEN
-                vr_aux_cdufende := rpad(rw_crapenc.cdufende, 2,' ');
-                vr_aux_nmcidade := rpad(rw_crapenc.nmcidade,40,' ');
-                vr_aux_nrcepend := lpad(rw_crapenc.nrcepend, 8,'0');
+                vr_aux_cdufende := rpad(vr_ufendere, 2,' ');
+                vr_aux_nmcidade := rpad(vr_nmcidade,40,' ');
+                vr_aux_nrcepend := lpad(vr_nrcepend, 8,'0');
               ELSE
                 vr_aux_cdufende := '__';
                 vr_aux_nmcidade := LPAD('_',40,'_');
@@ -7625,7 +7720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. 1.TTL%'   OR
                  upper(rw_crapalt.dsaltera) LIKE '%COMPL.END. 1.TTL%' OR
                  upper(rw_crapalt.dsaltera) LIKE '%APTO. 1.TTL%'      OR
-                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO 1.TTL%'     OR
+                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO 1.TTL%'     OR								 
                  upper(rw_crapalt.dsaltera) LIKE '%END.RES.,%'        OR
                  upper(rw_crapalt.dsaltera) LIKE '%BAIRRO,%'          OR 
                  upper(rw_crapalt.dsaltera) LIKE '%END.RES. COM.,%'   OR
@@ -7639,14 +7734,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               IF upper(rw_crapalt.dsaltera) LIKE '%CEP 1.TTL%'        OR
                  upper(rw_crapalt.dsaltera) LIKE '%CIDADE 1.TTL%'     OR
                  upper(rw_crapalt.dsaltera) LIKE '%UF 1.TTL%'         OR
+								 
                  upper(rw_crapalt.dsaltera) LIKE '%CIDADE,%'          OR
-                 upper(rw_crapalt.dsaltera) LIKE '%UF,%'              OR
+                 upper(rw_crapalt.dsaltera) LIKE '%UF,%'              OR								 
                  upper(rw_crapalt.dsaltera) LIKE '%CEP,%'             OR
+								 
                  upper(rw_crapalt.dsaltera) LIKE '%CEP COM.,%'        OR
                  upper(rw_crapalt.dsaltera) LIKE '%CIDADE COM.,%'     OR
                  upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         THEN
                 vr_flaltcep := TRUE;
               END IF;
+							
+							
+							
+							
+							
 
               -- Verificar se houve alteração do telefone do cooperado
               IF upper(rw_crapalt.dsaltera) LIKE '%TELEF.%' THEN
@@ -7682,7 +7784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                            rw_crapcrd_loop_alt.nrcctitg,
                                            vr_tipooper,
                                            rw_crapcrd_loop_alt.inpessoa,
-                                          (rw_crapcrd_loop_alt.nrctrcrd + 1000000),
+                                           rw_crapcrd_loop_alt.nrctrcrd,
                                            rw_crapcrd_loop_alt.cdagenci, -- Canal de Venda
                                            rw_crapacb.cdgrafin,
                                            vr_flaltafn,    -- pr_flaltafn
@@ -9573,13 +9675,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            WHERE tbcrd_situacao.cdsitadm = pr_cdsitadm;
         rw_tbcrd_situacao cr_tbcrd_situacao%ROWTYPE;
              
+		    CURSOR cr_primeiro_cartao_ativo(pr_cdcooper crawcrd.cdcooper%TYPE
+																			 ,pr_nrdconta crawcrd.nrdconta%TYPE
+																			 ,pr_cdadmcrd crawcrd.cdadmcrd%TYPE) IS
+					SELECT d.nrctrcrd
+						FROM crawcrd d
+					 WHERE d.cdcooper = pr_cdcooper
+						 AND d.nrdconta = pr_nrdconta
+						 AND d.cdadmcrd = pr_cdadmcrd
+						 AND d.insitcrd NOT IN (5,6) -- bloqueado,cancelado
+				ORDER BY d.dtpropos DESC;
+				rw_primeiro_cartao_ativo cr_primeiro_cartao_ativo%ROWTYPE;				
+             
         -- Buscar os dados do cartao de credito
         CURSOR cr_crawcrd(pr_cdcooper IN crawcrd.cdcooper%TYPE,
                           pr_nrdconta IN crawcrd.nrdconta%TYPE,
                           pr_nrcrcard IN crawcrd.nrcrcard%TYPE) IS                          
           SELECT crawcrd.insitcrd,
                  crawcrd.dtcancel,
-                 crawcrd.cdmotivo
+                 crawcrd.cdmotivo,
+								 crawcrd.flgprcrd
             FROM crawcrd
            WHERE crawcrd.cdcooper = pr_cdcooper
              AND crawcrd.nrdconta = pr_nrdconta
@@ -9589,6 +9704,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         vr_insitcrd crawcrd.insitcrd%TYPE;
         vr_dtcancel crawcrd.dtcancel%TYPE;
         vr_cdmotivo crawcrd.cdmotivo%TYPE;
+				vr_cdadmcrd crawcrd.cdadmcrd%TYPE;
         vr_nrdrowid ROWID;
         --Variaveis de Excecao
         vr_exc_erro EXCEPTION;
@@ -9636,15 +9752,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                AND crawcrd.nrcrcard = pr_nrcrcard
             RETURNING insitcrd,
                       dtcancel,
-                      cdmotivo
+                      cdmotivo,
+											cdadmcrd
                  INTO vr_insitcrd,
                       vr_dtcancel,
-                      vr_cdmotivo;
+                      vr_cdmotivo,
+											vr_cdadmcrd;
           EXCEPTION
             WHEN OTHERS THEN
               pr_dscritic := 'Erro ao atualizar crawcrd: ' || SQLERRM;
               RAISE vr_exc_erro;
           END;
+					
+					-- Se o cartao recem cancelado era titular, devemos repassar a titularidade
+					IF rw_crawcrd.flgprcrd = 1 THEN
+						OPEN cr_primeiro_cartao_ativo(pr_cdcooper => pr_cdcooper,
+																		      pr_nrdconta => pr_nrdconta,
+																		      pr_cdadmcrd => vr_cdadmcrd);
+						FETCH cr_primeiro_cartao_ativo INTO rw_primeiro_cartao_ativo;
+						--
+						IF cr_primeiro_cartao_ativo%FOUND THEN
+							 --
+							 BEGIN
+								 UPDATE crawcrd d
+										SET d.flgprcrd = 1
+									WHERE d.cdcooper = pr_cdcooper
+										AND d.nrdconta = pr_nrdconta
+										AND d.nrctrcrd = rw_primeiro_cartao_ativo.nrctrcrd;
+							 EXCEPTION
+							 WHEN OTHERS THEN
+									CLOSE cr_primeiro_cartao_ativo;
+									pr_dscritic := 'Erro ao vincular novo titular. Erro: '||SQLERRM;
+									RAISE vr_exc_erro;
+							 END;
+						END IF;
+						--
+						CLOSE cr_primeiro_cartao_ativo;
+					END IF;
           
         ELSE
           

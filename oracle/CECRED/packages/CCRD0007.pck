@@ -1282,10 +1282,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
        AND tfc.tptelefo = pr_tptelefo;
     rw_craptfc cr_craptfc%ROWTYPE;
 
+    -- cursor para endereco da agencia		
+		CURSOR cr_end_agencia(pr_cdcooper IN crapenc.cdcooper%TYPE
+											   ,pr_cdagenci IN crapage.cdagenci%TYPE) IS
+				SELECT crapage.dsendcop
+							,crapage.nrendere
+							,crapage.dscomple
+							,crapage.nmbairro
+							,crapage.nmcidade
+							,crapage.cdufdcop
+							,crapage.cdagenci
+							,crapage.idcidade
+							,crapage.nrcepend
+							,crapage.dsendcop||decode(crapage.nrendere,0,null,','||crapage.nrendere) dsender_compl
+					FROM crapage
+				 WHERE crapage.cdcooper = pr_cdcooper
+					 AND crapage.cdagenci = pr_cdagenci;
+		rw_end_agencia cr_end_agencia%ROWTYPE;
+		
+		CURSOR cr_endereco_entrega(pr_cdcooper IN tbcrd_endereco_entrega.cdcooper%TYPE,
+                               pr_nrdconta IN tbcrd_endereco_entrega.nrdconta%TYPE,
+															 pr_nrctrcrd IN tbcrd_endereco_entrega.nrctrcrd%TYPE) IS
+			SELECT tee.idtipoenvio
+			      ,tee.cdagenci
+				FROM tbcrd_endereco_entrega tee
+			 WHERE tee.cdcooper = pr_cdcooper
+				 AND tee.nrdconta = pr_nrdconta
+				 AND tee.nrctrcrd = pr_nrctrcrd;
+		rw_endereco_entrega cr_endereco_entrega%ROWTYPE;		
+
     -- cursor para adquirir endereço do cooperado
     CURSOR cr_crapenc (pr_cdcooper IN crapenc.cdcooper%TYPE,
                        pr_nrdconta IN crapenc.nrdconta%TYPE,
-                       pr_inpessoa IN crapass.inpessoa%TYPE) IS
+                       pr_tpendass IN crapenc.tpendass%TYPE) IS
     SELECT enc.nrcepend
           ,enc.nmcidade
           ,enc.nmbairro
@@ -1300,7 +1329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
       FROM crapenc enc
      WHERE enc.cdcooper = pr_cdcooper
        AND enc.nrdconta = pr_nrdconta
-       AND enc.tpendass = DECODE(pr_inpessoa,1,10,2,9);
+       AND enc.tpendass = pr_tpendass;
     rw_crapenc cr_crapenc%ROWTYPE;
 
     -- Buscar as informações da conta do titular para incluir no cartão do adicional
@@ -1419,6 +1448,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
         vr_cdbcobcb NUMBER(10);
         vr_cdagebcb crapage.cdagebcb%TYPE;
         vr_nrdconta crapass.nrdconta%TYPE;
+				vr_tpendass crapenc.tpendass%TYPE;
+				vr_cdagenci tbcrd_endereco_entrega.cdagenci%TYPE := 0;
+				
+				-- variaveis de endereço
+				vr_dsendere VARCHAR2(60) := '';
+				vr_dsender_apbl VARCHAR2(200) := NULL;
+				vr_dsender_compl VARCHAR2(200) := '';
+				vr_nrendere VARCHAR2(5) := '';
+				vr_ufendere VARCHAR2(5) := '';
+				vr_nmcidade VARCHAR2(50) := '';
+				vr_nmbairro VARCHAR2(50) := '';
+				vr_nrcepend VARCHAR2(15) := '';
 
         -- Objeto json
         vr_obj_VoReqAltaDeContaCartao    json := json();
@@ -1439,10 +1480,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
 
           END IF;
 
+				 /*
+					Validar se existe registro na tbcrd_endereco_entrega pelo rw_crawcrd.nrctrcrd
+					Se não houver segue a vida c/ cr_crapenc
+					Se houver, enviamos o endereço da crapenc com crapenc.tpendass baseado na tbcrd_endereco_entrega.idtipoenvio
+					*/
+						
+					IF pr_inpessoa = 1 THEN
+						vr_tpendass := 10;
+					ELSIF pr_inpessoa = 2 THEN
+						vr_tpendass := 9;
+					END IF;
+					--
+					OPEN cr_endereco_entrega(pr_cdcooper => rw_crawcrd.cdcooper,
+																	 pr_nrdconta => rw_crawcrd.nrdconta,
+																	 pr_nrctrcrd => pr_nrctrcrd);
+					FETCH cr_endereco_entrega INTO rw_endereco_entrega;
+					--
+					IF cr_endereco_entrega%FOUND THEN
+						vr_tpendass := rw_endereco_entrega.idtipoenvio;
+						IF vr_tpendass IN (90, 91) THEN
+							vr_cdagenci := nvl(rw_endereco_entrega.cdagenci, 0);
+						END IF; 
+						
+					END IF;
+					--
+					CLOSE cr_endereco_entrega;
+
+          IF vr_cdagenci > 0 THEN
+						-- Busca endereço do PA
+						OPEN cr_end_agencia(pr_cdcooper => rw_crawcrd.cdcooper,
+						                    pr_cdagenci => vr_cdagenci);
+						FETCH cr_end_agencia INTO rw_end_agencia;
+						CLOSE cr_end_agencia;
+
+						vr_dsender_compl := rw_end_agencia.dsender_compl;
+						vr_nmbairro := rw_end_agencia.nmbairro;
+						vr_nrcepend := rw_end_agencia.nrcepend;
+						
+						
+					ELSE
           -- Busca Endereço do Cooperado
           OPEN cr_crapenc(pr_cdcooper => rw_crawcrd.cdcooper,
                           pr_nrdconta => rw_crawcrd.nrdconta,
-                          pr_inpessoa => pr_inpessoa);
+														pr_tpendass => vr_tpendass);
           FETCH cr_crapenc INTO rw_crapenc;
 
           -- Se nao encontrar Endereço
@@ -1458,15 +1539,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
           ELSE
             -- Apenas fechar o cursor
             CLOSE cr_crapenc;
+							
+							vr_dsender_apbl := rw_crapenc.dsender_apbl;
+							vr_dsender_compl := rw_crapenc.dsender_compl;
+							vr_dsendere := rw_crapenc.dsendere;
+							vr_nrendere := rw_crapenc.nrendere; 
+							vr_ufendere := rw_crapenc.cdufende;
+							vr_nmcidade := rw_crapenc.nmcidade;
+							vr_nmbairro := rw_crapenc.nmbairro;
+							vr_nrcepend := rw_crapenc.nrcepend;
+							
+							
           END IF;
+					END IF;
 
           -- verificar quantos caracteres serão destinados ao endereço sd204641
-          IF rw_crapenc.dsender_apbl IS NULL THEN
+          IF vr_dsender_apbl IS NULL THEN
             --usa os 50 caracteres para o endereço
-            vr_aux_dsendcom := rpad(substr(rw_crapenc.dsender_compl,1,50),50,' ');
+						vr_aux_dsendcom := rpad(substr(vr_dsender_compl,1,50),50,' ');						
           ELSE
             -- separa 29 caracteres para endereço e 21 para complemento
-            vr_aux_dsendcom := rpad((TRIM(substr(rw_crapenc.dsendere,1,29)) || TRIM(substr(rw_crapenc.nrendere,1,6)||substr(rw_crapenc.dsender_apbl,1,15))),50,' ');
+            vr_aux_dsendcom := rpad((TRIM(substr(vr_dsendere,1,29)) || TRIM(substr(vr_nrendere,1,6)||substr(vr_dsender_apbl,1,15))),50,' ');
           END IF;
 
           -- Gerar código sequencial de controle para o contrato
@@ -1580,11 +1673,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
           vr_obj_VoReqAltaDeContaCartao.put('agenciaContaVinculada',vr_cdagebcb);
           vr_obj_VoReqAltaDeContaCartao.put('agenciaEmissor',rw_crapcop.cdagebcb);
           vr_obj_VoReqAltaDeContaCartao.put('appOrigem','5');
-          vr_obj_VoReqAltaDeContaCartao.put('bairro',rw_crapenc.nmbairro);
+          vr_obj_VoReqAltaDeContaCartao.put('bairro', vr_nmbairro);
           vr_obj_VoReqAltaDeContaCartao.put('bancoContaVinculada',vr_cdbcobcb);
           vr_obj_VoReqAltaDeContaCartao.put('bin',rw_crapadc.nrctamae);
           vr_obj_VoReqAltaDeContaCartao.put('canalDeVendas',rw_crawcrd.cdagenci);
-          vr_obj_VoReqAltaDeContaCartao.put('cep',rw_crapenc.nrcepend);
+          vr_obj_VoReqAltaDeContaCartao.put('cep', vr_nrcepend);
           vr_obj_VoReqAltaDeContaCartao.put('contaVinculada',vr_nrdconta);
           vr_obj_VoReqAltaDeContaCartao.put('dddCelular',vr_dddcelul);
           vr_obj_VoReqAltaDeContaCartao.put('dddComercial',vr_dddcomer);
