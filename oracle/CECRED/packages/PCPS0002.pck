@@ -59,6 +59,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
 
       Alteracoes:
 
+      22/03/2019 - inc0031490 Inclusão da rotina pc_internal_exception na rotina pc_email_pa_portabilidade para 
+                   identificar o ponto do programa que ocasionou o erro; correção do controle do tamanho do corpo do
+                   email, de 30 para 30000; correção do controle de existência de e-mail do PA (Carlos)
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   --> Declaração geral de exception
@@ -1101,6 +1105,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     -- Objetivo  : Realizar a leitura do arquivo atualizando os registros de solicitação conforme situação.
     --
     -- Alteracoes: 
+    --             04/04/2019 - Ajustar regra de validação da modalidade da conta, pois estava invertida, reprovando 
+    --                          assim as solicitações para contas salário (Renato Darosci - SUPERO - INC0036168)
     --             
     ---------------------------------------------------------------------------------------------------------------
 
@@ -1312,7 +1318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         END IF;
         
         -- Verificar se o tipo de conta não permite transferencias - Se é conta salário
-        IF rg_crapass.cdmodali = 2 THEN
+        IF rg_crapass.cdmodali <> 2 THEN
           -- Deve marcar os registro como reprovado
           vr_idsituac := 3; -- Reprovada
           vr_dsdomrep := vr_dsmotivoreprv;
@@ -2131,7 +2137,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     WHEN OTHERS THEN
       pr_dscritic := 'Erro na rotina PCPS.pc_proc_ERR_APCS103. ' ||SQLERRM;
   END pc_proc_ERR_APCS103;
-  --
+  
+  
   PROCEDURE pc_proc_XML_APCS104(pr_dsxmlarq  IN CLOB          --> Conteúdo do arquivo
                                ,pr_dscritic OUT VARCHAR2) IS  --> Descricao erro
     ---------------------------------------------------------------------------------------------------------------
@@ -7410,7 +7417,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
         CLOSE cr_agencia;
       
         -- Se não tiver endereço de email
-        IF vr_dsdemail IS NULL THEN
+        IF trim(vr_dsdemail) IS NULL THEN
           -- Registrar mensagem no log e pular para o próximo registro
           BEGIN
             vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
@@ -7425,6 +7432,10 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
             
             -- Próxima agência
             vr_cdagatual := vr_tbddados.NEXT(vr_cdagatual);
+            
+            IF vr_cdagatual IS NULL THEN
+              EXIT;
+            END IF;
             
             -- Próximo registro
             CONTINUE;
@@ -7459,7 +7470,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
                                       '</tr>';
           
           -- Controle do conteúdo, para evitar estouro de variável
-          IF length(vr_dsmensag) > 30.000 THEN
+          IF length(vr_dsmensag) > 30000 THEN
             EXIT; -- sai do for
           END IF;
           
@@ -7497,6 +7508,10 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
             -- Próxima agência
             vr_cdagatual := vr_tbddados.NEXT(vr_cdagatual);
             
+            IF vr_cdagatual IS NULL THEN
+              EXIT;
+            END IF;
+            
             -- Verificar se percorreu todas as agencias da coop
             EXIT WHEN vr_cdagatual = vr_tbddados.LAST();
             
@@ -7520,6 +7535,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
     WHEN vr_exc_erro THEN
       raise_application_error(-20001, vr_dscritic);
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception(pr_compleme => 'vr_cdagatual:' || vr_cdagatual || ' dsassunt' || vr_dsassunt);
       raise_application_error(-20002, 'Erro na rotina PC_EMAIL_PA_PORTABILIDADE: '||SQLERRM);
   END pc_email_pa_portabilidade;
 	
