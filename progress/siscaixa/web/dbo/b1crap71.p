@@ -74,7 +74,9 @@
                             
                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
-                              
+
+			   05/04/2019  Ajuste para somar o valor de cheques de outros bancos
+			               na autenticação de estorno (Jefferson - MoutS)
 ........................................................................... **/
 
 {dbo/bo-erro1.i}
