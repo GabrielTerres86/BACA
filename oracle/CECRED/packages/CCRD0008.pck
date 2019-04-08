@@ -297,14 +297,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
       SELECT cop.nmrescop
             ,cop.nmextcop
             ,cop.nrdocnpj
-            ,cop.dsendcop
-            ,cop.nrendcop
-            ,cop.nmbairro
-            ,cop.nmcidade
-            ,cop.cdufdcop
-			,cop.nrcepend
+            ,age.dsendcop
+            ,age.nrendere
+            ,age.nmbairro
+            ,age.nmcidade
+            ,age.cdufdcop
+			      ,age.nrcepend
         FROM crapcop cop
-       WHERE cop.cdcooper = pr_cdcooper;
+            ,crapage age
+       WHERE cop.cdcooper = pr_cdcooper
+         AND age.cdcooper = cop.cdcooper
+         AND age.cdagenci = (SELECT age.cdagenci
+                               FROM crapass ass,
+                                    crapage age
+                              WHERE ass.cdagenci = age.cdagenci
+                                AND age.cdcooper = ass.cdcooper
+                                AND ass.nrdconta = pr_nrdconta
+                                AND ass.cdcooper = pr_cdcooper);
     rw_crapcop cr_crapcop%ROWTYPE; 
     
     --> Buscar enderecos do cooperado.
@@ -387,6 +396,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
             ,crd.dtpropos
             ,crd.nrdoccrd
             ,crd.dsprotoc
+            ,crd.dsendenv
         FROM crawcrd crd
        WHERE crd.cdcooper = pr_cdcooper
          and crd.nrdconta = pr_nrdconta
@@ -512,25 +522,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
          AND tpproduto = 4
        ORDER BY dhacionamento DESC;
 	   
-   CURSOR cr_tbcrd_endereco_entrega(pr_cdcooper crapage.cdcooper%TYPE,
-                                    pr_nrdconta crapass.nrdconta%TYPE,
-                                    pr_nrctrcrd crapcrd.nrctrcrd%TYPE) IS
-  SELECT tbdom.dscodigo || ': ' || tbend.nmlogradouro || ', ' || tbend.nrlogradouro || ' - ' ||
-		 nvl2(trim(tbend.dscomplemento), ', ' || tbend.dscomplemento || ' ', '' ) ||
-		 tbend.nmbairro || ' - ' || crapmun.dscidade ||
-		 ' - ' || crapmun.cdestado || ' CEP: ' ||
-		 gene0002.fn_mask_cep(tbend.nrcep) as dsendereco
-  FROM tbcrd_endereco_entrega tbend
-    ,tbcrd_dominio_campo tbdom
-    ,crapmun
-   WHERE tbend.idtipoenvio = tbdom.cddominio  
-	 AND tbdom.nmdominio = 'TPENDERECOENTREGA'
-	 AND tbend.cdcooper = pr_cdcooper
-	 AND tbend.nrdconta = pr_nrdconta
-	 AND tbend.nrctrcrd = pr_nrctrcrd
-	 AND crapmun.dscidade = tbend.nmcidade;
-	 rw_tbcrd_endereco_entrega cr_tbcrd_endereco_entrega%rowtype;    
-   
    CURSOR cr_tbgen_versao_termo(pr_cdcooper crapage.cdcooper%TYPE,
                                 pr_dtadesao date ) IS
     SELECT DECODE(MAX(tbgen.dschave_versao), null, 'N', 'S') as dsnovotermo                                         
@@ -805,14 +796,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     FETCH cr_craptfc INTO rw_craptfc_comer;
     CLOSE cr_craptfc;  
     
-	
-	OPEN cr_tbcrd_endereco_entrega(pr_cdcooper => pr_cdcooper ,
-                    pr_nrdconta => rw_crapass.nrdconta,
-					pr_nrctrcrd => rw_crawcrd.nrctrcrd);
-    FETCH cr_tbcrd_endereco_entrega 
-	 INTO rw_tbcrd_endereco_entrega;
-    CLOSE cr_tbcrd_endereco_entrega;  
-	
   	OPEN cr_representante_legal(pr_nrdconta => rw_crapass.nrdconta);
     FETCH cr_representante_legal 
 	 INTO rw_representante_legal;
@@ -1193,8 +1176,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
       vr_tab_dados_ctr(vr_idxctr).indserasa := 'N';
     END IF;  
 	
-	  IF TRIM(rw_tbcrd_endereco_entrega.dsendereco) IS NOT NULL THEN
-        vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := rw_tbcrd_endereco_entrega.dsendereco;
+	  IF TRIM(rw_crawcrd.dsendenv) IS NOT NULL THEN
+        vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := rw_crawcrd.dsendenv;       --Endereço de envio definido na criação da prosta
     ELSE
         IF rw_crapenc.tpendass = 9 THEN
             vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := 'Comercial';
@@ -1206,6 +1189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                                                          ', '||rw_crapenc.nrendere||' - '||rw_crapenc.nmbairro||' - '||rw_crapenc.nmcidade||' - '||
                                                          rw_crapenc.cdufende||' CEP: '||rw_crapenc.nrcepend;
     END IF;
+    
 	vr_tab_dados_ctr(vr_idxctr).dsnovotermo := rw_tbgen_versao_termo.dsnovotermo;
 	vr_tab_dados_ctr(vr_idxctr).dsrepresentante := rw_representante_legal.dsrepresentante;
 	
