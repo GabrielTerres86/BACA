@@ -143,32 +143,16 @@
 							
 	if (contaDoOperador($nrdconta,$glbvars)) exibirErro('error', utf8ToHtml("Não é possível solicitar cartão de crédito para a própria conta do Operador."),'Alerta - Aimaro',$funcaoAposErro);
 				
-	$sNomeCartaoDebito   = 'Cartão CECRED Débito';
-	$sNomeCartaoMultiplo = 'Cartão CECRED Múltiplo';
+	$sNomeCartaoDebito   = 'Cartão AILOS Débito';
+	$sNomeCartaoMultiplo = 'Cartão AILOS Múltiplo';
 	$sNomeCartaoBB       = 'Cartão Banco do Brasil';
 	/* Se for pesso juridica, mudar o nome dos botoes */
 	if(isset($inpessoa)){
 		if($inpessoa > 1){
-			$sNomeCartaoDebito   = 'Cartão CECRED Empresas Débito';
-			$sNomeCartaoMultiplo = 'Cartão CECRED Empresas';
+			$sNomeCartaoDebito   = 'Cartão AILOS Empresas Débito';
+			$sNomeCartaoMultiplo = 'Cartão AILOS Empresas';
 		}
 	}
-
-	// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
-	$xml = "<Root>";
-	$xml .= " <Dados>";
-	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= " </Dados>";
-	$xml .= "</Root>";
-
-	$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObjeto = getObjectXML($xmlResult);
-		
-	// Se ocorrer um erro, mostra cr?tica
-	if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
-		exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
-	}
-				
 ?>
 <script>
 <?if($cdsitdct == 5){ ?>
@@ -234,9 +218,9 @@ function goBB(opt){
 function goCecred(){
 	<?
 	if($desabilitarNovo){
-			$mensagemDes = utf8ToHtml('O titular desta conta já possui Cartões CECRED de todas bandeiras disponíveis.');
+			$mensagemDes = utf8ToHtml('O titular desta conta já possui Cartões AILOS de todas bandeiras disponíveis.');
 			if($inpessoa ==2)
-				$mensagemDes = utf8ToHtml('Esta conta já possui cartão de crédito CECRED titular.');
+				$mensagemDes = utf8ToHtml('Esta conta já possui cartão de crédito AILOS titular.');
 		?>
 			showError("error", "<? echo $mensagemDes;?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return;

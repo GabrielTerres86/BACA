@@ -64,7 +64,8 @@
 		exibeErro($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
-	$historico = $xmlObj->roottag->tags[0]->tags;
+	$historico = $xmlObj->roottag->tags[0]->tags[0]->tags;
+	$reenvio = (getByTagName($xmlObj->roottag->tags[0]->tags, "reenvio") == "1");
 
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
@@ -93,9 +94,8 @@
 					</tr>			
 				</thead>
 				<tbody>
-					<?  for ($i = 0; $i < count($historico); $i++) { 					
-					?>
-						<tr id="<?php echo $i; ?>" >
+					<?  for ($i = 0; $i < count($historico); $i++) { ?>
+						<tr id="<?php echo $i; ?>">
 							<td class='data'><?php echo getByTagName($historico[$i]->tags,"DTALTERA"); ?></td>
 							<td class='proposta'><?php echo getByTagName($historico[$i]->tags,"NRPROPOSTA_EST"); ?></td>
 							<td class='situacao'><?php echo getByTagName($historico[$i]->tags,"SITUACAO"); ?></td>
@@ -111,6 +111,9 @@
 		
 		<div id="divBotoes">
 			<a href="#" class="botao" id="btvoltar" onClick="voltaDiv(2,1,4,385);return false;">Voltar</a>
+			<? if($reenvio) { ?>
+			<a href="#" class="botao" id="btreenviar" onClick="validaReenvioAltLimite(<?=$nrcctitg?>);return false;">Reenviar &uacute;ltima proposta</a>
+			<? } ?>
 		</div>
 		
 	</div>

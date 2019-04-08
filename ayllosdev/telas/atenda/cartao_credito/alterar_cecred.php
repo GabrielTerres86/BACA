@@ -235,7 +235,7 @@ $pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
                     <input  class='campo' id='vllimpro' name='vllimpro' value="<?php echo $vllimite; ?>">
 
                     <label for="flgdebit"><?php echo utf8ToHtml('Habilita função débito:') ?></label>
-                    <input type="checkbox" name="flgdebit" id="flgdebit" class="campo" dtb="1" disabled />
+                    <input type="checkbox" <?=$flgdebit?> name="flgdebit" id="flgdebit" class="campo" dtb="1" disabled />
                     <br />
                     <label for="flgimpnp"><?php echo utf8ToHtml('Promissória:') ?></label>
                     <select name="flgimpnp" id="flgimpnp" class="campo">
@@ -261,7 +261,7 @@ $pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
                 <div id="divBotoes">
 				
                     <input class="btnVoltar" id="backChoose" type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(0, 1, 4); return false;" />
-                    <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao(); return false;" />
+                    <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao('A'); return false;" />
 
                 
 					<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 

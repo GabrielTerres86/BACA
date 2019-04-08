@@ -18,6 +18,15 @@
 	require_once('../../../class/xmlfile.php');
 	isPostMethod();
 
+	// Função para exibir erros na tela através de javascript
+	function exibeErro($msgErro) { 
+		echo '<script type="text/javascript">';
+		echo 'hideMsgAguardo();';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo '</script>';
+		exit();
+	}
+
 	$contrato    = (isset($_POST['contrato'])) ? $_POST['contrato'] : 'null';
 	$cdForm      = (isset($_POST['cdForm'])) ? $_POST['cdForm'] : 'novo';
 

@@ -167,18 +167,20 @@
 	echo '</script>';	
 	
 	
-	$xmlpdf .= "<Root>";
-    $xmlpdf .= " <Dados>";
-	$xmlpdf.= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-    $xmlpdf.= "   <nrdconta>".$nrdconta."</nrdconta>";
-    $xmlpdf.= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
-    $xmlpdf.= " </Dados>";
-    $xmlpdf.= "</Root>"; 
-    $xmlResult = mensageria($xmlpdf, "ATENDA", "RETORNA_DADOS_ENTREGA_CARTAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObject = getObjectXML($xmlResult);
+	$xmlConsulta = "<Root>";
+    $xmlConsulta .= " <Dados>";
+	$xmlConsulta.= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+    $xmlConsulta.= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xmlConsulta.= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+    $xmlConsulta.= " </Dados>";
+    $xmlConsulta.= "</Root>"; 
+    $xmlResult = mensageria($xmlConsulta, "ATENDA_CRD", "RETORNA_DADOS_ENTREGA_CARTAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    
+	$xmlObject = getObjectXML($xmlResult);
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
-	} 
+	}
+
 	$incrdent = $xmlObject->roottag->tags[0]->tags[0]->cdata;
 	$dstipend = $xmlObject->roottag->tags[0]->tags[1]->cdata;
 	$dsendere = $xmlObject->roottag->tags[0]->tags[2]->cdata;
@@ -186,6 +188,8 @@
 	$dscidade = $xmlObject->roottag->tags[0]->tags[4]->cdata;
 	$nrcepend = $xmlObject->roottag->tags[0]->tags[5]->cdata;
 	$dsufende = $xmlObject->roottag->tags[0]->tags[6]->cdata;
+	$nmresage = $xmlObject->roottag->tags[0]->tags[7]->cdata;
+	$cdagenci = $xmlObject->roottag->tags[0]->tags[9]->cdata;
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
@@ -368,9 +372,13 @@
 				<? if ($incrdent == 1) { ?>
 				<fieldset style="padding-left: 50px;">
 					<legend><? echo utf8ToHtml('Endereço de envio do cartão:') ?></legend>
-					
-					<label for="dstipend"><? echo utf8ToHtml('Tipo:') ?></label>
-					<input type="text" name="dstipend" id="dstipend" value="<?php echo $dstipend; ?>" /> 
+					<label for="dstipend"><? echo utf8ToHtml('Tipo:') ?></label>					
+					<input type="text" name="dstipend" id="dstipend" value="<?php echo $dstipend; ?>" />
+
+					<? if (!empty($nmresage)) { ?>
+						<label for="dstipend"><? echo utf8ToHtml('PA:') ?></label>
+						<input type="text" name="nmresage" id="nmresage" value="<?php echo $cdagenci." - ".$nmresage; ?>" />
+					<? } ?>
 					
 					<label for="dsendere"><? echo utf8ToHtml('Endereço:') ?></label>
 					<input type="text" name="dsendere" id="dsendere" value="<?php echo $dsendere; ?>" />		
@@ -407,7 +415,7 @@
 				<?php
 				//Desabilitar o botão Imprimir Termo de Adesão para os cartões BB
 				if ($cdadmcrd!=83&&$cdadmcrd!=85&&$cdadmcrd!=87):?>
-					<a id="continuaAprovacaoBTN" style="display:none "  class="botao" onclick="solicitaTipoSenha(<?php echo $nrctrcrd; ?>, null, 'continuar') ;" ><? echo utf8ToHtml("Continuar Aprovação");?> </a>
+					<a id="continuaAprovacaoBTN" style="display:none " class="botao" onclick="continuarCartaoProposta(<?php echo $nrctrcrd; ?>);" ><? echo utf8ToHtml("Continuar");?> </a>
 					<a  style="display:none " cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
 					cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
 					nrdcaixa="<?php echo $glbvars['nrdcaixa']; ?>" 
@@ -431,8 +439,7 @@
 	}else{
 		$(".imprimeTermoBTN").show();
 		hideMsgAguardo();
-		bloqueiaFundo(divRotina);				
 	}
 	controlaLayout('frmDadosCartao');
-
+	bloqueiaFundo(divRotina);
 </script>

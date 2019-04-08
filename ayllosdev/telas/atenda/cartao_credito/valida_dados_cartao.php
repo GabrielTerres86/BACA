@@ -187,8 +187,9 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
         if ($nmempres <> "") {
 			if($glbadc == 'n' || $cdadmcrd!="15")
 				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero			
-			else {
-				echo '$("#nmempres","#frmNovoCartao").val(nmEmpresPla);';
+			} else {
+				
+                echo 'if (trim(nmEmpresPla) != "") { $("#nmempres","#frmNovoCartao").val(nmEmpresPla); }';
 				echo 'if ($("#flgEditEmpPlas", "#frmNovoCartao").val() != "1"){';
 				echo "desativa('nmempres');/*$glbadc*/";
 				echo '}';
@@ -214,14 +215,17 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 			if($glbadc == 'n' || $cdadmcrd!="15") {
 				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero
 			}else{
-				echo '$("#nmempres","#frmNovoCartao").val(nmEmpresPla);';
+                echo 'if (trim(nmEmpresPla) != "") { $("#nmempres","#frmNovoCartao").val(nmEmpresPla); }';
 				echo 'if ($("#flgEditEmpPlas", "#frmNovoCartao").val() != "1"){';
 				echo "desativa('nmempres');/*$glbadc*/";
 				echo '}';
 				
 			}
 
-			echo "$('#dddebito').attr('disabled', true);";
+			if ($inpessoa == 1) {
+                echo "$('#dddebito').attr('disabled', true);";
+            }
+
 			if ($nrctrcrd == 0) {
             echo "desativa('vllimpro');";
             echo "$('#tpdpagto').attr('disabled', true);";

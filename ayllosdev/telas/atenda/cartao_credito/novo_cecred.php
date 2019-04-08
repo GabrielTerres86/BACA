@@ -690,8 +690,9 @@ if ($coop_envia_cartao && !$pa_envia_cartao) {
 					<?php if ($coop_envia_cartao && !$pa_envia_cartao) { ?>
 					<input class="botao botaoDesativado" type="button" style='display:none' id="btnsaveRequest" onclick="return false;" value="Prosseguir" />
 					<?php } else { ?>
-					<input class="botao" type="button" style='display:none' id="btnsaveRequest" onclick="verificaEfetuaGravacao();" value="Prosseguir" />
+					<input class="botao" type="button" style='display:none' id="btnsaveRequest" onclick="verificaEfetuaGravacao('I');" value="Prosseguir" />
 					<?php } ?>
+					<input class="" type="image" style='display:none' id="btnsaveRequest" src="<?echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao('I');" />
                 
 					<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
 					cdagenci="<?php echo $glbvars['cdpactra']; ?>" 

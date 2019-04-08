@@ -162,7 +162,7 @@
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
-	//$xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
 
 	echo "<!--  $xmlResult  -->";
@@ -371,12 +371,9 @@
 			
 			<label for="vllimpro"><? echo utf8ToHtml('Limite Proposto:'); ?></label>
 			<div id="limiteDiv">
-				<? if($adicional || $tipo == "dbt"){?>
+				<? if($tipo == "dbt"){?>
 				<select class='campo' id='vllimpro' name='vllimpro' disabled readonly>
-					<?php
-					//for ($i = 0; $i < count($cdLimite); $i++){
-						?><option value="0,00" ><?echo formataMoeda(0.00); ?></option>
-					//}
+					<option value="0,00" ><?echo formataMoeda(0.00); ?></option>
 				</select>
 				<?php
 				}else{

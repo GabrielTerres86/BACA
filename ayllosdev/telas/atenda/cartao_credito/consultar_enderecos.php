@@ -33,13 +33,23 @@
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 	$cdcooper = $glbvars['cdcooper'];
-	$nrdconta = $_POST["nrdconta"];	
-	$tipoacao = $_POST["tipoacao"];	
-	 
-	        
-	// Verifica se o número da conta é um inteiro válido
+	$nrdconta = $_POST["nrdconta"];
+	$tipoacao = $_POST["tipoacao"];
+	$nrctrcrd = $_POST["nrctrcrd"];
+	$nrctrcrd_updown = $_POST["nrctrcrd_updown"];
+
+	define('NOVO_CARTAO', 1);
+	define('UPGRADE_DOWNGRADE', 2);
+	define('ALTERAR_ENDERECO', 3);
+
+	// Verifica se o número da conta foi enviado
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
+	}
+
+	// Verifica se a proposta foi enviada
+	if ((!validaInteiro($nrctrcrd)) || $nrctrcrd <= 0) {
+		exibeErro("Proposta inv&aacute;lida.");
 	}
 
 	// Função para exibir erros na tela através de javascript
@@ -66,11 +76,9 @@
 	if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
 		exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
-	 
-	$dominios = $xmlObjeto->roottag->tags[0]->tags;  
-	$enderecoPa = $xmlObjeto->roottag->tags[1]->tags[0]->cdata;  
-	//print_r($xmlObjeto->roottag->tags[1]);exit;
-	$agenciasPermitidas = $xmlObjeto->roottag->tags[2]->tags;  
+	
+	$dominios = $xmlObjeto->roottag->tags[0]->tags;
+	$cooperativas = $xmlObjeto->roottag->tags[1]->tags;
 	
 	// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
 	$xml = "<Root>";
@@ -85,11 +93,55 @@
 	$coop_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
 	$pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
 
-	$novo_fluxo_envio = false;
-	$pa_envia_cartao = false;
-
 	if ($coop_envia_cartao && !$pa_envia_cartao) {
 		echo "<script>showError('error', 'Nenhuma op&ccedil;&atilde;o de envio definida para o PA, por favor, entre em contato com a SEDE para que seja realizada a parametriza&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);') </script>";
+	}
+
+	// Se for alteração
+	$alguemAssinou = 'false';
+	if ($tipoacao == NOVO_CARTAO) {
+		$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+		$admresult = mensageria($xml, "ATENDA_CRD", "BUSCAR_ASSINATURA_REPRESENTANTE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$objectResult = simplexml_load_string($admresult);
+
+		foreach($objectResult->Dados->representantes->representante as $representante){ 
+			if( ($representante->assinou == "S")){
+				$alguemAssinou = 'true';
+			}
+		}
+	}
+
+	
+	$xmlConsulta = "<Root>";
+	$xmlConsulta .= " <Dados>";
+	$xmlConsulta.= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xmlConsulta.= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xmlConsulta.= "   <nrctrcrd>".((validaInteiro($nrctrcrd_updown) && $nrctrcrd_updown > 0) ? $nrctrcrd_updown : $nrctrcrd)."</nrctrcrd>";
+	$xmlConsulta.= " </Dados>";
+	$xmlConsulta.= "</Root>";
+	$xmlResult = mensageria($xmlConsulta, "ATENDA_CRD", "RETORNA_DADOS_ENTREGA_CARTAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObject = getObjectXML($xmlResult);
+	
+	/*if ($nrdconta == 6890) {
+	print_r($xmlObject);
+	}*/
+
+	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+		exibeErro($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	}
+
+	$idtipoenvio = getByTagName($xmlObject->roottag->tags[0]->tags, "idtipoenvio");
+	$cdagenci = getByTagName($xmlObject->roottag->tags[0]->tags, "cdagenci");
+	$flgadicional = getByTagName($xmlObject->roottag->tags[0]->tags, "flgadicional");
+	if (empty($flgadicional)) {
+		$flgadicional = false;
+	} else {
+		$flgadicional = $flgadicional == "1";
 	}
 ?>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -134,56 +186,41 @@
 																
 												<div>
 												<? 
-												foreach($dominios as $dominio){					
+													foreach($dominios as $dominio){ 
+														if($flgadicional && $idtipoenvio != getByTagName($dominio->tags, 'cddominio') && $tipoacao == NOVO_CARTAO) {
+															continue;
+														}
 												?>
-													<fieldset style="padding-left: 10px; display: inline-block; width: 190px; height: 100px;" onclick="selectRadio(this);">
-														<legend><? echo utf8ToHtml(getByTagName($dominio->tags, 'dscodigo')) ?></legend>	
-														<? if (trim(getByTagName($dominio->tags, 'dsendereco')) !== '') { ?>
-														<input type="radio" name="endereco" id="opt_<? echo utf8ToHtml(getByTagName($dominio->tags, 'cddominio')) ?>"  class='optradio' value="<? echo utf8ToHtml(getByTagName($dominio->tags, 'cddominio')) ?>" /> 
-														</br>
-														<label style="text-align: left; line-height: 14px; width: 190px" > 
-															<? echo utf8ToHtml(nl2br(getByTagName($dominio->tags, 'dsendereco'))) ?> 
-														</label>  
-														<? } else {?> 		
-														</br>					
-														<label style="line-height: 14px; width: 190px; font-size: 15px; color: #a9a9a9!important; text-align: center; margin-top: 20px" > 
-															<? echo utf8ToHtml('Não Informado') ?> 
-														</label>  
-														<? } ?> 
-													</fieldset>
-												<? } ?> 
-												
-													<fieldset style="padding-left: 10px; display: inline-block; width: 190px; height: 100px" onclick="selectRadio(this);">
-														<legend><? echo utf8ToHtml('Endereço PA') ?></legend>	
-														<input type="radio" name="endereco" id="enderecopa"  class='optradio' value="" /> 
-														</br> 
-														<label style="text-align: left; line-height: 14px; width: 190px" > 
-															<? echo nl2br($enderecoPa) ?> 
-														</label> 
-													</fieldset>
-													
-													<fieldset style="padding-left: 10px; display: inline-block; width: 190px; height: 100px;" onclick="selectRadio(this);">
-														<legend><? echo utf8ToHtml('Outro PA') ?></legend>		
-														<? if (count($agenciasPermitidas) !== 0) { ?>
-															<input type="radio" name="endereco" id="outropa"  class='optradio' /> 
+														<fieldset style="padding-left: 10px; display: inline-block; width: 190px; height: 100px;" onclick="selectRadio(this);">
+															<legend><? echo utf8ToHtml(getByTagName($dominio->tags, 'dscodigo')) ?></legend>
+															<input type="radio" data-cdagenci="<?=getByTagName($dominio->tags, 'cdagenci')?>" name="endereco" id="<? echo utf8ToHtml(getByTagName($dominio->tags, 'cddominio')) ?>" <?=($idtipoenvio == getByTagName($dominio->tags, 'cddominio') ? 'checked' : '')?>  class='optradio' />
+															<span style="color:#f00;font-weight:bold;"><?=($idtipoenvio == getByTagName($dominio->tags, 'cddominio') ? 'Endere&ccedil;o atual' : '')?></span>
 															</br>
-															<select class="Campo" id="outropasel" style="width: 70px; margin-top: 20px; margin-left: 40px">						
-															<? 
-															foreach($agenciasPermitidas as $agencia){
-															?>
-															<option data-endereco="<?php echo nl2br($agencia->cdata); ?>" value="<?php echo $agencia->name; ?>"><?php echo $agencia->name; ?></option> 
-															<? } ?> 
-															</br> 
-															</select>
-														<? } else {?> 		
-														</br>					
-														<label style="line-height: 14px; width: 190px; font-size: 15px; color: #a9a9a9!important; text-align: center; margin-top: 20px" > 
-															<? echo utf8ToHtml('Não Informado') ?> 
-														</label>  
-														<? } ?> 
-														
-													</fieldset>					
-												</div>	
+															<label style="text-align: left; line-height: 14px; width: 190px" >
+																<? echo utf8ToHtml(nl2br(getByTagName($dominio->tags, 'dsendereco'))) ?>
+															</label>														
+														</fieldset>
+												<? } ?>
+												<? 
+												if(!empty($cooperativas)) {
+													if (!($flgadicional && $idtipoenvio != 91 && $tipoacao == NOVO_CARTAO)) {
+												?>
+													<fieldset style="padding-left: 10px; display: inline-block; width: 190px; height: 100px;"  onclick="selectRadio(this);">
+														<legend>Outro PA</legend>
+														<input type="radio" name="endereco" id="91" <?=($idtipoenvio == 91 ? 'checked' : '')?> class='optradio' />
+														<span style="color:#f00;font-weight:bold;"><?=($idtipoenvio == 91 ? 'Endere&ccedil;o atual' : '')?></span>
+														</br>
+														<select class="Campo" <?=(($cdagenci > 0 && $flgadicional && $tipoacao == NOVO_CARTAO) ? 'disabled' : '')?> id="outropasel" style="width: 145px; margin-top: 20px;">
+															<? foreach($cooperativas as $cooperativa){ ?>
+																<option <?=(($cdagenci == getByTagName($cooperativa->tags, 'cdagenci')) ? 'selected' : '')?> data-endereco="<?=getByTagName($cooperativa->tags, 'dsendereco')?>" value="<?php echo getByTagName($cooperativa->tags, 'cdagenci'); ?>"><?php echo getByTagName($cooperativa->tags, 'dsagencia'); ?></option>
+															<? } ?>
+														</select>
+													</fieldset>
+												<? }} ?>
+												<? if (empty($dominios) && empty($cooperativas)) { ?>
+												<div style="margin: 20px 0;">Nenhum endere&ccedil;o cadastrado ou par&acirc;metro de envio n&atilde;o definido para o PA.</div>
+												<? } ?>
+												</div>
 
 												<input type="button" class="botao" id="btatualizardados" onClick="setaParametros('CONTAS','',nrdconta,'CA');$('#nmtelant','#frmMenu').val('CARTAO');direcionaTela('CONTAS','no');return false;" value="Atualizar Dados Cadastrais"/>
 											</fieldset>
@@ -191,12 +228,12 @@
 										</form>
 									</div>
 									<div id="ValidaSenha"></div>
-									<div id="divBotoes"> 
-										<a href="#" class="botao" id="btvoltar" onclick="exibeRotina($('#divRotina'));fechaRotina($('#divUsoGenerico'),$('#divRotina'));return false;">Voltar</a>
+									<div id="divBotoes">
+										<a href="#" class="botao" id="btvoltar" onclick="voltarEndereco('<?php echo $tipoacao; ?>')">Voltar</a>
 										<?php if ($coop_envia_cartao && !$pa_envia_cartao) { ?>
-										<a href="#" class="botao botaoDesativado" id="brprosseguir" onClick="return false;">Prosseguir</a> 
+										<a href="#" class="botao botaoDesativado" id="brprosseguir" onClick="return false;">Prosseguir</a>
 										<?php } else { ?>
-										<a href="#" class="botao" id="brprosseguir" onClick="confirmaEndereco('<?php echo $tipoacao; ?>');return false;">Prosseguir</a> 
+										<a href="#" class="botao" id="brprosseguir" onClick="confirmaEndereco('<?php echo $tipoacao; ?>', <?=$alguemAssinou?>);return false;">Prosseguir</a>
 										<?php } ?>
 									</div>
 								</td>
@@ -225,8 +262,8 @@
 	}else{
 		$(".imprimeTermoBTN").show();
 		hideMsgAguardo();
-		bloqueiaFundo(divRotina);				
 	}
+	bloqueiaFundo(divRotina);
 	controlaLayout('frmListaEnderecos');
 
 </script>

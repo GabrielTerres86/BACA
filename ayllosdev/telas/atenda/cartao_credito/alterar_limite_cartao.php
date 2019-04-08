@@ -17,7 +17,7 @@ $cdAdmCartao    = $_POST['cdadmcrd'];
 $cdadmcrd       = $_POST['cdadmcrd'];
 $nrctrcrd       = $_POST['nrctrcrd'];
 $cartaoCECRED   = in_array($cdAdmCartao, $cecredADM);
-$nrctrcrd       = $_POST['nrctrcrd'];
+$nrPropostaEst  = $_POST['nrPropostaEst'];
 $opcao          = null;
 if(isset($_POST['opcao'])){
   $opcao        = $_POST['opcao']; /* G - GLOBAL OU D - DIFERENCIADO */
@@ -36,7 +36,10 @@ try {
     return;
 }
 
-if (verificaPendencia($nrctrcrd, $nrdconta,$glbvars)){ exibirErro('error', utf8ToHtml("Proposta de alteração de limite pendente na esteira"),'Alerta - Aimaro',$funcaoAposErro); return;};
+// Só iremos validar as pendencias se for uma nova proposta
+if(empty($nrPropostaEst)) {
+    if (verificaPendencia($nrctrcrd, $nrdconta,$glbvars)){ exibirErro('error', utf8ToHtml("Proposta de alteração de limite pendente na esteira"),'Alerta - Aimaro',$funcaoAposErro); return;};
+}
 if (contaDoOperador($nrdconta, $glbvars)) exibirErro('error', utf8ToHtml("Não é possível solicitar alteração de limite para cartão de crédito da conta do Operador."),'Alerta - Aimaro',$funcaoAposErro);
 if(is_null($opcao)){
   $titular = is_titular_card($nrctrcrd, $nrdconta,$glbvars,$limiteatual,$limitetitular);

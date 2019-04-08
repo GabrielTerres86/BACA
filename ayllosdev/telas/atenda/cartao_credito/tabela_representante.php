@@ -84,7 +84,7 @@
 										</form>											
 										<div id="divBotoes">
 											<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"    onClick="fechaRotina($('#divUsoGenerico'),divRotina);return false;" />
-											<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/concluir.gif" onClick="fechaRotina($('#divUsoGenerico'),divRotina); validarNovoCartao(); return false;" />
+											<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/concluir.gif" onClick="fechaRotina($('#divUsoGenerico'),divRotina); validarNovoCartao('<?=$cddopcao?>'); return false;" />
 										</div>
 									</div>
 								</td>
