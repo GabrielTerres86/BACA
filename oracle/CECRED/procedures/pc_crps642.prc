@@ -175,7 +175,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
            TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_saida; 
         END IF; 
-      
+
       END IF; --pr_inpriori <> 'T'   
       
       --> Commit para garantir a gravação do parametro de 
