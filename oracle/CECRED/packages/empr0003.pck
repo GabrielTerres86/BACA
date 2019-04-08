@@ -485,7 +485,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
               CASE WHEN crapavt.inpessoa <> 0 THEN /* Se estiver preenchido o inpessoa (1 ou 2) do avalista */
                   DECODE(NVL(crapavt.inpessoa,1),1,
                   'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
-                      ' RG n.º '||SUBSTR(TRIM(crapavt.nrdocava),1,15)||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
+                      --PJ438 - Não apresentar rg quando não possuir
+                      CASE WHEN SUBSTR(TRIM(crapavt.nrdocava),1,15) <> '' THEN ' RG n.º '||SUBSTR(TRIM(crapavt.nrdocava),1,15) END ||
+                      decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
                                   ,NULL, NULL, ', com o estado civil ')||nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl)),
                   'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2))
               WHEN LENGTH(crapavt.nrcpfcgc) <= 11 THEN /* se não estiver preenchido (0) e for CPF length <= 11 */
@@ -748,7 +750,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
     WHERE cdcooper = pr_cdcooper
       AND nrdconta = pr_nrdconta
       AND nrctremp = pr_nrctremp
-      AND tpctrato = 1; -- avalista
+      AND tpctrato = 1
+      AND nmdavali = (SELECT decode(pr_nrseqava,1,e.nmdaval1,e.nmdaval2) 
+                        FROM crawepr e
+                       WHERE e.cdcooper = crapavt.cdcooper
+                         and e.nrdconta = crapavt.nrdconta
+                         and e.nrctremp = crapavt.nrctremp); -- avalista
 
   CURSOR cr_crawepr_av IS
     SELECT nvl(crapass.nmprimtl,crawepr.nmdaval1) nmdaval1,
@@ -824,16 +831,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   ww_nmdavali_org crapavt.nmdavali%TYPE;
 
 BEGIN
+  /*Alterado para respeitar a sequencia dos avalistas conforme emprestimo -- PRJ438*/
   FOR rw_crapavt IN cr_crapavt LOOP
     ww_nmdavali_org := rw_crapavt.nmdavali;
-    IF pr_nrseqava = cr_crapavt%ROWCOUNT THEN
+    --IF pr_nrseqava = cr_crapavt%ROWCOUNT THEN
       pr_nmdavali := rw_crapavt.nmdavali;
       pr_nrcpfcgc := rw_crapavt.nrcpfcgc;
       pr_dsendres := rw_crapavt.dsendres;
       pr_nrfonres := rw_crapavt.nrfonres;
       pr_nmconjug := rw_crapavt.nmconjug;
       pr_nrcpfcjg := rw_crapavt.nrcpfcjg;
-    END IF;
+    --END IF;
   END LOOP;
 
   -- Se nao encontrou, busca direto na tabela de emprestimos
@@ -943,7 +951,9 @@ BEGIN
                                       'CASA','Endereco: ' ||crapbpr.dscorbem,
                                       'APARTAMENTO','Endereco: ' ||crapbpr.dscorbem,
                                       'MAQUINA DE COSTURA','Chassi/N Série: '||crapbpr.dschassi,
+                                      'MAQUINA E EQUIPAMENTO','N Série: '||crapbpr.dschassi,
                                       'EQUIPAMENTO','Chassi/N Série: '||crapbpr.dschassi,
+                                      'GALPAO','Endereco: '||crapbpr.dscorbem,
                                                     'Chassi: '||crapbpr.dschassi) dschassi,
               crapbpr.tpchassi,
               case when nvl(crapbpr.ufplnovo, ' ') <> ' ' then crapbpr.ufplnovo else crapbpr.ufdplaca end ufdplaca,
@@ -1698,7 +1708,7 @@ BEGIN
         IF rw_crawepr.tpemprst = 1 THEN -- Tipo PP
           -- Se for bens móveis
           IF vr_tab_bens.exists(vr_tab_bens.first) AND
-            vr_tab_bens(vr_tab_bens.first).dscatbem IN ('MAQUINA DE COSTURA','EQUIPAMENTO') THEN
+            vr_tab_bens(vr_tab_bens.first).dscatbem IN ('MAQUINA DE COSTURA','EQUIPAMENTO','MAQUINA E EQUIPAMENTO') THEN
             -- clausula 2 do relatorio
             vr_coment01 := '2. Financiamento - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, com pagamento em parcelas,'||
                            ' na quantidade e valor contratados pelo Emitente.';
@@ -2127,7 +2137,7 @@ BEGIN
                                     ,pr_des_xml  OUT CLOB                  --> XML gerado
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
                                     ,pr_dscritic OUT VARCHAR2) IS          --> Descricao da critica
-    /* .............................................................................
+    /* ..........................................................................................................
 
        Programa: pc_gera_xml_contrato_pos
        Sistema : Conta-Corrente - Cooperativa de Credito
@@ -2142,16 +2152,20 @@ BEGIN
 
        Alteracoes: 01/02/2018 - Ajustes na geração do XML de contratos. (Jaison/James - PRJ298)
                   
-                  12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+                   12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
 
-                  27/11/2018 - Correção dos parâmetros de taxa de juros para serem apresentados corretamente (proposta efetivada) na Opção Imprimir / Contratos da tela Atenda / Prestações.
-				  Chamado INC0027935 - Gabriel (Mouts).
+                   27/11/2018 - Correção dos parâmetros de taxa de juros para serem apresentados corretamente 
+                                (proposta efetivada) na Opção Imprimir / Contratos da tela Atenda / Prestações.
+				                        Chamado INC0027935 - Gabriel (Mouts).
                   
                    20/12/2018 - Correção da taxa CET para buscar da tabela de CET quando existir registro
-								INC0029082 (Douglas Pagel / AMcom).
+                	 						  INC0029082 (Douglas Pagel / AMcom).
 
+                   05/04/2019 - Ajuste (INC0029082) busca da taxa CET: 
+                                estava considerando apenas inpessoa =1 e recisa buscar para inpessoa = 2 também
+                		 					  INC0011321 (Ana Volles).
                   
-    ............................................................................. */
+    .......................................................................................................... */
 
       -- Cursor sobre as informacoes de emprestimo
       CURSOR cr_crapepr IS
@@ -2399,9 +2413,9 @@ BEGIN
       vr_vljurcor	      NUMBER;                       --> Valor do juros de correcao
       vr_vlminpre       NUMBER;                       --> Valor minimo da parcela
       vr_perjurmo       NUMBER;                       --> Juro mora
-	  vr_nrcpfcgc       VARCHAR2(50);                 --> CPF/CNPJ do emitente
-	  vr_nrcpfcjg       VARCHAR2(50);                 --> CPF do conjuge
-      vr_txanocet       NUMBER := 0;               --> taxa anual do cet
+	    vr_nrcpfcgc       VARCHAR2(50);                 --> CPF/CNPJ do emitente
+	    vr_nrcpfcjg       VARCHAR2(50);                 --> CPF do conjuge
+      vr_txanocet       NUMBER := 0;                  --> taxa anual do cet
 
       -- Projeto 410 - 14/03/2018 - SM - Verificar informaçoes de IOF e tarifa
       vr_vlpreclc       NUMBER := 0;                -- Parcela calcula
@@ -2420,6 +2434,12 @@ BEGIN
       vr_cdusolcr NUMBER := 0;                -- Uso linha de credito
       vr_vlfinanc NUMBER := 0;
       vr_cdfvlcop crapfco.cdfvlcop%TYPE;
+      --
+      vr_info_propri1    varchar2(100);
+      vr_info_propri2    varchar2(100);
+      vr_info_propri3    varchar2(100);
+      vr_tag_propri_tmp  varchar2(300);      
+      
     BEGIN
       -- Abre o cursor com as informacoes da cooperativa
       OPEN  cr_crapcop;
@@ -2485,6 +2505,19 @@ BEGIN
 
       -- Capturar CPF/CNPJ
       vr_nrcpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crawepr.nrcpfcgc, rw_crawepr.inpessoa);
+
+      --INC0011321 - não considerar inpessoa para buscar vr_txanocet
+      --Checar se existe informações de CET gerado na efetivação
+      OPEN cr_tbepr_calculo_cet;
+      FETCH cr_tbepr_calculo_cet 
+       INTO rw_tbepr_calculo_cet;
+      IF cr_tbepr_calculo_cet%FOUND THEN
+        -- Usaremos as informações da tabela
+        vr_txanocet := rw_tbepr_calculo_cet.txanocet;
+      ELSE
+        vr_txanocet := rw_crawepr.percetop;
+      END IF;						
+      CLOSE cr_tbepr_calculo_cet;
 			
       -- Verifica se o documento eh um CPF ou CNPJ
       IF rw_crawepr.inpessoa = 1 THEN
@@ -2498,18 +2531,6 @@ BEGIN
         OPEN  cr_crapnac(pr_cdnacion => rw_crawepr.cdnacion);
         FETCH cr_crapnac INTO rw_crapnac;
         CLOSE cr_crapnac;
-
-        -- Checar se existe informações de CET gerado na efetivação
-      OPEN cr_tbepr_calculo_cet;
-      FETCH cr_tbepr_calculo_cet 
-       INTO rw_tbepr_calculo_cet;
-      IF cr_tbepr_calculo_cet%FOUND THEN
-        -- Usaremos as informações da tabela
-        vr_txanocet := rw_tbepr_calculo_cet.txanocet;
-      ELSE
-        vr_txanocet := rw_crawepr.percetop;
-      END IF;						
-      CLOSE cr_tbepr_calculo_cet;
 
         -- monta descricao para o relatorio com os dados do emitente
         vr_emitente := rw_crawepr.nmprimtl || ', ' 
@@ -2601,9 +2622,14 @@ BEGIN
 
           vr_tab_avl(vr_ind_aval).descricao := vr_tab_avl(vr_ind_aval).descricao
                                             || '<nmaval0' || vr_ind_aval || '>' || vr_tab_aval(vr_ind_aval).nmdavali || '</nmaval0' || vr_ind_aval || '>'
-                                            || '<cpfava0' || vr_ind_aval || '>' || gene0002.fn_mask_cpf_cnpj(vr_tab_aval(vr_ind_aval).nrcpfcgc, vr_tab_aval(vr_ind_aval).inpessoa) || '</cpfava0' || vr_ind_aval || '>'
+                                            || '<cpfava0' || vr_ind_aval || '>' || gene0002.fn_mask_cpf_cnpj(vr_tab_aval(vr_ind_aval).nrcpfcgc, vr_tab_aval(vr_ind_aval).inpessoa) || '</cpfava0' || vr_ind_aval || '>';
+                                            
+          -- Se pessoa fisica, imprimir dados do conjuge --BUG 14436 - Rubens
+          IF vr_tab_aval(vr_ind_aval).inpessoa = 1 THEN
+                   vr_tab_avl(vr_ind_aval).descricao := vr_tab_avl(vr_ind_aval).descricao                                            
                                             || '<nmcjg0'  || vr_ind_aval || '>' || vr_tab_aval(vr_ind_aval).nmconjug || '</nmcjg0' || vr_ind_aval || '>'
                                             || '<cpfcjg0' || vr_ind_aval || '>' || gene0002.fn_mask_cpf_cnpj(vr_tab_aval(vr_ind_aval).nrcpfcjg, 1) || '</cpfcjg0' || vr_ind_aval || '>';
+          END IF;                                                                                                
 
           -- Proximo Registro
           vr_ind_aval := vr_tab_aval.NEXT(vr_ind_aval);
@@ -2694,7 +2720,7 @@ BEGIN
         FETCH cr_crapcje INTO rw_crapcje;
         CLOSE cr_crapcje;
         -- Capturar CPF do conjuge				
-		vr_nrcpfcjg := gene0002.fn_mask_cpf_cnpj(rw_crapcje.nrcpfcjg, 1);
+	     	vr_nrcpfcjg := gene0002.fn_mask_cpf_cnpj(rw_crapcje.nrcpfcjg, 1);
       END IF;
       
       -- Incluir nome do modulo logado
@@ -2715,6 +2741,19 @@ BEGIN
         gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, '<bens>');
         WHILE vr_des_chave IS NOT NULL LOOP  -- varre temp table de bens
           -- Gera xml para cada bem encontrado
+
+          --Bug 14490
+          vr_tag_propri_tmp := vr_tab_bens(vr_des_chave).proprietario;
+          vr_info_propri1 := Substr(VR_TAG_PROPRI_TMP,1,Instr(Substr(VR_TAG_PROPRI_TMP,1,85),' ', -1));
+          
+          vr_info_propri2 := Substr(vr_tag_propri_tmp,length(vr_info_propri1) + 1,
+                                    Instr(
+                                       Substr(vr_tag_propri_tmp,length(vr_info_propri1) + 1 ,85),
+                                    ' ', -1));
+          
+          vr_info_propri3 := Trim(substr(vr_tag_propri_tmp,length(vr_info_propri2) + length(vr_info_propri1)));
+          --
+          
           gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
                                   '<bem>'              ||
                                   '  <veiculos>'       || vr_bens                                                    || '</veiculos>'       ||
@@ -2725,10 +2764,11 @@ BEGIN
                                   '  <cor>'            || vr_tab_bens(vr_des_chave).dscorbem                     	   || '</cor>'            ||
                                   '  <dsbem>'          || 'Descrição do bem: ' || vr_tab_bens(vr_des_chave).dscatbem || ' '                 ||
                                                            vr_tab_bens(vr_des_chave).dsbem                           || '</dsbem>'          ||
-                                  '  <proprietario>'   || vr_tab_bens(vr_des_chave).proprietario                     || '</proprietario>'   ||
-                                 --> Estas informações estao concatenadas no campo proprietario para ficar no padrão passado pelo juridico
-                                 -->  '  <dados_pessoais>' || vr_tab_bens(vr_des_chave).dados_pessoais                   || '</dados_pessoais>' ||
-                                 -->  '  <endereco>'       || vr_tab_bens(vr_des_chave).endereco                         || '</endereco>'       ||
+                                  --Bug 14490
+                                  '  <proprietario>'   || vr_info_propri1                                            || '</proprietario>'   ||
+                                  '  <dados_pessoais>' || vr_info_propri2                                            || '</dados_pessoais>' ||
+                                  '  <endereco>'      || vr_info_propri3                                            || '</endereco>'       ||
+                                  --
                                   '  <conjuge>'        || vr_tab_bens(vr_des_chave).conjuge                          || '</conjuge>'        ||
                                   '  <avaliacao>'      || 'Avaliação: R$ '||to_char(vr_tab_bens(vr_des_chave).avaliacao,'FM999G999G999G990D00') || '</avaliacao>' ||
                                   '</bem>');
@@ -2843,7 +2883,7 @@ BEGIN
       vr_vlminpre := NVL(vr_vlpreemp,0) - NVL(vr_vljurcor,0);
   
       vr_perjurmo := nvl(rw_crawepr.txmensal,0) + nvl(rw_craplcr.perjurmo,0);
-          
+
       -- Gera corpo do xml
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
                              '<ind_add_item>' || vr_ind_add_item                             || '</ind_add_item>' || -- Indicador se possui terceiro garantidor (0-Nao / 1-Sim)
@@ -4926,11 +4966,24 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
     vr_dsdireto_emp VARCHAR2(4000);
     vr_dsdireto_pre VARCHAR2(4000);
     vr_nmarqimp_emp VARCHAR2(200);
-    vr_nmarqimp_pre VARCHAR2(200);
+    vr_nmarqimp_pre VARCHAR2(200) := 'TRUE';
     
     -- Variaveis gerais
 
     vr_nmarqpdf   VARCHAR2(1000);   
+    vr_nrctrseg   crawseg.nrctrseg%type;
+    
+    /*Validar se existe proposta prestamista para contrato*/  
+    cursor c_crawseg(p_cdcooper in number,
+                     p_nrdconta in number,
+                     p_nrctrato in number) is
+    select s.nrctrseg
+      from crawseg s
+     where s.cdcooper = p_cdcooper
+       and s.nrdconta = p_nrdconta
+       and s.nrctrato = p_nrctrato;
+       --
+       r_crawseg c_crawseg%rowtype;    
 
     PROCEDURE pc_imprime_contrato_emprestimo(pr_cdcooper   IN crapcop.cdcooper%TYPE              --> Codigo da Cooperativa
                                             ,pr_nrdconta   IN crapepr.nrdconta%TYPE              --> Numero da conta do emprestimo
@@ -5573,10 +5626,10 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
     -- Tratamento de erros
     vr_exc_erro        EXCEPTION;
     
-    vr_dstransa        craplgm.dstransa%TYPE;
+    vr_dstransa        craplgm.dstransa%TYPE := 'Impressao contrato prestamista';
     vr_nrdrowid        ROWID;
 
-    vr_idseqttl        crapttl.idseqttl%TYPE;
+    vr_idseqttl        crapttl.idseqttl%TYPE := 1; 
     
     vr_dsdireto        VARCHAR2(4000);
     vr_nmendter        VARCHAR2(4000);     
@@ -5784,7 +5837,7 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
       IF pr_flgerlog = 1 THEN
         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
                              pr_cdoperad => pr_cdopecxa, 
-                             pr_dscritic => NULL, 
+                             pr_dscritic => ' ', 
                              pr_dsorigem => 'Ayllos WEB',
                              pr_dstransa => vr_dstransa, 
                              pr_dttransa => trunc(SYSDATE),
@@ -5889,6 +5942,59 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
     OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
     CLOSE BTCH0001.cr_crapdat;
+    
+    
+    -- Validar criação prestamista
+    open c_crawseg(pr_cdcooper,pr_nrdconta,pr_nrctremp);
+    fetch c_crawseg into r_crawseg;
+     if c_crawseg%notfound then
+       --Efetivação já cria a p
+       segu0003.pc_efetiva_proposta_sp(pr_cdcooper => pr_cdcooper
+                                     , pr_nrdconta => pr_nrdconta
+                                     , pr_nrctrato => pr_nrctremp
+                                     , pr_cdagenci => vr_cdagenci
+                                     , pr_nrdcaixa => vr_nrdcaixa
+                                     , pr_cdoperad => vr_cdoperad
+                                     , pr_nmdatela => vr_nmdatela
+                                     , pr_idorigem => vr_idorigem
+                                     , pr_cdcritic => vr_cdcritic
+                                     , pr_dscritic => vr_dscritic);
+      -- Se retornou erro
+      if nvl(vr_cdcritic,0) > 0 or 
+        trim(vr_dscritic) is not null then
+        close c_crawseg;
+        raise vr_exc_erro;
+      end if;        
+      
+      --Busca o número da proposta prestamista gerado
+      begin
+       select s.nrctrseg
+         into vr_nrctrseg
+         from crawseg s
+        where s.cdcooper = pr_cdcooper
+          and s.nrdconta = pr_nrdconta
+          and s.nrctrato = pr_nrctremp;
+      exception
+        when no_data_found then
+          vr_nmarqimp_pre := 'FALSE';
+        when others then
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao buscar proposta prestamista: '||sqlerrm;
+      end;
+      if vr_nrctrseg > 0 then
+        --Criou 
+        commit;
+      end if;
+      
+     else 
+      if pr_nrctrseg is null or pr_nrctrseg = 0 then
+        vr_nrctrseg := r_crawseg.nrctrseg;
+      else
+        vr_nrctrseg := pr_nrctrseg;
+      end if;  
+     end if;
+    close c_crawseg;
+    
     -- Gerar o contrato de emprestimo
     pc_imprime_contrato_emprestimo(pr_cdcooper   => pr_cdcooper
                                   ,pr_nrdconta   => pr_nrdconta
@@ -5903,10 +6009,12 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
       TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;                                   
+    --               
+    IF vr_nmarqimp_pre <> 'FALSE' THEN
     --  Gerar o relatorio proposta prestamista
     pc_imp_proposta_prestamista(pr_cdcooper => vr_cdcooper   --> Código da Cooperativa
                                ,pr_nrdconta => pr_nrdconta  --> Número da Conta
-                               ,pr_nrctrseg => pr_nrctrseg  --> Proposta
+                               ,pr_nrctrseg => vr_nrctrseg  --> Proposta
                                ,pr_nrctremp => pr_nrctremp  --> Contrato                                                                   
                                ,pr_cdagecxa => vr_cdagenci  --> Código da agencia
                                ,pr_nrdcaixa => vr_nrdcaixa  --> Numero do caixa do operador
@@ -5929,6 +6037,8 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
       --RAISE vr_exc_erro;
       vr_nmarqimp_pre := 'FALSE';
     END IF;
+    END IF;
+    
     -- Se tiver prestamista
     IF vr_nmarqimp_pre <> 'FALSE' THEN
       vr_nmarqpdf:= 'prest001'|| gene0002.fn_busca_time || '.pdf';
