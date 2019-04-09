@@ -201,7 +201,7 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
     } else {
 
         if ($nmempres <> "") {
-			if($glbadc == 'n' || $cdadmcrd!="15")
+			if($glbadc == 'n' || $cdadmcrd!="15") {
 				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero			
 			} else {
 				

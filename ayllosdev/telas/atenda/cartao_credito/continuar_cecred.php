@@ -80,6 +80,7 @@ $nrctrcrd = getByTagName($dados,"NRCTRCRD");
 $dscartao = getByTagName($dados,"DSCARTAO");
 $nmextttl = getByTagName($dados,"NMEXTTTL");
 $nmtitcrd = getByTagName($dados,"NMTITCRD");
+$nmempcrd = getByTagName($dados,"nmempcrd");
 $nrcpftit = getByTagName($dados,"NRCPFTIT");
 $nmempttl = getByTagName($dados,"nmempttl");
 $nrcnpjtl = getByTagName($dados,"nrcnpjtl");
@@ -150,7 +151,7 @@ $xmlObject = getObjectXML($xmlResult);
 
 $flgTitular = getByTagName($xmlObject->roottag->tags[0]->tags, "FLGTITULAR");
 
-if ($flgTitular) {
+if ($flgTitular && empty($desabilitaOpcoesDebito)) {
     $xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
@@ -242,7 +243,7 @@ if ($flgTitular) {
                     <br />
                     <div id="empresa">
                         <label for="nmempres"><?php echo utf8ToHtml('Empresa do Plástico:') ?></label>
-                        <input type="text" name="nmempres" id="nmempres" class="campo" value="<?php echo $nmtitcrd; ?>" />
+                        <input type="text" name="nmempres" id="nmempres" class="campo" value="<?php echo $nmempcrd; ?>" />
                     </div>
                     <hr style="background-color:#666; height:1px; width:480px;" id="hr2"/>
                     <br style="clear:both;" />
@@ -278,11 +279,11 @@ if ($flgTitular) {
                     <input type="text" name="vlalugue" id="vlalugue" class="campo" value="0,00" />
                     <br />
                     <label for="vllimpro"><?php echo utf8ToHtml('Limite Proposto:') ?></label>
-                    <input <?=((!$flgTitular) ? 'disabled' : '')?> onblur="validaLimite()" class='campo' id='vllimpro' name='vllimpro' value="<?php echo $vllimite; ?>">
+                    <input <?=((!$flgTitular || $desabilitaOpcoesDebito) ? 'disabled' : '')?> onblur="validaLimite()" class='campo' id='vllimpro' name='vllimpro' value="<?php echo $vllimite; ?>">
                     <input type="hidden" id="vllimmot" value="<?=$valorSugerido?>" />
 
                     <label for="flgdebit"><?php echo utf8ToHtml('Habilita função débito:') ?></label>
-                    <input type="checkbox" <?=$flgdebit?> name="flgdebit" id="flgdebit" class="campo" dtb="1" disabled />
+                    <input type="checkbox" <?=$flgdebit?> name="flgdebit" id="flgdebit" class="campo" dtb="1" onclick='confirmaPurocredito();' disabled />
                     <br />
                     <label for="flgimpnp"><?php echo utf8ToHtml('Promissória:') ?></label>
                     <select name="flgimpnp" id="flgimpnp" class="campo">

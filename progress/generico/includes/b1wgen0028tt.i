@@ -142,7 +142,8 @@ DEF TEMP-TABLE tt-dados_cartao NO-UNDO
     FIELD dtrejeit LIKE crawcrd.dtrejeit
     FIELD nrcctitg LIKE crawcrd.nrcctitg
     FIELD dsdpagto AS CHAR
-    FIELD dsgraupr AS CHAR.
+    FIELD dsgraupr AS CHAR
+    FIELD nmempcrd LIKE crawcrd.nmempcrd.
     
 DEF TEMP-TABLE tt-hab_cartao NO-UNDO
     FIELD nrcpfcgc LIKE crapass.nrcpfcgc

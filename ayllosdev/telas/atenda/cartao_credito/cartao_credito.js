@@ -245,6 +245,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
         $("#btnextr").prop("disabled", false);
         $("#btnextr").css('cursor', 'pointer');
 
+        //BANCOOB
         if (cdadmcrd > 9 && cdadmcrd < 81) {
 
             $("#btnaltr").prop("disabled", true);
@@ -272,13 +273,13 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 
 			
             if ((cdadmcrd > 10 && cdadmcrd < 17) &&  (situacao == "EM USO" ) && (cdadmcrd != 16 && cdadmcrd != 17)){
-			//if ( true){
                 $("#btnalterarLimite").unbind('click').bind('click', function () { return false; });
 				$("#btnalterarLimite").removeAttr("situacao");
                 $("#btnalterarLimite").attr("nrcrcard", nrcrcard);
                 $("#btnalterarLimite").attr("cdAdmCartao", cdAdmCartao);
-            }  
-            else{
+            } else if((cdadmcrd == 16 || cdadmcrd == 17) && situacao == "EM USO") {
+                $("#btnalterarLimite").removeAttr("situacao");
+            } else {
                  //$("#btnalterarLimite").prop("disabled", true);
 				 $("#btnalterarLimite").unbind('click').bind('click', function () { alteraCartao(); });
 				 $("#btnalterarLimite").attr("situacao", "situacao");
@@ -1859,6 +1860,7 @@ function validarNovoCartao(cddopcao) {
 			var nrdoccrd = $("#nrdoccrd", "#frmNovoCartao").val(); //AjusteDoc
             var flgimpnp = "yes";
             var dsrepinc = $("#dsrepinc option:selected", "#frmNovoCartao").text();
+            $("#nmempres","#frmNovoCartao").val($("#nmempres","#frmNovoCartao").val().replace(/[^a-zA-Z ]/g,''));
             var nmempres = $("#nmempres", "#frmNovoCartao").val();
         }
 
@@ -7087,10 +7089,6 @@ function alterarEndereco() {
     if (nrctrcrd == 0) {
         showError("error", "N&atilde;o h&aacute; cart&atilde;o selecionado.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
-    }
-    if(cdadmcrd == 16 || cdadmcrd ==17){
-        showError("error", "N&atilde;o &eacute; permitido alterar endere&ccedil;o para o cart&atilde;o puro debito.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        return;
     }
     if($("#btnalterarLimite").attr("situacao") != undefined && $("#btnalterarLimite").attr("situacao") == "situacao"){
 		showError("error", "Altera&ccedil;&atilde;o de endere&ccedil;o permitida apenas para cart&otilde;es com a situa&ccedil;&atilde;o 'Em Uso'.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");

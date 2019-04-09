@@ -5515,7 +5515,8 @@ PROCEDURE consulta_dados_cartao:
            tt-dados_cartao.dtrejeit = crawcrd.dtrejeit
            tt-dados_cartao.nrcctitg = crawcrd.nrcctitg
            tt-dados_cartao.dsdpagto = aux_dsdpagto
-           tt-dados_cartao.dsgraupr = aux_dstitula.
+           tt-dados_cartao.dsgraupr = aux_dstitula
+           tt-dados_cartao.nmempcrd = crawcrd.nmempcrd.
            
     RUN proc_gerar_log (INPUT par_cdcooper,
                         INPUT par_cdoperad,

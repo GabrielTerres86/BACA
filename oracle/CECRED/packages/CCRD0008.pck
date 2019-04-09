@@ -1179,15 +1179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
 	  IF TRIM(rw_crawcrd.dsendenv) IS NOT NULL THEN
         vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := rw_crawcrd.dsendenv;       --Endereço de envio definido na criação da prosta
     ELSE
-        IF rw_crapenc.tpendass = 9 THEN
-            vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := 'Comercial';
-        ELSIF rw_crapenc.tpendass = 10 THEN
-            vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := 'Residencial';
-        END IF;
-        
-        vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega||': '||rw_crapenc.dsendere||
-                                                         ', '||rw_crapenc.nrendere||' - '||rw_crapenc.nmbairro||' - '||rw_crapenc.nmcidade||' - '||
-                                                         rw_crapenc.cdufende||' CEP: '||rw_crapenc.nrcepend;
+        vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := rw_crapcop.dsendcop || ', ' || rw_crapcop.nrendere || ' - ' || rw_crapcop.nmbairro || ' - ' || rw_crapcop.nmcidade || ' - ' || rw_crapcop.cdufdcop || ' - CEP: ' || rw_crapcop.nrcepend;
     END IF;
     
 	vr_tab_dados_ctr(vr_idxctr).dsnovotermo := rw_tbgen_versao_termo.dsnovotermo;
