@@ -120,3 +120,22 @@ BEGIN
     
   COMMIT;             
 END; 
+
+UPDATE CECRED.crapaca t
+   set t.lstparam = null
+ where t.nrseqrdr = (select R.NRSEQRDR from craprdr r where r.nmprogra = 'TELA_CONSIG')
+   and T.NMDEACAO = 'HABILITAR_EMPR_CONSIG';
+   
+
+UPDATE CECRED.crapaca t
+   set t.lstparam = null
+ where t.nrseqrdr = (select R.NRSEQRDR from craprdr r where r.nmprogra = 'TELA_CONSIG')
+   and T.NMDEACAO = 'ALTERAR_EMPR_CONSIG'; 
+   
+ delete crapaca t 
+ where t.nmdeacao IN('INC_ALT_VENC_PARCELA','EXCLUIR_VENC_PARCELA','REPLICAR_VENC_PARCELA')
+   and t.nrseqrdr in(select r.nrseqrdr
+                       from craprdr r 
+                      where r.nmprogra = 'TELA_CONSIG');     
+   
+COMMIT;    
