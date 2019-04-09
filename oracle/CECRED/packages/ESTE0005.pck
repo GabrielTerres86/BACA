@@ -100,7 +100,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       Sistema  : Rotinas de Cartões de Crédito/Débito que utilizam comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Paulo Roberto da Silva
-      Data     : Fevereiro/2018.                   Ultima atualizacao: 03/09/2018
+      Data     : Fevereiro/2018.                   Ultima atualizacao: 29/03/2019
 
       Dados referentes ao programa:
 
@@ -110,6 +110,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       Alteracoes: 03/09/2018 - P450 - Ajuste na tag causouPrejuizoCoop e criação da tag estaEmPrejuizoCoop
                                (Diego Simas/AMcom)
 
+                  29/03/2019 - Ajustar cr_limatu pois estava buscando na ordem errada
+                               na pc_incluir_proposta_est (Lucas Ranghetti PRB0040718)
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Cursor generico de calendario
@@ -6523,7 +6525,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Paulo Silva (Supero)
-      Data     : Maio/2018.                   Ultima atualizacao: 28/11/2018
+      Data     : Maio/2018.                   Ultima atualizacao: 29/03/2019
 
       Dados referentes ao programa:
 
@@ -6532,6 +6534,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       
       Alteração : 28/11/2018 - PJ345 Ajustado o nome do arquivo (Rafael Faria - Supero)
 
+                  29/03/2019 - Ajustar cr_limatu pois estava buscando na ordem errada
+                               (Lucas Ranghetti PRB0040718)
     ..........................................................................*/
 
     -----------> VARIAVEIS <-----------
@@ -6601,11 +6605,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
            AND a.nrdconta = pr_nrdconta
            AND a.tpsituacao = 6 --Em Análise
            AND a.insitdec IN (1,6)   -- Sem Aprovação, Refazer
-           AND NOT EXISTS (SELECT 1
-                             FROM tbcrd_limite_atualiza b
-                            WHERE b.cdcooper = a.cdcooper
-                              AND b.nrdconta = a.nrdconta
-                              AND b.idatualizacao > a.idatualizacao);
+           AND a.dtalteracao = (SELECT MAX(atu.dtalteracao)
+                                    FROM tbcrd_limite_atualiza atu
+                                   WHERE atu.cdcooper = a.cdcooper
+                                     AND atu.nrdconta = a.nrdconta
+                                     AND atu.nrconta_cartao = a.nrconta_cartao);
       rw_limatu cr_limatu%ROWTYPE;
 
   BEGIN
