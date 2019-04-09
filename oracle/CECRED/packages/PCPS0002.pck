@@ -1105,6 +1105,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     -- Objetivo  : Realizar a leitura do arquivo atualizando os registros de solicitação conforme situação.
     --
     -- Alteracoes: 
+    --             04/04/2019 - Ajustar regra de validação da modalidade da conta, pois estava invertida, reprovando 
+    --                          assim as solicitações para contas salário (Renato Darosci - SUPERO - INC0036168)
     --             
     ---------------------------------------------------------------------------------------------------------------
 
@@ -1316,7 +1318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         END IF;
         
         -- Verificar se o tipo de conta não permite transferencias - Se é conta salário
-        IF rg_crapass.cdmodali = 2 THEN
+        IF rg_crapass.cdmodali <> 2 THEN
           -- Deve marcar os registro como reprovado
           vr_idsituac := 3; -- Reprovada
           vr_dsdomrep := vr_dsmotivoreprv;
@@ -6200,7 +6202,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
         
         -- Carregar o conteúdo extraído do arquivo criptografado
         vr_dsarqLOB := PCPS0001.fn_arq_utf_para_clob(pr_caminho => pr_dsdirarq||'/recebidos'
-                                                ,pr_arquivo => vr_nmarqERR||'.xml');  -- XML extraído
+                                                    ,pr_arquivo => vr_nmarqERR||'.xml');  -- XML extraído
         
         -- Chama a rotina para processamento do arquivo de erro
         CASE pr_dsdsigla
@@ -6452,7 +6454,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
         
         -- Carregar o conteúdo extraído do arquivo criptografado
         vr_dsarqLOB := PCPS0001.fn_arq_utf_para_clob(pr_caminho => pr_dsdirarq||'/recebidos'
-                                                ,pr_arquivo => vr_nmarqRET||'.xml');  -- XML extraído
+                                                    ,pr_arquivo => vr_nmarqRET||'.xml');  -- XML extraído
         
         -- Chama a rotina para processamento do arquivo de erro
         CASE pr_dsdsigla
@@ -7125,7 +7127,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
       
       -- Carregar o arquivo XML descriptografado 
       vr_dsxmlarq := PCPS0001.fn_arq_utf_para_clob(pr_caminho => rg_crapscb.dsdirarq||'/recebidos'
-                                              ,pr_arquivo => vr_tbarquiv(vr_index)||'.xml');  -- XML extraído  
+                                              	  ,pr_arquivo => vr_tbarquiv(vr_index)||'.xml');  -- XML extraído  
       
       -- Verifica qual o conteúdo de arquivo deve ser gerado
       CASE rg_crapscb.dsdsigla
@@ -7430,7 +7432,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
             
             -- Próxima agência
             vr_cdagatual := vr_tbddados.NEXT(vr_cdagatual);
-
+            
             IF vr_cdagatual IS NULL THEN
               EXIT;
             END IF;

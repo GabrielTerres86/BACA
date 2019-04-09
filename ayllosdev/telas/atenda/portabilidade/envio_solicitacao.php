@@ -283,7 +283,7 @@
 	<a style="margin-top: 5px;" class="botao"           id="btImprimirTermo" href="#" onclick="imprimirTermoAdesao('<?php echo $dsrowid; ?>')">Imprimir Termo</a>
 	<?php } ?>
 
-	<?php if (in_array($cdsituacao, array(1,2,3,9))) { ?>
+	<?php if (in_array($cdsituacao, array(1,3,9)) || ($cdsituacao == 2 && trim($nrnu_portabilidade) != "")) { ?>
 	<a style="margin-top: 5px;" class="botao" id="btCancelar" href="#" onclick="controlaOperacao('E')">Cancelar Portabilidade</a>
 	<?php } else { ?>
 	<a style="margin-top: 5px;" class="botaoDesativado" id="btCancelar" href="#" onclick="return false;">Cancelar Portabilidade</a>
