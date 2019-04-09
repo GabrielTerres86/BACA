@@ -46,7 +46,7 @@
 	$vlprerpp = $_POST["vlprerpp"];
 	$cdprodut = $_POST["cdprodut"];	
 	$indebito = $_POST["indebito"];	
-	$dsfinali = $_POST["dsfinali"];	
+	$dsfinali = utf8_decode($_POST["dsfinali"]);	
 	$dtdebito = $_POST["dtprxdeb"];	
 
 	// Verifica se número da conta é um inteiro válido
