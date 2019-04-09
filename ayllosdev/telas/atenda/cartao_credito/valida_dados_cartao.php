@@ -99,6 +99,22 @@ $xmlResult = getDataXML($xmlSetCartao);
 // Cria objeto para classe de tratamento de XML
 $xmlObjCartao = getObjectXML($xmlResult);
 	
+$flgTitular = false;
+if ($nrctrcrd > 0 && $cdadmcrd > 0) {
+    $xml  = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+    $xml .= "   <cdadmcrd>".$cdadmcrd."</cdadmcrd>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+    $xmlResult = mensageria($xml, "ATENDA_CRD", "BUSCA_DADOS_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObject = getObjectXML($xmlResult);
+
+    $flgTitular = getByTagName($xmlObject->roottag->tags[0]->tags, "FLGTITULAR");
+}
+
 	// Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
     $msgErro = $xmlObjCartao->roottag->tags[0]->cdata;
@@ -222,11 +238,11 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 				
 			}
 
-			if ($inpessoa == 1) {
+			if ($inpessoa == 1 || !$flgTitular) {
                 echo "$('#dddebito').attr('disabled', true);";
             }
 
-			if ($nrctrcrd == 0) {
+			if (!$flgTitular) {
             echo "desativa('vllimpro');";
             echo "$('#tpdpagto').attr('disabled', true);";
 			}

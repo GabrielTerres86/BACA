@@ -4241,7 +4241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 			   AND d.nrdconta = pr_nrdconta
 				 AND d.cdadmcrd = pr_cdadmcrd
 				 AND d.insitcrd NOT IN (5,6) -- bloqueado,cancelado
-  	ORDER BY d.dtpropos DESC;
+  	ORDER BY d.dtpropos ASC;
 		rw_primeiro_cartao_ativo cr_primeiro_cartao_ativo%ROWTYPE;
 		
 		CURSOR cr_eh_titular(pr_cdcooper crawcrd.cdcooper%TYPE
