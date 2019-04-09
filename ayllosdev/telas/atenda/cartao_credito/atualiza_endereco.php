@@ -90,6 +90,6 @@ if (strtoupper($xmlDados->name) == 'ERRO') {
             echo "solicitaTipoSenha($nrctrcrd, 'novo');";
         }
     } else {
-        exibirErro("warn", "Endere&ccedil;o alterado com sucesso.","Alerta - Aimaro","alertarCooperado('up_down');voltarEndereco(".$tipoAcao.");",false);
+        exibirErro("warn", "Endere&ccedil;o alterado com sucesso.","Alerta - Aimaro","alertarCooperado(".$tipoAcao.");voltarEndereco(".$tipoAcao.");",false);
     }
 }

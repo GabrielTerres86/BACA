@@ -28,13 +28,13 @@
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"]) || 		
 		!isset($_POST["nrctrcrd"]) ||
-	    !isset($_POST['tipoMsg' ])) {
+	    !isset($_POST['tipoAcao' ])) {
 		exit();
 	}	
 
 	$nrdconta = $_POST["nrdconta"];	
 	$nrctrcrd = $_POST["nrctrcrd"];
-	$tipoMsg  = $_POST['tipoMsg' ];
+	$tipoAcao  = $_POST['tipoAcao' ];
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta) || !validaInteiro($nrctrcrd)) {
@@ -61,10 +61,10 @@
 
 	if (!empty($tipo_envio)) {
 
-		if ($tipoMsg == 'novo') {
+		if ($tipoAcao == 1) {
 		echo "showError(\"inform\", \"Aten&ccedil;&atilde;o: Oriente o cooperado que a carta senha e o cart&atilde;o ser&atilde;o encaminhados para o endere&ccedil;o escolhido<br>e o cart&atilde;o n&atilde;o estar&aacute; habilitado para utiliza&ccedil;&atilde;o no TA at&eacute; que seja cadastrada a senha de 6 d&iacute;gitos.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 
-		} else if ($tipoMsg == 'up_down') {
+		} else if ($tipoAcao == 2) {
 			echo "showError(\"inform\", \"Aten&ccedil;&atilde;o: O cart&atilde;o ser&aacute; encaminhado para endere&ccedil;o escolhido e o cart&atilde;o n&atilde;o estar&aacute;<br>habilitado para utiliza&ccedil;&atilde;o no TA at&eacute; que seja cadastrada a senha de 6 d&iacute;gitos.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 		
 		}

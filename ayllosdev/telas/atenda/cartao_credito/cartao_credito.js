@@ -6663,9 +6663,9 @@ function alterarBancoob(autorizado,inpessoa,tipo, contrato){
 
 }
 
-function alertarCooperado(tipoMsg) {
-    if (tipoMsg == undefined) {
-        tipoMsg = 'novo';
+function alertarCooperado(tipoAcao) {
+    if (tipoAcao == undefined) {
+        tipoAcao = cTipoAcao.NOVO_CARTAO;
     }
 
     // Carrega conteúdo da opção através de ajax
@@ -6676,7 +6676,7 @@ function alertarCooperado(tipoMsg) {
         data: {
             nrdconta: nrdconta,
             nrctrcrd: nrctrcrd,
-            tipoMsg : tipoMsg,
+            tipoAcao : tipoAcao,
             redirect: "html_ajax"
         },
         error: function (objAjax, responseError, objExcept) {

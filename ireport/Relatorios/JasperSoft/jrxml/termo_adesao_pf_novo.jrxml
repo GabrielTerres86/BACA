@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-04-02T08:54:06 -->
+<!-- 2019-04-09T15:04:25 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_adesao_pfjrxml" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenResourceMissingType="Empty" uuid="32817cf7-217d-4d56-9fe9-f759e1107bf2">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<queryString language="xPath">
@@ -172,7 +172,7 @@
 		<band splitType="Stretch"/>
 	</background>
 	<detail>
-		<band height="337" splitType="Stretch">
+		<band height="352" splitType="Stretch">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<rectangle>
 				<reportElement x="0" y="11" width="550" height="46" backcolor="#EEECE1" uuid="13a4f2e2-6300-4696-91fd-e6489294398c"/>
@@ -519,7 +519,9 @@
 				<text><![CDATA[4.1 Nome a ser impresso no cartão:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="322" width="550" height="15" uuid="0670ae1d-1193-4f1a-a080-034a65cdcaf1"/>
+				<reportElement x="0" y="322" width="550" height="30" uuid="0670ae1d-1193-4f1a-a080-034a65cdcaf1">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
 				<box leftPadding="2">
 					<leftPen lineWidth="0.5"/>
 					<rightPen lineWidth="0.5"/>
@@ -539,7 +541,9 @@
 				<textFieldExpression><![CDATA["1.1 "+$F{nmextcopcop}+", sociedade cooperativa de crédito, inscrita no CNPJ sob o nº "+$F{nrdocnpjcop}+", estabelecida na Rua "+$F{dsendcopcop}+", CEP "+ $F{nrcependcop}+", cidade de " +$F{nmcidadecop}+"."]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="115" y="322" width="434" height="15" uuid="c091740b-9d53-4701-86de-792c93787984"/>
+				<reportElement x="115" y="322" width="434" height="30" uuid="c091740b-9d53-4701-86de-792c93787984">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
 				<box leftPadding="1">
 					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
