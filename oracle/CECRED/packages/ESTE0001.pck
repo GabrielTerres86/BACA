@@ -290,10 +290,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                        - pc_gera_json_proposta
                                        - pc_efetivar_proposta_est  
                                        
-                 05/04/2019 - P437 - Consigando - Josiane Stiehler (AMcom)
-                                     Altera o campo INAVERBA da tabela CRWEPR quando perder aprovação da proposta
-                                      - pc_incluir_proposta_est
-                                      - pc_alterar_proposta_est
+                  05/04/2019 - P437 - Consigando - Josiane Stiehler (AMcom)
+                                      Altera o campo INAVERBA da tabela CRWEPR quando perder aprovação da proposta
+                                       - pc_incluir_proposta_est
+                                       - pc_alterar_proposta_est
   ---------------------------------------------------------------------------------------------------------------*/
   --> Funcao para formatar o numero em decimal conforme padrao da IBRATAN
   FUNCTION fn_decimal_ibra (pr_numero IN number) RETURN NUMBER IS --RETURN VARCHAR2 is
@@ -1402,8 +1402,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                   26/07/2018 - Correção para quando a quantidade de meses do histórico de empréstimo for nula receber zero 
 							   PJ 450 - Diego Simas (AMcom) (Fluxo Atraso)							   
 
-                 05/04/2019 - P437 - Consignado - Enviar para Análise de Crédito (Esteira) a proposta de Consignado.
-                              (Fernanda Kelli de Oliveira - AMcom)           
+                  05/04/2019 - P437 - Consignado - Enviar para Análise de Crédito (Esteira) a proposta de Consignado.
+                               (Fernanda Kelli de Oliveira - AMcom)           
     ..........................................................................*/
     -----------> CURSORES <-----------
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
@@ -1708,8 +1708,11 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                                       pr_cdacesso => 'COOPER_CONSIGNADO');
 
     IF rw_crawepr.cdfinemp = 57 AND vr_cooper_consignado = 'S' THEN
-      vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    ,9);
-      vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'Consignado');
+      /*vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    ,9);
+      vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'Consignado');*/
+      --P437 - Mesmo sendo uma Proposta Consignado, passar pela Esteira como 1 - CDC Veiculos
+      vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    ,1); -- CDC Veiculos
+      vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'CDC Veiculos');
     -- Se for CDC e diversos
     ELSIF rw_crawepr.cdfinemp = 58 AND rw_crawepr.inlcrcdc = 1 THEN
       vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    ,0); -- CDC Diversos
@@ -4333,7 +4336,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                                       pr_cdacesso => 'COOPER_CONSIGNADO');
 
     IF rw_crawepr.cdfinemp = 57 AND vr_cooper_consignado = 'S'THEN
-      vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 9);
+      --vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 9);
+      vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 1); /*P437*/
     ELSIF rw_crawepr.cdfinemp = 58 and rw_crawepr.inlcrcdc = 1 THEN
       vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 0);
     ELSIF rw_crawepr.cdfinemp = 59 and rw_crawepr.inlcrcdc = 1 THEN
