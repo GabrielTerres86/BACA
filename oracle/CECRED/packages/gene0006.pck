@@ -1733,7 +1733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
               
             -- 20 = Recarga de Celular
             WHEN pr_protocolo(vr_index).cdtippro = 20 THEN
-              pr_protocolo(vr_index).idlstdom := 1;
+              pr_protocolo(vr_index).idlstdom := 20; -- 285.2 - Card #766
               
             -- 10 = Aplicação Pre/Pos
             WHEN pr_protocolo(vr_index).cdtippro = 10 THEN
@@ -2598,7 +2598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                 
           -- 20 = Recarga de Celular
           WHEN pr_protocolo(vr_index).cdtippro = 20 THEN
-            pr_protocolo(vr_index).idlstdom := 1;
+            pr_protocolo(vr_index).idlstdom := 20; -- 285.2 - Card #766
                 
           -- 10 = Aplicação Pre/Pos
           WHEN pr_protocolo(vr_index).cdtippro = 10 THEN

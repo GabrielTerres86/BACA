@@ -10,7 +10,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_retorna_mensagem_preposto(pr_cdcooper IN c
                                                                 pr_idseqttl IN crapsnh.idseqttl%TYPE,
                                                                 xml_operador OUT VARCHAR2) IS
     CURSOR cr_operad_aprov(pr_cdcooper crapass.cdcooper%TYPE,
-                           pr_nrdconta crapass.nrdconta%TYPE) IS
+                           pr_nrdconta crapass.nrdconta%TYPE
+						   --,pr_nrcpfpre crapass.nrcpfcgc%TYPE  --INC0030735
+						   ) IS
         SELECT t.nrcpf_operador
         FROM TBCC_OPERAD_APROV t
         WHERE t.cdcooper = pr_cdcooper AND
@@ -41,14 +43,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_retorna_mensagem_preposto(pr_cdcooper IN c
         rw_crapsnh cr_crapsnh%ROWTYPE;
 
     vr_desclob CLOB;
-    vr_nrcpfpre INTEGER;
+    -- vr_nrcpfpre INTEGER; --INC0030735
 
     BEGIN
 
         vr_desclob := '<OPERADORES>';
         
         /*
-          INC0030735
+          --INC0030735
         --OPEN cr_crapsnh(pr_cdcooper, pr_nrdconta , pr_idseqttl);
         --FETCH cr_crapsnh INTO rw_crapsnh;
         --CLOSE cr_crapsnh;
@@ -57,7 +59,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_retorna_mensagem_preposto(pr_cdcooper IN c
         */
 
         FOR rw_operad_aprov IN cr_operad_aprov (pr_cdcooper => pr_cdcooper,
-                                                pr_nrdconta => pr_nrdconta) LOOP
+                                                pr_nrdconta => pr_nrdconta
+												--, pr_nrcpfpre => vr_nrcpfpre --INC0030735
+												) LOOP
 
             FOR rw_crapopi IN cr_crapopi(pr_cdcooper => pr_cdcooper,
                                          pr_nrdconta => pr_nrdconta,

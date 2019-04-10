@@ -12909,16 +12909,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           vr_dshistor := 'RDC' || to_char(rw_craprda.qtdiauti,'fm0000');
           vr_dsaplica := rw_crapdtc.dsaplica;
 
-          IF UPPER(pr_cdprogra) = 'ATENDA' THEN
+          /* P.285 - Card #367 */
+
+          IF UPPER(pr_cdprogra) = 'ATENDA' OR pr_nrorigem = 3 THEN
             -- Abre o cursor que contem a descricao dos varios tipos de captacao oferecidas para o cooperado.
             OPEN cr_crapdtc_2(rw_craprda.tpnomapl);
-            FETCH cr_crapdtc_2 INTO rw_crapdtc_2;
+            FETCH cr_crapdtc_2 
+            INTO rw_crapdtc_2;
 
             IF cr_crapdtc_2%FOUND THEN
-              vr_dshistor := rw_crapdtc_2.dsaplica;
+              IF UPPER(pr_cdprogra) = 'ATENDA' THEN
+                vr_dshistor := rw_crapdtc_2.dsaplica;
+              ELSE
+                vr_dshistor := rw_crapdtc_2.dsaplica || ' - ' || vr_dshistor;
+              END IF;
             END IF;
+  
             CLOSE cr_crapdtc_2;
           END IF;
+          
+          /** P.285 - Card #367 **/
+
         ELSE
           vr_dshistor := rpad(substr(rw_crapdtc.dsaplica,1,7),7,' ');
           vr_dsaplica := substr(rw_crapdtc.dsaplica,1,6);
