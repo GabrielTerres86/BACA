@@ -26,7 +26,6 @@
     $nrctrcrd = $_POST['nrctrcrd'];
     $tpacao   = $_POST['tpacao'];
 	$esteira  = $_POST['esteira'];
-	$cdadmcrd = $_POST['cdadmcrd'];
 ?>
 
 

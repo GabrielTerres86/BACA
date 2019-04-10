@@ -6,7 +6,7 @@
  * DATA CRIAÇÃO : Setembro/2018
  * OBJETIVO     : Alterar as propostas de cartão de crédito
  * --------------
- * ALTERAÇÕES   : 18/03/2019 - PJ429 - Implementado tipo de envio do cartão - Anderson-Alan (Supero)
+ * ALTERAÇÕES   : 
  * --------------
  *
  *
@@ -80,6 +80,7 @@ $nrctrcrd = getByTagName($dados,"NRCTRCRD");
 $dscartao = getByTagName($dados,"DSCARTAO");
 $nmextttl = getByTagName($dados,"NMEXTTTL");
 $nmtitcrd = getByTagName($dados,"NMTITCRD");
+$nmempcrd = getByTagName($dados,"nmempcrd");
 $nrcpftit = getByTagName($dados,"NRCPFTIT");
 $nmempttl = getByTagName($dados,"nmempttl");
 $nrcnpjtl = getByTagName($dados,"nrcnpjtl");
@@ -129,20 +130,65 @@ if (getByTagName($dados,"DDDEBANT") == 0){
     $dddebant = getByTagName($dados,"DDDEBANT");
 }
 
+$desabilitaOpcoesDebito = "";
+// DEBITO PF OU DEBITO PJ
+if ($cdadmcrd == 16 || $cdadmcrd == 17) {
+    $desabilitaOpcoesDebito = "disabled";
+}
 
-// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
-$xml = "<Root>";
+
+
+$xml  = "<Root>";
 $xml .= " <Dados>";
+$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xml .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+$xml .= "   <cdadmcrd>".$cdadmcrd."</cdadmcrd>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
+$xmlResult = mensageria($xml, "ATENDA_CRD", "BUSCA_DADOS_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObject = getObjectXML($xmlResult);
 
-$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-$xmlObjeto = getObjectXML($xmlResult);
+$flgTitular = getByTagName($xmlObject->roottag->tags[0]->tags, "FLGTITULAR");
 
-$coop_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
-$pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
+if ($flgTitular && empty($desabilitaOpcoesDebito)) {
+    $xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+    $xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
 
+    $contingenciaIbra = trim($objXml->Dados->sugestoes->sugestao->contingencia_ibra);
+	$contingenciaMoto = trim($objXml->Dados->sugestoes->sugestao->contingencia_mot);
+
+	if(($contingenciaMoto!="") || ($contingenciaIbra!="")){
+		$msgconti = "";
+		if(strlen($contingenciaIbra) > 0){
+			$msgconti .="$contingenciaIbra";
+		}
+		if(strlen($contingenciaMoto) > 0){
+			$msgconti .= (strlen($msgconti) >0)? "<br> $contingenciaMoto":"$contingenciaMoto";
+		}
+		$contigenciaAtiva = true;
+		echo"<script>showError('inform', '".utf8ToHtml($msgconti)."', 'Alerta - Aimaro', ''); globalesteira = true; </script>";
+	}
+    $json_sugestoes = json_decode($xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[0]->cdata, true);
+    $sugestoes = $json_sugestoes["indicadoresGeradosRegra"]["sugestaoCartaoCecred"];
+    $idacionamento = $json_sugestoes['protocolo'];
+    $valorSugerido = 0;
+    foreach($sugestoes as $sugestao) {
+        if ($sugestao["codigoCategoria"] == $cdadmcrd) {
+            $valorSugerido = $sugestao["vlLimite"];
+        }
+    }
+    if ($valorSugerido == 0) {
+        echo "<script>globalesteira = true;</script>";
+    }
+    echo '<script>protocolo = "'.$idacionamento.'";</script>';
+
+}
 ?>
 
 <form action="" name="frmNovoCartao" id="frmNovoCartao" method="post" onSubmit="return false;">
@@ -197,7 +243,7 @@ $pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
                     <br />
                     <div id="empresa">
                         <label for="nmempres"><?php echo utf8ToHtml('Empresa do Plástico:') ?></label>
-                        <input type="text" name="nmempres" id="nmempres" class="campo" value="<?php echo $nmtitcrd; ?>" />
+                        <input type="text" name="nmempres" id="nmempres" class="campo" value="<?php echo $nmempcrd; ?>" />
                     </div>
                     <hr style="background-color:#666; height:1px; width:480px;" id="hr2"/>
                     <br style="clear:both;" />
@@ -213,7 +259,8 @@ $pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
 						<option value="GOLD">GOLD</option>
                     </select>
                     <label for="dddebito"><?php echo utf8ToHtml('Dia Débito:') ?></label>
-                    <select name="dddebito" id="dddebito" class="campo">
+                    <select <?=$desabilitaOpcoesDebito?> name="dddebito" id="dddebito" class="campo">
+                        <? if(empty($dddebito)) { echo "<option value=''></option>"; } ?>
 						<option value="03">03</option>
 						<option value="07">07</option>
 						<option value="11">11</option>
@@ -232,10 +279,11 @@ $pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
                     <input type="text" name="vlalugue" id="vlalugue" class="campo" value="0,00" />
                     <br />
                     <label for="vllimpro"><?php echo utf8ToHtml('Limite Proposto:') ?></label>
-                    <input  class='campo' id='vllimpro' name='vllimpro' value="<?php echo $vllimite; ?>">
+                    <input <?=((!$flgTitular || $desabilitaOpcoesDebito) ? 'disabled' : '')?> onblur="validaLimite()" class='campo' id='vllimpro' name='vllimpro' value="<?php echo $vllimite; ?>">
+                    <input type="hidden" id="vllimmot" value="<?=$valorSugerido?>" />
 
                     <label for="flgdebit"><?php echo utf8ToHtml('Habilita função débito:') ?></label>
-                    <input type="checkbox" <?=$flgdebit?> name="flgdebit" id="flgdebit" class="campo" dtb="1" disabled />
+                    <input type="checkbox" <?=$flgdebit?> name="flgdebit" id="flgdebit" class="campo" dtb="1" onclick='confirmaPurocredito();' disabled />
                     <br />
                     <label for="flgimpnp"><?php echo utf8ToHtml('Promissória:') ?></label>
                     <select name="flgimpnp" id="flgimpnp" class="campo">
@@ -245,7 +293,7 @@ $pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
                     <input type="text" name="vllimdeb" id="vllimdeb" class="campo" disabled value="0,00" />
                     <br />
                     <label for="tpdpagto"><?php echo utf8ToHtml('Forma de Pagamento:') ?></label>
-                    <select class='campo' id='tpdpagto' name='tpdpagto'>
+                    <select <?=$desabilitaOpcoesDebito?> class='campo' id='tpdpagto' name='tpdpagto'>
                         <option value='0' selected> </option>
                         <option value='2'>Debito CC Minimo</option>
                         <option value='1'selected>Debito CC Total</option>
@@ -258,10 +306,10 @@ $pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
                     </select>
                     <br />
                 </fieldset>
-                <div id="divBotoes">
+                <div id="divBotoes" >
 				
                     <input class="btnVoltar" id="backChoose" type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(0, 1, 4); return false;" />
-                    <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao('A'); return false;" />
+                    <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao('M'); return false;" />
 
                 
 					<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
@@ -316,12 +364,15 @@ $pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
 
     $(".di").attr("disabled",true);
     $(".di").css({opacity: 0.7});
-    $("#vllimpro").setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");
+    $("#vllimpro", "#divDadosNovoCartao").setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");
+    $("#dtnasccr", "#divDadosNovoCartao").setMask("DATE","","","divRotina");
+    $("#nrcpfcgc", "#divDadosNovoCartao").setMask("INTEGER","999.999.999-99","","");
 
     // Popula os valores nos campos
     buscaDados('<?echo $cdtipcta;?>','<?echo formataNumericos("999.999.999-99",$nrcpfstl,".-");?>','<?echo $inpessoa;?>','<?echo $dtnasstl ;?>','<?echo str_replace('\'','',$nrdocstl);?>','<?echo str_replace('\'','',$nmconjug); ?>','<?echo $dtnasccj ;?>','<?echo str_replace('\'','',$nmtitcrd); ?>','<?echo formataNumericos("999.999.999-99",$nrcpfcgc,".-");?>','<?echo $dtnasctl;?>','<?echo str_replace('\'','',$nrdoccrd); ?>','<?echo number_format(str_replace(",",".",$vlsalari),2,",","."); ?>','<?echo str_replace('\'','',$nmsegntl);?>');
     carregaRepresentantes();
 
+    validaLimite();
     hideMsgAguardo();
     bloqueiaFundo(divRotina);
 </script>

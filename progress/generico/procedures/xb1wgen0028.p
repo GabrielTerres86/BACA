@@ -3603,7 +3603,8 @@ PROCEDURE altera_administradora:
                                       INPUT aux_nrcrcard,
                                       INPUT aux_codaadmi,
                                       INPUT aux_codnadmi,
-                                     OUTPUT TABLE tt-erro).
+                                     OUTPUT TABLE tt-erro,
+                                     OUTPUT aux_nrctrcrd).
                                             
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
@@ -3621,10 +3622,9 @@ PROCEDURE altera_administradora:
         END.
     ELSE
         DO:
-            CREATE tt-erro.
-            ASSIGN tt-erro.dscritic = "Alteracao efetuada com sucesso.". 
-            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
-                            INPUT "Dados"). 
+            RUN piXmlNew.
+            RUN piXmlAtributo (INPUT "nrctrcrd",INPUT STRING(aux_nrctrcrd)).
+            RUN piXmlSave.
         END.
 
         

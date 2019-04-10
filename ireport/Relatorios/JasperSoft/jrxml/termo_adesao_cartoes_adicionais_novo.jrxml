@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2019-02-18T18:53:06 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_adesao_pj_portadores" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="0" bottomMargin="0" uuid="f3537448-8e47-42f8-a810-23d411b3df92">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+	<queryString language="XPath">
+		<![CDATA[/raiz/cartoes/cartao]]>
+	</queryString>
+	<field name="nomeCompleto" class="java.lang.String">
+		<fieldDescription><![CDATA[nomeCompleto]]></fieldDescription>
+	</field>
+	<field name="nomeImpresso" class="java.lang.String">
+		<fieldDescription><![CDATA[nomeImpresso]]></fieldDescription>
+	</field>
+	<field name="cpf" class="java.lang.String">
+		<fieldDescription><![CDATA[cpf]]></fieldDescription>
+	</field>
+	<field name="dataNascimento" class="java.lang.String">
+		<fieldDescription><![CDATA[dataNascimento]]></fieldDescription>
+	</field>
+	<field name="identidade" class="java.lang.String">
+		<fieldDescription><![CDATA[identidade]]></fieldDescription>
+	</field>
+	<field name="tagCont" class="java.lang.String">
+		<fieldDescription><![CDATA[tagCont]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="50" splitType="Stretch">
+			<textField>
+				<reportElement x="-20" y="0" width="550" height="35" uuid="e276cbd6-62c7-4456-9f3d-3f6571534937">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box topPadding="0" leftPadding="1">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<paragraph lineSpacingSize="1.0"/>
+				</textElement>
+				<textFieldExpression><![CDATA["5."+$F{tagCont}+".1 Nome completo: "+$F{nomeCompleto} +", nascido em "+$F{dataNascimento}+", inscrito(a) no CPF sob nº "+$F{cpf}+", portador do RG Nº "+$F{identidade}+"."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="-20" y="35" width="550" height="15" uuid="7b9c415c-9cfb-45b3-9bf7-e1d4e3f9c264">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="1">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["5."+$F{tagCont}+".2 Nome a ser Impresso no cartão: "+ $F{nomeImpresso}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

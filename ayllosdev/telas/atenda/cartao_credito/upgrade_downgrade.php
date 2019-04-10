@@ -1,11 +1,11 @@
 <?php
 /*!
  * FONTE        : upgrade_downgrade.php
- * CRIAÇÃO      : Jean Michel
- * DATA CRIAÇÃO : Abril/2014
- * OBJETIVO     : Mostrar opção de troca de Administradoras de cartões da tela ATENDA
+ * CRIAï¿½ï¿½O      : Jean Michel
+ * DATA CRIAï¿½ï¿½O : Abril/2014
+ * OBJETIVO     : Mostrar opï¿½ï¿½o de troca de Administradoras de cartï¿½es da tela ATENDA
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAï¿½ï¿½ES   :
  * --------------
  * 000:
  */
@@ -19,15 +19,15 @@
 	
 	$funcaoAposErro = 'bloqueiaFundo(divRotina);';
 	
-	// Verifica permissão
+	// Verifica permissï¿½o
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"D")) <> "") {
 		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);	
 	}			
 	
-	// Verifica se o número do cartao foi informado
+	// Verifica se o nï¿½mero do cartao foi informado
 	if (!isset($_POST["nrcrcard"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);	
 	
-	// Verifica se o número da conta foi informado
+	// Verifica se o nï¿½mero da conta foi informado
 	if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);	
 
 	$nrdconta = $_POST["nrdconta"];
@@ -38,10 +38,10 @@
 
 	
 		
-	// Verifica se o número do cartao é um inteiro válido
+	// Verifica se o nï¿½mero do cartao ï¿½ um inteiro vï¿½lido
 	if (!validaInteiro($nrcrcard)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	
-	// Verifica se o número da conta é um inteiro válido
+	// Verifica se o nï¿½mero da conta ï¿½ um inteiro vï¿½lido
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	
 
@@ -70,7 +70,7 @@
 		//Cria objeto para classe de tratamento de XML
 		$xmlObjNovoCartao = getObjectXML($xmlResult);
 		
-		// Se ocorrer um erro, mostra crítica
+		// Se ocorrer um erro, mostra crï¿½tica
 		if (strtoupper($xmlObjNovoCartao->roottag->tags[0]->name) == "ERRO") {
 			exibeErro($xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		}
@@ -90,7 +90,7 @@
 		$procXML = simplexml_load_string($admresult);
 		
 		$titular = $procXML->Dados->contas->conta->titular;
-		//echo "/* \n É titular: $titular \n */ ";
+		//echo "/* \n ï¿½ titular: $titular \n */ ";
 		if($titular == 'S')
 			return true;
 		else
@@ -99,7 +99,7 @@
 }
 	
 	
-	// Monta o xml de requisição
+	// Monta o xml de requisiï¿½ï¿½o
 	$xmlGetCartao  = "";
 	$xmlGetCartao .= "<Root>";
 	$xmlGetCartao .= "	<Cabecalho>";
@@ -125,7 +125,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjCartao = getObjectXML($xmlResult);
 
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crï¿½tica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro);	
 	}else{
@@ -183,8 +183,8 @@
 			</table>
 			
 			<div id="divBotoes" >
-				<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(0,1,4);return false;">
-				<input type="image" id="btSalvar" src="<?echo $UrlImagens; ?>botoes/concluir.gif" onClick="validarUpDown(<? echo $nrctrcrd;?>);return false;">
+				<input type="button" class="botao" id="btVoltar" onclick="voltaDiv(0,1,4);return false;" value="Voltar"/>
+				<input type="button" class="botao" id="btSalvar" onclick="validarUpDown(<? echo $nrctrcrd;?>);return false;" value="Prosseguir"/>
 			</div>
 		</fieldset>
 	</div>
@@ -200,7 +200,7 @@ justificativa[0] = {
 };
 //downgrade
 justificativa[1] = {
-		'<?php echo ("Nao possui interesse nos benefícios do produto."); ?>':"<?php echo ("Nao possui interesse nos benefícios do produto."); ?>",
+		'<?php echo ("Nao possui interesse nos benefï¿½cios do produto."); ?>':"<?php echo ("Nao possui interesse nos benefï¿½cios do produto."); ?>",
 		'<?php echo ("Valor da anuidade."); ?>':"<?php echo ("Valor da anuidade."); ?>",
 		'<?php echo ("Atualizacao de renda."); ?>':"<?php echo ("Atualizacao de renda."); ?>"	
 };
@@ -224,9 +224,9 @@ function populaSelect(id, dataset){
     }
 }
 populaSelect("dsjustificativa",undefined);
-// Mostra o div da Tela da opção
+// Mostra o div da Tela da opï¿½ï¿½o
 $("#divOpcoesDaOpcao1").css("display","block");
-// Esconde os cartões
+// Esconde os cartï¿½es
 $("#divConteudoCartoes").css("display","none");
 
 $("#dsadmatu").prop("disabled",true);
@@ -234,6 +234,6 @@ $("#dsadmatu").prop("disabled",true);
 // Esconde mensagem de aguardo
 hideMsgAguardo();
 
-// Bloqueia conteúdo que esta átras do div da rotina
+// Bloqueia conteï¿½do que esta ï¿½tras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
 </script>

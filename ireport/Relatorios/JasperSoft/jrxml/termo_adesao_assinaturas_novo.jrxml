@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2019-02-26T20:35:21 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_adesao_pj_assinaturas" language="groovy" pageWidth="595" pageHeight="842" columnWidth="575" leftMargin="0" rightMargin="20" topMargin="0" bottomMargin="0" uuid="892da295-c436-4a4e-b387-45c2fcf22a8f">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<queryString language="xPath">
+		<![CDATA[/raiz/assinaturas/assinatura]]>
+	</queryString>
+	<field name="nomeAprovacao" class="java.lang.String">
+		<fieldDescription><![CDATA[nomeAprovacao]]></fieldDescription>
+	</field>
+	<field name="dataAprovacao" class="java.lang.String">
+		<fieldDescription><![CDATA[dataAprovacao]]></fieldDescription>
+	</field>
+	<field name="horaAssinatura" class="java.lang.String">
+		<fieldDescription><![CDATA[horaAssinatura]]></fieldDescription>
+	</field>
+	<field name="txtassinatura" class="java.lang.String">
+		<fieldDescription><![CDATA[txtassinatura]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="30" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="550" height="30" uuid="e44e91fc-2152-4ef6-81d0-74db8ec0b1ac">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="3">
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{txtassinatura}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

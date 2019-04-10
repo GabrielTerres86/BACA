@@ -34,14 +34,29 @@
 	$codaadmi        = $_POST["codaadmi"];
 	$codnadmi        = $_POST["codnadmi"];
 	$nrcrcard        = $_POST["nrcrcard"];
+	$nrctrcrd_updown = $_POST["nrctrcrd_updown"];
+	$contrato        = $_POST["contrato"];
 	$dsjustificativa = $_POST['dsjustificativa'];
+    $piloto 		 = $_POST['piloto'];
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	if (!validaInteiro($codaadmi)) exibirErro('error','Antiga administradora inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	if (!validaInteiro($codnadmi)) exibirErro('error','Nova administradora inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	if (!validaInteiro($nrcrcard)) exibirErro('error','Cart&atilde; inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
+
+	// Monta o xml de requisição
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	$coop_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
 	
-	
+
     // Monta o xml de requisição
 	$xmlSetCartao  = "";
 	$xmlSetCartao .= "<Root>";
@@ -72,21 +87,26 @@
 		
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
-		echo "error = true;";
 		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata.".",'Alerta - Aimaro',$funcaoAposErro,false);	
-	}else{
-		$dsmensag = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		//echo 'showError("inform","'.$dsmensag.'","Alerta - Ayllos","voltaDiv(0,1,4); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
 	}
-	
-	// Procura indice da opcao "@" - Principal
-	$idPrincipal = array_search("@",$glbvars["opcoesTela"]);
-	
-	// Se o indice da opcao "@" foi encontrado - Carrega o principal novamente.
-	/*if (!($idPrincipal === false)) {
-		echo 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).','.$idPrincipal.',"'.$glbvars["opcoesTela"][$idPrincipal].'");';
-	}	else {
-		echo 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,"'.$glbvars["opcoesTela"][0].'");';
-	}*/
+
+	$nrctrcrd = 0;
+	if (!empty($xmlObjCartao->roottag->tags[0]->attributes["NRCTRCRD"])) {
+		$nrctrcrd = $xmlObjCartao->roottag->tags[0]->attributes["NRCTRCRD"];
+	}
+	if ($nrctrcrd <= 0) {
+		showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
+	}
+
+	//CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
+	if ($piloto == 1) {
+		echo "atualizaUpgradeDowngrade(".$contrato.", ".$nrctrcrd.");";
+	} else {
+		if ($coop_envia_cartao) {
+			echo "nrctrcrd = " . $nrctrcrd . "; nrctrcrd_updown = ".$nrctrcrd_updown."; consultaEnderecos(2);";
+		} else {
+			showError("inform","Operacao realizada com sucesso.","Alerta - Aimaro","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
+		}
+	}
 	
 ?>
