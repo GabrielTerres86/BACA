@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 29/01/2019
+ * FONTE        : emprestimos.js                            Última alteração: 09/04/2019
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -150,6 +150,7 @@
 * 120: [31/10/2018] Criacao de alteraNumeroContrato para iniciar a mesma funcao em alterar.php do botão alterar numero de proposta - PRJ - 438 - Bruno Luiz k - Mout's
 * 121: [31/10/2018] Criada função alteraProposta para abrir diretamente o fluxo para alterar a proposta, removendo a tela de opções de alteração - PRJ - 438 (Mateus Z - Mouts)
 * 122: [07/03/2019] Permite inclusao / cadastro de avalista via CRM - Chamado INC0033825 (Gabriel Marcos / Jefferson / Mouts).
+* 123: [09/04/2019] Ajustar maiscula/minuscula no processo (Christian - Envolti).
  
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
@@ -5192,13 +5193,13 @@ function attArray(novaOp, cdcooper) {
         arrayIntervs[atual]['cdnacion'] = $('#cdnacion', '#frmIntevAnuente').val();
         arrayIntervs[atual]['dsnacion'] = $('#dsnacion', '#frmIntevAnuente').val();
         arrayIntervs[atual]['tpdocava'] = $('#tpdocava', '#frmIntevAnuente').val();
-        arrayIntervs[atual]['nmconjug'] = $('#nmconjug', '#frmIntevAnuente').val().toUpperCase();
+        arrayIntervs[atual]['nmconjug'] = $('#nmconjug', '#frmIntevAnuente').val().toUpperCase(); 
         arrayIntervs[atual]['tpdoccjg'] = $('#tpdoccjg', '#frmIntevAnuente').val();
         arrayIntervs[atual]['dsendre1'] = $('#dsendre1', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrfonres'] = $('#nrfonres', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nmcidade'] = $('#nmcidade', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrcepend'] = $('#nrcepend', '#frmIntevAnuente').val();
-        arrayIntervs[atual]['nmdavali'] = $('#nmdavali', '#frmIntevAnuente').val().toUpperCase();
+        arrayIntervs[atual]['nmdavali'] = $('#nmdavali', '#frmIntevAnuente').val().toUpperCase(); 
         arrayIntervs[atual]['nrcpfcgc'] = $('#nrcpfcgc', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrdocava'] = $('#nrdocava', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrcpfcjg'] = $('#nrcpfcjg', '#frmIntevAnuente').val();
@@ -6139,13 +6140,13 @@ function insereIntervente(operacao, opContinua) {
     eval('arrayInterv' + i + '["cdnacion"] = $("#cdnacion","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["dsnacion"] = $("#dsnacion","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["tpdocava"] = $("#tpdocava","#frmIntevAnuente").val();');
-    eval('arrayInterv' + i + '["nmconjug"] = $("#nmconjug","#frmIntevAnuente").val();');
+    eval('arrayInterv' + i + '["nmconjug"] = $("#nmconjug","#frmIntevAnuente").val().toUpperCase();');
     eval('arrayInterv' + i + '["tpdoccjg"] = $("#tpdoccjg","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["dsendre1"] = $("#dsendre1","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["nrfonres"] = $("#nrfonres","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["nmcidade"] = $("#nmcidade","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["nrcepend"] = $("#nrcepend","#frmIntevAnuente").val();');
-    eval('arrayInterv' + i + '["nmdavali"] = $("#nmdavali","#frmIntevAnuente").val();');
+    eval('arrayInterv' + i + '["nmdavali"] = $("#nmdavali","#frmIntevAnuente").val().toUpperCase();');
     eval('arrayInterv' + i + '["nrcpfcgc"] = $("#nrcpfcgc","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["nrdocava"] = $("#nrdocava","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["nrcpfcjg"] = $("#nrcpfcjg","#frmIntevAnuente").val();');
@@ -6637,13 +6638,13 @@ function validaDadosInterv() {
     var nrctaava = normalizaNumero($("#nrctaava", "#frmIntevAnuente").val());
     var cdnacion = $("#cdnacion", "#frmIntevAnuente").val();
     var tpdocava = $("#tpdocava", "#frmIntevAnuente").val();
-    var nmconjug = $("#nmconjug", "#frmIntevAnuente").val();
+    var nmconjug = $("#nmconjug", "#frmIntevAnuente").val().toUpperCase();
     var tpdoccjg = $("#tpdoccjg", "#frmIntevAnuente").val();
     var dsendre1 = $("#dsendre1", "#frmIntevAnuente").val();
     var nrfonres = $("#nrfonres", "#frmIntevAnuente").val();
     var nmcidade = $("#nmcidade", "#frmIntevAnuente").val();
     var nrcepend = normalizaNumero($("#nrcepend", "#frmIntevAnuente").val());
-    var nmdavali = $("#nmdavali", "#frmIntevAnuente").val();
+    var nmdavali = $("#nmdavali", "#frmIntevAnuente").val().toUpperCase();
     var nrcpfcgc = normalizaNumero($("#nrcpfcgc", "#frmIntevAnuente").val());
     var nrdocava = $("#nrdocava", "#frmIntevAnuente").val();
     var nrcpfcjg = normalizaNumero($("#nrcpfcjg", "#frmIntevAnuente").val());

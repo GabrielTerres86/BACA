@@ -3439,7 +3439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Guilherme/SUPERO
-     Data    : Agosto/2013                     Ultima atualizacao:  23/10/2018
+     Data    : Agosto/2013                     Ultima atualizacao:  09/04/2019
 
      Dados referentes ao programa:
 
@@ -3509,6 +3509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                               
                  23/10/2018 - P442 - Ignorar cooperativas com Gravames Online (Marcos-Envolti)
                               
+				 09/04/2019 - Ajustar query para filtrar veiculos ao exportar lote (Petter - Envolti)
     ............................................................................. */
     DECLARE
 
