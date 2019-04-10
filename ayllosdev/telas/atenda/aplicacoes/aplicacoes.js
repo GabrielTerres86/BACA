@@ -1,7 +1,7 @@
 /******************************************************************************
  Fonte: aplicacoes.js                                             
  Autor: David                                                     
- Data : Setembro/2009                Última Alteração: 27/06/2018
+ Data : Setembro/2009                Última Alteração: 27/03/2019
                                                                   
  Objetivo  : Biblioteca de funções da rotina Aplicações da tela   
              ATENDA                                               
@@ -102,6 +102,8 @@
 
 			 27/06/2018 - Problemas com JS em tela Embarcada CRM.
 
+			 27/03/2019 - Tratamento para nao fechar janela da carencia para RDCPOS apos a 
+			              mensagem pra selecionar alguma carencia (Lucas Ranghetti INC0035717)
 ***************************************************************************/
 
 var nraplica = 0;     // Variável para armazenar número da aplicação selecionada
@@ -788,6 +790,8 @@ function selecionaCarencia(periodo, qtdiaapl, carencia, dtcarenc, simulacao) {
     aux_qtdiacar = carencia;
     cdperapl = periodo;
 
+	$("#btConcluir").show();
+	
     if (simulacao) {
 
         $("#qtdiacar", "#frmSimula" + $("#tpaplica option:selected", "#frmSimular").text()).val(carencia);
@@ -822,9 +826,11 @@ function fechaZoomCarencia(periodo, qtdiaapl, carencia, dtcarenc, simulacao) {
     cdperapl = periodo;
 
     if (carencia) {
-        showError("error", "Selecione a car&ecirc;ncia da aplica&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#vllanmto','#frmDadosAplicacaoPos').focus(); $('#divSelecionaCarencia').hide(); blockBackground(parseInt($('#divRotina').css('z-index')))");
+		showError("error", "Selecione a car&ecirc;ncia da aplica&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
+    
+	$("#btConcluir","divBtnAplicacao").show();
 
     if (simulacao) {
 
@@ -1039,6 +1045,8 @@ function carregaCarenciaAplicacao() {
         }
     }
 
+	 $("#btConcluir").hide();
+    
     // Mostra mensagem de aguardo
     if (tpaplrdc == 1) { // RDCPRE
         var vllanmto = $("#vllanmto", "#frmDadosAplicacaoPre").val().replace(/\./g, "");
@@ -1049,6 +1057,8 @@ function carregaCarenciaAplicacao() {
             obtemTaxaAplicacao();
         }
     } else {
+
+		
 
         // Executa script de consulta através de ajax
         $.ajax({
