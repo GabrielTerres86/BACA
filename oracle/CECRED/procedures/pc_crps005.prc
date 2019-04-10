@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 27/02/2018
+   Data    : Novembro/91.                    Ultima atualizacao: 18/03/2019
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch - Background).
@@ -399,6 +399,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                17/10/2018 - Liberacao primeiro pacote Projeto 421 - Melhorias nas
                             ferramentas contabeis e fiscais.
                             Heitor / Alcemir (Mouts)
+                            
+               18/03/2019 - PRB0040683 na rotina pc_consulta_poupanca e suas internas, feitos os tratamentos de erros para que
+                            sejam identificados os possíveis pontos de correção; pular a aplicação quando a consulta for chamada
+                            pelo batch (Carlos)
      ............................................................................. */
 
      DECLARE
@@ -9306,7 +9310,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                                               ,pr_cdagenci => vr_cdagenci            --> Codigo da Agencia
                                               ,pr_nrdcaixa => 1            --> Numero do caixa 
                                               ,pr_cdoperad => '1'            --> Codigo do Operador
-                                              ,pr_idorigem => 1            --> Identificador da Origem
+                                              ,pr_idorigem => 7            --> Identificador da Origem (7 - batch)
                                               ,pr_nrdconta => rw_crapass.nrdconta            --> Nro da conta associado
                                               ,pr_idseqttl => 1            --> Identificador Sequencial
                                               ,pr_nrctrrpp => 0                      --> Contrato Poupanca Programada 
@@ -10384,12 +10388,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
           end if;
          ROLLBACK;
        WHEN OTHERS THEN
+         --Inclusão na tabela de erros Oracle - Chamado 822997
+         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+
          -- Efetuar retorno do erro não tratado
          pr_cdcritic := 0;
          pr_dscritic := SQLERRM;
-
-         --Inclusão na tabela de erros Oracle - Chamado 822997
-         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
 
           --Grava tabela de log - Ch 822997
           pc_gera_log(pr_cdcooper      => pr_cdcooper,
