@@ -15,6 +15,9 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0005 AS
    Alteracoes: 13/09/2018 - Quando cancelar o Limite de Desconto de Títulos na pc_bloqueio_conta_corrente, também cancelar sua
                             proposta Principal e as Propostas de Manutenção, conforme o que ocorre atualmente na
                             b1wgen0030.efetua_cancelamento_limite (Andrew Albuquerque - GFT)
+
+               09/04/2019 - Ajuste na procedure pc_executa_job_prejuizo para efetuar apenas leitura de contratos em prejuizo
+				            alterado chamada da procedure pc_lanc_jratu_mensal para enviar data de movimento (Daniel - Ailos)
 ..............................................................................*/
   -- Códigos contábeis
   -- Transferência
@@ -946,8 +949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
 
       ---->> CURSORES <<-----
       CURSOR cr_crapbdt IS
-        SELECT
-          bdt.rowid AS id,
+      SELECT bdt.rowid AS id,
           bdt.nrborder,
           bdt.nrdconta,
           bdt.cdcooper,
@@ -956,13 +958,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
           bdt.insitbdt,
           bdt.qtdirisc,
           bdt.nrinrisc
-        FROM
-          crapbdt bdt
-        WHERE
-          bdt.nrinrisc = 9
-          AND bdt.qtdirisc>=180
-          AND bdt.inprejuz=0
-      ;
+        FROM crapbdt bdt
+       WHERE bdt.nrinrisc = 9
+         AND bdt.qtdirisc >= 180
+         AND bdt.inprejuz = 0
+         AND bdt.flverbor = 1;
       rw_crapbdt cr_crapbdt%ROWTYPE;
 
       -- Tratamento de erro
@@ -1924,6 +1924,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
 
         -- Efetua o lançamento da Mensal dos juros de atualização
         DSCT0003.pc_lanc_jratu_mensal(pr_cdcooper => pr_cdcooper
+                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                      ,pr_nrborder => pr_nrborder
                                      ,pr_nrdconta => rw_crapbdt.nrdconta
                                      ,pr_cdcritic => vr_cdcritic

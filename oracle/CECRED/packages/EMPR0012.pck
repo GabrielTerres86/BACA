@@ -3277,10 +3277,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
         BEGIN
           UPDATE tbepr_cdc_vendedor 
-             SET nmvendedor      =  REPLACE(pr_nmvendedor, '&', 'E')
+             SET nmvendedor      = REPLACE(pr_nmvendedor, '&', 'E')
                 ,nrcpf           = pr_nrcpf          
                 ,dsemail         = pr_dsemail        
                 ,idcooperado_cdc = pr_idcooperado_cdc
+				,idcomissao      = pr_idcomissao 
           WHERE idvendedor  =  pr_idvendedor;    
         EXCEPTION
           WHEN OTHERS THEN

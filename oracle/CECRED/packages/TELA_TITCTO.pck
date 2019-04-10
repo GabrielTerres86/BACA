@@ -321,8 +321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        aux_flregis INTEGER;
 
        CURSOR cr_craptdb IS
-          SELECT
-             craptdb.dtlibbdt AS dtlibbdt,
+          SELECT craptdb.dtlibbdt AS dtlibbdt,
              craptdb.dtvencto AS dtvencto,
              craptdb.nrborder AS nrborder,
              craptdb.cdbandoc AS cdbandoc,
@@ -335,24 +334,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
              crapcob.flgregis AS flgregis,
              craptdb.nrdconta AS nrdconta,
              crapass.nmprimtl AS nmprimtl
-          FROM
-             craptdb
-             INNER JOIN crapcob ON crapcob.cdcooper = craptdb.cdcooper AND
-                                                    crapcob.cdbandoc = craptdb.cdbandoc AND
-                                                    crapcob.nrdctabb = craptdb.nrdctabb AND
-                                                    crapcob.nrdconta = craptdb.nrdconta AND
-                                                    crapcob.nrcnvcob = craptdb.nrcnvcob AND
-                                                    crapcob.nrdocmto = craptdb.nrdocmto  AND
-                                                    (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
-             LEFT JOIN crapope ON crapope.cdcooper = craptdb.cdcooper AND crapope.cdoperad = craptdb.cdoperes
-             LEFT JOIN crapass ON crapass.cdcooper = craptdb.cdcooper AND crapass.nrdconta = craptdb.nrdconta
-          WHERE
-             (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta)
-             AND (
-                     craptdb.insittit = 4
-                     OR (craptdb.insittit = 1 AND pr_flresgat='S') -- RESGATADOS
+            FROM craptdb
+           INNER JOIN crapcob
+              ON crapcob.cdcooper = craptdb.cdcooper
+             AND crapcob.cdbandoc = craptdb.cdbandoc
+             AND crapcob.nrdctabb = craptdb.nrdctabb
+             AND crapcob.nrdconta = craptdb.nrdconta
+             AND crapcob.nrcnvcob = craptdb.nrcnvcob
+             AND crapcob.nrdocmto = craptdb.nrdocmto
+             AND (pr_tpcobran = 'T' OR crapcob.flgregis = aux_flregis)
+            LEFT JOIN crapope
+              ON crapope.cdcooper = craptdb.cdcooper
+             AND UPPER(crapope.cdoperad) = craptdb.cdoperes
+            LEFT JOIN crapass
+              ON crapass.cdcooper = craptdb.cdcooper
+             AND crapass.nrdconta = craptdb.nrdconta
+           WHERE (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta)
+             AND (craptdb.insittit = 4 OR (craptdb.insittit = 1 AND pr_flresgat = 'S') -- RESGATADOS
                  )
-          ORDER BY crapcob.flgregis DESC, crapcob.cdbandoc DESC, crapcob.nrdconta ASC ;
+           ORDER BY crapcob.flgregis DESC,
+                    crapcob.cdbandoc DESC,
+                    crapcob.nrdconta ASC;
           rw_craptdb cr_craptdb%ROWTYPE;
 
     BEGIN
@@ -578,35 +580,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        vr_dtmvtolt DATE;
        -- Verifica Conta (Cadastro de associados)
        CURSOR cr_crapass IS
-         select nmprimtl
-               ,inpessoa
-               ,nrdconta
-         from   crapass
-         where
-                crapass.cdcooper = pr_cdcooper
-                AND crapass.nrdconta = pr_nrdconta;
+         SELECT nmprimtl,
+                inpessoa,
+                nrdconta
+           FROM crapass
+          WHERE crapass.cdcooper = pr_cdcooper
+            AND crapass.nrdconta = pr_nrdconta;
        rw_crapass cr_crapass%rowtype;
 
        CURSOR cr_craptdb IS
-        SELECT
-          craptdb.insittit,
-          craptdb.vltitulo
-        FROM
-          craptdb
-          INNER JOIN crapcob ON crapcob.cdcooper = craptdb.cdcooper AND
-                                                   crapcob.cdbandoc = craptdb.cdbandoc AND
-                                                   crapcob.nrdctabb = craptdb.nrdctabb AND
-                                                   crapcob.nrdconta = craptdb.nrdconta AND
-                                                   crapcob.nrcnvcob = craptdb.nrcnvcob AND
-                                                   crapcob.nrdocmto = craptdb.nrdocmto AND
-                                                   (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
-        WHERE
-          craptdb.cdcooper = pr_cdcooper
-          AND ((craptdb.nrdconta = pr_nrdconta AND pr_nrdconta>0) OR (pr_nrdconta IS NULL OR pr_nrdconta=0)) -- se possui conta ou nao
-          AND (
-                (vr_dtvencto IS NOT NULL AND craptdb.dtvencto > (vr_dtperant) AND craptdb.dtvencto <= vr_dtvencto)
-                 OR (craptdb.dtvencto  > vr_dtmvtolt AND vr_dtvencto IS NULL)
-              )
+        SELECT craptdb.insittit,
+               craptdb.vltitulo
+          FROM craptdb
+         INNER JOIN crapcob
+            ON crapcob.cdcooper = craptdb.cdcooper
+           AND crapcob.cdbandoc = craptdb.cdbandoc
+           AND crapcob.nrdctabb = craptdb.nrdctabb
+           AND crapcob.nrdconta = craptdb.nrdconta
+           AND crapcob.nrcnvcob = craptdb.nrcnvcob
+           AND crapcob.nrdocmto = craptdb.nrdocmto
+           AND (pr_tpcobran = 'T' OR crapcob.flgregis = aux_flregis)
+         WHERE craptdb.cdcooper = pr_cdcooper
+           AND ((craptdb.nrdconta = pr_nrdconta AND pr_nrdconta > 0) OR
+               (pr_nrdconta IS NULL OR pr_nrdconta = 0)) -- se possui conta ou nao
+           AND ((vr_dtvencto IS NOT NULL AND craptdb.dtvencto > (vr_dtperant) AND
+               craptdb.dtvencto <= vr_dtvencto) OR
+               (craptdb.dtvencto > vr_dtmvtolt AND vr_dtvencto IS NULL))
           AND craptdb.dtlibbdt IS NOT NULL;
           rw_craptdb cr_craptdb%ROWTYPE;
 
@@ -850,153 +849,144 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
 
        /* Resgatados no dia */
        CURSOR cr_resgatados IS
-         SELECT
-              craptdb.insittit,
-              craptdb.vltitulo
-         FROM
-              craptdb
-              INNER JOIN crapbdt  ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
-              INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
-                                                   crapcob.cdbandoc = craptdb.cdbandoc AND
-                                                   crapcob.nrdctabb = craptdb.nrdctabb AND
-                                                   crapcob.nrdconta = craptdb.nrdconta AND
-                                                   crapcob.nrcnvcob = craptdb.nrcnvcob AND
-                                                   crapcob.nrdocmto = craptdb.nrdocmto AND
-                                                   (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
-         WHERE
-             craptdb.cdcooper = pr_cdcooper
-             AND craptdb.insittit = 1
-             AND craptdb.dtresgat = pr_dtvencto
-             AND crapbdt.flverbor = 0
-         ;
+         SELECT craptdb.insittit,
+                craptdb.vltitulo
+           FROM craptdb
+          INNER JOIN crapbdt
+             ON crapbdt.cdcooper = craptdb.cdcooper
+            AND crapbdt.nrborder = craptdb.nrborder
+          INNER JOIN crapcob
+             ON crapcob.cdcooper = craptdb.cdcooper
+            AND crapcob.cdbandoc = craptdb.cdbandoc
+            AND crapcob.nrdctabb = craptdb.nrdctabb
+            AND crapcob.nrdconta = craptdb.nrdconta
+            AND crapcob.nrcnvcob = craptdb.nrcnvcob
+            AND crapcob.nrdocmto = craptdb.nrdocmto
+            AND (pr_tpcobran = 'T' OR crapcob.flgregis = aux_flregis)
+          WHERE craptdb.cdcooper = pr_cdcooper
+            AND craptdb.insittit = 1
+            AND craptdb.dtresgat = pr_dtvencto
+            AND crapbdt.flverbor = 0;
        rw_resgatados cr_resgatados%ROWTYPE;
 
        /*Baixados sem pagamento no dia*/
        CURSOR cr_baixados_sem_pagamento IS
-         SELECT
-              craptdb.insittit,
-              craptdb.vltitulo,
-              craptdb.dtvencto
-         FROM
-              craptdb
-              INNER JOIN crapbdt  ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
-              INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
-                                                   crapcob.cdbandoc = craptdb.cdbandoc AND
-                                                   crapcob.nrdctabb = craptdb.nrdctabb AND
-                                                   crapcob.nrdconta = craptdb.nrdconta AND
-                                                   crapcob.nrcnvcob = craptdb.nrcnvcob AND
-                                                   crapcob.nrdocmto = craptdb.nrdocmto AND
-                                                   (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
-         WHERE
-             craptdb.cdcooper = pr_cdcooper
-             AND craptdb.insittit = 3
-             AND craptdb.dtdebito = pr_dtvencto
-             AND crapbdt.flverbor = 0;
+         SELECT craptdb.insittit,
+                craptdb.vltitulo,
+                craptdb.dtvencto
+           FROM craptdb
+          INNER JOIN crapbdt
+             ON crapbdt.cdcooper = craptdb.cdcooper
+            AND crapbdt.nrborder = craptdb.nrborder
+          INNER JOIN crapcob
+             ON crapcob.cdcooper = craptdb.cdcooper
+            AND crapcob.cdbandoc = craptdb.cdbandoc
+            AND crapcob.nrdctabb = craptdb.nrdctabb
+            AND crapcob.nrdconta = craptdb.nrdconta
+            AND crapcob.nrcnvcob = craptdb.nrcnvcob
+            AND crapcob.nrdocmto = craptdb.nrdocmto
+            AND (pr_tpcobran = 'T' OR crapcob.flgregis = aux_flregis)
+          WHERE craptdb.cdcooper = pr_cdcooper
+            AND craptdb.insittit = 3
+            AND craptdb.dtdebito = pr_dtvencto
+            AND crapbdt.flverbor = 0;
        rw_baixados_sem_pagamento cr_baixados_sem_pagamento%ROWTYPE;
 
        /* Pagos pelo Pagador - via COMPE... */
        CURSOR cr_pagos_compe IS
-         SELECT
-              craptdb.vltitulo
-         FROM
-              craptdb
-              INNER JOIN crapbdt  ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
-              INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
-                                                   crapcob.cdbandoc = craptdb.cdbandoc AND
-                                                   crapcob.nrdctabb = craptdb.nrdctabb AND
-                                                   crapcob.nrdconta = craptdb.nrdconta AND
-                                                   crapcob.nrcnvcob = craptdb.nrcnvcob AND
-                                                   crapcob.nrdocmto = craptdb.nrdocmto AND
-                                                   (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
-         WHERE
-              craptdb.cdcooper  = pr_cdcooper
-              AND craptdb.dtdpagto  > vr_dtrefere
-              AND craptdb.dtdpagto <= vr_dtmvtoan
-              AND craptdb.insittit  = 2
-              /*Apenas BB*/
-              AND crapcob.indpagto = 0
-              AND crapcob.cdbandoc = 001
-              AND crapbdt.flverbor = 0
-         ;
+         SELECT craptdb.vltitulo
+           FROM craptdb
+          INNER JOIN crapbdt
+             ON crapbdt.cdcooper = craptdb.cdcooper
+            AND crapbdt.nrborder = craptdb.nrborder
+          INNER JOIN crapcob
+             ON crapcob.cdcooper = craptdb.cdcooper
+            AND crapcob.cdbandoc = craptdb.cdbandoc
+            AND crapcob.nrdctabb = craptdb.nrdctabb
+            AND crapcob.nrdconta = craptdb.nrdconta
+            AND crapcob.nrcnvcob = craptdb.nrcnvcob
+            AND crapcob.nrdocmto = craptdb.nrdocmto
+            AND (pr_tpcobran = 'T' OR crapcob.flgregis = aux_flregis)
+          WHERE craptdb.cdcooper = pr_cdcooper
+            AND craptdb.dtdpagto  > vr_dtrefere
+            AND craptdb.dtdpagto <= vr_dtmvtoan
+            AND craptdb.insittit  = 2
+            /*Apenas BB*/
+            AND crapcob.indpagto = 0
+            AND crapcob.cdbandoc = 001
+            AND crapbdt.flverbor = 0;
        rw_pagos_compe cr_pagos_compe%ROWTYPE;
 
        /* Pagos pelo Pagador - via CAIXA... */
        CURSOR cr_pagos_caixa IS
-         SELECT
-              craptdb.vltitulo
-         FROM
-              craptdb
-              INNER JOIN crapbdt  ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
-              INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
-                                                   crapcob.cdbandoc = craptdb.cdbandoc AND
-                                                   crapcob.nrdctabb = craptdb.nrdctabb AND
-                                                   crapcob.nrdconta = craptdb.nrdconta AND
-                                                   crapcob.nrcnvcob = craptdb.nrcnvcob AND
-                                                   crapcob.nrdocmto = craptdb.nrdocmto AND
-                                                   (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
-         WHERE
-              craptdb.cdcooper  = pr_cdcooper
-              AND craptdb.dtdpagto  > vr_dtmvtoan
-              AND craptdb.dtdpagto <= pr_dtvencto
-              AND craptdb.insittit  = 2
-              /* Pago pelo CAIXA, InternetBank ou TAA, e compe 085 */
-              AND (
-                crapcob.indpagto = 1
-                OR crapcob.indpagto = 3
-                OR crapcob.indpagto = 4 /**TAA**/
-                OR (crapcob.indpagto = 0 AND crapcob.cdbandoc = 085)
-              )
-             AND crapbdt.flverbor = 0
-         ;
+         SELECT craptdb.vltitulo
+           FROM craptdb
+          INNER JOIN crapbdt
+             ON crapbdt.cdcooper = craptdb.cdcooper
+            AND crapbdt.nrborder = craptdb.nrborder
+          INNER JOIN crapcob
+             ON crapcob.cdcooper = craptdb.cdcooper
+            AND crapcob.cdbandoc = craptdb.cdbandoc
+            AND crapcob.nrdctabb = craptdb.nrdctabb
+            AND crapcob.nrdconta = craptdb.nrdconta
+            AND crapcob.nrcnvcob = craptdb.nrcnvcob
+            AND crapcob.nrdocmto = craptdb.nrdocmto
+            AND (pr_tpcobran = 'T' OR crapcob.flgregis = aux_flregis)
+          WHERE craptdb.cdcooper = pr_cdcooper
+            AND craptdb.dtdpagto  > vr_dtmvtoan
+            AND craptdb.dtdpagto <= pr_dtvencto
+            AND craptdb.insittit  = 2
+            /* Pago pelo CAIXA, InternetBank ou TAA, e compe 085 */
+            AND (crapcob.indpagto = 1 OR crapcob.indpagto = 3 OR crapcob.indpagto = 4 /**TAA**/
+                OR (crapcob.indpagto = 0 AND crapcob.cdbandoc = 085))
+            AND crapbdt.flverbor = 0;
        rw_pagos_caixa cr_pagos_caixa%ROWTYPE;
 
        /* Recebidos no dia */
        CURSOR cr_recebidos_dia IS
-         SELECT
-              craptdb.vltitulo
-         FROM
-              craptdb
-              INNER JOIN crapbdt  ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
-              INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
-                                                   crapcob.cdbandoc = craptdb.cdbandoc AND
-                                                   crapcob.nrdctabb = craptdb.nrdctabb AND
-                                                   crapcob.nrdconta = craptdb.nrdconta AND
-                                                   crapcob.nrcnvcob = craptdb.nrcnvcob AND
-                                                   crapcob.nrdocmto = craptdb.nrdocmto AND
-                                                   (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
-         WHERE
-              craptdb.cdcooper = pr_cdcooper
-              AND craptdb.dtlibbdt = pr_dtvencto
-              AND crapbdt.flverbor = 0
-         ;
+         SELECT craptdb.vltitulo
+           FROM craptdb
+          INNER JOIN crapbdt
+             ON crapbdt.cdcooper = craptdb.cdcooper
+            AND crapbdt.nrborder = craptdb.nrborder
+          INNER JOIN crapcob
+             ON crapcob.cdcooper = craptdb.cdcooper
+            AND crapcob.cdbandoc = craptdb.cdbandoc
+            AND crapcob.nrdctabb = craptdb.nrdctabb
+            AND crapcob.nrdconta = craptdb.nrdconta
+            AND crapcob.nrcnvcob = craptdb.nrcnvcob
+            AND crapcob.nrdocmto = craptdb.nrdocmto
+            AND (pr_tpcobran = 'T' OR crapcob.flgregis = aux_flregis)
+          WHERE craptdb.cdcooper = pr_cdcooper
+            AND craptdb.dtlibbdt = pr_dtvencto
+            AND crapbdt.flverbor = 0;
        rw_recebidos_dia cr_recebidos_dia%ROWTYPE;
 
        /* Saldo Anterior */
        CURSOR cr_saldo_anterior IS
-         SELECT
-              craptdb.vltitulo,
-              craptdb.dtlibbdt,
-              craptdb.insittit,
-              crapcob.indpagto,
-              crapcob.cdbandoc,
-              craptdb.dtdpagto,
-              craptdb.dtresgat,
-              craptdb.dtvencto,
-              craptdb.dtdebito
-         FROM
-              craptdb
-              INNER JOIN crapbdt  ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
-              INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
-                                                   crapcob.cdbandoc = craptdb.cdbandoc AND
-                                                   crapcob.nrdctabb = craptdb.nrdctabb AND
-                                                   crapcob.nrdconta = craptdb.nrdconta AND
-                                                   crapcob.nrcnvcob = craptdb.nrcnvcob AND
-                                                   crapcob.nrdocmto = craptdb.nrdocmto AND
-                                                   (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
-         WHERE
-              craptdb.cdcooper = pr_cdcooper
-              AND crapbdt.flverbor = 0
-         ;
+         SELECT craptdb.vltitulo,
+                craptdb.dtlibbdt,
+                craptdb.insittit,
+                crapcob.indpagto,
+                crapcob.cdbandoc,
+                craptdb.dtdpagto,
+                craptdb.dtresgat,
+                craptdb.dtvencto,
+                craptdb.dtdebito
+           FROM craptdb
+          INNER JOIN crapbdt
+             ON crapbdt.cdcooper = craptdb.cdcooper
+            AND crapbdt.nrborder = craptdb.nrborder
+          INNER JOIN crapcob
+             ON crapcob.cdcooper = craptdb.cdcooper
+            AND crapcob.cdbandoc = craptdb.cdbandoc
+            AND crapcob.nrdctabb = craptdb.nrdctabb
+            AND crapcob.nrdconta = craptdb.nrdconta
+            AND crapcob.nrcnvcob = craptdb.nrcnvcob
+            AND crapcob.nrdocmto = craptdb.nrdocmto
+            AND (pr_tpcobran = 'T' OR crapcob.flgregis = aux_flregis)
+          WHERE craptdb.cdcooper = pr_cdcooper
+            AND crapbdt.flverbor = 0;
        rw_saldo_anterior cr_saldo_anterior%ROWTYPE;
 
 
@@ -1718,40 +1708,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        rw_crapass cr_crapass%rowtype;
 
        CURSOR cr_craptdb IS
-          SELECT
-            craptdb.dtlibbdt,
-            crapbdt.cdagenci,
-            crapbdt.cdbccxlt,
-            crapbdt.nrdolote,
-            craptdb.dtvencto,
-            craptdb.cdbandoc,
-            craptdb.nrcnvcob,
-            craptdb.nrdocmto,
-            craptdb.vltitulo,
-            crapcob.flgregis
-          FROM
-              craptdb
-              INNER JOIN crapcob ON crapcob.cdcooper = craptdb.cdcooper AND
-                                                    crapcob.cdbandoc = craptdb.cdbandoc AND
-                                                    crapcob.nrdctabb = craptdb.nrdctabb AND
-                                                    crapcob.nrdconta = craptdb.nrdconta AND
-                                                    crapcob.nrcnvcob = craptdb.nrcnvcob AND
-                                                    crapcob.nrdocmto = craptdb.nrdocmto  AND
-                                                    (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
-              INNER JOIN crapbdt ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
-          WHERE
-              (
-                (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND craptdb.insittit = 2 AND (pr_tpdepesq='T' OR pr_tpdepesq='L'))
-                OR (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND craptdb.insittit = 3 AND pr_tpdepesq='T')
-                OR (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND craptdb.insittit = 4 AND (pr_tpdepesq='T' OR (pr_tpdepesq='A' AND craptdb.dtvencto > vr_dtmvtoan)))
+         SELECT craptdb.dtlibbdt,
+                crapbdt.cdagenci,
+                crapbdt.cdbccxlt,
+                crapbdt.nrdolote,
+                craptdb.dtvencto,
+                craptdb.cdbandoc,
+                craptdb.nrcnvcob,
+                craptdb.nrdocmto,
+                craptdb.vltitulo,
+                crapcob.flgregis
+           FROM craptdb
+          INNER JOIN crapcob
+             ON crapcob.cdcooper = craptdb.cdcooper
+            AND crapcob.cdbandoc = craptdb.cdbandoc
+            AND crapcob.nrdctabb = craptdb.nrdctabb
+            AND crapcob.nrdconta = craptdb.nrdconta
+            AND crapcob.nrcnvcob = craptdb.nrcnvcob
+            AND crapcob.nrdocmto = craptdb.nrdocmto
+            AND (pr_tpcobran = 'T' OR crapcob.flgregis = aux_flregis)
+          INNER JOIN crapbdt
+             ON crapbdt.cdcooper = craptdb.cdcooper
+            AND crapbdt.nrborder = craptdb.nrborder
+          WHERE ((craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND
+                craptdb.insittit = 2 AND (pr_tpdepesq = 'T' OR pr_tpdepesq = 'L')) OR
+                (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND
+                craptdb.insittit = 3 AND pr_tpdepesq = 'T') OR
+                (craptdb.cdcooper = pr_cdcooper AND craptdb.nrdconta = pr_nrdconta AND
+                craptdb.insittit = 4 AND
+                (pr_tpdepesq = 'T' OR (pr_tpdepesq = 'A' AND craptdb.dtvencto > vr_dtmvtoan))))
+            AND (((pr_nrdocmto > 0 AND pr_nrdocmto = craptdb.nrdocmto) OR nvl(pr_nrdocmto, 0) = 0) --caso tenha passado numero do boleto
+                AND
+                ((pr_vltitulo > 0 AND pr_vltitulo = craptdb.vltitulo) OR nvl(pr_vltitulo, 0) = 0) --caso tenha passado o valor
               )
-              AND (
-                  ((pr_nrdocmto>0 AND pr_nrdocmto = craptdb.nrdocmto) OR nvl(pr_nrdocmto,0)=0) --caso tenha passado numero do boleto
-                  AND ((pr_vltitulo>0 AND pr_vltitulo = craptdb.vltitulo) OR nvl(pr_vltitulo,0)=0) --caso tenha passado o valor
-              )
-          ORDER BY
-              crapcob.flgregis DESC, crapcob.cdbandoc DESC, craptdb.nrdconta
-         ;
+          ORDER BY crapcob.flgregis DESC,
+                   crapcob.cdbandoc DESC,
+                   craptdb.nrdconta;
          rw_craptdb cr_craptdb%ROWTYPE;
 
     BEGIN
@@ -1977,63 +1969,102 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        rw_crapdat btch0001.cr_crapdat%rowtype;
 
        CURSOR cr_lotes IS
-         SELECT
-           dtmvtolt,
-           cdagenci,
-           nrdconta,
-           nrborder,
-           nrdolote,
-           sum((case when flgregis = 1 THEN quantidade ELSE 0 END)) AS qttittot_cr,
-           sum((case when flgregis = 0 THEN quantidade ELSE 0 END)) AS qttittot_sr,
-           sum((case when flgregis = 1 THEN valor ELSE 0 END)) AS vltittot_cr,
-           sum((case when flgregis = 0 THEN valor ELSE 0 END)) AS vltittot_sr,
-           nmoperad
-          FROM
-            (
-              SELECT
-                dtmvtolt,
-                cdagenci,
-                nrdolote,
-                nrdconta,
-                nrborder,
-                flgregis,
-                count(*) AS quantidade,
-                sum(vltitulo) AS valor,
-                nmoperad
-              FROM (
-                  select
-                    crapbdt.dtmvtolt,
-                    crapbdt.cdagenci,
-                    craptdb.nrdconta,
-                    crapbdt.nrdolote,
-                    crapbdt.nrborder,
-                    (CASE WHEN crapope.nmoperad is not null THEN (craptdb.cdoperad || ' - ' || crapope.nmoperad) ELSE craptdb.cdoperad END) AS nmoperad,
-                    crapcob.flgregis,
-                    craptdb.vltitulo
-                  from
-                    cecred.crapbdt
-                    INNER JOIN craptdb ON craptdb.cdcooper = crapbdt.cdcooper AND
-                                            craptdb.nrdconta = crapbdt.nrdconta AND
-                                            craptdb.nrborder = crapbdt.nrborder
-                    INNER JOIN crapcob ON crapcob.cdcooper = craptdb.cdcooper AND
-                                            crapcob.nrdconta = craptdb.nrdconta AND
-                                            crapcob.nrcnvcob = craptdb.nrcnvcob AND
-                                            crapcob.nrdocmto = craptdb.nrdocmto AND
-                                            crapcob.cdbandoc = craptdb.cdbandoc AND
-                                            crapcob.nrdctabb = craptdb.nrdctabb
-                    LEFT JOIN crapope ON crapope.cdoperad=craptdb.cdoperad AND crapope.cdcooper=craptdb.cdcooper
+       SELECT dtmvtolt,
+              cdagenci,
+              nrdconta,
+              nrborder,
+              nrdolote,
+              SUM((CASE
+                    WHEN flgregis = 1 THEN
+                     quantidade
+                    ELSE
+                     0
+                  END)) AS qttittot_cr,
+              SUM((CASE
+                    WHEN flgregis = 0 THEN
+                     quantidade
+                    ELSE
+                     0
+                  END)) AS qttittot_sr,
+              SUM((CASE
+                    WHEN flgregis = 1 THEN
+                     valor
+                    ELSE
+                     0
+                  END)) AS vltittot_cr,
+              SUM((CASE
+                    WHEN flgregis = 0 THEN
+                     valor
+                    ELSE
+                     0
+                  END)) AS vltittot_sr,
+              nmoperad
+         FROM (SELECT dtmvtolt,
+                      cdagenci,
+                      nrdolote,
+                      nrdconta,
+                      nrborder,
+                      flgregis,
+                      COUNT(*) AS quantidade,
+                      SUM(vltitulo) AS valor,
+                      nmoperad
+                 FROM (SELECT crapbdt.dtmvtolt,
+                              crapbdt.cdagenci,
+                              craptdb.nrdconta,
+                              crapbdt.nrdolote,
+                              crapbdt.nrborder,
+                              (CASE
+                                WHEN crapope.nmoperad IS NOT NULL THEN
+                                 (craptdb.cdoperad || ' - ' || crapope.nmoperad)
+                                ELSE
+                                 craptdb.cdoperad
+                              END) AS nmoperad,
+                              crapcob.flgregis,
+                              craptdb.vltitulo
+                         FROM cecred.crapbdt
+                        INNER JOIN craptdb
+                           ON craptdb.cdcooper = crapbdt.cdcooper
+                          AND craptdb.nrdconta = crapbdt.nrdconta
+                          AND craptdb.nrborder = crapbdt.nrborder
+                        INNER JOIN crapcob
+                           ON crapcob.cdcooper = craptdb.cdcooper
+                          AND crapcob.nrdconta = craptdb.nrdconta
+                          AND crapcob.nrcnvcob = craptdb.nrcnvcob
+                          AND crapcob.nrdocmto = craptdb.nrdocmto
+                          AND crapcob.cdbandoc = craptdb.cdbandoc
+                          AND crapcob.nrdctabb = craptdb.nrdctabb
+                         LEFT JOIN crapope
+                           ON UPPER(crapope.cdoperad) = craptdb.cdoperad
+                          AND crapope.cdcooper = craptdb.cdcooper
 
-                  WHERE
-                    crapbdt.cdcooper=pr_cdcooper
-                    AND crapbdt.dtlibbdt >= vr_dtpridia
-                    AND crapbdt.dtlibbdt <= vr_dtultdia
-                    AND ((pr_cdagenci>0 AND crapbdt.cdagenci=pr_cdagenci) OR nvl(pr_cdagenci,0)=0)
-                  order by crapbdt.cdagenci,crapbdt.dtmvtolt,craptdb.cdbandoc,crapbdt.nrdolote
-                )
-              group by cdagenci,dtmvtolt,nrdolote, nrdconta,nrborder,flgregis,nmoperad
-            )
-          group by cdagenci,dtmvtolt,nrdolote,nrdconta,nrborder,nmoperad
-          order by cdagenci,dtmvtolt,nrdolote,nrdconta,nrborder,nmoperad;
+                        WHERE crapbdt.cdcooper = pr_cdcooper
+                          AND crapbdt.dtlibbdt >= vr_dtpridia
+                          AND crapbdt.dtlibbdt <= vr_dtultdia
+                          AND ((pr_cdagenci > 0 AND crapbdt.cdagenci = pr_cdagenci) OR
+                              nvl(pr_cdagenci, 0) = 0)
+                        ORDER BY crapbdt.cdagenci,
+                                 crapbdt.dtmvtolt,
+                                 craptdb.cdbandoc,
+                                 crapbdt.nrdolote)
+                GROUP BY cdagenci,
+                         dtmvtolt,
+                         nrdolote,
+                         nrdconta,
+                         nrborder,
+                         flgregis,
+                         nmoperad)
+        GROUP BY cdagenci,
+                 dtmvtolt,
+                 nrdolote,
+                 nrdconta,
+                 nrborder,
+                 nmoperad
+        ORDER BY cdagenci,
+                 dtmvtolt,
+                 nrdolote,
+                 nrdconta,
+                 nrborder,
+                 nmoperad;
 
        rw_lotes cr_lotes%ROWTYPE;
 
@@ -2210,7 +2241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        WHERE bdt.cdcooper = ass.cdcooper
          AND bdt.nrdconta = ass.nrdconta
          AND bdt.cdcooper = ope.cdcooper(+)
-         AND bdt.cdopeori = ope.cdoperad(+)
+         AND UPPER(bdt.cdopeori) = UPPER(ope.cdoperad(+))
          AND bdt.cdcooper = pr_cdcooper
          AND bdt.insitbdt IN (1,2) -- 1–Estudo / 2–Analise
          AND bdt.dtmvtolt BETWEEN pr_dtiniper AND pr_dtfimper
@@ -2584,16 +2615,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
 
     -- CURSOR PARA OBTER OS DADOS DO ASSOCIADO
     CURSOR cr_crapass IS
-         select nmprimtl
-               ,inpessoa
-               ,nrdconta
-               ,nrcpfcgc
-         from   crapass
-         where
-                crapass.cdcooper = vr_cdcooper
-                AND    crapass.nrdconta = pr_nrdconta;
-
-       rw_crapass cr_crapass%rowtype;
+       SELECT nmprimtl,
+              inpessoa,
+              nrdconta,
+              nrcpfcgc
+         FROM crapass
+        WHERE crapass.cdcooper = vr_cdcooper
+          AND crapass.nrdconta = pr_nrdconta;
+       rw_crapass cr_crapass%ROWTYPE;
 
 
      -- CURSOR PARA OBTER OS DADOS DA COOPERATIVA
@@ -2903,20 +2932,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
 
      -- CURSOR PARA OBTER OS DADOS DA COOPERATIVA
     CURSOR cr_crapcop IS
-      SELECT cop.nmrescop
-            ,cop.nmextcop
-            ,cop.nrdocnpj
-            ,cop.dsendcop
-            ,cop.nrendcop
-            ,cop.nmbairro
-            ,cop.nmcidade
-            ,cop.cdufdcop
-            ,cop.nrcepend
-            ,cop.nrtelsac
-            ,cop.nrtelouv
-            ,cop.dsendweb
-        FROM crapcop cop
-       WHERE cop.cdcooper = vr_cdcooper;
+    SELECT cop.nmrescop,
+           cop.nmextcop,
+           cop.nrdocnpj,
+           cop.dsendcop,
+           cop.nrendcop,
+           cop.nmbairro,
+           cop.nmcidade,
+           cop.cdufdcop,
+           cop.nrcepend,
+           cop.nrtelsac,
+           cop.nrtelouv,
+           cop.dsendweb
+      FROM crapcop cop
+     WHERE cop.cdcooper = vr_cdcooper;
 
     rw_crapcop cr_crapcop%ROWTYPE;
 
@@ -3182,32 +3211,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     aux_flregis INTEGER;
     /*Cursor dos titulos*/
     CURSOR cr_craptdb IS
-      SELECT 
-           craptdb.dtlibbdt AS dtlibbdt,
-           craptdb.dtvencto AS dtvencto,
-           craptdb.nrborder AS nrborder,
-           craptdb.cdbandoc AS cdbandoc,
-           craptdb.nrcnvcob AS nrcnvcob,
-           craptdb.nrdocmto AS nrdocmto,
-           craptdb.vltitulo AS vltitulo,
-           crapcob.flgregis AS flgregis,
-           craptdb.nrdconta AS nrdconta,
-           crapass.nmprimtl AS nmprimtl
-      FROM 
-           craptdb 
-           INNER JOIN crapcob ON craptdb.cdcooper = crapcob.cdcooper AND
-                                             craptdb.cdbandoc = crapcob.cdbandoc AND
-                                             craptdb.nrdctabb = crapcob.nrdctabb AND
-                                             craptdb.nrcnvcob = crapcob.nrcnvcob AND
-                                             craptdb.nrdconta = crapcob.nrdconta AND
-                                             craptdb.nrdocmto = crapcob.nrdocmto AND
-                                             (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
-           LEFT JOIN crapass ON crapass.nrdconta=craptdb.nrdconta AND crapass.cdcooper = craptdb.cdcooper
-      WHERE 
-           craptdb.nrinssac = (SELECT nrcpfcgc FROM crapass WHERE nrdconta = pr_nrdconta and cdcooper = pr_cdcooper) 
-           AND craptdb.cdcooper = pr_cdcooper
-           AND craptdb.insittit=4 -- apenas titulos liberados
-      ORDER BY crapcob.flgregis DESC, crapcob.cdbandoc DESC, crapcob.nrdconta;
+      SELECT craptdb.dtlibbdt AS dtlibbdt,
+             craptdb.dtvencto AS dtvencto,
+             craptdb.nrborder AS nrborder,
+             craptdb.cdbandoc AS cdbandoc,
+             craptdb.nrcnvcob AS nrcnvcob,
+             craptdb.nrdocmto AS nrdocmto,
+             craptdb.vltitulo AS vltitulo,
+             crapcob.flgregis AS flgregis,
+             craptdb.nrdconta AS nrdconta,
+             crapass.nmprimtl AS nmprimtl
+        FROM craptdb
+       INNER JOIN crapcob
+          ON craptdb.cdcooper = crapcob.cdcooper
+         AND craptdb.cdbandoc = crapcob.cdbandoc
+         AND craptdb.nrdctabb = crapcob.nrdctabb
+         AND craptdb.nrcnvcob = crapcob.nrcnvcob
+         AND craptdb.nrdconta = crapcob.nrdconta
+         AND craptdb.nrdocmto = crapcob.nrdocmto
+         AND (pr_tpcobran = 'T' OR crapcob.flgregis = aux_flregis)
+        LEFT JOIN crapass
+          ON crapass.nrdconta = craptdb.nrdconta
+         AND crapass.cdcooper = craptdb.cdcooper
+       WHERE craptdb.nrinssac = (SELECT nrcpfcgc
+                                   FROM crapass
+                                  WHERE nrdconta = pr_nrdconta
+                                    AND cdcooper = pr_cdcooper)
+         AND craptdb.cdcooper = pr_cdcooper
+         AND craptdb.insittit=4 -- apenas titulos liberados
+       ORDER BY crapcob.flgregis DESC,
+                crapcob.cdbandoc DESC,
+                crapcob.nrdconta;
       
       rw_craptdb cr_craptdb%ROWTYPE;
     
