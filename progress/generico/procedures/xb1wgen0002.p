@@ -157,6 +157,8 @@
 			  20/03/2019 - P437 Consignado - Inclusao de parametros na calcula_cet_novo (aux_vlrdoiof) (Fernanda Kelli - AMcom) 
 			  
 			  21/03/2019 - P437 Consignado - Inclusao de parametros na grava-proposta-completa (aux_vlrdoiof) (Fernanda Kelli - AMcom)
+
+			  09/04/2019 - P437 Consignado - Inclusão de parametros calcular_emprestimo (aux_dtdpagto, aux_vlpreempi e aux_vlrdoiof) - Josiane Stiehler - AMcom
               
 ..............................................................................*/
 
@@ -2509,6 +2511,9 @@ PROCEDURE recalcular_emprestimo:
                                       INPUT aux_nrdconta,
                                       INPUT aux_idseqttl,
                                       INPUT aux_nrctremp,
+									  INPUT aux_dtdpagto,
+                                      INPUT aux_vlpreempi,
+                                      INPUT aux_vlrdoiof,
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-msg-confirma). 
 

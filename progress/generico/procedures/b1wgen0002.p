@@ -850,8 +850,12 @@
 																
 		 27/03/2019 - P437 -  Consignado - Alterado a rotina "obtem-propostas-emprestimo" para retornar o campo inaverba
                               Josiane Stiehler - AMcom 
-     04/04/2018 - P437 - Consignado - Alterada rotina grava-proposta-completa, alterar o indicdor de averbaçao "INAVERBA = 0",
+         
+		 04/04/2018 - P437 - Consignado - Alterada rotina grava-proposta-completa, alterar o indicdor de averbaçao "INAVERBA = 0",
                          quando a proposta perder a aprovaçao.
+          
+		 09/04/2019 - P437 - Consignado - Alterado a rotina recalcular_emprestimo, para receber os parâmetros par_dtvencto,
+                      		 par_vlpreemp e par_vldoiof calculado pelo sistema FIS Brasil. Josiane Stiehler - AMcom 
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -14449,6 +14453,9 @@ PROCEDURE recalcular_emprestimo:
     DEF  INPUT PARAM par_nrdconta AS INTE                             NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS INTE                             NO-UNDO.
     DEF  INPUT PARAM par_nrctremp AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_dtvencto AS DATE                             NO-UNDO.    
+	DEF  INPUT PARAM par_vlpreemp AS DECI                             NO-UNDO.
+	DEF  INPUT PARAM par_vlrdoiof AS DECI                             NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
@@ -14463,7 +14470,11 @@ PROCEDURE recalcular_emprestimo:
     DEF VAR h-b1wgen0043 AS HANDLE                                                             NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                                             NO-UNDO.
     DEF VAR aux_dscatbem AS CHAR                                      NO-UNDO.
-    DEF VAR aux_dsctrliq AS CHAR                                      NO-UNDO.
+    DEF VAR aux_dsctrliq AS CHAR                                      NO-UNDO.	
+	DEF VAR aux_tpmodcon LIKE craplcr.tpmodcon                        NO-UNDO.
+	DEF VAR aux_vlrparce LIKE crawepr.vlpreemp                        NO-UNDO.
+	DEF VAR aux_dtdpagto LIKE crawepr.dtdpagto                        NO-UNDO.
+	DEF VAR aux_vlrdoiof AS DECI                                      NO-UNDO.
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-msg-confirma. 
     
@@ -14474,6 +14485,8 @@ PROCEDURE recalcular_emprestimo:
 		          	WHERE crapass.cdcooper = par_cdcooper AND
                       crapass.nrdconta = par_nrdconta
                       NO-LOCK: END.
+					  
+	
 
     IF NOT AVAILABLE crapass THEN
        DO:
@@ -14489,6 +14502,8 @@ PROCEDURE recalcular_emprestimo:
            RETURN "NOK".
        END.
    
+    
+				
     /*Monta a mensagem da operacao para envio no e-mail */
     ASSIGN aux_dsoperac = "Tentativa de recalcular o valor da proposta de " +
                           "emprestimo/financiamento na conta "              + 
@@ -14573,7 +14588,9 @@ PROCEDURE recalcular_emprestimo:
               ASSIGN aux_cdcritic = 946.
               UNDO RECALCULAR, LEAVE RECALCULAR.
           END.
-          
+       
+
+	   
        IF crawepr.dtlibera = par_dtmvtolt THEN
           DO:
               ASSIGN aux_dscritic = "A proposta nao foi recalculada. A data " +
@@ -14585,12 +14602,43 @@ PROCEDURE recalcular_emprestimo:
        ASSIGN crawepr.dtlibera = par_dtmvtolt
               aux_vlpreemp     = crawepr.vlpreemp.    
     
+	   FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
+                          craplcr.cdlcremp = crawepr.cdlcremp
+                          NO-LOCK NO-ERROR.
+
+		 /*P437*/
+		 IF AVAIL craplcr THEN				
+			IF craplcr.tpmodcon <> ? THEN
+				aux_tpmodcon = craplcr.tpmodcon.
+			ELSE
+				aux_tpmodcon = 0.
+
+		   /* P437 - verifica se é consignado novo*/
+		   IF crawepr.tpemprst = 1 AND 
+			  aux_tpmodcon <> ? AND
+			  aux_tpmodcon > 0 AND 
+			  par_vlpreemp <> ? THEN
+			  DO:
+			  ASSIGN aux_vlrparce = par_vlpreemp
+					 aux_vlrdoiof = par_vlrdoiof
+					 aux_dtdpagto = crawepr.dtdpagto
+                     crawepr.dtdpagto = par_dtvencto
+					 crawepr.dtvencto = par_dtvencto.
+			  END.
+		   ELSE
+			  DO:
+			  ASSIGN aux_vlrparce = crawepr.vlpreemp
+					 aux_vlrdoiof  = -1.
+			  END.
+	  
        IF   crawepr.tpemprst = 1   THEN
             DO:
        IF NOT VALID-HANDLE(h-b1wgen0084) THEN
           RUN sistema/generico/procedures/b1wgen0084.p 
               PERSISTENT SET h-b1wgen0084.
+      
 
+			
        RUN grava_parcelas_proposta IN h-b1wgen0084(INPUT par_cdcooper,
                                                    INPUT par_cdagenci,
                                                    INPUT par_nrdcaixa,
@@ -14609,7 +14657,7 @@ PROCEDURE recalcular_emprestimo:
                                                    INPUT crawepr.dtlibera,
                                                    INPUT crawepr.dtdpagto,
                                                    INPUT crawepr.idfiniof,
-												    INPUT crawepr.vlpreemp,   /*P437*/
+												   INPUT aux_vlrparce,   /*P437*/
                                                    OUTPUT TABLE tt-erro).
 
        IF VALID-HANDLE(h-b1wgen0084) THEN
@@ -14725,7 +14773,7 @@ PROCEDURE recalcular_emprestimo:
                             INPUT crawepr.nrctremp,
                             INPUT crawepr.dtlibera,
                             INPUT crawepr.vlemprst,
-                            INPUT crawepr.vlpreemp,
+                            INPUT aux_vlrparce, /*P437*/
                             INPUT crawepr.qtpreemp,
                             INPUT crawepr.dtdpagto,
                             INPUT crawepr.cdfinemp, 
@@ -14733,7 +14781,7 @@ PROCEDURE recalcular_emprestimo:
                             INPUT crawepr.idfiniof,
                             INPUT aux_dsctrliq,
                             INPUT "N",
-							INPUT -1,          /*P437 - Valor do IOF */
+							INPUT aux_vlrdoiof,  /*P437 - Valor do IOF */
                            OUTPUT aux_percetop, /* taxa cet ano */
                            OUTPUT aux_txcetmes, /* taxa cet mes */
                            OUTPUT TABLE tt-erro). 
@@ -14777,16 +14825,35 @@ PROCEDURE recalcular_emprestimo:
        ASSIGN crawepr.percetop = aux_percetop
               crawepr.dsnivris = UPPER(aux_nivrisco).
 
+      
        CREATE tt-msg-confirma.
-       ASSIGN tt-msg-confirma.inconfir = 1
-              tt-msg-confirma.dsmensag = "Atencao! A data de liberacao do recurso "     +
-                                         "foi alterada automaticamente para hoje "      +
-                                         STRING(par_dtmvtolt,"99/99/9999") + ". <br />" +
-                                         "Valor da parcela atualizado de R$ "           +
-                                         TRIM(STRING(aux_vlpreemp,"zzz,zzz,zz9.99"))    +
-                                         " para R$ " +
-                                         TRIM(STRING(crawepr.vlpreemp,"zzz,zzz,zz9.99")) + ".".
-                                       
+       IF par_dtvencto = aux_dtdpagto OR
+	      par_dtvencto = ? THEN
+          DO:	   
+			 ASSIGN tt-msg-confirma.inconfir = 1
+			        tt-msg-confirma.dsmensag = "Atencao! A data de liberacao do recurso "     +
+												 "foi alterada automaticamente para hoje "      +
+												 STRING(par_dtmvtolt,"99/99/9999") + ". <br />" +
+												 "Valor da parcela atualizado de R$ "           +
+												 TRIM(STRING(aux_vlpreemp,"zzz,zzz,zz9.99"))    +
+												 " para R$ " +
+												 TRIM(STRING(crawepr.vlpreemp,"zzz,zzz,zz9.99")) + ".".
+         END.
+        ELSE
+		   DO:
+			  ASSIGN tt-msg-confirma.inconfir = 1
+					 tt-msg-confirma.dsmensag = "Atencao! A data de liberacao do recurso "     +
+												 "foi alterada automaticamente para hoje "      +
+												 STRING(par_dtmvtolt,"99/99/9999") + ". <br />" +
+												 "Valor da parcela atualizado de R$ "           +
+												 TRIM(STRING(aux_vlpreemp,"zzz,zzz,zz9.99"))    +
+												 " para R$ " +
+												 TRIM(STRING(crawepr.vlpreemp,"zzz,zzz,zz9.99")) + ". <br />" +
+                                            	 "Data de Primeiro Vencimento alterada automaticamente para " +
+												 STRING(par_dtvencto,"99/99/9999") + ". <br />" +
+                       				             "imprima nova CCB." .
+ 		    END.
+			
        RUN proc_gerar_log (INPUT par_cdcooper,
                            INPUT par_cdoperad,
                            INPUT "",
@@ -14805,7 +14872,7 @@ PROCEDURE recalcular_emprestimo:
                                 
        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
                                 INPUT "vlpreemp",
-                                INPUT aux_vlpreemp,
+                                INPUT aux_vlrparce,
                                 INPUT crawepr.vlpreemp).
 
     END. /* END DO TRANSACTION */

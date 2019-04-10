@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Rafael Faria - Supero
-   Data    : Agosto/2018.                    Ultima atualizacao:
+   Data    : Agosto/2018.                    Ultima atualizacao: 09/04/2019
 
    Dados referentes ao programa:
 
@@ -12,7 +12,7 @@
    Objetivo  : Chamado atraves do shell crps751.sh para criaçao 
                de emprestimo de cessao.
                
-   Alteracoes : 
+   Alteracoes : P437 - Consignado - Incluido os parametros ( par_dtvencto, par_vlpreemp  par_vlrdoiof) na chamada da rotina calcular_emprestimos
 
 .............................................................................*/   
 
@@ -40,6 +40,10 @@ DEF VAR aux_nrctremp AS INTEGER                             NO-UNDO.
 DEF VAR aux_cdcritic AS INTEGER                             NO-UNDO.
 DEF VAR aux_dscritic AS CHARACTER                           NO-UNDO.
 DEF VAR aux_nmarqlog AS CHARACTER                           NO-UNDO.
+
+DEF VAR aux_dtvencto AS DATE                                NO-UNDO.
+DEF VAR aux_vlpreemp AS DECI                                NO-UNDO.
+DEF VAR aux_vlrdoiof AS DECI                                NO-UNDO.
 
 DEF VAR aux_transacao AS LOGICAL                            NO-UNDO.
 
@@ -70,7 +74,11 @@ DO TRANSACTION ON ERROR  UNDO trans_751, LEAVE trans_751
            aux_cdoperad = "1"
            aux_nmdatela = "CRPS751"
            aux_idorigem = 7 /* batch */
-           aux_idseqttl = 1.
+           aux_idseqttl = 1
+		   aux_dtvencto = ?
+		   aux_vlpreemp = ?
+		   aux_vlrdoiof = ?.
+		   
       
       IF NOT VALID-HANDLE(h-b1wgen0002) THEN
        RUN sistema/generico/procedures/b1wgen0002.p 
@@ -87,6 +95,9 @@ DO TRANSACTION ON ERROR  UNDO trans_751, LEAVE trans_751
                                                  ,INPUT aux_nrdconta /*par_nrdconta*/
                                                  ,INPUT aux_idseqttl /*par_idseqttl*/
                                                  ,INPUT aux_nrctremp /*par_nrctremp*/
+												 ,INPUT aux_dtvencto /*par_dtvencto*/
+												 ,INPUT aux_vlpreemp /*par_vlpreemp*/
+												 ,INPUT aux_vlrdoiof /*par_vlrdoiof*/
                                                  ,OUTPUT TABLE tt-erro
                                                  ,OUTPUT TABLE tt-msg-confirma).
        DELETE OBJECT h-b1wgen0002.
