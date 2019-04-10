@@ -1102,23 +1102,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          LOOP
                FETCH cr_baixados_sem_pagamento INTO rw_baixados_sem_pagamento;
                EXIT  WHEN cr_baixados_sem_pagamento%NOTFOUND;
-                 /* No caso de fim de semana e feriado, nao pega os titulos que ja foram pegos no dia anterior a ontem */
-                 IF (vr_dtrefere <> vr_dtmvtoan AND rw_baixados_sem_pagamento.dtvencto  = vr_dtrefere) THEN
-                   CONTINUE;
-                 ELSE
-                   /*Verifica se vencimento cai em dia nao util e considera o proximo caso ocorra*/
-                   tmp_dtvencto := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                             ,pr_dtmvtolt => rw_baixados_sem_pagamento.dtvencto
-                                             ,pr_tipo     => 'A' );
-                   /* Nao contabilizar os titulos que vencem no final de semana ou feriado no primeiro dia util seguinte, por causa da
-                           postergacao de data */
-                   IF (tmp_dtvencto<>rw_baixados_sem_pagamento.dtvencto AND  (pr_dtvencto - vr_dtrefere > 1  AND pr_dtvencto - vr_dtmvtoan > 1)    ) THEN
-                       CONTINUE;
-                   ELSE
+                 
                        vr_qtvencid := vr_qtvencid - 1;
                        vr_vlvencid := vr_vlvencid - rw_baixados_sem_pagamento.vltitulo;
-                   END IF;
-                 END IF;
+                 
          end loop;
 
          vr_dtrefere := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
@@ -1468,8 +1455,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     CLOSE cr_estorno_no_dia;
     
     -- Recebidos no dia
-    vr_cdhisrec := dsct0003.vr_cdhistordsct_liberacred ||','|| --2665
-                   dsct0003.vr_cdhistordsct_apropjurmra||','|| --2668
+    vr_cdhisrec := dsct0003.vr_cdhistordsct_liberacred    ||','|| --2665
+                   dsct0003.vr_cdhistordsct_apropjurmra   ||','|| --2668
                    dsct0003.vr_cdhistordsct_apropjurmta   ||','|| --2669
                    dsct0003.vr_cdhistordsct_deboppagmaior ||','|| --2804
                    dsct0003.vr_cdhistordsct_iofcompleoper;        --2800

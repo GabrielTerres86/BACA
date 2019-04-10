@@ -1828,6 +1828,7 @@ END fn_letra_risco;
                                    ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
                                    ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato
                                    ,pr_cddopcao IN VARCHAR2               --> Tipo de busca
+                                   ,pr_tpctrprp IN VARCHAR2 DEFAULT 'C'   --> Tipo de informação ('C' = Contrato / 'P' = Proposta)
                                    ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indicador de tipo de pessoa
                                    --------> OUT <--------                                   
                                    ,pr_tab_dados_limite    OUT typ_tab_dados_limite          --> retorna dos dados
@@ -1854,6 +1855,7 @@ END fn_letra_risco;
     ---------->> CURSORES <<--------   
     --> Buscar Contrato de limite
     CURSOR cr_craplim IS
+    select * from (
     select lim.nrdconta
           ,lim.vllimite
           ,lim.cddlinha
@@ -1877,12 +1879,13 @@ END fn_letra_risco;
           ,lim.flgdigit
           ,lim.nrperger
 		  ,lim.idcobope
+            ,'C' as tpctrprp
     from   craplim lim
     where  lim.cdcooper = pr_cdcooper
     and    lim.nrdconta = pr_nrdconta
     and    lim.nrctrlim = pr_nrctrlim
     and    lim.tpctrlim = pr_tpctrlim
-    and    pr_tpctrlim <> 3
+      
     
     union  all
 
@@ -1909,12 +1912,14 @@ END fn_letra_risco;
           ,lim.flgdigit
           ,lim.nrperger
 		  ,lim.idcobope
+            ,'P' as tpctrprp
     from   crawlim lim
     where  lim.cdcooper = pr_cdcooper
     and    lim.nrdconta = pr_nrdconta
     and    lim.nrctrlim = pr_nrctrlim
     and    lim.tpctrlim = pr_tpctrlim
-    and    pr_tpctrlim  = 3;
+      and    pr_tpctrlim  = 3) aux
+    where aux.tpctrprp = pr_tpctrprp;
     rw_craplim cr_craplim%ROWTYPE; 
     
     --> Buscar proposta de Contrato de limite
@@ -2179,6 +2184,7 @@ END fn_letra_risco;
                                        ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular da Conta
                                        ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
                                        ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato                                       
+                                       ,pr_tpctrprp IN VARCHAR2               --> Tipo de informação ('C' = Contrato / 'P' = Proposta)
                                        ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indicador de tipo de pessoa
                                        --------> OUT <--------                                   
                                        ,pr_tab_dados_limite     OUT typ_tab_dados_limite          --> retorna dos dados                                       
@@ -2231,6 +2237,7 @@ END fn_letra_risco;
                            ,pr_nmdatela => pr_nmdatela  --> Nome da Tela
                            ,pr_nrctrlim => pr_nrctrlim  --> Contrato
                            ,pr_cddopcao => 'C'          --> Tipo de busca
+                           ,pr_tpctrprp => pr_tpctrprp  --> Tipo de informação
                            ,pr_inpessoa => pr_inpessoa  --> Indicador de tipo de pessoa
                            --------> OUT <--------                                   
                            ,pr_tab_dados_limite   => pr_tab_dados_limite --> retorna dos dados
@@ -4822,6 +4829,7 @@ END fn_letra_risco;
 	 -- Variáveis auxiliares
 	 vr_stsnrcal BOOLEAN;
 	 vr_inpessoa_av INTEGER;
+   vr_tpctrprp VARCHAR2(1);
     
   BEGIN
     
@@ -4987,6 +4995,11 @@ END fn_letra_risco;
     END IF;
     CLOSE cr_crapemp;
     
+    IF pr_idimpres = 3 THEN
+      vr_tpctrprp := 'P';
+    ELSE 
+      vr_tpctrprp := 'C';
+    END IF;
     
     --> Buscar dados de um determinado limite de desconto de titulos
     pc_busca_dados_limite_cons (pr_cdcooper => pr_cdcooper  --> Código da Cooperativa
@@ -5000,6 +5013,7 @@ END fn_letra_risco;
                                ,pr_idseqttl => pr_idseqttl  --> Titular da Conta
                                ,pr_nmdatela => pr_nmdatela  --> Nome da Tela
                                ,pr_nrctrlim => pr_nrctrlim  --> Contrato
+                               ,pr_tpctrprp => vr_tpctrprp  --> Tipo de informação ('C' = Contrato / 'P' = Proposta)
                                ,pr_inpessoa => rw_crapass.inpessoa  --> Indicador de tipo de pessoa
                                --------> OUT <--------                                   
                                ,pr_tab_dados_limite    => vr_tab_dados_limite --> retorna dos dados
@@ -6298,6 +6312,8 @@ END fn_letra_risco;
     vr_desxml_CET      CLOB;
     vr_nmarqimp_CET    varchar2(60);
     
+    vr_nrctrlim craplim.nrctrlim%TYPE;
+    
     -- Variáveis para armazenar as informações em XML
     vr_des_xml   CLOB;
     vr_txtcompl  VARCHAR2(32600);
@@ -6389,6 +6405,12 @@ END fn_letra_risco;
 
     END IF;
 
+    IF pr_idimpres = 3 THEN
+      vr_nrctrlim := pr_nrctrlim;
+    ELSE 
+      vr_nrctrlim := rw_craplim.nrctrlim; 
+    END IF; 
+     
     --> Buscar dados para montar contratos etc para desconto de titulos
     pc_busca_dados_imp_descont( pr_cdcooper => pr_cdcooper  --> Código da Cooperativa
                                ,pr_cdagenci => pr_cdagecxa  --> Código da agencia
@@ -6403,7 +6425,7 @@ END fn_letra_risco;
                                ,pr_dtmvtopr => pr_dtmvtopr  --> Data do proximo Movimento
                                ,pr_inproces => pr_inproces  --> Indicador do processo 
                                ,pr_idimpres => pr_idimpres  --> Indicador de impresao
-                               ,pr_nrctrlim => rw_craplim.nrctrlim  --> Contrato
+                               ,pr_nrctrlim => vr_nrctrlim  --> Contrato
                                ,pr_nrborder => 0            --> Numero do bordero
                                ,pr_flgerlog => 0            --> Indicador se deve gerar log(0-nao, 1-sim)
                                ,pr_limorbor => 1            --> Indicador do tipo de dado( 1 - LIMITE DSCTIT 2 - BORDERO DSCTIT )                                     

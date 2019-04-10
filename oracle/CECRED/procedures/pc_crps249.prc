@@ -2014,13 +2014,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        AND craptit.cdbandst = 85
        AND craptit.tpdocmto = 20
        AND craptit.intitcop = 1  -- 0 = Outros Bancos; 1 = Cooperativa
-       AND NOT EXISTS (SELECT 1 FROM craptdb
-                        WHERE craptdb.cdcooper = craptit.cdcooper
-                          AND craptdb.nrdconta = to_number(SUBSTR(craptit.dscodbar,26,8))
-                          AND craptdb.nrcnvcob = to_number(SUBSTR(craptit.dscodbar,20,6))
-                          AND craptdb.nrdocmto = to_number(SUBSTR(craptit.dscodbar,34,9))
-                          AND craptdb.insittit IN (2,3)
-                          AND craptdb.dtdpagto = pr_dtmvtolt)
+       AND NOT EXISTS (    SELECT 1
+                             FROM craptdb tdb
+                       INNER JOIN crapbdt bdt ON bdt.cdcooper = tdb.cdcooper AND bdt.nrdconta = tdb.nrdconta AND bdt.nrborder = tdb.nrborder
+                            WHERE bdt.flverbor = 0
+                              AND tdb.cdcooper = craptit.cdcooper
+                              AND tdb.nrdconta = to_number(SUBSTR(craptit.dscodbar,26,8))
+                              AND tdb.nrcnvcob = to_number(SUBSTR(craptit.dscodbar,20,6))
+                              AND tdb.nrdocmto = to_number(SUBSTR(craptit.dscodbar,34,9))
+                              AND tdb.insittit = 2
+                              AND tdb.dtdpagto = pr_dtmvtolt
+                        UNION ALL
+                           SELECT 1
+                             FROM tbdsct_lancamento_bordero lbd
+                       INNER JOIN crapbdt bdt ON bdt.cdcooper = lbd.cdcooper AND bdt.nrdconta = lbd.nrdconta AND bdt.nrborder = lbd.nrborder
+                            WHERE bdt.flverbor = 1
+                              AND lbd.cdcooper = craptit.cdcooper
+                              AND lbd.nrdconta = to_number(SUBSTR(craptit.dscodbar,26,8))
+                              AND lbd.nrcnvcob = to_number(SUBSTR(craptit.dscodbar,20,6))
+                              AND lbd.nrdocmto = to_number(SUBSTR(craptit.dscodbar,34,9))
+                              AND lbd.cdhistor = 2673
+                              AND lbd.dtmvtolt = pr_dtmvtolt)
        AND crapcco.cdcooper = craptit.cdcooper
        AND crapcco.nrconven = to_number(SUBSTR(craptit.dscodbar,20,6))
      GROUP BY craptit.cdagenci, SUBSTR(craptit.dscodbar,20,6), crapcco.dsorgarq
@@ -2042,13 +2056,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        AND craptit.cdbandst = 85
        AND craptit.tpdocmto = 20
        AND craptit.intitcop = 1  -- 0 = Outros Bancos; 1 = Cooperativa
-       AND EXISTS (SELECT 1 FROM craptdb
-                    WHERE craptdb.cdcooper = craptit.cdcooper
-                      AND craptdb.nrdconta = to_number(SUBSTR(craptit.dscodbar,26,8))
-                      AND craptdb.nrcnvcob = to_number(SUBSTR(craptit.dscodbar,20,6))
-                      AND craptdb.nrdocmto = to_number(SUBSTR(craptit.dscodbar,34,9))
-                      AND craptdb.insittit IN (2,3)
-                      AND craptdb.dtdpagto = pr_dtmvtolt)
+       AND EXISTS (    SELECT 1
+                         FROM craptdb tdb
+                   INNER JOIN crapbdt bdt ON bdt.cdcooper = tdb.cdcooper AND bdt.nrdconta = tdb.nrdconta AND bdt.nrborder = tdb.nrborder
+                        WHERE bdt.flverbor = 0
+                          AND tdb.cdcooper = craptit.cdcooper
+                          AND tdb.nrdconta = to_number(SUBSTR(craptit.dscodbar,26,8))
+                          AND tdb.nrcnvcob = to_number(SUBSTR(craptit.dscodbar,20,6))
+                          AND tdb.nrdocmto = to_number(SUBSTR(craptit.dscodbar,34,9))
+                          AND tdb.insittit = 2
+                          AND tdb.dtdpagto = pr_dtmvtolt
+                    UNION ALL
+                       SELECT 1
+                         FROM tbdsct_lancamento_bordero lbd
+                   INNER JOIN crapbdt bdt ON bdt.cdcooper = lbd.cdcooper AND bdt.nrdconta = lbd.nrdconta AND bdt.nrborder = lbd.nrborder
+                        WHERE bdt.flverbor = 1
+                          AND lbd.cdcooper = craptit.cdcooper
+                          AND lbd.nrdconta = to_number(SUBSTR(craptit.dscodbar,26,8))
+                          AND lbd.nrcnvcob = to_number(SUBSTR(craptit.dscodbar,20,6))
+                          AND lbd.nrdocmto = to_number(SUBSTR(craptit.dscodbar,34,9))
+                          AND lbd.cdhistor = 2673
+                          AND lbd.dtmvtolt = pr_dtmvtolt)
      GROUP BY craptit.cdagenci, SUBSTR(craptit.dscodbar,20,6)
      ORDER BY craptit.cdagenci;
 

@@ -7669,18 +7669,20 @@ create or replace package body cecred.TELA_COBTIT is
     CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%TYPE
                       ,pr_nrdconta IN craptdb.nrdconta%TYPE
                       ,pr_nrborder IN craptdb.nrborder%TYPE
-                      ,pr_cdbandoc IN craptdb.cdbandoc%TYPE
-                      ,pr_nrcnvcob IN craptdb.nrcnvcob%TYPE
                       ,pr_nrtitulo IN VARCHAR2)IS
       SELECT listagg(nrdocmto, ', ') WITHIN GROUP (ORDER BY nrdocmto) AS nrdocmto
-        FROM craptdb 
-       WHERE cdcooper = pr_cdcooper 
-         AND nrdconta = pr_nrdconta
-         AND nrborder = pr_nrborder 
-         AND cdbandoc = pr_cdbandoc
-         AND nrcnvcob = pr_nrcnvcob
-         AND nrtitulo IN (SELECT to_number(regexp_substr(pr_nrtitulo,'[^,]+', 1, LEVEL)) FROM dual
-                            CONNECT BY regexp_substr(pr_nrtitulo, '[^,]+', 1, LEVEL) IS NOT NULL);
+          FROM craptdb tdb
+    INNER JOIN tbdsct_titulo_cyber tcy ON tcy.cdcooper = tdb.cdcooper AND tcy.nrdconta = tdb.nrdconta AND tcy.nrborder = tdb.nrborder AND tcy.nrtitulo = tdb.nrtitulo
+     LEFT JOIN crapcyc cyc ON tcy.cdcooper = cyc.cdcooper AND tcy.nrdconta = cyc.nrdconta AND tcy.nrctrdsc = cyc.nrctremp AND cyc.cdorigem = 4
+     LEFT JOIN tbrecup_acordo_contrato acc ON acc.cdorigem = 4 AND acc.nrctremp = tcy.nrctrdsc 
+     LEFT JOIN tbrecup_acordo aco ON aco.nracordo = acc.nracordo AND aco.cdcooper = tcy.cdcooper AND aco.nrdconta = tcy.nrdconta
+         WHERE tdb.cdcooper = pr_cdcooper 
+           AND tdb.nrdconta = pr_nrdconta
+           AND tdb.nrborder = pr_nrborder 
+           AND (tdb.nrtitulo IN (SELECT to_number(regexp_substr(pr_nrtitulo,'[^,]+', 1, LEVEL)) FROM dual
+                              CONNECT BY regexp_substr(pr_nrtitulo, '[^,]+', 1, LEVEL) IS NOT NULL) OR pr_nrtitulo IS NULL)
+           AND NVL(cyc.flgehvip,0) = 0
+           AND (NVL(aco.cdsituacao,0) = 0 OR aco.cdsituacao = 3);
     rw_craptdb cr_craptdb%ROWTYPE;
     
     -- Variáveis de controle de calendário
@@ -7810,8 +7812,6 @@ create or replace package body cecred.TELA_COBTIT is
           OPEN cr_craptdb(pr_cdcooper => rw_crapcob.cdcooper
                          ,pr_nrdconta => rw_crapcob.nrdconta
                          ,pr_nrborder => rw_crapcob.nrctremp
-                         ,pr_cdbandoc => rw_crapcob.cdbandoc
-                         ,pr_nrcnvcob => rw_crapcob.nrcnvcob
                          ,pr_nrtitulo => rw_crapcob.dsparcelas);
           FETCH cr_craptdb INTO rw_craptdb;
           -- Se não encontrar
