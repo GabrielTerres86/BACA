@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2013                        Ultima atualizacao: 26/03/2018
+       Data    : Abril/2013                        Ultima atualizacao: 11/03/2019
 
        Dados referentes ao programa:
 
@@ -48,6 +48,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
 
                    26/03/2018 - Inclusão do pr_inpriori: Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos).
                                 Neste programa o valor DEFAULT eh 'T'. Criamos a PC_CRPS642_PRIORI com  valor DEFAULT 'S' .	(Fabiano B. Dias - AMcom)	 									 
+    
+                   11/03/2019 - Quando der erro na rotina pc atualiza trans nao efetiv, 
+                                gerar Log pois as rotinas chamadoras iram ignorar o erro.
+                                (Belli - Envolti - INC0034476)
 																
     ..............................................................................*/
     
@@ -181,7 +185,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
       --> Commit para garantir a gravação do parametro de 
       --> controle de execução do programa DEBSIC CTRL_DEBSIC_EXEC
       COMMIT;
-/*      
+
+      -- Ignorar o erro - 11/03/2019 - INC0034476      
       -- Procedure para atualizar o registro de transação para não efetivado
       PAGA0001.pc_atualiza_trans_nao_efetiv ( pr_cdcooper => pr_cdcooper  --Código da Cooperativa
                                              ,pr_nrdconta => 0           --Numero da Conta
@@ -189,13 +194,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
                                              ,pr_dtmvtolt => vr_dtmvtopg --Data Proximo Pagamento
                                              ,pr_dstransa => vr_dstransa --Msg Transacao
                                              ,pr_cdcritic => vr_cdcritic --Código de erro
-                                             ,pr_dscritic => vr_dscritic);
-      
-      IF  vr_dscritic IS NOT NULL  THEN
-        --Envio do log de erro
-        RAISE vr_exc_saida;
-      END IF;
-*/
+                                             ,pr_dscritic => vr_dscritic);      
+      vr_dscritic := NULL;
+      vr_cdcritic := NULL;
+         
       -- Carrega o numero de dias para baixa dos valores
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper
                                                 ,pr_nmsistem => 'CRED'
