@@ -6,14 +6,12 @@ BEGIN
    SET mot.dsmotivo = 'Conjuge com Operacoes em Atraso teste (Valor de Operacoes)'
   WHERE mot.idmotivo = 54;
   
-  INSERT INTO tbgen_motivo VALUES(69,'Eliminado via carga manual.',25,1,1);
-
-  INSERT INTO tbgen_motivo VALUES(72,'Solicitado via Aimaro pelo operador.',4,1,1);
-  INSERT INTO tbgen_motivo VALUES(73,'Situação da conta regularizada.',25,1,1);
-  INSERT INTO tbgen_motivo VALUES(74,'Reliberado pois prazo de bloqueio expirou.',25,1,1);
-  
-  INSERT INTO tbgen_motivo VALUES(75,'Titular cadastrado na CADCYB',25,1,1);
-  INSERT INTO tbgen_motivo VALUES(76,'Titular cadastrado na BLQJUD',25,1,1);
+  INSERT INTO tbgen_motivo(IDMOTIVO, DSMOTIVO, CDPRODUTO, FLGRESERVA_SISTEMA) VALUES(69, 'Eliminado via carga manual.', 25, 1);
+  INSERT INTO tbgen_motivo(IDMOTIVO, DSMOTIVO, CDPRODUTO, FLGRESERVA_SISTEMA) VALUES(72, 'Solicitado via Aimaro pelo operador.', 4, 1);
+  INSERT INTO tbgen_motivo(IDMOTIVO, DSMOTIVO, CDPRODUTO, FLGRESERVA_SISTEMA) VALUES(73, 'Situação da conta regularizada.', 25,1);
+  INSERT INTO tbgen_motivo(IDMOTIVO, DSMOTIVO, CDPRODUTO, FLGRESERVA_SISTEMA) VALUES(74, 'Reliberado pois prazo de bloqueio expirou.', 25, 1);
+  INSERT INTO tbgen_motivo(IDMOTIVO, DSMOTIVO, CDPRODUTO, FLGRESERVA_SISTEMA) VALUES(75, 'Titular cadastrado na CADCYB', 25, 1);
+  INSERT INTO tbgen_motivo(IDMOTIVO, DSMOTIVO, CDPRODUTO, FLGRESERVA_SISTEMA) VALUES(76, 'Titular cadastrado na BLQJUD', 25, 1);
   
 
 
@@ -27,10 +25,10 @@ BEGIN
                VALUES('CADMOT',SYSDATE)
            RETURNING nrseqrdr INTO vr_nrseqrdr;  
   
-	INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
+  INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
                VALUES(vr_nrseqrdr, 'LISTA_MOTIVOS','TELA_CADMOT','pc_lista_motivos','pr_nrregist,pr_nriniseq');
   
-	INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
+  INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
                VALUES(vr_nrseqrdr, 'LISTA_COMOBO_PRODUTOS','TELA_CADMOT','pc_lista_produtos','');
   
   INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
