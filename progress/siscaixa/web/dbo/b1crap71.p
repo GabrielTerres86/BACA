@@ -1237,8 +1237,9 @@ PROCEDURE estorna-cheque-com-captura:
                        craplot.qtinfoln  = craplot.qtinfoln - 1
                        craplot.vlcompcr  = craplot.vlcompcr - craplcm.vllanmto
                        craplot.vlinfocr  = craplot.vlinfocr - craplcm.vllanmto
-                       p-valor           = p-valor + craplcm.vllanmto.
                 */
+
+                ASSIGN p-valor = p-valor + craplcm.vllanmto.
 
                 DELETE b-craplcm.
                 DELETE crapdpb.
