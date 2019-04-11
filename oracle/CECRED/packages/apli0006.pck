@@ -21,8 +21,8 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
   --             13/02/2019 - Retornar como saldo o campo "vlsldatl" no caso de consulta de saldo no mesmo dia que a aplicação foi criada
   --                          CIS Corporate
   --             18/03/2019 - PRB0040683 nas rotinas pc_posicao_saldo_aplicacao_pos e pc_posicao_saldo_aplicacao_pre,
-                              feitos os tratamentos de erros para que possíveis pontos de correção 
-                              sejam identificados (Carlos)
+  --                          feitos os tratamentos de erros para que possíveis pontos de correção 
+  --                          sejam identificados (Carlos)
 
   --             01/04/2019 - P411.3 adicionado o controle de carência nas pc_posicao_saldo_aplicacao_pos | pre (David Valente - Envolti)
   --------------------------------------------------------------------------------------------------------------- */
