@@ -7136,7 +7136,8 @@ function validaDados(cdcooper, tela) { //bruno - prj 438 - 14625 - TELA_SOLICITA
         var perfatcl = $('#perfatcl', '#frmDadosPropPj').val();
 
         if (perfatcl <= 0 || perfatcl > 100) {
-            return limpaMsg(false, '269 - Valor errado.');
+            //return limpaMsg(false, '269 - Valor errado.'); BUG18425
+            return limpaMsg(false, 'Cadastro incompleto. Passe pela tela CONTAS.');
         }
 
     } else if (in_array(operacao, ['A_DADOS_PROP', 'A_DADOS_PROP'])) {
