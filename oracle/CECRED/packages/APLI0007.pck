@@ -21,6 +21,18 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
   --                        - Remover o tempo de espera para o envio dos arquivos gerados. Passa
   --                          a considerar como processados os arquivos quando são colocados na 
   --                          pasta envia. (Daniel - Envolti)
+  --
+  --
+  -- Alterações: 05/03/2019 - P411 
+  --				          Ajuste Calculo da quantidade de cotas referente a operação atual
+  --						  alterado para compatibilizar com a B3;							  
+  --						  REGRA ANTIGA -> vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
+  --						  REGRA NOVA   -> vr_qtcotas_resg := fn_converte_valor_em_cota(rw_lcto.valorbase);						  
+  --                        - (David Valente - Envolti)
+	
+																		  
+														 
+	
   -- ----------------------------------------------------------------------------------- 
   
   -- Retornar tipo da Aplicação enviada
@@ -28,6 +40,11 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
                         ,pr_tpaplica IN NUMBER
                         ,pr_nrdconta IN NUMBER
                         ,pr_nraplica IN NUMBER) RETURN VARCHAR2;
+  
+														  
+															
+															
+																					
   
   -- Função para mostrar a descrição conforme o tipo do Arquivo enviado 
   FUNCTION fn_tparquivo_custodia(pr_idtipo_arquivo IN NUMBER        -- Tipo do Arquivo (1-Registro,2-Resgate,3-Exclusão,9-Conciliação)
@@ -41,9 +58,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
                           
   -- Rotina para processar retorno de conciliação pendentes de processamento
   PROCEDURE pc_processo_controle(pr_tipexec   IN NUMBER     --> Tipo da Execução
-                                ,pr_dsinform OUT VARCHAR2   --> Descrição de informativos na execução
+                                ,pr_dsinform OUT CLOB   --> Descrição de informativos na execução
                                 ,pr_dscritic OUT VARCHAR2); --> Descrição de critica
   
+					
 END APLI0007;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
@@ -1025,8 +1043,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,rda.dtmvtolt dtmvtapl
                       ,decode(capl.tpaplicacao,1,rda.qtdiaapl,rda.qtdiauti) qtdiacar
                       ,lap.progress_recid
-					  ,lap.vlpvlrgt valorbase						 
-									  
+					  ,lap.vlpvlrgt valorbase
+					  ,hst.cdhistorico									  
                   FROM craplap lap
                       ,craprda rda
                       ,crapdtc dtc
@@ -1075,7 +1093,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,rac.qtdiacar
                       ,lac.progress_recid
 					  ,lac.vlbasren valorbase				 
-															
+					  ,hst.cdhistorico										
                   FROM craplac lac
                       ,craprac rac
                       ,tbcapt_custodia_aplicacao capl
@@ -1370,6 +1388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           -- Buscar todos os movimentos de Operações dos últimos 2 dias  
           -- que ainda não estejam marcados para envio (idlctcus is null)
           FOR rw_lcto IN cr_lctos_rgt(rw_cop.cdcooper,vr_dtmvto2a,rw_crapdat.dtmvtolt,vr_dtinictd) LOOP
+			
             -- Se mudou data, conta ou aplicação
             IF vr_dtmvtolt <> rw_lcto.dtmvtolt OR vr_nrdconta <> rw_lcto.nrdconta OR vr_nraplica <> rw_lcto.nraplica THEN
               -- Armazenar quantidade de cotas 
@@ -1392,6 +1411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                                        ,pr_idcritic => vr_idcritic              --> Identificador critica
                                        ,pr_cdcritic => vr_cdcritic              --> Codigo da critica
                                        ,pr_dscritic => vr_dscritic);            --> Retorno de críticaca
+				
                 -- Código comum, para gravação do LOG independente de sucesso ou não
                 IF vr_dscritic IS NOT NULL THEN
                   -- Houve erro
@@ -1421,6 +1441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                 IF vr_sldaplic = 0 THEN
                   vr_sldaplic := rw_lcto.vllanmto;
                 END IF;
+				 
                   -- Calcular preço unitario
 				          IF vr_qtcotas = 0 THEN
 				            pr_dsdaviso := pr_dsdaviso || vr_dscarque || fn_get_time_char || ' Resgate com cotas zerada! '||  rw_cop.cdcooper ||' '|| rw_lcto.nrdconta ||' '|| rw_lcto.nraplica;
@@ -1428,13 +1449,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
 				          ELSE
 							vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
 						  END IF;
+						  /*
+							Autor : David Valente
+							Em 05/03/2019 P411
+
+							Calculo da quantidade de cotas referente a operação atual
+							alterado para compatibilizar com a B3;
+							vr_qtftcota é uma CONSTANTE COM O VALOR  = R$0,01 (1 Centavo)
+							REGRA ANTIGA -> vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
+						  */
 						  vr_qtcotas_resg := fn_converte_valor_em_cota(rw_lcto.valorbase);
 																				  
               ELSE
                 -- Quando carencia usar sempre a pu da emissão
                 vr_vlpreco_unit := rw_lcto.vlpreco_registro;
 				vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);															 
+				
               END IF;
+			  
               -- Armazena informações do registro atual
               vr_dtmvtolt := rw_lcto.dtmvtolt;
               vr_nrdconta := rw_lcto.nrdconta;
@@ -4671,6 +4703,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       vr_flprccnc := gene0001.fn_param_sistema('CRED',0,'FLG_CONCILIA_CUSTODIA_B3'); 
       vr_dtultcnc := to_date(gene0001.fn_param_sistema('CRED',0,'DAT_CONCILIA_CUSTODIA_B3'),'dd/mm/rrrr'); 
       
+											  
 											
 
       -- Montar o texto da janela de execução
@@ -5050,4 +5083,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
   END pc_processo_controle;
   
 END APLI0007;
-/
