@@ -59,6 +59,9 @@
 		$indescsg = ( isset($_POST["indescsg"]) ) ? $_POST["indescsg"] : '';
 	}else {
 		$indescsg = ( isset($_POST["flnecont"]) ) ? $_POST["flnecont"] : '';
+        if ($indescsg == '1'){
+            $indescsg = 2;
+        }
 	}
 	
 	
@@ -110,6 +113,9 @@
 		$old_indescsg = ( isset($_POST["old_indescsg"]) ) ? $_POST["old_indescsg"] : '';	
 	}else{
 		$old_indescsg = ( isset($_POST["old_flnecont"]) ) ? $_POST["old_flnecont"] : '';
+        if ($old_indescsg == '1'){
+            $old_indescsg = 2;
+        }
 	}
     	
 	$old_flgpagto = ( isset($_POST["old_flgpagto"]) ) ? $_POST["old_flgpagto"] : '';

@@ -309,7 +309,7 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 					echo '	<option value="3">INSS</option>';
 					echo '</select>';
 					echo '<input name="ddmesnov" type="hidden"  id="ddmesnov" class="campo" />';
-					echo '<input name="indescsg" type="hidden" id="indescsg" />';
+					echo '<input type="checkbox" id = "indescsg" name="indescsg" style="margin-right:10px; display:none;"/>';
 				}
 			?>
 			
