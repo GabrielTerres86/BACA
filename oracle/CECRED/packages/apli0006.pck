@@ -20,9 +20,11 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
   --                          Cláudio - CIS Corporate
   --             13/02/2019 - Retornar como saldo o campo "vlsldatl" no caso de consulta de saldo no mesmo dia que a aplicação foi criada
   --                          CIS Corporate
-  /*             18/03/2019 - PRB0040683 nas rotinas pc_posicao_saldo_aplicacao_pos e pc_posicao_saldo_aplicacao_pre,
+  --             18/03/2019 - PRB0040683 nas rotinas pc_posicao_saldo_aplicacao_pos e pc_posicao_saldo_aplicacao_pre,
                               feitos os tratamentos de erros para que possíveis pontos de correção 
                               sejam identificados (Carlos)
+
+  --             01/04/2019 - P411.3 adicionado o controle de carência nas pc_posicao_saldo_aplicacao_pos | pre (David Valente - Envolti)
   --------------------------------------------------------------------------------------------------------------- */
 
   -- Rotina referente a atualizar saldo de aplicacoes de aplicacao pós
@@ -39,6 +41,7 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
                                           ,pr_dtinical IN DATE                  --> Data Inicial Cálculo
                                           ,pr_dtfimcal IN DATE                  --> Data Final Cálculo
                                           ,pr_idtipbas IN PLS_INTEGER           --> Tipo Base Cálculo – 1-Parcial/2-Total)
+										  ,pr_flgcaren IN PLS_INTEGER DEFAULT 0 --> Flag para ignorar a carencia (0 - nao ignora / 1 - sim ignora)																										  
                                           ,pr_vlbascal IN OUT NUMBER            --> Valor Base Cálculo (Retorna valor proporcional da base de cálculo de entrada)
                                           ,pr_vlsldtot OUT NUMBER               --> Saldo Total da Aplicação
                                           ,pr_vlsldrgt OUT NUMBER               --> Saldo Total para Resgate
@@ -64,6 +67,7 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
                                           ,pr_dtinical IN DATE                  --> Data Inicial Cálculo
                                           ,pr_dtfimcal IN DATE                  --> Data Final Cálculo
                                           ,pr_idtipbas IN PLS_INTEGER           --> Tipo Base Cálculo – 1-Parcial/2-Total)
+										  ,pr_flgcaren IN PLS_INTEGER DEFAULT 0 --> Flag para ignorar a carencia (0 - nao ignora / 1 - sim ignora)																																		
                                           ,pr_vlbascal IN OUT NUMBER            --> Valor Base Cálculo (Retorna valor proporcional da base de cálculo de entrada)
                                           ,pr_vlsldtot OUT NUMBER               --> Saldo Total da Aplicação
                                           ,pr_vlsldrgt OUT NUMBER               --> Saldo Total para Resgate
@@ -132,6 +136,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
                                           ,pr_dtinical IN DATE                  --> Data Inicial Cálculo
                                           ,pr_dtfimcal IN DATE                  --> Data Final Cálculo
                                           ,pr_idtipbas IN PLS_INTEGER           --> Tipo Base Cálculo – 1-Parcial/2-Total)
+										  ,pr_flgcaren IN PLS_INTEGER DEFAULT 0 --> Flag para ignorar a carencia (0 - nao ignora / 1 - sim ignora)																										  
                                           ,pr_vlbascal IN OUT NUMBER            --> Valor Base Cálculo (Retorna valor proporcional da base de cálculo de entrada)
                                           ,pr_vlsldtot OUT NUMBER               --> Saldo Total da Aplicação
                                           ,pr_vlsldrgt OUT NUMBER               --> Saldo Total para Resgate
@@ -503,16 +508,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
         pr_vlultren := vr_vlrentot;
         pr_vlrentot := (vr_vlprovis - vr_vlrevers) + vr_vlrentot;
         pr_vlrevers := pr_vlrentot;
-
-        -- Verifica se a aplicação estiver na carência e o resgate for total
-        IF vr_qtdiasir < pr_qtdiacar THEN
-          pr_vlsldtot := rw_craprac.vlbasapl;
-          pr_vlsldrgt := rw_craprac.vlbasapl;
-          pr_vlrentot := 0;
-          pr_vlrdirrf := 0;
-          pr_vlbascal := rw_craprac.vlbasapl;
-
-        END IF;
+								  
+		-- So considera a carencia P411
+        IF pr_flgcaren = 0 THEN					   
+			-- Verifica se a aplicação estiver na carência e o resgate for total
+			IF vr_qtdiasir < pr_qtdiacar THEN
+			  pr_vlsldtot := rw_craprac.vlbasapl;
+			  pr_vlsldrgt := rw_craprac.vlbasapl;
+			  pr_vlrentot := 0;
+			  pr_vlrdirrf := 0;
+			  pr_vlbascal := rw_craprac.vlbasapl;
+			END IF;
+		END IF;	   
 
       ELSIF pr_idtipbas = 1 THEN
         -- Base Cálculo Parcial
@@ -521,19 +528,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
         pr_vlrentot := vr_vlrentot;
         pr_vlrevers := vr_vlrentot;
 
-        -- Verifica se a aplicação estiver na carência e o resgate for parcial
-        IF vr_qtdiasir < pr_qtdiacar THEN
-          pr_vlsldtot := pr_vlbascal;
-          pr_vlsldrgt := pr_vlbascal;
-          pr_vlrentot := 0;
-          pr_vlrdirrf := 0;
-
-        END IF;
+								  
+		-- So considera a carencia P411
+        IF pr_flgcaren = 0 THEN					   
+			-- Verifica se a aplicação estiver na carência e o resgate for parcial
+			IF vr_qtdiasir < pr_qtdiacar THEN
+			  pr_vlsldtot := pr_vlbascal;
+			  pr_vlsldrgt := pr_vlbascal;
+			  pr_vlrentot := 0;
+			  pr_vlrdirrf := 0;
+			END IF;
+		END IF;	   
 
       END IF;
 
-      -- Os cálculos abaixo deverão ser executados somente a aplicação passou o período de carência
-      IF vr_qtdiasir >= pr_qtdiacar THEN
+      -- Os cálculos abaixo deverão ser executados somente SE a aplicação passou o período de carência
+      -- ou se estivermos ignorando a carencia
+      IF (vr_qtdiasir >= pr_qtdiacar) OR
+         (pr_flgcaren = 1 /* ignora a carencia*/ ) THEN
+													   
 
         -- O valor do IRRF deve ser calculado com base no rendimento total
         pr_vlrdirrf := ROUND(pr_vlrentot * (pr_percirrf / 100), 2);
@@ -621,6 +634,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
                                           ,pr_dtinical IN DATE                  --> Data Inicial Cálculo
                                           ,pr_dtfimcal IN DATE                  --> Data Final Cálculo
                                           ,pr_idtipbas IN PLS_INTEGER           --> Tipo Base Cálculo – 1-Parcial/2-Total)
+										  ,pr_flgcaren IN PLS_INTEGER DEFAULT 0 --> Flag para ignorar a carencia (0 - nao ignora / 1 - sim ignora)																										  
                                           ,pr_vlbascal IN OUT NUMBER            --> Valor Base Cálculo (Retorna valor proporcional da base de cálculo de entrada)
                                           ,pr_vlsldtot OUT NUMBER               --> Saldo Total da Aplicação
                                           ,pr_vlsldrgt OUT NUMBER               --> Saldo Total para Resgate
@@ -985,16 +999,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
         pr_vlultren := vr_vlrentot;
         pr_vlrentot := (vr_vlprovis - vr_vlrevers) + vr_vlrentot;
         pr_vlrevers := pr_vlrentot;
-
-        -- Verifica se a aplicação estiver na carência e o resgate for total
-        IF vr_qtdiasir < pr_qtdiacar THEN
-          pr_vlsldtot := rw_craprac.vlbasapl;
-          pr_vlsldrgt := rw_craprac.vlbasapl;
-          pr_vlrentot := 0;
-          pr_vlrdirrf := 0;
-          pr_vlbascal := rw_craprac.vlbasapl;
-
-        END IF;
+								  
+		-- So considera a carencia P411
+        IF pr_flgcaren = 0 THEN					   
+			-- Verifica se a aplicação estiver na carência e o resgate for total
+			IF vr_qtdiasir < pr_qtdiacar THEN
+			  pr_vlsldtot := rw_craprac.vlbasapl;
+			  pr_vlsldrgt := rw_craprac.vlbasapl;
+			  pr_vlrentot := 0;
+			  pr_vlrdirrf := 0;
+			  pr_vlbascal := rw_craprac.vlbasapl;
+			END IF;
+		END IF;	   
 
       ELSIF pr_idtipbas = 1 THEN
         -- Base Cálculo Parcial
@@ -1002,20 +1018,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
         pr_vlultren := vr_vlrentot;
         pr_vlrentot := vr_vlrentot;
         pr_vlrevers := vr_vlrentot;
-
-        -- Verifica se a aplicação estiver na carência e o resgate for parcial
-        IF vr_qtdiasir < pr_qtdiacar THEN
-          pr_vlsldtot := pr_vlbascal;
-          pr_vlsldrgt := pr_vlbascal;
-          pr_vlrentot := 0;
-          pr_vlrdirrf := 0;
-
-        END IF;
+								  
+		-- So considera a carencia P411
+        IF pr_flgcaren = 0 THEN					   
+			-- Verifica se a aplicação estiver na carência e o resgate for parcial
+			IF vr_qtdiasir < pr_qtdiacar THEN
+			  pr_vlsldtot := pr_vlbascal;
+			  pr_vlsldrgt := pr_vlbascal;
+			  pr_vlrentot := 0;
+			  pr_vlrdirrf := 0;
+			END IF;
+		END IF;	   
 
       END IF;
 
       -- Os cálculos abaixo deverão ser executados somente a aplicação passou o período de carência
-      IF vr_qtdiasir >= pr_qtdiacar THEN
+      IF vr_qtdiasir >= pr_qtdiacar  OR
+         (pr_flgcaren = 1 /* ignora a carencia*/ ) THEN
+													   
 
         -- O valor do IRRF deve ser calculado com base no rendimento total
         pr_vlrdirrf := ROUND(pr_vlrentot * (pr_percirrf / 100), 2);
