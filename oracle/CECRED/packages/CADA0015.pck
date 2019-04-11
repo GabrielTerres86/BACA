@@ -5418,6 +5418,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                     05/07/2018 - Para solucionar o problema do incidente INC0018017 foi necessário
                                  a priorizar a atualização das pessoas no cursor para olhar a CRAPJFN
                                  primeiro (Kelvin/Adrino).
+
+					11/04/2019 - Reiniciar variáveis de cursores, para que não tenha
+							     inconsistências de dados ao efetuar atualizações/exclusões
+							     nas tabelas do cadastro unificado. 
+								 Alcemir - Mouts (PRB0040624).
+					
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -5695,6 +5701,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       CASE UPPER(rw_pessoa_atlz.nmtabela)
 
         WHEN 'CRAPCJE' THEN
+          
+          rw_crapcje := NULL; -- reiniciar variável do cursor cr_crapcje;
+          
           -- Buscar conjuge
           OPEN cr_crapcje( pr_cdcooper => rw_pessoa_atlz.cdcooper,
                            pr_nrdconta => rw_pessoa_atlz.nrdconta,
@@ -5735,6 +5744,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_dscritic    => vr_dscritic);         --> Retorno de Erro
 
         WHEN 'CRAPTFC' THEN
+          
+          rw_craptfc := NULL; -- reiniciar variável do cursor cr_craptfc;
+           
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
 
@@ -5769,7 +5781,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_cdoperad    => 1                     --> Operador que esta efetuando a operacao
                               ,pr_dscritic    => vr_dscritic);         --> Retorno de Erro
 
-				WHEN 'CRAPCEM' THEN
+	    WHEN 'CRAPCEM' THEN
+          
+          rw_crapcem := NULL; -- reiniciar variável do cursor cr_crapcem;
+          
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
 
@@ -5804,6 +5819,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
 				WHEN 'CRAPBEM' THEN
+          
+          rw_crapbem := NULL; -- reinciar variável do cursor cr_crapbem;
+          
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
 
@@ -5838,7 +5856,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
 
-				WHEN 'CRAPEPA' THEN
+	    WHEN 'CRAPEPA' THEN
+          
+          rw_crapepa := NULL; -- reiniciar variável do cursor cr_crapepa;
+           
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
 
@@ -5871,7 +5892,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
 
-				WHEN 'CRAPAVT' THEN
+	    WHEN 'CRAPAVT' THEN
+          
+          rw_crapavt := NULL; -- reiniciar variavel do cursor cr_crapavt;
+          
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
 
@@ -5909,7 +5933,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
 
-				WHEN 'CRAPCRL' THEN
+		WHEN 'CRAPCRL' THEN
+          
+          rw_crapcrl := NULL; -- reiniciar variavel do cursor cr_crapcrl;
+          
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
 
@@ -5949,6 +5976,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
 
         WHEN 'CRAPDEP' THEN
+          
+          rw_crapdep := NULL; -- reiniciar variavel do cursor cr_crapdep;
+          
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
 
@@ -5984,6 +6014,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
 
 				WHEN 'TBCADAST_POLITICO_EXPOSTO' THEN
+          
+          rw_politico_exposto := NULL; -- reiniciar variavel do cursor cr_politico_exposto;
+          
           -- Buscar titular politicamento exposto
           OPEN cr_politico_exposto( pr_cdcooper => rw_pessoa_atlz.cdcooper
 																	 ,pr_nrdconta => rw_pessoa_atlz.nrdconta
@@ -6013,7 +6046,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 																			 ,pr_cdoperad => 1                            --> Operador que esta efetuando a operacao
 																			 ,pr_dscritic => vr_dscritic);                --> Retorno de Erro
 
-				WHEN 'CRAPTTL' THEN
+		WHEN 'CRAPTTL' THEN
+          
+          rw_crapttl := NULL; -- reiniciar variavel do cursor cr_crapttl;
+        
           -- Buscar titular da conta
           OPEN cr_crapttl( pr_cdcooper => rw_pessoa_atlz.cdcooper
 												  ,pr_nrdconta => rw_pessoa_atlz.nrdconta
@@ -6063,6 +6099,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             -- Busca o ID PESSOA do email
             IF rw_crapttl.idseqttl = 1 THEN
               vr_idinclusao := FALSE;
+              rw_conta_comunic_soa := NULL; -- reiniciar variavel do cursor cr_conta_comunic_soa;
+              
               -- Busca os dados da ultima inclusao do historico
               OPEN cr_conta_comunic_soa(rw_crapttl.cdcooper, rw_crapttl.nrdconta);
               FETCH cr_conta_comunic_soa INTO rw_conta_comunic_soa;
@@ -6072,6 +6110,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               CLOSE cr_conta_comunic_soa;
                   
               IF vr_idinclusao THEN
+                
+                rw_crapass := NULL; -- reiniciar variavel do cursor cr_crapass;
+                
                 -- Buscar conta do cooperado
                 OPEN cr_crapass( pr_cdcooper => rw_crapttl.cdcooper
                                 ,pr_nrdconta => rw_crapttl.nrdconta);
@@ -6153,7 +6194,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             END;
           END IF;
 
-				WHEN 'CRAPENC' THEN
+		WHEN 'CRAPENC' THEN
+          
+          rw_crapenc := NULL; -- reiniciar variavel do cursor cr_crapenc; 
+          
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
 
@@ -6190,6 +6234,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
 
         WHEN 'CRAPASS' THEN
+          
+          rw_crapass := NULL; -- reiniciar variavel do cursor cr_crapenc; 
+          rw_conta_comunic_soa := NULL; -- reiniciar variavel do cursor cr_conta_comunic_soa;
+          rw_crapass_2 := NULL; -- reiniciar variavel do cursor cr_crapass_2;  
+
           -- Buscar conta do cooperado
           OPEN cr_crapass( pr_cdcooper => rw_pessoa_atlz.cdcooper
 												  ,pr_nrdconta => rw_pessoa_atlz.nrdconta);
@@ -6375,7 +6424,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
           END IF;
 
-			  WHEN 'CRAPJUR' THEN
+	    WHEN 'CRAPJUR' THEN
+          
+          rw_crapjur := NULL; -- reiniciar variavel do cursor cr_crapjur; 
+          
           -- Buscar conta PJ
           OPEN cr_crapjur( pr_cdcooper => rw_pessoa_atlz.cdcooper
 												  ,pr_nrdconta => rw_pessoa_atlz.nrdconta);
@@ -6403,7 +6455,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 														  ,pr_cdoperad => 1                   --> Operador que esta efetuando a operacao
 														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
 
-			  WHEN 'CRAPJFN' THEN
+		WHEN 'CRAPJFN' THEN
+          
+          rw_crapjfn := NULL; -- reiniciar variavel do cursor cr_crapjur; 
+          
           -- Buscar dados financeiros dos cooperados PJ
           OPEN cr_crapjfn( pr_cdcooper => rw_pessoa_atlz.cdcooper
 												  ,pr_nrdconta => rw_pessoa_atlz.nrdconta);
@@ -6431,7 +6486,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 														  ,pr_cdoperad => 1                   --> Operador que esta efetuando a operacao
 														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
 
-				WHEN 'CRAPOPI' THEN
+		WHEN 'CRAPOPI' THEN
+          
+          rw_atualiza_opi := NULL; -- reiniciar variavel do cursor cr_atualiza_opi; 
+          rw_crapopi := NULL; -- reiniciar variavel do cursor cr_crapopi; 
+
           -- Quebrar chave da tabela
           vr_tab_campos := gene0002.fn_quebra_string(rw_pessoa_atlz.dschave,';');
 
