@@ -21,7 +21,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
       -- Variáveis de retorno da procedure pc_busca_saldo_aplicacoes
       vr_vlsldtot  NUMBER;
       vr_vlsldrgt  NUMBER;
-      
+
       -- Indice para tabela temporária 
       vr_index_saldo_aplica PLS_INTEGER;
 
@@ -108,7 +108,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
       vr_percirtab         craptab.dstextab%TYPE;  --> Variavel para armazenar mensagem tabela generica IR
       vr_rpp_vlsdrdpp craprpp.vlsdrdpp%type := 0;  --> Valor do saldo da poupança programada
       vr_dstextab          craptab.dstextab%TYPE;  -->
-      vr_dup_vlsdrdca      craplap.vllanmto%TYPE;  --> Acumulo do saldo da aplicacao RDCA  
+      vr_dup_vlsdrdca      craplap.vllanmto%TYPE;  --> Acumulo do saldo da aplicacao RDCA     
       
       -- Tipo para instanciar PL TABLE para armazenar registros referentes as aplicação cadastradas
       TYPE typ_reg_crapdtc IS RECORD(tpaplrdc crapdtc.tpaplrdc%TYPE);
@@ -116,7 +116,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
       -- Instancia e indexa o tipo da PL TABLE para liberar para uso
       TYPE typ_tab_crapdtc IS TABLE OF typ_reg_crapdtc INDEX BY VARCHAR2(3);
       vr_tab_crapdtc typ_tab_crapdtc;
-      
+
       -- Cursor dos dados da cooperativa
       CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS  --> Código da cooperativa
          SELECT cop.nmrescop
@@ -159,7 +159,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
              AND rda.cdcooper = pr_cdcooper
              AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
              AND rda.insaqtot = 0;                  
-      
+
        -- Cursor registros de Poupança Programada
       CURSOR cr_craprpp(pr_cdcooper    IN crapcob.cdcooper%TYPE     --> Código da cooperativa
                           ,pr_nrdconta IN craprpp.nrdconta%TYPE) IS --> Número da conta
@@ -171,10 +171,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
            FROM craprpp ca
            WHERE ca.cdcooper = pr_cdcooper
              AND ca.nrdconta = pr_nrdconta;
-      
+
        -- Cursor registros de aplicações de captação NÃO PROGRAMADAS
       CURSOR cr_craprac(pr_cdcooper IN craprac.cdcooper%TYPE
-                        ,pr_cdagenci IN crapass.cdagenci%TYPE
                         ,pr_nrdconta IN craprac.nrdconta%TYPE) IS
          SELECT craprac.nraplica nraplica
                ,craprac.cdprodut cdprodut               
@@ -192,7 +191,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
                ,crapcpc --> Cadastro dos produtos de captacao
           WHERE craprac.cdcooper = pr_cdcooper
             AND craprac.nrdconta = pr_nrdconta
-            AND crapass.cdagenci = pr_cdagenci
+			AND craprac.idsaqtot = 0
             AND crapass.cdcooper = craprac.cdcooper
             AND crapass.nrdconta = craprac.nrdconta
             AND crapcpc.cdprodut = craprac.cdprodut;
@@ -234,12 +233,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
       -- Instancia e indexa o tipo da PL TABLE para liberar para uso
       TYPE typ_tab_saldo_plano IS TABLE OF typ_reg_saldo_plano INDEX BY VARCHAR2(20);
       vr_tab_saldo_plano  typ_tab_saldo_plano;
-     
+      
       -- Estutura de tabela temporária 
       -- para melhorar a performance do insert na tabela TBCAPT_SALDO_APLICA
       TYPE typ_tab_insert_saldo_aplica IS TABLE OF TBCAPT_SALDO_APLICA%ROWTYPE INDEX BY PLS_INTEGER;
       tab_insert_saldo_aplica typ_tab_insert_saldo_aplica;
-                   
+      
       -- INSERE OS SALDOS DAS APLICAÇÕES DIARIAMENTE
       PROCEDURE pc_insere_saldo_aplic
                   (pr_cdcooper       IN NUMBER --> Código da cooperativa
@@ -255,7 +254,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
          --Inicializar variavel de erro
          pr_des_erro := NULL;              
 
-         BEGIN 
+         BEGIN
            
            -- Verifica se existe indice para a tabela, caso não exista, cria com indice 1
            if not tab_insert_saldo_aplica.exists(1) then
@@ -282,7 +281,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
       END; --pc_insere_saldo_aplic
                                             
       -- Subprocedure para execução das SubRotinas
-      PROCEDURE pc_sub_rotinas(pr_des_erro OUT VARCHAR2) IS --> Erros no processo
+     PROCEDURE pc_sub_rotinas(pr_des_erro OUT VARCHAR2) IS --> Erros no processo
      BEGIN
        DECLARE
          vr_exe_erro  EXCEPTION; --> Variável para controle de exceção              
@@ -656,7 +655,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
 
               -- APLICAÇÕES PCAPTA
               FOR rw_craprac IN cr_craprac(pr_cdcooper => pr_cdcooper
-                                          ,pr_cdagenci => rw_crapass.cdagenci
                                           ,pr_nrdconta => rw_crapass.nrdconta) LOOP
                 
                 vr_vlbascal := 0;
@@ -816,7 +814,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
 
           END LOOP; -- FECHA O LOOP FOR rw_crapass
 
-                 
+       
           -- Processo OK, devemos chamar a fimprg
           btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                                    ,pr_cdprogra => vr_cdprogra
@@ -831,7 +829,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
   
           
           COMMIT; --> Comfirma as operações no banco de dados.
-          
+
           -- Apaga a TABELA TEMPORÁRIA
           vr_tab_craprda.delete;
           vr_tab_saldo_plano.delete;
@@ -875,7 +873,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS753 (pr_cdcooper  IN craptab.cdcooper%
      END pc_sub_rotinas;
 
       
-BEGIN         
+BEGIN 
     -- Incluir nome do módulo logado
     GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
                               ,pr_action => NULL);
