@@ -1017,8 +1017,12 @@ PROCEDURE atualiza_browser:
               ASSIGN aux_dstpdcto = "DOCUMENTOS RESPONSAVEL LEGAL".
           WHEN 52 THEN
               ASSIGN aux_dstpdcto = "DOCUMENTO SÓCIOS/ADMINISTRADORES".
+          WHEN 54 THEN
+              ASSIGN aux_dstpdcto = "FICHA CADASTRAL".
           WHEN 55 THEN
               ASSIGN aux_dstpdcto = "DECLARACAO SIMPLES NACIONAL".          
+          WHEN 56 THEN
+              ASSIGN aux_dstpdcto = "DECLARAÇAO PESSOA JURÍDICA COOPERATIVA".          
           WHEN 58 THEN
               ASSIGN aux_dstpdcto = "TERMO DE ALTERAÇAO DE TITULARIDADE".    
           WHEN 59 THEN

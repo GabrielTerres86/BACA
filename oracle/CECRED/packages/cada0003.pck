@@ -851,7 +851,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             20/08/2018 - Não considerar cheque cancelado como sendo um produto contratado.
   --                          Rotina fn_produto_habilitado, cursor cr_crapfdc (Wagner, INC0021862).  
-  --                        
+  --
   --             12/12/2018 - Remoção da atualização da capa de lote
   --                          Yuri - Mouts
   --
@@ -2622,6 +2622,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_criestcv BOOLEAN;
       vr_idseqttl INTEGER;
       vr_tpdocmto INTEGER;
+      type tipodoct IS VARRAY(2) OF INTEGER;
+      tpdoctos tipodoct := tipodoct(6, 54);
 
 
       -- Variaveis para a duplicacao da conta
@@ -3120,7 +3122,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       END;
 
       -- Efetua o loop sobre a tabela de controle de documentos digitalizados
-      FOR x IN 6..7 LOOP
+      FOR x IN 1..tpdoctos.count LOOP
         
         -- Pessoa juridica vamos gravar como zero a titularidade
         IF rw_crapass.inpessoa <> 1 THEN
@@ -3135,7 +3137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                           ,pr_idseqttl  => vr_idseqttl                   --> Indicador de titular
                                           ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc --> Numero do CPF/CNPJ
                                           ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento
-                                          ,pr_lstpdoct  => x                   --> lista de Tipo do documento separados por ;
+                                          ,pr_lstpdoct  => tpdoctos(x)         --> lista de Tipo do documento separados por ;
                                           ,pr_cdoperad  => nvl(pr_cdoperad,' ')--> Codigo do operador
                                           ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica
                                           ,pr_dscritic  => vr_dscritic);       --> Descricao da critica
