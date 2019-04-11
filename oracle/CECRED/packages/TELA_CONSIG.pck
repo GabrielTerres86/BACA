@@ -837,6 +837,7 @@ BEGIN
     -- Caso ocorra alteração do Dia Fechamento Folha na tela CONSIG, esta deve ser refletida na tela CADEMP.
     UPDATE crapemp emp
        SET dtfchfol = nvl(pr_dtfchfol, dtfchfol)
+          ,indescsg = decode(pr_indconsignado,'1','2','1') -- crapemp.indescsg = 2 = empresa consignado
      WHERE emp.cdempres = pr_cdempres
        AND emp.cdcooper = pr_cdcooper;
 
@@ -1257,13 +1258,14 @@ BEGIN
       
        RETURNING idemprconsig 
             INTO pr_idemprconsig; /*P437*/
-       
+            
       pr_dsmensag := 'Convênio de consignado criado com sucesso.';
     END IF;
 
     -- Caso ocorra alteração do Dia Fechamento Folha na tela CONSIG, esta deve ser refletida na tela CADEMP.
     UPDATE crapemp emp
        SET dtfchfol = nvl(pr_dtfchfol, dtfchfol)
+          ,indescsg = 2 -- empresa consignado  /*P437*/
      WHERE emp.cdempres = pr_cdempres
        AND emp.cdcooper = pr_cdcooper;
     
@@ -1589,6 +1591,12 @@ BEGIN
      WHERE tec.cdempres = pr_cdempres
        AND tec.cdcooper = pr_cdcooper;
 
+    -- P437 - Caso ocorra alteração no Convenio Consignado na tela CONSIG, esta deve ser refletida na tela CADEMP.
+    UPDATE crapemp emp
+       SET indescsg = 1 -- não é convênio de consignado  /*P437*/
+     WHERE emp.cdempres = pr_cdempres
+       AND emp.cdcooper = pr_cdcooper;
+    
     pr_dsmensag := 'Convênio de consignado desabilitado com sucesso.';
 
   EXCEPTION
