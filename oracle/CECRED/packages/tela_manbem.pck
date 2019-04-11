@@ -4700,13 +4700,6 @@ create or replace package body cecred.tela_manbem is
       return;
     end if;
     
-    -- Nacionalidade obrigatoria
-    if nvl(trim(par_cdnacion),0) = 0 then
-      par_dscritic := 'Nacionalidade do interveniente deve ser informada.';
-      par_nmdcampo := 'cdnacion';
-      return;
-    end if;
-    
     -- CPF obrigatorio
     if par_nrcpfcgc is null then
       par_dscritic := 'CPF/CNPJ do interveniente deve ser informado.';
@@ -4763,8 +4756,13 @@ create or replace package body cecred.tela_manbem is
         return;
       end if;
     else
-      null;
       -- PF
+      -- Nacionalidade obrigatoria
+      if nvl(trim(par_cdnacion),0) = 0 then
+        par_dscritic := 'Nacionalidade do interveniente deve ser informada.';
+        par_nmdcampo := 'cdnacion';
+        return;
+      end if;
       /*if trim(par_tpdocava) is null then
         par_dscritic := 'Tipo de documento do interveniente é obrigatorio.';
         par_nmdcampo := 'tpdocava';

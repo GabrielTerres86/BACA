@@ -1667,6 +1667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
            AND wpr.nrdconta = pr_nrdconta
            AND wpr.nrctremp <> pr_nrctremp  -- Somente em aberto
            AND wpr.insitapr = 1             -- Somente Aprovadas
+           AND wpr.insitest <> 6 -- Anulada
            AND NOT EXISTS(SELECT 1 
                            FROM crapepr epr
                           WHERE epr.cdcooper = wpr.cdcooper
