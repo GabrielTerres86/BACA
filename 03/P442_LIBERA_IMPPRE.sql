@@ -43,17 +43,24 @@ BEGIN
                        ,ope.cdoperad 
                    FROM crapope ope 
                  WHERE ope.cdsitope = 1) LOOP
-    INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
-    VALUES ('IMPPRE', 'E', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
-    
-    INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
-    VALUES ('IMPPRE', 'M', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
-    
-    INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
-    VALUES ('IMPPRE', 'D', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
-    
-    INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
-    VALUES ('IMPPRE', 'C', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
+    BEGIN
+      IF rw_ope.cdcooper = 3 THEN
+        INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+        VALUES ('IMPPRE', 'L', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
+      END IF;
+
+        INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+        VALUES ('IMPPRE', 'I', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
+
+        INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+        VALUES ('IMPPRE', 'D', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
+        
+        INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+        VALUES ('IMPPRE', 'E', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
+    EXCEPTION
+      WHEN OTHERS THEN
+        CONTINUE;
+    END;
   END LOOP;
   
   COMMIT;
