@@ -18,6 +18,9 @@ BEGIN
                
                Adaptado da versão do crps737 original, que foi baseado no crps147.
                Originalmente tinha como responsabilidade provisionar as aplic. programadas.
+
+   Alteracao : Ajuste na data enviada no arquivo contabil, conforme solicitacao
+               do Ewerton (09/04/2019 - Anderson).
                
 ............................................................................. */
 
@@ -1387,8 +1390,8 @@ BEGIN
         /*** Montando as informacoes de PESSOA FISICA ***/
         -- Montando o cabecalho das contas do dia atual
         vr_setlinha := '70'||                                                                                          --> Informacao inicial
-                        TO_CHAR(rw_dat.dtmvtolt,'YYMMDD')||','||                                                       --> Data AAMMDD do Arquivo
-                        TO_CHAR(rw_dat.dtmvtolt,'DDMMYY')||','||                                                       --> Data DDMMAA
+                        TO_CHAR(rw_dat.dtultdma,'YYMMDD')||','||                                                       --> Data AAMMDD do Arquivo
+                        TO_CHAR(rw_dat.dtultdma,'DDMMYY')||','||                                                       --> Data DDMMAA
                       gene0002.fn_mask(8066, pr_dsforma => '9999')||','||                                              --> Conta Origem
                       gene0002.fn_mask(8068, pr_dsforma => '9999')||','||                                              --> Conta Destino
                       TRIM(TO_CHAR(vr_tot_vlrrend_fis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','||    --> Total Valor PF
@@ -1430,8 +1433,8 @@ BEGIN
          /*** Montando as informacoes de PESSOA JURIDICA ***/       
          -- Montando o cabecalho das contas do dia atual
          vr_setlinha := '70'||                                                                                           --> Informacao inicial
-                          TO_CHAR(rw_dat.dtmvtolt,'YYMMDD')||','||                                                       --> Data AAMMDD do Arquivo
-                          TO_CHAR(rw_dat.dtmvtolt,'DDMMYY')||','||                                                       --> Data DDMMAA
+                          TO_CHAR(rw_dat.dtultdma,'YYMMDD')||','||                                                       --> Data AAMMDD do Arquivo
+                          TO_CHAR(rw_dat.dtultdma,'DDMMYY')||','||                                                       --> Data DDMMAA
                         gene0002.fn_mask(8067, pr_dsforma => '9999')||','||                                              --> Conta Origem
                         gene0002.fn_mask(8068, pr_dsforma => '9999')||','||                                              --> Conta Destino
                         TRIM(TO_CHAR(vr_tot_vlrrend_jur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','||    --> Total Valor PJ
