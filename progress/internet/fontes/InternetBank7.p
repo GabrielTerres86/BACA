@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 06/11/2017
+   Data    : Marco/2007                        Ultima atualizacao: 14/12/2018
 
    Dados referentes ao programa:
 
@@ -39,9 +39,9 @@
                             informações do IR de PJ (Douglas - Chamado 263905)
 
                12/02/2016 - Ajustes no FOR EACH  da craplct pois a funcao
-			                YEAR do Progress ocasionava problema quando
-							repitida mais de uma vez dentro do where
-							(Tiago/Thiago).
+                            YEAR do Progress ocasionava problema quando
+                            repitida mais de uma vez dentro do where
+                            (Tiago/Thiago).
 
                29/06/2016 - M325 - Tributacao de Juros ao Capital
                             Alterado tratamento para cod.retencao 5706 p/ 3277
@@ -50,21 +50,24 @@
 
 
                03/08/2016 - Inclusao de novos historicos de retorno de Sobras 
-			                e de sobras na Conta Corrente (Marcos-Supero).
+                            e de sobras na Conta Corrente (Marcos-Supero).
                       
                18/01/2017 - SD595294 - Retorno dos valores pagos em emprestimos
                             (Marcos-Supero)      
 
                24/03/2017 - SD638033 - Envio dos Rendimentos de Cotas Capital 
-			                      sem desconto IR (Marcos-Supero) 
+                                  sem desconto IR (Marcos-Supero) 
 
-			         13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                      crapass, crapttl, crapjur 
-							              (Adriano - P339).
+                     13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                                  crapass, crapttl, crapjur 
+                                          (Adriano - P339).
               
                18/08/2017 - Incluida validacao de IR para pessoa juridica
                             (Rafael Faria-Supero)
                06/11/2017 - Separar telefone do endereco da cooperativa (David)
+
+               14/12/2018 - P450 - Incluir valor de bloqueado prejuizo no valor do saldo disponivel.
+                            (Odirlei-AMcom)
 
 ............................................................................*/
     
@@ -127,7 +130,9 @@ DEF VAR aux_dsre3277 AS CHAR                                           NO-UNDO.
 DEF VAR aux_vlrentot AS DECI                                           NO-UNDO.
 DEF VAR aux_vlirfont AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsobras AS DECI                                           NO-UNDO.
-DEF VAR aux_nmsegntl AS CHAR										   NO-UNDO.
+DEF VAR aux_nmsegntl AS CHAR                                           NO-UNDO.
+DEF VAR aux_vlblqprj AS DECI                                           NO-UNDO.
+DEF VAR aux_dtdrefer_ant AS DATE                                       NO-UNDO.
 
 /* APLICACOES DE RENDA FIXA */
 DEF VAR sol_vlsdapli AS DECI                                           NO-UNDO.
@@ -201,8 +206,8 @@ FOR EACH craplct WHERE craplct.cdcooper = par_cdcooper      AND
                        craplct.nrdolote = 8005               AND 
                        craplct.nrdconta = par_nrdconta       AND
                        (craplct.cdhistor = 1940 OR craplct.cdhistor = 2172 OR
-					    craplct.cdhistor = 2174 OR craplct.cdhistor = 2173 OR
-					    craplct.cdhistor = 1801 OR craplct.cdhistor = 64) 
+                        craplct.cdhistor = 2174 OR craplct.cdhistor = 2173 OR
+                        craplct.cdhistor = 1801 OR craplct.cdhistor = 64) 
                        NO-LOCK:
     ASSIGN aux_vlsobras = aux_vlsobras + craplct.vllanmto.
 END.
@@ -215,8 +220,8 @@ FOR EACH craplcm WHERE craplcm.cdcooper = par_cdcooper      AND
                        craplcm.nrdolote = 8005               AND 
                        craplcm.nrdconta = par_nrdconta       AND
                        (craplcm.cdhistor = 2175 OR craplcm.cdhistor = 2176 OR
-					    craplcm.cdhistor = 2177 OR craplcm.cdhistor = 2178 OR
-					    craplcm.cdhistor = 2179 OR craplcm.cdhistor = 2189) 
+                        craplcm.cdhistor = 2177 OR craplcm.cdhistor = 2178 OR
+                        craplcm.cdhistor = 2179 OR craplcm.cdhistor = 2189) 
                        NO-LOCK:
     ASSIGN aux_vlsobras = aux_vlsobras + craplcm.vllanmto.
 END.
@@ -262,14 +267,14 @@ RETURN "OK".
 PROCEDURE proc_ir_fisica:
 
     FOR FIRST crapttl FIELDS(crapttl.nmextttl)
-	                   WHERE crapttl.cdcooper = par_cdcooper AND	
-							 crapttl.nrdconta = par_nrdconta AND
-							 crapttl.idseqttl = 2
-							 NO-LOCK:
+                       WHERE crapttl.cdcooper = par_cdcooper AND    
+                             crapttl.nrdconta = par_nrdconta AND
+                             crapttl.idseqttl = 2
+                             NO-LOCK:
 
-	   ASSIGN aux_nmsegntl = crapttl.nmextttl.
+       ASSIGN aux_nmsegntl = crapttl.nmextttl.
 
-	END.
+    END.
 
     FIND FIRST crapdir WHERE crapdir.cdcooper  = par_cdcooper AND
                              crapdir.nrdconta  = par_nrdconta AND
@@ -304,6 +309,13 @@ PROCEDURE proc_ir_fisica:
                              crapsli.dtrefere = DATE(12,31,par_anorefer) 
                              NO-LOCK NO-ERROR.
 
+    /* Buscar saldo bloqueado em prejuizo na data */
+    ASSIGN aux_vlblqprj = 0.
+    RUN proc_obtem_sldblq_preju_cc( INPUT par_cdcooper,
+                                    INPUT par_nrdconta,
+                                    INPUT DATE(12,31,par_anorefer),
+                                   OUTPUT aux_vlblqprj ).
+    
     ASSIGN aux_vlirfcot = crapdir.vlirfcot
            aux_vlprepag = crapdir.vlprepag
            aux_vlrencot = crapdir.vlrencot
@@ -311,6 +323,9 @@ PROCEDURE proc_ir_fisica:
            aux_vlsdapli = crapdir.vlsdapli + crapdir.vlsdrdpp  
            aux_vlsdccdp = crapdir.vlsdccdp + 
                          (IF AVAILABLE crapsli THEN crapsli.vlsddisp ELSE 0)
+           /* Incrementar valor do saldo bloqueado prejuizo */              
+           aux_vlsdccdp = aux_vlsdccdp + aux_vlblqprj
+                         
            aux_vlsddvem = crapdir.vlsddvem
            aux_vlttccap = crapdir.vlttccap
            aux_vlmoefix = DECIMAL(STRING(SUBSTR(craptab.dstextab,22,15),
@@ -452,6 +467,17 @@ PROCEDURE proc_ir_fisica:
     IF  AVAILABLE crapsli  THEN
         ASSIGN ant_vlsdccdp = ant_vlsdccdp + crapsli.vlsddisp.
          
+    
+    /* Buscar saldo bloqueado em prejuizo na data */
+    ASSIGN aux_vlblqprj = 0
+           aux_dtdrefer_ant = DATE(12,31,par_anorefer - 1).
+    RUN proc_obtem_sldblq_preju_cc( INPUT par_cdcooper,
+                                    INPUT par_nrdconta,
+                                    INPUT aux_dtdrefer_ant ,
+                                   OUTPUT aux_vlblqprj ).
+    
+    ASSIGN ant_vlsdccdp = ant_vlsdccdp + aux_vlblqprj.
+        
     CREATE xml_operacao.       
     ASSIGN xml_operacao.dslinxml = "<IRFISICA><anorefer>" +
                                    STRING(par_anorefer,"9999") +
@@ -610,14 +636,14 @@ PROCEDURE proc_ir_juridica:
     IF  par_anorefer = YEAR(par_dtmvtolt)  THEN
         DO:
 
-			ASSIGN aux_cdacesso = "IRENDA" + STRING(par_anorefer,"9999").
+            ASSIGN aux_cdacesso = "IRENDA" + STRING(par_anorefer,"9999").
 
-			FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-							   craptab.nmsistem = "CRED"       AND
-							   craptab.tptabela = "GENERI"     AND
-							   craptab.cdempres = 0            AND
-							   craptab.cdacesso = aux_cdacesso AND
-							   craptab.tpregist = 1            NO-LOCK NO-ERROR.
+            FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
+                               craptab.nmsistem = "CRED"       AND
+                               craptab.tptabela = "GENERI"     AND
+                               craptab.cdempres = 0            AND
+                               craptab.cdacesso = aux_cdacesso AND
+                               craptab.tpregist = 1            NO-LOCK NO-ERROR.
 
             ASSIGN aux_nrmesref = MONTH(par_dtmvtolt - DAY(par_dtmvtolt)).
             FIND crapcot WHERE crapcot.cdcooper = par_cdcooper AND
@@ -717,14 +743,14 @@ PROCEDURE proc_ir_juridica:
                        YEAR(crapdir.dtmvtolt) = par_anorefer
                        USE-INDEX crapdir1 NO-LOCK NO-ERROR.
 
-			ASSIGN aux_cdacesso = "IRENDA" + STRING(par_anorefer,"9999").
-			
-			FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-							   craptab.nmsistem = "CRED"       AND
-							   craptab.tptabela = "GENERI"     AND
-							   craptab.cdempres = 0            AND
-							   craptab.cdacesso = aux_cdacesso AND
-							   craptab.tpregist = 1            NO-LOCK NO-ERROR.
+            ASSIGN aux_cdacesso = "IRENDA" + STRING(par_anorefer,"9999").
+            
+            FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
+                               craptab.nmsistem = "CRED"       AND
+                               craptab.tptabela = "GENERI"     AND
+                               craptab.cdempres = 0            AND
+                               craptab.cdacesso = aux_cdacesso AND
+                               craptab.tpregist = 1            NO-LOCK NO-ERROR.
 
             IF NOT AVAILABLE crapdir or NOT AVAILABLE craptab THEN
                DO:
@@ -1030,6 +1056,36 @@ PROCEDURE proc_ir_juridica_trimestral:
     ASSIGN xml_operacao.dslinxml = "<root>" + aux_xmlopera + "</root>".
     
 END PROCEDURE. /*proc_ir_juridica_trimestral*/
+
+
+PROCEDURE proc_obtem_sldblq_preju_cc:
+    DEF INPUT  PARAM par_cdcooper AS INTEGER                         NO-UNDO.
+    DEF INPUT  PARAM par_nrdconta AS DEC                             NO-UNDO.
+    DEF INPUT  PARAM par_dtmvtolt AS DATE                            NO-UNDO.
+    DEF OUTPUT PARAM par_vlblqprj AS DEC                             NO-UNDO.
+
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_obtem_saldo_hist_preju_cc
+       aux_handproc = PROC-HANDLE NO-ERROR ( INPUT par_cdcooper /* Código da Cooperativa */
+                                           , INPUT par_nrdconta /* Número da conta */
+                                           , INPUT par_dtmvtolt /* Data a ser verificada para saber se Conta estava em prejuízo no período */
+                                           ,OUTPUT 0).          /* Retorna valor bloqueado prejuizo na data */
+
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_obtem_saldo_hist_preju_cc
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+    /* Busca possíveis erros */ 
+    ASSIGN par_vlblqprj = 0
+           par_vlblqprj = pc_obtem_saldo_hist_preju_cc.pr_vlblqprj 
+                          WHEN pc_obtem_saldo_hist_preju_cc.pr_vlblqprj <> ?.
+    
+END PROCEDURE. /*proc_obtem_sldblq_preju_cc*/
 
 
 PROCEDURE proc_geracao_log:

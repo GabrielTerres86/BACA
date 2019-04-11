@@ -78,6 +78,12 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0001 is
                              ,pr_tab_estouros OUT RISC0001.typ_tab_estouros --> Informações de estouro na conta
                              ,pr_dscritic     OUT VARCHAR2);                --> Retorno de erro
 
+  PROCEDURE pc_gera_arq_3026(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa solicitada
+                                   ,pr_dtrefere  IN crapdat.dtmvtolt%TYPE --> Data de referência
+                                   --,pr_retorno   OUT xmltype            --> XML de retorno
+                                   ,pr_retxml    OUT CLOB                 --> Arquivo de retorno do XML
+                                   ,pr_dscritic  OUT VARCHAR2);           --> Texto de erro/critica encontrada
+
 END RISC0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
@@ -88,7 +94,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --  Sistema  : Rotinas para Calculos de Risco
   --  Sigla    : RISC
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Agosto/2014.                   Ultima atualizacao: 27/04/2017
+  --  Data     : Agosto/2014.                   Ultima atualizacao: 15/02/2019
   --
   -- Dados referentes ao programa:
   --
@@ -108,6 +114,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --
   --             29/01/2019 - Projeto Demanda Regulatoria (Contabilidade) - Alteracao na numeracao das contas utilizadas.
   --                          Heitor (Mouts)
+  --             01/02/2019 - P450 - Criação da pc_gera_arq_3026 para gerar o 3026
+  --                          (Fabio Adriano - AMcom).
+  --
+  --             15/02/2019 - P450 - Alteração no arquivo 3026 uso do cpfcnpj_base no participante
+  --                          do grupo (Fabio Adriano - AMcom)
   --
   --             01/04/2019 - Correção historicos contabilização operações de desconto de tiutlo (Daniel - Ailos) 
   ---------------------------------------------------------------------------------------------------------------
@@ -1148,8 +1159,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                   PRJ450 - Regulatorio(Odirlei-AMcom)
                   
      21/11/2018 - Correção das contas envolvendo os juros +60, com a intensão de segregarmos as rendas a apropriar referente a operação 
-                  normal das rendas não reconhecidas por atraso superior a 60 dias. Pessoa Juricida	de 5591	para 5344 e Pessoa fisica	
-                  de 5590	para 5343 (Paulo Penteado GFT)
+                  normal das rendas não reconhecidas por atraso superior a 60 dias. Pessoa Juricida de 5591 para 5344 e Pessoa fisica   
+                  de 5590   para 5343 (Paulo Penteado GFT)
                   
      22/11/2018 - Alterado contas contabies do renda a apropriar conforme solicitação da area contabil.
                   PRJ450 - Regulatorio(Odirlei-AMcom) 
@@ -8639,6 +8650,395 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     END;
   END pc_lista_estouros;
 
+
+  PROCEDURE pc_gera_arq_3026(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa solicitada
+                            ,pr_dtrefere  IN crapdat.dtmvtolt%TYPE --> Data de referência
+                            --,pr_retorno   OUT xmltype              --> XML de retorno
+                            ,pr_retxml    OUT CLOB                 --> Arquivo de retorno do XML
+                            ,pr_dscritic  OUT VARCHAR2) IS         --> Texto de erro/critica encontrada
+  BEGIN
+  /* .............................................................................
+
+       Programa: pc_gera_arq_3026
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Fabio Adriano - AMcom
+       Data    : Fevereiro/2019                       Ultima atualizacao: 01/02/2019
+
+       Dados referentes ao programa:
+
+       Frequencia: sempre que for chamado
+       Objetivo  : gerar arquivo 3026 - Risco de Credito
+
+       Alteracoes :
+                     15/02/2019 - prj450 - Alteração no arquivo 3026 uso do cpfcnpj_base no participante
+                                  do grupo (Fabio Adriano - AMcom)
+
+     .............................................................................*/
+
+  DECLARE
+
+      ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
+
+      -- Código do programa
+      vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'RISCO';
+
+      -- Tratamento de erros
+      vr_exc_saida  EXCEPTION;
+      vr_cdcritic   PLS_INTEGER;
+      vr_dscritic   VARCHAR2(4000);
+
+      -- Exceções
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis gerais
+      vr_xml xmltype; -- XML que sera enviado
+      vr_retxml xmltype;
+      vr_contador      NUMBER := 0;
+      vr_nrcontgrup    NUMBER := 0;
+      vr_nrcontintgrup NUMBER := 0;
+
+      vr_dtbase        VARCHAR2(7);
+      cnpjinst         VARCHAR2(8);
+      vr_mes           char(2);
+      vr_ano           char(4);
+      vr_dtbase_cnpj   VARCHAR2(50);
+
+      -- Variaveis para os arquivos
+      vr_nom_direto    VARCHAR2(100);
+      vr_nom_dirsal    VARCHAR2(100);
+      vr_nom_dirmic    VARCHAR2(100);
+      vr_nmarqsai      VARCHAR2(50); -- Nome do arquivo 3026
+
+      -- Valor Minimo de divida para geração do arquivo 3026
+      vr_vlmin_3026    NUMBER := 0;
+
+      ------------------------------- CURSORES ---------------------------------
+      -- Busca dos dados da cooperativa
+      CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
+        SELECT cop.nmrescop
+              ,cop.nmextcop
+              ,cop.nrdocnpj
+              ,cop.dsnomscr
+              ,cop.dsemascr
+              ,cop.dstelscr
+              ,cop.nrcepend
+              ,cop.cdufdcop
+              ,cop.dsdircop
+          FROM crapcop cop
+         WHERE cop.cdcooper = pr_cdcooper;
+      rw_crapcop   cr_crapcop%ROWTYPE;
+
+
+      --Cursor principal central de risco
+      CURSOR cr_crapris_prin(pr_cdcooper IN NUMBER
+                            ,pr_dtrefere DATE) IS
+         SELECT distinct
+                  r.cdcooper
+                 ,r.nrdconta
+                 ,r.nrdgrupo
+                 ,r.inpessoa
+          FROM crapris r
+          WHERE r.cdcooper = pr_cdcooper
+           AND  r.dtrefere = pr_dtrefere
+           AND  r.nrdgrupo > 0
+           AND  r.vldivida > vr_vlmin_3026;
+      rw_crapris_prin   cr_crapris_prin%ROWTYPE;
+
+
+      -- Cursor para busca das contas do grupo economico
+      CURSOR cr_grupint (pr_nrdgrupo INTEGER)IS
+        SELECT int.tppessoa inpessoa
+              ,int.nrdconta
+              ,int.Nrcpfcgc
+              ,CASE WHEN int.tppessoa = 1                      then int.nrcpfcgc
+                    WHEN int.tppessoa = 2 and int.nrcpfcgc > 0 then to_number(substr(to_char(int.nrcpfcgc,'FM00000000000000'),1,8))
+                    ELSE NULL
+               END AS nrcpfcnpj_base
+          FROM tbcc_grupo_economico_integ INT
+              ,tbcc_grupo_economico p
+              ,crapass ass
+         WHERE int.dtexclusao IS NULL
+           AND int.cdcooper = pr_cdcooper
+           AND int.idgrupo  = p.idgrupo
+           --AND int.tppessoa = 1  -- Somente PF
+           AND int.idgrupo  = pr_nrdgrupo
+           --AND int.nrdconta <> pr_nrdconta -- Desconsiderar a propria conta, pois ela ja foi analisada
+           AND int.cdcooper = ass.cdcooper
+           AND int.nrdconta = ass.nrdconta
+         UNION
+        SELECT ass.inpessoa
+              ,pai.nrdconta
+              ,ass.nrcpfcgc
+              ,ass.nrcpfcnpj_base
+          FROM tbcc_grupo_economico       pai
+             , crapass                    ass
+             , tbcc_grupo_economico_integ int
+         WHERE ass.cdcooper = pai.cdcooper
+           AND ass.nrdconta = pai.nrdconta
+           AND int.idgrupo  = pai.idgrupo
+           AND int.dtexclusao is NULL
+           AND ass.dtelimin IS NULL -- Somente ativos
+           --AND ass.inpessoa = 1  -- Somente PF
+           AND ass.cdcooper = pr_cdcooper
+           AND int.cdcooper = pr_cdcooper
+           AND pai.idgrupo  = pr_nrdgrupo
+           /*AND pai.nrdconta <> pr_nrdconta*/ ; -- Desconsiderar a propria conta, pois ela ja foi analisada
+      rw_grupint   cr_grupint%ROWTYPE;
+
+      -- Cursor para busca integrantes do grupo economico
+      CURSOR cr_grupintegr (pr_nrdgrupo INTEGER)IS
+        SELECT int.tppessoa inpessoa
+              ,int.nrdconta
+              ,int.Nrcpfcgc
+          FROM tbcc_grupo_economico_integ INT
+              ,tbcc_grupo_economico p
+         WHERE int.dtexclusao IS NULL
+           AND int.cdcooper = pr_cdcooper
+           AND int.idgrupo  = p.idgrupo
+           --AND int.tppessoa = 1  -- Somente PF
+           AND int.idgrupo  = pr_nrdgrupo
+           --AND int.nrdconta <> pr_nrdconta -- Desconsiderar a propria conta, pois ela ja foi analisada
+         UNION
+        SELECT ass.inpessoa
+              ,pai.nrdconta
+              ,ass.nrcpfcgc
+          FROM tbcc_grupo_economico       pai
+             , crapass                    ass
+             , tbcc_grupo_economico_integ int
+         WHERE ass.cdcooper = pai.cdcooper
+           AND ass.nrdconta = pai.nrdconta
+           AND int.idgrupo  = pai.idgrupo
+           AND int.dtexclusao is NULL
+           AND ass.dtelimin IS NULL -- Somente ativos
+           --AND ass.inpessoa = 1  -- Somente PF
+           AND ass.cdcooper = pr_cdcooper
+           AND int.cdcooper = pr_cdcooper
+           AND pai.idgrupo  = pr_nrdgrupo
+           /*AND pai.nrdconta <> pr_nrdconta*/ ; -- Desconsiderar a propria conta, pois ela ja foi analisada
+      rw_grupintegr   cr_grupintegr%ROWTYPE;
+
+      -- Cursor sobre a tabela de associados
+      CURSOR cr_crapass(pr_cdcooper crapcop.cdcooper%TYPE
+                       ,pr_nrdconta crapass.nrdconta%TYPE) IS
+        SELECT a.nrcpfcgc,
+               a.inpessoa,
+               a.dsnivris,
+               a.dtadmiss,
+               a.nrcpfcnpj_base
+          FROM crapass a
+         WHERE a.cdcooper = pr_cdcooper
+           AND a.nrdconta = pr_nrdconta;
+      vr_nrcpfcgc_ass crapass.nrcpfcgc%TYPE;
+      vr_inpessoa_ass crapass.inpessoa%TYPE;
+      vr_dsnivris_ass crapass.dsnivris%TYPE;
+      vr_dtadmiss_ass crapass.dtadmiss%TYPE;
+
+
+      -- Busca dados por CPF/CNPJ em todas as cooperativas trazendo a conta mais antiga
+      -- Buscar o pior risco dentre todas as contas do CPF/CGC
+      CURSOR cr_crapass_cpfcnpj(pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
+        SELECT /*+ index(crapass CRAPASS##CRAPASS9) */
+               cdcooper
+              ,dsnivris
+              ,dtadmiss
+          FROM crapass
+         WHERE crapass.nrcpfcnpj_base = pr_nrcpfcgc;
+      vr_cdcooper_ass crapass.cdcooper%TYPE;
+
+      -- Cursor genérico de calendário
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+
+    -- ----------------------------------------------------------------
+    -- Rotina Principal
+    -- ----------------------------------------------------------------
+    BEGIN
+
+      -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+
+      --> Busca dados da cooperativa
+      OPEN  cr_crapcop(pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      CLOSE cr_crapcop;
+
+      vr_mes := to_char(SYSDATE,'mm');
+      vr_ano := to_char(SYSDATE,'yyyy');
+
+      vr_dtbase := vr_ano || '-' || vr_mes;
+      if length(rw_crapcop.nrdocnpj) = 14 then
+         cnpjinst  := SubStr(rw_crapcop.nrdocnpj,1,8);
+      else
+         cnpjinst  := SubStr(rw_crapcop.nrdocnpj,1,7);
+      end if;
+      vr_dtbase_cnpj := 'DtBase=' || vr_dtbase || ' CNPJ=' || cnpjinst;
+
+      -- Cria o cabecalho do xml de envio
+      vr_xml := xmltype.createxml('<?xml version="1.0" encoding="UTF-8" ?><Doc3026/>');
+
+      -- Cabeçalho do documento XML
+      gene0007.pc_insere_tag(pr_xml      => vr_xml
+                            ,pr_tag_pai  => 'Doc3026' --NULL
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'CongEcon' --null --'Doc3026'
+                            ,pr_tag_cont => NULL --vr_dtbase_cnpj
+                            ,pr_des_erro => pr_dscritic);
+
+      gene0007.pc_gera_atributo(pr_xml   => vr_xml,
+                                pr_tag   => 'Doc3026',
+                                pr_atrib => 'DtBase',
+                                pr_atval => vr_dtbase,
+                                pr_numva => 0,
+                                pr_des_erro => pr_dscritic);
+
+      gene0007.pc_gera_atributo(pr_xml   => vr_xml,
+                                pr_tag   => 'Doc3026',
+                                pr_atrib => 'CNPJ',
+                                pr_atval => cnpjinst,
+                                pr_numva => 0,
+                                pr_des_erro => pr_dscritic);
+
+
+      vr_vlmin_3026 := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                ,pr_cdcooper => 0
+                                                ,pr_cdacesso => 'VLMIN_3026');
+
+      -- Loop principal central de risco
+      FOR rw_crapris_prin IN cr_crapris_prin(pr_cdcooper => pr_cdcooper
+                                            ,pr_dtrefere => pr_dtrefere) LOOP
+
+        OPEN cr_grupintegr(pr_nrdgrupo => rw_crapris_prin.nrdgrupo);
+        FETCH cr_grupintegr INTO rw_grupintegr;
+        IF cr_grupintegr%FOUND THEN
+            CLOSE cr_grupintegr;
+
+            -- Insere os detalhes
+            gene0007.pc_insere_tag(pr_xml      => vr_xml
+                                  ,pr_tag_pai  => 'Doc3026'
+                                  ,pr_posicao  => 0 --vr_contador
+                                  ,pr_tag_nova => 'CongEcon'
+                                  ,pr_tag_cont => NULL --rw_crapris_prin.nrdgrupo
+                                  ,pr_des_erro => pr_dscritic);
+
+            gene0007.pc_gera_atributo(pr_xml   => vr_xml,
+                                      pr_tag   => 'CongEcon',
+                                      pr_atrib => 'Cd',
+                                      pr_atval => rw_crapris_prin.nrdgrupo,
+                                      pr_numva => vr_contador,
+                                      pr_des_erro => pr_dscritic);
+
+
+            FOR rw_grupint IN cr_grupint(rw_crapris_prin.nrdgrupo) LOOP
+
+               gene0007.pc_insere_tag(pr_xml      => vr_xml
+                                     ,pr_tag_pai  => 'CongEcon'
+                                     ,pr_posicao  => vr_contador
+                                     ,pr_tag_nova => 'Part'
+                                     ,pr_tag_cont => NULL
+                                     ,pr_des_erro => pr_dscritic);
+
+               gene0007.pc_gera_atributo(pr_xml   => vr_xml,
+                                         pr_tag   => 'Part',
+                                         pr_atrib => 'Cd',
+                                         pr_atval => rw_grupint.nrcpfcnpj_base,
+                                         pr_numva => vr_nrcontgrup,
+                                         pr_des_erro => pr_dscritic);
+
+               gene0007.pc_gera_atributo(pr_xml   => vr_xml,
+                                         pr_tag   => 'Part',
+                                         pr_atrib => 'Tp',
+                                         pr_atval => rw_grupint.inpessoa,
+                                         pr_numva => vr_nrcontgrup,
+                                         pr_des_erro => pr_dscritic);
+
+               vr_nrcontgrup := vr_nrcontgrup + 1;
+            END LOOP;
+
+            -- Próxima sequencia
+            vr_contador := vr_contador + 1;
+        ELSE
+          CLOSE cr_grupintegr;
+
+        END IF;
+
+      END LOOP;
+
+      IF pr_dscritic is not null THEN
+        -- Gerar crítica
+        vr_dscritic    := pr_dscritic;
+        -- Levantar exceção
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Se não encontrou nenhum registro
+      IF vr_contador = 0 THEN
+        -- Gerar crítica
+        vr_dscritic    := 'Não encontrado registro que atenda os requisitos';
+        -- Levantar exceção
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- pr_retorno := vr_xml;
+      dbms_output.put_line(vr_xml.getclobval);
+
+      pr_retxml := vr_xml.getclobval();
+
+      -- gera o arquivo xml 3026
+      vr_nmarqsai := '3026' || '_' || to_char(pr_dtrefere,'MMYY')||'.xml';
+      -- diretorio onde salvar
+      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_nmsubdir => 'rl');
+      -- busca o diretorio micros contab
+      vr_nom_dirmic := gene0001.fn_diretorio(pr_tpdireto => 'M' --> /micros
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_nmsubdir => 'contab');
+
+      gene0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper
+                                         ,pr_cdprogra  => 'RISCO'
+                                         ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
+                                         ,pr_dsxml     => pr_retxml
+                                         ,pr_dsarqsaid => vr_nom_direto ||'/'|| vr_nmarqsai
+                                         ,pr_cdrelato  => null
+                                         ,pr_flg_gerar => 'S'              --> Apenas submeter
+                                         ,pr_dspathcop => vr_nom_dirmic    --> Copiar para a Micros
+                                         ,pr_fldoscop  => 'S'              --> Efetuar cópia com Ux2Dos
+                                         ,pr_dscmaxcop => '| tr -d "\032"'
+                                         ,pr_des_erro  => pr_dscritic);
+      IF pr_dscritic is not null THEN
+          -- Gerar crítica
+          vr_dscritic    := 'Erro ao gravar arquivo - pc_solicita_relato_arquivo';
+          -- Levantar exceção
+          RAISE vr_exc_erro;
+      END IF;
+
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+
+        pr_dscritic := vr_dscritic;
+
+      WHEN OTHERS THEN
+
+        pr_dscritic := 'Erro não tratado na pc_gera_arq_3026';
+
+    END;
+
+
+  END PC_GERA_ARQ_3026;
 
 END RISC0001;
 /

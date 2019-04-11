@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Fabricio
-       Data    : Agosto/2013                     Ultima atualizacao: 13/12/2018
+       Data    : Agosto/2013                     Ultima atualizacao: 01/02/2019
 
        Dados referentes ao programa:
 
@@ -46,12 +46,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
 
                     27/04/2018 - Ajuste no nome do arquivo gerado no relatorio e 
                                  adicionado hora/minuto/segundo ao nrdocto(Projeto Debitador Unico - Fabiano B. Dias - AMcom).
-																 
+                                                                 
                     04/07/2018 - PJ450 Regulatório de Credito - Substituido o Insert na tabela craplcm 
                                  pela chamada da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)  
                    
                     13/12/2018 - Remoção da atualização da Capa de Lote
                                  Yuri - Mouts
+  
+                    01/02/2019 - P450 - Ajuste na geracao do prejuizo (Guilherme/AMcom)
     ............................................................................ */
 
     DECLARE
@@ -286,21 +288,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
         vr_vldebito := 0;
 
 
-        -- PJ450 - Verificar se pode debitar (Regra de Negocio)
-        IF NOT LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper
-                                       ,pr_nrdconta => rw_crappla.nrdconta
-                                       ,pr_cdhistor => 127) THEN
-            vr_dscritic := 'Lançamento de debito não efetuado. Cooperativa: '||pr_cdcooper
-                            || ' - Nr. Conta: ' || rw_crappla.nrdconta 
-                            || ' - Cod. historico: 127' ;
-                            
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                       pr_ind_tipo_log => 2, -- Erro tratato
-                                       pr_des_log      => TO_CHAR(sysdate,'hh24:mi:ss') || ' -' || vr_cdprogra || ' --> ' || vr_dscritic);
-                                                                   
-            continue;
-        END IF; 
-    
         /* Se Valor disponivel >= Valor minimo parametrizado para debito */
         IF vr_vlsddisp >= rw_crapcop.vlmidbco AND vr_vlsddisp > 0 THEN
           
@@ -439,7 +426,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
               vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
           END;*/
 
-		  vr_horaminseg := TO_NUMBER(TO_CHAR(SYSDATE, 'hh24mmss')); -- 27/04/2018-deb.unico.
+          vr_horaminseg := TO_NUMBER(TO_CHAR(SYSDATE, 'hh24mmss')); -- 27/04/2018-deb.unico.
 
           -- PJ450 - Insere Lancamento 
           LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
@@ -465,7 +452,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                                             );
 
           -- Conforme tipo de erro realiza acao diferenciada
-          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+          IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            IF vr_incrineg = 1 THEN
+              -- Critica de que não pode debitar. Segue para o próximo
+              CONTINUE;
+            END IF;
               RAISE vr_exc_saida;
           END IF;
 

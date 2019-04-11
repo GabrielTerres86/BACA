@@ -83,12 +83,12 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                    ,pr_cdagenci  IN crapass.cdagenci%TYPE        -- Código da agencia
                                    ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
                                    ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo 
-																	 ,pr_dtefetiv  IN crapepr.dtmvtolt%TYPE        -- Data de Efetivacao do Contrato de Emprestimo
-																	 ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE        -- Codigo da linha de credito
-																	 ,pr_vlemprst  IN crapepr.vlemprst%TYPE        -- Valor do Emprestimo
-																	 ,pr_txmensal  IN crawepr.txmensal%TYPE        -- Taxa Mensal do Contrato de Emprestimo
+                                                                     ,pr_dtefetiv  IN crapepr.dtmvtolt%TYPE        -- Data de Efetivacao do Contrato de Emprestimo
+                                                                     ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE        -- Codigo da linha de credito
+                                                                     ,pr_vlemprst  IN crapepr.vlemprst%TYPE        -- Valor do Emprestimo
+                                                                     ,pr_txmensal  IN crawepr.txmensal%TYPE        -- Taxa Mensal do Contrato de Emprestimo
                                    ,pr_dtdpagto  IN crawepr.dtdpagto%TYPE        -- Data de Pagamento do Primeiro Vencimento
-																	 ,pr_vlsprojt  IN crapepr.vlsprojt%TYPE        -- 
+                                                                     ,pr_vlsprojt  IN crapepr.vlsprojt%TYPE        -- 
                                    ,pr_qttolatr  IN crapepr.qttolatr%TYPE        -- Tolerancia para cobranca de multa e mora parcelas atraso
                                    --,pr_nracordo  IN tbrecup_acordo.nracordo%TYPE -- Número do acordo
                                    ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
@@ -232,11 +232,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --             07/12/2018 - Ajuste na "pc_pagar_contrato_acordo" para não acrescentar o valor do IOF provisionado no total 
   --                          a pagar quanto a conta corrente está em prejuízo.
   --                          (Reginaldo/AMcom - P450)
-	--             
-	--             08/01/2018 - Ajuste na procedure "pc_pagar_contrato_acordo", na chamada LANC0001.pc_gerar_lancto_conta
-	--                          para evitar violação de chave única por duplicidade do número do documento.
-	--                          Ajuste na procedure "pc_pagar_IOF_contrato_conta" para evitar lançamento com valor "zero".
-	--                          (Reginaldo/AMcom - P450)
+    --             
+    --             08/01/2018 - Ajuste na procedure "pc_pagar_contrato_acordo", na chamada LANC0001.pc_gerar_lancto_conta
+    --                          para evitar violação de chave única por duplicidade do número do documento.
+    --                          Ajuste na procedure "pc_pagar_IOF_contrato_conta" para evitar lançamento com valor "zero".
+    --                          (Reginaldo/AMcom - P450)
+  --
+  --             19/03/2019 - Ajuste na rotina "pc_pagar_contrato_emprestimo" para debitar corretamente da conta transitória
+  --                          o valor pago no contrato de empréstimo, caso a conta esteja em prejuízo.
+  --                          (Reginaldo/AMcom - P450)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -555,8 +559,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --             06/06/2018 - Alterado para usar rotina que centraliza lançamentos
   --                          (LANC0001.pc_gerar_lancamento_conta). PRJ450 (Teobaldo J.- AMcom)
   --  
-	--             08/01/2019 - Ajuste para evitar violação de chave única por duplicidade de número do documento
-	--                          na chamada da LANC0001.pc_gerar_lancto_conta (Reginaldo/AMcom - P450)
+    --             08/01/2019 - Ajuste para evitar violação de chave única por duplicidade de número do documento
+    --                          na chamada da LANC0001.pc_gerar_lancto_conta (Reginaldo/AMcom - P450)
   ---------------------------------------------------------------------------------------------------------------
     
     ---------------> CURSORES <-------------    
@@ -682,8 +686,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       vr_vlioflan := 0;   
       vr_tab_rowid_iof.delete;   
       --> buscar valores de IOF
-			vr_pagototal := TRUE; -- Assume que será pago integralmente
-			
+            vr_pagototal := TRUE; -- Assume que será pago integralmente
+            
       FOR rw_ioflanc IN cr_ioflanc LOOP
         --> Somar valor até o valor total pendente
         IF (rw_ioflanc.vliof + vr_vlioflan) <= vr_vliofpen AND
@@ -694,7 +698,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           vr_vlioflan := vr_vlioflan + rw_ioflanc.vliof;   
         ELSE 
           --> Nao possui valor suficiente para atualizar
-					vr_pagototal := FALSE;
+                    vr_pagototal := FALSE;
           EXIT;
         END IF;
       
@@ -706,9 +710,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         RETURN;
       END IF;
     
-			IF vr_pagototal THEN -- Se pagou integralmente os valores pendentes da TBGEN_IOF_LANCAMENTO
-				vr_vlioflan := pr_vliofdev - pr_vliofpag; -- Assume todo o valor pendente do IOF do acordo como pago
-			END IF;
+            IF vr_pagototal THEN -- Se pagou integralmente os valores pendentes da TBGEN_IOF_LANCAMENTO
+                vr_vlioflan := pr_vliofdev - pr_vliofpag; -- Assume todo o valor pendente do IOF do acordo como pago
+            END IF;
 
       --Verificar se o lote existe
       OPEN cr_craplot ( pr_cdcooper => pr_cdcooper
@@ -717,7 +721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                        ,pr_cdbccxlt => 100
                        ,pr_nrdolote => 8450);
       FETCH cr_craplot INTO rw_craplot;
-			
+            
       IF cr_craplot%NOTFOUND THEN
        --Criar lote
        BEGIN
@@ -820,7 +824,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       CLOSE cr_craplcm;
       
       pr_vltotpag := nvl(pr_vltotpag,0) + rw_craplcm.vllanmto; -- Assume apenas o valor parcial pago do IOF do acordo
-	      
+          
       --Atualizar capa do Lote
       BEGIN
        UPDATE craplot SET craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + round(rw_craplcm.vllanmto,2)
@@ -1366,17 +1370,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       /**************************/
   END pc_pagar_emprestimo_pp;
   
-	PROCEDURE pc_pagar_emprestimo_pos(pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
+    PROCEDURE pc_pagar_emprestimo_pos(pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
                                    ,pr_nrdconta  IN crapass.nrdconta%TYPE        -- Número da Conta
                                    ,pr_cdagenci  IN crapass.cdagenci%TYPE        -- Código da agencia
                                    ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
                                    ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo 
-																	 ,pr_dtefetiv  IN crapepr.dtmvtolt%TYPE        -- Data de Efetivacao do Contrato de Emprestimo
-																	 ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE        -- Codigo da linha de credito
-																	 ,pr_vlemprst  IN crapepr.vlemprst%TYPE        -- Valor do Emprestimo
-																	 ,pr_txmensal  IN crawepr.txmensal%TYPE        -- Taxa Mensal do Contrato de Emprestimo
+                                                                     ,pr_dtefetiv  IN crapepr.dtmvtolt%TYPE        -- Data de Efetivacao do Contrato de Emprestimo
+                                                                     ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE        -- Codigo da linha de credito
+                                                                     ,pr_vlemprst  IN crapepr.vlemprst%TYPE        -- Valor do Emprestimo
+                                                                     ,pr_txmensal  IN crawepr.txmensal%TYPE        -- Taxa Mensal do Contrato de Emprestimo
                                    ,pr_dtdpagto  IN crawepr.dtdpagto%TYPE        -- Data de Pagamento do Primeiro Vencimento
-																	 ,pr_vlsprojt  IN crapepr.vlsprojt%TYPE        -- 
+                                                                     ,pr_vlsprojt  IN crapepr.vlsprojt%TYPE        -- 
                                    ,pr_qttolatr  IN crapepr.qttolatr%TYPE        -- Tolerancia para cobranca de multa e mora parcelas atraso
                                    --,pr_nracordo  IN tbrecup_acordo.nracordo%TYPE -- Número do acordo
                                    ,pr_nrparcel  IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
@@ -1424,14 +1428,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     vr_vldsaldo        NUMBER;
     vr_vlajuste        NUMBER := 0;
     vr_vllanlem        NUMBER := 0;
-		vr_vlsdeved        NUMBER := 0;
-		vr_vlatrpag        NUMBER := 0;
+        vr_vlsdeved        NUMBER := 0;
+        vr_vlatrpag        NUMBER := 0;
     
     vr_des_reto        VARCHAR2(10);
     vr_tab_erro        GENE0001.typ_tab_erro;
-		vr_tab_parcelas    EMPR0011.typ_tab_parcelas;
-		vr_tab_parc_compe  EMPR0011.typ_tab_parcelas;
-		vr_tab_price       empr0011.typ_tab_price;
+        vr_tab_parcelas    EMPR0011.typ_tab_parcelas;
+        vr_tab_parc_compe  EMPR0011.typ_tab_parcelas;
+        vr_tab_price       empr0011.typ_tab_price;
     
     -- EXCEPTION
     vr_exc_erro        EXCEPTION;
@@ -1460,30 +1464,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     -----------------------------------------------------------------------------------------------
     -- Buscar as parcelas do contrato
     -----------------------------------------------------------------------------------------------
-		empr0011.pc_busca_pagto_parc_pos(pr_cdcooper     => pr_cdcooper
-		                                ,pr_cdprogra     => pr_nmtelant
-																		,pr_flgbatch     => TRUE -- Fixo 1
-																		,pr_dtmvtolt     => pr_crapdat.dtmvtolt
-																		,pr_dtmvtoan     => pr_crapdat.dtmvtoan
-																		,pr_nrdconta     => pr_nrdconta
-																		,pr_nrctremp     => pr_nrctremp
-																		,pr_dtefetiv     => pr_dtefetiv
-																		,pr_cdlcremp     => pr_cdlcremp
-																		,pr_vlemprst     => pr_vlemprst
-																		,pr_txmensal     => pr_txmensal
-																		,pr_dtdpagto     => pr_dtdpagto
-																		,pr_vlsprojt     => pr_vlsprojt
-																		,pr_qttolatr     => pr_qttolatr
-																		,pr_tab_parcelas => vr_tab_parcelas
-																		,pr_cdcritic     => pr_cdcritic
-																		,pr_dscritic     => pr_dscritic
-																		);
-	  --
-		IF pr_cdcritic IS NOT NULL OR pr_dscritic IS NOT NULL THEN
-			-- Gera exceção
+        empr0011.pc_busca_pagto_parc_pos(pr_cdcooper     => pr_cdcooper
+                                        ,pr_cdprogra     => pr_nmtelant
+                                                                        ,pr_flgbatch     => TRUE -- Fixo 1
+                                                                        ,pr_dtmvtolt     => pr_crapdat.dtmvtolt
+                                                                        ,pr_dtmvtoan     => pr_crapdat.dtmvtoan
+                                                                        ,pr_nrdconta     => pr_nrdconta
+                                                                        ,pr_nrctremp     => pr_nrctremp
+                                                                        ,pr_dtefetiv     => pr_dtefetiv
+                                                                        ,pr_cdlcremp     => pr_cdlcremp
+                                                                        ,pr_vlemprst     => pr_vlemprst
+                                                                        ,pr_txmensal     => pr_txmensal
+                                                                        ,pr_dtdpagto     => pr_dtdpagto
+                                                                        ,pr_vlsprojt     => pr_vlsprojt
+                                                                        ,pr_qttolatr     => pr_qttolatr
+                                                                        ,pr_tab_parcelas => vr_tab_parcelas
+                                                                        ,pr_cdcritic     => pr_cdcritic
+                                                                        ,pr_dscritic     => pr_dscritic
+                                                                        );
+      --
+        IF pr_cdcritic IS NOT NULL OR pr_dscritic IS NOT NULL THEN
+            -- Gera exceção
       RAISE vr_exc_erro;
-			--
-		END IF;
+            --
+        END IF;
     
     ------------------------------------------------------------------------------------------------------------
     -- BUSCAR OS VALORES RETROATIVOS DEVIDO AO TRATAMENTO DA COMPEFORA
@@ -1497,56 +1501,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       vr_dtdatoan := fn_dia_util_anterior(vr_dtdatmvt);
         
       -- Chamar novamente a procedure "pc_busca_pagto_parc_pos" e passar nas datas "dtmvtolt, dtmvtoan" o dia anterior
-			empr0011.pc_busca_pagto_parc_pos(pr_cdcooper     => pr_cdcooper
-																			,pr_cdprogra     => pr_nmtelant
-																			,pr_flgbatch     => TRUE -- Fixo 1
-																			,pr_dtmvtolt     => vr_dtdatmvt -- Data com base no dia anterior
-																			,pr_dtmvtoan     => vr_dtdatoan -- Data com base no dia anterior
-																			,pr_nrdconta     => pr_nrdconta
-																			,pr_nrctremp     => pr_nrctremp
-																			,pr_dtefetiv     => pr_dtefetiv
-																			,pr_cdlcremp     => pr_cdlcremp
-																			,pr_vlemprst     => pr_vlemprst
-																			,pr_txmensal     => pr_txmensal
-																			,pr_dtdpagto     => pr_dtdpagto
-																			,pr_vlsprojt     => pr_vlsprojt
-																			,pr_qttolatr     => pr_qttolatr
-																			,pr_tab_parcelas => vr_tab_parc_compe
-																			,pr_cdcritic     => pr_cdcritic
-																			,pr_dscritic     => pr_dscritic
-																			);
+            empr0011.pc_busca_pagto_parc_pos(pr_cdcooper     => pr_cdcooper
+                                                                            ,pr_cdprogra     => pr_nmtelant
+                                                                            ,pr_flgbatch     => TRUE -- Fixo 1
+                                                                            ,pr_dtmvtolt     => vr_dtdatmvt -- Data com base no dia anterior
+                                                                            ,pr_dtmvtoan     => vr_dtdatoan -- Data com base no dia anterior
+                                                                            ,pr_nrdconta     => pr_nrdconta
+                                                                            ,pr_nrctremp     => pr_nrctremp
+                                                                            ,pr_dtefetiv     => pr_dtefetiv
+                                                                            ,pr_cdlcremp     => pr_cdlcremp
+                                                                            ,pr_vlemprst     => pr_vlemprst
+                                                                            ,pr_txmensal     => pr_txmensal
+                                                                            ,pr_dtdpagto     => pr_dtdpagto
+                                                                            ,pr_vlsprojt     => pr_vlsprojt
+                                                                            ,pr_qttolatr     => pr_qttolatr
+                                                                            ,pr_tab_parcelas => vr_tab_parc_compe
+                                                                            ,pr_cdcritic     => pr_cdcritic
+                                                                            ,pr_dscritic     => pr_dscritic
+                                                                            );
         
       IF pr_cdcritic IS NOT NULL OR pr_dscritic IS NOT NULL THEN
-				--
-				pr_dscritic := 'Erro ao consultar pagamento de parcelas COMPEFORA: ' || pr_dscritic;
-				-- Gera exceção
-				RAISE vr_exc_erro;
-				--
-			END IF;
-			--
+                --
+                pr_dscritic := 'Erro ao consultar pagamento de parcelas COMPEFORA: ' || pr_dscritic;
+                -- Gera exceção
+                RAISE vr_exc_erro;
+                --
+            END IF;
+            --
     END IF; -- COMPEFORA
-		
-		-- Se encontrar registros
-		IF vr_tab_parc_compe.COUNT() > 0 THEN
-			-- Percorrer todos os registros retornados nas tabelas de memória
-			FOR idx IN vr_tab_parc_compe.FIRST..vr_tab_parc_compe.LAST LOOP
-				--
-				vr_vlsdeved := vr_vlsdeved + nvl(vr_tab_parc_compe(idx).vlatrpag, 0);
-				--
-			END LOOP;
-			--
-		ELSIF vr_tab_parcelas.COUNT() > 0 THEN
-			-- Percorrer todos os registros retornados nas tabelas de memória
-			FOR idx IN vr_tab_parcelas.FIRST..vr_tab_parcelas.LAST LOOP
-				--
-				vr_vlsdeved := vr_vlsdeved + nvl(vr_tab_parcelas(idx).vlatrpag, 0);
-				--
-			END LOOP;
-			--
-		END IF;
+        
+        -- Se encontrar registros
+        IF vr_tab_parc_compe.COUNT() > 0 THEN
+            -- Percorrer todos os registros retornados nas tabelas de memória
+            FOR idx IN vr_tab_parc_compe.FIRST..vr_tab_parc_compe.LAST LOOP
+                --
+                vr_vlsdeved := vr_vlsdeved + nvl(vr_tab_parc_compe(idx).vlatrpag, 0);
+                --
+            END LOOP;
+            --
+        ELSIF vr_tab_parcelas.COUNT() > 0 THEN
+            -- Percorrer todos os registros retornados nas tabelas de memória
+            FOR idx IN vr_tab_parcelas.FIRST..vr_tab_parcelas.LAST LOOP
+                --
+                vr_vlsdeved := vr_vlsdeved + nvl(vr_tab_parcelas(idx).vlatrpag, 0);
+                --
+            END LOOP;
+            --
+        END IF;
     
     -- Caso o saldo devedor total do empréstimo for menor que o valor pago no boleto 
-		-- ou se estiver realizando a quitação do acordo
+        -- ou se estiver realizando a quitação do acordo
     IF vr_vlsdeved < vr_vldpagto OR NVL(pr_inliqaco,'N') = 'S' THEN
       -- Devemos considerar somente o valor para pagar o saldo devedor.
       vr_vldpagto := vr_vlsdeved;
@@ -1559,25 +1563,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     IF vr_tab_parcelas.COUNT() > 0 THEN
       -- Percorrer todos os registros retornados nas tabelas de memória
       FOR idx IN vr_tab_parcelas.FIRST..vr_tab_parcelas.LAST LOOP
-				--
+                --
         vr_vlatrpag := 0;
         -- Se ainda possui saldo para pagar
         IF vr_vldsaldo > 0 THEN
-					--
+                    --
           IF vr_tab_parc_compe.EXISTS(idx) THEN
-						--
-						vr_vlatrpag := nvl(vr_tab_parc_compe(idx).vlatrpag, 0);
-						--
-					ELSIF vr_tab_parcelas.EXISTS(idx) THEN
-						--
-						vr_vlatrpag := nvl(vr_tab_parcelas(idx).vlatrpag, 0);
-						--
-					END IF;
+                        --
+                        vr_vlatrpag := nvl(vr_tab_parc_compe(idx).vlatrpag, 0);
+                        --
+                    ELSIF vr_tab_parcelas.EXISTS(idx) THEN
+                        --
+                        vr_vlatrpag := nvl(vr_tab_parcelas(idx).vlatrpag, 0);
+                        --
+                    END IF;
           -- Se o saldo para pagar é maior que o valor da parcela
           IF vr_vldsaldo > vr_vlatrpag THEN
-						--
+                        --
             vr_vldsaldo := vr_vldsaldo - vr_vlatrpag;
-						--
+                        --
           ELSE 
             -- Utiliza todo o saldo restante
             vr_vlpagpar := vr_vldsaldo;
@@ -1586,22 +1590,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           
           -- Indica o valor a ser pago da parcela
           vr_tab_parcelas(idx).vlpagpar := nvl(vr_vlpagpar, nvl(vr_tab_parcelas(idx).vlatrpag, 0));
-					vr_vlpagpar := NULL;
-					--
+                    vr_vlpagpar := NULL;
+                    --
         ELSE 
           -- Não irá pagar valor algum da parcela
           vr_tab_parcelas.DELETE(idx);
           -- Se encontrar a parcela da COMPE
           IF vr_tab_parc_compe.EXISTS(idx) THEN
-						--
+                        --
             vr_tab_parc_compe.DELETE(idx);
-						--
+                        --
           END IF;
-					--
+                    --
         END IF;
         --
       END LOOP;
-			--
+            --
     END IF;
  
     ------------------------------------------------------------------------------------------------------------
@@ -1614,47 +1618,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     -----------------------------------------------------------------------------------------------
     -- Efetuar o pagamento das parcelas
     -----------------------------------------------------------------------------------------------
-		pr_vltotpag := 0;
-		--
-		IF vr_tab_parcelas.COUNT() > 0 THEN
+        pr_vltotpag := 0;
+        --
+        IF vr_tab_parcelas.COUNT() > 0 THEN
       -- Percorrer todos os registros
       FOR idx IN vr_tab_parcelas.FIRST..vr_tab_parcelas.LAST LOOP
-				--
-				empr0011.pc_gera_pagto_pos(pr_cdcooper  => pr_cdcooper
-																	,pr_cdprogra  => pr_nmtelant
-																	,pr_dtcalcul  => pr_crapdat.dtmvtolt
-																	,pr_flgbatch  => TRUE -- Confirmar
-																	,pr_nrdconta  => pr_nrdconta
-																	,pr_nrctremp  => pr_nrctremp
-																	,pr_nrparepr  => vr_tab_parcelas(idx).nrparepr 
-																	,pr_vlpagpar  => vr_tab_parcelas(idx).vlpagpar
-																	,pr_idseqttl  => 1 -- Confirmar
-																	,pr_cdagenci  => pr_cdagenci
-																	,pr_cdpactra  => pr_cdagenci
-																	,pr_nrdcaixa  => 1 -- Confirmar
-																	,pr_cdoperad  => pr_cdoperad
-																	,pr_nrseqava  => 0 -- Fixo
-																	,pr_idorigem  => pr_idorigem
-																	,pr_nmdatela  => pr_nmtelant
-																	,pr_tab_price => vr_tab_price
-																	,pr_cdcritic  => pr_cdcritic
-																	,pr_dscritic  => pr_dscritic
-																	);
-		    --
-				IF pr_cdcritic IS NOT NULL OR pr_dscritic IS NOT NULL THEN
-					--
-					RAISE vr_exc_erro;
-					--
-				ELSE
-					-- Soma os valores pagos
-					pr_vltotpag := pr_vltotpag + nvl(vr_tab_parcelas(idx).vlpagpar, 0);
-					--
-				END IF;
-				--
-			END LOOP;
-			--
-		END IF;
-		--    
+                --
+                empr0011.pc_gera_pagto_pos(pr_cdcooper  => pr_cdcooper
+                                                                    ,pr_cdprogra  => pr_nmtelant
+                                                                    ,pr_dtcalcul  => pr_crapdat.dtmvtolt
+                                                                    ,pr_flgbatch  => TRUE -- Confirmar
+                                                                    ,pr_nrdconta  => pr_nrdconta
+                                                                    ,pr_nrctremp  => pr_nrctremp
+                                                                    ,pr_nrparepr  => vr_tab_parcelas(idx).nrparepr 
+                                                                    ,pr_vlpagpar  => vr_tab_parcelas(idx).vlpagpar
+                                                                    ,pr_idseqttl  => 1 -- Confirmar
+                                                                    ,pr_cdagenci  => pr_cdagenci
+                                                                    ,pr_cdpactra  => pr_cdagenci
+                                                                    ,pr_nrdcaixa  => 1 -- Confirmar
+                                                                    ,pr_cdoperad  => pr_cdoperad
+                                                                    ,pr_nrseqava  => 0 -- Fixo
+                                                                    ,pr_idorigem  => pr_idorigem
+                                                                    ,pr_nmdatela  => pr_nmtelant
+                                                                    ,pr_tab_price => vr_tab_price
+                                                                    ,pr_cdcritic  => pr_cdcritic
+                                                                    ,pr_dscritic  => pr_dscritic
+                                                                    );
+            --
+                IF pr_cdcritic IS NOT NULL OR pr_dscritic IS NOT NULL THEN
+                    --
+                    RAISE vr_exc_erro;
+                    --
+                ELSE
+                    -- Soma os valores pagos
+                    pr_vltotpag := pr_vltotpag + nvl(vr_tab_parcelas(idx).vlpagpar, 0);
+                    --
+                END IF;
+                --
+            END LOOP;
+            --
+        END IF;
+        --    
     
     -- REALIZAR O LANÇAMENTO DO AJUSTE CALCULADO NA COMPEFORA
     IF nvl(vr_vlajuste, 0) > 0 THEN
@@ -1764,12 +1768,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
            , epr.vlpgjmpr
            , epr.dtultpag
            , epr.vliofcpl
-					 , epr.dtmvtolt
-					 , epr.vlemprst
-					 , epr.txmensal
-					 , epr.dtdpagto
-					 , epr.vlsprojt
-					 , epr.qttolatr
+                     , epr.dtmvtolt
+                     , epr.vlemprst
+                     , epr.txmensal
+                     , epr.dtdpagto
+                     , epr.vlsprojt
+                     , epr.qttolatr
         FROM crapepr  epr
        WHERE epr.cdcooper = pr_cdcooper
          AND epr.nrdconta = pr_nrdconta
@@ -1942,19 +1946,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       
       -- Emprestimo Pos
       ELSIF rw_crapepr.tpemprst = 2 THEN
-				
-				-- Pagar empréstimo Pos
+                
+                -- Pagar empréstimo Pos
         pc_pagar_emprestimo_pos(pr_cdcooper => pr_cdcooper         
                                ,pr_nrdconta => pr_nrdconta         
                                ,pr_cdagenci => pr_cdagenci         
                                ,pr_crapdat  => pr_crapdat          
                                ,pr_nrctremp => pr_nrctremp
-															 ,pr_dtefetiv => rw_crapepr.dtmvtolt
-															 ,pr_cdlcremp => rw_crapepr.cdlcremp
-															 ,pr_vlemprst => rw_crapepr.vlemprst
-															 ,pr_txmensal => rw_crapepr.txmensal
+                                                             ,pr_dtefetiv => rw_crapepr.dtmvtolt
+                                                             ,pr_cdlcremp => rw_crapepr.cdlcremp
+                                                             ,pr_vlemprst => rw_crapepr.vlemprst
+                                                             ,pr_txmensal => rw_crapepr.txmensal
                                ,pr_dtdpagto => rw_crapepr.dtdpagto
-															 ,pr_vlsprojt => rw_crapepr.vlsprojt
+                                                             ,pr_vlsprojt => rw_crapepr.vlsprojt
                                ,pr_qttolatr => rw_crapepr.qttolatr
                                --,pr_nracordo => pr_nracordo         
                                ,pr_nrparcel => pr_nrparcel
@@ -1968,18 +1972,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                ,pr_vltotpag => pr_vltotpag         
                                ,pr_cdcritic => vr_cdcritic         
                                ,pr_dscritic => vr_dscritic
-															 );
+                                                             );
         
        -- Se retornar erro da rotina
         IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic, 0) > 0 THEN
-					--
+                    --
           RAISE vr_exp_erro;
-					--
+                    --
       END IF;
     END IF;
     
     END IF;   
   
+    -- Se a conta está em prejuízo, debita o valor pago da Conta Transitória (Bloqueado Prejuízo)
+    IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
+                                      , pr_nrdconta => pr_nrdconta) AND
+       pr_vltotpag > 0 THEN
+       
+       PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
+                                   , pr_nrdconta => pr_nrdconta
+                                   , pr_vlrlanc  => pr_vltotpag
+                                   , pr_dtmvtolt => pr_crapdat.dtmvtolt
+                                   , pr_cdcritic => vr_cdcritic
+                                   , pr_dscritic => vr_dscritic);
+                                   
+       IF trim(vr_dscritic) IS NOT NULL OR NVL(vr_cdcritic, 0) > 0 THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao debitar da conta em prejuízo o valor pago no contrato de empréstimo.';
+                    --
+          RAISE vr_exp_erro;
+                    --
+       END IF;
+    END IF;  
   EXCEPTION
     WHEN vr_exp_erro THEN
       -- Retornar total pago como zero
@@ -2178,35 +2202,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                      ,pr_nrdconta  crapass.nrdconta%TYPE) IS
       SELECT ass.cdagenci
            , ass.vllimcre
-					 , ass.inprejuz
-					 , sld.vliofmes -- Acrescido para compor o saldo devedor no caso e conta transferida para prejuízo (Reginaldo/AMcom)
+                     , ass.inprejuz
+                     , sld.vliofmes -- Acrescido para compor o saldo devedor no caso e conta transferida para prejuízo (Reginaldo/AMcom)
         FROM crapass  ass
-				   , crapsld  sld
+                   , crapsld  sld
        WHERE ass.nrdconta = pr_nrdconta
          AND ass.cdcooper = pr_cdcooper
-				 AND sld.cdcooper = ass.cdcooper
-				 AND sld.nrdconta = ass.nrdconta;
+                 AND sld.cdcooper = ass.cdcooper
+                 AND sld.nrdconta = ass.nrdconta;
     rw_crapass   cr_crapass%ROWTYPE;
     
     -- Buscar todos os contratos que estao amarrados no acordo
     CURSOR cr_acordo_contrato IS
-		  WITH contratos_acordo AS (
-			   SELECT a.cdcooper
-				      , a.nrdconta
+          WITH contratos_acordo AS (
+               SELECT a.cdcooper
+                      , a.nrdconta
               , a.nracordo
               , c.nrctremp -- é o mesmo que o nrctrdsc
-							, c.cdorigem
-					  , DECODE(c.cdorigem,1,1,2) as cdorigem_sort
-							, c.indpagar
+                            , c.cdorigem
+                      , DECODE(c.cdorigem,1,1,2) as cdorigem_sort
+                            , c.indpagar
                       , c.vliofdev
                       , c.vlbasiof
                       , c.vliofpag
                       , c.rowid
-				   FROM tbrecup_acordo a
+                   FROM tbrecup_acordo a
           INNER JOIN tbrecup_acordo_contrato c
              ON c.nracordo = a.nracordo
-				 WHERE a.nracordo = pr_nracordo
-			)
+                 WHERE a.nracordo = pr_nracordo
+            )
       SELECT acc.cdcooper
            , acc.nrdconta
            , acc.cdorigem 
@@ -2218,7 +2242,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
            , acc.vlbasiof
            , acc.vliofpag
            , acc.rowid
-					 , ass.inprejuz
+                     , ass.inprejuz
         FROM crapass                  ass
        INNER JOIN contratos_acordo acc
           ON ass.cdcooper = acc.cdcooper
@@ -2261,10 +2285,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     vr_dscatbem VARCHAR2(100);
     vr_cdlcremp NUMBER;
     vr_cdfinemp NUMBER;
-	  
-		vr_nrseqdig craplcm.nrseqdig%TYPE;
-		vr_incrineg INTEGER;
-		vr_tab_retorno LANC0001.typ_reg_retorno;
+      
+        vr_nrseqdig craplcm.nrseqdig%TYPE;
+        vr_incrineg INTEGER;
+        vr_tab_retorno LANC0001.typ_reg_retorno;
 
    -- Cursor para bens do contrato: 
     /*Faz o order by dscatbem pois "CASA" e "APARTAMENTO" reduzem as 3 aliquotas de IOF (principal, adicional e complementar) a zero.
@@ -2382,16 +2406,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       vr_idxsaldo := vr_tab_saldos.FIRST;
 
       /*
-			  Se a conta não está em prejuízo, desconta o valor da parcela do saldo devedor da conta.
-				Se a conta estiver em prejuízo, o valor da parcela já foi debitado (transferido para a conta transitória)
-			*/		  
-			IF rw_crapass.inprejuz = 0 THEN 
+              Se a conta não está em prejuízo, desconta o valor da parcela do saldo devedor da conta.
+                Se a conta estiver em prejuízo, o valor da parcela já foi debitado (transferido para a conta transitória)
+            */        
+            IF rw_crapass.inprejuz = 0 THEN 
       -- Saldo Disponivel na conta corrente - Descontando o valor pago do boleto
       vr_vlsddisp         := NVL(vr_tab_saldos(vr_idxsaldo).vlsddisp, 0) - nvl(vr_vlparcel,0);
     ELSE 
-				vr_vlsddisp         := NVL(vr_tab_saldos(vr_idxsaldo).vlsddisp, 0) - 
-				                       PREJ0003.fn_juros_remun_prov(rw_acordo.cdcooper, rw_acordo.nrdconta); -- Acrescenta os juros remuneratórios do prejuízo previsionados (Se houver)
-			END IF;
+                vr_vlsddisp         := NVL(vr_tab_saldos(vr_idxsaldo).vlsddisp, 0) - 
+                                       PREJ0003.fn_juros_remun_prov(rw_acordo.cdcooper, rw_acordo.nrdconta); -- Acrescenta os juros remuneratórios do prejuízo previsionados (Se houver)
+            END IF;
     ELSE
       pr_dscritic := 'Não foi retornado saldo dia da conta.';
       RAISE vr_exc_erro;
@@ -2432,21 +2456,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         END IF;
         RAISE vr_exc_erro;
       END IF;
-			ELSE
-				PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => rw_acordo.cdcooper
-				                            , pr_nrdconta => rw_acordo.nrdconta
-																		, pr_vlrlanc  => rw_acordo.vlbloqueado
-																		, pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
-																		, pr_cdcritic => vr_cdcritic
-																		, pr_dscritic => vr_dscritic); 
-														
-			  IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-					pr_cdcritic := vr_cdcritic;
-					pr_dscritic := vr_dscritic;
-					
-					RAISE vr_exc_erro;
-				END IF;
-			END IF;
+            ELSE
+                PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => rw_acordo.cdcooper
+                                            , pr_nrdconta => rw_acordo.nrdconta
+                                                                        , pr_vlrlanc  => rw_acordo.vlbloqueado
+                                                                        , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                                                        , pr_cdcritic => vr_cdcritic
+                                                                        , pr_dscritic => vr_dscritic); 
+                                                        
+              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                    pr_cdcritic := vr_cdcritic;
+                    pr_dscritic := vr_dscritic;
+                    
+                    RAISE vr_exc_erro;
+                END IF;
+            END IF;
       
       -- ZERAR O VALOR BLOQUEADO NA TABELA DE ACORDO
       BEGIN
@@ -2478,7 +2502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                , flgehvip = 1
                , cdmotcin = decode(cdmotcin,2,cdmotcin,7,cdmotcin,1)
                , dtaltera = BTCH0001.rw_crapdat.dtmvtolt
-			   , cdoperad = 'cyber'
+               , cdoperad = 'cyber'
            WHERE cdcooper = rw_acordo_contrato.cdcooper
              AND cdorigem = DECODE(rw_acordo_contrato.cdorigem,2,3,rw_acordo_contrato.cdorigem)
              AND nrdconta = rw_acordo_contrato.nrdconta
@@ -2572,33 +2596,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
             
           END IF;                     
           
-					-- Lança IOF pago no extrato do prejuízo de conta corrente
-					IF rw_crapass.inprejuz = 1 THEN
-						PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => rw_acordo_contrato.cdcooper
+                    -- Lança IOF pago no extrato do prejuízo de conta corrente
+                    IF rw_crapass.inprejuz = 1 THEN
+                        PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => rw_acordo_contrato.cdcooper
                                             , pr_nrdconta => rw_acordo_contrato.nrdconta
                                             , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
                                             , pr_cdhistor => 2323
                                             , pr_vllanmto => vr_vltotpag
                                             , pr_cdcritic => vr_cdcritic
                                             , pr_dscritic => vr_dscritic);
-																						
-						-- Verifica ocorrencia de erro
-						IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
-							-- Indicar que houve crítica ao processar o pagamento de estouro de conta
-							vr_flagerro := TRUE;
+                                                                                        
+                        -- Verifica ocorrencia de erro
+                        IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+                            -- Indicar que houve crítica ao processar o pagamento de estouro de conta
+                            vr_flagerro := TRUE;
 
-							-- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
-							pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
-															,pr_nrdconta => rw_acordo_contrato.nrdconta
-															,pr_nracordo => pr_nracordo
-															,pr_nrctremp => rw_acordo_contrato.nrctremp
-															,pr_dscritic => vr_dscritic
-															,pr_dsmodule => 'PC_PAGAR_IOF_CONTRATO_CONTA');
+                            -- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
+                            pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
+                                                            ,pr_nrdconta => rw_acordo_contrato.nrdconta
+                                                            ,pr_nracordo => pr_nracordo
+                                                            ,pr_nrctremp => rw_acordo_contrato.nrctremp
+                                                            ,pr_dscritic => vr_dscritic
+                                                            ,pr_dsmodule => 'PC_PAGAR_IOF_CONTRATO_CONTA');
 
-							-- Voltar ao Loop para processar o próximo pagamento
-							CONTINUE;
-						END IF;
-					END IF;
+                            -- Voltar ao Loop para processar o próximo pagamento
+                            CONTINUE;
+                        END IF;
+                    END IF;
 
           -- Diminuir o valor pago do boleto com o lançamento efetuado na conta corrente
           vr_vlparcel := vr_vlparcel - NVL(vr_vltotpag,0);
@@ -2640,67 +2664,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           
           -- Voltar ao Loop para processar o próximo pagamento
           CONTINUE;
-				ELSE -- Se pagou a conta corrente
-				  -- Somar o valor pago ao montante total de pagamentos
+                ELSE -- Se pagou a conta corrente
+                  -- Somar o valor pago ao montante total de pagamentos
           pr_vltotpag := NVL(pr_vltotpag,0) + NVL(vr_vltotpag,0);
-          -----------------------------------------------------------------------------------------------	
-				
-					IF rw_acordo_contrato.inprejuz = 1 THEN
-						-- Efetua o pagamento do prejuízo de conta corrente
-						PREJ0003.pc_pagar_prejuizo_cc(pr_cdcooper => rw_acordo_contrato.cdcooper
-						                            , pr_nrdconta => rw_acordo_contrato.nrdconta
-													, pr_vlrpagto => vr_vltotpag 
-																				, pr_atsldlib => 0
-																				, pr_cdcritic => vr_cdcritic
-																				, pr_dscritic => vr_dscritic);
+          -----------------------------------------------------------------------------------------------   
+                
+                    IF rw_acordo_contrato.inprejuz = 1 THEN
+                        -- Efetua o pagamento do prejuízo de conta corrente
+                        PREJ0003.pc_pagar_prejuizo_cc(pr_cdcooper => rw_acordo_contrato.cdcooper
+                                                    , pr_nrdconta => rw_acordo_contrato.nrdconta
+                                                    , pr_vlrpagto => vr_vltotpag 
+                                                                                , pr_atsldlib => 0
+                                                                                , pr_cdcritic => vr_cdcritic
+                                                                                , pr_dscritic => vr_dscritic);
 
-						IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic, 0)  >0 THEN
-							-- Indicar que houve crítica ao processar o pagamento de estouro de conta
-							vr_flagerro := TRUE;
+                        IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic, 0)  >0 THEN
+                            -- Indicar que houve crítica ao processar o pagamento de estouro de conta
+                            vr_flagerro := TRUE;
 
-							-- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
-							pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
-															,pr_nrdconta => rw_acordo_contrato.nrdconta
-															,pr_nracordo => pr_nracordo
-															,pr_nrctremp => rw_acordo_contrato.nrctremp
-															,pr_dscritic => vr_dscritic
-															,pr_dsmodule => 'PAGAR_CONTRATO_CONTA');
+                            -- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
+                            pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
+                                                            ,pr_nrdconta => rw_acordo_contrato.nrdconta
+                                                            ,pr_nracordo => pr_nracordo
+                                                            ,pr_nrctremp => rw_acordo_contrato.nrctremp
+                                                            ,pr_dscritic => vr_dscritic
+                                                            ,pr_dsmodule => 'PAGAR_CONTRATO_CONTA');
 
-							-- Voltar ao Loop para processar o próximo pagamento
-							CONTINUE;
-						END IF;
-						
-						-- Debita da conta transitória o valor utilizado para pagamento
-						PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_acordo_contrato.cdcooper
-						                              , pr_nrdconta => rw_acordo_contrato.nrdconta
-													 , pr_vlrlanc => pr_vltotpag 
-																					, pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
-																					, pr_cdcritic => vr_cdcritic
-																					, pr_dscritic => vr_dscritic);
-																					
-						IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
-							-- Indicar que houve crítica ao processar o pagamento de estouro de conta
-							vr_flagerro := TRUE;
+                            -- Voltar ao Loop para processar o próximo pagamento
+                            CONTINUE;
+                        END IF;
+                        
+                        -- Debita da conta transitória o valor utilizado para pagamento
+                        PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_acordo_contrato.cdcooper
+                                                      , pr_nrdconta => rw_acordo_contrato.nrdconta
+                                                     , pr_vlrlanc => pr_vltotpag 
+                                                                                    , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                                                                    , pr_cdcritic => vr_cdcritic
+                                                                                    , pr_dscritic => vr_dscritic);
+                                                                                    
+                        IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+                            -- Indicar que houve crítica ao processar o pagamento de estouro de conta
+                            vr_flagerro := TRUE;
 
-							-- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
-							pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
-															,pr_nrdconta => rw_acordo_contrato.nrdconta
-															,pr_nracordo => pr_nracordo 
-															,pr_nrctremp => rw_acordo_contrato.nrctremp
-															,pr_dscritic => vr_dscritic
-															,pr_dsmodule => 'PAGAR_CONTRATO_CONTA');
+                            -- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
+                            pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
+                                                            ,pr_nrdconta => rw_acordo_contrato.nrdconta
+                                                            ,pr_nracordo => pr_nracordo 
+                                                            ,pr_nrctremp => rw_acordo_contrato.nrctremp
+                                                            ,pr_dscritic => vr_dscritic
+                                                            ,pr_dsmodule => 'PAGAR_CONTRATO_CONTA');
 
-							-- Voltar ao Loop para processar o próximo pagamento
-							CONTINUE;
-						END IF;
-						
-						vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
+                            -- Voltar ao Loop para processar o próximo pagamento
+                            CONTINUE;
+                        END IF;
+                        
+                        vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
                                     ,pr_nmdcampo => 'NRSEQDIG'
                                     ,pr_dsdchave => to_char(rw_acordo_contrato.cdcooper)||';'||
                                     to_char(BTCH0001.rw_crapdat.dtmvtolt, 'DD/MM/RRRR')||';'||
                                     '1;100;650010');
 
-			      LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                  LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
                                              , pr_cdagenci => 1
                                              , pr_cdbccxlt => 100
                                              , pr_nrdolote => 650010
@@ -2719,27 +2743,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                              , pr_cdoperad => 1
                                              , pr_cdcooper => rw_acordo_contrato.cdcooper
                                              , pr_cdorigem => 5
-																			       , pr_incrineg => vr_incrineg
-																			       , pr_tab_retorno => vr_tab_retorno
-																			       , pr_cdcritic => vr_cdcritic
-																			       , pr_dscritic => vr_dscritic);
-																						 
-						IF nvl(vr_cdcritic, 0) > 0 or trim(vr_dscritic) IS NOT NULL THEN
-							-- Indicar que houve crítica ao processar o pagamento de estouro de conta
-							vr_flagerro := TRUE;
+                                                                                   , pr_incrineg => vr_incrineg
+                                                                                   , pr_tab_retorno => vr_tab_retorno
+                                                                                   , pr_cdcritic => vr_cdcritic
+                                                                                   , pr_dscritic => vr_dscritic);
+                                                                                         
+                        IF nvl(vr_cdcritic, 0) > 0 or trim(vr_dscritic) IS NOT NULL THEN
+                            -- Indicar que houve crítica ao processar o pagamento de estouro de conta
+                            vr_flagerro := TRUE;
 
-							-- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
-							pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
-															,pr_nrdconta => rw_acordo_contrato.nrdconta
-															,pr_nracordo => pr_nracordo
-															,pr_nrctremp => rw_acordo_contrato.nrctremp
-															,pr_dscritic => vr_dscritic
-															,pr_dsmodule => 'PAGAR_CONTRATO_CONTA');
+                            -- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
+                            pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
+                                                            ,pr_nrdconta => rw_acordo_contrato.nrdconta
+                                                            ,pr_nracordo => pr_nracordo
+                                                            ,pr_nrctremp => rw_acordo_contrato.nrctremp
+                                                            ,pr_dscritic => vr_dscritic
+                                                            ,pr_dsmodule => 'PAGAR_CONTRATO_CONTA');
 
-							-- Voltar ao Loop para processar o próximo pagamento
-							CONTINUE;
-						END IF;
-					END IF;
+                            -- Voltar ao Loop para processar o próximo pagamento
+                            CONTINUE;
+                        END IF;
+                    END IF;
         END IF;                     
         
         -- Diminuir o valor pago do boleto com o lançamento efetuado na conta corrente
@@ -2841,10 +2865,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                           ,pr_dscritic => vr_dscritic);                          --> Descrição da crítica
                                                 
         IF NVL(vr_dscritic, ' ') <> ' ' THEN
-				   RAISE vr_exc_erro;
-			  END IF;
-			  
-			  --Imunidade....
+                   RAISE vr_exc_erro;
+              END IF;
+              
+              --Imunidade....
         IF vr_flgimune > 0 THEN
           vr_vliofpri := 0;
           vr_vliofadi := 0;
@@ -2856,32 +2880,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         -- Somar o valor pago ao montante total de pagamentos
         pr_vltotpag := NVL(pr_vltotpag,0) + NVL(vr_vltotpag,0);
         -----------------------------------------------------------------------------------------------
-				
-				IF rw_crapass.inprejuz = 1 THEN				
-					-- Debita da conta transitória o valor utilizado para pagamento do empréstimo
-					PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_acordo_contrato.cdcooper
-																				, pr_nrdconta => rw_acordo_contrato.nrdconta
-																				, pr_vlrlanc => NVL(vr_vltotpag,0)
-																				, pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
-																				, pr_cdcritic => vr_cdcritic
-																				, pr_dscritic => vr_dscritic);
-																						
-					IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
-						-- Indicar que houve crítica ao processar o pagamento de estouro de conta
-						vr_flagerro := TRUE;
+                
+                IF rw_crapass.inprejuz = 1 THEN             
+                    -- Debita da conta transitória o valor utilizado para pagamento do empréstimo
+                    PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_acordo_contrato.cdcooper
+                                                                                , pr_nrdconta => rw_acordo_contrato.nrdconta
+                                                                                , pr_vlrlanc => NVL(vr_vltotpag,0)
+                                                                                , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                                                                , pr_cdcritic => vr_cdcritic
+                                                                                , pr_dscritic => vr_dscritic);
+                                                                                        
+                    IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+                        -- Indicar que houve crítica ao processar o pagamento de estouro de conta
+                        vr_flagerro := TRUE;
 
-						-- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
-						pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
-														,pr_nrdconta => rw_acordo_contrato.nrdconta
-														,pr_nracordo => pr_nracordo
-														,pr_nrctremp => rw_acordo_contrato.nrctremp
-														,pr_dscritic => vr_dscritic
-														,pr_dsmodule => 'PAGAR_CONTRATO_CONTA');
+                        -- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
+                        pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
+                                                        ,pr_nrdconta => rw_acordo_contrato.nrdconta
+                                                        ,pr_nracordo => pr_nracordo
+                                                        ,pr_nrctremp => rw_acordo_contrato.nrctremp
+                                                        ,pr_dscritic => vr_dscritic
+                                                        ,pr_dsmodule => 'PAGAR_CONTRATO_CONTA');
 
-						-- Voltar ao Loop para processar o próximo pagamento
-						CONTINUE;
-					END IF;
-				END IF;
+                        -- Voltar ao Loop para processar o próximo pagamento
+                        CONTINUE;
+                    END IF;
+                END IF;
 
       -- AWAE: Se a origem estiver indicando DESCONTO DE TÍTULOS
       ELSIF (rw_acordo_contrato.cdorigem = 4)  THEN
@@ -2924,32 +2948,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         -- Somar o valor pago ao montante total de pagamentos
         pr_vltotpag := NVL(pr_vltotpag,0) + NVL(vr_vltotpag,0);
         -----------------------------------------------------------------------------------------------
-				
-				IF rw_crapass.inprejuz = 1 THEN				
-					-- Debita da conta transitória o valor utilizado para pagamento do empréstimo
-					PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_acordo_contrato.cdcooper
-																				, pr_nrdconta => rw_acordo_contrato.nrdconta
-																				, pr_vlrlanc => NVL(vr_vltotpag,0)
-																				, pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
-																				, pr_cdcritic => vr_cdcritic
-																				, pr_dscritic => vr_dscritic);
-																						
-					IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
-						-- Indicar que houve crítica ao processar o pagamento de estouro de conta
-						vr_flagerro := TRUE;
+                
+                IF rw_crapass.inprejuz = 1 THEN             
+                    -- Debita da conta transitória o valor utilizado para pagamento do empréstimo
+                    PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_acordo_contrato.cdcooper
+                                                                                , pr_nrdconta => rw_acordo_contrato.nrdconta
+                                                                                , pr_vlrlanc => NVL(vr_vltotpag,0)
+                                                                                , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                                                                , pr_cdcritic => vr_cdcritic
+                                                                                , pr_dscritic => vr_dscritic);
+                                                                                        
+                    IF vr_dscritic IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+                        -- Indicar que houve crítica ao processar o pagamento de estouro de conta
+                        vr_flagerro := TRUE;
 
-						-- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
-						pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
-														,pr_nrdconta => rw_acordo_contrato.nrdconta
-														,pr_nracordo => pr_nracordo
-														,pr_nrctremp => rw_acordo_contrato.nrctremp
-														,pr_dscritic => vr_dscritic
-														,pr_dsmodule => 'PAGAR_CONTRATO_CONTA');
+                        -- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
+                        pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
+                                                        ,pr_nrdconta => rw_acordo_contrato.nrdconta
+                                                        ,pr_nracordo => pr_nracordo
+                                                        ,pr_nrctremp => rw_acordo_contrato.nrctremp
+                                                        ,pr_dscritic => vr_dscritic
+                                                        ,pr_dsmodule => 'PAGAR_CONTRATO_CONTA');
 
-						-- Voltar ao Loop para processar o próximo pagamento
-						CONTINUE;
-					END IF;
-				END IF;
+                        -- Voltar ao Loop para processar o próximo pagamento
+                        CONTINUE;
+                    END IF;
+                END IF;
       END IF;
         
       -- Deve sair do loop quando não houver mais saldo disponivel para pagamentos --
@@ -2982,7 +3006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       
       -- Se for para lançar a sobra como SALDO BLOQUEADO
       IF vr_flbloque THEN
-				IF rw_crapass.inprejuz = 0 THEN 
+                IF rw_crapass.inprejuz = 0 THEN 
         -- Realiza o lançamento do saldo bloqueado na conta corrente do cooperado
         EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_acordo.cdcooper           --> Cooperativa conectada
                                       ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt --> Movimento atual
@@ -3011,21 +3035,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           END IF;
           RAISE vr_exc_erro;
         END IF;
-				ELSE
-					PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_acordo.cdcooper
-					                            , pr_nrdconta => rw_acordo.nrdconta
-																			, pr_vlrlanc  => vr_vlparcel
-																			, pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                ELSE
+                    PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_acordo.cdcooper
+                                                , pr_nrdconta => rw_acordo.nrdconta
+                                                                            , pr_vlrlanc  => vr_vlparcel
+                                                                            , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
                                       , pr_cdcritic => vr_cdcritic
-																			, pr_dscritic => vr_dscritic);
-																			
-					IF nvl(vr_cdcritic, 0) > 0 AND vr_dscritic IS NOT NULL THEN
-						pr_cdcritic := vr_cdcritic;
-						pr_dscritic := vr_dscritic;
-						
-						RAISE vr_exc_erro;
-					END IF;
-				END IF;
+                                                                            , pr_dscritic => vr_dscritic);
+                                                                            
+                    IF nvl(vr_cdcritic, 0) > 0 AND vr_dscritic IS NOT NULL THEN
+                        pr_cdcritic := vr_cdcritic;
+                        pr_dscritic := vr_dscritic;
+                        
+                        RAISE vr_exc_erro;
+                    END IF;
+                END IF;
       
         -- Alterar o valor bloqueado no acordo, com o valor lançado
         BEGIN
@@ -3074,23 +3098,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           RAISE vr_exc_erro;
         END IF;
         
-				IF rw_crapass.inprejuz = 1 THEN
-					PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => rw_acordo.cdcooper
-					                            , pr_nrdconta => rw_acordo.nrdconta
-																			, pr_vllanmto => vr_vlparcel
-																			, pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
-																			, pr_versaldo => 0
-																			, pr_atsldlib => 0
-																			, pr_cdcritic => vr_cdcritic
-																			, pr_dscritic => vr_dscritic);
-																			
-				  IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-						pr_cdcritic := vr_cdcritic;
-						pr_dscritic := vr_dscritic;
-						
-						RAISE vr_exc_erro;
-					END IF;
-				END IF;
+                IF rw_crapass.inprejuz = 1 THEN
+                    PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => rw_acordo.cdcooper
+                                                , pr_nrdconta => rw_acordo.nrdconta
+                                                                            , pr_vllanmto => vr_vlparcel
+                                                                            , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                                                            , pr_versaldo => 0
+                                                                            , pr_atsldlib => 0
+                                                                            , pr_cdcritic => vr_cdcritic
+                                                                            , pr_dscritic => vr_dscritic);
+                                                                            
+                  IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                        pr_cdcritic := vr_cdcritic;
+                        pr_dscritic := vr_dscritic;
+                        
+                        RAISE vr_exc_erro;
+                    END IF;
+                END IF;
 
         -- Adicionar o valor lançado no como despesa ao total pago... pois o devido destino ao valor já foi dado
         pr_vltotpag := NVL(pr_vltotpag,0) + NVL(vr_vlparcel,0);
