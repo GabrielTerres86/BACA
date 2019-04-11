@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/94.                     Ultima atualizacao: 08/08/2017
+   Data    : Outubro/94.                     Ultima atualizacao: 26/03/2019
 
    Dados referentes ao programa:
 
@@ -125,7 +125,10 @@
                08/08/2017 - Tratar historicos 573 ou 78 (Lucas Ranghetti #715027)
                
                29/05/2018 - Alteraçao INSERT na craplcm pela chamada da rotina LANC0001
-                            PRJ450 - Renato Cordeiro (AMcom)         
+                            PRJ450 - Renato Cordeiro (AMcom)   
+							
+               26/03/2019 - PRB0040512 - Trocar a saida de criticas 251 para o proc_message
+			                e nao mais proc_batch.log (Andreatta-Mouts)      
 
 ............................................................................. */
 
@@ -278,7 +281,7 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
               UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                                 " - " + glb_cdprogra + "' --> '" +
                                 STRING(crapdev.nrdconta,"zzzz,zz9,9") +
-                                " " + glb_dscritic + " >> log/proc_batch.log").
+                                " " + glb_dscritic + " >> log/proc_message.log").
               
               NEXT.
                
