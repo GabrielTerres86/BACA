@@ -684,6 +684,5 @@ comment on column TBEPR_PARAM_CONTA.dtatualiza_majora_auto
   is 'Data da atualizacao da majoracao automatica de credito';
   
 -- Ajustar campos detectados faltantes nos demais ambientes
-alter table TBGEN_MOTIVO add flgativo NUMBER default 1;
-alter table CRAPASS add flgativo nrcpfcnpj_base NUMBER(11) default 0 not null;
-alter table TBGEN_MOTIVO add flgativo NUMBER default 1;
+alter table TBGEN_MOTIVO add flgativo NUMBER(1) default 1 not null;
+alter table CRAPASS add nrcpfcnpj_base NUMBER(11) default 0 not null;
