@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0119.p                  
     Autor(a): Fabricio
-    Data    : Dezembro/2011                      Ultima atualizacao: 12/12/2016
+    Data    : Dezembro/2011                      Ultima atualizacao: 12/04/2019
   
     Dados referentes ao programa:
   
@@ -51,6 +51,9 @@
                               para listar apenas Coops Ativas
                               Telas que utilizam a procedure (IMGCHQ/PARMON)
                               (Guilherme/SUPERO)
+                              
+                 12/04/2019 - RITM0011920 Na rotina verifica_permissao, incluida 
+                              a permissao de acesso para a coop 9 (Carlos)
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -106,7 +109,7 @@ PROCEDURE verifica_permissao:
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    IF par_cdcooper = 3 THEN
+    IF par_cdcooper = 3 OR par_cdcooper = 9 THEN
        DO:
            IF par_cddepart <> 20  AND /* TI */
               par_cddepart <> 14  AND /* PRODUTOS */
