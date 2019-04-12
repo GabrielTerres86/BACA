@@ -2,7 +2,7 @@
 
    Programa: siscaixa/web/crap051.w
    Sistema : Caixa On-line
-   Sigla   : CRED                            Ultima atualizacao: 09/05/2018.
+   Sigla   : CRED                            Ultima atualizacao: 12/04/2019.
 
    Dados referentes ao programa:
 
@@ -23,6 +23,9 @@
                             
                09/05/2018 - possibilidade de utilizaçao do Caixa On-lie mesmo com o
                             processo batch (noturno) executando (Fabio Adriano - AMcom).
+
+               12/04/2019 - PRB0040581 Ajustes para tratar lock (Andreatta-Mouts)
+
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v10r12 GUI adm2
@@ -92,6 +95,7 @@ CREATE WIDGET-POOL.
 /* Local Variable Definitions ---                                       */
 DEFINE VARIABLE h-b1crap00 AS HANDLE     NO-UNDO.
 DEFINE VARIABLE h-b1crap51 AS HANDLE     NO-UNDO.
+DEFINE VARIABLE h-b1crap61 AS HANDLE     NO-UNDO.
 DEFINE VARIABLE h-b1crap52  AS HANDLE     NO-UNDO.
 DEFINE VARIABLE p-cod-erro AS INTE       NO-UNDO.
 DEF VAR p-poupanca         AS LOG NO-UNDO.
@@ -535,18 +539,37 @@ PROCEDURE process-web-request :
                     v_nrsequni   = ""
                     v_dtenvelo   = ""
                     vh_foco      = "9".
-              FOR EACH crapmdw EXCLUSIVE-LOCK
-                 WHERE crapmdw.cdcooper  = crapcop.cdcooper
-                   AND crapmdw.cdagenci  = INT(v_pac)
-                   AND crapmdw.nrdcaixa  = INT(v_caixa):
-                  DELETE crapmdw.
-              END.
-              FOR EACH crapmrw EXCLUSIVE-LOCK
-                 WHERE crapmrw.cdcooper = crapcop.cdcooper
-                   AND crapmrw.cdagenci = INT(v_pac)
-                   AND crapmrw.nrdcaixa = INT(v_caixa):
-                  DELETE crapmrw.
-              END.
+
+				IF NOT VALID-HANDLE(h-b1crap61) THEN
+					RUN dbo/b1crap61.p PERSISTENT SET h-b1crap61.
+			
+				RUN elimina_crapmdw IN h-b1crap61 (INPUT v_coop,
+												   INPUT v_pac,
+												   INPUT v_caixa,
+												   INPUT 0).
+				 
+				IF VALID-HANDLE(h-b1crap61) THEN
+					DELETE PROCEDURE h-b1crap61.
+				
+				IF RETURN-VALUE = "NOK" THEN  DO:
+				   {include/i-erro.i}
+				   LEAVE.
+				END.
+				
+				IF NOT VALID-HANDLE(h-b1crap61) THEN
+					RUN dbo/b1crap61.p PERSISTENT SET h-b1crap61.
+		  
+				RUN elimina_crapmrw IN h-b1crap61 (INPUT v_coop,
+												   INPUT v_pac,
+												   INPUT v_caixa).        
+				IF VALID-HANDLE(h-b1crap61) THEN
+					DELETE PROCEDURE h-b1crap61.
+				
+				IF RETURN-VALUE = "NOK" THEN  DO:
+				   {include/i-erro.i}
+				   LEAVE.
+				END.
+
           END.
           ELSE DO: 
               RUN dbo/b1crap51.p PERSISTENT SET h-b1crap51.
@@ -838,18 +861,36 @@ PROCEDURE process-web-request :
     END.
     ELSE
     DO:
-        FOR EACH crapmdw EXCLUSIVE-LOCK
-           WHERE crapmdw.cdcooper  = crapcop.cdcooper
-             AND crapmdw.cdagenci  = INT(v_pac)
-             AND crapmdw.nrdcaixa  = INT(v_caixa):
-            DELETE crapmdw.
+		IF NOT VALID-HANDLE(h-b1crap61) THEN
+			RUN dbo/b1crap61.p PERSISTENT SET h-b1crap61.
+    
+        RUN elimina_crapmdw IN h-b1crap61 (INPUT v_coop,
+										   INPUT v_pac,
+										   INPUT v_caixa,
+										   INPUT 0).
+		 
+		IF VALID-HANDLE(h-b1crap61) THEN
+			DELETE PROCEDURE h-b1crap61.
+		
+		IF RETURN-VALUE = "NOK" THEN  DO:
+           {include/i-erro.i}
+           LEAVE.
         END.
-        FOR EACH crapmrw EXCLUSIVE-LOCK
-           WHERE crapmrw.cdcooper = crapcop.cdcooper
-             AND crapmrw.cdagenci = INT(v_pac)
-             AND crapmrw.nrdcaixa   = INT(v_caixa):
-            DELETE crapmrw.
+        
+        IF NOT VALID-HANDLE(h-b1crap61) THEN
+			RUN dbo/b1crap61.p PERSISTENT SET h-b1crap61.
+  
+        RUN elimina_crapmrw IN h-b1crap61 (INPUT v_coop,
+                                           INPUT v_pac,
+                                           INPUT v_caixa).        
+		IF VALID-HANDLE(h-b1crap61) THEN
+			DELETE PROCEDURE h-b1crap61.
+		
+		IF RETURN-VALUE = "NOK" THEN  DO:
+           {include/i-erro.i}
+           LEAVE.
         END.
+        
     END.
 
     IF GET-VALUE("v_log") = "yes" THEN DO:

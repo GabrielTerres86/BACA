@@ -5,7 +5,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Evandro.
-   Data    : Marco/2010                      Ultima atualizacao: 25/01/2019
+   Data    : Marco/2010                      Ultima atualizacao: 05/04/2019
 
    Dados referentes ao programa:
 
@@ -65,6 +65,8 @@
                             Heitor (Mouts)
 
                25/01/2019 - P450 - Correçao parametro geraçao lançamento (bo 200), dtmvtocd (Renato Cordeiro - AMcom)
+
+			   05/04/2019 - PRB0040581 Ajustes busca_envelopes_deposito para tratar lock (Andreatta-Mouts)
 
 ............................................................................ */
 
@@ -154,14 +156,20 @@ PROCEDURE busca_envelopes_deposito:
     DEF  INPUT PARAM par_vldincpt    AS CHAR             NO-UNDO.
     DEF  INPUT PARAM par_dssituac    AS CHAR             NO-UNDO.
 
+	/* Saida */ 
     DEF OUTPUT PARAM TABLE FOR tt-depositos-env.
 
     DEF BUFFER crabcop FOR crapcop.
-
+	DEF BUFFER crabmdw FOR crapmdw.
 
     DEFINE VARIABLE aux_nrsequen AS INTEGER     NO-UNDO.
+    DEFINE VARIABLE aux_contador AS INTEGER     NO-UNDO.
 
     EMPTY TEMP-TABLE tt-depositos-env.
+
+    RUN elimina-erro (INPUT par_nmrescop,
+                      INPUT par_cdagenci,
+                      INPUT par_nrdcaixa).
                
     FIND crapcop WHERE crapcop.nmrescop = par_nmrescop NO-LOCK NO-ERROR.
 
@@ -178,61 +186,96 @@ PROCEDURE busca_envelopes_deposito:
 
     IF  par_tpdeposi = 1  THEN
     DO:
-        FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper AND
-                               crapmdw.cdagenci = par_cdagenci     AND
-                               crapmdw.nrdcaixa = par_nrdcaixa EXCLUSIVE-LOCK,
-           FIRST crapenl WHERE crapenl.cdcoptfn = crapcop.cdcooper AND
-                               crapenl.dtmvtolt = crapmdw.dtlibcom AND
-                               crapenl.nrseqenv = crapmdw.nrcheque NO-LOCK
-                               BY crapmdw.nrseqdig:
-            CREATE tt-depositos-env.
-            ASSIGN aux_nrsequen = aux_nrsequen + 1
-                   tt-depositos-env.nrsequen = aux_nrsequen
-                   tt-depositos-env.nrdconta = crapenl.nrdconta
-                   tt-depositos-env.nrconfer = crapmdw.nrcheque
-                   tt-depositos-env.dtlibcom = crapmdw.dtlibcom
-                   tt-depositos-env.vlinform = IF  par_tpdeposi = 1  THEN 
-                                                   crapenl.vldininf 
-                                               ELSE crapenl.vlchqinf.
+			FOR EACH crabmdw WHERE crabmdw.cdcooper = crapcop.cdcooper AND
+								   crabmdw.cdagenci = par_cdagenci     AND
+								   crabmdw.nrdcaixa = par_nrdcaixa     NO-LOCK
+								   BY crabmdw.nrseqdig:
+ 
+               DO aux_contador = 1 TO 10:
+
+					FIND crapmdw WHERE  crapmdw.cdcooper = crabmdw.cdcooper AND
+                                        crapmdw.cdagenci = crabmdw.cdagenci AND 
+                                        crapmdw.nrdcaixa = crabmdw.nrdcaixa AND
+                                        crapmdw.nrctabdb = crabmdw.nrctabdb AND
+                                        crapmdw.nrcheque = crabmdw.nrcheque EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+					IF   NOT AVAIL crapmdw   THEN
+						 IF   LOCKED crapmdw   THEN
+							  DO:
+								  i-cod-erro = 77.
+								  PAUSE 1 NO-MESSAGE.
+								  NEXT.
+							  END.		
+
+					i-cod-erro = 0.
+					LEAVE.
+
+				END.
+
+				IF   i-cod-erro <> 0   THEN
+				DO:
+                     RUN cria-erro (INPUT par_nmrescop
+								   ,INPUT par_cdagenci
+								   ,INPUT par_nrdcaixa
+								   ,INPUT i-cod-erro
+								   ,INPUT ""
+								   ,INPUT YES).
+					 RETURN "NOK".
+                END.
+
+
+			   FIND FIRST crapenl WHERE crapenl.cdcoptfn = crapcop.cdcooper AND
+								   crapenl.dtmvtolt = crapmdw.dtlibcom AND
+								   crapenl.nrseqenv = crapmdw.nrcheque NO-LOCK NO-ERROR.
+
+				CREATE tt-depositos-env.
+				ASSIGN aux_nrsequen = aux_nrsequen + 1
+					   tt-depositos-env.nrsequen = aux_nrsequen
+					   tt-depositos-env.nrdconta = crapenl.nrdconta
+					   tt-depositos-env.nrconfer = crapmdw.nrcheque
+					   tt-depositos-env.dtlibcom = crapmdw.dtlibcom
+					   tt-depositos-env.vlinform = IF  par_tpdeposi = 1  THEN 
+													   crapenl.vldininf 
+												   ELSE crapenl.vlchqinf.
             
-            IF  crapenl.cdcooper <> crapenl.cdcoptfn THEN DO:
-                FIND FIRST crabcop
-                     WHERE crabcop.cdcooper = crapenl.cdcooper
-                NO-LOCK NO-ERROR.
-                IF  AVAIL crabcop THEN
-                    ASSIGN tt-depositos-env.cdcopdst = crabcop.cdcooper
-                           tt-depositos-env.nmcopdst = crabcop.nmrescop.
-                ELSE
-                    ASSIGN tt-depositos-env.cdcopdst = 0
-                           tt-depositos-env.nmcopdst = 'ERRO COP DST'.
-            END.
-            ELSE
-                ASSIGN tt-depositos-env.cdcopdst = crapcop.cdcooper
-                       tt-depositos-env.nmcopdst = crapcop.nmrescop.
+				IF  crapenl.cdcooper <> crapenl.cdcoptfn THEN DO:
+					FIND FIRST crabcop
+						 WHERE crabcop.cdcooper = crapenl.cdcooper
+					NO-LOCK NO-ERROR.
+					IF  AVAIL crabcop THEN
+						ASSIGN tt-depositos-env.cdcopdst = crabcop.cdcooper
+							   tt-depositos-env.nmcopdst = crabcop.nmrescop.
+					ELSE
+						ASSIGN tt-depositos-env.cdcopdst = 0
+							   tt-depositos-env.nmcopdst = 'ERRO COP DST'.
+				END.
+				ELSE
+					ASSIGN tt-depositos-env.cdcopdst = crapcop.cdcooper
+						   tt-depositos-env.nmcopdst = crapcop.nmrescop.
 
 
 
-            IF  crapmdw.nrseqdig = par_nrseqdig  THEN
-                ASSIGN crapmdw.dsdocmc7 = par_dssituac /* descartado */
-                       crapmdw.lsdigctr = par_vldincpt. /* computado */
+				IF  crapmdw.nrseqdig = par_nrseqdig  THEN
+					ASSIGN crapmdw.dsdocmc7 = par_dssituac /* descartado */
+						   crapmdw.lsdigctr = par_vldincpt. /* computado */
             
-            IF  par_tpdeposi = 1  THEN
-                ASSIGN tt-depositos-env.vlcomput = DECI(crapmdw.lsdigctr)
-                       tt-depositos-env.dssituac = crapmdw.dsdocmc7.
-            ELSE
-               ASSIGN tt-depositos-env.vlcomput = crapenl.vlchqcmp 
-                      tt-depositos-env.dssituac = IF  crapenl.cdsitenv = 0  THEN
-                                                       "A confirmar"
-                                                  ELSE
-                                                  IF  crapenl.cdsitenv = 1  THEN
-                                                      "Processado"
-                                                  ELSE
-                                                      "Descartado".
+				IF  par_tpdeposi = 1  THEN
+					ASSIGN tt-depositos-env.vlcomput = DECI(crapmdw.lsdigctr)
+						   tt-depositos-env.dssituac = crapmdw.dsdocmc7.
+				ELSE
+				   ASSIGN tt-depositos-env.vlcomput = crapenl.vlchqcmp 
+						  tt-depositos-env.dssituac = IF  crapenl.cdsitenv = 0  THEN
+														   "A confirmar"
+													  ELSE
+													  IF  crapenl.cdsitenv = 1  THEN
+														  "Processado"
+													  ELSE
+														  "Descartado".
 
 
 
 
-        END.
+			END.
     END.
     ELSE
     DO: 
@@ -1468,7 +1511,195 @@ PROCEDURE libera_envelope:
 END PROCEDURE.
 /* Fim libera_envelope */
 
+/* Procedimento para reiniciar os registros */
+PROCEDURE reinicia_crapmdw:
+    DEFINE INPUT  PARAM par_nmrescop    AS CHAR             NO-UNDO.
+    DEFINE INPUT  PARAM par_cdagenci    AS INT              NO-UNDO.
+    DEFINE INPUT  PARAM par_nrdcaixa    AS INT              NO-UNDO.
+        
+	DEF BUFFER crabmdw FOR crapmdw. 
+    DEFINE VARIABLE aux_contador AS INTEGER     NO-UNDO.
+  
+    FIND crapcop WHERE crapcop.nmrescop = par_nmrescop NO-LOCK NO-ERROR.
 
+    IF  NOT AVAILABLE crapcop  THEN
+        DO:
+            ASSIGN i-cod-erro  = 794.
+        END.
+    ELSE
+        DO:
+           FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper AND
+								  crapmdw.cdagenci = par_cdagenci     AND
+								  crapmdw.nrdcaixa = par_nrdcaixa NO-LOCK :			  
+			  DO aux_contador = 1 TO 10:
+				   /* Tenta lockar */
+				   FIND crabmdw WHERE  crapmdw.cdcooper = crabmdw.cdcooper AND
+									   crapmdw.cdagenci = crabmdw.cdagenci AND 
+									   crapmdw.nrdcaixa = crabmdw.nrdcaixa AND
+									   crapmdw.nrctabdb = crabmdw.nrctabdb AND
+									   crapmdw.nrcheque = crabmdw.nrcheque EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+					IF   NOT AVAIL crabmdw   THEN
+						 IF   LOCKED crabmdw   THEN
+							  DO:
+								  i-cod-erro = 77.
+								  PAUSE 1 NO-MESSAGE.
+								  NEXT.
+							  END.	
+					 ELSE
+                         DO:
+							ASSIGN crabmdw.inautent = NO.
+                            RELEASE crabmdw.
+                            LEAVE.																   
+                         END.
+			 END.
+           END.
+        END.
+
+    IF  i-cod-erro  <> 0   THEN
+        DO: 
+            RUN cria-erro (INPUT par_nmrescop,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT i-cod-erro,
+                           INPUT "",
+                           INPUT YES).
+            RETURN "NOK".
+        END.
+
+    RETURN "OK".
+END PROCEDURE.
+/* Fim reinicia_crapmdw */
+
+/* Procedimento para lock e eliminacao de registros */
+PROCEDURE elimina_crapmdw:
+    DEFINE INPUT  PARAM par_nmrescop    AS CHAR             NO-UNDO.
+    DEFINE INPUT  PARAM par_cdagenci    AS INT              NO-UNDO.
+    DEFINE INPUT  PARAM par_nrdcaixa    AS INT              NO-UNDO.
+    DEFINE INPUT  PARAM par_nrcheque    AS INT              NO-UNDO.
+        
+	DEF BUFFER crabmdw FOR crapmdw. 
+    DEFINE VARIABLE aux_contador AS INTEGER     NO-UNDO.
+  
+    FIND crapcop WHERE crapcop.nmrescop = par_nmrescop NO-LOCK NO-ERROR.
+
+    IF  NOT AVAILABLE crapcop  THEN
+        DO:
+            ASSIGN i-cod-erro  = 794.
+        END.
+    ELSE
+        DO:
+           FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper AND
+								  crapmdw.cdagenci = par_cdagenci     AND
+								  crapmdw.nrdcaixa = par_nrdcaixa     NO-LOCK :			  
+			 
+             /* Se passado cheque usa na consulta */
+             IF par_nrcheque <> 0 THEN
+             DO:
+               IF crapmdw.nrcheque <> par_nrcheque THEN 
+               DO:
+                  NEXT.
+               END.
+             END.
+ 
+             DO aux_contador = 1 TO 10:
+				   /* Tenta lockar */
+				   FIND crabmdw WHERE  crapmdw.cdcooper = crabmdw.cdcooper AND
+									   crapmdw.cdagenci = crabmdw.cdagenci AND 
+									   crapmdw.nrdcaixa = crabmdw.nrdcaixa AND
+									   crapmdw.nrctabdb = crabmdw.nrctabdb AND
+									   crapmdw.nrcheque = crabmdw.nrcheque EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+					IF   NOT AVAIL crabmdw   THEN
+						 IF   LOCKED crabmdw   THEN
+							  DO:
+								  i-cod-erro = 77.
+								  PAUSE 1 NO-MESSAGE.
+								  NEXT.
+							  END.	
+					 ELSE
+                         DO:
+							 DELETE crabmdw.
+							 LEAVE.
+                         END.
+			 END.
+           END.
+        END.
+
+    IF  i-cod-erro  <> 0   THEN
+        DO: 
+            RUN cria-erro (INPUT par_nmrescop,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT i-cod-erro,
+                           INPUT "",
+                           INPUT YES).
+            RETURN "NOK".
+        END.
+
+    RETURN "OK".
+END PROCEDURE.
+/* Fim elimina_crapmdw */
+
+
+
+/* Procedimento para lock e eliminacao de registros */
+PROCEDURE elimina_crapmrw:
+    DEFINE INPUT  PARAM par_nmrescop    AS CHAR             NO-UNDO.
+    DEFINE INPUT  PARAM par_cdagenci    AS INT              NO-UNDO.
+    DEFINE INPUT  PARAM par_nrdcaixa    AS INT              NO-UNDO.
+        
+	DEF BUFFER crabmrw FOR crapmrw. 
+    DEFINE VARIABLE aux_contador AS INTEGER     NO-UNDO.
+  
+    FIND crapcop WHERE crapcop.nmrescop = par_nmrescop NO-LOCK NO-ERROR.
+
+    IF  NOT AVAILABLE crapcop  THEN
+        DO:
+            ASSIGN i-cod-erro  = 794.
+        END.
+    ELSE
+        DO:
+           FOR EACH crapmrw WHERE crapmrw.cdcooper = crapcop.cdcooper AND
+								  crapmrw.cdagenci = par_cdagenci     AND
+								  crapmrw.nrdcaixa = par_nrdcaixa     NO-LOCK :			  
+			  DO aux_contador = 1 TO 10:
+				   /* Tenta lockar */
+				   FIND crabmrw WHERE  crapmrw.cdcooper = crabmrw.cdcooper AND
+									   crapmrw.cdagenci = crabmrw.cdagenci AND 
+									   crapmrw.nrdcaixa = crabmrw.nrdcaixa AND
+									   crapmrw.nrdconta = crabmrw.nrdconta EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+					IF   NOT AVAIL crabmrw   THEN
+						 IF   LOCKED crabmrw   THEN
+							  DO:
+								  i-cod-erro = 77.
+								  PAUSE 1 NO-MESSAGE.
+								  NEXT.
+							  END.	
+					 ELSE
+                         DO:
+						      DELETE crabmrw.
+                              LEAVE.
+                         END.
+			 END.
+          END.
+        END.
+
+    IF  i-cod-erro  <> 0   THEN
+        DO: 
+            RUN cria-erro (INPUT par_nmrescop,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT i-cod-erro,
+                           INPUT "",
+                           INPUT YES).
+            RETURN "NOK".
+        END.
+
+    RETURN "OK".
+END PROCEDURE.
+/* Fim elimina_crapmrw */
 
 
 
