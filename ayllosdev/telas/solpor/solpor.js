@@ -231,8 +231,6 @@ function Filtro() {
                     eval(response);
                 } else {
                     $('#divFiltro').html(response);
-                    filtro.formatar(cabecalho.getOpcaoSelecionada());
-                    hideMsgAguardo();
                 }
             }
         });
@@ -394,7 +392,6 @@ function estadoInicial() {
 }
 
 function LiberaCampos() {
-    cabecalho.desabilitarTodosComponentes();
     filtro.carregar(cabecalho.getOpcaoSelecionada());
     return false;
 }
@@ -690,75 +687,6 @@ function exibirReprovacaoPortabilidade(dsrowid) {
                 bloqueiaFundo($('#divUsoGenerico'));
                 ajustarCentralizacao($('#divUsoGenerico'));
             }
-		}
-	});
-}
-function responderContestacao(dsrowid, idstatus) {
-
-	// Mostra mensagem de aguardo
-	exibeRotina($('#divUsoGenerico'));
-
-	// Carrega conteúdo da opção através de ajax
-	$.ajax({
-		dataType: "html",
-		type: "POST",
-		url: UrlSite + "telas/solpor/form_responde_contestacao.php",
-		data: {
-			rowid: dsrowid,
-			idstatus: idstatus,
-			redirect: "script_ajax" // Tipo de retorno do ajax
-		},
-        error: function (objAjax, responseError, objExcept) {
-			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-		},
-        success: function (response) {
-			if (response.substr(0, 14) == 'hideMsgAguardo') {
-				eval(response);
-			} else {
-                hideMsgAguardo();
-                bloqueiaFundo($('#divUsoGenerico'));
-				$('#divUsoGenerico').html(response);
-				ajustarCentralizacao($('#divUsoGenerico'));
-			}
-		}
-	});
-}
-function confirmaRespondeContestacao(skipConfirm, rowid) {
-
-	var cdmotivo = $('#cdmotivo', '#frmResponderContestacao').val();
-	var idsituacao = $('input[name="idsituacao"]:checked', '#frmResponderContestacao').val();
-	
-	if (!cdmotivo){
-		showError("error", "Selecione um motivo para continuar.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return;
-	}
-	
-	if (!skipConfirm) {
-		showConfirmacao('Confirma o envio da resposta de contesta&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'confirmaRespondeContestacao(true, \''+rowid+'\')', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
-		return;
-	}
-	
-	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, respondendo contesta&ccedil;&atilde;o...");
-
-	// Carrega conteúdo da opção através de ajax
-	$.ajax({
-		dataType: "html",
-		type: "POST",
-		url: UrlSite + "telas/solpor/responde_contestacao.php",
-		data: {
-			dsrowid: rowid,
-            cdmotivo: cdmotivo,
-            idsituacao: idsituacao,
-			redirect: "script_ajax" // Tipo de retorno do ajax
-		},
-        error: function (objAjax, responseError, objExcept) {
-			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-		},
-        success: function (response) {
-			eval(response);
 		}
 	});
 }

@@ -20,6 +20,11 @@ require_once('../../class/xmlfile.php');
 isPostMethod();
 
 require_once("../../includes/carrega_permissoes.php");
+
+if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"], "@")) <> "") {
+	exibeErro($msgError);
+}
+
 ?>
 <script>
 	var dtmvtolt = '<? echo $glbvars['dtmvtolt']?>';
