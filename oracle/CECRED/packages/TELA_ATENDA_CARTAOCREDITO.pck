@@ -266,14 +266,14 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                    ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
                                    ,pr_des_erro  OUT VARCHAR2);
 
-    PROCEDURE pc_verifica_tipo_proposta(pr_nrdconta IN crapass.nrdconta%TYPE --> Nr. da Conta
-                                       ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE --> Nr. do Cartão
-                                       ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
-                                       ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
-                                       ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
-                                       ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
-                                       ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
-                                       ,pr_des_erro OUT VARCHAR2);
+	PROCEDURE pc_verifica_tipo_proposta(pr_nrdconta IN crapass.nrdconta%TYPE --> Nr. da Conta
+																		 ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE --> Nr. do Cartão
+																		 ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+																		 ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+																		 ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+																		 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																		 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																		 ,pr_des_erro OUT VARCHAR2);
                                        
   PROCEDURE pc_atualiza_limite_crd(pr_cdcooper     IN tbcrd_limite_atualiza.cdcooper%TYPE
                                   ,pr_nrdconta     IN tbcrd_limite_atualiza.nrdconta%TYPE
@@ -322,7 +322,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2) ;         --> Erros do processo                                       
-
+																		 
    PROCEDURE pc_valida_dtcorte_prot_entrega(pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE
 																					 ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
 																					 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
@@ -377,6 +377,21 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                   ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                   ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                                   ,pr_des_erro OUT VARCHAR2); --> Erros do processo
+																	
+	PROCEDURE pc_verifica_cooperativa_pa(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+																			,pr_nrdconta          IN crapass.nrdconta%TYPE --> Numero da Conta
+																			,pr_coop_envio_cartao OUT INTEGER --> Indica se cooperativa esta habilitada para envio de cartao
+																			,pr_pa_envio_cartao   OUT INTEGER --> Indica se o PA esta habilitado para envio de cartao
+																			,pr_cdcritic          OUT PLS_INTEGER --> Código da crítica
+																			,pr_dscritic          OUT VARCHAR2); --> Erros do processo
+
+	PROCEDURE pc_verifica_cooperativa_pa_web(pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta
+																					,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+																					,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+																					,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+																					,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																					,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+																					,pr_des_erro OUT VARCHAR2); --> Erros do processo																	
 																	
 	PROCEDURE pc_busca_dados_crd(pr_cdcooper IN crawcrd.cdcooper%TYPE --> Nr. da Cooperativa
 															,pr_nrdconta IN crawcrd.nrdconta%TYPE --> Nr. da Conta
@@ -5228,7 +5243,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       ROLLBACK;
 
   END pc_valida_alt_nome_empr;
-  
+	
 	PROCEDURE pc_valida_dtcorte_prot_entrega(pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE
 																				 ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
 																				 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
@@ -6099,7 +6114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
          ROLLBACK;
       WHEN OTHERS THEN
           pr_cdcritic := vr_cdcritic;
-          pr_dscritic := 'Erro geral na rotina pc_inclui_end_entrega_cartao: ' || SQLERRM;
+          pr_dscritic := 'Erro geral na rotina pc_atualiza_endereco_crd: ' || SQLERRM;
           ROLLBACK;		
 	END pc_atualiza_endereco_crd;
 	
@@ -6448,6 +6463,205 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
             pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
                                            pr_dscritic || '</Erro></Root>');
     END pc_busca_enderecos_crd;	
+		
+
+    PROCEDURE pc_verifica_cooperativa_pa(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+                                        ,pr_nrdconta          IN crapass.nrdconta%TYPE --> Numero da Conta
+                                        ,pr_coop_envio_cartao OUT INTEGER --> Indica se cooperativa esta habilitada para envio de cartao
+                                        ,pr_pa_envio_cartao   OUT INTEGER --> Indica se o PA esta habilitado para envio de cartao
+                                        ,pr_cdcritic          OUT PLS_INTEGER --> Código da crítica
+                                        ,pr_dscritic          OUT VARCHAR2) IS
+        -- Tratamento de erros
+        vr_cdcritic NUMBER := 0;
+        vr_dscritic VARCHAR2(4000);
+        vr_exc_saida EXCEPTION;
+    
+        -- Variaveis internas
+        vr_envio_cartao INTEGER := 0;
+    
+        -- Cursores internos
+        CURSOR cr_coop_envio_cartao(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+            SELECT tec.flghabilitar FROM tbcrd_envio_cartao tec WHERE tec.cdcooper = pr_cdcooper;
+        rw_coop_envio_cartao cr_coop_envio_cartao%ROWTYPE;
+    
+        CURSOR cr_pa_envio_cartao(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                 ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+            SELECT COUNT(1) pode_enviar
+              FROM crapass
+                  ,tbcrd_envio_cartao tec
+             WHERE crapass.cdcooper = tec.cdcooper
+               AND crapass.cdcooper = pr_cdcooper
+               AND crapass.nrdconta = pr_nrdconta
+               AND crapass.cdagenci IN
+                   (SELECT tp.cdagencia FROM tbcrd_pa_envio_cartao tp WHERE tp.cdcooper = crapass.cdcooper)
+               AND tec.flghabilitar = 1;
+    
+    BEGIN
+        -- Criar cabecalho do XML
+        OPEN cr_coop_envio_cartao(pr_cdcooper => pr_cdcooper);
+        FETCH cr_coop_envio_cartao
+            INTO rw_coop_envio_cartao;
+        CLOSE cr_coop_envio_cartao;
+    
+        OPEN cr_pa_envio_cartao(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
+        FETCH cr_pa_envio_cartao
+            INTO vr_envio_cartao;
+        CLOSE cr_pa_envio_cartao;
+    
+        pr_coop_envio_cartao := nvl(rw_coop_envio_cartao.flghabilitar, 0);
+        pr_pa_envio_cartao   := vr_envio_cartao;
+    
+    EXCEPTION
+        WHEN vr_exc_saida THEN
+            IF vr_cdcritic <> 0 THEN
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            ELSE
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := vr_dscritic;
+            END IF;
+        WHEN OTHERS THEN
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := 'Erro geral na rotina pc_inclui_end_entrega_cartao: ' || SQLERRM;
+    END pc_verifica_cooperativa_pa;
+
+    PROCEDURE pc_verifica_cooperativa_pa_web(pr_nrdconta IN crapass.nrdconta%TYPE
+                                            ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                            ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                            ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                            ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                            ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                                            ,pr_des_erro OUT VARCHAR2) IS
+        -- Tratamento de erros
+        vr_cdcritic NUMBER := 0;
+        vr_dscritic VARCHAR2(4000);
+        vr_exc_saida EXCEPTION;
+    
+        -- Variaveis retornadas da gene0004.pc_extrai_dados
+        vr_cdcooper INTEGER;
+        vr_cdoperad VARCHAR2(100);
+        vr_nmdatela VARCHAR2(100);
+        vr_nmeacao  VARCHAR2(100);
+        vr_cdagenci VARCHAR2(100);
+        vr_nrdcaixa VARCHAR2(100);
+        vr_idorigem VARCHAR2(100);
+    
+        -- Variaveis internas
+        vr_coop_envio_cartao INTEGER := 0;
+        vr_pa_envio_cartao   INTEGER := 0;
+    
+        -- Cursores internos
+        CURSOR cr_coop_envio_cartao(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+            SELECT tec.flghabilitar FROM tbcrd_envio_cartao tec WHERE tec.cdcooper = pr_cdcooper;
+        rw_coop_envio_cartao cr_coop_envio_cartao%ROWTYPE;
+    
+        CURSOR cr_pa_envio_cartao(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                 ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+            SELECT COUNT(1) pode_enviar
+              FROM crapass
+                  ,tbcrd_envio_cartao tec
+             WHERE crapass.cdcooper = tec.cdcooper
+               AND crapass.cdcooper = pr_cdcooper
+               AND crapass.nrdconta = pr_nrdconta
+               AND crapass.cdagenci IN
+                   (SELECT tp.cdagencia FROM tbcrd_pa_envio_cartao tp WHERE tp.cdcooper = crapass.cdcooper)
+               AND tec.flghabilitar = 1;
+    
+    BEGIN
+        pr_des_erro := 'OK';
+    
+        -- Extrai dados do xml
+        gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => vr_dscritic);
+    
+        gene0001.pc_informa_acesso(pr_module => vr_nmdatela, pr_action => vr_nmeacao);
+    
+        -- Se retornou alguma crítica
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+            -- Levanta exceção
+            RAISE vr_exc_saida;
+        END IF;
+    
+        pc_verifica_cooperativa_pa(pr_cdcooper          => vr_cdcooper
+                                  ,pr_nrdconta          => pr_nrdconta
+                                  ,pr_coop_envio_cartao => vr_coop_envio_cartao
+                                  ,pr_pa_envio_cartao   => vr_pa_envio_cartao
+                                  ,pr_cdcritic          => vr_cdcritic
+                                  ,pr_dscritic          => vr_dscritic);
+    
+        -- Se retornou alguma crítica
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+            -- Levanta exceção
+            RAISE vr_exc_saida;
+        END IF;
+    
+        -- Criar cabecalho do XML
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Root'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'coop_envio_cartao'
+                              ,pr_tag_cont => vr_coop_envio_cartao
+                              ,pr_des_erro => vr_dscritic);
+    
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Root'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'pa_envio_cartao'
+                              ,pr_tag_cont => vr_pa_envio_cartao
+                              ,pr_des_erro => vr_dscritic);
+    
+    EXCEPTION
+        WHEN vr_exc_saida THEN
+        
+            IF vr_cdcritic <> 0 THEN
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            ELSE
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := vr_dscritic;
+            END IF;
+        
+            pr_des_erro := 'NOK';
+            -- Carregar XML padrão para variável de retorno não utilizada.
+            -- Existe para satisfazer exigência da interface.
+            pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+                                           pr_dscritic || '</Erro></Root>');
+        
+            IF cr_coop_envio_cartao%ISOPEN THEN
+                CLOSE cr_coop_envio_cartao;
+            END IF;
+        
+            IF cr_pa_envio_cartao%ISOPEN THEN
+                CLOSE cr_pa_envio_cartao;
+            END IF;
+        WHEN OTHERS THEN
+        
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := 'Erro geral na rotina na procedure TELA_ATENDA_CARTAOCREDITO.pc_verifica_cooperado_pa. Erro: ' ||
+                           SQLERRM;
+            pr_des_erro := 'NOK';
+            -- Carregar XML padrão para variável de retorno não utilizada.
+            -- Existe para satisfazer exigência da interface.
+            pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+                                           pr_dscritic || '</Erro></Root>');
+        
+            IF cr_coop_envio_cartao%ISOPEN THEN
+                CLOSE cr_coop_envio_cartao;
+            END IF;
+        
+            IF cr_pa_envio_cartao%ISOPEN THEN
+                CLOSE cr_pa_envio_cartao;
+            END IF;
+    END pc_verifica_cooperativa_pa_web;    
 		
     PROCEDURE pc_busca_dados_crd(pr_cdcooper IN crawcrd.cdcooper%TYPE --> Nr. da Cooperativa
 															  ,pr_nrdconta IN crawcrd.nrdconta%TYPE --> Nr. da Conta
