@@ -1125,6 +1125,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 										11/10/2018 - P450 - Correção no cursor que identifica se o contrato de empréstimo está/esteve em prejuízo
 										             (Reginaldo/AMcom)
 
+                   01/11/2018 - P442 - Envio dos Scores Behaviour do Cooperado (MArcos Envolti)  
+				   
                    19/12/2018 - P442 - Envio de quantidade dias em Estouro (Marcos Envolti)     
 
     ..........................................................................*/

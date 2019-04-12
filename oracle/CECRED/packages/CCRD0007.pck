@@ -128,6 +128,7 @@ CREATE OR REPLACE PACKAGE CECRED."CCRD0007" is
                                      ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                                      ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
   
+  
   PROCEDURE pc_alterar_cartao_bancoob_wb(pr_nrdconta IN crawcrd.nrdconta%TYPE --> Nr da conta
                                         ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE --> Nr do contrato
                                         ,pr_vllimite IN crawcrd.vllimdlr%TYPE --> Novo valor do limite
@@ -156,7 +157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
       Sistema  : Rotinas de Cartões de Crédito/Débito que utilizam comunicação com o Bancoob
       Sigla    : CRED
       Autor    : Paulo Roberto da Silva
-      Data     : Fevereiro/2018.                   Ultima atualizacao: 23/07/2018
+      Data     : Fevereiro/2018.                   Ultima atualizacao: 05/04/2019
 
       Dados referentes ao programa:
 
@@ -165,6 +166,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
 
       Alteracoes: 23/07/2018 - Alteração na funcao fn_usa_bancoob_ws. Projeto 345(Lombardi).
 
+                  05/04/2019 - Alterar a situação do cartão pra aprovado quando o bancoob
+                               retornar critica na pc_solicita_retorno_bancoob 
+                               (Lucas Ranghetti INC0011849)
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Selecionar os dados da Cooperativa
@@ -2505,6 +2509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
     vr_exc_erro EXCEPTION;
+    vr_exc_continua EXCEPTION;
 
     vr_obj_cartao      json := json();
     vr_obj_cartao_clob clob;
@@ -2538,6 +2543,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
          AND dsprotocolo = pr_dsprotocolo
          AND TO_CHAR(dsresposta_requisicao) NOT LIKE '%não foi processado%';
     rw_retbancoob cr_retbancoob%ROWTYPE;
+
+    cursor cr_crawcrd (pr_cdcooper crawcrd.cdcooper%type
+                      ,pr_nrdconta crawcrd.nrdconta%type
+                      ,pr_nrctrcrd crawcrd.nrctrcrd%type) is
+    select flgprcrd
+      from crawcrd d
+     where d.cdcooper = pr_cdcooper
+       and d.nrdconta = pr_nrdconta 
+       and d.nrctrcrd = pr_nrctrcrd;
+     rw_crawcrd cr_crawcrd%rowtype;
 
   BEGIN
     pr_des_erro := 'OK';
@@ -2600,6 +2615,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     ELSE
       -- Apenas fechar o cursor
       CLOSE btch0001.cr_crapdat;
+    END IF;
+
+    -- Verifica se a cooperativa esta cadastrada
+    OPEN cr_crawcrd (pr_cdcooper => vr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta
+                    ,pr_nrctrcrd => pr_nrctrcrd);
+    FETCH cr_crawcrd INTO rw_crawcrd;
+
+    -- Se nao encontrar
+    IF cr_crawcrd%NOTFOUND THEN
+      -- Fechar o cursor pois havera raise
+      CLOSE cr_crawcrd;
+      -- Montar mensagem de critica
+      vr_cdcritic:= 0;
+      vr_dscritic:= 'Proposta nao encontrada!';
+      RAISE vr_exc_saida;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE cr_crawcrd;
+      -- Se não for primeiro titular não deve solicitar via API
+      if rw_crawcrd.flgprcrd = 0 then
+        RAISE vr_exc_continua;
+      end if;
     END IF;
 
     --> Gerar informações no padrao JSON da solicitação do cartão
@@ -2715,6 +2753,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                            pr_des_erro => vr_dscritic);
 
   EXCEPTION
+    when vr_exc_continua then
+      pr_cdcritic := nvl(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
     WHEN vr_exc_erro THEN
 
       --> Buscar critica
@@ -2785,13 +2826,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Paulo Silva
-    Data     : Março/2018                    Ultima atualizacao: 20/03/2018
+    Data     : Março/2018                    Ultima atualizacao: 05/04/2019
 
     Dados referentes ao programa:
 
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para solicitar retorno do Bancoob
-    Alteração :
+
+    Alteração : 05/04/2019 - Alterar a situação do cartão pra aprovado quando o bancoob
+                             retornar critica (Lucas Ranghetti INC0011849)
 
   ..........................................................................*/
 
@@ -2840,6 +2883,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
          AND nrctrprp  = pr_nrctrcrd
          AND dsprotocolo = pr_dsprotoc;
     rw_retbancoob cr_retbancoob%ROWTYPE;
+
+   -- Feito como pragma para salvar a alteração da situação do cartão em caso de erro
+   procedure pc_atualiza_situacao (pr_cdcooper in crapcop.cdcooper%type,
+                                   pr_nrdconta in crapass.nrdconta%type,
+                                   pr_nrctrcrd in crawcrd.nrctrcrd%type,
+                                   pr_dscritic out varchar2) is
+     
+      pragma autonomous_transaction;
+      begin
+        -- Se receber crítica volta para o status de Aprovado para ajustar ou Cancelar a proposta
+        -- Altera a situação do Cartão para 1 (Aprovado)
+        pc_altera_sit_cartao_bancoob(pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_nrctrcrd => pr_nrctrcrd
+                                    ,pr_nrseqcrd => NULL
+                                    ,pr_insitcrd => 1
+                                    ,pr_dscritic => pr_dscritic);
+        commit;
+      end;
 
   BEGIN
 
@@ -2913,6 +2975,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
       IF vr_obj_retorno.exist('descErroResult') THEN
         vr_dssitret := vr_resultado ||' - '|| gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_retorno.get('descErroResult').to_char(),'"'),'"'),'\u','\')));
         vr_dscritic_aux := vr_dssitret;
+        
+          -- Se receber crítica volta para o status de Aprovado para ajustar ou Cancelar a proposta
+          -- Altera a situação do Cartão para 1 (Aprovado)
+          pc_atualiza_situacao(pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrctrcrd => pr_nrctrcrd                                      
+                              ,pr_dscritic => vr_dscritic);
+        
+        IF vr_dscritic IS NOT NULL THEN
+          raise vr_exc_erro;
+        END IF;
+        
       ELSE
         vr_dssitret := vr_resultado;
       END IF;
