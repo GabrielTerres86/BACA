@@ -371,7 +371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     Sistema  : Procedimentos e funcoes das transacoes do caixa online
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Junho/2013.                   Ultima atualizacao: 12/12/2017
+    Data     : Junho/2013.                   Ultima atualizacao: 01/03/2019
 
     Dados referentes ao programa:
 
@@ -422,6 +422,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                              
                 23/01/2019 - Tratar a geração do numero de documento para evitar duplicidade 
                              (Jose Dill Mouts INC0030535)             
+                             
+                01/03/2019 - Se o banco ainda não estiver operante no SPB (Data de inicio da operação), 
+                             deve bloquear o envio da TED.
+                             (Jonata - Mouts INC0031899).
+         
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -673,7 +678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 20/03/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 01/03/2019
 
       Dados referentes ao programa:
 
@@ -684,6 +689,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
                   20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado
                               (Adriano - SD 620221).
+
+                  01/03/2019 - Se o banco ainda não estiver operante no SPB (Data de inicio da operação), 
+                               deve bloquear o envio da TED.
+                               (Jonata - Mouts INC0031899).
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
@@ -703,6 +712,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     CURSOR cr_crapban (pr_cdispbif crapban.nrispbif%TYPE,
                        pr_cdbccxlt crapban.cdbccxlt%TYPE) IS
       SELECT flgdispb
+            ,dtinispb
         FROM crapban
        WHERE (crapban.nrispbif = pr_cdispbif AND pr_cdbccxlt = 0)
          OR  (crapban.cdbccxlt = pr_cdbccxlt AND pr_cdbccxlt > 0);
@@ -919,6 +929,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       vr_dscritic := 'Banco do favorecido não opera no SPB.';
       RAISE vr_exc_erro;
     END IF;
+    
+    -- Verificar se banco já está em operação no SPB
+    IF rw_crapban.flgdispb = 1 /*true*/      AND 
+       trunc(SYSDATE) < rw_crapban.dtinispb  THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Banco nao iniciou as atividades no SPB. Data de inicio ' || to_char(rw_crapban.dtinispb,'DD/MM/RRRR') || '.';
+      RAISE vr_exc_erro;
+    END IF;
+    
     -- Validar agencia
     IF TRIM(pr_cdagefav) IS NULL THEN
       vr_cdcritic := 0;
