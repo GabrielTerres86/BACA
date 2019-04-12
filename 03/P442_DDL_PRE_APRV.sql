@@ -685,4 +685,9 @@ comment on column TBEPR_PARAM_CONTA.dtatualiza_majora_auto
   
 -- Ajustar campos detectados faltantes nos demais ambientes
 alter table TBGEN_MOTIVO add flgativo NUMBER(1) default 1 not null;
+comment on column TBGEN_MOTIVO.flgativo
+  is 'Flag: 1 - Ativo / 0 - Inativo';
+
 alter table CRAPASS add nrcpfcnpj_base NUMBER(11) default 0 not null;
+comment on column CRAPASS.nrcpfcnpj_base
+  is 'Numero do CPF/CNPJ Base do associado.';
