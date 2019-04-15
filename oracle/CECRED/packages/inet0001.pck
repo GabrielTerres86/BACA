@@ -530,7 +530,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                                    ,pr_idastcjt IN crapass.idastcjt%TYPE   --Exige Ass.Conjunta Nao=0 Sim=1
                                    ,pr_cdcritic   OUT INTEGER              --Código do erro
                                    ,pr_dscritic   OUT VARCHAR2);
-                                    
+    
 END INET0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
@@ -541,7 +541,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 08/01/2019
+  --  Data     : Junho/2013.                   Ultima atualizacao: 12/04/2019
   --
   -- Dados referentes ao programa:
   --
@@ -655,6 +655,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
 				 08/01/2019 - Ajuste para desconsiderar contas favorecidas que pertecem a uma cooperativa inativa
 			                 (Adriano - INC0029631).
+
+	            12/04/2019 - Ajuste para remover a condição colocada no fim de ano para atender o ticket INC0030017
+                            (Adriano -INC0012268 ).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -772,7 +775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 26/12/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 12/04/2019
   --
   -- Dados referentes ao programa:
   --
@@ -792,7 +795,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --             25/10/2016 - Novo ajuste na validacao do horario, solicitado pelo financeiro (Diego).         
   --
   --             26/12/2017 - Incluido validacao de horario FGTS/DAE. PRJ406 - FGTS (Odirlei-AMcom)   
-  ---------------------------------------------------------------------------------------------------------------
+  --
+  --             12/04/2019 - Ajuste para remover a condição colocada no fim de ano para atender o ticket INC0030017
+  --                         (Adriano -INC0012268 ).
+  ----------------------------------------- ----------------------------------------------------------------------
   BEGIN
     DECLARE
 
@@ -1221,14 +1227,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             vr_iddiauti:= 1;
           END IF;
 
-          ---Ajuste para atender o INC0030017 
-          IF vr_iddiauti = 2                      AND 
-             pr_tpoperac = 4                     /* AND 
-             trunc(SYSDATE) = to_date('31/12/2018','DD/MM/RRRR')*/ THEN
-            vr_iddiauti:= 1;
-          END IF; 
-
-          
           --Determinar a hora atual
           vr_hratual:= GENE0002.fn_busca_time;
           --Verificar se estourou o limite
@@ -5117,7 +5115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         END IF;
         /* Nao validar saldo para operadores na internet */
         IF pr_nrcpfope = 0 THEN
-         
+
             /** Obtem valor da tarifa TED **/
             IF pr_tpoperac = 4 AND
                pr_flgexage = 0 THEN
@@ -5217,7 +5215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         -- Verifica se data de agendamento e uma data futura
         IF pr_tpoperac IN (10,12,13) THEN --DARF/DAS, FGTS, DAE   
           
-          IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
+        IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
             --Montar mensagem erro
             vr_cdcritic:= 0;            
             --Data mínima obtida de dtmvtocd se não for dia útil
@@ -6646,7 +6644,7 @@ PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type 
       pr_dscritic := 'Erro na proc pc_verifica_limite_ope_canc '||sqlerrm;
   
   END pc_verifica_limite_ope_canc;    
-
+  
   /*Atualiza as transacoes pendentes para o novo preposto*/
   PROCEDURE pc_atu_trans_pend_prep (pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
                                    ,pr_nrdconta IN crapass.nrdconta%TYPE   --Numero conta
@@ -6748,7 +6746,7 @@ PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type 
                                pr_flreincidente       => 0,
                                pr_idprglog            => vr_idprglog);        
     END;
-    
+
   END pc_atu_trans_pend_prep;
   
 
