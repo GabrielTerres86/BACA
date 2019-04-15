@@ -5,6 +5,7 @@
  * OBJETIVO     : Biblioteca de funções na rotina REGISTRO da tela de CONTAS
  * --------------
  * ALTERAÇÕES   : 03/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ * 				  13/04/2018 - Alterado funcao voltarRotina para chamar a FATCA/CRS - PRJ 414 (Mateus - Mouts).
  * --------------
  */ 
 
@@ -48,7 +49,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		},		
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -66,7 +67,7 @@ function controlaOperacao(operacao) {
 
 	// Se não possui acesso para alterar, emitir mensagem	
 	if ( (operacao == 'CA') && (flgAlterar != '1') ) {
-		showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		exit();
 	}
 		
@@ -79,7 +80,7 @@ function controlaOperacao(operacao) {
 			break;	
 		// Alteração para Consulta
 		case 'AC': 
-			showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 		// Consulta para Exclusão: Excluindo Bem
@@ -114,7 +115,7 @@ function controlaOperacao(operacao) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -175,7 +176,7 @@ function manterRotina(operacao) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			try {
@@ -190,7 +191,7 @@ function manterRotina(operacao) {
 				return false;
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			}
 		}				
 	});
@@ -248,7 +249,7 @@ function controlaLayout(operacao) {
 		// Se maior do que 100, mostra mensagem de erro e retorna o foco no mesmo campo
 		$('#perfatcl','#frmRegistro').blur(function () {
 			if ( parseFloat( $(this).val().replace(',','.') ) > 100 ) {
-				showError('error','Percentual deve ser menor ou igual a 100,00.','Alerta - Ayllos','bloqueiaFundo($("#divRotina"),\'perfatcl\',\'frmRegistro\')');
+				showError('error','Percentual deve ser menor ou igual a 100,00.','Alerta - Aimaro','bloqueiaFundo($("#divRotina"),\'perfatcl\',\'frmRegistro\')');
 			} else {
 				$(this).removeClass('campoErro');
 			}
@@ -300,7 +301,7 @@ function controlaContinuar () {
 
 function voltarRotina() {
 	fechaRotina(divRotina);
-	acessaRotina('IDENTIFICACAO','Identificação','identificacao_juridica'); 
+	acessaRotina('FATCA CRS','FATCA/CRS','fatca_crs_pj'); 
 }
 
 function proximaRotina() {

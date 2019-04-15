@@ -6,6 +6,9 @@
  * OBJETIVO     : Rotina para validar/incluir/alterar/excluir os REGISTROS da tela de CONTAS
  *
  * ALTERACOES   : 04/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ *
+ *                02/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  */
 ?>
  
@@ -41,7 +44,7 @@
 	$orregemp = trim($orregemp);
 	
 	// Verifica os valores permitidos para operação
-	if(!in_array($operacao,array('AV','VA'))) exibirErro('error','O parâmetro operação não é válido.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if(!in_array($operacao,array('AV','VA'))) exibirErro('error','O parâmetro operação não é válido.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	if( $operacao == 'AV' ) validaDados();
 	
@@ -50,10 +53,10 @@
 	if( $operacao == 'AV' ) $procedure = 'valida_dados';
 	if( $operacao == 'VA' ) $procedure = 'grava_dados';
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A')) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A')) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
-	// exibirErro('error','operacao='.$operacao.'| procedure='.$procedure.'| idseqttl='.$idseqttl.'| nrdconta='.$nrdconta.'| vlfatano='.$vlfatano.'| vlcaprea='.$vlcaprea.'| dtregemp='.$dtregemp.'| nrregemp='.$nrregemp.'| orregemp='.$orregemp,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	// exibirErro('error','dtinsnum='.$dtinsnum.'| nrinsmun='.$nrinsmun.'| nrinsest='.$nrinsest.'| flgrefis='.$flgrefis.'| nrcdnire='.$nrcdnire.'| perfatcl='.$perfatcl,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	// exibirErro('error','operacao='.$operacao.'| procedure='.$procedure.'| idseqttl='.$idseqttl.'| nrdconta='.$nrdconta.'| vlfatano='.$vlfatano.'| vlcaprea='.$vlcaprea.'| dtregemp='.$dtregemp.'| nrregemp='.$nrregemp.'| orregemp='.$orregemp,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+	// exibirErro('error','dtinsnum='.$dtinsnum.'| nrinsmun='.$nrinsmun.'| nrinsest='.$nrinsest.'| flgrefis='.$flgrefis.'| nrcdnire='.$nrcdnire.'| perfatcl='.$perfatcl,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml dinâmico de acordo com a operação
 	$xml  = '';
@@ -69,7 +72,6 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';		
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 	$xml .= '		<vlfatano>'.$vlfatano.'</vlfatano>';
@@ -93,7 +95,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	$msg = Array();
 	
@@ -113,14 +115,14 @@
 	
 	// Se é Validação
 	if( $operacao == 'AV' ) {		
-		exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);		
+		exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);		
 	
 	// Se é Inclusão
 	} else {	
 		
 		// Verificar se existe "Verificação de Revisão Cadastral"
 		if($msgAtCad!='' && $flgcadas != 'M') {		
-			exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0065.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
+			exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0065.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
 		
 		// Se não existe necessidade de Revisão Cadastral
 		} else {		
@@ -133,32 +135,32 @@
 		echo '$("input","#frmRegistro").removeClass("campoErro");';
 		
 		// Número da conta e o titular são inteiros válidos
-		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inválida.'   ,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);				
-		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inválida','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inválida.'   ,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);				
+		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inválida','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 		
 		// Faturamento Ano
-		if ( $GLOBALS['vlfatano'] == 0 ) exibirErro('error','Faturamento Ano não pode ser zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'vlfatano\',\'frmRegistro\')',false);			
-		if (!validaDecimal($GLOBALS['vlfatano'])) exibirErro('error','Faturamento Ano deve ser um decimal válido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'vlfatano\',\'frmRegistro\')',false);			
+		if ( $GLOBALS['vlfatano'] == 0 ) exibirErro('error','Faturamento Ano não pode ser zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'vlfatano\',\'frmRegistro\')',false);			
+		if (!validaDecimal($GLOBALS['vlfatano'])) exibirErro('error','Faturamento Ano deve ser um decimal válido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'vlfatano\',\'frmRegistro\')',false);			
 		
 		// Capital Realizado
-		if ( $GLOBALS['vlcaprea'] == 0 ) exibirErro('error','Capital Realizado não pode ser zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'vlcaprea\',\'frmRegistro\')',false);					
+		if ( $GLOBALS['vlcaprea'] == 0 ) exibirErro('error','Capital Realizado não pode ser zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'vlcaprea\',\'frmRegistro\')',false);					
 				
 		// Data Registro
-		if ( $GLOBALS['dtregemp'] == '' ) exibirErro('error','Data do Registro deve ser preenchido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtregemp\',\'frmRegistro\')',false); 
-		if (!validaData($GLOBALS['dtregemp']) ) exibirErro('error','Data do Registro deve ser uma data válida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtregemp\',\'frmRegistro\')',false); 
+		if ( $GLOBALS['dtregemp'] == '' ) exibirErro('error','Data do Registro deve ser preenchido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtregemp\',\'frmRegistro\')',false); 
+		if (!validaData($GLOBALS['dtregemp']) ) exibirErro('error','Data do Registro deve ser uma data válida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtregemp\',\'frmRegistro\')',false); 
 		
 		// Número Registro
-		if ( $GLOBALS['nrregemp'] == 0 ) exibirErro('error','Número do Registro não pode ser zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrregemp\',\'frmRegistro\')',false);
-		if ( $GLOBALS['nrregemp'] == '' ) exibirErro('error','Número do Registro deve ser preenchido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrregemp\',\'frmRegistro\')',false); 
+		if ( $GLOBALS['nrregemp'] == 0 ) exibirErro('error','Número do Registro não pode ser zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrregemp\',\'frmRegistro\')',false);
+		if ( $GLOBALS['nrregemp'] == '' ) exibirErro('error','Número do Registro deve ser preenchido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrregemp\',\'frmRegistro\')',false); 
 		
 		// Orgão Registro
-		if ( $GLOBALS['orregemp'] == '' ) exibirErro('error','Orgão do Registro deve ser preenchido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'orregemp\',\'frmRegistro\')',false); 
+		if ( $GLOBALS['orregemp'] == '' ) exibirErro('error','Orgão do Registro deve ser preenchido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'orregemp\',\'frmRegistro\')',false); 
 		
 		// Data da Insc. Municipal		
-		if ( ($GLOBALS['dtinsnum'] != '') && (!validaData($GLOBALS['dtinsnum'])) ) exibirErro('error','Data da Inscrição Municipal deve ser uma data válida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtinsnum\',\'frmRegistro\')',false); 	
+		if ( ($GLOBALS['dtinsnum'] != '') && (!validaData($GLOBALS['dtinsnum'])) ) exibirErro('error','Data da Inscrição Municipal deve ser uma data válida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtinsnum\',\'frmRegistro\')',false); 	
 		
 		// Percentual Faturamento Único cliente
-		if ( $GLOBALS['perfatcl'] == 0 ) exibirErro('error','(%) Concentração Faturamento em Único Cliente não pode ser zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'perfatcl\',\'frmRegistro\')',false);					
-		if (!validaDecimal($GLOBALS['perfatcl'])) exibirErro('error','(%) Concentração Faturamento em Único Cliente não é um decimal válido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'perfatcl\',\'frmRegistro\')',false);			
+		if ( $GLOBALS['perfatcl'] == 0 ) exibirErro('error','(%) Concentração Faturamento em Único Cliente não pode ser zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'perfatcl\',\'frmRegistro\')',false);					
+		if (!validaDecimal($GLOBALS['perfatcl'])) exibirErro('error','(%) Concentração Faturamento em Único Cliente não é um decimal válido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'perfatcl\',\'frmRegistro\')',false);			
 	}
 ?>
