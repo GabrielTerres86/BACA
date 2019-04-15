@@ -1804,6 +1804,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
      
     rw_crapope cr_crapope%ROWTYPE;   
   
+    CURSOR cr_tbcrd_endereco_entrega(pr_cdcooper crapage.cdcooper%TYPE,
+                                     pr_nrdconta crapass.nrdconta%TYPE,
+                                     pr_nrctrcrd crapcrd.nrctrcrd%TYPE) IS
+    SELECT tbdom.dscodigo || ': ' || tbend.nmlogradouro || ', ' || tbend.nrlogradouro || ' - ' ||
+		       nvl2(trim(tbend.dscomplemento), ', ' || tbend.dscomplemento || ' ', '' ) ||
+		       tbend.nmbairro || ' - ' || crapmun.dscidade ||' - ' || crapmun.cdestado ||
+           ' CEP: ' ||gene0002.fn_mask_cep(tbend.nrcep) as dsendereco
+      FROM tbcrd_endereco_entrega tbend
+           ,tbcrd_dominio_campo tbdom
+           ,crapmun
+     WHERE tbend.idtipoenvio = tbdom.cddominio  
+	     AND tbdom.nmdominio = 'TPENDERECOENTREGA'
+	     AND tbend.cdcooper = pr_cdcooper
+	     AND tbend.nrdconta = pr_nrdconta
+	     AND tbend.nrctrcrd = pr_nrctrcrd
+	     AND crapmun.dscidade = tbend.nmcidade;
+	  rw_tbcrd_endereco_entrega cr_tbcrd_endereco_entrega%rowtype;
+
     ------------------------------- VARIÁVEIS --------------------------------
     
     -- Variaveis de log
@@ -1830,6 +1848,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     -- Cursor sobre a tabela de datas
     rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
     
+	vr_dsendenv VARCHAR2(400);
+
   BEGIN 
     
     -- Incluir nome do módulo logado
@@ -1852,7 +1872,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       RAISE vr_exc_saida;
     END IF;
     
-    
+
+    OPEN cr_tbcrd_endereco_entrega(pr_cdcooper => pr_cdcooper,
+                                   pr_nrdconta => pr_nrdconta,
+					                         pr_nrctrcrd => pr_nrctrcrd);
+    FETCH cr_tbcrd_endereco_entrega INTO rw_tbcrd_endereco_entrega;
+    CLOSE cr_tbcrd_endereco_entrega;
+
+
     IF (pr_indtipo_senha = 4 OR pr_indtipo_senha = 5) THEN
       
       -- Verificar os dados do operador
@@ -1918,7 +1945,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         vr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_insere_aprovador_crd: ' || SQLERRM;
         RAISE vr_exc_saida;
     END;
-      
+    
+
+	IF TRIM(rw_tbcrd_endereco_entrega.dsendereco) IS NOT NULL THEN
+        vr_dsendenv := rw_tbcrd_endereco_entrega.dsendereco;
+        
+        -- Update
+        BEGIN
+            UPDATE crawcrd crd
+               SET crd.dsendenv = vr_dsendenv
+             WHERE crd.cdcooper = pr_cdcooper
+               AND crd.nrdconta = pr_nrdconta
+               AND crd.nrctrcrd = pr_nrctrcrd;
+             
+             COMMIT;
+             
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao atualizar a tabela crawcrd em TELA_ATENDA_CARTAOCREDITO.pc_insere_aprovador_crd: ' || SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+    
+    END IF;
+
+
     GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
 														,pr_cdoperad => vr_cdoperad
 														,pr_dscritic => NULL
