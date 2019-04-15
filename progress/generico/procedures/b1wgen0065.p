@@ -2,7 +2,7 @@
 
     Programa: b1wgen0065.p
     Autor   : Jose Luis (DB1)
-    Data    : Abril/2010                   Ultima atualizacao: 22/09/2017
+    Data    : Abril/2010                   Ultima atualizacao: 15/04/2019
 
     Objetivo  : Tranformacao BO tela CONTAS - REGISTRO
 
@@ -21,8 +21,11 @@
                              o idseqttl como zero (Luacas Ranghetti #756813)
                              
                 13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
-                             PRJ366 - tipo de conta (Odirlei-AMcom)             
-.............................................................................*/
+                             PRJ366 - tipo de conta (Odirlei-AMcom)
+                                          
+                15/04/2019 - Melhoria no tratamento do Error-status para 
+                             correcao do problema PRB0041543 
+                             (Jose Eduardo -Mouts) ........................................................................... .. */
 
 /*............................. DEFINICOES ..................................*/
 { sistema/generico/includes/b1wgen0065tt.i &TT-LOG=SIM }
@@ -61,8 +64,7 @@ PROCEDURE Busca_Dados:
     DEF BUFFER crabjur FOR crapjur.
     DEF BUFFER crabjfn FOR crapjfn.
 
-    &SCOPED-DEFINE CAMPOS-JUR vlfatano vlcaprea dtregemp nrregemp orregemp~
-                              dtinsnum nrinsmun nrinsest flgrefis nrcdnire
+    &SCOPED-DEFINE CAMPOS-JUR vlfatano vlcaprea dtregemp nrregemp orregemp                              dtinsnum nrinsmun nrinsest flgrefis nrcdnire
 
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -408,7 +410,7 @@ PROCEDURE Grava_Dados:
             crapjur.nrcdnire = par_nrcdnire
             crapjfn.perfatcl = par_perfatcl NO-ERROR.
 
-        IF  ERROR-STATUS:ERROR THEN
+        IF  ERROR-STATUS:NUM-MESSAGES > 0 THEN
             DO:
                ASSIGN aux_dscritic = ERROR-STATUS:GET-MESSAGE(1).
                LEAVE Grava.

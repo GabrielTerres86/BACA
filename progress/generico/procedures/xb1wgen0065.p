@@ -2,12 +2,13 @@
 
     Programa: xb1wgen0065.p
     Autor   : Jose Luis
-    Data    : Abril/2010                   Ultima atualizacao: 00/00/0000   
+    Data    : Abril/2010                   Ultima atualizacao: 15/04/2019   
 
     Objetivo  : BO de Comunicacao XML x BO - CONTAS - REGISTRO
 
-    Alteracoes: 
-   
+    Alteracoes: 15/04/2019 - Melhoria no tratamento do Error-status para 
+                             correcao do problema PRB0041543 
+                             (Jose Eduardo -Mouts)
 .............................................................................*/
 
                                                                              
@@ -88,7 +89,7 @@ PROCEDURE Busca_Dados:
                            OUTPUT TABLE tt-registro,
                            OUTPUT TABLE tt-erro) .
 
-    IF  RETURN-VALUE = "NOK" THEN
+    IF  RETURN-VALUE <> "OK" THEN
         DO:
             FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
@@ -131,7 +132,7 @@ PROCEDURE Valida_Dados:
                              INPUT aux_perfatcl,
                             OUTPUT TABLE tt-erro) .
 
-    IF  RETURN-VALUE = "NOK" THEN
+    IF  RETURN-VALUE <> "OK" THEN
         DO:
            FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
@@ -182,7 +183,7 @@ PROCEDURE Grava_Dados:
                            OUTPUT aux_chavealt,
                            OUTPUT TABLE tt-erro) NO-ERROR.
 
-    IF  ERROR-STATUS:ERROR THEN
+    IF  ERROR-STATUS:NUM-MESSAGES > 0 THEN
         DO:
             IF  NOT CAN-FIND(FIRST tt-erro) THEN
                 DO:
@@ -196,7 +197,7 @@ PROCEDURE Grava_Dados:
                             INPUT "Erro").
         END.
 
-    IF  RETURN-VALUE = "NOK" THEN
+    IF  RETURN-VALUE <> "OK" THEN
         DO:
            FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
