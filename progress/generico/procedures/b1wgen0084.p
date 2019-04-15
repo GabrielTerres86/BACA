@@ -1936,7 +1936,7 @@ PROCEDURE valida_novo_calculo:
 
 END PROCEDURE. /* valida novo calculo */
 
-PROCEDURE busca_dados_efetivacao_proposta:
+PROCEDURE busca_dados_efetivacao_proposta:  
 
     DEF INPUT  PARAM par_cdcooper AS INTE                              NO-UNDO.
     DEF INPUT  PARAM par_cdagenci AS INTE                              NO-UNDO.
@@ -2149,6 +2149,7 @@ PROCEDURE busca_dados_efetivacao_proposta:
            tt-efetiv-epr.avalist2 = " "
            tt-efetiv-epr.dtdpagto = crawepr.dtdpagto
            tt-efetiv-epr.idcobope = crawepr.idcobope
+		   tt-efetiv-epr.tpemprst = crawepr.tpemprst /*P437*/
            tt-efetiv-epr.idfiniof = crawepr.idfiniof.
 
     /* Se tiver contrato em liquidacao, envia para efetivacao da proposta para refinanciamento */	
