@@ -202,7 +202,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
                          '   vr_cdcritic crapcri.cdcritic%TYPE; '||
                          '   vr_dscritic crapcri.dscritic%TYPE; '||
                          'begin cecred.pc_controle_migra_rpp(pr_cdcooper => '     ||rw_crapprm.cdcooper ||
-                                                          ', pr_dsjobnam => '''||vr_jobname||'' ||
+                                                          ', pr_dsjobnam => '''||vr_jobname||''' '||
                                                           ', pr_cdcritic => vr_cdcritic'|| 
                                                           ', pr_dscritic => vr_dscritic'||
                                                           '); end;';
