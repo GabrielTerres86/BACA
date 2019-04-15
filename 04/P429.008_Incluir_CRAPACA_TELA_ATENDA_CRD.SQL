@@ -34,7 +34,8 @@ BEGIN
   INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('BUSCA_DADOS_CRD', 'TELA_ATENDA_CARTAOCREDITO', 'pc_busca_dados_crd', 'pr_cdcooper,pr_nrdconta,pr_nrctrcrd,pr_cdadmcrd', vr_nrseqrdr);
   INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('RETORNA_DADOS_ENTREGA_CARTAO', 'CADA0004', 'pc_retorna_dados_entrg_crt_web', 'pr_cdcooper,pr_nrdconta,pr_nrctrcrd', vr_nrseqrdr);
   INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('ENVIO_CARTAO_COOP_PA', 'TELA_ATENDA_CARTAOCREDITO', 'pc_verifica_cooperativa_pa_web', 'pr_nrdconta', vr_nrseqrdr);
-  
+  INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('RETORNA_TIPO_ENVIO', 'CCRD0008', 'pc_retorna_tipo_envio', 'pr_nrdconta,pr_nrctrcrd', vr_nrseqrdr);
+
   COMMIT;
   
   -- Apresenta uma mensagem de ok
