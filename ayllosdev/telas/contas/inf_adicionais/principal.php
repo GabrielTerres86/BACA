@@ -97,7 +97,7 @@
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
-	$xmlResultModalidade = mensageria($xml, "CADA0006", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResultModalidade = mensageria($xml, "ATENDA", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjModalidade = getObjectXML($xmlResultModalidade);
 
 	if (strtoupper($xmlObjModalidade->roottag->tags[0]->name) == "ERRO") {

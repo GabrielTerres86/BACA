@@ -647,7 +647,7 @@ function trataCadastramento() {
 
     // Se vem da MATRIC, abrir 1.era rotina dependendo o tipo de pessoa
     if (inpessoa == 1) {
-        acessaRotina("INFORMATIVOS", "Conta Corrente", "conta_corrente_pf");
+        acessaRotina('Dados Pessoais', 'Dados Pessoais', 'dados_pessoais');
     }
     else {
         acessaRotina('IDENTIFICACAO', 'Identificação', 'identificacao_juridica');

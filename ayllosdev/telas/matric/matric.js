@@ -1,25 +1,25 @@
 /*!
  * FONTE        : matric.js
- * CRIAÇÃO      : Rodolpho Telmo (DB1)
- * DATA CRIAÇÃO : 07/06/2010
- * OBJETIVO     : Biblioteca de funções da tela MATRIC
+ * CRIAï¿½ï¿½O      : Rodolpho Telmo (DB1)
+ * DATA CRIAï¿½ï¿½O : 07/06/2010
+ * OBJETIVO     : Biblioteca de funï¿½ï¿½es da tela MATRIC
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAï¿½ï¿½ES   : 
  * --------------
  * 000: [11/02/2011] Gabriel Ramirez  (CECRED)	: Aumentado campo do nome para 50 posicoes 
  * 001: [26/04/2011] Rodolpho e Rogerius (DB1)	: Adicionado zoom generico do CEP.  
- * 002: [16/04/2012] Rogérius Militão (DB1) 	: Novo ayout padrão
+ * 002: [16/04/2012] Rogï¿½rius Militï¿½o (DB1) 	: Novo ayout padrï¿½o
  * 003: [15/06/2012] Adriano 		  (CECRED)  : Ajustes referente ao projeto GP - Socios Menores 
  * 004: [02/07/2012] Jorge Hamaguchi  (CECRED)  : Alterado funcao imprime(), novo esquema para impressao.
  * 005: [09/08/2013] Lucas Reinert	  (CECRED)  : Incluido campo UF de naturalidade
- * 006: [15/08/2013] Carlos           (CECRED)  : Alteração da sigla PAC para PA
- * 007: [09/05/2014] Douglas          (CECRED)  : Solicitar senha de coordenador quando operação "X"
+ * 006: [15/08/2013] Carlos           (CECRED)  : Alteraï¿½ï¿½o da sigla PAC para PA
+ * 007: [09/05/2014] Douglas          (CECRED)  : Solicitar senha de coordenador quando operaï¿½ï¿½o "X"
  * 007: [23/09/2014] Jorge Hamaguchi  (CECRED)  : Ajuste em funcao limpaTela(), retirado atribuicao de valor '' para campo opcao.
  * 009: [28/01/2015] Carlos           (CECRED)  : #239097 Ajustes para cadastro de Resp. legal 0 menor/maior.
- * 010: [12/05/2015] Carlos           (CECRED)  : #271162 Inclusão do botao concluir para salvar o cadastro quando a opção for de Alteração.
+ * 010: [12/05/2015] Carlos           (CECRED)  : #271162 Inclusï¿½o do botao concluir para salvar o cadastro quando a opï¿½ï¿½o for de Alteraï¿½ï¿½o.
  * 011: [09/07/2015] Gabriel          (RKAM)    : Projeto Reformulacao Cadastral.
- * 012: [05/10/2015] Kelvin 		  (CECRED)  : Adicionado nova opção "J" para alteração apenas do cpf/cnpj e removido a possibilidade de
-												  alteração pela opção "X", conforme solicitado no chamado 321572 (Kelvin).
+ * 012: [05/10/2015] Kelvin 		  (CECRED)  : Adicionado nova opï¿½ï¿½o "J" para alteraï¿½ï¿½o apenas do cpf/cnpj e removido a possibilidade de
+												  alteraï¿½ï¿½o pela opï¿½ï¿½o "X", conforme solicitado no chamado 321572 (Kelvin).
  * 013: [03/12/2015] Jaison/Andrino   (CECRED)  : Adicao do campo flserasa na pesquisa generica de BUSCA_CNAE.
  * 014: [15/12/2015] Douglas          (CECRED)  : Ajustado para quando sair do campo CPF, limpar os campos apenas quando a opcao da tela eh "I" (Chamado - 369594)
  * 015: [29/01/2016] Tiago Castro(RKAM)         : Chamados 388971/394261 - Incluido validacao para forcar usuario a clicar no botao prosseguir.
@@ -27,94 +27,94 @@
  * 015: [18/02/2016] Jorge Hamaguchi  (CECRED)  : Ajuste para pedir senha do coodenador quando for duplicar conta.
  * 015: [29/01/2016] Tiago Castro(RKAM)         : Chamados 388971/394261 - Incluido validacao para forcar usuario a clicar no botao prosseguir.
  *												  Ao teclar ENTER mais de uma vez, era criado mais de uma conta.
- * 016: [10/04/2016] Rafael (RKAM)              : Ajuste para comportamento acertivo quando o site da receita não estiver disponível
+ * 016: [10/04/2016] Rafael (RKAM)              : Ajuste para comportamento acertivo quando o site da receita nï¿½o estiver disponï¿½vel
  * 018: [20/04/2016] Heitor (RKAM)              : Limitado o campo NRENDERE em 5 posicoes, chamado 435477 
- * 019: [27/04/2016] Gisele (RKAM)              : Incluido  procedimento que verificar qual conexão do banco se é produção sim ou não.
- *                                                se for produção o sistema permanece executando a consulta no site da receita federal, 
- *                                                caso seja outro banco exemplo desenvolvimento a tela não executa consulta da Receita Federal.
+ * 019: [27/04/2016] Gisele (RKAM)              : Incluido  procedimento que verificar qual conexï¿½o do banco se ï¿½ produï¿½ï¿½o sim ou nï¿½o.
+ *                                                se for produï¿½ï¿½o o sistema permanece executando a consulta no site da receita federal, 
+ *                                                caso seja outro banco exemplo desenvolvimento a tela nï¿½o executa consulta da Receita Federal.
  *
  * 014: [15/12/2015] Douglas          (CECRED)  : Ajustado para quando sair do campo CPF, limpar os campos apenas quando a opcao da tela eh "I" (Chamado -
  369594)
- * 015: [17/05/2016] Kelvin 		  (CECRED)  : Adicionado inclusão de nacionalidade, conforme solicitado no chamado 422806. (Kelvin)
- * 016: [06/07/2016] Lucas Ranghetti  (CECRED)  : Alterar campo cCnae para suportar até 7 posicoes. (#481816)
+ * 015: [17/05/2016] Kelvin 		  (CECRED)  : Adicionado inclusï¿½o de nacionalidade, conforme solicitado no chamado 422806. (Kelvin)
+ * 016: [06/07/2016] Lucas Ranghetti  (CECRED)  : Alterar campo cCnae para suportar atï¿½ 7 posicoes. (#481816)
  * 017: [22/07/2016] Maciel 		  (RKAM)  : Ajustes no JS para o conportamento correto da consulta a receita
  * 018: [22/07/2016] Maciel 		  (RKAM)  : Aumento do tempo para consulta na receita federal
  * 019: [10/10/2016] Carlos           (CECRED): #537134 Comentada a consulta automatizada do CPF/CNPJ na receita devido aos constantes
  *                                              bloqueios de acesso.
  * 020: [25/10/2016] Tiago            (CECRED): M310 Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  * 021: [08/02/2017] Kelvin           (CECRED): Ajuste realiazado para tratar o chamado 566462. 
- * 022: [03/03/2017] Adriano          (CECRED): Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
+ * 022: [03/03/2017] Adriano          (CECRED): Ajuste devido a conversï¿½o das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
  * 023: [12/04/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 024: [14/06/2017] Adriano          (CECRED): Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
  *		                                        crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
- * 025: [26/06/2017] Jonata             (RKAM): Ajustes para inclusão da nova opção "G" (P364).
+ * 025: [26/06/2017] Jonata             (RKAM): Ajustes para inclusï¿½o da nova opï¿½ï¿½o "G" (P364).
  * 026: [31/07/2017] Odirlei Busana   (AMcom) : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM.	
- * 027: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae.
- * 028: [09/08/2017] Mateus Zimmermann (MOUTS): Ajustes para inclusão do Desligamento (P364).
+ * 027: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de cï¿½digo cnae.
+ * 028: [09/08/2017] Mateus Zimmermann (MOUTS): Ajustes para inclusï¿½o do Desligamento (P364).
  * 029: [28/08/2017] Kelvin			  (CECRED): Criando opcao de solicitar relacionamento caso cnpj informado esteja cadastrado na cooperativa. (Kelvin)
  * 030: [19/09/2017] Kelvin			  (CECRED): Ajuste no problema ao carregar contas com situacao de cpf diferente de 0. (PRJ339)			                         
- * 031: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
+ * 031: [29/09/2017] Adriano          (CECRED): Ajuste para forï¿½ar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
  * 032: [16/10/2017] Kelvin 		  (CECRED): Removendo o campo caixa postal. (PRJ339).
  * 033: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
- * 034: [23/10/2017] Odirlei Busana	  (AMcom): Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
- *                                             replicação dos dados da pessoa. (PRJ339).
- * 035: [14/11/2017] Jonta             (RKAM): Inclusão da opção H (P364).
- * 036: [27/12/2017] Renato Darosci  (SUPERO): Alterações apra inclusão dos novos botões Desligar e Saque Parcial - Melhoria 329
+ * 034: [23/10/2017] Odirlei Busana	  (AMcom): Ajustado para chamar a rotina de reposavel legal apos a inclusï¿½o devido a 
+ *                                             replicaï¿½ï¿½o dos dados da pessoa. (PRJ339).
+ * 035: [14/11/2017] Jonta             (RKAM): Inclusï¿½o da opï¿½ï¿½o H (P364).
+ * 036: [27/12/2017] Renato Darosci  (SUPERO): Alteraï¿½ï¿½es apra inclusï¿½o dos novos botï¿½es Desligar e Saque Parcial - Melhoria 329
  * 037: [16/01/2018] Lucas Reinert			 : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
  * 038: [13/07/2018] Andrey Formigari (Mouts): Novo campo Nome Social (#SCTASK0017525)
  * 039: [04/09/2018] Alcemir          (Mouts): alterado atualizarContasAntigasDemitidas(), incluido parametro operauto (operador autorizador). (SM 364) 
  */
 
-// Definição de algumas variáveis globais 
+// Definiï¿½ï¿½o de algumas variï¿½veis globais 
 var cdpactra = 0;  // PA de operador logado
-var operacao = ''; // Armazena a operação corrente da tela MATRIC
-var nrdconta = ''; // Armazena o Número da Conta/dv
+var operacao = ''; // Armazena a operaï¿½ï¿½o corrente da tela MATRIC
+var nrdconta = ''; // Armazena o Nï¿½mero da Conta/dv
 var rowidass = ''; // Armazena a chave do registro
 var tppessoa = ''; // Armazena o tipo da pessoa (1 ou 2)
-var nrdcontaOld = ''; // Variável auxiliar para guardar o número da conta passada
-var operacaoOld = ''; // Variável auxiliar para guardar a operação passada
-var nrJanelas = ''; // Armazena o número de janelas para as impressões
-var indarrayAvt = ''; // Variável que armazena o procurador que está selecionado na tabela
-var semaforo = 0; // Semáforo para não permitir chamar a função controlaOperacao uma atrás da outra
-var operProc = ''; // Armazena a operação corrente da rotina procuradores
+var nrdcontaOld = ''; // Variï¿½vel auxiliar para guardar o nï¿½mero da conta passada
+var operacaoOld = ''; // Variï¿½vel auxiliar para guardar a operaï¿½ï¿½o passada
+var nrJanelas = ''; // Armazena o nï¿½mero de janelas para as impressï¿½es
+var indarrayAvt = ''; // Variï¿½vel que armazena o procurador que estï¿½ selecionado na tabela
+var semaforo = 0; // Semï¿½foro para nï¿½o permitir chamar a funï¿½ï¿½o controlaOperacao uma atrï¿½s da outra
+var operProc = ''; // Armazena a operaï¿½ï¿½o corrente da rotina procuradores
 var nrcpfcgc = ''; // Armazena o cpf corrente da rotina procuradores
 var rowidavt = ''; // Armazena a chave do registro de procuradores
 var nrdconta_org = 0; // Conta origem para ser duplicada
 var hrinicad = 0; // Horario de inicio do cadastro
 var XMLContas = "";
 
-// Opções que o operador tem acesso na tela MATRIC
-var flgConsultar = ''; // Permissão para Consultar
-var flgIncluir = ''; // Permissão para Incluir
-var flgRelatorio = ''; // Permissão para emitir o relatório
-var flgNome = ''; // Permissão para alterar o nome
-var flgDesvincula = ''; // Permissão para Desvincular
-var flgCpfCnpj = ''; // Permissão para alterar o cpf ou o cnpj
-var flgAcessoCRM = ''; // Permissão de acesso do operador ao CRM
-var flgDesligarCRM = ''; // Permissão para o botão Desligar
-var flgSaldoPclCRM = ''; // Permissão para o botão Saldo Parcial
+// Opï¿½ï¿½es que o operador tem acesso na tela MATRIC
+var flgConsultar = ''; // Permissï¿½o para Consultar
+var flgIncluir = ''; // Permissï¿½o para Incluir
+var flgRelatorio = ''; // Permissï¿½o para emitir o relatï¿½rio
+var flgNome = ''; // Permissï¿½o para alterar o nome
+var flgDesvincula = ''; // Permissï¿½o para Desvincular
+var flgCpfCnpj = ''; // Permissï¿½o para alterar o cpf ou o cnpj
+var flgAcessoCRM = ''; // Permissï¿½o de acesso do operador ao CRM
+var flgDesligarCRM = ''; // Permissï¿½o para o botï¿½o Desligar
+var flgSaldoPclCRM = ''; // Permissï¿½o para o botï¿½o Saldo Parcial
 
-// Opções que o operador tem acesso na rotina PROCURADORES da tela MATRIC
-var flgAlterarProc = ''; // Permissão para Alterar Procurador
-var flgConsultarProc = ''; // Permissão para Consultar Procurador
-var flgExcluirProc = ''; // Permissão para Excluir Procurador
-var flgIncluirProc = ''; // Permissão para Incluir Procurador
-var aux_operacao = ''; // Armazena a operação da tela
-var nrdeanos = 0;  // Armazena o número de anos para controlar os botoes
+// Opï¿½ï¿½es que o operador tem acesso na rotina PROCURADORES da tela MATRIC
+var flgAlterarProc = ''; // Permissï¿½o para Alterar Procurador
+var flgConsultarProc = ''; // Permissï¿½o para Consultar Procurador
+var flgExcluirProc = ''; // Permissï¿½o para Excluir Procurador
+var flgIncluirProc = ''; // Permissï¿½o para Incluir Procurador
+var aux_operacao = ''; // Armazena a operaï¿½ï¿½o da tela
+var nrdeanos = 0;  // Armazena o nï¿½mero de anos para controlar os botoes
 var dtmvtolt = ''; // Armazena a data atual do sistema
 
-var verrespo = false; 				 	// Variável global para indicar se deve validar ou nao os dados dos Resp.Legal na BO55
-var permalte = true; 			     	// Está variável sera usada para controlar se a "Alteração/Exclusão/Inclusão - Resp. Legal" deverá ser feita somente na tela contas
-var arrayBensMatric = new Array(); 	// Variável global para armazenar os bens dos procuradores
-var arrayFilhosAvtMatric = new Array(); // Variável global para armazenar os procuradores
-var arrayBackupAvt = new Array(); 		// Array que armazena o arrayFilhosAvtMatric antes de qualquer operação.
-var arrayBackupBens = new Array(); 		// Array que armazena o arrayFilhosBensMatric antes de qualquer operação.
-var arrayFilhos = new Array(); 			// Variável global para armazenar os responsaveis legais
-var arrayBackupFilhos = new Array();    // Array que armazena o arrayFilhos antes de qualquer operação.
-var lstContasDemitidas = new Array(); // Variável para armazenar contas demitidas
-var lstContasAntigasDemitidas = new Array(); // Variável para armazenar contas antigas demitidas
+var verrespo = false; 				 	// Variï¿½vel global para indicar se deve validar ou nao os dados dos Resp.Legal na BO55
+var permalte = true; 			     	// Estï¿½ variï¿½vel sera usada para controlar se a "Alteraï¿½ï¿½o/Exclusï¿½o/Inclusï¿½o - Resp. Legal" deverï¿½ ser feita somente na tela contas
+var arrayBensMatric = new Array(); 	// Variï¿½vel global para armazenar os bens dos procuradores
+var arrayFilhosAvtMatric = new Array(); // Variï¿½vel global para armazenar os procuradores
+var arrayBackupAvt = new Array(); 		// Array que armazena o arrayFilhosAvtMatric antes de qualquer operaï¿½ï¿½o.
+var arrayBackupBens = new Array(); 		// Array que armazena o arrayFilhosBensMatric antes de qualquer operaï¿½ï¿½o.
+var arrayFilhos = new Array(); 			// Variï¿½vel global para armazenar os responsaveis legais
+var arrayBackupFilhos = new Array();    // Array que armazena o arrayFilhos antes de qualquer operaï¿½ï¿½o.
+var lstContasDemitidas = new Array(); // Variï¿½vel para armazenar contas demitidas
+var lstContasAntigasDemitidas = new Array(); // Variï¿½vel para armazenar contas antigas demitidas
 
-//Variaveis que armazenam informações do parcelamento
+//Variaveis que armazenam informaï¿½ï¿½es do parcelamento
 var dtdebito = '';
 var qtparcel = '';
 var vlparcel = '';
@@ -129,7 +129,7 @@ exibeAlerta = false;
 
 $(document).ready(function() {
 
-    // Inicializa algumas variáveis
+    // Inicializa algumas variï¿½veis
     idseqttl = 1;
     exibeAlerta = false;
 	estadoInicial();
@@ -192,7 +192,7 @@ function formataCabecalho(){
     
 		$('input,select').removeClass('campoErro');
 			
-		// Se é a tecla ENTER, TAB
+		// Se ï¿½ a tecla ENTER, TAB
 		if(e.keyCode == 13 || e.keyCode == 9){
 			
 			$('#btOK','#frmCabMatric').click();
@@ -321,21 +321,21 @@ function formataFiltro() {
         cDesAgencia.css('width', '175px');
 	}	
 	
-	// Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
+	// Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida aï¿½ï¿½o
 	cNrConta.unbind('keypress').bind('keypress', function (e) {
 	
 		if (divError.css('display') == 'block') { return false; }
 		
-		// Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
+		// Se ï¿½ a tecla ENTER, verificar numero conta e realizar as devidas operaï¿½ï¿½es
 		if (e.keyCode == 13) {
-			// Armazena o número da conta na variável global
+			// Armazena o nï¿½mero da conta na variï¿½vel global
 			nrdconta = normalizaNumero($(this).val());
 			nrdcontaOld = nrdconta;
 		
-			// Verifica se o número da conta é vazio
+			// Verifica se o nï¿½mero da conta ï¿½ vazio
 			if (nrdconta == '') { return false; }
 				
-			// Verifica se a conta é válida
+			// Verifica se a conta ï¿½ vï¿½lida
 			if (!validaNroConta(nrdconta)) {
 				showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmFiltro\');');
 				return false; 
@@ -352,7 +352,7 @@ function formataFiltro() {
 		cNrConta.val("");
 		cNrConta.desabilitaCampo();
 		
-		// Se eu mudar a opção, muda a variável global operacao
+		// Se eu mudar a opï¿½ï¿½o, muda a variï¿½vel global operacao
 	    $("#pessoaFi,#pessoaJu", "#frmFiltro").unbind('keypress').bind('keypress', function (e) {
 			
             if (divError.css('display') == 'block') { return false; }
@@ -364,7 +364,7 @@ function formataFiltro() {
 			
 		});
 		
-		// Libera os devidos campos do Cabeçalho
+		// Libera os devidos campos do Cabeï¿½alho
 		$('#cdagepac,#pessoaFi,#pessoaJu', '#frmFiltro').habilitaCampo();
 		
 		layoutPadrao();
@@ -389,14 +389,14 @@ function formataFiltro() {
 		
 		$('#btProsseguir','#divBotoesFiltro').unbind("click").bind("click", (function () {
 			
-			// Armazena o número da conta na variável global
+			// Armazena o nï¿½mero da conta na variï¿½vel global
 			nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
 			nrdcontaOld = nrdconta;
 		
-			// Verifica se o número da conta é vazio
+			// Verifica se o nï¿½mero da conta ï¿½ vazio
 			if (nrdconta == '') { return false; }
 				
-			// Verifica se a conta é válida
+			// Verifica se a conta ï¿½ vï¿½lida
 			if (!validaNroConta(nrdconta)) {
 				showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmFiltro\');');
 				return false; 
@@ -419,7 +419,7 @@ function formataFiltro() {
 
 function controlaPesquisasFiltro() {
 	
-	// Definindo as variáveis
+	// Definindo as variï¿½veis
     var bo = 'b1wgen0059.p';
     var procedure = '';
     var titulo = '';
@@ -447,19 +447,19 @@ function controlaPesquisasFiltro() {
 			} else {
                 campoAnterior = $(this).prev().attr('name');
 				
-				// Número da conta
+				// Nï¿½mero da conta
                 if (campoAnterior == 'nrdconta') {
 					
 					mostraPesquisaAssociado('nrdconta', 'frmFiltro');
 					return false;
 	
-				// Agência
+				// Agï¿½ncia
                 }else if (campoAnterior == 'cdagepac') {
 					procedure = 'busca_pac';
-					titulo = 'Agência PA';
+					titulo = 'Agï¿½ncia PA';
 					qtReg = '20';
-					filtrosPesq = 'Cód. PA;cdagepac;30px;S;0;;codigo;|Agência PA;nmresage;200px;S;;;descricao;';
-					colunas = 'Código;cdagepac;20%;right|Descrição;dsagepac;80%;left';
+					filtrosPesq = 'Cï¿½d. PA;cdagepac;30px;S;0;;codigo;|Agï¿½ncia PA;nmresage;200px;S;;;descricao;';
+					colunas = 'Cï¿½digo;cdagepac;20%;right|Descriï¿½ï¿½o;dsagepac;80%;left';
 					mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
 					return false;	
 										
@@ -471,23 +471,23 @@ function controlaPesquisasFiltro() {
 	
 	});
 		
-	//Agência
+	//Agï¿½ncia
     $('#cdagepac', '#' + nomeForm).unbind('blur').bind('blur', function () {
 			
             procedure = 'busca_pac';
-            titulo = 'Agência PA';
+            titulo = 'Agï¿½ncia PA';
 			filtrosDesc = '';
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'nmresage', $(this).val(), 'dsagepac', filtrosDesc, 'frmFiltro');
 			return false;
 		
 		});
 		
-	//Agência
+	//Agï¿½ncia
     $('#cdagepac', '#' + nomeForm).unbind('keypress').bind('keypress', function (e) {
 			
 		$('input,select').removeClass('campoErro');
 			
-		// Se é a tecla ENTER, TAB
+		// Se ï¿½ a tecla ENTER, TAB
 		if(e.keyCode == 13 || e.keyCode == 9){
 			
                 $("#pessoaFi", "#frmFiltro").focus();
@@ -523,7 +523,7 @@ function controlaOperacao(novaOp) {
         case 'IC': showConfirmacao('Deseja cancelar inclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
         case 'XC': showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
         case 'AC': showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
-        case 'DC': showConfirmacao('Deseja cancelar desvinculação?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
+        case 'DC': showConfirmacao('Deseja cancelar desvinculaï¿½ï¿½o?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
 
         case 'IV': manterRotina(); semaforo--; return false; break;
         case 'XV': manterRotina(); semaforo--; return false; break;
@@ -550,7 +550,7 @@ function controlaOperacao(novaOp) {
             return false;
             break;
 
-        default: //Deverá retonar ao inicio da tela
+        default: //Deverï¿½ retonar ao inicio da tela
 					controlaVoltar();		
 					return false;
 					
@@ -559,7 +559,7 @@ function controlaOperacao(novaOp) {
 	
     showMsgAguardo(mensagem);
 
-    // Carrega dados da conta através de ajax
+    // Carrega dados da conta atravï¿½s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -575,7 +575,7 @@ function controlaOperacao(novaOp) {
         error: function (objAjax, responseError, objExcept) {
             semaforo--;
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
+            showError('error', 'Nï¿½o foi possï¿½vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
         },
         success: function (response) {
             semaforo--;
@@ -621,8 +621,8 @@ function manterRotina() {
         case 'AV': mensagem = 'Aguarde, validando altera&ccedil;&atilde;o ...'; break;
         case 'AR': mensagem = 'Aguarde, validando altera&ccedil;&atilde;o ...'; break;
         case 'DV': mensagem = 'Aguarde, validando desvincula&ccedil;&atilde;o ...'; break;
-        case 'PI': mensagem = 'Aguarde, validando alteração ...'; break;
-        case 'PA': mensagem = 'Aguarde, validando alteração ...'; break;
+        case 'PI': mensagem = 'Aguarde, validando alteraï¿½ï¿½o ...'; break;
+        case 'PA': mensagem = 'Aguarde, validando alteraï¿½ï¿½o ...'; break;
         case 'CD': mensagem = 'Aguarde, verificando CPF/CNPJ ...'; break;
         default: return false; break;
 
@@ -639,14 +639,14 @@ function manterRotina() {
     nomeForm = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
 
     //-------------------------------------------------------------------------------------------------
-    // [ X ] - Caso for operacao de alteração de nome 
+    // [ X ] - Caso for operacao de alteraï¿½ï¿½o de nome 
     //-------------------------------------------------------------------------------------------------
     // Se for chamado a partir do botao da tela
-    // temos que executar a solicitação de senha do coordenador
+    // temos que executar a solicitaï¿½ï¿½o de senha do coordenador
     if (operacao == 'VX' || operacao == 'VJ') {
         mostrarRotina(operacao);
     }
-    // Se for chamda pelo manter_resultado.php que realiza a gravação
+    // Se for chamda pelo manter_resultado.php que realiza a gravaï¿½ï¿½o
     //executamos o manter Outros()
     if (operacao == 'XV' || operacao == 'JV') {
         manterOutros(nomeForm);
@@ -654,7 +654,7 @@ function manterRotina() {
 
 
     //-------------------------------------------------------------------------------------------------
-    // [ D ] - Caso for operacao de desvinculação
+    // [ D ] - Caso for operacao de desvinculaï¿½ï¿½o
     //-------------------------------------------------------------------------------------------------
     if ((operacao == 'VD') || (operacao == 'DV')) {
 
@@ -692,7 +692,7 @@ function manterRotina() {
 
 
     //-------------------------------------------------------------------------------------------------
-    // [ I | A ] - Caso for operacao for inclusão ou alteração e for PF - Pessoa Física 
+    // [ I | A ] - Caso for operacao for inclusï¿½o ou alteraï¿½ï¿½o e for PF - Pessoa Fï¿½sica 
     //-------------------------------------------------------------------------------------------------
     if ((in_array(operacao, ['VI', 'IV', 'VA', 'AV','AR', 'PI', 'PA'])) && (inpessoa == 1)) {
 
@@ -704,6 +704,7 @@ function manterRotina() {
         dtcnscpf = $('#dtcnscpf', '#frmFisico').val();
         nrdocptl = normalizaTexto($('#nrdocptl', '#frmFisico').val());
         cdoedptl = normalizaTexto($('#cdoedptl', '#frmFisico').val());
+        flgctsal = $('#flgctsal', '#frmFisico').prop('checked');
         dtemdptl = $('#dtemdptl', '#frmFisico').val();
         tpnacion = $('#tpnacion', '#frmFisico').val();
         cdnacion = $('#cdnacion', '#frmFisico').val();
@@ -819,8 +820,7 @@ function manterRotina() {
 				cdtipcta: cdtipcta, inhabmen: inhabmen, dthabmen: dthabmen, 
 				verrespo: verrespo, permalte: permalte, cdufnatu: cdufnatu, 
 				inconrfb: inconrfb, hrinicad: hrinicad, arrayFilhos: arrayFilhos, 
-				idorigee: idorigee,
-				nmsocial: nmsocial,
+				idorigee: idorigee, nmsocial: nmsocial, flgctsal: flgctsal,
                 redirect: 'script_ajax'
             },
             error: function (objAjax, responseError, objExcept) {
@@ -842,7 +842,7 @@ function manterRotina() {
 
 
     //-------------------------------------------------------------------------------------------------
-    // [ I | A ] - Caso for operacao for inclusão ou alteração e for PJ - Pessoa Jurídica
+    // [ I | A ] - Caso for operacao for inclusï¿½o ou alteraï¿½ï¿½o e for PJ - Pessoa Jurï¿½dica
     //-------------------------------------------------------------------------------------------------
     if ((in_array(operacao, ['VI', 'IV', 'VA', 'AV'])) && (inpessoa == 2)) {
 
@@ -877,7 +877,7 @@ function manterRotina() {
         inconrfb = $('#inconrfb', '#frmJuridico').val();
         idorigee = $('#idorigee', '#frmJuridico').val();
         nrlicamb = $('#nrlicamb', '#frmJuridico').val();
-        // Indicador se estã conectado no banco de producao
+        // Indicador se estï¿½ conectado no banco de producao
         inbcprod = $('#inbcprod', '#frmCabMatric').val();
 
         //Normalilza os campos de valor
@@ -1010,13 +1010,13 @@ function bloqueiaFormFiltro() {
     var valorPAC = normalizaNumero($('#cdagepac', '#frmFiltro').val());
     var descPAC = $('#nmresage', '#frmFiltro').val();
 
-    // Verifico se o PA está informado
+    // Verifico se o PA estï¿½ informado
     if (valorPAC == 0) {
         showError('error', 'PA n&atilde;o cadastrado.', 'Alerta - Matric', 'focaCampoErro(\'cdagepac\',\'frmFiltro\');');
         return false;
     }
 
-    //Verifico a descrição do PA
+    //Verifico a descriï¿½ï¿½o do PA
     if (descPAC == '') {
         showError('error', 'PA inv&aacute;lido.', 'Alerta - Matric', 'focaCampoErro(\'cdagepac\',\'frmFiltro\');');
         return false;
@@ -1024,7 +1024,7 @@ function bloqueiaFormFiltro() {
 
     if ($('#cdagepac', '#frmFiltro').hasClass('campoErro')) { return false; }
 
-    // Se o PA é diferente de zero, então bloqueia o cabecalho
+    // Se o PA ï¿½ diferente de zero, entï¿½o bloqueia o cabecalho
     $('input:text,input:radio,select', '#frmFiltro').removeClass('campoErro').desabilitaCampo();
 
     $('a', '#frmFiltro').unbind('click').css('cursor', 'auto');
@@ -1058,13 +1058,13 @@ function controlaAcessoOperacoes() {
         operacaoOld = operacao;
     }
 
-    // Verifica permissões de acesso	
-    if ((operacao == 'CI') && (flgIncluir != '1')) { showError('error', 'Seu usuário não possui permissão de inclusão.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
-    if ((operacao == 'FC') && (flgConsultar != '1')) { showError('error', 'Seu usuário não possui permissão de consulta.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
-    if ((operacao == 'CR') && (flgRelatorio != '1')) { showError('error', 'Seu usuário não possui permissão para emissão do relatório.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
-    if ((operacao == 'CX') && (flgNome != '1')) { showError('error', 'Seu usuário não possui permissão alteração do nome.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
-    if ((operacao == 'CJ') && (flgCpfCnpj != '1')) { showError('error', 'Seu usuário não possui permissão alteração do CPF/CNPJ.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
-    if ((operacao == 'CD') && (flgDesvincula != '1')) { showError('error', 'Seu usuário não possui permissão para desvincular.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
+    // Verifica permissï¿½es de acesso	
+    if ((operacao == 'CI') && (flgIncluir != '1')) { showError('error', 'Seu usuï¿½rio nï¿½o possui permissï¿½o de inclusï¿½o.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
+    if ((operacao == 'FC') && (flgConsultar != '1')) { showError('error', 'Seu usuï¿½rio nï¿½o possui permissï¿½o de consulta.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
+    if ((operacao == 'CR') && (flgRelatorio != '1')) { showError('error', 'Seu usuï¿½rio nï¿½o possui permissï¿½o para emissï¿½o do relatï¿½rio.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
+    if ((operacao == 'CX') && (flgNome != '1')) { showError('error', 'Seu usuï¿½rio nï¿½o possui permissï¿½o alteraï¿½ï¿½o do nome.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
+    if ((operacao == 'CJ') && (flgCpfCnpj != '1')) { showError('error', 'Seu usuï¿½rio nï¿½o possui permissï¿½o alteraï¿½ï¿½o do CPF/CNPJ.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
+    if ((operacao == 'CD') && (flgDesvincula != '1')) { showError('error', 'Seu usuï¿½rio nï¿½o possui permissï¿½o para desvincular.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
 
     return true;
 }
@@ -1077,7 +1077,7 @@ function controlaApresentacaoForms() {
     formataPessoaFisica();
     formataPessoaJuridica();
 
-    // Caso for Pessoa Física, mostra Form de Pessoa Física, caso contrário mostra Form de Pessoa Jurídica
+    // Caso for Pessoa Fï¿½sica, mostra Form de Pessoa Fï¿½sica, caso contrï¿½rio mostra Form de Pessoa Jurï¿½dica
     if (tppessoa == 1) {
         $('#frmFisico').css('display', 'block');
     } else if (tppessoa == 2 || tppessoa == 3) {
@@ -1108,9 +1108,9 @@ function controlaBotoes() {
     $('#btSalvarAltNome').css('display', 'none');
     $('#btVoltarCns').css('display', 'none');
 
-    // Ocultar o botão
+    // Ocultar o botï¿½o
     $('#btDemissCRM').css('display', 'none');
-    // Troca a classe do botão e retira a chamada da função do OnClick
+    // Troca a classe do botï¿½o e retira a chamada da funï¿½ï¿½o do OnClick
     $('#btDemissCRM').trocaClass('botao', 'botaoDesativado').attr("onClick", "return false;");
  
     $('#btSaqueCRM').css('display', 'none');
@@ -1134,7 +1134,7 @@ function controlaBotoes() {
 
             $('#btVoltarCns').css('display', 'inline');
 			
-            // Verifica se o operador não possui acesso ao CRM
+            // Verifica se o operador nï¿½o possui acesso ao CRM
             if (flgAcessoCRM == 'N') {
 
                 if ($('input[name="inpessoa"]:checked', '#frmFiltro').val() == 1) {
@@ -1177,18 +1177,18 @@ function controlaBotoes() {
                 }));
 
             } else {   // Caso operador possua acesso
-                // Se não tem data de demissão... exibe o botão
+                // Se nï¿½o tem data de demissï¿½o... exibe o botï¿½o
                 if (!$('#dtdemiss', '#frmFisico').val()) {
                     $('#btDemissCRM').css('display', 'inline');
                 }
 
                 if (flgDesligarCRM == 'S') {
-                    // Troca a classe do botão e atribui a chamada da função do OnClick
+                    // Troca a classe do botï¿½o e atribui a chamada da funï¿½ï¿½o do OnClick
                     $('#btDemissCRM').trocaClass('botaoDesativado', 'botao').attr("onClick", "verificaProdutosAtivosCRM(); return false;");
                 }
 
                 if (flgSaldoPclCRM == 'S') {
-                    // Exibir o botão de saque parcial
+                    // Exibir o botï¿½o de saque parcial
                     $('#btSaqueCRM').css('display', 'inline');
                 }
 
@@ -1289,7 +1289,7 @@ function formataRodape(nomeForm) {
         cDesMotivo.css('width', '230px');
     }
 
-    // [ A ] - Se operacão é inclusão, habilito os campos
+    // [ A ] - Se operacï¿½o ï¿½ inclusï¿½o, habilito os campos
     if (operacao == 'CA') {
         cDtSaida.habilitaCampo();
         cCodMotivo.habilitaCampo();
@@ -1298,8 +1298,8 @@ function formataRodape(nomeForm) {
     return false;
 }
 
-// ALTERAÇÃO 001: alterado a formatação dos campos de endereco, 
-//				  e a ação de habilitar os campos foi passado para as funções formataPessoaFisica e formataPessoaJuridica
+// ALTERAï¿½ï¿½O 001: alterado a formataï¿½ï¿½o dos campos de endereco, 
+//				  e a aï¿½ï¿½o de habilitar os campos foi passado para as funï¿½ï¿½es formataPessoaFisica e formataPessoaJuridica
 function formataEndereco(nomeForm) {
 
     var inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
@@ -1373,7 +1373,7 @@ function formataEndereco(nomeForm) {
 
 }
 
-// ALTERAÇÃO 001: adicionado a ação de habilitar os campos do endereco
+// ALTERAï¿½ï¿½O 001: adicionado a aï¿½ï¿½o de habilitar os campos do endereco
 function formataPessoaFisica() {
 
     highlightObjFocus($('#frmFisico'));
@@ -1412,7 +1412,7 @@ function formataPessoaFisica() {
     var cEstEmissor = $('#cdufdptl', '#frmFisico');
     var cDtEmissao = $('#dtemdptl', '#frmFisico');
     
-    // Indicador se estã conectado no banco de producao
+    // Indicador se estï¿½ conectado no banco de producao
     var inbcprod = $('#inbcprod', '#frmCabMatric');
 
     cTodosPF1.desabilitaCampo();
@@ -1576,7 +1576,7 @@ function formataPessoaFisica() {
     });
     // Somente executa se esta conectado no banco de producao
     //console.log(' 1- '+inbcprod.val());
-/*  Não consultar receita enquanto se estuda solução (Chamado #537134)
+/*  Nï¿½o consultar receita enquanto se estuda soluï¿½ï¿½o (Chamado #537134)
     if (inbcprod.val() == 'S') {
         // Carregar captcha para consulta na Receita federal
         cDtConsulta.unbind('focus').bind('focus', function () {
@@ -1642,7 +1642,7 @@ function formataPessoaFisica() {
 
 
     /* ----------------------- */
-    /*    FIELDSET FILIAÇÃO    */
+    /*    FIELDSET FILIAï¿½ï¿½O    */
     /* ----------------------- */
     var rRotulosPF3 = $('label[for="nmmaettl"]', '#frmFisico');
     var rNmpaittl = $('label[for="nmpaittl"]', '#frmFisico');
@@ -1661,7 +1661,7 @@ function formataPessoaFisica() {
     formataEndereco('frmFisico');
     formataRodape('frmFisico');
 
-    // [ I ] - Se operacão é inclusão, habilito os campos
+    // [ I ] - Se operacï¿½o ï¿½ inclusï¿½o, habilito os campos
     if (operacao == 'CI') {
         
 		if (bloqueiaFormFiltro()) {
@@ -1680,10 +1680,10 @@ function formataPessoaFisica() {
 			
             }
 		
-    } else // [ X ] - Se operacão for alteração do nome/cpf
+    } else // [ X ] - Se operacï¿½o for alteraï¿½ï¿½o do nome/cpf
         if (operacao == 'CX') {
             cNomeTitular.habilitaCampo();
-            // [ A ] - Se operacão for alteração 	
+            // [ A ] - Se operacï¿½o for alteraï¿½ï¿½o 	
         } else if (operacao == 'CJ') {
             cCPF.habilitaCampo();
         } else if (operacao == 'CA') {
@@ -1694,7 +1694,7 @@ function formataPessoaFisica() {
     return false;
 }
 
-// ALTERAÇÃO 001: adicionado a ação de habilitar os campos do endereco
+// ALTERAï¿½ï¿½O 001: adicionado a aï¿½ï¿½o de habilitar os campos do endereco
 function formataPessoaJuridica() {
 
     highlightObjFocus($('#frmJuridico'));
@@ -1754,7 +1754,7 @@ function formataPessoaJuridica() {
     var cCnae = $('#cdcnae', '#frmJuridico');
     var cDscnae = $('#dscnae', '#frmJuridico');
     
-    // Indicador se estã conectado no banco de producao
+    // Indicador se estï¿½ conectado no banco de producao
     var inbcprod = $('#inbcprod', '#frmCabMatric');
 
 
@@ -1821,7 +1821,7 @@ function formataPessoaJuridica() {
     });
     // Somente executa se esta conectado no banco de producao
     //console.log(' 2- '+inbcprod.val());
-/*  Não consultar receita enquanto se estuda solução (Chamado #537134)
+/*  Nï¿½o consultar receita enquanto se estuda soluï¿½ï¿½o (Chamado #537134)
     if (inbcprod.val() == 'S') {
         // Carregar captcha para consulta na Receita federal
         cDtConsulta.unbind('focus').bind('focus', function () {
@@ -1873,7 +1873,7 @@ function formataPessoaJuridica() {
     $('#divBotoes', '#frmJuridico').css({ 'text-align': 'center', 'padding-top': '3px' });
 
 
-    // [ I ] - Se operacão é inclusão, habilito os campos
+    // [ I ] - Se operacï¿½o ï¿½ inclusï¿½o, habilito os campos
     if (operacao == 'CI') {
        
 		if (bloqueiaFormFiltro()) {
@@ -1887,10 +1887,10 @@ function formataPessoaJuridica() {
                     cCNPJ.focus();
             }
 			
-    } else  // [ X ] - Se operacão for alteração do Razão Social/CNPJ
+    } else  // [ X ] - Se operacï¿½o for alteraï¿½ï¿½o do Razï¿½o Social/CNPJ
         if (operacao == 'CX') {
             cRazaoSocial.habilitaCampo();
-            // [ A ] - Se operacão for alteração 	
+            // [ A ] - Se operacï¿½o for alteraï¿½ï¿½o 	
         } else if (operacao == 'CJ') {
             cCNPJ.habilitaCampo();
         } else if (operacao == 'CA') {
@@ -1926,7 +1926,7 @@ function controlaFoco() {
 
 function controlaPesquisas() {
 
-    // Definindo as variáveis
+    // Definindo as variï¿½veis
     var bo = 'b1wgen0059.p';
     var procedure = '';
     var titulo = '';
@@ -1945,8 +1945,8 @@ function controlaPesquisas() {
         linkOrgao.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	} else {
         linkOrgao.css('cursor', 'pointer').unbind('click').bind('click', function () {
-		var filtrosPesq = "Código;cdoedptl;100px;S;|Descrição;nmoedptl;200px;S;";
-		var colunas = 'Código;cdorgao_expedidor;25%;left|Descrição;nmorgao_expedidor;75%;left';
+		var filtrosPesq = "Cï¿½digo;cdoedptl;100px;S;|Descriï¿½ï¿½o;nmoedptl;200px;S;";
+		var colunas = 'Cï¿½digo;cdorgao_expedidor;25%;left|Descriï¿½ï¿½o;nmorgao_expedidor;75%;left';
 		mostraPesquisa("ZOOM0001", "BUSCA_ORGAO_EXPEDIDOR", "Org&atilde;o expedidor", "30", filtrosPesq, colunas, '','','frmFisico');
 	});
 
@@ -1967,8 +1967,8 @@ function controlaPesquisas() {
             procedure = 'busca_tipo_nacionalidade';
             titulo = 'Tipo Nacionalidade';
             qtReg = '30';
-            filtrosPesq = 'Cód. Tp. Nacion.;tpnacion;30px;S;0;;codigo|Tp. Nacion.;destpnac;200px;S;;;descricao';
-            colunas = 'Código;tpnacion;20%;right|Tipo Nacionalidade;destpnac;80%;left';
+            filtrosPesq = 'Cï¿½d. Tp. Nacion.;tpnacion;30px;S;0;;codigo|Tp. Nacion.;destpnac;200px;S;;;descricao';
+            colunas = 'Cï¿½digo;tpnacion;20%;right|Tipo Nacionalidade;destpnac;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
@@ -1994,8 +1994,8 @@ function controlaPesquisas() {
     else {
         linkNaciona.addClass('lupa').css('cursor', 'pointer').unbind('click').bind('click', function () { 
 
-			var filtrosPesq = "Código;cdnacion;100px;S;0|Descrição;dsnacion;200px;S;";
-			var colunas = 'Código;cdnacion;25%;right|Descrição;dsnacion;75%;left';
+			var filtrosPesq = "Cï¿½digo;cdnacion;100px;S;0|Descriï¿½ï¿½o;dsnacion;200px;S;";
+			var colunas = 'Cï¿½digo;cdnacion;25%;right|Descriï¿½ï¿½o;dsnacion;75%;left';
 			mostraPesquisa("ZOOM0001", "BUSCANACIONALIDADES", "Nacionalidades", "30", filtrosPesq, colunas);
 			
 			return false;
@@ -2041,8 +2041,8 @@ function controlaPesquisas() {
             procedure = 'busca_estado_civil';
             titulo = 'Estado Civil';
             qtReg = '30';
-            filtrosPesq = 'Cód. Est. Civil.;cdestcvl;30px;S;0;;codigo|Est. Civil;dsestcvl;200px;S;;;descricao';
-            colunas = 'Código;cdestcvl;20%;right|Estado Civil;dsestcvl;80%;left';
+            filtrosPesq = 'Cï¿½d. Est. Civil.;cdestcvl;30px;S;0;;codigo|Est. Civil;dsestcvl;200px;S;;;descricao';
+            colunas = 'Cï¿½digo;cdestcvl;20%;right|Estado Civil;dsestcvl;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
@@ -2089,8 +2089,8 @@ function controlaPesquisas() {
             procedure = 'busca_empresa';
             titulo = 'Empresa';
             qtReg = '30';
-            filtrosPesq = 'Cód. Empresa;cdempres;30px;S;0;;codigo|Empresa;nmresemp;200px;S;;;descricao';
-            colunas = 'Código;cdempres;20%;right|Empresa;nmresemp;80%;left';
+            filtrosPesq = 'Cï¿½d. Empresa;cdempres;30px;S;0;;codigo|Empresa;nmresemp;200px;S;;;descricao';
+            colunas = 'Cï¿½digo;cdempres;20%;right|Empresa;nmresemp;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
@@ -2113,7 +2113,7 @@ function controlaPesquisas() {
     }
 
     /*-------------------------------*/
-    /*        CONTROLE OCUPAÇÃO      */
+    /*        CONTROLE OCUPAï¿½ï¿½O      */
     /*-------------------------------*/
     var linkEmp = $('a:eq(6)', '#frmFisico');
     if (linkEmp.prev().hasClass('campoTelaSemBorda')) {
@@ -2121,16 +2121,16 @@ function controlaPesquisas() {
     } else {
         linkEmp.css('cursor', 'pointer').unbind('click').bind('click', function () {
             
-            filtrosPesq = 'Cód. Ocupação;cdocpttl;30px;S;0;;codigo|Ocupação;dsocpttl;200px;S;;;descricao';
-            colunas = 'Código;cdocupa;20%;right|Ocupação;rsdocupa;80%;left';
-            mostraPesquisa("ZOOM0001", "BUSCOCUPACAO", "Ocupação", "30", filtrosPesq, colunas);
+            filtrosPesq = 'Cï¿½d. Ocupaï¿½ï¿½o;cdocpttl;30px;S;0;;codigo|Ocupaï¿½ï¿½o;dsocpttl;200px;S;;;descricao';
+            colunas = 'Cï¿½digo;cdocupa;20%;right|Ocupaï¿½ï¿½o;rsdocupa;80%;left';
+            mostraPesquisa("ZOOM0001", "BUSCOCUPACAO", "Ocupaï¿½ï¿½o", "30", filtrosPesq, colunas);
             return false;
 
         });
         linkEmp.prev().unbind('change').bind('change', function () {
             
             filtrosDesc = '';
-            buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupação", $(this).attr('name'), 'dsocpttl', $(this).val(), 'rsdocupa', filtrosDesc, 'frmFisico');
+            buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupaï¿½ï¿½o", $(this).attr('name'), 'dsocpttl', $(this).val(), 'rsdocupa', filtrosDesc, 'frmFisico');
             return false;
 
         });
@@ -2138,7 +2138,7 @@ function controlaPesquisas() {
             $(this).unbind('change').bind('change', function () {
                 
                 filtrosDesc = '';
-                buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupação", $(this).attr('name'), 'dsocpttl', $(this).val(), 'rsdocupa', filtrosDesc, 'frmFisico');
+                buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupaï¿½ï¿½o", $(this).attr('name'), 'dsocpttl', $(this).val(), 'rsdocupa', filtrosDesc, 'frmFisico');
                 return false;
             });
         });
@@ -2150,16 +2150,16 @@ function controlaPesquisas() {
     } else {
         linkMotivo.css('cursor', 'pointer').unbind('click').bind('click', function () {
             procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de saída';
+            titulo = 'Motivo de saï¿½da';
             qtReg = '30';
-            filtrosPesq = 'Cód. Motivo saída;cdmotdem;30px;S;0;;codigo|Motivo de saída;dsmotdem;200px;S;;;descricao';
-            colunas = 'Código;cdmotdem;20%;right|Motivo de saída;dsmotdem;80%;left';
+            filtrosPesq = 'Cï¿½d. Motivo saï¿½da;cdmotdem;30px;S;0;;codigo|Motivo de saï¿½da;dsmotdem;200px;S;;;descricao';
+            colunas = 'Cï¿½digo;cdmotdem;20%;right|Motivo de saï¿½da;dsmotdem;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
         linkMotivo.prev().unbind('change').bind('change', function () {
             procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de saída';
+            titulo = 'Motivo de saï¿½da';
             filtrosDesc = '';
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'frmFisico');
             return false;
@@ -2167,7 +2167,7 @@ function controlaPesquisas() {
         linkMotivo.prev().unbind('blur').bind('blur', function () {
             $(this).unbind('change').bind('change', function () {
                 procedure = 'busca_motivo_demissao';
-                titulo = 'Motivo de saída';
+                titulo = 'Motivo de saï¿½da';
                 filtrosDesc = '';
                 buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'frmFisico');
                 return false;
@@ -2184,16 +2184,16 @@ function controlaPesquisas() {
     } else {
         linkNatJur.css('cursor', 'pointer').unbind('click').bind('click', function () {
             procedure = 'busca_natureza_juridica';
-            titulo = 'Nat. Jurídica';
+            titulo = 'Nat. Jurï¿½dica';
             qtReg = '30';
-            filtrosPesq = 'Cód. Nat. Jurídica;natjurid;30px;S;0;;codigo|Nat. Jurídica;rsnatjur;200px;S;;;descricao';
-            colunas = 'Código;cdnatjur;20%;right|Nat. Jurídica;rsnatjur;80%;left';
+            filtrosPesq = 'Cï¿½d. Nat. Jurï¿½dica;natjurid;30px;S;0;;codigo|Nat. Jurï¿½dica;rsnatjur;200px;S;;;descricao';
+            colunas = 'Cï¿½digo;cdnatjur;20%;right|Nat. Jurï¿½dica;rsnatjur;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
         linkNatJur.prev().unbind('change').bind('change', function () {
             procedure = 'busca_natureza_juridica'; //
-            titulo = 'Nat. Jurídica';
+            titulo = 'Nat. Jurï¿½dica';
             filtrosDesc = '';
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'rsnatjur', $(this).val(), 'rsnatjur', filtrosDesc, 'frmJuridico');
             return false;
@@ -2201,7 +2201,7 @@ function controlaPesquisas() {
         linkNatJur.prev().unbind('blur').bind('blur', function () {
             $(this).unbind('change').bind('change', function () {
                 procedure = 'busca_natureza_juridica';
-                titulo = 'Nat. Jurídica';
+                titulo = 'Nat. Jurï¿½dica';
                 filtrosDesc = '';
                 buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'rsnatjur', $(this).val(), 'rsnatjur', filtrosDesc, 'frmJuridico');
                 return false;
@@ -2218,16 +2218,16 @@ function controlaPesquisas() {
     } else {
         linkSetEco.css('cursor', 'pointer').unbind('click').bind('click', function () {
             procedure = 'busca_setor_economico';
-            titulo = 'Setor Econômico';
+            titulo = 'Setor Econï¿½mico';
             qtReg = '30';
-            filtrosPesq = 'Cód. Setor Econômico;cdseteco;30px;S;0;;codigo|Setor Econômico;nmseteco;200px;S;;;descricao';
-            colunas = 'Código;cdseteco;20%;right|Setor Econômico;nmseteco;80%;left';
+            filtrosPesq = 'Cï¿½d. Setor Econï¿½mico;cdseteco;30px;S;0;;codigo|Setor Econï¿½mico;nmseteco;200px;S;;;descricao';
+            colunas = 'Cï¿½digo;cdseteco;20%;right|Setor Econï¿½mico;nmseteco;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
         linkSetEco.prev().unbind('change').bind('change', function () {
             procedure = 'busca_setor_economico';
-            titulo = 'Setor Econômico';
+            titulo = 'Setor Econï¿½mico';
             filtrosDesc = '';
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'nmseteco', $(this).val(), 'nmseteco', filtrosDesc, 'frmJuridico');
             return false;
@@ -2235,7 +2235,7 @@ function controlaPesquisas() {
         linkSetEco.prev().unbind('blur').bind('blur', function () {
             $(this).unbind('change').bind('change', function () {
                 procedure = 'busca_setor_economico';
-                titulo = 'Setor Econômico';
+                titulo = 'Setor Econï¿½mico';
                 filtrosDesc = '';
                 buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'nmseteco', $(this).val(), 'nmseteco', filtrosDesc, 'frmJuridico');
                 return false;
@@ -2254,8 +2254,8 @@ function controlaPesquisas() {
             procedure = 'busca_ramo_atividade';
             titulo = 'Ramo Atividade';
             qtReg = '30';
-            filtrosPesq = 'Cód. Ramo Atividade;cdrmativ;30px;S;0;;descricao|Ramo Atividade;dsrmativ;200px;S;;;descricao|Cód. Setor Econômico;cdseteco;30px;N;;;codigo|Setor Econômico;nmseteco;200px;N;;;descricao';
-            colunas = 'Código;cdrmativ;20%;right|Ramo Atividade;nmrmativ;80%;left';
+            filtrosPesq = 'Cï¿½d. Ramo Atividade;cdrmativ;30px;S;0;;descricao|Ramo Atividade;dsrmativ;200px;S;;;descricao|Cï¿½d. Setor Econï¿½mico;cdseteco;30px;N;;;codigo|Setor Econï¿½mico;nmseteco;200px;N;;;descricao';
+            colunas = 'Cï¿½digo;cdrmativ;20%;right|Ramo Atividade;nmrmativ;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
@@ -2288,8 +2288,8 @@ function controlaPesquisas() {
             procedure = 'BUSCA_CNAE';
             titulo = 'CNAE';
             qtReg = '30';
-            filtrosPesq = 'Cód. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
-            colunas = 'Código;cdcnae;20%;right|Desc CANE;dscnae;80%;left';
+            filtrosPesq = 'Cï¿½d. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
+            colunas = 'Cï¿½digo;cdcnae;20%;right|Desc CANE;dscnae;80%;left';
             mostraPesquisa('ZOOM0001', procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
@@ -2304,9 +2304,9 @@ function controlaPesquisas() {
 
 
     /*-----------------------------------------------*/
-    /*    CONTROLE ENDEREÇO FISICO E JURIDICO        */
+    /*    CONTROLE ENDEREï¿½O FISICO E JURIDICO        */
     /*-----------------------------------------------*/
-    // ALTERAÇÃO 001: adicionado o controle do endereco de pessoa fisica e juridica	
+    // ALTERAï¿½ï¿½O 001: adicionado o controle do endereco de pessoa fisica e juridica	
     var linkEnderecoFisico = $('a:eq(7)', '#frmFisico');
     if (linkEnderecoFisico.prev().hasClass('campoTelaSemBorda')) {
         linkEnderecoFisico.addClass('lupa').css('cursor', 'auto');
@@ -2332,16 +2332,16 @@ function controlaPesquisas() {
     } else {
         linkMotivo.css('cursor', 'pointer').unbind('click').bind('click', function () {
             procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de saída';
+            titulo = 'Motivo de saï¿½da';
             qtReg = '30';
-            filtrosPesq = 'Cód. Motivo de saída;cdmotdem;30px;S;0;;codigo|Motivo de saída;dsmotdem;200px;S;;;descricao';
-            colunas = 'Código;cdmotdem;20%;right|Motivo de saída;dsmotdem;80%;left';
+            filtrosPesq = 'Cï¿½d. Motivo de saï¿½da;cdmotdem;30px;S;0;;codigo|Motivo de saï¿½da;dsmotdem;200px;S;;;descricao';
+            colunas = 'Cï¿½digo;cdmotdem;20%;right|Motivo de saï¿½da;dsmotdem;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
         linkMotivo.prev().unbind('change').bind('change', function () {
             procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de saída';
+            titulo = 'Motivo de saï¿½da';
             filtrosDesc = '';
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'frmJuridico');
             return false;
@@ -2349,7 +2349,7 @@ function controlaPesquisas() {
         linkMotivo.prev().unbind('blur').bind('blur', function () {
             $(this).unbind('change').bind('change', function () {
                 procedure = 'busca_motivo_demissao';
-                titulo = 'Motivo de saída';
+                titulo = 'Motivo de saï¿½da';
                 filtrosDesc = '';
                 buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'frmJuridico');
                 return false;
@@ -2366,13 +2366,13 @@ function verificaResponsavelLegal() {
             abrirRotina('RESPONSAVEL LEGAL', 'Responsavel Legal', 'responsavel_legal', 'responsavel_legal', 'CT');
         }
         else {
-            //Alterado, pois validacao responsavel legal sera chamada apos salvar os dados, devido a replicação de dados da pessoa.		    
+            //Alterado, pois validacao responsavel legal sera chamada apos salvar os dados, devido a replicaï¿½ï¿½o de dados da pessoa.		    
             //controlaOperacao("VI");
             impressao_inclusao();
         }
     }
     else {
-        //Alterado, pois validacao responsavel legal sera chamada apos salvar os dados, devido a replicação de dados da pessoa.		    
+        //Alterado, pois validacao responsavel legal sera chamada apos salvar os dados, devido a replicaï¿½ï¿½o de dados da pessoa.		    
         //controlaOperacao("VI");
         impressao_inclusao();
     }
@@ -2428,7 +2428,7 @@ function consultaPreIncluir() {
     cdagepac = $('#cdagepac', '#frmFiltro').val();
     inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
 
-    // Carrega dados da conta através de ajax
+    // Carrega dados da conta atravï¿½s de ajax
     $.ajax({
         type: 'POST',
         url: UrlSite + 'telas/matric/valida_inicio_inclusao.php',
@@ -2441,7 +2441,7 @@ function consultaPreIncluir() {
 				},
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
+            showError('error', 'Nï¿½o foi possï¿½vel concluir a requisi&ccedil;&atilde;o', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
         },
         success: function (response) {
             try {
@@ -2457,7 +2457,7 @@ function consultaPreIncluir() {
     return false;
 }
 
-// ALTERAÇÃO 001: adicionado a ação de habilitar os campos do endereco
+// ALTERAï¿½ï¿½O 001: adicionado a aï¿½ï¿½o de habilitar os campos do endereco
 function formataInclusao() {
 
     if ($('#frmFisico').css('display') == 'block') {
@@ -2543,7 +2543,7 @@ function verificaRelatorio() {
 				},
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
+            showError('error', 'Nï¿½o foi possï¿½vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
         },
         success: function (response) {
             hideMsgAguardo();
@@ -2571,7 +2571,7 @@ function verificaRelatorio() {
 function exibirMsgMatric(strAlerta, msgRetorno, qtparcel, vlparcel) {
 
     if (strAlerta != '') {
-        // Definindo as variáveis
+        // Definindo as variï¿½veis
 
         var arrayMensagens = new Array();
         var novoArray = new Array();
@@ -2596,7 +2596,7 @@ function exibirMsgMatric(strAlerta, msgRetorno, qtparcel, vlparcel) {
 }
 
 //---------------------------------------------------------
-//  FUNÇÕES PARA O PARCELAMENTO
+//  FUNï¿½ï¿½ES PARA O PARCELAMENTO
 //---------------------------------------------------------
 
 function exibeParcelamento(qtparcel, vlparcel, msgRetor) {
@@ -2616,7 +2616,7 @@ function exibeParcelamento(qtparcel, vlparcel, msgRetor) {
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();
-                showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+                showError('error', 'N&atilde;o foi possï¿½vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
             },
             success: function (response) {
                 if (response.indexOf('showError("error"') == -1) {
@@ -2648,7 +2648,7 @@ function abrirProcuradores() {
     abrirRotina('PROCURADORES', 'Representante/Procurador', 'procuradores', 'procuradores', 'CI');
 }
 
-// Função para acessar rotina 
+// Funï¿½ï¿½o para acessar rotina 
 function abrirRotina(nomeValidar, nomeTitulo, nomeScript, nomeURL, ope) {
 
     // Se ja abriu a rotina, desconsiderar	
@@ -2682,7 +2682,7 @@ function abrirRotina(nomeValidar, nomeTitulo, nomeScript, nomeURL, ope) {
 
 
     // Carrega biblioteca javascript da rotina
-    // Ao carregar efetua chamada do conteúdo da rotina através de ajax
+    // Ao carregar efetua chamada do conteï¿½do da rotina atravï¿½s de ajax
     $.getScript(urlScript + ".js?keyrand="+Math.floor((Math.random() * 1000) + 1), function () {
 
         operacao_rsp = operacao;
@@ -2703,7 +2703,7 @@ function abrirRotina(nomeValidar, nomeTitulo, nomeScript, nomeURL, ope) {
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();
-                showError("error", "Não foi possível concluir a requisição.", "Alerta - Ayllos", "");
+                showError("error", "Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.", "Alerta - Ayllos", "");
             },
             success: function (response) {
 
@@ -2828,7 +2828,7 @@ function mostrarRotina(operacao) {
 
     showMsgAguardo('Aguarde, abrindo ...');
 
-    // Executa script de confirmação através de ajax
+    // Executa script de confirmaï¿½ï¿½o atravï¿½s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -2839,7 +2839,7 @@ function mostrarRotina(operacao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function (response) {
             $('#divRotina').html(response);
@@ -2873,7 +2873,7 @@ function buscaSenha(operacao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
+            showError('error', 'Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.', 'Alerta - Ayllos', "unblockBackground();");
         },
         success: function (response) {
 
@@ -2884,7 +2884,7 @@ function buscaSenha(operacao) {
                     formataSenha();
                     $('#codsenha', '#frmSenha').unbind('keydown').bind('keydown', function (e) {
                         if (divError.css('display') == 'block') { return false; }
-                        // Se é a tecla ENTER, 
+                        // Se ï¿½ a tecla ENTER, 
                         if (e.keyCode == 13) {
                             validarSenha(operacao);
                             return false;
@@ -2927,7 +2927,7 @@ function buscaContas() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
+            showError('error', 'Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.', 'Alerta - Ayllos', "unblockBackground();");
         },
         success: function (response) {
 
@@ -3067,8 +3067,8 @@ function validarSenha(operacao) {
         success: function (response) {
             try {
                 eval(response);
-                // se não ocorreu erro, vamos gravar as alçterações
-                if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                // se nï¿½o ocorreu erro, vamos gravar as alï¿½teraï¿½ï¿½es
+                //if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                     if (cddopcao == 'X') {
                         manterOutros(nomeForm);
                     } else if (operacao == 'LCD') {
@@ -3081,7 +3081,7 @@ function validarSenha(operacao) {
 
                     }
 
-                }
+                //}
                 return false;
             } catch (error) {
                 hideMsgAguardo();
@@ -3143,7 +3143,7 @@ function manterOutros(nomeForm) {
 
     switch (operacao) {
         case 'CC': mensagem = 'Aguarde, verificando a cidade do CEP ...'; break;
-        case 'LCD': mensagem = 'Aguarde, verificando situação do CPF/CNPJ ...'; break;
+        case 'LCD': mensagem = 'Aguarde, verificando situaï¿½ï¿½o do CPF/CNPJ ...'; break;
         case 'BCC': mensagem = 'Aguarde, gerando a C/C ...'; break;
         case 'DCC': mensagem = 'Aguarde, duplicando a C/C ...'; break;
 
@@ -3265,7 +3265,7 @@ function validaAcessoEexecuta(UrlSite, tipo) {
         var url = UrlSite + "includes/consulta_rfb/rfb/cnpj/getcaptcha.php";
     }
     var metodo = '$("#divBloqueio").css("display", "")';
-    var mensagem = "Site de consulta da Receita Federal do Brasil indisponível. Efetue a consulta manualmente. ";
+    var mensagem = "Site de consulta da Receita Federal do Brasil indisponï¿½vel. Efetue a consulta manualmente. ";
     var tipo = "error";
     var titulo = "Alerta - Ayllos";
     var cDtConsulta = $('#dtcnscpf');
@@ -3323,13 +3323,13 @@ function validaAcessoEexecuta(UrlSite, tipo) {
 }
 
 
-// Função para acessar rotina de Saque Parcial 
+// Funï¿½ï¿½o para acessar rotina de Saque Parcial 
 /*function apresentarDesligamento() {
 
     // Mostra mensagem de aguardo	
     showMsgAguardo("Aguarde, carregando ...");
 
-    // Executa script através de ajax
+    // Executa script atravï¿½s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -3340,7 +3340,7 @@ function validaAcessoEexecuta(UrlSite, tipo) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function (response) {
             $('#divRotina').html(response);
@@ -3373,7 +3373,7 @@ function formataDesligamento() {
 }
 */
 function confirmarDesligamento(cdmotdem, dsmotdem) {
-    showConfirmacao('A conta está na situa&ccedil;&atilde;o ' + cdmotdem + ' - ' + dsmotdem + '. Deseja Prosseguir?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuarDevolucaoCotas();', 'fechaRotina($(\'#divRotina\'));', 'sim.gif', 'nao.gif'); return false;
+    showConfirmacao('A conta estï¿½ na situa&ccedil;&atilde;o ' + cdmotdem + ' - ' + dsmotdem + '. Deseja Prosseguir?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuarDevolucaoCotas();', 'fechaRotina($(\'#divRotina\'));', 'sim.gif', 'nao.gif'); return false;
 }
 
 function buscarContasDemitidas(nriniseq,nrregist) {
@@ -3674,7 +3674,7 @@ function controlaVoltar(ope){
 function reverterSituacaoContasDemitidas() {
 	
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, efetuando operação ...");
+	showMsgAguardo("Aguarde, efetuando operaï¿½ï¿½o ...");
 	
 	var camposPc = '';
     camposPc = retornaCampos(lstContasDemitidas, '|');
@@ -3682,7 +3682,7 @@ function reverterSituacaoContasDemitidas() {
 	var dadosPrc = '';
     dadosPrc = retornaValores(lstContasDemitidas, ';', '|', camposPc);
 			
-	// Executa script de consulta através de ajax
+	// Executa script de consulta atravï¿½s de ajax
 	$.ajax({		
 		type: "POST",
 		url: UrlSite + "telas/matric/gerar_devolucao_capital_apos_ago.php",
@@ -3711,7 +3711,7 @@ function reverterSituacaoContasDemitidas() {
 function atualizarContasAntigasDemitidas(operauto) {
 
     // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, efetuando operação ...");
+    showMsgAguardo("Aguarde, efetuando operaï¿½ï¿½o ...");
 
     var camposPc = '';
     camposPc = retornaCampos(lstContasAntigasDemitidas, '|');
@@ -3719,7 +3719,7 @@ function atualizarContasAntigasDemitidas(operauto) {
     var dadosPrc = '';
     dadosPrc = retornaValores(lstContasAntigasDemitidas, ';', '|', camposPc);
 
-    // Executa script de consulta através de ajax
+    // Executa script de consulta atravï¿½s de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/matric/atualizar_contas_antigas_demitidas.php",
@@ -3755,7 +3755,7 @@ function gerarDevolucaoCotasContasSelecionadas() {
 	var dadosPrc = '';
     dadosPrc = retornaValores(lstContasDemitidas, ';', '|', camposPc);
 			
-	// Executa script de consulta através de ajax
+	// Executa script de consulta atravï¿½s de ajax
 	$.ajax({		
 		type: "POST",
 		url: UrlSite + "telas/matric/gerar_devolucao_cotas_contas_selecionadas.php",
@@ -3779,7 +3779,7 @@ function gerarDevolucaoCotasContasSelecionadas() {
 	});	
 }
 
-// Função para acessar rotina de Saque Parcial 
+// Funï¿½ï¿½o para acessar rotina de Saque Parcial 
 function abrirRotinaSaqueParcial() {
 			
     var tipoPessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();			
@@ -3787,7 +3787,7 @@ function abrirRotinaSaqueParcial() {
 	// Mostra mensagem de aguardo	
 	showMsgAguardo("Aguarde, carregando ...");
 	
-    // Executa script através de ajax
+    // Executa script atravï¿½s de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -3798,7 +3798,7 @@ function abrirRotinaSaqueParcial() {
 			}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
 			$('#divRotina').html(response);
@@ -3862,7 +3862,7 @@ function formataRotinaSaqueParcial(){
 				
 		if ( divError.css('display') == 'block' ) { return false; }		
 		
-		// Valida número da conta
+		// Valida nï¿½mero da conta
 		if (!validaNroConta(retiraCaracteres($(this).val(),"0123456789",true))) {
 		
 			showError("error","Conta/dv inv&aacute;lida.","Alerta - Ayllos","$('#nrdconta','#frmSaqueParcial').focus();");
@@ -3893,7 +3893,7 @@ function efetuarSaqueParcial() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, efetuando saque ...");
 			
-	// Executa script de consulta através de ajax
+	// Executa script de consulta atravï¿½s de ajax
 	$.ajax({		
 		type: "POST",
 		url: UrlSite + "telas/matric/efetuar_saque_parcial.php",
@@ -4017,7 +4017,7 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		buscaDescricao(bo, procedure, titulo, 'cdestcvl', 'dsestcvl', cdestadoCivil, 'dsestcvl', filtrosDesc, 'frmFisico');
 		
 		procedure = 'BUSCOCUPACAO';
-		titulo = 'Ocupação';
+		titulo = 'Ocupaï¿½ï¿½o';
 		filtrosDesc = '';
 		buscaDescricao("ZOOM0001", procedure, titulo, 'cdocpttl', 'dsocpttl', cdNaturezaOcupacao, 'rsdocupa', filtrosDesc, 'frmFisico');
 		
@@ -4048,12 +4048,12 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		$('#dtiniatv', '#' + nomeForm).val(dtInicioAtividade);
 		
 		procedure = 'busca_natureza_juridica';
-		titulo = 'Nat. Jurídica';
+		titulo = 'Nat. Jurï¿½dica';
 		filtrosDesc = '';
 		buscaDescricao(bo, procedure, titulo, 'natjurid', 'rsnatjur', cdNatureza, 'rsnatjur', filtrosDesc, 'frmJuridico');
 		
 		procedure = 'busca_setor_economico';
-		titulo = 'Setor Econômico';
+		titulo = 'Setor Econï¿½mico';
 		filtrosDesc = '';
 		buscaDescricao(bo, procedure, titulo, 'cdseteco', 'nmseteco', cdSetor, 'nmseteco', filtrosDesc, 'frmJuridico');				
 
@@ -4077,7 +4077,7 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 
 function controlaPesquisaSaquelPacial(){
 		
-    // Definindo as variáveis
+    // Definindo as variï¿½veis
     var bo = 'b1wgen0059.p';
     var procedure = '';
     var titulo = '';
@@ -4105,7 +4105,7 @@ function controlaPesquisaSaquelPacial(){
             } else {
                 campoAnterior = $(this).prev().attr('name');
 				
-                // Número da conta
+                // Nï¿½mero da conta
                 if (campoAnterior == 'nrdconta') {
 					
                     mostraPesquisaAssociado('nrdconta', 'frmSaqueParcial',$('#divRotina') );
@@ -4123,13 +4123,13 @@ function controlaPesquisaSaquelPacial(){
 
 }
 
-// Função para acessar rotina de Saque Parcial 
+// Funï¿½ï¿½o para acessar rotina de Saque Parcial 
 function apresentarDesligamento() {			
 	
     // Mostra mensagem de aguardo	
     showMsgAguardo("Aguarde, carregando ...");
 	
-    // Executa script através de ajax
+    // Executa script atravï¿½s de ajax
     $.ajax({		
         type: 'POST',
         dataType: 'html',
@@ -4140,7 +4140,7 @@ function apresentarDesligamento() {
         }, 
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+            showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground()");
         },
         success: function(response) {
             $('#divRotina').html(response);
@@ -4160,9 +4160,9 @@ function efetuarDevolucaoCotas() {
     var dtdemiss = $('#dtdemiss','#frmMotivoDesligamento').val();
 
     // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, efetuando devolução ...");
+    showMsgAguardo("Aguarde, efetuando devoluï¿½ï¿½o ...");
 			
-    // Executa script de consulta através de ajax
+    // Executa script de consulta atravï¿½s de ajax
     $.ajax({		
         type: "POST",
         url: UrlSite + "telas/matric/efetuar_devolucao_cotas.php",
@@ -4270,7 +4270,7 @@ function formataTelaDesligamento(){
     cVldcotas.css({'width':'130px'}).addClass('moeda').desabilitaCampo();
     cNrdconta.addClass('inteiro').css({ 'width': '130px' }).desabilitaCampo();
 			
-    // Definindo as variáveis
+    // Definindo as variï¿½veis
     var bo = 'b1wgen0059.p';
     var procedure = '';
     var titulo = '';
@@ -4285,15 +4285,15 @@ function formataTelaDesligamento(){
         motivoLink.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
     } else {
         motivoLink.css('cursor', 'pointer').unbind('click').bind('click', function () {
-          var filtrosPesq = "Código;cdmotdem;100px;S;0|Descrição;dsmotdem;200px;S;";
-          var colunas = 'Código;cdmotdem;25%;right|Descrição;dsmotdem;75%;left';
-          mostraPesquisa("ZOOM0001", "BUSCAMOTIVODEM", "Motivos de saída", "30", filtrosPesq, colunas);
+          var filtrosPesq = "Cï¿½digo;cdmotdem;100px;S;0|Descriï¿½ï¿½o;dsmotdem;200px;S;";
+          var colunas = 'Cï¿½digo;cdmotdem;25%;right|Descriï¿½ï¿½o;dsmotdem;75%;left';
+          mostraPesquisa("ZOOM0001", "BUSCAMOTIVODEM", "Motivos de saï¿½da", "30", filtrosPesq, colunas);
           return false;	
     });
         
     motivoLink.prev().unbind('change').bind('change', function () {
         procedure = 'BUSCAMOTIVODEM';
-        titulo = 'Motivo de saída';
+        titulo = 'Motivo de saï¿½da';
         filtrosDesc = '';
         buscaDescricao("ZOOM0001", procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento','blockBackground(parseInt($("#divRotina").css("z-index")))');
         return false;
@@ -4301,7 +4301,7 @@ function formataTelaDesligamento(){
     motivoLink.prev().unbind('blur').bind('blur', function () {
         $(this).unbind('change').bind('change', function () {
             procedure = 'BUSCAMOTIVODEM';
-            titulo = 'Motivo de saída';
+            titulo = 'Motivo de saï¿½da';
             filtrosDesc = '';
             buscaDescricao("ZOOM0001", procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento','blockBackground(parseInt($("#divRotina").css("z-index")))');
             return false;
@@ -4381,21 +4381,21 @@ function formataFiltroContasDemitidas() {
     cNrConta.addClass('conta pesquisa').css('width', '85px');
    
    
-    // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
+    // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida aï¿½ï¿½o
     cNrConta.unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
+        // Se ï¿½ a tecla ENTER, verificar numero conta e realizar as devidas operaï¿½ï¿½es
         if (e.keyCode == 13) {
-            // Armazena o número da conta na variável global
+            // Armazena o nï¿½mero da conta na variï¿½vel global
             nrdconta = normalizaNumero($(this).val());
             nrdcontaOld = nrdconta;
 
-            // Verifica se o número da conta é vazio
+            // Verifica se o nï¿½mero da conta ï¿½ vazio
             if (nrdconta == '') { return false; }
 
-            // Verifica se a conta é válida
+            // Verifica se a conta ï¿½ vï¿½lida
             if (!validaNroConta(nrdconta)) {
                 showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmFiltroContasDemitidas\');');
                 return false;
@@ -4421,13 +4421,13 @@ function formataFiltroContasDemitidas() {
             } else {
                 campoAnterior = $(this).prev().attr('name');
 
-                // Número da conta
+                // Nï¿½mero da conta
                 if (campoAnterior == 'nrdconta') {
 
                     mostraPesquisaAssociado('nrdconta', 'frmFiltroContasDemitidas');
                     return false;
 
-                    // Agência
+                    // Agï¿½ncia
         }
             }
             return false;
@@ -4459,21 +4459,21 @@ function formataFiltroContasAntigasDemitidas() {
     cNrConta.addClass('conta pesquisa').css('width', '85px');
 
 
-    // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
+    // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida aï¿½ï¿½o
     cNrConta.unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
-        // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
+        // Se ï¿½ a tecla ENTER, verificar numero conta e realizar as devidas operaï¿½ï¿½es
         if (e.keyCode == 13) {
-            // Armazena o número da conta na variável global
+            // Armazena o nï¿½mero da conta na variï¿½vel global
             nrdconta = normalizaNumero($(this).val());
             nrdcontaOld = nrdconta;
 
-            // Verifica se o número da conta é vazio
+            // Verifica se o nï¿½mero da conta ï¿½ vazio
             if (nrdconta == '') { return false; }
 
-            // Verifica se a conta é válida
+            // Verifica se a conta ï¿½ vï¿½lida
             if (!validaNroConta(nrdconta)) {
                 showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmFiltroContasAntigasDemitidas\');');
                 return false;
@@ -4499,13 +4499,13 @@ function formataFiltroContasAntigasDemitidas() {
             } else {
                 campoAnterior = $(this).prev().attr('name');
 
-                // Número da conta
+                // Nï¿½mero da conta
                 if (campoAnterior == 'nrdconta') {
 
                     mostraPesquisaAssociado('nrdconta', 'frmFiltroContasAntigasDemitidas');
                     return false;
 
-                    // Agência
+                    // Agï¿½ncia
                 }
             }
             return false;
@@ -4522,7 +4522,7 @@ function formataFiltroContasAntigasDemitidas() {
 
 function confirmarDesligamentoCRM() {
     showConfirmacao('Deseja confirmar o desligamento?','Confirma&ccedil;&atilde;o - Ayllos','efetuarDevolucaoCotasCRM();','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));','sim.gif','nao.gif');
-    //showConfirmacao('A conta está na situa&ccedil;&atilde;o ' + cdmotdem + ' - ' + dsmotdem + '. Deseja Prosseguir?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuarDevolucaoCotasCRM();', 'fechaRotina($(\'#divRotina\'));', 'sim.gif', 'nao.gif'); return false;
+    //showConfirmacao('A conta estï¿½ na situa&ccedil;&atilde;o ' + cdmotdem + ' - ' + dsmotdem + '. Deseja Prosseguir?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuarDevolucaoCotasCRM();', 'fechaRotina($(\'#divRotina\'));', 'sim.gif', 'nao.gif'); return false;
 }
 
 function efetuarDevolucaoCotasCRM() {
@@ -4535,7 +4535,7 @@ function efetuarDevolucaoCotasCRM() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando devolucao ...");
 
-    // Executa script de consulta através de ajax
+    // Executa script de consulta atravï¿½s de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/matric/efetuar_devolucao_cotasCRM.php",
@@ -4562,13 +4562,13 @@ function efetuarDevolucaoCotasCRM() {
     });
 }
 
-// Função para acessar rotina de Desligamento
+// Funï¿½ï¿½o para acessar rotina de Desligamento
 function apresentarDesligamentoCRM() {
 
     // Mostra mensagem de aguardo	
     showMsgAguardo("Aguarde, carregando ...");
 
-    // Executa script através de ajax
+    // Executa script atravï¿½s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -4579,7 +4579,7 @@ function apresentarDesligamentoCRM() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function (response) {
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
@@ -4649,7 +4649,7 @@ function formataTelaDesligamentoCRM() {
     cMotivoSq.css({ 'width': '400px' }).desabilitaCampo();
 
     /*
-    // Definindo as variáveis
+    // Definindo as variï¿½veis
     var bo = 'b1wgen0059.p';
     var procedure = '';
     var titulo = '';
@@ -4665,17 +4665,17 @@ function formataTelaDesligamentoCRM() {
     } else {
         motivoLink.css('cursor', 'pointer').unbind('click').bind('click', function () {
             procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de saída';
+            titulo = 'Motivo de saï¿½da';
             qtReg = '30';
-            filtrosPesq = 'Cód. Motivo saída;cdmotdem;30px;S;0;;codigo|Motivo de saída;dsmotdem;200px;S;;;descricao';
-            colunas = 'Código;cdmotdem;20%;right|Motivo de saída;dsmotdem;80%;left';
+            filtrosPesq = 'Cï¿½d. Motivo saï¿½da;cdmotdem;30px;S;0;;codigo|Motivo de saï¿½da;dsmotdem;200px;S;;;descricao';
+            colunas = 'Cï¿½digo;cdmotdem;20%;right|Motivo de saï¿½da;dsmotdem;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, $('#divRotina'));
             return false;
         });
 
         motivoLink.prev().unbind('change').bind('change', function () {
             procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de saída';
+            titulo = 'Motivo de saï¿½da';
             filtrosDesc = '';
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento', 'blockBackground(parseInt($("#divRotina").css("z-index")))');
             return false;
@@ -4683,7 +4683,7 @@ function formataTelaDesligamentoCRM() {
         motivoLink.prev().unbind('blur').bind('blur', function () {
             $(this).unbind('change').bind('change', function () {
                 procedure = 'busca_motivo_demissao';
-                titulo = 'Motivo de saída';
+                titulo = 'Motivo de saï¿½da';
                 filtrosDesc = '';
                 buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento', 'blockBackground(parseInt($("#divRotina").css("z-index")))');
                 return false;
@@ -4740,7 +4740,7 @@ function verificaProdutosAtivosCRM() {
 
 }
 
-// Função para acessar rotina de Saque Parcial 
+// Funï¿½ï¿½o para acessar rotina de Saque Parcial 
 function abrirRotinaSaqueParcialCRM() {
 
     var tipoPessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
@@ -4748,7 +4748,7 @@ function abrirRotinaSaqueParcialCRM() {
     // Mostra mensagem de aguardo	
     showMsgAguardo("Aguarde, carregando ...");
 
-    // Executa script através de ajax
+    // Executa script atravï¿½s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -4759,7 +4759,7 @@ function abrirRotinaSaqueParcialCRM() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function (response) {
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
@@ -4831,7 +4831,7 @@ function formataRotinaSaqueParcialCRM() {
 
         if (divError.css('display') == 'block') { return false; }
 
-        // Valida número da conta
+        // Valida nï¿½mero da conta
         if (!validaNroConta(retiraCaracteres($(this).val(), "0123456789", true))) {
 
             showError("error", "Conta/dv inv&aacute;lida.", "Alerta - Ayllos", "$('#nrdconta','#frmSaqueParcial').focus();");
@@ -4862,7 +4862,7 @@ function efetuarSaqueParcialCRM() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando saque ...");
 
-    // Executa script de consulta através de ajax
+    // Executa script de consulta atravï¿½s de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/matric/efetuar_saque_parcialCRM.php",

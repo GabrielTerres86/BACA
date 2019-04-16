@@ -105,9 +105,29 @@
 		$bens		  = ( isset($xmlObjeto->roottag->tags[3]->tags) ) ? $xmlObjeto->roottag->tags[3]->tags : array();
 		$alertas      = ( isset($xmlObjeto->roottag->tags[4]->tags) ) ? $xmlObjeto->roottag->tags[4]->tags : array();
 		$responsaveis = ( isset($xmlObjeto->roottag->tags[5]->tags) ) ? $xmlObjeto->roottag->tags[5]->tags : array();
-    $titulares 	  = ( isset($xmlObjeto->roottag->tags[6]->tags) ) ? $xmlObjeto->roottag->tags[6]->tags[0] : array();
+    	$titulares 	  = ( isset($xmlObjeto->roottag->tags[6]->tags) ) ? $xmlObjeto->roottag->tags[6]->tags[0] : array();
+		$tpPessoa	  = ( getByTagName($registro,'inpessoa') == '' ) ? 1 : getByTagName($registro,'inpessoa');
 
-		$tpPessoa	  = ( getByTagName($registro,'inpessoa') == '' ) ? 1 : getByTagName($registro,'inpessoa');	
+		//------------
+		$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <cdcooper>".$glbvars['cdcooper']."</cdcooper>";
+		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResultModalidade = mensageria($xml, "ATENDA", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjModalidade = getObjectXML($xmlResultModalidade);
+
+		if (strtoupper($xmlObjModalidade->roottag->tags[0]->name) == "ERRO") {
+			$msgErro = $xmlObjModalidade->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			if ($msgErro == "") {
+				$msgErro = $xmlObjModalidade->roottag->tags[0]->cdata;
+			}
+			exibeErro($msgErro);
+		}
+		$modalidade = $xmlObjModalidade->roottag->tags[0]->cdata;
+		//------------
 		
 		$msg = Array();
 		

@@ -543,6 +543,7 @@ function controlaLayout(operacao) {
 		}
     });
 
+    $("#cdsecext", "#frmContaCorrente").change();
     return false;
 }
 

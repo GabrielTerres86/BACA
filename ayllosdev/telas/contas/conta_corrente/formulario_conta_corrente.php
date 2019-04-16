@@ -96,6 +96,28 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 
 $situacoes = $xmlObj->roottag->tags[0]->tags;
 
+
+//------------
+$xml = "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <cdcooper>".$glbvars['cdcooper']."</cdcooper>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResultModalidade = mensageria($xml, "ATENDA", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObjModalidade = getObjectXML($xmlResultModalidade);
+
+if (strtoupper($xmlObjModalidade->roottag->tags[0]->name) == "ERRO") {
+	$msgErro = $xmlObjModalidade->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	if ($msgErro == "") {
+		$msgErro = $xmlObjModalidade->roottag->tags[0]->cdata;
+	}
+	exibeErro($msgErro);
+}
+$modalidade = $xmlObjModalidade->roottag->tags[0]->cdata;
+//------------
+
 ?>
 <script>
 <?
@@ -166,8 +188,8 @@ foreach($tipos_conta as $tipo_conta) {
 		<select name="cdcatego" id="cdcatego" <?php echo getByTagName($registro,'inpessoa') > 1 ? 'style="display: none";' : '' ?>>
 			<? if ($idindividual == 1) { ?> <option value="1" <? if (getByTagName($registro,'cdcatego') == 1) echo 'Selected'; ?>>Individual</option> <? } ?>
 			<? if ($idconjunta_solidaria == 1) { ?> <option value="2" <? if (getByTagName($registro,'cdcatego') == 2) echo 'Selected'; ?>>Conjunta</option> <? } ?>
-			<!--< ? if ($idconjunta_solidaria == 1) { ?> <option value="2" < ? if (getByTagName($registro,'cdcatego') == 2) echo 'Selected'; ?>>Conjunta solid&aacute;ria</option> < ? } ?>
-			< ? if ($idconjunta_nao_solidaria == 1) { ?> <option value="3" < ? if (getByTagName($registro,'cdcatego') == 3) echo 'Selected'; ?>>Conjunta n&atilde;o solid&aacute;ria</option> < ? } ?> -->
+			<!--<? if ($idconjunta_solidaria == 1) { ?> <option value="2" <? if (getByTagName($registro,'cdcatego') == 2) echo 'Selected'; ?>>Conjunta solid&aacute;ria</option> <? } ?>
+			<? if ($idconjunta_nao_solidaria == 1) { ?> <option value="3" <? if (getByTagName($registro,'cdcatego') == 3) echo 'Selected'; ?>>Conjunta n&atilde;o solid&aacute;ria</option> <? } ?> -->
 		</select>
 		<br />
 		
@@ -213,11 +235,17 @@ foreach($tipos_conta as $tipo_conta) {
 			<label for="tpavsdebOp1" class="radio">Sim</label>		
 			<input name="tpavsdeb" id="tpavsdebOp2" type="radio" class="radio" value="0" <? if (getByTagName($registro,'tpavsdeb') == '0') { echo ' checked'; } ?> />
 			<label for="tpavsdebOp2" class="radio"><? echo utf8ToHtml('Não') ?></label>						
-			
+
+		<?
+		$cdsecext = getByTagName($registro,'cdsecext');
+		if (empty($cdsecext) && $modalidade == 2 && $flgcadas == 'M') {
+			$cdsecext = 999;
+		}
+		?>
 		<label for="cdsecext">Destino Extrato:</label>
-			<input name="cdsecext" id="cdsecext" type="text" value="<? echo getByTagName($registro,'cdsecext') ?>" />
+			<input name="cdsecext" id="cdsecext" type="text" value="<?=$cdsecext?>" />
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-			<input name="dssecext" id="dssecext" type="text" value="<? echo getByTagName($registro,'dssecext') ?>" />	
+			<input name="dssecext" id="dssecext" type="text" value="<?=getByTagName($registro,'dssecext')?>" />
 		<br />
 			
 		<?php $disabled=($glbvars['nvoperad']!=3) ? "disabled" : ""; ?>
