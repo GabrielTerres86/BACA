@@ -101,6 +101,8 @@
                 29/01/2019 - Ajuste para permitir que seja cadastrado um responsavel
 				             legal de menor, porém, somente se for emancipado
 							 (Adriano - INC0011553).
+
+				16/04/2019 - Limitado em 25 caracteres o campo DSCIDRES (Jefferson - MoutS)
                 
  .............................................................................*/
 
@@ -1891,7 +1893,7 @@ PROCEDURE Grava_Dados:
                      crapcrl.nrendres = par_nrendere
                      crapcrl.dscomres = UPPER(par_complend)
                      crapcrl.dsbaires = UPPER(par_nmbairro)
-                     crapcrl.dscidres = UPPER(par_nmcidade)
+                     crapcrl.dscidres = SUBSTR(UPPER(par_nmcidade),1,25)
                      crapcrl.dsdufres = UPPER(par_cdufende)
                      crapcrl.nrcxpost = par_nrcxapst
                      crapcrl.nmmaersp = UPPER(par_nmmaecto)
