@@ -5076,6 +5076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,vltarifa
               ,vltiofpr
               ,vlpiofpr
+			  ,tpdescto -- P437	
           FROM crapepr
          WHERE cdcooper = pr_cdcooper
                AND nrdconta = pr_nrdconta
@@ -5907,6 +5908,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_tab_dados_epr(vr_indadepr).cdagenci := rw_crapepr.cdagenci;
           pr_tab_dados_epr(vr_indadepr).nrctremp := rw_crapepr.nrctremp;
           pr_tab_dados_epr(vr_indadepr).vlemprst := rw_crapepr.vlemprst;
+		  --P437
+          pr_tab_dados_epr(vr_indadepr).tpdescto := rw_crapepr.tpdescto;
           pr_tab_dados_epr(vr_indadepr).vlsdeved := vr_vlsdeved;
           pr_tab_dados_epr(vr_indadepr).vlpreemp := rw_crapepr.vlpreemp;
           pr_tab_dados_epr(vr_indadepr).vlprepag := vr_vlprepag;
