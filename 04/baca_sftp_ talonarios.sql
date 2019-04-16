@@ -9,7 +9,7 @@ UPDATE crapprm
  WHERE cdacesso = 'RRD_USER_FTP';
 
 UPDATE crapprm
-   SET dsvlrprm = '@omInU$Hlc4?sp=Yed@y'
+   SET dsvlrprm = 'omInUHlc4spYedy'
  WHERE cdacesso = 'RRD_PASS_FTP';
 
 UPDATE crapprm
