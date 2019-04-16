@@ -237,10 +237,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     --                          para evitar violação de chave única por duplicidade do número do documento.
     --                          Ajuste na procedure "pc_pagar_IOF_contrato_conta" para evitar lançamento com valor "zero".
     --                          (Reginaldo/AMcom - P450)
-  --
-  --             19/03/2019 - Ajuste na rotina "pc_pagar_contrato_emprestimo" para debitar corretamente da conta transitória
-  --                          o valor pago no contrato de empréstimo, caso a conta esteja em prejuízo.
-  --                          (Reginaldo/AMcom - P450)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -1984,26 +1980,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     
     END IF;   
   
-    -- Se a conta está em prejuízo, debita o valor pago da Conta Transitória (Bloqueado Prejuízo)
-    IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
-                                      , pr_nrdconta => pr_nrdconta) AND
-       pr_vltotpag > 0 THEN
-       
-       PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
-                                   , pr_nrdconta => pr_nrdconta
-                                   , pr_vlrlanc  => pr_vltotpag
-                                   , pr_dtmvtolt => pr_crapdat.dtmvtolt
-                                   , pr_cdcritic => vr_cdcritic
-                                   , pr_dscritic => vr_dscritic);
-                                   
-       IF trim(vr_dscritic) IS NOT NULL OR NVL(vr_cdcritic, 0) > 0 THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao debitar da conta em prejuízo o valor pago no contrato de empréstimo.';
-                    --
-          RAISE vr_exp_erro;
-                    --
-       END IF;
-    END IF;  
   EXCEPTION
     WHEN vr_exp_erro THEN
       -- Retornar total pago como zero
