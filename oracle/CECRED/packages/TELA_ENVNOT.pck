@@ -136,6 +136,23 @@ END TELA_ENVNOT;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
 
+  ----------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : TELA_ENVNOT
+  --  Sistema  : Ayllos Web
+  --  Autor    : -
+  --  Data     : -                          Ultima atualizacao: 16/04/2019
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Objetivo  : Centralizar rotinas relacionadas a tela ENVNOT
+  --
+  -- Alteracoes: 16/04/2019 - Retirada de critica em "if" para permitir o agendamento de notificacoes 
+  --                          que estejam importando um arquivo csv com uma lista de cooperados.
+  --                          Chamado RITM0011955 - Gabriel Marcos (Mouts).
+  --
+  ----------------------------------------------------------------------------------------------------------
+
   NMDATELA CONSTANT VARCHAR2(6) := 'ENVNOT';
   
   DESCRICAOVARIAVEISUNIVERSAIS CONSTANT VARCHAR2(32000) := 
@@ -259,8 +276,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
         pr_dscritic:= 'Hora do envio da mensagem já passou';
       ELSIF pr_tpfiltro <> 1 AND pr_tpfiltro <> 2 THEN
         pr_dscritic:= 'É necessário escolher um tipo de filtro';
-      ELSIF pr_tpfiltro = 2 AND TRUNC(pr_dhenvio_mensagem) <> TRUNC(SYSDATE) THEN -- Arquivo csv só pode ser importado para mensagens enviadas no dia, pq seus dados são estáticos
-        pr_dscritic:= 'Arquivo .csv só pode ser importado para mensagens enviadas no mesmo dia';
+      --ELSIF pr_tpfiltro = 2 AND TRUNC(pr_dhenvio_mensagem) <> TRUNC(SYSDATE) THEN -- Arquivo csv só pode ser importado para mensagens enviadas no dia, pq seus dados são estáticos
+        --pr_dscritic:= 'Arquivo .csv só pode ser importado para mensagens enviadas no mesmo dia';
       ELSIF (vr_dsfiltro_cooperativas IS NULL OR vr_dsfiltro_cooperativas = 0) AND pr_tpfiltro = 1 THEN
         pr_dscritic:= 'É necessário selecionar ao menos uma cooperativa';
       ELSIF (vr_dsfiltro_tipos_conta IS NULL OR vr_dsfiltro_tipos_conta = 0) AND pr_tpfiltro = 1 THEN
