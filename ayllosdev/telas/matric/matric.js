@@ -3068,7 +3068,7 @@ function validarSenha(operacao) {
             try {
                 eval(response);
                 // se n�o ocorreu erro, vamos gravar as al�tera��es
-                //if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                     if (cddopcao == 'X') {
                         manterOutros(nomeForm);
                     } else if (operacao == 'LCD') {
@@ -3081,7 +3081,7 @@ function validarSenha(operacao) {
 
                     }
 
-                //}
+                }
                 return false;
             } catch (error) {
                 hideMsgAguardo();
