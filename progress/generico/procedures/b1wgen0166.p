@@ -94,7 +94,9 @@
 			                 caso exista. Necessario para evitar duplicidade de geracao de registro
 			                 na crapavs - INC0025297. (Fabricio)
 
-
+                12/04/2016 - Ajuste nas rotinas Altera_inclui, Gera_arquivo_log e Imprime_relacao para gravar/alterar, gerar log
+				             e imprimir o campo nrdddemp  da tabela crapemp - P437 - Consignado Josiane stiehler - AMcom.
+							 
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -449,6 +451,7 @@ PROCEDURE Altera_inclui:
     DEFINE INPUT  PARAMETER par_vllimfol LIKE crapemp.vllimfol NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgdgfib LIKE crapemp.flgdgfib NO-UNDO.
     DEFINE INPUT  PARAMETER par_dtlimdeb LIKE crapemp.dtlimdeb NO-UNDO.
+    DEFINE INPUT  PARAMETER par_nrdddemp LIKE crapemp.nrdddemp NO-UNDO.
                                                 
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
 
@@ -648,8 +651,8 @@ PROCEDURE Altera_inclui:
                        /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                        crapemp.flgdgfib = IF par_flgdgfib THEN FALSE ELSE crapemp.flgdgfib
                        crapemp.dtlimdeb = par_dtlimdeb
-                       crapemp.cdoperad = par_cdoperad.
-                       
+                       crapemp.cdoperad = par_cdoperad
+                       crapemp.nrdddemp = par_nrdddemp.
                        
                 VALIDATE crapemp.
             END.
@@ -1160,6 +1163,8 @@ PROCEDURE Gera_arquivo_log:
     DEF INPUT PARAM par_nrfonemp  LIKE crapemp.nrfonemp NO-UNDO.
     DEF INPUT PARAM old_dtlimdeb  LIKE crapemp.dtlimdeb NO-UNDO.
     DEF INPUT PARAM par_dtlimdeb  LIKE crapemp.dtlimdeb NO-UNDO.
+	DEF INPUT PARAM old_nrdddemp  LIKE crapemp.nrdddemp NO-UNDO.
+	DEF INPUT PARAM par_nrdddemp  LIKE crapemp.nrdddemp NO-UNDO.
 
     DEFINE VARIABLE aux_verifi01 AS CHARACTER NO-UNDO.
     DEFINE VARIABLE aux_verifi02 AS CHARACTER NO-UNDO.
@@ -1452,7 +1457,19 @@ PROCEDURE Gera_arquivo_log:
                                    INPUT aux_verifi02, INPUT aux_verifi03).
         END.
 
-    IF  old_nrfonemp <> par_nrfonemp   THEN
+    IF  old_nrdddemp <> par_nrdddemp   THEN
+        DO:
+            ASSIGN  aux_verifi01 = STRING(par_nrdddemp)
+                    aux_verifi02 = STRING(old_nrdddemp)
+                    aux_verifi03 = "DDD".
+            RUN Gera_arquivo_log_2(INPUT par_cdcooper, INPUT par_cdopcao,
+                                   INPUT par_dtmvtolt, INPUT par_cdoperad,
+                                   INPUT par_cdempres, INPUT aux_verifi01,
+                                   INPUT aux_verifi02, INPUT aux_verifi03).
+        END.
+
+		
+		IF  old_nrfonemp <> par_nrfonemp   THEN
         DO:
             ASSIGN  aux_verifi01 = STRING(par_nrfonemp)
                     aux_verifi02 = STRING(old_nrfonemp)
@@ -1614,6 +1631,7 @@ PROCEDURE Imprime_relacao:
             DISPLAY STREAM str_1 
                     crapemp.cdempres "   "
                     crapemp.nmextemp "   "
+					crapemp.nrdddemp COLUMN-LABEL "DDD"
                     crapemp.nrfonemp
                     WITH CENTERED TITLE "RELACAO DE EMPRESAS CONVENIADAS\n\n"
                          FRAME f_numerica DOWN.
@@ -1628,6 +1646,7 @@ PROCEDURE Imprime_relacao:
             DISPLAY STREAM str_1 
                     crapemp.cdempres "   "
                     crapemp.nmextemp "   "
+					crapemp.nrdddemp COLUMN-LABEL "DDD"
                     crapemp.nrfonemp
                     WITH CENTERED TITLE "RELACAO DE EMPRESAS CONVENIADAS\n\n"
                     FRAME f_alfabetica DOWN.

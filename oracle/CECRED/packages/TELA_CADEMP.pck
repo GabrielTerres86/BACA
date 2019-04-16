@@ -5,7 +5,7 @@ create or replace package cecred.TELA_CADEMP is
   --  Sistema  : Rotinas focando nas funcionalidades da tela CADEMP
   --  Sigla    : TELA
   --  Autor    : CIS Corporate
-  --  Data     : Setembro/2018.                   Ultima atualizacao: 11/09/2018
+  --  Data     : Setembro/2018.                   Ultima atualizacao: 12/04/2019
   --
   -- Dados referentes ao programa:
   --
@@ -13,6 +13,7 @@ create or replace package cecred.TELA_CADEMP is
   -- Objetivo  : Agrupar rotinas que venham a ser utilizadas pela tela CADEMP.
   --
   -- Alteração : 11/09/2018 Criação da package (CIS Corporate)
+  --             12/04/2019 P437 - Consignado - Incusão do campo nrdddemp - Josiane stiehler - AMcom             
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -64,7 +65,8 @@ create or replace package cecred.TELA_CADEMP is
     dtultufp crapemp.dtultufp%TYPE,
     dtlimdeb crapemp.dtlimdeb%TYPE,
     tpmodcon tbcadast_empresa_consig.tpmodconvenio%TYPE,
-    flnecont tbcadast_empresa_consig.indconsignado%TYPE
+    flnecont tbcadast_empresa_consig.indconsignado%TYPE,
+    nrdddemp crapemp.nrdddemp%TYPE
   );
 
   /* Definicao de tabela que compreende os registros acima declarados */
@@ -103,7 +105,7 @@ create or replace package body cecred.TELA_CADEMP is
   --  Sistema  : Rotinas focando nas funcionalidades da tela CADEMP
   --  Sigla    : TELA
   --  Autor    : CIS Corporate
-  --  Data     : Setembro/2018.                   Ultima atualizacao: 29/03/2018
+  --  Data     : Setembro/2018.                   Ultima atualizacao: 12/04/2019
   --
   -- Dados referentes ao programa:
   --
@@ -112,6 +114,7 @@ create or replace package body cecred.TELA_CADEMP is
   --
   -- Alteração : 11/09/2018 Criação da package (CIS Corporate)
   --             29/03/2019 Criação da rotina pc_busca_dados_emp_fis
+  --             12/04/2019 P437 - Consignado - Incusão do campo nrdddemp - Josiane stiehler - AMcom             
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -140,6 +143,7 @@ create or replace package body cecred.TELA_CADEMP is
       Objetivo  : Busca os dados da empresa para cademp
 
       Alteração : 11/09/2018 - Criação (CIS Corporate)
+                  12/04/2019 P437 - Consignado - Incusão do campo nrdddemp - Josiane stiehler - AMcom             
 
     ----------------------------------------------------------------------------------------------------------*/
   BEGIN
@@ -179,6 +183,7 @@ create or replace package body cecred.TELA_CADEMP is
         p.nrdocnpj,
         p.nrendemp,
         p.nrfaxemp,
+        p.nrdddemp,
         p.nrfonemp,
         p.flgarqrt,
         p.flgvlddv,
@@ -289,7 +294,8 @@ create or replace package body cecred.TELA_CADEMP is
     pr_tab_dados_emp(vr_idtab).dtultufp := rw_cademp.dtultufp;
     pr_tab_dados_emp(vr_idtab).dtlimdeb := rw_cademp.dtlimdeb;
         pr_tab_dados_emp(vr_idtab).tpmodcon := rw_cademp.tpmodconvenio;
-
+    pr_tab_dados_emp(vr_idtab).nrdddemp := rw_cademp.nrdddemp;
+    
         pr_qtregist := nvl(pr_qtregist,0) + 1;
       END LOOP;
       CLOSE cr_cademp;
@@ -463,6 +469,7 @@ create or replace package body cecred.TELA_CADEMP is
         '<dtultufp>'|| to_char(vr_tab_dados_emp(vr_index).dtultufp,'DD/MM/RRRR') ||'</dtultufp>'||
         '<dtlimdeb>'|| vr_tab_dados_emp(vr_index).dtlimdeb ||'</dtlimdeb>'||
         '<tpmodcon>'|| vr_tab_dados_emp(vr_index).tpmodcon ||'</tpmodcon>'||
+        '<nrdddemp>'|| vr_tab_dados_emp(vr_index).nrdddemp ||'</nrdddemp>'||
        '</inf>');
           /* buscar proximo */
           vr_index := vr_tab_dados_emp.next(vr_index);

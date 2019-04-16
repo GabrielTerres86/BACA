@@ -2195,7 +2195,7 @@ BEGIN
            gene0007.fn_caract_acento (pr_texto    => e.nmcidade,
                                       pr_insubsti => 1) desccidadelogradouro,
            e.cdufdemp uflogradouro,
-           47  dddloja,  ---- falta implementar na cdemp um novo campo só para DDD
+           e.nrdddemp dddloja,  
            e.nrfonemp telloja,
            null descEmail,
            null descContatoLoja,
