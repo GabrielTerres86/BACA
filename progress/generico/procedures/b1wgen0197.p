@@ -643,7 +643,7 @@ PROCEDURE canc_auto_produtos:
                 END.
           END.
         
-        /* POUP. PROG. */
+        /* APLI. PROG. */
         IF par_flpouppr = 1 THEN
           DO:
             FOR EACH craprpp FIELDS(nrctrrpp)
@@ -674,9 +674,9 @@ PROCEDURE canc_auto_produtos:
                     FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
                     IF   AVAIL tt-erro  THEN
-                         par_dscritic = par_dscritic + "Poupanca Programada - " + tt-erro.dscritic + "</br>".
+                         par_dscritic = par_dscritic + "Aplicacao Programada - " + tt-erro.dscritic + "</br>".
                     ELSE
-                         par_dscritic = par_dscritic + "Poupanca Programada - Nao foi possivel efetuar o cancelamento automatico.</br>".
+                         par_dscritic = par_dscritic + "Aplicacao Programada - Nao foi possivel efetuar o cancelamento automatico.</br>".
                   END.
               
             END.

@@ -377,7 +377,7 @@ IF  par_inproces > 2                        AND
                             IF  LOCKED crapspp  THEN
                                 DO:
                                     aux_dscritic = "Registro de saldo da " +
-                                                   "poupanca ja esta sendo " +
+                                                   "aplicacao ja esta sendo " +
                                                    "alterado.".
                                     PAUSE 1 NO-MESSAGE.
                                     NEXT.

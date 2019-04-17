@@ -863,7 +863,7 @@ PROCEDURE impressao-saldo:
                                     " "
                 c-literal[14] = " "
                 c-literal[15] = " "
-                c-literal[16] = "SALDO POUPANCA PROGRAMADA: " +
+                c-literal[16] = "SALDO APLICACAO PROGRAMADA: " +
                                 STRING(p-valor-poupanca,"ZZZ,ZZZ,ZZZ,ZZ9.99-") 
                 c-literal[17] = IF  aux_vlblqpop > 0 THEN 
                                     "VALOR BLOQ. JUDICIALMENTE: " +

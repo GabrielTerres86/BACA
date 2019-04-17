@@ -629,7 +629,7 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                       ASSIGN aux_dscritic = TRIM(tt-erro.dscritic)
                              aux_cdcritic = tt-erro.cdcritic.
                     ELSE
-                      ASSIGN aux_dscritic = "Nao foi possivel carregar os saldos poupanca.".
+                      ASSIGN aux_dscritic = "Nao foi possivel carregar os saldos aplicacao.".
 
                     ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
                                           "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".

@@ -573,7 +573,7 @@ PROCEDURE Busca_Extppr:
 
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-        aux_dstransa = "Busca Extrato de Poupanca Programada"
+        aux_dstransa = "Busca Extrato de Aplicacao Programada"
         aux_dscritic = ""
         aux_cdcritic = 0
         aux_returnvl = "NOK"
@@ -712,7 +712,7 @@ PROCEDURE Busca_Poupanca:
 
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-        aux_dstransa = "Busca Extrato de Poupanca Programada"
+        aux_dstransa = "Busca Extrato de Aplicacao Programada"
         aux_dscritic = ""
         aux_cdcritic = 0
         aux_returnvl = "NOK".
@@ -850,7 +850,7 @@ PROCEDURE Busca_Lancamentos:
     
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-        aux_dstransa = "Busca Extrato de Poupanca Programada"
+        aux_dstransa = "Busca Extrato de Aplicacao Programada"
         aux_dscritic = ""
         aux_cdcritic = 0
         aux_returnvl = "NOK".

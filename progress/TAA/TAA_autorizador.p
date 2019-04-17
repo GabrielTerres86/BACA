@@ -3222,7 +3222,7 @@ PROCEDURE obtem_extrato_aplicacoes:
      
     /* EXTRATOS */
     RUN sistema/generico/procedures/b1wgen0004.p PERSISTENT SET h-b1wgen0004. /* Aplicações */
-    RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT SET h-b1wgen0006. /* Poup. Programada */
+    RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT SET h-b1wgen0006. /* Apli. Programada */
 
     /* Aplicações RDCA */
     RUN consulta-aplicacoes IN h-b1wgen0004
@@ -3437,7 +3437,7 @@ PROCEDURE obtem_extrato_aplicacoes:
         xRoot:APPEND-CHILD(xField).
 
         xDoc:CREATE-NODE(xText,"","TEXT").
-        xText:NODE-VALUE = "POUP.PROGRAMADA".
+        xText:NODE-VALUE = "APLI.PROGRAMADA".
         xField:APPEND-CHILD(xText).
 
 

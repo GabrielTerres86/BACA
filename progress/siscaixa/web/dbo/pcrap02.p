@@ -353,7 +353,7 @@ PROCEDURE ver_saldos:
         IF   d-vldsaldo > 0   THEN 
              DO:
                  ASSIGN i-cod-erro  = 736
-                        c-desc-erro = " POUPANCA PROGRAMADA COM SALDO.".
+                        c-desc-erro = " APLICACAO PROGRAMADA COM SALDO.".
                  RUN cria-erro (INPUT p-cooper,
                                 INPUT p-cod-agencia,
                                 INPUT p-nro-caixa,
