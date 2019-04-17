@@ -125,6 +125,48 @@ DECLARE
        set s.vlsddisp = vlsddisp + 10.48
      where s.cdcooper = 5
        and s.nrdconta = 138371;
+    -- ------------------------------------
+    update crapsda s
+       set s.vlsddisp = vlsddisp + 444.49
+     where s.cdcooper = 14
+       and s.nrdconta = 56111
+       and s.dtmvtolt = trunc(sysdate) - 1;
+    --
+    update crapsda s
+       set s.vlsddisp = vlsddisp + 2.73
+     where s.cdcooper = 16
+       and s.nrdconta = 259012
+       and s.dtmvtolt = trunc(sysdate) - 1;
+    --
+    update crapsda s
+       set s.vlsddisp = vlsddisp + 2.54
+     where s.cdcooper = 16
+       and s.nrdconta = 2135
+       and s.dtmvtolt = trunc(sysdate) - 1;
+    --
+    update crapsda s
+       set s.vlsddisp = vlsddisp + 52.16
+     where s.cdcooper = 1
+       and s.nrdconta = 8904227
+       and s.dtmvtolt = trunc(sysdate) - 1;
+    --
+    update crapsda s
+       set s.vlsddisp = vlsddisp + 10.80
+     where s.cdcooper = 5
+       and s.nrdconta = 112631
+       and s.dtmvtolt = trunc(sysdate) - 1;
+    --
+    update crapsda s
+       set s.vlsddisp = vlsddisp + 17.43
+     where s.cdcooper = 5
+       and s.nrdconta = 129585
+       and s.dtmvtolt = trunc(sysdate) - 1;
+    --
+    update crapsda s
+       set s.vlsddisp = vlsddisp + 10.48
+     where s.cdcooper = 5
+       and s.nrdconta = 138371
+       and s.dtmvtolt = trunc(sysdate) - 1;
     ---------------------------------------
     COMMIT;
 --==========================================================================================
