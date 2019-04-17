@@ -6334,7 +6334,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         IF vr_vldsaldo > 0 THEN
           -- Monta critica
           vr_cdcritic := NULL;
-          vr_dscritic := 'POUPANCA PROGRAMADA COM SALDO.';
+          vr_dscritic := 'APLICACAO PROGRAMADA COM SALDO.';
           -- Gera exceção
           RAISE vr_exc_erro;
         END IF;

@@ -904,7 +904,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
          NVL(pr_inpoupro,0) = 1 OR
          NVL(pr_inaplter,0) = 1 OR
          NVL(pr_inpouter,0) = 1) THEN
-         vr_dscritic := 'Não será permitido utilizar Aplicação ou Poupança Programada com valor de cobertura de garantia igual a 0!';
+         vr_dscritic := 'Não será permitido utilizar Aplicação ou Aplicação Programada com valor de cobertura de garantia igual a 0!';
          RAISE vr_exc_erro;
       END IF;
 
@@ -914,7 +914,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
          NVL(pr_inpoupro,0) = 0 AND
          NVL(pr_inaplter,0) = 0 AND
          NVL(pr_inpouter,0) = 0) THEN
-         vr_dscritic := 'Não é permitido informar um percentual mínimo de cobertura sem vincular uma aplicação/poupança!';
+         vr_dscritic := 'Não é permitido informar um percentual mínimo de cobertura sem vincular uma aplicação ou aplicação programada!';
          RAISE vr_exc_erro;
       END IF;
 
