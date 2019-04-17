@@ -2,7 +2,7 @@
 
     Programa: b1wgen0072.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 28/08/2017
+    Data    : Maio/2010                   Ultima atualizacao: 29/01/2019
 
     Objetivo  : Tranformacao BO tela CONTAS - RESPONSAVEL LEGAL
 
@@ -98,6 +98,11 @@
                 13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
                              PRJ366 - tipo de conta (Odirlei-AMcom)
 
+                29/01/2019 - Ajuste para permitir que seja cadastrado um responsavel
+				             legal de menor, porém, somente se for emancipado
+							 (Adriano - INC0011553).
+                
+				16/04/2019 - Limitado em 25 caracteres o campo DSCIDRES (Jefferson - MoutS)
                 
  .............................................................................*/
 
@@ -761,7 +766,7 @@ PROCEDURE Busca_Dados_Cto:
         /* 1o. Titular */
         FOR FIRST crabttl FIELDS(nmextttl nrdocttl idorgexp dtemdttl dtnasttl 
                                  cdsexotl cdestcvl cdnacion dsnatura nmpaittl 
-                                 nmmaettl tpdocttl cdufdttl)
+                                 nmmaettl tpdocttl cdufdttl dthabmen )
                           WHERE crabttl.cdcooper = crabass.cdcooper AND
                                 crabttl.nrdconta = crabass.nrdconta AND
                                 crabttl.idseqttl = 1 
@@ -812,7 +817,8 @@ PROCEDURE Busca_Dados_Cto:
             IF  BuscaIdade(crabttl.dtnasttl,par_dtmvtolt) < 18
             AND par_cddopcao <> "E" THEN
                DO:
-                  IF par_nrdctato <> 0 THEN
+                  IF par_nrdctato <> 0     and 
+				     crabttl.dthabmen = ?  THEN
                      DO:
                          ASSIGN par_cdcritic = 585.
                          UNDO Busca, LEAVE Busca.
@@ -1887,7 +1893,7 @@ PROCEDURE Grava_Dados:
                      crapcrl.nrendres = par_nrendere
                      crapcrl.dscomres = UPPER(par_complend)
                      crapcrl.dsbaires = UPPER(par_nmbairro)
-                     crapcrl.dscidres = UPPER(par_nmcidade)
+                     crapcrl.dscidres = SUBSTR(UPPER(par_nmcidade),1,25)
                      crapcrl.dsdufres = UPPER(par_cdufende)
                      crapcrl.nrcxpost = par_nrcxapst
                      crapcrl.nmmaersp = UPPER(par_nmmaecto)
