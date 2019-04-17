@@ -1059,13 +1059,17 @@ BEGIN
                    20/12/2018 - Correção da taxa CET para buscar da tabela de CET quando existir registro
 								INC0029082 (Douglas Pagel / AMcom).
 
+                   16/04/2019 - P437 - Consignado - Criar um nova CCB(Cédula de Crédito Bancário) para impressão dos novos contratos de Consignado.              
+                                (Fernanda Kelli de Oliveira - AMcom)                   
+
     ............................................................................. */
 
       -- Cursor sobre as informacoes de emprestimo
       CURSOR cr_crapepr IS
         SELECT crapepr.vltarifa,
                crapepr.vliofepr,
-               crapepr.vlemprst
+               crapepr.vlemprst,
+               crapepr.cdempres --P437
         FROM crapepr
         WHERE crapepr.cdcooper = pr_cdcooper
            AND crapepr.nrdconta = pr_nrdconta
@@ -1113,7 +1117,9 @@ BEGIN
                 crawepr.nrctrliq##7 || ',' ||
                 crawepr.nrctrliq##8 || ',' ||
                 crawepr.nrctrliq##9 || ',' ||
-                crawepr.nrctrliq##10 dsctrliq
+                crawepr.nrctrliq##10 dsctrliq,
+                crawepr.tpdescto,     --P437
+                crapass.xxx_dsnacion  --P437
           FROM crapage,
                crapass,
                crawepr
@@ -1127,11 +1133,36 @@ BEGIN
 
       rw_crawepr cr_crawepr%ROWTYPE;--armazena informacoes do cursor cr_crawepr
 
+	  --P437 - Consignado. Buscar dados do Empregador
+	  CURSOR cr_crapemp(pr_cdempres in crapemp.cdempres%type) is
+	    SELECT nmextemp,
+				CASE tbcadast_empresa_consig.tpmodconvenio
+				  WHEN 1 THEN 'Privado'
+				  WHEN 2 THEN 'Público'
+				  WHEN 3 THEN 'INSS'  
+				  ELSE ''
+				END tpmodconvenio,
+				nrdocnpj,
+				dsendemp,
+				nrendemp,
+				nmbairro,
+				nmcidade,
+				cdufdemp,
+				nrcepend         
+		   FROM crapemp,
+				tbcadast_empresa_consig
+		  WHERE crapemp.cdempres = tbcadast_empresa_consig.cdempres
+			AND crapemp.cdcooper = tbcadast_empresa_consig.cdcooper
+			AND crapemp.cdempres = pr_cdempres
+			AND crapemp.cdcooper = pr_cdcooper;
+	   rw_crapemp cr_crapemp%ROWTYPE;
+
       --cursor para buscar estado civil da pessoa fisica, jurida nao tem
       CURSOR cr_gnetcvl(pr_cdcooper IN crapttl.cdcooper%TYPE
 			           ,pr_nrdconta IN crapttl.nrdconta%TYPE) IS
           SELECT gnetcvl.rsestcvl,
-			     crapttl.dsproftl
+			           crapttl.dsproftl,
+                 crapttl.Cdempres  --P437
           FROM  crapttl,
                 gnetcvl
           WHERE crapttl.cdcooper = pr_cdcooper
@@ -1279,6 +1310,10 @@ BEGIN
       vr_campo_02   VARCHAR2(2000); --> comentario 02
       vr_nmarqim    VARCHAR2(50);   --> nome do arquivo PDF
       vr_bens       INTEGER := 1; --> para listar informacoes de veiculos
+      --P437 - Consignado
+      vr_cooperativa_consig     VARCHAR2(4000);  --> Dados da cooperativa
+      vr_emitente_consig        VARCHAR2(4000);  --> Dados do Emitente      
+      vr_empregador_consig      VARCHAR2(4000);  --> dados do Empregador 
 
       -- Variaveis gerais
       vr_texto_completo VARCHAR2(32600);           --> Variável para armazenar os dados do XML antes de incluir no CLOB
@@ -1641,6 +1676,57 @@ BEGIN
            vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
            vr_dsjasper := 'crrl100_14.jasper'; -- nome do jasper
 
+      -- relatorio crrl100_27 /*P437 - Consignado*/
+      ELSIF rw_craplcr.tpctrato IN (1,4) AND -- Modelo = 1 (NORMAL) ou 4 (APLICAÇÃO)
+            rw_craplcr.cdusolcr = 0 AND      -- codigo de uso = 0 (Normal)
+            rw_crawepr.tpemprst = 1 AND      -- Tipo PP
+            rw_crawepr.inpessoa = 1 AND      -- pessoa fisica
+            rw_crawepr.tpdescto = 2 THEN     -- Tipo de desconto (Desconto em Folha)
+        
+        -- Busca os dados da COOPERATIVA
+        vr_cooperativa_consig := rw_crapcop.nmextcop||' - '||rw_crapcop.nmrescop||', sociedade cooperativa de crédito, inscrita no CNPJ sob no. '||
+                                 gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)||', estabelecida na '||
+                                 rw_crapcop.dsendcop||' no. ' ||rw_crapcop.nrendcop|| ', bairro ' ||rw_crapcop.nmbairro||
+                                 ', CEP: '||gene0002.fn_mask_cep(rw_crapcop.nrcepend)||', cidade de '||rw_crapcop.nmcidade||
+                                  '-'||rw_crapcop.cdufdcop;
+                           
+        -- Busca os dados do EMITENTE
+        -- Verifica se o documento eh um CPF ou CNPJ
+        IF rw_crawepr.inpessoa = 1 THEN
+          vr_tppessoa := 'CPF';
+          OPEN cr_gnetcvl(pr_cdcooper, pr_nrdconta); -- busca estado civil
+          FETCH cr_gnetcvl INTO rw_gnetcvl;
+          CLOSE cr_gnetcvl;
+          -- monta descricao para o relatorio com os dados do emitente
+          vr_emitente_consig := rw_crawepr.nmprimtl||', '|| rw_crawepr.xxx_dsnacion||', '|| rw_gnetcvl.rsestcvl||', inscrito no '||vr_tppessoa||
+                                ' sob n.° '|| gene0002.fn_mask_cpf_cnpj(rw_crawepr.nrcpfcgc, rw_crawepr.inpessoa)||
+                                ', com sede/residência na Rua '||rw_crapenc.dsendere||', n.° '||rw_crapenc.nrendere||
+                                ', bairro '||rw_crapenc.nmbairro|| ', cidade de '||rw_crapenc.nmcidade||'/'||rw_crapenc.cdufende||
+                                ', CEP '||gene0002.fn_mask_cep(rw_crapenc.nrcepend);
+        END IF; 
+                                                  
+        -- Busca os dados do EMPREGADOR
+		    OPEN  cr_crapemp(nvl(rw_crapepr.cdempres, rw_gnetcvl.cdempres )); 
+        FETCH cr_crapemp INTO rw_crapemp;
+        CLOSE cr_crapemp;
+		  
+		    vr_empregador_consig := rw_crapemp.nmextemp|| ', pessoa jurídica de direito '||rw_crapemp.tpmodconvenio || 
+                               ', incrita na CNPJ sob n.° '|| gene0002.fn_mask_cpf_cnpj(rw_crapemp.nrdocnpj, 2)||
+                               ', sedianda na Rua '||rw_crapemp.dsendemp||', n.° '||rw_crapemp.nrendemp||
+                               ', bairro '||rw_crapemp.nmbairro||
+                               ', cidade de '||rw_crapemp.nmcidade||'/'||rw_crapemp.cdufdemp||
+                               ',CEP '||rw_crapemp.nrcepend;          
+                     
+        vr_nmarqim := '/crrl100_27_'||pr_nrdconta||pr_nrctremp||'.pdf';   -- nome do relatorio + nr contrato
+        -- titulo do relatorio
+        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO - CONSIGNADO - No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+		    -- Se for um contrato de portabilidade
+        IF vr_portabilidade = TRUE THEN
+          vr_dsjasper := 'crrl100_27.jasper'; -- nome do jasper
+        ELSE
+		    vr_dsjasper := 'crrl100_27.jasper'; -- nome do jasper
+        END IF;
+       
      -- relatorio crrl100_04
       ELSIF rw_craplcr.tpctrato IN (1,4) AND -- modelo = 1 NORMAL ou 4 = APLICAÇÃO
         rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
@@ -1658,7 +1744,6 @@ BEGIN
         ELSE
 		    vr_dsjasper := 'crrl100_18.jasper'; -- nome do jasper
         END IF;
-
      -- relatorios crrl100_11 / crrl100_10 ou crrl100_14
      ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
         rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
@@ -2036,6 +2121,11 @@ BEGIN
                                  '<nmemitente>'    ||rw_crawepr.nmprimtl                     ||'</nmemitente>'||
                                  '<campo_01>'      ||vr_campo_01                             ||'</campo_01>'||
                                  '<campo_02>'||vr_campo_02                                   ||'</campo_02>'||
+                                 --P437 - Consignado
+                                 '<cooperativa_consig>'   ||vr_cooperativa_consig            ||'</cooperativa_consig>'||
+                                 '<emitente_consig>'      ||vr_emitente_consig               ||'</emitente_consig>'||
+                                 '<empregador_consig>'    ||vr_empregador_consig             ||'</empregador_consig>'||
+                                 --
                                  '<pa>'      ||rw_crawepr.cdagenci                           ||'</pa>'||
                                  '<conta>'   ||gene0002.fn_mask_conta(pr_nrdconta)           ||'</conta>'||
                                  '<nrcnpjbase>'    ||nrcnpjbase_if_origem                                           ||'</nrcnpjbase>'||
