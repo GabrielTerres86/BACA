@@ -2460,7 +2460,7 @@ create or replace package body cecred.tela_manbem is
                                  ,par_cdcritic out NUMBER
                                  ,par_dscritic out varchar2) IS
     /* .............................................................................
-  
+    
         Programa: pc_grava_bem_proposta
         Sistema : CECRED
         Sigla   : EMPR
@@ -2560,7 +2560,7 @@ create or replace package body cecred.tela_manbem is
         v_flginclu := 1; -- Pendente inclusão
         v_dtatugrv := SYSDATE; -- Alienado hoje
         v_flgalfid := 0; -- Não alienado
-      END IF;  
+      END IF;
     end if;
     
     -- Verificar se o bem jah não existe
@@ -2670,7 +2670,7 @@ create or replace package body cecred.tela_manbem is
                                pr_nmdatela => par_nmdatela,
                                pr_nrdconta => par_nrdconta,
                                pr_nrdrowid => v_rowid);
-
+      
           gene0001.pc_gera_log_item(v_rowid,
                                     'Estado bem',
                                     rw_crapbpr.dstipbem,
@@ -3102,7 +3102,7 @@ create or replace package body cecred.tela_manbem is
         */
         END IF;
 
-      END IF;
+	    END IF;
       /*P438 - FIM*/
 
     ELSE
@@ -3298,7 +3298,8 @@ create or replace package body cecred.tela_manbem is
     
         Alteracoes: 18/10/2018 - Incluídos novas colunas referente aos bens alienados
                                  PRJ438 - Sprint 4 - Paulo Martins (Mouts)
-					26/03/2019 - Tratamento do erro oracle (ORA06502), PRB0040687 - ERRO CHASSI E PROPOSTA (Bruno C, Mout'S)
+        26/03/2019 - Tratamento do erro oracle (ORA06502), PRB0040687 - ERRO CHASSI E PROPOSTA (Bruno C, Mout'S)
+        27/03/2019 - Tratamento para impedir a existência de dados orfão na tabela CRAPBPR em casos do erro, PRB0040657 - Erro ao incluir veículo (Bruno C, Mout'S)
 
     ..............................................................................*/            
   
@@ -3704,7 +3705,18 @@ create or replace package body cecred.tela_manbem is
         WHEN OTHERS THEN
           CECRED.pc_internal_exception(pr_cdcooper => par_cdcooper);
           
-          par_dscritic := 'Erro na leitura do XML. Rotina PC_GRAVA_ALIENACAO_HIPOTECA: '||SQLERRM;
+          DELETE FROM crapbpr
+           WHERE cdcooper = par_cdcooper
+             AND nrdconta = par_nrdconta
+             AND tpctrpro = par_tpctrato
+             AND nrctrpro = par_nrctrato
+             AND flgalien = 1;
+          /*Exclusão do bem anexado à proposta em caso de erro*/
+        
+          par_dscritic := vr_aux_listabem ||
+                          'Erro na leitura do XML. Rotina PC_GRAVA_ALIENACAO_HIPOTECA: ' ||
+                          SQLERRM;
+        
           RAISE vr_exc_erro;
       END;
     END IF;
@@ -3753,7 +3765,7 @@ create or replace package body cecred.tela_manbem is
     END IF;
     
     /*
-    -- Temos de garantir que os CPFs informados na lista de bens estejam na lista
+	-- Temos de garantir que os CPFs informados na lista de bens estejam na lista
     -- de CPFs informados na lista de Intervenientes, qualquer diferença irá gerar
     -- erro nas CCBs e no GRAVAME
     FOR rw_cpf IN cr_cpfbens LOOP
@@ -3789,11 +3801,11 @@ create or replace package body cecred.tela_manbem is
       par_dscritic := 'O(s) documento(s) '||rtrim(par_dscritic,',')||' foi(ram) cadastrado(s) como Interveniente(s) porem nao foram relacionados a nenhum Bem';
       RAISE vr_exc_erro;
     END IF;
-    */
+	*/
     -- Se for alteracao, e deve perder aprovacao e nao for imoveis e maquina e equipamento
     IF par_cddopcao = 'A' AND par_flperapr = 'S' AND
        rw_crapbpr.dscatbem NOT IN ('MAQUINA E EQUIPAMENTO','APARTAMENTO','CASA','GALPAO','TERRENO') THEN
-
+      
       -- Checar se o operadorx tem acesso a permissão especial
         -- de alterar somente bens sem perca de aprovação
         gene0004.pc_verifica_permissao_operacao(pr_cdcooper => par_cdcooper
@@ -3837,11 +3849,11 @@ create or replace package body cecred.tela_manbem is
                              pr_nmdatela => 'ATENDA',
                              pr_nrdconta => par_nrdconta,
                              pr_nrdrowid => v_rowid);        
-        -- Limpar criticas
+          -- Limpar criticas
         par_cdcritic := 0;
         par_dscritic := '';        
         par_flperapr := 'N';
-        END IF;  
+      END IF;
 
 
     END IF;  
@@ -3881,7 +3893,7 @@ create or replace package body cecred.tela_manbem is
         Observacao: -----
     
         Alteracoes: 
-
+                                 
     ..............................................................................*/                                     
     -- Varchar2 temporário de Envio das Informações
     vr_dstextxml VARCHAR2(32767);
@@ -4178,7 +4190,7 @@ create or replace package body cecred.tela_manbem is
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;                       
-               
+                           
         
     -- Acionar a rotina convertida e que espera um XML completo com bens e intervenientes
     pc_grava_alienacao_hipoteca(par_cdcooper => par_cdcooper
@@ -4688,13 +4700,6 @@ create or replace package body cecred.tela_manbem is
       return;
     end if;
     
-    -- Nacionalidade obrigatoria
-    if nvl(trim(par_cdnacion),0) = 0 then
-      par_dscritic := 'Nacionalidade do interveniente deve ser informada.';
-      par_nmdcampo := 'cdnacion';
-      return;
-    end if;
-    
     -- CPF obrigatorio
     if par_nrcpfcgc is null then
       par_dscritic := 'CPF/CNPJ do interveniente deve ser informado.';
@@ -4751,8 +4756,13 @@ create or replace package body cecred.tela_manbem is
         return;
       end if;
     else
-      null;
       -- PF
+      -- Nacionalidade obrigatoria
+      if nvl(trim(par_cdnacion),0) = 0 then
+        par_dscritic := 'Nacionalidade do interveniente deve ser informada.';
+        par_nmdcampo := 'cdnacion';
+        return;
+      end if;
       /*if trim(par_tpdocava) is null then
         par_dscritic := 'Tipo de documento do interveniente é obrigatorio.';
         par_nmdcampo := 'tpdocava';

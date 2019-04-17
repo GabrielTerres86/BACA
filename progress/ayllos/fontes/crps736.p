@@ -39,7 +39,7 @@ ETIME(TRUE).
 
 RUN STORED-PROCEDURE pc_crps736 aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,
-    INPUT  ?, /* pr_cdagenci */ 
+    INPUT  0, /* pr_cdagenci */ 
     INPUT  0, /* pr_idparale */ 
     OUTPUT 0, /* pr_stprogra */
     OUTPUT 0, /* pr_infimsol */

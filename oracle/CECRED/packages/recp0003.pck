@@ -78,6 +78,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                 -pc_pagar_emprestimo_prejuizo
                                                 -pc_pagar_emprestimo_folha    
                          da RECP0001 para EMPR999;      Rangel Decker (AMcom)                                                                                                                          
+                         
+            21/02/2019 - P450 - Ajuste na rotina "pc_imp_arq_acordo_quitado" para adequação do abono de prejuízo
+                         com uso do novo histórico (2919) criado pela Contabilidade.                                                                                                                        
+                         (Reginaldo/AMcom)
+            
+            08/03/2019 - P450 - Ajuste na rotina "pc_imp_arq_acordo_quitado" para debitar da conta transitória valor
+                         pago (abonado) em contrato de empréstimo se a conta está em prejuízo.  
+                         (Reginaldo/AMcom)                                                                                                                                   
   ---------------------------------------------------------------------------------------------------------------*/
 
   vr_flgerlog BOOLEAN := FALSE;
@@ -613,6 +621,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       vr_vlsddisp NUMBER(25,2) := 0; -- Saldo disponivel
       vr_vltotpag NUMBER(25,2) := 0; -- Valor Total de Pagamento
       vr_vllancam NUMBER(25,2) := 0; -- Saldo disponivel
+      vr_vllanacc NUMBER(25,2) := 0; -- Valor do abatimento em conta corrente
+      vr_vllanact NUMBER(25,2) := 0; -- Valor do abatimento em contratos (emprésitmo, desc. de título)
       vr_idvlrmin NUMBER(25,2) := 0; -- Indicador de valor Minimo
       vr_cdoperad crapope.cdoperad%TYPE := '1';
       vr_nmdatela craptel.nmdatela%TYPE := 'JOB';
@@ -957,7 +967,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    CONTINUE;                                          
                  END IF;
 
-                 vr_vllancam := 0;
+                 vr_vllanacc := 0;
+                 vr_vllanact := 0;
                  vr_nracordo := TO_NUMBER(SUBSTR(vr_setlinha,29,13));
                  vr_dtquitac := TRUNC(SYSDATE);
 
@@ -1040,7 +1051,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          EXIT LEITURA_TXT;
                        END IF;
 
-                       vr_vllancam := NVL(vr_vllancam,0) + NVL(ABS(vr_vltotpag),0); 
+                       vr_vllanacc := NVL(vr_vllanacc,0) + NVL(ABS(vr_vltotpag),0);  -- Valor para lancto de abatimento na C/C (Reginaldo/AMcom - P450)
                        
                      END IF;
 
@@ -1167,7 +1178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          EXIT LEITURA_TXT;
                        END IF;
                        
-                       vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0); 
+                       vr_vllanact := NVL(vr_vllanact,0) + NVL(vr_vltotpag,0); 
                       -- Emprestimo TR
                       ELSIF rw_crapepr.tpemprst = 0 THEN
                         
@@ -1211,7 +1222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                           EXIT LEITURA_TXT;
                         END IF;
                        
-                        vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0); 
+                        vr_vllanact := NVL(vr_vllanact,0) + NVL(vr_vltotpag,0); 
                       -- Emprestimo PP
                       ELSIF rw_crapepr.tpemprst = 1 THEN
                         -- Pagar empréstimo PP
@@ -1226,7 +1237,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                        ,pr_vlsdevat => rw_crapepr.vlsdevat
                                                        ,pr_vlparcel => 0
                                                        ,pr_idorigem => 7 
-                                                       ,pr_nmtelant => CASE WHEN rw_crapass.inprejuz = 0 THEN vr_nmdatela ELSE 'BLQPREJU' END
+                                                       ,pr_nmtelant => vr_nmdatela
                                                        ,pr_cdoperad => vr_cdoperad
                                                        ,pr_inliqaco => 'S'
                                                        ,pr_idvlrmin => vr_idvlrmin
@@ -1250,7 +1261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                           EXIT LEITURA_TXT;
                         END IF;
                        
-                        vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
+                        vr_vllanact := NVL(vr_vllanact,0) + NVL(vr_vltotpag,0);
 											-- Emprestimo Pos-Fixado
 											ELSIF rw_crapepr.tpemprst = 2 THEN
 												-- Pagar emprestimo Pos-Fixado
@@ -1295,12 +1306,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                           EXIT LEITURA_TXT;
                         END IF;
                        
-                        vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
-												--
+                        vr_vllanact := NVL(vr_vllanact,0) + NVL(vr_vltotpag,0);
                       END IF;
                       
+                      -- Se a conta está em prejuízo, debita da conta transitória o valor pago no contrato de empréstimo
+                      IF NVL(vr_vltotpag,0) > 0 AND rw_crapass.inprejuz = 1 THEN
+                        PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_crapepr.cdcooper
+                                                    , pr_nrdconta => rw_crapepr.nrdconta
+                                                    , pr_vlrlanc  => vr_vltotpag
+                                                    , pr_dtmvtolt => vr_tab_crapdat(rw_crapepr.cdcooper).dtmvtolt
+                                                    , pr_cdcritic => vr_cdcritic
+                                                    , pr_dscritic => vr_dscritic);
+                                                    
+                        -- Se retornar erro da rotina
+                        IF TRIM(vr_dscritic) IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+                          IF NVL(vr_cdcritic,0) > 0 THEN
+                            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                          END IF;
+						-- Log de erro de execucao
+                          pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                               ,pr_dstiplog => 'E'
+                                               ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
+                          pr_flgemail := TRUE;
+                          ROLLBACK; -- Desfaz acoes
+                          EXIT LEITURA_TXT;
+					  END IF;
                     END IF;
-
+				  END IF;
                    BEGIN
                      UPDATE crapcyc 
                         SET flgehvip = decode(cdmotcin,2,flgehvip,7,flgehvip,flvipant),
@@ -1399,26 +1431,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
                  END IF;
 
-                 -- Verificar se sera necessario efetuar o lancamento de ajuste
-                 IF vr_vllancam - rw_nracordo.vlbloqueado > 0 THEN
-                 
-                   /* Se ainda houver saldo devedor nas operações vinculadas ao acordo, 
-                      o sistema Ayllos deverá efetuar o abatimento do saldo devedor das operações
-                      vinculadas ao acordo cujo ainda existem saldo(s) devedor(es), de forma automatica.
-                      Para este procedimento, utilizar o histórico: 2181
-                      Para contas em prejuizo usar historico 2723 */
-
-                   -- Renato Cordeiro
-                   vr_cdhistor := 2181;
-									 
-									 IF rw_crapass.inprejuz = 1 THEN
-										 -- Se a conta está em prejuízo, lança como abono somente o valor referente ao saldo do prejuízo de c/c
-										 vr_vlrabono := PREJ0003.fn_obtem_saldo_prejuizo_cc(rw_crapass.cdcooper, rw_crapass.nrdconta);
-									 ELSE
-										 vr_vlrabono := vr_vllancam - nvl(rw_nracordo.vlbloqueado,0);
-									 END IF;
-
-                   IF vr_vlrabono > 0 THEN
+                 -- Verifica se deve lançar abatimento no acordo
+                 IF vr_vllanacc + vr_vllanact - rw_nracordo.vlbloqueado > 0 THEN
+                   IF rw_crapass.inprejuz = 0 THEN        
+                     vr_vlrabono := vr_vllanacc + vr_vllanact - rw_nracordo.vlbloqueado;
+                                  
 										 -- Lança crédito do abono na conta corrente
                    EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_crapass.cdcooper                          --> Cooperativa conectada
                                                  ,pr_dtmvtolt => vr_tab_crapdat(rw_crapass.cdcooper).dtmvtolt --> Movimento atual
@@ -1428,7 +1445,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                  ,pr_cdpactra => rw_crapass.cdagenci                          --> P.A. da transação
                                                  ,pr_nrdolote => 650001                                       --> Numero do Lote
                                                  ,pr_nrdconta => rw_crapass.nrdconta                          --> Número da conta
-																									 ,pr_cdhistor => vr_cdhistor                                  --> Codigo historico
+                                                   ,pr_cdhistor => 2181                                         --> Codigo historico
 																									 ,pr_vllanmto => vr_vlrabono                                  --> Valor do credito
                                                  ,pr_nrparepr => 0                                            --> Número do Acordo
                                                  ,pr_nrctremp => rw_nracordo.nracordo                         --> Número do contrato de empréstimo
@@ -1453,9 +1470,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                      ROLLBACK; -- Desfaz acoes
                      EXIT LEITURA_TXT;
                    END IF;
+                   ELSE
+                     IF vr_vllanacc > 0 THEN -- Abatimento em conta corrente
+                       IF vr_vllanacc > rw_nracordo.vlbloqueado THEN
+                         vr_vlrabono := vr_vllanacc - rw_nracordo.vlbloqueado;
+                       
+                         -- Lança crédito do abono na conta corrente
+                         EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_crapass.cdcooper                          --> Cooperativa conectada
+                                                       ,pr_dtmvtolt => vr_tab_crapdat(rw_crapass.cdcooper).dtmvtolt --> Movimento atual
+                                                       ,pr_cdagenci => rw_crapass.cdagenci                          --> Código da agência
+                                                       ,pr_cdbccxlt => 100                                          --> Número do caixa
+                                                       ,pr_cdoperad => vr_cdoperad                                  --> Código do Operador
+                                                       ,pr_cdpactra => rw_crapass.cdagenci                          --> P.A. da transação
+                                                       ,pr_nrdolote => 650001                                       --> Numero do Lote
+                                                       ,pr_nrdconta => rw_crapass.nrdconta                          --> Número da conta
+                                                       ,pr_cdhistor => 2919                                         --> Codigo historico
+                                                       ,pr_vllanmto => vr_vlrabono                                  --> Valor do credito
+                                                       ,pr_nrparepr => 0                                            --> Número do Acordo
+                                                       ,pr_nrctremp => rw_nracordo.nracordo                         --> Número do contrato de empréstimo
+                                                       ,pr_des_reto => vr_des_reto                                  --> Retorno OK / NOK
+                                                       ,pr_tab_erro => vr_tab_erro);                                --> Tabela com possíves erros
 
-										 -- Se a conta está em prejuízo
-										 IF rw_crapass.inprejuz = 1 THEN
+                         -- Se ocorreu erro
+                         IF vr_des_reto <> 'OK' THEN
+                           -- Se possui algum erro na tabela de erros
+                           IF vr_tab_erro.COUNT() > 0 THEN
+                             vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+                             vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+                           ELSE
+                             vr_cdcritic := 0;
+                             vr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
+                           END IF;
+                           -- Log de erro de execucao
+                           pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                                ,pr_dstiplog => 'E'
+                                                ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
+                           pr_flgemail := TRUE;
+                           ROLLBACK; -- Desfaz acoes
+                           EXIT LEITURA_TXT;
+                         END IF;
+                         
 												-- Abate o valor do abono do saldo do prejuízo da conta corrente
 												UPDATE tbcc_prejuizo
 													 SET vlsdprej = vlsdprej - vr_vlrabono
@@ -1464,7 +1518,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 														AND nrdconta = rw_crapass.nrdconta
 														AND dtliquidacao IS NULL;
                  END IF;
+                     
+                       IF vr_vllanacc >= rw_nracordo.vlbloqueado THEN
+                         rw_nracordo.vlbloqueado := 0;
+                       ELSE
+                         rw_nracordo.vlbloqueado := rw_nracordo.vlbloqueado - vr_vllanacc;
 									 END IF;
+                     END IF;
+                     
+                     IF vr_vllanact > 0 THEN -- Abatimento em contratos (empréstimo, descto. de títulos, ...)
+                       vr_vlrabono := vr_vllanact - rw_nracordo.vlbloqueado;
+                       
+                       -- Lança crédito do abono na conta corrente
+                       EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_crapass.cdcooper                          --> Cooperativa conectada
+                                                     ,pr_dtmvtolt => vr_tab_crapdat(rw_crapass.cdcooper).dtmvtolt --> Movimento atual
+                                                     ,pr_cdagenci => rw_crapass.cdagenci                          --> Código da agência
+                                                     ,pr_cdbccxlt => 100                                          --> Número do caixa
+                                                     ,pr_cdoperad => vr_cdoperad                                  --> Código do Operador
+                                                     ,pr_cdpactra => rw_crapass.cdagenci                          --> P.A. da transação
+                                                     ,pr_nrdolote => 650001                                       --> Numero do Lote
+                                                     ,pr_nrdconta => rw_crapass.nrdconta                          --> Número da conta
+                                                     ,pr_cdhistor => 2181                                         --> Codigo historico
+                                                     ,pr_vllanmto => vr_vlrabono                                  --> Valor do credito
+                                                     ,pr_nrparepr => 0                                            --> Número do Acordo
+                                                     ,pr_nrctremp => rw_nracordo.nracordo                         --> Número do contrato de empréstimo
+                                                     ,pr_des_reto => vr_des_reto                                  --> Retorno OK / NOK
+                                                     ,pr_tab_erro => vr_tab_erro);                                --> Tabela com possíves erros
+
+                       -- Se ocorreu erro
+                       IF vr_des_reto <> 'OK' THEN
+                         -- Se possui algum erro na tabela de erros
+                         IF vr_tab_erro.COUNT() > 0 THEN
+                           vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+                           vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+                         ELSE
+                           vr_cdcritic := 0;
+                           vr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
+                         END IF;
+                         -- Log de erro de execucao
+                         pc_controla_log_batch(pr_cdcooper => vr_cdcooper
+                                              ,pr_dstiplog => 'E'
+                                              ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || vr_dscritic);
+                         pr_flgemail := TRUE;
+                         ROLLBACK; -- Desfaz acoes
+                         EXIT LEITURA_TXT;
+                       END IF;
+                     END IF;
+                   END IF;
                  END IF;
 
                  -- Atualiza a situação do acordo
@@ -1485,7 +1585,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                      ROLLBACK; -- Desfaz acoes
                      EXIT LEITURA_TXT;                                          
                  END;   
-                  
                END IF; --Arquivo aberto
              END LOOP;
              

@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps433 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Julio
-       Data    : Janeiro/2005                     Ultima atualizacao: 27/06/2016
+       Data    : Janeiro/2005                     Ultima atualizacao: 26/03/2019
 
        Dados referentes ao programa:
 
@@ -52,6 +52,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps433 (pr_cdcooper IN crapcop.cdcooper%T
 
                   27/06/2016 - M325 - Tributacao Juros ao Capital
                                Alteracao Cod.Retencao de 5706 para 3277 (Guilherme/SUPERO)
+
+                  26/03/2019 - PRB0040570 - Ajustes na chamada da valida_dia_util para
+                               considerar o ultimo dia do ano (Andreatta-MOUTs)
 
     ............................................................................ */
 
@@ -291,7 +294,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps433 (pr_cdcooper IN crapcop.cdcooper%T
       --verifica se a data calculada é dia util, caso nao for pega o dia util anterior
       vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
                                                  pr_dtmvtolt => vr_dtmvtolt,
-                                                 pr_tipo     => 'A'
+                                                 pr_tipo     => 'A',
+                                                 pr_excultdia => TRUE
                                                  );
 
       FOR rw_crapdir IN cr_crapdir -- busca dados geracao de Imposto Renda

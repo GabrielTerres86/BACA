@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
   --  Sistema  : Rotinas genericas referente a calculos de aplicacao
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Julho - 2014.                   Ultima atualizacao: 27/07/2018
+  --  Data     : Julho - 2014.                   Ultima atualizacao: 18/03/2019
   --
   -- Dados referentes ao programa:
   --
@@ -20,8 +20,10 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
   --                          Cláudio - CIS Corporate
   --             13/02/2019 - Retornar como saldo o campo "vlsldatl" no caso de consulta de saldo no mesmo dia que a aplicação foi criada
   --                          CIS Corporate
-  --
-  ---------------------------------------------------------------------------------------------------------------
+  /*             18/03/2019 - PRB0040683 nas rotinas pc_posicao_saldo_aplicacao_pos e pc_posicao_saldo_aplicacao_pre,
+                              feitos os tratamentos de erros para que possíveis pontos de correção 
+                              sejam identificados (Carlos)
+  --------------------------------------------------------------------------------------------------------------- */
 
   -- Rotina referente a atualizar saldo de aplicacoes de aplicacao pós
   PROCEDURE pc_posicao_saldo_aplicacao_pos(pr_cdcooper IN craprac.cdcooper%TYPE --> Código da Cooperativa
@@ -596,6 +598,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper, 
+                                     pr_compleme => 'Conta: ' || pr_nrdconta ||
+                                                    ' Aplicacao: ' || pr_nraplica);
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em Calculos de Aplicacao POS: ' || SQLERRM;
     END;
@@ -1072,6 +1077,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper, 
+                                     pr_compleme => 'Conta: ' || pr_nrdconta ||
+                                                    ' Aplicacao: ' || pr_nraplica);
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em Calculos de Aplicacao PRE: ' || SQLERRM;
     END;

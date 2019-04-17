@@ -2,8 +2,9 @@
 /*!
  * FONTE        : funcoes_gravame.php
  * CRIAÇÃO      : Thaise Medeiros (Envolti)
- * DATA CRIAÇÃO : Outubro/2018 
+ * DATA CRIAÇÃO : Outubro/2018                                        Ultima altercao: 09/04/2019
  * OBJETIVO     : Funções específicas para as rotinas do gravame
+ * ALTERACAO    : Ajustar controle de erro CTIP (Christian - Envolti)
  * --------------
  */
 	$httpcode = 0;
@@ -97,7 +98,7 @@
 	}
 
 	//Função para tratar as variáveis que serão utilizadas no POST e verificar o retorno
-	function postGravame($xml, $data, $url, $authPost) {
+	function postGravame($xml, $data, $url, $authPost, $funcErroMsg='') {
 		$xmlReturn;
 		if ($url == null || $url == '') {
 			echo "showError('inform','N&atilde;o foi encontrada a URL.','Notifica&ccedil;&atilde;o - Ayllos','');";	
@@ -108,7 +109,7 @@
 			$GLOBALS["getDate"] = date("d/m/Y H:i:s");
 		}
 		if ($xmlReturn == "null") {
-			echo "hideMsgAguardo();showError('error','Erro de comunica&ccedil;&atilde;o com CETIP.','Notifica&ccedil;&atilde;o - Ayllos','');"; die;
+			echo "hideMsgAguardo();showError('error','Erro de comunica&ccedil;&atilde;o com CETIP.','Notifica&ccedil;&atilde;o - Ayllos', '$funcErroMsg');"; die;
 		}
 		return $xmlReturn;
 	}

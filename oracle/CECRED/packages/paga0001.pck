@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --  Programa: PAGA0001                       Antiga: b1wgen0016.p
   --  Autor   : Evandro/David
-  --  Data    : Abril/2006                     Ultima Atualizacao: 29/10/2018
+  --  Data    : Abril/2006                     Ultima Atualizacao: 11/03/2019
   --
   --  Dados referentes ao programa:
   --
@@ -1282,7 +1282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 02/01/2019
+  --  Data     : Junho/2013.                   Ultima atualizacao: 11/03/2019
   --
   -- Dados referentes ao programa:
   --
@@ -1691,6 +1691,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
      02/01/2019 -  sctask0041317 Retirada de variáveis e cursores não utilizados, rotinas pc_paga_convenio e 
                    pc_paga_titulo; retirada de consulta repetida da crapass, rotina pc_paga_convenio (Carlos)
 
+     11/03/2019 - Quando der erro na rotina pc atualiza trans nao efetiv, 
+                  gerar Log pois as rotinas chamadoras iram ignorar o erro.
+                  (Belli - Envolti - INC0034476)
+      
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -15233,11 +15237,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                          ,pr_dscritic OUT varchar2) IS          --Retorno de Erro
     -- ..........................................................................
     --
-    --  Programa : pc_atualiza_trans_nao_efetiv  Antiga: b1wgen0016.p/atualiza_transacoes_nao_efetivadas
+    --  Programa : pc atualiza trans nao efetiv  Antiga: b1wgen0016.p/atualiza_transacoes_nao_efetivadas
     --  Sistema  : Rotinas Internet
     --  Sigla    : INET
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 17/12/2015
+    --  Data     : Junho/2013.                   Ultima atualizacao: 11/03/2019
     --
     --  Dados referentes ao programa:
     --
@@ -15250,6 +15254,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --
     --               17/12/2015 - Ajustes para o proje. 131 Assinatura Multipla.
     --                            (Jorge/David)
+    --
+    --               11/03/2019 - Quando der erro na rotina pc atualiza trans nao efetiv, 
+    --                            gerar Log pois as rotinas chamadoras iram ignorar o erro.
+    --                            (Belli - Envolti - INC0034476)
+    --
   BEGIN
     DECLARE
       --Cursores Locais
@@ -15273,7 +15282,46 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_tab_limite_pend INET0002.typ_tab_limite_pend;
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
+      
+      --Agrupa os parametros - 11/03/2019 - INC0034476 
+      vr_dsparame VARCHAR2(4000);
+      vr_cdprogra VARCHAR2 (100) := 'PAGA0001';
+      vr_dsaction VARCHAR2 (100) := vr_cdprogra || '.pc_atualiza_trans_nao_efetiv';
+
+    -- Trata email  - 11/03/2019 - INC0034476                
+    PROCEDURE PC_EMAIL
+    IS
     BEGIN
+      -- Envia o email
+      GENE0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra
+                                ,pr_des_destino => GENE0001.fn_param_sistema(
+                                                    pr_nmsistem => 'CRED'
+                                                   ,pr_cdacesso => 'EMAIL_CANC_DEBSIC')  
+                                ,pr_des_assunto => 'ERRO NA EXECUCAO DO PROGRAMA '|| vr_dsaction
+                                ,pr_des_corpo   => pr_dscritic 
+                                ,pr_des_anexo   => NULL
+                                ,pr_flg_enviar  => 'N'
+                                ,pr_des_erro    => vr_des_erro); 
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+    EXCEPTION       
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper
+                                     ,pr_compleme => vr_dsaction || vr_dsparame );    
+    END PC_EMAIL;
+    -- 
+    
+    BEGIN                                           --  INICIO ROTINA PRINCIPAL
+      
+      -- Incluido nome do módulo logado - 11/03/2019 - INC0034476 
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_dsaction);
+      --Ajuste mensagem de erro - 11/03/2019 - INC0034476 
+      vr_dsparame :=  ' pr_cdcooper:' || pr_cdcooper || 
+                      ', pr_nrdconta:' || pr_nrdconta ||
+                      ', pr_cdagenci:' || pr_cdagenci ||
+                      ', pr_dtmvtolt:' || pr_dtmvtolt;  
+                      
+                              
       --Inicializar retorno erro
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
@@ -15300,6 +15348,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         --levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorna nome do módulo logado - 11/03/2019 - INC0034476 
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_dsaction);
       
       --Alterar situacao transacao
       pc_altera_situac_trans (pr_cdcooper => pr_cdcooper          --Cooperativa
@@ -15316,6 +15366,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorna nome do módulo logado - 11/03/2019 - INC0034476 
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_dsaction);
       
       pr_dstransa:= '';
         --Se deve alterar
@@ -15324,20 +15376,52 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                        'Por esse motivo o status será alterado para EXPIRADA.';
       END IF;
 
-    EXCEPTION
+      -- Limpa nome do módulo logado - 11/03/2019 - INC0034476 
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+    EXCEPTION -- - 11/03/2019 - INC0034476 
       WHEN vr_exc_erro THEN
 
-        --rollback do savepoint
-        ROLLBACK TO TRANS_UNDO;
-
         pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_des_erro;
-      WHEN OTHERS THEN
-        --rollback do savepoint
-        ROLLBACK TO TRANS_UNDO;
+        pr_dscritic:= vr_des_erro ||
+                      vr_dsparame;                      
+        -- Geração de log                           
+        pc_controla_log_programa( pr_cdcooper      => pr_cdcooper
+                                 ,pr_dstiplog      => 'E' -- Tipo de Log - E = erro
+                                 ,pr_tpocorrencia  => 1   
+                                 ,pr_cdcriticidade => 1   
+                                 ,pr_cdmensagem    => pr_cdcritic  -- Codigo do Log
+                                 ,pr_dsmensagem    => pr_dscritic  -- Descrição
+                                 ,pr_tpexecucao    => 0 -- 0-Outro, 1-Batch, 2-Job, 3-Online
+                                 ); 
 
-        -- Erro
-        pr_dscritic:= 'Erro na rotina PAGA0001.pc_atualiza_trans_nao_efetiv. '||sqlerrm;
+        --rollback do savepoint
+        ROLLBACK TO TRANS_UNDO;               
+
+        -- Envia o email
+        PC_EMAIL; 
+        
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+        -- Ajuste mensagem de erro 
+        pr_cdcritic:= 9999;
+        pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                      ' ' || SQLERRM ||
+                      '.' || vr_dsparame;	
+        -- Geração de log                           
+        pc_controla_log_programa( pr_cdcooper      => pr_cdcooper
+                                 ,pr_dstiplog      => 'E'          -- Tipo de Log, E - erro
+                                 ,pr_tpocorrencia  => 2            -- Erro não tratado  
+                                 ,pr_cdcriticidade => 2 
+                                 ,pr_cdmensagem    => pr_cdcritic  -- Codigo do Log
+                                 ,pr_dsmensagem    => pr_dscritic  -- Descrição
+                                 ,pr_tpexecucao    => 0            -- 0-Outro, 1-Batch, 2-Job, 3-Online
+                                 ); 
+        --rollback do savepoint
+        ROLLBACK TO TRANS_UNDO;             
+
+        -- Envia o email
+        PC_EMAIL; 
     END;
   END pc_atualiza_trans_nao_efetiv;
 

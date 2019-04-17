@@ -18,6 +18,18 @@ $nrctrcrd = $_POST['nrctrcrd'];
 $ds_justif =  $_POST['ds_justif'];
 $inupgrad = $_POST['inupgrad'];
 $cdadmnov = $_POST['cdadmnov'];
+$nrctrcrd_novo = $_POST['nrctrcrd_novo'];
+
+$xml = "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObjeto = getObjectXML($xmlResult);
+
+$coop_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
 
 $updContratoXML .= "<Root>";
 $updContratoXML .= " <Dados>";
@@ -40,11 +52,13 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 }else{
 	echo" /* \n $admresult \n */";
 	
-		$message= "Alteração de categoria efetuada com sucesso.";
+	$acao = "voltaDiv(0,1,4); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);";
+	if ($coop_envia_cartao) {
+		$acao = "nrctrcrd = ".$nrctrcrd_novo."; nrctrcrd_updown = ".$nrctrcrd."; consultaEnderecos(2);";
+	}
 	
-	echo 'showError("inform"," '.utf8ToHtml( $message).' ","Alerta - Aimaro","voltaDiv(0,1,4); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
+	echo 'showError("inform"," '.utf8ToHtml("Alteração de categoria efetuada com sucesso.").' ","Alerta - Aimaro", "'.$acao.'");';
 }
-echo '  acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,"'.$glbvars["opcoesTela"][0].'");';
 
 ?>
 

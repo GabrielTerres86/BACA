@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --  Sistema  : Rotinas genericas focando nas funcionalidades das aplicacoes
   --  Sigla    : APLI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Dezembro/2012.                   Ultima atualizacao: 27/07/2018
+  --  Data     : Dezembro/2012.                   Ultima atualizacao: 18/03/2019
   --
   -- Dados referentes ao programa:
   --
@@ -101,7 +101,11 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --               
   -- 16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
   --                   Heitor (Mouts)
-  --
+  /*
+     18/03/2019 - PRB0040683 na rotina pc_consulta_poupanca e suas internas, feitos os tratamentos de erros para que
+                  sejam identificados os possíveis pontos de correção; pular a aplicação quando a consulta for chamada
+                  pelo batch (Carlos)
+  */
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes
@@ -9496,6 +9500,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         -- Retorno não OK
         pr_des_erro:= vr_des_erro;
       WHEN OTHERS THEN
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper, 
+                                     pr_compleme => 'Conta: ' || pr_nrdconta ||
+                                                    ' Poupanca: ' || pr_nrctrrpp);
         -- Retorno não OK
         pr_des_erro:= 'Erro na rotina APLI0001.pc_calc_saldo_rpp. '||sqlerrm;
     END;
@@ -9709,7 +9716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           -- As aplicações programadas não serão tratadas linha a linha, mas evitaremos fazer 
           -- chamadas desnecessárias abaixo
           
-          If rw_craprpp.cdprodut < 1 Then 
+          IF rw_craprpp.cdprodut < 1 THEN 
              vr_dsfinali := 'Poupança Programada';
           --Executar rotina para calcular saldo poupanca programada
           pc_calc_saldo_rpp (pr_cdcooper => pr_cdcooper
@@ -9887,6 +9894,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             vr_flgtrans:= FALSE;
             --Sair do loop
             EXIT;
+          WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper, 
+                                         pr_compleme => 'Conta: ' || pr_nrdconta ||
+                                                        ' Poupanca: ' || rw_craprpp.nrctrrpp);
+
+            vr_flgtrans := pr_idorigem = 7; -- pular consulta quando for batch            
+
+            vr_dscritic := 'Erro ao consultar a poupanca: '||rw_craprpp.nrctrrpp || 
+                           ' - APLI0001.pc_consulta_poupanca --> Consultar erro_sistema '||sqlerrm;
+            EXIT;
         END;
       END LOOP;  --cr_craprpp
       --Fechar Cursor
@@ -9951,6 +9968,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         -- Retorno não OK
         pr_retorno := 'NOK';
       WHEN OTHERS THEN
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper, 
+                                     pr_compleme => 'Conta: ' || pr_nrdconta ||
+                                                    ' Poupanca: ' || pr_nrctrrpp);
         -- Retorno não OK
         pr_retorno := 'NOK';
         -- Gerar erro montado
@@ -12909,16 +12929,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           vr_dshistor := 'RDC' || to_char(rw_craprda.qtdiauti,'fm0000');
           vr_dsaplica := rw_crapdtc.dsaplica;
 
-          IF UPPER(pr_cdprogra) = 'ATENDA' THEN
+          /* P.285 - Card #367 */
+
+          IF UPPER(pr_cdprogra) = 'ATENDA' OR pr_nrorigem = 3 THEN
             -- Abre o cursor que contem a descricao dos varios tipos de captacao oferecidas para o cooperado.
             OPEN cr_crapdtc_2(rw_craprda.tpnomapl);
-            FETCH cr_crapdtc_2 INTO rw_crapdtc_2;
+            FETCH cr_crapdtc_2 
+            INTO rw_crapdtc_2;
 
             IF cr_crapdtc_2%FOUND THEN
+              IF UPPER(pr_cdprogra) = 'ATENDA' THEN
               vr_dshistor := rw_crapdtc_2.dsaplica;
+              ELSE
+                vr_dshistor := rw_crapdtc_2.dsaplica || ' - ' || vr_dshistor;
+              END IF;
             END IF;
+  
             CLOSE cr_crapdtc_2;
           END IF;
+          
+          /** P.285 - Card #367 **/
+
         ELSE
           vr_dshistor := rpad(substr(rw_crapdtc.dsaplica,1,7),7,' ');
           vr_dsaplica := substr(rw_crapdtc.dsaplica,1,6);

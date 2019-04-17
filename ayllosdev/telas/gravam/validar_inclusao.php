@@ -2,8 +2,9 @@
 /*!
  * FONTE        : validar_inclusao.php
  * CRIAÇÃO      : Thaise Medeiros (Envolti)
- * DATA CRIAÇÃO : Outubro/2018
+ * DATA CRIAÇÃO : Outubro/2018                                                      Ultima Alteracao: 09/04/2019
  * OBJETIVO     : Rotina para realizar validação da inclusão manual do gravame
+ * ALTERACAO    : Ajustar controle de erro CTIP (Christian - Envolti)
  * --------------
  */
 
@@ -77,10 +78,12 @@
 
 			if ($operacao == "A") {
 				$data = convertXMLtoJSONAliena( $xml->gravameB3[0]->gravame[0] );
+        $funcErrorMsg = '';
 			} else {
 				$data = convertXMLtoJSONConsulta( $xml->gravameB3[0]->gravame[0] );
+        $funcErrorMsg = 'formatarInclusaoManual();';
 			}
-			$xmlStr = postGravame( $xml, $data, $url, $Auth_SOA );
+			$xmlStr = postGravame( $xml, $data, $url, $Auth_SOA, $funcErrorMsg );
 
 			if ($operacao == "A") {
 				$cdoperac = getCdOperac($xml->gravameB3[0]->gravame[0]);

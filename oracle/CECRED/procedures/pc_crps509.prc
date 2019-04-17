@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Abril/2008                        Ultima atualizacao: 27/11/2018
+   Data    : Abril/2008                        Ultima atualizacao: 11/03/2019
 
    Dados referentes ao programa:
 
@@ -70,6 +70,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                19/02/2018 - Ajustado para não propagar exceção quando não tem agendamentos a processar. 
                             PRB0040590 (Andre - MoutS).         
 			   
+    
+               11/03/2019 - Quando der erro na rotina pc atualiza trans nao efetiv, 
+                            gerar Log pois as rotinas chamadoras iram ignorar o erro.
+                            (Belli - Envolti - INC0034476)
      ............................................................................. */
 
      
@@ -818,19 +822,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
          --Nao retirar este commit, nem para testar.
          COMMIT;
 
-       /* Valido somente para InternetBank, por isto pac 90 */
-       /*PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
-                                             ,pr_nrdconta => 0             --Numero da Conta
-                                             ,pr_cdagenci => 90            --Código da Agencia
-                                             ,pr_dtmvtolt => vr_dtmvtopg   --Data Proximo Pagamento
-                                             ,pr_dstransa => vr_dstransa   --Msg Transação
-                                             ,pr_cdcritic => vr_cdcritic   --Codigo erro
-                                             ,pr_dscritic => vr_dscritic); --Descricao erro
-       --Se ocorreu erro
-       IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
-         --Levantar Excecao
-         RAISE vr_exc_saida;
-       END IF;*/
+         -- Ignorar o erro - 11/03/2019 - INC0034476
+         /* Valido somente para InternetBank, por isto pac 90 */
+         PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
+                                               ,pr_nrdconta => 0             --Numero da Conta
+                                               ,pr_cdagenci => 90            --Código da Agencia
+                                               ,pr_dtmvtolt => vr_dtmvtopg   --Data Proximo Pagamento
+                                               ,pr_dstransa => vr_dstransa   --Msg Transação
+                                               ,pr_cdcritic => vr_cdcritic   --Codigo erro
+                                               ,pr_dscritic => vr_dscritic); --Descricao erro
+         vr_dscritic := NULL;
+         vr_cdcritic := NULL;
 	   
          --Buscar a quantidade de jobs simultaneos para a cooperativa.
          vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper 

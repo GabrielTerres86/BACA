@@ -13,7 +13,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Adriano
-   Data    : Maio/2016                        Ultima atualizacao: 02/01/2017
+   Data    : Maio/2016                        Ultima atualizacao: 11/03/2019
 
    Dados referentes ao programa:
 
@@ -23,6 +23,10 @@ BEGIN
    Alteracoes: 02/01/2017 - Adição de filtro por cooperativa ativa na leitura da 
                crapcop, por precaução. Já foi ajustado na pc_job_agendebted também
                para gerar os jobs desse crps apenas para cooperativas ativas.
+               
+               11/03/2019 - Quando der erro na rotina pc atualiza trans nao efetiv, 
+                            gerar Log pois as rotinas chamadoras iram ignorar o erro.
+                            (Belli - Envolti - INC0034476)
 			   
    ............................................................................. */
 
@@ -161,21 +165,19 @@ BEGIN
 
      --Zerar tabelas de memoria auxiliar
      pc_limpa_tabela;
-/*
-    -- Valido somente para InternetBank, por isto pac 90
-    PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
+
+     -- Ignorar o erro - 11/03/2019 - INC0034476
+     -- Valido somente para InternetBank, por isto pac 90
+     PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
                                            ,pr_nrdconta => 0             --Numero da Conta
                                            ,pr_cdagenci => 90            --Código da Agencia
                                            ,pr_dtmvtolt => vr_dtmvtopg   --Data Proximo Pagamento
                                            ,pr_dstransa => vr_dstransa   --Msg Transação
                                            ,pr_cdcritic => vr_cdcritic   --Codigo erro
                                            ,pr_dscritic => vr_dscritic); --Descricao erro
-     --Se ocorreu erro
-     IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
-       --Levantar Excecao
-       RAISE vr_exc_saida;
-     END IF;
-*/
+     vr_dscritic := NULL;
+     vr_cdcritic := NULL;
+         
      --Essa informacao é necessária para a rotina pc_calc_poupanca
      vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                              ,pr_nmsistem => 'CRED'
@@ -228,17 +230,17 @@ BEGIN
      -- só atualiza situação dos lançamentos se for a última execução do dia
      IF pr_execucao = 3 THEN
        --
-     IF rw_crapdat.inproces = 1 THEN
-       UPDATE craplau lau
-          SET lau.insitlau = 4
-             ,lau.dtdebito = lau.dtmvtopg 
-             ,lau.cdcritic = 999
-        WHERE lau.cdcooper = pr_cdcooper
-          AND lau.dsorigem IN ('INTERNET','TAA')
-          AND lau.insitlau = 1
-          AND lau.dtmvtopg BETWEEN vr_dtmvtoan - 7 AND vr_dtmvtoan
-          AND lau.cdtiptra = 4; --Somente TED
-     END IF;
+       IF rw_crapdat.inproces = 1 THEN
+         UPDATE craplau lau
+            SET lau.insitlau = 4
+               ,lau.dtdebito = lau.dtmvtopg 
+               ,lau.cdcritic = 999
+          WHERE lau.cdcooper = pr_cdcooper
+            AND lau.dsorigem IN ('INTERNET','TAA')
+            AND lau.insitlau = 1
+            AND lau.dtmvtopg BETWEEN vr_dtmvtoan - 7 AND vr_dtmvtoan
+            AND lau.cdtiptra = 4; --Somente TED
+       END IF;
        --
      END IF;           
      --Gerar Relatorio

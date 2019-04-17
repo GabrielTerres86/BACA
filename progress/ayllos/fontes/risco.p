@@ -140,6 +140,7 @@
 
                19/05/2017 - Projeto 408 - Provisao Garantias Prestadas Central > Sing. (Andrei-Mouts)
                
+               01/02/2019 - P450 - estória 9050:7. 3040 - Layout Arquivo 3026 (Fabio Adriano- AMcom).
               
 ............................................................................. */
 
@@ -412,12 +413,13 @@ ASSIGN aux_cdvencid[1]  =  205
 FORM SKIP (1)
      "Opcao:"         AT 6
      glb_cddopcao     AT 13 NO-LABEL AUTO-RETURN
-                      HELP "Informe a opcao desejada (A, C, E, F ,K, I, R, M, T ou G)"
+                      HELP "Informe a opcao desejada (A, C, E, F ,K, I, R, M, T, G ou H)"
                       VALIDATE (glb_cddopcao = "A" OR glb_cddopcao = "C" OR
                                 glb_cddopcao = "E" OR glb_cddopcao = "F" OR
                                 glb_cddopcao = "K" OR glb_cddopcao = "I" OR
                                 glb_cddopcao = "R" OR glb_cddopcao = "M" OR 
-                                glb_cddopcao = "T" OR glb_cddopcao = "G",
+                                glb_cddopcao = "T" OR glb_cddopcao = "G" OR
+                                glb_cddopcao = "H",
                                 "014 - Opcao errada.")
 
      "Data Referencia: " AT 18
@@ -607,15 +609,22 @@ DO WHILE TRUE:
    RUN fontes/inicia.p.
 
    DISPLAY glb_cddopcao WITH FRAME f_risco.
-   NEXT-PROMPT tel_dtrefere WITH FRAME f_risco.
-
 
    DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 
       ASSIGN glb_cdcritic = 0.
 
       DO WHILE TRUE:
-          UPDATE glb_cddopcao tel_dtrefere WITH FRAME f_risco.
+          UPDATE glb_cddopcao WITH FRAME f_risco.
+          
+          
+          IF glb_cddopcao <> "H" THEN
+            UPDATE tel_dtrefere WITH FRAME f_risco.
+          ELSE DO:
+            /* Fixar a 31/12 do Ano anterior */
+            ASSIGN tel_dtrefere = DATE(1,1,year(glb_dtmvtolt)) - 1.
+            DISPLAY tel_dtrefere WITH FRAME f_risco.
+          END.
 
           IF  glb_cddopcao = "R"  THEN
               UPDATE tel_tprelato WITH FRAME f_risco.
@@ -629,6 +638,7 @@ DO WHILE TRUE:
       IF   glb_cddopcao <> "C"  AND
            glb_cddopcao <> "T"  AND
            glb_cddopcao <> "G"  AND
+           glb_cddopcao <> "H"  AND
            glb_cddopcao <> "R"  THEN
            DO:
                /*** Verifica se pode rodar ou nao **/
@@ -893,6 +903,42 @@ DO WHILE TRUE:
             { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
             
             ASSIGN aux_dscritic = pc_risco_g.pr_dscritic WHEN pc_risco_g.pr_dscritic <> ?.
+
+            IF aux_dscritic <> ""  THEN
+               DO:
+                   BELL.
+                   MESSAGE aux_dscritic VIEW-AS ALERT-BOX.
+               END.
+
+            HIDE MESSAGE NO-PAUSE.
+
+        END.           
+   ELSE 
+   IF   glb_cddopcao = "H"   THEN
+        DO:
+            RUN fontes/confirma.p (INPUT "",
+                                   OUTPUT aux_confirma).
+
+            IF aux_confirma <> "S" THEN
+               NEXT.
+
+            MESSAGE "Aguarde... Gerando Arq. 3026 ...".
+        
+            { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+            RUN STORED-PROCEDURE pc_gera_arq_3026
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT INTEGER(glb_cdcooper),
+                                  INPUT DATE(tel_dtrefere), /*STRING(tel_dtrefere,"99/99/9999")*/
+                                  OUTPUT "",
+                                  OUTPUT "").
+
+            CLOSE STORED-PROC pc_gera_arq_3026
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_dscritic = pc_gera_arq_3026.pr_dscritic WHEN pc_gera_arq_3026.pr_dscritic <> ?.
 
             IF aux_dscritic <> ""  THEN
                DO:

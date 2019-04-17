@@ -74,6 +74,15 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0008 AS
                                          ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
                                          ,pr_des_erro  OUT VARCHAR2);           --> Erros do processo
 
+  --> Rotina para retornar o tipo de envio
+  PROCEDURE pc_retorna_tipo_envio(pr_nrdconta   IN crapass.nrdconta%TYPE  --> Número da Conta
+                                 ,pr_nrctrcrd   IN crapcrd.nrctrcrd%TYPE  --> Contrato
+                                 ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
+                                 ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+                                 ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+                                 ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                 ,pr_des_erro  OUT VARCHAR2);             --> Erros do processo
 
 END CCRD0008;
 /
@@ -104,6 +113,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                   nrdconta crapass.nrdconta%TYPE, --Conta Corrente
                   nmresadm crapadc.nmresadm%TYPE,--Tipo Cartão CECRED
                   nmprimtl crapass.nmprimtl%TYPE, --Nome Completo
+                  dsendere crapenc.dsendere%TYPE, --Endereço
+                  nrendere crapenc.nrendere%TYPE, --Número
+                  nmbairro crapenc.nmbairro%TYPE, --Bairro
+                  nmcidade crapenc.nmcidade%TYPE, --Cidade
+                  cdufende crapenc.cdufende%TYPE, --UF Endereço
+                  nrcepend crapenc.nrcepend%TYPE, --CEP				  
+                  nmextcopcop crapcop.nmextcop%TYPE, --Nome Cooperativa
+                  nrdocnpjcop crapcop.nrdocnpj%TYPE, --CNPJ Cooperativa
+                  dsendcopcop crapcop.dsendcop%TYPE, --Endereço Cooperativa
+                  nrcependcop crapcop.nrcepend%TYPE, --CEP Cooperativa
+                  nmcidadecop crapcop.nmcidade%TYPE, --Cidade Cooperativa				  
                   nrcpfcgc VARCHAR2(100),         --CPF/CNPJ
                   razaosocial   VARCHAR2(200),    -- Razão Social
                   dtconstituicao  VARCHAR2(10), -- Data da Constituição
@@ -136,7 +156,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                   indserasa        VARCHAR2(1),     -- Indicador se está no SERASA   
                   nrdia_pagamento VARCHAR2(2),
                   nrcpftit        VARCHAR2(100),
-                  cdgraupr crawcrd.cdgraupr%TYPE);    -- Dia de pagamento
+                  cdgraupr crawcrd.cdgraupr%TYPE,    -- Dia de pagamento 
+				  dsenderecoentrega VARCHAR2(250),  --Endereço em que foi entregue o cartão         
+                  dsnovotermo VARCHAR2(1),          --Indicador ára utilização do Termo versão Novo
+                  dsrepresentante VARCHAR2(500));   --Representante da Pessoa Jurídica
                   
   TYPE typ_tab_dados_ctr IS TABLE OF typ_rec_dados_ctr
        INDEX BY PLS_INTEGER;                
@@ -150,11 +173,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                   nrctrcrd         tbcrd_aprovacao_cartao.nrctrcrd%TYPE,
                   indtipo_senha    tbcrd_aprovacao_cartao.indtipo_senha%TYPE,
                   nrcpf            tbcrd_aprovacao_cartao.nrcpf%TYPE,
-                  nmtextoassinatura VARCHAR2(4000));   
+                  nmtextoassinatura VARCHAR2(4000),
+                  nmtextoasssuperv  VARCHAR2(4000));
                                   
   TYPE typ_tab_assinaturas_ctr IS TABLE OF typ_rec_assinaturas_ctr
        INDEX BY PLS_INTEGER;
   
+  --> Armazenar dados dos cartões adicionais
+  TYPE typ_rec_cartoes_ctr 
+       IS RECORD (nmpessoa tbcadast_pessoa.nmpessoa%TYPE, --NOME PESSOA
+                  dtnascimento tbcadast_pessoa_fisica.dtnascimento%TYPE, --DATA NASCIMENTO
+                  nrcpfcgc varchar2(50), --NR CPF
+                  nrdocumento tbcadast_pessoa_fisica.nrdocumento%TYPE, --NR RG
+                  nmtitcrd crawcrd.nmtitcrd%TYPE);  --NOME IMPRESSO NO CARTÃO
+                   
+  TYPE typ_tab_cartoes_ctr IS TABLE OF typ_rec_cartoes_ctr
+       INDEX BY PLS_INTEGER;
+       
   --> Rotina para buscar dados para impressao do Termo de Adesão PF
   PROCEDURE pc_obtem_dados_contrato (pr_cdcooper        IN crapcop.cdcooper%TYPE  --> Código da Cooperativa 
                                     ,pr_cdagenci        IN crapage.cdagenci%TYPE  --> Código da agencia
@@ -164,10 +199,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                                     ,pr_nrdconta        IN crapass.nrdconta%TYPE  --> Número da Conta
                                     ,pr_nrctrlim        IN craplim.nrctrlim%TYPE  --> Contrato
                                     ,pr_nmdatela        IN craptel.nmdatela%TYPE
+                                    ,pr_dstipopessoa    IN VARCHAR2               --> Tipo da Pessoa
                                     ,pr_tab_dados_ctr   OUT typ_tab_dados_ctr      --> Dados do contrato 
                                     ,pr_tab_crapavt     OUT cada0001.typ_tab_crapavt_58
                                     ,pr_tab_bens        OUT cada0001.typ_tab_bens    
                                     ,pr_tab_assinaturas_ctr OUT typ_tab_assinaturas_ctr                               
+                                    ,pr_tab_cartoes_ctr OUT typ_tab_cartoes_ctr --CARTOES ADICIONAIS                          
                                     ,pr_cdcritic        OUT PLS_INTEGER            --> Código da crítica
                                     ,pr_dscritic        OUT VARCHAR2) IS           --> Descrição da crít
                                       
@@ -186,6 +223,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
      
      Alteracoes: 28/09/2018 - Ajuste para pegar valor numerico do limite de esteira 
                               no json. INC0023773 (Lombardi)
+				 20/02/2019 - Implementação de nova versão do Termo de Adesão do Cartão
+							  de crédito. (PJ429 - Lucas - Supero)
     ..............................................................................*/
 
     ---------->> CURSORES <<--------
@@ -262,13 +301,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
       SELECT cop.nmrescop
             ,cop.nmextcop
             ,cop.nrdocnpj
-            ,cop.dsendcop
-            ,cop.nrendcop
-            ,cop.nmbairro
-            ,cop.nmcidade
-            ,cop.cdufdcop
+            ,age.dsendcop
+            ,age.nrendere
+            ,age.nmbairro
+            ,age.nmcidade
+            ,age.cdufdcop
+			      ,age.nrcepend
         FROM crapcop cop
-       WHERE cop.cdcooper = pr_cdcooper;
+            ,crapage age
+       WHERE cop.cdcooper = pr_cdcooper
+         AND age.cdcooper = cop.cdcooper
+         AND age.cdagenci = (SELECT age.cdagenci
+                               FROM crapass ass,
+                                    crapage age
+                              WHERE ass.cdagenci = age.cdagenci
+                                AND age.cdcooper = ass.cdcooper
+                                AND ass.nrdconta = pr_nrdconta
+                                AND ass.cdcooper = pr_cdcooper);
     rw_crapcop cr_crapcop%ROWTYPE; 
     
     --> Buscar enderecos do cooperado.
@@ -279,7 +328,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
              enc.nmbairro,
              enc.nmcidade,
              enc.nrendere,
-             enc.cdufende
+             enc.cdufende,
+             enc.tpendass
         FROM crapenc enc
        WHERE enc.cdcooper = pr_cdcooper
          AND enc.nrdconta = pr_nrdconta
@@ -350,6 +400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
             ,crd.dtpropos
             ,crd.nrdoccrd
             ,crd.dsprotoc
+            ,crd.dsendenv
         FROM crawcrd crd
        WHERE crd.cdcooper = pr_cdcooper
          and crd.nrdconta = pr_nrdconta
@@ -420,7 +471,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
              dtaprovacao,
              hraprovacao,
              nrcpf,
-             nmaprovador
+             nmaprovador,
+             cdaprovador
         FROM tbcrd_aprovacao_cartao
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
@@ -474,6 +526,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
          AND tpproduto = 4
        ORDER BY dhacionamento DESC;
     
+   CURSOR cr_tbgen_versao_termo(pr_cdcooper crapage.cdcooper%TYPE,
+                                pr_dtadesao date ) IS
+    SELECT DECODE(MAX(tbgen.dschave_versao), null, 'N', 'S') as dsnovotermo                                         
+      FROM TBGEN_VERSAO_TERMO tbgen
+     WHERE tbgen.cdcooper = pr_cdcooper
+       AND pr_dtadesao > tbgen.dtinicio_vigencia
+       AND upper(tbgen.dsnome_jasper) = upper(decode(pr_dstipopessoa, 'PF', 'termo_adesao_pf_novo.jasper', 'PJ', 'termo_adesao_pj_novo.jasper'));
+    rw_tbgen_versao_termo cr_tbgen_versao_termo%rowtype;
+    
+    CURSOR cr_cartoes_adicionais(pr_cdcooper crapage.cdcooper%TYPE,
+                                 pr_nrdconta crapass.nrdconta%TYPE) IS
+     SELECT tbcadast_pessoa.nmpessoa, 
+        tbcadast_pessoa_fisica.dtnascimento,
+        tbcadast_pessoa.nrcpfcgc,
+        tbcadast_pessoa_fisica.tpdocumento,
+        tbcadast_pessoa_fisica.nrdocumento,
+        crawcrd.nmtitcrd
+   FROM crawcrd,
+        tbcadast_pessoa,
+        tbcadast_pessoa_fisica
+  WHERE crawcrd.nrdconta = pr_nrdconta
+    AND crawcrd.cdcooper = pr_cdcooper
+    AND crawcrd.INSITCRD = 4
+    AND tbcadast_pessoa.nrcpfcgc = crawcrd.nrcpftit
+    AND tbcadast_pessoa_fisica.idpessoa = tbcadast_pessoa.idpessoa;
+    rw_cartoes_adicionais  cr_cartoes_adicionais%rowtype;
+    
+   CURSOR cr_representante_legal(pr_nrdconta crapass.nrdconta%TYPE) IS
+     SELECT '2.2 Representante legal:  '||tbcadast_pessoa.nmpessoa||', '||crapnac.dsnacion||', natural de '||mun2.dscidade||', '||
+            gnetcvl.dsestcvl||', nascido em '||to_char(tbcadast_pessoa_fisica.dtnascimento, 'dd/mm/yyyy')||', inscrito(a) no CPF sob o nº '||gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => tbcadast_pessoa.nrcpfcgc, pr_inpessoa => 1)||
+            ', com endereço residencial na Rua '||tbcadast_pessoa_endereco.nmlogradouro||', nº '||tbcadast_pessoa_endereco.nrlogradouro||
+            ', bairro '||tbcadast_pessoa_endereco.nmbairro||', cidade de '||mun1.dscidade||'/'||mun1.cdestado||', CEP '||gene0002.fn_mask_cep(tbcadast_pessoa_endereco.nrcep) as dsrepresentante
+        FROM  crapavt
+              ,tbcadast_pessoa
+              ,tbcadast_pessoa_fisica
+              ,tbcadast_pessoa_endereco
+              ,crapnac
+              ,gnetcvl
+              ,crapmun mun1
+              ,crapmun mun2
+       WHERE crapavt.nrdconta = 943037
+        AND tbcadast_pessoa.nrcpfcgc = crapavt.nrcpfcgc
+        AND tbcadast_pessoa.idpessoa = tbcadast_pessoa_fisica.idpessoa
+        AND tbcadast_pessoa_endereco.idpessoa = tbcadast_pessoa_fisica.idpessoa
+        AND tbcadast_pessoa_endereco.tpendereco = 10
+        AND tbcadast_pessoa_endereco.nrseq_endereco = 1      
+        AND crapnac.cdnacion = tbcadast_pessoa_fisica.cdnacionalidade
+        AND gnetcvl.cdestcvl = tbcadast_pessoa_fisica.cdestado_civil              
+        AND tbcadast_pessoa_endereco.idcidade = mun1.idcidade
+        AND mun2.idcidade = tbcadast_pessoa_fisica.cdnaturalidade
+        AND crapavt.dtvalida > sysdate  
+        AND ROWNUM = 1
+        ORDER BY crapavt.progress_recid ASC;
+        rw_representante_legal cr_representante_legal%rowtype;
+    
     ----------->>> VARIAVEIS <<<--------   
     -- Variável de críticas
     vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -483,6 +590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_exc_erro        EXCEPTION;
     vr_idxctr          PLS_INTEGER;
     vr_idxassinaturas  PLS_INTEGER;
+    vr_idxcartoes  PLS_INTEGER;
     vr_tab_dados_ctr   typ_tab_dados_ctr;    
     
     vr_cdoedrep        tbgen_orgao_expedidor.cdorgao_expedidor%TYPE;
@@ -508,6 +616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_tab_bens          cada0001.typ_tab_bens;
     vr_tab_erro          gene0001.typ_tab_erro;
     vr_tab_assinaturas_ctr  typ_tab_assinaturas_ctr;
+    vr_tab_cartoes_ctr  typ_tab_cartoes_ctr;
     
     --variaveis de restrições
     vr_nrconbir          crapcbd.nrconbir%TYPE;
@@ -691,16 +800,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     FETCH cr_craptfc INTO rw_craptfc_comer;
     CLOSE cr_craptfc;  
     
+  	OPEN cr_representante_legal(pr_nrdconta => rw_crapass.nrdconta);
+    FETCH cr_representante_legal 
+	 INTO rw_representante_legal;
+    CLOSE cr_representante_legal;  
+  
     -- Buscar assinatura
-   /* BEGIN
+    -- Necessário verificação na tbcrd_aprovacao_cartao para garantir que a proposta foi assinada.
+    BEGIN
       select 'S'
       INTO  vr_existe_cartao
-      from  crawcrd 
-      where nrcrcard <> '0'
-      and   insitcrd <> '0' 
-      AND   nrdconta = pr_nrdconta
-      AND   nrctrcrd = pr_nrctrlim
-      and   cdcooper = pr_cdcooper;
+      from  crawcrd crd
+      where crd.nrcrcard <> '0'
+      and   crd.insitcrd <> '0'
+      AND NOT EXISTS (SELECT 1 FROM tbcrd_aprovacao_cartao tbac
+                       WHERE tbac.nrctrcrd = pr_nrctrlim
+                         AND tbac.nrdconta = pr_nrdconta
+                         AND tbac.cdcooper = pr_cdcooper)
+      AND   crd.nrdconta = pr_nrdconta
+      AND   crd.nrctrcrd = pr_nrctrlim
+      AND   crd.cdcooper = pr_cdcooper;
     EXCEPTION
       WHEN no_data_found THEN
         NULL;
@@ -708,13 +827,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
         vr_dscritic := 'Erro ao verificar se o cartão já existe';
         RAISE vr_exc_erro;  
     END;
-	*/
     
-   /*
     IF vr_existe_cartao IS NOT NULL THEN
       vr_tab_assinaturas_ctr(1).nmtextoassinatura := 'Proposta assinada manualmente, termo pré impresso.';
     ELSE
-	*/
       BEGIN
         vr_idxassinaturas := 0;
         FOR rw_tbaprc IN cr_tbaprc(pr_cdcooper
@@ -730,9 +846,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
           vr_tab_assinaturas_ctr(vr_idxassinaturas).nrctrcrd := rw_tbaprc.nrctrcrd;
           vr_tab_assinaturas_ctr(vr_idxassinaturas).indtipo_senha := rw_tbaprc.indtipo_senha;
           vr_tab_assinaturas_ctr(vr_idxassinaturas).nrcpf := rw_tbaprc.nrcpf;
+          IF (TRIM(rw_tbaprc.cdaprovador) IS NULL) THEN
           vr_tab_assinaturas_ctr(vr_idxassinaturas).nmtextoassinatura := 'Assinado eletronicamente, mediante aposição de senha do '
                                                               ||rw_tbaprc.nmaprovador||', no dia '||to_char(rw_tbaprc.dtaprovacao,'DD/MM/YYYY')
                                                               ||' e na hora '||rw_tbaprc.hraprovacao;
+          ELSE
+            vr_tab_assinaturas_ctr(vr_idxassinaturas).nmtextoasssuperv := 'Solicitado pelo '||rw_tbaprc.cdaprovador||' - '
+                                                              ||rw_tbaprc.nmaprovador||', no dia '||to_char(rw_tbaprc.dtaprovacao,'DD/MM/YYYY')
+                                                              ||' e na hora '||rw_tbaprc.hraprovacao;
+          END IF;
         END LOOP; 
       EXCEPTION
         WHEN no_data_found THEN
@@ -744,9 +866,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
       IF vr_idxassinaturas = 0 THEN
          vr_dscritic := 'Assinatura não encontrada.';
          vr_tab_assinaturas_ctr(1).nmtextoassinatura := 'Proposta assinada manualmente, termo pré impresso.';
+         vr_tab_assinaturas_ctr(1).nmtextoasssuperv := '';
       END IF;
       
-    /*END IF;*/
+    END IF;
     
     -- Se for pessoa Juridica
     IF rw_crapass.inpessoa > 1 THEN
@@ -760,6 +883,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
         CLOSE cr_crapjur;
       END IF;
     END IF;  
+    
+    --Busca Cartoes Adicionais
+    BEGIN
+      vr_idxcartoes := 0;
+      FOR rw_cartoes_adicionais IN cr_cartoes_adicionais(pr_cdcooper,
+                                                         pr_nrdconta) 
+      LOOP
+        vr_idxcartoes := vr_tab_cartoes_ctr.count() + 1;      
+        vr_tab_cartoes_ctr(vr_idxcartoes).nmpessoa := rw_cartoes_adicionais.nmpessoa;
+        vr_tab_cartoes_ctr(vr_idxcartoes).dtnascimento := rw_cartoes_adicionais.dtnascimento;
+        vr_tab_cartoes_ctr(vr_idxcartoes).nrcpfcgc := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_cartoes_adicionais.nrcpfcgc,
+                                                                        pr_inpessoa => 1);
+        vr_tab_cartoes_ctr(vr_idxcartoes).nrdocumento := rw_cartoes_adicionais.nrdocumento;
+        vr_tab_cartoes_ctr(vr_idxcartoes).nmtitcrd := rw_cartoes_adicionais.nmtitcrd;
+      END LOOP;
+    EXCEPTION
+      WHEN no_data_found THEN
+        vr_dscritic := 'Cartão adicional não encontrado.';
+        --RAISE vr_exc_erro;
+        IF vr_idxcartoes = 0 THEN
+          vr_dscritic := 'Cartão adicional não encontrado.';
+        END IF;
+    END;
+    
+    
     
     -- Busca restrições 
     sspc0001.pc_busca_consulta_biro(pr_cdcooper => pr_cdcooper,
@@ -927,6 +1075,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
       vr_dsDadosAprovador := 'Esteira de Crédito em '|| to_char(rw_crawcrd.dtaprova,'DD/MM/YYYY');
     END IF;
     
+         
+   -- Buscar vigência termo
+    OPEN cr_tbgen_versao_termo(pr_cdcooper
+                   ,nvl(rw_crawcrd.dtinsori,rw_crawcrd.dtpropos));
+    FETCH cr_tbgen_versao_termo INTO rw_tbgen_versao_termo;
+    CLOSE cr_tbgen_versao_termo;  
+    
     -- Monta os dados do Aprovador
     IF rw_crawcrd.cdadmcrd IN (16,17) THEN --Débito
       --O mesmo da solicitação
@@ -955,6 +1110,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_tab_dados_ctr(vr_idxctr).dsnacion := rw_crapnac.dsnacion;  --Nacionalidade
     vr_tab_dados_ctr(vr_idxctr).rsestcvl := rw_gnetcvl.rsestcvl;  --Estado Civil
     vr_tab_dados_ctr(vr_idxctr).nmprimtl := rw_crawcrd.nmextttl;  --Nome Completo
+    
+
+	vr_tab_dados_ctr(vr_idxctr).dsendere := rw_crapenc.dsendere;  --Endereço
+	vr_tab_dados_ctr(vr_idxctr).nrendere := rw_crapenc.nrendere;  --Número
+	vr_tab_dados_ctr(vr_idxctr).nmbairro := rw_crapenc.nmbairro;  --Bairro 
+	vr_tab_dados_ctr(vr_idxctr).nmcidade := rw_crapenc.nmcidade;  --Cidade
+	vr_tab_dados_ctr(vr_idxctr).cdufende := rw_crapenc.cdufende;  --UF Endereço
+	vr_tab_dados_ctr(vr_idxctr).nrcepend := rw_crapenc.nrcepend;  --CEP	
+	
+	vr_tab_dados_ctr(vr_idxctr).nmextcopcop := rw_crapcop.nmextcop;  --Nome Cooperativa
+	vr_tab_dados_ctr(vr_idxctr).nrdocnpjcop := rw_crapcop.nrdocnpj;  --CNPJ Cooperativa
+	vr_tab_dados_ctr(vr_idxctr).dsendcopcop := rw_crapcop.dsendcop;  --Endereço Cooperativa
+	vr_tab_dados_ctr(vr_idxctr).nrcependcop := rw_crapcop.nrcepend;  --CEP Cooperativa
+	vr_tab_dados_ctr(vr_idxctr).nmcidadecop := rw_crapcop.nmcidade;  --Cidade Cooperativa	
     
     IF rw_crapass.inpessoa = 1 THEN
       vr_tab_dados_ctr(vr_idxctr).nrcpfcgc := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crawcrd.nrcpftit,
@@ -989,7 +1158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_tab_dados_ctr(vr_idxctr).nrcpftit := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crawcrd.nrcpftit,
                                                                       pr_inpessoa => 1);--CPF da proposta
     vr_tab_dados_ctr(vr_idxctr).dsdadosSolicitacao := vr_dsDadosSolicitante;    -- Operador Solicitante
-    vr_tab_dados_ctr(vr_idxctr).dsdadosAprovacao := vr_dsDadosAprovador;        -- Operador Aprovador
+    vr_tab_dados_ctr(vr_idxctr).dsdadosAprovacao := nvl(vr_dsDadosAprovador, ' ');       -- Operador Aprovador
     vr_tab_dados_ctr(vr_idxctr).tpforma_pagamento := rw_crawcrd.forma_pagto;    -- Forma de pagamento
     vr_tab_dados_ctr(vr_idxctr).nrdia_pagamento := rw_crawcrd.dddebito;         -- Dia de pagamento
     vr_tab_dados_ctr(vr_idxctr).nmlocaldata := vr_localedata;                   -- Local e Data da Assinatura    
@@ -1011,6 +1180,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
       vr_tab_dados_ctr(vr_idxctr).indserasa := 'N';
     END IF;  
        
+	  IF TRIM(rw_crawcrd.dsendenv) IS NOT NULL THEN
+        vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := rw_crawcrd.dsendenv;       --Endereço de envio definido na criação da prosta
+    ELSE
+        vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega := rw_crapcop.dsendcop || ', ' || rw_crapcop.nrendere || ' - ' || rw_crapcop.nmbairro || ' - ' || rw_crapcop.nmcidade || ' - ' || rw_crapcop.cdufdcop || ' - CEP: ' || rw_crapcop.nrcepend;
+    END IF;
+    
+	vr_tab_dados_ctr(vr_idxctr).dsnovotermo := rw_tbgen_versao_termo.dsnovotermo;
+	vr_tab_dados_ctr(vr_idxctr).dsrepresentante := rw_representante_legal.dsrepresentante;
+	
     -- Se for pessoa Juridica
     IF rw_crapass.inpessoa > 1 THEN
     
@@ -1041,6 +1219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     pr_tab_crapavt    := vr_tab_crapavt;
     pr_tab_bens       := vr_tab_bens;
     pr_tab_assinaturas_ctr := vr_tab_assinaturas_ctr;
+    pr_tab_cartoes_ctr := vr_tab_cartoes_ctr;
     
   EXCEPTION    
     WHEN vr_exc_erro THEN
@@ -1107,6 +1286,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_dstransa        craplgm.dstransa%TYPE := 'Impressao do termo de adesao PF do carta de credito Ailos';
     vr_nrdrowid        ROWID;
 
+    vr_localdata       VARCHAR2(200);
+    vr_localdatasup    VARCHAR2(200);
+    
     vr_idseqttl        crapttl.idseqttl%TYPE;
     
     vr_dsdireto        VARCHAR2(4000);
@@ -1119,6 +1301,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_tab_crapavt     cada0001.typ_tab_crapavt_58;
     vr_tab_bens        cada0001.typ_tab_bens;
     vr_tab_assinaturas_ctr  typ_tab_assinaturas_ctr;
+    vr_tab_cartoes_ctr typ_tab_cartoes_ctr;
+    
+    vr_termo_jasper VARCHAR2(100);
+    vr_relatorio_jasper NUMBER;
     
     vr_idxctr          PLS_INTEGER;
     vr_idxass          PLS_INTEGER;
@@ -1151,7 +1337,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     --Buscar diretorio da cooperativa
     vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
                                          pr_cdcooper => pr_cdcooper);
-                                        
+                                         
     /* Caso o nome esteja vazio vamos setar algum valor para impedir 
        apagar todos os relatorios da pasta rl.
        Apesar disso, logamos para saber do ocorrido */
@@ -1199,12 +1385,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                               ,pr_nrdconta        => pr_nrdconta  --> Número da Conta
                               ,pr_nrctrlim        => pr_nrctrlim  --> Contrato
                               ,pr_nmdatela        => pr_nmdatela  --> Nome da Tela
+                              ,pr_dstipopessoa    => 'PF'         --> Tipo da Pessoa
                               ,pr_tab_dados_ctr   => vr_tab_dados_ctr    --> Dados do contrato 
                               ,pr_tab_crapavt     => vr_tab_crapavt     
                               ,pr_tab_bens        => vr_tab_bens  
                               ,pr_tab_assinaturas_ctr => vr_tab_assinaturas_ctr                                  
+                              ,pr_tab_cartoes_ctr => vr_tab_cartoes_ctr                         
                               ,pr_cdcritic        => vr_cdcritic         --> Código da crítica
-                              ,pr_dscritic        => vr_dscritic);         --> Descrição da crít
+                              ,pr_dscritic        => vr_dscritic);       --> Descrição da crít
                                       
     IF nvl(vr_cdcritic,0) > 0 OR
        TRIM(vr_dscritic) IS NOT NULL THEN
@@ -1233,12 +1421,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     
     vr_txtcompl := NULL;
    
+    IF vr_tab_assinaturas_ctr(1).nmtextoasssuperv IS NOT NULL THEN
+        vr_localdatasup := vr_tab_dados_ctr(vr_idxctr).nmlocaldata;
+        vr_localdata    := ' ';
+    ELSE
+        vr_localdatasup := ' ';
+        vr_localdata    := vr_tab_dados_ctr(vr_idxctr).nmlocaldata;
+    END IF;
+  
     --> INICIO
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>
                     <nmprimtl>'|| vr_tab_dados_ctr(vr_idxctr).nmprimtl ||'</nmprimtl>'); 
     
     pc_escreve_xml('<nrctrd>'||vr_tab_dados_ctr(vr_idxctr).nrctrcrd||'</nrctrd>'||
                    '<nomeCompleto>'|| vr_tab_dados_ctr(vr_idxctr).nmprimtl     ||'</nomeCompleto>'||     
+				   
+                   '<endere>'|| vr_tab_dados_ctr(vr_idxctr).dsendere ||'</endere>' ||
+                   '<nrende>'|| vr_tab_dados_ctr(vr_idxctr).nrendere ||'</nrende>' ||
+                   '<bairro>'|| vr_tab_dados_ctr(vr_idxctr).nmbairro ||'</bairro>' ||
+                   '<cidade>'|| vr_tab_dados_ctr(vr_idxctr).nmcidade ||'</cidade>' ||
+                   '<ufend>'|| vr_tab_dados_ctr(vr_idxctr).cdufende  ||'</ufend>' ||
+                   '<cep>'|| gene0002.fn_mask_cep(vr_tab_dados_ctr(vr_idxctr).nrcepend)  || '</cep>' ||  
+				   
                    '<cpf>'|| vr_tab_dados_ctr(vr_idxctr).nrcpfcgc                 ||'</cpf>'||
                    '<nomeImpresso>'|| vr_tab_dados_ctr(vr_idxctr).nmtitcrd ||'</nomeImpresso>'||
                    '<dataNascimento>'|| to_char(vr_tab_dados_ctr(vr_idxctr).dtnasctl,'DD/MM/RRRR') ||'</dataNascimento>'||
@@ -1261,12 +1465,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                    '<limiteEsteira>'|| 'R$ '|| to_char(vr_tab_dados_ctr(vr_idxctr).vllimest,'FM99G999G990D00') ||'</limiteEsteira>'||
                    '<dadosSolicitacao>'|| vr_tab_dados_ctr(vr_idxctr).dsdadosSolicitacao ||'</dadosSolicitacao>'||
                    '<dadosAprovacao>'|| vr_tab_dados_ctr(vr_idxctr).dsdadosAprovacao ||'</dadosAprovacao>'||
-                   '<localEData>'|| vr_tab_dados_ctr(vr_idxctr).nmlocaldata ||'</localEData>'||
+                   '<localEData>'|| vr_localdata ||'</localEData>'||
+                   '<localEDataSup>'|| vr_localdatasup ||'</localEDataSup>'||
                    '<formaPagamento>'|| vr_tab_dados_ctr(vr_idxctr).tpforma_pagamento ||'</formaPagamento>'||
                    '<assinatura>'||vr_tab_assinaturas_ctr(1).nmtextoassinatura||'</assinatura>'||
+                   '<asssuperv>'||vr_tab_assinaturas_ctr(1).nmtextoasssuperv||'</asssuperv>'||
                    '<spc>'|| vr_tab_dados_ctr(vr_idxctr).indspc ||'</spc>'||
                    '<serasa>'|| vr_tab_dados_ctr(vr_idxctr).indserasa ||'</serasa>'||
-                   '<diaPagamento>'|| vr_tab_dados_ctr(vr_idxctr).nrdia_pagamento ||'</diaPagamento>');    
+                   '<diaPagamento>'|| vr_tab_dados_ctr(vr_idxctr).nrdia_pagamento ||'</diaPagamento>'||
+				   '<nmextcopcop>'|| vr_tab_dados_ctr(vr_idxctr).nmextcopcop ||'</nmextcopcop>'||
+				   '<nrdocnpjcop>'|| vr_tab_dados_ctr(vr_idxctr).nrdocnpjcop ||'</nrdocnpjcop>'||
+				   '<dsendcopcop>'|| vr_tab_dados_ctr(vr_idxctr).dsendcopcop ||'</dsendcopcop>'||
+				   '<nrcependcop>'|| gene0002.fn_mask_cep(vr_tab_dados_ctr(vr_idxctr).nrcependcop) ||'</nrcependcop>'||
+				   '<nmcidadecop>'|| vr_tab_dados_ctr(vr_idxctr).nmcidadecop ||'</nmcidadecop>'||
+				   '<dsenderecoentrega>'|| vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega ||'</dsenderecoentrega>');
+               
+          pc_escreve_xml('<cartoes>');
+            FOR rindex IN 1..vr_tab_cartoes_ctr.count LOOP
+              -- 
+              pc_escreve_xml('<cartao>');
+              pc_escreve_xml('<nomeCompleto>'||vr_tab_cartoes_ctr(rindex).nmpessoa||'</nomeCompleto>'||
+                             '<nomeImpresso>'||vr_tab_cartoes_ctr(rindex).nmtitcrd||'</nomeImpresso>'||
+                             '<cpf>'||vr_tab_cartoes_ctr(rindex).nrcpfcgc||'</cpf>'||
+                             '<dataNascimento>'||to_char(vr_tab_cartoes_ctr(rindex).dtnascimento,'DD/MM/RRRR')||'</dataNascimento>'||
+                             '<identidade>'||vr_tab_cartoes_ctr(rindex).nrdocumento||'</identidade>'||
+                             '<tagCont>'||rindex||'</tagCont>');
+              pc_escreve_xml('</cartao>'); 
+              --
+            END LOOP;
+                      
+          pc_escreve_xml('</cartoes>');
+                    
     
     --> Descarregar buffer    
     pc_escreve_xml(' ',TRUE); 
@@ -1279,18 +1508,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
    l_offset := l_offset + 255;
    end loop;
     
+	 select decode(vr_tab_dados_ctr(vr_idxctr).dsnovotermo,
+				 'S',
+				 'termo_adesao_pf_novo.jasper',
+				 'termo_adesao_pf.jasper'),
+		  decode(vr_tab_dados_ctr(vr_idxctr).dsnovotermo, 'S', 777, 280)
+	 into vr_termo_jasper, vr_relatorio_jasper
+	 from dual;   
+    
     --> Solicita geracao do PDF
     gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
                                , pr_cdprogra  => pr_cdprogra
                                , pr_dtmvtolt  => pr_dtmvtolt
                                , pr_dsxml     => vr_des_xml
                                , pr_dsxmlnode => '/raiz'
-                               , pr_dsjasper  => 'termo_adesao_pf.jasper'
+                               , pr_dsjasper  => vr_termo_jasper
                                , pr_dsparams  => null
                                , pr_dsarqsaid => vr_dsdireto ||'/rl/'||pr_nmarqpdf
                                , pr_flg_gerar => 'S'
                                , pr_qtcoluna  => 234
-                               , pr_cdrelato  => 280
+                               , pr_cdrelato  => vr_relatorio_jasper
                                , pr_sqcabrel  => 1
                                , pr_flg_impri => 'N'
                                , pr_nmformul  => ' '
@@ -1477,9 +1714,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     vr_tab_crapavt     cada0001.typ_tab_crapavt_58;
     vr_tab_bens        cada0001.typ_tab_bens;
     vr_tab_assinaturas_ctr  typ_tab_assinaturas_ctr;
+    vr_tab_cartoes_ctr typ_tab_cartoes_ctr;
+    
+    vr_localdata       VARCHAR2(200);
+    vr_localdatasup    VARCHAR2(200);
     
     vr_idxctr          PLS_INTEGER;
     vr_idxass          PLS_INTEGER;
+    
+    vr_termo_jasper VARCHAR2(100);
+    vr_relatorio_jasper NUMBER;
     
     --vr_dsextmail       VARCHAR2(3);
     vr_dsmailcop       VARCHAR2(4000);
@@ -1557,12 +1801,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                               ,pr_nrdconta        => pr_nrdconta  --> Número da Conta
                               ,pr_nrctrlim        => pr_nrctrlim  --> Contrato
                               ,pr_nmdatela        => pr_nmdatela  --> Nome da tela
+                              ,pr_dstipopessoa    => 'PF'         --> Tipo da Pessoa                              
                               ,pr_tab_dados_ctr   => vr_tab_dados_ctr    --> Dados do contrato 
                               ,pr_tab_crapavt     => vr_tab_crapavt     
                               ,pr_tab_bens        => vr_tab_bens  
                               ,pr_tab_assinaturas_ctr => vr_tab_assinaturas_ctr                                       
+                              ,pr_tab_cartoes_ctr => vr_tab_cartoes_ctr                                             
                               ,pr_cdcritic        => vr_cdcritic         --> Código da crítica
-                              ,pr_dscritic        => vr_dscritic);         --> Descrição da crít
+                              ,pr_dscritic        => vr_dscritic);          --> Descrição da crít
                                       
     IF nvl(vr_cdcritic,0) > 0 OR
        TRIM(vr_dscritic) IS NOT NULL THEN
@@ -1591,6 +1837,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     
     vr_txtcompl := NULL;
    
+    IF vr_tab_assinaturas_ctr(1).nmtextoasssuperv IS NOT NULL THEN
+        vr_localdatasup := vr_tab_dados_ctr(vr_idxctr).nmlocaldata;
+        vr_localdata    := ' ';
+    ELSE
+        vr_localdatasup := ' ';
+        vr_localdata    := vr_tab_dados_ctr(vr_idxctr).nmlocaldata;
+    END IF;
+   
     --> INICIO
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>
                     <nmprimtl>'|| vr_tab_dados_ctr(vr_idxctr).nmprimtl ||'</nmprimtl>'); 
@@ -1603,6 +1857,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                    '<nomeFantasia>'|| vr_tab_dados_ctr(vr_idxctr).nmfantasia ||'</nomeFantasia>'||
                    '<dataConstituicao>'|| vr_tab_dados_ctr(vr_idxctr).dtconstituicao ||'</dataConstituicao>'||
                    '<nomeImpresso>'|| vr_tab_dados_ctr(vr_idxctr).nmimpresso ||'</nomeImpresso>'||
+                   
+                   '<endere>'|| vr_tab_dados_ctr(vr_idxctr).dsendere ||'</endere>' ||
+                   '<nrende>'|| vr_tab_dados_ctr(vr_idxctr).nrendere ||'</nrende>' ||
+                   '<bairro>'|| vr_tab_dados_ctr(vr_idxctr).nmbairro ||'</bairro>' ||
+                   '<cidade>'|| vr_tab_dados_ctr(vr_idxctr).nmcidade ||'</cidade>' ||
+                   '<ufend>'|| vr_tab_dados_ctr(vr_idxctr).cdufende  ||'</ufend>' ||
+                   '<cep>'|| gene0002.fn_mask_cep(vr_tab_dados_ctr(vr_idxctr).nrcepend)  || '</cep>' ||  
+                   
+                   '<nmextcopcop>'|| vr_tab_dados_ctr(vr_idxctr).nmextcopcop ||'</nmextcopcop>'||
+                   '<nrdocnpjcop>'|| vr_tab_dados_ctr(vr_idxctr).nrdocnpjcop ||'</nrdocnpjcop>'||
+                   '<dsendcopcop>'|| vr_tab_dados_ctr(vr_idxctr).dsendcopcop ||'</dsendcopcop>'||
+                   '<nrcependcop>'|| gene0002.fn_mask_cep(vr_tab_dados_ctr(vr_idxctr).nrcependcop) ||'</nrcependcop>'||
+                   '<nmcidadecop>'|| vr_tab_dados_ctr(vr_idxctr).nmcidadecop ||'</nmcidadecop>'||
+                                      
                    '<faturamentoAnual>'|| 'R$ '|| to_char(vr_tab_dados_ctr(vr_idxctr).vlfaturamentoanual,'FM99G999G990D00') ||'</faturamentoAnual>'||
                    '<tipoCartao>'|| vr_tab_dados_ctr(vr_idxctr).nmresadm ||'</tipoCartao>'||
                    '<foneComercial>'|| vr_tab_dados_ctr(vr_idxctr).vrnrteco ||'</foneComercial>'||
@@ -1614,11 +1882,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                    '<formaPagamento>'|| vr_tab_dados_ctr(vr_idxctr).tpforma_pagamento ||'</formaPagamento>'||
                    '<dadosSolicitacao>'|| vr_tab_dados_ctr(vr_idxctr).dsdadosSolicitacao ||'</dadosSolicitacao>'||
                    '<dadosAprovacao>'|| vr_tab_dados_ctr(vr_idxctr).dsdadosAprovacao ||'</dadosAprovacao>'||
-                   '<localEData>'|| vr_tab_dados_ctr(vr_idxctr).nmlocaldata ||'</localEData>'||
+                   '<localEData>'|| vr_localdata ||'</localEData>'||
+                   '<localEDataSup>'|| vr_localdatasup ||'</localEDataSup>'||
                    '<spc>'|| vr_tab_dados_ctr(vr_idxctr).indspc ||'</spc>'||
                    '<serasa>'|| vr_tab_dados_ctr(vr_idxctr).indserasa ||'</serasa>'||
                    '<diaPagamento>'|| vr_tab_dados_ctr(vr_idxctr).nrdia_pagamento ||'</diaPagamento>'||
-                   '<cdgraupr>'|| vr_tab_dados_ctr(vr_idxctr).cdgraupr ||'</cdgraupr>');
+                   '<cdgraupr>'|| vr_tab_dados_ctr(vr_idxctr).cdgraupr ||'</cdgraupr>'||
+                   '<dsenderecoentrega>'|| vr_tab_dados_ctr(vr_idxctr).dsenderecoentrega ||'</dsenderecoentrega>'||
+                   '<dsrepresentante>'|| vr_tab_dados_ctr(vr_idxctr).dsrepresentante||'</dsrepresentante>');
+    pc_escreve_xml('<cartoes>');
+      FOR rindex IN 1..vr_tab_cartoes_ctr.count LOOP
+        -- 
+        pc_escreve_xml('<cartao>');
+        pc_escreve_xml('<nomeCompleto>'||vr_tab_cartoes_ctr(rindex).nmpessoa||'</nomeCompleto>'||
+                       '<nomeImpresso>'||vr_tab_cartoes_ctr(rindex).nmtitcrd||'</nomeImpresso>'||
+                       '<cpf>'||vr_tab_cartoes_ctr(rindex).nrcpfcgc||'</cpf>'||
+                       '<dataNascimento>'||to_char(vr_tab_cartoes_ctr(rindex).dtnascimento,'DD/MM/RRRR')||'</dataNascimento>'||
+                       '<identidade>'||vr_tab_cartoes_ctr(rindex).nrdocumento||'</identidade>'||
+                       '<tagCont>'||rindex||'</tagCont>');
+        pc_escreve_xml('</cartao>'); 
+        --
+      END LOOP;
+                      
+    pc_escreve_xml('</cartoes>');               
                      
     pc_escreve_xml('<portadores>');
     
@@ -1630,7 +1916,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                      '<dataNascimento>'||to_char(vr_tab_dados_ctr(vr_idxctr).dtnasctl,'DD/MM/RRRR')||'</dataNascimento>'||
                      '<identidade>'||vr_tab_dados_ctr(vr_idxctr).nrdocttl||'</identidade>'||
                      '<emissor>'||vr_tab_dados_ctr(vr_idxctr).cdorgao_expedidor||'</emissor>'||
-                     '<ufEmissao>'||vr_tab_dados_ctr(vr_idxctr).cdufdttl||'</ufEmissao>');
+                     '<ufEmissao>'||vr_tab_dados_ctr(vr_idxctr).cdufdttl||'</ufEmissao>'||
+                     '<tagCont>0</tagCont>');
       pc_escreve_xml('</portador>');
     ELSE
       FOR rindex IN 1..vr_tab_crapavt.count LOOP
@@ -1644,7 +1931,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                          '<dataNascimento>'||to_char(vr_tab_crapavt(rindex).dtnascto,'DD/MM/RRRR')||'</dataNascimento>'||
                          '<identidade>'||vr_tab_crapavt(rindex).nrdocava||'</identidade>'||
                          '<emissor>'||vr_tab_crapavt(rindex).cdoeddoc||'</emissor>'||
-                         '<ufEmissao>'||vr_tab_crapavt(rindex).cdufddoc||'</ufEmissao>');
+                         '<ufEmissao>'||vr_tab_crapavt(rindex).cdufddoc||'</ufEmissao>'||
+                         '<tagCont>'||rindex||'</tagCont>');
           pc_escreve_xml('</portador>');
         END IF;
         --
@@ -1661,6 +1949,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
       pc_escreve_xml('</assinatura>');
     END LOOP;
     
+    IF vr_tab_assinaturas_ctr(1).nmtextoasssuperv IS NOT NULL THEN
+        pc_escreve_xml('<asssuperv>'||vr_tab_assinaturas_ctr(1).nmtextoasssuperv||'</asssuperv>');
+
+    END IF;
+    
     pc_escreve_xml('</assinaturas>');
         
     --> Descarregar buffer    
@@ -1674,18 +1967,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
    l_offset := l_offset + 255;
    end loop;
     
+   select decode(vr_tab_dados_ctr(vr_idxctr).dsnovotermo,
+               'S',
+               'termo_adesao_pj_novo.jasper',
+               'termo_adesao_pj.jasper'),
+        decode(vr_tab_dados_ctr(vr_idxctr).dsnovotermo, 'S', 780, 280)
+   into vr_termo_jasper, vr_relatorio_jasper
+   from dual;
+   
     --> Solicita geracao do PDF
     gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
                                , pr_cdprogra  => pr_cdprogra
                                , pr_dtmvtolt  => pr_dtmvtolt
                                , pr_dsxml     => vr_des_xml
                                , pr_dsxmlnode => '/raiz'
-                               , pr_dsjasper  => 'termo_adesao_pj.jasper'
+                               , pr_dsjasper  => vr_termo_jasper
                                , pr_dsparams  => null
                                , pr_dsarqsaid => vr_dsdireto ||'/rl/'||pr_nmarqpdf
                                , pr_flg_gerar => 'S'
                                , pr_qtcoluna  => 234
-                               , pr_cdrelato  => 280
+                               , pr_cdrelato  => vr_relatorio_jasper
                                , pr_sqcabrel  => 1
                                , pr_flg_impri => 'N'
                                , pr_nmformul  => ' '
@@ -2080,5 +2381,122 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     END;
 
   END pc_impres_termo_adesao_pj_web;
+  
+  --> Rotina para retornar o tipo de envio
+  PROCEDURE pc_retorna_tipo_envio(pr_nrdconta   IN crapass.nrdconta%TYPE  --> Número da Conta
+                                 ,pr_nrctrcrd   IN crapcrd.nrctrcrd%TYPE  --> Contrato
+                                 ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
+                                 ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+                                 ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+                                 ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                 ,pr_des_erro  OUT VARCHAR2) IS           --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_retorna_tipo_envio
+    Sistema : Ayllos Web
+    Autor   : Anderson - Supero
+    Data    : Março/2019                 Ultima atualizacao: 00/00/0000
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para chamar as impressoes pelo Ayllos Web
+
+    Alteracoes:
+    ..............................................................................*/
+    DECLARE
+      
+      CURSOR cr_tbcrd_endereco_entrega(pr_cdcooper crapage.cdcooper%TYPE,
+                                       pr_nrdconta crapass.nrdconta%TYPE,
+                                       pr_nrctrcrd crapcrd.nrctrcrd%TYPE) IS
+      SELECT tbend.idtipoenvio
+      FROM tbcrd_endereco_entrega tbend
+          ,tbcrd_dominio_campo tbdom
+       WHERE tbend.idtipoenvio = tbdom.cddominio
+       AND tbdom.nmdominio = 'TPENDERECOENTREGA'
+       AND tbend.cdcooper = pr_cdcooper
+       AND tbend.nrdconta = pr_nrdconta
+       AND tbend.nrctrcrd = pr_nrctrcrd;
+       rw_tbcrd_endereco_entrega cr_tbcrd_endereco_entrega%rowtype;
+    
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+      
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+    BEGIN
+      
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      OPEN cr_tbcrd_endereco_entrega(pr_cdcooper => vr_cdcooper ,
+                                     pr_nrdconta => pr_nrdconta,
+                                     pr_nrctrcrd => pr_nrctrcrd);
+      FETCH cr_tbcrd_endereco_entrega 
+       INTO rw_tbcrd_endereco_entrega;
+      CLOSE cr_tbcrd_endereco_entrega;
+      
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Root',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'Dados',
+                             pr_tag_cont => NULL,
+                             pr_des_erro => vr_dscritic);
+      -- Insere as tags
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Dados',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'tipo_envio',
+                             pr_tag_cont => rw_tbcrd_endereco_entrega.idtipoenvio,
+                             pr_des_erro => vr_dscritic);
+    
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela pc_retorna_tipo_envio: ' || SQLERRM;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+
+  END pc_retorna_tipo_envio;
 END CCRD0008;
 /

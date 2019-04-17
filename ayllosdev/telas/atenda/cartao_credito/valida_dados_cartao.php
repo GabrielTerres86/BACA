@@ -32,6 +32,8 @@
  *                                            Não há solicitação de cartão Puro Crédito para PF. (Chamado 545667)
  *				  
  *				  012: [01/03/2017] Kelvin: Realizado ajuste para não desabilitar o campo "Nome da empresa" caso cooperado já tenha cartão. (SD 609533)
+ *
+ *                013: [18/03/2019] Anderson: Implementado tipo de envio do cartão (Supero)
  * --------------
  */
 
@@ -97,6 +99,22 @@ $xmlResult = getDataXML($xmlSetCartao);
 // Cria objeto para classe de tratamento de XML
 $xmlObjCartao = getObjectXML($xmlResult);
 	
+$flgTitular = false;
+if ($nrctrcrd > 0 && $cdadmcrd > 0) {
+    $xml  = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+    $xml .= "   <cdadmcrd>".$cdadmcrd."</cdadmcrd>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+    $xmlResult = mensageria($xml, "ATENDA_CRD", "BUSCA_DADOS_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObject = getObjectXML($xmlResult);
+
+    $flgTitular = getByTagName($xmlObject->roottag->tags[0]->tags, "FLGTITULAR");
+}
+
 	// Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
     $msgErro = $xmlObjCartao->roottag->tags[0]->cdata;
@@ -113,6 +131,7 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
     $nmempres = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata;
     // Identifica se o cartao possui a opcao debito habilitada
     $flgdebit = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[5]->cdata;
+
 
     echo 'bloqueiaFundo(divRotina);';
 
@@ -133,10 +152,8 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
             echo '$("#tpdpagto","#frmNovoCartao").val(3);';
         }
 
-        /*Como foi removido a opcao cooperado no campo Envio
-          neste momento, forcamos o valor 1 ("Cooperativa") no campo*/
-        echo '$("#tpenvcrd","#frmNovoCartao").val(1);';
-        echo '$("#dddebito","#frmNovoCartao").val("' . $dddebito . '");';
+        echo '$("#tpenvcrd","#frmNovoCartao").val("'.$tpenvcrd.'");';
+        echo '$("#dddebito","#frmNovoCartao").val("'.$dddebito.'");';
         echo "$('#dddebito').attr('disabled', true);";
         echo "$('#tpenvcrd').attr('disabled', true);";
         if (!($cdadmcrd > 10 && $cdadmcrd < 18))
@@ -184,10 +201,11 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
     } else {
 
         if ($nmempres <> "") {
-			if($glbadc == 'n' || $cdadmcrd!="15")
+			if($glbadc == 'n' || $cdadmcrd!="15") {
 				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero			
-			else {
-				echo '$("#nmempres","#frmNovoCartao").val(nmEmpresPla);';
+			} else {
+				
+                echo 'if (trim(nmEmpresPla) != "") { $("#nmempres","#frmNovoCartao").val(nmEmpresPla); }';
 				echo 'if ($("#flgEditEmpPlas", "#frmNovoCartao").val() != "1"){';
 				echo "desativa('nmempres');/*$glbadc*/";
 				echo '}';
@@ -207,23 +225,24 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
                 echo '$("#tpdpagto","#frmNovoCartao").val("3");';
             }
 
-            /*Como foi removido a opcao cooperado no campo Envio
-              neste momento, forcamos o valor 1 ("Cooperativa") no campo*/
-            echo '$("#tpenvcrd","#frmNovoCartao").val(1);';
+            echo '$("#tpenvcrd","#frmNovoCartao").val("'.$tpenvcrd.'");';
 
             echo '$("#dddebito","#frmNovoCartao").val("' . $dddebito . '");';
 			if($glbadc == 'n' || $cdadmcrd!="15") {
 				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero
 			}else{
-				echo '$("#nmempres","#frmNovoCartao").val(nmEmpresPla);';
+                echo 'if (trim(nmEmpresPla) != "") { $("#nmempres","#frmNovoCartao").val(nmEmpresPla); }';
 				echo 'if ($("#flgEditEmpPlas", "#frmNovoCartao").val() != "1"){';
 				echo "desativa('nmempres');/*$glbadc*/";
 				echo '}';
 				
 			}
 
+			if ($inpessoa == 1 || !$flgTitular) {
 			echo "$('#dddebito').attr('disabled', true);";
-			if ($nrctrcrd == 0) {
+            }
+
+			if (!$flgTitular) {
             echo "desativa('vllimpro');";
             echo "$('#tpdpagto').attr('disabled', true);";
 			}

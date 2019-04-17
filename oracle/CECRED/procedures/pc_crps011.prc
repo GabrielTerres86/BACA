@@ -18,7 +18,7 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                       Ultima atualizacao: 03/01/2018
+   Data    : Janeiro/92.                       Ultima atualizacao: 12/12/2018
 
    Dados referentes ao programa:
 
@@ -126,6 +126,9 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
                15/08/2018 - Inclusão das Aplicações Programadas - cursor cr_craprpp
                             Proj. 411.2 - CIS Corporate
 
+               12/12/2018 - P450 - Alterado para apresentar saldo de prejuizo(vlsdprej) do emprestimo
+                            quando emprestimo estiver em prejuizo. (Odirlei-AMcom)
+                            
     ............................................................................ */
 
   ------------------------------- CURSORES ---------------------------------
@@ -305,15 +308,18 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
                      pr_nrctares in crapass.nrdconta%type) is
     select cdcooper,
            nrdconta,
-           sum(vlsdeved) vlsdeved
+           sum(decode(inprejuz,1,vlsdprej, --> Para contas em prejuizo, somar valor saldo em prejuizo
+                                vlsdeved)) vlsdeved
       from crapepr
      where cdcooper = pr_cdcooper
        and nrdconta > pr_nrctares
-       --se está ativo (inliquid = 0) ou está em prejuízo (inprejuz = 1)
-       and (inliquid = 0 or inprejuz = 1)
+       --se está ativo (inliquid = 0) ou está em prejuízo (inliquid = 1 e inprejuz = 1)
+       and (inliquid = 0 OR (inliquid = 1 AND inprejuz = 1))
        --se possui saldo devedor diferente de zero
-       and nvl(vlsdeved,0) <> 0
+       and (nvl(vlsdeved,0) <> 0 OR 
+            nvl(vlsdprej,0) <> 0)
      group by cdcooper, nrdconta;
+     
   -- Busca o registro de saldo dos associados
   cursor cr_crapsld(pr_cdcooper crapcop.cdcooper%type,
                     pr_nrctares crapass.nrdconta%type) is

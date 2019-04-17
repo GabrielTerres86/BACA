@@ -774,9 +774,12 @@ function formataCabecalho() {
 
 
 function ajustarCentralizacao() {
-    var x = $.browser.msie ? $(window).innerWidth() : $("body").offset().width;
-    x = x - 178;
-    $('#divRotina').css({ 'width': x + 'px' });
+    if (!$('#divBotoesSenha', '#divRotina').length) {
+        var x = $.browser.msie ? $(window).innerWidth() : $("body").offset().width;
+        x = x - 178;
+        $('#divRotina').css({ 'width': x + 'px' });
+    }
+
     $('#divRotina').centralizaRotinaH();
     return false;
 }

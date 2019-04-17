@@ -3439,7 +3439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Guilherme/SUPERO
-     Data    : Agosto/2013                     Ultima atualizacao:  23/10/2018
+     Data    : Agosto/2013                     Ultima atualizacao:  09/04/2019
 
      Dados referentes ao programa:
 
@@ -3509,6 +3509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                               
                  23/10/2018 - P442 - Ignorar cooperativas com Gravames Online (Marcos-Envolti)
                               
+				 09/04/2019 - Ajustar query para filtrar veiculos ao exportar lote (Petter - Envolti)
     ............................................................................. */
     DECLARE
 
@@ -3576,12 +3577,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,bpr.dsbemfin
               ,ROW_NUMBER ()
                   OVER (PARTITION BY cop.cdcooper ORDER BY cop.cdcooper) nrseqcop
-
           FROM crapass ass
               ,crapcop cop
               ,crawepr wpr
               ,crapbpr bpr
-         full outer join crapepr epr on (epr.cdcooper = bpr.cdcooper and epr.nrdconta = bpr.nrdconta and epr.nrctremp = bpr.nrctrpro)
+         FULL OUTER  JOIN crapepr epr on (epr.cdcooper = bpr.cdcooper AND epr.nrdconta = bpr.nrdconta AND epr.nrctremp = bpr.nrctrpro)
          WHERE bpr.cdcooper = DECODE(pr_cdcoptel,0,bpr.cdcooper,pr_cdcoptel)
            AND bpr.flgalien   = 1 -- Sim
            AND wpr.cdcooper   = bpr.cdcooper
@@ -3591,36 +3591,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
            AND cop.cdcooper   = bpr.cdcooper
            AND ass.cdcooper   = bpr.cdcooper
            AND ass.nrdconta   = bpr.nrdconta
+           -- Validar somente tipos de veículos válidos para GRAVAME
+           AND bpr.dscatbem IN('AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS')
+           -- Bloquear tipos de chassi inválido
+           AND (bpr.tpchassi IS NOT NULL OR bpr.tpchassi != 0)
            -- Somente Coops com Gravames Online desativado
-           AND fn_tem_gravame_online(cop.cdcooper) = 'N'
-           
-           AND (  -- Bloco INCLUSAO
-                     (pr_tparquiv IN ('INCLUSAO','TODAS')
-                 AND  bpr.tpctrpro   = 90
-                 AND  wpr.flgokgrv   = 1
-                 AND  bpr.flgbaixa   = 0      -- APENAS NÃO BAIXADOS
-                 AND  nvl(epr.inliquid,0) = 0 -- APENAS NÃO LIQUIDADO, CASO NULO TRATAR COMO "0 - NÃO LIQUIDADO"
-                 AND  bpr.flginclu   = 1      -- INCLUSAO SOLICITADA
-                 AND  bpr.cdsitgrv in (0,3)   -- NAO ENVIADO ou PROCES.COM ERRO
-                 AND  bpr.tpinclus   = 'A')   -- AUTOMATICA
-
-                  -- Bloco BAIXA --
-                  OR (pr_tparquiv IN('BAIXA','TODAS')
-                 AND  bpr.tpctrpro   in(90,99)  -- Tbm Para BENS excluidos na ADITIV
-                 AND  bpr.flgbaixa   = 1        -- BAIXA SOLICITADA
-                 AND  bpr.cdsitgrv  <> 1        -- Nao enviado
-                 AND  bpr.tpdbaixa   = 'A'      -- Automatica
-                 AND  bpr.flblqjud  <> 1)       -- Nao bloqueado judicial
-
-                 -- Bloco CANCELAMENTO --
-                  OR (pr_tparquiv IN('CANCELAMENTO','TODAS')
-                 AND  bpr.tpctrpro   = 90
-                 AND  bpr.flcancel   = 1    -- CANCELAMENTO SOLICITADO
-                 AND  bpr.tpcancel   = 'A'  -- Automatica
-                 AND  bpr.cdsitgrv  <> 1    -- Nao enviado
-                 AND  bpr.flblqjud  <> 1)   -- Nao bloqueado judicial
-
-               );
+           AND grvm0001.fn_tem_gravame_online(cop.cdcooper) = 'N'
+           AND ((pr_tparquiv IN ('INCLUSAO','TODAS') -- Bloco INCLUSAO
+                     AND  bpr.tpctrpro   = 90
+                     AND  wpr.flgokgrv   = 1
+                     AND  bpr.flgbaixa   = 0      -- APENAS NÃO BAIXADOS
+                     AND  nvl(epr.inliquid,0) = 0 -- APENAS NÃO LIQUIDADO, CASO NULO TRATAR COMO "0 - NÃO LIQUIDADO"
+                     AND  bpr.flginclu   = 1      -- INCLUSAO SOLICITADA
+                     AND  bpr.cdsitgrv in (0,3)   -- NAO ENVIADO ou PROCES.COM ERRO
+                     AND  bpr.tpinclus   = 'A')   -- AUTOMATICA
+                 OR (pr_tparquiv IN('BAIXA','TODAS') -- Bloco BAIXA --
+                     AND  bpr.tpctrpro   in(90,99)  -- Tbm Para BENS excluidos na ADITIV
+                     AND  bpr.flgbaixa   = 1        -- BAIXA SOLICITADA
+                     AND  bpr.cdsitgrv  <> 1        -- Nao enviado
+                     AND  bpr.tpdbaixa   = 'A'      -- Automatica
+                     AND  bpr.flblqjud  <> 1)       -- Nao bloqueado judicial
+                 OR (pr_tparquiv IN('CANCELAMENTO','TODAS') -- Bloco CANCELAMENTO --
+                     AND  bpr.tpctrpro   = 90
+                     AND  bpr.flcancel   = 1    -- CANCELAMENTO SOLICITADO
+                     AND  bpr.tpcancel   = 'A'  -- Automatica
+                     AND  bpr.cdsitgrv  <> 1    -- Nao enviado
+                     AND  bpr.flblqjud  <> 1)); -- Nao bloqueado judicial
 
       -- Busca de todas as agências por operador
       CURSOR cr_crapope IS

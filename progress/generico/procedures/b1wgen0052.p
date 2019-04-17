@@ -1891,7 +1891,7 @@ PROCEDURE Grava_Dados:
                                                         INPUT aux_idseqttl,
                                                         INPUT aux_nrcpfcgc,
                                                         INPUT par_dtmvtolt,
-                                                        INPUT "7", /* FICHA CADASTRAL */
+                                                        INPUT "54", /* FICHA CADASTRAL */
                                                         INPUT par_cdoperad,
                                                        OUTPUT aux_cdcritic,
                                                        OUTPUT aux_dscritic).
@@ -1982,13 +1982,13 @@ PROCEDURE Grava_Dados:
                                             INPUT aux_nrcpfcgc,
                                             INPUT par_dtmvtolt,
                                             /* 45 - CONTRATO ABERTURA DE CONTA PF 
-                                                7 - FICHA CADASTRAL 
+                                               54 - FICHA CADASTRAL 
                                                 8 - MATRICULA
                                                 2 - CARTEIRA IDENTIFICAÇAO 
                                                 1 - CPF - CADASTRO DE PESSOAS FISICAS 
                                                 3 - COMPROVANTE DE ENDEREÇO 
                                                 6 - CARTAO DE ASSINATURA */
-                                            INPUT "45;7;8;2;1;3;6", 
+                                            INPUT "45;54;8;2;1;3;6", 
                                             INPUT par_cdoperad,
                                            OUTPUT aux_cdcritic,
                                            OUTPUT aux_dscritic).
@@ -2101,9 +2101,9 @@ PROCEDURE Grava_Dados:
                                             /* 46 - CONTRATO ABERTURA DE CONTA PJ 
                                                10 - CARTAO DE CNPJ 
                                                 3 - COMPROVANTE DE ENDEREÇO                                                 
-                                                7 - FICHA CADASTRAL                                                 
+                                               54 - FICHA CADASTRAL                                                 
                                                 8 - MATRICULA */
-                                            INPUT "46;10;3;7;8", 
+                                            INPUT "46;10;3;54;8", 
                                             INPUT par_cdoperad,
                                            OUTPUT aux_cdcritic,
                                            OUTPUT aux_dscritic).

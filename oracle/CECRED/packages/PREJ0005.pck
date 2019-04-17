@@ -15,6 +15,9 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0005 AS
    Alteracoes: 13/09/2018 - Quando cancelar o Limite de Desconto de Títulos na pc_bloqueio_conta_corrente, também cancelar sua
                             proposta Principal e as Propostas de Manutenção, conforme o que ocorre atualmente na
                             b1wgen0030.efetua_cancelamento_limite (Andrew Albuquerque - GFT)
+
+               09/04/2019 - Ajuste na procedure pc_executa_job_prejuizo para efetuar apenas leitura de contratos em prejuizo
+				            alterado chamada da procedure pc_lanc_jratu_mensal para enviar data de movimento (Daniel - Ailos)
 ..............................................................................*/
   -- Códigos contábeis
   -- Transferência
@@ -232,12 +235,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
                           ,nrdconta
                           ,nrborder
                           ,MIN(dtvencto) dtvenmin
-                      FROM craptdb 
-                     WHERE (dtvencto+60) < pr_dtmvtolt 
-                       AND insittit = 4 
-                       AND cdcooper = pr_cdcooper
-                       AND nrborder = pr_nrborder
-                       AND nrdconta = pr_nrdconta
+                    FROM craptdb 
+                    WHERE (dtvencto+60) < pr_dtmvtolt 
+                      AND insittit = 4 
+                      AND cdcooper = pr_cdcooper
+                      AND nrborder = pr_nrborder
+                      AND nrdconta = pr_nrdconta
                      GROUP BY cdcooper
                              ,nrdconta
                              ,nrborder
@@ -581,12 +584,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
                               ,nrdconta
                               ,nrborder
                               ,MIN(dtvencto) dtvenmin
-                          FROM craptdb
-                         WHERE (dtvencto+60) < pr_dtmvtolt
-                           AND insittit = 4
-                           AND cdcooper = pr_cdcooper
-                           AND nrborder = pr_nrborder
-                           AND nrdconta = pr_nrdconta
+                        FROM craptdb
+                        WHERE (dtvencto+60) < pr_dtmvtolt
+                          AND insittit = 4
+                          AND cdcooper = pr_cdcooper
+                          AND nrborder = pr_nrborder
+                          AND nrdconta = pr_nrdconta
                          GROUP BY cdcooper
                                  ,nrdconta
                                  ,nrborder
@@ -946,8 +949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
 
       ---->> CURSORES <<-----
       CURSOR cr_crapbdt IS
-        SELECT
-          bdt.rowid AS id,
+      SELECT bdt.rowid AS id,
           bdt.nrborder,
           bdt.nrdconta,
           bdt.cdcooper,
@@ -956,13 +958,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
           bdt.insitbdt,
           bdt.qtdirisc,
           bdt.nrinrisc
-        FROM
-          crapbdt bdt
-        WHERE
-          bdt.nrinrisc = 9
-          AND bdt.qtdirisc>=180
-          AND bdt.inprejuz=0
-      ;
+        FROM crapbdt bdt
+       WHERE bdt.nrinrisc = 9
+         AND bdt.qtdirisc >= 180
+         AND bdt.inprejuz = 0
+         AND bdt.flverbor = 1;
       rw_crapbdt cr_crapbdt%ROWTYPE;
 
       -- Tratamento de erro
@@ -1533,16 +1533,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
         -- E não está em nenhum Acordo em aberto
         AND (tdb.cdcooper, tdb.nrdconta, tdb.nrborder, tdb.nrtitulo) NOT IN (
              SELECT ttc.cdcooper, ttc.nrdconta, ttc.nrborder, ttc.nrtitulo
-               FROM tbdsct_titulo_cyber ttc
-              INNER JOIN tbrecup_acordo_contrato tac ON ttc.nrctrdsc = tac.nrctremp
-              INNER JOIN tbrecup_acordo ta           ON tac.nracordo = ta.nracordo
-                                                    AND ta.cdcooper = ttc.cdcooper
-                                                    AND ta.nrdconta = ttc.nrdconta
-              WHERE tac.cdorigem   = 4 -- Desconto de Títulos
-                AND ta.cdsituacao <> 3 -- Acordo não está cancelado
-                AND tdb.cdcooper = ttc.cdcooper
-                AND tdb.nrdconta = ttc.nrdconta
-                AND tdb.nrborder = ttc.nrborder
+          FROM tbdsct_titulo_cyber ttc
+            INNER JOIN tbrecup_acordo_contrato tac ON ttc.nrctrdsc = tac.nrctremp
+            INNER JOIN tbrecup_acordo ta           ON tac.nracordo = ta.nracordo
+              AND ta.cdcooper = ttc.cdcooper
+              AND ta.nrdconta = ttc.nrdconta
+          WHERE tac.cdorigem   = 4 -- Desconto de Títulos
+            AND ta.cdsituacao <> 3 -- Acordo não está cancelado
+            AND tdb.cdcooper = ttc.cdcooper
+            AND tdb.nrdconta = ttc.nrdconta
+            AND tdb.nrborder = ttc.nrborder
                 AND tdb.nrtitulo = ttc.nrtitulo )
       ORDER BY dtvencto ASC, vlsdprej DESC
       ;
@@ -1550,9 +1550,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
 
       vr_tab_craptdb typ_tab_craptdb;
       
-      CURSOR cr_tbdsct_lancamento_bordero(pr_cdcooper IN tbdsct_lancamento_bordero.cdcooper%TYPE,
-                                          pr_cdhistor IN tbdsct_lancamento_bordero.cdhistor%TYPE,
-                                          pr_nrtitulo IN tbdsct_lancamento_bordero.nrtitulo%TYPE,
+      CURSOR cr_tbdsct_lancamento_bordero (pr_cdcooper IN tbdsct_lancamento_bordero.cdcooper%TYPE,
+                          pr_cdhistor IN tbdsct_lancamento_bordero.cdhistor%TYPE,
+                          pr_nrtitulo IN tbdsct_lancamento_bordero.nrtitulo%TYPE,
                                           pr_nrborder IN tbdsct_lancamento_bordero.nrborder%TYPE,
                                           pr_nrdconta IN tbdsct_lancamento_bordero.nrdconta%TYPE) IS
         SELECT tlb.cdcooper,
@@ -1924,6 +1924,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
 
         -- Efetua o lançamento da Mensal dos juros de atualização
         DSCT0003.pc_lanc_jratu_mensal(pr_cdcooper => pr_cdcooper
+                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                      ,pr_nrborder => pr_nrborder
                                      ,pr_nrdconta => rw_crapbdt.nrdconta
                                      ,pr_cdcritic => vr_cdcritic
@@ -2116,20 +2117,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
       -- CURSORES
       CURSOR cr_crapbdt IS
       SELECT bdt.rowid AS id,
-             bdt.insitbdt,
+        bdt.insitbdt,
              bdt.dtliqprj,
              bdt.nrdconta
-        FROM crapbdt bdt
+      FROM crapbdt bdt
        WHERE bdt.cdcooper = pr_cdcooper
          AND bdt.nrborder = pr_nrborder;
       rw_crapbdt cr_crapbdt%ROWTYPE;
 
       CURSOR cr_craptdb(pr_nrdconta craptdb.nrdconta%TYPE) IS
       SELECT 1
-        FROM craptdb tdb
+      FROM craptdb tdb
        WHERE tdb.cdcooper = pr_cdcooper
          AND tdb.nrdconta = pr_nrdconta
-         AND tdb.nrborder = pr_nrborder
+        AND tdb.nrborder = pr_nrborder
          AND tdb.insittit = 4;
       rw_craptdb cr_craptdb%ROWTYPE;
 
@@ -2490,16 +2491,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0005 AS
         -- E está em acordo
         AND (tdb.cdcooper, tdb.nrdconta, tdb.nrborder, tdb.nrtitulo) IN (
              SELECT ttc.cdcooper, ttc.nrdconta, ttc.nrborder, ttc.nrtitulo
-               FROM tbdsct_titulo_cyber ttc
-              INNER JOIN tbrecup_acordo_contrato tac ON ttc.nrctrdsc = tac.nrctremp
-              INNER JOIN tbrecup_acordo ta           ON tac.nracordo = ta.nracordo
-                                                    AND ta.cdcooper = ttc.cdcooper
-                                                    AND ta.nrdconta = ttc.nrdconta
-              WHERE tac.cdorigem   = 4 -- Desconto de Títulos
-                AND ta.cdsituacao <> 3 -- Acordo não está cancelado
-                AND tdb.cdcooper = ttc.cdcooper
-                AND tdb.nrdconta = ttc.nrdconta
-                AND tdb.nrborder = ttc.nrborder
+          FROM tbdsct_titulo_cyber ttc
+            INNER JOIN tbrecup_acordo_contrato tac ON ttc.nrctrdsc = tac.nrctremp
+            INNER JOIN tbrecup_acordo ta           ON tac.nracordo = ta.nracordo
+              AND ta.cdcooper = ttc.cdcooper
+              AND ta.nrdconta = ttc.nrdconta
+          WHERE tac.cdorigem   = 4 -- Desconto de Títulos
+            AND ta.cdsituacao <> 3 -- Acordo não está cancelado
+            AND tdb.cdcooper = ttc.cdcooper
+            AND tdb.nrdconta = ttc.nrdconta
+            AND tdb.nrborder = ttc.nrborder
                 AND tdb.nrtitulo = ttc.nrtitulo )
       ORDER BY dtvencto ASC, vlsdprej DESC
       ;

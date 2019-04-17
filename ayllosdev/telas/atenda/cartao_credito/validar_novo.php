@@ -74,6 +74,7 @@
 	$flgdebit = $_POST['flgdebit'];
 	$cdadmcrd = $_POST['cdadmcrd'];
 	$nrctrcrd = isset($_POST['nrctrcrd']) ? $_POST['nrctrcrd'] : '';
+	$cddopcao = isset($_POST['cddopcao']) ? $_POST['cddopcao'] : '';
 	
 	//Bloqueado solicitacao de novo cartao para cooperativa transulcred SD 574068
 	if($glbvars["cdcooper"] == 17) exibirErro('error','Solicita&ccedil;&atilde;o n&atilde;o autorizada.','Alerta - Aimaro',$funcaoAposErro,false);
@@ -203,9 +204,9 @@
 		
 		// Mostra mensagem de confirmação para finalizar a operação
 		if (empty($nrctrcrd)) {
-			$executar .= "showConfirmacao(\"".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao()\",\"bloqueiaFundo(divRotina)\",\"sim.gif\",\"nao.gif\");";
+			$executar .= "showConfirmacao(\"".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao('".$cddopcao."')\",\"bloqueiaFundo(divRotina)\",\"sim.gif\",\"nao.gif\");";
 		} else {
-			$executar .= "showConfirmacao(\"".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja alterar a proposta do cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao()\",\"bloqueiaFundo(divRotina)\",\"sim.gif\",\"nao.gif\");";
+			$executar .= "showConfirmacao(\"".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja alterar a proposta do cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao('".$cddopcao."')\",\"bloqueiaFundo(divRotina)\",\"sim.gif\",\"nao.gif\");";
 		}
 		
 	} else {
@@ -221,9 +222,9 @@
 		$executar .= "hideMsgAguardo();";
 		$executar .= "bloqueiaFundo(divRotina);";
 		if (empty($nrctrcrd)) {
-			$executar .= "showConfirmacao(\"Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao()\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+			$executar .= "showConfirmacao(\"Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao('".$cddopcao."')\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
 		} else {
-			$executar .= "showConfirmacao(\"Deseja alterar a proposta do cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao()\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+			$executar .= "showConfirmacao(\"Deseja alterar a proposta do cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao('".$cddopcao."')\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
 		}
 		
 

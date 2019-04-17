@@ -6577,6 +6577,7 @@ PROCEDURE grava-proposta-completa:
     DEF VAR          aux_nrliquid AS INT                            NO-UNDO. /*PRJ 438 BUG*/
     DEF VAR          aux_contigen AS LOGI                           NO-UNDO.
     DEF VAR          aux_interrup AS LOGI                           NO-UNDO.
+    DEF VAR          aux_vloutras AS DECI                           NO-UNDO.
 
     DEF  BUFFER      crabavt FOR  crapavt.
 
@@ -7511,6 +7512,31 @@ PROCEDURE grava-proposta-completa:
           END.
         
         
+        /*Quando o proponente tiver cônjuge que possui conta cadastrado, deverá ser apresentado informação do campo "total de outros rendimentos" da conta do cônjuge.*/
+         ASSIGN aux_vloutras = par_vloutras.
+         IF  par_inpessoa = 1 THEN
+           DO:
+              FIND crapcje WHERE crapcje.cdcooper = par_cdcooper   AND
+                                 crapcje.nrdconta = par_nrdconta   AND
+                                 crapcje.idseqttl = 1
+                                 NO-LOCK NO-ERROR.
+
+              IF AVAILABLE crapcje THEN
+              DO:
+               FOR FIRST crapttl FIELDS(vldrendi)
+                   WHERE crapttl.cdcooper = par_cdcooper AND
+                         crapttl.nrdconta = crapcje.nrctacje AND
+                         crapttl.idseqttl = 1 NO-LOCK:
+               END.
+                  
+               IF  AVAILABLE crapttl THEN
+               DO:
+                 ASSIGN aux_vloutras = crapttl.VLDRENDI[1] + crapttl.VLDRENDI[2] + 
+                                       crapttl.VLDRENDI[3] + crapttl.VLDRENDI[4] + 
+                                       crapttl.VLDRENDI[5] + crapttl.VLDRENDI[6].
+               END.
+             END.
+           END.
         
         RUN sistema/generico/procedures/b1wgen0024.p
                             PERSISTENT SET h-b1wgen0024.
@@ -7547,7 +7573,7 @@ PROCEDURE grava-proposta-completa:
                                                   INPUT par_vlsfnout,
                                                   /* Rendimentos */
                                                   INPUT par_vlsalari,
-                                                  INPUT par_vloutras,
+                                                  INPUT aux_vloutras, /*par_vloutras, PRJ438*/
                                                   INPUT par_vlalugue,
                                                   INPUT par_vlsalcon,
                                                   INPUT par_nmempcje,
@@ -8912,45 +8938,7 @@ PROCEDURE altera-valor-proposta:
                                         END.
                                         END.
                               END. /* IF par_dsdopcao = "SVP" THEN */
-                 ELSE
-                      DO:
-              IF NOT aux_contigen THEN
-              DO:
-              
-                  /* Se a proposta estava na Esteira */
-                  IF crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
-                  
-                      ASSIGN aux_interrup = true. /* Interromper na Esteira*/
-                  
-                  RUN proc_gerar_log (INPUT par_cdcooper,
-                                      INPUT par_cdoperad,
-                                      INPUT "",
-                                      INPUT aux_dsorigem,
-                                      INPUT "Motor em contigencia, perder aprovacao",
-                                      INPUT TRUE,
-                                      INPUT par_idseqttl,
-                                      INPUT par_nmdatela,
-                                      INPUT par_nrdconta,
-                                     OUTPUT aux_nrdrowid).
-                  
-                  RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                           INPUT "Contrato",
-                                           INPUT "ND",
-                                           INPUT par_nrctremp).
-                                                                   ASSIGN crawepr.insitapr = 0
-                                          crawepr.cdopeapr = ""
-                                          crawepr.dtaprova = ?
-                                          crawepr.hraprova = 0
-                         crawepr.insitest = 0
-                         par_idpeapro     = 1.
-
-                                  /* CREATE tt-msg-confirma.
-                                   ASSIGN tt-msg-confirma.inconfir = 1
-                       tt-msg-confirma.dsmensag = "Essa proposta deve ser" +
-                                             " enviada para Analise de Credito".      */
-                                     END. /* IF NOT aux_contigen THEN */
                       END.
-             END.
             END.
         END.
         END. /*par_inresapr */

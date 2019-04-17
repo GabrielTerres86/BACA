@@ -169,6 +169,9 @@
                               informacao nao esta nula. Problemas ao gerar arquivo da CREDIFIESC, dia 30/10/2018.
                               Heitor (Mouts) - INC0026530
 
+                 19/02/2019 - Chamada do procedimento para cancelar os debitos automaticos SICRED pendentes.
+                              Andre (Mouts) - INC0026530
+
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -593,6 +596,21 @@ ASSIGN glb_cdrelato[1] = 637
 { includes/cabrel132_5.i }
 
 EMPTY TEMP-TABLE tt-arquiv.
+
+/*
+  Efetua o cancelamento dos debitos automaticos que nao foram processados apos o fim
+  do ciclo de pagamentos. 
+*/
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+RUN STORED-PROCEDURE pc_SICR0001_cancela_debitos aux_handproc = PROC-HANDLE
+   (INPUT glb_dtmvtolt,
+    OUTPUT 0, 
+    OUTPUT "").
+        
+CLOSE STORED-PROCEDURE pc_SICR0001_cancela_debitos WHERE PROC-HANDLE = aux_handproc.
+
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
 /* Para cada cooperativa */
 FOR EACH crapcop NO-LOCK.

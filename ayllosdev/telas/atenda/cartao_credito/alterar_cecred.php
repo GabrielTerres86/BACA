@@ -6,7 +6,7 @@
  * DATA CRIAÇÃO : Setembro/2018
  * OBJETIVO     : Alterar as propostas de cartão de crédito
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 18/03/2019 - PJ429 - Implementado tipo de envio do cartão - Anderson-Alan (Supero)
  * --------------
  *
  *
@@ -129,6 +129,20 @@ if (getByTagName($dados,"DDDEBANT") == 0){
     $dddebant = getByTagName($dados,"DDDEBANT");
 }
 
+
+// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
+$xml = "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObjeto = getObjectXML($xmlResult);
+
+$coop_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
+$pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
+
 ?>
 
 <form action="" name="frmNovoCartao" id="frmNovoCartao" method="post" onSubmit="return false;">
@@ -239,15 +253,15 @@ if (getByTagName($dados,"DDDEBANT") == 0){
                     </select>
                     <label for="tpenvcrd"><?php echo utf8ToHtml('Envio:') ?></label>
                     <select class='campo' disabled id='tpenvcrd' name='tpenvcrd'>
-                        <option value='1' selected>Cooperativa</option>
-                        <!--option value='0'>Cooperado</option      OPÇÃO RETIRADO TEMPORÁRIAMENTE, PARA QUE SEJA ENVIADO SEMPRE PARA A COOPERATIVA (RENATO - SUPERO)-->
+                        <option <?php if ($pa_envia_cartao) { echo "selected"; } ?> value="0">Cooperado</option>
+                        <option <?php if (!$pa_envia_cartao) { echo "selected"; } ?> value="1">Cooperativa</option>
                     </select>
                     <br />
                 </fieldset>
-                <div id="divBotoes" >
+                <div id="divBotoes">
 				
                     <input class="btnVoltar" id="backChoose" type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(0, 1, 4); return false;" />
-                    <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao(); return false;" />
+                    <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao('A'); return false;" />
 
                 
 					<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 

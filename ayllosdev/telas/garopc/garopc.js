@@ -5,6 +5,8 @@
  * OBJETIVO     : Biblioteca de funcoes da tela
 
    Alteracoes   : 18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+                  23/03/2019 - PRJ 438 - BUG 18068 - Atualizar flag de alteração para sempre validar se houve ou não alteração
+                               nos valores em tela - Bruno Luiz Katzjarowski - Mout's
  */
 
 $(document).ready(function() {
@@ -271,12 +273,8 @@ function gravarGAROPC(gar_ret_nomcampo, gar_ret_nomformu, gar_ret_execfunc, gar_
     var gar_ter_apli_sld = $('#gar_ter_apli_sld', '#frmGAROPC').val();
     var gar_ter_poup_sld = $('#gar_ter_poup_sld', '#frmGAROPC').val();
 
-    // Carrega conteudo da opcao atraves do Ajax
-    $.ajax({
-        type: 'POST',
-        dataType: 'html',
-        url: UrlSite + 'telas/garopc/grava_dados.php',
-        data: {
+    //bruno - bug 6666
+    var _data = {
             nmdatela     : gar_nmdatela,
             idcobert     : gar_idcobert,
             tipaber      : cGar_tipaber.val(),
@@ -303,14 +301,71 @@ function gravarGAROPC(gar_ret_nomcampo, gar_ret_nomformu, gar_ret_execfunc, gar_
             err_execfunc : gar_err_execfunc,
             aux_acao: __aux_acao, //prj 438 - bug 14235
             redirect     : 'html_ajax'
-        },
+        };
+
+    //Bruno - bug 6666
+    //Ao entrar na tela garopc salvar o primeiro envio à grava_dados
+    if(__aux_acao == 'EMPRESTIMO'){
+        if(__garopcArr == null)
+            __garopcArr = _data;
+        else{
+            if(validaAlteracaoGaropc(__garopcArr, _data)){
+                _data.flagAlteracao = true;
+            }else{
+                _data.flagAlteracao = false;
+            }
+        }
+    }
+
+    // Carrega conteudo da opcao atraves do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/garopc/grava_dados.php',
+        data: _data,
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo($(\'#frmGAROPC\'))');
         },
         success: function (response) {
             eval(response);
+        },
+        complete: function(a,e,i,o){ //bruno - bug 6666
+            var response = a.responseText;
+            //Alterar array somente depois de gravado e não contendo erros
+            if(response.indexOf('error') === -1){
+                //Atualizar versão do array auxiliar da garopc
+                if(__aux_acao == 'EMPRESTIMO'){
+                    __garopcArr = _data;
+                }
+            }
         }
     });
 
+}
+
+
+/**
+ * Bruno Luiz Katzjarowski - Mout's - 23/03/2019
+ * @param {object} arrOld Valores antigos
+ * @param {object} arrNew Valores novos
+ * @return {boolean} true -> Há alterações, false -> não há alterações
+ */
+function validaAlteracaoGaropc(arrOld, arrNew){
+    if(arrOld.nrctater != arrNew.nrctater) return true;
+    if(arrOld.lintpctr != arrNew.lintpctr) return true;
+    if(arrOld.vlropera != arrNew.vlropera) return true;
+    if(arrOld.permingr != arrNew.permingr) return true;
+    if(arrOld.inresper != arrNew.inresper) return true;
+    if(arrOld.diatrper != arrNew.diatrper) return true;
+    if(arrOld.tpctrato != arrNew.tpctrato) return true;
+    if(arrOld.inaplpro != arrNew.inaplpro) return true;
+    if(arrOld.inpoupro != arrNew.inpoupro) return true;
+    if(arrOld.vlpoupro != arrNew.vlpoupro) return true;
+    if(arrOld.inresaut != arrNew.inresaut) return true;
+    if(arrOld.inaplter != arrNew.inaplter) return true;
+    if(arrOld.vlaplter != arrNew.vlaplter) return true;
+    if(arrOld.inpouter != arrNew.inpouter) return true;
+    if(arrOld.vlpouter != arrNew.vlpouter) return true;
+    return false;
 }

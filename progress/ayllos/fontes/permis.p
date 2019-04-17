@@ -109,6 +109,8 @@ DEF VAR tel_nvoperad    AS CHAR FORMAT "x(15)" VIEW-AS COMBO-BOX LIST-ITEMS
                                                "3 - Gerente"           NO-UNDO.
 DEF VAR tel_nmrotina    AS CHAR FORMAT "x(15)"                         NO-UNDO.
 DEF VAR tel_cdpermis    AS CHAR FORMAT "x(1)"                          NO-UNDO.
+DEF VAR tel_flgatual    AS LOGI FORMAT "SIM/NAO" INIT TRUE             NO-UNDO.
+DEF VAR tel_flgcoops    AS LOGI                                        NO-UNDO.
 
 DEF VAR aux_nmrotina    AS CHAR                                        NO-UNDO.
 DEF VAR aux_flgfirst    AS LOGI                                        NO-UNDO.
@@ -137,6 +139,7 @@ DEF VAR tel_nmdopcao    AS LOGI FORMAT "ARQUIVO/IMPRESSAO" INIT TRUE   NO-UNDO.
 
 DEF VAR aux_qtalterados AS INT                                         NO-UNDO.
 DEF VAR aux_inacesso    AS CHAR FORMAT "x(01)"                         NO-UNDO.
+DEF VAR aux_iddopcao    AS INTE                                        NO-UNDO.
 
 DEF   VAR tel_nmdireto AS   CHAR  FORMAT "x(20)"                    NO-UNDO.
 DEF   VAR tel_nmarquiv AS   CHAR  FORMAT "x(25)"                    NO-UNDO.
@@ -270,22 +273,25 @@ FORM glb_cddopcao AT 03 LABEL "Opcao" AUTO-RETURN
                         VALIDATE(CAN-DO("A,C,E,L,P,R,X,N,I",glb_cddopcao),
                                  "014 - Opcao errada.")
     
-     tel_cdoperad AT 13 LABEL "Oper Orig" AUTO-RETURN
+     tel_cdoperad AT 23 LABEL "Oper Orig" AUTO-RETURN
                         HELP "Informe o codigo do operador de origem."
                         VALIDATE(tel_cdoperad <> "",
                                "087 - Codigo do operador deve ser informado.")
-     tel_nmoperad AT 35 NO-LABEL
+     tel_nmoperad AT 45 NO-LABEL
                         HELP "Informe o nome do operador (nome completo)."
      SKIP
-     tel_cdopedst AT 13 LABEL "Oper Dest" AUTO-RETURN
+     tel_cdopedst AT 23 LABEL "Oper Dest" AUTO-RETURN
                         HELP "Informe o codigo do operador de destino."
                         VALIDATE(tel_cdopedst <> "",
                                "087 - Codigo do operador deve ser informado.")
-     tel_nmopedst AT 35 NO-LABEL 
+     tel_nmopedst AT 45 NO-LABEL 
                         HELP "Informe o nome do operador (nome completo)."
      SKIP
-     tel_idambtel AT 07 LABEL "Ambiente Acesso" AUTO-RETURN
+     tel_idambtel AT 17 LABEL "Ambiente Acesso" AUTO-RETURN
                         HELP  "Use as <SETAS> p/ selecionar o Ambiente de Acesso."
+     SKIP
+     tel_flgatual AT 07 LABEL "Manter Permissoes Atuais?" AUTO-RETURN
+                        HELP "Informe 'SIM' p/ manter permissoes atuais ou 'NAO' para remover."
      WITH ROW 6 COLUMN 2 OVERLAY NO-BOX SIDE-LABELS FRAME f_copia.
 
 FORM glb_cddopcao AT 03 LABEL "Opcao" AUTO-RETURN
@@ -457,9 +463,15 @@ ON GO , RETURN OF tel_idambtel IN FRAME f_relatorio DO:
 
 END.
 
-ON GO , RETURN OF tel_idambtel IN FRAME f_copia DO:
+ON GO OF tel_idambtel IN FRAME f_copia DO:
 
     APPLY "GO".
+
+END.
+
+ON RETURN OF tel_idambtel IN FRAME f_copia DO:
+
+    APPLY "TAB".
 
 END.
 
@@ -1007,7 +1019,7 @@ DO WHILE TRUE:
                     glb_cdcritic = 0.
                 END.
 
-           DISPLAY tel_nmoperad tel_cdopedst tel_nmopedst WITH FRAME f_copia.
+           DISPLAY tel_nmoperad tel_cdopedst tel_nmopedst tel_flgatual WITH FRAME f_copia.
  
            HIDE FRAME f_permis.
            HIDE FRAME f_permis_tela.
@@ -1096,29 +1108,89 @@ DO WHILE TRUE:
 
               DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
            
-                 UPDATE tel_idambtel WITH FRAME f_copia. 
+                 UPDATE tel_idambtel tel_flgatual WITH FRAME f_copia. 
                  ASSIGN tel_idambtel = tel_idambtel:SCREEN-VALUE IN FRAME 
-                                       f_copia.
+                                       f_copia
+                        tel_flgcoops = FALSE.
 
-                 DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                    ASSIGN aux_confirma = "N".
-
-                    MESSAGE COLOR NORMAL "Confirma copia de Perfil de acesso?"
-                    UPDATE aux_confirma.
-
-                    LEAVE.
-                 END.              
-
-                 IF KEYFUNCTION(LASTKEY) = "END-ERROR"   OR
-                    aux_confirma <> "S" THEN
+                 IF glb_cdcooper = 3 AND CAN-DO("16," + /* SEGURANCA TI */
+                                                "18," + /* SUPORTE      */
+                                                "20"    /* TI           */
+                                          ,STRING(glb_cddepart)) THEN
                     DO:
-                       BELL.
-                       MESSAGE "Copia nao realizada!".
-                       glb_cdcritic = 0.
-                       NEXT.
-                    END.
+                       IF tel_cdoperad = tel_cdopedst THEN
+                          DO:
+                              DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                                 ASSIGN aux_confirma = "N".
+                                 MESSAGE "ATENCAO: Operador de destino igual ao operador de origem da copia.".
+                                 MESSAGE "Deseja copiar o perfil de acesso somente nas coops. singulares?"
+                                 UPDATE aux_confirma.
 
-                 MESSAGE "Aguarde...".
+                                 ASSIGN tel_flgcoops = TRUE.
+                                
+                                 LEAVE.
+                              END.
+                              
+                              IF aux_confirma = "N" THEN
+                                 DO:
+                                     BELL.
+                                     MESSAGE "Copia nao realizada!".
+                                     glb_cdcritic = 0.
+                                     NEXT.
+                                 END.
+                          END.
+                       ELSE
+                          DO:
+                              DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                                 ASSIGN aux_confirma = "N".
+                                 MESSAGE "Deseja copiar o perfil de acesso em todas as cooperativas?"
+                                 UPDATE aux_confirma.
+
+                                 ASSIGN tel_flgcoops = TRUE.
+                                
+                                 LEAVE.
+                              END.                                      
+                                
+                              DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                                 ASSIGN aux_confirma = "N".  
+
+                                 MESSAGE "Confirma copia de perfil de acesso?"
+                                 UPDATE aux_confirma.
+
+                                 LEAVE.
+                              END.              
+
+                              IF KEYFUNCTION(LASTKEY) = "END-ERROR"   OR
+                                 aux_confirma <> "S" THEN
+                                 DO:
+                                    BELL.
+                                    MESSAGE "Copia nao realizada!".
+                                    glb_cdcritic = 0.
+                                    NEXT.
+                                 END.                                
+                          END.
+                    END.
+                 ELSE   
+                    DO:
+                       DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                          ASSIGN aux_confirma = "N".
+
+                          MESSAGE "Confirma copia de perfil de acesso?"
+                          UPDATE aux_confirma.
+
+                          LEAVE.
+                       END.              
+
+                       IF KEYFUNCTION(LASTKEY) = "END-ERROR"   OR
+                          aux_confirma <> "S" THEN
+                          DO:
+                             BELL.
+                             MESSAGE "Copia nao realizada!".
+                             glb_cdcritic = 0.
+                             NEXT.
+                          END.
+                    END.
+                                  
                  RUN copiar_perfil.   
                  RUN log-tela-permis (INPUT TODAY,
                                       INPUT glb_cdcooper,
@@ -1769,51 +1841,118 @@ END PROCEDURE.
 PROCEDURE copiar_perfil:
    
    DEF BUFFER bcrapace FOR crapace.
+   DEF BUFFER bcraptel FOR craptel.
    DEF VAR aux_idambtel AS INTE                               NO-UNDO.
    DEF VAR aux_cddopcao AS CHAR                               NO-UNDO.
-   DEF VAR aux_iddopcao AS INTE                               NO-UNDO.
 
+   HIDE MESSAGE NO-PAUSE.
+   
    ASSIGN aux_idambtel = INTEGER(SUBSTRING(tel_idambtel,1,1)).
-      
-   FOR EACH craptel WHERE craptel.cdcooper = glb_cdcooper NO-LOCK:
+   
+   IF NOT tel_flgatual THEN
+      DO: 
+         MESSAGE "Aguarde, removendo permissoes atuais ...".
+         FOR EACH crapcop WHERE crapcop.flgativo = TRUE AND
+                              ((crapcop.cdcooper = glb_cdcooper AND
+                                NOT tel_flgcoops) OR
+                                tel_flgcoops) NO-LOCK:
+                                
+           IF crapcop.cdcooper = glb_cdcooper AND tel_cdoperad = tel_cdopedst THEN
+              NEXT.
 
-       DO aux_iddopcao = 1 TO NUM-ENTRIES(craptel.cdopptel,","):
-
-           ASSIGN aux_cddopcao = ENTRY(aux_iddopcao,craptel.cdopptel,",").
-
-           FOR EACH bcrapace  
-              WHERE bcrapace.cdcooper = craptel.cdcooper AND
-                    bcrapace.nmdatela = craptel.nmdatela AND
-                    bcrapace.nmrotina = craptel.nmrotina AND
-                    bcrapace.cddopcao = aux_cddopcao     AND
-                    bcrapace.cdoperad = tel_cdoperad     AND
-                    bcrapace.idambace = aux_idambtel NO-LOCK:
+           FOR FIRST crapope WHERE crapope.cdcooper = crapcop.cdcooper AND 
+                                   crapope.cdoperad = tel_cdopedst     NO-LOCK: END.
+                                   
+           IF NOT AVAIL crapope THEN
+              NEXT.
+           
+           FOR EACH craptel WHERE craptel.cdcooper = crapcop.cdcooper NO-LOCK:
+           
+              DO aux_iddopcao = 1 TO NUM-ENTRIES(craptel.cdopptel,","):
               
-              FIND FIRST crapace 
-                   WHERE crapace.cdcooper = bcrapace.cdcooper AND
-                         crapace.nmdatela = bcrapace.nmdatela AND
-                         crapace.nmrotina = bcrapace.nmrotina AND 
-                         crapace.cddopcao = bcrapace.cddopcao AND
-                         crapace.cdoperad = tel_cdopedst      AND
-                         crapace.idambace = bcrapace.idambace
-                         NO-LOCK NO-ERROR.
-        
-              IF NOT AVAIL crapace THEN
-                 DO:
-                     CREATE crapace.
-                     ASSIGN crapace.cdcooper = glb_cdcooper
-                            crapace.nmdatela = bcrapace.nmdatela
-                            crapace.nmrotina = bcrapace.nmrotina
-                            crapace.cddopcao = bcrapace.cddopcao
-                            crapace.cdoperad = tel_cdopedst
-                            crapace.idambace = bcrapace.idambace
-                            crapace.idevento = bcrapace.idevento.
-                     VALIDATE crapace.
+                 ASSIGN aux_cddopcao = ENTRY(aux_iddopcao,craptel.cdopptel,",").
+                
+                 FOR EACH crapace WHERE crapace.cdcooper = craptel.cdcooper AND
+                                        crapace.nmdatela = craptel.nmdatela AND
+                                        crapace.nmrotina = craptel.nmrotina AND
+                                        crapace.cddopcao = aux_cddopcao     AND
+                                        crapace.cdoperad = tel_cdopedst     AND
+                                        crapace.idambace = aux_idambtel
+                                        EXCLUSIVE-LOCK:
+                               
+                    DELETE crapace.     
+                   
                  END.
-           END. 
+                 
+              END.
+              
+           END.                       
+         END.
+      END.
+      
+   HIDE MESSAGE NO-PAUSE.   
+   MESSAGE "Aguarde, copiando perfil ...".
+   
+   FOR EACH crapcop WHERE crapcop.flgativo = TRUE AND
+                        ((crapcop.cdcooper = glb_cdcooper AND
+                          NOT tel_flgcoops) OR
+                          tel_flgcoops) NO-LOCK:
 
-       END.
+     FOR FIRST crapope WHERE crapope.cdcooper = crapcop.cdcooper AND 
+                             crapope.cdoperad = tel_cdopedst     NO-LOCK: END.
+                             
+     IF NOT AVAIL crapope THEN
+        NEXT.    
+     
+     FOR EACH craptel WHERE craptel.cdcooper = glb_cdcooper NO-LOCK:
 
+         DO aux_iddopcao = 1 TO NUM-ENTRIES(craptel.cdopptel,","):
+
+             ASSIGN aux_cddopcao = ENTRY(aux_iddopcao,craptel.cdopptel,",").
+             
+             FOR FIRST bcraptel WHERE bcraptel.cdcooper = crapcop.cdcooper AND 
+                                      bcraptel.nmdatela = craptel.nmdatela AND
+                                      bcraptel.nmrotina = craptel.nmrotina AND                                               
+                                      bcraptel.idambtel = aux_idambtel     NO-LOCK: END.
+                                      
+             IF NOT AVAIL bcraptel OR NOT CAN-DO(bcraptel.cdopptel,aux_cddopcao) THEN
+                NEXT.
+
+             FOR EACH bcrapace  
+                WHERE bcrapace.cdcooper = craptel.cdcooper AND
+                      bcrapace.nmdatela = craptel.nmdatela AND
+                      bcrapace.nmrotina = craptel.nmrotina AND
+                      bcrapace.cddopcao = aux_cddopcao     AND
+                      bcrapace.cdoperad = tel_cdoperad     AND
+                      bcrapace.idambace = aux_idambtel NO-LOCK:
+                
+                FIND FIRST crapace 
+                     WHERE crapace.cdcooper = crapope.cdcooper  AND
+                           crapace.nmdatela = bcrapace.nmdatela AND
+                           crapace.nmrotina = bcrapace.nmrotina AND 
+                           crapace.cddopcao = bcrapace.cddopcao AND
+                           crapace.cdoperad = tel_cdopedst      AND
+                           crapace.idambace = bcrapace.idambace
+                           NO-LOCK NO-ERROR.
+                 
+                IF NOT AVAIL crapace THEN
+                   DO: 
+                       CREATE crapace.
+                       ASSIGN crapace.cdcooper = crapope.cdcooper
+                              crapace.nmdatela = bcrapace.nmdatela
+                              crapace.nmrotina = bcrapace.nmrotina
+                              crapace.cddopcao = bcrapace.cddopcao
+                              crapace.cdoperad = tel_cdopedst
+                              crapace.idambace = bcrapace.idambace
+                              crapace.idevento = bcrapace.idevento.
+                       VALIDATE crapace.
+                   END.
+             END. 
+
+         END.
+
+     END.
+     
    END.
                                  
    HIDE MESSAGE NO-PAUSE.
