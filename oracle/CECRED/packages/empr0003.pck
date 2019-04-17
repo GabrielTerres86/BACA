@@ -2137,7 +2137,7 @@ BEGIN
                                     ,pr_des_xml  OUT CLOB                  --> XML gerado
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
                                     ,pr_dscritic OUT VARCHAR2) IS          --> Descricao da critica
-    /* .............................................................................
+    /* ..........................................................................................................
 
        Programa: pc_gera_xml_contrato_pos
        Sistema : Conta-Corrente - Cooperativa de Credito
@@ -2152,16 +2152,20 @@ BEGIN
 
        Alteracoes: 01/02/2018 - Ajustes na geração do XML de contratos. (Jaison/James - PRJ298)
                   
-                  12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+                   12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
 
-                  27/11/2018 - Correção dos parâmetros de taxa de juros para serem apresentados corretamente (proposta efetivada) na Opção Imprimir / Contratos da tela Atenda / Prestações.
-				  Chamado INC0027935 - Gabriel (Mouts).
+                   27/11/2018 - Correção dos parâmetros de taxa de juros para serem apresentados corretamente 
+                                (proposta efetivada) na Opção Imprimir / Contratos da tela Atenda / Prestações.
+				                        Chamado INC0027935 - Gabriel (Mouts).
                   
                    20/12/2018 - Correção da taxa CET para buscar da tabela de CET quando existir registro
-								INC0029082 (Douglas Pagel / AMcom).
+                	 						  INC0029082 (Douglas Pagel / AMcom).
 
+                   05/04/2019 - Ajuste (INC0029082) busca da taxa CET: 
+                                estava considerando apenas inpessoa =1 e recisa buscar para inpessoa = 2 também
+                		 					  INC0011321 (Ana Volles).
                   
-    ............................................................................. */
+    .......................................................................................................... */
 
       -- Cursor sobre as informacoes de emprestimo
       CURSOR cr_crapepr IS
@@ -2409,9 +2413,9 @@ BEGIN
       vr_vljurcor	      NUMBER;                       --> Valor do juros de correcao
       vr_vlminpre       NUMBER;                       --> Valor minimo da parcela
       vr_perjurmo       NUMBER;                       --> Juro mora
-	  vr_nrcpfcgc       VARCHAR2(50);                 --> CPF/CNPJ do emitente
-	  vr_nrcpfcjg       VARCHAR2(50);                 --> CPF do conjuge
-      vr_txanocet       NUMBER := 0;               --> taxa anual do cet
+	    vr_nrcpfcgc       VARCHAR2(50);                 --> CPF/CNPJ do emitente
+	    vr_nrcpfcjg       VARCHAR2(50);                 --> CPF do conjuge
+      vr_txanocet       NUMBER := 0;                  --> taxa anual do cet
 
       -- Projeto 410 - 14/03/2018 - SM - Verificar informaçoes de IOF e tarifa
       vr_vlpreclc       NUMBER := 0;                -- Parcela calcula
@@ -2501,6 +2505,19 @@ BEGIN
 
       -- Capturar CPF/CNPJ
       vr_nrcpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crawepr.nrcpfcgc, rw_crawepr.inpessoa);
+
+      --INC0011321 - não considerar inpessoa para buscar vr_txanocet
+      --Checar se existe informações de CET gerado na efetivação
+      OPEN cr_tbepr_calculo_cet;
+      FETCH cr_tbepr_calculo_cet 
+       INTO rw_tbepr_calculo_cet;
+      IF cr_tbepr_calculo_cet%FOUND THEN
+        -- Usaremos as informações da tabela
+        vr_txanocet := rw_tbepr_calculo_cet.txanocet;
+      ELSE
+        vr_txanocet := rw_crawepr.percetop;
+      END IF;						
+      CLOSE cr_tbepr_calculo_cet;
 			
       -- Verifica se o documento eh um CPF ou CNPJ
       IF rw_crawepr.inpessoa = 1 THEN
@@ -2514,18 +2531,6 @@ BEGIN
         OPEN  cr_crapnac(pr_cdnacion => rw_crawepr.cdnacion);
         FETCH cr_crapnac INTO rw_crapnac;
         CLOSE cr_crapnac;
-
-        -- Checar se existe informações de CET gerado na efetivação
-      OPEN cr_tbepr_calculo_cet;
-      FETCH cr_tbepr_calculo_cet 
-       INTO rw_tbepr_calculo_cet;
-      IF cr_tbepr_calculo_cet%FOUND THEN
-        -- Usaremos as informações da tabela
-        vr_txanocet := rw_tbepr_calculo_cet.txanocet;
-      ELSE
-        vr_txanocet := rw_crawepr.percetop;
-      END IF;						
-      CLOSE cr_tbepr_calculo_cet;
 
         -- monta descricao para o relatorio com os dados do emitente
         vr_emitente := rw_crawepr.nmprimtl || ', ' 
@@ -2715,7 +2720,7 @@ BEGIN
         FETCH cr_crapcje INTO rw_crapcje;
         CLOSE cr_crapcje;
         -- Capturar CPF do conjuge				
-		vr_nrcpfcjg := gene0002.fn_mask_cpf_cnpj(rw_crapcje.nrcpfcjg, 1);
+	     	vr_nrcpfcjg := gene0002.fn_mask_cpf_cnpj(rw_crapcje.nrcpfcjg, 1);
       END IF;
       
       -- Incluir nome do modulo logado
@@ -2878,7 +2883,7 @@ BEGIN
       vr_vlminpre := NVL(vr_vlpreemp,0) - NVL(vr_vljurcor,0);
   
       vr_perjurmo := nvl(rw_crawepr.txmensal,0) + nvl(rw_craplcr.perjurmo,0);
-          
+
       -- Gera corpo do xml
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
                              '<ind_add_item>' || vr_ind_add_item                             || '</ind_add_item>' || -- Indicador se possui terceiro garantidor (0-Nao / 1-Sim)
