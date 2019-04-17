@@ -21,6 +21,18 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
   --                        - Remover o tempo de espera para o envio dos arquivos gerados. Passa
   --                          a considerar como processados os arquivos quando são colocados na 
   --                          pasta envia. (Daniel - Envolti)
+  --
+  --
+  -- Alterações: 05/03/2019 - P411 
+  --				          Ajuste Calculo da quantidade de cotas referente a operação atual
+  --						  alterado para compatibilizar com a B3;							  
+  --						  REGRA ANTIGA -> vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
+  --						  REGRA NOVA   -> vr_qtcotas_resg := fn_converte_valor_em_cota(rw_lcto.valorbase);						  
+  --                        - (David Valente - Envolti)
+	
+																		  
+														 
+	
   -- ----------------------------------------------------------------------------------- 
   
   -- Retornar tipo da Aplicação enviada
@@ -44,6 +56,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
                                 ,pr_dsinform OUT VARCHAR2   --> Descrição de informativos na execução
                                 ,pr_dscritic OUT VARCHAR2); --> Descrição de critica
   
+
 END APLI0007;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
@@ -337,6 +350,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       -- Guardar HMTL texto
       vr_dshmtl     clob;
       vr_dshmtl_aux varchar2(32767);
+
+      vr_dtmvtoan   crapdat.dtmvtoan%TYPE;      
+      -- tipo de aplicacao (1 - rdc pos e pre / 2 - pcapta / 3 - aplic programada)
+      vr_tpaplicacao tbcapt_saldo_aplica.tpaplicacao%TYPE;
+      vr_sldaplic    tbcapt_saldo_aplica.vlsaldo_concilia%TYPE;
+      vr_qtde_b3     tbcapt_custodia_aplicacao.qtcotas%TYPE;
+      vr_vlpu_b3     tbcapt_custodia_aplicacao.vlpreco_unitario%TYPE;
+      vr_vltotal_b3  tbcapt_saldo_aplica.vlsaldo_concilia%TYPE;
       
       -- Busca das linhas com critica no arquivo enviado
       CURSOR cr_arq IS
@@ -368,6 +389,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
               ,0 nrdconta
               ,0 nraplica
               ,rpad(' ',50,' ') tpaplica
+			  ,apl.qtcotas
           FROM tbcapt_custodia_aplicacao apl
         WHERE apl.idaplicacao = pr_idaplic;
       rw_aplica cr_aplica%ROWTYPE;        
@@ -390,10 +412,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
               ,crapcpc cpc
          WHERE rac.idaplcus = pr_idaplcus
            AND rac.cdprodut = cpc.cdprodut;      
+
+      -- Busca o saldo da aplicacao
+      CURSOR cr_saldo(pr_cdcooper    craprda.cdcooper%TYPE   
+                     ,pr_nrdconta    craprda.nrdconta%TYPE   
+                     ,pr_nraplica    craprda.nraplica%TYPE   
+                     ,pr_tpaplicacao craprda.tpaplica%TYPE
+                     ,pr_dtmvtolt    craprda.dtmvtolt%TYPE) IS
+        SELECT sl.VLSALDO_CONCILIA
+          FROM tbcapt_saldo_aplica sl
+         WHERE sl.cdcooper    = pr_cdcooper   
+           AND sl.nrdconta    = pr_nrdconta   
+           AND sl.nraplica    = pr_nraplica   
+           AND sl.tpaplicacao = pr_tpaplicacao
+           AND sl.dtmvtolt    = pr_dtmvtolt;
            
     BEGIN
       -- Inclusão do módulo e ação logado
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0007.pc_envia_email_alerta_arq');      
+
+      vr_dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper  => 3
+                                                ,pr_dtmvtolt  => trunc(SYSDATE)-1
+                                                ,pr_tipo      => 'A');
 
       -- Busca de todas as linhas com erro 
       FOR rw_arq IN cr_arq LOOP
@@ -442,6 +482,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Conta</th>');
             gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Tp.Aplica</th>');
             gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Aplica</th>');
+
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Qtd. Aimaro</th>');
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Valor Aimaro</th>');            
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Qtd. B3</th>');
+            gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Valor B3</th>');
+            
             gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Critica</th>');
             gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<th>Linha Enviada</th>');
           ELSE 
@@ -486,6 +532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                  ,rw_aplica.nraplica
                  ,rw_aplica.tpaplica;
             CLOSE cr_craprac;
+            vr_tpaplicacao := 2;
           ELSE
             -- Buscar aplicação RDA
             OPEN cr_craprda(rw_aplica.idaplicacao);
@@ -500,13 +547,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             ELSE
               rw_aplica.tpaplica := 'RDC Pós';
             END IF;
+            vr_tpaplicacao := 1;
           END IF;
+          vr_sldaplic := 0;
+          OPEN cr_saldo(rw_aplica.cdcooper
+                       ,rw_aplica.nrdconta
+                       ,rw_aplica.nraplica
+                       ,vr_tpaplicacao
+                       ,vr_dtmvtoan);                                      
+          FETCH cr_saldo                                       
+           INTO vr_sldaplic;   
+          CLOSE cr_saldo;
         END IF;
+        
+        BEGIN
+          /* Tenta buscar os dados do arquivo da B3*/
+          vr_qtde_b3 := to_number(gene0002.fn_busca_entrada('14' -- posicao 14
+                                                           ,rw_arq.dslinha
+                                                           ,';'));
+          vr_vlpu_b3 := to_number(gene0002.fn_busca_entrada('16' -- posicao 16
+                                                           ,rw_arq.dslinha
+                                                           ,';'));
+          vr_vltotal_b3 := vr_qtde_b3 * vr_vlpu_b3;
+        EXCEPTION
+          WHEN OTHERS THEN
+             vr_vltotal_b3 := 0;
+             vr_qtde_b3    := 0;
+             vr_vlpu_b3    := 0;
+        END;
+        
         -- Enviar dados da aplicacao
         gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_arq.dscodigo_b3||'</td>');
         gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_aplica.nrdconta||'</td>');
         gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_aplica.tpaplica||'</td>');
         gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_aplica.nraplica||'</td>');
+        
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_aplica.qtcotas||'</td>');
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||CADA0014.fn_formata_valor(vr_sldaplic)||'</td>');
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||vr_qtde_b3||'</td>');
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||CADA0014.fn_formata_valor(vr_vltotal_b3)||'</td>');
         -- Enviar linha e critica
         gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_arq.dscritica||'</td>');
         gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<td>'||rw_arq.dslinha||'</td>');
@@ -1015,7 +1094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,0 cdprodut
                       ,lap.dtmvtolt
                       ,lap.cdhistor
-                      ,lap.vllanmto
+                      ,lap.vllanmto * decode(hst.idtipo_lancto,4 /* Rendimento */,-1, 1) vllanmto
                       ,hst.idtipo_arquivo
                       ,hst.idtipo_lancto
                       ,hst.cdoperacao_b3
@@ -1024,6 +1103,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,rda.dtmvtolt dtmvtapl
                       ,decode(capl.tpaplicacao,1,rda.qtdiaapl,rda.qtdiauti) qtdiacar
                       ,lap.progress_recid
+					  ,lap.vlpvlrgt valorbase
+					  ,hst.cdhistorico		
+					  ,to_char(lap.progress_recid) ordena							  
                   FROM craplap lap
                       ,craprda rda
                       ,crapdtc dtc
@@ -1062,7 +1144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,rac.cdprodut
                       ,lac.dtmvtolt
                       ,lac.cdhistor
-                      ,lac.vllanmto
+                      ,lac.vllanmto * decode(hst.idtipo_lancto,4 /* Rendimento */,-1, 1) vllanmto
                       ,hst.idtipo_arquivo
                       ,hst.idtipo_lancto
                       ,hst.cdoperacao_b3 
@@ -1071,6 +1153,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,rac.dtmvtolt dtmvtapl
                       ,rac.qtdiacar
                       ,lac.progress_recid
+					  ,lac.vlbasren valorbase
+					  ,hst.cdhistorico
+					  ,lpad(nrseqrgt,10,0)||hst.idtipo_lancto ordena
                   FROM craplac lac
                       ,craprac rac
                       ,tbcapt_custodia_aplicacao capl
@@ -1100,7 +1185,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
          ORDER BY lct.dtmvtolt
                  ,lct.nrdconta
                  ,lct.nraplica
-                 ,lct.progress_recid; 
+                 --,lct.progress_recid desc; /* Necessario para calcular o valor base */
+                 ,lct.ordena desc;
       
       -- Valor total de resgate no dia
       CURSOR cr_resgat(pr_cdcooper crapcop.cdcooper%TYPE     --> Cooperativa
@@ -1153,6 +1239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       vr_sldaplic     craprda.vlsdrdca%TYPE;
       --vr_vlpreco_unit tbcapt_custodia_aplicacao.vlpreco_unitario%TYPE; --NUMBER(25,8)
       vr_vlpreco_unit NUMBER(38,30);
+	  vr_vlbase       NUMBER(38,30);
       vr_qtcotas_resg tbcapt_custodia_aplicacao.qtcotas%TYPE; 
       
       -- Controle de lançamento anterior
@@ -1211,6 +1298,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           FOR rw_lcto IN cr_lctos(rw_cop.cdcooper,vr_dtmvto2a,rw_crapdat.dtmvtolt,vr_dtinictd,vr_vlinictd) LOOP
             -- Converter valor aplicação em contas
             vr_qtcotas := fn_converte_valor_em_cota(rw_lcto.vllanmto);
+			
+		   
             -- Devemos gerar o registro de Custódia Aplicação
             BEGIN
               INSERT INTO TBCAPT_CUSTODIA_APLICACAO
@@ -1365,6 +1454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             IF vr_dtmvtolt <> rw_lcto.dtmvtolt OR vr_nrdconta <> rw_lcto.nrdconta OR vr_nraplica <> rw_lcto.nraplica THEN
               -- Armazenar quantidade de cotas 
               vr_qtcotas := rw_lcto.qtcotas;
+              vr_vlbase := 0;
               -- Quando não houver carencia
               IF fn_tem_carencia(pr_dtmvtapl => rw_lcto.dtmvtapl
                                 ,pr_qtdiacar => rw_lcto.qtdiacar
@@ -1415,11 +1505,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
 				            pr_dsdaviso := pr_dsdaviso || vr_dscarque || fn_get_time_char || ' Resgate com cotas zerada! '||  rw_cop.cdcooper ||' '|| rw_lcto.nrdconta ||' '|| rw_lcto.nraplica;
 				            continue;
 				          ELSE
-                    vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
-			            END IF;
+							vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
+						  END IF;
+						  /*
+							Autor : David Valente
+							Em 05/03/2019 P411
+
+							Calculo da quantidade de cotas referente a operação atual
+							alterado para compatibilizar com a B3;
+							vr_qtftcota é uma CONSTANTE COM O VALOR  = R$0,01 (1 Centavo)
+							REGRA ANTIGA -> vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
+						  */
+						  vr_qtcotas_resg := fn_converte_valor_em_cota(rw_lcto.valorbase);
+																				  
               ELSE
                 -- Quando carencia usar sempre a pu da emissão
                 vr_vlpreco_unit := rw_lcto.vlpreco_registro;
+				vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);															 
+				
               END IF;
               -- Armazena informações do registro atual
               vr_dtmvtolt := rw_lcto.dtmvtolt;
@@ -1439,8 +1542,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
               END IF;*/
             END IF;
             
-            -- Cuantidade de cotas referente a operação atual
-            vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
+		   
+/*
+               Autor : David Valente
+               Em 05/03/2019
+
+               Calculo da quantidade de cotas referente a operação atual
+               alterado para compatibilizar com a B3;
+               vr_qtftcota é uma CONSTANTE COM O VALOR  = R$0,01 (1 Centavo)
+               REGRA ANTIGA -> vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
+            */
+            --vr_qtcotas_resg := trunc(rw_lcto.valorbase / vr_qtftcota);
+           
+            vr_vlbase := vr_vlbase + rw_lcto.vllanmto;
+          
+            /* Se for IR e Rendimento nao vamos continuar */
+            IF rw_lcto.idtipo_lancto in (3, 4) THEN
+               continue;
+            END IF;
+            
+            vr_qtcotas_resg := fn_converte_valor_em_cota(vr_vlbase);
+            vr_vlbase := 0; /* Zera para não ficarmos com lixo */
+
             -- Devemos gerar o registro de CUstódia do Lançamento
             BEGIN
               INSERT INTO TBCAPT_CUSTODIA_LANCTOS
@@ -4021,6 +4144,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     --             06/12/2018 - P411 - Remocao da conciliação por saldo, manter apenas por quantidade (Marcos-Envolti)
     -- 
     --             12/12/2018 - P411 - Ajustes para o Layout para 15 posições (Marcos-Envolti)
+	--
+	--				19/03/2019 - P411 - Ajustes na conciliação para considerar percentuais de tolerancia (Martini)																											   
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Variaveis auxiliares
@@ -4105,7 +4230,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       -- Saldo da aplicação e preço unitário
       vr_sldaplic craprda.vlsdrdca%TYPE;
       vr_vlpreco_unit tbcapt_custodia_aplicacao.vlpreco_unitario%TYPE; 
+      vr_valor_tot_b3 NUMBER(38,8);
       
+		 -- Busca do valor conciliado
+      CURSOR cr_saldo(pr_cdcooper    tbcapt_saldo_aplica.cdcooper%TYPE   
+                     ,pr_nrdconta    tbcapt_saldo_aplica.nrdconta%TYPE   
+                     ,pr_nraplica    tbcapt_saldo_aplica.nraplica%TYPE   
+                     ,pr_tpaplicacao tbcapt_saldo_aplica.tpaplicacao%TYPE
+                     ,pr_dtmvtolt    tbcapt_saldo_aplica.dtmvtolt%TYPE) IS
+        SELECT sl.VLSALDO_CONCILIA
+          FROM tbcapt_saldo_aplica sl
+         WHERE sl.cdcooper    = pr_cdcooper   
+           AND sl.nrdconta    = pr_nrdconta   
+           AND sl.nraplica    = pr_nraplica   
+           AND sl.tpaplicacao = pr_tpaplicacao
+           AND sl.dtmvtolt    = pr_dtmvtolt;
+          
+      -- Percentual de tolerancia
+      vr_vlpertol NUMBER(25,5);	   
       
       -- Flag de conciliação OK
       vr_flgconcil BOOLEAN := FALSE;
@@ -4113,11 +4255,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       -- Busca do dia util anterior
       vr_dtmvtoan DATE;
       
+	  -- Tipo de aplicação da tabela TBCAPT_SALDO_APLICA
+	  -- tipo de aplicacao (1 - rdc pos e pre / 2 - pcapta / 3 - aplic programada) 
+	  -- David Valente (Envolti) 							 
+      vr_tpaplicacao NUMBER(2);
+	
     BEGIN
   	  -- Inclusão do módulo e ação logado
     	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0007.pc_processa_conciliacao'); 
       -- Incluir LOG
       pr_dsdaviso := fn_get_time_char || 'Iniciando Processamento e Integração de Arquivos Conciliação Devolvidos pela B3...';      
+      
+	  -- Buscar o percentual de tolerancia
+      BEGIN
+         vr_vlpertol := gene0001.fn_param_sistema('CRED',3,'CD_TOLERANCIA_DIF_VALOR');
+      EXCEPTION
+         WHEN OTHERS THEN  
+           vr_vlpertol := 0;
+      END;
+      	  
       -- Somente proceder se conciliação estiver ativa e ainda não efetuada para o dia
       IF pr_flprccnc = 'S' AND pr_dtultcnc < trunc(SYSDATE) THEN 
         -- Busca do dia util anterior
@@ -4251,6 +4407,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                     vr_dscritic := 'Aplicação '||vr_txretorn(5) ||' com Qtde Cotas igual a zero!';
                   ELSE
                     CLOSE cr_aplica;
+					
+					-- Variavel de controle com o tipo de aplicação
+                    -- se for aplicações do tipo 3 ou 4, recebe 2 senão recebe 1 
+                    -- para compatibilizar com os dados da tbcapt_saldo_aplica que recebe somente 1,2 ou 3
+                    vr_tpaplicacao := 0; 
+					
                     -- Buscar aplicação RDA ou RAC relacionada
                     IF rw_aplica.tpaplicacao IN(3,4) THEN 
                       -- Buscar aplicação RAC
@@ -4263,6 +4425,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                            ,rw_aplica.dtmvtolt
                            ,rw_aplica.dtvencto;
                       CLOSE cr_craprac;
+					  
+					  vr_tpaplicacao := 2;				  
+					  
                     ELSE
                       -- Buscar aplicação RDA
                       OPEN cr_craprda(rw_aplica.idaplicacao);
@@ -4273,6 +4438,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                            ,rw_aplica.dtmvtolt
                            ,rw_aplica.dtvencto;
                       CLOSE cr_craprda;                
+					  
+					  vr_tpaplicacao := 1;				  
+					  
                     END IF;
                     -- Caso não tenha encontrado a aplicação correspondente
                     IF rw_aplica.cdcooper + rw_aplica.nrdconta + rw_aplica.nraplica = 0 THEN 
@@ -4283,42 +4451,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                         vr_dscritic := 'Data de Emissão ('||vr_txretorn(9)||') diferente da Data Emissão Aplicação ('||TO_CHAR(rw_aplica.dtmvtolt,'RRRRMMDD')||').';
                       ELSIF TO_CHAR(rw_aplica.dtvencto,'RRRRMMDD') <> vr_txretorn(10) THEN 
                         vr_dscritic := 'Data de Vencimento ('||vr_txretorn(10)||') diferente da Data Vencimento Aplicação ('||TO_CHAR(rw_aplica.dtvencto,'RRRRMMDD')||').';
-                      ELSIF rw_aplica.qtcotas <> vr_txretorn(14) THEN
+					  /* Conciliar quantidade em cotas */
+                      ELSIF TO_NUMBER(rw_aplica.qtcotas) <> TO_NUMBER(vr_txretorn(14)) THEN
                         vr_dscritic := 'Quantidade em Carteira ('||vr_txretorn(14)||') diferente da Quantidade de Cotas da Aplicação ('||rw_aplica.qtcotas||').';
                       ELSE
-                        /* Busca de saldo comentada em 06/12 cfme solicitação Hasse
-                        
-                        -- Buscar saldo e outras informações da Aplicação
-                        pc_busca_saldo_anterior(pr_cdcooper  => rw_aplica.cdcooper      --> Cooperativa
-                                               ,pr_nrdconta  => rw_aplica.nrdconta      --> Conta
-                                               ,pr_nraplica  => rw_aplica.nraplica      --> Aplicação
-                                               ,pr_tpaplica  => rw_aplica.tpaplicacao   --> Tipo aplicação
-                                               ,pr_cdprodut  => rw_aplica.cdprodut      --> Codigo produto 
-                                               ,pr_dtmvtolt  => trunc(SYSDATE)          --> Data movimento
-                                               ,pr_dtmvtsld  => vr_dtmvtolt             --> Data do saldo desejado
-                                               ,pr_tpconsul  => 'C'                     --> Conciliação
-                                               ,pr_sldaplic  => vr_sldaplic             --> Saldo na data
-                                               ,pr_idcritic => vr_idcritic              --> Identificador critica
-                                               ,pr_cdcritic => vr_cdcritic              --> Codigo da critica
-                                               ,pr_dscritic => vr_dscritic);            --> Retorno de críticaca
-                        -- Código comum, para gravação do LOG independente de sucesso ou não
-                        IF vr_dscritic IS NOT NULL THEN
-                          -- Houve erro
-                          vr_dscritic := 'Nao foi possivel buscar saldo Anterior Cooper '||rw_aplica.cdcooper
-                                      || ',Conta '||rw_aplica.nrdconta
-                                      || ',Aplica '||rw_aplica.nraplica
-                                      || ',Data Solicitada '||(vr_dtmvtolt+1)
-                                      ||' -> '|| vr_dscritic;
-                        END IF;
+                        -- Buscar  saldo calculado da aplicação
+                        vr_sldaplic := 0;
+                        OPEN cr_saldo(rw_aplica.cdcooper
+                                     ,rw_aplica.nrdconta
+                                     ,rw_aplica.nraplica
+                                     ,vr_tpaplicacao
+                                     ,vr_dtmvtoan);																		  
+                        FETCH cr_saldo																			 
+                         INTO vr_sldaplic;   
+                        CLOSE cr_saldo;     
+						
                         -- Calcular valor unitário novamente com base no Saldo Ayllos X Quantidade de cotas
-                        vr_vlpreco_unit := vr_sldaplic / rw_aplica.qtcotas; */
+                        vr_vlpreco_unit := vr_sldaplic / rw_aplica.qtcotas; 
+
+                        vr_valor_tot_b3 := TO_NUMBER(vr_txretorn(14)) * vr_txretorn(16);  -- qtde b3 * pu b3;
                         
-                        -- Validar valor nominal
+                        -- Validar valor nominal 
                         IF rw_aplica.vlpreco_registro <> vr_txretorn(15) THEN
-                          vr_dscritic := 'Valor Nominal ('||vr_txretorn(15)||') diferente do Registrado da Aplicação ('||rw_aplica.vlpreco_registro||').';
-                        /*-- validar a PU atual recebida X calculada
-                        ELSIF vr_vlpreco_unit <> vr_txretorn(16) THEN
-                          vr_dscritic := 'Valor da P.U. ('||vr_txretorn(16)||') diferente da P.U. calculada da Aplicação ('||vr_vlpreco_unit||').';*/
+                          vr_dscritic := 'Valor Nominal ('||vr_txretorn(15)||') diferente do Registrado da Aplicação ('||rw_aplica.vlpreco_registro||'), tolerancia ('||vr_vlpertol||'%).';
+                        -- Validar a PA atual recebida versus a calculada no 445 no processo
+                     --   ELSIF ABS(((vr_vlpreco_unit - vr_txretorn(16)) / vr_txretorn(16)) * 100) < vr_vlpertol THEN
+                     --     vr_dscritic := 'Valor da P.U. ('||vr_txretorn(16)||') diferente da P.U. calculada da Aplicação ('||vr_vlpreco_unit||'), tolerancia ('||vr_vlpertol||'%).';
+                        ELSIF ABS(((vr_sldaplic - vr_valor_tot_b3) / vr_valor_tot_b3) * 100) > vr_vlpertol THEN
+                          vr_dscritic := 'Valor da Aplic. B3 ('||vr_valor_tot_b3||') diferente do valor da aplicação no Aimaro ('||vr_sldaplic||'), tolerancia ('||vr_vlpertol||'%).';
                         END IF;
                       END IF;  
                     END IF;
