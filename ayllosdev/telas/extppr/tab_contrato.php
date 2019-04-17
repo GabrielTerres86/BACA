@@ -17,7 +17,7 @@
 			<thead>
 				<tr>
 					<th><? echo utf8ToHtml('Data Movto'); ?></th>
-					<th><? echo utf8ToHtml('Poup Programada');  ?></th>
+					<th><? echo utf8ToHtml('Apli Programada');  ?></th>
 					<th><? echo utf8ToHtml('Dia Debito');  ?></th>
 					<th><? echo utf8ToHtml('Vl. Prestacao');  ?></th>
 				</tr>
