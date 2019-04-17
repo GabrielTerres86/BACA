@@ -66,6 +66,9 @@
                             (Rafael Faria-Supero)
                06/11/2017 - Separar telefone do endereco da cooperativa (David)
 
+			   17/04/2019 - INC0012046 - Correção para apresentar IR de pessoa física, falha de valor null na tabela.
+							(Guilherme Kuhnen - f0032175)
+
 ............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -329,7 +332,7 @@ PROCEDURE proc_ir_fisica:
                           crapdir.vlrenrdc[09] + crapdir.vlrenrdc[10] +
                           crapdir.vlrenrdc[11] + crapdir.vlrenrdc[12] +
                           
-                          crapdir.vlrenrpp + crapdir.vlabonpp + 
+						  (IF crapdir.vlrenrpp <> ? THEN crapdir.vlrenrpp ELSE 0) + crapdir.vlabonpp + /*INC0012046*/
                           crapdir.vlabonrd + crapdir.vlabiopp +        
                           crapdir.vlabiord  -                          
                           
