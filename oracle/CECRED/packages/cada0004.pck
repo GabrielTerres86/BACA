@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 23/11/2018
+    Data     : Agosto/2015.                   Ultima atualizacao: 11/01/2019
   
    Dados referentes ao programa:
   
@@ -5070,6 +5070,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     -- Gerar aviso para impressão do termo de responsabilidade
     IF rw_crapass.idimprtr = 1 THEN
       pc_cria_registro_msg(pr_dsmensag => 'Imprimir Termo de Responsabilidade para acesso ao Autoatendimento e SAC.'
+                          ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
+	
+	-- Verifica a data da ultima alteração do cooperado
+    IF months_between(pr_rw_crapdat.dtmvtolt,rw_crapass.dtultalt) > 12 THEN
+      pc_cria_registro_msg(pr_dsmensag => 'Cooperado com cadastro vencido.'
                           ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
 
