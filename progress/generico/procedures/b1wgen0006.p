@@ -143,6 +143,9 @@
 
                 19/07/2018 - Proj. 411.2 - Poupança Programada -> Aplicação Programada
 				
+                16/04/2019 - Ajustado para nao validar a qtd de meses para suspensao com o vencimento do plano,
+                             pois a informacao do plano nao eh mais utilizada (Anderson)
+
 ..............................................................................*/
 
 
@@ -1548,12 +1551,14 @@ PROCEDURE validar-dados-suspensao:
 
         ASSIGN aux_dtreinic = DATE(aux_nrmesini,aux_nrdiaini,aux_nranoini).
 
-        /** Data de reinicio da poupanca nao pode ser maior que o vencimento **/
+        /** Data de reinicio da poupanca nao pode ser maior que o vencimento 
         IF  aux_dtreinic > craprpp.dtvctopp  THEN
             DO:
                 ASSIGN aux_cdcritic = 26.
                 LEAVE.
             END.
+			
+        Comentado pois nao faz mais sentido, nao tem mais campo de vencimento **/
         
         ASSIGN aux_flgerror = FALSE.
 

@@ -112,6 +112,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                    12/10/2018 - Relatório crrl1120 publicado na intranet - pr_flg_impri = "S" - Proj. 411.2 (CIS Corporate)    
 
                    12/10/2018 - Tratamento de Flag de Teimosinha e Debito Parcial - Proj. 411.2 (CIS Corporate)    
+
+                   17/04/2019 - Ajuste para tratar planos cujo indebito esta marcado com 1 indevidamente (Anderson)
     ............................................................................. */
 
     DECLARE
@@ -191,7 +193,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
         AND    craprpp.nrctrrpp  > pr_nrctrrpp 
         AND   (craprpp.cdsitrpp  = 1 OR craprpp.cdsitrpp  = 2)
         AND    craprpp.dtdebito <= pr_dtdebito
-        AND    craprpp.indebito  = 0
+        AND   (
+                /* flag de debitado no mes = [0 - nao] e a data de debito eh menor ou igual a data do debito */
+                (craprpp.indebito  = 0 AND craprpp.dtdebito <= pr_dtdebito)
+               OR 
+                /* flag debitado no mes = [1 - sim] mas o debito programadado eh de mes anterior,
+                 vamos verificar se nao chegou o dia de debitar novamente este mes */
+                (    craprpp.indebito  = 1 
+                 and craprpp.dtdebito < trunc(pr_dtdebito)  
+                 and extract(day from craprpp.dtdebito) < extract(day from pr_dtdebito)  
+                )
+               )
         AND    craprpp.cdprodut > 0;
 
       --seleciona os saldos das contas dos cooperados
