@@ -37,12 +37,22 @@ SELECT cpc.idtippro + 2 -- Para que Pré fique 3 e Pós fique 4
   FROM crapind ind
       ,crapcpc cpc
  WHERE cpc.cddindex = ind.cddindex*/
-UNION
+UNION      -- IRRF
 SELECT cpc.idtippro + 2 -- Para que Pré fique 3 e Pós fique 4
       ,cpc.cdprodut
       ,cpc.cdhsirap
       ,2
       ,3
+      ,'0314'
+  FROM crapind ind
+      ,crapcpc cpc
+ WHERE cpc.cddindex = ind.cddindex
+UNION      -- RENDIMENTO
+SELECT cpc.idtippro + 2 -- Para que Pré fique 3 e Pós fique 4
+      ,cpc.cdprodut
+      ,cpc.cdhsrdap
+      ,2
+      ,4
       ,'0314'
   FROM crapind ind
       ,crapcpc cpc

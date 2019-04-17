@@ -111,7 +111,7 @@ $(document).ready(function() {
                     <label for="perctolval" align="right" style="width:100%;"><? echo utf8ToHtml('% Tolerância na Diferença de Valor:') ?></label>
                   </td>
                   <td>
-                    <input type="text" class="campo" id="perctolval" name="perctolval" size="10" maxlength = "10" style="text-align:center;" value="<?php echo getByTagName($xmlRegist->tags,'perctolval'); ?>" />
+                    <input type="text" class="campo" id="perctolval" name="perctolval" size="15" maxlength = "15" style="text-align:center;" value="<?php echo getByTagName($xmlRegist->tags,'perctolval'); ?>" />
                   </td>
                 </tr>
               </table>
