@@ -113,6 +113,7 @@
 			$glbvars["idorigem"],
 			$glbvars["cdoperad"],
 			"</Root>");
+
 		$xmlObj = getObjectXML($xmlResult);
 
 		if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
@@ -144,7 +145,7 @@
 			
 			$xml  = '';
 			$xml .= '<Root>';
-			$xml .= '	<Dados>';
+			$xml .= '	<dto>';
 			$xml .= '       <cdempres>'.$cdempres.'</cdempres>';// cdempres
 			$xml .= '       <indconsignado>'.$indconsignado.'</indconsignado>'; // indconsignado
 			$xml .= '       <dtativconsignado>'.$dtativconsignado.'</dtativconsignado>'; //dtativconsignado
@@ -157,9 +158,11 @@
 			$xml .= '       <indalertaemailconsig>'.$indalertaemailconsig.'</indalertaemailconsig>'; //indalertaemailconsig
 			$xml .= '       <dtinterromper>'.$dtinterromper.'</dtinterromper>'; //dtinterromper
 			$xml .= '       <dtfchfol>'.$dtfchfol.'</dtfchfol>'; //dtfchfol
-			$xml .= '       '.$vencimentos.''; //vencimentos
-			$xml .= '	</Dados>';
+			$xml .= '       '.$vencimentosFis.''; //vencimentos
+			$xml .= '	</dto>';
 			$xml .= '</Root>';
+
+
 			
 			$xmlResult = mensageria(
 				$xml,
@@ -248,7 +251,7 @@
 		}else{
 			$xml  = '';
 			$xml .= '<Root>';
-			$xml .= '	<Dados>';
+			$xml .= '	<dto>';
 			$xml .= '       <cdempres>'.$cdempres.'</cdempres>';// cdempres
 			$xml .= '       <indconsignado>'.$indconsignado.'</indconsignado>'; // indconsignado
 			$xml .= '       <dtativconsignado>'.$glbvars["dtmvtolt"].'</dtativconsignado>'; //dtativconsignado
@@ -261,9 +264,11 @@
 			$xml .= '       <indalertaemailconsig>'.$indalertaemailconsig.'</indalertaemailconsig>'; //indalertaemailconsig
 			$xml .= '       <dtinterromper>'.$dtinterromper.'</dtinterromper>'; //dtinterromper
 			$xml .= '       <dtfchfol>'.$dtfchfol.'</dtfchfol>'; //dtfchfol
-			$xml .= '       '.$vencimentos.''; //vencimentos
-			$xml .= '	</Dados>';
+			$xml .= '       '.$vencimentosFis.''; //vencimentos
+			$xml .= '	</dto>';
 			$xml .= '</Root>';
+
+			
 
 			$xmlResult = mensageria(
 				$xml,
@@ -275,6 +280,7 @@
 				$glbvars["idorigem"],
 				$glbvars["cdoperad"],
 				"</Root>");
+			
 
 			$xmlObj = getObjectXML($xmlResult);
 

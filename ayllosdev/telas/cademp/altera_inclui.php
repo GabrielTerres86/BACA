@@ -38,6 +38,8 @@
     $nmcidade = ( isset($_POST["nmcidade"]) ) ? $_POST["nmcidade"] : '';
     $cdufdemp = ( isset($_POST["cdufdemp"]) ) ? $_POST["cdufdemp"] : '';
     $nrfonemp = ( isset($_POST["nrfonemp"]) ) ? $_POST["nrfonemp"] : '';
+	//P437
+	$nrdddemp = ( isset($_POST["nrdddemp"]) ) ? $_POST["nrdddemp"] : '';
     $nrfaxemp = ( isset($_POST["nrfaxemp"]) ) ? $_POST["nrfaxemp"] : '';
     $dsdemail = ( isset($_POST["dsdemail"]) ) ? $_POST["dsdemail"] : '';
     $ddmesnov = ( isset($_POST["ddmesnov"]) ) ? $_POST["ddmesnov"] : '';
@@ -94,6 +96,8 @@
     $old_nmcidade = ( isset($_POST["old_nmcidade"]) ) ? $_POST["old_nmcidade"] : '';
     $old_cdufdemp = ( isset($_POST["old_cdufdemp"]) ) ? $_POST["old_cdufdemp"] : '';
     $old_nrfonemp = ( isset($_POST["old_nrfonemp"]) ) ? $_POST["old_nrfonemp"] : '';
+	//P437
+	$old_nrdddemp = ( isset($_POST["old_nrdddemp"]) ) ? $_POST["old_nrdddemp"] : '';
     $old_nrfaxemp = ( isset($_POST["old_nrfaxemp"]) ) ? $_POST["old_nrfaxemp"] : '';
     $old_dsdemail = ( isset($_POST["old_dsdemail"]) ) ? $_POST["old_dsdemail"] : '';
     $old_ddmesnov = ( isset($_POST["old_ddmesnov"]) ) ? $_POST["old_ddmesnov"] : '';
@@ -242,7 +246,7 @@
 		$xml .= '       <descbairrologradouro>'.$nmbairro.'</descbairrologradouro>';
 		$xml .= '       <desccidadelogradouro>'.$nmcidade.'</desccidadelogradouro>';
 		$xml .= '       <uflogradouro>'.$cdufdemp.'</uflogradouro>';
-		$xml .= '       <dddloja>47</dddloja>';
+		$xml .= '       <dddloja>'.$nrdddemp.'</dddloja>';
 		$xml .= '       <telloja>'.$nrfonemp.'</telloja>';
 		$xml .= '       <numConta>'.$nrdconta.'</numConta>';
 		$xml .= '	</dto>';
@@ -324,6 +328,8 @@
     $xml.="          <nrcepend>$nrcepend</nrcepend>";
     $xml.="          <nrdocnpj>$nrdocnpj</nrdocnpj>";
     $xml.="          <nrfonemp>$nrfonemp</nrfonemp>";
+	//P437
+	$xml.="          <nrdddemp>$nrdddemp</nrdddemp>";
     $xml.="          <nrfaxemp>$nrfaxemp</nrfaxemp>";
     $xml.="          <dsdemail>$dsdemail</dsdemail>";
     $xml.="          <nrlotfol>$nrlotfol</nrlotfol>";
@@ -549,7 +555,11 @@
 
     $xml .= "        <old_nrfaxemp>$old_nrfaxemp</old_nrfaxemp>";
     $xml .= "        <new_nrfaxemp>$nrfaxemp</new_nrfaxemp>";
-
+	
+	//P437
+	$xml .= "        <old_nrfonemp>$old_nrdddemp</old_nrfonemp>";
+    $xml .= "        <new_nrfonemp>$nrdddemp</new_nrfonemp>";
+	
     $xml .= "        <old_nrfonemp>$old_nrfonemp</old_nrfonemp>";
     $xml .= "        <new_nrfonemp>$nrfonemp</new_nrfonemp>";
 

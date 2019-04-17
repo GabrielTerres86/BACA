@@ -26,7 +26,7 @@
 		
 	
 	
-if ($operacao == 'SIMULA_CONSIGNADO'){
+if ($operacao == 'SIMULA_CONSIGNADO' || $operacao == 'RECALCULA_CONSIGNADO'){
 		$xml  = '';
 		$xml .= '<Root>';
 		$xml .= '	<Dados>';
@@ -57,8 +57,12 @@ if ($operacao == 'SIMULA_CONSIGNADO'){
 			return;
 		}
 		else{			
-			$js  = 'ret = 1;';									
-			
+			$js  = '';									
+			if ($operacao == 'RECALCULA_CONSIGNADO'){
+				$js  .= 'ret = 2;';
+			}else{
+				$js  .= 'ret = 1;';
+			}
 			$js .= '_dtlibera = "'.getByTagName($xmlObj->roottag->tags[0]->tags[0]->tags,'dtliberacao').'";';			
 			$js .= '_dtdpagto = "'.getByTagName($xmlObj->roottag->tags[0]->tags[0]->tags,'dtvencimento').'";';	
 			echo $js;

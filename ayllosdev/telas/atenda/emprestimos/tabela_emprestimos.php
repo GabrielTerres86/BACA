@@ -160,6 +160,7 @@
 						<input type="hidden" id="inaverba" name="inaverba" value="<? echo getByTagName($registro->tags,'inaverba') ?>" />
 						<input type="hidden" id="tpemprst" name="tpemprst" value="<? echo getByTagName($registro->tags,'tpemprst') ?>" />
 						<input type="hidden" id="tpmodcon" name="tpmodcon" value="<? echo getByTagName($registro->tags,'tpmodcon') ?>" />
+						<input type="hidden" id="dtdpagto" name="dtdpagto" value="<? echo getByTagName($registro->tags,'dtdpagto') ?>" />
 					    <!-- PRJ - 438 - Rating  -->
 						<input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
 						<input type="hidden" id="flintcdc" name="flintcdc" value="<? echo getByTagName($registro->tags,'flintcdc') ?>" />

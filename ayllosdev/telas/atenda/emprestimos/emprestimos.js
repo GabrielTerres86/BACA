@@ -446,6 +446,7 @@ var __aux_ingarapr = ""; //bruno - prj 438 - bug 14235
 
 var aux_nrctremp_consulta = ''; //rubens - prj 438 - bug 14283
 
+
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 
     // Mostra mensagem de aguardo
@@ -533,8 +534,9 @@ function confirmaAverbacao(){
 	return false;
 }
 
-function controlaOperacao(operacao) {
 
+
+function controlaOperacao(operacao) {
 	//console.log('Operacao: '+operacao);
 	
 	// Averbar P437 s3
@@ -586,7 +588,8 @@ function controlaOperacao(operacao) {
 
     var simula = false;
 	// Averbar P437 s3
-	if (operacao == 'AVERBAR'){
+	if (operacao == 'AVERBAR'){        
+
 		$('table > tbody > tr', 'div.divRegistros').each(function() {
             if ($(this).hasClass('corSelecao')) {
                 if ($('#tpemprst', $(this)).val() == 1 && $('#tpmodcon', $(this)).val() > 0 ){
@@ -1461,12 +1464,20 @@ function controlaOperacao(operacao) {
             cddopcao = 'G';
             break;
         case 'VAL_RECALCULAR_EMPRESTIMO' :
+             //P437-JDB
+            if (($("#divEmpres table tr.corSelecao").find("input[id='tpemprst']").val() == '1') && ($("#divEmpres table tr.corSelecao").find("input[id='tpmodcon']").val() > 0)){
+                 buscadtconsig($("#divEmpres table tr.corSelecao").find("input[id='cdlcremp']").val());
+            }else{
+                 gConsig = 0;                
+            }
             showConfirmacao('Deseja atualizar a data de libera&ccedil;&atilde;o do recurso?', 'Confirma&ccedil;&atilde;o - Aimaro', 'controlaOperacao(\'RECALCULAR_EMPRESTIMO\')', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
             return false;
-            break;
         case 'RECALCULAR_EMPRESTIMO' :
             mensagem = 'Recalculando Empr&eacute;stimo...';
             cddopcao = 'R';
+            if (gConsig == 1){
+                dtdpagto = $("#divEmpres table tr.corSelecao").find("input[id='dtdpagto']").val();           
+            }
             break;
 		case 'ACIONAMENTOS': /* Esteira - Acionamentos - Consulta */
             cddopcao = 'C';
@@ -2110,7 +2121,7 @@ function manterRotina(operacao) {
             inpesso2: inpesso2, dtnasct2: dtnasct2, cddopcao: cddopcao,
             resposta: resposta, idfiniof: idfiniof, vliofepr: vliofepr,
             vlrtarif: vlrtarif, vlrtotal: vlrtotal, vlfinanc: vlfinanc,
-            vliofepr: vliofepr,  gConsig: gConsig,
+             gConsig: gConsig,
 			// PRJ 438
             vlrecjg1: vlrecjg1, vlrecjg2: vlrecjg2, 
             //bruno - prj 438 - bug 14235
@@ -10465,6 +10476,7 @@ function efetivaProposta(operacao) {
             nrctremp: nrctremp, insitapv: insitapv,
             dtdpagto: dtdpagto, idcobope: idcobope, 
 			flliquid: flliquid, operacao: operacao,
+             gConsig: gConsig,
 			redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -11571,8 +11583,13 @@ function abrirTelaGAROPC(operacao) {
 	showMsgAguardo('Aguarde, carregando ...');	
     //P437 
     if (gConsig == 1){
-        operacao = 'I_DADOS_PROP';
-        cddopcao = 'I'; 
+        if (operacao == 'I_GAROPC'){
+            operacao = 'I_DADOS_PROP';
+            cddopcao = 'I'; 
+        }else if (operacao == 'A_GAROPC'){
+            operacao = 'A_DADOS_PROP';
+            cddopcao = 'A'; 
+        }
         controlaOperacao(operacao);
     }else{
         exibeRotina($('#divUsoGAROPC'));
@@ -12807,12 +12824,49 @@ function mostraAplicacao(tpaplica) {
 	return false;
 }
 
-
-function buscadtconsig()
+//P437
+function buscadtconsig(_cdlcremp)
 {	
 	//gConsig = 0;
-    if (operacao != 'TC'){
-        if ($('#cdlcremp', '#' + nomeForm).val()){
+    if (operacao != 'TC' && operacao != 'T_EFETIVA'){
+        if (typeof _cdlcremp !== 'undefined'){
+            showMsgAguardo('Aguarde validando ...');
+            $.ajax({
+                    type: 'POST',
+                    url: UrlSite + 'telas/atenda/emprestimos/consig_rotina.php',
+                    data: {
+                        operacao: 'RECALCULA_CONSIGNADO',	
+                        nrdconta: nrdconta ,
+                        cdlcremp: _cdlcremp,
+                        redirect: 'script_ajax'
+                    },
+                    error: function(objAjax, responseError, objExcept) {
+                        hideMsgAguardo();
+                        showError('error', 'Não foi possível concluir a requisição.'+responseError, 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                        gConsig = 0;
+                    },
+                    success: function(response) {
+                        hideMsgAguardo();
+                        try{
+                            eval(response);						
+                            if (typeof ret !== 'undefined') {
+                                if (ret == '2'){									                                   
+                                    gConsig = 1;
+                                    $("#divEmpres table tr.corSelecao").find("input[id='dtdpagto']").val(_dtdpagto);
+                                }
+                            }												
+                        } catch (error) {
+                            showError(
+                                'error',
+                                error,
+                                'Alerta - Ayllos',
+                                '');
+                            gConsig = 0;                            
+                        }					
+                    }
+                });
+        }
+        else if ($('#cdlcremp', '#' + nomeForm).val()){
             if ($('#cdlcremp', '#' + nomeForm).val() != '' && $('#cdlcremp', '#' + nomeForm).val() != '0'){
                 showMsgAguardo('Aguarde validando ...');
 

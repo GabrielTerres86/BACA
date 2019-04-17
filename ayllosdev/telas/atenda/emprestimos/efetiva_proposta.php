@@ -53,6 +53,21 @@
 	$flliquid = (isset($_POST['flliquid'])) ? $_POST['flliquid'] : 0;
 	//$continuaEfetivacao = false;
 	$errorQtd = 0;
+
+	//P437 -- comentado todos os codigos pois não será necessário na efetivação recalcular as parcelas e buscar o vlaor do IOF
+	/*
+	$gConsig = isset($_POST['gConsig']) ? $_POST['gConsig'] : '0';	
+	$vliofepr = -1;
+	$vlpreemp = 0;
+	if($gConsig == 1){
+		$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis&vlparepr=97,62&vliofepr=4');	
+		$obj = json_decode($raw_data); 	
+		if (isset($obj->vlparepr)){
+			$vlpreemp = $obj->vlparepr;
+			$vliofepr = $obj->vliofepr;	
+		}			
+	}
+	*/
 					
 	if ($idcobope > 0 && $flliquid == 0 && $operacao == '') {
 		// Monta o xml dinâmico de acordo com a operação 
@@ -100,8 +115,15 @@
 	$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
 	$xml .= "		<dtdpagto>".$dtdpagto."</dtdpagto>";
     $xml .= "		<nrcpfope>0</nrcpfope>";
+	/*
+	$xml .= "		<vlpreempi>".$vlpreemp."</vlpreempi>";
+	$xml .= "		<vlrdoiof>".$vliofepr."</vlrdoiof>";
+	*/
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
+
+	/*$auxLog = $xml;
+	echo "cttc('$auxLog');";*/
 
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xml);

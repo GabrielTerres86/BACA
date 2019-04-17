@@ -108,10 +108,13 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 			<input name="nrcepend" type="text"  id="nrcepend" class='campo' />
 
 			<br style="clear:both" />
+			<!--P437-->
+			<label for="nrdddemp">DDD:</label>
+			<input name="nrdddemp" type="text"  id="nrdddemp" class='campo' />
 
 			<label for="nrfonemp">Telefone:</label>
 			<input name="nrfonemp" type="text"  id="nrfonemp" class='campo' />
-
+	
 			<label for="nrfaxemp">Fax:</label>
 			<input name="nrfaxemp" type="text"  id="nrfaxemp" class='campo' />
 
@@ -136,6 +139,8 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 			<input type='hidden' name='old_nrcepend' id='old_nrcepend'>
 			<input type='hidden' name='old_nrdocnpj' id='old_nrdocnpj'>
 			<input type='hidden' name='old_nrfonemp' id='old_nrfonemp'>
+			<!-- P437 -->
+			<input type='hidden' name='old_nrdddemp' id='old_nrdddemp'>
 			<input type='hidden' name='old_nrfaxemp' id='old_nrfaxemp'>
 			<input type='hidden' name='old_dsdemail' id='old_dsdemail'>
 			<!-- CAMPOS PARA LOG -->

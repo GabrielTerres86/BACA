@@ -93,6 +93,8 @@ var
         cCdufdemp,
         cNrcepend,
         cNrdocnpj,
+		//P437
+		cNrdddemp,
         cNrfonemp,
         cNrfaxemp,
         cDsdemail,
@@ -112,6 +114,8 @@ var
         old_cCdufdemp,
         old_cNrcepend,
         old_cNrdocnpj,
+		//P437
+		old_cNrdddemp,
         old_cNrfonemp,
         old_cNrfaxemp,
         old_cDsdemail;
@@ -267,6 +271,8 @@ function formataCabecalho() {
     var cNmbairro = $('#nmbairro', '#frmInfEmpresa');
     var cNmcidade = $('#nmcidade', '#frmInfEmpresa');
     var cCdufdemp = $('#cdufdemp', '#frmInfEmpresa');
+	//P437
+	var cNrdddemp = $('#nrdddemp', '#frmInfEmpresa');
     var cNrfonemp = $('#nrfonemp', '#frmInfEmpresa');
     var cNrfaxemp = $('#nrfaxemp', '#frmInfEmpresa');
     var cDsdemail = $('#dsdemail', '#frmInfEmpresa');
@@ -294,6 +300,8 @@ function formataCabecalho() {
     cNmbairro.attr('maxlength', '15');
     cNmcidade.attr('maxlength', '25');
     cCdufdemp.attr('maxlength', '2');
+	//P437
+	cNrdddemp.attr('maxlength', '2');
     cNrfonemp.attr('maxlength', '15');
     cNrfaxemp.attr('maxlength', '15');
     cDsdemail.attr('maxlength', '60');
@@ -436,6 +444,8 @@ function formataInfEmpresas() {
     var rCdufdemp = $('label[for="cdufdemp"]', '#frmInfEmpresa');
     var rNrcepend = $('label[for="nrcepend"]', '#frmInfEmpresa');
     var rNrdocnpj = $('label[for="nrdocnpj"]', '#frmInfEmpresa');
+	//P437
+	var rNrdddemp = $('label[for="nrdddemp"]', '#frmInfEmpresa');
     var rNrfonemp = $('label[for="nrfonemp"]', '#frmInfEmpresa');
     var rNrfaxemp = $('label[for="nrfaxemp"]', '#frmInfEmpresa');
     var rDsdemail = $('label[for="dsdemail"]', '#frmInfEmpresa');
@@ -454,8 +464,10 @@ function formataInfEmpresas() {
     rCdufdemp.css({width: "90px"});
     rNrcepend.css({width: '62px'});
     rNrdocnpj.css({width: '90px'});
-    rNrfonemp.css({width: "90px"});
-    rNrfaxemp.css({width: '152px'});
+	//P437
+	rNrdddemp.css({width: "90px"});
+    rNrfonemp.css({width: "62px"});
+    rNrfaxemp.css({width: '44px'});
     rDsdemail.css({width: "90px"});
 
     cCdempres = $('#cdempres', '#frmInfEmpresa');
@@ -473,6 +485,8 @@ function formataInfEmpresas() {
     cCdufdemp = $('#cdufdemp', '#frmInfEmpresa');
     cNrcepend = $('#nrcepend', '#frmInfEmpresa');
     cNrdocnpj = $('#nrdocnpj', '#frmInfEmpresa');
+	//P437
+	cNrdddemp = $('#nrdddemp', '#frmInfEmpresa');
     cNrfonemp = $('#nrfonemp', '#frmInfEmpresa');
     cNrfaxemp = $('#nrfaxemp', '#frmInfEmpresa');
     cDsdemail = $('#dsdemail', '#frmInfEmpresa');
@@ -492,8 +506,10 @@ function formataInfEmpresas() {
     cCdufdemp.css({width: '30px'}).addClass('alpha ');
     cNrcepend.css({width: '100px'}).addClass('cep');
     cNrdocnpj.css({width: '135px'}).addClass('cnpj');
+	//P437
+	cNrdddemp.css({width: '30px'}).setMask("INTEGER", "zz");
     cNrfonemp.css({width: '131px'});
-    cNrfaxemp.css({width: '131px'});
+    cNrfaxemp.css({width: '150px'});
     cDsdemail.css({width: '423px'});
 
 	//cDsdemail.addClass('email');
@@ -688,6 +704,14 @@ function controlaOperacao() {
                 showError('error','campo de CNPJ ser informado!',
                           'Campo Obrigat&oacute;rio!',
                           '$("#nrdocnpj","#frmInfEmpresa").focus();');
+                return false;
+            }
+			
+			//P437
+			if (cNrdddemp.val() == 0) {
+                showError('error','N&uacute;mero de DDD deve ser informado!',
+                          'Campo Obrigat&oacute;rio!',
+                          '$("#nrdddemp","#frmInfEmpresa").focus();');
                 return false;
             }
 
@@ -1039,10 +1063,19 @@ function controlaFocoFormulariosEmpresa() {
         });
         cNrcepend.unbind('keypress').bind('keypress', function(e) {
             if (e.keyCode == 9 || e.keyCode == 13) {
+                cNrdddemp.focus();
+                return false;
+            }
+        }); 
+		
+		//P437
+		cNrdddemp.unbind('keypress').bind('keypress', function(e) {
+            if (e.keyCode == 9 || e.keyCode == 13) {
                 cNrfonemp.focus();
                 return false;
             }
-        });        
+        });
+		
         cNrfonemp.unbind('keypress').bind('keypress', function(e) {
             if (e.keyCode == 9 || e.keyCode == 13) {
                 cNrfaxemp.focus();
@@ -1333,7 +1366,7 @@ function monitorarCTRLV(evento, x_dsdemail) {
 function alteraInclui() {
 
 	//Variaveis para tratamento de caracteres invalidos
-    var nmextemp, nmresemp, nmcontat, dsendemp, dscomple, nmbairro, nmcidade, cdufdemp, nrfonemp, nrfaxemp, dsdemail;
+    var nmextemp, nmresemp, nmcontat, dsendemp, dscomple, nmbairro, nmcidade, cdufdemp, nrdddemp,nrfonemp, nrfaxemp, dsdemail;
 		
     var cnpj;
 
@@ -1362,6 +1395,8 @@ function alteraInclui() {
 	nmbairro = removeCaracteresInvalidos(cNmbairro.val().toUpperCase()); // Bairro
 	nmcidade = removeCaracteresInvalidos(cNmcidade.val().toUpperCase()); // Cidade
 	cdufdemp = removeCaracteresInvalidos(cCdufdemp.val());				 // UF
+	//P437
+	nrdddemp = removeCaracteresInvalidos(cNrdddemp.val());				 // DDD
 	nrfonemp = removeCaracteresInvalidos(cNrfonemp.val());				 // Telefone
 	nrfaxemp = removeCaracteresInvalidos(cNrfaxemp.val());				 // Fax
 	dsdemail = removeCaracteresInvalidos(cDsdemail.val());				 // Email
@@ -1394,6 +1429,8 @@ function alteraInclui() {
             cdufdemp: cdufdemp,
             nrcepend: normalizaNumero(cNrcepend.val()),
             nrdocnpj: normalizaNumero(cNrdocnpj.val()),
+			//P437
+			nrdddemp: nrdddemp,
             nrfonemp: nrfonemp,
             nrfaxemp: nrfaxemp,
             dsdemail: dsdemail,
@@ -1411,6 +1448,8 @@ function alteraInclui() {
             old_cdufdemp: old_cCdufdemp,
             old_nrcepend: normalizaNumero(old_cNrcepend),
             old_nrdocnpj: normalizaNumero(old_cNrdocnpj),
+			//P437
+			old_nrdddemp: old_cNrdddemp,
             old_nrfonemp: old_cNrfonemp,
             old_nrfaxemp: old_cNrfaxemp,
             old_dsdemail: old_cDsdemail,
@@ -1723,6 +1762,8 @@ function selecionaEmpresa() {
                 cCdufdemp.val($('#hcdufdemp', $(this)).val());
                 cNrcepend.val($('#hnrcepend', $(this)).val());
                 cNrdocnpj.val($('#hnrdocnpj', $(this)).val());
+				//P437
+				cNrdddemp.val($('#hnrdddemp', $(this)).val());
                 cNrfonemp.val($('#hnrfonemp', $(this)).val());
                 cNrfaxemp.val($('#hnrfaxemp', $(this)).val());
                 cDsdemail.val($('#hdsdemail', $(this)).val());
@@ -1743,6 +1784,8 @@ function selecionaEmpresa() {
                 old_cCdufdemp = $('#hcdufdemp', $(this)).val();
                 old_cNrcepend = $('#hnrcepend', $(this)).val();
                 old_cNrdocnpj = $('#hnrdocnpj', $(this)).val();
+				//P437
+				old_cNrdddemp = $('#hnrdddemp', $(this)).val();
                 old_cNrfonemp = $('#hnrfonemp', $(this)).val();
                 old_cNrfaxemp = $('#hnrfaxemp', $(this)).val();
                 old_cDsdemail = $('#hdsdemail', $(this)).val();

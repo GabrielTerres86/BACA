@@ -174,7 +174,10 @@
 	$dscatbem = (isset($_POST['dscatbem'])) ? $_POST['dscatbem'] : '' ;
 	
 	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1' ;
+	
+	//P437
 	$gConsig = isset($_POST['gConsig']) ? $_POST['gConsig'] : '0';	
+	$vliofepr = -1;
 	if($gConsig == 1){
 		$vliofepr = (isset($_POST['vliofepr'])) ? $_POST['vliofepr'] : -1 ;
 		$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis&vlparepr=97,62&vliofepr=4');	
@@ -514,9 +517,9 @@
 	$xml .= '		<vlrecjg2>'.$vlrecjg2.'</vlrecjg2>';
 	//bruno - prj 438 - bug 14235
 	$xml .= '	    <ingarapr>'.$aux_ingarapr.'</ingarapr>';
-	if ($gConsig == '1'){
-		$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
-	}	
+
+	//P437
+	$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
     

@@ -102,7 +102,9 @@
 	$executandoProdutos = $_POST['executandoProdutos'];
 	$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm'])?$_POST['sitaucaoDaContaCrm']:'');
 	
+	//P437	
 	$gConsig = isset($_POST['gConsig']) ? $_POST['gConsig'] : '0';	
+	$vliofepr = -1;
 	if($gConsig == 1){
 		$vlpreemp = (isset($_POST['vlpreemp'])) ? $_POST['vlpreemp'] : 0 ;
 		$vliofepr = (isset($_POST['vliofepr'])) ? $_POST['vliofepr'] : -1 ;
@@ -136,6 +138,7 @@
 		$xml .= "   <nrctremp>" . $nrctremp . "</nrctremp>";
 		$xml .= " </Dados>";
 		$xml .= "</Root>";
+				
 
 		$xmlResult = mensageria($xml, "EMPR0014", "VALIDA_AVERBACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObj = getObjectXML($xmlResult);
@@ -169,7 +172,8 @@
 		$xml .= "		<cddopcao>".$cddopcao."</cddopcao>";
 		$xml .= "		<inconfir>".$inconfir."</inconfir>";
 		$xml .= "	</Dados>";
-		$xml .= "</Root>";
+		$xml .= "</Root>";	
+		
 		
 		$xmlResult = getDataXML($xml,true, true,0, 1);
 		
@@ -937,8 +941,15 @@
 		$xml .= "	  <nrdconta>".$nrdconta."</nrdconta>";
 		$xml .= "	  <idseqttl>".$idseqttl."</idseqttl>";
 		$xml .= "     <nrctremp>".$nrctremp."</nrctremp>";
+		//P437
+		$xml .= "     <dtdpagto>".$dtdpagto."</dtdpagto>";
+		$xml .= "	  <vlpreempi>".$vlpreemp."</vlpreempi>";
+		$xml .= "     <vlrdoiof>".$vliofepr."</vlrdoiof>";		
 		$xml .= "  </Dados>";
 		$xml .= "</Root>";
+
+		$auxLog = $xml;
+		echo "cttc('$auxLog');";
 		
 		// Executa script para envio do XML
 		$xmlResult = getDataXML($xml,false);

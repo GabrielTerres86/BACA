@@ -50,6 +50,8 @@
  * 037: [03/07/2018] Marcos (Envolti): Inclusão de campos de IOF do Prejuízo
  * 038: [12/07/2018] - Incluir novamente a passagem do campo idcobope, que foi removido indevidamente. (Renato Darosci - Supero)   
  * 039: [17/10/2018] Marcos (Envolti): Inclusão de campos do projeto 442
+ * 040: [22/11/2018] Mateus Z (Mouts): Novos campos adicionados nas telas Avalistas, Interveniente e Dados da Alienação(frmHipoteca) - PRJ 438.
+ * 041: [23/11/2018] Bruno Luiz Katzjarowski - Mout's: Ocultação de telas. - Prj - 438
  */
 ?>
 
@@ -78,6 +80,8 @@
 	$nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
 	$prejuizo = (isset($_POST['prejuizo'])) ? $_POST['prejuizo'] : 0;
 	$tpemprst = (isset($_POST['tpemprst'])) ? $_POST['tpemprst'] : 0;
+	//P437
+	$tpdescto = (isset($_POST['tpdescto'])) ? $_POST['tpdescto'] : 0;
 	$nrparepr = (isset($_POST['nrparepr'])) ? $_POST['nrparepr'] : 0;
 	$vlpagpar = (isset($_POST['vlpagpar'])) ? $_POST['vlpagpar'] : 0;
 	$nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0; 
@@ -228,6 +232,8 @@
 			arrayRegistros['nmprimtl'] = '<? echo getByTagName($registros,'nmprimtl'); ?>';
 			arrayRegistros['nrctremp'] = '<? echo getByTagName($registros,'nrctremp'); ?>';
 			arrayRegistros['vlemprst'] = '<? echo getByTagName($registros,'vlemprst'); ?>';
+			//P437
+			arrayRegistros['tpdescto'] = '<? echo getByTagName($registros,'tpdescto'); ?>';			
 			arrayRegistros['vlsdeved'] = '<? echo formataMoeda($vlsldliq); ?>';
 			arrayRegistros['vlpreemp'] = '<? echo getByTagName($registros,'vlpreemp'); ?>';
 			arrayRegistros['vlprepag'] = '<? echo getByTagName($registros,'vlprepag'); ?>'; 
@@ -494,6 +500,10 @@
 				arrayAvalista<? echo $i; ?>['inpessoa'] = '<? echo getByTagName($avalistas[$i]->tags,'inpessoa'); ?>'; // Daniel
 				arrayAvalista<? echo $i; ?>['dtnascto'] = '<? echo getByTagName($avalistas[$i]->tags,'dtnascto'); ?>'; // Daniel
 				
+				// PRJ 438 - Sprint 6
+				arrayAvalista<? echo $i; ?>['nrctacjg'] = '<? echo getByTagName($avalistas[$i]->tags,'nrctacjg'); ?>';
+				arrayAvalista<? echo $i; ?>['vlrencjg'] = '<? echo getByTagName($avalistas[$i]->tags,'vlrencjg'); ?>';
+				
 				var arrayBensAval = new Array();
 			
 				<? for($j = 0; $j<count($regBensAval); $j++){
@@ -562,6 +572,10 @@
 				arrayAlienacao<? echo $i; ?>['dssitgrv'] = '<? echo getByTagName($alienacoes[$i]->tags,'dssitgrv'); ?>';
 				arrayAlienacao<? echo $i; ?>['dstpcomb'] = '<? echo getByTagName($alienacoes[$i]->tags,'dstpcomb'); ?>';
 
+				// prj 438 - BUG 14149
+				arrayAlienacao<?php echo $i; ?>['nrnotanf'] = '<?php echo getByTagName($alienacoes[$i]->tags,'nrnotanf'); ?>';
+				arrayAlienacao<?php echo $i; ?>['dsmarceq'] = '<?php echo getByTagName($alienacoes[$i]->tags,'dsmarceq'); ?>';
+
 				arrayAlienacoes[<? echo $i; ?>] = arrayAlienacao<? echo $i; ?>;
 				
 			<?}?>
@@ -596,7 +610,10 @@
 				arrayInterv<? echo $i; ?>['complend'] = '<? echo getByTagName($intervs[$i]->tags,'complend'); ?>';
 				arrayInterv<? echo $i; ?>['nrcxapst'] = '<? echo getByTagName($intervs[$i]->tags,'nrcxapst'); ?>';
 				
-				
+				// PRJ 438
+				arrayInterv<? echo $i; ?>['inpessoa'] = '<? echo getByTagName($intervs[$i]->tags,'inpessoa'); ?>';
+				arrayInterv<? echo $i; ?>['nrctacjg'] = '<? echo getByTagName($intervs[$i]->tags,'nrctacjg'); ?>';
+				arrayInterv<? echo $i; ?>['dtnascto'] = '<? echo getByTagName($intervs[$i]->tags,'dtnascto'); ?>';
 				
 				arrayIntervs[<? echo $i; ?>] = arrayInterv<? echo $i; ?>;
 				
@@ -640,6 +657,19 @@
 				arrayHipoteca<? echo $i; ?>['dscorbem'] = '<? echo getByTagName($hipotecas[$i]->tags,'dscorbem'); ?>';
 				arrayHipoteca<? echo $i; ?>['idseqhip'] = '<? echo getByTagName($hipotecas[$i]->tags,'idseqhip'); ?>';
 				arrayHipoteca<? echo $i; ?>['vlmerbem'] = '<? echo getByTagName($hipotecas[$i]->tags,'vlmerbem'); ?>';
+				// PRJ 438 - Sprint 6
+        		arrayHipoteca<? echo $i; ?>['vlrdobem'] = '<? echo getByTagName($hipotecas[$i]->tags,'vlrdobem'); ?>';
+        		arrayHipoteca<? echo $i; ?>['nrmatric'] = '<? echo getByTagName($hipotecas[$i]->tags,'nrmatric'); ?>';
+        		arrayHipoteca<? echo $i; ?>['vlareuti'] = '<? echo getByTagName($hipotecas[$i]->tags,'vlareuti'); ?>';
+        		arrayHipoteca<? echo $i; ?>['vlaretot'] = '<? echo getByTagName($hipotecas[$i]->tags,'vlaretot'); ?>';
+        		arrayHipoteca<? echo $i; ?>['dsclassif'] = '<? echo retiraCharEsp(getByTagName($hipotecas[$i]->tags,'dsclassif')); ?>';
+				arrayHipoteca<? echo $i; ?>['nrcepend'] = '<? echo getByTagName($hipotecas[$i]->tags,'nrcepend'); ?>';
+				arrayHipoteca<? echo $i; ?>['dsendere'] = '<? echo retiraCharEsp(getByTagName($hipotecas[$i]->tags,'dsendere')); ?>';
+				arrayHipoteca<? echo $i; ?>['nrendere'] = '<? echo getByTagName($hipotecas[$i]->tags,'nrendere'); ?>';
+				arrayHipoteca<? echo $i; ?>['dscompend'] = '<? echo retiraCharEsp(getByTagName($hipotecas[$i]->tags,'dscompend')); ?>';
+				arrayHipoteca<? echo $i; ?>['nmbairro'] = '<? echo retiraCharEsp(getByTagName($hipotecas[$i]->tags,'nmbairro')); ?>';
+				arrayHipoteca<? echo $i; ?>['cdufende'] = '<? echo getByTagName($hipotecas[$i]->tags,'cdufende'); ?>';
+				arrayHipoteca<? echo $i; ?>['nmcidade'] = '<? echo retiraCharEsp(getByTagName($hipotecas[$i]->tags,'nmcidade')); ?>';
 				
 				arrayHipotecas[<? echo $i; ?>] = arrayHipoteca<? echo $i; ?>;
 				
@@ -945,6 +975,18 @@
 		?><script type="text/javascript">
 		arrayRegistros['tpdrisco'] = '<? echo $tpdrisco; ?>';
 		</script><?
+    }
+	
+	//bruno - prj - 438 - sprint 6 - ocultação telas
+	if(in_array($operacao,Array('C_DADOS_PROP','C_DADOS_PROP_PJ'))){
+		echo "controlaOperacao('C_BENS_ASSOC');";
+		exit();
+	}else if (in_array($operacao,Array('C_PROTECAO_TIT','C_PROTECAO_AVAL','C_PROTECAO_CONJ','C_PROTECAO_SOC'))){
+		include('valida_operacao_rating.php');
+		exit();
+	}else if(in_array($operacao, Array('C_COMITE_APROV'))){
+		echo "controlaOperacao('C_DEMONSTRATIVO_EMPRESTIMO');";
+		exit();
     }
 	
 	$qtregist	= $xmlObjeto->roottag->tags[0]->attributes['QTREGIST'];

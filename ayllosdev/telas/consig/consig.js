@@ -1,10 +1,10 @@
 /***********************************************************************
  Fonte: consig.js                                                  
  Autor: Leonardo Oliveira - GFT 
- Data : Agoso/2018                Ultima Alteração:                                                                    
+ Data : Agoso/2018                Ultima Alteraï¿½ï¿½o:                                                                    
  Objetivo  : Cadastro de servicos ofertados na tela CADCCO
                                                                    	 
- Alterações: 03/2019 - JDB AMcom P437
+ Alteraï¿½ï¿½es: 03/2019 - JDB AMcom P437
 
 ************************************************************************/
 //
@@ -39,17 +39,17 @@ var
 	
 
 //campos
-var Ccddopcao // * Cabecalho // Código Operação
-    ,Ccdempres // * Filtro // Código Empresa
-    ,Cindconsignado // 'Convênio Consignado'
+var Ccddopcao // * Cabecalho // Cï¿½digo Operaï¿½ï¿½o
+    ,Ccdempres // * Filtro // Cï¿½digo Empresa
+    ,Cindconsignado // 'Convï¿½nio Consignado'
     ,Cdtativconsignado // 'Data'
-    ,Cnmextemp // * Form Consignado // Razão Social
+    ,Cnmextemp // * Form Consignado // Razï¿½o Social
     ,Ctpmodconvenio // Tipo de Convenio INSS/ Publico / Privado
     ,Cdtfchfol // Dia Fechamento Folha
     ,Cnrdialimiterepasse // Dia Limite para Repasse
-    ,Cindautrepassecc // Autoriza Débito Repasse em C/C?
-    ,Cindinterromper // Interrompe Cobrança
-    ,Cdtinterromper // Data Interrupção Cobrança
+    ,Cindautrepassecc // Autoriza Dï¿½bito Repasse em C/C?
+    ,Cindinterromper // Interrompe Cobranï¿½a
+    ,Cdtinterromper // Data Interrupï¿½ï¿½o Cobranï¿½a
     ,Cdsdemail // E-mail
     ,Cindalertaemailemp // Alertas (check box)
     ,Cdsdemailconsig // E-mail Consignado
@@ -60,15 +60,15 @@ var Ccddopcao // * Cabecalho // Código Operação
 //labels
 var Lcddopcao // * Cabecalho
     ,Lcdempres // * Filtro
-    ,Lindconsignado // 'Convênio Consignado'
+    ,Lindconsignado // 'Convï¿½nio Consignado'
     ,Ldtativconsignado // 'Data'
-    ,Lnmextemp // * Form Consignado // Razão Social
+    ,Lnmextemp // * Form Consignado // Razï¿½o Social
     ,Ltpmodconvenio // Tipo de Convenio INSS/ Publico / Privado
     ,Ldtfchfol // Dia Fechamento Folha
     ,Lnrdialimiterepasse // Dia Limite para Repasse
-    ,Lindautrepassecc // Autoriza Débito Repasse em C/C?
-    ,Lindinterromper // Interrompe Cobrança
-    ,Ldtinterromper // Data Interrupção Cobrança
+    ,Lindautrepassecc // Autoriza Dï¿½bito Repasse em C/C?
+    ,Lindinterromper // Interrompe Cobranï¿½a
+    ,Ldtinterromper // Data Interrupï¿½ï¿½o Cobranï¿½a
     ,Ldsdemail // E-mail
     ,Ldsdemailconsig; // E-mail Consignado
 
@@ -192,13 +192,13 @@ function formataFiltro(){
     BtLupa = $('#btLupa', Filtro);
     BtOK = $('#btOK', Filtro); 
 
-    Ccdempres = $('#cdempres', Filtro); // * Filtro // Código Empresa
-    Cindconsignado = $('#text_indconsignado', Filtro); // 'Convênio Consignado'
+    Ccdempres = $('#cdempres', Filtro); // * Filtro // Cï¿½digo Empresa
+    Cindconsignado = $('#text_indconsignado', Filtro); // 'Convï¿½nio Consignado'
     Cdtativconsignado = $('#dtativconsignado', Filtro); // 'Data'
     Crowid = $('#rowid_emp_consig', Filtro); // rowid
 
-    Lcdempres = $('label[for="cdempres"]', Filtro); // * Filtro // Código Empresa
-    Lindconsignado = $('label[for="text_indconsignado"]', Filtro); // 'Convênio Consignado'
+    Lcdempres = $('label[for="cdempres"]', Filtro); // * Filtro // Cï¿½digo Empresa
+    Lindconsignado = $('label[for="text_indconsignado"]', Filtro); // 'Convï¿½nio Consignado'
     Ldtativconsignado = $('label[for="dtativconsignado"]', Filtro); // 'Data'
 
     highlightObjFocus( Filtro );
@@ -305,8 +305,8 @@ function desabilitaFiltro(){
     BtVoltar = $('#btVoltar', DivBotoesFiltro);
     BtLupa = $('#btLupa', Filtro); 
 
-    Ccdempres = $('#cdempres', Filtro); // * Filtro // Código Empresa
-    Cindconsignado = $('#indconsignado', Filtro); // 'Convênio Consignado'
+    Ccdempres = $('#cdempres', Filtro); // * Filtro // Cï¿½digo Empresa
+    Cindconsignado = $('#indconsignado', Filtro); // 'Convï¿½nio Consignado'
     Cdtativconsignado = $('#dtativconsignado', Filtro); // 'Data'
     BtLupa.css('display','none');
     Ccdempres.desabilitaCampo();
@@ -326,8 +326,8 @@ function mostraPesquisaEmpresa(){
     var nomeProcedure = 'OBTEM_DADOS_EMP_CONSIGNADO';
     var titulo = 'Empresa';
     var qtReg = '30';
-    var filtros = 'Cód. Empresa;cdempres;60;S;;S;;|Nome Empresa;nmextemp;150;S;;S;;|;cddopcao;;N;' + cddopcao + ';N;|Empréstimo Consigando;indconsignado;;N;;N;;|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
-    var colunas = 'Código;cdempres;50;right;;S;;|Empresa;nmextemp;230;left;;S;;|;cddopcao;;N;;N;|Empréstimo Consigando;indconsignado;;N;;N;;|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
+    var filtros = 'Cod. Empresa;cdempres;60;S;;S;;|Nome Empresa;nmextemp;150;S;;S;;|;cddopcao;;N;' + cddopcao + ';N;|Emprï¿½stimo Consigando;indconsignado;;N;;N;;|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
+    var colunas = 'Codigo;cdempres;50;right;;S;;|Empresa;nmextemp;230;left;;S;;|;cddopcao;;N;;N;|Emprï¿½stimo Consigando;indconsignado;;N;;N;;|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
     var divBloqueia = '';
     var fncOnClose = 'fecharPesquisa();';
     var nomeRotina =  NomeFiltro;
@@ -350,7 +350,6 @@ function buscarDescricao(callback){
     var indconsignado = '';
     var rowid_emp_consig = '';
     var dtativconsignado = '';
-    
      $.ajax({
             type: 'POST',
             url: UrlSite + 'telas/consig/manter_rotina.php',
@@ -399,13 +398,13 @@ function callbackBuscarDescricao(){
 
 function fecharPesquisa(){
     Filtro = $('#'+NomeFiltro);
-    Cindconsignado = $('#indconsignado', Filtro); // 'Convênio Consignado'
-    CtextIndconsignado = $('#text_indconsignado', Filtro); // 'Convênio Consignado'
+    Cindconsignado = $('#indconsignado', Filtro); // 'Convï¿½nio Consignado'
+    CtextIndconsignado = $('#text_indconsignado', Filtro); // 'Convï¿½nio Consignado'
     var indconsignado = Cindconsignado.val();
     if(indconsignado == "1"){
         CtextIndconsignado.val("Sim");
     } else if(indconsignado == '0') {
-        CtextIndconsignado.val("Não");
+        CtextIndconsignado.val("Não"); 
 	}else if(indconsignado == '2') {
         CtextIndconsignado.val("Pend.");
     }else{
@@ -420,25 +419,25 @@ function consultaParametros(){
     Ccddopcao = $('#cddopcao', Cabecalho);
 
     Filtro = $('#'+NomeFiltro);
-    Ccdempres = $('#cdempres', Filtro); // * Filtro // Código Empresa
-    Cindconsignado = $('#indconsignado', Filtro); // 'Convênio Consignado'
+    Ccdempres = $('#cdempres', Filtro); // * Filtro // Cï¿½digo Empresa
+    Cindconsignado = $('#indconsignado', Filtro); // 'Convï¿½nio Consignado'
     Cdtativconsignado = $('#dtativconsignado', Filtro); // 'Data'
 
     var cddopcao = Ccddopcao.val();
-    var cdempres = Ccdempres.val(); // * Filtro // Código Empresa
-    var indconsignado = Cindconsignado.val(); // 'Convênio Consignado'
+    var cdempres = Ccdempres.val(); // * Filtro // Cï¿½digo Empresa
+    var indconsignado = Cindconsignado.val(); // 'Convï¿½nio Consignado'
     var dtativconsignado = Cdtativconsignado.val(); // 'Data'
 
     if(!existeEmpresa()){
             hideMsgAguardo();
             showError(
                 'error',
-                'Não há código de empresa cadastrado.',
+                'Nao ha codigo de empresa cadastrado.',
                 'Alerta - Ayllos',
                 '');
             return false;
     }
-
+     
      $.ajax({
         type: 'POST',
         url: UrlSite + 'telas/consig/manter_rotina.php',
@@ -486,7 +485,7 @@ function consultaParametros(){
 function existeEmpresa(){
     Filtro = $('#'+NomeFiltro);
     Crowid = $('#rowid_emp_consig', Filtro);// rowid
-    Cdempres = $('#cdempres', Filtro);// Código Empresa
+    Cdempres = $('#cdempres', Filtro);// Cï¿½digo Empresa
 
     cdempres = Cdempres.val();
     rowid = Crowid.val();
@@ -513,24 +512,24 @@ function formataTelaConsig(){
     BtConcluir = $('#btConcluir', DivBotoesConsig);
     BtVoltar = $('#btVoltar', DivBotoesConsig);
 
-    Lnmextemp = $('label[for="nmextemp"]', FrmConsig); // * Form Consignado // Razão Social
+    Lnmextemp = $('label[for="nmextemp"]', FrmConsig); // * Form Consignado // Razï¿½o Social
     Ltpmodconvenio = $('label[for="select_tpmodconvenio"]', FrmConsig);  // Tipo de Convenio INSS/ Publico / Privado
     Ldtfchfol = $('label[for="dtfchfol"]', FrmConsig);  // Dia Fechamento Folha
     Lnrdialimiterepasse = $('label[for="nrdialimiterepasse"]', FrmConsig);  // Dia Limite para Repasse
-    Lindautrepassecc = $('label[for="radio_indautrepassecc"]', FrmConsig);  // Autoriza Débito Repasse em C/C?
-    Lindinterromper = $('label[for="radio_indinterromper"]', FrmConsig);  // Interrompe Cobrança
-    Ldtinterromper = $('label[for="dtinterromper"]', FrmConsig); // Data Interrupção Cobrança
+    Lindautrepassecc = $('label[for="radio_indautrepassecc"]', FrmConsig);  // Autoriza Dï¿½bito Repasse em C/C?
+    Lindinterromper = $('label[for="radio_indinterromper"]', FrmConsig);  // Interrompe Cobranï¿½a
+    Ldtinterromper = $('label[for="dtinterromper"]', FrmConsig); // Data Interrupï¿½ï¿½o Cobranï¿½a
     Ldsdemail = $('label[for="dsdemail"]', FrmConsig); // E-mail
     Ldsdemailconsig = $('label[for="dsdemailconsig"]', FrmConsig); // E-mail Consignado
     Llbalertaconsig =  $('#lbalertaconsig', FrmConsig);
 
-    Cnmextemp = $('#nmextemp', FrmConsig); // * Form Consignado // Razão Social
+    Cnmextemp = $('#nmextemp', FrmConsig); // * Form Consignado // Razï¿½o Social
     Ctpmodconvenio = $('#select_tpmodconvenio', FrmConsig); // Tipo de Convenio INSS/ Publico / Privado
     Cdtfchfol = $('#dtfchfol', FrmConsig); // Dia Fechamento Folha
     Cnrdialimiterepasse = $('#nrdialimiterepasse', FrmConsig); // Dia Limite para Repasse
-    Cindautrepassecc = $('#radio_indautrepassecc', FrmConsig); // Autoriza Débito Repasse em C/C?
-    Cindinterromper = $('#radio_indinterromper', FrmConsig); // Interrompe Cobrança
-    Cdtinterromper = $('#dtinterromper', FrmConsig); // Data Interrupção Cobrança
+    Cindautrepassecc = $('#radio_indautrepassecc', FrmConsig); // Autoriza Dï¿½bito Repasse em C/C?
+    Cindinterromper = $('#radio_indinterromper', FrmConsig); // Interrompe Cobranï¿½a
+    Cdtinterromper = $('#dtinterromper', FrmConsig); // Data Interrupï¿½ï¿½o Cobranï¿½a
     Cdsdemail = $('#dsdemail', FrmConsig); // E-mail
     Cindalertaemailemp = $('#checkbox_indalertaemailemp', FrmConsig); // Alertas (check box)
     Cdsdemailconsig = $('#dsdemailconsig', FrmConsig); // E-mail Consignado
@@ -599,7 +598,7 @@ function formataTelaConsig(){
     controlaFocoTelaConsig();
     atualizaConvenio();
 
-	// verificação de alteração de valores pelo usuário
+	// verificaï¿½ï¿½o de alteraï¿½ï¿½o de valores pelo usuï¿½rio
     Ctpmodconvenio.unbind('change').bind('change', function(e) {
         $('#tpmodconvenio', FrmConsig).val(Ctpmodconvenio.val()); // Tipo de Convenio INSS/ Publico / Privado
 		atualizaConvenio();
@@ -669,7 +668,7 @@ function checkIsDay(field){
     return true;
 }
 
-// Se Interrompe Cobrança == Não ENTAO data interrupção == ''
+// Se Interrompe Cobranï¿½a == Nï¿½o ENTAO data interrupï¿½ï¿½o == ''
 function showHideDtInterrupcao(value){
     if(value == 0){
          $('#dtinterromper', FrmConsig).val('');
@@ -695,15 +694,15 @@ function atualizaConvenio(){
     DivConsig = $('#'+NomeDivConsig);
 	DivVencParc = $('#'+NomeDivVencParc);
 
-    Cnmextemp = $('#nmextemp', FrmConsig); // * Form Consignado // Razão Social
+    Cnmextemp = $('#nmextemp', FrmConsig); // * Form Consignado // Razï¿½o Social
     Ctpmodconvenio = $('#select_tpmodconvenio', FrmConsig); // Tipo de Convenio INSS/ Publico / Privado
     Cdtfchfol = $('#dtfchfol', FrmConsig); // Dia Fechamento Folha
     Cnrdialimiterepasse = $('#nrdialimiterepasse', FrmConsig); // Dia Limite para Repasse
-    Cindautrepassecc = $('#radio_indautrepassecc', FrmConsig); // Autoriza Débito Repasse em C/C?
-    Cindinterromper = $('#radio_indinterromper', FrmConsig); // Interrompe Cobrança
-    Hindautrepassecc = $('#indautrepassecc', FrmConsig); // HIDDEN Autoriza Débito Repasse em C/C?
-    Hindinterromper = $('#indinterromper', FrmConsig); // HIDDEN Interrompe Cobrança
-    Cdtinterromper = $('#dtinterromper', FrmConsig); // Data Interrupção Cobrança
+    Cindautrepassecc = $('#radio_indautrepassecc', FrmConsig); // Autoriza Dï¿½bito Repasse em C/C?
+    Cindinterromper = $('#radio_indinterromper', FrmConsig); // Interrompe Cobranï¿½a
+    Hindautrepassecc = $('#indautrepassecc', FrmConsig); // HIDDEN Autoriza Dï¿½bito Repasse em C/C?
+    Hindinterromper = $('#indinterromper', FrmConsig); // HIDDEN Interrompe Cobranï¿½a
+    Cdtinterromper = $('#dtinterromper', FrmConsig); // Data Interrupï¿½ï¿½o Cobranï¿½a
     Cdsdemail = $('#dsdemail', FrmConsig); // E-mail
     Cindalertaemailemp = $('#checkbox_indalertaemailemp', FrmConsig); // Alertas (check box)
     Cdsdemailconsig = $('#dsdemailconsig', FrmConsig); // E-mail Consignado
@@ -717,7 +716,7 @@ function atualizaConvenio(){
     dtinterromperOld = Cdtinterromper.val();
     cddopcao = Ccddopcao.val();
     tpmodconvenio = Ctpmodconvenio.val();
-    Cdsdemail.desabilitaCampo(); // E-mail sempre desabilitado par alteração manual
+    Cdsdemail.desabilitaCampo(); // E-mail sempre desabilitado par alteraï¿½ï¿½o manual
     
     // Configura os valores default para radios e checks
     $('input[name=radio_indautrepassecc]').prop('checked', false);
@@ -729,28 +728,28 @@ function atualizaConvenio(){
 
 
     if(cddopcao == 'C' || cddopcao == 'D'){ // CONSULTA - desabilita todos os campos
-        Cnmextemp.desabilitaCampo(); // * Form Consignado // Razão Social
+        Cnmextemp.desabilitaCampo(); // * Form Consignado // Razï¿½o Social
         Cdtfchfol.desabilitaCampo(); // Dia Fechamento Folha
         Cnrdialimiterepasse.desabilitaCampo(); // Dia Limite para Repasse
-        Cindautrepassecc.desabilitaCampo(); // Autoriza Débito Repasse em C/C?
-        Cindinterromper.desabilitaCampo(); // Interrompe Cobrança
-        Cdtinterromper.desabilitaCampo(); // Data Interrupção Cobrança
+        Cindautrepassecc.desabilitaCampo(); // Autoriza Dï¿½bito Repasse em C/C?
+        Cindinterromper.desabilitaCampo(); // Interrompe Cobranï¿½a
+        Cdtinterromper.desabilitaCampo(); // Data Interrupï¿½ï¿½o Cobranï¿½a
         Cindalertaemailemp.desabilitaCampo(); // Alertas (check box)
         Cdsdemailconsig.desabilitaCampo(); // E-mail Consignado
         Cindalertaemailconsig.desabilitaCampo(); // Alertas Consignado (check box)
-    } else { // Se não for CONSULTA por padrão habilita todos os campos
-        Cnmextemp.desabilitaCampo(); // * Form Consignado // Razão Social - por padrão nao fica desabilatado para alteração
+    } else { // Se nï¿½o for CONSULTA por padrï¿½o habilita todos os campos
+        Cnmextemp.desabilitaCampo(); // * Form Consignado // Razï¿½o Social - por padrï¿½o nao fica desabilatado para alteraï¿½ï¿½o
         Cdtfchfol.habilitaCampo(); // Dia Fechamento Folha
         Cnrdialimiterepasse.habilitaCampo(); // Dia Limite para Repasse
-        Cindautrepassecc.habilitaCampo(); // Autoriza Débito Repasse em C/C?
-        Cindinterromper.habilitaCampo(); // Interrompe Cobrança
-        Cdtinterromper.habilitaCampo(); // Data Interrupção Cobrança
+        Cindautrepassecc.habilitaCampo(); // Autoriza Dï¿½bito Repasse em C/C?
+        Cindinterromper.habilitaCampo(); // Interrompe Cobranï¿½a
+        Cdtinterromper.habilitaCampo(); // Data Interrupï¿½ï¿½o Cobranï¿½a
         Cindalertaemailemp.habilitaCampo(); // Alertas (check box)
         Cdsdemailconsig.habilitaCampo(); // E-mail Consignado
         Cindalertaemailconsig.habilitaCampo(); // Alertas Consignado (check box)
     }
 
-    // Select do tipo de convenivo só fica habilitado para H - Habilitar
+    // Select do tipo de convenivo sï¿½ fica habilitado para H - Habilitar
     if(cddopcao == 'H'){
         Ctpmodconvenio.habilitaCampo();
     }else{
@@ -777,7 +776,7 @@ function atualizaConvenio(){
         }
 
     }else if(tpmodconvenio == 2){// Publico
-        //Autoriza Débito Repasse em C/C?		
+        //Autoriza Dï¿½bito Repasse em C/C?		
 		DivVencParc.css('display', 'block');
 		if (Cdtfchfol.val() == '')
 			Cdtfchfol.val(dtfchfolOld);
@@ -788,7 +787,7 @@ function atualizaConvenio(){
 			$('#indinterromper', FrmConsig).val(0);
         }
     } else if ( tpmodconvenio == 3){ // INSS
-        // Limpa data de interrupção para INSS
+        // Limpa data de interrupï¿½ï¿½o para INSS
 		DivVencParc.css('display', 'none');
         Cdtfchfol.val('');
         Cdsdemail.val('');
@@ -802,11 +801,11 @@ function atualizaConvenio(){
         if(cddopcao == 'A' || cddopcao == 'H'){ // ALTERAR || HABILITAR
             // Dia Fechamento Folha
             Cdtfchfol.desabilitaCampo();
-            // Autoriza Débito Repasse em C/C?
+            // Autoriza Dï¿½bito Repasse em C/C?
             Cindautrepassecc.desabilitaCampo();
-            // Interrompe Cobrança
+            // Interrompe Cobranï¿½a
             Cindinterromper.desabilitaCampo();
-            // Data Interrupção Cobrança
+            // Data Interrupï¿½ï¿½o Cobranï¿½a
             Cdtinterromper.desabilitaCampo();
             // E-mail
             //Cdsdemail.desabilitaCampo();
@@ -818,7 +817,7 @@ function atualizaConvenio(){
             Cindalertaemailconsig.desabilitaCampo();
         }
         if(cddopcao == 'D'){ // DESABILITAR
-            // Razão Social
+            // Razï¿½o Social
             Cnmextemp.desabilitaCampo();
             //Dia Limite para Repasse
             Cnrdialimiterepasse.desabilitaCampo();
@@ -837,13 +836,13 @@ function controlaFocoTelaConsig(){
 
     FrmConsig = $('#'+NomeFrmConsig);
     DivConsig = $('#'+NomeDivConsig);
-    Cnmextemp = $('#nmextemp', FrmConsig); // * Form Consignado // Razão Social
+    Cnmextemp = $('#nmextemp', FrmConsig); // * Form Consignado // Razï¿½o Social
     Ctpmodconvenio = $('#select_tpmodconvenio', FrmConsig); // Tipo de Convenio INSS/ Publico / Privado
     Cdtfchfol = $('#dtfchfol', FrmConsig); // Dia Fechamento Folha
     Cnrdialimiterepasse = $('#nrdialimiterepasse', FrmConsig); // Dia Limite para Repasse
-    Cindautrepassecc = $('#radio_indautrepassecc', FrmConsig); // Autoriza Débito Repasse em C/C?
-    Cindinterromper = $('#radio_indinterromper', FrmConsig); // Interrompe Cobrança
-    Cdtinterromper = $('#dtinterromper', FrmConsig); // Data Interrupção Cobrança
+    Cindautrepassecc = $('#radio_indautrepassecc', FrmConsig); // Autoriza Dï¿½bito Repasse em C/C?
+    Cindinterromper = $('#radio_indinterromper', FrmConsig); // Interrompe Cobranï¿½a
+    Cdtinterromper = $('#dtinterromper', FrmConsig); // Data Interrupï¿½ï¿½o Cobranï¿½a
     Cdsdemail = $('#dsdemail', FrmConsig); // E-mail
     Cindalertaemailemp = $('#checkbox_indalertaemailemp', FrmConsig); // Alertas (check box)
     Cdsdemailconsig = $('#dsdemailconsig', FrmConsig); // E-mail Consignado
@@ -941,7 +940,7 @@ function voltar(flag){
 
     switch (flag) {
         case '1':
-            // Voltar de filtro para cabeçalho
+            // Voltar de filtro para cabeï¿½alho
             estadoInicial();
             break;
 
@@ -962,39 +961,39 @@ function controlaOperacao(){
 
     //filtro
     Filtro = $('#'+NomeFiltro);
-    Ccdempres = $('#cdempres', Filtro); // * Filtro // Código Empresa
-    Cindconsignado = $('#indconsignado', Filtro); // 'Convênio Consignado'
+    Ccdempres = $('#cdempres', Filtro); // * Filtro // Cï¿½digo Empresa
+    Cindconsignado = $('#indconsignado', Filtro); // 'Convï¿½nio Consignado'
     Cdtativconsignado = $('#dtativconsignado', Filtro); // 'Data'
 
-    cdempres = Ccdempres.val(); // * Filtro // Código Empresa
-    indconsignado = Cindconsignado.val(); // 'Convênio Consignado'
+    cdempres = Ccdempres.val(); // * Filtro // Cï¿½digo Empresa
+    indconsignado = Cindconsignado.val(); // 'Convï¿½nio Consignado'
     dtativconsignado = Cdtativconsignado.val(); // 'Data'
 
     //form
     FrmConsig = $('#'+NomeFrmConsig);
     DivConsig = $('#'+NomeDivConsig);
 
-    Cnmextemp = $('#nmextemp', FrmConsig); // * Form Consignado // Razão Social
+    Cnmextemp = $('#nmextemp', FrmConsig); // * Form Consignado // Razï¿½o Social
     Ctpmodconvenio = $('#tpmodconvenio', FrmConsig); // Tipo de Convenio INSS/ Publico / Privado
     Cdtfchfol = $('#dtfchfol', FrmConsig); // Dia Fechamento Folha
     Cnrdialimiterepasse = $('#nrdialimiterepasse', FrmConsig); // Dia Limite para Repasse
-    Cindautrepassecc = $('#radio_indautrepassecc', FrmConsig); // Autoriza Débito Repasse em C/C?
-    Cindinterromper = $('#radio_indinterromper', FrmConsig); // Interrompe Cobrança
-    Hindautrepassecc = $('#indautrepassecc', FrmConsig); // HIDDEN Autoriza Débito Repasse em C/C?
-    Hindinterromper = $('#indinterromper', FrmConsig); // HIDDEN Interrompe Cobrança
-    Cdtinterromper = $('#dtinterromper', FrmConsig); // Data Interrupção Cobrança
+    Cindautrepassecc = $('#radio_indautrepassecc', FrmConsig); // Autoriza Dï¿½bito Repasse em C/C?
+    Cindinterromper = $('#radio_indinterromper', FrmConsig); // Interrompe Cobranï¿½a
+    Hindautrepassecc = $('#indautrepassecc', FrmConsig); // HIDDEN Autoriza Dï¿½bito Repasse em C/C?
+    Hindinterromper = $('#indinterromper', FrmConsig); // HIDDEN Interrompe Cobranï¿½a
+    Cdtinterromper = $('#dtinterromper', FrmConsig); // Data Interrupï¿½ï¿½o Cobranï¿½a
     Cdsdemail = $('#dsdemail', FrmConsig); // E-mail
     Cindalertaemailemp = $('#indalertaemailemp', FrmConsig); // Alertas (check box)
     Cdsdemailconsig = $('#dsdemailconsig', FrmConsig); // E-mail Consignado
     Cindalertaemailconsig = $('#indalertaemailconsig', FrmConsig);// Alertas Consig(check box)
 
-    nmextemp = Cnmextemp.val(); // * Form Consignado // Razão Social
+    nmextemp = Cnmextemp.val(); // * Form Consignado // Razï¿½o Social
     tpmodconvenio = Ctpmodconvenio.val(); // Tipo de Convenio INSS/ Publico / Privado
     dtfchfol = Cdtfchfol.val(); // Dia Fechamento Folha
     nrdialimiterepasse =  Cnrdialimiterepasse.val(); // Dia Limite para Repasse
-    indautrepassecc = Hindautrepassecc.val(); // Autoriza Débito Repasse em C/C?
-    indinterromper = Hindinterromper.val(); // Interrompe Cobrança
-    dtinterromper = Cdtinterromper.val(); // Data Interrupção Cobrança
+    indautrepassecc = Hindautrepassecc.val(); // Autoriza Dï¿½bito Repasse em C/C?
+    indinterromper = Hindinterromper.val(); // Interrompe Cobranï¿½a
+    dtinterromper = Cdtinterromper.val(); // Data Interrupï¿½ï¿½o Cobranï¿½a
     dsdemail = Cdsdemail.val(); // E-mail
     indalertaemailemp = Cindalertaemailemp.val(); // Alertas (check box)
     dsdemailconsig = Cdsdemailconsig.val(); // E-mail Consignado
@@ -1003,7 +1002,7 @@ function controlaOperacao(){
     
 
 
-    // Validações de campos obrigatórios no front
+    // Validaï¿½ï¿½es de campos obrigatï¿½rios no front
     // Publico
     if(tpmodconvenio == 2 && (cddopcao == 'A' || cddopcao == 'H')){
         // Dia fechamento folha
@@ -1016,7 +1015,7 @@ function controlaOperacao(){
                  "$('#dtfchfol','#"+FrmConsig.attr('id')+"').focus()");
             return false;
         }
-        // Interrompe cobrança
+        // Interrompe cobranï¿½a
         if(!Cindinterromper.is(':checked')) {
             showError(
                 'error',
@@ -1040,7 +1039,7 @@ function controlaOperacao(){
                  "$('#dtfchfol','#"+FrmConsig.attr('id')+"').focus()");
             return false;
         }
-        // Interrompe cobrança
+        // Interrompe cobranï¿½a
         if(!Cindinterromper.is(':checked')) {
             showError(
                 'error',
@@ -1062,7 +1061,7 @@ function controlaOperacao(){
     }
 	
 	var vencimentos = retVencimentos();
-	
+	showMsgAguardo("Aguarde ...");
      $.ajax({
         type: 'POST',
         url: UrlSite + 'telas/consig/manter_rotina.php',

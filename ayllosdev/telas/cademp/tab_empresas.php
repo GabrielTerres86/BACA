@@ -72,6 +72,8 @@ isPostMethod();
 						<input type="hidden" id="hnrendemp" name="nrendemp" value="<?php echo getByTagName($r->tags,'nrendemp');?>" />
 						<input type="hidden" id="hnrfaxemp" name="nrfaxemp" value="<?php echo getByTagName($r->tags,'nrfaxemp');?>" />
 						<input type="hidden" id="hnrfonemp" name="nrfonemp" value="<?php echo getByTagName($r->tags,'nrfonemp');?>" />
+						<!-- P437 -->
+						<input type="hidden" id="hnrdddemp" name="nrdddemp" value="<?php echo getByTagName($r->tags,'nrdddemp');?>" />
 						<input type="hidden" id="hflgarqrt" name="flgarqrt" value="<?php echo getByTagName($r->tags,'flgarqrt');?>" />
 						<input type="hidden" id="hflgvlddv" name="flgvlddv" value="<?php echo getByTagName($r->tags,'flgvlddv');?>" />
 						<input type="hidden" id="hflgpgtib" name="flgpgtib" value="<?php echo getByTagName($r->tags,'flgpgtib');?>" />
