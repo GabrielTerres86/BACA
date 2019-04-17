@@ -1434,10 +1434,10 @@ BEGIN
                          ,rw_crapris.nrdconta);
       FETCH cr_crapbdt_ris INTO rw_crapbdt_ris;
       CLOSE cr_crapbdt_ris;
-      vr_inrisco_refin    := rw_crapbdt_ris.nrinrisc_max;
+      vr_inrisco_refin    := NULL;
       vr_inrisco_inclusao := rw_crapbdt_ris.nrinrisc_max;
-      vr_inrisco_melhora  := CASE WHEN rw_crapbdt_ris.nrinrisc_max = 2 THEN 2 ELSE NULL END; -- Risco Melhora só melhora para 2(A), se não, não melhora
-      vr_qtdias_atraso_refin := rw_crapbdt_ris.qtdirisc;
+      vr_inrisco_melhora  := NULL;
+      vr_qtdias_atraso_refin := 0;
       vr_inrisco_atraso := rw_crapbdt_ris.nrinrisc_max;
     ELSE
       vr_inrisco_refin := NULL;

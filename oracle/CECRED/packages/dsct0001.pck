@@ -2483,6 +2483,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         CLOSE BTCH0001.cr_crapdat;
       END IF;
 
+      IF pr_idorigem = 1 THEN
+        vr_dtmvtolt:= rw_crapdat.dtmvtolt;
+      ELSE
+        vr_dtmvtolt:= pr_dtmvtolt;
+      END IF;  
+      
       /* Leitura dos titulos para serem baixados */
       vr_index_titulo:= pr_tab_titulos.FIRST;
 
@@ -2563,7 +2569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                     ,pr_nrdctabb => rw_craptdb.nrdctabb
                                     ,pr_nrcnvcob => rw_craptdb.nrcnvcob
                                     ,pr_nrdocmto => rw_craptdb.nrdocmto
-                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_dtmvtolt => vr_dtmvtolt
                                     ,pr_inproces => rw_crapdat.inproces
                                     ,pr_indpagto => rw_crapcob.indpagto
                                     ,pr_vlpagmto => vr_vlpagmto
