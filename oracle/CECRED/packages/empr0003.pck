@@ -2437,8 +2437,8 @@ BEGIN
       --
       vr_info_propri1    varchar2(100);
       vr_info_propri2    varchar2(100);
-      vr_info_propri3    varchar2(300);
-      vr_tag_propri_tmp  varchar2(300);      
+      vr_info_propri3    varchar2(1000);
+      vr_tag_propri_tmp  varchar2(1000);      
       
     BEGIN
       -- Abre o cursor com as informacoes da cooperativa
