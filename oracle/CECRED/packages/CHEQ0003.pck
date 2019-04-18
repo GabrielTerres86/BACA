@@ -83,7 +83,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0003 AS
   --   Alteracoes: 18/02/2019 - Incluir nova procedure pc_gera_pesq_deposito_cheque
   --                            Problema PRB0040612 (Andre - MoutS)
   --               16/04/2019 - Remover verificação de Dev. Aut. Cheques para cheques com Contra-Ordem
-                                RITM0011849 (Jefferson - MoutS)
+  --                            RITM0011849 (Jefferson - MoutS)
   --
   ---------------------------------------------------------------------------------------------------------------
 
