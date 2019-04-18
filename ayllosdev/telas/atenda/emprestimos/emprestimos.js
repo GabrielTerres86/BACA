@@ -5590,7 +5590,7 @@ function atualizaTela() {
             $('#divInaverba', '#frmNovaProp').show();            
         }
 
-        if (arrayProposta['inaverba'] === '1') {
+        if (arrayProposta['inaverba'] == '1' || arrayProposta['inaverba'] == 'yes') {
             $('#inaverba', '#frmNovaProp').val('Sim');
         }else{
             $('#inaverba', '#frmNovaProp').val('Não');
