@@ -26,6 +26,8 @@
                             
                20/09/2017 - Projeto 410 - Incluir campo Indicador de 
                             financiamento do IOF (Diogo - Mouts)
+
+               14/12/2018 - P298 - Inclusos campos tpemprst e carencia para simulação (Andre Clemer - Supero)
 .............................................................................*/
 
 DEF VAR aux_cdcooper    AS  INTE                                      NO-UNDO.
@@ -53,6 +55,9 @@ DEF VAR aux_percetop    AS  DECI                                      NO-UNDO.
 DEF VAR aux_txcetano    AS  CHAR                                      NO-UNDO.
 DEF VAR aux_cdfinemp    AS  INTE                                      NO-UNDO.  
 DEF VAR aux_idfiniof    AS  INTE                                      NO-UNDO.  
+DEF VAR aux_tpemprst    AS  INTE                                      NO-UNDO.  
+DEF VAR aux_idcarenc    AS  INTE                                      NO-UNDO.  
+DEF VAR aux_dtcarenc    AS  DATE                                      NO-UNDO.  
 
 DEF VAR par_nmarqimp    AS  CHAR                                      NO-UNDO.
 DEF VAR par_nmarqpdf    AS  CHAR                                      NO-UNDO.
@@ -93,6 +98,9 @@ PROCEDURE valores_entrada:
             WHEN "dtfinper" THEN aux_dtfinper =    DATE(tt-param.valorCampo).
             WHEN "percetop" THEN aux_percetop =    DECI(tt-param.valorCampo).
 			WHEN "idfiniof" THEN aux_idfiniof =    INTE(tt-param.valorCampo).
+            WHEN "tpemprst" THEN aux_tpemprst =    INTE(tt-param.valorCampo).
+            WHEN "idcarenc" THEN aux_idcarenc =    INTE(tt-param.valorCampo).
+            WHEN "dtcarenc" THEN aux_dtcarenc =    DATE(tt-param.valorCampo).
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
@@ -297,6 +305,9 @@ PROCEDURE grava_simulacao:
                                 INPUT  aux_percetop,
                                 INPUT  aux_cdfinemp,
 								INPUT  aux_idfiniof,
+                                INPUT  aux_tpemprst,
+                                INPUT  aux_idcarenc,
+                                INPUT  aux_dtcarenc,
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT aux_nrgravad,
                                 OUTPUT aux_txcetano).
@@ -339,6 +350,7 @@ PROCEDURE imprime_simulacao:
                                   INPUT aux_flgerlog,
                                   INPUT aux_nrsimula,
                                   INPUT aux_dsiduser,
+                                  INPUT aux_tpemprst,
                                   OUTPUT par_nmarqimp,
                                   OUTPUT par_nmarqpdf,
                                   OUTPUT TABLE tt-erro).

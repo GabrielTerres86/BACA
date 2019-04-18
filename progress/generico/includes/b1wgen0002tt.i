@@ -406,7 +406,8 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
 	FIELD nivriori LIKE crawepr.dsnivori
     FIELD flintcdc LIKE crapcop.flintcdc
     FIELD inintegra_cont AS INT
-    FIELD tpfinali LIKE crapfin.tpfinali.
+    FIELD tpfinali LIKE crapfin.tpfinali
+    FIELD vlprecar LIKE crawepr.vlprecar.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR

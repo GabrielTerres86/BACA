@@ -17,6 +17,7 @@
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '';
 	$nrsimula = (isset($_POST['nrsimula'])) ? $_POST['nrsimula'] : '';
+	$tpemprst = (isset($_POST['tpemprst'])) ? $_POST['tpemprst'] : '';
 	$dsiduser = session_id();
 	
 	// Monta o xml de requisição
@@ -39,6 +40,7 @@
 	$xml .= "		<flgerlog>TRUE</flgerlog>";
 	$xml.= "		<nrsimula>".$nrsimula."</nrsimula>";
 	$xml .= "		<dsiduser>".$dsiduser."</dsiduser>";
+	$xml .= "		<tpemprst>".$tpemprst."</tpemprst>";
 	$xml.= "	</Dados>";
 	$xml.= "</Root>";
 	

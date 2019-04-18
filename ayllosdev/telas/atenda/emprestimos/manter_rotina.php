@@ -37,6 +37,7 @@
  * 026: [24/01/2018] Processamento do campo DSNIVORI (risco original da proposta) (Reginaldo - AMcom)
  * 027: [18/10/2018] Adicionado novos campos nas telas Avalista e Interveniente - PRJ 438. (Mateus Z / Mouts)
  * 028: [07/11/2018] Retirado Revisão Cadastral quando for a proc grava-proposta-completa - PRJ 438 - Sprint 4. (Mateus Z / Mouts)
+ * 027: [21/12/2018] P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
  */
 ?>
 
@@ -163,6 +164,7 @@
     $idcarenc = (isset($_POST['idcarenc'])) ? $_POST['idcarenc'] : '' ;
     $dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '' ;
 	$vlfinanc = (isset($_POST['vlfinanc'])) ? $_POST['vlfinanc'] : '' ;
+	$vlprecar = (isset($_POST['vlprecar'])) ? $_POST['vlprecar'] : '' ;
 	
 	// Daniel
 	$inpesso1 = (isset($_POST['inpesso1'])) ? $_POST['inpesso1'] : '' ;

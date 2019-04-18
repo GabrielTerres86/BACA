@@ -152,6 +152,8 @@
                            de outras propostas (Marcos-Envolti)
               
               31/10/2018 - P438 - Incluído campos novos para gravação de hipoteca
+
+              20/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
               
 ..............................................................................*/
 
@@ -390,6 +392,7 @@ DEF VAR aux_flgconsu AS LOGI                                           NO-UNDO.
 DEF VAR aux_flmudfai AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrcpfope AS DECI                                           NO-UNDO. 
 DEF VAR aux_nivrisco AS CHAR                                           NO-UNDO. 
+DEF VAR aux_vlprecar AS DECI                                           NO-UNDO.
 DEF VAR aux_cdmodali AS CHAR                                           NO-UNDO.
 DEF VAR aux_vllanmto AS DECI                                           NO-UNDO.
 DEF VAR aux_txccdiof AS DECI                                           NO-UNDO.
@@ -1216,7 +1219,8 @@ PROCEDURE valida-dados-gerais:
                             OUTPUT aux_flgpagt2,
                             OUTPUT aux_dtdpagt3,
                             OUTPUT aux_vlutiliz,
-                            OUTPUT aux_nivrisco ).
+                            OUTPUT aux_nivrisco,
+                            OUTPUT aux_vlprecar).
 
     
     IF  RETURN-VALUE = "NOK"  THEN
@@ -1254,6 +1258,7 @@ PROCEDURE valida-dados-gerais:
             RUN piXmlAtributo (INPUT "flgpagto",INPUT aux_flgpagt2).
             RUN piXmlAtributo (INPUT "dtdpagto",INPUT STRING(aux_dtdpagt3,"99/99/9999")).
             RUN piXmlAtributo (INPUT "nivrisco",INPUT aux_nivrisco).
+            RUN piXmlAtributo (INPUT "vlprecar",INPUT aux_vlprecar).
             RUN piXmlExport   (INPUT TEMP-TABLE tt-ge-epr:HANDLE,
                                      INPUT "GrupoEconomico").
             RUN piXmlSave.

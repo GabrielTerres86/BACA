@@ -76,7 +76,7 @@ $simulacoes = $xmlObjeto->roottag->tags[0]->tags;
 <table id="tbsimulacoes"cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr>
         <td align="center">		
-            <table border="0" cellpadding="0" cellspacing="0" width="645">
+            <table border="0" cellpadding="0" cellspacing="0" width="700">
                 <tr>
                     <td>
                         <table width="100%" border="0" cellspacing="0" cellpadding="0">

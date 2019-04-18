@@ -11,6 +11,7 @@ ALTERACOES     : 30/03/2012 - Incluir campo %CET (Gabriel).
                  30/06/2015 - Ajustes referentes Projeto 215 DV 3 (Daniel)
                  03/02/2017 - Reposicionar a Linha de Credito. (Jaison/James - PRJ298)
                  20/09/2017 - Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
+				 14/12/2018 - Projeto 298.2 - Inclusao da proposta Pos fixado no simulador (Andre Clemer - Supero)
 
 */	
 
@@ -41,6 +42,26 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
     <form name="frmSimulacao" id="frmSimulacao" class="formulario">
         <fieldset>
             <legend><? echo utf8ToHtml('Dados para a  S I M U L A Ç Ã O') ?></legend>
+
+            <label for="tpemprst">Produto:</label>
+            <select name="tpemprst" id="tpemprst">
+            <?php
+                $xml  = "<Root>";
+                $xml .= " <Dados>";
+                $xml .= "   <nmdominio>TPEMPRST</nmdominio>";
+                $xml .= " </Dados>";
+                $xml .= "</Root>";
+                $xmlResult = mensageria($xml, "EMPR9999", "BUSCA_DOMINIO_EPR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+                $xmlObject = getObjectXML($xmlResult);
+                $xmlDomini = $xmlObject->roottag->tags[0]->tags;
+                foreach ($xmlDomini as $reg) {
+                    $cddominio = getByTagName($reg->tags,'CDDOMINIO');
+                    if ($cddominio > 0) {
+                        echo '<option value="'.$cddominio.'">'.getByTagName($reg->tags,'DSCODIGO').'</option>';
+                    }
+                }
+            ?>
+            </select>
 
             <label for="vlemprst">Valor:</label>
             <input name="vlemprst" id="vlemprst" type="text" value="" />
@@ -82,6 +103,29 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
             <label for="dtdpagto"><? echo utf8ToHtml('Data do 1º Pagamento:') ?></label>
             <input name="dtdpagto" id="dtdpagto" type="text" value="" />
             <br />
+
+            <div id="linCarencia" class="divCarencia">
+                <label for="idcarenc"><? echo utf8ToHtml("Carência:") ?></label>
+                <select name="idcarenc" id="idcarenc">
+                <?php
+                    $xml  = "<Root>";
+                    $xml .= " <Dados>";
+                    $xml .= "   <flghabilitado>1</flghabilitado>"; // Habilitado (0-Nao/1-Sim/2-Todos)
+                    $xml .= " </Dados>";
+                    $xml .= "</Root>";
+                    $xmlResult = mensageria($xml, "TELA_PRMPOS", "PRMPOS_BUSCA_CARENCIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+                    $xmlObject = getObjectXML($xmlResult);
+                    $xmlCarenc = $xmlObject->roottag->tags[0]->tags;
+                    foreach ($xmlCarenc as $reg) {
+                        echo '<option value="'.getByTagName($reg->tags,'IDCARENCIA').'">'.getByTagName($reg->tags,'DSCARENCIA').'</option>';
+                    }
+                ?>
+                </select>
+            
+                <label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1ª Carência:") ?> </label>
+                <input name="dtcarenc" id="dtcarenc" type="text" value="" />
+                <br />
+            </div>
 
             <label for="idfiniof">Financiar IOF e Tarifa:</label>
             <select name="idfiniof" id="idfiniof" class="campo" >

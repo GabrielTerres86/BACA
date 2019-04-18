@@ -26,6 +26,7 @@
  * 015: [31/01/2017] Troca de posicao da Linha de Credito e Finalidade. Criacao dos campos Carencia e Data da primeira Carencia. (Jaison/James - PRJ298)
  * 016: [13/07/2018] Alterada a função chamada ao clicar no botão Concluir. (Mateus Z / Mouts - PRJ438)
  * 017: [18/10/2018] Alterado layout da tela Nova Proposta. PRJ438 (Mateus Z / Mouts)
+ * 018: [14/12/2018] P298.2 - Incluso campo Prest. Carên. Estim. (Andre Clemer - Supero)
  */
  ?> 
 
@@ -69,7 +70,7 @@
 	        </select>
 		</div>
 
-		<div id="divIdcarenc">
+		<div class="divCarencia">
 			<label for="idcarenc"><? echo utf8ToHtml("Carência:") ?></label>
 			<select name="idcarenc" id="idcarenc">
             <?php
@@ -95,10 +96,36 @@
 		<select name="tpemprst" id="tpemprst">
 		</select>
 
-		<div id="divDtcarenc">
+		<div class="divCarencia">
         	<label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1ª Carência:") ?> </label>
 			<input name="dtcarenc" id="dtcarenc" type="text" value="" />
         </div>
+
+		<br />		
+
+		<label for="vlemprst"><? echo utf8ToHtml('Valor do Empréstimo:') ?></label>
+		<input name="vlemprst" id="vlemprst" type="text" value="" />
+
+		<div class="divCarencia">
+			<label for="vlprecar"> <? echo utf8ToHtml("Valor da Parcela 1ª Carência:") ?> </label>
+			<input name="vlprecar" id="vlprecar" type="text" value="" />
+		</div>
+
+		<br />
+
+		<label for="cdlcremp"><? echo utf8ToHtml('Linha de Crédito:') ?></label>
+		<input name="cdlcremp" id="cdlcremp" type="text" value="" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dslcremp" id="dslcremp" type="text" value="" />
+		
+		<input name="nivcalcu" id="nivcalcu" type="hidden" value="" />
+		
+		<br />
+		
+		<label for="cdfinemp">Finalidade:</label>
+		<input name="cdfinemp" id="cdfinemp" type="text" value="" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dsfinemp" id="dsfinemp" type="text" value="" />
 
         <div id="divFlgpagto">
         	<label for="flgpagto">Debitar em:</label>
@@ -110,8 +137,8 @@
 
         <br />
 
-		<label for="vlemprst"><? echo utf8ToHtml('Valor do Empréstimo:') ?></label>
-		<input name="vlemprst" id="vlemprst" type="text" value="" />
+		<label for="qtpreemp">Quantidade de Parcelas:</label>
+		<input name="qtpreemp" id="qtpreemp" type="text" value="" />
 
 		<div id="divIdquapro">
 			<label for="idquapro"><? echo utf8ToHtml('Qualificação da Operação:') ?></label>
@@ -122,10 +149,8 @@
 
 		<br />
 
-		<label for="cdlcremp"><? echo utf8ToHtml('Linha de Crédito:') ?></label>
-		<input name="cdlcremp" id="cdlcremp" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<input name="dslcremp" id="dslcremp" type="text" value="" />
+		<label for="vlpreemp">Valor da Parcela:</label>
+		<input name="vlpreemp" id="vlpreemp" type="text" value="" />
 
 		<div id="divFlgdocje">
 			<label for="flgdocje"><? echo utf8ToHtml('Co-Responsável:') ?></label>
@@ -135,25 +160,6 @@
 			<label for="flgNo" class="radio"><? echo utf8ToHtml('Não') ?></label>
 		</div>
 			
-		<input name="nivcalcu" id="nivcalcu" type="hidden" value="" />
-
-		<br />
-
-		<label for="cdfinemp">Finalidade:</label>
-		<input name="cdfinemp" id="cdfinemp" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<input name="dsfinemp" id="dsfinemp" type="text" value="" />
-
-		<br />
-
-		<label for="qtpreemp">Quantidade de Parcelas:</label>
-		<input name="qtpreemp" id="qtpreemp" type="text" value="" />
-
-		<br />
-
-		<label for="vlpreemp">Valor da Parcela:</label>
-		<input name="vlpreemp" id="vlpreemp" type="text" value="" />
-
 		<br />
 
 		<label for="dtdpagto">Data de Pagamento:</label>
@@ -180,6 +186,8 @@
 		
 		<input name="vlrtotal" id="vlrtotal" type="hidden" value=""/>
 		
+		<br />
+
 		<select name="flgimppr" id="flgimppr">
 			<option value=""   > - </option>
 			<option value="yes" >Imprime</option>

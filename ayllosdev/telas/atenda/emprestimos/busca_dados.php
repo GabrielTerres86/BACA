@@ -5,7 +5,8 @@
  DATA CRIAÇÃO : 03/04/2017
  OBJETIVO     : Busca os dados do ORACLE
  --------------
- ALTERAÇÕES   :
+ ALTERAÇÕES   : 14/12/2018 - Incluso parametro do form para funcionamento com Simulacao
+                (Andre Clemer - Supero)
  --------------
  */
 
@@ -20,6 +21,7 @@
 
     $idcarenc = (isset($_POST['idcarenc'])) ? $_POST['idcarenc'] : 0;
     $dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '';
+    $nomeform = (!empty($_POST['nomeform'])) ? $_POST['nomeform'] : '#frmNovaProp';
 
     $xml  = "<Root>";
     $xml .= " <Dados>";
@@ -40,7 +42,7 @@
                 }
                 exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
             }
-            echo '$("#dtcarenc", "#frmNovaProp").val("'.getByTagName($xmlObject->roottag->tags[0]->tags,'dtcarenc').'").desabilitaCampo();';
+            echo '$("#dtcarenc", "'.$nomeform.'").val("'.getByTagName($xmlObject->roottag->tags[0]->tags,'dtcarenc').'").desabilitaCampo();';
         break;
 
     }

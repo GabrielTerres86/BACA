@@ -1212,6 +1212,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
            AND dtiniper = pr_dtiniper;
       rw_craptxi cr_craptxi%ROWTYPE;
       
+      rw_crapdat   btch0001.cr_crapdat%rowtype;
       -- Vetor para armazenamento
       vr_tab_total_juros     empr0011.typ_tab_total_juros;
       vr_tab_saldo_projetado empr0011.typ_tab_saldo_projetado;
@@ -1242,11 +1243,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       vr_tab_saldo_projetado.DELETE;
       vr_tab_total_juros.DELETE;
       
+      -- Busca do Calendário
+      open btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      fetch btch0001.cr_crapdat into rw_crapdat;
+      close btch0001.cr_crapdat;
+      
       vr_dtmvtolt := pr_dtcalcul;
       -- Função para retornar o dia anterior
-      vr_dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,       --> Cooperativa conectada
+      /*vr_dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,       --> Cooperativa conectada
                                                  pr_dtmvtolt  => vr_dtmvtolt - 1,   --> Data do movimento
-                                                 pr_tipo      => 'A');
+                                                 pr_tipo      => 'A'); */
+      -- ajustado devido a simulacao usar uma data futura, para isso deve respeitar sempre a data anterior atual
+      vr_dtmvtoan := rw_crapdat.dtmvtoan;
                                                  
       -- Buscar a taxa de juros
       OPEN cr_craplcr(pr_cdcooper => pr_cdcooper
@@ -2367,9 +2375,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        -- Usar o vetor de parcelas
-        vr_vlpreemp := vr_tab_parcelas(1).vlparepr;
+        -- Buscar a primeira parcela sem carencia
+				FOR vr_indice IN 1..vr_tab_parcelas.count() LOOP
+					--
+					IF vr_tab_parcelas(vr_indice).flcarenc = 0 THEN
+						--
+						vr_vlpreemp := vr_tab_parcelas(vr_indice).vlparepr;
+						EXIT;
+						--
       END IF;  
+					--
+				END LOOP;
+				--
+      END IF; 
+			-- 
     END IF;
     
     -- Retornar a prestação calculada
