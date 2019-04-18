@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2019-01-29T16:54:58 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl771_simulacao_sub" language="groovy" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="141913e0-3a8a-461c-a4c7-d68f662d2b5e">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="simulacao_emprestimo"/>
+	<queryString language="xPath">
+		<![CDATA[/Dados_simulacao/Simulacao_Emprestimo/Dados_emprestimo/Parcelas]]>
+	</queryString>
+	<field name="vl_Liquido_liberado" class="java.lang.String">
+		<fieldDescription><![CDATA[/Dados_simulacao/Simulacao_Emprestimo/Dados_emprestimo/vl_Liquido_liberado]]></fieldDescription>
+	</field>
+	<field name="Parcela" class="java.lang.String">
+		<fieldDescription><![CDATA[child::text()]]></fieldDescription>
+	</field>
+	<field name="Parcela_1" class="java.lang.String">
+		<fieldDescription><![CDATA[Parcela]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="20" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField>
+				<reportElement x="0" y="0" width="790" height="20" uuid="e44075c1-6f3a-4912-abf5-d6082173498b">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Parcela_1}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

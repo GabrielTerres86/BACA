@@ -10,6 +10,7 @@
  *                30/06/2015 - Ajustes referentes Projeto 215 - DV 3 (Daniel)
  *                20/09/2017 - Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  *                13/12/2018 - Projeto 298 - Inclusos novos campos tpemprst e campos de carencia (Andre Clemer - Supero)
+ * 				  28/02/2018 - Alterado para buscar os dados na mensageria Oracle (P438 Douglas Pagel / AMcom) 
  * */
 
 session_start();
@@ -44,46 +45,42 @@ if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cd
 // Monta o xml de requisição
 $xml = "";
 $xml.= "<Root>";
-$xml.= "	<Cabecalho>";
-$xml.= "		<Bo>b1wgen0097.p</Bo>";
-$xml.= "		<Proc>grava_simulacao</Proc>";
-$xml.= "	</Cabecalho>";
 $xml.= "	<Dados>";
-$xml.= "		<cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
-$xml.= "		<cdagenci>" . $glbvars["cdagenci"] . "</cdagenci>";
-$xml.= "		<nrdcaixa>" . $glbvars["nrdcaixa"] . "</nrdcaixa>";
-$xml.= "		<cdoperad>" . $glbvars["cdoperad"] . "</cdoperad>";
-$xml.= "		<nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
-$xml.= "		<idorigem>" . $glbvars["idorigem"] . "</idorigem>";
 $xml.= "		<nrdconta>" . $nrdconta . "</nrdconta>";
 $xml.= "		<idseqttl>" . $idseqttl . "</idseqttl>";
 $xml .= "		<dtmvtolt>" . $glbvars["dtmvtolt"] . "</dtmvtolt>";
-$xml .= "		<flgerlog>TRUE</flgerlog>";
 $xml .= "		<cddopcao>" . $cddopcao . "</cddopcao>";
 $xml.= "		<nrsimula>" . $nrsimula . "</nrsimula>";
 $xml.= "		<cdlcremp>" . $cdlcremp . "</cdlcremp>";
-$xml.= "		<vlemprst>" . $vlemprst . "</vlemprst>";
+$xml.= "		<vlemprst>" . str_replace(",", ".",str_replace(".","",$vlemprst)) . "</vlemprst>";
 $xml.= "		<qtparepr>" . $qtparepr . "</qtparepr>";
 $xml.= "		<dtlibera>" . $dtlibera . "</dtlibera>";
 $xml.= "		<dtdpagto>" . $dtdpagto . "</dtdpagto>";
 $xml.= "        <percetop>" . $percetop . "</percetop>";
 $xml.= "        <cdfinemp>" . $cdfinemp . "</cdfinemp>";
 $xml.= "        <idfiniof>" . $idfiniof . "</idfiniof>";
+$xml.= "        <flggrava>1</flggrava>";
+$xml.= "        <idpessoa>0</idpessoa>";
+$xml.= "        <nrseq_email>0</nrseq_email>";
+$xml.= "        <nrseq_telefone>0</nrseq_telefone>";
+$xml.= "        <idsegmento>0</idsegmento>";
 $xml.= "        <tpemprst>" . $tpemprst . "</tpemprst>";
 $xml.= "        <idcarenc>" . $idcarenc . "</idcarenc>";
 $xml.= "        <dtcarenc>" . $dtcarenc . "</dtcarenc>";
+$xml .= "		<flgerlog>1</flgerlog>";
 $xml.= "	</Dados>";
 $xml.= "</Root>";
 
 // Executa script para envio do XML
-$xmlResult = getDataXML($xml);
-
+$xmlResult = mensageria($xml, "TELA_ATENDA_SIMULACAO", "SIMULA_GRAVA_SIMULACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 // Cria objeto para classe de tratamento de XML
 $xmlObj = getObjectXML($xmlResult);
 
 // Obtém número da simulação gravada
-$nrgravad = $xmlObj->roottag->tags[0]->attributes["NRGRAVAD"];
-$txcetano = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
+$nrgravad = getByTagName($xmlObj->roottag->tags,'NRGRAVAD');
+//$nrgravad = $xmlObj->roottag->tags[0]->attributes["NRGRAVAD"];
+//$txcetano = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
+$txcetano = getByTagName($xmlObj->roottag->tags,'TXCETANO');
 
 //$vliofepr = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
 //$vlrtarif = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
