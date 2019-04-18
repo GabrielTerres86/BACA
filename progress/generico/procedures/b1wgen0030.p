@@ -37,7 +37,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 16/11/2018
+    Data    : Julho/2008                     Ultima Atualizacao: 09/04/2019
            
     Dados referentes ao programa:
                 
@@ -574,6 +574,8 @@
 
                16/11/2018 - Alterado para buscar o qtd dias de renovacao da tabela craprli (Paulo Penteao GFT)
 
+			   09/04/2019 - Ajustado busca_total_descontos para contabilizar total de desconto de titulo atraves no campo
+			                saldo do titulo vlsldtit (Daniel - Ailos)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -685,7 +687,7 @@ PROCEDURE busca_total_descontos:
                           NO-LOCK:
 
         ASSIGN tt-tot_descontos.vldsctit = tt-tot_descontos.vldsctit +
-                                           craptdb.vltitulo
+                                           craptdb.vlsldtit
                tt-tot_descontos.qtdsctit = tt-tot_descontos.qtdsctit + 1
 
                tt-tot_descontos.vlmaxtit = IF craptdb.vltitulo > 

@@ -526,6 +526,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                        ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                        ,pr_limorbor IN INTEGER                --> Indicador do tipo de dado( 1 - LIMITE DSCTIT 2 - BORDERO DSCTIT)
                                        ,pr_nrvrsctr IN NUMBER DEFAULT 0       --> Numero da versao do contrato
+                                       ,pr_tpimpres IN VARCHAR2 DEFAULT NULL
                                        --------> OUT <--------         
                                        --> Tabelas nao serao retornadar pois nao foram convetidas parao projeto indexacao(qrcode)                          
                                        --> pr_tab_emprsts             
@@ -4528,6 +4529,7 @@ END fn_letra_risco;
                                        ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                        ,pr_limorbor IN INTEGER                --> Indicador do tipo de dado(/* 1 - LIMITE DSCTIT 2 - BORDERO DSCTIT */)                                     
                                        ,pr_nrvrsctr IN NUMBER DEFAULT 0       --> Numero da versao do contrato
+                                       ,pr_tpimpres IN VARCHAR2 DEFAULT NULL
                                        --------> OUT <--------         
                                        --> Tabelas nao serao retornadar pois nao foram convetidas parao projeto indexacao(qrcode)                          
                                        --> pr_tab_emprsts             
@@ -4999,6 +5001,10 @@ END fn_letra_risco;
       vr_tpctrprp := 'P';
     ELSE 
       vr_tpctrprp := 'C';
+    END IF;
+    
+    IF pr_tpimpres IS NOT NULL THEN
+      vr_tpctrprp := 'P';
     END IF;
     
     --> Buscar dados de um determinado limite de desconto de titulos
@@ -6120,62 +6126,62 @@ END fn_letra_risco;
     --> Buscar Contrato de limite
     CURSOR cr_craplim IS
     --     descontos de titulos
-    select lim.nrdconta
-          ,lim.cdageori
-          ,lim.vllimite
-          ,lim.cddlinha
-          ,lim.dtinivig
-		  ,lim.idcobope
-		  ,lim.dtpropos
-          ,lim.nrctrlim
-    from   craplim lim
-    where  lim.cdcooper = pr_cdcooper
-    and    lim.nrdconta = pr_nrdconta
-    and    lim.nrctrlim = pr_nrctrlim
-    and    lim.tpctrlim = pr_tpctrlim
-    and    pr_tpctrlim <> 3
+    SELECT lim.nrdconta,
+           lim.cdageori,
+           lim.vllimite,
+           lim.cddlinha,
+           lim.dtinivig,
+           lim.idcobope,
+           lim.dtpropos,
+           lim.nrctrlim
+      FROM craplim lim
+     WHERE lim.cdcooper = pr_cdcooper
+       AND lim.nrdconta = pr_nrdconta
+       AND lim.nrctrlim = pr_nrctrlim
+       AND lim.tpctrlim = pr_tpctrlim
+       AND pr_tpctrlim <> 3
     
-    union  all
+    UNION ALL
 
     --     proposta principal do limites de desconto de titulo
-    select lim.nrdconta
-          ,lim.cdageori
-          ,lim.vllimite
-          ,lim.cddlinha
-          ,lim.dtinivig
-			,lim.idcobope
-		  	,lim.dtpropos
-          ,lim.nrctrlim
-    from   crawlim lim
-    where  lim.cdcooper = pr_cdcooper
-    and    lim.nrdconta = pr_nrdconta
-    and    lim.nrctrlim = pr_nrctrlim
-    and    lim.tpctrlim = pr_tpctrlim
-    and    lim.nrctrmnt = 0
-    and    pr_tpctrlim  = 3
+    SELECT lim.nrdconta,
+           lim.cdageori,
+           lim.vllimite,
+           lim.cddlinha,
+           lim.dtinivig,
+           lim.idcobope,
+           lim.dtpropos,
+           lim.nrctrlim
+      FROM crawlim lim
+     WHERE lim.cdcooper = pr_cdcooper
+       AND lim.nrdconta = pr_nrdconta
+       AND lim.nrctrlim = pr_nrctrlim
+       AND lim.tpctrlim = pr_tpctrlim
+       AND lim.nrctrmnt = 0
+       AND pr_tpctrlim = 3
     
-    union  all
+    UNION ALL
     
     --     proposta de manutenção de limites de desconto de titulo
-    select mnt.nrdconta
-          ,mnt.cdageori
-          ,mnt.vllimite
-          ,mnt.cddlinha
-          ,mnt.dtinivig
-		  ,mnt.idcobope
-		  ,mnt.dtpropos
-          ,mnt.nrctrlim
-    from   crawlim mnt
-          ,crawlim lim
-    where  mnt.cdcooper = lim.cdcooper
-    and    mnt.nrdconta = lim.nrdconta
-    and    mnt.nrctrlim = lim.nrctrmnt
-    and    mnt.tpctrlim = lim.tpctrlim
-    and    lim.cdcooper = lim.cdcooper
-    and    lim.nrdconta = pr_nrdconta
-    and    lim.nrctrlim = pr_nrctrlim
-    and    lim.tpctrlim = pr_tpctrlim
-    and    pr_tpctrlim  = 3;
+    SELECT mnt.nrdconta,
+           mnt.cdageori,
+           mnt.vllimite,
+           mnt.cddlinha,
+           mnt.dtinivig,
+           mnt.idcobope,
+           mnt.dtpropos,
+           mnt.nrctrlim
+      FROM crawlim mnt,
+           crawlim lim
+     WHERE mnt.cdcooper = lim.cdcooper
+       AND mnt.nrdconta = lim.nrdconta
+       AND mnt.nrctrlim = lim.nrctrmnt
+       AND mnt.tpctrlim = lim.tpctrlim
+       AND lim.cdcooper = lim.cdcooper
+       AND lim.nrdconta = pr_nrdconta
+       AND lim.nrctrlim = pr_nrctrlim
+       AND lim.tpctrlim = pr_tpctrlim
+       AND pr_tpctrlim = 3;
     rw_craplim cr_craplim%ROWTYPE; 
     
     --> Buscar dados de Linhas de Desconto
@@ -6259,6 +6265,8 @@ END fn_letra_risco;
     vr_index_rating_hist       PLS_INTEGER;
     
     vr_dados_mock              VARCHAR2(50);
+
+    vr_tpimpres                VARCHAR2(5) := NULL;
 
     ----------->>> VARIAVEIS <<<--------   
     -- Variável de críticas
@@ -6411,6 +6419,12 @@ END fn_letra_risco;
       vr_nrctrlim := rw_craplim.nrctrlim; 
     END IF; 
      
+    IF pr_idimpres = 2 AND pr_tpctrlim = 3 THEN   
+      IF rw_craplim.dtinivig IS NULL THEN
+        vr_tpimpres := 'P';
+      END IF;
+    END IF;  
+     
     --> Buscar dados para montar contratos etc para desconto de titulos
     pc_busca_dados_imp_descont( pr_cdcooper => pr_cdcooper  --> Código da Cooperativa
                                ,pr_cdagenci => pr_cdagecxa  --> Código da agencia
@@ -6430,6 +6444,7 @@ END fn_letra_risco;
                                ,pr_flgerlog => 0            --> Indicador se deve gerar log(0-nao, 1-sim)
                                ,pr_limorbor => 1            --> Indicador do tipo de dado( 1 - LIMITE DSCTIT 2 - BORDERO DSCTIT )                                     
                                ,pr_nrvrsctr => vr_nrvrsctr  --> Numero da versao do contrato
+                               ,pr_tpimpres => vr_tpimpres
                                --------> OUT <--------         
                                --> Tabelas nao serao retornadar pois nao foram convetidas parao projeto indexacao(qrcode)                          
                                --> pr_tab_emprsts             

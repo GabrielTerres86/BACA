@@ -159,7 +159,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0004 IS
                                crapcob.nrdocmto = craptdb.nrdocmto
   WHERE  craptdb.cdcooper = pr_cdcooper
   AND    craptdb.nrdconta = pr_nrdconta
-  AND    craptdb.nrctrlim = rw_craplim.nrctrlim
   AND   (craptdb.insittit = 4 OR (craptdb.insittit = 2 AND craptdb.dtdpagto = pr_dtmvtolt));
   rw_craptdb_des cr_craptdb_des%rowtype;
   
@@ -443,6 +442,9 @@ PROCEDURE pc_calcula_limite_disponivel(pr_cdcooper  IN crapcop.cdcooper%TYPE -->
 
     Alteração : 16/05/2018 - Criação (Paulo Penteado (GFT))
 
+	            16/04/2019 - Correção busca valor utilizado (Daniel - Ailos) 
+	            
+
   ---------------------------------------------------------------------------------------------------------------------*/
 BEGIN
   OPEN  cr_craplim(pr_cdcooper => pr_cdcooper
@@ -457,6 +459,10 @@ BEGIN
   CLOSE cr_craptdb_des;
   
   pr_vllimdis := rw_craplim.vllimite - nvl(rw_craptdb_des.vlutiliz,0);
+
+  IF pr_vllimdis < 0 THEN
+    pr_vllimdis = 0;
+  END IF; 
 
 END pc_calcula_limite_disponivel;
 

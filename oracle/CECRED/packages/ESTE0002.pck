@@ -149,7 +149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 03/09/2018
+      Data     : Maio/2017.                   Ultima atualizacao: 16/04/2019
 
       Dados referentes ao programa:
 
@@ -183,6 +183,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 				  10/11/2018 - Ajuste na procedure "pc_gera_json_pessoa_ass" - correção no cursor que identifica
 							   se o contrato de empréstimo está/esteve em prejuízo
 							   (Reginaldo/AMcom)
+
+                  16/04/2019 - Correção busca limite cheque especial, não estava filtrando o tipo de produto (Daniel - Ailos)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1690,6 +1692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
           FROM craplim lim
          WHERE lim.cdcooper = pr_cdcooper
            AND lim.nrdconta = pr_nrdconta
+		   AND lim.tpctrlim = 1 -- Cheque Especial
            AND lim.insitlim = 2; -- Ativo
       rw_craplim_chqesp cr_craplim_chqesp%ROWTYPE;
     
