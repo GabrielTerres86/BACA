@@ -360,7 +360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 19/04/2018
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 12/12/2018
   --
   -- Dados referentes ao programa:
   --
@@ -412,6 +412,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             19/04/2018 - #812349 Na rotina pc_gera_relato, utilizada a rotina pc_mv_arquivo para ganho de
   --                          perfomance no comando (Carlos)
+  --
+  --             12/12/2018 - Alterado padrão da mascara de contrato
+  --                          (Andre Clemer - Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
@@ -421,7 +424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   vr_des_mask_cnpj     VARCHAR2(20);
   vr_des_mask_cep      VARCHAR2(10);
   vr_des_mask_matric   VARCHAR2(7);
-  vr_des_mask_contrato VARCHAR2(9);
+  vr_des_mask_contrato VARCHAR2(13);
 
   /* Saída com erro */
   vr_des_erro VARCHAR2(4000);
@@ -664,13 +667,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                            (Ana - Envolti - Chamado 776896)
     --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
+    --               12/12/2018 - Alterado padrão da mascara de contrato
+    --                            (Andre Clemer - Supero)
     -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
 		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_contrato'); 
    -- Se ainda não foi buscado
     IF vr_des_mask_contrato IS NULL THEN
-      vr_des_mask_contrato := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CONTRATO'), 'zz.zzz.zz9');
+      vr_des_mask_contrato := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CONTRATO'), 'z.zzz.zzz.zz9');
     END IF;
     -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
     GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);

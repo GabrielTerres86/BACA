@@ -33,6 +33,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR9999 AS
   --
   --             15/08/2018 - Pagamento de Emprestimos/Financiamentos (Rangel Decker / AMcom)
   --                        - pc_pagar_emprestimo_pos
+  --
+  --             14/12/2018 - P298.2 - Inclusão da proposta Pós fixado no simulador (Andre Clemer - Supero)
+  --                        - pc_busca_dominio;
 
   ---------------------------------------------------------------------------------------------------------------
 
@@ -201,6 +204,15 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR9999 AS
                                    ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                    ,pr_dscritic OUT VARCHAR2);                   -- Descrição da crítica
 
+  PROCEDURE pc_busca_dominio(pr_nmdominio IN tbepr_dominio_campo.nmdominio%TYPE --> Nome do domínio
+                            ,pr_xmllog    IN VARCHAR2                           --> XML com informações de LOG
+                            ,pr_cdcritic  OUT PLS_INTEGER                       --> Código da crítica
+                            ,pr_dscritic  OUT VARCHAR2                          --> Descrição da crítica
+                            ,pr_retxml    IN OUT NOCOPY xmltype                 --> Arquivo de retorno do XML
+                            ,pr_nmdcampo  OUT VARCHAR2                          --> Nome do campo com erro
+                            ,pr_des_erro  OUT VARCHAR2                          --> Erros do processo
+                             );
+
 
 END EMPR9999;
 /
@@ -235,6 +247,9 @@ create or replace package body cecred.EMPR9999 as
   --
   --             15/08/2018 - Pagamento de Emprestimos/Financiamentos (Rangel Decker / AMcom)
   --                         - pc_pagar_emprestimo_pos
+  --
+  --             14/12/2018 - P298.2 - Inclusão da proposta Pós fixado no simulador (Andre Clemer - Supero)
+  --                        - pc_busca_dominio;
 
   ---------------------------------------------------------------------------------------------------------------
   /* Tratamento de erro */
@@ -2502,6 +2517,150 @@ create or replace package body cecred.EMPR9999 as
     END;
 
   END pc_verifica_empr_migrado_web;
+  
+  PROCEDURE pc_busca_dominio(pr_nmdominio IN tbepr_dominio_campo.nmdominio%TYPE --> Nome do domínio
+                            ,pr_xmllog    IN VARCHAR2                           --> XML com informações de LOG
+                            ,pr_cdcritic  OUT PLS_INTEGER                       --> Código da crítica
+                            ,pr_dscritic  OUT VARCHAR2                          --> Descrição da crítica
+                            ,pr_retxml    IN OUT NOCOPY xmltype                 --> Arquivo de retorno do XML
+                            ,pr_nmdcampo  OUT VARCHAR2                          --> Nome do campo com erro
+                            ,pr_des_erro  OUT VARCHAR2                          --> Erros do processo
+                             ) IS
+      /* .............................................................................
+        Programa: pc_busca_dominio
+        Sistema : CECRED
+        Sigla   : COBRAN
+        Autor   : Andre Clemer - Supero
+        Data    : Dezembro/18.                    Ultima atualizacao: --/--/----
+      
+        Dados referentes ao programa:
+      
+        Frequencia: Sempre que for chamado
+      
+        Objetivo  : Retornar lista as opções do domínio enviado
+      
+        Observacao: -----
+      
+        Alteracoes:
+      ..............................................................................*/
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(4000); --> Desc. Erro
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+      -- Variáveis para armazenar as informações em XML
+      vr_des_xml CLOB;
+      -- Variável para armazenar os dados do XML antes de incluir no CLOB
+      vr_texto_completo VARCHAR2(32600);
+
+      -- Tabela que receberá as opções do domínio
+      vr_tab_dominios gene0010.typ_tab_dominio;
+
+      -- Subrotina para escrever texto na variável CLOB do XML
+      PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2
+                              ,pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+      BEGIN
+          gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+      END;
+
+  BEGIN
+
+      pr_des_erro := 'OK';
+      -- Extrai dados do xml
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Levanta exceção
+          RAISE vr_exc_saida;
+      END IF;
+
+      -- Leitura da PL/Table e geração do arquivo XML
+      -- Inicializar o CLOB
+      vr_des_xml := NULL;
+      dbms_lob.createtemporary(vr_des_xml, TRUE);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- Inicilizar as informações do XML
+      vr_texto_completo := NULL;
+
+      -- Busca as opções do domínio
+      gene0010.pc_retorna_dominios(pr_nmmodulo     => 'EPR' --> Nome do modulo(TB<EPR>_DOMINIO_CAMPO)
+                                  ,pr_nmdomini     => pr_nmdominio --> Nome do dominio
+                                  ,pr_tab_dominios => vr_tab_dominios --> retorna os dados dos dominios
+                                  ,pr_dscritic     => vr_dscritic --> retorna descricao da critica
+                                   );
+
+      IF vr_tab_dominios.count > 0 THEN
+
+          pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1"?><root><dados>');
+
+          FOR i IN vr_tab_dominios.first .. vr_tab_dominios.last LOOP
+
+              dbms_output.put_line(vr_tab_dominios(i).cddominio || ' - ' || vr_tab_dominios(i).dscodigo);
+              pc_escreve_xml('<inf>' || '<nmdominio>' || pr_nmdominio || '</nmdominio>' || '<cddominio>' || vr_tab_dominios(i)
+                             .cddominio || '</cddominio>' || '<dscodigo>' || vr_tab_dominios(i).dscodigo ||
+                             '</dscodigo>' || '</inf>');
+
+          END LOOP;
+
+          pc_escreve_xml('</dados></root>', TRUE);
+
+          pr_retxml := xmltype.createxml(vr_des_xml);
+
+      ELSE
+
+          vr_dscritic := 'Nenhuma opcao encontrada para o dominio informado: ' || pr_nmdominio;
+          RAISE vr_exc_saida;
+
+      END IF;
+
+  EXCEPTION
+      WHEN vr_exc_saida THEN
+          IF vr_cdcritic <> 0 THEN
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          ELSE
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := vr_dscritic;
+          END IF;
+
+          pr_des_erro := 'NOK';
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+                                         pr_dscritic || '</Erro></Root>');
+
+      WHEN OTHERS THEN
+
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+          pr_des_erro := 'NOK';
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+                                         pr_dscritic || '</Erro></Root>');
+
+  END pc_busca_dominio;
 
 END EMPR9999;
 /

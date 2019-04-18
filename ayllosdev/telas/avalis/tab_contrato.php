@@ -35,7 +35,7 @@
 				<? foreach( $registros as $r ) { ?>
 					<tr>
 						<td><span><? echo getByTagName($r->tags,'nrctremp') ?></span>
-							<? echo mascara(getByTagName($r->tags,'nrctremp'),'#.###.###') ?></td>
+							<? echo mascara(getByTagName($r->tags,'nrctremp'),'#.###.###.###') ?></td>
 						
 						<td><? echo getByTagName($r->tags,'cdpesqui') ?></td>
 						
