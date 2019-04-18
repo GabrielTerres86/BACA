@@ -13514,6 +13514,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --                            Ajuste mensagem de erro 
     --                            (Belli - Envolti - Chamado 779415)        
     --
+    --               12/04/2019 - Adequar o processamento de transferencias para o fluxo 
+    --                            relacionado à portabilidade de Salário ( Renato Darosci - Supero - P485)
     -- ..........................................................................
   BEGIN
     DECLARE
@@ -13603,6 +13605,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
          ELSIF vr_tab_agendto(vr_index_agendto).dsorigem = 'TAA' THEN
            vr_cdagenci:= 91;
            vr_idorigem:= 4;  /*TAA*/
+         ELSIF vr_tab_agendto(vr_index_agendto).dsorigem = 'PORTABILIDAD' THEN -- P485
+           vr_cdagenci:= 0;
+           vr_idorigem:= 4;  /*Seguir o mesmo fluxo do TAA, para que não sejam validados limites de internet*/
          ELSE
            vr_cdagenci:= vr_tab_agendto(vr_index_agendto).cdagenci;
            vr_idorigem:= 2;  /*CAIXA*/
@@ -13803,6 +13808,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 	
                    12/09/2018 - Busca de convenios prioritarios - Debitador Unico - Fabiano B. Dias (AMcom)
 
+                   12/04/2019 - Considerar os lançamentos de origem da portabilidade para 
+                                realizar a transferencias de valores, relacionados à 
+                                portabilidade de Salário ( Renato Darosci - Supero - P485)
     -----------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -13882,7 +13890,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           AND ((    craplau.cdcooper = pr_cdcooper
               AND   craplau.dtmvtopg = pr_dtmvtopg
               AND   craplau.insitlau = 1
-              AND   craplau.dsorigem IN ('INTERNET','TAA')
+              AND   craplau.dsorigem IN ('INTERNET','TAA', 'PORTABILIDAD')  -- P485 - Considerar também Portabilidade
               AND    craplau.tpdvalor = 0)
               OR
              (    craplau.cdcooper  = pr_cdcooper
@@ -26495,6 +26503,9 @@ end;';
                                 Ajuste mensagem de erro 
                                (Belli - Envolti - Chamado 779415)                                                       
                                 
+                   12/04/2019 - Incluir validação para setar parametros no processamento
+                                de transferencias de valores, relacionados à portabilidade
+                                de Salário ( Renato Darosci - Supero - P485)
      ..........................................................................*/
 
 
@@ -26572,12 +26583,24 @@ end;';
               ,t.cdfinalidade
               ,t.dshistorico
               ,t.dsidentific
+              ,t.nrridlfp
           FROM craplau
               ,tbted_det_agendamento t
          WHERE craplau.progress_recid = pr_progress_recid
            AND craplau.idlancto = t.idlancto;
       rw_craplau cr_craplau%ROWTYPE;
       
+      -- Buscar dados da portabilidade
+      CURSOR cr_portab(pr_cdcooper IN NUMBER
+                      ,pr_nrdconta IN NUMBER) IS
+        SELECT rec.nmprimtl
+             , rec.nrcpfcgc
+             , rec.cdtipo_cta_destinataria intipcta
+          FROM tbcc_portabilidade_recebe rec
+         WHERE rec.nrdconta = pr_nrdconta
+           AND rec.cdcooper = pr_cdcooper
+         ORDER BY rec.dtsolicitacao DESC;
+      rw_portab    cr_portab%ROWTYPE;
       
       --Tipo da tabela de saldos
       vr_tab_saldo EXTR0001.typ_tab_saldos;
@@ -26614,10 +26637,17 @@ end;';
       vr_flultexe  INTEGER;
       vr_qtdexec   INTEGER;
       vr_cdispbif  INTEGER;
-            
+      
+      vr_idportab     NUMBER;
+      vr_nrridlfp     tbted_det_agendamento.nrridlfp%TYPE;
+      
       vr_aux_vllanaut craplau.vllanaut%TYPE;
       
       vr_tab_protocolo_ted          CXON0020.typ_tab_protocolo_ted;
+      
+      vr_cti_nrcpfcgc      crapcti.nrcpfcgc%TYPE;
+      vr_cti_inpessoa      crapcti.inpessoa%TYPE;
+      vr_cti_intipcta      crapcti.intipcta%TYPE;
       
       --Variaveis de Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -27024,7 +27054,53 @@ end;';
           END IF;
           --Fechar Cursor
           CLOSE cr_crapban;        
-         
+          
+          -- Verificar se é um agendamento de portabilidade
+          IF rw_craplau.dsorigem = 'PORTABILIDAD' THEN
+            vr_idportab := 1;
+            vr_nrridlfp := rw_craplau.nrridlfp;
+            
+            -- Buscar os dados no registro da portabilidade
+            OPEN  cr_portab(pr_cdcooper
+                           ,rw_craplau.nrdconta);
+            FETCH cr_portab INTO rw_portab;
+            
+            -- Se não encontrar registro de portabilidade
+            IF cr_portab%NOTFOUND THEN
+              CLOSE cr_portab;
+              vr_cdcritic := 0;
+              vr_dscritic := 'Dados de portabilidade não encontrados.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+            
+            -- Fechar o cursor
+            CLOSE cr_portab;
+            
+            -- Dados de destino
+            vr_nmtldest     := rw_portab.nmprimtl;
+            vr_cti_nrcpfcgc := rw_portab.nrcpfcgc;
+            vr_cti_inpessoa := 1; -- Portabilidade é sempre pessoa física
+            
+            -- Tp. conta - Destinatário
+            IF    rw_portab.intipcta = 'CC' THEN -- Conta Corrente
+              vr_cti_intipcta := 1;
+            ELSIF rw_portab.intipcta = 'PP' THEN -- Poupança
+              vr_cti_intipcta := 2;
+            ELSIF rw_portab.intipcta = 'PG' THEN -- Conta de Pagamento
+              vr_cti_intipcta := 3;
+            END IF;
+            
+          ELSE 
+            vr_idportab := 0;
+            vr_nrridlfp := NULL;
+            
+            -- Fluxo atual
+            vr_cti_nrcpfcgc := rw_crapcti.nrcpfcgc;
+            vr_cti_inpessoa := rw_crapcti.inpessoa;
+            vr_cti_intipcta := rw_crapcti.intipcta;
+          END IF;
+          
           --> Procedure para executar o envio da TED
           CXON0020.pc_executa_envio_ted (pr_cdcooper => pr_cdcooper  --> Cooperativa    
                                        ,pr_cdagenci => 90           --> Agencia
@@ -27039,15 +27115,17 @@ end;';
                                        ,pr_cdageban => rw_craplau.cdageban  --> Agencia destino
                                        ,pr_nrctatrf => rw_craplau.nrctadst  --> Conta transferencia
                                        ,pr_nmtitula => vr_nmtldest  --> nome do titular destino
-                                       ,pr_nrcpfcgc => rw_crapcti.nrcpfcgc  --> CPF do titular destino
-                                       ,pr_inpessoa => rw_crapcti.inpessoa  --> Tipo de pessoa
-                                       ,pr_intipcta => rw_crapcti.intipcta  --> Tipo de conta
+                                       ,pr_nrcpfcgc => vr_cti_nrcpfcgc      --> CPF do titular destino
+                                       ,pr_inpessoa => vr_cti_inpessoa      --> Tipo de pessoa
+                                       ,pr_intipcta => vr_cti_intipcta      --> Tipo de conta
                                        ,pr_vllanmto => rw_craplau.vllanaut  --> Valor do lançamento
                                        ,pr_dstransf => rw_craplau.dsidentific  --> Identificacao Transf.
                                        ,pr_cdfinali => rw_craplau.cdfinalidade  --pr_cdfinali  --> Finalidade TED   
                                        ,pr_dshistor => rw_craplau.dshistorico  --pr_dshistor  --> Descriçao do Histórico
                                        ,pr_cdispbif => vr_cdispbif  --> ISPB Banco Favorecido=
 					                             ,pr_idagenda => 2
+                                       ,pr_idportab => vr_idportab
+                                       ,pr_nrridlfp => vr_nrridlfp
                                        -- saida        
                                        ,pr_dsprotoc => vr_dsprotoc  --> Retorna protocolo    
                                        ,pr_tab_protocolo_ted => vr_tab_protocolo_ted --> dados do protocolo
