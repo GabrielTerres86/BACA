@@ -15,6 +15,11 @@ CREATE OR REPLACE PACKAGE CECRED.cobr0003 AS
   --
   --  Alteracoes: 18/08/2014 - Inclusão do contador de registros nas rotinas de consulta
   --                            (Andrino-RKAM)
+  --
+  --              18/04/2019 - Inclusao de job para automatizacao de limpeza de cheques sinistrados internos
+  --                           da cooperativa que tenham mais de 180 dias de idade.
+  --                           Chamado RITM0012001 - Gabriel Marcos (Mouts).
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   TYPE typ_reg_chqfora IS
@@ -151,6 +156,8 @@ CREATE OR REPLACE PACKAGE CECRED.cobr0003 AS
                                  ,pr_nmdcampo OUT VARCHAR2                 -- Nome do campo com erro                      
                                  ,pr_des_erro OUT VARCHAR2);                                  
 
+  -- Job para realizar limpeza automatica de cheques
+  procedure pc_job_limpeza_chqsin;
 
 END cobr0003;
 /
@@ -189,6 +196,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0003 AS
   --              29/08/2016 - #456682 Alterações nas rotinas pc_consulta_cbrfra, pc_insere_cbrfra e 
   --                           pc_excluir_cbrfra para atender a tela CBRFRA com controle de fraudes em TEDs (Carlos)
   --                             
+  --              18/04/2019 - Inclusao de job para automatizacao de limpeza de cheques sinistrados internos
+  --                           da cooperativa que tenham mais de 180 dias de idade.
+  --                           Chamado RITM0012001 - Gabriel Marcos (Mouts).
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Procedure para consulta na tela CBRFRA
@@ -1264,5 +1275,129 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0003 AS
         ROLLBACK;
     END pc_exclui_chqsin_fora;
   
+  -- Job para realizar limpeza automatica de cheques
+  procedure pc_job_limpeza_chqsin is
+ 
+    -- Cursor para limpeza dos registros
+    cursor cr_limpeza_chqsin is
+    select sch.rowid
+         , 'Registro de sinistro de cheque deletado. --->' ||
+           ' dtmvtolt: ' || to_char(sch.dtmvtolt,'dd/mm/yyyy') ||
+           ' cdbccxlt: ' || sch.cdbccxlt ||
+           ' cdagectl: ' || sch.cdagectl ||
+           ' nrctachq: ' || sch.nrctachq ||
+           ' dsmotivo: ' || sch.dsmotivo ||
+           ' cdoperad: ' || sch.cdoperad descricao_log
+      from crapsch sch
+         , crapcop cop
+         , crapass ass
+         , crapdat dat
+         , crapprm prm
+     where prm.cdacesso = 'JOB_LIMPEZA_CHQSIN'
+       and dat.cdcooper = cop.cdcooper
+       -- Registros com mais de 180 dias (antigos)
+       -- Alteracao de regra pode ser feito por um update       
+       and prm.dsvlrprm < (dat.dtmvtolt - sch.dtmvtolt) 
+       and cop.cdagectl = sch.cdagectl
+       and ass.cdcooper = cop.cdcooper
+       and ass.nrdconta = sch.nrctachq;     
+
+    -- Variável de críticas
+    vr_cdcritic      crapcri.cdcritic%type;
+    vr_dscritic      varchar2(4000);
+
+    -- Tratamento de erros
+    vr_exc_saida     exception;
+    
+    -- Variaveis gerais
+    vr_nmprogra tbgen_prglog.cdprograma%type := 'JBCOBR_LIMPEZA_CHQSIN';
+    vr_idprglog tbgen_prglog.idprglog%type := 0; 
+      
+  begin
+    
+    -- Gera log no início da execução
+    pc_log_programa(pr_dstiplog   => 'I'         
+                   ,pr_cdprograma => vr_nmprogra 
+                   ,pr_cdcooper   => 0
+                   ,pr_tpexecucao => 2
+                   ,pr_idprglog   => vr_idprglog);  
+
+    -- Loop para limpeza dos registros    
+    for rw_limpeza_chqsin in cr_limpeza_chqsin loop
+      
+      -- Deletar registros
+      begin
+        delete
+          from crapsch sch
+         where sch.rowid = rw_limpeza_chqsin.rowid;
+      exception
+        when others then
+          vr_dscritic := 'Erro ao deletar crapsch: '||
+                         rw_limpeza_chqsin.rowid||' ---> '||sqlerrm;
+          raise vr_exc_saida;
+      end;
+
+      -- Gravar backup do registro deletado
+      cecred.pc_log_programa(pr_dstiplog      => 'O'
+                            ,pr_cdprograma    => vr_nmprogra
+                            ,pr_cdcooper      => 0
+                            ,pr_tpexecucao    => 2 
+                            ,pr_tpocorrencia  => 4
+                            ,pr_cdcriticidade => 0
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => rw_limpeza_chqsin.descricao_log
+                            ,pr_idprglog      => vr_idprglog);      
+							
+      commit;							
+                            
+    end loop;
+    
+    -- Gera log no início da execução
+    pc_log_programa(pr_dstiplog   => 'F'         
+                   ,pr_cdprograma => vr_nmprogra 
+                   ,pr_cdcooper   => 0
+                   ,pr_tpexecucao => 2    
+                   ,pr_flgsucesso => 1
+                   ,pr_idprglog   => vr_idprglog);      
+      
+    commit;
+      
+  exception
+    
+    when vr_exc_saida then
+
+      -- Registrar erro de execucao
+      cecred.pc_log_programa(pr_dstiplog      => 'E' 
+                            ,pr_cdprograma    => vr_nmprogra
+                            ,pr_cdcooper      => 0
+                            ,pr_tpexecucao    => 2
+                            ,pr_tpocorrencia  => 2   
+                            ,pr_cdcriticidade => 3   
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => vr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+                            
+      rollback;                            
+
+    when others then
+      
+      -- Erro nao tratado
+      vr_dscritic := vr_nmprogra||': erro geral não tratado ---> '||sqlerrm;
+    
+      -- Registrar erro de execucao
+      cecred.pc_log_programa(pr_dstiplog      => 'E' 
+                            ,pr_cdprograma    => vr_nmprogra
+                            ,pr_cdcooper      => 0
+                            ,pr_tpexecucao    => 2
+                            ,pr_tpocorrencia  => 2   
+                            ,pr_cdcriticidade => 3   
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => vr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+                            
+      rollback;     
+      
+  end pc_job_limpeza_chqsin; 
+
 END cobr0003;
 /
