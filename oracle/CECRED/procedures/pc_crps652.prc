@@ -355,6 +355,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
        WHERE crapcop.cdcooper = pr_cdcooper;
      rw_crapcop1 cr_crapcop1%ROWTYPE;
 
+     CURSOR cr_crapcop_ativas IS 
+       SELECT cdcooper FROM crapcop 
+        WHERE crapcop.flgativo = 1; 
+       rw_crapcop_ativas cr_crapcop_ativas%ROWTYPE;
+
      -- Selecionar todas Cooperativas para o processamento
      CURSOR cr_crapcop (pr_cdcoppar crapcop.cdcooper%TYPE              DEFAULT 0
                        ,pr_cdprogra tbgen_batch_controle.cdprogra%TYPE DEFAULT 0 
@@ -5448,7 +5453,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
         AND   nrdconta = pr_nrdconta; 
         rw_aval2 cr_aval2%ROWTYPE;        
       
-      CURSOR cr_cpfcgc (pr_nrcpfcgc IN pr_rw_crapcyb.nrcpfcgc%TYPE
+      CURSOR cr_cpfcgc (pr_cdcooper IN crapass.cdcooper%TYPE
+                       ,pr_nrcpfcgc IN pr_rw_crapcyb.nrcpfcgc%TYPE
                        ,pr_nrcpfav1 IN pr_rw_crapcyb.nrcpfcgc%TYPE
                        ,pr_nrcpfav2 IN pr_rw_crapcyb.nrcpfcgc%TYPE) IS 
         SELECT cdcooper,
@@ -5457,7 +5463,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                                pr_nrcpfav1,10,
                                pr_nrcpfav2,15) tptelefo 
         FROM crapass 
-        WHERE nrcpfcgc IN (pr_nrcpfcgc, pr_nrcpfav1, pr_nrcpfav2) ; 
+        WHERE cdcooper = pr_cdcooper 
+          AND nrcpfcgc IN (pr_nrcpfcgc, pr_nrcpfav1, pr_nrcpfav2) ; 
         rw_cpfcgc cr_cpfcgc%ROWTYPE;       
       
       -- Busca recarga favorito     
@@ -5546,7 +5553,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
              vr_nrcpfav2 := rw_aval2.nrcpfcgc;
            END IF;            
                    
-           FOR rw_cpfcgc IN cr_cpfcgc(pr_nrcpfcgc => trim(pr_rw_crapcyb.nrcpfcgc)
+           FOR rw_crapcop_ativas IN cr_crapcop_ativas LOOP
+                   
+             FOR rw_cpfcgc IN cr_cpfcgc(pr_cdcooper => rw_crapcop_ativas.cdcooper
+                                       ,pr_nrcpfcgc => trim(pr_rw_crapcyb.nrcpfcgc)
                                          ,pr_nrcpfav1 => vr_nrcpfav1
                                          ,pr_nrcpfav2 => vr_nrcpfav2) LOOP 
              
@@ -5580,7 +5590,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
               
             END LOOP;
             END LOOP;
-
+            END LOOP;
          EXCEPTION
            WHEN vr_exc_saida THEN
            IF vr_cdcritic <> 0 THEN
