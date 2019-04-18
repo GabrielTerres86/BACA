@@ -592,6 +592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                                  ,pr_nmtabela IN VARCHAR2  --> Nome da tabela
                                  ,pr_dsnoprin IN VARCHAR2  --> Nó principal do xml
                                  ,pr_dsnofilh IN VARCHAR2  --> Nós filhos
+                                 ,pr_clausula IN VARCHAR2 default NULL      --> Clausula Where
                                  ,pr_retorno  OUT xmltype  --> XML de retorno
                                  ,pr_dscritic OUT VARCHAR2) IS
 
@@ -667,6 +668,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 
     vr_dscursor := vr_dscursor|| ' FROM ' || pr_nmtabela;
     vr_dscursor := vr_dscursor|| ' WHERE idpessoa = ' ||pr_idpessoa;
+    IF pr_clausula IS NOT NULL THEN
+      vr_dscursor := vr_dscursor|| ' AND ' || pr_clausula;
+    END IF;    
 
     -- Cria cursor dinâmico
     vr_nrcursor := dbms_sql.open_cursor;
@@ -2240,6 +2244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                          ,pr_nmtabela => 'TBCADAST_PESSOA_ENDERECO'     --> Nome da tabela
                          ,pr_dsnoprin => 'enderecos'                    --> Nó principal do xml
                          ,pr_dsnofilh => 'endereco'                     --> Nós filhos
+                         ,pr_clausula => '(NRCEP > 0)'                  --> Cláusula Where
                          ,pr_retorno  => pr_retorno                     --> XML de retorno
                          ,pr_dscritic => pr_dscritic);
   EXCEPTION
