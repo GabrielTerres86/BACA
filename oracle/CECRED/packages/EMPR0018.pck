@@ -1831,7 +1831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                           , pr_cdcritic => vr_cdcritic
                                           , pr_dscritic => vr_dscritic);
       
-        IF vr_cdcritic <> 0 or trim(vr_des_erro) is not null THEN
+        IF vr_cdcritic <> 0 or trim(vr_dscritic) is not null THEN
           RAISE vr_exc_erro;
         END IF;
       END IF;   
