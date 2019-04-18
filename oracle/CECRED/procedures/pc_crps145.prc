@@ -113,7 +113,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
 
                    12/10/2018 - Tratamento de Flag de Teimosinha e Debito Parcial - Proj. 411.2 (CIS Corporate)    
 
-                   17/04/2019 - Ajuste para tratar planos cujo indebito esta marcado com 1 indevidamente (Anderson)
+                   17/04/2019 - Ajuste para carregar nos planos a flag indebito corretamente (Anderson)
     ............................................................................. */
 
     DECLARE
@@ -193,17 +193,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
         AND    craprpp.nrctrrpp  > pr_nrctrrpp 
         AND   (craprpp.cdsitrpp  = 1 OR craprpp.cdsitrpp  = 2)
         AND    craprpp.dtdebito <= pr_dtdebito
-        AND   (
-                /* flag de debitado no mes = [0 - nao] e a data de debito eh menor ou igual a data do debito */
-                (craprpp.indebito  = 0 AND craprpp.dtdebito <= pr_dtdebito)
-               OR 
-                /* flag debitado no mes = [1 - sim] mas o debito programadado eh de mes anterior,
-                 vamos verificar se nao chegou o dia de debitar novamente este mes */
-                (    craprpp.indebito  = 1 
-                 and craprpp.dtdebito < trunc(pr_dtdebito)  
-                 and extract(day from craprpp.dtdebito) < extract(day from pr_dtdebito)  
-                )
-               )
+        AND    craprpp.indebito  = 0
         AND    craprpp.cdprodut > 0;
 
       --seleciona os saldos das contas dos cooperados
@@ -414,6 +404,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
       vr_vlabdiof     craprpp.vlabdiof%TYPE;
       vr_geraavis     BOOLEAN;
       vr_indebito     INTEGER;
+      vr_dtdebito     craprpp.dtdebito%TYPE;
+      vr_dtultdeb     craprpp.dtdebito%TYPE;
       vr_cdturnos     crapttl.cdturnos%TYPE;
       vr_path_arquivo VARCHAR2(500);
       vr_commit       NUMBER;
@@ -908,6 +900,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
           END IF;  
         END IF;--IF TO_NUMBER(TO_CHAR(rw_craprpp.dtinirpp, 'DD')) < 11 THEN 
         
+        /* Regra antiga do vr_indebito
         -- se o mes/ano do debito for igual a data do movimento
         IF TO_CHAR(rw_craprpp.dtdebito,'MMYYYY') = TO_CHAR(rw_crapdat.dtmvtolt,'MMYYYY') THEN  
           vr_indebito := 0;
@@ -918,31 +911,56 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
           vr_indebito := 0;  
         ELSE  
           vr_indebito := 1;  
-        END IF;   
+        END IF;   */
+        
+        /* Carrega nova data de proximo debito */
+        vr_dtdebito := add_months(rw_craprpp.dtdebito,1);
+
+        /* Precaucao: a proxima data de debito sempre devera ser superior a data atual,
+           caso contrario podemos ficar raspando a conta muitas vezes ate que a data fique maior que a atual */
+        IF rw_crapdat.dtmvtolt > vr_dtdebito THEN
+          LOOP 
+            EXIT WHEN rw_crapdat.dtmvtolt < vr_dtdebito;
+            vr_dtdebito := add_months(rw_craprpp.dtdebito,1);
+          END LOOP;
+        END IF;
+
+        /* Ultimo dia para debito da parcela atual = dia anterior ao proximo debito*/
+        vr_dtultdeb := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                  ,pr_dtmvtolt  => (vr_dtdebito - 1)
+                                                  ,pr_tipo      => 'A'
+                                                  ,pr_feriado   => true
+                                                  ,pr_excultdia => true);
         
         --atualizado a tabela de poupanca programada
         IF vr_dscritic IS NULL THEN
-        BEGIN
-          IF ((rw_crapdat.dtmvtolt < add_months(rw_craprpp.dtdebito , 1)) AND
-          ((rw_craprpp.flgteimosinha = 1) AND (vr_vlaplica < vr_vlprerpp))
-          ) THEN
-              UPDATE craprpp SET dtaltrpp = rw_crapdat.dtmvtolt
-                           ,vlsppant = vr_vlprerpp - vr_vlaplica
-              WHERE craprpp.rowid = rw_craprpp.rowid;                    
-          ELSE
-              UPDATE craprpp SET indebito = vr_indebito
-                                ,cdsitrpp = vr_cdsitrpp
-                                ,dtdebito = add_months(dtdebito, 1)
-                                ,vlsppant = 0
-              WHERE craprpp.rowid = rw_craprpp.rowid;                    
-          END IF;
-        EXCEPTION
-          WHEN OTHERS THEN
-            --gerando a critica
-            vr_dscritic := 'Erro ao atualizar a tabela craprpp para a conta '||rw_craprpp.nrdconta||'. '||SQLERRM;
-            --abortando o sistema
-            RAISE vr_exc_saida;
-          END;                  
+          BEGIN
+            IF (rw_craprpp.flgteimosinha = 1)      AND  -- teimosinha ativa
+               (rw_crapdat.dtmvtolt < vr_dtultdeb) AND  -- até data ultima data possivel de debito, antes de virar o mes             
+               (vr_vlaplica < vr_vlprerpp)         THEN -- debitou parcial
+                
+                UPDATE craprpp SET dtaltrpp = rw_crapdat.dtmvtolt
+                                  ,vlsppant = vr_vlprerpp - vr_vlaplica
+                WHERE craprpp.rowid = rw_craprpp.rowid;                    
+                
+            ELSE              
+                /* Sempre que mudar a data do debito para o mes seguinte 
+                   o indebito devera ser zerado */  
+                vr_indebito := 0;
+            
+                UPDATE craprpp SET indebito = vr_indebito
+                                  ,cdsitrpp = vr_cdsitrpp
+                                  ,dtdebito = vr_dtdebito
+                                  ,vlsppant = 0
+                WHERE craprpp.rowid = rw_craprpp.rowid;                    
+            END IF;
+          EXCEPTION
+            WHEN OTHERS THEN
+              --gerando a critica
+              vr_dscritic := 'Erro ao atualizar a tabela craprpp para a conta '||rw_craprpp.nrdconta||'. '||SQLERRM;
+              --abortando o sistema
+              RAISE vr_exc_saida;
+            END;                  
         END IF;
         
         --se o programa controla restart, atualiza o numero da conta processada
