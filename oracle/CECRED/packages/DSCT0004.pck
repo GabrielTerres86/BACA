@@ -108,6 +108,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0004 IS
                   10/10/2018 - Ajuste para mensagem de estouro do parametro da TAB052 na pc_criar_bordero_desc_tit (Andrew Albuquerque - GFT)
                   11/10/2018 - Ajuste para retornar a situação dos títulos na pc_obtem_titulos_resumo_ib e na
                                pc_obtem_detalhes_bordero_ib (Andrew Albuquerque - GFT)
+                  18/04/2019 - Ajuste no cursor cr_craptdb_des para não buscar somente os borderôs do contrato de limite ativo e não 
+                               permitir que retorno saldo com valor negativo (Paulo Penteado GFT) 
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Variáveis para armazenar as informações em XML
@@ -151,12 +153,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0004 IS
                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE ) IS
   SELECT SUM(craptdb.vlsldtit) AS vlutiliz
   FROM   craptdb
-         INNER JOIN crapcob ON crapcob.cdcooper = craptdb.cdcooper AND
-                               crapcob.cdbandoc = craptdb.cdbandoc AND
-                               crapcob.nrdctabb = craptdb.nrdctabb AND
-                               crapcob.nrdconta = craptdb.nrdconta AND
-                               crapcob.nrcnvcob = craptdb.nrcnvcob AND
-                               crapcob.nrdocmto = craptdb.nrdocmto
   WHERE  craptdb.cdcooper = pr_cdcooper
   AND    craptdb.nrdconta = pr_nrdconta
   AND   (craptdb.insittit = 4 OR (craptdb.insittit = 2 AND craptdb.dtdpagto = pr_dtmvtolt));
@@ -441,9 +437,8 @@ PROCEDURE pc_calcula_limite_disponivel(pr_cdcooper  IN crapcop.cdcooper%TYPE -->
     Objetivo  : Rotina para calcular o valor disponível para desconto de borderô de títulos
 
     Alteração : 16/05/2018 - Criação (Paulo Penteado (GFT))
-
-	            16/04/2019 - Correção busca valor utilizado (Daniel - Ailos) 
-	            
+                18/04/2019 - Ajuste no cursor cr_craptdb_des para não buscar somente os borderôs do contrato de limite ativo e não 
+                             permitir que retorno saldo com valor negativo (Paulo Penteado GFT) 
 
   ---------------------------------------------------------------------------------------------------------------------*/
 BEGIN
@@ -458,10 +453,10 @@ BEGIN
   FETCH cr_craptdb_des INTO rw_craptdb_des;
   CLOSE cr_craptdb_des;
   
-  pr_vllimdis := rw_craplim.vllimite - nvl(rw_craptdb_des.vlutiliz,0);
+  pr_vllimdis := NVL(rw_craplim.vllimite,0) - NVL(rw_craptdb_des.vlutiliz,0);
 
   IF pr_vllimdis < 0 THEN
-    pr_vllimdis = 0;
+    pr_vllimdis := 0;
   END IF; 
 
 END pc_calcula_limite_disponivel;
