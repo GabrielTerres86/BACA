@@ -4765,9 +4765,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                   pr_ind_tipo_log  => 1);
       
       -- Se chegar erro não tratado de outras chamadas desta procedure joga para 1124
-      IF pr_cdcritic = 9999 THEN
-        pr_cdcritic := 1224; -- Nao foi possivel efetuar o procedimento. Tente novamente ou contacte seu PA
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      IF pr_cdcritic in (1034, 9999) THEN
+        pr_cdcritic := 0; -- Nao foi possivel efetuar o procedimento. Tente novamente ou contacte seu PA
+        pr_dscritic := gene0001.fn_busca_critica(1224);
       END IF;            
         
       ROLLBACK;
