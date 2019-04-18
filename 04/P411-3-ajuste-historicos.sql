@@ -41,4 +41,7 @@ values (null, 1, 476, 2, 3/*IR*/  , '0314');
 insert into TBCAPT_HISTOR_OPERAC_B3 (idhistorico_operac, tpaplicacao, cdhistorico, idtipo_arquivo, idtipo_lancto, cdoperacao_b3)
 values (null, 1, 475, 2, 4/*Rend*/, '0314');
 
+INSERT INTO crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM, PROGRESS_RECID) values
+('CRED',0,'CD_TOLERANCIA_DIF_VALOR','Percentual de Tolerância para Conciliação',',1',NULL);
+
 commit;
