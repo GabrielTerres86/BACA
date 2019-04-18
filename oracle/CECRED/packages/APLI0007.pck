@@ -40,6 +40,11 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
                         ,pr_tpaplica IN NUMBER
                         ,pr_nrdconta IN NUMBER
                         ,pr_nraplica IN NUMBER) RETURN VARCHAR2;
+
+  -- Retornar true caso a aplicação esteja em carencia
+  FUNCTION fn_tem_carencia(pr_dtmvtapl crapdat.dtmvtolt%type
+                          ,pr_qtdiacar craprac.qtdiacar%TYPE
+                          ,pr_dtmvtres crapdat.dtmvtolt%TYPE) RETURN VARCHAR2;      
   
   -- Função para mostrar a descrição conforme o tipo do Arquivo enviado 
   FUNCTION fn_tparquivo_custodia(pr_idtipo_arquivo IN NUMBER        -- Tipo do Arquivo (1-Registro,2-Resgate,3-Exclusão,9-Conciliação)
