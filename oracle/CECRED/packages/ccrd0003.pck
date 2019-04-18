@@ -1794,26 +1794,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                             and tbgen_batch_controle.insituacao  = 1
                                             and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)));
 
-      -- Busca listagem das agencias da cooperativa
-      CURSOR cr_crapage(pr_cdcoppar crapcop.cdcooper%TYPE              DEFAULT 0
-                       ,pr_cdagepar crapage.cdagenci%TYPE              DEFAULT 0 
-                       ,pr_cdprogra tbgen_batch_controle.cdprogra%TYPE DEFAULT 0 
-                       ,pr_qterro   number                             DEFAULT 0
-                       ,pr_dtmvtolt tbgen_batch_controle.dtmvtolt%TYPE DEFAULT NULL) IS
-       SELECT age.cdagenci
-         FROM crapage age
-        WHERE age.cdcooper = pr_cdcoppar
-          AND age.cdagenci = decode(pr_cdagepar,0,age.cdagenci,pr_cdagepar)
-          AND (pr_qterro = 0 or
-              (pr_qterro > 0 and exists (select 1
-                                           from tbgen_batch_controle
-                                          where tbgen_batch_controle.cdcooper    = pr_cdcooper -- Controle é gravado com a Coop Central
-                                            and tbgen_batch_controle.cdprogra    = pr_cdprogra
-                                            and tbgen_batch_controle.tpagrupador = 3
-                                            AND tbgen_batch_controle.cdagrupador = (lpad(age.cdcooper,3,'0')||lpad(age.cdagenci,5,'0'))
-                                            and tbgen_batch_controle.insituacao  = 1
-                                            and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)));
-
       -- Cursor genérico de calendário da Cooperativa em operação
       rw_crabdat  btch0001.cr_crapdat%ROWTYPE;
       rw_crapdatc btch0001.cr_crapdat%ROWTYPE;
@@ -2099,7 +2079,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         else
           vr_tpexecucao := 1;
         end if;   
-
+        
         -- Grava controle de batch por agência
         gene0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper                                      -- Codigo da Cooperativa
                                         ,pr_cdprogra    => vr_cdprogra                                      -- Codigo do Programa
@@ -2275,11 +2255,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         -- escrever TRAILER do arquivo
         vr_tab_texto(vr_contador+1).destexto := vr_dstraile;
-
+                             
         -- Incializar CLOB do arquivo txt
         dbms_lob.createtemporary(vr_clob_arq, TRUE, dbms_lob.CALL);
         dbms_lob.open(vr_clob_arq, dbms_lob.lob_readwrite);
-                             
+
         -- VArrer pltable
         FOR idx IN vr_tab_texto.first..vr_tab_texto.last LOOP
           -- Escreve no CLOB
@@ -2678,8 +2658,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_idlog_ini_par tbgen_prglog.idprglog%type;
 
       ---------------------------- ESTRUTURAS DE REGISTRO ----------------------
-     
-        
+
+
       -- Definicao de temptable para registros da craplcm
       TYPE typ_tab_craplcm IS
         TABLE OF craplcm%ROWTYPE
@@ -2944,7 +2924,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                  pr_flgdebcc in craphcb.flgdebcc%TYPE,
                                  pr_vldtrans NUMBER,
                                  pr_dscritic out varchar2) is 
-
+        
       begin
         insert into tbgen_batch_relatorio_wrk(cdcooper
                                              ,cdprograma
@@ -3122,7 +3102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           pr_dscritic := 'Erro na rotina pc_insert_crapdcb --> '||SQLERRM;
       END pc_insert_crapdcb;
 
-
+        
 
       BEGIN
         -- Incluir nome do modulo logado
@@ -3147,7 +3127,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             raise vr_exc_saida;
           end if;    
         end if;
-
+                 
         -- Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
         pc_log_programa(pr_dstiplog   => 'I'  
                        ,pr_cdprograma => vr_cdprogra||'_'||pr_nrseqexe          
@@ -3157,7 +3137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         -- Buscar data base para transacoes com contas migradas no periodo da migracao
         vr_dtcxtmig := to_date(pr_dtcxtmig,'dd/mm/rrrr');
-        
+
         -- Ler todas as linhas da tabela direcionadas para essa execução
         FOR rw_arq in cr_work_arq(pr_cdcooper
                                  ,pr_nrseqexe
@@ -4139,7 +4119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
               WHILE vr_idxlcm IS NOT NULL LOOP
 
-                BEGIN
+                    BEGIN
 
                   INSERT INTO craplcm
                       (cdcooper,
@@ -4389,7 +4369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                           ,vr_tab_crapdcb(vr_idxdcb).det.dtmvtolt
                          );
                       EXCEPTION
-                    WHEN OTHERS THEN
+                        WHEN OTHERS THEN
                           vr_dscritic := 'Erro ao inserir crapdcb dup_val: '||SQLERRM 
                           || 'nsu: '|| vr_tab_crapdcb(vr_idxdcb).det.nrnsucap
                           || 'aut: '|| vr_tab_crapdcb(vr_idxdcb).det.cdautori
@@ -6141,7 +6121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                vr_cdcritic := 1040;
                gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat||': '||vr_dscritic);
             END IF;
-           END IF;
+          END IF;
         END LOOP;
         /* Fim Prj421 */
 
@@ -6420,9 +6400,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         -- Desfaz as alterações da base
         ROLLBACK;
 
-        -- Desfaz as alterações da base
-        ROLLBACK;
-
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
 
@@ -6441,7 +6418,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     END;
 
   END pc_crps670_web;  
-  
   
   
   /* Rotina com a os procedimentos para o CRPS671 */
@@ -6989,23 +6965,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       CURSOR cr_nrctaitg(pr_cdcooper IN crawcrd.cdcooper%TYPE,
                          pr_nrdconta IN crawcrd.nrdconta%TYPE,
                          pr_cdadmcrd IN crawcrd.cdadmcrd%TYPE) IS
-        SELECT c.nrcctitg
+      SELECT c.nrcctitg
         FROM crapttl t, 
              crawcrd c, 
              crawcrd w
-         WHERE w.nrcpftit = t.nrcpfcgc
-           AND t.nrcpfcgc = c.nrcpftit
-           AND t.idseqttl = 1 -- Titular
-           AND t.nrdconta = c.nrdconta
-           AND t.cdcooper = c.cdcooper
-           AND c.cdadmcrd BETWEEN 10 AND 80
-           AND c.cdadmcrd = w.cdadmcrd
-           AND c.nrdconta = w.nrdconta
-           AND c.cdcooper = w.cdcooper
+       WHERE w.nrcpftit = t.nrcpfcgc
+         AND t.nrcpfcgc = c.nrcpftit
+         AND t.idseqttl = 1 -- Titular
+         AND t.nrdconta = c.nrdconta
+         AND t.cdcooper = c.cdcooper
+         AND c.cdadmcrd BETWEEN 10 AND 80
+         AND c.cdadmcrd = w.cdadmcrd
+         AND c.nrdconta = w.nrdconta
+         AND c.cdcooper = w.cdcooper
          and c.insitcrd = w.insitcrd
          and c.flgprcrd = w.flgprcrd
-           AND w.cdadmcrd = pr_cdadmcrd
-           AND w.nrdconta = pr_nrdconta
+         AND w.cdadmcrd = pr_cdadmcrd
+         AND w.nrdconta = pr_nrdconta
          AND w.cdcooper = pr_cdcooper
          and w.insitcrd = 4;
       rw_nrctaitg    cr_nrctaitg%ROWTYPE;
@@ -7175,7 +7151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 								
             END IF;
 						
-            END IF;
+						END IF;
 
 
        -- VERIFICAR QUANTOS CARACTERES SERÃO DESTINADOS AO ENDEREÇO SD204641
@@ -7888,7 +7864,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. 1.TTL%'   OR
                  upper(rw_crapalt.dsaltera) LIKE '%COMPL.END. 1.TTL%' OR
                  upper(rw_crapalt.dsaltera) LIKE '%APTO. 1.TTL%'      OR
-                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO 1.TTL%'     OR
+                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO 1.TTL%'     OR								 
                  upper(rw_crapalt.dsaltera) LIKE '%END.RES.,%'        OR
                  upper(rw_crapalt.dsaltera) LIKE '%BAIRRO,%'          OR 
                  upper(rw_crapalt.dsaltera) LIKE '%END.RES. COM.,%'   OR
@@ -7904,7 +7880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  upper(rw_crapalt.dsaltera) LIKE '%UF 1.TTL%'         OR
 								 
                  upper(rw_crapalt.dsaltera) LIKE '%CIDADE,%'          OR
-                 upper(rw_crapalt.dsaltera) LIKE '%UF,%'              OR
+                 upper(rw_crapalt.dsaltera) LIKE '%UF,%'              OR								 
                  upper(rw_crapalt.dsaltera) LIKE '%CEP,%'             OR
 								 
                  upper(rw_crapalt.dsaltera) LIKE '%CEP COM.,%'        OR
@@ -7912,7 +7888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         THEN
                 vr_flaltcep := TRUE;
               END IF;
-
+							
 							
 							
 							
@@ -8510,9 +8486,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 END IF;
                 
                 RAISE vr_exc_saida;
-                END IF;
-                
-                RAISE vr_exc_saida;
             END;
 
           END LOOP;
@@ -8878,12 +8851,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_origemws   boolean;         -- Solicitacao por WS
       vr_final_cartao_aimaro VARCHAR(4);
       vr_final_cartao_cabal  VARCHAR(4);
-    
-      vr_tplimcrd   NUMBER(1) :=  0; -- 0=concessao, 1=alteracao
-      vr_origemws   boolean;         -- Solicitacao por WS
-      vr_final_cartao_aimaro VARCHAR(4);
-      vr_final_cartao_cabal  VARCHAR(4);
-    
+
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
       vr_exc_fimprg    EXCEPTION;
@@ -8952,8 +8920,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            AND crd.nrcrcard = 0
            AND crd.insitcrd= 2;    -- Situação 2-solicitado
            
-      rw_crawcrd_cpf cr_crawcrd_cpf%ROWTYPE;
-     
       rw_crawcrd_cpf cr_crawcrd_cpf%ROWTYPE;
      
       -- Busca as cooperativas
@@ -10317,7 +10283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              AND maj.nrcontacartao     = pr_nrctacrd
              AND maj.cdmajorado        = 4; -- Pendente
         END IF;
-        
+
       EXCEPTION
         WHEN OTHERS THEN
           pr_des_erro := 'Erro ao atualizar majoracao: '||SQLERRM;
@@ -10372,7 +10338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
-                  
+ 
       -- Verificar se cooperativa esta no processo ainda
       if rw_crapdat.inproces > 1 AND 
          trunc(sysdate) > rw_crapdat.dtmvtolt THEN

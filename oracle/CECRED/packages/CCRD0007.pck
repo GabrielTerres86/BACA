@@ -164,7 +164,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
       Objetivo  : Para solicitações e alterações de limites de credito de cartões utilizar a comunicação com o Bancoob.
 
       Alteracoes: 23/07/2018 - Alteração na funcao fn_usa_bancoob_ws. Projeto 345(Lombardi).
-
+       
                   05/04/2019 - Alterar a situação do cartão pra aprovado quando o bancoob
                                retornar critica na pc_solicita_retorno_bancoob 
                                (Lucas Ranghetti INC0011849)
@@ -314,10 +314,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                           pr_cdcooper => pr_cdcooper,
                                           pr_cdacesso => 'BANCOOB_WS_CAD_CONTING');
       IF (trim(vr_param) = '0')THEN
-      RETURN FALSE;
+        RETURN FALSE;
+      END IF;
     END IF;
-    END IF;
-
+    
     IF pr_tpoperac = 'R' OR pr_tpoperac = 'L' THEN
       /* Verifica se o bancoob está em contingencia */
       vr_param := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
@@ -627,7 +627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
       END IF;
     ELSE
       vr_request.content := pr_conteudo;
-    END IF;
+    END IF;	   
 
     -- Disparo do REQUEST
     json0001.pc_executa_ws_json(pr_request           => vr_request
@@ -1554,7 +1554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
 							
 							
           END IF;
-          END IF;
+					END IF;
 
           -- verificar quantos caracteres serão destinados ao endereço sd204641
           IF vr_dsender_apbl IS NULL THEN
@@ -2635,7 +2635,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
          AND dsprotocolo = pr_dsprotocolo
          AND TO_CHAR(dsresposta_requisicao) NOT LIKE '%não foi processado%';
     rw_retbancoob cr_retbancoob%ROWTYPE;
-
+    
     cursor cr_crawcrd (pr_cdcooper crawcrd.cdcooper%type
                       ,pr_nrdconta crawcrd.nrdconta%type
                       ,pr_nrctrcrd crawcrd.nrctrcrd%type) is
@@ -2751,7 +2751,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     dbms_lob.open(vr_obj_cartao_clob, dbms_lob.lob_readwrite);
     json.to_clob(vr_obj_cartao,vr_obj_cartao_clob);
 
-    pc_enviar_bancoob ( pr_cdcooper    => vr_cdcooper,  --> Codigo da cooperativa
+     pc_enviar_bancoob ( pr_cdcooper    => vr_cdcooper,  --> Codigo da cooperativa
                         pr_cdagenci    => vr_cdagenci,  --> Codigo da agencia
                         pr_cdoperad    => vr_cdoperad,  --> codigo do operador
                         pr_cdorigem    => vr_idorigem,  --> Origem da operacao
@@ -2922,7 +2922,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
 
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para solicitar retorno do Bancoob
-    Alteração :
 
     Alteração : 05/04/2019 - Alterar a situação do cartão pra aprovado quando o bancoob
                              retornar critica (Lucas Ranghetti INC0011849)
@@ -3146,7 +3145,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
          Resultado esperado "resultado": "1 - Processado com sucesso!" */
       IF TRIM(SUBSTR(vr_resultado,1,2)) = '1' AND
          pr_intipret = 'I' /* Inclusao de cartao */ THEN
-         
+      
         BEGIN
           /* Procedimento de busca da conta cartao e numero do cartao
              ficara comentado ate que a Cabal libere o acesso ao
@@ -3166,7 +3165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
            --vr_idusuario2 := json(vr_obj_lst.get(2).to_char()).get('idComponente').to_char();
            vr_idusuario  := json(vr_obj_lst.get(2).to_char()).get('idComponente').to_char();
          ELSE
-          vr_idusuario := json(vr_obj_lst.get(1).to_char()).get('idComponente').to_char();
+           vr_idusuario := json(vr_obj_lst.get(1).to_char()).get('idComponente').to_char();
          END IF;
           
           --======== Agora vamos buscar os dados do cartao gerado bancoob =========
@@ -3219,18 +3218,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
           END IF;
           -- Troca os caracteres * por 0 (zero), referente a mascara do cartao.
           vr_nrcartao := trim(replace(replace(vr_obj_retorno.get('cartao').to_char(),'*','0'),'"',''));
-          */
-          
-          UPDATE crawcrd
-             SET insitcrd = 2 /* Solicitado */
-             /* , nrcrcard = vr_nrcartao
-               , nrcctitg = vr_conta_cartao */
-               , dtsolici = trunc(SYSDATE)
-           WHERE cdcooper = pr_cdcooper
-             AND nrdconta = pr_nrdconta
-             AND nrctrcrd = pr_nrctrcrd;
-             
-          /* Vamos atualizar a conta cartao 
+
+          -- Altera a situação do Cartão para 2 (Solicitado)
+          pc_altera_sit_cartao_bancoob(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_nrctrcrd => pr_nrctrcrd
+                                      ,pr_nrseqcrd => NULL
+                                      ,pr_insitcrd => 2
+                                      ,pr_nrcctitg => vr_conta_cartao
+                                      ,pr_nrcrcard => vr_nrcartao
+                                      ,pr_dscritic => vr_dscritic);
+                                      
+          IF vr_dscritic IS NOT NULL THEN
+            raise vr_exc_erro;
+          END IF;
+
+          /* Vamos atualizar a conta cartao */
           ccrd0003.pc_insere_conta_cartao(pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta
                                          ,pr_nrconta_cartao => vr_conta_cartao
