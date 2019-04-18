@@ -648,7 +648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
   Sigla   : APLI
 
   Autor   : CIS Corporate
-  Data    : Julho/2018                       Ultima atualizacao: 18/03/2019
+  Data    : Julho/2018                       Ultima atualizacao: 15/04/2019
   
   Dados referentes ao programa:
   
@@ -657,8 +657,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
               
   Alteracoes: 05/10/2018 - Inclusão rotinas para manutenção da configuração das APs - Proj. 411.2 - Fase 2 - (CIS Corporate)    
   
-  18/03/2019 - PRB0040683 na rotina pc_calc_saldo_apl_prog, feitos os tratamentos de erros para que sejam identificados 
-               os possíveis pontos de correção (Carlos)
+              18/03/2019 - PRB0040683 na rotina pc_calc_saldo_apl_prog, feitos os tratamentos de erros para que sejam identificados 
+                           os possíveis pontos de correção (Carlos)	  
+
+              15/04/2019 - P450 - Ajuste na "pc_efet_resgate_apl_prog" para inclusão da centralizadora de lançamentos da CRAPLCM
+                           (Reginaldo/AMcom)
   ----------------------------------------------------------------------------------- */
     
   FUNCTION fn_val_cooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE) --> Código da Cooperativa
@@ -7814,7 +7817,7 @@ END pc_calc_app_programada;
     --  Sistema  : Captação (Aplicação Programada)
     --  Sigla    : CRED
     --  Autor    : CIS Corporate
-    --  Data     : Setembro/2018.                   Ultima atualizacao: 
+    --  Data     : Setembro/2018.                   Ultima atualizacao: 15/04/2019
     --
     -- Dados referentes ao programa:
     --
@@ -7822,7 +7825,8 @@ END pc_calc_app_programada;
     -- Objetivo  : Efetiva o resgate da aplicação programada + resgate no momento
     --             b1wgen0006.efetuar-resgate 
     --
-    -- Alteracoes:
+    -- Alteracoes: 15/04/2019 - P450 - Inclusão da centralizadora de lançamentos da CRAPLCM (LANC0001) 
+    --                          (Reginaldo/AMcom)
     -- 
     ---------------------------------------------------------------------------------------------------------------
    BEGIN
@@ -7861,6 +7865,11 @@ END pc_calc_app_programada;
       vr_rpp_txaplmes   NUMBER := 0;
       vr_dtmvtopr       DATE := pr_dtmvtolt; -- data da operação deve ser igual a do movimento para que o crédito seja efetivado no mesmo dia
       vr_fase           PLS_INTEGER:=0;
+      
+      -- Variáveis usadas na chamada da LANC0001
+      vr_incrineg       INTEGER;
+      vr_tab_retorno    LANC0001.typ_reg_retorno;      
+      
       -- Cursores
       -- Lote
       CURSOR cr_craplot IS
@@ -8519,43 +8528,34 @@ END pc_calc_app_programada;
                   RAISE vr_exc_saida;  
               END;
                   
-              -- inserir lançamento
-              BEGIN
-                INSERT INTO craplcm
-                            (craplcm.dtmvtolt
-                            ,craplcm.cdagenci
-                            ,craplcm.cdbccxlt
-                            ,craplcm.nrdolote
-                            ,craplcm.nrdconta
-                            ,craplcm.nrdctabb
-                            ,craplcm.nrdctitg                 
-                            ,craplcm.nrdocmto
-                            ,craplcm.cdhistor
-                            ,craplcm.vllanmto
-                            ,craplcm.nrseqdig
-                            ,craplcm.cdcooper)
-                     VALUES( rw_craplot.dtmvtolt -- craplcm.dtmvtolt
-                            ,rw_craplot.cdagenci -- craplcm.cdagenci
-                            ,rw_craplot.cdbccxlt -- craplcm.cdbccxlt
-                            ,rw_craplot.nrdolote -- craplcm.nrdolote
-                            ,rw_craprpp.nrdconta -- craplcm.nrdconta
-                            ,rw_craprpp.nrdconta -- craplcm.nrdctabb
-                            ,gene0002.fn_mask(rw_craprpp.nrdconta,'99999999') -- craplcm.nrdctitg
-                            ,rw_craplot.nrseqdig -- craplcm.nrdocmto
-                            ,(CASE rw_craprpp.flgctain 
+              /* P450 - Inclusão da centralizadora de lançamentos da CRAPLCM (Reginaldo/AMcom) */
+              LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
+                                               , pr_cdagenci => rw_craplot.cdagenci
+                                               , pr_cdbccxlt => rw_craplot.cdbccxlt
+                                               , pr_nrdolote => rw_craplot.nrdolote
+                                               , pr_nrdconta => rw_craprpp.nrdconta
+                                               , pr_nrdocmto => rw_craplot.nrseqdig
+                                               , pr_cdhistor => (CASE rw_craprpp.flgctain 
                                WHEN 1 /* true */ THEN 501 -- TRANSF. RESGATE POUP.PROGRAMADA DA C/I PARA C/C
                                ELSE 159 -- CR.POUP.PROGR
-                              END)          -- craplcm.cdhistor
-                            ,vr_vlresgat         -- craplcm.vllanmto
-                            ,rw_craplot.nrseqdig -- craplcm.nrseqdig
-                            ,pr_cdcooper);       -- craplcm.cdcooper
-          
-                  
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Não foi possivel atualizar craplcm (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
+                                                                 END)
+                                               , pr_nrseqdig => rw_craplot.nrseqdig
+                                               , pr_vllanmto => vr_vlresgat
+                                               , pr_nrdctabb => rw_craprpp.nrdconta
+                                               , pr_cdcooper => pr_cdcooper
+                                               , pr_nrdctitg => gene0002.fn_mask(rw_craprpp.nrdconta,'99999999')
+                                               , pr_tab_retorno => vr_tab_retorno
+                                               , pr_incrineg => vr_incrineg
+                                               , pr_cdcritic => vr_cdcritic
+                                               , pr_dscritic => vr_dscritic);
+                                               
+              IF trim(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+                vr_dscritic := 'Não foi possivel inserir na craplcm (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
                   RAISE vr_exc_saida;  
-              END;    
+              END IF;
+              
+              vr_cdcritic := NULL;
+              vr_dscritic := NULL;
             END IF; --> Fim IF rw_craplrg.flgcreci = 0 /* false */ /*Resgate Conta Corrente*/
                                               
             /* Gerar  lançamento na conta investimento*/

@@ -49,6 +49,8 @@ BEGIN
 
 			  22/11/2018 - Selecionar emprestimo consignado apenas no processo batch noturno (Rodrigo)
 
+              15/04/2019 - P450 - Inclusão de tratamento para ignorar contas corrente em prejuízo (Reginaldo/AMcom)
+
     ............................................................................. */
 
   DECLARE
@@ -1228,6 +1230,10 @@ BEGIN
       --
       -- Busca do Empréstimo  
       FOR rw_crapepr IN cr_crapepr LOOP
+        /* P450 - Tratamento para ignorar contas em prejuízo (Reginaldo/AMcom) */
+        IF PREJ0003.fn_verifica_preju_conta(rw_crapepr.cdcooper, rw_crapepr.nrdconta) THEN
+          CONTINUE;
+        END IF;
 
         -- Debitador Unico: validar se a parcela continua em aberto (pode ter sido paga via boleto apos o inicio da execucao deste programa).
         vr_inliquid := 0;
