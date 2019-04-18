@@ -39,7 +39,7 @@ VALUES
   'HABILITAR_EMPR_CONSIG', -- nmdeacao
   'TELA_CONSIG', -- nmpackag
   'pc_habilitar_empr_consig_web', -- nmproced
-  'pr_cdempres,pr_indconsignado,pr_dtativconsignado,pr_tpmodconvenio,pr_nrdialimiterepasse,pr_indautrepassecc,pr_indinterromper,pr_dsdemailconsig,pr_indalertaemailemp,pr_indalertaemailconsig,pr_dtinterromper,pr_dtfchfol', -- lstparam
+  '', -- lstparam 
    (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONSIG')); -- nrseqrdr
 
 -- ALTERAR_EMPR_CONSIG
@@ -51,7 +51,7 @@ VALUES
   'ALTERAR_EMPR_CONSIG', -- nmdeacao
   'TELA_CONSIG', -- nmpackag
   'pc_alterar_empr_consig_web', --nmproced
-  'pr_cdempres,pr_indconsignado,pr_dtativconsignado,pr_tpmodconvenio,pr_nrdialimiterepasse,pr_indautrepassecc,pr_indinterromper,pr_dsdemailconsig,pr_indalertaemailemp,pr_indalertaemailconsig,pr_dtinterromper,pr_dtfchfol', -- lstparam
+  '', -- lstparam
   (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONSIG')); -- nrseqrdr
 
 COMMIT;
