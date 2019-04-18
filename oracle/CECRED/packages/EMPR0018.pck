@@ -1010,7 +1010,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                                         , pr_cdcritic => vr_cdcritic
                                                         , pr_dscritic => vr_des_erro);
                                                         
-        IF vr_cdcritic <> 0 or vr_des_erro <> '' THEN
+        IF vr_cdcritic <> 0 or trim(vr_des_erro) is not null THEN
           RAISE vr_exc_erro;  
         END IF;                                                                                                                        
       
@@ -1396,7 +1396,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
       
-      IF vr_dscritic <> null THEN
+      IF trim(vr_dscritic) is not null THEN
+      
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => 1
                              ,pr_nrdcaixa => 1
@@ -1458,7 +1459,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                                 ,pr_dscritic => vr_dscritic
                                                 ,pr_tab_erro => pr_tab_erro); 
                                                 
-           IF vr_dscritic <> null THEN
+           IF trim(vr_dscritic) is not null THEN
               gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                                    ,pr_cdagenci => 1
                                    ,pr_nrdcaixa => 1
@@ -1830,7 +1831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                           , pr_cdcritic => vr_cdcritic
                                           , pr_dscritic => vr_dscritic);
       
-        IF vr_cdcritic <> 0 or vr_dscritic <> '' THEN
+        IF vr_cdcritic <> 0 or trim(vr_des_erro) is not null THEN
           RAISE vr_exc_erro;
         END IF;
       END IF;   
@@ -1908,7 +1909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
         RAISE vr_exc_erro;  
       END IF;
       
-      IF pr_dtlibera < pr_dtmvtolt THEN
+      IF pr_dtlibera < trunc(pr_dtmvtolt) THEN
         vr_dscritic := 'Data de movimento nao pode ser maior que a data de liberacao.';
         vr_cdcritic := 0;
         RAISE vr_exc_erro;  
