@@ -191,6 +191,9 @@ var __flag_dataPagamento = false; //Validar se a chamada de validaDados do campo
 FIM VARIAVEIS DE CONTROLE
 */
 
+//bruno - bug 6666
+var __garopcArr = null;
+
 var qtmesblq = 0;
 var bloquear_pre_aprovado = false;
  
