@@ -6190,60 +6190,36 @@ END pc_trata_arquivo_ldl;
                 FETCH cr_lcm_nrseqdig INTO vr_nrlcmdig;
                 CLOSE cr_lcm_nrseqdig;
                  
+              -- Atualizar o NRSEQDIG da CRAPLCM
+              vr_nrlcmdig := nvl(vr_nrlcmdig,0) + 1;
+          
               -- Gerar lançamento em conta
-              BEGIN
-                INSERT INTO craplcm
-                   (cdcooper
-                   ,dtmvtolt
-                   ,cdagenci
-                   ,cdbccxlt
-                   ,nrdolote
-                   ,nrdconta
-                   ,nrdctabb
-                   ,nrdocmto
-                   ,cdhistor
-                   ,nrseqdig
-                   ,cdpesqbb
-                   ,vllanmto
-                   ,cdoperad
-                   ,hrtransa)
-                VALUES
-                   (rw_crapcop_mensag.cdcooper
-                   ,vr_aux_dtmvtolt            -- rw_craplot.dtmvtolt
-                   ,rw_craplot_rvt.cdagenci
-                   ,rw_craplot_rvt.cdbccxlt
-                   ,rw_craplot_rvt.nrdolote
-                   ,vr_aux_nrctacre
-                   ,vr_aux_nrctacre
-                   ,vr_aux_nrdocmto
-                   ,vr_aux_cdhistor
-                     ,nvl(vr_nrlcmdig,0) + 1
-                   ,vr_aux_cdpesqbb
-                   ,vr_aux_VlrLanc
-                   ,'1'
-                     ,to_char(vr_glb_dataatual,'sssss'))
-                  RETURNING nrseqdig INTO vr_nrlcmdig;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao inserir na tabela craplcm --> ' || SQLERRM;
-                 -- Sair da rotina
-                 RAISE vr_exc_saida;
-              END;
+              LANC0001.pc_gerar_lancamento_conta
+                            ( pr_cdcooper => rw_crapcop_mensag.cdcooper
+                             ,pr_dtmvtolt => vr_aux_dtmvtolt
+                             ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                             ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                             ,pr_nrdolote => rw_craplot_rvt.nrdolote
+                             ,pr_nrdconta => vr_aux_nrctacre
+                             ,pr_nrdctabb => vr_aux_nrctacre
+                             ,pr_nrdocmto => vr_aux_nrdocmto
+                             ,pr_cdhistor => vr_aux_cdhistor
+                             ,pr_nrseqdig => vr_nrlcmdig
+                             ,pr_cdpesqbb => vr_aux_cdpesqbb
+                             ,pr_vllanmto => vr_aux_VlrLanc
+                             ,pr_cdoperad => '1'
+                             ,pr_hrtransa => to_char(vr_glb_dataatual,'sssss')
+                             --> OUT <--
+                             ,pr_tab_retorno => vr_tab_retorno
+                             ,pr_incrineg => vr_incrineg           -- Indicador de crítica de negócio
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic);
 
-              -- Atualizar capa do Lote
-              BEGIN
-                UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_aux_VlrLanc
-                                  ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + vr_aux_VlrLanc
-                                  ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
-                                  ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                                    ,craplot.nrseqdig = vr_nrlcmdig
-                WHERE craplot.ROWID = rw_craplot_rvt.ROWID;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao atualizar tabela craplot. ' || SQLERRM;
+              IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                vr_dscritic := 'Erro ao inserir na tabela craplcm --> ' || vr_dscritic;
                   -- Sair da rotina
                   RAISE vr_exc_saida;
-              END;
+              END IF;  
               
               -- Se possui registro de id de lançamento da folha de pagamento
               IF rw_craptvl.nrridlfp > 0 THEN
