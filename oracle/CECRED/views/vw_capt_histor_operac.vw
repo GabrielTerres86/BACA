@@ -67,4 +67,3 @@ SELECT cpc.idtippro + 2 /* Para que Pré fique 3 e Pós fique 4 */
   FROM crapind ind
       ,crapcpc cpc
  WHERE cpc.cddindex = ind.cddindex
-;
