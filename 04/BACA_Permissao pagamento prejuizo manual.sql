@@ -44,9 +44,9 @@ INSERT INTO crapace
        AND cop.cdcooper = ope.cdcooper
        AND acn.cdcooper = ope.cdcooper
        AND trim(upper(acn.cdoperad)) = trim(upper(ope.cdoperad))
-       AND acn.cddopcao = 'C' -- copia permissões do botão "consultar"
-       AND acn.nmrotina = 'DSC TITS - BORDERO'
-       AND acn.nmdatela = 'ATENDA'
+       AND upper(acn.cddopcao) = 'C' -- copia permissões do botão "consultar"
+       AND upper(acn.nmrotina) = 'DSC TITS - BORDERO'
+       AND upper(acn.nmdatela) = 'ATENDA'
        AND acn.idambace = 2;
 
 commit;
@@ -78,9 +78,9 @@ INSERT INTO crapace
        AND cop.cdcooper = ope.cdcooper
        AND acn.cdcooper = ope.cdcooper
        AND trim(upper(acn.cdoperad)) = trim(upper(ope.cdoperad))
-       AND acn.cddopcao = 'A' -- copia permissões de concessão de abono de empréstimos
-       AND acn.nmrotina = 'PRESTACOES'
-       AND acn.nmdatela = 'ATENDA'
+       AND upper(acn.cddopcao) = 'A' -- copia permissões de concessão de abono de empréstimos
+       AND upper(acn.nmrotina) = 'PRESTACOES'
+       AND upper(acn.nmdatela) = 'ATENDA'
        AND acn.idambace = 2;
 
 commit;
