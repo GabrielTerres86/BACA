@@ -6,7 +6,7 @@
  * DATA CRIAÇÃO : 26/08/2014
  * OBJETIVO     : Ajax de consulta para tela PCAPTA - nomenclatura dos produtos
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 23/10/2018 - Inclusão das principais características - Proj. 411.2 - CIS Corporate
  *
  * --------------
  */
@@ -59,7 +59,8 @@ if  ( $flgopcao == 'C' ) {
                     'qtmaxcar' => $registro->tags[5]->cdata,
                     'vlminapl' => $registro->tags[6]->cdata,
                     'vlmaxapl' => $registro->tags[7]->cdata,
-                    'aplicacao' => $registro->tags[8]->cdata
+                    'dscaract' => $registro->tags[8]->cdata,
+                    'aplicacao' => $registro->tags[9]->cdata
                 );
             }
             
@@ -88,6 +89,7 @@ if  ( $flgopcao == 'C' ) {
         $qtmaxcar = (isset($_POST["qtmaxcar"])) ? $_POST["qtmaxcar"] : 0;
         $vlminapl = (isset($_POST["vlminapl"])) ? str_replace(',','.',str_replace('.','', $_POST["vlminapl"])) : 0;
         $vlmaxapl = (isset($_POST["vlmaxapl"])) ? str_replace(',','.',str_replace('.','', $_POST["vlmaxapl"])) : 0;
+        $dscaract = (isset($_POST["dscaract"])) ? $_POST["dscaract"] : '';
         $idsitnom = (isset($_POST["idsitnom"])) ? $_POST["idsitnom"] : 0;
     }
 
@@ -99,11 +101,12 @@ if  ( $flgopcao == 'C' ) {
         $xml .= "   <cdprodut>" . $cdprodut . "</cdprodut>";
         $xml .= "   <cdnomenc>" . $cdnomenc . "</cdnomenc>";        
         $xml .= "   <dsnomenc>" . $dsnomenc . "</dsnomenc>";
+        $xml .= "   <idsitnom>" . $idsitnom . "</idsitnom>";
         $xml .= "   <qtmincar>" . $qtmincar . "</qtmincar>";
         $xml .= "   <qtmaxcar>" . $qtmaxcar . "</qtmaxcar>";
         $xml .= "   <vlminapl>" . $vlminapl . "</vlminapl>";
         $xml .= "   <vlmaxapl>" . $vlmaxapl . "</vlmaxapl>";
-        $xml .= "   <idsitnom>" . $idsitnom . "</idsitnom>";
+        $xml .= "   <dscaract>" . $dscaract . "</dscaract>";
         $xml .= " </Dados>";
         $xml .= "</Root>";
 
@@ -142,6 +145,7 @@ if  ( $flgopcao == 'C' ) {
         $qtmaxcar = (isset($_POST["qtmaxcar"])) ? $_POST["qtmaxcar"] : 0;
         $vlminapl = (isset($_POST["vlminapl"])) ? str_replace(',','.',str_replace('.','', $_POST["vlminapl"])) : 0;
         $vlmaxapl = (isset($_POST["vlmaxapl"])) ? str_replace(',','.',str_replace('.','', $_POST["vlmaxapl"])) : 0;
+        $dscaract = (isset($_POST["dscaract"])) ? $_POST["dscaract"] : '';
         $idsitnom = (isset($_POST["idsitnom"])) ? $_POST["idsitnom"] : 0;
     }
 
@@ -153,11 +157,12 @@ if  ( $flgopcao == 'C' ) {
         $xml .= "   <cdprodut>" . $cdprodut . "</cdprodut>";
         $xml .= "   <cdnomenc>" . $cdnomenc . "</cdnomenc>";
         $xml .= "   <dsnomenc>" . $dsnomenc . "</dsnomenc>";
+        $xml .= "   <idsitnom>" . $idsitnom . "</idsitnom>";
         $xml .= "   <qtmincar>" . $qtmincar . "</qtmincar>";
         $xml .= "   <qtmaxcar>" . $qtmaxcar . "</qtmaxcar>";
         $xml .= "   <vlminapl>" . $vlminapl . "</vlminapl>";
         $xml .= "   <vlmaxapl>" . $vlmaxapl . "</vlmaxapl>";
-        $xml .= "   <idsitnom>" . $idsitnom . "</idsitnom>";
+        $xml .= "   <dscaract>" . $dscaract . "</dscaract>";
         $xml .= " </Dados>";
         $xml .= "</Root>";   
         
@@ -194,6 +199,7 @@ if  ( $flgopcao == 'C' ) {
         $qtmaxcar = (isset($_POST["qtmaxcar"])) ? $_POST["qtmaxcar"] : 0;
         $vlminapl = (isset($_POST["vlminapl"])) ? str_replace(',','.',str_replace('.','', $_POST["vlminapl"])) : 0;
         $vlmaxapl = (isset($_POST["vlmaxapl"])) ? str_replace(',','.',str_replace('.','', $_POST["vlmaxapl"])) : 0;
+        $dscaract = (isset($_POST["dscaract"])) ? $_POST["dscaract"] : '';
         $idsitnom = (isset($_POST["idsitnom"])) ? $_POST["idsitnom"] : 0;
     }
 
@@ -204,11 +210,12 @@ if  ( $flgopcao == 'C' ) {
         $xml .= "   <cddopcao>I</cddopcao>";
         $xml .= "   <cdprodut>" . $cdprodut . "</cdprodut>";
         $xml .= "   <dsnomenc>" . $dsnomenc . "</dsnomenc>";
+        $xml .= "   <idsitnom>" . $idsitnom . "</idsitnom>";
         $xml .= "   <qtmincar>" . $qtmincar . "</qtmincar>";
         $xml .= "   <qtmaxcar>" . $qtmaxcar . "</qtmaxcar>";
         $xml .= "   <vlminapl>" . $vlminapl . "</vlminapl>";
         $xml .= "   <vlmaxapl>" . $vlmaxapl . "</vlmaxapl>";
-        $xml .= "   <idsitnom>" . $idsitnom . "</idsitnom>";
+        $xml .= "   <dscaract>" . $dscaract . "</dscaract>";
         $xml .= " </Dados>";
         $xml .= "</Root>";        
         

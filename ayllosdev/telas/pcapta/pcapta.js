@@ -6,6 +6,9 @@
  * --------------
  * ALTERAÇÕES   : 25/09/2018 - Inclusão do campo indplano (Apl. Programada) - Proj. 411.2  (CIS Corporate)
  * --------------
+ *                23/10/2018 - Inclusão dos campos para Teimosinha,Debito parcial, Valor Minimo
+ *                             Autoatendimento e Resg. Programado (Apl. Programada) - Proj. 411.2  (CIS Corporate)
+ * 
  */
 
 //Formulários
@@ -13,10 +16,11 @@ var frmCab = 'frmCab';
 
 var rNmprodut, rNommitra, rIdsitpro, rCddindex, rIdtippro, rIdtxfixa, rIdacumul, rIndplano, rCdprodut, rQtdiacar, rQtdiaprz, rVlrfaixa, rVlperren, rVltxfixa, rCdcooper, rCdnomenc, rDsnomenc, rQtmincar, rVlminapl;
 var rNmprodus, rIdsitnom, rCdhscacc, rCdhsvrcc, rCdhsraap, rCdhsnrap, rCdhsprap, rCdhsrvap, rCdhsrdap, rCdhsirap, rCdhsrgap, rCdhsvtap, rDtmvtolt, rCddopcao, rIndteimo, rIndparci, rVlminimo;
-
+var rAutoAten, rIndRgtPr, rDsCaract
 
 var cNmprodut, cNommitra, cIdsitpro, cCddindex, cIdtippro, cIdtxfixa, cIdacumul, cIndplano, cCdprodut, cQtdiacar, cQtdiaprz, cVlrfaixa, cVlperren, cVltxfixa, cCdcooper, cCdnomenc, cDsnomenc, cQtmincar, cQtmaxcar, cVlminapl, cVlmaxapl;
 var cNmprodus, cIdsitnom, cCdhscacc, cCdhsvrcc, cCdhsraap, cCdhsnrap, cCdhsprap, cCdhsrvap, cCdhsrdap, cCdhsirap, cCdhsrgap, cCdhsvtap, cDtmvtolt, cCddopcao, cIndteimo, cIndparci, cVlminimo;
+var cAutoAten, CIndRgtPr, cDsCaract
 
 var btnAltera, btnConsul, btnExclui, btnInclui, btnVoltar, btnAtivar, btnBloque, btnDesblo, btnDefini, btnFiltra, btnProseg, btnCancel;
 
@@ -42,7 +46,7 @@ function estadoInicial() {
     $('#divTela').fadeTo(0, 0.1);
     $('#frmCab').css({'display': 'block'});
 
-    // Botï¿½es
+    // Botões
     btnAltera = $('#btAltera', '#' + frmCab);
     btnConsul = $('#btConsul', '#' + frmCab);
     btnExclui = $('#btExclui', '#' + frmCab);
@@ -93,6 +97,9 @@ function estadoInicial() {
     rIndteimo = $('label[for="indteimo"]', '#' + frmCab);
     rIndparci = $('label[for="indparci"]', '#' + frmCab);
     rVlminimo = $('label[for="vlminimo"]', '#' + frmCab);
+    rAutoAten = $('label[for="indautoa"]', '#' + frmCab);
+    rIndRgtPr = $('label[for="indrgtpr"]', '#' + frmCab);
+    rDsCaract = $('label[for="dscaract"]', '#' + frmCab);
 
     //Campos
     cCddopcao = $('#cddopcao', '#' + frmCab);
@@ -133,6 +140,9 @@ function estadoInicial() {
     cIndteimo = $('#indteimo', '#' + frmCab);
     cIndparci = $('#indparci', '#' + frmCab);
     cVlminimo = $('#vlminimo', '#' + frmCab);
+    cAutoAten = $('#indautoa', '#' + frmCab);
+    cIndRgtPr = $('#indrgtpr', '#' + frmCab);
+    cDsCaract = $('#dscaract', '#' + frmCab);
 
     removeOpacidade('divTela');
     unblockBackground();
@@ -157,7 +167,10 @@ function estadoInicial() {
     cIndteimo.attr("disabled", true);
     cIndparci.attr("disabled", true);
     cVlminimo.attr("disabled", true);
-    
+    cAutoAten.attr("disabled", true);
+    cIndRgtPr.attr("disabled", true);
+    cDsCaract.attr("readonly", true);    
+
     // PCAPTA - Historicos
     cCdhscacc.attr("disabled", true);
     cCdhsvrcc.attr("disabled", true);
@@ -226,6 +239,9 @@ function formataCabecalho() {
     rIndteimo.css('width', '130px');
     rIndparci.css('width', '130px');
     rVlminimo.css('width', '130px');
+    rAutoAten.css('width', '130px');
+    rIndRgtPr.css('width', '130px');
+    rDsCaract.css('width', '130px');
     
 
     /* Tamanho Campos */
@@ -622,6 +638,7 @@ function escolheOpcao(cddopcao, stropcao) {
                         $('tr.linhaBotoes').show();   
                         $("#cdprodut", "#" + frmCab).focus();
                         $('#nomenclaturaDados legend').text('Dados Nomenclatura - Alterar');
+                        cDsCaract.removeAttr("readonly");
                         break;
 
                     case 'C':
@@ -666,6 +683,7 @@ function escolheOpcao(cddopcao, stropcao) {
                         cVlminapl.attr("disabled", false);
                         cVlmaxapl.attr("disabled", false);
                         cIdsitnom.attr("disabled", false);
+                        cDsCaract.removeAttr("readonly");
 
                         $('tr.linhaBotoes').show();
                         $("#cdprodut", "#" + frmCab).focus();   
@@ -835,6 +853,11 @@ function resetaForm(divPrincipal)
         $(this).attr("disabled", true);
     });
 
+    $("#" + divPrincipal + " table td textarea").each(function() {
+        $(this).val("");
+        $(this).attr("readonly", true);
+    });
+
     btnProseg1.show();
 
     $("table.tableAcoes #btVoltar").css('margin-left', '0px !important');
@@ -876,6 +899,9 @@ function resetaCampos() {
     $('#indteimo', '#frmCab').prop( "checked", false );
     $('#indparci', '#frmCab').prop( "checked", false );
     $('#vlminimo', '#frmCab').val('');
+    $('#indautoa', '#frmCab').prop( "checked", false );
+    $('#indrgtpr', '#frmCab').prop( "checked", false );
+
     $("div.divRetorno").hide();
     $("tr.linhaBotoes").show();
     return false;

@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 30/04/2014
  * OBJETIVO     : Formulario de definicao de da tela PCAPTA
  * --------------
- * ALTERAÇÕES   : 10/10/2018 Inclusão do botão alteração para configuração da apl. programa X Cooperativa
+ * ALTERAÇÕES   : 10/10/2018 Inclusão do botão alteração para configuração da apli. programa X Cooperativa
  *                Proj. 411.2 - CIS Corporate
  * --------------
  */
@@ -105,6 +105,20 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
                             <input type="text" name="vlminimo" id="vlminimo" value="" />
                         </td>
                     </tr>
+                    <tr>
+                        <td>
+                            <label for="indautoa">Autoatendimento:</label>
+                            <input type="radio" name="indautoa" id="indautoa" value="1" ><label>&nbsp;&nbsp;&nbsp;Sim</label>
+                            <input type="radio" name="indautoa" id="indautoa" value="2" style="margin-left: 20px;" ><label>&nbsp;&nbsp;&nbsp;N&atilde;o</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label for="indrgtpr">Resgate Programado:</label>
+                            <input type="radio" name="indrgtpr" id="indrgtpr" value="1" ><label>&nbsp;&nbsp;&nbsp;Sim</label>
+                            <input type="radio" name="indrgtpr" id="indrgtpr" value="2" style="margin-left: 20px;" ><label>&nbsp;&nbsp;&nbsp;N&atilde;o</label>
+                        </td>
+                    </tr>
                 </table>
         </fieldset>
         <table>
@@ -178,6 +192,11 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
             $('#indparci', '#frmCab').attr('disabled', true );
             $('#vlminimo', '#frmCab').val('');
             $('#vlminimo', '#frmCab').attr('disabled',true); 
+            $('#indautoa', '#frmCab').prop('checked', false );
+            $('#indautoa', '#frmCab').attr('disabled', true );
+            $('#indrgtpr', '#frmCab').prop('checked', false );
+            $('#indrgtpr', '#frmCab').attr('disabled', true );
+
             return false;
         });
 
@@ -285,6 +304,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
                 $('#indteimo', '#frmCab').prop( "checked", false );
                 $('#indparci', '#frmCab').prop( "checked", false );
                 $('#vlminimo', '#frmCab').val('');
+                $('#indautoa', '#frmCab').prop( "checked", false );
+                $('#indrgtpr', '#frmCab').prop( "checked", false );
                 var cooperativa = $('#definicaoConsulta select#cdcooper option:selected').val();
                 if (cooperativa == 0) {
                     showError('error', 'Selecione uma cooperativa', 'Alerta - Ayllos', "$('#cdcooper', '#frmCab').focus();ocultaMsgAguardo();");
@@ -365,6 +386,28 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
                                                              $(obj).attr('disabled', (item.existe_config != 1));   
                                                         }
                                                         break;
+                                                    case 'indautoa': //autoatendimento?
+                                                        if ($(obj).val() == item.autoatendimento) {
+                                                            $(obj).attr('checked', 'checked');
+                                                        }
+                                                        if (inclusao) {
+                                                             $(obj).attr('disabled', (item.existe_config != 2));   
+                                                        }
+                                                        if (alteracao) {
+                                                             $(obj).attr('disabled', (item.existe_config != 1));   
+                                                        }
+                                                        break;
+                                                    case 'indrgtpr': //Resgate programado?
+                                                        if ($(obj).val() == item.resgate_programado) {
+                                                            $(obj).attr('checked', 'checked');
+                                                        }
+                                                        if (inclusao) {
+                                                             $(obj).attr('disabled', (item.existe_config != 2));   
+                                                        }
+                                                        if (alteracao) {
+                                                             $(obj).attr('disabled', (item.existe_config != 1));   
+                                                        }
+                                                        break;
                                             }
                                         });
                                         if (item.debito_parcial == 1 && inclusao && item.existe_config == 2)  { // aceita debito parcial, é inclusão  e não foi encontrado
@@ -389,6 +432,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
                                                         break;
                                                     case 'indteimo': // desabilitar pois não pode alterar
                                                     case 'indparci': // desabilitar pois não pode alterar
+                                                    case 'indautoa': // desabilitar pois não pode alterar
+                                                    case 'indrgtpr': // desabilitar pois não pode alterar
                                                         $(obj).attr('disabled', true);
                                                         break;
                                             }
@@ -498,6 +543,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
             $('#indteimo', '#frmCab').attr('disabled', true);
             $('#indparci', '#frmCab').attr('disabled', true);
             $('#vlminimo', '#frmCab').attr('disabled', true);
+            $('#indautoa', '#frmCab').attr('disabled', true);
+            $('#indrgtpr', '#frmCab').attr('disabled', true);
 
             showMsgAguardo("Aguarde, carregando dados...");			
             $.ajax({
@@ -585,10 +632,13 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
         var cdModali = '';
         var cooperativa = $('#definicaoConsulta select#cdcooper option:selected').val();    
         var produto = $('#definicaoConsulta select#cdprodut option:selected').val();     
-        var indplano =  0; //default - nao programada
-        var indteimo =  0; //default - nao teimosinha
-        var indparci =  0; //default - nao debito parcial
-        var valormin =  0; //default - 0
+        var indplano = 0; //default - nao programada
+        var indteimo = 0; //default - nao teimosinha
+        var indparci = 0; //default - nao debito parcial
+        var valormin = 0; //default - 0
+        var indautoa = 0; //default - nao permite autoatendimento
+        var indrgtpr = 0; //default - nao permite resgate programado
+
         cdModali = $("#hdnCodModalidade").val();
 
         if ($('input:radio[name=indplano][value=1]').is(':checked')) {    //apl. prog.
@@ -600,6 +650,13 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
                 indparci =  1;
                 valormin =  $('#vlminimo', '#frmCab').val(); 
             }
+            if ($('input:radio[name=indautoa][value=1]').is(':checked')) {
+                indautoa =  1;
+            } 
+            if ($('input:radio[name=indrgtpr][value=1]').is(':checked')) {
+                indrgtpr =  1;
+            } 
+            
         }
         if  ( cdoperacao == 'A' ) { 
             // É uma alteração, a modalidade não importa
@@ -612,6 +669,15 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
                 showError("error", 'Favor informar se o débito parcial é permitido', "Alerta - Ayllos", "$('#cdcooper', '#frmCab').focus();ocultaMsgAguardo();");
                 return false;
             }
+            if (!($('input:radio[name=indautoa][value=1]').is(':checked') || $('input:radio[name=indautoa][value=2]').is(':checked'))) {
+                showError("error", 'Favor informar se o autoatendimento é permitido', "Alerta - Ayllos", "$('#cdcooper', '#frmCab').focus();ocultaMsgAguardo();");
+                return false;
+            }
+            if (!($('input:radio[name=indrgtpr][value=1]').is(':checked') || $('input:radio[name=indrgtpr][value=2]').is(':checked'))) {
+                showError("error", 'Favor informar se o resgate programado é permitido', "Alerta - Ayllos", "$('#cdcooper', '#frmCab').focus();ocultaMsgAguardo();");
+                return false;
+            }
+            
             if ($('input:radio[name=indparci][value=1]').is(':checked')) { // aceita deb. parc. verifica se o valor min. foi preenchido
                 var vlmin = $('#vlminimo', '#frmCab').val()
                 if ((vlmin  == '') || ( parseFloat(vlmin.replace(/\./g, '').replace(',', '.')) == 0))  {
@@ -638,7 +704,9 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
                     indplano: indplano,
                     indteimo: indteimo,  
                     indparci: indparci,
-                    valormin: valormin
+                    valormin: valormin,
+                    indautoa: indautoa,
+                    indrgtpr: indrgtpr
                 },
                 success: function(retorno) {
                     if (retorno.erro == 'N') {

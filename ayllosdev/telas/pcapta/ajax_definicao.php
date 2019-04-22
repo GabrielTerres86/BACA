@@ -163,24 +163,29 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
                         'teimosinha'     => '0', //Teimosinha  (0 = indefinido, 1 = sim, 2 = nao)
                         'debito_parcial' => '0', //Debito Parcial (0 = indefinido, 1 = sim, 2 = nao)
                         'vlminimo'       => '', //Valor mínimo para debito parcial
-                        'existe_config'  => '2' // Existe a configurcao ( 1 = sim, 2 = nao)
+                        'autoatendimento'=> '0', //Liberado no autoatendimento (0 = indefinido, 1 = sim, 2 = nao)
+                        'resgate_programado'=> '0', //Resgate programado  (0 = indefinido, 1 = sim, 2 = nao)
+                        'existe_config'  => '2' // Existe a configuracao ( 1 = sim, 2 = nao)
                         );
                      
                 } 
             } else { // Nao encontrou erro
                 $registrosAP    = $xmlObjAP->roottag->tags[0]->tags;
-                $teimosinha     = $registrosAP[0]->tags[1]->cdata;  // Teimosinha  (0 = indefinido, 1 = sim, 2 = nao) 
-                $debito_parcial = $registrosAP[0]->tags[2]->cdata;  //Debito Parcial (0 = indefinido, 1 = sim, 2 = nao)
-                $vlminimo       = $registrosAP[0]->tags[3]->cdata;  //Valor mínimo para debito parcial
+                $teimosinha         = $registrosAP[0]->tags[1]->cdata;  // Teimosinha  (1 = sim, 2 = nao) 
+                $debito_parcial     = $registrosAP[0]->tags[2]->cdata;  // Debito Parcial (1 = sim, 2 = nao)
+                $vlminimo           = $registrosAP[0]->tags[3]->cdata;  // Valor mínimo para debito parcial
+                $autoatendimento    = $registrosAP[0]->tags[4]->cdata;  // Liberado no autoatendimento (1 = sim, 2 = nao)
+                $resgate_programado = $registrosAP[0]->tags[5]->cdata;  // Resgate programado  (0 = indefinido, 1 = sim, 2 = nao)
                 $retorno[] = array(
                     'idtxfixa'       => $vidtxfixa, 
                     'nmdindex'       => $vnmdindex , 
                     'indplano'       => $vindplano, 
-                    'teimosinha'     => $teimosinha,     //Teimosinha  (0 = indefinido, 1 = sim, 2 = nao)
-                    'debito_parcial' => $debito_parcial, //Debito Parcial (0 = indefinido, 1 = sim, 2 = nao)
-                    'vlminimo'       => $vlminimo,       //Valor mínimo para debito parcial
-                    'existe_config'  => '1'              // Existe a configurcao ( 1 = sim, 2 = nao)
-
+                    'teimosinha'     => $teimosinha,            // Teimosinha  (0 = indefinido, 1 = sim, 2 = nao)
+                    'debito_parcial' => $debito_parcial,        // Debito Parcial (0 = indefinido, 1 = sim, 2 = nao)
+                    'vlminimo'       => $vlminimo,              // Valor mínimo para debito parcial
+                    'autoatendimento'=> $autoatendimento,       // Liberado no autoatendimento (0 = indefinido, 1 = sim, 2 = nao)
+                    'resgate_programado'=> $resgate_programado, // Resgate programado  (0 = indefinido, 1 = sim, 2 = nao)
+                    'existe_config'  => '1'                     // Existe a configuraao ( 1 = sim, 2 = nao)
                     );
             }
         } else {  // Apl . nao e do tipo pgoramada
@@ -376,7 +381,8 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
     
     // Verifica se os parametros necessarios foram informados
     if (!isset($_POST["cdcooper"]) || !isset($_POST["cdmodali"]) || !isset($_POST["indplano"]) || !isset($_POST["cdprodut"]) ||
-        !isset($_POST["indteimo"]) || !isset($_POST["indparci"]) || !isset($_POST["valormin"]) ) { 
+        !isset($_POST["indteimo"]) || !isset($_POST["indparci"]) || !isset($_POST["valormin"]) ||
+        !isset($_POST["indautoa"]) || !isset($_POST["indrgtpr"])) { 
         $msgErro = 'Par&acirc;metros incorretos.';
         $erro = 'S';               
     } else {
@@ -389,6 +395,8 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
         $valormin = (isset($_POST["valormin"])) ? $_POST["valormin"] : 0;
 
 	    $valormin = str_replace(',','.',str_replace('.','',$valormin)); // substituir , por .
+        $indautoa = (isset($_POST["indautoa"])) ? $_POST["indautoa"] : 0;
+        $indrgtpr = (isset($_POST["indrgtpr"])) ? $_POST["indrgtpr"] : 0;        
     }
 
     if ( $erro == 'N' ) {
@@ -432,6 +440,8 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
                 $xmlCfg .= "   <flgteimo>" . $indteimo . "</flgteimo>";
                 $xmlCfg .= "   <fldbparc>" . $indparci . "</fldbparc>";
                 $xmlCfg .= "   <vlminimo>" . $valormin . "</vlminimo>";
+                $xmlCfg .= "   <flgautoatendimento>" . $indautoa . "</flgautoatendimento>";
+                $xmlCfg .= "   <flgresgate_prog>" . $indrgtpr . "</flgresgate_prog>";
                 $xmlCfg .= " </Dados>";
                 $xmlCfg .= "</Root>";
                 $xmlResultCfg = mensageria($xmlCfg, "APLI0008", "MANTEM_CONFIG_APL_PROG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
@@ -452,7 +462,8 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
     
     // Verifica se os parametros necessarios foram informados
     if (!isset($_POST["cdcooper"]) || !isset($_POST["indplano"]) || !isset($_POST["cdprodut"]) ||
-        !isset($_POST["indteimo"]) || !isset($_POST["indparci"]) || !isset($_POST["valormin"]) ) { 
+        !isset($_POST["indteimo"]) || !isset($_POST["indparci"]) || !isset($_POST["valormin"]) ||
+        !isset($_POST["indautoa"]) || !isset($_POST["indrgtpr"])) { 
         $msgErro = 'Par&acirc;metros incorretos.';
         $erro = 'S';               
     } else {
@@ -464,6 +475,8 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
         $valormin = (isset($_POST["valormin"])) ? $_POST["valormin"] : 0;
 
 	    $valormin = str_replace(',','.',str_replace('.','',$valormin)); // substituir , por .
+        $indautoa = (isset($_POST["indautoa"])) ? $_POST["indautoa"] : 0;
+        $indrgtpr = (isset($_POST["indrgtpr"])) ? $_POST["indrgtpr"] : 0;
     }
 
     if ( $erro == 'N' ) {
@@ -475,6 +488,8 @@ if  ( $flgopcao == 'CM' ) { //consulta Modalidades
         $xmlCfg .= "   <flgteimo>" . $indteimo . "</flgteimo>";
         $xmlCfg .= "   <fldbparc>" . $indparci . "</fldbparc>";
         $xmlCfg .= "   <vlminimo>" . $valormin . "</vlminimo>";
+        $xmlCfg .= "   <flgautoatendimento>" . $indautoa . "</flgautoatendimento>";
+        $xmlCfg .= "   <flgresgate_prog>" . $indrgtpr . "</flgresgate_prog>";
         $xmlCfg .= " </Dados>";
         $xmlCfg .= "</Root>";
         $xmlResultCfg = mensageria($xmlCfg, "APLI0008", "MANTEM_CONFIG_APL_PROG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");

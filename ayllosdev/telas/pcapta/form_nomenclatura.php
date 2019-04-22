@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 30/04/2014
  * OBJETIVO     : Formulario de nomenclatura da tela PCAPTA
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 23/10/2018 - Inclusão do campo com as principais características - Proj. 411.2 - CIS Corporate
  * --------------
  */
 
@@ -66,6 +66,12 @@ setVarSession('nmrotina','NOMENCLATURA');
                         <option value="1">ATIVA</option>
                         <option value="2">INATIVA</option>
                     </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="dscaract">Caracter&iacute;sticas:</label></br>
+                    <textarea name="dscaract" id="dscaract" maxlength="500" style="margin-left: 40px; width: 330px; height: 180px; border:solid 1px;"></textarea>
                 </td>
             </tr>
             <tr class="linhaBotoes">
@@ -198,11 +204,17 @@ setVarSession('nmrotina','NOMENCLATURA');
         
         $('#idsitnom', '#frmCab').unbind('keypress').bind('keypress', function(e) {
             if (e.keyCode == 9 || e.keyCode == 13) {
-                $('#btProseg', '#frmCab').focus();
+                $('#dscaract', '#frmCab').focus();
                 return false;
             }
         });        
         
+        $('#dscaract', '#frmCab').unbind('keypress').bind('keypress', function(e) {
+            if (e.keyCode == 9 || e.keyCode == 13) {
+                $('#btProseg', '#frmCab').focus();
+                return false;
+            }
+        });        
         
         
     });
@@ -222,7 +234,7 @@ setVarSession('nmrotina','NOMENCLATURA');
                     type: "POST",
                     url: UrlSite + "telas/pcapta/ajax_nomenclatura.php",
                     dataType: "json",
-                                    async: false,
+                    async: false,
                     data: {
                         flgopcao: 'C',
                         cdprodut: $("#cdprodut").val()
@@ -283,6 +295,7 @@ setVarSession('nmrotina','NOMENCLATURA');
                                 $("#qtmaxcar").val(item.qtmaxcar);
                                 $("#vlminapl").val(item.vlminapl);
                                 $("#vlmaxapl").val(item.vlmaxapl);
+                                $("#dscaract").val(item.dscaract);
                                 $("#idsitnom option").each( function() {
                                     if ( $(this).val() == item.idsitnom ) {
                                         $(this).attr('selected', 'selected');
@@ -293,7 +306,6 @@ setVarSession('nmrotina','NOMENCLATURA');
 
                                 if ( $("#hdnAcao").val() == 'A' ) {
                                     $("#hdnCdnomenc").val($("#cdnomenc option:selected").val());
-
                                     if ( item.aplicacao == 'S' ) {
                                         cCdprodut.desabilitaCampo();
                                         cCdnomenc.desabilitaCampo();
@@ -320,6 +332,7 @@ setVarSession('nmrotina','NOMENCLATURA');
                                         cVlminapl.habilitaCampo();
                                         cVlmaxapl.habilitaCampo();
                                         cIdsitnom.habilitaCampo();
+                                        cDsCaract.habilitaCampo();
                                         //foca o campo de carencia minima
                                         $('#qtmincar', '#frmCab').focus();
                                     }
@@ -417,6 +430,12 @@ setVarSession('nmrotina','NOMENCLATURA');
                 showError("error", "Preencha a faixa de valor maxima.", "Alerta - Ayllos", "$('#vlmaxapl', '#frmCab').focus();ocultaMsgAguardo();");
                 return false;
             }
+
+            if ($.trim($("#dscaract").val()) == '' || $("#dscaract").val() == null) {
+                showError("error", "Preencha as principais caracteristicas.", "Alerta - Ayllos", "$('#dscaract', '#frmCab').focus();ocultaMsgAguardo();");
+                return false;
+            }
+
         }
 
         if ($.trim($("#idsitnom").val()) == '' || $("#idsitnom").val() == null) {
@@ -440,6 +459,7 @@ setVarSession('nmrotina','NOMENCLATURA');
                 qtmaxcar: $("#qtmaxcar").val(),
                 vlminapl: $("#vlminapl").val(),
                 vlmaxapl: $("#vlmaxapl").val(),
+                dscaract: $("#dscaract").val(),
                 idsitnom: $("#idsitnom").val()
             },
             success: function(data) {
@@ -496,6 +516,7 @@ setVarSession('nmrotina','NOMENCLATURA');
                 qtmaxcar: $("#qtmaxcar").val(),
                 vlminapl: $("#vlminapl").val(),
                 vlmaxapl: $("#vlmaxapl").val(),
+                dscaract: $("#dscaract").val(),
                 idsitnom: $("#idsitnom").val()
             },
             success: function(data) {

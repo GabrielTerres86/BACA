@@ -59,6 +59,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0008 AS
            ,dtrnirpp craprpp.dtrnirpp%TYPE
            ,dtaltrpp craprpp.dtaltrpp%TYPE
            ,dtcancel craprpp.dtcancel%TYPE
+           ,cdopeori craprpp.cdopeori%TYPE
            ,cdsitrpp craprpp.cdsitrpp%TYPE
            ,dssitrpp VARCHAR2(10)
            ,dsblqrpp VARCHAR2(3)
@@ -98,6 +99,35 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0008 AS
   TYPE typ_tab_saldo_rpp IS
     TABLE OF typ_reg_saldo_rpp
     INDEX BY BINARY_INTEGER;   
+
+  --Definicao de produtos aplicacao-programada
+  TYPE typ_reg_prod_apl_prog IS
+    RECORD (cdprodut crapcpc.cdprodut%TYPE
+           ,nmprodut crapcpc.nmprodut%TYPE
+           ,idtippro crapcpc.idtippro%TYPE
+    );
+
+  --Definicao do tipo de tabela para os produtos aplicacao-programada
+  TYPE typ_tab_prod_apl_prog IS
+    TABLE OF typ_reg_prod_apl_prog
+    INDEX BY BINARY_INTEGER;   
+
+  --Definicao das nomenclaturas de uma aplicacao-programada
+  TYPE typ_reg_nomenc_apl_prog IS
+    RECORD (cdnomenc crapnpc.cdnomenc%TYPE
+           ,dsnomenc crapnpc.dsnomenc%TYPE
+           ,idsitnom crapnpc.idsitnom%TYPE
+           ,qtmincar crapnpc.qtmincar%TYPE
+           ,qtmaxcar crapnpc.qtmaxcar%TYPE
+           ,vlminapl crapnpc.vlminapl%TYPE
+           ,vlmaxapl crapnpc.vlmaxapl%TYPE
+    );
+
+  --Definicao das nomenclaturas de uma aplicacao-programada
+  TYPE typ_tab_nomenc_apl_prog IS
+    TABLE OF typ_reg_nomenc_apl_prog
+    INDEX BY BINARY_INTEGER;   
+
 
   /* Funcao para validar a cooperativa */
   FUNCTION fn_val_cooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE) --> Código da Cooperativa
@@ -714,6 +744,8 @@ procedure pc_calc_app_programada (pr_cdcooper  in crapcop.cdcooper%type,        
                                     ,pr_flgteimo OUT tbcapt_config_planos_apl_prog.flgteimosinha%TYPE     --> Teimosinha? (0 = Nao, 1 = Sim)
                                     ,pr_fldbparc OUT tbcapt_config_planos_apl_prog.flgdebito_parcial%TYPE --> Debito Parcial (0 = Nao, 1 = Sim)
                                     ,pr_vlminimo OUT tbcapt_config_planos_apl_prog.vlminimo%TYPE          --> Valor mínimo do débito parcial
+                                    ,pr_flautoat OUT tbcapt_config_planos_apl_prog.flgautoatendimento%TYPE --> Liberacao no autoatendimento (0 = Nao, 1 = Sim) 
+                                    ,pr_flrgtpro OUT tbcapt_config_planos_apl_prog.flgresgate_prog%TYPE    --> Resgate programado permitido? (0 = Nao, 1 = Sim)  
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE                                --> Codigo da critica de erro
                                     ,pr_dscritic OUT crapcri.dscritic%TYPE);                              --> Descricao da critica de erro
  
@@ -733,6 +765,8 @@ procedure pc_calc_app_programada (pr_cdcooper  in crapcop.cdcooper%type,        
                                     ,pr_flgteimo IN pls_integer DEFAULT 0                        --> Teimosinha? (0 = Nao, 1 = Sim)
                                     ,pr_fldbparc IN pls_integer DEFAULT 0                        --> Debito Parcial (0 = Nao, 1 = Sim)
                                     ,pr_vlminimo IN tbcapt_config_planos_apl_prog.vlminimo%TYPE  --> Valor mínimo do débito parcial
+                                    ,pr_flgautoatendimento IN pls_integer DEFAULT 0              --> Autoatendimento (0 = Nao, 1 = Sim)
+                                    ,pr_flgresgate_prog IN pls_integer DEFAULT 0                 --> Resgate Programado (0 = Nao, 1 = Sim)                                   
                                     ,pr_idconfig OUT tbcapt_config_planos_apl_prog.idconfiguracao%TYPE 
                                                                                                  --> ID da configuração (0 para inclusão) 
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE                       --> Codigo da critica de erro
@@ -751,6 +785,24 @@ procedure pc_calc_app_programada (pr_cdcooper  in crapcop.cdcooper%type,        
                                         ,pr_nmdcampo   OUT VARCHAR2                                 -- Nome do campo com erro
                                         ,pr_des_erro   OUT VARCHAR2);                               -- Erros do processo
 
+  
+  /* Recuperar lista dos produtos de Aplicação Programada */
+  PROCEDURE pc_lista_prods_apl_prog (pr_cdcooper   IN  crapcop.cdcooper%TYPE    -- Código da cooperativa
+                                    ,pr_idtippro   IN  crapcpc.idtippro%TYPE    -- Tipo do produto (0 = todos , 1 = PRE, 2 = POS)
+                                    ,pr_tab_produtos OUT typ_tab_prod_apl_prog  -- Produtos de Apl Programadas
+                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE      -- Código da crítica
+                                    ,pr_dscritic OUT crapcri.dscritic%TYPE      -- Descrição da crítica
+                                    );
+
+  /* Recuperar lista dos produtos de Aplicação Programada - Mensageria */
+  PROCEDURE pc_lista_prods_apl_prog_web (pr_idtippro   IN  crapcpc.idtippro%TYPE -- Tipo do produto (0 = todos , 1 = PRE, 2 = POS)
+                                        ,pr_xmllog     IN VARCHAR2               -- XML com informacoes de LOG
+                                        ,pr_cdcritic   OUT PLS_INTEGER           -- Código da crítica
+                                        ,pr_dscritic   OUT VARCHAR2              -- Descrição da crítica
+                                        ,pr_retxml     IN OUT NOCOPY XMLType     -- Arquivo de retorno do XML
+                                        ,pr_nmdcampo   OUT VARCHAR2              -- Nome do campo com erro
+                                        ,pr_des_erro   OUT VARCHAR2);            -- Erros do processo
+                                   
   /* Obtem a lista de Aplicações e Poupanças Programadas para uma conta e cooperativa  - Mensageria */
   PROCEDURE pc_ObterListaPlanoAplProg (pr_cdcooper IN crapcop.cdcooper%TYPE            --> Cooperativa
                                       ,pr_idorigem IN INTEGER                          --> Identificador da Origem
@@ -9962,6 +10014,7 @@ END pc_calc_app_programada;
                     vr_tpresgate_apl := 2;
                   END IF;
                   
+                  vr_lista_inf := vr_lista_inf || '-' || rw_craprac.nraplica || '-' || vr_vlresgat_apl || '-' || vr_tpresgate_apl;
                   apli0005.pc_efetua_resgate (pr_cdcooper => pr_cdcooper
                                              ,pr_nrdconta => rw_craprac.nrdconta
                                              ,pr_nraplica => rw_craprac.nraplica
@@ -10859,7 +10912,6 @@ END pc_calc_app_programada;
      /*##############################
          INICIO GERA PROTOCOLO
      ###############################*/
-   
      IF vr_geraprotocolo = 1 THEN
 	     -- Encontra registro do associado
 	     OPEN cr_crapass(pr_cdcooper => pr_cdcooper
@@ -11364,6 +11416,8 @@ END pc_calc_app_programada;
                                     ,pr_flgteimo OUT tbcapt_config_planos_apl_prog.flgteimosinha%TYPE     --> Teimosinha? (0 = Nao, 1 = Sim)
                                     ,pr_fldbparc OUT tbcapt_config_planos_apl_prog.flgdebito_parcial%TYPE --> Debito Parcial (0 = Nao, 1 = Sim)
                                     ,pr_vlminimo OUT tbcapt_config_planos_apl_prog.vlminimo%TYPE          --> Valor mínimo do débito parcial
+                                    ,pr_flautoat OUT tbcapt_config_planos_apl_prog.flgautoatendimento%TYPE --> Liberacao no autoatendimento (0 = Nao, 1 = Sim) 
+                                    ,pr_flrgtpro OUT tbcapt_config_planos_apl_prog.flgresgate_prog%TYPE    --> Resgate programado permitido? (0 = Nao, 1 = Sim)  
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE                                --> Codigo da critica de erro
                                     ,pr_dscritic OUT crapcri.dscritic%TYPE)                               --> Descricao da critica de erro
 
@@ -11399,6 +11453,8 @@ END pc_calc_app_programada;
              ,tb.flgteimosinha
              ,tb.flgdebito_parcial
              ,tb.vlminimo
+             ,tb.flgautoatendimento
+             ,tb.flgresgate_prog
       FROM  tbcapt_config_planos_apl_prog tb
       WHERE tb.cdcooper = pr_cdcooper 
       AND   tb.cdprodut = pr_cdprodut;
@@ -11419,6 +11475,8 @@ END pc_calc_app_programada;
                    pr_flgteimo := rw_config_planos.flgteimosinha;
                    pr_fldbparc := rw_config_planos.flgdebito_parcial;
                    pr_vlminimo := rw_config_planos.vlminimo;
+                   pr_flautoat := rw_config_planos.flgautoatendimento;
+                   pr_flrgtpro := rw_config_planos.flgresgate_prog;
             END IF;
             CLOSE cr_config_planos;
             IF vr_dscritic IS NOT NULL THEN
@@ -11486,6 +11544,8 @@ END pc_calc_app_programada;
         vr_flgteimo pls_integer; -- Obs. O retorno através da xml é diferente da proc normal 
         vr_fldbparc pls_integer; -- para ser compatível com a tela (1 = sim, 2 = nao)
         vr_vlminimo tbcapt_config_planos_apl_prog.vlminimo%TYPE;
+        vr_flautoat tbcapt_config_planos_apl_prog.flgautoatendimento%TYPE; -- Liberacao no autoatendimento (0 = Nao, 1 = Sim) 
+        vr_flrgtpro tbcapt_config_planos_apl_prog.flgresgate_prog%TYPE;    -- Resgate programado permitido? (0 = Nao, 1 = Sim)  
         
         vr_texto_novo VARCHAR2(5000);
 
@@ -11516,6 +11576,8 @@ END pc_calc_app_programada;
                                 ,pr_flgteimo => vr_flgteimo
                                 ,pr_fldbparc => vr_fldbparc
                                 ,pr_vlminimo => vr_vlminimo
+                                ,pr_flautoat => vr_flautoat
+                                ,pr_flrgtpro => vr_flrgtpro 
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);        
 
@@ -11528,6 +11590,13 @@ END pc_calc_app_programada;
         IF vr_fldbparc = 0 THEN
           vr_fldbparc := 2;
         END IF;
+        IF vr_flautoat = 0 THEN
+          vr_flautoat := 2;
+        END IF;          
+        IF vr_flrgtpro = 0 THEN
+          vr_flrgtpro := 2;
+        END IF;          
+
         -- Criar cabeçalho do XML
         dbms_lob.createtemporary(vr_clobxmlc, TRUE); 
         dbms_lob.open(vr_clobxmlc, dbms_lob.lob_readwrite);
@@ -11542,6 +11611,8 @@ END pc_calc_app_programada;
                       '<teimosinha>'    ||vr_flgteimo||'</teimosinha>'||  
                       '<debito_parcial>'||vr_fldbparc||'</debito_parcial>'||
                       '<vlminimo>'      ||to_char(vr_vlminimo, 'fm999g999g990d00')||'</vlminimo>'||
+                      '<autoatendimento>'||vr_flautoat||'</autoatendimento>'||
+                      '<resgate_programado>'||vr_flrgtpro||'</resgate_programado>'||
                       '</Registro>';
 
         gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc
@@ -11588,6 +11659,8 @@ END pc_calc_app_programada;
                                     ,pr_flgteimo IN pls_integer DEFAULT 0                       --> Teimosinha? (0 = Nao, 1 = Sim)
                                     ,pr_fldbparc IN pls_integer DEFAULT 0                       --> Debito Parcial (0 = Nao, 1 = Sim)
                                     ,pr_vlminimo IN tbcapt_config_planos_apl_prog.vlminimo%TYPE --> Valor mínimo do débito parcial
+                                    ,pr_flgautoatendimento IN pls_integer DEFAULT 0             --> Autoatendimento (0 = Nao, 1 = Sim)
+                                    ,pr_flgresgate_prog IN pls_integer DEFAULT 0                --> Resgate Programado (0 = Nao, 1 = Sim)                                   
                                     ,pr_idconfig OUT tbcapt_config_planos_apl_prog.idconfiguracao%TYPE 
                                                                                                 --> ID da configuração  
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE                      --> Codigo da critica de erro
@@ -11705,13 +11778,19 @@ END pc_calc_app_programada;
                                                         ,cdprodut
                                                         ,flgteimosinha
                                                         ,flgdebito_parcial
-                                                        ,vlminimo) values (
+                                                        ,vlminimo
+                                                        ,flgautoatendimento
+                                                        ,flgresgate_prog
+                                                        ) values (
                                                         rw_config_planos.prox_idconfiguracao
                                                         ,pr_cdcooper
                                                         ,pr_cdprodut
                                                         ,pr_flgteimo
                                                         ,pr_fldbparc
-                                                        ,pr_vlminimo);
+                                                        ,pr_vlminimo
+                                                        ,pr_flgautoatendimento
+                                                        ,pr_flgresgate_prog                                                        
+                                                        );
 
                    pr_idconfig := rw_config_planos.prox_idconfiguracao;
                EXCEPTION
@@ -11732,6 +11811,8 @@ END pc_calc_app_programada;
                         flgteimosinha     = pr_flgteimo
                        ,flgdebito_parcial = pr_fldbparc
                        ,vlminimo          = vr_vlminimo
+                       ,flgautoatendimento = pr_flgautoatendimento
+                       ,flgresgate_prog    = pr_flgresgate_prog      
                     WHERE
                        CURRENT OF cr_config_planos_update;   
                EXCEPTION
@@ -11769,6 +11850,8 @@ END pc_calc_app_programada;
                                         ,pr_flgteimo IN pls_integer                                 -- Teimosinha? (0 = Nao, 1 = Sim)
                                         ,pr_fldbparc IN pls_integer                                 -- Debito Parcial (0 = Nao, 1 = Sim)
                                         ,pr_vlminimo IN tbcapt_config_planos_apl_prog.vlminimo%TYPE -- Valor mínimo do débito parcial
+                                        ,pr_flgautoatendimento IN pls_integer                       -- Autoatendimento (0 = Nao, 1 = Sim)
+                                        ,pr_flgresgate_prog IN pls_integer                          -- Resgate Programado (0 = Nao, 1 = Sim)                                   
                                         ,pr_xmllog     IN VARCHAR2                                  -- XML com informacoes de LOG
                                         ,pr_cdcritic   OUT PLS_INTEGER                              -- Código da crítica
                                         ,pr_dscritic   OUT VARCHAR2                                 -- Descrição da crítica
@@ -11845,6 +11928,8 @@ END pc_calc_app_programada;
                                 ,pr_flgteimo => pr_flgteimo
                                 ,pr_fldbparc => pr_fldbparc
                                 ,pr_vlminimo => pr_vlminimo
+                                ,pr_flgautoatendimento => pr_flgautoatendimento
+                                ,pr_flgresgate_prog => pr_flgresgate_prog
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
 
@@ -11897,6 +11982,341 @@ END pc_calc_app_programada;
       END;
 
   END pc_manter_conf_apl_prog_web;
+
+  /* Recuperar lista dos produtos de Aplicação Programada*/
+  PROCEDURE pc_lista_prods_apl_prog (pr_cdcooper     IN  crapcop.cdcooper%TYPE  -- Código da cooperativa
+                                    ,pr_idtippro     IN  crapcpc.idtippro%TYPE  -- Tipo do produto (0 = todos , 1 = PRE, 2 = POS)
+                                    ,pr_tab_produtos OUT typ_tab_prod_apl_prog  -- Produtos de Apl Programadas
+                                    ,pr_cdcritic     OUT crapcri.cdcritic%TYPE  -- Código da crítica
+                                    ,pr_dscritic     OUT crapcri.dscritic%TYPE  -- Descrição da crítica
+                                     ) IS 
+  BEGIN
+  /* .............................................................................
+
+   Programa: pc_lista_prods_apl_prog               
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : CIS Corporate
+   Data    : Outubro/2018.                        Ultima atualizacao: 
+
+   Dados referentes ao programa:
+
+   Frequencia: On-line
+   Objetivo  : Recuperar produtos de aplicação programada para contratação - por cooperativa
+
+   Alteracoes: 
+  ............................................................................. */
+    DECLARE
+
+      --Selecionar informacoes das poupancas programadas
+      CURSOR cr_crapcpc IS
+        SELECT distinct
+                cpc.cdprodut
+               ,cpc.nmprodut
+               ,cpc.idtippro
+        FROM 
+               crapcpc cpc
+              ,crapmpc mpc
+              ,crapdpc dpc
+        WHERE cpc.indplano = 1  -- Apl. Programada
+          AND cpc.idsitpro = 1  -- Produto Ativo
+          AND dpc.idsitmod = 1  -- Modalidade ativa
+          AND ((cpc.idtippro = pr_idtippro)  -- Filtro por pre ou pos
+               OR (pr_idtippro = 0)) -- Ambos
+          AND cpc.cdprodut = mpc.cdprodut
+          AND mpc.cdmodali = dpc.cdmodali 
+          AND dpc.cdcooper = pr_cdcooper
+        ORDER BY cpc.nmprodut;
+        
+      rw_crapcpc cr_crapcpc%ROWTYPE;
+    
+      --Variaveis Locais
+
+      --Variaveis de retorno de erro
+      vr_des_erro VARCHAR2(4000);
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(4000);
+
+      --Variaveis de Indice para tabela memoria
+      vr_index_tab     NUMBER;
+
+      --Variaveis de Excecao
+      vr_exc_erro EXCEPTION; --ERRO
+
+    BEGIN
+      pr_tab_produtos.DELETE;
+
+      --Selecionar informacoes das poupancas programadas
+      OPEN cr_crapcpc;
+      LOOP
+        --Posicionar no proximo registro
+        FETCH cr_crapcpc INTO rw_crapcpc;
+        --Sair quando nao encontrar mais registros
+        EXIT WHEN cr_crapcpc%NOTFOUND;
+          --Encontrar o proximo indice para a tabela
+          vr_index_tab:= pr_tab_produtos.Count+1;
+          --Atualizar informacoes na tabela de memoria
+          pr_tab_produtos(vr_index_tab).cdprodut:= rw_crapcpc.cdprodut;
+          pr_tab_produtos(vr_index_tab).nmprodut:= rw_crapcpc.nmprodut;
+          pr_tab_produtos(vr_index_tab).idtippro:= rw_crapcpc.idtippro;
+      END LOOP;  --cr_crapcpc
+      --Fechar Cursor
+      CLOSE cr_crapcpc;
+
+      --Se nao executou loop corretamente
+      EXCEPTION
+          WHEN OTHERS THEN
+               pr_cdcritic := null;
+               pr_dscritic := 'Erro nao tratado na APLI0008.pc_lista_prods_apl_prog: ' || SQLERRM;
+               -- Fecha os cursores
+               IF cr_crapcpc%ISOPEN THEN
+                 CLOSE cr_crapcpc;
+               END IF;
+    END;
+  END pc_lista_prods_apl_prog;
+  
+  /* Recuperar lista dos produtos de Aplicação Programada - Mensageria */
+  PROCEDURE pc_lista_prods_apl_prog_web (pr_idtippro   IN  crapcpc.idtippro%TYPE  -- Tipo do produto (0 = todos , 1 = PRE, 2 = POS)
+                                        ,pr_xmllog     IN VARCHAR2                -- XML com informacoes de LOG
+                                        ,pr_cdcritic   OUT PLS_INTEGER            -- Código da crítica
+                                        ,pr_dscritic   OUT VARCHAR2               -- Descrição da crítica
+                                        ,pr_retxml     IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                        ,pr_nmdcampo   OUT VARCHAR2               -- Nome do campo com erro
+                                        ,pr_des_erro   OUT VARCHAR2)              -- Erros do processo
+   IS BEGIN
+   /* .............................................................................
+
+   Programa: pc_lista_prods_apl_prog_web
+   Sistema : Novos Produtos de Captação - Aplicação Programada
+   Sigla   : APLI
+   Autor   : CIS Corporate
+   Data    : Outubro/2018.                    Ultima atualizacao: --/--/----
+
+   Dados referentes ao programa:
+
+   Frequencia: Sempre que for chamado
+
+   Objetivo  : Rotina referente a busca de produtos de aplicação programada - Mensageria. 
+
+   Observacao: -----
+
+   Alteracoes: 
+  ..............................................................................*/                
+
+  DECLARE
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+    
+    -- Variaveis auxiliares
+    vr_exc_erro EXCEPTION;
+    vr_exc_zero EXCEPTION;
+
+    -- Variaveis de retorno
+    vr_tab_produtos typ_tab_prod_apl_prog;
+    vr_tab_erro gene0001.typ_tab_erro;
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_tpapprog VARCHAR2(100);
+    vr_flgerlog BOOLEAN := FALSE; 
+
+    -- Variaveis de XML 
+    vr_xml_temp VARCHAR2(32767);
+    vr_clobxmlc CLOB;
+    vr_texto_novo VARCHAR2(1000);
+
+    
+  BEGIN
+     -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;     
+ 
+    -- Chama a rotina       
+    pc_lista_prods_apl_prog (pr_cdcooper => vr_cdcooper
+                            ,pr_idtippro => pr_idtippro
+                            ,pr_tab_produtos => vr_tab_produtos
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic);
+
+    IF vr_dscritic IS NOT NULL THEN
+       RAISE vr_exc_erro;
+    END IF;
+    -- Criar cabeçalho do XML
+    dbms_lob.createtemporary(vr_clobxmlc, TRUE); 
+    dbms_lob.open(vr_clobxmlc, dbms_lob.lob_readwrite);
+    -- Insere o cabeçalho do XML 
+    gene0002.pc_escreve_xml (pr_xml            => vr_clobxmlc 
+                            ,pr_texto_completo => vr_xml_temp 
+                            ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados Total="'||vr_tab_produtos.count||'">');
+
+    -- Dados
+    IF vr_tab_produtos.count >0 THEN
+       FOR i1 in vr_tab_produtos.FIRST..vr_tab_produtos.LAST LOOP
+             vr_texto_novo := vr_texto_novo ||
+                              '<Registro>'||
+                              '<cdprodut>'||vr_tab_produtos(i1).cdprodut||'</cdprodut>'||
+                              '<nmprodut>'||vr_tab_produtos(i1).nmprodut||'</nmprodut>'||  
+                              '<idtippro>'||vr_tab_produtos(i1).idtippro||'</idtippro>'||  
+                              '</Registro>';
+
+             gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc
+                                    ,pr_texto_completo => vr_xml_temp 
+                                    ,pr_texto_novo     => vr_texto_novo);
+             vr_texto_novo :='';                                                           
+       END LOOP;
+    ELSE
+       RAISE vr_exc_zero;
+    END IF;
+    -- Encerrar a tag raiz 
+    gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
+                            ,pr_texto_completo => vr_xml_temp 
+                            ,pr_texto_novo     => '</Dados></Root>' 
+                            ,pr_fecha_xml      => TRUE);
+                                 
+    pr_retxml := XMLType.createXML(vr_clobxmlc);
+
+  Exception
+    When vr_exc_erro Then
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    When vr_exc_zero Then
+      pr_cdcritic := null; -- não será utilizado
+      pr_dscritic := 'Não há produtos para contratação.';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic ||
+                                     '</Erro></Root>');
+       
+    When others Then
+      pr_cdcritic := null; -- não será utilizado
+      pr_dscritic := 'Erro geral em APLI0008.pc_listar_prods_apl_prog_web: '||SQLERRM;
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic ||
+                                     '</Erro></Root>');
+                                     
+
+      
+  END;
+END pc_lista_prods_apl_prog_web;
+
+  /* Recuperar lista de nomenclatura de uma Aplicação Programada */
+  PROCEDURE pc_buscar_nomenc_apl_prog (pr_cdprodut    IN crapcpc.cdprodut%TYPE   -- Código do produto PCAPTA
+                                      ,pr_tab_nomenc  OUT typ_tab_nomenc_apl_prog  -- Produtos de Apl Programadas
+                                      ,pr_cdcritic    OUT crapcri.cdcritic%TYPE  -- Código da crítica
+                                      ,pr_dscritic    OUT crapcri.dscritic%TYPE  -- Descrição da crítica
+                                      ) IS 
+  BEGIN
+  /* .............................................................................
+
+   Programa: pc_listar_prods_apl_prog               
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : CIS Corporate
+   Data    : Outubro/2018.                        Ultima atualizacao: 
+
+   Dados referentes ao programa:
+
+   Frequencia: On-line
+   Objetivo  : Recuperar produtos de aplicação programada para contratação/manutenção
+
+   Alteracoes: 
+  ............................................................................. */
+    DECLARE
+
+      --Selecionar informacoes das aplicações programadas
+      CURSOR cr_crapnpc IS
+        SELECT  cdnomenc
+               ,dsnomenc
+               ,idsitnom
+               ,qtmincar
+               ,qtmaxcar
+               ,vlminapl
+               ,vlmaxapl
+               --,dscaract
+        FROM
+               crapnpc npc
+        WHERE 
+              cdprodut = pr_cdprodut;
+               
+      rw_crapnpc cr_crapnpc%ROWTYPE;
+     
+      --Variaveis Locais
+
+      --Variaveis de retorno de erro
+      vr_des_erro VARCHAR2(4000);
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(4000);
+
+      --Variaveis de Indice para tabela memoria
+      vr_index_tab     NUMBER;
+
+      --Variaveis de Excecao
+      vr_exc_erro EXCEPTION; --ERRO
+
+    BEGIN
+      pr_tab_nomenc.DELETE;
+
+      --Selecionar informacoes das aplicacoes programadas
+      OPEN cr_crapnpc;
+      LOOP
+        --Posicionar no proximo registro
+        FETCH cr_crapnpc INTO rw_crapnpc;
+        --Sair quando nao encontrar mais registros
+        EXIT WHEN cr_crapnpc%NOTFOUND;
+          --Encontrar o proximo indice para a tabela
+          vr_index_tab:= pr_tab_nomenc.Count+1;
+          --Atualizar informacoes na tabela de memoria
+          pr_tab_nomenc(vr_index_tab).cdnomenc:= rw_crapnpc.cdnomenc;
+          pr_tab_nomenc(vr_index_tab).dsnomenc:= rw_crapnpc.dsnomenc;
+          pr_tab_nomenc(vr_index_tab).idsitnom:= rw_crapnpc.idsitnom;
+          pr_tab_nomenc(vr_index_tab).qtmincar:= rw_crapnpc.qtmincar;
+          pr_tab_nomenc(vr_index_tab).qtmaxcar:= rw_crapnpc.qtmaxcar;
+          pr_tab_nomenc(vr_index_tab).vlminapl:= rw_crapnpc.vlminapl;
+          pr_tab_nomenc(vr_index_tab).vlmaxapl:= rw_crapnpc.vlmaxapl;
+          --pr_tab_nomenc(vr_index_tab).dscaract:= rw_crapnpc.dscaract;
+      END LOOP;  --cr_crapnpc
+      --Fechar Cursor
+      CLOSE cr_crapnpc;
+
+      --Se nao executou loop corretamente
+      EXCEPTION
+          WHEN OTHERS THEN
+               pr_cdcritic := null;
+               pr_dscritic := 'Erro nao tratado na APLI0008.pc_lista_prod_apl_prog: ' || SQLERRM;
+               -- Fecha os cursores
+               IF cr_crapnpc%ISOPEN THEN
+                 CLOSE cr_crapnpc;
+               END IF;
+    END;
+  END pc_buscar_nomenc_apl_prog;
 
   PROCEDURE pc_ObterListaPlanoAplProg (pr_cdcooper IN crapcop.cdcooper%TYPE            --> Cooperativa
                                       ,pr_idorigem IN INTEGER                          --> Identificador da Origem

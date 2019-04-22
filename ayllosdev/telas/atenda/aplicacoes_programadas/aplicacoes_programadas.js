@@ -46,6 +46,10 @@
 //***            05/09/2018 - Inclusão do campo Finalidade              ***//
 //***                         (Proj. 411.2 - CIS Corporate)             ***//
 //***                                                                   ***//
+//***            24/10/2018 - Inclusão dos campos tipo aplicacao,       ***//
+//***                         aplicacao, carencia e percentual          ***//
+//***                         (Proj. 411.2 - CIS Corporate)             ***//
+//***                                                                   ***//
 //*************************************************************************//
 
 var nrctrrpp    = 0;        // Variável para armazenar número da poupança selecionada
@@ -1157,6 +1161,10 @@ function controlaLayout( nomeForm ){
 		var Lvlprerpp = $('label[for="vlprerpp"]','#'+nomeForm);
 		var Ltpemiext = $('label[for="tpemiext"]','#'+nomeForm);
 		var Ldsfinali = $('label[for="dsfinali"]','#'+nomeForm);
+		var Ltpaplicacao = $('label[for="tpaplicacao"]','#'+nomeForm);
+		var Lqtdiacar = $('label[for="qtdiacar"]','#'+nomeForm);
+		var Ldsaplica = $('label[for="dsaplica"]','#'+nomeForm);
+		var Ltxaplica = $('label[for="txaplica"]','#'+nomeForm);
 
 		var Cdtinirpp = $('#dtinirpp','#'+nomeForm);
 		var Cdiadtvct = $('#diadtvct','#'+nomeForm);
@@ -1165,14 +1173,22 @@ function controlaLayout( nomeForm ){
 		var Cvlprerpp = $('#vlprerpp','#'+nomeForm);
 		var Ctpemiext = $('#tpemiext','#'+nomeForm);
 		var Cdsfinali = $('#dsfinali','#'+nomeForm);
+		var Ctpaplicacao = $('#tpaplicacao','#'+nomeForm);
+		var Cqtdiacar = $('#qtdiacar','#'+nomeForm);
+		var Cdsaplica = $('#dsaplica','#'+nomeForm);
+		var Ctxaplica = $('#txaplica','#'+nomeForm);
 
-		Ldtinirpp.addClass('rotulo').css('width','270px');
-		Ldiadtvct.addClass('rotulo').css('width','270px');
+		Ldtinirpp.addClass('rotulo').css('width','200px');
+		Ldiadtvct.addClass('rotulo').css('width','200px');
 		Lmesdtvct.css('width','11px');
 		Lanodtvct.css('width','11px');
-		Lvlprerpp.addClass('rotulo').css('width','270px');
-		Ltpemiext.addClass('rotulo').css('width','270px');
-		Ldsfinali.addClass('rotulo').css('width','270px');
+		Lvlprerpp.addClass('rotulo').css('width','200px');
+		Ltpemiext.addClass('rotulo').css('width','200px');
+		Ldsfinali.addClass('rotulo').css('width','200px');
+		Ltpaplicacao.addClass('rotulo').css('width','200px');
+		Lqtdiacar.addClass('rotulo').css('width','200px');
+		Ldsaplica.addClass('rotulo').css('width','200px');
+		Ltxaplica.addClass('rotulo').css('width','200px');
 		
 		Cdtinirpp.css({'width':'115px'});
 		Cdiadtvct.css({'width':'25px'});
@@ -1181,6 +1197,18 @@ function controlaLayout( nomeForm ){
 		Cvlprerpp.css({'width':'115px','text-align':'right'});
 		Ctpemiext.css({'width':'115px'});
 		Cdsfinali.css({'width':'185px'});
+		Ctpaplicacao.css({'width':'160px'});
+		Ctxaplica.css({'width':'115px'});
+		Cqtdiacar.css({'width':'80px'});
+
+		$("#divConteudoOpcao").css("height","270px");
+
+		$("#btnLupaCarencia").css("cursor","pointer");
+		$("#btnLupaCarencia").unbind("click");
+		$("#btnLupaCarencia").bind("click",function() {
+			carregaCarenciaAplicacaoProgramada();
+			return false;
+		});
 
 	}else if( nomeForm == 'divResultadoResgates' ){
 		
@@ -1324,4 +1352,56 @@ function controlaLayout( nomeForm ){
 
 function senhaCoordenador(executaDepois) {
 	pedeSenhaCoordenador(2,executaDepois,'divRotina');
+}
+
+// Função para carregar carências
+function carregaCarenciaAplicacaoProgramada() {
+    var tpaplica = $("#tpaplicacao", "#frmDadosPoupanca").val();
+    var strValoresAplic = tpaplica.split(',', 3);
+
+	cdprodut = strValoresAplic[0]; /* Códido do produto */
+    idtippro = strValoresAplic[1]; /* Verifica se produto é PRE = 1 OU POS = 2 */
+
+    // Mostra mensagem de aguardo
+        // Executa script de consulta através de ajax
+        $.ajax({
+            type: "POST",
+            url: UrlSite + "telas/atenda/aplicacoes_programadas/aplicacoes_programadas_carencia.php",
+            data: {
+                nrdconta: nrdconta,
+                cdprodut: cdprodut, /*Codigo do produto pcapta*/
+                idtippro: idtippro, /*Produto é PRE = 1 OU POS =2 dos produtos novos*/
+                qtdiaapl: 0,
+                qtdiacar: 0,
+                redirect: "script_ajax"
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success: function (response) {
+                try {
+                    hideMsgAguardo();
+                    eval(response);
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                }
+            }
+        });
+
+        showMsgAguardo("Aguarde, carregando per&iacute;odos para car&ecirc;ncia...");
+
+}
+
+function selecionaCarenciaCaptacao(carencia, prazo) {
+
+    $("#qtdiacar", "#frmDadosPoupanca").val(carencia);
+    $("#qtdiapra", "#frmDadosPoupanca").val(prazo);
+    $("#divSelecionaCarencia").hide();
+
+    aux_qtdiaapl = prazo;
+    aux_qtdiacar = carencia;
+
+    obtemTaxaAplicacao();
 }

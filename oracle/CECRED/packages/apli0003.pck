@@ -6,7 +6,7 @@ create or replace package cecred.APLI0003 is
   --  Sistema  : Rotinas genericas referente a tela PCAPTA
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Maio - 2014.                   Ultima atualizacao: 15/07/2018
+  --  Data     : Maio - 2014.                   Ultima atualizacao: 31/10/2018
   --
   -- Dados referentes ao programa:
   --
@@ -18,6 +18,8 @@ create or replace package cecred.APLI0003 is
   --             15/07/2018 Inclusão da Aplicação Programada - Cláudio (CIS Corporate)
   --
   --             25/09/2018 Inclusão da Aplicação Programada no retorno da pc_carrega_produto - Proj. 411.2 (CIS Corporate)
+  --
+  --             31/10/2018 Inclusão do campo características - Proj. 411.2 (CIS Corporate)
   --
   ---------------------------------------------------------------------------------------------------------------
   
@@ -156,6 +158,7 @@ PROCEDURE pc_lista_nomenclatura_produto(pr_cdprodut IN crapcpc.cdprodut%TYPE -->
                                           ,pr_qtmaxcar IN crapnpc.qtmaxcar%TYPE --> Quantidade maxima de carencia
                                           ,pr_vlminapl IN crapnpc.vlminapl%TYPE --> Valor minimo aplicacao
                                           ,pr_vlmaxapl IN crapnpc.vlmaxapl%TYPE --> Valor maximo aplicacao                                          
+                                          ,pr_dscaract IN crapnpc.dscaract%TYPE --> Características do produto                                          
                                           ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                           ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                           ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -280,6 +283,8 @@ create or replace package body cecred.APLI0003 is
                 
                  25/09/2018 - Inclusão da Aplicação Programada no retorno 
                               Proj. 411.2 (CIS Corporate)
+             
+                 31/10/2018 Inclusão do campo características - Proj. 411.2 (CIS Corporate)
              
      ..............................................................................*/ 
     DECLARE
@@ -1790,7 +1795,7 @@ BEGIN
    Sistema : Novos Produtos de Captação
    Sigla   : APLI
    Autor   : Carlos Rafael Tanholi
-   Data    : Agosto/14.                    Ultima atualizacao: 26/08/2014
+   Data    : Agosto/14.                    Ultima atualizacao: 31/10/2018
 
    Dados referentes ao programa:
 
@@ -1800,7 +1805,8 @@ BEGIN
 
    Observacao: -----
 
-   Alteracoes: 
+   Alteracoes: 31/10/2018 - Inclusao do campo dscaract no retorno
+                          - Proj. 411.2 - CIS Corporate
    ..............................................................................*/ 
   DECLARE
           
@@ -1824,7 +1830,8 @@ BEGIN
       npc.qtmincar,
       npc.qtmaxcar,
       npc.vlminapl,
-      npc.vlmaxapl
+      npc.vlmaxapl,
+      npc.dscaract
      FROM crapcpc cpc
          ,crapnpc npc
     WHERE cpc.idsitpro = 1
@@ -1874,6 +1881,7 @@ BEGIN
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'qtmaxcar', pr_tag_cont => rw_crapcpc.qtmaxcar, pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vlminapl', pr_tag_cont => TO_CHAR(rw_crapcpc.vlminapl, 'FM999G999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS=,.'), pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vlmaxapl', pr_tag_cont => TO_CHAR(rw_crapcpc.vlmaxapl, 'FM999G999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS=,.'), pr_des_erro => vr_dscritic);          
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dscaract', pr_tag_cont => rw_crapcpc.dscaract, pr_des_erro => vr_dscritic);          
           
           vr_contador := vr_contador + 1;                                
             
@@ -1945,6 +1953,7 @@ END pc_lista_nomenclatura_produto;
                                           ,pr_qtmaxcar IN crapnpc.qtmaxcar%TYPE --> Quantidade maxima de carencia
                                           ,pr_vlminapl IN crapnpc.vlminapl%TYPE --> Valor minimo aplicacao
                                           ,pr_vlmaxapl IN crapnpc.vlmaxapl%TYPE --> Valor maximo aplicacao                                          
+                                          ,pr_dscaract IN crapnpc.dscaract%TYPE --> Características do produto                                          
                                           ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                           ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                           ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -1959,7 +1968,7 @@ END pc_lista_nomenclatura_produto;
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Carlos Rafael Tanholi
-     Data    : Agosto/14.                    Ultima atualizacao: 27/08/2014
+     Data    : Agosto/14.                    Ultima atualizacao: 03/11/2018
 
      Dados referentes ao programa:
 
@@ -1969,7 +1978,7 @@ END pc_lista_nomenclatura_produto;
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 03/11/2018 - Inclusão do campo dscaract - Proj. 411.2 - CIS Corporate
      ..............................................................................*/ 
     DECLARE
           
@@ -2060,7 +2069,8 @@ END pc_lista_nomenclatura_produto;
              qtmincar,
              qtmaxcar,
              vlminapl,
-             vlmaxapl
+             vlmaxapl,
+             dscaract
         FROM    
              crapnpc
        WHERE cdnomenc = pr_cdnomenc;
@@ -2214,8 +2224,8 @@ END pc_lista_nomenclatura_produto;
         WHEN 'I' THEN -- insercao
           BEGIN
          
-            INSERT INTO crapnpc(cdprodut, dsnomenc, idsitnom, qtmincar, qtmaxcar, vlminapl, vlmaxapl)
-                 VALUES(pr_cdprodut, pr_dsnomenc, pr_idsitnom, pr_qtmincar, pr_qtmaxcar, pr_vlminapl, pr_vlmaxapl)
+            INSERT INTO crapnpc(cdprodut, dsnomenc, idsitnom, qtmincar, qtmaxcar, vlminapl, vlmaxapl, dscaract)
+                 VALUES(pr_cdprodut, pr_dsnomenc, pr_idsitnom, pr_qtmincar, pr_qtmaxcar, pr_vlminapl, pr_vlmaxapl, pr_dscaract)
               RETURNING cdnomenc INTO vr_seqcdnom; -- armazena o novo ID gerado
               
           -- Verifica se houve problema na insercao de registros
@@ -2246,7 +2256,8 @@ END pc_lista_nomenclatura_produto;
                                                                 || pr_cdprodut || ' - ' || vr_nmprodut || ': codigo ' || vr_seqcdnom 
                                                                 || ', nome ' || pr_dsnomenc || ', carencia de '|| pr_qtmincar 
                                                                 || ' ate ' || pr_qtmaxcar || ', valor de ' || TO_CHAR(pr_vlminapl, 'FM999G999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS=,.') 
-                                                                || ' ate ' || TO_CHAR(pr_vlmaxapl, 'FM999G999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS=,.') || ', situacao ' || vr_idsitnom;
+                                                                || ' ate ' || TO_CHAR(pr_vlmaxapl, 'FM999G999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS=,.') || ', situacao ' || vr_idsitnom
+                                                                || ' caracteristicas ' || pr_dscaract ;
           
           -- monta o retorno para a tela
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'cadprod', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
@@ -2281,7 +2292,8 @@ END pc_lista_nomenclatura_produto;
                        crapnpc.qtmincar = pr_qtmincar,
                        crapnpc.qtmaxcar = pr_qtmaxcar,
                        crapnpc.vlminapl = pr_vlminapl,
-                       crapnpc.vlmaxapl = pr_vlmaxapl
+                       crapnpc.vlmaxapl = pr_vlmaxapl,
+                       crapnpc.dscaract = pr_dscaract
                  WHERE crapnpc.cdprodut = pr_cdprodut
                    AND crapnpc.cdnomenc = pr_cdnomenc; 
                  
@@ -2299,7 +2311,8 @@ END pc_lista_nomenclatura_produto;
               BEGIN   
                  -- executa a atualizacao parcial do produto                
                   UPDATE crapnpc 
-                     SET crapnpc.idsitnom = pr_idsitnom
+                     SET crapnpc.idsitnom = pr_idsitnom,
+                         crapnpc.dscaract = pr_dscaract
                    WHERE crapnpc.cdprodut = pr_cdprodut
                      AND crapnpc.cdnomenc = pr_cdnomenc;   
                    
@@ -2328,6 +2341,10 @@ END pc_lista_nomenclatura_produto;
             IF ( rw_crapnpc_log.idsitnom <> pr_idsitnom ) THEN
                vr_dsmsglog := vr_dsmsglog || ' situacao ' || gene0002.fn_busca_entrada(pr_postext =>  rw_crapnpc_log.idsitnom,pr_dstext => vr_sitnom ,pr_delimitador => ',') 
                                           || ' para '     || gene0002.fn_busca_entrada(pr_postext =>  pr_idsitnom,pr_dstext => vr_sitnom ,pr_delimitador => ',');
+            END IF;   
+
+            IF ( rw_crapnpc_log.dscaract <> pr_dscaract) THEN
+               vr_dsmsglog := vr_dsmsglog || ' caracteristica ' || rw_crapnpc_log.dscaract || ' para ' || pr_dscaract || ', ';
             END IF;   
             
             -- 02/05/2014 – 08:00:00 ? Operador 1 alterou o nome 1 do produto 1 – RDCPOS SELIC: 
