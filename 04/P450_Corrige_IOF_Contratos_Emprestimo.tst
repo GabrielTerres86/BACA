@@ -106,7 +106,7 @@ declare
     
      WHERE 1 = 1
        and (l.inprejuz = 1)
-       and (l.vlsdprej = 0)
+       --and (l.vlsdprej = 0)
        and ((l.vlpgjmpr > l.vlttjmpr) OR (l.vltiofpr - l.vlpiofpr > 0))
        and (l.dtprejuz > '01/01/2018')
           
