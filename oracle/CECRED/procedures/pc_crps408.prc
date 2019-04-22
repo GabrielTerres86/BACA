@@ -196,13 +196,25 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
  
                21/05/2018 - Utilizar dtvigencia no subselect da tabela tbcc_produtos_coop. 
                             PRJ366 (Lombardi).
- 
+                            
                11/07/2018 - Ajuste feito para tratar requisicoes com agencia zerada. (INC0019189 - Kelvin/Wagner)
 
+			   01/08/2018 - Adaptar a regra que envia o literal6 para impressão da frase "Cheque especial"
+                            no talonário, para verificar se o cooperado possui limite de crédito habilitado
+                            na conta. (Renato Darosci)
+
+               18/07/2018 - Validação de sucesso no envio de talonário para RR Donnelley
+                            SCTASK0017339
+                            Paulo Martins (Mout´s)       
                19/07/2018 - Alterar a atualizacao da gnsequt para trabalhar com pragma
                             evitando dessa forma as ocorrencias constantes de locks
                             que aparecem rapidamente no BD no inicio do batch.
                             (SCTASK0015571) - (Fabricio)
+
+			   28/08/2081 - Ajuste no cursor cr_crapreq (Andrey Formigari - Mouts) #PRB0040295	
+
+			   24/01/2019 - Retirado o ajuste no cursor cr_crapreq. 
+                            Acelera - Entrega de Talonarios no Ayllos (Lombardi)
  
 ............................................................................. */
 
@@ -294,6 +306,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 
   vr_possuipr   VARCHAR2(1);
   vr_inimpede_talionario tbcc_situacao_conta_coop.inimpede_talionario%TYPE;
+  vr_arquivo_zip   VARCHAR2(200);
   
   -- Procedimento para inserir texto no CLOB do arquivo XML
   PROCEDURE pc_escreve_xml(pr_des_dados in VARCHAR2,
@@ -310,6 +323,81 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     END IF;
   end;
 
+  PROCEDURE pc_envia_email_arq(pr_cdcooper    IN crapcop.cdcooper%TYPE   --> Coop conectada
+                              ,pr_dsorigem    IN varchar2                --> Caminho com nome do Arquito
+                              ,pr_des_erro    OUT VARCHAR2) IS           --> Erro no processo
+                              
+  cursor c_cop is 
+   select c.nmrescop
+     from crapcop c
+    where c.cdcooper = pr_cdcooper;                               
+                              
+  vr_des_erro   varchar2(500);
+  vr_exc_erro   exception;
+  vr_assunto    varchar2(4000);
+  vr_prm_emails varchar2(4000) := gene0001.fn_param_sistema('CRED',0,'EMAIL_SUPRI_PEDIDOS_RRD');
+  vr_cooperativa crapcop.nmrescop%type;
+  vr_corpo         varchar2(4000);  
+  vr_proxima_linha varchar2(100) := '<br /><br />';  
+  vr_flg_remove_anex char(1) := 'N';
+  
+
+  BEGIN
+    --    Autor   : Paulo Martins (Mout-s)
+    --    Data    : Julho/2018                         
+    --
+    --    Objetivo  : Em caso de erro no FTP para RR Donnelley, envia email para suprimentos com arquivo anexo 
+    --                para processamento Manual.
+    --
+    IF vr_prm_emails IS NULL THEN
+       vr_des_erro := 'Não localizou o parâmetro "EMAIL_SUPRI_PEDIDOS_RRD" com os e-mails para envio.';
+       RAISE vr_exc_erro;    
+    END IF; 
+    --
+    vr_assunto := 'Pedidos de talonários não enviado ao parceiro - Necessita processo manual';      
+    
+    open c_cop;
+     fetch c_cop into vr_cooperativa;
+    close c_cop;
+    
+    vr_corpo := 'Cooperativa: '||pr_cdcooper||' - '||vr_cooperativa||vr_proxima_linha;
+    vr_corpo := vr_corpo||'Arquivo: '||pr_dsorigem||vr_proxima_linha;
+    vr_corpo := vr_corpo||'Na data de '||to_char(sysdate,'DD/MM/RRRR')||' não foi possível entregar o arquivo (em anexo neste e-mail) para o parceiro,'||
+                          'devido a problemas no canal de comunicação.'||vr_proxima_linha||
+                          'É necessário que a área de suprimentos poste manualmente este arquivo no ambiente do parceiro.'||vr_proxima_linha;
+    
+    if pr_dsorigem is null then
+      -- Envia e-mail sem anexo com alerta para abrir Incidente para sustentação
+      vr_corpo := vr_corpo||'Atenção: Arquivo não encontrado, favor abrir Incidente para Sustentação!';
+      vr_flg_remove_anex := 'S';
+    end if;
+
+    -- Chamar o agendamento deste e-mail
+    gene0003.pc_solicita_email(pr_cdcooper    => pr_cdcooper
+                              ,pr_cdprogra    => 'pc_crps408'
+                              ,pr_des_destino => vr_prm_emails
+                              ,pr_flg_remove_anex => vr_flg_remove_anex --> Manter os anexos
+                              ,pr_des_assunto => vr_assunto
+                              ,pr_des_corpo   => vr_corpo
+                              ,pr_des_anexo   => pr_dsorigem||'.zip'
+                              ,pr_des_erro    => vr_des_erro);
+    -- Se houver erro
+    IF vr_des_erro IS NOT NULL THEN
+      -- Levantar exceção
+      RAISE vr_exc_erro;
+    END IF;
+  EXCEPTION
+    WHEN vr_exc_erro THEN --> Erro tratado
+      -- Efetuar rollback
+      ROLLBACK;
+      -- Concatenar o erro previamente montado e retornar
+      pr_des_erro := 'pc_crps408.pc_envia_email_arq --> : ' || vr_des_erro;
+    WHEN OTHERS THEN -- Gerar log de erro
+      -- Efetuar rollback
+      ROLLBACK;
+      -- Retornar o erro contido na sqlerrm
+      pr_des_erro := 'pc_crps408.pc_envia_email_arq --> : '|| sqlerrm;
+  END pc_envia_email_arq;  
   -- Subrotina que vai gerar o relatorio sobre o talonario
   PROCEDURE Pc_Gera_Talonario(pr_cdcooper     IN crapreq.cdcooper%TYPE,
                               pr_cdbanchq     IN crapass.cdbcochq%TYPE,
@@ -332,6 +420,10 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       SELECT crapreq.ROWID,
              crapreq.cdagenci,
              crapreq.nrdconta,
+             /*CASE 
+			   WHEN NVL(crapreq.qtreqtal,0) = 0 THEN 1
+			   ELSE crapreq.qtreqtal
+			 END AS qtreqtal,*/
              crapreq.qtreqtal,
              crapreq.tprequis,
              crapreq.insitreq,
@@ -354,6 +446,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
          AND crapass.cdcooper = crapreq.cdcooper
          AND crapass.nrdconta = crapreq.nrdconta
          AND crapass.cdbcochq = pr_cdbanchq
+--         AND NVL(crapreq.qtreqtal, 0) >= 0 -- Somente quando tiver solicitacao de talao
          AND crapreq.qtreqtal > 0 -- Somente quando tiver solicitacao de talao
          AND crapreq.tprequis = pr_tprequis
        ORDER BY crapreq.cdagenci,
@@ -530,6 +623,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     vr_nmarqdadped     VARCHAR2(50);
     vr_input_file_dad  utl_file.file_type;
     vr_input_file_ctr  utl_file.file_type;
+    vr_lista_nmarq     VARCHAR2(50);
 
     -- Variável que indica se foi gerado arquivo de requisicao de talao/formulario de cheque
     vr_flggerou        boolean;
@@ -1252,7 +1346,14 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           ELSE
             vr_literal5 := 'Cooperado desde: '||to_char(vr_dtabtcc2,'MM/YYYY')|| '          ';
           END IF;
-          /*
+          
+          -- Se o cooperado tem cheque especial habilitado na conta
+          IF CADA0003.fn_produto_habilitado(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => rw_crapass.nrdconta
+                                           ,pr_cdproduto => 13) = 'S'   THEN
+            vr_literal6 := 'CHEQUE ESPECIAL';
+          END IF;
+          /*  SUBSTITUÍDA A REGRA ANTIGA, PELA VERIFICAÇÃO DO PRODUTO 13 - LIMITE CHEQUE ESPECIAL
           IF rw_crapass.cdtipcta IN (9,  --ESPEC. CONVENIO
                                      11, --CONJ.ESP.CONV.
                                      13, --ESPECIAL ITG
@@ -1844,6 +1945,102 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                                                         ') via SFTP - ' || vr_des_saida);
         END IF;
 
+        -- Inicio SCTASK0017339   
+        -- Validar se realmente ocorreu o FTP com sucesso, realiza download e verifica se arquivo existe
+        vr_comando := vr_script                                      || ' ' || -- Script Shell
+        '-recebe'                                                    || ' ' || -- Enviar/Receber
+        '-srv '         || vr_serv_sftp                              || ' ' || -- Servidor
+        '-usr '         || vr_user_sftp                              || ' ' || -- Usuario
+        '-pass '        || vr_pass_sftp                              || ' ' || -- Senha
+        '-arq '         || CHR(39) || vr_nmarqped || CHR(39)         || ' ' || -- Nome do Arquivo .RET
+        '-dir_local '   || vr_nom_diretorio || '/arq/ver'            || ' ' || -- /usr/coop/<cooperativa>/arq/ver
+        '-dir_remoto '  || vr_dir_remoto                             || ' ' || -- /<conta do cooperado>/RETORNO
+        '-log '         || vr_nom_diretorio || '/log/ver_arq_ftp_rrd.log';     -- /usr/coop/<cooperativa>/log/cst_por_arquivo.log    
+        
+        -- Comando para criptografar o arquivo
+        vr_comando:= vr_dscomora ||' perl_remoto ' || vr_comando;        
+        
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_des_saida);                           
+        IF vr_typ_saida = 'ERR' OR vr_des_saida IS NOT NULL THEN
+          -- Envio Centralizado de Log de Erro
+          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                     pr_ind_tipo_log => 2, -- ERRO TRATATO
+                                     pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss') ||
+                                                        ' -' || vr_cdprogra || ' --> ' ||
+                                                        'ERRO ao copiar arquivo para validação (' || vr_nmarqped ||
+                                                        ') via SFTP - ' || vr_des_saida);          
+        END IF;     
+
+        --Listar arquivo
+        gene0001.pc_lista_arquivos( pr_path     => vr_nom_diretorio|| '/arq/ver/'
+                                   ,pr_pesq     => vr_nmarqped
+                                   ,pr_listarq  => vr_lista_nmarq
+                                   ,pr_des_erro => vr_dscritic);
+        vr_arquivo_zip := null; 
+        -- Verificar se encontrou arquivo
+        if trim(vr_lista_nmarq) is null then
+          -- Necessário verificar se o Arquivo esta no diretório ainda, ou esta em salvar
+          gene0001.pc_lista_arquivos( pr_path     => vr_nom_diretorio|| '/arq/'
+                                     ,pr_pesq     => vr_nmarqped
+                                     ,pr_listarq  => vr_lista_nmarq
+                                     ,pr_des_erro => vr_dscritic);          
+          
+          
+          IF trim(vr_lista_nmarq) is not null THEN -- Diretório onde arquivo é gerado
+            vr_arquivo_zip := vr_nom_diretorio||'/arq/'||vr_nmarqped;
+          ELSE
+            gene0001.pc_lista_arquivos( pr_path     => vr_nom_diretorio|| '/salvar/'
+                                       ,pr_pesq     => vr_nmarqped
+                                       ,pr_listarq  => vr_lista_nmarq
+                                       ,pr_des_erro => vr_dscritic);         
+            IF trim(vr_lista_nmarq) is not null THEN                                
+               vr_arquivo_zip := vr_nom_diretorio||'/salvar/'||vr_nmarqped;            
+            END IF;
+          END IF;
+            
+          if vr_arquivo_zip is not null then
+            gene0002.pc_zipcecred(pr_cdcooper => pr_cdcooper                 --> Cooperativa conectada
+                                 ,pr_tpfuncao => 'A'
+                                 ,pr_dsorigem => vr_arquivo_zip                 --> Lista de arquivos a compactar (separados por espaço)
+                                 ,pr_dsdestin => vr_arquivo_zip||'.zip' --> Caminho para o arquivo Zip a gerar
+                                 ,pr_dspasswd => NULL
+                                 ,pr_des_erro => vr_des_saida);   
+            IF vr_des_saida IS NOT NULL THEN
+              -- Envio Centralizado de Log de Erro
+              BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                         pr_ind_tipo_log => 2, -- ERRO TRATATO
+                                         pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss') ||
+                                                            ' -' || vr_cdprogra || ' --> ' ||
+                                                            'ERRO ao zipar arquivo para e-mail (' || vr_nmarqped ||
+                                                            ') via SFTP - ' || vr_des_saida);          
+            END IF; 
+          end if;  
+          
+          -- Envia e-mail para área de suprimentos com o Arquivo
+          pc_envia_email_arq(pr_cdcooper => pr_cdcooper
+                            ,pr_dsorigem => vr_arquivo_zip -- Caminho com nome do Arquivo
+                            ,pr_des_erro => vr_des_saida);
+          IF vr_des_saida IS NOT NULL THEN
+            -- Envio Centralizado de Log de Erro
+            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                       pr_ind_tipo_log => 2, -- ERRO TRATATO
+                                       pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss') ||
+                                                          ' -' || vr_cdprogra || ' --> ' ||
+                                                          'ERRO ao enviar email para sustentação (' || vr_nmarqped ||
+                                                          ') via SFTP - ' || vr_des_saida);          
+          END IF; 
+
+                              
+        ELSE
+          -- Remove arquivo do servidor
+          gene0001.pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||vr_nom_diretorio ||'/arq/ver/'|| vr_nmarqped);
+          gene0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_nom_diretorio||'/arq/ver/'||vr_nmarqped||' 2> /dev/null');          
+        END IF;
+        -- Fim SCTASK0017339   
 
       END IF;
     ELSE
