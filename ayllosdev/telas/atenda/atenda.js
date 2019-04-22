@@ -553,7 +553,7 @@ function obtemCabecalho() {
                 aux_nrdconta = $("#nrdconta", "#frmCabAtenda").val();
                 aux_nrdconta = aux_nrdconta.replace('-', '.');
                 if (inpessoa == 1){
-                    $("#divSemCartaoAss").html("<a tabindex='6' name='6' class='txtNormal SetFocus' style='margin-left: 1px; cursor:default' href='#' onclick='abreDocumentos(); return false;' >Documentos.</a>");
+                    $("#divSemCartaoAss").html("<a tabindex='6' name='6' class='txtNormal SetFocus' style='margin-left: 1px; cursor:default' href='#' onclick='abreDocumentos(); return false;' >Documentos</a>");
                 }
                 else{
                     if (flgdigit == "yes" || flgdigit == "S") {
