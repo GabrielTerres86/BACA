@@ -334,6 +334,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --
   --              23/06/2017 - Na rotina pc_inst_alt_dados_arq_rem_085 foi alterado para fechar o cursor correto
   --                           pois estava ocasionando erro (Tiago/Rodrigo #698180)
+  --
+  --              09/04/2019 - Incluso tratativa para permitir protestar titulos descontados e vencidos apos carencia
+  --                           (Daniel - Ailos) 
   ---------------------------------------------------------------------------------------------------------------
   
   04/10/2017 - #751605 Alteradas as rotinas "pc_inst_canc_sms" e "pc_inst_envio_sms". Na de cancelamento, 
@@ -1284,7 +1287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
             -- e a situação é em estudo e não esta vencido
             IF ((rw_craptdb.insittit = 0 AND vr_dtcalcul >= pr_dtmvtolt) OR
-              rw_craptdb.insittit = 4)  THEN -- LIBERADO
+              (rw_craptdb.insittit = 4 AND vr_dtcalcul >= pr_dtmvtolt) )  THEN -- LIBERADO
 
               --Fechar Cursor
               CLOSE cr_craptdb;
