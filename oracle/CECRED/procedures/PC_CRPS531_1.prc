@@ -6125,9 +6125,9 @@ END pc_trata_arquivo_ldl;
           vr_aux_vllanmto := NULL;
           OPEN cr_craplcm_exis(pr_cdcooper => rw_crapcop_mensag.cdcooper
                               ,pr_dtmvtolt => vr_aux_dtmvtolt            -- rw_craplot.dtmvtolt
-                                ,pr_cdagenci => rw_craplot.cdagenci /* OU: rw_craplot_rvt */
-                                ,pr_cdbccxlt => rw_craplot.cdbccxlt /* OU: rw_craplot_rvt */
-                                ,pr_nrdolote => rw_craplot.nrdolote /* OU: rw_craplot_rvt */
+                                ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                                ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                                ,pr_nrdolote => rw_craplot_rvt.nrdolote
                               ,pr_nrdctabb => vr_aux_nrctacre
                               ,pr_nrdocmto => vr_aux_nrdocmto);
           FETCH cr_craplcm_exis
@@ -6140,7 +6140,7 @@ END pc_trata_arquivo_ldl;
             IF vr_aux_CodMsg in ('STR0010R2','PAG0111R2') OR vr_aux_tagCABInf THEN
               -- Montar textos de logs
               vr_log_msgderro := 'Lancamento ja existe! Conta: ' || vr_aux_nrctacre
-                                || ', Lote: ' || rw_craplot.nrdolote   /* OU: rw_craplot_rvt */
+                                || ', Lote: ' || rw_craplot_rvt.nrdolote
                               || ', Doc.: ' || vr_aux_nrdocmto;
               -- Conforme cabine
               IF vr_aux_tagCABInf THEN
@@ -6152,7 +6152,7 @@ END pc_trata_arquivo_ldl;
             ELSE
               -- Montar textos de logs
               vr_tipolog := 'RECEBIDA';
-                vr_log_msgderro := 'Lancamento ja existe! Lote: '|| rw_craplot.nrdolote /* OU: rw_craplot_rvt */
+                vr_log_msgderro := 'Lancamento ja existe! Lote: '|| rw_craplot_rvt.nrdolote
                               || ', Doc.: ' || vr_aux_nrdocmto;
             END IF;
             -- Cria registro das movimentacoes no SPB
@@ -6184,9 +6184,9 @@ END pc_trata_arquivo_ldl;
                 -- Buscar o último NRSEQDIG para a CRAPLCM
                 OPEN  cr_lcm_nrseqdig(rw_crapcop_mensag.cdcooper -- pr_cdcooper
                                      ,vr_aux_dtmvtolt            -- pr_dtmvtolt
-                                     ,rw_craplot.cdagenci        -- pr_cdagenci /* OU: rw_craplot_rvt */
-                                     ,rw_craplot.cdbccxlt        -- pr_cdbccxlt /* OU: rw_craplot_rvt */
-                                     ,rw_craplot.nrdolote);      -- pr_nrdolote /* OU: rw_craplot_rvt */
+                                     ,rw_craplot_rvt.cdagenci    -- pr_cdagenci
+                                     ,rw_craplot_rvt.cdbccxlt    -- pr_cdbccxlt
+                                     ,rw_craplot_rvt.nrdolote);  -- pr_nrdolote
                 FETCH cr_lcm_nrseqdig INTO vr_nrlcmdig;
                 CLOSE cr_lcm_nrseqdig;
                  
@@ -6210,9 +6210,9 @@ END pc_trata_arquivo_ldl;
                 VALUES
                    (rw_crapcop_mensag.cdcooper
                    ,vr_aux_dtmvtolt            -- rw_craplot.dtmvtolt
-                   ,rw_craplot.cdagenci        /* OU: rw_craplot_rvt */
-                   ,rw_craplot.cdbccxlt        /* OU: rw_craplot_rvt */
-                   ,rw_craplot.nrdolote        /* OU: rw_craplot_rvt */
+                   ,rw_craplot_rvt.cdagenci
+                   ,rw_craplot_rvt.cdbccxlt
+                   ,rw_craplot_rvt.nrdolote
                    ,vr_aux_nrctacre
                    ,vr_aux_nrctacre
                    ,vr_aux_nrdocmto
@@ -6237,8 +6237,8 @@ END pc_trata_arquivo_ldl;
                                   ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
                                   ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
                                     ,craplot.nrseqdig = vr_nrlcmdig
-                WHERE craplot.ROWID = rw_craplot.ROWID;  /* OU: rw_craplot_rvt */
-              EXCEPTION 
+                WHERE craplot.ROWID = rw_craplot_rvt.ROWID;
+              EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao atualizar tabela craplot. ' || SQLERRM;
                   -- Sair da rotina
