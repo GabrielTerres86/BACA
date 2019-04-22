@@ -373,17 +373,22 @@
 		echo "hideMsgAguardo();";
 		if(isset($nrctrcrd) && isset($cdadmcrd)) {
 			echo "nrctrcrd = ".$nrctrcrd.";";
+
+			if ($cddopcao == "M") {
+				echo "if (flgBancoob) enviarBancoob(".$nrctrcrd."); else voltarParaTelaPrincipal();";
+			} else {
 			if ($novo_fluxo_envio && $cddopcao != "A") {
 				echo "cdadmcrd = ".$cdadmcrd."; consultaEnderecos(1);";
 			} else {
 				if ($alguemAssinou) {
-					echo "enviarBancoob(".$nrctrcrd.")";
+						echo "enviarBancoob(".$nrctrcrd.");";
 				} else {
 
 					if ($parametroAprovador == 0) {
 						echo "solicitaSenha($nrctrcrd, cTipoSenha.COOPERADO);";
 					} else {
 						echo "solicitaTipoSenha($nrctrcrd, 'novo');";
+						}
 					}
 				}
 			}

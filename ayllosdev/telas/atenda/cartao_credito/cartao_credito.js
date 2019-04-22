@@ -138,6 +138,7 @@ var protocolo;
 var glbadc = 'n';
 var justificativaCartao;
 var contigenciaAtiva = false;
+var flgBancoob = false;
 // Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
 
