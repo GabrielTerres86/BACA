@@ -9700,6 +9700,8 @@ END pc_calc_app_programada;
       vr_dtmvtopr       DATE := pr_dtmvtolt; -- data da operação deve ser igual a do movimento para que o crédito seja efetivado no mesmo dia
       vr_fase           PLS_INTEGER:=0;
 
+      vr_geraprotocolo PLS_INTEGER:=0;
+
       vr_dsinfor1 VARCHAR2(1000);
       vr_dsinfor2 VARCHAR2(1000);
       vr_dsinfor3 VARCHAR2(1000);
@@ -9960,7 +9962,6 @@ END pc_calc_app_programada;
                     vr_tpresgate_apl := 2;
                   END IF;
                   
-                  vr_lista_inf := vr_lista_inf || '-' || rw_craprac.nraplica || '-' || vr_vlresgat_apl || '-' || vr_tpresgate_apl;
                   apli0005.pc_efetua_resgate (pr_cdcooper => pr_cdcooper
                                              ,pr_nrdconta => rw_craprac.nrdconta
                                              ,pr_nraplica => rw_craprac.nraplica
@@ -10827,6 +10828,7 @@ END pc_calc_app_programada;
                 
                 IF (vr_dscritic IS NULL) THEN         
                    vr_fase := 60;
+		   vr_geraprotocolo := 1;
                    /* Atualizar valor resgatado */
                    BEGIN
                       UPDATE craprpp
@@ -10858,160 +10860,162 @@ END pc_calc_app_programada;
          INICIO GERA PROTOCOLO
      ###############################*/
    
-     -- Encontra registro do associado
-     OPEN cr_crapass(pr_cdcooper => pr_cdcooper
-                    ,pr_nrdconta => pr_nrdconta);
-                      
-     FETCH cr_crapass INTO rw_crapass;
-       
-     IF cr_crapass%NOTFOUND THEN
-         
-       -- Fecha o cursor
-       CLOSE cr_crapass;
-         
-       -- Monta critica
-       vr_cdcritic := 9;
-       vr_dscritic := NULL;
-         
-       -- Gera exceção
-       RAISE vr_exc_saida;
-         
-     ELSE
-       -- Fecha o cursor
-       CLOSE cr_crapass;   
-       
-     END IF;        
-    
-       -- Busca cooperativa
-     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
-     
-     FETCH cr_crapcop INTO rw_crapcop;
-     
-     --Se nao encontrou
-     IF cr_crapcop%NOTFOUND THEN
-       
-       --Fechar Cursor
-       CLOSE cr_crapcop;
-       
-       vr_cdcritic:= 651;
-       vr_dscritic:= NULL;
-       
-       -- Gera exceção
-       RAISE vr_exc_saida;
-       
-     END IF;
-     
-     --Fechar Cursor
-     CLOSE cr_crapcop;
-    
-     -- Busca a cidade do PA do associado
-     OPEN cr_crapage(pr_cdcooper => rw_crapass.cdcooper
-                    ,pr_cdagenci => rw_crapass.cdagenci);
-                          
-     FETCH cr_crapage INTO vr_nmcidade;
-           
-     IF cr_crapage%NOTFOUND THEN
-       --Fechar Cursor
-       CLOSE cr_crapage;
-               
-       vr_cdcritic:= 962;
-       vr_dscritic:= NULL;
-               
-       -- Gera exceção
-       RAISE vr_exc_saida;
-     ELSE
-       -- Fechar o cursor
-       CLOSE cr_crapage;
-             
-     END IF; 
-    
-     --Formata nrdconta para visualizacao na internet 
-     vr_nrdconta:= GENE0002.fn_mask_conta(rw_crapass.nrdconta);
-       
-     --Trocar o ultimo ponto por traco
-     vr_nrdconta:= SubStr(vr_nrdconta,1,Length(vr_nrdconta)-2)||'-'||
-                   SubStr(vr_nrdconta,Length(vr_nrdconta),1);
-       
-     --Se for pessoa fisica
-     IF rw_crapass.inpessoa = 1 THEN
-         
-       --ome do titular que fez a transferencia
-       OPEN cr_crapttl (pr_cdcooper => rw_crapass.cdcooper
-                       ,pr_nrdconta => rw_crapass.nrdconta
-                       ,pr_idseqttl => pr_idseqttl);
-         
-       --Posicionar no proximo registro
-       FETCH cr_crapttl INTO rw_crapttl;
-         
-       --Se nao encontrar
-       IF cr_crapttl%NOTFOUND THEN
-         --Fechar Cursor
-         CLOSE cr_crapttl;
-           
-         vr_cdcritic:= 0;
-         vr_dscritic:= 'Titular nao encontrado.';
-           
-         -- Gera exceção
-         RAISE vr_exc_saida;
-       END IF;
-         
-       --Fechar Cursor
-       CLOSE cr_crapttl;
-         
-       --Nome titular
-       vr_nmextttl:= rw_crapttl.nmextttl;
-         
-     ELSE
-       vr_nmextttl:= rw_crapass.nmprimtl;
-     END IF;
-    
-     IF (vr_perirapl < 0) THEN
-        vr_dsperirapl := '';
-     ELSE
-         vr_dsperirapl := TO_CHAR(NVL(vr_perirapl, '0'), 'fm990D00') || '%';
-     END IF;
-     
-     vr_dsinfor1:= 'Resgate Aplic. Programada';          
-    
-     vr_dsinfor2:= vr_nmextttl ||'#' ||
-                   'Conta/dv: ' ||vr_nrdconta ||' - '||
-                   rw_crapass.nmprimtl||'#'|| gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
-                   ' - '|| rw_crapcop.nmrescop;
-     vr_dsinfor3:= 'Data do Resgate: '   || TO_CHAR(pr_dtmvtolt,'dd/mm/yyyy')           || '#' ||
-                   'Numero do Resgate: ' || TO_CHAR(pr_nrctrrpp,'9G999G990')    || '#' ||
-           'IRRF (Imposto de Renda Retido na Fonte): ' || TO_CHAR(vr_valortir,'999G999G990D00') || '#' ||
-                   'Aliquota IRRF: '       || vr_dsperirapl  || '#' ||
-                   'Valor Bruto: '         || TO_CHAR(pr_vlresgat  + vr_valortir,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') || '#'  ||                                 
-                   'Cooperativa: '         || UPPER(rw_crapcop.nmextcop) || '#' || 
-                   'CNPJ: '                || TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) || '#' ||
-                   UPPER(TRIM(vr_nmcidade)) || ', ' || TO_CHAR(pr_dtmvtolt,'dd') || ' DE ' || GENE0001.vr_vet_nmmesano(TO_CHAR(pr_dtmvtolt,'mm')) || ' DE ' || TO_CHAR(pr_dtmvtolt,'RRRR') || '.';                             
-    
-     --Gerar protocolo
-     GENE0006.pc_gera_protocolo(pr_cdcooper => pr_cdcooper                         --> Código da cooperativa
-                               ,pr_dtmvtolt => pr_dtmvtolt                 --> Data movimento
-                               ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) --> Hora da transação NOK
-                               ,pr_nrdconta => pr_nrdconta                         --> Número da conta
-                               ,pr_nrdocmto => pr_nrctrrpp                         --> Número do documento
-                               ,pr_nrseqaut => 0                                   --> Número da sequencia
-                               ,pr_vllanmto => pr_vlresgat                         --> Valor lançamento
-                               ,pr_nrdcaixa => pr_nrdcaixa                         --> Número do caixa NOK
-                               ,pr_gravapro => TRUE                                --> Controle de gravação
-                               ,pr_cdtippro => 12                                  --> Código de operação
-                               ,pr_dsinfor1 => vr_dsinfor1                         --> Descrição 1
-                               ,pr_dsinfor2 => vr_dsinfor2                         --> Descrição 2
-                               ,pr_dsinfor3 => vr_dsinfor3                         --> Descrição 3
-                               ,pr_dscedent => NULL                                --> Descritivo
-                               ,pr_flgagend => FALSE                               --> Controle de agenda
-                               ,pr_nrcpfope => 0                                   --> Número de operação
-                               ,pr_nrcpfpre => 0                                   --> Número pré operação
-                               ,pr_nmprepos => ''                                  --> Nome
-                               ,pr_dsprotoc => vr_dsprotoc                         --> Descrição do protocolo
-                               ,pr_dscritic => vr_dscritic                         --> Descrição crítica
-                               ,pr_des_erro => vr_des_erro);                       --> Descrição dos erros de processo
-                             
-         IF (vr_cdcritic IS NOT NULL ) OR (vr_dscritic IS NOT NULL) THEN
-            RAISE vr_exc_saida;
-         END IF;
+     IF vr_geraprotocolo = 1 THEN
+	     -- Encontra registro do associado
+	     OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+	                    ,pr_nrdconta => pr_nrdconta);
+	                      
+	     FETCH cr_crapass INTO rw_crapass;
+	       
+	     IF cr_crapass%NOTFOUND THEN
+	         
+	       -- Fecha o cursor
+	       CLOSE cr_crapass;
+	         
+	       -- Monta critica
+	       vr_cdcritic := 9;
+	       vr_dscritic := NULL;
+	         
+	       -- Gera exceção
+	       RAISE vr_exc_saida;
+	         
+	     ELSE
+	       -- Fecha o cursor
+	       CLOSE cr_crapass;   
+	       
+	     END IF;        
+	    
+	       -- Busca cooperativa
+	     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+	     
+	     FETCH cr_crapcop INTO rw_crapcop;
+	     
+	     --Se nao encontrou
+	     IF cr_crapcop%NOTFOUND THEN
+	       
+	       --Fechar Cursor
+	       CLOSE cr_crapcop;
+	       
+	       vr_cdcritic:= 651;
+	       vr_dscritic:= NULL;
+	       
+	       -- Gera exceção
+	       RAISE vr_exc_saida;
+	       
+	     END IF;
+	     
+	     --Fechar Cursor
+	     CLOSE cr_crapcop;
+	    
+	     -- Busca a cidade do PA do associado
+	     OPEN cr_crapage(pr_cdcooper => rw_crapass.cdcooper
+	                    ,pr_cdagenci => rw_crapass.cdagenci);
+	                          
+	     FETCH cr_crapage INTO vr_nmcidade;
+	           
+	     IF cr_crapage%NOTFOUND THEN
+	       --Fechar Cursor
+	       CLOSE cr_crapage;
+	               
+	       vr_cdcritic:= 962;
+	       vr_dscritic:= NULL;
+	               
+	       -- Gera exceção
+	       RAISE vr_exc_saida;
+	     ELSE
+	       -- Fechar o cursor
+	       CLOSE cr_crapage;
+	             
+	     END IF; 
+	    
+	     --Formata nrdconta para visualizacao na internet 
+	     vr_nrdconta:= GENE0002.fn_mask_conta(rw_crapass.nrdconta);
+	       
+	     --Trocar o ultimo ponto por traco
+	     vr_nrdconta:= SubStr(vr_nrdconta,1,Length(vr_nrdconta)-2)||'-'||
+	                   SubStr(vr_nrdconta,Length(vr_nrdconta),1);
+	       
+	     --Se for pessoa fisica
+	     IF rw_crapass.inpessoa = 1 THEN
+	         
+	       --ome do titular que fez a transferencia
+	       OPEN cr_crapttl (pr_cdcooper => rw_crapass.cdcooper
+	                       ,pr_nrdconta => rw_crapass.nrdconta
+	                       ,pr_idseqttl => pr_idseqttl);
+	         
+	       --Posicionar no proximo registro
+	       FETCH cr_crapttl INTO rw_crapttl;
+	         
+	       --Se nao encontrar
+	       IF cr_crapttl%NOTFOUND THEN
+	         --Fechar Cursor
+	         CLOSE cr_crapttl;
+	           
+	         vr_cdcritic:= 0;
+	         vr_dscritic:= 'Titular nao encontrado.';
+	           
+	         -- Gera exceção
+	         RAISE vr_exc_saida;
+	       END IF;
+	         
+	       --Fechar Cursor
+	       CLOSE cr_crapttl;
+	         
+	       --Nome titular
+	       vr_nmextttl:= rw_crapttl.nmextttl;
+	         
+	     ELSE
+	       vr_nmextttl:= rw_crapass.nmprimtl;
+	     END IF;
+	    
+	     IF (vr_perirapl < 0) THEN
+	        vr_dsperirapl := '';
+	     ELSE
+	         vr_dsperirapl := TO_CHAR(NVL(vr_perirapl, '0'), 'fm990D00') || '%';
+	     END IF;
+	     
+	     vr_dsinfor1:= 'Resgate Aplic. Programada';          
+	    
+	     vr_dsinfor2:= vr_nmextttl ||'#' ||
+	                   'Conta/dv: ' ||vr_nrdconta ||' - '||
+	                   rw_crapass.nmprimtl||'#'|| gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
+	                   ' - '|| rw_crapcop.nmrescop;
+	     vr_dsinfor3:= 'Data do Resgate: '   || TO_CHAR(pr_dtmvtolt,'dd/mm/yyyy')           || '#' ||
+	                   'Numero do Resgate: ' || TO_CHAR(pr_nrctrrpp,'9G999G990')    || '#' ||
+	           'IRRF (Imposto de Renda Retido na Fonte): ' || TO_CHAR(vr_valortir,'999G999G990D00') || '#' ||
+	                   'Aliquota IRRF: '       || vr_dsperirapl  || '#' ||
+	                   'Valor Bruto: '         || TO_CHAR(pr_vlresgat  + vr_valortir,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') || '#'  ||                                 
+	                   'Cooperativa: '         || UPPER(rw_crapcop.nmextcop) || '#' || 
+	                   'CNPJ: '                || TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) || '#' ||
+	                   UPPER(TRIM(vr_nmcidade)) || ', ' || TO_CHAR(pr_dtmvtolt,'dd') || ' DE ' || GENE0001.vr_vet_nmmesano(TO_CHAR(pr_dtmvtolt,'mm')) || ' DE ' || TO_CHAR(pr_dtmvtolt,'RRRR') || '.';                             
+	    
+	     --Gerar protocolo
+	     GENE0006.pc_gera_protocolo(pr_cdcooper => pr_cdcooper                         --> Código da cooperativa
+	                               ,pr_dtmvtolt => pr_dtmvtolt                 --> Data movimento
+	                               ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) --> Hora da transação NOK
+	                               ,pr_nrdconta => pr_nrdconta                         --> Número da conta
+	                               ,pr_nrdocmto => pr_nrctrrpp                         --> Número do documento
+	                               ,pr_nrseqaut => 0                                   --> Número da sequencia
+	                               ,pr_vllanmto => pr_vlresgat                         --> Valor lançamento
+	                               ,pr_nrdcaixa => pr_nrdcaixa                         --> Número do caixa NOK
+	                               ,pr_gravapro => TRUE                                --> Controle de gravação
+	                               ,pr_cdtippro => 12                                  --> Código de operação
+	                               ,pr_dsinfor1 => vr_dsinfor1                         --> Descrição 1
+	                               ,pr_dsinfor2 => vr_dsinfor2                         --> Descrição 2
+	                               ,pr_dsinfor3 => vr_dsinfor3                         --> Descrição 3
+	                               ,pr_dscedent => NULL                                --> Descritivo
+	                               ,pr_flgagend => FALSE                               --> Controle de agenda
+	                               ,pr_nrcpfope => 0                                   --> Número de operação
+	                               ,pr_nrcpfpre => 0                                   --> Número pré operação
+	                               ,pr_nmprepos => ''                                  --> Nome
+	                               ,pr_dsprotoc => vr_dsprotoc                         --> Descrição do protocolo
+	                               ,pr_dscritic => vr_dscritic                         --> Descrição crítica
+	                               ,pr_des_erro => vr_des_erro);                       --> Descrição dos erros de processo
+	                             
+	         IF (vr_cdcritic IS NOT NULL ) OR (vr_dscritic IS NOT NULL) THEN
+	            RAISE vr_exc_saida;
+	         END IF;
+	END IF;
          -- Verifica se deve gerar log
          IF pr_flgerlog = 1 THEN
             gene0001.pc_gera_log (pr_cdcooper => pr_cdcooper
