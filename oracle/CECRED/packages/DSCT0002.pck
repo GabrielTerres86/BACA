@@ -6419,7 +6419,7 @@ END fn_letra_risco;
       vr_nrctrlim := rw_craplim.nrctrlim; 
     END IF; 
      
-    IF pr_idimpres = 2 AND pr_tpctrlim = 3 THEN   
+    IF pr_tpctrlim = 3 THEN   
       IF rw_craplim.dtinivig IS NULL THEN
         vr_tpimpres := 'P';
       END IF;
