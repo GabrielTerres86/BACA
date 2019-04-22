@@ -6,6 +6,7 @@
  *
  * ALTERACOES   : 04/08/2015 - Reformulacao Cadastral (Gabriel-RKAM).	
  *				  18/10/2016 - Correcao no envio de dados para XML removendo caract. especiais. (Carlos Rafael Tanholi - SD 540832)
+ *				  19/03/2019 - Inserção dos campos de Canal e Data de revisão - Vitor S. Assanuma (GFT)
  */
 
 var nrdrowid  = ''; 
@@ -227,8 +228,8 @@ function manterRotina( operacao ) {
 }
 
 function controlaLayout(operacao) {		
-	
-	altura  = ( in_array(operacao,['AT','IT','FI','FA','FE','SC','']) ) ? '205px' : '196px';
+	var alt = inpessoa == 1 ? '220px' : '205px';
+	altura  = ( in_array(operacao,['AT','IT','FI','FA','FE','SC','']) ) ? '205px' : alt;
 	altura = ( operacao == 'TI') ? '220px': altura ;
 	largura = ( in_array(operacao,['AT','IT','FI','FA','FE','SC','']) ) ? '580px' : '368px';
 	divRotina.css('width',largura);	
@@ -275,8 +276,8 @@ function controlaLayout(operacao) {
 		var sugest 		= $('#sugestao');
 		var formulario  = $('#'+nomeForm);
 		var cTodos     	= $('input,select','#'+nomeForm);		
-		var rRotulos   	= $('label[for="tptelefo"],label[for="nrdddtfc"],label[for="cdopetfn"],label[for="nrdramal"],label[for="nmpescto"],label[for="idsittfc"]','#'+nomeForm);
-		var rLinha      = $('label[for="nrtelefo"],label[for="secpscto"],label[for="idorigem"]','#'+nomeForm);
+		var rRotulos   	= $('label[for="tptelefo"],label[for="nrdddtfc"],label[for="cdopetfn"],label[for="nrdramal"],label[for="nmpescto"],label[for="idsittfc"],label[for="idcanal"]','#'+nomeForm);
+		var rLinha      = $('label[for="nrtelefo"],label[for="secpscto"],label[for="idorigem"],label[for="dtrevisa"]','#'+nomeForm);
 
 		var cGrupo_1    = $('#tptelefo,#nrdddtfc,#nrtelefo,#idsittfc,#idorigem','#'+nomeForm);
 		var cIdentif   	= $('#tptelefo','#'+nomeForm);
@@ -287,6 +288,8 @@ function controlaLayout(operacao) {
 		var cSetor		= $('#secpscto','#'+nomeForm);
 		var cIdSituacao	= $('#idsittfc','#'+nomeForm);
 		var cIdOrigem	= $('#idorigem','#'+nomeForm);
+		var cIdCanal	= $('#idcanal' ,'#'+nomeForm);
+		var cDtRevisa	= $('#dtrevisa','#'+nomeForm);
 		var cContato	= $('#nmpescto','#'+nomeForm);	
 
 		sugest.css({'display':'none'});
@@ -302,6 +305,8 @@ function controlaLayout(operacao) {
 		cSetor.addClass('alphanum').attr('maxlength','7').css('width','87px');
 		cIdSituacao.css('width','60px');
 		cIdOrigem.css('width','87px');
+		cIdCanal.css('width','60px');
+		cDtRevisa.css('width','87px');
 		cContato.addClass('alphanum').attr('maxlength','30').css('width','230px');
 		
 

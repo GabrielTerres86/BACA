@@ -407,6 +407,40 @@ function controlaLayout(operacao) {
     controlaFocoEnter("frmDadosComercial");
     controlaFocoEnter("frmManipulaRendi");
 
+    //FORM ATUALIZACAO CADASTRAL
+    var rIdCanalE  = $('label[for="idcanal_empresa"]' , '#' + nomeForm);
+    var rDtRevisaE = $('label[for="dtrevisa_empresa"]', '#' + nomeForm);
+
+    rIdCanalE.addClass('rotulo').css('width', '120px');
+    rDtRevisaE.addClass('rotulo-linha').css('width', '120px');
+
+    var cIdCanalE  = $('#idcanal_empresa' , '#' + nomeForm);
+    var cDtRevisaE = $('#dtrevisa_empresa', '#' + nomeForm);
+
+    cIdCanalE.css('width', '120px');
+    cIdCanalE.css('text-align', 'center');
+    cDtRevisaE.css('width', '120px');
+    cDtRevisaE.css('text-align', 'center');
+    cIdCanalE.desabilitaCampo();
+    cDtRevisaE.desabilitaCampo();
+
+    var rIdCanalR  = $('label[for="idcanal_renda"]' , '#' + nomeForm);
+    var rDtRevisaR = $('label[for="dtrevisa_renda"]', '#' + nomeForm);
+
+    rIdCanalR.addClass('rotulo').css('width', '120px');
+    rDtRevisaR.addClass('rotulo-linha').css('width', '120px');
+
+    var cIdCanalR  = $('#idcanal_renda' , '#' + nomeForm);
+    var cDtRevisaR = $('#dtrevisa_renda', '#' + nomeForm);
+
+    cIdCanalR.css('width', '120px');
+    cIdCanalR.css('text-align', 'center');
+    cDtRevisaR.css('width', '120px');
+    cDtRevisaR.css('text-align', 'center');
+    cIdCanalR.desabilitaCampo();
+    cDtRevisaR.desabilitaCampo();
+
+
     //FORM RENDAS AUTOMATICAS
     var rDtrefere = $('label[for="dtrefere"]', '#' + nomeForm);
     var rVltotmes = $('label[for="vltotmes"]', '#' + nomeForm);

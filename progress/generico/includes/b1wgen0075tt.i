@@ -56,7 +56,11 @@ DEFINE TEMP-TABLE tt-comercial NO-UNDO
     FIELD cxpotct1 AS INTE
     FIELD inpolexp AS INTE
     FIELD nrdrowid AS ROWID
-    FIELD dsjusren AS CHAR.
+    FIELD dsjusren AS CHAR
+    FIELD dscanale AS CHAR
+    FIELD dtrevise AS DATE FORMAT "99/99/9999"
+    FIELD dscanalr AS CHAR
+    FIELD dtrevisr AS DATE FORMAT "99/99/9999".
 
 &IF DEFINED(TT-LOG) <> 0 &THEN
 

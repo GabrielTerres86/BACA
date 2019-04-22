@@ -109,6 +109,32 @@
 	</fieldset>
 	
 	<fieldset>
+		<legend><? echo utf8ToHtml('Atualização Cadastral') ?></legend>
+
+		<label for="idcanal_empresa">Empresa Canal:</label>
+		<select id="idcanal_empresa" name="idcanal_empresa">
+			<option value=""> - </option>
+			<option value="1" <? if (getByTagName($registro,'idcanal_empresa') == '1' ){ echo ' selected'; } ?>> IB </option>
+			<option value="2" <? if (getByTagName($registro,'idcanal_empresa') == '2' ){ echo ' selected'; } ?>> Mobile </option>
+		</select>
+
+		<label for="dtrevisa_renda"><? echo utf8ToHtml('Data revisão:'); ?></label>
+		<input name="dtrevisa_renda" id="dtrevisa_renda" type="text"  value="<? echo getByTagName($endereco,'dtrevisa_renda') ?>" />
+
+		<label for="idcanal_renda">Renda Canal:</label>
+		<select id="idcanal_renda" name="idcanal_renda">
+			<option value=""> - </option>
+			<option value="1" <? if (getByTagName($registro,'idcanal_renda') == '1' ){ echo ' selected'; } ?>> IB </option>
+			<option value="2" <? if (getByTagName($registro,'idcanal_renda') == '2' ){ echo ' selected'; } ?>> Mobile </option>
+		</select>
+
+		<label for="dtrevisa_renda"><? echo utf8ToHtml('Data revisão:'); ?></label>
+		<input name="dtrevisa_renda" id="dtrevisa_renda" type="text"  value="<? echo getByTagName($endereco,'dtrevisa_renda') ?>" />
+		
+	    <br style="clear:both" />
+	</fieldset>
+
+	<fieldset>
 		<legend><? echo utf8ToHtml('Rendas automáticas') ?></legend>
 
 		<label for="dtrefere">Refer&ecirc;ncia.:</label>

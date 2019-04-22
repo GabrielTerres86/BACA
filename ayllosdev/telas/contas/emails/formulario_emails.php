@@ -22,6 +22,25 @@
 	<label for="nmpescto">Nome Contato:</label>
 	<input name="nmpescto" id="nmpescto" type="text" value="<? echo getByTagName($registro,'nmpescto') ?>" />
 	<br />
+
+	<?php if ($inpessoa == 1) { ?>
+		<label for="idsittfc"><? echo utf8ToHtml('Situação:'); ?></label>
+		<select id="idsittfc" name="idsittfc">
+			<option value=""> - </option>
+			<option value="1" <? if (getByTagName($registro,'idsittfc') == '1' ){ echo ' selected'; } ?>> Ativo </option>
+			<option value="2" <? if (getByTagName($registro,'idsittfc') == '2' ){ echo ' selected'; } ?>> Inativo </option>
+		</select>
+
+		<label for="idcanal"><? echo utf8ToHtml('Canal:'); ?></label>
+		<select id="idcanal" name="idcanal">
+			<option value=""> - </option>
+			<option value="1" <? if (getByTagName($registro,'idcanal') == '1' ){ echo ' selected'; } ?>> IB </option>
+			<option value="2" <? if (getByTagName($registro,'idcanal') == '2' ){ echo ' selected'; } ?>> Mobile </option>
+		</select>
+
+		<label for="dtrevisa"><? echo utf8ToHtml('Data revisão:'); ?></label>
+		<input name="dtrevisa" id="dtrevisa" type="text"  value="<? echo getByTagName($endereco,'dtrevisa') ?>" />
+	<?php } ?>
 	
 </form>
 

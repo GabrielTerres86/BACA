@@ -10,6 +10,8 @@
  *
  *                21/07/2016 - Remover caracteres especiais e acentos do endereco de email
  *                             Chamado 490892 - Heitor (RKAM)
+ *
+ *				  19/03/2019 - Inserção dos campos de Status, Canal e Data de revisão - Vitor S. Assanuma (GFT)
  */
 
 var nrdrowid  = ''; 
@@ -217,8 +219,8 @@ function manterRotina( operacao ) {
 }
 
 function controlaLayout(operacao) {		
-	
-	altura  = ( in_array(operacao,['AT','IT','FI','FA','FE','SC','']) ) ? '205px' : '115px';
+	var alt = inpessoa == 1 ? '145px' : '115px';
+	altura  = ( in_array(operacao,['AT','IT','FI','FA','FE','SC','']) ) ? '205px' : alt;
 	largura = ( in_array(operacao,['AT','IT','FI','FA','FE','SC','']) ) ? '730px' : '500px';
 	divRotina.css('width',largura);	
 	$('#divConteudoOpcao').css('height',altura);
@@ -256,12 +258,34 @@ function controlaLayout(operacao) {
 		var cEmail	  = $('#dsdemail','#'+nomeForm);
 		var cSetor	  = $('#secpscto','#'+nomeForm);
 		var cContato  = $('#nmpescto','#'+nomeForm);		
+		var cSituacao = $('#idsittfc','#'+nomeForm);		
+		var cIdCanal  = $('#idcanal','#'+nomeForm);		
+		var cDtRevisa = $('#dtrevisa','#'+nomeForm);
+
+		var rEmail    = $('label[for="dsdemail"]','#'+nomeForm);
+		var rSetor    = $('label[for="secpscto"]','#'+nomeForm);
+		var rContato  = $('label[for="nmpescto"]','#'+nomeForm);
+		var rSituacao = $('label[for="idsittfc"]','#'+nomeForm);
+		var rIdCanal  = $('label[for="idcanal"]','#'+nomeForm);
+		var rDtRevisa = $('label[for="dtrevisa"]','#'+nomeForm);	
+
+		rEmail.addClass('rotulo').css('width','90px');
+		rSetor.addClass('rotulo').css('width','90px');
+		rContato.addClass('rotulo').css('width','90px');
+		rSituacao.addClass('rotulo').css('width','90px');
+		rIdCanal.addClass('rotulo-linha').css('width','60px');
+		rDtRevisa.addClass('rotulo-linha').css('width','90px');
 		
-		rRotulos.addClass('rotulo').css('width','90px');
 		cTodos.addClass('campo');
 		cEmail.addClass('email').css('width','377px').attr('maxlength','60');
 		cSetor.addClass('alphanum').css('width','70px').attr('maxlength','8');
 		cContato.addClass('alphanum').css('width','277px').attr('maxlength','25');
+		cSituacao.css('width','60px');
+		cIdCanal.css('width','70px');
+		cDtRevisa.css('width','85px');
+		cSituacao.desabilitaCampo();
+		cIdCanal.desabilitaCampo();
+		cDtRevisa.desabilitaCampo();
 		
 		// Se for pessoa Física, bloquear os campos Setor e Nome Contato
 		if( inpessoa == 1 ) {

@@ -897,6 +897,47 @@ PROCEDURE obtem-endereco:
                                      INPUT par_cdagenci,
                                      INPUT par_nrdcaixa,
                                      INPUT TRUE ).
+             /*
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+            /* Efetuar a chamada a rotina Oracle */
+            RUN STORED-PROCEDURE pc_busca_tbcadast
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.nrcpfcgc /* Cpf */
+                                                ,INPUT par_idseqttl     /* Numero sequencial  */
+                                                ,INPUT "ENDERECO"       /* Tabela que será buscada */ 
+                                                ,OUTPUT 0               /* Codigo da situacao */
+                                                ,OUTPUT 0               /* Descricao da situacao   */
+                                                ,OUTPUT 0               /* Codigo do Canal    */
+                                                ,OUTPUT ""              /* Descricao do Canal */
+                                                ,OUTPUT ?               /* Data da Revisao    */
+                                                ,OUTPUT "").            /* Descrição da crítica    */
+            /* Fechar o procedimento para buscarmos o resultado */ 
+            CLOSE STORED-PROC pc_busca_tbcadast
+             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+            ASSIGN aux_idcanal  = pc_busca_tbcadast.pr_idcanal
+                                  WHEN pc_busca_tbcadast.pr_idcanal <> ?
+                   aux_dscanal  = pc_busca_tbcadast.pr_dscanal
+                                  WHEN pc_busca_tbcadast.pr_dscanal <> ?.
+                   aux_dtrevisa = pc_busca_tbcadast.pr_dtrevisa
+                                  WHEN pc_busca_tbcadast.pr_dtrevisa <> ?.
+                   aux_dscritic = pc_busca_tbcadast.pr_dscritic
+                                  WHEN pc_busca_tbcadast.pr_dscritic <> ?
+                                 
+            /* Se retornou erro */
+            IF aux_dscritic <> "" THEN 
+              DO:
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1, /** Sequencia **/
+                                 INPUT 0,
+                                 INPUT-OUTPUT aux_dscritic).
+              END.    
+
+            ASSIGN tt-email-endereco.dssituac = aux_dssituac
+                   tt-email-endereco.dsdcanal = aux_dscanal
+                   tt-email-endereco.dtrevisa = aux_dtrevisa.
+         */
                                      
         END.
     ELSE
@@ -1191,7 +1232,7 @@ PROCEDURE gerenciar-atualizacao-endereco:
                                 END.
                         END.
                     ELSE
-                        ASSIGN aux_dscritic = "Endereco nao cadastrado.".
+                        ASSIGN aux_dscritic = "11 - Endereco nao cadastrado.".
                 END.
 
             LEAVE.
@@ -1236,7 +1277,7 @@ PROCEDURE gerenciar-atualizacao-endereco:
                                 END.
                         END.
                     ELSE
-                        ASSIGN aux_dscritic = "Endereco nao cadastrado.".
+                        ASSIGN aux_dscritic = "12 - Endereco nao cadastrado.".
                 END.
 
             LEAVE.

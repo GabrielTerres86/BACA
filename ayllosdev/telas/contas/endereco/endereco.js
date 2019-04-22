@@ -14,6 +14,7 @@
  * 005: [15/09/2017] Kelvin			   (CECRED) Alterações referente a melhoria 339.
  * 006: [27/09/2017] Kelvin 		   (CECRED) Removido campos nrdoapto, cddbloco e nrcxapst (PRJ339).
  * 007: [06/07/2018] André Bohn		   (MoutS) Ajustado para remover os caracteres especiais no campo de complemento (PRB0040114).
+ * 007:	[19/03/2019] Vitor S. Assanuma (GFT) Inserção dos campos de Canal e Data de revisão.
  */
 
 var nomeForm = 'frmEndereco'; // Nome do Formulário 
@@ -304,6 +305,8 @@ function controlaLayout(operacao) {
 	var rEst	= $('label[for="cdufende"],label[for="ib_cdufende"]','#'+nomeForm);	
 	var rCid	= $('label[for="nmcidade"],label[for="ib_nmcidade"]','#'+nomeForm);
 	var rOri	= $('label[for="idorigem"],label[for="ib_idorigem"]','#'+nomeForm);
+	var rCan	= $('label[for="idcanal"], label[for="ib_idcanal"]', '#'+nomeForm);
+	var rRev	= $('label[for="dtrevisa"],label[for="ib_dtrevisa"]','#'+nomeForm);
 	
 	rCep.addClass('rotulo').css('width','55px');
 	rEnd.addClass('rotulo-linha').css('width','25px');
@@ -313,6 +316,8 @@ function controlaLayout(operacao) {
 	rCid.addClass('rotulo').css('width','55px');
 	rEst.addClass('rotulo-linha').css('width','52px');
 	rOri.addClass('rotulo').css('width','55px');
+	rCan.addClass('rotulo-linha').css('width','40px');
+	rRev.addClass('rotulo-linha').css('width','94px');
 	
 	// CAMPOS - IMÓVEL
 	var cImovel	= $('#incasprp,#ib_incasprp','#'+nomeForm);
@@ -338,6 +343,8 @@ function controlaLayout(operacao) {
 	var cEst	= $('#cdufende,#ib_cdufende','#'+nomeForm);	
 	var cCid	= $('#nmcidade,#ib_nmcidade','#'+nomeForm);
 	var cOri	= $('#idorigem,#ib_idorigem','#'+nomeForm);
+	var cCan	= $('#idcanal, #ib_idcanal', '#'+nomeForm);
+	var cRev	= $('#dtrevisa,#ib_dtrevisa','#'+nomeForm);
 
 
 	cCep.addClass('cep pesquisa').css('width','65px').attr('maxlength','9');
@@ -347,6 +354,8 @@ function controlaLayout(operacao) {
 	cEst.css('width','62px');
 	cCid.addClass('alphanum').css('width','300px').attr('maxlength','25');
 	cOri.css('width','87px');
+	cCan.css('width','87px');
+	cRev.css('width','100px');
 	
 	// Para evitar a digitação de caracteres especiais que ocasiona erro na recuperação através de XML
     cCom.bind("keyup", function () {
@@ -367,7 +376,7 @@ function controlaLayout(operacao) {
 	switch(operacao) {	
 		case 'CA': // Consulta Alteração
 			cTodos.habilitaCampo();
-			$('#dsendere,#cdufende,#nmbairro,#nmcidade,#nranores','#'+nomeForm).desabilitaCampo();
+			$('#dsendere,#cdufende,#nmbairro,#nmcidade,#nranores,#idcanal,#dtrevisa','#'+nomeForm).desabilitaCampo();
 			montaSelect('b1wgen0059.p','busca_tpimovel','incasprp','incasprp','dscasprp',incasprp);
 			layoutPadrao();
 			break;

@@ -77,7 +77,17 @@
 			<option value="2" <? if (getByTagName($endereco,'idorigem') == '2' ){ echo ' selected'; } ?>> Cooperativa </option>
 			<option value="3" <? if (getByTagName($endereco,'idorigem') == '3' ){ echo ' selected'; } ?>> Terceiros </option>
 		</select>
+		<?php if ($inpessoa == 1) { ?>
+			<label for="idcanal"><? echo utf8ToHtml('Canal:'); ?></label>
+			<select id="idcanal" name="idcanal">
+				<option value=""> - </option>
+				<option value="1" <? if (getByTagName($endereco,'idcanal') == '1' ){ echo ' selected'; } ?>> IB </option>
+				<option value="2" <? if (getByTagName($endereco,'idcanal') == '2' ){ echo ' selected'; } ?>> Mobile </option>
+			</select>
 		
+			<label for="dtrevisa"><? echo utf8ToHtml('Data de revisão:'); ?></label>
+			<input name="dtrevisa" id="dtrevisa" type="text"  value="<? echo getByTagName($endereco,'dtrevisa') ?>" />
+		<?php } ?>
 		<br style="clear:both" />
 	
 	</fieldset>
