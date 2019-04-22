@@ -8329,6 +8329,38 @@ PROCEDURE altera-valor-proposta:
         ASSIGN aux_contigen = FALSE.
         IF pc_param_sistema.pr_dsvlrprm = "1" then
            ASSIGN aux_contigen = TRUE.
+        
+    Grava_valor:
+    DO WHILE TRUE TRANSACTION ON ERROR UNDO Grava_valor, LEAVE Grava_valor:
+
+        DO  aux_contador = 1 TO 10:
+
+            FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
+                               crawepr.nrdconta = par_nrdconta   AND
+                               crawepr.nrctremp = par_nrctremp
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+            IF   NOT AVAIL crawepr   THEN
+                 IF   LOCKED crawepr   THEN
+                      DO:
+                          aux_cdcritic = 371.
+                          PAUSE 1 NO-MESSAGE.
+                          NEXT.
+                      END.
+                 ELSE
+                      DO:
+                          aux_cdcritic = 510.
+                          LEAVE.
+                      END.
+
+            aux_cdcritic = 0.
+            LEAVE.
+
+        END.
+
+        IF  aux_cdcritic <> 0    OR
+            aux_dscritic <> ""   THEN
+            LEAVE.
 
 			
 	    /* PJ438 Sprint 5 trecho movido para esse ponto par_dsdopcao SVP */
