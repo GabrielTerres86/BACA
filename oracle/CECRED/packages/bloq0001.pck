@@ -1955,10 +1955,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
       IF vr_des_reto = 'NOK' THEN
         IF vr_tab_erro.COUNT() > 0 THEN
           -- Retornar a descrição da Critica
-          pr_dscritic := 'Erro ao verificar saldo de Poupança da Conta Terceira: '
+          pr_dscritic := 'Erro ao verificar saldo de Aplic. Programada da Conta Terceira: '
           || vr_tab_erro(vr_tab_erro.first).dscritic;
         ELSE
-          pr_dscritic := 'Erro ao verificar saldo de Poupança da Conta Terceira: '
+          pr_dscritic := 'Erro ao verificar saldo de Aplic. Programada da Conta Terceira: '
           || vr_dscritic;
           END IF;
           
@@ -2339,7 +2339,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
             END IF;
             -- Se selecionado Poup Própria
             IF vr_inpoupanca_propria = 1 THEN
-              vr_des_log_tipos := vr_des_log_tipos || ' Poupanças Próprias,';
+              vr_des_log_tipos := vr_des_log_tipos || ' Aplic. Programadas Próprias,';
             END IF;
             --Se selecionado Aplicação Terc
             IF vr_inaplicacao_terceiro = 1 THEN
@@ -2347,7 +2347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
             END IF;
             -- Se selecionado Poup. Terc
             IF vr_inpoupanca_terceiro = 1 THEN
-              vr_des_log_tipos := vr_des_log_tipos || ' Poupanças Terceiro Conta ' || vr_nrconta_terceiro || ',';
+              vr_des_log_tipos := vr_des_log_tipos || ' Aplic. Programadas Terceiro Conta ' || vr_nrconta_terceiro || ',';
             END IF;
             
             vr_des_log := vr_des_log || rtrim(vr_des_log_tipos,',');
