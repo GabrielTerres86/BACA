@@ -57,7 +57,7 @@ BEGIN
     FOR rw_cdagenci IN cr_cdagenci(rw_cdcooper.cdcooper) LOOP
       FOR rw_cdbccxlt IN cr_cdbccxlt LOOP
         FOR rw_nrdolote IN cr_nrdolote LOOP
-          FOR i IN 0..60 LOOP
+          FOR i IN 0..30 LOOP
             vr_dschave := rw_cdcooper.cdcooper||';'
                         ||to_char((rw_cdcooper.dtmvtolt + i),'DD/MM/RRRR')||';'
                         ||rw_cdagenci.cdagenci||';'
