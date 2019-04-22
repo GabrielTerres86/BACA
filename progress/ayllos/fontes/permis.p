@@ -1113,18 +1113,21 @@ DO WHILE TRUE:
                                        f_copia
                         tel_flgcoops = FALSE.
 
-                 IF glb_cdcooper = 3 AND CAN-DO("16," + /* SEGURANCA TI */
-                                                "18," + /* SUPORTE      */
-                                                "20"    /* TI           */
-                                          ,STRING(glb_cddepart)) THEN
+                 IF (glb_cdcooper = 1 OR glb_cdcooper = 3) AND CAN-DO("16," + /* SEGURANCA TI */
+                                                                      "18," + /* SUPORTE      */
+                                                                      "20"    /* TI           */
+                                                                     ,STRING(glb_cddepart)) THEN
                     DO:
                        IF tel_cdoperad = tel_cdopedst THEN
                           DO:
                               DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                  ASSIGN aux_confirma = "N".
                                  MESSAGE "ATENCAO: Operador de destino igual ao operador de origem da copia.".
-                                 MESSAGE "Deseja copiar o perfil de acesso somente nas coops. singulares?"
-                                 UPDATE aux_confirma.
+                                 
+                                 IF glb_cdcooper = 3 THEN
+                                    MESSAGE "Copiar o perfil de acesso somente nas coops. singulares?" UPDATE aux_confirma.
+                                 ELSE
+                                    MESSAGE "Copiar o perfil de acesso somente nas demais coops. singulares?" UPDATE aux_confirma.                                 
 
                                  ASSIGN tel_flgcoops = TRUE.
                                 
@@ -1143,8 +1146,11 @@ DO WHILE TRUE:
                           DO:
                               DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                  ASSIGN aux_confirma = "N".
-                                 MESSAGE "Deseja copiar o perfil de acesso em todas as cooperativas?"
-                                 UPDATE aux_confirma.
+                                 
+                                 IF glb_cdcooper = 3 THEN
+                                    MESSAGE "Copiar o perfil de acesso em todas as cooperativas?" UPDATE aux_confirma.
+                                 ELSE
+                                    MESSAGE "Copiar o perfil de acesso para as demais cooperativas, exceto Ailos?" UPDATE aux_confirma.                                 
 
                                  ASSIGN tel_flgcoops = TRUE.
                                 
@@ -1857,6 +1863,9 @@ PROCEDURE copiar_perfil:
                                 NOT tel_flgcoops) OR
                                 tel_flgcoops) NO-LOCK:
                                 
+           IF tel_flgcoops AND glb_cdcooper = 1 AND crapcop.cdcooper = 3 THEN                     
+              NEXT.
+                                
            IF crapcop.cdcooper = glb_cdcooper AND tel_cdoperad = tel_cdopedst THEN
               NEXT.
 
@@ -1898,6 +1907,9 @@ PROCEDURE copiar_perfil:
                           NOT tel_flgcoops) OR
                           tel_flgcoops) NO-LOCK:
 
+     IF tel_flgcoops AND glb_cdcooper = 1 AND crapcop.cdcooper = 3 THEN                     
+        NEXT.
+        
      FOR FIRST crapope WHERE crapope.cdcooper = crapcop.cdcooper AND 
                              crapope.cdoperad = tel_cdopedst     NO-LOCK: END.
                              
