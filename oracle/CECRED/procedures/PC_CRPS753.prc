@@ -988,8 +988,6 @@ BEGIN
     vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper => pr_cdcooper --> Código da coopertiva
                                                  ,pr_cdprogra => vr_cdprogra --> Código do programa
                                                  );
-    -- remover teste David de forçar paralelismo
-    rw_crapdat.inproces := 3;
     
      /* Paralelismo visando performance Rodar Somente no processo Noturno */
     if rw_crapdat.inproces  > 2 and
