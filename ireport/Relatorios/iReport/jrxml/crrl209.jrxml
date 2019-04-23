@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-03-12T16:29:25 -->
+<!-- 2019-04-22T22:15:13 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl209" language="groovy" pageWidth="442" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.657341500000001"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="41"/>
+	<property name="ireport.encoding" value="UTF-8"/>
 	<subDataset name="dataset1" uuid="0695e938-6a20-48a5-9cc2-5c0937dbf294"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -150,7 +151,7 @@
 					<textElement>
 						<font fontName="Courier New" size="9"/>
 					</textElement>
-					<text><![CDATA[APLICACAO POUPANCA PROGRAMADA:]]></text>
+					<text><![CDATA[APLICACAO PROGRAMADA:]]></text>
 				</staticText>
 				<textField>
 					<reportElement x="165" y="0" width="55" height="11" uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06"/>

@@ -18021,7 +18021,7 @@ END pc_consulta_ir_pj_trim;
                          '" nrctrrpp="'||to_char(vr_tab_dados_rpp(vr_index_dados_rpp).nrctrrpp,'fm99g999g990')||
                          '" dtvctopp="'||to_char(vr_tab_dados_rpp(vr_index_dados_rpp).dtvctopp,'DD/MM/YYYY')||
                                      '" dtaderpp="'||to_char(vr_tab_dados_rpp(vr_index_dados_rpp).dtmvtolt,'DD/MM/YYYY')||
-                                     '" dsfinali="'||UPPER(vr_tab_dados_rpp(vr_index_dados_rpp).dsfinali)||
+                                     '" dsfinali="'||gene0007.fn_caract_acento(UPPER(vr_tab_dados_rpp(vr_index_dados_rpp).dsfinali),1,'#$&%¹²³ªº°*!?<>|','                  ')||
                                      '" dssituac="'|| UPPER(vr_tab_dados_rpp(vr_index_dados_rpp).dssitrpp)|| -- Situacao 
                          '" dtiniper="'||to_char(pr_dtiniper,'DD/MM/YYYY')||
                          '" dtfimper="'||to_char(pr_dtfimper,'DD/MM/YYYY')||
