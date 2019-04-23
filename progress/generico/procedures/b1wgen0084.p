@@ -324,8 +324,13 @@
               31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts         
 
               19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)     
-			  
+
 			  13/12/2018 - P442 - Ao checar Chassi alienado em outros contratos, descartar refinanciamentos (Marcos-Envolti)         
+
+              19/12/2018 - P298.2 - Inclusão dos campos tpemprst e vlprecar no retorno da procedure busca_dados_efetivacao_proposta
+                           (Andre Clemer - Supero)
+
+              27/12/2018 - PJ298.2 - Alterado gravacao do campo vlpreemp para o POS (Rafael Faria - Supero)                           
                            
 			  03/01/2019 - Ajuste na gravação do IOF do emprestimo (INC0029419) Daniel
 ............................................................................. */
@@ -2121,7 +2126,9 @@ PROCEDURE busca_dados_efetivacao_proposta:
            tt-efetiv-epr.avalist2 = " "
            tt-efetiv-epr.dtdpagto = crawepr.dtdpagto
            tt-efetiv-epr.idcobope = crawepr.idcobope
-           tt-efetiv-epr.idfiniof = crawepr.idfiniof.
+           tt-efetiv-epr.idfiniof = crawepr.idfiniof
+           tt-efetiv-epr.tpemprst = crawepr.tpemprst
+           tt-efetiv-epr.vlprecar = crawepr.vlprecar.
 
     /* Se tiver contrato em liquidacao, envia para efetivacao da proposta para refinanciamento */	
     IF (crawepr.nrctrliq[1] > 0 OR crawepr.nrctrliq[2] > 0 OR crawepr.nrctrliq[3] > 0
@@ -2776,6 +2783,40 @@ PROCEDURE valida_dados_efetivacao_proposta:
     END.
             END.
         END.
+
+        /* Verificar se um dos bens da proposta ja se
+           encontra alienado em outro contrato */
+        FOR EACH crapbpr WHERE crapbpr.cdcooper = par_cdcooper
+                           AND crapbpr.nrdconta = par_nrdconta
+                           AND crapbpr.nrctrpro = par_nrctremp
+                           AND crapbpr.flgalien = TRUE
+                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,OUTROS VEICULOS",crapbpr.dscatbem)
+                           NO-LOCK:
+            FOR EACH crapepr WHERE crapepr.cdcooper = crapbpr.cdcooper
+                               AND crapepr.nrdconta = crapbpr.nrdconta
+                               AND crapepr.inliquid = 0
+                               NO-LOCK:
+                FOR FIRST crabbpr WHERE crabbpr.cdcooper = crapepr.cdcooper
+                                    AND crabbpr.nrdconta = crapepr.nrdconta
+                                    AND crabbpr.nrctrpro = crapepr.nrctremp
+                                    AND crabbpr.flgalien = TRUE
+                                    AND crabbpr.dschassi = crapbpr.dschassi
+                                    AND (crabbpr.cdsitgrv <> 4 AND
+                                         crabbpr.cdsitgrv <> 5)
+                                    NO-LOCK: END.
+                IF AVAIL crabbpr THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "Ja existe o mesmo chassi alienado em um contrato liberado!".
+        
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 2,
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+            
+                    RETURN "NOK".
     END.
       END.
 
@@ -4371,7 +4412,9 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.cdfinemp = crawepr.cdfinemp
               crapepr.cdlcremp = crawepr.cdlcremp
               crapepr.vlemprst = crawepr.vlemprst
-              crapepr.vlpreemp = crawepr.vlpreemp
+              crapepr.vlpreemp = IF (crawepr.idcarenc > 1) THEN
+                                      crawepr.vlprecar
+                                 ELSE crawepr.vlpreemp
               crapepr.qtpreemp = crawepr.qtpreemp
               crapepr.nrctaav1 = crawepr.nrctaav1
               crapepr.nrctaav2 = crawepr.nrctaav2

@@ -661,6 +661,7 @@ PROCEDURE valores_entrada:
 
             WHEN "idcarenc" THEN aux_idcarenc = INTE(tt-param.valorCampo).
             WHEN "dtcarenc" THEN aux_dtcarenc = DATE(tt-param.valorCampo).
+            WHEN "vlprecar" THEN aux_vlprecar = DECI(tt-param.valorCampo).
 
             WHEN "cdufende" THEN aux_cdufende = tt-param.valorCampo.
             WHEN "dscompend" THEN aux_dscompend = tt-param.valorCampo.

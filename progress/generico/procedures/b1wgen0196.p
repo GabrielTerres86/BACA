@@ -28,6 +28,8 @@
 
 			   28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
 
+               21/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -131,6 +133,7 @@ PROCEDURE grava_dados:
     DEF VAR aux_recidepr AS INTE                                    NO-UNDO.
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
     DEF VAR aux_nivrisco AS CHAR                                    NO-UNDO.
+    DEF VAR aux_vlprecar AS DECI                                    NO-UNDO.
     DEF VAR aux_qtdiacar AS INTE                                    NO-UNDO.
     DEF VAR aux_vlajuepr AS DECI                                    NO-UNDO.
     DEF VAR aux_txdiaria AS DECI                                    NO-UNDO.
@@ -325,7 +328,8 @@ PROCEDURE grava_dados:
                                              OUTPUT tt-proposta-epr.flgpagto,
                                              OUTPUT tt-proposta-epr.dtdpagto,
                                              OUTPUT aux_vlutiliz,
-                                             OUTPUT aux_nivrisco).
+                                             OUTPUT aux_nivrisco,
+                                             OUTPUT aux_vlprecar).
 
      IF RETURN-VALUE <> "OK" THEN
      DO:
