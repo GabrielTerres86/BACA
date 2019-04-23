@@ -58,7 +58,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
                           
   -- Rotina para processar retorno de conciliação pendentes de processamento
   PROCEDURE pc_processo_controle(pr_tipexec   IN NUMBER     --> Tipo da Execução
-                                ,pr_dsinform OUT VARCHAR2   --> Descrição de informativos na execução
+                                ,pr_dsinform OUT CLOB       --> Descrição de informativos na execução
                                 ,pr_dscritic OUT VARCHAR2); --> Descrição de critica
   
 
@@ -4712,7 +4712,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
   
   -- Rotina para processar retorno de conciliação pendentes de processamento
   PROCEDURE pc_processo_controle(pr_tipexec   IN NUMBER       --> Tipo da Execução
-                                ,pr_dsinform OUT VARCHAR2     --> Descrição de informativos na execução
+                                ,pr_dsinform OUT CLOB         --> Descrição de informativos na execução
                                 ,pr_dscritic OUT VARCHAR2) IS --> Retorno de crítica
   BEGIN
     ---------------------------------------------------------------------------------------------------------------
