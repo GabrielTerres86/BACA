@@ -1502,6 +1502,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              pc_incluir_nova_aplicacao, pc_excluir_nova_aplicacao, pc_efetua_resgate_online, pc_excluir_agendmto
                              Rubens Lima (Mouts)
                              
+				23/04/2019 - INC0011348 - Ajuste no controle de resgate duplo de aplicação para que não considere data 
+                             e hora superior que atual inserida na CRAPLRG.
+
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -18710,7 +18713,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
          AND lrg.vllanmto = pr_vllanmto
          AND lrg.dtresgat = pr_dtresgat    
          AND lrg.tpresgat = pr_tpresgat
-         AND lrg.nraplica = pr_nraplica;
+         AND lrg.nraplica = pr_nraplica
+         AND lrg.hrtransa <= ((SYSDATE-TRUNC(SYSDATE))*(24*60*60)); --INC0011348
     
     -- Variáveis
     vr_nrseqdig       craplot.nrseqdig%TYPE;
