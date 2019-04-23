@@ -4152,6 +4152,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
               ,crawepr.percetop
               ,crawepr.txdiaria
               ,crawepr.cdlcremp
+              ,crawepr.tpemprst
+              ,(SELECT COUNT(1)
+                  FROM crappep
+                 WHERE crappep.cdcooper = crawepr.cdcooper
+                   AND crappep.nrdconta = crawepr.nrdconta
+                   AND crappep.nrctremp = crawepr.nrctremp
+                   AND crappep.inliquid = 1
+                   AND crappep.inprejuz = 0) qtprcpag
+              ,(SELECT MAX(dtvencto)
+                  FROM crappep
+                 WHERE crappep.cdcooper = crawepr.cdcooper
+                   AND crappep.nrdconta = crawepr.nrdconta
+                   AND crappep.nrctremp = crawepr.nrctremp) dtvencto
           FROM crawepr
          WHERE crawepr.cdcooper = pr_cdcooper
            AND crawepr.nrdconta = pr_nrdconta
@@ -4473,10 +4486,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
         '  <txefetivo>'|| TO_CHAR(vr_txanual,'fm9999g999g990d00000') ||'</txefetivo>'||
         '  <txcet>'|| TO_CHAR(rw_crawepr.percetop,'fm9999g999g990d00000') ||'</txcet>'||
         '  <qtpreemp>'|| rw_crawepr.qtpreemp ||'</qtpreemp>'||
+		'  <qtprcpag>'|| rw_crawepr.qtprcpag ||'</qtprcpag>'||
+        '  <dtvencto>'|| rw_crawepr.dtvencto ||'</dtvencto>'||
         '  <vlpreemp>'|| TO_CHAR(rw_crawepr.vlpreemp,'fm9999g999g990d00') ||'</vlpreemp>'||
         '  <dtdpagto>'|| TO_CHAR(rw_crawepr.dtdpagto,'DD/MM/YYYY') ||'</dtdpagto>'||
         '  <dtultpgt>'|| TO_CHAR(ADD_MONTHS(rw_crawepr.dtdpagto, rw_crawepr.qtpreemp - 1),'DD/MM/YYYY') ||'</dtultpgt>'||
         '  <dsdadata>'|| vr_dsdadata ||'</dsdadata>'||
+		'  <tpemprst>'|| rw_crawepr.tpemprst ||'</tpemprst>'||
         '</dados>');
 
       --Finaliza TAG Relatorio

@@ -2163,7 +2163,10 @@ BEGIN
 
                    05/04/2019 - Ajuste (INC0029082) busca da taxa CET: 
                                 estava considerando apenas inpessoa =1 e recisa buscar para inpessoa = 2 também
-                		 					  INC0011321 (Ana Volles).
+                		 					  INC0011321 (Ana Volles).	 
+
+                   10/01/2019 - P298 - Alteração dos parâmetros da taxa de juros,
+                               Custo efetivo financeiro, percentual do custo financeiro. (Anderson-Alan Supero)
                   
     .......................................................................................................... */
 
@@ -2187,6 +2190,7 @@ BEGIN
                crawepr.qtpreemp,
                crawepr.dtvencto,
                crawepr.percetop,
+               crawepr.vlperidx,
 			   crawepr.idcobope,
                crapass.inpessoa,
                crapass.nrcpfcgc,
@@ -2918,8 +2922,8 @@ BEGIN
                              '<diavenct>'     || to_char(rw_crawepr.dtvencto,'DD')           || '</diavenct>'     ||
                              '<amigavel>'     || vr_dados_coop                               || '</amigavel>'     || -- dados de atendimento da coop para clausula de solucao amigavel
                              '<dscusfin>'     || rw_crawepr.nmdindex                         || '</dscusfin>'     ||
-                             '<pccusfin>'     || to_char(rw_crawepr.txjurvar,'FM990D00') || ' %' || '</pccusfin>' ||
-                             '<vlminpre>'     || 'R$ ' || to_char(vr_vlminpre,'FM99G999G990D00') || ' + 100% do CDI</vlminpre>' ||
+                             '<pccusfin>'     || to_char(rw_crawepr.vlperidx,'FM990D00') || ' %' || '</pccusfin>' ||
+                             '<vlminpre>'     || 'R$ ' || to_char(vr_vlminpre,'FM99G999G990D00') || ' + ' || to_char(rw_crawepr.vlperidx,'FM990D00') || '% do ' || rw_crawepr.nmdindex || '</vlminpre>' ||
                              '<dtpagcar>'     || rw_crawepr.dscarencia                       || '</dtpagcar>'     ||
                              '<dtpricar>'     || nvl(to_char(rw_crawepr.dtcarenc,'DD/MM/YYYY'),UPPER('Sem carência'))   || '</dtpricar>'     ||
 

@@ -98,7 +98,10 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0004 AS
       ,vlparepr NUMBER
       ,dtparepr DATE
       ,indpagto INTEGER
-      ,dtvencto DATE);  
+      ,dtvencto DATE
+			,dtultpag crappep.dtultpag%TYPE
+			,vlsdvpar crappep.vlsdvpar%TYPE
+			);  
     TYPE typ_tab_parcela_epr IS TABLE OF typ_reg_parcela_epr INDEX BY PLS_INTEGER;
      
     --Tipo de Registro para Data da parcela do Emprestimo (b1wgen0084tt.i/tt-datas-parcelas) 
@@ -724,6 +727,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0004 AS
               ,crappep.vlparepr
               ,crappep.dtvencto
               ,crappep.inliquid
+							,crappep.dtultpag
+							,crappep.vlsdvpar
         FROM crappep crappep
         WHERE crappep.cdcooper = pr_cdcooper
         AND crappep.nrdconta   = pr_nrdconta
@@ -768,6 +773,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0004 AS
           pr_parcela_epr(vr_index).dtparepr:= rw_crappep.dtvencto;
           pr_parcela_epr(vr_index).indpagto:= rw_crappep.inliquid;
           pr_parcela_epr(vr_index).dtvencto:= rw_crappep.dtvencto;
+					pr_parcela_epr(vr_index).dtultpag:= rw_crappep.dtultpag;
+					pr_parcela_epr(vr_index).vlsdvpar:= rw_crappep.vlsdvpar;
         END LOOP;                             
       END IF;
       --Fechar Cursor

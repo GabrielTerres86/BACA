@@ -189,6 +189,8 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
     cValorTotal.addClass('rotulo moeda').css('width', '90px').desabilitaCampo();
 
     if (operacao == 'C_SIMULACAO' || operacao == "E_SIMULACAO") {
+        nomeForm = 'frmSimulacao';
+
         $('#divProcSimulacoesTabela').css('display', 'none');
         $('#divProcSimulacoesFormulario').css('display', 'block');
         $('#divProcParcelasTabela').css('display', 'block');

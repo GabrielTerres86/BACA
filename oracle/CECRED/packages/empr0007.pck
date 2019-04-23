@@ -2788,11 +2788,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 					-- Não permitir antecipação de parcela quando não estiver em acordo ativo
           -- Utilizar o quantidade de meses e parcelas calculadas para saber se esta em atraso
           -- Os campos da tabela podem esta desatualizados
+          -- PJ298.2.2 - Pos Fixado - Migracao contratos nao pode fazer
+          IF UPPER(pr_nmtelant) <> 'MIGRACAO' THEN
           IF vr_qtprecal > vr_msdecatr AND NVL(vr_flgativo,0) = 0 
 					AND NOT vr_prejuzcc THEN
              vr_cdcritic := 0;
 						 vr_dscritic := 'Pagamento apenas para parcelas em atraso';
 						 RAISE vr_exc_undo;
+          END IF;
           END IF;
 					
           -- Garantir que o saldo devedor seja inferior ao desconto
@@ -2990,6 +2993,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
             -- Testar se já retornado o registro de capas de lote para o 8457
             IF rw_craplot_8457.rowid IS NULL THEN
               -- Chamar rotina para buscá-lo, e se não encontrar, irá criá-lo
+              -- PJ298.2.2 - Pos Fixado - Migracao contratos nao pode fazer
+              IF UPPER(pr_nmtelant) <> 'MIGRACAO' THEN
+
               IF NOT vr_prejuzcc THEN
               pc_cria_craplot(pr_dtmvtolt   => rw_crapdat.dtmvtolt
                              ,pr_nrdolote   => 8457
@@ -3002,8 +3008,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                 RAISE vr_exc_undo;
               END IF;
             END IF;
+              END IF; -- PJ298.2.2 migracao
             END IF;
 
+		  -- PJ298.2.2 - Pos Fixado - Migracao contratos nao pode fazer
+      IF UPPER(pr_nmtelant) <> 'MIGRACAO' THEN
 		  IF NOT vr_prejuzcc THEN
 
             vr_nrdoclcm := rw_craplot_8457.nrseqdig + 1;
@@ -3116,6 +3125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                 RAISE vr_exc_undo;
             END;
          END IF; -- Lançamento conta corrente
+				 END IF; -- PJ298.2.2 - Migracao
 				 
 				 --> Armazenar valores
          pr_vltotpag := nvl(pr_vltotpag,0) + nvl(vr_vldescto,0);
