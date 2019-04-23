@@ -358,7 +358,7 @@ IF  crapass.inpessoa = 1  THEN
                                            '</idseqttl><nmtitula>' +
                                            crapttl.nmextttl +
                                            '</nmtitula><nrcpfcgc>' +
-                                           STRING(crapttl.nrcpfcgc) +
+                                           STRING(crapttl.nrcpfcgc,'99999999999') +
                                            '</nrcpfcgc></TITULAR>'.             
 
         END.
@@ -373,7 +373,7 @@ ELSE
                                        '1</idseqttl><nmtitula>' +
                                        crapass.nmprimtl +
                                        '</nmtitula><nrcpfcgc>' +
-                                       STRING(crapass.nrcpfcgc) +
+                                       STRING(crapass.nrcpfcgc,'99999999999999') +
                                        '</nrcpfcgc></TITULAR></TITULARES>'.
                                        
     END.
@@ -417,7 +417,7 @@ ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmtitula>" +
                                "</nmprepos><nrcpfpre>" +
                                STRING(aux_nrcpfpre) +
                                "</nrcpfpre><nrcpfcgc>" +
-                               STRING(aux_nrcpfcgc) + 
+                               (IF aux_inpessoa = 1 THEN STRING(aux_nrcpfcgc,'99999999999') ELSE STRING(aux_nrcpfcgc,'99999999999999')) + 
                                "</nrcpfcgc><cdsitdct>" + 
                                STRING(crapass.cdsitdct) + 
                                "</cdsitdct><qtminast>" +
