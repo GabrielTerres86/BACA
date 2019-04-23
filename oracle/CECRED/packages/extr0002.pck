@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
     Programa : EXTR0002 (Antigo b1wgen0112.p )
     Sistema  : Rotinas genéricas para geracao de extratos
     Sigla    : GENE
-    Autor    : Alisson.
+    Autor    : Alisson.US7ASCII
     Data     : Setembro/2014.                   Ultima atualizacao: 26/04/2017
 
 	Alterações: 26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
@@ -18021,7 +18021,7 @@ END pc_consulta_ir_pj_trim;
                          '" nrctrrpp="'||to_char(vr_tab_dados_rpp(vr_index_dados_rpp).nrctrrpp,'fm99g999g990')||
                          '" dtvctopp="'||to_char(vr_tab_dados_rpp(vr_index_dados_rpp).dtvctopp,'DD/MM/YYYY')||
                                      '" dtaderpp="'||to_char(vr_tab_dados_rpp(vr_index_dados_rpp).dtmvtolt,'DD/MM/YYYY')||
-                                     '" dsfinali="'||UPPER(CONVERT(vr_tab_dados_rpp(vr_index_dados_rpp).dsfinali, 'US7ASCII'))||
+                                     '" dsfinali="'||UPPER(vr_tab_dados_rpp(vr_index_dados_rpp).dsfinali)||
                                      '" dssituac="'|| UPPER(vr_tab_dados_rpp(vr_index_dados_rpp).dssitrpp)|| -- Situacao 
                          '" dtiniper="'||to_char(pr_dtiniper,'DD/MM/YYYY')||
                          '" dtfimper="'||to_char(pr_dtfimper,'DD/MM/YYYY')||
