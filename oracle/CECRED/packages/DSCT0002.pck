@@ -526,6 +526,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                        ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                        ,pr_limorbor IN INTEGER                --> Indicador do tipo de dado( 1 - LIMITE DSCTIT 2 - BORDERO DSCTIT)
                                        ,pr_nrvrsctr IN NUMBER DEFAULT 0       --> Numero da versao do contrato
+                                       ,pr_tpimpres IN VARCHAR2 DEFAULT NULL
                                        --------> OUT <--------         
                                        --> Tabelas nao serao retornadar pois nao foram convetidas parao projeto indexacao(qrcode)                          
                                        --> pr_tab_emprsts             
@@ -4528,6 +4529,7 @@ END fn_letra_risco;
                                        ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                        ,pr_limorbor IN INTEGER                --> Indicador do tipo de dado(/* 1 - LIMITE DSCTIT 2 - BORDERO DSCTIT */)                                     
                                        ,pr_nrvrsctr IN NUMBER DEFAULT 0       --> Numero da versao do contrato
+                                       ,pr_tpimpres IN VARCHAR2 DEFAULT NULL
                                        --------> OUT <--------         
                                        --> Tabelas nao serao retornadar pois nao foram convetidas parao projeto indexacao(qrcode)                          
                                        --> pr_tab_emprsts             
@@ -4999,6 +5001,10 @@ END fn_letra_risco;
       vr_tpctrprp := 'P';
     ELSE 
       vr_tpctrprp := 'C';
+    END IF;
+    
+    IF pr_tpimpres IS NOT NULL THEN
+      vr_tpctrprp := 'P';
     END IF;
     
     --> Buscar dados de um determinado limite de desconto de titulos
@@ -6260,6 +6266,8 @@ END fn_letra_risco;
     
     vr_dados_mock              VARCHAR2(50);
 
+    vr_tpimpres                VARCHAR2(5) := NULL;
+
     ----------->>> VARIAVEIS <<<--------   
     -- Variável de críticas
     vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -6411,6 +6419,12 @@ END fn_letra_risco;
       vr_nrctrlim := rw_craplim.nrctrlim; 
     END IF; 
      
+    IF pr_tpctrlim = 3 THEN   
+      IF rw_craplim.dtinivig IS NULL THEN
+        vr_tpimpres := 'P';
+      END IF;
+    END IF;  
+     
     --> Buscar dados para montar contratos etc para desconto de titulos
     pc_busca_dados_imp_descont( pr_cdcooper => pr_cdcooper  --> Código da Cooperativa
                                ,pr_cdagenci => pr_cdagecxa  --> Código da agencia
@@ -6430,6 +6444,7 @@ END fn_letra_risco;
                                ,pr_flgerlog => 0            --> Indicador se deve gerar log(0-nao, 1-sim)
                                ,pr_limorbor => 1            --> Indicador do tipo de dado( 1 - LIMITE DSCTIT 2 - BORDERO DSCTIT )                                     
                                ,pr_nrvrsctr => vr_nrvrsctr  --> Numero da versao do contrato
+                               ,pr_tpimpres => vr_tpimpres
                                --------> OUT <--------         
                                --> Tabelas nao serao retornadar pois nao foram convetidas parao projeto indexacao(qrcode)                          
                                --> pr_tab_emprsts             
