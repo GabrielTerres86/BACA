@@ -437,6 +437,7 @@ DEF VAR aux_nsenhaok AS LOGI                                           NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
 DEF VAR aux_dscatbem AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsctrliq AS CHAR                                           NO-UNDO.
+DEF VAR aux_idpeapro AS INT                                            NO-UNDO.
 DEF VAR aux_vlprecar AS DECI                                           NO-UNDO.
 
 { sistema/generico/includes/var_internet.i }
