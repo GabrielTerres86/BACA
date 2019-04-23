@@ -1507,7 +1507,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                 END IF;
                   -- Calcular preço unitario
 				          IF vr_qtcotas = 0 THEN
-				            pr_dsdaviso := pr_dsdaviso || vr_dscarque || fn_get_time_char || ' Resgate com cotas zerada! '||  rw_cop.cdcooper ||' '|| rw_lcto.nrdconta ||' '|| rw_lcto.nraplica;
+				            -- comentado pois estava estourando a variavel de log						   
+				            --pr_dsdaviso := pr_dsdaviso || vr_dscarque || fn_get_time_char || ' Resgate com cotas zerada! '||  rw_cop.cdcooper ||' '|| rw_lcto.nrdconta ||' '|| rw_lcto.nraplica;
 				            continue;
 				          ELSE
 							vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
