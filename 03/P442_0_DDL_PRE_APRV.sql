@@ -119,6 +119,16 @@ alter table TBGEN_MOTIVO add flgreserva_sistema number default 0;
 -- Add comments to the columns 
 comment on column TBGEN_MOTIVO.flgreserva_sistema
   is 'Flag que indica se o motivo é reservado para sistema, ou seja, não será apresentado em telas para seleção';
+
+  -- Add/modify columns 
+alter table TBGEN_MOTIVO add flgexibe number(1) default 1 not null;
+alter table TBGEN_MOTIVO add flgtipo number(1) default 1 not null;
+
+-- Add comments to the columns 
+comment on column TBGEN_MOTIVO.flgexibe
+is 'Determina se a descricao na listagem de historio de bloqueios manuais [0- Nao Exibe, 1-Exibe]';
+comment on column TBGEN_MOTIVO.flgtipo
+is 'Identifica o tipo do motivo na tela de bloqueio manual [0-Desbloqueio, 1-Bloqueio]';
   
   
   
