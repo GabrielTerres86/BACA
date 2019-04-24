@@ -345,7 +345,13 @@ end;
                           Jose Dill - Mouts
                           
        12/02/2019 - Ajuste da revitalização de lotes craplcm 
-                    Jose Dill - Mout (INC0032794)                   
+                    Jose Dill - Mout (INC0032794)  
+                    
+       06/03/2019 - Permitir as mensagens SEL e RDC executarem com o processo rodando. 
+                    Jose Dill - Mouts              
+                    
+       26/03/2019 - Inclusão do rollback para vr-boleto 
+                    Jose Dill - Mouts (PRB0040712)                
  
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -7747,7 +7753,8 @@ END pc_trata_arquivo_cir0060;
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'PAG%'
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'LDL%' -- Sprint D
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SEL%' -- Sprint D          
-          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SLB%' -- Sprint D          
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SLB%' -- Sprint D 
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'RDC%'         
           THEN
           -- Se o processo estiver rodando
           IF NOT fn_verifica_processo THEN
@@ -8707,6 +8714,9 @@ END pc_trata_arquivo_cir0060;
                                               ,pr_dscritic => vr_dscritic);
           -- Se voltou erro nas criticas
           IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+            --
+            ROLLBACK; --PRB0040712
+            --
             -- Se ha critica sem descricao
             IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
@@ -9271,7 +9281,10 @@ END pc_trata_arquivo_cir0060;
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'PAG%'
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SLC%'
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'CIR%' -- Sprint D 
-          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'LDL%' -- Sprint D           
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'LDL%' -- Sprint D  
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SEL%' 
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'RDC%'       
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SLB%'  
           AND NOT vr_aux_tagCABInf
           THEN
             IF NOT fn_verifica_processo THEN
