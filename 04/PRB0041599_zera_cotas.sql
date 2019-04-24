@@ -1,6 +1,6 @@
 declare
 
-  -- Contas
+  -- Contas com problemas
   cursor c1 IS
     select 1 cdcooper, 1984640  nrdconta, 712.92  valor from dual union all
     select 1 cdcooper, 3127354  nrdconta, 1.00  valor from dual union all
