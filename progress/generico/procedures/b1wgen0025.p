@@ -1192,49 +1192,9 @@ PROCEDURE entrega_envelope:
 
     DEFINE     VARIABLE h-bo_algoritmo_seguranca    AS HANDLE                   NO-UNDO.
     DEFINE     VARIABLE aux_dsinform                AS CHAR     EXTENT  3       NO-UNDO.
-    DEFINE     VARIABLE aux_cdmodali                AS INT                      NO-UNDO.
     
     DO TRANSACTION ON ERROR UNDO, LEAVE: 
-
-        /* P485 - Validaçao para conta salário */
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-        
-        RUN STORED-PROCEDURE pc_busca_modalidade_conta aux_handproc = PROC-HANDLE NO-ERROR
-                      (INPUT  par_cdcopdst 
-                      ,INPUT  par_nrctafav 
-                      ,OUTPUT 0
-                      ,OUTPUT ""
-                      ,OUTPUT "").
-                             
-
-        CLOSE STORED-PROC pc_busca_modalidade_conta aux_statproc = PROC-STATUS 
-             WHERE PROC-HANDLE = aux_handproc.
-        
-        ASSIGN par_dscritic = ""
-               aux_cdmodali = 0
-               par_dscritic = pc_busca_modalidade_conta.pr_dscritic 
-                              WHEN pc_busca_modalidade_conta.pr_dscritic <> ?
-               aux_cdmodali = pc_busca_modalidade_conta.pr_cdmodalidade_tipo 
-                              WHEN pc_busca_modalidade_conta.pr_cdmodalidade_tipo <> ?.
-        
-        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-        
-        /* Se retornou crítica */
-        IF  par_dscritic <> "" THEN
-          DO:
-            RETURN "NOK".
-          END.
-        
-        /* Se a modalidade for 2 entao é conta salário */
-        IF aux_cdmodali = 2 THEN
-          DO:
-            ASSIGN par_dscritic = "Lancamento nao permitido para este tipo de conta.".
-            RETURN "NOK".
-          END.
-
-        /* P485 - Validaçao para conta salário */   
-
-        
+    
         FIND craptfn WHERE craptfn.cdcooper = par_cdcoptfn  AND
                            craptfn.nrterfin = par_nrterfin
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
