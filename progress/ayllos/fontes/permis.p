@@ -1151,11 +1151,15 @@ DO WHILE TRUE:
                                     MESSAGE "Copiar o perfil de acesso em todas as cooperativas?" UPDATE aux_confirma.
                                  ELSE
                                     MESSAGE "Copiar o perfil de acesso para as demais cooperativas, exceto Ailos?" UPDATE aux_confirma.                                 
-
-                                 ASSIGN tel_flgcoops = TRUE.
                                 
                                  LEAVE.
-                              END.                                      
+                              END.                       
+                              
+                              IF KEYFUNCTION(LASTKEY) = "END-ERROR"   OR
+                                 aux_confirma <> "S" THEN
+                                 ASSIGN tel_flgcoops = FALSE.
+                              ELSE
+                                 ASSIGN tel_flgcoops = TRUE.
                                 
                               DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                  ASSIGN aux_confirma = "N".  
@@ -1213,7 +1217,9 @@ DO WHILE TRUE:
                                       INPUT "",
                                       INPUT INTEGER(
                                             SUBSTRING(tel_idambtel,1,1)),
-                                      INPUT "").
+                                      INPUT "",
+                                      INPUT tel_flgatual,
+                                      INPUT tel_flgcoops).
 
                  LEAVE.
 
@@ -1425,7 +1431,9 @@ DO WHILE TRUE:
                                 INPUT "",
                                 INPUT "",
                                 INPUT INTEGER(SUBSTRING(tel_idambtel,1,1)),
-                                INPUT "").
+                                INPUT "",
+                                INPUT NO,
+                                INPUT NO).
        END.
      END.
    ELSE
@@ -1837,7 +1845,9 @@ PROCEDURE atualiza_crapace:
                              INPUT "",
                              INPUT "",
                              INPUT tt-acesso.idambtel,
-                             INPUT "").
+                             INPUT "",
+                             INPUT NO,
+                             INPUT NO).
 
    END.
 
@@ -1848,12 +1858,15 @@ PROCEDURE copiar_perfil:
    
    DEF BUFFER bcrapace FOR crapace.
    DEF BUFFER bcraptel FOR craptel.
-   DEF VAR aux_idambtel AS INTE                               NO-UNDO.
+   DEF VAR aux_idambace AS INTE                               NO-UNDO.   
+   DEF VAR aux_idsistem LIKE craptel.idsistem                 NO-UNDO.
+   
    DEF VAR aux_cddopcao AS CHAR                               NO-UNDO.
 
    HIDE MESSAGE NO-PAUSE.
    
-   ASSIGN aux_idambtel = INTEGER(SUBSTRING(tel_idambtel,1,1)).
+   ASSIGN aux_idambace = INTEGER(SUBSTRING(tel_idambtel,1,1))
+          aux_idsistem = IF aux_idambace = 3 THEN 2 ELSE 1.
    
    IF NOT tel_flgatual THEN
       DO: 
@@ -1875,7 +1888,11 @@ PROCEDURE copiar_perfil:
            IF NOT AVAIL crapope THEN
               NEXT.
            
-           FOR EACH craptel WHERE craptel.cdcooper = crapcop.cdcooper NO-LOCK:
+           FOR EACH craptel WHERE craptel.cdcooper = crapcop.cdcooper AND
+                                  craptel.idsistem = aux_idsistem     NO-LOCK:
+                                  
+              IF aux_idsistem = 1 AND craptel.idambtel > 0 AND craptel.idambtel <> aux_idambace THEN
+                 NEXT.
            
               DO aux_iddopcao = 1 TO NUM-ENTRIES(craptel.cdopptel,","):
               
@@ -1886,7 +1903,7 @@ PROCEDURE copiar_perfil:
                                         crapace.nmrotina = craptel.nmrotina AND
                                         crapace.cddopcao = aux_cddopcao     AND
                                         crapace.cdoperad = tel_cdopedst     AND
-                                        crapace.idambace = aux_idambtel
+                                        crapace.idambace = aux_idambace
                                         EXCLUSIVE-LOCK:
                                
                     DELETE crapace.     
@@ -1916,28 +1933,36 @@ PROCEDURE copiar_perfil:
      IF NOT AVAIL crapope THEN
         NEXT.    
      
-     FOR EACH craptel WHERE craptel.cdcooper = glb_cdcooper NO-LOCK:
-
+     FOR EACH craptel WHERE craptel.cdcooper = glb_cdcooper AND
+                            craptel.idsistem = aux_idsistem NO-LOCK:
+                            
+         IF aux_idsistem = 1 AND craptel.idambtel > 0 AND craptel.idambtel <> aux_idambace THEN
+            NEXT.
+            
+         FOR FIRST bcraptel WHERE bcraptel.cdcooper = crapcop.cdcooper AND 
+                                  bcraptel.nmdatela = craptel.nmdatela AND
+                                  bcraptel.nmrotina = craptel.nmrotina AND                                               
+                                  bcraptel.idsistem = craptel.idsistem AND
+                                  bcraptel.idambtel = craptel.idambtel NO-LOCK: END.             
+                          
+         IF NOT AVAIL bcraptel THEN
+            NEXT.
+                               
          DO aux_iddopcao = 1 TO NUM-ENTRIES(craptel.cdopptel,","):
 
              ASSIGN aux_cddopcao = ENTRY(aux_iddopcao,craptel.cdopptel,",").
              
-             FOR FIRST bcraptel WHERE bcraptel.cdcooper = crapcop.cdcooper AND 
-                                      bcraptel.nmdatela = craptel.nmdatela AND
-                                      bcraptel.nmrotina = craptel.nmrotina AND                                               
-                                      bcraptel.idambtel = aux_idambtel     NO-LOCK: END.
-                                      
-             IF NOT AVAIL bcraptel OR NOT CAN-DO(bcraptel.cdopptel,aux_cddopcao) THEN
-                NEXT.
-
+             IF NOT CAN-DO(bcraptel.cdopptel,aux_cddopcao) THEN
+                NEXT.             
+             
              FOR EACH bcrapace  
                 WHERE bcrapace.cdcooper = craptel.cdcooper AND
                       bcrapace.nmdatela = craptel.nmdatela AND
                       bcrapace.nmrotina = craptel.nmrotina AND
                       bcrapace.cddopcao = aux_cddopcao     AND
                       bcrapace.cdoperad = tel_cdoperad     AND
-                      bcrapace.idambace = aux_idambtel NO-LOCK:
-                
+                      bcrapace.idambace = aux_idambace NO-LOCK:
+                         
                 FIND FIRST crapace 
                      WHERE crapace.cdcooper = crapope.cdcooper  AND
                            crapace.nmdatela = bcrapace.nmdatela AND
@@ -1946,9 +1971,9 @@ PROCEDURE copiar_perfil:
                            crapace.cdoperad = tel_cdopedst      AND
                            crapace.idambace = bcrapace.idambace
                            NO-LOCK NO-ERROR.
-                 
+                
                 IF NOT AVAIL crapace THEN
-                   DO: 
+                   DO:  
                        CREATE crapace.
                        ASSIGN crapace.cdcooper = crapope.cdcooper
                               crapace.nmdatela = bcrapace.nmdatela
@@ -2614,7 +2639,9 @@ DEF INPUT PARAM par_nvoperad AS CHAR                                    NO-UNDO.
                                 INPUT par_nvoperad,
                                 INPUT w-operadores.cdoperad,
                                 INPUT tt-acesso.idambtel,
-                                INPUT "").
+                                INPUT "",
+                                INPUT NO,
+                                INPUT NO).
    
    END.   /* Fim da opcao da rotina da tela selecionada */
 
@@ -2732,6 +2759,8 @@ PROCEDURE log-tela-permis:
    DEF INPUT PARAM par_opaltera AS CHAR              NO-UNDO.
    DEF INPUT PARAM par_idambace AS INTE              NO-UNDO.
    DEF INPUT PARAM par_nmarquiv AS CHAR              NO-UNDO.
+   DEF INPUT PARAM par_flgatual AS LOGI              NO-UNDO.
+   DEF INPUT PARAM par_flgcoops AS LOGI              NO-UNDO.
 
    IF par_cddopcao = "E" THEN
            UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999")   +
@@ -2750,6 +2779,8 @@ PROCEDURE log-tela-permis:
                           " - Operador Orig.: " + par_dscopera             +
                           " - Operador dest.: " + par_cdopedst             +
                           " - Ambiente: " + (IF par_idambace = 1 THEN " CARACTER" ELSE IF par_idambace = 2 THEN " WEB" ELSE " PROGRID") +
+                          " - Manteve permissoes atuais? " + STRING(par_flgatual,"SIM/NAO") +
+                          " - Replicacao outras cooperativas? " + STRING(par_flgcoops,"SIM/NAO") + 
                           ". >> log/permis.log").
         ELSE
         IF par_cddopcao = "A" THEN
@@ -2910,7 +2941,7 @@ PROCEDURE importa-arquivo-permissoes:
                 END.
             ELSE
                 ASSIGN aux_nmdatela = craptel.nmdatela.
-                
+
             FOR EACH craptel WHERE craptel.cdcooper = crapcop.cdcooper  AND
                                    craptel.nmdatela = aux_nmdatela      AND
                                    craptel.nmrotina = aux_nmrotina      NO-LOCK:
@@ -2977,7 +3008,9 @@ PROCEDURE importa-arquivo-permissoes:
                          INPUT "",
                          INPUT "",
                          INPUT 0,
-                         INPUT tel_nmarqint).
+                         INPUT tel_nmarqint,
+                         INPUT NO,
+                         INPUT NO).
 
     RETURN "OK".
 
