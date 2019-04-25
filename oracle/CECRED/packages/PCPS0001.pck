@@ -87,22 +87,21 @@ CREATE OR REPLACE PACKAGE CECRED.PCPS0001 is
     PROCEDURE pc_estorno_rej_empregador(pr_nrridlfp    IN NUMBER
                                        ,pr_nrdocmto    IN NUMBER
                                        ,pr_dscritic   OUT VARCHAR2);
-																			 
-    PROCEDURE pc_valida_deposito_cta_sal(pr_cdcooper IN crapcop.cdcooper%TYPE --Código da cooperativa origem
-                                       ,pr_nrdconta IN crapass.nrdconta%TYPE --Número da conta origem 
-                                       ,pr_cdcopdst IN crapcop.cdcooper%TYPE --Código da cooperativa de destino
-                                       ,pr_nrctadst IN crapass.nrdconta%TYPE --Número da conta de destino do depósito 
-                                       ,pr_idseqttl IN crapttl.idseqttl%TYPE
-                                       ,pr_cdagenci IN NUMBER
-                                       ,pr_nrdcaixa IN NUMBER
-                                       ,pr_cdorigem IN NUMBER   -- Código da origem
-                                       ,pr_nmdatela IN VARCHAR2 -- Nome da tela 
-                                       ,pr_nmprogra IN VARCHAR2 -- Nome do programa
-                                       ,pr_cdoperad IN VARCHAR2 -- Código do operador
-                                       ,pr_flgerlog IN NUMBER
-                                       ,pr_flmobile IN NUMBER
-                                       ,pr_dsretxml OUT xmltype  --> XML de retorno CLOB
-                                       ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica																			 
+
+    -- Validar se o depósito está sendo feito numa conta salário ou não.
+		PROCEDURE pc_valida_deposito_cta_sal(pr_cdcopdst IN crapcop.cdcooper%TYPE --Código da cooperativa de destino
+                                        ,pr_nrctadst IN crapass.nrdconta%TYPE --Número da conta de destino do depósito 
+                                        ,pr_idseqttl IN crapttl.idseqttl%TYPE
+                                        ,pr_cdagenci IN NUMBER
+                                        ,pr_nrdcaixa IN NUMBER
+                                        ,pr_cdorigem IN NUMBER   -- Código da origem
+                                        ,pr_nmdatela IN VARCHAR2 -- Nome da tela 
+                                        ,pr_nmprogra IN VARCHAR2 -- Nome do programa
+                                        ,pr_cdoperad IN VARCHAR2 -- Código do operador
+                                        ,pr_flgerlog IN NUMBER
+                                        ,pr_flmobile IN NUMBER
+                                        ,pr_dsretxml OUT xmltype  --> XML de retorno CLOB
+                                        ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica
 END PCPS0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
@@ -3318,9 +3317,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
       
   END pc_estorno_rej_empregador;
   
-  PROCEDURE pc_valida_deposito_cta_sal(pr_cdcooper IN crapcop.cdcooper%TYPE --Código da cooperativa origem
-                                      ,pr_nrdconta IN crapass.nrdconta%TYPE --Número da conta origem 
-                                      ,pr_cdcopdst IN crapcop.cdcooper%TYPE --Código da cooperativa de destino
+	-- Validar se o depósito está sendo feito numa conta salário ou não.
+	PROCEDURE pc_valida_deposito_cta_sal(pr_cdcopdst IN crapcop.cdcooper%TYPE --Código da cooperativa de destino
                                       ,pr_nrctadst IN crapass.nrdconta%TYPE --Número da conta de destino do depósito 
                                       ,pr_idseqttl IN crapttl.idseqttl%TYPE
                                       ,pr_cdagenci IN NUMBER
@@ -3350,28 +3348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
             Observacao: -----
         
             Alteracoes:
-    ............................................................................. */																					 
-
-  -- Buscar primeiro titular
-	CURSOR cr_crapttl (pr_cdcooper crapass.cdcooper%TYPE
-										,pr_nrdconta crapass.nrdconta%TYPE) IS
-			SELECT t.nrcpfemp
-				FROM crapttl t
-			 WHERE t.cdcooper = pr_cdcooper
-				 AND t.nrdconta = pr_nrdconta
-				 AND t.idseqttl = 1;
-	rw_crapttl cr_crapttl%ROWTYPE;
-	
-	-- Buscar associado
-	CURSOR cr_crapass (pr_nrdconta crapass.nrdconta%TYPE
-										,pr_cdcooper crapass.cdcooper%TYPE) IS
-		  SELECT a.nrcpfcgc
-			      ,a.inpessoa
-			      ,a.cdtipcta
-				FROM crapass a
-			 WHERE a.cdcooper = pr_cdcooper
-			   AND a.nrdconta = pr_nrdconta;
-  rw_crapass cr_crapass%ROWTYPE;
+    ............................................................................. */
 
 	-- Variaveis
 	vr_cdmodali  INTEGER;
@@ -3399,59 +3376,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
 		
 		-- Se for modalidade 2 significa que é conta salário
 		IF vr_cdmodali = 2 THEN
-			-- Se foi enviado o parâmetro de cooperativa e conta origem valida se é o empregador
-			IF pr_nrdconta > 0 AND pr_cdcooper > 0 THEN
-				-- Buscamos o remetente
-				OPEN cr_crapass (pr_cdcooper => pr_cdcooper
-												,pr_nrdconta => pr_nrdconta);
-				FETCH cr_crapass INTO rw_crapass;
-				--
-				IF cr_crapass%NOTFOUND THEN
-					CLOSE	cr_crapass;
-					vr_dscritic := 'Remetente nao localizado';
-					RAISE vr_exc_erro;
-				END IF;
-				--
-				CLOSE	cr_crapass;
-				
-				--
-				OPEN cr_crapttl (pr_cdcooper => pr_cdcopdst
-												,pr_nrdconta => pr_nrctadst);
-				FETCH cr_crapttl INTO rw_crapttl;
-				-- Se o CNPJ do empregador for diferente do remetente, não permite
-				IF cr_crapttl%FOUND THEN
-					IF rw_crapass.nrcpfcgc <> rw_crapttl.nrcpfemp THEN
-						CLOSE	cr_crapttl;
-						vr_dscritic := 'Lancamento nao permitido para este tipo de conta.';
-						RAISE vr_exc_erro;
-					END IF;
-				END IF;
-				--
-				CLOSE	cr_crapttl;
-				
-			ELSE
-				-- Caso não houver origem, significa que foi feito depósito direto pelo TAA
 				vr_dscritic := 'Lancamento nao permitido para este tipo de conta.';
 				RAISE vr_exc_erro;
-      END IF;    			
-
 		END IF;
 		
-		pr_dsretxml := xmltype.createxml('<?xml version="1.0" ?> ' || '<dsmsgerr></dsmsgerr>');
+		pr_dsretxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmsgerr></dsmsgerr></Root>');
 		
   EXCEPTION
 		WHEN vr_exc_erro THEN
 			--
 			pr_dscritic := vr_dscritic;
-			pr_dsretxml := xmltype.createxml('<?xml version="1.0" ?> ' || '<dsmsgerr>' ||
-                                           pr_dscritic || '</dsmsgerr>');
+			pr_dsretxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmsgerr>' ||
+                                           pr_dscritic || '</dsmsgerr></Root>');
 
     WHEN OTHERS THEN
       --
       pr_dscritic := 'Erro geral na PCPS0001.PC_VALIDA_DEPOSITO_CTA_SAL: ' || SQLERRM;
-			pr_dsretxml := xmltype.createxml('<?xml version="1.0" ?> ' || '<dsmsgerr>' ||
-                                           pr_dscritic || '</dsmsgerr>');
-  END;	
+			pr_dsretxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmsgerr>' ||
+                                           pr_dscritic || '</dsmsgerr></Root>');
+  END pc_valida_deposito_cta_sal;
   
 END PCPS0001;
 /
