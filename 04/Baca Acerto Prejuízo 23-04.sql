@@ -344,6 +344,49 @@ WHEN OTHERS THEN
   RAISE_APPLICATION_ERROR(-20510,pr_dscritic);
 end;
 -- ================================================================================================= 8
+BEGIN
+  BEGIN
+    UPDATE tbcc_prejuizo
+       SET VLSDPREJ = 0
+     WHERE cdcooper = 16
+       AND nrdconta = 34924;
+  EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_APPLICATION_ERROR(20501,'Erro no acerto da conta = 34924 '||sqlerrm);
+  END;
+
+  BEGIN
+    UPDATE tbcc_prejuizo
+       SET VLSDPREJ = 0
+     WHERE cdcooper = 1
+       AND nrdconta = 3599469;
+  EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_APPLICATION_ERROR(20501,'Erro no acerto da conta = 3599469 '||sqlerrm);
+  END;
+
+  BEGIN
+    UPDATE tbcc_prejuizo
+       SET VLSDPREJ = 0
+     WHERE cdcooper = 1
+       AND nrdconta = 3222322;
+  EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_APPLICATION_ERROR(20501,'Erro no acerto da conta = 3222322 '||sqlerrm);
+  END;
+
+  BEGIN
+    UPDATE tbcc_prejuizo
+       SET VLSDPREJ = 0
+     WHERE cdcooper = 13
+       AND nrdconta = 404152;
+  EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_APPLICATION_ERROR(20501,'Erro no acerto da conta = 404152 '||sqlerrm);
+  END;
+
+  COMMIT;
+END;
 -- ================================================================================================= 9
 -- ================================================================================================= 10
 -- ================================================================================================= 11
