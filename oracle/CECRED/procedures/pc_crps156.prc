@@ -362,6 +362,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
     vr_vlrevers NUMBER(20,8) := 0; --> Valor de reversao
     vr_vlrdirrf NUMBER(20,8) := 0; --> Valor de IRRF
     vr_percirrf NUMBER(20,8) := 0; --> Valor percentual de IRRF
+    vr_vlsldttr NUMBER(20,8) := 0; --> Valor Saldo Total de Resgate
     
     -- Variáveis para armazenar as informações em XML
     vr_des_xml         CLOB;
@@ -404,6 +405,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                                       pr_nrctrrpp => rw_craprpp.nrctrrpp) LOOP
                 vr_vlrgappr := 0;
                 vr_vlsdappr := 0;
+                vr_vlsldttr := 0;
          	vr_tpresgate_apl := 1;
          	vr_nrseqrgt := vr_nrseqrgt + 1;
 
@@ -422,6 +424,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                                                    ,pr_vlrevers => vr_vlrevers 
                                                    ,pr_vlrdirrf => vr_vlrdirrf
                                                    ,pr_percirrf => vr_percirrf
+                                                   ,pr_vlsldttr => vr_vlsldttr
                                                    ,pr_tpcritic => vr_tpcritic_app
                                                    ,pr_cdcritic => vr_cdcritic_app
                                                    ,pr_dscritic => vr_dscritic_app);
@@ -439,8 +442,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                       
                 vr_valortir := vr_valortir + vr_vlrdirrf;
 
-                vr_vlrtotresgate_apl := vr_vlrtotresgate_apl + vr_vlrgappr;
-                vr_vlresgat_apl := vr_vlrgappr;
+                vr_vlrtotresgate_apl := vr_vlrtotresgate_apl + vr_vlsldttr;
+                vr_vlresgat_apl := vr_vlsldttr;
                 vr_tpresgate_apl := 1;
                 IF (pr_tpresgat = 1) THEN
                    IF (vr_vlresgat > vr_vlrtotresgate_apl) THEN

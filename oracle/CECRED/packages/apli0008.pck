@@ -853,7 +853,8 @@ procedure pc_calc_app_programada (pr_cdcooper  in crapcop.cdcooper%type,        
                  ,pr_vlrevers OUT NUMBER --> Valor de reversao
                  ,pr_vlrdirrf OUT NUMBER --> Valor de IRRF
                  ,pr_percirrf OUT NUMBER --> Valor percentual de IRRF
-                             ,pr_tpcritic OUT crapcri.cdcritic%TYPE     --> Tipo da crítica (0- Nao aborta Processo/ 1 - Aborta Processo)
+                  ,pr_vlsldttr OUT NUMBER --> Valor de saldo total de resgate
+                            ,pr_tpcritic OUT crapcri.cdcritic%TYPE     --> Tipo da crítica (0- Nao aborta Processo/ 1 - Aborta Processo)
                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código da crítica
                              ,pr_dscritic OUT crapcri.dscritic%TYPE);
 
@@ -9882,6 +9883,7 @@ END pc_calc_app_programada;
     vr_vlrevers NUMBER(20,8) := 0; --> Valor de reversao
     vr_vlrdirrf NUMBER(20,8) := 0; --> Valor de IRRF
     vr_percirrf NUMBER(20,8) := 0; --> Valor percentual de IRRF
+    vr_vlsldttr NUMBER(20,8) := 0; --> Valor percentual de IRRF
 
       -- Selecionar dados de aplicacao
       CURSOR cr_craprac (pr_cdcooper craplrg.cdcooper%TYPE
@@ -9961,8 +9963,9 @@ END pc_calc_app_programada;
 
                  vr_vlrgappr := 0;
                  vr_vlsdappr := 0;
-
-         	 vr_tpresgate_apl := 1;
+				 vr_vlsldttr := 0;
+         	 
+			 vr_tpresgate_apl := 1;
          	 vr_nrseqrgt := vr_nrseqrgt + 1;
 
                  pc_calc_saldo_resgate (pr_cdcooper => pr_cdcooper
@@ -9980,6 +9983,7 @@ END pc_calc_app_programada;
                                                     ,pr_vlrevers => vr_vlrevers 
                                                     ,pr_vlrdirrf => vr_vlrdirrf
                                                     ,pr_percirrf => vr_percirrf
+                                                    ,pr_vlsldttr => vr_vlsldttr
                                                     ,pr_tpcritic => vr_tpcritic_apl
                                                     ,pr_cdcritic => vr_cdcritic_apl
                                                     ,pr_dscritic => vr_dscritic_apl);
@@ -9997,8 +10001,8 @@ END pc_calc_app_programada;
                        
                  vr_valortir := vr_valortir + vr_vlrdirrf;
 
-                 vr_vlrtotresgate_apl := vr_vlrtotresgate_apl + vr_vlrgappr;
-                 vr_vlresgat_apl := vr_vlrgappr;
+                 vr_vlrtotresgate_apl := vr_vlrtotresgate_apl + vr_vlsldttr;
+                 vr_vlresgat_apl := vr_vlsldttr;
                  vr_tpresgate_apl := 1;
                  IF (pr_tpresgat = 1) THEN
                     IF (vr_vlresgat > vr_vlrtotresgate_apl) THEN
@@ -12900,6 +12904,7 @@ END pc_ObterListaPlanoAplProg;
                  ,pr_vlrevers OUT NUMBER --> Valor de reversao
                  ,pr_vlrdirrf OUT NUMBER --> Valor de IRRF
                  ,pr_percirrf OUT NUMBER --> Valor percentual de IRRF
+                 ,pr_vlsldttr OUT NUMBER --> Valor de saldo total de resgate
                              ,pr_tpcritic OUT crapcri.cdcritic%TYPE     --> Tipo da crítica (0- Nao aborta Processo/ 1 - Aborta Processo)
                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código da crítica
                              ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da Critica
@@ -13422,6 +13427,8 @@ END pc_ObterListaPlanoAplProg;
             END IF;
 
           END IF; -- Fim verificacao tipo de aplicacao
+	  
+		  pr_vlsldttr := pr_vlsldrgt;
 
           IF pr_vlsldrgt < pr_vlresgat THEN
           	vr_vlresgat := pr_vlsldrgt;
@@ -13701,7 +13708,8 @@ END pc_ObterListaPlanoAplProg;
       vr_vlrevers NUMBER(20,8) := 0; --> Valor de reversao
       vr_vlrdirrf NUMBER(20,8) := 0; --> Valor de IRRF
       vr_percirrf NUMBER(20,8) := 0; --> Valor percentual de IRRF
-
+	  vr_vlsldttr NUMBER(20,8) := 0; --> Valor saldo total de resgate
+	  
       -- Variaveis Erro
       vr_des_erro VARCHAR2(1000);
 
@@ -13764,6 +13772,7 @@ END pc_ObterListaPlanoAplProg;
                                           ,pr_nrctrrpp => pr_nrctrrpp) LOOP
                  vr_vlsldrgt := 0;
                  vr_vlsldtot := 0;
+				 vr_vlsldttr := 0;
          vr_tpresgate_apl := 1;
          vr_nrseqrgt := vr_nrseqrgt + 1;
 
@@ -13782,6 +13791,7 @@ END pc_ObterListaPlanoAplProg;
                                                     ,pr_vlrevers => vr_vlrevers 
                                                     ,pr_vlrdirrf => vr_vlrdirrf
                                                     ,pr_percirrf => vr_percirrf
+													,pr_vlsldttr => vr_vlsldttr
                                                     ,pr_tpcritic => vr_tpcritic
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic);
