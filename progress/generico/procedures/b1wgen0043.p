@@ -260,6 +260,9 @@
               
               15/04/2018 - Alterado a procedure verifica_rating para considerar a tabela
                            de proposta de limite de desconto de titulos crawlim na geração da critica 484 (Paulo Penteado GFT)
+						   
+              12/12/2018 - Alterado mascara do contrato nas procedures gera-arquivo-impressao-rating
+                           e efetivar_rating (Andre Clemer - Supero)
 .............................................................................*/
   
   
@@ -2526,7 +2529,7 @@ PROCEDURE gera-arquivo-impressao-rating:
                     tt-efetivacao.dsdefeti = 
                         "Efetivado para a Central de Risco" +
                         " o risco '" + aux_indrisco  + "' do contrato nº " +
-                        TRIM(STRING(crapnrc.nrctrrat,"z,zzz,zz9"))             +
+                        TRIM(STRING(crapnrc.nrctrrat,"z,zzz,zzz,zz9"))             +
                         " do " + aux_dsdopera + " no valor de R$ "             +
                         TRIM(STRING(aux_vloperac,"zz,zzz,zz9.99")) + ".".        
                                   
@@ -2907,7 +2910,7 @@ PROCEDURE efetivar_rating:
                     tt-efetivacao.dsdefeti =
                        "Efetivado para a Central de Risco o risco '" + 
                        aux_indrisco  + "' do contrato nº "    + 
-                       TRIM(STRING(tt-ratings.nrctrrat,"z,zzz,zz9")) + 
+                       TRIM(STRING(tt-ratings.nrctrrat,"z,zzz,zzz,zz9")) + 
                        " do " + tt-ratings.dsdopera                  + 
                        " no valor de R$ "                            + 
                        TRIM(STRING(aux_vloperac,"zz,zzz,zz9.99"))    + ".".

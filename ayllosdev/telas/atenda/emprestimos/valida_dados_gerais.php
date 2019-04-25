@@ -19,6 +19,8 @@
  * 010: [04/04/2017] Jaison/James: Adicionado parametros de carencia do produto Pos-Fixado.
  * 011: [15/12/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
  * 012: [21/05/2018] Inserção do campo idquapro. PRJ366 (Lombardi)
+ * 013: [20/12/2018] P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
+ * 014: [09/04/2019] P298.2.2 - Permitir a alteração da proposta para o POS (Nagasava - Supero)
  */
 ?>
 <?
@@ -67,8 +69,8 @@
 	if( $operacao == 'TI' ){ $cddopcao = 'I'; }
 	else if( $operacao == 'I_INICIO' ){ $cddopcao = 'I'; }
 	
-	/* Sempre quando o emprestimo for PP, vamos atualizar a data de liberacao do emprestimo para a data atual. Projeto do Estorno 215 */
-	if ($tpemprst == 1){
+	/* Sempre quando o emprestimo for PP (ou POS - PRJ298), vamos atualizar a data de liberacao do emprestimo para a data atual. Projeto do Estorno 215 */
+	if ($tpemprst == 1 || $tpemprst == 2){
 		$dtlibera = $glbvars["dtmvtolt"];
 	}
 						
@@ -214,6 +216,7 @@
 	$flgpagto = trim($xmlObj->roottag->tags[0]->attributes['FLGPAGTO']);
 	$dtdpagto = trim($xmlObj->roottag->tags[0]->attributes['DTDPAGTO']);
 	$nivrisco = trim($xmlObj->roottag->tags[0]->attributes['NIVRISCO']);
+	$vlprecar = trim($xmlObj->roottag->tags[0]->attributes['VLPRECAR']);
 	$dsmensag = trim( getByTagName($mensagem,'dsmensag') );
 	$inconfir = trim( getByTagName($mensagem,'inconfir') );
 	
@@ -228,6 +231,7 @@
 	echo "dsmesage = '".$dsmesage."';";
 							
 	echo "arrayProposta['vlpreemp'] = '".$vlpreemp."';";
+	echo "arrayProposta['vlprecar'] = '".$vlprecar."';";
 	echo "arrayProposta['dslcremp'] = '".$dslcremp."';";
 	echo "arrayProposta['dsfinemp'] = '".$dsfinemp."';";
 	echo "arrayProposta['tplcremp'] = '".$tplcremp."';";
@@ -249,4 +253,6 @@
 	echo "$('#dtlibera','#frmNovaProp').val('".$dtlibera."');";
 	echo "$('#idcobope','#frmNovaProp').val('".$idcobope."');";
     echo "$('#idfiniof','#frmNovaProp').val('".$idfiniof."');";
+    echo "$('#vlprecar','#frmNovaProp').val('".$vlprecar."');";
+    echo "$('#vlprecar','#frmNovaProp').trigger('blur');";
 ?>

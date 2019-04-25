@@ -255,6 +255,8 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,flintcdc crapcop.flintcdc%TYPE
     ,inintegra_cont INTEGER
     ,tpfinali crapfin.tpfinali%TYPE
+    ,vlprecar crawepr.vlprecar%TYPE
+    ,nrdiaatr INTEGER			
     );
 
   /* Definicao de tabela que compreende os registros acima declarados */
@@ -5119,6 +5121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,idcarenc
               ,dtcarenc
               ,epr.cdoperad
+              ,vlprecar
           FROM crawepr epr
          WHERE epr.cdcooper = pr_cdcooper
                AND epr.nrdconta = pr_nrdconta
@@ -6005,6 +6008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             -- Enviar a taxa do empréstimo
             pr_tab_dados_epr(vr_indadepr).txmensal := rw_crapepr.txmensal;
             pr_tab_dados_epr(vr_indadepr).dsidenti := '';
+            pr_tab_dados_epr(vr_indadepr).vlprecar := rw_crawepr.vlprecar;
           ELSIF rw_crapepr.tpemprst = 0 THEN -- Price TR
             -- Utilizar da linha de crédito
             pr_tab_dados_epr(vr_indadepr).txmensal := rw_craplcr.txmensal;
@@ -6039,6 +6043,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             -- IOF do prejuizo
             pr_tab_dados_epr(vr_indadepr).vltiofpr := rw_crapepr.vltiofpr;
             pr_tab_dados_epr(vr_indadepr).vlpiofpr := rw_crapepr.vlpiofpr;
+            pr_tab_dados_epr(vr_indadepr).nrdiaatr := pr_rw_crapdat.dtmvtolt - rw_crapepr.dtdpagto;
 
             /* Daniel */
             vr_flpgmujm := FALSE;
@@ -6770,6 +6775,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<cdoperad>' || vr_tab_dados_epr(vr_index).cdoperad            || '</cdoperad>' ||
                         '<inintegra_cont>' || vr_tab_dados_epr(vr_index).inintegra_cont|| '</inintegra_cont>' ||
                         '<tpfinali>' ||  vr_tab_dados_epr(vr_index).tpfinali           || '</tpfinali>' ||
+                        '<vlprecar>' ||  vr_tab_dados_epr(vr_index).vlprecar           || '</vlprecar>' ||
+                        '<nrdiaatr>' || vr_tab_dados_epr(vr_index).nrdiaatr || '</nrdiaatr>' ||
                       '</inf>' );
 
       -- buscar proximo

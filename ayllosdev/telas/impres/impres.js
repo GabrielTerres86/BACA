@@ -515,9 +515,9 @@ function controlaPesquisas() {
 function formataCabecalho() {
 
     // cabecalho
-    rCddopcao.addClass('rotulo').css({ 'width': '42px' });
+    rCddopcao.addClass('rotulo').css({ 'width': '82px' });
     rNrdconta.addClass('rotulo-linha').css({ 'width': '45px' });
-    rTpextrat.addClass('rotulo-linha').css({ 'width': '39px' });
+    rTpextrat.addClass('rotulo-linha').css({ 'width': '79px' });
     rNrdborde.addClass('rotulo-linha').css({ 'width': '170px' });
 
     cCddopcao.css({ 'width': '400px' })
@@ -629,17 +629,17 @@ function formataDados() {
     $('fieldset').css({ 'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '0 3px 5px 3px' });
     $('fieldset > legend').css({ 'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px' });
 
-    rDtrefere.addClass('rotulo').css({ 'width': '53px' });
+    rDtrefere.addClass('rotulo').css({ 'width': '98px' });
     rDtreffim.addClass('rotulo-linha').css({ 'width': '85px' });
     rFlgtarif.addClass('rotulo-linha').css({ 'width': '77px' });
-    rInrelext.addClass('rotulo').css({ 'width': '53px' });
+    rInrelext.addClass('rotulo').css({ 'width': '98px' });
     rInselext.addClass('rotulo-linha').css({ 'width': '93px' });
     rTpmodelo.addClass('rotulo').css({ 'width': '51px' });
     rNrctremp.addClass('rotulo-linha').css({ 'width': '65px' });
-    rNraplica.addClass('rotulo').css({ 'width': '53px' });
+    rNraplica.addClass('rotulo').css({ 'width': '98px' });
     rNranoref.addClass('rotulo-linha').css({ 'width': '69px' });
     rFlgemiss.addClass('rotulo-linha').css({ 'width': '93px' });
-    rTpinform.addClass('rotulo').css({ 'width': '53px' });
+    rTpinform.addClass('rotulo').css({ 'width': '98px' });
     rNrperiod.addClass('rotulo-linha').css({ 'width': '65px' });
     rBtnoK3.css({ 'width': '1px' });
 
@@ -773,7 +773,7 @@ function montarTabela() {
         var flgtarif = (arrayImpres[i]['tpextrat'] == 1 ? (arrayImpres[i]['flgtarif'] == 'no' ? 'Nao' : 'Sim') : '');
         var inrelext = arrayImpres[i]['inrelext'] > 0 ? arrayImpres[i]['inrelext'] : '';
         var inselext = (arrayImpres[i]['inselext'] > 0 && arrayImpres[i]['tpextrat'] > 1) ? arrayImpres[i]['inselext'] : '';
-        var nrctremp = arrayImpres[i]['nrctremp'] > 0 ? mascara(arrayImpres[i]['nrctremp'], '####.###') : '';
+        var nrctremp = arrayImpres[i]['nrctremp'] > 0 ? mascara(arrayImpres[i]['nrctremp'], '###.###.###') : '';
         var nraplica = arrayImpres[i]['nraplica'] > 0 ? mascara(arrayImpres[i]['nraplica'], '####.###') : '';
         var nranoref = arrayImpres[i]['nranoref'] > 0 ? arrayImpres[i]['nranoref'] : '';
         var flgemiss = arrayImpres[i]['flgemiss'] == 'no' ? 'Process' : '<a href="javascript:Gera_Impressao(\'' + i + '\')"><img src="' + UrlImagens + 'icones/ico_impressora.png" border="0"> Agora</a>';
@@ -817,7 +817,7 @@ function formataTabela() {
     arrayLargura[4] = '25px';
     arrayLargura[5] = '32px';
     arrayLargura[6] = '25px';
-    arrayLargura[7] = '52px';
+    arrayLargura[7] = '80px';
     arrayLargura[8] = '50px';
     arrayLargura[9] = '27px';
 

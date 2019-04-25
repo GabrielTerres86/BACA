@@ -515,6 +515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           ,sab.nrinssac
           ,sab.nmcidsac
           ,sab.cdufsaca
+          ,sab.nrcepsac -- CEP do Pagador para buscar depois na instrucao de protesto
       FROM crapsab sab
      WHERE sab.cdcooper = pr_cdcooper
        AND sab.nrdconta = pr_nrdconta
@@ -2948,7 +2949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 24/08/201819/05/2016
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 06/03/2019
     --
     --  Dados referentes ao programa:
     --
@@ -2976,6 +2977,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                     (Ana - Envolti - Ch. REQ0011728)
     --
     --        14/01/2019 - Enviar instrucao de bloqueio do boleto para a CIP. (Cechet)
+    --
+    --        06/03/2019 - Retornar erro caso o endereço não for encontrado na base de CEPs. (Cechet)
     -- ...........................................................................................
   BEGIN
     DECLARE
@@ -2989,10 +2992,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
            AND UPPER(pnp.cduflogr) = UPPER(pr_cduflogr);
       rw_crappnp cr_crappnp%ROWTYPE;
       
+      -- verificar se o CEP existe nos correios
+      CURSOR cr_cep (pr_nrceplog IN crapdne.nrceplog%TYPE) IS
+        SELECT nrceplog 
+          FROM crapdne dne
+         WHERE dne.nrceplog = pr_nrceplog
+           AND dne.idoricad = 1; -- somente CEP dos correios;
+      rw_cep cr_cep%ROWTYPE;
+      
       --Variaveis Locais
       vr_index_lat VARCHAR2(60);
       vr_nrremret  INTEGER;
       vr_nrseqreg  INTEGER;
+      vr_dtmvtolt  DATE; -- data de envio para protesto
       
       rw_crapcob_ret COBR0007.cr_crapcob%ROWTYPE;
       rw_crapcop     COBR0007.cr_crapcop%ROWTYPE;
@@ -3015,6 +3027,95 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       
       vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
       vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;      
+      
+      PROCEDURE pc_nao_efetuar_protesto IS
+        PRAGMA AUTONOMOUS_TRANSACTION;      
+    BEGIN
+        -- se a instrução de protesto for automatica        
+        -- sistema deverá cancelar a instrução automática de protesto e retornar um erro
+        IF pr_cdoperad = '1' THEN             
+          -- 
+          -- atualizar boleto, cancelando a inst autom de protesto
+          BEGIN
+            UPDATE crapcob SET crapcob.flgdprot = 0,
+                               crapcob.qtdiaprt = 0,
+                               crapcob.dsdinstr = '',
+                               crapcob.insrvprt = 0,
+                               crapcob.dtbloque = NULL,
+                               crapcob.insitcrt = 0,
+                               crapcob.dtsitcrt = NULL
+            WHERE crapcob.rowid = rw_crapcob_ret.rowid;
+          EXCEPTION
+            WHEN OTHERS THEN
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+              vr_cdcritic := 1035;  --Erro ao atualizar crapcob 
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapcob:'||
+                             ' flgdprot:0'||
+                             ', qtdiaprt:0'||
+                             ', dsdinstr:NULL'||
+                             ', insrvprt:0'||
+                             ', dtbloque:NULL'||
+                             ', insitcrt:0'||
+                             ', dtsitcrt:NULL'||
+                             ' com rowid:'||rw_crapcob_ret.rowid||
+                             '. '||sqlerrm;
+              RAISE vr_exc_erro;
+          END;
+
+          --Cria log cobranca
+          PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob_ret.rowid   --ROWID da Cobranca
+                                       ,pr_cdoperad => pr_cdoperad   --Operador
+                                       ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
+                                       ,pr_dsmensag => 'CEP do pagador incorreto. Instr Automatica de Protesto cancelada.'   --Descricao Mensagem
+                                       ,pr_des_erro => vr_des_erro   --Indicador erro
+                                       ,pr_dscritic => vr_dscritic); --Descricao erro
+          --Se ocorreu erro
+          IF vr_des_erro = 'NOK' THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+
+          --                       
+        ELSE -- se foi o cooperado ou o operador que comandou o protesto
+          --
+          --Cria log cobranca
+          PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob_ret.rowid   --ROWID da Cobranca
+                                       ,pr_cdoperad => pr_cdoperad   --Operador
+                                       ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
+                                       ,pr_dsmensag => 'CEP do pagador incorreto. Instr de Protesto nao efetuada.'   --Descricao Mensagem
+                                       ,pr_des_erro => vr_des_erro   --Indicador erro
+                                       ,pr_dscritic => vr_dscritic); --Descricao erro
+          --Se ocorreu erro
+          IF vr_des_erro = 'NOK' THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;            
+          --                       
+        END IF;
+          
+        --Prepara retorno cooperado
+        COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob_ret.rowid --ROWID da cobranca
+                                           ,pr_cdocorre => 26  -- Instrucao Rejeitada --Codigo Ocorrencia
+                                           ,pr_cdmotivo => 'NP' -- 'Boleto nao protesto devido ao CEP do pagador incorreto' --Codigo Motivo
+                                           ,pr_vltarifa => 0
+                                           ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                           ,pr_cdagectl => rw_crapcop.cdagectl
+                                           ,pr_dtmvtolt => pr_dtmvtolt  --Data Movimento
+                                           ,pr_cdoperad => pr_cdoperad --Codigo Operador
+                                           ,pr_nrremass => pr_nrremass --Numero Remessa
+                                           ,pr_cdcritic => vr_cdcritic   --Codigo Critica
+                                           ,pr_dscritic => vr_dscritic); --Descricao Critica
+        --Se Ocorreu erro
+        IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;                      
+          
+        -- autonomous transaction
+        COMMIT;        
+      END;
+                 
     BEGIN
       -- Inclui nome do modulo logado - 30/08/2018 - REQ0011728
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0007.pc_inst_protestar');
@@ -3326,6 +3427,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       END IF;
       --Fechar Cursor
       CLOSE cr_crapsab;
+      
+      --Selecionar cadastro convenio
+      OPEN cr_crapcco (pr_cdcooper => rw_crapcob_ret.cdcooper
+                      ,pr_nrconven => rw_crapcob_ret.nrcnvcob);
+      --Proximo registro
+      FETCH cr_crapcco INTO rw_crapcco;
+      CLOSE cr_crapcco;      
+      
+      IF rw_crapcco.insrvprt = 2 THEN -- BB
       --Selecionar pracas nao executantes de processo
       OPEN cr_crappnp (pr_nmextcid => rw_crapsab.nmcidsac
                       ,pr_cduflogr => rw_crapsab.cdufsaca);
@@ -3366,6 +3476,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       IF cr_crappnp%ISOPEN THEN
         CLOSE cr_crappnp;
       END IF;
+      END IF;
+      
+      IF rw_crapcco.insrvprt = 1 THEN -- Serviço de Protesto IEPTB
+        
+        -- Verificar se o CEP existe nos correios
+        OPEN cr_cep (pr_nrceplog => rw_crapsab.nrcepsac);
+        FETCH cr_cep INTO rw_cep;
+        CLOSE cr_cep;
+        
+        -- se o CEP não existir, retornar erro
+        IF rw_cep.nrceplog IS NULL THEN
+
+          -- rotina autonomous transaction
+          pc_nao_efetuar_protesto;          
+                    
+          -- Inclui nome do modulo logado 
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0007.pc_inst_protestar');
+          vr_cdcritic := 1463;
+          vr_dscritic := gene0001.fn_busca_critica(1463); -- CEP do pagador incorreto. Favor atualizar o endereço do pagador e comandar novamente.
+          --Retornar
+          RAISE vr_exc_erro;          
+        END IF;
+        
+      END IF;
+      
       -- tratamento para titulos migrados 
       IF rw_crapcob_ret.flgregis = 1 AND rw_crapcob_ret.cdbandoc = 001 THEN
         --Selecionar cadastro convenio
@@ -3486,12 +3621,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0007.pc_inst_protestar');
           --
         ELSIF rw_crapcco.insrvprt = 1 THEN -- IEPTB
+
+          -- utilizar a data do movimento específica para protesto          
+          vr_dtmvtolt := cobr0011.fn_busca_dtmvtolt(pr_cdcooper => pr_cdcooper);          
+          
           -- Preparar remessa banco
           PAGA0001.pc_prep_remessa_banco(pr_cdcooper => rw_crapcob_ret.cdcooper --Cooperativa
                                         ,pr_nrcnvcob => rw_crapcob_ret.nrcnvcob --Numero Convenio
-                                        ,pr_dtmvtolt => pr_dtmvtolt  --Data Movimento
+                                        ,pr_dtmvtolt => vr_dtmvtolt  --Data Movimento
                                         ,pr_cdoperad => pr_cdoperad --Codigo Operador
-                                        ,pr_idregcob => rw_crapcob_ret.rowid
+                                        ,pr_idregcob => '0'
                                         ,pr_nrremret => vr_nrremret --Numero Remessa
                                         ,pr_rowid_ret => vr_rowid_ret --ROWID Remessa Retorno
                                         ,pr_nrseqreg => vr_nrseqreg --Numero Sequencial registro
@@ -3550,6 +3689,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             IF vr_des_erro = 'NOK' THEN
               --Levantar Excecao
               RAISE vr_exc_erro;
+            END IF;
+
+            IF rw_crapcco.insrvprt = 1 THEN -- IEPTB
+              --
+              IF vr_dtmvtolt <> trunc(SYSDATE) THEN
+                --Cria log cobranca
+                PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob_ret.rowid   --ROWID da Cobranca
+                                             ,pr_cdoperad => pr_cdoperad   --Operador
+                                             ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
+                                             ,pr_dsmensag => 'Instr de Protesto agendada para ' || to_char(vr_dtmvtolt,'DD/MM/RRRR')   --Descricao Mensagem
+                                             ,pr_des_erro => vr_des_erro   --Indicador erro
+                                             ,pr_dscritic => vr_dscritic); --Descricao erro
+                --Se ocorreu erro
+                IF vr_des_erro = 'NOK' THEN
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                END IF;
+                --                 
+              END IF;
+              --
             END IF;
 
             -- enviar instrucao de bloqueio do boleto pra CIP            
@@ -3828,6 +3987,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     vr_nrseqreg     INTEGER;
     vr_rowid_ret    ROWID;
     vr_index_lat    VARCHAR2(60);
+    vr_dtmvtolt     DATE; -- data de envio para protesto
 
     -- Identificar se o boleto possui Negativacao Serasa
     vr_is_serasa    BOOLEAN;
@@ -4280,13 +4440,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 					--
 				WHEN 2 THEN -- titulo enviado a cartorio          
 
+          -- utilizar a data do movimento específica para protesto          
+          vr_dtmvtolt := cobr0011.fn_busca_dtmvtolt(pr_cdcooper => pr_cdcooper);          
+
           -- Registra Instrucao Alter Dados / Protesto
           -- gerar solicitacao de sustar protesto no dia seguinte
           PAGA0001.pc_prep_remessa_banco (pr_cdcooper => rw_crapcob.cdcooper --Codigo Cooperativa
                                          ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
-                                         ,pr_dtmvtolt => rw_crapdat.dtmvtopr --Data movimento
+                                         ,pr_dtmvtolt => vr_dtmvtolt         --Data movimento
                                          ,pr_cdoperad => pr_cdoperad         --Codigo Operador
-																				 ,pr_idregcob => rw_crapcob.rowid
+										                     ,pr_idregcob => '0'
                                          ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                          ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                          ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial
@@ -4449,13 +4612,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             --
           END IF;
         
+          -- utilizar a data do movimento específica para protesto          
+          vr_dtmvtolt := cobr0011.fn_busca_dtmvtolt(pr_cdcooper => pr_cdcooper);
+        
           -- Registra Instrucao Alter Dados / Protesto
           -- gerar solicitacao de sustar protesto no dia seguinte
           PAGA0001.pc_prep_remessa_banco (pr_cdcooper => rw_crapcob.cdcooper --Codigo Cooperativa
                                          ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
-                                         ,pr_dtmvtolt => pr_dtmvtolt --Data movimento
+                                         ,pr_dtmvtolt => vr_dtmvtolt         --Data movimento
                                          ,pr_cdoperad => pr_cdoperad         --Codigo Operador
-																				 ,pr_idregcob => rw_crapcob.rowid
+										                     ,pr_idregcob => '0'
                                          ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                          ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                          ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial
@@ -13505,6 +13671,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     vr_des_erro   VARCHAR2(3);
     --Ch REQ0011728
     vr_dsparame      VARCHAR2(4000);
+    vr_dtmvtolt   DATE; -- data de envio para protesto    
 
     ------------------------------- CURSORES ---------------------------------    
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -13777,13 +13944,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                  ,pr_des_erro => vr_des_erro   --Indicador erro
                                  ,pr_dscritic => vr_dscritic); --Descricao erro
 
+    -- utilizar a data do movimento específica para protesto          
+    vr_dtmvtolt := cobr0011.fn_busca_dtmvtolt(pr_cdcooper => pr_cdcooper);          
+
     -- Registra Instrucao Alter Dados / Protesto
     -- gerar pedido de remessa
     PAGA0001.pc_prep_remessa_banco (pr_cdcooper => rw_crapcob.cdcooper --Codigo Cooperativa
                                    ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
-                                   ,pr_dtmvtolt => pr_dtmvtolt         --Data movimento
+                                   ,pr_dtmvtolt => vr_dtmvtolt         --Data movimento
                                    ,pr_cdoperad => pr_cdoperad         --Codigo Operador
-																	 ,pr_idregcob => rw_crapcob.rowid
+								                   ,pr_idregcob => '0'
                                    ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                    ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                    ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial

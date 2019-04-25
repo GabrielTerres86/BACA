@@ -51,7 +51,7 @@
                 $tpmodelo =  getByTagName($r->tags,'tpmodelo');
 				$inrelext =  getByTagName($r->tags,'inrelext') > 0   ? getByTagName($r->tags,'inrelext') : '' ;
 				$inselext = (getByTagName($r->tags,'inselext') > 0 and getByTagName($r->tags,'tpextrat') > 1) ? getByTagName($r->tags,'inselext') : '' ;
-				$nrctremp =  getByTagName($r->tags,'nrctremp') > 0   ? mascara(getByTagName($r->tags,'nrctremp'),'#.###.####.###')  : '' ;
+				$nrctremp =  getByTagName($r->tags,'nrctremp') > 0   ? mascara(getByTagName($r->tags,'nrctremp'),'#.###.###.###')  : '' ;
 				$nraplica =  getByTagName($r->tags,'nraplica') > 0   ? mascara(getByTagName($r->tags,'nraplica'),'####.###')  : '' ;
 				$nranoref =  getByTagName($r->tags,'nranoref') > 0   ? getByTagName($r->tags,'nranoref')  : '' ;
 				$flgemiss =  getByTagName($r->tags,'flgemiss') == 'no' ? 'Process' : 'Agora' ;

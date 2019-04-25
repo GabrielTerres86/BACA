@@ -2,7 +2,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0097.p
     Autor   : Gabriel, GATI - Diego
-    Data    : Maio/2011               Ultima Atualizacao: 12/04/2018
+    Data    : Maio/2011               Ultima Atualizacao: 14/12/2018
     
     Dados referentes ao programa:
     
@@ -115,6 +115,8 @@
                 
                 12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
                 
+                14/12/2018 - P298 - Inclusos campos tpemprst e carencia para simulação (Andre Clemer - Supero)
+                
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -141,6 +143,7 @@ DEF VAR var_txmensal AS DECI                                        NO-UNDO.
 DEF VAR var_vliofepr AS DECI                                        NO-UNDO.
 DEF VAR var_vlrtarif AS DECI                                        NO-UNDO.
 DEF VAR var_vllibera AS DECI                                        NO-UNDO.
+DEF VAR aux_vlemprst AS DECI                                        NO-UNDO.
 DEF VAR var_permnovo AS LOGI                                        NO-UNDO.
 
 
@@ -277,6 +280,17 @@ PROCEDURE busca_dados_simulacao:
     DEF OUTPUT PARAM TABLE FOR tt-crapsim.
     DEF OUTPUT PARAM TABLE FOR tt-parcelas-epr.
 
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc          AS HANDLE                                 NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE                                 NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE                                 NO-UNDO.  
+    DEF VAR xField        AS HANDLE                                 NO-UNDO. 
+    DEF VAR xText         AS HANDLE                                 NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER                                NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER                                NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR                                 NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR                               NO-UNDO. 
+
     EMPTY TEMP-TABLE tt-erro.         
     EMPTY TEMP-TABLE tt-crapsim.      
     EMPTY TEMP-TABLE tt-parcelas-epr. 
@@ -304,6 +318,16 @@ PROCEDURE busca_dados_simulacao:
                                                       tt-crapsim.dtmvtolt,
                                                       tt-crapsim.dtlibera)
                     tt-crapsim.idfiniof = crapsim.idfiniof.
+             
+             ASSIGN tt-crapsim.tpemprst = crapsim.tpemprst.
+             
+             IF crapsim.tpemprst = 2 THEN
+               DO:
+                 ASSIGN tt-crapsim.idcarenc = crapsim.idcarenc
+                        tt-crapsim.dtcarenc = crapsim.dtcarenc
+                        tt-crapsim.vlprecar = crapsim.vlprecar.
+               END.
+
              FIND crapass OF crapsim NO-LOCK NO-ERROR.
              IF   AVAIL crapass   THEN
                   ASSIGN tt-crapsim.cdagenci = crapass.cdagenci.
@@ -349,25 +373,15 @@ PROCEDURE busca_dados_simulacao:
                 END.
              END.
                           
-             /* Datas das Prestacoes */
-             RUN calcula_data_parcela_sim
-                (par_cdcooper, crapsim.dtdpagto, crapsim.qtparepr).
-             
-             DO aux_nrparepr = 1 TO crapsim.qtparepr:
-             
-                FIND tt-datas-parcelas WHERE tt-datas-parcelas.nrparepr = aux_nrparepr
-                                             NO-LOCK NO-ERROR.
-                IF  AVAIL tt-datas-parcelas THEN
-                    DO:
-         
-                        CREATE tt-parcelas-epr.
-                        ASSIGN tt-parcelas-epr.cdcooper = par_cdcooper
-                               tt-parcelas-epr.nrdconta = par_nrdconta
-                               tt-parcelas-epr.nrparepr = aux_nrparepr
-                               tt-parcelas-epr.vlparepr = crapsim.vlparepr
-                               tt-parcelas-epr.dtparepr = tt-datas-parcelas.dtparepr.
-                    END.
-             END.                  
+            /*-------------------------------------------------------------------------------*/
+            RUN busca_parcelas (INPUT par_cdcooper, /*par_cdcooper*/
+                                INPUT par_nrdconta, /*par_nrdconta*/
+                                INPUT par_nrsimula, /*par_nrsimula*/
+                                OUTPUT TABLE tt-parcelas-epr). /*tt-parcelas-epr*/
+
+            IF   RETURN-VALUE = "NOK"   THEN 
+              RETURN "NOK".
+            /*-------------------------------------------------------------------------------*/
          
          END.
     ELSE
@@ -538,7 +552,45 @@ PROCEDURE exclui_simulacao:
     END. /* DO   aux_contador = 1 TO 10: */
 
     IF   aux_cdcritic = 0 AND aux_dscritic = ""   THEN
+      DO:
          DELETE crapsim.
+         
+         /*se for alteracao limpa a tabela de parcelas simulacao*/
+        
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+          /* Efetuar a chamada a rotina Oracle  */
+          RUN STORED-PROCEDURE pc_remove_simulacao_parcela
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /*pr_cdcooper*/
+                                                 INPUT par_nrdconta, /*pr_nrdconta*/
+                                                 INPUT par_nrsimula, /*pr_nrsimula*/
+                                                OUTPUT 0,  /* pr_cdcritic */
+                                                OUTPUT "").  /* pr_dscritic */
+
+          /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_remove_simulacao_parcela
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+          ASSIGN aux_cdcritic = 0
+                 aux_dscritic = ""
+                 aux_cdcritic = INT(pc_remove_simulacao_parcela.pr_cdcritic) 
+                                WHEN pc_remove_simulacao_parcela.pr_cdcritic <> ?
+                 aux_dscritic = pc_remove_simulacao_parcela.pr_dscritic
+                                WHEN pc_remove_simulacao_parcela.pr_dscritic <> ?.
+          
+          IF aux_cdcritic <> 0    OR aux_dscritic <> ""   THEN
+            DO:
+              RUN gera_erro (INPUT par_cdcooper,
+                             INPUT par_cdagenci,
+                             INPUT par_nrdcaixa,
+                             INPUT 1,
+                             INPUT aux_cdcritic,
+                             INPUT-OUTPUT aux_dscritic).
+              RETURN "NOK".
+            END.
+      END.   
     ELSE 
          DO:
              RUN gera_erro (INPUT par_cdcooper,
@@ -592,6 +644,9 @@ PROCEDURE grava_simulacao:
     DEF  INPUT PARAM par_percetop AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_cdfinemp AS INTE                           NO-UNDO.
 	DEF  INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpemprst AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idcarenc AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtcarenc AS DATE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM par_nrgravad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_txcetano AS DECI                           NO-UNDO.
@@ -604,9 +659,26 @@ PROCEDURE grava_simulacao:
     DEF  VAR aux_dtlibera AS DATE                                   NO-UNDO.
     DEF  VAR aux_dtdpagto AS DATE                                   NO-UNDO.
     DEF  VAR aux_txcetano AS DECI                                   NO-UNDO.
+    DEF  VAR aux_txcetmes AS DECI                                   NO-UNDO.
     DEF  VAR aux_dscatbem AS CHAR                                   NO-UNDO.
     DEF  VAR aux_nrparepr AS INTE INITIAL 0                         NO-UNDO.
+    DEF  VAR aux_cdcritic AS INTE                                   NO-UNDO.
+    DEF  VAR aux_dscritic AS CHAR                                   NO-UNDO.
+    DEF  VAR aux_qtdias_carencia AS INTE INITIAL 0                  NO-UNDO.
+    DEF  VAR aux_vlprecar AS DECI                                   NO-UNDO.
+    DEF  VAR aux_vlpreemp AS DECI INITIAL 0                         NO-UNDO.
+    DEF  VAR aux_dtvencto AS DATE                                   NO-UNDO.
 
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc          AS HANDLE                                 NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE                                 NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE                                 NO-UNDO.  
+    DEF VAR xField        AS HANDLE                                 NO-UNDO. 
+    DEF VAR xText         AS HANDLE                                 NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER                                NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER                                NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR                                 NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR                               NO-UNDO. 
 
     EMPTY TEMP-TABLE tt-erro.
 	
@@ -678,44 +750,13 @@ PROCEDURE grava_simulacao:
                                    INPUT par_dtdpagto,
                                    INPUT par_cddopcao,
                                    INPUT par_nrsimula,
-                                   INPUT par_cdfinemp).
+                                   INPUT par_cdfinemp,
+                                   INPUT par_tpemprst,
+                                   INPUT par_idcarenc,
+                                   INPUT par_dtcarenc).
 
     IF   RETURN-VALUE = "NOK"   THEN 
          RETURN "NOK".
-
-    RUN sistema/generico/procedures/b1wgen0084.p PERSISTENT SET hb1wgen0084.
-  
-    RUN calcula_emprestimo IN hb1wgen0084  (INPUT  par_cdcooper,  
-                                            INPUT  par_cdagenci,  
-                                            INPUT  par_nrdcaixa,  
-                                            INPUT  par_cdoperad,  
-                                            INPUT  par_nmdatela,  
-                                            INPUT  par_idorigem,  
-                                            INPUT  par_nrdconta,  
-                                            INPUT  par_idseqttl,  
-                                            INPUT  par_flgerlog,
-                                            INPUT  0,
-                                            INPUT  par_cdlcremp,  
-                                            INPUT  par_cdfinemp,
-                                            INPUT  par_vlemprst,  
-                                            INPUT  par_qtparepr,  
-                                            INPUT  par_dtmvtolt,  
-                                            INPUT  par_dtdpagto,  
-                                            INPUT  NO,            
-                                            INPUT  par_dtlibera,
-                                            INPUT  par_idfiniof,
-                                            OUTPUT var_qtdiacar,  
-                                            OUTPUT var_vlajuepr,  
-                                            OUTPUT var_txdiaria,  
-                                            OUTPUT var_txmensal,  
-                                            OUTPUT TABLE tt-erro,
-                                            OUTPUT TABLE tt-parcelas-epr).
-         
-    DELETE OBJECT hb1wgen0084.
-    
-    FIND FIRST tt-parcelas-epr NO-ERROR.
-  
-   
         
     
     /* Busca dados da Linha */ 
@@ -756,7 +797,274 @@ PROCEDURE grava_simulacao:
            aux_dscritic = ""
            var_vliofepr = 0.      
           
+    IF par_tpemprst = 1 THEN
+      DO:
+        RUN sistema/generico/procedures/b1wgen0084.p PERSISTENT SET hb1wgen0084.
+      
+        RUN calcula_emprestimo IN hb1wgen0084  (INPUT  par_cdcooper,  
+                                                INPUT  par_cdagenci,  
+                                                INPUT  par_nrdcaixa,  
+                                                INPUT  par_cdoperad,  
+                                                INPUT  par_nmdatela,  
+                                                INPUT  par_idorigem,  
+                                                INPUT  par_nrdconta,  
+                                                INPUT  par_idseqttl,  
+                                                INPUT  par_flgerlog,
+                                                INPUT  0,
+                                                INPUT  par_cdlcremp,  
+                                                INPUT  par_cdfinemp,
+                                                INPUT  par_vlemprst,  
+                                                INPUT  par_qtparepr,  
+                                                INPUT  par_dtmvtolt,  
+                                                INPUT  par_dtdpagto,  
+                                                INPUT  NO,            
+                                                INPUT  par_dtlibera,
+                                                INPUT  par_idfiniof,
+                                                OUTPUT var_qtdiacar,  
+                                                OUTPUT var_vlajuepr,  
+                                                OUTPUT var_txdiaria,  
+                                                OUTPUT var_txmensal,  
+                                                OUTPUT TABLE tt-erro,
+                                                OUTPUT TABLE tt-parcelas-epr).
+             
+        DELETE OBJECT hb1wgen0084.
         
+        FIND FIRST tt-parcelas-epr NO-ERROR.
+      END.
+  
+    ELSE IF par_tpemprst = 2 THEN
+      DO:
+      
+        ASSIGN var_txmensal = craplcr.txmensal.
+
+        /* Se tiver carencia */
+        IF par_idcarenc > 0 THEN 
+          DO:
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Efetuar a chamada a rotina Oracle  */
+            RUN STORED-PROCEDURE pc_busca_qtd_dias_carencia
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_idcarenc,
+                                                  OUTPUT 0,   /* pr_qtddias */
+                                                  OUTPUT 0,   /* pr_cdcritic */
+                                                  OUTPUT ""). /* pr_dscritic */  
+
+            /* Fechar o procedimento para buscarmos o resultado */ 
+            CLOSE STORED-PROC pc_busca_qtd_dias_carencia
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = ""
+                   aux_cdcritic = INT(pc_busca_qtd_dias_carencia.pr_cdcritic) 
+                                  WHEN pc_busca_qtd_dias_carencia.pr_cdcritic <> ?
+                   aux_dscritic = pc_busca_qtd_dias_carencia.pr_dscritic
+                                  WHEN pc_busca_qtd_dias_carencia.pr_dscritic <> ?
+                   aux_qtdias_carencia = INT(pc_busca_qtd_dias_carencia.pr_qtddias) 
+                                         WHEN pc_busca_qtd_dias_carencia.pr_qtddias <> ?.
+          
+            IF aux_cdcritic <> 0    OR
+               aux_dscritic <> ""   THEN
+              DO:
+                 RUN gera_erro (INPUT par_cdcooper,
+                                INPUT par_cdagenci,
+                                INPUT par_nrdcaixa,
+                                INPUT 1,
+                                INPUT aux_cdcritic,
+                                INPUT-OUTPUT aux_dscritic).
+             
+                 RETURN "NOK".
+              END.
+          
+          END.
+        
+          ASSIGN aux_vlemprst = par_vlemprst
+                 var_vllibera = par_vlemprst.
+          
+          /* Financia IOF e Tarifa */
+          IF par_idfiniof = 1 THEN
+            DO:
+              /* adiciona o tarifa */
+              ASSIGN aux_vlemprst = aux_vlemprst + var_vlrtarif.
+            END.
+
+          /* Calcular o IOF da operação */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+          /* Efetuar a chamada a rotina Oracle */ 
+          RUN STORED-PROCEDURE pc_calcula_iof_epr
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                               INPUT par_nrdconta,
+                                               INPUT 0,
+                                               INPUT par_dtmvtolt,
+                                               INPUT crapass.inpessoa,
+                                               INPUT par_cdlcremp,
+                                               INPUT par_cdfinemp,   
+                                               INPUT par_qtparepr,                                              
+                                               INPUT 0, 
+                                               INPUT par_vlemprst,
+                                               INPUT par_dtdpagto,
+                                               INPUT par_dtlibera,
+                                               INPUT par_tpemprst,
+                                               INPUT par_dtcarenc, /* pr_dtcarenc */
+                                               INPUT aux_qtdias_carencia, /* pr_qtdias_carencia */
+                                               INPUT aux_dscatbem,     /* Bens em garantia */
+                                               INPUT par_idfiniof,     /* Indicador de financiamento de IOF e tarifa */
+                                               INPUT ?,
+                                               INPUT "N", 
+                                              OUTPUT 0, /* Valor Calculado Parcela */
+                                              OUTPUT 0, /* IOF */
+                                              OUTPUT 0, /* IOF principal */
+                                              OUTPUT 0, /* IOF adicional */
+                                              OUTPUT 0, /* Imunidade */
+                                              OUTPUT "").
+
+          /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_calcula_iof_epr
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          ASSIGN var_vliofepr = pc_calcula_iof_epr.pr_valoriof
+                                WHEN pc_calcula_iof_epr.pr_valoriof <> ?           
+                 aux_dscritic = pc_calcula_iof_epr.pr_dscritic
+                                WHEN pc_calcula_iof_epr.pr_dscritic <> ?.
+         
+          /* Financia IOF e Tarifa */
+          IF par_idfiniof = 1 THEN
+            DO:
+              /* adiciona o IOF */
+              ASSIGN aux_vlemprst = aux_vlemprst + var_vliofepr
+                     var_vllibera = aux_vlemprst.
+            END.
+         
+         /* parcela */
+         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Efetuar a chamada a rotina Oracle  */
+        RUN STORED-PROCEDURE pc_calc_parc_pos_fixado_prog
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                               INPUT par_dtlibera,
+                                               INPUT par_cdlcremp,
+                                               INPUT par_dtcarenc,
+                                               INPUT aux_qtdias_carencia,
+                                               INPUT par_dtdpagto,
+                                               INPUT par_qtparepr,
+                                               INPUT aux_vlemprst,
+                                              OUTPUT "", /* pr_tab_parcelas */
+                                              OUTPUT 0,  /* pr_cdcritic */
+                                              OUTPUT ""  /* pr_dscritic */
+                                              ).
+
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_calc_parc_pos_fixado_prog
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_cdcritic = INT(pc_calc_parc_pos_fixado_prog.pr_cdcritic) 
+                              WHEN pc_calc_parc_pos_fixado_prog.pr_cdcritic <> ?
+               aux_dscritic = pc_calc_parc_pos_fixado_prog.pr_dscritic
+                              WHEN pc_calc_parc_pos_fixado_prog.pr_dscritic <> ?.
+
+        IF aux_cdcritic <> 0    OR
+           aux_dscritic <> ""   THEN
+          DO:
+             RUN gera_erro (INPUT par_cdcooper,
+                            INPUT par_cdagenci,
+                            INPUT par_nrdcaixa,
+                            INPUT 1,
+                            INPUT aux_cdcritic,
+                            INPUT-OUTPUT aux_dscritic).
+         
+             RETURN "NOK".
+          END.
+          
+        /***************************************************************************************/
+        EMPTY TEMP-TABLE tt-parcelas-epr.
+
+        /* Leitura do XML de retorno da proc e criacao dos registros na tt-extrato_conta
+           para visualizacao dos registros na tela */
+
+        /* Buscar o XML na tabela de retorno da procedure Progress */ 
+        ASSIGN xml_req = pc_calc_parc_pos_fixado_prog.pr_tab_parcelas. 
+
+        /* Efetuar a leitura do XML*/ 
+        SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+        PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+        /* Inicializando objetos para leitura do XML */ 
+        CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+        CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+        CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+        CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+        CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+
+        IF ponteiro_xml <> ? THEN
+          DO:
+            xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+            xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+            DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+
+              xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+
+              IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                NEXT. 
+
+              IF xRoot2:NUM-CHILDREN > 0 THEN
+                CREATE tt-parcelas-epr.
+
+              DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+                    
+                xRoot2:GET-CHILD(xField,aux_cont).
+
+                IF xField:SUBTYPE <> "ELEMENT" THEN 
+                  NEXT. 
+
+                xField:GET-CHILD(xText,1).
+                
+                ASSIGN tt-parcelas-epr.cdcooper = par_cdcooper
+                       tt-parcelas-epr.nrdconta = par_nrdconta
+                       tt-parcelas-epr.nrctremp = 0
+                       tt-parcelas-epr.nrparepr = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrparepr"
+                       tt-parcelas-epr.vlparepr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlparepr"
+                       tt-parcelas-epr.dtparepr = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtvencto"
+                       tt-parcelas-epr.indpagto = 0
+                       tt-parcelas-epr.dtvencto = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtvencto".
+                
+                IF tt-parcelas-epr.dtvencto >= par_dtcarenc AND aux_vlprecar = 0 THEN
+                  DO:
+                    ASSIGN aux_vlprecar = tt-parcelas-epr.vlparepr.
+                  END.
+
+                IF (tt-parcelas-epr.dtvencto > par_dtdpagto) AND aux_vlpreemp = 0 THEN
+                  DO:
+                    ASSIGN aux_vlpreemp = tt-parcelas-epr.vlparepr.
+                  END.
+                  
+              END. /* DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:*/
+
+            END. /* DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: */
+
+            SET-SIZE(ponteiro_xml) = 0. 
+
+          END. /* ponteiro_xml <> ? */
+
+          /*Elimina os objetos criados*/
+          DELETE OBJECT xDoc. 
+          DELETE OBJECT xRoot. 
+          DELETE OBJECT xRoot2. 
+          DELETE OBJECT xField. 
+          DELETE OBJECT xText.
+          /***************************************************************************************/
+
+      END. /*tpemprst=2*/
+          
+          
+    /* somente para PP*/    
+    IF par_tpemprst = 1 THEN
+      DO:
               /* Calcular o IOF da operação */
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         /* Efetuar a chamada a rotina Oracle */ 
@@ -775,9 +1083,9 @@ PROCEDURE grava_simulacao:
                                               INPUT par_vlemprst,
                                               INPUT par_dtdpagto,
                                               INPUT par_dtlibera,
-                                              INPUT 1,
-                                              INPUT ?, /* pr_dtcarenc */
-                                              INPUT 0, /* pr_qtdias_carencia */
+                                              INPUT par_tpemprst,
+                                              INPUT par_dtcarenc, /* pr_dtcarenc */
+                                              INPUT aux_qtdias_carencia, /* pr_qtdias_carencia */
                                           INPUT aux_dscatbem,     /* Bens em garantia */
                                               INPUT par_idfiniof,     /* Indicador de financiamento de IOF e tarifa */
                                               INPUT ?,
@@ -809,6 +1117,8 @@ PROCEDURE grava_simulacao:
           IF  AVAIL tt-parcelas-epr THEN
               DO:
                   ASSIGN tt-parcelas-epr.vlparepr = pc_calcula_iof_epr.pr_vlpreclc
+                                                      WHEN pc_calcula_iof_epr.pr_vlpreclc <> ?
+                             aux_vlpreemp             = pc_calcula_iof_epr.pr_vlpreclc
                                                   WHEN pc_calcula_iof_epr.pr_vlpreclc <> ?.
               END.
         END.
@@ -822,8 +1132,10 @@ PROCEDURE grava_simulacao:
     END.
     ELSE
     DO:
-        ASSIGN var_vllibera = par_vlemprst - var_vlrtarif - var_vliofepr.
+              ASSIGN var_vllibera = par_vlemprst - var_vlrtarif - var_vliofepr
+                     aux_vlpreemp = tt-parcelas-epr.vlparepr.
     END.
+    END. /* par_tpemprst =1 */
     
     /* Criacao ou busca do registro de simulacao */
     IF   par_cddopcao = "I"   THEN
@@ -891,21 +1203,31 @@ PROCEDURE grava_simulacao:
     RUN sistema/generico/procedures/b1wgen0002.p 
         PERSISTENT SET h-b1wgen0002.
 
-    RUN calcula-cet IN h-b1wgen0002 (INPUT par_cdcooper, 
+     RUN calcula_cet_novo IN h-b1wgen0002 (INPUT par_cdcooper,
                                      INPUT par_cdagenci, 
                                      INPUT par_nrdcaixa, 
                                      INPUT par_cdoperad, 
                                      INPUT par_nmdatela, 
                                      INPUT par_idorigem, 
                                      INPUT par_dtmvtolt, 
-                                     INPUT par_qtparepr, 
-                                     INPUT IF AVAIL tt-parcelas-epr THEN 
-                                              tt-parcelas-epr.vlparepr 
-                                           ELSE 0, 
+                                           INPUT par_nrdconta,
+                                           INPUT crapass.inpessoa, 
+                                           INPUT 2, /* cdusolcr */
+                                           INPUT par_cdlcremp,
+                                           INPUT par_tpemprst,
+                                           INPUT 0,
+                                           INPUT par_dtlibera,
                                      INPUT var_vllibera,
-                                     INPUT par_dtlibera, 
+                                           INPUT aux_vlpreemp,
+                                           INPUT par_qtparepr,
                                      INPUT par_dtdpagto,
-                                    OUTPUT aux_txcetano,
+                                           INPUT par_cdfinemp, 
+                                           INPUT aux_dscatbem,
+                                           INPUT par_idfiniof,
+                                           INPUT ?,
+                                           INPUT "N",
+                                           OUTPUT aux_txcetano, /* taxa cet ano */
+                                           OUTPUT aux_txcetmes, /* taxa cet mes */
                                     OUTPUT TABLE tt-erro).
 
     ASSIGN par_txcetano = ROUND(aux_txcetano,2).
@@ -918,12 +1240,11 @@ PROCEDURE grava_simulacao:
                 aux_dtdpagto = crapsim.dtdpagto.
 
     ASSIGN par_nrgravad     = crapsim.nrsimula
+           crapsim.tpemprst = par_tpemprst
            crapsim.cdlcremp = par_cdlcremp
            crapsim.vlemprst = par_vlemprst
            crapsim.qtparepr = par_qtparepr
-           crapsim.vlparepr = IF AVAIL tt-parcelas-epr THEN 
-                                       tt-parcelas-epr.vlparepr 
-                              ELSE 0
+           crapsim.vlparepr = aux_vlpreemp
            crapsim.dtmvtolt = par_dtmvtolt
            crapsim.dtdpagto = par_dtdpagto
            crapsim.dtlibera = par_dtlibera
@@ -937,9 +1258,102 @@ PROCEDURE grava_simulacao:
            crapsim.cdoperad = par_cdoperad
            crapsim.vlajuepr = var_vlajuepr
            crapsim.cdfinemp = par_cdfinemp
-           crapsim.idfiniof = par_idfiniof.
+           crapsim.idfiniof = par_idfiniof
+           crapsim.vlprecar = IF  (par_idcarenc > 1) THEN /* Pos-Fixado  e carencia*/
+                                   aux_vlprecar
+                              ELSE 0
+           crapsim.idcarenc = IF  (par_tpemprst = 2) THEN /* Pos-Fixado */
+                                   par_idcarenc
+                              ELSE 0
+           crapsim.dtcarenc = IF  (par_tpemprst = 2) THEN /* Pos-Fixado */
+                                   par_dtcarenc
+                              ELSE ?.
 
     VALIDATE crapsim.
+
+    /*se for alteracao limpa a tabela de parcelas simulacao*/
+    IF par_cddopcao = "A" THEN
+      DO:
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Efetuar a chamada a rotina Oracle  */
+        RUN STORED-PROCEDURE pc_remove_simulacao_parcela
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /*pr_cdcooper*/
+                                               INPUT par_nrdconta, /*pr_nrdconta*/
+                                               INPUT par_nrgravad, /*pr_nrsimula*/
+                                              OUTPUT 0,  /* pr_cdcritic */
+                                              OUTPUT "").  /* pr_dscritic */
+
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_remove_simulacao_parcela
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_cdcritic = INT(pc_remove_simulacao_parcela.pr_cdcritic) 
+                              WHEN pc_remove_simulacao_parcela.pr_cdcritic <> ?
+               aux_dscritic = pc_remove_simulacao_parcela.pr_dscritic
+                              WHEN pc_remove_simulacao_parcela.pr_dscritic <> ?.
+        
+        IF aux_cdcritic <> 0    OR aux_dscritic <> ""   THEN
+          DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+          END.
+      END.
+    
+    /* Gravar os valores de parcelas */
+    FOR EACH tt-parcelas-epr BREAK BY tt-parcelas-epr.nrparepr:
+    
+        IF par_tpemprst = 1  THEN
+          aux_dtvencto = tt-parcelas-epr.dtparepr.
+        ELSE IF par_tpemprst = 2  THEN
+          aux_dtvencto = tt-parcelas-epr.dtvencto.
+
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Efetuar a chamada a rotina Oracle  */
+        RUN STORED-PROCEDURE pc_grava_simulacao_parcela
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT tt-parcelas-epr.cdcooper, /*pr_cdcooper*/
+                                               INPUT tt-parcelas-epr.nrdconta, /*pr_nrdconta*/
+                                               INPUT par_nrgravad, /*pr_nrsimula*/
+                                               INPUT tt-parcelas-epr.nrparepr, /*pr_nrparepr*/
+                                               INPUT tt-parcelas-epr.vlparepr, /*pr_vlparepr*/
+                                               INPUT aux_dtvencto, /*pr_dtvencto*/
+                                              OUTPUT 0,  /* pr_cdcritic */
+                                              OUTPUT "").  /* pr_dscritic */
+
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_grava_simulacao_parcela
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_cdcritic = INT(pc_grava_simulacao_parcela.pr_cdcritic) 
+                              WHEN pc_grava_simulacao_parcela.pr_cdcritic <> ?
+               aux_dscritic = pc_grava_simulacao_parcela.pr_dscritic
+                              WHEN pc_grava_simulacao_parcela.pr_dscritic <> ?.
+
+        IF aux_cdcritic <> 0 OR aux_dscritic <> ""   THEN
+          DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+          END.
+    END. /*tt-parcelas-epr*/
 
     IF  par_flgerlog   THEN 
         DO:
@@ -1014,6 +1428,9 @@ PROCEDURE valida_gravacao_simulacao:
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrsimula AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdfinemp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpemprst AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idcarenc AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtcarenc AS DATE                           NO-UNDO.
     
     DEF  VAR         aux_cdempres AS INTE                           NO-UNDO.
     DEF  VAR         aux_qtdiacar AS INTE                           NO-UNDO.
@@ -1059,6 +1476,9 @@ PROCEDURE valida_gravacao_simulacao:
                 LEAVE VALIDA.
             END.
          
+       IF par_tpemprst = 1 THEN
+          DO:
+
        RUN sistema/generico/procedures/b1wgen0084.p PERSISTENT SET hb1wgen0084.
                 
        RUN valida_novo_calculo IN hb1wgen0084 (INPUT  par_cdcooper,
@@ -1073,6 +1493,42 @@ PROCEDURE valida_gravacao_simulacao:
        
        IF  RETURN-VALUE <> "OK" THEN
            RETURN "NOK".
+         END.
+       ELSE IF par_tpemprst = 2 THEN
+			   DO:
+                                                               
+				   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+				   /* Efetuar a chamada a rotina Oracle  */
+				   RUN STORED-PROCEDURE pc_valida_dados_pos_fixado
+				   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                                        INPUT par_dtmvtolt,
+                                                        INPUT par_cdlcremp,
+                                                        INPUT par_vlemprst,
+                                                        INPUT par_qtparepr,
+                                                        INPUT par_dtlibera,
+                                                        INPUT par_dtdpagto,
+                                                        INPUT par_dtcarenc,
+                                                        INPUT 0,   /* par_flgpagto */
+                                                        OUTPUT 0,   /* pr_cdcritic */
+                                                        OUTPUT ""). /* pr_dscritic */  
+
+				   /* Fechar o procedimento para buscarmos o resultado */ 
+				   CLOSE STORED-PROC pc_valida_dados_pos_fixado
+                  				     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+				   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+				   ASSIGN aux_cdcritic = 0
+				          aux_dscritic = ""
+				          aux_cdcritic = INT(pc_valida_dados_pos_fixado.pr_cdcritic) 
+                                 WHEN pc_valida_dados_pos_fixado.pr_cdcritic <> ?
+				          aux_dscritic = pc_valida_dados_pos_fixado.pr_dscritic
+                                 WHEN pc_valida_dados_pos_fixado.pr_dscritic <> ?.
+				   IF   aux_cdcritic <> 0    OR
+				        aux_dscritic <> ""   THEN
+				        LEAVE VALIDA.
+			   END.
 
        FIND craplcr WHERE
             craplcr.cdcooper = par_cdcooper   AND 
@@ -1094,8 +1550,8 @@ PROCEDURE valida_gravacao_simulacao:
                 LEAVE VALIDA.
             END.
 
-       /* Diferente que o produto PP */ 
-       IF  craplcr.tpprodut <> 1 THEN
+       /* Nao permitido para produto TR */ 
+       IF  craplcr.tpprodut = 0 THEN
            DO:
                ASSIGN aux_cdcritic = 0
                       aux_dscritic = "Linha nao permitida para esse produto".
@@ -1206,6 +1662,14 @@ PROCEDURE valida_gravacao_simulacao:
             
                LEAVE VALIDA.
            END.
+
+       IF   (par_tpemprst = 1 OR par_tpemprst = 2) AND
+             DAY(par_dtdpagto) > 27   THEN
+             DO:
+                 ASSIGN aux_cdcritic = 0
+                        aux_dscritic = "Data de pagamento nao pode ser maior ou igual ao dia 28" .
+                 LEAVE VALIDA.
+             END.    
 
        FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
                           craptab.nmsistem = "CRED"       AND
@@ -1354,6 +1818,7 @@ PROCEDURE imprime_simulacao:
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_nrsimula AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_tpemprst AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_nmarqpdf AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -1361,6 +1826,7 @@ PROCEDURE imprime_simulacao:
     DEF VAR aux_nmarquiv          AS CHAR                           NO-UNDO.
     DEF VAR aux_carencia          AS CHAR                           NO-UNDO.
     DEF VAR aux_contador          AS INTE                           NO-UNDO.
+    DEF VAR aux_contotal          AS INTE                           NO-UNDO.
     DEF VAR aux_contaesq          AS INTE INIT 1                    NO-UNDO.
     DEF VAR aux_contadir          AS INTE                           NO-UNDO.
     DEF VAR aux_codigesq          AS CHAR                           NO-UNDO.
@@ -1372,11 +1838,13 @@ PROCEDURE imprime_simulacao:
     DEF VAR aux_vlrsolic          AS CHAR                           NO-UNDO.
     DEF VAR aux_txmensal          AS CHAR                           NO-UNDO.
     DEF VAR aux_vlparepr          AS CHAR                           NO-UNDO.
+    DEF VAR aux_vlprecar          AS CHAR                           NO-UNDO.
     DEF VAR aux_tributos          AS CHAR                           NO-UNDO.
     DEF VAR aux_vlajuepr          AS CHAR                           NO-UNDO.
     DEF VAR aux_vlrtarif          AS CHAR                           NO-UNDO.
     DEF VAR aux_vllibera          AS CHAR                           NO-UNDO.
     DEF VAR aux_dsfiniof          AS CHAR                           NO-UNDO.
+    DEF VAR aux_dscarenc          AS CHAR                           NO-UNDO.
     DEF VAR aux_percetop          AS DECI FORMAT "zz9.99"           NO-UNDO.
     DEF VAR aux_diapagto          AS INTE                           NO-UNDO.
     DEF VAR aux_mespagto          AS INTE                           NO-UNDO.
@@ -1428,7 +1896,55 @@ PROCEDURE imprime_simulacao:
         aux_vllibera     FORMAT "x(18)"    AT 02 LABEL "Vl.Liquido Liberado"
         aux_percetop                       AT 11 LABEL "CET(%a.a.)"
         SKIP(1)
-        WITH NO-BOX SIDE-LABELS WIDTH 80 FRAME f_cabec.
+      WITH NO-BOX SIDE-LABELS WIDTH 80 FRAME f_cabec_pp.
+
+    FORM 
+        crapcop.nmextcop FORMAT "X(40)"    AT 01 NO-LABEL
+        "-"                                AT 42   
+        crapcop.nmrescop FORMAT "X(10)"    AT 44 NO-LABEL
+        par_dtmvtolt     FORMAT "99/99/99" AT 55 LABEL "Data Emissao"
+        SKIP                                        
+        tt-crapsim.nrdconta                AT 01 LABEL "Conta"
+        tt-crapsim.nrsimula                AT 26 LABEL "Simulacao"
+        tt-crapsim.cdagenci                AT 66 LABEL "Pac" 
+        SKIP(2)
+        "SIMULACAO DE EMPRESTIMO"          AT 29   
+        SKIP(1)
+        tt-crapsim.cdfinemp                AT 17 LABEL "Finalidade"
+        "-"                                AT 33
+        crapfin.dsfinemp                   AT 35 NO-LABEL  
+        SKIP(1)
+        /* imprime modalidade caso for uma PORTABILIDADE */
+        aux_lbmodali                       AT 17 NO-LABEL
+        aux_cdmodali                       AT 30 NO-LABEL
+        aux_dsmodali                       AT 35 NO-LABEL  
+        SKIP(1)
+        tt-crapsim.cdlcremp                AT 10
+        "-"                                AT 33
+        craplcr.dslcremp                   AT 35 NO-LABEL  
+        SKIP(1)
+        aux_vlrsolic     FORMAT "x(18)"    AT 05 LABEL "Valor Solicitado"
+        tt-crapsim.dtlibera                AT 42 LABEL "Data de Liberacao"
+        SKIP
+        aux_txmensal     FORMAT "x(10)"    AT 10 LABEL "Taxa Mensal"
+        tt-crapsim.dtcarenc                AT 34 LABEL "Data Pgto. 1 Parc. Caren."
+        SKIP
+        tt-crapsim.qtparepr                AT 05
+        aux_vlparepr     FORMAT "x(18)"    AT 45 LABEL "Vl. da Parcela"
+        SKIP
+        aux_tributos     FORMAT "x(18)"    AT 13 LABEL "Tributos"
+        aux_vlprecar     FORMAT "x(18)"    AT 41 LABEL "Vl. Parc. 1 Caren."
+        SKIP
+        aux_vlrtarif     FORMAT "x(13)"    AT 15 LABEL "Tarifa"
+        aux_dscarenc     FORMAT "x(18)"    AT 43 LABEL "Periodo Carencia"
+        SKIP
+        aux_dsfiniof     FORMAT "x(3)"     AT 02 LABEL "Financia IOF/Tarifa"
+        aux_carencia                       AT 50 LABEL "*Carencia"
+        SKIP
+        aux_vllibera     FORMAT "x(18)"    AT 02 LABEL "Vl.Liquido Liberado"
+        aux_percetop                       AT 11 LABEL "CET(%a.a.)"
+        SKIP(1)
+        WITH NO-BOX SIDE-LABELS WIDTH 80 FRAME f_cabec_pos.
 
     FORM aux_codigesq AT 01 FORMAT "X(4)" 
          aux_datadesq AT 06 
@@ -1535,6 +2051,30 @@ PROCEDURE imprime_simulacao:
                
                aux_anopagto = YEAR(tt-crapsim.dtdpagto).
 
+               /*somente se for POS*/
+               IF par_tpemprst = 2 THEN
+                 DO:
+                   ASSIGN aux_vlprecar = fnFormataValor("R$ ",
+                                                        tt-crapsim.vlprecar,
+                                                        "zzz,zzz,zz9.99",
+                                                        "").
+
+                   IF tt-crapsim.idcarenc = 1 THEN
+                     ASSIGN aux_dscarenc = "Sem pagamento".
+                   ELSE IF tt-crapsim.idcarenc = 2 THEN
+                     ASSIGN aux_dscarenc = "Mensal".
+                   ELSE IF tt-crapsim.idcarenc = 3 THEN
+                     ASSIGN aux_dscarenc = "Bimestral".
+                   ELSE IF tt-crapsim.idcarenc = 4 THEN
+                     ASSIGN aux_dscarenc = "Trimestral".
+                   ELSE IF tt-crapsim.idcarenc = 5 THEN
+                     ASSIGN aux_dscarenc = "Semestral".
+                   ELSE IF tt-crapsim.idcarenc = 6 THEN
+                     ASSIGN aux_dscarenc = "Anual".
+                   ELSE
+                     ASSIGN aux_dscarenc = "Sem carencia".
+                 END.
+
                IF tt-crapsim.idfiniof = 1 THEN 
                    ASSIGN aux_dsfiniof = "SIM".
                ELSE
@@ -1573,8 +2113,7 @@ PROCEDURE imprime_simulacao:
                    aux_dsmodali = "".
         END.
 
-
-
+        IF tt-crapsim.tpemprst = 1 THEN
         DISPLAY STREAM str_limcre
                 crapcop.nmextcop
                 crapcop.nmrescop
@@ -1600,20 +2139,67 @@ PROCEDURE imprime_simulacao:
                 aux_cdmodali
                 aux_lbmodali
                 aux_dsmodali
-                WITH FRAME f_cabec.
+                  WITH FRAME f_cabec_pp.
+        ELSE IF tt-crapsim.tpemprst = 2 THEN
+          DISPLAY STREAM str_limcre
+                  crapcop.nmextcop
+                  crapcop.nmrescop
+                  par_dtmvtolt
+                  tt-crapsim.nrdconta
+                  tt-crapsim.nrsimula
+                  tt-crapsim.cdagenci
+                  tt-crapsim.cdfinemp
+                  crapfin.dsfinemp WHEN AVAIL crapfin
+                  tt-crapsim.cdlcremp
+                  craplcr.dslcremp WHEN AVAIL craplcr
+                  aux_vlrsolic
+                  tt-crapsim.dtlibera
+                  aux_txmensal
+                  tt-crapsim.dtcarenc
+                  aux_vlprecar
+                  aux_vlparepr
+                  tt-crapsim.qtparepr
+                  aux_dscarenc
+                  aux_carencia
+                  aux_tributos
+                  aux_vlrtarif
+                  aux_dsfiniof
+                  aux_vllibera
+                  aux_percetop
+                  aux_cdmodali
+                  aux_lbmodali
+                  aux_dsmodali
+                  WITH FRAME f_cabec_pos.
                                      
         PUT STREAM str_limcre "PARCELAS" AT 01 SKIP.
 
-        ASSIGN aux_contadir = INT(tt-crapsim.qtparepr / 2) + 1.
+        /*-------------------------------------------------------------------------------*/
+        RUN busca_parcelas (INPUT par_cdcooper, /*par_cdcooper*/
+                            INPUT par_nrdconta, /*par_nrdconta*/
+                            INPUT par_nrsimula, /*par_nrsimula*/
+                            OUTPUT TABLE tt-parcelas-epr). /*tt-parcelas-epr*/
 
-        DO    aux_contador = 1 TO tt-crapsim.qtparepr:
+        IF   RETURN-VALUE = "NOK"   THEN 
+          RETURN "NOK".
+        /*-------------------------------------------------------------------------------*/
+        ASSIGN aux_contotal = 0.
+        
+        FOR EACH tt-parcelas-epr:
+          ASSIGN aux_contotal = aux_contotal + 1.
+        END.
+        
+        ASSIGN aux_contadir = INT(aux_contotal / 2) + 1.
+        /*-------------------------------------------------------------------------------*/
+        DO    aux_contador = 1 TO aux_contotal:
 
-              IF aux_contador MOD 2 = 1 THEN DO:
+              IF aux_contador MOD 2 = 1 THEN
+                DO:
                   FIND tt-parcelas-epr WHERE 
                        tt-parcelas-epr.nrparepr = aux_contaesq NO-ERROR.
                   ASSIGN aux_contaesq = aux_contaesq + 1.
               END.
-              ELSE DO:
+              ELSE 
+                DO:
                   FIND tt-parcelas-epr WHERE 
                        tt-parcelas-epr.nrparepr = aux_contadir NO-ERROR.
                   ASSIGN aux_contadir = aux_contadir + 1.
@@ -1670,9 +2256,21 @@ PROCEDURE imprime_simulacao:
         "e a aprovacao" SKIP
         "de credito.".
 
+    IF par_tpemprst = 1 THEN
+      DO:
     PUT STREAM str_limcre UNFORMATTED
         SKIP(2)
         "*Para efeito de calculo todos os meses sao considerados com 30 dias.".
+      END.
+    ELSE IF par_tpemprst = 2 THEN
+      DO:
+        PUT STREAM str_limcre UNFORMATTED
+            SKIP(2)
+            "*Para efeito de calculo todos os meses sao considerados com 30 dias " +
+            "para cobranca " SKIP
+            "de juros remuneratorios e para juros de correcao sera " +
+            "considerado dias uteis.".
+      END.
 
     OUTPUT STREAM str_limcre CLOSE.
 
@@ -2024,6 +2622,122 @@ PROCEDURE consulta_tarifa_emprst:
            
 
     RETURN "OK".
+END.
+
+PROCEDURE busca_parcelas:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrsimula AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-parcelas-epr.
+
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc          AS HANDLE                                 NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE                                 NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE                                 NO-UNDO.  
+    DEF VAR xField        AS HANDLE                                 NO-UNDO. 
+    DEF VAR xText         AS HANDLE                                 NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER                                NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER                                NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR                                 NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR                               NO-UNDO. 
+
+    EMPTY TEMP-TABLE tt-parcelas-epr.
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    /* Efetuar a chamada a rotina Oracle  */
+    RUN STORED-PROCEDURE pc_retorna_simulacao_parc_prog
+      aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /*pr_cdcooper*/
+                                           INPUT par_nrdconta, /*pr_nrdconta*/
+                                           INPUT par_nrsimula, /*pr_nrsimula*/
+                                           OUTPUT "", /* pr_tab_parcelas */
+                                           OUTPUT 0,   /* pr_cdcritic */
+                                           OUTPUT ""). /* pr_dscritic */  
+
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_retorna_simulacao_parc_prog
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = INT(pc_retorna_simulacao_parc_prog.pr_cdcritic)
+                          WHEN pc_retorna_simulacao_parc_prog.pr_cdcritic <> ?
+           aux_dscritic = pc_retorna_simulacao_parc_prog.pr_dscritic
+                          WHEN pc_retorna_simulacao_parc_prog.pr_dscritic <> ?.
+  
+    IF aux_cdcritic <> 0    OR
+       aux_dscritic <> ""   THEN
+      RETURN "NOK".
+
+    EMPTY TEMP-TABLE tt-parcelas-epr.
+
+    /* Leitura do XML de retorno da proc e criacao dos registros na tt-extrato_conta
+       para visualizacao dos registros na tela */
+
+    /* Buscar o XML na tabela de retorno da procedure Progress */ 
+    ASSIGN xml_req = pc_retorna_simulacao_parc_prog.pr_tab_parcelas. 
+
+    /* Efetuar a leitura do XML*/ 
+    SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+    PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+    /* Inicializando objetos para leitura do XML */ 
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+
+    IF ponteiro_xml <> ? THEN
+      DO:
+        xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+        xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+        DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+
+          xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+
+          IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+            NEXT. 
+
+          IF xRoot2:NUM-CHILDREN > 0 THEN
+            CREATE tt-parcelas-epr.
+
+          DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+
+            xRoot2:GET-CHILD(xField,aux_cont).
+
+            IF xField:SUBTYPE <> "ELEMENT" THEN 
+              NEXT. 
+
+            xField:GET-CHILD(xText,1).
+
+            ASSIGN tt-parcelas-epr.cdcooper = par_cdcooper
+                   tt-parcelas-epr.nrdconta = par_nrdconta
+                   tt-parcelas-epr.nrparepr = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrparepr"
+                   tt-parcelas-epr.vlparepr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlparepr"
+                   tt-parcelas-epr.dtparepr = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtvencto".
+
+          END. /* DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:*/
+
+        END. /* DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: */
+
+        SET-SIZE(ponteiro_xml) = 0. 
+
+      END. /* ponteiro_xml <> ? */
+
+      /*Elimina os objetos criados*/
+      DELETE OBJECT xDoc. 
+      DELETE OBJECT xRoot. 
+      DELETE OBJECT xRoot2. 
+      DELETE OBJECT xField. 
+      DELETE OBJECT xText.
+      
+   RETURN "OK".
+
 END.
 
 /* ......................................................................... */

@@ -117,7 +117,9 @@
 
 				28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
         
-        13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
+                13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
+
+                20/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
                 
                 08/01/2019 - Ajuste da taxa mensal na impressao do contrato 
                              INC0028548 (Douglas Pagel / AMcom).
@@ -668,6 +670,7 @@ PROCEDURE grava_dados:
     DEF VAR aux_recidepr AS INTE                                    NO-UNDO.
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
     DEF VAR aux_nivrisco AS CHAR                                    NO-UNDO.
+    DEF VAR aux_vlprecar AS CHAR                                    NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
 
     DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
@@ -948,7 +951,8 @@ PROCEDURE grava_dados:
                                                OUTPUT tt-proposta-epr.flgpagto,
                                                OUTPUT tt-proposta-epr.dtdpagto,
                                                OUTPUT aux_vlutiliz,
-                                               OUTPUT aux_nivrisco).
+                                               OUTPUT aux_nivrisco,
+                                               OUTPUT aux_vlprecar).
     
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.

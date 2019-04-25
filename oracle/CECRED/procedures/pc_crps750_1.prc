@@ -37,7 +37,7 @@ BEGIN
               07/12/2017 - Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)
 
               06/04/2018 - Remover o resgate de aplicação pois a funcionalidade não deve ser aplicada para
-                           empréstimos TR (Renato - Supero).
+                           empréstimos TR (Renato - Supero). 
 
               13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).
                            
@@ -48,6 +48,8 @@ BEGIN
               23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
 
 			  22/11/2018 - Selecionar emprestimo consignado apenas no processo batch noturno (Rodrigo)
+
+              15/04/2019 - P450 - Inclusão de tratamento para ignorar contas corrente em prejuízo (Reginaldo/AMcom)
 
     ............................................................................. */
 
@@ -824,7 +826,7 @@ BEGIN
       vr_cdbccxlt CONSTANT PLS_INTEGER := 100;
       vr_qtd_reg  NUMBER:=0;
       vr_inliquid crapepr.inliquid%TYPE;
-      
+
       ------------------------------- CURSORES ---------------------------------
 
       -- Buscar o cadastro dos associados da Cooperativa
@@ -1228,6 +1230,10 @@ BEGIN
       --
       -- Busca do Empréstimo  
       FOR rw_crapepr IN cr_crapepr LOOP
+        /* P450 - Tratamento para ignorar contas em prejuízo (Reginaldo/AMcom) */
+        IF PREJ0003.fn_verifica_preju_conta(rw_crapepr.cdcooper, rw_crapepr.nrdconta) THEN
+          CONTINUE;
+        END IF;
 
         -- Debitador Unico: validar se a parcela continua em aberto (pode ter sido paga via boleto apos o inicio da execucao deste programa).
         vr_inliquid := 0;
@@ -1435,7 +1441,7 @@ BEGIN
 
             -- Conforme tipo de erro realiza acao diferenciada
             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                RAISE vr_exc_erro;
+                   RAISE vr_exc_erro;                      
             END IF;
 
             -- Subtrai o valor pago do saldo disponivel

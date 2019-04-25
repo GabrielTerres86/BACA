@@ -25,7 +25,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
       ,vldstcor_atu crappep.vldstcor%TYPE
       ,vldstrem     crappep.vldstrem%TYPE
       ,vldstrem_atu crappep.vldstrem%TYPE      
-      ,dtdstjur     crappep.dtdstjur%TYPE);
+      ,dtdstjur     crappep.dtdstjur%TYPE
+			,inliquid     crappep.inliquid%TYPE
+			);
       
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_parcelas IS TABLE OF typ_reg_tab_parcelas INDEX BY BINARY_INTEGER;
@@ -141,6 +143,19 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                           ,pr_cdcritic        OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                           ,pr_dscritic        OUT crapcri.dscritic%TYPE);
                                        
+  PROCEDURE pc_calc_parc_pos_fixado_prog(pr_cdcooper        IN  crapcop.cdcooper%TYPE                    -- Codigo da Cooperativa
+																				,pr_dtcalcul        IN  crapdat.dtmvtolt%TYPE                    -- Data de Calculo
+																				,pr_cdlcremp        IN  craplcr.cdlcremp%TYPE                    -- Codigo da Linha de Credito
+																				,pr_dtcarenc        IN  crawepr.dtcarenc%TYPE                    -- Data da Carencia do Contrato
+																				,pr_qtdias_carencia IN  tbepr_posfix_param_carencia.qtddias%TYPE -- Quantidade de Dias de Carencia
+																				,pr_dtdpagto        IN  crapepr.dtdpagto%TYPE                    -- Data de Pagamento
+																				,pr_qtpreemp        IN  crapepr.qtpreemp%type                    -- Quantidade de Prestacoes
+																				,pr_vlemprst        IN  crapepr.vlemprst%TYPE                    -- Valor do Emprestimo
+																				,pr_tab_parcelas    OUT CLOB                                     -- Parcelas do Emprestimo
+																				,pr_cdcritic        OUT crapcri.cdcritic%TYPE                    -- Codigo da critica
+																				,pr_dscritic        OUT crapcri.dscritic%TYPE                    -- Descricao da critica
+		                                    );
+	
   PROCEDURE pc_calcula_atraso_pos_fixado (pr_cdcooper IN  crappep.cdcooper%TYPE   --> Codigo da Cooperativa
                                          ,pr_cdprogra IN  crapprg.cdprogra%TYPE   --> Codigo do Programa
                                          ,pr_nrdconta IN  crappep.nrdconta%TYPE   --> Numero da Conta Corrente
@@ -213,7 +228,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
 
   PROCEDURE pc_busca_pagto_parc_pos_web(pr_cdcooper     IN crapepr.cdcooper%TYPE      --> Codigo da Cooperativa
                                        ,pr_dtmvtolt     IN VARCHAR2                   --> Data de calculo das parcelas
-                                       ,pr_dtmvtoan     IN VARCHAR2                   --> Data de movimento anterior
+                                       ,pr_dtmvtoan     IN VARCHAR2 DEFAULT NULL      --> Data de movimento anterior
                                        ,pr_nrdconta     IN crapepr.nrdconta%TYPE      --> Numero da Conta Corrente
                                        ,pr_nrctremp     IN crapepr.nrctremp%TYPE      --> Numero do Contrato
                                        ,pr_xmllog       IN VARCHAR2                   --> XML com informacoes de LOG
@@ -563,6 +578,20 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                         ,pr_cdcritic            OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                         ,pr_dscritic OUT crapcri.dscritic%TYPE);   --> Descricao da critica
 
+  PROCEDURE pc_retorna_val_parc_pos_fixado(pr_cdcooper        IN  crapcop.cdcooper%TYPE                    -- Codigo da Cooperativa
+                                          ,pr_dtcalcul        IN  crapdat.dtmvtolt%TYPE                    -- Data de Calculo
+                                          ,pr_cdlcremp        IN  craplcr.cdlcremp%TYPE                    -- Codigo da Linha de Credito
+                                          ,pr_dtcarenc        IN  crawepr.dtcarenc%TYPE                    -- Data da Carencia do Contrato
+                                          ,pr_qtdias_carencia IN  tbepr_posfix_param_carencia.qtddias%TYPE -- Quantidade de Dias de Carencia
+                                          ,pr_dtdpagto        IN  crapepr.dtdpagto%TYPE                    -- Data de Pagamento
+                                          ,pr_qtpreemp        IN  crapepr.qtpreemp%type                    -- Quantidade de Prestacoes
+                                          ,pr_vlemprst        IN  crapepr.vlemprst%TYPE                    -- Valor do Emprestimo
+                                          ,pr_vlprecar        OUT crapepr.vlemprst%TYPE                    -- Valor da prestacao carencia
+																					,pr_vlpreemp        OUT crapepr.vlemprst%TYPE                    -- Valor da prestacao emprestimo
+                                          ,pr_cdcritic        OUT crapcri.cdcritic%TYPE                    -- Codigo da critica
+                                          ,pr_dscritic        OUT crapcri.dscritic%TYPE                    -- Descricao da critica
+																					);
+
   PROCEDURE pc_efetua_liquidacao_empr_pos(pr_cdcooper   IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
                                          ,pr_nrdconta   IN crapepr.nrdconta%TYPE     --> Numero da Conta Corrente
                                          ,pr_nrctremp   IN crapepr.nrctremp%TYPE     --> Numero do Contrato
@@ -586,7 +615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Jaison Fernando
-  --  Data     : Abril - 2017                 Ultima atualizacao: 14/08/2018
+  --  Data     : Abril - 2017                 Ultima atualizacao: 21/01/2019
   --
   -- Dados referentes ao programa:
   --
@@ -597,6 +626,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   --                          -pc_efetua_pagamento_em_dia
   --                          -pc_efetua_pagamento_em_atraso
   --                          -pc_efetua_pagamento_vencer
+	--
+	--             12/12/2018 - PRJ298.2 - Permitir a simulacao das parcelas do pos-fixado
+	--             08/01/2018 - PRJ298.2.2 - Ajustar e validar rotinas respeitando aplicação da varição do indexador - Nagasava (Supero)
+	--             21/01/2019 - PRJ298.2.2 - Ajuste para "Atualização da Dívida após a transferência do prejuízo" - Nagasava (Supero)
+	--
   ---------------------------------------------------------------------------
   PROCEDURE pc_calcula_qtd_dias_uteis(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
                                      ,pr_flgbatch     IN BOOLEAN DEFAULT FALSE --> Indica se o processo noturno estah rodando
@@ -1396,7 +1430,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
        Autor   : James Prust Junior
-       Data    : Abril/2017                         Ultima atualizacao: 
+       Data    : Abril/2017                         Ultima atualizacao: 08/01/2019
 
        Dados referentes ao programa:
 
@@ -1404,7 +1438,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
        Objetivo  : Procedure para calcular as parcelas do Pos-Fixado.
     
-       Alteracoes: 
+       Alteracoes: 12/12/2018 - PRJ298.2 - Permitir a simulacao das parcelas do pos-fixado
+			       08/01/2019 - PRJ298.2.2 - Ajustar e validar rotinas respeitando aplicação da varição do indexador - Nagasava (Supero)
     ............................................................................. */
     DECLARE
     -- Busca os dados da linha de credito
@@ -1412,6 +1447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                        ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
       SELECT txmensal 
               ,cddindex
+						,(vlperidx/100) vlperidx
         FROM craplcr 
        WHERE cdcooper = pr_cdcooper
          AND cdlcremp = pr_cdlcremp;
@@ -1442,21 +1478,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_fator_price_total      NUMBER(25,10);
       vr_saldo_projetado        NUMBER(25,10);
       vr_indice                 VARCHAR2(4000);
+			vr_vlrdtaxa               craptxi.vlrdtaxa%TYPE;
 
       -- Variaveis tratamento de erros
       vr_cdcritic               crapcri.cdcritic%TYPE;
       vr_dscritic               VARCHAR2(4000);
       vr_exc_erro               EXCEPTION;
+			--
+			rw_crapdat    BTCH0001.cr_crapdat%ROWTYPE;
+			--
     BEGIN
+			-- Leitura do calendário da cooperativa
+			OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+			FETCH btch0001.cr_crapdat INTO rw_crapdat;
+	        
+			-- Se não encontrar
+			IF btch0001.cr_crapdat%NOTFOUND THEN      
+				CLOSE btch0001.cr_crapdat;
+				-- Montar mensagem de critica
+				vr_dscritic := 'Sistema sem data de movimento, tente novamente mais tarde';
+				RAISE vr_exc_erro;
+			ELSE
+				CLOSE btch0001.cr_crapdat;
+			END IF;
+			--
       vr_tab_price.DELETE;
       vr_tab_total_juros.DELETE;
       vr_tab_saldo_projetado.DELETE;
 
       vr_dtmvtolt := pr_dtcalcul;
       -- Função para retornar o dia anterior
-      vr_dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,       --> Cooperativa conectada
-                                                 pr_dtmvtolt  => vr_dtmvtolt - 1,   --> Data do movimento
-                                                 pr_tipo      => 'A');
+      vr_dtmvtoan := rw_crapdat.dtmvtoan;
 
       -- Buscar a taxa de juros
       OPEN cr_craplcr(pr_cdcooper => pr_cdcooper
@@ -1486,6 +1538,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         RAISE vr_exc_erro;
       END IF;
 
+			-- Aplica o percentual do indexador sobre o valor da taxa
+			vr_vlrdtaxa := (rw_craptxi.vlrdtaxa * rw_craplcr.vlperidx);
+
       -- Saldo Projetado Inicial
       vr_saldo_projetado := pr_vlemprst;
       -- Percorrer as datas que deverão ser calculadas
@@ -1514,7 +1569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                   ,pr_datafinal           => vr_datafinal
                                   ,pr_nrparepr            => vr_nrparepr
                                   ,pr_dtvencto            => vr_dtcarenc
-                                  ,pr_vlrdtaxa            => rw_craptxi.vlrdtaxa
+                                  ,pr_vlrdtaxa            => vr_vlrdtaxa
                                   ,pr_dtdpagto            => pr_dtdpagto
                                   ,pr_txmensal            => rw_craplcr.txmensal
                                   ,pr_vlsprojt            => pr_vlemprst
@@ -1534,11 +1589,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           pr_tab_parcelas(vr_nrparepr).vlparepr := vr_tab_total_juros(vr_nrparepr).valor_total_juros;
           pr_tab_parcelas(vr_nrparepr).dtvencto := vr_dtcarenc;
           pr_tab_parcelas(vr_nrparepr).flcarenc := 1;
-          pr_tab_parcelas(vr_nrparepr).vlrdtaxa := rw_craptxi.vlrdtaxa;
-          -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
-          vr_nrparepr := NVL(vr_nrparepr,0) + 1;
+          pr_tab_parcelas(vr_nrparepr).vlrdtaxa := vr_vlrdtaxa;
+
           -- Avanca da data da carencia para o proximo mês
           vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
+		  --
+		  pr_tab_parcelas(vr_nrparepr).dtultpag     := NULL;
+		  pr_tab_parcelas(vr_nrparepr).insitpar     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vlpagpar     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vlmtapar     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vlmrapar     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vliofcpl     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vlsdvpar     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vldescto     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vlpraven     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vlatupar     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vlatrpag     := 0;
+		  pr_tab_parcelas(vr_nrparepr).taxa_periodo := 0;
+		  pr_tab_parcelas(vr_nrparepr).vliofpri     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vliofadc     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vldstcor     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vldstcor_atu := 0;
+		  pr_tab_parcelas(vr_nrparepr).vldstrem     := 0;
+		  pr_tab_parcelas(vr_nrparepr).vldstrem_atu := 0;
+		  pr_tab_parcelas(vr_nrparepr).dtdstjur     := NULL;
+		  pr_tab_parcelas(vr_nrparepr).inliquid     := NULL;
+		  
+		  -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
+          vr_nrparepr := NVL(vr_nrparepr,0) + 1;
+		  --
                 END IF;
              
         vr_datainicial := vr_datafinal;
@@ -1561,7 +1640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                             ,pr_dtefetiv          => pr_dtcalcul
                             ,pr_dtvencto          => pr_dtdpagto
                             ,pr_txmensal          => rw_craplcr.txmensal
-                            ,pr_vlrdtaxa          => rw_craptxi.vlrdtaxa
+                            ,pr_vlrdtaxa          => vr_vlrdtaxa
                             ,pr_qtparcel          => pr_qtpreemp
                             ,pr_tab_price         => vr_tab_price
                             ,pr_fator_price_total => vr_fator_price_total
@@ -1617,6 +1696,127 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
     END;
 
   END pc_calcula_parcelas_pos_fixado;
+ 
+	PROCEDURE pc_calc_parc_pos_fixado_prog(pr_cdcooper        IN  crapcop.cdcooper%TYPE                    -- Codigo da Cooperativa
+																				,pr_dtcalcul        IN  crapdat.dtmvtolt%TYPE                    -- Data de Calculo
+																				,pr_cdlcremp        IN  craplcr.cdlcremp%TYPE                    -- Codigo da Linha de Credito
+																				,pr_dtcarenc        IN  crawepr.dtcarenc%TYPE                    -- Data da Carencia do Contrato
+																				,pr_qtdias_carencia IN  tbepr_posfix_param_carencia.qtddias%TYPE -- Quantidade de Dias de Carencia
+																				,pr_dtdpagto        IN  crapepr.dtdpagto%TYPE                    -- Data de Pagamento
+																				,pr_qtpreemp        IN  crapepr.qtpreemp%type                    -- Quantidade de Prestacoes
+																				,pr_vlemprst        IN  crapepr.vlemprst%TYPE                    -- Valor do Emprestimo
+																				,pr_tab_parcelas    OUT CLOB                                     -- Parcelas do Emprestimo
+																				,pr_cdcritic        OUT crapcri.cdcritic%TYPE                    -- Codigo da critica
+																				,pr_dscritic        OUT crapcri.dscritic%TYPE                    -- Descricao da critica
+		                                    ) IS
+	  /* .............................................................................
+
+       Programa: pc_calc_parc_pos_fixado_prog
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Adriano Nagasava (Supero)
+       Data    : Dezembro/2018                         Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+
+       Objetivo  : Procedure para calcular as parcelas do Pos-Fixado e retorna-las para o progress.
+    
+       Alteracoes: 
+			 
+    ............................................................................. */
+		--
+		vr_tab_parcelas typ_tab_parcelas;
+		--
+		vr_dstexto      VARCHAR2(32767);
+    vr_string       VARCHAR2(32767);
+		vr_index        VARCHAR(24);
+		--
+	BEGIN
+		--
+		empr0011.pc_calcula_parcelas_pos_fixado(pr_cdcooper        => pr_cdcooper
+		                                       ,pr_dtcalcul        => pr_dtcalcul
+																					 ,pr_cdlcremp        => pr_cdlcremp
+																					 ,pr_dtcarenc        => pr_dtcarenc
+																					 ,pr_qtdias_carencia => pr_qtdias_carencia
+																					 ,pr_dtdpagto        => pr_dtdpagto
+																					 ,pr_qtpreemp        => pr_qtpreemp
+																					 ,pr_vlemprst        => pr_vlemprst
+																					 ,pr_tab_parcelas    => vr_tab_parcelas
+																					 ,pr_cdcritic        => pr_cdcritic
+																					 ,pr_dscritic        => pr_dscritic
+																					 );
+		-- Montar CLOB
+		IF vr_tab_parcelas.COUNT > 0 THEN
+        
+			-- Criar documento XML
+			dbms_lob.createtemporary(pr_tab_parcelas, TRUE); 
+			dbms_lob.open(pr_tab_parcelas, dbms_lob.lob_readwrite);
+        
+			-- Insere o cabeçalho do XML 
+			gene0002.pc_escreve_xml(pr_xml            => pr_tab_parcelas 
+														 ,pr_texto_completo => vr_dstexto 
+														 ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>'
+														 );
+         
+			--Buscar Primeiro beneficiario
+			vr_index:= vr_tab_parcelas.FIRST;
+        
+			--Percorrer todos os beneficiarios
+			WHILE vr_index IS NOT NULL LOOP
+				vr_string := '<parcela>'        ||
+											 '<nrparepr>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).nrparepr),' ')              || '</nrparepr>'     ||
+											 '<vlparepr>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vlparepr),' ')              || '</vlparepr>'     ||
+											 '<dtvencto>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).dtvencto,'DD/MM/YYYY'),' ') || '</dtvencto>'     ||
+											 '<dtultpag>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).dtultpag,'DD/MM/YYYY'),' ') || '</dtultpag>'     ||
+											 '<insitpar>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).insitpar),' ')              || '</insitpar>'     ||
+											 '<vlpagpar>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vlpagpar),' ')              || '</vlpagpar>'     ||
+											 '<vlmtapar>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vlmtapar),' ')              || '</vlmtapar>'     ||
+											 '<vlmrapar>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vlmrapar),' ')              || '</vlmrapar>'     ||
+											 '<vliofcpl>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vliofcpl),' ')              || '</vliofcpl>'     ||
+											 '<vlsdvpar>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vlsdvpar),' ')              || '</vlsdvpar>'     ||
+											 '<vldescto>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vldescto),' ')              || '</vldescto>'     ||
+											 '<vlpraven>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vlpraven),' ')              || '</vlpraven>'     ||
+											 '<vlatupar>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vlatupar),' ')              || '</vlatupar>'     ||
+											 '<vlatrpag>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vlatrpag),' ')              || '</vlatrpag>'     ||
+											 '<flcarenc>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).flcarenc),' ')              || '</flcarenc>'     ||
+											 '<vlrdtaxa>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vlrdtaxa),' ')              || '</vlrdtaxa>'     ||
+											 '<taxa_periodo>' || NVL(TO_CHAR(vr_tab_parcelas(vr_index).taxa_periodo),' ')          || '</taxa_periodo>' ||
+											 '<vliofpri>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vliofpri),' ')              || '</vliofpri>'     ||
+											 '<vliofadc>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vliofadc),' ')              || '</vliofadc>'     ||
+											 '<vldstcor>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vldstcor),' ')              || '</vldstcor>'     ||
+											 '<vldstcor_atu>' || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vldstcor_atu),' ')          || '</vldstcor_atu>' ||
+											 '<vldstrem>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vldstrem),' ')              || '</vldstrem>'     ||
+											 '<vldstrem_atu>' || NVL(TO_CHAR(vr_tab_parcelas(vr_index).vldstrem_atu),' ')          || '</vldstrem_atu>' ||
+											 '<dtdstjur>'     || NVL(TO_CHAR(vr_tab_parcelas(vr_index).dtdstjur,'DD/MM/YYYY'),' ') || '</dtdstjur>'     ||
+										 '</parcela>';
+
+				-- Escrever no XML
+				gene0002.pc_escreve_xml(pr_xml            => pr_tab_parcelas 
+															 ,pr_texto_completo => vr_dstexto 
+															 ,pr_texto_novo     => vr_string
+															 ,pr_fecha_xml      => FALSE
+															 );   
+                                                    
+				--Proximo Registro
+				vr_index:= vr_tab_parcelas.NEXT(vr_index);
+          
+			END LOOP;  
+        
+			-- Encerrar a tag raiz 
+			gene0002.pc_escreve_xml(pr_xml            => pr_tab_parcelas 
+														 ,pr_texto_completo => vr_dstexto 
+														 ,pr_texto_novo     => '</root>' 
+														 ,pr_fecha_xml      => TRUE
+														 );
+                               
+		END IF;
+		--
+	EXCEPTION
+		WHEN OTHERS THEN
+			pr_dscritic := SQLERRM;
+	END pc_calc_parc_pos_fixado_prog;
  
   PROCEDURE pc_calcula_atraso_pos_fixado (pr_cdcooper IN  crappep.cdcooper%TYPE   --> Codigo da Cooperativa
                                          ,pr_cdprogra IN  crapprg.cdprogra%TYPE   --> Codigo do Programa
@@ -2928,6 +3128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
        Objetivo  : Procedure para calcular o saldo devedor do contrato
 
        Alteracoes: 10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
+			             09/01/2019 - PRJ298.2.2 - Inclusao da Transferencia para prejuizo para o Pos - Nagasava (Supero)
     ............................................................................. */
     DECLARE
       -- Cursor da Linha de Crédito
@@ -2940,6 +3141,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
          WHERE cdcooper = DECODE(pr_cdcooper,0,cdcooper,pr_cdcooper)
            AND cdlcremp = DECODE(pr_cdlcremp,0,cdlcremp,pr_cdlcremp);
       rw_craplcr cr_craplcr%ROWTYPE;      
+
+			-- Busca dos dados de complemento do emprestimo
+      CURSOR cr_crawepr IS
+        SELECT epr.dtlibera
+				      ,epr.idfiniof
+          FROM crawepr epr
+         WHERE epr.cdcooper = pr_cdcooper
+					 AND epr.nrdconta = pr_nrdconta
+					 AND epr.nrctremp = pr_nrctremp;
+      --
+			rw_crawepr cr_crawepr%ROWTYPE;
+			
+			-- Busca dos dados de empréstimo
+      CURSOR cr_crapepr IS
+        SELECT epr.cdlcremp
+              ,epr.txmensal
+              ,epr.dtdpagto
+              ,epr.qtprecal
+              ,epr.vlemprst
+              ,epr.qtpreemp
+              ,epr.inliquid
+              ,epr.idfiniof
+              ,epr.vliofepr
+              ,epr.vltarifa
+              ,epr.vlsdeved
+          FROM crapepr epr
+         WHERE epr.cdcooper = pr_cdcooper
+               AND epr.nrdconta = pr_nrdconta
+               AND epr.nrctremp = pr_nrctremp;
+      rw_crapepr cr_crapepr%ROWTYPE;
 
       -- Cursor da parcelaa dos Emprestimo
       CURSOR cr_crappep(pr_cdcooper IN crapepr.cdcooper%TYPE
@@ -2955,13 +3186,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                crappep.vltaxatu,
                crappep.dtdstjur,
                crappep.vldstcor,
-               crappep.vldstrem
+               crappep.vldstrem,
+							 crappep.inliquid
           FROM crappep
          WHERE crappep.cdcooper = pr_cdcooper
            AND crappep.nrdconta = pr_nrdconta
            AND crappep.nrctremp = pr_nrctremp
            and crappep.inliquid = 0;
         
+			-- Buscar o total pago no mês
+      CURSOR cr_craplem(pr_cdcooper IN craplem.cdcooper%TYPE
+                       ,pr_nrdconta IN craplem.nrdconta%TYPE
+                       ,pr_nrctremp IN craplem.nrctremp%TYPE
+                       ,pr_dtmvtolt IN craplem.dtmvtolt%TYPE) IS
+
+      SELECT /*+ INDEX (lem CRAPLEM##CRAPLEM7) */ SUM(DECODE(lem.cdhistor,
+                      1044,
+                      lem.vllanmto,
+                      1039,
+                      lem.vllanmto,
+                      1045,
+                      lem.vllanmto,
+                      1057,
+                      lem.vllanmto,
+                      1716,
+                      lem.vllanmto * -1,
+                      1707,
+                      lem.vllanmto * -1,
+                      1714,
+                      lem.vllanmto * -1,
+                      1705,
+                      lem.vllanmto * -1)) as vllanmto
+      FROM craplem lem
+     WHERE lem.cdcooper = pr_cdcooper
+       AND lem.nrdconta = pr_nrdconta
+       AND lem.nrctremp = pr_nrctremp
+       AND lem.nrdolote in (600012, 600013, 600031)
+       AND lem.cdhistor in (1039, 1057, 1044, 1045, 1716, 1707, 1714, 1705)
+       AND TO_CHAR(lem.dtmvtolt, 'MMRRRR') = TO_CHAR(pr_dtmvtolt, 'MMRRRR');
+      --
+      rw_craplem cr_craplem%ROWTYPE;
+			
       -- Variveis Procedure
       vr_dstextab          craptab.dstextab%TYPE;
       vr_indice            PLS_INTEGER;
@@ -2978,6 +3243,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_dscritic   VARCHAR2(4000);
       vr_exc_erro   EXCEPTION;
 
+			-- Indice para o Array de historicos
+      vr_vllanmto   craplem.vllanmto%TYPE;
+      vr_vlsdeved   NUMBER := 0; --> Saldo devedor
+      vr_vlprepag   NUMBER := 0; --> Qtde parcela paga
+      vr_vlpreapg   NUMBER := 0; --> Qtde parcela a pagar
+      vr_vlpagsld   NUMBER := 0; --> Valor pago saldo
+      vr_vlsderel   NUMBER := 0; --> Saldo para relatórios
+      vr_vlsdvctr   NUMBER := 0;
+
       -- Obter o % de multa da CECRED - TAB090
       PROCEDURE pc_busca_tab(pr_dstextab OUT craptab.dstextab%TYPE) IS
       BEGIN
@@ -2990,6 +3264,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END pc_busca_tab;
 
     BEGIN
+			-- Busca detalhes do empréstimo
+			OPEN cr_crapepr;
+			FETCH cr_crapepr
+				INTO rw_crapepr;
+			-- Se não tiver encontrado
+			IF cr_crapepr%NOTFOUND THEN
+				-- Fechar o cursor e gerar critica
+				CLOSE cr_crapepr;
+				vr_cdcritic := 356;
+				RAISE vr_exc_erro;
+			ELSE
+				-- fechar o cursor e continuar o processo
+				CLOSE cr_crapepr;
+			END IF;
+			--
       pr_tab_parcelas.DELETE;
       vr_tab_price.DELETE;
 
@@ -3059,6 +3348,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
       END IF;
 
+			-- Busca dados complementares do empréstimo
+			OPEN cr_crawepr;
+			FETCH cr_crawepr
+				INTO rw_crawepr;
+			-- Se não tiver encontrado
+			IF cr_crawepr%NOTFOUND THEN
+				-- Fechar o cursor e gerar critica
+				CLOSE cr_crawepr;
+				vr_cdcritic := 535;
+				RAISE vr_exc_erro;
+			ELSE
+				-- fechar o cursor e continuar o processo
+				CLOSE cr_crawepr;
+			END IF;
+
       -- Busca dos dados da parcela
       FOR rw_crappep IN cr_crappep(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
@@ -3078,6 +3382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         pr_tab_parcelas(vr_indice).vldstcor := rw_crappep.vldstcor;
         pr_tab_parcelas(vr_indice).vldstrem := rw_crappep.vldstrem;
         pr_tab_parcelas(vr_indice).vlatupar := rw_crappep.vlsdvpar;
+				pr_tab_parcelas(vr_indice).inliquid := rw_crappep.inliquid;
         vr_vldescto_remunert := 0;
         vr_vldescto_correcao := 0;
         vr_vlpagto_corrigido := 0;
@@ -3138,9 +3443,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         ------------------------------------------------------------------------------------------
         --  Calculo das parcelas
         ------------------------------------------------------------------------------------------        
+        -- Se ainda não foi liberado
+        IF pr_dtmvtolt <= rw_crawepr.dtlibera THEN
+					-- Guardar quantidades calculadas
+          vr_vlsdvctr := vr_vlsdvctr + rw_crappep.vlsdvpar;
+					--
+				END IF;
         -- Parcela em dia
         IF rw_crappep.dtvencto > pr_dtmvtoan AND rw_crappep.dtvencto <= pr_dtmvtolt THEN
+					--
           pr_tab_parcelas(vr_indice).insitpar := 1; -- Em Dia
+
+					-- Guardar quantidades calculadas
+					vr_vlsdvctr := vr_vlsdvctr + rw_crappep.vlsdvpar;
+
+					-- A regularizar
+					vr_vlpreapg := vr_vlpreapg + rw_crappep.vlsdvpar;
 
         -- Parcela em Atraso
         ELSIF rw_crappep.dtvencto < pr_dtmvtolt THEN
@@ -3178,6 +3496,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           -- Valor da Parcela Atualizado
           pr_tab_parcelas(vr_indice).vlatupar := NVL(pr_tab_parcelas(vr_indice).vlsdvpar,0);
           
+					-- Acumular o valor a regularizar
+					vr_vlpreapg := vr_vlpreapg + pr_tab_parcelas(vr_indice).vlatupar;
+					-- Guardar quantidades calculadas
+					vr_vlsdvctr := vr_vlsdvctr + pr_tab_parcelas(vr_indice).vlatupar;
+          
         -- Parcela à Vencer
         ELSIF rw_crappep.dtvencto > pr_dtmvtolt THEN
           -- Calcula o desconto da parcela
@@ -3211,12 +3534,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
             pr_tab_parcelas(vr_indice).vlpraven := NVL(rw_crappep.vlsdvpar,0);
           END IF;         
           
+					-- Guardar quantidades calculadas
+          vr_vlsdvctr := vr_vlsdvctr + rw_crappep.vlsdvpar;        
+          
         END IF;
+				
         -- Valor atual da parcela mais multa e juros de mora
         pr_tab_parcelas(vr_indice).vlatrpag := NVL(pr_tab_parcelas(vr_indice).vlatupar,0)
                                              + NVL(pr_tab_parcelas(vr_indice).vlmtapar,0)
                                              + NVL(pr_tab_parcelas(vr_indice).vlmrapar,0)
                                              + NVL(pr_tab_parcelas(vr_indice).vliofcpl,0);
+        -- Somente calcular se o empréstimo estiver liberado
+				IF NOT pr_dtmvtolt <= rw_crawepr.dtlibera THEN
+					-- Saldo para relatorios
+					vr_vlsderel := vr_vlsderel + pr_tab_parcelas(vr_indice).vlatupar;
+					-- Saldo devedor total do emprestimo
+					vr_vlsdeved := vr_vlsdeved + pr_tab_parcelas(vr_indice).vlatrpag;
+					--
+				END IF;
+				--
       END LOOP;
 
     EXCEPTION
@@ -3392,7 +3728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
   PROCEDURE pc_busca_pagto_parc_pos_web(pr_cdcooper     IN crapepr.cdcooper%TYPE      --> Codigo da Cooperativa
                                        ,pr_dtmvtolt     IN VARCHAR2                   --> Data de calculo das parcelas
-                                       ,pr_dtmvtoan     IN VARCHAR2                   --> Data de movimento anterior
+                                       ,pr_dtmvtoan     IN VARCHAR2 DEFAULT NULL      --> Data de movimento anterior
                                        ,pr_nrdconta     IN crapepr.nrdconta%TYPE      --> Numero da Conta Corrente
                                        ,pr_nrctremp     IN crapepr.nrctremp%TYPE      --> Numero do Contrato
                                        ,pr_xmllog       IN VARCHAR2                   --> XML com informacoes de LOG
@@ -3481,7 +3817,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                               
       -- Converte para data
       vr_dtmvtolt := TO_DATE(pr_dtmvtolt,'DD/MM/RRRR');
+      
+      IF pr_dtmvtoan IS NOT NULL THEN
       vr_dtmvtoan := TO_DATE(pr_dtmvtoan,'DD/MM/RRRR');
+      ELSE
+        vr_dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                  ,pr_dtmvtolt => vr_dtmvtolt - 1
+                                                  ,pr_tipo => 'A');
+      END IF;
 
      	-- Buscar os dados de emprestimo
       OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
@@ -3837,7 +4180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison Fernando
-       Data    : Abril/2017                         Ultima atualizacao: 
+       Data    : Abril/2017                         Ultima atualizacao: 08/01/2019
 
        Dados referentes ao programa:
 
@@ -3845,7 +4188,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
        Objetivo  : Procedure para gravar as parcelas do Pos-Fixado.
 
-       Alteracoes: 
+       Alteracoes: 27/12/2018 - PJ298.2 Criado campo vlprecar e alterando gravacao do campo vlpreemp (Rafael Faria - Supero)
+			             08/01/2018 - PRJ298.2.2 - Ajustar e validar rotinas respeitando aplicação da varição do indexador - Nagasava (Supero)
     ............................................................................. */
 
     DECLARE
@@ -3854,6 +4198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_tab_parcelas typ_tab_parcelas;
       vr_txdiaria     craplcr.txdiaria%TYPE;
       vr_vlpreemp     crapepr.vlpreemp%TYPE := 0;
+      vr_vlprecar     crawepr.vlprecar%TYPE := 0;
       vr_dtdpagto     crapepr.dtdpagto%TYPE;
       vr_vlemprst     crapepr.vlemprst%TYPE;
       vr_dsbemgar     VARCHAR2(32000);
@@ -3896,6 +4241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         SELECT txmensal
               ,cdusolcr
               ,tpctrato
+							,vlperidx
           FROM craplcr 
          WHERE cdcooper = pr_cdcooper
            AND cdlcremp = pr_cdlcremp;
@@ -4012,7 +4358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END IF;
 
       -- Caso financie IOF  e haja valor de IOF
-      if nvl(rw_crawepr.idfiniof,0) = 1 AND vr_retorno01 > 0 then
+      if nvl(rw_crawepr.idfiniof,0) = 1 then
         -- Calcular Tarifa
         TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
@@ -4070,8 +4416,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
         -- Guarda a prestacao e data apenas uma vez
         IF vr_vlpreemp = 0 THEN
-          vr_vlpreemp := vr_tab_parcelas(vr_ind_parcelas).vlparepr;
+          --vr_vlpreemp := vr_tab_parcelas(vr_ind_parcelas).vlparepr;
           vr_dtdpagto := vr_tab_parcelas(vr_ind_parcelas).dtvencto;
+        END IF;
+
+        IF vr_tab_parcelas(vr_ind_parcelas).flcarenc = 1 and vr_vlprecar = 0 THEN
+          vr_vlprecar := vr_tab_parcelas(vr_ind_parcelas).vlparepr;
+        END IF;
+        
+        IF vr_tab_parcelas(vr_ind_parcelas).flcarenc = 0 and vr_vlpreemp = 0 THEN
+          vr_vlpreemp := vr_tab_parcelas(vr_ind_parcelas).vlparepr;
         END IF;
 
         BEGIN
@@ -4109,8 +4463,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       BEGIN
         UPDATE crawepr
            SET vlpreemp = vr_vlpreemp
+              ,vlprecar = vr_vlprecar
               ,txdiaria = vr_txdiaria
               ,txmensal = rw_craplcr.txmensal
+							,vlperidx = rw_craplcr.vlperidx
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND nrctremp = pr_nrctremp;
@@ -5113,7 +5469,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : James Prust Junior
-       Data    : Julho/2017                         Ultima atualizacao: 
+       Data    : Julho/2017                         Ultima atualizacao: 21/01/2019
 
        Dados referentes ao programa:
 
@@ -5121,10 +5477,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
        Objetivo  : Procedure para efetuar o lancamento de Juros Remuneratorio
 
-       Alteracoes: 
+       Alteracoes: 21/01/2019 - PRJ298.2.2 - Ajuste para "Atualização da Dívida após a transferência do prejuízo" - Nagasava (Supero)
     ............................................................................. */
 
     DECLARE
+			--
+			CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
+											 ,pr_nrdconta IN crapepr.nrdconta%TYPE
+											 ,pr_nrctremp IN crapepr.nrctremp%TYPE
+											 ) IS
+				SELECT crapepr.inprejuz
+					FROM crapepr
+				 WHERE crapepr.cdcooper = pr_cdcooper
+					 AND crapepr.nrdconta = pr_nrdconta
+					 AND crapepr.nrctremp = pr_nrctremp;
+			--
+			rw_crapepr cr_crapepr%ROWTYPE;
+			--
       vr_cdhistor	      craphis.cdhistor%TYPE;
 
       -- Variaveis tratamento de erro
@@ -5162,6 +5531,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       ELSE
         --Codigo historico
         vr_cdhistor := 2342;
+      END IF;
+			--
+			OPEN cr_crapepr(pr_cdcooper
+										 ,pr_nrdconta
+										 ,pr_nrctremp
+										 );
+			--
+			FETCH cr_crapepr INTO rw_crapepr;
+			--
+			IF cr_crapepr%NOTFOUND THEN
+				--
+				vr_cdcritic := 484;
+				CLOSE cr_crapepr;
+				RAISE vr_exc_erro;
+				--
+			END IF;
+			--
+			CLOSE cr_crapepr;
+			--
+			IF rw_crapepr.inprejuz = 1 THEN
+				--
+				vr_cdhistor := 2409;
+				--
       END IF;
 
       -- Se possui juros
@@ -8290,7 +8682,91 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
     END;
     
   END pc_busca_prest_principal_pos;
+	--
+	PROCEDURE pc_retorna_val_parc_pos_fixado(pr_cdcooper        IN  crapcop.cdcooper%TYPE                    -- Codigo da Cooperativa
+                                          ,pr_dtcalcul        IN  crapdat.dtmvtolt%TYPE                    -- Data de Calculo
+                                          ,pr_cdlcremp        IN  craplcr.cdlcremp%TYPE                    -- Codigo da Linha de Credito
+                                          ,pr_dtcarenc        IN  crawepr.dtcarenc%TYPE                    -- Data da Carencia do Contrato
+                                          ,pr_qtdias_carencia IN  tbepr_posfix_param_carencia.qtddias%TYPE -- Quantidade de Dias de Carencia
+                                          ,pr_dtdpagto        IN  crapepr.dtdpagto%TYPE                    -- Data de Pagamento
+                                          ,pr_qtpreemp        IN  crapepr.qtpreemp%type                    -- Quantidade de Prestacoes
+                                          ,pr_vlemprst        IN  crapepr.vlemprst%TYPE                    -- Valor do Emprestimo
+                                          ,pr_vlprecar        OUT crapepr.vlemprst%TYPE                    -- Valor da prestacao carencia
+																					,pr_vlpreemp        OUT crapepr.vlemprst%TYPE                    -- Valor da prestacao emprestimo
+                                          ,pr_cdcritic        OUT crapcri.cdcritic%TYPE                    -- Codigo da critica
+                                          ,pr_dscritic        OUT crapcri.dscritic%TYPE                    -- Descricao da critica
+																					) IS
+		/* .............................................................................
 
+       Programa: pc_retorna_val_parc_pos_fixado
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Adriano Nagasava (Supero)
+       Data    : Dezembro/2018                         Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+
+       Objetivo  : Procedure para retornar os valores parcela na carencia e parcela estimada.
+    
+       Alteracoes: 
+			 
+    ............................................................................. */
+		--
+		vr_exc_erro     EXCEPTION;
+		vr_tab_parcelas typ_tab_parcelas;
+		--
+	BEGIN
+		--
+		pr_vlprecar := 0;
+		pr_vlpreemp := 0;
+    /*pr_vlemprst deve considerar o valor do IOF, ou seja, quando chamar a rotina caso tenha IOF
+    considar o valor na passagem de parametro */
+		--
+		empr0011.pc_calcula_parcelas_pos_fixado(pr_cdcooper        => pr_cdcooper
+		                                       ,pr_dtcalcul        => pr_dtcalcul
+																					 ,pr_cdlcremp        => pr_cdlcremp
+																					 ,pr_dtcarenc        => pr_dtcarenc
+																					 ,pr_qtdias_carencia => pr_qtdias_carencia
+																					 ,pr_dtdpagto        => pr_dtdpagto
+																					 ,pr_qtpreemp        => pr_qtpreemp
+																					 ,pr_vlemprst        => pr_vlemprst
+																					 ,pr_tab_parcelas    => vr_tab_parcelas
+																					 ,pr_cdcritic        => pr_cdcritic
+																					 ,pr_dscritic        => pr_dscritic
+																					 );
+		--
+		IF pr_cdcritic IS NOT NULL OR pr_cdcritic IS NOT NULL THEN
+			--
+			RAISE vr_exc_erro;
+			--
+		END IF;
+		-- Buscar a primeira parcela com carencia e a primeira parcela sem carencia
+		FOR vr_indice IN 1..vr_tab_parcelas.count() LOOP
+			--
+			IF vr_tab_parcelas(vr_indice).flcarenc = 1 AND 
+				 nvl(pr_vlprecar, 0) = 0 THEN
+				--
+				pr_vlprecar := round(vr_tab_parcelas(vr_indice).vlparepr,2);
+				--
+			END IF;
+			--
+			IF vr_tab_parcelas(vr_indice).flcarenc = 0 AND 
+				 nvl(pr_vlpreemp, 0) = 0 THEN
+				--
+				pr_vlpreemp := round(vr_tab_parcelas(vr_indice).vlparepr,2);
+				EXIT;
+				--
+			END IF;
+			--
+		END LOOP;
+		--
+	EXCEPTION
+		WHEN vr_exc_erro THEN
+			NULL;
+	END pc_retorna_val_parc_pos_fixado;
+	--
   PROCEDURE pc_efetua_liquidacao_empr_pos(pr_cdcooper   IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
                                          ,pr_nrdconta   IN crapepr.nrdconta%TYPE     --> Numero da Conta Corrente
                                          ,pr_nrctremp   IN crapepr.nrctremp%TYPE     --> Numero do Contrato

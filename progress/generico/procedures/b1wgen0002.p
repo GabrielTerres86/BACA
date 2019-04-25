@@ -825,7 +825,9 @@
                                       1 = Perde Aprovacao 
                                       2 = Aprovacao Auto.
 									  
-	      29/03/2019 - Incidente 0033759 - Erro na geracao automatica da cessao de credito - Ramon
+	      29/03/2019 - Incidente 0033759 - Erro na geracao automatica da cessao de credito - Ramon		  
+
+          20/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
           
  ..............................................................................*/
 
@@ -2361,6 +2363,7 @@ PROCEDURE obtem-propostas-emprestimo:
                tt-proposta-epr.nrctremp = crawepr.nrctremp
                tt-proposta-epr.vlemprst = crawepr.vlemprst
                tt-proposta-epr.vlpreemp = crawepr.vlpreemp
+               tt-proposta-epr.vlprecar = crawepr.vlprecar
                tt-proposta-epr.qtpreemp = crawepr.qtpreemp
                tt-proposta-epr.qtpromis = crawepr.qtpromis
                tt-proposta-epr.cdlcremp = crawepr.cdlcremp
@@ -3168,7 +3171,8 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.vlrtarif = aux_vlrtarif
                        tt-proposta-epr.vliofepr = 0
 					   tt-proposta-epr.idfiniof = crawepr.idfiniof
-                       tt-proposta-epr.flintcdc = crapcop.flintcdc.
+                       tt-proposta-epr.flintcdc = crapcop.flintcdc
+                       tt-proposta-epr.vlprecar = crawepr.vlprecar.
 
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                        
@@ -4003,6 +4007,7 @@ PROCEDURE valida-dados-gerais:
     DEF OUTPUT PARAM aux_dtdpagto AS DATE                           NO-UNDO.
     DEF OUTPUT PARAM par_vlutiliz AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_nivrisco AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_vlprecar AS DECI                           NO-UNDO.
 
     DEF   VAR        aux_contador AS INTE                           NO-UNDO.
     DEF   VAR        aux_nrdodias AS INTE                           NO-UNDO.
@@ -4786,7 +4791,41 @@ PROCEDURE valida-dados-gerais:
 
                      END.
                      
-                 END.
+                   /*Retorna os valores de prestacao*/
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   RUN STORED-PROCEDURE pc_retorna_val_parc_pos_fixado
+                   aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper
+                                                      ,INPUT par_dtmvtolt
+                                                      ,INPUT par_cdlcremp
+                                                      ,INPUT par_dtcarenc
+                                                      ,INPUT aux_qtdias_carencia
+                                                      ,INPUT par_dtdpagto
+                                                      ,INPUT par_qtpreemp
+                                                      ,INPUT aux_vlemprst
+                                                      ,OUTPUT 0  /* Valor da prestacao carencia */
+                                                      ,OUTPUT 0  /* Valor da prestacao emprestimo */
+                                                      ,OUTPUT 0  /* Codigo da critica */
+                                                      ,OUTPUT "" /* Descricao da critica */
+                                                      ).
+
+                  CLOSE STORED-PROC pc_retorna_val_parc_pos_fixado 
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                  /* Retornar valor da prestação */
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = ""
+                         aux_cdcritic = INT(pc_retorna_val_parc_pos_fixado.pr_cdcritic) 
+                                        WHEN pc_retorna_val_parc_pos_fixado.pr_cdcritic <> ?
+                         aux_dscritic = pc_retorna_val_parc_pos_fixado.pr_dscritic
+                                        WHEN pc_retorna_val_parc_pos_fixado.pr_dscritic <> ?
+                         aux_vlpreemp = pc_retorna_val_parc_pos_fixado.pr_vlpreemp
+                                        WHEN pc_retorna_val_parc_pos_fixado.pr_vlpreemp <> ?
+                         par_vlprecar = ROUND(pc_retorna_val_parc_pos_fixado.pr_vlprecar,2)
+                                        WHEN pc_retorna_val_parc_pos_fixado.pr_vlprecar <> ?.
+
+                 END. /* par_tpemprst = 2 */
         END CASE.
 
         /* Para MicroCredito */
@@ -8053,6 +8092,9 @@ PROCEDURE grava-proposta-completa:
     /* Chamar apos o fechamento da transacao pois depende de valores   */
     /* anteriores no Oracle. Os erros aqui dentro sao retornados na    */
     /* tt-msg-confirma pois nao podem comprometer o resto da execucao  */
+    /* PJ298.2.2 - Liberado apenas para migracao de contratos*/
+    IF par_nmdatela <> "MIGRACAO" THEN
+      DO:    
     RUN sistema/generico/procedures/b1wgen0191.p  PERSISTENT SET h-b1wgen0191.
                       
     RUN Verifica_Consulta_Biro IN h-b1wgen0191 (INPUT par_cdcooper,
@@ -8064,6 +8106,7 @@ PROCEDURE grava-proposta-completa:
                                          INPUT-OUTPUT TABLE tt-msg-confirma,
                                                OUTPUT par_flmudfai).          
     DELETE PROCEDURE h-b1wgen0191.
+      END.
     IF  par_flgerlog  THEN
         DO:
         
@@ -8188,6 +8231,7 @@ PROCEDURE altera-valor-proposta:
     DEF VAR          aux_vlemprst LIKE crawepr.vlemprst             NO-UNDO.
     DEF VAR          aux_dsratori LIKE crawepr.dsratori             NO-UNDO.
     DEF VAR          aux_vlpreemp LIKE crawepr.vlpreemp             NO-UNDO.
+    DEF VAR          aux_vlprecar LIKE crawepr.vlprecar             NO-UNDO.
     DEF VAR          aux_insitapr LIKE crawepr.insitapr             NO-UNDO.
     DEF VAR          aux_cdopeapr LIKE crawepr.cdopeapr             NO-UNDO.
     DEF VAR          aux_tpctrato LIKE craplcr.tpctrato             NO-UNDO.
@@ -8285,8 +8329,7 @@ PROCEDURE altera-valor-proposta:
         ASSIGN aux_contigen = FALSE.
         IF pc_param_sistema.pr_dsvlrprm = "1" then
            ASSIGN aux_contigen = TRUE.
-
-    
+        
     Grava_valor:
     DO WHILE TRUE TRANSACTION ON ERROR UNDO Grava_valor, LEAVE Grava_valor:
 
@@ -8317,8 +8360,8 @@ PROCEDURE altera-valor-proposta:
 
         IF  aux_cdcritic <> 0    OR
             aux_dscritic <> ""   THEN
-            LEAVE.			
-			
+            LEAVE.
+
 			
 	    /* PJ438 Sprint 5 trecho movido para esse ponto par_dsdopcao SVP */
     /* Quando for apenas alteracao do valor */

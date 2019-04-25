@@ -137,6 +137,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
                    20/09/2018 = P450 - Elimina tratamento de incrineg no retorno da lanc0001.
                                 Não verificar se é crítica de negócio para gerar o raise.
                                 Renato Cordeiro - AMcom
+                                
+                   19/02/2019 - PJ298.2.2 - Pos fixado, nao lancar sobras na conta corrente do cooperado
+                                (Rafael Faria - Supero)
     ............................................................................ */
 
     DECLARE
@@ -326,6 +329,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
       vr_incrineg     INTEGER;
       vr_tab_retorno  lanc0001.typ_reg_retorno;
       vr_fldebita     BOOLEAN;
+
+      -- PJ298.2.2 - Pos fixado - migracao contratos
+      vr_nrctremp_migrado crawepr.nrctremp%type := 0;
 
       -- Subrotina para checar a existencia de lote cfme tipo passado
       PROCEDURE pc_cria_craplot(pr_dtmvtolt   IN craplot.dtmvtolt%TYPE
@@ -838,6 +844,24 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
             END;
             -- Descontar da quantidade de parcelas calculadas o valor da sobra / valor da parcela
             vr_qtprecal_lem := vr_qtprecal_lem - ROUND((vr_vldsobra/rw_crapepr.vlpreemp),4);
+            
+            -- verificar se o emprestimo foi migrado
+            vr_nrctremp_migrado := 0;
+            empr9999.pc_verifica_empr_migrado(pr_cdcooper => pr_cdcooper
+                                             ,pr_nrdconta => rw_crapepr.nrdconta
+                                             ,pr_nrctrnov => rw_crapepr.nrctremp
+                                             ,pr_tpempmgr => 1 -- verificar através do original
+                                             ,pr_nrctremp => vr_nrctremp_migrado -- (0 Nao migrado, >0 migrado)
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+
+            -- caso acontecer erro na execucao nao deve parar o programa
+            vr_cdcritic := 0;
+            vr_dscritic := NULL;
+
+            -- se for emprestimo migrado, nao deve lancar a sobra corrente na conta do cooperado
+            IF vr_nrctremp_migrado = 0 THEN
+            
             -- Testar se ja retornado o registro de capas de lote para o 8351
             IF rw_craplot_8351.rowid IS NULL THEN
               -- Chamar rotina para busca-lo, e se n?o encontrar, ira crialo
@@ -893,6 +917,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
                 vr_dscritic := 'Erro ao atualizar capas de lotes (craplot), lote: '||rw_craplot_8351.nrdolote||'. Detalhes: '||sqlerrm;
                 RAISE vr_exc_undo;
             END;
+            END IF; -- IF vr_nrctremp_migrado = 0 THEN
           END IF;
            
            

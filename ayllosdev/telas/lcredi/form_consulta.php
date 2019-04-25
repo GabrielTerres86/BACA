@@ -3,7 +3,7 @@
 
   Fonte: form_consulta.php
   Autor: Andrei - RKAM
-  Data : Julho/2016                       Última Alteração: 10/10/2017
+  Data : Julho/2016                       Última Alteração: 06/01/2019
 
   Objetivo  : Mostrar o form com as informaões da linha de crédito.
 
@@ -18,6 +18,8 @@
 
  			  10/10/2017 - Inclusao do campos % Mínimo Garantia e adicionado 
 						   opção 4 no campo Modelo. (Lombardi - PRJ404)
+
+			  06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
 
  * ********************************************************************* */
 
@@ -202,7 +204,12 @@
                 }
             ?>
             </select>
+			
+			<label for="vlperidx"><? echo utf8ToHtml("% do Indexador:"); ?></label>
+			<input  type="text" id="vlperidx" name="vlperidx"value="<?echo getByTagName($linha->tags,'vlperidx'); ?>" >
 		</div>
+		
+		<br />
 
 		<label for="txjurfix"><? echo utf8ToHtml("Taxa Fixa %:"); ?></label>
 		<input  type="text" id="txjurfix" name="txjurfix"value="<?echo getByTagName($linha->tags,'txjurfix'); ?>" > 

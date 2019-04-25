@@ -7191,15 +7191,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --  Data     : Agosto/2017.                   Ultima atualizacao: 15/04/2019
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para atualizar pessoa juridica na estrutura antiga
     --
-    --  Alteração :
-    --
+    --  Alteração : 15/04/2019 - Melhoria no tratamento para correcao do 
+	--                           problema PRB0041543 
+	--							 (Roberto Holz/Jose Eduardo -Mouts)
     --
     -- ..........................................................................*/
     
@@ -7378,19 +7379,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     RAISE vr_exc_erro;
                 END;
               END IF;
-              
-              --> Realizar alteração dados financeiros  
-              BEGIN                            
-                UPDATE crapjfn jfn
-                   SET jfn.perfatcl = pr_pessoa_jur_new.peunico_cliente                       
-                 WHERE jfn.cdcooper   = vr_tab_contas(idx).cdcooper
-                   AND jfn.nrdconta   = vr_tab_contas(idx).nrdconta;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
-                  vr_dscritic := 'Erro ao atualizar resultados financeiros de PJ:'||SQLERRM; 
-                  RAISE vr_exc_erro;          
-              END;
+			  
+              --> Validar se foi alterado alguma informação desta tabela, para garantir que nao seja sobreposto
+              --> alguma informação que ainda nao foi processada, devido a ordem de execução da tabela
+              IF nvl(pr_pessoa_jur_new.peunico_cliente,0) <> nvl(pr_pessoa_jur_old.peunico_cliente,0) THEN               
+                 --> Realizar alteração dados financeiros  
+                 BEGIN                            
+                   UPDATE crapjfn jfn
+                      SET jfn.perfatcl = pr_pessoa_jur_new.peunico_cliente                       
+                    WHERE jfn.cdcooper   = vr_tab_contas(idx).cdcooper
+                      AND jfn.nrdconta   = vr_tab_contas(idx).nrdconta;
+                 EXCEPTION
+                   WHEN OTHERS THEN
+                     cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
+                     vr_dscritic := 'Erro ao atualizar resultados financeiros de PJ:'||SQLERRM; 
+                     RAISE vr_exc_erro;          
+                 END;
+			  END IF;
               
             END IF;
             

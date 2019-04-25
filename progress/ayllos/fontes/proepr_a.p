@@ -418,6 +418,8 @@
             
             23/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)  
 
+            21/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
+
 ........................................................................... */
 
 DEF INPUT PARAM par_nrdconta AS INTE                                   NO-UNDO.
@@ -436,6 +438,7 @@ DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
 DEF VAR aux_dscatbem AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsctrliq AS CHAR                                           NO-UNDO.
 DEF VAR aux_idpeapro AS INT                                            NO-UNDO.
+DEF VAR aux_vlprecar AS DECI                                           NO-UNDO.
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/b1wgen0056tt.i }
@@ -926,7 +929,8 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                          OUTPUT tt-proposta-epr.flgpagto,
                                          OUTPUT tt-proposta-epr.dtdpagto,
                                          OUTPUT par_vlutiliz,
-                                         OUTPUT tt-proposta-epr.nivrisco).
+                                         OUTPUT tt-proposta-epr.nivrisco,
+                                         OUTPUT aux_vlprecar).
 
                 IF RETURN-VALUE <> "OK"   THEN
                    DO:

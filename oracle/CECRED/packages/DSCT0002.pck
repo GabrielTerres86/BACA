@@ -6126,62 +6126,62 @@ END fn_letra_risco;
     --> Buscar Contrato de limite
     CURSOR cr_craplim IS
     --     descontos de titulos
-    select lim.nrdconta
-          ,lim.cdageori
-          ,lim.vllimite
-          ,lim.cddlinha
-          ,lim.dtinivig
-		  ,lim.idcobope
-		  ,lim.dtpropos
-          ,lim.nrctrlim
-    from   craplim lim
-    where  lim.cdcooper = pr_cdcooper
-    and    lim.nrdconta = pr_nrdconta
-    and    lim.nrctrlim = pr_nrctrlim
-    and    lim.tpctrlim = pr_tpctrlim
-    and    pr_tpctrlim <> 3
+    SELECT lim.nrdconta,
+           lim.cdageori,
+           lim.vllimite,
+           lim.cddlinha,
+           lim.dtinivig,
+           lim.idcobope,
+           lim.dtpropos,
+           lim.nrctrlim
+      FROM craplim lim
+     WHERE lim.cdcooper = pr_cdcooper
+       AND lim.nrdconta = pr_nrdconta
+       AND lim.nrctrlim = pr_nrctrlim
+       AND lim.tpctrlim = pr_tpctrlim
+       AND pr_tpctrlim <> 3
     
-    union  all
+    UNION ALL
 
     --     proposta principal do limites de desconto de titulo
-    select lim.nrdconta
-          ,lim.cdageori
-          ,lim.vllimite
-          ,lim.cddlinha
-          ,lim.dtinivig
-			,lim.idcobope
-		  	,lim.dtpropos
-          ,lim.nrctrlim
-    from   crawlim lim
-    where  lim.cdcooper = pr_cdcooper
-    and    lim.nrdconta = pr_nrdconta
-    and    lim.nrctrlim = pr_nrctrlim
-    and    lim.tpctrlim = pr_tpctrlim
-    and    lim.nrctrmnt = 0
-    and    pr_tpctrlim  = 3
+    SELECT lim.nrdconta,
+           lim.cdageori,
+           lim.vllimite,
+           lim.cddlinha,
+           lim.dtinivig,
+           lim.idcobope,
+           lim.dtpropos,
+           lim.nrctrlim
+      FROM crawlim lim
+     WHERE lim.cdcooper = pr_cdcooper
+       AND lim.nrdconta = pr_nrdconta
+       AND lim.nrctrlim = pr_nrctrlim
+       AND lim.tpctrlim = pr_tpctrlim
+       AND lim.nrctrmnt = 0
+       AND pr_tpctrlim = 3
     
-    union  all
+    UNION ALL
     
     --     proposta de manutenção de limites de desconto de titulo
-    select mnt.nrdconta
-          ,mnt.cdageori
-          ,mnt.vllimite
-          ,mnt.cddlinha
-          ,mnt.dtinivig
-		  ,mnt.idcobope
-		  ,mnt.dtpropos
-          ,mnt.nrctrlim
-    from   crawlim mnt
-          ,crawlim lim
-    where  mnt.cdcooper = lim.cdcooper
-    and    mnt.nrdconta = lim.nrdconta
-    and    mnt.nrctrlim = lim.nrctrmnt
-    and    mnt.tpctrlim = lim.tpctrlim
-    and    lim.cdcooper = lim.cdcooper
-    and    lim.nrdconta = pr_nrdconta
-    and    lim.nrctrlim = pr_nrctrlim
-    and    lim.tpctrlim = pr_tpctrlim
-    and    pr_tpctrlim  = 3;
+    SELECT mnt.nrdconta,
+           mnt.cdageori,
+           mnt.vllimite,
+           mnt.cddlinha,
+           mnt.dtinivig,
+           mnt.idcobope,
+           mnt.dtpropos,
+           mnt.nrctrlim
+      FROM crawlim mnt,
+           crawlim lim
+     WHERE mnt.cdcooper = lim.cdcooper
+       AND mnt.nrdconta = lim.nrdconta
+       AND mnt.nrctrlim = lim.nrctrmnt
+       AND mnt.tpctrlim = lim.tpctrlim
+       AND lim.cdcooper = lim.cdcooper
+       AND lim.nrdconta = pr_nrdconta
+       AND lim.nrctrlim = pr_nrctrlim
+       AND lim.tpctrlim = pr_tpctrlim
+       AND pr_tpctrlim = 3;
     rw_craplim cr_craplim%ROWTYPE; 
     
     --> Buscar dados de Linhas de Desconto

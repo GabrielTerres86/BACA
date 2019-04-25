@@ -110,7 +110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 07/12/2018
+   Data    : Maio/2017                      Ultima atualizacao: 17/04/2019
 
    Dados referentes ao programa:
 
@@ -152,7 +152,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
 							 
 	  07/12/2018 - Refatoração dos lançamentos de estorno na LEM e inclusão da busca pelo valor do lançamento
 	               a estornar na TBCC_PREJUIZO_DETALHE com o histórico 2781 (pc_estorno_pagamento).
-	  			   (Reginaldo/AMcom - P450)
+	  			   (Reginaldo/AMcom - P450)			
+
+      17/04/2019 - Ajuste na rotina de estorno de pagamento de empréstimo em prejuízo para excluir o histórico 2781
+                   lançado na TBCC_PREJUIZO_DETALHE.
+                   (Reginaldo/AMcom - P450)
 
 ..............................................................................*/
 
@@ -344,6 +348,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
          AND crapbpr.flgbaixa = 1
          AND crapbpr.tpdbaixa = 'A'
          ;
+         
+    CURSOR cr_lancto_2781(pr_cdcooper craplem.cdcooper%TYPE
+                        , pr_nrdconta craplem.nrdconta%TYPE
+                        , pr_nrctremp craplem.nrctremp%TYPE
+                        , pr_dtmvtolt craplem.dtmvtolt%TYPE
+                        , pr_vllanmto craplem.vllanmto%TYPE) IS
+    SELECT idlancto
+      FROM tbcc_prejuizo_detalhe 
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta
+       AND nrctremp = pr_nrctremp
+       AND dtmvtolt = pr_dtmvtolt
+       AND vllanmto = pr_vllanmto
+    ;
+    
+    vr_idlancto_2781 NUMBER;
     vr_existbpr_baixado PLS_INTEGER := 0;
 
     -- VARIAVEIS
@@ -475,7 +495,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
         ELSIF r_craplem.cdhistor = 2475 THEN --Juros Mora
           -- Atualizar o valor pago de juros mora
           rw_crapepr.vlpgjmpr := rw_crapepr.vlpgjmpr - r_craplem.vllanmto;
+        ELSIF r_craplem.cdhistor = 2701 THEN
+          OPEN cr_lancto_2781(pr_cdcooper => pr_cdcooper
+                            , pr_nrdconta => pr_nrdconta
+                            , pr_nrctremp => pr_nrctremp 
+                            , pr_dtmvtolt => pr_dtmvtolt
+                            , pr_vllanmto => r_craplem.vllanmto);
+          FETCH cr_lancto_2781 INTO vr_idlancto_2781;
+          
+          IF cr_lancto_2781%FOUND THEN
+            DELETE FROM tbcc_prejuizo_detalhe
+             WHERE idlancto = vr_idlancto_2781;
         END IF;
+          
+          CLOSE cr_lancto_2781;
+            END IF;
 
         /* 1) Excluir Lancamento LEM */
         BEGIN
@@ -655,6 +689,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
               END IF;
             END IF;
               END IF;
+             
+              OPEN cr_lancto_2781(pr_cdcooper => pr_cdcooper
+                                , pr_nrdconta => pr_nrdconta
+                                , pr_nrctremp => pr_nrctremp 
+                                , pr_dtmvtolt => pr_dtmvtolt
+                                , pr_vllanmto => r_craplem.vllanmto);
+              FETCH cr_lancto_2781 INTO vr_idlancto_2781;
+              
+              IF cr_lancto_2781%FOUND THEN
+                DELETE FROM tbcc_prejuizo_detalhe
+                 WHERE idlancto = vr_idlancto_2781;
+            END IF;
+              
+              CLOSE cr_lancto_2781;
             END IF;
 						
 						empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
@@ -765,6 +813,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
         pr_des_reto := 'NOK';
         RAISE vr_erro;
     END;
+				
     -- Confirma alterações
     COMMIT;
   EXCEPTION

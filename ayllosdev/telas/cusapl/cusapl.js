@@ -1,11 +1,12 @@
 //*********************************************************************************************//
 //*** Fonte: cusapl.js                                                 						          ***//
 //*** Autor: Rafael B. Arins - Envolti                                           						***//
-//*** Data : Abril/2018                  Última Alteração: --/--/----  					            ***//
+//*** Data : Abril/2018                  Última Alteração: 21/03/2019  					            ***//
 //***                                                                  						          ***//
 //*** Objetivo  : Biblioteca de funções da tela                     						            ***//
 //***                                                                  						          ***//
 //*** Alterações: 																			                                    ***//
+//***						21/03/2019 - Adição de tolerânica para conciliação - projeto 411.3 (Petter Rafael - Envolti)
 //*********************************************************************************************//
 
 var Cdsvlrprm24;
@@ -194,6 +195,9 @@ function gravaCustodia() {
   var reghab = $("#reghab","#frmCusApl").val();
   var rgthab = $("#rgthab","#frmCusApl").val();
   var cnchab = $("#cnchab","#frmCusApl").val();
+  var perctolval = $("#perctolval", "#frmCusApl").val();
+
+  perctolval = perctolval.replace("," , ".");
 
   dsmail = myTrim(dsmail);
 
@@ -211,15 +215,16 @@ function gravaCustodia() {
 		url: UrlSite + "telas/cusapl/grava_custodia.php",
 		data: {
 			dataB3: dataB3,
-      vlminB3: vlminB3,
+            vlminB3: vlminB3,
 			nomarq: nomarq,
 			qtdarq: qtdarq,
 			dsmail: dsmail,
 			hrinicio: hrinicio,
 			hrfinal: hrfinal,
-      reghab: reghab,
-      rgthab: rgthab,
-      cnchab: cnchab,
+            reghab: reghab,
+            rgthab: rgthab,
+            cnchab: cnchab,
+            perctolval: perctolval,
 			redirect: "script_ajax"
 		},
 		error: function(objAjax, responseError, objExcept) {
@@ -355,7 +360,7 @@ function consultaRegistrosArquivos(idArquivo, idLinha,idtable){
       type: "POST",
       url: UrlSite + "telas/cusapl/registros_arquivos.php",
       data: {
-          idarquivo   : idArquivo,
+          idarquivo   : idArquivo,		   
           redirect   : "html_ajax" // Tipo de retorno do ajax
       },
       error: function(objAjax, responseError, objExcept) {
@@ -636,10 +641,10 @@ function sortTable(idTable, n) {
       y = rows[i + 1].getElementsByTagName("TD")[n];
 
       if (dir == "asc") {
-        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) { shouldSwitch= true;    break; }
+        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) { shouldSwitch= true;    break; }		  
       }
 	  else if (dir == "desc") {
-        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) { shouldSwitch= true;    break; }
+        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) { shouldSwitch= true;    break; }			  
       }
     }
     if (shouldSwitch) { rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);    switching = true;    switchcount ++; }

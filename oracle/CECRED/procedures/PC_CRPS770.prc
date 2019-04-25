@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS770(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Rafael - Mout's
-   Data    : Fevereiro / 2018                     Ultima atualizacao: 
+   Data    : Fevereiro / 2018                     Ultima atualizacao: 15/04/2019
 
    Dados referentes ao programa:
 
@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS770(pr_cdcooper IN crapcop.cdcooper%TY
    Objetivo  : Atende a solicitacao M324.
                Rotina para realizar o pagamento de prejuízo automaticamente
 
-   Alteracoes: 
+   Alteracoes: 15/04/2019 - Inclusão de tratamento para ignorar contas corrente em prejuízo (Reginaldo/AMcom)
 ............................................................................. */                                       
 
 
@@ -133,6 +133,11 @@ BEGIN
    
   -- Primeiro com os sem garantias
   FOR r01 IN c01 LOOP
+    /* P450 - Tratamento para ignorar contas corrente em prejuízo (Reginaldo/AMcom) */
+    IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, r01.nrdconta) THEN
+      CONTINUE;
+    END IF;  
+  
     -- Zerar Variáveis
     vr_flgativo := 0;
     vr_flgbloqu := 0;

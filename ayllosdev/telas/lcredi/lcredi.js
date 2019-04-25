@@ -1,7 +1,7 @@
 /***********************************************************************
  Fonte: lcredi.js                                                  
  Autor: Andrei - RKAM
- Data : JULHO/2016                Última Alteração: 10/07/2018
+ Data : JULHO/2016                Última Alteração: 06/01/2019
                                                                    
  Objetivo  : Cadastro de servicos ofertados na tela LCREDI
                                                                    	 
@@ -16,6 +16,8 @@
               28/05/2018 - Aumentado o limite de 3 para 4 o campo Grupo. (Andrey Formigari- Mout's)
               
               10/07/2018 - sctask0014375 uso da funcao removeCaracteresInvalidos (Carlos)
+
+			  06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
 
 ************************************************************************/
 
@@ -178,6 +180,7 @@ function formataFormularioConsulta() {
     $('label[for="cdsubmod"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
 
     $('label[for="cddindex"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
+	$('label[for="vlperidx"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "180px" });
     $('label[for="txjurfix"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
     $('label[for="txjurvar"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "180px" });
     $('label[for="txjurvarDesc"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "70px" });
@@ -222,7 +225,7 @@ function formataFormularioConsulta() {
     $('#flgtaiof', '#frmConsulta').css({ 'width': '80px', 'text-align': 'left' }).desabilitaCampo(); 
     $('#vltrfesp', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '10').setMask("DECIMAL", "zzz.zz9,99", "", "");
     $('#flgcrcta', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo(); 
-    $('#manterpo', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '4'); 
+    $('#manterpo', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '3'); 
     $('#flgimpde', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
     $('#dsorgrec', '#frmConsulta').css({ 'width': '335px', 'text-align': 'left' }).desabilitaCampo();
     $('#flglispr', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
@@ -233,6 +236,7 @@ function formataFormularioConsulta() {
     $('#dssubmod', '#frmConsulta').css({ 'width': '370px', 'text-align': 'left' }).addClass('alphanum').attr('maxlength', '50').desabilitaCampo();
 
     $('#cddindex', '#frmConsulta').css({ 'width': '100px' }).desabilitaCampo();
+	$('#vlperidx', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
     $('#txjurfix', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
     $('#txjurvar', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
     $('#txpresta', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
@@ -706,6 +710,27 @@ function formataFormularioConsulta() {
 
     //Define ação para o campo cddindex
     $("#cddindex", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+            $(this).nextAll('.campo:first').focus();
+
+            return false;
+        }
+
+    });
+
+	//Define ação para o campo vlperidx
+    $('#vlperidx', '#frmConsulta').unbind('change').bind('change', function () {
+
+        calculaTaxas($(this).attr('name'));
+    });
+
+    //Define ação para o campo vlperidx
+    $("#vlperidx", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
@@ -1442,6 +1467,7 @@ function alterarLinhaCredito() {
     var cdhistor = $('#cdhistor', '#frmConsulta').val();
     var tpprodut = $('#tpprodut', '#frmConsulta').val();
     var cddindex = (tpprodut == 1 ? 0 : $('#cddindex', '#frmConsulta').val());
+	var vlperidx = isNaN(parseFloat($('#vlperidx', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlperidx', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."));
 
     //Mostra mensagem de aguardo
     showMsgAguardo('Aguarde, alterando linha ...');
@@ -1498,6 +1524,7 @@ function alterarLinhaCredito() {
             cdhistor: cdhistor,
             tpprodut: tpprodut,
             cddindex: cddindex,
+			vlperidx: vlperidx,
             redirect: 'html_ajax' // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1565,6 +1592,7 @@ function incluirLinhaCredito() {
     var cdhistor = $('#cdhistor', '#frmConsulta').val();
     var tpprodut = $('#tpprodut', '#frmConsulta').val();
     var cddindex = (tpprodut == 1 ? 0 : $('#cddindex', '#frmConsulta').val());
+	var vlperidx = isNaN(parseFloat($('#vlperidx', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlperidx', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."));
 
     //Mostra mensagem de aguardo
     showMsgAguardo('Aguarde, incluindo linha ...');
@@ -1622,6 +1650,7 @@ function incluirLinhaCredito() {
             finalidades: RegLinha,
             tpprodut: tpprodut,
             cddindex: cddindex,
+			vlperidx: vlperidx,
             redirect: 'html_ajax' // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {

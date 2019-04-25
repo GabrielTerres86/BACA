@@ -8,6 +8,8 @@
 
  * ALTERACOES	: 02/04/2012 - Incluido campo %CET (Gabriel)
  *                30/06/2015 - Ajustes referentes Projeto 215 - DV3 (Daniel)
+ *                13/12/2018 - P298.2 - Inclusão da proposta Pos fixado no simulador (Andre Clemer - Supero)
+ *				  26/02/2019 - P438	 - Alterada mensageria para ORACLE (Douglas Pagel / AMcom)
 
  * */
 session_start();
@@ -30,38 +32,30 @@ $dtlibera = (isset($_POST['dtlibera'])) ? $_POST['dtlibera'] : '';
 // Monta o xml de requisição
 $xml = "";
 $xml.= "<Root>";
-$xml.= "	<Cabecalho>";
-$xml.= "		<Bo>b1wgen0097.p</Bo>";
-$xml.= "		<Proc>busca_dados_simulacao</Proc>";
-$xml.= "	</Cabecalho>";
 $xml.= "	<Dados>";
-$xml.= "		<cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
-$xml.= "		<cdagenci>" . $glbvars["cdagenci"] . "</cdagenci>";
-$xml.= "		<nrdcaixa>" . $glbvars["nrdcaixa"] . "</nrdcaixa>";
-$xml.= "		<cdoperad>" . $glbvars["cdoperad"] . "</cdoperad>";
-$xml.= "		<nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
-$xml.= "		<idorigem>" . $glbvars["idorigem"] . "</idorigem>";
 $xml.= "		<nrdconta>" . $nrdconta . "</nrdconta>";
 $xml.= "		<idseqttl>" . $idseqttl . "</idseqttl>";
 $xml .= "		<dtmvtolt>" . $glbvars["dtmvtolt"] . "</dtmvtolt>";
-$xml .= "		<flgerlog>TRUE</flgerlog>";
+$xml .= "		<flgerlog>1</flgerlog>";
 $xml.= "		<nrsimula>" . $nrsimula . "</nrsimula>";
 $xml.= "	</Dados>";
 $xml.= "</Root>";
 
 // Executa script para envio do XML
-$xmlResult = getDataXML($xml);
+$xmlResult = mensageria($xml, "TELA_ATENDA_SIMULACAO", "SIMULA_BUSCA_DADOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 // Cria objeto para classe de tratamento de XML
 $xmlObj = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
     echo 'showError("error","' . $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata . '","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 } else {
-    $dados_simulacao = $xmlObj->roottag->tags[0]->tags;
+    $dados_simulacao = $xmlObj->roottag->tags;
     if ($operacao == "GPR" || $operacao == "TI") {
-        $retorno = '$("#vlemprst","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'vlemprst') . '");
+        $retorno = '$("#tpemprst","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'tpemprst') . '");
+        			$("#vlemprst","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'vlemprst') . '");
 					$("#vlemprst","#frmNovaProp").blur();
 					$("#vlpreemp","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'vlparepr') . '");
+                    $("#vlpreemp","#frmNovaProp").blur();
 					$("#qtdialib","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'nrdialib') . '");
 					$("#dtlibera","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'dtlibera') . '");
 					$("#qtpreemp","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'qtparepr') . '");
@@ -72,6 +66,13 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 					$("#dsfinemp","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'dsfinemp') . '");
 					$("#percetop","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'percetop') . '");
           $("#idfiniof","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'idfiniof') . '");
+                    $("#idcarenc","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'idcarenc') . '");
+                    $("#dtcarenc","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'dtcarenc') . '");
+                    $("#vlprecar","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'vlprecar') . '");
+                    if ($("#tpemprst","#frmNovaProp").val() == 2) {
+                        exibeLinhaCarencia("#frmNovaProp");
+                        $("#vlprecar","#frmNovaProp").blur();
+                    }                    
 
 				  $("#flgpagto","#frmNovaProp").val("no");';
     } else {
@@ -79,7 +80,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
         if ($idfiniof == ""){
             $idfiniof = "1";
         }
-        $retorno = '$("#vlemprst","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vlemprst') . '");
+        $retorno = '$("#tpemprst","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'tpemprst') . '");
+        			$("#vlemprst","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vlemprst') . '");
 					$("#qtparepr","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'qtparepr') . '");
 					$("#cdlcremp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'cdlcremp') . '");
 					$("#dtlibera","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dtlibera') . '");
@@ -87,6 +89,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 					$("#dslcremp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dslcremp') . '");
 					$("#percetop","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'percetop') . '");
 					$("#cdfinemp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'cdfinemp') . '");
+                    $("#idcarenc","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'idcarenc') . '");
+                    $("#dtcarenc","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dtcarenc') . '");
           $("#dsfinemp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dsfinemp') . '");
           $("#vliofepr","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vliofepr') . '");
           $("#vlrtarif","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vlrtarif') . '");

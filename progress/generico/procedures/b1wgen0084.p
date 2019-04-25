@@ -327,7 +327,13 @@
 			  
 			  13/12/2018 - P442 - Ao checar Chassi alienado em outros contratos, descartar refinanciamentos (Marcos-Envolti)         
                            
-			  03/01/2019 - Ajuste na gravação do IOF do emprestimo (INC0029419) Daniel
+			  03/01/2019 - Ajuste na gravação do IOF do emprestimo (INC0029419) Daniel			
+
+              19/12/2018 - P298.2 - Inclusão dos campos tpemprst e vlprecar no retorno da procedure busca_dados_efetivacao_proposta
+                           (Andre Clemer - Supero)
+
+              27/12/2018 - PJ298.2 - Alterado gravacao do campo vlpreemp para o POS (Rafael Faria - Supero)
+
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -2121,7 +2127,9 @@ PROCEDURE busca_dados_efetivacao_proposta:
            tt-efetiv-epr.avalist2 = " "
            tt-efetiv-epr.dtdpagto = crawepr.dtdpagto
            tt-efetiv-epr.idcobope = crawepr.idcobope
-           tt-efetiv-epr.idfiniof = crawepr.idfiniof.
+           tt-efetiv-epr.idfiniof = crawepr.idfiniof
+           tt-efetiv-epr.tpemprst = crawepr.tpemprst
+           tt-efetiv-epr.vlprecar = crawepr.vlprecar.
 
     /* Se tiver contrato em liquidacao, envia para efetivacao da proposta para refinanciamento */	
     IF (crawepr.nrctrliq[1] > 0 OR crawepr.nrctrliq[2] > 0 OR crawepr.nrctrliq[3] > 0
@@ -4371,7 +4379,9 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.cdfinemp = crawepr.cdfinemp
               crapepr.cdlcremp = crawepr.cdlcremp
               crapepr.vlemprst = crawepr.vlemprst
-              crapepr.vlpreemp = crawepr.vlpreemp
+              crapepr.vlpreemp = IF (crawepr.idcarenc > 1) THEN
+                                      crawepr.vlprecar
+                                 ELSE crawepr.vlpreemp
               crapepr.qtpreemp = crawepr.qtpreemp
               crapepr.nrctaav1 = crawepr.nrctaav1
               crapepr.nrctaav2 = crawepr.nrctaav2

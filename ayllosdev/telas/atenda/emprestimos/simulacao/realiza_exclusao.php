@@ -4,6 +4,8 @@
  * CRIAÇÃO      : Marcelo L. Pereira (GATI)
  * DATA CRIAÇÃO : 27/06/2011
  * OBJETIVO     : Executa os processos da rotina filha de Simulações da rotina de Empréstimos 
+ *
+ * 001: [28/02/2018] Alterado para buscar os dados na mensageria Oracle (P438 Douglas Pagel / AMcom)
 **/
 	session_start();
 	require_once('../../../../includes/config.php');
@@ -24,27 +26,17 @@
 	// Monta o xml de requisição
 	$xml = "";
 	$xml.= "<Root>";
-	$xml.= "	<Cabecalho>";
-	$xml.= "		<Bo>b1wgen0097.p</Bo>";
-	$xml.= "		<Proc>exclui_simulacao</Proc>";
-	$xml.= "	</Cabecalho>";
 	$xml.= "	<Dados>";
-	$xml.= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xml.= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-	$xml.= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xml.= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xml.= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-	$xml.= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
 	$xml.= "		<nrdconta>".$nrdconta."</nrdconta>";
     $xml.= "		<idseqttl>".$idseqttl."</idseqttl>";
 	$xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$xml .= "		<flgerlog>TRUE</flgerlog>";
 	$xml.= "		<nrsimula>".$nrsimula."</nrsimula>";
+	$xml .= "		<flgerlog>1</flgerlog>";
 	$xml.= "	</Dados>";
 	$xml.= "</Root>";
 	
 	// Executa script para envio do XML
-	$xmlResult = getDataXML($xml);	
+	$xmlResult = mensageria($xml, "TELA_ATENDA_SIMULACAO", "SIMULA_EXCLUI_SIMULACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	// Cria objeto para classe de tratamento de XML
 	$xmlObj = getObjectXML($xmlResult);
 	

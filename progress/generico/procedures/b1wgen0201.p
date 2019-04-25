@@ -9,7 +9,7 @@
     Objetivo  : BO ref. Rotina integracao CDC
 
     Alteracoes: 19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)
-                
+                21/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
 ..............................................................................*/
 
 /*................................ DEFINICOES ............................... */
@@ -120,6 +120,7 @@ PROCEDURE integra_proposta:
     DEF VAR aux_recidepr AS INTE                                    NO-UNDO.
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
     DEF VAR aux_nivrisco AS CHAR                                    NO-UNDO.
+    DEF VAR aux_vlprecar AS DECI                                    NO-UNDO.
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
     DEF VAR aux_dsbensal AS CHAR                                    NO-UNDO.
     DEF VAR aux_dsdregis AS CHAR                                    NO-UNDO.
@@ -439,7 +440,8 @@ PROCEDURE integra_proposta:
                                                OUTPUT tt-proposta-epr.flgpagto,
                                                OUTPUT tt-proposta-epr.dtdpagto,
                                                OUTPUT aux_vlutiliz,
-                                               OUTPUT aux_nivrisco).
+                                               OUTPUT aux_nivrisco,
+                                               OUTPUT aux_vlprecar).
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVAINTCDC, LEAVE GRAVAINTCDC.
     

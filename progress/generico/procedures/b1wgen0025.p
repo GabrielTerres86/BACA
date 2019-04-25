@@ -2521,8 +2521,8 @@ PROCEDURE verifica_saque:
         DO:
             IF  aux_vlsaqnot > 500  THEN
                 DO:
-                    par_dssaqmax = " Limite  para  saque  noturno:  R$ 500,00".
-                    par_dscritic = "Limite de Saque Excedido. " + par_dssaqmax.
+                    par_dssaqmax = "Para sua seguranca, apos 20h, o limite de saque e de R$ 500,00".
+                    par_dscritic = "Limite saque noturno excedido. " + par_dssaqmax.
                     RETURN "NOK".
                 END.
         END.

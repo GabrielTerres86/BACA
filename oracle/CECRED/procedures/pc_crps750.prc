@@ -42,6 +42,8 @@ BEGIN
               29/10/2018 - Passar null para o pr_cdoperad onde ha a chamado do 750_1 que esta utilizando
                            o user do banco (user que criou o objeto). (Fabricio)
 			  
+              15/04/2019 - P450 - Inclusão de tratamento para ignorar contas em prejuízo (Reginaldo/AMcom)
+			  
  ............................................................................. */
 
   DECLARE
@@ -549,6 +551,10 @@ BEGIN
                                     ,pr_dtmvtoan => rw_crapdat.dtmvtoan
                                     ,pr_cdagenci => pr_cdagenci) LOOP
 
+           /* P450 - Tratamento para ignorar contas em prejuízo (Reginaldo/AMcom) */
+           IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, rw_crappep.nrdconta) THEN
+             CONTINUE;
+           END IF;
 
            /* Verificar tipo de produto, se TR, executar a PC_CRPS750_1, se PP, executar a PC_CRPS750_2 */
            vr_nrdconta := rw_crappep.nrdconta;

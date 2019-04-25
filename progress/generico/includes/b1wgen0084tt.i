@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0084tt.i                  
     Autor   : Irlan
-    Data    : Fevereiro/2010                     Ultima atualizacao: 06/03/2018
+    Data    : Fevereiro/2010                     Ultima atualizacao: 19/12/2018
 
    Dados referentes ao programa:
 
@@ -13,6 +13,9 @@
                             
                06/03/2018 - Adicionado campo idcobope na temp-table tt-efetiv-epr.
                             (PRJ 404)
+
+               19/12/2018 - PJ298.2 - Adicionados campos tpemprst e vlprecar na temp-table tt-efetiv-epr.
+                            (Andre Clemer - Supero)
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-parcelas-epr    NO-UNDO
@@ -54,6 +57,8 @@ DEF TEMP-TABLE tt-efetiv-epr       NO-UNDO
     FIELD altdtpgt AS LOGICAL
     FIELD idfiniof AS INTE
     FIELD idcobope LIKE crawepr.idcobope
+    FIELD tpemprst LIKE crawepr.tpemprst
+    FIELD vlprecar LIKE crawepr.vlprecar
 	FIELD flliquid AS INTE.
 
 DEF TEMP-TABLE tt-msg-aval        NO-UNDO

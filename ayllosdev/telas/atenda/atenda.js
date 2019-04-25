@@ -92,6 +92,8 @@
 
                   23/11/2018 - P442 - Inclusao de Score (Thaise-Envolti)
 				   
+                  11/01/2019 - Adicionada modal para selecionar impressão de Documentos quando for pessoa física (Luis Fernando - GFT)
+                  
 ***************************************************************************/
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela ATENDA
@@ -550,10 +552,15 @@ function obtemCabecalho() {
                 flgdigit = $("#hdnFlgdig", "#frmCabAtenda").val();
                 aux_nrdconta = $("#nrdconta", "#frmCabAtenda").val();
                 aux_nrdconta = aux_nrdconta.replace('-', '.');
-                if (flgdigit == "yes" || flgdigit == "S") {
-                    $("#divSemCartaoAss").html("<a tabindex='6' name='6' class='txtNormal SetFocus' href='#' onclick='dossieDigdoc(9); return false;' >&nbsp;Cart&atilde;o Ass.</a>");
-                } else {
-                    $("#divSemCartaoAss").html("<a tabindex='6' name='6' class='txtNormal SetFocus' style='margin-left: 1px; cursor:default' >&nbsp;Cart&atilde;o Ass.</a>");
+                if (inpessoa == 1){
+                    $("#divSemCartaoAss").html("<a tabindex='6' name='6' class='txtNormal SetFocus' style='margin-left: 1px; cursor:default' href='#' onclick='abreDocumentos(); return false;' >Documentos</a>");
+                }
+                else{
+                    if (flgdigit == "yes" || flgdigit == "S") {
+                        $("#divSemCartaoAss").html("<a tabindex='6' name='6' class='txtNormal SetFocus' href='#' onclick='dossieDigdoc(9,true); return false;' >&nbsp;Cart&atilde;o Ass.</a>");
+                    } else {
+                        $("#divSemCartaoAss").html("<a tabindex='6' name='6' class='txtNormal SetFocus' style='margin-left: 1px; cursor:default' >&nbsp;Cart&atilde;o Ass.</a>");
+                    }
                 }
 
                 if (flgProdutos) {
@@ -578,6 +585,13 @@ function obtemCabecalho() {
         }
     });
 
+}
+
+function abreDocumentos(){
+    $("#divRotina").html($("#rotinaDocumentos").html());
+    mostraRotina();
+    bloqueiaFundo($('#divRotina'));
+    executandoProdutos = true;
 }
 
 // Função para limpar campos com dados da conta
@@ -784,10 +798,14 @@ function ajustarCentralizacao() {
     return false;
 }
 
-function dossieDigdoc(cdproduto){
+function dossieDigdoc(cdproduto,ignoraFundo){
 
 	var mensagem = 'Aguarde, acessando dossie...';
 	showMsgAguardo( mensagem );
+
+    if (ignoraFundo === undefined){
+        ignoraFundo = false;
+    }
 
 	// Carrega dados da conta através de ajax
 	$.ajax({
@@ -810,9 +828,12 @@ function dossieDigdoc(cdproduto){
 					// Portabilidade
 					if (cdproduto == 6){
 						bloqueiaFundo($('#divUsoGenerico'));
-					}else if (cdproduto != 9){
-						blockBackground(parseInt($('#divRotina').css('z-index')));
+					}else {
+                        if (!ignoraFundo) {
+                            blockBackground(parseInt($('#divRotina').css('z-index')));
+                        }
 					}
+
 					if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
 						try {
 							eval( response );
@@ -834,6 +855,10 @@ function dossieDigdoc(cdproduto){
 
 	return false;
 }	  
+
+function dadosCadastraisDigdoc(){
+    dossieDigdoc(8);
+}
 
 function impedSeguros(seguroVida, seguroAuto) {
 
