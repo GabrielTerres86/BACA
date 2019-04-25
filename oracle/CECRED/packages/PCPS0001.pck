@@ -89,7 +89,8 @@ CREATE OR REPLACE PACKAGE CECRED.PCPS0001 is
                                        ,pr_dscritic   OUT VARCHAR2);
 
     -- Validar se o depósito está sendo feito numa conta salário ou não.
-		PROCEDURE pc_valida_deposito_cta_sal(pr_cdcopdst IN crapcop.cdcooper%TYPE --Código da cooperativa de destino
+		PROCEDURE pc_valida_deposito_cta_sal(pr_cdcooper IN crapcop.cdcooper%TYPE --Código da cooperativa de origem
+			                                  ,pr_cdcopdst IN crapcop.cdcooper%TYPE --Código da cooperativa de destino
                                         ,pr_nrctadst IN crapass.nrdconta%TYPE --Número da conta de destino do depósito 
                                         ,pr_idseqttl IN crapttl.idseqttl%TYPE
                                         ,pr_cdagenci IN NUMBER
@@ -3318,7 +3319,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
   END pc_estorno_rej_empregador;
   
 	-- Validar se o depósito está sendo feito numa conta salário ou não.
-	PROCEDURE pc_valida_deposito_cta_sal(pr_cdcopdst IN crapcop.cdcooper%TYPE --Código da cooperativa de destino
+	PROCEDURE pc_valida_deposito_cta_sal(pr_cdcooper IN crapcop.cdcooper%TYPE --Código da cooperativa de origem
+		                                  ,pr_cdcopdst IN crapcop.cdcooper%TYPE --Código da cooperativa de destino
                                       ,pr_nrctadst IN crapass.nrdconta%TYPE --Número da conta de destino do depósito 
                                       ,pr_idseqttl IN crapttl.idseqttl%TYPE
                                       ,pr_cdagenci IN NUMBER
