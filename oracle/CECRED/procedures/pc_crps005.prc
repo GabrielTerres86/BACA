@@ -403,6 +403,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                18/03/2019 - PRB0040683 na rotina pc_consulta_poupanca e suas internas, feitos os tratamentos de erros para que
                             sejam identificados os possíveis pontos de correção; pular a aplicação quando a consulta for chamada
                             pelo batch (Carlos)
+
+               25/04/2019 - INC0013948 As condições que verificam os dados do cursor cr_crapass para 
+                            validar se existe investimento, não estava contemplando o tipo de 
+                            pessoa 3 - Administrativa 
+                            Aplicada condição de verificação para o valor 3 na validação do campo 
+                            rw_crapass.inpessoa no cursor. (Jackson)
      ............................................................................. */
 
      DECLARE
@@ -9592,6 +9598,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                     vr_vltotfis:= nvl(vr_vltotfis,0) + nvl(vr_tab_crapsli(vr_index_crapsli).vlsddisp,0);
                   WHEN 2 THEN --pessoa juridica
                     --Acumular valor total disponivel pessoa juridica
+                    vr_vltotjur:= nvl(vr_vltotjur,0) + nvl(vr_tab_crapsli(vr_index_crapsli).vlsddisp,0);
+                  WHEN 3 THEN --pessoa juridica ADMINISTRATIVA (Inclusão por INC0013948)
+                    --Acumular valor total disponivel pessoa juridica ADMINISTRATIVA 
                     vr_vltotjur:= nvl(vr_vltotjur,0) + nvl(vr_tab_crapsli(vr_index_crapsli).vlsddisp,0);
                 END CASE;
               END IF;
