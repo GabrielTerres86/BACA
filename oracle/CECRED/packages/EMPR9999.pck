@@ -2227,7 +2227,6 @@ create or replace package body cecred.EMPR9999 as
 
    --Tabelas de Memoria para Pagamentos das Parcelas Emprestimo
    vr_tab_parcelas_pos EMPR0011.typ_tab_parcelas;
-	 vr_tab_calculado    empr0011.typ_tab_calculado;
 
    vr_tab_price EMPR0011.typ_tab_price;
 
@@ -2272,7 +2271,6 @@ create or replace package body cecred.EMPR9999 as
                                              ,pr_vlsprojt => pr_vlsprojt        --rw_crapepr.vlsprojt
                                              ,pr_qttolatr => pr_qttolar         --rw_crapepr.qttolatr
                                              ,pr_tab_parcelas => vr_tab_parcelas_pos
-																						 ,pr_tab_calculado => vr_tab_calculado
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);																				 
 																						 
