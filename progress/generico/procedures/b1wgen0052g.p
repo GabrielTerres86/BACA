@@ -4369,7 +4369,7 @@ PROCEDURE Inclui PRIVATE :
                    IF par_inpessoa = 1 THEN
                       DO:
                         IF par_flgctsal = YES THEN
-                          aux_cdpartar = 68.  /* TIPO DE CONTA INICIAL PF SALARIO */
+                          aux_cdpartar = 71.  /* TIPO DE CONTA INICIAL PF SALARIO */
                         ELSE
                           aux_cdpartar = 54.  /* TIPO DE CONTA INICIAL PF */
                       END.
