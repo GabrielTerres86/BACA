@@ -171,9 +171,12 @@ DECLARE
   VR_ARQ_PATH VARCHAR2(1000);
   VR_NMARQUIV VARCHAR2(200);
   VR_ARQSAIDA VARCHAR2(200);
+  VR_ARQRELAT VARCHAR2(200);
 
-  VR_DES_XML        CLOB;
-  VR_TEXTO_COMPLETO VARCHAR2(32600);
+  VR_DES_XML         CLOB;
+  VR_TEXTO_COMPLETO  VARCHAR2(32600);
+  VR_DES_REL         CLOB;
+  VR_TEXTO_RELATORIO VARCHAR2(32600);
 
   VR_CHAVE PLS_INTEGER;
   VR_EXC_ERRO EXCEPTION;
@@ -185,6 +188,24 @@ DECLARE
   VR_ROWIDNRC ROWID;
   VR_DTMVTOLT CRAPNRC.DTMVTOLT%TYPE;
 
+  PROCEDURE PC_ESCREVE_XML(PR_DES_DADOS IN VARCHAR2,
+                           PR_FECHA_XML IN BOOLEAN DEFAULT FALSE) IS
+  BEGIN
+    GENE0002.PC_ESCREVE_XML(VR_DES_XML,
+                            VR_TEXTO_COMPLETO,
+                            PR_DES_DADOS,
+                            PR_FECHA_XML);
+  END;
+
+  PROCEDURE PC_ESCREVE_REL(PR_DES_DADOS IN VARCHAR2,
+                           PR_FECHA_XML IN BOOLEAN DEFAULT FALSE) IS
+  BEGIN
+    GENE0002.PC_ESCREVE_XML(VR_DES_REL,
+                            VR_TEXTO_RELATORIO,
+                            PR_DES_DADOS,
+                            PR_FECHA_XML);
+  END;
+
   PROCEDURE PC_IMPRIME_DADOS(PR_ROWIDNRC IN ROWID,
                              PR_MENSAGEM IN VARCHAR2,
                              PR_DSOUTROS IN VARCHAR2 DEFAULT NULL) IS
@@ -193,37 +214,46 @@ DECLARE
     RW_CRAPNRC2 CR_CRAPNRC2%ROWTYPE;
     VR_DSOUTROS VARCHAR2(4000);
   BEGIN
-    NULL;
-    /*
-        VR_DSOUTROS := ';' || VR_TAB_RAT(VR_CHAVE).NRCTRRAT || ';' || VR_TAB_RAT(VR_CHAVE)
-                      .CDRATCAL || ';' || VR_TAB_RAT(VR_CHAVE).ACUMULAD;
-        IF NVL(PR_DSOUTROS, ' ') <> ' ' THEN
-          VR_DSOUTROS := VR_DSOUTROS || ';' || PR_DSOUTROS;
-        END IF;
-        IF CR_CRAPNRC2%ISOPEN THEN
-          CLOSE CR_CRAPNRC2;
-        END IF;
-        OPEN CR_CRAPNRC2;
-        FETCH CR_CRAPNRC2
-          INTO RW_CRAPNRC2;
-        IF CR_CRAPNRC2%FOUND THEN
-          DBMS_OUTPUT.PUT_LINE(PR_MENSAGEM || ';' || RW_CRAPASS.CDCOOPER || ';' ||
-                               RW_CRAPASS.CDAGENCI || ';' ||
-                               RW_CRAPASS.NRDCONTA || ';' ||
-                               RW_CRAPNRC2.NRCTRRAT || ';' ||
-                               RW_CRAPNRC2.INDRISCO || ';' ||
-                               RW_CRAPNRC2.NRNOTRAT || ';' ||
-                               RW_CRAPNRC2.VLUTLRAT || ';' ||
-                               RW_CRAPNRC2.DTEFTRAT || VR_DSOUTROS);
-        ELSE
-          DBMS_OUTPUT.PUT_LINE(PR_MENSAGEM || ';' || RW_CRAPASS.CDCOOPER || ';' ||
-                               RW_CRAPASS.CDAGENCI || ';' ||
-                               RW_CRAPASS.NRDCONTA || ';;;;;' || VR_DSOUTROS);
-        END IF;
-        IF CR_CRAPNRC2%ISOPEN THEN
-          CLOSE CR_CRAPNRC2;
-        END IF;
-    */
+    VR_DSOUTROS := ';' || VR_TAB_RAT(VR_CHAVE).NRCTRRAT || ';' || VR_TAB_RAT(VR_CHAVE)
+                  .CDRATCAL || ';' || VR_TAB_RAT(VR_CHAVE).ACUMULAD;
+    IF NVL(PR_DSOUTROS, ' ') <> ' ' THEN
+      VR_DSOUTROS := VR_DSOUTROS || ';' || PR_DSOUTROS;
+    END IF;
+    IF CR_CRAPNRC2%ISOPEN THEN
+      CLOSE CR_CRAPNRC2;
+    END IF;
+    OPEN CR_CRAPNRC2;
+    FETCH CR_CRAPNRC2
+      INTO RW_CRAPNRC2;
+    IF CR_CRAPNRC2%FOUND THEN
+      PC_ESCREVE_REL(PR_MENSAGEM || ';' || RW_CRAPASS.CDCOOPER || ';' ||
+                     RW_CRAPASS.CDAGENCI || ';' || RW_CRAPASS.NRDCONTA || ';' ||
+                     RW_CRAPNRC2.NRCTRRAT || ';' || RW_CRAPNRC2.INDRISCO || ';' ||
+                     RW_CRAPNRC2.NRNOTRAT || ';' || RW_CRAPNRC2.VLUTLRAT || ';' ||
+                     RW_CRAPNRC2.DTEFTRAT || VR_DSOUTROS || CHR(10));
+      /*      
+            DBMS_OUTPUT.PUT_LINE(PR_MENSAGEM || ';' || RW_CRAPASS.CDCOOPER || ';' ||
+                                 RW_CRAPASS.CDAGENCI || ';' ||
+                                 RW_CRAPASS.NRDCONTA || ';' ||
+                                 RW_CRAPNRC2.NRCTRRAT || ';' ||
+                                 RW_CRAPNRC2.INDRISCO || ';' ||
+                                 RW_CRAPNRC2.NRNOTRAT || ';' ||
+                                 RW_CRAPNRC2.VLUTLRAT || ';' ||
+                                 RW_CRAPNRC2.DTEFTRAT || VR_DSOUTROS);
+      */
+    ELSE
+      PC_ESCREVE_REL(PR_MENSAGEM || ';' || RW_CRAPASS.CDCOOPER || ';' ||
+                     RW_CRAPASS.CDAGENCI || ';' || RW_CRAPASS.NRDCONTA ||
+                     ';;;;;' || VR_DSOUTROS || CHR(10));
+      /*      
+            DBMS_OUTPUT.PUT_LINE(PR_MENSAGEM || ';' || RW_CRAPASS.CDCOOPER || ';' ||
+                                 RW_CRAPASS.CDAGENCI || ';' ||
+                                 RW_CRAPASS.NRDCONTA || ';;;;;' || VR_DSOUTROS);
+      */
+    END IF;
+    IF CR_CRAPNRC2%ISOPEN THEN
+      CLOSE CR_CRAPNRC2;
+    END IF;
   END;
 
   FUNCTION FN_BUSCA_DATA_CTR(PR_CDCOOPER IN CRAPCOP.CDCOOPER%TYPE,
@@ -250,15 +280,6 @@ DECLARE
     END IF;
     RETURN VR_DTCTRATO;
   END FN_BUSCA_DATA_CTR;
-
-  PROCEDURE PC_ESCREVE_XML(PR_DES_DADOS IN VARCHAR2,
-                           PR_FECHA_XML IN BOOLEAN DEFAULT FALSE) IS
-  BEGIN
-    GENE0002.PC_ESCREVE_XML(VR_DES_XML,
-                            VR_TEXTO_COMPLETO,
-                            PR_DES_DADOS,
-                            PR_FECHA_XML);
-  END;
 
   /* Retornar o Rating Proposto com pior nota. */
   PROCEDURE PC_PROCURA_PIOR_NOTA(PR_CDCOOPER IN CRAPCOP.CDCOOPER%TYPE --> Código da Cooperativa
@@ -332,12 +353,18 @@ BEGIN
                  'cpd/bacas/' || VR_NOMEBACA;
   VR_NMARQUIV := VR_NOMEBACA || '_IN.csv';
   VR_ARQSAIDA := VR_NOMEBACA || '_OUT.txt';
+  VR_ARQRELAT := VR_NOMEBACA || '_REL.txt';
 
   -- Inicializar o CLOB
   VR_DES_XML := NULL;
   DBMS_LOB.CREATETEMPORARY(VR_DES_XML, TRUE);
   DBMS_LOB.OPEN(VR_DES_XML, DBMS_LOB.LOB_READWRITE);
   VR_TEXTO_COMPLETO := NULL;
+
+  VR_DES_REL := NULL;
+  DBMS_LOB.CREATETEMPORARY(VR_DES_REL, TRUE);
+  DBMS_LOB.OPEN(VR_DES_REL, DBMS_LOB.LOB_READWRITE);
+  VR_TEXTO_RELATORIO := NULL;
 
   -- Efetuar abertura do arquivo para processamento
   GENE0001.PC_ABRE_ARQUIVO(PR_NMDIRETO => VR_ARQ_PATH --> Diretorio do arquivo
@@ -354,6 +381,7 @@ BEGIN
     --Levantar Excecao
     VR_DSCRITIC := 'Erro na leitura do arquivo --> ' || VR_DSCRITIC;
     DBMS_OUTPUT.PUT_LINE(VR_DSCRITIC);
+    PC_ESCREVE_REL(VR_DSCRITIC || CHR(10));
     RAISE VR_EXC_ERRO;
   END IF;
 
@@ -405,6 +433,7 @@ BEGIN
             VR_DSCRITIC := 'Erro na leitura do arquivo2 --> ' ||
                            VR_TXTAUXIL || SQLERRM;
             DBMS_OUTPUT.PUT_LINE(VR_DSCRITIC);
+            PC_ESCREVE_REL(VR_DSCRITIC || CHR(10));
             RAISE VR_EXC_ERRO;
         END;
       
@@ -416,11 +445,14 @@ BEGIN
     END;
   END IF;
 
-/*
-  DBMS_OUTPUT.PUT_LINE('Mensagem;Coop;PA;Conta;Contrato Efetivado;Rating Efetivado;' ||
-                       'Nota Efetivada;Valor Efetivado;Efetivação;Contrato Origem;' ||
-                       'Rating Origem;Valor Origem;Saldo Devedor;Data Saldo Devedor');
-*/
+  PC_ESCREVE_REL('Mensagem;Coop;PA;Conta;Contrato Efetivado;Rating Efetivado;' ||
+                 'Nota Efetivada;Valor Efetivado;Efetivação;Contrato Origem;' ||
+                 'Rating Origem;Valor Origem;Saldo Devedor;Data Saldo Devedor' || CHR(10));
+  /*
+    DBMS_OUTPUT.PUT_LINE('Mensagem;Coop;PA;Conta;Contrato Efetivado;Rating Efetivado;' ||
+                         'Nota Efetivada;Valor Efetivado;Efetivação;Contrato Origem;' ||
+                         'Rating Origem;Valor Origem;Saldo Devedor;Data Saldo Devedor');
+  */
 
   VR_CHAVE := VR_TAB_RAT.FIRST;
 
@@ -437,8 +469,8 @@ BEGIN
       IF CR_CRAPASS%ISOPEN THEN
         CLOSE CR_CRAPASS;
       END IF;
-      PC_ESCREVE_XML('ASSOCIADO NAO EXISTE;' || VR_TAB_RAT(VR_CHAVE)
-                     .CDCOOPER || ';' || VR_TAB_RAT(VR_CHAVE).NRDCONTA);
+      PC_ESCREVE_REL('ASSOCIADO NAO EXISTE;' || VR_TAB_RAT(VR_CHAVE)
+                     .CDCOOPER || ';' || VR_TAB_RAT(VR_CHAVE).NRDCONTA || CHR(10));
       VR_CHAVE := VR_TAB_RAT.NEXT(VR_CHAVE);
       CONTINUE;
     END IF;
@@ -474,7 +506,7 @@ BEGIN
                      RW_CRAPNRC_BACKUP.NRCTRRAT || ' AND TPCTRRAT=' ||
                      RW_CRAPNRC_BACKUP.TPCTRRAT || ';' || CHR(10));
     END LOOP;
-    
+  
     --///
     COMMIT;
     --///
@@ -1482,6 +1514,16 @@ BEGIN
   -- Liberando a memória alocada pro CLOB
   DBMS_LOB.CLOSE(VR_DES_XML);
   DBMS_LOB.FREETEMPORARY(VR_DES_XML);
+
+  PC_ESCREVE_REL(' ', TRUE);
+  DBMS_XSLPROCESSOR.CLOB2FILE(VR_DES_REL,
+                              VR_ARQ_PATH,
+                              TO_CHAR(SYSDATE, 'ddmmyyyy_hh24miss') || '_' ||
+                              VR_ARQRELAT,
+                              NLS_CHARSET_ID('UTF8'));
+  -- Liberando a memória alocada pro CLOB
+  DBMS_LOB.CLOSE(VR_DES_REL);
+  DBMS_LOB.FREETEMPORARY(VR_DES_REL);
 
   COMMIT;
 EXCEPTION
