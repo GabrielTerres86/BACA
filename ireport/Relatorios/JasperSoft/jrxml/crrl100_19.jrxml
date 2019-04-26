@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2016-09-15T14:54:32 -->
+<!-- 2019-04-17T16:37:06 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.5"/>
 	<property name="ireport.x" value="0"/>
@@ -212,9 +212,9 @@
 		<band splitType="Stretch"/>
 	</background>
 	<detail>
-		<band height="119" splitType="Stretch">
+		<band height="134" splitType="Stretch">
 			<frame>
-				<reportElement stretchType="RelativeToBandHeight" x="1" y="0" width="467" height="119" forecolor="#000000" backcolor="#000000" uuid="92243a14-ca32-4614-b6fd-49f77525ab14"/>
+				<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="467" height="134" forecolor="#000000" backcolor="#000000" uuid="92243a14-ca32-4614-b6fd-49f77525ab14"/>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0"/>
@@ -238,21 +238,21 @@
 				<textFieldExpression><![CDATA[$F{dados_pessoais}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="5" y="76" width="465" height="22" isRemoveLineWhenBlank="true" uuid="aed5826e-803d-405c-ae6c-f4475276a0e8"/>
+				<reportElement x="5" y="79" width="465" height="31" isRemoveLineWhenBlank="true" uuid="aed5826e-803d-405c-ae6c-f4475276a0e8"/>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{endereco}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="5" y="97" width="463" height="11" isRemoveLineWhenBlank="true" uuid="c08921e2-8fd2-4e92-a9c5-6b84bb31940d"/>
+				<reportElement x="5" y="112" width="463" height="11" isRemoveLineWhenBlank="true" uuid="c08921e2-8fd2-4e92-a9c5-6b84bb31940d"/>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{conjuge}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="6" y="108" width="463" height="11" isRemoveLineWhenBlank="true" uuid="da658e68-04ad-40b3-9fe0-1191aeffb4f8"/>
+				<reportElement x="6" y="123" width="463" height="11" isRemoveLineWhenBlank="true" uuid="da658e68-04ad-40b3-9fe0-1191aeffb4f8"/>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
