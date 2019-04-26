@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Setembro/2004.                  Ultima atualizacao: 19/07/2018
+   Data    : Setembro/2004.                  Ultima atualizacao: 22/04/2019
 
    Dados referentes ao programa:
 
@@ -197,7 +197,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                21/05/2018 - Utilizar dtvigencia no subselect da tabela tbcc_produtos_coop. 
                             PRJ366 (Lombardi).
                             
-               11/07/2018 - Ajuste feito para tratar requisicoes com agencia zerada. (INC0019189 - Kelvin/Wagner)                            
+               11/07/2018 - Ajuste feito para tratar requisicoes com agencia zerada. (INC0019189 - Kelvin/Wagner)
 
 			   01/08/2018 - Adaptar a regra que envia o literal6 para impressão da frase "Cheque especial"
                             no talonário, para verificar se o cooperado possui limite de crédito habilitado
@@ -215,7 +215,10 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 
 			   24/01/2019 - Retirado o ajuste no cursor cr_crapreq. 
                             Acelera - Entrega de Talonarios no Ayllos (Lombardi)
- 
+                            
+         22/04/2019 - Retirado tratamento para geração dos arquivos de 
+                      formularios continuos a cada 15 dias. Geracao do arquivo 
+                      passa a ser diaria. (Elton) 
 ............................................................................. */
 
   -- Data do movimento
@@ -630,7 +633,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     
     -- variavel para verificacao do dia de processamento de envio da requisicao
     vr_dtcalcul        DATE;
-    
+
     -- Número do pedido
     vr_nrpedido        NUMBER;
     
@@ -641,7 +644,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       -- Pragma - abre nova sessão para tratar a atualização
       PRAGMA AUTONOMOUS_TRANSACTION;
      
-    BEGIN       
+  BEGIN
       -- Tenta atualizar o registro de controle de sequencia
       UPDATE gnsequt
          SET gnsequt.vlsequtl = NVL(gnsequt.vlsequtl,0) + 1
@@ -653,11 +656,11 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
         -- Faz rollback das informações
         ROLLBACK;
         -- Define o erro
-        pr_cdcritic := 151;
+      pr_cdcritic := 151;
         -- Critica 151 - Registro de restart nao encontrado
         RETURN;
-      END IF;
-       
+    END IF;
+
       -- Comita os dados desta sessão
       COMMIT;
     EXCEPTION 
@@ -667,7 +670,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
         ROLLBACK; 
     END pc_altera_gnsequt;
 
-  BEGIN        
+    BEGIN
     
     -- Rotina para controlar a atualização da gnsequt, sem que a mesma fique em lock
     pc_altera_gnsequt (pr_cdcritic => pr_cdcritic
@@ -773,47 +776,6 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                                  pr_tprequis,
                                  vr_dtmvtolt) LOOP
 
-      -- Verifica se é o primeiro dia útil do mês ou primeiro dia útil a partir do dia 15, pois as
-      -- solicitações de formulário continuo só acontecerão de 15 em 15 dias, apenas para a empresa RR Donnelley
-      IF (rw_crapreq.tprequis = 3 AND 
-          rw_crapreq.tpformul = 999) THEN
-        
-        IF pr_cdempres <> 2 THEN
-          CONTINUE;
-        END IF;
-        
-        -- Definindo a data do calculo
-        -- se for primeira quinzena
-        IF vr_dtmvtolt < to_date('15/' || to_char(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR') THEN
-          -- primeiro dia útil do mes atual
-          vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper , 
-                                                     pr_dtmvtolt => trunc(vr_dtmvtolt,'MM')); 
-        ELSE
-          vr_dtcalcul := to_date('15/' || to_char(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR');
-          -- primeiro dia útil da segunda quinzena do mes atual
-          vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper , 
-                                                     pr_dtmvtolt => vr_dtcalcul);
-        END IF;
-
-        -- Incrementa a data do processamento enquanto a empresa for diferente de 2
-        vr_cdacesso := 'CRPS408_CHEQUE_' || to_char(vr_dtcalcul,'DY','NLS_DATE_LANGUAGE = PORTUGUESE');
-        vr_cdempres2 := NVL(gene0001.fn_param_sistema('CRED',0,vr_cdacesso),0);
-        WHILE vr_dtcalcul <= vr_dtmvtolt AND 
-              vr_cdempres2 <> 2 LOOP
-          vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper , 
-                                                     pr_dtmvtolt => vr_dtcalcul + 1);
-          vr_cdacesso := 'CRPS408_CHEQUE_' || to_char(vr_dtcalcul,'DY','NLS_DATE_LANGUAGE = PORTUGUESE');
-          vr_cdempres2 := NVL(gene0001.fn_param_sistema('CRED',0,vr_cdacesso),0);
-        END LOOP;        
-        
-        -- Se a data atual for diferente da data a ser processada é pq não é a primeira ter, qua ou sex da 
-        -- quinzena; vai para a próxima rw_crapreq
-        IF vr_dtmvtolt <> vr_dtcalcul THEN
-          continue; 
-        END IF;
-
-      END IF;
-
       -- Busca os dados do associado
       OPEN cr_crapass(pr_cdcooper,
                       rw_crapreq.nrdconta);
@@ -840,24 +802,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       ELSE 
         vr_cdcritic := 0;
       END IF;
-      /*
-      -- Verificacao se o cooperado nao esta rejeitado
-      IF pr_cdtipcta_ini = 12 THEN -- NORMAL ITG
-        IF rw_crapass.cdtipcta < 12 THEN
-          vr_cdcritic := 65; -- 065 - Tipo de conta nao permite req.
-        ELSIF rw_crapass.flgctitg <> 2 THEN -- Situação da conta diferente de cadastrada
-          vr_cdcritic := 837; -- 837 - Conta de Integracao incorreta.
-        ELSIF rw_crapass.cdtipcta > 16 THEN -- Conta de aplicação
-          vr_cdcritic := 65; -- 065 - Tipo de conta nao permite req.
-        ELSIF rw_crapass.nrdctitg IS NULL THEN -- Se nao tiver numero de conta de integracao
-          vr_cdcritic := 837; -- 837 - Conta de Integracao incorreta.
-        END IF;
-      ELSIF pr_cdtipcta_ini = 8 THEN -- NORMAL CONVENIO
-        IF rw_crapass.cdtipcta < 8  OR rw_crapass.cdtipcta > 11 THEN
-          vr_cdcritic := 65;-- 065 - Tipo de conta nao permite req.
-        END IF;
-      END IF;
-      */
+      
       -- Se não houver rejeição no associado
       IF nvl(vr_cdcritic,0) = 0 THEN
         
@@ -1254,26 +1199,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
             vr_nrfolhas := rw_crapreq.qtreqtal;
             vr_numtalon := 0;
           END IF;
-          /*
-          -- Define a conta base
-          IF pr_cdtipcta_ini = 12 THEN --NORMAL ITG
-            IF rw_crapass.nrdctitg IS NULL THEN -- numero da conta de integracao
-              vr_nrdctitg_aux := 0;
-            ELSE
-              -- Se o digito não for numerico
-              IF SUBSTR(rw_crapass.nrdctitg,-1,1) IN ('1','2','3','4','5','6','7','8','9','0') THEN
-                vr_nrdctitg_aux := rw_crapass.nrdctitg;
-              ELSE
-                vr_nrdctitg_aux := substr(rw_crapass.nrdctitg,1,length(rw_crapass.nrdctitg)-1);
-              END IF;
-            END IF;
-            vr_nrdctitg := SUBSTR(rw_crapass.nrdctitg,1,7);
-            vr_nrdigctb := SUBSTR(rw_crapass.nrdctitg,8,1);
-          ELSE -- Igual para IF CECRED e Bancoob
-            vr_nrdctitg_aux := rw_crapass.nrdconta;
-            vr_nrdctitg := substr(to_char(rw_crapass.nrdconta,'fm00000000'),1,7);
-            vr_nrdigctb := substr(rw_crapass.nrdconta,-1,1);
-          END IF;*/
+         
           
           vr_nrdctitg_aux := rw_crapass.nrdconta;
           vr_nrdctitg := substr(to_char(rw_crapass.nrdconta,'fm00000000'),1,7);
@@ -1302,19 +1228,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
             vr_nmorgexp := NULL;   
           END IF;
 
-          -- Busca os dados cadastrais do titular
-          /*IF rw_crapass.cdtipcta = 12   OR --NORMAL ITG
-             rw_crapass.cdtipcta = 13   THEN --ESPECIAL ITG
-            vr_literal2 := vr_dscpfcgc ||
-                           rpad(vr_nrcpfcgc,18,' ')||
-                           rpad(' ',7,' ') ||
-                           gene0002.fn_mask(rw_crapass.nrdconta,'zzzz.zzz.z');
-            vr_literal3 := rpad(vr_tpdocptl,3,' ') ||
-                           SUBSTR(TRIM(vr_nrdocptl),1,15) || ' '||
-                           TRIM(vr_cdorgexp)|| ' '||
-                           TRIM(vr_cdufdptl);
-            vr_literal4 := '';
-          ELSE*/
+         
             vr_literal2 := vr_nmsegtal;
             vr_literal3 := vr_dscpfcgc ||
                            rpad(vr_nrcpfcgc,18,' ')||
@@ -1324,8 +1238,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                            SUBSTR(TRIM(vr_nrdocptl),1,15) || ' '||
                            TRIM(vr_cdorgexp)|| ' '||
                            TRIM(vr_cdufdptl);
-          --END IF;
-
+          
 
           OPEN cr_crapsfn(pr_cdcooper,
                           rw_crapass.nrcpfcgc);
@@ -1353,14 +1266,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                                            ,pr_cdproduto => 13) = 'S'   THEN
             vr_literal6 := 'CHEQUE ESPECIAL';
           END IF;
-          /*  SUBSTITUÍDA A REGRA ANTIGA, PELA VERIFICAÇÃO DO PRODUTO 13 - LIMITE CHEQUE ESPECIAL
-          IF rw_crapass.cdtipcta IN (9,  --ESPEC. CONVENIO
-                                     11, --CONJ.ESP.CONV.
-                                     13, --ESPECIAL ITG
-                                     15) THEN --ESPEC.CJTA ITG
-            vr_literal6 := 'CHEQUE ESPECIAL';
-          END IF;
-          */
+         
           IF nvl(rw_crapage.dsinform##1,' ') = ' ' AND
              nvl(rw_crapage.dsinform##2,' ') = ' ' AND
              nvl(rw_crapage.dsinform##3,' ') = ' ' THEN
@@ -1532,15 +1438,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       END;
 
     END LOOP;
-    /*
-    -- Se nao teve requisicoes gera mensagem de alerta
-    IF nvl(vr_qttotreq,0) + nvl(vr_qttotrej_fc,0) + nvl(vr_qttotrej_tl,0) = 0 AND  pr_cdtipcta_ini = 12 THEN
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                          ,pr_ind_tipo_log => 2 -- Erro tratado
-                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                           || vr_cdprogra || ' --> NAO HA REQUISICOES PARA CHEQUES NORMAIS');
-    END IF;
-    */
+    
     -- Verifica se a tag PAC das requisicoes de Talões esta fechada. Em caso negativo, fecha a tag.
     IF NOT vr_fechapac_req_tl THEN
       pc_escreve_xml(       '<qttotreq>'||vr_qttotreq_tl||'</qttotreq>'||
