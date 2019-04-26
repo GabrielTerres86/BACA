@@ -33,6 +33,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR9999 AS
   --
   --             15/08/2018 - Pagamento de Emprestimos/Financiamentos (Rangel Decker / AMcom)
   --                        - pc_pagar_emprestimo_pos
+  --
+  --             14/12/2018 - P298.2 - Inclusão da proposta Pós fixado no simulador (Andre Clemer - Supero)
+  --                        - pc_busca_dominio;
 
   ---------------------------------------------------------------------------------------------------------------
 
@@ -201,6 +204,15 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR9999 AS
                                    ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                    ,pr_dscritic OUT VARCHAR2);                   -- Descrição da crítica
 
+  PROCEDURE pc_busca_dominio(pr_nmdominio IN tbepr_dominio_campo.nmdominio%TYPE --> Nome do domínio
+                            ,pr_xmllog    IN VARCHAR2                           --> XML com informações de LOG
+                            ,pr_cdcritic  OUT PLS_INTEGER                       --> Código da crítica
+                            ,pr_dscritic  OUT VARCHAR2                          --> Descrição da crítica
+                            ,pr_retxml    IN OUT NOCOPY xmltype                 --> Arquivo de retorno do XML
+                            ,pr_nmdcampo  OUT VARCHAR2                          --> Nome do campo com erro
+                            ,pr_des_erro  OUT VARCHAR2                          --> Erros do processo
+                             );
+
 
 END EMPR9999;
 /
@@ -212,7 +224,7 @@ create or replace package body cecred.EMPR9999 as
   --  Sistema  : Rotinas focando nas funcionalidades genericas
   --  Sigla    : EMPR
   --  Autor    : Pedro Cruz (GFT)
-  --  Data     : Julho/2018.                   Ultima atualizacao: 27/12/2018
+  --  Data     : Julho/2018.                   Ultima atualizacao: 26/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -236,10 +248,9 @@ create or replace package body cecred.EMPR9999 as
   --             15/08/2018 - Pagamento de Emprestimos/Financiamentos (Rangel Decker / AMcom)
   --                         - pc_pagar_emprestimo_pos
   --
-  --
-  --             27/12/2018 - Alteração no tratamento para contas corrente em prejuízo (verificar através
-  -- 						              da função PREJ0003.fn_verifica_preju_conta ao invés de usar o "pr_nmdatela").
-  --													P450 - Reginaldo/AMcom        
+  --             14/12/2018 - P298.2 - Inclusão da proposta Pós fixado no simulador (Andre Clemer - Supero)
+  --                        - pc_busca_dominio;
+
   ---------------------------------------------------------------------------------------------------------------
   /* Tratamento de erro */
   vr_exc_erro EXCEPTION;
@@ -562,7 +573,7 @@ create or replace package body cecred.EMPR9999 as
       END IF;
 			
       IF cr_crapris%ISOPEN THEN
-      CLOSE cr_crapris;
+        CLOSE cr_crapris;
       END IF;
 
       -- Verificando para Empréstimos
@@ -600,7 +611,7 @@ create or replace package body cecred.EMPR9999 as
   END LOOP;
 		
   pr_dsquapro := vr_vet_qualif(pr_idquapro);
-
+  
   EXCEPTION
     WHEN vr_exc_erro THEN
     /* busca valores de critica predefinidos */
@@ -881,26 +892,6 @@ create or replace package body cecred.EMPR9999 as
                                         ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                         ,pr_dscritic OUT VARCHAR2) IS                 -- Descrição da crítica
 
-    /* ..........................................................................
-      Programa : pc_pagar_emprestimo_prejuizo
-      Sistema  : Conta-Corrente - Cooperativa de Credito
-      Sigla    : CRED
-      Autor    : 
-      Data     :                             Ultima atualizacao: 27/12/2018
-
-      Dados referentes ao programa:
-
-      Frequencia: Sempre que for chamada
-      Objetivo  : Realizar o calculo e pagamento de prejuízo
-          
-      Alteração : 29/11/2018 - Ajustado para gerar lanc. hist 384 na tabela de prejuizo detalhe, 
-                               para pagamentos com conta em prejuiz CC. PRJ450 - Regulatorio (Odirlei-AMcom)
-							    
-									27/12/2018 - Alteração no tratamento para contas corrente em prejuízo (verificar através
-									             da função PREJ0003.fn_verifica_preju_conta ao invés de usar o "pr_nmdatela").
-															 P450 - Reginaldo/AMcom
-    ..........................................................................*/
-    
     -- Buscar o valor total de lançamentos referente ao pagamento do prejuízo original
     CURSOR cr_craplem(pr_cdhistor  craplem.cdhistor%TYPE) IS
       SELECT SUM(lem.vllanmto) vllanmto
@@ -926,12 +917,8 @@ create or replace package body cecred.EMPR9999 as
     vr_vlsdprej     crapepr.vlsdprej%TYPE;
     vr_dtliquid     crapepr.dtliquid%TYPE;
 
-    vr_nrseqdig        craplem.nrseqdig%TYPE;
-
     -- EXCEPTIONS
     vr_exc_erro     EXCEPTION;
-
-		vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
 
   BEGIN
 
@@ -1245,14 +1232,11 @@ create or replace package body cecred.EMPR9999 as
     -- FIM PARA O LANÇAMENTO DE PAGAMENTO DE JUROS
     ------------------------------------------------------------------------------------------------------------
 
-		-- Verifica se a conta corrente está em prejuízo - Reginaldo/AMcom
-		vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
-
     ------------------------------------------------------------------------------------------------------------
     -- INICIO PARA O LANÇAMENTO DE DEBITO DO PAGAMENTO DE PREJUIZO  -->  (((3º ETAPA)))  <--
     ------------------------------------------------------------------------------------------------------------
     IF pr_vltotpag > 0 THEN
-     IF NOT vr_prejuzcc THEN
+     IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
       EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
                                       ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
                                       ,pr_cdagenci => pr_cdagenci         --> Código da agência
@@ -1280,29 +1264,11 @@ create or replace package body cecred.EMPR9999 as
         END IF;
         RAISE vr_exc_erro;
       END IF;
-    ELSE
-      -- Lança débito no extrato do prejuízo (para correta contabilização)
-      PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
-                                      , pr_nrdconta => pr_nrdconta
-                                      , pr_dtmvtolt => pr_crapdat.dtmvtolt
-                                      , pr_cdhistor => 384
-                                      , pr_vllanmto => pr_vltotpag - nvl(pr_vliofcpl,0)
-                                      , pr_nrctremp => pr_nrctremp
-                                      , pr_cdcritic => vr_cdcritic
-                                      , pr_dscritic => vr_dscritic);
-      IF nvl(vr_cdcritic,0) > 0 OR  
-         TRIM(vr_dscritic) IS NOT NULL THEN
-         
-        pr_cdcritic := vr_cdcritic; 
-        pr_dscritic := vr_dscritic;
-        RAISE vr_exc_erro;
-      END IF;   
-
     END IF; -- Lançamento conta corrente
 
      IF NVL(pr_vliofcpl,0) > 0 THEN
-       IF NOT vr_prejuzcc THEN
-          EMPR0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
+       IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
+          EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
                                         ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
                                         ,pr_cdagenci => pr_cdagenci         --> Código da agência
                                         ,pr_cdbccxlt => 100                 --> Número do caixa
@@ -1314,7 +1280,6 @@ create or replace package body cecred.EMPR9999 as
                                         ,pr_vllanmto => pr_vliofcpl         --> Valor do debito
                                         ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
                                         ,pr_nrctremp => 0                   --> Número do contrato de empréstimo
-                                              ,pr_nrseqdig => vr_nrseqdig         --> Número de sequencia de lançamento 
                                         ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
                                         ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
 
@@ -1333,7 +1298,8 @@ create or replace package body cecred.EMPR9999 as
         END IF; --Lançamento na conta corrente
 
       -- Lançamento na conta corrente
-       IF vr_prejuzcc THEN
+       IF UPPER(pr_nmtelant) = 'BLQPREJU' THEN
+
        PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper,
                                       pr_nrdconta => pr_nrdconta,
                                       pr_cdoperad => pr_cdoperad,
@@ -1362,7 +1328,7 @@ create or replace package body cecred.EMPR9999 as
                                , pr_cdagenci_lcm => pr_cdagenci
                                , pr_cdbccxlt_lcm => 100
                                , pr_nrdolote_lcm => 650001
-														 , pr_nrseqdig_lcm => vr_nrseqdig
+                               , pr_nrseqdig_lcm => 1
                                , pr_vliofpri     => 0
                                , pr_vliofadi     => 0
                                , pr_vliofcpl     => pr_vliofcpl
@@ -1542,8 +1508,6 @@ create or replace package body cecred.EMPR9999 as
 
     -- EXCEPTION
     vr_exc_erro     EXCEPTION;
-
-		vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
 
   BEGIN
     -- Leitura do indicador de uso da tabela de taxa de juros
@@ -1761,13 +1725,10 @@ create or replace package body cecred.EMPR9999 as
       END;
     END LOOP; -- cr_crapavs
 
-		-- Verifica se a conta corrente está em prejuízo - Reginaldo/AMcom
-		vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
-
     -----------------------------------------------------------------------------------------------
     -- Debita em conta corrente o total pago do emprestimo
     -----------------------------------------------------------------------------------------------
-    IF NOT vr_prejuzcc THEN
+    IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
       EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
                                     ,pr_dtmvtolt => pr_crapdat.dtmvtolt  --> Movimento atual
                                     ,pr_cdagenci => pr_cdagenci   --> Código da agência
@@ -1795,7 +1756,11 @@ create or replace package body cecred.EMPR9999 as
         END IF;
         RAISE vr_exc_erro;
       END IF;
-    ELSE
+   END IF; -- Lançamento na conta corrente
+
+    --Lançamento conta transitoria
+    IF UPPER(pr_nmtelant) = 'BLQPREJU' THEN
+
        PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper  => pr_cdcooper,
                                      pr_nrdconta => pr_nrdconta,
                                      pr_cdoperad => pr_cdoperad,
@@ -1892,8 +1857,6 @@ create or replace package body cecred.EMPR9999 as
 
     -- EXCEPTION
     vr_exc_erro        EXCEPTION;
-
-		vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
 
     -- Função para retornar o ultimo dia util anterior
     FUNCTION fn_dia_util_anterior(pr_data IN DATE) RETURN DATE IS
@@ -2154,11 +2117,9 @@ create or replace package body cecred.EMPR9999 as
       -- Realiza o ajuste de lançamento
       vr_vlajuste := vr_vlajuste + NVL(vr_vllanlem,0);
 
-			-- Verifica se a conta corrente está em prejuízo - Reginaldo/AMcom
-			vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
-
       -- VERIFICAR NOVAMENTE SE O VALOR DO AJUSTE É MAIOR QUE ZERO
-      IF nvl(vr_vlajuste, 0) > 0 AND NOT vr_prejuzcc THEN
+      IF nvl(vr_vlajuste, 0) > 0 AND pr_nmtelant <> 'BLQPREJU' THEN
+
         -- Lanca em C/C e atualiza o lote
         EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
                                       ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
@@ -2556,6 +2517,150 @@ create or replace package body cecred.EMPR9999 as
     END;
 
   END pc_verifica_empr_migrado_web;
+  
+  PROCEDURE pc_busca_dominio(pr_nmdominio IN tbepr_dominio_campo.nmdominio%TYPE --> Nome do domínio
+                            ,pr_xmllog    IN VARCHAR2                           --> XML com informações de LOG
+                            ,pr_cdcritic  OUT PLS_INTEGER                       --> Código da crítica
+                            ,pr_dscritic  OUT VARCHAR2                          --> Descrição da crítica
+                            ,pr_retxml    IN OUT NOCOPY xmltype                 --> Arquivo de retorno do XML
+                            ,pr_nmdcampo  OUT VARCHAR2                          --> Nome do campo com erro
+                            ,pr_des_erro  OUT VARCHAR2                          --> Erros do processo
+                             ) IS
+      /* .............................................................................
+        Programa: pc_busca_dominio
+        Sistema : CECRED
+        Sigla   : COBRAN
+        Autor   : Andre Clemer - Supero
+        Data    : Dezembro/18.                    Ultima atualizacao: --/--/----
+      
+        Dados referentes ao programa:
+      
+        Frequencia: Sempre que for chamado
+      
+        Objetivo  : Retornar lista as opções do domínio enviado
+      
+        Observacao: -----
+      
+        Alteracoes:
+      ..............................................................................*/
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(4000); --> Desc. Erro
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+      -- Variáveis para armazenar as informações em XML
+      vr_des_xml CLOB;
+      -- Variável para armazenar os dados do XML antes de incluir no CLOB
+      vr_texto_completo VARCHAR2(32600);
+
+      -- Tabela que receberá as opções do domínio
+      vr_tab_dominios gene0010.typ_tab_dominio;
+
+      -- Subrotina para escrever texto na variável CLOB do XML
+      PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2
+                              ,pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+      BEGIN
+          gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+      END;
+
+  BEGIN
+
+      pr_des_erro := 'OK';
+      -- Extrai dados do xml
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Levanta exceção
+          RAISE vr_exc_saida;
+      END IF;
+
+      -- Leitura da PL/Table e geração do arquivo XML
+      -- Inicializar o CLOB
+      vr_des_xml := NULL;
+      dbms_lob.createtemporary(vr_des_xml, TRUE);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- Inicilizar as informações do XML
+      vr_texto_completo := NULL;
+
+      -- Busca as opções do domínio
+      gene0010.pc_retorna_dominios(pr_nmmodulo     => 'EPR' --> Nome do modulo(TB<EPR>_DOMINIO_CAMPO)
+                                  ,pr_nmdomini     => pr_nmdominio --> Nome do dominio
+                                  ,pr_tab_dominios => vr_tab_dominios --> retorna os dados dos dominios
+                                  ,pr_dscritic     => vr_dscritic --> retorna descricao da critica
+                                   );
+
+      IF vr_tab_dominios.count > 0 THEN
+
+          pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1"?><root><dados>');
+
+          FOR i IN vr_tab_dominios.first .. vr_tab_dominios.last LOOP
+
+              dbms_output.put_line(vr_tab_dominios(i).cddominio || ' - ' || vr_tab_dominios(i).dscodigo);
+              pc_escreve_xml('<inf>' || '<nmdominio>' || pr_nmdominio || '</nmdominio>' || '<cddominio>' || vr_tab_dominios(i)
+                             .cddominio || '</cddominio>' || '<dscodigo>' || vr_tab_dominios(i).dscodigo ||
+                             '</dscodigo>' || '</inf>');
+
+          END LOOP;
+
+          pc_escreve_xml('</dados></root>', TRUE);
+
+          pr_retxml := xmltype.createxml(vr_des_xml);
+
+      ELSE
+
+          vr_dscritic := 'Nenhuma opcao encontrada para o dominio informado: ' || pr_nmdominio;
+          RAISE vr_exc_saida;
+
+      END IF;
+
+  EXCEPTION
+      WHEN vr_exc_saida THEN
+          IF vr_cdcritic <> 0 THEN
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          ELSE
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := vr_dscritic;
+          END IF;
+
+          pr_des_erro := 'NOK';
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+                                         pr_dscritic || '</Erro></Root>');
+
+      WHEN OTHERS THEN
+
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+          pr_des_erro := 'NOK';
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+                                         pr_dscritic || '</Erro></Root>');
+
+  END pc_busca_dominio;
 
 END EMPR9999;
 /
