@@ -32,7 +32,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --                          (Ricardo Linhares)    
   --
   --             01/09/2017 - Imprimir conta quando o avalista for cooperado
-  --                          Heitor (Mouts) - Chamado 735958
+  --                          Heitor (Mouts) - Chamado 735958 
   --
   ---------------------------------------------------------------------------------------------------------------
 
