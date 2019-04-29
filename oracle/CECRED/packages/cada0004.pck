@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 23/11/2018
+    Data     : Agosto/2015.                   Ultima atualizacao: 11/01/2019
   
    Dados referentes ao programa:
   
@@ -67,7 +67,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
 
                  23/11/2018 - P442 - Retorno do Score Behaviour do Cooperado (Marcos-Envolti)
 
+				 12/12/2018 - Criado Procedure para salvar a data da assinatura eletronica TA Online. (Anderson-Alan Supero P432)
                  
+				 13/02/2019 - XSLProcessor
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -903,6 +905,23 @@ PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA
                                          ,pr_cdcritic  OUT PLS_INTEGER
                                          ,pr_dscritic  OUT VARCHAR2
                                          ,pr_des_reto  OUT VARCHAR2 );
+                                         
+  -- Procedure para gravar data e hora no campo, visto que pelo progress estava gravando apenas a data.                                    
+  PROCEDURE pc_salva_dtassele(pr_cdcooper IN crapcrd.cdcooper%TYPE
+                             ,pr_nrdconta IN crapcrd.nrdconta%TYPE
+                             ,pr_nrcrcard IN VARCHAR2
+                             ,pr_dscritic OUT VARCHAR2);
+                             
+
+  PROCEDURE pc_retorna_dados_entrg_crt_web(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código da cooperativa
+                                           ,pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código CONTA
+                                           ,pr_nrctrcrd IN VARCHAR2 --crapcrm.nrcartao%TYPE  --> Número do cartão
+                                           ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                           ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                           ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                           ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                           ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                           ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
 END CADA0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
@@ -912,7 +931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 03/04/2018
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 11/01/2019
   --
   -- Dados referentes ao programa:
   --
@@ -978,6 +997,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --
   --               05/06/2018 - Inclusão do campo vr_insituacprvd no retorno da 
   --                            pc_carrega_dados_atenda (Claudio CIS Corporate)
+															    --
+  --               05/12/2018 - SCTASK0038225 (Yuri - Mouts)
+  --                            substituição do método XSLProcessor pela chamada da GENE0002
+  --
+  --               11/01/2019 - Adicionada tratativa para ANOTA para alertar cadastro de cooperado vencido (Luis Fernando - GFT)             
+
 
 ---------------------------------------------------------------------------------------------------------------
 
@@ -4427,10 +4452,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	--                           para proximo registro.              
 	--                           Chamado INC0016984 (Gabriel - Mouts).
 	--
+    --              27/08/2018 - Adicionado alerta para bordero em prejuizo. - Luis Fernando (GFT)
+	--
+	--              25/10/2018 - Adicionado alerta para títulos descontados em atraso. - Lucas (GFT)
+	--
     --              25/12/2018 - PJ298.2 Adicionado mensagem para contratos migrados (Rafael Faria- Supero)
     --
     --              24/01/2019 - PJ298.2.2 - Ajustado mensagem de prejuizo de emprestimo (Rafael Faria - Supero)              
     --
+    -- 
+    --              07/03/2019 - Correcao na mensagem de cadastro vencido (Cassia de Oliveira - GFT)
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4455,7 +4486,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
              crapass.idastcjt,
              crapass.cdsitdct,
              crapass.cdcatego,
-             crapass.inprejuz
+             crapass.inprejuz,
+             crapass.dtultalt
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
@@ -4777,7 +4809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --> Buscar alterações
     CURSOR cr_crapalt IS
       SELECT /*+index_desc (crapalt CRAPALT##CRAPALT1)*/
-             crapalt.dtaltera
+             MAX(crapalt.dtaltera) AS dtaltera
         FROM crapalt
        WHERE crapalt.cdcooper = pr_cdcooper
          AND crapalt.nrdconta = pr_nrdconta
@@ -4901,6 +4933,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 							AND nrdconta = pr_nrdconta;
 		rw_cr_impdecsn cr_impdecsn%ROWTYPE;
 
+    --> Busca contratos de bordero em prejuizo
+    CURSOR cr_crapbdt_preju(pr_cdcooper crapbdt.cdcooper%TYPE
+											      ,pr_nrdconta crapbdt.nrdconta%TYPE) IS
+      SELECT
+        bdt.inprejuz, -- possui prejuizo
+        bdt.dtliqprj  -- prejuizo liquidado
+      FROM 
+        crapbdt bdt
+      WHERE
+        bdt.nrdconta = pr_nrdconta
+        AND bdt.cdcooper = pr_cdcooper
+        AND bdt.inprejuz = 1
+      ;
+    rw_crapbdt_preju cr_crapbdt_preju%ROWTYPE; 
+
     CURSOR cr_tbepr_migracao_empr (pr_cdcooper IN tbepr_migracao_empr.cdcooper%TYPE
                                   ,pr_nrdconta IN tbepr_migracao_empr.nrdconta%TYPE
                                   ,pr_nrctremp IN tbepr_migracao_empr.nrctremp%TYPE) IS
@@ -4921,6 +4968,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     rw_prejuizo cr_prejuizo%ROWTYPE;
 
 
+	-- Busca existência de títulos em atraso
+    CURSOR cr_craptdb_atrasados(pr_cdcooper crapbdt.cdcooper%TYPE
+											     	   ,pr_nrdconta crapbdt.nrdconta%TYPE
+                               ,pr_dtmvtolt crapdat.dtmvtolt%TYPE
+                               ,pr_dtmvtoan crapdat.dtmvtoan%TYPE) IS
+          SELECT 1
+            FROM crapbdt bdt
+      INNER JOIN craptdb tdb ON tdb.cdcooper = bdt.cdcooper AND tdb.nrdconta = bdt.nrdconta AND tdb.nrborder = bdt.nrborder
+           WHERE bdt.cdcooper = pr_cdcooper            
+             AND bdt.nrdconta = pr_nrdconta
+             AND bdt.flverbor = 1             -- borderôs do novo produto
+             AND tdb.dtlibbdt IS NOT NULL     -- borderôs que foram liberados em algum momento
+             AND tdb.insittit = 4             -- borderôs em aberto
+             AND tdb.dtvencto <  pr_dtmvtolt  -- borderôs vencidos
+             AND tdb.dtvencto <= pr_dtmvtoan; -- desconsidera borderôs com títulos que venceram em dias não úteis e que podem ser pagos na data atual
+      rw_craptdb_atrasados cr_craptdb_atrasados%ROWTYPE;
+    
     --------------> VARIAVEIS <----------------
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
@@ -4941,6 +5005,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_dsmensag     VARCHAR2(4000);
     vr_flgpreju     BOOLEAN;
     vr_flgpreju_ativo BOOLEAN;
+	vr_flgpreju_bdt BOOLEAN;
+    vr_flgpreju_bdt_liq BOOLEAN;
     vr_dsprejuz     VARCHAR2(1000);
     vr_sralerta     INTEGER;
     vr_tab_alertas  typ_tab_alertas;
@@ -5305,18 +5371,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       IF rw_crapepr.vlsdprej > 0  THEN
         vr_flgpreju_ativo := TRUE;
         EXIT;
-      END IF;
+    END IF;
     END LOOP;
 
     IF vr_flgpreju THEN
       IF vr_flgpreju_ativo THEN
-        pc_cria_registro_msg(pr_dsmensag             => 'Conta Corrente com Emprestimo em Prejuizo',
-                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
-      ELSE
-        pc_cria_registro_msg(pr_dsmensag             => 'Houve Prejuizo de Emprestimo',
-                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+      pc_cria_registro_msg(pr_dsmensag             => 'Conta Corrente com Emprestimo em Prejuizo',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    ELSE
+      pc_cria_registro_msg(pr_dsmensag             => 'Houve Prejuizo de Emprestimo',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
       END IF;
     END IF;
+
+	vr_flgpreju_bdt := FALSE;
+    vr_flgpreju_bdt_liq := FALSE;
+    --> Verifica se possui bordero em prejuizo
+    OPEN cr_crapbdt_preju (pr_cdcooper=>pr_cdcooper, pr_nrdconta=>pr_nrdconta);
+    LOOP FETCH cr_crapbdt_preju INTO rw_crapbdt_preju;
+      EXIT WHEN cr_crapbdt_preju%NOTFOUND;
+      vr_flgpreju_bdt_liq := TRUE;
+      IF (rw_crapbdt_preju.inprejuz=1) THEN
+        --Conta possui desconto de título em prejuízo
+        IF (rw_crapbdt_preju.dtliqprj IS NULL) THEN
+          vr_flgpreju_bdt := TRUE;
+          vr_flgpreju_bdt_liq := FALSE;
+          EXIT;
+        END IF;
+      END IF;
+    END LOOP;
+    
+    IF (vr_flgpreju_bdt_liq) THEN
+      -- Incluir na temptable
+      pc_cria_registro_msg(pr_dsmensag             => 'Houve prejuizo de desconto de titulos nesta conta - liquidado',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
+    
+    IF (vr_flgpreju_bdt) THEN
+      -- Incluir na temptable
+      pc_cria_registro_msg(pr_dsmensag             => 'Conta possui desconto de titulo em prejuizo',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+      END IF;
+    
+    -- Verifica se possui títulos em atraso
+    OPEN cr_craptdb_atrasados (pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                              ,pr_dtmvtoan => pr_rw_crapdat.dtmvtoan);
+    FETCH cr_craptdb_atrasados INTO rw_craptdb_atrasados;
+    
+    IF cr_craptdb_atrasados%FOUND THEN
+      -- Incluir na temptable
+      pc_cria_registro_msg(pr_dsmensag             => 'Associado com borderô de desconto de títulos em atraso',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
+    CLOSE cr_craptdb_atrasados;
+    
     -- FIM MENSAGENS PREJUÍZO --
 
     IF pr_cdcooper IN (16,1) THEN /* Se Viacredi AltoVale ou Viacredi*/
@@ -5913,6 +6023,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;      
     ELSE 
       CLOSE cr_crapalt;
+      
+      -- Verifica a data da ultima alteração do cooperado
+      IF months_between(pr_rw_crapdat.dtmvtolt,rw_crapalt.dtaltera) > 12 THEN
+        pc_cria_registro_msg(pr_dsmensag => 'Cooperado com cadastro vencido.'
+                            ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+      END IF;
       
       /* Somente para pessoa fisica */
       IF rw_crapass.inpessoa = 1 THEN  
@@ -10484,7 +10600,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END LOOP;
     
     pc_escreve_xml(' ',TRUE);
-    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, vr_arq_temp, NLS_CHARSET_ID('UTF8'));
+    -- SCTASK0038225 (Yuri - Mouts)
+    -- Com a migração para versão Oracle 12C necessário alteração no procedimento de gerar arquivo
+    --Criar o arquivo no diretorio especificado 
+    gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_xml 
+                                 ,pr_caminho  => vr_arq_path
+                                 ,pr_arquivo  => vr_arq_temp
+                                 ,pr_des_erro => vr_dscritic);
+    IF vr_dscritic IS NOT NULL THEN
+       vr_dscritic := 'Problemas ao gerar o arquivo no servidor. ' || vr_dscritic;
+       RAISE vr_excerror;
+    END IF;
+
+/*    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, vr_arq_temp, NLS_CHARSET_ID('UTF8'));*/
+    -- Fim SCTASK38225
+    --
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);   
@@ -11679,7 +11809,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END LOOP;
     
     pc_escreve_xml(' ',TRUE);
-    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, vr_arq_temp, NLS_CHARSET_ID('UTF8'));
+    -- SCTASK0038225 (Yuri - Mouts)
+    -- Com a migração para versão Oracle 12C necessário alteração no procedimento de gerar arquivo
+    --Criar o arquivo no diretorio especificado 
+    gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_xml 
+                                 ,pr_caminho  => vr_arq_path
+                                 ,pr_arquivo  => vr_arq_temp
+                                 ,pr_des_erro => vr_dscritic);
+    IF vr_dscritic IS NOT NULL THEN
+       vr_dscritic := 'Problemas ao gerar o arquivo no servidor. ' || vr_dscritic;
+       RAISE vr_excerror;
+    END IF;
+
+/*  DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, vr_arq_temp, NLS_CHARSET_ID('UTF8'));*/
+    -- Fim SCTASK0038225
+    --
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);   
@@ -13748,5 +13892,234 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
       pr_des_reto := 'NOK';
 
   END pc_bloquear_cartao_magnetico;
+  
+  /*****************************************************************************/
+  /**         Procedure para Salvar data da assinatura TA Online              **/
+  /*****************************************************************************/
+  PROCEDURE pc_salva_dtassele(pr_cdcooper  IN crapcrd.cdcooper%TYPE
+                             ,pr_nrdconta  IN crapcrd.nrdconta%TYPE
+                             ,pr_nrcrcard  IN VARCHAR2
+                             ,pr_dscritic OUT VARCHAR2) IS
+    /* ..........................................................................
+    --
+    --  Programa : pc_salva_dtassele        
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito 
+    --  Sigla    : CRED
+    --  Autor    : Anderson Alan (Supero)
+    --  Data     : Dezembro/2018.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para gravar data e hora no campo, visto que pelo 
+    --               progress estava gravando apenas a data.
+    --
+    --  Alteração :
+    -- ..........................................................................*/
+      
+  BEGIN
+    
+    UPDATE crapcrd
+       SET crapcrd.dtassele = SYSDATE
+     WHERE crapcrd.cdcooper = pr_cdcooper
+       AND crapcrd.nrdconta = pr_nrdconta
+       AND crapcrd.nrcrcard = TO_NUMBER(pr_nrcrcard);
+    
+    COMMIT;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro na rotina pc_salva_dtassele: '||SQLERRM;
+  END pc_salva_dtassele;
+  
+
+	PROCEDURE pc_retorna_dados_entrg_crt_web(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código da cooperativa
+                                           ,pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código CONTA
+                                           ,pr_nrctrcrd IN VARCHAR2 --crapcrm.nrcartao%TYPE  --> Número do cartão
+                                           ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                           ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                           ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                           ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                           ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                           ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+                                               
+  /* .............................................................................
+
+      Programa: pc_retorna_dados_entrg_crt_web
+      Sistema : CECRED
+      Sigla   : CRD
+      Autor   : Augusto (Supero)
+      Data    : Fevereiro/2019                 Ultima atualizacao: 
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+
+      Objetivo  : Retorna informações da entrega do cartão
+
+      Observacao: -----
+
+      Alteracoes:
+  ..............................................................................*/
+	
+  -- Tratamento de erros
+  vr_cdcritic NUMBER := 0;
+  vr_dscritic VARCHAR2(4000);
+  vr_incrdent NUMBER := 0;
+	vr_nmresage crapage.nmresage%TYPE;
+	
+	-- Variaveis locais
+	vr_nrctrcrd_tit crawcrd.nrctrcrd%TYPE;
+	vr_flgAdicional NUMBER := 0;
+	vr_idtipoenvio tbcrd_endereco_entrega.idtipoenvio%TYPE;
+	
+	CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
+	                 ,pr_nrdconta crapass.nrdconta%TYPE) IS
+		SELECT decode(s.inpessoa, 1, 10, 9) idtipoenvio
+		  FROM crapass s
+		 WHERE s.cdcooper = pr_cdcooper
+		   AND s.nrdconta = pr_nrdconta;
+	rw_crapass cr_crapass%ROWTYPE;
+  
+  CURSOR cr_busca_dados_entrega(pr_cdcooper tbcrd_endereco_entrega.cdcooper%TYPE
+	                             ,pr_nrdconta tbcrd_endereco_entrega.nrdconta%TYPE
+															 ,pr_nrctrcrd tbcrd_endereco_entrega.nrctrcrd%TYPE) IS
+		SELECT tbdom.dscodigo
+				  ,tbend.cdagenci
+				  ,tbend.nmlogradouro || ', ' || tbend.nrlogradouro ||
+				   nvl2(TRIM(tbend.dscomplemento), ', ' || tbend.dscomplemento || ' ', '') AS dsendere
+				  ,tbend.nmbairro
+				  ,tbend.nmcidade
+				  ,tbcadast_uf.cduf
+				  ,gene0002.fn_mask_cep(tbend.nrcep) AS nrcepend
+					,tbend.idtipoenvio
+		  FROM tbcrd_endereco_entrega tbend
+				  ,tbcrd_dominio_campo    tbdom
+				  ,tbcadast_uf
+	   WHERE tbend.idtipoenvio = tbdom.cddominio
+		   AND tbdom.nmdominio = 'TPENDERECOENTREGA'
+		   AND tbend.cdcooper = pr_cdcooper
+		   AND tbend.nrdconta = pr_nrdconta
+		   AND tbend.nrctrcrd = pr_nrctrcrd;
+  rw_busca_dados_entrega  cr_busca_dados_entrega%ROWTYPE;
+  
+	CURSOR cr_crapage (pr_cdagenci crapage.cdagenci%TYPE) IS
+	  SELECT age.nmresage
+		  FROM crapage age
+		 WHERE age.cdcooper = pr_cdcooper
+		   AND age.cdagenci = pr_cdagenci;
+	rw_crapage cr_crapage%ROWTYPE;
+	
+	CURSOR cr_cdadmcrd(pr_cdcooper crawcrd.cdcooper%TYPE
+									  ,pr_nrctrcrd crawcrd.nrctrcrd%TYPE
+									  ,pr_nrdconta crawcrd.nrdconta%TYPE) IS
+		SELECT d.cdadmcrd
+			FROM crawcrd d
+		 WHERE d.cdcooper = pr_cdcooper
+			 AND d.nrctrcrd = pr_nrctrcrd
+			 AND d.nrdconta = pr_nrdconta;
+	rw_cdadmcrd cr_cdadmcrd%ROWTYPE;
+
+	CURSOR cr_cartoes(pr_cdcooper crawcrd.cdcooper%TYPE
+									 ,pr_cdadmcrd crawcrd.cdadmcrd%TYPE
+									 ,pr_nrctrcrd crawcrd.nrctrcrd%TYPE
+									 ,pr_nrdconta crawcrd.nrdconta%TYPE) IS
+		 SELECT d.nrctrcrd
+			 FROM crawcrd d
+			WHERE d.cdcooper = pr_cdcooper
+				AND	d.cdadmcrd = pr_cdadmcrd
+				AND d.nrctrcrd <> pr_nrctrcrd
+				AND d.insitcrd NOT IN (5,6) -- bloqueado,cancelado
+				AND d.nrdconta = pr_nrdconta;
+	rw_cartoes cr_cartoes%ROWTYPE;
+	
+	BEGIN  
+        
+	  -- A principio dizemos que o proprio cartao é titular
+		vr_nrctrcrd_tit := pr_nrctrcrd;
+	
+	  -- Retornarmos a administradora do cartao
+	  OPEN cr_cdadmcrd(pr_cdcooper => pr_cdcooper
+			            ,pr_nrctrcrd => pr_nrctrcrd
+									,pr_nrdconta => pr_nrdconta);
+		FETCH cr_cdadmcrd INTO rw_cdadmcrd;
+		--
+		IF cr_cdadmcrd%NOTFOUND THEN
+			CLOSE cr_cdadmcrd;
+			vr_dscritic := 'Proposta nao localizada.';
+		END IF;
+		CLOSE cr_cdadmcrd;
+
+		-- Retornamos os cartoes da conta cartao que nao seja o cartao atual
+		OPEN cr_cartoes(pr_cdcooper => pr_cdcooper
+					         ,pr_cdadmcrd => nvl(rw_cdadmcrd.cdadmcrd, 0)
+									 ,pr_nrctrcrd => pr_nrctrcrd
+									 ,pr_nrdconta => pr_nrdconta);
+		FETCH cr_cartoes INTO rw_cartoes;
+		-- Se encontrar significa que o cartao atual nao é titular
+		IF cr_cartoes%FOUND THEN
+		   vr_nrctrcrd_tit := rw_cartoes.nrctrcrd;
+			 vr_flgAdicional := 1;
+		END IF;
+		--
+		CLOSE cr_cartoes;
+
+    --
+    OPEN cr_busca_dados_entrega(pr_cdcooper => pr_cdcooper
+		                           ,pr_nrdconta => pr_nrdconta
+															 ,pr_nrctrcrd => vr_nrctrcrd_tit);
+    FETCH cr_busca_dados_entrega INTO rw_busca_dados_entrega;
+    --
+		IF cr_busca_dados_entrega%FOUND THEN
+			vr_incrdent := 1;
+			vr_idtipoenvio := rw_busca_dados_entrega.idtipoenvio;
+			--
+			IF NVL(rw_busca_dados_entrega.cdagenci, 0) > 0 THEN
+			   --
+				 OPEN cr_crapage(rw_busca_dados_entrega.cdagenci);
+				 FETCH cr_crapage INTO rw_crapage;
+				 CLOSE cr_crapage;
+				 --
+				 vr_nmresage := nvl(rw_crapage.nmresage, '');
+				 --
+			END IF;
+			--
+		ELSE
+			IF vr_flgAdicional = 1 THEN
+				OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+											 ,pr_nrdconta => pr_nrdconta);
+				FETCH cr_crapass INTO rw_crapass;
+				CLOSE cr_crapass;
+				vr_idtipoenvio := rw_crapass.idtipoenvio;
+		END IF;
+		END IF;
+		--
+    CLOSE cr_busca_dados_entrega;
+
+	  pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><Dados> ' ||
+																	 '<incrdent>' || vr_incrdent || '</incrdent>' ||
+																	 '<dstipend>' || nvl(rw_busca_dados_entrega.dscodigo, '') || '</dstipend>' ||
+																	 '<dsendere>' || nvl(rw_busca_dados_entrega.dsendere, '') || '</dsendere>' ||
+																	 '<dsbairro>' || nvl(rw_busca_dados_entrega.nmbairro, '') || '</dsbairro>' ||
+																	 '<dscidade>' || nvl(rw_busca_dados_entrega.nmcidade, '') || '</dscidade>' ||
+																	 '<nrcepend>' || nvl(rw_busca_dados_entrega.nrcepend, '') || '</nrcepend>' ||
+																	 '<dsufende>' || nvl(rw_busca_dados_entrega.cduf, '') || '</dsufende>' ||
+																	 '<nmresage>' || nvl(vr_nmresage, '') || '</nmresage>' ||
+																	 '<idtipoenvio>' || nvl(vr_idtipoenvio, 0) || '</idtipoenvio>' ||
+                                   '<cdagenci>' || nvl(rw_busca_dados_entrega.cdagenci, 0) || '</cdagenci>' ||
+																	 '<flgadicional>' || vr_flgAdicional || '</flgadicional>' ||
+																	 '</Dados></Root>');
+	EXCEPTION
+			WHEN OTHERS THEN
+
+					pr_cdcritic := vr_cdcritic;
+					pr_dscritic := 'Erro geral na rotina na procedure CADA0004.pc_retorna_dados_entrg_crt_web. Erro: ' || SQLERRM;
+					pr_des_erro := 'NOK';
+					-- Carregar XML padrão para variável de retorno não utilizada.
+					-- Existe para satisfazer exigência da interface.
+					pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+																				 pr_dscritic || '</Erro></Root>');                                             
+                                               
+  END pc_retorna_dados_entrg_crt_web;                               
 END CADA0004;
 /
