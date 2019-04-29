@@ -228,6 +228,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
 
                 05/06/2018 - Ajuste para adicionar Desconto de Titulos (Andrew Albuquerque - GFT)
 
+                26/04/2018 - P437 - Consignado. Alteração na pc_altera_dados_crapcyc
+                             (Fernanda Kelli de Oliveira - AMcom)
   ---------------------------------------------------------------------------------------------------------------*/
 
     --Tabela de Memoria com ROWID para log (usado no grava_dados)
@@ -6858,6 +6860,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
       raise vr_exc_erro;
     else
       close cr_crapcyc;
+    end if;
+    
+    /*P437 - Consignado - Motivo 8 Repasse Consignado é utilizado apenas pela tela CONSIG, quando Interromper da Cobrança da Empresa */
+    if ( vr_cdmotcin in(8)) then
+      vr_cdcritic := 0;
+      vr_dscritic := 'Motivo 8 Repasse Consignado exclusivo para utilizacao do sistema!';
+      raise vr_exc_erro;
     end if;
 
     open cr_crapope;
