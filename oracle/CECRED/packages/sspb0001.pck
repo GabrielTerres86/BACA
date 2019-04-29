@@ -925,6 +925,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 		--					                   para a geracao de TED dos convenios. SD 519980.
 		--					                   (Carlos Rafael Tanholi)
     --
+    --                  29/04/2019 - Ajuste na mascara de CPF/CNPJ Sacado
+    --                               (Andre - Mouts PRB0041664).		
+    --
   BEGIN
     DECLARE
       --Variaveis Locais
@@ -1118,18 +1121,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       END IF;
       /* Alimenta variaveis default */
 
-      --Se for pessoa fisica
+      --Se Cedente for pessoa fisica
       IF pr_tppesced = 'F' THEN
         --Numero Inscricao Cedente
         vr_nrinsced:= TO_CHAR(pr_nrinsced,'fm00000000000');
-        --Numero Inscricao Sacado
-        vr_nrinssac:= TO_CHAR(pr_nrinssac,'fm00000000000');
       ELSE
         --Numero Inscricao Cedente
         vr_nrinsced:= TO_CHAR(pr_nrinsced,'fm00000000000000');
+      END IF;
+      
+      --Se Sacado for pessoa fisica
+      IF pr_tppessac = 'F' THEN
+        --Numero Inscricao Sacado
+        vr_nrinssac:= TO_CHAR(pr_nrinssac,'fm00000000000');
+      ELSE
         --Numero Inscricao Sacado
         vr_nrinssac:= TO_CHAR(pr_nrinssac,'fm00000000000000');
-      END IF;
+      END IF;      
+      
        /* Format da data deve ser AAAA-MM-DD */
       vr_dtmvtolt:= To_Char(SYSDATE,'YYYY-MM-DD');
       /* Separador decimal de centavos deve ser "." */
@@ -3501,7 +3510,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   01/03/2019 - Se o banco ainda não estiver operante no SPB (Data de inicio da operação), 
                                deve bloquear o envio da TED.
                                (Jonata - Mouts INC0031899).
-                               
+
+                                
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
