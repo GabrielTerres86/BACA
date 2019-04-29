@@ -23,8 +23,10 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
   --             18/03/2019 - PRB0040683 nas rotinas pc_posicao_saldo_aplicacao_pos e pc_posicao_saldo_aplicacao_pre,
   --                          feitos os tratamentos de erros para que possíveis pontos de correção 
   --                          sejam identificados (Carlos)
-
+  --
   --             01/04/2019 - P411.3 adicionado o controle de carência nas pc_posicao_saldo_aplicacao_pos | pre (David Valente - Envolti)
+  --             
+  --             24/04/2019 - P411.2 correcao da busca da faixa regressiva de IR (Anderson)
   --------------------------------------------------------------------------------------------------------------- */
 
   -- Rotina referente a atualizar saldo de aplicacoes de aplicacao pós
@@ -171,6 +173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
 	Alteracoes: 13/02/2019 - Retornar como saldo o campo "vlsldatl" no caso de consulta de saldo no mesmo dia que a aplicação foi criada
                               CIS Corporate
 
+                24/04/2019 - P411.2 correcao da busca da faixa regressiva de IR (Anderson)
     ..............................................................................*/
     DECLARE
 
@@ -349,6 +352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
       FOR i IN REVERSE apli0001.vr_faixa_ir_rdc.first .. apli0001.vr_faixa_ir_rdc.last LOOP
         IF vr_qtdiasir > apli0001.vr_faixa_ir_rdc(i).qtdiatab THEN
           pr_percirrf := NVL(apli0001.vr_faixa_ir_rdc(i).perirtab,0);
+          EXIT;
         END IF;
 
       END LOOP;
@@ -666,6 +670,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
      Alteracoes: 15/07/2018 - Inclusao de novo parametro para indicao de apl. programada
                               Cláudio - CIS Corporate
 
+                 24/04/2019 - P411.2 correcao da busca da faixa regressiva de IR (Anderson)
     ..............................................................................*/
     DECLARE
 
@@ -842,6 +847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
 
         IF vr_qtdiasir > apli0001.vr_faixa_ir_rdc(i).qtdiatab THEN
           pr_percirrf := NVL(apli0001.vr_faixa_ir_rdc(i).perirtab,0);
+          EXIT;
         END IF;
 
       END LOOP;
