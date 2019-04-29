@@ -3111,6 +3111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_xml_temp VARCHAR2(32726) := '';
       vr_dscritic crapcri.dscritic%TYPE;
       vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_nrrefere VARCHAR2(50) := '';
       vr_tpcaptur INTEGER;
 			vr_cdempcon INTEGER;
 			vr_cdtribut INTEGER;
@@ -3189,7 +3190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nmsolici>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmsolici>' ||
 																		'<cdagesic>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdagesic>' ||
 																		'<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||																
- 																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||
+ 																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||
 																		'<nmagenci>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmagenci>' ||
 																		'<dstipdoc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
 																		'<dsnomfon>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsnomfon>' ||
@@ -3197,10 +3198,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nrcpfcgc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrcpfcgc>');
 																		
 					IF vr_cdtribut <> 6106 THEN 
+            vr_nrrefere := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
 						gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																	 ,pr_texto_completo => vr_xml_temp      
 																	 ,pr_texto_novo     =>
-																			'<nrrefere>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrrefere>' ||
+																			'<nrrefere>' || vr_nrrefere || '</nrrefere>' ||
 																			'<dtvencto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(11, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtvencto>' ||
 																			'<vlrecbru>0,00</vlrecbru>'                                                                                                         ||
 																			'<vlpercen>0</vlpercen>');
@@ -3355,6 +3357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_xml_temp VARCHAR2(32726) := '';
       vr_dscritic crapcri.dscritic%TYPE;
       vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_nrrefere VARCHAR2(50) := '';
       vr_tpcaptur INTEGER;
 			vr_cdtribut INTEGER;
 			vr_cdempcon INTEGER;
@@ -3439,7 +3442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nmsolici>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmsolici>' ||
 																		'<cdagesic>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdagesic>' ||
                                     '<cdagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</cdagearr>' ||
-																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||																
+																		'<nmagearr>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')), '-')) || '</nmagearr>' ||																
 																		'<nmagenci>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nmagenci>' ||
 																		'<dstipdoc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dstipdoc>' ||
 																		'<dsnomfon>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsnomfon>' ||
@@ -3447,10 +3450,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nrcpfcgc>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrcpfcgc>');
 																		
 					IF vr_cdtribut <> 6106 THEN 
+            vr_nrrefere := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
 						gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 																	 ,pr_texto_completo => vr_xml_temp      
 																	 ,pr_texto_novo     =>
-																			'<nrrefere>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</nrrefere>' ||
+																			'<nrrefere>' || vr_nrrefere || '</nrrefere>' ||
 																			'<dtvencto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(11, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtvencto>' ||
 																			'<vlrecbru>0,00</vlrecbru>'                                                                                                         ||
 																			'<vlpercen>0</vlpercen>');
@@ -3527,7 +3531,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<dsnomfon>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsnomfon>' ||
 																		'<cdbarras>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</cdbarras>' ||
 																		'<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dslinhad>' ||
-																		'<dtvencto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10,vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtvencto>' ||
+																		'<dtvencto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(9, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtvencto>' ||
 																		'<nrdocdar></nrdocdar>'                                                                                                            ||
 																		'<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
 																		'<dsdpagto>' || CASE vr_cdempcon 

@@ -17686,7 +17686,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_tab_agen(vr_ind_agen).qtdiacar := rw_crapaar.qtdiacar;
           vr_tab_agen(vr_ind_agen).qtmesaar := rw_crapaar.qtmesaar;
           vr_tab_agen(vr_ind_agen).vlparaar := rw_crapaar.vlparaar;
-          vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar.dtmvtolt = rw_crapdat.dtmvtocd THEN 1 ELSE 0 END;
+          vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar.dtmvtolt = rw_crapdat.dtmvtocd AND rw_crapaar.cdsitaar = 1 THEN 1 ELSE 0 END;
           vr_tab_agen(vr_ind_agen).dssitaar := rw_crapaar.dssitaar;
           vr_tab_agen(vr_ind_agen).dstipaar := rw_crapaar.dstipaar;
           
@@ -17761,7 +17761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_tab_agen(vr_ind_agen).qtdiacar := rw_crapaar2.qtdiacar;
           vr_tab_agen(vr_ind_agen).qtmesaar := rw_crapaar2.qtmesaar;
           vr_tab_agen(vr_ind_agen).vlparaar := rw_crapaar2.vlparaar;
-          vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar2.dtmvtolt = rw_crapdat.dtmvtocd THEN 1 ELSE 0 END;
+          vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar2.dtmvtolt = rw_crapdat.dtmvtocd AND rw_crapaar2.cdsitaar = 1 THEN 1 ELSE 0 END;
           vr_tab_agen(vr_ind_agen).dssitaar := rw_crapaar2.dssitaar;
           vr_tab_agen(vr_ind_agen).dstipaar := rw_crapaar2.dstipaar;
           
