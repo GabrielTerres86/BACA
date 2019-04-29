@@ -25,12 +25,14 @@
 		<meta http-equiv="Pragma" content="no-cache">
 		<title><? echo $TituloSistema; ?></title>
 		<link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
+		<link href="../../css/tooltip.css" rel="stylesheet" type="text/css">
 		<script type="text/javascript" src="../../scripts/scripts.js" charset="utf-8"></script>
 		<script type="text/javascript" src="../../scripts/dimensions.js"></script>
 		<script type="text/javascript" src="../../scripts/funcoes.js"></script>
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../scripts/jquery.mask.min.js"></script>
+		<script type="text/javascript" src="../../scripts/tooltip.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
 		<script type="text/javascript" src="cadpac.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>

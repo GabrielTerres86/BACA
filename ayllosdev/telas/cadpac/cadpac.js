@@ -167,6 +167,10 @@ function formataCamposTela(cddopcao){
         var rCdestado = $('label[for="cdestado"]', '#frmCadpac');
         var rDsdemail = $('label[for="dsdemail"]', '#frmCadpac');
         var rDsmailbd = $('label[for="dsmailbd"]', '#frmCadpac');
+
+        var rDsemailpj = $('label[for="dsemailpj"]', '#frmCadpac');
+        var rDsemailpf = $('label[for="dsemailpf"]', '#frmCadpac');
+
         var rDsinform1 = $('label[for="dsinform1"]', '#frmCadpac');
         var rDsinform2 = $('label[for="dsinform2"]', '#frmCadpac');
         var rDsinform3 = $('label[for="dsinform3"]', '#frmCadpac');
@@ -244,6 +248,10 @@ function formataCamposTela(cddopcao){
         var cCdestado = $('#cdestado', '#frmCadpac');
         var cDsdemail = $('#dsdemail', '#frmCadpac');
         var cDsmailbd = $('#dsmailbd', '#frmCadpac');
+        
+        var cDsemailpj = $('#dsemailpj', '#frmCadpac');
+        var cDsemailpf = $('#dsemailpf', '#frmCadpac');
+
         var cDsinform1 = $('#dsinform1', '#frmCadpac');
         var cDsinform2 = $('#dsinform2', '#frmCadpac');
         var cDsinform3 = $('#dsinform3', '#frmCadpac');
@@ -321,6 +329,10 @@ function formataCamposTela(cddopcao){
         rCdestado.addClass('rotulo-linha').css({'width': '55px'});
         rDsdemail.addClass('rotulo').css({'width': '130px'});
         rDsmailbd.addClass('rotulo').css({'width': '130px'});
+
+        rDsemailpj.addClass('rotulo').css({'width': '130px'});
+        rDsemailpf.addClass('rotulo').css({'width': '130px'});
+
         rDsinform1.addClass('rotulo').css({'width': '230px'});
         rDsinform2.addClass('rotulo').css({'width': '230px'});
         rDsinform3.addClass('rotulo').css({'width': '230px'});
@@ -398,6 +410,10 @@ function formataCamposTela(cddopcao){
         cCdestado.addClass('campo').css({'width':'50px'});
         cDsdemail.addClass('campo').css({'width':'411px'}).attr('maxlength','60');
         cDsmailbd.addClass('campo').css({'width':'411px'}).attr('maxlength','60');
+
+        cDsemailpj.addClass('campo').css({'width':'411px'}).attr('maxlength','60');
+        cDsemailpf.addClass('campo').css({'width':'411px'}).attr('maxlength','60');
+
         cDsinform1.addClass('campo').css({'width':'311px'}).attr('maxlength','40');
         cDsinform2.addClass('campo').css({'width':'311px'}).attr('maxlength','40');
         cDsinform3.addClass('campo').css({'width':'311px'}).attr('maxlength','40');
@@ -1198,6 +1214,7 @@ function formataCamposTela(cddopcao){
 
     }
 
+    $(".hint").tooltip();
 	layoutPadrao();
 	controlaPesquisas();	
     return false;
@@ -1584,6 +1601,11 @@ function gravarPAC() {
     var cdestado = $('#cdestado','#frmCadpac').val();
     var dsdemail = $('#dsdemail','#frmCadpac').val();
     var dsmailbd = $('#dsmailbd','#frmCadpac').val();
+    
+    var dsemailpj = $('#dsemailpj','#frmCadpac').val();
+    var dsemailpf = $('#dsemailpf','#frmCadpac').val();
+
+
     var dsinform1 = $('#dsinform1','#frmCadpac').val();
     var dsinform2 = $('#dsinform2','#frmCadpac').val();
     var dsinform3 = $('#dsinform3','#frmCadpac').val();
@@ -1665,6 +1687,10 @@ function gravarPAC() {
             cdufdcop: cdestado,
             dsdemail: dsdemail,
             dsmailbd: dsmailbd,
+
+            dsemailpj: dsemailpj,
+            dsemailpf: dsemailpf,
+
             dsinform1: dsinform1,
             dsinform2: dsinform2,
             dsinform3: dsinform3,

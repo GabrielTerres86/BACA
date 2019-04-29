@@ -201,6 +201,19 @@
                         <input type="text" id="dsdemail" name="dsdemail" />
                         <label for="dsmailbd">E-mail Borderô:</label>
                         <input type="text" id="dsmailbd" name="dsmailbd" />
+
+                        <br clear="all" />
+
+                        <label for="dsemailpj" class="hint" title="E-mail Reciprocidade PJ">E-mail Recip PJ:</label>
+                        <input type="text" id="dsemailpj" name="dsemailpj" />
+                        
+                        <br clear="all" />
+
+                        <label for="dsemailpf" class="hint" title="E-mail Reciprocidade PF">E-mail Recip PF:</label>
+                        <input type="text" id="dsemailpf" name="dsemailpf" />
+
+                        <br clear="all" />
+
                         <label for="dsinform1">Dados para impressão dos cheques:</label>
                         <input type="text" id="dsinform1" name="dsinform1" />
                         <label for="dsinform2"></label>
