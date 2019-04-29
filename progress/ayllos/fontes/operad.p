@@ -186,6 +186,8 @@
                01/09/2018 - PJ 438 - Agilidade nas contratações - Incluir campo tel_dsdemail - de e-mail do operador - (Márcio - Mouts)							
                
                23/10/2018 - Adicionar opçao no campo flgutcrm e alteraçao no nome do label - Andrino Souza - MoutS
+               
+               13/02/2019 - Inclusao de nova opcao para o campo tel_flgutcrm (PA 3) e novo campo tel_insaqdes - Rubens Lima - Mout's
 ............................................................................. */
 
 { includes/var_online.i }
@@ -218,6 +220,7 @@ DEF        VAR tel_insaqesp AS LOGICAL INITIAL FALSE FORMAT "Sim/Nao" NO-UNDO.
 DEF        VAR tel_dsdemail AS CHAR    FORMAT  "x(40)"              NO-UNDO.
 
 DEF        VAR tel_flgutcrm AS INTE    FORMAT "9"                    NO-UNDO.
+DEF        VAR tel_insaqdes AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO. /* pj339 */
 DEF        VAR tel_flgcarta AS LOGICAL                               NO-UNDO.
 
 DEF        VAR tel_vlpagchq LIKE crapope.vlpagchq                    NO-UNDO.
@@ -366,10 +369,11 @@ FORM SKIP
      SKIP
      tel_vlalccre AT 03 LABEL "Valor da Alcada de Credito"
          HELP "Informe o valor da alcada de credito."
+     tel_flgutcrm AT 46 LABEL "Forma de Acesso" HELP "Forma acesso operador (0-Aimaro, 1-CRM, 2-Aimaro e CRM, 3-PA)." /*pj339*/
      SKIP
      tel_vlapvcap AT 02 LABEL "Valor da Alcada de Captacao"
          HELP "Informe o valor da alcada de captacao."
-     tel_flgutcrm AT 46 LABEL "Forma de Acesso" HELP "Forma de acesso do operador (0-Aimaro, 1-CRM, 2-Aimaro e CRM)."        
+     tel_insaqdes AT 46 LABEL "Saque Parcial e Desligamento" HELP "Efetua saque parcial e desligamento pelo Aimaro." /*pj339*/
 	 SKIP
      tel_dsdemail AT 12 LABEL "Email do Operador"
          HELP "Email do operador."
@@ -676,7 +680,7 @@ DO WHILE TRUE:
                   tel_vlalccre = crapope.vlapvcre
                   tel_vlapvcap = crapope.vlapvcap
                   tel_flgutcrm = crapope.inutlcrm
-
+                  tel_insaqdes = crapope.insaqdes /* PJ339*/
                   log_nmoperad = tel_nmoperad
                   log_nvoperad = tel_nvoperad
                   log_flgperac = tel_flgperac
@@ -712,6 +716,7 @@ DO WHILE TRUE:
                    tel_dscomite WHEN crapcop.flgcmtlc
                    tel_vlalccre tel_vlapvcap tel_flgutcrm
 				   tel_dsdemail
+                   tel_insaqdes 
                    WITH FRAME f_operad.
 
            UPDATE tel_nmoperad                     
@@ -1003,10 +1008,23 @@ DO WHILE TRUE:
 
                UPDATE tel_flgutcrm WITH FRAME f_operad.
 
+               /* prj339 permite escolher se faz saque parcial ou desligamento apenas quando valor igual a 2*/
+               IF tel_flgutcrm=2 THEN
+               DO:
+                  UPDATE tel_insaqdes
+                      WITH FRAME f_operad.   
+               END.
+               ELSE
+               DO:
+                  tel_insaqdes=FALSE.
+               END.
+                
+
                ASSIGN crapope.flgdopgd = tel_flgdopgd
                       crapope.flgacres = tel_flgacres
                       crapope.vlapvcap = tel_vlapvcap
-                      crapope.inutlcrm = tel_flgutcrm.       
+                      crapope.inutlcrm = tel_flgutcrm
+                      crapope.insaqdes = tel_insaqdes.        /*PJ339*/
                       
                IF   log_flgdopgd <> tel_flgdopgd   THEN
                     RUN gera_log ("Acessar Sistema de Relacionamento",
@@ -1094,6 +1112,7 @@ DO WHILE TRUE:
                   tel_cdcomite = crapope.cdcomite
                   tel_vlalccre = crapope.vlapvcre
                   tel_vlapvcap = crapope.vlapvcap       
+                  tel_insaqdes = crapope.insaqdes /* PJ339 */
                   tel_flgutcrm = crapope.inutlcrm.       
 
            RUN atualiza_dscomite.
@@ -1103,7 +1122,7 @@ DO WHILE TRUE:
                    tel_flgdopgd tel_flgacres tel_vlpagchq
                    tel_flgdonet tel_insaqesp tel_cdcomite WHEN crapcop.flgcmtlc
                    tel_dscomite WHEN crapcop.flgcmtlc
-                   tel_vlalccre tel_vlapvcap tel_flgutcrm
+                   tel_vlalccre tel_vlapvcap tel_flgutcrm tel_insaqdes
 				   tel_dsdemail
                    WITH FRAME f_operad.
  
@@ -1208,6 +1227,7 @@ DO WHILE TRUE:
                    tel_cdcomite = crapope.cdcomite
                    tel_vlalccre = crapope.vlapvcre
                    tel_vlapvcap = crapope.vlapvcap
+                   tel_insaqdes = crapope.insaqdes /* PJ339 */
                    tel_flgutcrm = crapope.inutlcrm.
                    
             RUN atualiza_dscomite.
@@ -1220,7 +1240,7 @@ DO WHILE TRUE:
                     tel_cdcomite WHEN crapcop.flgcmtlc
                     tel_dscomite WHEN crapcop.flgcmtlc
                     tel_vlalccre tel_vlapvcap tel_flgutcrm
-					tel_dsdemail
+                    tel_dsdemail tel_insaqdes
                     WITH FRAME f_operad.
         END.
    ELSE
@@ -1253,6 +1273,7 @@ DO WHILE TRUE:
                    tel_dsdepart = ""
                    tel_vlapvcap = 0
                    tel_flgutcrm = 2
+                   tel_insaqdes = TRUE /* pj339 */
 				   tel_dsdemail = ""
                    aux_inposniv = 1
                    aux_inpostip = 1.
@@ -1441,6 +1462,17 @@ DO WHILE TRUE:
 
                UPDATE tel_flgutcrm WITH FRAME f_operad.
 
+               /* prj339 permite escolher se faz saque parcial ou desligamento apenas quando valor igual a 2*/
+               IF tel_flgutcrm=2 THEN
+               DO:
+                  UPDATE tel_insaqdes
+                      WITH FRAME f_operad.   
+               END.
+               ELSE
+               DO:
+                  tel_insaqdes=FALSE.
+               END.
+
                DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 
                   ASSIGN aux_confirma = "N"
@@ -1493,6 +1525,7 @@ DO WHILE TRUE:
                          crapope.cddepart = tel_cddepart
                          crapope.vlapvcap = tel_vlapvcap
                          crapope.inutlcrm = tel_flgutcrm
+                         crapope.insaqdes = tel_insaqdes /* PJ339*/
 						 crapope.dsdemail = tel_dsdemail.
 
                   IF   CAN-DO("1,3",STRING(crapope.tpoperad))   THEN 
@@ -1843,6 +1876,7 @@ DO WHILE TRUE:
                    tel_cdcomite = crapope.cdcomite
                    tel_vlalccre = crapope.vlapvcre
                    tel_vlapvcap = crapope.vlapvcap
+                   tel_insaqdes = crapope.insaqdes /* PJ339*/
                    tel_flgutcrm = crapope.inutlcrm.
                    
             RUN atualiza_dscomite.
@@ -1856,7 +1890,7 @@ DO WHILE TRUE:
                     tel_cdcomite WHEN crapcop.flgcmtlc
                     tel_dscomite WHEN crapcop.flgcmtlc
                     tel_vlalccre tel_vlapvcap tel_flgutcrm
-					tel_dsdemail
+					tel_dsdemail tel_insaqdes
                     WITH FRAME f_operad.
                    
             DO WHILE TRUE ON ENDKEY UNDO, LEAVE:    
@@ -1958,6 +1992,7 @@ DO WHILE TRUE:
                      tel_cdcomite = crapope.cdcomite
                      tel_vlalccre = crapope.vlapvcre
                      tel_vlapvcap = crapope.vlapvcap
+                     tel_insaqdes = crapope.insaqdes /* PJ339*/
                      tel_flgutcrm = crapope.inutlcrm.
                
               RUN atualiza_dscomite.
@@ -1971,7 +2006,7 @@ DO WHILE TRUE:
                       tel_cdcomite WHEN crapcop.flgcmtlc
                       tel_dscomite WHEN crapcop.flgcmtlc
                       tel_vlalccre tel_vlapvcap tel_flgutcrm
-					  tel_dsdemail
+					  tel_dsdemail tel_insaqdes
                       WITH FRAME f_operad.
              
               UPDATE tel_vlpagchq tel_vllimted WITH FRAME f_operad.
@@ -2269,6 +2304,7 @@ DO WHILE TRUE:
                     tel_cdcomite = crapope.cdcomite
                     tel_vlalccre = crapope.vlapvcre
                     tel_vlapvcap = crapope.vlapvcap
+                    tel_insaqdes = crapope.insaqdes /* PJ339*/
                     tel_flgutcrm = crapope.inutlcrm.
                      
              RUN atualiza_dscomite.
@@ -2281,7 +2317,7 @@ DO WHILE TRUE:
                      tel_cdcomite WHEN crapcop.flgcmtlc
                      tel_dscomite WHEN crapcop.flgcmtlc
                      tel_vlalccre tel_vlapvcap tel_flgutcrm
-					 tel_dsdemail
+					 tel_dsdemail tel_insaqdes
                      WITH FRAME f_operad.
 
              RUN fontes/confirma.p(INPUT "",
@@ -2349,6 +2385,7 @@ DO WHILE TRUE:
                      tel_cdcomite = crapope.cdcomite
                      tel_vlalccre = crapope.vlapvcre
                      tel_vlapvcap = crapope.vlapvcap
+                     tel_insaqdes = crapope.insaqdes /* PJ339*/
                      tel_flgutcrm = crapope.inutlcrm.
                
               RUN atualiza_dscomite.
@@ -2361,7 +2398,7 @@ DO WHILE TRUE:
                       tel_cdcomite WHEN crapcop.flgcmtlc
                       tel_dscomite WHEN crapcop.flgcmtlc
                       tel_vlalccre tel_vlapvcap tel_flgutcrm
-					  tel_dsdemail
+					  tel_dsdemail tel_insaqdes
                       WITH FRAME f_operad.
              
               UPDATE tel_flgperac WITH FRAME f_operad.

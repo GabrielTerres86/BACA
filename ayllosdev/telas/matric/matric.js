@@ -64,6 +64,7 @@
  * 038: [13/07/2018] Andrey Formigari (Mouts): Novo campo Nome Social (#SCTASK0017525)
  * 039: [04/09/2018] Alcemir          (Mouts): alterado atualizarContasAntigasDemitidas(), incluido parametro operauto (operador autorizador). (SM 364) 
  * 040: [16/01/2019] Cássia de Oliveira (GFT): Remoção de impressão automatica quando pessoa fisica
+ * 041: [09/03/2019] Rubens Lima (Mouts)     : PJ339 - Bloqueio CRM
  * 049: [29/01/2019] Márcio           (Mouts): Validar se CNAE informado é válido (PRB0040478) 
  */
 
@@ -95,6 +96,7 @@ var flgCpfCnpj = ''; // Permissão para alterar o cpf ou o cnpj
 var flgAcessoCRM = ''; // Permissão de acesso do operador ao CRM
 var flgDesligarCRM = ''; // Permissão para o botão Desligar
 var flgSaldoPclCRM = ''; // Permissão para o botão Saldo Parcial
+var inSaqDes = ''; //Permissao para realizar saques parciais e desligamento pelo Aimaro
 
 // Opções que o operador tem acesso na rotina PROCURADORES da tela MATRIC
 var flgAlterarProc = ''; // Permissão para Alterar Procurador
@@ -1144,8 +1146,12 @@ function controlaBotoes() {
 
             $('#btVoltarCns').css('display', 'inline');
 			
-            // Verifica se o operador não possui acesso ao CRM
-            if (flgAcessoCRM == 'N') {
+            //PRJ339 - Se possui par?metro para efetuar saque e desligamento pelo AIMARO
+            debugger;
+			if (inSaqDes == 1 || trim(crm_nrdconta) != '') {
+              
+                //Verifica se veio pelo AIMARO ou CRM atrav?s do n?mero da contaCRM
+                if (trim(crm_nrdconta) == '' ){
 
                 if ($('input[name="inpessoa"]:checked', '#frmFiltro').val() == 1) {
 
@@ -1163,7 +1169,7 @@ function controlaBotoes() {
                         $('#btDesligarAlt').css('display', 'inline');
                     }
 
-                    $('#btVoltarCns', '#divBotoes').css('display', 'inline');
+                    //$('#btVoltarCns', '#divBotoes').css('display', 'inline');
 
                 } else {
 
@@ -1191,21 +1197,25 @@ function controlaBotoes() {
                 if (!$('#dtdemiss', '#frmFisico').val()) {
                     $('#btDemissCRM').css('display', 'inline');
                 }
+				$('#btDemissCRM').trocaClass('botaoDesativado', 'botao').attr("onClick", "verificaProdutosAtivosCRM(); return false;");
 
+				/*
                 if (flgDesligarCRM == 'S') {
                     // Troca a classe do botão e atribui a chamada da função do OnClick
                     $('#btDemissCRM').trocaClass('botaoDesativado', 'botao').attr("onClick", "verificaProdutosAtivosCRM(); return false;");
-                }
+                }*/
 
+				$('#btSaqueCRM').css('display', 'inline');
+                /*
                 if (flgSaldoPclCRM == 'S') {
                     // Exibir o botão de saque parcial
                     $('#btSaqueCRM').css('display', 'inline');
                 }
-
+				*/
             }
             
             break;
-
+        }
         case 'CI':
 
             if (isHabilitado($('#cdagepac', '#frmFiltro')) == false && $('#cdagepac', '#frmFiltro').val() == '') {
@@ -1229,7 +1239,7 @@ function controlaBotoes() {
                         controlaOperacao('IV');
                     }));
 
-                    $('#btVoltarInc').css('display', 'inline');
+                    //$('#btVoltarInc').css('display', 'inline');
                     $('#btProsseguirInc').css('display', 'inline');
 
                 } else {
@@ -1241,7 +1251,7 @@ function controlaBotoes() {
 
                     }));
 
-                    $('#btVoltarInc').css('display', 'inline');
+                    //$('#btVoltarInc').css('display', 'inline');
                     $('#btProsseguirInc').css('display', 'inline');
 
                 }

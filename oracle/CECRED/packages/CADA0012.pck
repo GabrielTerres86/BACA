@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
   --  Sistema  : Rotinas para cadastros de Pessoas. Chamada pela SOA
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior (Mouts)
-  --  Data     : Julho/2017.                   Ultima atualizacao:
+  --  Data     : Julho/2017.                   Ultima atualizacao: 29/04/2019
   --
   -- Dados referentes ao programa:
   --
@@ -869,7 +869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
     --   Objetivo  : Rotina para validar o acesso do operador na Cooperativa e do PA
 		--               a partir do sistema de CRM
     --
-    --  Alteração :
+    --  Alteração : 15/02/2019 - PJ339 Bloqueio CRM - Rubens Lima - Mouts.
     --
     --
     -- ..........................................................................*/
@@ -898,32 +898,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 		vr_dscritic VARCHAR2(4000);
 
   BEGIN
-   
-    -- Buscar registro do PA
-		OPEN cr_crapage;
-		FETCH cr_crapage INTO rw_crapage;
-
-		-- Se não encontrou PA
-		IF cr_crapage%NOTFOUND THEN
-			-- Fechar cursor
-			CLOSE cr_crapage;
-			-- Gerar crítica
-			vr_cdcritic := 962;
-			vr_dscritic := '';
-			-- Levantar exceção
-			RAISE vr_exc_erro;
-		END IF;
-		-- Fechar cursor
-		CLOSE cr_crapage;
-
-		-- Se PA não possui acesso ao CRM
-		IF rw_crapage.flgutcrm = 0 THEN
-			-- Gerar crítica
-			vr_dscritic := 'PA não está habilitado para acessar o sistema CRM.';
-			-- Levantar exceção
-			RAISE vr_exc_erro;
-
-		ELSIF rw_crapage.flgutcrm IN (1,2) THEN -- PA está habilitado para acessar o CRM
 			-- Buscar registro do operador
 			OPEN cr_crapope;
 			FETCH cr_crapope INTO rw_crapope;
@@ -967,7 +941,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
           pr_dstoken := rw_crapope.cddsenha;
         END IF;
 			END IF;
+  
+    -- Buscar registro do PA
+    OPEN cr_crapage;
+    FETCH cr_crapage INTO rw_crapage;
+
+    -- Se não encontrou PA
+    IF cr_crapage%NOTFOUND THEN
+      -- Fechar cursor
+      CLOSE cr_crapage;
+      -- Gerar crítica
+      vr_cdcritic := 962;
+      vr_dscritic := '';
+      -- Levantar exceção
+      RAISE vr_exc_erro;
 		END IF;
+    -- Fechar cursor
+    CLOSE cr_crapage;
+
+    -- Se PA não possui acesso ao CRM
+   IF (rw_crapage.flgutcrm = 0 AND rw_crapope.flgutcrm=3) THEN
+      -- Gerar crítica
+      vr_dscritic := 'PA não está habilitado para acessar o sistema CRM.';
+      -- Levantar exceção
+      RAISE vr_exc_erro;
+   END IF;
 
   EXCEPTION
 		WHEN vr_exc_erro THEN

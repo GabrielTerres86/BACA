@@ -2084,8 +2084,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     --               mensageria, além de verificar os acessos aos botões de Desligamento e
     --               Saque Parcial da tela MATRIC.
     --
-    --  Alteração :
-    --
+    --  Alteração : 13/02/2019 - Incluído cursor para verificar se realiza saque parcial e desligamento pelo Aimaro.
+    --                           Retorno INSAQDES --> XML
     --
     -- ..........................................................................*/
     
@@ -2099,6 +2099,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
          AND tb.nrdconta = pr_nrdconta
          AND tb.tpsaque  = pr_tpsaque
          AND tb.dtefetivacao IS NULL; -- Processo de devolução ainda não efetivado
+    
+    -- Cursor para verificar se o operador realiza saques parciais e desligamento diretamente pelo Aimaro.
+    CURSOR cr_insaqdes (pr_cdcooper crapcop.cdcooper%TYPE,
+                        pr_cdoperad crapope.cdoperad%TYPE) IS
+      SELECT insaqdes
+      FROM crapope
+      WHERE cdcooper = pr_cdcooper
+      AND   cdoperad = pr_cdoperad;
+      
     
     -- Variaveis de log
     vr_cdcooper INTEGER;
@@ -2114,6 +2123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     vr_string   VARCHAR2(1000);
     vr_dstexto  VARCHAR2(1000);
     vr_indsaque NUMBER;
+    vr_insaqdes NUMBER; --Indicador de saque parcial e desligamento (0-NAO, 1-SIM)
     vr_dsxmlret CLOB;
         
     -- Tratamento de erros  																			
@@ -2164,6 +2174,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                    '<flgdemiss>N</flgdemiss>'||
                    '<flgsaqprc>N</flgsaqprc>';
                    
+      -- Verifica se o operador realiza saques parciais e desligamento pelo Aimaro
+      OPEN  cr_insaqdes(vr_cdcooper
+                       ,vr_cdoperad);
+      FETCH cr_insaqdes INTO vr_insaqdes;
+      
+      IF vr_insaqdes=1 THEN
+        vr_string := vr_string||'<insaqdes>1</insaqdes>';
+    ELSE
+        vr_string := vr_string||'<insaqdes>0</insaqdes>';
+      END IF;
+      
+      CLOSE cr_insaqdes; 
+                   
     ELSE
       -- Indica Operador com acesso
       vr_string := '<flgacesso>S</flgacesso>';
@@ -2197,6 +2220,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
       END IF;
       
       CLOSE cr_ctrl_saque;
+    
+      -- Verifica se o operador realiza saques parciais e desligamento pelo Aimaro
+      OPEN  cr_insaqdes(vr_cdcooper
+                       ,vr_cdoperad);
+      FETCH cr_insaqdes INTO vr_insaqdes;
+      
+      IF vr_insaqdes=1 THEN
+        vr_string := vr_string||'<insaqdes>1</insaqdes>';
+      ELSE
+        vr_string := vr_string||'<insaqdes>0</insaqdes>';
+    END IF;  
+      
+      CLOSE cr_insaqdes;      
     
     END IF;  
 		  
