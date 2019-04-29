@@ -54,7 +54,7 @@
 
                04/06/2018 - Projeto 403 - Envio de titulos descontados para a Cyber (Lucas Lazari - GFT)
 			   
-			   26/04/2018 - P437 - Consignado. Alteração na grava-dados-crapcyc e importa-dados-crapcyc
+			   26/04/2019 - P437 - Consignado. Alteração na grava-dados-crapcyc e importa-dados-crapcyc
                              (Fernanda Kelli de Oliveira - AMcom)
 .............................................................................*/
 
