@@ -491,8 +491,6 @@
                
 			   06/03/2019 - Adicionado condicao para apresentar o status do titulo corretamente na COBRAN (Cassia de Oliveira - GFT)
 
-			   04/04/2019 - Ajuste na rotina cria_tt-consulta-blt para não incluir informação
-			                de titulos descontados liquidados (Daniel - Ailos)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -4640,7 +4638,7 @@ PROCEDURE cria_tt-consulta-blt.
          ASSIGN tt-consulta-blt.dssituac = tt-consulta-blt.dssituac + "/" +
                                            ENTRY(1,crapcob.dcmc7chq,";").
 
-     IF   AVAILABLE craptdb AND craptdb.insitapr <> 2 AND craptdb.vlsldtit > 0 THEN
+     IF   AVAILABLE craptdb AND craptdb.insitapr <> 2 THEN
           DO:
               ASSIGN tt-consulta-blt.nrborder = craptdb.nrborder.
 
