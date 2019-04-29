@@ -53,6 +53,9 @@
 			                se operador não for do depto.Jurídico (Everton Souza - Mouts)
 
                04/06/2018 - Projeto 403 - Envio de titulos descontados para a Cyber (Lucas Lazari - GFT)
+			   
+			   26/04/2018 - P437 - Consignado. Alteração na grava-dados-crapcyc e importa-dados-crapcyc
+                             (Fernanda Kelli de Oliveira - AMcom)
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -444,6 +447,21 @@ PROCEDURE grava-dados-crapcyc:
         ELSE
             ASSIGN aux_flgehvip = TRUE.
         
+						   
+		/*P437 - Consignado - Motivo 8 Repasse Consignado é utilizado apenas pela tela CONSIG, quando Interromper da Cobrança da Empresa */
+		IF aux_cdmotcin = 8 THEN
+		 DO:
+		   ASSIGN aux_dscritic  = "Motivo exclusivo para utilizacao do sistema.".
+		   
+		   RUN gera_erro (INPUT par_cdcooper,
+						  INPUT par_cdagenci,
+						  INPUT par_nrdcaixa,
+						  INPUT 1,
+						  INPUT 0,
+						  INPUT-OUTPUT aux_dscritic).
+		   RETURN "NOK".
+		END.
+		
          /* 1 - Conta, 3 - Contrato, 4 - Desconto de Titulos */
         IF  par_cdorigem MATCHES "*Conta*" THEN
           DO:
@@ -1456,6 +1474,14 @@ PROCEDURE importa-dados-crapcyc:
     
            IF aux_cdcooper <> par_cdcooper THEN DO:
                 PUT STREAM str_2 UNFORMATTED "Registro nao pertence a cooperativa processada. - " +
+                                              aux_registro SKIP.
+                ASSIGN aux_flgerro = TRUE.
+                NEXT.
+           END.
+		   
+		   /* P437 - Consignado - Motivo 8 Repasse Consignado é utilizado apenas pela tela CONSIG, quando Interromper da Cobrança da Empresa */
+		   IF aux_cdmotcin = 8 THEN DO:
+                PUT STREAM str_2 UNFORMATTED "Motivo 8 Repasse Consignado exclusivo para utilizacao do sistema. - " +
                                               aux_registro SKIP.
                 ASSIGN aux_flgerro = TRUE.
                 NEXT.
