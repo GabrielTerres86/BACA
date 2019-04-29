@@ -7,6 +7,8 @@
                                                                    	 
   Alteracoes: 05/03/2019 - Inserido validacao de e-mail na Solicitacao de Portabilidade. INC0033519 (Mateus Z - Mouts)
  					
+  Alteracoes: 29/04/2019 - Alterado para validar o e-mail somente quando o mesmo estiver preenchido (João Gabriel Mannes - Mouts)
+ 					
 *************************************************************************/
 
 var callafterCapital = ''; 
@@ -267,9 +269,11 @@ function controlaOperacao(cddopcao) {
 				cDsdbanco.focus();
 				return;
 			}
-			if (!validaEmail(cDsdemail.val())) {
-				showError("error", "E-mail inv&aacute;lido.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-				return false;
+			if (cDsdemail.val()){
+			  if (!validaEmail(cDsdemail.val())) {
+    				showError("error", "E-mail inv&aacute;lido.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+					return false;
+				}
 			}
 			solicitaPortabilidade(false);
 		break;
