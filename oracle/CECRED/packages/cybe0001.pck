@@ -228,7 +228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
 
                 05/06/2018 - Ajuste para adicionar Desconto de Titulos (Andrew Albuquerque - GFT)
 
-                26/04/2018 - P437 - Consignado. Alteração na pc_altera_dados_crapcyc
+                26/04/2019 - P437 - Consignado. Alteração na pc_altera_dados_crapcyc
                              (Fernanda Kelli de Oliveira - AMcom)
   ---------------------------------------------------------------------------------------------------------------*/
 

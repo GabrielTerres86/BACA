@@ -33,6 +33,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONSIG IS
   --                            - pc_validar_venctos_consig
   --                            - pc_excluir_param_consig                              
   --                          (P437 - Consignado - Fernanda Kelli - AMcom)
+  --
+  --             26/04/2019 - Incluso a rotina pc_interromper_cobrança 
+  --                          (P437 - Consignado - Fernanda Kelli - AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo que compreende o registro da tab. temporaria tt-proposta-epr */
@@ -236,7 +239,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
   --                            - pc_validar_venctos_consig
   --                            - pc_excluir_param_consig                              
   --                          (P437 - Consignado - Fernanda Kelli - AMcom)
-  -- 
+  --
+  --             26/04/2019 - Incluso a rotina pc_interromper_cobrança 
+  --                          (P437 - Consignado - Fernanda Kelli - AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1868,7 +1874,7 @@ BEGIN
 
     --Regra: A data do campo envio do arquivo deverá ser igual ou maior que a data do campo até;
     IF vr_dtenvioarquivo < vr_dtinclpropostaate THEN
-      vr_dscritic := 'Data do envio do arquivo deve ser igual ou maior que a Data de inclusao da proposta Ate .  '|| sqlerrm;
+      vr_dscritic := 'Data do envio do arquivo deve ser igual ou maior que a Data de inclusao da proposta Ate.';
       RAISE vr_exc_erro;
     END IF;
 
@@ -1884,7 +1890,7 @@ BEGIN
 
     --Regra: O dia do envio do arquivo deverá ser igual ou menor que a da data cadastrada no campo “Dia fechamento folha”;
     IF vr_diaenvioarquivo > vr_dtfchfol THEN
-      vr_dscritic := 'Data do envio do arquivo deve ser igual ou menor a Data de fechamento da folha.  '|| sqlerrm;
+      vr_dscritic := 'Data do envio do arquivo deve ser igual ou menor que a Data de fechamento da folha.';
       RAISE vr_exc_erro;
     END IF;
 
