@@ -159,7 +159,7 @@ function manterRotina(operacao) {
 	nrlicamb = $('#nrlicamb','#frmDadosIdentJuridica').val();
 	dtvallic = $('#dtvallic', '#frmDadosIdentJuridica').val();
 	tpregtrb = $('#tpregtrb', '#frmDadosIdentJuridica').val();
-	inpessoa = $('#inpessoa', '#frmDadosIdentJuridica').val();
+	inpessoa = $('#inpessoa', '#frmDadosIdentJuridica').val().substring(0, 1);
 
 	// Executa script de confirmação através de ajax
 	$.ajax({		
