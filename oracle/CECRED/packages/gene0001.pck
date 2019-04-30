@@ -39,6 +39,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  18/12/2017 - Criação nova funçao para busca de quantidade total registro por commit
   --               Projeto Ligeirinho. (Jonatas Jaqmam - AMcom)  
 	--
+  --  06/11/2018 - Adicionado nmmodulo DESC. TITULOS (Cássia de Oliviera - GFT)
 	--  04/12/2018 - Criar rotina pc_gera_log_auto para geracao de log utilizando autonomous_transaction com 
 	--               commit da operacao (Adriano Nagasava - Supero)
 	--
@@ -57,9 +58,10 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /**  8  = SOLICITACOES                                   **/
   /**  9  = CADASTROS                                      **/
   /**  10 = CONVENIOS                                      **/
+  /**  11 = DESC. TITULOS								   **/
   /** ---------------------------------------------------- **/
   -- Definicao do tipo de array para nome origem do módulo
-  TYPE typ_tab_nmmodulo IS VARRAY(10) OF VARCHAR2(15);
+  TYPE typ_tab_nmmodulo IS VARRAY(11) OF VARCHAR2(15);
   -- Vetor de memória com as origens do módulo
   vr_vet_nmmodulo typ_tab_nmmodulo := typ_tab_nmmodulo('DEP. A VISTA'
                                                       ,'CAPITAL'
@@ -70,7 +72,8 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                                                       ,'PARAMETRIZACAO'
                                                       ,'SOLICITACOES'
                                                       ,'CADASTROS'
-                                                      ,'CONVENIOS');
+                                                      ,'CONVENIOS'
+                                                      ,'DESC. TITULOS');
 
   /** ------------------------------------------------------------**/
   /** Variavel para geracao de log - Origem da Solicitacao     **/
