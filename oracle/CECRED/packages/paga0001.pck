@@ -542,6 +542,11 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                ,pr_flgpesqu IN INTEGER
                                ,pr_flmobile IN INTEGER
                                ,pr_dstransa IN VARCHAR2
+                               ,pr_cdorigem IN INTEGER                 --> Código da Origem
+                               ,pr_dsorigem IN VARCHAR2                --> Descrição da Origem
+                               ,pr_cdagenci IN INTEGER                 --> Agencia              
+                               ,pr_nrdcaixa IN INTEGER                 --> Caixa
+                               ,pr_nmprogra IN VARCHAR2                --> Nome do programa
                                ,pr_xml_dsmsgerr   OUT VARCHAR2         --> Retorno XML de critica
                                ,pr_xml_operacao23 OUT CLOB             --> Retorno XML da operação 23
                                ,pr_dsretorn       OUT VARCHAR2);
@@ -2719,6 +2724,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                ,pr_flgpesqu IN INTEGER
                                ,pr_flmobile IN INTEGER
                                ,pr_dstransa IN VARCHAR2
+                               ,pr_cdorigem IN INTEGER                 --> Código da Origem
+                               ,pr_dsorigem IN VARCHAR2                --> Descrição da Origem
+                               ,pr_cdagenci IN INTEGER                 --> Agencia              
+                               ,pr_nrdcaixa IN INTEGER                 --> Caixa
+                               ,pr_nmprogra IN VARCHAR2                --> Nome do programa
                                ,pr_xml_dsmsgerr   OUT VARCHAR2         --> Retorno XML de critica
                                ,pr_xml_operacao23 OUT CLOB             --> Retorno XML da operação 23
                                ,pr_dsretorn       OUT VARCHAR2) IS     --> Retorno de critica (OK ou NOK)
@@ -2914,13 +2924,13 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => '996'
                           ,pr_dscritic => vr_dscritic
-                          ,pr_dsorigem => 'INTERNET'
+                          ,pr_dsorigem => pr_dsorigem
                           ,pr_dstransa => vr_dstransa
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => pr_flgtrans
                           ,pr_hrtransa => gene0002.fn_busca_time
                           ,pr_idseqttl => pr_idseqttl
-                          ,pr_nmdatela => 'INTERNETBANK'
+                          ,pr_nmdatela => pr_nmprogra
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
       
@@ -2971,8 +2981,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
     IF pr_flgpesqu <> 1 THEN
       INET0001.pc_verifica_operacao(pr_cdcooper => pr_cdcooper, 
-                                    pr_cdagenci => 90,            -- PA           
-                                    pr_nrdcaixa => 900,           -- CAIXA         
+                                    pr_cdagenci => pr_cdagenci,   -- PA           
+                                    pr_nrdcaixa => pr_nrdcaixa,   -- CAIXA         
                                     pr_nrdconta => pr_nrdconta,  
                                     pr_idseqttl => pr_idseqttl,  
                                     pr_dtmvtolt => pr_dtmvtolt,  
@@ -2986,10 +2996,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                     pr_cdoperad => '996',         -- OPERADOR      
                                     pr_tpoperac => pr_tpoperac,  
                                     pr_flgvalid => FALSE,         -- VALIDACOES    
-                                    pr_dsorigem => 'INTERNET',    -- ORIGEM        
+                                    pr_dsorigem => pr_dsorigem,    -- ORIGEM        
                                     pr_nrcpfope => pr_nrcpfope,   -- CPF OPERADOR  
                                     pr_flgctrag => TRUE,          -- VALIDA LIMITES
-                                    pr_nmdatela => 'INTERNETBANK', 
+                                    pr_nmdatela => pr_nmprogra, 
                                     pr_dstransa => vr_dstransa, 
                                     pr_tab_limite => vr_tab_limite, 
                                     pr_tab_internet => vr_tab_internet, 
@@ -3061,11 +3071,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
     /* Contas cadastradas */
     inet0001.pc_con_contas_cadastradas( pr_cdcooper => pr_cdcooper, 
-                                        pr_cdagenci => 90,
-                                        pr_nrdcaixa => 900, 
+                                        pr_cdagenci => pr_cdagenci,
+                                        pr_nrdcaixa => pr_nrdcaixa, 
                                         pr_cdoperad => '996', 
-                                        pr_nmdatela => 'INTERNETBANK',
-                                        pr_idorigem => 3, 
+                                        pr_nmdatela => pr_nmprogra,
+                                        pr_idorigem => pr_cdorigem, 
                                         pr_nrdconta => pr_nrdconta, 
                                         pr_idseqttl => pr_idseqttl, 
                                         pr_dtmvtolt => pr_dtmvtolt, 
@@ -3138,8 +3148,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_InternetBank23');                                                       
 
     inet0001.pc_consulta_finalidades(pr_cdcooper        => pr_cdcooper
-                                    ,pr_cdagenci        => 90
-                                    ,pr_nrdcaixa        => 900
+                                    ,pr_cdagenci        => pr_cdagenci
+                                    ,pr_nrdcaixa        => pr_nrdcaixa
                                     ,pr_cdcritic        => vr_cdcritic
                                     ,pr_dscritic        => vr_dscritic
                                     ,pr_tab_finalidades => vr_tab_finalidades
@@ -15398,7 +15408,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                  ); 
 
         --rollback do savepoint
-        ROLLBACK TO TRANS_UNDO;               
+        ROLLBACK TO TRANS_UNDO;
 
         -- Envia o email
         PC_EMAIL; 
@@ -15421,7 +15431,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                  ,pr_tpexecucao    => 0            -- 0-Outro, 1-Batch, 2-Job, 3-Online
                                  ); 
         --rollback do savepoint
-        ROLLBACK TO TRANS_UNDO;             
+        ROLLBACK TO TRANS_UNDO;
 
         -- Envia o email
         PC_EMAIL; 
@@ -18894,13 +18904,13 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             FOR i IN 1..100 LOOP
               BEGIN
                 -- Leitura do lote
-                OPEN cr_craplot (pr_cdcooper => pr_cdcooper
+            OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                             ,pr_dtmvtolt => pr_dtmvtolt
                             ,pr_cdagenci => pr_cdagenci
                             ,pr_cdbccxlt => pr_cdbccxlt
                             ,pr_nrdolote => pr_nrdolote);
-                --Posicionar no primeiro registro
-                FETCH cr_craplot INTO rw_craplot;
+            --Posicionar no primeiro registro
+            FETCH cr_craplot INTO rw_craplot;
                 pr_dscritic := NULL;
                 EXIT;
               EXCEPTION

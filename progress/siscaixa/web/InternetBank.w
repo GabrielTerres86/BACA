@@ -3770,8 +3770,13 @@ PROCEDURE proc_operacao23:
                                                   INPUT aux_nmtitpes,
                                                   INPUT aux_flgpesqu,
                                                   INPUT aux_flmobile,
-                                                  INPUT canal_dsorigem, /* Projeto 363 - Novo ATM */
-                                                  INPUT canal_nmprogra, /* Projeto 363 - Novo ATM */
+                                                  /* Projeto 363 - Novo ATM */
+                                                  INPUT canal_cdorigem,
+                                                  INPUT canal_dsorigem,
+                                                  INPUT canal_cdagenci,
+                                                  INPUT canal_nrdcaixa,
+                                                  INPUT canal_nmprogra,
+                                                  /* Projeto 363 - Novo ATM */
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
                     

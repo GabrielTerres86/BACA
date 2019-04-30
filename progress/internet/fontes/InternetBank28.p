@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Junho/2007.                       Ultima atualizacao: 23/08/2018
+   Data    : Junho/2007.                       Ultima atualizacao: 24/04/2019
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -54,6 +54,8 @@
                28/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
                             servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
                
+               24/04/2019 - utilizar a rotina convertida pc_verifica_operacao_prog que possui 
+                            todas as regras, ao invés da rotina progress (Douglas)
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -99,41 +101,82 @@ DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
 DEF VAR aux_dsconsul  AS CHAR NO-UNDO.
 
+/* Variáveis utilizadas para receber clob da rotina no oracle */
+DEF VAR xDoc           AS HANDLE   NO-UNDO.   
+DEF VAR xRoot          AS HANDLE   NO-UNDO.  
+DEF VAR xRoot2         AS HANDLE   NO-UNDO.  
+DEF VAR xField         AS HANDLE   NO-UNDO. 
+DEF VAR xText          AS HANDLE   NO-UNDO. 
+DEF VAR aux_tab_limite AS LONGCHAR NO-UNDO.
+DEF VAR ponteiro_xml   AS MEMPTR   NO-UNDO. 
+DEF VAR aux_cont_raiz  AS INTEGER  NO-UNDO.
+DEF VAR aux_cont       AS INTEGER  NO-UNDO.
+
 
 ASSIGN aux_dstransa = "Acesso a tela de pagamentos".
 
-RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET h-b1wgen0015.
+/* Procedimento do internetbank pc_verifica_operacao_prog */
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
-IF  VALID-HANDLE(h-b1wgen0015)  THEN
-    DO:
-        RUN verifica_operacao IN h-b1wgen0015 
-                                      (INPUT par_cdcooper,
-                                       INPUT par_cdagenci, /** PAC   - Projeto 363 - Novo ATM -> estava fixo 90 **/
-                                       INPUT par_nrdcaixa, /** CAIXA - Projeto 363 - Novo ATM -> estava fixo 900 **/
-                                       INPUT par_nrdconta,
-                                       INPUT par_idseqttl,
-                                       INPUT par_dtmvtolt,
-                                       INPUT 0,          /** AGENDAMENTO   **/
-                                       INPUT ?,          /** DATA DEBITO   **/
-                                       INPUT 0,          /** VALOR OPER.   **/
-                                       INPUT 0,          /** BANCO DESTINO **/
-                                       INPUT 0,          /** AGENC.DESTINO **/
-                                       INPUT 0,          /** CONTA DESTINO **/
-                                       INPUT 0,          /** IND.TRANSACAO **/
-                                       INPUT "996",      /** OPERADOR      **/
-                                       INPUT 2,          /** PAGAMENTO     **/
-                                       INPUT FALSE,      /** VALIDACOES    **/
-                                       INPUT par_dsorigem, /** ORIGEM - Projeto 363 - Novo ATM -> estava fixo "INTERNET" **/
-                                       INPUT par_nrcpfope, /** CPF OPERADOR  */
-                                       INPUT TRUE,       /** VALIDA LIMITES**/
-                                      OUTPUT aux_dstrans1,
-                                      OUTPUT aux_dscritic,
-                                      OUTPUT TABLE tt-limite,
-                                      OUTPUT TABLE tt-limites-internet).
+RUN STORED-PROCEDURE pc_verifica_operacao_prog
+    aux_handproc = PROC-HANDLE NO-ERROR      
+      (INPUT  par_cdcooper
+      ,INPUT  par_cdagenci
+      ,INPUT  par_nrdcaixa
+      ,INPUT  par_nrdconta
+      ,INPUT  par_idseqttl        
+      ,INPUT  par_dtmvtolt
+      ,INPUT  0          /** AGENDAMENTO   **/
+      ,INPUT  ?          /** DATA DEBITO   **/
+      ,INPUT  0          /** VALOR OPER.   **/
+      ,INPUT  0          /** BANCO DESTINO **/
+      ,INPUT  0          /** AGENC.DESTINO **/
+      ,INPUT  0          /** CONTA DESTINO **/
+      ,INPUT  0          /** IND.TRANSACAO **/
+      ,INPUT  "996"      /** OPERADOR      **/
+      ,INPUT  2          /** PAGAMENTO     **/
+      ,INPUT  0            /** VALIDACOES - FALSE   **/
+      ,INPUT  par_dsorigem /* par_dsorigem */
+      ,INPUT  par_nrcpfope /** CPF OPERADOR  */
+      ,INPUT  1            /** VALIDA LIMITES**/
+      ,INPUT  par_nmprogra /* par_nmdatela */
+      ,OUTPUT ""           /* --> Descricao da transacao         */
+      ,OUTPUT ""           /* --> Retorno XML pr_tab_limite      */
+      ,OUTPUT ""           /* --> Retorno XML pr_tab_internet    */
+      ,OUTPUT 0            /* --> Retorno pr_cdcritic            */
+      ,OUTPUT "").         /* --> Retorno pr_dscritic            */
+
+IF  ERROR-STATUS:ERROR  THEN DO:
+    DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
+        ASSIGN aux_msgerora = aux_msgerora + 
+                              ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
+    END.
+     
+    ASSIGN aux_dscritic = "pc_verifica_operacao_prog --> "  +
+                          "Erro ao executar Stored Procedure: " +
+                          aux_msgerora.      
+    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + 
+                               "Erro inesperado. Nao foi possivel efetuar a verificacao." + 
+                               " Tente novamente ou contacte seu PA" +
+                          "</dsmsgerr>".                        
+    RUN proc_geracao_log.
+    RETURN "NOK".
     
-        DELETE PROCEDURE h-b1wgen0015.
-                
-        IF  RETURN-VALUE = "NOK"  THEN
+END. 
+
+CLOSE STORED-PROC pc_verifica_operacao_prog
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl}}
+
+ASSIGN aux_dscritic   = ""
+       aux_tab_limite = ""
+       aux_dscritic   = pc_verifica_operacao_prog.pr_dscritic 
+                        WHEN pc_verifica_operacao_prog.pr_dscritic <> ?                               
+       aux_tab_limite = pc_verifica_operacao_prog.pr_tab_limite 
+                        WHEN pc_verifica_operacao_prog.pr_tab_limite <> ? .  
+
+IF  aux_dscritic <> ""  THEN
             DO:
                 ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + 
                                       "</dsmsgerr>".
@@ -143,11 +186,78 @@ IF  VALID-HANDLE(h-b1wgen0015)  THEN
                 RETURN "NOK".
             END.
                 
+/* Inicializando objetos para leitura do XML */ 
+CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+
+/* Efetuar a leitura do XML*/ 
+SET-SIZE(ponteiro_xml) = LENGTH(aux_tab_limite) + 1. 
+PUT-STRING(ponteiro_xml,1) = aux_tab_limite. 
+
+IF  ponteiro_xml <> ? THEN
+DO:
+
+    xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+    xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+    DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN:
+        xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+
+        IF  xRoot2:SUBTYPE <> "ELEMENT" THEN 
+            NEXT. 
+
+        IF  xRoot2:NUM-CHILDREN > 0 THEN               
+            CREATE tt-limite.     
+
+        DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+            xRoot2:GET-CHILD(xField,aux_cont).
+
+            IF xField:SUBTYPE <> "ELEMENT" THEN 
+                NEXT.
+
+            xField:GET-CHILD(xText,1) NO-ERROR.
+
+            /* Se nao vier conteudo na TAG */
+            IF ERROR-STATUS:ERROR             OR
+               ERROR-STATUS:NUM-MESSAGES > 0  THEN
+                NEXT.
+
+            IF xField:NAME = "hrinipag" THEN
+                tt-limite.hrinipag = STRING(xText:NODE-VALUE).
+                
+            IF xField:NAME = "hrfimpag" THEN
+                tt-limite.hrfimpag = STRING(xText:NODE-VALUE).
+                
+            IF xField:NAME = "nrhorini" THEN
+                tt-limite.nrhorini = INTE(xText:NODE-VALUE).
+                
+            IF xField:NAME = "nrhorfim" THEN
+                tt-limite.nrhorfim = INTE(xText:NODE-VALUE).
+                
+            IF xField:NAME = "idesthor" THEN
+                tt-limite.idesthor = INTE(xText:NODE-VALUE).
+        END.
+
+    END.
+
+    SET-SIZE(ponteiro_xml) = 0.
+END.
+
+/* Eliminar os objetos da leitura do XML */ 
+DELETE OBJECT xDoc. 
+DELETE OBJECT xRoot. 
+DELETE OBJECT xRoot2. 
+DELETE OBJECT xField. 
+DELETE OBJECT xText.
+
+
         CREATE xml_operacao.
         ASSIGN xml_operacao.dslinxml = "<LIMITE>".
        
         FIND FIRST tt-limite NO-LOCK NO-ERROR.
-
         IF  AVAILABLE tt-limite  THEN
             DO:
                 CREATE xml_operacao.
@@ -259,7 +369,7 @@ IF  VALID-HANDLE(h-b1wgen0015)  THEN
         ASSIGN xml_operacao.dslinxml = "</CONVENIOS_ACEITOS>".
             
         RUN proc_geracao_log (INPUT TRUE).
-    END.
+
     
 /*................................ PROCEDURES ................................*/
 

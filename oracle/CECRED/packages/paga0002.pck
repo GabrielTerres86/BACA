@@ -2273,8 +2273,9 @@ create or replace package body cecred.PAGA0002 is
     /* Efetuada por operador ou responsável de assinatura conjunta de conta PJ */
 
       IF vr_assin_conjunta = 1 THEN
-      /* Se deseja gravar favorito */
-      IF pr_gravafav = 1 THEN
+      /* Se deseja gravar favorito 
+         PA 91 não grava favorito */
+      IF pr_gravafav = 1 AND pr_cdagenci <> 91 THEN
         pc_grava_favorito(pr_cdcritic => vr_cdcritic
                          ,pr_dscritic => vr_dscritic);
         -- verificar se retornou critica
@@ -2429,8 +2430,9 @@ create or replace package body cecred.PAGA0002 is
 
     ELSIF vr_idagenda = 1 THEN /** Transferencia no dia corrente **/
 
-      /* Se deseja gravar favorito */
-      IF pr_gravafav = 1 THEN
+      /* Se deseja gravar favorito 
+         PA 91 não grava favorito */
+      IF pr_gravafav = 1 AND pr_cdagenci <> 91 THEN
         pc_grava_favorito(pr_cdcritic => vr_cdcritic
                          ,pr_dscritic => vr_dscritic);
         -- verificar se retornou critica
@@ -2682,8 +2684,9 @@ create or replace package body cecred.PAGA0002 is
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_cdproint);
       END IF;
 
-      /* Se deseja gravar favorito */
-      IF pr_gravafav = 1 THEN
+      /* Se deseja gravar favorito 
+         PA 91 não grava favorito */
+      IF pr_gravafav = 1 AND pr_cdagenci <> 91 THEN
         pc_grava_favorito(pr_cdcritic => vr_cdcritic
                          ,pr_dscritic => vr_dscritic);
         -- verificar se retornou critica
@@ -2839,8 +2842,9 @@ create or replace package body cecred.PAGA0002 is
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_cdproint);
       END IF;
 
-      /* Se deseja gravar favorito */
-      IF pr_gravafav = 1 THEN
+      /* Se deseja gravar favorito 
+         PA 91 não grava favorito */
+      IF pr_gravafav = 1 AND pr_cdagenci <> 91 THEN
         pc_grava_favorito(pr_cdcritic => vr_cdcritic
                          ,pr_dscritic => vr_dscritic);
         -- verificar se retornou critica
