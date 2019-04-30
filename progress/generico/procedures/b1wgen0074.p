@@ -278,7 +278,9 @@
                 16/01/2019 - Tratamento temporario para nao permitir solicitacao
                              ou encerramento de conta ITG devido a migracao do BB.
                              (Lombardi/Elton)
-
+			    30/04/2019 - Removido regra para permitir alteração de tipo de conta
+				             mesmo que a conta ITG esteja inativa.
+							 Alcemir - Mouts (PRB0041585).
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1452,26 +1454,7 @@ PROCEDURE Valida_Dados_Altera:
                /* Mudando para Conta Integracao */
                IF  aux_inctaitg = 1  THEN
                    DO:
-                      /* Elimin. anteriorm. CI */
-                      IF  crapass.flgctitg = 3 AND crapass.nrdctitg <> " " THEN
-                          DO:
-                             FOR EACH crapalt WHERE
-                                      crapalt.cdcooper = par_cdcooper   AND
-                                      crapalt.nrdconta = par_nrdconta   AND
-                                      crapalt.flgctitg <> 2             NO-LOCK:
-                                 
-                                 IF   crapalt.dsaltera MATCHES
-                                                  "*exclusao conta-itg*"   THEN
-                                      DO:
-                                         ASSIGN par_cdcritic = 219
-                                                par_nmdcampo = "cdtipcta".
-                                     
-                                         LEAVE ValidaAltera.
-                                     
-                                      END.
-                             END.
-                          END.
-                      
+				                           
                       /* Nao pode mudar pra CI pois nao existe a agencia do
                          do BB cadastrado na cadcop */
                       IF  crapcop.cdagedbb = 0 THEN
