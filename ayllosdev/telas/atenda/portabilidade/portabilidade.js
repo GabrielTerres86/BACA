@@ -5,6 +5,9 @@
                                                                    
   Objetivo  : Biblioteca de funcoes da rotina Portabilidade da tela Atenda                                              
                                                                    	 
+  Alteracoes: 05/03/2019 - Inserido validacao de e-mail na Solicitacao de Portabilidade. INC0033519 (Mateus Z - Mouts)
+ 					
+  Alteracoes: 29/04/2019 - Alterado para validar o e-mail somente quando o mesmo estiver preenchido (João Gabriel Mannes - Mouts)
  					
 *************************************************************************/
 
@@ -259,14 +262,22 @@ function controlaOperacao(cddopcao) {
 		// Solicita portabilidade
 		case 'S':
 			var cDsdbanco = $('#dsdbanco', '#'+nomeForm);
+			var cDsdemail = $('#dsdemail', '#'+nomeForm);
 			var vCdbccxlt = cDsdbanco.val();
 			if (!vCdbccxlt) {
 				showError("error", "O campo Banco Folha deve ser selecionado.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 				cDsdbanco.focus();
 				return;
 			}
+			if (cDsdemail.val()){
+			  if (!validaEmail(cDsdemail.val())) {
+    				showError("error", "E-mail inv&aacute;lido.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+					return false;
+				}
+			}
 			solicitaPortabilidade(false);
 		break;
+
 		// Cancela portabilidade
 		case 'E':
 			exibeCancelamento();
