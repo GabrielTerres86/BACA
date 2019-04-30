@@ -1,4 +1,5 @@
 BEGIN
+  --
   UPDATE craptab
      SET dstextab = '10000,00;10000,00'
    WHERE upper(nmsistem) = 'CRED'
@@ -14,5 +15,6 @@ BEGIN
      AND cdempres = 0
      AND upper(cdacesso) = 'VLMICFLIMI'
      AND tpregist = 0;
+	 
   COMMIT;
 END;

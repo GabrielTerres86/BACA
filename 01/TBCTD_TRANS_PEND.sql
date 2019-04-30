@@ -25,7 +25,6 @@ comment on column CECRED.TBCTD_TRANS_PEND.vlcontrato  is 'Valor do contrato';
 comment on column CECRED.TBCTD_TRANS_PEND.dhcontrato  is 'Data/hora da inclusao do contrato';
 comment on column CECRED.TBCTD_TRANS_PEND.cdoperad  is 'Codigo do operador';
 comment on column CECRED.TBCTD_TRANS_PEND.cdrecid_crapcdc  is 'PROGRESS_RECID da tabela CRAPCDC';
-
 -- Create/Recreate primary, unique and foreign key constraints
 alter table CECRED.TBCTD_TRANS_PEND
   add constraint TBCTD_TRANS_PEND_PK primary key (CDTRANSACAO_PENDENTE);
