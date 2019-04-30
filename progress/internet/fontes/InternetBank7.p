@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 14/12/2018
+   Data    : Marco/2007                        Ultima atualizacao: 17/04/2019
 
    Dados referentes ao programa:
 
@@ -39,9 +39,9 @@
                             informações do IR de PJ (Douglas - Chamado 263905)
 
                12/02/2016 - Ajustes no FOR EACH  da craplct pois a funcao
-                            YEAR do Progress ocasionava problema quando
-                            repitida mais de uma vez dentro do where
-                            (Tiago/Thiago).
+			                YEAR do Progress ocasionava problema quando
+							repitida mais de uma vez dentro do where
+							(Tiago/Thiago).
 
                29/06/2016 - M325 - Tributacao de Juros ao Capital
                             Alterado tratamento para cod.retencao 5706 p/ 3277
@@ -50,17 +50,17 @@
 
 
                03/08/2016 - Inclusao de novos historicos de retorno de Sobras 
-                            e de sobras na Conta Corrente (Marcos-Supero).
+			                e de sobras na Conta Corrente (Marcos-Supero).
                       
                18/01/2017 - SD595294 - Retorno dos valores pagos em emprestimos
                             (Marcos-Supero)      
 
                24/03/2017 - SD638033 - Envio dos Rendimentos de Cotas Capital 
-                                  sem desconto IR (Marcos-Supero) 
+			                      sem desconto IR (Marcos-Supero) 
 
-                     13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                                  crapass, crapttl, crapjur 
-                                          (Adriano - P339).
+			         13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                      crapass, crapttl, crapjur 
+							              (Adriano - P339).
               
                18/08/2017 - Incluida validacao de IR para pessoa juridica
                             (Rafael Faria-Supero)
@@ -68,6 +68,9 @@
 
                14/12/2018 - P450 - Incluir valor de bloqueado prejuizo no valor do saldo disponivel.
                             (Odirlei-AMcom)
+                            
+               17/04/2019 - INC0012046 - Correçao para apresentar IR de pessoa física, falha de valor null na tabela.
+							(Guilherme Kuhnen - f0032175)
 
 ............................................................................*/
     
@@ -206,8 +209,8 @@ FOR EACH craplct WHERE craplct.cdcooper = par_cdcooper      AND
                        craplct.nrdolote = 8005               AND 
                        craplct.nrdconta = par_nrdconta       AND
                        (craplct.cdhistor = 1940 OR craplct.cdhistor = 2172 OR
-                        craplct.cdhistor = 2174 OR craplct.cdhistor = 2173 OR
-                        craplct.cdhistor = 1801 OR craplct.cdhistor = 64) 
+					    craplct.cdhistor = 2174 OR craplct.cdhistor = 2173 OR
+					    craplct.cdhistor = 1801 OR craplct.cdhistor = 64) 
                        NO-LOCK:
     ASSIGN aux_vlsobras = aux_vlsobras + craplct.vllanmto.
 END.
@@ -220,8 +223,8 @@ FOR EACH craplcm WHERE craplcm.cdcooper = par_cdcooper      AND
                        craplcm.nrdolote = 8005               AND 
                        craplcm.nrdconta = par_nrdconta       AND
                        (craplcm.cdhistor = 2175 OR craplcm.cdhistor = 2176 OR
-                        craplcm.cdhistor = 2177 OR craplcm.cdhistor = 2178 OR
-                        craplcm.cdhistor = 2179 OR craplcm.cdhistor = 2189) 
+					    craplcm.cdhistor = 2177 OR craplcm.cdhistor = 2178 OR
+					    craplcm.cdhistor = 2179 OR craplcm.cdhistor = 2189) 
                        NO-LOCK:
     ASSIGN aux_vlsobras = aux_vlsobras + craplcm.vllanmto.
 END.
@@ -267,14 +270,14 @@ RETURN "OK".
 PROCEDURE proc_ir_fisica:
 
     FOR FIRST crapttl FIELDS(crapttl.nmextttl)
-                       WHERE crapttl.cdcooper = par_cdcooper AND    
-                             crapttl.nrdconta = par_nrdconta AND
-                             crapttl.idseqttl = 2
-                             NO-LOCK:
+	                   WHERE crapttl.cdcooper = par_cdcooper AND	
+							 crapttl.nrdconta = par_nrdconta AND
+							 crapttl.idseqttl = 2
+							 NO-LOCK:
 
-       ASSIGN aux_nmsegntl = crapttl.nmextttl.
+	   ASSIGN aux_nmsegntl = crapttl.nmextttl.
 
-    END.
+	END.
 
     FIND FIRST crapdir WHERE crapdir.cdcooper  = par_cdcooper AND
                              crapdir.nrdconta  = par_nrdconta AND
@@ -344,7 +347,7 @@ PROCEDURE proc_ir_fisica:
                           crapdir.vlrenrdc[09] + crapdir.vlrenrdc[10] +
                           crapdir.vlrenrdc[11] + crapdir.vlrenrdc[12] +
                           
-                          crapdir.vlrenrpp + crapdir.vlabonpp + 
+						  (IF crapdir.vlrenrpp <> ? THEN crapdir.vlrenrpp ELSE 0) + crapdir.vlabonpp + /*INC0012046*/
                           crapdir.vlabonrd + crapdir.vlabiopp +        
                           crapdir.vlabiord  -                          
                           
@@ -636,14 +639,14 @@ PROCEDURE proc_ir_juridica:
     IF  par_anorefer = YEAR(par_dtmvtolt)  THEN
         DO:
 
-            ASSIGN aux_cdacesso = "IRENDA" + STRING(par_anorefer,"9999").
+			ASSIGN aux_cdacesso = "IRENDA" + STRING(par_anorefer,"9999").
 
-            FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-                               craptab.nmsistem = "CRED"       AND
-                               craptab.tptabela = "GENERI"     AND
-                               craptab.cdempres = 0            AND
-                               craptab.cdacesso = aux_cdacesso AND
-                               craptab.tpregist = 1            NO-LOCK NO-ERROR.
+			FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
+							   craptab.nmsistem = "CRED"       AND
+							   craptab.tptabela = "GENERI"     AND
+							   craptab.cdempres = 0            AND
+							   craptab.cdacesso = aux_cdacesso AND
+							   craptab.tpregist = 1            NO-LOCK NO-ERROR.
 
             ASSIGN aux_nrmesref = MONTH(par_dtmvtolt - DAY(par_dtmvtolt)).
             FIND crapcot WHERE crapcot.cdcooper = par_cdcooper AND
@@ -743,14 +746,14 @@ PROCEDURE proc_ir_juridica:
                        YEAR(crapdir.dtmvtolt) = par_anorefer
                        USE-INDEX crapdir1 NO-LOCK NO-ERROR.
 
-            ASSIGN aux_cdacesso = "IRENDA" + STRING(par_anorefer,"9999").
-            
-            FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-                               craptab.nmsistem = "CRED"       AND
-                               craptab.tptabela = "GENERI"     AND
-                               craptab.cdempres = 0            AND
-                               craptab.cdacesso = aux_cdacesso AND
-                               craptab.tpregist = 1            NO-LOCK NO-ERROR.
+			ASSIGN aux_cdacesso = "IRENDA" + STRING(par_anorefer,"9999").
+			
+			FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
+							   craptab.nmsistem = "CRED"       AND
+							   craptab.tptabela = "GENERI"     AND
+							   craptab.cdempres = 0            AND
+							   craptab.cdacesso = aux_cdacesso AND
+							   craptab.tpregist = 1            NO-LOCK NO-ERROR.
 
             IF NOT AVAILABLE crapdir or NOT AVAILABLE craptab THEN
                DO:
