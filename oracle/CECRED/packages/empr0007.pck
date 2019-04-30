@@ -22,6 +22,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
   --                          boletagem massiva. (P210.2 - Lombardi)
   --
   --             27/09/2017 - Ajuste para atender SM 3 do projeto 210.2 (Daniel)
+  --                04/2019 - Ajuste para COBEMP P437 S6 JDB AMcom
   --            
   ---------------------------------------------------------------------------
 
@@ -68,7 +69,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 		,nmpescto       tbrecup_cobranca.nmcontato%TYPE
 		,nrctacob       tbrecup_cobranca.nrdconta_cob%TYPE
     ,lindigit       VARCHAR(60)
-    ,dsparcel       tbrecup_cobranca.dsparcelas%TYPE);
+    ,dsparcel       tbrecup_cobranca.dsparcelas%TYPE
+    ,incobran       crapcob.incobran%TYPE); /* P437 S6 */
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_cde IS TABLE OF typ_reg_cde INDEX BY BINARY_INTEGER;
@@ -3493,6 +3495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 							 ,cde.nmcontato nmpescto
 							 ,cde.nrdconta_cob nrctacob
                ,cde.dsparcelas
+               ,cob.incobran   /* P437 S6 */
            FROM crapcob cob, tbrecup_cobranca cde, crapass ass
           WHERE cde.cdcooper = pr_cdcooper                            --> Cód. cooperativa
 					  AND (pr_cdagenci = 0     OR ass.cdagenci =  pr_cdagenci)  --> PA
@@ -3671,6 +3674,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
           pr_tab_cde(vr_ind_cde).dtdpagto := rw_crapcob.dtdpagto;
           pr_tab_cde(vr_ind_cde).vldpagto := rw_crapcob.vldpagto;
           pr_tab_cde(vr_ind_cde).dsparcel := rw_crapcob.dsparcelas;
+          pr_tab_cde(vr_ind_cde).incobran := rw_crapcob.incobran; /* P437 S6 */
+
 
           cobr0005.pc_buscar_titulo_cobranca(pr_cdcooper => pr_cdcooper
 --                                            ,pr_rowidcob => rw_crapcob.rowidcob
@@ -5611,8 +5616,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       END IF;      
       
       -- Nao eh permitido gerar boleto para contratos Consignados 
-      IF nvl(rw_epr.flgpagto,0) = 0 AND 
-         nvl(rw_epr.tpdescto,0) = 2 THEN
+      --P437 s6 adicionada clausula rw_epr.tpemprst != 1
+      IF nvl(rw_epr.flgpagto,0) = 0 AND nvl(rw_epr.tpdescto,0) = 2 AND nvl(rw_epr.tpemprst,0) != 1 THEN
         -- Atribui crítica
         vr_cdcritic := 0;
         vr_dscritic := 'Nao e permitido gerar boleto de contratos Consignados.';

@@ -17,6 +17,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBEMP IS
   --                          nas procedures pc_verifica_gerar_boleto, Prj. 302 (Jean Michel).
   --
   -- 23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
+  --                04/2019 - Ajuste para COBEMP P437 S6 JDB AMcom
   --
   ---------------------------------------------------------------------------
 
@@ -1425,7 +1426,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                epr.tpemprst,
                epr.vlsdprej,
                epr.txmensal,
-               epr.qtpreemp
+               epr.qtpreemp,
+               epr.tpdescto --P437
           FROM crapepr epr
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
@@ -1679,6 +1681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 							-- Insere as tags
 							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
 							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'cdlcremp', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).cdlcremp, pr_des_erro => vr_dscritic);
+ 							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'tpdescto', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).tpdescto, pr_des_erro => vr_dscritic); --P437
 							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'cdfinemp', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).cdfinemp, pr_des_erro => vr_dscritic);
 							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'tpemprst', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).tpemprst, pr_des_erro => vr_dscritic);
 							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dtmvtolt', pr_tag_cont => TO_CHAR(vr_tab_dados_epr(vr_ind_cde).dtmvtolt, 'dd/mm/RRRR'), pr_des_erro => vr_dscritic);
