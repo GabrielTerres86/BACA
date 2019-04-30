@@ -109,42 +109,19 @@ PROCEDURE verifica_permissao:
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    IF par_cdcooper = 3 OR par_cdcooper = 9 THEN
-       DO:
-           IF par_cddepart <> 20  AND /* TI */
-              par_cddepart <> 14  AND /* PRODUTOS */
-              par_cddepart <> 2  THEN /* CARTOES */
-           DO:
-               ASSIGN aux_cdcritic = 36
-                      aux_dscritic = "".
-                       
-               RUN gera_erro (INPUT par_cdcooper,
-                              INPUT par_cdagenci,
-                              INPUT par_nrdcaixa,
-                              INPUT 1,            /** Sequencia **/
-                              INPUT aux_cdcritic,
-                              INPUT-OUTPUT aux_dscritic).
-                        
-               RETURN "NOK".
-    
-           END.
+    IF par_cdcooper <> 3 AND par_cdcooper <> 9 THEN
+        DO:            
+            ASSIGN aux_cdcritic = 36
+                   aux_dscritic = "".
 
-       END.
-    ELSE
-       DO:
-           ASSIGN aux_cdcritic = 36
-                  aux_dscritic = "".
-                       
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1,            /** Sequencia **/
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-                      
-           RETURN "NOK".
-
-       END.
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+        END.    
     
     RETURN "OK".
 
