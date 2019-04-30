@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 11/02/2019
+    Data      : Marco/2008                    Ultima Atualizacao: 30/04/2019
     
     Dados referentes ao programa:
 
@@ -558,6 +558,9 @@
                11/02/2019 - Validacao para nao permitir exclusao de cartao quando o mesmo estiver em uso
                             (Lucas Ranghetti #PRB0040556)
                           - Validar titularidade na entrega da segunda via do cartao (Lucas Ranghetti #PRB0040597)
+                          
+               30/04/2019 - Na procedure exclui_cartao permitir exclusao apenas de cartoes bancoob
+                            com situacao em estudo (Lucas Ranghetti PRB0041657)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -14597,6 +14600,14 @@ PROCEDURE exclui_cartao:
                   ASSIGN aux_dscritic = "Cartao ja solicitado.".
                   LEAVE.
               END.               
+          
+          /* Permitir exclusao apenas de cartoes com situacao em estudo */
+          IF f_verifica_adm(crawcrd.cdadmcrd) = 2  AND
+              crawcrd.insitcrd <> 0   THEN
+              DO:
+                  ASSIGN aux_dscritic = "Situacao do cartao nao permite exclusao.".
+                  LEAVE.
+              END.   
           
           IF  crawcrd.insitcrd = 4 THEN
               DO:
