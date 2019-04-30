@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 26/05/2018
+    Data    : Maio/2010                   Ultima atualizacao: 29/04/2019
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -278,6 +278,14 @@
                 16/01/2019 - Tratamento temporario para nao permitir solicitacao
                              ou encerramento de conta ITG devido a migracao do BB.
                              (Lombardi/Elton)
+
+                28/03/2019 - PRB0040591 - Tratamento para eliminar tambem a CRAPSNH quando eliminar 
+                             os titulares (Andreatta-Mouts)
+                             
+                29/04/2019 - Tratamento temporario para cooperativa CREDELESC 
+                             nao permitir solicitacao ou encerramento de conta 
+                             ITG referente a M459 - Migracao contas BB  
+                             (Elton - Ailos).
 			    30/04/2019 - Removido regra para permitir alteração de tipo de conta
 				             mesmo que a conta ITG esteja inativa.
 							 Alcemir - Mouts (PRB0041585).
@@ -602,8 +610,8 @@ PROCEDURE Busca_Dados:
             
         /* Tratamento temporario para nao permitir solicitacao
            ou encerramento de conta ITG devido a migracao do BB */
-        IF  par_cdcooper = 10 AND /* Credcomin */
-            par_dtmvtolt >= 01/17/2019 AND par_dtmvtolt <= 01/25/2019  THEN
+        IF  par_cdcooper = 8  AND /* Credelesc */
+            par_dtmvtolt >= 05/10/2019 AND par_dtmvtolt <= 05/20/2019  THEN
             DO:
                ASSIGN tt-conta-corr.btencitg = NO
                       tt-conta-corr.btsolitg = NO.
@@ -1454,7 +1462,7 @@ PROCEDURE Valida_Dados_Altera:
                /* Mudando para Conta Integracao */
                IF  aux_inctaitg = 1  THEN
                    DO:
-				                           
+                                 
                       /* Nao pode mudar pra CI pois nao existe a agencia do
                          do BB cadastrado na cadcop */
                       IF  crapcop.cdagedbb = 0 THEN
@@ -5408,7 +5416,7 @@ PROCEDURE Grava_Dados_Exclui:
                 IF  par_cdcritic <> 0 THEN
                     UNDO GravaExclui, LEAVE GravaExclui.                               
             END.
-            
+
             ContadorTtl: DO aux_contador = 1 TO 10:
 
                 FIND brapttl WHERE ROWID(brapttl) = ROWID(crabttl)
