@@ -9,11 +9,12 @@
  *
  *                01/03/2017 - Inclusao de indicador se possui avalista, funcionamento de justificativa de baixa,
  *                             geracao de boleto em prejuizo, criacao da opcao Y - Boletagem Massiva. (P210.2 - Jaison/Daniel)
+ *                  04/2019 - Ajustes Boleto Consignado P437 S6 - JDB AMcom
  */
 
 //Labels/Campos do cabeçalho
 var cCddopcao, cTodosCabecalho, cCdagenci, cTodosFrmManutencao, cTodosFrmContratos, cTodosFrmArquivos;
-var glbNrdconta, glbNrctacob, glbNrdocmto, glbNrcnvcob, glbNrctremp, glbTipoVcto;
+var glbNrdconta, glbNrctacob, glbNrdocmto, glbNrcnvcob, glbNrctremp, glbTipoVcto, glbTpdescto; /*P437 S6*/
 var glbTipoVlr, glbLindigit, glbTpemprst,  glbAvalista, glbInprejuz, glbVlsdprej, glbIdarquivo, glbInsitarq;
 
 // Definição de algumas variáveis globais
@@ -712,6 +713,7 @@ function formataContratos() {
         glbAvalista = $(this).find('#avalista').val();
         glbInprejuz = $(this).find('#inprejuz').val();
         glbVlsdprej = $(this).find('#vlsdprej').val();
+        glbTpdescto = $(this).find('#tpdescto').val(); /*P437 S6*/
     });
 
     glbNrdconta = normalizaNumero($('#nrdconta', '#frmContratos').val());
@@ -771,10 +773,12 @@ function formataContratosManutencao() {
     $('table > tbody > tr', divRegistro).click(function() {
         glbNrdconta = $(this).find('#nrdconta > span').text();
         glbNrdocmto = $(this).find('#nrdocmto > span').text();
+        glbTpemprst = $(this).find('#tpemprst').val(); /*P437 S6*/
         glbNrcnvcob = $(this).find('#nrcnvcob').val();
         glbNrctacob = $(this).find('#nrctacob').val();
         glbLindigit = $(this).find('#lindigit').val();
         glbNrctremp = $(this).find('#nrctremp').val();
+        glbTpdescto = $(this).find('#tpdescto').val(); /*P437 S6*/
     });
 
     $('table > tbody > tr:eq(0)', divRegistro).click();
@@ -1781,6 +1785,8 @@ function validaGerarBoleto() {
 	var nrctacob = glbNrctacob;
     var nrcnvcob = glbNrcnvcob;
     var nrctremp = glbNrctremp;
+    var tpdescto = glbTpdescto; /*P437 S6*/
+    var tpemprst = glbTpemprst; /*P437 S6*/
 
 	showMsgAguardo('Aguarde, validando rotina de Geracao de Boleto...');
 
@@ -1794,6 +1800,8 @@ function validaGerarBoleto() {
 			nrctacob : nrctacob,
 			nrcnvcob : nrcnvcob,
 			nrctremp : nrctremp,
+            tpdescto : tpdescto,
+            tpemprst: tpemprst, /*P437 S6*/
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1814,6 +1822,8 @@ function gerarBoleto() {
 
     var tpemprst = glbTpemprst;
     var inprejuz = glbInprejuz;
+    var tpdescto = glbTpdescto; /*P437 S6*/
+    var tpemprst = glbTpemprst; /*P437 S6*/
 
     // Executa script através de ajax
     $.ajax({
@@ -2011,6 +2021,8 @@ function buscaParcelasPP() {
         data: {
             nrdconta: glbNrdconta,
             nrctremp: glbNrctremp,
+            tpdescto: glbTpdescto, /*P437 S6*/
+            tpemprst: glbTpemprst, /*P437 S6*/
             dtvencto: dtvencto,
             redirect: 'script_ajax'
         },
@@ -2049,7 +2061,6 @@ function buscaParcelasPP() {
 }
 
 function habilitaDataVencimentoTR(valor) {
-
     if (valor == true) {
         $("#dtvencto").datepicker('enable');
     } else {
@@ -2146,7 +2157,6 @@ function confirmaGeracaoBoletoTR() {
 }
 
 function gerarBoletoPP() {
-
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -2155,6 +2165,8 @@ function gerarBoletoPP() {
             avalista: glbAvalista,
             nrdconta: glbNrdconta,
             nrctremp: glbNrctremp,
+            tpdescto: glbTpdescto, /*P437 S6*/
+            tpemprst: glbTpemprst, /*P437 S6*/
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -2529,6 +2541,7 @@ function efetuaGeracaoBoleto(tpemprst) {
         data: {
             nrdconta: glbNrdconta,
             nrctremp: glbNrctremp,
+            tpdescto: glbTpdescto, /*P437 S6*/
             tpparepr: tpparepr,
             dsparepr: dsparepr,
             dtvencto: dataVencimento,
