@@ -5072,12 +5072,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pc_cria_registro_msg(pr_dsmensag => 'Imprimir Termo de Responsabilidade para acesso ao Autoatendimento e SAC.'
                           ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
-	
-	-- Verifica a data da ultima alteração do cooperado
-    IF months_between(pr_rw_crapdat.dtmvtolt,rw_crapass.dtultalt) > 12 THEN
-      pc_cria_registro_msg(pr_dsmensag => 'Cooperado com cadastro vencido.'
-                          ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
-    END IF;
 
     CADA0006.pc_descricao_situacao_conta(pr_cdsituacao => 7
                                         ,pr_dssituacao => vr_dssituacao
