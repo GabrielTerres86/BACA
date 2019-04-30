@@ -940,6 +940,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --      			 27/06/2018 - Ajustes de exception em comandos DML e procedures. (Jean Michel)
   ---------------------------------------------------------------------------------------------------------------
 
+  --INC0011323
+  vr_cdprogra VARCHAR2(20) := 'INET0002';
+  
+  ------------------------------ PROCEDURES --------------------------------    
+  --> Grava informações para validar erro de programa/ sistema
+  PROCEDURE pc_gera_log(pr_cdcooper      IN PLS_INTEGER           --> Cooperativa
+                       ,pr_dstiplog      IN VARCHAR2              --> Tipo Log
+                       ,pr_dscritic      IN VARCHAR2 DEFAULT NULL --> Descricao da critica
+                       ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0
+                       ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0
+                       ,pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2
+                       ,pr_nmarqlog      IN tbgen_prglog.nmarqlog%type DEFAULT NULL
+                       ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%type DEFAULT 1 -- cadeia - 12/02/2019 - REQ0035813
+                       ) IS
+    -----------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_gera_log
+    --  Sistema  : Rotina para gravar logs em tabelas
+    --  Sigla    : CRED
+    --  Autor    : Ana Lúcia E. Volles
+    --  Data     : Abril/2019             Ultima atualizacao: 17/04/2019
+    --  Chamado  : INC0011323
+    --
+    -- Dados referentes ao programa:
+    -- Frequencia: Rotina executada em qualquer frequencia.
+    -- Objetivo  : Controla gravação de log em tabelas.
+    --
+    -- Alteracoes:  
+    --             
+    ------------------------------------------------------------------------------------------------------------   
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+    --
+  BEGIN         
+    --> Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
+                           pr_cdcooper      => pr_cdcooper, 
+                           pr_tpocorrencia  => pr_ind_tipo_log, 
+                           pr_cdprograma    => vr_cdprogra, 
+                           pr_tpexecucao    => pr_tpexecucao,
+                           pr_cdcriticidade => pr_cdcriticidade,
+                           pr_cdmensagem    => pr_cdmensagem,    
+                           pr_dsmensagem    => pr_dscritic,               
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => pr_nmarqlog);
+  EXCEPTION
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+  END pc_gera_log;
+  --
   
   /* Procedure para verificar horario permitido para transacoes */
   PROCEDURE pc_verifica_rep_assinatura (pr_cdcooper IN crapcop.cdcooper%TYPE --Codigo Cooperativa
@@ -4552,15 +4601,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                       ,pr_idastcjt  IN crapass.idastcjt%TYPE                   --> Indicador de Assinatura Conjunta
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE                   --> Codigo de Critica
                                       ,pr_dscritic OUT crapcri.dscritic%TYPE) IS               --> Descricao de Critica
-  
+
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_cria_trans_pend_credito
+    --  Sistema  : Procedimentos de criacao de transacao de crédito
+    --  Sigla    : CRED
+    --  Autor    : 
+    --  Data     :              .                   Ultima atualizacao: 17/04/2019
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Procedimentos de criacao de transacao de transferencia
+    --
+    -- Alteração : 17/04/2019 - Inclusão de log par mapeamentos de erros de atualização 
+    --                          da tabela tbepr_trans_pend
+    --                          INC0011323 - Ana Volles
+    --
+    ---------------------------------------------------------------------------------------------------------------
     -- Variáveis
-    vr_cdcritic crapcri.cdcritic%TYPE := 0;
-    vr_dscritic crapcri.dscritic%TYPE := '';
-    vr_exec_saida EXCEPTION;
-    vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
+    vr_cdcritic    crapcri.cdcritic%TYPE := 0;
+    vr_dscritic    crapcri.dscritic%TYPE := '';
+    vr_exec_saida  EXCEPTION;
+    vr_cdtranpe    tbgen_trans_pend.cdtransacao_pendente%TYPE;
     vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
+    --INC0011323
+    vr_dsparame    VARCHAR2(2000);
   BEGIN
-    
+    -- Inclui nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'INET0002.pc_cria_trans_pend_credito');
+
+    vr_dsparame := ' - pr_cdagenci:'||pr_cdagenci||', pr_nrdcaixa:'||pr_nrdcaixa
+                  ||', pr_cdoperad:'||pr_cdoperad||', pr_nmdatela:'||pr_nmdatela
+                  ||', pr_idorigem:'||pr_idorigem||', pr_idseqttl:'||pr_idseqttl
+                  ||', pr_nrcpfope:'||pr_nrcpfope||', pr_nrcpfrep:'||pr_nrcpfrep
+                  ||', pr_cdcoptfn:'||pr_cdcoptfn||', pr_cdagetfn:'||pr_cdagetfn
+                  ||', pr_nrterfin:'||pr_nrterfin||', pr_dtmvtolt:'||pr_dtmvtolt
+                  ||', pr_cdcooper:'||pr_cdcooper||', pr_nrdconta:'||pr_nrdconta
+                  ||', pr_vlemprst:'||pr_vlemprst||', pr_qtpreemp:'||pr_qtpreemp
+                  ||', pr_vlpreemp:'||pr_vlpreemp||', pr_dtdpagto:'||pr_dtdpagto
+                  ||', pr_percetop:'||pr_percetop||', pr_vlrtarif:'||pr_vlrtarif
+                  ||', pr_txmensal:'||pr_txmensal||', pr_vltariof:'||pr_vltariof
+                  ||', pr_vltaxiof:'||pr_vltaxiof||', pr_idastcjt:'||pr_idastcjt
+                  ||', pr_cdcritic:'||pr_cdcritic||', pr_dscritic:'||pr_dscritic;
+
     INET0002.pc_cria_transacao_operador(pr_cdagenci => pr_cdagenci
                                        ,pr_nrdcaixa => pr_nrdcaixa
                                        ,pr_cdoperad => pr_cdoperad
@@ -4580,10 +4665,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        ,pr_tab_crapavt => vr_tab_crapavt
                                        ,pr_cdtranpe => vr_cdtranpe
                                        ,pr_dscritic => vr_dscritic);
-                                         
+
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exec_saida;
     END IF;
+    -- Inclui nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'INET0002.pc_cria_trans_pend_credito');
 
     BEGIN
       INSERT INTO
@@ -4615,8 +4702,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           ,pr_vltaxiof);
     EXCEPTION
       WHEN OTHERS THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao incluir registro tbepr_trans_pend: ' || SQLERRM;
+        --Gravar tabela especifica de log - INC0011323
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+        vr_cdcritic := 1034;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbepr_trans_pend:'||
+        ' cdtransacao_pendente:'||vr_cdtranpe||
+        ', cdcooper:'||pr_cdcooper||
+        ', nrdconta:'||pr_nrdconta||
+        ', vlemprestimo:'||pr_vlemprst||
+        ', nrparcelas:'||pr_qtpreemp||
+        ', vlparcela:'||pr_vlpreemp||
+        ', dtprimeiro_vencto:'||pr_dtdpagto||
+        ', vlpercentual_cet:'||pr_percetop||
+        ', vltarifa:'||pr_vlrtarif||
+        ', vltaxa_mensal:'||pr_txmensal||
+        ', vliof:'||pr_vltariof||
+        ', vlpercentual_iof:'||pr_vltaxiof||
+        '. '||sqlerrm;
+
         RAISE vr_exec_saida;
     END;
     
@@ -4639,26 +4743,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
        RAISE vr_exec_saida;
     END IF;
+    -- Inclui nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'INET0002.pc_cria_trans_pend_credito');
 
     COMMIT;
+
+    -- Limpa nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
 
   EXCEPTION
     WHEN vr_exec_saida THEN
       pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic, vr_dscritic);
+
+      --Grava tabela de log - INC0011323
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-      ELSE	
-         pr_dscritic := vr_dscritic;
-      END IF;
+      -- Se chegar erro não tratado de outras chamadas desta procedure joga para 1124
+      IF pr_cdcritic = 9999 THEN
+        pr_cdcritic := 1224; -- Nao foi possivel efetuar o procedimento. Tente novamente ou contacte seu PA
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      END IF;            
         
       ROLLBACK;
 
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+      -- Erro
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'INET0002.pc_cria_trans_pend_credito. '||sqlerrm;
+
+      --Grava tabela de log - Ch REQ0011728
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_credito: '|| SQLERRM; 
+      pr_dscritic := gene0001.fn_busca_critica(1224);
+
       ROLLBACK; 
+      
   END pc_cria_trans_pend_credito;
+  
   -- Início Projeto 454 - SM 1 
   -- Procedure de criacao de transacao de resgate de cheque em custódia
   PROCEDURE pc_cria_trans_pend_resgate_cst(pr_cdcooper    IN tbtransf_trans_pend.cdcooper%TYPE --> Codigo da cooperativa
