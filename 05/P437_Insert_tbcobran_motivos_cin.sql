@@ -18,6 +18,5 @@ BEGIN
         COMMIT; 
       END;
   END;      
-END;D;      
 END;
 
