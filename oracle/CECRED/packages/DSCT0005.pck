@@ -2135,8 +2135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
       ---------------------------------------------------------------------------------------------------------------------*/
     
     -- Busca dos dados do associado
-    CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
-                     ,pr_nrdconta IN crapass.nrdconta%TYPE DEFAULT 0) IS
+    CURSOR cr_crapass IS
      SELECT crapass.cdcooper
            ,crapass.nrdconta
            ,crapass.inpessoa
@@ -2150,8 +2149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
         AND crapass.nrdconta = DECODE(pr_nrdconta,0,crapass.nrdconta,pr_nrdconta);
     rw_crapass cr_crapass%ROWTYPE;
   
-    CURSOR cr_crapbdt (pr_cdcooper IN crapbdt.cdcooper%type
-                      ,pr_nrborder IN crapbdt.nrborder%type) IS
+    CURSOR cr_crapbdt IS
       SELECT rowid
             ,crapbdt.txmensal
             ,crapbdt.flverbor
@@ -2164,13 +2162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
       AND   crapbdt.nrborder = pr_nrborder;
     rw_crapbdt cr_crapbdt%ROWTYPE;
   
-    CURSOR cr_craptdb(pr_cdcooper IN crapcop.cdcooper%TYPE
-                     ,pr_nrdconta IN craptdb.nrdconta%TYPE
-                     ,pr_nrborder IN craptdb.nrborder%TYPE
-                     ,pr_cdbandoc IN craptdb.cdbandoc%TYPE
-                     ,pr_nrdctabb IN craptdb.nrdctabb%TYPE
-                     ,pr_nrcnvcob IN craptdb.nrcnvcob%TYPE
-                     ,pr_nrdocmto IN craptdb.nrdocmto%TYPE) IS
+    CURSOR cr_craptdb IS
       SELECT ROWID,
              craptdb.nrdocmto,
              craptdb.dtvencto,
@@ -2201,7 +2193,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
     rw_craptdb cr_craptdb%ROWTYPE;
     
     -- Busca o lançamento do crédito do pagamento do título dentro da operação
-    CURSOR cr_lanc_bordero_cred_ope (pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS --> Data do movimento atual
+    CURSOR cr_lanc_bordero_cred_ope IS
                                     
       SELECT lbd.rowid,
              lbd.vllanmto
@@ -2212,7 +2204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
          AND lbd.cdbandoc = pr_cdbandoc
          AND lbd.nrdctabb = pr_nrdctabb
          AND lbd.nrcnvcob = pr_nrcnvcob
-         AND lbd.nrdconta = pr_nrdconta
+         AND lbd.dtmvtolt = pr_dtmvtolt
          AND lbd.nrdocmto = pr_nrdocmto
          AND lbd.cdhistor IN (DSCT0003.vr_cdhistordsct_pgtocompe, -- Compe
                               DSCT0003.vr_cdhistordsct_pgtocooper) -- Caixa/IB/TAA
@@ -2221,8 +2213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
     rw_lanc_bordero_cred_ope cr_lanc_bordero_cred_ope%ROWTYPE;
     
     -- Busca todos os lançamentos da operação que foram gerados pelo pagamento do título
-    CURSOR cr_lanc_bordero_cob (pr_dtmvtolt IN craplcm.dtmvtolt%TYPE --> Data do movimento atual
-                               ,pr_cdhistor IN craphis.cdhistor%TYPE --> Codigo do historico do lancamento
+    CURSOR cr_lanc_bordero_cob (pr_cdhistor IN craphis.cdhistor%TYPE --> Codigo do historico do lancamento
                                )IS
       SELECT lbd.rowid,
              lbd.vllanmto
@@ -2233,7 +2224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
          AND lbd.cdbandoc = pr_cdbandoc
          AND lbd.nrdctabb = pr_nrdctabb
          AND lbd.nrcnvcob = pr_nrcnvcob
-         AND lbd.nrdconta = pr_nrdconta
+         AND lbd.dtmvtolt = pr_dtmvtolt
          AND lbd.nrdocmto = pr_nrdocmto
          AND lbd.cdhistor = pr_cdhistor
          AND lbd.cdorigem IN (1,2,3,4); -- Ayllos/IB/TAA/Caixa On-Line;
@@ -2241,8 +2232,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
     rw_lanc_bordero_cob cr_lanc_bordero_cob%ROWTYPE;
     
     -- Busca todos os lançamentos da operação que foram gerados pelo pagamento através da conta do cooperado
-    CURSOR cr_lanc_bordero_cc (pr_dtmvtolt IN craplcm.dtmvtolt%TYPE --> Data do movimento atual
-                              ,pr_cdhistor IN craphis.cdhistor%TYPE --> Codigo do historico do lancamento
+    CURSOR cr_lanc_bordero_cc (pr_cdhistor IN craphis.cdhistor%TYPE --> Codigo do historico do lancamento
                               )IS
       SELECT lbd.rowid,
              lbd.vllanmto
@@ -2253,16 +2243,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
          AND lbd.cdbandoc = pr_cdbandoc
          AND lbd.nrdctabb = pr_nrdctabb
          AND lbd.nrcnvcob = pr_nrcnvcob
-         AND lbd.nrdconta = pr_nrdconta
+         AND lbd.dtmvtolt = pr_dtmvtolt
          AND lbd.nrdocmto = pr_nrdocmto
          AND lbd.cdhistor = pr_cdhistor
          AND lbd.cdorigem IN (7); -- Raspada
          
     rw_lanc_bordero_cc cr_lanc_bordero_cc%ROWTYPE;
     
-    CURSOR cr_craplcm (pr_dtmvtolt IN craplcm.dtmvtolt%TYPE 
-                      ,pr_cdagenci IN craplcm.cdagenci%TYPE
-                      ,pr_cdbccxlt IN craplcm.cdbccxlt%TYPE
+    CURSOR cr_craplcm (pr_cdbccxlt IN craplcm.cdbccxlt%TYPE
                       ,pr_cdhistor IN craplcm.cdhistor%TYPE
                       ) IS
       SELECT craplcm.rowid
@@ -2271,7 +2259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
       WHERE craplcm.cdcooper = pr_cdcooper
       AND   craplcm.nrdconta = pr_nrdconta
       AND   craplcm.dtmvtolt = pr_dtmvtolt
-      AND   craplcm.cdagenci = pr_cdagenci
+      AND   craplcm.cdpesqbb = 'Desconto de Título do Borderô ' || pr_nrborder
       AND   craplcm.cdbccxlt = pr_cdbccxlt
       AND   craplcm.cdhistor = pr_cdhistor
       AND   craplcm.nrdocmto = pr_nrdocmto;
@@ -2331,13 +2319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
   BEGIN
     
     -- Valida a existência do título
-    OPEN cr_craptdb (pr_cdcooper => pr_cdcooper
-                    ,pr_nrdconta => pr_nrdconta
-                    ,pr_nrborder => pr_nrborder
-                    ,pr_cdbandoc => pr_cdbandoc
-                    ,pr_nrdctabb => pr_nrdctabb
-                    ,pr_nrcnvcob => pr_nrcnvcob
-                    ,pr_nrdocmto => pr_nrdocmto);
+    OPEN cr_craptdb;
     FETCH cr_craptdb INTO rw_craptdb;
 
     IF cr_craptdb%NOTFOUND THEN
@@ -2349,8 +2331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
     CLOSE cr_craptdb;
 
     -- Valida existência do borderô do respectivo título
-    OPEN cr_crapbdt (pr_cdcooper => pr_cdcooper
-                    ,pr_nrborder => pr_nrborder);
+    OPEN cr_crapbdt;
     FETCH cr_crapbdt INTO rw_crapbdt;
 
     IF cr_crapbdt%NOTFOUND THEN
@@ -2362,129 +2343,164 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
     CLOSE cr_crapbdt;
     
     -- 1) Busca o valor do histórico de crédito do boleto dentro da operação
-    OPEN cr_lanc_bordero_cred_ope (pr_dtmvtolt => pr_dtmvtolt);
+    OPEN cr_lanc_bordero_cred_ope;
     FETCH cr_lanc_bordero_cred_ope INTO rw_lanc_bordero_cred_ope;
     
     IF cr_lanc_bordero_cred_ope%FOUND THEN
       -- Atribui valor do IOF complementar para atualizar os saldos no final do processo
       vr_vlpagtit := rw_lanc_bordero_cred_ope.vllanmto;
       
-      -- Exclui o registro da tabela de lançamentos do borderô
-      DELETE
-        FROM tbdsct_lancamento_bordero lbd
-       WHERE lbd.rowid = rw_lanc_bordero_cred_ope.rowid;
+      BEGIN
+        -- Exclui o registro da tabela de lançamentos do borderô
+        DELETE
+          FROM tbdsct_lancamento_bordero lbd
+         WHERE lbd.rowid = rw_lanc_bordero_cred_ope.rowid;
+       EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Nao foi possivel excluir o registro da tabela de lançamentos do borderô';
+            RAISE vr_exc_erro;
+        END;
        
     END IF;                          
     CLOSE cr_lanc_bordero_cred_ope;
      
     -- 2) Busca o valor do histórico de IOF lançado na operação
-    OPEN cr_lanc_bordero_cob (pr_dtmvtolt => pr_dtmvtolt,
-                         	    pr_cdhistor => DSCT0003.vr_cdhistordsct_iofcompleoper);
+    OPEN cr_lanc_bordero_cob (pr_cdhistor => DSCT0003.vr_cdhistordsct_iofcompleoper);
     FETCH cr_lanc_bordero_cob INTO rw_lanc_bordero_cob;
     
     IF cr_lanc_bordero_cob%FOUND THEN
       -- Atribui valor do IOF complementar para atualizar os saldos no final do processo
       vr_vliofcpl := rw_lanc_bordero_cob.vllanmto;
       
-      -- Exclui o registro da tabela de lançamentos do borderô
-      DELETE
-        FROM tbdsct_lancamento_bordero lbd
-       WHERE lbd.rowid = rw_lanc_bordero_cob.rowid;
+      BEGIN
+        -- Exclui o registro da tabela de lançamentos do borderô
+        DELETE
+          FROM tbdsct_lancamento_bordero lbd
+         WHERE lbd.rowid = rw_lanc_bordero_cob.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel excluir o registro da tabela de lançamentos do borderô';
+          RAISE vr_exc_erro;
+      END;
        
     END IF;                          
     CLOSE cr_lanc_bordero_cob;   
     
     
     -- 3) Busca o valor de apropriação de multa lançado na operação
-    OPEN cr_lanc_bordero_cob (pr_dtmvtolt => pr_dtmvtolt,
-                         	    pr_cdhistor => DSCT0003.vr_cdhistordsct_apropjurmta);
+    OPEN cr_lanc_bordero_cob (pr_cdhistor => DSCT0003.vr_cdhistordsct_apropjurmta);
     FETCH cr_lanc_bordero_cob INTO rw_lanc_bordero_cob;
     
     IF cr_lanc_bordero_cob%FOUND THEN
       -- Atribui valor da multa para atualizar os saldos no final do processo
       vr_vlmtatit := rw_lanc_bordero_cob.vllanmto;
       
-      -- Exclui o registro da tabela de lançamentos do borderô
-      DELETE
-        FROM tbdsct_lancamento_bordero lbd
-       WHERE lbd.rowid = rw_lanc_bordero_cob.rowid;
+      BEGIN
+        -- Exclui o registro da tabela de lançamentos do borderô
+        DELETE
+          FROM tbdsct_lancamento_bordero lbd
+         WHERE lbd.rowid = rw_lanc_bordero_cob.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel excluir o registro da tabela de lançamentos do borderô';
+          RAISE vr_exc_erro;
+      END;
        
     END IF;                          
     CLOSE cr_lanc_bordero_cob; 
     
     -- 4) Busca o valor de apropriação de juros lançado na operação
-    OPEN cr_lanc_bordero_cob (pr_dtmvtolt => pr_dtmvtolt,
-                         	    pr_cdhistor => DSCT0003.vr_cdhistordsct_apropjurmra);
+    OPEN cr_lanc_bordero_cob (pr_cdhistor => DSCT0003.vr_cdhistordsct_apropjurmra);
     FETCH cr_lanc_bordero_cob INTO rw_lanc_bordero_cob;
     
     IF cr_lanc_bordero_cob%FOUND THEN
       -- Atribui valor dos juros de mora para atualizar os saldos no final do processo
       vr_vlmratit := rw_lanc_bordero_cob.vllanmto;
       
-      -- Exclui o registro da tabela de lançamentos do borderô
-      DELETE
-        FROM tbdsct_lancamento_bordero lbd
-       WHERE lbd.rowid = rw_lanc_bordero_cob.rowid;
-       
+      BEGIN
+        -- Exclui o registro da tabela de lançamentos do borderô
+        DELETE
+          FROM tbdsct_lancamento_bordero lbd
+         WHERE lbd.rowid = rw_lanc_bordero_cob.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel excluir o registro da tabela de lançamentos do borderô';
+          RAISE vr_exc_erro;
+      END;
     END IF;                          
     CLOSE cr_lanc_bordero_cob; 
     
     -- 5) Busca o valor de ajuste de pagamento a maior
-    OPEN cr_lanc_bordero_cob (pr_dtmvtolt => pr_dtmvtolt,
-                         	    pr_cdhistor => DSCT0003.vr_cdhistordsct_deboppagmaior);
+    OPEN cr_lanc_bordero_cob (pr_cdhistor => DSCT0003.vr_cdhistordsct_deboppagmaior);
     FETCH cr_lanc_bordero_cob INTO rw_lanc_bordero_cob;
     
     IF cr_lanc_bordero_cob%FOUND THEN
       
       vr_vlpagmaior := rw_lanc_bordero_cob.vllanmto;
     
-      -- Exclui o registro da tabela de lançamentos do borderô
-      DELETE
-        FROM tbdsct_lancamento_bordero lbd
-       WHERE lbd.rowid = rw_lanc_bordero_cob.rowid;
-       
+      BEGIN
+        -- Exclui o registro da tabela de lançamentos do borderô
+        DELETE
+          FROM tbdsct_lancamento_bordero lbd
+         WHERE lbd.rowid = rw_lanc_bordero_cob.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel excluir o registro da tabela de lançamentos do borderô';
+          RAISE vr_exc_erro;
+      END;
     END IF;                          
     CLOSE cr_lanc_bordero_cob;
     
     -- 6) Busca o valor de crédito na conta do cooperado no caso de pagamento a maior
-    OPEN cr_craplcm (pr_dtmvtolt => pr_dtmvtolt
-                    ,pr_cdagenci => 1
-                    ,pr_cdbccxlt => 100
+    OPEN cr_craplcm (pr_cdbccxlt => 100
                     ,pr_cdhistor => DSCT0003.vr_cdhistordsct_credpagmaior
                     );
     FETCH cr_craplcm INTO rw_craplcm;
     
     IF cr_craplcm%FOUND THEN
-      
-      -- Exclui o registro da tabela de lançamentos do borderô
-      DELETE
-        FROM craplcm lcm
-       WHERE lcm.rowid = rw_craplcm.rowid;
+      BEGIN
+        -- Exclui o registro da tabela de lançamentos do borderô
+        DELETE
+          FROM craplcm lcm
+         WHERE lcm.rowid = rw_craplcm.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel excluir o registro da tabela de lançamentos do borderô';
+          RAISE vr_exc_erro;
+      END;
        
     END IF;                          
     CLOSE cr_craplcm;
     
     -- 7) Busca o valor de crédito na conta do cooperado no caso de devolução por pagamento antecipado
-    OPEN cr_craplcm (pr_dtmvtolt => pr_dtmvtolt
-                    ,pr_cdagenci => 1
-                    ,pr_cdbccxlt => 100
+    OPEN cr_craplcm (pr_cdbccxlt => 100
                     ,pr_cdhistor => DSCT0003.vr_cdhistordsct_rendapgtoant
                     );
     FETCH cr_craplcm INTO rw_craplcm;
     
     IF cr_craplcm%FOUND THEN
-      
-      -- Exclui o registro da tabela de lançamentos do borderô
-      DELETE
-        FROM craplcm lcm
-       WHERE lcm.rowid = rw_craplcm.rowid;
-       
+      BEGIN
+        -- Exclui o registro da tabela de lançamentos do borderô
+        DELETE
+          FROM craplcm lcm
+         WHERE lcm.rowid = rw_craplcm.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel excluir o valor de crédito na conta do cooperado';
+          RAISE vr_exc_erro;
+      END;
     END IF;                          
     CLOSE cr_craplcm;
     
     -- busca os dados do associado/cooperado para só então encontrar seus dados na tabela de parâmetros
-    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
-                    pr_nrdconta => pr_nrdconta);
+    OPEN cr_crapass;
     FETCH cr_crapass INTO rw_crapass;
     CLOSE cr_crapass;
     
@@ -2509,31 +2525,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
       -- Busca todas as raspadas que podem ter ocorrido entre o pagamento e o estorno do mesmo
       
       -- Lançamentos na operação
-      FOR rw_lanc_bordero_cc IN cr_lanc_bordero_cc (pr_dtmvtolt => pr_dtmvtolt,
-                                                    pr_cdhistor => DSCT0003.vr_cdhistordsct_pgtoopc) LOOP
+      FOR rw_lanc_bordero_cc IN cr_lanc_bordero_cc (pr_cdhistor => DSCT0003.vr_cdhistordsct_pgtoopc) LOOP
       
         -- Acumula os valores                                              
         vr_vlpgtocc := vr_vlpgtocc + rw_lanc_bordero_cc.vllanmto;
-        
-        -- Exclui o registro da tabela de lançamentos do borderô
-        DELETE
-          FROM tbdsct_lancamento_bordero lbd
-         WHERE lbd.rowid = rw_lanc_bordero_cc.rowid;
-        
+        BEGIN
+          -- Exclui o registro da tabela de lançamentos do borderô
+          DELETE
+            FROM tbdsct_lancamento_bordero lbd
+           WHERE lbd.rowid = rw_lanc_bordero_cc.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Nao foi possivel excluir o registro da tabela de lançamentos do borderô';
+            RAISE vr_exc_erro;
+        END;
       
       END LOOP;
       
       -- Lançamentos na conta-corrente do cooperado
-      FOR rw_craplcm IN cr_craplcm (pr_dtmvtolt => pr_dtmvtolt
-                                   ,pr_cdagenci => 1
-                                   ,pr_cdbccxlt => 100
+      FOR rw_craplcm IN cr_craplcm (pr_cdbccxlt => 100
                                    ,pr_cdhistor => DSCT0003.vr_cdhistordsct_pgtocc
                                    ) LOOP
-      
-        -- Exclui o registro da tabela de lançamentos do borderô
-        DELETE
-          FROM craplcm lcm
-         WHERE lcm.rowid = rw_craplcm.rowid;
+        BEGIN
+          -- Exclui o registro da tabela de lançamentos do borderô
+          DELETE
+            FROM craplcm lcm
+           WHERE lcm.rowid = rw_craplcm.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Nao foi possivel excluir os lançamentos na conta-corrente do cooperado';
+            RAISE vr_exc_erro;
+        END;
       
       END LOOP;
     END IF;
@@ -2574,32 +2598,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
       FETCH cr_craplcm_tarifa INTO rw_craplcm_tarifa;
       
       IF cr_craplcm_tarifa%FOUND THEN
-        
-        -- Exclui o registro da tabela de lançamentos do borderô
-        DELETE
-          FROM craplcm lcm
-         WHERE lcm.rowid = rw_craplcm_tarifa.rowid;
+        BEGIN
+          -- Exclui o registro da tabela de lançamentos do borderô
+          DELETE
+            FROM craplcm lcm
+           WHERE lcm.rowid = rw_craplcm_tarifa.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Nao foi possivel excluir os lançamentos na conta-corrente do cooperado';
+            RAISE vr_exc_erro;
+        END;
          
       END IF;                          
       CLOSE cr_craplcm_tarifa;
       
     END IF;  
-    
-    -- Atualiza os saldos das tabela
-    UPDATE craptdb tdb
-       SET tdb.vlsldtit = tdb.vlsldtit + NVL(vr_vlpgtocc,0) + (NVL(vr_vlpagtit,0) - NVL(vr_vliofcpl,0) - NVL(vr_vlmratit,0) - NVL(vr_vlmtatit,0) - NVL(vr_vlpagmaior,0)),
-           tdb.vlpagmta = tdb.vlpagmta - NVL(vr_vlmtatit,0),
-           tdb.vlpagmra = tdb.vlpagmra - NVL(vr_vlmratit,0),
-           tdb.vlpagiof = tdb.vlpagiof - NVL(vr_vliofcpl,0),
-           tdb.dtdebito = NULL,
-           tdb.dtdpagto = NULL,
-           tdb.insittit = 4
-     WHERE tdb.rowid = rw_craptdb.rowid;
-    
-    -- Atualiza a situação do borderô
-    UPDATE crapbdt bdt
-       SET bdt.insitbdt = 3
-     WHERE bdt.rowid = rw_crapbdt.rowid;
+    BEGIN
+      -- Atualiza os saldos das tabela
+      UPDATE craptdb tdb
+         SET tdb.vlsldtit = tdb.vlsldtit + NVL(vr_vlpgtocc,0) + (NVL(vr_vlpagtit,0) - NVL(vr_vliofcpl,0) - NVL(vr_vlmratit,0) - NVL(vr_vlmtatit,0) - NVL(vr_vlpagmaior,0)),
+             tdb.vlpagmta = tdb.vlpagmta - NVL(vr_vlmtatit,0),
+             tdb.vlpagmra = tdb.vlpagmra - NVL(vr_vlmratit,0),
+             tdb.vlpagiof = tdb.vlpagiof - NVL(vr_vliofcpl,0),
+             tdb.dtdebito = NULL,
+             tdb.dtdpagto = NULL,
+             tdb.insittit = 4
+       WHERE tdb.rowid = rw_craptdb.rowid;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Nao foi possivel atualizar os saldos das tabela';
+        RAISE vr_exc_erro;
+    END;
+    BEGIN
+      -- Atualiza a situação do borderô
+      UPDATE crapbdt bdt
+         SET bdt.insitbdt = 3
+       WHERE bdt.rowid = rw_crapbdt.rowid;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Nao foi possivel atualizar a situação do borderô';
+        RAISE vr_exc_erro;
+    END;
        
     -- Realiza o registro do histórico de estorno
     pc_insere_estorno(pr_cdcooper => pr_cdcooper
@@ -2615,13 +2657,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0005 AS
                      ,pr_dscritic  => vr_dscritic
                      );
                      
-    IF TRIM(pr_dscritic) IS NOT NULL THEN
-      vr_cdcritic := 0;
-      vr_dscritic := pr_dscritic;
+    IF NVL(vr_cdcritic,0) > 0 OR  TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;   
-    
   EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Erro geral na rotina DSCT0005.pc_realiza_estorno_cob: ' || SQLERRM;
