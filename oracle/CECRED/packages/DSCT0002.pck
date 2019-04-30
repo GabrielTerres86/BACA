@@ -2447,19 +2447,30 @@ END fn_letra_risco;
              bdt.flgdigit,
              bdt.cdopcolb,
              bdt.cdopcoan,
-             DSCT0003.fn_retorna_rating(bdt.nrinrisc) AS dsinrisc ,
+             DSCT0003.fn_retorna_rating(bdt.nrinrisc) AS dsinrisc,
              bdt.qtdirisc,
              bdt.inprejuz,
              bdt.dtliqprj,
              bdt.flverbor,
-             (SELECT COUNT(1) FROM craptdb tdb WHERE tdb.cdcooper = bdt.cdcooper AND tdb.nrdconta = bdt.nrdconta AND tdb.nrborder = bdt.nrborder AND tdb.insitapr <> 2) as qttitulo,
-             (SELECT SUM(vltitulo) FROM craptdb tdb WHERE tdb.cdcooper = bdt.cdcooper AND tdb.nrdconta = bdt.nrdconta AND tdb.nrborder = bdt.nrborder AND tdb.insitapr <> 2) as vltitulo
+             (SELECT COUNT(1)
+                FROM craptdb tdb
+               WHERE tdb.cdcooper = bdt.cdcooper
+                 AND tdb.nrdconta = bdt.nrdconta
+                 AND tdb.nrborder = bdt.nrborder
+                 AND tdb.insitapr <> 2) AS qttitulo,
+             (SELECT SUM(vltitulo)
+                FROM craptdb tdb
+               WHERE tdb.cdcooper = bdt.cdcooper
+                 AND tdb.nrdconta = bdt.nrdconta
+                 AND tdb.nrborder = bdt.nrborder
+                 AND tdb.insitapr <> 2) AS vltitulo
         FROM crapbdt bdt
-        LEFT JOIN crapris ris ON ris.cdcooper = bdt.cdcooper 
-                             AND ris.nrdconta = bdt.nrdconta 
-                             AND bdt.nrborder = ris.nrctremp 
-                             AND ris.cdmodali = 301 
-                             AND ris.dtrefere = pr_dtmvtoan
+        LEFT JOIN crapris ris
+          ON ris.cdcooper = bdt.cdcooper
+         AND ris.nrdconta = bdt.nrdconta
+         AND bdt.nrborder = ris.nrctremp
+         AND ris.cdmodali = 301
+         AND ris.dtrefere = pr_dtmvtoan
        WHERE bdt.cdcooper = pr_cdcooper
          AND bdt.nrborder = pr_nrborder;
     rw_crapbdt  cr_crapbdt%ROWTYPE;
@@ -2866,479 +2877,7 @@ END fn_letra_risco;
                                       
   END pc_busca_dados_bordero_web;                                 
   
-  --> Rotina para Carregar dados para a impressao da proposta de bordero
-  PROCEDURE pc_carrega_proposta_bordero ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
-                                         ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
-                                         ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
-                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
-                                         ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta                                         
-                                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
-                                         ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE  --> Data do proximo movimento
-                                         ,pr_idorigem IN INTEGER                --> Identificador de Origem
-                                         ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Identificador do titular
-                                         ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da terla
-                                         ,pr_inproces IN crapdat.inproces%TYPE  --> Indicador do processp
-                                         ,pr_telefone IN VARCHAR2               --> Numero do telefone
-                                         ,pr_dsdeben1 IN VARCHAR2               --> 
-                                         ,pr_vlsalari IN NUMBER                 --> Valor salario
-                                         ,pr_vlsalcon IN NUMBER                 --> Valor salario
-                                         ,pr_vloutras IN NUMBER                 --> valor Outros
-                                         ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Numero do contrato de limite
-                                         ,pr_nrborder IN crapbdt.nrborder%TYPE  --> Numero do bordero
-                                         ,pr_vllimpro IN NUMBER                 --> Valor de limite
-                                         ,pr_dsobserv IN VARCHAR2               --> Descrição de observação
-                                         ,pr_vlslddsc IN NUMBER                 --> Valor de saldo desconto
-                                         ,pr_qtdscsld IN INTEGER                --> Quantidade de saldo de desconto
-                                         ,pr_vlmaxdsc IN NUMBER                 --> Valor maximo de desconto
-                                         ,pr_vllimdsc IN NUMBER                 --> Valor limite de desconto
-                                         ,pr_vllimchq IN NUMBER                 --> Valor limite de cheque
-                                         ,pr_nmempres IN VARCHAR2               --> Nome empresa
-                                         ,pr_nmextcop IN crapcop.nmextcop%TYPE  --> Nome extenso da cooperativa
-                                         ,pr_dsramati IN VARCHAR2               -->
-                                         ,pr_qtdbolet IN VARCHAR2               --> Quantidade de boletos
-                                         ,pr_vlmedbol IN NUMBER                 --> Valor media de boleto
-                                         ,pr_nrmespsq IN INTEGER                --> Numero de meses para pequisa
-                                         ,pr_vlfatura IN NUMBER                 --> Valor da fatura
-                                         ,pr_dsmesref IN VARCHAR2               --> Descrição mês de referencia
-                                         ,pr_nmrescop IN crapcop.nmrescop%TYPE  --> Nome resumido da cooperativa
-                                         ,pr_nmcidade IN crapcop.nmcidade%TYPE  --> Nome da cidade
-                                         ,pr_nmoperad IN crapope.nmoperad%TYPE  --> Nome do operador
-                                         --------> OUT <--------                                   
-                                         ,pr_tab_dados_border OUT typ_tab_dados_border --> retorna dados do bordero
-                                         ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                                         ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
-    /* .........................................................................
-    --
-    --  Programa : pc_carrega_proposta_bordero           Antigo: b1wgen0030.p/carrega_dados_proposta_bordero
-    --  Sistema  : Cred
-    --  Sigla    : DSCT0002
-    --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Agosto/2016.                   Ultima atualizacao: 29/08/2016
-    --
-    --  Dados referentes ao programa:
-    --
-    --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Rotina para Carregar dados para a impressao da proposta de bordero
-    --
-    --   Alteração : 29/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
-    -- .........................................................................*/
-    
-    ---------->>> CURSORES <<<---------- 
-    
-    --> Buscar dados associado
-    CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
-                       pr_nrdconta crapass.nrdconta%TYPE )IS
-      SELECT ass.nrcpfcgc,
-             ass.nmprimtl,
-             ass.cdagenci,
-             ass.inpessoa,
-             ass.nrdconta,
-             ass.nrdocptl,
-             ass.idorgexp,
-             ass.tpdocptl,
-             ass.cdufdptl
-             
-        FROM crapass ass
-       WHERE ass.cdcooper = pr_cdcooper
-         AND ass.nrdconta = pr_nrdconta;
-    rw_crapass cr_crapass%ROWTYPE;    
-    
-    --> Buscar Dados agencia
-    CURSOR cr_crapage(pr_cdcooper crapage.cdcooper%TYPE,
-                      pr_cdagenci crapage.cdagenci%TYPE) IS
-      SELECT age.nmcidade,
-             age.nmresage
-        FROM crapage age
-       WHERE age.cdcooper = pr_cdcooper
-         AND age.cdagenci = pr_cdagenci;
-    --rw_crapage cr_crapage%ROWTYPE;
-    
-    --Tipo de registro do tipo data
-    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
-    
-    ---------->>> TEMPTABLE <<<---------
-    -- TempTables para APLI0001.pc_consulta_poupanca
-    vr_tab_conta_bloq  APLI0001.typ_tab_ctablq;
-    vr_tab_craplpp     APLI0001.typ_tab_craplpp;
-    vr_tab_craplrg     APLI0001.typ_tab_craplpp;
-    vr_tab_resgate     APLI0001.typ_tab_resgate;
-    vr_tab_dados_rpp   APLI0001.typ_tab_dados_rpp;
-    vr_tab_saldo_rdca  APLI0001.typ_tab_saldo_rdca;
-    vr_tab_cartoes     CADA0004.typ_tab_cartoes;
-    vr_tab_cabec       CADA0004.typ_tab_cabec;
-    vr_tab_medias      EXTR0001.typ_tab_medias;
-    vr_tab_comp_medias EXTR0001.typ_tab_comp_medias;
-    vr_tab_dados_epr   EMPR0001.typ_tab_dados_epr;
-    
-    vr_idxcmpmd        PLS_INTEGER;
-    vr_idxcabec        PLS_INTEGER;
-    ----------->>> VARIAVEIS <<<--------   
-    -- Variável de críticas
-    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
-    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro    
-    vr_des_reto        VARCHAR2(1000);        --> Desc. Erro    
-    vr_tab_erro        gene0001.typ_tab_erro;
-    
-    -- Tratamento de erros
-    vr_exc_erro        EXCEPTION;
-    
-    vr_percenir        NUMBER;
-    vr_rel_dsagenci    VARCHAR2(100);                   
-    vr_rel_cdagenci    VARCHAR2(100);
-    vr_vlsldtot        NUMBER;
-    vr_vlsldrgt        NUMBER;
-    vr_vlsdrdpp        NUMBER;
-    vr_rel_vlaplica    NUMBER;
-    vr_flgativo        INTEGER  := 0;
-    vr_flgocorr        INTEGER  := 0;
-    vr_nrctrhcj        NUMBER   := 0;
-    vr_flgliber        INTEGER  := 0;
-    vr_vltotccr        NUMBER   := 0;
-    vr_dstipcta        VARCHAR2(100);
-    vr_dssitdct        VARCHAR2(100);
-    vr_vlsmdtri        NUMBER;
-    
-    vr_dstextab_digitaliza craptab.dstextab%TYPE;
-    vr_dstextab_parempctl  craptab.dstextab%TYPE;
-    vr_dstextab            craptab.dstextab%TYPE;    
-    vr_inusatab            BOOLEAN;
-    vr_qtregist            INTEGER;
-    
-    
-  BEGIN
-    vr_dscritic := 'Conversao nao concluida.';
-    RAISE vr_exc_erro;
-    /*
-    --Verificar se a data existe
-    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-    -- Se não encontrar
-    IF BTCH0001.cr_crapdat%NOTFOUND THEN
-      CLOSE BTCH0001.cr_crapdat;
-      vr_cdcritic := 1;
-      RAISE vr_exc_erro;
-    ELSE
-      CLOSE BTCH0001.cr_crapdat;
-    END IF;
-    
-    --> Buscar cooperado
-    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
-                    pr_nrdconta => pr_nrdconta);
-    FETCH cr_crapass INTO rw_crapass;
-    IF cr_crapass%NOTFOUND THEN 
-      CLOSE cr_crapass;
-      vr_cdcritic := 9; -- 009 - Associado nao cadastrado.
-      RAISE vr_exc_erro;
-    ELSE
-      CLOSE cr_crapass;
-    END IF;  
-  
-    --> Buscar Dados agencia
-    OPEN cr_crapage(pr_cdcooper => pr_cdcooper ,
-                    pr_cdagenci => rw_crapass.cdagenci);
-    FETCH cr_crapage INTO rw_crapage;
-    CLOSE cr_crapage;
-    
-    vr_rel_dsagenci := to_char(rw_crapass.cdagenci,'fm000')||' - '||
-                       nvl(rw_crapage.nmresage,'NAO CADASTRADO');
-    vr_rel_cdagenci := rw_crapass.cdagenci;
-    
-    --> Saldo das aplicacoes    
-    vr_vlsldtot := 0;
-    
-    APLI0002.pc_obtem_dados_aplicacoes (pr_cdcooper       => pr_cdcooper --> Codigo Cooperativa
-                                       ,pr_cdagenci       => pr_cdagenci --> Codigo Agencia
-                                       ,pr_nrdcaixa       => 1           --> Numero do Caixa
-                                       ,pr_cdoperad       => 1           --> Codigo do Operador
-                                       ,pr_nmdatela       => pr_nmdatela --> Nome da Tela
-                                       ,pr_idorigem       => 1           --> Origem
-                                       ,pr_nrdconta       => pr_nrdconta --> Número da Conta
-                                       ,pr_idseqttl       => 1           --> Sequencia do Titular
-                                       ,pr_nraplica       => 0           --> Número da Aplicação
-                                       ,pr_cdprogra       => pr_nmdatela --> Codigo do Programa
-                                       ,pr_flgerlog       => 0           --> Gerar Log (0-False / 1-True)
-                                       ,pr_dtiniper       => NULL        --> Data de Inicio
-                                       ,pr_dtfimper       => NULL        --> Data de Termino
-                                       ,pr_vlsldapl       => vr_rel_vlaplica   --> Valor do saldo aplicado                             
-                                       ,pr_tab_saldo_rdca => vr_tab_saldo_rdca --> Tabela de Saldo do RDCA 
-                                       ,pr_des_reto       => vr_des_reto       --> Retorno OK ou NOK
-                                       ,pr_tab_erro       => vr_tab_erro);     --> Tabela de Erros
-    --Se retornou erro
-    IF vr_des_reto = 'NOK' THEN
-      --Se possuir erro na temp-table
-      IF vr_tab_erro.COUNT > 0 THEN
-          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-      ELSE
-          vr_dscritic := 'Nao foi possivel carregar o aplicacoes.';      
-      END IF; 
-      
-      -- Limpar tabela de erros
-      vr_tab_erro.DELETE;
-      
-      RAISE vr_exc_erro;
-    END IF; 
-    
-    --> Buscar saldo das aplicacoes
-    APLI0005.pc_busca_saldo_aplicacoes(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
-                                      ,pr_cdoperad => '1'           --> Código do Operador
-                                      ,pr_nmdatela => pr_nmdatela   --> Nome da Tela
-                                      ,pr_idorigem => 1             --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
-                                      ,pr_nrdconta => pr_nrdconta   --> Número da Conta
-                                      ,pr_idseqttl => 1             --> Titular da Conta
-                                      ,pr_nraplica => 0             --> Número da Aplicação / Parâmetro Opcional
-                                      ,pr_dtmvtolt => pr_dtmvtolt   --> Data de Movimento
-                                      ,pr_cdprodut => 0             --> Código do Produto -–> Parâmetro Opcional
-                                      ,pr_idblqrgt => 1             --> Identificador de Bloqueio de Resgate (1 – Todas / 2 – Bloqueadas / 3 – Desbloqueadas)
-                                      ,pr_idgerlog => 0             --> Identificador de Log (0 – Não / 1 – Sim)
-                                      ,pr_vlsldtot => vr_vlsldtot   --> Saldo Total da Aplicação
-                                      ,pr_vlsldrgt => vr_vlsldrgt   --> Saldo Total para Resgate
-                                      ,pr_cdcritic => vr_cdcritic   --> Código da crítica
-                                      ,pr_dscritic => vr_dscritic); --> Descrição da crítica
-																						
-    IF nvl(vr_cdcritic,0) <> 0 OR 
-       TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF; 
-    
-    vr_rel_vlaplica := nvl(vr_vlsldrgt,0) + nvl(vr_rel_vlaplica,0);
-    
-    -- Foi identificado que as PL TABLES vr_tab_conta_bloq, vr_tab_craplpp, vr_tab_craplrg, vr_tab_resgate
-    -- nao sao utilizadas para calcular o valor do saldo de poupanca programada (vr_vlsldppr) que eh o unico 
-    -- campo carregado pelo programa
-    -- As informacoes da PL TABLE vr_tab_dados_rpp nao sao enviados para o programa
-    -- por esse motivo as PL TABLES vr_tab_conta_bloq, vr_tab_craplpp, vr_tab_craplrg, vr_tab_resgate 
-    -- e por questao de performace elas nao serao carregadas
-    
-    -- Calculo do IR
-    vr_percenir:= GENE0002.fn_char_para_number(TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                                 ,pr_nmsistem => 'CRED'
-                                                 ,pr_tptabela => 'CONFIG'
-                                                 ,pr_cdempres => 0
-                                                 ,pr_cdacesso => 'PERCIRAPLI'
-                                                 ,pr_tpregist => 0));
-                                                     
 
-    --Executar rotina consulta poupanca
-    apli0001.pc_consulta_poupanca (pr_cdcooper => pr_cdcooper            --> Cooperativa 
-                                  ,pr_cdagenci => pr_cdagenci            --> Codigo da Agencia
-                                  ,pr_nrdcaixa => pr_nrdcaixa            --> Numero do caixa 
-                                  ,pr_cdoperad => pr_cdoperad            --> Codigo do Operador
-                                  ,pr_idorigem => pr_idorigem            --> Identificador da Origem
-                                  ,pr_nrdconta => pr_nrdconta            --> Nro da conta associado
-                                  ,pr_idseqttl => pr_idseqttl            --> Identificador Sequencial
-                                  ,pr_nrctrrpp => 0                      --> Contrato Poupanca Programada 
-                                  ,pr_dtmvtolt => pr_dtmvtolt            --> Data do movimento atual
-                                  ,pr_dtmvtopr => pr_dtmvtopr            --> Data do proximo movimento
-                                  ,pr_inproces => pr_inproces            --> Indicador de processo
-                                  ,pr_cdprogra => pr_nmdatela            --> Nome do programa chamador
-                                  ,pr_flgerlog => FALSE                  --> Flag erro log
-                                  ,pr_percenir => vr_percenir            --> % IR para Calculo Poupanca
-                                  ,pr_tab_craptab => vr_tab_conta_bloq   --> Tipo de tabela de Conta Bloqueada
-                                  ,pr_tab_craplpp => vr_tab_craplpp      --> Tipo de tabela com lancamento poupanca
-                                  ,pr_tab_craplrg => vr_tab_craplrg      --> Tipo de tabela com resgates
-                                  ,pr_tab_resgate => vr_tab_resgate      --> Tabela com valores dos resgates das contas por aplicacao
-                                  ,pr_vlsldrpp    => vr_vlsdrdpp         --> Valor saldo poupanca programada
-                                  ,pr_retorno     => vr_des_reto         --> Descricao de erro ou sucesso OK/NOK 
-                                  ,pr_tab_dados_rpp => vr_tab_dados_rpp  --> Poupancas Programadas
-                                  ,pr_tab_erro      => vr_tab_erro);     --> Saida com erros;
-    --Se retornou erro
-    IF vr_des_reto = 'NOK' THEN
-      -- Extrair o codigo e critica de erro da tabela de erro
-      vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
-      vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
-      
-      -- Limpar tabela de erros
-      vr_tab_erro.DELETE;
-      
-      RAISE vr_exc_erro;      
-    END IF;
-    
-    vr_rel_vlaplica := nvl(vr_rel_vlaplica,0) + nvl(vr_vlsdrdpp,0);
-    
-    --> Procedure para listar cartoes do cooperado                    
-    CADA0004.pc_lista_cartoes( pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
-                              ,pr_cdagenci => pr_cdagenci --> Codigo de agencia
-                              ,pr_nrdcaixa => pr_nrdcaixa --> Numero do caixa
-                              ,pr_cdoperad => pr_cdoperad --> Codigo do operador
-                              ,pr_nrdconta => pr_nrdconta --> Numero da conta
-                              ,pr_idorigem => pr_idorigem --> Identificado de oriem
-                              ,pr_idseqttl => pr_idseqttl --> sequencial do titular
-                              ,pr_nmdatela => pr_nmdatela --> Nome da tela
-                              ,pr_flgerlog => 'N'         --> identificador se deve gerar log S-Sim e N-Nao
-                              ,pr_dtmvtolt => pr_dtmvtolt --> Data da cooperativa
-                              ------ OUT ------
-                              ,pr_flgativo     => vr_flgativo          --> Retorna situação 1-ativo 2-inativo
-                              ,pr_nrctrhcj     => vr_nrctrhcj          --> Retorna numero do contrato
-                              ,pr_flgliber     => vr_flgliber          --> Retorna se esta liberado 1-sim 2-nao
-                              ,pr_vltotccr     => vr_vltotccr          --> retorna total de limite do cartao 
-                              ,pr_tab_cartoes  => vr_tab_cartoes   --> retorna temptable com os dados dos convenios
-                              ,pr_des_reto     => vr_des_reto                    --> OK ou NOK
-                              ,pr_tab_erro     => vr_tab_erro);
-    
-    -- Se houve retorno não Ok
-    IF vr_des_reto = 'NOK' THEN
-      -- Retornar a mensagem de erro
-      vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-      vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-
-      -- Limpar tabela de erros
-      vr_tab_erro.DELETE;
-
-      RAISE vr_exc_erro;
-    END IF;
-    
-    CADA0004.pc_obtem_cabecalho_atenda ( pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
-                                        ,pr_cdagenci => pr_cdagenci --> Codigo de agencia
-                                        ,pr_nrdcaixa => pr_nrdcaixa --> Numero do caixa
-                                        ,pr_cdoperad => pr_cdoperad --> Codigo do operador
-                                        ,pr_nrdconta => pr_nrdconta --> Numero da conta
-                                        ,pr_nrdctitg => NULL        --> Numero da conta itg
-                                        ,pr_dtinicio => pr_dtmvtolt --> Data de incio
-                                        ,pr_dtdfinal => pr_dtmvtolt --> data final
-                                        ,pr_idorigem => pr_idorigem --> Identificado de oriem
-                                        ---------- OUT --------
-                                        ,pr_tab_cabec=> vr_tab_cabec --> Retorna dados do cabecalho da tela ATENDA
-                                        ,pr_des_reto => vr_des_reto  --> OK ou NOK
-                                        ,pr_tab_erro => vr_tab_erro);--> Temptable de erros
-    
-    IF vr_des_reto = 'NOK' THEN
-      -- Retornar a mensagem de erro
-      vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-      vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-
-      -- Limpar tabela de erros
-      vr_tab_erro.DELETE;
-
-      RAISE vr_exc_erro;      
-    END IF;
-    
-    --> Rotina para carregar as medias dos cooperados
-    EXTR0001.pc_carrega_medias (pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
-                               ,pr_cdagenci => pr_cdagenci   --> Código da agencia
-                               ,pr_nrdcaixa => pr_nrdcaixa   --> Numero do caixa do operador
-                               ,pr_cdoperad => pr_cdoperad   --> Código do Operador
-                               ,pr_nrdconta => pr_nrdconta   --> Número da Conta
-                               ,pr_dtmvtolt => pr_dtmvtolt   --> Data de Movimento
-                               ,pr_idorigem => pr_idorigem   --> Identificador de Origem                               
-                               ,pr_idseqttl => pr_idseqttl   --> Sequencial do titular
-                               ,pr_nmdatela => pr_nmdatela   --> Nome da Tela
-                               ,pr_flgerlog => 0             --> Indicador se deve gerar log(0-nao, 1-sim)
-                               --------> OUT <--------                                   
-                               ,pr_tab_medias      => vr_tab_medias      --> Retornar valores das medias
-                               ,pr_tab_comp_medias => vr_tab_comp_medias --> Retorna complemento medias
-                               ,pr_cdcritic        => vr_cdcritic        --> Código da crítica
-                               ,pr_dscritic        => vr_dscritic);      --> Descrição da crítica
-    
-    IF nvl(vr_cdcritic,0) <> 0 OR 
-       TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-    
-    vr_idxcabec := vr_tab_cabec.first;    
-    IF vr_idxcabec IS NOT NULL THEN
-      vr_dstipcta := vr_tab_cabec(vr_idxcabec).dstipcta;
-      vr_dssitdct := vr_tab_cabec(vr_idxcabec).dssitdct;
-    END IF;
-        
-    vr_idxcmpmd := vr_tab_comp_medias.first;    
-    IF vr_idxcmpmd IS NOT NULL THEN
-      vr_vlsmdtri := vr_tab_comp_medias(vr_idxcmpmd).vlsmdtri;
-    END IF;  
-    
-    -- busca o tipo de documento GED
-    vr_dstextab_digitaliza := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                                        ,pr_nmsistem => 'CRED'
-                                                        ,pr_tptabela => 'GENERI'
-                                                        ,pr_cdempres => 00
-                                                        ,pr_cdacesso => 'DIGITALIZA'
-                                                        ,pr_tpregist => 5);
-
-    -- Leitura do indicador de uso da tabela de taxa de juros
-    vr_dstextab_parempctl := tabe0001.fn_busca_dstextab(pr_cdcooper => 3
-                                                       ,pr_nmsistem => 'CRED'
-                                                       ,pr_tptabela => 'USUARI'
-                                                       ,pr_cdempres => 11
-                                                       ,pr_cdacesso => 'PAREMPCTL'
-                                                       ,pr_tpregist => 01);
-
-
-    --Buscar Indicador Uso tabela
-    vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                            ,pr_nmsistem => 'CRED'
-                                            ,pr_tptabela => 'USUARI'
-                                            ,pr_cdempres => 11
-                                            ,pr_cdacesso => 'TAXATABELA'
-                                            ,pr_tpregist => 0);
-    --Se nao encontrou
-    IF vr_dstextab IS NULL THEN
-      --Nao usa tabela
-      vr_inusatab:= FALSE;
-    ELSE
-      IF  SUBSTR(vr_dstextab,1,1) = '0' THEN
-        --Nao usa tabela
-        vr_inusatab:= FALSE;
-      ELSE
-        --Nao usa tabela
-        vr_inusatab:= TRUE;
-      END IF;
-    END IF;
-    
-    --> Obter dados de emprestimos do associado 
-    empr0001.pc_obtem_dados_empresti
-                           (pr_cdcooper       => pr_cdcooper           --> Cooperativa conectada
-                           ,pr_cdagenci       => pr_cdagenci           --> Código da agência
-                           ,pr_nrdcaixa       => pr_nrdcaixa           --> Número do caixa
-                           ,pr_cdoperad       => pr_cdoperad           --> Código do operador
-                           ,pr_nmdatela       => pr_nmdatela           --> Nome datela conectada
-                           ,pr_idorigem       => pr_idorigem           --> Indicador da origem da chamada
-                           ,pr_nrdconta       => pr_nrdconta           --> Conta do associado
-                           ,pr_idseqttl       => pr_idseqttl           --> Sequencia de titularidade da conta
-                           ,pr_rw_crapdat     => rw_crapdat            --> Vetor com dados de parâmetro (CRAPDAT)
-                           ,pr_dtcalcul       => NULL                  --> Data solicitada do calculo
-                           ,pr_nrctremp       => 0                     --> Número contrato empréstimo
-                           ,pr_cdprogra       => 'b1wgen0030'          --> Programa conectado
-                           ,pr_inusatab       => vr_inusatab           --> Indicador de utilização da tabela
-                           ,pr_flgerlog       => 'N'                   --> Gerar log S/N
-                           ,pr_flgcondc       => FALSE                 --> Mostrar emprestimos liquidados sem prejuizo
-                           ,pr_nmprimtl       => rw_crapass.nmprimtl   --> Nome Primeiro Titular
-                           ,pr_tab_parempctl  => vr_dstextab_parempctl --> Dados tabela parametro
-                           ,pr_tab_digitaliza => vr_dstextab_digitaliza--> Dados tabela parametro
-                           ,pr_nriniseq       => 0                     --> Numero inicial da paginacao
-                           ,pr_nrregist       => 0                     --> Numero de registros por pagina
-                           ,pr_qtregist       => vr_qtregist           --> Qtde total de registros
-                           ,pr_tab_dados_epr  => vr_tab_dados_epr      --> Saida com os dados do empréstimo
-                           ,pr_des_reto       => vr_des_reto           --> Retorno OK / NOK
-                           ,pr_tab_erro       => vr_tab_erro);         --> Tabela com possíves erros
-
-    IF vr_des_reto = 'NOK' THEN
-      IF vr_tab_erro.exists(vr_tab_erro.first) THEN
-
-        vr_dscritic := 'Conta: '||pr_nrdconta||' nao possui emprestimo.: '|| 
-                        -- concatenado a critica na versao oracle para tbm saber a causa de abortar o programa
-                        vr_tab_erro(vr_tab_erro.first).dscritic;
-      ELSE
-        vr_dscritic := 'Conta: '||pr_nrdconta||' nao possui emprestimo.';
-      END IF;
-      RAISE vr_exc_erro;
-    END IF;
-    */
-    
-  EXCEPTION    
-    WHEN vr_exc_erro THEN
-      
-      IF nvl(vr_cdcritic,0) <> 0 AND 
-         TRIM(vr_dscritic) IS NULL THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      ELSE
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-      END IF;
-            
-    WHEN OTHERS THEN      
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := replace(replace('Erro pc_carrega_proposta_bordero: ' || SQLERRM, chr(13)),chr(10));   
-  END pc_carrega_proposta_bordero;
   
   --> Buscar titulos de um determinado bordero a partir da craptdb 
   PROCEDURE pc_busca_titulos_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
@@ -4186,14 +3725,6 @@ END fn_letra_risco;
       pr_tab_dados_proposta(0).nmcidade := pr_nmcidade;
       pr_tab_dados_proposta(0).nmresco1 := pr_nmextcop;
       
-      
-      /*
-      vr_tab_dados_limite(vr_idxlimit).vlcaptal := 0;
-      vr_tab_dados_limite(vr_idxlimit).vlprepla := 0;
-      vr_tab_dados_limite(vr_idxlimit).rel_tpcobran := 0;
-                                        
-      */
-
       -- busca o tipo de documento GED
       vr_dstextab_digitaliza := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                           ,pr_nmsistem => 'CRED'
@@ -4507,7 +4038,10 @@ END fn_letra_risco;
     pr_tab_contrato_limite(vr_idxctlim).dscfcav2 := pr_dscfcav2;
     pr_tab_contrato_limite(vr_idxctlim).nrfonav2 := pr_nrfonav2;
     pr_tab_contrato_limite(vr_idxctlim).nmoperad := pr_nmoperad;
-    
+  EXCEPTION   
+    WHEN OTHERS THEN    
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro pc_carrega_dados_ctrlim: ' || SQLERRM;   
   END pc_carrega_dados_ctrlim;  
   
   --> Buscar dados para montar contratos etc para desconto de titulos
@@ -4932,7 +4466,7 @@ END fn_letra_risco;
     END IF;    
     CLOSE cr_crapage;
     
-    vr_dsemsnot := SUBSTR(rw_crapage.nmcidade,1,15) ||', ' || gene0005.fn_data_extenso(pr_dtmvtolt);
+    vr_dsemsnot := SUBSTR(vr_nmcidage,1,15) ||', ' || gene0005.fn_data_extenso(pr_dtmvtolt);
     vr_dsmesref := gene0001.vr_vet_nmmesano(to_char(pr_dtmvtolt,'MM'));
     vr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc, 
                                              pr_inpessoa => rw_crapass.inpessoa);
@@ -6264,8 +5798,6 @@ END fn_letra_risco;
     vr_index_emprestimo        PLS_INTEGER;
     vr_index_rating_hist       PLS_INTEGER;
     
-    vr_dados_mock              VARCHAR2(50);
-
     vr_tpimpres                VARCHAR2(5) := NULL;
 
     ----------->>> VARIAVEIS <<<--------   
@@ -7025,14 +6557,6 @@ END fn_letra_risco;
 
     END IF;
     IF pr_idimpres = 3 THEN ---PROPOSTA
-      /*
-       vr_tab_dados_proposta -- dados da proposta
-       vr_tab_emprestimos    -- lista de emprestimos
-       vr_tab_grupo          -- endividamento de grupos
-       vr_tab_rating_hist    -- historico rating
-      */ 
-      
-      vr_dados_mock := 'mock'; 
     
      --Buscar indice do primeiro registro
      vr_idx_proposta := vr_tab_dados_proposta.FIRST; 
@@ -9023,20 +8547,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
       close btch0001.cr_crapdat;
       
       
-       --  PECONCENTR_MAXTIT  : Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip)
-      OPEN  cr_concentracao_excecao;
-      FETCH cr_concentracao_excecao into rw_concentracao_excecao;
-      --    Se houver exceção cadastrada na CADPCP, e ela for maior que o valor da TAB052, será considerada a exceção.
-      IF    cr_concentracao_excecao%found and rw_concentracao_excecao.pe_conc_excecao > vr_pcmxctip THEN
-            vr_concentracao_maxima := rw_concentracao_excecao.pe_conc_excecao;
-      ELSE
-            vr_concentracao_maxima := vr_pcmxctip;
-      END IF;
-      CLOSE cr_concentracao_excecao;      
-      IF  pr_pc_conc > vr_concentracao_maxima then
-          vr_cri_concentr_maxtit := pr_pc_conc;
-          vr_inpossui_criticas := 1;
-      END IF;
+       
         
       IF (pr_qtcarpag IS NULL OR pr_qttliqcp IS NULL OR pr_vltliqcp IS NULL OR pr_pcmxctip IS NULL OR pr_dtmvtolt_de IS NULL OR pr_qtmitdcl IS NULL OR pr_vlmintcl is NULL) THEN
         OPEN cr_crapass;
@@ -9078,6 +8589,8 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
         vr_vlmintcl  := pr_vlmintcl;
       END IF;
                                    
+      
+                                   
       DSCT0003.pc_calcula_concentracao(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
                      ,pr_nrinssac => pr_nrinssac
@@ -9090,6 +8603,22 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                     ,pr_pc_conc      => pr_pc_conc
                     ,pr_qtd_conc     => pr_qtd_conc
                     );
+                    
+      --  PECONCENTR_MAXTIT  : Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip)
+      OPEN  cr_concentracao_excecao;
+      FETCH cr_concentracao_excecao into rw_concentracao_excecao;
+      --    Se houver exceção cadastrada na CADPCP, e ela for maior que o valor da TAB052, será considerada a exceção.
+      IF    cr_concentracao_excecao%found and rw_concentracao_excecao.pe_conc_excecao > vr_pcmxctip THEN
+            vr_concentracao_maxima := rw_concentracao_excecao.pe_conc_excecao;
+      ELSE
+            vr_concentracao_maxima := vr_pcmxctip;
+      END IF;
+      CLOSE cr_concentracao_excecao;      
+      IF  pr_pc_conc > vr_concentracao_maxima then
+          vr_cri_concentr_maxtit := pr_pc_conc;
+          vr_inpossui_criticas := 1;
+      END IF;              
+                    
                     
       IF (pr_flforcar) THEN
         DSCT0003.pc_calcula_liquidez_pagador(pr_cdcooper => pr_cdcooper
