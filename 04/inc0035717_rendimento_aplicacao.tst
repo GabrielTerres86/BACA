@@ -1,12 +1,6 @@
 PL/SQL Developer Test script 3.0
-741
-/* Ajusta aplicacoes nao resgatadas 
- 
- Obs.: Considera fixo CDI 6.40
- 
- Versao excluindo contas fixas.
-
-*/
+903
+/* Ajusta aplicacoes nao resgatadas */
 declare 
 
 
@@ -14,7 +8,7 @@ declare
   pr_dtiniano date := to_date('01/01/2018','dd/mm/rrrr');
   pr_dstitulo varchar2(500) := 'rendimento-cooper';
 
-  vr_cdidiari NUMBER(10,8); --:= (POWER((1 + 6.4 / 100),(1 / 252)) - 1) * 100;
+  vr_cdidiari NUMBER(10,8); 
   vr_dscritic varchar2(5000) := ' ';
   vr_cdhistor craphis.cdhistor%TYPE;
   vr_nrdocmto craplap.nrdocmto%TYPE;
@@ -30,6 +24,7 @@ declare
   vr_dtinitax   DATE;
   vr_dtfimtax   DATE;
   vr_vlrtaxa number;
+  vr_flgarantia boolean:= false;
   
   TYPE typ_tab_saldo_2018 IS
    TABLE OF NUMBER(22,8)
@@ -48,11 +43,13 @@ declare
   vr_nmarqimp3       VARCHAR2(100)  := pr_dstitulo||'-falha.txt';
   vr_nmarqimp4       VARCHAR2(100)  := pr_dstitulo||'-backup.txt';
   vr_nmarqimp5       VARCHAR2(100)  := 'rendimento_cooperativa.csv';
+  vr_nmarqimp6       VARCHAR2(100)  := 'alteracao_faixas_abril.csv';
   vr_ind_arquiv      utl_file.file_type;
   vr_ind_arquiv2     utl_file.file_type;
   vr_ind_arquiv3     utl_file.file_type;
   vr_ind_arquiv4     utl_file.file_type;
   vr_ind_arquiv5     utl_file.file_type;
+  vr_ind_arquiv6     utl_file.file_type;
   
   rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
@@ -80,6 +77,7 @@ select o.cdcooper
       ,o.vlsltxmm
       ,o.dtatslmx
       ,o.tpaplica
+      ,o.valor
       ,o.progress_recid
   from(
 SELECT rda.cdcooper 
@@ -92,6 +90,7 @@ SELECT rda.cdcooper
       ,rda.vlsltxmm
       ,rda.dtatslmx
       ,rda.tpaplica
+      ,(decode(his.indebcre,'D',-1,1) * lap.vllanmto) valor
       ,rda.progress_recid      
       ,(select sum(cap.vlsddapl) 
          from crapcap cap 
@@ -115,18 +114,115 @@ SELECT rda.cdcooper
            and lap.nraplica = rda.nraplica
            and lap.dtmvtolt = rda.dtmvtolt) vlfaixa_contratada 
   FROM craprda rda, 
-       crapttx ttx
+       crapttx ttx,
+       craplap lap, 
+       craphis his
  WHERE rda.cdcooper not in( 2,8)
    and rda.insaqtot = 0
    and rda.tpaplica = 8
    and rda.dtmvtolt > '01/01/2018'
+   and rda.dtmvtolt < '01/04/2019'
    and ttx.cdcooper = rda.cdcooper
    AND ttx.tptaxrdc = 8
-   and ttx.qtdiacar = rda.qtdiauti
+   and ttx.qtdiacar = rda.qtdiauti   
+   and lap.cdcooper = rda.cdcooper
+   and lap.nrdconta = rda.nrdconta
+   and lap.nraplica = rda.nraplica 
+   and lap.dtmvtolt = rda.dtmvtolt
+   and not exists(select 1
+                    from craplap lap
+                   where lap.cdcooper = rda.cdcooper
+                     and lap.nrdconta = rda.nrdconta
+                     and lap.nraplica = rda.nraplica
+                     and lap.cdhistor in (534,531))  -- Sem Resgate e sem reversão
+   AND his.cdcooper = lap.cdcooper
+   AND his.cdhistor = lap.cdhistor
 ) o
 where vlfaixa_calculada <> vlfaixa_contratada
   and vlfaixa_calculada > vlfaixa_contratada;
   rw_cr_lancamentos cr_lancamentos%rowtype;
+  
+  /* LANCAMENTOS Abril */  
+cursor cr_lancamentos_abril is
+select o.cdcooper
+      ,o.nrdconta
+      ,o.nraplica
+      ,o.dtmvtolt
+      ,o.vlaplica
+      ,o.qtdiauti
+      ,o.vlsaldo_acum
+      ,o.vlfaixa_calculada
+      ,o.vlfaixa_contratada
+      ,o.vlsltxmx
+      ,o.vlsltxmm
+      ,o.dtatslmx
+      ,o.tpaplica
+      ,o.valor
+      ,o.progress_recid
+  from(
+SELECT rda.cdcooper 
+      ,rda.nrdconta 
+      ,rda.nraplica 
+      ,rda.dtmvtolt 
+      ,rda.vlaplica 
+      ,rda.qtdiauti 
+      ,rda.vlsltxmx
+      ,rda.vlsltxmm
+      ,rda.dtatslmx
+      ,rda.tpaplica
+      ,(decode(his.indebcre,'D',-1,1) * lap.vllanmto) valor
+      ,rda.progress_recid      
+      ,(select sum(cap.vlsddapl) 
+         from crapcap cap 
+        where cap.cdcooper = rda.cdcooper 
+          and cap.nrdconta = rda.nrdconta 
+          and cap.nraplica = rda.nraplica) vlsaldo_acum 
+      ,(select max(ftx.perapltx) 
+          from crapftx ftx 
+         where ftx.cdcooper = rda.cdcooper 
+           and ftx.tptaxrdc = rda.tpaplica
+           and ftx.cdperapl = ttx.cdperapl 
+           and ftx.vlfaixas <= (select sum(cap.vlsddapl) + rda.vlaplica
+                                  from crapcap cap 
+                                 where cap.cdcooper = rda.cdcooper 
+                                   and cap.nrdconta = rda.nrdconta 
+                                   and cap.nraplica = rda.nraplica)) vlfaixa_calculada 
+      ,(select distinct lap.txaplica
+          from craplap lap
+         where lap.cdcooper = rda.cdcooper
+           and lap.nrdconta = rda.nrdconta
+           and lap.nraplica = rda.nraplica
+           and lap.dtmvtolt = rda.dtmvtolt) vlfaixa_contratada 
+  FROM craprda rda, 
+       crapttx ttx,
+       craplap lap, 
+       craphis his
+ WHERE rda.cdcooper not in( 2,8)
+   and rda.insaqtot = 0
+   and rda.tpaplica = 8
+   and rda.dtmvtolt >= '01/04/2019'
+   and rda.dtmvtolt <= '16/04/2019'
+   and ttx.cdcooper = rda.cdcooper
+   AND ttx.tptaxrdc = 8
+   and ttx.qtdiacar = rda.qtdiauti   
+   and lap.cdcooper = rda.cdcooper
+   and lap.nrdconta = rda.nrdconta
+   and lap.nraplica = rda.nraplica 
+   and lap.dtmvtolt = rda.dtmvtolt
+   and not exists(select 1
+                    from craplap lap
+                   where lap.cdcooper = rda.cdcooper
+                     and lap.nrdconta = rda.nrdconta
+                     and lap.nraplica = rda.nraplica
+                     and lap.cdhistor in (534,531))  -- Sem Resgate e sem reversão
+     
+   AND his.cdcooper = lap.cdcooper
+   AND his.cdhistor = lap.cdhistor
+) o
+where vlfaixa_calculada <> vlfaixa_contratada
+  and vlfaixa_calculada > vlfaixa_contratada;
+  rw_cr_lancamentos_abril cr_lancamentos_abril%rowtype;
+  /********************/
 
  CURSOR cr_craplap_2018 (pr_cdcooper  IN crapcop.cdcooper%TYPE
                         ,pr_nrdconta  IN craprda.nrdconta%TYPE
@@ -297,14 +393,7 @@ where vlfaixa_calculada <> vlfaixa_contratada
                                  ,vr_vlmoefix
                                  ,vr_txmespop
                                  ,vr_txdiapop);
-/*
-      -- Atribuicao de taxa aplicada
-      IF pr_txaplica < vr_txdiapop THEN
-        pr_txdiapop := vr_txdiapop;    
-      else
-        pr_txdiapop:= pr_txaplica;  
-      END IF;*/
-      
+
       pr_txdiapop := vr_txdiapop;
       
   end pc_calculo_garantia;
@@ -366,11 +455,23 @@ begin
      RAISE vr_excsaida;
   END IF;
   
+  --Criar arquivo
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        --> Diretorio do arquivo
+                          ,pr_nmarquiv => vr_nmarqimp6       --> Nome do arquivo
+                          ,pr_tipabert => 'W'                --> modo de abertura (r,w,a)
+                          ,pr_utlfileh => vr_ind_arquiv6     --> handle do arquivo aberto
+                          ,pr_des_erro => vr_dscritic);      --> erro
+  -- em caso de crítica
+  IF vr_dscritic IS NOT NULL THEN        
+     RAISE vr_excsaida;
+  END IF;
+  
   loga('Inicio Processo');  
   
   /*******************/
   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv5,'Cooperativa;'||
                                                 'Conta;'||
+                                                'Data Aplicacao;'||
                                                 'Aplicacao;'||
                                                 'Valor Aplicado;'||
                                                 'CDI Contratado;'||
@@ -380,7 +481,9 @@ begin
                                                 'Diferenca;'||chr(13));
   /*******************/
   
-  FOR rw_lancamentos IN cr_lancamentos LOOP
+  FOR rw_lancamentos IN cr_lancamentos LOOP    
+  
+    vr_flgarantia:= false;
     
     -- Verifica a data da cooper viacredi
     OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_lancamentos.cdcooper);
@@ -483,9 +586,14 @@ begin
       close cr_crapmfx;
 
       vr_cdidiari := (POWER((1 + rw_crapmfx.vlmoefix / 100),(1 / 252)) - 1) * 100;
-      vr_vltxapli := (vr_cdidiari * rw_lancamentos.vlfaixa_calculada / 100 / 100);
+      --vr_vltxapli := TRUNC(fn_round(vr_cdidiari * rw_lancamentos.vlfaixa_calculada / 100,10),8);
+      vr_vltxapli := fn_round((vr_cdidiari * rw_lancamentos.vlfaixa_calculada / 100 ) / 100 ,8);
 
       if rw_lancamentos.dtmvtolt > vr_dtinitax and vr_dtfimtax >=  rw_lancamentos.dtmvtolt then
+        vr_flgarantia:= true;
+        -- vr_vltxapli := (vr_cdidiari * rw_lancamentos.vlfaixa_calculada / 100);
+         vr_vltxapli:= fn_round((vr_cdidiari * rw_lancamentos.vlfaixa_calculada / 100 ) / 100 ,8);
+         
          pc_calculo_garantia(vr_cdidiari,rw_lancamentos.dtmvtolt,vr_vlrtaxa);
          
          IF vr_vltxapli < vr_vlrtaxa / 100 THEN
@@ -494,12 +602,12 @@ begin
          
          vr_vlrendim := rw_lancamentos.vlaplica + TRUNC(fn_round(rw_lancamentos.vlaplica * vr_vltxapli,10), 8);
       else
+        vr_flgarantia:= false;
          vr_vlrtaxa:= vr_cdidiari;
-         vr_vlrendim := rw_lancamentos.vlaplica + (rw_lancamentos.vlaplica * vr_vlrtaxa * rw_lancamentos.vlfaixa_calculada / 100 / 100);
+       -- vr_vlrendim := rw_lancamentos.vlaplica + (rw_lancamentos.vlaplica * vr_vlrtaxa * rw_lancamentos.vlfaixa_calculada / 100 / 100);
+        vr_vlrendim := rw_lancamentos.vlaplica + (rw_lancamentos.vlaplica * vr_vlrtaxa * rw_lancamentos.vlfaixa_calculada / 100 / 100);
       end if;
       
-     -- vr_vlrendim := rw_lancamentos.vlaplica + (rw_lancamentos.vlaplica * vr_vlrtaxa * rw_lancamentos.vlfaixa_calculada / 100 / 100);
---      vr_vlrendim := rw_lancamentos.vlaplica + (rw_lancamentos.vlaplica * vr_vlrtaxa * rw_lancamentos.vlfaixa_contratada / 100 / 100);
       vr_dia      := rw_lancamentos.dtmvtolt + 1;
       LOOP      
         vr_dia := gene0005.fn_valida_dia_util(rw_lancamentos.cdcooper, vr_dia, 'P', true, true);      
@@ -515,9 +623,13 @@ begin
         close cr_crapmfx;
         
         vr_cdidiari := (POWER((1 + rw_crapmfx.vlmoefix / 100),(1 / 252)) - 1) * 100;
-        vr_vltxapli := TRUNC(fn_round(vr_cdidiari * rw_lancamentos.vlfaixa_calculada / 100 / 100 ,10), 8);
-      
-        if vr_dia > vr_dtinitax then
+        --vr_vltxapli := TRUNC(fn_round(vr_cdidiari * rw_lancamentos.vlfaixa_calculada / 100,10),8);                       
+        vr_vltxapli := fn_round((vr_cdidiari * rw_lancamentos.vlfaixa_calculada / 100 ) / 100 ,8);
+        
+        if vr_dia > vr_dtinitax and vr_flgarantia then
+          --vr_vltxapli:= TRUNC(fn_round(vr_cdidiari * rw_lancamentos.vlfaixa_calculada / 100 / 100 ,10), 8);
+          vr_vltxapli:= fn_round((vr_cdidiari * rw_lancamentos.vlfaixa_calculada / 100 ) / 100 ,8);
+          
            pc_calculo_garantia(vr_cdidiari,vr_dia,vr_vlrtaxa);
            
            IF vr_vltxapli < vr_vlrtaxa / 100 THEN
@@ -527,47 +639,52 @@ begin
            vr_vlrendim := vr_vlrendim + vr_vlrendim * vr_vltxapli;
         else
            vr_vlrtaxa:= vr_cdidiari;
+          -- vr_vlrendim := vr_vlrendim + (vr_vlrendim * vr_vlrtaxa * rw_lancamentos.vlfaixa_calculada / 100 / 100);
            vr_vlrendim := vr_vlrendim + (vr_vlrendim * vr_vlrtaxa * rw_lancamentos.vlfaixa_calculada / 100 / 100);
         end if;
         
---        vr_vlrendim := vr_vlrendim + (vr_vlrendim * vr_vlrtaxa * rw_lancamentos.vlfaixa_calculada / 100 / 100);
---        vr_vlrendim := vr_vlrendim + (vr_vlrendim * vr_vlrtaxa * rw_lancamentos.vlfaixa_contratada / 100 / 100);
         vr_dia := vr_dia + 1;
       end loop;
       
     ELSE
       vr_dscritic := 'Tipo aplicacao invalida! Cooper: '|| rw_lancamentos.cdcooper || ' Conta: ' ||rw_lancamentos.nrdconta || ' Aplica: '|| rw_lancamentos.nraplica || ' Tpaplica: '|| rw_lancamentos.tpaplica;
       falha(vr_dscritic);
-      CLOSE cr_craplap;
-      CONTINUE;
-    END IF;
-    
-    /* Se o valor do rendimento for zero, nao vamos fazer nada */
-    IF round(vr_vlrendim,2) <= 0 THEN
-      vr_dscritic := 'Rendimento calculado zerado. Cooper: '|| rw_lancamentos.cdcooper || ' Conta: ' ||rw_lancamentos.nrdconta || ' Aplica: '|| rw_lancamentos.nraplica || ' Tpaplica: '|| rw_lancamentos.tpaplica || ' Rend.: '|| formata(vr_vlrendim) ;
-      loga(vr_dscritic);
-      CLOSE cr_craplap;
+      if cr_craplap%isopen then    
+        CLOSE cr_craplap;
+      end if;
       CONTINUE;
     END IF;
     
     vr_vltotal := vr_vlrendim - vr_saldo_cal_2018;
-    dbms_output.put_line(vr_vltotal);
+    --dbms_output.put_line(vr_vltotal);
     
-    /*******************/
-    gene0001.pc_escr_linha_arquivo(vr_ind_arquiv5, rw_lancamentos.cdcooper||';'||
-                                                   rw_lancamentos.nrdconta||';'||
-                                                   rw_lancamentos.nraplica||';'||
-                                                   rw_lancamentos.vlaplica||';'||
-                                                   rw_lancamentos.vlfaixa_contratada||';'||
-                                                   vr_saldo_cal_2018||';'||
-                                                   rw_lancamentos.vlfaixa_calculada||';'||
-                                                   vr_vlrendim||';'||
-                                                   vr_vltotal);
+    IF round(vr_vltotal,2) > 0 THEN
+      /*******************/
+      gene0001.pc_escr_linha_arquivo(vr_ind_arquiv5, rw_lancamentos.cdcooper||';'||
+                                                     rw_lancamentos.nrdconta||';'||
+                                                     rw_lancamentos.dtmvtolt||';'||
+                                                     rw_lancamentos.nraplica||';'||
+                                                     rw_lancamentos.vlaplica||';'||
+                                                     rw_lancamentos.vlfaixa_contratada||';'||
+                                                     vr_saldo_cal_2018||';'||
+                                                     rw_lancamentos.vlfaixa_calculada||';'||
+                                                     vr_vlrendim||';'||
+                                                     vr_vltotal);
+    end if;
+    
     /*******************/
     if cr_craplap%isopen then    
       CLOSE cr_craplap;
     end if;
-   /*     
+
+   /* Se o valor do rendimento for zero, nao vamos fazer nada */
+    IF round(vr_vltotal,2) <= 0 THEN
+      vr_dscritic := 'Rendimento calculado zerado. Cooper: '|| rw_lancamentos.cdcooper || ' Conta: ' ||rw_lancamentos.nrdconta || ' Aplica: '|| rw_lancamentos.nraplica || ' Tpaplica: '|| rw_lancamentos.tpaplica || ' Rend.: '|| formata(vr_vltotal) ;
+      loga(vr_dscritic);
+      CONTINUE;
+    END IF;
+    
+        
     vr_nrseqdig := nvl(vr_nrseqdig,0) + 1;
     vr_nrdocmto := vr_nrdocmto_inicial + vr_nrseqdig;
     --vr_vltotal  := vr_vltotal + vr_vlrendim;
@@ -586,7 +703,7 @@ begin
         ,round(vr_vltotal,2)  --vllanmto
         ,rw_lancamentos.vlfaixa_calculada
         ,rw_craplap.dtrefere
-        ,case when rw_lancamentos.tpaplica = 8 then rw_craplap.txaplmes else rw_craplap.txaplica end
+        ,rw_lancamentos.vlfaixa_calculada 
         ,rw_lancamentos.cdcooper
         ,round(vr_vltotal,2)  -- vlrendmm
         ) returning rowid into vr_laprowid;
@@ -612,13 +729,16 @@ begin
     END;
     
     sucesso('Creditado para Cooper: '|| rw_lancamentos.cdcooper || ' Conta: ' ||rw_lancamentos.nrdconta || ' Aplica: '|| rw_lancamentos.nraplica || ' Valor : '|| vr_vlrendim || ' Valor anterior: ' || rw_lancamentos.vlsltxmx || ' Valor atualizado: ' || (rw_lancamentos.vlsltxmx + vr_vlrendim) );
-    CLOSE cr_craplap;
-
+    
+    if cr_craplap%isopen then    
+      CLOSE cr_craplap;
+    end if;
+    
     -- Commitar a cada 1000 registros
     -- para nao lockar as aplicacoes
     IF rw_lancamentos.cdcooper = 1 and MOD(vr_qtd,1000) = 0 THEN
       backup('/* COMITOU AQUI '|| vr_qtd || ' registro ');
-     -- COMMIT;
+      COMMIT;
     END IF;
     
     -- Atualiza capa de lote 
@@ -704,8 +824,44 @@ begin
         falha(vr_dscritic);
         RAISE vr_excsaida;
     END;
-*/
+
   END LOOP;
+  
+  /***************** LANCAMENTOS DE ABRIL ****************************/  
+  gene0001.pc_escr_linha_arquivo(vr_ind_arquiv6,'Cooperativa;'||
+                                                'Conta;'||
+                                                'Data Aplicacao;'||
+                                                'Aplicacao;'||
+                                                'Valor Aplicado;'||
+                                                'CDI Contratado;'||
+                                                'CDI Calculado;'||chr(13));
+  
+  
+  FOR rw_lancamentos_abril IN cr_lancamentos_abril LOOP    
+    BEGIN
+      update craplap p
+         set p.txaplica = rw_lancamentos_abril.vlfaixa_calculada
+            ,p.txaplmes = rw_lancamentos_abril.vlfaixa_calculada
+       WHERE p.cdcooper = rw_lancamentos_abril.cdcooper
+         AND p.nrdconta = rw_lancamentos_abril.nrdconta
+         AND p.nraplica = rw_lancamentos_abril.nraplica;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro alterando craplap! '|| SQLERRM;
+        falha(vr_dscritic);
+        RAISE vr_excsaida;
+    END;
+    
+    gene0001.pc_escr_linha_arquivo(vr_ind_arquiv6, rw_lancamentos_abril.cdcooper||';'||
+                                                   rw_lancamentos_abril.nrdconta||';'||
+                                                   rw_lancamentos_abril.dtmvtolt||';'||
+                                                   rw_lancamentos_abril.nraplica||';'||
+                                                   rw_lancamentos_abril.vlaplica||';'||
+                                                   rw_lancamentos_abril.vlfaixa_contratada||';'||
+                                                   rw_lancamentos_abril.vlfaixa_calculada);
+  END LOOP;
+  
+  /**************** FIM DO LANCAMENTOS DE ABRIL ***************/
   
   IF vr_tem_critica THEN
     RAISE vr_excsaida;
@@ -713,12 +869,14 @@ begin
   
   loga('Fim do Processo com sucesso');
   
---  commit;
+  commit;
 
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;  
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv2); --> Handle do arquivo aberto;  
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv3); --> Handle do arquivo aberto;  
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv4); --> Handle do arquivo aberto;  
+  gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv5); --> Handle do arquivo aberto;  
+  gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv6); --> Handle do arquivo aberto;    
 
   :vr_dscritic := 'SUCESSO';
   
@@ -730,6 +888,8 @@ EXCEPTION
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv2); --> Handle do arquivo aberto;  
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv3); --> Handle do arquivo aberto;
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv4); --> Handle do arquivo aberto;    
+    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv5); --> Handle do arquivo aberto; 
+    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv6); --> Handle do arquivo aberto;       
     
   WHEN OTHERS then
     loga(vr_dscritic);
@@ -740,13 +900,20 @@ EXCEPTION
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv2); --> Handle do arquivo aberto;  
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv3); --> Handle do arquivo aberto;  
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv4); --> Handle do arquivo aberto;  
+    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv5); --> Handle do arquivo aberto;  
+    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv6); --> Handle do arquivo aberto;      
 end;
 1
 vr_dscritic
-0
+1
+SUCESSO
 5
-4
+8
 vr_vlrendim
 vr_saldo_cal_2018
-rw_lancamentos.vlaplica
 vr_dia
+vr_vltotal
+rw_lancamentos.nrdconta
+rw_crapmfx.vlmoefix
+vr_vltxapli
+vr_cdidiari
