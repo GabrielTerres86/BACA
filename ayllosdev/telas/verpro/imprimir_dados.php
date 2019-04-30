@@ -122,6 +122,19 @@
   $nrdocpes     = $_POST['nrdocpes'];
   $cdidenti     = $_POST['cdidenti'];
   $nrdocmto_dae = $_POST['nrdocmto_dae'];
+  //pj470
+  $dtinclusao = $_POST['dtinclusao'];
+  $hrinclusao = $_POST['hrinclusao'];
+
+	//bruno - prj 470 - tela autorizacao
+	$dsoperacao = (isset($_POST['dsoperacao']) ? $_POST['dsoperacao'] : ''); 
+	$cdbanco =    (isset($_POST['cdbanco'])    ? $_POST['cdbanco']    : ''); 
+	$cdagencia =  (isset($_POST['cdagencia'])  ? $_POST['cdagencia']  : ''); 
+	$cdconta =    (isset($_POST['cdconta'])    ? $_POST['cdconta']    : ''); 
+	$nrcheque_i = (isset($_POST['nrcheque_i']) ? $_POST['nrcheque_i'] : ''); 
+	$nrcheque_f = (isset($_POST['nrcheque_f']) ? $_POST['nrcheque_f'] : ''); 
+
+
 	
 	$dsiduser 	= session_id();	
 
@@ -240,6 +253,18 @@
   $xml .= '		<nrdocpes>'.$nrdocpes.'</nrdocpes>';
   $xml .= '		<cdidenti>'.$cdidenti.'</cdidenti>';
   $xml .= '		<nrdocmto_dae>'.$nrdocmto_dae.'</nrdocmto_dae>';
+  //PJ470
+  $xml .= '		<dtinclusao>'.$dtinclusao.'</dtinclusao>';
+  $xml .= '		<hrinclusao>'.$hrinclusao.'</hrinclusao>';
+
+	//bruno - prj 470 - tela autorizacao
+	$xml .= '		<dsoperacao>'.$dsoperacao.'</dsoperacao>';
+	$xml .= '		<cdbanco>'.$cdbanco.'</cdbanco>';
+	$xml .= '		<cdagencia>'.$cdagencia.'</cdagencia>';
+	$xml .= '		<cdconta>'.$cdconta.'</cdconta>';
+	$xml .= '		<nrcheque_i>'.$nrcheque_i.'</nrcheque_i>';
+	$xml .= '		<nrcheque_f>'.$nrcheque_f.'</nrcheque_f>';
+  
 	$xml .= '	</Dados>';                                  
 	$xml .= '</Root>';
 	

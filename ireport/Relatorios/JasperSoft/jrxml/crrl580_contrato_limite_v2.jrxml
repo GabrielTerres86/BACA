@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-08-10T14:27:26 -->
+<!-- 2019-03-29T09:17:00 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="aditiv" language="groovy" pageWidth="480" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Key" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl580"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Limite de credito"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -195,6 +195,12 @@
 	</field>
 	<field name="inaddcob" class="java.lang.Integer">
 		<fieldDescription><![CDATA[contrato/inaddcob]]></fieldDescription>
+	</field>
+	<field name="dsfrase_cooperado" class="java.lang.String">
+		<fieldDescription><![CDATA[autorizacao_por_senha/dsfrase_cooperado]]></fieldDescription>
+	</field>
+	<field name="dsfrase_cooperativa" class="java.lang.String">
+		<fieldDescription><![CDATA[autorizacao_por_senha/dsfrase_cooperativa]]></fieldDescription>
 	</field>
 	<background>
 		<band splitType="Stretch"/>
@@ -661,7 +667,7 @@
 				<textElement textAlignment="Justified" markup="styled">
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>1.</style> A <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> está expressamente autorizada a efetuar toda e quaisquer consultas cadastrais, tanto do (a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>, assim como dos seus Representante(s) Legal(is) e do(s) <style isBold='true' pdfFontName='Courier-Bold'>FIADOR(ES)</style>, junto aos órgãos de proteção/restrição ao Crédito, ao Sistemas Central de Risco do Banco Central do Brasil, dentre outros, assim como enviar os seus dados aos órgãos públicos ou privados, administradores de bancos de dados na hipótese de inadimplemento e/ou excesso do uso do limite ora contratado."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>1.</style> A <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> está expressamente autorizada a efetuar toda e quaisquer consultas cadastrais, tanto do (a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>, assim como dos seus Representante(s) Legal(is) e do(s) <style isBold='true' pdfFontName='Courier-Bold'>FIADOR(ES)</style>, junto aos órgãos de proteção/restrição ao Crédito, ao Sistemas Central de Risco do Banco Central do Brasil, dentre outros, assim como enviar os seus dados aos órgãos públicos ou privados, administradores de bancos de dados na hipótese de inadimplemento e/ou excesso do uso do limite ora contratado. "]]></textFieldExpression>
 			</textField>
 		</band>
 		<band height="11">
@@ -779,6 +785,20 @@
 		<band height="11">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="20" y="0" width="440" height="11" uuid="61d00538-4bc4-4c80-8fa4-0cd9018a4426">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>4.4.</style> O <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> reconhece que todos os atos praticados mediante aposição de senha numérica e letras de segurança, serão registrados e arquivados em meios magnéticos, sendo reconhecidos, para todos os fins de direito, como assinatura digital, como válidos, verdadeiros e processados por meios seguros e constituirão meio eficaz e prova inequívoca do desconto realizado."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="11">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="20" y="0" width="440" height="11" uuid="aa129d8e-ef42-4e0c-9364-497fb0487013">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -787,14 +807,15 @@
 				<textElement textAlignment="Justified" markup="styled">
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["E, por estarem assim justas e contratadas, firmam o presente Contrato/Termo de Adesão em tantas vias quantas forem necessárias, na presença das duas testemunhas abaixo identificadas. \n"]]></textFieldExpression>
+				<textFieldExpression><![CDATA["E, por estarem assim justas e contratadas, firmam o presente Contrato/Termo de Adesão em tantas vias quantas forem necessárias" + ($F{dsfrase_cooperado}.length()==1 ?  ", na presença das duas testemunhas abaixo identificadas" : "")  + ". \n"]]></textFieldExpression>
 			</textField>
 		</band>
 		<band>
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 		</band>
-		<band height="90">
+		<band height="70">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1]]></printWhenExpression>
 			<line>
 				<reportElement x="40" y="36" width="190" height="1" uuid="6c2d586f-8451-4388-a26a-e99c62113f6f">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -869,7 +890,8 @@
 		</band>
 		<band height="221">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<printWhenExpression><![CDATA[$F{qtd_avalistas}>0 || $F{ind_interv} > 0]]></printWhenExpression>
+			<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1 ||
+$F{qtd_avalistas}>0 || $F{ind_interv} > 0]]></printWhenExpression>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" mode="Opaque" x="40" y="31" width="190" height="22" uuid="f4062148-4c7c-4b03-9b13-cc04676b0bb8">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -1059,8 +1081,9 @@
 				<text><![CDATA[<style isBold='true' pdfFontName='Courier-Bold'>CÔNJUGE FIADOR</style>]]></text>
 			</staticText>
 		</band>
-		<band height="91">
+		<band height="85">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1]]></printWhenExpression>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="40" y="72" width="40" height="13" uuid="3ecfd444-9cf6-4f18-b54f-4508cba2173d">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -1176,6 +1199,20 @@
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 			</line>
+		</band>
+		<band height="54">
+			<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()>1]]></printWhenExpression>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="20" y="10" width="440" height="11" uuid="59f51f2c-4cec-4bcc-ad58-c96c11660596">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsfrase_cooperado} +  "\n" + "\n"  + $F{dsfrase_cooperativa}]]></textFieldExpression>
+			</textField>
 		</band>
 	</detail>
 	<pageFooter>

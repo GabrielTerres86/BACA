@@ -234,5 +234,14 @@ DEF TEMP-TABLE tt-tbpagto_tributos_trans_pend NO-UNDO
   FIELD idagendamento        AS INTEGER
   FIELD idrowid              AS CHAR.  
 
+/* Projeto 470 - Marcelo Telleas Coelho */
+DEF TEMP-TABLE tt-tbctd_trans_pend NO-UNDO
+  FIELD cdtransacao_pendente AS DECIMAL
+  FIELD cdcooper             AS DECIMAL
+  FIELD nrdconta             AS DECIMAL
+  FIELD tpcontrato           AS DECIMAL     
+  FIELD nrcontrato           AS DECIMAL
+  FIELD vlcontrato           AS DECIMAL
+  FIELD dhcontrato           AS DATE.
 
 /*............................................................................*/

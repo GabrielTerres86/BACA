@@ -843,6 +843,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   PROCEDURE pc_retorna_cartao_valido(pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
                                     ,pr_idtipcar IN INTEGER                --> Indica qual o cartao 
                                     ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indica o tipo de pessoa
+                                                                             -- 1 = PF
+                                                                             -- 2 = PJ
+                                                                             -- 4 = PF, retornar somente os cartões do titular da conta
                                     ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
@@ -13217,6 +13220,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   PROCEDURE pc_retorna_cartao_valido(pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
                                     ,pr_idtipcar IN INTEGER                --> Indica qual o cartao 
                                     ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indica o tipo de pessoa
+                                                                             -- 1 = PF
+                                                                             -- 2 = PJ
+                                                                             -- 4 = PF, retornar somente os cartões do titular da conta
                                     ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
@@ -13251,7 +13257,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND crapcrm.nrdconta = pr_nrdconta
          AND crapcrm.cdsitcar = 2
          AND crapcrm.dtvalcar > rw_crapdat.dtmvtolt
-         AND crapcrm.tptitcar = CASE WHEN pr_inpessoa IN (1) THEN 1 ELSE crapcrm.tptitcar END
+         AND crapcrm.tptitcar = CASE WHEN pr_inpessoa IN (1,4) THEN 1 ELSE crapcrm.tptitcar END
+         AND crapcrm.tpusucar = CASE WHEN pr_inpessoa IN (4)   THEN 1 ELSE crapcrm.tpusucar END -- Somente cartão do titular da conta
          AND crapcrm.dtentcrm IS NOT NULL;
       rw_crapcrm cr_crapcrm%ROWTYPE;
       
@@ -13263,6 +13270,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND crawcrd.insitcrd = 4
          AND crawcrd.dtentreg < rw_crapdat.dtmvtolt
          AND crawcrd.dtvalida > rw_crapdat.dtmvtolt
+         AND (pr_inpessoa IN (1,2)
+          OR (pr_inpessoa = 4 AND crawcrd.nrcpftit IN (SELECT a.nrcpfcgc -- Somente cartão do titular da conta
+                                                         FROM crapass a
+                                                        WHERE a.cdcooper = crawcrd.cdcooper
+                                                          AND a.nrdconta = crawcrd.nrdconta)))
          AND crawcrd.dtcancel IS NULL;    
       rw_crawcrd cr_crawcrd%ROWTYPE;
     

@@ -38,6 +38,8 @@ var arrayMantal		= '';
 var formCab   		= 'frmCab';
 var formDados 		= 'frmMantal';
 
+var __dsComplemento = "";
+
 //Labels/Campos do cabeçalho
 var rOpcao, rConta, rNome, cTodos, cOpcao, cConta, cNome ;
 
@@ -45,7 +47,6 @@ var rOpcao, rConta, rNome, cTodos, cOpcao, cConta, cNome ;
 var rBanco, rAgencia, rContraCheque,
     rNrChequeIni, rNrChequeFim, cBanco, 
 	cAgencia, cContraCheque, cNrChequeIni, cNrChequeFim;
-
 
 $(document).ready(function() {
 	estadoInicial();
@@ -169,6 +170,9 @@ function manterRotina() {
 	var nrctachq = normalizaNumero( cContraCheque.val() );
 	var nrinichq = normalizaNumero( cNrChequeIni.val() 	);
 	var nrfimchq = normalizaNumero( cNrChequeFim.val() 	);
+	
+	//bruno - tela autorizacao
+	__dsComplemento = montaDsComplemento(cdbanchq,cdagechq,nrctachq,nrinichq,nrfimchq);
 	
 	switch (operacao) {
 		case 'B1': mensagem = 'Aguarde, buscando...'; break;
@@ -830,7 +834,24 @@ function btnConcluir() {
 	if ( arrayMantal.length > 0 ) {
 	
 		if ( cddopcao == 'B' || imp_criticas != '' ) {
-			showConfirmacao('Imprimir ?','Confirma&ccedil;&atilde;o - Aimaro','Gera_Impressao();','estadoInicial();','sim.gif','nao.gif');
+			
+			__aux_arrayMantal = arrayMantal;
+			__aux_cdopcao_mantal = cddopcao;
+
+			//bruno - prj 470 - tela autorizacao impressao
+			var params = {
+				nrdconta : nrdconta,
+				obrigatoria: 'T',
+				tpcontrato: 31,
+				vlcontrato: "0",
+				nrcontrato: '',
+				funcaoImpressao: "Gera_Impressao();",
+				funcaoGeraProtocolo: 'estadoInicial();',
+				dscomplemento: __dsComplemento
+			};
+			mostraTelaAutorizacaoContrato(params);
+			
+			//showConfirmacao('Imprimir ?','Confirma&ccedil;&atilde;o - Ayllos','Gera_Impressao();','estadoInicial();','sim.gif','nao.gif');
 		} else {
 			$('input', '#'+ formCab ).limpaFormulario();
 			$('input', '#'+ formDados ).limpaFormulario();
@@ -937,4 +958,19 @@ function validaAgencia() {
 		});
 	
 	return aux_retorno;
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 07/02/2019
+ * tela autorizacao
+ */
+function montaDsComplemento(banco, agencia, conta, chq_inicial, chq_final){
+	var retorno = "Inclusao";
+	retorno += '#'+banco;
+	retorno += '#'+agencia;
+	retorno += '#'+conta;
+	retorno += '#'+chq_inicial;
+	retorno += '#'+chq_final;
+	return retorno;
 }

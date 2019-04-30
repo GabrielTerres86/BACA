@@ -4495,6 +4495,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
 		'  <tpemprst>'|| rw_crawepr.tpemprst ||'</tpemprst>'||
         '</dados>');
 
+      -- Projeto 470 - SM 1
+      -- 18/03/2019 - Projeto 470 - SM 1
+      -- Marcelo Telles Coelho - Mouts
+      DECLARE
+        vr_dsfrase_cooperado   VARCHAR2(4000);
+        vr_dsfrase_cooperativa VARCHAR2(4000);
+      BEGIN
+        cntr0001.pc_ver_protocolo (pr_cdcooper            => vr_cdcooper
+                                  ,pr_nrdconta            => pr_nrdconta
+                                  ,pr_nrcontrato          => pr_nrctremp
+                                  ,pr_tpcontrato          => 26
+                                  ,pr_dsfrase_cooperado   => vr_dsfrase_cooperado
+                                  ,pr_dsfrase_cooperativa => vr_dsfrase_cooperativa);
+        IF vr_dsfrase_cooperado IS NOT NULL THEN
+          GENE0002.pc_escreve_xml(vr_clobxml,vr_dstexto,'<autorizacao_por_senha>');
+          GENE0002.pc_escreve_xml(vr_clobxml,vr_dstexto,'<dsfrase_cooperado>'||vr_dsfrase_cooperado||'</dsfrase_cooperado>');
+          GENE0002.pc_escreve_xml(vr_clobxml,vr_dstexto,'<dsfrase_cooperativa>'||vr_dsfrase_cooperativa||'</dsfrase_cooperativa>');
+          GENE0002.pc_escreve_xml(vr_clobxml,vr_dstexto,'</autorizacao_por_senha>');
+        END IF;
+      END;
+      --
+      GENE0002.pc_escreve_xml(vr_clobxml,vr_dstexto,'</dados>');
+      -- Fim Projeto 470 - SM 1
+
       --Finaliza TAG Relatorio
       GENE0002.pc_escreve_xml(vr_clobxml,vr_dstexto,'</raiz>',TRUE);
 
@@ -4504,7 +4528,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
                                  ,pr_dtmvtolt  => NULL                          --> Data do movimento atual
                                  ,pr_dsxml     => vr_clobxml                    --> Arquivo XML de dados
                                  ,pr_dsxmlnode => '/raiz/dados'                 --> Nó base do XML para leitura dos dados
-                                 ,pr_dsjasper  => 'crrl073_termo.jasper'        --> Arquivo de layout do iReport
+                                 ,pr_dsjasper  => 'crrl073_termo_novo.jasper'   --> Arquivo de layout do iReport
                                  ,pr_dsparams  => NULL                          --> Sem parâmetros                                         
                                  ,pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqimp --> Arquivo final com o path
                                  ,pr_qtcoluna  => 132                           --> Colunas do relatorio
@@ -4513,6 +4537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
                                  ,pr_nmformul  => '132col'                      --> Nome do formulário para impressão
                                  ,pr_nrcopias  => 1                             --> Número de cópias
                                  ,pr_cdrelato  => 73                            --> Codigo do Relatorio
+                                 ,pr_nrvergrl  => 1
                                  ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
       --Se ocorreu erro no relatorio
       IF vr_dscritic IS NOT NULL THEN

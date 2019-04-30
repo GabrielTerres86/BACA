@@ -89,6 +89,48 @@ $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
 // Carrega biblioteca javascript referente as CONSULTAS AUTOMATIZADAS
 $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
 
+//bruno - prj 470 - tela autorizacao
+$.getScript(UrlSite + 'includes/autorizacao_contrato/autorizacao_contrato.js');
+
+//bruno - prj 470 - tela autorizacao
+var var_globais = { 
+    vllimite: '',
+	dslimcre: '',
+	dtmvtolt: '',
+	dsfimvig: '',
+	dtfimvig: '',
+	nrctrlim: '',
+	qtdiavig: '',
+	dsencfi1: '',
+	dsencfi2: '',
+	dsencfi3: '',
+	dssitlli: '',
+	dsmotivo: '',
+	nmoperad: '',
+	flgpropo: '',
+	nrctrpro: '',
+	cdlinpro: '',
+	vllimpro: '',
+	nmopelib: '',
+	flgenvio: '',
+	flgenpro: '',
+	cddlinha: '',
+	dsdlinha: '',
+	tpdocmto: '',
+	flgdigit: '',
+	dsobserv: '',
+	dstprenv: '',
+	dtrenova: '',
+	qtrenova: '',
+	flgimpnp: '',
+	dslimpro: '',
+    idcobope: '',
+    inpessoa: '',
+    nrdconta: '',
+    nivrisco: '',
+    dsdtxfix: ''
+}
+
 /*	Criar array de objetos com os dados do Rating - 004 */
 function trataRatingSingulares(qtdTotalTopicos) {
 	
@@ -173,6 +215,10 @@ function acessaOpcaoAba(nrOpcoes, id, cddopcao) {
 		var msg = ", carregando o limite proposto ";
 		var urlOperacao = UrlSite + "telas/atenda/limite_credito/novo_limite.php";
 		flpropos = true;
+    }else if(cddopcao == 'IA'){
+        //bruno - prj 470 - tela autorizacao
+        chamarImpressaoLimiteCredito(false);
+        return false;
 	}	
 		
 	// Mostra mensagem de aguardo
@@ -301,6 +347,9 @@ function cancelarLimiteAtual(nrctrlim) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, cancelando " + strTitRotinaLC + " atual ...");
 	
+    //bruno - prj 470 - atualizar var_globais
+    var_globais.nrctrlim = nrctrlim;
+	
 	// Executa script de confirmação através de ajax
 	$.ajax({		
 		type: "POST",
@@ -363,6 +412,12 @@ function validarNovoLimite(inconfir, inconfi2) {
     var cddlinha = $("#cddlinha", "#frmNovoLimite").val();
     var vllimite = $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
     var flgimpnp = $("#flgimpnp", "#frmNovoLimite").val();
+	
+    //bruno - prj 470 - atualizar var_globais
+    var_globais.nrctrlim = $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, "");
+    var_globais.cddlinha = $("#cddlinha", "#frmNovoLimite").val();
+    var_globais.vllimite = $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
+    var_globais.flgimpnp = $("#flgimpnp", "#frmNovoLimite").val();
 	
 	// Valida número do contrato
     if (nrctrlim == "" || !validaNumero(nrctrlim, true, 0, 0)) {
@@ -429,6 +484,14 @@ function cadastrarNovoLimite() {
         return valor;
     }
     
+    //bruno - prj 470 - atualizar var_globais
+    var_globais.vllimite = $("#vllimite", "#frmNovoLimite").val().replace(/\./g, ""); 
+    var_globais.nrctrlim = $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, "");
+    var_globais.cddlinha =  $("#cddlinha", "#frmNovoLimite").val();
+    var_globais.vllimite =  $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
+    var_globais.flgimpnp =  $("#flgimpnp", "#frmNovoLimite").val();
+
+
     var vlsalari = f($("#vlsalari", "#frmNovoLimite").val());
     var vlsalcon = f($("#vlsalcon", "#frmNovoLimite").val());
     var vloutras = f($("#vloutras", "#frmNovoLimite").val());
@@ -2113,4 +2176,26 @@ function validaAdesaoValorProduto(executar, vllimite) {
 
 function senhaCoordenador(executaDepois) {
 	pedeSenhaCoordenador(2,executaDepois,'divRotina');
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 18/12/2018;
+ * prj 470 - tela autorizacao
+ */
+function chamarImpressaoLimiteCredito(flagCancelamento){
+
+    if(typeof flagCancelamento == 'undefined'){
+        flagCancelamento = false;
+    }
+	var params = {
+		nrdconta : nrdconta,
+		obrigatoria: 1,
+		tpcontrato: (flagCancelamento ? 25 : 29), //Cancelamento == 29, inclusao == 25
+		nrcontrato: var_globais.nrctrlim,
+		vlcontrato: var_globais.vllimite,
+        funcaoImpressao: (flagCancelamento ? "carregarImpresso(4,'no','no','"+var_globais.nrctrlim+"');" : "acessaOpcaoAba(8,2,'I');"),
+        funcaoGeraProtocolo: "acessaOpcaoAba(8,0,'@');"
+	};
+	mostraTelaAutorizacaoContrato(params);
 }

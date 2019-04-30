@@ -414,6 +414,10 @@ var idlsbemfin = false;
 var vlemprst_antigo = 0;
 var dsctrliq_antigo = '';
 
+//bruno - prj 470 - tela autorizacao
+$.getScript(UrlSite + 'includes/autorizacao_contrato/autorizacao_contrato.js');
+var aux_portabilidade = "";
+
 $.getScript(UrlSite + "telas/atenda/emprestimos/impressao.js");
 $.getScript(UrlSite + "telas/atenda/emprestimos/simulacao/simulacao.js");
 $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
@@ -4738,6 +4742,8 @@ function controlaLayout(operacao) {
         //seta a acao do botao continuar
         $("#btSalvar", "#divBotoesFormPortabilidade").unbind('click').bind('click', function() {
             validaDados(0);
+            //bruno - prj 470 - tela autorizacao
+            aux_portabilidade = "S";
         });
 
         // tratamento para o botao voltar
@@ -10561,6 +10567,11 @@ function calculaCet(operacao) {
     var tpemprst = $('#tpemprst', '#frmNovaProp').val();
     var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();    
 
+    //bruno - prj 470 - tela autorizacao
+    if(possuiPortabilidade != ""){
+        aux_portabilidade = possuiPortabilidade;
+    }
+
     $.ajax({
         type: 'POST',
         url: UrlSite + 'telas/atenda/emprestimos/calculo_cet.php',
@@ -12617,7 +12628,35 @@ function selecionaComplemento(tr) {
     
 	return false;
 }
+/**
+ * Autor: Bruno Luiz Katzjarowski;
+ * bruno - prj 470 - tela autorizacao
+ */
+function mostraTelaAutorizacaoImpressao(operacao, paramTela){
 
+    var a_nrdconta = "";
+    if(typeof paramTela != "undefined"){
+        a_nrdconta = paramTela.nrdconta;
+    }else{
+        a_nrdconta = nrdconta;
+    }
+
+	if(aux_portabilidade == 'S'){
+		var params = {
+			nrdconta : a_nrdconta,
+			obrigatoria: 1,
+            tpcontrato: 26,
+            nrcontrato: nrctremp,
+			vlcontrato: arrayProposta['vlemprst'],
+            funcaoImpressao: "mostraDivImpressao('"+operacao+"');exibeRotina($('#divUsoGenerico'));",
+            funcaoGeraProtocolo: "controlaOperacao('');"
+		};
+		mostraTelaAutorizacaoContrato(params);
+        aux_portabilidade = 'N'; //bruno - prj 470 - bug 
+	}else{
+		mostraDivImpressao(operacao);
+	}
+}
 
 function mostraAplicacao(tpaplica) {
 	showMsgAguardo('Aguarde, buscando ...');

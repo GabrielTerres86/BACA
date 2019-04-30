@@ -69,6 +69,8 @@
                                                 
                06/03/2018 - Adicionado campo idcobope na temp-table tt-cabec-limcredito.
                             (PRJ404 Reinert)
+               21/03/2019 - Ajuste no Termo de Recisao para assinatura eletronica
+                            Pj470 SM 1 - Ze Gracik - Mouts
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-limite-credito NO-UNDO
@@ -247,7 +249,12 @@ DEF TEMP-TABLE tt-dados-rescisao NO-UNDO
     FIELD nrctrlim AS INTE
     FIELD vllimite AS DECI
     FIELD dtmvtolt AS DATE
-    FIELD nmoperad AS CHAR.
+    FIELD nmoperad AS CHAR
+    FIELD dsfrass1 AS CHAR  /* Pj470 SM 1 - Ze Gracik - Mouts */
+    FIELD dsfrass2 AS CHAR  /* Pj470 SM 1 - Ze Gracik - Mouts */
+    FIELD dsfrass3 AS CHAR  /* Pj470 SM 1 - Ze Gracik - Mouts */
+    FIELD dsfrcop1 AS CHAR  /* Pj470 SM 1 - Ze Gracik - Mouts */
+    FIELD dsfrcop2 AS CHAR. /* Pj470 SM 1 - Ze Gracik - Mouts */
            
 DEF TEMP-TABLE tt-avais-ctr NO-UNDO    
     FIELD nmdavali AS CHAR

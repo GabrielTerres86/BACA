@@ -352,9 +352,18 @@
 	echo 'nrctrrat = '.$nrctrlim.';';
 
 	// Gravar dados do rating do cooperado
-	echo 'atualizaDadosRating("divConteudoOpcao");';
+	//bruno - prj 470 - tela autorizacao
+	//echo 'atualizaDadosRating("divConteudoOpcao");';
 	
-	echo 'eval(fncRatingSuccess);';
+	//bruno - prj 470 - tela autorizacao
+	//echo 'eval(fncRatingSuccess);';
+	if($stringArrayMsg != "")
+	echo 'chamarImpressaoLimiteCredito(false);';
+	// echo 'var p = {
+	// 	vlcontrato: "'.$vllimite.'",
+	// 	nrcontrato: "'.$nrctrlim.'",
+	// };';
+	// echo 'chamarImpressao(p);';
 	
 	// Mensagens de alerta
 	$msg = Array();
@@ -365,7 +374,10 @@
 
 	$stringArrayMsg = implode( "|", $msg);
 	
-	echo 'exibirMensagens("'.$stringArrayMsg.'","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));");';
+	//bruno - prj 470 - tela autorizacao
+	$executar = 'blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));chamarImpressaoLimiteCredito(false);';
+
+	echo 'exibirMensagens("'.$stringArrayMsg.'","'.$executar.'");';
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 

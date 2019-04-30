@@ -3075,6 +3075,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 		           '<ind_interv>' || vr_ind_interv ||'</ind_interv>'); 
     --> Fim interveniente/Garantidor
 
+    -- Projeto 470 - SM 1 - 18/03/2019
+    -- Marcelo Telles Coelho - Mouts
+    DECLARE
+      vr_dsfrase_cooperado   VARCHAR2(4000);
+      vr_dsfrase_cooperativa VARCHAR2(4000);
+    BEGIN
+      cntr0001.pc_ver_protocolo (pr_cdcooper            => pr_cdcooper
+                                ,pr_nrdconta            => pr_nrdconta
+                                ,pr_nrcontrato          => pr_nrctrlim
+                                ,pr_tpcontrato          => 29
+                                ,pr_dsfrase_cooperado   => vr_dsfrase_cooperado
+                                ,pr_dsfrase_cooperativa => vr_dsfrase_cooperativa);
+      IF vr_dsfrase_cooperado IS NOT NULL THEN
+        pc_escreve_xml('<autorizacao_por_senha>');
+        pc_escreve_xml('<dsfrase_cooperado>'||vr_dsfrase_cooperado||'</dsfrase_cooperado>');
+        pc_escreve_xml('<dsfrase_cooperativa>'||vr_dsfrase_cooperativa||'</dsfrase_cooperativa>');
+        pc_escreve_xml('</autorizacao_por_senha>');
+      END IF;
+    END;
+    -- Fim Projeto 470 - SM 1
+
     IF pr_idimpres = 1  THEN --> Completa 
       
       --> GERAR CONTRATO DO CET

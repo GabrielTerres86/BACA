@@ -15,7 +15,15 @@
  *
  *				   14/09/2018 - Adicionado a div Desconto de Titulos - Estorno de Pagamentos (Cássia de Oliveira - GFT)
  *                 30/10/2018 - PJ 438 - Adicionado 2 novos parametros (avtperda e vlperavt) - Mateus Z (Mouts)
+ *                 11/12/2018 - PRJ 470 - Adicionado 2 novos parametros (inpreapv e vlmincnt) - Mateus Z (Mouts)
  */
+
+	session_start();
+	require_once('../../includes/config.php');
+	require_once('../../includes/funcoes.php');
+	require_once('../../includes/controla_secao.php');
+	require_once('../../class/xmlfile.php');
+	isPostMethod();		
 ?>
 
 <form name="frmTab089" id="frmTab089" class="formulario" style="display:block;">	
@@ -162,7 +170,7 @@
 		<label>&nbsp;dia(s)</label>
 		<br style="clear:both" />
 
-	</fieldset>
+	</fieldset>	  
 
 	<fieldset>
 		<legend>Desconto de T&iacute;tulos - Estorno de Pagamentos</legend>
@@ -171,6 +179,30 @@
 		<input type="text" id="vlmaxdst" name="vlmaxdst" class="moeda" value="<?php echo $vlmaxdst == 0 ? '' : $vlmaxdst ?>" style="text-align:right;"/>
 		<br style="clear:both" />
 	</fieldset> 
+
+
+	<!-- Inicio PRJ 470 -->
+	<?php if($glbvars['cdcooper'] != 3) { // Exibir Contratação de Crédito apenas se não for cooperativa 3 (Ailos) ?> 
+	<fieldset>
+			<!-- <legend>Contrata&ccedil;&atilde;o de Cr&eacute;dito</legend> -->
+			<legend>Contrata&ccedil;&otilde;es de Cr&eacute;dito autorizados por senha</legend>
+			
+			<label for="inpreapv" class='labelPri'>Utilizar pr&eacute;-aprovado cooperado:</label>
+			<select id="inpreapv" name="inpreapv" style="width:100px;">
+				<!-- Bruno - prj 470 - ALteração Tab089 -->
+				<option value='S'> Sim </option>
+				<option value='N'> N&atilde;o </option>
+			</select>   	
+		<br style="clear:both" />
+			
+			<!-- <label for="vlmincnt" class='labelPri'>Valor m&iacute;nimo contrata&ccedil;&atilde;o:</label> -->
+			<label for="vlmincnt"  class='labelPri'>Valor Limite Autorizado: </label>
+			<input type="text" id="vlmincnt" name="vlmincnt" value="<?php echo $vlmincnt == 0 ? '' : $vlmincnt ?>" style="text-align:right;"/>
+			<br style="clear:both" />
+
+	</fieldset> 
+	<?php } ?>
+	<!-- Fim PRJ 470 -->
 </form>
 
 <div id="divBotoes" name="divBotoes" style="margin-bottom:5px">

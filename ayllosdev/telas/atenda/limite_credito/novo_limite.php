@@ -1,4 +1,4 @@
-<?
+<?php
 /*
  * FONTE        : novo_limite.php
  * CRIAÇÃO      : David (CECRED)
@@ -25,9 +25,7 @@
  * 010: [15/03/2018] Diego Simas	 (AMcom)  : Alterado para exibir tratativas quando o limite de crédito foi 
  *                                              cancelado de forma automática pelo Aimaro.  
  */	  
-?>
 
-<?
 	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -179,9 +177,15 @@
 	
 	// Se o índice da opção "I" foi encontrado 
 	if (!($idImpressao === false)) {
-		$fncImpressao = "acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idImpressao.",'".$glbvars["opcoesTela"][$idImpressao]."');";
+		//bruno - prj 470 - tela autorizacao
+		$idImpressao = "'IA'";
+		$fncImpressao = "acessaOpcaoAba('','',".$idImpressao.")";
+		//$fncImpressao = "acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idImpressao.",'".$glbvars["opcoesTela"][$idImpressao]."');";
 	} else {
-		$fncImpressao = "acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idPrincipal.",'".$glbvars["opcoesTela"][$idPrincipal]."');";
+		//bruno - prj 470 - tela autorizacao
+		$idImpressao = "'IA'";
+		$fncImpressao = "acessaOpcaoAba('','',".$idImpressao.")";
+		//$fncImpressao = "acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idPrincipal.",'".$glbvars["opcoesTela"][$idPrincipal]."');";
 	}
 
 	$voltaAvalista  = "$('#frmNovoLimite').css('width', 515);lcrShowHideDiv('divDadosRating','divDadosAvalistas');return false"; 

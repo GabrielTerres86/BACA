@@ -360,7 +360,8 @@
 			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulos()");
 		} else {
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite(\'PROPOSTA\')");
+			//bruno - prj 470 - tela autorizacao
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","chamarImpressao('PROPOSTA');");
 		}
 		return false;
 	});

@@ -20,6 +20,10 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
   --              31/07/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
   --                           PRJ 450 - Diego Simas (AMcom)
   --			  14/09/2018 - Adicionado parametro valor max de estorno para desconto de titulo - Cássia de Oliveira (GFT)
+  --              11/12/2018 - pc_consultar - Inclusão de campos para retornar no XML os valores da Contratação de Crédito
+  --                                        * Utilizar pré-aprovado cooperado [S/N] e o valor mínimo da contratação
+  --                         - pc_alterar - Inclusão de dois parâmetros na chamada da procedure para gravar o informado via tela.
+  --                           PRJ 470 - Rubens Lima (Mouts)
   --
   ---------------------------------------------------------------------------
 
@@ -67,7 +71,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
                        ,pr_avtperda  IN NUMBER  -- Alteração em Avalista perde aprovação - PRJ438 - Paulo (Mouts)
                        ,pr_vlperavt  IN NUMBER  -- Valor para perda de aprovação referente ao Avalista - PRJ438 - Paulo (Mouts)                       
                        ,pr_vlmaxdst  IN NUMBER  -- Valor maximo de estorno par desconto de titulo 
-
+                       -- PRJ470 - Rubens Lima (Mouts)
+                       ,pr_inpreapv  IN VARCHAR2 -- Utiliza pre-aprovado do cooperado - PRJ470 - Rubens Lima (Mouts)
+                       ,pr_vlmincnt  IN NUMBER   -- Valor minimo da contratacao - PRJ470 - Rubens Lima (Mouts)
 				       ,pr_xmllog      IN VARCHAR2  --> XML com informações de LOG
                        ,pr_cdcritic   OUT PLS_INTEGER --> Código da crítica
                        ,pr_dscritic   OUT VARCHAR2 --> Descrição da crítica
@@ -162,6 +168,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
   --              14/09/2018 - Adicionado parametro valor max de estorno para desconto de titulo - Cássia de Oliveira (GFT)
   --              30/10/2018 - Parametros de perda de aprovação relacionado ao Avalista - Paulo Martins (Mouts)
   --
+  --              11/12/2018 - pc_consultar - Inclusão de campos para retornar no XML os valores da Contratação de Crédito
+  --                                        * Utilizar pré-aprovado cooperado [S/N] e o valor mínimo da contratação
+  --                         - pc_alterar - Inclusão de dois parâmetros na chamada da procedure para gravar o informado via tela.
+  --                           PRJ 470 - Rubens Lima (Mouts)
   ---------------------------------------------------------------------------
   PROCEDURE pc_consultar(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
                         ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
@@ -240,6 +250,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
       vr_cdagenci VARCHAR2(100);
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
+
+      -- Variaveis retornadas da fn_busca_dstextab
+      vr_inpreapv VARCHAR2(1); -- PJ470 - Rubens Lima (Mouts)
+      vr_vlmincnt NUMBER; -- PJ470 - Rubens Lima (Mouts)
 
       ---------->> CURSORES <<--------
 
@@ -324,6 +338,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
 		vr_vlmaxdst := gene0002.fn_char_para_number(vr_dsvlrprm);      
 
 	  END IF;
+
+      -- Buscar dados da TAB referentes ao PRJ 470 - Rubens Lima (Mouts)
+      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'GENERI'
+                                               ,pr_cdempres => 0
+                                               ,pr_cdacesso => 'PARCONTRATO'
+                                               ,pr_tpregist => 01);
+                                               
+      --Se nao encontrou parametro
+      IF TRIM(vr_dstextab) IS NULL THEN
+        vr_inpreapv := 'N';
+        vr_vlmincnt := 0;
+      ELSE
+        -- EFETUA OS PROCEDIMENTOS COM O DADO RETORNADO
+        vr_inpreapv := SUBSTR(vr_dstextab,1,1);
+        vr_vlmincnt := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,3,12));
+      END IF;                                               
+                                               
 
       -- PASSA OS DADOS PARA O XML RETORNO      
       -- Criar cabeçalho do XML
@@ -540,7 +573,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                             pr_tag_cont => to_char(vr_vlmaxdst,
                                                    '999999999D00',
                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
-                            pr_des_erro => vr_dscritic); 	                                                        
+                            pr_des_erro => vr_dscritic); 	
+
+      --PRJ470 - Rubens Lima (Mouts)
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'inpreapv',
+                             pr_tag_cont => to_char(vr_inpreapv),
+                             pr_des_erro => vr_dscritic);
+
+      --PRJ470 - Rubens Lima (Mouts)
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'vlmincnt',
+                             pr_tag_cont => to_char(vr_vlmincnt,
+                                                    '999999999D00',
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
+                             pr_des_erro => vr_dscritic);                             
+                                                        
   EXCEPTION
     WHEN vr_exc_saida THEN
 
@@ -601,7 +653,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                        ,pr_avtperda  IN NUMBER  -- Alteração em Avalista perde aprovação - PRJ438 - Paulo (Mouts)
                        ,pr_vlperavt  IN NUMBER  -- Valor para perda de aprovação referente ao Avalista - PRJ438 - Paulo (Mouts)
                        ,pr_vlmaxdst  IN NUMBER  -- Valor maximo de estorno para desconto de titulo
-
+                       -- PRJ470 - Rubens Lima (Mouts)
+                       ,pr_inpreapv  IN VARCHAR2 -- Utiliza pre-aprovado do cooperado - PRJ470 - Rubens Lima (Mouts)
+                       ,pr_vlmincnt  IN NUMBER   -- Valor minimo da contratacao - PRJ470 - Rubens Lima (Mouts)
+                       -- 
 					   ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
                        ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                        ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -678,7 +733,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
     vr_qtdictcc INTEGER :=0;
     vr_avtperda NUMBER  :=0; -- PJ438 - Paulo (Mouts) Sprint 5
     vr_vlperavt NUMBER  :=0; -- PJ438 - Paulo (Mouts) Sprint 5 
-    vr_vlmaxdst NUMBER  :=0;
+    vr_vlmaxdst NUMBER  :=0;  
+    vr_inpreapv VARCHAR2(1); -- PJ470 - Rubens Lima (Mouts)
+    vr_vlmincnt NUMBER  :=0; -- PJ470 - Rubens Lima (Mouts)      
 
     -- Cursor generico de calendario
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -1095,6 +1152,92 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                                     ' para ' || to_char(pr_vlmaxdst,'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
 
     END IF;
+
+
+    -- Projeto 470
+    -- Busca parâmetros Contratacao de Credito
+    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
+                                             ,pr_nmsistem => 'CRED'
+                                             ,pr_tptabela => 'GENERI'
+                                             ,pr_cdempres => 0
+                                             ,pr_cdacesso => 'PARCONTRATO'
+                                             ,pr_tpregist => 01);
+
+    --Se encontrou atribui valor, caso contrario, mantem Zero
+    IF TRIM(vr_dstextab) IS NOT NULL THEN
+      -- EFETUA OS PROCEDIMENTOS COM O DADO RETORNADO DA CRAPTAB
+      vr_inpreapv := SUBSTR(vr_dstextab,1,1);
+      vr_vlmincnt := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,3,12));
+    END IF;
+
+    --Criação do registro dos valores alterados
+    vr_dstextab := to_char(pr_inpreapv)|| ' ' || -- PJ438 - Rubens Lima (Mouts)
+                   to_char(pr_vlmincnt, 'FM000000000D00' , 'NLS_NUMERIC_CHARACTERS='',.'''); -- PJ438 - Rubens Lima (Mouts)
+
+    --> gerar log da tela
+    IF vr_inpreapv <> pr_inpreapv THEN
+
+      pc_log_tab089(pr_cdcooper => vr_cdcooper,
+                    pr_cdoperad => vr_cdoperad,
+                    pr_dscdolog => 'Alterou flag Pre-Aprovado da Contratacao de Credito de ' ||
+                                    to_char(vr_inpreapv) ||
+                                    ' para ' || to_char(pr_inpreapv));
+
+    END IF;
+
+    --> gerar log da tela
+    IF vr_vlmincnt <> pr_vlmincnt THEN
+
+      pc_log_tab089(pr_cdcooper => vr_cdcooper,
+                    pr_cdoperad => vr_cdoperad,
+                    pr_dscdolog => 'Alterou valor minimo da Contratacao de Credito de ' ||
+                                    to_char(vr_vlmincnt) ||
+                                    ' para ' || to_char(pr_vlmincnt));
+
+    END IF;
+
+    --Atualiza o registro , se não existir, insere
+    BEGIN
+
+      UPDATE craptab tab
+         SET tab.dstextab = vr_dstextab
+       WHERE tab.cdcooper        = vr_cdcooper
+         AND upper(tab.nmsistem) = 'CRED'
+         AND upper(tab.tptabela) = 'GENERI'
+         AND tab.cdempres        = 0
+         AND upper(tab.cdacesso) = 'PARCONTRATO'
+         AND tab.tpregist        = 01;
+
+    IF ( sql%rowcount = 0 ) THEN
+
+      INSERT INTO
+           craptab (nmsistem,
+                    tptabela,
+                    cdempres,
+                    cdacesso,
+                    tpregist,
+                    dstextab,
+                    cdcooper)
+           values ('CRED',
+                   'GENERI',
+                   0,
+                   'PARCONTRATO',
+                   '01',
+                    vr_dstextab,
+                    vr_cdcooper);
+
+    END IF;
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Montar mensagem de critica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao atualizar Parametros da Contratacao de Credito!';
+        -- volta para o programa chamador
+        RAISE vr_exc_saida;
+
+    END;
+    -- Fim Projeto 470
 
     COMMIT;
 

@@ -6445,6 +6445,27 @@ END fn_letra_risco;
     
       END IF;
     
+      -- Projeto 470 - SM 1 - 18/03/2019
+      -- Marcelo Telles Coelho - Mouts
+      DECLARE
+        vr_dsfrase_cooperado   VARCHAR2(4000);
+        vr_dsfrase_cooperativa VARCHAR2(4000);
+      BEGIN
+        cntr0001.pc_ver_protocolo (pr_cdcooper            => pr_cdcooper
+                                  ,pr_nrdconta            => pr_nrdconta
+                                  ,pr_nrcontrato          => pr_nrctrlim
+                                  ,pr_tpcontrato          => CASE WHEN pr_tpctrlim = 2 THEN 27 ELSE 28 END
+                                  ,pr_dsfrase_cooperado   => vr_dsfrase_cooperado
+                                  ,pr_dsfrase_cooperativa => vr_dsfrase_cooperativa);
+        IF vr_dsfrase_cooperado IS NOT NULL THEN
+          pc_escreve_xml('<autorizacao_por_senha>');
+          pc_escreve_xml('<dsfrase_cooperado>'||vr_dsfrase_cooperado||'</dsfrase_cooperado>');
+          pc_escreve_xml('<dsfrase_cooperativa>'||vr_dsfrase_cooperativa||'</dsfrase_cooperativa>');
+          pc_escreve_xml('</autorizacao_por_senha>');
+        END IF;
+      END;
+      -- Fim Projeto 470 - SM 1
+    
       --> Gerar XML para dados do relatorio de CET   
       CCET0001.pc_imprime_limites_cet( pr_cdcooper  => pr_cdcooper                 -- Cooperativa
                                       ,pr_dtmvtolt  => pr_dtmvtolt                 -- Data Movimento

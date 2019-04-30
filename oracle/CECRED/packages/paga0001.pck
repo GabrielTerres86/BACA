@@ -14301,6 +14301,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --               29/10/2018 - Ajuste critica/ mensagem / continuação do processo
     --                            ( Belli - Envolti - PRB0040400)
     --
+    --               24/01/2019 - Aumentar o período para a expiração das transações pendentes para 15 dias
+    --                            Tipo da transacao 20 - Autorizacao de contratos por senha
+    --                            Projeto 470 -- Marcelo Telles Coelho - Mouts
     -----------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -14438,6 +14441,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 	     WHERE trib.cdtransacao_pendente = pr_cdtrapen;
   	  rw_tbtrib_trans_pend cr_tbtrib_trans_pend%ROWTYPE;
     
+      --Tabela Contratos pend.
+      CURSOR cr_tbctd_trans_pend (pr_cdtrapen IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS
+      SELECT 0                                  idagendamento
+            ,TRUNC(tbctd_trans_pend.dhcontrato) dtdebito
+            ,tbctd_trans_pend.vlcontrato        vlpagamento
+      FROM   tbctd_trans_pend
+      WHERE  tbctd_trans_pend.cdtransacao_pendente = pr_cdtrapen;
+      rw_tbctd_trans_pend cr_tbctd_trans_pend%ROWTYPE;
+
       --Variaveis Locais
       vr_nmrescop crapcop.nmrescop%TYPE;
       vr_hratual  INTEGER;
@@ -14656,6 +14668,29 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             
             vr_idagenda := rw_tbtrib_trans_pend.idagendamento;
             vr_dtmvtopg := rw_tbtrib_trans_pend.dtdebito;
+        --Contratos
+        -- Projeto 470 - Marcelo Telles Coeljho - Mouts
+        ELSIF vr_tptransa = 20 THEN	--> Autorizacao de contratos por senha
+            --Selecionar transacao pendente
+            OPEN cr_tbctd_trans_pend (pr_cdtrapen => vr_cdtransa);
+            --Posicionar no primeiro registro
+            FETCH cr_tbctd_trans_pend INTO rw_tbtrib_trans_pend;
+            --Se encontrou
+            IF cr_tbctd_trans_pend%NOTFOUND THEN
+              --Fechar Cursor
+              CLOSE cr_tbctd_trans_pend;
+              --Erro
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Transacao pendente não cadastrada - Contrato.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+            --Fechar Cursor
+            CLOSE cr_tbctd_trans_pend;
+
+            vr_idagenda := rw_tbctd_trans_pend.idagendamento;
+            vr_dtmvtopg := rw_tbtrib_trans_pend.dtdebito;
+        -- Fim Projeto 470
         ELSE
 			-- Adesão de pacote de tarifas(10), contrao de SMS(16,17) e Desconto de cheque(12)
       -- não permite agendamento
@@ -14876,6 +14911,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 						  pr_flgalter := TRUE;
             END IF;           
 -- Fim  SM 454.1          
+					-- Projeto 470 - Marcelo Telles Coeljho - Mouts
+          ELSIF  vr_tptransa = 20 THEN --> Contratos
+            --> Verificar se ja se passou 15 dias desde a criação da pendencia
+            IF rw_tbgen_trans_pend.dtmvtolt + 15 < pr_dtmvtolt THEN
+              --Atualizar flag para true
+						  vr_flgalter := TRUE;
+						  pr_flgalter := TRUE;
+            END IF;
+					-- Fim Projeto 470
 					ELSE
 						--Debito por agendamento
 						vr_dtauxili := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada

@@ -1754,13 +1754,20 @@ begin
           vr_flgcontr := 7;
         end if;
         --
-        if vr_tab_separados(vr_indice_separados).vr_vlemprst < 2000 then
-          vr_desvalor := 'BORDEROS ATE R$ 1.999,99';
+        -- Projeto 470 - Marcelo Telles Coelho - Mouts
+        -- Deixar de fazer a quebra até R$ 2.000,00
+        -- if vr_tab_separados(vr_indice_separados).vr_vlemprst < 2000 then
+        --   vr_desvalor := 'BORDEROS ATE R$ 1.999,99';
+        --   vr_flgvalor := 1;
+        -- elsif vr_tab_separados(vr_indice_separados).vr_vlemprst >= 2000  then
+        --   vr_desvalor := 'BORDEROS ACIMA R$ 2.000,00  INCLUSIVE';
+        --   vr_flgvalor := 2;
+        -- end if;
+        -- Passar a fazer quebra única
+        vr_desvalor := 'BORDEROS ACIMA R$ 0,00 INCLUSIVE';
           vr_flgvalor := 1;
-        elsif vr_tab_separados(vr_indice_separados).vr_vlemprst >= 2000  then
-          vr_desvalor := 'BORDEROS ACIMA R$ 2.000,00  INCLUSIVE';
-          vr_flgvalor := 2;
-        end if;
+        -- Fim Projeto 470
+        --
         -- Define o índice das tabelas gerais
         vr_indice_geral := to_char(rw_crapage.cdagenci, 'fm00000')||
                            to_char(vr_flgcontr)||
@@ -1822,8 +1829,12 @@ begin
     -- Primeira leitura dos borderôs
     vr_indice_separados := vr_tab_separados.first;
     while vr_indice_separados is not null loop
+      -- Projeto 470 - Marcelo Telles Coelho - Mouts
+      -- Deixar de fazer a quebra até R$ 2.000,00
       if vr_tab_separados(vr_indice_separados).vr_tpctrlim = 1 and
-         vr_tab_separados(vr_indice_separados).vr_vlemprst < 2000 then
+         -- vr_tab_separados(vr_indice_separados).vr_vlemprst < 2000 then
+         vr_tab_separados(vr_indice_separados).vr_vlemprst < 0 then
+      -- Fim Projeto 470
         if not vr_flesctgvl then
           -- Na primeira volta do loop, deve abrir o grupo VALOR
           gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp
@@ -1858,13 +1869,18 @@ begin
       gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'</valor>');
     end if;
     -- imprime_bordero_cheques - valor alto
-    vr_desvalor := 'BORDEROS ACIMA R$ 2.000,00  INCLUSIVE';
+    -- vr_desvalor := 'BORDEROS ACIMA R$ 2.000,00  INCLUSIVE'; -- Projeto 470 - Marcelo Telles Coelho - Mouts
+    vr_desvalor := 'BORDEROS ACIMA R$ 0,00  INCLUSIVE'; -- Projeto 470 - Marcelo Telles Coelho - Mouts
     vr_flesctgvl := false;
     -- primeira leitura dos borderôs
     vr_indice_separados := vr_tab_separados.first;
     while vr_indice_separados is not null loop
+      -- Projeto 470 - Marcelo Telles Coelho - Mouts
+      -- Deixar de fazer a quebra até R$ 2.000,00
       if vr_tab_separados(vr_indice_separados).vr_tpctrlim = 1 and
-         vr_tab_separados(vr_indice_separados).vr_vlemprst >= 2000 then
+         -- vr_tab_separados(vr_indice_separados).vr_vlemprst >= 2000 then
+         vr_tab_separados(vr_indice_separados).vr_vlemprst >= 0 then
+      -- Fim Projeto 470
         if not vr_flesctgvl then
           -- Na primeira volta do loop, deve abrir o grupo VALOR
           gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp
@@ -1911,8 +1927,12 @@ begin
     -- primeira leitura dos borderôs
     vr_indice_separados := vr_tab_separados.first;
     while vr_indice_separados is not null loop
+      -- Projeto 470 - Marcelo Telles Coelho - Mouts
+      -- Deixar de fazer a quebra até R$ 2.000,00
       if vr_tab_separados(vr_indice_separados).vr_tpctrlim = 2 and
-         vr_tab_separados(vr_indice_separados).vr_vlemprst < 2000 then
+--         vr_tab_separados(vr_indice_separados).vr_vlemprst < 2000 then
+         vr_tab_separados(vr_indice_separados).vr_vlemprst < 0 then
+      -- Fim Projeto 470
         if not vr_flesctgvl then
           -- Na primeira volta do loop, deve abrir o grupo VALOR
           gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp
@@ -1947,13 +1967,18 @@ begin
       gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'</valor>');
     end if;
     -- imprime_bordero_titulos - valor alto
-    vr_desvalor := 'BORDEROS ACIMA R$ 2.000,00  INCLUSIVE';
+    -- vr_desvalor := 'BORDEROS ACIMA R$ 2.000,00  INCLUSIVE'; -- Projeto 470 - Marcelo Telles Coelho - Mouts
+    vr_desvalor := 'BORDEROS ACIMA R$ 0,00  INCLUSIVE'; -- Projeto 470 - Marcelo Telles Coelho - Mouts
     vr_flesctgvl := false;
     -- primeira leitura dos borderôs
     vr_indice_separados := vr_tab_separados.first;
     while vr_indice_separados is not null loop
+      -- Projeto 470 - Marcelo Telles Coelho - Mouts
+      -- Deixar de fazer a quebra até R$ 2.000,00
       if vr_tab_separados(vr_indice_separados).vr_tpctrlim = 2 and
-         vr_tab_separados(vr_indice_separados).vr_vlemprst >= 2000 then
+         -- vr_tab_separados(vr_indice_separados).vr_vlemprst >= 2000 then
+         vr_tab_separados(vr_indice_separados).vr_vlemprst >= 0 then
+      -- Fim Projeto 470
         if not vr_flesctgvl then
           -- Na primeira volta do loop, deve abrir o grupo VALOR
           gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,
