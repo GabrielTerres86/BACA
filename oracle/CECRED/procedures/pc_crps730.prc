@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 16/12/2018
+   Data    : Fevereiro/2018                    Ultima atualizacao: 24/04/2019
 
    Dados referentes ao programa:
 
@@ -31,6 +31,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 
    16/12/2018 - Ajuste nos blocos de exceções, pois nem toda crítica deve abortar
                 o processo. (P352 - Cechet)   
+
+   24/04/2019 - inc0013629 Tratamento para não executar em feriados (Carlos)
 
   ............................................................................. */
   
@@ -4400,6 +4402,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
 	--
 
 BEGIN                          -- Inicio Bloco Principal 
+
+  -- Executar apenas em dias úteis na Central
+  IF gene0005.fn_valida_dia_util(pr_cdcooper => 3, 
+                                 pr_dtmvtolt => trunc(SYSDATE)) <> trunc(SYSDATE) THEN
+    RETURN;
+  END IF;
+
   --
   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => vr_cdprogra);
 
