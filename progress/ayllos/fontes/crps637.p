@@ -57,6 +57,10 @@
 
                 09/11/2018 - Criado um tratamento para apresentar 30 carcatereres no campo dstransa (Descrição da transação).
                 			 SCTASK0032223 (Paulo Kowalsky).             
+							 
+                16/04/2019 - Criar copia dos arquivos ccrotran e ccroconv para a pasta micros.
+                             Chamado RITM0012005 - Gabriel Marcos (Mouts).
+
 ..............................................................................*/
 
 DEF STREAM str_1.  /* ARQ. IMPORTAÇÃO       */
@@ -333,6 +337,10 @@ IF  aux_flgarqui THEN
         /* copia para o dir de armazenamento */
         UNIX SILENT VALUE("cp " + aux_nmarqimp + " /usr/connect/sicredi/recebidos/CCROTRAN_" + STRING(YEAR(TODAY),"9999") +
                                             STRING(MONTH(TODAY),"99") + STRING(DAY(TODAY),"99") + ".csv " + "2> /dev/null").
+
+        /* Disponibiliza copia do arquivo para acesso da area de negocio */
+        UNIX SILENT VALUE("cp " + aux_nmarqimp + " /micros/convenios/tabela_ccrotran/CCROTRAN_" + STRING(YEAR(TODAY),"9999") +
+                                            STRING(MONTH(TODAY),"99") + STRING(DAY(TODAY),"99") + ".csv " + "2> /dev/null").											
 
         /* remove o arq antigo */
         UNIX SILENT VALUE("rm " + aux_nmarqimp + " 2> /dev/null").
@@ -701,6 +709,10 @@ IF  aux_flgarqui THEN
         /* copia para o dir de armazenamento */
         UNIX SILENT VALUE("cp " + aux_nmarqimp + " /usr/connect/sicredi/recebidos/CCROCONV_" + STRING(YEAR(TODAY),"9999") +
                                             STRING(MONTH(TODAY),"99") + STRING(DAY(TODAY),"99") + ".csv " + "2> /dev/null").
+
+        /* Disponibiliza copia do arquivo para acesso da area de negocio */
+        UNIX SILENT VALUE("cp " + aux_nmarqimp + " /micros/convenios/tabela_ccroconv/CCROCONV_" + STRING(YEAR(TODAY),"9999") +
+                                            STRING(MONTH(TODAY),"99") + STRING(DAY(TODAY),"99") + ".csv " + "2> /dev/null").											
 
         /* remove o arq antigo */
         UNIX SILENT VALUE("rm " + aux_nmarqimp + " 2> /dev/null").
