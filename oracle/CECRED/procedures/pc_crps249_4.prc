@@ -46,6 +46,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_4(pr_cdcooper  IN crapcop.cdcooper
 							
 			   03/02/2014 - (Chamado 245712) Agencia com 3 dígitos não integrando no contábil
 							 (Andrino - RKAM).
+               
+               30/04/2019 - Ajustada a rotina para desprezar os dados de lançamentos
+                            de transferencias de portabilidade, nas leituras da 
+                            CRAPTVL. (Renato Darosci - Supero - Projeto 485)
 ............................................................................ */
   -- Informações da cooperativa
   cursor cr_crapcop is
@@ -122,6 +126,14 @@ begin
                ' where cdcooper = '||pr_cdcooper||
                  ' and dtmvtolt = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')'||
                  ' and tpdoctrf in ('||vr_tpdoctrf1||','||vr_tpdoctrf2||')';
+  
+  -- Se a estrutura for CRAPTVL
+  IF UPPER(pr_nmestrut) = 'CRAPTVL' THEN
+    -- Não devem ser considerados os lançamentos da TVL referente a portabilidade de salário,
+    -- pois os mesmos estão dispostos em outros históricos
+    vr_cursor := vr_cursor||' and NVL(nrridlfp,0) = 0 ';
+  END IF;
+  
   -- Cria cursor dinâmico
   vr_num_cursor := dbms_sql.open_cursor;
   -- Comando Parse
@@ -281,4 +293,3 @@ exception
     pr_dscritic := 'Erro PC_CRPS249_4: '||SQLERRM;
 end pc_crps249_4;
 /
-
