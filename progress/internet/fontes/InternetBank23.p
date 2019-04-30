@@ -113,8 +113,12 @@ DEF INPUT  PARAM par_nmtitpes LIKE crapcti.nmtitula                    NO-UNDO.
 DEF INPUT  PARAM par_flgpesqu AS LOGI                                  NO-UNDO.
 DEF INPUT  PARAM par_flmobile AS LOGI                                  NO-UNDO.
 /* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
 DEF INPUT  PARAM par_dsorigem AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_cdagenci AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INT                                   NO-UNDO.
 DEF INPUT  PARAM par_nmprogra AS CHAR                                  NO-UNDO.
+/* Projeto 363 - Novo ATM */
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -153,6 +157,11 @@ end.
         ,INPUT  INT(par_flmobile)      /* --> Indicativo de operacao mobile */
         
         ,INPUT  aux_dstransa           /* --> Descricao da transferencia    */        
+        ,INPUT  par_cdorigem
+        ,INPUT  par_dsorigem
+        ,INPUT  par_cdagenci
+        ,INPUT  par_nrdcaixa
+        ,INPUT  par_nmprogra
         ,OUTPUT ""                     /* --> Retorno XML de critica        */
         ,OUTPUT ""                     /* --> Retorno XML da operaçao 26    */
         ,OUTPUT "" ).                  /* --> Retorno de critica (OK ou NOK)*/
