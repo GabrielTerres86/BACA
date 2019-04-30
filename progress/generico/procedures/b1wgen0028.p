@@ -889,7 +889,7 @@ PROCEDURE lista_cartoes:
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Listar cartoes de credito.".    
            
-    FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd dtinsori
+    FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd dtinsori flgprcrd
                             dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
                       WHERE crawcrd.cdcooper = par_cdcooper    AND
                             crawcrd.nrdconta = par_nrdconta    NO-LOCK:
@@ -992,7 +992,8 @@ PROCEDURE lista_cartoes:
                tt-cartoes.cdadmcrd = crawcrd.cdadmcrd
                tt-cartoes.dtinsori = crawcrd.dtinsori
                tt-cartoes.flgcchip = crapadc.flgcchip
-               tt-cartoes.flgprovi = aux_flgprovi.
+               tt-cartoes.flgprovi = aux_flgprovi
+			   tt-cartoes.flgprcrd = crawcrd.flgprcrd.
 
         /* Mascara número de cartão de for Bancoob */
         IF  f_verifica_adm(crawcrd.cdadmcrd) = 2 THEN
@@ -1112,11 +1113,11 @@ PROCEDURE carrega_dados_inclusao:
     
     ASSIGN aux_dscartao = "NACIONAL,INTERNACIONAL,GOLD"
            aux_cdcartao = "1,2,3"
-           aux_dsgraupr = 
-                  "Conjuge,Filhos,Companheiro,Primeiro Titular,Segundo Titular,Terceiro Titular,Quarto Titular"
+           aux_dsgraupr = "Conjuge,Filhos,Companheiro,Primeiro Titular,Segundo Titular,Terceiro Titular,Quarto Titular"
            aux_cdgraupr = "1,3,4,5,6,7,8"       
            aux_flgfirst = TRUE
            aux_vlrftbru = 0.
+    
     
     FOR FIRST crapass FIELDS(nrdconta inpessoa nrcpfcgc cdtipcta cdsitdct cdsitdtl dtdemiss 
                              vledvmto cdcooper nmprimtl dtnasctl nrdocptl)
@@ -3899,6 +3900,7 @@ PROCEDURE cadastra_novo_cartao:
                                                             INPUT 0, /* Nacao */
                                                             INPUT 0,  /* Vl.Endiv*/
                                                             INPUT 0,  /* Vl.Rend */
+															INPUT 0, /* par_vlrecjg1 */
                                                             INPUT par_nrender1, 
                                                             INPUT par_complen1,
                                                             INPUT par_nrcxaps1,
@@ -3929,6 +3931,7 @@ PROCEDURE cadastra_novo_cartao:
                                                             INPUT par_nrcxaps2,
                                                             INPUT 0,  /* inpessoa 2o avail */
                                                             INPUT ?,  /* dtnascto 2o avail */
+															INPUT 0, /* par_vlrecjg2 */
                                                             INPUT "",
                                                            OUTPUT TABLE tt-erro).        
                 DELETE PROCEDURE h-b1wgen9999.
@@ -5142,6 +5145,7 @@ PROCEDURE consulta_dados_cartao:
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Consultar dados cartao de credito.".
 
+
     FIND crawcrd WHERE crawcrd.cdcooper = par_cdcooper   AND
                        crawcrd.nrdconta = par_nrdconta   AND
                        crawcrd.nrctrcrd = par_nrctrcrd   NO-LOCK NO-ERROR.
@@ -5554,7 +5558,8 @@ PROCEDURE consulta_dados_cartao:
            tt-dados_cartao.nrcctitg = crawcrd.nrcctitg
            tt-dados_cartao.dsdpagto = aux_dsdpagto
            tt-dados_cartao.dsgraupr = aux_dstitula
-           tt-dados_cartao.flgprovi = aux_flgprovi.
+           tt-dados_cartao.flgprovi = aux_flgprovi
+           tt-dados_cartao.nmempcrd = crawcrd.nmempcrd.
            
     RUN proc_gerar_log (INPUT par_cdcooper,
                         INPUT par_cdoperad,
@@ -9237,6 +9242,7 @@ PROCEDURE altera_limcred_cartao:
                                  INPUT par_nrcxaps1,
                                  INPUT 0,  /* inpessoa 1o avail */
                                  INPUT ?,  /* dtnascto 1o avail */
+								 INPUT 0, /* par_vlrecjg1 */
                                  /* 2 avalista */
                                  INPUT par_nrctaav2,
                                  INPUT par_nmdaval2,
@@ -9262,6 +9268,7 @@ PROCEDURE altera_limcred_cartao:
                                  INPUT par_nrcxaps2,
                                  INPUT 0,  /* inpessoa 2o avail */
                                  INPUT ?,  /* dtnascto 2o avail */
+								 INPUT 0, /* par_vlrecjg2 */
                                  INPUT ""). /* Bens */                                 
                                  
                 DELETE PROCEDURE h-b1wgen9999.                 
@@ -11696,6 +11703,7 @@ PROCEDURE efetua_entrega2via_cartao:
                                                     INPUT par_nrcxaps1,
                                                     INPUT 0,  /* inpessoa 1o avail */
                                                     INPUT ?,  /* dtnascto 1o avail */
+													INPUT 0, /* par_vlrecjg1 */
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -11721,6 +11729,7 @@ PROCEDURE efetua_entrega2via_cartao:
                                                     INPUT par_nrcxaps2,
                                                     INPUT 0,  /* inpessoa 2o avail */
                                                     INPUT ?,  /* dtnascto 2o avail */
+													INPUT 0, /* par_vlrecjg2 */
                                                     INPUT "",
                                                    OUTPUT TABLE tt-erro). 
 
@@ -19247,6 +19256,7 @@ PROCEDURE grava_dados_habilitacao:
                                                       INPUT par_nrcxaps1,
                                                       INPUT 0,  /* inpessoa 1o avail */
                                                       INPUT ?,  /* dtnascto 1o avail */
+													  INPUT 0, /* par_vlrecjg1 */
                                                       /** 2o avalista **/
                                                       INPUT par_nrctaav2,
                                                       INPUT par_nmdaval2, 
@@ -19272,6 +19282,7 @@ PROCEDURE grava_dados_habilitacao:
                                                       INPUT par_nrcxaps2,
                                                       INPUT 0,  /* inpessoa 2o avail */
                                                       INPUT ?,  /* dtnascto 2o avail */
+													  INPUT 0, /* par_vlrecjg2 */
                                                       INPUT "",
                                                      OUTPUT TABLE tt-erro).
           
@@ -23926,6 +23937,7 @@ PROCEDURE altera_administradora:
    DEF  INPUT PARAM par_codnadmi AS INTE NO-UNDO.
                     
    DEF OUTPUT PARAM TABLE FOR tt-erro.      
+   DEF OUTPUT PARAM par_nrctrcrd AS DECI NO-UNDO.
    
    DEF VAR aux_flgexist AS INTE INIT 0 NO-UNDO.
    DEF VAR aux_contador AS INTE INIT 0 NO-UNDO.
@@ -24156,7 +24168,8 @@ PROCEDURE altera_administradora:
                  crabcrd.dtentreg = ?              /* Inclusao Renato - Supero - 07/11/2014 */
                  aux_flgexist = 1
                  crabcrd.inupgrad = 1              /* Flag indicativa de upgrade  */
-                 nrctrcrd = aux_nrctrcrd.
+                 nrctrcrd = aux_nrctrcrd
+                 par_nrctrcrd = aux_nrctrcrd.
                  
           /* Buscar o codigo do limite de credito da nova administradora */       
           IF AVAILABLE craptlc THEN
