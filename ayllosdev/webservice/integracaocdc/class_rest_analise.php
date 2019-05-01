@@ -247,6 +247,7 @@ class RestCDC extends RestServerJson{
             }
 			// Capturar o identificador de acionamento
 			$idacionamento = $oRetorno->idacionamento;
+            $segueFluxoAtacado = (isset($oDados->indicadoresGeradosRegra->segueFluxoAtacado))? $oDados->indicadoresGeradosRegra->segueFluxoAtacado : FALSE;
 
 			// Processa a informacao do banco de dados        
 			$xml  = "<Root>";
@@ -268,6 +269,7 @@ class RestCDC extends RestServerJson{
             $xml .= "   <desscore>".$oDados->indicadoresGeradosRegra->descricaoScoreBVS."</desscore>";
             $xml .= "   <datscore>".$oDados->indicadoresGeradosRegra->dataScoreBVS."</datscore>";
 			$xml .= "   <flgpreap>".$oDados->indicadoresGeradosRegra->preAprovado."</flgpreap>";
+            $xml .= "   <idfluata>".$segueFluxoAtacado."</idfluata>";
 			$xml .= "   <dsrequis>".$this->getFileContents()."</dsrequis>";
 			$xml .= "   <namehost>".$this->getNameHost()."</namehost>";
 			$xml .= " </Dados>";

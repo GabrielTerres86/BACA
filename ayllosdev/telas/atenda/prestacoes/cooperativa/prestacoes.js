@@ -1644,7 +1644,7 @@ function controlaLayout(operacao) {
 	}else if (in_array(operacao,['C_PAG_PREST_PREJU'])){
 
 		nomeForm = 'frmVlParcPreju';
-		altura   = '210px';
+		altura   = '240px';
 		largura  = '260px';
 		var cAbono  = $('#vlabono','#'+nomeForm);
 		var cPagto = $('#vlpagto','#'+nomeForm);
