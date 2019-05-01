@@ -112,6 +112,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
                   29/03/2019 - Ajustar cr_limatu pois estava buscando na ordem errada
                                na pc_incluir_proposta_est (Lucas Ranghetti PRB0040718)
+				  
+				  18/04/2019 - P637 - Fazer a chamada da pc_gera_json_pessoa_ass da ESTE0002
+                              (Luciano Kienolt - Supero)
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Cursor generico de calendario
@@ -4030,6 +4034,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         AND crd.nrctrcrd = pr_nrctrcrd;
     rw_crawcrd cr_crawcrd%ROWTYPE;        
     
+    --Busca Patrimonio referencial da cooperativa 
+    CURSOR cr_tbcadast_cooperativa(pr_cdcooper INTEGER) IS
+      SELECT vlpatrimonio_referencial
+        FROM tbcadast_cooperativa
+       WHERE cdcooper = pr_cdcooper;
+    rw_tbcadast_cooperativa cr_tbcadast_cooperativa%ROWTYPE;    
+    
     --Tipo de registro do tipo data
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 
@@ -4069,6 +4080,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
     vr_qtdiarpv      INTEGER;
     vr_tplimcrd      NUMBER(1) := 0; -- 0-concessao, 1-alteracao
+	vr_tpprodut      NUMBER(1) := 4; -- tipo produto 
+
+    vr_vlpatref      tbcadast_cooperativa.vlpatrimonio_referencial%TYPE;
 
   BEGIN
 
@@ -4308,13 +4322,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     -- Adicionar o array seguro no objeto informações adicionais
     vr_obj_generico.put('categoriasCartaoCecred', vr_lst_generic3);
 
+    -- Buscar Patrimonio referencial da cooperativa 
+    OPEN cr_tbcadast_cooperativa(pr_cdcooper);
+    FETCH cr_tbcadast_cooperativa INTO vr_vlpatref;
+
+    IF cr_tbcadast_cooperativa%NOTFOUND THEN
+      vr_vlpatref := 0;
+    END IF;
+    CLOSE cr_tbcadast_cooperativa;    
+    -- Incluir Patrimonio referencial da cooperativa
+    vr_obj_generico.put('valorPatrimonioReferencial',ESTE0001.fn_decimal_ibra(vr_vlpatref));
+    
     vr_obj_analise.put('indicadoresCliente', vr_obj_generico);
 
-    pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
-                           ,pr_nrdconta => pr_nrdconta
-                           ,pr_dsjsonan => vr_obj_generico
-                           ,pr_cdcritic => vr_cdcritic
-                           ,pr_dscritic => vr_dscritic);
+    este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_nrctremp => NULL
+                                    ,pr_dsjsonan => vr_obj_generico
+                                    ,pr_tpprodut => vr_tpprodut
+                                    ,pr_cdcritic => vr_cdcritic
+                                    ,pr_dscritic => vr_dscritic);
 
      -- Testar possíveis erros na rotina:
      IF nvl(vr_cdcritic,0) <> 0 OR
@@ -4346,10 +4373,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         IF rw_crapcje.nrctacje <> 0 THEN
 
           -- Passaremos a conta para montagem dos dados:
-          pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+          este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => rw_crapcje.nrctacje
+                                          ,pr_nrctremp => NULL
                                  ,pr_vlsalari => rw_crapcje.vlsalari
                                  ,pr_dsjsonan => vr_obj_conjuge
+                                 ,pr_tpprodut => vr_tpprodut
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
 
@@ -4537,9 +4566,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
           --> Se Responsável for associado
           IF rw_crapcrl.nrdconta <> 0 THEN
             -- Passaremos a conta para montagem dos dados:
-            pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+            este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => rw_crapcrl.nrdconta
+                                            ,pr_nrctremp => NULL
                                    ,pr_dsjsonan => vr_obj_responsav
+                                   ,pr_tpprodut => vr_tpprodut
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic);
             -- Testar possíveis erros na rotina:
@@ -4650,12 +4681,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         -- Se socio for associado
         IF rw_crapavt.nrdctato > 0 THEN
           -- Passaremos a conta para montagem dos dados:
-          pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+          este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => rw_crapavt.nrdctato
+                                          ,pr_nrctremp => NULL
                                  ,pr_dsjsonan => vr_obj_socio
                                  ,pr_persocio => rw_crapavt.persocio
                                  ,pr_dtadmsoc => rw_crapavt.dtadmsoc
                                  ,pr_dtvigpro => rw_crapavt.dtvalida
+                                 ,pr_tpprodut => vr_tpprodut
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
           -- Testar possíveis erros na rotina:
@@ -4701,12 +4734,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         -- Se socio for associado
         IF rw_crapepa.nrctasoc > 0 THEN
           -- Passaremos a conta para montagem dos dados:
-          pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
+          este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => rw_crapepa.nrctasoc
+                                          ,pr_nrctremp => NULL
                                  ,pr_persocio => rw_crapepa.persocio
                                  ,pr_dtadmsoc => rw_crapepa.dtadmiss
                                  ,pr_dtvigpro => to_date('31/12/9999','dd/mm/rrrr')
                                  ,pr_dsjsonan => vr_obj_particip
+                                 ,pr_tpprodut => vr_tpprodut
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
           -- Testar possíveis erros na rotina:
@@ -4833,11 +4868,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       -- Se socio for associado
       IF rw_crapavt.nrdctato > 0 THEN
         -- Passaremos a conta para montagem dos dados:
-        pc_gera_json_pessoa_ass ( pr_cdcooper => pr_cdcooper
-                                 ,pr_nrdconta => rw_crapavt.nrdctato
-                                 ,pr_dsjsonan => vr_obj_procurad
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic);
+        este0002.pc_gera_json_pessoa_ass ( pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => rw_crapavt.nrdctato
+                                          ,pr_nrctremp => NULL
+                                          ,pr_dsjsonan => vr_obj_procurad
+                                          ,pr_tpprodut => vr_tpprodut
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
         -- Testar possíveis erros na rotina:
         IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
@@ -6609,7 +6646,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                     FROM tbcrd_limite_atualiza atu
                                    WHERE atu.cdcooper = a.cdcooper
                                      AND atu.nrdconta = a.nrdconta
-                                     AND atu.nrconta_cartao = a.nrconta_cartao);
+                                     AND atu.nrconta_cartao = a.nrconta_cartao)
+           AND NOT EXISTS (SELECT 1
+                             FROM tbcrd_limite_atualiza b
+                            WHERE b.cdcooper = a.cdcooper
+                              AND b.nrdconta = a.nrdconta
+                              AND b.idatualizacao > a.idatualizacao);
       rw_limatu cr_limatu%ROWTYPE;
 
   BEGIN

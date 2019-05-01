@@ -424,6 +424,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
          AND nrctremp = pr_nrctremp;
 
   
+    --Busca Patrimonio referencial da cooperativa 
+    CURSOR cr_tbcadast_cooperativa(pr_cdcooper INTEGER) IS
+      SELECT vlpatrimonio_referencial
+        FROM tbcadast_cooperativa
+       WHERE cdcooper = pr_cdcooper;
+    rw_tbcadast_cooperativa cr_tbcadast_cooperativa%ROWTYPE;
+    
     --Tipo de registro do tipo data
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
      
@@ -469,6 +476,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     vr_txcetano      NUMBER;
     vr_txcetmes      NUMBER;
     vr_vllimati      craplim.vllimite%TYPE;
+      
+    vr_vlpatref      tbcadast_cooperativa.vlpatrimonio_referencial%TYPE;
       
   BEGIN
   
@@ -709,6 +718,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     
     vr_obj_generico.put('valorPrestLiquidacao', ESTE0001.fn_decimal_ibra(vr_sum_vlpreemp));
 
+    -- Buscar Patrimonio referencial da cooperativa 
+    OPEN cr_tbcadast_cooperativa(pr_cdcooper);
+    FETCH cr_tbcadast_cooperativa INTO vr_vlpatref;
+     
+    IF cr_tbcadast_cooperativa%NOTFOUND THEN
+      vr_vlpatref := 0;
+    END IF;
+    CLOSE cr_tbcadast_cooperativa;    
+    -- Incluir Patrimonio referencial da cooperativa
+    vr_obj_generico.put('valorPatrimonioReferencial',ESTE0001.fn_decimal_ibra(vr_vlpatref));
+    
     vr_obj_analise.put('indicadoresCliente', vr_obj_generico);         
     
     este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
