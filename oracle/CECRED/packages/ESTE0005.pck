@@ -6646,12 +6646,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                     FROM tbcrd_limite_atualiza atu
                                    WHERE atu.cdcooper = a.cdcooper
                                      AND atu.nrdconta = a.nrdconta
-                                     AND atu.nrconta_cartao = a.nrconta_cartao)
-           AND NOT EXISTS (SELECT 1
-                             FROM tbcrd_limite_atualiza b
-                            WHERE b.cdcooper = a.cdcooper
-                              AND b.nrdconta = a.nrdconta
-                              AND b.idatualizacao > a.idatualizacao);
+                                     AND atu.nrconta_cartao = a.nrconta_cartao);
       rw_limatu cr_limatu%ROWTYPE;
 
   BEGIN
