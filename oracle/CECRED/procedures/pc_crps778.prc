@@ -30,6 +30,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
                               FTP e Salvar. Melhoria na gravacao dos logs e inclusao de tratamento de exceptions.
                               Gabriel (Mouts) - Chamado INC0015743.
 
+                 10/04/2019 - Ajustes para permitir a execução nos finais de semena e feriado e execução por cooperativa
+                              sem necessidade de termino do processo batch de todas as cooperativas.
+                              Jose Dill (Mouts) - Requisicao RITM0011966.             
+
   ............................................................................ */
 
   ------------------------------- CURSORES ---------------------------------
@@ -39,9 +43,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
       SELECT cop.cdcooper
             ,cop.nmrescop
             ,cop.dsdircop
+            ,dat.inproces /* RITM0011966 - Inclusão do campo inprocess.*/
        FROM crapcop cop
+           ,crapdat dat
       WHERE cop.cdcooper <> 3
         AND cop.flgativo = 1
+        AND cop.cdcooper = dat.cdcooper 
       ORDER BY cop.cdcooper;
     rw_crapcoop cr_crapcoop%ROWTYPE;
 			
@@ -125,6 +132,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
     
     --Variavel para envio de e-mail e gravar log
     vr_idprglog     tbgen_prglog.idprglog%TYPE := 0;
+
+    vr_hora_final_execucao integer;
+    vr_hora_sistema        integer;
 
     --------------------------- SUBROTINAS INTERNAS --------------------------
     PROCEDURE pc_gerar_log(pr_cdcooper crapcop.cdcooper%TYPE,
@@ -211,15 +221,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
   BEGIN
     --------------- VALIDACOES INICIAIS -----------------
 
+    /* RITM0011966 - Retirada a validação para verificar se todas as cooperativas ja haviam terminado seu
+       processo Batch para executar o programa. Foi incluída uma validação por cooperativa no cursor cr_crapcoop (abaixo)
+       para verificar se a mesma ja concluiu o batch. Se concluiu, executa o programa. */
     -- Executar apenas quando as cooperativas estiverem online
-    IF btch0001.fn_cooperativas_online = FALSE THEN
+    /*IF btch0001.fn_cooperativas_online = FALSE THEN
       RETURN;
-    END IF;
+    END IF;*/
 
+    /* RITM0011966 - Retirada a validação de feriados e finais de semana, ou seja, o programa deve ser executado
+       todos os dias.*/
     -- Executar apenas em dias úteis na cecred
-    IF gene0005.fn_valida_dia_util(pr_cdcooper => 3, pr_dtmvtolt => trunc(SYSDATE)) <> trunc(SYSDATE) THEN
+    /*IF gene0005.fn_valida_dia_util(pr_cdcooper => 3, pr_dtmvtolt => trunc(SYSDATE)) <> trunc(SYSDATE) THEN
+      RETURN;
+    END IF;*/
+    
+    /* RITM0011966 - Incluída validação de horário máximo de de execução do programa CRPS778, conforme requisito que 
+       solicita que o mesmo seja executado até as 22:00. */
+    vr_hora_final_execucao:= gene0001.fn_param_sistema('CRED',0,'CRPS778_HORARIO_FINAL');
+    vr_hora_sistema := GENE0002.fn_busca_time;
+    IF vr_hora_sistema > vr_hora_final_execucao THEN
+       pc_gerar_log(pr_cdcooper => 3,
+                    pr_dscdolog => 'Horário limite permitido estourado para a execução do programa 778 (22:00)'); 
+      
       RETURN;
     END IF;
+    --
 			
     -- Incluir nome do módulo logado
     GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
@@ -246,6 +273,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
 
     FOR rw_crapcoop IN cr_crapcoop LOOP
         
+      /* RITM0011966 - Não executar a rotina para a cooperativa caso seu processo batch não tenha sido concluído.
+                       Neste caso irá gerar uma mensagem no log e prosseguir para a próxima cooperativa (Continue). */
+      IF NVL(rw_crapcoop.inproces,0) <> 1 THEN
+               -- Gera log
+         pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
+                      pr_dscdolog => 'Cooperativa '|| rw_crapcoop.nmrescop || ' não concluiu seu processo batch.'); 
+         --             
+         CONTINUE;
+      END IF;
+      --
       BEGIN
 			
         vr_cdcritic := 0;
