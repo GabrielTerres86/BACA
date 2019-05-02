@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 06/12/2018
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/01/2019
   --
   -- Dados referentes ao programa:
   --
@@ -42,6 +42,9 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  06/11/2018 - Adicionado nmmodulo DESC. TITULOS (Cássia de Oliviera - GFT)
 	--  04/12/2018 - Criar rotina pc_gera_log_auto para geracao de log utilizando autonomous_transaction com 
 	--               commit da operacao (Adriano Nagasava - Supero)
+	--
+  --  09/01/2019 - Inclusão da rotina de controle de execução de programa com PRAGMA             
+  --               ( Belli - Envolti - PRB0040466 )
 	--
   ---------------------------------------------------------------------------------------------------------------
 
@@ -526,6 +529,16 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                                   ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
                                   ) RETURN NUMBER;
 --           
+  /* Procedimento para verificar/controlar a execução de programas */
+  PROCEDURE pc_controle_exec_pragma(pr_cdcooper  IN crapcop.cdcooper%TYPE  -- Código da coopertiva
+                                   ,pr_cdtipope  IN VARCHAR2               -- Tipo de operacao I-incrementar, C-Consultar, V-Validar e C2-Consultar
+                                   ,pr_dtmvtolt  IN DATE                   -- Data do movimento
+                                   ,pr_cdprogra  IN crapprg.cdprogra%TYPE  -- Codigo do programa
+                                   ,pr_flultexe OUT INTEGER                -- Retorna se é a ultima execução do procedimento
+                                   ,pr_qtdexec  OUT INTEGER                -- Retorna a quantidade
+                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE  -- Codigo da critica de erro
+                                   ,pr_dscritic OUT VARCHAR2);             -- descrição do erro se ocorrer  
+--                      
 END GENE0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
@@ -536,7 +549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 06/12/2018
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/01/2019
   --
   -- Dados referentes ao programa:
   --
@@ -587,6 +600,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 	--
 	--             04/12/2018 - Criar rotina pc_gera_log_auto para geracao de log utilizando autonomous_transaction com 
 	--                          commit da operacao (Adriano Nagasava - Supero)
+  --
+  --             09/01/2019 - Inclusão da rotina de controle de execução de programa com PRAGMA             
+  --                          ( Belli - Envolti - PRB0040466 )
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -5277,5 +5293,129 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
   END fn_ret_qt_erro_paralelo;  
 															 
+
+  /* Procedimento para verificar/controlar a execução de programas */
+  PROCEDURE pc_controle_exec_pragma(pr_cdcooper  IN crapcop.cdcooper%TYPE  -- Código da coopertiva
+                                   ,pr_cdtipope  IN VARCHAR2               -- Tipo de operacao I-incrementar, C-Consultar, V-Validar e C2-Consultar
+                                   ,pr_dtmvtolt  IN DATE                   -- Data do movimento
+                                   ,pr_cdprogra  IN crapprg.cdprogra%TYPE  -- Codigo do programa
+                                   ,pr_flultexe OUT INTEGER                -- Retorna se é a ultima execução do procedimento
+                                   ,pr_qtdexec  OUT INTEGER                -- Retorna a quantidade
+                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE  -- Codigo da critica de erro
+                                   ,pr_dscritic OUT VARCHAR2)              -- descrição do erro se ocorrer
+  IS
+    
+    -- Cria uma nova seção para commitar, somente este escopo de atualizações
+    PRAGMA AUTONOMOUS_TRANSACTION;    
+                                     
+  /*---------------------------------------------------------------------------------------------------------------
+  Programa : pc_controle_exec_pragma
+  Sistema  : AILOS
+  Sigla    : CRED
+  Autor    : Belli - Envolti
+  Data     : Janeiro/2019                       Ultima atualizacao:
+  
+  Referência: Chamado PRB0040466 - 09/01/2019.
+    
+  Dados referentes ao programa:  
+  Frequencia: Sempre que chamado
+  Objetivo  : Procedimento para executar o controle de execução por dia 
+              e fazer um COMMIT independente da rotina chamadora  
+   
+  Alteracoes:  
+  
+  ------------------------------------------------------------------------------------------*/
+   
+    -- Variaveis para tratar erro e reagendamento do processo
+    vr_exc_erro_tratado             EXCEPTION;
+    vr_cdcritic                     crapcri.cdcritic%TYPE;
+    vr_dscritic                     tbgen_prglog_ocorrencia.dsmensagem%TYPE;
+    vr_idprglog                     tbgen_prglog.idprglog%TYPE := 0;
+        
+  BEGIN                           -- Bloco Principal - Inicio
+    -- Inclusão da ação logado
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0001.pc_controle_exec_pragma');       
+    -- Forçado erro - Teste Belli
+    --vr_cdcritic := 0 / 0;
+    -- Dispara verifica execução
+    CECRED.gene0001.pc_controle_exec(pr_cdcooper  => pr_cdcooper       --> Código da coopertiva
+                                    ,pr_cdtipope  => pr_cdtipope       --> Tipo de operacao I-incrementar e C-Consultar
+                                    ,pr_dtmvtolt  => pr_dtmvtolt       --> Data do movimento
+                                    ,pr_cdprogra  => pr_cdprogra       --> Codigo do programa
+                                    ,pr_flultexe  => pr_flultexe       --> Retorna se é a ultima execução do procedimento
+                                    ,pr_qtdexec   => pr_qtdexec        --> Retorna a quantidade
+                                    ,pr_cdcritic  => vr_cdcritic       --> Codigo da critica de erro
+                                    ,pr_dscritic  => vr_dscritic);     --> descrição do erro se ocorrer                                                             
+    --Trata retorno
+    IF NVL(vr_cdcritic,0) > 0        OR
+       TRIM(vr_dscritic)  IS NOT NULL  THEN
+      vr_dscritic := vr_dscritic ||
+                     ' Retorno gene0001.pc_controle_exec';
+      RAISE vr_exc_erro_tratado;
+    END IF;
+    -- Retorna ação logado
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0001.pc_controle_exec_pragma');   
+                                            
+    COMMIT;
+    
+    -- Limpa ação logado
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);  
+    
+  EXCEPTION
+    WHEN vr_exc_erro_tratado THEN
+      -- Controlar geração de log de execução dos jobs
+      CECRED.pc_log_programa(pr_dstiplog      => 'E'   -- E - Erro 
+                            ,pr_tpocorrencia  => 1     -- 1 - Erro tratado
+                            ,pr_cdcriticidade => 3     -- 3 - Critica
+                            ,pr_tpexecucao    => 0     -- 0 - Outro
+                            ,pr_dsmensagem    => gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic
+                                                                          ,pr_dscritic => vr_dscritic) ||
+                                               ' pr_cdcooper:' || pr_cdcooper || 
+                                               ',pr_cdtipope:' || pr_cdtipope ||
+                                               ',pr_dtmvtolt:' || pr_dtmvtolt ||  
+                                               ',pr_cdprogra:' || pr_cdprogra ||  
+                                               ',pr_flultexe:' || pr_flultexe || 
+                                               ',pr_qtdexec: ' || pr_qtdexec  ||   
+                                               ',pr_cdcritic:' || vr_cdcritic ||  
+                                               ',pr_dscritic:' || vr_dscritic ||  
+                                               '. ' || SQLERRM
+                            ,pr_cdmensagem    => vr_cdcritic
+                            ,pr_cdcooper      => pr_cdcooper 
+                            ,pr_flabrechamado => 1 -- Abre chamado 1 Sim
+                            ,pr_cdprograma    => 'GENE0001'
+                            ,pr_idprglog      => vr_idprglog
+                            );
+                            
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+                             
+      ROLLBACK;
+     
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log  
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                            
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     ' pr_cdcooper:' || pr_cdcooper || 
+                     ',pr_cdtipope:' || pr_cdtipope ||
+                     ',pr_dtmvtolt:' || pr_dtmvtolt ||  
+                     ',pr_cdprogra:' || pr_cdprogra ||  
+                     '. ' || SQLERRM;
+      -- Controlar geração de log de execução dos jobs
+      CECRED.pc_log_programa(pr_dstiplog      => 'E'   -- E - Erro 
+                            ,pr_tpocorrencia  => 2     -- 2 - Erro nao tratado
+                            ,pr_cdcriticidade => 3     -- 3 - Critica
+                            ,pr_tpexecucao    => 0     -- 0 - Outro
+                            ,pr_dsmensagem    => pr_dscritic
+                            ,pr_cdmensagem    => pr_cdcritic
+                            ,pr_cdcooper      => pr_cdcooper 
+                            ,pr_flabrechamado => 1 -- Abre chamado 1 Sim
+                            ,pr_cdprograma    => 'GENE0001'
+                            ,pr_idprglog      => vr_idprglog
+                            );
+                             
+      ROLLBACK;
+     
+  END pc_controle_exec_pragma;															 
 END GENE0001;
 /

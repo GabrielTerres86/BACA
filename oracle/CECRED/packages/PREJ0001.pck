@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 04/07/2018
+   Data    : Maio/2017                      Ultima atualizacao: 09/01/2019
 
    Dados referentes ao programa:
 
@@ -17,6 +17,12 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0001 AS
    Alteracoes: 04/07/2018 - P450 - Adicionada Função para retornar Juros+60 
                             "Data Anterior" para Empréstimos/ financiamentos em prejuízo
                             Daniel(AMcom)
+
+   09/01/2019 - 1) Ajuste reagendamento do processo.
+                2) Padrões: 
+                Others, Modulo/Action, PC Internal Exception, PC Log Programa
+                Inserts, Updates, Deletes e SELECT's, Parâmetros                            
+                (Envolti - Belli - PRB00040466)
 
 ..............................................................................*/
 
@@ -203,7 +209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-     Data    : Maio/2017                      Ultima atualizacao: 09/11/2018
+     Data    : Maio/2017                      Ultima atualizacao: 09/01/2019
 
    Dados referentes ao programa:
 
@@ -224,6 +230,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
 
      09/11/2018 - Alteração no cálculo dos dias de atraso na pc_transfere_epr_prejuizo_PP
                   (Reginaldo/AMcom/P450)
+  
+   09/01/2019 - 1) Ajuste reagendamento do processo.
+                2) Padrões: 
+                Others, Modulo/Action, PC Internal Exception, PC Log Programa
+                Inserts, Updates, Deletes e SELECT's, Parâmetros                            
+                (Envolti - Belli - PRB00040466)
   
 ..............................................................................*/
 
@@ -5018,273 +5030,881 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
   --
   
   PROCEDURE pc_controla_exe_job(pr_cdcritic OUT NUMBER,
-                                pr_dscritic OUT VARCHAR2) IS
+                                pr_dscritic OUT VARCHAR2) 
+  IS
+  /* ..........................................................................
+  Procedure : pc controla exe job
+  Sistema : CECRED
+  Sigla   : CRED
+  Autor   : Xxxx
+  Data    : Xxxxx/9999                      Ultima atualizacao: 09/01/2019
+
+  Dados referentes ao programa:
+  Frequencia: Sempre que for chamado
+  Objetivo  : Procedure para tratar transfêrencia de prejuizo
+  
+  Job permanente: JBP_TRANSFERENCIA_PREJU
+  Job reagendado: JBPRE_TRF_PRE_REP_$123456789  
+
+  Alterações:  09/01/2019 - 1) Ajuste reagendamento do processo.
+                            2) Padrões: 
+                            Others, Modulo/Action, PC Internal Exception, PC Log Programa
+                            Inserts, Updates, Deletes e SELECT's, Parâmetros                            
+                            (Envolti - Belli - PRB00040466)
+                            
+  ............................................................................. */     
     --
     -- Cursor
     CURSOR cr_crapcop IS
       SELECT cop.cdcooper
         FROM crapcop cop
-       WHERE cop.cdcooper <> 3;  
+     WHERE cop.cdcooper <> 3
+     AND   cop.flgativo = 1 -- Seleciona cooperativas ativas - 09/01/2019 - PRB00040466
+     ORDER BY cop.cdcooper;  
     --
     -- Variaveis
   
-    vr_cdcooper crapcop.cdcooper%TYPE;
+  vr_cdcoppar crapcop.cdcooper%TYPE;  
     vr_infimsol INTEGER;
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(10000); 
-    vr_cdprogra VARCHAR2(40) := 'PC_CONTROLA_EXE_JOB';
+  ---vr_cdprogra VARCHAR2(40) := 'PC_CONTROLA_EXE_JOB'; - Não mais utilizado - 09/01/2019 - PRB00040466
     vr_nomdojob VARCHAR2(40) := 'JBP_TRANSFERENCIA_PREJU'; 
-    vr_dserro   VARCHAR2(10000); 
-    vr_dstexto  VARCHAR2(2000);
+  --vr_dserro   VARCHAR2(10000); - Não mais utilizado - 09/01/2019 - PRB00040466
+  --vr_dstexto  VARCHAR2(2000);  - Não mais utilizado - 09/01/2019 - PRB00040466
     vr_titulo   VARCHAR2(1000);
     vr_destinatario_email VARCHAR2(500);
     vr_idprglog   tbgen_prglog.idprglog%TYPE;
-    vr_exc_erro   EXCEPTION;
+  --vr_exc_erro   EXCEPTION; - Não mais utilizado - 09/01/2019 - PRB00040466
     vr_dtmvtolt DATE;
-    vr_flgerlog    BOOLEAN := FALSE;
+  --vr_flgerlog    BOOLEAN := FALSE; - Não mais utilizado - 09/01/2019 - PRB00040466
     vr_dsvlrgar  VARCHAR2(32000) := '';
     vr_tipsplit  gene0002.typ_split;   
     vr_permite_trans NUMBER(1); 
-    vr_tab_erro  gene0001.typ_tab_erro;
-    --
-    PROCEDURE pc_controla_log_batch(pr_cdcooper IN NUMBER,
-                                    pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
-                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+  
+  -- Variaveis para tratar erro e reagendamento do processo -- 09/01/2019 - PRB00040466
+  vr_exc_erro_tratado   EXCEPTION;
+  vr_exc_montada        EXCEPTION;
+  vr_exc_others         EXCEPTION;      
+  vr_sqlerrm  VARCHAR2(4000); 
+  vr_qtdexec  INTEGER:= 0; 
+  vr_cdproexe tbgen_prglog.cdprograma%TYPE := 'PREJ0001';            -- Programa que esta executando
+  vr_nmrotpro tbgen_prglog.cdprograma%TYPE := 'pc_controla_exe_job'; -- Procedure que esta executando
+  -- cdrotcpl: Rotina completa PCK e Procedure pois ela é independente e disparada por um Job
+  --           O melhor seria ter criado uma procedure de controle e ela sim disparar procedures pcks..
+  vr_cdrotcpl tbgen_prglog.cdprograma%TYPE;                         -- Rotina completa
+  vr_nmjobtmp tbgen_prglog.cdprograma%TYPE := 'JBPRE_TRF_PRE_REP';  -- Job temporario para reagendamento
+  vr_cdproint tbgen_prglog.cdprograma%TYPE := NULL;                 -- Procedure Interna que esta executando
+  vr_nmsistem crapprm.nmsistem%TYPE := 'CRED';
+  vr_cdacesso crapprm.cdacesso%TYPE;   
+  vr_dsvlrprm crapprm.dsvlrprm%TYPE; 
+  vr_dsagenda VARCHAR2 (4000) := NULL;
+  vr_hriniexe VARCHAR2    (5) := NULL;
+  vr_hrageexe VARCHAR2    (5) := NULL;
+  vr_hrfimexe VARCHAR2    (5) := NULL;  
+  vr_dtsysdat DATE;
+  vr_cdcoplog crapcop.cdcooper%TYPE;                -- Código da cooperativa do log
+  vr_cdproctr crapprg.cdprogra%TYPE := 'PREJU_TRF'; -- Transformado GRVM0001 pc controla exe job" em "PREJU TRF", motivo max de 10 caracteres no processo de reagendamento
+  vr_dsparame VARCHAR2 (4000);
+  vr_dsparcop VARCHAR2 (4000);
+  vr_dsparint VARCHAR2 (4000);
+  vr_ctreajob NUMBER      (2) := 0;                 -- Controle para reagendamento
+  
+  -- Procedure Internas 
+
+  -- Controla log proc_batch, para apenas exibir qnd realmente processar informação
+  PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                                 ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                                 ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                                 ,pr_tpexecuc IN NUMBER   DEFAULT 2   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                                 ,pr_dscritic IN VARCHAR2 DEFAULT NULL
+                                 ,pr_cdcritic IN INTEGER  DEFAULT NULL
+                                 ,pr_flgsuces IN NUMBER   DEFAULT 0    -- Indicador de sucesso da execução  
+                                 ,pr_flabrchd IN INTEGER  DEFAULT 1    -- Abre chamado 1 Sim/ 0 Não
+                                 ,pr_textochd IN VARCHAR2 DEFAULT NULL -- Texto do chamado
+                                 ,pr_desemail IN VARCHAR2 DEFAULT NULL -- Destinatario do email
+                                 ,pr_flreinci IN INTEGER  DEFAULT 1    -- Erro pode reincidir no prog em dias diferentes, devendo abrir chamado
+                                 ,pr_cdcopprm IN VARCHAR2 DEFAULT NULL -- Cooperativa      
+  ) 
+  IS
+  /* ..........................................................................    
+  Procedure: pc controla log batch
+  Sistema  : CECRED
+  Autor    : Belli/Envolti - PRB00040466
+  Data     : 09/01/2019                        Ultima atualizacao: 09/01/2019
+    
+  Dados referentes ao programa:    
+  Frequencia: Sempre que for chamado
+  Objetivo  : Chamar a rotina de Log para gravação de criticas.
+    
+  Alteracoes: 
+    
+  ............................................................................. */
+    
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
     BEGIN
-      --> Controlar geração de log de execução dos jobs 
-      BTCH0001.pc_log_exec_job( pr_cdcooper  => pr_cdcooper    --> Cooperativa
-                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
-                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
-                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
-                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+    -- Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => pr_dstiplog -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                          ,pr_tpocorrencia  => pr_tpocorre -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                          ,pr_cdcriticidade => pr_cdcricid -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                          ,pr_tpexecucao    => pr_tpexecuc -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                          ,pr_dsmensagem    => SUBSTR(pr_dscritic,1,3900)
+                          ,pr_cdmensagem    => pr_cdcritic
+                          ,pr_cdcooper      => pr_cdcopprm 
+                          ,pr_flgsucesso    => pr_flgsuces
+                          ,pr_flabrechamado => pr_flabrchd -- Abre chamado 1 Sim/ 0 Não
+                          ,pr_texto_chamado => pr_textochd
+                          ,pr_destinatario_email => pr_desemail
+                          ,pr_flreincidente => pr_flreinci
+                          ,pr_cdprograma    => vr_cdrotcpl
+                          ,pr_idprglog      => vr_idprglog
+                          );   
+    IF LENGTH(pr_dscritic) > 3900 THEN   
+      -- Controlar geração de log de execução dos jobs                                
+      CECRED.pc_log_programa(pr_dstiplog      => 'O' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                            ,pr_tpocorrencia  => 3 -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                            ,pr_cdcriticidade => 0 -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                            ,pr_tpexecucao    => 2 -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                            ,pr_dsmensagem    => gene0001.fn_busca_critica(pr_cdcritic => 9999) ||
+                                            '. Estouro do atributo pr_dscritic com tamanho de: '||LENGTH(pr_dscritic)||
+                                            '. ' || vr_cdrotcpl || 
+                                            '. ' || SUBSTR(pr_dscritic,3901,3900) 
+                            ,pr_cdmensagem    => 9999
+                            ,pr_cdcooper      => pr_cdcopprm 
+                            ,pr_flgsucesso    => pr_flgsuces
+                            ,pr_flabrechamado => pr_flabrchd -- Abre chamado 1 Sim/ 0 Não
+                            ,pr_texto_chamado => pr_textochd
+                            ,pr_destinatario_email => pr_desemail
+                            ,pr_flreincidente => pr_flreinci
+                            ,pr_cdprograma    => vr_cdrotcpl
+                            ,pr_idprglog      => vr_idprglog
+                            );     
+    END IF;                                                       
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log  
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcopprm
+                                   ,pr_compleme => 'LENGTH(pr_dscritic):' || LENGTH(pr_dscritic) ||
+                                                   'pr_cdcritic:'         || pr_cdcritic
+                                   );      
     END pc_controla_log_batch;     
   
-  BEGIN
-    vr_dscritic := NULL;
+  -- 
+  PROCEDURE pc_le_crapprm
+  IS
+  /* ..........................................................................    
+  Procedure: pc le crapprm
+  Sistema  : CECRED
+  Autor    : Belli/Envolti - PRB00040466
+  Data     : 09/01/2019                        Ultima atualizacao: 09/01/2019
 
-    FOR rw_crapcop IN cr_crapcop LOOP
+  Dados referentes ao programa:    
+  Frequencia: Sempre que for chamado  
+  Objetivo  : Posicionar parâmetros
       
-      vr_cdcooper := rw_crapcop.cdcooper;
+  Regra de pesquisa:
+    Primeiro le o registro com o codigo da cooperativa, se não encontrar 
+    le o registro com o codigo da cooperativa com ZERO, 
+    desta forma para os parametros iguais em todas cooperativas basta um cadastro.    
+  ............................................................................. */
+   
+  vr_cdcoppar crapprm.cdcooper%TYPE;
+  
       --
-      vr_dsvlrgar := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdcooper => 0,pr_cdacesso => 'BLOQ_AUTO_PREJ');
-      vr_tipsplit := gene0002.fn_quebra_string(pr_string => vr_dsvlrgar, pr_delimit => ';');
-      vr_permite_trans := 1;
-      FOR i IN vr_tipsplit.first..vr_tipsplit.last LOOP
-        IF vr_cdcooper = vr_tipsplit(i) THEN
-          vr_permite_trans := 0;
-        END IF;
-      END LOOP;
+  PROCEDURE pc_le_crapprm_cooper
+  IS
+  /* ..........................................................................    
+  Procedure: pc le crapprm cooper
+  Sistema  : CECRED
+  Autor    : Belli/Envolti - PRB00040466
+  Data     : 09/01/2019                        Ultima atualizacao: 09/01/2019
+    
+  Dados referentes ao programa:    
+  Frequencia: Sempre que for chamado
+  
+  Objetivo  : Posicionar parâmetros por cooperativa
+  .............................................................................*/
+  
+  BEGIN
+    SELECT  t30.dsvlrprm
+    INTO    vr_dsvlrprm
+    FROM    crapprm t30
+    WHERE   t30.nmsistem = vr_nmsistem
+    AND     t30.cdcooper = vr_cdcoppar
+    AND     t30.cdacesso = vr_cdacesso;
+  END;
       --  
-      IF vr_permite_trans = 1 THEN
+  BEGIN
+    vr_cdcoppar := vr_cdcoplog;
+    pc_le_crapprm_cooper;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
         --
-      pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
-                            pr_dstiplog => 'I',
-                            pr_dscritic => vr_dscritic);                
+      vr_cdcoppar := 0;
+      BEGIN
+        pc_le_crapprm_cooper;
+      EXCEPTION
+        WHEN vr_exc_montada THEN  
+          RAISE vr_exc_montada;
+        WHEN vr_exc_erro_tratado THEN 
+          RAISE vr_exc_erro_tratado; 
+        WHEN vr_exc_others THEN 
+          RAISE vr_exc_others; 
+        WHEN OTHERS THEN   
+          -- No caso de erro de programa gravar tabela especifica de log
+          cecred.pc_internal_exception(pr_cdcooper => vr_cdcoplog); 
+          -- Trata erro
+          pr_cdcritic := 1036;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic)  ||                  
+                         ' crapprm(8): '  ||
+                         vr_dsparame      ||
+                         ', vr_cdcoppar:' || vr_cdcoppar ||
+                         ', vr_cdacesso:' || vr_cdacesso ||
+                         '. ' || SQLERRM; 
+          RAISE vr_exc_montada;
+      END;
       --
-      gene0004.pc_executa_job( pr_cdcooper => vr_cdcooper   --> Codigo da cooperativa
-                              ,pr_fldiautl => 1   --> Flag se deve validar dia util
-                              ,pr_flproces => 1   --> Flag se deve validar se esta no processo
-                              ,pr_flrepjob => 1   --> Flag para reprogramar o job
-                              ,pr_flgerlog => 1   --> indicador se deve gerar log
-                              ,pr_nmprogra => vr_cdprogra --> Nome do programa que esta sendo executado no job
-                              ,pr_dscritic => vr_dserro);
+    WHEN vr_exc_montada THEN  
+      RAISE vr_exc_montada;
+    WHEN vr_exc_erro_tratado THEN 
+      RAISE vr_exc_erro_tratado; 
+    WHEN vr_exc_others THEN 
+      RAISE vr_exc_others; 
+    WHEN OTHERS THEN   
+      -- No caso de erro de programa gravar tabela especifica de log
+      cecred.pc_internal_exception(pr_cdcooper => vr_cdcoplog); 
+      -- Trata erro
+      pr_cdcritic := 1036;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic)  ||                  
+                    ' crapprm(4): '  ||
+                    vr_dsparame      ||
+                    ', vr_cdcoppar:' || vr_cdcoppar ||
+                    ', vr_cdacesso:' || vr_cdacesso ||
+                    '. ' || SQLERRM; 
+      RAISE vr_exc_montada;
+  END pc_le_crapprm;            
+  --
 
-      -- se nao retornou critica chama rotina
-      IF trim(vr_dserro) IS NULL THEN
+  --  
+  PROCEDURE pc_cria_job 
+  IS
+  /* ..........................................................................    
+  Procedure: pc cria job
+  Sistema  : CECRED
+  Autor    : Belli/Envolti - PRB00040466
+  Data     : 09/01/2019                        Ultima atualizacao: 09/01/2019
           
-        OPEN btch0001.cr_crapdat(vr_cdcooper);
-        FETCH btch0001.cr_crapdat  INTO rw_crapdat;
-        CLOSE btch0001.cr_crapdat;
+  Dados referentes ao programa:    
+  Frequencia: Sempre que for chamado
+  Objetivo  : cria job.
             
-        --Verifica o dia util da cooperativa e caso nao for pula a coop
-        vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper  => vr_cdcooper
-                                                  ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
-                                                  ,pr_tipo      => 'A');
+  Alteracoes: 
                                                       
-        IF vr_dtmvtolt <> rw_crapdat.dtmvtolt THEN
+  ............................................................................. */ 
+  --  
+    vr_nmjobage    VARCHAR2  (100); -- Nome do job agendado
+    vr_dsplsql     VARCHAR2 (4000);
+    vr_dtagenda    DATE;
+  BEGIN
+    -- Posiciona procedure
+    vr_cdproint := 'pc_cria_job';
+    -- Inclusão do módulo e ação logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);    
+    vr_dsparint := ', vr_cdproint:' || vr_cdproint ||
+                   ', vr_hrfimexe:' || vr_hrfimexe ||
+                   ', vr_dtsysdat:' || TO_CHAR(vr_dtsysdat,'HH24:MI')||
+                   ', vr_ctreajob:' || vr_ctreajob;                  
+    -- posiciona parametros
+    vr_cdacesso := 'PREJU_TRF_HOR_EXE';         
+    pc_le_crapprm;
+    -- Retorno  do módulo e ação logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);   
+    vr_dsagenda := vr_dsvlrprm;
+    vr_hriniexe := SUBSTR(vr_dsagenda,01,05);
+    vr_hrageexe := SUBSTR(vr_dsagenda,07,05);
+    vr_hrfimexe := SUBSTR(vr_dsagenda,13,05);          
+    --Horario de agendamento
+    vr_dtagenda := ( vr_dtsysdat + (( ( SUBSTR(vr_hrageexe,1,2) * 60 ) + SUBSTR(vr_hrageexe,4,2) ) /1440) );
+    vr_dsparint := vr_dsparint ||
+                   ', vr_nmjobage:' || vr_nmjobage ||
+                   ', vr_dsplsql:'  || vr_dsplsql  ||
+                   ', vr_hriniexe:' || vr_hriniexe ||
+                   ', vr_hrageexe:' || vr_hrageexe ||
+                   ', vr_hrfimexe:' || vr_hrfimexe ||
+                   ', vr_dtagenda:' || vr_dtagenda;
+    -- Verifica se pode reagendar
+    IF vr_hrfimexe < TO_CHAR(vr_dtsysdat,'HH24:MI') THEN
+      -- Log acompanhamento
+      pc_controla_log_batch(pr_cdcritic => 1201
+                            ,pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
+                                            '. Passou do horario limite'     || 
+                                            ' ' || vr_dsparame ||
+                                            ' ' || vr_dsparint
+                            ,pr_dstiplog => 'O'
+                            ,pr_tpocorre => 4
+                            ,pr_flabrchd => 0
+                            ,pr_cdcopprm => 0);
+     ELSE                 
+      -- Reagendado    
+      vr_nmjobage  := vr_nmjobtmp || '_' || '$';
+      vr_dsplsql  := 
+      'declare
+         vr_cdcritic number;
+         vr_dscritic varchar2(4000);								
+       begin 
+         cecred.'    || 
+         vr_cdrotcpl ||
+         '(pr_cdcritic => vr_cdcritic, pr_dscritic => vr_dscritic); 
+         if vr_dscritic is not null then
+           RAISE_application_error(-20500,vr_dscritic);
+          end if;
+       end;';
+      -- Log acompanhamento - Forçado Log - Teste Belli
+      pc_controla_log_batch(pr_cdcritic => 1201
+                           ,pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
+                                               '. Vai Executar gene0001.pc_submit_job' ||
+                                               ' ' || vr_dsparame ||
+                                               ' ' || vr_dsparint ||
+                                               ', vr_dtmvtolt:'   || vr_dtmvtolt
+                               ,pr_dstiplog => 'O'
+                               ,pr_tpocorre => 4
+                               ,pr_flabrchd => 0
+                               ,pr_cdcopprm => 0);                 
+      
+      -- Faz a chamada ao programa paralelo atraves de JOB
+      -- Forçado comentario da rotina para Teste Belli
+      gene0001.pc_submit_job(pr_cdcooper  => vr_cdcoplog     -- Código da cooperativa
+                            ,pr_cdprogra  => vr_cdproexe     -- Código do programa
+                            ,pr_dsplsql   => vr_dsplsql      -- Bloco PLSQL a executar
+                            ,pr_dthrexe   => vr_dtagenda     -- Horario da execução
+                            ,pr_interva   => NULL            -- apenas uma vez
+                            ,pr_jobname   => vr_nmjobage     -- Nome randomico criado
+                            ,pr_des_erro  => vr_dscritic);
+      --                   
+      IF TRIM(vr_dscritic) is not null THEN
+        -- Montar mensagem de critica
            vr_cdcritic := 0;
-           vr_dscritic := 'Data da cooperativa diferente da data atual.';
-           RAISE vr_exc_erro; 
+        vr_dscritic := vr_dscritic ||
+                       ' Retorno gene0001.pc_submit_job';
+        RAISE vr_exc_erro_tratado;    
         END IF;                                          
+    END IF;
            
-        pc_crps780(pr_cdcooper => vr_cdcooper,
-                   pr_nmdatela => 'job',
-                   pr_infimsol => vr_infimsol,
-                   pr_cdcritic => vr_cdcritic,
-                   pr_dscritic => vr_dscritic);
+    -- Retorno do módulo e ação logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => NULL);  
+  EXCEPTION 
+    WHEN vr_exc_erro_tratado THEN 
+      RAISE vr_exc_erro_tratado; 
+    WHEN vr_exc_others THEN 
+      RAISE vr_exc_others; 
+    WHEN OTHERS THEN   
+      -- No caso de erro de programa gravar tabela especifica de log
+      cecred.pc_internal_exception(pr_cdcooper => 0); 
+      -- Trata erro
+      vr_sqlerrm := SQLERRM;
+      RAISE vr_exc_others;            
+  END pc_cria_job;
                                            
-        IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+  --  
+  PROCEDURE pc_trata_nro_execucoes(pr_cdcopexe    IN NUMBER
+                                  ,pr_dtproces    IN DATE
+                                  ,pr_cdtipope    IN VARCHAR2
+                                  ,pr_qtdexec     OUT INTEGER
+                                  )         
+  IS    
+  /* ..........................................................................
              
-          -- Abrir chamado - Texto para utilizar na abertura do chamado e no email enviado
-          vr_dstexto := to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_nomdojob || ' --> ' ||
-                       'Erro na execucao do programa. Critica: ' || nvl(vr_dscritic,' ');
+  Procedure: pc trata nro execucoes
+  Sistema  : AILOS
+  Autor    : Belli/Envolti - PRB00040466
+  Data     : 09/01/2019                        Ultima atualizacao: 09/01/2019
+    
+  Dados referentes ao programa:    
+  Frequencia: Sempre que for chamado
+  Objetivo  : Trata  execucoes
+    
+  Alteracoes:                            
+    
+  ............................................................................. */
+    vr_flultexe    INTEGER          := NULL;
+    vr_qtdexec     INTEGER          := NULL;
+  BEGIN
+    -- Posiciona procedure
+    vr_cdproint := 'pc_trata_nro_execucoes';
+    -- Inclusão do módulo e ação logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);    
+    vr_dsparint := ', vr_cdproint:'  || vr_cdproint ||
+                   ', vr_hrfimexe:'  || vr_hrfimexe ||
+                   ', pr_cdcopexe:'  || pr_cdcopexe ||
+                   ', pr_cdtipope:'  || pr_cdtipope ||
+                   ', pr_dtproces:'  || pr_dtproces ||
+                   ', vr_cdproctr:'  || vr_cdproctr;
+    --> Verificar a execução
+    CECRED.gene0001.pc_controle_exec_pragma(pr_cdcooper  => pr_cdcopexe       --> Código da coopertiva
+                                    ,pr_cdtipope  => pr_cdtipope       --> Tipo de operacao I-incrementar e C-Consultar
+                                    ,pr_dtmvtolt  => pr_dtproces       --> Data do movimento
+                                    ,pr_cdprogra  => vr_cdproctr       --> Codigo do programa
+                                    ,pr_flultexe  => vr_flultexe       --> Retorna se é a ultima execução do procedimento
+                                    ,pr_qtdexec   => vr_qtdexec        --> Retorna a quantidade
+                                    ,pr_cdcritic  => vr_cdcritic       --> Codigo da critica de erro
+                                    ,pr_dscritic  => vr_dscritic);     --> descrição do erro se ocorrer
+    pr_qtdexec := vr_qtdexec;                                                               
+    --Trata retorno
+    IF nvl(vr_cdcritic,0) > 0         OR
+        TRIM(vr_dscritic)   IS NOT NULL THEN
+      vr_dscritic := vr_dscritic ||
+                     ' Retorno gene0001.pc_controle_exec_pragma';
+      RAISE vr_exc_erro_tratado;
+    END IF;
+    
+    -- Limpa Action do modulo logado
+    GENE0001.pc_informa_acesso(pr_module => vr_cdrotcpl, pr_action => NULL);
+  EXCEPTION
+      -- apenas repassar as criticas
+    WHEN vr_exc_erro_tratado THEN 
+      RAISE vr_exc_erro_tratado; 
+    WHEN vr_exc_others THEN 
+      RAISE vr_exc_others; 
+    WHEN OTHERS THEN   
+      -- No caso de erro de programa gravar tabela especifica de log
+      cecred.pc_internal_exception(pr_cdcooper => pr_cdcopexe); 
+      -- Trata erro
+      vr_sqlerrm := SQLERRM;
+      RAISE vr_exc_others;  		           
+  END pc_trata_nro_execucoes;
+  
+  -- pc processo
+  PROCEDURE pc_processo
+  IS
+  /* ..........................................................................    
+  Procedure: pc processo
+  Sistema  : CECRED
+  Autor    : Belli/Envolti - PRB00040466
+  Data     : 09/01/2019                        Ultima atualizacao: 09/01/2019
+    
+  Dados referentes ao programa:    
+  Frequencia: Sempre que for chamado
+  Objetivo  : processa realmente o negocio por cooperativa.
+    
+  Alteracoes: 
+    
+  ............................................................................. */ 
+  --   
+  BEGIN
+    -- Posiciona procedure
+    vr_cdproint := 'pc_processo';
+    -- Inclusão do módulo e ação logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);    
+    vr_cdcoplog := vr_cdcoppar;
+    vr_dsparint := ', vr_cdproint:' || vr_cdproint ||
+                   ', vr_cdcoplog:' || vr_cdcoplog;
 
-          -- Parte inicial do texto do chamado e do email
-          vr_titulo := '<b>Abaixo os erros encontrados no job ' || vr_nomdojob || '</b><br><br>';
+    -- Log de inicio de execucao para cada cooperativa
+    pc_controla_log_batch(pr_dstiplog => 'I'
+                         ,pr_cdcopprm => vr_cdcoplog);
 
-          -- Buscar e-mails dos destinatarios do produto cyber
-          vr_destinatario_email := gene0001.fn_param_sistema('CRED',vr_cdcooper,'CYBER_RESPONSAVEL');
+    -- Forçada log - Teste Belli 
+    -- Log acompanhamento
+    pc_controla_log_batch(pr_cdcritic => 1201
+                             ,pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
+                                             '. Vai executar as rotinas de negocio' ||
+                                             ' pc_crps780 e PREJ0003.pc_transfere_prejuizo_cc' ||
+                                             ' ' || vr_dsparame ||
+                                             ' ' || vr_dsparint
+                             ,pr_dstiplog => 'O'
+                             ,pr_tpocorre => 4
+                             ,pr_flabrchd => 0
+                             ,pr_cdcopprm => vr_cdcoplog);  
 
-          cecred.pc_log_programa( PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
-                                 ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
-                                 ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                                 -- Parametros para Ocorrencia
-                                 ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
-                                 ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-                                 ,pr_dsmensagem    => vr_dstexto    --> dscritic       
-                                 ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
-                                 ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
-                                 ,pr_texto_chamado => vr_titulo
-                                 ,pr_destinatario_email => vr_destinatario_email
-                                 ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
-                                 ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+    
              
-           RAISE vr_exc_erro; 
+    
+    pc_crps780(pr_cdcooper => vr_cdcoplog
+              ,pr_nmdatela => 'job'
+              ,pr_infimsol => vr_infimsol
+              ,pr_cdcritic => vr_cdcritic
+              ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN 
+      -- Montar mensagem de critica
+      vr_dscritic := vr_dscritic ||
+                     ' Retorno pc_crps780';                                         
+      RAISE vr_exc_erro_tratado; 
         END IF;
+    -- Retorna módulo e ação logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);
         
-        PREJ0005.pc_executa_job_prejuizo(pr_cdcooper => vr_cdcooper
+	  PREJ0005.pc_executa_job_prejuizo(pr_cdcooper => vr_cdcoplog
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);
                                                      
-        IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+    IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+      -- Montar mensagem de critica
+      vr_dscritic := vr_dscritic ||
+                     ' Retorno PREJ0005.pc_executa_job_prejuizo';                 
+      RAISE vr_exc_erro_tratado; 
+    END IF;
 
-          -- Abrir chamado - Texto para utilizar na abertura do chamado e no email enviado
-          vr_dstexto := to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_nomdojob || ' --> ' ||
-                       'Erro na execucao do programa. Critica: ' || nvl(vr_dscritic,' ');
-
-          -- Parte inicial do texto do chamado e do email
-          vr_titulo := '<b>Abaixo os erros encontrados no job ' || vr_nomdojob || '</b><br><br>';
-
-          -- Buscar e-mails dos destinatarios do produto cyber
-          vr_destinatario_email := gene0001.fn_param_sistema('CRED',vr_cdcooper,'CYBER_RESPONSAVEL');
-
-          cecred.pc_log_programa( PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
-                                 ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
-                                 ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                                 -- Parametros para Ocorrencia
-                                 ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
-                                 ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-                                 ,pr_dsmensagem    => vr_dstexto    --> dscritic
-                                 ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
-                                 ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
-                                 ,pr_texto_chamado => vr_titulo
-                                 ,pr_destinatario_email => vr_destinatario_email
-                                 ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
-                                 ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
-
-           RAISE vr_exc_erro;
-        END IF;
+	  -- Retorna módulo e ação logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);
         
-        -- Se as regras de prejuízo de conta corrente estão ativas para a cooperativa
-		IF PREJ0003.fn_verifica_flg_ativa_prju(vr_cdcooper) THEN
+    -- Se as regras de prejuízo de conta corrente estão ativas para a cooperativa
+    IF PREJ0003.fn_verifica_flg_ativa_prju(vr_cdcoplog) THEN      
+      -- Retorna módulo e ação logado
+      GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);
+    
+      -- Rotinas referente a calculo de juros, pagamento e liquidação de prejuizo de conta corrente
+      -- serão executados durante o processo batch no crps752.      
+      -- Transfere contas corrente para prejuízo
+      
+      CECRED.PREJ0003.pc_transfere_prejuizo_cc(pr_cdcooper => vr_cdcoplog
+                                              ,pr_cdcritic => vr_cdcritic
+                                              ,pr_dscritic => vr_dscritic
+                                              ,pr_tab_erro => vr_tab_erro );
+      
+        IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+        -- Montar mensagem de critica
+        vr_dscritic := vr_dscritic ||
+                       ' Retorno PREJ0003.pc_transfere_prejuizo_cc';                 
+        RAISE vr_exc_erro_tratado; 
+      END IF;
+    END IF; 
+    -- Retorna módulo e ação logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);      
+      
+    -- Forçado erro Tratado nesta PCK - De origem externa - Teste Belli
+    --vr_dscritic := vr_dscritic || '9999 -  Erro nao tratado: BLA BLA BLA ,,, BLA ,, BLA' ||
+    --               ' Retorno PREJ0003.pc_transfere_prejuizo_cc';                 
+    --RAISE vr_exc_erro_tratado;
+          
+    -- Registra que programa executou        
+    pc_trata_nro_execucoes(pr_cdcopexe  => vr_cdcoplog
+                          ,pr_dtproces  => TRUNC(vr_dtsysdat)
+                          ,pr_cdtipope  => 'I'
+                          ,pr_qtdexec   => vr_qtdexec);                                                
+    -- Retorna módulo e ação logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);
+      
+    -- Log de fim de execucao
+    pc_controla_log_batch(pr_dstiplog => 'F'
+                         ,pr_cdcopprm => vr_cdcoplog);
+                         
+    vr_cdcoplog := 0;  -- Volta para rotina sem cooperativa               
+    
+    -- Limpa Action do modulo logado
+    GENE0001.pc_informa_acesso(pr_module => vr_cdrotcpl, pr_action => NULL);
+  EXCEPTION 
+    WHEN vr_exc_erro_tratado THEN 
+      RAISE vr_exc_erro_tratado; 
+    WHEN vr_exc_others THEN 
+      RAISE vr_exc_others; 
+    WHEN OTHERS THEN   
+      -- No caso de erro de programa gravar tabela especifica de log
+      cecred.pc_internal_exception(pr_cdcooper => vr_cdcoplog); 
+      -- Trata erro
+      vr_sqlerrm := SQLERRM;
+      RAISE vr_exc_others;            
+  END pc_processo; 
+
+  -- Verifica a execução da cooperativa    
+  PROCEDURE pc_ver_exe_coop
+  IS  
+  /* ..........................................................................    
+  Procedure: pc ver exe coop
+  Sistema  : CECRED
+  Autor    : Belli/Envolti - PRB00040466
+  Data     : 09/01/2019                        Ultima atualizacao: 09/01/2019
+
+  Dados referentes ao programa:    
+  Frequencia: Sempre que for chamado
+  Objetivo  : Verifica a execução da cooperativa
+
+  Alteracoes: 
+
+  ............................................................................. */ 
+  --   
+  BEGIN  
+    -- Posiciona procedure
+    vr_cdproint := 'pc_ver_exe_coop';
+    -- Inclusão do módulo e ação logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint); 
+    vr_dsparint := ', vr_cdproint:' || vr_cdproint;
+
+    vr_dsvlrgar := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                            ,pr_cdcooper => 0
+                                            ,pr_cdacesso => 'BLOQ_AUTO_PREJ');
+    vr_tipsplit := gene0002.fn_quebra_string(pr_string => vr_dsvlrgar, pr_delimit => ';'); 
+    -- Retorno do módulo e ação logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);
+
+    vr_permite_trans := 1;
+    FOR i IN vr_tipsplit.first..vr_tipsplit.last LOOP
+      IF vr_cdcoppar = vr_tipsplit(i) THEN
+        vr_permite_trans := 0;
+        END IF;
+    END LOOP;
+        
 		
-          --> Rotinas referente a calculo de juros, pagamento e liquidação de prejuizo de conta corrente
-          --> serão executados durante o processo batch no crps752.
+    IF vr_permite_trans = 1 THEN
 
+      -- Confere se já executou
+      pc_trata_nro_execucoes(pr_cdcopexe  => vr_cdcoppar
+                            ,pr_dtproces  => TRUNC(vr_dtsysdat)
+                            ,pr_cdtipope  => 'C2' -- Leva em conta a data 
+                            ,pr_qtdexec   => vr_qtdexec);
+      -- Retorno do módulo e ação logado
+      GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);
+      vr_dsparint := vr_dsparint ||
+                     ', vr_qtdexec:' || vr_qtdexec;
 			
+      IF vr_qtdexec = 0 THEN -- Programa não executou
 
-			-- Transfere contas corrente para prejuízo
-			CECRED.PREJ0003.pc_transfere_prejuizo_cc(pr_cdcooper => vr_cdcooper
-																								,pr_cdcritic =>vr_cdcritic
-																								,pr_dscritic =>vr_dscritic
-																								,pr_tab_erro =>vr_tab_erro );
+        OPEN btch0001.cr_crapdat(vr_cdcoppar);
+        FETCH btch0001.cr_crapdat  INTO rw_crapdat;
+        -- Se nao encontrar
+        IF BTCH0001.cr_crapdat%NOTFOUND THEN
+          -- Fechar o cursor pois havera raise
+          CLOSE BTCH0001.cr_crapdat;
+          -- Montar mensagem de critica
+           vr_cdcritic := 1;
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+           RAISE vr_exc_erro_tratado;
+        ELSE
+          -- Fechar o cursor
+          CLOSE BTCH0001.cr_crapdat;
+        END IF;                   
 
-			IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
-				-- Abrir chamado - Texto para utilizar na abertura do chamado e no email enviado
-				vr_dstexto := to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_nomdojob || ' --> ' ||
-										 'Erro na execucao do programa. Critica: ' || nvl(vr_dscritic,' ');
+        --Verifica o dia util da cooperativa e caso nao for pula a coop
+        vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper  => vr_cdcoppar
+                                                  ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
+                                                  ,pr_tipo      => 'A');    
+        -- Retorno do módulo e ação logado
+        GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);        
+        vr_dsparint := vr_dsparint ||
+                       ', vr_dtmvtolt:' || vr_dtmvtolt ||
+                       ', rw_crapdat.dtmvtolt:' || rw_crapdat.dtmvtolt ||
+                       ', rw_crapdat.inproces:' || rw_crapdat.inproces;
 
-				-- Parte inicial do texto do chamado e do email
-				vr_titulo := '<b>Abaixo os erros encontrados no job ' || vr_nomdojob || '</b><br><br>';
+        IF vr_dtmvtolt = rw_crapdat.dtmvtolt THEN
 
-				-- Buscar e-mails dos destinatarios do produto cyber
-				vr_destinatario_email := gene0001.fn_param_sistema('CRED',vr_cdcooper,'CYBER_RESPONSAVEL');
+          -- Verifica se a cadeia da cooperativa especifica terminou
+          IF nvl(rw_crapdat.inproces,0) = 1 THEN          
 
-				cecred.pc_log_programa( PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
-															 ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
-															 ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-															 -- Parametros para Ocorrencia
-															 ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
-															 ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-															 ,pr_dsmensagem    => vr_dstexto    --> dscritic
-															 ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
-															 ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
-															 ,pr_texto_chamado => vr_titulo
-															 ,pr_destinatario_email => vr_destinatario_email
-															 ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
-															 ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+            pc_processo;
+            -- Retorno do módulo e ação logado
+            GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => vr_cdproint);
 
-				 RAISE vr_exc_erro;
-			END IF;
-		END IF;
+          ELSE
+            vr_ctreajob := vr_ctreajob + 1; -- Adiciona no Reagendamento   
+            -- Log acompanhamento - Forçado Log para - Teste Belli 
+            pc_controla_log_batch(pr_cdcritic => 1201
+                             ,pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
+                                             '. Cooperativa em processo batch' ||
+                                             ' ' || vr_dsparame ||
+                                             ' ' || vr_dsparint ||
+                                             ', vr_qtdexec:'          || vr_qtdexec  ||
+                                             ', vr_dtmvtolt:'         || vr_dtmvtolt ||
+                                             ', rw_crapdat.inproces:' || rw_crapdat.inproces ||
+                                             ', rw_crapdat.dtmvtolt:' || rw_crapdat.dtmvtolt
+                             ,pr_dstiplog => 'O'
+                             ,pr_tpocorre => 4
+                             ,pr_flabrchd => 0
+                             ,pr_cdcopprm => 0);           
+          END IF; -- Verifica se a cadeia da cooperativa especifica terminou
+        ELSE
+          -- Log acompanhamento
+          pc_controla_log_batch(pr_cdcritic => 1201
+                               ,pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
+                                               '. Data não útil para Cooperativa' ||
+                                               ' ' || vr_dsparame ||
+                                               ' ' || vr_dsparint ||
+                                               ', vr_dtmvtolt:' || vr_dtmvtolt ||
+                                               ', rw_crapdat.dtmvtolt:' || rw_crapdat.dtmvtolt
+                               ,pr_dstiplog => 'O'
+                               ,pr_tpocorre => 4
+                               ,pr_flabrchd => 0
+                               ,pr_cdcopprm => 0);                  
+        END IF; -- Não é dia util 
       ELSE
-        cecred.pc_log_programa( PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
-                               ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
-                               ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                               -- Parametros para Ocorrencia
-                               ,pr_tpocorrencia  => 4             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
-                               ,pr_cdcriticidade => 0             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-                               ,pr_dsmensagem    => vr_dserro    --> dscritic
-                               ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
-      END IF;
-      --
-      pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
-                            pr_dstiplog => 'F',
-                            pr_dscritic => vr_dscritic);
-      END IF;
+        -- NULL; - Forçado comentario - Teste Belli 
+        -- Log acompanhamento - Forçado Log para - Teste Belli 
+        pc_controla_log_batch(pr_cdcritic => 1201
+                             ,pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
+                                             '. Cooperativa já executou nesta data' ||
+                                             ' ' || vr_dsparame ||
+                                             ' ' || vr_dsparint ||
+                                             ', vr_dtmvtolt:'         || vr_dtmvtolt ||
+                                             ', rw_crapdat.dtmvtolt:' || rw_crapdat.dtmvtolt
+                             ,pr_dstiplog => 'O'
+                             ,pr_tpocorre => 4
+                             ,pr_flabrchd => 0
+                             ,pr_cdcopprm => 0);   
+      END IF; -- Já executou
+      ELSE
+      -- Log acompanhamento
+      pc_controla_log_batch(pr_cdcritic => 1201
+                           ,pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
+                                           '. Cooperativa não trabalha com transfêrencia de prejuizo' ||
+                                           ' ' || vr_dsparame ||
+                                           ' ' || vr_dsparint ||
+                                           ', vr_permite_trans:' || vr_permite_trans 
+                           ,pr_dstiplog => 'O'
+                           ,pr_tpocorre => 4
+                           ,pr_flabrchd => 0
+                           ,pr_textochd => vr_titulo
+                           ,pr_desemail => vr_destinatario_email
+                           ,pr_cdcricid => 0
+                           ,pr_cdcopprm => 0 );        
+    END IF; -- Cooperativa não trabalha com transfêrencia de prejuizo
+
+    -- Limpa ação logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => NULL);  
+  EXCEPTION
+    WHEN vr_exc_erro_tratado THEN 
+      RAISE vr_exc_erro_tratado; 
+    WHEN vr_exc_others THEN 
+      RAISE vr_exc_others; 
+    WHEN OTHERS THEN   
+      -- No caso de erro de programa gravar tabela especifica de log
+      cecred.pc_internal_exception(pr_cdcooper => 0); 
+      -- Trata erro
+      vr_sqlerrm := SQLERRM;
+      RAISE vr_exc_others;           
+  END pc_ver_exe_coop; 
+  
+  --                         BLOCO PRINCIPAL
+  BEGIN                                      -- INICIO DO PROCESSO
+    vr_cdrotcpl := vr_cdproexe ||'.' ||vr_nmrotpro;      
+    -- Incluido nome do módulo logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => NULL);
+    -- Incluida SYSDATE em variavel vr_dtsysdat para manupilar melhor quando teste - 09/10/2018 - Chd REQ0029484
+    vr_dtsysdat := SYSDATE;
+    vr_cdcoplog := 0;
+    vr_cdcoppar := 0; 
+    vr_cdcritic := NULL;
+    vr_dscritic := NULL;  
+    vr_dsparame := ' Nomdojob:'  || vr_nomdojob ||
+                   ', cdrotcpl:' || vr_cdrotcpl ||
+                   ', cdcoplog:' || vr_cdcoplog;
+    -- Parte inicial do texto do chamado e do email
+    vr_titulo             := '<b>Abaixo os erros encontrados no job ' || vr_nomdojob || '</b><br><br>';
+    -- Buscar e-mails dos destinatarios do produto cyber
+    vr_destinatario_email := gene0001.fn_param_sistema('CRED',vr_cdcoplog,'CYBER_RESPONSAVEL');
+    
+    -- Log de inicio de execucao sem cooperativa
+    pc_controla_log_batch(pr_dstiplog => 'I'
+                         ,pr_cdcopprm => 0);
+      
+    
+    vr_dsparcop := vr_dsparame;
+    FOR rw_crapcop IN cr_crapcop LOOP
+      
+      vr_cdcoppar := rw_crapcop.cdcooper;
+      vr_dsparame := vr_dsparcop ||
+                     ', vr_cdcoppar:' || vr_cdcoppar; 
+      
+      -- Forçado erro - Teste Belli
+      --IF vr_cdcoppar > 1 THEN
+      --  vr_cdcritic := 0 / 0;  
+      --END IF;
+      
+      -- Verifica a execução da cooperativa
+      pc_ver_exe_coop;
+      -- Retorno nome do módulo logado
+      GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => NULL);
+                             
     END LOOP;
 
-  EXCEPTION
-    WHEN vr_exc_erro THEN  
-      GENE0001.pc_gera_erro(pr_cdcooper => nvl(vr_cdcooper,3)
-                           ,pr_cdagenci => 1
-                           ,pr_nrdcaixa => 100
-                           ,pr_nrsequen => 1 /** Sequencia **/
-                           ,pr_cdcritic => vr_cdcritic
-                           ,pr_dscritic => vr_dscritic
-                           ,pr_tab_erro => vr_tab_erro);
-                             
-      --vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-      vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+    vr_dsparame := vr_dsparcop;
 
-      pr_cdcritic := 0;
-      pr_dscritic := NULL;      
-
-      -- Log de erro de execucao
-      pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
-                            pr_dstiplog => 'E',
-                            pr_dscritic => vr_dscritic);
+    -- Verifica se é necessario reagendamento
+    IF vr_ctreajob > 0 THEN
+      -- Reagendamento
+      pc_cria_job;
+      -- Retorno do módulo e ação logado
+      GENE0001.pc_set_modulo(pr_module => vr_cdrotcpl, pr_action => NULL);
+    END IF;
                             
-      ROLLBACK;
+    -- Log de fim de execucao
+    pc_controla_log_batch(pr_dstiplog => 'F'
+                         ,pr_cdcopprm => 0);
         
+    -- Retorno nome do módulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+  EXCEPTION
+    WHEN vr_exc_erro_tratado THEN
+      IF NVL(vr_cdcritic,0) = 0 THEN
+        -- Busca a primeira sequencia de numeros até o Hifen, de no maximo 5 caracteres         
+        -- Se não encontrar hifen ou nenhum numero ou der algum problema permanece 0 no codigo
+        BEGIN
+          vr_cdcritic := 
+            SUBSTR(NVL(LTRIM(TRANSLATE(SUBSTR(vr_dscritic
+                                              , 1, REPLACE(INSTR(vr_dscritic, '-', 1, 1),0,1))
+                                    ,TRANSLATE(SUBSTR(vr_dscritic
+                                                       , 1, REPLACE(INSTR(vr_dscritic, '-', 1, 1),0,1))
+                                    ,'1234567890',' '), ' ')),0),1,5); 
+        EXCEPTION 
     WHEN OTHERS THEN     
-      cecred.pc_internal_exception(pr_cdcooper => nvl(vr_cdcooper,3),
-                                   pr_compleme => vr_dscritic);
-
-      --pr_dscritic := vr_dscritic;
-      
-      -- Erro
-      vr_cdcritic:= 0;
-      vr_dscritic:= 'Erro na rotina pc_gera_dados_cyber. '||sqlerrm;
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic;
-
-      GENE0001.pc_gera_erro(pr_cdcooper => nvl(vr_cdcooper,3)
-                           ,pr_cdagenci => 1
-                           ,pr_nrdcaixa => 100
-                           ,pr_nrsequen => 1 /** Sequencia **/
-                           ,pr_cdcritic => vr_cdcritic
-                           ,pr_dscritic => vr_dscritic
-                           ,pr_tab_erro => vr_tab_erro);
-
-      --vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-      vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-
+            -- No caso de erro de programa gravar tabela especifica de log
+            cecred.pc_internal_exception(pr_cdcooper => vr_cdcoplog); 
+            vr_cdcritic := 0;
+        END;           
+      END IF;
+      pr_cdcritic := NVL(vr_cdcritic,0);
+      -- Monta mensagem
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic
+                                              ,pr_dscritic => vr_dscritic) ||
+                     ' '  || vr_dsparame ||
+                     ' '  || vr_dsparint;                   
       -- Log de erro de execucao
-      pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
-                            pr_dstiplog => 'E',
-                            pr_dscritic => vr_dscritic);
+      pc_controla_log_batch(pr_cdcritic => pr_cdcritic
+                           ,pr_dscritic => pr_dscritic
+                           ,pr_textochd => vr_titulo
+                           ,pr_desemail => vr_destinatario_email
+                           ,pr_cdcopprm => 0);
+      
+      ROLLBACK;
+    WHEN vr_exc_montada THEN                   
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_cdcritic => pr_cdcritic
+                           ,pr_dscritic => pr_dscritic
+                           ,pr_textochd => vr_titulo
+                           ,pr_desemail => vr_destinatario_email
+                           ,pr_cdcopprm => 0);
+
+    WHEN vr_exc_others THEN     
+      -- No caso de erro de programa gravar tabela especifica de log
+      cecred.pc_internal_exception(pr_cdcooper => vr_cdcoplog);
+      -- Monta mensagem
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     ' '  || vr_dsparame ||
+                     ' '  || vr_dsparint ||
+                     '. ' || vr_sqlerrm;                   
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_cdcritic => pr_cdcritic
+                           ,pr_dscritic => pr_dscritic
+                           ,pr_textochd => vr_titulo
+                           ,pr_desemail => vr_destinatario_email
+                           ,pr_cdcopprm => 0);
+
+      ROLLBACK;                             
+
+    WHEN OTHERS THEN     
+      -- No caso de erro de programa gravar tabela especifica de log
+      cecred.pc_internal_exception(pr_cdcooper => vr_cdcoplog);
+      -- Monta mensagem
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     ' '  || vr_dsparame ||
+                     '. ' || SQLERRM;                   
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_cdcritic => pr_cdcritic
+                           ,pr_dscritic => pr_dscritic
+                           ,pr_textochd => vr_titulo
+                           ,pr_desemail => vr_destinatario_email
+                           ,pr_cdcopprm => 0);
+                           
       ROLLBACK;                             
     
   END pc_controla_exe_job;
