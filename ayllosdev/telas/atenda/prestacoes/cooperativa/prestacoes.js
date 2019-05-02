@@ -70,6 +70,7 @@
  *                   PJ450 - Diego Simas (AMcom)  
  * 049: [19/11/2018] Alterado layout da tela frmNovaProp (Dados da Solicitação), tela Garantias (agora Rating)
  *                    Avalistas, Interveniente e Dados da Alienação(frmHipoteca) - PRJ 438. (Mateus Z / Mouts)
+ *				     05/2018 - Valida o pagamento se consignado - JDB AMcom
 */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -250,7 +251,7 @@ function controlaOperacao(operacao) {
 		// botao efetivar
 		}
     }
-	
+	//P437
 	if(tpemprst == 1 && tpdescto == 2 ){        
         // botao Registrar GRV
 		if (operacao == 'D_EFETIVA'){
@@ -3263,7 +3264,20 @@ function validaPagamento(){
 	
 	showMsgAguardo('Aguarde, validando pagamento...');
 	var vlapagar = $('#totpagto', '#frmVlParc').val();
+    //P437 S6
+	var parc = "";	
+	//Carregar parcelas
+	$("input[type=checkbox][name='checkParcelas[]']").each(function() {
+		checked = false;
+		checked = this.checked;
+		if(checked != false)
+		{
+			parc = parc + this.id.split("_")[1] + ';' ;						
+            
+		}
+	});
 	
+
 	// Carregar os dados de antecipação
 	verificaAntecipacaopgto();
 	
@@ -3275,6 +3289,7 @@ function validaPagamento(){
 			nrdconta: nrdconta,
 			vlapagar: vlapagar,
 			nrctremp: nrctremp,
+			    parc: parc,
 			redirect: 'script_ajax'
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -4797,3 +4812,4 @@ function hideCamposCategoriaVeiculos(hide){ //PRJ 438 - Bruno
 		$('.fieldVeiculos').show();
 	}
 }
+
