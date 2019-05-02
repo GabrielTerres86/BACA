@@ -7627,6 +7627,10 @@ create or replace package body cecred.PAGA0002 is
 
     --
 	--              03/09/2018 - Correção para remover lote (Jonata - Mouts).
+    --         
+    --              02/05/2019 - Retirado o returnning e criado variavel vr_cdbccxlt
+                                 para ser usada ao inserir na craplau junto com a 
+                                 variavel vr_nrdolote. Alcemir Mouts (PRB0041522).  
     ...........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -7858,7 +7862,8 @@ create or replace package body cecred.PAGA0002 is
     vr_exc_erro EXCEPTION;
     --vr_des_erro VARCHAR2(4000); -- Não utilizado - 27/11/2018 - REQ0029314
     vr_dtmvtopg DATE;
-    vr_nrdolote NUMBER;
+    vr_nrdolote craplot.nrdolote%TYPE;
+    vr_cdbccxlt craplot.cdbccxlt%TYPE;
     vr_dslindig VARCHAR2(200);
     vr_tpdvalor INTEGER;
     vr_nmprepos VARCHAR2(200);
@@ -7926,6 +7931,8 @@ create or replace package body cecred.PAGA0002 is
                    ', pr_iddispos:' || pr_iddispos;   
 
     vr_dtmvtopg := pr_dtmvtopg;
+
+    vr_cdbccxlt := 100;
 
     -- Definir descrição da transação
     IF pr_cdtiptra IN (1,5) THEN
@@ -8154,7 +8161,7 @@ create or replace package body cecred.PAGA0002 is
                                 ,''||pr_cdcooper||';'
                                  ||to_char(pr_dtmvtolt,'DD/MM/RRRR')||';'
                                  ||pr_cdagenci||';'
-                                 ||100||';'
+                                 ||vr_cdbccxlt||';'
                                  ||vr_nrdolote);
       -- Tentar criar registro de lote ate 10 vezes
       -- senao abortar
@@ -8243,46 +8250,57 @@ create or replace package body cecred.PAGA0002 is
       OPEN cr_craplot (pr_cdcooper  => pr_cdcooper ,
                        pr_dtmvtolt  => pr_dtmvtolt ,
                        pr_cdagenci  => pr_cdagenci ,
-                       pr_cdbccxlt  => 100 ,
+                       pr_cdbccxlt  => vr_cdbccxlt ,
                        pr_nrdolote  => vr_nrdolote );
       FETCH cr_craplot INTO rw_craplot;
       IF cr_craplot%NOTFOUND THEN
         CLOSE cr_craplot;
         -- se não localizou, deve criar o registro de lote
-      BEGIN
-          INSERT INTO craplot
-                     ( craplot.cdcooper
-                      ,craplot.dtmvtolt
-                      ,craplot.cdagenci
-                      ,craplot.cdbccxlt
-                      ,craplot.nrdolote
-                      ,craplot.nrdcaixa
-                      ,craplot.cdoperad
-                      ,craplot.cdopecxa
-                      ,craplot.tplotmov)
-              VALUES ( pr_cdcooper   -- craplot.cdcooper
-                      ,pr_dtmvtolt   -- craplot.dtmvtolt
-                      ,pr_cdagenci   -- craplot.cdagenci
-                      ,100            -- craplot.cdbccxlt
-                      ,vr_nrdolote   -- craplot.nrdolote
-                      ,pr_nrdcaixa   -- craplot.nrdcaixa
-                      ,pr_cdoperad   -- craplot.cdoperad
-                      ,pr_cdoperad   -- craplot.cdopecxa
-                      ,12)            -- craplot.tplotmov
-              RETURNING craplot.rowid,
-                        craplot.cdbccxlt,
-                        craplot.nrdolote
-              INTO rw_craplot.rowid,
-                   rw_craplot.cdbccxlt,
-                   rw_craplot.nrdolote;
-      EXCEPTION
-        WHEN OTHERS THEN
-          -- No caso de erro de programa gravar tabela especifica de log 
-          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-           vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
-
-          RAISE vr_exc_erro;
-      END;
+        BEGIN
+            INSERT INTO craplot
+                       ( craplot.cdcooper
+                        ,craplot.dtmvtolt
+                        ,craplot.cdagenci
+                        ,craplot.cdbccxlt
+                        ,craplot.nrdolote
+                        ,craplot.nrdcaixa
+                        ,craplot.cdoperad
+                        ,craplot.cdopecxa
+                        ,craplot.tplotmov)
+                VALUES ( pr_cdcooper   -- craplot.cdcooper
+                        ,pr_dtmvtolt   -- craplot.dtmvtolt
+                        ,pr_cdagenci   -- craplot.cdagenci
+                        ,vr_cdbccxlt   -- craplot.cdbccxlt
+                        ,vr_nrdolote   -- craplot.nrdolote
+                        ,pr_nrdcaixa   -- craplot.nrdcaixa
+                        ,pr_cdoperad   -- craplot.cdoperad
+                        ,pr_cdoperad   -- craplot.cdopecxa
+                        ,12);          -- craplot.tplotmov
+              /*RETURNING craplot.rowid,
+                          craplot.cdbccxlt,
+                          craplot.nrdolote
+                INTO rw_craplot.rowid,
+                     rw_craplot.cdbccxlt,
+                     rw_craplot.nrdolote;*/
+        EXCEPTION
+         WHEN OTHERS THEN
+                  -- No caso de erro de programa gravar tabela especifica de log 
+                  CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+                  vr_cdcritic := 1034;
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                              'craplot(1):' ||
+                              ' cdcooper:'  || pr_cdcooper ||
+                              ', dtmvtolt:' || pr_dtmvtolt ||
+                              ', cdagenci:' || pr_cdagenci ||
+                              ', cdbccxlt:' || vr_cdbccxlt ||
+                              ', nrdolote:' || vr_nrdolote ||
+                              ', nrdcaixa:' || pr_nrdcaixa ||
+                              ', cdoperad:' || pr_cdoperad ||
+                              ', cdopecxa:' || pr_cdoperad ||
+                              ', tplotmov:' || '12'        ||
+                              '. ' ||SQLERRM;
+                  RAISE vr_exc_erro;
+        END;
       
       ELSE
         CLOSE cr_craplot;
@@ -8398,8 +8416,8 @@ create or replace package body cecred.PAGA0002 is
         OPEN cr_craplau_ted(pr_cdcooper => pr_cdcooper
                            ,pr_dtmvtolt => pr_dtmvtolt
                            ,pr_cdageope => pr_cdagenci
-                           ,pr_nrdolote => rw_craplot.nrdolote
-                           ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                           ,pr_nrdolote => vr_nrdolote
+                           ,pr_cdbccxlt => vr_cdbccxlt
                            ,pr_nrdconta => pr_nrdconta
                            ,pr_cdbanfav => pr_cddbanco
                            ,pr_cdagefav => pr_cdageban
@@ -8480,8 +8498,8 @@ create or replace package body cecred.PAGA0002 is
         OPEN cr_craplau_ted(pr_cdcooper => pr_cdcooper
                            ,pr_dtmvtolt => pr_dtmvtolt
                            ,pr_cdageope => pr_cdagenci
-                           ,pr_nrdolote => rw_craplot.nrdolote
-                           ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                           ,pr_nrdolote => vr_nrdolote
+                           ,pr_cdbccxlt => vr_cdbccxlt
                            ,pr_nrdconta => pr_nrdconta
                            ,pr_cdbanfav => pr_cddbanco
                            ,pr_cdagefav => pr_cdageban
@@ -8627,8 +8645,8 @@ create or replace package body cecred.PAGA0002 is
                      ,gene0002.fn_busca_time    -- craplau.hrtransa
                      ,pr_dtmvtolt               -- craplau.dtmvtolt
                      ,pr_cdagenci               -- craplau.cdagenci
-                     ,rw_craplot.cdbccxlt       -- craplau.cdbccxlt
-                     ,rw_craplot.nrdolote       -- craplau.nrdolote
+                     ,vr_cdbccxlt               -- craplau.cdbccxlt
+                     ,vr_nrdolote               -- craplau.nrdolote
                      ,vr_nrseqdig               -- craplau.nrseqdig
                      ,vr_nrseqdig               -- craplau.nrdocmto
                      ,pr_cdhistor               -- craplau.cdhistor
@@ -8708,10 +8726,10 @@ create or replace package body cecred.PAGA0002 is
                          ', hrtransa:' || gene0002.fn_busca_time    ||
                          ', dtmvtolt:' || pr_dtmvtolt               ||
                          ', cdagenci:' || pr_cdagenci               ||
-                         ', cdbccxlt:' || rw_craplot.cdbccxlt       ||
-                         ', nrdolote:' || rw_craplot.nrdolote       ||
-                         ', nrseqdig:' || rw_craplot.nrseqdig       ||
-                         ', nrdocmto:' || rw_craplot.nrseqdig       ||
+                         ', cdbccxlt:' || vr_cdbccxlt               ||
+                         ', nrdolote:' || vr_nrdolote               ||
+                         ', nrseqdig:' || vr_nrseqdig               ||
+                         ', nrdocmto:' || vr_nrseqdig               ||
                          ', cdhistor:' || pr_cdhistor               ||
                          ', dsorigem:' || pr_dsorigem               ||
                          ', insitlau:' || '1'                       ||
