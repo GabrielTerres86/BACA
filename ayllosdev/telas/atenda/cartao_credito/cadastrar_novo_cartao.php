@@ -122,7 +122,6 @@
 	
 	$nrctrcrd = $_POST['nrctrcrd'];
 	
-	
 	$cddopcao = $_POST['cddopcao'];
 	
 	$executandoProdutos = $_POST['executandoProdutos'];
@@ -364,7 +363,7 @@
     if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
-	
+
     $parametroAprovador = !empty($xmlObject->roottag->tags[0]->cdata) ? $xmlObject->roottag->tags[0]->cdata : 0;
 
 	$cecredCartoes = array(11,12,13,14,15,16,17,18);
@@ -373,12 +372,16 @@
 		echo "hideMsgAguardo();";
 		if(isset($nrctrcrd) && isset($cdadmcrd)) {
 			echo "nrctrcrd = ".$nrctrcrd.";";
+
+			if ($cddopcao == "M") {
+				echo "if (flgBancoob) enviarBancoob(".$nrctrcrd."); else voltarParaTelaPrincipal();";
+			} else {
 			if ($novo_fluxo_envio && $cddopcao != "A") {
 				echo "cdadmcrd = ".$cdadmcrd."; consultaEnderecos(1);";
 			} else {
-			if ($alguemAssinou) {
-				echo "enviarBancoob(".$nrctrcrd.")";
-			} else {
+				if ($alguemAssinou) {
+						echo "enviarBancoob(".$nrctrcrd.");";
+				} else {
 
 					if ($parametroAprovador == 0) {
 						echo "solicitaSenha($nrctrcrd, cTipoSenha.COOPERADO);";
@@ -386,6 +389,7 @@
 						echo "solicitaTipoSenha($nrctrcrd, 'novo');";
 					}
 				}
+			}
 			}
 		} else {
 			exibirErro('error',utf8ToHtml("O Contrato não pôde ser gerado."),'Alerta - Aimaro',$funcaoAposErro,false);
@@ -412,7 +416,7 @@
 	
 	$confmsg = "Deseja visualizar a impress&atilde;o?";
 	$conftit = "Confirma&ccedil;&atilde;o - Aimaro";
-	$confsim = "gerarImpressao(2,".$opcao.",".$cdadmcrd.",".$nrctrcrd.",0);";	
+	$confsim = "gerarImpressao(2,".$opcao.",".$cdadmcrd.",".$nrctrcrd.",0);";
 	$msgdconf = 'showConfirmacao("'.$confmsg.'","'.$conftit.'","'.$confsim.'",callafterCartaoCredito,"sim.gif","nao.gif");';	
 	
 	// Mostra a mensagem de informação para verificar atualização cadastral se for adm BB

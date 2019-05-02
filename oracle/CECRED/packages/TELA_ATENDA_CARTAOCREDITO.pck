@@ -5904,6 +5904,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 						,crapenc.nmbairro
 						,crapenc.nrcepend
 						,crapenc.nmcidade
+						,crapenc.cdufende
 				FROM crapenc
 						,crapass
 			 WHERE crapenc.cdcooper = crapass.cdcooper
@@ -6001,7 +6002,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 									,nmbairro
 									,nmcidade
 									,nrcep
-									,cdagenci)
+									,cdagenci
+									,cdufende)
 							VALUES
 									(pr_cdcooper
 									,pr_nrdconta
@@ -6013,7 +6015,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 									,rw_end_agencia.nmbairro
 									,rw_end_agencia.nmcidade
 									,rw_end_agencia.nrcepend
-									,pr_cdagenci);
+									,pr_cdagenci
+									,rw_end_agencia.cdufdcop);
 					EXCEPTION
 							WHEN DUP_VAL_ON_INDEX THEN
 								BEGIN
@@ -6026,6 +6029,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 												,nmcidade = rw_end_agencia.nmcidade
 												,nrcep = rw_end_agencia.nrcepend
 												,cdagenci = pr_cdagenci
+												,cdufende = rw_end_agencia.cdufdcop
 									 WHERE cdcooper = pr_cdcooper
 										 AND nrdconta = pr_nrdconta
 										 AND nrctrcrd = rw_cartoes.nrctrcrd;
@@ -6059,7 +6063,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 									,dscomplemento
 									,nmbairro
 									,nmcidade
-									,nrcep)
+									,nrcep
+									,cdufende)
 							VALUES
 									(pr_cdcooper
 									,pr_nrdconta
@@ -6070,7 +6075,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 									,rw_end_cooperado.complend
 									,rw_end_cooperado.nmbairro
 									,rw_end_cooperado.nmcidade
-									,rw_end_cooperado.nrcepend);
+									,rw_end_cooperado.nrcepend
+									,rw_end_cooperado.cdufende);
 					EXCEPTION
 							WHEN DUP_VAL_ON_INDEX THEN
 								BEGIN
@@ -6083,6 +6089,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 												,nmcidade = rw_end_cooperado.nmcidade
 												,nrcep = rw_end_cooperado.nrcepend
 												,cdagenci = 0
+												,cdufende = rw_end_cooperado.cdufende
 									 WHERE cdcooper = pr_cdcooper
 										 AND nrdconta = pr_nrdconta
 										 AND nrctrcrd = rw_cartoes.nrctrcrd;

@@ -145,6 +145,7 @@ var protocolo;
 var glbadc = 'n';
 var justificativaCartao;
 var contigenciaAtiva = false;
+var flgBancoob = false;
 
 var flgPrincipal = true;
 

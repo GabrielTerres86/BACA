@@ -14008,12 +14008,11 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
 				   nvl2(TRIM(tbend.dscomplemento), ', ' || tbend.dscomplemento || ' ', '') AS dsendere
 				  ,tbend.nmbairro
 				  ,tbend.nmcidade
-				  ,tbcadast_uf.cduf
+				  ,tbend.cdufende
 				  ,gene0002.fn_mask_cep(tbend.nrcep) AS nrcepend
 					,tbend.idtipoenvio
 		  FROM tbcrd_endereco_entrega tbend
 				  ,tbcrd_dominio_campo    tbdom
-				  ,tbcadast_uf
 	   WHERE tbend.idtipoenvio = tbdom.cddominio
 		   AND tbdom.nmdominio = 'TPENDERECOENTREGA'
 		   AND tbend.cdcooper = pr_cdcooper
@@ -14121,7 +14120,7 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
 																	 '<dsbairro>' || nvl(rw_busca_dados_entrega.nmbairro, '') || '</dsbairro>' ||
 																	 '<dscidade>' || nvl(rw_busca_dados_entrega.nmcidade, '') || '</dscidade>' ||
 																	 '<nrcepend>' || nvl(rw_busca_dados_entrega.nrcepend, '') || '</nrcepend>' ||
-																	 '<dsufende>' || nvl(rw_busca_dados_entrega.cduf, '') || '</dsufende>' ||
+																	 '<dsufende>' || nvl(rw_busca_dados_entrega.cdufende, '') || '</dsufende>' ||
 																	 '<nmresage>' || nvl(vr_nmresage, '') || '</nmresage>' ||
 																	 '<idtipoenvio>' || nvl(vr_idtipoenvio, 0) || '</idtipoenvio>' ||
                                    '<cdagenci>' || nvl(rw_busca_dados_entrega.cdagenci, 0) || '</cdagenci>' ||
