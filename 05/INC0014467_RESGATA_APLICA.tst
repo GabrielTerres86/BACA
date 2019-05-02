@@ -111,8 +111,8 @@ declare
        AND   craprda.tpaplica = pr_tpaplica 
        AND   craprda.insaqtot = 0
        AND   craprda.dtvencto <= pr_dtvencto
-       AND   craprda.nrdconta = 4011082
-       AND   craprda.nraplica = 17
+       AND   craprda.nrdconta = 3889149
+       AND   craprda.nraplica = 41
        ORDER BY cdcooper, tpaplica, insaqtot, cdageass, nrdconta, nraplica, vlsdrdca;
 
      --Selecionar Agencias
