@@ -549,22 +549,12 @@ create or replace package body cecred.TELA_CADEMP is
     vr_nrdcaixa varchar2(100);
     vr_idorigem varchar2(100);
 
-
-    vr_datainicio    varchar2(20);
-    vr_indconsignado number(2);
-    vr_tipoPadrao    varchar2(10);
-    vr_idemprconsig  number;
-    vr_qtdtotal      number;
     vr_nrvencto      number;
     vr_xmlvencto     varchar2(32600);
-    
-    vr_usuario       crapprm.dsvlrprm%type; 
-    vr_senha         crapprm.dsvlrprm%type;
         
     -- variáveis para armazenar as informaçoes em xml
     vr_des_xml        clob;
     vr_texto_completo varchar2(32600);
-    vr_index          varchar2(100);
     
     vr_cdempres             crapemp.cdempres%TYPE; 
     vr_codPromotora         crapemp.cdcooper%TYPE;
@@ -581,22 +571,22 @@ create or replace package body cecred.TELA_CADEMP is
     vr_ufLogradouro         crapemp.cdufdemp%TYPE;
     vr_dddLoja              varchar2(10);  ---crapemp. derá adicionada nrdddemp
     vr_telLoja              varchar2(20);
-    vr_codbanco             crapcop.cdbcoctl%TYPE;
-    vr_codAgencia           crapcop.cdagectl%TYPE;
     vr_numConta             crapemp.nrdconta%TYPE;
 
     
     CURSOR cr_dados_consig (pr_cdcooper  IN crapemp.cdcooper%TYPE,
                             pr_cdempres  IN crapemp.cdempres%TYPE) IS
     SELECT 'GRCONV' codTransacao,
-           to_char(sysdate,'dd/mm/yyyy hh24:mi:ss') dataHoraEnvio,
-           c.dtativconsignado datainicio,
-           decode(c.indconsignado,0,sysdate,null) datafim,
+           to_char(SYSTIMESTAMP,'yyyy-mm-dd')||'T'||to_char(SYSTIMESTAMP,'hh24:mi:ss') dataHoraEnvio,
+           to_char(c.dtativconsignado,'yyyy-mm-dd')||'T'||to_char(c.dtativconsignado,'hh24:mi:ss') datainicio,
+           decode(c.indconsignado,0,to_char(SYSTIMESTAMP,'yyyy-mm-dd')||'T'||to_char(SYSTIMESTAMP,'hh24:mi:ss'),null) datafim,
            null descEmail,
            null descContatoLoja,  
            null numContaDigito,
            '1' tipoOperador,
-           c.tpmodconvenio tipoPadrao, 
+           decode(c.tpmodconvenio,1,161,
+                  decode(c.tpmodconvenio,2,162,
+                         decode(c.tpmodconvenio,3,163,null))) tipoPadrao,
            c.idemprconsig,
            c.indconsignado,
            p.cdbcoctl codbanco,
@@ -614,13 +604,11 @@ create or replace package body cecred.TELA_CADEMP is
   rw_dados_consig cr_dados_consig%ROWTYPE;
 
   CURSOR cr_dados_vencto (pr_idemprconsig in tbcadast_emp_consig_param.idemprconsig%TYPE) IS
-  SELECT to_char(sysdate,'dd/mm/yyyy')             dataInicioValidade,
-         to_char(t.dtinclpropostade,'dd/mm/yyyy')  diaMesDe,
-         to_char(t.dtinclpropostaate,'dd/mm/yyyy') diaMesAte,
-         to_char(t.dtenvioarquivo,'dd/mm/yyyy')    diaMesEnvio,
-         to_char(t.dtvencimento,'dd/mm/yyyy')      diaMesVencto,
-         'DC' tipoDiavencto,
-         'F' tipoAjuste,
+  SELECT to_char(SYSTIMESTAMP,'yyyy-mm-dd')||'T'||to_char(SYSTIMESTAMP,'hh24:mi:ss') dataInicioValidade,
+         to_char(t.dtinclpropostade,'yyyy-mm-dd')  diaMesDe,
+         to_char(t.dtinclpropostaate,'yyyy-mm-dd') diaMesAte,
+         to_char(t.dtenvioarquivo,'yyyy-mm-dd')    diaMesEnvio,
+         to_char(t.dtvencimento,'yyyy-mm-dd')      diaMesVencto,
          1  qtdeVenctos
     FROM tbcadast_emp_consig_param  t
    WHERE t.idemprconsig = pr_idemprconsig
@@ -700,20 +688,7 @@ create or replace package body cecred.TELA_CADEMP is
       -- inicilizar as informaçoes do xml
       vr_texto_completo := null;
 
-      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
-        '<root><dados qtregist="' || 1 ||'" >');
-
-      -- verifica em qual banco de dados esta sendo executadO
-      IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',vr_cdcooper,'DB_NAME_PRODUC') THEN --> Produção
-         -- busca usuário e senha do serviço com a FIS de PRODUÇÃO
-         vr_usuario:= gene0001.fn_param_sistema('CRED',0,'USUARIO_FIS_PRD');
-         vr_senha  := gene0001.fn_param_sistema('CRED',0,'SENHA_FIS_PRD');
-      ELSE
-         -- busca usuário e senha do serviço com a FIS de HOMOLOGAÇÃO
-         vr_usuario:= gene0001.fn_param_sistema('CRED',0,'USUARIO_FIS_HML');
-         vr_senha  := gene0001.fn_param_sistema('CRED',0,'SENHA_FIS_HML');
-      END IF;
-      
+      pc_escreve_xml('<?xml version="1.0"?>');
       
       OPEN cr_dados_consig(pr_cdcooper => to_number(vr_cdcooper),
                            pr_cdempres => to_number(vr_cdempres));
@@ -727,37 +702,65 @@ create or replace package body cecred.TELA_CADEMP is
            raise vr_saida;
         END IF;
 
-                 
-        pc_escreve_xml('<gravaDadosConvenio>'||
-                       '<dto>'||
-                            '<codUsuario>'||vr_usuario||'</codUsuario>'||
-                            '<codSenha>'||vr_senha||'</codSenha>'||
-                            '<codTransacao>'||rw_dados_consig.codtransacao||'</codTransacao>'||
-                            '<dataHoraEnvio>'||rw_dados_consig.datahoraenvio||'</dataHoraEnvio>'||
-                            '<codPromotora>'||vr_codpromotora||'</codPromotora>'||
-                            '<codConvenio>'||vr_codconvenio||'</codConvenio>'||
-                            '<numCNPJLoja>'||vr_numcnpjloja||'</numCNPJLoja>'||
-                            '<descNomeLoja>'||vr_descnomeloja||'</descNomeLoja>'||
-                            '<descRazaoLoja>'||vr_descrazaoloja||'</descRazaoLoja>'||
-                            '<dataInicio>'||vr_datainicio||'</dataInicio>'||
-                            '<dataFim>'||rw_dados_consig.datafim||'</dataFim>'||
-                            '<cepLogradouro>'||vr_ceplogradouro||'</cepLogradouro>'||
-                            '<descLogradouro>'||vr_desclogradouro||'</descLogradouro>'||
-                            '<numLogradouro>'||vr_numlogradouro||'</numLogradouro>'||
-                            '<descComplementoLogradouro>'||vr_desccompllogradouro||'</descComplementoLogradouro>'||
-                            '<descBairroLogradouro>'||vr_descbairrologradouro||'</descBairroLogradouro>'||
-                            '<descCidadeLogradouro>'||vr_desccidadelogradouro||'</descCidadeLogradouro>'||
-                            '<ufLogradouro>'||vr_uflogradouro||'</ufLogradouro>'||
-                            '<dddLoja>'||vr_dddloja||'</dddLoja>'||
-                            '<telLoja>'||vr_telloja||'</telLoja>'||
-                            '<descEmail>'||rw_dados_consig.descemail||'</descEmail>'||
-                            '<descContatoLoja>'||rw_dados_consig.desccontatoloja||'</descContatoLoja>'||
-                            '<codbanco>'||rw_dados_consig.codbanco||'</codbanco>'||
-                            '<codAgencia>'||rw_dados_consig.codagencia||'</codAgencia>'||
-                            '<numConta>'||vr_numconta||'</numConta>'||
-                            '<numContaDigito>'||rw_dados_consig.numcontadigito||'</numContaDigito>'||
-                            '<tipoOperador>'||rw_dados_consig.tipooperador||'</tipoOperador>'||
-                            '<tipoPadrao>'||vr_tipoPadrao||'</tipoPadrao>');
+
+        pc_escreve_xml('<dto>'||
+                         '<convenioCredito>'||
+                           '<conveniado>'||
+                             '<identificadorReceitaFederal>'||vr_numcnpjloja||'</identificadorReceitaFederal>'||
+                             '<nomeFantasiaOuAbreviado>'||vr_descnomeloja||'</nomeFantasiaOuAbreviado>'||
+                             '<razaoSocialOuNome>'||vr_descrazaoloja||'</razaoSocialOuNome>'||
+                             '<contaCorrente>'||
+                               '<agencia>'||
+                                '<codigo>'||rw_dados_consig.codagencia||'</codigo>'||
+                               '</agencia>'||
+                               '<banco>'||
+                                 '<codigo>'||rw_dados_consig.codbanco||'</codigo>'||
+                               '</banco>'||
+                               '<codigoContaSemDigito>'||vr_numconta||'</codigoContaSemDigito>'||
+                             '</contaCorrente>'||
+                           '</conveniado>'||
+                           '<cooperativa>'||
+                             '<codigo>'||vr_codpromotora||'</codigo>'|| 
+                           '</cooperativa>'||
+                           '<dataContratacao>'||rw_dados_consig.datainicio||'</dataContratacao>'||
+                           '<dataExpiracao>'||rw_dados_consig.datafim||'</dataExpiracao>'||
+                           '<numeroContrato>'||vr_codconvenio||'</numeroContrato>'|| -- codigo da empresa
+                           '<tipoConveniada>'||
+                             '<codigo>'||'3'||'</codigo>'||  -- 3- Consignado
+                           '</tipoConveniada>'||
+                         '</convenioCredito>'||
+                         '<pessoaContatoEndereco>'||
+                           '<CEP>'||vr_ceplogradouro||'</CEP>'||
+                           '<cidade>'||
+                             '<descricao>'||vr_desccidadelogradouro||'</descricao>'||
+                           '</cidade>'||
+                           '<nomeBairro>'||vr_descbairrologradouro||'</nomeBairro>'||
+                           '<numeroLogradouro>'||vr_numlogradouro||'</numeroLogradouro>'||
+                           '<tipoENomeLogradouro>'||vr_desclogradouro||'</tipoENomeLogradouro>'||
+                           '<UF>'||vr_uflogradouro||'</UF>'||
+                         '</pessoaContatoEndereco>'||
+                         '<pessoaContatoTelefone>'||
+                           '<numero>'||vr_telloja||'</numero>'||
+                           '<DDD>'||vr_dddloja||'</DDD>'||
+                         '</pessoaContatoTelefone>'||
+                         '<pessoaContatoEmail>'||
+                           '<enderecoEletronico>'||rw_dados_consig.descemail||'</enderecoEletronico>'||
+                           '<nomeContato>'||rw_dados_consig.desccontatoloja||'</nomeContato>'||
+                         '</pessoaContatoEmail>'||
+                         '<credito>'||
+                           '<produto>'||
+                           '<codigo>'||rw_dados_consig.tipoPadrao||'</codigo>'||
+                           '</produto>'||
+                         '</credito>'||
+                         '<sistemaTransacao>'||
+                           '<tipoUsuario>'||
+                            '<codigo>'||rw_dados_consig.tipoOperador|| '</codigo>'||
+                           '</tipoUsuario>'||
+                         '</sistemaTransacao>'||
+                         '<interacaoGrafica>'||
+                          '<dataAcaoUsuario>'||rw_dados_consig.datahoraenvio||'</dataAcaoUsuario>'||
+                        '</interacaoGrafica>'||
+                        '<listaVencimentos>');
 
          vr_nrvencto := 0;
          vr_xmlvencto:= null;
@@ -765,17 +768,29 @@ create or replace package body cecred.TELA_CADEMP is
          FOR rw_dados_vencto in cr_dados_vencto (pr_idemprconsig => rw_dados_consig.idemprconsig)
          LOOP
             vr_nrvencto:= vr_nrvencto + 1;
-            vr_xmlvencto:=  vr_xmlvencto||
-                            '<vencimento'||vr_nrvencto||'>'||
-                              '<dataInicioValidade>'||to_char(sysdate,'dd/mm/yyyy')||'</dataInicioValidade>'||
-                              '<diaMesDe>'||rw_dados_vencto.diaMesDe||'</diaMesDe>'||  
-                              '<diaMesAte>'||rw_dados_vencto.diaMesAte ||'</diaMesAte>'||    
-                              '<diaMesEnvio>'||rw_dados_vencto.diamesenvio||'</diaMesEnvio>'||    
-                              '<diaMesVencto>'||rw_dados_vencto.diamesvencto||'</diaMesVencto>'||    
-                              '<tipoDiavencto>DC</tipoDiavencto>'||
-                              '<tipoAjuste>F</tipoAjuste>'||
-                              '<qtdeVenctos>1</qtdeVenctos>'||
-                            '</vencimento'||to_char(vr_nrvencto)||'>';
+             vr_xmlvencto:=  vr_xmlvencto||
+                             '<vencimento>'||
+                               '<convenioCredito>'||
+                                '<dataContratacao>'||rw_dados_vencto.dataInicioValidade||'</dataContratacao>'||
+                               '</convenioCredito>'||
+                               '<configuracaoCredito>'||
+                                '<tratamendoDiaNaoUtil>'||
+                                 '<codigo>'||'2'||'</codigo>'|| -- DC - Dia Corrido
+                                '</tratamendoDiaNaoUtil>'||
+                               '</configuracaoCredito>'||
+                               '<consulta>'||
+                                '<tipoContagemDias>'||
+                                 '<codigo>'||'3'||'</codigo>'|| --  F - Fixa
+                                '</tipoContagemDias>'||
+                               '</consulta>'||
+                               '<parametroConsignado>'||
+                                '<diaMesVencInicial>'||rw_dados_vencto.diaMesDe||'</diaMesVencInicial>'||
+                                '<diaMesVencFinal>'||rw_dados_vencto.diaMesAte||'</diaMesVencFinal>'||
+                                '<diaMesVencInterface>'||rw_dados_vencto.diamesenvio||'</diaMesVencInterface>'||
+                                '<diaMesVencimento>'||rw_dados_vencto.diamesvencto||'</diaMesVencimento>'||
+                                '<qtdeVencimentos>'||rw_dados_vencto.qtdeVenctos||'</qtdeVencimentos>'||
+                               '</parametroConsignado>'||
+                               '</vencimento>';
          END LOOP;
          
          IF vr_xmlvencto IS NULL THEN
@@ -783,13 +798,14 @@ create or replace package body cecred.TELA_CADEMP is
             vr_dscritic:= 'Os parametros de vencimento não estao cadastrados!';
             raise vr_saida;
          END IF;
-         
-         pc_escreve_xml(vr_xmlvencto||
-                          '</dto>'||                           
-                       '</gravaDadosConvenio>');
+
+         pc_escreve_xml(vr_xmlvencto);
+
       END LOOP;
       CLOSE cr_dados_consig;
-      pc_escreve_xml ('</dados></root>',true);
+      pc_escreve_xml ('</listaVencimentos>'||
+                      '</dto>',true);
+     
       pr_retxml := xmltype.createxml(vr_des_xml);
 
       /* liberando a memória alocada pro clob */

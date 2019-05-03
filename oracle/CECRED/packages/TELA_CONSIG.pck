@@ -2274,9 +2274,12 @@ BEGIN
     vr_qtdtotal      number;
     vr_nrvencto      number;
     vr_xmlvencto     varchar2(32600);
+    vrdiaMesDe       varchar2(20);
+    vrdiaMesAte      varchar2(20);
+    vrdiaMesEnvio    varchar2(20);
+    vrdiaMesVencto   varchar2(20);
+                                 
     
-    vr_usuario       crapprm.dsvlrprm%type;
-    vr_senha         crapprm.dsvlrprm%type;
 
     -- variáveis para armazenar as informaçoes em xml
     vr_des_xml        clob;
@@ -2286,11 +2289,11 @@ BEGIN
     CURSOR cr_dados_consig (pr_cdcooper      IN crapemp.cdcooper%type,
                             pr_indconsignado IN tbcadast_empresa_consig.indconsignado%type) IS
     SELECT 'GRCONV' codTransacao,
-           to_char(sysdate,'dd/mm/yyyy hh24:mi:ss') dataHoraEnvio,
+           to_char(SYSTIMESTAMP,'yyyy-mm-dd')||'T'||to_char(SYSTIMESTAMP,'hh24:mi:ss') dataHoraEnvio,
            e.cdcooper codpromotora,
            e.cdempres codconvenio,
            e.nrdocnpj numcnpjloja,
-           decode(pr_indconsignado,0,sysdate,null) datafim,
+           decode(pr_indconsignado,0,to_char(SYSTIMESTAMP,'yyyy-mm-dd')||'T'||to_char(SYSTIMESTAMP,'hh24:mi:ss'),null) datafim,
            gene0007.fn_caract_acento (pr_texto    => e.nmresemp,
                                       pr_insubsti => 1) descnomeloja,
            gene0007.fn_caract_acento (pr_texto    => e.nmextemp,
@@ -2369,10 +2372,24 @@ BEGIN
       -- Extraindo os dados do XML que vem da tela CONSIG
       vr_cdempres     := TRIM(pr_retxml.extract('/Root/dto/cdempres/text()').getstringval());
       vr_datainicio   := TRIM(pr_retxml.extract('/Root/dto/datainicio/text()').getstringval());
+      vr_datainicio   := TO_CHAR(TO_DATE(vr_datainicio,'dd/mm/yyyy'),'yyyy-mm-dd')||'T'||
+                                       to_char(to_date(vr_datainicio,'dd/mm/yyyy hh24:mi:ss'),'hh24:mi:ss');
       vr_indconsignado:= TRIM(pr_retxml.extract('/Root/dto/indconsignado/text()').getstringval());
+      
+      
       
       BEGIN
         vr_tipoPadrao   := TRIM(pr_retxml.extract('/Root/dto/tipoPadrao/text()').getstringval());
+        IF vr_tipoPadrao = '1' THEN
+           vr_tipoPadrao   := '161';
+        ELSIF vr_tipoPadrao = '2' THEN
+           vr_tipoPadrao   := '162';
+        ELSIF vr_tipoPadrao = '3' THEN
+           vr_tipoPadrao   := '163';  
+        ELSE
+           vr_tipoPadrao   := null;
+        END IF;
+           
       EXCEPTION
         WHEN OTHERS THEN
           IF SQLCODE = '-30625' THEN
@@ -2389,24 +2406,42 @@ BEGIN
 
       vr_nrvencto := 0;
       vr_xmlvencto:= null;
+
       FOR x in 1 .. vr_qtdtotal
       LOOP
         vr_nrvencto:= vr_nrvencto + 1;
+        vrdiaMesDe:= TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto
+                                            ||'/'||'diaMesDe/text()').getstringval())||'/1900';
+        vrdiaMesAte:= TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto
+                                             ||'/'||'diaMesAte/text()').getstringval())||'/1900';
+        vrdiaMesEnvio:= TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto
+                                               ||'/'||'diaMesEnvio/text()').getstringval())||'/1900';
+        vrdiaMesVencto:= TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto
+                                                ||'/'||'diaMesVencto/text()').getstringval())||'/1900';
+
         vr_xmlvencto:=  vr_xmlvencto||
-                        '<vencimento'||vr_nrvencto||'>'||
-                          '<dataInicioValidade>'||to_char(sysdate,'dd/mm/yyyy')||'</dataInicioValidade>'||
-                          '<diaMesDe>'||TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto
-                                      ||'/'||'diaMesDe/text()').getstringval())||'/1900'||'</diaMesDe>'||
-                          '<diaMesAte>'||TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto
-                                       ||'/'||'diaMesAte/text()').getstringval())||'/1900'||'</diaMesAte>'||
-                          '<diaMesEnvio>'||TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto
-                                         ||'/'||'diaMesEnvio/text()').getstringval())||'/1900'||'</diaMesEnvio>'||
-                          '<diaMesVencto>'||TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto
-                                          ||'/'||'diaMesVencto/text()').getstringval())||'/1900'||'</diaMesVencto>'||
-                          '<tipoDiavencto>DC</tipoDiavencto>'||
-                          '<tipoAjuste>F</tipoAjuste>'||
-                          '<qtdeVenctos>1</qtdeVenctos>'||
-                        '</vencimento'||to_char(vr_nrvencto)||'>';
+                         '<vencimento>'||
+                           '<convenioCredito>'||
+                            '<dataContratacao>'||to_char(SYSTIMESTAMP,'yyyy-mm-dd')||'T'||to_char(SYSTIMESTAMP,'hh24:mi:ss')||'</dataContratacao>'||
+                           '</convenioCredito>'||
+                           '<configuracaoCredito>'||
+                            '<tratamendoDiaNaoUtil>'||
+                             '<codigo>'||'2'||'</codigo>'|| -- DC - Dia Corrido
+                            '</tratamendoDiaNaoUtil>'||
+                           '</configuracaoCredito>'||
+                           '<consulta>'||
+                            '<tipoContagemDias>'||
+                             '<codigo>'||'3'||'</codigo>'|| --  F - Fixa
+                            '</tipoContagemDias>'||
+                           '</consulta>'||
+                           '<parametroConsignado>'||
+                            '<diaMesVencInicial>'||to_char(to_date(vrdiaMesDe,'dd/mm/yyyy'),'yyyy-mm-dd')||'</diaMesVencInicial>'||
+                            '<diaMesVencFinal>'||to_char(to_date(vrdiaMesAte,'dd/mm/yyyy'),'yyyy-mm-dd')||'</diaMesVencFinal>'||
+                            '<diaMesVencInterface>'||to_char(to_date(vrdiaMesEnvio,'dd/mm/yyyy'),'yyyy-mm-dd')||'</diaMesVencInterface>'||
+                            '<diaMesVencimento>'||to_char(to_date(vrdiaMesVencto,'dd/mm/yyyy'),'yyyy-mm-dd')||'</diaMesVencimento>'||
+                            '<qtdeVencimentos>'||1||'</qtdeVencimentos>'||
+                           '</parametroConsignado>'||
+                           '</vencimento>';
       END LOOP;
 
       -- inicializar o clob
@@ -2416,62 +2451,77 @@ BEGIN
       -- inicilizar as informaçoes do xml
       vr_texto_completo := null;
 
-      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
-        '<root><dados qtregist="' || 1 ||'" >');
-
-      -- verifica em qual banco de dados esta sendo executadO
-      IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',vr_cdcooper,'DB_NAME_PRODUC') THEN --> Produção
-         -- busca usuário e senha do serviço com a FIS de PRODUÇÃO
-         vr_usuario:= gene0001.fn_param_sistema('CRED',0,'USUARIO_FIS_PRD');
-         vr_senha  := gene0001.fn_param_sistema('CRED',0,'SENHA_FIS_PRD');
-      ELSE
-         -- busca usuário e senha do serviço com a FIS de HOMOLOGAÇÃO
-         vr_usuario:= gene0001.fn_param_sistema('CRED',0,'USUARIO_FIS_HML');
-         vr_senha  := gene0001.fn_param_sistema('CRED',0,'SENHA_FIS_HML');
-      END IF;
-
+      pc_escreve_xml('<?xml version="1.0"?>');
 
       -- ler os registros do consignado e incluir no xml
       FOR rw_dados_consig in cr_dados_consig (pr_cdcooper      => vr_cdcooper,
                                               pr_indconsignado => vr_idemprconsig)
       LOOP
-        pc_escreve_xml('<gravaDadosConvenio>'||
-                       '<dto>'||
-                            '<codUsuario>'||vr_usuario||'</codUsuario>'||
-                            '<codSenha>'||vr_senha||'</codSenha>'||
-                            '<codTransacao>'||rw_dados_consig.codtransacao||'</codTransacao>'||
-                            '<dataHoraEnvio>'||rw_dados_consig.datahoraenvio||'</dataHoraEnvio>'||
-                            '<codPromotora>'||rw_dados_consig.codpromotora||'</codPromotora>'||
-                            '<codConvenio>'||rw_dados_consig.codconvenio||'</codConvenio>'||
-                            '<numCNPJLoja>'||rw_dados_consig.numcnpjloja||'</numCNPJLoja>'||
-                            '<descNomeLoja>'||rw_dados_consig.descnomeloja||'</descNomeLoja>'||
-                            '<descRazaoLoja>'||rw_dados_consig.descrazaoloja||'</descRazaoLoja>'||
-                            '<dataInicio>'||vr_datainicio||'</dataInicio>'||
-                            '<dataFim>'||rw_dados_consig.datafim||'</dataFim>'||
-                            '<cepLogradouro>'||rw_dados_consig.ceplogradouro||'</cepLogradouro>'||
-                            '<descLogradouro>'||rw_dados_consig.desclogradouro||'</descLogradouro>'||
-                            '<numLogradouro>'||rw_dados_consig.numlogradouro||'</numLogradouro>'||
-                            '<descComplementoLogradouro>'||rw_dados_consig.desccompllogradouro||'</descComplementoLogradouro>'||
-                            '<descBairroLogradouro>'||rw_dados_consig.descbairrologradouro||'</descBairroLogradouro>'||
-                            '<descCidadeLogradouro>'||rw_dados_consig.desccidadelogradouro||'</descCidadeLogradouro>'||
-                            '<ufLogradouro>'||rw_dados_consig.uflogradouro||'</ufLogradouro>'||
-                            '<dddLoja>'||rw_dados_consig.dddloja||'</dddLoja>'||
-                            '<telLoja>'||rw_dados_consig.telloja||'</telLoja>'||
-                            '<descEmail>'||rw_dados_consig.descemail||'</descEmail>'||
-                            '<descContatoLoja>'||rw_dados_consig.desccontatoloja||'</descContatoLoja>'||
-                            '<codbanco>'||rw_dados_consig.codbanco||'</codbanco>'||
-                            '<codAgencia>'||rw_dados_consig.codagencia||'</codAgencia>'||
-                            '<numConta>'||rw_dados_consig.numconta||'</numConta>'||
-                            '<numContaDigito>'||rw_dados_consig.numcontadigito||'</numContaDigito>'||
-                            '<tipoOperador>'||rw_dados_consig.tipooperador||'</tipoOperador>'||
-                            '<tipoPadrao>'||vr_tipoPadrao||'</tipoPadrao>'||
-                            vr_xmlvencto||
-                          '</dto>'||
-                       '</gravaDadosConvenio>');
-
+         pc_escreve_xml('<dto>'||
+                         '<convenioCredito>'||
+                           '<conveniado>'||
+                             '<identificadorReceitaFederal>'||rw_dados_consig.numcnpjloja||'</identificadorReceitaFederal>'||
+                             '<nomeFantasiaOuAbreviado>'||rw_dados_consig.descnomeloja||'</nomeFantasiaOuAbreviado>'||
+                             '<razaoSocialOuNome>'||rw_dados_consig.descrazaoloja||'</razaoSocialOuNome>'||
+                             '<contaCorrente>'||
+                               '<agencia>'||
+                                '<codigo>'||rw_dados_consig.codagencia||'</codigo>'||
+                               '</agencia>'||
+                               '<banco>'||
+                                 '<codigo>'||rw_dados_consig.codbanco||'</codigo>'||
+                               '</banco>'||
+                               '<codigoContaSemDigito>'||rw_dados_consig.numconta||'</codigoContaSemDigito>'||
+                             '</contaCorrente>'||
+                           '</conveniado>'||
+                           '<cooperativa>'|| 
+                             '<codigo>'||rw_dados_consig.codpromotora||'</codigo>'|| 
+                           '</cooperativa>'||
+                           '<dataContratacao>'||vr_datainicio||'</dataContratacao>'||
+                           '<dataExpiracao>'||rw_dados_consig.datafim||'</dataExpiracao>'||
+                           '<numeroContrato>'||rw_dados_consig.codconvenio||'</numeroContrato>'|| -- codigo da empresa
+                           '<tipoConveniada>'||
+                             '<codigo>'||'3'||'</codigo>'||  -- 3- Consignado
+                           '</tipoConveniada>'||
+                         '</convenioCredito>'||
+                         '<pessoaContatoEndereco>'||
+                           '<CEP>'||rw_dados_consig.ceplogradouro||'</CEP>'||
+                           '<cidade>'||
+                             '<descricao>'||rw_dados_consig.desccidadelogradouro||'</descricao>'||
+                           '</cidade>'||
+                           '<nomeBairro>'||rw_dados_consig.descbairrologradouro||'</nomeBairro>'||
+                           '<numeroLogradouro>'||rw_dados_consig.numlogradouro||'</numeroLogradouro>'||
+                           '<tipoENomeLogradouro>'||rw_dados_consig.desclogradouro||'</tipoENomeLogradouro>'||
+                           '<UF>'||rw_dados_consig.uflogradouro||'</UF>'||
+                         '</pessoaContatoEndereco>'||
+                         '<pessoaContatoTelefone>'||
+                           '<numero>'||rw_dados_consig.telloja||'</numero>'||
+                           '<DDD>'||rw_dados_consig.dddloja||'</DDD>'||
+                         '</pessoaContatoTelefone>'||
+                         '<pessoaContatoEmail>'||
+                           '<enderecoEletronico>'||rw_dados_consig.descemail||'</enderecoEletronico>'||
+                           '<nomeContato>'||rw_dados_consig.desccontatoloja||'</nomeContato>'||
+                         '</pessoaContatoEmail>'||
+                         '<credito>'||
+                           '<produto>'||
+                           '<codigo>'||vr_tipoPadrao||'</codigo>'||
+                           '</produto>'||
+                         '</credito>'||
+                         '<sistemaTransacao>'||
+                           '<tipoUsuario>'||
+                            '<codigo>'||rw_dados_consig.tipoOperador|| '</codigo>'||
+                           '</tipoUsuario>'||
+                         '</sistemaTransacao>'||
+                         '<interacaoGrafica>'||
+                          '<dataAcaoUsuario>'||rw_dados_consig.datahoraenvio||'</dataAcaoUsuario>'||
+                        '</interacaoGrafica>'||
+                        '<listaVencimentos>'||
+                        vr_xmlvencto);
+ 
       END LOOP;
 
-      pc_escreve_xml ('</dados></root>',true);
+
+      pc_escreve_xml ('</listaVencimentos>'||
+                      '</dto>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);
 
       /* liberando a memória alocada pro clob */
