@@ -218,8 +218,6 @@ EXCEPTION
     RAISE_APPLICATION_ERROR(-20100,'ERRO GERACAO SEQUENCE DO CAMPO idhistor - TABELA TBEPR_HISTOR_LIB_PRE_APRV!');
 end TBEPR_HISTOR_LIB_PRE_APRV_ID;    
 
-
-
   
 -- Create table
 create table TBCC_OPERACOES_PRODUTO
@@ -426,17 +424,30 @@ BEGIN
                                      ,'Majoração Automática do Cartão de Crédito'
                                      ,1); --> Por conta
   
-  INSERT INTO tbgen_motivo VALUES(71,'Carga de liberacao manual.',25,1,1);  
+	INSERT INTO tbgen_motivo(idmotivo
+							,dsmotivo
+							,cdproduto
+							,flgreserva_sistema
+							,flgativo
+							,flgexibe
+							,flgtipo) 
+	  VALUES(71
+			,'Carga de liberacao manual.'
+			,25
+			,1
+			,1
+			,1
   
+  -- Transformar tbepr_param_conta para nova estrutura
   -- Transformar tbepr_param_conta para nova estrutura
   INSERT INTO TBCC_PARAM_PESSOA_PRODUTO(cdcooper             
                                        ,tppessoa             
                                        ,nrcpfcnpj_base       
                                        ,nrdconta
                                        ,cdproduto            
-                                       ,cdoperac_produto     
-                                       ,flglibera    
-                                       ,idmotivo        
+                                       ,cdoperac_produto			 
+                                       ,idmotivo      
+                                       ,flglibera      
                                        ,dtvigencia_paramet)
     SELECT ass.cdcooper
           ,ass.inpessoa
@@ -497,7 +508,7 @@ end;
 
 -- Add/modify columns 
 alter table CRAWEPR add dtpreapv date;
-alter table CRAWEPR add hrpreapv number;
+alter table CRAWEPR add hrpreapv numberr(6);
 
 -- Add comments to the columns 
 comment on column CRAWEPR.dtpreapv
