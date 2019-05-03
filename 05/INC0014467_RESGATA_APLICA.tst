@@ -1425,7 +1425,7 @@ declare
                                       ,pr_nrdconta => rw_craprda.nrdconta --> Nro da conta da aplicacao RDC
                                       ,pr_nraplica => rw_craprda.nraplica --> Nro da aplicacao RDC
                                       ,pr_dtmvtpap => rw_crapdat.dtmvtolt --> Data do movimento atual passado
-                                      ,pr_dtcalsld => rw_craprda.dtvencto --> Data do movimento atual passado
+                                      ,pr_dtcalsld => rw_crapdat.dtmvtolt --> Data do movimento atual passado
                                       ,pr_flantven => FALSE               --> Flag antecede vencimento
                                       ,pr_flggrvir => FALSE               --> Identificador se deve gravar valor insento
                                       ,pr_dtinitax => vr_dtinitax         --> Data de inicio da utilizacao da taxa de poupanca.
@@ -2751,7 +2751,7 @@ BEGIN
 
   FOR rw_coop IN cr_coop LOOP
 
-    PC_CRPS481_DIA(pr_cdcooper => 1
+    PC_CRPS481_DIA(pr_cdcooper => rw_coop.cdcooper
                   ,pr_nmtelant => NULL
                   ,pr_flgresta => 0
                   ,pr_stprogra => vr_stprogra
