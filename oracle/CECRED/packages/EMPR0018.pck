@@ -3471,7 +3471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     aux_dtalibera NUMBER;
       
     aux_carencia  VARCHAR2(50);
-    aux_codig     VARCHAR2(4);
+    aux_codig     VARCHAR2(10);
     aux_data_parc VARCHAR2(20);
       
     aux_vlrsolic  VARCHAR2(18);
