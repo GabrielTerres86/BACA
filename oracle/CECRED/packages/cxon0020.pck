@@ -1390,6 +1390,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                transferencia de salário via portabilidade, de forma que o programa possa tratar
                                a requisição como TEC de salário. Foram realizados os ajustes também para que 
                                seja utilizado o histórico correto (Renato - Supero - Projeto 485)
+                               
+                  03/05/2019 - Alterado para que não seja gerada tarifa para transferencias de portabilidade de 
+                               salário. (Renato Darosci - Supero - Projeto 485)
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
@@ -2196,26 +2199,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
     -- inicializar valor
     vr_vllanto_aux := 1;
-
-    -- Rotina para buscar valor tarifa TED/DOC
-    CXON0020.pc_busca_tarifa_ted (pr_cdcooper => rw_crapcop.cdcooper --> Codigo Cooperativa
-                                 ,pr_cdagenci => pr_cdageope         --> Codigo Agencia
-                                 ,pr_nrdconta => pr_nrdconta         --> Numero da Conta
-                                 ,pr_vllanmto => vr_vllanto_aux      --> Valor Lancamento
-                                 ,pr_vltarifa => vr_vllantar         --> Valor Tarifa
-                                 ,pr_cdhistor => vr_cdhistar         --> Historico da tarifa
-                                 ,pr_cdhisest => vr_cdhisest         --> Historico estorno
-                                 ,pr_cdfvlcop => vr_cdfvlcop         --> Codigo Filial Cooperativa
-                                 ,pr_cdcritic => vr_cdcritic         --> Codigo do erro
-                                 ,pr_dscritic => vr_dscritic);       --> Descricao do erro
-    --Se ocorreu erro
-    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-      --Levantar Excecao
-      RAISE vr_exc_erro;
-    END IF;
     
     -- Se não for transferencia de portabilidade de salário (Renato - Supero - P485)
     IF NVL(pr_idportab,0) = 0 THEN
+      
+      -- Rotina para buscar valor tarifa TED/DOC
+      CXON0020.pc_busca_tarifa_ted (pr_cdcooper => rw_crapcop.cdcooper --> Codigo Cooperativa
+                                   ,pr_cdagenci => pr_cdageope         --> Codigo Agencia
+                                   ,pr_nrdconta => pr_nrdconta         --> Numero da Conta
+                                   ,pr_vllanmto => vr_vllanto_aux      --> Valor Lancamento
+                                   ,pr_vltarifa => vr_vllantar         --> Valor Tarifa
+                                   ,pr_cdhistor => vr_cdhistar         --> Historico da tarifa
+                                   ,pr_cdhisest => vr_cdhisest         --> Historico estorno
+                                   ,pr_cdfvlcop => vr_cdfvlcop         --> Codigo Filial Cooperativa
+                                   ,pr_cdcritic => vr_cdcritic         --> Codigo do erro
+                                   ,pr_dscritic => vr_dscritic);       --> Descricao do erro
+      --Se ocorreu erro
+      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+    
       -- Se for bloqueio judicial (bacenjud), utiliza o historico 1406-TR.BLOQ.JUD
       IF pr_tpctafav = 9 THEN
         vr_cdhisted := 1406;
@@ -2223,7 +2227,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       -- definir historico de ted
       vr_cdhisted := 555;
       END IF;
+      
     ELSE
+      -- Portabilidade não deve cobrar tarifa
+      vr_vllantar := 0;    
+    
       -- Histórico da TED/TEC de transferencia de salário de portabilidade
       vr_cdhisted := 2944; -- NOSSA REMESSA TEC COMPE CECRED - CONTA SALARIO
       
