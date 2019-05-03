@@ -3397,7 +3397,7 @@ PROCEDURE permissoes-menu-mobile:
     IF aux_cdmodali = 2 THEN
       DO:
       
-        ASSIGN aux_dscctsal = "10,20,103,104,30,200,300,301,302,400,401,402,500,804,40,1001".
+        ASSIGN aux_dscctsal = "10,20,103,104,30,200,300,301,302,400,401,402,500,804,902,40,1001".
 
         FOR EACH tt-itens-menu-mobile NO-LOCK:
           IF NOT CAN-DO(aux_dscctsal, STRING(tt-itens-menu-mobile.cditemmn)) THEN
