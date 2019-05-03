@@ -22,7 +22,7 @@
 
 <form name="frmVencParc" id="frmVencParc" class="formulario frmVencParc" >
 	<fieldset id="fsetVencParc" name="fsetVencParc" style="padding:0px; padding-bottom:10px;">
-		<legend> <? echo utf8ToHtml('Vencimentos')?> </legend>
+		<legend> <? echo utf8ToHtml('Datas de Corte de Vencimento de Parcelas')?> </legend>
 		<br style="clear:both" />
 		<table class="tituloRegistros" id="tblVencParc" cellpadding="1" cellspacing="1">
 		<thead>		

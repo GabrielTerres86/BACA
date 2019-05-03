@@ -17,8 +17,9 @@
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
+	require_once('wssoa.php');
 	isPostMethod();
-
+	
 	$cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '' ;
 	$consulta_cddopcao = (isset($_POST['consulta_cddopcao'])) ? $_POST['consulta_cddopcao'] : '' ;
 	$cdempres = (isset($_POST['cdempres'])) ? $_POST['cdempres'] : '' ;
@@ -129,13 +130,16 @@
 		}else{
 			//cham SOA x FIS
 			$xml = simplexml_load_string($xmlResult);
-			$json = json_encode($xml);		
+			$json = json_encode($xml);	
+			//print_r($json);
+			$retSOAxFIS = chamaServico($json,$Url_SOA, $Auth_SOA);
+			
 		}		
 		
 		if($retSOAxFIS == "ERRO"){
 			exibirErro(
 				"error",
-				$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
+				"Erro ao enviar empresa para FIS",
 				"Alerta - Ayllos",
 				"",
 				false);
@@ -237,6 +241,7 @@
 			exit();
 		}else{
 			//cham SOA x FIS
+			
 		}		
 		
 		if($retSOAxFIS == "ERRO"){

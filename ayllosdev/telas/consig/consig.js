@@ -770,8 +770,8 @@ function atualizaConvenio(){
             $('input[name=radio_indautrepassecc]').prop('checked', false);
             $('input[name=radio_indautrepassecc][value=1]').prop('checked', true); 
 			$('#indautrepassecc', FrmConsig).val(1);
-            $('input[name=radio_indinterromper]').prop('checked', false);
-            $('input[name=radio_indinterromper][value=0]').prop('checked', true); 
+            //$('input[name=radio_indinterromper]').prop('checked', false);
+            //$('input[name=radio_indinterromper][value=0]').prop('checked', true); 
 			$('#indinterromper', FrmConsig).val(0);
         }
 
@@ -1357,11 +1357,11 @@ function Replicar()
 				}
 			}else{
 				document.getElementById('tdReplicar').innerHTML = '<a href="javascript:Replicar();"  class="botao">Replicar</a>';
-				showError("info","Valor Inv&aacute;lidos para Replicar!","Alerta - Ayllos","");			
+				showError("info","Valor Inv&aacute;lido para Replicar!","Alerta - Ayllos","");			
 			}
 		}else{
 			document.getElementById('tdReplicar').innerHTML = '<a href="javascript:Replicar();"  class="botao">Replicar</a>';
-			showError("info","Valor Inv&aacute;lidos para Replicar!","Alerta - Ayllos","");
+			showError("info","Valor Inv&aacute;lido para Replicar!","Alerta - Ayllos","");
 		}
 	}else{
 		showError("info","Voc&ecirc; precisa estar na Op&ccedil;&atilde;o H - (Habilitar) ou A - (Alterar)! ","Alerta - Ayllos","");			

@@ -18,6 +18,7 @@
     require_once('../../includes/funcoes.php');
     require_once('../../includes/controla_secao.php');
     require_once('../../class/xmlfile.php');
+	require_once('../consig/wssoa.php');
     isPostMethod();
 
 	$nmresemp = ( isset($_POST["nmresemp"]) ) ? substr($_POST["nmresemp"],0,15) : '';
@@ -275,15 +276,19 @@
 			
 			exit();
 		}else{
-			//cham SOA x FIS          
+			//cham SOA x FIS
+			$xml = simplexml_load_string($xmlResult);
+			//print_r($xml);
+			$json = json_encode($xml);	
+			$retSOAxFIS = chamaServico($json,$Url_SOA, $Auth_SOA);          
 		}		
 		
 		if($retSOAxFIS == "ERRO"){
 			exibirErro(
 				"error",
-				$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
+				"Erro ao enviar empresa para FIS",
 				"Alerta - Ayllos",
-				"estadoInicial();",
+				"",
 				false);
 			
 			exit();
