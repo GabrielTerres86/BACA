@@ -1830,11 +1830,11 @@ declare
                  ,rw_craplot.nrdolote
                  ,rw_craprda.nrdconta
                  ,rw_craprda.nraplica
-                 ,nvl(rw_craplot.nrseqdig,0) + 1
+                 ,TO_NUMBER(TO_CHAR(  nvl(rw_craplot.nrseqdig,0) + 1 )||'0')
                  ,vr_txaplica
                  ,vr_txaplica
                  ,vr_cdhistor
-                 ,nvl(rw_craplot.nrseqdig,0) + 1
+                 ,TO_NUMBER(TO_CHAR(  nvl(rw_craplot.nrseqdig,0) + 1 )||'0')
                  ,rw_craprda.dtfimper
                  ,pr_cdcooper
                  ,nvl(vr_vlsldapl,0))
