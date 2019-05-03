@@ -11924,12 +11924,12 @@ function controlaNavegacaoCamposNovaProposta(){
     //bruno - prj 438 - bug 17972
     $("#dtdpagto", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
         // Se é a tecla TAB ou SHIFT + TAB
-        if (e.keyCode == 9) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
 
             /*Validar se a data está no formato dd/mm/yyyy*/
             var dtForm = $("#dtdpagto", "#frmNovaProp").val();
             if (!validaData(dtForm)) {
-                showError('error', 'A data de pagamento deve estar no formado dd/mm/yyyy.', 'Alerta - Aimaro', "unblockBackground()");
+                showError('error', 'A data de pagamento deve estar no formato dd/mm/yyyy.', 'Alerta - Aimaro', "unblockBackground()");
                 return false;
             }
 
