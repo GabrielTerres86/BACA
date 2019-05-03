@@ -11,7 +11,7 @@ declare
  CURSOR cr_coop IS
    SELECT cdcooper
      FROM crapcop
-    WHERE crapcop.cdcooper IN (1, 2, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17)
+    WHERE crapcop.cdcooper IN (1)
       AND crapcop.flgativo = 1;
 
   PROCEDURE PC_CRPS481_DIA (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
@@ -87,7 +87,7 @@ declare
              ,crapdtc.tpaplrdc
        FROM crapdtc 
        WHERE crapdtc.cdcooper = pr_cdcooper     
-       AND   crapdtc.tpaplrdc IN (2)
+       AND   crapdtc.tpaplrdc IN (1,2)
        ORDER BY cdcooper, tpaplica;
      --Selecionar Aplicacoes
      CURSOR cr_craprda (pr_cdcooper IN crapcop.cdcooper%TYPE
