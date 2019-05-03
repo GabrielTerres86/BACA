@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-2753
+2764
 -- Created on 02/05/2019 by F0030344 
 declare 
   -- Local variables here
@@ -7,7 +7,13 @@ declare
   vr_infimsol PLS_INTEGER;           --> Saida de termino da solicitacao
   vr_cdcritic crapcri.cdcritic%TYPE;  --> Codigo da Critica
   vr_dscritic VARCHAR2(400);  
-  
+
+ CURSOR cr_coop IS
+   SELECT cdcooper
+     FROM crapcop
+    WHERE crapcop.cdcooper IN (1, 2, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17)
+      AND crapcop.flgativo = 1;
+
   PROCEDURE PC_CRPS481_DIA (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
                                        ,pr_nmtelant IN VARCHAR2                --> Nome tela anterior
                                        ,pr_flgresta IN PLS_INTEGER             --> Flag padrao para utilizacao de restart
@@ -111,8 +117,6 @@ declare
        AND   craprda.tpaplica = pr_tpaplica 
        AND   craprda.insaqtot = 0
        AND   craprda.dtvencto <= pr_dtvencto
-       AND   craprda.nrdconta = 3889149
-       AND   craprda.nraplica = 41
        ORDER BY cdcooper, tpaplica, insaqtot, cdageass, nrdconta, nraplica, vlsdrdca;
 
      --Selecionar Agencias
@@ -2743,14 +2747,21 @@ declare
    END;  --pc_crps481
   
 BEGIN 
-  -- Test statements here
-  PC_CRPS481_DIA(pr_cdcooper => 1
-                ,pr_nmtelant => NULL
-                ,pr_flgresta => 0
-                ,pr_stprogra => vr_stprogra
-                ,pr_infimsol => vr_infimsol
-                ,pr_cdcritic => vr_cdcritic
-                ,pr_dscritic => vr_dscritic);
+  
+
+  FOR rw_coop IN cr_coop LOOP
+
+    PC_CRPS481_DIA(pr_cdcooper => 1
+                  ,pr_nmtelant => NULL
+                  ,pr_flgresta => 0
+                  ,pr_stprogra => vr_stprogra
+                  ,pr_infimsol => vr_infimsol
+                  ,pr_cdcritic => vr_cdcritic
+                  ,pr_dscritic => vr_dscritic);
+  
+  END LOOP;
+  
+  
   
 END;
 0
