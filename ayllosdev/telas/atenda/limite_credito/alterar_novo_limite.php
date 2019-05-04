@@ -56,7 +56,7 @@
 
 	foreach ($params as $nomeParam) {
 		if (!in_array($nomeParam,array_keys($_POST))) {			
-			exibeErro("Parâmetros incorretos.");
+			exibeErro(utf8ToHtml("Parâmetros incorretos. " . $nomeParam)); //bruno - prj 438 - sprint 7 - novo limite
 		}	
 	}
 
@@ -191,10 +191,10 @@
 		exibeErro("Percepção geral inválida.");
 	}
 		
-	// Verifica se o percentual de faturamento é um decimal válido
-	if (!validaDecimal($perfatcl)) {
-		exibeErro("Percentual de Faturamento inválido.");
-	}		
+	// Verifica se o percentual de faturamento ? um decimal v?lido
+	// if (!validaDecimal($perfatcl)) {
+	// 	exibeErro("Percentual de Faturamento inv?lido.");
+	// }		
 	
 	// Verifica se número da conta do 1° avalista é um inteiro válido
 	if (!validaInteiro($nrctaav1)) {
@@ -364,7 +364,22 @@
 	}	
 	else {
 		// Gravar dados do rating do cooperado
-		echo 'atualizaDadosRating("divConteudoOpcao");';
+		// bruno - prj 438 - sprint 7 - tela rating
+		echo "
+		var aux_dataRating = {
+			nrdconta: '".$nrdconta."',									
+			nrgarope: '".$nrgarope."',
+			nrinfcad: '".$nrinfcad."',
+			nrliquid: '".$nrliquid."',
+			nrpatlvr: '".$nrpatlvr."',
+			nrperger: '".$nrperger."',
+			tpctrrat: tpctrrat,
+			nrctrrat: nrctrrat,	
+			iddivcri: 'nop',
+			redirect: 'script_ajax'
+		};
+	";
+	echo 'atualizarDadosRating(aux_dataRating);';
 	}
 	
 	// Função para exibir erros na tela através de javascript

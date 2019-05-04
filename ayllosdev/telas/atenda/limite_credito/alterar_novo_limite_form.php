@@ -55,9 +55,20 @@
 								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
 									<div style="width: 240px; height: 100px;" id="divConteudoAltara" class="divBotoes">
 												
-										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " id="todaProp" onClick="fechaRotinaAltera(); acessaOpcaoAba(8, 1, 'N1'); return false;">Toda a proposta </a>
-										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="exibeAlteraNumero();return false;"> Alterar o n&uacute;mero do contrato </a>
-										<a href="#" class="botao" style="margin: 6px 0px 0px 0px;" id="btVoltar" onClick="fechaRotinaAltera();return false;"> Voltar </a>
+										<!-- bruno - prj 438 - sprint 7 - tela principal -->
+										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " id="todaProp" 
+										onClick="fechaRotinaAltera(); acessaTela('N');  aux_opcaoAtiva = 'ALTERAR'; return false;">
+											Toda a proposta 
+										</a>
+
+										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " 
+										onClick="exibeAlteraNumero();return false;"> 
+											Alterar o n&uacute;mero do contrato 
+										</a>
+
+										<a href="#" class="botao" style="margin: 6px 0px 0px 0px;" id="btVoltar" 
+										onClick="fechaRotinaAltera();return false;"> Voltar 
+										</a>
 										
 																				
 									</div>

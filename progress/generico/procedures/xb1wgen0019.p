@@ -132,6 +132,8 @@ DEF VAR aux_inconcje AS INTE                                           NO-UNDO.
 DEF VAR aux_dtconbir AS DATE                                           NO-UNDO.
 DEF VAR aux_idcobope AS INTE                                           NO-UNDO.
 DEF VAR aux_flmudfai AS CHAR                                           NO-UNDO.
+DEF VAR aux_vlrecjg1 AS DECI                                           NO-UNDO.
+DEF VAR aux_vlrecjg2 AS DECI                                           NO-UNDO.
 
 DEF VAR aux_rowidsin AS ROWID                                          NO-UNDO.
 
@@ -230,6 +232,8 @@ PROCEDURE valores_entrada:
             WHEN "inconcje" THEN aux_inconcje = INTE(tt-param.valorCampo).
             WHEN "dtconbir" THEN aux_dtconbir = DATE(tt-param.valorCampo).
             WHEN "idcobope" THEN aux_idcobope = INTE(tt-param.valorCampo).
+			WHEN "vlrecjg1" THEN aux_vlrecjg1 = DECI(tt-param.valorCampo).
+			WHEN "vlrecjg2" THEN aux_vlrecjg2 = DECI(tt-param.valorCampo).
 
         END CASE.
     
@@ -809,6 +813,7 @@ PROCEDURE cadastrar-novo-limite:
                                       INPUT aux_complen1,
                                       INPUT aux_nrcxaps1,
                                       INPUT aux_vlrenme1,
+									  INPUT aux_vlrecjg1,
                                       /** 2o avalista **/
                                       INPUT aux_nrctaav2,
                                       INPUT aux_nmdaval2, 
@@ -830,6 +835,7 @@ PROCEDURE cadastrar-novo-limite:
                                       INPUT aux_complen2,
                                       INPUT aux_nrcxaps2,
                                       INPUT aux_vlrenme2,
+									  INPUT aux_vlrecjg2,
                                       INPUT aux_inconcje,
                                       INPUT aux_dtconbir,
                                       INPUT aux_idcobope,

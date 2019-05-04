@@ -203,8 +203,10 @@
 		if ($inconfir == "3") {		
 		
 			// Mostra div com campos para dados de renda
-			echo '$("#divDadosLimite").css("display","none");';
-			echo '$("#divDadosRenda").css("display","block");';				
+			// echo '$("#divDadosLimite").css("display","none");';
+			// echo '$("#divDadosRenda").css("display","block");';	 
+			//bruno - prj 438 - sprint 7 - novo limite
+			echo "abrirGaropc();";			
 			
 			// Esconde mensagem de aguardo
 			echo 'hideMsgAguardo();';
@@ -228,8 +230,11 @@
 	}		
 	
 	// Mostra div com campos para dados de renda
-	echo '$("#divDadosLimite").css("display","none");';
-	echo '$("#divDadosRenda").css("display","block");';	
+	// echo '$("#divDadosLimite").css("display","none");';
+	// echo '$("#divDadosRenda").css("display","block");';	 
+	//bruno - prj 438 - sprint 7 - novo limite
+	echo "abrirGaropc();";
+	
 	
 	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';	

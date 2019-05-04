@@ -97,6 +97,8 @@
 
 
 	<div id="divBotoes">
+		<!-- bruno - prj - 438 - sprint 7 - tela principal -->
+		<a href="#" class="botao" id="btVoltarImpressao" onClick="acessaTela('@');  return false;">Voltar</a>
 		<a href="#" class="botao" id="btCompleta" onClick="verificaEnvioEmail(1,'yes');   return false;">Completa  </a>
 		<a href="#" class="botao" id="btContrato" onClick="verificaEnvioEmail(2,'yes');   return false;">Contrato  </a>
 		<a href="#" class="botao" id="btCet"      onClick="verificaEnvioEmail(6,'yes');   return false;">CET       </a>

@@ -190,11 +190,16 @@
 	$dsmensag = $xmlObjLimite->roottag->tags[0]->tags[0]->tags[1]->cdata;
 	$inconfir = $xmlObjLimite->roottag->tags[0]->tags[0]->tags[0]->cdata;	
 	
-	echo "buscaDadosProposta('$nrdconta','$nrctrlim');";
+	$cddopcao = $_POST['cddopcao'];
+	
+	//bruno - prj 438 - sprint 7 - novo limite
+	//echo "buscaDadosProposta('$nrdconta','$nrctrlim');";
+	echo "trataObservacao('".$cddopcao."');";
+	echo "trataGAROPC('".$cddopcao."','".$nrctrlim."');"; //cddopcao, nrctrlim
 		
 	// Mostra div com campos para dados de renda
 	echo '$("#divDadosLimite").css("display","none");';
-	echo '$("#divDadosRenda").css("display","block");';	
+	// echo '$("#divDadosRenda").css("display","block");';	 
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

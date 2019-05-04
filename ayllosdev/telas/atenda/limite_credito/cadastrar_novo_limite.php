@@ -125,9 +125,12 @@
 	$inconcje = $_POST["inconcje"];
 	$dtconbir = $_POST["dtconbir"];
 	$idcobope = $_POST["idcobope"];
+	$vlrecjg1 = isset($_POST["vlrecjg1"]) ? $_POST["vlrecjg1"] : "0,00";  
+	$vlrecjg2 = isset($_POST["vlrecjg2"]) ? $_POST["vlrecjg2"] : "0,00";  
 	
-	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) {
+	
+	// Verifica se n?mero da conta ? um inteiro v?lido
+	/*if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
 	
@@ -247,7 +250,7 @@
 	}
 
 	$dsobserv = str_replace('"','',str_replace(">","",str_replace("<","",retiraAcentos(removeCaracteresInvalidos(utf8_decode($dsobserv))))));
-	
+	*/
 	// Monta o xml de requisição
 	$xmlSetLimite  = "";
 	$xmlSetLimite .= "<Root>";
@@ -326,6 +329,11 @@
 	$xmlSetLimite .= "		<inconcje>".$inconcje."</inconcje>";
 	$xmlSetLimite .= "		<dtconbir>".$dtconbir."</dtconbir>";
 	$xmlSetLimite .= "		<idcobope>".$idcobope."</idcobope>";
+
+	// PRJ 438 - Sprint 7
+	$xmlSetLimite .= "		<vlrecjg1>".$vlrecjg1."</vlrecjg1>";
+	$xmlSetLimite .= "		<vlrecjg2>".$vlrecjg2."</vlrecjg2>";
+
 	$xmlSetLimite .= "	</Dados>";
 	$xmlSetLimite .= "</Root>";
 		
@@ -352,9 +360,24 @@
 	echo 'nrctrrat = '.$nrctrlim.';';
 
 	// Gravar dados do rating do cooperado
-	echo 'atualizaDadosRating("divConteudoOpcao");';
+	// bruno - prj 438 - sprint 7 - tela rating
+	echo "
+		var aux_dataRating = {
+			nrdconta: '".$nrdconta."',									
+			nrgarope: '".$nrgarope."',
+			nrinfcad: '".$nrinfcad."',
+			nrliquid: '".$nrliquid."',
+			nrpatlvr: '".$nrpatlvr."',
+			nrperger: '".$nrperger."',
+			tpctrrat: tpctrrat,
+			nrctrrat: nrctrrat,	
+			iddivcri: 'nop',
+			redirect: 'script_ajax'
+		};
+	";
+	echo 'atualizarDadosRating(aux_dataRating);';
 	
-	echo 'eval(fncRatingSuccess);';
+	echo 'eval(metodoSucesso);';
 	
 	// Mensagens de alerta
 	$msg = Array();

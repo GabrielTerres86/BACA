@@ -48,6 +48,9 @@
 	$flpropos = $_POST["flpropos"];
 	$inconfir = (isset($_POST["inconfir"])) ? $_POST["inconfir"] : 1;	
 
+	//bruno - prj 438 - sprint 7 - novo limite
+	$inpessoa = $_POST['inpessoa'];
+
 	$metodoContinue = '';
 
 	// Verifica se o número da conta é um inteiro válido
@@ -147,10 +150,11 @@
 		}	
 	}		
 
-	$nrctrlim = getByTagName($limite,"nrctrpro");
-	$vllimite = str_replace(",",".",getByTagName($limite,"vllimpro"));
+	// PRJ 438 - Sprint 7 - Tratar para caso o valor for 0(inclusao), mostrar vazio
+	$nrctrlim = getByTagName($limite,"nrctrpro") ? getByTagName($limite,"nrctrpro") : '';
+	$vllimite = getByTagName($limite,"vllimpro") ? str_replace(",",".",getByTagName($limite,"vllimpro")) : '';
 	$flgimpnp = getByTagName($limite,"flgimpnp");
-	$cddlinha = getByTagName($limite,"cddlinha");
+	$cddlinha = getByTagName($limite,"cddlinha") ? getByTagName($limite,"cddlinha") : '';
 	$dsdlinha = getByTagName($limite,"dsdlinha");	
 	$nrgarope = getByTagName($limite,"nrgarope"); 
 	$nrinfcad = getByTagName($limite,"nrinfcad");
@@ -161,6 +165,14 @@
 	$nrctacje = getByTagName($limite,"nrctacje");
 	$dtconbir = getByTagName($limite,"dtconbir");
 	$idcobope = getByTagName($limite,"idcobope");
+	// PRJ 438 - Sprint 7 - Novos campos
+	$dsdtxfix = getByTagName($limite,"dsdtxfix");
+	$vlsalari = 0;
+	$vlsalcon = 0;
+	$vloutras = 0;
+	$vlalugue = 0;
+	$nivrisco = getByTagName($limite,"nivrisco");
+	$inconcje = getByTagName($limite,"inconcje");
     
 	// Verifica se existe uma proposta cadastrada
 	$flgProposta = (intval($nrctrlim) > 0 && doubleval($vllimite) > 0) ? true : false;
@@ -184,23 +196,56 @@
 		$fncImpressao = "acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idPrincipal.",'".$glbvars["opcoesTela"][$idPrincipal]."');";
 	}
 
-	$voltaAvalista  = "$('#frmNovoLimite').css('width', 515);lcrShowHideDiv('divDadosRating','divDadosAvalistas');return false"; 
-	$metodoAvanca   = "validaDadosRating();";
+	//bruno - prj 438 - sprint 7 - tela rating
+	$voltaAvalista  = "controlaVoltarAvalista();"; 
+	$metodoAvanca   = "validarDadosRating();"; //bruno - prj 438 - sprint 7 - tela rating
 
 	if ($cddopcao != 'N') { // Consulta
-		$metodoContinue = "controlaOperacao('C_PROTECAO_TIT');";
+		//bruno - prj 438 - sprint 7 - remoção telas
+		$metodoContinue = "controlaOperacao('C_COMITE_APROV')"; //"controlaOperacao('C_PROTECAO_TIT');"; //
+	}	
+
+	// Monta o xml de requisi??o
+	$xmlGetAvalistas  = "";
+	$xmlGetAvalistas .= "<Root>";
+	$xmlGetAvalistas .= "	<Cabecalho>";
+	$xmlGetAvalistas .= "		<Bo>b1wgen0019.p</Bo>";
+	$xmlGetAvalistas .= "		<Proc>busca-dados-avalistas</Proc>";
+	$xmlGetAvalistas .= "	</Cabecalho>";
+	$xmlGetAvalistas .= "	<Dados>";
+	$xmlGetAvalistas .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xmlGetAvalistas .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xmlGetAvalistas .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+	$xmlGetAvalistas .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";		
+	$xmlGetAvalistas .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xmlGetAvalistas .= "		<nrctrlim>".$nrctrlim."</nrctrlim>";
+	$xmlGetAvalistas .= "	</Dados>";
+	$xmlGetAvalistas .= "</Root>";
+		
+	// Executa script para envio do XML
+	$xmlResult = getDataXML($xmlGetAvalistas);
+	
+	// Cria objeto para classe de tratamento de XML
+	$xmlObjAvalistas = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra cr?tica
+	if (isset($xmlObjAvalistas->roottag->tags[0]->name) && strtoupper($xmlObjAvalistas->roottag->tags[0]->name) == "ERRO"){ 
+		exibirErro('error',$xmlObjAvalistas->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','');
 	}		
 	
+	$avalistas = $xmlObjAvalistas->roottag->tags[0]->tags;
+
 ?>
 
 <!-- Criando variáveis em javascprit -->
 <script type="text/javascript">
 	var metodoBlock     = "blockBackground(parseInt($('#divRotina').css('z-index')))";		
-	var metodoCancel    = "lcrShowHideDiv('divDadosObservacoes','divDadosRating');";
-	var metodoContinue  = "<? echo $metodoContinue; ?>";
-	var metodoAvanca	= "<? echo $metodoAvanca; ?>";
-	var metodoSucesso   = "<? echo $fncImpressao; ?>";
-	var flgProposta		= "<? echo $flgProposta;  ?>";
+	//bruno - prj 438 - sprint 7 - tela rating
+	var metodoCancel    = "lcrShowHideDiv('divDadosObservacoes','divFormRating');"; //Metodo voltar para a tela de rating
+	var metodoContinue  = "<? echo $metodoContinue; ?>"; //Metodo continuar para a tela de Rating
+	var metodoAvanca	= "<? echo $metodoAvanca; ?>"; //Metodo Avançar para a tela de rating
+	var metodoSucesso   = "<? echo $fncImpressao; ?>"; //Metodo sucesso para a tela de Rating
+	var flgProposta		= "<? echo $flgProposta;  ?>"; //flgProposta
 		
 		
 	var nrgarope        = "<? echo $nrgarope;  ?>";
@@ -214,6 +259,34 @@
 	
 	dtconbir            = "<? echo $dtconbir;  ?>";
 		
+	var aux_rating = {
+		nrgarope: "<? echo $nrgarope;  ?>",
+		nrinfcad: "<? echo $nrinfcad;  ?>",		
+		nrliquid: "<? echo $nrliquid;  ?>",
+		nrpatlvr: "<? echo $nrpatlvr;  ?>",
+		nrperger: "<? echo $nrperger;  ?>"	
+	};
+
+	//bruno - prj - 438 - sprint 7 - tela principal
+	var aux_novoLimite = {
+		nrctrlim: "<?php echo $nrctrlim ?>",
+		vllimite: "<?php echo $vllimite ?>",
+		flgimpnp: "<?php echo $flgimpnp ?>",
+		cddlinha: "<?php echo $cddlinha ?>",
+		dsdlinha: "<?php echo $dsdlinha ?>",	
+		nrgarope: "<?php echo $nrgarope ?>", 
+		nrinfcad: "<?php echo $nrinfcad ?>",
+		nrliquid: "<?php echo $nrliquid ?>",
+		nrpatlvr: "<?php echo $nrpatlvr ?>",
+		nrperger: "<?php echo $nrperger ?>",	
+		nrcpfcjg: "<?php echo $nrcpfcjg ?>",
+		nrctacje: "<?php echo $nrctacje ?>",
+		dtconbir: "<?php echo $dtconbir ?>",
+		idcobope: "<?php echo $idcobope ?>"
+	}
+
+	console.log(aux_novoLimite);
+		
 	if(flgProposta){
 		changeAbaPropLabel("Alterar Limite");
 	}else{
@@ -223,6 +296,56 @@
 	<? if ($cddopcao != 'N') { ?>
 		$("input, textarea","#frmNovoLimite").desabilitaCampo();
 	<?} ?>
+			
+	//bruno - prj 438 - tela rating
+	getDadosRating();
+
+	var arrayAvalistas = new Array();
+	nrAvalistas     = 0;
+	contAvalistas   = 1;
+
+	<? 
+	for ($i=0; $i<count($avalistas); $i++) {
+	    if (getByTagName($avalistas[$i]->tags,'nrctaava') != 0 || getByTagName($avalistas[$i]->tags,'nrcpfcgc') != 0) {
+	?>
+			var arrayAvalista<? echo $i; ?> = new Object();
+
+			arrayAvalista<? echo $i; ?>['nrctaava'] = '<? echo getByTagName($avalistas[$i]->tags,'nrctaava'); ?>';
+			arrayAvalista<? echo $i; ?>['cdnacion'] = '<? echo getByTagName($avalistas[$i]->tags,'cdnacion'); ?>';
+			arrayAvalista<? echo $i; ?>['dsnacion'] = '<? echo getByTagName($avalistas[$i]->tags,'dsnacion'); ?>';
+			arrayAvalista<? echo $i; ?>['tpdocava'] = '<? echo getByTagName($avalistas[$i]->tags,'tpdocava'); ?>';
+			arrayAvalista<? echo $i; ?>['nmconjug'] = '<? echo getByTagName($avalistas[$i]->tags,'nmconjug'); ?>';
+			arrayAvalista<? echo $i; ?>['tpdoccjg'] = '<? echo getByTagName($avalistas[$i]->tags,'tpdoccjg'); ?>';
+			arrayAvalista<? echo $i; ?>['dsendre1'] = '<? echo getByTagName($avalistas[$i]->tags,'dsendre1'); ?>';
+			arrayAvalista<? echo $i; ?>['nrfonres'] = '<? echo getByTagName($avalistas[$i]->tags,'nrfonres'); ?>';
+			arrayAvalista<? echo $i; ?>['nmcidade'] = '<? echo getByTagName($avalistas[$i]->tags,'nmcidade'); ?>';
+			arrayAvalista<? echo $i; ?>['nrcepend'] = '<? echo getByTagName($avalistas[$i]->tags,'nrcepend'); ?>';
+			arrayAvalista<? echo $i; ?>['nmdavali'] = '<? echo getByTagName($avalistas[$i]->tags,'nmdavali'); ?>';
+			arrayAvalista<? echo $i; ?>['nrcpfcgc'] = '<? echo getByTagName($avalistas[$i]->tags,'nrcpfcgc'); ?>';
+			arrayAvalista<? echo $i; ?>['nrdocava'] = '<? echo getByTagName($avalistas[$i]->tags,'nrdocava'); ?>';
+			arrayAvalista<? echo $i; ?>['nrcpfcjg'] = '<? echo getByTagName($avalistas[$i]->tags,'nrcpfcjg'); ?>';
+			arrayAvalista<? echo $i; ?>['nrdoccjg'] = '<? echo getByTagName($avalistas[$i]->tags,'nrdoccjg'); ?>';
+			arrayAvalista<? echo $i; ?>['dsendre2'] = '<? echo getByTagName($avalistas[$i]->tags,'dsendre2'); ?>';
+			arrayAvalista<? echo $i; ?>['dsdemail'] = '<? echo getByTagName($avalistas[$i]->tags,'dsdemail'); ?>';
+			arrayAvalista<? echo $i; ?>['cdufresd'] = '<? echo getByTagName($avalistas[$i]->tags,'cdufresd'); ?>';
+			arrayAvalista<? echo $i; ?>['vlrenmes'] = '<? echo getByTagName($avalistas[$i]->tags,'vlrenmes'); ?>';
+			arrayAvalista<? echo $i; ?>['vledvmto'] = '<? echo getByTagName($avalistas[$i]->tags,'vledvmto'); ?>';
+			arrayAvalista<? echo $i; ?>['nrendere'] = '<? echo getByTagName($avalistas[$i]->tags,'nrendere'); ?>';
+			arrayAvalista<? echo $i; ?>['complend'] = '<? echo getByTagName($avalistas[$i]->tags,'complend'); ?>';
+			arrayAvalista<? echo $i; ?>['nrcxapst'] = '<? echo getByTagName($avalistas[$i]->tags,'nrcxapst'); ?>';
+			arrayAvalista<? echo $i; ?>['inpessoa'] = '<? echo getByTagName($avalistas[$i]->tags,'inpessoa'); ?>';
+			arrayAvalista<? echo $i; ?>['dtnascto'] = '<? echo getByTagName($avalistas[$i]->tags,'dtnascto'); ?>';
+			arrayAvalista<? echo $i; ?>['nrctacjg'] = '<? echo getByTagName($avalistas[$i]->tags,'nrctacjg'); ?>';
+			arrayAvalista<? echo $i; ?>['vlrencjg'] = '<? echo getByTagName($avalistas[$i]->tags,'vlrencjg'); ?>';
+
+			arrayAvalistas[<? echo $i; ?>] = arrayAvalista<? echo $i; ?>;
+
+			nrAvalistas++;
+
+	<?	
+		}
+	}
+	?>
 			
 </script>
 
@@ -235,47 +358,46 @@
 				<? include('form_limite_credito.php') ?>
 			</div>
 			
-			
+				<?php /* PRJ 438 - Sprint 7 - Comentado pois a tela não deve mais ser exibida
 			<div id="divDadosRenda">
 				<? include('form_dados_renda.php') ?>
 			</div>
+				*/ ?>
       
       <div id="divUsoGAROPC"></div>
   
       <div id="divFormGAROPC"></div>      
 			
+				<div id='divFormRating'> <!-- bruno - prj 438 - sprint 7 - tela rating  -->
+					<?php 
+						// Variavel que indica se é uma operação para cadastrar nova proposta ou consulta - Utiliza na include rating_busca_dados.php
+						$cdOperacao = ($cddopcao == 'N') ? 'I' : 'C';	
+						$operacao   = ($flgProposta) ? 'A_PROT_CRED' : 'I_PROT_CRED' ;
+						$inprodut   = 3; // Limite de Credito
+						include('form_rating.php');
+					?>
+				</div>
+			
 			<div id="divDadosObservacoes">
-				<? include('form_observacoes.php') ?>
+					<?php include('form_observacoes.php') ?>
+				</div>
+
+				<!-- bruno - prj 438 - sprint 7 - tela demonstracao -->
+				<div id='divDemoLimiteCredito'>
+					<?php 
+						include('form_demo_limite_credito.php');
+					?>
 			</div>
 			
 			<div id="divDadosAvalistas">
-			    <? include('../../../includes/avalistas/form_avalista.php'); ?>
-				<div id="divBotoes">
-					<input type="image" id="btVoltar" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="<? echo $voltaAvalista; ?>">
-					
-					<? if ($cddopcao == 'N') { // Se for novo limite ou alteracao  ?>
-						<input type="image" id="btCancelar" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="<? echo $fncPrincipal; ?>return false;">	
-						<? if ($flgProposta) { // Alteracao ?>
- 							<input type="image" id="btContinuar" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('A_PROTECAO_AVAL');return false;">	
-						<? } else {			   // Inclusao ?>			  
-							<input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/concluir.gif" onClick="buscaGrupoEconomico();return false;">	
-						<? } ?>
-						
-					<? } else { // Consulta ?>
-						<input type="image" id="btContinuar" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_PROTECAO_AVAL'); return false;">
-					<? } ?>
-				
-				</div>				
+					<? //include('../../../includes/avalistas/form_avalista.php'); ?>
+					<? include('form_avalista.php'); ?>
 			</div>
 			
-			</form>			
+			</form>	<!-- FIM frmNovoLimite -->	
 			<?
-				// Variável que indica se é uma operação para cadastrar nova proposta ou consulta - Utiliza na include rating_busca_dados.php
-				$cdOperacao = ($cddopcao == 'N') ? 'I' : 'C';	
-				$operacao   = ($flgProposta) ? 'A_PROT_CRED' : 'I_PROT_CRED' ;
-				$inprodut   = 3; // Limite de Credito
-				
-				include('../../../includes/rating/rating_busca_dados.php');
+				//bruno - prj 438 - sprint 7 - tela rating
+				//include('../../../includes/rating/rating_busca_dados.php');
 			?>
 			
 			
@@ -305,6 +427,9 @@
   $("#divBotoesGAROPC").css("display", "none");
 	$("#divDadosObservacoes").css("display","none");
 	$("#divDadosAvalistas").css("display","none");
+	//bruno - prj 438 - sprint 7 - novo limite
+	$("#divFormRating").css("display","none");
+	$("#divDemoLimiteCredito").css("display","none");
 
 	$("#tdTitDivDadosLimite").html("DADOS DO " + strTitRotinaUC);
 	$("#divDadosLimite").css("display","block");
@@ -313,21 +438,25 @@
     $("#divUsoGAROPC").empty();
     $("#divFormGAROPC").empty();
     $("#frmNovoLimite").css("width", 515);
-    $("#divDadosRenda").css("display", "block");
+		//bruno - prj 438 - sprint 7 - novo limite
+		$('#frmGAROPC').remove();
+		$("#divDadosLimite").css("display", "block"); 
+
     $("#divFormGAROPC").css("display", "none");
     $("#divBotoesGAROPC").css("display", "none");
 		return false;
 	});
   
   $("#btnContinuarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
-    gravarGAROPC('idcobert','frmNovoLimite','$("#divDadosObservacoes").css("display", "block");$("#divFormGAROPC").css("display", "none");$("#divBotoesGAROPC").css("display", "none");$("#frmNovoLimite").css("width", 515);bloqueiaFundo($("#divDadosObservacoes"));');
+		// bruno - prj 438 - sprint 7 - remover telas
+		gravarGAROPC('idcobert','frmNovoLimite','abrirRating();$("#divFormGAROPC").css("display", "none");$("#divBotoesGAROPC").css("display", "none");$("#frmNovoLimite").css("width", 515);bloqueiaFundo($("#divDadosObservacoes"));');
     return false;
 	});
 
-	// Se for inclusao/alteracao, habilitar avalista
-	habilitaAvalista(<? echo ($cddopcao == 'N') ?>);
-	
 	controlaLayout('<? echo $cddopcao; ?>');
+	if(nrAvalistas > 0){
+		atualizarCamposTelaAvalistas();
+	}
 
 	<? if($travaCamposLimite == 'S'){ ?>
 		travaCamposLimite();
@@ -335,7 +464,6 @@
 
 	hideMsgAguardo();
 	bloqueiaFundo(divRotina);
-	
 </script>												
 
 <script>
@@ -347,9 +475,6 @@
 		$("#tdTitDivDadosLimite").html("DADOS DO " + strTitRotinaUC);
 		$("#divDadosLimite").css("display","block");	
 
-		// Se for inclusao/alteracao, habilitar avalista
-		habilitaAvalista(<? echo ($cddopcao == 'N') ?>);
-		
 		controlaLayout('<? echo $cddopcao; ?>');
 		
 		hideMsgAguardo();

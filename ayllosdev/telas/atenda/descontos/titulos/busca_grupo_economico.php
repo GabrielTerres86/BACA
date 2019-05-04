@@ -28,7 +28,9 @@
 		exibeErro("Par&acirc;metros incorretos.");
 	}
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
-	$nrdconta = $_POST["nrdconta"];
+	$nrdconta = $_POST["nrdconta"]; 
+	// PRJ 438 - Sprint 7 - Flag para nao validar o avalista, que já é validado anteriormente (0 não validar / 1 validar (default))
+	$flgValidarAvalistas = (isset($_POST['flgValidarAvalistas'])) ? $_POST['flgValidarAvalistas'] : 1;
 	
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -81,7 +83,11 @@
 		if($pertgrup == "yes"){
 			echo 'calcEndividRiscoGrupo(\''.$nrdgrupo.'\',\''.$tipo.'\');';
 		}else{
-			echo 'validarAvalistas(\''.$tipo.'\');';
+			if($flgValidarAvalistas == 0){
+				echo 'continuarSemValidarAvalistas();';
+			} else {
+				echo 'validarAvalistas(\''.$tipo.'\');';
+			}
 		}
 
 	}
