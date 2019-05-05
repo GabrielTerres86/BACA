@@ -125,9 +125,15 @@
 	$inconcje = $_POST["inconcje"];
 	$dtconbir = $_POST["dtconbir"];
 	$idcobope = $_POST["idcobope"];
+	// PRJ 438 - Sprint 7
 	$vlrecjg1 = isset($_POST["vlrecjg1"]) ? $_POST["vlrecjg1"] : "0,00";  
-	$vlrecjg2 = isset($_POST["vlrecjg2"]) ? $_POST["vlrecjg2"] : "0,00";  
-	
+	$vlrecjg2 = isset($_POST["vlrecjg2"]) ? $_POST["vlrecjg2"] : "0,00";
+	$cdnacio1 = $_POST["cdnacio1"];
+	$cdnacio2 = $_POST["cdnacio2"];
+	$inpesso1 = $_POST["inpesso1"];
+	$inpesso2 = $_POST["inpesso2"];
+	$dtnasct1 = $_POST["dtnasct1"];
+	$dtnasct2 = $_POST["dtnasct2"];	
 	
 	// Verifica se n?mero da conta ? um inteiro v?lido
 	/*if (!validaInteiro($nrdconta)) {
@@ -333,6 +339,12 @@
 	// PRJ 438 - Sprint 7
 	$xmlSetLimite .= "		<vlrecjg1>".$vlrecjg1."</vlrecjg1>";
 	$xmlSetLimite .= "		<vlrecjg2>".$vlrecjg2."</vlrecjg2>";
+	$xmlSetLimite .= "		<cdnacio1>".$cdnacio1."</cdnacio1>";
+	$xmlSetLimite .= "		<cdnacio2>".$cdnacio2."</cdnacio2>";
+	$xmlSetLimite .= "		<inpesso1>".$inpesso1."</inpesso1>";
+	$xmlSetLimite .= "		<inpesso2>".$inpesso2."</inpesso2>";
+	$xmlSetLimite .= "		<dtnasct1>".$dtnasct1."</dtnasct1>";
+	$xmlSetLimite .= "		<dtnasct2>".$dtnasct2."</dtnasct2>";
 
 	$xmlSetLimite .= "	</Dados>";
 	$xmlSetLimite .= "</Root>";

@@ -87,7 +87,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (isset($xmlObjLimite->roottag->tags[0]->name) && strtoupper($xmlObjLimite->roottag->tags[0]->name) == "ERRO") 
-		exibirErro('error',$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','');
+		exibirErro('error',$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 	$qtMensagens = count($xmlObjLimite->roottag->tags[1]->tags);	
 	$mensagem  	 = ( isset($xmlObjLimite->roottag->tags[1]->tags[$qtMensagens - 1]->tags[1]->cdata) ) ? $xmlObjLimite->roottag->tags[1]->tags[$qtMensagens - 1]->tags[1]->cdata : '';
@@ -284,8 +284,6 @@
 		dtconbir: "<?php echo $dtconbir ?>",
 		idcobope: "<?php echo $idcobope ?>"
 	}
-
-	console.log(aux_novoLimite);
 		
 	if(flgProposta){
 		changeAbaPropLabel("Alterar Limite");

@@ -132,8 +132,15 @@ DEF VAR aux_inconcje AS INTE                                           NO-UNDO.
 DEF VAR aux_dtconbir AS DATE                                           NO-UNDO.
 DEF VAR aux_idcobope AS INTE                                           NO-UNDO.
 DEF VAR aux_flmudfai AS CHAR                                           NO-UNDO.
+/* PRJ 438 Sprint 7 */
 DEF VAR aux_vlrecjg1 AS DECI                                           NO-UNDO.
 DEF VAR aux_vlrecjg2 AS DECI                                           NO-UNDO.
+DEF VAR aux_cdnacio1 AS INTE                                           NO-UNDO.
+DEF VAR aux_cdnacio2 AS INTE                                           NO-UNDO.
+DEF VAR aux_inpesso1 AS INTE                                           NO-UNDO.
+DEF VAR aux_inpesso2 AS INTE                                           NO-UNDO.
+DEF VAR aux_dtnasct1 AS DATE                                           NO-UNDO.
+DEF VAR aux_dtnasct2 AS DATE                                           NO-UNDO.
 
 DEF VAR aux_rowidsin AS ROWID                                          NO-UNDO.
 
@@ -232,8 +239,15 @@ PROCEDURE valores_entrada:
             WHEN "inconcje" THEN aux_inconcje = INTE(tt-param.valorCampo).
             WHEN "dtconbir" THEN aux_dtconbir = DATE(tt-param.valorCampo).
             WHEN "idcobope" THEN aux_idcobope = INTE(tt-param.valorCampo).
-			WHEN "vlrecjg1" THEN aux_vlrecjg1 = DECI(tt-param.valorCampo).
-			WHEN "vlrecjg2" THEN aux_vlrecjg2 = DECI(tt-param.valorCampo).
+            /* PRJ 438 Sprint 7*/
+            WHEN "vlrecjg1" THEN aux_vlrecjg1 = DECI(tt-param.valorCampo).
+            WHEN "vlrecjg2" THEN aux_vlrecjg2 = DECI(tt-param.valorCampo).            
+            WHEN "cdnacio1" THEN aux_cdnacio1 = INTE(tt-param.valorCampo).
+            WHEN "cdnacio2" THEN aux_cdnacio2 = INTE(tt-param.valorCampo).
+            WHEN "inpesso1" THEN aux_inpesso1 = INTE(tt-param.valorCampo).
+            WHEN "inpesso2" THEN aux_inpesso2 = INTE(tt-param.valorCampo).
+            WHEN "dtnasct1" THEN aux_dtnasct1 = DATE(tt-param.valorCampo).
+            WHEN "dtnasct2" THEN aux_dtnasct2 = DATE(tt-param.valorCampo).
 
         END CASE.
     
@@ -813,7 +827,10 @@ PROCEDURE cadastrar-novo-limite:
                                       INPUT aux_complen1,
                                       INPUT aux_nrcxaps1,
                                       INPUT aux_vlrenme1,
-									  INPUT aux_vlrecjg1,
+                                      INPUT aux_vlrecjg1,
+                                      INPUT aux_cdnacio1,
+                                      INPUT aux_inpesso1,
+                                      INPUT aux_dtnasct1,
                                       /** 2o avalista **/
                                       INPUT aux_nrctaav2,
                                       INPUT aux_nmdaval2, 
@@ -835,7 +852,10 @@ PROCEDURE cadastrar-novo-limite:
                                       INPUT aux_complen2,
                                       INPUT aux_nrcxaps2,
                                       INPUT aux_vlrenme2,
-									  INPUT aux_vlrecjg2,
+                                      INPUT aux_vlrecjg2,
+                                      INPUT aux_cdnacio2,
+                                      INPUT aux_inpesso2,
+                                      INPUT aux_dtnasct2,
                                       INPUT aux_inconcje,
                                       INPUT aux_dtconbir,
                                       INPUT aux_idcobope,
@@ -1283,6 +1303,10 @@ PROCEDURE alterar-novo-limite:
                                     INPUT aux_complen1,
                                     INPUT aux_nrcxaps1,
                                     INPUT aux_vlrenme1,
+                                    INPUT aux_vlrecjg1,
+                                    INPUT aux_cdnacio1,
+                                    INPUT aux_inpesso1,
+                                    INPUT aux_dtnasct1,
                                     /** 2o avalista **/
                                     INPUT aux_nrctaav2,
                                     INPUT aux_nmdaval2, 
@@ -1304,6 +1328,10 @@ PROCEDURE alterar-novo-limite:
                                     INPUT aux_complen2,
                                     INPUT aux_nrcxaps2,
                                     INPUT aux_vlrenme2,
+                                    INPUT aux_vlrecjg2,
+                                    INPUT aux_cdnacio2,
+                                    INPUT aux_inpesso2,
+                                    INPUT aux_dtnasct2,
                                     INPUT aux_inconcje,
                                     INPUT aux_dtconbir,
                                     /** Garantia **/

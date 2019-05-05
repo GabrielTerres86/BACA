@@ -38,6 +38,15 @@ $xmlLimites = new SimpleXMLElement($xmlResult);
 
 <br style="clear:both" />	
 
+<form action="<?php echo $UrlSite; ?>telas/atenda/limite_credito/imprimir_dados.php" name="frmImprimir" id="frmImprimir" method="post">
+    <input type="hidden" name="nrdconta" id="nrdconta" value="">
+    <input type="hidden" name="nrctrlim" id="nrctrlim" value="">            
+    <input type="hidden" name="idimpres" id="idimpres" value="">
+    <input type="hidden" name="flgemail" id="flgemail" value="">
+    <input type="hidden" name="flgimpnp" id="flgimpnp" value="">
+    <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">     
+</form> 
+
 <div id="divBotoes">
 
     <a href="#" class="botao" id="btVoltar">Voltar</a>

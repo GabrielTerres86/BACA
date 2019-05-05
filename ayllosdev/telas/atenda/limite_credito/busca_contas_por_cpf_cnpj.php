@@ -46,6 +46,7 @@ if(count($contas) == 0){
 if (count($contas) == 1) {
     $conta = formataContaDV(getByTagName($contas[0]->tags,'nrdconta'));
     echo "$('#". $nomeCampoConta. "','#". $nomeForm. "').val(\"$conta\");";
+    echo "$('#". $nomeCampoConta. "','#". $nomeForm. "').trigger('keydown',{keyCode: 13});";
     exit;
 }
 

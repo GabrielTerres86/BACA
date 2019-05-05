@@ -1144,8 +1144,9 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.complend = crapenc.complend
                        tt-dados-avais.nrcxapst = crapenc.nrcxapst
                        tt-dados-avais.inpessoa = crapass.inpessoa
-					   tt-dados-avais.vlrencjg = aux_vlrencjg
-					   tt-dados-avais.nrctacjg = aux_nrctacjg.
+                       tt-dados-avais.dtnascto = crapass.dtnasctl
+                       tt-dados-avais.vlrencjg = aux_vlrencjg
+                       tt-dados-avais.nrctacjg = aux_nrctacjg.
 
             END.
         
@@ -1195,8 +1196,9 @@ PROCEDURE lista_avalistas:
                    tt-dados-avais.complend = crapavt.complend
                    tt-dados-avais.nrcxapst = crapavt.nrcxapst
                    tt-dados-avais.inpessoa = crapavt.inpessoa
-				   tt-dados-avais.vlrencjg = crapavt.vlrencjg
-				   tt-dados-avais.nrctacjg = 0.
+                   tt-dados-avais.dtnascto = crapavt.dtnascto
+                   tt-dados-avais.vlrencjg = crapavt.vlrencjg
+                   tt-dados-avais.nrctacjg = 0.
 
         END. /** Fim do FOR EACH crapavt **/
 
@@ -1390,8 +1392,9 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.complend = crapenc.complend
                        tt-dados-avais.nrcxapst = crapenc.nrcxapst
                        tt-dados-avais.inpessoa = crapass.inpessoa
-					   tt-dados-avais.vlrencjg = aux_vlrencjg
-					   tt-dados-avais.nrctacjg = aux_nrctacjg.
+                       tt-dados-avais.dtnascto = crapass.dtnasctl
+                       tt-dados-avais.vlrencjg = aux_vlrencjg
+                       tt-dados-avais.nrctacjg = aux_nrctacjg.
             END.
 
 
@@ -1614,8 +1617,8 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nrcxapst = crapenc.nrcxapst
                        tt-dados-avais.inpessoa = crapass.inpessoa
                        tt-dados-avais.dtnascto = crapass.dtnasctl
-					   tt-dados-avais.vlrencjg = aux_vlrencjg
-					   tt-dados-avais.nrctacjg = aux_nrctacjg.
+                       tt-dados-avais.vlrencjg = aux_vlrencjg
+                       tt-dados-avais.nrctacjg = aux_nrctacjg.
 
             END.
         
@@ -1665,8 +1668,8 @@ PROCEDURE lista_avalistas:
                    tt-dados-avais.nrcxapst = crapavt.nrcxapst
                    tt-dados-avais.inpessoa = crapavt.inpessoa
                    tt-dados-avais.dtnascto = crapavt.dtnascto
-				   tt-dados-avais.vlrencjg = crapavt.vlrencjg
-				   tt-dados-avais.nrctacjg = 0.
+                   tt-dados-avais.vlrencjg = crapavt.vlrencjg
+                   tt-dados-avais.nrctacjg = 0.
         
         END. /** Fim do FOR EACH crapavt **/
         
@@ -3216,8 +3219,8 @@ PROCEDURE consulta-avalista:
                    tt-dados-avais.complend = TRIM(crapenc.complend)
                    tt-dados-avais.inpessoa = crapass.inpessoa
                    tt-dados-avais.dtnascto = crapass.dtnasctl
-				   tt-dados-avais.vlrencjg = aux_vlrencjg
-				   tt-dados-avais.nrctacjg = aux_nrctacjg.
+                   tt-dados-avais.vlrencjg = aux_vlrencjg
+                   tt-dados-avais.nrctacjg = aux_nrctacjg.
         END.                
     ELSE
     IF  par_nrcpfcgc > 0  THEN

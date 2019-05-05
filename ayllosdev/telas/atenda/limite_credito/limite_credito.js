@@ -340,8 +340,12 @@ function acessaTela(cddopcao) {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
-			$("#divConteudoOpcao").html(response);
-			controlaFoco(cddopcao);
+        	if (response.indexOf('showError("error"') == -1) {
+				$("#divConteudoOpcao").html(response);
+				controlaFoco(cddopcao);
+			}else{
+				eval(response);
+			}
 		}				
 	});	
 }
@@ -793,6 +797,10 @@ function cadastrarNovoLimite() {
             complen1: complen1,
             nrcxaps1: normalizaNumero(nrcxaps1),
             vlrenme1: vlrenme1,
+            vlrecjg1: vlrecjg1,
+            cdnacio1: cdnacio1,
+			inpesso1: inpesso1,
+			dtnasct1: dtnasct1,
 			
             nrctaav2: normalizaNumero(nrctaav2),
             nmdaval2: nmdaval2,
@@ -815,6 +823,10 @@ function cadastrarNovoLimite() {
             nrcxaps2: normalizaNumero(nrcxaps2),
             vlrenme2: vlrenme2,
 			idcobope: $("#idcobert", "#frmNovoLimite").val(),
+			vlrecjg2: vlrecjg2,
+			cdnacio2: cdnacio2,
+			inpesso2: inpesso2,
+			dtnasct2: dtnasct2,
 			redirect: "script_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
@@ -1248,8 +1260,6 @@ function controlaPesquisas() {
 	var procedure, titulo, qtReg, filtrosPesq, filtrosDesc, colunas;	
     var bo = 'zoom0001';
 	
-    var camposOrigem = 'nrcepend;dsendre1;nrendere;complend;nrcxapst;dsendre2;cdufresd;nmcidade';
-	
     $('a', '#' + nomeForm).ponteiroMouse();
 	
 	// CÓDIGO DA LINHA
@@ -1267,11 +1277,10 @@ function controlaPesquisas() {
         fncOnClose = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
         mostraPesquisa(bo, procedure, titulo, '20', filtrosPesq, colunas, divRotina, fncOnClose);
         return false;
-    });
-
-    $('#nrcepend', '#' + nomeForm).buscaCEP(nomeForm, camposOrigem, divRotina);
+    });    
 
     aplicarEventosLupasTelaRating();
+    aplicarEventosLupasTelaAvalista();
 }
 
 
@@ -1865,6 +1874,10 @@ function alterarNovoLimite() {
         complen1: complen1,
         nrcxaps1: normalizaNumero(nrcxaps1),
         vlrenme1: vlrenme1,
+        vlrecjg1: vlrecjg1,
+        cdnacio1: cdnacio1,
+		inpesso1: inpesso1,
+		dtnasct1: dtnasct1,
 		
         nrctaav2: normalizaNumero(nrctaav2),
         nmdaval2: nmdaval2,
@@ -1886,8 +1899,12 @@ function alterarNovoLimite() {
         complen2: complen2,
         nrcxaps2: normalizaNumero(nrcxaps2),
         vlrenme2: vlrenme2,
-            idcobope: $("#idcobert", "#frmNovoLimite").val(),
-			redirect: "script_ajax"
+        vlrecjg2: vlrecjg2,
+        cdnacio2: cdnacio2,
+		inpesso2: inpesso2,
+		dtnasct2: dtnasct2,
+        idcobope: $("#idcobert", "#frmNovoLimite").val(),
+		redirect: "script_ajax"
     };
 
 	// Executa script de cadastro do limite atravé	s de ajax
@@ -2385,7 +2402,7 @@ function exibeAlteraNumero() {
         dataType: 'html',
         url: UrlSite + 'telas/atenda/limite_credito/numero.php',
         data: {
-            nrctrpro: nrctrpro,
+            nrctrpro: var_globais.nrctrpro,
             redirect: 'html_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -2590,7 +2607,7 @@ function controlaLayoutTelaRating(){
     var rPercep = $('label[for="nrperger"]', '#' + nomeFormRating);
     var rNrinfcad = $('label[for="nrinfcad"]', '#' + nomeFormRating);
 
-    var cCodigo = $('#nrgarope,#nrliquid,#nrpatlvr,#nrperger', '#' + nomeFormRating);
+    var cCodigo = $('#nrinfcad,#nrgarope,#nrliquid,#nrpatlvr,#nrperger', '#' + nomeFormRating);
 
     var cGarantia = $('#dsgarope', '#' + nomeFormRating);
     var cLiquidez = $('#dsliquid', '#' + nomeFormRating);
@@ -2608,7 +2625,7 @@ function controlaLayoutTelaRating(){
     rGarantia.addClass('rotulo-linha');
     rNrinfcad.addClass('rotulo-linha');
 
-    cCodigo.addClass('codigo').css('width', '35px');
+    cCodigo.addClass('codigo pesquisa').css('width', '35px');
     cGarantia.addClass('descricao').css('width', '123px');
     cLiquidez.addClass('descricao').css('width', '123px');
     cPatriLv.addClass('descricao').css('width', '302px');

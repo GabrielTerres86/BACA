@@ -3616,8 +3616,12 @@ PROCEDURE cadastrar-novo-limite:
     DEF  INPUT PARAM par_complen1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme1 AS DECI                           NO-UNDO.
-	  /* Leonardo */
+	  /* PRJ 438 Sprint 7 */
 	  DEF  INPUT PARAM par_vlrecjg1 AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio1 AS INTE                           NO-UNDO.
+	  DEF  INPUT PARAM par_inpesso1 AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtnasct1 AS DATE                           NO-UNDO.    
+    
     /** ------------------- Parametros do 2 avalista ------------------- **/
     DEF  INPUT PARAM par_nrctaav2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdaval2 AS CHAR                           NO-UNDO.
@@ -3639,8 +3643,12 @@ PROCEDURE cadastrar-novo-limite:
     DEF  INPUT PARAM par_complen2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme2 AS DECI                           NO-UNDO.
-	  /* Leonardo */
+	  /* PRJ 438 Sprint 7 */
 	  DEF  INPUT PARAM par_vlrecjg2 AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio2 AS INTE                           NO-UNDO.
+	  DEF  INPUT PARAM par_inpesso2 AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtnasct2 AS DATE                           NO-UNDO.
+    
     DEF  INPUT PARAM par_inconcje AS INTE                           NO-UNDO.   
     DEF  INPUT PARAM par_dtconbir AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_idcobope AS INTE                           NO-UNDO.
@@ -4061,14 +4069,14 @@ PROCEDURE cadastrar-novo-limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT 0,
+                                                    INPUT par_cdnacio1,
                                                     INPUT 0,
                                                     INPUT par_vlrenme1,
                                                     INPUT par_nrender1,
                                                     INPUT par_complen1,
                                                     INPUT par_nrcxaps1,
-                                                    INPUT 0,  /* inpessoa 1o avail */
-                                                    INPUT ?,  /* dtnascto 1o avail */
+                                                    INPUT par_inpesso1,  /* inpessoa 1o avail */
+                                                    INPUT par_dtnasct1,  /* dtnascto 1o avail */
                                                     INPUT par_vlrecjg1, /* par_vlrecjg1 */
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
@@ -4087,14 +4095,14 @@ PROCEDURE cadastrar-novo-limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT 0,
+                                                    INPUT par_cdnacio2,
                                                     INPUT 0,
                                                     INPUT par_vlrenme2,
                                                     INPUT par_nrender2,
                                                     INPUT par_complen2,
                                                     INPUT par_nrcxaps2,
-                                                    INPUT 0,  /* inpessoa 2o avail */
-                                                    INPUT ?,  /* dtnascto 2o avail */
+                                                    INPUT par_inpesso2,  /* inpessoa 1o avail */
+                                                    INPUT par_dtnasct2,  /* dtnascto 1o avail */
                                                     INPUT par_vlrecjg2, /* par_vlrecjg2 */
                                                     INPUT "",
                                                    OUTPUT TABLE tt-erro).
@@ -9555,6 +9563,11 @@ PROCEDURE alterar-novo-limite:
     DEF  INPUT PARAM par_complen1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme1 AS DECI                           NO-UNDO.
+    /* PRJ 438 Sprint 7 */
+	  DEF  INPUT PARAM par_vlrecjg1 AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio1 AS INTE                           NO-UNDO.
+	  DEF  INPUT PARAM par_inpesso1 AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtnasct1 AS DATE                           NO-UNDO.
     /** ------------------- Parametros do 2 avalista ------------------- **/
     DEF  INPUT PARAM par_nrctaav2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdaval2 AS CHAR                           NO-UNDO.
@@ -9576,6 +9589,11 @@ PROCEDURE alterar-novo-limite:
     DEF  INPUT PARAM par_complen2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme2 AS DECI                           NO-UNDO.
+    /* PRJ 438 Sprint 7 */
+	  DEF  INPUT PARAM par_vlrecjg2 AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio2 AS INTE                           NO-UNDO.
+	  DEF  INPUT PARAM par_inpesso2 AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtnasct2 AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_inconcje AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtconbir AS DATE                           NO-UNDO.   
     DEF  INPUT PARAM par_idcobope AS INTE                           NO-UNDO.
@@ -9986,15 +10004,15 @@ PROCEDURE alterar-novo-limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT 0,
+                                                    INPUT par_cdnacio1,
                                                     INPUT 0,
                                                     INPUT par_vlrenme1,
                                                     INPUT par_nrender1,
                                                     INPUT par_complen1,
                                                     INPUT par_nrcxaps1,
-                                                    INPUT 0,  /* inpessoa 1o avail */
-                                                    INPUT ?,  /* dtnascto 1o avail */
-													INPUT 0, /* par_vlrecjg1 */
+                                                    INPUT par_inpesso1,
+                                                    INPUT par_dtnasct1,
+                                                    INPUT par_vlrecjg1,
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -10012,15 +10030,15 @@ PROCEDURE alterar-novo-limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT 0,
+                                                    INPUT par_cdnacio2,
                                                     INPUT 0,
                                                     INPUT par_vlrenme2,
                                                     INPUT par_nrender2,
                                                     INPUT par_complen2,
                                                     INPUT par_nrcxaps2,
-                                                    INPUT 0,  /* inpessoa 2o avail */
-                                                    INPUT ?,  /* dtnascto 2o avail */
-													INPUT 0, /* par_vlrecjg2 */
+                                                    INPUT par_inpesso2,
+                                                    INPUT par_dtnasct2,
+                                                    INPUT par_vlrecjg2,
                                                     INPUT "").
         
         DELETE PROCEDURE h-b1wgen9999.
@@ -10267,118 +10285,39 @@ PROCEDURE busca-dados-avalistas:
 
     IF  AVAIL(craplim) THEN
         DO:
-            /*********SEGUNDO AVALISTA********************************/
-            FIND crapass WHERE crapass.cdcooper = craplim.cdcooper
-                           AND crapass.nrdconta = craplim.nrctaav2
-                           NO-LOCK NO-ERROR.
-
-            IF  AVAIL(crapass) THEN
-                DO:
-                    EMPTY TEMP-TABLE tt-dados-avais.
-
-                    RUN sistema/generico/procedures/b1wgen0028.p 
-                                   PERSISTENT SET h-b1wgen0028.
-                                                    
-                    RUN carrega_avalista IN h-b1wgen0028
-                                              ( INPUT  craplim.cdcooper,
-                                                INPUT  0,
-                                                INPUT  0,
-                                                INPUT  par_cdoperad,
-                                                INPUT  par_nmdatela,
-                                                INPUT  1,
-                                                INPUT  craplim.nrdconta,
-                                                INPUT  1,
-                                                INPUT  par_dtmvtolt,
-                                                INPUT  craplim.nrctaav2,
-                                                INPUT  crapass.nrcpfcgc,
-                                                INPUT  YES,
-                                                OUTPUT TABLE tt-dados-avais,
-                                                OUTPUT TABLE tt-erro). 
-                    DELETE PROCEDURE h-b1wgen0028.
         
-                    IF  CAN-FIND(FIRST tt-erro)   THEN
-                        RETURN "NOK".
+            RUN sistema/generico/procedures/b1wgen9999.p
+                    PERSISTENT SET h-b1wgen9999.
+
+                IF  NOT VALID-HANDLE(h-b1wgen9999)  THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Handle invalido para BO "
+                                              + "b1wgen9999.".
+                        LEAVE.
+                     END.
         
-                    FIND tt-dados-avais NO-ERROR.
-                    IF  AVAIL tt-dados-avais THEN 
-                        DO:
-                            ASSIGN lim_nmdavali    = tt-dados-avais.nmdavali
-                                   lim_nrcpfcgc    = tt-dados-avais.nrcpfcgc
-                                   lim_tpdocavl    = tt-dados-avais.tpdocava
-                                   lim_dscpfavl    = tt-dados-avais.nrdocava
-                                   lim_nmdcjavl    = tt-dados-avais.nmconjug
-                                   lim_nrcpfccg    = tt-dados-avais.nrcpfcjg
-                                   lim_tpdoccjl    = tt-dados-avais.tpdoccjg
-                                   lim_dscfcavl    = tt-dados-avais.nrdoccjg
-                                   lim_dsendavl[1] = tt-dados-avais.dsendre1
-                                   lim_dsendavl[2] = tt-dados-avais.dsendre2
-                                   lim_nmcidade    = tt-dados-avais.nmcidade
-                                   lim_cdufresd    = tt-dados-avais.cdufresd
-                                   lim_nrcepend    = tt-dados-avais.nrcepend
-                                   lim_nrendere    = tt-dados-avais.nrendere
-                                   lim_complend    = tt-dados-avais.complend
-                                   lim_nrcxapst    = tt-dados-avais.nrcxapst.
-                        END.
-                    
-                END.
+                RUN lista_avalistas IN h-b1wgen9999
+                                               (INPUT par_cdcooper,
+                                                INPUT 0,
+                                                INPUT 0,
+                                                INPUT par_cdoperad,
+                                                INPUT par_nmdatela,
+                                                INPUT 1,
+                                                INPUT par_nrdconta,
+                                                INPUT 1,
+                                                INPUT 3,
+                                                INPUT par_nrctrlim,
+                                                INPUT craplim.nrctaav1,
+                                                INPUT craplim.nrctaav2,
+                                               OUTPUT TABLE tt-dados-avais,
+                                               OUTPUT TABLE tt-erro).
 
-            /********PRIMEIRO AVALISTA********************************/
-            FIND crapass WHERE crapass.cdcooper = craplim.cdcooper
-                           AND crapass.nrdconta = craplim.nrctaav1
-                           NO-LOCK NO-ERROR.
+                DELETE PROCEDURE h-b1wgen9999.
 
-            IF  AVAIL(crapass) THEN
-                DO:
-                    EMPTY TEMP-TABLE tt-dados-avais.
-
-                    RUN sistema/generico/procedures/b1wgen0028.p 
-                                   PERSISTENT SET h-b1wgen0028.
-                                        
-                    RUN carrega_avalista IN h-b1wgen0028
-                                              ( INPUT  par_cdcooper,
-                                                INPUT  0,
-                                                INPUT  0,
-                                                INPUT  par_cdoperad,
-                                                INPUT  par_nmdatela,
-                                                INPUT  1,
-                                                INPUT  craplim.nrdconta,
-                                                INPUT  1,
-                                                INPUT  par_dtmvtolt,
-                                                INPUT  craplim.nrctaav1,
-                                                INPUT  crapass.nrcpfcgc,
-                                                INPUT  YES,
-                                                OUTPUT TABLE tt-dados-avais,
-                                                OUTPUT TABLE tt-erro). 
-                    DELETE PROCEDURE h-b1wgen0028.
+                IF  RETURN-VALUE <> "OK"  THEN
+                    RETURN "NOK". 
         
-                    IF  CAN-FIND(FIRST tt-erro)   THEN
-                        RETURN "NOK".
-        
-                    FIND tt-dados-avais NO-LOCK NO-ERROR.
-                    IF  AVAIL tt-dados-avais THEN 
-                        DO:
-                            CREATE tt-dados-avais.
-                            ASSIGN tt-dados-avais.nmdavali = lim_nmdavali   
-                                   tt-dados-avais.nrcpfcgc = lim_nrcpfcgc   
-                                   tt-dados-avais.tpdocava = lim_tpdocavl   
-                                   tt-dados-avais.nrdocava = lim_dscpfavl   
-                                   tt-dados-avais.nmconjug = lim_nmdcjavl   
-                                   tt-dados-avais.nrcpfcjg = lim_nrcpfccg   
-                                   tt-dados-avais.tpdoccjg = lim_tpdoccjl   
-                                   tt-dados-avais.nrdoccjg = lim_dscfcavl   
-                                   tt-dados-avais.dsendre1 = lim_dsendavl[1]
-                                   tt-dados-avais.dsendre2 = lim_dsendavl[2]
-                                   tt-dados-avais.nmcidade = lim_nmcidade   
-                                   tt-dados-avais.cdufresd = lim_cdufresd   
-                                   tt-dados-avais.nrcepend = lim_nrcepend   
-                                   tt-dados-avais.nrendere = lim_nrendere   
-                                   tt-dados-avais.complend = lim_complend   
-                                   tt-dados-avais.nrcxapst = lim_nrcxapst.
-
-                            VALIDATE tt-dados-avais.
-                        END.
-                    
-                END.
         END. 
 
     RETURN "OK".

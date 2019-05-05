@@ -101,5 +101,5 @@
 	
 ?>
 <script type="text/javascript">
-	showError("inform","Registro alterado com sucesso.","Alerta - Aimaro","fechaRotinaAltera();");
+	showError("inform","Registro alterado com sucesso.","Alerta - Aimaro","fechaRotinaAltera();acessaTela('@');");
 </script>
