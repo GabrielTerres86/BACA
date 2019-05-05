@@ -322,6 +322,9 @@
 				 26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 				 08/08/2018 - Ajustes na busca do contrato de limite de crédito (INC0021296 - Andrey Formigari).
+         
+         05/05/2019 - PRJ 438 - Sprint 7 - Alterado rotinas de gravar/alterar limite com os novos campos da tela avalista,
+                                alterado impressao de proposta PJ - (Mateus Z - Mouts).
 
 ..............................................................................*/
 
@@ -4998,7 +5001,87 @@ PROCEDURE gera-impressao-limite:
          tt-dados-prp.vllimite FORMAT "zzz,zzz,zz9.99"
          rel_cabobser                             FORMAT "x(12)" 
          SKIP
-         WITH NO-BOX NO-LABELS WIDTH 96 FRAME f_dados.
+         WITH NO-BOX NO-LABELS WIDTH 96 FRAME f_dados_fisica.
+         
+    FORM SKIP
+         "DADOS DO ASSOCIADO"
+         SKIP 
+         "Conta/dv:"                  
+         tt-dados-prp.nrdconta FORMAT "zzzz,zzz,9"
+         "Matricula:"          AT 29  
+         tt-dados-prp.nrmatric FORMAT "zzz,zz9"
+         "PA"                  AT 50
+         tt-dados-prp.nmresage FORMAT "x(22)"
+         SKIP(1)
+         "Nome do(s) titular(es):"    
+         tt-dados-prp.nmprimtl FORMAT "x(50)"
+         SKIP
+         tt-dados-prp.nmsegntl AT 25 FORMAT "x(50)" 
+         SKIP
+         "CPF/CNPJ:"                  
+         tt-dados-prp.nrcpfcgc FORMAT "x(18)"
+         "Admissao:"           AT 61  
+         tt-dados-prp.dtadmiss FORMAT "99/99/9999"
+         SKIP
+         "Empresa:"                   
+         tt-dados-prp.dsempres FORMAT "x(25)"
+         "Inicio da Atividade:"           AT 50  
+         tt-dados-prp.dtiniatv FORMAT "99/99/9999"
+         SKIP
+         "Ramo de Atividade:"
+         tt-dados-prp.dsrmativ FORMAT "x(50)"
+         SKIP(1)
+         "Telefone/Ramal:"            
+         tt-dados-prp.nrdofone FORMAT "X(20)"
+         SKIP(1)
+         "Tipo de conta:"             
+         tt-dados-prp.dstipcta FORMAT "x(20)"
+         "Situacao da conta:"  AT 38  
+         tt-dados-prp.dssitdct FORMAT "x(22)"
+         SKIP(1)
+         "RECIPROCIDADE"
+         SKIP 
+         "Saldo medio do trimestre:"  
+         tt-dados-prp.vlsmdtri FORMAT "zzzzzz,zz9.99"
+         "Capital:"            AT 41  
+         tt-dados-prp.vlcaptal FORMAT "zzzzzz,zz9.99"
+         "Plano:"              AT 64  
+         tt-dados-prp.vlprepla FORMAT "zzz,zz9.99"
+         SKIP(1)
+         "Aplicacoes:"                
+         tt-dados-prp.vlaplica FORMAT "zzz,zzz,zz9.99"
+         SKIP(1)
+         "FATURAMENTO"
+         SKIP 
+         "Faturamento Medio Mensal:"                   
+         tt-dados-prp.vlfatmes FORMAT "zzz,zzz,zz9.99"
+         SKIP
+         "Concentracao Faturamento Unico Cliente:" 
+         tt-dados-prp.perfatcl FORMAT "zzz,zzz,zz9.99"
+         SKIP(1)
+         "Limite de credito atual:"   
+         tt-dados-prp.vllimcre FORMAT "zzz,zzz,zz9.99"
+         "Aluguel:"            AT 61  
+         tt-dados-prp.vlalugue FORMAT "zzzz,zz9.99"
+         SKIP(1)
+         "Limite de cartao(es) de credito:"
+         tt-dados-prp.vltotccr FORMAT "zzz,zzz,zz9.99"
+         SKIP(1)
+         "DIVIDA"
+         SKIP 
+         "Saldo devedor de emprestimos:" 
+         tt-dados-prp.vltotemp FORMAT "zzz,zzz,zz9.99"
+         "Prestacoes:" AT 49 
+         tt-dados-prp.vltotpre FORMAT "zzz,zzz,zz9.99"
+         SKIP
+         "TOTAL OP.CREDITO:"          
+         tt-dados-prp.vlutiliz FORMAT "zzz,zzz,zz9.99"
+         SKIP 
+         "Limite de credito proposto:" 
+         tt-dados-prp.vllimite FORMAT "zzz,zzz,zz9.99"
+         rel_cabobser                             FORMAT "x(12)" 
+         SKIP
+         WITH NO-BOX NO-LABELS WIDTH 96 FRAME f_dados_juridica.     
        
     FORM rel_dsobserv FORMAT "x(76)"
          WITH DOWN NO-BOX NO-LABELS WIDTH 96 FRAME f_dados_2.
@@ -5659,21 +5742,43 @@ PROCEDURE gera-impressao-limite:
                DISPLAY STREAM str_limcre
                        tt-dados-prp.nmextcop  tt-dados-prp.nrctrlim
                        WITH FRAME f_coop.
+               
+               IF  tt-dados-prp.inpessoa > 1  THEN 
+                   DO:
+                       DISPLAY STREAM str_limcre
+                               tt-dados-prp.nrdconta  tt-dados-prp.nrmatric
+                               tt-dados-prp.nmresage  tt-dados-prp.nmprimtl
+                               tt-dados-prp.dtadmiss  tt-dados-prp.nrcpfcgc
+                               tt-dados-prp.nmsegntl  tt-dados-prp.dsempres
+                               tt-dados-prp.dstipcta  tt-dados-prp.dssitdct
+                               tt-dados-prp.vlsmdtri  tt-dados-prp.vlcaptal 
+                               tt-dados-prp.vlprepla  tt-dados-prp.vlaplica 
+                               tt-dados-prp.vlfatmes  tt-dados-prp.perfatcl 
+                               tt-dados-prp.vllimcre  tt-dados-prp.vlalugue  
+                               tt-dados-prp.vltotccr  tt-dados-prp.vltotemp  
+                               tt-dados-prp.vltotpre  tt-dados-prp.vlutiliz  
+                               tt-dados-prp.vllimite  tt-dados-prp.dtiniatv  
+                               tt-dados-prp.dsrmativ
+                               rel_cabobser WITH FRAME f_dados_juridica.                               
+                   END.
+               ELSE
+                   DO:
+                      DISPLAY STREAM str_limcre
+                               tt-dados-prp.nrdconta  tt-dados-prp.nrmatric
+                               tt-dados-prp.nmresage  tt-dados-prp.nmprimtl
+                               tt-dados-prp.dtadmiss  tt-dados-prp.nrcpfcgc
+                               tt-dados-prp.nmsegntl  tt-dados-prp.dsempres
+                               tt-dados-prp.dstipcta  tt-dados-prp.dssitdct
+                               tt-dados-prp.vlsmdtri  tt-dados-prp.vlcaptal 
+                               tt-dados-prp.vlprepla  tt-dados-prp.vlaplica 
+                               tt-dados-prp.vlsalari  tt-dados-prp.vlsalcon 
+                               tt-dados-prp.vloutras  tt-dados-prp.vllimcre
+                               tt-dados-prp.vlalugue  tt-dados-prp.vltotccr
+                               tt-dados-prp.vltotemp  tt-dados-prp.vltotpre
+                               tt-dados-prp.vlutiliz  tt-dados-prp.vllimite
+                               rel_cabobser WITH FRAME f_dados_fisica.                   
+                   END.
                     
-               DISPLAY STREAM str_limcre
-                       tt-dados-prp.nrdconta  tt-dados-prp.nrmatric
-                       tt-dados-prp.nmresage  tt-dados-prp.nmprimtl
-                       tt-dados-prp.dtadmiss  tt-dados-prp.nrcpfcgc
-                       tt-dados-prp.nmsegntl  tt-dados-prp.dsempres
-                       tt-dados-prp.dstipcta  tt-dados-prp.dssitdct
-                       tt-dados-prp.vlsmdtri  tt-dados-prp.vlcaptal 
-                       tt-dados-prp.vlprepla  tt-dados-prp.vlaplica 
-                       tt-dados-prp.vlsalari  tt-dados-prp.vlsalcon 
-                       tt-dados-prp.vloutras  tt-dados-prp.vllimcre
-                       tt-dados-prp.vlalugue  tt-dados-prp.vltotccr
-                       tt-dados-prp.vltotemp  tt-dados-prp.vltotpre
-                       tt-dados-prp.vlutiliz  tt-dados-prp.vllimite
-                       rel_cabobser WITH FRAME f_dados.
                
                ASSIGN aux_restoobs = LENGTH(aux_dsobserv) MODULO 76
                       aux_incontad = 1.
@@ -7780,6 +7885,11 @@ PROCEDURE obtem-dados-proposta:
     DEF VAR aux_nrcpfcjg AS DECI                                    NO-UNDO.
     DEF VAR aux_nrctacje AS INTE                                    NO-UNDO.
 	DEF VAR aux_nmsegntl AS CHAR								    NO-UNDO.
+    /* PRJ 438 - Sprint 7 */
+    DEF VAR aux_dsrmativ AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dtiniatv AS DATE                                    NO-UNDO.
+    DEF VAR aux_vlfatmes AS DECI                                    NO-UNDO.
+    DEF VAR aux_perfatcl AS DECI                                    NO-UNDO.
 
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0002 AS HANDLE                                  NO-UNDO.
@@ -8311,7 +8421,7 @@ PROCEDURE obtem-dados-proposta:
         ASSIGN aux_nmresage = TRIM(STRING(crapass.cdagenci,"zz9")) + " - " + 
                               crapage.nmresage.
 
-    ASSIGN aux_cdempres = 0.
+    ASSIGN aux_cdempres = 0.           
     
     IF  crapass.inpessoa = 1  THEN
         DO:
@@ -8342,7 +8452,36 @@ PROCEDURE obtem-dados-proposta:
                                NO-LOCK NO-ERROR.
 
             IF   AVAIL crapjur  THEN
-                 ASSIGN aux_cdempres = crapjur.cdempres.
+                DO:
+                    ASSIGN aux_cdempres = crapjur.cdempres
+                        /* PRJ 438 - Sprint 7 */
+                        aux_dtiniatv = crapjur.dtiniatv
+                        aux_vlfatmes = crapjur.vlfatano / 12.
+                        
+                    /* PRJ 438 - Sprint 7 */    
+                    IF   crapjur.cdrmativ <> 0   AND
+                         crapjur.cdseteco <> 0   THEN
+                       DO:
+                            FIND gnrativ WHERE 
+                                         gnrativ.cdseteco = crapjur.cdseteco AND
+                                         gnrativ.cdrmativ = crapjur.cdrmativ
+                                         NO-LOCK NO-ERROR.
+
+                            ASSIGN aux_dsrmativ = IF   AVAILABLE gnrativ THEN 
+                                                                STRING(gnrativ.cdrmativ) + " - " + gnrativ.nmrmativ
+                                                           ELSE 
+                                                                "".
+                       END.            
+                         
+                END.
+                
+            /* PRJ 438 - Sprint 7 */    
+            FIND FIRST crapjfn WHERE crapjfn.cdcooper = par_cdcooper  AND
+                                     crapjfn.nrdconta = par_nrdconta
+                               NO-LOCK NO-ERROR.
+
+            IF   AVAIL crapjfn  THEN
+                    ASSIGN aux_perfatcl = crapjfn.perfatcl.
                  
             ASSIGN aux_nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,
                                   "99999999999999"),"xx.xxx.xxx/xxxx-xx").
@@ -8437,7 +8576,13 @@ PROCEDURE obtem-dados-proposta:
            tt-dados-prp.nrcpfcjg = aux_nrcpfcjg
            tt-dados-prp.nrctacje = aux_nrctacje
            tt-dados-prp.inconcje = craplim.inconcje
-           tt-dados-prp.idcobope = craplim.idcobope.
+           tt-dados-prp.idcobope = craplim.idcobope
+           tt-dados-prp.inpessoa = crapass.inpessoa
+           /* PRJ 438 - Sprint 7 */
+           tt-dados-prp.dtiniatv = aux_dtiniatv
+           tt-dados-prp.dsrmativ = aux_dsrmativ
+           tt-dados-prp.vlfatmes = aux_vlfatmes
+           tt-dados-prp.perfatcl = aux_perfatcl.
 
     /* Salvar os CPF/CNPJ dos avais e o tipo de pessoa */
     FOR EACH tt-dados-avais NO-LOCK.

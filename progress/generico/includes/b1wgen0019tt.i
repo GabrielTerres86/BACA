@@ -238,7 +238,11 @@ DEF TEMP-TABLE tt-dados-prp NO-UNDO
     FIELD nrctacje AS INTE
     FIELD inpesso1 AS INTE
     FIELD inpesso2 AS INTE
-    FIELD idcobope AS INTE.
+    FIELD idcobope AS INTE
+    FIELD inpessoa AS INTE
+    FIELD dtiniatv AS DATE
+    FIELD dsrmativ AS CHAR
+    FIELD vlfatmes AS DECI.
 
 DEF TEMP-TABLE tt-dados-rescisao NO-UNDO
     FIELD nmextcop AS CHAR
