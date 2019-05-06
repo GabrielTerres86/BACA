@@ -37,7 +37,7 @@
 	$xml .= "</Root>";
 	
 	// Executa script para envio do XML
-	$xmlModalidadeResult = mensageria($xml, "CADA0006", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlModalidadeResult = mensageria($xml, "ATENDA", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlModalidadeObject = getObjectXML($xmlModalidadeResult);
 	
 	// Se ocorrer um erro, mostra crítica
