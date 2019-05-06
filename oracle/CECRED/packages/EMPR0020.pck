@@ -13,16 +13,25 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
 
     ..............................................................................*/
 
- PROCEDURE pc_validar_dtpgto_antecipada (-- campos padrões
-                                          pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
-                                         ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
-                                         ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
-                                         ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                         ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
-                                         ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
-                                         );
+  PROCEDURE pc_validar_dtpgto_antecipada(pr_xmllog      IN VARCHAR2              --> XML com informacoes de LOG
+                                        ,pr_cdcritic   OUT PLS_INTEGER           --> Codigo da critica
+                                        ,pr_dscritic   OUT VARCHAR2              --> Descricao da critica
+                                        ,pr_retxml      IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                        ,pr_des_erro   OUT VARCHAR2);            --> Erros do processo
+                                                                     
+  PROCEDURE pc_efetua_debito_conveniada(pr_cdcooper 		IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                       ,pr_cdempres 		IN crapemp.cdempres%TYPE --> Código da Empresa que receberá o débito
+                                       ,pr_cdoperad 		IN VARCHAR2              --> Operador da Consulta – Valor 'xxxxx' para Internet
+                                       ,pr_aplOrigem		IN VARCHAR2              --> Aplicação de Origem da chamada do Serviço
+                                       ,pr_nrdcaixa		  IN INTEGER               --> Código de caixa do canal de atendimento – Valor 'XXXX' para Internet
+                                       ,pr_dtmvtolt 		IN crapdat.dtmvtolt%TYPE --> Data do movimento atual.
+                                       ,pr_vrdebito 		IN NUMBER                --> Valor a ser debitado   
+                                       ,pr_idpagto		  IN NUMBER                --> Identificador de pagamento enviado pelo consumidor
+                                       ,pr_dscritic 	 OUT VARCHAR2              --> Descrição da crítica          
+                                       ,pr_retorno 	   OUT xmltype);                                         
 
-end EMPR0020;
+END EMPR0020;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
   /* -----------------------------------------------------------------------------------
@@ -47,7 +56,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
                                          ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
                                          ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
                                          )IS
-   /*---------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------
       Programa : pc_validar_dtpgto_antecipada
       Sistema  : AIMARO
       Sigla    : ATENDA->PRESTAÇÕES->COOPERATIVA
@@ -60,8 +69,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
 
       Alteração :
 
-    ----------------------------------------------------------------------------------------------------------*/
-
+  ----------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
        /* Tratamento de erro */
@@ -255,9 +263,239 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
            -- Carregar XML padrao para variavel de retorno
             pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-    END;  
-    
+    END;    
   END pc_validar_dtpgto_antecipada;
+  
+  PROCEDURE pc_efetua_debito_conveniada(pr_cdcooper 		IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                       ,pr_cdempres 		IN crapemp.cdempres%TYPE --> Código da Empresa que receberá o débito
+                                       ,pr_cdoperad 		IN VARCHAR2              --> Operador da Consulta – Valor 'xxxxx' para Internet
+                                       ,pr_aplOrigem		IN VARCHAR2              --> Aplicação de Origem da chamada do Serviço
+                                       ,pr_nrdcaixa		  IN INTEGER               --> Código de caixa do canal de atendimento – Valor 'XXXX' para Internet
+                                       ,pr_dtmvtolt 		IN crapdat.dtmvtolt%TYPE --> Data do movimento atual.
+                                       ,pr_vrdebito 		IN NUMBER                --> Valor a ser debitado   
+                                       ,pr_idpagto		  IN NUMBER                --> Identificador de pagamento enviado pelo consumidor
+                                       ,pr_dscritic 	 OUT VARCHAR2              --> Descrição da crítica          
+                                       ,pr_retorno 		 OUT xmltype) IS
+  /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_efetua_debito_conveniada
+      Sistema  : AIMARO
+      Sigla    : 
+      Autor    : Fernanda Kelli de Oliveira - AMcom Sistemas de Informação
+      Data     : 03/05/2019
+  
+      Objetivo : Efetuar débito de consignado em conta da conveniada. 
+                 Procedure será chamada pelo barramento SOA.
+
+      Alteração:
+
+  ----------------------------------------------------------------------------------------------------------*/
+    /* Tratamento de erro */
+    vr_exc_erro   EXCEPTION;
+    vr_dscritic   VARCHAR2(4000);      
+    vr_des_erro   VARCHAR2(10);
+    vr_tab_erro   GENE0001.typ_tab_erro;
+   
+    vr_idsequencia tbepr_consignado_debconveniada.idsequencia%type;  
+    vr_instatus    tbepr_consignado_debconveniada.instatus%type;  
+    vr_dtmvtolt    crapdat.dtmvtolt%type;
+    vr_cdagenci    crapass.cdagenci%type;
+    vr_nrdconta    crapass.nrdconta%type;
+  
+  BEGIN
+          
+    BEGIN      
+      pr_dscritic    := null;
+      --Verificar se o registro já existe
+      vr_idsequencia := null;
+      vr_instatus    := null;
+      BEGIN
+        SELECT debconv.idsequencia,
+               debconv.instatus
+          INTO vr_idsequencia,
+               vr_instatus
+          FROM cecred.tbepr_consignado_debconveniada debconv
+         WHERE debconv.cdcooper = pr_cdcooper
+           AND debconv.cdempres = pr_cdempres
+           AND debconv.idpagto  = pr_idpagto;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          vr_idsequencia := NULL;
+        WHEN OTHERS THEN  
+          vr_dscritic := 'Problemas ao consultar se o registro ja foi cadastrado - tabela tbepr_consignado_debconveniada. ' || SQLERRM; 
+          RAISE vr_exc_erro;
+      END;
+        
+      --Inserir os parâmetros de entrada na tabela de controle de pagamento
+      IF vr_idsequencia IS NULL THEN
+        BEGIN
+          vr_instatus := 1; 
+          INSERT INTO cecred.tbepr_consignado_debconveniada
+            (idsequencia,
+             cdcooper,
+             cdempres,
+             idpagto,
+             vrdebito,
+             instatus,
+             cdoperad,
+             dtincreg,
+             dtupdreg)
+          VALUES
+            (cecred.tbepr_consig_debconv_seq.nextval,
+             pr_cdcooper,
+             pr_cdempres,
+             pr_idpagto,
+             pr_vrdebito,
+             vr_instatus,  --pr_instatus (1-Pendente, 2-Processado, 3-Erro)
+             pr_cdoperad,
+             sysdate,      --pr_dtincreg - Data de inclusao do registro
+             null)        --pr_dtupdreg - Data de alteração do registro
+        
+          RETURNING tbepr_consignado_debconveniada.idsequencia INTO vr_idsequencia;
+          
+        EXCEPTION
+          WHEN OTHERS THEN
+            RAISE vr_exc_erro;    
+        END;
+      ELSE
+        BEGIN
+          UPDATE cecred.tbepr_consignado_debconveniada
+             SET cdoperad = pr_cdoperad,
+                 dtupdreg = sysdate
+           WHERE idsequencia = vr_idsequencia;
+        EXCEPTION
+          WHEN OTHERS THEN
+            RAISE vr_exc_erro;    
+        END;       
+      END IF;
+      
+      --Buscar a Data de movimento da Cooperativa
+      BEGIN
+        SELECT dtmvtolt          
+          INTO vr_dtmvtolt
+          FROM crapdat 
+         WHERE crapdat.cdcooper = pr_cdcooper;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Problemas no select de busca da data de vencimento. ' || SQLERRM;
+          RAISE vr_exc_erro; 
+      END;
+      
+      --Buscar o Número da Conta da Empresa
+      BEGIN 
+        vr_nrdconta := NULL;       
+        SELECT crapemp.nrdconta               
+          INTO vr_nrdconta                    
+          FROM crapemp,
+               tbcadast_empresa_consig consig
+         WHERE crapemp.cdempres = consig.cdempres
+           AND crapemp.cdcooper = consig.cdcooper
+           AND consig.indautrepassecc = 1 --Autorizar Debito Repasse em C/C. (0 - NÃ£o Autorizado / 1 - Autorizado)
+           AND crapemp.cdempres = pr_cdempres
+           AND crapemp.cdcooper = pr_cdcooper;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          vr_nrdconta := NULL;
+        WHEN OTHERS THEN
+          vr_dscritic := 'Problemas no select de busca da data de conta/agencia. ' || SQLERRM;
+          RAISE vr_exc_erro; 
+      END;
+      
+      --Caso não tenha conta corrente cadastrada na Cademp, então o sistema Aimaro não fará o débito do repasse.
+      IF nvl(vr_nrdconta,0) = 0 THEN
+        vr_dscritic := 'Empresa '||pr_cdempres||' nao possui conta-corrente cadastrada. ';
+        RAISE vr_exc_erro; 
+      ELSE
+        --Buscar o codigo da agencia
+        BEGIN 
+          vr_cdagenci := NULL;       
+          SELECT crapass.cdagenci
+            INTO vr_cdagenci  
+            FROM crapass   
+           WHERE crapass.cdcooper = pr_cdcooper
+             AND crapass.nrdconta = vr_nrdconta;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            vr_cdagenci := NULL;
+          WHEN OTHERS THEN
+            vr_dscritic := 'Problemas no select de busca do numero do PA. ' || SQLERRM;
+            RAISE vr_exc_erro; 
+        END;
+        
+        IF nvl(vr_cdagenci,0) = 0 THEN
+          vr_dscritic := 'Empresa '||pr_cdempres||' conta-corrente '||vr_nrdconta||' nao possui agencia cadastrada. ';
+          RAISE vr_exc_erro; 
+        END IF; 
+      END IF;
+      
+      --Se estiver Pendente/Erro de processamento 
+      IF vr_instatus in(1,3) THEN  --
+        
+        /* Lanca em C/C e atualiza o lote */
+        empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper      --> Cooperativa conectada
+                                      ,pr_dtmvtolt => vr_dtmvtolt      --> Movimento atual
+                                      ,pr_cdagenci => vr_cdagenci      --> Código da agência
+                                      ,pr_cdbccxlt => 1                --> Número do caixa
+                                      ,pr_cdoperad => pr_cdoperad      --> Código do Operador
+                                      ,pr_cdpactra => vr_cdagenci      --> P.A. da transação
+                                      ,pr_nrdolote => 600014           --> Numero do Lote
+                                      ,pr_nrdconta => vr_nrdconta      --> Número da conta
+                                      ,pr_cdhistor => 2972             --> Codigo historico
+                                      ,pr_vllanmto => pr_vrdebito      --> Valor da parcela emprestimo
+                                      ,pr_nrparepr => 0                --> Número parcelas empréstimo
+                                      ,pr_nrctremp => 0                --> Número do contrato de empréstimo
+                                      ,pr_des_reto => vr_des_erro      --> Retorno OK / NOK
+                                      ,pr_tab_erro => vr_tab_erro);    --> Tabela com possíves erros
+        --Se Retornou erro
+        IF vr_des_erro <> 'OK' THEN
+          --Sair
+          vr_dscritic := 'Problema na rotina empr0001.pc_cria_lancamento_cc, empresa '|| pr_cdempres || '. Erro: '|| sqlerrm ;
+          RAISE vr_exc_erro;
+        ELSE
+          BEGIN
+            UPDATE cecred.tbepr_consignado_debconveniada T
+               SET t.instatus = 2  --Processado
+             WHERE idsequencia = vr_idsequencia;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Problema na atualizacao do processamento da empresa '|| pr_cdempres || '. Erro: '|| sqlerrm ;
+              RAISE vr_exc_erro;    
+          END;  
+        END IF;
+      END IF;
+      
+      --Retorno (SUCESSO)
+      pr_dscritic:= null;
+      vr_dscritic := 'Débito realizado com sucesso!';      
+      pr_retorno := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><retorno>'||vr_dscritic||'</retorno></Root>');
+      
+      COMMIT;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        BEGIN
+          UPDATE cecred.tbepr_consignado_debconveniada T
+             SET t.instatus = 3  --Erro
+           WHERE idsequencia = vr_idsequencia;
+           
+           COMMIT;
+           
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Problema na atualizacao do processamento da empresa '|| pr_cdempres || '. Erro: '|| sqlerrm ;
+            RAISE vr_exc_erro;    
+        END;
+        --Retorno (NÃO SUCESSO)
+        pr_retorno := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><retorno>' || pr_dscritic || '</retorno></Root>');
+        pr_dscritic:= 'Erro ao debitar valor solicitado. ' || vr_dscritic;                                         
+      WHEN OTHERS THEN
+         --Retorno (NÃO SUCESSO)        
+        pr_retorno := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><retorno>' || pr_dscritic || '</retorno></Root>');
+        pr_dscritic:= 'Erro ao debitar valor solicitado. Erro: ' || sqlerrm;                                         
+    END;    
+  END pc_efetua_debito_conveniada;                                        
+                                   
   
 END EMPR0020;
 /
