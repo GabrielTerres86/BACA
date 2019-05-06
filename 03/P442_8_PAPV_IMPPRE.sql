@@ -114,7 +114,7 @@ BEGIN
 
   -- Criar novas ações --    
   INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
-    VALUES(vr_nrseqrdr, 'LISTA_CARGAS_SAS','TELA_IMPPRE','pc_lista_cargas_sas',''); 
+    VALUES(vr_nrseqrdr, 'LISTA_CARGAS_SAS','TELA_IMPPRE','pc_lista_cargas_sas','pr_nrregist,pr_nriniseq'); 
     
   INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
     VALUES(vr_nrseqrdr, 'EXEC_CARGA_SAS','TELA_IMPPRE','pc_proc_carga_sas','pr_skcarga,pr_cddopcao,pr_dsrejeicao');  
