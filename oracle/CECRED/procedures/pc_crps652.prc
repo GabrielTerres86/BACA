@@ -3654,17 +3654,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
               SELECT epr.cdempres,
                      emp.nmextemp
                 FROM crapepr epr,
-                     craplcr lcr,
                      crapemp emp
-               WHERE epr.cdcooper = lcr.cdcooper
-                 AND epr.cdlcremp = lcr.cdlcremp
-                 AND epr.cdcooper = emp.cdcooper
+               WHERE epr.cdcooper = emp.cdcooper
                  AND epr.cdempres = emp.cdempres
                  AND epr.cdcooper = pr_cdcooper
                  AND epr.nrdconta = pr_nrdconta
                  AND epr.nrctremp = pr_nrctremp
                  AND epr.tpemprst = 1
-                 AND nvl(lcr.tpmodcon,0) > 0;
+                 AND epr.tpdescto = 2;
            rw_consig cr_consig%ROWTYPE;
             
            --Tabela Memoria Avalistas

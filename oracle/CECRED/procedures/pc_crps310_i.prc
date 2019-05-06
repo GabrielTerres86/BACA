@@ -513,6 +513,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,crapepr.qtdias_atraso_refin
               ,crapepr.rowid rowidepr
               ,t.inrisco_melhora -- Risco Melhora Novo (Atual)
+              ,crapepr.tpdescto --P437 - Consignado
           FROM crapepr, crawepr, tbrisco_operacoes t
          WHERE crawepr.cdcooper = crapepr.cdcooper
            AND crawepr.nrdconta = crapepr.nrdconta
@@ -3020,14 +3021,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
              AND lem.cdhistor IN (1037,1038)
              AND lem.dtmvtolt > pr_rw_crapdat.dtmvtolt - (pr_qtdiaatr - 59);       
 
-        -- P437 - Consignado
-        -- Verifica se a linha de crédito é de consignado
-        CURSOR cr_craplcr IS
-        SELECT nvl(lcr.tpmodcon,0) tpmodcon
-            FROM craplcr lcr
-           WHERE lcr.cdcooper = pr_cdcooper
-             AND lcr.cdlcremp = pr_rw_crapepr.cdlcremp;
-             
         -- Busca o Juros+60 calculado pela FIS Brasil
         CURSOR cr_consig IS
         SELECT epr.vljura60
@@ -3200,17 +3193,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_tpmodcon :=0;
         -- Calcular somente na mensal
         IF vr_qtdiaatr >= 60  THEN  -- Calcular o valor dos juros a mais de 60 dias
-           -- P437 -Verifica se a cooperativa é consignado
-          IF NVL(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+           -- P437 -Verifica se é consignado
+           IF NVL(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                            ,pr_cdcooper  => pr_cdcooper
-                                           ,pr_cdacesso  => 'COOPER_CONSIGNADO' ),'N') = 'S' THEN
-               -- P437 - consigando - Para o consignado considerar o Juros+60 calculado pela FIS Brasil
-               OPEN cr_craplcr;
-               FETCH cr_craplcr INTO vr_tpmodcon;
-               CLOSE cr_craplcr;
-           END IF;
-           -- linha de crédito é de consignado
-           IF vr_tpmodcon > 0 THEN
+                                           ,pr_cdacesso  => 'COOPER_CONSIGNADO' ),'N') = 'S' AND
+              pr_rw_crapepr.tpemprst = 1 AND
+              pr_rw_crapepr.tpdescto = 2 THEN
               OPEN cr_consig;
               FETCH cr_consig INTO vr_totjur60;
               CLOSE cr_consig;
