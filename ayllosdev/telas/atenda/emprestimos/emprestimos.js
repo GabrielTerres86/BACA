@@ -153,6 +153,8 @@
 * 123: [13/02/2019] P298_2_2 - Pos Fixado - Habilitar campo Produto permitindo selecionar PP e POS. 
 *                   Não permitir selecionar Produto TR (Luciano Kienolt - Supero)         
 * 124: [07/03/2019] Permite inclusao / cadastro de avalista via CRM - Chamado INC0033825 (Gabriel Marcos / Jefferson / Mouts).
+* 125: [06/05/2019] Ajuste para salvar os campos de portabilidade, para que quando abrir a tela de portabilidade (alteração)
+*                   os campos já estejam salvos em váriaveis PRJ 438 (Mateus Z - Mouts)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -418,6 +420,12 @@ var dsctrliq_antigo = '';
 $.getScript(UrlSite + 'includes/autorizacao_contrato/autorizacao_contrato.js');
 var aux_portabilidade = "";
 
+// PRJ 438 - Variaveis para salvar as informações, para serem usados em caso de portabilidade
+var nrctrempPortabil = 0;
+var tplcrempPortabil = 0;
+var flgimpprPortabil = '';
+var flgimpnpPortabil = '';
+
 $.getScript(UrlSite + "telas/atenda/emprestimos/impressao.js");
 $.getScript(UrlSite + "telas/atenda/emprestimos/simulacao/simulacao.js");
 $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
@@ -624,9 +632,24 @@ function controlaOperacao(operacao) {
                 nomeAcaoCall = ''; // Reseta a global
             }
         });
-        if ((nrctremp == '' || tplcremp == 0 || flgimppr == '' || flgimpnp == '') && (operacao != 'PORTAB_CRED_I')) {
-            return false;
+
+        // PRJ 438 - Salvar os valores para serem usados em caso de portabilidade
+        if(nrctremp != '' && tplcremp != 0 && flgimppr != '' && flgimpnp != ''){
+        	nrctrempPortabil = nrctremp;
+			tplcrempPortabil = tplcremp;
+			flgimpprPortabil = flgimppr;
+			flgimpnpPortabil = flgimpnp;
         }
+        
+        if(portabil == 'S'){
+        	if ((nrctrempPortabil == '' || tplcrempPortabil == 0 || flgimpprPortabil == '' || flgimpnpPortabil == '') && (operacao != 'PORTAB_CRED_I')) {
+	            return false;
+	        }
+        } else {
+	        if ((nrctremp == '' || tplcremp == 0 || flgimppr == '' || flgimpnp == '') && (operacao != 'PORTAB_CRED_I')) {
+	            return false;
+	        }
+       	}
 
     }
 
@@ -2723,12 +2746,17 @@ function controlaLayout(operacao) {
                     controlaOperacao('PORTAB_CRED_A');
                 });
 
-                //atribui o novo parametro para o evento click do botao
-                $("#btSalvar", "#divBotoes").attr('onClick', "buscaLiquidacoes('PORTAB_A');");
-                //fiz esta adaptacao tecnica para obrigar o IE a executar a nova funcao se o botao for clicado.
-                $("#btSalvar", "#divBotoes").unbind('click').bind('click', function() {
-                    buscaLiquidacoes('PORTAB_A');
-                });
+                if ($.browser.msie) {
+                	//atribui o novo parametro para o evento click do botao
+                	$("#btSalvar", "#divBotoes").attr('onClick', "buscaLiquidacoes('PORTAB_A');");
+				    //fiz esta adaptacao tecnica para obrigar o IE a executar a nova funcao se o botao for clicado.
+	                $("#btSalvar", "#divBotoes").unbind('click').bind('click', function() {
+	                    buscaLiquidacoes('PORTAB_A');
+	                });
+				} else {
+	                //atribui o novo parametro para o evento click do botao
+                	$("#btSalvar", "#divBotoes").attr('onClick', "buscaLiquidacoes('PORTAB_A');");
+				}
 
                 //desabilita o campo tipo de emprestimo
                 //cTipoEmpr.attr('disabled', 'disabled');
