@@ -144,11 +144,55 @@
 * 114: [15/09/2018] Alteração da tela de Bens da Atenda Prestação/Empréstimo (Christian / Envolti)
 * 115: [20/09/2018] Inclusão de histórico de Gravames (Christian / Envolti)
 * 116: [29/01/2019] Alteracao da consulta FIPE  (Christian / Envolti)
-* 117: [07/03/2019] Permite inclusao / cadastro de avalista via CRM - Chamado INC0033825 (Gabriel Marcos / Mouts).
+* 117: [19/10/2018] Ajustes da tela Rating para esconder e criar campo nrinfcad - Bruno Luiz Katzjarowski - Mout's 
+* 118: [24/10/2018] Esconder as telas de rendimento e tabela de bens - Bruno Luiz K. - Mout's - PRJ 438
+* 119: [18/10/2018] Alterado layout das telas Nova Proposta, Avalista e Interveniente - PRJ 438. (Mateus Z / Mouts)
+* 120: [31/10/2018] Criacao de alteraNumeroContrato para iniciar a mesma funcao em alterar.php do botão alterar numero de proposta - PRJ - 438 - Bruno Luiz k - Mout's
+* 121: [31/10/2018] Criada função alteraProposta para abrir diretamente o fluxo para alterar a proposta, removendo a tela de opções de alteração - PRJ - 438 (Mateus Z - Mouts)
+* 122: [14/12/2018] P298 - Inclusão da proposta Pós fixado no simulador (Andre Clemer - Supero)
+* 123: [13/02/2019] P298_2_2 - Pos Fixado - Habilitar campo Produto permitindo selecionar PP e POS. 
+*                   Não permitir selecionar Produto TR (Luciano Kienolt - Supero)         
+* 124: [07/03/2019] Permite inclusao / cadastro de avalista via CRM - Chamado INC0033825 (Gabriel Marcos / Jefferson / Mouts).
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
  */
+
+/** 
+ * ----------------------------------
+ * CONSTANTES
+ * ----------------------------------
+ */
+var __BOTAO_TAB = 9;
+var __BOTAO_ENTER = 13;
+//bruno - prj 438 - bug 14235
+var __ACAO_GAROPC_EMPRESTIMO = 'EMPRESTIMO';
+var __TELA_DADOS_SOLICITACAO = 'TELA_DADOS_SOLICITACAO'; //bruno - prj 438 - bug 14625
+/** 
+ * ----------------------------------
+ * FIM CONSTANTES
+ * ----------------------------------
+*/
+
+/*
+ VARIAVEIS DE CONTROLE
+*/
+var __last_avalista = { //bruno - prj 438 - bug 14444
+	habilitado: true,
+	nrctaava: '', //Número da conta do avalista
+	nrcpfcgc: '',  //Numero de cpf/cnpj do avalista
+    lastMessage: '' //Ultima mensagem de erro (caso tenha)
+};
+
+//bruno - prj 438 - bug 14625
+var __flag_dataPagamento = false; //Validar se a chamada de validaDados do campo data de pagamento da tela dados da solicitação retornou corretamente.
+                                  //para não bugar a tela de liquidações e garopc.
+/*
+FIM VARIAVEIS DE CONTROLE
+*/
+
+//bruno - bug 6666
+var __garopcArr = null;
 
 var qtmesblq = 0;
 var bloquear_pre_aprovado = false;
@@ -230,6 +274,7 @@ var numeroProposta = '';
 var possuiPortabilidade = '';
 var cadastroNovo = '';
 var modalidade = '0';
+var insitest = 0;
 
 //******************************
 //Variaveis aux. de persistencia
@@ -259,6 +304,8 @@ var aux_nrcxaps1 = '';
 // Daniel
 var aux_inpesso1 = '';
 var aux_dtnasct1 = '';
+// PRJ 438
+var aux_vlrecjg1 = '';
 
 var aux_nmdaval0 = '';
 var aux_nrcpfav0 = '';
@@ -284,12 +331,16 @@ var aux_nrcxaps0 = '';
 // Daniel
 var aux_inpesso0 = '';
 var aux_dtnasct0 = '';
+// PRJ 438
+var aux_vlrencj0 = '';
 
 var aux_dsdbeavt = '';
 var aux_dsdfinan = '';
 var aux_dsdrendi = '';
 var aux_dsdebens = '';
 var aux_dsdalien = '';
+
+var aux_insitest = '0';
 
 var vlutiliz = '';
 var dsmesage = '';
@@ -357,6 +408,7 @@ var inobriga = '';
 var booPrimeiroBen = false; //809763
 var booBoxMarcas = true;
 var bemCarregadoUfPa = false;
+var idlsbemfin = false;
 
 // PRJ366
 var vlemprst_antigo = 0;
@@ -366,8 +418,36 @@ $.getScript(UrlSite + "telas/atenda/emprestimos/impressao.js");
 $.getScript(UrlSite + "telas/atenda/emprestimos/simulacao/simulacao.js");
 $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
 
+/** bruno - prj 438 - bug 13952 */
+$.getScript(UrlSite + "telas/atenda/emprestimos/validacoes/validaTelaAvalista.js");
+
+/** bruno - prj 438 - bug 14529 */
+$.getScript(UrlSite + "telas/atenda/emprestimos/validacoes/validaTelaInterveniente.js");
+
+/** bruno - prj 438 - bug 14750 */
+$.getScript(UrlSite + "telas/atenda/emprestimos/validacoes/validaEmprestimo.js");
+
 var modeloBem;
 var frmCab   		= 'frmCab';
+
+var cdfinemp = ""; //PRJ - 438 - Rating - Sprint 4
+//bruno - prj 438 - bloqueia botao
+var aux_botoesTelaInicial = {
+    btSalvarOnclick: "",
+    btVoltarClick: "",
+    btGravarOnclick: ""
+};
+
+var aux_ignoraHideMensagem = false; //PRJ - 438 - Bruno - Carregamento
+
+var aux_cdfinemp_rating = ""; //PRJ - 438 - Rating - bruno
+var aux_inobriga_rating = ""; //PRJ - 438 - Rating - bruno
+
+var aux_insitapr = ""; //bruno - prj 438 - bug 13658
+
+var __aux_ingarapr = ""; //bruno - prj 438 - bug 14235
+
+var aux_nrctremp_consulta = ''; //rubens - prj 438 - bug 14283
 
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 
@@ -430,13 +510,32 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 
 function controlaOperacao(operacao) {
 
+	//console.log('Operacao: '+operacao);
+
+    //bruno - prj 438 - bug 14750
+    if(in_array(operacao,['VAL_RECALCULAR_EMPRESTIMO','T_EFETIVA','ACIONAMENTOS'])){
+        if(!validaAnulada($("#divEmpres table tr.corSelecao"), operacao)){
+            return false;
+        }
+    }
+
+
+	//PRJ - 438 - Rating - 3 - bruno
+	if(aux_cdfinemp_rating == "" || in_array(operacao,['TC','TA'])){
+		aux_cdfinemp_rating = $("#divEmpres table tr.corSelecao").find("input[id='cdfinemp']").val();
+		aux_inobriga_rating = $("#divEmpres table tr.corSelecao").find("input[id='inobriga']").val();
+	}else if(in_array(operacao, ['TI','I'])){
+		aux_inobriga_rating = "";
+	}
+	aux_ignoraHideMensagem = true; //prj - 438 - bruno - carregamento
+
 	var idcobope = '';
 	var insitest = '';
 	var err_efet = '';
-	/*var nrdrecid = '';*/
+	/*var nrdrecid = ''; comentado pois estava dando erro para gerar a proposta*/
 	var flgimpnp = '';
 
-    cdlcremp = '';
+    //cdlcremp = '';
     vlempres = '';
     qtparepr = '';
     qtdialib = '';
@@ -445,18 +544,26 @@ function controlaOperacao(operacao) {
     vlpreemp = '';
     dscatbem = '';
     idfiniof = '';
-    cdfinemp = '';
+    //cdfinemp = '';
     dsctrliq = '';
 	idcarenc = '';
     dtcarenc = '';
+    inobriga = ""; //prj - 438 - bruno - rating - 3
+    vlprecar = '';
 
     var simula = false;
 
 	// validacao de contingencia Integracao CDC
-			var flintcdc       = $("#divEmpres table tr.corSelecao").find("input[id='flintcdc']").val();
-			var inintegra_cont = $("#divEmpres table tr.corSelecao").find("input[id='inintegra_cont']").val();
-			var tpfinali       = $("#divEmpres table tr.corSelecao").find("input[id='tpfinali']").val();
-			var cdoperad       = $("#divEmpres table tr.corSelecao").find("input[id='cdoperad']").val();
+	var flintcdc       = $("#divEmpres table tr.corSelecao").find("input[id='flintcdc']").val();
+	var inintegra_cont = $("#divEmpres table tr.corSelecao").find("input[id='inintegra_cont']").val();
+	var tpfinali       = $("#divEmpres table tr.corSelecao").find("input[id='tpfinali']").val();
+	var cdoperad       = $("#divEmpres table tr.corSelecao").find("input[id='cdoperad']").val();
+
+    //bug 14667		
+	if (operacao == "IMP") {
+	    insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
+	    inobriga = $("#divEmpres table tr.corSelecao").find("input[id='inobriga']").val();
+	}
 
 	if(tpfinali == 3 && cdoperad=='AUTOCDC'){
 		// botao Registrar GRV
@@ -482,7 +589,7 @@ function controlaOperacao(operacao) {
     // Para isso verifico a linha que está selecionado e pego o valor do INPUT HIDDEN desta linha
     if (in_array(operacao, ['TA', 'TE', 'TC', 'A_NOVA_PROP', 'A_NUMERO', 'A_VALOR', 'A_AVALISTA', 'IMP', 'REG_GRAVAMES', 'VAL_GRAVAMES',
                             'PORTAB_CRED_C', 'VAL_RECALCULAR_EMPRESTIMO', 'RECALCULAR_EMPRESTIMO', 'PORTAB_CRED_A', 'PORTAB_CRED_I', 'ENV_ESTEIRA',
-							'ACIONAMENTOS', 'MOTIVOS'])) {
+							'ACIONAMENTOS', 'A_SOMBENS', 'MOTIVOS'])) {
 
         nrctremp = (nrctremp == '') ? '' : nrctremp;
         tplcremp = (tplcremp == 0) ? 0 : tplcremp;
@@ -507,6 +614,8 @@ function controlaOperacao(operacao) {
                 dsctrliq = $('#dsctrliq', $(this)).val();
                 idcobope = $('#idcobope', $(this)).val();
 				insitest = $('#insitest', $(this)).val();
+
+				aux_insitest = insitest;
 
                 nomeAcaoCall = ''; // Reseta a global
             }
@@ -606,6 +715,8 @@ function controlaOperacao(operacao) {
         case 'C_PROT_CRED' :
             mensagem = 'abrindo consultar ...';
             cddopcao = 'C';
+            cdfinemp = aux_cdfinemp_rating; //prj - 438 - rating
+            inobriga = aux_inobriga_rating; //prj - 438 - rating
             break;
         case 'C_BENS_ASSOC' :
             initArrayBens('C_BENS_ASSOC');
@@ -613,6 +724,10 @@ function controlaOperacao(operacao) {
             return false;
             break;
         case 'TA':
+
+        	//bruno - prj 438 - bug 13658
+        	aux_insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
+
 			// PRJ 438 - Adicionado controle para situação ANULADA
         	if (insitest == 6) {
         	    showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Aimaro', '');
@@ -623,7 +738,8 @@ function controlaOperacao(operacao) {
             if (msgDsdidade != '') {
                 showError('inform', msgDsdidade, 'Alerta - Aimaro', 'mostraTelaAltera("");');
             } else {
-                mostraTelaAltera('');
+            	// PRJ 438 - Sprint 5 - Mateus Z (Mouts)
+                alteraProposta();
             }
             return false;
             break;
@@ -641,9 +757,16 @@ function controlaOperacao(operacao) {
             if ($("#nrinfcad", "#frmOrgaos").val() != undefined) {
                 arrayProtCred['dtcnsspc'] = $("#dtcnsspc", "#frmOrgaos").val();
                 arrayProtCred['nrinfcad'] = $("#nrinfcad", "#frmOrgaos").val();
+				
+				if(arrayProtCred['nrinfcad'] == "" || arrayProtCred['nrinfcad'] == undefined){
+					arrayProtCred['nrinfcad'] = $('#nrinfcad', '#frmOrgProtCred').val();
+					arrayProtCred['dtcnsspc'] = $("#dtcnsspc", "#frmOrgProtCred").val();
+				}
+				
             }
 
-            buscaObs('A');
+            //buscaObs('A');
+            fechaBuscaObs('A_COMITE_APROV');
             return false;
             break;
         case 'A_NUMERO' :
@@ -702,6 +825,10 @@ function controlaOperacao(operacao) {
 			return false;
 			break;
 		case 'C_GAROPC': 
+			if(arrayInfoParcelas['cdlcremp'] == undefined){
+				cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
+				arrayInfoParcelas['cdlcremp'] = cdlcremp;
+			}
 			abrirTelaGAROPC(operacao);
 			return false;
 			break;
@@ -734,7 +861,7 @@ function controlaOperacao(operacao) {
             iddoaval_busca = contAvalistas;
             inpessoa_busca = arrayAvalistas[contAvalistas - 1]['inpessoa'];
             nrdconta_busca = retiraCaracteres(arrayAvalistas[contAvalistas - 1]['nrctaava'], '0123456789', true);
-            nrcpfcgc_busca = arrayAvalistas[contAvalistas - 1]['nrcpfcgc'];
+            nrcpfcgc_busca = normalizaNumero(arrayAvalistas[contAvalistas - 1]['nrcpfcgc']);
             mensagem = 'consultando dados ...';
             break;
         case 'C_PROTECAO_AVAL':
@@ -812,6 +939,8 @@ function controlaOperacao(operacao) {
         case 'A_PROT_CRED':
             mensagem = 'abrindo altera ...';
             cddopcao = 'A';
+            cdfinemp = aux_cdfinemp_rating; //prj - 438 - rating
+            inobriga = aux_inobriga_rating; //prj - 438 - rating
             break;
         case 'A_COMITE_APROV':
             mensagem = 'abrindo altera ...';
@@ -984,11 +1113,21 @@ function controlaOperacao(operacao) {
             break;
         case 'I_PROT_CRED':
             cddopcao = 'I';
+            cdfinemp = aux_cdfinemp_rating; //prj - 438 - rating
+            inobriga = aux_inobriga_rating; //prj - 438 - rating
             break;
         case 'I_BUSCA_OBS':
             arrayProtCred['dtcnsspc'] = $("#dtcnsspc", "#frmOrgaos").val();
             arrayProtCred['nrinfcad'] = $("#nrinfcad", "#frmOrgaos").val();
-            mostraBuscaObs('');
+			
+			if(arrayProtCred['nrinfcad'] == "" || arrayProtCred['nrinfcad'] == undefined){
+				arrayProtCred['nrinfcad'] = $('#nrinfcad', '#frmOrgProtCred').val();
+				arrayProtCred['dtcnsspc'] = $("#dtcnsspc", "#frmOrgProtCred").val();
+			}
+			
+            //mostraBuscaObs('');
+            aux_ignoraHideMensagem = true; //prj - 438 - bruno - carregamento
+            fechaBuscaObs('I_COMITE_APROV');
             return false;
             break;
         case 'I_COMITE_APROV':
@@ -1102,6 +1241,10 @@ function controlaOperacao(operacao) {
             cddopcao = 'E';
             break;
         case 'E_COMITE_APROV' :
+			if(arrayInfoParcelas['cdlcremp'] == undefined){
+				cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
+				arrayInfoParcelas['cdlcremp'] = cdlcremp;
+			}
             mensagem = 'processando exclus&atilde;o...';
             cddopcao = 'E';
             break;
@@ -1309,8 +1452,8 @@ function controlaOperacao(operacao) {
         		showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Aimaro', '');
         		return false;
         	}
-			      insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
-			      dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
+			insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
+			dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
             mensagem = 'Enviando Proposta para An&aacute;lise de Cr&eacute;dito...';
 			if (dssitest == 'Analise Finalizada' && insitapr == 2){				
 				showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Aimaro', 'pedeSenhaCoordenador(2,\'manterRotina("ENV_ESTEIRA")\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
@@ -1319,7 +1462,12 @@ function controlaOperacao(operacao) {
 			}
             return false;
             break;
-        //case 'DEMONSTRATIVO_EMPRESTIMO':
+        case 'DEMONSTRATIVO_EMPRESTIMO':
+			if(arrayInfoParcelas['cdlcremp'] == undefined){
+				cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
+				arrayInfoParcelas['cdlcremp'] = cdlcremp;
+			}
+			break;
         case 'A_DEMONSTRATIVO_EMPRESTIMO':
         case 'I_DEMONSTRATIVO_EMPRESTIMO':
             tpemprst = arrayProposta['tpemprst'];
@@ -1333,6 +1481,7 @@ function controlaOperacao(operacao) {
 			dtcarenc = arrayProposta['dtcarenc'];
             cddopcao = 'C';
             vlpreemp = number_format(parseFloat(arrayProposta['vlpreemp'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+            vlprecar = number_format(parseFloat(arrayProposta['vlprecar'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
             mensagem = 'Carregando Demonstrativo da Proposta...';
             dscatbem = '';
             cdfinemp = arrayProposta['cdfinemp']
@@ -1349,10 +1498,54 @@ function controlaOperacao(operacao) {
 			mostraTabelaHistoricoGravames();
 			return false;
 			break;
-		
+		case 'A_SOMBENS' :
+			mensagem = 'abrindo altera ...';
+			cddopcao = 'A';
+            break;
+		case 'A_BENSINI' :
+			if ( idlsbemfin ) {
+				contAlienacao = contAlienacao-1;
+				idlsbemfin = false;
+			} else {
+				contAlienacao = contAlienacao-2;
+			}
+			if (contAlienacao < 0) {
+				controlaOperacao('AT');
+                return false;
+			}
+			
+		case 'A_BENS' :
+			if (arrayProposta['tplcremp'] == 2) {
+                if (contAlienacao < nrAlienacao) {
+                    mensagem = 'abrindo altera ...';
+                    cddopcao = 'A';
+					operacao = 'A_BENS';
+                } else {
+                    if (contAlienacao == nrAlienacao) {
+                        controlaOperacao('AI_BENS');
+                        return false;
+                    } else {
+                        contAlienacao <= 0;
+                        controlaOperacao('I_INICIO');
+                        return false;
+                    }
+                }
+            } else if (arrayProposta['tplcremp'] == 3) {
+                controlaOperacao('A_HIPOTECA');
+                return false;
+            } else {
+                controlaOperacao('I_INICIO');
+                return false;
+            }
+            break;
+		case 'A_BENSFIM' :
+			alteraSomenteBens();
+			//fechaRotina($('#divUsoGenerico'),$('#divRotina'));
+			return false;
+            break;
         case 'MOTIVOS' :
             carregaDadosConsultaMotivos();
-            return false;
+			return false;
             break;
         default:
             operacao = '';
@@ -1365,7 +1558,7 @@ function controlaOperacao(operacao) {
             arrayDadosPortabilidade = new Array();
             numeroProposta = ''
             aux_cdmodali_simulacao = '';
-    }
+    }//fim Swith
 
     var inconcje = 0;
     var tplcremp = (typeof arrayProposta == 'undefined') ? 0 : arrayProposta['tplcremp'];
@@ -1379,11 +1572,21 @@ function controlaOperacao(operacao) {
         $('.divRegistros').remove();
     }
 */
+
+	/* prj - 438 - rating - bruno */
+	if(inobriga == "" || cdfinemp == ""){
+		inobriga = aux_inobriga_rating;
+		cdfinemp = aux_cdfinemp_rating;
+	}
+
     mensagem = (mensagem == "") ? 'carregando...' : mensagem;
 	
     showMsgAguardo('Aguarde, ' + mensagem);
 
-    // Executa script de através de ajax -- Ponto de erro da função
+	if(cdlcremp == "" || cdlcremp == undefined)
+		cdlcremp = arrayInfoParcelas['cdlcremp'];
+
+    // Executa script de através de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -1409,6 +1612,9 @@ function controlaOperacao(operacao) {
 			dtcarenc: dtcarenc, idcarenc:idcarenc, 
             nomeAcaoCall: nomeAcaoCall,
 			executandoProdutos: executandoProdutos,
+			inobriga: inobriga, insiteste: aux_insitest,
+			insitapr: insitapr, //bug 14667 rubens
+			vlprecar: vlprecar,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1423,7 +1629,7 @@ function controlaOperacao(operacao) {
 			if ( operacao != 'RECALCULAR_EMPRESTIMO') {
 				$('.divRegistros').remove();
 			}
-			
+
             if (response.indexOf('showError("error"') == -1) {
 
                 if (cddopcao == 'G') {
@@ -1438,22 +1644,56 @@ function controlaOperacao(operacao) {
                             bloqueiaFundo(divRotina);
                             eval(response);
                         } else {
-							
+
 							if (nomeAcaoCall == 'A_AVALISTA'){
-								if (operacao == 'A_AVALISTA') {
+								if(in_array(operacao, ['I_PROTECAO_TIT','A_PROTECAO_AVAL', 'A_PROTECAO_TIT','A_PROTECAO_CONJ',
+										'C_PROTECAO_TIT','C_PROTECAO_AVAL', 'C_PROTECAO_CONJ','C_PROTECAO_SOC','A_PROTECAO_SOC'])){
+									$('#divConteudoOpcao').hide(); //Sumir com o div para o response do eval não ser impresso na tela
+									eval(response);
+								}else if (operacao == 'A_AVALISTA') {
 									$('#divConteudoOpcao').hide();
 									$('#divRotina').hide();
 								}else if ((operacao == 'AI_DADOS_AVAL') || (operacao == 'A_DADOS_AVAL')){
 									$('#divConteudoOpcao').show();
 									$('#divRotina').show();
 								}
-							}
-							
                             $('#divConteudoOpcao').html(response);
+							}else if(in_array(operacao, ['I_PROTECAO_TIT','A_PROTECAO_AVAL', 'A_PROTECAO_TIT','A_PROTECAO_CONJ',
+										'C_PROTECAO_TIT','C_PROTECAO_AVAL', 'C_PROTECAO_CONJ','C_PROTECAO_SOC','A_PROTECAO_SOC'])){ //PRJ 438 - Remover tela orgãos
+								eval(response);
+							}else if(in_array(operacao, ['C_PROT_CRED','A_PROT_CRED','I_PROT_CRED'])){
+								if(response.indexOf("$('#executouOperacaoRating').val('');") == -1){
+									aux_ignoraHideMensagem = false; //prj - 438 - bruno - carregamento
+									$('#divConteudoOpcao').html(response);
+                                    $('#divRotina').show(); //bruno - prj 438 - bug 14400
+                                    $('#divRotina').centralizaRotinaH();
+								}
+								else{
+                                    showMsgAguardo('Aguarde, ' + mensagem);
+									eval(response);
+                                }
+							}
+							else if(in_array(operacao, ['A_DADOS_PROP','I_DADOS_PROP','C_DADOS_PROP', 'E_DADOS_PROP'])){ //PRJ - 438 - Remover rendimentos e Bens
+								$('#divConteudoOpcao').html(response);
+								$('#divRotina').hide();
+								$('#divConteudoOpcao').hide();
+							}else if(in_array(operacao, ['C_DADOS_PROP_PJ','A_DADOS_PROP_PJ','E_DADOS_PROP_PJ','I_DADOS_PROP_PJ'])){ //PRJ - 438 - Remover Dados da proposta
+								$('#divConteudoOpcao').html(response);
+								$('#divRotina').hide();
+								$('#divConteudoOpcao').hide();
+							}else if(in_array(operacao, ['I_COMITE_APROV', 'C_COMITE_APROV', 'E_COMITE_APROV', 'A_COMITE_APROV'])){ //PRJ - 438 - Bruno | bruno - prj 438 - bug 14400
+								$('#divConteudoOpcao').html(response);
+								$('#divRotina').hide();
+								$('#divConteudoOpcao').hide();
+							}else{							
+                                aux_ignoraHideMensagem = false; //prj - 438 - bruno - carregamento
+								$('#divRotina').show(); //PRJ - 438 - Bruno
+								$('#divConteudoOpcao').html(response);
+							}
 
 							if (operacao == 'ACIONAMENTOS') {
 								formataAcionamento();
-                        }
+							}
                         }
                         //consulta campos de portabilidade	
                         if (in_array(operacao, ['PORTAB_CRED_C', 'PORTAB_CRED_I', 'PORTAB_CRED_A'])) {
@@ -1463,20 +1703,30 @@ function controlaOperacao(operacao) {
                     }
                 }
 
+                //bruno - prj 438 - bug 18015
+                if (in_array(operacao, ['CF', 'TC', 'TE', 'I_CONTRATO', 'I_FINALIZA', 'A_FINALIZA'])){
+                    preencherTpemprst();
+                    exibeLinhaCarencia('#' + nomeForm);
+                    $('#tpemprst','#frmNovaProp').val(arrayProposta['tpemprst']);
+                }
+
 /*                if (in_array(operacao, ['C_ALIENACAO', 'AI_ALIENACAO', 'A_ALIENACAO', 'E_ALIENACAO', 'I_ALIENACAO', 'IA_ALIENACAO', 'A_BENS', 'AI_BENS']) && !bemCarregadoUfPa) {
                     busca_uf_pa_ass();
                 }*/
-                
+				if (operacao == "A_SOMBENS") {
+					showMsgAguardo('Aguarde, buscando bens...');
+				}
+
                 if ((typeof arrayProposta != typeof undefined) && (arrayProposta['tpemprst']== 0)) {
                     $("#idfiniof").desabilitaCampo();
                     $("#idfiniof").val(0);
                     arrayProposta['tpemprst'] = 0;
                 }
-                
+
                 if (possuiPortabilidade == 'S') {
                     $("#idfiniof").desabilitaCampo();
                 }
-                
+
             } else {
                 eval(response);
             }
@@ -1513,9 +1763,13 @@ function manterRotina(operacao) {
             mensagem = 'validando exclus&atilde;o';
             break;
         case 'VA':
+        	// PRJ 438 - Sprint 5 - Mateus Z (Mouts)
+        	var dsdopcao = "SVP";
             mensagem = 'alterando';
             break;
         case 'VI':
+        	// PRJ 438 - Sprint 5 - Mateus Z (Mouts)
+        	var dsdopcao = "TP";
             mensagem = 'incluindo';
             break;
         case 'E':
@@ -1548,6 +1802,7 @@ function manterRotina(operacao) {
 
 			var vlemprst = (typeof arrayProposta['vlemprst'] == 'undefined') ? '' : arrayProposta['vlemprst'];
 			var vlpreemp = (typeof arrayProposta['vlpreemp'] == 'undefined') ? '' : arrayProposta['vlpreemp'];
+			var vlprecar = (typeof arrayProposta['vlprecar'] == 'undefined') ? '' : arrayProposta['vlprecar'];
 			var tpemprst = (typeof arrayProposta['tpemprst'] == 'undefined') ? '' : arrayProposta['tpemprst'];
 			var qtpreemp = (typeof arrayProposta['qtpreemp'] == 'undefined') ? '' : arrayProposta['qtpreemp'];
 			var dsnivris = (typeof arrayProposta['nivrisco'] == 'undefined') ? '' : arrayProposta['nivrisco'];
@@ -1644,6 +1899,9 @@ function manterRotina(operacao) {
 			var inpesso1 = (typeof aux_inpesso0 == 'undefined') ? '' : aux_inpesso0;
 			var dtnasct1 = (typeof aux_dtnasct0 == 'undefined') ? '' : aux_dtnasct0;
 
+			// PRJ 438
+			var vlrecjg1 = (typeof aux_vlrencj0 == 'undefined') ? '' : aux_vlrencj0;
+
 			var nmdaval2 = (typeof aux_nmdaval1 == 'undefined') ? '' : aux_nmdaval1;
 			var nrcpfav2 = (typeof aux_nrcpfav1 == 'undefined') ? '' : aux_nrcpfav1;
 			var tpdocav2 = (typeof aux_tpdocav1 == 'undefined') ? '' : aux_tpdocav1;
@@ -1665,6 +1923,9 @@ function manterRotina(operacao) {
 			var nrender2 = (typeof aux_nrender1 == 'undefined') ? '' : aux_nrender1;
 			var complen2 = (typeof aux_complen1 == 'undefined') ? '' : aux_complen1;
 			var nrcxaps2 = (typeof aux_nrcxaps1 == 'undefined') ? '' : aux_nrcxaps1;
+
+			// PRJ 438
+			var vlrecjg2 = (typeof aux_vlrecjg1 == 'undefined') ? '' : aux_vlrecjg1;
     } 
     // Daniel
     var inpesso2 = (typeof aux_inpesso1 == 'undefined') ? '' : aux_inpesso1;
@@ -1673,8 +1934,6 @@ function manterRotina(operacao) {
     var dsdbeavt = (typeof aux_dsdbeavt == 'undefined') ? '' : aux_dsdbeavt;
 
     var vlpreant = (typeof vleprori == 'undefined') ? '' : vleprori;
-
-    var dsdopcao = "SVP";
 
     var nrctrant = (typeof nrctremp == 'undefined') ? '' : nrctremp;
 
@@ -1685,57 +1944,57 @@ function manterRotina(operacao) {
     //vlopescr = parseFloat( vlopescr.replace(',','.') );
 
     if (operacao != 'ENV_ESTEIRA' ) {
-    vlemprst = number_format(parseFloat(vlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    percetop = number_format(parseFloat(percetop.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vltotsfn = number_format(parseFloat(vltotsfn.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlrpreju = number_format(parseFloat(vlrpreju.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlsfnout = number_format(parseFloat(vlsfnout.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vloutras = number_format(parseFloat(vloutras.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlalugue = number_format(parseFloat(vlalugue.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlsalcon = number_format(parseFloat(vlsalcon.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vledvmt2 = number_format(parseFloat(vledvmt2.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlrenme2 = number_format(parseFloat(vlrenme2.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlsalari = number_format(parseFloat(vlsalari.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlmedfat = number_format(parseFloat(vlmedfat.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vledvmt1 = number_format(parseFloat(vledvmt1.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
-    vlrenme1 = number_format(parseFloat(vlrenme1.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlemprst = number_format(parseFloat(vlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		percetop = number_format(parseFloat(percetop.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vltotsfn = number_format(parseFloat(vltotsfn.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlrpreju = number_format(parseFloat(vlrpreju.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlsfnout = number_format(parseFloat(vlsfnout.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vloutras = number_format(parseFloat(vloutras.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlalugue = number_format(parseFloat(vlalugue.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlsalcon = number_format(parseFloat(vlsalcon.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vledvmt2 = number_format(parseFloat(vledvmt2.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlrenme2 = number_format(parseFloat(vlrenme2.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlsalari = number_format(parseFloat(vlsalari.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlmedfat = number_format(parseFloat(vlmedfat.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vledvmt1 = number_format(parseFloat(vledvmt1.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
+		vlrenme1 = number_format(parseFloat(vlrenme1.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
 
-    dtcnsspc = (dtcnsspc == '') ? '?' : dtcnsspc;
-    dtdpagto = (dtdpagto == '') ? '?' : dtdpagto;
-    dtoutspc = (dtoutspc == '') ? '?' : dtoutspc;
-    dtoutris = (dtoutris == '') ? '?' : dtoutris;
-    nrinfcad = (nrinfcad == '') ? 1 : nrinfcad;
-    idfiniof = (idfiniof == '') ? 1 : idfiniof;
+		dtcnsspc = (dtcnsspc == '') ? '?' : dtcnsspc;
+		dtdpagto = (dtdpagto == '') ? '?' : dtdpagto;
+		dtoutspc = (dtoutspc == '') ? '?' : dtoutspc;
+		dtoutris = (dtoutris == '') ? '?' : dtoutris;
+		nrinfcad = (nrinfcad == '') ? 1 : nrinfcad;
+		idfiniof = (idfiniof == '') ? 1 : idfiniof;
 
-    nrcpfcjg = normalizaNumero(nrcpfcjg);
-    nrcpfav1 = normalizaNumero(nrcpfav1);
-    cpfcjav1 = normalizaNumero(cpfcjav1);
-    nrcpfav2 = normalizaNumero(nrcpfav2);
-    cpfcjav2 = normalizaNumero(cpfcjav2);
-    nrcepav2 = normalizaNumero(nrcepav2);
-    nrctaava = normalizaNumero(nrctaava);
-    nrctaav2 = normalizaNumero(nrctaav2);
+		nrcpfcjg = normalizaNumero(nrcpfcjg);
+		nrcpfav1 = normalizaNumero(nrcpfav1);
+		cpfcjav1 = normalizaNumero(cpfcjav1);
+		nrcpfav2 = normalizaNumero(nrcpfav2);
+		cpfcjav2 = normalizaNumero(cpfcjav2);
+		nrcepav2 = normalizaNumero(nrcepav2);
+		nrctaava = normalizaNumero(nrctaava);
+		nrctaav2 = normalizaNumero(nrctaav2);
 
-    nrcepav1 = normalizaNumero(nrcepav1);
-    nrender1 = normalizaNumero(nrender1);
-    nrcxaps1 = normalizaNumero(nrcxaps1);
+		nrcepav1 = normalizaNumero(nrcepav1);
+		nrender1 = normalizaNumero(nrender1);
+		nrcxaps1 = normalizaNumero(nrcxaps1);
 
-    dsobserv = dsobserv.replace(/\r\n/g, ' ').replace("'", "");
-    dsobserv = removeCaracteresInvalidos(dsobserv);
+		dsobserv = dsobserv.replace(/\r\n/g, ' ').replace("'", "");
+		dsobserv = removeCaracteresInvalidos(dsobserv);
     }   
 
     var dscatbem = "";
     //Carrega a lista de bens para enviar junto no POST
     if (typeof arrayHipotecas != typeof undefined){
-    for (i in arrayHipotecas) {
-        dscatbem += arrayHipotecas[i]['dscatbem'] + '|';
-    }
+		for (i in arrayHipotecas) {
+			dscatbem += arrayHipotecas[i]['dscatbem'] + '|';
+		}
     }
 
     if (typeof arrayAlienacoes != typeof undefined){    
-    for (i in arrayAlienacoes) {
-        dscatbem += arrayAlienacoes[i]['dscatbem'] + '|';
-    }
+		for (i in arrayAlienacoes) {
+			dscatbem += arrayAlienacoes[i]['dscatbem'] + '|';
+		}
     }
 
     // Executa script de confirmação através de ajax
@@ -1781,12 +2040,16 @@ function manterRotina(operacao) {
             dtlibera: dtlibera, inconcje: inconcje, flgconsu: flgconsu,
             blqpreap: (bloquear_pre_aprovado ? 1 : 0),
             idcobope: idcobope,
-            idcarenc: idcarenc, dtcarenc: dtcarenc,
+            idcarenc: idcarenc, dtcarenc: dtcarenc, vlprecar: vlprecar,
             // Daniel
             inpesso1: inpesso1, dtnasct1: dtnasct1, dscatbem: dscatbem,
             inpesso2: inpesso2, dtnasct2: dtnasct2, cddopcao: cddopcao,
             resposta: resposta, idfiniof: idfiniof, vliofepr: vliofepr,
             vlrtarif: vlrtarif, vlrtotal: vlrtotal, vlfinanc: vlfinanc,
+            // PRJ 438
+            vlrecjg1: vlrecjg1, vlrecjg2: vlrecjg2, 
+            //bruno - prj 438 - bug 14235
+            aux_ingarapr: __aux_ingarapr,
             executandoProdutos: executandoProdutos, redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1795,21 +2058,21 @@ function manterRotina(operacao) {
         },
         success: function(response) {
             try {
-                
+
                 eval(response);
 
-               if (operacao != 'ENV_ESTEIRA'){ 
-                if (typeof arrayDadosPortabilidade['nrcnpjbase_if_origem'] != 'undefined' &&
+				if (operacao != 'ENV_ESTEIRA'){
+					if (typeof arrayDadosPortabilidade['nrcnpjbase_if_origem'] != 'undefined' &&
                         typeof arrayDadosPortabilidade['nrcontrato_if_origem'] != 'undefined' &&
                         typeof arrayDadosPortabilidade['nmif_origem'] != 'undefined' &&
                         cddopcao == 'I') {
 
-                    //cadastra a proposta de portabilidade
-                    cadastraPortabilidade(nrdconta, nrctremp, 1,
+						//cadastra a proposta de portabilidade
+						cadastraPortabilidade(nrdconta, nrctremp, 1,
                             arrayDadosPortabilidade['nrcnpjbase_if_origem'],
                             arrayDadosPortabilidade['nmif_origem'],
                             arrayDadosPortabilidade['nrcontrato_if_origem'])
-                }
+					}
                 }
 
                 return false;
@@ -1896,7 +2159,6 @@ function verificaQtDiaLib() {
     switch ($('#tpemprst').val()) {
         case '0': // TR
             $('#qtdialib').habilitaCampo();
-            $("#qtdialib").datepicker('enable');
             if ($('#qtdialib').val().length > 1) {
                 showError('error', 'A data de libera&ccedil;&atilde;o n&atilde;o pode ser maior que 9 dias.', 'Alerta - Aimaro', 'focaCampoErro(\'qtdialib\',\'frmNovaProp\');bloqueiaFundo(divRotina);');
                 $('#qtdialib').val('0');
@@ -1907,7 +2169,6 @@ function verificaQtDiaLib() {
             break;
         case '1': // Pre-Fixado
             $('#qtdialib').desabilitaCampo();
-            $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
             $('#qtdialib').change();
             if (possuiPortabilidade == 'S') {
@@ -1919,7 +2180,6 @@ function verificaQtDiaLib() {
         case '2': // Pos-Fixado
             $('#flgpagto').desabilitaCampo();
             $('#qtdialib').desabilitaCampo();
-            $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
             $('#qtdialib').change();
             if (possuiPortabilidade == 'S') {
@@ -1980,22 +2240,64 @@ function controlaLayout(operacao) {
         var metodoTabela = 'controlaOperacao(\'TA\')';
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
 
+        // PRJ 438 - Sprint 5 - Tratar se deve aparecer o botão "Consulta Automatizada"
+		//PRJ - 438 - inobriga - bruno
+        /* Carregar evento após inserção dos componentes no DOM da página. Anterior a isto não funciona. */
+		var firstTr = $('#divEmpres table tr.corSelecao');
+        inobriga = $(firstTr).find("input[id='inobriga']").val();
+        $('#divEmpres table tr').bind('click',function(){
+			var tr = $(this);
+			inobriga = $(tr).find("input[id='inobriga']").val();
+			cdfinemp = $(tr).find("input[id='cdfinemp']").val();
+			if(inobriga == "N"){ //bruno - prj 438 - ajustes automatizada
+				$('#btConsultaAutomatizada').show();
+			}else{
+				$('#btConsultaAutomatizada').hide();
+			}
+		});
+
+		var inobrigaToTr = $(firstTr).find("input[id='inobriga']").val();
+		var cdfinempToTr = $(firstTr).find("input[id='cdfinemp']").val();
+		
+		if(inobrigaToTr == "N"){ //bruno - prj 438 - ajustes automatizada
+			$('#btConsultaAutomatizada').show();
+		}else{
+			$('#btConsultaAutomatizada').hide();
+		}
+
+		// PRJ 438 - Sprint 5 - Tratar se deve aparecer o botão "Alterar Somente Bens"
+		var tplcremp = $("#divEmpres table tr.corSelecao").find("input[id='tplcremp']").val();
+		
+		if(tplcremp == 1 || tplcremp == 2){ // Pre fixado ou Pos Fixado
+			$('#btAlteraSomenteBens').show();
+		}else{
+			$('#btAlteraSomenteBens').hide();
+		}
+
+		$('#divEmpres table tr').bind('click',function(){
+			var tr = $(this);
+			var tplcremp = $(tr).find("input[id='tplcremp']").val();
+			if(tplcremp == 1 || tplcremp == 2){ // Pre fixado ou Pos Fixado
+				$('#btAlteraSomenteBens').show();
+			}else{
+				$('#btAlteraSomenteBens').hide();
+			}
+		});
+
         // Operação Alterando/Incluindo
     } else if (in_array(operacao, ['TI', 'TE', 'TC', 'TA', 'CF', 'A_NOVA_PROP', 'A_NUMERO', 'I_CONTRATO', 'I_FINALIZA', 'A_FINALIZA', 'I_INICIO', 'A_INICIO', 'A_VALOR', 'A_AVALISTA'])) {
 
         nomeForm = 'frmNovaProp';
-        altura = '340px';
-        largura = '465px';
+        altura = '260px';
+        largura = '650px';
 
         inconfir = 1;
         inconfi2 = 30;
 
-        var rRotulos = $('label[for="nivrisco"],label[for="qtpreemp"],label[for="vlpreemp"],label[for="vlemprst"],label[for="flgpagto"],label[for="tpemprst"],label[for="dsctrliq"],label[for="vlfinanc"]', '#' + nomeForm);
+        var rRotulos = $('label[for="nivrisco"],label[for="qtpreemp"],label[for="vlpreemp"],label[for="vlemprst"],label[for="tpemprst"],label[for="dsctrliq"],label[for="vlfinanc"],label[for="cdlcremp"],label[for="cdfinemp"],label[for="dtdpagto"]', '#' + nomeForm);
         var cTodos = $('select,input', '#' + nomeForm);
-        var r_Linha1 = $('label[for="cdlcremp"]', '#' + nomeForm);
         var rCet = $('label[for="percetop"]', '#' + nomeForm);
         var rDiasUteis = $('#duteis', '#' + nomeForm);
-        var r_Linha2 = $('label[for="nivcalcu"],label[for="flgimpnp"],label[for="dtdpagto"],label[for="vlpreemp"]', '#' + nomeForm);
         var cCodigo = $('#cdfinemp,#idquapro,#cdlcremp', '#' + nomeForm);
         var cDescricao = $('#dslcremp,#dsquapro,#dsfinemp', '#' + nomeForm);
 
@@ -2025,7 +2327,10 @@ function controlaLayout(operacao) {
         var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
         var rIdcarenc = $('label[for="idcarenc"]', '#' + nomeForm);
         var rDtcarenc = $('label[for="dtcarenc"]', '#' + nomeForm);
+        var rVlPreCar = $('label[for="vlprecar"]', '#' + nomeForm);
 		var rVlFinanc = $('label[for="vlfinanc"]', '#' + nomeForm);
+		var rIdfiniof = $('label[for="idfiniof"]', '#' + nomeForm);
+		var rFlgdocje = $('label[for="flgdocje"]', '#' + nomeForm);		
 
         var cNivelRic = $('#nivrisco', '#' + nomeForm);
         var cRiscoCalc = $('#nivcalcu', '#' + nomeForm);
@@ -2057,6 +2362,9 @@ function controlaLayout(operacao) {
         var rImgCalen = $('#imgcalen', '#' + nomeForm);
         var cIdcarenc = $('#idcarenc', '#' + nomeForm);
         var cDtcarenc = $('#dtcarenc', '#' + nomeForm);
+        var cCoresp = $('input[name="flgdocje"]', '#' + nomeForm);
+        var cIdfiniof = $('#idfiniof', '#' + nomeForm);
+        var cVlPreCar = $('#vlprecar', '#' + nomeForm);
 
         cNivelRic.addClass('rotulo').css('width', '90px');
         cRiscoCalc.addClass('').css('width', '108px');
@@ -2066,7 +2374,7 @@ function controlaLayout(operacao) {
         cVlPrest.addClass('moeda').css('width', '90px');
         cFinali.addClass('rotulo').css('width', '35px');
         cDsFinali.css('width', '108px');
-        cQtParc.addClass('rotulo').css('width', '50px').setMask('INTEGER', 'zz9', '', '');
+        cQtParc.addClass('rotulo codigo').css('width', '50px').attr('maxlength', '3');//.setMask('INTEGER', 'zz9', '', ''); //prj - 438 - bruno - zero
         cQualiParc.addClass('rotulo').css('width', '35px');
         cDsQualiParc.addClass('').css('width', '108');
         cDebitar.addClass('rotulo').css('width', '90px');
@@ -2082,16 +2390,18 @@ function controlaLayout(operacao) {
         cLiquidacoes.addClass('rotulo alphanum').css('width', '320px');
         cIdcarenc.css('width', '108px');
         cDtcarenc.css('width', '108px');
+        cCoresp.css('width', '22px');
+        cVlPreCar.addClass('moeda').css('width', '108px');
 
-        rRotulos.addClass('rotulo').css('width', '75px');
+        rRotulos.addClass('rotulo').css('width', '140px');
 
-        rVliofepr.addClass('rotulo').css('width', '75px');
+        rVliofepr.addClass('rotulo').css('width', '140px');
         cVliofepr.addClass('rotulo moeda').css('width', '90px');
-        rVlrtarif.addClass('rotulo').css('width', '75px');
+        rVlrtarif.addClass('rotulo').css('width', '140px');
         cVlrtarif.addClass('rotulo moeda').css('width', '90px');
-        rVlrtotal.addClass('rotulo').css('width', '75px');
+        rVlrtotal.addClass('rotulo').css('width', '140px');
         cVlrtotal.addClass('rotulo moeda').css('width', '90px');
-        rVlFinanc.addClass('rotulo').css('width', '75px');
+        rVlFinanc.addClass('rotulo').css('width', '140px');
         cVlFinanc.addClass('rotulo moeda').css('width', '90px');
 
         rDtLiberar.css('width', '97px');
@@ -2102,17 +2412,21 @@ function controlaLayout(operacao) {
         rImgCalen.css('margin-top', '-5px');
 
         rRiscoCalc.addClass('').css('width', '153px');
-        rLnCred.addClass('').css('width', '95px');
-        rFinali.addClass('').css('width', '95px');
-        rQualiParc.addClass('').css('width', '95px');
+        rLnCred.addClass('').css('width', '140px');
+        rFinali.addClass('').css('width', '140px');
+        rQualiParc.addClass('rotulo-linha').css('width', '230px');
         rPercCET.addClass('').css('width', '153px');
-        rDtPgmento.addClass('').css('width', '159px');
+        rDtPgmento.addClass('').css('width', '140px');
         rDtUltPag.addClass('').css('width', '321px');
         rDtLiquidacao.addClass('rotulo').css('width', '265px');
         rNtPromis.addClass('rotulo-linha').css('width', '318px');
         rDiasUteis.addClass('rotulo-linha');
-        rIdcarenc.addClass('rotulo').css('width', '75px');
-        rDtcarenc.addClass('').css('width', '135px');
+        rIdcarenc.addClass('rotulo-linha').css('width', '230px');
+        rDtcarenc.addClass('rotulo-linha').css('width', '230px');
+        rIdfiniof.addClass('rotulo-linha').css('width', '154px');
+        rDebitar.addClass('rotulo-linha').css('width', '230px');
+        rFlgdocje.addClass('rotulo-linha').css('width', '158px');
+        rVlPreCar.addClass('rotulo-linha').css('width', '230px');
 
         cTodos.addClass('campo');
         cDescricao.addClass('descricao');
@@ -2127,13 +2441,32 @@ function controlaLayout(operacao) {
                 cQtParc.focus();
             }
 
+            /* prj - 438 - bruno - zero */
+            $('#vlemprst', '#frmNovaProp').unbind('click').bind('click',function(){
+            	if($(this).val() == "0,00")
+	            	$(this).val(''); //prj - 438 - bruno - zero - 2
+            });
+            //prj - 438 - bruno - zero - 2
+            $('#vlemprst', '#frmNovaProp').bind('focus',function(){
+            	if($(this).val() == "0,00")
+	            	$(this).val(''); //prj - 438 - bruno - zero - 2
+            });
+
             $('#tpemprst', '#frmNovaProp').unbind('change').bind('change', function() {
+				if ($('#tpemprst', '#frmNovaProp').val() == 0 && // Price TR
+				   (possuiPortabilidade == 'S')) { 
+                    showError('error', 'Produto TR n&atilde;o permitido para portabilidade, favor selecionar outro produto!', 'Aten;&atilde;o', '$("#tpemprst","#frmNovaProp").focus();bloqueiaFundo(divRotina);');					
+					return false;
+				} 
 
                 // Reseta os campos Finalidade e Linha de Credito
-                cLnCred.val(0);
+                cLnCred.val("");
                 cDsLnCred.val('');
-                cFinali.val(0);
+                cFinali.val("");
                 cDsFinali.val('');
+
+                cLnCred.attr('aux','');
+                cFinali.attr('aux','');
 
                 if ($('#tpemprst', '#frmNovaProp').val() == 1 || // Price Pre-Fixado
                     $('#tpemprst', '#frmNovaProp').val() == 2) { // Pos-Fixado
@@ -2150,19 +2483,58 @@ function controlaLayout(operacao) {
                 rProposta.css('width', '321px');
 
                 verificaQtDiaLib();
-                exibeLinhaCarencia();
+                exibeLinhaCarencia('#' + nomeForm);
+                controlaNavegacaoCamposNovaProposta();
+
+                if ($('#tpemprst', '#frmNovaProp').val() == 2) { // Pos-Fixado
+                    $('label[for="idfiniof"]', '#frmNovaProp').css('width', '154px');
+                }
             });
 
-            $('#idcarenc', '#frmNovaProp').unbind('change').bind('change', function() {
-                calculaDataCarencia();
+            cIdcarenc.unbind('change').bind('change', function() {
+                showMsgAguardo('Aguarde, validando dados ...');
+                calculaDataCarencia('#' + nomeForm);
+            	setTimeout('validaDados("' + cdcooper + '")', 400);
             });
 
-            $('#dtdpagto', '#frmNovaProp').unbind('blur').bind('blur', function() {
+            cDtPgmento.unbind('blur').bind('blur', function() {
                 // Se for Pos Fixado
                 if ($('#tpemprst', '#frmNovaProp').val() == 2) {
-                    calculaDataCarencia();
-        }
+                    calculaDataCarencia('#' + nomeForm);
+                 }
             });
+
+            var a = '';
+            cDtPgmento.unbind('change').bind('change', function() { //bruno - prj 438 - bug 14625
+                __flag_dataPagamento = false;
+                if(cDtPgmento.val().length == 10){
+                   showMsgAguardo('Aguarde, validando dados ...');
+                   validaDados(cdcooper, 'TELA_SOLICITACAO');
+                }
+            });    
+            cDtPgmento.unbind('keypress').bind('keypress', function(e,param1) {
+
+                if(typeof param1 == 'undefined'){
+                    param1 = {keyCode: 0};
+                }
+
+                if(e.keyCode == __BOTAO_ENTER || e.keyCode == __BOTAO_TAB || param1.keyCode == __BOTAO_ENTER){
+                    if(cDtPgmento.val().length == 10){
+                       showMsgAguardo('Aguarde, validando dados ...');
+                       validaDados(cdcooper, 'TELA_SOLICITACAO');
+                    }
+                }
+            });
+
+            cQtParc.unbind('change').bind('change', function() {
+	            showMsgAguardo('Aguarde, validando dados ...');
+	            setTimeout('validaDados("' + cdcooper + '")', 400);
+	        });
+	        
+	        cIdfiniof.unbind('change').bind('change', function() {
+	            showMsgAguardo('Aguarde, validando dados ...');
+	            setTimeout('validaDados("' + cdcooper + '")', 400);
+	        });
 
         }
 
@@ -2180,9 +2552,9 @@ function controlaLayout(operacao) {
             cDtlibera.desabilitaCampo();
             cDtUltPag.desabilitaCampo();
             cPercCET.desabilitaCampo();
+            cVlPreCar.desabilitaCampo();
             if (arrayProposta['tpemprst'] == '1') {
                 $("#qtdialib").desabilitaCampo();
-                $("#qtdialib").datepicker('disable');
             }
 
             if (cDebitar.val() == 'yes') {
@@ -2250,7 +2622,8 @@ function controlaLayout(operacao) {
             cTodos.habilitaCampo();
             cNivelRic.desabilitaCampo();
             cRiscoCalc.desabilitaCampo();
-            cVlEmpr.desabilitaCampo();
+            //bruno - prj 438 - bug 13641
+            //cVlEmpr.desabilitaCampo();
             cVlPrest.desabilitaCampo();
             cQualiParc.desabilitaCampo();
             cLiquidacoes.attr('disabled', true);
@@ -2260,7 +2633,6 @@ function controlaLayout(operacao) {
 
             if (arrayProposta['tpemprst'] == '1') {
                 $("#qtdialib").desabilitaCampo();
-                $("#qtdialib").datepicker('disable');
             }
 
             if (arrayProposta['tpemprst'] == '0') {
@@ -2285,7 +2657,7 @@ function controlaLayout(operacao) {
 
             cVlEmpr.unbind('change').bind('change', function() {
 
-                if (parseFloat($(this).replace(/[.R$ ]*/g, '').replace(',', '.')) >
+                if (parseFloat($(this).val().replace(/[.R$ ]*/g, '').replace(',', '.')) >
                         parseFloat(arrayCooperativa['vlemprst'].replace(/[.R$ ]*/g, '').replace(',', '.'))) {
                     cProposta.val('yes');
                 }
@@ -2296,11 +2668,11 @@ function controlaLayout(operacao) {
                 // PRJ 438 - Adicionado IF para não entrar quando for a opção "Alterar toda a proposta", para assim manter 
             	// o campo Data pagto desabilitado.
             	if(operacao != 'A_NOVA_PROP') {
-                if ($(this).val() == 'yes') {
-                    cDtPgmento.desabilitaCampo();
-                } else {
-                    cDtPgmento.habilitaCampo();
-                }
+					if ($(this).val() == 'yes') {
+						cDtPgmento.desabilitaCampo();
+					} else {
+						cDtPgmento.habilitaCampo();
+					}
             	}
 
                 if ($(this).val() == 'yes') {
@@ -2346,16 +2718,17 @@ function controlaLayout(operacao) {
                 $("#btVoltar", "#divBotoes").unbind('click').bind('click', function() {
                     controlaOperacao('PORTAB_CRED_A');
                 });
-                
+
                 //atribui o novo parametro para o evento click do botao
                 $("#btSalvar", "#divBotoes").attr('onClick', "buscaLiquidacoes('PORTAB_A');");
                 //fiz esta adaptacao tecnica para obrigar o IE a executar a nova funcao se o botao for clicado.
                 $("#btSalvar", "#divBotoes").unbind('click').bind('click', function() {
                     buscaLiquidacoes('PORTAB_A');
                 });
-                
+
                 //desabilita o campo tipo de emprestimo
-                cTipoEmpr.attr('disabled', 'disabled');
+                //cTipoEmpr.attr('disabled', 'disabled');
+				cTipoEmpr.habilitaCampo(); // Portabilidade
                 //carrega finalidade especifica de portabilidade
                 carregaFinalidadePortabilidade();
             } else if (operacao == 'TC') {
@@ -2364,11 +2737,14 @@ function controlaLayout(operacao) {
                     controlaOperacao('PORTAB_CRED_C');
                 });
             } else if (operacao == 'TI' || operacao == 'I_INICIO') {
-                //carrega o campo finalidade 
+                //carrega o campo finalidade
                 if ($("#cdfinemp").val() == 0 && $("#dsfinemp").val() == '') {
                     carregaFinalidadePortabilidade();
                 }
-                cTipoEmpr.attr('disabled', 'disabled');
+                
+				// P298_2_2 - Habilitar o campo tipo de emprestimo 
+                //cTipoEmpr.attr('disabled', 'disabled');
+				cTipoEmpr.habilitaCampo();
                 
                 $("#btVoltar", "#divBotoes").attr('onClick', "controlaOperacao('PORTAB_CRED_I');");                
                 //seta acao do botao voltar
@@ -2389,9 +2765,10 @@ function controlaLayout(operacao) {
         }
 
 		// PRJ 438 - Desabilitar o campo Data pagto na opção "Alterar toda a proposta"
-        if (operacao == 'A_NOVA_PROP') {
-            cDtPgmento.desabilitaCampo();
-        }
+        // bruno - prj 438 - bug 13658
+        // if (operacao == 'A_NOVA_PROP') {
+        //     cDtPgmento.desabilitaCampo();
+        // }
 
         //Controle de ordem de digitação
         cTipoEmpr.attr('tabindex', parseInt(cRiscoCalc.attr('tabindex')) + 1);
@@ -2425,6 +2802,18 @@ function controlaLayout(operacao) {
         cVliofepr.desabilitaCampo();
         cVlrtotal.desabilitaCampo();
         cVlFinanc.desabilitaCampo();
+
+        cProposta.hide();
+		cNtPromis.hide();
+
+        cTipoEmpr.focus();
+
+        controlaNavegacaoCamposNovaProposta();
+
+        //Se não tem conjuge, desabilita campo 'Co-responsável'
+        if (arrayRendimento['flgconju'] == 'no') {
+            cCoresp.desabilitaCampo();
+        }
 
     } else if (in_array(operacao, ['C_DADOS_PROP', 'A_DADOS_PROP', 'I_DADOS_PROP'])) {
 
@@ -2572,12 +2961,12 @@ function controlaLayout(operacao) {
     } else if (in_array(operacao, ['C_DADOS_AVAL', 'A_DADOS_AVAL', 'I_DADOS_AVAL', 'AI_DADOS_AVAL', 'IA_DADOS_AVAL'])) {
 
         nomeForm = 'frmDadosAval';
-        altura = '420px'; // Zimmermann 392
+        altura = '450px'; // Zimmermann 392
         largura = '508px';
 
         var cTodos = $('select,input', '#' + nomeForm + ' fieldset:eq(0)');
         //odirlei PRJ339
-        var rRotulo = $('label[for="qtpromis"],label[for="nrcpfcgc"],label[for="tpdocava"]', '#' + nomeForm);
+        var rRotulo = $('label[for="qtpromis"],label[for="nrcpfcgc"],label[for="tpdocava"],label[for="nmdavali"],label[for="nrctaava"],label[for="inpessoa"],label[for="cdnacion"]', '#' + nomeForm);
 
         var rConta = $('label[for="nrctaava"]', '#' + nomeForm);
         //odirlei PRJ339
@@ -2589,6 +2978,7 @@ function controlaLayout(operacao) {
         var cQntd = $('#qtpromis', '#' + nomeForm);
         var cConta = $('#nrctaava', '#' + nomeForm);
         var cCPF = $('#nrcpfcgc', '#' + nomeForm);
+        var cCPF_E = $('#nrcpfcgcE', '#' + nomeForm); //PRJ - 438 - Bruno
         var cNome = $('#nmdavali', '#' + nomeForm);
         var cDoc = $('#tpdocava', '#' + nomeForm);
         var cNrDoc = $('#nrdocava', '#' + nomeForm);
@@ -2597,53 +2987,59 @@ function controlaLayout(operacao) {
         var cDsnacio = $('#dsnacion', '#' + nomeForm);
         var cDtnascto = $('#dtnascto', '#' + nomeForm);
 
-        rRotulo.addClass('rotulo').css('width', '40px');
+        rRotulo.addClass('rotulo').css('width', '80px');
         //odirlei PRJ339
-        rConta.css('width', '70px');
-        rInpessoa.css('width', '70px');
-        rNmdavali.css('width', '45px');
-        rNacio.addClass('rotulo').css('width', '40px');
-        rDtnascto.css('width', '72px');
+        rConta.css('width', '80px');
+        rInpessoa.css('width', '80px');
+        rNmdavali.css('width', '80px');
+        rDtnascto.addClass('rotulo-linha').css('width', '95px');
 
         cQntd.css('width', '60px').setMask('INTEGER', 'zz9', '', '');
         cConta.addClass('conta pesquisa').css('width', '115px');
         cCPF.css('width', '134px');
         cNome.addClass('alphanum').css('width', '255px').attr('maxlength', '40');
-        cDoc.css('width', '50px');
+        cDoc.css('width', '50px').hide();
         cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '40');        
         cInpessoa.css({'width': '99px'});
-        cNacio.addClass('codigo pesquisa').css('width', '50px');
-        cDsnacio.css('width', '155px');
+        cNacio.addClass('codigo pesquisa').css('width', '30px');
+        cDsnacio.css('width', '150px');
         cDtnascto.addClass('data').css({'width': '100px'});
 
-        cConta.unbind('change').bind('change', function() {
+        //bruno - prj 438 - bug 14444
+        // cConta.unbind('change').bind('change', function() {
 
-            nrctaava = normalizaNumero($(this).val());
+        //     nrctaava = normalizaNumero($(this).val());
 
-            if (nrctaava != 0) {
-                // Verifica se a conta é válida
-                if (!validaNroConta(nrctaava)) {
-                    showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Anota', 'focaCampoErro(\'nrctaava\',\'frmDadosAval\');bloqueiaFundo(divRotina);');
-                    return false;
-                } else {
-                    Busca_Associado(nrctaava, 0, contAvalistas - 1);
-                }
-            }
-        });
+        //     if (nrctaava != 0) {
+        //         // Verifica se a conta é válida
+        //         if (!validaNroConta(nrctaava)) {
+        //             showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Anota', 'focaCampoErro(\'nrctaava\',\'frmDadosAval\');bloqueiaFundo(divRotina);');
+        //             return false;
+        //         } else {
+        //             Busca_Associado(nrctaava, 0, contAvalistas - 1);
+        //         }
+        //     }
+        // });
 
         // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação (keydown)
-        cConta.unbind('keydown').bind('keydown', function(e) {
+        cConta.unbind('keydown').bind('keydown', function(e, triggerEvent) { //bruno - prj 438 - bug 14444
+
+        	if(typeof triggerEvent == 'undefined'){
+                triggerEvent = {keyCode: 0};
+            }
+
 
             if (divError.css('display') == 'block') {
                 return false;
             }
 
             // Se é a tecla TAB, verificar numero conta e realizar as devidas operações
-            if (e.keyCode == 9) {
+            if (e.keyCode == 13 || e.keyCode == 9 || triggerEvent.keyCode == __BOTAO_ENTER) {
 
                 // Armazena o número da conta na variável global
                 nrctaava = normalizaNumero($(this).val());
                 nrctaavaOld = nrctaava;
+                __last_avalista.nrctaava = nrctaava; //bruno - prj 438 - bug 14444
 
                 if (nrctaava != 0) {
                     // Verifica se a conta é válida
@@ -2669,6 +3065,7 @@ function controlaLayout(operacao) {
                     cNome.focus();*/
                     cInpessoa.habilitaCampo();
                     cInpessoa.focus();
+                    
                 }
 
                 return false;
@@ -2684,13 +3081,14 @@ function controlaLayout(operacao) {
             }
 
             // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
-            if (e.keyCode == 9) {
-                
+            if (e.keyCode == 9 || e.keyCode == 13) { //prj - 438 - bruno - enter
+
                 pessoa = normalizaNumero(cInpessoa.val());
                 if (pessoa == "" ) {
                     showError('error', 'Selecione o tipo de pessoa', 'Aten;&atilde;o', '$("#inpessoa","#frmDadosAval").focus();bloqueiaFundo(divRotina);');
                     return false;
                 } else {
+                
                     cCPF.habilitaCampo();
                     cCPF.focus();
                 }
@@ -2698,14 +3096,17 @@ function controlaLayout(operacao) {
                 return false;
             }
         });
-        
-        // Odirlei PRJ339
-        // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação (keydown)
-        cCPF.unbind('change').bind('change', function (e) {
+
+        // PRJ 438 - Sprint 5 - Bug 13494
+        // Se pressionar alguma tecla no campo cpf, verificar a tecla pressionada e toma a devida ação (keydown)
+        cCPF.unbind('keydown').bind('keydown', function (e) {
 
             if (divError.css('display') == 'block') {
                 return false;
             }
+
+            // Se é a tecla TAB, verificar numero conta e realizar as devidas operações
+            if (e.keyCode == 13 || e.keyCode == 9) {
 
                 // Armazena o número da conta na variável global
                 nrcpfcgc = normalizaNumero(cCPF.val());
@@ -2717,66 +3118,108 @@ function controlaLayout(operacao) {
 
                     // Valida o CPF
                     if (!validaCpfCnpj(nrcpfcgc, pessoa)) {
-                        showError('error', 'CPF/CNPJ inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#inpessoa","#frmDadosAval").focus();bloqueiaFundo(divRotina);');
+                        showError('error', 'CPF/CNPJ inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#nrcpfcgc","#frmDadosAval").focus();bloqueiaFundo(divRotina);');
                         return false;
                     } else {
 
-                        Busca_Associado(0, nrcpfcgc, contAvalistas - 1);
-
-                    /*
-    
-                    Permite que o acesso via CRM faca o cadastro de avalistas.
-                    Ao digitar um cpf/cnpj que nao possui idpessoa, a tela
-                    ira habilitar digitacao nos campos que anteriormente a
-                    esta implementacao, estavam bloqueados / somente leitura.
-
-                    */
-
-                    // Se nao for acessado via CRM, pode habilitar os campos
-                    //if ($('#crm_inacesso', '#' + nomeForm).val() != 1 ) {
-
-                        cTodos.habilitaCampo();
-                        cTodos_1.habilitaCampo();
-                        cTodos_2.habilitaCampo();
-                        cTodos_3.habilitaCampo();
-                        cTodos_4.habilitaCampo();
-                        cConta.desabilitaCampo().val(nrctaava);
-                        cQntd.desabilitaCampo().val(arrayProposta['qtpromis']);
-                        
-                        $('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeForm).desabilitaCampo();
-                        controlaPesquisas();
-                        cNome.focus();
-                        
-                    //}
+                    	//PRJ 438 - Sprint 4 - Comentado chamada da função 'Busca_Associado', pois será usado a nova função 'buscarContasPorCpfCnpj'
+                        // Busca_Associado(0, nrcpfcgc, contAvalistas - 1);
+                        buscarContasPorCpfCnpj('aval');
 
                     }
-
-                    // Caso em que o cpf é zero
-                } else {
-
                 }
 
                 return false;
-        
+
+            }        
         });
+
+        // PRJ 438 - Sprint 4 - Capturar alteração no Tipo de Natureza selecionado para controlar os campos da tela
+        cInpessoa.unbind('change').bind('change', function(e) {
+
+        	// PRJ 438 - Sprint 4 - Chamar função para ajustar o layout da tela passando false no parametro cooperado
+        	controlaCamposTelaAvalista(false);
+
+        });
+
+        // PRJ 438 - Sprint 4 - Capturar alteração no Codigo Nacionalidade para focar o próximo campo
+        cNacio.unbind('change').bind('change', function(e) {
+        	cDtnascto.focus();
+        });
+
+		/* prj - 438 - enter - bruno */
+        controlaEventoCamposTelaAvalista();
 
         var cTodos_1 = $('select,input', '#' + nomeForm + ' fieldset:eq(1)');
 
-        var rRotulo_1 = $('label[for="nmconjug"],label[for="tpdoccjg"]', '#' + nomeForm);
+        var rRotulo_1 = $('label[for="nmconjug"],label[for="tpdoccjg"],label[for="nrctacjg"]', '#' + nomeForm);
         var rCpf_1 = $('label[for="nrcpfcjg"]', '#' + nomeForm);
+        var rDoc_1 = $('label[for="tpdoccjg"]', '#' + nomeForm);
+        var rVlrencjg = $('label[for="vlrencjg"]', '#' + nomeForm);
+        
 
         var cConj = $('#nmconjug', '#' + nomeForm);
         var cCPF_1 = $('#nrcpfcjg', '#' + nomeForm);
         var cDoc_1 = $('#tpdoccjg', '#' + nomeForm);
         var cNrDoc_1 = $('#nrdoccjg', '#' + nomeForm);
+        var cNrctacjg = $('#nrctacjg', '#' + nomeForm);
+        var cVlrencjg = $('#vlrencjg', '#' + nomeForm);
 
         rRotulo_1.addClass('rotulo').css('width', '50px');
-        rCpf_1.addClass('').css('width', '40px');
+        rCpf_1.addClass('rotulo-linha').css('width', '117px');
+        rDoc_1.hide();
+        rVlrencjg.addClass('rotulo-linha').css('width', '70px');
 
-        cConj.addClass('alphanum').css('width', '250px').attr('maxlength', '40');
+        cConj.addClass('alphanum').css('width', '200px').attr('maxlength', '40');
         cCPF_1.addClass('cpf').css('width', '134px');
-        cDoc_1.css('width', '50px');
-        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '40');
+        cDoc_1.css('width', '50px').hide();
+        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '40').hide();
+        cNrctacjg.addClass('conta');
+        cVlrencjg.addClass('moeda').css('width', '100px');
+
+        // PRJ 438 - Buscar dados da conta digitada
+        //prj 438 - bug 13951
+        cNrctacjg.unbind('keydown').bind('keydown', function (e, param1) {
+            if(typeof param1 == 'undefined'){
+                param1 = {keyCode: 0};
+            }
+
+            if (e.keyCode == __BOTAO_ENTER || e.keyCode == __BOTAO_TAB || param1.keyCode == __BOTAO_ENTER) {
+            nrctacjg = normalizaNumero($(this).val());
+
+            if (nrctacjg != 0) {
+                // Verifica se a conta é válida
+                if (!validaNroConta(nrctacjg)) {
+                    showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Anota', 'focaCampoErro(\'nrctacjg\',\'frmDadosAval\');bloqueiaFundo(divRotina);');
+                    return false;
+                } else {
+                    buscarDadosContaConjuge(nomeForm);
+                }
+            }
+            }
+        });
+
+        // PRJ 438 - Buscar contas do CPF/CNPJ digitado
+        //prj 438 - bug 13951
+        cCPF_1.unbind('keydown').bind('keydown', function (e) {
+            if (e.keyCode == __BOTAO_ENTER || e.keyCode == __BOTAO_TAB) {
+                //$('#nrcpfcjg', '#' + nomeForm).unbind('change').bind('change',function (e) {
+            // Armazena o número da conta na variável global
+            nrcpfcgc = normalizaNumero(cCPF_1.val());
+
+            if (nrcpfcgc != 0) {
+                // Valida o CPF
+                if (!validaCpfCnpj(nrcpfcgc, 1)) {
+                    showError('error', 'CPF inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#nrcpfcjg","#frmDadosAval").focus();bloqueiaFundo(divRotina);');
+                    return false;
+                } else {
+
+                    buscarContasPorCpfCnpj('aval-cje');
+
+                }
+				}
+			}
+        });
 
         var cTodos_2 = $('select,input', '#' + nomeForm + ' fieldset:eq(2)');
 
@@ -2826,13 +3269,13 @@ function controlaLayout(operacao) {
         var rFone = $('label[for="nrfonres"]', '#' + nomeForm);
         var rEmail = $('label[for="dsdemail"]', '#' + nomeForm);
 
-        rFone.addClass('rotulo-linha');
-        rEmail.addClass('rotulo').css('width', '55px');
+        rFone.addClass('rotulo');
+        rEmail.addClass('rotulo-linha').css('width', '55px');
 
         var cFone = $('#nrfonres', '#' + nomeForm);
         var cEmail = $('#dsdemail', '#' + nomeForm);
 
-        cFone.addClass('alphanum').css('width', '150px').attr('maxlength', '19');
+        cFone.addClass('alphanum').css('width', '100px').attr('maxlength', '19');
         cEmail.addClass('alphanum').css('width', '237px').attr('maxlength', '30');
 
         var cTodos_4 = $('select,input', '#' + nomeForm + ' fieldset:eq(4)');
@@ -2840,13 +3283,13 @@ function controlaLayout(operacao) {
         var rEndiv = $('label[for="vledvmto"]', '#' + nomeForm);
         var rRenda = $('label[for="vlrenmes"]', '#' + nomeForm);
 
-        rRenda.css('width', '110px');
-        rEndiv.addClass('rotulo').css('width', '105px');
+        rRenda.css('width', '120px');
+        rEndiv.addClass('rotulo').css('width', '105px').hide();
 
         var cEndiv = $('#vledvmto', '#' + nomeForm);
         var cRenda = $('#vlrenmes', '#' + nomeForm);
 
-        cEndiv.addClass('moeda').css('width', '130px');
+        cEndiv.addClass('moeda').css('width', '130px').hide();
         cRenda.addClass('moeda').css('width', '130px');
 
         if (operacao == 'C_DADOS_AVAL') {
@@ -2880,7 +3323,6 @@ function controlaLayout(operacao) {
             $('#dsendre1, #cdufresd, #dsendre2, #nmcidade', '#' + nomeForm).desabilitaCampo();
 
         }
-
     } else if (in_array(operacao, ['A_PROTECAO_AVAL', 'A_PROTECAO_TIT', 'A_PROTECAO_CONJ', 'C_PROTECAO_TIT',
         'C_PROTECAO_AVAL', 'C_PROTECAO_CONJ', 'C_PROTECAO_SOC', 'A_PROTECAO_SOC',
         'I_PROTECAO_TIT'])) {
@@ -2898,6 +3340,7 @@ function controlaLayout(operacao) {
         // Cessao de credito nao podera alterar o campo
         if ((aDadosPropostaFinalidade['flgcescr']) || (arrayProposta['flgcescr']) || inobriga == 'S') {
             $('#nrinfcad', '#frmOrgaos').desabilitaCampo();
+			$('#nrinfcad', '#frmOrgProtCred').desabilitaCampo();
         }
 
     } else if (in_array(operacao, ['I_MICRO_PERG', 'A_MICRO_PERG', 'C_MICRO_PERG'])) {
@@ -2963,27 +3406,63 @@ function controlaLayout(operacao) {
     } else if (in_array(operacao, ['C_HIPOTECA', 'AI_HIPOTECA', 'A_HIPOTECA', 'I_HIPOTECA', 'IA_HIPOTECA'])) {
 
         nomeForm = 'frmHipoteca';
-        altura = '160px';
-        largura = '452px';
+        altura = '345px';
+        largura = '480px';
 
         var cTodos = $('select,input', '#' + nomeForm);
-        var rRotulo = $('label[for="dscatbem"],label[for="dsbemfin"],label[for="dscorbem"]', '#' + nomeForm);
-        var rVlMerc = $('label[for="vlmerbem"]', '#' + nomeForm);
+        var rRotulo = $('label[for="dscatbem"],label[for="dsbemfin"],label[for="vlmerbem"],label[for="dsclassi"],label[for="vlrdobem"]', '#' + nomeForm);
+        var rRotuloLinha = $('label[for="vlareuti"],label[for="vlaretot"],label[for="nrmatric"]', '#' + nomeForm);
+        var rRotuloEnd = $('label[for="nrcepend"],label[for="nrendere"],label[for="nmbairro"],label[for="nmcidade"]', '#' + nomeForm);
         var rTitulo = $('#lsbemfin', '#' + nomeForm);
+        var rCom = $('label[for="dscompend"]', '#' + nomeForm);
+        var rEnd = $('label[for="dsendere"]', '#' + nomeForm);
+        var rUf  = $('label[for="cdufende"]', '#' + nomeForm);
 
         var cCateg = $('#dscatbem', '#' + nomeForm);
         var cVlMerc = $('#vlmerbem', '#' + nomeForm);
         var cDesc = $('#dsbemfin', '#' + nomeForm);
-        var cEnd = $('#dscorbem', '#' + nomeForm);
+        var cVlvend = $('#vlrdobem', '#' + nomeForm);
+        var cMatric = $('#nrmatric', '#' + nomeForm);
+        var cAreaUtil = $('#vlareuti', '#' + nomeForm);
+        var cAreaTot = $('#vlaretot', '#' + nomeForm);
+        var cClassif = $('#dsclassi', '#' + nomeForm);     
 
-        rRotulo.addClass('rotulo').css('width', '60px');
+	    // CAMPOS - ENDEREÇO
+		var cCep	= $('#nrcepend', '#' + nomeForm);
+		var cEnd	= $('#dsendere', '#' + nomeForm);
+		var cNum	= $('#nrendere', '#' + nomeForm);
+		var cCom	= $('#dscompend', '#' + nomeForm);
+		var cBai	= $('#nmbairro', '#' + nomeForm);
+		var cEst	= $('#cdufende', '#' + nomeForm);
+		var cCid = $('#nmcidade', '#' + nomeForm);
+
+		cMatric.attr('maxlength', '10').addClass('inteiro');
+		cAreaUtil.attr('maxlength', '10').addClass('inteiro');
+		cAreaTot.attr('maxlength', '10').addClass('inteiro');
+
+        rRotulo.addClass('rotulo').css('width', '80px');
+        rRotuloLinha.addClass('rotulo-linha').css('width', '80px');
         rTitulo.addClass('').css({'width': '253px', 'clear': 'both'});
-        rVlMerc.addClass('rotulo-linha');
+        //Endereço
+        rRotuloEnd.addClass('rotulo').css('width', '41px');
+        rCom.addClass('rotulo-linha').css('width','50px');
+        rEnd.addClass('rotulo-linha').css('width','30px');
+        rUf.addClass('rotulo-linha').css('width','56px');
 
         cCateg.css('width', '132px');
+        cClassif.css('width', '132px');
         cVlMerc.addClass('moeda').css('width', '132px');
-        cDesc.addClass('alphanum').css('width', '370px').attr('maxlength', '50');
-        cEnd.addClass('alphanum').css('width', '370px').attr('maxlength', '50');
+        cVlvend.addClass('moeda').css('width', '132px');
+        cDesc.addClass('alphanum').css('width', '365px').attr('maxlength', '50');
+        cNum.addClass('alphanum').css('width', '65px');
+        cCom.addClass('alphanum').css('width', '275px').attr('maxlength', '50');
+	    cCep.addClass('cep pesquisa').css('width','65px').attr('maxlength','9');
+		cEnd.addClass('alphanum').css('width','275px').attr('maxlength','40');
+		cBai.addClass('alphanum').css('width','270px').attr('maxlength','40');	
+		cEst.css('width','62px');
+		cCid.addClass('alphanum').css('width','270px').attr('maxlength','25');        
+
+        //cEnd.addClass('alphanum').css('width', '370px').attr('maxlength', '50');
 
         // Para chamar o evento de onChange - Ocorria que qndo voltava o campo nao era ajustada a mascara.
         cCateg.trigger("change");
@@ -3002,14 +3481,29 @@ function controlaLayout(operacao) {
             rTitulo.html('( ' + (contHipotecas + 1) + '° Imovel )');
         }
 
+		// Para evitar a digitação de caracteres especiais que ocasiona erro na recuperação através de XML
+	    cCom.bind("keyup", function () {
+		    this.value = removeAcentos(removeCaracteresInvalidos(this.value));
+	    });
+		// Bloqueia a digitação de caracteres com a tecla Alt + ..
+	    cCom.bind("keydown", function (e) {
+		   if (e.altKey) { return false; }
+	    });
+
+	    controlaPesquisas();
+		
+		cCep.trigger('blur');
+
+
     } else if (in_array(operacao, ['C_PROT_CRED', 'A_PROT_CRED', 'I_PROT_CRED'])) {
 
         nomeForm = 'frmOrgProtCred';
-        altura = '220px';
+        altura = '160px';
         largura = '495px';
         
         // Exibe o Fieldset de GARANTIAS
-        $('#' + nomeForm + ' fieldset:eq(1)').show();
+        //bruno - ´rj 438 - rating
+        //$('#' + nomeForm + ' fieldset:eq(1)').show();
 
         var rRotulo = $('label[for="dtcnsspc"],label[for="dtoutspc"]', '#' + nomeForm);
         var rInfCad = $('label[for="nrinfcad"]', '#' + nomeForm);
@@ -3099,20 +3593,10 @@ function controlaLayout(operacao) {
             cTodos_1.desabilitaCampo();
             cTodos_2.desabilitaCampo();
 
-            if (inobriga == 'S' && arrayProposta['insitest'] < 2) {
-                $('#' + nomeForm + ' fieldset:eq(1)').hide();
-                altura = '135px';
-            }
-
         } else if (operacao == 'A_PROT_CRED' || operacao == 'I_PROT_CRED') {
             cTodos_1.desabilitaCampo();
             cTodos_2.habilitaCampo();
 
-			if (inobriga == 'S'){
-                $('#' + nomeForm + ' fieldset:eq(1)').hide();
-                altura = '135px';
-			}
-			
             if (arrayProtCred['flgcentr'] == 'no') {
 
                 c1Tit_1.habilitaCampo();
@@ -3191,15 +3675,15 @@ function controlaLayout(operacao) {
     } else if (in_array(operacao, ['C_ALIENACAO', 'AI_ALIENACAO', 'A_ALIENACAO', 'I_ALIENACAO', 'IA_ALIENACAO'])) {
 
         nomeForm = 'frmTipo';
-        altura 	 = '350px';//'215px';
-        largura  = '630px';//'462px';
+        altura 	 = '375px';//'350px'; //PRJ - 438 - Bruno
+        largura  = '680px';//'462px';
 		$('#dssitgrv').parent().css({"margin-top": "20px"});
 		$('#lsbemfin').css({'width': '100%', 'text-align': 'center'});
 
         var cTodos = $('select,input', '#' + nomeForm);
         var rRotulo = $('label[for="dscatbem"],label[for="dsbemfin"],label[for="dscorbem"],label[for="ufdplaca"],label[for="nrrenava"],label[for="nrmodbem"]', '#' + nomeForm);
         var rNrBem = $('#lsbemfin', '#' + nomeForm);
-        var rVlBem = $('label[for="vlmerbem"]', '#' + nomeForm);
+        //var rVlBem = $('label[for="vlmerbem"]', '#' + nomeForm);
         var rTpCHassi = $('label[for="tpchassi"]', '#' + nomeForm);
         var rLinha = $('label[for="dschassi"],label[for="uflicenc"],label[for="nrcpfbem"]', '#' + nomeForm);
         var rAnoFab = $('label[for="nranobem"]', '#' + nomeForm);
@@ -3220,21 +3704,29 @@ function controlaLayout(operacao) {
         var cAnoFab = $('#nranobem', '#' + nomeForm);
         var cAnoMod = $('#nrmodbem', '#' + nomeForm);
         var cCPF = $('#nrcpfcgc', '#' + nomeForm); //nrcpfbem
+        var cCPF_E = $('#nrcpfcgcE', '#' + nomeForm); //nrcpfbem
 
         var cVlFipe = $('#vlfipbem', '#' + nomeForm);
         var cVlMercad = $('#vlrdobem', '#' + nomeForm); //vlmerbem
+        var cVlMercad_E = $('#vlrdobemE', '#' + nomeForm); //PRJ - 438 - Bruno
 		var cSitGrv = $('#dssitgrv', '#' + nomeForm);
 
-		if($("#dscatbem option[value='EQUIPAMENTO']").length == 0){
-			$('#dscatbem','#frmTipo').append($('<option>', {
-				value: "EQUIPAMENTO",
-				text: "Equipamento"
+		/*if($("#dscatbem option[value='EQUIPAMENTO']").length == 0){
+		$('#dscatbem','#frmTipo').append($('<option>', {
+			value: "EQUIPAMENTO",
+			text: "Equipamento"
 			}));
 		}
 		if($("#dscatbem option[value='MAQUINA DE COSTURA']").length == 0){
 			$('#dscatbem','#frmTipo').append($('<option>', {
-				value: "MAQUINA DE COSTURA",
-				text: "Máquina de Costura"
+			value: "MAQUINA DE COSTURA",
+			text: "Máquina de Costura"
+		}));
+		}*/
+		if($("#dscatbem option[value='MAQUINA E EQUIPAMENTO']").length == 0){ //PRJ 438 - Bruno
+			$('#dscatbem','#frmTipo').append($('<option>', {
+				value: "MAQUINA E EQUIPAMENTO",
+				text: "Máquina e Equipamento"
 			}));
 		}
 
@@ -3254,7 +3746,8 @@ function controlaLayout(operacao) {
 			} else if (operacao == 'AI_ALIENACAO' || operacao == 'I_ALIENACAO' || operacao == 'AI_BENS') {
 				//strSelect(lscatbem, 'dscatbem', 'frmTipo');
 				$('#' + nomeForm).limpaFormulario();
-				rNrBem.html('( ' + (contAlienacao + 1) + 'º Bem )');
+				idlsbemfin = contAlienacao + 1;
+				rNrBem.html('( ' + idlsbemfin + '&ordm; Bem )');
 			}
 		}
 
@@ -3262,36 +3755,40 @@ function controlaLayout(operacao) {
 			if (!bemCarregadoUfPa) {
 				busca_uf_pa_ass();
 			}
+			//idElementTpVeiulo -> está vindo de servico_fipe.js na tela manbem
 			$("#"+idElementTpVeiulo).unbind('change').bind('change', function() {
 				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
+					hideCamposCategoriaVeiculos(false); //PRJ - 438 - Bruno
+					cCor.show();
 					if (cTpChassi.val()==""){
 						cTpChassi.val(2);
 					}
 					cTpBem.trigger("change");
+					//rTpBem.css('visibility', 'visible');
 					cTpBem.habilitaCampo(); //, 'width': '87px'
 					$("#btHistoricoGravame").show();
 					cChassi.addClass('alphanum').attr('maxlength', '17'); //.css('width', '162px')
 					cTpChassi.habilitaCampo();
 					cCor.habilitaCampo();
 					cUfLicenc.habilitaCampo();
-                cTpBem.unbind('change').bind('change', function() {
-						if (cTpBem.val() != 'USADO') {
-                        cUfPlaca.val('').desabilitaCampo();
-                        cNrPlaca.val('').desabilitaCampo();
-                        cRenavan.val('').desabilitaCampo();
-                    } else {
-                        cUfPlaca.habilitaCampo();
-                        cNrPlaca.habilitaCampo();
-                        cRenavan.habilitaCampo();
-							//busca_uf_pa_ass();
-                    }
-						if ( !in_array(cCateg.val(), ['OUTROS VEICULOS']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
-						if($(this).val() == 'USADO'){ modeloBem = ''; }
-						$('#nrmodbem').val(-1).change();
-						var bemFin = $('#dsbemfin').val();
-						$('#dsbemfin').val(bemFin).change();
+					cTpBem.unbind('change').bind('change', function() {
+						if ( cTpBem.val() != 'USADO' ) {
+							cUfPlaca.val('').desabilitaCampo();
+							cNrPlaca.val('').desabilitaCampo();
+							cRenavan.val('').desabilitaCampo();
+						} else {
+							cUfPlaca.habilitaCampo();
+							cNrPlaca.habilitaCampo();
+							cRenavan.habilitaCampo();
+							busca_uf_pa_ass();
 						}
-                });
+						if ( !in_array(cCateg.val(), ['OUTROS VEICULOS']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
+							if ($(this).val() == 'USADO') { modeloBem = ''; }
+							$('#nrmodbem').val(-1).change();
+							var bemFin = $('#dsbemfin').val();
+							$('#dsbemfin').val(bemFin).change();
+						}
+					});
 
 					$('#dssemfip', '#frmTipo').unbind('change').bind('change', function() {
 						if ( !in_array(cCateg.val(), ['OUTROS VEICULOS']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
@@ -3337,7 +3834,7 @@ function controlaLayout(operacao) {
 						trataCamposFipe($(this));
 					}
 
-					if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
+						if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
 						var urlPagina= "telas/manbem/fipe/busca_marcas.php";
 						var tipoVeiculo = trataTipoVeiculo($(this).val());
 						var data = jQuery.param({ idelhtml: idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax'});
@@ -3347,7 +3844,7 @@ function controlaLayout(operacao) {
 					if (!booBoxMarcas) {
 					    booBoxMarcas = true;
 					}
-					} else {
+				} else {
 					    $("#" + idElementMarca + "C").show();
 					    $("#" + idElementMarca).hide();
 						removeErroCampo($("#" + idElementMarca));
@@ -3360,7 +3857,27 @@ function controlaLayout(operacao) {
 						cVlFipe.val('');
 					}
 
-				} else if ( cCateg.val()=="" ) {
+				}else if(cCateg.val() == "MAQUINA E EQUIPAMENTO"){ //PRJ 438 - Bruno
+
+					hideCamposCategoriaVeiculos();
+
+					cTpBem.val('').desabilitaCampo();
+					cUfLicenc.val('').desabilitaCampo();
+					$("#btHistoricoGravame").hide();
+					cUfPlaca.val('').desabilitaCampo();
+					cNrPlaca.val('').desabilitaCampo();
+					cRenavan.val('').desabilitaCampo();
+					cCor.val('').desabilitaCampo();
+					cVlFipe.val('');
+					cSitGrv.val('');
+					cAnoFab.val('');
+					cCPF.val('');
+					$("#" + idElementAno + "C").hide();
+					$("#" + idElementAno).show().html('');
+					busca_uf_pa_ass();
+
+				} else if ( cCateg.val() == "" ) {
+					hideCamposCategoriaVeiculos(false); //PRJ 438 - Bruno
 					cTpBem.val('').desabilitaCampo();
 					cUfLicenc.val('').desabilitaCampo();
 					$("#btHistoricoGravame").hide();
@@ -3371,21 +3888,22 @@ function controlaLayout(operacao) {
 					cCor.val('').desabilitaCampo();
 					cVlFipe.val('');
 					cVlMercad.val('');
+					cVlMercad_E.val(''); //PRJ - 438 - Bruno
 					cSitGrv.val('');
 					cAnoFab.val('');
 					cCPF.val('');
 					cChassi.val('');
-					$("#" + idElementMarca + "C").hide();
+					$("#" + idElementMarca + "C").val('').hide();
 					$("#" + idElementMarca).show().html('');
 					removeErroCampo($("#" + idElementMarca + "C"));
-					$("#" + idElementModelo + "C").hide();
+					$("#" + idElementModelo + "C").val('').hide();
 					$("#" + idElementModelo).show().html('');
 					removeErroCampo($("#" + idElementModelo + "C"));
-					$("#" + idElementAno + "C").hide();
+					$("#" + idElementAno + "C").val('').hide();
 					$("#" + idElementAno).show().html('');
 					removeErroCampo($("#" + idElementAno + "C"));
 					busca_uf_pa_ass();
-            } else {
+				} else {
 					cTpBem.val('').desabilitaCampo();
 					cUfLicenc.desabilitaCampo();
 					cChassi.addClass('alphanum').attr('maxlength', '20');//.css('width', '162px')
@@ -3415,8 +3933,8 @@ function controlaLayout(operacao) {
 					$('#dssemfip').removeAttr('checked').hide();
 					$('#lbsemfip').hide();
 					$("#frmTipo select#dstipbem").css({ "width": "150" });
-            }
-        });
+				}
+			});
 
 			$("#"+idElementMarca).unbind('change').bind('change', function() {
 				trataCamposFipe($(this));
@@ -3425,7 +3943,7 @@ function controlaLayout(operacao) {
 					var cdTipoVeiculo = trataTipoVeiculo($("#"+idElementTpVeiulo).val());
 					var cdMarcaFipe = $(this).val();
 					var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe, tipveicu: cdTipoVeiculo, redirect: 'script_ajax' });
-					buscaFipeServico(urlPagina,data);
+					buscaFipeServico(urlPagina,data);	
 				}
 				if ($(this).val() == '-1' && $("#"+idElementModelo+"C").val() != "") {
 					$("#"+idElementModelo+"C").show();
@@ -3477,67 +3995,67 @@ function controlaLayout(operacao) {
 				}
 			});
 
-        // Para chamar o evento de onChange - Ocorria que qndo voltava o campo nao era ajustada a mascara.
-        cCateg.trigger("change");
+			// Para chamar o evento de onChange - Ocorria que qndo voltava o campo nao era ajustada a mascara.
+			cCateg.trigger("change");
 
-        // Se pressionar alguma tecla no campo Chassi/N.Serie, verificar a tecla pressionada e toda a devida ação
-        cChassi.unbind('keydown').bind('keydown', function(event) {
-			
+			// Se pressionar alguma tecla no campo Chassi/N.Serie, verificar a tecla pressionada e toda a devida ação
+			cChassi.unbind('keydown').bind('keydown', function(event) {
+				
 				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
-			
-				var tecla = event.which || event.keyCode;
 				
-				// Se é a tecla "Q" ou "q"
-				if (tecla == 81){
-					return false;
+					var tecla = event.which || event.keyCode;
+					
+					// Se é a tecla "Q" ou "q"
+					if (tecla == 81){
+						return false;
+					}
+					
+					// Se é a tecla "I" ou "i"			
+					if (tecla == 73){
+						return false;
+					}
+					
+					// Se é a tecla "O" ou "o"
+					if (tecla == 79){
+						return false;
+					}			
+					
+				}	
+			});
+
+			//Remover caracteres especiais
+			cChassi.unbind('keyup').bind('keyup', function(e){
+				
+				var re = /[^\w\s]/gi;
+				
+				if(re.test(cChassi.val())){
+					cChassi.val(cChassi.val().replace(re, ''));
+				}		            
+				
+				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
+					re = /[\Q\q\I\i\O\o\_]/g;
+
+					if(re.test(cChassi.val())){
+						cChassi.val(cChassi.val().replace(re, ''));
+					}			
 				}
-				
-				// Se é a tecla "I" ou "i"			
-				if (tecla == 73){
-					return false;
-				}
-				
-				// Se é a tecla "O" ou "o"
-				if (tecla == 79){
-					return false;
+				re = / /g;
+
+				if(re.test(cChassi.val())){
+					cChassi.val(cChassi.val().replace(re, ''));
 				}			
-				
-			}	
-        });
+			});
 
-		//Remover caracteres especiais
-		cChassi.unbind('keyup').bind('keyup', function(e){
-			
-			var re = /[^\w\s]/gi;
-			
-			if(re.test(cChassi.val())){
-				cChassi.val(cChassi.val().replace(re, ''));
-			}		            
-            
+			cChassi.unbind('blur').bind('blur', function(){
+				cChassi.val(cChassi.val().replace(/[^\w\s]/gi, ''));
+
 				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
-                re = /[\Q\q\I\i\O\o\_]/g;
-                
-                if(re.test(cChassi.val())){
-                    cChassi.val(cChassi.val().replace(re, ''));
-                }			
-			}
-			re = / /g;
-			
-			if(re.test(cChassi.val())){
-				cChassi.val(cChassi.val().replace(re, ''));
-			}			
-		});
-		
-		cChassi.unbind('blur').bind('blur', function(){
-			cChassi.val(cChassi.val().replace(/[^\w\s]/gi, ''));
-            
-				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO', 'OUTROS VEICULOS'])) {
-			  cChassi.val(cChassi.val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
-            }
-            
-			cChassi.val(cChassi.val().replace(/ /g,''));			
-		});
-		
+				  cChassi.val(cChassi.val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
+				}
+
+				cChassi.val(cChassi.val().replace(/ /g,''));			
+			});
+
 			bemCarregadoUfPa = false;
 			if ($("#"+idElementMarca+"C").val()=="" && (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO']))){ $("#"+idElementMarca+"C").hide(); $("#"+idElementMarca).show(); }
 			if ($("#"+idElementModelo+"C").val()==""){ $("#"+idElementModelo+"C").hide(); $("#"+idElementModelo).show(); }
@@ -3549,11 +4067,28 @@ function controlaLayout(operacao) {
 			$("#" + idElementModelo).hide();
 			$("#" + idElementAno + "C").show();
 			$("#" + idElementAno).hide();
-            }
+		}
 
 		cRenavan.mask('AA.AAA.AAA.AAA', {reverse: true});
 
 		cCPF.keyup(function(){
+			valor = $(this).val();
+			if ( valor.length > 14 ) {
+				valor=valor.replace(/\D/g,"");
+				valor=valor.replace(/^(\d{2})(\d)/,"$1.$2");
+				valor=valor.replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3");
+				valor=valor.replace(/\.(\d{3})(\d)/,".$1/$2");
+				valor=valor.replace(/(\d{4})(\d)/,"$1-$2");
+        } else {
+				valor=valor.replace(/\D/g,"");
+				valor=valor.replace(/(\d{3})(\d)/,"$1.$2");
+				valor=valor.replace(/(\d{3})(\d)/,"$1.$2");
+				valor=valor.replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+			}
+			$(this).val(valor);
+		});
+
+		cCPF_E.keyup(function(){
 			valor = $(this).val();
 			if ( valor.length > 14 ) {
 				valor=valor.replace(/\D/g,"");
@@ -3578,15 +4113,12 @@ function controlaLayout(operacao) {
     } else if (in_array(operacao, ['C_INTEV_ANU', 'A_INTEV_ANU', 'AI_INTEV_ANU', 'I_INTEV_ANU', 'IA_INTEV_ANU'])) {
 
         nomeForm = 'frmIntevAnuente';
-        altura = '415px';
+        altura = '435px';
         largura = '498px';
 
         var cTodos = $('input,select', '#' + nomeForm + ' fieldset:eq(0)');
 
-        var rRotulo = $('label[for="nrctaava"],label[for="nmdavali"],label[for="tpdocava"]', '#' + nomeForm);
-
-        var rCpf = $('label[for="nrcpfcgc"]', '#' + nomeForm);
-        var rNacio = $('label[for="cdnacion"]', '#' + nomeForm);
+        var rRotulo = $('label[for="nrctaava"],label[for="nmdavali"],label[for="tpdocava"],label[for="nrcpfcgc"],label[for="cdnacion"],label[for="inpessoa"]', '#' + nomeForm);
 
         var cConta = $('#nrctaava', '#' + nomeForm);
         var cCPF = $('#nrcpfcgc', '#' + nomeForm);
@@ -3597,18 +4129,22 @@ function controlaLayout(operacao) {
         var cDsnacio = $('#dsnacion', '#' + nomeForm);
         var cInpessoa = $('#inpessoa', '#' + nomeForm);
 
-        rRotulo.addClass('rotulo').css('width', '40px');
-        rCpf.css('width', '45px');
-        rNacio.addClass('rotulo').css('width', '40px');
+        //bruno - prj 438 - bug 14668
+        var cDtnascto = $('#dtnascto', '#' + nomeForm);
+        var rDtnascto = $('label[for="dtnascto"]', '#' + nomeForm);
+        cDtnascto.addClass('data').css({'width': '100px'}); //Adicionando mascara para data e fixando tamanho do campo em 100px
+        //fim alteração bug 14668 cdnacion
+
+        rRotulo.addClass('rotulo').css('width', '80px');
 
         cConta.addClass('conta pesquisa').css('width', '115px');
         cCPF.css('width', '134px');
 
         cNome.addClass('alphanum').css('width', '255px').attr('maxlength', '40');
-        cDoc.css('width', '50px');
+        cDoc.css('width', '50px').hide();
         cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '40');
-        cNacio.addClass('codigo pesquisa').css('width', '50px');
-        cDsnacio.css('width', '182px');
+        cNacio.addClass('codigo pesquisa').css('width', '30px'); //bruno - prj 438 - bug 14585
+        cDsnacio.css('width', '150px'); //bruno - prj 438 - bug 14585
 
         cConta.unbind('change').bind('change', function() {
 
@@ -3621,6 +4157,7 @@ function controlaLayout(operacao) {
                     return false;
                 } else {
                     Busca_Associado(nrctaava, 0, contIntervis - 1);
+                    controlaCamposTelaInterveniente(); //bruno - prj 438 - bug 14962
                 }
             }
         });
@@ -3633,7 +4170,8 @@ function controlaLayout(operacao) {
             }
 
             // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
-            if (e.keyCode == 9) {
+            // PRJ 438 - Sprint 4 - Adicionado keyCode == 13
+            if (e.keyCode == 9 || e.keyCode == 13) {
                 // Armazena o número da conta na variável global
                 nrctaava = normalizaNumero($(this).val());
                 nrctaavaOld = nrctaava;
@@ -3648,33 +4186,28 @@ function controlaLayout(operacao) {
                     }
 
                     Busca_Associado(nrctaava, 0, contAvalistas - 1);
+
+                    controlaCamposTelaInterveniente(); //bruno - prj 438 - bug 14962
+
                 } else {
-                    cTodos.habilitaCampo();
-                    cTodos_1.habilitaCampo();
-                    cTodos_2.habilitaCampo();
-                    cTodos_3.habilitaCampo();
-                    cConta.desabilitaCampo();
-                    //Projeto CEP
-                    $('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeForm).desabilitaCampo();
 
-                    controlaPesquisas();
+                    cInpessoa.habilitaCampo();
+                    cInpessoa.focus();
 
-                    cNome.focus();
                 }
 
                 return false;
             }
         });
 
-        // Se pressio/*nar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
-        cInpessoa.unbind('keydown').bind('keydown', function(e) {
+        cCPF.unbind('keydown').bind('keydown', function (e) {
 
             if (divError.css('display') == 'block') {
                 return false;
             }
 
-            // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
-            if (e.keyCode == 9) {
+            if (e.keyCode == 9 || e.keyCode == 13) {
+
                 // Armazena o número da conta na variável global
                 nrcpfcgc = normalizaNumero(cCPF.val());
                 nrcpfcgcOld = nrcpfcgc;
@@ -3685,40 +4218,138 @@ function controlaLayout(operacao) {
 
                     // Valida o CPF
                     if (!validaCpfCnpj(nrcpfcgc, pessoa)) {
-                        showError('error', 'CPF/CNPJ inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#inpessoa","#frmIntevAnuente").focus();bloqueiaFundo(divRotina);');
+	                    showError('error', 'CPF/CNPJ inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#nrcpfcgc","#frmIntevAnuente").focus();bloqueiaFundo(divRotina);');
                         return false;
                     } else {
 
-                        Busca_Associado(0, nrcpfcgc, contAvalistas - 1);
+	                    buscarContasPorCpfCnpj('interv');
 
-                    }
+	                }
 
-                    // Caso em que o cpf é zero
-                } else {
+                }
 
+                return false;
+
+            }
+        });
+
+        cInpessoa.unbind('keydown').bind('keydown', function(e) { // Zimmermann
+
+            if (divError.css('display') == 'block') {
+                return false;
+            }
+
+            // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
+            // PRJ 438 - Sprint 4 - Adicionado keyCode == 13
+            if (e.keyCode == 9 || e.keyCode == 13) {
+                
+                pessoa = normalizaNumero(cInpessoa.val());
+                if (pessoa == "" ) {
+                    showError('error', 'Selecione o tipo de pessoa', 'Aten;&atilde;o', '$("#inpessoa","#frmIntevAnuente").focus();bloqueiaFundo(divRotina);');
+                    return false;
+                }else {
+                
+                    cCPF.habilitaCampo();
+                    cCPF.focus();
                 }
 
                 return false;
             }
         });
 
+        // PRJ 438 - Sprint 4 - Capturar alteração no Tipo de Natureza selecionado para controlar os campos da tela
+        cInpessoa.unbind('change').bind('change', function(e) {
+
+        	// PRJ 438 - Sprint 4 - Chamar função para ajustar o layout da tela passando false no parametro cooperado
+        	controlaCamposTelaInterveniente(false);
+
+        });
+
+        // PRJ 438 - Sprint 4
+        controlaEventoCamposTelaInterveniente();
+
         var cTodos_1 = $('input,select', '#' + nomeForm + ' fieldset:eq(1)');
 
-        var rRotulo_1 = $('label[for="nmconjug"],label[for="tpdoccjg"]', '#' + nomeForm);
+        var rRotulo_1 = $('label[for="nmconjug"],label[for="tpdoccjg"],label[for="nrctacjg"]', '#' + nomeForm);
         var rCpf_1 = $('label[for="nrcpfcjg"]', '#' + nomeForm);
 
         var cConj = $('#nmconjug', '#' + nomeForm);
         var cCPF_1 = $('#nrcpfcjg', '#' + nomeForm);
         var cDoc_1 = $('#tpdoccjg', '#' + nomeForm);
         var cNrDoc_1 = $('#nrdoccjg', '#' + nomeForm);
+        var cNrctacjg = $('#nrctacjg', '#' + nomeForm);
 
         rRotulo_1.addClass('rotulo').css('width', '50px');
-        rCpf_1.addClass('').css('width', '40px');
+        rCpf_1.addClass('rotulo-linha').css('width', '40px');
 
         cConj.addClass('alphanum').css('width', '250px').attr('maxlength', '40');
         cCPF_1.addClass('cpf').css('width', '134px');
-        cDoc_1.css('width', '50px');
+        cDoc_1.css('width', '50px').hide();
         cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '40');
+        cNrctacjg.addClass('conta');
+
+        // PRJ 438 - Buscar dados da conta digitada
+        //bruno - prj 438 - BUG 13977
+        /**
+         * NUMERO DA CONTA DO INTERVENIENTE
+         */
+        cNrctacjg.unbind('keydown').bind('keydown', function(e, param1) {
+
+            if(typeof param1 == 'undefined'){
+                param1 = {keyCode: 0};
+            }
+
+            if (e.keyCode == __BOTAO_ENTER || e.keyCode == __BOTAO_TAB || (param1.keyCode == __BOTAO_ENTER)) {
+            nrctacjg = normalizaNumero($(this).val());
+
+            if (nrctacjg != 0) {
+                // Verifica se a conta é válida
+                if (!validaNroConta(nrctacjg)) {
+                    showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Anota', 'focaCampoErro(\'nrctacjg\',\'frmDadosAval\');bloqueiaFundo(divRotina);');
+                    return false;
+                } else {
+                    buscarDadosContaConjuge(nomeForm);
+                }
+            }
+            }
+        });
+
+        // PRJ 438 - Buscar contas do CPF/CNPJ digitado
+        //bruno - prj 438 - BUG 13977
+        /**
+         * NUMERO CPF DO INTERVENIENTE
+         */
+        cCPF_1.unbind('keydown').bind('keydown', function (e) {
+            if(e.keyCode == __BOTAO_ENTER || e.keyCode == __BOTAO_TAB){
+            // Armazena o número da conta na variável global
+            nrcpfcgc = normalizaNumero(cCPF_1.val());
+
+            if (nrcpfcgc != 0) {
+
+                // Valida o CPF
+                if (!validaCpfCnpj(nrcpfcgc, 1)) {
+                    showError('error', 'CPF inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#nrcpfcjg","#frmDadosAval").focus();bloqueiaFundo(divRotina);');
+                    return false;
+                } else {
+                        buscarContasPorCpfCnpj('interv-cje',{campo: 'nrcepend', form: nomeForm});
+                    }
+                }
+            }
+        });
+
+        //Bruno - prj 438 - bug 14962
+        cCPF_1.unbind('change').bind('change',function(){
+            nrcpfcgc = normalizaNumero(cCPF_1.val());
+            if (nrcpfcgc != 0) {
+                // Valida o CPF
+                if (!validaCpfCnpj(nrcpfcgc, 1)) {
+                    showError('error', 'CPF inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#nrcpfcjg","#frmDadosAval").focus();bloqueiaFundo(divRotina);');
+                    return false;
+                } else {
+                    buscarContasPorCpfCnpj('interv-cje',{campo: 'nrcepend', form: nomeForm});
+            }
+            }
+        });
 
         var cTodos_2 = $('input,select', '#' + nomeForm + ' fieldset:eq(2)');
 
@@ -3768,14 +4399,20 @@ function controlaLayout(operacao) {
         var rFone = $('label[for="nrfonres"]', '#' + nomeForm);
         var rEmail = $('label[for="dsdemail"]', '#' + nomeForm);
 
-        rFone.addClass('rotulo-linha');
-        rEmail.addClass('rotulo').css('width', '55px');
+        rFone.addClass('rotulo');
+        rEmail.addClass('rotulo-linha').css('width', '55px');
+
+        //bruno - prj 438 - bug 13977
+        var cFone = $('#nrfonres', '#' + nomeForm);
+        $(cFone).unbind('keyup').bind('keyup',function(){
+            maskTelefone(this);
+        });
 
         var cFone = $('#nrfonres', '#' + nomeForm);
         var cEmail = $('#dsdemail', '#' + nomeForm);
 
-        cFone.addClass('alphanum').css('width', '150px').attr('maxlength', '19');
-        cEmail.addClass('alphanum').css('width', '237px').attr('maxlength', '30');
+        cFone.addClass('alphanum').css('width', '100px').attr('maxlength', '19');
+        cEmail.addClass('alphanum').css('width', '237px').attr('maxlength', '50');  //bruno - prj 438 - bug 14284
 
         if (operacao == 'C_INTEV_ANU') {
             cTodos.desabilitaCampo();
@@ -3791,6 +4428,24 @@ function controlaLayout(operacao) {
 
             $('#' + nomeForm).limpaFormulario();
             $('legend:first', '#frmIntevAnuente').html('Dados do Interveniente Anuente ' + (contIntervis + 1));
+        }
+
+        // PRJ 438 - Sprint 4 - Capturar alteração no Codigo Nacionalidade para focar o próximo campo
+        //bruno - prj 438 - bug 14962
+        cNacio.unbind('change').bind('change', function(e) {
+            if($('#nrctaava','#frmIntevAnuente').val() == "" || $('#nrctaava','#frmIntevAnuente').val() == "0"){
+        		cDtnascto.focus(); //bruno - prj 438 - bug 14587
+        	}else{
+        		cCep.focus();
+        	}
+        });
+
+        //bruno - prj 438 - bug 14962
+        if(cInpessoa.val() == ""){
+            var __cpfcnpj_conjuge = $('#nrcpfcgc', '#frmIntevAnuente').val();
+            var __tipoInterv = (validaCpfCnpj(__cpfcnpj_conjuge,1) ? '1' : (validaCpfCnpj(__cpfcnpj_conjuge,'2') ? '2' : '' )); 
+            inpessoa = __tipoInterv;
+            cInpessoa.val(__tipoInterv);
         }
 
     } else if (in_array(operacao, ['A_PARCELAS', 'V_PARCELAS', 'C_PARCELAS', 'I_PARCELAS'])) {
@@ -3840,6 +4495,7 @@ function controlaLayout(operacao) {
         var cNivelRisco = $('#nivrisco', '#' + nomeForm);
         var cValorEmpr = $('#vlemprst', '#' + nomeForm);
         var cValorParc = $('#vlpreemp', '#' + nomeForm);
+        var cValorCare = $('#vlprecar', '#' + nomeForm);
         var cQtdeParc = $('#qtpreemp', '#' + nomeForm);
         var cDebito = $('#flgpagto', '#' + nomeForm);
         var cDtPagamento = $('#dtdpagto', '#' + nomeForm);
@@ -3854,6 +4510,7 @@ function controlaLayout(operacao) {
         var rNivelRisco = $('label[for="nivrisco"]', '#' + nomeForm);
         var rValorEmpr = $('label[for="vlemprst"]', '#' + nomeForm);
         var rValorParc = $('label[for="vlpreemp"]', '#' + nomeForm);
+        var rValorCare = $('label[for="vlprecar"]', '#' + nomeForm);
         var rQtdeParc = $('label[for="qtpreemp"]', '#' + nomeForm);
         var rDtPagamento = $('label[for="dtdpagto"]', '#' + nomeForm);
         var rDebito = $('label[for="flgpagto"]', '#' + nomeForm);
@@ -3868,6 +4525,7 @@ function controlaLayout(operacao) {
         cNivelRisco.addClass('rotulo').css('width', '30px');
         cValorEmpr.addClass('moeda').css('width', '70px');
         cValorParc.addClass('rotulo moeda').css('width', '70px');
+        cValorCare.addClass('rotulo moeda').css('width', '70px');
         cQtdeParc.addClass('').css('width', '50px').setMask('INTEGER', 'zz9', '', '');
         cDtPagamento.addClass('').css('width', '90px');
         cDebito.addClass('rotulo').css('width', '70px');
@@ -3882,6 +4540,7 @@ function controlaLayout(operacao) {
         rNivelRisco.addClass('rotulo').css('width', '110px');
         rValorEmpr.css('width', '170px');
         rValorParc.addClass('rotulo').css('width', '110px');
+        rValorCare.addClass('rotulo').css('width', '110px');
         rQtdeParc.css('width', '130px');
         rDtPagamento.addClass('rotulo').css('width', '110px');
         rDebito.css('width', '110px');
@@ -3897,6 +4556,7 @@ function controlaLayout(operacao) {
         cNivelRisco.desabilitaCampo();
         cValorEmpr.desabilitaCampo();
         cValorParc.desabilitaCampo();
+        cValorCare.desabilitaCampo();
         cQtdeParc.desabilitaCampo();
         cDebito.desabilitaCampo();
         cDtPagamento.desabilitaCampo();
@@ -3916,6 +4576,7 @@ function controlaLayout(operacao) {
         cNivelRisco.val(arrayStatusApprov['nivriori'] != '' ? arrayStatusApprov['nivriori'] : arrayStatusApprov['nivriris']);
         cValorEmpr.val(arrayStatusApprov['vlemprst']);
         cValorParc.val(arrayStatusApprov['vlpreemp']);
+        cValorCare.val(arrayStatusApprov['vlprecar']);
         cQtdeParc.val(arrayStatusApprov['qtpreemp']);
         cDebito.val(tipoPagamento);
         cDtPagamento.val(arrayStatusApprov['dtdpagto']);
@@ -4007,7 +4668,8 @@ function controlaLayout(operacao) {
 
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 
-        hideMsgAguardo();
+        if(!aux_ignoraHideMensagem)//PRJ - 438 - Bruno - Carregamento
+            hideMsgAguardo();
         bloqueiaFundo($('#divRotina'));
 
     } else if (in_array(operacao, ['RATING'])) {
@@ -4161,13 +4823,20 @@ function controlaLayout(operacao) {
 	} else if (in_array(operacao, ['I_DEMONSTRATIVO_EMPRESTIMO', 'A_DEMONSTRATIVO_EMPRESTIMO'])) {
         nomeForm = 'frmDemonstracaoEmprestimo';
         largura = '345px';
+        if (tpemprst == 2) {
+            altura = '230px';
+        } else {
         altura = '205px';
+        }
 
         var rVlemprst = $('label[for="vlemprst"]', '#' + nomeForm);
         var rVliofepr = $('label[for="vliofepr"]', '#' + nomeForm);
         var rVlrtarif = $('label[for="vlrtarif"]', '#' + nomeForm);
         var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
         var rVlpreemp = $('label[for="vlpreemp"]', '#' + nomeForm);
+        if (tpemprst == 2) {
+            var rVlprecar = $('label[for="vlprecar"]', '#' + nomeForm);
+        }
         var rPercetop = $('label[for="percetop"]', '#' + nomeForm);
 
         var cVlemprst = $('#vlemprst', '#' + nomeForm);
@@ -4175,20 +4844,29 @@ function controlaLayout(operacao) {
         var cVlrtarif = $('#vlrtarif', '#' + nomeForm);
         var cVlrtotal = $('#vlrtotal', '#' + nomeForm);
         var cVlpreemp = $('#vlpreemp', '#' + nomeForm);
+        if (tpemprst == 2) {
+            var cVlprecar = $('#vlprecar', '#' + nomeForm);
+        }
         var cPercetop = $('#percetop', '#' + nomeForm);
 
-        rVlemprst.addClass('rotulo').css('width', '100px');
-        rVliofepr.addClass('rotulo').css('width', '100px');
-        rVlrtarif.addClass('rotulo').css('width', '100px');
-        rVlrtotal.addClass('rotulo').css('width', '100px');
-        rVlpreemp.addClass('rotulo').css('width', '100px');
-        rPercetop.addClass('rotulo').css('width', '100px');
+        rVlemprst.addClass('rotulo').css('width', '120px');
+        rVliofepr.addClass('rotulo').css('width', '120px');
+        rVlrtarif.addClass('rotulo').css('width', '120px');
+        rVlrtotal.addClass('rotulo').css('width', '120px');
+        rVlpreemp.addClass('rotulo').css('width', '120px');
+        if (tpemprst == 2) {
+            rVlprecar.addClass('rotulo').css('width', '120px');
+        }
+        rPercetop.addClass('rotulo').css('width', '120px');
 
         cVlemprst.addClass('moeda');
         cVliofepr.addClass('moeda');
         cVlrtarif.addClass('moeda');
         cVlrtotal.addClass('moeda');
         cVlpreemp.addClass('moeda');
+        if (tpemprst == 2) {
+            cVlprecar.addClass('moeda');
+        }
         cPercetop.addClass('moeda');
 
         cVlemprst.desabilitaCampo();
@@ -4196,6 +4874,9 @@ function controlaLayout(operacao) {
         cVlrtarif.desabilitaCampo();
         cVlrtotal.desabilitaCampo();
         cVlpreemp.desabilitaCampo();
+        if (tpemprst == 2) {
+            cVlprecar.desabilitaCampo();
+        }
         cPercetop.desabilitaCampo();
     }
     
@@ -4208,19 +4889,23 @@ function controlaLayout(operacao) {
     layoutPadrao();
     removeOpacidade('divConteudoOpcao');
     if (!in_array(operacao, ['AT', 'IT', 'FI', 'FA', 'FE', 'SC', 'T_AVALISTA1', 'T_AVALISTA2', ''])) {
-        $('input,select', '#' + nomeForm).trigger('blur');
+    	// PRJ 438 - Sprint 4 - Adicionado filtro para dar trigger apenas se o campo tiver valor true
+        $('input,select', '#' + nomeForm).filter(function () {
+    		return !!this.value;
+		}).trigger('blur');
         if (operacao == 'TI') {
             cVlEmpr.val('0,00');
         }
     }
 
     controlaPesquisas();
-    hideMsgAguardo();
+    if(!aux_ignoraHideMensagem) //PRJ - 438 - Bruno - Carregamento
+        hideMsgAguardo();
     bloqueiaFundo(divRotina);
     removeOpacidade('divConteudoOpcao');
     controlaFoco(operacao);
     divRotina.centralizaRotinaH();
-    exibeLinhaCarencia();
+    exibeLinhaCarencia('#' + nomeForm);
 
     return false;
 }
@@ -4274,12 +4959,24 @@ function verificaObs(operacao) {
 
 }
 
-function atualizaArray(novaOp, cdcooper) {
+
+
+/**
+ * bruno - prj 438 - bug 14400
+ * @param {parametro para definir fechamento da mensagem de aguarde da tela de liquidacao} param1 
+ */
+function atualizaArray(novaOp, cdcooper, param1) {
+
+	//bruno - prj 438 - bug 14400
+    if(typeof param1 == 'undefined'){
+        param1 = "";
+    }
+
 	if (novaOp == 'I_DADOS_AVAL' || novaOp == 'A_DADOS_AVAL' || novaOp == 'V_VALOR' || novaOp == 'I_GAROPC' || novaOp == 'A_GAROPC')
-		validaValorAdesaoProdutoEmp(novaOp, cdcooper);
+		validaValorAdesaoProdutoEmp(novaOp, cdcooper, param1); //bruno - prj 438 - bug 14400
     else {
-    showMsgAguardo('Aguarde, validando dados ...');
-    setTimeout('attArray(\'' + novaOp + '\',\'' + cdcooper + '\')', 400);
+		showMsgAguardo('Aguarde, validando dados ...');
+		setTimeout('attArray(\'' + novaOp + '\',\'' + cdcooper + '\')', 400);
 	}
     return false;
 }
@@ -4322,6 +5019,14 @@ function attArray(novaOp, cdcooper) {
         eval(mtdDelecao);
         return false;
     }
+
+    //bruno - prj 438 - bug 14587
+    if(operacao == 'A_DADOS_AVAL'){
+        if(!validaTelaAvalistas()){
+            return false;
+        }
+    }
+
     if (!validaDados(cdcooper)) {
         return false;
     }
@@ -4364,6 +5069,7 @@ function attArray(novaOp, cdcooper) {
         arrayProposta['vlrtotal'] = $('#vlrtotal', '#frmNovaProp').val();
         arrayProposta['idcarenc'] = $('#idcarenc', '#frmNovaProp').val();
         arrayProposta['dtcarenc'] = $('#dtcarenc', '#frmNovaProp').val();
+        arrayProposta['vlprecar'] = $('#vlprecar', '#frmNovaProp').val();
 		arrayProposta['vlfinanc'] = $('#vlfinanc', '#frmNovaProp').val();
 
         flgimppr = arrayProposta['flgimppr'];
@@ -4372,6 +5078,16 @@ function attArray(novaOp, cdcooper) {
         tpemprst = arrayProposta['tpemprst'];
         cdtpempr = arrayProposta['cdtpempr'];
         dstpempr = arrayProposta['dstpempr'];
+
+        if ($('#flgYes', '#frmNovaProp').prop('checked')) {
+            arrayRendimento['flgdocje'] = 'yes';
+            // PRJ 438 - Paulo
+            arrayRendimento['inconcje'] = 'yes';
+        } else {
+            arrayRendimento['flgdocje'] = 'no';
+            // PRJ 438 - Paulo
+            arrayRendimento['inconcje'] = 'no';
+        }
 
         calculaCet(operacao);
 
@@ -4392,6 +5108,7 @@ function attArray(novaOp, cdcooper) {
             arrayRendimento['tpdrend' + i] = $('#tpdrend' + i, '#frmDadosProp').val();
             arrayRendimento['dsdrend' + i] = $('#dsdrend' + i, '#frmDadosProp').val();
             arrayRendimento['vldrend' + i] = $('#vldrend' + i, '#frmDadosProp').val();
+
         }
 
         arrayRendimento['vlsalcon'] = $('#vlsalcon', '#frmDadosProp').val();
@@ -4419,6 +5136,8 @@ function attArray(novaOp, cdcooper) {
 
     } else if (in_array(operacao, ['A_DADOS_AVAL', 'AI_DADOS_AVAL', 'I_DADOS_AVAL', 'IA_DADOS_AVAL'])) {
 
+		
+			
         atual = contAvalistas - 1;
 
         arrayAvalistas[atual]['nrctaava'] = $('#nrctaava', '#frmDadosAval').val();
@@ -4445,9 +5164,13 @@ function attArray(novaOp, cdcooper) {
         arrayAvalistas[atual]['nrendere'] = $('#nrendere', '#frmDadosAval').val();
         arrayAvalistas[atual]['complend'] = $('#complend', '#frmDadosAval').val();
         arrayAvalistas[atual]['nrcxapst'] = $('#nrcxapst', '#frmDadosAval').val();
+
         //Daniel
         arrayAvalistas[atual]['inpessoa'] = $('#inpessoa', '#frmDadosAval').val();
         arrayAvalistas[atual]['dtnascto'] = $('#dtnascto', '#frmDadosAval').val();
+
+			// PRJ 438
+			arrayAvalistas[atual]['vlrencjg'] = $('#vlrencjg', '#frmDadosAval').val();       
 
     } else if (in_array(operacao, ['AI_ALIENACAO', 'A_ALIENACAO', 'IA_ALIENACAO', 'I_ALIENACAO'])) {
 
@@ -4455,11 +5178,23 @@ function attArray(novaOp, cdcooper) {
 
         arrayAlienacoes[atual]['dscatbem'] = $('#dscatbem', '#frmTipo').val().toUpperCase();
         arrayAlienacoes[atual]['dstipbem'] = $('#dstipbem', '#frmTipo').val().toUpperCase();
-        arrayAlienacoes[atual]['dscorbem'] = removeAcentos(removeCaracteresInvalidos($('#dscorbem', '#frmTipo').val().replace("<", "").replace(">", "").toUpperCase()));
+
+		if (arrayAlienacoes[atual]['dscatbem'] == "" && arrayAlienacoes[atual]['dstipbem'] == "") {
+
+			deletaAlienacao(operacao);
+			return false;
+
+		} else {
+
+			arrayAlienacoes[atual]['dscorbem'] = removeAcentos(removeCaracteresInvalidos($('#dscorbem', '#frmTipo').val().replace("<", "").replace(">", "")));
         arrayAlienacoes[atual]['dschassi'] = $('#dschassi', '#frmTipo').val().toUpperCase();
-        arrayAlienacoes[atual]['nranobem'] = $('#nranobem', '#frmTipo').val().toUpperCase();
+			arrayAlienacoes[atual]['nranobem'] = $('#nranobem', '#frmTipo').val();
+			arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbem', '#frmTipo').val();
+			if(typeof arrayAlienacoes[atual]['nrmodbem'] == "undefined"){ //PRJ438 - Bruno
+				arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbemC', '#frmTipo').val();
+			}
         arrayAlienacoes[atual]['nrdplaca'] = $('#nrdplaca', '#frmTipo').val().toUpperCase();
-        arrayAlienacoes[atual]['nrrenava'] = normalizaNumero( $('#nrrenava', '#frmTipo').val().toUpperCase() );
+			arrayAlienacoes[atual]['nrrenava'] = $('#nrrenava', '#frmTipo').val();
         arrayAlienacoes[atual]['tpchassi'] = $('#tpchassi', '#frmTipo').val();
         arrayAlienacoes[atual]['ufdplaca'] = $('#ufdplaca', '#frmTipo').val().toUpperCase();
         //arrayAlienacoes[atual]['nrcpfbem'] = $('#nrcpfbem', '#frmTipo').val();
@@ -4471,17 +5206,35 @@ function attArray(novaOp, cdcooper) {
 
 		arrayAlienacoes[atual]['vlfipbem'] = $('#vlfipbem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
 		arrayAlienacoes[atual]['vlrdobem'] = $('#vlrdobem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
+			//bruno - prj 438 - manbem - vlmerbem não alterava
+            arrayAlienacoes[atual]['vlmerbem'] = $('#vlrdobem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
 		arrayAlienacoes[atual]['dssitgrv'] = $('#dssitgrv', '#frmTipo').val().toUpperCase();
 		arrayAlienacoes[atual]['nrcpfcgc'] = normalizaNumero( $('#nrcpfcgc', '#frmTipo').val() );
-		var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
-		if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked') ) {
-			arrayAlienacoes[atual]['dsmarbem'] = removeAcentos(removeCaracteresInvalidos($('#dsmarbemC', '#frmTipo').val().toUpperCase()));
-			arrayAlienacoes[atual]['dsbemfin'] = removeAcentos(removeCaracteresInvalidos($('#dsbemfinC', '#frmTipo').val().toUpperCase()));
-			arrayAlienacoes[atual]['nrmodbem'] = removeAcentos(removeCaracteresInvalidos($('#nrmodbemC', '#frmTipo').val().toUpperCase()));
-		} else {
-			arrayAlienacoes[atual]['dsmarbem'] = $('#dsmarbem option:selected', '#frmTipo').text().toUpperCase();
-			arrayAlienacoes[atual]['dsbemfin'] = $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase();
-			arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbem option:selected', '#frmTipo').text().toUpperCase();
+			var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
+			if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked') ) {
+				arrayAlienacoes[atual]['dsmarbem'] = removeAcentos(removeCaracteresInvalidos($('#dsmarbemC', '#frmTipo').val().toUpperCase()));
+				arrayAlienacoes[atual]['dsbemfin'] = removeAcentos(removeCaracteresInvalidos($('#dsbemfinC', '#frmTipo').val().toUpperCase()));
+				arrayAlienacoes[atual]['nrmodbem'] = removeAcentos(removeCaracteresInvalidos($('#nrmodbemC', '#frmTipo').val().toUpperCase()));
+			} else {
+			    arrayAlienacoes[atual]['dsmarbem'] = $('#dsmarbem option:selected', '#frmTipo').text().toUpperCase();
+			    arrayAlienacoes[atual]['dsbemfin'] = $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase();
+			    arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbem option:selected', '#frmTipo').text().toUpperCase();
+		    }
+
+            //PRJ - 438 - Bruno
+            arrayAlienacoes[atual]['dsmarceq'] = $('#dsmarceq', '#frmTipo').val();
+            arrayAlienacoes[atual]['nrnotanf'] = $('#nrnotanf', '#frmTipo').val();
+		    if($('#dscatbem', '#frmTipo').val() == "MAQUINA E EQUIPAMENTO"){
+			    arrayAlienacoes[atual]['dsmarbem'] = $('#dsmarbemE', "#frmTipo").val().toUpperCase();
+			    arrayAlienacoes[atual]['dsbemfin'] = $('#dsbemfinE', "#frmTipo").val().toUpperCase();
+
+			    arrayAlienacoes[atual]['dschassi'] = $('#dschassiE', '#frmTipo').val();
+				arrayAlienacoes[atual]['nranobem'] = $('#nrmodbemE', "#frmTipo").val().toUpperCase(); //bug 14415
+			    arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbemE', "#frmTipo").val().toUpperCase();
+			    arrayAlienacoes[atual]['nrcpfcgc'] = $('#nrcpfcgcE', "#frmTipo").val().toUpperCase();
+			    arrayAlienacoes[atual]['vlmerbem'] = $('#vlrdobemE', '#frmTipo').val();
+		    }
+
 		}
 
     } else if (in_array(operacao, ['AI_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU', 'I_INTEV_ANU'])) {
@@ -4492,13 +5245,13 @@ function attArray(novaOp, cdcooper) {
         arrayIntervs[atual]['cdnacion'] = $('#cdnacion', '#frmIntevAnuente').val();
         arrayIntervs[atual]['dsnacion'] = $('#dsnacion', '#frmIntevAnuente').val();
         arrayIntervs[atual]['tpdocava'] = $('#tpdocava', '#frmIntevAnuente').val();
-        arrayIntervs[atual]['nmconjug'] = $('#nmconjug', '#frmIntevAnuente').val();
+        arrayIntervs[atual]['nmconjug'] = $('#nmconjug', '#frmIntevAnuente').val().toUpperCase(); 
         arrayIntervs[atual]['tpdoccjg'] = $('#tpdoccjg', '#frmIntevAnuente').val();
         arrayIntervs[atual]['dsendre1'] = $('#dsendre1', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrfonres'] = $('#nrfonres', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nmcidade'] = $('#nmcidade', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrcepend'] = $('#nrcepend', '#frmIntevAnuente').val();
-        arrayIntervs[atual]['nmdavali'] = $('#nmdavali', '#frmIntevAnuente').val();
+        arrayIntervs[atual]['nmdavali'] = $('#nmdavali', '#frmIntevAnuente').val().toUpperCase(); 
         arrayIntervs[atual]['nrcpfcgc'] = $('#nrcpfcgc', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrdocava'] = $('#nrdocava', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrcpfcjg'] = $('#nrcpfcjg', '#frmIntevAnuente').val();
@@ -4511,8 +5264,16 @@ function attArray(novaOp, cdcooper) {
         arrayIntervs[atual]['complend'] = $('#complend', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrcxapst'] = $('#nrcxapst', '#frmIntevAnuente').val();
 
-    } else if (in_array(operacao, ['A_PROT_CRED', 'I_PROT_CRED'])) {
+        // PRJ 438
+        arrayIntervs[atual]['inpessoa'] = $('#inpessoa', '#frmIntevAnuente').val();
 
+        //bruno - prj 438 - bug 14284
+        arrayIntervs[atual]['nrctacjg'] = $('#nrctacjg', '#frmIntevAnuente').val();
+
+        //bruno - prj 438 - bug 14585
+        arrayIntervs[atual]['dtnascto'] = $('#dtnascto', '#frmIntevAnuente').val();
+
+    } else if (in_array(operacao, ['A_PROT_CRED', 'I_PROT_CRED'])) {
         arrayProtCred['nrperger'] = $('#nrperger', '#frmOrgProtCred').val();
         arrayProtCred['dsperger'] = $('#dsperger', '#frmOrgProtCred').val();
         arrayProtCred['dtcnsspc'] = $('#dtcnsspc', '#frmOrgProtCred').val();
@@ -4542,12 +5303,24 @@ function attArray(novaOp, cdcooper) {
 
         arrayHipotecas[atual]['dscatbem'] = $('#dscatbem', '#frmHipoteca').val();
         arrayHipotecas[atual]['dsbemfin'] = $('#dsbemfin', '#frmHipoteca').val();
-        arrayHipotecas[atual]['dscorbem'] = $('#dscorbem', '#frmHipoteca').val();
+        //arrayHipotecas[atual]['dscorbem'] = $('#dscorbem', '#frmHipoteca').val(); retirado Sprint 4
         arrayHipotecas[atual]['idseqhip'] = $('#idseqhip', '#frmHipoteca').val();
         arrayHipotecas[atual]['vlmerbem'] = $('#vlmerbem', '#frmHipoteca').val();
+        //Inclusão 438 Sprint 4
+        arrayHipotecas[atual]['vlrdobem'] = $('#vlrdobem', '#frmHipoteca').val();
+        arrayHipotecas[atual]['nrmatric'] = $('#nrmatric', '#frmHipoteca').val();
+        arrayHipotecas[atual]['vlareuti'] = $('#vlareuti', '#frmHipoteca').val();
+        arrayHipotecas[atual]['vlaretot'] = $('#vlaretot', '#frmHipoteca').val();
+        arrayHipotecas[atual]['dsclassi'] = $('#dsclassi', '#frmHipoteca').val();
+        arrayHipotecas[atual]['nrcepend'] = $('#nrcepend', '#frmHipoteca').val();
+        arrayHipotecas[atual]['dsendere'] = $('#dsendere', '#frmHipoteca').val();
+        arrayHipotecas[atual]['nrendere'] = $('#nrendere', '#frmHipoteca').val();
+        arrayHipotecas[atual]['dscompend'] = $('#dscompend', '#frmHipoteca').val();
+        arrayHipotecas[atual]['nmbairro'] = $('#nmbairro', '#frmHipoteca').val();
+        arrayHipotecas[atual]['cdufende'] = $('#cdufende', '#frmHipoteca').val();
+        arrayHipotecas[atual]['nmcidade'] = $('#nmcidade', '#frmHipoteca').val();
 
     } else if (in_array(operacao, ['V_PARCELAS'])) {
-
         arrayProposta['nivrisco'] = $('#nivrisco', '#frmNovaProp').val();
         arrayProposta['nivriori'] = $('#nivriori', '#frmNovaProp').val();
         arrayProposta['nivcalcu'] = $('#nivcalcu', '#frmNovaProp').val();
@@ -4643,10 +5416,25 @@ function atualizaTela() {
         $('#nivcalcu', '#frmNovaProp').val(arrayProposta['nivcalcu']);
         $('#vlemprst', '#frmNovaProp').val(arrayProposta['vlemprst']);
         $('#cdfinemp', '#frmNovaProp').val(arrayProposta['cdfinemp']);
+
+		//prj - 438 - bruno - zero
+        if($('#cdfinemp', '#frmNovaProp').val() == "0")
+        	$('#cdfinemp', '#frmNovaProp').val("");
+
         $('#cdlcremp', '#frmNovaProp').val(arrayProposta['cdlcremp']);
+
+        //prj - 438 - bruno - zero
+        if($('#cdlcremp', '#frmNovaProp').val() == "0")
+        	$('#cdlcremp', '#frmNovaProp').val("");
+
         $('#vlpreemp', '#frmNovaProp').val(arrayProposta['vlpreemp']);
         $('#tpemprst', '#frmNovaProp').val(arrayProposta['tpemprst']);
         $('#qtpreemp', '#frmNovaProp').val(arrayProposta['qtpreemp']);
+
+		//prj - 438 - bruno - zero
+        if($('#qtpreemp', '#frmNovaProp').val() == "0")
+        	$('#qtpreemp', '#frmNovaProp').val("");
+
         $('#idquapro', '#frmNovaProp').val(arrayProposta['idquapro']);
         $('#dsquapro', '#frmNovaProp').val(arrayProposta['dsquapro']);
         $('#flgpagto', '#frmNovaProp').val(arrayProposta['flgpagto']);
@@ -4666,7 +5454,17 @@ function atualizaTela() {
         $('#vlrtotal', '#frmNovaProp').val(arrayProposta['vlrtotal']);
         $('#idcarenc', '#frmNovaProp').val(arrayProposta['idcarenc']);
         $('#dtcarenc', '#frmNovaProp').val(arrayProposta['dtcarenc']);
+        $('#vlprecar', '#frmNovaProp').val(arrayProposta['vlprecar']);
 		$('#vlfinanc', '#frmNovaProp').val(arrayProposta['vlfinanc']);        
+		if (arrayRendimento['flgdocje'] == 'yes') {
+            $('#flgYes', '#frmNovaProp').prop('checked', true);
+            // PRJ 438 - Paulo
+            $('#inconcje_1', '#frmDadosProp').prop('checked', true);
+        } else {
+            $('#flgNo', '#frmNovaProp').prop('checked', true);
+            // PRJ 438 - Paulo
+            $('#inconcje_2', '#frmDadosProp').prop('checked', true);
+        }     
 
         vlemprst_antigo = arrayProposta['vlemprst'];
         dsctrliq_antigo = arrayProposta['dsctrliq'];
@@ -4759,11 +5557,15 @@ function atualizaTela() {
 
         $('#qtpromis', '#frmDadosAval').val(arrayProposta['qtpromis']);
 
+        // PRJ 438
+        $('#vlrencjg', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['vlrencjg']);
+        $('#nrctacjg', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['nrctacjg']);
+
         contAvalistas++;
 
         $('legend:first', '#frmDadosAval').html('Dados dos Avalistas/Fiadores ' + contAvalistas);
 
-    } else if (in_array(operacao, ['C_ALIENACAO', 'A_ALIENACAO', 'IA_ALIENACAO'])) {
+    } else if (in_array(operacao, ['C_ALIENACAO', 'A_ALIENACAO', 'IA_ALIENACAO', 'A_BENS'])) {
 
         //strSelect(lscatbem, 'dscatbem', 'frmTipo');
 
@@ -4798,6 +5600,7 @@ function atualizaTela() {
         $('#nrdplaca', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrdplaca']);
         $('#nrrenava', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrrenava']);
         $('#tpchassi', '#frmTipo').val(arrayAlienacoes[contAlienacao]['tpchassi']);
+        $('#idseqbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['idseqbem']);
         //$('#ufdplaca', '#frmTipo').val(arrayAlienacoes[contAlienacao]['ufdplaca']);
         //$('#nrcpfbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrcpfbem']);
         //$('#dscpfbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dscpfbem']);
@@ -4832,6 +5635,21 @@ function atualizaTela() {
 			}
 		}
 
+		//PRJ - 438 - Bruno
+		if(in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['EQUIPAMENTO', 'MAQUINA DE COSTURA', 'MAQUINA E EQUIPAMENTO'])){
+			$('#dschassiE', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dschassi']);
+			$('#nrmodbemE','#frmTipo').val( nrmodbemtmp);
+			$('#dsbemfinE','#frmTipo').val( arrayAlienacoes[contAlienacao]['dsbemfin'] ); //PRJ - 438 - Bruno
+			$('#dsmarbemE','#frmTipo').val( arrayAlienacoes[contAlienacao]['dsmarbem'] ); //PRJ - 438 - Bruno
+			$('#dsmarceq','#frmTipo').val(arrayAlienacoes[contAlienacao]['dsmarceq']);
+			$('#nrnotanf','#frmTipo').val(arrayAlienacoes[contAlienacao]['nrnotanf']);
+			$('#vlrdobemE', '#frmTipo').val(vlrdobemtmp).trigger('mask.maskMoney');
+			$('#nrcpfcgcE', '#frmTipo').val(nrcpfcgctmp);
+		}
+		//fim - prj - 438 - bruno
+
+		
+
 		$('#vlrdobem', '#frmTipo').val( vlrdobemtmp ).trigger('mask.maskMoney');
 		$('#nrcpfcgc', '#frmTipo').val( nrcpfcgctmp );
 
@@ -4846,25 +5664,50 @@ function atualizaTela() {
 			$("#nrmodbem").hide();
 		}
 */
-		$('#dscatbem','#frmTipo').append($('<option>', {
+		/*$('#dscatbem','#frmTipo').append($('<option>', {
 			value: "EQUIPAMENTO",
 			text: "Equipamento"
 		}));
 		$('#dscatbem','#frmTipo').append($('<option>', {
 			value: "MAQUINA DE COSTURA",
 			text: "Máquina de Costura"
+		}));*/
+		$('#dscatbem','#frmTipo').append($('<option>', { //PRJ 438 - Bruno
+			value: "MAQUINA E EQUIPAMENTO",
+			text: "Máquina e Equipamento"
 		}));
 
-		$("#frmTipo #dscatbem option").each(function() {
+		if(arrayAlienacoes[contAlienacao]['dscatbem'] == "EQUIPAMENTO" || arrayAlienacoes[contAlienacao]['dscatbem'] == "MAQUINA DE COSTURA"){ //PRJ 438 - Bruno
+			arrayAlienacoes[contAlienacao]['dscatbem'] = "MAQUINA E EQUIPAMENTO";
+		}
+
+		$("#frmTipo #dscatbem option").each(function() { //Seleciona a opção que estiver gravada no banco
 			if (arrayAlienacoes[contAlienacao]['dscatbem'] == $(this).val()) {
 				$(this).attr('selected', 'selected');
+
+				if(arrayAlienacoes[contAlienacao]['dscatbem'] == "MAQUINA E EQUIPAMENTO"){ //PRJ - 438 - Bruno
+					hideCamposCategoriaVeiculos();
+				}
 			}
 		});
-
+/*
+		if ( $("#dsmarbemC").val() != "" ) {
+			$("#dsmarbemC").show();
+			$("#dsmarbem").hide();
+		}
+		if ( $("#dsbemfinC").val() != "" ) {
+			$("#dsbemfinC").show();
+			$("#dsbemfin").hide();
+		}
+		if ( $("#nrmodbemC").val() != "" ) {
+			$("#nrmodbemC").show();
+			$("#nrmodbem").hide();
+		}
+*/
 		if (arrayAlienacoes[contAlienacao]['tpchassi'] != "") {
 			bemCarregadoUfPa = true;
 		}
-		
+
 		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL', 'CAMINHAO', 'MOTO']) && !in_array(operacao, ['C_ALIENACAO']) && (!$('#dssemfip', '#frmTipo').is(':checked')) ) {
 			urlPagina= "telas/manbem/fipe/busca_marcas.php";
 			tipoVeiculo = trataTipoVeiculo(arrayAlienacoes[contAlienacao]['dscatbem']);
@@ -4878,34 +5721,33 @@ function atualizaTela() {
 
 		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL', 'CAMINHAO', 'MOTO', 'OUTROS VEICULOS'])) {
 			$("#btHistoricoGravame").show();
-			$("#frmTipo #dstipbem option").each(function() {
-				if (arrayAlienacoes[contAlienacao]['dstipbem'] == $(this).val()) {
-					$(this).attr('selected', 'selected');
-				}
-			});
-			$("#frmTipo #tpchassi option").each(function() {
-				if (arrayAlienacoes[contAlienacao]['tpchassi'] == $(this).val()) {
-					$(this).attr('selected', 'selected');
-				}
-			});
-			$("#frmTipo #ufdplaca option").each(function() {
-				if (arrayAlienacoes[contAlienacao]['ufdplaca'] == $(this).val()) {
-					$(this).attr('selected', 'selected');
-				}
-			});
-			$("#frmTipo #uflicenc option").each(function() {
-				if (arrayAlienacoes[contAlienacao]['uflicenc'] == $(this).val()) {
-					$(this).attr('selected', 'selected');
-				}
-			});
+		$("#frmTipo #dstipbem option").each(function() {
+			if (arrayAlienacoes[contAlienacao]['dstipbem'] == $(this).val()) {
+				$(this).attr('selected', 'selected');
+			}
+		});
+		$("#frmTipo #tpchassi option").each(function() {
+			if (arrayAlienacoes[contAlienacao]['tpchassi'] == $(this).val()) {
+				$(this).attr('selected', 'selected');
+			}
+		});
+		$("#frmTipo #ufdplaca option").each(function() {
+			if (arrayAlienacoes[contAlienacao]['ufdplaca'] == $(this).val()) {
+				$(this).attr('selected', 'selected');
+			}
+		});
+		$("#frmTipo #uflicenc option").each(function() {
+			if (arrayAlienacoes[contAlienacao]['uflicenc'] == $(this).val()) {
+				$(this).attr('selected', 'selected');
+			}
+		});
 		} else {
+			$("#btHistoricoGravame").hide();
 			$('#dstipbem', '#frmTipo').desabilitaCampo();
 			$('#uflicenc', '#frmTipo').desabilitaCampo();
 			$('#tpchassi', '#frmTipo').val('').desabilitaCampo();
 			$('#dscorbem', '#frmTipo').val('').desabilitaCampo();
 		}
-
-		$('#lsbemfin','#frmTipo').html( arrayAlienacoes[contAlienacao]['lsbemfin'] );
 
         if (arrayAlienacoes[contAlienacao]['dstipbem'] == 'ZERO KM') {
             $('#ufdplaca', '#frmTipo').val('').desabilitaCampo();
@@ -4915,6 +5757,8 @@ function atualizaTela() {
 		booBoxMarcas = false;
 
         contAlienacao++;
+
+		$('#lsbemfin','#frmTipo').html( '( ' + contAlienacao + '&ordm; Bem )' );
 
     } else if (in_array(operacao, ['C_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU'])) {
 
@@ -4940,6 +5784,23 @@ function atualizaTela() {
         $('#nrendere', '#frmIntevAnuente').val(arrayIntervs[contIntervis]['nrendere']);
         $('#complend', '#frmIntevAnuente').val(arrayIntervs[contIntervis]['complend']);
         $('#nrcxapst', '#frmIntevAnuente').val(arrayIntervs[contIntervis]['nrcxapst']);
+
+        // PRJ 438
+        $('#nrctacjg', '#frmIntevAnuente').val(arrayIntervs[contIntervis]['nrctacjg']);
+        $('#inpessoa', '#frmIntevAnuente').val(arrayIntervs[contIntervis]['inpessoa']);
+
+        //bruno - prj 438 - bug 14585
+        $('#dtnascto', '#frmIntevAnuente').val(arrayIntervs[contIntervis]['dtnascto']);
+        
+
+
+	    //bruno - prj 438 - bug 14284
+        if(typeof arrayIntervs[contIntervis]['inpessoa'] == "undefined" || arrayIntervs[contIntervis]['inpessoa'] == ""){
+	        var __cpfcnpj_conjuge = arrayIntervs[contIntervis]['nrcpfcgc'];
+	        var __tipoInterv = (validaCpfCnpj(__cpfcnpj_conjuge,1) ? '1' : (validaCpfCnpj(__cpfcnpj_conjuge,'2') ? '2' : '' )); 
+	        $('#inpessoa', '#frmIntevAnuente').val(__tipoInterv);
+        }
+
 
         contIntervis++;
 
@@ -4992,9 +5853,22 @@ function atualizaTela() {
 
         $('#dscatbem', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['dscatbem']);
         $('#dsbemfin', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['dsbemfin']);
-        $('#dscorbem', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['dscorbem']);
+        //$('#dscorbem', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['dscorbem']); Sprint 4
         $('#idseqhip', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['idseqhip']);
         $('#vlmerbem', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['vlmerbem']);
+        //Inclusão 438 Sprint 4
+        $('#vlrdobem', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['vlrdobem']);
+        $('#nrmatric', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['nrmatric']);
+        $('#vlareuti', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['vlareuti']);
+        $('#vlaretot', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['vlaretot']);
+        $('#dsclassi', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['dsclassi']);
+        $('#nrcepend', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['nrcepend']);
+        $('#dsendere', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['dsendere']);
+        $('#nrendere', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['nrendere']);
+        $('#dscompend', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['dscompend']);
+        $('#nmbairro', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['nmbairro']);
+        $('#cdufende', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['cdufende']);
+        $('#nmcidade', '#frmHipoteca').val(arrayHipotecas[contHipotecas]['nmcidade']);        
 
         contHipotecas++;
 
@@ -5005,6 +5879,7 @@ function atualizaTela() {
         $('#percetop', '#frmDemonstracaoEmprestimo').val(arrayProposta['percetop']);
         $('#vlemprst', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlemprst']);
         $('#vlpreemp', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlpreemp']);
+        $('#vlprecar', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlprecar']);
     }
 
     return false;
@@ -5028,7 +5903,23 @@ function insereAvalista(OpContinua) {
     var aux_cpf = normalizaNumero($('#nrcpfcgc', '#frmDadosAval').val());
     var aux_nome = normalizaNumero($("#nmdavali", "#frmDadosAval").val());
 
+    //bruno - prj 438 - bug 6666
+    if($('#nrcpfcgc','#frmDadosAval').val() == "" && $('#nmdavali','#frmDadosAval').val() == "" && $('#nrctaava','#frmDadosAval').val()){
+        $('#nrctaava', '#frmDadosAval').trigger('keydown',{keyCode: 13});
+        return false;
+    }
+
+    //prj 438 - BUG 13952 (arquivo validacoes/validaTelaAvalista.js)
+    if(!validaTelaAvalistas()){
+        return false;
+    }
+
     if (!validaDadosAval()) {
+        return false;
+    }
+
+    if(!__last_avalista.habilitado){ //bruno - prj 438 - bug 14444
+        showError('error', __last_avalista.lastMessage, 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
         return false;
     }
 
@@ -5072,6 +5963,9 @@ function insereAvalista(OpContinua) {
     // Daniel
     eval('arrayAvalista' + i + '["inpessoa"] = $("#inpessoa","#frmDadosAval").val();');
     eval('arrayAvalista' + i + '["dtnascto"] = $("#dtnascto","#frmDadosAval").val();');
+
+    // PRJ 438
+    eval('arrayAvalista' + i + '["vlrencjg"] = $("#vlrencjg","#frmDadosAval").val();');
 
     eval('var arrayBensAval' + i + ' = new Array();');
 
@@ -5133,6 +6027,7 @@ function insereAlienacao(operacao, opContinua) {
     i = arrayAlienacoes.length;
 
     eval('var arrayAlienacao' + i + ' = new Object();');
+    eval('arrayAlienacao' + i + '["idseqbem"] = $("#idseqbem","#frmTipo").val();');
     eval('arrayAlienacao' + i + '["dscatbem"] = removeAcentos(removeCaracteresInvalidos($("#dscatbem","#frmTipo").val().toUpperCase()));');
     eval('arrayAlienacao' + i + '["dstipbem"] = $("#dstipbem","#frmTipo").val().toUpperCase();');
     //eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfin","#frmTipo").val().replace("<","").replace(">","").toUpperCase()));');
@@ -5146,7 +6041,7 @@ function insereAlienacao(operacao, opContinua) {
     eval('arrayAlienacao' + i + '["ufdplaca"] = $("#ufdplaca","#frmTipo").val().toUpperCase();');
     //eval('arrayAlienacao' + i + '["nrcpfbem"] = $("#nrcpfbem","#frmTipo").val();');
     //eval('arrayAlienacao' + i + '["dscpfbem"] = $("#dscpfbem","#frmTipo").val();');
-    //eval('arrayAlienacao' + i + '["vlmerbem"] = $("#vlmerbem","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["vlmerbem"] = $("#vlrdobem","#frmTipo").val().replace("R$","").replace(".","");');
     eval('arrayAlienacao' + i + '["uflicenc"] = $("#uflicenc","#frmTipo").val().toUpperCase();'); // GRAVAMES*/
 
     eval('arrayAlienacao' + i + '["nrcpfcgc"] = normalizaNumero($("#nrcpfcgc","#frmTipo").val());');
@@ -5154,8 +6049,21 @@ function insereAlienacao(operacao, opContinua) {
     eval('arrayAlienacao' + i + '["vlfipbem"] = $("#vlfipbem","#frmTipo").val().replace("R$","").replace(".","");');
     eval('arrayAlienacao' + i + '["uflicenc"] = $("#uflicenc","#frmTipo").val().toUpperCase();');
 
+    //PRJ - 438 - Bruno
+    eval('arrayAlienacao' + i + '["dsmarceq"] = $("#dsmarceq","#frmTipo").val();'); //Nota fiscal
+	eval('arrayAlienacao' + i + '["nrnotanf"] = $("#nrnotanf","#frmTipo").val();'); //Descricao
+
 	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
-	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked') ) {
+	//PRJ - 348 - BRUNO
+	if($('#dscatbem', '#frmTipo').val() == "MAQUINA E EQUIPAMENTO"){
+		eval('arrayAlienacao' + i + '["dsmarbem"] = removeAcentos(removeCaracteresInvalidos($("#dsmarbemE","#frmTipo").val().toUpperCase()));'); //Marca
+		eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfinE","#frmTipo").val().toUpperCase()));'); //Modelo
+		eval('arrayAlienacao' + i + '["nrmodbem"] = removeAcentos(removeCaracteresInvalidos($("#nrmodbemE","#frmTipo").val().toUpperCase()));'); //Ano fabricacao
+		eval('arrayAlienacao' + i + '["nrcpfcgc"] = normalizaNumero($("#nrcpfcgcE","#frmTipo").val());'); //CPF/CNPJ
+		eval('arrayAlienacao' + i + '["dschassi"] = $("#dschassiE","#frmTipo").val().toUpperCase();'); //Nr. Serie
+		eval('arrayAlienacao' + i + '["vlmerbem"] = $("#vlrdobemE","#frmTipo").val().replace("R$","").replace(".","");');
+		eval('arrayAlienacao' + i + '["vlrdobem"] = $("#vlrdobemE","#frmTipo").val().replace("R$","").replace(".","");');
+	}else if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
 		eval('arrayAlienacao' + i + '["dsmarbem"] = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val().toUpperCase()));');
 		eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val().toUpperCase()));');
 		eval('arrayAlienacao' + i + '["nrmodbem"] = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val().toUpperCase()));');
@@ -5211,10 +6119,23 @@ function insereHipoteca(operacao, opContinua) {
     eval('var arrayHipoteca' + i + ' = new Object();');
     eval('arrayHipoteca' + i + '["dscatbem"] = $("#dscatbem","#frmHipoteca").val();');
     eval('arrayHipoteca' + i + '["dsbemfin"] = removeCaracteresInvalidos($("#dsbemfin","#frmHipoteca").val(), true);');
-    eval('arrayHipoteca' + i + '["dscorbem"] = removeCaracteresInvalidos($("#dscorbem","#frmHipoteca").val(), true);');
+    //eval('arrayHipoteca' + i + '["dscorbem"] = removeCaracteresInvalidos($("#dscorbem","#frmHipoteca").val(), true);'); Retirado Sprint 4
     eval('arrayHipoteca' + i + '["idseqhip"] = $("#idseqhip","#frmHipoteca").val();');
     eval('arrayHipoteca' + i + '["vlmerbem"] = $("#vlmerbem","#frmHipoteca").val();');
     eval('arrayHipoteca' + i + '["lsbemfin"] = "";');
+    //Inclusão 438 Sprint 4
+    eval('arrayHipoteca' + i + '["vlrdobem"] = $("#vlrdobem", "#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["nrmatric"] = $("#nrmatric", "#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["vlareuti"] = $("#vlareuti", "#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["vlaretot"] = $("#vlaretot", "#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["dsclassi"] = $("#dsclassi", "#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["nrcepend"] = $("#nrcepend", "#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["dsendere"] = $("#dsendere", "#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["nrendere"] = $("#nrendere", "#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["dscompend"] = $("#dscompend", "#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["nmbairro"] = $("#nmbairro", "#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["cdufende"] = $("#cdufende", "#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["nmcidade"] = $("#nmcidade", "#frmHipoteca").val();');
 
     eval('arrayHipotecas[' + i + '] = arrayHipoteca' + i + ';');
 
@@ -5249,6 +6170,19 @@ function insereIntervente(operacao, opContinua) {
         return false;
     }
 
+    //bruno - prj 438 - 14587
+    var __aux_validaInterveniente = validaTelaInterveniente(); 
+    if(__aux_validaInterveniente == false){ //validacoes/validaTelaInterveniente.js
+        return false;
+    }
+
+    //bruno - prj 438 - bug 14962
+    //tipo de documento não é mais utilizado em PJ, para não alterar no oracle, foi removido o valor ao enviar para
+    //o oracle
+    if($("#tpdocava","#frmIntevAnuente").val() != "" && $("#inpessoa","#frmIntevAnuente").val() == 2){
+         $("#tpdocava","#frmIntevAnuente").val("");   
+    }
+
     if (!validaDadosInterv()) {
         return false;
     }
@@ -5275,6 +6209,15 @@ function insereIntervente(operacao, opContinua) {
     eval('arrayInterv' + i + '["dsdemail"] = $("#dsdemail","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["cdufresd"] = $("#cdufresd","#frmIntevAnuente").val();');
     eval('arrayInterv' + i + '["complend"] = $("#complend","#frmIntevAnuente").val();');
+
+    //bruno - prj 438 - bug 14284 - OK
+    eval('arrayInterv' + i + '["inpessoa"] = $("#inpessoa","#frmIntevAnuente").val();');
+    eval('arrayInterv' + i + '["nrendere"] = $("#nrendere","#frmIntevAnuente").val();');
+    eval('arrayInterv' + i + '["nrcxapst"] = $("#nrcxapst","#frmIntevAnuente").val();');
+    eval('arrayInterv' + i + '["nrctacjg"] = $("#nrctacjg","#frmIntevAnuente").val();');
+
+    //bruno - prj 438 - bug 14587
+    eval('arrayInterv' + i + '["dtnascto"] = $("#dtnascto","#frmIntevAnuente").val();');
 
     eval('arrayIntervs[' + i + '] = arrayInterv' + i + ';');
 
@@ -5407,9 +6350,19 @@ function Busca_Associado(nrctaava, nrcpfcgc, indxaval) {
                     hideMsgAguardo();
                     bloqueiaFundo(divRotina);
 
+                    //bruno - prj 438 - bug 14444
+                    if(fonteBusca == 'busca_avalista.php'){
+                        __last_avalista.habilitado = true;
+                        __last_avalista.lastMessage = '';
+                    }
+
                     verificaBusca();
                 } else {
                     hideMsgAguardo();
+                    //bruno - prj 438 - bug 14444
+                    if(fonteBusca == 'busca_avalista.php'){
+                        __last_avalista.habilitado = false;
+                    }
                     eval(response);
                 }
 
@@ -5432,9 +6385,11 @@ function verificaBusca() {
             mostraTabelaFiadores(operacao);
         } else {
             carregaBusca();
+            controlaCamposTelaAvalista(true);
         }
     } else if (operacao == 'A_INTEV_ANU' || operacao == 'AI_INTEV_ANU' || operacao == 'I_INTEV_ANU' || operacao == 'IA_INTEV_ANU') {
         carregaBusca();
+        controlaCamposTelaInterveniente(true);
     }
     return false;
 }
@@ -5494,6 +6449,10 @@ function carregaBusca() {
         // Daniel
         $('#inpessoa', '#' + formBusca).val(arrayAvalBusca['inpessoa']);
         $('#dtnascto', '#' + formBusca).val(arrayAvalBusca['dtnascto']);
+
+        // PRJ 438
+        $('#vlrencjg', '#' + formBusca).val(arrayAvalBusca['vlrencjg']);
+        $('#nrctacjg', '#' + formBusca).val(arrayAvalBusca['nrctacjg']);
 
         if (normalizaNumero($('#nrctaava', '#' + formBusca).val()) != 0) {
             $('select,input', '#' + formBusca + ' fieldset').desabilitaCampo();
@@ -5618,7 +6577,8 @@ function validaDadosGerais() {
                 if (response.indexOf('showError("error"') == -1) {
                     aux_retorno = true;
                     eval(response);
-
+                    //bruno - prj 438 - bug 14625
+                    __flag_dataPagamento = true;
                     hideMsgAguardo();
                     bloqueiaFundo(divRotina);
                 } else {
@@ -5703,8 +6663,11 @@ function validaDadosAval() {
                 if (response.indexOf('showError("error"') == -1) {
                     aux_retorno = true;
                     eval(response);
-
+                    //bruno - prj 438 - bug 14400
+                    if(operacao != "AI_DADOS_AVAL"){
                     hideMsgAguardo();
+                    }
+
                     bloqueiaFundo(divRotina);
                 } else {
                     aux_retorno = false;
@@ -5793,6 +6756,9 @@ function validaHipoteca(nmfuncao, operacao) {
 		eval(nmfuncao);
         return true;
     }
+
+    $('#vlrdobem', '#frmHipoteca').trigger('blur');
+    $('#vlmerbem', '#frmHipoteca').trigger('blur');
 	
 	showMsgAguardo('Aguarde, validando dados...');
 	
@@ -5804,6 +6770,13 @@ function validaHipoteca(nmfuncao, operacao) {
     var dsbemfin  = $('#dsbemfin', '#frmHipoteca').val();
     var vlmerbem  = $('#vlmerbem', '#frmHipoteca').val();
     var dscatbem  = $('#dscatbem', '#frmHipoteca').val();
+    var dsendere  = $('#dsendere', '#frmHipoteca').val();    
+    var dsclassi  = $('#dsclassi', '#frmHipoteca').val();
+    var vlrdobem  = $('#vlrdobem', '#frmHipoteca').val();    
+    var nrcepend  = normalizaNumero($('#nrcepend', '#frmHipoteca').val());   
+    var nmbairro  = $('#nmbairro', '#frmHipoteca').val();   
+    var nmcidade  = $('#nmcidade', '#frmHipoteca').val();   
+    var cdufende  = $('#cdufende', '#frmHipoteca').val();   
 	var fVlemprst = $('#vlemprst', '#frmNovaProp').val();
 	var fVlemprst = arrayProposta['vlemprst'];
 		fVlemprst = number_format(parseFloat(fVlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
@@ -5831,6 +6804,10 @@ function validaHipoteca(nmfuncao, operacao) {
             vlmerbem: vlmerbem, idcatbem: idcatbem,
 			nmfuncao: nmfuncao, vlemprst: fVlemprst,
             operacao: operacao, nomeform: nomeForm,
+            dsendere: dsendere, dsclassi: dsclassi,
+            vlrdobem: vlrdobem, nrcepend: nrcepend,
+            nmbairro: nmbairro, nmcidade: nmcidade,
+            cdufende: cdufende,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -5859,11 +6836,11 @@ function validaHipoteca(nmfuncao, operacao) {
 }
 
 function validaAlienacao(nmfuncao, operacao) {
-	
+
     if (((typeof $('#dscatbem', '#frmTipo').val() == 'object') || $('#dscatbem', '#frmTipo').val() == '') && $('#dstipbem', '#frmTipo').val() == '' && booPrimeiroBen) {//809763
         eval(nmfuncao);
         return false;
-}
+	}
 
 	showMsgAguardo('Aguarde, validando dados...');
 
@@ -5898,7 +6875,7 @@ function validaAlienacao(nmfuncao, operacao) {
 	var dsbemfin = $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase(); // string
 	var nrmodbem = $('#nrmodbem option:selected', '#frmTipo').text().toUpperCase();
 
-	if ($('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked')) {
+	if (($('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "" || $('#dssemfip', '#frmTipo').is(':checked')) && $('#dscatbem', '#frmTipo').val() != "MAQUINA E EQUIPAMENTO") { //PRJ - 438 - Bruno
 		dsmarbem = $('#dsmarbemC', '#frmTipo').val().toUpperCase();
 		dsbemfin = $('#dsbemfinC', '#frmTipo').val().toUpperCase();
 		nrmodbem = $('#nrmodbemC', '#frmTipo').val().toUpperCase();
@@ -5916,6 +6893,20 @@ function validaAlienacao(nmfuncao, operacao) {
 	var nrrenava = normalizaNumero(  $('#nrrenava', '#frmTipo').val()); // inteiro
 	var uflicenc =  $('#uflicenc option:selected', '#frmTipo').val().toUpperCase(); // string
     var nrcpfcgc =  normalizaNumero( $('#nrcpfcgc', '#frmTipo').val()); // inteiro
+	var idseqbem = $('#idseqbem', '#frmTipo').val();
+	
+    //PRJ - 438 - Bruno
+    var nrnotanf = $('#nrnotanf', '#frmTipo').val();
+    var dsmarceq = $('#dsmarceq', '#frmTipo').val();
+    if($('#dscatbem', '#frmTipo').val() == "MAQUINA E EQUIPAMENTO"){
+    	dsmarbem = $('#dsmarbemE', "#frmTipo").val().toUpperCase();
+    	dsbemfin = $('#dsbemfinE', "#frmTipo").val().toUpperCase();
+    	dschassi = $('#dschassiE', "#frmTipo").val().toUpperCase();
+    	nrmodbem = $('#nrmodbemE', "#frmTipo").val().toUpperCase();
+    	nrcpfcgc = $('#nrcpfcgcE', "#frmTipo").val().toUpperCase();
+    	vlrdobem = $('#vlrdobemE', '#frmTipo').val();
+    }
+
 	
 	var vlmerbem = vlrdobem;
 	var nrcpfbem = nrcpfcgc;
@@ -5923,14 +6914,14 @@ function validaAlienacao(nmfuncao, operacao) {
 	var dssitgrv = $('#dssitgrv', '#frmTipo').val().toUpperCase();
 
 	var radios = $('input[name=nrbem]');
-	var idseqbem = "";
-	var cdoperad =1;
-	for (var i = 0, length = radios.length; i < length; i++) {
+	var cdoperad = 1;
+	for ( var i = 0, length = radios.length; i < length; i++ ) {
 		if (radios[i].checked) {
 			idseqbem = normalizaNumero($.trim(radios[i].value));			
 			break;
 		}
 	}
+
 	vlrdobem = vlrdobem.replace('R$','').replace(/\./g,'');//.replace(',','.');
 	vlfipbem = vlfipbem.replace('R$','').replace(/\./g,'');//.replace(',','.');
 
@@ -5960,6 +6951,34 @@ function validaAlienacao(nmfuncao, operacao) {
 	$.trim(nrrenava);
 	$.trim(uflicenc);
 	$.trim(nrcpfcgc);
+	$.trim(nrnotanf); //PRJ - 438 - Bruno
+	$.trim(dsmarceq); //PRJ - 438 - Bruno
+
+	//prj - 438 - bruno valida campos maquina e equipamento
+	if($('#dscatbem', '#frmTipo').val() == "MAQUINA E EQUIPAMENTO"){
+		if(dsmarceq == ""){
+			showError('error', 'O campo Descri&ccedil;&atilde;o &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'dsmarceq\',\'frmTipo\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
+			return false;
+		}
+
+		if (vlrdobem == ""){
+		  showError('error', 'O campo Valor de Mercado &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'dsmarbem\',\'frmTipo\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
+	      return false;
+	    }
+		if (dsbemfin == ""){
+		  showError('error', 'O campo Modelo &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'dsmarbem\',\'frmTipo\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
+	      return false;
+	    }	
+		if (nrmodbem == ""){
+		  showError('error', 'O campo Ano Fabrica&ccedil;&atilde;o &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'dsmarbem\',\'frmTipo\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
+	      return false;
+	    }	
+
+		if (dschassi == ""){
+		  showError('error', 'O campo Nr S&eacuterie &eacute; obrigat&oacute;rio, preencha-o para continuar.', 'Alerta - Aimaro', 'focaCampoErro(\'dsmarbem\',\'frmTipo\');hideMsgAguardo();bloqueiaFundo(divRotina);');//809763
+			return false;
+		}
+    }
 
     var idcatbem = contAlienacao;
 
@@ -6000,7 +7019,7 @@ function validaAlienacao(nmfuncao, operacao) {
             msgerro = 'Numero Placa';
             camperr = 'nrdplaca';
         } else if (dschassi == '') {
-            msgerro = 'Chassi N.Serie';
+            msgerro = 'Chassi';
             camperr = 'dschassi';
         } else if (dstipbem == 'USADO' && nrrenava == '0') {
             msgerro = 'RENAVAM';
@@ -6041,7 +7060,8 @@ function validaAlienacao(nmfuncao, operacao) {
             uflicenc: uflicenc, nmfuncao: nmfuncao,
 			dsmarbem: dsmarbem, vlrdobem: vlrdobem,
 			vlfipbem: vlfipbem, nrcpfcgc: nrcpfcgc,
-			vlemprst: fVlemprst,
+			vlemprst: fVlemprst, dsmarceq: dsmarceq, //PRJ - 438 - Bruno
+			nrnotanf: nrnotanf,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -6145,7 +7165,7 @@ function limpaMsg(retorno, msgerro) {
 
 }
 
-function validaDados(cdcooper) {
+function validaDados(cdcooper, tela) { //bruno - prj 438 - 14625 - TELA_SOLICITACAO
 
     if (in_array(operacao, ['TA', 'A_NOVA_PROP', 'A_INICIO', 'A_VALOR', 'A_AVALISTA', 'TI', 'I_INICIO'])) {
 
@@ -6155,11 +7175,12 @@ function validaDados(cdcooper) {
             return limpaMsg(false, '269 - Valor errado.');
         }
 
-        if (!validaDadosGerais()) {
+        if (!validaDadosGerais(tela)) { //bruno - prj 438 - bug 14625
             return false;
         }
 		
-		carregaDadosPropostaLinhaCredito();
+		bloqueiaFundo(divRotina); //bruno - prj 438 - bug 14400
+		carregaDadosPropostaLinhaCredito(tela);
 
     } else if (in_array(operacao, ['A_DADOS_PROP_PJ', 'I_DADOS_PROP_PJ'])) {
 
@@ -6323,6 +7344,8 @@ function geraRegsDinamicos() {
         // Daniel
         eval('aux_inpesso' + i + ' = "";');
         eval('aux_dtnasct' + i + ' = "";');
+        // PRJ 438
+        eval('aux_vlrencj' + i + ' = "";');
     }
 
     //Array avalistas
@@ -6351,6 +7374,8 @@ function geraRegsDinamicos() {
         // Daniel
         eval('aux_inpesso' + i + ' = arrayAvalistas[' + i + '][\'inpessoa\'];');
         eval('aux_dtnasct' + i + ' = arrayAvalistas[' + i + '][\'dtnascto\'];');
+        // PRJ 438
+        eval('aux_vlrencj' + i + ' = arrayAvalistas[' + i + '][\'vlrencjg\'];');
     }
 
     montaString();
@@ -6469,17 +7494,21 @@ function montaString() {
 
 		var dstpcomb = "";
 		var nrmodbem = arrayAlienacoes[i]['nrmodbem'];
+		if(nrmodbem == "" || nrmodbem == null || typeof nrmodbem == "undefined"){ //PRJ 438 - Bruno
+			nrmodbem =arrayAlienacoes[i]['nranobem'];
+		}else{
 		arrmodbem = nrmodbem.split(" ");
 		if ( arrmodbem[0] !== nrmodbem ) {
 			nrmodbem = arrmodbem[0];
 			dstpcomb = arrmodbem[1];
+		}
 		}
 
         aux_dsdalien = aux_dsdalien +
                 arrayAlienacoes[i]['dscatbem'] + ';' +
                 removeAcentos(removeCaracteresInvalidos(arrayAlienacoes[i]['dsbemfin'].replace("<", "").replace(">", ""))) + ';' +
                 removeAcentos(removeCaracteresInvalidos(arrayAlienacoes[i]['dscorbem'].replace("<", "").replace(">", ""))) + ';' +
-                number_format(parseFloat(arrayAlienacoes[i]['vlrdobem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //altera
+                number_format(parseFloat(arrayAlienacoes[i]['vlmerbem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //altera
                 arrayAlienacoes[i]['dschassi'] + ';' +
                 arrayAlienacoes[i]['nranobem'] + ';' +
                 nrmodbem.substring(0,4) + ';' +
@@ -6488,13 +7517,16 @@ function montaString() {
                 arrayAlienacoes[i]['tpchassi'] + ';' +
                 arrayAlienacoes[i]['ufdplaca'] + ';' +
                 normalizaNumero(arrayAlienacoes[i]['nrcpfcgc']) + ';' + //altera
-                arrayAlienacoes[i]['uflicenc'] /* GRAVAMES*/ + ';' +
+                arrayAlienacoes[i]['uflicenc'] + ';' + /* GRAVAMES */
                 arrayAlienacoes[i]['dstipbem'] + ';' +
-                arrayAlienacoes[i]['idseqbem'] + ';' + /* GRAVAMES*/
+                arrayAlienacoes[i]['idseqbem'] + ';' + /* GRAVAMES */
                 arrayAlienacoes[i]['cdcoplib'] + ';' + /* OPERADOR DE LIBERACAO */
                 arrayAlienacoes[i]['dsmarbem'] + ';' + //novo
                 number_format(parseFloat(arrayAlienacoes[i]['vlfipbem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //novo
-				dstpcomb + ';' ; //novo
+				dstpcomb + //novo
+                ';;;;;;;;;;;;;' + // Adicionado PRJ438
+				arrayAlienacoes[i]['dsmarceq'] + ';' + //PRJ - 438 - Bruno
+                arrayAlienacoes[i]['nrnotanf'] + ';'; //PRJ - 438 - Bruno
     }
 
     //Interneiente anuente
@@ -6507,25 +7539,26 @@ function montaString() {
         }
 
         par_dsinterv = par_dsinterv +
-                normalizaNumero(arrayIntervs[i]['nrcpfcgc']) + ';' +
-                arrayIntervs[i]['nmdavali'] + ';' +
-                normalizaNumero(arrayIntervs[i]['nrcpfcjg']) + ';' +
-                arrayIntervs[i]['nmconjug'] + ';' +
-                arrayIntervs[i]['tpdoccjg'] + ';' +
-                arrayIntervs[i]['nrdoccjg'] + ';' +
-                arrayIntervs[i]['tpdocava'] + ';' +
-                arrayIntervs[i]['nrdocava'] + ';' +
-                arrayIntervs[i]['dsendre1'] + ';' +
-                arrayIntervs[i]['dsendre2'] + ';' +
-                arrayIntervs[i]['nrfonres'] + ';' +
-                arrayIntervs[i]['dsdemail'] + ';' +
-                arrayIntervs[i]['nmcidade'] + ';' +
-                arrayIntervs[i]['cdufresd'] + ';' +
-                normalizaNumero(arrayIntervs[i]['nrcepend']) + ';' +
-                arrayIntervs[i]['cdnacion'] + ';' +
-                normalizaNumero(arrayIntervs[i]['nrendere']) + ';' +
-                arrayIntervs[i]['complend'] + ';' +
-                normalizaNumero(arrayIntervs[i]['nrcxapst']);
+                normalizaNumero(arrayIntervs[i]['nrcpfcgc']) + ';' + //0
+                arrayIntervs[i]['nmdavali'] + ';' + //1
+                normalizaNumero(arrayIntervs[i]['nrcpfcjg']) + ';' + //2
+                arrayIntervs[i]['nmconjug'] + ';' + //3
+                arrayIntervs[i]['tpdoccjg'] + ';' + //4
+                arrayIntervs[i]['nrdoccjg'] + ';' + //5
+                arrayIntervs[i]['tpdocava'] + ';' + //6
+                arrayIntervs[i]['nrdocava'] + ';' + //7
+                arrayIntervs[i]['dsendre1'] + ';' + //8
+                arrayIntervs[i]['dsendre2'] + ';' + //9
+                arrayIntervs[i]['nrfonres'] + ';' + //10
+                arrayIntervs[i]['dsdemail'] + ';' + //11
+                arrayIntervs[i]['nmcidade'] + ';' + //12
+                arrayIntervs[i]['cdufresd'] + ';' + //13
+                normalizaNumero(arrayIntervs[i]['nrcepend']) + ';' + //14
+                arrayIntervs[i]['cdnacion'] + ';' + //15
+                normalizaNumero(arrayIntervs[i]['nrendere']) + ';' + //16
+                arrayIntervs[i]['complend'] + ';' + //17
+                normalizaNumero(arrayIntervs[i]['nrcxapst']) + ";" + //18
+                arrayIntervs[i]['dtnascto']; //bruno - prj 438 - bug 14585 //19
     }
 
     //Hipoteca
@@ -6538,9 +7571,38 @@ function montaString() {
         aux_dsdalien = aux_dsdalien +
                 arrayHipotecas[i]['dscatbem'] + ';' +
                 arrayHipotecas[i]['dsbemfin'] + ';' +
-                arrayHipotecas[i]['dscorbem'] + ';' +
-                arrayHipotecas[i]['vlmerbem'] + ';;;;;;;;;;;';
-        /* GRAVAMES - String de 15 entradas
+                 ';' +
+                //arrayHipotecas[i]['dscorbem'] + ';' + -- Não é mais gravado aqui
+                arrayHipotecas[i]['vlmerbem'] + ';' +
+                ';' +
+                ';' +
+                ';' +
+                ';' +
+                ';' +
+                ';' +
+                ';' +
+                ';' +
+                ';' +
+                ';' +
+                (typeof arrayHipotecas[i]['idseqbem'] == "undefined" ? "0" : arrayHipotecas[i]['idseqbem']) +';' + //Bug 13721 -- PRJ 438
+                ';' +
+                ';' +
+                ';' +
+                ';' + 
+                //PRJ438 - Sprint 
+                arrayHipotecas[i]['cdufende'] + ';' +         
+                arrayHipotecas[i]['dscompend'] + ';' +      
+                arrayHipotecas[i]['dsendere'] + ';' +  
+                arrayHipotecas[i]['nmbairro'] + ';' +  
+                arrayHipotecas[i]['nmcidade'] + ';' +
+                arrayHipotecas[i]['nrcepend'] + ';' +  
+                arrayHipotecas[i]['nrendere'] + ';' + 
+                arrayHipotecas[i]['dsclassi'] + ';' +                                                                                                        
+                arrayHipotecas[i]['vlareuti'] + ';' +
+                arrayHipotecas[i]['vlaretot'] + ';' +
+                arrayHipotecas[i]['nrmatric'] + ';' +  
+                arrayHipotecas[i]['vlrdobem'] + ';';
+        /* GRAVAMES - String de entradas
          Tratado na BO0002 e monta_registros_proposta */
     }
 
@@ -6608,6 +7670,14 @@ function iniciaInterv() {
 
     var nomeForm = 'frmIntevAnuente';
     $('input,select', '#' + nomeForm + ' fieldset').desabilitaCampo();
+
+    //bruno - prj 438 - bug 14962
+    $('label[for="dtnascto"]', '#frmIntevAnuente').text('Data Nasc.:');
+    $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').show();
+    $('label[for="dsdemail"], #dsdemail' ,'#frmIntevAnuente').show();
+
+    $('#inpessoa','#'+nomeForm).val('');
+    
 
     highlightObjFocus($('#frmIntevAnuente'));
 
@@ -6872,6 +7942,7 @@ function controlaLayoutTabelaSimulacao()
     arrayLargura[4] = '40px';
     arrayLargura[5] = '60px';
     arrayLargura[6] = '75px';
+    arrayLargura[7] = '75px';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'right';
@@ -6882,6 +7953,7 @@ function controlaLayoutTabelaSimulacao()
     arrayAlinha[5] = 'right';
     arrayAlinha[6] = 'right';
     arrayAlinha[7] = 'right';
+    arrayAlinha[8] = 'right';
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
     layoutPadrao();
@@ -6894,7 +7966,7 @@ function controlaLayoutTabelaSimulacao()
     });
 
     divRotina.css('width', largura);
-    $('#divConteudoOpcao').css({'height': altura, 'width': largura});
+    $('#divConteudoOpcao').css({'width': largura});
 
     controlaPesquisas();
     bloqueiaFundo(divRotina);
@@ -6971,6 +8043,7 @@ function mostraTabelaBens(operacaoBem, operacao) {
         },
         success: function(response) {
             $('#divUsoGenerico').html(response);
+            $('#divUsoGenerico').html(); //Bruno - PRJ 438
             controlaOperacaoBens(operacaoBem, operacao);
         }
     });
@@ -7026,7 +8099,7 @@ function controlaOperacaoBens(operacao, operacaoPrinc) {
             // Mostra a tabela de bens
         case 'BT':
             // Oculto o formulario e mostro a tabela
-            msgOperacao = 'abrindo tabela de bens';
+            msgOperacao = 'consultando.'; //prj - 438 - bruno - rating
             break;
         case 'BR':
             // Oculto o formulario e mostro a tabela
@@ -7258,7 +8331,7 @@ function controlaLayoutBens(operacao, operacaoPrinc) {
     }
 
     layoutPadrao();
-    hideMsgAguardo();
+    //hideMsgAguardo(); //prj - 438 - rating - bruno
     bloqueiaFundo($('#divUsoGenerico'));
     if (operacao != 'BT') {
         $('#dsrelbem', '#divProcBensFormulario').focus();
@@ -7367,7 +8440,6 @@ function fechaBens() {
         else {
             controlaOperacao('C_HIPOTECA');
         }
-
 
     }
     return false;
@@ -8002,7 +9074,7 @@ function fechaNumero(operacao) {
 function validaItensRating(operacao, flgarray) {
 
     var nrgarope = (flgarray) ? arrayProtCred['nrgarope'] : $("#nrgarope", "#frmOrgProtCred").val();
-    var nrinfcad = (flgarray) ? $("#nrinfcad", "#frmOrgaos").val() : 1;
+    var nrinfcad = (flgarray) ? $("#nrinfcad", "#frmOrgProtCred").val() : 1;
     var nrliquid = (flgarray) ? arrayProtCred['nrliquid'] : $("#nrliquid", "#frmOrgProtCred").val();
     var nrpatlvr = (flgarray) ? arrayProtCred['nrpatlvr'] : $("#nrpatlvr", "#frmOrgProtCred").val();
     var nrperger = (flgarray) ? arrayProtCred['nrperger'] : $("#nrperger", "#frmOrgProtCred").val();
@@ -8044,7 +9116,7 @@ function validaItensRating(operacao, flgarray) {
                     aux_retorno = true;
                     eval(response);
 
-                    hideMsgAguardo();
+                    //hideMsgAguardo(); //bruno - prj 438 - bug 14400
                     bloqueiaFundo(divRotina);
 
                 } else {
@@ -8227,6 +9299,45 @@ function confirmaConsultas(flmudfai, cddopcao) {
 
 function buscaLiquidacoes(operacao) {
 	
+    //bruno - prj 438 - bug 14672
+    if($('#tpemprst', '#frmNovaProp').val() == 0){ // Tipo Produto "Price TR"
+        $("#flgpagto", "#frmNovaProp").focus();
+    } else if ($('#tpemprst', '#frmNovaProp').val() == 1){ // Tipo Produto "Price Pre-Fixado"
+        $("#idfiniof", "#frmNovaProp").focus();
+    } else if ($('#tpemprst', '#frmNovaProp').val() == 2){ // Tipo Produto "Pos-Fixado"
+        $("#idcarenc", "#frmNovaProp").focus();
+    }
+    $("#dtdpagto", "#frmNovaProp").trigger('change');
+
+
+    if(!__flag_dataPagamento && operacao != 'PORTAB_A'){ //bruno - prj 438 - bug 14625
+        showMsgAguardo('Aguarde, validando dados ...');
+        validaDados(cdcooper,'TELA_SOLICITACAO');
+        return false;
+    }else{
+        __flag_dataPagamento = false;
+    }
+    
+
+    
+	if(cdlcremp == ""){
+		cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
+		arrayInfoParcelas['cdlcremp'] = cdlcremp;
+	}
+	
+    //bruno - prj 438 - bug 14400
+    //bruno - prj 438 - bloqueia botao
+    //if(in_array(operacao, ['A_NOVA_PROP','A_INICIO','TI','I_INICIO'])){
+    //aux_botoesTelaInicial.btSalvarOnclick = $('#btSalvar', '#divBotoes').attr('onClick'); 
+    //$('#btSalvar', '#divBotoes').attr('onClick','');
+    //aux_botoesTelaInicial.btVoltarClick = $('#btVoltar', '#divBotoes').attr('onClick');
+    //$('#btVoltar', '#divBotoes').attr('onClick','');
+    //aux_botoesTelaInicial.btGravarOnclick = $('#btGravaPropostaCompleta', '#divBotoes').attr('onClick');
+    //$('#btGravaPropostaCompleta', '#divBotoes').attr('onClick','');
+    //}
+
+
+	
     var dsctrliq = $('#dsctrliq', '#' + nomeForm).val();
     //variavel que contem o valor de "Emprestimos" na tela atenda    
     var vltotemp = parseFloat($('#valueRot1').html().replace(/[.R$ ]*/g, '').replace(',', '.'));
@@ -8338,7 +9449,12 @@ function controlaLiquidacoes() {
     return false;
 }
 
-function validaLiquidacoes(flgContinuar, operacao) {
+
+/**
+ * bruno - prj 438 - bug 14400
+ * @param {controle para abertura/fechamento mensagens da tela de liqidacoes} param1 
+ */
+function validaLiquidacoes(flgContinuar, operacao, param1) {
 
     var dtmvtoep = (flgContinuar) ? "" : arrayLiquidacoes[indarray]['dtmvtolt'];
     var qtlinsel = nrSelec;
@@ -8362,6 +9478,7 @@ function validaLiquidacoes(flgContinuar, operacao) {
             vlemprst: vlemprst, vlsdeved: vlsdeved,
             tosdeved: tosdeved, operacao: operacao,
             nrctremp: nrctremp, idenempr: idenempr,
+            param1: param1, //bruno - prj 438 - bug 14400
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -8372,8 +9489,11 @@ function validaLiquidacoes(flgContinuar, operacao) {
             try {
 
                 if (response.indexOf('showError("error"') == -1) {
-                    hideMsgAguardo();
-                    bloqueiaFundo(divRotina);
+                    //bruno - prj 438 - bug 14400
+                    if(param1 == ""){
+                        hideMsgAguardo();
+                        bloqueiaFundo(divRotina);
+                    }
                     eval(response);
 
                 } else {
@@ -8437,7 +9557,7 @@ function controlaLayoutLiq(operacao) {
 
     for (var i in arrayLiquidacoes) {
 
-        aux_nrctremp = formataContrato(arrayLiquidacoes[i]['nrctremp'].replace(/[. ]*/g, ''));
+        aux_nrctremp = mascara(arrayLiquidacoes[i]['nrctremp'].replace(/[. ]*/g, ''), '#.###.###.###');
         aux_vlemprst = number_format(parseFloat(arrayLiquidacoes[i]['vlemprst'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
         aux_vlpreemp = number_format(parseFloat(arrayLiquidacoes[i]['vlpreemp'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
         aux_vlsdeved = number_format(parseFloat(arrayLiquidacoes[i]['vlsdeved'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '.');
@@ -8491,14 +9611,14 @@ function controlaLayoutLiq(operacao) {
     ordemInicial = [[0, 0]];
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '15px';
+    arrayLargura[0] = '10px';
     arrayLargura[1] = '30px';
     arrayLargura[2] = '30px';
-    arrayLargura[3] = '35px';
+    arrayLargura[3] = '90px';
     arrayLargura[4] = '58px';
-    arrayLargura[5] = '55px';
-    arrayLargura[6] = '80px';
-    arrayLargura[7] = '37px';
+    arrayLargura[5] = '70px';
+    arrayLargura[6] = '50px';
+    arrayLargura[7] = '50px';
     arrayLargura[8] = '80px';
 
     var arrayAlinha = new Array();
@@ -8539,13 +9659,22 @@ function selecionaLiquidacao() {
     return false;
 }
 
-function fechaLiquidacoes(operacao) {
+/**
+ * bruno - prj 438 - bug 14400
+ * @param {proxima operacao} operacao 
+ * @param {controle para abertura/fechamento mensagens da tela de liquidacao} param1 
+ */
+function fechaLiquidacoes(operacao, param1) {
+	
+	if(typeof param1 == 'undefined'){
+        param1 = "";
+    }
 	
     var dsctrliq = '';
 
     for (var i in arrayLiquidacoes) {
         if (arrayLiquidacoes[i]['idseleca'] == '*') {
-            dsctrliq += formataContrato(arrayLiquidacoes[i]['nrctremp'].replace(/[. ]*/g, '')) + ',';
+            dsctrliq += mascara(arrayLiquidacoes[i]['nrctremp'].replace(/[. ]*/g, ''), '#.###.###.###') + ',';
         }
     }
 
@@ -8559,11 +9688,15 @@ function fechaLiquidacoes(operacao) {
 						'sim.gif', 
 						'nao.gif');
 	else
-		fechaLiquidacoesAposConfirmacao(dsctrliq, operacao);
+		fechaLiquidacoesAposConfirmacao(dsctrliq, operacao, param1); //bruno - prj 438 - bug 14400
 	return false;
 }
 
-function fechaLiquidacoesAposConfirmacao(dsctrliq, operacao){
+/**
+ * bruno - prj 438 - bug 14400
+ * @param {controle para abertura/fechamento mensagens da tela de liquidacao} param1 
+ */
+function fechaLiquidacoesAposConfirmacao(dsctrliq, operacao, param1){
 	
 	$('#dsctrliq', '#' + nomeForm).val(dsctrliq);
 
@@ -8581,10 +9714,10 @@ function fechaLiquidacoesAposConfirmacao(dsctrliq, operacao){
 	}
 
 	limpaDivGenerica();
-	fechaRotina($('#divUsoGenerico'), $('#divRotina'));
+	//fechaRotina($('#divUsoGenerico'), $('#divRotina')); //bruno - prj 438 - bug 14400
 	showMsgAguardo('Aguarde, carregando...');
 
-	validaLiquidacoes(true, operacao);
+	validaLiquidacoes(true, operacao, param1); //bruno - prj 438 - bug 14400
 	
     return false;
 }
@@ -8701,7 +9834,11 @@ function controlaPesquisas() {
     // 1) os cincos primeiros campos são os retornados para o formulario de origem
     // 2) o sexto campo é o campo q será focado após o retorno ao formulario de origem, que
     // pelo requisito na maioria dos casos será o NUMERO do endereço
-    var camposOrigem = 'nrcepend;dsendre1;nrendere;complend;nrcxapst;dsendre2;cdufresd;nmcidade';
+    if(nomeForm == 'frmHipoteca'){
+    	var camposOrigem = 'nrcepend;dsendere;nrendere;dscompend;nrcepend;nmbairro;cdufende;nmcidade';
+    } else {
+        var camposOrigem = 'nrcepend;dsendre1;nrendere;complend;nrcxapst;dsendre2;cdufresd;nmcidade';
+    }
 
     if (nomeForm == '') {
         return false;
@@ -8790,7 +9927,9 @@ function controlaPesquisas() {
                     filtros = 'C&oacuted. Linha Cr&eacutedito;cdlcremp;30px;S;0|Descri&ccedil&atildeo;dslcremp;200px;S|;' + null + ';;N;;N|;' + null + ';;N;;N|;' + null + ';;N;;N|;cdfinemp;;;' + varFin + ';N|;cdmodali;;;' + varMod + ';N|;flgstlcr;;;yes;N|;tpprodut;;;' + varTip + ';N';
                     colunas = 'C&oacutedigo;cdlcremp;15%;right|Linha de Cr&eacutedito;dslcremp;40%;left|Taxa;txbaspre;10%;right|Prest. Max.;nrfimpre;10%;right|Garantia;dsgarant;25%;left';
 
-                    mostraPesquisa(bo, procedure, titulo, qtReg, filtros, colunas, divRotina);
+                    //prj 438 - bruno - BUG 17929
+                    var nada; //Mandar 'nada' para validações na rotina em pesquisa.js
+                    mostraPesquisa(bo, procedure, titulo, qtReg, filtros, colunas, divRotina,nada,nada,nada,'cdfinemp|frmNovaProp');
 
                     return false;
                 } else if (campoAnterior == 'nrgarope') {
@@ -8906,7 +10045,6 @@ function controlaPesquisas() {
         return false;
     });
 
-
     // Tipo Rendimento
     $('#tpdrend1,#tpdrend2,#tpdrend3,#tpdrend4,#tpdrend5,#tpdrend6', '#' + nomeForm).unbind('change').bind('change', function() {
         bo = 'b1wgen0059.p';
@@ -8943,8 +10081,6 @@ function controlaPesquisas() {
 
     });
 
-
-
     // Finalidade de emprestimo
     $('#cdfinemp', '#' + nomeForm).unbind('change').bind('change', function() {
         bo = 'zoom0001';
@@ -8959,7 +10095,6 @@ function controlaPesquisas() {
         }
     });
 
-
     // Linha de Credito
     $('#cdlcremp', '#' + nomeForm).unbind('change').bind('change', function() {
         // Alterado para quando a linha de credito for (Cessao de Cartao) a
@@ -8973,6 +10108,9 @@ function controlaPesquisas() {
             $('#dsquapro', '#' + nomeForm).val('OPERACAO NORMAL'); 
         }
 
+        if($(this).val() == "0"){ //PRJ - 438 - Bruno - zero
+        	$(this).val("");
+		}
         bo = 'b1wgen0059.p';
         procedure = 'busca_linhas_credito';
         titulo = 'Linhas de Cr&eacute;dito';
@@ -9056,6 +10194,23 @@ function controlaPesquisas() {
         buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsperger', $(this).val(), 'dsseqit1', filtrosDesc, nomeForm);
     });
 
+    //prj 438 - bug 13949
+    $('#cdnacion','#frmDadosAval').unbind('change').bind('change',function(){
+        procedure	= 'BUSCANACIONALIDADES';
+		titulo      = ' Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao('ZOOM0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,'frmDadosAval'); 
+    });
+    
+    //bruno - prj 438 - bug 13977 e 17972
+    $('#cdnacion', '#frmIntevAnuente').unbind('blur').bind('blur', function (e) {
+        procedure = 'BUSCANACIONALIDADES';
+        titulo = ' Nacionalidade';
+        filtrosDesc = '';
+        buscaDescricao('ZOOM0001', procedure, titulo, $(this).attr('name'), 'dsnacion', $(this).val(), 'dsnacion', filtrosDesc, 'frmIntevAnuente');
+    });
+
+
     $('#nrcepend', '#' + nomeForm).buscaCEP(nomeForm, camposOrigem, divRotina);
 
     return false;
@@ -9112,6 +10267,8 @@ function limpaForm(form) {
             // Daniel
             arrayAvalistas[atual]['inpessoa'] = '';
             arrayAvalistas[atual]['dtnascto'] = '';
+            // PRJ 438
+            arrayAvalistas[atual]['vlrencjg'] = '';
 
         }
 
@@ -9129,15 +10286,21 @@ function limpaForm(form) {
 
 
 function showConfirmacaoEfetiva() {
-    showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'efetivaProposta();', 'bloqueiaFundo( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
+   // showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'efetivaProposta();', 'bloqueiaFundo( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
+	efetivaProposta();
 }
 
-function efetivaProposta() {
+function efetivaProposta(operacao) {
 
-    showMsgAguardo('Aguarde, efetivando a proposta...');
-    exibeRotina($('#divUsoGenerico'));
+	var msgAguarde = ', efetivando a proposta';
+	
+	if (operacao == 'EFE_PRP') {
+		msgAguarde = ", processando requisi&ccedil;&aacute;o";
+	}
 
-    limpaDivGenerica();
+	$.getScript(UrlSite + "telas/manbem/scripts/historico_gravames.js");
+
+    showMsgAguardo('Aguarde' + msgAguarde + '...');
 
     nrdconta = arrayStatusApprov['nrdconta'];
     nrctremp = arrayStatusApprov['nrctremp'];
@@ -9154,12 +10317,12 @@ function efetivaProposta() {
             nrdconta: nrdconta, idseqttl: idseqttl,
             nrctremp: nrctremp, insitapv: insitapv,
             dtdpagto: dtdpagto, idcobope: idcobope, 
-			flliquid: flliquid,
+			flliquid: flliquid, operacao: operacao,
 			redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
             eval(response);
@@ -9279,13 +10442,14 @@ function validaJustificativa(operacao) {
 
     var rendimento = false;
 
-    for (var i = 1; i <= contRend; i++) {
-        if ($('#tpdrend' + i, '#frmDadosProp').val() == 6) {
+    for (var i = 1; i <= contRend; i++) { //percorre todos os campos de bens para definir se há rendimento
+        if ($('#tpdrend' + i, '#frmDadosProp').val() == 6) { //6 = rendimento -> Outros
             rendimento = true;
 
         }
     }
 
+	/* Se há rendimento e o campo de justificativa estiver vazio */
     if (rendimento == true && $('#dsjusren', '#frmDadosProp').val() == '') {
         showError('inform', 'Deve ser informado uma justificativa.', 'Alerta - Aimaro', '$(\'#dsjusren\',\'#frmDadosProp\').focus;');
         return false;
@@ -9444,15 +10608,28 @@ function efetuar_consultas(insolici,operacao) {
         flvalest = 1;
     }
        
+    //paulo - prj 438 - bug 14442
+    var __nrctremp = "";
+    if(typeof aux_nrctremp_consulta != 'undefined'){
+        if(aux_nrctremp_consulta == ""){
+            __nrctremp  = nrctremp;
+        }else{
+            __nrctremp = aux_nrctremp_consulta;
+        }
+    }else{
+        __nrctremp  = nrctremp;
+    }
+       
     $.ajax({
         type: 'POST',
         url: UrlSite + 'includes/consultas_automatizadas/efetuar_consultas.php',
         data: {
             nrdconta: nrdconta,
-            nrdocmto: nrctremp,
+            nrdocmto:__nrctremp, //pj438 - bug 14283 | bug 14442
             inprodut: 1,
             insolici: insolici,
             flvalest: flvalest,
+            nome_acao: 'EMPRESTIMOS_CONSULTA', //bruno - prj 438 - sprint 5 - consutla automatizada
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -9474,6 +10651,11 @@ function controlaSocios(operacao, cdcooper, idSocio, qtSocios) {
         if ($("#nrinfcad", "#frmOrgaos").val() != undefined) {
             arrayProtCred['dtcnsspc'] = $("#dtcnsspc", "#frmOrgaos").val();
             arrayProtCred['nrinfcad'] = $("#nrinfcad", "#frmOrgaos").val();
+			
+			if(arrayProtCred['nrinfcad'] == "" || arrayProtCred['nrinfcad'] == undefined){
+				arrayProtCred['nrinfcad'] = $('#nrinfcad', '#frmOrgProtCred').val();
+				arrayProtCred['dtcnsspc'] = $("#dtcnsspc", "#frmOrgProtCred").val();
+			}
         }
     }
 
@@ -9563,9 +10745,10 @@ function salvaQuestionario(operacao) {
 
 function carregaDadosPropostaFinalidade() {
 
-    var tpemprst = $('#tpemprst', '#frmNovaProp').val();
-    var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();
-    var cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
+	//PRJ - 438 - Bruno - Rating - 3
+    	tpemprst = $('#tpemprst', '#frmNovaProp').val();
+    	cdfinemp = $('#cdfinemp', '#frmNovaProp').val();
+    	cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
 
     showMsgAguardo('Aguarde, carregando os dados...');
 
@@ -9594,11 +10777,17 @@ function carregaDadosPropostaFinalidade() {
     return false;
 }
 
-function carregaDadosPropostaLinhaCredito() {
+function carregaDadosPropostaLinhaCredito(tela) { //bruno - prj 438 - bug 14625
 
-    var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();
-    var cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
-    var dsctrliq = $('#dsctrliq', '#frmNovaProp').val();
+    //PRJ - 438 - Bruno - Rating - 3
+    	tpemprst = $('#tpemprst', '#frmNovaProp').val();
+    	cdfinemp = $('#cdfinemp', '#frmNovaProp').val();
+    	cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
+
+    /* prj - 438 - rating - bruno */
+    if(cdfinemp == ""){
+    	cdfinemp = aux_cdfinemp_rating;
+    }
 
     showMsgAguardo('Aguarde, carregando os dados...');
 
@@ -10259,6 +11448,7 @@ function abrirTelaGAROPC(operacao) {
 						   ' controlaOperacao(\\\'' + opera + '_DADOS_AVAL\\\');',
             ret_voltfunc : ' controlaOperacao(\'' + opera + '_INICIO\');',
             ret_errofunc : '$(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});bloqueiaFundo($(\\\'#divRotina\\\'));',
+            ACAO: __ACAO_GAROPC_EMPRESTIMO, //prj 438 - bug 14235
 			redirect     : 'html_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -10273,23 +11463,51 @@ function abrirTelaGAROPC(operacao) {
     });
 }
 
-function exibeLinhaCarencia() {
-    if ($("#tpemprst", "#frmNovaProp").val() == 2) { // Se for Pos-Fixado
-        $("#linCarencia","#frmNovaProp").show();
-        calculaDataCarencia();
+function exibeLinhaCarencia(idForm) {
+
+    //bruno - prj 438 - bug 18015
+    var forceLinhaCarencia = false;
+    if(in_array(operacao, ['CF', 'TC', 'TE', 'I_CONTRATO', 'I_FINALIZA', 'A_FINALIZA'])){
+        if(arrayProposta['tpemprst'] == 2){
+            forceLinhaCarencia = true;
+        }
+    }
+
+    if ($("#tpemprst", idForm).val() == 2 || forceLinhaCarencia) { // Se for Pos-Fixado
+        $(".divCarencia", idForm).show();
+        $("#divIdfiniof", '#frmNovaProp').insertAfter($("#dslcremp", '#frmNovaProp'));
+        $("#divFlgpagto", '#frmNovaProp').insertAfter($("#dsfinemp", '#frmNovaProp'));        
+        $("#divIdquapro", '#frmNovaProp').insertAfter($("#qtpreemp", '#frmNovaProp'));
+        $("#divFlgdocje", '#frmNovaProp').insertAfter($("#vlpreemp", '#frmNovaProp'));
+        $('label[for="flgpagto"]', '#frmNovaProp').css('width', '154px');
+        $('label[for="idquapro"]', '#frmNovaProp').css('width', '270px');
+        $('label[for="flgdocje"]', '#frmNovaProp').css('width', '230px');
+        //bruno - prj 438 - bug 18015
+        if(!forceLinhaCarencia){
+            calculaDataCarencia(idForm);
+        }
+
     } else {
-        $("#linCarencia","#frmNovaProp").hide();
+        $(".divCarencia", idForm).hide();
+        $("#divIdfiniof", '#frmNovaProp').insertAfter($("#nivrisco", '#frmNovaProp'));
+        $("#divFlgpagto", '#frmNovaProp').insertAfter($("#tpemprst", '#frmNovaProp'));        
+        $("#divIdquapro", '#frmNovaProp').insertAfter($("#vlemprst", '#frmNovaProp'));
+        $("#divFlgdocje", '#frmNovaProp').insertAfter($("#dslcremp", '#frmNovaProp'));
+        $('label[for="idfiniof"]', '#frmNovaProp').css('width', '230px');
+        $('label[for="flgpagto"]', '#frmNovaProp').css('width', '230px');
+        $('label[for="idquapro"]', '#frmNovaProp').css('width', '230px');
+        $('label[for="flgdocje"]', '#frmNovaProp').css('width', '154px');
     }
 }
 
-function calculaDataCarencia() {
+function calculaDataCarencia(idForm) {
 
     hideMsgAguardo();
 	showMsgAguardo("Aguarde, calculando os dados...");
 
-    var idcarenc = normalizaNumero($("#idcarenc", "#frmNovaProp").val());
-    var dtlibera = $("#dtlibera", "#frmNovaProp").val();
-    var dtdpagto = $("#dtdpagto", "#frmNovaProp").val();
+    var idcarenc = normalizaNumero($("#idcarenc", idForm).val());
+    var dtlibera = $("#dtlibera", idForm).val();
+    var dtdpagto = $("#dtdpagto", idForm).val();
     var dtcarenc = dtdpagto.substr(0, 2) + '/' + dtlibera.substr(3, 2) + '/' + dtmvtolt.substr(6, 4);
 	
 	$.ajax({
@@ -10299,6 +11517,7 @@ function calculaDataCarencia() {
 			acao    : 'CALC_DATA_CARENCIA',
             idcarenc: idcarenc,
 			dtcarenc: dtcarenc,
+            nomeform: idForm,
 			redirect: "script_ajax"
 		},
 		error: function(objAjax,responseError,objExcept){
@@ -10346,7 +11565,7 @@ function telefone(fone){
 	return fone;
 }
 
-function validaValorAdesaoProdutoEmp(operacao,cdcooper) {
+function validaValorAdesaoProdutoEmp(operacao,cdcooper, param1) { //bruno - prj 438 - bug 14400
 	
     var dsctrliq = $('#dsctrliq', '#frmNovaProp').val();
     var vlemprst = $('#vlemprst', '#frmNovaProp').val();
@@ -10374,7 +11593,11 @@ function validaValorAdesaoProdutoEmp(operacao,cdcooper) {
 			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
 		},
 		success: function (response) {
-			hideMsgAguardo();
+
+            if(param1 == ""){ //bruno - prj 438 - bug 14400
+			    hideMsgAguardo();
+            }
+
             try {
 				eval(response);
 			} catch (error) {
@@ -10448,71 +11671,71 @@ function carregaDadosConsultaMotivos() {
             if (response.indexOf('showError("error"') == -1) {
                 $('#divConteudoOpcao').html(response);
 	            layoutPadrao();
-	            hideMsgAguardo();
+	hideMsgAguardo();
 	            formatarTelaConsultaMotivos();
 	            divRotina.centralizaRotinaH();
 	            bloqueiaFundo(divRotina);
             } else {
                 eval(response);
             }
-        }               
+		}
     });
     return false;
-}
+	}
 
 function formatarTelaConsultaMotivos(){
 
 	divRotina.css('width', '515px');
     $('#divConteudoOpcao').css({'height': '', 'width': '500px'});
     $('#frmDadosMotivos').css('width','500px');
-
+		
     $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px', 'padding': '10px 3px 5px 3px'});
     $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
 
     return false;
-}
+	}
 
 function gravaMotivosAnulacao(){
-    
+
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando alterado o motivo");
-
+	
     var cdmotivo     = $("input[name='cdmotivo']:checked", "#frmDadosMotivos").val();
     var dsmotivo     = $('#dsmotivo'+cdmotivo,'#frmDadosMotivos').val();
     var dsobservacao = $('#dsobservacao'+cdmotivo,'#frmDadosMotivos').val();
 
-    $.ajax({        
+		$.ajax({
         type: "POST", 
         url: UrlSite + "telas/atenda/emprestimos/grava_motivo.php",
-        data: {
+			data: {
             nrdconta: nrdconta,
             nrctremp: nrctremp,
             cdmotivo: cdmotivo,
             dsmotivo: dsmotivo,
             dsobservacao: dsobservacao,
             redirect: "script_ajax"
-        }, 
-        error: function(objAjax,responseError,objExcept) {
-            hideMsgAguardo();
+			},
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
             showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function(response) {
-            try {
-                eval(response);
-            } catch(error) {
-                hideMsgAguardo();
+			},
+			success: function(response) {
+				try {
+					eval(response);
+				} catch(error) {
+					hideMsgAguardo();
                 showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				}
 			}
-		}				
-	});
-}
-
+		});
+	}
+	
 function fechaMotivos(encerrarRotina) {
     $('#divUsoGenerico').html('');
     fechaRotina($('#divUsoGenerico'));
     exibeRotina($('#divRotina'));
     controlaOperacao('');
-    return false;
+	return false;
 }
 
 function controlarMotivos(cdMotivo){
@@ -10526,6 +11749,791 @@ function controlarMotivos(cdMotivo){
         $('#dsobservacao'+cdMotivo,'#frmDadosMotivos').habilitaCampo();
     }
 }
+
+function controlaNavegacaoCamposNovaProposta(){
+
+	// Campo Produto
+	$("#tpemprst", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+    		$("#vlemprst", "#frmNovaProp").focus();
+
+    		/* prj - 438 - bruno - zero */
+    		setSelectionRange($("#vlemprst", "#frmNovaProp")[0],0,0);
+
+            return false;
+        }
+    });
+
+	// Campo Valor do Emprestimo
+    $("#vlemprst", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
+
+        // Se é a tecla ENTER
+        if (e.keyCode == 13) {
+
+			$("#cdlcremp", "#frmNovaProp").focus();
+
+            return false;
+        }
+
+        // Se é a tecla TAB ou SHIFT + TAB
+        if (e.keyCode == 9) {
+
+			if (e.shiftKey) {
+
+	        	$("#tpemprst", "#frmNovaProp").focus();
+
+	            return false;
+        	}
+
+	        $("#cdlcremp", "#frmNovaProp").focus();
+
+	        return false;
+        }
+    });
+
+    // Campo Linha de Credito
+    $("#cdlcremp", "#frmNovaProp").bind('keydown', function (e) {
+
+    	if($(this).val() == "0") //PRJ - 438 - Bruno - zero
+    		$(this).val("");
+
+        // Se é a tecla ENTER
+        if (e.keyCode == 13) {
+
+			$("#cdfinemp", "#frmNovaProp").focus();
+
+            return false;
+        }
+
+        // Se é a tecla TAB ou SHIFT + TAB
+        if (e.keyCode == 9) {
+
+			if (e.shiftKey) {
+
+        		$("#vlemprst", "#frmNovaProp").focus();
+
+	            return false;
+        	}
+
+	        $("#cdfinemp", "#frmNovaProp").focus();
+
+	        return false;
+        }
+    });
+
+    /* prj - 438 - bruno - zero */
+    $("#cdlcremp", "#frmNovaProp").unbind('keyup').bind('keyup',function(){
+    	if($(this).val() == "0")
+    		$(this).val("");
+    });
+
+    // Campo Finalidade
+    $("#cdfinemp", "#frmNovaProp").bind('keydown', function (e) {
+
+    	if($(this).val() == "0") //prj - 438 - bruno - zero
+    		$(this).val("");
+
+        // Se é a tecla ENTER
+        if (e.keyCode == 13) {
+
+			$("#qtpreemp", "#frmNovaProp").focus();
+
+            return false;
+        }
+
+        // Se é a tecla TAB ou SHIFT + TAB
+        if (e.keyCode == 9) {
+
+			if (e.shiftKey) {
+
+	        	$("#cdlcremp", "#frmNovaProp").focus();
+
+	            return false;
+        	}
+
+	        $("#qtpreemp", "#frmNovaProp").focus();
+
+	        return false;
+        }
+    });
+    /* prj - 438 - bruno - zero */
+    $("#cdfinemp", "#frmNovaProp").unbind('keyup').bind('keyup',function(){
+    	if($(this).val() == "0")
+    		$(this).val("");
+    });
+
+    // Campo Quantidade de Parcelas
+    $("#qtpreemp", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
+
+    	if($(this).val() == "0") //prj - 438 - bruno - zero
+    		$(this).val("");
+
+        // Se é a tecla ENTER
+        if (e.keyCode == 13) {
+
+    		$("#dtdpagto", "#frmNovaProp").focus();
+
+        	// PRJ 438 - Sprint 4 - Validar os dados quando passar pelo campo Quantidade de Parcelas
+        	showMsgAguardo('Aguarde, validando dados ...');
+            setTimeout('validaDados("' + cdcooper + '")', 400);
+
+            return false;
+        }
+
+        // Se é a tecla TAB ou SHIFT + TAB
+        if (e.keyCode == 9) {
+
+			if (e.shiftKey) {
+
+	        	$("#cdfinemp", "#frmNovaProp").focus();
+
+	            return false;
+        	}
+
+    		$("#dtdpagto", "#frmNovaProp").focus();
+
+        	// PRJ 438 - Sprint 4 - Validar os dados quando passar pelo campo Quantidade de Parcelas
+        	showMsgAguardo('Aguarde, validando dados ...');
+            setTimeout('validaDados("' + cdcooper + '")', 400);
+
+	        return false;
+        }
+    });
+    /* prj - 438 - bruno - zero */
+    $("#qtpreemp", "#frmNovaProp").unbind('keyup').bind('keyup',function(){
+    	if($(this).val() == "0")
+    		$(this).val("");
+    });
+
+    
+	// Campo Data de Pagamento
+    //bruno - prj 438 - bug 17972
+    $("#dtdpagto", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
+        // Se é a tecla TAB ou SHIFT + TAB
+        if (e.keyCode == 9) {
+			if (e.shiftKey) {
+				$("#qtpreemp", "#frmNovaProp").focus();
+	            return false;
+        	}
+            //prj 438 - bruno - bug 17972 (passou para cima)
+	        showMsgAguardo('Aguarde, carregando [1] ...');
+        	if($('#tpemprst', '#frmNovaProp').val() == 0){ // Tipo Produto "Price TR"
+	        	$("#flgpagto", "#frmNovaProp").focus();
+	    	} else if ($('#tpemprst', '#frmNovaProp').val() == 1){ // Tipo Produto "Price Pre-Fixado"
+	    		$("#idfiniof", "#frmNovaProp").focus();
+	    	} else if ($('#tpemprst', '#frmNovaProp').val() == 2){ // Tipo Produto "Pos-Fixado"
+	    		$("#idcarenc", "#frmNovaProp").focus();
+	    	}
+            //bruno - prj 438 - bug 14672
+            $(this).trigger('keypress',{keyCode: 13});
+	        return false;
+        }
+    });
+    
+
+    // Campo Carencia
+    $("#idcarenc", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
+
+        // Se é a tecla ENTER
+        if (e.keyCode == 13) {
+
+			$("#idfiniof", "#frmNovaProp").focus();
+
+            return false;
+        }
+
+        // Se é a tecla TAB ou SHIFT + TAB
+        if (e.keyCode == 9) {
+
+			if (e.shiftKey) {
+
+        		$("#dtdpagto", "#frmNovaProp").focus();
+
+	            return false;
+        	}
+
+	        $("#idfiniof", "#frmNovaProp").focus();
+
+	        return false;
+        }
+    });
+
+	// Campo Data de Pagamento
+    $("#idfiniof", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
+
+        // Se é a tecla ENTER
+        if (e.keyCode == 13) {
+
+        	if($('#tpemprst', '#frmNovaProp').val() == 0){ // Tipo Produto "Price TR"
+				$("#flgpagto", "#frmNovaProp").focus();
+			} else if ($('#tpemprst', '#frmNovaProp').val() == 1){ // Tipo Produto "Price Pre-Fixado"
+				$("#flgpagto", "#frmNovaProp").focus();
+			} else if ($('#tpemprst', '#frmNovaProp').val() == 2){ // Tipo Produto "Pos-Fixado"
+				if (arrayRendimento['flgconju'] == 'no') {
+            		$("#btSalvar", "#divBotoes").focus();
+	        	} else {
+		        	$("#flgYes", "#frmNovaProp").focus();
+	        	}
+			}
+
+            return false;
+        }
+
+        // Se é a tecla TAB ou SHIFT + TAB
+        if (e.keyCode == 9) {
+
+			if (e.shiftKey) {
+
+			if($('#tpemprst', '#frmNovaProp').val() == 0){ // Tipo Produto "Price TR"
+        		$("#qtpreemp", "#frmNovaProp").focus();
+        	} else if ($('#tpemprst', '#frmNovaProp').val() == 1){ // Tipo Produto "Price Pre-Fixado"
+        		$("#dtdpagto", "#frmNovaProp").focus();
+        	} else if ($('#tpemprst', '#frmNovaProp').val() == 2){ // Tipo Produto "Pos-Fixado"
+        		$("#idcarenc", "#frmNovaProp").focus();
+        	}
+
+	            return false;
+        	}
+
+        	if($('#tpemprst', '#frmNovaProp').val() == 0){ // Tipo Produto "Price TR"
+	        	$("#flgpagto", "#frmNovaProp").focus();
+	    	} else if ($('#tpemprst', '#frmNovaProp').val() == 1){ // Tipo Produto "Price Pre-Fixado"
+	    		$("#flgpagto", "#frmNovaProp").focus();
+	    	} else if ($('#tpemprst', '#frmNovaProp').val() == 2){ // Tipo Produto "Pos-Fixado"
+	    		if (arrayRendimento['flgconju'] == 'no') {
+            		$("#btSalvar", "#divBotoes").focus();
+	        	} else {
+		        	$("#flgYes", "#frmNovaProp").focus();
+	        	}
+	    	}	
+
+	        return false;
+        }
+    });
+
+    // Campo Debitar Em
+    $("#flgpagto", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
+
+        // Se é a tecla ENTER
+        if (e.keyCode == 13) {
+
+        	if (arrayRendimento['flgconju'] == 'no') {
+            	$("#btSalvar", "#divBotoes").focus();
+        	} else {
+	        	$("#flgYes", "#frmNovaProp").focus();
+        	}
+			
+
+            return false;
+        }
+
+        // Se é a tecla TAB ou SHIFT + TAB
+        if (e.keyCode == 9) {
+
+			if (e.shiftKey) {
+
+				if ($('#tpemprst', '#frmNovaProp').val() == 0){ // Tipo Produto "Price TR"
+	        		$("#dtdpagto", "#frmNovaProp").focus();
+	        	} else {
+	        		$("#idfiniof", "#frmNovaProp").focus();
+	        	}
+
+	            return false;
+        	}
+
+	        if (arrayRendimento['flgconju'] == 'no') {
+            	$("#btSalvar", "#divBotoes").focus();
+        	} else {
+	        	$("#flgYes", "#frmNovaProp").focus();
+        	}
+
+	        return false;
+        }
+    });
+	    
+    // Campo Radio Button YES
+    $("#flgYes", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
+
+        // Se é a tecla ENTER
+        if (e.keyCode == 13) {
+
+			$("#flgNo", "#frmNovaProp").focus();
+
+            return false;
+        }
+
+        // Se é a tecla TAB ou SHIFT + TAB
+        if (e.keyCode == 9) {
+
+			if (e.shiftKey) {
+
+				if ($('#tpemprst', '#frmNovaProp').val() == 2) { // Tipo Produto "Pos-Fixado"
+	        		$("#idfiniof", "#frmNovaProp").focus();
+	        	} else {	        		
+	        		$("#flgpagto", "#frmNovaProp").focus();
+	        	}
+
+	            return false;
+        	}
+
+	        $("#flgNo", "#frmNovaProp").focus();
+
+	        return false;
+        }
+    });
+
+    // Campo Radio Button NO
+    $("#flgNo", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
+
+        // Se é a tecla ENTER
+        if (e.keyCode == 13) {
+
+			$("#btSalvar", "#divBotoes").focus();
+
+            return false;
+        }
+
+        // Se é a tecla TAB ou SHIFT + TAB
+        if (e.keyCode == 9) {
+
+			if (e.shiftKey) {
+
+	        	$("#flgYes", "#frmNovaProp").focus();
+
+	            return false;
+        	}
+
+	        $("#btSalvar", "#divBotoes").focus();
+
+	        return false;
+        }
+    });
+
+    // Botão Continuar
+   //  $("#btSalvar", "#divBotoes").unbind('keydown').bind('keydown', function (e) {
+
+   //      // Se é a tecla TAB ou SHIFT + TAB
+   //      if (e.keyCode == 9) {
+
+			// if (e.shiftKey) {
+
+	  //       	if (arrayRendimento['flgconju'] == 'no') {
+   //          		$("#btSalvar", "#divBotoes").focus();
+	  //       	} else {
+		 //        	$("#flgYes", "#frmNovaProp").focus();
+	  //       	}
+
+	  //           return false;
+   //      	}
+
+	  //       return false;
+   //      }
+   //  });
+}
+
+function controlaCamposTelaAvalista(cooperado){
+
+	var inpessoa = $('#inpessoa', '#frmDadosAval').val();
+
+	if(cooperado == null){
+		var nrctaava = $('#nrctaava', '#frmDadosAval').val();
+		if(nrctaava == 0){
+			var cooperado = false;
+		} else {
+			var cooperado = true;
+		}
+	}
+
+    //bruno - prj 438 - BUG 14123
+    if(inpessoa == 1){
+        $('label[for="vlrenmes"]', '#frmDadosAval').css('width', '120px').text('Rendimento Mensal:');
+		$('label[for="dtnascto"]', '#frmDadosAval').css('width', '70px').text('Data Nasc.:');
+        $('#fsetConjugeAval', '#frmDadosAval').show();
+    }else{
+		$('label[for="vlrenmes"]', '#frmDadosAval').css('width', '150px').text('Faturamente Médio Mensal:');
+		$('label[for="dtnascto"]', '#frmDadosAval').css('width', '100px').text('Data da Abertura:');
+        $('#fsetConjugeAval', '#frmDadosAval').hide();
+    }
+
+	if (inpessoa == 1 && cooperado == true) {
+
+		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('C.P.F:');
+		$('label[for="nmdavali"]', '#frmDadosAval').text('Nome:');
+		$('#divCdnacion', '#frmDadosAval').hide();
+		$('label[for="dtnascto"], #dtnascto', '#frmDadosAval').hide();
+		$('label[for="dsdemail"], #dsdemail', '#frmDadosAval').hide();
+		$('label[for="vlrenmes"]', '#frmDadosAval').css('width', '120px').text('Rendimento Mensal:');
+		$('#fsetConjugeAval', '#frmDadosAval').show();
+
+	} else if (inpessoa == 1 && cooperado == false) {
+
+		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('C.P.F:');
+		$('label[for="nmdavali"]', '#frmDadosAval').text('Nome:');
+		$('#divCdnacion', '#frmDadosAval').show();
+		$('label[for="dtnascto"], #dtnascto', '#frmDadosAval').show();
+		$('label[for="dsdemail"], #dsdemail', '#frmDadosAval').show();
+		$('label[for="vlrenmes"]', '#frmDadosAval').css('width', '120px').text('Rendimento Mensal:');
+		$('#fsetConjugeAval', '#frmDadosAval').show();
+
+	} else if (inpessoa == 2 && cooperado == true) {
+
+		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('C.N.P.J:');
+		$('label[for="nmdavali"]', '#frmDadosAval').text('Razão Social:');
+		$('#divCdnacion', '#frmDadosAval').hide();
+		$('label[for="dtnascto"], #dtnascto', '#frmDadosAval').hide();
+		$('label[for="dsdemail"], #dsdemail', '#frmDadosAval').hide();
+		$('label[for="vlrenmes"]', '#frmDadosAval').css('width', '150px').text('Faturamente Médio Mensal:');
+		$('#fsetConjugeAval', '#frmDadosAval').hide();
+
+	} else if (inpessoa == 2 && cooperado == false) {
+
+		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('C.N.P.J:');
+		$('label[for="nmdavali"]', '#frmDadosAval').text('Razão Social:');
+		$('#divCdnacion', '#frmDadosAval').show(); //prj 438 - BUG 14149
+		$('label[for="dtnascto"], #dtnascto', '#frmDadosAval').show();
+		$('label[for="dtnascto"]', '#frmDadosAval').text('Data da Abertura:');
+		$('label[for="dsdemail"], #dsdemail', '#frmDadosAval').show();
+		$('label[for="vlrenmes"]', '#frmDadosAval').css('width', '150px').text('Faturamente Médio Mensal:');
+		$('#fsetConjugeAval', '#frmDadosAval').hide();
+
+	}
+
+    //bruno - prj 438 - bug 14585
+    if(operacao == 'C_DADOS_AVAL'){
+        if($('#nrctaava','#frmDadosAval').val() == "0" || $('#nrctaava','#frmDadosAval').val() == ""){
+            $('label[for="dtnascto"], #dtnascto', '#frmDadosAval').show();
+		    $('label[for="dsdemail"], #dsdemail', '#frmDadosAval').show();
+        }
+    }
+
+}
+
+
+/*
+	Autor: Bruno Luiz Katzjarowski
+	PRJ - 438 - Enter na tela de avalista
+	Controlar eventos dos campos da tela de avalista enter|tab
+*/
+function controlaEventoCamposTelaAvalista(){
+
+	var arrCampos = [
+		"nrcpfcgc", //0
+		"nmdavali", //1
+		"cdnacion", //2
+		"dtnascto", //3
+		"nrctacjg", //4
+		"nrcpfcjg", //5
+		"nmconjug", //6
+		"vlrencjg", //7
+		"nrcepend", //8
+		"nrendere", //9
+		"complend", //10
+		"nrcxapst", //11
+		"nrfonres", //12
+		"dsdemail", //13
+		"vlrenmes", //14
+	];
+
+    //bruno - prj 438 - BUG 13977
+    $(arrCampos).each(function(elem){
+        var c = $("#"+arrCampos[elem],"#frmDadosAval");
+		if(!((elem+1)>(arrCampos.length-1))){
+			$(c).bind('keypress',function(e){
+				if(e.keyCode == 13 || e.keyCode == 9){
+					if($('#inpessoa',"#frmDadosAval").val() != "1"){
+						if(arrCampos[elem] == "dtnascto")
+							$("#"+arrCampos[8],"#frmDadosAval").focus();
+						else
+							$("#"+arrCampos[elem+1],"#frmDadosAval").focus();
+					}else{
+						$("#"+arrCampos[elem+1],"#frmDadosAval").focus();
+					}
+				}
+			});
+	}
+	});
+
+
+}
+
+/**
+ * Bruno - prj 438 - bug 14962
+ * @param {string} tipoConsulta Tipo da consulta (swith) 
+ * @param {object} campoFoco Configuração de campo para focar após busca
+ * @param {stirng} campoFoco.campo Campo a enviar o foco
+ * @param {string} campoFoco.form Formulario onde está inserido o campo 
+ */
+function buscarContasPorCpfCnpj(tipoConsulta, campoFoco){
+
+    //bruno - prj 438 - bug 14962
+    if(typeof campoFoco == "undefined"){
+        campoFoco = {
+            campo: "",
+            form: ""
+        };
+    }
+
+	switch (tipoConsulta) {
+		case 'aval':
+			var nomeCampoCpf = 'nrcpfcgc';
+			var nomeCampoConta = 'nrctaava';
+			var nomeForm = 'frmDadosAval';
+			break;
+		case 'aval-cje':
+			var nomeCampoCpf = 'nrcpfcjg';
+			var nomeCampoConta = 'nrctacjg';
+			var nomeForm = 'frmDadosAval';
+			break;
+		case 'interv':
+			var nomeCampoCpf = 'nrcpfcgc';
+			var nomeCampoConta = 'nrctaava';
+			var nomeForm = 'frmIntevAnuente';
+			break;
+		case 'interv-cje':
+			var nomeCampoCpf = 'nrcpfcjg';
+			var nomeCampoConta = 'nrctacjg';
+			var nomeForm = 'frmIntevAnuente';
+			break;
+	}
+	
+	//var nrcpfcgc = $('#nrcpfcgc', '#frmDadosAval').val();
+	var nrcpfcgc = $('#' + nomeCampoCpf, '#' + nomeForm).val();
+	nrcpfcgc = normalizaNumero(nrcpfcgc);
+
+	$.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/emprestimos/busca_contas_por_cpf_cnpj.php',
+        data: {
+        	nomeCampoConta: nomeCampoConta,
+        	nomeForm: nomeForm,
+            nrcpfcgc: nrcpfcgc,
+            campoFoco: campoFoco, //bruno - prj 438 - bug 14962
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "unblockBackground()");
+        },
+        success: function(response) {
+            try {
+            	//bruno - prj 438 - bug 13500
+            	zeraCamposDadosConjugeAvalista();
+                //bruno - prj 438 - bug 14962
+                zeraCamposDadosConjugeInterveniente();
+                if (response.indexOf('showError("error"') == -1) {
+                	hideMsgAguardo();
+                	// Se o response retornou vazio, ou seja, nenhuma conta, permitir digitação na tela
+                	if (response.length == 0) {
+                		if(tipoConsulta == 'aval'){
+                			// Chamar função para ajustar o layout da tela Avalista passando false(nao cooperado) no parametro cooperado
+                    		controlaCamposTelaAvalista(false);
+                    		habilitarCamposAvalistaInterveniente(nomeForm);
+                		} else if(tipoConsulta == 'interv'){
+                			// Chamar função para ajustar o layout da tela Interveniente passando false(nao cooperado) no parametro cooperado
+                    		controlaCamposTelaInterveniente(false);
+                    		habilitarCamposAvalistaInterveniente(nomeForm);
+                		}else if(tipoConsulta == "aval-cje"){ //bruno - prj 438 - bug 13500
+                            $('#nrctacjg','#fsetConjugeAval').desabilitaCampo();
+                		}
+                		bloqueiaFundo(divRotina);
+                	// Verificar se é para exibir a tabela de contas ou se retornou apenas uma conta
+                	} else if (response.indexOf("$('#" + nomeCampoConta + "','#" + nomeForm + "').val") == -1) {
+                		$('#divUsoGenerico').html(response);
+                    	controlaLayoutContas();
+                	} else {
+                		hideMsgAguardo();
+
+                		if(tipoConsulta == "aval-cje"){ //bruno - prj 438 - bug 13500
+                            $('#nrctacjg','#fsetConjugeAval').habilitaCampo();
+                        }
+
+                    	eval(response);
+                        if(tipoConsulta != "interv-cje"){ //bruno - prj 438 - bug 14962
+                    	     $('#' + nomeCampoConta, '#' + nomeForm).trigger('change');
+                	    }
+                	}
+                } else {
+                    hideMsgAguardo();
+                    eval(response);
+                }
+            } catch (error) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground()');
+            }
+        }
+    });
+    return false;
+}
+
+function controlaLayoutContas(){
+	var divRegistro = $('#divTabelaContasPorCpfCnpj > div.divRegistros');
+    var tabela = $('table', divRegistro);
+
+    divRegistro.css('height', '150px');
+
+    var ordemInicial = new Array();
+    ordemInicial = [[0, 0]];
+
+    var arrayLargura = new Array();
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
+
+    layoutPadrao();
+    exibeRotina($('#divUsoGenerico'));
+}
+
+/**
+ * bruno - prj 438 - bug 14962
+ * @param {string} nomeCampoConta 
+ * @param {string} nomeForm 
+ * @param {object} campoFoco Configuração de campo para focar após busca |
+ * @param {stirng} campoFoco.campo Campo a enviar o foco |
+ * @param {string} campoFoco.form Formulario onde está inserido o campo 
+ */
+function confirmarConta(nomeCampoConta, nomeForm, campoFoco){
+	
+	var nrdconta = $("#divTabelaContasPorCpfCnpj table tr.corSelecao").find("input[id='nrdconta']").val();
+
+	$('#' + nomeCampoConta,'#' + nomeForm).val(nrdconta);
+	fechaRotina($('#divUsoGenerico'), $('#divRotina'));
+    //prj 438 - bruno - bug 13951
+	//$('#' + nomeCampoConta, '#' + nomeForm).trigger('change');
+    $('#' + nomeCampoConta, '#' + nomeForm).trigger('keydown',{keyCode: 13});
+	$('#divUsoGenerico').html('');
+
+    //bruno - prj 438 - bug 14962
+    focaCampo(campoFoco);
+}
+
+function controlaCamposTelaInterveniente(cooperado){
+
+	var inpessoa = $('#inpessoa', '#frmIntevAnuente').val();
+
+    if(inpessoa == ""){ //bruno - prj 438 - bug 14962 
+        var __cpfcnpj_conjuge = $('#nrcpfcgc', '#frmIntevAnuente').val();
+        var __tipoInterv = (validaCpfCnpj(__cpfcnpj_conjuge,1) ? '1' : (validaCpfCnpj(__cpfcnpj_conjuge,'2') ? '2' : '' )); 
+        inpessoa = __tipoInterv;
+        $('#inpessoa', '#frmDadosAval').val(__tipoInterv);
+    }
+
+	if(cooperado == null){
+		var nrctaava = $('#nrctaava', '#frmIntevAnuente').val();
+		if(nrctaava == 0){
+			var cooperado = false;
+		} else {
+			var cooperado = true;
+		}
+	}
+
+    //bruno - prj 438 - bug 14585
+    switch(inpessoa){
+        case '1':
+            $('label[for="dtnascto"]', '#frmIntevAnuente').text('Data Nasc.:');
+        break;
+        default:
+            $('label[for="dtnascto"]', '#frmIntevAnuente').text('Data da Abertura:');
+        break;
+    }
+    if(operacao == 'C_INTEV_ANU'){
+        if($('#nrctaava', '#frmIntevAnuente').val() == '0' || $('#nrctaava', '#frmIntevAnuente').val() == ''){
+            $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').show();
+        }else{
+            $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').hide();
+        }
+    }
+
+	if (inpessoa == 1 && cooperado == true) {
+
+		$('label[for="nrcpfcgc"]', '#frmIntevAnuente').text('C.P.F:');
+		$('label[for="nmdavali"]', '#frmIntevAnuente').text('Nome:');
+		$('#divCdnacion', '#frmIntevAnuente').hide();
+		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').hide();
+		$('#fsetConjugeInterv', '#frmIntevAnuente').show();
+        $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').hide(); //bruno - prj 438 - bug 14962
+
+	} else if (inpessoa == 1 && cooperado == false) {
+
+		$('label[for="nrcpfcgc"]', '#frmIntevAnuente').text('C.P.F:');
+		$('label[for="nmdavali"]', '#frmIntevAnuente').text('Nome:');
+		$('#divCdnacion', '#frmIntevAnuente').show();
+		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').show();
+		$('#fsetConjugeInterv', '#frmIntevAnuente').show();
+        $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').show(); //bruno - prj 438 - bug 14962
+
+	} else if (inpessoa == 2 && cooperado == true) {
+
+		$('label[for="nrcpfcgc"]', '#frmIntevAnuente').text('C.N.P.J:');
+		$('label[for="nmdavali"]', '#frmIntevAnuente').text('Razão Social:');
+		$('#divCdnacion', '#frmIntevAnuente').hide();
+		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').hide();
+		$('#fsetConjugeInterv', '#frmIntevAnuente').hide();
+        $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').hide(); //bruno - prj 438 - bug 14962
+
+	} else if (inpessoa == 2 && cooperado == false) {
+
+		$('label[for="nrcpfcgc"]', '#frmIntevAnuente').text('C.N.P.J:');
+		$('label[for="nmdavali"]', '#frmIntevAnuente').text('Razão Social:');
+		$('#divCdnacion', '#frmIntevAnuente').show();
+		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').show();
+		$('#fsetConjugeInterv', '#frmIntevAnuente').hide();
+        $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').show(); //bruno - prj 438 - bug 14962
+
+	}
+
+    //bruno - prj 438 - 14962
+    //if(operacao == 'C_INTEV_ANU'){ 
+        if($('#nrctaava', '#frmIntevAnuente').val() == '0' || $('#nrctaava', '#frmIntevAnuente').val() == ''){
+            $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').show();
+		    $('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').show();
+        }else{
+            $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').hide();
+		    $('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').hide();
+        }
+    //}
+    if($('#nrctaava', '#frmIntevAnuente').val() == "" || $('#nrctaava', '#frmIntevAnuente').val() == "0"){
+		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').show();
+    } 
+}
+
+function buscarDadosContaConjuge(nomeForm){
+	
+	var nrdconta = $('#nrctacjg', '#' + nomeForm).val();
+	nrdconta = normalizaNumero(nrdconta);
+
+	$.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/emprestimos/busca_dados_conta_conjuge.php',
+        data: {
+        	nrdconta: nrdconta,
+        	nomeForm: nomeForm,
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            try {
+                hideMsgAguardo();
+                bloqueiaFundo(divRotina);
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo($(\'#divUsoGenerico\'))');
+            }
+        }
+    });
+    return false;
+}
+// PRJ 438 - FIM
 
 function buscaTipo() {
 	arrayAditiv.length = 0;
@@ -10546,7 +12554,7 @@ function buscaTipo() {
 			},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',"unblockBackground();");
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
@@ -10587,13 +12595,13 @@ function verificarTipoVeiculo() {
 	var tipo = $('#dstipbem option:selected').val();
 	
 	var optionsModBem = $('#nrmodbem option');
-		$.each(optionsModBem, function(){
-			if($(this).text().toUpperCase().search('ZERO KM') != -1){
+		$.each( optionsModBem, function() {
+			if ($(this).text().toUpperCase().search('ZERO KM') != -1) {
 				if (modeloBem == '' || modeloBem == null) { modeloBem = 3200; }
 				$(this).remove();
 			}
 		});
-	if(tipo != 'ZERO KM'){
+	if (tipo != 'ZERO KM') {
 		modeloBem = '';
 	} 
 }
@@ -10633,4 +12641,304 @@ function mostraAplicacao(tpaplica) {
     });
     
 	return false;
+}
+function alteraSomenteBens() {
+	bloqueiaFundo(divRotina);
+	showMsgAguardo('Aguarde, salvando ...');
+
+    //Bens alienação
+    var aux_dsdalien = '';
+	var aux_dsinterv = '';
+    for (i in arrayAlienacoes) {
+
+        if (aux_dsdalien != '') {
+            aux_dsdalien = aux_dsdalien + '|';
+        }
+
+		var dstpcomb = "";
+		var nrmodbem = arrayAlienacoes[i]['nrmodbem'];
+		arrmodbem = nrmodbem.split(" ");
+		if ( arrmodbem[0] !== nrmodbem ) {
+			nrmodbem = arrmodbem[0];
+			dstpcomb = arrmodbem[1];
+		}
+
+        aux_dsdalien = aux_dsdalien +
+                arrayAlienacoes[i]['dscatbem'] + ';' +
+                removeAcentos(removeCaracteresInvalidos(arrayAlienacoes[i]['dsbemfin'].replace("<", "").replace(">", ""))) + ';' +
+                removeAcentos(removeCaracteresInvalidos(arrayAlienacoes[i]['dscorbem'].replace("<", "").replace(">", ""))) + ';' +
+                number_format(parseFloat(arrayAlienacoes[i]['vlrdobem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //altera
+                arrayAlienacoes[i]['dschassi'] + ';' +
+                arrayAlienacoes[i]['nranobem'] + ';' +
+                nrmodbem.substring(0,4) + ';' +
+                arrayAlienacoes[i]['nrdplaca'].replace('0000000', '') + ';' +
+                normalizaNumero(arrayAlienacoes[i]['nrrenava']) + ';' +
+                arrayAlienacoes[i]['tpchassi'] + ';' +
+                arrayAlienacoes[i]['ufdplaca'] + ';' +
+                normalizaNumero(arrayAlienacoes[i]['nrcpfcgc']) + ';' + //altera
+                arrayAlienacoes[i]['uflicenc'] /* GRAVAMES*/ + ';' +
+                arrayAlienacoes[i]['dstipbem'] + ';' +
+                arrayAlienacoes[i]['idseqbem'] + ';' + /* GRAVAMES */
+                arrayAlienacoes[i]['cdcoplib'] + ';' + /* OPERADOR DE LIBERACAO */
+                arrayAlienacoes[i]['dsmarbem'] + ';' + //novo
+                number_format(parseFloat(arrayAlienacoes[i]['vlfipbem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //novo
+				dstpcomb + ';' ; //novo
+    }
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/emprestimos/altera_somente_bens.php',
+		data: {
+			cddopcao: cddopcao,
+			nrdconta: nrdconta,
+			nrctremp: nrctremp,
+			dsdalien: aux_dsdalien,
+			dsinterv: aux_dsinterv,
+			redirect: 'html_ajax'
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
+		},
+		success: function(response) {
+			try {
+				bloqueiaFundo(divRotina);
+				eval(response);
+				return false;
+			} catch(error) {
+				hideMsgAguardo();
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
+			}
+		}
+    });
+    
+	return false;
+}
+
+/* 
+	Esconder mostrar campos para a categoria MAQUINA E EQUIPMENTO 
+
+	@param hide boolean true => mostrar field maquina e equipamento | false => esconder maquina e equipamento
+	@return void
+*/
+function hideCamposCategoriaVeiculos(hide){ //PRJ 438 - Bruno
+	if(typeof hide == "undefined"){
+		hide = true;
+	}
+	if(hide){
+		$('.fieldVeiculos').hide();
+		$('.fieldMaquinaEquipamento').show();
+	}else{
+		$('.fieldMaquinaEquipamento').hide();
+		$('.fieldVeiculos').show();
+	}
+}
+
+
+/*
+	Autor: Bruno Luiz Katzjarowski - Mout's
+	Abrir alterar numero contrato - PRJ - 438 - Contrato
+	@return false
+*/
+function alteraNumeroContrato(){
+
+    //bruno - prj 438 - bug 14750
+    if(!validaAnulada($("#divEmpres table tr.corSelecao"))){
+        return false;
+    }
+
+    possuiPortabilidade = $("#divEmpres table tr.corSelecao").find("input[id='portabil']").val();
+    controlaOperacao('A_NUMERO');
+    return false;
+}
+
+/*
+	Autor: Mateus Zimmermann (Mouts)
+	Descrição: Abrir tela altera proposta
+	@return false
+*/
+function alteraProposta(){
+    possuiPortabilidade = $("#divEmpres table tr.corSelecao").find("input[id='portabil']").val();
+    direcionaAlteracao('A_NOVA_PROP');
+    return false;
+}
+
+/*
+	Autor: Bruno Luiz Katzjarowski - Mout's
+	Abrir Consulta Automatizada - PRJ - 438 - Automatizadas
+	@return false
+*/
+function alteraConsultaAutomatizada(){
+	//#btConsultaAutomatizada
+    possuiPortabilidade = $("#divEmpres table tr.corSelecao").find("input[id='portabil']").val();
+	aux_nrctremp_consulta = $("#divEmpres table tr.corSelecao").find("input[id='nrctremp']").val();
+    controlaOperacao('CONSULTAS');
+    return false;
+}
+
+function botaoAlteraSomenteBens(){
+    possuiPortabilidade = $("#divEmpres table tr.corSelecao").find("input[id='portabil']").val();
+    controlaOperacao('A_SOMBENS');
+    return false;
+}
+
+/*
+	Setar o cursor em uma determinada posiçao dentro do input ou selecionar uma parte 
+	do texto
+
+	@param input
+	@param selectionStart selecionar de
+	@param selectionEnd selecinar até
+*/
+function setSelectionRange(input, selectionStart, selectionEnd) {
+	if (input.setSelectionRange) {
+		input.focus();
+		input.setSelectionRange(selectionStart, selectionEnd);
+	}
+	else if (input.createTextRange) {
+		var range = input.createTextRange();
+		range.collapse(true);
+		range.moveEnd('character', selectionEnd);
+		range.moveStart('character', selectionStart);
+		range.select();
+}
+};
+
+/*
+	Autor: Mateus Z (Mouts)
+	PRJ - 438 - Enter na tela de internveniente
+	Controlar navegancao usando o enter na tela interveniente
+*/
+function controlaEventoCamposTelaInterveniente(){
+
+	var arrCampos = [
+		"nrcpfcgc",
+		"nmdavali",
+		"cdnacion",
+        "dtnascto", //Bruno - prj 438 - bug 14587
+		"nrctacjg",
+		"nrcpfcjg",
+		"nmconjug",
+		"nrcepend",
+		"nrendere",
+		"complend",
+		"nrcxapst",
+		"nrfonres",
+		"dsdemail",
+	];
+
+    //bruno - prj 438 - BUG 13977
+    $(arrCampos).each(function(i){
+        var c = $("#"+arrCampos[i],"#frmIntevAnuente");
+		if(!((i+1)>(arrCampos.length-1))){
+			$(c).bind('keypress',function(e){
+				if(e.keyCode == 13 || e.keyCode == 9){
+					if($('#inpessoa',"#frmIntevAnuente").val() != '1'){
+						if(c == "dtnascto") //bruno - prj 438 - bug 14962
+							$("#"+arrCampos[6],"#frmIntevAnuente").focus();
+						else
+							$("#"+arrCampos[i+1],"#frmIntevAnuente").focus();
+					}else{
+						$("#"+arrCampos[i+1],"#frmIntevAnuente").focus();
+					}
+				}
+			});
+		}
+	});
+
+}
+
+function habilitarCamposAvalistaInterveniente(nomeForm){
+
+	var cTodos = $('select,input', '#' + nomeForm);
+	var cTodos_1 = $('select,input', '#' + nomeForm + ' fieldset:eq(1)');
+	var cTodos_2 = $('select,input', '#' + nomeForm + ' fieldset:eq(2)');
+	var cTodos_3 = $('select,input', '#' + nomeForm + ' fieldset:eq(3)');
+	var cTodos_4 = $('select,input', '#' + nomeForm + ' fieldset:eq(4)');
+	var cQntd = $('#qtpromis', '#' + nomeForm);
+    var cConta = $('#nrctaava', '#' + nomeForm);
+    var cNome = $('#nmdavali', '#' + nomeForm);
+
+    /*
+
+    Permite que o acesso via CRM faca o cadastro de avalistas.
+    Ao digitar um cpf/cnpj que nao possui idpessoa, a tela
+    ira habilitar digitacao nos campos que anteriormente a
+    esta implementacao, estavam bloqueados / somente leitura.
+
+    */
+    // Se nao for acessado via CRM, pode habilitar os campos
+    //if ($('#crm_inacesso', '#' + nomeForm).val() != 1 ) {
+        cTodos.habilitaCampo();
+        cTodos_1.habilitaCampo();
+        cTodos_2.habilitaCampo();
+        cTodos_3.habilitaCampo();
+        if(nomeForm == 'frmDadosAval'){
+        	cTodos_4.habilitaCampo();
+	        cConta.desabilitaCampo().val(nrctaava);
+	        cQntd.desabilitaCampo().val(arrayProposta['qtpromis']);
+        } else if (nomeForm == 'frmIntevAnuente'){
+        	cConta.desabilitaCampo();
+        }
+
+        $('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeForm).desabilitaCampo();
+        controlaPesquisas();
+        cNome.focus();
+        
+    //}
+}
+
+/*
+Autor: Bruno Luiz Katzjarowski
+Data: 03/01/2019
+bruno - prj 438 - bug 13500
+*/
+function zeraCamposDadosConjugeAvalista(){
+
+	$('#nmconjug', '#frmDadosAval').val("");
+	$('#nrctacjg', '#frmDadosAval').val("");
+	$('#vlrencjg', '#frmDadosAval').val("");
+
+}
+
+
+/*
+    Autor: Bruno Luiz Katzjarowski
+    Data: 22/02/2019
+    bruno - prj 438 - bug 14962
+*/
+function zeraCamposDadosConjugeInterveniente(){
+	$('#nmconjug', '#frmIntevAnuente').val("");
+	$('#nrctacjg', '#frmIntevAnuente').val("");
+	$('#vlrencjg', '#frmIntevAnuente').val("");
+}
+
+/** 
+ * Autor: Bruno Luiz Katzjarowski
+ * Data: 16/01/2019
+ * bruno - prj 438 - bloqueia botao 
+*/
+function restaurarBotoesTelaInicial(verificar){
+    if(verificar){
+        if(aux_botoesTelaInicial.btGravarOnclick != ""){
+            $('#btVoltar', '#divBotoes').attr('onClick',aux_botoesTelaInicial.btVoltarClick);
+            $('#btSalvar', '#divBotoes').attr('onClick',aux_botoesTelaInicial.btSalvarOnclick);
+            $('#btGravaPropostaCompleta', '#divBotoes').attr('onClick',aux_botoesTelaInicial.btGravarOnclick);
+        }
+    }else{    
+        $('#btVoltar', '#divBotoes').attr('onClick',aux_botoesTelaInicial.btVoltarClick);
+        $('#btSalvar', '#divBotoes').attr('onClick',aux_botoesTelaInicial.btSalvarOnclick);
+        $('#btGravaPropostaCompleta', '#divBotoes').attr('onClick',aux_botoesTelaInicial.btGravarOnclick);
+    }
+}
+
+/**
+ * bruno - prj 438 - bug 14962
+ * @param {object} campo Configuração de campo para focar após busca
+ * @param {stirng} campo.campo Campo a enviar o foco
+ * @param {string} campo.form Formulario onde está inserido o campo 
+ */
+function focaCampo(campo){
+    $('#'+campo.campo,'#'+campo.form).focus();
 }
