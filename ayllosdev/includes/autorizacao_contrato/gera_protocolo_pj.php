@@ -48,7 +48,8 @@ if(strpos(";",$funcaoImpressao) === false){
  */
 
     if($codTela == "0"){
-        geraProtocoloPJ($nrcontrato,$vlcontrato);
+        //prj 470 - bruno - libera alteração
+        geraProtocoloPJ($nrcontrato,$vlcontrato,$contas_digitadas,$dsComplemento);
     }else{
 
         switch ($codTela) {
