@@ -6017,6 +6017,7 @@ PROCEDURE Critica_Cadastro_Pf:
     /*DEF VAR aux_flgnrcto AS LOG                                     NO-UNDO.*/
     DEF VAR aux_nrdeanos AS INTE                                    NO-UNDO.
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_cdmodali AS INTE                                    NO-UNDO.
 
     DEF BUFFER craxttl FOR crapttl.
     DEF BUFFER crabenc FOR crapenc.
@@ -6038,6 +6039,36 @@ PROCEDURE Critica_Cadastro_Pf:
     ASSIGN aux_returnvl = "NOK".
 
     CriticaPf: DO ON ERROR UNDO CriticaPf, LEAVE CriticaPf:
+    
+        /* P485 - Validaçao para conta salário */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_busca_modalidade_conta aux_handproc = PROC-HANDLE NO-ERROR
+                      (INPUT  par_cdcooper 
+                      ,INPUT  par_nrdconta 
+                      ,OUTPUT 0
+                      ,OUTPUT ""
+                      ,OUTPUT "").
+                             
+
+        CLOSE STORED-PROC pc_busca_modalidade_conta aux_statproc = PROC-STATUS 
+             WHERE PROC-HANDLE = aux_handproc.
+        
+        ASSIGN aux_dscritic = ""
+               aux_cdmodali = 0
+               aux_dscritic = pc_busca_modalidade_conta.pr_dscritic 
+                              WHEN pc_busca_modalidade_conta.pr_dscritic <> ?
+               aux_cdmodali = pc_busca_modalidade_conta.pr_cdmodalidade_tipo 
+                              WHEN pc_busca_modalidade_conta.pr_cdmodalidade_tipo <> ?.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* Se retornou crítica */
+        IF  aux_dscritic <> "" THEN
+          DO:
+               LEAVE CriticaPf.
+          END.
+        /* P485 - Validaçao para conta salário */
 
         FOR EACH craxttl FIELDS(cdcooper idseqttl nrdconta nmextttl nrcpfcgc 
                                 dtcnscpf cdsitcpf tpdocttl nrdocttl idorgexp 
@@ -6159,11 +6190,15 @@ PROCEDURE Critica_Cadastro_Pf:
                       INPUT "Estado Civil", 
                       INPUT {&TT-IDENT} ).
 
-            IF  craxttl.grescola = 0 THEN
-                RUN Trata_Critica
-                    ( INPUT craxttl.idseqttl,
-                      INPUT "Escolaridade", 
-                      INPUT {&TT-IDENT} ).
+            /* Se a modalidade for 2 entao é conta salário */
+            IF aux_cdmodali <> 2 THEN
+              DO:
+                IF  craxttl.grescola = 0 THEN
+                    RUN Trata_Critica
+                        ( INPUT craxttl.idseqttl,
+                          INPUT "Escolaridade", 
+                          INPUT {&TT-IDENT} ).
+              END.
 
             IF  craxttl.nmtalttl = "" THEN
                 RUN Trata_Critica
