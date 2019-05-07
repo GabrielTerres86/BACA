@@ -4492,8 +4492,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
         '  <dtdpagto>'|| TO_CHAR(rw_crawepr.dtdpagto,'DD/MM/YYYY') ||'</dtdpagto>'||
         '  <dtultpgt>'|| TO_CHAR(ADD_MONTHS(rw_crawepr.dtdpagto, rw_crawepr.qtpreemp - 1),'DD/MM/YYYY') ||'</dtultpgt>'||
         '  <dsdadata>'|| vr_dsdadata ||'</dsdadata>'||
-		'  <tpemprst>'|| rw_crawepr.tpemprst ||'</tpemprst>'||
-        '</dados>');
+		'  <tpemprst>'|| rw_crawepr.tpemprst ||'</tpemprst>');
 
       -- Projeto 470 - SM 1
       -- 18/03/2019 - Projeto 470 - SM 1
