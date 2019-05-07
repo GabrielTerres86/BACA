@@ -35,7 +35,6 @@ SELECT ass.cdcooper cooperativa,
    AND enc.idseqttl(+) = ttl.idseqttl
    AND enc.tpendass(+) IN (9,10)
    AND ass.dtelimin IS NULL
-   AND ttl.nrcpfcgc IS NOT NULL
 UNION
 SELECT ass.cdcooper,
        ass.nrdconta,
@@ -43,11 +42,11 @@ SELECT ass.cdcooper,
        age.nmresage,
        ass.inpessoa,
        NULL,
-       ass2.nmprimtl,
-       ass2.nrcpfcgc,
+       nvl(ass2.nmprimtl, avt.nmdavali),
+       nvl(ass2.nrcpfcgc, avt.nrcpfcgc),
        1,
        ass.nmprimtl,
-       ass2.dsproftl,
+       nvl(ass2.dsproftl, avt.dsproftl),
        decode(enc.tpendass,10,'RESIDENCIAL','COMERCIAL'),
        enc.dsendere,
        enc.nrendere,
@@ -77,4 +76,37 @@ SELECT ass.cdcooper,
    AND enc.idseqttl(+) = 1
    AND enc.tpendass(+) = 9
    AND ass.dtelimin IS NULL
-   AND ass2.nrcpfcgc IS NOT NULL;
+UNION
+SELECT ass.cdcooper,
+       ass.nrdconta,
+       ass.cdagenci,
+       age.nmresage,
+       ass.inpessoa,
+       NULL,
+       ass.nmprimtl,
+       ass.nrcpfcgc,
+       1,
+       ass.nmprimtl,
+       ass.dsproftl,
+       decode(enc.tpendass,10,'RESIDENCIAL','COMERCIAL'),
+       enc.dsendere,
+       enc.nrendere,
+       enc.nmbairro,
+       enc.nmcidade,
+       enc.nrcepend,
+       enc.cdufende,
+       enc.complend
+  FROM crapcop cop,
+       crapass ass,
+       crapage age,
+       crapenc enc
+ WHERE cop.flgativo = 1
+   AND ass.cdcooper = cop.cdcooper
+   AND ass.inpessoa = 2
+   AND age.cdcooper = cop.cdcooper
+   AND age.cdagenci = ass.cdagenci
+   AND enc.cdcooper(+) = ass.cdcooper
+   AND enc.nrdconta(+) = ass.nrdconta
+   AND enc.idseqttl(+) = 1
+   AND enc.tpendass(+) = 9
+   AND ass.dtelimin IS NULL;
