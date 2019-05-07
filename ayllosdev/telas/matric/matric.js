@@ -64,6 +64,7 @@
  * 038: [13/07/2018] Andrey Formigari (Mouts): Novo campo Nome Social (#SCTASK0017525)
  * 039: [04/09/2018] Alcemir          (Mouts): alterado atualizarContasAntigasDemitidas(), incluido parametro operauto (operador autorizador). (SM 364) 
  * 049: [29/01/2019] Márcio           (Mouts): Validar se CNAE informado é válido (PRB0040478) 
+ * 050: [07/05/2019] Daniel Lombardi  (Mouts): Nova function excluisva para validação de e-mails. (PRB0041686) 
  */
 
 // Definição de algumas variáveis globais 
@@ -777,7 +778,7 @@ function manterRotina() {
         }
 
         if (dsdemail != '') {
-            dsdemail = removeAcentos(removeCaracteresInvalidos(dsdemail));
+            dsdemail = removeAcentos(removeCaracteresInvalidosEmail(dsdemail));
         }
 
         if (nmprimtl != '') {
@@ -905,7 +906,7 @@ function manterRotina() {
         }
 
         if (dsdemail != '') {
-            dsdemail = removeAcentos(removeCaracteresInvalidos(dsdemail));
+            dsdemail = removeAcentos(removeCaracteresInvalidosEmail(dsdemail));
         }
 
         if (nmprimtl != '') {
@@ -966,6 +967,11 @@ function removeAcentos(str){
 function removeCaracteresInvalidos(str){
 	return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
 }
+
+function removeCaracteresInvalidosEmail(str) {
+    return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\(\)\-\_\=\@\+\[\]\{\}\?\;\:\.\,\/\>\<]/g, "");
+}
+
 function verificaCpfCgcRespSocial(inpessoa, nrcpfcgc) {
     
     $.ajax({
