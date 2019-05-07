@@ -907,6 +907,7 @@ PROCEDURE calcula_emprestimo:
 			END.
 				
 		/*Se Pre-fixado e Modalidade Consignado*/
+		IF  AVAILABLE crabepr THEN
 		 IF crabepr.tpemprst = 1 AND aux_tpmodcon <> ? THEN
 			DO:
 				ASSIGN aux_vlparepr = par_vlpreemp.
