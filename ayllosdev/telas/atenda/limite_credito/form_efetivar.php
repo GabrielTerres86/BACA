@@ -28,8 +28,8 @@
 		<label for="nivrisco"><?php echo utf8ToHtml('Nível de Risco:') ?></label>
 		<input name="nivrisco" id="nivrisco" type="text" />
 
-		<label for="qtdiavig"><?php echo utf8ToHtml('Vigência:') ?></label>	
-		<input id="qtdiavig" name="qtdiavig" type="text" />
+		<label for="dataterm"><?php echo utf8ToHtml('Data de Término:') ?></label>	
+		<input id="dataterm" name="dataterm" type="text" />
 		<br />
 		
 		<label for="nrctrlim"><?php echo utf8ToHtml('Número do Contrato:') ?></label>	

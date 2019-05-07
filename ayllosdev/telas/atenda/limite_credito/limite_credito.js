@@ -248,6 +248,9 @@ var aux_inpesso1 = '';
 var aux_dtnasct1 = '';
 var aux_vlrecjg1 = '';
 
+// PRJ 438
+var aux_dtmvtolt = '';
+
 /**
  * bruno - prj - 438 - sprint 7 - tela principal
  * Função para acessar opções da rotina
@@ -1522,6 +1525,10 @@ function controlaFoco(opcao) {
         });
 
         $(".FirstInputModal").focus();
+    }
+    if(opcao == null){
+    	console.log('entrou controlaFoco null');
+    	$(":input").blur();	
     }
 }
 
@@ -2938,12 +2945,12 @@ function formataEfetivar() {
 	rNrctrlim = $('label[for="nrctrlim"]', '#frmEfetivar');
     rVllimite = $('label[for="vllimite"]', '#frmEfetivar');
     rCddlinha = $('label[for="cddlinha"]', '#frmEfetivar');
-    rQtdiavig = $('label[for="qtdiavig"]', '#frmEfetivar');
+    rDataterm = $('label[for="dataterm"]', '#frmEfetivar');
     rNivrisco = $('label[for="nivrisco"]', '#frmEfetivar');
     rDsdtxfix = $('label[for="dsdtxfix"]', '#frmEfetivar');
 
     rNivrisco.addClass('rotulo').css({ 'width': '130px' });
-    rQtdiavig.addClass('rotulo-linha').css({ 'width': '150px' });
+    rDataterm.addClass('rotulo-linha').css({ 'width': '150px' });
     rNrctrlim.addClass('rotulo').css({ 'width': '130px' });
     rVllimite.addClass('rotulo-linha').css({ 'width': '150px' });
     rCddlinha.addClass('rotulo').css({ 'width': '130px' });
@@ -2953,14 +2960,14 @@ function formataEfetivar() {
     cNrctrlim = $('#nrctrlim', '#frmEfetivar');
     cVllimite = $('#vllimite', '#frmEfetivar');
     cCddlinha = $('#cddlinha', '#frmEfetivar');
-    cQtdiavig = $('#qtdiavig', '#frmEfetivar');
+    cDataterm = $('#dataterm', '#frmEfetivar');
     cNivrisco = $('#nivrisco', '#frmEfetivar'); 
     cDsdtxfix = $('#dsdtxfix', '#frmEfetivar');
 
     cNrctrlim.addClass('contrato').css({ 'width': '70px' });
     cVllimite.addClass('moeda').css({ 'width': '100px' });
     cCddlinha.css({ 'width': '180px' });
-	cQtdiavig.css({ 'width': '70px' });
+	cDataterm.css({ 'width': '70px' });
     cNivrisco.css({ 'width': '70px' });
     cDsdtxfix.css({ 'width': '100px' });
 
@@ -2986,10 +2993,12 @@ function formataEfetivar() {
 
 function setDadosEfetivar() {
 		
+	var dataTermino = calcularDataTermino();
+		
     $("#nrctrlim", "#frmEfetivar").val(aux_limites.pausado.nrctrlim);
     $("#vllimite", "#frmEfetivar").val(aux_limites.pausado.vllimite);
     $("#cddlinha", "#frmEfetivar").val(aux_limites.pausado.cddlinha + ' ' + aux_limites.pausado.dsdlinha);
-    $("#qtdiavig", "#frmEfetivar").val(aux_limites.pausado.qtdiavig);
+    $("#dataterm", "#frmEfetivar").val(dataTermino);
 	$("#nivrisco", "#frmEfetivar").val(aux_limites.pausado.nivrisco);
 	$("#dsdtxfix", "#frmEfetivar").val(aux_limites.pausado.txjurfix + '% + TR');
 	
@@ -3028,4 +3037,27 @@ function telefone(fone){
 	} else {
 		return '';
 	}
+}
+
+// PRJ 438
+function calcularDataTermino(){
+
+	var qtdiavig = isNaN(parseInt(aux_limites.pausado.qtdiavig)) ? 0 : parseInt(aux_limites.pausado.qtdiavig);
+	
+	var dia = aux_dtmvtolt.substr(0, 2);
+    var mes = aux_dtmvtolt.substr(3, 2);
+    var ano = aux_dtmvtolt.substr(6, 4);
+
+	var dtmvtolt = new Date(mes + "/" + dia + "/" + ano);
+
+    dtmvtolt.setDate(dtmvtolt.getDate() + qtdiavig);
+    
+    dia = ("0" + dtmvtolt.getDate()).slice(-2);
+    mes = ("0" + (dtmvtolt.getMonth() + 1)).slice(-2);
+    ano = dtmvtolt.getFullYear();
+
+    if (dia == null || mes == null || ano == null){
+    	return '';
+    }
+    return dia + '/' + mes + '/' + ano;
 }

@@ -262,4 +262,6 @@
 	aux_tpdocmto = '<?php echo $tpdocmto ?>';
 	aux_GEDServidor = '<?php echo $GEDServidor;?>';
 
+	aux_dtmvtolt = '<?php echo $glbvars["dtmvtolt"]?>';
+
 </script>
