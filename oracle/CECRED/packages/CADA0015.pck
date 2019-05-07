@@ -5415,9 +5415,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --  Alteração : 07/02/2018 - Alterado a prioridade de atualizacao das pessoas no cursor
     --                           cr_pessoa_atlz para olhar a CRAPJUR primeiro (Tiago/Andrino #843413) 
     --
-                    05/07/2018 - Para solucionar o problema do incidente INC0018017 foi necessário
-                                 a priorizar a atualização das pessoas no cursor para olhar a CRAPJFN
-                                 primeiro (Kelvin/Adrino).
+    --              05/07/2018 - Para solucionar o problema do incidente INC0018017 foi necessário
+    --                           a priorizar a atualização das pessoas no cursor para olhar a CRAPJFN
+    --                           primeiro (Kelvin/Adrino).
+	--
+	--              07/05/2019 - Ajustado a ordem de priorização entre CRAPJUR e CRAPJFN
+	--                           INC0014506 (Jefferson - MoutS)
+	--
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -5434,7 +5438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               )
        ORDER BY trunc(atl.dhatualiza,'MI'),
                 --> Ordenacao priorizando as tabelas ass e ttl
-                decode(atl.nmtabela,'CRAPJFN',0,'CRAPJUR',1,'CRAPASS',2,'CRAPTTL',3,4),
+                decode(atl.nmtabela,'CRAPJUR',0,'CRAPJFN',1,'CRAPASS',2,'CRAPTTL',3,4),
                 decode(atl.nmtabela,'CRAPCEM',atl.dschave,'CRAPTFC',atl.dschave,decode(substr(atl.dschave,1,1),'S',1,2)) ; 
 
     --> dados do conjuge
