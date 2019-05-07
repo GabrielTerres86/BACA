@@ -235,7 +235,7 @@
 				"error",
 				$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
 				"Alerta - Ayllos",
-				"estadoInicial();",
+				"",
 				false);
 			
 			exit();
@@ -295,7 +295,7 @@
 					"error",
 					$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
 					"Alerta - Ayllos",
-					"estadoInicial();",
+					"",
 					false);
 				
 				exit();
