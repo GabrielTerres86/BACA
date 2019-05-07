@@ -991,6 +991,7 @@ BEGIN
         END IF;  
     END;
     
+    --Tipo de Modalidade de Convenio (1 - Privado, 2 . Publico e 3 - INSS).
     vr_tpmodconvenio         := to_number(TRIM(pr_retxml.extract('/Root/dto/tpmodconvenio/text()').getstringval()));
     
     BEGIN
@@ -1091,18 +1092,20 @@ BEGIN
       RAISE vr_exc_erro;
     END IF;
 
-    /*Validação do Range dos Vencimentos - P437*/
-    BEGIN
-      pc_validar_venctos_consig( pr_retxml   => pr_retxml   --IN
-                                ,pr_cdcritic => vr_cdcritic --OUT
-                                ,pr_dscritic => vr_dscritic --OUT
-                                ,pr_des_erro => vr_des_erro --OUT
-                                );
+    /*Validação do Range dos Vencimentos se for 1 - Privado, 2 - Publico (P437) */
+    IF vr_tpmodconvenio IN(1,2) THEN
+      BEGIN
+        pc_validar_venctos_consig( pr_retxml   => pr_retxml   --IN
+                                  ,pr_cdcritic => vr_cdcritic --OUT
+                                  ,pr_dscritic => vr_dscritic --OUT
+                                  ,pr_des_erro => vr_des_erro --OUT
+                                  );
 
-      IF vr_des_erro = 'NOK' THEN
-        raise vr_exc_erro;
-      END IF;
-    END;  
+        IF vr_des_erro = 'NOK' THEN
+          raise vr_exc_erro;
+        END IF;
+      END;
+    END IF;    
     
     /*Excluir todos os vencimentos - P437*/
     BEGIN
@@ -1463,6 +1466,7 @@ BEGIN
      END;
      
      BEGIN
+       --Tipo de Modalidade de Convenio (1 - Privado, 2 . Publico e 3 - INSS).
        vr_tpmodconvenio   := to_number(TRIM(pr_retxml.extract('/Root/dto/tpmodconvenio/text()').getstringval()));
      EXCEPTION
        WHEN OTHERS THEN
@@ -1568,18 +1572,20 @@ BEGIN
        RAISE vr_exc_erro;
      END IF;
     
-    /*Validação do Range dos Vencimentos - P437*/
-    BEGIN
-      pc_validar_venctos_consig( pr_retxml   => pr_retxml   --IN
-                                ,pr_cdcritic => vr_cdcritic --OUT
-                                ,pr_dscritic => vr_dscritic --OUT
-                                ,pr_des_erro => vr_des_erro --OUT
-                                );
+    /*Validação do Range dos Vencimentos se for 1 - Privado, 2 - Publico (P437) */
+    IF vr_tpmodconvenio IN(1,2) THEN
+      BEGIN
+        pc_validar_venctos_consig( pr_retxml   => pr_retxml   --IN
+                                  ,pr_cdcritic => vr_cdcritic --OUT
+                                  ,pr_dscritic => vr_dscritic --OUT
+                                  ,pr_des_erro => vr_des_erro --OUT
+                                  );
 
-      IF vr_des_erro = 'NOK' THEN
-        raise vr_exc_erro;
-      END IF;
-    END;  
+        IF vr_des_erro = 'NOK' THEN
+          raise vr_exc_erro;
+        END IF;
+      END;  
+    END IF;
     
     /*Excluir todos os vencimentos - P437*/
     BEGIN
@@ -1874,7 +1880,7 @@ BEGIN
 
     --Regra: A data do campo envio do arquivo deverá ser igual ou maior que a data do campo até;
     IF vr_dtenvioarquivo < vr_dtinclpropostaate THEN
-      vr_dscritic := 'Data do envio do arquivo deve ser igual ou maior que a Data de inclusao da proposta Ate.';
+      vr_dscritic := 'Data do envio do arquivo '||to_char(vr_dtenvioarquivo,'DD/MM')||' deve ser igual ou maior que a Data de inclusao da proposta Ate '||to_char(vr_dtinclpropostaate,'DD/MM')||'.';
       RAISE vr_exc_erro;
     END IF;
 
@@ -1890,7 +1896,7 @@ BEGIN
 
     --Regra: O dia do envio do arquivo deverá ser igual ou menor que a da data cadastrada no campo “Dia fechamento folha”;
     IF vr_diaenvioarquivo > vr_dtfchfol THEN
-      vr_dscritic := 'Data do envio do arquivo deve ser igual ou menor que a Data de fechamento da folha.';
+      vr_dscritic := 'O dia do envio do arquivo deve ser igual ou menor que o dia de fechamento da folha.';
       RAISE vr_exc_erro;
     END IF;
 
@@ -2341,17 +2347,6 @@ BEGIN
 
     BEGIN
 
-      /*Validação do Range dos Vencimentos*/
-      pc_validar_venctos_consig( pr_retxml   => pr_retxml   --IN
-                                ,pr_cdcritic => vr_cdcritic --OUT
-                                ,pr_dscritic => vr_dscritic --OUT
-                                ,pr_des_erro => vr_des_erro --OUT
-                                );
-
-      IF vr_des_erro = 'NOK' THEN
-        raise vr_exc_erro;
-      END IF;
-
       pr_nmdcampo := NULL;
       pr_des_erro := 'OK';
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
@@ -2376,9 +2371,8 @@ BEGIN
                                        to_char(to_date(vr_datainicio,'dd/mm/yyyy hh24:mi:ss'),'hh24:mi:ss');
       vr_indconsignado:= TRIM(pr_retxml.extract('/Root/dto/indconsignado/text()').getstringval());
       
-      
-      
       BEGIN
+        --Tipo de Modalidade de Convenio (1 - Privado, 2 . Publico e 3 - INSS).
         vr_tipoPadrao   := TRIM(pr_retxml.extract('/Root/dto/tipoPadrao/text()').getstringval());
         IF vr_tipoPadrao = '1' THEN
            vr_tipoPadrao   := '161';
@@ -2388,12 +2382,12 @@ BEGIN
            vr_tipoPadrao   := '163';  
         ELSE
            vr_tipoPadrao   := null;
-        END IF;
-           
+        END IF;           
       EXCEPTION
         WHEN OTHERS THEN
           IF SQLCODE = '-30625' THEN
-             vr_tipoPadrao := NULL;   
+            vr_dscritic := 'Tipo de Convênio deve ser preenchido.';
+            RAISE vr_exc_erro;   
           ELSE
             vr_dscritic := 'Erro na leitura do campo vr_tipoPadrao.';
             RAISE vr_exc_erro;
@@ -2402,8 +2396,20 @@ BEGIN
       
       vr_idemprconsig := TO_NUMBER(TRIM(pr_retxml.extract('/Root/dto/idemprconsig/text()').getstringval()));
       vr_qtdtotal     := TO_NUMBER(TRIM(pr_retxml.extract('/Root/dto/vencimentos/total/text()').getstringval()));
+      
+      /*Validação do Range dos Vencimentos se for 1 - Privado, 2 - Publico (P437) */
+      IF vr_tipoPadrao IN(161,162) THEN
+        pc_validar_venctos_consig( pr_retxml   => pr_retxml   --IN
+                                  ,pr_cdcritic => vr_cdcritic --OUT
+                                  ,pr_dscritic => vr_dscritic --OUT
+                                  ,pr_des_erro => vr_des_erro --OUT
+                                  );
 
-
+        IF vr_des_erro = 'NOK' THEN
+          raise vr_exc_erro;
+        END IF;        
+      END IF;
+      
       vr_nrvencto := 0;
       vr_xmlvencto:= null;
 
@@ -2604,6 +2610,12 @@ BEGIN
       -- Extraindo os dados do XML o valor da tag <total>
       vr_qtdtotal     := TO_NUMBER(TRIM(pr_retxml.extract('/Root/dto/vencimentos/total/text()').getstringval()));
 
+      --
+      IF nvl(vr_qtdtotal,0) = 0 THEN
+        vr_dscritic := 'Campo Datas de Corte Vcto Parcela deve ser preenchido.';
+        raise vr_exc_erro; 
+      END IF;
+      
       vr_nrvencto := 0;
      -- vr_xmlvencto:= null;
       FOR x in 1 .. vr_qtdtotal LOOP
@@ -2618,16 +2630,23 @@ BEGIN
         IF vr_nrvencto = 1 THEN
           vr_dtate_ant        := vr_dtinclpropostaate;
           vr_dtate_de_inicial := vr_dtinclpropostade;
+          --Última liha
+          IF vr_nrvencto = vr_qtdtotal THEN
+            IF substr((vr_dtate_ant + 1),1,5) <> substr(vr_dtate_de_inicial,1,5)  THEN
+              vr_dscritic := 'O Grid de Vencimentos deve ter intervalos com todos os dias do Ano.';
+              raise vr_exc_erro;
+            END IF;  
+          END IF;
         ELSIF vr_nrvencto > 1 THEN
-          IF vr_dtate_ant + 1 <> vr_dtinclpropostade  THEN
-            vr_dscritic := 'O Grid de Vencimentos deve ter intervalos com todas os dias do Ano.';
+          IF substr((vr_dtate_ant + 1),1,5) <> substr(vr_dtinclpropostade,1,5)  THEN
+            vr_dscritic := 'O Grid de Vencimentos deve ter intervalos com todos os dias do Ano.';
             raise vr_exc_erro;
           END IF;
           vr_dtate_ant := vr_dtinclpropostaate;
           --Última liha
           IF vr_nrvencto = vr_qtdtotal THEN
-            IF vr_dtate_ant + 1 <> vr_dtate_de_inicial  THEN
-              vr_dscritic := 'O Grid de Vencimentos deve ter intervalos com todas os dias do Ano.';
+            IF substr((vr_dtate_ant + 1),1,5) <> substr(vr_dtate_de_inicial,1,5)  THEN
+              vr_dscritic := 'O Grid de Vencimentos deve ter intervalos com todos os dias do Ano.';
               raise vr_exc_erro;
             END IF;  
           END IF;
