@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 18/06/2018
+      Data: Janeiro/2010                        Ultima alteracao: 08/05/2019
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -319,7 +319,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 			   
             18/06/2018 - Retornar o complemento na consulta de extrato
                          (Douglas - Prj 467)
-			            
+			      
+            08/05/2019 - Ajustar parametros na chamada da rotina 
+                         pc_cadastrar_agendamento (Renato - Supero - P485)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -3962,6 +3964,7 @@ PROCEDURE efetua_transferencia:
                                  INPUT "",  /* pr_iptransa */
                                  INPUT "",  /* Numero controle consulta npc */   
                                  INPUT '', /* par_iddispos */
+                                 INPUT ?,  /* pr_nrridlfp */
                                  
                                 OUTPUT "",  /* pr_dstransa */
                                 OUTPUT "",
@@ -4853,6 +4856,7 @@ PROCEDURE paga_titulo:
                                                    INPUT "",   /* pr_iptransa */
                                                    INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
                                                    INPUT '', /* pr_iddispos */
+                                                   INPUT ?,  /* pr_nrridlfp */
                                                    
                                                    OUTPUT "",  /* pr_dstransa */
                                                    OUTPUT "",
@@ -5389,6 +5393,7 @@ PROCEDURE paga_convenio:
                                                   INPUT '',  /* pr_iptransa */
                                                   INPUT '',  /* Numero controle consulta npc */   
                                                   INPUT '', /* par_iddispos */
+                                                  INPUT ?,  /* pr_nrridlfp */
                                                   
                                                  OUTPUT "",  /* pr_dstransa */
                                                  OUTPUT "",
