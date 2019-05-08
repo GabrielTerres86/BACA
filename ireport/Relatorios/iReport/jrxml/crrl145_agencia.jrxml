@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl145_agencia" language="groovy" pageWidth="592" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="592" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
-	<property name="ireport.zoom" value="3.0"/>
-	<property name="ireport.x" value="886"/>
+	<property name="ireport.zoom" value="2.727272727272727"/>
+	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -119,21 +119,21 @@
 				<text><![CDATA[PA:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="8" y="16" width="45" height="8"/>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="7" y="16" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7" isUnderline="false"/>
 				</textElement>
 				<text><![CDATA[CONTA/DV]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="59" y="16" width="42" height="8"/>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="70" y="16" width="42" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7" isUnderline="false"/>
 				</textElement>
 				<text><![CDATA[CONTRATO]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="104" y="16" width="40" height="8"/>
+				<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="114" y="16" width="40" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7" isUnderline="false"/>
 				</textElement>
@@ -158,7 +158,7 @@
 	<detail>
 		<band height="16" splitType="Prevent">
 			<textField>
-				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="8" y="0" width="45" height="8"/>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="7" y="0" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -179,14 +179,14 @@
 				<textFieldExpression><![CDATA[$F{dsoperad}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="59" y="0" width="42" height="8"/>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="53" y="0" width="59" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nrctremp}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="105" y="0" width="40" height="8"/>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="113" y="0" width="41" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
