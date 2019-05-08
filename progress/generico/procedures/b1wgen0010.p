@@ -41,7 +41,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 30/11/2018
+   Data    : 12/09/2005                     Ultima atualizacao: 08/05/2019
 
    Dados referentes ao programa:
 
@@ -490,6 +490,9 @@
                             (Lucas Ranghetti INC0027138)
                
 			   06/03/2019 - Adicionado condicao para apresentar o status do titulo corretamente na COBRAN (Cassia de Oliveira - GFT)
+         
+               08/05/2019 - inc0012536 adicionada a validação do código da espécie 2 (duplicata de serviço) juntamente com a UF 
+                            não autorizada. Duplicatas de serviço dos estados listados não podem ir para protesto (Carlos)
 
 ........................................................................... */
 
@@ -1371,7 +1374,8 @@ PROCEDURE consulta-bloqueto.
                                             /* Data de Movimento atualizada */ 
                                             tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
                                             /* Identificar se o boleto esta vencido */
-                                            tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0.
+                                            tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0
+                                            tt-consulta-blt.cddespec = crapcob.cddespec.
                                             
                                  END.
                                           
@@ -1612,7 +1616,8 @@ PROCEDURE consulta-bloqueto.
                                             /* Data de Movimento atualizada */ 
                                             tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
                                             /* Identificar se o boleto esta vencido */
-                                            tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0.
+                                            tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0
+                                            tt-consulta-blt.cddespec = crapcob.cddespec.
                                  
                                  END.
                              END.    
@@ -1852,7 +1857,8 @@ PROCEDURE consulta-bloqueto.
                                                       /* Data de Movimento atualizada */ 
                                                       tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
                                                       /* Identificar se o boleto esta vencido */
-                                                      tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0.
+                                                      tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0
+                                                      tt-consulta-blt.cddespec = crapcob.cddespec.
 
                                 END.
                                 END.
@@ -2095,7 +2101,8 @@ PROCEDURE consulta-bloqueto.
                                                 /* Data de Movimento atualizada */ 
                                                 tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
                                                 /* Identificar se o boleto esta vencido */
-                                                tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0.
+                                                tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0
+                                                tt-consulta-blt.cddespec = crapcob.cddespec.
                                  
                                 END.
                                 END.
@@ -2555,7 +2562,8 @@ PROCEDURE consulta-bloqueto.
                                             /* Data de Movimento atualizada */ 
                                             tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
                                             /* Identificar se o boleto esta vencido */
-                                            tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0.
+                                            tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0
+                                            tt-consulta-blt.cddespec = crapcob.cddespec.
                                 
                                 END.
                             END.
