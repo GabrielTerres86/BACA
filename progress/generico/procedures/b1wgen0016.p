@@ -39,7 +39,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 23/04/2018
+    Data    : Abril/2006                     Ultima Atualizacao: 05/02/2019
     
     Dados referentes ao programa:
 
@@ -546,6 +546,16 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
                            inclusao dos parametros para geracao da analise de fraude
                            PRJ381 - Antifraude (Odirlei-AMcom)
 
+              20/05/2018 - Adicionado tratamento com a tabela tbdsct_trans_pend (Paulo Penteado GFT)
+
+              05/02/2019 - Alterada rotina cadastrar-agendamento para passar o parametro do codigo de controle 
+                           da consulta na cip corretamente (Tiago PRB0040595)
+
+              10/12/2018 - Tratar novos tbgen_trans_pend.tptransacao
+                           20 /* Contrato */
+                           Projeto 470 - Marcelo Telleas Coelho
+
+
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -588,6 +598,7 @@ DEF TEMP-TABLE tt-tbrecarga_trans_pend        NO-UNDO LIKE tbrecarga_trans_pend.
 DEF TEMP-TABLE tt-pagtos-mon NO-UNDO
     FIELD nrsequen AS INTE
     FIELD dslinhas AS CHAR.
+DEF TEMP-TABLE tt-tbdsct_trans_pend         NO-UNDO LIKE tbdsct_trans_pend.
 
 DEF VAR glb_dsprotoc   AS CHAR                                      NO-UNDO.
 
@@ -777,6 +788,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
     DEF VAR aux_dstiptra AS CHAR  NO-UNDO.
     DEF VAR aux_vltotbdc AS DECI NO-UNDO.					   
     DEF VAR aux_resposta AS CHAR NO-UNDO.
+    DEF VAR aux_vltotbdt AS DECI NO-UNDO.
     
     DEF VAR h-b1wgen9999 AS HANDLE NO-UNDO.
     DEF VAR h-b1wgen0081 AS HANDLE NO-UNDO.
@@ -1323,6 +1335,21 @@ PROCEDURE proc_cria_critica_transacao_oper:
                         /*aux_vllantra = 10.*/
                       END.
                     ELSE
+                IF tbgen_trans_pend.tptransacao = 19 THEN /*Bordero Desconto Titulo*/
+                    DO:
+                        FOR EACH  tbdsct_trans_pend WHERE tbdsct_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente NO-LOCK:
+                            ASSIGN aux_vltotbdt = aux_vltotbdt + tbdsct_trans_pend.vltitulo.
+                        END.
+
+                        ASSIGN aux_dtdebito = "Nesta Data"
+                               aux_vllantra = aux_vltotbdt
+                               aux_dscedent = "Bordero de Desconto de Titulos"
+                               aux_dstptran = "Bordero de Desconto de Titulos"
+                               aux_dstiptra = "Desconto de Titulos".
+                     
+                    END.
+
+                ELSE
                     aux_dstiptra = "Transacao".
                 
                 CREATE tt-criticas_transacoes_oper.
@@ -2231,7 +2258,10 @@ PROCEDURE cadastrar-agendamento:
     DEF  INPUT PARAM par_nrdconta LIKE crapttl.nrdconta             NO-UNDO.
     DEF  INPUT PARAM par_idseqttl LIKE crapttl.idseqttl             NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt LIKE crapdat.dtmvtolt             NO-UNDO.
+    /* Projeto 363 - Novo ATM */
+    DEF  INPUT PARAM par_idorigem AS   INTE                         NO-UNDO.
     DEF  INPUT PARAM par_dsorigem LIKE craplau.dsorigem             NO-UNDO.
+    DEF  INPUT PARAM par_nmprogra AS   CHAR                         NO-UNDO.
     DEF  INPUT PARAM par_cdtiptra LIKE craplau.cdtiptra             NO-UNDO.
     DEF  INPUT PARAM par_idtpdpag AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dscedent LIKE craplau.dscedent             NO-UNDO.
@@ -2282,7 +2312,10 @@ PROCEDURE cadastrar-agendamento:
                           INPUT par_nrdconta,
                           INPUT par_idseqttl,                          
                           INPUT par_dtmvtolt,
+                          /* Projeto 363 - Novo ATM */
+                          INPUT par_idorigem,
                           INPUT par_dsorigem,
+                          INPUT par_nmprogra,
                           INPUT par_cdtiptra,
                           INPUT par_idtpdpag,
                           INPUT par_dscedent,
@@ -2312,8 +2345,9 @@ PROCEDURE cadastrar-agendamento:
                           INPUT par_dstransf,
                           INPUT par_dshistor,
                           INPUT par_iptransa,  /* pr_iptransa */
-						              INPUT pr_cdctrlcs, /* pr_cdctrlcs*/
+						              INPUT par_cdctrlcs, /* pr_cdctrlcs*/
                           INPUT par_iddispos,
+                         OUTPUT 0, /* pr_idlancto */
                          OUTPUT "",  /* pr_dstransa */                         
                          OUTPUT "",
                          OUTPUT 0,
@@ -4354,6 +4388,140 @@ PROCEDURE busca_trans_pend_trib:
     
 END PROCEDURE.
 
+/*............................................................................*/
+/* Projeto 470 - Marcelo Telles Coelho */
+PROCEDURE busca_trans_pend_ctd:
+  DEF  INPUT PARAMETER par_cdcooper AS INTE    NO-UNDO.
+  DEF  INPUT PARAMETER par_cdoperad AS CHAR    NO-UNDO.
+  DEF  INPUT PARAMETER par_nmdatela AS CHAR    NO-UNDO.
+  DEF  INPUT PARAMETER par_nrdconta AS INTEGER NO-UNDO.  
+  DEF  INPUT PARAMETER par_cdtrapen AS CHAR    NO-UNDO.
+  DEF OUTPUT PARAMETER par_qtdregis AS INTEGER NO-UNDO.
+  DEF OUTPUT PARAMETER par_cdcritic AS INTEGER NO-UNDO.
+  DEF OUTPUT PARAMETER par_dscritic AS CHAR    NO-UNDO.
+        
+  DEF VAR aux_cdcritic AS INTE          NO-UNDO.
+  DEF VAR aux_dscritic AS CHAR          NO-UNDO.
+    
+  /* Variaveis para o XML */ 
+  DEF VAR xDoc          AS HANDLE   NO-UNDO.   
+  DEF VAR xRoot         AS HANDLE   NO-UNDO.  
+  DEF VAR xRoot2        AS HANDLE   NO-UNDO.  
+  DEF VAR xField        AS HANDLE   NO-UNDO. 
+  DEF VAR xText         AS HANDLE   NO-UNDO. 
+  DEF VAR aux_cont_raiz AS INTEGER  NO-UNDO. 
+  DEF VAR aux_cont      AS INTEGER  NO-UNDO. 
+  DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO. 
+  DEF VAR xml_req       AS LONGCHAR NO-UNDO.
+
+  /* Inicializando objetos para leitura do XML */ 
+  CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+  CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+  CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+  CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+  CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+                  
+  { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} } 
+
+  /* Efetuar a chamada a rotina Oracle */ 
+  RUN STORED-PROCEDURE pc_ret_trans_pend_ctd_car
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                         INPUT par_cdoperad, /* Código do Operador */
+                                         INPUT par_nmdatela, /* Nome da Tela */
+                                         INPUT 1,            /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
+                                         INPUT par_nrdconta, /* Número da Conta */
+                                         INPUT 1,            /* Titular da Conta */
+                                         INPUT par_cdtrapen, /* Codigo da Transacao */
+                                        OUTPUT ?,            /* XML com informaçoes de LOG */
+                                        OUTPUT 0,            /* Código da crítica */
+                                        OUTPUT "").          /* Descriçao da crítica */
+
+  /* Fechar o procedimento para buscarmos o resultado */ 
+  CLOSE STORED-PROC pc_ret_trans_pend_ctd_car
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+  { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} } 
+    
+  /* Busca possíveis erros */ 
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_ret_trans_pend_ctd_car.pr_cdcritic 
+                          WHEN pc_ret_trans_pend_ctd_car.pr_cdcritic <> ?
+           aux_dscritic = pc_ret_trans_pend_ctd_car.pr_dscritic 
+                          WHEN pc_ret_trans_pend_ctd_car.pr_dscritic <> ?.
+
+    IF aux_cdcritic <> 0 OR
+       aux_dscritic <> "" THEN
+        DO:
+          ASSIGN par_cdcritic = aux_cdcritic
+                 par_dscritic = aux_dscritic.
+                
+          RETURN "NOK".            
+        END.
+
+    EMPTY TEMP-TABLE tt-tbctd_trans_pend. /* Projeto 470 - Marcelo Telleas Coelho */
+
+    /*Leitura do XML de retorno da proc e criacao dos registros na tt-saldo-rdca
+    para visualizacao dos registros na tela */
+    
+    /* Buscar o XML na tabela de retorno da procedure Progress */ 
+    ASSIGN xml_req = pc_ret_trans_pend_ctd_car.pr_clobxmlc. 
+    
+    /* Efetuar a leitura do XML*/ 
+    SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+    PUT-STRING(ponteiro_xml,1) = xml_req. 
+       
+    IF ponteiro_xml <> ? THEN
+      DO:
+        xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+        xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+        
+        DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+        
+          xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+        
+          IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+            NEXT. 
+        
+          IF xRoot2:NUM-CHILDREN > 0 THEN
+            DO:
+              CREATE tt-tbctd_trans_pend.
+              ASSIGN par_qtdregis = par_qtdregis + 1.
+            END.                
+          
+            DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+                      
+              xRoot2:GET-CHILD(xField,aux_cont).
+                  
+              IF xField:SUBTYPE <> "ELEMENT" THEN 
+                NEXT. 
+
+              xField:GET-CHILD(xText,1).
+              ASSIGN tt-tbctd_trans_pend.cdtransacao_pendente =  DEC(xText:NODE-VALUE) WHEN xField:NAME  = "cdtransacao_pendente".
+              ASSIGN tt-tbctd_trans_pend.cdcooper             =  DEC(xText:NODE-VALUE) WHEN xField:NAME  = "cdcooper".
+              ASSIGN tt-tbctd_trans_pend.nrdconta             =  DEC(xText:NODE-VALUE) WHEN xField:NAME  = "nrdconta".
+              ASSIGN tt-tbctd_trans_pend.tpcontrato           =  DEC(xText:NODE-VALUE) WHEN xField:NAME  = "tpcontrato".
+              ASSIGN tt-tbctd_trans_pend.nrcontrato           =  DEC(xText:NODE-VALUE) WHEN xField:NAME  = "nrcontrato".
+              ASSIGN tt-tbctd_trans_pend.vlcontrato           =  DEC(xText:NODE-VALUE) WHEN xField:NAME  = "vlcontrato".
+              ASSIGN tt-tbctd_trans_pend.dhcontrato           =  DATE(xText:NODE-VALUE) WHEN xField:NAME = "dhcontrato".
+              
+          END.
+        END.
+        
+        SET-SIZE(ponteiro_xml) = 0. 
+      END.
+    
+    DELETE OBJECT xDoc. 
+    DELETE OBJECT xRoot. 
+    DELETE OBJECT xRoot2. 
+    DELETE OBJECT xField. 
+    DELETE OBJECT xText.
+    
+    RETURN "OK".
+    
+END PROCEDURE.
+/* Fim Projeto 470 */
+
 /******************************************************************************/
 /*Procedure para aprovar uma transacao feita pelo operador da conta*/
 /******************************************************************************/
@@ -4481,6 +4649,8 @@ PROCEDURE aprova_trans_pend:
     DEF VAR aux_flagtrib AS LOGICAL                                 NO-UNDO.
     DEF VAR aux_trantrib AS CHAR                                    NO-UNDO.
     
+    DEF VAR aux_flagctd  AS LOGICAL                                 NO-UNDO. /* Projeto 470 */
+    DEF VAR aux_tranctd  AS CHAR                                    NO-UNDO. /* Projeto 470 */
 
     
     DEF VAR aux_vldocmto AS DECIMAL                                 NO-UNDO.
@@ -4492,6 +4662,13 @@ PROCEDURE aprova_trans_pend:
     DEF VAR aux_nrremret AS CHAR                                    NO-UNDO.
     DEF VAR aux_vltotbdc AS DECIMAL                                 NO-UNDO.
     DEF VAR aux_flgtbdsc AS LOGICAL                                 NO-UNDO.
+
+    DEF VAR aux_cdbandoc_bdt AS LONGCHAR                            NO-UNDO.
+    DEF VAR aux_nrdctabb_bdt AS LONGCHAR                            NO-UNDO.
+    DEF VAR aux_nrcnvcob_bdt AS LONGCHAR                            NO-UNDO.
+    DEF VAR aux_nrdocmto_bdt AS LONGCHAR                            NO-UNDO.
+    DEF VAR aux_vltotbdt     AS DECIMAL                             NO-UNDO.
+    DEF VAR aux_flgtbdst     AS LOGICAL                             NO-UNDO.
 
     DEF VAR h-b1wgen0015 AS HANDLE NO-UNDO.
     DEF VAR h-b1wgen0081 AS HANDLE NO-UNDO.
@@ -4737,6 +4914,7 @@ PROCEDURE aprova_trans_pend:
     EMPTY TEMP-TABLE tt-tbrecarga_trans_pend.
                                                                                                   EMPTY TEMP-TABLE tt-tbcobran_sms_trans_pend.
     EMPTY TEMP-TABLE tt-tbdscc_trans_pend.
+    EMPTY TEMP-TABLE tt-tbdsct_trans_pend.
     
     DO aux_contador = 1 TO NUM-ENTRIES(par_cdditens,"/"):
         
@@ -5259,6 +5437,64 @@ PROCEDURE aprova_trans_pend:
                           END.                   
                   END.   
        
+                ELSE IF tbgen_trans_pend.tptransacao = 19 THEN /*Bordero Desconto Titulo*/
+                  DO:
+                      EMPTY TEMP-TABLE tt-tbdsct_trans_pend.
+                      
+                      aux_flgtbdst = FALSE.
+                      
+                      FOR EACH tbdsct_trans_pend WHERE tbdsct_trans_pend.cdtransacao_pendente = aux_cddoitem NO-LOCK:
+                          CREATE tt-tbdsct_trans_pend.
+                          BUFFER-COPY tbdsct_trans_pend TO tt-tbdsct_trans_pend.
+                          aux_flgtbdst = TRUE.
+                      END.
+                      
+                      IF aux_flgtbdst THEN
+                          ASSIGN tt-tbgen_trans_pend.idmovimento_conta  = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0).
+                      ELSE 
+                          DO:
+                            ASSIGN aux_cdcritic = 0
+                                   aux_dscritic = "Registro de Bordero de Desconto de Titulos Pendente Inexistente.".
+                    
+                            RUN gera_erro (INPUT par_cdcooper,
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrdcaixa,
+                                           INPUT 1,            /** Sequencia **/
+                                           INPUT aux_cdcritic,
+                                           INPUT-OUTPUT aux_dscritic).
+                            
+                            IF par_flgerlog THEN
+                              DO:
+                                  RUN proc_gerar_log (INPUT par_cdcooper,
+                                                      INPUT par_cdoperad,
+                                                      INPUT aux_dscritic,
+                                                      INPUT aux_dsorigem,
+                                                      INPUT aux_dstransa,
+                                                      INPUT FALSE,
+                                                      INPUT 1,
+                                                      INPUT par_nmdatela,
+                                                      INPUT par_nrdconta,
+                                                     OUTPUT aux_nrdrowid).
+                                END.
+                
+                            RETURN "NOK".
+                          END.
+                  END.  
+/* Projeto 470 - Marcelo Telles Coelho */
+            ELSE IF tbgen_trans_pend.tptransacao = 20 /* Contrato */
+                 THEN
+                DO:
+                  ASSIGN tt-tbgen_trans_pend.idmovimento_conta = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0)
+                  aux_flagctd = TRUE.
+            
+                  IF aux_tranctd <> ? THEN
+                    ASSIGN aux_tranctd = aux_tranctd + ";".
+              
+                  ASSIGN aux_tranctd = aux_tranctd + STRING(aux_cddoitem).
+            
+                END.
+            /* Fim Projeto 470 */     
+       
             END. /*IF AVAILABLE tbgen_trans_pend THEN*/
              
     END. /*DO aux_contador = 1 */
@@ -5358,6 +5594,53 @@ PROCEDURE aprova_trans_pend:
         END.
       END. /* FIM IF aux_flagtrib */
 
+    /* Verifica se existem transacoes de contrato */
+    /* Projeto 470 - Marcelo Telles Coelho */
+    IF aux_flagctd THEN
+      DO:
+        RUN busca_trans_pend_ctd
+                          (INPUT par_cdcooper,
+                           INPUT par_cdoperad,
+                           INPUT par_nmdatela,
+                           INPUT par_nrdconta,
+                           INPUT aux_tranctd,
+                          OUTPUT aux_qtdregis, 
+                          OUTPUT aux_cdcritic,
+                          OUTPUT aux_dscritic).
+                          
+        IF RETURN-VALUE <> "OK" OR aux_qtdregis = 0 THEN
+          DO:
+            IF aux_qtdregis = 0 THEN
+              DO:
+                ASSIGN aux_cdcritic = 0.
+                
+                ASSIGN aux_dscritic = "Registro de Contrato Inexistente.".
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+                IF par_flgerlog THEN
+                  DO:
+                    RUN proc_gerar_log (INPUT par_cdcooper,
+                                        INPUT par_cdoperad,
+                                        INPUT aux_dscritic,
+                                        INPUT aux_dsorigem,
+                                        INPUT aux_dstransa,
+                                        INPUT FALSE,
+                                        INPUT 1,
+                                        INPUT par_nmdatela,
+                                        INPUT par_nrdconta,
+                                       OUTPUT aux_nrdrowid).
+                  END.        
+            
+                RETURN "NOK".
+              END.
+          END.
+      END. /* FIM IF aux_flagctd */
+      /* Fim Projeto 470 */
 
 
     FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR NO-WAIT.
@@ -5884,7 +6167,10 @@ PROCEDURE aprova_trans_pend:
                                                                           INPUT par_nrdconta,
                                                                           INPUT par_idseqttl,
                                                                           INPUT par_dtmvtolt,
+                                                                          /* Projeto 363 - Novo ATM */ 
+                                                                          INPUT par_idorigem,
                                                                           INPUT aux_dsorigem,
+                                                                          INPUT par_nmdatela,
                                                                           INPUT tt-tbgen_trans_pend.tptransacao, /** PAGAMENTO/TRANSF **/
                                                                           INPUT 0,
                                                                           INPUT '',
@@ -6053,7 +6339,10 @@ PROCEDURE aprova_trans_pend:
                                                                           INPUT par_nrdconta,
                                                                           INPUT par_idseqttl,
                                                                           INPUT par_dtmvtolt,
+                                                                          /* Projeto 363 - Novo ATM */ 
+                                                                          INPUT par_idorigem,
                                                                           INPUT aux_dsorigem,
+                                                                          INPUT par_nmdatela,
                                                                           INPUT tt-tbgen_trans_pend.tptransacao, /** PAGAMENTO/TRANSF **/
                                                                           INPUT 0,
                                                                           INPUT '',
@@ -6510,7 +6799,10 @@ PROCEDURE aprova_trans_pend:
                                                                INPUT par_nrdconta,
                                                                INPUT par_idseqttl,
                                                                INPUT par_dtmvtolt,
+                                                               /* Projeto 363 - Novo ATM */ 
+                                                               INPUT par_idorigem,
                                                                INPUT aux_dsorigem,
+                                                               INPUT par_nmdatela,
                                                                INPUT tt-tbgen_trans_pend.tptransacao, /** PAGAMENTO/TRANSF **/
                                                                INPUT 0,
                                                                INPUT '',
@@ -6809,7 +7101,81 @@ PROCEDURE aprova_trans_pend:
                               UNDO TRANSACAO, LEAVE TRANSACAO.
                             END.
                           END.
+                            
+
+                          IF par_indvalid = 0 AND aux_conttran = 1 THEN
+                          DO:
+                                                      
+                            /* Procedimento do internetbank pc_gps_verificar_lancamento */
+                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                              RUN STORED-PROCEDURE pc_gps_verificar_lancamento aux_handproc = PROC-HANDLE NO-ERROR
+                                                  (INPUT par_cdcooper,
+                                                   INPUT par_nrdconta,
+                                                   INPUT par_dtmvtolt,
+                                                   INPUT par_cdagenci,
+                                                   INPUT par_nrdcaixa,
+                                                   INPUT tt-tbgen_trans_pend.cdtransacao_pendente,
+                                                   INPUT "",
+                                                   INPUT 0,
+                                                   INPUT "",
+                                                   INPUT 0,
+                                                   OUTPUT 0,
+                                                   OUTPUT "").
+                              CLOSE STORED-PROC pc_gps_verificar_lancamento
+                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                                
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl}}
+                            
+                              ASSIGN aux_dscritic = ""
+                                     aux_dscritic = pc_gps_verificar_lancamento.pr_dscritic
+                                                   WHEN pc_gps_verificar_lancamento.pr_dscritic <> ?.
+                            
+                            /* Verificar se retornou critica */
+                            IF aux_dscritic <> "" THEN
+                            DO:        
+                               
+                              /* Gerar log das teds com erro */
+                              RUN gera_arquivo_log_ted(INPUT par_cdcooper,
+                                                       INPUT "pc_gps_verificar_lancamento",
+                                                       INPUT "b1wgen0016",
+                                                       INPUT par_dtmvtolt,
+                                                       INPUT par_nrdconta,
+                                                       INPUT tt-tbgen_trans_pend.nrcpf_operador,
+                                                       INPUT 0,
+                                                       INPUT 0,
+                                                       INPUT 0,
+                                                       INPUT "",
+                                                       INPUT 0,
+                                                       INPUT 0,
+                                                       INPUT 0,
+                                                       INPUT tt-tbpagto_trans_pend.vlpagamento,
+                                                       INPUT "",
+                                                       INPUT tt-tbgen_trans_pend.tptransacao,
+                                                       INPUT 0,
+                                                       INPUT aux_dscritic).
+    
+                              RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                      INPUT par_cdoperad,
+                                                      INPUT aux_dscritic,
+                                                      INPUT aux_dsorigem,
+                                                      INPUT aux_dstransa,
+                                                      INPUT FALSE,
+                                                      INPUT par_nmdatela,
+                                                      INPUT par_nrdconta,
+                                                      INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                      INPUT FALSE,
+                                                      INPUT par_indvalid,
+                                                      INPUT tt-tbpagto_trans_pend.dtdebito,
+                                                      INPUT tt-tbpagto_trans_pend.vlpagamento,
+                                                      INPUT aux_conttran).
+  
+                              UNDO TRANSACAO, LEAVE TRANSACAO.
                             END.
+                          END.
+
+
+
+                        END.
                             
                         IF tt-tbpagto_trans_pend.tppagamento = 1 THEN
                             DO:
@@ -6971,7 +7337,10 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT par_nrdconta,
                                                                   INPUT par_idseqttl,
                                                                   INPUT par_dtmvtolt,
+                                                                  /* Projeto 363 - Novo ATM */ 
+                                                                  INPUT par_idorigem,
                                                                   INPUT aux_dsorigem,
+                                                                  INPUT par_nmdatela,
                                                                   INPUT tt-tbgen_trans_pend.tptransacao, /** PAGAMENTO/TRANSF **/
                                                                   INPUT 1,
                                                                   INPUT tt-tbpagto_trans_pend.dscedente,
@@ -7251,7 +7620,10 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT par_nrdconta,
                                                                   INPUT par_idseqttl,
                                                                   INPUT par_dtmvtolt,
+                                                                  /* Projeto 363 - Novo ATM */ 
+                                                                  INPUT par_idorigem,
                                                                   INPUT aux_dsorigem,
+                                                                  INPUT par_nmdatela,
                                                                   INPUT tt-tbgen_trans_pend.tptransacao, /** PAGAMENTO/TRANSF **/
                                                                   INPUT 2,
                                                                   INPUT tt-tbpagto_trans_pend.dscedente,
@@ -10664,6 +11036,16 @@ PROCEDURE aprova_trans_pend:
                                                                aux_conttran = 1 THEN 1 
                                                             ELSE  3        /* pr_aprvpend */
                                                      ,INPUT 0
+                                                     /* Projeto 363 - Novo ATM */ 
+                                                     ,INPUT 3 /* pr_idorigem */
+                                                     ,INPUT 90 /* pr_cdagenci */
+                                                     ,INPUT 900 /*pr_nrdcaixa */
+                                                     ,INPUT "INTERNETBANK" /*pr_nmprogra */
+                                                     ,INPUT 0 /*pr_cdcoptfn  */
+                                                     ,INPUT 0 /*pr_cdagetfn */
+                                                     ,INPUT 0 /*pr_nrterfin */
+                                                     ,INPUT 0 /*pr_nrcartao */
+                                                     ,OUTPUT "" /*pr_xml_idlancto */
                                                      ,OUTPUT ""
                                                      ,OUTPUT 0
                                                      ,OUTPUT "").
@@ -11283,6 +11665,186 @@ PROCEDURE aprova_trans_pend:
                         
                   END. /*FIM 18*/                  
                   
+
+            ELSE IF tt-tbgen_trans_pend.tptransacao = 19 THEN /*Bordero Desconto Titulo*/
+                    DO: 
+                        ASSIGN aux_cdbandoc_bdt = ""
+                               aux_nrdctabb_bdt = ""
+                               aux_nrcnvcob_bdt = ""
+                               aux_nrdocmto_bdt = "".
+                               
+                        FOR EACH tt-tbdsct_trans_pend WHERE tt-tbdsct_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK:
+                            
+                            IF aux_nrdocmto_bdt <> "" THEN
+                               DO:
+                                  ASSIGN aux_cdbandoc_bdt = aux_cdbandoc_bdt + "|"
+                                         aux_nrdctabb_bdt = aux_nrdctabb_bdt + "|"
+                                         aux_nrcnvcob_bdt = aux_nrcnvcob_bdt + "|"
+                                         aux_nrdocmto_bdt = aux_nrdocmto_bdt + "|".
+                               END.
+                              
+                            ASSIGN aux_cdbandoc_bdt = aux_cdbandoc_bdt + STRING(tt-tbdsct_trans_pend.cdbandoc)
+                                   aux_nrdctabb_bdt = aux_nrdctabb_bdt + STRING(tt-tbdsct_trans_pend.nrdctabb)
+                                   aux_nrcnvcob_bdt = aux_nrcnvcob_bdt + STRING(tt-tbdsct_trans_pend.nrcnvcob)
+                                   aux_nrdocmto_bdt = aux_nrdocmto_bdt + STRING(tt-tbdsct_trans_pend.nrdocmto).
+                        END.
+
+                        IF par_indvalid = 1 AND aux_conttran = 1 THEN
+                           DO:
+                               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                               RUN STORED-PROCEDURE pc_finalizar_bordero_dscto_tit aux_handproc = PROC-HANDLE NO-ERROR
+                                                     (INPUT par_cdcooper
+                                                     ,INPUT par_nrdconta
+                                                     ,INPUT par_idseqttl
+                                                     ,INPUT 0
+                                                     ,INPUT aux_cdbandoc_bdt
+                                                     ,INPUT aux_nrdctabb_bdt
+                                                     ,INPUT aux_nrcnvcob_bdt
+                                                     ,INPUT aux_nrdocmto_bdt
+                                                     ,OUTPUT ""
+                                                     ,OUTPUT "").
+                                
+                               CLOSE STORED-PROC pc_finalizar_bordero_dscto_tit aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.  
+
+                               ASSIGN aux_dscritic = ""
+                                      aux_dscritic = pc_finalizar_bordero_dscto_tit.pr_dscritic
+                                                     WHEN pc_finalizar_bordero_dscto_tit.pr_dscritic <> ?.
+
+                               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                                
+                               IF  aux_dscritic <> ""  THEN DO: 
+                                    
+                                   RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                           INPUT par_cdoperad,
+                                                           INPUT aux_dscritic,
+                                                           INPUT aux_dsorigem,
+                                                           INPUT aux_dstransa,
+                                                           INPUT FALSE,
+                                                           INPUT par_nmdatela,
+                                                           INPUT par_nrdconta,
+                                                           INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                           INPUT FALSE,
+                                                           INPUT par_indvalid,
+                                                           INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
+                                                           INPUT aux_vltotbdc,
+                                                           INPUT aux_conttran).
+                        
+                IF par_indvalid = 1 THEN
+                                       ASSIGN par_flgaviso = TRUE.
+                        
+                                   UNDO TRANSACAO, LEAVE TRANSACAO.
+                                    
+                               END.
+                           END.
+                                
+                       RUN gera_erro_transacao(INPUT par_cdcooper,
+                                               INPUT par_cdoperad,
+                                               INPUT aux_dscritic,
+                                               INPUT aux_dsorigem,
+                                               INPUT aux_dstransa,
+                                               INPUT FALSE,
+                                               INPUT par_nmdatela,
+                                               INPUT par_nrdconta,
+                                               INPUT STRING(ROWID(tbgen_trans_pend)),
+                                               INPUT TRUE,
+                                               INPUT par_indvalid,
+                                               INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
+                                               INPUT aux_vltotbdc,
+                                               INPUT aux_conttran).
+                END. /* = 19 */   
+/* Projeto 470 - Marcelo Telles Coelho */
+                ELSE IF tt-tbgen_trans_pend.tptransacao = 20 /* Contrato */
+                     THEN
+                    DO: 
+                    /*Se ultimo aprovador e se a tela eh a de confirmacao faca*/
+                    IF par_indvalid = 1 AND aux_conttran = 1 THEN
+                      DO:
+                        FOR FIRST tt-tbctd_trans_pend 
+                            WHERE tt-tbctd_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK.
+                        END.
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                        RUN STORED-PROCEDURE pc_gera_prot_ctd_pj_prgs aux_handproc = PROC-HANDLE NO-ERROR
+                                                     (INPUT par_cdcooper
+                                                     ,INPUT par_nrdconta
+                                                     ,INPUT tt-tbctd_trans_pend.tpcontrato
+                                                     ,INPUT tt-tbctd_trans_pend.dhcontrato
+                                                     ,INPUT tt-tbctd_trans_pend.nrcontrato
+                                                     ,INPUT tt-tbctd_trans_pend.vlcontrato
+                                                     ,INPUT tt-tbctd_trans_pend.cdtransacao_pendente
+                                                     ,INPUT ""
+                                                     ,OUTPUT 0
+                                                     ,OUTPUT ""
+                                                     ,OUTPUT ""
+                                                     ,OUTPUT "").
+                        CLOSE STORED-PROC pc_gera_prot_ctd_pj_prgs 
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+                     
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = ""
+                               aux_cdcritic = pc_gera_prot_ctd_pj_prgs.pr_cdcritic
+                        WHEN pc_gera_prot_ctd_pj_prgs.pr_cdcritic <> ?
+                             aux_dscritic = pc_gera_prot_ctd_pj_prgs.pr_dscritic
+                        WHEN pc_gera_prot_ctd_pj_prgs.pr_dscritic <> ?.
+                                       
+                                
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                             
+                        IF  aux_cdcritic <> 0   OR
+                            aux_dscritic <> ""  THEN
+                            DO: 
+                                IF  aux_dscritic = "" THEN 
+                                    DO:
+                                        FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                                        NO-LOCK NO-ERROR.
+                                
+                                        IF  AVAIL crapcri THEN
+                                            ASSIGN aux_dscritic = crapcri.dscritic.
+                                        ELSE
+                                            ASSIGN aux_dscritic =  "Nao foi possivel incluir o servico".
+                                    END.
+                     
+                                    RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                            INPUT par_cdoperad,
+                                                            INPUT aux_dscritic,
+                                                            INPUT aux_dsorigem,
+                                                            INPUT aux_dstransa,
+                                                            INPUT FALSE,
+                                                            INPUT par_nmdatela,
+                                                            INPUT par_nrdconta,
+                                                            INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                            INPUT FALSE,
+                                                            INPUT par_indvalid,
+                                                            INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
+                                                            INPUT 0, /*tt-tbtarif_pacote_trans_pend.vlpacote,*/
+                                                            INPUT aux_conttran).
+                
+                                    IF par_indvalid = 1 THEN
+                                        ASSIGN par_flgaviso = TRUE.
+                
+                                    UNDO TRANSACAO, LEAVE TRANSACAO.
+
+                            END.
+
+                      END. /* IF par_indvalid = 1 AND aux_conttran = 1 THEN */
+                      RUN gera_erro_transacao(INPUT par_cdcooper,
+                                              INPUT par_cdoperad,
+                                              INPUT aux_dscritic,
+                                              INPUT aux_dsorigem,
+                                              INPUT aux_dstransa,
+                                              INPUT FALSE,
+                                              INPUT par_nmdatela,
+                                              INPUT par_nrdconta,
+                                              INPUT STRING(ROWID(tbgen_trans_pend)),
+                                              INPUT TRUE,
+                                              INPUT par_indvalid,
+                                              INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
+                                              INPUT 0, /*tt-tbtarif_pacote_trans_pend.vlpacote,*/
+                                              INPUT aux_conttran).
+                    END.
+                    /* Fim Projeto 470 */                
+                  
                 IF par_indvalid = 1 THEN
                     DO: 
                         FOR FIRST tbgen_aprova_trans_pend WHERE tbgen_aprova_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente
@@ -11479,6 +12041,7 @@ PROCEDURE pc_valores_online:
     DEF  INPUT PARAM par_cdtransa AS INTE                           NO-UNDO.
     /* AUXILIAR */
     DEF VAR aux_vlcheque          AS DECI                           NO-UNDO.
+    DEF VAR aux_vltitulo          AS DECI                           NO-UNDO.
 
     IF CAN-DO("1,3,5",STRING(tt-tbgen_trans_pend.tptransacao)) THEN /* Transf.Intracoop,Crédito Salário,Transf.Intercoop */
         DO:
@@ -11706,6 +12269,22 @@ ELSE IF tt-tbgen_trans_pend.tptransacao = 16 OR
           CREATE tt-vlrdat.
           ASSIGN tt-vlrdat.dattrans = tt-tbgen_trans_pend.dtmvtolt.
       
+        END.
+      END. 
+    ELSE IF tt-tbgen_trans_pend.tptransacao = 19 THEN /*Bordero Desconto Titulo*/
+      DO:
+          FOR EACH tt-tbdsct_trans_pend WHERE tt-tbdsct_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK. 
+          
+             ASSIGN aux_vltitulo = aux_vltitulo + tt-tbdsct_trans_pend.vltitulo.
+             
+          END.
+          
+          FIND FIRST tt-vlrdat WHERE tt-vlrdat.dattrans = tt-tbgen_trans_pend.dtmvtolt EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+          IF NOT AVAILABLE tt-vlrdat THEN
+          DO:
+             CREATE tt-vlrdat.
+             ASSIGN tt-vlrdat.dattrans = tt-tbgen_trans_pend.dtmvtolt.
         END.
     END.      
 END PROCEDURE.
