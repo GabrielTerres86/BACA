@@ -221,10 +221,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
          AND tdc.nmdominio          = 'IDALCADA_RECIPR'
          AND tpw.flregra_aprovacao  = 1 -- Ativo
          AND tpw.cdcooper           = pr_cdcooper
-		ORDER BY tpw.cdalcada_aprovacao;
-		
+		ORDER BY tpw.cdalcada_aprovacao;		
     rw_alcada cr_alcada%ROWTYPE;
-		
+		--
 		CURSOR cr_conta(pr_cdcooper crapceb.cdcooper%TYPE
 		               ,pr_idrecipr crapceb.idrecipr%TYPE
 									 ) IS
@@ -249,7 +248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 				 AND ROWNUM = 1;
 		
 		rw_conta cr_conta%ROWTYPE;
-		
+		--
 		CURSOR cr_operador(pr_cdcooper           tbrecip_param_aprovador.cdcooper%TYPE
                       ,pr_cdalcada_aprovacao tbrecip_param_aprovador.cdalcada_aprovacao%TYPE
                       ) IS
@@ -265,18 +264,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
          AND tpa.cdalcada_aprovacao = pr_cdalcada_aprovacao;
     --
     rw_operador cr_operador%ROWTYPE;
-    -- Variável de críticas
-    vr_cdcritic crapcri.cdcritic%TYPE;
-    vr_dscritic VARCHAR2(10000);
+		--
+		CURSOR cr_regional (pr_cdcooper crapage.cdcooper%TYPE
+		                   ,pr_cdagenci crapage.cdagenci%TYPE) IS
+			SELECT r.dsdemail
+						,r.cdopereg
+				FROM crapage c
+						,crapreg r 
+			 WHERE c.cdcooper = r.cdcooper 
+				 AND c.cddregio = r.cddregio 
+				 AND c.cdcooper = pr_cdcooper 
+				 AND c.cdagenci = pr_cdagenci;
+	 rw_regional cr_regional%ROWTYPE;
 
-    -- Tratamento de erros
-    vr_exc_erro EXCEPTION;
-    
-    -- Variáveis do e-mail
-    vr_dsjustificativa_desc_adic CLOB;
-    vr_dsassunt                  VARCHAR2(10000);
-    vr_dsmensag                  VARCHAR2(10000);
-    --
+	 -- Variável de críticas
+	 vr_cdcritic crapcri.cdcritic%TYPE;
+	 vr_dscritic VARCHAR2(10000);
+
+	 -- Tratamento de erros
+	 vr_exc_erro EXCEPTION;
+	    
+	 -- Variáveis do e-mail
+	 vr_dsjustificativa_desc_adic CLOB;
+ 	 vr_dsassunt                  VARCHAR2(10000);
+   vr_dsmensag                  VARCHAR2(10000);
+	 --
   BEGIN
 		--
     BEGIN
@@ -296,8 +308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     END;
     --
 		OPEN cr_conta(pr_cdcooper
-								 ,pr_idcalculo_reciproci
-								 );
+								 ,pr_idcalculo_reciproci);
 		--
 		FETCH cr_conta INTO rw_conta;
 		--
@@ -318,8 +329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
                    '<a href="https://ayllos.cecred.coop.br/home.php">https://ayllos.cecred.coop.br/home.php</a>';
     --
 		OPEN cr_alcada(pr_cdcooper
-									,pr_idcalculo_reciproci
-									);
+									,pr_idcalculo_reciproci);
 		--
 		LOOP
 			--
@@ -334,47 +344,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
       RAISE vr_exc_erro;
 			--
 		END IF;
-		--
+		-- 
 		IF rw_alcada.dsstatus = 'Pendente' THEN
 			--
-			OPEN cr_operador(pr_cdcooper
-											,rw_alcada.cdalcada_aprovacao
-											);
-			--
-			LOOP
-			--
-				FETCH cr_operador INTO rw_operador;
-				EXIT WHEN cr_operador%NOTFOUND;
-        --
-        IF TRIM(rw_operador.dsemail_aprovador) IS NULL THEN
-           --
-           vr_dscritic := 'Operador da alcada sem e-mail cadastrado ou incorreto!';
-           RAISE vr_exc_erro;
-           --
-        END IF;
-				-- Enviar Email comunicando o interesse
-				gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-																	,pr_cdprogra        => 'CADRES'
-																	,pr_des_destino     => rw_operador.dsemail_aprovador
-																	,pr_des_assunto     => vr_dsassunt
-																	,pr_des_corpo       => vr_dsmensag
-																	,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
-																	,pr_flg_remove_anex => 'N' --> Remover os anexos passados
-																	,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
-																	,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
-																	,pr_des_erro        => vr_dscritic
-																	);
-				-- Se houver erros
-				IF vr_dscritic IS NOT NULL THEN
-					 -- Gera critica
-					 vr_cdcritic := 9999;
-					 RAISE vr_exc_erro;
-					 --
+			IF rw_alcada.cdalcada_aprovacao = 1 THEN
+				-- Envia apenas para o regional do PA do cooperado
+				OPEN cr_regional(pr_cdcooper => pr_cdcooper
+				                ,pr_cdagenci => 1); -- TODO: colocar agencia
+				FETCH cr_regional INTO rw_regional;
+				--
+				IF cr_regional%FOUND THEN
+					--
+					IF TRIM(rw_regional.dsdemail) IS NOT NULL THEN
+						gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+																			,pr_cdprogra        => 'CADRES'
+																			,pr_des_destino     => rw_regional.dsdemail
+																			,pr_des_assunto     => vr_dsassunt
+																			,pr_des_corpo       => vr_dsmensag
+																			,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
+																			,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+																			,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
+																			,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+																			,pr_des_erro        => vr_dscritic);
+					END IF;
+					--
 				END IF;
 				--
-			END LOOP;
-			--
-			CLOSE cr_operador;
+				CLOSE cr_regional;
+			ELSE
+				-- Envia para todos daquela alçada
+				OPEN cr_operador(pr_cdcooper
+												,rw_alcada.cdalcada_aprovacao);
+				--
+				LOOP
+				--
+					FETCH cr_operador INTO rw_operador;
+					EXIT WHEN cr_operador%NOTFOUND;
+					--
+					IF TRIM(rw_operador.dsemail_aprovador) IS NOT NULL THEN
+						gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+																			,pr_cdprogra        => 'CADRES'
+																			,pr_des_destino     => rw_operador.dsemail_aprovador
+																			,pr_des_assunto     => vr_dsassunt
+																			,pr_des_corpo       => vr_dsmensag
+																			,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
+																			,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+																			,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
+																			,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+																			,pr_des_erro        => vr_dscritic);
+					END IF;																		
+					--
+				END LOOP;
+				--
+				CLOSE cr_operador;
+			END IF;
 			--
 		END IF;
 		--
@@ -1265,6 +1288,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 		
 		rw_aprovadores cr_aprovadores%ROWTYPE;
 		
+    CURSOR cr_regional(pr_cdcooper crapage.cdcooper%TYPE) IS
+			SELECT r.dsdemail
+						,r.cdopereg
+						,o.nmoperad
+				FROM crapage c
+						,crapreg r
+						,crapope o
+			 WHERE c.cdcooper = r.cdcooper 
+				 AND c.cddregio = r.cddregio 
+				 AND r.cdcooper = o.cdcooper
+       	 AND r.cdopereg = o.cdoperad
+				 AND c.cdcooper = pr_cdcooper
+	  GROUP BY r.dsdemail
+		        ,r.cdopereg
+						,o.nmoperad;
+   rw_regional cr_regional%ROWTYPE;		
+		
 		-- Variaveis de log
     vr_cdcooper crapcop.cdcooper%TYPE;
     vr_cdoperad VARCHAR2(100);
@@ -1329,41 +1369,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     -- Inicilizar as informações do XML
     vr_texto_completo := NULL;
 		--
-		OPEN cr_aprovadores(pr_cdcooprt
-											 ,pr_cdalcada_aprovacao
-											 ,pr_cdaprovador
-											 );
-		--
 		pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1"?><root><dados>');
 		--
-		LOOP
+		IF pr_cdalcada_aprovacao = 1 THEN
 			--
-			FETCH cr_aprovadores INTO rw_aprovadores;
-			EXIT WHEN cr_aprovadores%NOTFOUND;
+			FOR rw_regional IN cr_regional (pr_cdcooprt) LOOP
+				pc_escreve_xml('<inf>'||
+													'<cdaprovador>'      || rw_regional.cdopereg ||'</cdaprovador>'      ||
+													'<nmaprovador>'      || rw_regional.nmoperad ||'</nmaprovador>'      ||
+													'<dsemailaprovador>' || rw_regional.dsdemail ||'</dsemailaprovador>' ||
+											 '</inf>');
+			END LOOP;
 			--
-			pc_escreve_xml('<inf>'||
-												'<cdaprovador>'      || rw_aprovadores.cdaprovador       ||'</cdaprovador>'      ||
-												'<nmaprovador>'      || rw_aprovadores.nmoperad          ||'</nmaprovador>'      ||
-												'<dsemailaprovador>' || rw_aprovadores.dsemail_aprovador ||'</dsemailaprovador>' ||
-										 '</inf>');
+		ELSE		
+			FOR rw_aprovadores IN cr_aprovadores(pr_cdcooprt
+          									              ,pr_cdalcada_aprovacao
+									                        ,pr_cdaprovador) LOOP
+				--
+				pc_escreve_xml('<inf>'||
+													'<cdaprovador>'      || rw_aprovadores.cdaprovador       ||'</cdaprovador>'      ||
+													'<nmaprovador>'      || rw_aprovadores.nmoperad          ||'</nmaprovador>'      ||
+													'<dsemailaprovador>' || rw_aprovadores.dsemail_aprovador ||'</dsemailaprovador>' ||
+											 '</inf>');
+			END LOOP;
 			--
-		END LOOP;
+		END IF;
 		--
-		--IF cr_aprovadores%ROWCOUNT > 0 THEN
-			--
-			pc_escreve_xml('</dados></root>',TRUE);    
-			--
-			pr_retxml := XMLType.createXML(vr_des_xml);
-			--
-		/* -- Comentado para não gerar erro na tela
-		ELSE
-			--
-			vr_dscritic := 'Nenhum aprovador encontrado para a cooperativa e alçada informados: ' || pr_cdcooper || ' - ' || pr_cdalcada_aprovacao;
-      RAISE vr_exc_erro;
-			-- */
-		--END IF;
+		pc_escreve_xml('</dados></root>',TRUE);    
 		--
-		CLOSE cr_aprovadores;
+		pr_retxml := XMLType.createXML(vr_des_xml);
 		--
 	EXCEPTION
 		WHEN vr_exc_erro THEN
@@ -1775,7 +1809,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 											WHERE tpa.cdcooper           = tpw.cdcooper
 												AND tpa.cdalcada_aprovacao = tpw.cdalcada_aprovacao
 												AND tpa.flativo            = 1 -- Ativo
-												AND tpa.cdaprovador        = pr_cdoperad) > 0 THEN
+												AND LOWER(tpa.cdaprovador) = LOWER(pr_cdoperad)) > 0 THEN
+								 1 -- True
+							 WHEN (SELECT COUNT(1)
+											 FROM crapreg reg
+											WHERE reg.cdcooper = tpw.cdcooper
+												AND tpw.cdalcada_aprovacao = 1 -- Regional
+												AND lower(reg.cdopereg) = LOWER(pr_cdoperad)) > 0 THEN
 								 1 -- True
 							 ELSE
 								 0 -- False
@@ -1968,6 +2008,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 		
     ..............................................................................*/
 		
+		CURSOR cr_regional (pr_cdcooper crapage.cdcooper%TYPE
+											 ,pr_cdoperad crapreg.cdopereg%TYPE
+											 ,pr_cdagenci crapage.cdagenci%TYPE) IS
+				SELECT r.dsdemail
+							,r.cdopereg
+					FROM crapage c
+							,crapreg r 
+				 WHERE c.cdcooper = r.cdcooper 
+					 AND c.cddregio = r.cddregio 
+					 AND c.cdcooper = pr_cdcooper 
+					 AND c.cdagenci = pr_cdagenci
+					 AND lower(r.cdopereg) = lower(pr_cdoperad);
+		rw_regional cr_regional%ROWTYPE;
+		
 		CURSOR cr_valida_aprovador(pr_cdcooper           tbrecip_param_aprovador.cdcooper%TYPE
 		                          ,pr_cdalcada_aprovacao tbrecip_param_aprovador.cdalcada_aprovacao%TYPE
 															,pr_cdaprovador        tbrecip_param_aprovador.cdaprovador%TYPE
@@ -2022,6 +2076,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 		
 		rw_contratos cr_contratos%ROWTYPE;
 		
+		CURSOR cr_agencia(pr_cdcooper crapceb.cdcooper%TYPE
+		                 ,pr_idrecipr crapceb.idrecipr%TYPE) IS
+										 
+      SELECT ass.cdagenci
+				FROM crapceb crapceb2
+				    ,crapass ass
+			 WHERE (crapceb2.cdcooper, crapceb2.nrdconta) IN (SELECT crapceb.cdcooper
+																															,crapceb.nrdconta
+																													FROM crapceb
+																												 WHERE crapceb.cdcooper = pr_cdcooper
+																													 AND crapceb.idrecipr = pr_idrecipr
+																										 UNION ALL
+																												SELECT crapceb.cdcooper
+																															,crapceb.nrdconta
+																													FROM tbcobran_crapceb crapceb
+																												 WHERE crapceb.cdcooper = pr_cdcooper
+																													 AND crapceb.idrecipr = pr_idrecipr)
+         AND ass.cdcooper = crapceb2.cdcooper
+				 AND ass.nrdconta = crapceb2.nrdconta
+			 UNION ALL
+			SELECT ass.cdagenci
+				FROM tbcobran_crapceb crapceb2
+				    ,crapass ass
+			 WHERE (crapceb2.cdcooper, crapceb2.nrdconta) IN (SELECT crapceb.cdcooper
+																															,crapceb.nrdconta
+																													FROM tbcobran_crapceb crapceb
+																												 WHERE crapceb.cdcooper = pr_cdcooper
+																													 AND crapceb.idrecipr = pr_idrecipr)
+         AND ass.cdcooper = crapceb2.cdcooper
+				 AND ass.nrdconta = crapceb2.nrdconta;
+		rw_agencia cr_agencia%ROWTYPE;
+		
 		-- Variaveis de log
     vr_cdcooper crapcop.cdcooper%TYPE;
     vr_cdoperad VARCHAR2(100);
@@ -2071,23 +2157,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
       RAISE vr_exc_erro;
 			--
     END IF;
-		-- Valida se o usuário possui permissão de aprovador na alçada informada
-		OPEN cr_valida_aprovador(pr_cdcooprt
-														,pr_cdalcada_aprovacao
-														,vr_cdoperad
-														);
+		
+		OPEN cr_agencia(pr_cdcooper => pr_cdcooprt
+		               ,pr_idrecipr => pr_idcalculo_reciproci);
+		FETCH cr_agencia INTO rw_agencia;
 		--
-		FETCH cr_valida_aprovador INTO rw_valida_aprovador;
-		--
-		IF cr_valida_aprovador%ROWCOUNT = 0 THEN
-			--
-			vr_dscritic := 'O usuário não possui permissão de aprovador!';
+		IF cr_agencia%NOTFOUND THEN
+			CLOSE cr_agencia;
+			vr_dscritic := 'Contrato invalido.';
 			RAISE vr_exc_erro;
-			--
 		END IF;
 		--
-		CLOSE cr_valida_aprovador;
+		CLOSE cr_agencia;
 		--
+		IF pr_idstatus = 'R' THEN -- Aprovado
+			--
+			OPEN cr_regional(pr_cdcooper => pr_cdcooprt
+											,pr_cdoperad => vr_cdoperad
+											,pr_cdagenci => rw_agencia.cdagenci);
+			FETCH cr_regional INTO rw_regional;
+			--
+			IF cr_regional%NOTFOUND THEN
+				-- Valida se o usuário possui permissão de aprovador na alçada informada
+				OPEN cr_valida_aprovador(pr_cdcooprt
+																,pr_cdalcada_aprovacao
+																,vr_cdoperad
+																);
+				--
+				FETCH cr_valida_aprovador INTO rw_valida_aprovador;
+				--
+				IF cr_valida_aprovador%NOTFOUND THEN
+					CLOSE cr_valida_aprovador;
+          CLOSE cr_regional;
+					vr_dscritic := 'O usuário não possui permissão de aprovador ou não pertence a regional do cooperado!';
+					RAISE vr_exc_erro;
+				END IF;
+				CLOSE cr_valida_aprovador;
+			END IF;
+			CLOSE cr_regional;
+		ELSE
+
+			IF pr_cdalcada_aprovacao = 1 THEN
+				OPEN cr_regional(pr_cdcooper => pr_cdcooprt
+												,pr_cdoperad => vr_cdoperad
+												,pr_cdagenci => rw_agencia.cdagenci);
+				FETCH cr_regional INTO rw_regional;
+				IF cr_regional%NOTFOUND THEN
+					CLOSE cr_regional;
+					vr_dscritic := 'O usuário não pertence a regional do cooperado!';
+					RAISE vr_exc_erro;
+				END IF;
+				CLOSE cr_regional;
+			ELSE
+				-- Valida se o usuário possui permissão de aprovador na alçada informada
+				OPEN cr_valida_aprovador(pr_cdcooprt
+																,pr_cdalcada_aprovacao
+																,vr_cdoperad);
+				--
+				FETCH cr_valida_aprovador INTO rw_valida_aprovador;
+				--
+				IF cr_valida_aprovador%ROWCOUNT = 0 THEN
+					--
+					vr_dscritic := 'O usuário não possui permissão de aprovador!';
+					RAISE vr_exc_erro;
+					--
+				END IF;
+				--
+				CLOSE cr_valida_aprovador;
+				--
+			END IF;
+		END IF;
+
 		-- Verificacao do calendario
 		OPEN BTCH0001.cr_crapdat(pr_cdcooprt);
 		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -2105,7 +2245,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 																					 ,cdoperador
 																					 )
 																		 VALUES(pr_cdcooprt
-																		       ,rw_valida_aprovador.cdalcada_aprovacao --pr_cdalcada_aprovacao
+																		       ,nvl(pr_cdalcada_aprovacao, nvl(rw_valida_aprovador.cdalcada_aprovacao, 1))
 																		       ,pr_idcalculo_reciproci
 																					 ,vr_cdoperad
 																					 ,pr_idstatus

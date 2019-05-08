@@ -229,6 +229,9 @@ if ($cddopcao == 'I') {
 	$valores = ( isset($xmlObjDadosAtenda->roottag->tags[2]->tags[0]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[2]->tags[0]->tags : null;
 	$vr_deposito = ( isset($valores[5]->cdata) ) ? number_format(str_replace(",", ".", $valores[5]->cdata), 2, ",", ".") : '';
 	$vr_aplicacoes = ( isset($valores[2]->cdata) ) ? number_format(str_replace(",", ".", $valores[2]->cdata), 2, ",", ".") : '';
+	if ($vr_deposito < 0) {
+		$vr_deposito = number_format(str_replace(",", ".", 0), 2, ",", ".");
+	}
 
 }
 

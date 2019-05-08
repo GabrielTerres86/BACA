@@ -71,5 +71,5 @@ if ( $cddopcao == 'A' ) {
 }
 
 function exibeErroNew($msgErro) {
-    exit('hideMsgAguardo();showError("error","' . $msgErro . '","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");');
+    exit('hideMsgAguardo();showError("error","' . $msgErro . '","Alerta - Ayllos","acessaOpcaoContratos();");');
 }

@@ -37,11 +37,6 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 
 $registros = $xmlObj->roottag->tags[0]->tags;
 
-// Opcao de Carregamento
-if ( $cdalcada == 1 || true ) {
-
-}
-
 function exibeErroNew($msgErro) {
     exit('hideMsgAguardo();showError("error","'.$msgErro.'","Alerta - Ayllos","desbloqueia()");');
 }
@@ -52,7 +47,7 @@ function exibeErroNew($msgErro) {
             <tr>
                 <th align="left">C&oacute;digo</th>
                 <th align="left">Nome</th>
-                <?php if ($cddopcao != 'C') { ?>
+                <?php if ($cddopcao != 'C' && $cdalcada != 1) { ?>
                 <th>&nbsp;</th> 
                 <?php } ?>
             </tr>
@@ -63,7 +58,7 @@ function exibeErroNew($msgErro) {
         $cdaprovadores = array();
         if ( !$count ) { 
             $i = 0;					
-            ?><tr><td colspan="<?php echo $cddopcao == 'C' ? '2' : '3'; ?>" style="font-size:12px; text-align:center;">N&atilde;o existem aprovadores para a al&ccedil;ada informada.</td></tr><?php
+            ?><tr><td colspan="<?php echo (($cddopcao != 'C' && $cdalcada != 1) ? '2' : '3'); ?>" style="font-size:12px; text-align:center;">N&atilde;o existem aprovadores para a al&ccedil;ada informada.</td></tr><?php
         // Caso a pesquisa retornou itens, exibilos em diversas linhas da tabela
         } else {  
             // Realiza um loop nos registros retornados e desenha cada um em uma linha da tabela
@@ -72,9 +67,13 @@ function exibeErroNew($msgErro) {
                 $nmaprovador = getByTagName($registros[$i]->tags,'nmaprovador');
                 $dsemailaprovador = getByTagName($registros[$i]->tags,'dsemailaprovador');
                 $cdaprovadores[] = $cdaprovador;
+                $mtDblClick = "";
+                if ($cddopcao != 'C' && $cdalcada != 1) {
+                    $mtDblClick = "PopupAprovadores.onDblClick_Registro('$cdalcada', '$cdaprovador', '$nmaprovador','$dsemailaprovador')";
+                }
             ?>
                 <tr onclick="PopupAprovadores.onClick_Registro('<?php echo $dsemailaprovador; ?>')" 
-                    ondblclick="PopupAprovadores.onDblClick_Registro('<?php echo $cdalcada; ?>', '<?php echo $cdaprovador; ?>', '<?php echo $nmaprovador; ?>','<?php echo $dsemailaprovador; ?>')">
+                    ondblclick="<?=$mtDblClick?>">
                     <td>
                         <input type="hidden" id="cdaprovador_<?php echo $i; ?>" name="cdaprovador[]" value="<?php echo $cdaprovador; ?>"/>
                         <?php echo $cdaprovador; ?>
@@ -82,7 +81,7 @@ function exibeErroNew($msgErro) {
                     <td>
                         <?php echo $nmaprovador; ?>
                     </td>
-                    <?php if ($cddopcao != 'C') { ?>
+                    <?php if ($cddopcao != 'C' && $cdalcada != 1) { ?>
                     <td>
                         <img onclick="PopupAprovadores.onClick_Excluir('<?php echo $cdaprovador; ?>','<?php echo $cdalcada; ?>');" src="<?php echo $UrlImagens; ?>geral/btn_excluir.gif" width="16" height="16" border="0"></a>
                     </td>
