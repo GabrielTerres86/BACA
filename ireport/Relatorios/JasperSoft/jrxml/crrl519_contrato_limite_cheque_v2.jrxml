@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-03-15T15:55:55 -->
+<!-- 2019-03-29T09:16:31 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_contrato_limite_cheque" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="0.9558924531310722"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="1144"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl519"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Limite Cheque"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -196,6 +196,12 @@
 	</field>
 	<field name="vr_ind_interv" class="java.lang.Integer">
 		<fieldDescription><![CDATA[vr_ind_interv]]></fieldDescription>
+	</field>
+	<field name="dsfrase_cooperado" class="java.lang.String">
+		<fieldDescription><![CDATA[autorizacao_por_senha/dsfrase_cooperado]]></fieldDescription>
+	</field>
+	<field name="dsfrase_cooperativa" class="java.lang.String">
+		<fieldDescription><![CDATA[autorizacao_por_senha/dsfrase_cooperativa]]></fieldDescription>
 	</field>
 	<detail>
 		<band height="169" splitType="Stretch">
@@ -721,7 +727,7 @@
 				<textElement textAlignment="Justified" markup="styled">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'><u>2. Objeto</u> -</style> O <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> contrata com a <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> uma linha de crédito para a realização de descontos de recebíveis representados por cheques custodiados, que serão descritos e caracterizados no(s) Borderô(s), a cada operação de desconto, os quais serão parte integrante e complementar deste Contrato, tornando-se a <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> a legítima titular dos créditos representados pelos cheques descontados.\n§ 1º O(s) crédito(s) serão liberados, por meio da utilização de limite máximo para operacionalização dos descontos de cheques no valor definido no item " + (3 + $F{ind_dev_sol}) + ".3, diretamente na conta informada no item " + (3 + $F{ind_dev_sol}) + ".2.\n§ 2º Fica estabelecido que o limite liberado para operação de desconto fixado no caput será reduzido, proporcionalmente, à medida que for(em) realizado(s) o(s) desconto(s) do(s) cheque(s) pré-datado(s) e restabelecido na mesma proporção do(s) valor(es) do(s) cheque(s) que vierem a ser liquidado(s) no(s) seu(s) vencimento(s), tudo conforme Borderô(s) vinculado(s) a este Contrato.\n§ 3º Havendo renovação do contrato ou formalização de outro contrato, deverão ser considerados, para fins de computação dos valores emprestados, até o limite do crédito, os descontos anteriormente realizados e ainda não vencidos e/ou resgatados.\n<style isBold='true' pdfFontName='Courier-Bold'><u>3. Da solicitação e da liberação do limite para desconto</u> –</style> O <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> proporá à <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, face a sua necessidade de crédito, desconto de cheques(s) pré-datado(s), o(s) qual(is) devem(rão) estar relacionado(s) e totalizado(s) em Borderô específico, cuja aceitação deste(s) depende de prévia análise e aprovação pela <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, e que passará(ão) a ser parte(s) integrante(s) do presente Contrato.\n§ 1º Para a liberação do crédito especificado no(s) Borderô(s), o(s) cheque(s) pré-datado(s), objeto(s) da operação de desconto, deve(m), necessariamente, ser entregue(s) e custodiado(s) na <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, devidamente endossados pelo(a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> em favor da primeira."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'><u>2. Objeto</u> -</style> O <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> contrata com a <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> uma linha de crédito para a realização de descontos de recebíveis representados por cheques custodiados, que serão descritos e caracterizados no(s) Borderô(s), a cada operação de desconto, os quais serão parte integrante e complementar deste Contrato, tornando-se a <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> a legítima titular dos créditos representados pelos cheques descontados.\n§ 1º O(s) crédito(s) serão liberados, por meio da utilização de limite máximo para operacionalização dos descontos de cheques no valor definido no item " + (3 + $F{ind_dev_sol}) + ".3, diretamente na conta informada no item " + (3 + $F{ind_dev_sol}) + ".2.\n§ 2º Fica estabelecido que o limite liberado para operação de desconto fixado no caput será reduzido, proporcionalmente, à medida que for(em) realizado(s) o(s) desconto(s) do(s) cheque(s) pré-datado(s) e restabelecido na mesma proporção do(s) valor(es) do(s) cheque(s) que vierem a ser liquidado(s) no(s) seu(s) vencimento(s), tudo conforme Borderô(s) vinculado(s) a este Contrato.\n§ 3º Havendo renovação do contrato ou formalização de outro contrato, deverão ser considerados, para fins de computação dos valores emprestados, até o limite do crédito, os descontos anteriormente realizados e ainda não vencidos e/ou resgatados.\n<style isBold='true' pdfFontName='Courier-Bold'><u>3. Da solicitação e da liberação do limite para desconto</u> –</style> O <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> proporá à <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, face a sua necessidade de crédito, desconto de cheques(s) pré-datado(s), o(s) qual(is) devem(rão) estar relacionado(s) e totalizado(s) em Borderô específico, cuja aceitação deste(s) depende de prévia análise e aprovação pela <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, e que passará(ão) a ser parte(s) integrante(s) do presente Contrato.\n§ 1º Para a liberação do crédito especificado no(s) Borderô(s), o(s) cheque(s) pré-datado(s), objeto(s) da operação de desconto, deve(m), necessariamente, ser entregue(s) e custodiado(s) na <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, devidamente endossados pelo(a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> em favor da primeira. "]]></textFieldExpression>
 			</textField>
 			<break>
 				<reportElement x="0" y="391" width="100" height="1" uuid="0ba467ee-829f-4c6a-820c-30e298f0389e">
@@ -759,7 +765,7 @@
 				<textElement textAlignment="Justified" markup="styled">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["§ 2º O(A) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> responsabiliza-se pela existência e legitimidade do(s) crédito(s) representado(s) pelo(s) cheque(s), garantindo que o(s) mesmo(s) refere(m)-se à(s) mercadoria(s) vendida(s) e/ou prestação de serviços, não sendo objeto de contestação de qualquer espécie por parte do(s) emitente(s)do(s) mesmo(s).\n§ 3° O(A) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> obriga-se a informar imediatamente à <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, a existência de qualquer reclamação relativa a compra e venda e/ou prestação de serviços, os quais tenham originado o(s) crédito(s) representado(s) pelo(s) cheque(s), objeto do desconto, obrigando-se a resgatá-lo(s) e, pagando, inclusive, toda e qualquer despesa inerente a este processo.\n§ 4º A <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> poderá admitir que o(s) cheque(s) custodiado(s) ou pendente(s) de custódia sejam lançados pelo <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>, por meio do acesso à conta online disponível no site da <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, para efetuar uma operação de desconto.\n§ 5º A <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> admitirá que o(s) Borderô(s) seja(m) incluído(s) pelo <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>, por meio do acesso à conta online disponível no site da <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> ou emitido(s) diretamente no Posto de Atendimento. O <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> reconhece que todos os atos praticados mediante aposição de senha numérica e letras de segurança, serão registrados e arquivados em meios magnéticos, sendo reconhecidos, para todos os fins de direito, como válidos, verdadeiros e processados por meios seguros e constituirão meio eficaz e prova inequívoca do desconto realizado com assinatura digital.\n§ 6° O valor de cada operação de desconto somente será entregue ao <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> 48 (quarenta e oito) horas após o recebimento, na <style isBold='true' pdfFontName='Courier-Bold'>Cooperativa</style>, do(s) cheque(s) pré-datado(s) para desconto, mediante crédito em sua conta corrente identificada no item " + (3 + $F{ind_dev_sol}) + ".2.\n§ 7° O <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> não poderá incluir borderô(s) para antecipação, quando não houver limite disponível, ou seja, quando este tenha utilizado a totalidade do saldo do limite para operacionalização do desconto de cheque contratado.\n§ 8° É de inteira responsabilidade do <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> efetuar a notificação ao sacado de que o(s) cheque(s) estão sendo descontados e entregues para cobrança à <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>.<style isBold='true' pdfFontName='Courier-Bold'><u>\n4. Dos encargos financeiros</u> –</style> No momento da solicitação do desconto, a <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> informará o percentual de juros, oportunidade que será informado o IOF e demais tarifas incidentes, inclusive tarifas de custódia do(s) cheque(s) pré-datado(s), quando for o caso. Os encargos pactuados incidirão diariamente e de forma capitalizada sobre o saldo devedor das obrigações assumidas, sendo exigíveis, nos respectivos vencimentos dos cheques e na data de liquidação deste Contrato, conforme o caso, ocorram estes antecipadamente ou não."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["§ 2º O(A) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> responsabiliza-se pela existência e legitimidade do(s) crédito(s) representado(s) pelo(s) cheque(s), garantindo que o(s) mesmo(s) refere(m)-se à(s) mercadoria(s) vendida(s) e/ou prestação de serviços, não sendo objeto de contestação de qualquer espécie por parte do(s) emitente(s)do(s) mesmo(s).\n§ 3° O(A) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> obriga-se a informar imediatamente à <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, a existência de qualquer reclamação relativa a compra e venda e/ou prestação de serviços, os quais tenham originado o(s) crédito(s) representado(s) pelo(s) cheque(s), objeto do desconto, obrigando-se a resgatá-lo(s) e, pagando, inclusive, toda e qualquer despesa inerente a este processo.\n§ 4º A <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> poderá admitir que o(s) cheque(s) custodiado(s) ou pendente(s) de custódia sejam lançados pelo <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>, por meio do acesso à conta online disponível no site da <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>, para efetuar uma operação de desconto.\n§ 5º A <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> admitirá que o(s) Borderô(s) seja(m) incluído(s) pelo <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>, por meio do acesso à conta online disponível no site da <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> ou emitido(s) diretamente no Posto de Atendimento. \n§ 6º O <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> reconhece que todos os atos praticados mediante aposição de senha numérica e letras de segurança, serão registrados e arquivados em meios magnéticos, sendo reconhecidos, para todos os fins de direito, como válidos, verdadeiros e processados por meios seguros e constituirão meio eficaz e prova inequívoca do desconto realizado com assinatura digital.\n§ 7° O valor de cada operação de desconto somente será entregue ao <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> 48 (quarenta e oito) horas após o recebimento, na <style isBold='true' pdfFontName='Courier-Bold'>Cooperativa</style>, do(s) cheque(s) pré-datado(s) para desconto, mediante crédito em sua conta corrente identificada no item " + (3 + $F{ind_dev_sol}) + ".2.\n§ 8° O <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> não poderá incluir borderô(s) para antecipação, quando não houver limite disponível, ou seja, quando este tenha utilizado a totalidade do saldo do limite para operacionalização do desconto de cheque contratado.\n§ 9° É de inteira responsabilidade do <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> efetuar a notificação ao sacado de que o(s) cheque(s) estão sendo descontados e entregues para cobrança à <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style>.<style isBold='true' pdfFontName='Courier-Bold'><u>\n4. Dos encargos financeiros</u> –</style> No momento da solicitação do desconto, a <style isBold='true' pdfFontName='Courier-Bold'>COOPERATIVA</style> informará o percentual de juros, oportunidade que será informado o IOF e demais tarifas incidentes, inclusive tarifas de custódia do(s) cheque(s) pré-datado(s), quando for o caso. Os encargos pactuados incidirão diariamente e de forma capitalizada sobre o saldo devedor das obrigações assumidas, sendo exigíveis, nos respectivos vencimentos dos cheques e na data de liquidação deste Contrato, conforme o caso, ocorram estes antecipadamente ou não."]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement x="38" y="477" width="520" height="74" uuid="fc07c9ff-b1cf-4951-8e4d-21e51bc2157d"/>
@@ -973,16 +979,20 @@ l) descumprir qualquer das disposições constantes na Política de Responsabili
 			<line>
 				<reportElement x="60" y="376" width="209" height="1" uuid="539fa277-6ca3-45d6-be93-e6e8663c86d3">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1]]></printWhenExpression>
 				</reportElement>
 			</line>
 			<line>
-				<reportElement x="314" y="376" width="209" height="1" uuid="a2c033d3-8ad9-4c99-ac6a-b1c74e4419dd"/>
+				<reportElement x="314" y="376" width="209" height="1" uuid="a2c033d3-8ad9-4c99-ac6a-b1c74e4419dd">
+					<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1]]></printWhenExpression>
+				</reportElement>
 			</line>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="60" y="389" width="209" height="10" uuid="47e7d84f-a0d4-495a-999a-f1324e05d753">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="styled">
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -995,6 +1005,7 @@ l) descumprir qualquer das disposições constantes na Política de Responsabili
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="styled">
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -1015,6 +1026,7 @@ b) O(A) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> pod
 			<staticText>
 				<reportElement positionType="Float" x="60" y="378" width="209" height="10" uuid="288584bc-47bc-42b5-aece-c7dafa6d63c8">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="styled">
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
@@ -1022,7 +1034,9 @@ b) O(A) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> pod
 				<text><![CDATA[<style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>]]></text>
 			</staticText>
 			<staticText>
-				<reportElement positionType="Float" x="314" y="378" width="208" height="10" uuid="7a2cbcd2-8c7b-43f6-960f-85ca335482d3"/>
+				<reportElement positionType="Float" x="314" y="378" width="208" height="10" uuid="7a2cbcd2-8c7b-43f6-960f-85ca335482d3">
+					<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1]]></printWhenExpression>
+				</reportElement>
 				<textElement textAlignment="Justified" markup="styled">
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
@@ -1030,7 +1044,7 @@ b) O(A) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> pod
 			</staticText>
 		</band>
 		<band height="75">
-			<printWhenExpression><![CDATA[$F{nmdavali1}.length()>0]]></printWhenExpression>
+			<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1 || $F{nmdavali1}.length()>0]]></printWhenExpression>
 			<line>
 				<reportElement x="60" y="37" width="209" height="1" isRemoveLineWhenBlank="true" uuid="cc4b22f7-ac94-4d80-8822-b9c6525f64c5">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
@@ -1106,7 +1120,7 @@ b) O(A) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> pod
 			</staticText>
 		</band>
 		<band height="75">
-			<printWhenExpression><![CDATA[$F{nmdavali2}.length()>0]]></printWhenExpression>
+			<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1 || $F{nmdavali2}.length()>0]]></printWhenExpression>
 			<textField isBlankWhenNull="true">
 				<reportElement x="60" y="51" width="209" height="10" isRemoveLineWhenBlank="true" uuid="f3813872-360c-46f5-b4ab-db95fa3f6378">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
@@ -1178,7 +1192,7 @@ b) O(A) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> pod
 			</staticText>
 		</band>
 		<band height="75">
-			<printWhenExpression><![CDATA[$F{nminterv}.length()>0]]></printWhenExpression>
+			<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1 || $F{nminterv}.length()>0]]></printWhenExpression>
 			<textField isBlankWhenNull="true">
 				<reportElement x="60" y="60" width="209" height="10" isRemoveLineWhenBlank="true" uuid="bb167679-041c-4109-81e5-b76dfe6abc46">
 					<printWhenExpression><![CDATA[$F{nminterv}.length()>0]]></printWhenExpression>
@@ -1218,6 +1232,7 @@ b) O(A) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> pod
 		</band>
 		<band height="75">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1]]></printWhenExpression>
 			<line>
 				<reportElement x="315" y="38" width="209" height="1" isRemoveLineWhenBlank="true" uuid="74218ca4-9ae6-49c2-99ae-66387b6a6584"/>
 			</line>
@@ -1281,6 +1296,7 @@ b) O(A) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style> pod
 		</band>
 		<band height="197">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()==1]]></printWhenExpression>
 			<frame>
 				<reportElement x="61" y="35" width="466" height="158" uuid="b860fbee-ea74-47ef-baf1-f88579b069eb">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -1378,6 +1394,19 @@ CPF:]]></text>
 Emitente]]></text>
 				</staticText>
 			</frame>
+		</band>
+		<band height="17">
+			<printWhenExpression><![CDATA[$F{dsfrase_cooperado}.length()>1]]></printWhenExpression>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="38" y="0" width="518" height="11" uuid="ef14654e-370c-4a63-8d3d-8e068287ebae">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsfrase_cooperado} + "\n" + "\n" + $F{dsfrase_cooperativa}]]></textFieldExpression>
+			</textField>
 		</band>
 	</detail>
 	<lastPageFooter>

@@ -44,8 +44,8 @@
     $idcidade           = (isset($_POST['idcidade']))           ? $_POST['idcidade']           : '';
     $dstelefone         = (isset($_POST['dstelefone']))         ? $_POST['dstelefone']         : '';
     $dsemail            = (isset($_POST['dsemail']))            ? $_POST['dsemail']            : '';
-    $nrlatitude         = (isset($_POST['nrlatitude']))         ? $_POST['nrlatitude']         : '';
-	$nrlongitude        = (isset($_POST['nrlongitude']))        ? $_POST['nrlongitude']        : '';    
+    $nrlatitude         = (!empty($_POST['nrlatitude']))        ? $_POST['nrlatitude']         : 0;
+	$nrlongitude        = (!empty($_POST['nrlongitude']))       ? $_POST['nrlongitude']        : 0;    
 	$idcomissao         = (isset($_POST['idcomissao']))         ? $_POST['idcomissao']         : '';
 	$flgitctr           = (isset($_POST['flgitctr']))           ? $_POST['flgitctr']           : '';
 
@@ -94,6 +94,6 @@
         if ($msgErro == "") {
             $msgErro = $xmlObjeto->roottag->tags[0]->cdata;
         }
-        exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro',"bloqueiaFundo(divRotina)",false);
+        exibirErro('error',addslashes(utf8_encode($msgErro)),'Alerta - Aimaro',"bloqueiaFundo(divRotina)",false);
     }
 ?>

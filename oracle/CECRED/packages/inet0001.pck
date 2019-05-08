@@ -530,7 +530,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                                    ,pr_idastcjt IN crapass.idastcjt%TYPE   --Exige Ass.Conjunta Nao=0 Sim=1
                                    ,pr_cdcritic   OUT INTEGER              --Código do erro
                                    ,pr_dscritic   OUT VARCHAR2);
-    
+                                    
 END INET0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
@@ -3993,7 +3993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
    Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
    Sigla    : CRED
    Autor    : Alisson C. Berrido - Amcom
-   Data     : Junho/2013.                   Ultima atualizacao: 04/04/2018
+   Data     : Junho/2013.                   Ultima atualizacao: 21/03/2019
   
   Dados referentes ao programa:
   
@@ -4079,6 +4079,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                            
               29/12/2018 - Ajuste emergencial na rotina de validação do último dia não útil do ano. (Cechet/Pablão)
               
+              21/03/2019 - Essa rotina faz a validação dos limites da conta online para aprovar as transações, e o caixa eletrônico 
+                           passou a utilizar as rotinas da conta online. No caixa eletrônico não existe validação de limite, pois
+                           para utilizar o caixa eletrônico não precisamos da senha de internet cadastrada, e é de lá que vem o valor
+                           de limite que o cooperado possui. Programa ajustado para não validar limite quando a transação estiver sendo 
+                           feita pelo PA 91 (ATM) (Douglas - Projeto 363)
+
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -4429,8 +4435,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                              ,pr_dscritic     => vr_dscritic); --Descricao do erro;
             --Se ocorreu erro
             IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+              -- A pc_busca_limites vai carregar o valor dos limites da conta, e quando não encontra o valor de limite retorna as mensagens de erro
+              -- porém carrega o valor dos limites com 0
+              -- A agência 91 (TAA) não realiza validação de limite para as transações, então quando fo agencia 91 e as mensagens de erro que não encontraram 
+              -- os limites, elas serão ignoradas e o processo irá continuar
+              -- Se for qualquer outra mensagem de erro, ela deverá ser retornada
+              IF pr_cdagenci = 91 AND
+                 vr_dscritic IN ('Não encontrou limites para a conta.','Senha para conta on-line nao cadastrada.') THEN
+                     NULL;
+              ELSE
               --Levantar Excecao
               RAISE vr_exc_erro;
+              END IF;
             END IF; -- Validar se esá habilitado assinatura conjunta            
         END IF;
         ELSE -- Se for operador
@@ -4486,8 +4502,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                        ,pr_dscritic     => vr_dscritic); --Descricao do erro;
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          -- A pc_busca_limites vai carregar o valor dos limites da conta, e quando não encontra o valor de limite retorna as mensagens de erro
+          -- porém carrega o valor dos limites com 0
+          -- A agência 91 (TAA) não realiza validação de limite para as transações, então quando fo agencia 91 e as mensagens de erro que não encontraram 
+          -- os limites, elas serão ignoradas e o processo irá continuar
+          -- Se for qualquer outra mensagem de erro, ela deverá ser retornada
+          IF pr_cdagenci = 91 AND
+             vr_dscritic IN ('Não encontrou limites para a conta.','Senha para conta on-line nao cadastrada.') THEN
+                 NULL;
+          ELSE
         --Levantar Excecao
         RAISE vr_exc_erro;
+          END IF;
         END IF; -- Validar se esá habilitado assinatura conjunta                                      
 
       END IF;
@@ -4611,8 +4637,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 	    
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        -- A pc_busca_limites vai carregar o valor dos limites da conta, e quando não encontra o valor de limite retorna as mensagens de erro
+        -- porém carrega o valor dos limites com 0
+        -- A agência 91 (TAA) não realiza validação de limite para as transações, então quando fo agencia 91 e as mensagens de erro que não encontraram 
+        -- os limites, elas serão ignoradas e o processo irá continuar
+        -- Se for qualquer outra mensagem de erro, ela deverá ser retornada
+        IF pr_cdagenci = 91 AND
+           vr_dscritic IN ('Não encontrou limites para a conta.','Senha para conta on-line nao cadastrada.') THEN
+               NULL;
+        ELSE
         --Levantar Excecao
         RAISE vr_exc_erro;
+      END IF; 
       END IF; 
       
       vr_vldspptl_conta := 0;
@@ -4642,10 +4678,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       /** Obtem limites do primeiro titular se for pessoa fisica **/
       IF rw_crapass.inpessoa = 1 AND pr_idseqttl > 1 THEN
         IF pr_tab_internet.COUNT = 0 THEN
+          IF pr_cdagenci <> 91 THEN -- PA 91 - ATM: não valida limite 
           vr_cdcritic:= 0;
           vr_dscritic:= 'Limite para internet nao cadastrado. Entre em contato com seu PA.';
           --Levantar Excecao
           RAISE vr_exc_erro;
+        END IF;
+
         END IF;
         IF pr_tpoperac = 6 THEN /* VR Boleto */
           --Limite diario
@@ -4680,10 +4719,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
       --Se o limite estiver zerado
       IF (vr_vllimptl = 0 OR vr_vllimttl = 0) AND rw_crapass.inpessoa = 1 THEN
+        IF pr_cdagenci <> 91 THEN -- PA 91 - ATM: não valida limite 
         vr_cdcritic:= 0;
         vr_dscritic:= 'Limite para internet nao cadastrado. Entre em contato com seu PA.';
         --Levantar Excecao
         RAISE vr_exc_erro;
+      END IF;
+
       END IF;
 
 			IF pr_tpoperac IN (10,12,13) AND -- DARF/DAS,FGTS,DAE 
@@ -4987,36 +5029,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       
       /** Verifica se pode movimentar o valor desejado - limite diario **/
       IF  pr_vllanmto > vr_vllimptl AND rw_crapass.inpessoa = 1 THEN
+        IF pr_cdagenci <> 91 THEN -- PA 91 - ATM: não valida limite 
         vr_cdcritic:= 0;
         vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      END IF;
       
       /** Verifica se pode movimentar o valor desejado - limite cooperativa **/
       IF  pr_vllanmto > vr_vllimcop AND pr_tpoperac = 6 THEN
+        IF pr_cdagenci <> 91 THEN -- PA 91 - ATM: não valida limite 
         vr_cdcritic:= 0;
         vr_dscritic:= 'Valor da operacao superior ao limite da cooperativa.';
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      END IF;
       -- projeto 397
       /** Verifica se titular tem limite para movimentar o valor **/
       IF rw_crapass.inpessoa = 1 AND pr_idseqttl > 1 AND pr_vllanmto > vr_vllimttl THEN
+        IF pr_cdagenci <> 91 THEN -- PA 91 - ATM: não valida limite 
         vr_cdcritic:= 0;
         vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';
         --Levantar Excecao
         RAISE vr_exc_erro;
+      END IF;
       END IF;
       
       /** Verifica se pode movimentar em relacao ao que ja foi usado **/
       /** no dia por todos os titulares 
        **/
       IF pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa = 1 THEN
+        IF pr_cdagenci <> 91 THEN -- PA 91 - ATM: não valida limite 
         vr_cdcritic:= 0;
         vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';
         --Levantar Excecao
         RAISE vr_exc_erro;
+      END IF;
       END IF;
       
       vr_operador_conta := 0;
@@ -5028,19 +5078,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       -- SE NAO FOR ASSINATURA E NAO TIVER OPERADOR E ULTRAPSSOU O LIMITE DA CONTA, MOSTRAR CRITICA
       IF rw_crapass.idastcjt = 0 AND vr_operador_conta = 0 AND
         pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
+        IF pr_cdagenci <> 91 THEN -- PA 91 - ATM: não valida limite 
         vr_cdcritic:= 0;
         vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';
         RAISE vr_exc_erro;
+        END IF;
       ELSIF rw_crapass.idastcjt = 0 AND pr_nrcpfope <= 0 AND
         pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
+        IF pr_cdagenci <> 91 THEN -- PA 91 - ATM: não valida limite 
         vr_cdcritic:= 0;
         vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';        
         RAISE vr_exc_erro;
+        END IF;
       -- Se o valor do lançamento for maior que o limite da conta, nao permitir 
       ELSIF pr_vllanmto > vr_vldspptl_conta and rw_crapass.inpessoa IN (2,3) THEN
+        IF pr_cdagenci <> 91 THEN -- PA 91 - ATM: não valida limite 
         vr_cdcritic:= 0;
         vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';        
         RAISE vr_exc_erro;
+        END IF;
       ELSIF pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
         pr_assin_conjunta := 1; -- Deverá gerar fluxo de aprovação assinatura conjunta
       END IF;
@@ -5048,10 +5104,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       /** Verifica se pode movimentar em relacao ao que ja foi usado **/
       /** no dia pelo titular                                        **/
       IF rw_crapass.inpessoa = 1 AND pr_idseqttl > 1 AND pr_vllanmto > vr_vldspttl THEN
+        IF pr_cdagenci <> 91 THEN -- PA 91 - ATM: não valida limite 
         vr_cdcritic:= 0;
         vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';
         --Levantar Excecao
         RAISE vr_exc_erro;
+      END IF;
       END IF;
       
       IF  pr_idagenda = 1 THEN
@@ -5115,7 +5173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         END IF;
         /* Nao validar saldo para operadores na internet */
         IF pr_nrcpfope = 0 THEN
-
+         
             /** Obtem valor da tarifa TED **/
             IF pr_tpoperac = 4 AND
                pr_flgexage = 0 THEN
@@ -5215,7 +5273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         -- Verifica se data de agendamento e uma data futura
         IF pr_tpoperac IN (10,12,13) THEN --DARF/DAS, FGTS, DAE   
           
-        IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
+          IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
             --Montar mensagem erro
             vr_cdcritic:= 0;            
             --Data mínima obtida de dtmvtocd se não for dia útil
@@ -6644,7 +6702,7 @@ PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type 
       pr_dscritic := 'Erro na proc pc_verifica_limite_ope_canc '||sqlerrm;
   
   END pc_verifica_limite_ope_canc;    
-  
+
   /*Atualiza as transacoes pendentes para o novo preposto*/
   PROCEDURE pc_atu_trans_pend_prep (pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
                                    ,pr_nrdconta IN crapass.nrdconta%TYPE   --Numero conta
@@ -6746,7 +6804,7 @@ PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type 
                                pr_flreincidente       => 0,
                                pr_idprglog            => vr_idprglog);        
     END;
-
+    
   END pc_atu_trans_pend_prep;
   
 

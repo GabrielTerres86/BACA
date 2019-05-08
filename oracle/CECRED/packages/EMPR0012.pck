@@ -78,6 +78,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                 ,pr_flgpreap IN NUMBER                --> Identificador de pre aprovado
                                 ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
                                 ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado -- P637                                                             
                                 ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -1063,6 +1064,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                ,pr_flgpreap IN NUMBER                --> Identificador de pre aprovado
                                ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
                                ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                               ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado -- P637                                                             
                                ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -1085,7 +1087,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
    Observacao: 
      
-   Alteracoes:
+   Alteracoes: 18/04/2019 - Incluido novo campo segueFluxoAtacado no retorno do motor de credito
+			   P637 - Luciano Kienolt - Supero
 
    ..............................................................................*/  
    DECLARE
@@ -1114,6 +1117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
               ,wpr.cdopeste
               ,wpr.insitest
               ,decode(wpr.insitapr, 0, 'EM ESTUDO', 1, 'APROVADO', 2, 'NAO APROVADO', 3, 'RESTRICAO', 4, 'REFAZER', 'SITUACAO DESCONHECIDA') dssitapr
+              ,wpr.idfluata -- P637              
               ,wpr.rowid
           FROM crawepr wpr
          WHERE wpr.cdcooper = pr_cdcooper
@@ -1140,6 +1144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     vr_nrperger VARCHAR2(100); --> Valor da Percepção Geral da Empresa calculada no Rating
     vr_desscore VARCHAR2(100); --> Descricao do Score Boa Vista
     vr_datscore VARCHAR2(100); --> Data do Score Boa Vista
+    vr_idfluata BOOLEAN; --> Segue Fluxo Atacado -- P637
 
     -- Função para verificar se parâmetro passado é numérico
     FUNCTION fn_is_number(pr_vlparam IN VARCHAR2) RETURN BOOLEAN IS
@@ -1358,6 +1363,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                            ,pr_dsdscore    => vr_desscore    --> Descrição Score Boa Vista
                                            ,pr_dtdscore    => to_date(vr_datscore,'RRRRMMDD')    --> Data Score Boa Vista
                                            ,pr_flgpreap    => pr_flgpreap    --> Indicador de Pré Aprovado
+                                           ,pr_idfluata    => pr_idfluata    --> Indicador Segue Fluxo Atacado -- P637                                          
                                            ,pr_status      => vr_status      --> Status
                                            ,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
                                            ,pr_dscritic    => vr_dscritic    --> Descricao da critica

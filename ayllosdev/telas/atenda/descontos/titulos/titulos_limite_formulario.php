@@ -347,25 +347,46 @@
 	$('#btnContinuarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
 		if (operacao == 'A') {
 			/*Motor em contingencia*/
+
+			//bruno - prj 470 - tela autorizacao
 			if(flctgmot){
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
+			informarRating('divDscTit_Renda',
+			"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
+			"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
+			"fecharRotinaGenerico('<? echo $tipo ?>');");
 			}
 			else{
-				informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
+				informarRating('divDscTit_Renda',
+				"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
+				"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
+				"chamarImpressao('<? echo $tipo ?>');");
+
 				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda;divDscTit_Renda');
 			}
 		} else if (operacao == 'C') {
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
+			informarRating('divDscTit_Renda',
+			"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
+			"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
+			"fecharRotinaGenerico('<? echo $tipo ?>'); console.log('Entrei 2');");
 		} else {
 			/*Motor em contingencia*/
+			//bruno - prj 470 - tela autorizacao
 			if(flctgmot){
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
+			informarRating('divDscTit_Renda',
+			"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
+			"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
+			"chamarImpressao('<? echo $tipo ?>'); console.log('Entrei 3');");
 		}
 			else{
-				informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
+				//bruno - prj 470 - tela autorizacao
+				informarRating('divDscTit_Renda',
+				"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
+				"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
+				"chamarImpressao('<? echo $tipo ?>'); console.log('Entrei 4');");
+
 				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda;divDscTit_Renda');
 			}
 		}

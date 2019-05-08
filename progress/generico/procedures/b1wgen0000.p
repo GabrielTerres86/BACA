@@ -115,6 +115,8 @@
 			  23/08/2017 - Alterado para efetuar a validacao do login no AD. (PRJ339 - Reinert)
 
 			  24/10/2017 - Adicionado validacao para autenticacao pelo CRM. (PRJ339 - Reinert)
+              
+        20/02/2019 - PJ434 - Alterado "efetua_login". Inclui verificação de login pelo CRM (Rubens Lima - Mout's) 
 ..............................................................................*/
 
 
@@ -159,6 +161,8 @@ PROCEDURE efetua_login:
     DEF VAR aux_dtmvtopr AS DATE                                    NO-UNDO.
 
     DEF VAR aux_nmarqblq AS CHAR                                    NO-UNDO.
+    
+    DEF VAR aux_vldlogin AS LOGI                                    NO-UNDO. /*P339*/
     
     FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
     
@@ -428,8 +432,9 @@ PROCEDURE efetua_login:
                                    WHERE crapage.cdcooper = par_cdcooper
                                      AND crapage.cdagenci = par_cdagenci
                                      NO-LOCK:
-                  /* Se PA utiliza somente o CRM */
-                  IF  crapage.inutlcrm = 1 THEN
+               
+                  /* O parametro da OPERAD é soberano. Só valida agencia pelo Ayllos se for (inutlcrm=3) */
+                  IF crapage.inutlcrm = 1 AND crapope.inutlcrm = 3 THEN
                       DO:
                          ASSIGN aux_cdcritic = 0
                                 aux_dscritic = "PA nao esta habilitado para acessar o sistema Ayllos. Utilize o CRM".
@@ -448,6 +453,63 @@ PROCEDURE efetua_login:
              END. /* IF CAPS(crapprm.dsvlrprm) = "N" THEN */
         END. /* FOR FIRST crapprm */
       END. /* IF  par_idorigem = 5 THEN */
+
+  /* PRJ339 - Rubens Lima */
+  /* Se login foi feito pelo CRM - apenas para teste pelo simulador CRM*/
+	IF  par_idorigem <> 5 THEN
+      DO:
+        /* Verificar se CRM esta liberado na prm */
+        FOR FIRST crapprm FIELDS(dsvlrprm)
+                           WHERE crapprm.cdcooper = 0
+                             AND crapprm.nmsistem = "CRED"
+                             AND crapprm.cdacesso = "LIBCRM"
+                             NO-LOCK:
+          IF TRIM(crapprm.dsvlrprm) = "0" THEN
+             DO:      
+                
+                IF crapope.inutlcrm = 0 THEN
+                    DO:
+                       ASSIGN aux_cdcritic = 0
+                              aux_dscritic = "Operador nao esta habilitado para acessar o sistema CRM. Utilize o Ayllos.".
+                        
+                       RUN gera_erro (INPUT par_cdcooper,
+                                      INPUT par_cdagenci,
+                                      INPUT par_nrdcaixa,
+                                      INPUT 1,            /** Sequencia **/
+                                      INPUT aux_cdcritic,
+                                      INPUT-OUTPUT aux_dscritic).
+                         
+                       RETURN "NOK".                    
+                    END. /* IF  crapope.flgutcrm THEN */
+                /*Buscar registro do PA*/
+                FOR FIRST crapage FIELDS(inutlcrm)
+                                   WHERE crapage.cdcooper = par_cdcooper
+                                     AND crapage.cdagenci = par_cdagenci
+                                     NO-LOCK:
+                  /* Se PA utiliza somente o CRM 
+                  IF  crapage.inutlcrm = 1 THEN */
+                  /* Se PA nao possui acesso ao CRM */
+                  IF crapage.inutlcrm = 0 AND crapope.inutlcrm = 3 THEN
+                      DO:
+                         ASSIGN aux_cdcritic = 0
+                                aux_dscritic = "PA nao esta habilitado para acessar o sistema CRM. Utilize o Ayllos".
+                          
+                         RUN gera_erro (INPUT par_cdcooper,
+                                        INPUT par_cdagenci,
+                                        INPUT par_nrdcaixa,
+                                        INPUT 1,            /** Sequencia **/
+                                        INPUT aux_cdcritic,
+                                        INPUT-OUTPUT aux_dscritic).
+                           
+                         RETURN "NOK".
+
+                      END. /* IF  crapage.flgutcrm THEN */
+                END. /* FOR FIRST crapage  */                    
+             END. /* IF CAPS(crapprm.dsvlrprm) = "N" THEN */
+        END. /* FOR FIRST crapprm */
+      END. /* IF  par_idorigem = 5 THEN */
+
+
 	
     RETURN "OK".
         

@@ -6,6 +6,7 @@
  * OBJETIVO     : Mostrar tela DCTROR
  * --------------
  * ALTERAÇÕES   : 04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (Jonata - RKAM P364)
+ *                19/02/2019 - Adicionar chamada para script da tela de autorização para impressão - Bruno Luiz Katzjarowski - Mout's
  * --------------
  */
 ?>
@@ -33,6 +34,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js?keyrand=<?php echo mt_rand(); ?>"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
+		<script type="text/javascript" src="../../includes/autorizacao_contrato/autorizacao_contrato.js?keyrand=<?php echo mt_rand(); ?>"></script>
 		<script type="text/javascript" src="dctror.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>
 <body>

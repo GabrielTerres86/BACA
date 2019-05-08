@@ -153,6 +153,8 @@
 * 123: [13/02/2019] P298_2_2 - Pos Fixado - Habilitar campo Produto permitindo selecionar PP e POS. 
 *                   Não permitir selecionar Produto TR (Luciano Kienolt - Supero)         
 * 124: [07/03/2019] Permite inclusao / cadastro de avalista via CRM - Chamado INC0033825 (Gabriel Marcos / Jefferson / Mouts).
+* 125: [06/05/2019] Ajuste para salvar os campos de portabilidade, para que quando abrir a tela de portabilidade (alteração)
+*                   os campos já estejam salvos em váriaveis PRJ 438 (Mateus Z - Mouts)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -414,6 +416,16 @@ var idlsbemfin = false;
 var vlemprst_antigo = 0;
 var dsctrliq_antigo = '';
 
+//bruno - prj 470 - tela autorizacao
+$.getScript(UrlSite + 'includes/autorizacao_contrato/autorizacao_contrato.js');
+var aux_portabilidade = "";
+
+// PRJ 438 - Variaveis para salvar as informações, para serem usados em caso de portabilidade
+var nrctrempPortabil = 0;
+var tplcrempPortabil = 0;
+var flgimpprPortabil = '';
+var flgimpnpPortabil = '';
+
 $.getScript(UrlSite + "telas/atenda/emprestimos/impressao.js");
 $.getScript(UrlSite + "telas/atenda/emprestimos/simulacao/simulacao.js");
 $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
@@ -620,9 +632,24 @@ function controlaOperacao(operacao) {
                 nomeAcaoCall = ''; // Reseta a global
             }
         });
-        if ((nrctremp == '' || tplcremp == 0 || flgimppr == '' || flgimpnp == '') && (operacao != 'PORTAB_CRED_I')) {
-            return false;
+
+        // PRJ 438 - Salvar os valores para serem usados em caso de portabilidade
+        if(nrctremp != '' && tplcremp != 0 && flgimppr != '' && flgimpnp != ''){
+        	nrctrempPortabil = nrctremp;
+			tplcrempPortabil = tplcremp;
+			flgimpprPortabil = flgimppr;
+			flgimpnpPortabil = flgimpnp;
         }
+        
+        if(portabil == 'S'){
+        	if ((nrctrempPortabil == '' || tplcrempPortabil == 0 || flgimpprPortabil == '' || flgimpnpPortabil == '') && (operacao != 'PORTAB_CRED_I')) {
+	            return false;
+	        }
+        } else {
+	        if ((nrctremp == '' || tplcremp == 0 || flgimppr == '' || flgimpnp == '') && (operacao != 'PORTAB_CRED_I')) {
+	            return false;
+	        }
+       	}
 
     }
 
@@ -2719,12 +2746,17 @@ function controlaLayout(operacao) {
                     controlaOperacao('PORTAB_CRED_A');
                 });
 
-                //atribui o novo parametro para o evento click do botao
-                $("#btSalvar", "#divBotoes").attr('onClick', "buscaLiquidacoes('PORTAB_A');");
-                //fiz esta adaptacao tecnica para obrigar o IE a executar a nova funcao se o botao for clicado.
-                $("#btSalvar", "#divBotoes").unbind('click').bind('click', function() {
-                    buscaLiquidacoes('PORTAB_A');
-                });
+                if ($.browser.msie) {
+                	//atribui o novo parametro para o evento click do botao
+                	$("#btSalvar", "#divBotoes").attr('onClick', "buscaLiquidacoes('PORTAB_A');");
+				    //fiz esta adaptacao tecnica para obrigar o IE a executar a nova funcao se o botao for clicado.
+	                $("#btSalvar", "#divBotoes").unbind('click').bind('click', function() {
+	                    buscaLiquidacoes('PORTAB_A');
+	                });
+				} else {
+	                //atribui o novo parametro para o evento click do botao
+                	$("#btSalvar", "#divBotoes").attr('onClick', "buscaLiquidacoes('PORTAB_A');");
+				}
 
                 //desabilita o campo tipo de emprestimo
                 //cTipoEmpr.attr('disabled', 'disabled');
@@ -4738,6 +4770,8 @@ function controlaLayout(operacao) {
         //seta a acao do botao continuar
         $("#btSalvar", "#divBotoesFormPortabilidade").unbind('click').bind('click', function() {
             validaDados(0);
+            //bruno - prj 470 - tela autorizacao
+            aux_portabilidade = "S";
         });
 
         // tratamento para o botao voltar
@@ -10561,6 +10595,11 @@ function calculaCet(operacao) {
     var tpemprst = $('#tpemprst', '#frmNovaProp').val();
     var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();    
 
+    //bruno - prj 470 - tela autorizacao
+    if(possuiPortabilidade != ""){
+        aux_portabilidade = possuiPortabilidade;
+    }
+
     $.ajax({
         type: 'POST',
         url: UrlSite + 'telas/atenda/emprestimos/calculo_cet.php',
@@ -11913,7 +11952,15 @@ function controlaNavegacaoCamposNovaProposta(){
     //bruno - prj 438 - bug 17972
     $("#dtdpagto", "#frmNovaProp").unbind('keydown').bind('keydown', function (e) {
         // Se é a tecla TAB ou SHIFT + TAB
-        if (e.keyCode == 9) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+
+            /*Validar se a data está no formato dd/mm/yyyy*/
+            var dtForm = $("#dtdpagto", "#frmNovaProp").val();
+            if (!validaData(dtForm)) {
+                showError('error', 'A data de pagamento deve estar no formato dd/mm/yyyy.', 'Alerta - Aimaro', "unblockBackground()");
+                return false;
+            }
+
 			if (e.shiftKey) {
 				$("#qtpreemp", "#frmNovaProp").focus();
 	            return false;
@@ -12617,7 +12664,35 @@ function selecionaComplemento(tr) {
     
 	return false;
 }
+/**
+ * Autor: Bruno Luiz Katzjarowski;
+ * bruno - prj 470 - tela autorizacao
+ */
+function mostraTelaAutorizacaoImpressao(operacao, paramTela){
 
+    var a_nrdconta = "";
+    if(typeof paramTela != "undefined"){
+        a_nrdconta = paramTela.nrdconta;
+    }else{
+        a_nrdconta = nrdconta;
+    }
+
+	if(aux_portabilidade == 'S'){
+		var params = {
+			nrdconta : a_nrdconta,
+			obrigatoria: 1,
+            tpcontrato: 26,
+            nrcontrato: nrctremp,
+			vlcontrato: arrayProposta['vlemprst'],
+            funcaoImpressao: "mostraDivImpressao('"+operacao+"');exibeRotina($('#divUsoGenerico'));",
+            funcaoGeraProtocolo: "controlaOperacao('');"
+		};
+		mostraTelaAutorizacaoContrato(params);
+        aux_portabilidade = 'N'; //bruno - prj 470 - bug 
+	}else{
+		mostraDivImpressao(operacao);
+	}
+}
 
 function mostraAplicacao(tpaplica) {
 	showMsgAguardo('Aguarde, buscando ...');

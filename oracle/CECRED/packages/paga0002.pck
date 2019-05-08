@@ -946,7 +946,7 @@ create or replace package body cecred.PAGA0002 is
                                Others, Modulo/Action, PC Internal Exception, PC Log Programa
                                Inserts, Updates, Deletes e SELECT's, Parâmetros
                                (Envolti - Belli - REQ0011727)
-																		  
+
                   03/09/2018 - Correção para remover lote (Jonata - Mouts).
 
 				  10/10/2018 - Permitir agendar Teds antes da abertura da grade.
@@ -1174,14 +1174,14 @@ create or replace package body cecred.PAGA0002 is
                                (Adriano - INC0017772).
                                
                   12/07/2018 - Adicionar os parametros que identificam o canal
-                               (Prj363 - Douglas Quisinski)
+                               (Prj363 - Douglas Quisinski)		  
                                
                   26/10/2018 - Ajuste para tratar o "Codigo identificador" quando escolhido a finalidade 400 - Tributos Municipais ISS - LCP 157
                               (Jonata  - Mouts / INC0024119).
 
 				  13/02/2019 - Correcao da finalidade 400 (Tributos Municipais ISS - LCP) para 157
                                (Jonata  - Mouts / INC0032530).
-
+                                                              
     .................................................................................*/
     ----------------> CURSORES  <---------------
     CURSOR cr_crapass (prc_cdcooper IN crapass.cdcooper%TYPE,
@@ -1377,7 +1377,7 @@ create or replace package body cecred.PAGA0002 is
                                      pr_nmdcampo => 'Nome do Representante/Procurador',
                                      pr_dsdadant => '',
                                      pr_dsdadatu => vr_nmprimtl);
-
+                                                   
            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                      pr_nmdcampo => 'CPF do Representante/Procurador',
                                      pr_dsdadant => '',
@@ -1385,7 +1385,7 @@ create or replace package body cecred.PAGA0002 is
         END IF;
 
       END IF;
-
+      
     END pc_proc_geracao_log;
 
     -- Monta xml de agendamento recorresntes
@@ -1400,7 +1400,7 @@ create or replace package body cecred.PAGA0002 is
       vr_dslinxml_aprov    VARCHAR2(32000) := NULL;
       vr_exiscrit          VARCHAR2(50)   := 'no';
       vr_idxcriti          VARCHAR2(4000) := NULL;
-
+      
     BEGIN
       -- varrer temptable apenas se encontrar algum registro
       IF vr_tab_agenda_recorrente.count > 0 THEN
@@ -1489,7 +1489,7 @@ create or replace package body cecred.PAGA0002 is
 
         pr_dscritic := 'Nao foi possivel montar xml de agendamentos recorrentes: '||SQLERRM;
     END pc_proc_agendamento_recorrente;
-
+    
     -- incluir favorecido
     PROCEDURE pc_grava_favorito(pr_dscritic OUT VARCHAR2) IS
     BEGIN
@@ -1534,9 +1534,9 @@ create or replace package body cecred.PAGA0002 is
         IF (NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL) AND NVL(vr_cdcritic,0) <> 979 THEN
            IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
               pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-           ELSE
+          ELSE 
              pr_dscritic := vr_dscritic;
-           END IF;
+          END IF;
         END IF;
 
         /* Não chamar a inclusao se favorecido jah cadastrado */
@@ -1587,8 +1587,8 @@ create or replace package body cecred.PAGA0002 is
 
       ELSE
 
-      /* Validar a conta de destino da transferencia */
-      INET0001.pc_valida_conta_destino ( pr_cdcooper => pr_cdcooper --Codigo Cooperativa
+        /* Validar a conta de destino da transferencia */
+        INET0001.pc_valida_conta_destino ( pr_cdcooper => pr_cdcooper --Codigo Cooperativa
                                         ,pr_cdagenci => pr_cdagenci --Agencia do Associado
                                         ,pr_nrdcaixa => pr_nrdcaixa --Numero caixa
                                         ,pr_cdoperad => '996'       --Codigo Operador
@@ -1605,18 +1605,18 @@ create or replace package body cecred.PAGA0002 is
                                         ,pr_dscritic => vr_des_erro --Retorno OK/NOK
                                         ,pr_tab_erro => vr_tab_erro); --Tabela de retorno de erro
 
-      IF vr_des_erro <> 'OK' THEN
-        IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+        IF vr_des_erro <> 'OK' THEN          
+          IF vr_tab_erro.exists(vr_tab_erro.first) THEN
           pr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
-        ELSE
+          ELSE
           pr_dscritic := 'Erro na validacao da conta destino.';
-        END IF;
-        -- se retornou critica deve abortar processo
+          END IF;
+          -- se retornou critica deve abortar processo
         RETURN;
-      END IF;
+        END IF;
 
-      IF  NOT vr_flgctafa  THEN
-        CADA0002.pc_inclui_conta_transf
+        IF  NOT vr_flgctafa  THEN
+          CADA0002.pc_inclui_conta_transf
                          (pr_cdcooper => pr_cdcooper    --> Codigo da cooperativa
                          ,pr_cdagenci => pr_cdagenci    --> Codigo da agencia
                          ,pr_nrdcaixa => pr_nrdcaixa    --> Numero do caixa
@@ -1644,16 +1644,16 @@ create or replace package body cecred.PAGA0002 is
                            ,pr_cdcritic => vr_cdcritic    --> Codigo da critica
                            ,pr_dscritic => pr_dscritic);  --> Descricao da critica
 
-        IF vr_des_erro <> 'OK' THEN
+          IF vr_des_erro <> 'OK' THEN
             IF TRIM(pr_dscritic) IS NULL  THEN
             pr_dscritic := 'Erro na inclusao da conta favorita.';
+            END IF;
           END IF;
-        END IF;
       END IF;
       END IF;
     END pc_grava_favorito;
-
-
+    
+    
 
   BEGIN
 
@@ -1670,7 +1670,7 @@ create or replace package body cecred.PAGA0002 is
     IF length(pr_cdageban) > 4 THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Agencia deve ser informada sem o digito verificador (Limite de 4 digitos).';
-	  RAISE vr_exc_erro;
+	    RAISE vr_exc_erro;
     END IF;          
     -- Fim da validação.	
 
@@ -1680,7 +1680,7 @@ create or replace package body cecred.PAGA0002 is
     IF length(pr_nrctatrf) > 13 THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Informe o numero da conta creditada com ate 13 caracteres.';
-	  RAISE vr_exc_erro;
+	    RAISE vr_exc_erro;
     END IF;          
     -- Fim da validação.
     
@@ -1732,7 +1732,7 @@ create or replace package body cecred.PAGA0002 is
     
     ELSE
       vr_dstransf := pr_dstransf;
-    END IF;
+    END IF; 
 
     INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
@@ -1769,9 +1769,9 @@ create or replace package body cecred.PAGA0002 is
       IF sspb0003.fn_valida_horario_ted(pr_cdcooper => pr_cdcooper) then
          If  vr_idastcjt = 1 then
             vr_dscritic := 'Operação deve ser realizada dentro do horário estabelecido para transferências na data atual.';
-            raise vr_exc_erro; 
+         raise vr_exc_erro; 
          End if;         
-         vr_idagenda := 2;
+       vr_idagenda := 2;
       END IF;   
     END IF;  
 
@@ -1900,10 +1900,10 @@ create or replace package body cecred.PAGA0002 is
                           ,pr_cdcritic => vr_cdcritic  --> Codigo do erro
                           ,pr_dscritic => vr_dscritic);--> Descricao do erro
 
-    IF nvl(vr_cdcritic,0) <> 0 OR
-       TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
+      IF nvl(vr_cdcritic,0) <> 0 OR
+        TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
 
     END IF;
 
@@ -2030,8 +2030,9 @@ create or replace package body cecred.PAGA0002 is
     /* Efetuada por operador ou responsável de assinatura conjunta de conta PJ */
 
       IF vr_assin_conjunta = 1 THEN
-      /* Se deseja gravar favorito */
-      IF pr_gravafav = 1 THEN
+      /* Se deseja gravar favorito 
+         PA 91 não grava favorito */
+      IF pr_gravafav = 1 AND pr_cdagenci <> 91 THEN
         pc_grava_favorito(pr_dscritic => vr_dscritic);
         -- verificar se retornou critica
         IF vr_dscritic IS NOT NULL THEN
@@ -2145,23 +2146,24 @@ create or replace package body cecred.PAGA0002 is
                                  ELSE 'Transferencia registrada' END) ||
                        ' com sucesso. ' ||
                        'Aguardando aprovacao do registro pelos demais responsaveis.';
-        ELSE
+             ELSE
             vr_dscritic := (CASE WHEN pr_cdtiptra = 3 THEN 'Credito de salario registrado'
                                  ELSE 'Transferencia registrada' END) ||
                        ' com sucesso. ' ||
                        'Aguardando efetivacao do registro pelo preposto.';
-        END IF;
+             END IF;
 
-        IF vr_idagenda > 1 THEN
+            IF vr_idagenda > 1 THEN
           vr_dscritic := 'Agendamento de ' || vr_dscritic;
-        END IF;
+            END IF;
 
-      END IF;
+          END IF;
 
     ELSIF vr_idagenda = 1 THEN /** Transferencia no dia corrente **/
 
-      /* Se deseja gravar favorito */
-      IF pr_gravafav = 1 THEN
+      /* Se deseja gravar favorito 
+         PA 91 não grava favorito */
+      IF pr_gravafav = 1 AND pr_cdagenci <> 91 THEN
         pc_grava_favorito(pr_dscritic => vr_dscritic);
         -- verificar se retornou critica
         IF vr_dscritic IS NOT NULL THEN
@@ -2266,7 +2268,7 @@ create or replace package body cecred.PAGA0002 is
                                     ,pr_dsprotoc => vr_dsprotoc    --> Descricao protocolo
                                     ,pr_cdcritic => vr_cdcritic    --> Codigo do erro
                                     ,pr_dscritic => vr_dscritic);  --> Descricao do erro
-         ELSE
+        ELSE
            /* Executar transferencia intercooperativa */
            PAGA0001.pc_executa_transf_intercoop
                                        (pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
@@ -2302,8 +2304,8 @@ create or replace package body cecred.PAGA0002 is
       IF nvl(vr_cdcritic,0) = 0 AND
          TRIM(vr_dscritic) IS NULL THEN
 
-        IF pr_tpoperac = 4  THEN /** TED **/
-          IF vr_tab_protocolo_ted.count > 0 THEN
+      IF pr_tpoperac = 4  THEN /** TED **/
+        IF vr_tab_protocolo_ted.count > 0 THEN
 
             -- montar retorno em xml com as informações dos protocolos
             FOR vr_idxp IN vr_tab_protocolo_ted.first..vr_tab_protocolo_ted.last LOOP
@@ -2339,23 +2341,23 @@ create or replace package body cecred.PAGA0002 is
                            ,pr_fecha_xml      => TRUE
                            ,pr_texto_novo     => ' ');
 
-          END IF;
-          vr_qtminast := 0;
-          FOR rw_crapass IN cr_crapass (pr_cdcooper,
+        END IF;
+        vr_qtminast := 0;
+        FOR rw_crapass IN cr_crapass (pr_cdcooper,
                                         pr_nrdconta) LOOP
             vr_qtminast := rw_crapass.qtminast;
-          END LOOP;
+        END LOOP;
 
-          pr_xml_operacao22 := pr_xml_operacao22 ||
-                               '<dsmsgsuc>Transferencia registrada com sucesso.</dsmsgsuc>'||
-                               '<qtminast>'|| vr_qtminast ||'</qtminast>';
+        pr_xml_operacao22 := pr_xml_operacao22 ||
+                             '<dsmsgsuc>Transferencia registrada com sucesso.</dsmsgsuc>'||
+                             '<qtminast>'|| vr_qtminast ||'</qtminast>';
 
-        -- se for transferencia sistema cecred
-        ELSIF pr_cdtiptra IN (1,5) THEN
+      -- se for transferencia sistema cecred
+      ELSIF pr_cdtiptra IN (1,5) THEN
           vr_dscritic := 'Transferencia efetuada com sucesso.';
-        ELSIF pr_cdtiptra = 3  THEN
+      ELSIF pr_cdtiptra = 3  THEN
           vr_dscritic := 'Credito de salario efetuado com sucesso.';
-        END IF;
+      END IF;                                      
 
       ELSE -- se retornou critica deve abortar programa
         RAISE vr_exc_erro;
@@ -2382,16 +2384,17 @@ create or replace package body cecred.PAGA0002 is
                                      ,pr_cdhisdeb => vr_cdhisdeb   --> Historico Debito
                                      ,pr_cdcritic => vr_cdcritic   --> Código do erro
                                      ,pr_dscritic => vr_dscritic); --> Descricao do erro
-      END IF;
+        END IF;
 
-      /* Se deseja gravar favorito */
-      IF pr_gravafav = 1 THEN
+      /* Se deseja gravar favorito 
+         PA 91 não grava favorito */
+      IF pr_gravafav = 1 AND pr_cdagenci <> 91 THEN
         pc_grava_favorito(pr_dscritic => vr_dscritic);
         -- verificar se retornou critica
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-      END IF;
+      END IF;      
 
       -- Buscar ultimo horario da DEBNET
       OPEN cr_craphec(pr_cdcooper => pr_cdcooper, 
@@ -2470,14 +2473,14 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_dscritic => vr_dscritic);--> Descricao critica
 
       -- Se não localizar critica
-      IF TRIM(vr_dscritic) IS NULL THEN
+      IF TRIM(vr_dscritic) IS NULL THEN        
           -- Verificar se a data é um dia util, caso não ser, retorna o proximo dia
           vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,
                                                      pr_dtmvtolt  => pr_dtmvtopg,
                                                      pr_tipo      => 'P',
                                                      pr_feriado   => TRUE);
 
-        IF pr_cdtiptra = 4 THEN
+        IF pr_cdtiptra = 4 THEN  
           vr_dscritic := 'Transferencia agendada com sucesso para o dia ' ||
                          to_char(vr_dtmvtopg,'DD/MM/RRRR') ||
                          ', mediante saldo disponivel em conta corrente.';
@@ -2491,8 +2494,8 @@ create or replace package body cecred.PAGA0002 is
                           ' com sucesso para o dia '|| to_char(vr_dtmvtopg,'DD/MM/RRRR') ||
                           ', mediante saldo disponivel em conta corrente ate as '        ||
                           vr_hrfimpag || '.';
-        END IF;
-
+          END IF;
+                            
       -- Se retornou critica
       ELSE
         -- Se retornou critica , deve abortar
@@ -2521,10 +2524,11 @@ create or replace package body cecred.PAGA0002 is
                                      ,pr_cdhisdeb => vr_cdhisdeb   --> Historico Debito
                                      ,pr_cdcritic => vr_cdcritic   --> Código do erro
                                      ,pr_dscritic => vr_dscritic); --> Descricao do erro
-      END IF;
+        END IF;
 
-      /* Se deseja gravar favorito */
-      IF pr_gravafav = 1 THEN
+      /* Se deseja gravar favorito 
+         PA 91 não grava favorito */
+      IF pr_gravafav = 1 AND pr_cdagenci <> 91 THEN
         pc_grava_favorito(pr_dscritic => vr_dscritic);
         -- verificar se retornou critica
         IF vr_dscritic IS NOT NULL THEN
@@ -2616,9 +2620,9 @@ create or replace package body cecred.PAGA0002 is
 
     pc_proc_geracao_log(pr_flgtrans => 1 /*TRUE*/);
     pr_dsretorn := 'OK';
-
+    
   EXCEPTION
-    WHEN vr_exc_erro THEN
+    WHEN vr_exc_erro THEN   
       ROLLBACK;
 
       -- se possui codigo, porém não possui descrição
@@ -2643,7 +2647,7 @@ create or replace package body cecred.PAGA0002 is
       ROLLBACK;
 
       btch0001.pc_log_internal_exception(pr_cdcooper);
-
+        
       vr_dscritic := 'Erro inesperado. Nao foi possivel efetuar a transferencia.: '||SQLERRM;
 
       -- definir retorno
@@ -2795,7 +2799,7 @@ create or replace package body cecred.PAGA0002 is
     vr_nrcpfcgc  INTEGER := 0;
     vr_nmprimtl  VARCHAR2(500);
     vr_flcartma  INTEGER(1) := 0;
-
+    
     CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT a.inpessoa
@@ -2803,7 +2807,7 @@ create or replace package body cecred.PAGA0002 is
      WHERE a.cdcooper = pr_cdcooper     
        AND a.nrdconta = pr_nrdconta;
 
-  BEGIN
+  BEGIN    
 
     -- Verificar se é agendamento
     IF NVL(pr_idagenda,0) = 2 THEN
@@ -3105,10 +3109,10 @@ create or replace package body cecred.PAGA0002 is
     END;
 
     pr_dsretorn := 'OK';
-
+    
   EXCEPTION
     WHEN vr_exc_erro THEN
-
+      
       -- se possui codigo, porém não possui descrição
       IF nvl(vr_cdcritic,0) > 0 AND
          TRIM(vr_dscritic) IS NULL THEN
@@ -3121,8 +3125,8 @@ create or replace package body cecred.PAGA0002 is
       pr_xml_dsmsgerr := '<dsmsgerr>'|| vr_dscritic ||'</dsmsgerr>';
       pr_dsretorn := 'NOK';
 
-      -- Gerar log ao cooperado (b1wgen0014 - gera_log);
-      GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+        -- Gerar log ao cooperado (b1wgen0014 - gera_log);
+        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => '996'
                           ,pr_dscritic => vr_dscritic
                           ,pr_dsorigem => pr_dsorigem /* Projeto 363 - Novo ATM -> estava fixo "INTERNET" */ 
@@ -3135,24 +3139,24 @@ create or replace package body cecred.PAGA0002 is
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
 
-      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'Origem',
                                 pr_dsdadant => NULL,
                                 pr_dsdadatu => CASE pr_flmobile
                                                WHEN 1 THEN 'MOBILE'
                                                ELSE pr_nmprogra /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                                                 END);
-
-    WHEN OTHERS THEN
-
+      
+        WHEN OTHERS THEN
+      
       vr_dscritic := 'Não foi possivel validar pagamento: '||SQLERRM;
 
       -- definir retorno
       pr_xml_dsmsgerr := '<dsmsgerr>'|| vr_dscritic ||'</dsmsgerr>';
       pr_dsretorn := 'NOK';
 
-      -- Gerar log ao cooperado (b1wgen0014 - gera_log);
-      GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+        -- Gerar log ao cooperado (b1wgen0014 - gera_log);
+        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => '996'
                           ,pr_dscritic => vr_dscritic
                           ,pr_dsorigem => pr_dsorigem /* Projeto 363 - Novo ATM -> estava fixo "INTERNET" */
@@ -3165,7 +3169,7 @@ create or replace package body cecred.PAGA0002 is
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
 
-      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'Origem',
                                 pr_dsdadant => NULL,
                                 pr_dsdadatu => CASE pr_flmobile
@@ -3432,7 +3436,7 @@ create or replace package body cecred.PAGA0002 is
                         ,pr_nmdcampo => 'Representacao Numerica'
                         ,pr_dsdadant => ' '
                         ,pr_dsdadatu => vr_cdbarras);
-
+                        
         GENE0001.pc_gera_log_item
                         (pr_nrdrowid => vr_nrdrowid
                         ,pr_nmdcampo => (CASE
@@ -3481,7 +3485,7 @@ create or replace package body cecred.PAGA0002 is
         END IF;
 
       END IF;
-
+      
     END pc_proc_geracao_log;
 
   BEGIN
@@ -3572,7 +3576,7 @@ create or replace package body cecred.PAGA0002 is
         -- Fecha o cursor
         CLOSE cr_crapass;
       END IF;
-
+    
       -- obter do saldo da conta
       extr0001.pc_obtem_saldo_dia(pr_cdcooper   => pr_cdcooper,
                                   pr_rw_crapdat => rw_crapdat,
@@ -4194,7 +4198,7 @@ create or replace package body cecred.PAGA0002 is
 
     pc_proc_geracao_log(pr_flgtrans => 1 /* TRUE*/);
     pr_dsretorn := 'OK';
-
+    
   EXCEPTION
     WHEN vr_exc_erro THEN
       ROLLBACK;
@@ -7517,7 +7521,7 @@ create or replace package body cecred.PAGA0002 is
       IF cr_craplot%NOTFOUND THEN
         CLOSE cr_craplot;
         -- se não localizou, deve criar o registro de lote
-        BEGIN
+      BEGIN
           INSERT INTO craplot
                      ( craplot.cdcooper
                       ,craplot.dtmvtolt
@@ -7543,11 +7547,11 @@ create or replace package body cecred.PAGA0002 is
               INTO rw_craplot.rowid,
                    rw_craplot.cdbccxlt,
                    rw_craplot.nrdolote;
-        EXCEPTION
-          WHEN OTHERS THEN
+      EXCEPTION
+        WHEN OTHERS THEN
            vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
-           RAISE vr_exc_erro;
-        END;
+          RAISE vr_exc_erro;
+      END;
       
       ELSE
         CLOSE cr_craplot;
@@ -7829,7 +7833,7 @@ create or replace package body cecred.PAGA0002 is
                                             ,pr_tptransacao => 2 --> Agendamento
                                             ,pr_iddispositivo => pr_iddispos
                                             ,pr_idanalise_fraude => vr_idanalise_fraude
-                                            ,pr_dscritic   => vr_dscritic);
+                                            ,pr_dscritic   => vr_dscritic); 
         vr_dscritic := NULL;
       END IF;
 
@@ -7916,12 +7920,12 @@ create or replace package body cecred.PAGA0002 is
 
         -- Se for TED, criar informações do agendamento
         IF pr_cdtiptra = 4 THEN
-          INSERT INTO tbted_det_agendamento
+            INSERT INTO tbted_det_agendamento
             (idlancto
             ,cdfinalidade
             ,dshistorico
             ,dsidentific)
-          VALUES
+            VALUES
             (vr_idlancto
             ,pr_cdfinali
             ,pr_dshistor
@@ -7979,7 +7983,7 @@ create or replace package body cecred.PAGA0002 is
 
     -- Retornar o ID do lançamento de agendamento 
     pr_idlancto := vr_idlancto;
-
+    
   EXCEPTION
     WHEN vr_exc_erro THEN
       IF nvl(vr_cdcritic,0) > 0 AND
@@ -7988,9 +7992,9 @@ create or replace package body cecred.PAGA0002 is
          
       END IF;   
     
-      pr_dscritic := vr_dscritic_aux || vr_dscritic;
+      pr_dscritic := vr_dscritic_aux || vr_dscritic; 
     WHEN OTHERS THEN
-
+      
       btch0001.pc_log_internal_exception(pr_cdcooper);
 
       pr_dscritic := vr_dscritic_aux||': '||'Erro ao criar agendamento(PAGA0002.pc_cadastrar_agendamento):'||SQLERRM;
@@ -8030,7 +8034,7 @@ create or replace package body cecred.PAGA0002 is
     -- Variaveis de XML
     vr_xml_temp VARCHAR2(32767);
 
-    BEGIN
+  BEGIN
 
       PAGA0002.pc_verif_agend_recorrente(
                 pr_cdcooper => pr_cdcooper,
@@ -8058,11 +8062,11 @@ create or replace package body cecred.PAGA0002 is
                 pr_cdcritic => pr_cdcritic,
                 pr_dscritic => pr_dscritic);
 
-    -- se possui codigo, porém não possui descrição
+      -- se possui codigo, porém não possui descrição
     IF nvl(pr_cdcritic,0) > 0 AND
        TRIM(pr_dscritic) IS NULL THEN
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-    END IF;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);  
+    END IF; 
 
     --> DESCARREGAR TEMPTABLE DE LIMITES PARA O CLOB <---
     -- Criar documento XML
@@ -8381,7 +8385,7 @@ create or replace package body cecred.PAGA0002 is
       END IF;
 
     END LOOP;
-
+    
   EXCEPTION
     WHEN vr_exc_erro THEN
       IF vr_cdcritic = 0 AND TRIM(vr_dscritic) IS NULL THEN
@@ -8633,10 +8637,10 @@ create or replace package body cecred.PAGA0002 is
 
     -- Devolver a lista de agendamento 
     pr_dslancto := vr_dslancto;
-
+    
 
   EXCEPTION
-    WHEN vr_exc_erro THEN
+    WHEN vr_exc_erro THEN       
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := 'Nao foi possivel agendar a transferencia.';
 
@@ -8779,7 +8783,7 @@ create or replace package body cecred.PAGA0002 is
 
     vr_dadosdeb VARCHAR2(100);
 
-     BEGIN
+  BEGIN    
         /* Busca Lancamento de credito salario */
         OPEN cr_craplcs(pr_rowidlcs => pr_rowidlcs);
         FETCH cr_craplcs INTO rw_craplcs;
@@ -8900,22 +8904,22 @@ create or replace package body cecred.PAGA0002 is
           WHEN OTHERS THEN
              vr_cdcritic := 9999;
              vr_dscritic := 'Erro ao inserir craplcs: ' || pr_rowidlcs || SQLERRM;
-             -- Executa a exceção
-             RAISE vr_exc_erro;
-          END;
+            -- Executa a exceção
+            RAISE vr_exc_erro;
+        END;
 
 
         LOTE0001.pc_insere_lote_rvt(pr_cdcooper => rw_crapcop.cdcooper
-                                   ,pr_dtmvtolt => pr_dtmvtolt
-                                   ,pr_cdagenci => 1
-                                   ,pr_cdbccxlt => 85
-                                   ,pr_nrdolote => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_NRLOT_CTASAL_B85')
-                                   ,pr_cdoperad => pr_cdoperad
-                                   ,pr_nrdcaixa => pr_nrdcaixa
-                                   ,pr_tplotmov => 1
-                                   ,pr_cdhistor => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85')
+                               ,pr_dtmvtolt => pr_dtmvtolt
+                               ,pr_cdagenci => 1
+                               ,pr_cdbccxlt => 85
+                               ,pr_nrdolote => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_NRLOT_CTASAL_B85')
+                               ,pr_cdoperad => pr_cdoperad
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_tplotmov => 1
+                               ,pr_cdhistor => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85')
                                    ,pr_craplot  => rw_craplot_rvt
-                                   ,pr_dscritic => vr_dscritic);
+                               ,pr_dscritic => vr_dscritic);
 
         -- se encontrou erro ao buscar lote, abortar programa
         IF vr_dscritic IS NOT NULL THEN
@@ -8946,44 +8950,44 @@ create or replace package body cecred.PAGA0002 is
            CLOSE cr_craplcm;
            -- Executa a exceção
            RAISE vr_exc_erro;
-       END IF;
+        END IF;
 
-       CLOSE cr_craplcm;
+        CLOSE cr_craplcm;
 
          vr_flgerror := 0;
 
        BEGIN
-            -- Inserir lancamento
+    -- Inserir lancamento
               LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt =>rw_craplot_rvt.dtmvtolt -- dtmvtolt
                                                 ,pr_cdagenci =>rw_craplot_rvt.cdagenci -- cdagenci
                                                 ,pr_cdbccxlt =>rw_craplot_rvt.cdbccxlt -- cdbccxlt
                                                 ,pr_nrdolote =>rw_craplot_rvt.nrdolote -- nrdolote
-                                                ,pr_nrdconta =>rw_crapccs.nrctatrf -- nrdconta                                                                                                
-                                                ,pr_nrdctabb =>rw_crapccs.nrdconta -- nrdctabb   
-                                                ,pr_nrdctitg =>gene0002.fn_mask(rw_crapccs.nrctatrf,'99999999') -- nrdctitg
-                                                ,pr_nrdocmto => rw_craplcs.nrdocmto -- nrdocmto                                              
-                                                ,pr_cdhistor => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85')                  -- cdhistor                                                
-                                                ,pr_vllanmto => rw_craplcs.vllanmto -- vllanmto                                                
+                                      ,pr_nrdconta =>rw_crapccs.nrctatrf -- nrdconta                                                                                                
+                                      ,pr_nrdctabb =>rw_crapccs.nrdconta -- nrdctabb   
+                                      ,pr_nrdctitg =>gene0002.fn_mask(rw_crapccs.nrctatrf,'99999999') -- nrdctitg
+                                      ,pr_nrdocmto => rw_craplcs.nrdocmto -- nrdocmto                                              
+                                      ,pr_cdhistor => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85')                  -- cdhistor                                                
+                                      ,pr_vllanmto => rw_craplcs.vllanmto -- vllanmto                                                
                                                 ,pr_nrseqdig => vr_nrseqdig -- nrseqdig
                                                 ,pr_cdcooper => rw_craplot_rvt.cdcooper
-												,pr_cdpesqbb => vr_dadosdeb -- Remetente 
-                                                ,pr_cdoperad => pr_cdoperad          
-												,pr_hrtransa => TO_CHAR(SYSDATE, 'SSSSS')
-												,pr_cdcoptfn => pr_cdcooper
+											              	,pr_cdpesqbb => vr_dadosdeb -- Remetente 
+                                      ,pr_cdoperad => pr_cdoperad          
+												              ,pr_hrtransa => TO_CHAR(SYSDATE, 'SSSSS')
+												              ,pr_cdcoptfn => pr_cdcooper
 
-                                                -- OUTPUT --
-                                                ,pr_tab_retorno => vr_tab_retorno
-                                                ,pr_incrineg => vr_incrineg
-                                                ,pr_cdcritic => vr_cdcritic
-                                                ,pr_dscritic => vr_dscritic);
+                                      -- OUTPUT --
+                                      ,pr_tab_retorno => vr_tab_retorno
+                                      ,pr_incrineg => vr_incrineg
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);                    
                     
-              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                 RAISE vr_exc_erro;
-              END IF;
+    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
               
-              rw_craplcm.nrdconta := rw_crapccs.nrctatrf; 
-              rw_craplcm.vllanmto := rw_craplcs.vllanmto;
-              rw_craplcm.nrdocmto := rw_craplcs.nrdocmto;
+        rw_craplcm.nrdconta := rw_crapccs.nrctatrf; 
+        rw_craplcm.vllanmto := rw_craplcs.vllanmto;
+        rw_craplcm.nrdocmto := rw_craplcs.nrdocmto;
 
         EXCEPTION
           WHEN OTHERS THEN
@@ -9007,14 +9011,14 @@ create or replace package body cecred.PAGA0002 is
                              ,rw_craplcm.nrdocmto  --Numero Documento
                              ,0                    --Cod Agencia
                              ,vr_cdcritic          --Codigo do erro
-                             ,vr_dscritic);        --Descricao do erro
-
+                             ,vr_dscritic);        --Descricao do erro                   
+                             
      EXCEPTION
-       WHEN vr_exc_erro THEN
-            pr_cdcritic := vr_cdcritic;
+     WHEN vr_exc_erro THEN
+        pr_cdcritic := vr_cdcritic;
             pr_dscritic := vr_dscritic;
 
-            gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                                  ,pr_cdagenci => pr_cdagenci
                                  ,pr_nrdcaixa => pr_nrdcaixa
                                  ,pr_nrsequen => 1
@@ -9023,11 +9027,11 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_tab_erro => vr_tab_erro);
 
 
-       WHEN OTHERS THEN
+    WHEN OTHERS THEN
             pr_cdcritic := 0;
             pr_dscritic := 'Nao foi possivel efetuar a transferencia: '||SQLERRM;
 
- END pc_tranf_sal_intercooperativa;
+  END pc_tranf_sal_intercooperativa;
 
  /* Procedimento para listar convenios aceitos */
   PROCEDURE pc_convenios_aceitos(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
@@ -9098,8 +9102,8 @@ create or replace package body cecred.PAGA0002 is
     vr_hrini_bancoob  VARCHAR2(5); --HH:MM
     vr_hrfim_bancoob  VARCHAR2(5); --HH:MM
     vr_hhcan_bancoob  VARCHAR2(5); --HH:MM
-
-    BEGIN
+    
+  BEGIN
        vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper
                                                  ,pr_nmsistem => 'CRED'
                                                  ,pr_tptabela => 'GENERI'
@@ -9176,9 +9180,9 @@ create or replace package body cecred.PAGA0002 is
        END LOOP;
 
     EXCEPTION
-       WHEN vr_exc_erro THEN
-            pr_cdcritic := vr_cdcritic;
-            pr_dscritic := vr_dscritic;
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
 
             gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                                  ,pr_cdagenci => 90
@@ -9187,11 +9191,11 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic
                                  ,pr_tab_erro => vr_tab_erro);
-       WHEN OTHERS THEN
+    WHEN OTHERS THEN
             pr_cdcritic := 0;
             pr_dscritic := 'Erro ao buscar convenios aceitos: '||SQLERRM;
 
- END pc_convenios_aceitos;
+  END pc_convenios_aceitos;
 
 
   /* Auditoria das informações de Auto Atendimento para retorno de sobras posterior */
@@ -9535,7 +9539,7 @@ create or replace package body cecred.PAGA0002 is
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL ); 
       -- Dispara rotina de Log - tabela: tbgen prglog ocorrencia
       paga0002.pc_log( pr_dstiplog => 'F');
-       
+
     EXCEPTION
       -- Tratamentos de erros - 31/08/2018 - REQ0011727 
       WHEN vr_exc_sem_processo THEN       
@@ -9679,15 +9683,15 @@ create or replace package body cecred.PAGA0002 is
       OPEN cr_crapcop(pr_cdcooper => vr_cdcooper);
       FETCH cr_crapcop INTO rw_crapcop;
 
-      IF cr_crapcop%NOTFOUND THEN
+    IF cr_crapcop%NOTFOUND THEN
          CLOSE cr_crapcop;
       RAISE vr_exc_erro;
     END IF;
 
       CLOSE cr_crapcop;
 
-       -- Verifica se a data esta cadastrada
-      OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+    -- Verifica se a data esta cadastrada
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
       -- Se não encontrar
       IF BTCH0001.cr_crapdat%NOTFOUND THEN
@@ -9748,13 +9752,13 @@ create or replace package body cecred.PAGA0002 is
                                                    '<qtnaoefetiva>' || NVL(vr_qtnaoefetiva,0) || '</qtnaoefetiva>'||
                                                    '<qtdpendentes>' || NVL(vr_qtdpendentes,0) || '</qtdpendentes>'||
                                                    '<qtdtotallanc>' || NVL(vr_qtdtotallanc,0) || '</qtdtotallanc>');
-
+    
       -- Encerrar a tag raiz
       gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc,
                               pr_texto_completo => vr_xml_temp,
                               pr_texto_novo     => '</raiz>',
                               pr_fecha_xml      => TRUE);
-
+                              
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
@@ -9830,15 +9834,15 @@ create or replace package body cecred.PAGA0002 is
         IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         END IF;
-
+    
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
         ROLLBACK;
 
-      WHEN OTHERS THEN
+    WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em PAGA0002.pc_param_cancelamento: ' || SQLERRM;
-        ROLLBACK;
+      ROLLBACK;
 
   END pc_param_cancelamento;
 
@@ -10234,7 +10238,7 @@ create or replace package body cecred.PAGA0002 is
       -- Fecha o cursor
       CLOSE cr_crapass;
     END IF;
-
+                   
     -- Obtem parametros para condicoes de cancelamento **/
     PAGA0002.pc_param_cancelamento(pr_cdcooper => pr_cdcooper   --> Codigo da Cooperativa
                                   ,pr_cdagenci => pr_cdagenci   --> Codigo do PA
@@ -10491,7 +10495,7 @@ create or replace package body cecred.PAGA0002 is
             -- Fecha cursor
             CLOSE cr_crapcti;
             --vr_nrctadst := TRIM(GENE0002.fn_mask_conta(rw_crapcti.nrctatrf));
-			vr_nrctadst := TRIM(GENE0002.fn_mask(rw_crapcti.nrctatrf,'zzzzzzzzzz.zzz.z'));
+		      	vr_nrctadst := TRIM(GENE0002.fn_mask(rw_crapcti.nrctatrf,'zzzzzzzzzz.zzz.z'));
             vr_nrctadst := vr_nrctadst || ' - ' || rw_crapcti.nmtitula;
           ELSE
             -- Fecha cursor
@@ -10684,24 +10688,24 @@ create or replace package body cecred.PAGA0002 is
     END LOOP;
 
     pr_tab_dados_agendamento := vr_tab_dados_agendamento;
-
+    
   EXCEPTION
-      WHEN vr_exc_erro THEN
+    WHEN vr_exc_erro THEN
 
         IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         END IF;
 
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic; 
 
-        ROLLBACK;
+     ROLLBACK;
 
-      WHEN OTHERS THEN
+    WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em PAGA0002.pc_obtem_agendamentos: ' || SQLERRM;
         cecred.pc_internal_exception(pr_compleme => 'PAGA0002.PC_OBTEM_AGENDAMENTOS progress_recid: '|| vr_prorowid);
-        ROLLBACK;
+      ROLLBACK;
 
   END pc_obtem_agendamentos;
 
@@ -10749,15 +10753,15 @@ create or replace package body cecred.PAGA0002 is
     vr_qttotage INTEGER       := 0;  -- Quantidade de registros de agendamentos
     vr_contador INTEGER       := 0;
   vr_stsnrcal BOOLEAN;
-  vr_inpessoa INTEGER;
-  vr_dscpfcgc VARCHAR(20);
+    vr_inpessoa INTEGER;
+    vr_dscpfcgc VARCHAR(20);
 
     -- Variaveis de XML
     vr_xml_temp VARCHAR2(32767);
 
   BEGIN
-
-   PAGA0002.pc_obtem_agendamentos(pr_cdcooper               => pr_cdcooper              --> Código da Cooperativa
+   
+    PAGA0002.pc_obtem_agendamentos(pr_cdcooper               => pr_cdcooper              --> Código da Cooperativa
                                   ,pr_cdagenci              => pr_cdagenci              --> Código do PA
                                   ,pr_nrdcaixa              => pr_nrdcaixa              --> Numero do Caixa
                                   ,pr_nrdconta              => pr_nrdconta              --> Numero da Conta
@@ -10870,7 +10874,7 @@ create or replace package body cecred.PAGA0002 is
                              ,pr_texto_novo     => '</root>'
                              ,pr_fecha_xml      => TRUE);
     END IF;
-
+    
   EXCEPTION
     WHEN vr_exc_erro THEN
 
@@ -10927,7 +10931,7 @@ create or replace package body cecred.PAGA0002 is
     ...........................................................................*/
 
     ---------------> CURSORES <-----------------
-    -- Buscar dados do associado
+    -- Buscar dados do associado    
     CURSOR cr_crapass (pr_cdcooper  crapass.cdcooper%TYPE,
                        pr_nrdconta  crapass.nrdconta%TYPE) IS
       SELECT crapass.nrdconta,
@@ -11090,7 +11094,7 @@ create or replace package body cecred.PAGA0002 is
 
 
 
-  BEGIN
+  BEGIN    
 
     pr_dstransa := 'Cancelar agendamento de pagamentos, transferencias e TED';
     vr_flgtrans := FALSE;
@@ -11109,12 +11113,12 @@ create or replace package body cecred.PAGA0002 is
     IF nvl(pr_idoriest,0) <> 0 THEN
       vr_idorigem := pr_idoriest;
     END IF;
-
+    
     --> Buscar dados da cooperativa
     OPEN cr_crapcop (pr_cdcooper  => pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
     IF cr_crapcop%NOTFOUND THEN
-      CLOSE cr_crapcop;
+      CLOSE cr_crapcop; 
       vr_dscritic := 'Cooperativa nao cadastrada.';
       RAISE vr_exc_erro;
     ELSE
@@ -11268,7 +11272,7 @@ create or replace package body cecred.PAGA0002 is
       IF nvl(vr_cdcritic,0) > 0 OR
          vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
-    END IF;
+      END IF;
     END IF;
 
     --> Alterar status de transacao para reprovada
@@ -11279,10 +11283,10 @@ create or replace package body cecred.PAGA0002 is
                tr.dtalteracao_situacao = SYSDATE
          WHERE tr.cdtransacao_pendente = rw_craplau.cdtrapen;
 
-         IF SQL%ROWCOUNT = 0 THEN
+        IF SQL%ROWCOUNT = 0 THEN
            vr_dscritic := 'Registro de transacao nao cadastrado.';
-           RAISE vr_exc_erro;
-         END IF;
+          RAISE vr_exc_erro;
+        END IF;
 
       EXCEPTION
         WHEN OTHERS THEN
@@ -11465,7 +11469,7 @@ create or replace package body cecred.PAGA0002 is
        WHERE lau.rowid = rw_craplau.rowid
        RETURNING insitlau INTO rw_craplau.insitlau;
     EXCEPTION
-      WHEN OTHERS THEN
+      WHEN OTHERS THEN        
         vr_dscritic := 'Erro ao atualizar agendamento: '||SQLERRM;
         RAISE vr_exc_erro;
     END;
@@ -11820,12 +11824,12 @@ create or replace package body cecred.PAGA0002 is
                    ||   '<qtmesagd>'   ||to_char(pr_tab_limite(1).qtmesagd)  ||'</qtmesagd>'
                    ||   '<idtpdpag>'   ||to_char(pr_tab_limite(1).idtpdpag)  ||'</idtpdpag>'
                    || '</documento>';
-                   
+
         RETURN vr_tag_xml;
       END;
   
-  BEGIN    
-    
+  BEGIN        
+        
     --Verificar se o associado existe
     OPEN cr_crapass(pr_cdcooper => pr_cdcooper
                    ,pr_nrdconta => pr_nrdconta);
@@ -12016,9 +12020,9 @@ create or replace package body cecred.PAGA0002 is
                            ,pr_texto_completo => vr_xml_tmp
                            ,pr_texto_novo     => '</documentos>'
                            ,pr_fecha_xml      => TRUE);
-  
+
   EXCEPTION
-    WHEN vr_exc_erro THEN
+    WHEN vr_exc_erro THEN    
     
       --> Buscar critica
       IF nvl(vr_cdcritic,0) > 0 AND
@@ -12026,7 +12030,7 @@ create or replace package body cecred.PAGA0002 is
         -- Busca descricao
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       END IF;
-    
+                     
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       pr_dscritic := 'Nao foi possivel verificar cod. barras: '||SQLERRM;        
@@ -12124,7 +12128,7 @@ create or replace package body cecred.PAGA0002 is
     vr_cdcritic  NUMBER;
   
   BEGIN
-  
+      
     /*** TIPOS DE PAGAMENTO ***
          1 - Título 
          2 - Convenio
@@ -12350,7 +12354,7 @@ create or replace package body cecred.PAGA0002 is
         RAISE vr_exc_erro;
       END IF;
     END IF; --> Fim IF pr_tpdpagto = 9 
-    
+
   EXCEPTION
     WHEN vr_exc_erro THEN
     
@@ -12407,7 +12411,7 @@ create or replace package body cecred.PAGA0002 is
     vr_cdcritic  NUMBER;
   
   BEGIN
-  
+      
     /*** TIPOS DE PAGAMENTO ***
          1 - Título 
          2 - Convenio
@@ -12453,7 +12457,7 @@ create or replace package body cecred.PAGA0002 is
                                               ||   '<idtpdpag>'   ||to_char(vr_tab_limite(vr_tab_limite.FIRST).idtpdpag)  ||'</idtpdpag>'
                                               || '</documento>'
                            ,pr_fecha_xml      => TRUE);
-  
+
   EXCEPTION
     WHEN vr_exc_erro THEN
     

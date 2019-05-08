@@ -212,6 +212,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CVNCDC IS
                                   ,pr_idcooperado_cdc IN tbepr_cdc_usuario_vinculo.idcooperado_cdc%TYPE  DEFAULT NULL --> Id do cooperado CDC 
                                   ,pr_nmvendedor      IN tbepr_cdc_vendedor.nmvendedor%type DEFAULT NULL   --> Nome do vendedor
                                   ,pr_nrcpf           IN tbepr_cdc_vendedor.nrcpf%type DEFAULT NULL        --> Numero do CPF                                                                 
+                                  ,pr_dsemail         IN tbepr_cdc_vendedor.dsemail%type DEFAULT NULL      --> Email do vendedor
                                   ,pr_cdcritic OUT PLS_INTEGER                               --> Codigo da critica
                                   ,pr_dscritic OUT VARCHAR2                                  --> Descricao da critica
                                   );
@@ -1118,6 +1119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
                                   ,pr_idcooperado_cdc => vr_idcooperado_cdc --> Id do cooperado CDC 
                                   ,pr_nmvendedor      => pr_nmfantasia       --> Nome do vendedor
                                   ,pr_nrcpf           => rw_crapass.nrcpfcgc --> Numero do CPF                                     
+                                  ,pr_dsemail         => pr_dsemail          --> email do lojista
                                   ,pr_cdcritic  => vr_cdcritic     --> Codigo da critica
                                   ,pr_dscritic  => vr_dscritic);   --> Descricao da critica
                                             
@@ -3686,6 +3688,7 @@ PROCEDURE pc_lista_vinculos(pr_cdvinculo IN tbepr_cdc_vendedor.idvendedor%TYPE  
                                   ,pr_idcooperado_cdc IN tbepr_cdc_usuario_vinculo.idcooperado_cdc%TYPE  DEFAULT NULL --> Id do cooperado CDC 
                                   ,pr_nmvendedor      IN tbepr_cdc_vendedor.nmvendedor%type DEFAULT NULL   --> Nome do vendedor
                                   ,pr_nrcpf           IN tbepr_cdc_vendedor.nrcpf%type DEFAULT NULL        --> Numero do CPF                               
+                                  ,pr_dsemail         IN tbepr_cdc_vendedor.dsemail%type DEFAULT NULL      --> Email do vendedor
                                   ,pr_cdcritic OUT PLS_INTEGER                               --> Codigo da critica
                                   ,pr_dscritic OUT VARCHAR2                                  --> Descricao da critica
                                   ) IS   
@@ -3704,7 +3707,7 @@ PROCEDURE pc_lista_vinculos(pr_cdvinculo IN tbepr_cdc_vendedor.idvendedor%TYPE  
 
     Objetivo  : Rotina CRUD para manter usuarios
 
-    Alteracoes: -----
+    Alteracoes: 25/04/2019 - PJ439 Adicionado o e-mail como parametro (Rafael Faria - Supero)
     ..............................................................................*/
     DECLARE
       ----> CURSORES <----
@@ -3773,7 +3776,7 @@ PROCEDURE pc_lista_vinculos(pr_cdvinculo IN tbepr_cdc_vendedor.idvendedor%TYPE  
                                      ,pr_idcooperado_cdc  => pr_idcooperado_cdc --> Identificacao do lojista
                                      ,pr_nmvendedor       => pr_nmvendedor --> Nome do vendedor
                                      ,pr_nrcpf            => pr_nrcpf      --> Numero do CPF
-                                     ,pr_dsemail          => NULL          --> Descricao do email
+                                     ,pr_dsemail          => pr_dsemail    --> Descricao do email
                                      ,pr_idcomissao       => NULL          --> Comissao
                                      ,pr_dscritic         => vr_dscritic); --> Retorna critica
       

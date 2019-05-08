@@ -22,6 +22,7 @@
  * 011: [14/11/2017] Jonata (RKAM)    : Retirado botão de envio TED (P364).
  * 012: [27/12/2017] Renato (Supero)  : Alterado para incluir os botões Desligar e Saque Parcial conforme tela CADMAT (M329)
  * 013: [18/07/2018] Andrey Formigari : Novo campo Nome Social (#SCTASK0017525 - Mouts)
+ * 014: [13/02/2019] Rubens Lima (Mouts)  : Novo campo para controle dos botoes Desligar e Saque Parcial (PJ339 - Mouts)
  */ 
 
 	session_start();	
@@ -47,6 +48,7 @@
 	$flgAcessoCRM   = 'N';
 	$flgDesligarCRM = 'N';
 	$flgSaldoPclCRM = 'N';
+	$inSaqDes		= '0'; //Indicador saque parcial e desligamento (0-Nao, 1-Sim)
 	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0  ;
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
@@ -326,6 +328,7 @@
 		$flgAcessoCRM   = $xmlObj->roottag->tags[0]->cdata;
 		$flgDesligarCRM = $xmlObj->roottag->tags[1]->cdata;
 		$flgSaldoPclCRM = $xmlObj->roottag->tags[2]->cdata;
+		$inSaqDes	    = $xmlObj->roottag->tags[3]->cdata;
 		
 	}
 ?>
@@ -432,6 +435,7 @@
 	flgAcessoCRM    = '<?php echo $flgAcessoCRM;    ?>';
 	flgDesligarCRM  = '<?php echo $flgDesligarCRM;  ?>';
 	flgSaldoPclCRM  = '<?php echo $flgSaldoPclCRM;  ?>';
+	inSaqDes 		= '<?php echo $inSaqDes;  		?>';
 	
 	strMsg = '<?php echo $strMsg; ?>';
 	

@@ -95,6 +95,17 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
           ,nrtelouv crapcop.nrtelouv%TYPE
           ,idlstdom INTEGER
           ,dsorigem VARCHAR2(50)
+          -- Projeto 470
+          ,dtinclusao crappro.dsinform##2%TYPE
+          ,hrinclusao crappro.dsinform##2%TYPE
+          ,dsfrase crappro.dsinform##1%TYPE
+          ,dsoperacao VARCHAR2(100)
+          ,cdbanco    VARCHAR2(100)
+          ,cdagencia  VARCHAR2(100)
+          ,cdconta    VARCHAR2(100)
+          ,nrcheque_i VARCHAR2(100)
+          ,nrcheque_f VARCHAR2(100)
+          -- Fim Projeto 470
           );
 
   /* Definição da PL Table de registros de protocolos */
@@ -1378,7 +1389,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --
     --  Alteração : 03/01/2017 - Incluido tratativas para arrecadação de FGTS.
     --                           PRJ406-FGTS(Odirlei-AMcom) 
-    --
+    --  Alteração : 13/12/2018 - Incluido tratativas para os novos protocolos do 25 ao 31
+    --                           PJ470 - Rubens Lima (Mouts)
     -- .............................................................................
   BEGIN
     DECLARE
@@ -1658,8 +1670,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           ELSE
             pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
           END IF;
+        --PJ470 - Rubens Lima (Mouts) - 13/12/2018
+        ELSIF rw_crappro.cdtippro IN (25 -- Rescisão de Lim. Créd. (Termo)
+                                     ,26 -- Solicitação de Portab. Créd. (Termo)
+                                     ,27 -- Limite de Desc. Chq. (Contrato)
+                                     ,28 -- Limite de Desc. Tit. (Contrato)
+                                     ,29 -- Limite de Crédito (Contrato)
+                                     ,30 -- Solicitação de Sustação de Chq.
+                                     ,31) -- Sol.Canc.de Folha/Tal.de Chq. (Termo)
+        THEN
+          pr_protocolo(vr_index).dtinclusao := TRIM(gene0002.fn_busca_entrada(2,rw_crappro.dsinform##2, '#'));
+          pr_protocolo(vr_index).hrinclusao := TRIM(gene0002.fn_busca_entrada(3,rw_crappro.dsinform##2, '#'));
+          pr_protocolo(vr_index).dsfrase    := TRIM(gene0002.fn_busca_entrada(1,rw_crappro.dsinform##3, '#'));
+          IF rw_crappro.cdtippro IN (30 -- Solicitação de Sustação de Chq.
+                                    ,31) -- Sol.Canc.de Folha/Tal.de Chq. (Termo)
+          THEN
+            IF rw_crappro.cdtippro = 30 THEN
+              pr_protocolo(vr_index).dsoperacao := TRIM(gene0002.fn_busca_entrada(4,rw_crappro.dsinform##2, '#'));
+            ELSE
+              pr_protocolo(vr_index).dsoperacao := '-';
         END IF;
-        
+            pr_protocolo(vr_index).cdbanco    := TRIM(gene0002.fn_busca_entrada(5,rw_crappro.dsinform##2, '#'));
+            pr_protocolo(vr_index).cdagencia  := TRIM(gene0002.fn_busca_entrada(6,rw_crappro.dsinform##2, '#'));
+            pr_protocolo(vr_index).cdconta    := TRIM(gene0002.fn_busca_entrada(7,rw_crappro.dsinform##2, '#'));
+            pr_protocolo(vr_index).nrcheque_i := TRIM(gene0002.fn_busca_entrada(8,rw_crappro.dsinform##2, '#'));
+            pr_protocolo(vr_index).nrcheque_f := TRIM(gene0002.fn_busca_entrada(9,rw_crappro.dsinform##2, '#'));
+          ELSE
+            pr_protocolo(vr_index).cdbanco    := '-';
+            pr_protocolo(vr_index).cdagencia  := '-';
+            pr_protocolo(vr_index).cdconta    := '-';
+            pr_protocolo(vr_index).nrcheque_i := '-';
+            pr_protocolo(vr_index).nrcheque_f := '-';
+          END IF;
+        END IF;       
           -- Identificar a origem do comprovante
           -- Devido as informações presentes na crappro, será possivel apenas diferenciar em TAA e não TAA
           -- Quando não for TAA será devolvido como INTERNET

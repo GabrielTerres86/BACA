@@ -5185,7 +5185,7 @@ END pc_inserir_lancamento_bordero;
                                           ,pr_cdhistor => vr_cdhistor           --> Codigo Historico
                                           ,pr_vllanaut => vr_vltarifa           --> Valor lancamento automatico
                                           ,pr_cdoperad => pr_cdoperad           --> Codigo Operador
-                                          ,pr_cdagenci => 1                     --> Codigo Agencia
+                                          ,pr_cdagenci => pr_cdagenci           --> Codigo Agencia
                                           ,pr_cdbccxlt => 100                   --> Codigo banco caixa
                                           ,pr_nrdolote => 1900 + vr_cdpactra    --> Numero do lote
                                           ,pr_tpdolote => 1                     --> Tipo do lote (35 - Título)
@@ -8667,7 +8667,7 @@ EXCEPTION
                                            ,pr_nrcnvcob => pr_nrcnvcob
                                            ,pr_nrdocmto => pr_nrdocmto
                                            ,pr_dtmvtolt => pr_dtmvtolt
-                                           ,pr_cdagenci => 1 -- apenas para o produto novo
+                                           ,pr_cdagenci => pr_cdagenci -- apenas para o produto novo
                                            ,pr_cdoperad => pr_cdoperad
                                            ,pr_cdorigpg => 1 -- operacao de credito
                                            ,pr_dtdpagto => pr_dtmvtolt
@@ -8703,7 +8703,7 @@ EXCEPTION
     
       -- então lançar o saldo restante como crédito na conta corrente do cooperado
       pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
-                       ,pr_cdagenci => 1
+                       ,pr_cdagenci => pr_cdagenci
                        ,pr_cdbccxlt => 100
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_vllanmto => vr_vlpagmto
@@ -8812,7 +8812,7 @@ EXCEPTION
                                           ,pr_cdhistor => vr_dados_tarifa.cdhistor --Codigo Historico
                                           ,pr_vllanaut => vr_dados_tarifa.vlrtarif --Valor lancamento automatico
                                           ,pr_cdoperad => 1          --Codigo Operador
-                                          ,pr_cdagenci => 1                    --Codigo Agencia
+                                          ,pr_cdagenci => pr_cdagenci          --Codigo Agencia
                                           ,pr_cdbccxlt => 100                  --Codigo banco caixa
                                           ,pr_nrdolote => 8452                 --Numero do lote
                                           ,pr_tpdolote => 1                    --Tipo do lote
@@ -9205,7 +9205,7 @@ EXCEPTION
     -- Se for boletagem massiva e o valor do titulo for maior que o valor do pagamento
     IF pr_cdorigpg = 5 AND NVL(rw_craptdb.vltitulo_total - pr_vlpagmto,0) > 0 THEN
       pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
-                       ,pr_cdagenci => 1
+                       ,pr_cdagenci => pr_cdagenci
                        ,pr_cdbccxlt => 100
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_vllanmto => NVL(rw_craptdb.vltitulo_total - pr_vlpagmto,0)
@@ -9271,7 +9271,7 @@ EXCEPTION
         
       -- Realiza o débito do IOF complementar na conta corrente do cooperado     
       pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
-                       ,pr_cdagenci => 1
+                       ,pr_cdagenci => pr_cdagenci
                        ,pr_cdbccxlt => 100
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_vllanmto => vr_vlpagiof
@@ -9324,7 +9324,7 @@ EXCEPTION
       
       -- Realiza o débito da multa na conta corrente do cooperado 
       pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
-                       ,pr_cdagenci => 1
+                       ,pr_cdagenci => pr_cdagenci
                        ,pr_cdbccxlt => 100
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_vllanmto => vr_vlpagmta
@@ -9413,7 +9413,7 @@ EXCEPTION
       
       -- Lança o valor dos juros de mora na conta do cooperado
       pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
-                       ,pr_cdagenci => 1
+                       ,pr_cdagenci => pr_cdagenci
                        ,pr_cdbccxlt => 100
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_vllanmto => (vr_vlpagmra + vr_vlpagm60) -- A mora é sempre tratada como um valor só
@@ -9543,7 +9543,7 @@ EXCEPTION
       IF pr_cdorigpg IN (0,2,3,4,5) THEN
         -- Debita o valor do título se o pagamento vier da conta corrente
         pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
-                         ,pr_cdagenci => 1
+                         ,pr_cdagenci => pr_cdagenci
                          ,pr_cdbccxlt => 100
                          ,pr_nrdconta => pr_nrdconta
                          ,pr_vllanmto => vr_vlpagtit
@@ -9711,7 +9711,7 @@ EXCEPTION
                                           ,pr_cdhistor => vr_dados_tarifa.cdhistor --Codigo Historico
                                           ,pr_vllanaut => vr_dados_tarifa.vlrtarif --Valor lancamento automatico
                                           ,pr_cdoperad => 1          --Codigo Operador
-                                          ,pr_cdagenci => 1                    --Codigo Agencia
+                                          ,pr_cdagenci => pr_cdagenci          --Codigo Agencia
                                           ,pr_cdbccxlt => 100                  --Codigo banco caixa
                                           ,pr_nrdolote => 8452                 --Numero do lote
                                           ,pr_tpdolote => 1                    --Tipo do lote
@@ -9876,7 +9876,7 @@ EXCEPTION
       ELSE
           paga0001.pc_insere_lote_wrk(pr_cdcooper => pr_cdcooper
                                      ,pr_dtmvtolt => pr_dtmvtolt
-                                     ,pr_cdagenci => 1
+                                     ,pr_cdagenci => pr_cdagenci
                                      ,pr_cdbccxlt => 100
                                      ,pr_nrdolote => vr_nrdolote
                                      ,pr_cdoperad => pr_cdoperad

@@ -5544,6 +5544,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
            vr_tel_existe                 integer;  
            vr_nrcpfav1    crapass.nrcpfcgc%TYPE;
            vr_nrcpfav2    crapass.nrcpfcgc%TYPE;
+           vr_nrctaav1    crapepr.nrctaav1%TYPE;
+           vr_nrctaav2    crapepr.nrctaav2%TYPE;
            
            --Selecionar Telefones
            CURSOR cr_craptfc (pr_cdcooper IN craptfc.cdcooper%TYPE
@@ -5585,7 +5587,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                    ,craptfc.dtrefatu 
              FROM  craptfc
              WHERE craptfc.cdcooper = pr_cdcooper
-             AND   craptfc.nrdconta IN (pr_nrdconta, pr_nrctaav1, pr_nrctaav2)
+             AND   (craptfc.nrdconta IN (pr_nrdconta, pr_nrctaav1, pr_nrctaav2)
+             AND    craptfc.nrdconta > 0)
              AND   craptfc.idsittfc = 1 -- telefone ativo 
              AND   (trunc(craptfc.dtinsori) >= pr_dtmvtolt
               OR    trunc(craptfc.dtrefatu) >= pr_dtmvtolt
@@ -5598,7 +5601,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
         SELECT nrcpfcgc 
         FROM crapass 
         WHERE cdcooper = pr_cdcooper
-        AND   nrdconta = pr_nrdconta; 
+        AND   (nrdconta = pr_nrdconta
+        AND    nrdconta > 0);  
         rw_aval1 cr_aval1%ROWTYPE;       
      
       CURSOR cr_aval2 (pr_cdcooper IN crapass.cdcooper%TYPE
@@ -5606,7 +5610,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
         SELECT nrcpfcgc 
         FROM crapass 
         WHERE cdcooper = pr_cdcooper
-        AND   nrdconta = pr_nrdconta; 
+        AND   (nrdconta = pr_nrdconta
+        AND    nrdconta > 0); 
         rw_aval2 cr_aval2%ROWTYPE;        
       
       CURSOR cr_cpfcgc (pr_cdcooper IN crapass.cdcooper%TYPE
@@ -5620,7 +5625,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                                pr_nrcpfav2,15) tptelefo 
         FROM crapass 
         WHERE cdcooper = pr_cdcooper 
-          AND nrcpfcgc IN (pr_nrcpfcgc, pr_nrcpfav1, pr_nrcpfav2) ; 
+          AND (nrcpfcgc IN (pr_nrcpfcgc, pr_nrcpfav1, pr_nrcpfav2)
+          AND  nrcpfcgc > 0); 
         rw_cpfcgc cr_cpfcgc%ROWTYPE;       
       
       -- Busca recarga favorito     
@@ -5657,6 +5663,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
            --Limpar parametros erro
            pr_cdcritic := NULL;
            pr_dscritic := NULL;
+           
+           vr_nrctaav1 := NULL;
+           IF pr_rw_crapcyb.nrctaav1 >0 THEN
+             vr_nrctaav1 := pr_rw_crapcyb.nrctaav1;
+           END IF;
+
+           vr_nrctaav2 := NULL;
+           IF pr_rw_crapcyb.nrctaav2 >0 THEN
+             vr_nrctaav2 := pr_rw_crapcyb.nrctaav2;
+           END IF;
            
            FOR rw_craptfc IN cr_craptfc(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta

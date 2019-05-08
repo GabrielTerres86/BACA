@@ -1502,6 +1502,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              pc_incluir_nova_aplicacao, pc_excluir_nova_aplicacao, pc_efetua_resgate_online, pc_excluir_agendmto
                              Rubens Lima (Mouts)
                              
+				23/04/2019 - INC0011348 - Ajuste no controle de resgate duplo de aplicação para que não considere data 
+                             e hora superior que atual inserida na CRAPLRG.
+							 (Guilherme Kuhnen)
+
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -17686,7 +17690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_tab_agen(vr_ind_agen).qtdiacar := rw_crapaar.qtdiacar;
           vr_tab_agen(vr_ind_agen).qtmesaar := rw_crapaar.qtmesaar;
           vr_tab_agen(vr_ind_agen).vlparaar := rw_crapaar.vlparaar;
-          vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar.dtmvtolt = rw_crapdat.dtmvtocd THEN 1 ELSE 0 END;
+          vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar.dtmvtolt = rw_crapdat.dtmvtocd AND rw_crapaar.cdsitaar = 1 THEN 1 ELSE 0 END;
           vr_tab_agen(vr_ind_agen).dssitaar := rw_crapaar.dssitaar;
           vr_tab_agen(vr_ind_agen).dstipaar := rw_crapaar.dstipaar;
           
@@ -17761,7 +17765,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_tab_agen(vr_ind_agen).qtdiacar := rw_crapaar2.qtdiacar;
           vr_tab_agen(vr_ind_agen).qtmesaar := rw_crapaar2.qtmesaar;
           vr_tab_agen(vr_ind_agen).vlparaar := rw_crapaar2.vlparaar;
-          vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar2.dtmvtolt = rw_crapdat.dtmvtocd THEN 1 ELSE 0 END;
+          vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar2.dtmvtolt = rw_crapdat.dtmvtocd AND rw_crapaar2.cdsitaar = 1 THEN 1 ELSE 0 END;
           vr_tab_agen(vr_ind_agen).dssitaar := rw_crapaar2.dssitaar;
           vr_tab_agen(vr_ind_agen).dstipaar := rw_crapaar2.dstipaar;
           
@@ -18710,7 +18714,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
          AND lrg.vllanmto = pr_vllanmto
          AND lrg.dtresgat = pr_dtresgat    
          AND lrg.tpresgat = pr_tpresgat
-         AND lrg.nraplica = pr_nraplica;
+         AND lrg.nraplica = pr_nraplica
+         AND lrg.hrtransa <= ((SYSDATE-TRUNC(SYSDATE))*(24*60*60)); --INC0011348
     
     -- Variáveis
     vr_nrseqdig       craplot.nrseqdig%TYPE;

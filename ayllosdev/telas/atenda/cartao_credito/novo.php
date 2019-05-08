@@ -5,6 +5,8 @@
  * --------------
  * 000: [25/09/2018] Lombardi (CECRED): Tratamento para nao permitir solicitacao de novos Cartoes BB.
  * 001: [18/10/2018] Lombardi (CECRED): Comentado tratamento para nao permitir solicitacao de novos Cartoes BB.
+ * 002: [16/01/2019] Lombardi (CECRED): Tratamento para nao permitir solicitacao de novos Cartoes BB.
+ * 003: [29/03/2019] Elton    (Ailos) : Tratamento temporario para nao permitir solicitacao de novos Cartoes BB para a cooperativa Credelesc.
  */
 ?>
 
@@ -163,6 +165,15 @@
 $(document).ready(function(){
 	if(inpessoa != 1)
 		$("#bbcard").hide();
+	
+	<?php // Tratamento temporario para nao permitir solicitacao de novos Cartoes BB para cooperativa Credelesc
+	$dtmvtolt = substr($glbvars["dtmvtolt"], 6, 4).'-'.substr($glbvars["dtmvtolt"], 3, 2).'-'.substr ($glbvars["dtmvtolt"], 0, 2);
+	if ($glbvars["cdcooper"] == 8 &&   // Credelesc 
+		strtotime($dtmvtolt) >= strtotime('2019-05-10') && strtotime($dtmvtolt) <= strtotime('2019-05-20')) {
+		echo '$("#bbcard").hide();';
+	}
+	?>
+	
 	/*
 	<?php // Tratamento para nao permitir solicitacao de novos Cartoes BB
 	$dtmvtolt = substr($glbvars["dtmvtolt"], 6, 4).'-'.substr($glbvars["dtmvtolt"], 3, 2).'-'.substr ($glbvars["dtmvtolt"], 0, 2);

@@ -542,6 +542,11 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                ,pr_flgpesqu IN INTEGER
                                ,pr_flmobile IN INTEGER
                                ,pr_dstransa IN VARCHAR2
+                               ,pr_cdorigem IN INTEGER                 --> Código da Origem
+                               ,pr_dsorigem IN VARCHAR2                --> Descrição da Origem
+                               ,pr_cdagenci IN INTEGER                 --> Agencia              
+                               ,pr_nrdcaixa IN INTEGER                 --> Caixa
+                               ,pr_nmprogra IN VARCHAR2                --> Nome do programa
                                ,pr_xml_dsmsgerr   OUT VARCHAR2         --> Retorno XML de critica
                                ,pr_xml_operacao23 OUT CLOB             --> Retorno XML da operação 23
                                ,pr_dsretorn       OUT VARCHAR2);
@@ -1694,7 +1699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
      11/03/2019 - Quando der erro na rotina pc atualiza trans nao efetiv, 
                   gerar Log pois as rotinas chamadoras iram ignorar o erro.
                   (Belli - Envolti - INC0034476)
-      
+                  
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -2716,6 +2721,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                ,pr_flgpesqu IN INTEGER
                                ,pr_flmobile IN INTEGER
                                ,pr_dstransa IN VARCHAR2
+                               ,pr_cdorigem IN INTEGER                 --> Código da Origem
+                               ,pr_dsorigem IN VARCHAR2                --> Descrição da Origem
+                               ,pr_cdagenci IN INTEGER                 --> Agencia              
+                               ,pr_nrdcaixa IN INTEGER                 --> Caixa
+                               ,pr_nmprogra IN VARCHAR2                --> Nome do programa
                                ,pr_xml_dsmsgerr   OUT VARCHAR2         --> Retorno XML de critica
                                ,pr_xml_operacao23 OUT CLOB             --> Retorno XML da operação 23
                                ,pr_dsretorn       OUT VARCHAR2) IS     --> Retorno de critica (OK ou NOK)
@@ -2911,13 +2921,13 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => '996'
                           ,pr_dscritic => vr_dscritic
-                          ,pr_dsorigem => 'INTERNET'
+                          ,pr_dsorigem => pr_dsorigem
                           ,pr_dstransa => vr_dstransa
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => pr_flgtrans
                           ,pr_hrtransa => gene0002.fn_busca_time
                           ,pr_idseqttl => pr_idseqttl
-                          ,pr_nmdatela => 'INTERNETBANK'
+                          ,pr_nmdatela => pr_nmprogra
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
       
@@ -2968,8 +2978,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
     IF pr_flgpesqu <> 1 THEN
       INET0001.pc_verifica_operacao(pr_cdcooper => pr_cdcooper, 
-                                    pr_cdagenci => 90,            -- PA           
-                                    pr_nrdcaixa => 900,           -- CAIXA         
+                                    pr_cdagenci => pr_cdagenci,   -- PA           
+                                    pr_nrdcaixa => pr_nrdcaixa,   -- CAIXA         
                                     pr_nrdconta => pr_nrdconta,  
                                     pr_idseqttl => pr_idseqttl,  
                                     pr_dtmvtolt => pr_dtmvtolt,  
@@ -2983,10 +2993,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                     pr_cdoperad => '996',         -- OPERADOR      
                                     pr_tpoperac => pr_tpoperac,  
                                     pr_flgvalid => FALSE,         -- VALIDACOES    
-                                    pr_dsorigem => 'INTERNET',    -- ORIGEM        
+                                    pr_dsorigem => pr_dsorigem,    -- ORIGEM        
                                     pr_nrcpfope => pr_nrcpfope,   -- CPF OPERADOR  
                                     pr_flgctrag => TRUE,          -- VALIDA LIMITES
-                                    pr_nmdatela => 'INTERNETBANK', 
+                                    pr_nmdatela => pr_nmprogra, 
                                     pr_dstransa => vr_dstransa, 
                                     pr_tab_limite => vr_tab_limite, 
                                     pr_tab_internet => vr_tab_internet, 
@@ -3058,11 +3068,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
     /* Contas cadastradas */
     inet0001.pc_con_contas_cadastradas( pr_cdcooper => pr_cdcooper, 
-                                        pr_cdagenci => 90,
-                                        pr_nrdcaixa => 900, 
+                                        pr_cdagenci => pr_cdagenci,
+                                        pr_nrdcaixa => pr_nrdcaixa, 
                                         pr_cdoperad => '996', 
-                                        pr_nmdatela => 'INTERNETBANK',
-                                        pr_idorigem => 3, 
+                                        pr_nmdatela => pr_nmprogra,
+                                        pr_idorigem => pr_cdorigem, 
                                         pr_nrdconta => pr_nrdconta, 
                                         pr_idseqttl => pr_idseqttl, 
                                         pr_dtmvtolt => pr_dtmvtolt, 
@@ -3135,8 +3145,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_InternetBank23');                                                       
 
     inet0001.pc_consulta_finalidades(pr_cdcooper        => pr_cdcooper
-                                    ,pr_cdagenci        => 90
-                                    ,pr_nrdcaixa        => 900
+                                    ,pr_cdagenci        => pr_cdagenci
+                                    ,pr_nrdcaixa        => pr_nrdcaixa
                                     ,pr_cdcritic        => vr_cdcritic
                                     ,pr_dscritic        => vr_dscritic
                                     ,pr_tab_finalidades => vr_tab_finalidades
@@ -14291,6 +14301,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --               29/10/2018 - Ajuste critica/ mensagem / continuação do processo
     --                            ( Belli - Envolti - PRB0040400)
     --
+    --               24/01/2019 - Aumentar o período para a expiração das transações pendentes para 15 dias
+    --                            Tipo da transacao 20 - Autorizacao de contratos por senha
+    --                            Projeto 470 -- Marcelo Telles Coelho - Mouts
     -----------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -14428,6 +14441,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 	     WHERE trib.cdtransacao_pendente = pr_cdtrapen;
   	  rw_tbtrib_trans_pend cr_tbtrib_trans_pend%ROWTYPE;
     
+      --Tabela Contratos pend.
+      CURSOR cr_tbctd_trans_pend (pr_cdtrapen IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS
+      SELECT 0                                  idagendamento
+            ,TRUNC(tbctd_trans_pend.dhcontrato) dtdebito
+            ,tbctd_trans_pend.vlcontrato        vlpagamento
+      FROM   tbctd_trans_pend
+      WHERE  tbctd_trans_pend.cdtransacao_pendente = pr_cdtrapen;
+      rw_tbctd_trans_pend cr_tbctd_trans_pend%ROWTYPE;
+
       --Variaveis Locais
       vr_nmrescop crapcop.nmrescop%TYPE;
       vr_hratual  INTEGER;
@@ -14646,6 +14668,29 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             
             vr_idagenda := rw_tbtrib_trans_pend.idagendamento;
             vr_dtmvtopg := rw_tbtrib_trans_pend.dtdebito;
+        --Contratos
+        -- Projeto 470 - Marcelo Telles Coeljho - Mouts
+        ELSIF vr_tptransa = 20 THEN	--> Autorizacao de contratos por senha
+            --Selecionar transacao pendente
+            OPEN cr_tbctd_trans_pend (pr_cdtrapen => vr_cdtransa);
+            --Posicionar no primeiro registro
+            FETCH cr_tbctd_trans_pend INTO rw_tbtrib_trans_pend;
+            --Se encontrou
+            IF cr_tbctd_trans_pend%NOTFOUND THEN
+              --Fechar Cursor
+              CLOSE cr_tbctd_trans_pend;
+              --Erro
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Transacao pendente não cadastrada - Contrato.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+            --Fechar Cursor
+            CLOSE cr_tbctd_trans_pend;
+
+            vr_idagenda := rw_tbctd_trans_pend.idagendamento;
+            vr_dtmvtopg := rw_tbtrib_trans_pend.dtdebito;
+        -- Fim Projeto 470
         ELSE
 			-- Adesão de pacote de tarifas(10), contrao de SMS(16,17) e Desconto de cheque(12)
       -- não permite agendamento
@@ -14866,6 +14911,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 						  pr_flgalter := TRUE;
             END IF;           
 -- Fim  SM 454.1          
+					-- Projeto 470 - Marcelo Telles Coeljho - Mouts
+          ELSIF  vr_tptransa = 20 THEN --> Contratos
+            --> Verificar se ja se passou 15 dias desde a criação da pendencia
+            IF rw_tbgen_trans_pend.dtmvtolt + 15 < pr_dtmvtolt THEN
+              --Atualizar flag para true
+						  vr_flgalter := TRUE;
+						  pr_flgalter := TRUE;
+            END IF;
+					-- Fim Projeto 470
 					ELSE
 						--Debito por agendamento
 						vr_dtauxili := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
@@ -18887,13 +18941,13 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           --Se for tarifa
           IF pr_tab_lcm_consolidada(vr_index).tplancto <> 'T' THEN /* Tarifa */
             --Buscar lote
-            OPEN cr_craplot (pr_cdcooper => pr_cdcooper
+                OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                             ,pr_dtmvtolt => pr_dtmvtolt
                             ,pr_cdagenci => pr_cdagenci
                             ,pr_cdbccxlt => pr_cdbccxlt
                             ,pr_nrdolote => pr_nrdolote);
-            --Posicionar no primeiro registro
-            FETCH cr_craplot INTO rw_craplot;
+                --Posicionar no primeiro registro
+                FETCH cr_craplot INTO rw_craplot;
             --Verificar se encontrou
             IF cr_craplot%NOTFOUND THEN
               --Fechar Cursor

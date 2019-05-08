@@ -20,6 +20,7 @@
  * 011: [13/07/2017] Diogo (P410)         	   : Incluido campo Identificador do Regime tributário 'tpregtrb'
  * 012: [12/08/2017] Lombardi                  : Criada a função dossieDigidoc.	PRJ339 CRM
  * 013: [13/04/2018] Mateus Z (Mouts)           : Alterado funcao proximaRotina para chamar FATCA/CRS (PRJ414).
+ * 014: [29/04/2019] Jefferson (MoutS)         : Ajustada a atribuição da variável global inpessoa 
  */
 
 var contWin = 0;  // Variável para contagem do número de janelas abertas para impressão de termos
@@ -159,7 +160,7 @@ function manterRotina(operacao) {
 	nrlicamb = $('#nrlicamb','#frmDadosIdentJuridica').val();
 	dtvallic = $('#dtvallic', '#frmDadosIdentJuridica').val();
 	tpregtrb = $('#tpregtrb', '#frmDadosIdentJuridica').val();
-	inpessoa = $('#inpessoa', '#frmDadosIdentJuridica').val();
+	inpessoa = $('#inpessoa', '#frmDadosIdentJuridica').val().substring(0, 1);
 
 	// Executa script de confirmação através de ajax
 	$.ajax({		

@@ -5026,6 +5026,8 @@ PROCEDURE retorna_docs_liberados:
 
     DEF VAR aux_vlchqtot AS DECI                                       NO-UNDO.
     DEF VAR aux_vltittot AS DECI                                       NO-UNDO.
+    DEF VAR aux_idexiste AS DECI                                       NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                                       NO-UNDO.
 
     EMPTY TEMP-TABLE tt-documentos-liberados.
 
@@ -5253,6 +5255,31 @@ PROCEDURE retorna_docs_liberados:
                                              crapope.cdoperad = craplim.cdopelib
                                              NO-LOCK NO-ERROR.             
                                 
+
+                    /* Projeto 470 - Marcelo Telles Coelho */
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    RUN STORED-PROCEDURE pc_ver_protocolo_ctd aux_handproc = PROC-HANDLE NO-ERROR
+                                                     (INPUT craplim.cdcooper
+                                                     ,INPUT craplim.nrdconta
+                                                     ,INPUT 29
+                                                     ,INPUT craplim.dtinivig
+                                                     ,INPUT ?
+                                                     ,INPUT craplim.nrctrlim
+                                                     ,OUTPUT 0
+                                                     ,OUTPUT "").
+                    CLOSE STORED-PROC pc_ver_protocolo_ctd 
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+                     
+                    ASSIGN aux_idexiste = 0
+                           aux_dscritic = ""
+                           aux_idexiste = pc_ver_protocolo_ctd.pr_idexiste
+                           aux_dscritic = pc_ver_protocolo_ctd.pr_dscritic
+                    WHEN pc_ver_protocolo_ctd.pr_dscritic <> ?.
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    IF aux_idexiste = 0 THEN
+                      DO:
+                    /* Fim Projeto 470 */
                     CREATE tt-documentos-liberados.
                     ASSIGN tt-documentos-liberados.tpdocmto = 84
                            tt-documentos-liberados.nrdconta = craplim.nrdconta
@@ -5264,6 +5291,7 @@ PROCEDURE retorna_docs_liberados:
                            tt-documentos-liberados.nraditiv = 0
                            tt-documentos-liberados.dtlibera = craplim.dtinivig
                            tt-documentos-liberados.vllanmto = craplim.vllimite.
+                      END. /* Projeto 470 */
                     
                 END.
             END.
@@ -5282,6 +5310,31 @@ PROCEDURE retorna_docs_liberados:
                                     AND craplot.tplotmov = 27
                                     NO-LOCK:
 
+                    /* Projeto 470 - Marcelo Telles Coelho */
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    RUN STORED-PROCEDURE pc_ver_protocolo_ctd aux_handproc = PROC-HANDLE NO-ERROR
+                                                     (INPUT crapcdc.cdcooper
+                                                     ,INPUT crapcdc.nrdconta
+                                                     ,INPUT 27
+                                                     ,INPUT crapcdc.dtmvtolt
+                                                     ,INPUT ?
+                                                     ,INPUT crapcdc.nrctrlim
+                                                     ,OUTPUT 0
+                                                     ,OUTPUT "").
+                    CLOSE STORED-PROC pc_ver_protocolo_ctd 
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+                     
+                    ASSIGN aux_idexiste = 0
+                           aux_dscritic = ""
+                           aux_idexiste = pc_ver_protocolo_ctd.pr_idexiste
+                           aux_dscritic = pc_ver_protocolo_ctd.pr_dscritic
+                    WHEN pc_ver_protocolo_ctd.pr_dscritic <> ?.
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    IF aux_idexiste = 0 THEN
+                      DO:
+                    /* Fim Projeto 470 */
+
                     CREATE tt-documentos-liberados.
                     ASSIGN tt-documentos-liberados.tpdocmto = 86
                            tt-documentos-liberados.nrdconta = crapcdc.nrdconta
@@ -5292,6 +5345,7 @@ PROCEDURE retorna_docs_liberados:
                            tt-documentos-liberados.nraditiv = 0
                            tt-documentos-liberados.dtlibera = crapcdc.dtmvtolt
                            tt-documentos-liberados.vllanmto = crapcdc.vllimite.
+                      END. /* Projeto 470 */
         
                 END.
             END.
@@ -5310,6 +5364,31 @@ PROCEDURE retorna_docs_liberados:
                                     AND craplot.tplotmov = 35
                                     NO-LOCK:
 
+                    /* Projeto 470 - Marcelo Telles Coelho */
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    RUN STORED-PROCEDURE pc_ver_protocolo_ctd aux_handproc = PROC-HANDLE NO-ERROR
+                                                     (INPUT crapcdc.cdcooper
+                                                     ,INPUT crapcdc.nrdconta
+                                                     ,INPUT 28
+                                                     ,INPUT crapcdc.dtmvtolt
+                                                     ,INPUT ?
+                                                     ,INPUT crapcdc.nrctrlim
+                                                     ,OUTPUT 0
+                                                     ,OUTPUT "").
+                    CLOSE STORED-PROC pc_ver_protocolo_ctd 
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+                     
+                    ASSIGN aux_idexiste = 0
+                           aux_dscritic = ""
+                           aux_idexiste = pc_ver_protocolo_ctd.pr_idexiste
+                           aux_dscritic = pc_ver_protocolo_ctd.pr_dscritic
+                    WHEN pc_ver_protocolo_ctd.pr_dscritic <> ?.
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    IF aux_idexiste = 0 THEN
+                      DO:
+                    /* Fim Projeto 470 */
+                      
                     CREATE tt-documentos-liberados.
                     ASSIGN tt-documentos-liberados.tpdocmto = 85
                            tt-documentos-liberados.nrdconta = crapcdc.nrdconta
@@ -5320,6 +5399,7 @@ PROCEDURE retorna_docs_liberados:
                            tt-documentos-liberados.nraditiv = 0
                            tt-documentos-liberados.dtlibera = crapcdc.dtmvtolt
                            tt-documentos-liberados.vllanmto = crapcdc.vllimite.
+                      END. /* Projeto 470 */
         
                 END.
             END.

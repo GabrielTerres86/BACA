@@ -323,6 +323,8 @@
 
 				 08/08/2018 - Ajustes na busca do contrato de limite de crédito (INC0021296 - Andrey Formigari).
 
+                 21/03/2019 - Ajuste no Termo de Recisao para assinatura eletronica
+                              Pj470 SM 1 - Ze Gracik - Mouts
 ..............................................................................*/
 
 
@@ -5317,7 +5319,9 @@ PROCEDURE gera-impressao-limite:
          tt-dados-rescisao.cdufdcop FORMAT "X(4)"
          tt-dados-rescisao.dtmvtolt FORMAT "99/99/9999" "."
          SKIP(4)
-         "____________________________________" AT  1
+         WITH NO-BOX COLUMN 5 NO-LABELS  FRAME f_termo.
+        
+    FORM "____________________________________" AT  1
          "____________________________________" 
          SKIP
          tt-dados-rescisao.nmoperad FORMAT "x(26)"
@@ -5327,7 +5331,22 @@ PROCEDURE gera-impressao-limite:
          "____________________________________" AT 1
          SKIP
          tt-dados-rescisao.nmprimtl FORMAT "X(50)"
-         WITH NO-BOX COLUMN 5 NO-LABELS  FRAME f_termo.
+         WITH NO-BOX COLUMN 5 NO-LABELS  FRAME f_termo_apr_ass_manual.
+
+    /* Pj470 SM 1 - Ze Gracik - Mouts */
+    FORM SKIP
+         tt-dados-rescisao.dsfrass1 FORMAT "x(76)" AT 01 
+         SKIP
+         tt-dados-rescisao.dsfrass2 FORMAT "x(76)" AT 01 
+         SKIP
+         tt-dados-rescisao.dsfrass3 FORMAT "x(76)" AT 01 
+         SKIP(2)
+         tt-dados-rescisao.dsfrcop1 FORMAT "x(76)" AT 01 
+         SKIP
+         tt-dados-rescisao.dsfrcop2 FORMAT "x(76)" AT 01 
+         WITH NO-BOX COLUMN 5 NO-LABELS  FRAME f_termo_apr_ass_eletronica.
+    /* Fim Pj470 SM 1 */
+              
     
     /** FORM's para impressao da NOTA PROMISSORIA **/
     FORM SKIP(1)
@@ -6047,6 +6066,24 @@ PROCEDURE gera-impressao-limite:
                        tt-dados-rescisao.nmoperad  tt-dados-rescisao.nmexcop1
                        tt-dados-rescisao.nmexcop2  tt-dados-rescisao.nmprimtl
                        WITH FRAME f_termo.
+
+               /* Pj470 SM 1 - Ze Gracik - Mouts */
+               IF   tt-dados-rescisao.dsfrass1 = "*" THEN
+                    DISPLAY STREAM str_limcre
+                                tt-dados-rescisao.nmoperad
+                                tt-dados-rescisao.nmexcop1
+                                tt-dados-rescisao.nmexcop2
+                                tt-dados-rescisao.nmprimtl
+                                WITH FRAME f_termo_apr_ass_manual.
+               ELSE
+                    DISPLAY STREAM str_limcre
+                                tt-dados-rescisao.dsfrass1
+                                tt-dados-rescisao.dsfrass2
+                                tt-dados-rescisao.dsfrass3
+                                tt-dados-rescisao.dsfrcop1
+                                tt-dados-rescisao.dsfrcop2
+                                WITH FRAME f_termo_apr_ass_eletronica.
+               /* Fim Pj470 SM 1 */
            END. 
          
        IF  par_idimpres <> 6 THEN
@@ -8442,7 +8479,12 @@ PROCEDURE obtem-dados-rescisao:
 
     DEF VAR aux_nmexcop1 AS CHAR                                    NO-UNDO.
     DEF VAR aux_nmexcop2 AS CHAR                                    NO-UNDO.
- 
+    /* Pj470 SM 1 - Ze Gracik - Mouts */
+    DEF VAR aux_dscoperd AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dscopert AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dsfrsass AS CHAR    EXTENT 4                        NO-UNDO.
+    DEF VAR aux_dsfrscop AS CHAR    EXTENT 4                        NO-UNDO.
+    /* Fim Pj470 SM 1 */    
     DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
     
     EMPTY TEMP-TABLE tt-dados-rescisao.
@@ -8522,6 +8564,29 @@ PROCEDURE obtem-dados-rescisao:
             RETURN "NOK".
         END.
 
+    ASSIGN aux_dscoperd = ""
+           aux_dscopert = "".
+
+    /* Pj470 SM 1 - Ze Gracik - Mouts */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_ver_protocolo
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper
+                                            ,INPUT crapass.nrdconta
+                                            ,INPUT craplim.nrctrlim
+                                            ,INPUT 25
+                                           ,OUTPUT ""
+                                           ,OUTPUT "").
+                                            
+    CLOSE STORED-PROC pc_ver_protocolo
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                                        
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_dscoperd = pc_ver_protocolo.pr_dsfrase_cooperado
+           aux_dscopert = pc_ver_protocolo.pr_dsfrase_cooperativa.
+    /* Fim Pj 470 SM 1 */
+
     RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT
         SET h-b1wgen9999.
         
@@ -8544,12 +8609,26 @@ PROCEDURE obtem-dados-rescisao:
                                          OUTPUT aux_nmexcop1,
                                          OUTPUT aux_nmexcop2).
         
+    RUN quebra-str IN h-b1wgen9999 (INPUT aux_dscoperd,
+                                    INPUT 76, INPUT 76,
+                                    INPUT 76, INPUT 76,
+                                   OUTPUT aux_dsfrsass[1],
+                                   OUTPUT aux_dsfrsass[2],
+                                   OUTPUT aux_dsfrsass[3],
+                                   OUTPUT aux_dsfrsass[4]).
+                                   
+    RUN quebra-str IN h-b1wgen9999 (INPUT aux_dscopert,
+                                    INPUT 76, INPUT 76,
+                                    INPUT 76, INPUT 76,
+                                   OUTPUT aux_dsfrscop[1],
+                                   OUTPUT aux_dsfrscop[2],
+                                   OUTPUT aux_dsfrscop[3],
+                                   OUTPUT aux_dsfrscop[4]).
+        
     DELETE PROCEDURE h-b1wgen9999.
         
     CREATE tt-dados-rescisao.
     ASSIGN tt-dados-rescisao.nmextcop = crapcop.nmextcop
-           tt-dados-rescisao.nmexcop1 = aux_nmexcop1  
-           tt-dados-rescisao.nmexcop2 = aux_nmexcop2  
            tt-dados-rescisao.nmcidade = crapcop.nmcidade
            tt-dados-rescisao.cdufdcop = crapcop.cdufdcop
            tt-dados-rescisao.nrdconta = crapass.nrdconta
@@ -8557,8 +8636,25 @@ PROCEDURE obtem-dados-rescisao:
            tt-dados-rescisao.nrctrlim = craplim.nrctrlim           
            tt-dados-rescisao.vllimite = craplim.vllimite
            tt-dados-rescisao.dtmvtolt = par_dtmvtolt     
+           tt-dados-rescisao.nmexcop1 = aux_nmexcop1  
+           tt-dados-rescisao.nmexcop2 = aux_nmexcop2
            tt-dados-rescisao.nmoperad = "Operador: " + TRIM(crapope.nmoperad).
     
+    /* Pj470 SM 1 - Ze Gracik - Mouts */
+    IF   aux_dscoperd = "*" THEN
+         ASSIGN tt-dados-rescisao.dsfrass1 = "*"
+                tt-dados-rescisao.dsfrass2 = ""
+                tt-dados-rescisao.dsfrass3 = ""
+                tt-dados-rescisao.dsfrcop1 = ""
+                tt-dados-rescisao.dsfrcop2 = "".
+    ELSE
+         ASSIGN tt-dados-rescisao.dsfrass1 = aux_dsfrsass[1]
+                tt-dados-rescisao.dsfrass2 = aux_dsfrsass[2]
+                tt-dados-rescisao.dsfrass3 = aux_dsfrsass[3]
+                tt-dados-rescisao.dsfrcop1 = aux_dsfrscop[1]
+                tt-dados-rescisao.dsfrcop2 = aux_dsfrscop[2].
+    
+    /* Fim Pj 470 SM 1 */
     RETURN "OK".
     
 END PROCEDURE.

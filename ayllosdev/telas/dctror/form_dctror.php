@@ -8,8 +8,10 @@
  * ALTERAÇÕES   :
  * --------------
  */	
+//bruno - prj 438 - bug 100	
 ?>
-
+<link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
+<link href="../../css/estilo.css" rel="stylesheet" type="text/css">
 <form name="frmDctror" id="frmDctror" class="formulario">	
 
 	<input name="nrdconta" id="nrdconta" type="hidden" value="" />

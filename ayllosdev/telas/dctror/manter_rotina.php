@@ -283,6 +283,19 @@
 		// recebe nova contra-ordem
 		echo 'arrayDctror[i] = aux;';
 
+		//bruno - prj 470 - tela autorizacao
+		echo '
+			if(typeof arrayDctror != "undefined"){
+				if(arrayDctror.length > 0){
+					__aux_arrayDctror = Array();
+					$(arrayDctror).each(function(i, elem){
+						__aux_arrayDctror.push(elem);
+					});
+				}
+			}
+
+		';
+
 		echo "controlaLayout();";
 	}
 

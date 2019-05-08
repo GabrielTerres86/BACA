@@ -356,7 +356,11 @@
 			informarRating("divDscChq_Renda","dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');","carregaLimitesCheques()");
 		<? } else { ?>
 			$('#divBotoesRenda').css('display','none');
-			informarRating("divDscChq_Renda","dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite()");
+			//prj 470 - tela autorizacao
+			informarRating("divDscChq_Renda",
+						   "dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
+						   "dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');",
+						   "chamarImpressaoChequeLimite()");
 		<? } ?>
 		return false;
 	});

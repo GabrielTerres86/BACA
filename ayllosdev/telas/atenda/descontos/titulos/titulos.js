@@ -111,6 +111,9 @@ var fl_inprejuz = 0;
 // ALTERAÇÃO 001: Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
 
+//bruno - prj 470 - tela autorizacao
+$.getScript(UrlSite + 'includes/autorizacao_contrato/autorizacao_contrato.js');
+
 
 //Para inclusao de borderos
 var tituloSelecionadoResumo = null;
@@ -3851,4 +3854,24 @@ function formataTabelaCriticas(div){
     var tabela = div.find("table");
     div.zebraTabela();
     tabela.css("text-align","center");
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 18/12/2018;
+ * prj 438 - Tela Autorizacao
+ */
+function chamarImpressao(tipo){
+
+	//bruno - prj 470 - tela autorizacao
+	var params = {
+		nrdconta : nrdconta,
+		obrigatoria: 1,
+		tpcontrato: 28,
+		vlcontrato: $("#vllimite","#frmDadosLimiteDscTit").val().replace(/\./g,""), //vllimite,
+		nrcontrato: nrcontrato,
+        funcaoImpressao: "mostraImprimirLimite('"+tipo+"');",
+        funcaoGeraProtocolo: "fecharRotinaGenerico('PROPOSTA');blockBackground(parseInt($('#divRotina').css('z-index')));"
+	};
+	mostraTelaAutorizacaoContrato(params);
 }

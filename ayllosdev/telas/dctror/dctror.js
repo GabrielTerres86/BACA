@@ -60,6 +60,9 @@ var operauto		= '';
 var formCab   		= 'frmCab';
 var formDados 		= 'frmDctror';
 
+//bruno
+var __dsComplemento = "";
+
 //Labels/Campos do cabeçalho
 var rOpcao, rTipo, rConta, rNome, cTodos, cOpcao, cTipo, cConta, cNome ;
 
@@ -68,7 +71,6 @@ var rSituacao, rDtEmiss, rCdHistor, rBanco, rAgencia, rContraCheque,
     rNrChequeIni, rNrChequeFim, cSituacao, cDtEmiss, cCdHistor, cBanco, 
 	cAgencia, cContraCheque, cNrChequeIni, cNrChequeFim, cDtValCor, rDtValCor,
 	cflprovis, rFlProvis;
-
 
 $(document).ready(function() {
 	estadoInicial()	
@@ -255,6 +257,19 @@ function manterRotina() {
 	var dadosDc1 = '';
 	dadosDc   = retornaValores( arrayDctror, ';', '|',camposDc );
 	dadosDc1  = retornaValores( arrayCustdesc, ';', '|',camposDc1 );
+
+	//bruno
+	if(cdbanchq != "" && arrayDctror.length == 0){
+	__dsComplemento = montaDsComplemento({
+		cdbanchq: cdbanchq,
+		cdagechq: cdagechq,
+		nrdconta: nrctachq,
+		nrinichq: nrinichq,
+		nrfinchq: nrfinchq
+	});
+	}else{
+		__dsComplemento = montaDsComplemento(arrayDctror[0],arrayDctror);
+	}
 
 	switch (operacao) {
 		// Consulta
@@ -666,13 +681,17 @@ function controlaLayout() {
 			mostraCriticas();
 		} else {
 			
-			if  (aux_imprimir == 'SIM') {
-				msgSucesso('Gera_Impressao();');
-				
-			}
-			else {
-				msgSucesso('estadoCabecalho();');
-			}
+			//if  (aux_imprimir == 'SIM') {
+				//bruno - prj 470 - tela autorizacao
+				//if(operacao == "A26" || operacao == 'I26' || operacao == 'E26'){ //prj 470 - bruno
+					msgSucesso('chamarImpressao();');
+				//}else{
+				//	msgSucesso('Gera_Impressao();');
+				//}	
+			//}
+			//else {
+			//	msgSucesso('estadoCabecalho();');
+			//}
 		}
 
 		return false;
@@ -1728,4 +1747,75 @@ function sequenciaImpedimentos() {
 		posicao++;
 		return false;
     }
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 07/01/2019;
+ */
+function chamarImpressao(params){
+	//bruno - prj 470 - tela autorizacao
+	var params = {
+		nrdconta : nrdconta,
+		obrigatoria: "T",
+		tpcontrato: 30,
+		vlcontrato: '',
+		nrcontrato: '',
+		funcaoImpressao: "Gera_Impressao();",
+		funcaoGeraProtocolo: "btnVoltar();",
+		dscomplemento: __dsComplemento //bruno - tela autorizacao
+	};
+	mostraTelaAutorizacaoContrato(params);
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 07/02/2019
+ * tela autorizacao
+ */
+function montaDsComplemento(dados, aux_arrayDctror){
+
+	var cdopcao = $('#cddopcao','#frmCab').val();
+
+	//Adicionar todas as contra ordens para o array auxiliar em autorizacao_contrato.js
+	if(typeof aux_arrayDctror != "undefined"){
+		__aux_cdopcao_dctror = cdopcao;
+		if(aux_arrayDctror.length > 0){
+			__aux_arrayDctror = Array();
+			$(arrayDctror).each(function(i, elem){
+				__aux_arrayDctror.push(elem);
+			});
+		}
+	}
+
+	var tipoOpcao = "";
+	switch(cdopcao){
+		case 'I':
+			tipoOpcao = "Inclusao";
+			break;
+		case 'A':
+			tipoOpcao = "Alteracao";
+			break;
+		case 'E':
+			tipoOpcao = "Cancelamento";
+			break;
+	}
+	var retorno = tipoOpcao;
+
+	if(typeof dados != "undefined"){
+		if(typeof dados.cdbanchq != "undefined"){
+			retorno += '#'+dados.cdbanchq;
+			retorno += '#'+dados.cdagechq;
+			retorno += '#'+dados.nrdconta;
+			retorno += '#'+dados.nrinichq;
+			retorno += '#'+dados.nrfinchq;
+		}else{
+			retorno += '#'+dados["cdbanchq"];
+			retorno += '#'+dados["cdagechq"];
+			retorno += '#'+dados["nrdconta"];
+			retorno += '#'+dados["nrinichq"];
+			retorno += '#'+dados["nrfinchq"];
+		}
+	}
+	return retorno;
 }

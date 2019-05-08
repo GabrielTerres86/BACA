@@ -16,6 +16,7 @@
  * 
  *				  14/09/2018 - Adicionado campo do valor max de estorno para desconto de titulo (Cássia de Oliveira - GFT)
  *                30/10/2018 - PJ 438 - Adicionado 2 novos parametros (avtperda e vlperavt) - Mateus Z (Mouts)
+ *                11/12/2018 - PRJ 470 - Adicionado 2 novos parametros (inpreapv e vlmincnt) - Mateus Z (Mouts)
  */
 
 session_start();
@@ -54,6 +55,8 @@ $qtditsem = isset($_POST['qtditsem']) ? $_POST['qtditsem'] : 0; //PJ 438 - Márci
 $avtperda = isset($_POST['avtperda']) ? $_POST['avtperda'] : 0; // PJ438 - Sprint 5 - Mateus Z (Mouts)
 $vlperavt = isset($_POST['vlperavt']) ? $_POST['vlperavt'] : 0; // PJ438 - Sprint 5 - Mateus Z (Mouts)
 $vlmaxdst = isset($_POST['vlmaxdst']) ? $_POST['vlmaxdst'] : 0;
+$inpreapv = isset($_POST['inpreapv']) ? $_POST['inpreapv'] : ''; // PRJ 470
+$vlmincnt = isset($_POST['vlmincnt']) ? $_POST['vlmincnt'] : 0;  // PRJ 470
 
 $cdopcao = $cddopcao == 'AC' ? $cdopcao = 'C' : $cdopcao = $cddopcao;
 
@@ -102,6 +105,9 @@ if ($cdopcao == 'C') {
 	$xml .= "   <avtperda>".$avtperda."</avtperda>"; // PJ438 - Sprint 5 - Mateus Z (Mouts)
     $xml .= "   <vlperavt>".str_replace(',','.', $vlperavt)."</vlperavt>"; // PJ438 - Sprint 5 - Mateus Z (Mouts)
     $xml .= "   <vlmaxdst>".str_replace(',','.', $vlmaxdst)."</vlmaxdst>";
+    $xml .= "   <inpreapv>".$inpreapv."</inpreapv>"; // PRJ 470
+    $xml .= "   <vlmincnt>".str_replace(',','.', $vlmincnt)."</vlmincnt>"; // PRJ 470
+
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
@@ -161,6 +167,9 @@ if ($cdopcao == 'C') {
 	    //BUG 14179 - Prj 438 - bruno
         echo '$("#vlperavt", "#frmTab089").val("' .($aux_vlperavt > 0 ? getByTagName($r->tags, 'vlperavt') : '') . '");'; // PJ438 - Sprint 5 - Mateus Z (Mouts)
         echo '$("#vlmaxdst", "#frmTab089").val("' . getByTagName($r->tags, 'vlmaxdst') . '");';	
+		echo '$("#inpreapv", "#frmTab089").val("' . getByTagName($r->tags, 'inpreapv') . '");'; // PRJ 470
+        echo '$("#vlmincnt", "#frmTab089").val("' . getByTagName($r->tags, 'vlmincnt') . '");'; // PRJ 470
+
     }
 }
 

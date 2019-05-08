@@ -12,12 +12,12 @@
  *                             PRJ 450 - Diego Simas (AMcom)
  * 
  * 10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)
- *
  * 22/08/2018 - PJ 438 - Alterado a tela para o modo abas - Mateus Z (Mouts)
  *                14/09/2018 - Adicionado campo do valor max de estorno para desconto de titulo (Cássia de Oliveira - GFT)
  *
  *                30/10/2018 - PJ 438 - Adicionado 2 novos parametros (avtperda e vlperavt) - Mateus Z (Mouts)
  *
+ *                11/12/2018 - PRJ 470 - Adicionado 2 novos parametros (inpreapv e vlmincnt) - Mateus Z (Mouts)
  *                12/12/2018 - PRJ 438 - Adicionado critica quando valor for zero no campo de Alteraçao de Avalista - Bruno Luiz
  *                                       Katzjarowski - Mout's
  * ---------------
@@ -122,6 +122,7 @@ function formataCampos() {
     cVlperavt = $('#vlperavt', '#frmTab089'); // PRJ 438 - Sprint 5 - Mateus	
 
     //Máscara para quantidade de dias
+	 cVlmincnt = $('#vlmincnt', '#frmTab089'); // PRJ 470
     cPrtlmult.css('width', '40px').setMask('INTEGER','zzz','','');
     cPrestorn.css('width', '40px').setMask('INTEGER','zzz','','');
     cPzmaxepr.css('width', '40px').setMask('INTEGER','zzzz','','');
@@ -151,6 +152,7 @@ function formataCampos() {
     cVltolemp.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', '');     
     cVlmaxdst.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
     cVlperavt.css('width', '100px').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); // PRJ 438 - Sprint 5 - Mateus
+	cVlmincnt.css('width', '100px').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); // PRJ 470
 
     cTodosFiltro = $('input[type="text"],select', '#frmTab089');
     // Limpa formulário
@@ -252,13 +254,29 @@ function controlaFoco() {
         }
     });
 
+    // Inicio PRJ 470 - Ajuste na navega??o
     $('#vltolemp', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#avtperda', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+
+    $('#avtperda', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#vlperavt', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#vlperavt', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             $('#qtdpaimo', '#frmTab089').focus();
             return false;
         }
     });
-
+    // Fim PRJ 470 - Ajuste na navega??o
 
     $('#qtdpaimo', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
@@ -361,6 +379,7 @@ function controlaFoco() {
         }
     });
 	
+    // Inicio PRJ 470
     $('#qtdictcc', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
 
@@ -371,10 +390,27 @@ function controlaFoco() {
 
     $('#vlmaxdst', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#btContinuar').focus();
+            $('#inpreapv', '#frmTab089').focus();
             return false;
         }
     });
+
+    $('#inpreapv', '#frmTab089').unbind('keypress').bind('keypress', function (e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#vlmincnt', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+
+    $('#vlmincnt', '#frmTab089').unbind('keypress').bind('keypress', function (e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#btContinuar', '#divBotoes').focus();
+            return false;
+        }
+    });
+    // Fim PRJ 470
+	
 }
 
 function controlaOperacao() {
@@ -443,6 +479,9 @@ function manterRotina(cddopcao) {
 	var cAvtperda = normalizaNumero($('#avtperda', '#frmTab089').val()); // PJ438 - Sprint 5 - Mateus Z (Mouts)
     var cVlperavt = normalizaNumero($('#vlperavt', '#frmTab089').val()); // PJ438 - Sprint 5 - Mateus Z (Mouts)
     var cVlmaxdst = normalizaNumero($('#vlmaxdst', '#frmTab089').val());
+	var cInpreapv = $('#inpreapv', '#frmTab089').val(); // PRJ 470
+	var cVlmincnt = normalizaNumero($('#vlmincnt', '#frmTab089').val()); // PRJ 470
+
 
     var mensagem = 'Aguarde, efetuando solicita&ccedil;&atilde;o...';
     showMsgAguardo(mensagem);
@@ -478,6 +517,9 @@ function manterRotina(cddopcao) {
 			vlmaxdst : cVlmaxdst,
 	        avtperda : cAvtperda, // PJ438 - Sprint 5 - Mateus Z (Mouts)
             vlperavt : cVlperavt, // PJ438 - Sprint 5 - Mateus Z (Mouts)
+			inpreapv : cInpreapv, // PRJ 470
+            vlmincnt : cVlmincnt, // PRJ 470
+
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {

@@ -6809,7 +6809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
                                   ,pr_nmdcampo => 'NRDOLOTE'
                                   ,pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' 
-                                                  || pr_dtmvtolt || ';'
+                                                  || TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR') || ';'
                                                   || TO_CHAR(pr_cdagenci)|| ';'
                                                   || '100');
         vr_nrdocmtolt := rw_craptdb.nrdocmto;

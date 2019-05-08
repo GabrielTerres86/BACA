@@ -26,6 +26,9 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
   --
   --             18/09/2018 - Incluso novo parametro na pc_retorno_analise_aut e ajustado para ela gerenciar
   --  						  as chamadas das procedures de atualização de limite de desc titulo e emprestimo (Daniel)
+  --     
+  --             18/04/2019 - Incluido novo campo segueFluxoAtacado no retorno do motor de credito
+  --                          P637 - Luciano Kienolt - Supero)
   ---------------------------------------------------------------------------
   PROCEDURE pc_atuaretorn_proposta_esteira(pr_usuario  IN VARCHAR2              --> Usuario
                                           ,pr_senha    IN VARCHAR2              --> Senha
@@ -71,6 +74,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
 																			 ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
 																			 ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
 																			 ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                       ,pr_idfluata IN BOOLEAN DEFAULT FALSE  --> Indicador Segue Fluxo Atacado -- P637
 																			 ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
 																			 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
 																			 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -93,6 +97,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
                                        ,pr_datscore in varchar2           --> Data do Score Boa Vista
                                        ,pr_dsrequis in varchar2           --> Conteúdo da requisição oriunda da Análise Automática na Esteira
                                        ,pr_namehost in varchar2           --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                       ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado --P637                                                           
                                        ,pr_xmllog   in varchar2           --> XML com informações de LOG
                                        ,pr_cdcritic out pls_integer       --> Código da crítica
                                        ,pr_dscritic out varchar2          --> Descrição da crítica
@@ -117,6 +122,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
                                   ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
                                   ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
                                   ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                  ,pr_idfluata IN BOOLEAN DEFAULT FALSE              --> Indicador Segue Fluxo Atacado --P637                                                                                                         
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -153,6 +159,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
 										                      ,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
                      										  ,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
                                           ,pr_flgpreap    IN NUMBER   DEFAULT 0        --> Indicador de Pré-Aprovado
+                                          ,pr_idfluata    IN BOOLEAN  DEFAULT FALSE    --> Indicador Segue Fluxo Atacado --P637
                                           ,pr_status      OUT PLS_INTEGER              --> Status
                                           ,pr_cdcritic    OUT PLS_INTEGER              --> Codigo da critica
                                           ,pr_dscritic    OUT VARCHAR2                 --> Descricao da critica
@@ -782,6 +789,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																					,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
 																					,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
                                           ,pr_flgpreap    IN NUMBER   DEFAULT 0        --> Indicador de Pré-Aprovado
+                                          ,pr_idfluata    IN BOOLEAN  DEFAULT FALSE    --> Indicador Segue Fluxo Atacado --P637
                                           ,pr_status      OUT PLS_INTEGER              --> Status
                                           ,pr_cdcritic    OUT PLS_INTEGER              --> Codigo da critica
                                           ,pr_dscritic    OUT VARCHAR2                 --> Descricao da critica
@@ -823,6 +831,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 				 
 				 26/09/2018 - Incluso coalesce ao atualizar crawpepr campo  dsratori  
 				              Alcemir Mout's - INC0023901.
+                 08/03/2019 - P637 – Motor de Crédito - Criar um atributo de retorno após 
+                              a execução do motor que irá identificar que essa proposta 
+                              pertence ao “seguefluxoatacado”, quando essa proposta for 
+                              enviada para a esteira de crédito, esse atributo deverá ser 
+                              enviado para que a Ibratan identifique que essa proposta 
+                              seguirá para um fluxo especifico. (Luciano Kienolt - Supero)
+
      ..............................................................................*/
     DECLARE
       CURSOR cr_crawepr(pr_cdcooper IN crawepr.cdcooper%TYPE
@@ -839,6 +854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
               ,crawepr.cdfinemp
               ,crawepr.dtenvest
 							,crawepr.dsnivris
+							,crawepr.idfluata
           FROM crawepr
          WHERE crawepr.cdcooper = pr_cdcooper
            AND crawepr.nrdconta = pr_nrdconta
@@ -883,6 +899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_cdcritic crapcri.cdcritic%type;
       vr_dscritic crapcri.dscritic%type;
       vr_insitpro NUMBER(2);
+      vr_idfluata NUMBER(1);
 
       /*M438*/
             --PL tables
@@ -1153,6 +1170,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           
         END IF;        
         
+        vr_idfluata := 0;
+        IF pr_idfluata THEN
+           vr_idfluata := 1;              
+        END IF;
+        
         -- Atualiza os dados da proposta de emprestimo
         BEGIN
           UPDATE crawepr
@@ -1175,6 +1197,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                 ,crawepr.vlpreori = crawepr.vlpreemp /*M438*/
                 ,crawepr.dsratori = coalesce(vr_rating,crawepr.dsratori,' ') /* M438 */
                 ,crawepr.flgpreap = NVL(pr_flgpreap,crawepr.flgpreap)
+                ,crawepr.idfluata = vr_idfluata -- P637
            WHERE crawepr.cdcooper = pr_cdcooper
              AND crawepr.nrdconta = pr_nrdconta
              AND crawepr.nrctremp = pr_nrctremp
@@ -1281,6 +1304,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                  ,pr_dsdadant => rw_crawepr_log.insitest
                                  ,pr_dsdadatu => rw_crawepr.insitest);
       END IF;
+      
+      IF nvl(rw_crawepr_log.idfluata,0) <> nvl(rw_crawepr.idfluata,0) THEN -- P637
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'idfluata'
+                                 ,pr_dsdadant => rw_crawepr_log.idfluata
+                                 ,pr_dsdadatu => rw_crawepr.idfluata);
+      END IF;     
       
       IF nvl(rw_crapass_log.dtdscore,to_date('01/01/1900','DD/MM/RRRR')) <> nvl(rw_crapass.dtdscore,to_date('01/01/1900','DD/MM/RRRR')) THEN
         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
@@ -1417,6 +1447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 				,pr_nrgarope    in number   default null     --> Valor das Garantias calculada no Rating
 				,pr_nrparlvr    in number   default null     --> Valor do Patrimônio Pessoal Livre calculado no Rating
                 ,pr_nrperger    in number   default null     --> Valor da Percepção Geral da Empresa calculada no Rating
+                ,pr_idfluata    in BOOLEAN  default FALSE    --> Indicador Segue Fluxo Atacado --P637                 
                 ,pr_status      out pls_integer              --> Status
                 ,pr_cdcritic    out pls_integer              --> Codigo da critica
                 ,pr_dscritic    out varchar2                 --> Descricao da critica
@@ -1452,6 +1483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           ,lim.dtenvest
 							   ,lim.dsnivris
           ,lim.insitlim
+          ,lim.idfluata
     from   crawlim lim
     where  lim.cdcooper = pr_cdcooper
     and    lim.nrdconta = pr_nrdconta
@@ -1475,6 +1507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
     vr_nrdrowid      rowid;
     vr_exc_saida     exception;
     vr_exc_erro_500  exception;
+    vr_idfluata      NUMBER(1);
   
   begin
       
@@ -1588,6 +1621,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         end if;
     end if;			
       
+    vr_idfluata := 0;
+    IF pr_idfluata THEN
+       vr_idfluata := 1;              
+    END IF;    		
+      
     /*  Verificar se a analise da proposta expirou na esteira*/      
     if  pr_insitapr = 99 then
         begin
@@ -1658,6 +1696,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                  ,nrliquid = decode(pr_tpretest, 'M', nvl(pr_nrliquid, lim.nrinfcad), lim.nrliquid)
                  ,nrpatlvr = decode(pr_tpretest, 'M', nvl(pr_nrparlvr, lim.nrinfcad), lim.nrpatlvr)
                  ,nrperger = decode(pr_tpretest, 'M', nvl(pr_nrperger, lim.nrinfcad), lim.nrperger)
+                 ,idfluata = vr_idfluata -- P637
+
            where  lim.cdcooper = pr_cdcooper
            and    lim.nrdconta = pr_nrdconta
            and    lim.nrctrlim = pr_nrctrlim
@@ -1759,6 +1799,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                  ,pr_dsdadatu => rw_crawlim.insitest);
     end if;
       
+    if  nvl(rw_crawlim_log.idfluata,0) <> nvl(rw_crawlim.idfluata,0) then --P637
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'idfluata'
+                                 ,pr_dsdadant => rw_crawlim_log.idfluata
+                                 ,pr_dsdadatu => rw_crawlim.idfluata);
+    end if; 
+        
     if  nvl(rw_crapass_log.dtdscore,to_date('01/01/1900','DD/MM/RRRR')) <> nvl(rw_crapass.dtdscore,to_date('01/01/1900','DD/MM/RRRR')) then
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                  ,pr_nmdcampo => 'dtdscore'
@@ -3251,6 +3298,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																			 ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
 																			 ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
 																			 ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                       ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado --P637                                                                              
 																			 ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
 																			 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
 																			 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -3348,6 +3396,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 			vr_nrperger VARCHAR2(100); --> Valor da Percepção Geral da Empresa calculada no Rating
       vr_desscore VARCHAR2(100); --> Descricao do Score Boa Vista
       vr_datscore VARCHAR2(100); --> Data do Score Boa Vista
+      vr_idfluata BOOLEAN;       --> Segue Fluxo Atacado --P637
       
       -- Bloco PLSQL para chamar a execução paralela do pc_crps414
       vr_dsplsql VARCHAR2(4000);
@@ -3702,6 +3751,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																		,pr_dsdscore    => vr_desscore    --> Descrição Score Boa Vista
 																		,pr_dtdscore    => to_date(vr_datscore,'RRRRMMDD')    --> Data Score Boa Vista
                                     ,pr_flgpreap    => 0                                  --> Indicador de Pré Aprovado
+                                    ,pr_idfluata    => vr_idfluata    --> Indicador Segue Fluxo Atacado --P637                                    
 																		,pr_status      => vr_status      --> Status
 																		,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
 																		,pr_dscritic    => vr_dscritic    --> Descricao da critica
@@ -4012,6 +4062,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 					,pr_datscore in varchar2           --> Data do Score Boa Vista
                     ,pr_dsrequis in varchar2           --> Conteúdo da requisição oriunda da Análise Automática na Esteira
                     ,pr_namehost in varchar2           --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                    ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado --P637                    
                     ,pr_xmllog   in varchar2           --> XML com informações de LOG
 					,pr_cdcritic out pls_integer       --> Código da crítica
                     ,pr_dscritic out varchar2          --> Descrição da crítica
@@ -4111,6 +4162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      vr_nrperger varchar2(100); --> Valor da Percepção Geral da Empresa calculada no Rating
      vr_desscore varchar2(100); --> Descricao do Score Boa Vista
      vr_datscore varchar2(100); --> Data do Score Boa Vista
+     vr_idfluata BOOLEAN;       --> Segue Fluxo Atacado
 
      -- Bloco PLSQL para chamar a execução paralela do pc_crps414
      vr_dsplsql varchar2(4000);
@@ -4703,6 +4755,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                   ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
                                   ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
                                   ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                  ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado   --P637                                                                       
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -4756,6 +4809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                     ,pr_datscore => pr_datscore
                     ,pr_dsrequis => pr_dsrequis
                     ,pr_namehost => pr_namehost
+                    ,pr_idfluata => pr_idfluata --P637
                     ,pr_xmllog   => pr_xmllog  
                     ,pr_cdcritic => pr_cdcritic
                     ,pr_dscritic => pr_dscritic
@@ -4781,6 +4835,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                     ,pr_datscore => pr_datscore
                     ,pr_dsrequis => pr_dsrequis
                     ,pr_namehost => pr_namehost
+                    ,pr_idfluata => pr_idfluata --P637
                     ,pr_xmllog   => pr_xmllog  
                     ,pr_cdcritic => pr_cdcritic
                     ,pr_dscritic => pr_dscritic

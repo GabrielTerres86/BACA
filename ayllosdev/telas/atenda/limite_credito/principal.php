@@ -217,3 +217,42 @@
 	}
 	
 ?>
+<script type='text/javascript'>
+	//bruno - prj 470 - tela autorizacao
+	/**
+	 * Salvar variaveis globais
+	 */
+    var_globais.vllimite = "<?php echo $vllimite; ?>";
+	var_globais.dslimcre = "<?php echo $dslimcre; ?>";
+	var_globais.dtmvtolt = "<?php echo $dtmvtolt; ?>";
+	var_globais.dsfimvig = "<?php echo $dsfimvig; ?>";	
+	var_globais.dtfimvig = "<?php echo $dtfimvig; ?>";
+	var_globais.nrctrlim = "<?php echo $nrctrlim; ?>";
+	var_globais.qtdiavig = "<?php echo $qtdiavig; ?>";
+	var_globais.dsencfi1 = "<?php echo $dsencfi1; ?>";
+	var_globais.dsencfi2 = "<?php echo $dsencfi2; ?>";
+	var_globais.dsencfi3 = "<?php echo $dsencfi3; ?>";
+	var_globais.dssitlli = "<?php echo $dssitlli; ?>";
+	var_globais.dsmotivo = "<?php echo $dsmotivo; ?>";
+	var_globais.nmoperad = "<?php echo $nmoperad; ?>";
+	var_globais.flgpropo = "<?php echo $flgpropo; ?>";
+	var_globais.nrctrpro = "<?php echo $nrctrpro; ?>";
+	var_globais.cdlinpro = "<?php echo $cdlinpro; ?>";
+	var_globais.vllimpro = "<?php echo $vllimpro; ?>";	
+	var_globais.nmopelib = "<?php echo $nmopelib; ?>";
+	var_globais.flgenvio = "<?php echo $flgenvio; ?>";
+	var_globais.flgenpro = "<?php echo $flgenpro; ?>";
+	var_globais.cddlinha = "<?php echo $cddlinha; ?>";
+	var_globais.dsdlinha = "<?php echo $dsdlinha; ?>";
+	var_globais.tpdocmto = "<?php echo $tpdocmto; ?>";
+	var_globais.flgdigit = "<?php echo $flgdigit; ?>";
+	var_globais.dsobserv = "<?php echo $dsobserv; ?>";	
+	var_globais.dstprenv = "<?php echo $dstprenv; ?>";
+	var_globais.dtrenova = "<?php echo $dtrenova; ?>";
+	var_globais.qtrenova = "<?php echo $qtrenova; ?>";
+	var_globais.flgimpnp = "<?php echo $flgimpnp; ?>";
+	var_globais.dslimpro = "<?php echo $dslimpro; ?>";	
+	var_globais.idcobope = "<?php echo $idcobope; ?>";
+	var_globais.nivrisco = "<?php echo $nivrisco; ?>";	
+	var_globais.dsdtxfix = "<?php echo $dsdtxfix; ?>";
+</script>
