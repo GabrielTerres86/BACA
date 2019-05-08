@@ -4,7 +4,7 @@ BEGIN
 
   -- Ajustar opções da tela
   UPDATE craptel tel 
-     SET tel.cdopptel = 'I,C'
+     SET tel.cdopptel = 'A,C'
         ,tel.lsopptel = 'ALTERACAO,CONSULTA'     
   WHERE upper(tel.nmdatela) = 'CADPRE';
 
