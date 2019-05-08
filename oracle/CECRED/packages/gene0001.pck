@@ -41,7 +41,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
 	--
 	--  04/12/2018 - Criar rotina pc_gera_log_auto para geracao de log utilizando autonomous_transaction com 
 	--               commit da operacao (Adriano Nagasava - Supero)
-	--
+	--     05/2019 - Adicionado  Origem = 14 - Descto. Folha (CONSIGNADO) (P437 - JDB AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
   /** ---------------------------------------------------- **/
@@ -88,10 +88,11 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /** -> Origem = 11 - ACORDO (WEBSERVICE DE ACORDOS)             **/
   /** -> Origem = 12 - ANTIFRAUDE (WEBSERVICE ANALISE ANTIFRAUDE) 	**/
   /** -> Origem = 13 - COBRANCA (RENOVACAO AUTOMATICA) 	**/
+  /** -> Origem = 14 - Descto. Folha (CONSIGNADO) 	**/ 
   /** ---------------------------------------------------------**/
 
-  TYPE typ_des_dorigens IS VARRAY(13) OF VARCHAR2(13);
-  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AIMARO','CAIXA','INTERNET','CASH','AIMARO WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE','COBRANCA');
+  TYPE typ_des_dorigens IS VARRAY(14) OF VARCHAR2(13);
+  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AIMARO','CAIXA','INTERNET','CASH','AIMARO WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE','COBRANCA','CONSIGNADO');
 
 
   /** ---------------------------------------------------- **/

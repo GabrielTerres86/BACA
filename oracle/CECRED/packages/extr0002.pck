@@ -809,6 +809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 		14/11/2018 - Alteração na procedure "pc_consulta_lancamento" para incluir o valor provisionado
                      de juros remuneratórios do prejuízo de conta corrente na tela LAUTOM.
                      (Reginaldo/AMcom/P450)
+	--     05/2019 -Alteração pc_obtem_extrato_emprest adicionado  Origem = 14 - Descto. Folha (CONSIGNADO) (P437 - JDB AMcom)      
         
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -3859,8 +3860,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craplem.qtdiacal
               ,craplem.vltaxprd
               ,craplem.dthrtran
-            --  ,DECODE(craplem.cdorigem,1,'Ayllos',2,'Caixa',3,'Internet',4,'Cash',5,'Ayllos WEB',6,'URA',7,'Batch',8,'Mensageria',' ') cdorigem
-              ,DECODE(craplem.cdorigem,1,'Debito CC',2,'Caixa',3,'Internet',4,'Cash',5,'Debito CC',6,'URA',7,'Debito CC',8,'Mensageria',' ') cdorigem
+            --  ,DECODE(craplem.cdorigem,1,'Ayllos',2,'Caixa',3,'Internet',4,'Cash',5,'Ayllos WEB',6,'URA',7,'Batch',8,'Mensageria',14,'Folha (Consignado)',' ') cdorigem
+              ,DECODE(craplem.cdorigem,1,'Debito CC',2,'Caixa',3,'Internet',4,'Cash',5,'Debito CC',6,'URA',7,'Debito CC',8,'Mensageria',14,'Folha',' ') cdorigem
               ,count(*) over (partition by  craplem.cdcooper,craplem.nrdconta,craplem.dtmvtolt) nrtotdat
               ,row_number() over (partition by craplem.dtmvtolt ORDER BY craplem.cdcooper
                                                                         ,craplem.nrdconta
