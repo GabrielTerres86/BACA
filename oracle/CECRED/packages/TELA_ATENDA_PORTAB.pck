@@ -2204,7 +2204,8 @@ PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numer
                  crapttl.nrcpfemp as nrcpfemp,
                  crapemp.dsendemp as dsendemp,
                  crapemp.nrcepend as nrcepend,
-                 crapemp.nmcidade as nmcidade
+                 UPPER(crapemp.nmcidade) as nmcidade,
+                 crapemp.nrendemp as nrendemp
             FROM crapttl, crapemp
            WHERE crapttl.cdcooper = pr_cdcooper
              AND crapttl.nrdconta = pr_nrdconta
@@ -2334,7 +2335,7 @@ PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numer
                          '<ds_responsavel>' || vr_ds_responsavel ||'</ds_responsavel>' ||                            
                          '<emp_nmextemp>' || nvl(trim(rw_crapttl.nmextemp), ' ') ||'</emp_nmextemp>' ||  
                          '<emp_nrcpfemp>' || vr_nrcpfcgc_emp ||'</emp_nrcpfemp>' ||  
-                         '<emp_dsendere>' || nvl(trim(rw_crapttl.dsendemp), ' ') ||'</emp_dsendere>' ||
+                         '<emp_dsendere>' || nvl(trim(rw_crapttl.dsendemp), ' ') || ', nº ' || nvl(trim(rw_crapttl.nrendemp), '') ||'</emp_dsendere>' ||
                          '<emp_nrcepend>' || gene0002.fn_mask_cep(rw_crapttl.nrcepend) ||'</emp_nrcepend>' ||
                          '<emp_nmcidade>' || nvl(trim(rw_crapttl.nmcidade), ' ') ||'</emp_nmcidade>'||
                          '<nr_clausula_empregador>' || nr_clausula_empregador || '</nr_clausula_empregador>' ||

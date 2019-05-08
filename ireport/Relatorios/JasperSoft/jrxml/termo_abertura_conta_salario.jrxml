@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-01-17T17:40:05 -->
+<!-- 2019-05-08T19:05:20 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_abertura_conta_salario" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -205,7 +205,7 @@
 				<reportElement x="68" y="170" width="462" height="50" uuid="810ba191-5190-44de-b8e8-146d4473247a">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
-				<textFieldExpression><![CDATA["1."+$F{nr_clausula_empregador}+". EMPREGADOR COOPERADO: "+$F{emp_nmextemp}+", pessoa jurídica de direito privado, inscrita no CNPJ sob n° "+$F{emp_nrcpfemp}+", estabelecida na Rua  "+$F{emp_dsendere}+" , CEP "+$F{emp_nrcepend}+", cidade de "+$F{emp_nmcidade}+"."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["1."+$F{nr_clausula_empregador}+". EMPREGADOR COOPERADO: "+$F{emp_nmextemp}+", pessoa jurídica de direito privado, inscrita no CNPJ sob n° "+$F{emp_nrcpfemp}+", estabelecida na Rua  "+$F{emp_dsendere}+", CEP "+$F{emp_nrcepend}+", cidade de "+$F{emp_nmcidade}+"."]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement x="67" y="221" width="232" height="20" uuid="5eff0be3-6d67-4d4d-8014-dc469b7924ea"/>
@@ -216,7 +216,7 @@
 				<textFieldExpression><![CDATA["1."+$F{nr_clausula_pa}+". PA: " + $F{tit_nmresage}]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="708" splitType="Immediate">
+		<band height="724" splitType="Immediate">
 			<textField>
 				<reportElement x="65" y="10" width="465" height="13" uuid="c2e9dc28-a40f-4510-981c-65e9d1b6f7df">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -250,33 +250,33 @@
 				<textFieldExpression><![CDATA["2.5. O(a) COOPERADO(A) poderá ter acesso aos canais de autoatendimento disponibilizados pela COOPERATIVA, ou ainda, outros que venham a ser disponibilizados para realização de movimentações e transações em sua conta salário."]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="65" y="398" width="465" height="52" uuid="333f4c8f-4e0b-46cb-91af-abfccd48af11"/>
+				<reportElement x="65" y="397" width="465" height="59" uuid="333f4c8f-4e0b-46cb-91af-abfccd48af11"/>
 				<textElement textAlignment="Justified"/>
 				<textFieldExpression><![CDATA["2.6. O(a) COOPERADO(A) reconhece que todos os atos praticados mediante aposição de senha numérica e/ou letras de segurança, serão registrados e arquivados em meios magnéticos/digitais, sendo reconhecidos, para todos os fins de direito, como assinatura digital, válidos, verdadeiros e processados por meios seguros e constituirão meio eficaz e prova inequívoca da operação realizada."]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="65" y="456" width="465" height="104" uuid="d5e20e16-c0e5-4d3c-8064-e3858d55bd0b"/>
+				<reportElement x="65" y="462" width="465" height="111" uuid="d5e20e16-c0e5-4d3c-8064-e3858d55bd0b"/>
 				<textElement textAlignment="Justified"/>
 				<textFieldExpression><![CDATA["2.7. O(a) COOPERADO(A) estará isento de tarifas para a realização das seguintes operações:  a) fornecimento de cartão magnético, a não ser nos casos de pedidos de reposição decorrentes de perda, roubo, danificação e outros motivos não imputáveis à instituição financeira; b) realização de até 05 (cinco) saques, por evento de crédito; c) acesso a pelo menos 02 (duas) consultas mensais ao saldo nos terminais de autoatendimento ou diretamente no guichê de caixa; d) fornecimento, por meio dos terminais de autoatendimento ou diretamente no guichê de caixa, de pelo menos 02 (dois) extratos contendo toda a movimentação da conta nos últimos 30 (trinta) dias; e) manutenção da conta, inclusive no caso de não haver movimentação."]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="65" y="627" width="465" height="81" uuid="76a61e53-ac09-4b17-8ccf-816ffd67d1c8"/>
+				<reportElement x="65" y="642" width="465" height="81" uuid="76a61e53-ac09-4b17-8ccf-816ffd67d1c8"/>
 				<textElement textAlignment="Justified"/>
-				<textFieldExpression><![CDATA["2.10. Havendo dúvidas sobre os produtos e/ou serviços da COOPERATIVA, ou para a solução amigável de eventuais conflitos relacionados à esta conta salário, o(a) COOPERADO (A), poderá dirigir seu pedido ou reclamação ao Posto de Atendimento responsável pela sua conta. Está ainda à sua disposição o tele atendimento ("+$F{cop_nrtelura}+", e o website ("+$F{cop_dsendweb}+"). Se não for solucionado o conflito, o COOPERADO (A) poderá recorrer à Ouvidoria "+$F{cop_nmrescop}+" ("+$F{cop_nrtelouv}+", em dias úteis, 08h00min às 17h00min)."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["2.10. Havendo dúvidas sobre os produtos e/ou serviços da COOPERATIVA, ou para a solução amigável de eventuais conflitos relacionados à esta conta salário, o(a) COOPERADO (A), poderá dirigir seu pedido ou reclamação ao Posto de Atendimento responsável pela sua conta. Está ainda à sua disposição o tele atendimento ("+$F{cop_nrtelura}+"), e o website ("+$F{cop_dsendweb}+"). Se não for solucionado o conflito, o COOPERADO (A) poderá recorrer à Ouvidoria "+$F{cop_nmrescop}+" ("+$F{cop_nrtelouv}+", em dias úteis, 08h00min às 17h00min)."]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="65" y="567" width="465" height="52" uuid="14fd89b4-ff77-4539-81a5-4c7629690a4f"/>
+				<reportElement x="65" y="582" width="465" height="52" uuid="14fd89b4-ff77-4539-81a5-4c7629690a4f"/>
 				<textElement textAlignment="Justified"/>
 				<textFieldExpression><![CDATA["2.8. O(a) COOPERADO(A) declara-se ciente de que ultrapassada a quantidade gratuita dos serviços acima, estará sujeito(a) à cobrança de tarifas, taxas, despesas e outros encargos sobre serviços inerentes a movimentação da Contas Salário, bem como sobre contratação/utilização de produtos e/ou serviços relacionados ou não com conta de salário."]]></textFieldExpression>
 			</textField>
 		</band>
 		<band height="379">
 			<frame>
-				<reportElement positionType="FixRelativeToBottom" x="0" y="99" width="595" height="188" uuid="8bb5d640-6653-4948-8ee9-87e49059bc82">
+				<reportElement positionType="FixRelativeToBottom" x="0" y="94" width="595" height="188" uuid="8bb5d640-6653-4948-8ee9-87e49059bc82">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
 				<line>
-					<reportElement x="74" y="44" width="206" height="1" uuid="479c01fb-f977-42d1-997d-7a5a5e3beaf7">
+					<reportElement x="74" y="39" width="206" height="1" uuid="479c01fb-f977-42d1-997d-7a5a5e3beaf7">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					</reportElement>
@@ -285,7 +285,7 @@
 					</graphicElement>
 				</line>
 				<staticText>
-					<reportElement x="65" y="24" width="225" height="70" uuid="5f87320e-4a99-4b0d-b9fc-16299722455d">
+					<reportElement x="65" y="19" width="225" height="70" uuid="5f87320e-4a99-4b0d-b9fc-16299722455d">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -295,7 +295,7 @@
 					<text><![CDATA[COOPERATIVA]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="310" y="24" width="220" height="70" uuid="ac81f6e7-0a38-47df-8b08-d311641f69ea">
+					<reportElement x="310" y="19" width="220" height="70" uuid="ac81f6e7-0a38-47df-8b08-d311641f69ea">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -305,7 +305,7 @@
 					<text><![CDATA[COOPERADO(A)]]></text>
 				</staticText>
 				<line>
-					<reportElement x="320" y="44" width="200" height="1" uuid="15aac658-5527-466c-aff4-e4eccb7cb83b">
+					<reportElement x="320" y="39" width="200" height="1" uuid="15aac658-5527-466c-aff4-e4eccb7cb83b">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					</reportElement>
 					<graphicElement>
@@ -313,7 +313,7 @@
 					</graphicElement>
 				</line>
 				<staticText>
-					<reportElement x="310" y="105" width="220" height="70" uuid="2dae440d-4a78-4a52-9b4c-270b0985663f">
+					<reportElement x="310" y="100" width="220" height="70" uuid="2dae440d-4a78-4a52-9b4c-270b0985663f">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<printWhenExpression><![CDATA[new Boolean($F{ds_responsavel}.length().intValue() > 10)]]></printWhenExpression>
 					</reportElement>
@@ -324,7 +324,7 @@
 					<text><![CDATA[RESPONSÁVEL LEGAL]]></text>
 				</staticText>
 				<line>
-					<reportElement x="320" y="124" width="200" height="1" uuid="9c09ce33-4687-4653-a6be-6822796ab9d1">
+					<reportElement x="320" y="119" width="200" height="1" uuid="9c09ce33-4687-4653-a6be-6822796ab9d1">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<printWhenExpression><![CDATA[new Boolean($F{ds_responsavel}.length().intValue() > 10)]]></printWhenExpression>
 					</reportElement>
@@ -333,7 +333,7 @@
 					</graphicElement>
 				</line>
 				<staticText>
-					<reportElement x="65" y="105" width="225" height="70" uuid="e7787d12-963e-415f-9773-e7f2329340f1">
+					<reportElement x="65" y="100" width="225" height="70" uuid="e7787d12-963e-415f-9773-e7f2329340f1">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -343,7 +343,7 @@
 					<text><![CDATA[EMPREGADOR]]></text>
 				</staticText>
 				<line>
-					<reportElement x="74" y="124" width="206" height="1" uuid="b1e30b79-2f9c-4ec4-9868-d6b720436784">
+					<reportElement x="74" y="119" width="206" height="1" uuid="b1e30b79-2f9c-4ec4-9868-d6b720436784">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					</reportElement>
@@ -353,13 +353,13 @@
 				</line>
 			</frame>
 			<textField>
-				<reportElement x="65" y="1" width="465" height="75" uuid="594645c7-8219-4863-aeda-df9eabef697d"/>
+				<reportElement x="65" y="11" width="465" height="75" uuid="594645c7-8219-4863-aeda-df9eabef697d"/>
 				<textElement textAlignment="Justified"/>
 				<textFieldExpression><![CDATA["2.11.  As partes declaram que este instrumento está vinculado as disposições legais cooperativistas, ao Estatuto Social da COOPERATIVA e demais deliberações assembleares desta, e do seu Conselho de Administração, aos quais o(a) COOPERADO(A), livre e espontaneamente adere ao integrar o quadro social da COOPERATIVA, cujo teor ratifica, reconhecendo neste contrato a celebração de um ato cooperativo, nos termos do artigo 79 da Lei 5764/71"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="65" y="82" width="465" height="15" uuid="cc0c2174-ae48-4dad-8aae-0e4ce1bbee7b"/>
-				<textFieldExpression><![CDATA[$F{cop_dataextenso}]]></textFieldExpression>
+				<reportElement x="65" y="92" width="465" height="15" uuid="cc0c2174-ae48-4dad-8aae-0e4ce1bbee7b"/>
+				<textFieldExpression><![CDATA[$F{cop_dataextenso}+"."]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>
