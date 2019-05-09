@@ -18825,6 +18825,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --                Ajuste mensagem de erro 
     --                (Belli - Envolti - Chamado 779415)    
     --
+	--   09/05/2019 - Ajustado para buscar cursor do lote quando ocorrer dup_val
+	--                (Jefferson - MoutS)
     -- .........................................................................    
   BEGIN
     DECLARE
@@ -18977,6 +18979,30 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                   ,rw_craplot.nrseqdig
                   ,rw_craplot.rowid;
               EXCEPTION
+                WHEN DUP_VAL_ON_INDEX THEN                
+                  -- Leitura do lote
+                  OPEN cr_craplot (pr_cdcooper => pr_cdcooper
+                                  ,pr_dtmvtolt => pr_dtmvtolt
+                                  ,pr_cdagenci => pr_cdagenci
+                                  ,pr_cdbccxlt => pr_cdbccxlt
+                                  ,pr_nrdolote => pr_nrdolote);
+                  --Posicionar no primeiro registro
+                  FETCH cr_craplot INTO rw_craplot;
+                  --Verificar se encontrou
+                  IF cr_craplot%NOTFOUND THEN
+                    vr_cdcritic := 1034;
+                    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                               'CRAPLOT(27):' ||	
+                               ' cdcooper:'   || pr_cdcooper ||
+                               ', dtmvtolt:'  || pr_dtmvtolt ||
+                               ', cdagenci:'  || pr_cdagenci ||
+                               ', cdbccxlt:'  || pr_cdbccxlt ||
+                               ', nrdolote:'  || pr_nrdolote ||
+                               ', tplotmov:'  || '1' ||
+                               '. ' ||sqlerrm;	
+                    --Levantar Excecao
+                    RAISE vr_exc_erro;
+                  END IF;
                 WHEN OTHERS THEN
                   -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
                   CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
