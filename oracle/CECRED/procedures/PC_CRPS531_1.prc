@@ -332,6 +332,9 @@ end;
                           
              17/10/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT C
                           Jose Dill - Mouts
+
+             31/10/2018 - Alterações referentes ao projeto 485 - Portabilidade de Salário
+                          Marcelo Kestring - Supero
                           
              02/01/2019 - Tratamento para STR0006R2 - Pagto de boletos em cartório (Lucas Afonso/Cechet)                          
                           
@@ -344,8 +347,11 @@ end;
 			 07/12/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT D
                           Jose Dill - Mouts
                           
-       12/02/2019 - Ajuste da revitalização de lotes craplcm 
-                    Jose Dill - Mout (INC0032794)                   
+             12/02/2019 - Ajuste da revitalização de lotes craplcm  Jose Dill - Mout (INC0032794)
+
+             22/03/2019 - Alterado para tratar a devolução de TEC salário, via CRAPLCM. Este novo fluxo se faz 
+                          necessário, pois a nova portabilidade de salário, com contas CRAPASS/CRAPLCM, utilizará
+                          o envio de valores como TEC. Projeto 485 - Portabilidade de salário (Renato Darosci - Supero)                   
  
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -428,6 +434,20 @@ end;
        WHERE cop.nrctactl = pr_nrctactl
          AND cop.flgativo = nvl(pr_flgativo,cop.flgativo);
 
+    -- Buscar o próximo sequencial para o lançamento
+    CURSOR cr_lcm_nrseqdig(pr_cdcooper  craplcm.cdcooper%TYPE
+                          ,pr_dtmvtolt  craplcm.dtmvtolt%TYPE
+                          ,pr_cdagenci  craplcm.cdagenci%TYPE
+                          ,pr_cdbccxlt  craplcm.cdbccxlt%TYPE
+                          ,pr_nrdolote  craplcm.nrdolote%TYPE) IS
+      SELECT MAX(lcm.nrseqdig)
+        FROM craplcm lcm
+       WHERE lcm.cdcooper = pr_cdcooper
+         AND lcm.dtmvtolt = pr_dtmvtolt
+         AND lcm.cdagenci = pr_cdagenci
+         AND lcm.cdbccxlt = pr_cdbccxlt
+         AND lcm.nrdolote = pr_nrdolote;
+    
     /* Cursor genérico de calendário */
     rw_crapdat_central btch0001.cr_crapdat%ROWTYPE;
     rw_crapdat_mensag btch0001.cr_crapdat%ROWTYPE;
@@ -578,7 +598,9 @@ end;
     vr_aux_dsmotivo       VARCHAR2(100);
     vr_ret_nrremret       NUMBER;
     vr_aux_nrridflp       NUMBER;
-    vr_aux_dsdemail       VARCHAR2(4000);    
+    vr_aux_dsdemail       VARCHAR2(4000);   
+    vr_aux_idregtvl       BOOLEAN;
+    vr_aux_idreglcs       BOOLEAN; 
 
     -- Pagamentos de titulos
     vr_tab_lcm_consolidada paga0001.typ_tab_lcm_consolidada;
@@ -617,6 +639,8 @@ end;
             ,tpdctacr
             ,dshistor
             ,ROWID
+            ,nrridlfp 
+            ,nrdocmto
         FROM craptvl 
        WHERE craptvl.cdcooper = pr_cdcooper
          AND craptvl.tpdoctrf = 3
@@ -715,6 +739,19 @@ end;
          AND tpctatrf = NVL(pr_tpctatrf,tpctatrf);
     rw_craptco cr_craptco%ROWTYPE;
 
+    /* Buscar tipo da conta */
+    CURSOR cr_tbcc_tipo_conta(pr_inpessoa NUMBER
+                             ,pr_cdtipo_conta NUMBER) IS
+      SELECT inpessoa
+            ,cdtipo_conta
+            ,dstipo_conta
+            ,cdmodalidade_tipo
+            ,ROWID
+        FROM tbcc_tipo_conta
+       WHERE tbcc_tipo_conta.inpessoa = pr_inpessoa
+         AND tbcc_tipo_conta.cdtipo_conta = pr_cdtipo_conta;
+    rw_tbcc_tipo_conta cr_tbcc_tipo_conta%ROWTYPE;
+
     -- Buscar associado
     CURSOR cr_crapass(pr_cdcooper NUMBER
                      ,pr_nrdconta NUMBER
@@ -724,6 +761,7 @@ end;
             ,nrcpfcgc
             ,dtelimin
             ,cdsitdct
+            ,cdtipcta
         FROM crapass
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
@@ -737,11 +775,23 @@ end;
                      ,pr_nrdconta NUMBER
                      ,pr_nrcpfcgc NUMBER DEFAULT NULL) IS
       SELECT nrcpfcgc
+            ,nrcpfemp
         FROM crapttl
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
          AND nrcpfcgc = NVL(pr_nrcpfcgc,nrcpfcgc);
     rw_crapttl cr_crapttl%ROWTYPE;
+
+    -- Buscar dados da conta em transferencia
+    CURSOR cr_crapccs(pr_cdcooper crapcop.cdcooper%TYPE
+           ,pr_nrdconta crapass.nrdconta%TYPE) IS
+    SELECT cdagetrf
+        ,nrctatrf
+            ,tpctatrf
+      FROM crapccs
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta;
+    rw_crapccs cr_crapccs%ROWTYPE;
 
     -- Cursor Capa do Lote
     CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
@@ -844,7 +894,8 @@ end;
     vr_nmremetente              VARCHAR2(100);
     vr_dsdevolucao              craptab.dstextab%TYPE;    
     vr_aux_CD_SITUACAO          VARCHAR2(100);
-    vr_aux_dtmovto_aux          VARCHAR2(10);
+    vr_aux_dtmovto_aux          VARCHAR2(10); 
+    vr_nrlcmdig                 NUMBER;
 
 
     -- Rotina para validar a conta
@@ -867,6 +918,7 @@ end;
       vr_val_nrcpfcgc NUMBER;
       vr_val_tpdconta VARCHAR2(10);
       vr_val_nrdctapg VARCHAR2(100);
+      vr_val_cdmodalidade_tipo NUMBER;
       -- Buffers locais
       rw_b_crapcop cr_busca_coop%rowtype;
       rw_b_crapdat btch0001.cr_crapdat%rowtype;
@@ -1048,6 +1100,24 @@ end;
             ELSE
               CLOSE cr_crapttl;
             END IF;
+            
+            cada0006.pc_busca_modalidade_tipo(pr_inpessoa => rw_crapass.inpessoa
+																						 ,pr_cdtipo_conta => rw_crapass.cdtipcta
+																						 ,pr_cdmodalidade_tipo => vr_val_cdmodalidade_tipo
+																						 ,pr_des_erro => vr_des_erro
+																						 ,pr_dscritic => vr_dscritic);
+            
+            -- Verifica se é conta salário
+            IF vr_val_cdmodalidade_tipo = 2 THEN
+              IF rw_crapttl.nrcpfemp <> vr_aux_CNPJ_CPFDeb THEN
+                /*CNPJ remetente inválido*/
+                pr_cdcritic := 4;
+                pr_dscritic := 'Mensagem Invalida para o Tipo de Transacao ou Finalidade.';
+                -- Sair
+                RETURN;
+              END IF;
+            END IF;
+
           ELSE -- PJ
             -- Verifica se o problema esta no CPF
             rw_crapass := NULL;
@@ -1309,7 +1379,17 @@ end;
         -- Fim Projeto 475
         --
         -- Se for TED
-        ELSIF SUBSTR(vr_aux_NumCtrlIF,1,1) = 1 THEN
+        ELSE -- Se NumCtrlIF for 1 ou 2 
+          /**  --ELSIF SUBSTR(vr_aux_NumCtrlIF,1,1) = 1 THEN
+           ** Renato Darosci - Supero - 22/03/2019
+           ** P485 - Portabilidade de Salário
+           **
+           ** Não vai mais considerar o id de controle, pois TECs também serão processadas 
+           ** através de lançamentos da CRAPLCM.
+          **/
+          
+          -- Buscar o registro de transferencia realizado via LCM
+          
           -- Buscar registro transferência
           OPEN cr_craptvl(pr_cdcooper => vr_cdcooper
                          ,pr_idopetrf => vr_aux_NumCtrlIF);
@@ -1317,7 +1397,9 @@ end;
            INTO rw_craptvl;
           -- Se encontrar
           IF cr_craptvl%FOUND THEN
+            -- Fechar o cursor
             CLOSE cr_craptvl;
+            
             -- Substituir caracteres
             vr_nmpesrcb := gene0007.fn_caract_acento(rw_craptvl.nmpesrcb);
             -- Gerar log
@@ -1430,9 +1512,14 @@ end;
                END IF;
             END IF;
           ELSE
+            -- Fechar o cursor se o mesmo estiver aberto
+            IF cr_craptvl%ISOPEN THEN
             CLOSE cr_craptvl;
           END IF;
-        ELSE -- TEC
+            
+            /************************************************************************/
+            -- Como não encontrou o registro na CRAPTVL, deve buscar na CRAPLCS
+            
           -- Buscar registro transferência
           OPEN cr_craplcs(pr_cdcooper => vr_cdcooper
                          ,pr_idopetrf => vr_aux_NumCtrlIF);
@@ -1538,6 +1625,10 @@ end;
           ELSE
             CLOSE cr_craplcs;
           END IF;
+            
+            /***********************************************************************/            
+        END IF;
+          
         END IF;
       ELSIF pr_tipodlog = 'RECEBIDA' THEN
         /* Buscar dados do banco */
@@ -5786,12 +5877,9 @@ END pc_trata_arquivo_cir0060;
                        ,pr_idopetrf => vr_aux_NumCtrlIF);
         FETCH cr_craplcs
          INTO rw_craplcs;
-        -- Se encontrar
-        IF cr_craplcs%NOTFOUND THEN
-          CLOSE cr_craplcs;
-          -- Gerar critica
-          vr_dscritic := 'Numero de Controle invalido';
-        ELSE
+        
+        -- Se não encontrar
+        IF cr_craplcs%FOUND THEN
           CLOSE cr_craplcs;
 
           -- Verificar se tabela esta lockada
@@ -5822,7 +5910,7 @@ END pc_trata_arquivo_cir0060;
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar registro craplcs --> '||sqlerrm;
           END;
-        END IF;
+
         -- Se não deu erro
         IF vr_dscritic IS NULL THEN
           -- Se retornou Recid Folha IB
@@ -5970,6 +6058,208 @@ END pc_trata_arquivo_cir0060;
           END IF;
         END IF;
 
+        
+        -- Se não encontrar registro na CRAPLCS deve realizar o processo de TEC para CRAPLCM
+        ELSE 
+          -- Fechar o cursor da CRAPLCS
+          CLOSE cr_craplcs;
+          
+          -- Busca numero da conta a CREDITAR
+          OPEN cr_craptvl(rw_crapcop_mensag.cdcooper,vr_aux_NumCtrlIF);
+          FETCH cr_craptvl  INTO rw_craptvl;
+          -- Se não encontrou
+          IF cr_craptvl%NOTFOUND THEN
+            CLOSE cr_craptvl;
+               
+            -- Gerar critica
+            vr_dscritic := 'Numero de Controle invalido';
+              
+          ELSE
+            CLOSE cr_craptvl;
+            
+            -- Se for registro de devolução do Folha
+            IF NVL(rw_craptvl.nrridlfp,0) = 0 THEN
+                
+              -- Gerar critica
+              vr_dscritic := 'Registro de lancamento de folha nao informado';
+            
+            ELSE
+              
+            -- Número da conta de crédito deve ser a da TVL
+            vr_aux_nrctacre := rw_craptvl.nrdconta;
+              -- Valor a ser devolvido
+              vr_aux_VlrLanc  := rw_craptvl.vldocrcb;
+            
+            
+          -- Verificar se o LCM já não existe
+          vr_aux_existlcm := 0;
+          vr_aux_vllanmto := NULL;
+          OPEN cr_craplcm_exis(pr_cdcooper => rw_crapcop_mensag.cdcooper
+                              ,pr_dtmvtolt => vr_aux_dtmvtolt            -- rw_craplot.dtmvtolt
+                                ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                                ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                                ,pr_nrdolote => rw_craplot_rvt.nrdolote
+                              ,pr_nrdctabb => vr_aux_nrctacre
+                              ,pr_nrdocmto => vr_aux_nrdocmto);
+          FETCH cr_craplcm_exis
+           INTO vr_aux_existlcm,vr_aux_vllanmto;
+          CLOSE cr_craplcm_exis;
+          
+          -- Se encontrou
+          IF vr_aux_existlcm = 1 THEN
+            -- Para Rejeição
+            IF vr_aux_CodMsg in ('STR0010R2','PAG0111R2') OR vr_aux_tagCABInf THEN
+              -- Montar textos de logs
+              vr_log_msgderro := 'Lancamento ja existe! Conta: ' || vr_aux_nrctacre
+                                || ', Lote: ' || rw_craplot_rvt.nrdolote
+                              || ', Doc.: ' || vr_aux_nrdocmto;
+              -- Conforme cabine
+              IF vr_aux_tagCABInf THEN
+                vr_tipolog := 'REJEITADA NAO OK';
+                vr_aux_CodMsg := 'ERROREJ';
+              ELSE
+                vr_tipolog := 'RETORNO SPB';
+              END IF;
+            ELSE
+              -- Montar textos de logs
+              vr_tipolog := 'RECEBIDA';
+                vr_log_msgderro := 'Lancamento ja existe! Lote: '|| rw_craplot_rvt.nrdolote
+                              || ', Doc.: ' || vr_aux_nrdocmto;
+            END IF;
+            -- Cria registro das movimentacoes no SPB
+            pc_cria_gnmvcen(pr_cdagenci => rw_crapcop_mensag.cdagectl
+                           ,pr_dtmvtolt => vr_aux_dtmvtolt
+                           ,pr_dsmensag => vr_aux_codMsg
+                           ,pr_dsdebcre => 'C'
+                           ,pr_vllanmto => vr_aux_VlrLanc
+                           ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              raise vr_exc_saida;
+            END IF;
+            -- Gerar LOG SPB
+            pc_gera_log_SPB(pr_tipodlog  => vr_tipolog
+                           ,pr_msgderro  => vr_log_msgderro);
+
+            -- Salvar o arquivo
+              --pc_salva_arquivo;
+
+            -- Retornar a execução
+            RETURN;
+
+          ELSE
+          
+                -- Definir o Histórico de estorno de TEC
+                vr_aux_cdhistor := 2945;
+                vr_aux_cdpesqbb := vr_aux_CodDevTransf;
+              
+                -- Buscar o último NRSEQDIG para a CRAPLCM
+                OPEN  cr_lcm_nrseqdig(rw_crapcop_mensag.cdcooper -- pr_cdcooper
+                                     ,vr_aux_dtmvtolt            -- pr_dtmvtolt
+                                     ,rw_craplot_rvt.cdagenci    -- pr_cdagenci
+                                     ,rw_craplot_rvt.cdbccxlt    -- pr_cdbccxlt
+                                     ,rw_craplot_rvt.nrdolote);  -- pr_nrdolote
+                FETCH cr_lcm_nrseqdig INTO vr_nrlcmdig;
+                CLOSE cr_lcm_nrseqdig;
+                 
+              -- Atualizar o NRSEQDIG da CRAPLCM
+              vr_nrlcmdig := nvl(vr_nrlcmdig,0) + 1;
+          
+              -- Gerar lançamento em conta
+              LANC0001.pc_gerar_lancamento_conta
+                            ( pr_cdcooper => rw_crapcop_mensag.cdcooper
+                             ,pr_dtmvtolt => vr_aux_dtmvtolt
+                             ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                             ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                             ,pr_nrdolote => rw_craplot_rvt.nrdolote
+                             ,pr_nrdconta => vr_aux_nrctacre
+                             ,pr_nrdctabb => vr_aux_nrctacre
+                             ,pr_nrdocmto => vr_aux_nrdocmto
+                             ,pr_cdhistor => vr_aux_cdhistor
+                             ,pr_nrseqdig => vr_nrlcmdig
+                             ,pr_cdpesqbb => vr_aux_cdpesqbb
+                             ,pr_vllanmto => vr_aux_VlrLanc
+                             ,pr_cdoperad => '1'
+                             ,pr_hrtransa => to_char(vr_glb_dataatual,'sssss')
+                             --> OUT <--
+                             ,pr_tab_retorno => vr_tab_retorno
+                             ,pr_incrineg => vr_incrineg           -- Indicador de crítica de negócio
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic);
+
+              IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                vr_dscritic := 'Erro ao inserir na tabela craplcm --> ' || vr_dscritic;
+                  -- Sair da rotina
+                  RAISE vr_exc_saida;
+              END IF;  
+              
+              -- Se possui registro de id de lançamento da folha de pagamento
+              IF rw_craptvl.nrridlfp > 0 THEN
+                -- Realizar a devolução dos valores ao empregador
+                PCPS0001.pc_estorno_rej_empregador(pr_nrridlfp => rw_craptvl.nrridlfp
+                                                  ,pr_nrdocmto => rw_craptvl.nrdocmto
+                                                  ,pr_dscritic => vr_dscritic);
+                
+                  -- Se retornou erro.. não deve tomar ação, pois o valor ficará disponivel ao cooperado 
+                IF TRIM(vr_dscritic) IS NOT NULL THEN
+                    vr_dscritic := NULL;
+                END IF;
+                  
+              END IF;
+              
+              --
+              -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+              -- Estornar a tarifa da TED, somente se for devolução/rejeição de TED gerada no Ailos
+              IF vr_aux_tagCABInfCCL
+              THEN
+                FOR r1 IN (SELECT *
+                             FROM craplat
+                            WHERE cdcooper = rw_crapcop_mensag.cdcooper
+                              AND nrdconta = vr_aux_nrctacre
+                              AND nrdocmto = vr_aux_nrdocmto)
+                LOOP
+                  --> Estornar lançamento de tarifa de TED da conta corrente do cooperado
+                  TARI0001.pc_estorno_baixa_tarifa (pr_cdcooper  => rw_crapcop_mensag.cdcooper  --> Codigo Cooperativa
+                                                   ,pr_cdagenci  => 1                           --> Codigo Agencia
+                                                   ,pr_nrdcaixa  => 1                           --> Numero do caixa
+                                                   ,pr_cdoperad  => '1'                         --> Codigo Operador
+                                                   ,pr_dtmvtolt  => vr_aux_dtmvtolt             --> Data Lancamento
+                                                   ,pr_nmdatela  => NULL                        --> Nome da tela
+                                                   ,pr_idorigem  => 1               -- AYLLOS   --> Indicador de origem
+                                                   ,pr_inproces  => 1                           --> Indicador processo
+                                                   ,pr_nrdconta  => vr_aux_nrctacre             --> Numero da Conta
+                                                   ,pr_cddopcap  => 1                           --> Codigo de opcao --> 1 - Estorno de tarifa --> 2 - Baixa de tarifa
+                                                   ,pr_lscdlant  => r1.cdlantar                 --> Lista de lancamentos de tarifa(delimitador ;)
+                                                   ,pr_lscdmote  => ''                          --> Lista de motivos de estorno (delimitador ;)
+                                                   ,pr_flgerlog  => 'S'                         --> Indicador se deve gerar log (S-sim N-Nao)
+                                                   ,pr_cdcritic  => vr_cdcritic                 --> Codigo Critica
+                                                   ,pr_dscritic  => vr_dscritic);               --> Descricao Critica
+                  IF nvl(vr_cdcritic,0) > 0 OR
+                     TRIM(vr_dscritic) IS NOT NULL THEN
+                    RAISE vr_exc_saida;
+                  END IF;
+                END LOOP;
+              END IF;
+              -- Fim Projeto 475
+              --
+              -- Conforme cabine
+              IF vr_aux_tagCABInf THEN
+                vr_aux_CodMsg := 'MSGREJ';
+              END IF;
+              -- Cria registro das movimentacoes no SPB
+              pc_cria_gnmvcen(pr_cdagenci => rw_crapcop_mensag.cdagectl
+                             ,pr_dtmvtolt => vr_aux_dtmvtolt
+                             ,pr_dsmensag => vr_aux_codMsg
+                             ,pr_dsdebcre => 'C'
+                             ,pr_vllanmto => vr_aux_VlrLanc
+                             ,pr_dscritic => vr_dscritic);
+              IF vr_dscritic IS NOT NULL THEN
+                raise vr_exc_saida;
+              END IF;
+            END IF;
+            END IF;
+          END IF;
+        END IF;
+        
         -- Se houve critica
         IF vr_dscritic IS NOT NULL THEN
           -- Se nao veio da Cabine
@@ -9090,23 +9380,75 @@ END pc_trata_arquivo_cir0060;
           -- devolucao(STR0010/PAG0111) geradas pelo Legado,
           -- sendo assim, apenas logamos o recebimento da R1
           IF vr_aux_CodMsg NOT IN ('STR0010R1','PAG0111R1') THEN
-            -- TED
-            IF SUBSTR(vr_aux_NumCtrlIF,1,1) = '1'  THEN
+            
+            -- Renato Darosci - Supero - Projeto 485
+            -- Alterar a lógica para tratar TED e TEC tanto pela tabela CRAPLCS como pela tabela CRAPLCM  
+          
+            -- TED / TEC
+            IF SUBSTR(vr_aux_NumCtrlIF,1,1) IN ('1','2')  THEN
+              -- Identificador de onde o registro foi encontrado
+              vr_aux_idregtvl := FALSE;
+              vr_aux_idreglcs := FALSE;
+            
+              -- Marcelo Telles Coelho - Projeto 475
+              -- Passar a tratar somente situações da R1 que são Efetivação/Aprovação
+              -- -- Se veio mensagem de Cancelado ou Rejeitado
+              -- IF vr_aux_SitLanc IN('5','9','14','15') THEN
+              --   -- Gera LOG SPB
+              --   pc_gera_log_SPB(pr_tipodlog  => 'ENVIADA NAO OK'
+              --                  ,pr_msgderro  => 'Situacao Lancamento: '||vr_aux_SitLanc);
+              --   -- Salvar o arquivo
+              --   pc_salva_arquivo;
+              --   -- Processo finalizado
+              --   RAISE vr_exc_next;
+              -- ELSE
               IF vr_aux_SitLanc IN('1'   -- Efetivado
                                   ,'2'   -- Efetivado - Contingência/STR Web
                                   ,'3'   -- Efetivado - Otimização
                                   ,'COM' -- Aprovado
                                   ) THEN
+                              
                 -- Buscar o registro da TVL a ser atualizado
                 OPEN cr_craptvl(rw_crapcop_mensag.cdcooper,vr_aux_NumCtrlIF);
-                FETCH cr_craptvl
-                 INTO rw_craptvl;
-                -- Se não encontrou
+                FETCH cr_craptvl INTO rw_craptvl;
+
+                -- Se não encontrou, deve buscar na CRAPLCS
                 IF cr_craptvl%NOTFOUND THEN
+                  -- Fechar o cursor
                   CLOSE cr_craptvl;
-                  vr_dscritic := 'Numero de Controle invalido';
+                          
+                  -- Indicar que o registro não foi encontrado na CRAPTVL
+                  vr_aux_idregtvl := FALSE;
+                          
+                  -- Buscar registro transferência
+                  OPEN  cr_craplcs(pr_cdcooper => rw_crapcop_mensag.cdcooper
+                                  ,pr_idopetrf => vr_aux_NumCtrlIF);
+                  FETCH cr_craplcs INTO rw_craplcs;
+                
+                  -- Se encontrar
+                  IF cr_craplcs%NOTFOUND THEN
+                    -- Não encontrou
+                    vr_aux_idreglcs := FALSE;
                 ELSE
+                    -- Indicar que o registro foi encontrado na LCS
+                    vr_aux_idreglcs := TRUE;
+                  END IF;
+                  
+                  -- Fechar o cursor
+                  CLOSE cr_craplcs;
+                  
+                ELSE
+                  -- Fechar o cursor 
                   CLOSE cr_craptvl;
+                  
+                  -- Indicar que o registro foi encontrado na TVL
+                  vr_aux_idregtvl := TRUE;
+                  vr_aux_idreglcs := FALSE;
+                END IF;
+                
+                -- Se encontrou registro na CRAPTVL
+                IF vr_aux_idregtvl THEN
+                
                   -- Verificar se tabela esta lockada
                   IF fn_verifica_tab_em_uso(pr_sig_tabela => 'TVL'
                                            ,pr_rowid => rw_craptvl.rowid ) = 1 THEN
@@ -9120,6 +9462,7 @@ END pc_trata_arquivo_cir0060;
                     UPDATE craptvl
                        SET flgopfin = 1 -- True
                      WHERE ROWID = rw_craptvl.rowid;
+                    
                     -- Se nao atualizou nenhum registro
                     IF SQL%ROWCOUNT = 0 THEN
                       -- Gerar critica
@@ -9129,39 +9472,9 @@ END pc_trata_arquivo_cir0060;
                     WHEN OTHERS THEN
                       vr_dscritic := 'Erro ao atualizar registro craptvl --> '||sqlerrm;
                   END;
-                END IF;
-              ELSIF vr_aux_SitLanc IN('18'  -- Pendente por agendamento
-                                     ,'AGE' -- Agendado
-                                     ,'ENF' -- Pendente à Espera de Execução do Algoritmo Multilateral
-                                     ) THEN
-                NULL;
-              ELSE
-                -- Se veio mensagem de Cancelado ou Rejeitado
-                -- Gera LOG SPB
-                pc_gera_log_SPB(pr_tipodlog  => 'ENVIADA SPB NOK'
-                               ,pr_msgderro  => 'Retorno R1 não prevista - Situacao Lancamento: '||vr_aux_SitLanc);
-                -- Processo finalizado
-                RAISE vr_exc_next;
-              END IF;
-            -- TEC
-            ELSIF SUBSTR(vr_aux_NumCtrlIF,1,1) = '2'  THEN
-              IF vr_aux_SitLanc IN('1'   -- Efetivado
-                                  ,'2'   -- Efetivado - Contingência/STR Web
-                                  ,'3'   -- Efetivado - Otimização
-                                  ,'COM' -- Aprovado
-                                  ) THEN
-                -- Buscar registro transferência
-                OPEN cr_craplcs(pr_cdcooper => rw_crapcop_mensag.cdcooper
-                               ,pr_idopetrf => vr_aux_NumCtrlIF);
-                FETCH cr_craplcs
-                 INTO rw_craplcs;
-                -- Se encontrar
-                IF cr_craplcs%NOTFOUND THEN
-                  CLOSE cr_craplcs;
-                  -- Gerar critica
-                  vr_dscritic := 'Numero de Controle invalido';
-                ELSE
-                  CLOSE cr_craplcs;
+                  -- Fim Projeto 475
+                -- Se encontrou registro na CRAPLCS
+                ELSIF vr_aux_idreglcs THEN
 
                   -- Verificar se tabela esta lockada
                   IF fn_verifica_tab_em_uso(pr_sig_tabela => 'LCS'
@@ -9186,7 +9499,11 @@ END pc_trata_arquivo_cir0060;
                     WHEN OTHERS THEN
                       vr_dscritic := 'Erro ao atualizar registro craplcs --> '||sqlerrm;
                   END;
+                ELSE 
+                  -- Gerar critica
+                  vr_dscritic := 'Numero de Controle invalido';
                 END IF;
+                  
                 -- Se não deu erro e retornou Recid Folha IB
                 IF vr_dscritic IS NULL AND vr_aux_nrridflp <> 0 THEN
                   -- checar se a tabela nao esta em lock
