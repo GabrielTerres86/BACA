@@ -5415,15 +5415,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --  Alteração : 07/02/2018 - Alterado a prioridade de atualizacao das pessoas no cursor
     --                           cr_pessoa_atlz para olhar a CRAPJUR primeiro (Tiago/Andrino #843413) 
     --
-                    05/07/2018 - Para solucionar o problema do incidente INC0018017 foi necessário
-                                 a priorizar a atualização das pessoas no cursor para olhar a CRAPJFN
-                                 primeiro (Kelvin/Adrino).
-
-					11/04/2019 - Reiniciar variáveis de cursores, para que não tenha
-							     inconsistências de dados ao efetuar atualizações/exclusões
-							     nas tabelas do cadastro unificado. 
-								 Alcemir - Mouts (PRB0040624).
-					
+    --
+    --              05/07/2018 - Para solucionar o problema do incidente INC0018017 foi necessário
+    --                           a priorizar a atualização das pessoas no cursor para olhar a CRAPJFN
+    --                           primeiro (Kelvin/Adrino).
+	--
+	--				11/04/2019 - Reiniciar variáveis de cursores, para que não tenha
+	--						     inconsistências de dados ao efetuar atualizações/exclusões
+	--						     nas tabelas do cadastro unificado. 
+	--							 Alcemir - Mouts (PRB0040624).
+	--
+	--              07/05/2019 - Ajustado a ordem de priorização entre CRAPJUR e CRAPJFN
+	--                           INC0014506 (Jefferson - MoutS)
+	--
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -5440,7 +5444,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               )
        ORDER BY trunc(atl.dhatualiza,'MI'),
                 --> Ordenacao priorizando as tabelas ass e ttl
-                decode(atl.nmtabela,'CRAPJFN',0,'CRAPJUR',1,'CRAPASS',2,'CRAPTTL',3,4),
+                decode(atl.nmtabela,'CRAPJUR',0,'CRAPJFN',1,'CRAPASS',2,'CRAPTTL',3,4),
                 decode(atl.nmtabela,'CRAPCEM',atl.dschave,'CRAPTFC',atl.dschave,decode(substr(atl.dschave,1,1),'S',1,2)) ; 
 
     --> dados do conjuge
@@ -5781,7 +5785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_cdoperad    => 1                     --> Operador que esta efetuando a operacao
                               ,pr_dscritic    => vr_dscritic);         --> Retorno de Erro
 
-	    WHEN 'CRAPCEM' THEN
+				WHEN 'CRAPCEM' THEN
           
           rw_crapcem := NULL; -- reiniciar variável do cursor cr_crapcem;
           
@@ -5856,7 +5860,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
 
-	    WHEN 'CRAPEPA' THEN
+				WHEN 'CRAPEPA' THEN
           
           rw_crapepa := NULL; -- reiniciar variável do cursor cr_crapepa;
            
@@ -5892,7 +5896,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
 
-	    WHEN 'CRAPAVT' THEN
+				WHEN 'CRAPAVT' THEN
           
           rw_crapavt := NULL; -- reiniciar variavel do cursor cr_crapavt;
           
@@ -5933,7 +5937,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
                               ,pr_cdoperad => 1                        --> Operador que esta efetuando a operacao
                               ,pr_dscritic => vr_dscritic);            --> Retorno de Erro
 
-		WHEN 'CRAPCRL' THEN
+				WHEN 'CRAPCRL' THEN
           
           rw_crapcrl := NULL; -- reiniciar variavel do cursor cr_crapcrl;
           
@@ -6046,7 +6050,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 																			 ,pr_cdoperad => 1                            --> Operador que esta efetuando a operacao
 																			 ,pr_dscritic => vr_dscritic);                --> Retorno de Erro
 
-		WHEN 'CRAPTTL' THEN
+				WHEN 'CRAPTTL' THEN
           
           rw_crapttl := NULL; -- reiniciar variavel do cursor cr_crapttl;
         
@@ -6194,7 +6198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             END;
           END IF;
 
-		WHEN 'CRAPENC' THEN
+				WHEN 'CRAPENC' THEN
           
           rw_crapenc := NULL; -- reiniciar variavel do cursor cr_crapenc; 
           
@@ -6424,7 +6428,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
           END IF;
 
-	    WHEN 'CRAPJUR' THEN
+			  WHEN 'CRAPJUR' THEN
           
           rw_crapjur := NULL; -- reiniciar variavel do cursor cr_crapjur; 
           
@@ -6455,7 +6459,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 														  ,pr_cdoperad => 1                   --> Operador que esta efetuando a operacao
 														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
 
-		WHEN 'CRAPJFN' THEN
+			  WHEN 'CRAPJFN' THEN
           
           rw_crapjfn := NULL; -- reiniciar variavel do cursor cr_crapjur; 
           
@@ -6486,7 +6490,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 														  ,pr_cdoperad => 1                   --> Operador que esta efetuando a operacao
 														  ,pr_dscritic => vr_dscritic);       --> Retorno de Erro
 
-		WHEN 'CRAPOPI' THEN
+				WHEN 'CRAPOPI' THEN
           
           rw_atualiza_opi := NULL; -- reiniciar variavel do cursor cr_atualiza_opi; 
           rw_crapopi := NULL; -- reiniciar variavel do cursor cr_crapopi; 
@@ -6546,7 +6550,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 				-- Efetuar rollback
         ROLLBACK;
         vr_insit_atualiza := 3; --> Com erro
-
+        
         -- Insere na inconsistencia
         gene0005.pc_gera_inconsistencia(pr_cdcooper => nvl(rw_pessoa_atlz.cdcooper,3)
                                        ,pr_iddgrupo => 3 -- Erros de Script CRM
