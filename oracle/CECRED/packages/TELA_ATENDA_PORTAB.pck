@@ -2139,7 +2139,7 @@ PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numer
             ,crapnac.dsnacion as dsnacion
             ,gnetcvl.dsestcvl as dsestcvl
             ,tbcadast_pessoa_fisica_resp.idpessoa_resp_legal
-            ,crapage.nmresage as nmresage
+            ,crapage.nmextage as nmextage
             ,crapenc.dsendere as dsendere
             ,crapenc.nrendere as nrendere
             ,crapenc.nmbairro as nmbairro
@@ -2331,7 +2331,7 @@ PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numer
                          '<tit_nmcidade>' || nvl(trim(rw_crapass.nmcidade), ' ') ||'</tit_nmcidade>' ||  
                          '<tit_cdufende>' || nvl(trim(rw_crapass.cdufende), ' ') ||'</tit_cdufende>' ||  
                          '<tit_nrcepend>' || gene0002.fn_mask_cep(rw_crapass.nrcepend) ||'</tit_nrcepend>' ||  
-                         '<tit_nmresage>' || rw_crapass.nmresage ||'</tit_nmresage>' ||                          
+                         '<tit_nmresage>' || rw_crapass.nmextage ||'</tit_nmresage>' ||                          
                          '<ds_responsavel>' || vr_ds_responsavel ||'</ds_responsavel>' ||                            
                          '<emp_nmextemp>' || nvl(trim(rw_crapttl.nmextemp), ' ') ||'</emp_nmextemp>' ||  
                          '<emp_nrcpfemp>' || vr_nrcpfcgc_emp ||'</emp_nrcpfemp>' ||  
