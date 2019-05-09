@@ -2,7 +2,7 @@
 
    Programa: b1wgen0028tt.i                  
    Autor   : Guilherme
-   Data    : Marco/2008                        Ultima atualizacao: 20/04/2017
+   Data    : Marco/2008                        Ultima atualizacao: 09/05/2017
 
    Dados referentes ao programa:
 
@@ -77,6 +77,9 @@
 							(Adriano - P339).
                
 			   12/12/2018 - Adicionado campo flgprovi (Anderson-Alan Supero P432)
+			                 
+			   09/05/2019 - Incluido campo inupgrad da tabela crawcrd na temp-table 
+				            Alcemir Mouts (PRB0041641).
 ....................................................................................*/
 
 DEF TEMP-TABLE tt-lim_total NO-UNDO
@@ -147,7 +150,8 @@ DEF TEMP-TABLE tt-dados_cartao NO-UNDO
     FIELD dsdpagto AS CHAR
     FIELD dsgraupr AS CHAR
 	FIELD flgprovi AS INTE
-    FIELD nmempcrd LIKE crawcrd.nmempcrd.
+    FIELD nmempcrd LIKE crawcrd.nmempcrd
+	FIELD inupgrad LIKE crawcrd.inupgrad.
     
 DEF TEMP-TABLE tt-hab_cartao NO-UNDO
     FIELD nrcpfcgc LIKE crapass.nrcpfcgc

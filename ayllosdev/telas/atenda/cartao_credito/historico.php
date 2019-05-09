@@ -1,4 +1,14 @@
 <?
+
+	/*!
+	 * FONTE        : historico.php
+	 * AUTOR        : David
+	 * DATA CRIAÇÃO : 29/10/2010 
+	 * OBJETIVO     : Listar historico da proposta
+	 * 001: [09/05/2019] Alcemir (Mouts) : incluido na validação para mostrar os botões "Reenviar proposta" e "Solicitar Retorno". 
+	 */
+
+
 session_start();
 require_once('../../../includes/config.php');
 require_once('../../../includes/funcoes.php');
@@ -8,6 +18,7 @@ isPostMethod();
 $nrdconta = $_POST["nrdconta"];
 $nrctrcrd = $_POST["nrctrcrd"];
 $sitcrd = strtolower($_POST['dssituac']);
+$inupgrad = $_POST["inupgrad"];
 
 
 $lista = array();
@@ -148,7 +159,7 @@ function getDecisao($nrdconta, $nrctrcrd, $glbvars){
 									
 									<a href="#" onclick="consultaCartao();"  class="botao" id="btVoltar">Voltar</a>
 									
-									<?if(($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
+									<?if((($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
 										 ($sitcrd==strtolower("Solic.") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
 										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov.")) && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
 										 ((($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov.")) || $sitcrd==strtolower("Aprov.")) && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
@@ -156,21 +167,21 @@ function getDecisao($nrdconta, $nrctrcrd, $glbvars){
 										 ($sitcrd==strtolower("Solic.") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
 										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
 										 ($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
-										 ($sitcrd==strtolower("Solic.") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ){ ?> 
+										 ($sitcrd==strtolower("Solic.") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual"))) && $inupgrad == 0 ){ ?> 
 									<a 	href="#" 
 										onclick="showConfirmacao('Deseja reenviar a proposta?', 'Confirma&ccedil;&atilde;o - Aimaro', 'reenviarBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   																			
 										class="botao" 
 										id="btRenviar">Reenviar Proposta</a>
 									<?}?>
 									
-									<?if(($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
+									<?if((($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
 										 ($sitcrd==strtolower("Solic.") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
 										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
 										 ($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
 										 ($sitcrd==strtolower("Solic.") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
 										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
 										 ($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
-										 ($sitcrd==strtolower("Solic.") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ){ ?> 
+										 ($sitcrd==strtolower("Solic.") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual"))) && $inupgrad == 0 ){ ?> 
 									<a href="#" 
 										onclick="showConfirmacao('Deseja solicitar o retorno do Bancoob?', 'Confirma&ccedil;&atilde;o - Aimaro', 'verificaRetornoBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   
 									   class="botao" 

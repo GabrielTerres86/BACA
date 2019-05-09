@@ -69,6 +69,7 @@
  * 048: [22/08/2018] Ranghetti     (AILOS)  : Habilitar botao de impressao para cartoes BB - INC0022408.
  * 049: [12/12/2018] Anderson-Alan (SUPERO) : Criado funções para controle do novo formulário de Assinatura Eletronica com Senha do TA ou Internet. (P432)
  * 050: [26/02/2019] Lucas Henrique (SUPERO): P429 - Inseridos campos de 'Detalhes de Cartões de Crédito Informações do endereço do cooperado'
+ * 051: [09/05/2019] Alcemir (Mouts)        : Incluido var inupgrad para passar por requisição (PRB0041641).
 */
 
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -6111,7 +6112,8 @@ function mostraHisLimite() {
 
 function carregaHistorico(type,contrato) {
     showMsgAguardo("Aguarde, carregando hist&oacute;rico ...");
-	var sitcrd = $("#dssituac").val();
+    var sitcrd = $("#dssituac").val();
+    var inupgrad = $("#inupgrad").val();
     $.ajax({
         type: "POST",
         dataType: "html",
@@ -6120,6 +6122,7 @@ function carregaHistorico(type,contrato) {
             nrcrcard: nrcrcard,
             nrdconta: nrdconta,
             nrctrcrd: contrato,
+            inupgrad: inupgrad,
             type: type,
 			dssituac : sitcrd
         },
