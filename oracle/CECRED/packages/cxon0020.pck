@@ -1351,7 +1351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 28/08/2018
+      Data     : Junho/2015.                   Ultima atualizacao: 08/05/2019
 
       Dados referentes ao programa:
 
@@ -1398,6 +1398,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   24/08/2018 - Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE - TIAGO)                 
                   
                   28/08/2018 - Tratamento de exceção pra chamada AFRA0004.pc_monitora_operacao (Tiago - RITM0025395)
+
+				  08/05/2019 - Tratamento para travar envio de 2 TEDs simultaneamente, ocorre erro na validacao do saldo
+                               do deposito a vista - (Jose Gracik/Mouts - RITM0012961)
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
@@ -1458,6 +1461,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND craptvl.vldocrcb = pr_vldocmto;
     rw_craptvl_max cr_craptvl_max%ROWTYPE;
 
+	/* Validar dep. a vista em transferencias sequencias */
+    CURSOR cr_craptvl2_max(pr_cdcooper craptvl.cdcooper%TYPE,
+                           pr_dtmvtocd craptvl.dtmvtocd%TYPE,
+                           pr_nrdconta craptvl.nrdconta%TYPE) IS
+      SELECT MAX(hrtransa) hrtransa
+        FROM craptvl
+       WHERE craptvl.cdcooper = pr_cdcooper
+         AND craptvl.dtmvtolt = pr_dtmvtocd
+         AND craptvl.tpdoctrf = 3
+         AND craptvl.nrdconta = pr_nrdconta;
+    rw_craptvl2_max cr_craptvl2_max%ROWTYPE;
 
     -- Buscar dados historico
     CURSOR cr_craphis (pr_cdcooper craphis.cdcooper%TYPE,
@@ -1886,6 +1900,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       END IF;
       CLOSE cr_craptvl_max;
 
+    ELSE
+	
+      /* Controle para envio de 2 TEDs da mesma conta ao mesmo tempo sem validar o saldo do dep. a vista */
+      OPEN cr_craptvl2_max( pr_cdcooper => rw_crapcop.cdcooper,
+                            pr_dtmvtocd => rw_crapdat.dtmvtocd,
+                            pr_nrdconta => pr_nrdconta);
+      FETCH cr_craptvl2_max INTO rw_craptvl2_max;
+
+      -- se ja existe um lançamento com os mesmos dados em menos de 30 segundos (30 seg) apresentar alerta
+      IF cr_craptvl2_max%FOUND AND
+        (to_char(SYSDATE,'SSSSS') - nvl(rw_craptvl2_max.hrtransa,0)) <= 30 THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Ja existe TED em processamento. ' ||
+                       'Consulte extrato ou tente novamente em 30 segundos.';
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_craptvl2_max;	
     END IF;
 
 	--Bacenjud - SM 1
