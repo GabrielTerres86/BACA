@@ -1462,7 +1462,7 @@ PROCEDURE Valida_Dados_Altera:
                /* Mudando para Conta Integracao */
                IF  aux_inctaitg = 1  THEN
                    DO:
-				   
+                                     
                       /* Nao pode mudar pra CI pois nao existe a agencia do
                          do BB cadastrado na cadcop */
                       IF  crapcop.cdagedbb = 0 THEN
@@ -1564,6 +1564,29 @@ PROCEDURE Valida_Dados_Altera:
                */
                
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                RUN STORED-PROCEDURE pc_valida_conta_salario
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdcooper, /* Cooperativa */
+                                                     INPUT crapass.nrdconta, /* Número da conta */
+                                                     OUTPUT ""). /* Descriçao da crítica */
+
+                CLOSE STORED-PROC pc_valida_conta_salario
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                    
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_dscritic = pc_valida_conta_salario.pr_dscritic
+                  WHEN pc_valida_conta_salario.pr_dscritic <> ?.
+
+                IF aux_dscritic <> ""  THEN
+                  DO:
+                     ASSIGN par_dscritic = aux_dscritic
+                        par_nmdcampo = "cdtipcta".
+                    
+                    LEAVE ValidaAltera.
+                  END.
+                  
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }                  
                
                RUN STORED-PROCEDURE pc_permite_produto_tipo
                aux_handproc = PROC-HANDLE NO-ERROR (INPUT 13,               /* Codigo do produto */
@@ -3228,8 +3251,8 @@ PROCEDURE Grava_Dados_Altera:
     DEF  INPUT PARAM par_indserma AS LOG                            NO-UNDO.
 	DEF  INPUT PARAM par_idastcjt AS INTE							NO-UNDO.
     DEF  INPUT PARAM par_cdcatego AS INTE							NO-UNDO.
-	DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM aux_dsorigem AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM aux_dsorigem AS CHAR                           NO-UNDO.
 
   	DEF PARAM BUFFER crabass FOR crapass.
 
@@ -3243,6 +3266,7 @@ PROCEDURE Grava_Dados_Altera:
     DEF VAR aux_cdtipcta_ant AS INTE                                NO-UNDO.
     DEF VAR aux_cdsitdct_ant AS INTE                                NO-UNDO.
     DEF VAR aux_cdcatego_ant AS INTE                                NO-UNDO.
+    DEF VAR aux_cdtarifa_salario AS INTE                            NO-UNDO.
 
     DEF BUFFER crabttl FOR crapttl.
     DEF BUFFER brapttl FOR crapttl.
@@ -3327,6 +3351,107 @@ PROCEDURE Grava_Dados_Altera:
           END.
         
         END.
+
+        /* Caso foi alterado o tipo de conta e a novo tipo 
+           for da modalidade salario, devemos atribuir o 
+           pacote de tarifas parametrizado, exceto se já houver
+           um pacote vigente. */        
+        IF par_cdtipcta <> crabass.cdtipcta  AND aux_cdmodali = 2 THEN
+          DO:
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              RUN STORED-PROCEDURE pc_incluir_pacote_salario
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                                   INPUT par_nrdconta, /* Nr da conta */
+                                                   INPUT par_cdoperad, /* Operador */
+                                                  OUTPUT "",           /* Flag Erro */
+                                                  OUTPUT "").          /* Descriçao da crítica */
+
+              CLOSE STORED-PROC pc_incluir_pacote_salario
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_des_erro = ""
+                     aux_dscritic = ""
+                     aux_des_erro = pc_incluir_pacote_salario.pr_des_erro 
+                                    WHEN pc_incluir_pacote_salario.pr_des_erro <> ?
+                     aux_dscritic = pc_incluir_pacote_salario.pr_dscritic
+                                    WHEN pc_incluir_pacote_salario.pr_dscritic <> ?.
+
+              IF aux_des_erro = "NOK"  THEN
+                  DO:
+                      ASSIGN par_dscritic = aux_dscritic.
+                      UNDO GravaAltera, LEAVE GravaAltera.
+
+                  END.
+
+              /* Mantem apenas as pendencias de identificaçao e endereco */
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              RUN STORED-PROCEDURE pc_remove_digidoc_salario
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                                   INPUT par_nrdconta, /* Nr da conta */
+                                                   INPUT par_cdoperad, /* Operador */
+                                                  OUTPUT "",           /* Flag Erro */
+                                                  OUTPUT "").          /* Descriçao da crítica */
+
+              CLOSE STORED-PROC pc_remove_digidoc_salario
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_des_erro = ""
+                     aux_dscritic = ""
+                     aux_des_erro = pc_remove_digidoc_salario.pr_des_erro 
+                                    WHEN pc_remove_digidoc_salario.pr_des_erro <> ?
+                     aux_dscritic = pc_remove_digidoc_salario.pr_dscritic
+                                    WHEN pc_remove_digidoc_salario.pr_dscritic <> ?.
+
+              IF aux_des_erro = "NOK"  THEN
+                  DO:
+                      ASSIGN par_dscritic = aux_dscritic.
+                      UNDO GravaAltera, LEAVE GravaAltera.
+
+                  END.
+                  
+                  
+            
+          END.
+          
+        /* Caso foi alterado o tipo de conta e a novo tipo 
+           for diferente da modalidade salario, devemos desativar o 
+           pacote de tarifas vigente referentes a conta salario. */        
+        IF par_cdtipcta <> crabass.cdtipcta  AND aux_cdmodali <> 2 THEN
+          DO:
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              RUN STORED-PROCEDURE pc_desativar_pacote_salario
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                                   INPUT par_nrdconta, /* Nr da conta */
+                                                   INPUT par_cdoperad, /* Operador */
+                                                  OUTPUT "",           /* Flag Erro */
+                                                  OUTPUT "").          /* Descriçao da crítica */
+
+              CLOSE STORED-PROC pc_desativar_pacote_salario
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_des_erro = ""
+                     aux_dscritic = ""
+                     aux_des_erro = pc_desativar_pacote_salario.pr_des_erro 
+                                    WHEN pc_desativar_pacote_salario.pr_des_erro <> ?
+                     aux_dscritic = pc_desativar_pacote_salario.pr_dscritic
+                                    WHEN pc_desativar_pacote_salario.pr_dscritic <> ?.
+
+              IF aux_des_erro = "NOK"  THEN
+                  DO:
+                      ASSIGN par_dscritic = aux_dscritic.
+                      UNDO GravaAltera, LEAVE GravaAltera.
+
+                  END.
+          END.
 
         /* Se estiver alterando o tipo de conta ou estiver cadastrando ... */
         IF par_cdtipcta <> crabass.cdtipcta   OR
@@ -5943,6 +6068,7 @@ PROCEDURE Critica_Cadastro_Pf:
     /*DEF VAR aux_flgnrcto AS LOG                                     NO-UNDO.*/
     DEF VAR aux_nrdeanos AS INTE                                    NO-UNDO.
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_cdmodali AS INTE                                    NO-UNDO.
 
     DEF BUFFER craxttl FOR crapttl.
     DEF BUFFER crabenc FOR crapenc.
@@ -5964,6 +6090,36 @@ PROCEDURE Critica_Cadastro_Pf:
     ASSIGN aux_returnvl = "NOK".
 
     CriticaPf: DO ON ERROR UNDO CriticaPf, LEAVE CriticaPf:
+
+        /* P485 - Validaçao para conta salário */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_busca_modalidade_conta aux_handproc = PROC-HANDLE NO-ERROR
+                      (INPUT  par_cdcooper 
+                      ,INPUT  par_nrdconta 
+                      ,OUTPUT 0
+                      ,OUTPUT ""
+                      ,OUTPUT "").
+                             
+
+        CLOSE STORED-PROC pc_busca_modalidade_conta aux_statproc = PROC-STATUS 
+             WHERE PROC-HANDLE = aux_handproc.
+        
+        ASSIGN aux_dscritic = ""
+               aux_cdmodali = 0
+               aux_dscritic = pc_busca_modalidade_conta.pr_dscritic 
+                              WHEN pc_busca_modalidade_conta.pr_dscritic <> ?
+               aux_cdmodali = pc_busca_modalidade_conta.pr_cdmodalidade_tipo 
+                              WHEN pc_busca_modalidade_conta.pr_cdmodalidade_tipo <> ?.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* Se retornou crítica */
+        IF  aux_dscritic <> "" THEN
+          DO:
+               LEAVE CriticaPf.
+          END.
+        /* P485 - Validaçao para conta salário */
 
         FOR EACH craxttl FIELDS(cdcooper idseqttl nrdconta nmextttl nrcpfcgc 
                                 dtcnscpf cdsitcpf tpdocttl nrdocttl idorgexp 
@@ -6085,11 +6241,15 @@ PROCEDURE Critica_Cadastro_Pf:
                       INPUT "Estado Civil", 
                       INPUT {&TT-IDENT} ).
 
+            /* Se a modalidade for 2 entao é conta salário */
+            IF aux_cdmodali <> 2 THEN
+              DO:
             IF  craxttl.grescola = 0 THEN
                 RUN Trata_Critica
                     ( INPUT craxttl.idseqttl,
                       INPUT "Escolaridade", 
                       INPUT {&TT-IDENT} ).
+              END.
 
             IF  craxttl.nmtalttl = "" THEN
                 RUN Trata_Critica

@@ -8,7 +8,7 @@
   |   busca_dados                            |	EMPR0002.pc_busca_dados_cpa           |
   |   valida_dados                            |	EMPR0002.pc_valid_dados_cpa           |
   +------------------------------------------+----------------------------------------+
-   
+
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
 
@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 08/01/2019
+    Data      : Julho/2014                Ultima Atualizacao: 22/02/2019
     
     Dados referentes ao programa:
 
@@ -107,7 +107,7 @@
 									   
                 21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                              grava-proposta-completa. PRJ402 - Integracao CDC
-                             (Reinert)						                  
+                             (Reinert)                                                                  
                 
                 12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
                 
@@ -116,13 +116,15 @@
                              faixa de valor (rotina grava_dados_conta) (Carlos)
 
 				28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
-        
+                
                 13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
 
                 20/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
                 
                 08/01/2019 - Ajuste da taxa mensal na impressao do contrato 
                              INC0028548 (Douglas Pagel / AMcom).
+
+				22/02/2019 - P485. Validaçao de conta salário na exibiçao do banner Pré Aprovado no TAA. (Augusto/Supero)
                 
 ..............................................................................*/
 
@@ -1673,7 +1675,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                                                 ,INPUT par_nrdconta
                                                 ,INPUT par_nrctremp
                                                 ,INPUT par_dtmvtolt
-                                                ,INPUT crapass.inpessoa
+                                                ,INPUT crapass.inpessoa                                                
                                                 ,INPUT par_cdlcremp
                                                 ,INPUT crawepr.cdfinemp
                                                 ,INPUT crawepr.qtpreemp
@@ -2143,14 +2145,14 @@ PROCEDURE calcula_parcelas_emprestimo:
            ASSIGN aux_cdcritic = 0
                   aux_dscritic = "Parametros pre-aprovado nao cadastrado".
         
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-            RETURN "NOK".
-        END.
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1,
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+           RETURN "NOK".
+       END.
 
     /* Buscar pre-aprovado da conta */
     FOR crapcpa FIELDS(vlcalpar cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
@@ -2374,7 +2376,7 @@ PROCEDURE calcula_taxa_emprestimo:
                                       OUTPUT aux_dtvigenc,
                                       OUTPUT aux_cdfvlcop,
                                       OUTPUT TABLE tt-erro).
-                                      
+
     
     IF RETURN-VALUE <> "OK"  THEN
        DO:
@@ -2385,8 +2387,8 @@ PROCEDURE calcula_taxa_emprestimo:
          IF VALID-HANDLE(h-b1wgen0153) THEN
             DELETE PROCEDURE h-b1wgen0153.
         
-         RETURN "NOK".
-       
+       RETURN "NOK".
+    
        END.
     
     /* Busca a tarifa especial */
@@ -2414,8 +2416,8 @@ PROCEDURE calcula_taxa_emprestimo:
          IF VALID-HANDLE(h-b1wgen0153) THEN
             DELETE PROCEDURE h-b1wgen0153.
         
-         RETURN "NOK".
-       
+       RETURN "NOK".
+    
        END.
     
     /* Valor da tarifa */
@@ -2448,7 +2450,7 @@ PROCEDURE calcula_taxa_emprestimo:
                                           OUTPUT par_percetop,
                                           OUTPUT aux_txcetmes,
                                           OUTPUT TABLE tt-erro).
-                                          
+
     IF RETURN-VALUE <> "OK"  THEN
        DO:
      
@@ -2458,8 +2460,8 @@ PROCEDURE calcula_taxa_emprestimo:
          IF VALID-HANDLE(h-b1wgen0153) THEN
             DELETE PROCEDURE h-b1wgen0153.
         
-         RETURN "NOK".
-       
+       RETURN "NOK".
+
        END.
 
     /* Calcula o IOF */
@@ -2481,7 +2483,7 @@ PROCEDURE calcula_taxa_emprestimo:
                      OUTPUT par_vltaxiof,
                      OUTPUT par_vltariof,
                      OUTPUT TABLE tt-erro).
-                     
+    
     IF RETURN-VALUE <> "OK"  THEN
        DO:
      
@@ -2491,8 +2493,8 @@ PROCEDURE calcula_taxa_emprestimo:
          IF VALID-HANDLE(h-b1wgen0153) THEN
             DELETE PROCEDURE h-b1wgen0153.
         
-         RETURN "NOK".
-       
+       RETURN "NOK".
+
        END.
 
     ASSIGN par_vlliquid = par_vlemprst - par_vlrtarif - par_vltariof.
@@ -3235,11 +3237,54 @@ PROCEDURE verifica_mostra_banner_taa:
     DEF VAR aux_ponteiro AS INTE                                    NO-UNDO.
     DEF VAR aux_dtmvtolt AS CHAR                                    NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdmodali AS INTE                                    NO-UNDO.
 
     ASSIGN par_flgdobnr = TRUE
            aux_dtmvtolt = STRING(DAY(par_dtmvtolt), "99")      + "/" +
                           STRING(MONTH(par_dtmvtolt), "99")    + "/" +
                           STRING(YEAR(par_dtmvtolt), "9999").
+
+    
+    /* P485 - Validaçao para conta salário */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_busca_modalidade_conta aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT  par_cdcooper 
+                  ,INPUT  par_nrdconta 
+                  ,OUTPUT 0
+                  ,OUTPUT ""
+                  ,OUTPUT "").
+                         
+
+    CLOSE STORED-PROC pc_busca_modalidade_conta aux_statproc = PROC-STATUS 
+         WHERE PROC-HANDLE = aux_handproc.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdmodali = 0
+           aux_dscritic = pc_busca_modalidade_conta.pr_dscritic 
+                          WHEN pc_busca_modalidade_conta.pr_dscritic <> ?
+           aux_cdmodali = pc_busca_modalidade_conta.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade_conta.pr_cdmodalidade_tipo <> ?.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    /* Se retornou crítica */
+    IF  aux_dscritic <> "" THEN
+      DO:
+           RETURN "NOK".
+      END.
+    
+    /* Se a modalidade for 2 entao é conta salário */
+    IF aux_cdmodali = 2 THEN
+      DO:
+        par_flgdobnr = FALSE.
+        RETURN "OK".
+      END.
+    
+    /* P485 - Validaçao para conta salário */    
+    
+    
+    
 
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     

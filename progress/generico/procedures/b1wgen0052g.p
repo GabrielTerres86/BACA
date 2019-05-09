@@ -189,7 +189,7 @@
                              PRJ366 (Lombardi).		
 
 				13/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)	
-				
+
 				06/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
                              corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
 .............................................................................*/
@@ -303,9 +303,10 @@ PROCEDURE Grava_Dados :
     DEF  INPUT PARAM TABLE FOR tt-bens.
 
     DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.	
 	
-	DEF  INPUT PARAM par_nmsocial AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmsocial AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_flgctsal AS LOGI                           NO-UNDO.
 	
     DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
@@ -419,8 +420,9 @@ PROCEDURE Grava_Dados :
                              INPUT par_hrinicad,
                              INPUT par_idorigee,
                              INPUT par_nrlicamb,
-							 INPUT par_nmsocial,
+                             INPUT par_nmsocial,
                              INPUT par_cdempres,
+						     INPUT par_flgctsal,
                             OUTPUT par_rowidass,
                             OUTPUT aux_rowidttl,               
                             OUTPUT aux_rowidjur,
@@ -4260,8 +4262,9 @@ PROCEDURE Inclui PRIVATE :
     DEF  INPUT PARAM par_hrinicad AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
-	DEF  INPUT PARAM par_nmsocial AS CHAR                           NO-UNDO. 
+    DEF  INPUT PARAM par_nmsocial AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdempres AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgctsal AS LOGI                           NO-UNDO.
 
     DEF OUTPUT PARAM par_rowidass AS ROWID                          NO-UNDO.
     DEF OUTPUT PARAM par_rowidttl AS ROWID                          NO-UNDO.
@@ -4369,7 +4372,12 @@ PROCEDURE Inclui PRIVATE :
 
 
                    IF par_inpessoa = 1 THEN
-                       aux_cdpartar = 54.  /* TIPO DE CONTA INICIAL PF */
+                      DO:
+                        IF par_flgctsal = YES THEN
+                          aux_cdpartar = 71.  /* TIPO DE CONTA INICIAL PF SALARIO */
+                        ELSE
+                          aux_cdpartar = 54.  /* TIPO DE CONTA INICIAL PF */
+                      END.
                    ELSE
                        aux_cdpartar = 55.  /* TIPO DE CONTA INICIAL PJ */
                        
