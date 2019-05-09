@@ -87,6 +87,39 @@
 	if (strtoupper($xmlObjFiliacao->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	
 	$infAdicionais = $xmlObjFiliacao->roottag->tags[0]->tags[0]->tags;
+
+
+	//------------
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars['cdcooper']."</cdcooper>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResultModalidade = mensageria($xml, "ATENDA", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjModalidade = getObjectXML($xmlResultModalidade);
+
+	if (strtoupper($xmlObjModalidade->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObjModalidade->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		if ($msgErro == "") {
+			$msgErro = $xmlObjModalidade->roottag->tags[0]->cdata;
+		}
+		exibeErro($msgErro);
+	}
+	$modalidade = $xmlObjModalidade->roottag->tags[0]->cdata;
+	//------------
+	$nrinfcad = 0;
+	$nrpatlvr = 0;
+	if (!empty($infAdicionais)) {
+		$nrinfcad = getByTagName($infAdicionais,'nrinfcad');
+		$nrpatlvr = getByTagName($infAdicionais,'nrpatlvr');
+	}
+	// Se for conta salário e for inclusão
+	if ($flgcadas == 'M' && $modalidade == 2) {
+		$nrinfcad = 1;
+		$nrpatlvr = 1;
+	}
 	
 	$textareaTags = $xmlObjFiliacao->roottag->tags[0]->tags[0]->tags[3]->tags;
 	

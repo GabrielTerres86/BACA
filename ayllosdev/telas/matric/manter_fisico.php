@@ -40,6 +40,7 @@
 	$tpdocptl = (isset($_POST['tpdocptl'])) ? $_POST['tpdocptl'] : '' ;
 	$nrdocptl = (isset($_POST['nrdocptl'])) ? $_POST['nrdocptl'] : '' ;
 	$cdoedptl = (isset($_POST['cdoedptl'])) ? $_POST['cdoedptl'] : '' ;
+	$flgctsal = (isset($_POST['flgctsal'])) ? $_POST['flgctsal'] : false ;
 	$cdufdptl = (isset($_POST['cdufdptl'])) ? $_POST['cdufdptl'] : '' ;
 	$dtemdptl = (isset($_POST['dtemdptl'])) ? $_POST['dtemdptl'] : '' ;
 	$tpnacion = (isset($_POST['tpnacion'])) ? $_POST['tpnacion'] : '' ;

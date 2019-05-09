@@ -167,7 +167,7 @@
 			
 			// Se ocorrer um erro, mostra crítica
 			if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") { 
-				exibirErro('inform','Conta n&atilde;o permite empr&eacute;stimo. Permitido apenas inclus&atilde;o de propostas de CDC e linhas 100, 800, 900 e 6901.','Alerta - Aimaro',"bloqueiaFundo(divRotina);",true);
+				exibirErro('inform','Conta n&atilde;o permite empr&eacute;stimo. Permitido apenas inclus&atilde;o de propostas de CDC, empr&eacute;stimo consignado e linhas 100, 800, 900 e 6901.','Alerta - Aimaro',"bloqueiaFundo(divRotina);",true);
 			}
 		}
 		

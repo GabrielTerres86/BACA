@@ -13,6 +13,8 @@
  *                25/04/2018 - Adicionado nova opcao de impresssao Declaracao de FATCA/CRS
  *							   PRJ 414 (Mateus Z - Mouts)
  *				  16/01/2019 - Adicionado chamada para o relatorio Ficha-Proposta (Cássia de Oliveira - GFT)
+ *
+ *				  16/01/2019 - Adicionado novo relatorio de Termo de Abertura de Conta Salario - P485 (Lucas Schneider - Supero)
  */	 
 ?>
 
@@ -78,6 +80,47 @@
 	$impchave = $GLOBALS['tprelato'].$nrdconta.$idseqttl;
 	setcookie('impchave', $impchave, time()+60 );
 	
+	
+	// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
+	$xml .= "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$cdcooper."</cdcooper>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	// craprdr / crapaca 
+	$xmlResult = mensageria($xml, "ATENDA", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	// Se ocorrer um erro, mostra crítica
+	if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
+		exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	}
+
+	//Obtem o tipo da conta do associado
+	$cdtipoconta = $xmlObjeto->roottag->tags[0]->cdata;	
+	 
+	if($cdtipoconta == '2'){ //2 - Conta tipo Salario
+		
+		// craprdr / crapaca 
+		$xmlResult = mensageria($xml, "CONTAS", "IMPRIME_TERMO_CONTA_SALARIO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjeto = getObjectXML($xmlResult);
+
+		// Se ocorrer um erro, mostra crítica
+		if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
+			exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
+		}
+
+		//Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+		$nmarqpdf = $xmlObjeto->roottag->cdata;
+
+		//Chama funções para mostrar PDF do impresso gerado no browser	 
+		visualizaPDF($nmarqpdf);	
+
+	
+	} else {		
+		
 	// Monta o xml de requisição
 	$xmlSetPesquisa  = "";
 	$xmlSetPesquisa .= "<Root>";
@@ -136,6 +179,9 @@
 	$dompdf->render();
 	$dompdf->stream('impressoes_'.$impchave.'.pdf', $opcoes );
 	}
-	// Fim - Ficha-proposta - Cásssia de Oliveira (GFT)
+	
 		
+	}	// Fim - Ficha-proposta - Cásssia de Oliveira (GFT)
+
+	
 ?>
