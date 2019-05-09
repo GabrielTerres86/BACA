@@ -46,15 +46,7 @@ function formatarCamposDemoLimiteCredito(){
     }
 
     $('#demoQtdiavig','#'+nomeForm).desabilitaCampo();
-    switch(aux_opcaoAtiva){
-        case 'CONSULTA_PROPOSTO':
-            $('#demoQtdiavig','#'+nomeForm).val(aux_limites.pausado.qtdiavig);
-            break;
-        default:
-            $('#demoQtdiavig','#'+nomeForm).val(aux_limites.ativo.qtdiavig);
-            break;
-    }
-
+    $('#demoQtdiavig','#'+nomeForm).val(var_globais.qtdiavig);
     
 }
 

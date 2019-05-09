@@ -66,11 +66,14 @@ function atribuirEventosBotoes(){
      */
     $("#btRenovar").bind('click',function(e){
         e.preventDefault();
-        showConfirmacao('Deseja renovar o ' + strTitRotinaLC + ' atual?',
-        'Confirmação - Aimaro',
-        'validaAdesaoValorProduto(\'renovarLimiteAtual('+aux_limites.ativo.nrctrlim+')\','+aux_limites.ativo.vllimite+')',
-        "blockBackground(parseInt($('#divRotina').css('z-index')))",
-        'sim.gif','nao.gif');
+        if(aux_hasAtivo){
+            acessaTela('R');
+        }else{
+            showError("error",
+                "Conta DEVE ter limite ATIVO.",
+                "Alerta - Aimaro",
+                "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        }
         return false;
     });
 

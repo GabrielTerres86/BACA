@@ -11,6 +11,10 @@ var contAvalistas = 1;
 var maxAvalista = 2;
 var arrayAvalBusca = new Object();
 
+// Constantes
+var __BOTAO_TAB = 9;
+var __BOTAO_ENTER = 13;
+
 // PRJ 438 - Sprint 7
 function formataAvalista(){
 
@@ -52,30 +56,19 @@ function formataAvalista(){
     cDsnacio.css('width', '150px');
     cDtnascto.addClass('data').css({'width': '100px'});
 
-    cConta.unbind('change').bind('change', function() {
-
-        nrctaava = normalizaNumero($(this).val());
-
-        if (nrctaava != 0) {
-            // Verifica se a conta é válida
-            if (!validaNroConta(nrctaava)) {
-                showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Anota', 'focaCampoErro(\'nrctaava\',\'divDadosAvalistas\');bloqueiaFundo(divRotina);');
-                return false;
-            } else {
-                Busca_Associado(nrctaava, 0);
-            }
-        }
-    });
-
     // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação (keydown)
-    cConta.unbind('keydown').bind('keydown', function(e) {
+    cConta.unbind('keydown').bind('keydown', function(e, triggerEvent) {
+
+        if(typeof triggerEvent == 'undefined'){
+            triggerEvent = {keyCode: 0};
+        }
 
         if (divError.css('display') == 'block') {
             return false;
         }
 
         // Se é a tecla TAB, verificar numero conta e realizar as devidas operações
-        if (e.keyCode == 13 || e.keyCode == 9) {
+        if (e.keyCode == __BOTAO_ENTER || e.keyCode == __BOTAO_TAB || triggerEvent.keyCode == __BOTAO_ENTER) {
 
             // Armazena o número da conta na variável global
             nrctaava = normalizaNumero($(this).val());
@@ -193,8 +186,12 @@ function formataAvalista(){
     cNrctacjg.addClass('conta');
     cVlrencjg.addClass('moeda').css('width', '100px');
 
-    cNrctacjg.unbind('change').bind('change', function() {
+    cNrctacjg.unbind('keydown').bind('keydown', function (e, param1) {
+        if(typeof param1 == 'undefined'){
+            param1 = {keyCode: 0};
+        }
 
+        if (e.keyCode == __BOTAO_ENTER || e.keyCode == __BOTAO_TAB || param1.keyCode == __BOTAO_ENTER) {
         nrctacjg = normalizaNumero($(this).val());
 
         if (nrctacjg != 0) {
@@ -206,10 +203,11 @@ function formataAvalista(){
                 buscarDadosContaConjuge();
             }
         }
+        }
     });
 
-    cCPF_1.unbind('change').bind('change', function (e) {
-
+    cCPF_1.unbind('keydown').bind('keydown', function (e) {
+        if (e.keyCode == __BOTAO_ENTER || e.keyCode == __BOTAO_TAB) {
         // Armazena o número da conta na variável global
         nrcpfcgc = normalizaNumero(cCPF_1.val());
 
@@ -222,12 +220,9 @@ function formataAvalista(){
             } else {
 
                 buscarContasPorCpfCnpj('aval-cje');
-
             }
-
         }
-
-        return false;
+        }
     
     });
 
@@ -387,6 +382,8 @@ function Busca_Associado(nrctaava, nrcpfcgc) {
 // PRJ 438 - Sprint 7
 function carregaBusca(){
 
+    var nomeForm = 'divDadosAvalistas';
+
 	$('#nrctaava', '#' + nomeForm).val(arrayAvalBusca['nrctaava']);
     $('#cdnacion', '#' + nomeForm).val(arrayAvalBusca['cdnacion']);
     $('#dsnacion', '#' + nomeForm).val(arrayAvalBusca['dsnacion']);
@@ -430,7 +427,7 @@ function controlaCamposTelaAvalista(cooperado){
 	var inpessoa = $('#inpessoa', '#divDadosAvalistas').val();
 
 	if(cooperado == null){
-		var nrctaava = $('#inpessoa', '#divDadosAvalistas').val();
+		var nrctaava = $('#nrctaava', '#divDadosAvalistas').val();
 		if(nrctaava == 0){
 			var cooperado = false;
 		} else {
@@ -514,6 +511,12 @@ function limpaFormAvalistas(flgLimparArray) {
             arrayAvalistas[indiceAvalista]['inpessoa'] = '';
             arrayAvalistas[indiceAvalista]['dtnascto'] = '';
             arrayAvalistas[indiceAvalista]['vlrencjg'] = '';
+            arrayAvalistas[indiceAvalista]['complend'] = '';
+            arrayAvalistas[indiceAvalista]['nrctacjg'] = '';
+            arrayAvalistas[indiceAvalista]['nrendere'] = '';
+            arrayAvalistas[indiceAvalista]['vledvmto'] = '';
+            arrayAvalistas[indiceAvalista]['vlrenmes'] = '';
+            arrayAvalistas[indiceAvalista]['nrcxapst'] = '';
         }
     }
     
@@ -937,6 +940,7 @@ function atualizarCamposTelaAvalistas(flgAttContAvalistas){
     $('legend:first', '#divDadosAvalistas').html('Dados dos Avalistas/Fiadores ' + contAvalistas);
 
     controlaCamposTelaAvalista();
+    $('input', '#divDadosAvalistas').trigger('blur');
 
 }
 
@@ -971,7 +975,7 @@ function controlaContinuarAvalista(){
         	insereAvalista();
 
         // Se os valores de conta e cpf NÃO estiverem vazios, entao será inserir os dados do avalista no array atual 	
-        } else if(arrayAvalistas[indiceAvalista]['nrctaava'] && arrayAvalistas[indiceAvalista]['nrcpfcjg']){
+        } else if((aux_conta || aux_cpf) && arrayAvalistas[indiceAvalista]){
         	atualizaArrayAvalistas();
         }
     }
@@ -1030,4 +1034,67 @@ function controlaVoltarAvalista(){
         lcrShowHideDiv('divFormRating','divDadosAvalistas'); 
         return false;
     }   
+}
+
+function aplicarEventosLupasTelaAvalista(){
+
+    // Conta Avalista
+    $('#nrctaava','#'+nomeForm).next().unbind('click').bind('click', function () {
+        if ($('#nrctaava','#'+nomeForm).hasClass('campoTelaSemBorda')) {
+            return false;
+        }
+        mostraPesquisaAssociado('nrctaava', nomeForm, divRotina);
+        return false;
+    });
+    
+
+    // Nacionalidade
+    $('#cdnacion','#'+nomeForm).unbind('change').bind('change', function() {
+        procedure    = 'BUSCANACIONALIDADES';
+        titulo      = ' Nacionalidade';
+        filtrosDesc = '';
+        buscaDescricao('ZOOM0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,'divDadosAvalistas'); 
+        return false;
+    }).next().unbind('click').bind('click', function () {
+        if ($('#cdnacion','#'+nomeForm).hasClass('campoTelaSemBorda')) {
+            return false;
+        }
+        bo = 'b1wgen0059.p';
+        procedure = 'busca_nacionalidade';
+        titulo = 'Nacionalidade';
+        qtReg = '50';
+        filtros = 'Codigo;cdnacion;30px;N;|Nacionalidade;dsnacion;200px;S;';
+        colunas = 'Codigo;cdnacion;15%;left|Descrição;dsnacion;85%;left';
+        mostraPesquisa(bo, procedure, titulo, qtReg, filtros, colunas, divRotina);
+        return false;
+    });
+
+    // CEP
+    var camposOrigem = 'nrcepend;dsendre1;nrendere;complend;nrcxapst;dsendre2;cdufresd;nmcidade';
+    $('#nrcepend','#'+nomeForm).unbind('change').bind('change', function() {
+        mostraPesquisaEndereco(nomeForm, camposOrigem, divRotina, $(this).val());
+        return false;
+    }).next().unbind('click').bind('click', function () {
+        if ($('#nrcepend','#'+nomeForm).hasClass('campoTelaSemBorda')) {
+            return false;
+        }
+        mostraPesquisaEndereco(nomeForm, camposOrigem, divRotina);
+        return false;
+    });
+}
+
+function maskTelefone(nrfonemp){
+    fone = nrfonemp.value.replace(/[^0-9]/g,'');    
+    
+    fone = fone.replace(/\D/g,"");                 //Remove tudo o que não é dígito
+    fone = fone.replace(/^(\d\d)(\d)/g,"($1) $2"); //Coloca parênteses em volta dos dois primeiros dígitos
+    
+    if (fone.length < 14)
+        fone = fone.replace(/(\d{4})(\d)/,"$1-$2");    //Coloca hífen entre o quarto e o quinto dígito
+    else
+        fone = fone.replace(/(\d{5})(\d)/,"$1-$2");    //Coloca hífen entre o quinto e o sexto dígito
+    
+    nrfonemp.value = fone.substring(0, 15);
+    
+    return true;
 }

@@ -320,6 +320,11 @@ function acessaTela(cddopcao) {
 		    urlOperacao += "form_efetivar.php";
 		    flpropos = true;
             break;    
+        case 'R': // Opção renovar
+		    msgAguarde = ", carregando o limite ativo ";
+		    urlOperacao += "novo_limite.php";
+		    flpropos = false;
+            break; 
     }
 		
 	// Mostra mensagem de aguardo
@@ -900,6 +905,7 @@ function checaEnter(campo, e) {
 }
 
 function trataGAROPC(cddopcao, nrctrlim) {
+	
   if (cddopcao == 'N' || 
      (cddopcao == 'A' && normalizaNumero($('#idcobert','#frmNovoLimite').val()) > 0) || 
      (cddopcao == 'P' && normalizaNumero($('#idcobert','#frmNovoLimite').val()) > 0)) {
@@ -1527,7 +1533,6 @@ function controlaFoco(opcao) {
         $(".FirstInputModal").focus();
     }
     if(opcao == null){
-    	console.log('entrou controlaFoco null');
     	$(":input").blur();	
     }
 }

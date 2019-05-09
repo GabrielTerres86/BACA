@@ -80,7 +80,8 @@
 	$acessaaba = 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,\''.$glbvars["opcoesTela"][0].'\');';
 	echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';
 	echo "callafterLimiteCred = \"".$acessaaba."\";";	
-	echo 'showError("inform","Limite de Crédito renovado com sucesso!","Alerta - Aimaro","hideMsgAguardo();'.$acessaaba.'");';	
+	echo 'hideMsgAguardo();';
+	echo 'showError("inform","Limite de Crédito renovado com sucesso!","Alerta - Aimaro","'.$acessaaba.'");';	
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
