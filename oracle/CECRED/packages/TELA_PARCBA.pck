@@ -101,7 +101,8 @@ PROCEDURE pc_deleta_historico_ailos(pr_cdhistor IN tbcontab_conc_bancoob.cdhisto
                                     ,pr_nmdcampo       OUT VARCHAR2          --> Nome do campo com erro
                                     ,pr_des_erro       OUT VARCHAR2);
 
-  PROCEDURE pc_executa_conciliacao(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+  PROCEDURE pc_executa_conciliacao(pr_dtmvtolt IN VARCHAR2           --> Campo data inserido - Melhoria RITM0011945
+                                  ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
                                   ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
@@ -125,7 +126,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARCBA IS
   --
   -- Alteracoes:   
   --    
-  --  
+  --  RITM0011945 - Gabriel (Mouts) 15/04/2019 - Adicionado campo dtmvtolt (executa carga)
   ---------------------------------------------------------------------------------------------------------------*/
 
   
@@ -1392,7 +1393,8 @@ PROCEDURE pc_deleta_historico_ailos(pr_cdhistor IN tbcontab_conc_bancoob.cdhisto
       ROLLBACK;
   END pc_exclui_tarifa_bancoob;
   
-  PROCEDURE pc_executa_conciliacao(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+  PROCEDURE pc_executa_conciliacao(pr_dtmvtolt IN VARCHAR2           --> Campo data inserido - Melhoria RITM0011945
+                                  ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
                                   ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
@@ -1415,6 +1417,7 @@ PROCEDURE pc_deleta_historico_ailos(pr_cdhistor IN tbcontab_conc_bancoob.cdhisto
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
+    vr_dtmvtolt date;    
   BEGIN
     pr_des_erro := 'OK';
 
@@ -1441,9 +1444,12 @@ PROCEDURE pc_deleta_historico_ailos(pr_cdhistor IN tbcontab_conc_bancoob.cdhisto
                      vr_cdcritic integer; 
                      vr_dscritic varchar2(4000); 
                    begin 
-                     cont0002.pc_processa_arquivo_bancoob (pr_cdcooper  => 3,
-                                                           pr_cdcritic  => vr_cdcritic,
-                                                           pr_dscritic  => vr_dscritic); 
+                     cont0002.pc_processa_arquivo_bancoob (pr_cdcooper  => 3
+                                                          ,pr_dtmvtolt  => '||case when     pr_dtmvtolt is null then 'null'
+                                                                                   else 'to_date('''||pr_dtmvtolt||''',''dd/mm/yyyy'')' end||'      
+                                                          ,pr_cdcritic  => vr_cdcritic
+                                                          ,pr_dscritic  => vr_dscritic);
+                  
                    end;';
 
     -- Faz a chamada ao programa paralelo atraves de JOB
@@ -1460,6 +1466,7 @@ PROCEDURE pc_deleta_historico_ailos(pr_cdhistor IN tbcontab_conc_bancoob.cdhisto
       -- Levantar exceçao
       raise vr_exc_erro;
     END IF;
+
   EXCEPTION
     WHEN vr_exc_erro THEN
       IF vr_cdcritic <> 0 THEN

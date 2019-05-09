@@ -5,7 +5,7 @@
 	 * DATA CRIAÇÃO : 21/09/2018
 	 * OBJETIVO     : Rotina para manter as operações da tela PARCBA
 	 * --------------
-	 * ALTERAÇÕES   : 
+	 * ALTERAÇÕES   : RITM0011945 - Gabriel (Mouts) 15/04/2019 - Adicionado campo dtmvtolt
 	 * -------------- 
 	 */		
 
@@ -27,6 +27,7 @@
     $indebcre_histor  = (isset($_POST["indebcre_histor"])) ? $_POST["indebcre_histor"] : "";
     $lscdhistor = (isset($_POST["lscdhistor"]))    ? $_POST["lscdhistor"]    : "";
     $lsindebcre = (isset($_POST["lsindebcre"]))    ? $_POST["lsindebcre"]    : "";
+    $dtmvtolt   = (isset($_POST["dtmvtolt"]))      ? $_POST["dtmvtolt"]      : "";
 
 	//Validar permissão do usuário
 	//if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
@@ -126,6 +127,10 @@
 	   $xml .= "<cdhistor>".$cdhistor."</cdhistor>";	   
 	   $xml .= "<cdtransa>".$cdtransa."</cdtransa>";	
        
+	}
+	
+	if ($cddopcao == "G") {
+	   $xml .= "<dtmvtolt>".$dtmvtolt."</dtmvtolt>";
 	}
 
 	$xml .= "  </Dados>";

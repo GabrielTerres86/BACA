@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 21/09/2018
  * OBJETIVO     : Mostrar tela PARCBA - Cadastro de parametros transações Bancoob x AILOS
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : RITM0011945 - Gabriel (Mouts) 15/04/2019 - Adicionado campo dtmvtolt
  * --------------
  */
 	session_start();
@@ -83,6 +83,8 @@
 																			<? include('form_cabecalho.php'); ?>
 
 																			<div id="divBotoes" style='border-top:1px solid #777'>
+																			
+																			
 																				<a href="#" class="botao" id="btVoltar"   onclick="controlaVoltar(); return  false;">Voltar</a>
 
 																				<a href="#" class="botao" id="btConcluir" onclick="controlaConcluir(); return false;">Concluir</a>																			
