@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 15/12/2017
  * OBJETIVO     : Rotina para buscar os cheques custodiados resgatados
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 02/05/2019 - Alterado o metodo de formatacao "number_format" para a function formataMoeda().
+ *                             (Daniel Lombardi - Mouts'S) 
  * -------------- 
  */		
 
@@ -84,8 +85,8 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 					<td><input type="hidden" id="aux_banco" name="aux_banco" value="<? echo $aux_cddbanco ?>"><? echo $aux_cddbanco ?></td>
 					<td><input type="hidden" id="aux_agencia" name="aux_agencia" value="<? echo $aux_cdagenci ?>"><? echo $aux_cdagenci ?></td>
 					<td><input type="hidden" id="aux_cheque" name="aux_cheque" value="<? echo $aux_nrcheque ?>"><? echo $aux_nrcheque ?></td>
-					<td><input type="hidden" id="aux_vlcheque" name="aux_vlcheque" value="<? echo number_format($aux_vlcheque,2,',','.') ?>"><? echo number_format($aux_vlcheque,2,',','.') ?></td>
-					<td><input type="hidden" id="aux_cmc7" name="aux_cmc7" value="<? echo $aux_dsdocmc7?>"><? echo $aux_dsdocmc7 ?></td>
+					<td><input type="hidden" id="aux_vlcheque" name="aux_vlcheque" value="<? echo formataMoeda($aux_vlcheque) ?>"><? echo formataMoeda($aux_vlcheque) ?></td>
+          <td><input type="hidden" id="aux_cmc7" name="aux_cmc7" value="<? echo $aux_dsdocmc7?>"><? echo $aux_dsdocmc7 ?></td>
 				</tr>
 			<?
 			}		
