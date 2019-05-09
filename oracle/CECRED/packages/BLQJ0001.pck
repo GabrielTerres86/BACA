@@ -157,7 +157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
 
     Programa: sistema/generico/procedures/b1wgen0155.p
     Autor   : Renato Darosci
-    Data    : Outubro/2016                Ultima Atualizacao: 26/10/2016.
+    Data    : Outubro/2016                Ultima Atualizacao: 08/01/2019.
      
     Dados referentes ao programa:
    
@@ -186,6 +186,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                 29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
                              PRJ450 - Renato Cordeiro (AMcom)         
  
+                08/01/2019 - Remoção da atualização da capa do lote
+                             Yuri - Mouts
   .............................................................................*/
   
   -- Buscar o lote para lançamentos
@@ -205,7 +207,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
        AND lot.dtmvtolt = pr_dtmvtolt   
        AND lot.cdagenci = 1
        AND lot.cdbccxlt = 100
-       AND lot.nrdolote = pr_nrdolote FOR UPDATE; -- Realizar o lock do registro de lote
+       AND lot.nrdolote = pr_nrdolote;-- FOR UPDATE; -- Realizar o lock do registro de lote
+       -- Retirado o FOR UPDATE - Remoção atualização da capa do lote
   rw_craplot  cr_craplot%ROWTYPE;
   
     
@@ -1477,7 +1480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                  ,100          
                                  ,6880
                                  ,1
-                                 ,0) 
+                                 ,1) 
                         RETURNING ROWID INTO rw_craplot.dsdrowid;
                          
                -- Atualizar o registro do lote        
@@ -1487,7 +1490,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                rw_craplot.cdbccxlt := 100;        
                rw_craplot.nrdolote := 6880;
                rw_craplot.tplotmov := 1;               
-               rw_craplot.nrseqdig := 0;
                
             EXCEPTION 
               -- Início Chamado - SCTASK0018254
@@ -1509,12 +1511,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                 RAISE vr_exp_erro;
             END;
           END IF;
+          -- Como não incrementa mais no update, Busca o sequencial 
+          -- Remoção da atualização da capa do Lote
+          rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                                             pr_nmdcampo => 'NRSEQDIG',
+                                             pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                             to_char(BTCH0001.rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                             ';1;100;6880');
           
           -- Fechar o cursor
           CLOSE cr_craplot;
 
           -- Montar o número do documento com base no NRSEQDIG
-          vr_nrdocmto := rw_craplot.nrseqdig + 1;
+          -- vr_nrdocmto := rw_craplot.nrseqdig + 1;
+          vr_nrdocmto := rw_craplot.nrseqdig;
           -------------             
           LOOP
             -- Buscar por lançamento pelo número do documento
@@ -1561,7 +1571,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                    ,pr_nrdocmto => vr_nrdocmto
                    ,pr_cdhistor => vr_cdhistor
                    ,pr_vllanmto => TO_NUMBER(vr_tbbloque(vr_indice))
-                   ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                 --,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                   ,pr_nrseqdig => rw_craplot.nrseqdig -- Remoção capa de lote
                    ,pr_cdpesqbb => 'BLOQJUD'
                    ,pr_tab_retorno => vr_tab_retorno
                    ,pr_incrineg => vr_incrineg
@@ -1582,7 +1593,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           END;
           
           -- Atualizar o registro da CRAPLOT
-          BEGIN
+          -- Remoção da Atualização da capa do lote
+/*          BEGIN
             UPDATE craplot 
                SET qtcompln = NVL(qtcompln,0) + 1
                  , qtinfoln = NVL(qtinfoln,0) + 1
@@ -1594,7 +1606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar Lote: '||SQLERRM;
               RAISE vr_exp_erro;
-          END;
+          END;*/
           
           -- Atualizar o registro de saldo
           BEGIN
@@ -1724,7 +1736,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                  ,100          
                                  ,6870
                                  ,1
-                                 ,0) 
+                                 ,1) 
                         RETURNING ROWID INTO rw_craplot.dsdrowid;
                          
                -- Atualizar o registro do lote        
@@ -1734,7 +1746,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                rw_craplot.cdbccxlt := 100;        
                rw_craplot.nrdolote := 6870;
                rw_craplot.tplotmov := 1;               
-               rw_craplot.nrseqdig := 0;
                
             EXCEPTION 
               WHEN OTHERS THEN
@@ -1742,12 +1753,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                 RAISE vr_exp_erro;
             END;
           END IF;
+          -- Como não incrementa mais no update, Busca o sequencial 
+          -- Remoção da atualização da capa do Lote
+          rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                                             pr_nmdcampo => 'NRSEQDIG',
+                                             pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                             to_char(BTCH0001.rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                             ';1;100;6870');
           
           -- Fechar o cursor
           CLOSE cr_craplot;
           
           -- Montar o número do documento com base no NRSEQDIG
-          vr_nrdocmto := rw_craplot.nrseqdig + 1;
+          -- vr_nrdocmto := rw_craplot.nrseqdig + 1;
+          vr_nrdocmto := rw_craplot.nrseqdig;
           -------------             
           LOOP
             -- Buscar por lançamento pelo número do documento
@@ -1803,7 +1822,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                ,vr_nrdocmto                       -- nrdocmto
                                ,DECODE(rw_crapass.inpessoa, 1, 1402, 1403) -- cdhistor => 1402 - PF / 1403 - PJ
                                ,pr_vlrsaldo                       -- vllanaut
-                               ,rw_craplot.nrseqdig + 1           -- nrseqdig
+                             --,rw_craplot.nrseqdig + 1           -- nrseqdig
+                               ,rw_craplot.nrseqdig               -- nrseqdig
                                ,1                                 -- insitlau
                                , NULL                             -- dtdebito
                                ,'BLOQJUD'                         -- dsorigem
@@ -1816,7 +1836,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           END;
           
           -- Atualizar o registro da CRAPLOT
-          BEGIN
+          -- Remoção da atualização da capa do lote
+/*          BEGIN
             UPDATE craplot 
                SET qtcompln = NVL(qtcompln,0) + 1
                  , qtinfoln = NVL(qtinfoln,0) + 1
@@ -1828,7 +1849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar Lote: '||SQLERRM;
               RAISE vr_exp_erro;
-          END;
+          END;*/
           
           -- Setar a flag de transação
           vr_flgtrans := TRUE;      
@@ -2196,7 +2217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                ,100          
                                ,6880
                                ,1
-                               ,0) 
+                               ,1) 
                        RETURNING ROWID INTO rw_craplot.dsdrowid;
                          
             -- Atualizar o registro do lote        
@@ -2206,7 +2227,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
             rw_craplot.cdbccxlt := 100;        
             rw_craplot.nrdolote := 6880;
             rw_craplot.tplotmov := 1;               
-            rw_craplot.nrseqdig := 0;
                
           EXCEPTION 
             -- Início Chamado - SCTASK0018254
@@ -2228,12 +2248,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
               RAISE vr_exp_erro;
           END;
         END IF;
+        -- Como não incrementa mais no update, Busca o sequencial 
+        -- Remoção da atualização da capa do Lote
+        rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
+                                           pr_nmdcampo => 'NRSEQDIG',
+                                           pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                           to_char(pr_dtmvtolt,'DD/MM/RRRR')||
+                                           ';1;100;6880');
           
         -- Fechar o cursor
         CLOSE cr_craplot;
 
         -- Montar o número do documento com base no NRSEQDIG
-        vr_nrdocmto := rw_craplot.nrseqdig + 1;
+        -- vr_nrdocmto := rw_craplot.nrseqdig + 1;
+        vr_nrdocmto := rw_craplot.nrseqdig;
         -------------             
         LOOP
           -- Buscar por lançamento pelo número do documento
@@ -2292,7 +2320,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                    ,pr_nrdocmto => vr_nrdocmto
                    ,pr_cdhistor => vr_cdhistor
                    ,pr_vllanmto => pr_vldesblo
-                   ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                 --,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                   ,pr_nrseqdig => rw_craplot.nrseqdig
                    ,pr_cdpesqbb => 'BLOQJUD'
                    ,pr_tab_retorno => vr_tab_retorno
                    ,pr_incrineg => vr_incrineg
@@ -2315,7 +2344,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         END;
           
         -- Atualizar o registro da CRAPLOT
-        BEGIN
+        -- Remoção da atualização da capa do lote
+/*        BEGIN
           UPDATE craplot 
              SET qtcompln = NVL(qtcompln,0) + 1
                , qtinfoln = NVL(qtinfoln,0) + 1
@@ -2327,7 +2357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao atualizar Lote: '||SQLERRM;
             RAISE vr_exp_erro;
-        END;
+        END;*/
           
         -- Atualizar o registro de saldo
         BEGIN
