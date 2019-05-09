@@ -1,25 +1,25 @@
 /*!
  * FONTE        : matric.js
- * CRIA��O      : Rodolpho Telmo (DB1)
- * DATA CRIA��O : 07/06/2010
- * OBJETIVO     : Biblioteca de fun��es da tela MATRIC
+ * CRIAÇÃO      : Rodolpho Telmo (DB1)
+ * DATA CRIAÇÃO : 07/06/2010
+ * OBJETIVO     : Biblioteca de funções da tela MATRIC
  * --------------
- * ALTERA��ES   : 
+ * ALTERAÇÕES   : 
  * --------------
  * 000: [11/02/2011] Gabriel Ramirez  (CECRED)	: Aumentado campo do nome para 50 posicoes 
  * 001: [26/04/2011] Rodolpho e Rogerius (DB1)	: Adicionado zoom generico do CEP.  
- * 002: [16/04/2012] Rog�rius Milit�o (DB1) 	: Novo ayout padr�o
+ * 002: [16/04/2012] Rogérius Militão (DB1) 	: Novo ayout padrão
  * 003: [15/06/2012] Adriano 		  (CECRED)  : Ajustes referente ao projeto GP - Socios Menores 
  * 004: [02/07/2012] Jorge Hamaguchi  (CECRED)  : Alterado funcao imprime(), novo esquema para impressao.
  * 005: [09/08/2013] Lucas Reinert	  (CECRED)  : Incluido campo UF de naturalidade
- * 006: [15/08/2013] Carlos           (CECRED)  : Altera��o da sigla PAC para PA
- * 007: [09/05/2014] Douglas          (CECRED)  : Solicitar senha de coordenador quando opera��o "X"
+ * 006: [15/08/2013] Carlos           (CECRED)  : Alteração da sigla PAC para PA
+ * 007: [09/05/2014] Douglas          (CECRED)  : Solicitar senha de coordenador quando operação "X"
  * 007: [23/09/2014] Jorge Hamaguchi  (CECRED)  : Ajuste em funcao limpaTela(), retirado atribuicao de valor '' para campo opcao.
  * 009: [28/01/2015] Carlos           (CECRED)  : #239097 Ajustes para cadastro de Resp. legal 0 menor/maior.
- * 010: [12/05/2015] Carlos           (CECRED)  : #271162 Inclus�o do botao concluir para salvar o cadastro quando a op��o for de Altera��o.
+ * 010: [12/05/2015] Carlos           (CECRED)  : #271162 Inclusão do botao concluir para salvar o cadastro quando a opção for de Alteração.
  * 011: [09/07/2015] Gabriel          (RKAM)    : Projeto Reformulacao Cadastral.
- * 012: [05/10/2015] Kelvin 		  (CECRED)  : Adicionado nova op��o "J" para altera��o apenas do cpf/cnpj e removido a possibilidade de
-												  altera��o pela op��o "X", conforme solicitado no chamado 321572 (Kelvin).
+ * 012: [05/10/2015] Kelvin 		  (CECRED)  : Adicionado nova opção "J" para alteração apenas do cpf/cnpj e removido a possibilidade de
+												  alteração pela opção "X", conforme solicitado no chamado 321572 (Kelvin).
  * 013: [03/12/2015] Jaison/Andrino   (CECRED)  : Adicao do campo flserasa na pesquisa generica de BUSCA_CNAE.
  * 014: [15/12/2015] Douglas          (CECRED)  : Ajustado para quando sair do campo CPF, limpar os campos apenas quando a opcao da tela eh "I" (Chamado - 369594)
  * 015: [29/01/2016] Tiago Castro(RKAM)         : Chamados 388971/394261 - Incluido validacao para forcar usuario a clicar no botao prosseguir.
@@ -27,94 +27,94 @@
  * 015: [18/02/2016] Jorge Hamaguchi  (CECRED)  : Ajuste para pedir senha do coodenador quando for duplicar conta.
  * 015: [29/01/2016] Tiago Castro(RKAM)         : Chamados 388971/394261 - Incluido validacao para forcar usuario a clicar no botao prosseguir.
  *												  Ao teclar ENTER mais de uma vez, era criado mais de uma conta.
- * 016: [10/04/2016] Rafael (RKAM)              : Ajuste para comportamento acertivo quando o site da receita n�o estiver dispon�vel
+ * 016: [10/04/2016] Rafael (RKAM)              : Ajuste para comportamento acertivo quando o site da receita não estiver disponível
  * 018: [20/04/2016] Heitor (RKAM)              : Limitado o campo NRENDERE em 5 posicoes, chamado 435477 
- * 019: [27/04/2016] Gisele (RKAM)              : Incluido  procedimento que verificar qual conex�o do banco se � produ��o sim ou n�o.
- *                                                se for produ��o o sistema permanece executando a consulta no site da receita federal, 
- *                                                caso seja outro banco exemplo desenvolvimento a tela n�o executa consulta da Receita Federal.
+ * 019: [27/04/2016] Gisele (RKAM)              : Incluido  procedimento que verificar qual conexão do banco se é produção sim ou não.
+ *                                                se for produção o sistema permanece executando a consulta no site da receita federal, 
+ *                                                caso seja outro banco exemplo desenvolvimento a tela não executa consulta da Receita Federal.
  *
  * 014: [15/12/2015] Douglas          (CECRED)  : Ajustado para quando sair do campo CPF, limpar os campos apenas quando a opcao da tela eh "I" (Chamado -
  369594)
- * 015: [17/05/2016] Kelvin 		  (CECRED)  : Adicionado inclus�o de nacionalidade, conforme solicitado no chamado 422806. (Kelvin)
- * 016: [06/07/2016] Lucas Ranghetti  (CECRED)  : Alterar campo cCnae para suportar at� 7 posicoes. (#481816)
+ * 015: [17/05/2016] Kelvin 		  (CECRED)  : Adicionado inclusão de nacionalidade, conforme solicitado no chamado 422806. (Kelvin)
+ * 016: [06/07/2016] Lucas Ranghetti  (CECRED)  : Alterar campo cCnae para suportar até 7 posicoes. (#481816)
  * 017: [22/07/2016] Maciel 		  (RKAM)  : Ajustes no JS para o conportamento correto da consulta a receita
  * 018: [22/07/2016] Maciel 		  (RKAM)  : Aumento do tempo para consulta na receita federal
  * 019: [10/10/2016] Carlos           (CECRED): #537134 Comentada a consulta automatizada do CPF/CNPJ na receita devido aos constantes
  *                                              bloqueios de acesso.
  * 020: [25/10/2016] Tiago            (CECRED): M310 Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  * 021: [08/02/2017] Kelvin           (CECRED): Ajuste realiazado para tratar o chamado 566462. 
- * 022: [03/03/2017] Adriano          (CECRED): Ajuste devido a convers�o das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
+ * 022: [03/03/2017] Adriano          (CECRED): Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
  * 023: [12/04/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 024: [14/06/2017] Adriano          (CECRED): Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
  *		                                        crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
- * 025: [26/06/2017] Jonata             (RKAM): Ajustes para inclus�o da nova op��o "G" (P364).
+ * 025: [26/06/2017] Jonata             (RKAM): Ajustes para inclusão da nova opção "G" (P364).
  * 026: [31/07/2017] Odirlei Busana   (AMcom) : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM.	
- * 027: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de c�digo cnae.
- * 028: [09/08/2017] Mateus Zimmermann (MOUTS): Ajustes para inclus�o do Desligamento (P364).
+ * 027: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae.
+ * 028: [09/08/2017] Mateus Zimmermann (MOUTS): Ajustes para inclusão do Desligamento (P364).
  * 029: [28/08/2017] Kelvin			  (CECRED): Criando opcao de solicitar relacionamento caso cnpj informado esteja cadastrado na cooperativa. (Kelvin)
  * 030: [19/09/2017] Kelvin			  (CECRED): Ajuste no problema ao carregar contas com situacao de cpf diferente de 0. (PRJ339)			                         
- * 031: [29/09/2017] Adriano          (CECRED): Ajuste para for�ar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
+ * 031: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
  * 032: [16/10/2017] Kelvin 		  (CECRED): Removendo o campo caixa postal. (PRJ339).
  * 033: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
- * 034: [23/10/2017] Odirlei Busana	  (AMcom): Ajustado para chamar a rotina de reposavel legal apos a inclus�o devido a 
- *                                             replica��o dos dados da pessoa. (PRJ339).
- * 035: [14/11/2017] Jonta             (RKAM): Inclus�o da op��o H (P364).
- * 036: [27/12/2017] Renato Darosci  (SUPERO): Altera��es apra inclus�o dos novos bot�es Desligar e Saque Parcial - Melhoria 329
+ * 034: [23/10/2017] Odirlei Busana	  (AMcom): Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
+ *                                             replicação dos dados da pessoa. (PRJ339).
+ * 035: [14/11/2017] Jonta             (RKAM): Inclusão da opção H (P364).
+ * 036: [27/12/2017] Renato Darosci  (SUPERO): Alterações apra inclusão dos novos botões Desligar e Saque Parcial - Melhoria 329
  * 037: [16/01/2018] Lucas Reinert			 : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
  * 038: [13/07/2018] Andrey Formigari (Mouts): Novo campo Nome Social (#SCTASK0017525)
  * 039: [04/09/2018] Alcemir          (Mouts): alterado atualizarContasAntigasDemitidas(), incluido parametro operauto (operador autorizador). (SM 364) 
  */
 
-// Defini��o de algumas vari�veis globais 
+// Definição de algumas variáveis globais 
 var cdpactra = 0;  // PA de operador logado
-var operacao = ''; // Armazena a opera��o corrente da tela MATRIC
-var nrdconta = ''; // Armazena o N�mero da Conta/dv
+var operacao = ''; // Armazena a operação corrente da tela MATRIC
+var nrdconta = ''; // Armazena o Número da Conta/dv
 var rowidass = ''; // Armazena a chave do registro
 var tppessoa = ''; // Armazena o tipo da pessoa (1 ou 2)
-var nrdcontaOld = ''; // Vari�vel auxiliar para guardar o n�mero da conta passada
-var operacaoOld = ''; // Vari�vel auxiliar para guardar a opera��o passada
-var nrJanelas = ''; // Armazena o n�mero de janelas para as impress�es
-var indarrayAvt = ''; // Vari�vel que armazena o procurador que est� selecionado na tabela
-var semaforo = 0; // Sem�foro para n�o permitir chamar a fun��o controlaOperacao uma atr�s da outra
-var operProc = ''; // Armazena a opera��o corrente da rotina procuradores
+var nrdcontaOld = ''; // Variável auxiliar para guardar o número da conta passada
+var operacaoOld = ''; // Variável auxiliar para guardar a operação passada
+var nrJanelas = ''; // Armazena o número de janelas para as impressões
+var indarrayAvt = ''; // Variável que armazena o procurador que está selecionado na tabela
+var semaforo = 0; // Semáforo para não permitir chamar a função controlaOperacao uma atrás da outra
+var operProc = ''; // Armazena a operação corrente da rotina procuradores
 var nrcpfcgc = ''; // Armazena o cpf corrente da rotina procuradores
 var rowidavt = ''; // Armazena a chave do registro de procuradores
 var nrdconta_org = 0; // Conta origem para ser duplicada
 var hrinicad = 0; // Horario de inicio do cadastro
 var XMLContas = "";
 
-// Op��es que o operador tem acesso na tela MATRIC
-var flgConsultar = ''; // Permiss�o para Consultar
-var flgIncluir = ''; // Permiss�o para Incluir
-var flgRelatorio = ''; // Permiss�o para emitir o relat�rio
-var flgNome = ''; // Permiss�o para alterar o nome
-var flgDesvincula = ''; // Permiss�o para Desvincular
-var flgCpfCnpj = ''; // Permiss�o para alterar o cpf ou o cnpj
-var flgAcessoCRM = ''; // Permiss�o de acesso do operador ao CRM
-var flgDesligarCRM = ''; // Permiss�o para o bot�o Desligar
-var flgSaldoPclCRM = ''; // Permiss�o para o bot�o Saldo Parcial
+// Opções que o operador tem acesso na tela MATRIC
+var flgConsultar = ''; // Permissão para Consultar
+var flgIncluir = ''; // Permissão para Incluir
+var flgRelatorio = ''; // Permissão para emitir o relatório
+var flgNome = ''; // Permissão para alterar o nome
+var flgDesvincula = ''; // Permissão para Desvincular
+var flgCpfCnpj = ''; // Permissão para alterar o cpf ou o cnpj
+var flgAcessoCRM = ''; // Permissão de acesso do operador ao CRM
+var flgDesligarCRM = ''; // Permissão para o botão Desligar
+var flgSaldoPclCRM = ''; // Permissão para o botão Saldo Parcial
 
-// Op��es que o operador tem acesso na rotina PROCURADORES da tela MATRIC
-var flgAlterarProc = ''; // Permiss�o para Alterar Procurador
-var flgConsultarProc = ''; // Permiss�o para Consultar Procurador
-var flgExcluirProc = ''; // Permiss�o para Excluir Procurador
-var flgIncluirProc = ''; // Permiss�o para Incluir Procurador
-var aux_operacao = ''; // Armazena a opera��o da tela
-var nrdeanos = 0;  // Armazena o n�mero de anos para controlar os botoes
+// Opções que o operador tem acesso na rotina PROCURADORES da tela MATRIC
+var flgAlterarProc = ''; // Permissão para Alterar Procurador
+var flgConsultarProc = ''; // Permissão para Consultar Procurador
+var flgExcluirProc = ''; // Permissão para Excluir Procurador
+var flgIncluirProc = ''; // Permissão para Incluir Procurador
+var aux_operacao = ''; // Armazena a operação da tela
+var nrdeanos = 0;  // Armazena o número de anos para controlar os botoes
 var dtmvtolt = ''; // Armazena a data atual do sistema
 
-var verrespo = false; 				 	// Vari�vel global para indicar se deve validar ou nao os dados dos Resp.Legal na BO55
-var permalte = true; 			     	// Est� vari�vel sera usada para controlar se a "Altera��o/Exclus�o/Inclus�o - Resp. Legal" dever� ser feita somente na tela contas
-var arrayBensMatric = new Array(); 	// Vari�vel global para armazenar os bens dos procuradores
-var arrayFilhosAvtMatric = new Array(); // Vari�vel global para armazenar os procuradores
-var arrayBackupAvt = new Array(); 		// Array que armazena o arrayFilhosAvtMatric antes de qualquer opera��o.
-var arrayBackupBens = new Array(); 		// Array que armazena o arrayFilhosBensMatric antes de qualquer opera��o.
-var arrayFilhos = new Array(); 			// Vari�vel global para armazenar os responsaveis legais
-var arrayBackupFilhos = new Array();    // Array que armazena o arrayFilhos antes de qualquer opera��o.
-var lstContasDemitidas = new Array(); // Vari�vel para armazenar contas demitidas
-var lstContasAntigasDemitidas = new Array(); // Vari�vel para armazenar contas antigas demitidas
+var verrespo = false; 				 	// Variável global para indicar se deve validar ou nao os dados dos Resp.Legal na BO55
+var permalte = true; 			     	// Está variável sera usada para controlar se a "Alteração/Exclusão/Inclusão - Resp. Legal" deverá ser feita somente na tela contas
+var arrayBensMatric = new Array(); 	// Variável global para armazenar os bens dos procuradores
+var arrayFilhosAvtMatric = new Array(); // Variável global para armazenar os procuradores
+var arrayBackupAvt = new Array(); 		// Array que armazena o arrayFilhosAvtMatric antes de qualquer operação.
+var arrayBackupBens = new Array(); 		// Array que armazena o arrayFilhosBensMatric antes de qualquer operação.
+var arrayFilhos = new Array(); 			// Variável global para armazenar os responsaveis legais
+var arrayBackupFilhos = new Array();    // Array que armazena o arrayFilhos antes de qualquer operação.
+var lstContasDemitidas = new Array(); // Variável para armazenar contas demitidas
+var lstContasAntigasDemitidas = new Array(); // Variável para armazenar contas antigas demitidas
 
-//Variaveis que armazenam informa��es do parcelamento
+//Variaveis que armazenam informações do parcelamento
 var dtdebito = '';
 var qtparcel = '';
 var vlparcel = '';
@@ -129,7 +129,7 @@ exibeAlerta = false;
 
 $(document).ready(function() {
 
-    // Inicializa algumas vari�veis
+    // Inicializa algumas variáveis
     idseqttl = 1;
     exibeAlerta = false;
 	estadoInicial();
@@ -192,7 +192,7 @@ function formataCabecalho(){
     
 		$('input,select').removeClass('campoErro');
 			
-		// Se � a tecla ENTER, TAB
+		// Se é a tecla ENTER, TAB
 		if(e.keyCode == 13 || e.keyCode == 9){
 			
 			$('#btOK','#frmCabMatric').click();
@@ -321,21 +321,21 @@ function formataFiltro() {
         cDesAgencia.css('width', '175px');
 	}	
 	
-	// Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida a��o
+	// Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
 	cNrConta.unbind('keypress').bind('keypress', function (e) {
 	
 		if (divError.css('display') == 'block') { return false; }
 		
-		// Se � a tecla ENTER, verificar numero conta e realizar as devidas opera��es
+		// Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
 		if (e.keyCode == 13) {
-			// Armazena o n�mero da conta na vari�vel global
+			// Armazena o número da conta na variável global
 			nrdconta = normalizaNumero($(this).val());
 			nrdcontaOld = nrdconta;
 		
-			// Verifica se o n�mero da conta � vazio
+			// Verifica se o número da conta é vazio
 			if (nrdconta == '') { return false; }
 				
-			// Verifica se a conta � v�lida
+			// Verifica se a conta é válida
 			if (!validaNroConta(nrdconta)) {
 				showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmFiltro\');');
 				return false; 
@@ -352,7 +352,7 @@ function formataFiltro() {
 		cNrConta.val("");
 		cNrConta.desabilitaCampo();
 		
-		// Se eu mudar a op��o, muda a vari�vel global operacao
+		// Se eu mudar a opção, muda a variável global operacao
 	    $("#pessoaFi,#pessoaJu", "#frmFiltro").unbind('keypress').bind('keypress', function (e) {
 			
             if (divError.css('display') == 'block') { return false; }
@@ -364,7 +364,7 @@ function formataFiltro() {
 			
 		});
 		
-		// Libera os devidos campos do Cabe�alho
+		// Libera os devidos campos do Cabeçalho
 		$('#cdagepac,#pessoaFi,#pessoaJu', '#frmFiltro').habilitaCampo();
 		
 		layoutPadrao();
@@ -389,14 +389,14 @@ function formataFiltro() {
 		
 		$('#btProsseguir','#divBotoesFiltro').unbind("click").bind("click", (function () {
 			
-			// Armazena o n�mero da conta na vari�vel global
+			// Armazena o número da conta na variável global
 			nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
 			nrdcontaOld = nrdconta;
 		
-			// Verifica se o n�mero da conta � vazio
+			// Verifica se o número da conta é vazio
 			if (nrdconta == '') { return false; }
 				
-			// Verifica se a conta � v�lida
+			// Verifica se a conta é válida
 			if (!validaNroConta(nrdconta)) {
 				showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmFiltro\');');
 				return false; 
@@ -419,7 +419,7 @@ function formataFiltro() {
 
 function controlaPesquisasFiltro() {
 	
-	// Definindo as vari�veis
+	// Definindo as variáveis
     var bo = 'b1wgen0059.p';
     var procedure = '';
     var titulo = '';
@@ -447,19 +447,19 @@ function controlaPesquisasFiltro() {
 			} else {
                 campoAnterior = $(this).prev().attr('name');
 				
-				// N�mero da conta
+				// Número da conta
                 if (campoAnterior == 'nrdconta') {
 					
 					mostraPesquisaAssociado('nrdconta', 'frmFiltro');
 					return false;
 	
-				// Ag�ncia
+				// Agência
                 }else if (campoAnterior == 'cdagepac') {
 					procedure = 'busca_pac';
-					titulo = 'Ag�ncia PA';
+					titulo = 'Agência PA';
 					qtReg = '20';
-					filtrosPesq = 'C�d. PA;cdagepac;30px;S;0;;codigo;|Ag�ncia PA;nmresage;200px;S;;;descricao;';
-					colunas = 'C�digo;cdagepac;20%;right|Descri��o;dsagepac;80%;left';
+					filtrosPesq = 'Cód. PA;cdagepac;30px;S;0;;codigo;|Agência PA;nmresage;200px;S;;;descricao;';
+					colunas = 'Código;cdagepac;20%;right|Descrição;dsagepac;80%;left';
 					mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
 					return false;	
 										
@@ -471,23 +471,23 @@ function controlaPesquisasFiltro() {
 	
 	});
 		
-	//Ag�ncia
+	//Agência
     $('#cdagepac', '#' + nomeForm).unbind('blur').bind('blur', function () {
 			
             procedure = 'busca_pac';
-            titulo = 'Ag�ncia PA';
+            titulo = 'Agência PA';
 			filtrosDesc = '';
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'nmresage', $(this).val(), 'dsagepac', filtrosDesc, 'frmFiltro');
 			return false;
 		
 		});
 		
-	//Ag�ncia
+	//Agência
     $('#cdagepac', '#' + nomeForm).unbind('keypress').bind('keypress', function (e) {
 			
 		$('input,select').removeClass('campoErro');
 			
-		// Se � a tecla ENTER, TAB
+		// Se é a tecla ENTER, TAB
 		if(e.keyCode == 13 || e.keyCode == 9){
 			
                 $("#pessoaFi", "#frmFiltro").focus();
@@ -523,7 +523,7 @@ function controlaOperacao(novaOp) {
         case 'IC': showConfirmacao('Deseja cancelar inclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
         case 'XC': showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
         case 'AC': showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
-        case 'DC': showConfirmacao('Deseja cancelar desvincula��o?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
+        case 'DC': showConfirmacao('Deseja cancelar desvinculação?', 'Confirma&ccedil;&atilde;o - Matric', 'controlaVoltar()', '', 'sim.gif', 'nao.gif'); semaforo--; return false; break;
 
         case 'IV': manterRotina(); semaforo--; return false; break;
         case 'XV': manterRotina(); semaforo--; return false; break;
@@ -550,7 +550,7 @@ function controlaOperacao(novaOp) {
             return false;
             break;
 
-        default: //Dever� retonar ao inicio da tela
+        default: //Deverá retonar ao inicio da tela
 					controlaVoltar();		
 					return false;
 					
@@ -559,7 +559,7 @@ function controlaOperacao(novaOp) {
 	
     showMsgAguardo(mensagem);
 
-    // Carrega dados da conta atrav�s de ajax
+    // Carrega dados da conta através de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -575,7 +575,7 @@ function controlaOperacao(novaOp) {
         error: function (objAjax, responseError, objExcept) {
             semaforo--;
             hideMsgAguardo();
-            showError('error', 'N�o foi poss�vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
+            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
         },
         success: function (response) {
             semaforo--;
@@ -621,8 +621,8 @@ function manterRotina() {
         case 'AV': mensagem = 'Aguarde, validando altera&ccedil;&atilde;o ...'; break;
         case 'AR': mensagem = 'Aguarde, validando altera&ccedil;&atilde;o ...'; break;
         case 'DV': mensagem = 'Aguarde, validando desvincula&ccedil;&atilde;o ...'; break;
-        case 'PI': mensagem = 'Aguarde, validando altera��o ...'; break;
-        case 'PA': mensagem = 'Aguarde, validando altera��o ...'; break;
+        case 'PI': mensagem = 'Aguarde, validando alteração ...'; break;
+        case 'PA': mensagem = 'Aguarde, validando alteração ...'; break;
         case 'CD': mensagem = 'Aguarde, verificando CPF/CNPJ ...'; break;
         default: return false; break;
 
@@ -639,14 +639,14 @@ function manterRotina() {
     nomeForm = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
 
     //-------------------------------------------------------------------------------------------------
-    // [ X ] - Caso for operacao de altera��o de nome 
+    // [ X ] - Caso for operacao de alteração de nome 
     //-------------------------------------------------------------------------------------------------
     // Se for chamado a partir do botao da tela
-    // temos que executar a solicita��o de senha do coordenador
+    // temos que executar a solicitação de senha do coordenador
     if (operacao == 'VX' || operacao == 'VJ') {
         mostrarRotina(operacao);
     }
-    // Se for chamda pelo manter_resultado.php que realiza a grava��o
+    // Se for chamda pelo manter_resultado.php que realiza a gravação
     //executamos o manter Outros()
     if (operacao == 'XV' || operacao == 'JV') {
         manterOutros(nomeForm);
@@ -654,7 +654,7 @@ function manterRotina() {
 
 
     //-------------------------------------------------------------------------------------------------
-    // [ D ] - Caso for operacao de desvincula��o
+    // [ D ] - Caso for operacao de desvinculação
     //-------------------------------------------------------------------------------------------------
     if ((operacao == 'VD') || (operacao == 'DV')) {
 
@@ -692,7 +692,7 @@ function manterRotina() {
 
 
     //-------------------------------------------------------------------------------------------------
-    // [ I | A ] - Caso for operacao for inclus�o ou altera��o e for PF - Pessoa F�sica 
+    // [ I | A ] - Caso for operacao for inclusão ou alteração e for PF - Pessoa Física 
     //-------------------------------------------------------------------------------------------------
     if ((in_array(operacao, ['VI', 'IV', 'VA', 'AV','AR', 'PI', 'PA'])) && (inpessoa == 1)) {
 
@@ -842,7 +842,7 @@ function manterRotina() {
 
 
     //-------------------------------------------------------------------------------------------------
-    // [ I | A ] - Caso for operacao for inclus�o ou altera��o e for PJ - Pessoa Jur�dica
+    // [ I | A ] - Caso for operacao for inclusão ou alteração e for PJ - Pessoa Jurídica
     //-------------------------------------------------------------------------------------------------
     if ((in_array(operacao, ['VI', 'IV', 'VA', 'AV'])) && (inpessoa == 2)) {
 
@@ -877,7 +877,7 @@ function manterRotina() {
         inconrfb = $('#inconrfb', '#frmJuridico').val();
         idorigee = $('#idorigee', '#frmJuridico').val();
         nrlicamb = $('#nrlicamb', '#frmJuridico').val();
-        // Indicador se est� conectado no banco de producao
+        // Indicador se estã conectado no banco de producao
         inbcprod = $('#inbcprod', '#frmCabMatric').val();
 
         //Normalilza os campos de valor
@@ -1010,13 +1010,13 @@ function bloqueiaFormFiltro() {
     var valorPAC = normalizaNumero($('#cdagepac', '#frmFiltro').val());
     var descPAC = $('#nmresage', '#frmFiltro').val();
 
-    // Verifico se o PA est� informado
+    // Verifico se o PA está informado
     if (valorPAC == 0) {
         showError('error', 'PA n&atilde;o cadastrado.', 'Alerta - Matric', 'focaCampoErro(\'cdagepac\',\'frmFiltro\');');
         return false;
     }
 
-    //Verifico a descri��o do PA
+    //Verifico a descrição do PA
     if (descPAC == '') {
         showError('error', 'PA inv&aacute;lido.', 'Alerta - Matric', 'focaCampoErro(\'cdagepac\',\'frmFiltro\');');
         return false;
@@ -1024,7 +1024,7 @@ function bloqueiaFormFiltro() {
 
     if ($('#cdagepac', '#frmFiltro').hasClass('campoErro')) { return false; }
 
-    // Se o PA � diferente de zero, ent�o bloqueia o cabecalho
+    // Se o PA é diferente de zero, então bloqueia o cabecalho
     $('input:text,input:radio,select', '#frmFiltro').removeClass('campoErro').desabilitaCampo();
 
     $('a', '#frmFiltro').unbind('click').css('cursor', 'auto');
@@ -1058,13 +1058,13 @@ function controlaAcessoOperacoes() {
         operacaoOld = operacao;
     }
 
-    // Verifica permiss�es de acesso	
-    if ((operacao == 'CI') && (flgIncluir != '1')) { showError('error', 'Seu usu�rio n�o possui permiss�o de inclus�o.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
-    if ((operacao == 'FC') && (flgConsultar != '1')) { showError('error', 'Seu usu�rio n�o possui permiss�o de consulta.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
-    if ((operacao == 'CR') && (flgRelatorio != '1')) { showError('error', 'Seu usu�rio n�o possui permiss�o para emiss�o do relat�rio.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
-    if ((operacao == 'CX') && (flgNome != '1')) { showError('error', 'Seu usu�rio n�o possui permiss�o altera��o do nome.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
-    if ((operacao == 'CJ') && (flgCpfCnpj != '1')) { showError('error', 'Seu usu�rio n�o possui permiss�o altera��o do CPF/CNPJ.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
-    if ((operacao == 'CD') && (flgDesvincula != '1')) { showError('error', 'Seu usu�rio n�o possui permiss�o para desvincular.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
+    // Verifica permissões de acesso	
+    if ((operacao == 'CI') && (flgIncluir != '1')) { showError('error', 'Seu usuário não possui permissão de inclusão.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
+    if ((operacao == 'FC') && (flgConsultar != '1')) { showError('error', 'Seu usuário não possui permissão de consulta.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
+    if ((operacao == 'CR') && (flgRelatorio != '1')) { showError('error', 'Seu usuário não possui permissão para emissão do relatório.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
+    if ((operacao == 'CX') && (flgNome != '1')) { showError('error', 'Seu usuário não possui permissão alteração do nome.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
+    if ((operacao == 'CJ') && (flgCpfCnpj != '1')) { showError('error', 'Seu usuário não possui permissão alteração do CPF/CNPJ.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
+    if ((operacao == 'CD') && (flgDesvincula != '1')) { showError('error', 'Seu usuário não possui permissão para desvincular.', 'Alerta - Ayllos', 'semaforo--;'); return false; }
 
     return true;
 }
@@ -1077,7 +1077,7 @@ function controlaApresentacaoForms() {
     formataPessoaFisica();
     formataPessoaJuridica();
 
-    // Caso for Pessoa F�sica, mostra Form de Pessoa F�sica, caso contr�rio mostra Form de Pessoa Jur�dica
+    // Caso for Pessoa Física, mostra Form de Pessoa Física, caso contrário mostra Form de Pessoa Jurídica
     if (tppessoa == 1) {
         $('#frmFisico').css('display', 'block');
     } else if (tppessoa == 2 || tppessoa == 3) {
@@ -1108,9 +1108,9 @@ function controlaBotoes() {
     $('#btSalvarAltNome').css('display', 'none');
     $('#btVoltarCns').css('display', 'none');
 
-    // Ocultar o bot�o
+    // Ocultar o botão
     $('#btDemissCRM').css('display', 'none');
-    // Troca a classe do bot�o e retira a chamada da fun��o do OnClick
+    // Troca a classe do botão e retira a chamada da função do OnClick
     $('#btDemissCRM').trocaClass('botao', 'botaoDesativado').attr("onClick", "return false;");
  
     $('#btSaqueCRM').css('display', 'none');
@@ -1134,7 +1134,7 @@ function controlaBotoes() {
 
             $('#btVoltarCns').css('display', 'inline');
 			
-            // Verifica se o operador n�o possui acesso ao CRM
+            // Verifica se o operador não possui acesso ao CRM
             if (flgAcessoCRM == 'N') {
 
                 if ($('input[name="inpessoa"]:checked', '#frmFiltro').val() == 1) {
@@ -1177,18 +1177,18 @@ function controlaBotoes() {
                 }));
 
             } else {   // Caso operador possua acesso
-                // Se n�o tem data de demiss�o... exibe o bot�o
+                // Se não tem data de demissão... exibe o botão
                 if (!$('#dtdemiss', '#frmFisico').val()) {
                     $('#btDemissCRM').css('display', 'inline');
                 }
 
                 if (flgDesligarCRM == 'S') {
-                    // Troca a classe do bot�o e atribui a chamada da fun��o do OnClick
+                    // Troca a classe do botão e atribui a chamada da função do OnClick
                     $('#btDemissCRM').trocaClass('botaoDesativado', 'botao').attr("onClick", "verificaProdutosAtivosCRM(); return false;");
                 }
 
                 if (flgSaldoPclCRM == 'S') {
-                    // Exibir o bot�o de saque parcial
+                    // Exibir o botão de saque parcial
                     $('#btSaqueCRM').css('display', 'inline');
                 }
 
@@ -1289,7 +1289,7 @@ function formataRodape(nomeForm) {
         cDesMotivo.css('width', '230px');
     }
 
-    // [ A ] - Se operac�o � inclus�o, habilito os campos
+    // [ A ] - Se operacão é inclusão, habilito os campos
     if (operacao == 'CA') {
         cDtSaida.habilitaCampo();
         cCodMotivo.habilitaCampo();
@@ -1298,8 +1298,8 @@ function formataRodape(nomeForm) {
     return false;
 }
 
-// ALTERA��O 001: alterado a formata��o dos campos de endereco, 
-//				  e a a��o de habilitar os campos foi passado para as fun��es formataPessoaFisica e formataPessoaJuridica
+// ALTERAÇÃO 001: alterado a formatação dos campos de endereco, 
+//				  e a ação de habilitar os campos foi passado para as funções formataPessoaFisica e formataPessoaJuridica
 function formataEndereco(nomeForm) {
 
     var inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
@@ -1373,7 +1373,7 @@ function formataEndereco(nomeForm) {
 
 }
 
-// ALTERA��O 001: adicionado a a��o de habilitar os campos do endereco
+// ALTERAÇÃO 001: adicionado a ação de habilitar os campos do endereco
 function formataPessoaFisica() {
 
     highlightObjFocus($('#frmFisico'));
@@ -1412,7 +1412,7 @@ function formataPessoaFisica() {
     var cEstEmissor = $('#cdufdptl', '#frmFisico');
     var cDtEmissao = $('#dtemdptl', '#frmFisico');
     
-    // Indicador se est� conectado no banco de producao
+    // Indicador se estã conectado no banco de producao
     var inbcprod = $('#inbcprod', '#frmCabMatric');
 
     cTodosPF1.desabilitaCampo();
@@ -1576,7 +1576,7 @@ function formataPessoaFisica() {
     });
     // Somente executa se esta conectado no banco de producao
     //console.log(' 1- '+inbcprod.val());
-/*  N�o consultar receita enquanto se estuda solu��o (Chamado #537134)
+/*  Não consultar receita enquanto se estuda solução (Chamado #537134)
     if (inbcprod.val() == 'S') {
         // Carregar captcha para consulta na Receita federal
         cDtConsulta.unbind('focus').bind('focus', function () {
@@ -1642,7 +1642,7 @@ function formataPessoaFisica() {
 
 
     /* ----------------------- */
-    /*    FIELDSET FILIA��O    */
+    /*    FIELDSET FILIAÇÃO    */
     /* ----------------------- */
     var rRotulosPF3 = $('label[for="nmmaettl"]', '#frmFisico');
     var rNmpaittl = $('label[for="nmpaittl"]', '#frmFisico');
@@ -1661,7 +1661,7 @@ function formataPessoaFisica() {
     formataEndereco('frmFisico');
     formataRodape('frmFisico');
 
-    // [ I ] - Se operac�o � inclus�o, habilito os campos
+    // [ I ] - Se operacão é inclusão, habilito os campos
     if (operacao == 'CI') {
         
 		if (bloqueiaFormFiltro()) {
@@ -1680,10 +1680,10 @@ function formataPessoaFisica() {
 			
             }
 		
-    } else // [ X ] - Se operac�o for altera��o do nome/cpf
+    } else // [ X ] - Se operacão for alteração do nome/cpf
         if (operacao == 'CX') {
             cNomeTitular.habilitaCampo();
-            // [ A ] - Se operac�o for altera��o 	
+            // [ A ] - Se operacão for alteração 	
         } else if (operacao == 'CJ') {
             cCPF.habilitaCampo();
         } else if (operacao == 'CA') {
@@ -1694,7 +1694,7 @@ function formataPessoaFisica() {
     return false;
 }
 
-// ALTERA��O 001: adicionado a a��o de habilitar os campos do endereco
+// ALTERAÇÃO 001: adicionado a ação de habilitar os campos do endereco
 function formataPessoaJuridica() {
 
     highlightObjFocus($('#frmJuridico'));
@@ -1754,7 +1754,7 @@ function formataPessoaJuridica() {
     var cCnae = $('#cdcnae', '#frmJuridico');
     var cDscnae = $('#dscnae', '#frmJuridico');
     
-    // Indicador se est� conectado no banco de producao
+    // Indicador se estã conectado no banco de producao
     var inbcprod = $('#inbcprod', '#frmCabMatric');
 
 
@@ -1821,7 +1821,7 @@ function formataPessoaJuridica() {
     });
     // Somente executa se esta conectado no banco de producao
     //console.log(' 2- '+inbcprod.val());
-/*  N�o consultar receita enquanto se estuda solu��o (Chamado #537134)
+/*  Não consultar receita enquanto se estuda solução (Chamado #537134)
     if (inbcprod.val() == 'S') {
         // Carregar captcha para consulta na Receita federal
         cDtConsulta.unbind('focus').bind('focus', function () {
@@ -1873,7 +1873,7 @@ function formataPessoaJuridica() {
     $('#divBotoes', '#frmJuridico').css({ 'text-align': 'center', 'padding-top': '3px' });
 
 
-    // [ I ] - Se operac�o � inclus�o, habilito os campos
+    // [ I ] - Se operacão é inclusão, habilito os campos
     if (operacao == 'CI') {
        
 		if (bloqueiaFormFiltro()) {
@@ -1887,10 +1887,10 @@ function formataPessoaJuridica() {
                     cCNPJ.focus();
             }
 			
-    } else  // [ X ] - Se operac�o for altera��o do Raz�o Social/CNPJ
+    } else  // [ X ] - Se operacão for alteração do Razão Social/CNPJ
         if (operacao == 'CX') {
             cRazaoSocial.habilitaCampo();
-            // [ A ] - Se operac�o for altera��o 	
+            // [ A ] - Se operacão for alteração 	
         } else if (operacao == 'CJ') {
             cCNPJ.habilitaCampo();
         } else if (operacao == 'CA') {
@@ -1926,7 +1926,7 @@ function controlaFoco() {
 
 function controlaPesquisas() {
 
-    // Definindo as vari�veis
+    // Definindo as variáveis
     var bo = 'b1wgen0059.p';
     var procedure = '';
     var titulo = '';
@@ -1945,8 +1945,8 @@ function controlaPesquisas() {
         linkOrgao.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	} else {
         linkOrgao.css('cursor', 'pointer').unbind('click').bind('click', function () {
-		var filtrosPesq = "C�digo;cdoedptl;100px;S;|Descri��o;nmoedptl;200px;S;";
-		var colunas = 'C�digo;cdorgao_expedidor;25%;left|Descri��o;nmorgao_expedidor;75%;left';
+		var filtrosPesq = "Código;cdoedptl;100px;S;|Descrição;nmoedptl;200px;S;";
+		var colunas = 'Código;cdorgao_expedidor;25%;left|Descrição;nmorgao_expedidor;75%;left';
 		mostraPesquisa("ZOOM0001", "BUSCA_ORGAO_EXPEDIDOR", "Org&atilde;o expedidor", "30", filtrosPesq, colunas, '','','frmFisico');
 	});
 
@@ -1967,8 +1967,8 @@ function controlaPesquisas() {
             procedure = 'busca_tipo_nacionalidade';
             titulo = 'Tipo Nacionalidade';
             qtReg = '30';
-            filtrosPesq = 'C�d. Tp. Nacion.;tpnacion;30px;S;0;;codigo|Tp. Nacion.;destpnac;200px;S;;;descricao';
-            colunas = 'C�digo;tpnacion;20%;right|Tipo Nacionalidade;destpnac;80%;left';
+            filtrosPesq = 'Cód. Tp. Nacion.;tpnacion;30px;S;0;;codigo|Tp. Nacion.;destpnac;200px;S;;;descricao';
+            colunas = 'Código;tpnacion;20%;right|Tipo Nacionalidade;destpnac;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
@@ -1994,8 +1994,8 @@ function controlaPesquisas() {
     else {
         linkNaciona.addClass('lupa').css('cursor', 'pointer').unbind('click').bind('click', function () { 
 
-			var filtrosPesq = "C�digo;cdnacion;100px;S;0|Descri��o;dsnacion;200px;S;";
-			var colunas = 'C�digo;cdnacion;25%;right|Descri��o;dsnacion;75%;left';
+			var filtrosPesq = "Código;cdnacion;100px;S;0|Descrição;dsnacion;200px;S;";
+			var colunas = 'Código;cdnacion;25%;right|Descrição;dsnacion;75%;left';
 			mostraPesquisa("ZOOM0001", "BUSCANACIONALIDADES", "Nacionalidades", "30", filtrosPesq, colunas);
 			
 			return false;
@@ -2041,8 +2041,8 @@ function controlaPesquisas() {
             procedure = 'busca_estado_civil';
             titulo = 'Estado Civil';
             qtReg = '30';
-            filtrosPesq = 'C�d. Est. Civil.;cdestcvl;30px;S;0;;codigo|Est. Civil;dsestcvl;200px;S;;;descricao';
-            colunas = 'C�digo;cdestcvl;20%;right|Estado Civil;dsestcvl;80%;left';
+            filtrosPesq = 'Cód. Est. Civil.;cdestcvl;30px;S;0;;codigo|Est. Civil;dsestcvl;200px;S;;;descricao';
+            colunas = 'Código;cdestcvl;20%;right|Estado Civil;dsestcvl;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
@@ -2089,8 +2089,8 @@ function controlaPesquisas() {
             procedure = 'busca_empresa';
             titulo = 'Empresa';
             qtReg = '30';
-            filtrosPesq = 'C�d. Empresa;cdempres;30px;S;0;;codigo|Empresa;nmresemp;200px;S;;;descricao';
-            colunas = 'C�digo;cdempres;20%;right|Empresa;nmresemp;80%;left';
+            filtrosPesq = 'Cód. Empresa;cdempres;30px;S;0;;codigo|Empresa;nmresemp;200px;S;;;descricao';
+            colunas = 'Código;cdempres;20%;right|Empresa;nmresemp;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
@@ -2113,7 +2113,7 @@ function controlaPesquisas() {
     }
 
     /*-------------------------------*/
-    /*        CONTROLE OCUPA��O      */
+    /*        CONTROLE OCUPAÇÃO      */
     /*-------------------------------*/
     var linkEmp = $('a:eq(6)', '#frmFisico');
     if (linkEmp.prev().hasClass('campoTelaSemBorda')) {
@@ -2121,16 +2121,16 @@ function controlaPesquisas() {
     } else {
         linkEmp.css('cursor', 'pointer').unbind('click').bind('click', function () {
             
-            filtrosPesq = 'C�d. Ocupa��o;cdocpttl;30px;S;0;;codigo|Ocupa��o;dsocpttl;200px;S;;;descricao';
-            colunas = 'C�digo;cdocupa;20%;right|Ocupa��o;rsdocupa;80%;left';
-            mostraPesquisa("ZOOM0001", "BUSCOCUPACAO", "Ocupa��o", "30", filtrosPesq, colunas);
+            filtrosPesq = 'Cód. Ocupação;cdocpttl;30px;S;0;;codigo|Ocupação;dsocpttl;200px;S;;;descricao';
+            colunas = 'Código;cdocupa;20%;right|Ocupação;rsdocupa;80%;left';
+            mostraPesquisa("ZOOM0001", "BUSCOCUPACAO", "Ocupação", "30", filtrosPesq, colunas);
             return false;
 
         });
         linkEmp.prev().unbind('change').bind('change', function () {
             
             filtrosDesc = '';
-            buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupa��o", $(this).attr('name'), 'dsocpttl', $(this).val(), 'rsdocupa', filtrosDesc, 'frmFisico');
+            buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupação", $(this).attr('name'), 'dsocpttl', $(this).val(), 'rsdocupa', filtrosDesc, 'frmFisico');
             return false;
 
         });
@@ -2138,7 +2138,7 @@ function controlaPesquisas() {
             $(this).unbind('change').bind('change', function () {
                 
                 filtrosDesc = '';
-                buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupa��o", $(this).attr('name'), 'dsocpttl', $(this).val(), 'rsdocupa', filtrosDesc, 'frmFisico');
+                buscaDescricao("ZOOM0001", "BUSCOCUPACAO", "Ocupação", $(this).attr('name'), 'dsocpttl', $(this).val(), 'rsdocupa', filtrosDesc, 'frmFisico');
                 return false;
             });
         });
@@ -2150,16 +2150,16 @@ function controlaPesquisas() {
     } else {
         linkMotivo.css('cursor', 'pointer').unbind('click').bind('click', function () {
             procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de sa�da';
+            titulo = 'Motivo de saída';
             qtReg = '30';
-            filtrosPesq = 'C�d. Motivo sa�da;cdmotdem;30px;S;0;;codigo|Motivo de sa�da;dsmotdem;200px;S;;;descricao';
-            colunas = 'C�digo;cdmotdem;20%;right|Motivo de sa�da;dsmotdem;80%;left';
+            filtrosPesq = 'Cód. Motivo saída;cdmotdem;30px;S;0;;codigo|Motivo de saída;dsmotdem;200px;S;;;descricao';
+            colunas = 'Código;cdmotdem;20%;right|Motivo de saída;dsmotdem;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
         linkMotivo.prev().unbind('change').bind('change', function () {
             procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de sa�da';
+            titulo = 'Motivo de saída';
             filtrosDesc = '';
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'frmFisico');
             return false;
@@ -2167,7 +2167,7 @@ function controlaPesquisas() {
         linkMotivo.prev().unbind('blur').bind('blur', function () {
             $(this).unbind('change').bind('change', function () {
                 procedure = 'busca_motivo_demissao';
-                titulo = 'Motivo de sa�da';
+                titulo = 'Motivo de saída';
                 filtrosDesc = '';
                 buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'frmFisico');
                 return false;
@@ -2184,16 +2184,16 @@ function controlaPesquisas() {
     } else {
         linkNatJur.css('cursor', 'pointer').unbind('click').bind('click', function () {
             procedure = 'busca_natureza_juridica';
-            titulo = 'Nat. Jur�dica';
+            titulo = 'Nat. Jurídica';
             qtReg = '30';
-            filtrosPesq = 'C�d. Nat. Jur�dica;natjurid;30px;S;0;;codigo|Nat. Jur�dica;rsnatjur;200px;S;;;descricao';
-            colunas = 'C�digo;cdnatjur;20%;right|Nat. Jur�dica;rsnatjur;80%;left';
+            filtrosPesq = 'Cód. Nat. Jurídica;natjurid;30px;S;0;;codigo|Nat. Jurídica;rsnatjur;200px;S;;;descricao';
+            colunas = 'Código;cdnatjur;20%;right|Nat. Jurídica;rsnatjur;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
         linkNatJur.prev().unbind('change').bind('change', function () {
             procedure = 'busca_natureza_juridica'; //
-            titulo = 'Nat. Jur�dica';
+            titulo = 'Nat. Jurídica';
             filtrosDesc = '';
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'rsnatjur', $(this).val(), 'rsnatjur', filtrosDesc, 'frmJuridico');
             return false;
@@ -2201,7 +2201,7 @@ function controlaPesquisas() {
         linkNatJur.prev().unbind('blur').bind('blur', function () {
             $(this).unbind('change').bind('change', function () {
                 procedure = 'busca_natureza_juridica';
-                titulo = 'Nat. Jur�dica';
+                titulo = 'Nat. Jurídica';
                 filtrosDesc = '';
                 buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'rsnatjur', $(this).val(), 'rsnatjur', filtrosDesc, 'frmJuridico');
                 return false;
@@ -2218,16 +2218,16 @@ function controlaPesquisas() {
     } else {
         linkSetEco.css('cursor', 'pointer').unbind('click').bind('click', function () {
             procedure = 'busca_setor_economico';
-            titulo = 'Setor Econ�mico';
+            titulo = 'Setor Econômico';
             qtReg = '30';
-            filtrosPesq = 'C�d. Setor Econ�mico;cdseteco;30px;S;0;;codigo|Setor Econ�mico;nmseteco;200px;S;;;descricao';
-            colunas = 'C�digo;cdseteco;20%;right|Setor Econ�mico;nmseteco;80%;left';
+            filtrosPesq = 'Cód. Setor Econômico;cdseteco;30px;S;0;;codigo|Setor Econômico;nmseteco;200px;S;;;descricao';
+            colunas = 'Código;cdseteco;20%;right|Setor Econômico;nmseteco;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
         linkSetEco.prev().unbind('change').bind('change', function () {
             procedure = 'busca_setor_economico';
-            titulo = 'Setor Econ�mico';
+            titulo = 'Setor Econômico';
             filtrosDesc = '';
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'nmseteco', $(this).val(), 'nmseteco', filtrosDesc, 'frmJuridico');
             return false;
@@ -2235,7 +2235,7 @@ function controlaPesquisas() {
         linkSetEco.prev().unbind('blur').bind('blur', function () {
             $(this).unbind('change').bind('change', function () {
                 procedure = 'busca_setor_economico';
-                titulo = 'Setor Econ�mico';
+                titulo = 'Setor Econômico';
                 filtrosDesc = '';
                 buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'nmseteco', $(this).val(), 'nmseteco', filtrosDesc, 'frmJuridico');
                 return false;
@@ -2254,8 +2254,8 @@ function controlaPesquisas() {
             procedure = 'busca_ramo_atividade';
             titulo = 'Ramo Atividade';
             qtReg = '30';
-            filtrosPesq = 'C�d. Ramo Atividade;cdrmativ;30px;S;0;;descricao|Ramo Atividade;dsrmativ;200px;S;;;descricao|C�d. Setor Econ�mico;cdseteco;30px;N;;;codigo|Setor Econ�mico;nmseteco;200px;N;;;descricao';
-            colunas = 'C�digo;cdrmativ;20%;right|Ramo Atividade;nmrmativ;80%;left';
+            filtrosPesq = 'Cód. Ramo Atividade;cdrmativ;30px;S;0;;descricao|Ramo Atividade;dsrmativ;200px;S;;;descricao|Cód. Setor Econômico;cdseteco;30px;N;;;codigo|Setor Econômico;nmseteco;200px;N;;;descricao';
+            colunas = 'Código;cdrmativ;20%;right|Ramo Atividade;nmrmativ;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
@@ -2288,8 +2288,8 @@ function controlaPesquisas() {
             procedure = 'BUSCA_CNAE';
             titulo = 'CNAE';
             qtReg = '30';
-            filtrosPesq = 'C�d. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
-            colunas = 'C�digo;cdcnae;20%;right|Desc CANE;dscnae;80%;left';
+            filtrosPesq = 'Cód. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
+            colunas = 'Código;cdcnae;20%;right|Desc CANE;dscnae;80%;left';
             mostraPesquisa('ZOOM0001', procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
@@ -2304,9 +2304,9 @@ function controlaPesquisas() {
 
 
     /*-----------------------------------------------*/
-    /*    CONTROLE ENDERE�O FISICO E JURIDICO        */
+    /*    CONTROLE ENDEREÇO FISICO E JURIDICO        */
     /*-----------------------------------------------*/
-    // ALTERA��O 001: adicionado o controle do endereco de pessoa fisica e juridica	
+    // ALTERAÇÃO 001: adicionado o controle do endereco de pessoa fisica e juridica	
     var linkEnderecoFisico = $('a:eq(7)', '#frmFisico');
     if (linkEnderecoFisico.prev().hasClass('campoTelaSemBorda')) {
         linkEnderecoFisico.addClass('lupa').css('cursor', 'auto');
@@ -2332,16 +2332,16 @@ function controlaPesquisas() {
     } else {
         linkMotivo.css('cursor', 'pointer').unbind('click').bind('click', function () {
             procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de sa�da';
+            titulo = 'Motivo de saída';
             qtReg = '30';
-            filtrosPesq = 'C�d. Motivo de sa�da;cdmotdem;30px;S;0;;codigo|Motivo de sa�da;dsmotdem;200px;S;;;descricao';
-            colunas = 'C�digo;cdmotdem;20%;right|Motivo de sa�da;dsmotdem;80%;left';
+            filtrosPesq = 'Cód. Motivo de saída;cdmotdem;30px;S;0;;codigo|Motivo de saída;dsmotdem;200px;S;;;descricao';
+            colunas = 'Código;cdmotdem;20%;right|Motivo de saída;dsmotdem;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
             return false;
         });
         linkMotivo.prev().unbind('change').bind('change', function () {
             procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de sa�da';
+            titulo = 'Motivo de saída';
             filtrosDesc = '';
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'frmJuridico');
             return false;
@@ -2349,7 +2349,7 @@ function controlaPesquisas() {
         linkMotivo.prev().unbind('blur').bind('blur', function () {
             $(this).unbind('change').bind('change', function () {
                 procedure = 'busca_motivo_demissao';
-                titulo = 'Motivo de sa�da';
+                titulo = 'Motivo de saída';
                 filtrosDesc = '';
                 buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'frmJuridico');
                 return false;
@@ -2366,13 +2366,13 @@ function verificaResponsavelLegal() {
             abrirRotina('RESPONSAVEL LEGAL', 'Responsavel Legal', 'responsavel_legal', 'responsavel_legal', 'CT');
         }
         else {
-            //Alterado, pois validacao responsavel legal sera chamada apos salvar os dados, devido a replica��o de dados da pessoa.		    
+            //Alterado, pois validacao responsavel legal sera chamada apos salvar os dados, devido a replicação de dados da pessoa.		    
             //controlaOperacao("VI");
             impressao_inclusao();
         }
     }
     else {
-        //Alterado, pois validacao responsavel legal sera chamada apos salvar os dados, devido a replica��o de dados da pessoa.		    
+        //Alterado, pois validacao responsavel legal sera chamada apos salvar os dados, devido a replicação de dados da pessoa.		    
         //controlaOperacao("VI");
         impressao_inclusao();
     }
@@ -2428,7 +2428,7 @@ function consultaPreIncluir() {
     cdagepac = $('#cdagepac', '#frmFiltro').val();
     inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
 
-    // Carrega dados da conta atrav�s de ajax
+    // Carrega dados da conta através de ajax
     $.ajax({
         type: 'POST',
         url: UrlSite + 'telas/matric/valida_inicio_inclusao.php',
@@ -2441,7 +2441,7 @@ function consultaPreIncluir() {
 				},
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N�o foi poss�vel concluir a requisi&ccedil;&atilde;o', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
+            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
         },
         success: function (response) {
             try {
@@ -2457,7 +2457,7 @@ function consultaPreIncluir() {
     return false;
 }
 
-// ALTERA��O 001: adicionado a a��o de habilitar os campos do endereco
+// ALTERAÇÃO 001: adicionado a ação de habilitar os campos do endereco
 function formataInclusao() {
 
     if ($('#frmFisico').css('display') == 'block') {
@@ -2543,7 +2543,7 @@ function verificaRelatorio() {
 				},
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N�o foi poss�vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
+            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Matric', '$(\'#nrdconta\',\'#frmFiltro\').focus()');
         },
         success: function (response) {
             hideMsgAguardo();
@@ -2571,7 +2571,7 @@ function verificaRelatorio() {
 function exibirMsgMatric(strAlerta, msgRetorno, qtparcel, vlparcel) {
 
     if (strAlerta != '') {
-        // Definindo as vari�veis
+        // Definindo as variáveis
 
         var arrayMensagens = new Array();
         var novoArray = new Array();
@@ -2596,7 +2596,7 @@ function exibirMsgMatric(strAlerta, msgRetorno, qtparcel, vlparcel) {
 }
 
 //---------------------------------------------------------
-//  FUN��ES PARA O PARCELAMENTO
+//  FUNÇÕES PARA O PARCELAMENTO
 //---------------------------------------------------------
 
 function exibeParcelamento(qtparcel, vlparcel, msgRetor) {
@@ -2616,7 +2616,7 @@ function exibeParcelamento(qtparcel, vlparcel, msgRetor) {
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();
-                showError('error', 'N&atilde;o foi poss�vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+                showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
             },
             success: function (response) {
                 if (response.indexOf('showError("error"') == -1) {
@@ -2648,7 +2648,7 @@ function abrirProcuradores() {
     abrirRotina('PROCURADORES', 'Representante/Procurador', 'procuradores', 'procuradores', 'CI');
 }
 
-// Fun��o para acessar rotina 
+// Função para acessar rotina 
 function abrirRotina(nomeValidar, nomeTitulo, nomeScript, nomeURL, ope) {
 
     // Se ja abriu a rotina, desconsiderar	
@@ -2682,7 +2682,7 @@ function abrirRotina(nomeValidar, nomeTitulo, nomeScript, nomeURL, ope) {
 
 
     // Carrega biblioteca javascript da rotina
-    // Ao carregar efetua chamada do conte�do da rotina atrav�s de ajax
+    // Ao carregar efetua chamada do conteúdo da rotina através de ajax
     $.getScript(urlScript + ".js?keyrand="+Math.floor((Math.random() * 1000) + 1), function () {
 
         operacao_rsp = operacao;
@@ -2703,7 +2703,7 @@ function abrirRotina(nomeValidar, nomeTitulo, nomeScript, nomeURL, ope) {
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();
-                showError("error", "N�o foi poss�vel concluir a requisi��o.", "Alerta - Ayllos", "");
+                showError("error", "Não foi possível concluir a requisição.", "Alerta - Ayllos", "");
             },
             success: function (response) {
 
@@ -2828,7 +2828,7 @@ function mostrarRotina(operacao) {
 
     showMsgAguardo('Aguarde, abrindo ...');
 
-    // Executa script de confirma��o atrav�s de ajax
+    // Executa script de confirmação através de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -2839,7 +2839,7 @@ function mostrarRotina(operacao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N�o foi poss�vel concluir a requisi��o.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function (response) {
             $('#divRotina').html(response);
@@ -2873,7 +2873,7 @@ function buscaSenha(operacao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N�o foi poss�vel concluir a requisi��o.', 'Alerta - Ayllos', "unblockBackground();");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
         },
         success: function (response) {
 
@@ -2884,7 +2884,7 @@ function buscaSenha(operacao) {
                     formataSenha();
                     $('#codsenha', '#frmSenha').unbind('keydown').bind('keydown', function (e) {
                         if (divError.css('display') == 'block') { return false; }
-                        // Se � a tecla ENTER, 
+                        // Se é a tecla ENTER, 
                         if (e.keyCode == 13) {
                             validarSenha(operacao);
                             return false;
@@ -2927,7 +2927,7 @@ function buscaContas() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N�o foi poss�vel concluir a requisi��o.', 'Alerta - Ayllos', "unblockBackground();");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
         },
         success: function (response) {
 
@@ -3067,7 +3067,7 @@ function validarSenha(operacao) {
         success: function (response) {
             try {
                 eval(response);
-                // se n�o ocorreu erro, vamos gravar as al�tera��es
+                // se não ocorreu erro, vamos gravar as alçterações
                 if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                     if (cddopcao == 'X') {
                         manterOutros(nomeForm);
@@ -3143,7 +3143,7 @@ function manterOutros(nomeForm) {
 
     switch (operacao) {
         case 'CC': mensagem = 'Aguarde, verificando a cidade do CEP ...'; break;
-        case 'LCD': mensagem = 'Aguarde, verificando situa��o do CPF/CNPJ ...'; break;
+        case 'LCD': mensagem = 'Aguarde, verificando situação do CPF/CNPJ ...'; break;
         case 'BCC': mensagem = 'Aguarde, gerando a C/C ...'; break;
         case 'DCC': mensagem = 'Aguarde, duplicando a C/C ...'; break;
 
@@ -3265,7 +3265,7 @@ function validaAcessoEexecuta(UrlSite, tipo) {
         var url = UrlSite + "includes/consulta_rfb/rfb/cnpj/getcaptcha.php";
     }
     var metodo = '$("#divBloqueio").css("display", "")';
-    var mensagem = "Site de consulta da Receita Federal do Brasil indispon�vel. Efetue a consulta manualmente. ";
+    var mensagem = "Site de consulta da Receita Federal do Brasil indisponível. Efetue a consulta manualmente. ";
     var tipo = "error";
     var titulo = "Alerta - Ayllos";
     var cDtConsulta = $('#dtcnscpf');
@@ -3323,13 +3323,13 @@ function validaAcessoEexecuta(UrlSite, tipo) {
 }
 
 
-// Fun��o para acessar rotina de Saque Parcial 
+// Função para acessar rotina de Saque Parcial 
 /*function apresentarDesligamento() {
 
     // Mostra mensagem de aguardo	
     showMsgAguardo("Aguarde, carregando ...");
 
-    // Executa script atrav�s de ajax
+    // Executa script através de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -3340,7 +3340,7 @@ function validaAcessoEexecuta(UrlSite, tipo) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N�o foi poss�vel concluir a requisi��o.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function (response) {
             $('#divRotina').html(response);
@@ -3373,7 +3373,7 @@ function formataDesligamento() {
 }
 */
 function confirmarDesligamento(cdmotdem, dsmotdem) {
-    showConfirmacao('A conta est� na situa&ccedil;&atilde;o ' + cdmotdem + ' - ' + dsmotdem + '. Deseja Prosseguir?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuarDevolucaoCotas();', 'fechaRotina($(\'#divRotina\'));', 'sim.gif', 'nao.gif'); return false;
+    showConfirmacao('A conta está na situa&ccedil;&atilde;o ' + cdmotdem + ' - ' + dsmotdem + '. Deseja Prosseguir?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuarDevolucaoCotas();', 'fechaRotina($(\'#divRotina\'));', 'sim.gif', 'nao.gif'); return false;
 }
 
 function buscarContasDemitidas(nriniseq,nrregist) {
@@ -3674,7 +3674,7 @@ function controlaVoltar(ope){
 function reverterSituacaoContasDemitidas() {
 	
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, efetuando opera��o ...");
+	showMsgAguardo("Aguarde, efetuando operação ...");
 	
 	var camposPc = '';
     camposPc = retornaCampos(lstContasDemitidas, '|');
@@ -3682,7 +3682,7 @@ function reverterSituacaoContasDemitidas() {
 	var dadosPrc = '';
     dadosPrc = retornaValores(lstContasDemitidas, ';', '|', camposPc);
 			
-	// Executa script de consulta atrav�s de ajax
+	// Executa script de consulta através de ajax
 	$.ajax({		
 		type: "POST",
 		url: UrlSite + "telas/matric/gerar_devolucao_capital_apos_ago.php",
@@ -3711,7 +3711,7 @@ function reverterSituacaoContasDemitidas() {
 function atualizarContasAntigasDemitidas(operauto) {
 
     // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, efetuando opera��o ...");
+    showMsgAguardo("Aguarde, efetuando operação ...");
 
     var camposPc = '';
     camposPc = retornaCampos(lstContasAntigasDemitidas, '|');
@@ -3719,7 +3719,7 @@ function atualizarContasAntigasDemitidas(operauto) {
     var dadosPrc = '';
     dadosPrc = retornaValores(lstContasAntigasDemitidas, ';', '|', camposPc);
 
-    // Executa script de consulta atrav�s de ajax
+    // Executa script de consulta através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/matric/atualizar_contas_antigas_demitidas.php",
@@ -3755,7 +3755,7 @@ function gerarDevolucaoCotasContasSelecionadas() {
 	var dadosPrc = '';
     dadosPrc = retornaValores(lstContasDemitidas, ';', '|', camposPc);
 			
-	// Executa script de consulta atrav�s de ajax
+	// Executa script de consulta através de ajax
 	$.ajax({		
 		type: "POST",
 		url: UrlSite + "telas/matric/gerar_devolucao_cotas_contas_selecionadas.php",
@@ -3779,7 +3779,7 @@ function gerarDevolucaoCotasContasSelecionadas() {
 	});	
 }
 
-// Fun��o para acessar rotina de Saque Parcial 
+// Função para acessar rotina de Saque Parcial 
 function abrirRotinaSaqueParcial() {
 			
     var tipoPessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();			
@@ -3787,7 +3787,7 @@ function abrirRotinaSaqueParcial() {
 	// Mostra mensagem de aguardo	
 	showMsgAguardo("Aguarde, carregando ...");
 	
-    // Executa script atrav�s de ajax
+    // Executa script através de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -3798,7 +3798,7 @@ function abrirRotinaSaqueParcial() {
 			}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N�o foi poss�vel concluir a requisi��o.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
 			$('#divRotina').html(response);
@@ -3862,7 +3862,7 @@ function formataRotinaSaqueParcial(){
 				
 		if ( divError.css('display') == 'block' ) { return false; }		
 		
-		// Valida n�mero da conta
+		// Valida número da conta
 		if (!validaNroConta(retiraCaracteres($(this).val(),"0123456789",true))) {
 		
 			showError("error","Conta/dv inv&aacute;lida.","Alerta - Ayllos","$('#nrdconta','#frmSaqueParcial').focus();");
@@ -3893,7 +3893,7 @@ function efetuarSaqueParcial() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, efetuando saque ...");
 			
-	// Executa script de consulta atrav�s de ajax
+	// Executa script de consulta através de ajax
 	$.ajax({		
 		type: "POST",
 		url: UrlSite + "telas/matric/efetuar_saque_parcial.php",
@@ -4017,7 +4017,7 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		buscaDescricao(bo, procedure, titulo, 'cdestcvl', 'dsestcvl', cdestadoCivil, 'dsestcvl', filtrosDesc, 'frmFisico');
 		
 		procedure = 'BUSCOCUPACAO';
-		titulo = 'Ocupa��o';
+		titulo = 'Ocupação';
 		filtrosDesc = '';
 		buscaDescricao("ZOOM0001", procedure, titulo, 'cdocpttl', 'dsocpttl', cdNaturezaOcupacao, 'rsdocupa', filtrosDesc, 'frmFisico');
 		
@@ -4048,12 +4048,12 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		$('#dtiniatv', '#' + nomeForm).val(dtInicioAtividade);
 		
 		procedure = 'busca_natureza_juridica';
-		titulo = 'Nat. Jur�dica';
+		titulo = 'Nat. Jurídica';
 		filtrosDesc = '';
 		buscaDescricao(bo, procedure, titulo, 'natjurid', 'rsnatjur', cdNatureza, 'rsnatjur', filtrosDesc, 'frmJuridico');
 		
 		procedure = 'busca_setor_economico';
-		titulo = 'Setor Econ�mico';
+		titulo = 'Setor Econômico';
 		filtrosDesc = '';
 		buscaDescricao(bo, procedure, titulo, 'cdseteco', 'nmseteco', cdSetor, 'nmseteco', filtrosDesc, 'frmJuridico');				
 
@@ -4077,7 +4077,7 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 
 function controlaPesquisaSaquelPacial(){
 		
-    // Definindo as vari�veis
+    // Definindo as variáveis
     var bo = 'b1wgen0059.p';
     var procedure = '';
     var titulo = '';
@@ -4105,7 +4105,7 @@ function controlaPesquisaSaquelPacial(){
             } else {
                 campoAnterior = $(this).prev().attr('name');
 				
-                // N�mero da conta
+                // Número da conta
                 if (campoAnterior == 'nrdconta') {
 					
                     mostraPesquisaAssociado('nrdconta', 'frmSaqueParcial',$('#divRotina') );
@@ -4123,13 +4123,13 @@ function controlaPesquisaSaquelPacial(){
 
 }
 
-// Fun��o para acessar rotina de Saque Parcial 
+// Função para acessar rotina de Saque Parcial 
 function apresentarDesligamento() {			
 	
     // Mostra mensagem de aguardo	
     showMsgAguardo("Aguarde, carregando ...");
 	
-    // Executa script atrav�s de ajax
+    // Executa script através de ajax
     $.ajax({		
         type: 'POST',
         dataType: 'html',
@@ -4140,7 +4140,7 @@ function apresentarDesligamento() {
         }, 
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','N�o foi poss�vel concluir a requisi��o.','Alerta - Ayllos',"unblockBackground()");
+            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
         },
         success: function(response) {
             $('#divRotina').html(response);
@@ -4160,9 +4160,9 @@ function efetuarDevolucaoCotas() {
     var dtdemiss = $('#dtdemiss','#frmMotivoDesligamento').val();
 
     // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, efetuando devolu��o ...");
+    showMsgAguardo("Aguarde, efetuando devolução ...");
 			
-    // Executa script de consulta atrav�s de ajax
+    // Executa script de consulta através de ajax
     $.ajax({		
         type: "POST",
         url: UrlSite + "telas/matric/efetuar_devolucao_cotas.php",
@@ -4270,7 +4270,7 @@ function formataTelaDesligamento(){
     cVldcotas.css({'width':'130px'}).addClass('moeda').desabilitaCampo();
     cNrdconta.addClass('inteiro').css({ 'width': '130px' }).desabilitaCampo();
 			
-    // Definindo as vari�veis
+    // Definindo as variáveis
     var bo = 'b1wgen0059.p';
     var procedure = '';
     var titulo = '';
@@ -4285,15 +4285,15 @@ function formataTelaDesligamento(){
         motivoLink.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
     } else {
         motivoLink.css('cursor', 'pointer').unbind('click').bind('click', function () {
-          var filtrosPesq = "C�digo;cdmotdem;100px;S;0|Descri��o;dsmotdem;200px;S;";
-          var colunas = 'C�digo;cdmotdem;25%;right|Descri��o;dsmotdem;75%;left';
-          mostraPesquisa("ZOOM0001", "BUSCAMOTIVODEM", "Motivos de sa�da", "30", filtrosPesq, colunas);
+          var filtrosPesq = "Código;cdmotdem;100px;S;0|Descrição;dsmotdem;200px;S;";
+          var colunas = 'Código;cdmotdem;25%;right|Descrição;dsmotdem;75%;left';
+          mostraPesquisa("ZOOM0001", "BUSCAMOTIVODEM", "Motivos de saída", "30", filtrosPesq, colunas);
           return false;	
     });
         
     motivoLink.prev().unbind('change').bind('change', function () {
         procedure = 'BUSCAMOTIVODEM';
-        titulo = 'Motivo de sa�da';
+        titulo = 'Motivo de saída';
         filtrosDesc = '';
         buscaDescricao("ZOOM0001", procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento','blockBackground(parseInt($("#divRotina").css("z-index")))');
         return false;
@@ -4301,7 +4301,7 @@ function formataTelaDesligamento(){
     motivoLink.prev().unbind('blur').bind('blur', function () {
         $(this).unbind('change').bind('change', function () {
             procedure = 'BUSCAMOTIVODEM';
-            titulo = 'Motivo de sa�da';
+            titulo = 'Motivo de saída';
             filtrosDesc = '';
             buscaDescricao("ZOOM0001", procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento','blockBackground(parseInt($("#divRotina").css("z-index")))');
             return false;
@@ -4381,21 +4381,21 @@ function formataFiltroContasDemitidas() {
     cNrConta.addClass('conta pesquisa').css('width', '85px');
    
    
-    // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida a��o
+    // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
     cNrConta.unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
-        // Se � a tecla ENTER, verificar numero conta e realizar as devidas opera��es
+        // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
         if (e.keyCode == 13) {
-            // Armazena o n�mero da conta na vari�vel global
+            // Armazena o número da conta na variável global
             nrdconta = normalizaNumero($(this).val());
             nrdcontaOld = nrdconta;
 
-            // Verifica se o n�mero da conta � vazio
+            // Verifica se o número da conta é vazio
             if (nrdconta == '') { return false; }
 
-            // Verifica se a conta � v�lida
+            // Verifica se a conta é válida
             if (!validaNroConta(nrdconta)) {
                 showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmFiltroContasDemitidas\');');
                 return false;
@@ -4421,13 +4421,13 @@ function formataFiltroContasDemitidas() {
             } else {
                 campoAnterior = $(this).prev().attr('name');
 
-                // N�mero da conta
+                // Número da conta
                 if (campoAnterior == 'nrdconta') {
 
                     mostraPesquisaAssociado('nrdconta', 'frmFiltroContasDemitidas');
                     return false;
 
-                    // Ag�ncia
+                    // Agência
         }
             }
             return false;
@@ -4459,21 +4459,21 @@ function formataFiltroContasAntigasDemitidas() {
     cNrConta.addClass('conta pesquisa').css('width', '85px');
 
 
-    // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida a��o
+    // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
     cNrConta.unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
-        // Se � a tecla ENTER, verificar numero conta e realizar as devidas opera��es
+        // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
         if (e.keyCode == 13) {
-            // Armazena o n�mero da conta na vari�vel global
+            // Armazena o número da conta na variável global
             nrdconta = normalizaNumero($(this).val());
             nrdcontaOld = nrdconta;
 
-            // Verifica se o n�mero da conta � vazio
+            // Verifica se o número da conta é vazio
             if (nrdconta == '') { return false; }
 
-            // Verifica se a conta � v�lida
+            // Verifica se a conta é válida
             if (!validaNroConta(nrdconta)) {
                 showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Matric', 'focaCampoErro(\'nrdconta\',\'frmFiltroContasAntigasDemitidas\');');
                 return false;
@@ -4499,13 +4499,13 @@ function formataFiltroContasAntigasDemitidas() {
             } else {
                 campoAnterior = $(this).prev().attr('name');
 
-                // N�mero da conta
+                // Número da conta
                 if (campoAnterior == 'nrdconta') {
 
                     mostraPesquisaAssociado('nrdconta', 'frmFiltroContasAntigasDemitidas');
                     return false;
 
-                    // Ag�ncia
+                    // Agência
                 }
             }
             return false;
@@ -4522,7 +4522,7 @@ function formataFiltroContasAntigasDemitidas() {
 
 function confirmarDesligamentoCRM() {
     showConfirmacao('Deseja confirmar o desligamento?','Confirma&ccedil;&atilde;o - Ayllos','efetuarDevolucaoCotasCRM();','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));','sim.gif','nao.gif');
-    //showConfirmacao('A conta est� na situa&ccedil;&atilde;o ' + cdmotdem + ' - ' + dsmotdem + '. Deseja Prosseguir?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuarDevolucaoCotasCRM();', 'fechaRotina($(\'#divRotina\'));', 'sim.gif', 'nao.gif'); return false;
+    //showConfirmacao('A conta está na situa&ccedil;&atilde;o ' + cdmotdem + ' - ' + dsmotdem + '. Deseja Prosseguir?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuarDevolucaoCotasCRM();', 'fechaRotina($(\'#divRotina\'));', 'sim.gif', 'nao.gif'); return false;
 }
 
 function efetuarDevolucaoCotasCRM() {
@@ -4535,7 +4535,7 @@ function efetuarDevolucaoCotasCRM() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando devolucao ...");
 
-    // Executa script de consulta atrav�s de ajax
+    // Executa script de consulta através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/matric/efetuar_devolucao_cotasCRM.php",
@@ -4562,13 +4562,13 @@ function efetuarDevolucaoCotasCRM() {
     });
 }
 
-// Fun��o para acessar rotina de Desligamento
+// Função para acessar rotina de Desligamento
 function apresentarDesligamentoCRM() {
 
     // Mostra mensagem de aguardo	
     showMsgAguardo("Aguarde, carregando ...");
 
-    // Executa script atrav�s de ajax
+    // Executa script através de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -4579,7 +4579,7 @@ function apresentarDesligamentoCRM() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N�o foi poss�vel concluir a requisi��o.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function (response) {
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
@@ -4649,7 +4649,7 @@ function formataTelaDesligamentoCRM() {
     cMotivoSq.css({ 'width': '400px' }).desabilitaCampo();
 
     /*
-    // Definindo as vari�veis
+    // Definindo as variáveis
     var bo = 'b1wgen0059.p';
     var procedure = '';
     var titulo = '';
@@ -4665,17 +4665,17 @@ function formataTelaDesligamentoCRM() {
     } else {
         motivoLink.css('cursor', 'pointer').unbind('click').bind('click', function () {
             procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de sa�da';
+            titulo = 'Motivo de saída';
             qtReg = '30';
-            filtrosPesq = 'C�d. Motivo sa�da;cdmotdem;30px;S;0;;codigo|Motivo de sa�da;dsmotdem;200px;S;;;descricao';
-            colunas = 'C�digo;cdmotdem;20%;right|Motivo de sa�da;dsmotdem;80%;left';
+            filtrosPesq = 'Cód. Motivo saída;cdmotdem;30px;S;0;;codigo|Motivo de saída;dsmotdem;200px;S;;;descricao';
+            colunas = 'Código;cdmotdem;20%;right|Motivo de saída;dsmotdem;80%;left';
             mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, $('#divRotina'));
             return false;
         });
 
         motivoLink.prev().unbind('change').bind('change', function () {
             procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de sa�da';
+            titulo = 'Motivo de saída';
             filtrosDesc = '';
             buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento', 'blockBackground(parseInt($("#divRotina").css("z-index")))');
             return false;
@@ -4683,7 +4683,7 @@ function formataTelaDesligamentoCRM() {
         motivoLink.prev().unbind('blur').bind('blur', function () {
             $(this).unbind('change').bind('change', function () {
                 procedure = 'busca_motivo_demissao';
-                titulo = 'Motivo de sa�da';
+                titulo = 'Motivo de saída';
                 filtrosDesc = '';
                 buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento', 'blockBackground(parseInt($("#divRotina").css("z-index")))');
                 return false;
@@ -4740,7 +4740,7 @@ function verificaProdutosAtivosCRM() {
 
 }
 
-// Fun��o para acessar rotina de Saque Parcial 
+// Função para acessar rotina de Saque Parcial 
 function abrirRotinaSaqueParcialCRM() {
 
     var tipoPessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
@@ -4748,7 +4748,7 @@ function abrirRotinaSaqueParcialCRM() {
     // Mostra mensagem de aguardo	
     showMsgAguardo("Aguarde, carregando ...");
 
-    // Executa script atrav�s de ajax
+    // Executa script através de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -4759,7 +4759,7 @@ function abrirRotinaSaqueParcialCRM() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N�o foi poss�vel concluir a requisi��o.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function (response) {
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
@@ -4831,7 +4831,7 @@ function formataRotinaSaqueParcialCRM() {
 
         if (divError.css('display') == 'block') { return false; }
 
-        // Valida n�mero da conta
+        // Valida número da conta
         if (!validaNroConta(retiraCaracteres($(this).val(), "0123456789", true))) {
 
             showError("error", "Conta/dv inv&aacute;lida.", "Alerta - Ayllos", "$('#nrdconta','#frmSaqueParcial').focus();");
@@ -4862,7 +4862,7 @@ function efetuarSaqueParcialCRM() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando saque ...");
 
-    // Executa script de consulta atrav�s de ajax
+    // Executa script de consulta através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/matric/efetuar_saque_parcialCRM.php",
