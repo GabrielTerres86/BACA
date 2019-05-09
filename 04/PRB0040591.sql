@@ -3,7 +3,7 @@ BEGIN
   DELETE crapsnh snh 
    WHERE snh.tpdsenha = 1
      AND snh.idseqttl > 1
-     AND snh.idseqttl <= 5
+     AND snh.idseqttl <= 5 
      -- Seja pessoa fisica
      AND EXISTS(SELECT 1
                   FROM crapass ass
