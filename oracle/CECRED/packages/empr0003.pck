@@ -5761,7 +5761,7 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
       dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
 
       -- Monta o Local e Data
-      vr_localedata := upper(SUBSTR(rw_crawseg.nmcidade,1,15) ||', ' || gene0005.fn_data_extenso(rw_crawseg.dtmvtolt));
+      vr_localedata := upper(SUBSTR(rw_crawseg.nmcidade,1,15) ||', ' || gene0005.fn_data_extenso(pr_dtmvtolt => rw_crawseg.dtmvtolt, pr_flanoatu => FALSE));
     
       vr_txtcompl := NULL;
       
