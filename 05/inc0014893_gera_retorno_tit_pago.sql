@@ -15,14 +15,20 @@ begin
                )
   loop
     --
-    dbms_output.put_line(r_cop.cdcooper);
+    dbms_output.put_line('Coop: '|| r_cop.cdcooper);
     --
     PGTA0001.pc_gera_retorno_tit_pago(pr_cdcooper => r_cop.cdcooper
-                                    , pr_dtmvtolt => to_date('07052019','ddmmyyyy')
+                                    , pr_dtmvtolt => to_date('08052019','ddmmyyyy')
                                     , pr_idorigem => 3    -- Ayllos
                                     , pr_cdoperad => '1'
                                     , pr_cdcritic => vr_cdcritic
                                     , pr_dscritic => vr_dscritic );
+
+    IF trim(vr_dscritic) is not null then
+      dbms_output.put_line('Erro: '|| vr_dscritic);
+    else 
+      dbms_output.put_line('>>>>> Sucesso <<<<<');
+    end if;
     --
     commit;
     --
