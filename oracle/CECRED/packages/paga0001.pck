@@ -1702,7 +1702,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   
      24/04/2019 - Incluído tratamento para verificar se o lote esta em lock.
                   Jose Dill - Mouts (PRB0040712)
-                   
+
+     09/05/2019 - Incluído tratamento dentro da pc_gera_arq_coop_cnab240  excluido o antigo tratamento. 
+	              (Daniel Lombardi - Mouts'S)
+	                     
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -20612,6 +20615,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 			vr_nmarqzip VARCHAR2(1000);
 			vr_remanexo VARCHAR2(1);
 			vr_arqanexo VARCHAR2(1000);
+	  vr_boleto_protestado BOOLEAN;
       --Variaveis de erro
       vr_des_erro VARCHAR2(4000);
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -20844,16 +20848,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         /* condicao especifica ref. aos boletos 085 baixados
           para envio "PROTESTO" - os cooperados nao receberao
           o retorno destes titulos baixados com motivo "09" */
-        IF rw_crapcco.dsorgarq = 'IMPRESSO PELO SOFTWARE' AND
+        vr_boleto_protestado := 
+           rw_crapcco.dsorgarq = 'IMPRESSO PELO SOFTWARE' AND
            rw_crapcco.cddbanco = 085                      AND
            rw_craprtc.cdocorre = 9                        AND
-           rw_craprtc.cdmotivo = '09' THEN
-          --Proximo registro loop
-          CONTINUE;
-        END IF;
-
-        --Valor da tarifa
-        vr_vltarifa:= rw_craprtc.vltarass;
+           rw_craprtc.cdmotivo = '09';
+        
+        if not vr_boleto_protestado then
+            --Valor da tarifa
+            vr_vltarifa:= rw_craprtc.vltarass;
 
         /* Verifica Digito da Conta Mantenedora */
         vr_cdagerec:= to_number(gene0002.fn_mask(rw_craprtc.cdagerec,'9999')||'0');
