@@ -12,6 +12,9 @@
                 
                 21/03/2019 - P437 - Consignado - Inclusao dos parametros par_vlpreempi e par_vlrdoiof 
                              na chamada da rotina valida-dados-gerais - Josiane Stiehler - AMcom
+							 
+				09/05/2019 - P437 - Consignado - Inclusao dos parametros par_vlrdoiof 
+                             na chamada da rotina grava-proposta-completa - Fernanda Kelli de Oliveira - AMcom
  
 ..............................................................................*/
 
@@ -691,6 +694,7 @@ PROCEDURE integra_proposta:
 												   INPUT 1, /*par_idfiniof*/
                                                    INPUT "", /*par_dscatbem*/
                                                    INPUT par_inresapr, /* par_inresapr */
+												   INPUT -1, /*par_vlrdoiof-P437*/
 												   INPUT "TP", /* par_dsdopcao */
                                                    INPUT 0,
                                                    OUTPUT TABLE tt-erro,
