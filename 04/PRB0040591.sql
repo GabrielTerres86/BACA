@@ -1,5 +1,5 @@
 BEGIN
-  
+   
   DELETE crapsnh snh 
    WHERE snh.tpdsenha = 1
      AND snh.idseqttl > 1
