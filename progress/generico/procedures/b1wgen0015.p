@@ -36,7 +36,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 08/09/2018
+    Data    : Abril/2006                      Ultima Atualizacao: 26/03/2019
     
     Dados referentes ao programa:
 
@@ -437,6 +437,10 @@
               
               16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
+
+              26/03/2019 - PRB0040591 - Problema com CRAPSNH "perdidos" e inativos que impossibilitam
+                           mudar o limite de titular (Andreatta-Mouts)
+
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -7454,6 +7458,7 @@ PROCEDURE valida-dados-limites:
                 FOR EACH crabsnh WHERE crabsnh.cdcooper  = par_cdcooper AND
                                        crabsnh.nrdconta  = par_nrdconta AND
                                        crabsnh.tpdsenha  = 1            AND
+                                       crabsnh.cdsitsnh  = 1            AND /* Somente ativos */
                                        crabsnh.idseqttl <> 1 
                                        NO-LOCK:
                                                                           
