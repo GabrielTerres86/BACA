@@ -32,7 +32,10 @@
                            na chamada da rotina valida-dados-gerais - Josiane Stiehler - AMcom
 						   
 			  22/03/2019 - P437 - Consignado - Inclusao dos parametros par_vlpreempi e par_vlrdoiof 
-                             na chamada da rotina calcula_emprestimo - Fernanda Kelli de Oliveira - AMcom			   
+                             na chamada da rotina calcula_emprestimo - Fernanda Kelli de Oliveira - AMcom
+ 
+              09/05/2019 - P437 - Consignado - Inclusao dos parametros par_vlrdoiof 
+                           na chamada da rotina grava-proposta-completa - Fernanda Kelli de Oliveira - AMcom 
 
  ..............................................................................*/
 
@@ -646,8 +649,9 @@ PROCEDURE grava_dados:
                         /* INPUT 0,                         nrcntloj */
                         INPUT 0,						 /* idfiniof */
 						INPUT "",                        /* dscatbem */
-						INPUT 1,
-						INPUT "TP", /* par_dsdopcao */
+						INPUT 1,    					 /*par_inresapr*/
+						INPUT -1,                        /*par_vlrdoiof-P437*/
+						INPUT "TP",                      /*par_dsdopcao */
                         INPUT 0,
                        OUTPUT TABLE tt-erro,
                        OUTPUT TABLE tt-msg-confirma,
