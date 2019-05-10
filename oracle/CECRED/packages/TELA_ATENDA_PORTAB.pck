@@ -3294,7 +3294,8 @@ PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numer
                  crapttl.nrcpfemp as nrcpfemp,
                  crapemp.dsendemp as dsendemp,
                  crapemp.nrcepend as nrcepend,
-                 crapemp.nmcidade as nmcidade
+                 UPPER(crapemp.nmcidade) as nmcidade,
+                 crapemp.nrendemp as nrendemp
             FROM crapttl, crapemp
            WHERE crapttl.cdcooper = pr_cdcooper
              AND crapttl.nrdconta = pr_nrdconta
