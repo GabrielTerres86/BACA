@@ -1036,6 +1036,19 @@ PROCEDURE lista_avalistas:
                                             crapttl.vldrendi[6]. 
                      END.
 
+                IF   crapass.inpessoa = 2 THEN /*Faturamento Avalista PJ*/
+                     DO:
+                         RUN calcula-faturamento (INPUT  par_cdcooper,
+                                                  INPUT  par_cdagenci,
+                                                  INPUT  par_nrdcaixa,
+                                                  INPUT  par_idorigem,
+                                                  INPUT  crapass.nrdconta, /*Conta avalista*/
+                                                  INPUT  "",
+                                                  OUTPUT aux_vlmedfat).
+				            
+                         ASSIGN aux_vlrenmes = aux_vlmedfat.
+                     END.      
+
                ASSIGN aux_vledvmto = 0. 
 
                 /* endevidamento do aval cooperado */
@@ -1294,6 +1307,19 @@ PROCEDURE lista_avalistas:
                                         crapttl.vldrendi[5]  +
                                         crapttl.vldrendi[6]. 
                 END.
+                
+                IF   crapass.inpessoa = 2 THEN /*Faturamento Avalista PJ*/
+                    DO:
+                        RUN calcula-faturamento (INPUT  par_cdcooper,
+                                                 INPUT  par_cdagenci,
+                                                 INPUT  par_nrdcaixa,
+                                                 INPUT  par_idorigem,
+                                                 INPUT  crapass.nrdconta, /*Conta avalista*/
+                                                 INPUT  "",
+                                                 OUTPUT aux_vlmedfat).
+				            
+                        ASSIGN aux_vlrenmes = aux_vlmedfat.
+                    END.
 
                 FIND FIRST crapcem WHERE crapcem.cdcooper = par_cdcooper     AND
                                          crapcem.nrdconta = crapass.nrdconta AND

@@ -135,128 +135,6 @@
 	$dtnasct1 = $_POST["dtnasct1"];
 	$dtnasct2 = $_POST["dtnasct2"];	
 	
-	// Verifica se n?mero da conta ? um inteiro v?lido
-	/*if (!validaInteiro($nrdconta)) {
-		exibeErro("Conta/dv inv&aacute;lida.");
-	}
-	
-	// Verifica se número do contrato é um inteiro válido
-	if (!validaInteiro($nrctrlim)) {
-		exibeErro("N&uacute;mero de contrato inv&aacute;lido.");
-	}	
-	
-	// Verifica se número da linha de crédito é um inteiro válido
-	if (!validaInteiro($nrctrlim)) {
-		exibeErro("Linha de cr&eacute;dito inv&aacute;lida.");
-	}
-	
-	// Verifica se valor do limite é um decimal válido
-	if (!validaDecimal($vllimite)) {
-		exibeErro("Valor do Limite de Cr&eacute;dito inv&aacute;lido.");
-	}	
-	
-	// Valida impressão de nota promissória
-	if ($flgimpnp <> "yes" && $flgimpnp <> "no") {
-		exibeErro("Indicador de impress&atilde;o da nota promiss&oacute;ria inv&aacute;lido.");		
-	}
-	
-	// Verifica se valor do salário do avalista é um decimal válido
-	if (!validaDecimal($vlsalari)) {
-		exibeErro("Valor do Sal&aacute;rio do Avalista inv&aacute;lido.");
-	}	
-	
-	// Verifica se valor do salário do conjugê é um decimal válido
-	if (!validaDecimal($vlsalcon)) {
-		exibeErro("Valor do Sal&aacute;rio do Conjug&ecirc; inv&aacute;lido.");
-	}	
-	
-	// Verifica se valor de outras é um decimal válido
-	if (!validaDecimal($vloutras)) {
-		exibeErro("Outros Valores inv&aacute;lido.");
-	}	
-	
-	// Verifica se valor do aluguel é um decimal válido
-	if (!validaDecimal($vlalugue)) {
-		exibeErro("Valor do Aluguel inv&aacute;lido.");
-	}		
-	
-	// Verifica se identificador de garantia é um inteiro válido
-	if (!validaInteiro($nrgarope)) {
-		exibeErro("Garantia inv&aacute;lida.");
-	}
-	
-	// Verifica se identificador de informação cadastral é um inteiro válido
-	if (!validaInteiro($nrinfcad)) {
-		exibeErro("Informa&ccedil;&etilde;o cadastral inv&aacute;lida.");
-	}
-	
-	// Verifica se identificador de liquidez é um inteiro válido
-	if (!validaInteiro($nrliquid)) {
-		exibeErro("Liquidez de garantia inv&aacute;lida.");
-	}
-	
-	// Verifica se identificador de patrimônio é um inteiro válido
-	if (!validaInteiro($nrpatlvr)) {
-		exibeErro("Patrim&ocirc;nio pessoal inv&aacute;lido.");
-	}
-	
-	// Verifica se identificador de percepção é um inteiro válido
-	if (!validaInteiro($nrperger)) {
-		exibeErro("Percep&ccedil;&atilde;o geral inv&aacute;lida.");
-	}
-	
-	// Verifica se o percentual de faturamento é um decimal válido
-	if (!validaDecimal($perfatcl)) {
-		exibeErro("Percentual de Faturamento inv&aacute;lido.");
-	}		
-	
-	// Verifica se número da conta do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav1)) {
-		exibeErro("Conta/dv do 1o Avalista inv&aacute;lida.");
-	}
-	
-	// Verifica se número da conta do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav2)) {
-		exibeErro("Conta/dv do 2o Avalista inv&aacute;lida.");
-	}	
-	
-	// Verifica se CPF do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav1)) {
-		exibeErro("CPF do 1o Avalista inv&aacute;lido.");
-	}	
-	
-	// Verifica se CPF do Conjugê do 1° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav1)) {
-		exibeErro("CPF do Conjug&ecirc; do 1o Avalista inv&aacute;lido.");
-	}	
-	
-	// Verifica se CPF do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav2)) {
-		exibeErro("CPF do 2o Avalista inv&aacute;lido.");
-	}	
-	
-	// Verifica se CPF do Conjugê do 2° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav2)) {
-		exibeErro("CPF do Conjug&ecirc; do 2o Avalista inv&aacute;lido.");
-	}	
-	
-	// Verifica se CEP do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcepav1)) {
-		exibeErro("CEP do 1o Avalista inv&aacute;lido.");
-	}	
-	
-	// Verifica se CEP do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcepav2)) {
-		exibeErro("CEP do 2o Avalista inv&aacute;lido.");
-	}		
-
-	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($idcobope)) {
-		exibeErro("Garantia inválida.");
-	}
-
-	$dsobserv = str_replace('"','',str_replace(">","",str_replace("<","",retiraAcentos(removeCaracteresInvalidos(utf8_decode($dsobserv))))));
-	*/
 	// Monta o xml de requisição
 	$xmlSetLimite  = "";
 	$xmlSetLimite .= "<Root>";
@@ -387,7 +265,7 @@
 			redirect: 'script_ajax'
 		};
 	";
-	echo 'atualizarDadosRating(aux_dataRating);';
+	echo 'atualizarDadosRating(aux_dataRating, "acessaTela(\'@\');");';
 	
 	echo 'eval(metodoSucesso);';
 	

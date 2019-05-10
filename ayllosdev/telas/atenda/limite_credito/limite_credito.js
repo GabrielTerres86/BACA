@@ -2876,9 +2876,9 @@ function validarDadosRating(cdcooper , operacao , inprodut) {
  * bruno - prj 438 - tela rating
  * @param aux_data cadastrar_novo_limite.php -> linha 358
  */
-function atualizarDadosRating(aux_data){
+function atualizarDadosRating(aux_data, fncSucesso){
     showMsgAguardo("Aguarde, atualizando dados do rating ...");
-    fncRatingSuccess = "acessaTela('@');";
+    fncRatingSuccess = fncSucesso;
 	$.ajax({
 		type: "POST", 
 		url: UrlSite + "includes/rating/rating_atualiza_dados.php",
@@ -3065,4 +3065,13 @@ function calcularDataTermino(){
     	return '';
     }
     return dia + '/' + mes + '/' + ano;
+}
+
+function showConfirmacaoRenovar(){
+
+	showConfirmacao('Deseja renovar o ' + strTitRotinaLC + ' atual?',
+            'Confirmação - Aimaro',
+            'validaAdesaoValorProduto(\'renovarLimiteAtual('+aux_limites.ativo.nrctrlim+')\','+aux_limites.ativo.vllimite+')',
+            "blockBackground(parseInt($('#divRotina').css('z-index')))",
+            'sim.gif','nao.gif');	
 }
