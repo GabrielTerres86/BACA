@@ -15,7 +15,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao: 30/08/2018
+  Data    : Abril/2017.                    Ultima atualizacao: 03/05/2019
 
   Dados referentes ao programa:
 
@@ -46,6 +46,9 @@ BEGIN
                            não mais somente na última execução (Marcelo Elias Gonçalves / AMcom Make IT Real).					   
 
               30/08/2018 - Debitador Unico - permitir executar na cadeia da CECRED alem do debitador (Fabiano B. Dias AMcom).
+              
+              03/05/2019 - P437 - Consignado - Permitir debitar as parcela em atraso do consignado em todas as execuções do dia
+                           considerando o parametro "Dia Limite para Repasse". Josiane Stiehler AMcom
 						   
   ............................................................................. */
   DECLARE
@@ -73,6 +76,10 @@ BEGIN
                       ,pr_nrctremp IN crapepr.nrctremp%TYPE
                       ,pr_inliquid IN crapepr.inliquid%TYPE) IS
       SELECT crapepr.dtdpagto
+           , crapepr.cdlcremp
+           , crapepr.cdempres
+           , crapepr.tpemprst
+           , crapepr.tpdescto
            , crapepr.rowid
         FROM crapepr
        WHERE crapepr.cdcooper = pr_cdcooper
@@ -99,6 +106,10 @@ BEGIN
            , crawepr.tpemprst
            , crawepr.idcobope
            , crapass.vllimcre
+           , crappep.vlparepr -- P437 -Consignado
+           , crappep.vlmtapar -- P437 - Consignado
+           , crappep.vlmrapar -- P437 - Consignado
+           , crappep.vliofcpl -- P437 - Consignado
         FROM crawepr
            , crapass
            , crappep
@@ -203,6 +214,14 @@ BEGIN
          AND x.inhistor in (3,4,5)
          AND c.dtliblan = pr_dtrefere
          AND c.inlibera = 1;
+         
+  -- P437 - Consignado Busca o parametro "Dia Limite para Repasse"
+  CURSOR cr_consig (pr_cdcooper IN tbcadast_empresa_consig.cdcooper%TYPE,
+                    pr_cdempres IN tbcadast_empresa_consig.cdempres%TYPE) IS
+    SELECT NVL(tec.nrdialimiterepasse,0) nrdialimiterepasse
+      FROM tbcadast_empresa_consig tec
+     WHERE tec.cdcooper = pr_cdcooper 
+       AND tec.cdempres = pr_cdempres;
   
     -- Tabela de Memoria dos detalhes de emprestimo
     vr_tab_crawepr      EMPR0001.typ_tab_crawepr;
@@ -252,6 +271,7 @@ BEGIN
     vr_vlsomvld         NUMBER;
     vr_index_saldo      PLS_INTEGER;
 
+    
     -- Variaveis de Indices
     vr_cdindice         VARCHAR2(30) := ''; -- Indice da tabela de acordos
     vr_index_crawepr    VARCHAR2(30);
@@ -281,6 +301,9 @@ BEGIN
     -- Debitador Unico	
     vr_flultexe     NUMBER;
     vr_qtdexec      NUMBER;	
+    
+    -- P437 - Consignado
+    vr_nrdialimiterepasse tbcadast_empresa_consig.nrdialimiterepasse%TYPE;
 ----------------------------------------------------------------------------------
   
     -- Procedure para limpar os dados das tabelas de memoria
@@ -391,7 +414,7 @@ BEGIN
       -- Apenas fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
     END IF;
-
+    
     IF pr_cdcooper = 3 THEN -- 30/08/2018.
       vr_flultexe := 1;	
       vr_qtdexec  := 1;	  
@@ -502,6 +525,13 @@ BEGIN
       END IF;
       --Fechar CURSOR
       CLOSE cr_crapepr;
+      
+      -- P437 - Consignado, verifica a modadlidade do consignado
+      FOR rw_consig IN cr_consig (pr_cdcooper => rw_crappep.cdcooper,
+                                  pr_cdempres => rw_crapepr.cdempres)
+      LOOP
+        vr_nrdialimiterepasse:= rw_consig.nrdialimiterepasse;
+      END LOOP;                                 
       
       /* 229243 Verifica se possui movimento de credito no dia */
       IF rw_crapdat.inproces = 1 AND vr_flgpripr THEN
@@ -768,7 +798,7 @@ BEGIN
         vr_vlsomato     := 0;
       END IF;
 
-      IF vr_flgemdia THEN /* PARCELA EM DIA */
+     IF vr_flgemdia THEN /* PARCELA EM DIA */
         /* Parcela em dia */
         
         /* 229243 Definido pela area de negocio que serão pagas apenas
@@ -856,8 +886,79 @@ BEGIN
           IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
             vr_flgpagpa := FALSE;
           END IF;
-          
 
+          /* P437 - Consignado -Condicao para verificar se a operacao é consignado */
+          IF rw_crapepr.tpdescto = 2 THEN
+             /* Processo Diurno */
+             IF rw_crapdat.inproces = 1 then
+               CONTINUE;
+             /* Processo Noturno */
+             ELSE
+               /* Condicao para verificar se o contrato possui boleto/acordo gerado */
+               IF NOT vr_flgpagpa THEN
+                 CONTINUE;
+               END IF;
+               
+               /* Verificar Saldo */
+                IF nvl(vr_vlsomato,0) > nvl(vr_vlapagar,0) THEN
+                   -- Soma total recebe valor a pagar
+                   vr_vlsomato:= vr_vlapagar;
+                END IF;
+               
+                 
+                -- efetua o pagamento da parcela (gera o lançamento no evento SOA,
+                -- cria lançamento CC, insere registro na tabela de controle (tbepr_consignado_pagamento) 
+                empr0020.pc_efetiva_pagto_parc_consig(pr_cdcooper => pr_cdcooper          --> Codigo Cooperativa
+                                                      ,pr_cdagenci => pr_cdagenci          --> Codigo Agencia
+                                                      ,pr_nrdcaixa => 0                    --> Codigo Caixa
+                                                      ,pr_cdoperad => vr_cdoperad          --> Operador
+                                                      ,pr_nmdatela => pr_nmdatela          --> Nome da Tela
+                                                      ,pr_idorigem => 7 /*Batch*/          --> Identificador origem
+                                                      ,pr_cdpactra => pr_cdagenci /*cdpactra*/ --> Posto Atendimento
+                                                      ,pr_nrdconta => rw_crappep.nrdconta  --> Numero da Conta
+                                                      ,pr_idseqttl => 1 /* Tit. */         --> Sequencial Titular
+                                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --> Data Emprestimo
+                                                      ,pr_flgerlog => 'S'                  --> Erro no Log
+                                                      ,pr_nrctremp => rw_crappep.nrctremp  --> Numero Contrato
+                                                      ,pr_nrparepr => rw_crappep.nrparepr  --> Numero parcela
+                                                      ,pr_vlparepr => vr_vlsomato          --> Valor da parcela (pago)
+                                                      ,pr_vlparcel => rw_crappep.vlparepr  --> valor da parcela
+                                                      ,pr_dtvencto => rw_crappep.dtvencto  --> Vencimento da parcela
+                                                      ,pr_cdlcremp => rw_crapepr.cdlcremp  --> Linha de credito
+                                                      ,pr_tppagmto    => 'D'                 --> Tipo Pagamento - "D" -Em Dia, "A"- Em Atraso
+                                                      ,pr_vlrmulta    => rw_crappep.vlmtapar --> Valor da multa
+                                                      ,pr_vlatraso    => rw_crappep.vlmrapar --> Valor Juros de mora
+                                                      ,pr_vliofcpl    => rw_crappep.vliofcpl --> Valor do IOF complementar de atraso
+                                                      ,pr_des_reto    => vr_des_erro   --> Retorno OK / NOK
+                                                      ,pr_tab_erro    => vr_tab_erro); --> Tabela com possíves erros
+                                     
+                -- Se ocorreu erro
+                IF vr_des_erro <> 'OK' THEN
+                   -- Se tem erro
+                   IF vr_tab_erro.count > 0 THEN
+                      vr_cdcritic:= 0;
+                      vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+                        
+                      -- Envio centralizado de log de erro
+                      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                                  || vr_cdprogra || ' --> '
+                                                                  || vr_dscritic );
+                      -- Desfazer transacao
+                      ROLLBACK TO SAVEPOINT sav_trans_750;
+                        
+                      -- Proximo registro
+                      CONTINUE;
+                   END IF;
+                END IF;
+                -- salva os dados quando consignado
+                COMMIT;
+               CONTINUE;
+            END IF; -- rw_crapdat.inproces = 1
+          END IF; -- crapepr.tpdescto = 2 
+
+ 
           /* Sem valor suficiente para pagar parcela ou parcela ja liquidada */
           IF NOT vr_flgpagpa THEN
             -- buscar ultimo dia Util do mes
@@ -940,7 +1041,7 @@ BEGIN
             CONTINUE;
           
           END IF; --NOT vr_flgpagpa
-                
+
           /* Verifica se tem uma parcela anterior nao liquida e ja vencida */
           EMPR0001.pc_verifica_parcel_anteriores (pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
                                                  ,pr_nrdconta => rw_crappep.nrdconta --> Número da conta
@@ -954,7 +1055,7 @@ BEGIN
             -- Proximo Registro
             CONTINUE;
           END IF;
-
+            
           IF nvl(vr_vlresgat,0) = 0 THEN
             -- Log sem resgate
             vr_dstransa := 'Efetiva parcela normal, contrato: '
@@ -1038,6 +1139,21 @@ BEGIN
         
       ELSE /* PARCELA VENCIDA */
         
+        -- P437- Consignado
+        -- Para parcela de consignado em atraso só debita
+        -- se existir cadastrado o dia limite para repasse
+        -- O débito deve acontecer no dia seguinte do parametro
+        IF rw_crapepr.tpdescto = 2 THEN
+           IF vr_nrdialimiterepasse = 0 then-- não possui cadastro
+              --Proximo Registro
+               vr_vlsomato := 0;
+           ELSIF to_char(rw_crapdat.dtmvtolt,'DD') < (vr_nrdialimiterepasse) THEN
+              --Proximo Registro
+               vr_vlsomato := 0;
+           END IF;
+        END IF;
+      
+      
         /* verificar se existe boleto de contrato em aberto e se pode debitar do cooperado */
         /* 1º) verificar se o parametro está bloqueado para realizar busca de boleto em aberto */
         IF vr_blqresg_cc = 'S' THEN
@@ -1111,21 +1227,25 @@ BEGIN
           -- Proximo registro
           CONTINUE;
         END IF;
-
-        /* Verifica se tem uma parcela anterior nao liquida e ja vencida */
-        EMPR0001.pc_verifica_parcel_anteriores(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
-                                              ,pr_nrdconta => rw_crappep.nrdconta --> Número da conta
-                                              ,pr_nrctremp => rw_crappep.nrctremp --> Número do contrato de empréstimo
-                                              ,pr_nrparepr => rw_crappep.nrparepr --> Número parcelas empréstimo
-                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Movimento atual
-                                              ,pr_des_reto => vr_des_erro         --> Retorno OK / NOK
-                                              ,pr_dscritic => vr_dscritic);       --> Descricao Erro
-        -- Se ocorreu erro
-        IF vr_des_erro <> 'OK' THEN
-          -- Proximo Registro
-          CONTINUE;
+        
+        -- P437 - Consignado - Não verificar parcelas anteriores
+        -- para o consignado
+        IF rw_crapepr.tpdescto <> 2 THEN
+          /* Verifica se tem uma parcela anterior nao liquida e ja vencida */
+          EMPR0001.pc_verifica_parcel_anteriores(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
+                                                ,pr_nrdconta => rw_crappep.nrdconta --> Número da conta
+                                                ,pr_nrctremp => rw_crappep.nrctremp --> Número do contrato de empréstimo
+                                                ,pr_nrparepr => rw_crappep.nrparepr --> Número parcelas empréstimo
+                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Movimento atual
+                                                ,pr_des_reto => vr_des_erro         --> Retorno OK / NOK
+                                                ,pr_dscritic => vr_dscritic);       --> Descricao Erro
+          -- Se ocorreu erro
+          IF vr_des_erro <> 'OK' THEN
+            -- Proximo Registro
+            CONTINUE;
+          END IF;
         END IF;
-
+        
         -- Criar savepoint
         SAVEPOINT sav_trans_750;
 
@@ -1219,26 +1339,55 @@ BEGIN
                                       pr_dsdadatu => to_char(vr_vlresgat,'fm999G999G990D00'));
           END IF;
         END IF; -- IF vr_index_pgto_parcel IS NOT NULL
-
-        -- Efetivar Pagamento da Parcela Atrasada
-        EMPR0001.pc_efetiva_pagto_atr_parcel(pr_cdcooper => pr_cdcooper           --> Cooperativa conectada
-                                            ,pr_cdagenci => pr_cdagenci           --> Código da agência
-                                            ,pr_nrdcaixa => 0                     --> Número do caixa
-                                            ,pr_cdoperad => vr_cdoperad           --> Código do Operador
-                                            ,pr_nmdatela => pr_nmdatela           --> Nome da tela
-                                            ,pr_idorigem => 7 /*Batch*/           --> Id do módulo de sistema
-                                            ,pr_cdpactra => pr_cdagenci /*cdpactra*/ --> P.A. da transação
-                                            ,pr_nrdconta => rw_crappep.nrdconta   --> Número da conta
-                                            ,pr_idseqttl => 1 /* Titular */       --> Seq titula
-                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --> Movimento atual
-                                            ,pr_flgerlog => 'N'                   --> Indicador S/N para geração de log
-                                            ,pr_nrctremp => rw_crappep.nrctremp   --> Número do contrato de empréstimo
-                                            ,pr_nrparepr => rw_crappep.nrparepr   --> Número parcelas empréstimo
-                                            ,pr_vlpagpar => vr_vlsomato           --> Soma Total
-                                            ,pr_tab_crawepr => vr_tab_crawepr     --> Tabela com Contas e Contratos
-                                            ,pr_des_reto => vr_des_erro           --> Retorno OK / NOK
-                                            ,pr_tab_erro => vr_tab_erro);         --> Tabela com possíves erros
-
+        
+        -- P437 - Consignado
+        -- Quando for consignado chama a rotina que irá criar o evento SOA
+        -- e os lançamentos em c/c de multa, juros, IOF de atraso e da parcela em atraso
+        IF rw_crapepr.tpdescto = 2 THEN
+           EMPR0020.pc_efetiva_pagto_parc_consig(pr_cdcooper    => pr_cdcooper  --> Cooperativa conectada
+                                                ,pr_cdagenci    => pr_cdagenci  --> Código da agência
+                                                ,pr_nrdcaixa    => 0            --> Número do caixa
+                                                ,pr_cdoperad    => vr_cdoperad  --> Código do Operador
+                                                ,pr_nmdatela    => pr_nmdatela  --> Nome da tela
+                                                ,pr_idorigem    => 7 /*Batch*/  --> Id do módulo de sistema
+                                                ,pr_cdpactra    => pr_cdagenci  --> P.A. da transação
+                                                ,pr_nrdconta    => rw_crappep.nrdconta --> Número da conta
+                                                ,pr_idseqttl    => 1 /* Titular */     --> Seq titula
+                                                ,pr_dtmvtolt    => rw_crapdat.dtmvtolt --> Movimento atual
+                                                ,pr_flgerlog    => 'N'                 --> Indicador S/N para geração de log
+                                                ,pr_nrctremp    => rw_crappep.nrctremp --> Número do contrato de empréstimo
+                                                ,pr_nrparepr    => rw_crappep.nrparepr --> Número parcelas empréstimo
+                                                ,pr_vlparepr    => vr_vlsomato         --> Valor da parcela emprestimo à pagar
+                                                ,pr_vlparcel    => rw_crappep.vlparepr --> valor da parcela
+                                                ,pr_dtvencto    => rw_crappep.dtvencto --> Vencimento da parcela
+                                                ,pr_cdlcremp    => rw_crapepr.cdlcremp --> Linha de crédito
+                                                ,pr_tppagmto    => 'A'                 --> Tipo Pagamento - "D" -Em Dia, "A"- Em Atraso
+                                                ,pr_vlrmulta    => rw_crappep.vlmtapar --> Valor da multa
+                                                ,pr_vlatraso    => rw_crappep.vlmrapar --> Valor Juros de mora
+                                                ,pr_vliofcpl    => rw_crappep.vliofcpl --> Valor do IOF complementar de atraso
+                                                ,pr_des_reto    => vr_des_erro   --> Retorno OK / NOK
+                                                ,pr_tab_erro    => vr_tab_erro); --> Tabela com possíves erros
+        ELSE
+          -- Efetivar Pagamento da Parcela Atrasada
+          EMPR0001.pc_efetiva_pagto_atr_parcel(pr_cdcooper => pr_cdcooper           --> Cooperativa conectada
+                                              ,pr_cdagenci => pr_cdagenci           --> Código da agência
+                                              ,pr_nrdcaixa => 0                     --> Número do caixa
+                                              ,pr_cdoperad => vr_cdoperad           --> Código do Operador
+                                              ,pr_nmdatela => pr_nmdatela           --> Nome da tela
+                                              ,pr_idorigem => 7 /*Batch*/           --> Id do módulo de sistema
+                                              ,pr_cdpactra => pr_cdagenci /*cdpactra*/ --> P.A. da transação
+                                              ,pr_nrdconta => rw_crappep.nrdconta   --> Número da conta
+                                              ,pr_idseqttl => 1 /* Titular */       --> Seq titula
+                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --> Movimento atual
+                                              ,pr_flgerlog => 'N'                   --> Indicador S/N para geração de log
+                                              ,pr_nrctremp => rw_crappep.nrctremp   --> Número do contrato de empréstimo
+                                              ,pr_nrparepr => rw_crappep.nrparepr   --> Número parcelas empréstimo
+                                              ,pr_vlpagpar => vr_vlsomato           --> Soma Total
+                                              ,pr_tab_crawepr => vr_tab_crawepr     --> Tabela com Contas e Contratos
+                                              ,pr_des_reto => vr_des_erro           --> Retorno OK / NOK
+                                              ,pr_tab_erro => vr_tab_erro);         --> Tabela com possíves erros
+        END IF;
+        
         /* Se deu erro eh porque nao tinha dinheiro minimo suficiente */
         --Se ocorreu erro
         IF vr_des_erro <> 'OK' THEN
@@ -1324,5 +1473,5 @@ BEGIN
       ROLLBACK;
       
   END;
-END PC_CRPS750_2;
+END PC_CRPS750;
 /
