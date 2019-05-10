@@ -27093,7 +27093,7 @@ end;';
             
           ELSE 
             vr_idportab := 0;
-            vr_nrridlfp := NULL;
+            vr_nrridlfp := 0;
             
             -- Fluxo atual
             vr_cti_nrcpfcgc := rw_crapcti.nrcpfcgc;
