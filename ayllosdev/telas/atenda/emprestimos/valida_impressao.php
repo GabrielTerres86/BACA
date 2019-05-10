@@ -59,13 +59,5 @@
 		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$mtdErro,false);
 	}
 	echo "inobriga = '".$xmlObj->roottag->tags[0]->attributes['INOBRIGA']."';";
-
-	//bruno - prj 470 - tela autorizacao
-	//echo 'mostraDivImpressao("'.$operacao.'");';
-	echo '
-	var prTelaAutoriza = {
-		nrdconta:  "'.$nrdconta.'"
-	};
-	';
-	echo 'mostraTelaAutorizacaoImpressao("'.$operacao.'",prTelaAutoriza);';
+	echo 'mostraDivImpressao("'.$operacao.'");';	
 ?>
