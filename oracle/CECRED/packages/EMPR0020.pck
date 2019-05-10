@@ -29,7 +29,55 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
                                        ,pr_vrdebito 		IN NUMBER                --> Valor a ser debitado   
                                        ,pr_idpagto		  IN NUMBER                --> Identificador de pagamento enviado pelo consumidor
                                        ,pr_dscritic 	 OUT VARCHAR2              --> Descrição da crítica          
-                                       ,pr_retorno 	   OUT xmltype);                                         
+                                       ,pr_retorno 	   OUT xmltype);   
+                                       
+  PROCEDURE pc_efetiva_pagto_parc_consig(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                        ,pr_cdagenci    IN crapass.cdagenci%TYPE --> Código da agência
+                                        ,pr_nrdcaixa    IN craperr.nrdcaixa%TYPE --> Número do caixa
+                                        ,pr_cdoperad    IN crapdev.cdoperad%TYPE --> Código do Operador
+                                        ,pr_nmdatela    IN VARCHAR2              --> Nome da tela
+                                        ,pr_idorigem    IN INTEGER               --> Id do módulo de sistema
+                                        ,pr_cdpactra    IN INTEGER               --> P.A. da transação
+                                        ,pr_nrdconta    IN crapepr.nrdconta%TYPE --> Número da conta
+                                        ,pr_idseqttl    IN crapttl.idseqttl%TYPE --> Seq titula
+                                        ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE --> Movimento atual
+                                        ,pr_flgerlog    IN VARCHAR2              --> Indicador S/N para geração de log
+                                        ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
+                                        ,pr_nrparepr    IN INTEGER               --> Número parcelas empréstimo
+                                        ,pr_vlparepr    IN NUMBER                --> Valor da parcela emprestimo
+                                        ,pr_vlparcel    IN NUMBER                --> valor da parcela
+                                        ,pr_dtvencto    IN crappep.dtvencto%TYPE --> Vencimento da parcela
+                                        ,pr_cdlcremp    IN crapepr.cdlcremp%TYPE --> Linha de crédito
+                                        ,pr_tppagmto    IN VARCHAR2              --> Tipo Pagamento - "D" -Em Dia, "A"- Em Atraso                                        
+                                        ,pr_vlrmulta    IN crappep.vlpagmta%TYPE --> Valor da multa
+                                        ,pr_vlatraso    IN crappep.vlpagmra %TYPE--> Valor Juros de mora
+                                        ,pr_vliofcpl    IN crappep.vliofcpl%TYPE --> Valor do IOF complementar de atraso
+                                        ,pr_nrseqava    IN NUMBER DEFAULT 0      --> Pagamento: Sequencia do avalista
+                                        ,pr_des_reto    OUT VARCHAR              --> Retorno OK / NOK
+                                        ,pr_tab_erro    OUT gene0001.typ_tab_erro);
+
+  PROCEDURE pc_inc_alt_tbepr_consig_pagto (pr_idsequencia IN number, --tbepr_consignado_pagamento.idsequencia%TYPE,
+                                           pr_cdcooper    IN number, --tbepr_consignado_pagamento.cdcooper%TYPE,
+                                           pr_nrdconta    IN number, --tbepr_consignado_pagamento.nrdconta%TYPE,
+                                           pr_nrctremp    IN number, --tbepr_consignado_pagamento.nrctremp%TYPE,
+                                           pr_nrparepr    IN number, --tbepr_consignado_pagamento.nrparepr%TYPE,
+                                           pr_vlparepr    IN number, --tbepr_consignado_pagamento.vlparepr%TYPE,
+                                           pr_vlpagpar    IN number, --tbepr_consignado_pagamento.vlpagpar%TYPE,
+                                           pr_dtvencto    IN date, --tbepr_consignado_pagamento.dtvencto%TYPE,
+                                           pr_instatus    IN number, --tbepr_consignado_pagamento.instatus%TYPE,
+                                           pr_dscritic 	 OUT VARCHAR2 );
+
+   FUNCTION fn_ret_status_pagto_consignado (pr_cdcooper    IN number, --tbepr_consignado_pagamento.cdcooper%TYPE,
+                                            pr_nrdconta    IN number, --tbepr_consignado_pagamento.nrdconta%TYPE,
+                                            pr_nrctremp    IN number, --tbepr_consignado_pagamento.nrctremp%TYPE,
+                                            pr_nrparepr    IN number) return number; --tbepr_consignado_pagamento.nrparepr%TYPE) RETURN NUMBER;                                                                                                                    
+
+   PROCEDURE pc_gera_xml_pagamento_consig(pr_cdcooper    IN crapepr.cdcooper%TYPE, -- código da cooperativa
+                                          pr_nrdconta    IN crapepr.nrdconta%TYPE, -- Número da conta
+                                          pr_nrctremp    IN crapepr.nrctremp%TYPE, -- Número do contrato de emprestimo
+                                          pr_nrparepr    IN crappep.nrparepr%TYPE, -- Numero da parcela
+                                          pr_dsxmlali   OUT XmlType,               -- XML de saida do pagamento
+                                          pr_dscritic   OUT VARCHAR2); --> Descricao Erro
 
 END EMPR0020;
 /
@@ -38,13 +86,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
 
     Programa: EMPR0020
     Autor   : Fernanda Kelli de Oliveira / AMcom
-    Data    : 02/05/2019    ultima Atualizacao: --
+    Data    : 02/05/2019    ultima Atualizacao: 06/05/2019
 
     Dados referentes ao programa:
 
     Objetivo  : Concentrar rotinas referente ao processo do Crédito Consignado
 
-    Alteracoes:
+    Alteracoes: 06/05/2019 - P437 Consignado - Inclusão da rotina pc_efetiva_pagto_parc_consig 
+                Josiane Stiehler AMcom
 
     ..............................................................................*/
 
@@ -496,6 +545,609 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
     END;    
   END pc_efetua_debito_conveniada;                                        
                                    
+  PROCEDURE pc_efetiva_pagto_parc_consig(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                        ,pr_cdagenci    IN crapass.cdagenci%TYPE --> Código da agência
+                                        ,pr_nrdcaixa    IN craperr.nrdcaixa%TYPE --> Número do caixa
+                                        ,pr_cdoperad    IN crapdev.cdoperad%TYPE --> Código do Operador
+                                        ,pr_nmdatela    IN VARCHAR2              --> Nome da tela
+                                        ,pr_idorigem    IN INTEGER               --> Id do módulo de sistema
+                                        ,pr_cdpactra    IN INTEGER               --> P.A. da transação
+                                        ,pr_nrdconta    IN crapepr.nrdconta%TYPE --> Número da conta
+                                        ,pr_idseqttl    IN crapttl.idseqttl%TYPE --> Seq titula
+                                        ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE --> Movimento atual
+                                        ,pr_flgerlog    IN VARCHAR2              --> Indicador S/N para geração de log
+                                        ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
+                                        ,pr_nrparepr    IN INTEGER               --> Número parcelas empréstimo
+                                        ,pr_vlparepr    IN NUMBER                --> Valor da parcela emprestimo à pagar
+                                        ,pr_vlparcel    IN NUMBER                --> valor da parcela
+                                        ,pr_dtvencto    IN crappep.dtvencto%TYPE --> Vencimento da parcela
+                                        ,pr_cdlcremp    IN crapepr.cdlcremp%TYPE --> Linha de crédito
+                                        ,pr_tppagmto    IN VARCHAR2              --> Tipo Pagamento - "D" -Em Dia, "A"- Em Atraso
+                                        ,pr_vlrmulta    IN crappep.vlpagmta%TYPE --> Valor da multa
+                                        ,pr_vlatraso    IN crappep.vlpagmra %TYPE--> Valor Juros de mora
+                                        ,pr_vliofcpl    IN crappep.vliofcpl%TYPE --> Valor do IOF complementar de atraso
+                                        ,pr_nrseqava    IN NUMBER DEFAULT 0      --> Pagamento: Sequencia do avalista
+                                        ,pr_des_reto    OUT VARCHAR              --> Retorno OK / NOK
+                                        ,pr_tab_erro    OUT gene0001.typ_tab_erro) IS --> Tabela com possíves erros
   
+  /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_efetiva_pagto_parc_consig
+      Sistema  : AIMARO
+      Sigla    : 
+      Autor    : Josiane Stiehler - AMcom
+      Data     : 06/05/2019
+  
+      Objetivo : Efetiva pagamento da parcela, ou seja grava evento SOA referente ao pagamento
+                 para ser enviado a FIS Brasil. 
+      Alteração:
+
+  ----------------------------------------------------------------------------------------------------------*/
+  BEGIN
+    DECLARE
+      -- Cursor de Linha de Credito 
+      CURSOR cr_craplcr(pr_cdcooper IN craplcr.cdcooper%TYPE
+                       ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
+        SELECT craplcr.cdlcremp
+              ,craplcr.dsoperac
+          FROM craplcr
+         WHERE craplcr.cdcooper = pr_cdcooper
+               AND craplcr.cdlcremp = pr_cdlcremp;
+               
+      rw_craplcr cr_craplcr%ROWTYPE;
+  
+      --Variaveis Locais
+      vr_dstransa VARCHAR2(100);
+      vr_dsorigem VARCHAR2(100);
+      vr_nrdrowid ROWID;
+      vr_flgtrans BOOLEAN;
+      vr_floperac BOOLEAN;
+      vr_cdhismul craphis.cdhistor%TYPE;
+      vr_cdhisatr craphis.cdhistor%TYPE;
+      vr_cdhisiof craphis.cdhistor%TYPE;
+      vr_cdhistor craphis.cdhistor%TYPE;
+      vr_lotemult craplot.nrdolote%TYPE;
+      vr_loteatra craplot.nrdolote%TYPE;
+      vr_loteiof  craplot.nrdolote%TYPE;
+      vr_nrdolote craplot.nrdolote%TYPE; 
+      vr_nrseqdig tbgen_iof_lancamento.nrseqdig_lcm%TYPE;
+      
+      vr_dsxmlali XMLType;
+      -- ID Evento SOA
+      vr_idevento   tbgen_evento_soa.idevento%type;    
+
+      --Variaveis Erro
+      vr_cdcritic INTEGER;
+      vr_des_erro VARCHAR2(3);
+      vr_dscritic VARCHAR2(4000);
+
+      --Variaveis Excecao
+      vr_exc_erro  EXCEPTION;
+      vr_exc_saida EXCEPTION;
+
+    BEGIN
+      --Inicializar variavel erro
+      pr_des_reto := 'OK';
+      --Marcar que nao ocorreu transacao
+      vr_flgtrans := FALSE;
+
+      --Limpar tabela erro
+      pr_tab_erro.DELETE;
+
+      --Se escreve erro log
+      IF pr_flgerlog = 'S' THEN
+        --Buscar Descricao origem
+        vr_dsorigem := GENE0001.vr_vet_des_origens(pr_idorigem);
+        --Descricao Transacao
+        vr_dstransa := 'Efetiva pagamento de parcela consignado';
+      END IF;
+
+      BEGIN
+        --Criar savepoint para desfazer transacao
+        SAVEPOINT savtrans_efetiva_pagto_parcela;
+        
+        -- Gera evento SOA de pagamento e insere lancamento na C/C somente
+        -- o pagamento que não foi enviado ou que retornou erro da FIS Brasil
+        IF fn_ret_status_pagto_consignado (pr_cdcooper => pr_cdcooper,
+                                           pr_nrdconta => pr_nrdconta,
+                                           pr_nrctremp => pr_nrctremp, 
+                                           pr_nrparepr => pr_nrparepr) IN (0,2,3) THEN -- 0- não enviado, 2, Pagamento Efetuado na FIS, 3- Erro
+
+           --Selecionar Linha Credito
+           OPEN cr_craplcr(pr_cdcooper => pr_cdcooper
+                          ,pr_cdlcremp => pr_cdlcremp);
+           FETCH cr_craplcr
+            INTO rw_craplcr;
+           --Se nao Encontrou
+           IF cr_craplcr%NOTFOUND THEN
+              --Fechar Cursor
+              CLOSE cr_craplcr;
+              vr_cdcritic := 363;
+              --Sair
+              RAISE vr_exc_saida;
+           ELSE
+             --Determinar se a Operacao é financiamento
+             vr_floperac := rw_craplcr.dsoperac = 'FINANCIAMENTO';
+           END IF;
+           
+           -- verifica se o pagamento é em dia
+           IF pr_tppagmto = 'D' THEN 
+              IF vr_floperac THEN
+                 vr_nrdolote := 600015;
+              ELSE
+                 vr_nrdolote := 600014;
+              END IF;
+              vr_cdhistor := 108;
+           ELSE -- pagamento em atraso
+               IF vr_floperac THEN -- Financiamento
+                  -- multa
+                  vr_lotemult := 600021; 
+                  vr_cdhismul := 1070;
+                  -- atraso
+                  vr_cdhisatr := 1072;
+                  vr_loteatra := 600025;
+                  -- IOF
+                  vr_cdhisiof:= 2314;
+                  vr_loteiof:=  600023;
+                  -- pago da parcela
+                  vr_cdhistor := 108;
+                  vr_nrdolote:=  600015;
+               ELSE -- Emprestimo 
+                  -- multa
+                  vr_lotemult := 600020; 
+                  vr_cdhismul := 1060;
+                  -- atraso
+                  vr_cdhisatr := 1071;
+                  vr_loteatra := 600024;
+                  -- IOF
+                  vr_cdhisiof:= 2313;
+                  vr_loteiof:= 600022;
+                  -- pago da parcela
+                  vr_cdhistor := 108;
+                  vr_nrdolote:= 600014;
+               END IF;
+           END IF;
+           
+           -- Gera o XML do pagamento a ser gravado no evento SOA
+           pc_gera_xml_pagamento_consig(pr_cdcooper  => pr_cdcooper, -- código da cooperativa
+                                        pr_nrdconta  => pr_nrdconta, -- Número da conta
+                                        pr_nrctremp  => pr_nrctremp, -- Número do contrato de emprestimo
+                                        pr_nrparepr  => pr_nrparepr, -- Numero da parcela
+                                        pr_dsxmlali  => vr_dsxmlali, -- XML de saida do pagamento
+                                        pr_dscritic  => vr_dscritic); 
+
+           -- Tratar saida com erro                          
+           IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+           END IF;                                  
+           
+           -- gera evento soa para o pagamento de consignado
+           soap0003.pc_gerar_evento_soa(pr_cdcooper               => pr_cdcooper
+                                       ,pr_nrdconta               => pr_nrdconta
+                                       ,pr_nrctrprp               => pr_nrctremp
+                                       ,pr_tpevento               => 'PAGAMENTO_PARCELA'
+                                       ,pr_tproduto_evento        => 'CDC'
+                                       ,pr_tpoperacao             => 'INSERT'
+                                       ,pr_dsconteudo_requisicao  => vr_dsxmlali.getClobVal()
+                                       ,pr_idevento               => vr_idevento
+                                       ,pr_dscritic               => vr_dscritic);
+           -- Tratar saida com erro                          
+           IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+           END IF;
+
+           -- Lanca em C/C e atualiza o lote 
+           empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                          ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
+                                          ,pr_cdagenci => pr_cdagenci --> Código da agência
+                                          ,pr_cdbccxlt => 100         --> Número do caixa
+                                          ,pr_cdoperad => pr_cdoperad --> Código do Operador
+                                          ,pr_cdpactra => pr_cdpactra --> P.A. da transação
+                                          ,pr_nrdolote => vr_nrdolote --> Numero do Lote
+                                          ,pr_nrdconta => pr_nrdconta --> Número da conta
+                                          ,pr_cdhistor => vr_cdhistor --> Codigo historico
+                                          ,pr_vllanmto => pr_vlparepr --> Valor da parcela emprestimo
+                                          ,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
+                                          ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
+                                          ,pr_nrseqava => pr_nrseqava --> Pagamento: Sequencia do avalista
+                                          ,pr_des_reto => vr_des_erro --> Retorno OK / NOK
+                                          ,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
+           --Se Retornou erro
+           IF vr_des_erro <> 'OK' THEN
+              --Sair
+              RAISE vr_exc_saida;
+           END IF;
+
+           pc_inc_alt_tbepr_consig_pagto (pr_idsequencia => null,        -- Numero sequencial da tabela
+                                          pr_cdcooper    => pr_cdcooper, -- codigo da cooperativa
+                                          pr_nrdconta    => pr_nrdconta, -- numero da conta
+                                          pr_nrctremp    => pr_nrctremp, -- Numero do contrato
+                                          pr_nrparepr    => pr_nrparepr, -- Numero da parcela
+                                          pr_vlparepr    => pr_vlparcel, -- valor da parcela do emprestimo
+                                          pr_vlpagpar    => pr_vlparepr, -- Valor pago da parcela
+                                          pr_dtvencto    => pr_dtvencto, -- Vencimento da parcela
+                                          pr_instatus    => 1,           -- Status do processamento
+                                          pr_dscritic 	  => vr_dscritic); -- critica de erro
+           -- Tratar saida com erro                          
+           IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+           END IF;                                                   
+        
+           -- Para os pagamentos em atraso
+           -- lançar em c/c  Multa, juros e IOF
+           IF pr_tppagmto = 'A' THEN
+              ------------------------------
+              -- Lançamento de Multa
+              ------------------------------
+              IF nvl(pr_vlrmulta,0) > 0 then
+                 --Lanca em C/C e atualiza o lote 
+                 empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                               ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
+                                               ,pr_cdagenci => pr_cdagenci --> Código da agência
+                                               ,pr_cdbccxlt => 100 --> Número do caixa
+                                               ,pr_cdoperad => pr_cdoperad --> Código do Operador
+                                               ,pr_cdpactra => pr_cdpactra --> P.A. da transação
+                                               ,pr_nrdolote => vr_lotemult --> Numero do Lote
+                                               ,pr_nrdconta => pr_nrdconta --> Número da conta
+                                               ,pr_cdhistor => vr_cdhismul --> Codigo historico
+                                               ,pr_vllanmto => pr_vlrmulta --> Valor da parcela emprestimo
+                                               ,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
+                                               ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
+                                               ,pr_nrseqava => pr_nrseqava -- Pagamento: Sequencia do avalista
+                                               ,pr_des_reto => vr_des_erro --> Retorno OK / NOK
+                                               ,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
+                 --Se Retornou erro
+                 IF vr_des_erro <> 'OK' THEN
+                    --Sair
+                    RAISE vr_exc_saida;
+                 END IF;
+              END IF;
+              
+              ---------------------------------
+              -- Lançamento de juros de mora 
+              ---------------------------------
+              IF nvl(pr_vlatraso, 0) > 0  THEN
+                 -- AND nvl(vr_vlpagsld, 0) >= 0 THEN
+                 -- Debita o pagamento da parcela da C/C 
+                 empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                                ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
+                                                ,pr_cdagenci => pr_cdagenci --> Código da agência
+                                                ,pr_cdbccxlt => 100 --> Número do caixa
+                                                ,pr_cdoperad => pr_cdoperad --> Código do Operador
+                                                ,pr_cdpactra => pr_cdpactra --> P.A. da transação
+                                                ,pr_nrdolote => vr_loteatra --> Numero do Lote
+                                                ,pr_nrdconta => pr_nrdconta --> Número da conta
+                                                ,pr_cdhistor => vr_cdhisatr --> Codigo historico
+                                                ,pr_vllanmto => pr_vlatraso --> Valor da parcela emprestimo
+                                                ,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
+                                                ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
+                                                ,pr_nrseqava => pr_nrseqava --> Pagamento: Sequencia do avalista
+                                                ,pr_des_reto => vr_des_erro --> Retorno OK / NOK
+                                                ,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
+                 --Se Retornou erro
+                 IF vr_des_erro <> 'OK' THEN
+                    --Sair
+                    RAISE vr_exc_saida;
+                 END IF;
+              END IF;
+                
+              ----------------------------------------
+              -- Lançamento do IOF complementar
+              ----------------------------------------
+              IF nvl(pr_vliofcpl, 0) > 0 THEN
+                 -- AND nvl(vr_vlpagsld, 0) >= 0 THEN
+                 -- Debita o valor do IOF complementar atraso da C/C 
+                 empr0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                                      ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
+                                                      ,pr_cdagenci => pr_cdagenci --> Código da agência
+                                                      ,pr_cdbccxlt => 100 --> Número do caixa
+                                                      ,pr_cdoperad => pr_cdoperad --> Código do Operador
+                                                      ,pr_cdpactra => pr_cdpactra --> P.A. da transação
+                                                      ,pr_nrdolote => vr_loteiof  --> Numero do Lote
+                                                      ,pr_nrdconta => pr_nrdconta --> Número da conta
+                                                      ,pr_cdhistor => vr_cdhisiof --> Codigo historico
+                                                      ,pr_vllanmto => pr_vliofcpl --> Valor da parcela emprestimo
+                                                      ,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
+                                                      ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
+                                                      ,pr_nrseqava => pr_nrseqava --> Pagamento: Sequencia do avalista
+                                                      ,pr_nrseqdig => vr_nrseqdig
+                                                      ,pr_des_reto => vr_des_erro --> Retorno OK / NOK
+                                                      ,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
+                 --Se Retornou erro
+                 IF vr_des_erro <> 'OK' THEN
+                    --Sair
+                    RAISE vr_exc_saida;
+                 END IF;  
+                
+                 -- Insere o IOF 
+                 tiof0001.pc_insere_iof(pr_cdcooper     => pr_cdcooper
+                                       ,pr_nrdconta     => pr_nrdconta
+                                       ,pr_dtmvtolt     => pr_dtmvtolt
+                                       ,pr_tpproduto    => 1 -- Emprestimo
+                                       ,pr_nrcontrato   => pr_nrctremp
+                                       ,pr_idlautom     => null
+                                       ,pr_dtmvtolt_lcm => pr_dtmvtolt
+                                       ,pr_cdagenci_lcm => pr_cdpactra
+                                       ,pr_cdbccxlt_lcm => 100
+                                       ,pr_nrdolote_lcm => vr_loteiof
+                                       ,pr_nrseqdig_lcm => vr_nrseqdig
+                                       ,pr_vliofpri     => 0
+                                       ,pr_vliofadi     => 0
+                                       ,pr_vliofcpl     => pr_vliofcpl
+                                       ,pr_flgimune     => 0
+                                       ,pr_cdcritic     => vr_cdcritic
+                                       ,pr_dscritic     => vr_dscritic);
+
+                 IF vr_dscritic is not null THEN
+                    RAISE vr_exc_saida;
+                 end if;
+              END IF;
+           END IF;
+        END IF;
+        
+        --Marcar que ocorreu transacao
+        vr_flgtrans := TRUE;
+
+      EXCEPTION
+        WHEN vr_exc_saida THEN
+          --Desfaz transacoes
+          ROLLBACK TO SAVEPOINT savtrans_efetiva_pagto_parcela;
+      END;
+
+      --Se nao ocorreu a transacao
+      IF NOT vr_flgtrans THEN
+        -- Retorno não OK
+        pr_des_reto := 'NOK';
+        --Se nao tem erro na tabela
+        IF pr_tab_erro.COUNT = 0 THEN
+          -- Gerar rotina de gravação de erro
+          gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cdagenci
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_nrsequen => 1 --> Fixo
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic
+                               ,pr_tab_erro => pr_tab_erro);
+        END IF;
+      ELSIF pr_flgerlog = 'S' THEN
+        -- Se foi solicitado o envio de LOG
+        -- Gerar LOG
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_dscritic => ''
+                            ,pr_dsorigem => vr_dsorigem
+                            ,pr_dstransa => vr_dstransa
+                            ,pr_dttransa => pr_dtmvtolt
+                            ,pr_flgtrans => 1 --> TRUE
+                            ,pr_hrtransa => GENE0002.fn_busca_time
+                            ,pr_idseqttl => pr_idseqttl
+                            ,pr_nmdatela => pr_nmdatela
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);
+        -- Retorno OK
+        pr_des_reto := 'OK';
+      END IF;
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Retorno não OK
+        pr_des_reto := 'NOK';
+        -- Montar descrição de erro não tratado
+        vr_dscritic := 'Erro não tratado na empr0020.pc_efetiva_pagto_parc_consig ' ||
+                       sqlerrm;
+        -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => 0
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+    END;
+    END pc_efetiva_pagto_parc_consig;     
+    
+    PROCEDURE pc_inc_alt_tbepr_consig_pagto (pr_idsequencia IN number, --tbepr_consignado_pagamento.idsequencia%TYPE,
+                                             pr_cdcooper    IN number, --tbepr_consignado_pagamento.cdcooper%TYPE,
+                                             pr_nrdconta    IN number, --tbepr_consignado_pagamento.nrdconta%TYPE,
+                                             pr_nrctremp    IN number, --tbepr_consignado_pagamento.nrctremp%TYPE,
+                                             pr_nrparepr    IN number, --tbepr_consignado_pagamento.nrparepr%TYPE,
+                                             pr_vlparepr    IN number, --tbepr_consignado_pagamento.vlparepr%TYPE,
+                                             pr_vlpagpar    IN number, --tbepr_consignado_pagamento.vlpagpar%TYPE,
+                                             pr_dtvencto    IN date,   --tbepr_consignado_pagamento.dtvencto%TYPE,
+                                             pr_instatus    IN number, --tbepr_consignado_pagamento.instatus%TYPE,
+                                             pr_dscritic 	 OUT VARCHAR2 ) IS 
+     /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_inc_alt_tbepr_consignado_pagamento
+      Sistema  : AIMARO
+      Sigla    : 
+      Autor    : Josiane Stiehler - AMcom
+      Data     : 06/05/2019
+  
+      Objetivo : Inclui ou altera a tabela bepr_consignado_pagamento, 
+                 para o controle de pagamento enviados a FIS Brasil
+
+      Alteração:
+
+     ----------------------------------------------------------------------------------------------------------*/
+  BEGIN
+    DECLARE
+     vr_dscritic  varchar2(2000);
+     vr_exc_saida exception;
+  BEGIN 
+ /*       IF pr_idsequencia IS NULL THEN
+          BEGIN   
+            INSERT INTO tbepr_consignado_pagamento
+                 (idsequencia,
+                  cdcooper,
+                  nrdconta,
+                  nrctremp,
+                  nrparepr,
+                  vlparepr,
+                  vlpagpar,
+                  dtvencto,
+                  instatus,
+                  dtincreg,
+                  dtupdreg)
+              VALUES
+                 (null,
+                  pr_cdcooper,
+                  pr_nrdconta,
+                  pr_nrctremp,
+                  pr_nrparepr,
+                  pr_vlparepr,
+                  pr_vlpagpar,
+                  pr_dtvencto,
+                  pr_instatus,
+                  sysdate,
+                  null);
+           EXCEPTION
+             WHEN OTHERS THEN
+               vr_dscritic:= 'Erro no insert da tabela tbepr_consignado_pagamento - ' ||sqlerrm;
+               RAISE vr_exc_saida;
+           END;      
+         ELSE
+           BEGIN
+             UPDATE tbepr_consignado_pagamento
+                SET instatus = pr_instatus,
+                    dtupdreg = dtupdreg
+              WHERE idsequencia = pr_idsequencia;
+           EXCEPTION
+             WHEN OTHERS THEN
+               vr_dscritic:= 'Erro no updateda tabela tbepr_consignado_pagamento - '||sqlerrm;
+               RAISE vr_exc_saida;               
+           END;      
+         END IF;*/
+         null;
+     EXCEPTION
+        WHEN vr_exc_saida THEN
+           pr_dscritic:= vr_dscritic; 
+      END;
+    END pc_inc_alt_tbepr_consig_pagto;
+    
+    FUNCTION fn_ret_status_pagto_consignado (pr_cdcooper    IN number,--tbepr_consignado_pagamento.cdcooper%TYPE, -- código da cooperativa
+                                             pr_nrdconta    IN number,--tbepr_consignado_pagamento.nrdconta%TYPE, -- Número da conta
+                                             pr_nrctremp    IN number,--tbepr_consignado_pagamento.nrctremp%TYPE, -- Número do contrato de emprestimo
+                                             pr_nrparepr    IN number)--tbepr_consignado_pagamento.nrparepr%TYPE) -- Número da parcela de emprestimo
+                          RETURN NUMBER IS
+     /*---------------------------------------------------------------------------------------------------------
+      Programa : fn_ret_status_pagto_consignado
+      Sistema  : AIMARO
+      Sigla    : 
+      Autor    : Josiane Stiehler - AMcom
+      Data     : 06/05/2019
+  
+      Objetivo : Retorna o status do processamento do pagamento criado no Evento SOA.
+                 Pagamento que irá ocorrer na FIS Brasil
+
+      Alteração:
+
+     ----------------------------------------------------------------------------------------------------------*/
+    BEGIN
+      DECLARE
+       vr_instatus number;--tbepr_consignado_pagamento.instatus%TYPE;
+
+       CURSOR cr_consig_pagto IS      
+          SELECT 0 instatus  -- 1- Enviado, 2 - Pagamento efetuado FIS, 3- Erro
+            FROM dual; --tbepr_consignado_pagamento
+         /*  WHERE cdcooper = pr_cdcooper
+             AND nrdconta = pr_nrdconta
+             AND nrctremp = pr_nrctremp
+             AND nrparepr = pr_nrparepr;*/
+       BEGIN
+         vr_instatus:= 0;
+         FOR rw_consig_pagto IN cr_consig_pagto
+         LOOP
+           vr_instatus:= rw_consig_pagto.instatus;
+         END LOOP;
+        RETURN (vr_instatus);
+      END;
+    END fn_ret_status_pagto_consignado;
+    
+    -- Montar o XML para registro do Gravames somente CDC 
+    PROCEDURE pc_gera_xml_pagamento_consig(pr_cdcooper    IN crapepr.cdcooper%TYPE, -- código da cooperativa
+                                           pr_nrdconta    IN crapepr.nrdconta%TYPE, -- Número da conta
+                                           pr_nrctremp    IN crapepr.nrctremp%TYPE, -- Número do contrato de emprestimo
+                                           pr_nrparepr    IN crappep.nrparepr%TYPE, -- Numero da parcela
+                                           pr_dsxmlali   OUT XmlType,               -- XML de saida do pagamento
+                                           pr_dscritic   OUT VARCHAR2) IS --> Descricao Erro
+
+    BEGIN
+    /* .............................................................................
+       Programa : pc_gera_xml_pagamento
+       Sistema  : AIMARO
+       Sigla    : 
+       Autor    : Josiane Stiehler - AMcom
+       Data     : 09/05/2019                      Última Alteração:
+                        
+      Alterações :
+                              
+    ............................................................................... */
+                          
+    DECLARE
+      -- Código do programa
+      vr_cdprogra crapprg.cdprogra%TYPE;
+      -- Erro para parar a cadeia
+      vr_exc_saida exception;
+
+      -------------- Cursores específicos ----------------
+
+         
+                      
+      -------------- Variáveis e Tipos -------------------
+                        
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Código da crítica
+      vr_dscritic     VARCHAR2(2000);    --> Descrição da crítica
+                              
+      -- Variaveis locais para retorno de erro
+      vr_des_reto varchar2(4000);
+                            
+      -- Varchar2 temporário
+      vr_dsxmltemp VARCHAR2(32767);
+
+      -- Temporárias para o CLOB
+      vr_clobxml CLOB;                   -- CLOB para armazenamento das informações do arquivo
+      vr_clobaux VARCHAR2(32767);        -- Var auxiliar para montagem do arquivo
+
+                          
+    BEGIN
+      --Inicializar variavel erro
+      pr_dscritic := NULL;
+      
+      -- Inicializar as informações do XML de dados
+      dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
+      dbms_lob.open(vr_clobxml,dbms_lob.lob_readwrite);
+                        
+      -- Escrever no arquivo XML
+      gene0002.pc_escreve_xml(vr_clobxml
+                             ,vr_clobaux
+                             ,'<?xml version="1.0" encoding="UTF-8"?><Root>');
+                        
+      -- Monta XML do pagamento do consignado   
+      vr_dsxmltemp:= '<TESTE> TESTE CONSIGNADO </TESTE>';    
+      -- Enviar o mesmo ao CLOB
+      gene0002.pc_escreve_xml(vr_clobxml
+                             ,vr_clobaux
+                             ,vr_dsxmltemp); 
+                  
+                      
+      -- Finalizar o XML
+      gene0002.pc_escreve_xml(vr_clobxml
+                             ,vr_clobaux
+                             ,'</Root>'
+                             ,TRUE);      
+      -- E converter o CLOB para o XMLType de retorno
+      pr_dsxmlali := XmlType.createXML(vr_clobxml);
+                      
+      --Fechar Clob e Liberar Memoria  
+      dbms_lob.close(vr_clobxml);
+      dbms_lob.freetemporary(vr_clobxml); 
+          
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Montar descrição de erro não tratado
+          pr_dscritic := 'Erro não tratado na empr0020.pc_gera_xml_pagamento_consig ' ||
+                         sqlerrm;
+      END;
+      END pc_gera_xml_pagamento_consig;
+    
 END EMPR0020;
 /
