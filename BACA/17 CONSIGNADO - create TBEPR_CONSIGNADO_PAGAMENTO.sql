@@ -9,7 +9,7 @@ create table TBEPR_CONSIGNADO_PAGAMENTO
   VLPAREPR     NUMBER(25,2),
   VLPAGPAR     NUMBER(25,2),
   DTVENCTO     DATE,
-  INSTATUS     NUMBER(5),    
+  INSTATUS     NUMBER(1),    
   DTINCREG     DATE         DEFAULT SYSDATE NOT NULL,           
   DTUPDREG     DATE);
 
@@ -25,7 +25,7 @@ comment on column TBEPR_CONSIGNADO_PAGAMENTO.INORGPGT is 'Indicador da origem do
 comment on column TBEPR_CONSIGNADO_PAGAMENTO.VLPAREPR is 'Valor da parcela.';
 comment on column TBEPR_CONSIGNADO_PAGAMENTO.VLPAGPAR is 'Valor pago da parcela.';
 comment on column TBEPR_CONSIGNADO_PAGAMENTO.DTVENCTO is 'Data do vencimento da parcela.';
-comment on column TBEPR_CONSIGNADO_PAGAMENTO.INSTATUS is 'Indicador do status do processamento (1 - Enviado, 2 - Pagamento efetuado FIS, 3- Erro)';
+comment on column TBEPR_CONSIGNADO_PAGAMENTO.INSTATUS is 'Indicador do status do processamento (1 - Processando, 2 - Pagamento efetuado FIS, 3- Erro)';
 comment on column TBEPR_CONSIGNADO_PAGAMENTO.DTINCREG is 'Data de inclusao do registro';
 comment on column TBEPR_CONSIGNADO_PAGAMENTO.DTUPDREG is 'Data de alteracao do registro';
 
@@ -45,6 +45,11 @@ order;
 insert into tbcadast_dominio_campo values ('INORGPGT','1','Debitador Único');
 insert into tbcadast_dominio_campo values ('INORGPGT','2','Tela Pagar');
 insert into tbcadast_dominio_campo values ('INORGPGT','3','Boleto');
+
+insert into tbcadast_dominio_campo values ('INSTATUS','1','Processando');
+insert into tbcadast_dominio_campo values ('INSTATUS','2','Pagamento Efetuado na FIS Brasil');
+insert into tbcadast_dominio_campo values ('INSTATUS','3','Erro');
+
 commit;
 
 -- Create Trigger
