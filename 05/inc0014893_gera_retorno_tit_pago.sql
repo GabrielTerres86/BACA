@@ -18,7 +18,7 @@ begin
     dbms_output.put_line('Coop: '|| r_cop.cdcooper);
     --
     PGTA0001.pc_gera_retorno_tit_pago(pr_cdcooper => r_cop.cdcooper
-                                    , pr_dtmvtolt => to_date('08052019','ddmmyyyy')
+                                    , pr_dtmvtolt => to_date('09052019','ddmmyyyy')
                                     , pr_idorigem => 3    -- Ayllos
                                     , pr_cdoperad => '1'
                                     , pr_cdcritic => vr_cdcritic
