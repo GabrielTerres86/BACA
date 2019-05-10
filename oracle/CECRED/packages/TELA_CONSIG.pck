@@ -2327,8 +2327,8 @@ BEGIN
      FROM crapemp e,
           tbcadast_empresa_consig c,
           crapcop p
-    WHERE e.cdcooper      = c.cdcooper
-      AND e.cdempres      = c.cdempres
+    WHERE e.cdcooper      = c.cdcooper(+)
+      AND e.cdempres      = c.cdempres(+)
       AND e.cdcooper      = p.cdcooper
       AND e.cdcooper      = pr_cdcooper
       AND e.cdempres      = vr_cdempres;
