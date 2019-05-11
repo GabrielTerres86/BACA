@@ -68,12 +68,15 @@ function  validaintervenientePF(){
     }
 
     //E-mail: dsdemail 
-    if($('#dsdemail',aux_nomeForm).val() == ""){
-        exibirErroAvalista('Favor inserir um endere&ccedil;o de E-mail.');
-        return false;
-    }else if(!vaidaEmailAvalista($('#dsdemail',aux_nomeForm).val())){
+    // if($('#dsdemail',aux_nomeForm).val() == ""){
+    //     exibirErroAvalista('Favor inserir um endere&ccedil;o de E-mail.');
+    //     return false;
+    // }else
+    if($('#dsdemail',aux_nomeForm).val() !== ""){
+        if(!vaidaEmailAvalista($('#dsdemail',aux_nomeForm).val())){
         exibirErroAvalista('Favor inserir um endere&ccedil;o de E-mail v&aacute;lido.');
         return false;
+        }
     }
 
     return true;
@@ -102,12 +105,15 @@ function  validaintervenientePJ(){
     }
 
     //E-mail: dsdemail 
-    if($('#dsdemail',aux_nomeForm).val() == ""){
-        exibirErroAvalista('Favor inserir um endere&ccedil;o de E-mail.');
-        return false;
-    }else if(!vaidaEmailAvalista($('#dsdemail',aux_nomeForm).val())){
+    // if($('#dsdemail',aux_nomeForm).val() == ""){
+    //     exibirErroAvalista('Favor inserir um endere&ccedil;o de E-mail.');
+    //     return false;
+    // }else
+    if($('#dsdemail',aux_nomeForm).val() !== ""){
+        if(!vaidaEmailAvalista($('#dsdemail',aux_nomeForm).val())){
         exibirErroAvalista('Favor inserir um endere&ccedil;o de E-mail v&aacute;lido.');
         return false;
+        }
     }
     
     return true;

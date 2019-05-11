@@ -81,12 +81,15 @@
     }
 
     //E-mail: dsdemail 
-    if($('#dsdemail',aux_nomeForm).val() == ""){
-        exibirErroAvalista('Favor inserir um endereco de E-mail.');
-        return false;
-    }else if(!vaidaEmailAvalista($('#dsdemail',aux_nomeForm).val())){
+    // if($('#dsdemail',aux_nomeForm).val() == ""){
+    //     exibirErroAvalista('Favor inserir um endereco de E-mail.');
+    //     return false;
+    // }else
+    if($('#dsdemail',aux_nomeForm).val() !== ""){
+        if(!vaidaEmailAvalista($('#dsdemail',aux_nomeForm).val())){
         exibirErroAvalista('Favor inserir um endereco de E-mail valido.');
         return false;
+        }
     }
 
     //Rendimento Mensal: vlrenmes
@@ -124,12 +127,15 @@
     }
 
     //E-mail: dsdemail 
-    if($('#dsdemail',aux_nomeForm).val() == ""){
-        exibirErroAvalista('Favor inserir um endereco de E-mail.');
-        return false;
-    }else if(!vaidaEmailAvalista($('#dsdemail',aux_nomeForm).val())){
+    // if($('#dsdemail',aux_nomeForm).val() == ""){
+    //     exibirErroAvalista('Favor inserir um endereco de E-mail.');
+    //     return false;
+    // }else
+    if($('#dsdemail',aux_nomeForm).val() !== ""){
+        if(!vaidaEmailAvalista($('#dsdemail',aux_nomeForm).val())){
         exibirErroAvalista('Favor inserir um endereco de E-mail valido.');
         return false;
+        }    
     }
 
     //Faturamente médio Mensal: vlrenmes
