@@ -258,6 +258,8 @@
 		
 	if ($flmudfai == 'N') {
 		echo "showConfirmacao('Deseja efetuar as consultas?','Confirma&ccedil;&atilde;o - Aimaro','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));acessaTela(\"@\");','efetuar_consultas();acessaTela(\"@\");','nao.gif','sim.gif');";
+	}else{
+		echo "acessaTela(\"@\");";
 	}	
 
 		// Gravar dados do rating do cooperado

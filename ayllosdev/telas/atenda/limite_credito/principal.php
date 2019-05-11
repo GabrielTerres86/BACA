@@ -257,6 +257,8 @@
 	var_globais.idcobope = "<?php echo $idcobope; ?>";
 	var_globais.nivrisco = "<?php echo $nivrisco; ?>";	
 	var_globais.dsdtxfix = "<?php echo $dsdtxfix; ?>";
+	var_globais.dtultmaj = "<?php echo $dtultmaj; ?>";
+	var_globais.dtcanlim = "<?php echo $dtcanlim; ?>";
 
 	aux_cdcooper = '<?php echo $glbvars["cdcooper"]?>';
 	aux_tpdocmto = '<?php echo $tpdocmto ?>';

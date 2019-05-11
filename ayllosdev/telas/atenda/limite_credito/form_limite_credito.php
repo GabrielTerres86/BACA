@@ -129,11 +129,6 @@
 			<input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="aux_inconfir = 1; aux_inconfi2 = 30; validaAdesaoValorProduto('validarNovoLimite('+aux_inconfir+','+aux_inconfi2+');'); return false;">
 		<? } ?>	
 	
-	<? } else if ($cddopcao == 'R') { // Se for renovacao ?>
-
-		<input type="image" id="btVoltar" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="acessaTela('@');return false;">
-		<input type="image" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="showConfirmacaoRenovar(); return false;"> 
-
 	<? } else { // Se for consulta 
 			if ($nrctrlim > 0)  { // Se tiver contrato ou proposta ?>
 				<!-- bruno - prj - 438 - sprint 7 - tela principal -->

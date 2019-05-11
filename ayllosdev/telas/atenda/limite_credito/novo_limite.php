@@ -352,9 +352,15 @@
 		<td align="center">			
 			<form action="" name="frmNovoLimite" id="frmNovoLimite" method="post" class="formulario condensado" onSubmit="return false;" >
 			
+				<?php if ($cddopcao == 'A' || $cddopcao == 'R') { ?>
+					<div id="divDadosLimite">
+						<? include('form_dados_limite_credito.php') ?>
+					</div>
+				<?php } else { ?>
 			<div id="divDadosLimite">
 				<? include('form_limite_credito.php') ?>
 			</div>
+				<?php } ?>
 			
 				<?php /* PRJ 438 - Sprint 7 - Comentado pois a tela não deve mais ser exibida
 			<div id="divDadosRenda">

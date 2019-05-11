@@ -134,7 +134,9 @@ var var_globais = {
     inpessoa: '',
     nrdconta: '',
     nivrisco: '',
-    dsdtxfix: ''
+    dsdtxfix: '',
+    dtultmaj: '',
+    dtcanlim: ''
 }
 
 //bruno - prj - 438 - sprint 7 - tela principal
@@ -3074,4 +3076,114 @@ function showConfirmacaoRenovar(){
             'validaAdesaoValorProduto(\'renovarLimiteAtual('+aux_limites.ativo.nrctrlim+')\','+aux_limites.ativo.vllimite+')',
             "blockBackground(parseInt($('#divRotina').css('z-index')))",
             'sim.gif','nao.gif');	
+}
+
+// Função que formata a pagina dados do limite de crédito
+function formataDadosLimiteCredito() {
+
+	$('input, select', '#frmDadosLimiteCredito').desabilitaCampo();		
+
+	// rotulo
+    rVllimite = $('label[for="vllimite"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDtmvtolt = $('label[for="dtmvtolt"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rCddlinha = $('label[for="cddlinha"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDtfimvig = $('label[for="dtfimvig"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rNrctrlim = $('label[for="nrctrlim"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rQtdiavig = $('label[for="qtdiavig"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDsencfi1 = $('label[for="dsencfi1"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDsencfi2 = $('label[for="dsencfi2"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDsencfi3 = $('label[for="dsencfi3"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDssitlli = $('label[for="dssitlli"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDtcanlim = $('label[for="dtcanlim"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rNmoperad = $('label[for="nmoperad"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rNmopelib = $('label[for="nmopelib"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rFlgenvio = $('label[for="flgenvio"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDstprenv = $('label[for="dstprenv"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rQtrenova = $('label[for="qtrenova"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDtrenova = $('label[for="dtrenova"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+	rDtultmaj = $('label[for="dtultmaj"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+
+    rVllimite.addClass('rotulo').css({ 'width': '126px' });
+    rDtmvtolt.addClass('rotulo-linha').css({ 'width': '110px' });
+    rCddlinha.addClass('rotulo').css({ 'width': '126px' });
+    rDtfimvig.addClass('rotulo-linha').css({ 'width': '110px' });
+    rNrctrlim.addClass('rotulo').css({ 'width': '126px' });
+    rQtdiavig.addClass('rotulo-linha').css({ 'width': '210px' });
+    rDsencfi1.addClass('rotulo').css({ 'width': '126px' });
+    rDsencfi2.addClass('rotulo').css({ 'width': '126px' });
+    rDsencfi3.addClass('rotulo').css({ 'width': '126px' });
+    rDssitlli.addClass('rotulo').css({ 'width': '126px' });
+    rDtcanlim.addClass('rotulo').css({ 'width': '126px' });
+    rNmoperad.addClass('rotulo').css({ 'width': '126px' });
+    rNmopelib.addClass('rotulo').css({ 'width': '126px' });
+    rFlgenvio.addClass('rotulo').css({ 'width': '126px' });
+    rDstprenv.addClass('rotulo').css({ 'width': '126px' });
+    rQtrenova.addClass('rotulo-linha');
+    rDtrenova.addClass('rotulo-linha').css({ 'width': '91px' });
+	rDtultmaj.addClass('rotulo').css({ 'width': '126px' });
+	
+	// campos
+    cVllimite = $('#vllimite', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDtmvtolt = $('#dtmvtolt', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cCddlinha = $('#cddlinha', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDtfimvig = $('#dtfimvig', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cNrctrlim = $('#nrctrlim', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cQtdiavig = $('#qtdiavig', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDsencfi1 = $('#dsencfi1', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDsencfi2 = $('#dsencfi2', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDsencfi3 = $('#dsencfi3', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDssitlli = $('#dssitlli', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDtcanlim = $('#dtcanlim', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cNmoperad = $('#nmoperad', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cNmopelib = $('#nmopelib', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cFlgenvio = $('#flgenvio', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDstprenv = $('#dstprenv', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cQtrenova = $('#qtrenova', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDtrenova = $('#dtrenova', '#' + nomeForm + ' #divDadosLimiteCredito');
+	cDtultmaj = $('#dtultmaj', '#' + nomeForm + ' #divDadosLimiteCredito');
+
+    cVllimite.css({ 'width': '180px' });
+    cDtmvtolt.css({ 'width': '70px' });
+    cCddlinha.css({ 'width': '180px' });
+    cDtfimvig.css({ 'width': '70px' });
+    cNrctrlim.css({ 'width': '80px' });
+    cQtdiavig.css({ 'width': '70px' });
+    cDsencfi1.css({ 'width': '336px' });
+    cDsencfi2.css({ 'width': '336px' });
+    cDsencfi3.css({ 'width': '336px' });
+    cDssitlli.css({ 'width': '336px' });
+    cDtultmaj.css({ 'width': '80px' });
+    cDtcanlim.css({ 'width': '70px' });
+    cNmoperad.css({ 'width': '336px' });
+    cNmopelib.css({ 'width': '336px' });
+    cFlgenvio.css({ 'width': '336px' });
+    cDstprenv.css({ 'width': '80px' });
+    cQtrenova.css({ 'width': '45px' });
+    cDtrenova.css({ 'width': '70px' });
+
+}
+
+function setarDadosLimiteCredito(){
+
+	$('#nivrisco', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.nivrisco);
+	$('#dsdtxfix', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dsdtxfix);
+	$('#vllimite', '#' + nomeForm + ' #divDadosLimiteCredito').val(number_format(var_globais.vllimite, 2).replace('.',',').replace(',','.'));
+	$('#dtmvtolt', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dtmvtolt);
+	$('#cddlinha', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.cddlinha + ' - ' + var_globais.dsdlinha);
+	$('#dtfimvig', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dtfimvig);
+	$('#nrctrlim', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.nrctrlim);
+	$('#qtdiavig', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.qtdiavig);
+	$('#dstprenv', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dstprenv);
+	$('#qtrenova', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.qtrenova);
+	$('#dtrenova', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dtrenova);
+	$('#dtcanlim', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dtcanlim);
+	$('#dsencfi1', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dsencfi1);
+	$('#dsencfi2', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dsencfi2);
+	$('#dsencfi3', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dsencfi3);
+	$('#dssitlli', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dssitlli + (var_globais.dsmotivo.trim() == "" ? "" : " - " + var_globais.dsmotivo));
+	$('#dtultmaj', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dtultmaj);
+	$('#nmoperad', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.nmoperad);
+	$('#nmopelib', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.nmopelib);
+	$('#flgenvio', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.flgenvio);
+
 }
