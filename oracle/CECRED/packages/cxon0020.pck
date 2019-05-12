@@ -1878,6 +1878,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
     IF pr_idagenda = 1 THEN
 
+	  /* Garantir o horario de funcionamento do SPB */
+	  IF sspb0003.fn_valida_horario_ted(pr_cdcooper => pr_cdcooper) then
+         vr_cdcritic := 0;
+         vr_dscritic := 'Operação deve ser realizada dentro do horário estabelecido para transferências na data atual.';
+         RAISE vr_exc_erro; 
+      END IF; 
+
       /* Controle para envio de 2 TEDs iguais pelo ambiente Mobile */
       OPEN cr_craptvl_max( pr_cdcooper => rw_crapcop.cdcooper,
                            pr_dtmvtocd => rw_crapdat.dtmvtocd,
