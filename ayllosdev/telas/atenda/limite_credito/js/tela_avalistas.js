@@ -192,36 +192,36 @@ function formataAvalista(){
         }
 
         if (e.keyCode == __BOTAO_ENTER || e.keyCode == __BOTAO_TAB || param1.keyCode == __BOTAO_ENTER) {
-        nrctacjg = normalizaNumero($(this).val());
+            nrctacjg = normalizaNumero($(this).val());
 
-        if (nrctacjg != 0) {
-            // Verifica se a conta é válida
-            if (!validaNroConta(nrctacjg)) {
-                showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Anota', 'focaCampoErro(\'nrctacjg\',\'divDadosAvalistas\');bloqueiaFundo(divRotina);');
-                return false;
-            } else {
-                buscarDadosContaConjuge();
+            if (nrctacjg != 0) {
+                // Verifica se a conta é válida
+                if (!validaNroConta(nrctacjg)) {
+                    showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Anota', 'focaCampoErro(\'nrctacjg\',\'divDadosAvalistas\');bloqueiaFundo(divRotina);');
+                    return false;
+                } else {
+                    buscarDadosContaConjuge();
+                }
             }
-        }
         }
     });
 
     cCPF_1.unbind('keydown').bind('keydown', function (e) {
         if (e.keyCode == __BOTAO_ENTER || e.keyCode == __BOTAO_TAB) {
-        // Armazena o número da conta na variável global
-        nrcpfcgc = normalizaNumero(cCPF_1.val());
+            // Armazena o número da conta na variável global
+            nrcpfcgc = normalizaNumero(cCPF_1.val());
 
-        if (nrcpfcgc != 0) {
+            if (nrcpfcgc != 0) {
 
-            // Valida o CPF
-            if (!validaCpfCnpj(nrcpfcgc, 1)) {
-                showError('error', 'CPF inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#nrcpfcjg","#divDadosAvalistas").focus();bloqueiaFundo(divRotina);');
-                return false;
-            } else {
+                // Valida o CPF
+                if (!validaCpfCnpj(nrcpfcgc, 1)) {
+                    showError('error', 'CPF inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#nrcpfcjg","#divDadosAvalistas").focus();bloqueiaFundo(divRotina);');
+                    return false;
+                } else {
 
-                buscarContasPorCpfCnpj('aval-cje');
+                    buscarContasPorCpfCnpj('aval-cje');
+                }
             }
-        }
         }
     
     });
@@ -953,6 +953,11 @@ function controlaContinuarAvalista(){
     var aux_conta = normalizaNumero($('#nrctaava', '#' + nomeForm).val());
     var aux_cpf = normalizaNumero($('#nrcpfcgc', '#' + nomeForm).val());
     var indiceAvalista = contAvalistas - 1;
+
+    if($('#nrcpfcgc', '#' + nomeForm).val() == "" && $('#nmdavali', '#' + nomeForm).val() == "" && $('#nrctaava', '#' + nomeForm).val()){
+        $('#nrctaava', '#' + nomeForm).trigger('keydown',{keyCode: 13});
+        return false;
+    }
 
     if(aux_cddopcao != 'N'){
         hideMsgAguardo();

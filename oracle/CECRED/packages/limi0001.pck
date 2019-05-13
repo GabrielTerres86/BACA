@@ -332,6 +332,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   --  
   --             23/08/2018 - Alteraçao na pc_renovar_lim_desc_titulo: Registrar a renovação na tabela de histórico de alteraçao 
   --                          de contrato de limite (Andrew Albuquerque - GFT)
+  --              
+  --             13/05/2019 - Alterado pc_ultimas_alteracoes para nos casos de CANCELADOS buscar o operador baseado na cdopeexc
+  --                          no casos em que o campo nao estiver vazio PRJ 438 (Mateus Z - Mouts)
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_tela_cadlim_consultar(pr_inpessoa IN craprli.inpessoa%TYPE --> Codigo do tipo de pessoa
                                     ,pr_flgdepop IN INTEGER               --> Flag para verificar o departamento do operador
@@ -4288,7 +4291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
            and c.insitlim = 3            
            and c.nrctrlim <> 0
 		   and o.cdcooper = c.cdcooper
-		   and o.cdoperad = c.cdoperad
+		   and o.cdoperad = decode(c.cdopeexc, ' ', c.cdoperad, c.cdopeexc)
         union
         select t.cdcooper
              , t.nrctrlim

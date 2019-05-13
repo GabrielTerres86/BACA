@@ -70,11 +70,11 @@
 
 	<br />
 
-	<label for="nmoperad"><? echo utf8ToHtml('Operador(a):') ?></label>	
+	<label for="nmoperad"><? echo utf8ToHtml('Operador(a) Proposta:') ?></label>	
 	<input id="nmoperad" name="nmoperad" type="text" />
 	<br />
 
-	<label for="nmopelib"><? echo utf8ToHtml('Op. Libe:') ?></label>	
+	<label for="nmopelib"><? echo utf8ToHtml('Operador(a) Libera&ccedil;&atilde;o:') ?></label>	
 	<input id="nmopelib" name="nmopelib" type="text" />
 	<br />
 
