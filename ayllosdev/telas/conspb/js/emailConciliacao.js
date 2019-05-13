@@ -22,8 +22,8 @@ function atribuirEventosModal(){
      $('#dsendere').unbind('keydown').bind('keydown',function(e){
         if(e.keyCode == 13 || e.keyCode == 9){ //13 = enter | 9 = tab
             setFocus('#btEnviarEmail');
-        }
         return false;
+        }
     });
 
 

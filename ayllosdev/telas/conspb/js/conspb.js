@@ -55,12 +55,6 @@ var _modalEmailAberto = false;
         }
     });
 
-    $('#tdTela').unbind('keydown').bind('keydown',function(e){
-        console.log(e.keyCode);
-        if(e.keyCode == 13 || e.keyCode == 9){ //13 = enter | 9 = tab
-        }
-    });
-
  }
 
 /**
@@ -168,23 +162,23 @@ var _modalEmailAberto = false;
    $('#mensagem').unbind('keydown').bind('keydown',function(e){
         if(e.keyCode == 13 || e.keyCode == 9){ //13 = enter | 9 = tab
             setFocus('#periodoDe');
+            return false;
         }
-        return false;
     });
 
     $('#periodoDe').unbind('keydown').bind('keydown',function(e){
         if(e.keyCode == 13 || e.keyCode == 9){ //13 = enter | 9 = tab
             setFocus('#periodoAte');
+            return false;
         }
-        return false;
     });
     $('#periodoDe').setMask("DATE", "", "", "");
 
     $('#periodoAte').unbind('keydown').bind('keydown',function(e){
         if(e.keyCode == 13 || e.keyCode == 9){ //13 = enter | 9 = tab
             setFocus('#btConciliar');
+            return false;
         }
-        return false;
     });
     $('#periodoAte').setMask("DATE", "", "", "");
 
