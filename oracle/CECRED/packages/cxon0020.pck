@@ -1463,7 +1463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
 	/* Validar dep. a vista em transferencias sequencias */
     CURSOR cr_craptvl2_max(pr_cdcooper craptvl.cdcooper%TYPE,
-                           pr_dtmvtocd craptvl.dtmvtocd%TYPE,
+                           pr_dtmvtocd craptvl.dtmvtolt%TYPE,
                            pr_nrdconta craptvl.nrdconta%TYPE) IS
       SELECT MAX(hrtransa) hrtransa
         FROM craptvl
@@ -1907,9 +1907,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       END IF;
       CLOSE cr_craptvl_max;
 
-    ELSE
-	
-      /* Controle para envio de 2 TEDs da mesma conta ao mesmo tempo sem validar o saldo do dep. a vista */
+       /* Controle para envio de 2 TEDs da mesma conta ao mesmo tempo sem validar o saldo do dep. a vista */
       OPEN cr_craptvl2_max( pr_cdcooper => rw_crapcop.cdcooper,
                             pr_dtmvtocd => rw_crapdat.dtmvtocd,
                             pr_nrdconta => pr_nrdconta);
