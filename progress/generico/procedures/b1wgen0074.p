@@ -3342,7 +3342,7 @@ PROCEDURE Grava_Dados_Altera:
            for da modalidade salario, devemos atribuir o 
            pacote de tarifas parametrizado, exceto se já houver
            um pacote vigente. */        
-        IF (par_cdtipcta <> crabass.cdtipcta OR crabass.dtinsori = par_dtmvtolt) AND aux_cdmodali = 2 THEN
+        IF par_cdtipcta <> crabass.cdtipcta  AND aux_cdmodali = 2 THEN
           DO:
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
