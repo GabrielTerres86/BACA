@@ -1,4 +1,4 @@
-DECLARE
+DECLARE 
   
   -- Buscar registro da RDR
   CURSOR cr_craprdr IS

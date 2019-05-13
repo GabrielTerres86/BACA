@@ -1,4 +1,4 @@
-BEGIN
+BEGIN 
   
 	INSERT INTO tbcc_dominio_campo (nmdominio, cddominio, dscodigo) VALUES 
 	('IMPED_DESLIG_CTA_SAL', 1, 'Limite de Credito');
