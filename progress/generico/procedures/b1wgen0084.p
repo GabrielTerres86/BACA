@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 09/01/2019
+    Data    : Fevereiro/2011               ultima Atualizacao: 21/04/2019
 
     Dados referentes ao programa:
 
@@ -318,8 +318,8 @@
               27/06/2018 - P450 - Calculo e gravacao Risco Refin no emprestimo
                            (Guilherme/AMcom)
                            
-              16/08/2018 - Qualificar a Operacao no ato da efetivacao da proposta
-                           PJ 450 - Diego Simas (AMcom)
+              16/08/2018 - Qualificar a Operacao no ato da efetivacao da
+                           proposta PJ 450 - Diego Simas (AMcom)
                            
               31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts         
 
@@ -333,6 +333,9 @@
                            (Andre Clemer - Supero)
 
               27/12/2018 - PJ298.2 - Alterado gravacao do campo vlpreemp para o POS (Rafael Faria - Supero)
+
+              08/05/2019 - P450 - Ajuste na qualificacao da operacao quando
+                           se tratar de uma Cessao de Cartao (Guilherme/AMcom)
 
 ............................................................................. */
 
@@ -483,12 +486,12 @@ FUNCTION fnBuscaDataDoUltimoDiaUtilMes RETURN DATE
 
     DEF VAR aux_dtcalcul AS DATE   NO-UNDO.
 
-    /* Calcular o ultimo dia do mês */
+    /* Calcular o ultimo dia do mes */
     ASSIGN aux_dtcalcul =
           ((DATE(MONTH(par_dtrefmes),28,YEAR(par_dtrefmes)) + 4) -
             DAY(DATE(MONTH(par_dtrefmes),28,YEAR(par_dtrefmes)) + 4)).
 
-    /* Calcular o ultimo dia util do mês */
+    /* Calcular o ultimo dia util do mes */
     DO WHILE TRUE:
        IF   CAN-DO("1,7",STRING(WEEKDAY(aux_dtcalcul)))    OR
             CAN-FIND(crapfer WHERE crapfer.cdcooper = par_cdcooper    AND
@@ -563,7 +566,7 @@ END FUNCTION.
 
 END FUNCTION.*/
 
-/* Retorna o ultimo dia do mês */
+/* Retorna o ultimo dia do mes */
 FUNCTION fnBuscaDataDoUltimoDiaMes RETURN DATE (par_dtrefmes AS DATE):
 
     DEF VAR aux_dtcalcul AS DATE   NO-UNDO.
@@ -1018,7 +1021,7 @@ PROCEDURE calcula_data_parcela:
                 aux_dtcalcul = DATE(aux_mes,aux_dia,aux_ano) NO-ERROR.
                 IF  ERROR-STATUS:ERROR THEN
                     DO:
-                      /* Calcular o ultimo dia do mês */
+                      /* Calcular o ultimo dia do mes */
                       ASSIGN aux_dtcalcul = DATE((DATE(aux_mes, 28, aux_ano) + 4) -
                                                  DAY(DATE(aux_mes,28, aux_ano) + 4)).
                     END.
@@ -2131,11 +2134,19 @@ PROCEDURE busca_dados_efetivacao_proposta:
            tt-efetiv-epr.tpemprst = crawepr.tpemprst
            tt-efetiv-epr.vlprecar = crawepr.vlprecar.
 
-    /* Se tiver contrato em liquidacao, envia para efetivacao da proposta para refinanciamento */	
-    IF (crawepr.nrctrliq[1] > 0 OR crawepr.nrctrliq[2] > 0 OR crawepr.nrctrliq[3] > 0
-	   OR crawepr.nrctrliq[4] > 0 OR crawepr.nrctrliq[5] > 0 OR crawepr.nrctrliq[6] > 0 
-       OR crawepr.nrctrliq[7] > 0 OR crawepr.nrctrliq[8] > 0 OR crawepr.nrctrliq[9] > 0 
-	   OR crawepr.nrctrliq[10] > 0 OR crawepr.nrliquid > 0) THEN		
+    /* Se tiver contrato em liquidacao, envia para efetivacao da proposta 
+       para refinanciamento */        
+    IF (crawepr.nrctrliq[1] > 0 OR
+        crawepr.nrctrliq[2] > 0 OR
+        crawepr.nrctrliq[3] > 0 OR
+        crawepr.nrctrliq[4] > 0 OR
+        crawepr.nrctrliq[5] > 0 OR
+        crawepr.nrctrliq[6] > 0 OR
+        crawepr.nrctrliq[7] > 0 OR
+        crawepr.nrctrliq[8] > 0 OR
+        crawepr.nrctrliq[9] > 0 OR
+        crawepr.nrctrliq[10] > 0
+        OR crawepr.nrliquid > 0) THEN                
 		ASSIGN tt-efetiv-epr.flliquid = 1.
     ELSE
 	    ASSIGN tt-efetiv-epr.flliquid = 0.	   
@@ -2388,6 +2399,7 @@ PROCEDURE busca_dados_efetivacao_proposta:
 
 
         END.
+        
     RETURN "OK".
 
 END PROCEDURE. /* busca dados efetivacao proposta */
@@ -4235,6 +4247,24 @@ PROCEDURE grava_efetivacao_proposta:
                  END.
 
                  END.
+
+       /* Diego Simas (AMcom) - PJ 450                       */
+       /* Início                                             */
+       
+       /* Verifica se existe algum contrato limite/adp       */
+       /* e adiciona a lista de contratos para qualificar    */ 
+       IF aux_dsctrliq <> "" THEN DO:
+            IF crawepr.nrliquid <> 0 THEN
+               aux_dsctrliq = aux_dsctrliq + 
+                 ", " + TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).                           
+                 END.
+       ELSE DO:
+            IF crawepr.nrliquid <> 0 THEN
+               aux_dsctrliq = aux_dsctrliq + 
+                 TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).               
+            END.
+
+
        /***********************
           CALCULO DATA RISCO REFIN
           Se houve alguma liquidacao de contrato
@@ -4280,24 +4310,8 @@ PROCEDURE grava_efetivacao_proposta:
        ELSE 
            ASSIGN aux_dtrisref = ?.
        /***********************/
-          
-       /* Diego Simas (AMcom) - PJ 450                       */
-       /* Início                                             */
-       
-       /* Verifica se existe algum contrato limite/adp       */
-       /* e adiciona a lista de contratos para qualificar    */ 
-       IF aux_dsctrliq <> "" THEN
-          DO:
-            IF crawepr.nrliquid <> 0 THEN
-               aux_dsctrliq = aux_dsctrliq + 
-                 ", " + TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).                           
-                 END.
-       ELSE
-          DO:
-            IF crawepr.nrliquid <> 0 THEN
-               aux_dsctrliq = aux_dsctrliq + 
-                 TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).               
-            END.                      
+         
+                    
 
        /* Acionar rotina que gera a qualificacao da operacao */
        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -4344,6 +4358,12 @@ PROCEDURE grava_efetivacao_proposta:
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
           END.
 
+
+       /* CESSAO DE CARTAO - sempre sera 5-Cessao Cartao */
+       IF  crawepr.cdlcremp = 6901
+       AND crawepr.cdfinemp = 69 THEN
+         ASSIGN aux_idquapro = 5.
+           
        /* Requalifica a operacao na proposta                 */
        /* INICIO                                             */       
        FIND FIRST b-crawepr

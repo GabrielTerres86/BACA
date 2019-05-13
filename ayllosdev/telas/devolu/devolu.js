@@ -29,6 +29,9 @@
  *                23/01/2019 - Alteracao na rotina de alteracao de alinea e
  *                             melhoria na gravacao do log na verlog.
  *                             Chamado - PRB0040476 - Gabriel Marcos (Mouts).
+ *                08/05/2019 - Inclusão botão alterar alinea
+*                            - Validação do botão Alterar Alinea para mostrar apenas para o depto COMPE
+ *							   e permissão no PERMIS (Luiz Otávio Olinger Momm - AMCOM)
  */
 
 // Definição de algumas variáveis globais
@@ -60,6 +63,7 @@ var flbaiarq = false;
 var cdbandep;
 var cdagedep;
 var nrctadep;
+var btnAA = false;
 
 var camposDc, dadosDc;
 
@@ -354,7 +358,10 @@ function trocaBotao( botao , funcao ) {
 	
 	if(botao == 'Lancamento' ){
 		$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btMarcar" onClick="Marcar(); return false;" >Marcar</a>&nbsp;');
-		$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btDesmarcar" onClick="Desmarcar(); return false;" >Desmarcar</a>');
+		$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btDesmarcar" onClick="Desmarcar(); return false;" >Desmarcar</a>&nbsp;');
+		if (permissaoAlterarAlinea == 'OK') {
+			$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btAltAlinea" onClick="alterarAlinea(); return false;" >Alterar Alinea</a>&nbsp;');
+		}
 	}else {
 		$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btSalvar" onclick=' + funcao + ' return false;" >' + botao + '</a>');
 	}
@@ -364,6 +371,10 @@ function trocaBotao( botao , funcao ) {
 	$('#btFechaImagem','#divBotoes').hide(); 
     $('#btExcluir','#divBotoes').hide();
 	$('#btDesmarcar').trocaClass('botao', 'botaoDesativado');
+
+	if (permissaoAlterarAlinea == 'OK') {
+		$('#btAltAlinea').trocaClass('botao', 'botaoDesativado');
+	}
 	return false;
 }
 
@@ -386,28 +397,31 @@ function ExecutaDevolucao() {
 }
 
 function Marcar(){
-	
+	if($('#btMarcar').hasClass('botao')){	
 	if (iqtSelecao > 0 || alinea > 0 || alinea == 35   || cddsitua == 1) {return false;}
 	
 	marcar_cheque_devolu();
 	
     return false;
 }
+}
 
 function Desmarcar(){
 	
+	if($('#btDesmarcar').hasClass('botao')){		
 	if (iqtSelecao == 0 || iqtSelecao.typeof == 'undefined') {return false;}
 	
 	marcar_cheque_devolu();	
 	return false;
 }
+}
 
 // Botao Auxiliar - Devolver Cheque
 function proc_gera_dev() {
 	if (altalinea == true){
-		showConfirmacao('Confirma Opera&ccedil;&atilde;o?',"Confirma&ccedil;&atilde;o - Aimaro",'verifica_alinea("AL");','fechaRotina($("#divRotina"));',"sim.gif","nao.gif");
+		showConfirmacao('Confirma Opera&ccedil;&atilde;o?',"Confirma&ccedil;&atilde;o - Aimaro",'verifica_alinea("AL");','fechaRotina($("#divRotina")); btnAA = false;',"sim.gif","nao.gif");
 	}else{
-		showConfirmacao('Confirma Opera&ccedil;&atilde;o?',"Confirma&ccedil;&atilde;o - Aimaro",'verifica_alinea();','fechaRotina($("#divRotina"));',"sim.gif","nao.gif");
+		showConfirmacao('Confirma Opera&ccedil;&atilde;o?',"Confirma&ccedil;&atilde;o - Aimaro",'verifica_alinea();','fechaRotina($("#divRotina")); btnAA = false;',"sim.gif","nao.gif");
 	}
     return false;
 }
@@ -697,7 +711,22 @@ function formataTabelaLancto() {
 
 	// Se der dois clicks na tabela, altera alinea
 	$('table > tbody > tr', divRegistro).dblclick( function() {
-		
+		validaAlterarAlinea();
+	});
+	
+	
+	$('table > tbody > tr:eq(0)', divRegistro).click();
+	return false;
+}
+
+function alterarAlinea(){
+	if($('#btAltAlinea').hasClass('botao')){
+		btnAA = true;
+		validaAlterarAlinea();
+	}
+}
+
+function validaAlterarAlinea(){
 		// Se tiver alinea e não for devolvido e não for alineas de contra-ordem(20,21,28,70) e altera alinea para devoluções 35 somente quando haver craplcm
 		if (alinea != 0  && cddsitua != 1 &&
 		    alinea != 20 && alinea != 21 && 
@@ -710,11 +739,6 @@ function formataTabelaLancto() {
 				mostraAlinea('AL');
 			}
 		}
-	});
-	
-	
-	$('table > tbody > tr:eq(0)', divRegistro).click();
-	return false;
 }
 
 function selecionaTabela(tr) {
@@ -745,6 +769,7 @@ function selecionaTabela(tr) {
     flag     = $('#flag', tr).val();
 	dstabela = $('#dstabela', tr).val();
 	altalinea = false;
+	
     return false;
 }
 
@@ -1031,6 +1056,7 @@ function mostraAlinea(opcao) {
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
+			btnAA = false;
 		},
 		success: function(response) {
 			$('#divRotina').html(response);
@@ -1059,6 +1085,7 @@ function buscaAlinea(opcao) {
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
+			btnAA = false;
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
@@ -1079,6 +1106,7 @@ function buscaAlinea(opcao) {
 				} catch(error) {
 					hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
+					btnAA = false;
 				}
 			} else {
 				try {
@@ -1086,6 +1114,7 @@ function buscaAlinea(opcao) {
 				} catch(error) {
 					hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
+					btnAA = false;
 				}
 			}
 		}
@@ -1104,11 +1133,26 @@ function verifica_alinea(opcao) {
 	}else{
 		cdalinea = $('#cdalinea','#frmAlinea').val();
 		showMsgAguardo('Aguarde, validando alinea...');
+		if (btnAA && iqtSelecao == 1){
+			 $('input:checkbox:checked', '#tabDevoluConta').each(function() {
+				cdcooper = ($('#cdcooper', $(this).closest('tr')).val());
+				cdbanchq = ($('#cdbanchq', $(this).closest('tr')).val());
+				cdagechq = ($('#cdagechq', $(this).closest('tr')).val());
+				nrctachq = ($('#nrctachq', $(this).closest('tr')).val());
+				nrcheque = ($('#nrcheque', $(this).closest('tr')).val());	
+				vllanmto = ($('#vllanmto', $(this).closest('tr')).val());	
+				cdbandep = ($('#cdbandep', $(this).closest('tr')).val());	
+				cdagedep = ($('#cdagedep', $(this).closest('tr')).val());
+				nrctadep = ($('#nrctadep', $(this).closest('tr')).val());				
+			});  
+			btnAA = false;
+		}
 	}
 
 	if(iqtSelecao > 0 && altalinea == false) {
 		geracao_devolu();
 	}else {
+		
 		$.ajax({
 			type    : 'POST',
 			dataType: 'html',
@@ -1126,9 +1170,11 @@ function verifica_alinea(opcao) {
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
 				showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
+				btnAA = false;
 			},
 			success: function(response) {
 				try {
+					btnAA = false;
 					if ( response.indexOf('showError("error"') == -1) {
 						try {
 							$('input,select','#frmAlinea').removeClass('campoErro');
@@ -1141,6 +1187,7 @@ function verifica_alinea(opcao) {
 						} catch(error) {
 							hideMsgAguardo();
 							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
+							btnAA = false;
 						}
 					} else {
 						try {
@@ -1149,12 +1196,14 @@ function verifica_alinea(opcao) {
 						} catch(error) {
 							hideMsgAguardo();
 							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
+							btnAA = false;
 						}
 					}
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
 					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+					btnAA = false;
 				}
 			}
 		});
@@ -1165,7 +1214,7 @@ function verifica_alinea(opcao) {
 function alteraAlinea(){
 	
 	var cdalinea;
-	
+	btnAA = false;
 	cdalinea = $('#cdalinea','#frmAlinea').val();
 	showMsgAguardo('Aguarde, alterando alinea...');
 	
@@ -1909,7 +1958,7 @@ function validaSelecao(linhaSelec,inprejuz){
     iqtSelecao = 0;
 	
     if (inprejuz == 1) {
-		showError("inform","Conta em Prejuizo","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		showError("inform","Conta em Prejuizo","Alerta - Aimaro","unblockBackground(); removeOpacidade('divTela');");
 	}
 
     $('input:checkbox:checked', '#tabDevoluConta').each(function() {
@@ -1930,6 +1979,14 @@ function validaSelecao(linhaSelec,inprejuz){
         $('#complemento', '#linha').html(iqtSelecao + ' cheque(s) selecionado(s) - M&aacuteximo 20.');
     } else {
         linhaSelec.prop('checked', false);
+    }
+	
+	if (permissaoAlterarAlinea == 'OK') {
+		if (iqtSelecao == 1){
+			$('#btAltAlinea').trocaClass('botaoDesativado', 'botao');				
+		}else{
+			$('#btAltAlinea').trocaClass('botao', 'botaoDesativado');
+		}
     }
 
     return false;
