@@ -1147,7 +1147,6 @@ function controlaBotoes() {
             $('#btVoltarCns').css('display', 'inline');
 			
             //PRJ339 - Se possui par?metro para efetuar saque e desligamento pelo AIMARO
-            debugger;
 			if (inSaqDes == 1 || trim(crm_nrdconta) != '') {
               
                 //Verifica se veio pelo AIMARO ou CRM atrav?s do n?mero da contaCRM
@@ -2573,8 +2572,8 @@ function verificaRelatorio() {
                 // Se esta incluindo, efetuar consultas
 						var metodo = ($('#opcao', '#frmCabMatric').val() == 'CI') ? 'efetuar_consultas();' : 'controlaVoltar()';
 				// Inicio - Ficha-Proposta - Cássia de Oliveira (GFT)
-				$inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
-				if($inpessoa == 2){
+				var inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
+				if(cddopcao == 'CR' || inpessoa == 2){
                 showConfirmacao("Deseja visualizar a impress&atilde;o?", "Confirma&ccedil;&atilde;o - Aimaro", "imprime();", metodo, "sim.gif", "nao.gif");
 				}else{
 					eval(metodo);
