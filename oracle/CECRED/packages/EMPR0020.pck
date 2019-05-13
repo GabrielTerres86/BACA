@@ -79,6 +79,19 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
                                           pr_dsxmlali   OUT XmlType,               -- XML de saida do pagamento
                                           pr_dscritic   OUT VARCHAR2); --> Descricao Erro
 
+   PROCEDURE pc_envia_email_erro_pagam_fis(pr_cdcooper    IN crapepr.cdcooper%TYPE, --Cooperativa
+                                              pr_nrdconta    IN crapepr.nrdconta%TYPE, --Conta
+                                              pr_nrctremp    IN crapepr.nrctremp%TYPE, --Contrato
+                                              pr_nrparepr    IN crappep.nrparepr%TYPE default null, --Parcela (Opcional)
+                                              pr_idpagamento IN NUMBER, --ID Pagamento (Opcional)
+                                              pr_tipoemail   IN VARCHAR2, --Tipo de Email (Vide tipos acima)
+                                              pr_msg         IN VARCHAR2, --Mensagem_erro_origem
+                                              pr_cdcritic    OUT PLS_INTEGER,
+                                              pr_dscritic 	 OUT VARCHAR2,
+                                              pr_des_erro    OUT VARCHAR2,
+                                              pr_retxml 		 OUT xmltype
+                                               );
+
 END EMPR0020;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
@@ -1148,6 +1161,101 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
                          sqlerrm;
       END;
       END pc_gera_xml_pagamento_consig;
+      
+      PROCEDURE pc_envia_email_erro_pagam_fis(pr_cdcooper    IN crapepr.cdcooper%TYPE, --Cooperativa
+                                              pr_nrdconta    IN crapepr.nrdconta%TYPE, --Conta
+                                              pr_nrctremp    IN crapepr.nrctremp%TYPE, --Contrato
+                                              pr_nrparepr    IN crappep.nrparepr%TYPE default null, --Parcela (Opcional)
+                                              pr_idpagamento IN NUMBER, --ID Pagamento (Opcional)
+                                              pr_tipoemail   IN VARCHAR2, --Tipo de Email (Vide tipos acima)
+                                              pr_msg         IN VARCHAR2, --Mensagem_erro_origem
+                                              pr_cdcritic    OUT PLS_INTEGER,
+                                              pr_dscritic 	 OUT VARCHAR2,
+                                              pr_des_erro    OUT VARCHAR2,
+                                              pr_retxml 		 OUT xmltype
+                                              )IS  
+                                                                                                         
+
+      BEGIN
+        DECLARE       
+          vr_email      VARCHAR2(4000) := null ;
+          vr_desemail   VARCHAR(4000) := '';
+          
+          -- Variaveis de Erro
+          vr_cdcritic   crapcri.cdcritic%TYPE;
+          vr_dscritic   VARCHAR2(4000);
+          vr_des_erro   VARCHAR2(10);
+          
+          -- Variaveis Excecao
+          vr_exc_erro   EXCEPTION;  
+          
+
+        BEGIN
+          SELECT dsvlrprm INTO vr_email FROM crapprm WHERE nmsistem = 'CRED' AND cdcooper = 0 AND cdacesso = 'EMAIL_PAG_ERR_FIS';
+          vr_desemail := 'Consignado<br>
+                          Ocorreu um erro no procedimento <b><i>'||pr_tipoemail||'</i></b>, verifique com urgência.<br><br> 
+                          
+                          Segue abaixo dados do processo executado:<br>
+                          <b>Cooperativa:</b> '||pr_cdcooper||' <br>
+                          <b>Conta:</b> '||pr_nrdconta||' <br>
+                          <b>Contrato:</b> '||pr_nrctremp||' <br>';
+          if pr_nrparepr is not null then
+              vr_desemail :=  vr_desemail || '<b>Parcela:</b> '||pr_nrparepr||' <br>';
+          end if;
+          vr_desemail :=  vr_desemail || '<b>Descrição do erro ocorrido:</b> '||pr_msg||' <br>';
+          
+          IF ((vr_email is not null ) and (pr_msg is not null)) THEN
+            -- Envia email 
+             gene0003.pc_solicita_email(pr_cdcooper         => 3
+                                        ,pr_cdprogra        => 'EMPR0020'
+                                        ,pr_des_destino     => vr_email
+                                        ,pr_des_assunto     => 'Consignado - Ocorreu um erro no procedimento '|| pr_tipoemail ||', verifique com urgência. '
+                                        ,pr_des_corpo       => vr_desemail
+                                        ,pr_des_anexo       => NULL --> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
+                                        ,pr_flg_remove_anex => 'N'  --> Remover os anexos passados
+                                        ,pr_flg_remete_coop => 'N'  --> Se o envio sera do e-mail da Cooperativa
+                                        ,pr_flg_enviar      => 'S'  --> Enviar o e-mail na hora
+                                        ,pr_des_erro        => vr_dscritic);
+
+             -- Se houver erros
+             IF vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_erro;
+             END IF;  
+          END IF;
+          
+          pr_cdcritic := 0;
+          pr_dscritic := null; 
+          pr_des_erro := 'OK';   
+          -- Existe para satisfazer exigência da interface. 
+          pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><dsmensag>OK</dsmensag></Root>');
+          commit; 
+        
+        
+         EXCEPTION
+      WHEN vr_exc_erro THEN
+         /*  se foi retornado apenas código */
+         IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+             /* buscar a descriçao */
+             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+         END IF;
+         /* variavel de erro recebe erro ocorrido */
+         pr_des_erro := 'NOK';
+         pr_cdcritic := nvl(vr_cdcritic,0);
+         pr_dscritic := vr_dscritic;
+         -- Carregar XML padrao para variavel de retorno
+          pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+           pr_des_erro := 'NOK';
+          /* montar descriçao de erro nao tratado */
+           pr_dscritic := 'erro não tratado na empr0020.pc_envia_email_erro_pagam_fis ' ||SQLERRM;
+           -- Carregar XML padrao para variavel de retorno
+           pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      END;
+                                               
+     END pc_envia_email_erro_pagam_fis;
     
 END EMPR0020;
 /
