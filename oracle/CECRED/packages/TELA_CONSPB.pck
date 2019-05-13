@@ -19,10 +19,12 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONSPB AS
                               ,pr_dtmensagem_de   IN VARCHAR2              --> Data inicial do período
                               ,pr_dtmensagem_ate  IN VARCHAR2              --> Data final do período
                               ,pr_dsendere        IN VARCHAR2              --> Endereço de e-mail para envio do CSV
-                              ,pr_retxml          IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
-                              ,pr_cdcritic       OUT PLS_INTEGER           --> Código da crítica
-                              ,pr_dscritic       OUT VARCHAR2              --> Descrição da crítica
-                              ,pr_des_erro       OUT VARCHAR2  );          --> Saida OK/NOK
+                              ,pr_xmllog          IN VARCHAR2                               --> XML com informações de LOG
+                              ,pr_cdcritic       OUT PLS_INTEGER                            --> Código da crítica
+                              ,pr_dscritic       OUT VARCHAR2                               --> Descrição da crítica
+                              ,pr_retxml      IN OUT NOCOPY xmltype                         --> Arquivo de retorno do XML
+                              ,pr_nmdcampo       OUT VARCHAR2                               --> Nome do Campo
+                              ,pr_des_erro       OUT VARCHAR2);                           --> Saida OK/NOK
 
  
 END TELA_CONSPB;
@@ -65,15 +67,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSPB AS
   
  
 
-  
   PROCEDURE pc_executar_conciliacao_mnl(pr_tipo_msg   IN VARCHAR2       --> Tipo de mensagem (E - Enviadas, R - Recebidas, T - Todas)
                               ,pr_dtmensagem_de   IN VARCHAR2                  --> Data inicial do período
                               ,pr_dtmensagem_ate  IN VARCHAR2                  --> Data final do período
                               ,pr_dsendere        IN VARCHAR2              --> Endereço de e-mail para envio do CSV
-                              ,pr_retxml          IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
-                              ,pr_cdcritic       OUT PLS_INTEGER           --> Código da crítica
-                              ,pr_dscritic       OUT VARCHAR2              --> Descrição da crítica
-                              ,pr_des_erro       OUT VARCHAR2) IS          --> Saida OK/NOK
+                              ,pr_xmllog          IN VARCHAR2                               --> XML com informações de LOG
+                              ,pr_cdcritic       OUT PLS_INTEGER                            --> Código da crítica
+                              ,pr_dscritic       OUT VARCHAR2                               --> Descrição da crítica
+                              ,pr_retxml      IN OUT NOCOPY xmltype                         --> Arquivo de retorno do XML
+                              ,pr_nmdcampo       OUT VARCHAR2                               --> Nome do Campo
+                              ,pr_des_erro       OUT VARCHAR2) IS                           --> Saida OK/NOK
 
     /* .............................................................................
     Programa: pc_executar_conciliacao
@@ -109,6 +112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSPB AS
     vr_dtmensagem_ate   DATE;
 
   BEGIN -- Inicio pc_buscar_mensagens
+        
     gene0001.pc_informa_acesso(pr_module => 'CONSPB'
                               ,pr_action => NULL);
 
@@ -128,6 +132,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSPB AS
       -- Levanta exceção
       vr_cdcooper := 3;
     END IF;
+    
     -- Validações dos parâmetros
     IF pr_dsendere IS NULL THEN
       vr_dscritic:= 'Endereço de e-mail obrigatório!';   
@@ -184,21 +189,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSPB AS
     END IF;  
 
     -- Validar se existem registros no JDSBP para o período estabelecido
-    --*****************ATENCAO - TABELAS JD NAO CRIADAS*****************
     IF pr_tipo_msg IN ('E','T') THEN
       vr_qtd_reg_env :=0;
       SELECT count(*) INTO vr_qtd_reg_env
-      FROM tbspb_msg_enviada tma
-      WHERE TRUNC(tma.dhmensagem) BETWEEN vr_dtmensagem_de
+      FROM tbspb_conciliacao_enviada tma
+      WHERE TRUNC(tma.dtmovto) BETWEEN vr_dtmensagem_de
                                AND vr_dtmensagem_ate;
     END IF;
     --
     IF pr_tipo_msg in ('R','T') THEN
-    vr_qtd_reg_rec :=0;
-    SELECT count(*) INTO vr_qtd_reg_rec
-    FROM tbspb_msg_recebida tma
-    WHERE TRUNC(tma.dhmensagem) BETWEEN vr_dtmensagem_de
-                             AND vr_dtmensagem_ate;   
+      vr_qtd_reg_rec :=0;
+      SELECT count(*) INTO vr_qtd_reg_rec
+      FROM tbspb_conciliacao_recebida tma
+      WHERE TRUNC(tma.dtmovto) BETWEEN vr_dtmensagem_de
+                               AND vr_dtmensagem_ate;   
     END IF;                                                  
     --
     IF vr_qtd_reg_env = 0 and vr_qtd_reg_rec = 0 and pr_tipo_msg = 'T' THEN
@@ -211,6 +215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSPB AS
        vr_dscritic:= 'Não há dados de mensagens recebidas na JD para este período solicitado!';
        RAISE vr_exc_erro;  
     END IF;    
+    
     -- Chamar o JOB
     -- Montar o bloco PLSQL que será executado
     -- Ou seja, executaremos a geração do arquivo CSV
@@ -256,6 +261,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSPB AS
       END IF;
     END;
 
+    -- Carregar XML padrão para variável de retorno não utilizada.
+    -- Existe para satisfazer exigência da interface.
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><status>OK</status></Root>');
+
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Retorno não OK
@@ -281,7 +291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSPB AS
 
       -- Erro
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na TELA_LOGSPB.pc_buscar_mensagens_opcao_c_m --> ' ||SQLERRM;
+      pr_dscritic := 'Erro na TELA_CONSPB.pc_buscar_mensagens_opcao_c_m --> ' ||SQLERRM;
 
       -- Existe para satisfazer exigência da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
