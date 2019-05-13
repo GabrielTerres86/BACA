@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 29/03/2019
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 30/04/2019
   --
   -- Dados referentes ao programa:
   --
@@ -129,6 +129,14 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             29/03/2019 - Ajustar cursor cr_nrctaitg para buscar somente cartoes em uso
   --                          na procedure pc_crps671 (Lucas Ranghetti PRB0040697)
+  --
+  --              30/04/2019 - Utilizar o vr_nrcctitg no lugar do rw_crawcrd.nrcctitg 
+  --                           no insert do crawcrd da segunda via dos cartões (Lucas Ranghetti PRB0041609)
+  --                         - Incluir insitdec 8 na leitura do cursor cr_crawcrd
+  --                           (Lucas Ranghettu PRB0041606)
+  --                         - No Cursor cr_nrctaitg vamos utilizar o and w.nrcctitg > 0 ao 
+  --                           invés de usar o insitcrd = 4, assim garantimos que só vamos
+  --                           pegar a conta cartã correta (Lucas Ranghetti PRB0041677)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6433,7 +6441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
      Sistema : Cartoes de Credito - Cooperativa de Credito
      Sigla   : CRRD
      Autor   : Lucas Lunelli
-     Data    : Maio/14.                    Ultima atualizacao: 29/03/2019
+     Data    : Maio/14.                    Ultima atualizacao: 30/04/2019
 
      Dados referentes ao programa:
 
@@ -6550,6 +6558,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              
                 29/03/2019 - Ajustar cursor cr_nrctaitg para buscar somente cartoes em uso
                              (Lucas Ranghetti PRB0040697)
+                             
+                30/04/2019 - Incluir insitdec 8 na leitura do cursor cr_crawcrd
+                             (Lucas Ranghettu PRB0041606)
+                           - No Cursor cr_nrctaitg vamos utilizar o and w.nrcctitg > 0 ao 
+                             invés de usar o insitcrd = 4, assim garantimos que só vamos
+                             pegar a conta cartã correta (Lucas Ranghetti PRB0041677)
+                        
      ..............................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -6710,7 +6725,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              ass.dtdemiss IS NULL        AND
              age.cdcooper = ass.cdcooper AND
              age.cdagenci = ass.cdagenci AND
-			 pcr.insitdec IN (2,3) /* Decisao esteira = 2 - Aprovado Auto, 3 - Aprovado Manuel */
+             pcr.insitdec IN (2,3,8) /* Decisao esteira = 2 - Aprovado Auto, 3 - Aprovado Manual, 8 - Efetivada */
              -- Numero da conta utilizado para nao gerar linha de solicitacao de cartao adiciona quando eh 
              -- UPGRADE/DOWNGRADE, DEVE ficar como primeiro campo no ORDER BY (Douglas - Chamado 441407)             
              ORDER BY pcr.nrdconta   
@@ -6983,7 +6998,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
          AND w.cdadmcrd = pr_cdadmcrd
          AND w.nrdconta = pr_nrdconta
          AND w.cdcooper = pr_cdcooper
-         and w.insitcrd = 4;
+         and w.nrcctitg > 0;
       rw_nrctaitg    cr_nrctaitg%ROWTYPE;
 
       -- Buscar as informações do primeiro cartão empresarial da conta
@@ -8601,7 +8616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 08/03/2019
+       Data    : Abril/2014.                     Ultima atualizacao: 30/04/2019
 
        Dados referentes ao programa:
 
@@ -8778,6 +8793,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    08/03/2019 - Verificar se processo batch ainda está rodando na central
                                 pois vamos rodar o programa mesmo com a central rodando
                                 (Lucas Ranghetti PRB0040618)
+                                
+                   30/04/2019 - Utilizar o vr_nrcctitg no lugar do rw_crawcrd.nrcctitg 
+                                no insert do crawcrd da segunda via dos cartões (Lucas Ranghetti PRB0041609)
     ............................................................................ */
 
     DECLARE
@@ -10270,7 +10288,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_dscritic := NULL;
         END IF;
         
-        
         IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',pr_cdcooper,'DB_NAME_PRODUC') THEN --> Produção
     
           -- Atualizar os registros de majoração
@@ -10283,7 +10300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              AND maj.nrcontacartao     = pr_nrctacrd
              AND maj.cdmajorado        = 4; -- Pendente
         END IF;
-
+        
       EXCEPTION
         WHEN OTHERS THEN
           pr_des_erro := 'Erro ao atualizar majoracao: '||SQLERRM;
@@ -12449,7 +12466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         VALUES
                            (rw_crawcrd.nrdconta,
                             vr_nrcrcard, -- número cartão vindo do arquivo
-                            rw_crawcrd.nrcctitg,
+                            vr_nrdctitg, -- Conta cartão vindo do arquivo
                             rw_crawcrd.nrcpftit,
                             rw_crawcrd.vllimcrd,
                             rw_crawcrd.flgctitg,
