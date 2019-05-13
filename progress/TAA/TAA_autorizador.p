@@ -1119,10 +1119,10 @@ DO:
         /* Projeto ECO */ 
 		ELSE
         IF  xField:NAME = "NRREMETE"   THEN
-            aux_nrremete = xText:NODE-VALUE.
+            aux_nrremete = INTE(xText:NODE-VALUE).
         ELSE
 		IF  xField:NAME = "CDAGEREM"   THEN
-            aux_cdagerem = xText:NODE-VALUE.
+            aux_cdagerem = INTE(xText:NODE-VALUE).
 
     END.
 
@@ -11402,7 +11402,7 @@ PROCEDURE verifica_modalidade_conta:
            
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
-    RUN STORED-PROCEDURE pc_busca_modalidade aux_handproc = PROC-HANDLE NO-ERROR
+    RUN STORED-PROCEDURE pc_busca_modalidade_conta aux_handproc = PROC-HANDLE NO-ERROR
                   (INPUT  aux_cdcooper 
                   ,INPUT  aux_nrdconta 
                   ,OUTPUT 0
@@ -11410,15 +11410,15 @@ PROCEDURE verifica_modalidade_conta:
                   ,OUTPUT "").
                          
 
-    CLOSE STORED-PROC pc_busca_modalidade aux_statproc = PROC-STATUS 
+    CLOSE STORED-PROC pc_busca_modalidade_conta aux_statproc = PROC-STATUS 
          WHERE PROC-HANDLE = aux_handproc.
     
     ASSIGN aux_dscritic = ""
            aux_cdmodali = 0
-           aux_dscritic = pc_busca_modalidade.pr_dscritic 
-                          WHEN pc_busca_modalidade.pr_dscritic <> ?
-           aux_cdmodali = pc_busca_modalidade.pr_cdmodalidade_tipo 
-                          WHEN pc_busca_modalidade.pr_cdmodalidade_tipo <> ?.
+           aux_dscritic = pc_busca_modalidade_conta.pr_dscritic 
+                          WHEN pc_busca_modalidade_conta.pr_dscritic <> ?
+           aux_cdmodali = pc_busca_modalidade_conta.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade_conta.pr_cdmodalidade_tipo <> ?.
     
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
     
