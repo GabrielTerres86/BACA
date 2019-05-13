@@ -6256,6 +6256,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_obj_proposta.put('limiteCooperadoValor'   ,este0001.fn_decimal_ibra(nvl(vr_vllimdis,0)) );
     vr_obj_proposta.put('protocoloPolitica',vr_dsprotoc);
     
+	-- Tratativa exclusiva para ambiente de homologacao, não deve existir o parametro "URI_WEBSRV_ESTEIRA_HOMOL"
+	-- em ambiente produtivo
+	IF (trim(gene0001.fn_param_sistema('CRED',pr_cdcooper,'URI_WEBSRV_ESTEIRA_HOMOL')) IS NOT NULL) THEN
+	  vr_obj_proposta.put('ambienteTemp','true');
+	  vr_obj_proposta.put('urlRetornoTemp', gene0001.fn_param_sistema('CRED',pr_cdcooper,'URI_WEBSRV_ESTEIRA_HOMOL') );
+	END IF;
+
+    
     --> Busca nome da categoria da proposta
     OPEN cr_crapadc (pr_cdcooper => pr_cdcooper
                     ,pr_cdadmcrd => rw_crawcrd.cdadmcrd);
