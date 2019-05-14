@@ -4554,6 +4554,41 @@ PROCEDURE Inclui PRIVATE :
                    IF  aux_dscritic <> "" THEN
                        LEAVE ContadorAss.
                    
+                   
+                   /* TARIFAÇAO CONTA SALARIO */
+                   IF par_flgctsal = TRUE THEN        
+                    DO:
+                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                      RUN STORED-PROCEDURE pc_incluir_pacote_salario
+                      aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                                           INPUT par_nrdconta, /* Nr da conta */
+                                                           INPUT par_cdoperad, /* Operador */
+                                                          OUTPUT "",           /* Flag Erro */
+                                                          OUTPUT "").          /* Descriçao da crítica */
+
+                      CLOSE STORED-PROC pc_incluir_pacote_salario
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                      ASSIGN aux_des_erro = ""
+                             aux_dscritic = ""
+                             aux_des_erro = pc_incluir_pacote_salario.pr_des_erro 
+                                            WHEN pc_incluir_pacote_salario.pr_des_erro <> ?
+                             aux_dscritic = pc_incluir_pacote_salario.pr_dscritic
+                                            WHEN pc_incluir_pacote_salario.pr_dscritic <> ?.
+
+                      IF aux_des_erro = "NOK" AND aux_dscritic <> "" THEN
+                          DO:
+                              ASSIGN par_dscritic = aux_dscritic.
+                   LEAVE ContadorAss.
+                          END.
+                    END.
+                   /* TARIFAÇAO CONTA SALARIO */
+                   
+                   
+                   
                    LEAVE ContadorAss.
                 END.
             ELSE
