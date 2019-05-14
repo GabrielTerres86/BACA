@@ -88,7 +88,41 @@ function envServico($url, $method, $arrayHeader, $data) {
 
 }
 
-function gravaLog($dstransal,$dscriticl,$nrdconta,$glbvars,$json,$rs){	
+function gravaTbeprConsignado($nrdconta,$nrctremp,$pejuro_anual,$pecet_anual,$glbvars){
+	$xml  = '';
+	$xml .= '<Root>';
+	$xml .= "	<Dados>";
+	$xml .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
+	$xml .= "		<nrctremp>" . $nrctremp . "</nrctremp>";
+	$xml .= "		<pejuro_anual>" . str_replace(",", ".",str_replace(".","",$pejuro_anual)) . "</pejuro_anual>";
+	$xml .= "		<pecet_anual>" . str_replace(",", ".",str_replace(".","",$pecet_anual)) . "</pecet_anual>";
+	$xml .= '	</Dados>';
+	$xml .= '</Root>';
+	$xmlResult = mensageria(
+		$xml,
+		"TELA_ATENDA_SIMULACAO",
+		"LOG_ERRO_SOA_FIS_CALCULA",
+		$glbvars["cdcooper"],
+		$glbvars["cdagenci"],
+		$glbvars["nrdcaixa"],
+		$glbvars["idorigem"],
+		$glbvars["cdoperad"],
+		"</Root>");		
+		
+	$xmlObj = getObjectXML($xmlResult);
+
+	if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
+		exibirErro(
+			"error",
+			$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
+			"Alerta - Ayllos",
+			"",
+			false);
+		exit();
+	}
+}
+
+function gravaLog($tela,$acao,$dstransal,$dscriticl,$nrdconta,$glbvars,$json,$rs){	
 	$xml  = '';
 	$xml .= '<Root>';
 	$xml .= '	<dto>';
@@ -101,8 +135,8 @@ function gravaLog($dstransal,$dscriticl,$nrdconta,$glbvars,$json,$rs){
 	$xml .= '</Root>';
 	$xmlResult = mensageria(
 		$xml,
-		"TELA_ATENDA_SIMULACAO",
-		"LOG_ERRO_SOA_FIS_CALCULA",
+		$tela,
+		$acao,
 		$glbvars["cdcooper"],
 		$glbvars["cdagenci"],
 		$glbvars["nrdcaixa"],

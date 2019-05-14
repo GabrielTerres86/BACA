@@ -84,7 +84,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 			$xmlResult = mensageria(
 				$xml,
 				"TELA_ATENDA_SIMULACAO",
-				"SIMULA_BUSCA_DADOS_CALC_FIS",
+				"SIM_BUSCA_DADOS_CALC_FIS",
 				$glbvars["cdcooper"],
 				$glbvars["cdagenci"],
 				$glbvars["nrdcaixa"],
@@ -95,7 +95,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 			$xmlObj = getObjectXML($xmlResult);
 
 			if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
-				gravaLog("Erro gerando o xml com dados.",$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,$nrdconta,$glbvars,'','');
+				gravaLog("TELA_ATENDA_SIMULACAO","SIM_LOG_ERRO_SOA_FIS_CALCULA","Erro gerando o xml com dados.",$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,$nrdconta,$glbvars,'','');
 			}else{	
 				$xml = simplexml_load_string($xmlResult);
 				$json = json_encode($xml);
@@ -104,9 +104,9 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 				//echo "cttc('".$rs."');";
 				
 				if (isset($rs->msg)){
-					gravaLog("Retorno erro tratado pela fis.",$rs->msg,$nrdconta,$glbvars,$json,$rs);				
+					gravaLog("TELA_ATENDA_SIMULACAO","SIM_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro tratado pela fis.",$rs->msg,$nrdconta,$glbvars,$json,$rs);				
 				}else if (isset($rs->errorMessage)){
-					gravaLog("Retorno erro nao tratado pela fis.",$rs->errorMessage,$nrdconta,$glbvars,$json,$rs);					
+					gravaLog("TELA_ATENDA_SIMULACAO","SIM_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro nao tratado pela fis.",$rs->errorMessage,$nrdconta,$glbvars,$json,$rs);					
 				}			
 				else if (isset($rs->parcela->valor) && isset($rs->sistemaTransacao->dataHoraRetorno)){
 					if ($rs->parcela->valor > 0 && $rs->sistemaTransacao->dataHoraRetorno != ""){
@@ -116,7 +116,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 						$percetop = str_replace(".", ",",$rs->credito->CETPercentAoAno);	
 						$jurosAnual = str_replace(".", ",",$rs->credito->taxaJurosRemuneratoriosAnual);
 					}else{
-						gravaLog("Retorno erro nao tratado pela fis.","valores de retorno em branco",$nrdconta,$glbvars,$json,$rs);
+						gravaLog("TELA_ATENDA_SIMULACAO","SIM_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro nao tratado pela fis.","valores de retorno em branco",$nrdconta,$glbvars,$json,$rs);
 					}
 				}
 				
