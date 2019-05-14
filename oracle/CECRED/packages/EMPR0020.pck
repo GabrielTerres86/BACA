@@ -20,16 +20,16 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
                                         ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
                                         ,pr_des_erro   OUT VARCHAR2);            --> Erros do processo
                                                                      
-  PROCEDURE pc_efetua_debito_conveniada(pr_cdcooper 		IN crapcop.cdcooper%TYPE --> Código da cooperativa
-                                       ,pr_cdempres 		IN crapemp.cdempres%TYPE --> Código da Empresa que receberá o débito
-                                       ,pr_cdoperad 		IN VARCHAR2              --> Operador da Consulta – Valor 'xxxxx' para Internet
-                                       ,pr_aplOrigem		IN VARCHAR2              --> Aplicação de Origem da chamada do Serviço
-                                       ,pr_nrdcaixa		  IN INTEGER               --> Código de caixa do canal de atendimento – Valor 'XXXX' para Internet
-                                       ,pr_dtmvtolt 		IN crapdat.dtmvtolt%TYPE --> Data do movimento atual.
-                                       ,pr_vrdebito 		IN NUMBER                --> Valor a ser debitado   
-                                       ,pr_idpagto		  IN NUMBER                --> Identificador de pagamento enviado pelo consumidor
-                                       ,pr_dscritic 	 OUT VARCHAR2              --> Descrição da crítica          
-                                       ,pr_retorno 	   OUT xmltype);   
+  PROCEDURE pc_efetua_debito_conveniada(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                       ,pr_cdempres     IN crapemp.cdempres%TYPE --> Código da Empresa que receberá o débito
+                                       ,pr_cdoperad     IN VARCHAR2              --> Operador da Consulta – Valor 'xxxxx' para Internet
+                                       ,pr_aplOrigem    IN VARCHAR2              --> Aplicação de Origem da chamada do Serviço
+                                       ,pr_nrdcaixa      IN INTEGER               --> Código de caixa do canal de atendimento – Valor 'XXXX' para Internet
+                                       ,pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE --> Data do movimento atual.
+                                       ,pr_vrdebito     IN NUMBER                --> Valor a ser debitado   
+                                       ,pr_idpagto      IN NUMBER                --> Identificador de pagamento enviado pelo consumidor
+                                       ,pr_dscritic    OUT VARCHAR2              --> Descrição da crítica          
+                                       ,pr_retorno      OUT xmltype);   
                                        
   PROCEDURE pc_efetiva_pagto_parc_consig(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                         ,pr_cdagenci    IN crapass.cdagenci%TYPE --> Código da agência
@@ -65,7 +65,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
                                            pr_vlpagpar    IN number, --tbepr_consignado_pagamento.vlpagpar%TYPE,
                                            pr_dtvencto    IN date, --tbepr_consignado_pagamento.dtvencto%TYPE,
                                            pr_instatus    IN number, --tbepr_consignado_pagamento.instatus%TYPE,
-                                           pr_dscritic 	 OUT VARCHAR2 );
+                                           pr_dscritic    OUT VARCHAR2 );
 
    FUNCTION fn_ret_status_pagto_consignado (pr_cdcooper    IN number, --tbepr_consignado_pagamento.cdcooper%TYPE,
                                             pr_nrdconta    IN number, --tbepr_consignado_pagamento.nrdconta%TYPE,
@@ -78,18 +78,16 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
                                           pr_nrparepr    IN crappep.nrparepr%TYPE, -- Numero da parcela
                                           pr_dsxmlali   OUT XmlType,               -- XML de saida do pagamento
                                           pr_dscritic   OUT VARCHAR2); --> Descricao Erro
-
-   PROCEDURE pc_envia_email_erro_pagam_fis(pr_cdcooper    IN crapepr.cdcooper%TYPE, --Cooperativa
+                                          
+   PROCEDURE  pc_envia_email_erro_int_consig(pr_cdcooper    IN crapepr.cdcooper%TYPE, --Cooperativa
                                               pr_nrdconta    IN crapepr.nrdconta%TYPE, --Conta
                                               pr_nrctremp    IN crapepr.nrctremp%TYPE, --Contrato
                                               pr_nrparepr    IN crappep.nrparepr%TYPE default null, --Parcela (Opcional)
-                                              pr_idpagamento IN NUMBER, --ID Pagamento (Opcional)
-                                              pr_tipoemail   IN VARCHAR2, --Tipo de Email (Vide tipos acima)
+                                              pr_idoperacao  IN NUMBER default null, --ID Operacao (Opcional)
+                                              pr_tipoemail   IN VARCHAR2, --Tipo de Email 
                                               pr_msg         IN VARCHAR2, --Mensagem_erro_origem
-                                              pr_cdcritic    OUT PLS_INTEGER,
-                                              pr_dscritic 	 OUT VARCHAR2,
-                                              pr_des_erro    OUT VARCHAR2,
-                                              pr_retxml 		 OUT xmltype
+                                              pr_dscritic    OUT VARCHAR2,
+                                              pr_retxml      OUT xmltype
                                                );
 
 END EMPR0020;
@@ -107,6 +105,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
 
     Alteracoes: 06/05/2019 - P437 Consignado - Inclusão da rotina pc_efetiva_pagto_parc_consig 
                 Josiane Stiehler AMcom
+        14/05/2019 - P437 Consignado - Inclusão da rotina pc_envia_email_erro_int_consig 
+                Jackson Barcellos AMcom
 
     ..............................................................................*/
 
@@ -328,16 +328,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
     END;    
   END pc_validar_dtpgto_antecipada;
   
-  PROCEDURE pc_efetua_debito_conveniada(pr_cdcooper 		IN crapcop.cdcooper%TYPE --> Código da cooperativa
-                                       ,pr_cdempres 		IN crapemp.cdempres%TYPE --> Código da Empresa que receberá o débito
-                                       ,pr_cdoperad 		IN VARCHAR2              --> Operador da Consulta – Valor 'xxxxx' para Internet
-                                       ,pr_aplOrigem		IN VARCHAR2              --> Aplicação de Origem da chamada do Serviço
-                                       ,pr_nrdcaixa		  IN INTEGER               --> Código de caixa do canal de atendimento – Valor 'XXXX' para Internet
-                                       ,pr_dtmvtolt 		IN crapdat.dtmvtolt%TYPE --> Data do movimento atual.
-                                       ,pr_vrdebito 		IN NUMBER                --> Valor a ser debitado   
-                                       ,pr_idpagto		  IN NUMBER                --> Identificador de pagamento enviado pelo consumidor
-                                       ,pr_dscritic 	 OUT VARCHAR2              --> Descrição da crítica          
-                                       ,pr_retorno 		 OUT xmltype) IS
+  PROCEDURE pc_efetua_debito_conveniada(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                       ,pr_cdempres     IN crapemp.cdempres%TYPE --> Código da Empresa que receberá o débito
+                                       ,pr_cdoperad     IN VARCHAR2              --> Operador da Consulta – Valor 'xxxxx' para Internet
+                                       ,pr_aplOrigem    IN VARCHAR2              --> Aplicação de Origem da chamada do Serviço
+                                       ,pr_nrdcaixa      IN INTEGER               --> Código de caixa do canal de atendimento – Valor 'XXXX' para Internet
+                                       ,pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE --> Data do movimento atual.
+                                       ,pr_vrdebito     IN NUMBER                --> Valor a ser debitado   
+                                       ,pr_idpagto      IN NUMBER                --> Identificador de pagamento enviado pelo consumidor
+                                       ,pr_dscritic    OUT VARCHAR2              --> Descrição da crítica          
+                                       ,pr_retorno      OUT xmltype) IS
   /*---------------------------------------------------------------------------------------------------------
       Programa : pc_efetua_debito_conveniada
       Sistema  : AIMARO
@@ -779,7 +779,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
                                           pr_vlpagpar    => pr_vlparepr, -- Valor pago da parcela
                                           pr_dtvencto    => pr_dtvencto, -- Vencimento da parcela
                                           pr_instatus    => 1,           -- Status do processamento
-                                          pr_dscritic 	  => vr_dscritic); -- critica de erro
+                                          pr_dscritic     => vr_dscritic); -- critica de erro
            -- Tratar saida com erro                          
            IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_saida;
@@ -967,7 +967,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
                                              pr_vlpagpar    IN number, --tbepr_consignado_pagamento.vlpagpar%TYPE,
                                              pr_dtvencto    IN date,   --tbepr_consignado_pagamento.dtvencto%TYPE,
                                              pr_instatus    IN number, --tbepr_consignado_pagamento.instatus%TYPE,
-                                             pr_dscritic 	 OUT VARCHAR2 ) IS 
+                                             pr_dscritic    OUT VARCHAR2 ) IS 
      /*---------------------------------------------------------------------------------------------------------
       Programa : pc_inc_alt_tbepr_consignado_pagamento
       Sistema  : AIMARO
@@ -1162,17 +1162,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
       END;
       END pc_gera_xml_pagamento_consig;
       
-      PROCEDURE pc_envia_email_erro_pagam_fis(pr_cdcooper    IN crapepr.cdcooper%TYPE, --Cooperativa
+      PROCEDURE  pc_envia_email_erro_int_consig(pr_cdcooper  IN crapepr.cdcooper%TYPE, --Cooperativa
                                               pr_nrdconta    IN crapepr.nrdconta%TYPE, --Conta
                                               pr_nrctremp    IN crapepr.nrctremp%TYPE, --Contrato
                                               pr_nrparepr    IN crappep.nrparepr%TYPE default null, --Parcela (Opcional)
-                                              pr_idpagamento IN NUMBER, --ID Pagamento (Opcional)
-                                              pr_tipoemail   IN VARCHAR2, --Tipo de Email (Vide tipos acima)
+                                              pr_idoperacao  IN NUMBER default null, --ID Operacao (Opcional)
+                                              pr_tipoemail   IN VARCHAR2, --Tipo de Email 
                                               pr_msg         IN VARCHAR2, --Mensagem_erro_origem
-                                              pr_cdcritic    OUT PLS_INTEGER,
-                                              pr_dscritic 	 OUT VARCHAR2,
-                                              pr_des_erro    OUT VARCHAR2,
-                                              pr_retxml 		 OUT xmltype
+                                              pr_dscritic    OUT VARCHAR2,
+                                              pr_retxml      OUT xmltype
                                               )IS  
                                                                                                          
 
@@ -1191,7 +1189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
           
 
         BEGIN
-          SELECT dsvlrprm INTO vr_email FROM crapprm WHERE nmsistem = 'CRED' AND cdcooper = 0 AND cdacesso = 'EMAIL_PAG_ERR_FIS';
+          SELECT dsvlrprm INTO vr_email FROM crapprm WHERE nmsistem = 'CRED' AND cdcooper = 0 AND cdacesso = 'EMAIL_ERR_INT_CONSIG';
           vr_desemail := 'Consignado<br>
                           Ocorreu um erro no procedimento <b><i>'||pr_tipoemail||'</i></b>, verifique com urgência.<br><br> 
                           
@@ -1201,6 +1199,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
                           <b>Contrato:</b> '||pr_nrctremp||' <br>';
           if pr_nrparepr is not null then
               vr_desemail :=  vr_desemail || '<b>Parcela:</b> '||pr_nrparepr||' <br>';
+          end if;
+          vr_desemail :=  vr_desemail || '<b>Descrição do erro ocorrido:</b> '||pr_msg||' <br>';
+          
+          if pr_idoperacao is not null then
+              vr_desemail :=  vr_desemail || '<b>Id Operação:</b> '||pr_idoperacao||' <br>';
           end if;
           vr_desemail :=  vr_desemail || '<b>Descrição do erro ocorrido:</b> '||pr_msg||' <br>';
           
@@ -1223,9 +1226,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
              END IF;  
           END IF;
           
-          pr_cdcritic := 0;
-          pr_dscritic := null; 
-          pr_des_erro := 'OK';   
+          pr_dscritic := 'OK'; 
           -- Existe para satisfazer exigência da interface. 
           pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><dsmensag>OK</dsmensag></Root>');
@@ -1240,22 +1241,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
          END IF;
          /* variavel de erro recebe erro ocorrido */
-         pr_des_erro := 'NOK';
-         pr_cdcritic := nvl(vr_cdcritic,0);
-         pr_dscritic := vr_dscritic;
+         pr_dscritic := 'NOK';
          -- Carregar XML padrao para variavel de retorno
           pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+                                           '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
       WHEN OTHERS THEN
-           pr_des_erro := 'NOK';
           /* montar descriçao de erro nao tratado */
-           pr_dscritic := 'erro não tratado na empr0020.pc_envia_email_erro_pagam_fis ' ||SQLERRM;
+           vr_dscritic := 'erro não tratado na empr0020.pc_envia_email_erro_pagam_fis ' ||SQLERRM;
+           pr_dscritic := 'NOK';
            -- Carregar XML padrao para variavel de retorno
            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+                                           '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
       END;
                                                
-     END pc_envia_email_erro_pagam_fis;
+     END  pc_envia_email_erro_int_consig;
     
 END EMPR0020;
 /
