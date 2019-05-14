@@ -1458,7 +1458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
 				vr_dsendere VARCHAR2(60) := '';
 				vr_dsender_apbl VARCHAR2(200) := NULL;
 				vr_dsender_compl VARCHAR2(200) := '';
-				vr_nrendere VARCHAR2(5) := '';
+				vr_nrendere VARCHAR2(20) := '';
 				vr_ufendere VARCHAR2(5) := '';
 				vr_nmcidade VARCHAR2(50) := '';
 				vr_nmbairro VARCHAR2(50) := '';
