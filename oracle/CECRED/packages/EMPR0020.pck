@@ -89,6 +89,15 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
                                               pr_dscritic    OUT VARCHAR2,
                                               pr_retxml      OUT xmltype
                                                );
+  
+   PROCEDURE pc_alt_emp_cooperado_desligado(pr_cdcooper      IN crapepr.cdcooper%TYPE  --> Cooperativa
+                                           ,pr_nrdconta      IN crapepr.nrdconta%TYPE  --> Conta
+                                           ,pr_flgdesligado  IN VARCHAR2               --> Indica se o cliente foi desligado (1 = Sim / 2 = Nao)
+                                           -- campos padrões
+                                           ,pr_cdcritic      OUT PLS_INTEGER           --> Codigo da critica
+                                           ,pr_dscritic      OUT VARCHAR2              --> Descricao da critica
+                                           ,pr_des_erro      OUT VARCHAR2              --> Erros do processo
+                                           );                                               
 
 END EMPR0020;
 /
@@ -1256,5 +1265,122 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
                                                
      END  pc_envia_email_erro_int_consig;
     
+   PROCEDURE pc_alt_emp_cooperado_desligado(pr_cdcooper      IN crapepr.cdcooper%TYPE  --> Cooperativa
+                                           ,pr_nrdconta      IN crapepr.nrdconta%TYPE  --> Conta
+                                           ,pr_flgdesligado  IN VARCHAR2               --> Indica se o cliente foi desligado (1 = Sim / 2 = Nao)
+                                           -- campos padrões
+                                           ,pr_cdcritic      OUT PLS_INTEGER           --> Codigo da critica
+                                           ,pr_dscritic      OUT VARCHAR2              --> Descricao da critica
+                                           ,pr_des_erro      OUT VARCHAR2              --> Erros do processo
+                                           )IS
+   /*---------------------------------------------------------------------------------------------------------
+      Programa  : pc_alt_emp_cooperado_desligado
+      Sistema   : AIMARO
+      Sigla     : 
+      Autor     : Fernanda Kelli de Oliveira - AMcom Sistemas de Informação
+      Data      : 14/05/2019
+
+      Objetivo  : O sistema Aimaro receberá, via serviço da FIS Brasil, a informação quando cooperado 
+                  for desligado da Conveniada e esta rotina irá fazer a alteração da empresa para 
+                  9999 (Desligado Consignado) na conta e nos contratos do cooperado.
+                  
+                  Controle de COMMIT/ROLLBACK será feito pela rotina principal (JOB)
+
+      Alteração :
+
+  ----------------------------------------------------------------------------------------------------------*/
+ 
+  BEGIN
+    DECLARE
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+      
+      -- Variáveis auxiliares
+      v_cdempres  crapttl.cdempres%type;
+        
+    BEGIN
+      
+      IF pr_flgdesligado IS NULL THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Parâmetro pr_flgdesligado deve ser preenchido. Conta: '||pr_nrdconta|| ' da cooperativa: '||pr_cdcooper;
+        RAISE vr_exc_erro;          
+      ELSIF pr_flgdesligado = 1 THEN
+        --Buscar o Codigo da empresa onde o titular trabalha.       
+        BEGIN
+          SELECT t.cdempres
+            INTO v_cdempres
+            FROM crapttl t
+           WHERE t.cdcooper = pr_cdcooper
+             AND t.nrdconta = pr_nrdconta
+             AND t.idseqttl = 1;
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN
+            v_cdempres := null; 
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao buscar a empresa da conta: '||pr_nrdconta|| ' da cooperativa: '||pr_cdcooper;
+            RAISE vr_exc_erro;
+        END;
+       
+        IF v_cdempres IS NOT NULL AND v_cdempres <> 9999 THEN
+          --Atualizar a empresa no Cadastro de titulares da conta para 9999 - Desligado Consignado
+          --Contas > Comercial > Empresa 
+          BEGIN
+            UPDATE crapttl t
+               SET t.cdempres = 9999 -- Desligado Consignado
+             WHERE t.cdcooper = pr_cdcooper
+               AND t.nrdconta = pr_nrdconta
+               AND t.idseqttl = 1; 
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao atualizar a empresa da conta: '||pr_nrdconta|| ' da cooperativa: '||pr_cdcooper|| ' para 9999-Desligado Consignado.';
+              RAISE vr_exc_erro;  
+          END;
+          
+          --Atualizar a empresa nos Contratos de Consignado do cooperado e desvincular da empresa.
+          BEGIN
+           UPDATE crapepr c
+              SET c.cdempres = 9999
+            WHERE c.cdcooper = pr_cdcooper
+              AND c.nrdconta = pr_nrdconta              
+              AND c.inliquid = 0           --Contrato não liquidado
+              AND c.tpdescto = 2           --Desconto em Folha de Pgto
+              AND c.tpemprst = 1           --Empréstimo Pré-Fixado  
+              AND c.cdempres is not null 
+              AND c.cdempres <> 9999;       --ainda esta vinculada a uma empresa
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao atualizar a empresa nos Contratos da conta: '||pr_nrdconta|| ' da cooperativa: '||pr_cdcooper|| ' para 9999-Desligado Consignado.';
+              RAISE vr_exc_erro;  
+          END;                    
+        END IF;  
+      END IF;
+      
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF  vr_cdcritic <> 0 THEN
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+        pr_des_erro := 'NOK';
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        --ROLLBACK;
+      WHEN OTHERS THEN
+        pr_des_erro := 'NOK';
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina tela_consig.pc_excluir_param_consig_web: '||SQLERRM;        
+        --ROLLBACK;     
+    END;
+    
+  END pc_alt_emp_cooperado_desligado;                                           
+                                             
 END EMPR0020;
 /
