@@ -14,8 +14,9 @@
 
 
 function chamaServico($data,$Url_SOA, $Auth_SOA){
-	$arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$Auth_SOA);
+	$arrayHeader = array("Content-Type:application/json","Accept:application/json","Authorization:".$Auth_SOA);
 	$url = $Url_SOA."/osb-soa/TransacaoCreditoRestService/v1/EnviarDadosCadastraisConvenioCredito";
+	
 	$dataexemplo = '{
 	  "convenioCredito" : {
 		"conveniado" : {
@@ -129,22 +130,18 @@ function envServico($url, $method, $arrayHeader, $data) {
 	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_HTTPHEADER, $arrayHeader);
-	curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-	$result = curl_exec($ch);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $data);	
+	$result = curl_exec($ch);	
 	$GLOBALS["httpcode"] = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-	$DOMDocument = new DOMDocument( '1.0', 'utf-8' );
-    $DOMDocument->preserveWhiteSpace = false;
-	$DOMDocument->loadXML($result);
-	$DOMXPath = new DOMXPath( $DOMDocument );
-	$DOMXPath->registerNamespace( 'ns2' , 'http://www.cecred.coop.br/INF/LCD/Global/v1');
-	foreach( $DOMXPath->query('.//ns2:*') as $Node ){
-		$Data[ preg_replace( '/ns2:/', '', $Node->nodeName ) ] = $Node->nodeValue;
+	curl_close($ch);
+	//echo '<pre>'.htmlentities($result).'</pre>';
+	$result = json_decode($result);
+	if (isset($result->sistemaTransacao->dataHoraRetorno)){
+		if($result->sistemaTransacao->dataHoraRetorno != ""){
+			return $result->sistemaTransacao->dataHoraRetorno;
+		}
 	}
 	
-	if (isset($Data['dataHoraRetorno'])){
-       return( $Data['dataHoraRetorno'] );
-	}else{
-		return( 'ERRO' );
-	}
+	return "ERRO";
 
 }

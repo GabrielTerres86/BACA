@@ -131,6 +131,23 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_SIMULACAO IS
                                    ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
                                    ,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK  
 
+  PROCEDURE pc_busca_dados_soa_fis_calcula (-- campos padrões
+                                            pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
+                                           ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
+                                           ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
+                                           ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                           ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
+                                           ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
+                                           );  
+                                           
+  PROCEDURE prc_log_erro_soa_fis_calcula(-- campos padrões
+                                          pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
+                                         ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
+                                         ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
+                                         ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
+                                         ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
+                                         ) ;                                                                          
 
 END TELA_ATENDA_SIMULACAO;
 /
@@ -148,6 +165,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
   --
   -- Alteracoes: 14/03/2019 - Inclusão dos parametros pr_vlparepr e pr_vliofepr
   --             na rotina pc_grava_simulação ( Josiane Stiehler - AMcom)
+  --             14/05/2019 - Inclusão procedures pc_busca_dados_soa_fis_calcula
+  --             prc_log_erro_soa_fis_calcula -CONSIGNADO-( Jackson Barcellos - AMcom)
   --
   ---------------------------------------------------------------------------
   
@@ -1629,6 +1648,389 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
                                      '<Root><Erro>' || pr_cdcritic || '-' ||
                                      pr_dscritic || '</Erro></Root>');  
  END pc_valida_simul_consig;    
+ 
+ PROCEDURE pc_busca_dados_soa_fis_calcula (-- campos padrões
+                                            pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
+                                           ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
+                                           ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
+                                           ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                           ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
+                                           ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
+                                           ) IS
+
+/*---------------------------------------------------------------------------------------------------------
+      Programa : pc_busca_dados_soa_fis
+      Sistema  : AIMARO
+      Sigla    : CONSIG
+      Autor    : Jackson Barcellos - AMcom Sistemas de Informação
+      Data     : 09/05/2019
+
+      Objetivo : Recebe os dados da tela e busca informacoes gerando xml para comunicacao via SOA com a FIS para calcular emprestimo
+
+      Alteração :
+
+    ----------------------------------------------------------------------------------------------------------*/                                   
+BEGIN
+    DECLARE
+
+    /* Tratamento de erro */
+    vr_exc_erro EXCEPTION;
+
+    /* Descrição e código da critica */
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_erro VARCHAR2(10);
+    
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
+    
+    --variaveis da tela
+    vr_nrdconta number;
+    vr_cdlcremp number;
+    vr_vlemprst number;
+    vr_fintaxas number;
+    vr_data_primeira_parcela date;
+    vr_quantidade_parcelas number;
+    
+    --variaveis local
+    vr_vlrtarif number;
+    vr_tab_erro gene0001.typ_tab_erro;
+    vr_dias_carencia number;
+    vr_cdempres tbcadast_empresa_consig.cdempres%TYPE; --> codigo da empresa
+    vr_taxa_juros number;
+    vr_produto number;
+    vr_dtmovtov varchar2(40);
+    vr_dt_movto date;
+        
+    -- variáveis para armazenar as informaçoes em xml
+    vr_des_xml        clob;
+    vr_texto_completo varchar2(32600);
+    vr_index          varchar2(100);
+
+    PROCEDURE pc_escreve_xml( pr_des_dados in varchar2
+                            , pr_fecha_xml in boolean default false
+                            ) is
+    BEGIN
+        gene0002.pc_escreve_xml( vr_des_xml
+                               , vr_texto_completo
+                               , pr_des_dados
+                               , pr_fecha_xml );
+    END;
+    
+    BEGIN
+
+      pr_nmdcampo := NULL;
+      pr_des_erro := 'OK';
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
+
+      IF (nvl(vr_cdcritic,0) <> 0 OR
+          vr_dscritic IS NOT NULL) THEN
+          raise vr_exc_erro;
+      END IF;
+      
+      -- Extraindo os dados do XML que vem da tela 
+      BEGIN
+        vr_cdlcremp  := TRIM(pr_retxml.extract('/Root/dto/cdlcremp/text()').getstringval());
+        vr_vlemprst  := TO_NUMBER(REPLACE(REPLACE(TRIM(pr_retxml.extract('/Root/dto/vlemprst/text()').getstringval()),'.',''),',','.'));
+        vr_nrdconta  := TRIM(pr_retxml.extract('/Root/dto/nrdconta/text()').getstringval());
+        vr_fintaxas  := TRIM(pr_retxml.extract('/Root/dto/fintaxas/text()').getstringval());
+        vr_quantidade_parcelas := TRIM(pr_retxml.extract('/Root/dto/quantidadeparcelas/text()').getstringval());
+--        vr_data_primeira_parcela   := TO_CHAR(TO_DATE(dataprimeiraparcela,'dd/mm/yyyy'),'yyyy-mm-dd')||'T'||to_char(to_date(vr_datainicio,'dd/mm/yyyy hh24:mi:ss'),'hh24:mi:ss');
+--        vr_data_primeira_parcela   := TO_CHAR(TO_DATE(dataprimeiraparcela,'dd/mm/yyyy'),'yyyy-mm-dd');
+        vr_data_primeira_parcela   := TO_DATE(TRIM(pr_retxml.extract('/Root/dto/dataprimeiraparcela/text()').getstringval()),'DD/MM/RRRR');
+
+      EXCEPTION
+        WHEN OTHERS THEN
+          DBMS_OUTPUT.put_line(SQLERRM);
+          IF SQLCODE = '-30625' THEN
+            vr_dscritic := 'Erro na leitura dos dados da tela1.';
+            RAISE vr_exc_erro;   
+          ELSE
+            vr_dscritic := sqlerrm||' - Erro na leitura dos dados da tela2.';
+            RAISE vr_exc_erro;
+          END IF;           
+      END;
+      
+      --Busca Tarifa
+      empr0018.pc_consulta_tarifa_emprst(pr_cdcooper => vr_cdcooper
+                               ,pr_cdlcremp => vr_cdlcremp
+                               ,pr_vlemprst => vr_vlemprst
+                               ,pr_nrdconta => vr_nrdconta
+                               ,pr_nrctremp => 0 
+                               ,pr_dscatbem => '' 
+                               --
+                               ,pr_vlrtarif => vr_vlrtarif
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_des_erro => vr_dscritic
+                               ,pr_des_reto => vr_des_erro
+                               ,pr_tab_erro => vr_tab_erro);
+                               
+      IF vr_des_erro = 'NOK' THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Busca codempresa
+      BEGIN
+            SELECT ttl.cdempres
+            INTO   vr_cdempres             
+            FROM   crapttl ttl 
+            WHERE  ttl.cdcooper = vr_cdcooper
+                   AND ttl.nrdconta = vr_nrdconta
+                   AND ttl.idseqttl = 1;
+      EXCEPTION WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao buscar empresa.';
+            RAISE vr_exc_erro;
+      END;  
+
+      -- Busca juros
+      BEGIN
+            SELECT lc.txmensal as taxaJurosRemuneratorios
+                   ,'16'||lc.tpmodcon as produto_codigo
+                   INTO
+                   vr_taxa_juros
+                   ,vr_produto
+            FROM   craplcr lc
+            WHERE  lc.cdcooper = vr_cdcooper
+                   AND lc.cdlcremp = vr_cdlcremp;  
+      EXCEPTION WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao buscar juros.';
+            RAISE vr_exc_erro;
+      END;
+      
+      --busca dtmov
+      BEGIN
+            SELECT TO_CHAR(TO_DATE(dt.dtmvtolt,'DD/MM/RRRR'),'RRRR-MM-DD')||'T'||to_char(sysdate,'hh24:mi:ss') 
+                   ,dt.dtmvtolt                   
+            INTO   vr_dtmovtov
+                   ,vr_dt_movto
+            FROM   crapdat dt 
+            WHERE  dt. cdcooper = vr_cdcooper;
+      EXCEPTION WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao buscar dtmov coop.';
+            RAISE vr_exc_erro;
+      END;
+      
+      --Calcula dias carencia
+      BEGIN
+	        vr_dias_carencia := vr_data_primeira_parcela - vr_dt_movto;             
+      EXCEPTION WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao calcular carencia.';
+            RAISE vr_exc_erro;
+      END;
+       
+
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
+      
+      -- monta xml
+      pc_escreve_xml('<?xml version="1.0"?>');
+      pc_escreve_xml('<dto>'||
+                      '<convenioCredito>'||
+                        '<cooperativa>'||
+                          '<codigo>'||vr_cdcooper||'</codigo>'|| --codcooperativa
+                        '</cooperativa>'||
+                        '<numeroContrato>'||vr_cdempres||'</numeroContrato>'|| --codempresa
+                      '</convenioCredito>'||
+                      '<configuracaoCredito>'||
+                        '<diasCarencia>'||vr_dias_carencia||'</diasCarencia>'|| -- dt1parc - dtmov
+                        '<financiaIOF>'||vr_fintaxas||'</financiaIOF>'|| -- param1 enviado via tela
+                        '<financiaTarifa>'||vr_fintaxas||'</financiaTarifa>'||  -- param1 enviado via tela
+                      '</configuracaoCredito>'||
+                      '<credito>'||
+                        '<dataPrimeiraParcela>'||TO_CHAR(TO_DATE(vr_data_primeira_parcela,'DD/MM/RRRR'),'RRRR-MM-DD')||'</dataPrimeiraParcela>'||  -- param2 enviado via tela
+                        '<produto>'||
+                          '<codigo>'||vr_produto||'</codigo>'|| -- 161 privado 162 publico 163 inss
+                        '</produto>'||
+                        '<quantidadeParcelas>'||vr_quantidade_parcelas||'</quantidadeParcelas>'||  -- param3 enviado via tela
+                        '<taxaJurosRemuneratorios>'||trim(to_char(vr_taxa_juros,'99999990D00', 'NLS_NUMERIC_CHARACTERS = ''.,'''))||'</taxaJurosRemuneratorios>'|| --buscar lcredi
+                        '<tipoJuros>'||
+                          '<codigo>1</codigo>'|| --fixo
+                        '</tipoJuros>'||
+                        '<tipoLiberacao>'||
+                          '<codigo>1</codigo>'|| --fixo
+                        '</tipoLiberacao>'||
+                        '<tipoLiquidacao>'||
+                          '<codigo>1</codigo>'|| --fixo
+                        '</tipoLiquidacao>'||
+                        '<valorBase>'||trim(to_char(vr_vlemprst,'99999990D00', 'NLS_NUMERIC_CHARACTERS = ''.,'''))||'</valorBase>'||  -- param4 enviado via tela
+                      '</credito>'||
+                      '<tarifa>'||
+                        '<valor>'||trim(to_char(vr_vlrtarif,'99999990D00', 'NLS_NUMERIC_CHARACTERS = ''.,'''))||'</valor>'|| --buscar lcredi
+                      '</tarifa>'||
+                      '<sistemaTransacao/>'|| --enviar tag em branco
+                      '<interacaoGrafica>'||
+                        '<dataAcaoUsuario>'||vr_dtmovtov||'</dataAcaoUsuario>'|| --dtmov
+                      '</interacaoGrafica>'||
+                      '<parametroConsignado>'||
+                        '<codigoFisTabelaJuros>1</codigoFisTabelaJuros>'|| -- param5 enviado via tela (codigo lcredi) mudou para 1 fixo
+                      '</parametroConsignado>'
+                     );
+                     
+      pc_escreve_xml ('</dto>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
+
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+         /*  se foi retornado apenas código */
+         IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+             /* buscar a descriçao */
+             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+         END IF;
+         /* variavel de erro recebe erro ocorrido */
+         pr_des_erro := 'NOK';
+         pr_cdcritic := nvl(vr_cdcritic,0);
+         pr_dscritic := vr_dscritic;
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+           pr_des_erro := 'NOK';
+          /* montar descriçao de erro nao tratado */
+           pr_dscritic := 'erro não tratado na tela_atenda_simulacao.pc_busca_dados_soa_fis ' ||SQLERRM;
+           -- Carregar XML padrao para variavel de retorno
+           pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+  END pc_busca_dados_soa_fis_calcula;
+  
+  procedure prc_log_erro_soa_fis_calcula(-- campos padrões
+                                          pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
+                                         ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
+                                         ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
+                                         ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
+                                         ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
+                                         )is
+
+  begin
+    declare 
+       /* Tratamento de erro */
+        vr_exc_erro EXCEPTION;
+
+        /* Descrição e código da critica */
+        vr_cdcritic crapcri.cdcritic%TYPE;
+        vr_dscritic VARCHAR2(4000);
+        vr_des_erro VARCHAR2(10);
+    
+        --variaveis log
+        vr_nrdrowidl rowid;
+        vr_dscriticl varchar(1000);
+        vr_dstransal varchar(250);
+        vr_nrdcontal number;
+        vr_json_req varchar2(4000);
+        vr_json_res varchar2(4000);
+        
+        -- variaveis de entrada vindas no xml
+        vr_cdcooper number;
+        vr_cdoperad varchar2(100);
+        vr_nmdatela varchar2(100);
+        vr_nmeacao  varchar2(100);
+        vr_cdagenci varchar2(100);
+        vr_nrdcaixa varchar2(100);
+        vr_idorigem varchar2(100);
+        
+  
+    BEGIN
+
+      pr_nmdcampo := NULL;
+      pr_des_erro := 'OK';
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
+
+      IF (nvl(vr_cdcritic,0) <> 0 OR
+          vr_dscritic IS NOT NULL) THEN
+          raise vr_exc_erro;
+      END IF;
+      
+      vr_nrdcontal  := TRIM(pr_retxml.extract('/Root/dto/nrdconta/text()').getstringval());
+      vr_dstransal  := TRIM(pr_retxml.extract('/Root/dto/dstransal/text()').getstringval());
+      vr_dscriticl  := TRIM(pr_retxml.extract('/Root/dto/dscriticl/text()').getstringval());
+      vr_json_req  := TRIM(pr_retxml.extract('/Root/dto/json_req/text()').getstringval());
+      vr_json_res  := TRIM(pr_retxml.extract('/Root/dto/json_res/text()').getstringval());            
+      vr_json_req := regexp_replace(vr_json_req, '&'||'quot;', '"');
+      vr_json_res := regexp_replace(vr_json_res, '&'||'quot;', '"');
+      GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscriticl
+                            ,pr_dsorigem => vr_idorigem
+                            ,pr_dstransa => vr_dstransal
+                            ,pr_dttransa => TRUNC(SYSDATE)
+                            ,pr_flgtrans => 0
+                            ,pr_hrtransa => gene0002.fn_busca_time
+                            ,pr_idseqttl => 1
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nrdconta => vr_nrdcontal
+                            ,pr_nrdrowid => vr_nrdrowidl);
+      
+      -- Gravar Item do LOG
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowidl
+                               ,pr_nmdcampo => 'JSON'
+                               ,pr_dsdadant => vr_json_req
+                               ,pr_dsdadatu => vr_json_res);
+      
+      commit;
+      pr_cdcritic := 0;
+      pr_dscritic := null;    
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><dsmensag>OK</dsmensag></Root>');                       
+                            
+                            
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+         /*  se foi retornado apenas código */
+         IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+             /* buscar a descriçao */
+             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+         END IF;
+         /* variavel de erro recebe erro ocorrido */
+         pr_des_erro := 'NOK';
+         pr_cdcritic := nvl(vr_cdcritic,0);
+         pr_dscritic := vr_dscritic;
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+           pr_des_erro := 'NOK';
+          /* montar descriçao de erro nao tratado */
+           pr_dscritic := 'erro não tratado na tela_atenda_simulacao.pc_busca_dados_soa_fis ' ||SQLERRM;
+           -- Carregar XML padrao para variavel de retorno
+           pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+  end prc_log_erro_soa_fis_calcula;
+  
+
+                                    
  
 END TELA_ATENDA_SIMULACAO;
 /

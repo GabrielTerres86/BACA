@@ -19,7 +19,7 @@ require_once('../../../../includes/config.php');
 require_once('../../../../includes/funcoes.php');
 require_once('../../../../includes/controla_secao.php');
 require_once('../../../../class/xmlfile.php');
-
+require_once('../wssoa.php');
 
 isPostMethod();
 
@@ -28,6 +28,8 @@ $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 $gconsig = (isset($_POST['gconsig'])) ? $_POST['gconsig'] : '';
 $vlparepr = '';
 $vliofepr = '';
+$vlrcet = '';
+$jurosAnual = '';
 $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 $idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '';
 $nrsimula = (isset($_POST['nrsimula'])) ? $_POST['nrsimula'] : '';
@@ -50,11 +52,59 @@ if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cd
 }
 
 //se consignado busca valor de parcela e iof consumir soa exemplo tela manbem
-if ($gconsig == '1'){
-	$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis');	
-	$obj = json_decode($raw_data); 	
-	$vlparepr = $obj->vlparepr;
-	$vliofepr = $obj->vliofepr;
+if ($gconsig == '1'){		
+		//Busca XML BD converte em json e comunica com a FIS	
+		$xml  = '';
+		$xml .= '<Root>';
+		$xml .= '	<dto>';
+		$xml .= '       <cdlcremp>'.$cdlcremp.'</cdlcremp>';
+		$xml .= '       <vlemprst>'.$vlemprst.'</vlemprst>';
+		$xml .= '       <nrdconta>'.$nrdconta.'</nrdconta>';
+		$xml .= '       <fintaxas>'.$idfiniof.'</fintaxas>';
+		$xml .= '       <quantidadeparcelas>'.$qtparepr.'</quantidadeparcelas>';
+		$xml .= '       <dataprimeiraparcela>'.$dtdpagto.'</dataprimeiraparcela>';
+		$xml .= '	</dto>';
+		$xml .= '</Root>';
+		
+		$xmlResult = mensageria(
+			$xml,
+			"TELA_ATENDA_SIMULACAO",
+			"SIMULA_BUSCA_DADOS_CALC_FIS",
+			$glbvars["cdcooper"],
+			$glbvars["cdagenci"],
+			$glbvars["nrdcaixa"],
+			$glbvars["idorigem"],
+			$glbvars["cdoperad"],
+			"</Root>");
+
+		$xmlObj = getObjectXML($xmlResult);
+
+		if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
+			gravaLog("Erro gerando o xml com dados.",$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,$nrdconta,$glbvars,'1','2');
+		}else{	
+			$xml = simplexml_load_string($xmlResult);
+			$json = json_encode($xml);
+			//echo "cttc('".$json."');";
+			$rs = chamaServico($json,$Url_SOA, $Auth_SOA);
+			//echo "cttc('".$rs."');";
+			
+			if (isset($rs->msg)){
+				gravaLog("Retorno erro tratado pela fis.",$rs->msg,$nrdconta,$glbvars,$json,json_encode($rs));				
+			}else if (isset($rs->errorMessage)){
+				gravaLog("Retorno erro nao tratado pela fis.",$rs->errorMessage,$nrdconta,$glbvars,'1','2');					
+			}			
+			else if (isset($rs->parcela->valor) && isset($rs->sistemaTransacao->dataHoraRetorno)){
+				if ($rs->parcela->valor > 0 && $rs->sistemaTransacao->dataHoraRetorno != ""){
+					$vlparepr = str_replace(".", ",",$rs->parcela->valor);
+					$vliofepr = str_replace(".", ",",$rs->credito->tributoIOFValor);
+					$vlrcet = str_replace(".", ",",$rs->credito->CETPercentAoAno);	
+					$jurosAnual = str_replace(".", ",",$rs->credito->taxaJurosRemuneratoriosAnual);
+				}else{
+					gravaLog("Retorno erro nao tratado pela fis.","valores de retorno em branco",$nrdconta,$glbvars,'1','2');
+				}
+			}
+			
+		}
 }
 
 // Monta o xml de requisição
@@ -71,7 +121,7 @@ $xml.= "		<vlemprst>" . str_replace(",", ".",str_replace(".","",$vlemprst)) . "<
 $xml.= "		<qtparepr>" . $qtparepr . "</qtparepr>";
 $xml.= "		<dtlibera>" . $dtlibera . "</dtlibera>";
 $xml.= "		<dtdpagto>" . $dtdpagto . "</dtdpagto>";
-$xml.= "        <percetop>" . $percetop . "</percetop>";
+$xml.= "        <percetop>" . str_replace(",", ".",str_replace(".","",$percetop))  . "</percetop>";
 $xml.= "        <cdfinemp>" . $cdfinemp . "</cdfinemp>";
 $xml.= "        <idfiniof>" . $idfiniof . "</idfiniof>";
 $xml.= "        <flggrava>1</flggrava>";
@@ -83,8 +133,10 @@ $xml.= "        <tpemprst>" . $tpemprst . "</tpemprst>";
 $xml.= "        <idcarenc>" . $idcarenc . "</idcarenc>";
 $xml.= "        <dtcarenc>" . $dtcarenc . "</dtcarenc>";
 $xml .= "		<flgerlog>1</flgerlog>";
-$xml .= "		<vlparepr>".$vlparepr."</vlparepr>";
-$xml .= "		<vliofepr>".$vliofepr."</vliofepr>";
+$xml .= "		<vlparepr>".str_replace(",", ".",str_replace(".","",$vlparepr))."</vlparepr>";
+$xml .= "		<vliofepr>".str_replace(",", ".",str_replace(".","",$vliofepr))."</vliofepr>";
+$xml.= "		<vlcapint>0</vlcapint>";
+$xml.= "        <tpgarope></tpgarope>"; 
 $xml.= "	</Dados>";
 $xml.= "</Root>";
 
@@ -100,17 +152,24 @@ $nrgravad = getByTagName($xmlObj->roottag->tags,'NRGRAVAD');
 //$txcetano = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
 $txcetano = getByTagName($xmlObj->roottag->tags,'TXCETANO');
 
+
 //$vliofepr = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
 //$vlrtarif = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
 //$vlrtotal = $xmlObj->roottag->tags[0]->attributes['TXCETANO'];
-$vliofepr = '0';
-$vlrtarif = '0';
-$vlrtotal = '0';
-
-echo "$('#percetop','#frmSimulacao').val('" . $txcetano . "');";
+//$vliofepr = '0';
+//$vlrtarif = '0';
+//$vlrtotal = '0';
+/*
+if ($vlrcet == ''){
+	echo "$('#percetop','#frmSimulacao').val('" . $txcetano . "');";
+}else{
+	echo "$('#percetop','#frmSimulacao').val('" . $vlrcet . "');";
+}
 echo "$('#vliofepr','#frmSimulacao').val('" . $vliofepr . "');";
 echo "$('#vlrtarif','#frmSimulacao').val('" . $vlrtarif . "');";
 echo "$('#vlrtotal','#frmSimulacao').val('" . $vlrtotal . "');";
+*/
+//echo "cttc('".$vliofepr."');";
 
 if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
     echo 'hideMsgAguardo();';
@@ -123,4 +182,6 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
         echo "mostraTabelaSimulacao('TS');";
     }
 }
+
+
 ?>

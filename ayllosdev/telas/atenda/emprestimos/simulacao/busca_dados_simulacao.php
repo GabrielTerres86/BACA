@@ -18,6 +18,7 @@ require_once('../../../../includes/config.php');
 require_once('../../../../includes/funcoes.php');
 require_once('../../../../includes/controla_secao.php');
 require_once('../../../../class/xmlfile.php');
+require_once('../wssoa.php');
 isPostMethod();
 
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], 'C')) <> '') {
@@ -26,6 +27,8 @@ if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], 'C'
 
 $vlpreemp = 0;
 $vliofepr = 0;
+$percetop = 0;
+$jurosAnual = '';
 
 // Guardo os parâmetos do POST em variáveis	
 $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
@@ -54,20 +57,73 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
     echo 'showError("error","' . $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata . '","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 } else {
     $dados_simulacao = $xmlObj->roottag->tags;
+	$vlpreemp = getByTagName($dados_simulacao[0]->tags, 'vlparepr');
+    $vliofepr = getByTagName($dados_simulacao[0]->tags, 'vliofepr'); 
+	$percetop = getByTagName($dados_simulacao[0]->tags, 'percetop');
+	$dtdpagto = getByTagName($dados_simulacao[0]->tags, 'dtdpagto');
+	$cdlcremp = getByTagName($dados_simulacao[0]->tags, 'cdlcremp');
+	$vlemprst = getByTagName($dados_simulacao[0]->tags, 'vlemprst');
+	$idfiniof = getByTagName($dados_simulacao[0]->tags, 'idfiniof');
+	$qtparepr = getByTagName($dados_simulacao[0]->tags, 'qtparepr');
     if ($operacao == "GPR" || $operacao == "TI") {
-		
-		$vlpreemp = getByTagName($dados_simulacao[0]->tags, 'vlpreemp');
-        $vliofepr = getByTagName($dados_simulacao[0]->tags, 'vliofepr');        		
 		$retorno = "";				
-		if (getByTagName($dados_simulacao[0]->tags, 'cdmodali') == 2 && getByTagName($dados_simulacao[0]->tags, 'cdsubmod') == 2 && getByTagName($dados_simulacao[0]->tags, 'tpmodcon') > 0 ){
-			$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis&vlparepr=50&vliofepr=2');	
-			$obj = json_decode($raw_data); 	
-			if (isset ($obj->vlparepr)){
-				$vlpreemp = $obj->vlparepr;
-				$vliofepr = $obj->vliofepr;	
-			}					
+		if (getByTagName($dados_simulacao[0]->tags, 'cdmodali') == 2 && getByTagName($dados_simulacao[0]->tags, 'cdsubmod') == 2 && getByTagName($dados_simulacao[0]->tags, 'tpmodcon') > 0 ){				
+			//Busca XML BD converte em json e comunica com a FIS	
+			$xml  = '';
+			$xml .= '<Root>';
+			$xml .= '	<dto>';
+			$xml .= '       <cdlcremp>'.$cdlcremp.'</cdlcremp>';
+			$xml .= '       <vlemprst>'.$vlemprst.'</vlemprst>';
+			$xml .= '       <nrdconta>'.$nrdconta.'</nrdconta>';
+			$xml .= '       <fintaxas>'.$idfiniof.'</fintaxas>';
+			$xml .= '       <quantidadeparcelas>'.$qtparepr.'</quantidadeparcelas>';
+			$xml .= '       <dataprimeiraparcela>'.$dtdpagto.'</dataprimeiraparcela>';
+			$xml .= '	</dto>';
+			$xml .= '</Root>';
+			
+			$xmlResult = mensageria(
+				$xml,
+				"TELA_ATENDA_SIMULACAO",
+				"SIMULA_BUSCA_DADOS_CALC_FIS",
+				$glbvars["cdcooper"],
+				$glbvars["cdagenci"],
+				$glbvars["nrdcaixa"],
+				$glbvars["idorigem"],
+				$glbvars["cdoperad"],
+				"</Root>");
+
+			$xmlObj = getObjectXML($xmlResult);
+
+			if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
+				gravaLog("Erro gerando o xml com dados.",$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,$nrdconta,$glbvars,'','');
+			}else{	
+				$xml = simplexml_load_string($xmlResult);
+				$json = json_encode($xml);
+				//echo "cttc('".$json."');";
+				$rs = chamaServico($json,$Url_SOA, $Auth_SOA);
+				//echo "cttc('".$rs."');";
+				
+				if (isset($rs->msg)){
+					gravaLog("Retorno erro tratado pela fis.",$rs->msg,$nrdconta,$glbvars,$json,$rs);				
+				}else if (isset($rs->errorMessage)){
+					gravaLog("Retorno erro nao tratado pela fis.",$rs->errorMessage,$nrdconta,$glbvars,$json,$rs);					
+				}			
+				else if (isset($rs->parcela->valor) && isset($rs->sistemaTransacao->dataHoraRetorno)){
+					if ($rs->parcela->valor > 0 && $rs->sistemaTransacao->dataHoraRetorno != ""){
+						$vlpreemp = str_replace(".", ",",$rs->parcela->valor);
+						echo "cttc('".$vlpreemp."');";
+						$vliofepr = str_replace(".", ",",$rs->credito->tributoIOFValor);
+						$percetop = str_replace(".", ",",$rs->credito->CETPercentAoAno);	
+						$jurosAnual = str_replace(".", ",",$rs->credito->taxaJurosRemuneratoriosAnual);
+					}else{
+						gravaLog("Retorno erro nao tratado pela fis.","valores de retorno em branco",$nrdconta,$glbvars,$json,$rs);
+					}
+				}
+				
+			}
+			
+			
 		}	
-	
 		
         $retorno .= '$("#tpemprst","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'tpemprst') . '");
         			$("#vlemprst","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'vlemprst') . '");
@@ -82,7 +138,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 					$("#dtdpagto","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'dtdpagto') . '");
 					$("#cdfinemp","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'cdfinemp') . '");
 					$("#dsfinemp","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'dsfinemp') . '");
-					$("#percetop","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'percetop') . '");
+					$("#percetop","#frmNovaProp").val("' . $percetop . '");
 					$("#idfiniof","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'idfiniof') . '");
                     $("#idcarenc","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'idcarenc') . '");
                     $("#dtcarenc","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'dtcarenc') . '");
@@ -99,6 +155,11 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
         if ($idfiniof == ""){
             $idfiniof = "1";
         }
+		
+		$vlpreemp = getByTagName($dados_simulacao[0]->tags, 'vlpreemp');
+        $vliofepr = getByTagName($dados_simulacao[0]->tags, 'vliofepr');        		
+		
+		
         $retorno = '$("#tpemprst","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'tpemprst') . '");
         			$("#vlemprst","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vlemprst') . '");
 					$("#qtparepr","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'qtparepr') . '");
@@ -106,7 +167,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 					$("#dtlibera","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dtlibera') . '");
 					$("#dtdpagto","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dtdpagto') . '");
 					$("#dslcremp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dslcremp') . '");
-					$("#percetop","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'percetop') . '");
+					$("#percetop","#frmSimulacao").val("' . $percetop . '");
 					$("#cdfinemp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'cdfinemp') . '");
                     $("#idcarenc","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'idcarenc') . '");
                     $("#dtcarenc","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dtcarenc') . '");
