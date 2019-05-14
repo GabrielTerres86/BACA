@@ -22710,7 +22710,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
    Objetivo  : Rotina para manipular lote de resgate de aplicacoes de maneira autonoma
 
-   Alteracoes: 
+   Alteracoes: 26/04/2019 - Implementado controle para não gerar lock na tabela craplot.
+                            (PRB0041533 - Andre - MoutS)
                 
   .......................................................................................*/
 
@@ -22727,35 +22728,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                   ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descrição do erro   
   	 
      -- Pragma - abre nova sessao para tratar a atualizacao
-     PRAGMA AUTONOMOUS_TRANSACTION;                                
+     PRAGMA AUTONOMOUS_TRANSACTION;  
+     
+     -- Cursor para buscar lote
+     CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
+                      ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
+                      ,pr_cdagenci IN craplot.cdagenci%TYPE
+                      ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                      ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
+    SELECT lot.ROWID
+      FROM craplot lot
+     WHERE lot.cdcooper = pr_cdcooper
+       AND lot.dtmvtolt = pr_dtmvtolt
+       AND lot.cdagenci = pr_cdagenci
+       AND lot.cdbccxlt = pr_cdbccxlt
+       AND lot.nrdolote = pr_nrdolote
+    FOR UPDATE NOWAIT;
+    rw_craplot cr_craplot%ROWTYPE;                              
 
   BEGIN
     DECLARE     
       -- Descrição e código da critica
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
+      -- Variavel exceção
+      vr_exc_erro EXCEPTION;
       
       BEGIN    
-        -- Mensagem de erro de update
-        vr_dscritic := 'atualizar CRAPLOT';      
-        
-        -- Atualizar capa dos lotes
-        UPDATE craplot 
-           SET craplot.nrseqdig = NVL(craplot.nrseqdig,0) + 1
-             , craplot.qtcompln = NVL(craplot.qtcompln,0) + 1
-             , craplot.qtinfoln = NVL(craplot.qtinfoln,0) + 1
-             , craplot.vlcompdb = NVL(craplot.vlcompdb,0) + pr_vlresgat
-             , craplot.vlinfodb = NVL(craplot.vlinfodb,0) + pr_vlresgat
-         WHERE craplot.cdcooper = pr_cdcooper
-           AND craplot.dtmvtolt = pr_dtmvtolt
-           AND craplot.cdagenci = 99
-           AND craplot.cdbccxlt = 400
-           AND craplot.nrdolote = 999
-        RETURNING nrseqdig INTO pr_nrseqdig;
 
-        -- Se não alterar nenhum registro
-        IF SQL%ROWCOUNT = 0 THEN
+        vr_gbl_tentativa := 0;
+        vr_gbl_achou_registro := 0;
+        
+        /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
+        WHILE vr_gbl_achou_registro = 0 AND vr_gbl_tentativa < vr_gbl_total_vezes LOOP  
+          BEGIN 
+            vr_gbl_tentativa := vr_gbl_tentativa+1;      
+         
+            --Buscar o lote
+            OPEN cr_craplot(pr_cdcooper         
+                           ,pr_dtmvtolt
+                           ,99
+                           ,400
+                           ,999);
+        
+            FETCH cr_craplot INTO rw_craplot;
+		  
+            vr_gbl_achou_registro := 1; --condicao de saida
+           
+          -- Gerar erro caso não encontre
+          EXCEPTION 
+            WHEN OTHERS THEN 
+              pr_trata_erro(vr_gbl_tentativa,SQLCODE,'craplot',vr_dscritic, $$plsql_unit, $$plsql_line); 
+              IF vr_dscritic IS NOT NULL THEN 
+                RAISE vr_exc_erro; 
+              END IF;              
+          END; 
+        END LOOP; 
               
+        IF cr_craplot%NOTFOUND THEN
           -- Mensagem de erro de insert
           vr_dscritic := 'inserir CRAPLOT';
             
@@ -22793,14 +22823,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              ,pr_cdoperad    -- cdoperad
                              ,pr_cdcooper)   -- cdcooper
           RETURNING nrseqdig INTO pr_nrseqdig;
-
-        END IF;
+          
+        ELSE
+          -- Mensagem de erro de update
+          vr_dscritic := 'atualizar CRAPLOT';  
+                  
+          -- Atualizar capa dos lotes
+          UPDATE craplot 
+             SET craplot.nrseqdig = NVL(craplot.nrseqdig,0) + 1
+               , craplot.qtcompln = NVL(craplot.qtcompln,0) + 1
+               , craplot.qtinfoln = NVL(craplot.qtinfoln,0) + 1
+               , craplot.vlcompdb = NVL(craplot.vlcompdb,0) + pr_vlresgat
+               , craplot.vlinfodb = NVL(craplot.vlinfodb,0) + pr_vlresgat
+           WHERE craplot.cdcooper = pr_cdcooper
+             AND craplot.dtmvtolt = pr_dtmvtolt
+             AND craplot.cdagenci = 99
+             AND craplot.cdbccxlt = 400
+             AND craplot.nrdolote = 999
+          RETURNING nrseqdig INTO pr_nrseqdig;
+      END IF;  
+	  
+      IF cr_craplot%ISOPEN THEN
+        CLOSE cr_craplot;
+      END IF;
 
       COMMIT;  
       pr_des_reto := 'OK';
 	        
       EXCEPTION
-        WHEN OTHERS THEN
+	    WHEN vr_exc_erro THEN
+          pr_des_reto := 'NOK';   
+          pr_cdcritic := nvl(vr_cdcritic,0);
+          pr_dscritic := vr_dscritic;		  
+
+	    WHEN OTHERS THEN
           pr_des_reto := 'NOK';        
           --Monta critica
           pr_cdcritic := 0;
