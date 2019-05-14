@@ -751,9 +751,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
                              ,pr_dsdadant => NULL
                              ,pr_dsdadatu => to_char(vr_dtinicio_vigencia,'DD/MM/RRRR'));
 
-    -- Efetua commit
-    COMMIT;
-
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Retorno não OK
@@ -764,14 +761,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
       END IF;
 			
 			pr_dscritic := vr_dscritic;
-			ROLLBACK;
-
     WHEN OTHERS THEN
       -- Retorno não OK
       pr_des_erro := 'NOK';
       -- Erro
       pr_dscritic := 'Erro na PCPS0001.PC_INCLUIR_PACOTE_SALARIO: ' || SQLERRM;
-			ROLLBACK;
 
   END pc_incluir_pacote_salario;
 	
