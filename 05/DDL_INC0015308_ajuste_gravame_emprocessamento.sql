@@ -353,6 +353,7 @@ begin
 
 
 --VIACREDI
+--Parte 1
   update crapbpr c
      set c.cdsitgrv = 3
    where c.cdcooper = 1
@@ -1356,7 +1357,14 @@ begin
 1664559,
 1000676,
 1001066,
-1001434,
+1001434
+);
+
+--Parte 2
+  update crapbpr c
+     set c.cdsitgrv = 3
+   where c.cdcooper = 1
+     and c.progress_recid in (
 1001493,
 1729181,
 1003269,
@@ -2356,7 +2364,14 @@ begin
 1122527,
 1122542,
 1122561,
-1122569,
+1122569
+);
+
+--Parte 3
+  update crapbpr c
+     set c.cdsitgrv = 3
+   where c.cdcooper = 1
+     and c.progress_recid in (
 1122576,
 1122587,
 1122588,
@@ -3356,7 +3371,14 @@ begin
 1145986,
 1145994,
 1146034,
-1146035,
+1146035
+);
+
+--Parte 4
+  update crapbpr c
+     set c.cdsitgrv = 3
+   where c.cdcooper = 1
+     and c.progress_recid in (
 1146065,
 1146128,
 1814843,
@@ -3467,7 +3489,9 @@ begin
 1151707,
 1152479
 );
+
  
+--Parte 1
   update crapgrv c
    set c.dtretgrv = trunc(sysdate)
    where c.cdcooper = 1
@@ -4471,7 +4495,16 @@ begin
 4720385,
 4720386,
 4720387,
-4720388,
+4720388
+)
+   and c.dtretgrv is null;   
+
+
+--Parte 2
+  update crapgrv c
+   set c.dtretgrv = trunc(sysdate)
+   where c.cdcooper = 1
+   and c.progress_recid in (
 4720389,
 4720390,
 4720391,
@@ -5471,7 +5504,16 @@ begin
 4721377,
 4721378,
 4721379,
-4721380,
+4721380
+)
+   and c.dtretgrv is null;   
+
+
+--Parte 3
+  update crapgrv c
+   set c.dtretgrv = trunc(sysdate)
+   where c.cdcooper = 1
+   and c.progress_recid in (
 4721381,
 4721382,
 4721383,
@@ -6471,7 +6513,16 @@ begin
 4722324,
 4722325,
 4722326,
-4722327,
+4722327
+)
+   and c.dtretgrv is null;   
+
+
+--Parte 4
+  update crapgrv c
+   set c.dtretgrv = trunc(sysdate)
+   where c.cdcooper = 1
+   and c.progress_recid in (
 4722328,
 4722329,
 4722330,
