@@ -5144,6 +5144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
               crapass
         where craplim.cdcooper = pr_cdcooper
           and craplim.nrdconta = pr_nrdconta
+          and craplim.tpctrlim = 1 -- Apenas limites de crédito
           and craplim.insitlim in (1, 2) 
           and CRAPLRT.cdcooper = craplim.cdcooper
           and CRAPLRT.Cddlinha = craplim.cddlinha
