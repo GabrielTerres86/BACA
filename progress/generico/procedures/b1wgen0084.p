@@ -4360,9 +4360,8 @@ PROCEDURE grava_efetivacao_proposta:
 
 
        /* CESSAO DE CARTAO - sempre sera 5-Cessao Cartao */
-       IF  crawepr.cdlcremp = 6901
-       AND crawepr.cdfinemp = 69 THEN
-         ASSIGN aux_idquapro = 5.
+       IF  aux_flgcescr THEN
+           ASSIGN aux_idquapro = 5.
            
        /* Requalifica a operacao na proposta                 */
        /* INICIO                                             */       
