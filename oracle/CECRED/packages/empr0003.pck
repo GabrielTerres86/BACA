@@ -2438,11 +2438,6 @@ BEGIN
       vr_cdusolcr NUMBER := 0;                -- Uso linha de credito
       vr_vlfinanc NUMBER := 0;
       vr_cdfvlcop crapfco.cdfvlcop%TYPE;
-      --
-      vr_info_propri1    varchar2(100);
-      vr_info_propri2    varchar2(100);
-      vr_info_propri3    varchar2(2000);
-      vr_tag_propri_tmp  varchar2(2000);      
       
     BEGIN
       -- Abre o cursor com as informacoes da cooperativa
@@ -2745,18 +2740,6 @@ BEGIN
         gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, '<bens>');
         WHILE vr_des_chave IS NOT NULL LOOP  -- varre temp table de bens
           -- Gera xml para cada bem encontrado
-
-          --Bug 14490
-          vr_tag_propri_tmp := vr_tab_bens(vr_des_chave).proprietario;
-          vr_info_propri1 := Substr(VR_TAG_PROPRI_TMP,1,Instr(Substr(VR_TAG_PROPRI_TMP,1,85),' ', -1));
-          
-          vr_info_propri2 := Substr(vr_tag_propri_tmp,length(vr_info_propri1) + 1,
-                                    Instr(
-                                       Substr(vr_tag_propri_tmp,length(vr_info_propri1) + 1 ,85),
-                                    ' ', -1));
-          
-          vr_info_propri3 := Trim(substr(vr_tag_propri_tmp,length(vr_info_propri2) + length(vr_info_propri1)));
-          --
           
           gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
                                   '<bem>'              ||
@@ -2768,11 +2751,9 @@ BEGIN
                                   '  <cor>'            || vr_tab_bens(vr_des_chave).dscorbem                     	   || '</cor>'            ||
                                   '  <dsbem>'          || 'Descrição do bem: ' || vr_tab_bens(vr_des_chave).dscatbem || ' '                 ||
                                                            vr_tab_bens(vr_des_chave).dsbem                           || '</dsbem>'          ||
-                                  --Bug 14490
-                                  '  <proprietario>'   || vr_info_propri1                                            || '</proprietario>'   ||
-                                  '  <dados_pessoais>' || vr_info_propri2                                            || '</dados_pessoais>' ||
-                                  '  <endereco>'      || vr_info_propri3                                            || '</endereco>'       ||
-                                  --
+                                  '  <proprietario>'   || vr_tab_bens(vr_des_chave).proprietario                     || '</proprietario>'   ||
+                                  '  <dados_pessoais>' || vr_tab_bens(vr_des_chave).dados_pessoais                    || '</dados_pessoais>' ||
+                                  '  <endereco>'       || vr_tab_bens(vr_des_chave).endereco                         || '</endereco>'       ||
                                   '  <conjuge>'        || vr_tab_bens(vr_des_chave).conjuge                          || '</conjuge>'        ||
                                   '  <avaliacao>'      || 'Avaliação: R$ '||to_char(vr_tab_bens(vr_des_chave).avaliacao,'FM999G999G999G990D00') || '</avaliacao>' ||
                                   '</bem>');
