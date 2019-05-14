@@ -1959,6 +1959,7 @@ function validaSelecao(linhaSelec,inprejuz){
 	
     if (inprejuz == 1) {
 		showError("inform","Conta em Prejuizo","Alerta - Aimaro","unblockBackground(); removeOpacidade('divTela');");
+		$(linhaSelec).prop( "checked", false );
 	}
 
     $('input:checkbox:checked', '#tabDevoluConta').each(function() {
