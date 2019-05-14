@@ -573,6 +573,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                25/01/2018 - P510 - Ajustes na pc_gps_pagamento para receber o tipo Especie ou COnta e 
                             propagar para a gravacao na LGP passando por pc_gps_validar_sicredi, pc_gps_arrecadar_sicredi
                             e pc_atualiza_pagamento (Marcos-Envolti)      
+
+			   14/05/2019 - INC0015051 - Ajustada e padronizada mensagem de retorno quando uma guia de SEFAZ DARE for inserida nos campos de tributos 
+                            indevidamente.
+                            (f0032175 - Guilherme Kuhnen).
 							
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -7886,7 +7890,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               IF pr_flmobile = 1 THEN
               pr_dscritic := 'Convênio deve ser pago na opção ''Pagamentos - Boletos e Convênios''';
               ELSE
-                pr_dscritic := 'Convênio deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços.';
+                pr_dscritic := 'Convênio deve ser pago na opção ''Pagamentos - Boletos Diversos'' do menu de serviços.'; --INC0015051
               END IF;
               RAISE vr_exc_saida;
             END IF;
