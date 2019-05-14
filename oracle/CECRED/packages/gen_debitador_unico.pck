@@ -137,7 +137,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
   --  Frequência: Conforme chamada
   --  Objetivo  : Empacotar as rotinas referente ao Debitador Único
   --
-  --  Alterações:
+  --  Alterações:  09/05/2019 - Forçar execução da ultima execução 21:50 id -> 6
+  --               (INC0015007 - André - MoutS)
+  --
+  --               14/05/2019 - Ajuste para permitir selecionar execução emergencial da cooperativa selecionada
+  --               (PRB0041765 - André - MoutS)
   --
   -----------------------------------------------------------------------------------------------
 
@@ -595,7 +599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
       END IF;
     END IF; */
 
-    gen_debitador_unico.pc_verifica_ctrl_ult_execucao(pr_cdcooper        => NULL
+    gen_debitador_unico.pc_verifica_ctrl_ult_execucao(pr_cdcooper        => pr_cdcooper
                                                      ,pr_cdprocesso      => pr_cdprocesso
                                                      ,pr_flultexe        => vr_flultexe
                                                      ,pr_qtdexec         => vr_qtdexec
@@ -1649,24 +1653,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                           ,pr_tpexecuc => NULL
                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                           ,pr_idtiplog => 'O');
+                 
+      -- INC0015007 Se for a última execução 21:50 executar mesmo se tiver 
+      -- outro job executando.
+      IF  nvl(pr_idhora_processamento,0) <> 6 THEN
+        -- Verificar se há algun JOB do Debitador rodando para a Cooperativa
+        pc_verifica_job_running(pr_cdcooper             => pr_cdcooper
+                               ,pr_idhora_processamento => pr_idhora_processamento
+                               ,pr_job_name_running     => vr_job_name_running
+                               ,pr_start_date           => vr_start_date
+                               ,pr_ds_erro              => vr_dscritic);
+        -- Tratamento Erro
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_email;
+        END IF;
 
-      -- Verificar se há algun JOB do Debitador rodando para a Cooperativa
-      pc_verifica_job_running(pr_cdcooper             => pr_cdcooper
-                             ,pr_idhora_processamento => pr_idhora_processamento
-                             ,pr_job_name_running     => vr_job_name_running
-                             ,pr_start_date           => vr_start_date
-                             ,pr_ds_erro              => vr_dscritic);
-      -- Tratamento Erro
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_email;
+        -- Se a há algun JOB do Debitador rodando para a Cooperativa (Running)
+        IF vr_job_name_running IS NOT NULL THEN
+          vr_dscritic := 'Debitador Abortado em '||To_Char(SYSDATE,'dd/mm/rrrr hh24:mi')||' devido a existir um JOB ainda executando o Debitador: '||vr_job_name_running||' com Start em '||vr_start_date||'. (Cooperativa: '||pr_cdcooper||')';
+          RAISE vr_exc_email;
+        END IF;
       END IF;
-
-      -- Se a há algun JOB do Debitador rodando para a Cooperativa (Running)
-      IF vr_job_name_running IS NOT NULL THEN
-        vr_dscritic := 'Debitador Abortado em '||To_Char(SYSDATE,'dd/mm/rrrr hh24:mi')||' devido a existir um JOB ainda executando o Debitador: '||vr_job_name_running||' com Start em '||vr_start_date||'. (Cooperativa: '||pr_cdcooper||')';
-        RAISE vr_exc_email;
-      END IF;
-
       -- Log de ocorrência
       pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
                           ,pr_indexecu => 'Verificando se ja executou a integracao ABBC...'
