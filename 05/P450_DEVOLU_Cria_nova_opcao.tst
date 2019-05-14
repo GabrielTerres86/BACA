@@ -24,7 +24,7 @@ declare
 begin
 
 
-SIGLA_TELA := 'DEVOLU ';
+SIGLA_TELA := 'DEVOLU';
   --PARA CADA COOPERATIVA CADASTRADA
   FOR rw_crapcop IN cr_crapcop LOOP
     FOR rw_craptel IN cr_craptel (rw_crapcop.cdcooper) LOOP
