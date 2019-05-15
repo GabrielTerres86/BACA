@@ -32,49 +32,54 @@
  *                                            Não há solicitação de cartão Puro Crédito para PF. (Chamado 545667)
  *				  
  *				  012: [01/03/2017] Kelvin: Realizado ajuste para não desabilitar o campo "Nome da empresa" caso cooperado já tenha cartão. (SD 609533)
+ *
+ *                013: [18/03/2019] Anderson: Implementado tipo de envio do cartão (Supero)
+ *
+ *                014: [15/05/2019] Jefferson (MoutS): Inicialização da várialvel javascript flgdebit para corrigir travamento no CRM
  * --------------
  */
 
-	session_start();
-	require_once('../../../includes/config.php');
-	require_once('../../../includes/funcoes.php');
-	require_once('../../../includes/controla_secao.php');
-	require_once('../../../class/xmlfile.php');
-	isPostMethod();	
-	
-	$funcaoAposErro = 'bloqueiaFundo(divRotina);';
-	
+session_start();
+require_once('../../../includes/config.php');
+require_once('../../../includes/funcoes.php');
+require_once('../../../includes/controla_secao.php');
+require_once('../../../class/xmlfile.php');
+isPostMethod();
+
+$funcaoAposErro = 'bloqueiaFundo(divRotina);';
+
 	// Verifica permissão
 /*	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro,false);
-	}	
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro,false);
+	}
 */	
 	// Verifica se os parâmetros necessários foram informados
-	if (!isset($_POST["nrdconta"]) || !isset($_POST["cdadmcrd"]) || !isset($_POST["nrcpfcgc"])) {
-    exibirErro('error', 'Par&acirc;metros incorretos.', 'Alerta - Ayllos', $funcaoAposErro, false);
-	}	
+if (!isset($_POST["nrdconta"]) || !isset($_POST["cdadmcrd"]) || !isset($_POST["nrcpfcgc"])) {
+    exibirErro('error', 'Par&acirc;metros incorretos.', 'Alerta - Aimaro', $funcaoAposErro, false);
+}
 
-	$nrdconta = $_POST["nrdconta"];
-	$cdadmcrd = $_POST["cdadmcrd"];
-	$nrcpfcgc = $_POST["nrcpfcgc"];
-	$nmtitcrd = $_POST["nmtitcrd"];
-	$floutros = $_POST["floutros"];
+$nrdconta = $_POST["nrdconta"];
+$cdadmcrd = $_POST["cdadmcrd"];
+$nrcpfcgc = $_POST["nrcpfcgc"];
+$nmtitcrd = $_POST["nmtitcrd"];
+$floutros = $_POST["floutros"];
 $idastcjt = $_POST["idastcjt"];
 $glbadc = $_POST['glbadc'];
-	$inpessoa = $_POST["inpessoa"];
+$inpessoa = $_POST["inpessoa"];
+	$nrctrcrd = !empty($_POST["nrctrcrd"]) ? $_POST["nrctrcrd"] : 0;
 	
 	// Verifica se número da conta é um inteiro válido
-if (!validaInteiro($nrdconta)) exibirErro('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Ayllos', $funcaoAposErro, false);
-if (!validaInteiro($cdadmcrd)) exibirErro('error', 'Administradora de Cart&atilde;o inv&aacute;lida.', 'Alerta - Ayllos', $funcaoAposErro, false);
+if (!validaInteiro($nrdconta)) exibirErro('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Aimaro', $funcaoAposErro, false);
+if (!validaInteiro($cdadmcrd)) exibirErro('error', 'Administradora de Cart&atilde;o inv&aacute;lida.', 'Alerta - Aimaro', $funcaoAposErro, false);
 	
     // Monta o xml de requisição
 $xmlSetCartao = "";
-	$xmlSetCartao .= "<Root>";
-	$xmlSetCartao .= "	<Cabecalho>";
-	$xmlSetCartao .= "		<Bo>b1wgen0028.p</Bo>";
-	$xmlSetCartao .= "		<Proc>valida_dados_cartao</Proc>";
-	$xmlSetCartao .= "	</Cabecalho>";
-	$xmlSetCartao .= "	<Dados>";
+$xmlSetCartao .= "<Root>";
+$xmlSetCartao .= "	<Cabecalho>";
+$xmlSetCartao .= "		<Bo>b1wgen0028.p</Bo>";
+$xmlSetCartao .= "		<Proc>valida_dados_cartao</Proc>";
+$xmlSetCartao .= "	</Cabecalho>";
+$xmlSetCartao .= "	<Dados>";
 $xmlSetCartao .= "		<cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
 $xmlSetCartao .= "		<cdagenci>" . $glbvars["cdagenci"] . "</cdagenci>";
 $xmlSetCartao .= "		<nrdcaixa>" . $glbvars["nrdcaixa"] . "</nrdcaixa>";
@@ -87,187 +92,214 @@ $xmlSetCartao .= "		<cdadmcrd>" . $cdadmcrd . "</cdadmcrd>";
 $xmlSetCartao .= "		<nmtitcrd>" . $nmtitcrd . "</nmtitcrd>";
 $xmlSetCartao .= "		<nrcpfcgc>" . $nrcpfcgc . "</nrcpfcgc>";
 $xmlSetCartao .= "		<inpessoa>" . $inpessoa . "</inpessoa>";
-	$xmlSetCartao .= "	</Dados>";
-	$xmlSetCartao .= "</Root>";
+$xmlSetCartao .= "	</Dados>";
+$xmlSetCartao .= "</Root>";
 
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlSetCartao);
+// Executa script para envio do XML
+$xmlResult = getDataXML($xmlSetCartao);
 
-    // Cria objeto para classe de tratamento de XML
-	$xmlObjCartao = getObjectXML($xmlResult);
+// Cria objeto para classe de tratamento de XML
+$xmlObjCartao = getObjectXML($xmlResult);
 	
+$flgTitular = false;
+if ($nrctrcrd > 0 && $cdadmcrd > 0) {
+    $xml  = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+    $xml .= "   <cdadmcrd>".$cdadmcrd."</cdadmcrd>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+    $xmlResult = mensageria($xml, "ATENDA_CRD", "BUSCA_DADOS_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObject = getObjectXML($xmlResult);
+
+    $flgTitular = getByTagName($xmlObject->roottag->tags[0]->tags, "FLGTITULAR");
+}
+
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
-		$msgErro = $xmlObjCartao->roottag->tags[0]->cdata;
-		$msgErro = $msgErro == null || $msgErro == '' ? $xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata : $msgErro;
-    echo 'showError("error","' . $msgErro . '","Alerta - Ayllos","voltaDiv(0,1,5); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
+if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
+    $msgErro = $xmlObjCartao->roottag->tags[0]->cdata;
+    $msgErro = $msgErro == null || $msgErro == '' ? $xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata : $msgErro;
+    echo 'showError("error","' . $msgErro . '","Alerta - Aimaro","voltaDiv(0,1,5); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
 } else {
-		//Caso consulta retorne dados
-		$dddebito = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[0]->cdata;
-		$dddebito = str_pad($dddebito, 2, "0", STR_PAD_LEFT);  // Preencher com zeros a esquerda ( Renato - Supero - 23/09/2014)
-		$vllimcrd = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[1]->cdata;
-		$tpenvcrd = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[2]->cdata;
-		$tpdpagto = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[3]->cdata;
-		
-		$nmempres = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		// Identifica se o cartao possui a opcao debito habilitada
-		$flgdebit = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[5]->cdata;
-		
-		echo 'bloqueiaFundo(divRotina);';
-		
+    //Caso consulta retorne dados
+    $dddebito = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[0]->cdata;
+    $dddebito = str_pad($dddebito, 2, "0", STR_PAD_LEFT);  // Preencher com zeros a esquerda ( Renato - Supero - 23/09/2014)
+    $vllimcrd = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[1]->cdata;
+    $tpenvcrd = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[2]->cdata;
+    $tpdpagto = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[3]->cdata;
+
+    $nmempres = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata;
+    // Identifica se o cartao possui a opcao debito habilitada
+    $flgdebit = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[5]->cdata;
+
+
+    echo 'bloqueiaFundo(divRotina);';
+
     if ($inpessoa == 1) {
 
-			//chw+
-        if ($vllimcrd <> 0) {
-				echo "$('#vllimpro').desabilitaCampo();";
-			}	
-		
-        if ($tpdpagto == 0 && $cdadmcrd != 15) {
-				echo '$("#tpdpagto","#frmNovoCartao").val(0);';
-        } else if ($tpdpagto == 1) {
-				echo '$("#tpdpagto","#frmNovoCartao").val(1);';
-        } else if ($tpdpagto == 2) {
-				echo '$("#tpdpagto","#frmNovoCartao").val(2);';
-        } else {
-				echo '$("#tpdpagto","#frmNovoCartao").val(3);';
-			}
-			
-			/*Como foi removido a opcao cooperado no campo Envio
-			  neste momento, forcamos o valor 1 ("Cooperativa") no campo*/
-			echo '$("#tpenvcrd","#frmNovoCartao").val(1);';
-			
-        echo '$("#dddebito","#frmNovoCartao").val("' . $dddebito . '");';
-			echo "$('#dddebito').attr('disabled', true);";
-			echo "$('#tpenvcrd').attr('disabled', true);";
-        if (!($cdadmcrd > 10 && cdadmcrd < 18))
-            echo "atualizaCampoLimiteProposto(new Array('" . formataMoeda($vllimcrd) . "'));";
-			
-			
-			echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
-			echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";			
-			/* comentar todo o trecho de codigo abaixo que trata o campo flgdebit para PF 
-			   pois esse campo para PF tem que vir sempre marcado nao permitindo alteracao - Fabricio - 01/11/2016 */
-			
-		/*	
-			//Administradora apenas débito (Maestro)
-			if ($cdadmcrd == 16 ||
-			    $cdadmcrd == 17) {
-				echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
-				echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
-			} 
-			else {
-				//Outros
-				if($floutros == 1) {
-					echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";	
-					echo "$('#flgdebit','#frmNovoCartao').attr('checked', false);";
-				} 
-				else {
-			// Habilitar o campo "Habilita Funcao de Debito"
-			echo "$('#flgdebit','#frmNovoCartao').habilitaCampo();";
-			// Verificar se retornou a funcao debito
-			if ($flgdebit != "") {
-				// Verfica se a esta habilitada no primeiro cartao
-				if (strtoupper($flgdebit) == "YES"){
-					// Marcar o campo no novo cartao
-					echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
-						} 
-						else {
-					// Desabilitar o campo para nao permitir alterar
-					echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
-					// Somente quando o primeiro cartao for SOMENTE CREDITO que a opção deve ficar desabilitada
-					echo "$('#flgdebit','#frmNovoCartao').attr('checked', false);";
-				}
-			}
-				}
-			}
-			*/
-		} else {
+        //chw+
+        if ($vllimcrd <> 0 && $nrctrcrd == 0) {
+            echo "$('#vllimpro').desabilitaCampo();";
+        }
 
-			if ($nmempres <> "") {
-			if($glbadc == 'n' || $cdadmcrd!="15")
+        if ($tpdpagto == 0 && $cdadmcrd != 15) {
+            echo '$("#tpdpagto","#frmNovoCartao").val(0);';
+        } else if ($tpdpagto == 1) {
+            echo '$("#tpdpagto","#frmNovoCartao").val(1);';
+        } else if ($tpdpagto == 2) {
+            echo '$("#tpdpagto","#frmNovoCartao").val(2);';
+        } else {
+            echo '$("#tpdpagto","#frmNovoCartao").val(3);';
+        }
+
+        echo '$("#tpenvcrd","#frmNovoCartao").val("'.$tpenvcrd.'");';
+        echo '$("#dddebito","#frmNovoCartao").val("'.$dddebito.'");';
+        echo "$('#dddebito').attr('disabled', true);";
+        echo "$('#tpenvcrd').attr('disabled', true);";
+        if (!($cdadmcrd > 10 && $cdadmcrd < 18))
+            echo "atualizaCampoLimiteProposto(new Array('" . formataMoeda($vllimcrd) . "'));";
+
+
+        echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
+        echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
+        /* comentar todo o trecho de codigo abaixo que trata o campo flgdebit para PF
+           pois esse campo para PF tem que vir sempre marcado nao permitindo alteracao - Fabricio - 01/11/2016 */
+
+        /*
+			//Administradora apenas débito (Maestro)
+            if ($cdadmcrd == 16 ||
+                $cdadmcrd == 17) {
+                echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
+                echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
+            }
+            else {
+                //Outros
+                if($floutros == 1) {
+                    echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
+                    echo "$('#flgdebit','#frmNovoCartao').attr('checked', false);";
+                }
+                else {
+            // Habilitar o campo "Habilita Funcao de Debito"
+            echo "$('#flgdebit','#frmNovoCartao').habilitaCampo();";
+            // Verificar se retornou a funcao debito
+            if ($flgdebit != "") {
+                // Verfica se a esta habilitada no primeiro cartao
+                if (strtoupper($flgdebit) == "YES"){
+                    // Marcar o campo no novo cartao
+                    echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
+                        }
+                        else {
+                    // Desabilitar o campo para nao permitir alterar
+                    echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
+					// Somente quando o primeiro cartao for SOMENTE CREDITO que a opção deve ficar desabilitada
+                    echo "$('#flgdebit','#frmNovoCartao').attr('checked', false);";
+                }
+            }
+                }
+            }
+            */
+    } else {
+
+        if ($nmempres <> "") {
+			if($glbadc == 'n' || $cdadmcrd!="15") {
 				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero			
-			else {
-				echo '$("#nmempres","#frmNovoCartao").val(nmEmpresPla);';
+			} else {
+				
+                echo 'if (trim(nmEmpresPla) != "") { $("#nmempres","#frmNovoCartao").val(nmEmpresPla); }';
+				echo 'if ($("#flgEditEmpPlas", "#frmNovoCartao").val() != "1"){';
 				echo "desativa('nmempres');/*$glbadc*/";
+				echo '}';
 			}
         }
 
+        // tratamento para considerar cartao adicional
         if ($vllimcrd <> 0) {
-					
+			// aqui e para ser adicional		
             if ($tpdpagto == 0 && $cdadmcrd != 15) {
-					echo '$("#tpdpagto","#frmNovoCartao").val("0");';
-            } else if ($tpdpagto == 1) {
-					echo '$("#tpdpagto","#frmNovoCartao").val("1");';
-            } else if ($tpdpagto == 2) {
-					echo '$("#tpdpagto","#frmNovoCartao").val("2");';
-            } else {
-					echo '$("#tpdpagto","#frmNovoCartao").val("3");';
-				}
-				
-				/*Como foi removido a opcao cooperado no campo Envio
-				  neste momento, forcamos o valor 1 ("Cooperativa") no campo*/
-				echo '$("#tpenvcrd","#frmNovoCartao").val(1);';
-				
-            echo '$("#dddebito","#frmNovoCartao").val("' . $dddebito . '");';
-			if($glbadc == 'n' || $cdadmcrd!="15")
-				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero
-			else{
-				echo '$("#nmempres","#frmNovoCartao").val(nmEmpresPla);'; //
-				echo "desativa('nmempres');/*$glbadc*/";
-			}
-
-				echo "$('#dddebito').attr('disabled', true);";
-            echo "desativa('vllimpro');";
-				echo "$('#tpenvcrd').attr('disabled', true);";
-				echo "$('#tpdpagto').attr('disabled', true);";
-            if (!($cdadmcrd > 10 && cdadmcrd < 18))
-                echo "atualizaCampoLimiteProposto(new Array('" . formataMoeda($vllimcrd) . "'));";
-		
-        } else {
-			
-				echo "$('#dddebito').attr('disabled', false);";				
-				echo "$('#tpenvcrd').attr('disabled', false);";
-            if ($cdadmcrd != 15) {
                 echo '$("#tpdpagto","#frmNovoCartao").val("0");';
-                echo "$('#tpdpagto').attr('disabled', false);";
+            } else if ($tpdpagto == 1) {
+                echo '$("#tpdpagto","#frmNovoCartao").val("1");';
+            } else if ($tpdpagto == 2) {
+                echo '$("#tpdpagto","#frmNovoCartao").val("2");';
             } else {
-				echo "$('#tpdpagto').attr('disabled', false);";
-                echo "$('#tpdpagto').val('1');";
-                echo "$('#tpdpagto').attr('disabled', true);";         
+                echo '$("#tpdpagto","#frmNovoCartao").val("3");';
             }
 
-			} 
+            echo '$("#tpenvcrd","#frmNovoCartao").val("'.$tpenvcrd.'");';
+
+            echo '$("#dddebito","#frmNovoCartao").val("' . $dddebito . '");';
+			if($glbadc == 'n' || $cdadmcrd!="15") {
+				echo '$("#nmempres","#frmNovoCartao").val("' . $nmempres . '");'; // Renato - Supero
+			}else{
+                echo 'if (trim(nmEmpresPla) != "") { $("#nmempres","#frmNovoCartao").val(nmEmpresPla); }';
+				echo 'if ($("#flgEditEmpPlas", "#frmNovoCartao").val() != "1"){';
+				echo "desativa('nmempres');/*$glbadc*/";
+				echo '}';
+				
+			}
+
+			if ($inpessoa == 1 || !$flgTitular) {
+			echo "$('#dddebito').attr('disabled', true);";
+            }
+
+			if (!$flgTitular) {
+            echo "desativa('vllimpro');";
+            echo "$('#tpdpagto').attr('disabled', true);";
+			}
+			echo "$('#tpenvcrd').attr('disabled', true);";
+            if (!($cdadmcrd > 10 && $cdadmcrd < 18)) {
+                echo "atualizaCampoLimiteProposto(new Array('" . formataMoeda($vllimcrd) . "'));";
+			}
+
+        } else {
+
+				//echo "$('#dddebito').attr('disabled', false);";				
+            echo "$('#tpenvcrd').attr('disabled', false);";
+            if ($cdadmcrd != 15) {
+                echo '$("#tpdpagto","#frmNovoCartao").val("1");';
+                echo "$('#tpdpagto').attr('disabled', true);";
+            } else {
+                echo "$('#tpdpagto').val('1');";
+				//if ($nrctrcrd == 0) {
+                //	echo "$('#tpdpagto').attr('disabled', true);";
+				//}
+            }
+
+        }
 
         //Administradora apenas d?bito (Maestro)
-			if ($cdadmcrd == 17) {
-				echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
-				echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
+        if ($cdadmcrd == 17) {
+            echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
+            echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
         } else {
-				//Outros
+            //Outros
             if ($floutros == 1) {
-					echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";	
-					echo "$('#flgdebit','#frmNovoCartao').attr('checked', false);";
+                echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
+                echo "$('#flgdebit','#frmNovoCartao').attr('checked', false);";
             } else {
-			// Habilitar o campo "Habilita Funcao de Debito"
-			echo "$('#flgdebit','#frmNovoCartao').habilitaCampo();";
-			// Verificar se retornou a funcao debito
-			if ($flgdebit != "") {
-				// Verfica se a esta habilitada no primeiro cartao
+                // Habilitar o campo "Habilita Funcao de Debito"
+                echo "$('#flgdebit','#frmNovoCartao').habilitaCampo();";
+                // Verificar se retornou a funcao debito
+                if ($flgdebit != "") {
+                    // Verfica se a esta habilitada no primeiro cartao
                     if (strtoupper($flgdebit) == "YES") {
-					// Marcar o campo no novo cartao
-					echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
+                        // Marcar o campo no novo cartao
+                        echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
                     } else {
-					// Desabilitar o campo para nao permitir alterar
-					echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
+                        // Desabilitar o campo para nao permitir alterar
+                        echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
                         // Somente quando o primeiro cartao for SOMENTE CREDITO que a op??o deve ficar desabilitada
-					echo "$('#flgdebit','#frmNovoCartao').attr('checked', false);";
-				}
+                        echo "$('#flgdebit','#frmNovoCartao').attr('checked', false);";
+                    }
                 }
             }
 			
             if ($cdadmcrd == 15 && $idastcjt != 1 && $floutros != 1) {
                 ?>
-                if(flgdebitp == 1 && idastcjt == 0 ){
+				var flgdebit = $('#flgdebit', '#frmNovoCartao').prop('checked');
+                if(flgdebit == 1 && idastcjt == 0 ){
                 //$('#flgdebit').removeAttr('disabled');
 				ativa("flgdebit");
                 $('#flgdebit').attr('checked',true);
@@ -286,11 +318,11 @@ $xmlSetCartao .= "		<inpessoa>" . $inpessoa . "</inpessoa>";
                 echo "\n desativa('flgdebit'); \n";
             } else if ($glbadc == 'n' &&  $idastcjt != 1) {
                 echo "ativa('flgdebit');";
-			}
+            }
 			if($glbadc !="n"){
 				echo ' desativa("dddebito");';
-		}
-	}
-		}
-	}
+			}
+        }
+    }
+}
 ?>
