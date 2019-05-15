@@ -8799,6 +8799,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                    15/05/2019 - Retirado a restrição de código de critica, com isso todas 
 							    as criticas saíram no relatório. Alcemir Mouts (PRB0041490).
+
+                   15/05/2019 - Incluido validação para quando a proposta é via WMS.
+					            Alcemir Mouts (PRB0041673).
     ............................................................................ */
 
     DECLARE
@@ -12225,7 +12228,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     IF (rw_crawcrd.nrcctitg = vr_nrdctitg AND              /* Mesma conta cartao */
                         rw_crawcrd.nrcrcard > 0 AND                        /* Numeracao de cartao preenchida */
                         vr_final_cartao_aimaro = vr_final_cartao_cabal AND /* Mesmo final de cartao */
-                        rw_crawcrd.insitcrd = 2                            /* Solicitado */ ) THEN
+                        ((rw_crawcrd.insitcrd = 2) or (SUBSTR(rw_crawcrd.nrcrcard,7,5) = '00000' AND rw_crawcrd.insitcrd = 1))) THEN    /* Solicitado ou Aprovado*/ 
+						 /*
+                          OR (SUBSTR(rw_crawcrd.nrcrcard,7,5) = '00000' AND rw_crawcrd.insitcrd = 1)
+                          
+                          Esta condição foi colocada devido ao arquivo vir com dois registros
+                          um com Nr. cartão zerado porem com crítica (rejeitado), fazendo com que o 
+                          campo insitcrd fosse atualizado de 2 - solicitado para 1 - aprovado.
+                          e outro com o Nr. cartão completo, onde não caia neste IF, pois o registro anterior que 
+                          foi rejeitado estava jogando o insitcrd para 1 - aprovado.
+                        */
                        vr_origemws := true;  
                     END IF;
                   EXCEPTION
