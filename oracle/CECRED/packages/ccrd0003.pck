@@ -8796,6 +8796,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 
                    30/04/2019 - Utilizar o vr_nrcctitg no lugar do rw_crawcrd.nrcctitg 
                                 no insert do crawcrd da segunda via dos cartões (Lucas Ranghetti PRB0041609)
+
+                   15/05/2019 - Retirado a restrição de código de critica, com isso todas 
+							    as criticas saíram no relatório. Alcemir Mouts (PRB0041490).
     ............................................................................ */
 
     DECLARE
@@ -9001,10 +9004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   crc.cdcodigo = rej.cdcritic
               
          
-        WHERE rej.dshistor = 'CCR3'
-          AND (rej.cdcritic > 10 
-          AND rej.cdcritic < 900  
-           OR rej.cdcritic = 999)
+        WHERE rej.dshistor = 'CCR3'        
           AND rej.dtmvtolt = pr_dtmvtolt
           AND rej.cdcooper = pr_cdcooper                  
                   
