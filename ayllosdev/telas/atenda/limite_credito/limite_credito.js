@@ -47,7 +47,8 @@
  * 028: [13/04/2018] Lombardi  (CECRED)  : Inluidas funcoes validaAdesaoValorProduto e senhaCoordenador. PRJ366 (Lombardi).
  * 029: [27/06/2018] Christian Grosch (CECRED): Ajustes JS para execução do Ayllos em modo embarcado no CRM.
  * 030: [09/10/2018] Marco Antonio Rodrigues Amorim(Mout's) : Remove ponto do usuario e substitui virgula da casa decimal por ponto.
- */
+ * 031: [27/11/2018] Bruno Luiz Katzjarowski (Mout's): Criação da nova tela principal (nova rotina acessaTela) 
+*/
  
 var callafterLimiteCred = '';
 var nrctrimp = '0';  // Variável para armazenar código do contrato para impressão
@@ -84,10 +85,16 @@ var arrayRatingSingulares = new Array();
 $.getScript(UrlSite + 'includes/rating/rating.js');
 
 // Carrega biblioteca javascript referente aos AVALISTAS
-$.getScript(UrlSite + 'includes/avalistas/avalistas.js');	
+//$.getScript(UrlSite + 'includes/avalistas/avalistas.js');	
 
 // Carrega biblioteca javascript referente as CONSULTAS AUTOMATIZADAS
 $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
+
+// bruno - prj 438 - sprint 7 - rating
+$.getScript(UrlSite + "telas/atenda/limite_credito/js/tela_rating.js");
+
+// PRJ 438 - sprint 7 - Avalistas
+$.getScript(UrlSite + "telas/atenda/limite_credito/js/tela_avalistas.js");
 
 //bruno - prj 470 - tela autorizacao
 $.getScript(UrlSite + 'includes/autorizacao_contrato/autorizacao_contrato.js');
@@ -128,7 +135,230 @@ var var_globais = {
     inpessoa: '',
     nrdconta: '',
     nivrisco: '',
-    dsdtxfix: ''
+    dsdtxfix: '',
+    dtultmaj: '',
+    dtcanlim: ''
+}
+
+//bruno - prj - 438 - sprint 7 - tela principal
+//guardar dados vindos da proc de consulta para ativo e pausado
+//atribuido em tabelas/tabela_tela_principal.php
+var aux_limites = {
+    ativo: {
+        dtpropos: "",
+        dtinivig: "",
+        nrctrlim: "",
+        vllimite: "",
+        txmensal: "",
+        dtfimvig: "",
+        dtrenova: "",
+        insitlim: "",
+        lfgsitua: "",
+        inpessoa: "",
+        qtdiavig: "",
+        cddlinha: "",
+        dsdlinha: "",
+        nivrisco: "",
+        dsdtxfix: "",
+        nrgarope: "",
+        nrinfcad: "",
+        nrliquid: "",
+        nrpatlvr: "",
+        nrperger: ""
+    },
+    pausado: {
+        dtpropos: "",
+        dtinivig: "",
+        nrctrlim: "",
+        vllimite: "",
+        txmensal: "",
+        dtfimvig: "",
+        dtrenova: "",
+        insitlim: "",
+        lfgsitua: "",
+        inpessoa: "",
+        qtdiavig: "",
+        cddlinha: "",
+        dsdlinha: "",
+        nivrisco: "",
+        dsdtxfix: "",
+        nrgarope: "",
+        nrinfcad: "",
+        nrliquid: "",
+        nrpatlvr: "",
+        nrperger: ""
+    }
+};
+
+//bruno - prj - 438 - sprint 7 - tela principal
+var aux_cddopcao = "";
+
+//bruno - prj - 438 - sprint 7 - tela ratong
+var aux_opcaoAtiva = "";
+
+// bruno - prj 438 - sprint 7 - demo limite credito
+$.getScript(UrlSite + "telas/atenda/limite_credito/js/tela_demo_limite_credito.js");
+
+var aux_nrctaav0 = '';
+var aux_nmdaval0 = '';
+var aux_nrcpfav0 = '';
+var aux_tpdocav0 = '';
+var aux_dsdocav0 = '';
+var aux_nmdcjav0 = '';
+var aux_cpfcjav0 = '';
+var aux_tdccjav0 = '';
+var aux_doccjav0 = '';
+var aux_ende1av0 = '';
+var aux_ende2av0 = '';
+var aux_nrfonav0 = '';
+var aux_emailav0 = '';
+var aux_nmcidav0 = '';
+var aux_cdufava0 = '';
+var aux_nrcepav0 = '';
+var aux_cdnacio0 = '';
+var aux_vledvmt0 = '';
+var aux_vlrenme0 = '';
+var aux_nrender0 = '';
+var aux_complen0 = '';
+var aux_nrcxaps0 = '';
+var aux_inpesso0 = '';
+var aux_dtnasct0 = '';
+var aux_vlrencj0 = '';
+
+var aux_nrctaav1 = '';
+var aux_nmdaval1 = '';
+var aux_nrcpfav1 = '';
+var aux_tpdocav1 = '';
+var aux_dsdocav1 = '';
+var aux_nmdcjav1 = '';
+var aux_cpfcjav1 = '';
+var aux_tdccjav1 = '';
+var aux_doccjav1 = '';
+var aux_ende1av1 = '';
+var aux_ende2av1 = '';
+var aux_nrfonav1 = '';
+var aux_emailav1 = '';
+var aux_nmcidav1 = '';
+var aux_cdufava1 = '';
+var aux_nrcepav1 = '';
+var aux_cdnacio1 = '';
+var aux_vledvmt1 = '';
+var aux_vlrenme1 = '';
+var aux_nrender1 = '';
+var aux_complen1 = '';
+var aux_nrcxaps1 = '';
+var aux_inpesso1 = '';
+var aux_dtnasct1 = '';
+var aux_vlrecjg1 = '';
+
+// PRJ 438
+var aux_dtmvtolt = '';
+
+/**
+ * bruno - prj - 438 - sprint 7 - tela principal
+ * Função para acessar opções da rotina
+ * @param {código da opção} cddopcao 
+ */
+function acessaTela(cddopcao) {
+
+    aux_cddopcao = cddopcao;
+
+    var flpropos;
+	
+	//Projeto CRM: Se for uma das situações não deve permitir acesso a inclusão.
+	if((sitaucaoDaContaCrm == '4' || 
+	    sitaucaoDaContaCrm == '7' || 
+	    sitaucaoDaContaCrm == '8' ) &&
+        (cddopcao == "N" || cddopcao == "N1")){
+	    showError('inform', 'Situa&ccedil;&atilde;o de conta n&atilde;o permite acesso34.', 'Alerta - Aimaro', 'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		return false;
+		
+    }
+
+    var msgAguarde = '';
+    var urlOperacao = UrlSite + "telas/atenda/limite_credito/";
+    
+    switch (cddopcao) {
+        case '@': //Opção principal
+            msgAguarde = ", carregando dados do " + strTitRotinaLC;
+            urlOperacao += "form_tela_principal.php"; //Bruno - prj - 438 - sprint 7 - tela principal
+            aux_opcaoAtiva = 'PRINCIPAL';
+            break;
+        case 'ALT':
+                mostraTelaAltera();
+                return false;
+            break;
+        case 'N': // Opção Novo Limite N ou N1
+        case 'N1':
+            msgAguarde = ", carregando op&ccedil;&atilde;o para novo " + strTitRotinaLC;
+            urlOperacao += "novo_limite.php";
+            nomeForm = 'frmNovoLimite';
+            flpropos = true;
+            cddopcao = "N";
+            break;
+        case 'U': // Opção Últimas Alterações
+            msgAguarde = ", carregando &uacute;ltimas altera&ccedil;&otilde;es do " + strTitRotinaLC;
+		    urlOperacao += "ultimas_alteracoes.php";
+            break;
+        case 'I': // Opção Imprimir		
+            msgAguarde = ", carregando op&ccedil;&atilde;o para impress&otilde;es";
+		    urlOperacao += "imprimir.php";
+            break;
+        case 'IA': //Opcao: Impressao com tela de autorizacao
+            chamarImpressaoLimiteCredito(false);
+            return false;
+            break;
+        case 'A': // Opção consulta limite ativo
+		    msgAguarde = ", carregando o limite ativo ";
+		    urlOperacao += "novo_limite.php";
+		    flpropos = false;
+            break;
+        case 'P': // Opcao consulta limite proposto
+		    msgAguarde = ", carregando o limite proposto ";
+		    urlOperacao += "novo_limite.php";
+		    flpropos = true;
+            break;
+        case 'E': // Opcao efetivar limite
+		    msgAguarde = ", carregando a efetiva&ccedil;&atilde;o ";
+		    urlOperacao += "form_efetivar.php";
+		    flpropos = true;
+            break;   
+        case 'R': // Opção renovar
+		    msgAguarde = ", carregando o limite ativo ";
+		    urlOperacao += "novo_limite.php";
+		    flpropos = false;
+            break; 
+    }
+		
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde" + msgAguarde + " ...");
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({
+		type: "POST", 
+		dataType: "html",
+		url: urlOperacao,
+		data: {
+			nrdconta: nrdconta,
+			cddopcao: cddopcao,
+            flpropos: flpropos,
+            inpessoa: var_globais.inpessoa, //bruno - prj 438 - sprint 7 - novo limite
+			inconfir: 1,
+			redirect: "html_ajax"
+		},		
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+        	if (response.indexOf('showError("error"') == -1) {
+				$("#divConteudoOpcao").html(response);
+				controlaFoco(cddopcao);
+			}else{
+				eval(response);
+			}
+		}				
+	});	
 }
 
 /*	Criar array de objetos com os dados do Rating - 004 */
@@ -187,7 +417,7 @@ function acessaOpcaoAba(nrOpcoes, id, cddopcao) {
 	
 	if (cddopcao == "@") {	// Opção Principal
 		var msg = ", carregando dados do " + strTitRotinaLC;
-		var urlOperacao = UrlSite + "telas/atenda/limite_credito/principal.php";
+		var urlOperacao = UrlSite + "telas/atenda/limite_credito/form_tela_principal.php"; //Bruno - prj - 438 - sprint 7 - tela principal
 	} else if (cddopcao == "N" || cddopcao == "N1") { // Opção Novo Limite
 		var msg = ", carregando op&ccedil;&atilde;o para novo " + strTitRotinaLC;
 		var urlOperacao = UrlSite + "telas/atenda/limite_credito/novo_limite.php";
@@ -224,26 +454,6 @@ function acessaOpcaoAba(nrOpcoes, id, cddopcao) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde" + msg + " ...");
 	
-	// Atribui cor de destaque para aba da opção
-	for (var i = 0; i < nrOpcoes; i++) {
-		if (!$("#linkAba" + id)) {
-			continue;
-		}
-				
-		if (id == i) { // Atribui estilos para foco da opção
-            $("#linkAba" + id).attr("class", "txtBrancoBold");
-            $("#imgAbaEsq" + id).attr("src", UrlImagens + "background/mnu_sle.gif");
-            $("#imgAbaDir" + id).attr("src", UrlImagens + "background/mnu_sld.gif");
-            $("#imgAbaCen" + id).css("background-color", "#969FA9");
-			continue;			
-		}
-		
-        $("#linkAba" + i).attr("class", "txtNormalBold");
-        $("#imgAbaEsq" + i).attr("src", UrlImagens + "background/mnu_nle.gif");
-        $("#imgAbaDir" + i).attr("src", UrlImagens + "background/mnu_nld.gif");
-        $("#imgAbaCen" + i).css("background-color", "#C6C8CA");
-	}
-
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({		
 		type: "POST", 
@@ -253,6 +463,7 @@ function acessaOpcaoAba(nrOpcoes, id, cddopcao) {
 			nrdconta: nrdconta,
 			cddopcao: cddopcao,
 			flpropos: flpropos,
+            inpessoa: var_globais.inpessoa, //bruno - prj 438 - sprint 7 - novo limite
 			inconfir: 1,
 			redirect: "html_ajax"
 		},		
@@ -297,6 +508,7 @@ function confirmaNovoLimite(inconfir, flgratok) {
 			/** Variaveis ref ao rating singulares **/
 			camposRS: camposRS,
 			dadosRtS: dadosRtS,
+            inpessoa: var_globais.inpessoa, //bruno - prj 438 - sprint 7 - novo limite
 			redirect: "script_ajax"
 		}, 
         error: function (objAjax, responseError, objExcept) {
@@ -413,6 +625,11 @@ function validarNovoLimite(inconfir, inconfi2) {
     var vllimite = $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
     var flgimpnp = $("#flgimpnp", "#frmNovoLimite").val();
 	
+	//bruno - prj - 438 - sprint 7 - tela principal
+    if(flgimpnp == "" || typeof flgimpnp == 'undefined'){
+        flgimpnp = aux_novoLimite.flgimpnp; //aux_novoLimite está sendo setado em novo_limite.php
+    }
+	
     //bruno - prj 470 - atualizar var_globais
     var_globais.nrctrlim = $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, "");
     var_globais.cddlinha = $("#cddlinha", "#frmNovoLimite").val();
@@ -452,6 +669,7 @@ function validarNovoLimite(inconfir, inconfi2) {
 			flgimpnp: flgimpnp,
 			inconfir: inconfir,
 			inconfi2: inconfi2,
+            cddopcao: aux_cddopcao, //bruno - prj 438 - sprint 7 - novo limite
 			redirect: "script_ajax"
 		},	
         error: function (objAjax, responseError, objExcept) {
@@ -483,6 +701,11 @@ function cadastrarNovoLimite() {
         valor = valor.replace(",",".");
         return valor;
     }
+
+    // PRJ 438 - Sprint 7 - Função com a atribuição das variaveis dos avalistas
+    geraRegsDinamicosAvalistas();
+    //prj 438 - sprint 7 - Atualizar valor do limite
+    var_globais.vllimite = $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
     
     //bruno - prj 470 - atualizar var_globais
     var_globais.vllimite = $("#vllimite", "#frmNovoLimite").val().replace(/\./g, ""); 
@@ -497,6 +720,69 @@ function cadastrarNovoLimite() {
     var vloutras = f($("#vloutras", "#frmNovoLimite").val());
     var vlalugue = f($("#vlalugue", "#frmNovoLimite").val());
 	
+    //bruno - prj 438 - sprint 7 - tela principal
+    var flgimpnp = $("#flgimpnp", "#frmNovoLimite").val();
+    if(flgimpnp == "" || typeof flgimpnp == 'undefined'){
+        flgimpnp = aux_novoLimite.flgimpnp;
+    }
+
+    var aux_nrperger = $("#nrperger", "#frmNovoLimite").val();
+    if(aux_nrperger == "" || typeof aux_nrperger == "undefined"){
+        aux_nrperger = 0;
+    }
+
+    var nrctaav1 = (typeof aux_nrctaav0 == 'undefined') ? 0  : aux_nrctaav0;
+    var nmdaval1 = (typeof aux_nmdaval0 == 'undefined') ? '' : aux_nmdaval0;
+	var nrcpfav1 = (typeof aux_nrcpfav0 == 'undefined') ? '' : aux_nrcpfav0;
+	var tpdocav1 = (typeof aux_tpdocav0 == 'undefined') ? '' : aux_tpdocav0;
+	var dsdocav1 = (typeof aux_dsdocav0 == 'undefined') ? '' : aux_dsdocav0;
+	var nmdcjav1 = (typeof aux_nmdcjav0 == 'undefined') ? '' : aux_nmdcjav0;
+	var cpfcjav1 = (typeof aux_cpfcjav0 == 'undefined') ? '' : aux_cpfcjav0;
+	var tdccjav1 = (typeof aux_tdccjav0 == 'undefined') ? '' : aux_tdccjav0;
+	var doccjav1 = (typeof aux_doccjav0 == 'undefined') ? '' : aux_doccjav0;
+	var ende1av1 = (typeof aux_ende1av0 == 'undefined') ? '' : aux_ende1av0;
+	var ende2av1 = (typeof aux_ende2av0 == 'undefined') ? '' : aux_ende2av0;
+	var nrfonav1 = (typeof aux_nrfonav0 == 'undefined') ? '' : aux_nrfonav0;
+	var emailav1 = (typeof aux_emailav0 == 'undefined') ? '' : aux_emailav0;
+	var nmcidav1 = (typeof aux_nmcidav0 == 'undefined') ? '' : aux_nmcidav0;
+	var cdufava1 = (typeof aux_cdufava0 == 'undefined') ? '' : aux_cdufava0;
+	var nrcepav1 = (typeof aux_nrcepav0 == 'undefined') ? '' : aux_nrcepav0;
+	var cdnacio1 = (typeof aux_cdnacio0 == 'undefined') ? '' : aux_cdnacio0;
+	var vledvmt1 = (typeof aux_vledvmt0 == 'undefined') ? '' : aux_vledvmt0;
+	var vlrenme1 = (typeof aux_vlrenme0 == 'undefined') ? '' : aux_vlrenme0;
+	var nrender1 = (typeof aux_nrender0 == 'undefined') ? '' : aux_nrender0;
+	var complen1 = (typeof aux_complen0 == 'undefined') ? '' : aux_complen0;
+	var nrcxaps1 = (typeof aux_nrcxaps0 == 'undefined') ? '' : aux_nrcxaps0;
+	var inpesso1 = (typeof aux_inpesso0 == 'undefined') ? '' : aux_inpesso0;
+	var dtnasct1 = (typeof aux_dtnasct0 == 'undefined') ? '' : aux_dtnasct0;
+	var vlrecjg1 = (typeof aux_vlrencj0 == 'undefined') ? '' : aux_vlrencj0;
+
+	var nrctaav2 = (typeof aux_nrctaav1 == 'undefined') ? 0  : aux_nrctaav1;
+	var nmdaval2 = (typeof aux_nmdaval1 == 'undefined') ? '' : aux_nmdaval1;
+	var nrcpfav2 = (typeof aux_nrcpfav1 == 'undefined') ? '' : aux_nrcpfav1;
+	var tpdocav2 = (typeof aux_tpdocav1 == 'undefined') ? '' : aux_tpdocav1;
+	var dsdocav2 = (typeof aux_dsdocav1 == 'undefined') ? '' : aux_dsdocav1;
+	var nmdcjav2 = (typeof aux_nmdcjav1 == 'undefined') ? '' : aux_nmdcjav1;
+	var cpfcjav2 = (typeof aux_cpfcjav1 == 'undefined') ? '' : aux_cpfcjav1;
+	var tdccjav2 = (typeof aux_tdccjav1 == 'undefined') ? '' : aux_tdccjav1;
+	var doccjav2 = (typeof aux_doccjav1 == 'undefined') ? '' : aux_doccjav1;
+	var ende1av2 = (typeof aux_ende1av1 == 'undefined') ? '' : aux_ende1av1;
+	var ende2av2 = (typeof aux_ende2av1 == 'undefined') ? '' : aux_ende2av1;
+	var nrfonav2 = (typeof aux_nrfonav1 == 'undefined') ? '' : aux_nrfonav1;
+	var emailav2 = (typeof aux_emailav1 == 'undefined') ? '' : aux_emailav1;
+	var nmcidav2 = (typeof aux_nmcidav1 == 'undefined') ? '' : aux_nmcidav1;
+	var cdufava2 = (typeof aux_cdufava1 == 'undefined') ? '' : aux_cdufava1;
+	var nrcepav2 = (typeof aux_nrcepav1 == 'undefined') ? '' : aux_nrcepav1;
+	var cdnacio2 = (typeof aux_cdnacio1 == 'undefined') ? '' : aux_cdnacio1;
+	var vledvmt2 = (typeof aux_vledvmt1 == 'undefined') ? '' : aux_vledvmt1;
+	var vlrenme2 = (typeof aux_vlrenme1 == 'undefined') ? '' : aux_vlrenme1;
+	var nrender2 = (typeof aux_nrender1 == 'undefined') ? '' : aux_nrender1;
+	var complen2 = (typeof aux_complen1 == 'undefined') ? '' : aux_complen1;
+	var nrcxaps2 = (typeof aux_nrcxaps1 == 'undefined') ? '' : aux_nrcxaps1;
+	var inpesso2 = (typeof aux_inpesso1 == 'undefined') ? '' : aux_inpesso1;
+    var dtnasct2 = (typeof aux_dtnasct1 == 'undefined') ? '' : aux_dtnasct1;
+	var vlrecjg2 = (typeof aux_vlrecjg1 == 'undefined') ? '' : aux_vlrecjg1;
+
 	// Executa script de cadastro do limite atravé	s de ajax
 	$.ajax({		
 		type: "POST", 
@@ -506,7 +792,7 @@ function cadastrarNovoLimite() {
             nrctrlim: $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, ""),
             cddlinha: $("#cddlinha", "#frmNovoLimite").val(),
             vllimite: $("#vllimite", "#frmNovoLimite").val().replace(/\./g, ""),
-            flgimpnp: $("#flgimpnp", "#frmNovoLimite").val(),
+            flgimpnp: flgimpnp, //bruno - prj 438 - sprint 7 - tela principal
             vlsalari: vlsalari > 0 ? $("#vlsalari", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
             vlsalcon: vlsalcon > 0 ? $("#vlsalcon", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
             vloutras: vloutras > 0 ? $("#vloutras", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
@@ -515,55 +801,64 @@ function cadastrarNovoLimite() {
             dsobserv: $("#dsobserv", "#frmNovoLimite").val(),
 			dtconbir: dtconbir,			
 			/** Variáveis globais alimentadas na função validaDadosRating em rating.js **/
-			nrgarope: nrgarope,
-			nrinfcad: nrinfcad,
-			nrliquid: nrliquid,
-			nrpatlvr: nrpatlvr,			
-			perfatcl: perfatcl,
-			nrperger: nrperger,		
+            //bruno - prj 438 - sprint 7 - tela rating
+			nrgarope: $("#nrgarope", "#frmNovoLimite").val(),
+			nrinfcad: $("#nrinfcad", "#frmNovoLimite").val(),
+			nrliquid: $("#nrliquid", "#frmNovoLimite").val(),
+			nrpatlvr: $("#nrpatlvr", "#frmNovoLimite").val(),			
+			perfatcl: "0,00",
+			nrperger: aux_nrperger,
 		    /** ---------------------------------------------------------------------- **/
-            nrctaav1: normalizaNumero($("#nrctaav1", "#frmNovoLimite").val()),
-            nmdaval1: $("#nmdaval1", "#frmNovoLimite").val(),
-            nrcpfav1: normalizaNumero($("#nrcpfav1", "#frmNovoLimite").val()),
-            tpdocav1: $("#tpdocav1", "#frmNovoLimite").val(),
-            dsdocav1: $("#dsdocav1", "#frmNovoLimite").val(),
-            nmdcjav1: $("#nmdcjav1", "#frmNovoLimite").val(),
-            cpfcjav1: normalizaNumero($("#cpfcjav1", "#frmNovoLimite").val()),
-            tdccjav1: $("#tdccjav1", "#frmNovoLimite").val(),
-            doccjav1: $("#doccjav1", "#frmNovoLimite").val(),
-            ende1av1: $("#ende1av1", "#frmNovoLimite").val(),
-            ende2av1: $("#ende2av1", "#frmNovoLimite").val(),
-            nrcepav1: normalizaNumero($("#nrcepav1", "#frmNovoLimite").val()),
-            nmcidav1: $("#nmcidav1", "#frmNovoLimite").val(),
-            cdufava1: $("#cdufava1", "#frmNovoLimite").val(),
-            nrfonav1: $("#nrfonav1", "#frmNovoLimite").val(),
-            emailav1: $("#emailav1", "#frmNovoLimite").val(),
-            nrender1: normalizaNumero($("#nrender1", "#frmNovoLimite").val()),
-            complen1: $("#complen1", "#frmNovoLimite").val(),
-            nrcxaps1: normalizaNumero($("#nrcxaps1", "#frmNovoLimite").val()),
-            vlrenme1: $("#vlrenme1", "#frmNovoLimite").val(),
+            nrctaav1: normalizaNumero(nrctaav1),
+            nmdaval1: nmdaval1,
+            nrcpfav1: normalizaNumero(nrcpfav1),
+            tpdocav1: tpdocav1,
+            dsdocav1: dsdocav1,
+            nmdcjav1: nmdcjav1,
+            cpfcjav1: normalizaNumero(cpfcjav1),
+            tdccjav1: tdccjav1,
+            doccjav1: doccjav1,
+            ende1av1: ende1av1,
+            ende2av1: ende2av1,
+            nrcepav1: normalizaNumero(nrcepav1),
+            nmcidav1: nmcidav1,
+            cdufava1: cdufava1,
+            nrfonav1: nrfonav1,
+            emailav1: emailav1,
+            nrender1: normalizaNumero(nrender1),
+            complen1: complen1,
+            nrcxaps1: normalizaNumero(nrcxaps1),
+            vlrenme1: vlrenme1,
+            vlrecjg1: vlrecjg1,
+            cdnacio1: cdnacio1,
+			inpesso1: inpesso1,
+			dtnasct1: dtnasct1,
 			
-            nrctaav2: normalizaNumero($("#nrctaav2", "#frmNovoLimite").val()),
-            nmdaval2: $("#nmdaval2", "#frmNovoLimite").val(),
-            nrcpfav2: normalizaNumero($("#nrcpfav2", "#frmNovoLimite").val()),
-            tpdocav2: $("#tpdocav2", "#frmNovoLimite").val(),
-            dsdocav2: $("#dsdocav2", "#frmNovoLimite").val(),
-            nmdcjav2: $("#nmdcjav2", "#frmNovoLimite").val(),
-            cpfcjav2: normalizaNumero($("#cpfcjav2", "#frmNovoLimite").val()),
-            tdccjav2: $("#tdccjav2", "#frmNovoLimite").val(),
-            doccjav2: $("#doccjav2", "#frmNovoLimite").val(),
-            ende1av2: $("#ende1av2", "#frmNovoLimite").val(),
-            ende2av2: $("#ende2av2", "#frmNovoLimite").val(),
-            nrcepav2: normalizaNumero($("#nrcepav2", "#frmNovoLimite").val()),
-            nmcidav2: $("#nmcidav2", "#frmNovoLimite").val(),
-            cdufava2: $("#cdufava2", "#frmNovoLimite").val(),
-            nrfonav2: $("#nrfonav2", "#frmNovoLimite").val(),
-            emailav2: $("#emailav2", "#frmNovoLimite").val(),
-            nrender2: normalizaNumero($("#nrender2", "#frmNovoLimite").val()),
-            complen2: $("#complen2", "#frmNovoLimite").val(),
-            nrcxaps2: normalizaNumero($("#nrcxaps2", "#frmNovoLimite").val()),
-            vlrenme2: $("#vlrenme2", "#frmNovoLimite").val(),
+            nrctaav2: normalizaNumero(nrctaav2),
+            nmdaval2: nmdaval2,
+            nrcpfav2: normalizaNumero(nrcpfav2),
+            tpdocav2: tpdocav2,
+            dsdocav2: dsdocav2,
+            nmdcjav2: nmdcjav2,
+            cpfcjav2: normalizaNumero(cpfcjav2),
+            tdccjav2: tdccjav2,
+            doccjav2: doccjav2,
+            ende1av2: ende1av2,
+            ende2av2: ende2av2,
+            nrcepav2: normalizaNumero(nrcepav2),
+            nmcidav2: nmcidav2,
+            cdufava2: cdufava2,
+            nrfonav2: nrfonav2,
+            emailav2: emailav2,
+            nrender2: normalizaNumero(nrender2),
+            complen2: complen2,
+            nrcxaps2: normalizaNumero(nrcxaps2),
+            vlrenme2: vlrenme2,
 			idcobope: $("#idcobert", "#frmNovoLimite").val(),
+			vlrecjg2: vlrecjg2,
+			cdnacio2: cdnacio2,
+			inpesso2: inpesso2,
+			dtnasct2: dtnasct2,
 			redirect: "script_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
@@ -633,13 +928,20 @@ function checaEnter(campo, e) {
 }
 
 function trataGAROPC(cddopcao, nrctrlim) {
-  if (cddopcao == 'N' || (cddopcao == 'A' && normalizaNumero($('#idcobert','#frmNovoLimite').val()) > 0) || (cddopcao == 'P' && normalizaNumero($('#idcobert','#frmNovoLimite').val()) > 0)) {
-    abrirTelaGAROPC(cddopcao, nrctrlim);
-  } else {
-    lcrShowHideDiv('divDadosObservacoes','divDadosRenda');
-    $('#divRotina').css({'display':'block'});
-    bloqueiaFundo($('#divRotina'));
-  }
+	
+	if (cddopcao == 'N' || 
+	   (cddopcao == 'A' && normalizaNumero($('#idcobert','#frmNovoLimite').val()) > 0) || 
+	   (cddopcao == 'P' && normalizaNumero($('#idcobert','#frmNovoLimite').val()) > 0)) {
+		//bruno - prj 438 - sprint 7 - novo limite
+	    $('#frmGAROPC').remove();
+	    abrirTelaGAROPC(cddopcao, nrctrlim);
+	} else {
+	    //bruno - prj 438 - sprint 7 - remover observacao
+	    //lcrShowHideDiv('divDadosObservacoes','divDadosRenda');
+	    abrirRating();
+	    $('#divRotina').css({'display':'block'});
+	    bloqueiaFundo($('#divRotina'));
+	}
 }
 
 function abrirTelaGAROPC(cddopcao, nrctrlim) {
@@ -714,54 +1016,6 @@ function lcrShowHideDiv(divShow, divHide) {
     $("#" + divHide).css("display", "none");
 }
 
-/*
- * OBJETIVO : Função para validar avalistas 
- * ALTERAÇÃO 001: Padronizado o recebimento de valores 
- */
-function validarAvalistas() {
-	
-	showMsgAguardo('Aguarde, validando dados dos avalistas ...');
-	
-    var nrctaav1 = normalizaNumero($('#nrctaav1', '#' + nomeForm).val());
-    var nrcpfav1 = normalizaNumero($('#nrcpfav1', '#' + nomeForm).val());
-    var cpfcjav1 = normalizaNumero($('#cpfcjav1', '#' + nomeForm).val());
-    var nrctaav2 = normalizaNumero($('#nrctaav2', '#' + nomeForm).val());
-    var nrcpfav2 = normalizaNumero($('#nrcpfav2', '#' + nomeForm).val());
-    var cpfcjav2 = normalizaNumero($('#cpfcjav2', '#' + nomeForm).val());
-
-    var nmdaval1 = trim($('#nmdaval1', '#' + nomeForm).val());
-    var ende1av1 = trim($('#ende1av1', '#' + nomeForm).val());
-    var nrcepav1 = normalizaNumero($('#nrcepav1', '#' + nomeForm).val());
-	
-    var nmdaval2 = trim($('#nmdaval2', '#' + nomeForm).val());
-    var ende1av2 = trim($('#ende1av2', '#' + nomeForm).val());
-    var nrcepav2 = normalizaNumero($('#nrcepav2', '#' + nomeForm).val());
-	
-	$.ajax({		
-		type: "POST", 
-		url: UrlSite + "telas/atenda/limite_credito/validar_dados_avalistas.php",
-		data: {
-            nrdconta: nrdconta, nrctaav1: nrctaav1, nmdaval1: nmdaval1,
-            nrcpfav1: nrcpfav1, cpfcjav1: cpfcjav1, ende1av1: ende1av1,
-            nrctaav2: nrctaav2, nmdaval2: nmdaval2, nrcpfav2: nrcpfav2,
-            cpfcjav2: cpfcjav2, ende1av2: ende1av2, nrcepav1: nrcepav1,
-			nrcepav2: nrcepav2, flgpropo: flgProposta, redirect: 'script_ajax'
-		},		
-        error: function (objAjax, responseError, objExcept) {
-			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-		},
-        success: function (response) {
-			try {
-				eval(response);
-            } catch (error) {
-				hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-			}
-		}				
-	});	
-}
-
 function travaCamposLimite(){
     //----------------------------------------------------------------
     // FORMULÁRIO NOVO LIMITE 
@@ -784,6 +1038,11 @@ function controlaLayout(cddopcao) {
 	//----------------------------------------------------------------
 	// FORMULÁRIO NOVO LIMITE
 	//----------------------------------------------------------------		
+
+	$('#divConteudoOpcao').css({
+        'width': '540px'
+    });
+
     var cTodosLimite = $('input, select', '#' + nomeForm + ' .fsLimiteCredito');
     $('label', '#' + nomeForm + ' .fsLimiteCredito').addClass('rotulo').css('width', '200px');
     $('#nrctrlim', '#' + nomeForm + ' .fsLimiteCredito').addClass('contrato').css('width', '60px');
@@ -792,13 +1051,38 @@ function controlaLayout(cddopcao) {
     $('#vllimite', '#' + nomeForm + ' .fsLimiteCredito').addClass('moeda').css('width', '90px');
     $('#flgimpnp', '#' + nomeForm + ' .fsLimiteCredito').css('width', '70px');
     $('#dsobserv', '#' + nomeForm + ' .fsObservacoes').addClass('campo');
+    // PRJ 438 - Sprint 7 - Novo campo Nivel de Risco
+    $('#nivrisco', '#' + nomeForm + ' .fsLimiteCredito').css('width', '30px');
+    $('label[for="flgYes"]').css({'width': "30px"});
+    $('label[for="flgNo"]').css({'width': "30px"});
 				
 	// Se for novo limite ou alteracao, habilitar campos
 	if (cddopcao == 'N') {
 		cTodosLimite.habilitaCampo();
+
+        // PRJ 438 - Sprint 7 - No momento o campo Nivel de Risco sempre estará desabilitado
+        $('#nivrisco', '#' + nomeForm + ' .fsLimiteCredito').desabilitaCampo();
+        $('#dsdtxfix', '#' + nomeForm + ' .fsLimiteCredito').desabilitaCampo();
+
 	} else {
 		cTodosLimite.desabilitaCampo();
 	}
+		
+    controlaLayoutTelaRating();
+    //bruno - prj 438 - sprint 7 - tela principal
+    switch(cddopcao){
+        case 'N':
+            if(flgProposta){
+                controlaLayoutAlterarlimiteEstudo();
+            }
+            break;
+        case 'A': //Consulta limite Ativo
+            controlaLayoutConsultaLimiteAtivo();
+            break;
+        case 'P': //Consulta limite Proposto
+            controlaLayoutConsultalimiteEstudo();
+            break;
+    }
 		
 	if (flgProposta) {
         $('#nrctrlim', '#' + nomeForm + ' .fsLimiteCredito').desabilitaCampo();
@@ -843,9 +1127,10 @@ function controlaLayout(cddopcao) {
         $(".fsConjuge", "#divDadosRenda").css('display', 'none');
 	}
 	
+	// PRJ 438 - Sprint 7 - Alterado div, agora o campo inconcje está na divDadosLimite
 	// Se nao tiver conjuge, desabilita a consulta automatizadas para o mesmo
 	if (nrcpfcjg == 0 && nrctacje == 0) {	
-        $("input[name='inconcje']", "#divDadosRenda").desabilitaCampo();
+        $("input[name='inconcje']", "#divDadosLimite").desabilitaCampo();
 	}
 	
 	layoutPadrao();	
@@ -1014,14 +1299,19 @@ function controlaPesquisas() {
 	$('#cddlinha','#'+nomeForm).unbind('change').bind('change', function() {
 	    filtrosDesc = 'tpdlinha|' + inpessoa + ';flgstlcr|1;nriniseq|1;nrregist|30';
 		buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'dsdlinha',$(this).val(),'dsdlinha',filtrosDesc,'frmNovoLimite');
+		$('#cddlinha', '#frmNovoLimite').attr('aux', '');
+		buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'dsdtxfix',$(this).val(),'dsdtxfix',filtrosDesc,'frmNovoLimite');
 		return false;
     }).next().unbind('click').bind('click', function () {
-        filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + "|;flgstlcr;;;1;N";
+        filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + "|;dsdtxfix;;;|;flgstlcr;;;1;N";
         colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center';
         fncOnClose = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
         mostraPesquisa(bo, procedure, titulo, '20', filtrosPesq, colunas, divRotina, fncOnClose);
         return false;
-    });
+    });    
+
+    aplicarEventosLupasTelaRating();
+    aplicarEventosLupasTelaAvalista();
 }
 
 
@@ -1106,53 +1396,14 @@ function controlaFoco(opcao) {
     }
     if (opcao == "N") { //Novo Limite
 
-        $('#divConteudoOpcao').each(function () {
-            formid = $('#divConteudoOpcao form');
-            IdForm = $(formid).attr('id');//Seleciona o id do formulario
-            if (IdForm == "frmNovoLimite") {
-                $(this).find("#frmNovoLimite #divDadosLimite .fsLimiteCredito > :input[type=text]").first().addClass("FirstInputModal").focus();
-                $(this).find("#divBotoes:first > :input[type=image]").last().addClass("LastInputModal");
-                $("#btVoltar").focus(function () {
-                    $(this).bind('keydown', function (e) {
-                        if (e.keyCode == 13) {
-                            acessaOpcaoAba(8, 0, '@');
-		return false;										
-                        }
-                    });
-                });
-
-                //Se estiver com foco na classe LastInputModal
-                $(".LastInputModal").focus(function () {
-                    var pressedShift = false;
-
-                    $(this).bind('keyup', function (e) {
-                        if (e.keyCode == 16) {
-                            pressedShift = false;//Quando tecla shift for solta passa valor false 
-                        }
-                    })
-
-                    $(this).bind('keydown', function (e) {
-                        if (e.keyCode == 13) {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            $(".LastInputModal").click();
-                        }
-                        if (e.keyCode == 16) {
-                            pressedShift = true;//Quando tecla shift for pressionada passa valor true 
-                        }
-                        if ((e.keyCode == 9) && pressedShift == true) {
-                            return setFocusCampo($(target), e, false, 0);
-                        }
-                        else if (e.keyCode == 9) {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            $(".FirstInputModal").focus();
-                        }
-                    });
-                });
-            };
-        });
-        $(".FirstInputModal").focus();
+        $('input', '#frmNovoLimite').keydown( function(e) {
+	        var key = e.charCode ? e.charCode : e.keyCode ? e.keyCode : 0;
+	        if(key == 13) {
+	            e.preventDefault();
+	            var inputs = $(this).closest('form').find(':input:visible:not([disabled]):not([readonly])');
+	            inputs.eq( inputs.index(this) + 1 ).focus();
+	        }
+    	});
     }
     if (opcao == "I") { //Imprimir
 
@@ -1303,6 +1554,9 @@ function controlaFoco(opcao) {
 
         $(".FirstInputModal").focus();
     }
+    if(opcao == null){
+    	$(":input").blur();	
+    }
 }
 
 
@@ -1384,6 +1638,8 @@ function buscaGrupoEconomico() {
 		url: UrlSite + 'telas/atenda/descontos/titulos/busca_grupo_economico.php',
 		data: {
 			nrdconta: nrdconta,	
+			// PRJ 438 - Sprint 7 - Flag para nao validar o avalista, que já é validado anteriormente (0 não validar / 1 validar)
+			flgValidarAvalistas: 0,	
 			redirect: 'html_ajax'
 		},		
         error: function (objAjax, responseError, objExcept) {
@@ -1414,6 +1670,8 @@ function calcEndividRiscoGrupo(nrdgrupo) {
 		data: {
 			nrdconta: nrdconta,	
 			nrdgrupo: nrdgrupo,
+			// PRJ 438 - Sprint 7 - Flag para nao validar o avalista, que já é validado anteriormente (0 não validar / 1 validar)
+			flgValidarAvalistas: 0,
 			redirect: 'html_ajax'
 		},		
         error: function (objAjax, responseError, objExcept) {
@@ -1476,7 +1734,7 @@ function atualizaObservacoes(nrctrpro) {
 
 //***********************************************************TIAGO********************************************************
 // Função para validar novo limite de crédito
-function validarAlteracaoLimite(inconfir, inconfi2) {
+function validarAlteracaoLimite(inconfir, inconfi2, flgimpnp) {
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando novo " + strTitRotinaLC + " ...");
@@ -1484,7 +1742,10 @@ function validarAlteracaoLimite(inconfir, inconfi2) {
     var nrctrlim = $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, "");
     var cddlinha = $("#cddlinha", "#frmNovoLimite").val();
     var vllimite = $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
-    var flgimpnp = $("#flgimpnp", "#frmNovoLimite").val();
+    //bruno - prj 438 - sprint 7 - novo limite
+    if(flgimpnp == "" || typeof flgimpnp == 'undefined'){
+        flgimpnp = 'yes';
+    }
 	
 	// Valida número do contrato
     if (nrctrlim == "" || !validaNumero(nrctrlim, true, 0, 0)) {
@@ -1519,6 +1780,7 @@ function validarAlteracaoLimite(inconfir, inconfi2) {
 			flgimpnp: flgimpnp,
 			inconfir: inconfir,
 			inconfi2: inconfi2,
+            cddopcao: aux_cddopcao, //bruno - prj 438 - sprint 7 - novo limite
 			redirect: "script_ajax"
 		},	
         error: function (objAjax, responseError, objExcept) {
@@ -1541,75 +1803,147 @@ function alterarNovoLimite() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, alterando o " + strTitRotinaLC + " ...");
 			
+    // bruno - prj 438 - sprint 7 - tela rating
+    var aux_perfatcl = $("#perfatcl", "#frmNovoLimite").val();
+    if(aux_perfatcl == "" || typeof aux_perfatcl == "undefined"){
+        aux_perfatcl = 0;
+    }
+
+    // Função com a atribuição das variaveis dos avalistas
+	geraRegsDinamicosAvalistas();
+
+	var nrctaav1 = (typeof aux_nrctaav0 == 'undefined') ? 0  : aux_nrctaav0;
+    var nmdaval1 = (typeof aux_nmdaval0 == 'undefined') ? '' : aux_nmdaval0;
+	var nrcpfav1 = (typeof aux_nrcpfav0 == 'undefined') ? '' : aux_nrcpfav0;
+	var tpdocav1 = (typeof aux_tpdocav0 == 'undefined') ? '' : aux_tpdocav0;
+	var dsdocav1 = (typeof aux_dsdocav0 == 'undefined') ? '' : aux_dsdocav0;
+	var nmdcjav1 = (typeof aux_nmdcjav0 == 'undefined') ? '' : aux_nmdcjav0;
+	var cpfcjav1 = (typeof aux_cpfcjav0 == 'undefined') ? '' : aux_cpfcjav0;
+	var tdccjav1 = (typeof aux_tdccjav0 == 'undefined') ? '' : aux_tdccjav0;
+	var doccjav1 = (typeof aux_doccjav0 == 'undefined') ? '' : aux_doccjav0;
+	var ende1av1 = (typeof aux_ende1av0 == 'undefined') ? '' : aux_ende1av0;
+	var ende2av1 = (typeof aux_ende2av0 == 'undefined') ? '' : aux_ende2av0;
+	var nrfonav1 = (typeof aux_nrfonav0 == 'undefined') ? '' : aux_nrfonav0;
+	var emailav1 = (typeof aux_emailav0 == 'undefined') ? '' : aux_emailav0;
+	var nmcidav1 = (typeof aux_nmcidav0 == 'undefined') ? '' : aux_nmcidav0;
+	var cdufava1 = (typeof aux_cdufava0 == 'undefined') ? '' : aux_cdufava0;
+	var nrcepav1 = (typeof aux_nrcepav0 == 'undefined') ? '' : aux_nrcepav0;
+	var cdnacio1 = (typeof aux_cdnacio0 == 'undefined') ? '' : aux_cdnacio0;
+	var vledvmt1 = (typeof aux_vledvmt0 == 'undefined') ? '' : aux_vledvmt0;
+	var vlrenme1 = (typeof aux_vlrenme0 == 'undefined') ? '' : aux_vlrenme0;
+	var nrender1 = (typeof aux_nrender0 == 'undefined') ? '' : aux_nrender0;
+	var complen1 = (typeof aux_complen0 == 'undefined') ? '' : aux_complen0;
+	var nrcxaps1 = (typeof aux_nrcxaps0 == 'undefined') ? '' : aux_nrcxaps0;
+	var inpesso1 = (typeof aux_inpesso0 == 'undefined') ? '' : aux_inpesso0;
+	var dtnasct1 = (typeof aux_dtnasct0 == 'undefined') ? '' : aux_dtnasct0;
+	var vlrecjg1 = (typeof aux_vlrencj0 == 'undefined') ? '' : aux_vlrencj0;
+
+	var nrctaav2 = (typeof aux_nrctaav1 == 'undefined') ? 0  : aux_nrctaav1;
+	var nmdaval2 = (typeof aux_nmdaval1 == 'undefined') ? '' : aux_nmdaval1;
+	var nrcpfav2 = (typeof aux_nrcpfav1 == 'undefined') ? '' : aux_nrcpfav1;
+	var tpdocav2 = (typeof aux_tpdocav1 == 'undefined') ? '' : aux_tpdocav1;
+	var dsdocav2 = (typeof aux_dsdocav1 == 'undefined') ? '' : aux_dsdocav1;
+	var nmdcjav2 = (typeof aux_nmdcjav1 == 'undefined') ? '' : aux_nmdcjav1;
+	var cpfcjav2 = (typeof aux_cpfcjav1 == 'undefined') ? '' : aux_cpfcjav1;
+	var tdccjav2 = (typeof aux_tdccjav1 == 'undefined') ? '' : aux_tdccjav1;
+	var doccjav2 = (typeof aux_doccjav1 == 'undefined') ? '' : aux_doccjav1;
+	var ende1av2 = (typeof aux_ende1av1 == 'undefined') ? '' : aux_ende1av1;
+	var ende2av2 = (typeof aux_ende2av1 == 'undefined') ? '' : aux_ende2av1;
+	var nrfonav2 = (typeof aux_nrfonav1 == 'undefined') ? '' : aux_nrfonav1;
+	var emailav2 = (typeof aux_emailav1 == 'undefined') ? '' : aux_emailav1;
+	var nmcidav2 = (typeof aux_nmcidav1 == 'undefined') ? '' : aux_nmcidav1;
+	var cdufava2 = (typeof aux_cdufava1 == 'undefined') ? '' : aux_cdufava1;
+	var nrcepav2 = (typeof aux_nrcepav1 == 'undefined') ? '' : aux_nrcepav1;
+	var cdnacio2 = (typeof aux_cdnacio1 == 'undefined') ? '' : aux_cdnacio1;
+	var vledvmt2 = (typeof aux_vledvmt1 == 'undefined') ? '' : aux_vledvmt1;
+	var vlrenme2 = (typeof aux_vlrenme1 == 'undefined') ? '' : aux_vlrenme1;
+	var nrender2 = (typeof aux_nrender1 == 'undefined') ? '' : aux_nrender1;
+	var complen2 = (typeof aux_complen1 == 'undefined') ? '' : aux_complen1;
+	var nrcxaps2 = (typeof aux_nrcxaps1 == 'undefined') ? '' : aux_nrcxaps1;
+	var inpesso2 = (typeof aux_inpesso1 == 'undefined') ? '' : aux_inpesso1;
+    var dtnasct2 = (typeof aux_dtnasct1 == 'undefined') ? '' : aux_dtnasct1;
+	var vlrecjg2 = (typeof aux_vlrecjg1 == 'undefined') ? '' : aux_vlrecjg1;
+
+    var dataAlterar = {
+		nrdconta: nrdconta,
+        nrctrlim: $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, ""),
+        cddlinha: $("#cddlinha", "#frmNovoLimite").val(),
+        vllimite: $("#vllimite", "#frmNovoLimite").val().replace(/\./g, ""),
+        flgimpnp: aux_novoLimite.flgimpnp,//bruno - prj 438 - sprint 7 - novo limite  //$("#flgimpnp", "#frmNovoLimite").val(),
+        vlsalari: $("#vlsalari", "#frmNovoLimite").val().replace(/\./g, ""),
+        vlsalcon: $("#vlsalcon", "#frmNovoLimite").val().replace(/\./g, ""),
+        vloutras: $("#vloutras", "#frmNovoLimite").val().replace(/\./g, ""),
+        vlalugue: $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, ""),
+        inconcje: ($("#inconcje_1", "#frmNovoLimite").prop('checked')) ? 1 : 0,
+        dsobserv: $("#dsobserv", "#frmNovoLimite").val(),
+		dtconbir: dtconbir,			
+		/** Variáveis globais alimentadas na função validaDadosRating em rating.js **/
+        // bruno - prj 438 - sprint 7 - tela rating
+        nrgarope: $("#nrgarope", "#frmNovoLimite").val(),
+        nrinfcad: $("#nrinfcad", "#frmNovoLimite").val(),
+        nrliquid: $("#nrliquid", "#frmNovoLimite").val(),
+        nrpatlvr: $("#nrpatlvr", "#frmNovoLimite").val(),
+        perfatcl: "0",
+        nrperger: $("#nrperger", "#frmNovoLimite").val(),
+		    /** ---------------------------------------------------------------------- **/
+        nrctaav1: normalizaNumero(nrctaav1),
+        nmdaval1: nmdaval1,
+        nrcpfav1: normalizaNumero(nrcpfav1),
+        tpdocav1: tpdocav1,
+        dsdocav1: dsdocav1,
+        nmdcjav1: nmdcjav1,
+        cpfcjav1: normalizaNumero(cpfcjav1),
+        tdccjav1: tdccjav1,
+        doccjav1: doccjav1,
+        ende1av1: ende1av1,
+        ende2av1: ende2av1,
+        nrcepav1: normalizaNumero(nrcepav1),
+        nmcidav1: nmcidav1,
+        cdufava1: cdufava1,
+        nrfonav1: nrfonav1,
+        emailav1: emailav1,
+        nrender1: normalizaNumero(nrender1),
+        complen1: complen1,
+        nrcxaps1: normalizaNumero(nrcxaps1),
+        vlrenme1: vlrenme1,
+        vlrecjg1: vlrecjg1,
+        cdnacio1: cdnacio1,
+		inpesso1: inpesso1,
+		dtnasct1: dtnasct1,
+		
+        nrctaav2: normalizaNumero(nrctaav2),
+        nmdaval2: nmdaval2,
+        nrcpfav2: normalizaNumero(nrcpfav2),
+        tpdocav2: tpdocav2,
+        dsdocav2: dsdocav2,
+        nmdcjav2: nmdcjav2,
+        cpfcjav2: normalizaNumero(cpfcjav2),
+        tdccjav2: tdccjav2,
+        doccjav2: doccjav2,
+        ende1av2: ende1av2,
+        ende2av2: ende2av2,
+        nrcepav2: normalizaNumero(nrcepav2),
+        nmcidav2: nmcidav2,
+        cdufava2: cdufava2,
+        nrfonav2: nrfonav2,
+        emailav2: emailav2,
+        nrender2: normalizaNumero(nrender2),
+        complen2: complen2,
+        nrcxaps2: normalizaNumero(nrcxaps2),
+        vlrenme2: vlrenme2,
+        vlrecjg2: vlrecjg2,
+        cdnacio2: cdnacio2,
+		inpesso2: inpesso2,
+		dtnasct2: dtnasct2,
+        idcobope: $("#idcobert", "#frmNovoLimite").val(),
+		redirect: "script_ajax"
+    };
+
 	// Executa script de cadastro do limite atravé	s de ajax
 	$.ajax({		
 		type: "POST", 
 		url: UrlSite + "telas/atenda/limite_credito/alterar_novo_limite.php",
-		data: {
-			nrdconta: nrdconta,
-            nrctrlim: $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, ""),
-            cddlinha: $("#cddlinha", "#frmNovoLimite").val(),
-            vllimite: $("#vllimite", "#frmNovoLimite").val().replace(/\./g, ""),
-            flgimpnp: $("#flgimpnp", "#frmNovoLimite").val(),
-            vlsalari: $("#vlsalari", "#frmNovoLimite").val().replace(/\./g, ""),
-            vlsalcon: $("#vlsalcon", "#frmNovoLimite").val().replace(/\./g, ""),
-            vloutras: $("#vloutras", "#frmNovoLimite").val().replace(/\./g, ""),
-            vlalugue: $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, ""),
-            inconcje: ($("#inconcje_1", "#frmNovoLimite").prop('checked')) ? 1 : 0,
-            dsobserv: $("#dsobserv", "#frmNovoLimite").val(),
-			dtconbir: dtconbir,			
-			/** Variáveis globais alimentadas na função validaDadosRating em rating.js **/
-			nrgarope: nrgarope,
-			nrinfcad: nrinfcad,
-			nrliquid: nrliquid,
-			nrpatlvr: nrpatlvr,			
-			perfatcl: perfatcl,
-			nrperger: nrperger,		
-		    /** ---------------------------------------------------------------------- **/
-            nrctaav1: normalizaNumero($("#nrctaav1", "#frmNovoLimite").val()),
-            nmdaval1: $("#nmdaval1", "#frmNovoLimite").val(),
-            nrcpfav1: normalizaNumero($("#nrcpfav1", "#frmNovoLimite").val()),
-            tpdocav1: $("#tpdocav1", "#frmNovoLimite").val(),
-            dsdocav1: $("#dsdocav1", "#frmNovoLimite").val(),
-            nmdcjav1: $("#nmdcjav1", "#frmNovoLimite").val(),
-            cpfcjav1: normalizaNumero($("#cpfcjav1", "#frmNovoLimite").val()),
-            tdccjav1: $("#tdccjav1", "#frmNovoLimite").val(),
-            doccjav1: $("#doccjav1", "#frmNovoLimite").val(),
-            ende1av1: $("#ende1av1", "#frmNovoLimite").val(),
-            ende2av1: $("#ende2av1", "#frmNovoLimite").val(),
-            nrcepav1: normalizaNumero($("#nrcepav1", "#frmNovoLimite").val()),
-            nmcidav1: $("#nmcidav1", "#frmNovoLimite").val(),
-            cdufava1: $("#cdufava1", "#frmNovoLimite").val(),
-            nrfonav1: $("#nrfonav1", "#frmNovoLimite").val(),
-            emailav1: $("#emailav1", "#frmNovoLimite").val(),
-            nrender1: normalizaNumero($("#nrender1", "#frmNovoLimite").val()),
-            complen1: $("#complen1", "#frmNovoLimite").val(),
-            nrcxaps1: normalizaNumero($("#nrcxaps1", "#frmNovoLimite").val()),
-            vlrenme1: $("#vlrenme1", "#frmNovoLimite").val(),
-
-            nrctaav2: normalizaNumero($("#nrctaav2", "#frmNovoLimite").val()),
-            nmdaval2: $("#nmdaval2", "#frmNovoLimite").val(),
-            nrcpfav2: normalizaNumero($("#nrcpfav2", "#frmNovoLimite").val()),
-            tpdocav2: $("#tpdocav2", "#frmNovoLimite").val(),
-            dsdocav2: $("#dsdocav2", "#frmNovoLimite").val(),
-            nmdcjav2: $("#nmdcjav2", "#frmNovoLimite").val(),
-            cpfcjav2: normalizaNumero($("#cpfcjav2", "#frmNovoLimite").val()),
-            tdccjav2: $("#tdccjav2", "#frmNovoLimite").val(),
-            doccjav2: $("#doccjav2", "#frmNovoLimite").val(),
-            ende1av2: $("#ende1av2", "#frmNovoLimite").val(),
-            ende2av2: $("#ende2av2", "#frmNovoLimite").val(),
-            nrcepav2: normalizaNumero($("#nrcepav2", "#frmNovoLimite").val()),
-            nmcidav2: $("#nmcidav2", "#frmNovoLimite").val(),
-            cdufava2: $("#cdufava2", "#frmNovoLimite").val(),
-            nrfonav2: $("#nrfonav2", "#frmNovoLimite").val(),
-            emailav2: $("#emailav2", "#frmNovoLimite").val(),
-            nrender2: normalizaNumero($("#nrender2", "#frmNovoLimite").val()),
-            complen2: $("#complen2", "#frmNovoLimite").val(),
-            nrcxaps2: normalizaNumero($("#nrcxaps2", "#frmNovoLimite").val()),
-            vlrenme2: $("#vlrenme2", "#frmNovoLimite").val(),
-            idcobope: $("#idcobert", "#frmNovoLimite").val(),
-			redirect: "script_ajax"
-		},		
+		data: dataAlterar,		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -1627,6 +1961,22 @@ function alterarNovoLimite() {
 }
 
 function buscaDadosProposta(nrdconta, nrctrlim) {
+
+    //bruno - prj 438 - sprint 7 - novo limite
+    var inpessoa = "";
+    switch(aux_cddopcao){
+        case 'P':
+            inpessoa = aux_limites.pausado.inpessoa;
+            break;
+        case 'A':
+            inpessoa = aux_limites.ativo.inpessoa;
+            break;
+        case 'N':
+            if(flgProposta){ //Alterar proposta
+                inpessoa = aux_limites.pausado.inpessoa;
+            }
+            break;
+    }
 
 	// Executa script de confirmação através de ajax
 	$.ajax({		
@@ -1776,6 +2126,17 @@ function efetuar_consultas() {
 function controlaOperacao(operacao) {
 
     var nrctrlim = $("#nrctrlim", "#frmNovoLimite").val();
+
+    //bruno - prj 438 - sprint 7 - tela principal
+    if(nrctrlim == "" || typeof nrctrlim == 'undefined'){
+        nrctrlim = aux_limites.ativo.nrctrlim;
+        
+        //Se for consulta do limite proposto recuperar o valor do contrato do limite proposto|pausado
+        if(aux_cddopcao == 'P' && aux_limites.pausado.nrctrlim != ""){
+            nrctrlim = aux_limites.pausado.nrctrlim;
+        }
+    }
+
     var iddoaval_busca = 0;
 	var inpessoa_busca = 0;
 	var nrdconta_busca = 0;
@@ -1792,7 +2153,7 @@ function controlaOperacao(operacao) {
 		case 'C_INICIO': 
 		case 'I_INICIO': {
 			idSocio = 0;
-            lcrShowHideDiv('divDadosRating', 'frmOrgaos');
+            lcrShowHideDiv('divFormRating', 'frmOrgaos'); //bruno - prj 438 - sprint 7 - tela rating
 			return false;
 		}
 	
@@ -1887,6 +2248,8 @@ function controlaOperacao(operacao) {
 		}
 		
 		case 'C_COMITE_APROV': {
+            //bruno - prj 438 - sprint 7 - tela rating
+            $("#divFormRating").css("display", "none");
 			$("#frmOrgaos").remove();	
             $("#frmNovoLimite").css("width", 530);
             $("#divDadosAvalistas").css('display', 'block');
@@ -1912,7 +2275,8 @@ function controlaOperacao(operacao) {
 	}
 		
 	// Esconde div do RATING e AVAIS e remover o das consultas automatizadas
-    $("#divDadosRating").css("display", "none");
+    //bruno - prj 438 - sprint 7 - tela rating
+    $("#divFormRating").css("display", "none");
     $("#divDadosAvalistas").css("display", "none");
 	$("#frmOrgaos").remove();
 	
@@ -2005,6 +2369,7 @@ function confirmaInclusaoMenor(nrdconta, cddopcao, flpropos, inconfir) {
 			cddopcao: cddopcao,
 			flpropos: flpropos,
 			inconfir: inconfir,
+            inpessoa: var_globais.inpessoa, //bruno - prj 438 - sprint 7 - novo limite
 			redirect: "html_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
@@ -2069,7 +2434,7 @@ function exibeAlteraNumero() {
         dataType: 'html',
         url: UrlSite + 'telas/atenda/limite_credito/numero.php',
         data: {
-            nrctrpro: nrctrpro,
+            nrctrpro: var_globais.nrctrpro,
             redirect: 'html_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -2090,7 +2455,8 @@ function exibeAlteraNumero() {
 function fechaRotinaAltera() {
 
     fechaRotina($('#divUsoGenerico'), $('#divRotina'));
-    acessaOpcaoAba(8, 0, '@'); // Consulta
+    //bruno - prj 438 - sprint 7 - fluxo novo limite
+    //acessaOpcaoAba(8, 0, '@'); // Consulta
     return false;
 
 }
@@ -2176,6 +2542,668 @@ function validaAdesaoValorProduto(executar, vllimite) {
 
 function senhaCoordenador(executaDepois) {
 	pedeSenhaCoordenador(2,executaDepois,'divRotina');
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski;
+ * Ajustar div no centro da tela
+ * prj - 438 - sprint 7 - tela principal
+ */
+function ajustarCentralizacao() {
+    var x = $.browser.msie ? $(window).innerWidth() : $("body").offset().width;
+    x = x - 178;
+    $('#divRotina').css({ 'width': x + 'px' });
+    $('#divRotina').centralizaRotinaH();
+    return false;
+}
+
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 29/11/2018
+ */
+function controlaLayoutConsultaLimiteAtivo(){
+    var formNovoLimite = "#frmNovoLimite";
+
+    $('#nrctrlim',formNovoLimite).val(aux_limites.ativo.nrctrlim);
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 29/11/2018
+ */
+function controlaLayoutConsultalimiteEstudo(){
+    var formNovoLimite = "#frmNovoLimite";
+
+    $('#nrctrlim',formNovoLimite).val(aux_limites.pausado.nrctrlim);
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 30/11/2018
+ */
+function controlaLayoutAlterarlimiteEstudo(){
+    var formNovoLimite = "#frmNovoLimite";
+
+    $('#nrctrlim',formNovoLimite).val(aux_limites.pausado.nrctrlim);
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 30/11/2018
+ */
+function abrirGaropc(){
+    var nrctrlim_aux = "";
+    switch(aux_cddopcao){
+        case 'A':
+            nrctrlim_aux = aux_limites.ativo.nrctrlim;
+            break;
+        case 'P':
+            nrctrlim_aux = aux_limites.pausado.nrctrlim;
+            break;
+
+    }
+
+    trataObservacao(aux_cddopcao);
+	trataGAROPC(aux_cddopcao,nrctrlim_aux);
+		
+	// Mostra div com campos para dados de renda
+	$("#divDadosLimite").css("display","none");
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 03/12/2018
+ * Abrir tela Rating
+ */
+function abrirRating(){
+    $('#divFormRating').show();
+    blockBackground(parseInt($('#divRotina').css('z-index')));
+}
+
+
+/**
+ * Controla layout tela rating
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 03/12/2018
+ */
+function controlaLayoutTelaRating(){
+    var nomeFormRating = 'fsRating';
+    
+    var cTodos_2 = $('input', '#' + nomeFormRating + ' fieldset:eq(1)');
+    var rRotulo_2 = $('label[for="nrgarope"],label[for="nrpatlvr"],label[for="nrperger"]', '#' + nomeFormRating);
+
+    var rGarantia = $('label[for="nrgarope"]', '#' + nomeFormRating);
+    var rLiquidez = $('label[for="nrliquid"]', '#' + nomeFormRating);
+    var rPatriLv = $('label[for="nrpatlvr"]', '#' + nomeFormRating);
+    var rPercep = $('label[for="nrperger"]', '#' + nomeFormRating);
+    var rNrinfcad = $('label[for="nrinfcad"]', '#' + nomeFormRating);
+
+    var cCodigo = $('#nrinfcad,#nrgarope,#nrliquid,#nrpatlvr,#nrperger', '#' + nomeFormRating);
+
+    var cGarantia = $('#dsgarope', '#' + nomeFormRating);
+    var cLiquidez = $('#dsliquid', '#' + nomeFormRating);
+    var cPatriLv = $('#dspatlvr', '#' + nomeFormRating);
+    var cPercep = $('#nrperger', '#' + nomeFormRating);
+    var cDsPercep = $('#dsperger', '#' + nomeFormRating);
+    var lupa = $('#lupanrperger', '#' + nomeFormRating);
+    var cDsinfcad = $('#dsinfcad', '#' + nomeFormRating);
+    var cNrinfcad = $('#nrinfcad', '#' + nomeFormRating);
+
+    rRotulo_2.addClass('rotulo');
+    rLiquidez.addClass('rotulo-linha');
+    rPatriLv.css('width', '106px');
+    rPercep.addClass('rotulo-linha');
+    rGarantia.addClass('rotulo-linha');
+    rNrinfcad.addClass('rotulo-linha');
+
+    cCodigo.addClass('codigo pesquisa').css('width', '35px');
+    cGarantia.addClass('descricao').css('width', '123px');
+    cLiquidez.addClass('descricao').css('width', '123px');
+    cPatriLv.addClass('descricao').css('width', '302px');
+    cDsPercep.addClass('descricao').css('width', '181px');
+    cDsinfcad.addClass('descricao').css('width', '181px');
+    cNrinfcad.addClass('campo').css('width', '35px'); //Inf. Cadastrais
+
+    if(inpessoa == 1){
+    	$("#divRatingPJ").css("display","none");
+    }
+
+}
+
+/** 
+ * Aplicar eventos em Lupas e campos para a tela Rating - Consulta/Alteração/Inclusão
+ * Autor: Bruno Luiz katzjarowski
+ * Data: 04/12/2018
+*/
+function aplicarEventosLupasTelaRating(){
+    //bruno - prj 438 - sprint 7 - tela rating
+
+    /* Campo Inf. cadastrais na tela Rating - form_rating.php */
+    $('#nrinfcad','#'+nomeForm).unbind('change').bind('change',function(){
+        bo			= 'b1wgen0059.p';
+        procedure   = 'busca_seqrating';
+        titulo      = 'Informa&ccedil&atildeo Cadastral';
+        nrtopico    = ( var_globais.inpessoa == 1 ) ? '1' : '3';
+        nritetop    = ( var_globais.inpessoa == 1 ) ? '4' : '3';
+        filtrosDesc = 'nrtopico|'+nrtopico+';nritetop|'+nritetop+';flgcompl|no;nrseqite|'+$(this).val();
+        buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'dsinfcad',$(this).val(),'dsseqit1',filtrosDesc,nomeForm);
+    }).next().unbind('click').bind('click',function(){
+        bo			= 'b1wgen0059.p';
+		procedure   = 'busca_seqrating';
+		titulo      = 'Itens do Rating';
+		qtReg		= '20';
+		nrtopico    = ( var_globais.inpessoa == 1 ) ? '1' : '3';
+		nritetop    = ( var_globais.inpessoa == 1 ) ? '4' : '3';
+		filtros		= 'C&oacuted. Inf. Cadastral;nrinfcad;30px;S;0|Inf. Cadastral;dsinfcad;200px;S;|;nrtopico;;;'+nrtopico+';N|;nritetop;;;'+nritetop+';N|;flgcompl;;;no;N';
+		colunas 	= 'Seq. Item;nrseqite;20%;right|Descri&ccedil&atildeo Seq. Item;dsseqite;80%;left;dsseqit1';
+		mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
+		return false;
+    });
+
+
+    /* Campo Garantia na tela Rating - form_rating.php */
+    $('#nrgarope','#'+nomeForm).unbind('change').bind('change',function(){
+        bo = 'b1wgen0059.p';
+        procedure = 'busca_seqrating';
+        titulo = 'Garantia';
+        nrtopico = (var_globais.inpessoa == 1) ? '2' : '4';
+        nritetop = (var_globais.inpessoa == 1) ? '2' : '2';
+        filtrosDesc = 'nrtopico|' + nrtopico + ';nritetop|' + nritetop + ';flgcompl|no;nrseqite|' + $(this).val();
+        buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsgarope', $(this).val(), 'dsseqit1', filtrosDesc, nomeForm);
+    }).next().unbind('click').bind('click',function(){
+        bo = 'b1wgen0059.p';
+        procedure = 'busca_seqrating';
+        titulo = 'Itens do Rating';
+        qtReg = '20';
+        nrtopico = (var_globais.inpessoa == 1) ? '2' : '4';
+        nritetop = (var_globais.inpessoa == 1) ? '2' : '2';
+        filtrosPesq = 'C&oacuted. Inf. Cadastral;nrgarope;30px;S;0|Inf. Cadastral;dsgarope;200px;S;|;nrtopico;;;' + nrtopico + ';N|;nritetop;;;' + nritetop + ';N|;flgcompl;;;no;N';
+        colunas = 'Seq. Item;nrseqite;20%;right|Descri&ccedil&atildeo Seq. Item;dsseqite;80%;left;dsseqit1';
+        mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);
+        return false;
+    });
+
+    /* Campo nrliquid Liquidez - tela rating - form_rating.php  */
+    $('#nrliquid','#'+nomeForm).unbind('change').bind('change',function(){
+        bo = 'b1wgen0059.p';
+        procedure = 'busca_seqrating';
+        titulo = 'Liquidez';
+        nrtopico = (var_globais.inpessoa == 1) ? '2' : '4';
+        nritetop = (var_globais.inpessoa == 1) ? '3' : '2';
+        filtrosDesc = 'nrtopico|' + nrtopico + ';nritetop|' + nritetop + ';flgcompl|no;nrseqite|' + $(this).val();
+        buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsliquid', $(this).val(), 'dsseqit1', filtrosDesc, nomeForm);
+        return false;
+    }).next().unbind('click').bind('click',function(){
+        bo = 'b1wgen0059.p';
+        procedure = 'busca_seqrating';
+        titulo = 'Itens do Rating';
+        qtReg = '20';
+        nrtopico = (var_globais.inpessoa == 1) ? '2' : '4';
+        nritetop = (var_globais.inpessoa == 1) ? '3' : '3';
+        filtrosPesq = 'C&oacuted. Inf. Cadastral;nrliquid;30px;S;0|Inf. Cadastral;dsliquid;200px;S;|;nrtopico;;;' + nrtopico + ';N|;nritetop;;;' + nritetop + ';N|;flgcompl;;;no;N';
+        colunas = 'Seq. Item;nrseqite;20%;right|Descri&ccedil&atildeo Seq. Item;dsseqite;80%;left;dsseqit1';
+        mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);
+        return false;
+    });
+
+    /* Campo nrpatlvr - Patr. pessoal livre - tela Rating - form_rating.php */
+    $('#nrpatlvr','#'+nomeForm).unbind('change').bind('change',function(){
+        bo = 'b1wgen0059.p';
+        procedure = 'busca_seqrating';
+        titulo = 'Patrim&ocircnio Livre';
+        nrtopico = (var_globais.inpessoa == 1) ? '1' : '3';
+        nritetop = (var_globais.inpessoa == 1) ? '8' : '9';
+        filtrosDesc = 'nrtopico|' + nrtopico + ';nritetop|' + nritetop + ';flgcompl|no;nrseqite|' + $(this).val();
+        buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dspatlvr', $(this).val(), 'dsseqit1', filtrosDesc, nomeForm);
+        return false;
+    }).next().unbind('click').bind('click',function(){                    
+        bo = 'b1wgen0059.p';
+        procedure = 'busca_seqrating';
+        titulo = 'Itens do Rating';
+        qtReg = '20';
+        nrtopico = (var_globais.inpessoa == 1) ? '1' : '3';
+        nritetop = (var_globais.inpessoa == 1) ? '8' : '9';
+        filtrosPesq = 'C&oacuted. Inf. Cadastral;nrpatlvr;30px;S;0|Inf. Cadastral;dspatlvr;200px;S;|;nrtopico;;;' + nrtopico + ';N|;nritetop;;;' + nritetop + ';N|;flgcompl;;;no;N';
+        colunas = 'Seq. Item;nrseqite;20%;right|Descri&ccedil&atildeo Seq. Item;dsseqite;80%;left;dsseqit1';
+        mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);
+        return false;
+    });
+
+    /**
+     * Campo nrperger - Percepção geral com relação a empresa - tela rating - form_rating.php 
+     */
+    $('#nrperger','#'+nomeForm).unbind('change').bind('change',function(){
+        bo = 'b1wgen0059.p';
+        procedure = 'busca_seqrating';
+        titulo = 'Patrim&ocircnio Livre';
+        nrtopico = '3';
+        nritetop = '11';
+        filtrosDesc = 'nrtopico|' + nrtopico + ';nritetop|' + nritetop + ';flgcompl|no;nrseqite|' + $(this).val();
+        buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsperger', $(this).val(), 'dsseqit1', filtrosDesc, nomeForm);
+        return false;
+    }).next().unbind('click').bind('click',function(){                    
+        bo = 'b1wgen0059.p';
+        procedure = 'busca_seqrating';
+        titulo = 'Itens do Rating';
+        qtReg = '20';
+        nrtopico = '3';
+        nritetop = '11';
+        filtrosPesq = 'C&oacuted. Inf. Cadastral;nrperger;30px;S;0|Inf. Cadastral;dsperger;200px;S;|;nrtopico;;;' + nrtopico + ';N|;nritetop;;;' + nritetop + ';N|;flgcompl;;;no;N';
+        colunas = 'Seq. Item;nrseqite;20%;right|Descri&ccedil&atildeo Seq. Item;dsseqite;80%;left;dsseqit1';
+        mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);
+        return false;
+    });
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * bruno - prj 438 - tela rating
+ * @param {numero cooperado} cdcooper 
+ * @param {codigo da operacao} operacao 
+ * @param {???} inprodut 
+ */
+function validarDadosRating(cdcooper , operacao , inprodut) { 
+
+	var vlprodut;
+
+	showMsgAguardo("Aguarde, validando dados do rating ...");
+
+	if (inprodut == 3 && operacao == 'I_PROT_CRED') { // Limite de credito
+		vlprodut = $("#vllimite","#frmNovoLimite").val().replace(".","").replace(",",".");
+	}
+		
+	nrgarope = $("#nrgarope","#"+nomeForm).val();
+	nrliquid = $("#nrliquid","#"+nomeForm).val();
+	nrpatlvr = $("#nrpatlvr","#"+nomeForm).val();	
+		
+		
+	if (inprodut == 3) { // Limite de credito
+		if (operacao != 'A_PROT_CRED' && operacao != 'I_PROT_CRED') {			
+			nrinfcad = $("#nrinfcad","#frmOrgaos").val();
+			dtconbir = $("#dtcnsspc","#frmOrgaos").val();
+		} else {
+			nrinfcad = (nrinfcad == 0 || operacao == 'I_PROT_CRED' ) ? undefined : nrinfcad;
+		}
+	} else {
+		nrinfcad = $("#nrinfcad","#"+nomeForm).val();
+		//vltotsfn = $("#vltotsfn","#"+nomeForm).val().replace(/\./g,"");
+    }
+    
+    //perfatcl = (inpessoa == 1) ? "0,00" : $("#perfatcl","#frmDadosRating").val().replace(/\./g,"");
+	nrperger = (var_globais.inpessoa == 1) ? "0" : $("#nrperger","#"+nomeForm).val();
+			
+	if (cdcooper == 3) {
+	
+		if (nrgarope != "" && validaNumero(nrgarope,true,0,0)) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o pode ser informado nenhuma garantia.","Alerta - Aimaro","$('#nrgarope','#'+'"+nomeForm+"').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}
+		
+		if (nrpatlvr != "" && validaNumero(nrpatlvr,true,0,0)) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o pode ser informado nenhum Patrim&ocirc;nio Pessoal Livre.","Alerta - Aimaro","$('#nrpatlvr','#'+'"+nomeForm+"').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}	
+		
+		if (inpessoa != 1 && (nrperger != "" && validaNumero(nrperger,true,0,0))) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o pode ser informado nenhuma Percep&ccedil;&atilde;o Geral.","Alerta - Aimaro","$('#nrperger','#'+'"+nomeForm+"').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}
+	
+	}
+
+	// Executa o script de valida��o dos dados do rating atrav�s de ajax
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "includes/rating/rating_valida_dados.php",
+		data: {
+			nrdconta: nrdconta,			
+			nrgarope: nrgarope,
+			nrinfcad: nrinfcad,
+			nrliquid: nrliquid,
+			nrpatlvr: nrpatlvr,			
+			nrperger: nrperger,
+			operacao: operacao,
+			inprodut: inprodut,
+			inpessoa: inpessoa,
+			vlprodut: vlprodut,
+			redirect: "script_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				// PRJ 438 - Ajuste pra esconder o form apenas em caso de nenhuma critica
+				if (response.indexOf('showError("error"') == -1) {
+					$('#divFormRating', '#frmNovoLimite').hide();
+				}
+                eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}				
+	}); 
+}
+
+/**
+ * Autor: Bruno Luiz katzjarowski - Mout's
+ * bruno - prj 438 - tela rating
+ * @param aux_data cadastrar_novo_limite.php -> linha 358
+ */
+function atualizarDadosRating(aux_data, fncSucesso){
+    showMsgAguardo("Aguarde, atualizando dados do rating ...");
+    fncRatingSuccess = fncSucesso;
+	$.ajax({
+		type: "POST", 
+		url: UrlSite + "includes/rating/rating_atualiza_dados.php",
+		data: aux_data,		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}				
+	});	
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * bruno - prj 438 - sprint 7 - tela rating
+ */
+function getDadosRating(){
+    $.ajax({
+		type: "POST", 
+		url: UrlSite + "telas/atenda/limite_credito/rating_buscar_dados.php", 
+        data: {
+            nrdconta: var_globais.nrdconta,
+            redirect: "script_ajax"
+        },
+        dataType: 'json',
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+            atualizarCampoNrinfcad(response.rating);
+		}				
+	});	
+}
+
+//bruno - prj 438 - sprint 7 - tela rating
+function atualizarCampoNrinfcad(rating){
+    $('#nrinfcad',"#frmNovoLimite").val(rating.nrinfcad);
+    $('#nrinfcad',"#frmNovoLimite").trigger('change');
+    
+    $('#nrpatlvr',"#frmNovoLimite").val(rating.nrpatlvr);
+    $('#nrpatlvr',"#frmNovoLimite").trigger('change');
+
+    $('#nrperger',"#frmNovoLimite").val(rating.nrperger);
+    $('#nrperger',"#frmNovoLimite").trigger('change');
+
+    if(aux_opcaoAtiva == "ALTERAR"){
+        atualizarCamposRating(aux_limites.pausado);
+    }
+}
+
+// Função que formata a pagina Efetivar
+function formataEfetivar() {
+
+	$('#divConteudoOpcao').css({
+        'width': '500px'
+    });
+
+	$('input, select', '#frmEfetivar').desabilitaCampo();		
+
+	// rotulo
+	rNrctrlim = $('label[for="nrctrlim"]', '#frmEfetivar');
+    rVllimite = $('label[for="vllimite"]', '#frmEfetivar');
+    rCddlinha = $('label[for="cddlinha"]', '#frmEfetivar');
+    rDataterm = $('label[for="dataterm"]', '#frmEfetivar');
+    rNivrisco = $('label[for="nivrisco"]', '#frmEfetivar');
+    rDsdtxfix = $('label[for="dsdtxfix"]', '#frmEfetivar');
+
+    rNivrisco.addClass('rotulo').css({ 'width': '130px' });
+    rDataterm.addClass('rotulo-linha').css({ 'width': '150px' });
+    rNrctrlim.addClass('rotulo').css({ 'width': '130px' });
+    rVllimite.addClass('rotulo-linha').css({ 'width': '150px' });
+    rCddlinha.addClass('rotulo').css({ 'width': '130px' });
+    rDsdtxfix.addClass('rotulo-linha').css({ 'width': '40px' });
+	
+	// campos
+    cNrctrlim = $('#nrctrlim', '#frmEfetivar');
+    cVllimite = $('#vllimite', '#frmEfetivar');
+    cCddlinha = $('#cddlinha', '#frmEfetivar');
+    cDataterm = $('#dataterm', '#frmEfetivar');
+    cNivrisco = $('#nivrisco', '#frmEfetivar'); 
+    cDsdtxfix = $('#dsdtxfix', '#frmEfetivar');
+
+    cNrctrlim.addClass('contrato').css({ 'width': '70px' });
+    cVllimite.addClass('moeda').css({ 'width': '100px' });
+    cCddlinha.css({ 'width': '180px' });
+	cDataterm.css({ 'width': '70px' });
+    cNivrisco.css({ 'width': '70px' });
+    cDsdtxfix.css({ 'width': '100px' });
+
+    $('#btVoltar', '#frmEfetivar').unbind('click').bind('click',function(e){
+    	e.preventDefault();
+		acessaTela('@');
+
+		return false;
+	});
+
+	$('#btContinuar', '#frmEfetivar').unbind('click').bind('click',function(e){
+		e.preventDefault();
+        showConfirmacao('Deseja confirmar novo ' + strTitRotinaLC + '?',
+                        'Confirmação - Aimaro',
+                        'efetivarLimiteCredito()',
+                        "blockBackground(parseInt($('#divRotina').css('z-index')))"
+                        ,'sim.gif','nao.gif');
+        return false;
+	});
+
+	layoutPadrao();
+}
+
+function setDadosEfetivar() {
+
+	var dataTermino = calcularDataTermino();
+		
+    $("#nrctrlim", "#frmEfetivar").val(aux_limites.pausado.nrctrlim);
+    $("#vllimite", "#frmEfetivar").val(aux_limites.pausado.vllimite);
+    $("#cddlinha", "#frmEfetivar").val(aux_limites.pausado.cddlinha + ' ' + aux_limites.pausado.dsdlinha);
+    $("#dataterm", "#frmEfetivar").val(dataTermino);
+	$("#nivrisco", "#frmEfetivar").val(aux_limites.pausado.nivrisco);
+	$("#dsdtxfix", "#frmEfetivar").val(aux_limites.pausado.txjurfix + '% + TR');
+	
+}
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 06/12/2018
+ */
+function abrirTelaDemoLimiteCredito(abrir){
+    if(typeof abrir == 'undefined'){
+        abrir = false;
+    }
+
+    if(abrir){
+        $('#divDadosAvalistas','#'+nomeForm).hide();
+        $('#divDemoLimiteCredito','#'+nomeForm).show();
+
+        formatarCamposDemoLimiteCredito();
+
+    }else{
+        $('#divDadosAvalistas','#'+nomeForm).show();
+        $('#divDemoLimiteCredito','#'+nomeForm).hide();
+    }
+}
+
+// PRJ 438 - Sprint 7
+function telefone(fone){
+	if(fone != null){
+		fone = fone.replace(/\D/g,"");                 //Remove tudo o que não é dígito
+		if (fone.length < 10 || fone.length > 11)
+			return '';
+		fone = fone.replace(/^(\d\d)(\d)/g,"($1) $2"); //Coloca parênteses em volta dos dois primeiros dígitos
+		fone = fone.replace(/(\d{4})(\d)/,"$1-$2");    //Coloca hífen entre o quarto e o quinto dígitos
+		return fone;
+	} else {
+		return '';
+	}
+}
+
+// PRJ 438
+function calcularDataTermino(){
+
+	var qtdiavig = isNaN(parseInt(aux_limites.pausado.qtdiavig)) ? 0 : parseInt(aux_limites.pausado.qtdiavig);
+	
+	var dia = aux_dtmvtolt.substr(0, 2);
+    var mes = aux_dtmvtolt.substr(3, 2);
+    var ano = aux_dtmvtolt.substr(6, 4);
+
+	var dtmvtolt = new Date(mes + "/" + dia + "/" + ano);
+
+    dtmvtolt.setDate(dtmvtolt.getDate() + qtdiavig);
+    
+    dia = ("0" + dtmvtolt.getDate()).slice(-2);
+    mes = ("0" + (dtmvtolt.getMonth() + 1)).slice(-2);
+    ano = dtmvtolt.getFullYear();
+
+    if (dia == null || mes == null || ano == null){
+    	return '';
+    }
+    return dia + '/' + mes + '/' + ano;
+}
+
+function showConfirmacaoRenovar(){
+
+	showConfirmacao('Deseja renovar o ' + strTitRotinaLC + ' atual?',
+            'Confirmação - Aimaro',
+            'validaAdesaoValorProduto(\'renovarLimiteAtual('+aux_limites.ativo.nrctrlim+')\','+aux_limites.ativo.vllimite+')',
+            "blockBackground(parseInt($('#divRotina').css('z-index')))",
+            'sim.gif','nao.gif');	
+}
+
+// Função que formata a pagina dados do limite de crédito
+function formataDadosLimiteCredito() {
+
+	$('input, select', '#frmDadosLimiteCredito').desabilitaCampo();		
+
+	// rotulo
+    rVllimite = $('label[for="vllimite"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDtmvtolt = $('label[for="dtmvtolt"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rCddlinha = $('label[for="cddlinha"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDtfimvig = $('label[for="dtfimvig"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rNrctrlim = $('label[for="nrctrlim"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rQtdiavig = $('label[for="qtdiavig"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDsencfi1 = $('label[for="dsencfi1"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDsencfi2 = $('label[for="dsencfi2"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDsencfi3 = $('label[for="dsencfi3"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDssitlli = $('label[for="dssitlli"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDtcanlim = $('label[for="dtcanlim"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rNmoperad = $('label[for="nmoperad"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rNmopelib = $('label[for="nmopelib"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rFlgenvio = $('label[for="flgenvio"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDstprenv = $('label[for="dstprenv"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rQtrenova = $('label[for="qtrenova"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+    rDtrenova = $('label[for="dtrenova"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+	rDtultmaj = $('label[for="dtultmaj"]', '#' + nomeForm + ' #divDadosLimiteCredito');
+
+    rVllimite.addClass('rotulo').css({ 'width': '126px' });
+    rDtmvtolt.addClass('rotulo-linha').css({ 'width': '110px' });
+    rCddlinha.addClass('rotulo').css({ 'width': '126px' });
+    rDtfimvig.addClass('rotulo-linha').css({ 'width': '110px' });
+    rNrctrlim.addClass('rotulo').css({ 'width': '126px' });
+    rQtdiavig.addClass('rotulo-linha').css({ 'width': '210px' });
+    rDsencfi1.addClass('rotulo').css({ 'width': '126px' });
+    rDsencfi2.addClass('rotulo').css({ 'width': '126px' });
+    rDsencfi3.addClass('rotulo').css({ 'width': '126px' });
+    rDssitlli.addClass('rotulo').css({ 'width': '126px' });
+    rDtcanlim.addClass('rotulo').css({ 'width': '126px' });
+    rNmoperad.addClass('rotulo').css({ 'width': '126px' });
+    rNmopelib.addClass('rotulo').css({ 'width': '126px' });
+    rFlgenvio.addClass('rotulo').css({ 'width': '126px' });
+    rDstprenv.addClass('rotulo').css({ 'width': '126px' });
+    rQtrenova.addClass('rotulo-linha');
+    rDtrenova.addClass('rotulo-linha').css({ 'width': '91px' });
+	rDtultmaj.addClass('rotulo').css({ 'width': '126px' });
+	
+	// campos
+    cVllimite = $('#vllimite', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDtmvtolt = $('#dtmvtolt', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cCddlinha = $('#cddlinha', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDtfimvig = $('#dtfimvig', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cNrctrlim = $('#nrctrlim', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cQtdiavig = $('#qtdiavig', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDsencfi1 = $('#dsencfi1', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDsencfi2 = $('#dsencfi2', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDsencfi3 = $('#dsencfi3', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDssitlli = $('#dssitlli', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDtcanlim = $('#dtcanlim', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cNmoperad = $('#nmoperad', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cNmopelib = $('#nmopelib', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cFlgenvio = $('#flgenvio', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDstprenv = $('#dstprenv', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cQtrenova = $('#qtrenova', '#' + nomeForm + ' #divDadosLimiteCredito');
+    cDtrenova = $('#dtrenova', '#' + nomeForm + ' #divDadosLimiteCredito');
+	cDtultmaj = $('#dtultmaj', '#' + nomeForm + ' #divDadosLimiteCredito');
+
+    cVllimite.css({ 'width': '180px' });
+    cDtmvtolt.css({ 'width': '70px' });
+    cCddlinha.css({ 'width': '180px' });
+    cDtfimvig.css({ 'width': '70px' });
+    cNrctrlim.css({ 'width': '80px' });
+    cQtdiavig.css({ 'width': '70px' });
+    cDsencfi1.css({ 'width': '336px' });
+    cDsencfi2.css({ 'width': '336px' });
+    cDsencfi3.css({ 'width': '336px' });
+    cDssitlli.css({ 'width': '336px' });
+    cDtultmaj.css({ 'width': '80px' });
+    cDtcanlim.css({ 'width': '70px' });
+    cNmoperad.css({ 'width': '336px' });
+    cNmopelib.css({ 'width': '336px' });
+    cFlgenvio.css({ 'width': '336px' });
+    cDstprenv.css({ 'width': '80px' });
+    cQtrenova.css({ 'width': '45px' });
+    cDtrenova.css({ 'width': '70px' });
+
+}
+
+function setarDadosLimiteCredito(){
+
+	$('#nivrisco', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.nivrisco);
+	$('#dsdtxfix', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dsdtxfix);
+	$('#vllimite', '#' + nomeForm + ' #divDadosLimiteCredito').val(number_format(var_globais.vllimite, 2).replace('.',',').replace(',','.'));
+	$('#dtmvtolt', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dtmvtolt);
+	$('#cddlinha', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.cddlinha + ' - ' + var_globais.dsdlinha);
+	$('#dtfimvig', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dtfimvig);
+	$('#nrctrlim', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.nrctrlim);
+	$('#qtdiavig', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.qtdiavig);
+	$('#dstprenv', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dstprenv);
+	$('#qtrenova', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.qtrenova);
+	$('#dtrenova', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dtrenova);
+	$('#dtcanlim', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dtcanlim);
+	$('#dsencfi1', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dsencfi1);
+	$('#dsencfi2', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dsencfi2);
+	$('#dsencfi3', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dsencfi3);
+	$('#dssitlli', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dssitlli + (var_globais.dsmotivo.trim() == "" ? "" : " - " + var_globais.dsmotivo));
+	$('#dtultmaj', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.dtultmaj);
+	$('#nmoperad', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.nmoperad);
+	$('#nmopelib', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.nmopelib);
+	$('#flgenvio', '#' + nomeForm + ' #divDadosLimiteCredito').val(var_globais.flgenvio);
+
 }
 
 /**
