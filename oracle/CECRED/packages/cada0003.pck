@@ -709,6 +709,22 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                                  ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2); --> Descricao da critica   
+
+  PROCEDURE pc_lista_contas_porCpfCnpj(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE  --> Numero do CPF / CGC do cooperado
+                           ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                           ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                           ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                           ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                           ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                           ,pr_des_erro OUT VARCHAR2);        --> Erros do processo                                                             
+                                                                                                                                                           
+  PROCEDURE pc_busca_dados_cjg_ass(pr_nrdconta IN crapass.nrdconta%TYPE, -- Numero da conta
+                                   pr_xmllog   IN VARCHAR2, --> XML com informações de LOG
+                                   pr_cdcritic OUT PLS_INTEGER, --> Código da crítica
+                                   pr_dscritic OUT VARCHAR2, --> Descrição da crítica
+                                   pr_retxml   IN OUT NOCOPY XMLType, --> Arquivo de retorno do XML
+                                   pr_nmdcampo OUT VARCHAR2, --> Nome do campo com erro
+                                   pr_des_erro OUT VARCHAR2);                                
                                                                                                                                                            
 
 END CADA0003;
@@ -4366,11 +4382,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Cursor para verificar se existe bordero de cheques ativo
       CURSOR cr_crapbdc(pr_cdcooper IN crapbdc.cdcooper%TYPE
                        ,pr_nrdconta IN crapbdc.nrdconta%TYPE)IS
-      SELECT 1 
-        FROM crapbdc
-       WHERE crapbdc.cdcooper = pr_cdcooper 
-         AND crapbdc.nrdconta = pr_nrdconta
-         AND crapbdc.insitbdc = 3; --Liberado
+      SELECT 1
+        FROM craplim lim
+            ,crapbdc bdc
+            ,crapcdb cdb
+       WHERE lim.cdcooper = pr_cdcooper
+         AND lim.nrdconta = pr_nrdconta
+         AND lim.tpctrlim = 2
+         AND lim.insitlim = 2 -- Ativa
+         AND bdc.cdcooper = lim.cdcooper
+         AND bdc.nrdconta = lim.nrdconta
+         AND bdc.nrctrlim = lim.nrctrlim
+         AND cdb.cdcooper = bdc.cdcooper
+         AND cdb.nrdconta = bdc.nrdconta
+         AND cdb.nrborder = bdc.nrborder
+         AND cdb.dtlibera >= rw_crapdat.dtmvtolt
+         AND cdb.insitchq = 2 -- Processado
+         AND ROWNUM = 1; -- Processado
       rw_crapbdc cr_crapbdc%ROWTYPE;
       
       --Cursor para buscar emprestimos ativos
@@ -14322,7 +14350,260 @@ exception
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                    '<Root><Erro>' || pr_dscritic ||
                                    '</Erro></Root>');
-  END pc_retorna_grupo_cpf;   
+  END pc_retorna_grupo_cpf; 
+  
+PROCEDURE pc_lista_contas_porCpfCnpj(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE --> Numero do CPF / CGC do cooperado
+                                    ,
+                                     pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                    ,
+                                     pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                    ,
+                                     pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                    ,
+                                     pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                    ,
+                                     pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                                    ,
+                                     pr_des_erro OUT VARCHAR2) is
+                                     
+     /* .............................................................................
+    
+       Programa: pc_lista_contas_porCpfCnpj                
+       Sistema : Cadastro - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Leonardo Zippert - Mouts
+       Data    : 17/10/2018                        Ultima atualizacao: 
+    
+       Dados referentes ao programa:
+    
+       Frequencia: Diaria - Sempre que for chamada
+       Objetivo  : Rotina para retornar uma lista de contas associadas ao cpf ou cnpj informado.
+    
+       Alteracoes:     
+    ............................................................................. */
+
+  -- Cursor sobre a tabela de associados que podem possuir contas duplicadas
+    CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%type) IS
+      SELECT nrdconta,
+             dtadmiss
+        FROM crapass
+       WHERE cdcooper = pr_cdcooper
+         AND nrcpfcgc = pr_nrcpfcgc
+         AND cdsitdct IN (1,5,9)
+       ORDER BY dtadmiss DESC;
+  
+  -- Variável de críticas
+  vr_cdcritic crapcri.cdcritic%TYPE := 0;
+  vr_dscritic VARCHAR2(4000);
+  vr_exc_saida exception;
+
+  -- Variaveis de log
+  vr_cdcooper INTEGER;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+  vr_dsorigem VARCHAR2(1000);
+
+  -- Variaveis gerais
+  vr_contador PLS_INTEGER := 0;
+
+begin
+
+  gene0001.pc_informa_acesso(pr_module => 'CADA0003');
+
+  -- Extrai os dados vindos do XML
+  GENE0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                           pr_cdcooper => vr_cdcooper,
+                           pr_nmdatela => vr_nmdatela,
+                           pr_nmeacao  => vr_nmeacao,
+                           pr_cdagenci => vr_cdagenci,
+                           pr_nrdcaixa => vr_nrdcaixa,
+                           pr_idorigem => vr_idorigem,
+                           pr_cdoperad => vr_cdoperad,
+                           pr_dscritic => vr_dscritic);
+
+  vr_dsorigem := gene0001.vr_vet_des_origens(vr_idorigem);
+  
+  pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+
+  -- Loop para incrementar as contas encontradas
+  FOR rw_crapass IN cr_crapass(vr_cdcooper) LOOP
+  
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
+    
+    vr_contador := vr_contador + 1;   
+    
+  
+  END LOOP; 
+  
+  pr_des_erro := 'OK';
+
+exception
+  when vr_exc_saida then
+    IF vr_cdcritic <> 0 THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+    ELSE
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    END IF;
+  
+    pr_des_erro := 'NOK';
+  
+    -- Carregar XML padrão para variável de retorno não utilizada.
+    -- Existe para satisfazer exigência da interface.
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><Erro>' || pr_dscritic ||
+                                   '</Erro></Root>');
+  when others then
+    cecred.pc_internal_exception(3);
+    pr_cdcritic := vr_cdcritic;
+    pr_dscritic := 'Erro geral em CADA0003.pc_lista_contas_porCpfCnpj.';
+    pr_des_erro := 'NOK';
+  
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><Erro>' || pr_dscritic ||
+                                   '</Erro></Root>');
+end pc_lista_contas_porCpfCnpj;
+
+PROCEDURE pc_busca_dados_cjg_ass(pr_nrdconta IN crapass.nrdconta%TYPE, -- Numero da conta
+                                 pr_xmllog   IN VARCHAR2, --> XML com informações de LOG
+                                 pr_cdcritic OUT PLS_INTEGER, --> Código da crítica
+                                 pr_dscritic OUT VARCHAR2, --> Descrição da crítica
+                                 pr_retxml   IN OUT NOCOPY XMLType, --> Arquivo de retorno do XML
+                                 pr_nmdcampo OUT VARCHAR2, --> Nome do campo com erro
+                                 pr_des_erro OUT VARCHAR2) is
+                                     
+     /* .............................................................................
+    
+       Programa: pc_busca_dados_cjg_ass                
+       Sistema : Cadastro - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Paulo Martins - Mouts
+       Data    : 24/10/2018                        Ultima atualizacao: 
+    
+       Dados referentes ao programa:
+    
+       Frequencia: Sempre que for chamada
+       Objetivo  : Rotina para retornar uma lista de informações de uma conta informada, para fluxo de proposta de emprestimo
+       Atenda -> emprestimos
+    
+       Alteracoes:     
+    ............................................................................. */
+
+  -- Cursor sobre a tabela de associados que podem possuir contas duplicadas
+     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%type) IS
+     SELECT a.nrdconta,
+             a.dtadmiss,
+             a.nmprimtl,
+             a.nrcpfcgc,
+             t.vlsalari+
+             t.vldrendi##1+
+             t.vldrendi##2+
+             t.vldrendi##3+                          
+             t.vldrendi##4+
+             t.vldrendi##5+
+             t.vldrendi##6 rendimento
+        FROM crapass a,
+             crapttl t
+       WHERE a.cdcooper = pr_cdcooper
+         AND a.nrdconta = pr_nrdconta
+         AND a.dtdemiss IS NULL -- Nao exibir demitidos
+         AND a.dtelimin IS NULL -- Nao exibir contas que possuam valores eliminados
+         AND a.cdsitdtl NOT IN (5,6,7,8) -- Nao exibir contas com prejuizo
+         AND a.cdsitdtl NOT IN (2,4,6,8) -- Titular da conta bloqueado      
+         AND t.idseqttl = 1   
+         and a.nrdconta = t.nrdconta
+         and a.cdcooper = t.cdcooper
+       ORDER BY dtadmiss DESC;
+  
+  
+  -- Variável de críticas
+  vr_cdcritic crapcri.cdcritic%TYPE := 0;
+  vr_dscritic VARCHAR2(4000);
+  vr_exc_saida exception;
+
+  -- Variaveis de log
+  vr_cdcooper INTEGER;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+  vr_dsorigem VARCHAR2(1000);
+
+  -- Variaveis gerais
+  vr_contador PLS_INTEGER := 0;
+
+begin
+
+  gene0001.pc_informa_acesso(pr_module => 'CADA0003');
+
+  -- Extrai os dados vindos do XML
+  GENE0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                           pr_cdcooper => vr_cdcooper,
+                           pr_nmdatela => vr_nmdatela,
+                           pr_nmeacao  => vr_nmeacao,
+                           pr_cdagenci => vr_cdagenci,
+                           pr_nrdcaixa => vr_nrdcaixa,
+                           pr_idorigem => vr_idorigem,
+                           pr_cdoperad => vr_cdoperad,
+                           pr_dscritic => vr_dscritic);
+
+  vr_dsorigem := gene0001.vr_vet_des_origens(vr_idorigem);
+  
+  pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+
+  -- Loop para incrementar as contas encontradas
+  FOR rw_crapass IN cr_crapass(vr_cdcooper) LOOP
+  
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmprimtl', pr_tag_cont => rw_crapass.nmprimtl, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrcpfcgc', pr_tag_cont => rw_crapass.nrcpfcgc, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'rendimento', pr_tag_cont => rw_crapass.rendimento, pr_des_erro => vr_dscritic);    
+    
+    vr_contador := vr_contador + 1;   
+    
+  
+  END LOOP; 
+  
+  pr_des_erro := 'OK';
+
+exception
+  when vr_exc_saida then
+    IF vr_cdcritic <> 0 THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+    ELSE
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    END IF;
+  
+    pr_des_erro := 'NOK';
+  
+    -- Carregar XML padrão para variável de retorno não utilizada.
+    -- Existe para satisfazer exigência da interface.
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><Erro>' || pr_dscritic ||
+                                   '</Erro></Root>');
+  when others then
+    cecred.pc_internal_exception(3);
+    pr_cdcritic := vr_cdcritic;
+    pr_dscritic := 'Erro geral em CADA0003.pc_busca_dados_cjg_ass.';
+    pr_des_erro := 'NOK';
+  
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><Erro>' || pr_dscritic ||
+                                   '</Erro></Root>');
+end pc_busca_dados_cjg_ass;    
   
 END CADA0003;
 /
