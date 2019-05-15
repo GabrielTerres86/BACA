@@ -11,11 +11,10 @@ declare
        AND (t.inliquid = 0 OR (t.vlsdprej > 0))
        ;
   rw_epr cr_epr%ROWTYPE;
-   
-  -- Local variables here
+
   i integer;
 begin
-  -- Test statements here
+  --
   FOR rw_epr IN cr_epr LOOP
 
     UPDATE crawepr t

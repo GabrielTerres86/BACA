@@ -18,7 +18,8 @@ declare
  SIGLA_TELA varchar2(400);
 begin
   
-SIGLA_TELA := 'DEVOLU ';
+/* */
+SIGLA_TELA := 'DEVOLU';
   --PARA CADA COOPERATIVA CADASTRADA
   FOR rw_crapcop IN cr_crapcop LOOP
   

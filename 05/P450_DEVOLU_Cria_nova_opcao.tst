@@ -22,7 +22,7 @@ declare
   rw_craptel cr_craptel%ROWTYPE;
 
 begin
-
+/* */
 
 SIGLA_TELA := 'DEVOLU';
   --PARA CADA COOPERATIVA CADASTRADA
