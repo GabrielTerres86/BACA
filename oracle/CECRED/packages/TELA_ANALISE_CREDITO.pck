@@ -7652,74 +7652,74 @@ PROCEDURE pc_consulta_proposta_limite(pr_cdcooper IN crapass.cdcooper%TYPE      
    open c_proposta_epr(pr_cdcooper,pr_nrdconta,pr_nrctrato);
     fetch c_proposta_epr into r_proposta_epr;
     
-     if r_proposta_epr.idfiniof = 1 then
-       /*IOF - TARIFA - VALOR EMPRESTIMO*/
-       FOR rw_crapbpr IN cr_crapbpr LOOP
-           vr_dscatbem := vr_dscatbem || '|' || rw_crapbpr.dscatbem;
-       END LOOP;     
+     /*IOF - TARIFA - VALOR EMPRESTIMO*/
+     FOR rw_crapbpr IN cr_crapbpr LOOP
+         vr_dscatbem := vr_dscatbem || '|' || rw_crapbpr.dscatbem;
+     END LOOP;     
 
-       -- Buscar iof
-       TIOF0001.pc_calcula_iof_epr( pr_cdcooper => pr_cdcooper
-                                   ,pr_nrdconta => pr_nrdconta
-                                   ,pr_nrctremp => pr_nrctrato
-                                   ,pr_dtmvtolt => r_proposta_epr.dtmvtolt
-                                   ,pr_inpessoa => pr_inpessoa
-                                   ,pr_cdfinemp => r_proposta_epr.cdfinemp
-                                   ,pr_cdlcremp => r_proposta_epr.cdlcremp
-                                   ,pr_qtpreemp => r_proposta_epr.qtpreemp
-                                   ,pr_vlpreemp => r_proposta_epr.vlpreemp
-                                   ,pr_vlemprst => r_proposta_epr.vlemprst
-                                   ,pr_dtdpagto => r_proposta_epr.dtdpagto
-                                   ,pr_dtlibera => r_proposta_epr.dtlibera
-                                   ,pr_tpemprst => r_proposta_epr.tpemprst
-                                   ,pr_dtcarenc        => r_proposta_epr.dtcarenc
-                                   ,pr_qtdias_carencia => r_proposta_epr.qtddias
-                                   ,pr_valoriof => vr_vlrdoiof
-                                   ,pr_dscatbem => vr_dscatbem
-                                   ,pr_idfiniof => r_proposta_epr.idfiniof
-                                   ,pr_dsctrliq => r_proposta_epr.dsctrliq
-                                   ,pr_idgravar => 'N'
-                                   ,pr_vlpreclc => vr_vlpreclc
-                                   ,pr_vliofpri => vr_vliofpri
-                                   ,pr_vliofadi => vr_vliofadi
-                                   ,pr_flgimune => vr_flgimune
-                                   ,pr_dscritic => vr_dscritic);
+     -- Buscar iof
+     TIOF0001.pc_calcula_iof_epr( pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrctremp => pr_nrctrato
+                                 ,pr_dtmvtolt => r_proposta_epr.dtmvtolt
+                                 ,pr_inpessoa => pr_inpessoa
+                                 ,pr_cdfinemp => r_proposta_epr.cdfinemp
+                                 ,pr_cdlcremp => r_proposta_epr.cdlcremp
+                                 ,pr_qtpreemp => r_proposta_epr.qtpreemp
+                                 ,pr_vlpreemp => r_proposta_epr.vlpreemp
+                                 ,pr_vlemprst => r_proposta_epr.vlemprst
+                                 ,pr_dtdpagto => r_proposta_epr.dtdpagto
+                                 ,pr_dtlibera => r_proposta_epr.dtlibera
+                                 ,pr_tpemprst => r_proposta_epr.tpemprst
+                                 ,pr_dtcarenc        => r_proposta_epr.dtcarenc
+                                 ,pr_qtdias_carencia => r_proposta_epr.qtddias
+                                 ,pr_valoriof => vr_vlrdoiof
+                                 ,pr_dscatbem => vr_dscatbem
+                                 ,pr_idfiniof => r_proposta_epr.idfiniof
+                                 ,pr_dsctrliq => r_proposta_epr.dsctrliq
+                                 ,pr_idgravar => 'N'
+                                 ,pr_vlpreclc => vr_vlpreclc
+                                 ,pr_vliofpri => vr_vliofpri
+                                 ,pr_vliofadi => vr_vliofadi
+                                 ,pr_flgimune => vr_flgimune
+                                 ,pr_dscritic => vr_dscritic);
                                        
-      SELECT decode(cdusolcr,2,0,cdusolcr) cdusolcr, -- Se for Epr/Boletos, considera como normal
-             tpctrato
-             into 
-             vr_cdusolcr,
-             vr_tpctrato
-        FROM craplcr
-       WHERE cdcooper = pr_cdcooper
-         AND cdlcremp = r_proposta_epr.cdlcremp;
+    SELECT decode(cdusolcr,2,0,cdusolcr) cdusolcr, -- Se for Epr/Boletos, considera como normal
+           tpctrato
+           into 
+           vr_cdusolcr,
+           vr_tpctrato
+      FROM craplcr
+     WHERE cdcooper = pr_cdcooper
+       AND cdlcremp = r_proposta_epr.cdlcremp;
                                           
                                        
-       -- Calcula tarifa
-       TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
-                                 ,pr_nrdconta => pr_nrdconta
-                                 ,pr_cdlcremp => r_proposta_epr.cdlcremp
-                                 ,pr_vlemprst => r_proposta_epr.vlemprst
-                                 ,pr_cdusolcr => vr_cdusolcr
-                                 ,pr_tpctrato => vr_tpctrato
-                                 ,pr_dsbemgar => vr_dscatbem
-                                 ,pr_cdprogra => 'TELA_UNICA'
-                                 ,pr_flgemail => 'N'
-                                 ,pr_vlrtarif => vr_vlrtarif
-                                 ,pr_vltrfesp => vr_vlrtares
-                                 ,pr_vltrfgar => vr_vltarbem
-                                 ,pr_cdhistor => vr_cdhistor
-                                 ,pr_cdfvlcop => vr_cdfvlcop
-                                 ,pr_cdhisgar => vr_cdhistor
-                                 ,pr_cdfvlgar => vr_cdfvlcop 
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic);
+     -- Calcula tarifa
+     TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_cdlcremp => r_proposta_epr.cdlcremp
+                               ,pr_vlemprst => r_proposta_epr.vlemprst
+                               ,pr_cdusolcr => vr_cdusolcr
+                               ,pr_tpctrato => vr_tpctrato
+                               ,pr_dsbemgar => vr_dscatbem
+                               ,pr_cdprogra => 'TELA_UNICA'
+                               ,pr_flgemail => 'N'
+                               ,pr_vlrtarif => vr_vlrtarif
+                               ,pr_vltrfesp => vr_vlrtares
+                               ,pr_vltrfgar => vr_vltarbem
+                               ,pr_cdhistor => vr_cdhistor
+                               ,pr_cdfvlcop => vr_cdfvlcop
+                               ,pr_cdhisgar => vr_cdhistor
+                               ,pr_cdfvlgar => vr_cdfvlcop 
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
           
-        vr_vlrtarif := ROUND(nvl(vr_vlrtarif,0),2) + nvl(vr_vlrtares,0) + nvl(vr_vltarbem,0);
-        vr_vlfinanc := r_proposta_epr.vlemprst + nvl(vr_vlrdoiof,0) + nvl(vr_vlrtarif,0);
-          
-          
-        end if;
+      vr_vlrtarif := ROUND(nvl(vr_vlrtarif,0),2) + nvl(vr_vlrtares,0) + nvl(vr_vltarbem,0);
+      vr_vlfinanc := r_proposta_epr.vlemprst;
+        
+      if r_proposta_epr.idfiniof = 1 then
+         vr_vlfinanc := vr_vlfinanc + nvl(vr_vlrdoiof,0) + nvl(vr_vlrtarif,0);          
+      end if;
     
      /*IOF - TARIFA - VALOR EMPRESTIMO*/
 
