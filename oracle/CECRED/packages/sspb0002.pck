@@ -2757,7 +2757,7 @@ BEGIN
       ELSE
         -- Retornar erro
         vr_dscritic := 'Chave duplicada nas mensagens enviadas na conciliacao - '||vr_ind_msgenvi;
-        RAISE vr_exc_erro;  
+        --RAISE vr_exc_erro;  
       END IF;    
       --
       vr_fgenviada:= False;
@@ -2954,7 +2954,7 @@ BEGIN
       ELSE
         -- Retornar erro
         vr_dscritic := 'Chave duplicada nas mensagens recebidas - '||vr_ind_msgrec;
-        RAISE vr_exc_erro;  
+        --RAISE vr_exc_erro; 
       END IF;    
       --
       vr_fgrecebida:= False;
