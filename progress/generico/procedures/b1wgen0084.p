@@ -3380,6 +3380,7 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_dtrisref AS DATE /* DATA RISCO REFIN */               NO-UNDO.
     DEF VAR aux_qtdiaatr AS INTE                                      NO-UNDO.
     DEF VAR aux_idquapro AS INTE                                      NO-UNDO.
+	DEF VAR aux_flgcescr AS LOGI INIT FALSE                           NO-UNDO.
 
     DEF BUFFER b-crawepr FOR crawepr.
 
@@ -4358,6 +4359,13 @@ PROCEDURE grava_efetivacao_proposta:
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
           END.
 
+       FOR FIRST crapfin FIELDS(tpfinali)
+          WHERE crapfin.cdcooper = par_cdcooper
+		    AND crapfin.cdfinemp = crawepr.cdfinemp
+        NO-LOCK: END.    
+    
+       IF AVAIL crapfin AND crapfin.tpfinali = 1 THEN
+         ASSIGN aux_flgcescr = TRUE.
 
        /* CESSAO DE CARTAO - sempre sera 5-Cessao Cartao */
        IF  aux_flgcescr THEN
