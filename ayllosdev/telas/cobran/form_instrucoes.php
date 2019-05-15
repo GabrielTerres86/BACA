@@ -8,6 +8,8 @@
  * ALTERAÇÕES   :  30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
  *                 22/09/2017 - Ajustes nas validações para exibir as instruções de Serasa e Protesto (Douglas - Chamado 754911)
  *			       05/10/2018 - Adicionado validação para não exibir Protesto 9 quando sacado estiver em uma UF não autorizada (Anderson Alan - SM_Projeto_352)
+ *                 08/05/2019 - inc0012536 adicionada a validação do código da espécie 2 (duplicata de serviço) juntamente 
+ *                              com a UF não autorizada. Duplicatas de serviço dos estados listados não podem ir para protesto (Carlos)
  * --------------
  */
 
@@ -34,7 +36,7 @@ $vr_dtmvtolt = strtotime($vr_dtmvtolt);
 $exec_inst_auto = $vr_dtvencto > $vr_dtmvtolt ? 1 : 0;
 //var_dump($vr_dtvencto,$vr_dtmvtolt,$qtlimaxp,$exec_inst_auto);
 
-foreach( $registro as $r ) {
+foreach( $registro as $r ) { // Cada crapoco de b1wgen0010.busca_instrucoes
     // Por padrão vamos criar a opção da instrução em tela
 	$cria_opcao = 1;
 	
@@ -73,8 +75,9 @@ foreach( $registro as $r ) {
 			} 
 		}
 		
-		// Verifica se o UF sacado está em um UF sem autorização para estar em protesto, caso estiver, não permite instrução 9
-		if ($estaEmDsnegufds) {
+		// Verifica se o UF sacado está em um UF sem autorização para estar em protesto e 
+        // a especie do boleto for DS (duplicata de serviço), caso estiver, não permite instrução 9
+		if ($estaEmDsnegufds && $cddespec === 2) {
 			if( getByTagName($r->tags,'cdocorre') == 9 || // Protestar
 				getByTagName($r->tags, 'cdocorre') == 80) { // Incluir Instrução Automática de Protesto
 				// Não criar a opção

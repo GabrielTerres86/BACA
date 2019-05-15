@@ -18,6 +18,8 @@
 *               08/01/2017 - Inclusao do campo flgdprot (Heitor - Mouts) - Chamado 574161 
  *              11/10/2016 - Inclusao dos campos de aviso por SMS 
  *                           PRJ319 - SMS Cobrança (Odirlei - AMcom)
+ *              08/05/2019 - inc0012536 adicionada a validação do código da espécie 2 (duplicata de serviço) juntamente com a UF 
+ *                           não autorizada. Duplicatas de serviço dos estados listados não podem ir para protesto (Carlos)
  */	
 ?>
 
@@ -66,6 +68,8 @@
 								  <input type="hidden" id="nrdctabb" name="nrdctabb" value="<? echo getByTagName($r->tags,'nrdctabb') ?>" />								  
 								  <input type="hidden" id="insitcrt" name="insitcrt" value="<? echo getByTagName($r->tags,'insitcrt') ?>" />									  
 								  
+                                  <input type="hidden" id="cddespec" name="cddespec" value="<? echo getByTagName($r->tags,'cddespec') ?>" />
+                                  
 								  <input type="hidden" id="cdcooper" name="cdcooper" value="<? echo getByTagName($r->tags,'cdcooper') ?>" />								  
 								  <input type="hidden" id="cdsituac" name="cdsituac" value="<? echo getByTagName($r->tags,'cdsituac') ?>" />								  
 								  <input type="hidden" id="dssituac" name="dssituac" value="<? echo getByTagName($r->tags,'dssituac') ?>" />								  
