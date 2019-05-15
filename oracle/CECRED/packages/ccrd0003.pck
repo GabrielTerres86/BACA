@@ -8494,7 +8494,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                           ,pr_des_anexo       => NULL
                                           ,pr_des_corpo       => 'Erro ao gerar arquivo '|| vr_nmrquivo||
                                                                  '<br><br>'||'Critica: ' || vr_dscritic
-                                          ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                          ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
                                           ,pr_des_erro        => vr_dsderro);
                 --Se ocorreu erro
                 IF trim(vr_dsderro) IS NOT NULL THEN
@@ -8598,12 +8598,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         gene0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper
                                   ,pr_cdprogra        => vr_cdprogra
-                                  ,pr_des_destino     => gene0001.fn_param_sistema('CRED',vr_cdcooper,'CRD_RESPONSAVEL') || ',cartoes@ailos.coop.br'
+                                  ,pr_des_destino     => gene0001.fn_param_sistema('CRED',vr_cdcooper,'CRD_RESPONSAVEL')
                                   ,pr_des_assunto     => 'Erro geral em ARQBCB/CRPS671'
                                   ,pr_des_anexo       => NULL
                                   ,pr_des_corpo       => 'Erro ao gerar arquivo '|| vr_nmrquivo||
                                                          '<br><br>'||'Critica: ' || pr_dscritic 
-                                  ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                  ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
                                   ,pr_des_erro        => vr_dsderro);
 
         -- Desfaz as alterações da base
