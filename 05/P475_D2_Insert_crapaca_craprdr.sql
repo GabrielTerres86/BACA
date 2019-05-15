@@ -6,7 +6,7 @@ BEGIN
                returning NRSEQRDR into vr_nrseqrdr;
 
   insert into crapaca (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-               values (null, 'PC_EXECUTAR_CONCILIACAO_MNL', 'TELA_CONSPB', 'PC_EXECUTAR_CONCILIACAO_MNL','PR_TIPO_MSG, PR_DTMENSAGEM_DE, PR_DTMENSAGEM_ATE, PR_DSENDERE', vr_nrseqrdr);
+               values (null, 'PC_EXECUTAR_CONCILIACAO_MNL', 'TELA_CONSPB', 'pc_executar_conciliacao_mnl','pr_tipo_msg,pr_dtmensagem_de,pr_dtmensagem_ate,pr_dsendere', vr_nrseqrdr);
 
 
   Commit;
