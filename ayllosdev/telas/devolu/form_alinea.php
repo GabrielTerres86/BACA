@@ -6,19 +6,22 @@
  * OBJETIVO     : Exibe a tela de Alinea - tela DEVOLU
  * --------------
  * ALTERAÇÕES   : 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923) 
- * 
+ *                08/05/2019 - Inclusão botão alterar alinea
+ *                           - Validação do botão Alterar Alinea para mostrar apenas para o depto COMPE
+ 							   e permissão no PERMIS (Luiz Otávio Olinger Momm - AMCOM)
  * --------------
  */ 
-?>
 
-
-<?php
  	session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');	
 	require_once('../../class/xmlfile.php');
 	isPostMethod();		
+
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A', false)) <> '') {
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
+	}
 ?>
 
 <form id="frmAlinea" name="frmAlinea" class="formulario" onsubmit="return false;">
@@ -34,6 +37,6 @@
 
 <div id="divBotoes2">
     <br />
-	<a href="#" class="botao" id="btVoltar" onclick="fechaRotina($('#divRotina')); return false;">Cancelar</a>
+	<a href="#" class="botao" id="btVoltar" onclick="fechaRotina($('#divRotina')); btnAA = false; return false;">Cancelar</a>
 	<a href="#" class="botao" id="btOk" onclick="proc_gera_dev(); return false;">Ok</a>
 </div>

@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 19/10/2018
+    Data    : Fevereiro/2011               ultima Atualizacao: 21/04/2019
 
     Dados referentes ao programa:
 
@@ -318,13 +318,25 @@
               27/06/2018 - P450 - Calculo e gravacao Risco Refin no emprestimo
                            (Guilherme/AMcom)
                            
-              16/08/2018 - Qualificar a Operacao no ato da efetivacao da proposta
-                           PJ 450 - Diego Simas (AMcom)
+              16/08/2018 - Qualificar a Operacao no ato da efetivacao da
+                           proposta PJ 450 - Diego Simas (AMcom)
                            
               31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts         
 
               19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)              
                            
+			  13/12/2018 - P442 - Ao checar Chassi alienado em outros contratos, descartar refinanciamentos (Marcos-Envolti)         
+                           
+			  03/01/2019 - Ajuste na gravação do IOF do emprestimo (INC0029419) Daniel			
+
+              19/12/2018 - P298.2 - Inclusão dos campos tpemprst e vlprecar no retorno da procedure busca_dados_efetivacao_proposta
+                           (Andre Clemer - Supero)
+
+              27/12/2018 - PJ298.2 - Alterado gravacao do campo vlpreemp para o POS (Rafael Faria - Supero)
+
+              08/05/2019 - P450 - Ajuste na qualificacao da operacao quando
+                           se tratar de uma Cessao de Cartao (Guilherme/AMcom)
+
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -474,12 +486,12 @@ FUNCTION fnBuscaDataDoUltimoDiaUtilMes RETURN DATE
 
     DEF VAR aux_dtcalcul AS DATE   NO-UNDO.
 
-    /* Calcular o ultimo dia do mês */
+    /* Calcular o ultimo dia do mes */
     ASSIGN aux_dtcalcul =
           ((DATE(MONTH(par_dtrefmes),28,YEAR(par_dtrefmes)) + 4) -
             DAY(DATE(MONTH(par_dtrefmes),28,YEAR(par_dtrefmes)) + 4)).
 
-    /* Calcular o ultimo dia util do mês */
+    /* Calcular o ultimo dia util do mes */
     DO WHILE TRUE:
        IF   CAN-DO("1,7",STRING(WEEKDAY(aux_dtcalcul)))    OR
             CAN-FIND(crapfer WHERE crapfer.cdcooper = par_cdcooper    AND
@@ -554,7 +566,7 @@ END FUNCTION.
 
 END FUNCTION.*/
 
-/* Retorna o ultimo dia do mês */
+/* Retorna o ultimo dia do mes */
 FUNCTION fnBuscaDataDoUltimoDiaMes RETURN DATE (par_dtrefmes AS DATE):
 
     DEF VAR aux_dtcalcul AS DATE   NO-UNDO.
@@ -1009,7 +1021,7 @@ PROCEDURE calcula_data_parcela:
                 aux_dtcalcul = DATE(aux_mes,aux_dia,aux_ano) NO-ERROR.
                 IF  ERROR-STATUS:ERROR THEN
                     DO:
-                      /* Calcular o ultimo dia do mês */
+                      /* Calcular o ultimo dia do mes */
                       ASSIGN aux_dtcalcul = DATE((DATE(aux_mes, 28, aux_ano) + 4) -
                                                  DAY(DATE(aux_mes,28, aux_ano) + 4)).
                     END.
@@ -2118,13 +2130,23 @@ PROCEDURE busca_dados_efetivacao_proposta:
            tt-efetiv-epr.avalist2 = " "
            tt-efetiv-epr.dtdpagto = crawepr.dtdpagto
            tt-efetiv-epr.idcobope = crawepr.idcobope
-           tt-efetiv-epr.idfiniof = crawepr.idfiniof.
+           tt-efetiv-epr.idfiniof = crawepr.idfiniof
+           tt-efetiv-epr.tpemprst = crawepr.tpemprst
+           tt-efetiv-epr.vlprecar = crawepr.vlprecar.
 
-    /* Se tiver contrato em liquidacao, envia para efetivacao da proposta para refinanciamento */	
-    IF (crawepr.nrctrliq[1] > 0 OR crawepr.nrctrliq[2] > 0 OR crawepr.nrctrliq[3] > 0
-	   OR crawepr.nrctrliq[4] > 0 OR crawepr.nrctrliq[5] > 0 OR crawepr.nrctrliq[6] > 0 
-       OR crawepr.nrctrliq[7] > 0 OR crawepr.nrctrliq[8] > 0 OR crawepr.nrctrliq[9] > 0 
-	   OR crawepr.nrctrliq[10] > 0 OR crawepr.nrliquid > 0) THEN		
+    /* Se tiver contrato em liquidacao, envia para efetivacao da proposta 
+       para refinanciamento */        
+    IF (crawepr.nrctrliq[1] > 0 OR
+        crawepr.nrctrliq[2] > 0 OR
+        crawepr.nrctrliq[3] > 0 OR
+        crawepr.nrctrliq[4] > 0 OR
+        crawepr.nrctrliq[5] > 0 OR
+        crawepr.nrctrliq[6] > 0 OR
+        crawepr.nrctrliq[7] > 0 OR
+        crawepr.nrctrliq[8] > 0 OR
+        crawepr.nrctrliq[9] > 0 OR
+        crawepr.nrctrliq[10] > 0
+        OR crawepr.nrliquid > 0) THEN                
 		ASSIGN tt-efetiv-epr.flliquid = 1.
     ELSE
 	    ASSIGN tt-efetiv-epr.flliquid = 0.	   
@@ -2377,6 +2399,7 @@ PROCEDURE busca_dados_efetivacao_proposta:
 
 
         END.
+        
     RETURN "OK".
 
 END PROCEDURE. /* busca dados efetivacao proposta */
@@ -2405,6 +2428,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
     DEF VAR aux_flgativo AS INTEGER NO-UNDO.
     DEF VAR aux_flgcescr AS LOG INIT FALSE                             NO-UNDO.
 	  /* DEF VAR aux_flimovel AS INTEGER NO-UNDO. 17/02/2017 - Validaçao removida */
+    DEF VAR aux_flgportb AS LOGI INIT FALSE                           NO-UNDO.
 
     DEF BUFFER crabbpr FOR crapbpr.
     
@@ -2623,6 +2647,15 @@ PROCEDURE valida_dados_efetivacao_proposta:
               RETURN "NOK".
         END.
      
+    FOR FIRST tbepr_portabilidade
+       FIELDS (nrdconta)
+        WHERE tbepr_portabilidade.cdcooper = par_cdcooper
+          AND tbepr_portabilidade.nrdconta = par_nrdconta
+          AND tbepr_portabilidade.nrctremp = par_nrctremp
+        NO-LOCK:
+        ASSIGN aux_flgportb = TRUE.
+    END.
+   
    FOR FIRST crapfin FIELDS(tpfinali)
         WHERE crapfin.cdcooper = par_cdcooper AND
               crapfin.cdfinemp = crawepr.cdfinemp
@@ -2715,8 +2748,11 @@ PROCEDURE valida_dados_efetivacao_proposta:
             END.
         END.
 
-        /* Verificar se um dos bens da proposta ja se
-           encontra alienado em outro contrato */
+        /* Verificar se um dos bens da proposta ja se encontra alienado em outro contrato
+           OBS: Nao eh feito para Portabilidade */
+        IF  aux_flgportb = FALSE THEN
+                DO:
+
         FOR EACH crapbpr WHERE crapbpr.cdcooper = par_cdcooper
                            AND crapbpr.nrdconta = par_nrdconta
                            AND crapbpr.nrctrpro = par_nrctremp
@@ -2726,7 +2762,16 @@ PROCEDURE valida_dados_efetivacao_proposta:
             FOR EACH crapepr WHERE crapepr.cdcooper = crapbpr.cdcooper
                                AND crapepr.nrdconta = crapbpr.nrdconta
                                AND crapepr.inliquid = 0
-                               NO-LOCK:
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[1]  
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[2]  
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[3]
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[4]  
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[5]  
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[6]
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[7]
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[8]
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[9]
+                     AND crapepr.nrctremp <> crawepr.nrctrliq[10] NO-LOCK:
                 FOR FIRST crabbpr WHERE crabbpr.cdcooper = crapepr.cdcooper
                                     AND crabbpr.nrdconta = crapepr.nrdconta
                                     AND crabbpr.nrctrpro = crapepr.nrctremp
@@ -2751,44 +2796,10 @@ PROCEDURE valida_dados_efetivacao_proposta:
                 END.
             END.
         END.
-
-        /* Verificar se um dos bens da proposta ja se
-           encontra alienado em outro contrato */
-        FOR EACH crapbpr WHERE crapbpr.cdcooper = par_cdcooper
-                           AND crapbpr.nrdconta = par_nrdconta
-                           AND crapbpr.nrctrpro = par_nrctremp
-                           AND crapbpr.flgalien = TRUE
-                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,OUTROS VEICULOS",crapbpr.dscatbem)
-                           NO-LOCK:
-            FOR EACH crapepr WHERE crapepr.cdcooper = crapbpr.cdcooper
-                               AND crapepr.nrdconta = crapbpr.nrdconta
-                               AND crapepr.inliquid = 0
-                               NO-LOCK:
-                FOR FIRST crabbpr WHERE crabbpr.cdcooper = crapepr.cdcooper
-                                    AND crabbpr.nrdconta = crapepr.nrdconta
-                                    AND crabbpr.nrctrpro = crapepr.nrctremp
-                                    AND crabbpr.flgalien = TRUE
-                                    AND crabbpr.dschassi = crapbpr.dschassi
-                                    AND (crabbpr.cdsitgrv <> 4 AND
-                                         crabbpr.cdsitgrv <> 5)
-                                    NO-LOCK: END.
-                IF AVAIL crabbpr THEN
-                DO:
-                    ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Ja existe o mesmo chassi alienado em um contrato liberado!".
-        
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 2,
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-            
-                    RETURN "NOK".
     END.
             END.
-        END.
-    END.
+
+           
 
 /*
     /* Nao permitir utilizar linha 100, quando possuir acordo de estouro de conta ativo */
@@ -4236,6 +4247,24 @@ PROCEDURE grava_efetivacao_proposta:
                  END.
 
                  END.
+
+       /* Diego Simas (AMcom) - PJ 450                       */
+       /* Início                                             */
+       
+       /* Verifica se existe algum contrato limite/adp       */
+       /* e adiciona a lista de contratos para qualificar    */ 
+       IF aux_dsctrliq <> "" THEN DO:
+            IF crawepr.nrliquid <> 0 THEN
+               aux_dsctrliq = aux_dsctrliq + 
+                 ", " + TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).                           
+                 END.
+       ELSE DO:
+            IF crawepr.nrliquid <> 0 THEN
+               aux_dsctrliq = aux_dsctrliq + 
+                 TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).               
+            END.
+
+
        /***********************
           CALCULO DATA RISCO REFIN
           Se houve alguma liquidacao de contrato
@@ -4282,23 +4311,7 @@ PROCEDURE grava_efetivacao_proposta:
            ASSIGN aux_dtrisref = ?.
        /***********************/
           
-       /* Diego Simas (AMcom) - PJ 450                       */
-       /* Início                                             */
        
-       /* Verifica se existe algum contrato limite/adp       */
-       /* e adiciona a lista de contratos para qualificar    */ 
-       IF aux_dsctrliq <> "" THEN
-          DO:
-            IF crawepr.nrliquid <> 0 THEN
-               aux_dsctrliq = aux_dsctrliq + 
-                 ", " + TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).                           
-          END.
-       ELSE
-          DO:
-            IF crawepr.nrliquid <> 0 THEN
-               aux_dsctrliq = aux_dsctrliq + 
-                 TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).               
-            END.                      
 
        /* Acionar rotina que gera a qualificacao da operacao */
        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -4345,6 +4358,11 @@ PROCEDURE grava_efetivacao_proposta:
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
           END.
 
+
+       /* CESSAO DE CARTAO - sempre sera 5-Cessao Cartao */
+       IF  aux_flgcescr THEN
+           ASSIGN aux_idquapro = 5.
+           
        /* Requalifica a operacao na proposta                 */
        /* INICIO                                             */       
        FIND FIRST b-crawepr
@@ -4380,7 +4398,9 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.cdfinemp = crawepr.cdfinemp
               crapepr.cdlcremp = crawepr.cdlcremp
               crapepr.vlemprst = crawepr.vlemprst
-              crapepr.vlpreemp = crawepr.vlpreemp
+              crapepr.vlpreemp = IF (crawepr.idcarenc > 1) THEN
+                                      crawepr.vlprecar
+                                 ELSE crawepr.vlpreemp
               crapepr.qtpreemp = crawepr.qtpreemp
               crapepr.nrctaav1 = crawepr.nrctaav1
               crapepr.nrctaav2 = crawepr.nrctaav2
@@ -4408,7 +4428,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.vltarifa = aux_vltarifa
               crapepr.vlaqiofc = aux_vlaqiofc
               /*P438 Incluir a tratativa para PP*/
-              crapepr.vltariof = (IF CAN-DO("1,2", STRING(crawepr.tpemprst)) THEN aux_vltariof ELSE aux_vltotiof)
+              crapepr.vltariof = aux_vltotiof /* (IF CAN-DO("1,2", STRING(crawepr.tpemprst)) THEN aux_vltariof ELSE aux_vltotiof) */
               crapepr.iddcarga = aux_idcarga
               crapepr.idfiniof = crawepr.idfiniof
               crapepr.dtinicio_atraso_refin = aux_dtrisref.
