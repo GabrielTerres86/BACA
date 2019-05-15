@@ -51,7 +51,13 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_EMPRESTIMO IS
                                   , pr_clob_ret       OUT CLOB                  --> Tabela Extrato da Conta
                                   , pr_cdcritic       OUT PLS_INTEGER           --> Codigo da critica
                                   , pr_dscritic       OUT VARCHAR2              --> Descricao da critica
-                                  ) ;                                                                               
+                                  ) ;     
+  PROCEDURE pc_altera_numero_proposta(pr_cdcooper       IN crapcop.cdcooper%TYPE --> Cooperativa 
+                                     ,pr_nrdconta       IN crapass.nrdconta%type --> Conta
+                                     ,pr_nrctremp       IN crawepr.nrctremp%TYPE --> número da proposta
+                                     ,pr_nrctremp_novo  IN crawepr.nrctremp%TYPE --> Numero da proposta de emprestimo novo
+                                     ,pr_dscritic       OUT VARCHAR2             --> Descricao da critica
+                                    );                                                                                                            
 END TELA_ATENDA_EMPRESTIMO;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
@@ -1023,6 +1029,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
              
     END;
   END pc_valida_inf_cad_car;
+
+  PROCEDURE pc_altera_numero_proposta(pr_cdcooper       IN crapcop.cdcooper%TYPE --> Cooperativa 
+                                     ,pr_nrdconta       IN crapass.nrdconta%type --> Conta
+                                     ,pr_nrctremp       IN crawepr.nrctremp%TYPE --> número da proposta
+                                     ,pr_nrctremp_novo  IN crawepr.nrctremp%TYPE --> Numero da proposta de emprestimo novo
+                                     ,pr_dscritic       OUT VARCHAR2             --> Descricao da critica
+                                    ) IS
+    /* .............................................................................................
+
+    Programa: pc_altera_numero_proposta (Rotina chamada do progess b1wgen0002.p)
+    Sistema : AIMARO
+    Autor   : Josiane Stiehler - AMcom 
+    Data    : 13/05/2019                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo : Projeto 437 - Consignado - Altera o número da proposta (contrato) na tabela do consignado 
+
+
+    Alteracoes: 
+    ...............................................................................................*/
+    BEGIN
+      UPDATE tbepr_consignado consig
+         SET consig.nrctremp = pr_nrctremp_novo
+       WHERE consig.cdcooper = pr_cdcooper
+         AND consig.nrdconta = pr_nrdconta
+         AND consig.nrctremp = pr_nrctremp;
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_dscritic := 'Não foi possivel atualizar tbepr_consignado: '||SQLERRM;
+    END pc_altera_numero_proposta;
 
 END TELA_ATENDA_EMPRESTIMO;
 /
