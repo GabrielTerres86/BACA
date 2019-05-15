@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-66
+65
 declare 
   cursor cr_crapcop is
   select cdcooper 
@@ -13,7 +13,7 @@ declare
   select cdoperad 
     from crapope
    where cdcooper =   pr_cdcooper
-    and  cddepart = 4 -- 4-COMPE;
+    and  cddepart = 4; -- 4-COMPE;
   rw_crapope cr_crapope%ROWTYPE;
  SIGLA_TELA varchar2(400);
 begin
@@ -64,8 +64,6 @@ SIGLA_TELA := 'DEVOLU';
   
   COMMIT;
 end;
-
-
 
 0
 0
