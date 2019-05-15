@@ -137,8 +137,9 @@ DEF VAR aux_nrregist AS INT                                            NO-UNDO.
 DEF VAR aux_nriniseq AS INT                                            NO-UNDO.
 DEF VAR aux_cdcritic AS INT                                            NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
-DEF VAR aux_vlrtotal AS DEC											   NO-UNDO.
+DEF VAR aux_vlrtotal AS DEC											                       NO-UNDO.
 DEF VAR aux_nmsocial AS CHAR                                           NO-UNDO.
+DEF VAR aux_flgctsal AS LOG                                            NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -240,9 +241,10 @@ PROCEDURE valores_entrada:
             WHEN "hrinicad" THEN aux_hrinicad = INTE(tt-param.valorCampo).
             WHEN "idorigee" THEN aux_idorigee = INTE(tt-param.valorCampo).
             WHEN "nrlicamb" THEN aux_nrlicamb = DECI(tt-param.valorCampo).
-			WHEN "nrregist"  THEN aux_nrregist  = INTE(tt-param.valorCampo).
-            WHEN "nriniseq"  THEN aux_nriniseq  = INTE(tt-param.valorCampo).
+            WHEN "nrregist" THEN aux_nrregist  = INTE(tt-param.valorCampo).
+            WHEN "nriniseq" THEN aux_nriniseq  = INTE(tt-param.valorCampo).
 			WHEN "nmsocial" THEN aux_nmsocial = tt-param.valorCampo.
+            WHEN "flgctsal" THEN aux_flgctsal = LOGICAL(tt-param.valorCampo).
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
@@ -1065,6 +1067,7 @@ PROCEDURE Grava_Dados:
                             INPUT aux_idorigee,
                             INPUT aux_nrlicamb,
 							INPUT aux_nmsocial,
+                            INPUT aux_flgctsal,
                            OUTPUT aux_msgretor,
                            OUTPUT aux_tpatlcad,
                            OUTPUT aux_msgatcad,

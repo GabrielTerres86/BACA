@@ -708,6 +708,7 @@ function manterRotina() {
         dtcnscpf = $('#dtcnscpf', '#frmFisico').val();
         nrdocptl = normalizaTexto($('#nrdocptl', '#frmFisico').val());
         cdoedptl = normalizaTexto($('#cdoedptl', '#frmFisico').val());
+        flgctsal = $('#flgctsal', '#frmFisico').prop('checked');
         dtemdptl = $('#dtemdptl', '#frmFisico').val();
         tpnacion = $('#tpnacion', '#frmFisico').val();
         cdnacion = $('#cdnacion', '#frmFisico').val();
@@ -823,8 +824,7 @@ function manterRotina() {
 				cdtipcta: cdtipcta, inhabmen: inhabmen, dthabmen: dthabmen, 
 				verrespo: verrespo, permalte: permalte, cdufnatu: cdufnatu, 
 				inconrfb: inconrfb, hrinicad: hrinicad, arrayFilhos: arrayFilhos, 
-				idorigee: idorigee,
-				nmsocial: nmsocial,
+				idorigee: idorigee, nmsocial: nmsocial, flgctsal: flgctsal,
                 redirect: 'script_ajax'
             },
             error: function (objAjax, responseError, objExcept) {
@@ -1146,7 +1146,7 @@ function controlaBotoes() {
 
             $('#btVoltarCns').css('display', 'inline');
 			
-            //PRJ339 - Se possui par?metro para efetuar saque e desligamento pelo AIMARO            
+            //PRJ339 - Se possui par?metro para efetuar saque e desligamento pelo AIMARO
 			if (inSaqDes == 1 || trim(crm_nrdconta) != '') {
               
                 //Verifica se veio pelo AIMARO ou CRM atrav?s do n?mero da contaCRM

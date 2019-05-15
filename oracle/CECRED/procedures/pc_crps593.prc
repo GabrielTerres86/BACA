@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps593 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Ze Eduardo
-       Data    : Marco/2011                       Ultima atualizacao: 27/01/2018
+       Data    : Marco/2011                       Ultima atualizacao: 07/05/2019
 
        Dados referentes ao programa:
 
@@ -62,6 +62,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps593 (pr_cdcooper IN crapcop.cdcooper%T
                                 aumentado para 7 digitos (Carlos)
 
 				   27/01/2018 - #780914 Removido cheques digitalizados (Andrey)
+                            
+                   07/05/0219 - Ajuste para remover espaços em branco ao formatar
+                                o número do lote e número do cheque ao montar o xml
+                                para geração do relatório
+                                (Inc0014133 - Adriano).
                             
     ............................................................................ */
 
@@ -567,14 +572,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps593 (pr_cdcooper IN crapcop.cdcooper%T
                         <nrdconta>'|| gene0002.fn_mask_conta(vr_tab_custdesc(vr_index).nrdconta) ||'</nrdconta>
                         <dtmvtolt>'|| to_char(vr_tab_custdesc(vr_index).dtmvtolt,'DD/MM/RRRR')   ||'</dtmvtolt>
                         <dtlibera>'|| to_char(vr_tab_custdesc(vr_index).dtlibera,'DD/MM/RRRR')   ||'</dtlibera>
-                        <nrdolote>'|| gene0002.fn_mask_contrato(vr_tab_custdesc(vr_index).nrdolote) ||'</nrdolote>
+                        <nrdolote>'|| trim(gene0002.fn_mask_contrato(vr_tab_custdesc(vr_index).nrdolote)) ||'</nrdolote>
                         <dtlibbdc>'|| to_char(vr_tab_custdesc(vr_index).dtlibbdc,'DD/MM/RRRR')   ||'</dtlibbdc>
                         <nrborder>'|| gene0002.fn_mask(vr_tab_custdesc(vr_index).nrborder,'zzzzzz9') ||'</nrborder>
                         <cdcmpchq>'|| gene0002.fn_mask(vr_tab_custdesc(vr_index).cdcmpchq,'999') ||'</cdcmpchq>
                         <cdbanchq>'|| gene0002.fn_mask(vr_tab_custdesc(vr_index).cdbanchq,'999') ||'</cdbanchq>
                         <cdagechq>'|| gene0002.fn_mask(vr_tab_custdesc(vr_index).cdagechq,'9999')||'</cdagechq>
                         <nrctachq>'|| vr_tab_custdesc(vr_index).nrctachq                         ||'</nrctachq>
-                        <nrcheque>'|| gene0002.fn_mask_contrato(vr_tab_custdesc(vr_index).nrcheque) ||'</nrcheque>
+                        <nrcheque>'|| trim(gene0002.fn_mask_contrato(vr_tab_custdesc(vr_index).nrcheque)) ||'</nrcheque>
                         <vlcheque>'|| vr_tab_custdesc(vr_index).vlcheque                         ||'</vlcheque>
                       </cheque>',
                       -- incluir no resumo
@@ -784,4 +789,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps593 (pr_cdcooper IN crapcop.cdcooper%T
 
   END pc_crps593;
 /
-

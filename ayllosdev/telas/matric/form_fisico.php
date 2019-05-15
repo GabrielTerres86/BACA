@@ -93,8 +93,10 @@
 		
 		<label for="dtemdptl">Dt. Emi.:</label>
 		<input name="dtemdptl" id="dtemdptl" type="text" value="<? echo getByTagName($registro,'dtemdptl') ?>" />
+
+		<input style="margin:3px 5px;" <?=($modalidade == 2 ? 'checked' : '')?> type="checkbox" id="flgctsal" name="flgctsal" value="1" /> <label>Conta Modalidade Sal&aacute;rio</label>
+
 		<br style="clear:both" />
-		
 	</fieldset>
 	
 	<fieldset>

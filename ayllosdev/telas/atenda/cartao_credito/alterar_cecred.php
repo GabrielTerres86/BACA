@@ -143,6 +143,17 @@ $xmlObjeto = getObjectXML($xmlResult);
 $coop_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
 $pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
 
+$xmlSituacao = "<Root>";
+$xmlSituacao .= " <Dados>";
+$xmlSituacao .= "   <nrdconta>$nrdconta</nrdconta>";
+$xmlSituacao .= "   <nrctrcrd>$nrctrcrd</nrctrcrd>";
+$xmlSituacao .= " </Dados>";
+$xmlSituacao .= "</Root>";
+
+
+$xmlResult = mensageria($xmlSituacao, "ATENDA_CRD", "BUSCAR_SITUACAO_DECISAO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObjeto = simplexml_load_string($xmlResult);
+$flgBancoob = ($xmlObjeto->Dados->cartoes->sitdec == "Refazer" ? true : false);
 ?>
 
 <form action="" name="frmNovoCartao" id="frmNovoCartao" method="post" onSubmit="return false;">
@@ -232,7 +243,11 @@ $pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
                     <input type="text" name="vlalugue" id="vlalugue" class="campo" value="0,00" />
                     <br />
                     <label for="vllimpro"><?php echo utf8ToHtml('Limite Proposto:') ?></label>
+                    <? if (!$flgBancoob) { ?>
+                    <input  class='campo' id='vllimpro' onchange="validaNovoLimite()" name='vllimpro' data-old="<?php echo $vllimite; ?>" value="<?php echo $vllimite; ?>">
+                    <? } else { ?>
                     <input  class='campo' id='vllimpro' name='vllimpro' value="<?php echo $vllimite; ?>">
+                    <? } ?>
 
                     <label for="flgdebit"><?php echo utf8ToHtml('Habilita função débito:') ?></label>
                     <input type="checkbox" <?=$flgdebit?> name="flgdebit" id="flgdebit" class="campo" dtb="1" disabled />
@@ -261,7 +276,7 @@ $pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
                 <div id="divBotoes">
 				
                     <input class="btnVoltar" id="backChoose" type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(0, 1, 4); return false;" />
-                    <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao('A'); return false;" />
+                    <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao('M'); return false;" />
 
                 
 					<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
@@ -298,6 +313,20 @@ $pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
 
 
 <script type="text/javascript">
+    function validaNovoLimite() {
+        var limiteAntigo = $("#vllimpro").data("old"),
+            limiteNovo = $("#vllimpro").val();
+
+        limiteAntigo = normalizaNumero(limiteAntigo || 0);
+        limiteNovo = normalizaNumero(limiteNovo || 0);
+        flgBancoob = false;
+        if (limiteNovo != limiteAntigo) {
+            flgBancoob = true;
+        }
+    }
+    
+    <? if ($flgBancoob) { echo "flgBancoob = true;"; }?>
+    
     controlaLayout('frmNovoCartao');
 
     $("#divOpcoesDaOpcao1").css("display","block");

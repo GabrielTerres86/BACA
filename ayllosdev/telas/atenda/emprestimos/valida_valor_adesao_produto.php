@@ -26,10 +26,30 @@
 	
 	$executar = "showMsgAguardo(\"Aguarde, validando dados ...\");";
 	$executar = "setTimeout(\"attArray(\\\"".$operacao."\\\",\\\"".$cdcooper."\\\")\", 400);";
+
+	/* Buscamos a modalidade do cooperado */
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "	<Dados>";
+	$xml .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "	</Dados>";
+	$xml .= "</Root>";
 	
+	// Executa script para envio do XML
+	$xmlModalidadeResult = mensageria($xml, "ATENDA", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlModalidadeObject = getObjectXML($xmlModalidadeResult);
 	
-	/* Desconsidera CDC */
-	if ($cdfinemp <> 0 && $cdfinemp <> 58 && $cdfinemp <> 59 && $idquapro <> 2 && $idquapro <> 4) {
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlModalidadeObject->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlModalidadeObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	}	
+	$modalidade = $xmlModalidadeObject->roottag->tags[0]->cdata;
+	$flgConsignadoSalario = ($modalidade == 2 && $cdfinemp == 57);
+	
+	/* Desconsidera CDC e consignado para conta salário */
+	if ($cdfinemp <> 0 && $cdfinemp <> 58 && $cdfinemp <> 59 && $idquapro <> 2 && $idquapro <> 4 && !$flgConsignadoSalario) {
 		
 		// Monta o xml de requisição
 		$xml  = "";

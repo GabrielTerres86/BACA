@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
      Sistema : Baixas Operacionais DDA0108R2 - LAUTOM
      Sigla   : CRED
      Autor   : Ricardo Linhares
-     Data    : Dezembro/2016                     Ultima atualizacao: 02/01/2018
+     Data    : Dezembro/2016                     Ultima atualizacao: 02/05/2019
 
      Dados referentes ao programa:
 
@@ -27,6 +27,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
                   do cursor cr_jd e também do delete da procedure pc_excluir_registros_jd
                   incluindo todos os campos com índice nas tabelas do sql server.
                   (INC0020759-AJFink)
+
+     02/05/2019 - Trocar codigo "TpOpJD" de "CB" que não existe para "CO - Cancelamento da Baixa
+                  Operacional enviada pelo Banco Recebedor".
+                  (INC0013795-AJFink)
 
   ............................................................................ */
 
@@ -118,6 +122,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
                                  ,pr_dsdirlog     => vr_dsdireto
                                  ,pr_flfinmsg     => 'N'                                 
                                  ,pr_nmarqlog     => 'pc_crps711'
+                                 ,pr_cdprograma   => vr_cdprogra
                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY hh24:mi:ss')||' - Erro: ' || pr_dscritic);                                       
                                  
     END;
@@ -297,7 +302,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
              and ctrl."IdOpJD" = optit."IdOpJD"
              and ctrl."ISPBAdministrado" = optit."ISPBAdministrado"
              --
-             and optit."TpOpJD" IN ('BO', 'CB')
+             and optit."TpOpJD" IN ('BO', 'CO')
              and optit."DtHrOpJD" >= to_number(to_char(pr_dtmvtoan,'YYYYMMDD')||'000000');
       --
       vr_index number(10);

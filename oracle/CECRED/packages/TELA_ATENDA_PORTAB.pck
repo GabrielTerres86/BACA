@@ -118,7 +118,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PORTAB IS
                                     ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);
-                                    
+
   PROCEDURE pc_contesta_portabilidade(pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
                                      ,pr_cdmotivo IN tbcc_portab_env_contestacao.cdmotivo%TYPE --> Motivo da contestacao
                                      ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
@@ -3229,7 +3229,7 @@ PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numer
             ,crapnac.dsnacion as dsnacion
             ,gnetcvl.dsestcvl as dsestcvl
             ,tbcadast_pessoa_fisica_resp.idpessoa_resp_legal
-            ,crapage.nmresage as nmresage
+            ,crapage.nmextage as nmextage
             ,crapenc.dsendere as dsendere
             ,crapenc.nrendere as nrendere
             ,crapenc.nmbairro as nmbairro
@@ -3294,7 +3294,8 @@ PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numer
                  crapttl.nrcpfemp as nrcpfemp,
                  crapemp.dsendemp as dsendemp,
                  crapemp.nrcepend as nrcepend,
-                 crapemp.nmcidade as nmcidade
+                 UPPER(crapemp.nmcidade) as nmcidade,
+                 crapemp.nrendemp as nrendemp
             FROM crapttl, crapemp
            WHERE crapttl.cdcooper = pr_cdcooper
              AND crapttl.nrdconta = pr_nrdconta
@@ -3401,30 +3402,30 @@ PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numer
                             pr_texto_novo     => '<cop_nmextcop>' || rw_crapcop.nmextcop || '</cop_nmextcop>' ||
 												 '<cop_nmrescop>' || rw_crapcop.nmrescop || '</cop_nmrescop>' ||
                          '<cop_nrdocnpj>' || vr_nrcpfcgc_cop ||'</cop_nrdocnpj>' || 
-												 '<cop_nmcidade>' || rw_crapcop.nmcidade ||'</cop_nmcidade>' || 
-												 '<cop_dsendcop>' || rw_crapcop.dsendcop ||'</cop_dsendcop>' || 
-												 '<cop_cdufdcop>' || rw_crapcop.cdufdcop ||'</cop_cdufdcop>' || 
-												 '<cop_nrcepend>' || gene0002.fn_mask_cep(rw_crapcop.nrcepend) ||'</cop_nrcepend>' || 
-												 '<cop_dsendweb>' || rw_crapcop.dsendweb ||'</cop_dsendweb>' || 
-												 '<cop_dataextenso>' || rw_crapcop.dataextenso ||'</cop_dataextenso>' || 
-												 '<cop_nrtelura>' || nvl(trim(rw_crapcop.nrtelura), ' ') ||'</cop_nrtelura>' || 
-												 '<cop_nrtelouv>' || nvl(trim(rw_crapcop.nrtelouv), ' ') ||'</cop_nrtelouv>' ||  												 
-												 '<tit_nrdconta>' || gene0002.fn_mask_conta(rw_crapass.nrdconta) ||'</tit_nrdconta>' ||  
-												 '<tit_nmprimtl>' || nvl(trim(rw_crapass.nmprimtl), ' ') ||'</tit_nmprimtl>' ||  
-												 '<tit_nrcpfcgc>' || vr_nrcpfcgc_ass ||'</tit_nrcpfcgc>' ||  
-												 '<tit_xxx_dsnacion>' || nvl(trim(rw_crapass.dsnacion), ' ') ||'</tit_xxx_dsnacion>' ||  
-												 '<tit_xxx_dsregcas>' || nvl(trim(rw_crapass.dsestcvl), ' ') ||'</tit_xxx_dsregcas>' ||  
-												 '<tit_dsendere>' || nvl(trim(rw_crapass.dsendere), ' ') ||'</tit_dsendere>' ||  
-												 '<tit_nrendere>' || nvl(trim(rw_crapass.nrendere), ' ') ||'</tit_nrendere>' ||  
-												 '<tit_nmbairro>' || nvl(trim(rw_crapass.nmbairro), ' ') ||'</tit_nmbairro>' ||  
-												 '<tit_nmcidade>' || nvl(trim(rw_crapass.nmcidade), ' ') ||'</tit_nmcidade>' ||  
+                         '<cop_nmcidade>' || rw_crapcop.nmcidade ||'</cop_nmcidade>' || 
+                         '<cop_dsendcop>' || rw_crapcop.dsendcop ||'</cop_dsendcop>' || 
+                         '<cop_cdufdcop>' || rw_crapcop.cdufdcop ||'</cop_cdufdcop>' || 
+                         '<cop_nrcepend>' || gene0002.fn_mask_cep(rw_crapcop.nrcepend) ||'</cop_nrcepend>' || 
+                         '<cop_dsendweb>' || rw_crapcop.dsendweb ||'</cop_dsendweb>' || 
+                         '<cop_dataextenso>' || rw_crapcop.dataextenso ||'</cop_dataextenso>' || 
+                         '<cop_nrtelura>' || nvl(trim(rw_crapcop.nrtelura), ' ') ||'</cop_nrtelura>' || 
+                         '<cop_nrtelouv>' || nvl(trim(rw_crapcop.nrtelouv), ' ') ||'</cop_nrtelouv>' ||  												 
+                         '<tit_nrdconta>' || gene0002.fn_mask_conta(rw_crapass.nrdconta) ||'</tit_nrdconta>' ||  
+                         '<tit_nmprimtl>' || nvl(trim(rw_crapass.nmprimtl), ' ') ||'</tit_nmprimtl>' ||  
+                         '<tit_nrcpfcgc>' || vr_nrcpfcgc_ass ||'</tit_nrcpfcgc>' ||  
+                         '<tit_xxx_dsnacion>' || nvl(trim(rw_crapass.dsnacion), ' ') ||'</tit_xxx_dsnacion>' ||  
+                         '<tit_xxx_dsregcas>' || nvl(trim(rw_crapass.dsestcvl), ' ') ||'</tit_xxx_dsregcas>' ||  
+                         '<tit_dsendere>' || nvl(trim(rw_crapass.dsendere), ' ') ||'</tit_dsendere>' ||  
+                         '<tit_nrendere>' || nvl(trim(rw_crapass.nrendere), ' ') ||'</tit_nrendere>' ||  
+                         '<tit_nmbairro>' || nvl(trim(rw_crapass.nmbairro), ' ') ||'</tit_nmbairro>' ||  
+                         '<tit_nmcidade>' || nvl(trim(rw_crapass.nmcidade), ' ') ||'</tit_nmcidade>' ||  
                          '<tit_cdufende>' || nvl(trim(rw_crapass.cdufende), ' ') ||'</tit_cdufende>' ||  
                          '<tit_nrcepend>' || gene0002.fn_mask_cep(rw_crapass.nrcepend) ||'</tit_nrcepend>' ||  
-                         '<tit_nmresage>' || rw_crapass.nmresage ||'</tit_nmresage>' ||                          
+                         '<tit_nmresage>' || rw_crapass.nmextage ||'</tit_nmresage>' ||                          
                          '<ds_responsavel>' || vr_ds_responsavel ||'</ds_responsavel>' ||                            
                          '<emp_nmextemp>' || nvl(trim(rw_crapttl.nmextemp), ' ') ||'</emp_nmextemp>' ||  
                          '<emp_nrcpfemp>' || vr_nrcpfcgc_emp ||'</emp_nrcpfemp>' ||  
-                         '<emp_dsendere>' || nvl(trim(rw_crapttl.dsendemp), ' ') ||'</emp_dsendere>' ||
+                         '<emp_dsendere>' || nvl(trim(rw_crapttl.dsendemp), ' ') || ', nº ' || nvl(trim(rw_crapttl.nrendemp), '') ||'</emp_dsendere>' ||
                          '<emp_nrcepend>' || gene0002.fn_mask_cep(rw_crapttl.nrcepend) ||'</emp_nrcepend>' ||
                          '<emp_nmcidade>' || nvl(trim(rw_crapttl.nmcidade), ' ') ||'</emp_nmcidade>'||
                          '<nr_clausula_empregador>' || nr_clausula_empregador || '</nr_clausula_empregador>' ||
@@ -3494,7 +3495,7 @@ PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numer
       pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END pc_imprimir_termo_conta;
-  
+
   PROCEDURE pc_contesta_portabilidade(pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
                                      ,pr_cdmotivo IN tbcc_portab_env_contestacao.cdmotivo%TYPE --> Motivo do cancelamento
                                      ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG

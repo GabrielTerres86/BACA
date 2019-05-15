@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: consultar_dados_cartao.php                                ***//
 	//*** Autor: Guilherme                                                 ***//
-	//*** Data : Março/2008                   Última Alteração: 14/10/2015 ***//
+	//*** Data : Março/2008                   Última Alteração: 09/05/2019 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Mostrar opção de Consulta da rotina de Cartões de    ***//
 	//***             Crédito da tela ATENDA                               ***//
@@ -33,8 +33,10 @@
 	//***                                                                  ***//
 	//***             22/02/2019 - Adicionados campos de exibição do  	   ***//
     //***                          endereço de entrega do cartão de 	   ***//
-	//***						   crédito (Lucas - P429)       		   ***//
+	//***						   crédito (Lucas - P429)       		                    ***//
 	//***                                                                  ***//
+  //***             09/05/2019 - incluido campo inupgrade como hidden    ***//
+  //***                          Alcemir Mouts (PRB0041641).             ***//                    
 	//************************************************************************//			
 	
 	session_start();
@@ -145,11 +147,12 @@
 	$nmopetaa = getByTagName($dados,"nmopetaa");
 	$cdadmcrd = getByTagName($dados,"cdadmcrd");
 	$flgdebit = ((getByTagName($dados,"flgdebit") == "no") ? "" : "checked");
-    $dtrejeit = getByTagName($dados,"dtrejeit");
-    $nrcctitg = getByTagName($dados,"nrcctitg");
-    $dsdpagto = getByTagName($dados,"dsdpagto");
-    $dsgraupr = getByTagName($dados,"dsgraupr");
+  $dtrejeit = getByTagName($dados,"dtrejeit");
+  $nrcctitg = getByTagName($dados,"nrcctitg");
+  $dsdpagto = getByTagName($dados,"dsdpagto");
+  $dsgraupr = getByTagName($dados,"dsgraupr");
 	$flgprovi = getByTagName($dados,"flgprovi");
+  $inupgrad = getByTagName($dados,"inupgrad");
 		   
 
 	
@@ -371,6 +374,8 @@
 			
 				<label for="flgprovi"><? echo utf8ToHtml('Cartão Provisório:') ?></label>
 				<input type="text" name="flgprovi" id="flgprovi" value="<?php echo $flgprovi == 1 ? "Sim" : "N&#227;o"; ?>" />			
+        
+        <input type="hidden" name="inupgrad" id="inupgrad" value="<?php echo $inupgrad; ?>" />
 				
 				<? if ($incrdent == 1) { ?>
 				<fieldset style="padding-left: 50px;">

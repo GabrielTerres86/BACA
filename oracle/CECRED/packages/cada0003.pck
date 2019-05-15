@@ -14386,8 +14386,8 @@ PROCEDURE pc_lista_contas_porCpfCnpj(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE --> Nu
         FROM crapass
        WHERE cdcooper = pr_cdcooper
          AND nrcpfcgc = pr_nrcpfcgc
+         AND cdsitdct IN (1,5,9)
        ORDER BY dtadmiss DESC;
-  
   
   -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE := 0;

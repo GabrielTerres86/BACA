@@ -17,6 +17,9 @@
                26/06/2018 - Inclusao de novos campos para retorno de dados da conta.
                             PRJ-CDC (Odirlei-AMcom)
 
+               14/11/2018 - Ajuste para passar a modalidade do tpo da conta do cooperado
+							atraves do servico (PRJ 485 - Lucas Skroch)  
+
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -54,6 +57,12 @@ DEF VAR aux_nrcpfcgc LIKE crapass.nrcpfcgc                             NO-UNDO.
 DEF VAR aux_nrcpfpre LIKE crapsnh.nrcpfcgc                             NO-UNDO.
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
+
+/*  INICIO Projeto 485 - Portabilidade de salario */
+DEF VAR aux_cdmodali AS INTE                                           NO-UNDO.
+DEF VAR aux_des_erro AS CHAR                                           NO-UNDO.
+/*  FIM Projeto 485 - Portabilidade de salario */
+
 /*  Projeto 363 - Novo ATM */
 DEF VAR aux_flgemiss AS INTE                                           NO-UNDO.
 DEF VAR aux_xml      AS CHAR                                           NO-UNDO.
@@ -252,7 +261,7 @@ ELSE
                 END.
             END.
     END.
-    
+
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
 RUN STORED-PROCEDURE pc_retorna_idpessoa
@@ -272,7 +281,36 @@ ASSIGN aux_idpessoa = 0
        aux_dscritic = pc_retorna_idpessoa.pr_dscritic
                       WHEN pc_retorna_idpessoa.pr_dscritic <> ?.      
 
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }  
+
+/*  INICIO Projeto 485 - Portabilidade de salario
+   buscar a modalidade da conta de acordo com o tipo de conta do cooperado */
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+    
+   RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+       aux_handproc = PROC-HANDLE NO-ERROR
+                          (INPUT crapass.inpessoa, /* pr_inpessoa */
+                           INPUT crapass.cdtipcta, /* pr_cdtipo_conta */
+                           OUTPUT 0,  /* pr_cdmodalidade_tipo */
+                           OUTPUT "", /* pr_des_erro */
+                           OUTPUT ""). /* pr_dscritic */
+    
+   CLOSE STORED-PROC pc_busca_modalidade_tipo 
+       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+   ASSIGN aux_cdmodali = 0
+          aux_des_erro = ""
+          aux_dscritic = ""
+          aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo                          
+                    WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+          aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro                          
+                    WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+          aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                    WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }       
+
+/* FIM Projeto 485 - Portabilidade de salario */
 
   FIND FIRST tbtaa_limite_saque 
        WHERE tbtaa_limite_saque.cdcooper = par_cdcooper
@@ -288,60 +326,60 @@ ASSIGN aux_idpessoa = 0
 IF par_cdorigem = 3  OR    /* Internet Bank */
    par_cdorigem = 10 THEN  /* Mobile */ 
 DO:
-RUN sistema/internet/procedures/b1wnet0002.p PERSISTENT
-    SET h-b1wnet0002.
+    RUN sistema/internet/procedures/b1wnet0002.p PERSISTENT
+        SET h-b1wnet0002.
 
-IF  VALID-HANDLE(h-b1wnet0002)  THEN
-    DO:
+    IF  VALID-HANDLE(h-b1wnet0002)  THEN
+        DO:
 
             /* Somente a conta online armazena o acesso anterior,
                com isso os parametros nao foram ajustados para 
                o projeto 363 Novo caixa eletronico */
-        RUN obtem-acesso-anterior IN h-b1wnet0002
-                                 (INPUT par_cdcooper,
-                                  INPUT 90,
-                                  INPUT 900,
-                                  INPUT "996",
-                                  INPUT "InternetBank",
-                                  INPUT 3,
-                                  INPUT par_nrdconta,
-                                  INPUT par_idseqttl,
-                                  INPUT par_nrcpfope,
-                                  INPUT FALSE,
-                                  INPUT par_flmobile,
-                                 OUTPUT TABLE tt-erro,
-                                 OUTPUT TABLE tt-acesso).
+            RUN obtem-acesso-anterior IN h-b1wnet0002
+                                     (INPUT par_cdcooper,
+                                      INPUT 90,
+                                      INPUT 900,
+                                      INPUT "996",
+                                      INPUT "InternetBank",
+                                      INPUT 3,
+                                      INPUT par_nrdconta,
+                                      INPUT par_idseqttl,
+                                      INPUT par_nrcpfope,
+                                      INPUT FALSE,
+                                      INPUT par_flmobile,
+                                     OUTPUT TABLE tt-erro,
+                                     OUTPUT TABLE tt-acesso).
 
-        DELETE PROCEDURE h-b1wnet0002.
+            DELETE PROCEDURE h-b1wnet0002.
 
-        IF  RETURN-VALUE = "NOK"  THEN
-            DO:
-                FIND FIRST tt-erro NO-LOCK NO-ERROR.
+            IF  RETURN-VALUE = "NOK"  THEN
+                DO:
+                    FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-                IF  AVAILABLE tt-erro  THEN
-                    aux_dscritic = tt-erro.dscritic.
-                ELSE
-                    aux_dscritic = "Nao foi possivel carregar os " +
-                                   "saldos.".
+                    IF  AVAILABLE tt-erro  THEN
+                        aux_dscritic = tt-erro.dscritic.
+                    ELSE
+                        aux_dscritic = "Nao foi possivel carregar os " +
+                                       "saldos.".
 
-                xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                               "</dsmsgerr>".
+                    xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
+                                   "</dsmsgerr>".
 
-                RUN proc_geracao_log (INPUT FALSE).
+                    RUN proc_geracao_log (INPUT FALSE).
 
-                RETURN "NOK".
-            END.                
+                    RETURN "NOK".
+                END.                
 
-        FIND FIRST tt-acesso NO-LOCK NO-ERROR.
+            FIND FIRST tt-acesso NO-LOCK NO-ERROR.
 
-        IF  AVAILABLE tt-acesso  THEN
-            ASSIGN aux_dtultace = IF  tt-acesso.dtultace <> ?  THEN
-                                      STRING(tt-acesso.dtultace,
-                                             "99/99/9999")
-                                  ELSE
-                                      ""
-                   aux_hrultace = STRING(tt-acesso.hrultace,"HH:MM:SS").                           
-    END.
+            IF  AVAILABLE tt-acesso  THEN
+                ASSIGN aux_dtultace = IF  tt-acesso.dtultace <> ?  THEN
+                                          STRING(tt-acesso.dtultace,
+                                                 "99/99/9999")
+                                      ELSE
+                                          ""
+                       aux_hrultace = STRING(tt-acesso.hrultace,"HH:MM:SS").                           
+        END.
 END.
 
 
@@ -430,8 +468,11 @@ ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmtitula>" +
                                aux_dtadmiss + 
                                "</dtadmiss><dtdemiss>" + 
                                aux_dtdemiss +
-                               "</dtdemiss></CORRENTISTA>" +
+                               "</dtdemiss><cdmodali>" + /* INICIO Projeto 485 - Portabilidade de salario */
+                               STRING(aux_cdmodali) +
+                               "</cdmodali></CORRENTISTA>" + /* FIM Projeto 485 - Portabilidade de salario */
                                aux_xml.
+
 
 RETURN "OK".
 

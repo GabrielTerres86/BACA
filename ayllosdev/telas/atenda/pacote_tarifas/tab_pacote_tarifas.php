@@ -1,5 +1,5 @@
 <?	
-
+	
 /***************************************************************************************
  * FONTE        : tab_pacote_tarifas.php				Última alteração: --/--/----
  * CRIAÇÃO      : Lombardi
@@ -65,9 +65,13 @@
 </div>	
 
 <div id="divBotoes">
-	<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:70px; " id="btIncluir" onClick=<? if ($flgInclusao != '') echo '"chamaTelaPacote(\'I\',\'' . $nrdconta . '\'); return false;"'; else echo '"showError(\'error\',\'' . $msgErro . '\',\'Alerta - Aimaro\',\'bloqueiaFundo(divRotina)\');return false;"';?>>Incluir </a>
-	<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:70px; " id="btConsultar" onClick=<? if ($flgConsulta != '') echo '"chamaTelaPacote(\'C\',\'' . $nrdconta . '\'); return false;"'; else echo '"showError(\'error\',\'' . $msgErro . '\',\'Alerta - Aimaro\',\'bloqueiaFundo(divRotina)\');return false;"';?>>Consultar </a>
-	<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:120px; " id="btAlterarDebito" onClick=<? if ($flgAlteracao != '') echo '"verificaPctCancelado(' . $nrdconta . ',\'AD\');return false;"'; else echo '"showError(\'error\',\'' . $msgErro . '\',\'Alerta - Aimaro\',\'bloqueiaFundo(divRotina)\');return false;"';?>>Alterar D&eacute;bito </a>
-	<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:70px; " id="btImprimir" onClick=<? if ($flgImpressao != '') echo '"chamaTelaImprimir('.$nrdconta.');return false;"'; else echo '"showError(\'error\',\'' . $msgErro . '\',\'Alerta - Aimaro\',\'bloqueiaFundo(divRotina)\');return false;"';?>>Imprimir </a>
-	<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:70px; " id="btCancelar" onClick=<? if ($flgCancela != '') echo '"verificaPctCancelado('.$nrdconta.',\'C\');return false;";'; else echo '"showError(\'error\',\'' . $msgErro . '\',\'Alerta - Aimaro\',\'bloqueiaFundo(divRotina)\');return false;"';?>>Cancelar </a>
+	<? if($modalidade != 2) {?>
+		<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:70px; " id="btIncluir" onClick=<? if ($flgInclusao != '') echo '"chamaTelaPacote(\'I\',\'' . $nrdconta . '\'); return false;"'; else echo '"showError(\'error\',\'' . $msgErro . '\',\'Alerta - Ayllos\',\'bloqueiaFundo(divRotina)\');return false;"';?>>Incluir </a>
+	<?}?>
+	<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:70px; " id="btConsultar" onClick=<? if ($flgConsulta != '') echo '"chamaTelaPacote(\'C\',\'' . $nrdconta . '\'); return false;"'; else echo '"showError(\'error\',\'' . $msgErro . '\',\'Alerta - Ayllos\',\'bloqueiaFundo(divRotina)\');return false;"';?>>Consultar </a>
+	<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:120px; " id="btAlterarDebito" onClick=<? if ($flgAlteracao != '') echo '"verificaPctCancelado(' . $nrdconta . ',\'AD\');return false;"'; else echo '"showError(\'error\',\'' . $msgErro . '\',\'Alerta - Ayllos\',\'bloqueiaFundo(divRotina)\');return false;"';?>>Alterar D&eacute;bito </a>
+	<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:70px; " id="btImprimir" onClick=<? if ($flgImpressao != '') echo '"chamaTelaImprimir('.$nrdconta.');return false;"'; else echo '"showError(\'error\',\'' . $msgErro . '\',\'Alerta - Ayllos\',\'bloqueiaFundo(divRotina)\');return false;"';?>>Imprimir </a>
+	<? if($modalidade != 2) {?>
+		<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:70px; " id="btCancelar" onClick=<? if ($flgCancela != '') echo '"verificaPctCancelado('.$nrdconta.',\'C\');return false;";'; else echo '"showError(\'error\',\'' . $msgErro . '\',\'Alerta - Ayllos\',\'bloqueiaFundo(divRotina)\');return false;"';?>>Cancelar </a>
+	<?}?>	
 </div>

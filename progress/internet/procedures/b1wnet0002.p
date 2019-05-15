@@ -3129,6 +3129,14 @@ PROCEDURE permissoes-menu-mobile:
     DEF VAR h-b1wgen0018 AS HANDLE                                  NO-UNDO.
     DEF VAR aux_possuipr AS CHAR NO-UNDO.
     
+    DEF VAR aux_cdmodali AS INTE                                    NO-UNDO.
+    DEF VAR aux_contador AS INTE                                    NO-UNDO.
+    DEF VAR aux_itens    AS CHAR                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
+    
+    DEF VAR aux_dscctsal AS CHAR                                    NO-UNDO.
+
+    
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-itens-menu.
     
@@ -3254,38 +3262,155 @@ PROCEDURE permissoes-menu-mobile:
       aux_flgresga = TRUE.
     ELSE
       aux_flgresga = FALSE.
-    
+      
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 204. /*TRANSAÇOES PENDENTES*/
            tt-itens-menu-mobile.flcreate = aux_flgsittp.
-    
+      
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 700. /*PRÉ-APROVADO*/
            tt-itens-menu-mobile.flcreate = aux_flgaprov. 
+
+    RUN STORED-PROCEDURE pc_busca_itens_menumobile
+    aux_handproc = PROC-HANDLE NO-ERROR (OUTPUT "",               /* Itens */
+                                         OUTPUT "",               /* Flag Erro */
+                                         OUTPUT "").              /* Descriçao da crítica */
+
+    CLOSE STORED-PROC pc_busca_itens_menumobile
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_itens = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_itens = pc_busca_itens_menumobile.pr_itens 
+                       WHEN pc_busca_itens_menumobile.pr_itens <> ?
+           aux_des_erro = pc_busca_itens_menumobile.pr_des_erro 
+                          WHEN pc_busca_itens_menumobile.pr_des_erro <> ?
+           aux_dscritic = pc_busca_itens_menumobile.pr_dscritic
+                          WHEN pc_busca_itens_menumobile.pr_dscritic <> ?.
+
+    IF aux_des_erro = "NOK"  THEN
+        DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT 0,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+        END.  
+     
+    DO aux_contador = 1  TO  NUM-ENTRIES(aux_itens, ","):
+      CREATE tt-itens-menu-mobile.
+      ASSIGN tt-itens-menu-mobile.cditemmn = INTE(ENTRY(aux_contador, aux_itens ,",")).
+             tt-itens-menu-mobile.flcreate = TRUE.
+    END.
+      
+    FIND FIRST tt-itens-menu-mobile WHERE tt-itens-menu-mobile.cditemmn = 204 EXCLUSIVE-LOCK NO-ERROR. /*TRANSAÇOES PENDENTES*/    
+    IF AVAILABLE tt-itens-menu-mobile THEN
+      DO:
+        ASSIGN tt-itens-menu-mobile.flcreate = aux_flgsittp.
+      END.
     
-    CREATE tt-itens-menu-mobile.
-    ASSIGN tt-itens-menu-mobile.cditemmn = 901. /*RECARGA DE CELULAR*/
-           tt-itens-menu-mobile.flcreate = aux_flgsitrc.  
     
-    CREATE tt-itens-menu-mobile.
-    ASSIGN tt-itens-menu-mobile.cditemmn = 902. /*DEBITO AUTOMATICO*/
-           tt-itens-menu-mobile.flcreate = aux_flgdebau.  
+    FIND FIRST tt-itens-menu-mobile WHERE tt-itens-menu-mobile.cditemmn = 700 EXCLUSIVE-LOCK NO-ERROR. /*PRÉ-APROVADO*/
+    IF AVAILABLE tt-itens-menu-mobile THEN
+      DO:
+        ASSIGN tt-itens-menu-mobile.flcreate = aux_flgaprov.
+      END.
+      
+      
+    FIND FIRST tt-itens-menu-mobile WHERE tt-itens-menu-mobile.cditemmn = 901 EXCLUSIVE-LOCK NO-ERROR. /*RECARGA DE CELULAR*/
+    IF AVAILABLE tt-itens-menu-mobile THEN
+      DO:
+        ASSIGN tt-itens-menu-mobile.flcreate = aux_flgsitrc.
+      END.
+      
+      
+    FIND FIRST tt-itens-menu-mobile WHERE tt-itens-menu-mobile.cditemmn = 902 EXCLUSIVE-LOCK NO-ERROR. /*DEBITO AUTOMATICO*/
+    IF AVAILABLE tt-itens-menu-mobile THEN
+      DO:
+        ASSIGN tt-itens-menu-mobile.flcreate = aux_flgdebau.
+      END.
     
     IF aux_flgsitrc = FALSE AND 
        aux_flgdebau = FALSE THEN
         DO:
-            CREATE tt-itens-menu-mobile.
-            ASSIGN tt-itens-menu-mobile.cditemmn = 900. /*CONVENIENCIA*/
-                   tt-itens-menu-mobile.flcreate = FALSE.  
+            FIND FIRST tt-itens-menu-mobile WHERE tt-itens-menu-mobile.cditemmn = 900 EXCLUSIVE-LOCK NO-ERROR. /*CONVENIENCIA*/
+            IF AVAILABLE tt-itens-menu-mobile THEN
+              DO:
+                ASSIGN tt-itens-menu-mobile.flcreate = FALSE.
+              END.
         END.
+
+    FIND FIRST tt-itens-menu-mobile WHERE tt-itens-menu-mobile.cditemmn = 602 EXCLUSIVE-LOCK NO-ERROR. /*APLICACAO*/
+    IF AVAILABLE tt-itens-menu-mobile THEN
+      DO:
+        ASSIGN tt-itens-menu-mobile.flcreate = aux_flgaplic.
+      END.
+      
+    FIND FIRST tt-itens-menu-mobile WHERE tt-itens-menu-mobile.cditemmn = 603 EXCLUSIVE-LOCK NO-ERROR. /* RESGATE APLICACAO*/
+    IF AVAILABLE tt-itens-menu-mobile THEN
+      DO:
+        ASSIGN tt-itens-menu-mobile.flcreate = aux_flgresga.
+      END.
+
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                         INPUT crapass.cdtipcta, /* Tipo de conta */
+                                        OUTPUT 0,                /* Modalidade */
+                                        OUTPUT "",               /* Flag Erro */
+                                        OUTPUT "").              /* Descriçao da crítica */
+
+    CLOSE STORED-PROC pc_busca_modalidade_tipo
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdmodali = 0
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+           aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                          WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+           aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                          WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+    IF aux_des_erro = "NOK"  THEN
+        DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT 0,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+        END.
+
     
-    CREATE tt-itens-menu-mobile.
-    ASSIGN tt-itens-menu-mobile.cditemmn = 602. /*APLICACAO*/
-           tt-itens-menu-mobile.flcreate = aux_flgaplic.  
-    
-    CREATE tt-itens-menu-mobile.
-    ASSIGN tt-itens-menu-mobile.cditemmn = 603. /* RESGATE APLICACAO*/
-           tt-itens-menu-mobile.flcreate = aux_flgresga.
+    /*
+    1) modalidade é 2? se sim goto 2 senao goto -1
+    2) inativa todos os itens da temp-table
+    3) ativa somente os itens retornados no select
+    */
+    IF aux_cdmodali = 2 THEN
+      DO:
+      
+        ASSIGN aux_dscctsal = "10,20,103,104,30,200,300,301,302,400,401,402,500,804,902,40,1001".
+
+        FOR EACH tt-itens-menu-mobile NO-LOCK:
+          IF NOT CAN-DO(aux_dscctsal, STRING(tt-itens-menu-mobile.cditemmn)) THEN
+          DO:
+            ASSIGN tt-itens-menu-mobile.flcreate = FALSE.
+          END.
+        END.
+      END.
     
   RETURN "OK".
     

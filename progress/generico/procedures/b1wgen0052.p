@@ -1653,8 +1653,8 @@ PROCEDURE Grava_Dados:
 
 	DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
-
 	DEF  INPUT PARAM par_nmsocial AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_flgctsal AS LOG                            NO-UNDO.
 	
     DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
@@ -2297,6 +2297,7 @@ PROCEDURE Grava_Dados:
               INPUT par_idorigee,
               INPUT par_nrlicamb,
 			  INPUT par_nmsocial,
+              INPUT par_flgctsal,
              OUTPUT par_msgretor,
              OUTPUT aux_cdcritic,
              OUTPUT aux_dscritic,

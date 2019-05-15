@@ -536,7 +536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 14/11/2018
+    Data    : Agosto/2011                        Ultima atualizacao: 02/05/2019
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -4551,7 +4551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 22/11/2018
+  --  Data     : Julho/2014                           Ultima atualizacao: 02/05/2019
   --
   -- Dados referentes ao programa:
   --
@@ -4660,6 +4660,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              22/11/2018 - Adicionado no detalhamento do lanaçamento futuro os valores de juros de mora, multa
   --                           e IOF dos titulos do novo produto do borderô que estejam em atrazo (Paulo Penteado GFT)
   -- 
+  --              02/05/2019 - No cursor cr_cred_npc trocar codigo "TpOpJD" de "CB" que não existe para "CO -
+  --                           Cancelamento da Baixa Operacional enviada pelo Banco Recebedor".
+  --                           (INC0013795-AJFink)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -5269,7 +5272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         WHERE t.cdcooper = pr_cdcooper
           AND t.nrdconta = pr_nrdconta
           AND t.dtcredito >= pr_dtmvtolt
-          AND t.tpoperac_jd IN ('BO','CB') -- BO=é um crédito futuro, CB=é um débito futuro
+          AND t.tpoperac_jd IN ('BO','CO') -- BO=é um crédito futuro, CO=é um débito futuro (INC0013795)
           AND not exists (
                           --se já existir crepret com ocorrencia 6 ou 17 então
                           --será exibido somente no cursor cr_crapret (SD793999 e SD795994)

@@ -15,12 +15,12 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
    Alteracoes: 08/09/2018 - Considerar apenas a contratação da Aplicação Programada, não somando com aplicações 
                             anteriores (pc_valida_valor_de_adesao)
                             Proj. 411.2 (CIS Corporate)   
-
+  
                01/10/2018 - Possibilitar a alteração do dia da contratação, valor e finalidade de aplicações programadas
                             Proj. 411.2 (CIS Corporate)   
 
   ---------------------------------------------------------------------------------------------------------------*/
-	
+  
   -- Validar transferencia de contas entre tipos de conta
   PROCEDURE pc_valida_transferencia(pr_inpessoa   IN INTEGER --> Tipo de pessoa
                                    ,pr_cdcooper   IN INTEGER --> Código da cooperativa
@@ -122,6 +122,12 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                     ,pr_des_erro          OUT VARCHAR2 --> Código da crítica
                                     ,pr_dscritic          OUT VARCHAR2); --> Descrição da crítica
                                    
+  PROCEDURE pc_busca_modalidade_conta(pr_cdcooper          IN crapass.cdcooper%TYPE --> codigo da coperativa
+                                     ,pr_nrdconta          IN crapass.nrdconta%TYPE --> codigo do tipo de conta
+                                     ,pr_cdmodalidade_tipo OUT INTEGER --> codigo da modalide da conta
+                                     ,pr_des_erro          OUT VARCHAR2 --> Código da crítica
+                                     ,pr_dscritic          OUT VARCHAR2); --> Descrição da crítica  
+  
   PROCEDURE pc_busca_modalidade_web(pr_cdcooper IN crapass.cdcooper%TYPE
                                    ,pr_nrdconta IN crapass.nrdconta%TYPE
                                    ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
@@ -845,7 +851,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         END IF;
         
       END IF;
-        
+      
       IF vr_inimpcre = 1 AND 
          pr_cdprodut IN (4  -- CARTÃO DE CRÉDITO
                         ,13 -- LIMITE DE CRÉDITO
@@ -2278,6 +2284,101 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         ROLLBACK;
     END;
   END pc_busca_modalidade_tipo;
+  
+    PROCEDURE pc_busca_modalidade_conta(pr_cdcooper          IN crapass.cdcooper%TYPE --> codigo da coperativa
+                                     ,pr_nrdconta          IN crapass.nrdconta%TYPE --> codigo do tipo de conta
+                                     ,pr_cdmodalidade_tipo OUT INTEGER --> codigo da modalide da conta
+                                     ,pr_des_erro          OUT VARCHAR2 --> Código da crítica
+                                     ,pr_dscritic          OUT VARCHAR2) IS --> Descrição da crítica
+    /* .............................................................................
+    
+        Programa: pc_busca_modalidade
+        Sistema : CECRED
+        Sigla   : CADA
+        Autor   : Lucas Skroch - Supero
+        Data    : 20/11/2018                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina para buscar codigo da modalidade do tipo de conta.
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+  BEGIN
+    DECLARE
+    
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      -- Busca tipo de conta
+      CURSOR cr_tipo_conta(pr_cdcooper IN crapass.cdcooper%TYPE
+                          ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT NVL(cta.cdmodalidade_tipo,0) cdmodalidade_tipo
+          FROM crapass a,
+               tbcc_tipo_conta cta
+         WHERE a.inpessoa = cta.inpessoa 
+           AND a.cdtipcta = cta.cdtipo_conta           
+           AND a.cdcooper = pr_cdcooper
+           AND a.nrdconta = pr_nrdconta;
+        rw_tipo_conta cr_tipo_conta%ROWTYPE;
+      
+    BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => null);
+      
+      pr_des_erro := 'NOK';
+      
+      -- Verifica se a cooperativa eh valida
+      IF pr_cdcooper = 0 THEN
+        vr_dscritic := 'Código da cooperativa inválido.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Verifica se a conta eh valida
+      IF pr_nrdconta = 0 THEN
+        vr_dscritic := 'Conta inválida.';
+        RAISE vr_exc_saida;
+      END IF;            
+      
+      -- Busca tipo de conta
+      OPEN cr_tipo_conta(pr_cdcooper => pr_cdcooper
+                        ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_tipo_conta INTO rw_tipo_conta;
+      
+      IF cr_tipo_conta%NOTFOUND THEN
+        CLOSE cr_tipo_conta;
+        vr_dscritic := 'Tipo de conta não encontrado.';
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_tipo_conta;
+      
+      -- Retorna codigo da modalidade do tipo de conta
+      pr_cdmodalidade_tipo := rw_tipo_conta.cdmodalidade_tipo;
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_dscritic := vr_dscritic;
+        END IF;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro geral na rotina pc_busca_modalidade_tipo: ' || SQLERRM;
+        ROLLBACK;
+    END;
+  END pc_busca_modalidade_conta;
   
   PROCEDURE pc_busca_modalidade_web(pr_cdcooper IN crapass.cdcooper%TYPE
                                    ,pr_nrdconta IN crapass.nrdconta%TYPE

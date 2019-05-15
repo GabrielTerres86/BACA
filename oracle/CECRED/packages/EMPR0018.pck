@@ -3471,7 +3471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     aux_dtalibera NUMBER;
       
     aux_carencia  VARCHAR2(50);
-    aux_codig     VARCHAR2(4);
+    aux_codig     VARCHAR2(10);
     aux_data_parc VARCHAR2(20);
       
     aux_vlrsolic  VARCHAR2(18);
@@ -3792,15 +3792,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                     ,pr_tag_pai  => 'Dados_titulo'
                     ,pr_posicao  => vr_contador
                     ,pr_tag_nova => 'nome_cooperativa'
-                    ,pr_tag_cont => rw_crapcop.nmextcop
+                    ,pr_tag_cont => rw_crapcop.nmextcop||' -  '||rw_crapcop.nmrescop
                     ,pr_des_erro => vr_dscritic);
 
-          insere_tag(pr_xml      => pr_retorno
+         /* insere_tag(pr_xml      => pr_retorno
                     ,pr_tag_pai  => 'Dados_titulo'
                     ,pr_posicao  => vr_contador
                     ,pr_tag_nova => 'nome_resum_cooperativa'
                     ,pr_tag_cont => ' -  '||rw_crapcop.nmrescop
-                    ,pr_des_erro => vr_dscritic);
+                    ,pr_des_erro => vr_dscritic);*/
 
           insere_tag(pr_xml      => pr_retorno
                     ,pr_tag_pai  => 'Dados_titulo'
@@ -3901,60 +3901,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                     ,pr_tag_pai  => 'Dados_emprestimo'
                     ,pr_posicao  => vr_contador
                     ,pr_tag_nova => 'data_liberacao'
-                    ,pr_tag_cont => 'Data de Liberacao: '||to_char(vr_tcrapsim(idx).dtlibera,'dd/mm/yyyy')
+                    ,pr_tag_cont => to_char(vr_tcrapsim(idx).dtlibera,'dd/mm/yyyy')
                     ,pr_des_erro => vr_dscritic);
                     
+          IF vr_tcrapsim(idx).tpemprst = 2 THEN                    
           --/
           insere_tag(pr_xml      => pr_retorno
                     ,pr_tag_pai  => 'Dados_emprestimo'  -- Data Pgto 1 parcela carenc
                     ,pr_posicao  => vr_contador
-                    ,pr_tag_nova => 'dtcarenc'
-                    ,pr_tag_cont => CASE WHEN vr_tcrapsim(idx).tpemprst= 2
-                                    THEN
-                                       'Data Pgto 1 parc. carenc.: '||aux_dtcarenc
-                                    ELSE
-                                      ''
-                                    END     
+                    ,pr_tag_nova => 'label_dtcarenc'
+                    ,pr_tag_cont => 'Data Pgto 1 parc. carenc.: '
                     ,pr_des_erro => vr_dscritic);
 
+          insere_tag(pr_xml      => pr_retorno
+                    ,pr_tag_pai  => 'Dados_emprestimo'  -- Data Pgto 1 parcela carenc
+                    ,pr_posicao  => vr_contador
+                    ,pr_tag_nova => 'dtcarenc'
+                    ,pr_tag_cont => aux_dtcarenc
+                    ,pr_des_erro => vr_dscritic);
+          END IF;
+          --
           --/
           insere_tag(pr_xml      => pr_retorno
                     ,pr_tag_pai  => 'Dados_emprestimo'
                     ,pr_posicao  => vr_contador
                     ,pr_tag_nova => 'valor_parcela'
-                    ,pr_tag_cont => 'Vl. da Parcela: '||aux_vlparepr
+                    ,pr_tag_cont => aux_vlparepr
                     ,pr_des_erro => vr_dscritic);
-                    
+          --
+          --/
+          IF vr_tcrapsim(idx).tpemprst = 2 THEN
+          insere_tag(pr_xml      => pr_retorno
+                    ,pr_tag_pai  => 'Dados_emprestimo'
+                    ,pr_posicao  => vr_contador
+                    ,pr_tag_nova => 'label_vlparcar'            -- Vl. Parc. 1 Carenc.
+                    ,pr_tag_cont => 'Vl. Parc. 1 Carenc.: '
+                    ,pr_des_erro => vr_dscritic);
           --/
           insere_tag(pr_xml      => pr_retorno
                     ,pr_tag_pai  => 'Dados_emprestimo'
                     ,pr_posicao  => vr_contador
                     ,pr_tag_nova => 'vlparcar'            -- Vl. Parc. 1 Carenc.
-                    ,pr_tag_cont => CASE WHEN vr_tcrapsim(idx).tpemprst = 2
-                                      THEN 
-                                        'Vl. Parc. 1 Carenc.: '||aux_vlprecar                                    
-                                    ELSE
-                                      ''
-                                    END 
+                    ,pr_tag_cont => aux_vlprecar                                    
                     ,pr_des_erro => vr_dscritic);
           --/
           insere_tag(pr_xml      => pr_retorno
                     ,pr_tag_pai  => 'Dados_emprestimo'
                     ,pr_posicao  => vr_contador
-                    ,pr_tag_nova => 'dscarenc'             -- Periodo Carencia
-                    ,pr_tag_cont => CASE WHEN vr_tcrapsim(idx).tpemprst = 2
-                                      THEN
-                                       'Periodo Carencia: '||aux_dscarenc
-                                    ELSE
-                                      ''    
-                                    END    
+                    ,pr_tag_nova => 'label_dscarenc'             -- Periodo Carencia
+                    ,pr_tag_cont => 'Periodo Carencia: '
                     ,pr_des_erro => vr_dscritic);
+
+          insere_tag(pr_xml      => pr_retorno
+                    ,pr_tag_pai  => 'Dados_emprestimo'
+                    ,pr_posicao  => vr_contador
+                    ,pr_tag_nova => 'dscarenc'             -- Periodo Carencia
+                    ,pr_tag_cont => aux_dscarenc
+                    ,pr_des_erro => vr_dscritic);
+          END IF;
           --/
           insere_tag(pr_xml      => pr_retorno
                     ,pr_tag_pai  => 'Dados_emprestimo'
                     ,pr_posicao  => vr_contador
                     ,pr_tag_nova => 'Carencia'
-                    ,pr_tag_cont => 'Carencia: '||aux_carencia
+                    ,pr_tag_cont => aux_carencia
                     ,pr_des_erro => vr_dscritic);
           --/
           insere_tag(pr_xml      => pr_retorno
@@ -4054,7 +4064,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
            --/
            vr_endline := FALSE;
            --/
-           IF aux_string_parc IS NULL
+        /* IF aux_string_parc IS NULL
              THEN
                  aux_string_parc := aux_codig||' '||aux_data_parc||' '||aux_valor;
                 
@@ -4065,7 +4075,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                 
            ELSE
                 aux_string_parc := aux_string_parc||CHR(13)||aux_codig||' '||aux_data_parc||' '||aux_valor;
+           END IF;*/
+           --/
+           IF aux_string_parc IS NULL
+             THEN
+                 aux_string_parc := RPAD(TRIM(aux_codig),5,chr(32))||aux_data_parc||chr(32)||chr(32)||aux_valor;
+                
+           ELSIF vr_posicao_aux = vr_posicao
+             THEN
+                aux_string_parc := RPAD(aux_string_parc,38,chr(32))||RPAD(TRIM(aux_codig),5,chr(32))||aux_data_parc||chr(32)||chr(32)||aux_valor;
+                vr_endline := TRUE;
+                
+           ELSE
+                aux_string_parc := aux_string_parc||CHR(13)||RPAD(TRIM(aux_codig),5,chr(32))||aux_data_parc||chr(32)||chr(32)||aux_valor;
            END IF;
+           --
            --/  
            vr_posicao_aux  := vr_posicao;
            --/
@@ -4256,6 +4280,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
           
     END pc_imprime_simulacao;
 
+
+
+   --/ procedure generica para inserir as tags no xml montado
    PROCEDURE insere_tag(pr_xml      IN OUT NOCOPY XMLType  --> XML que receberá a nova TAG
                       ,pr_tag_pai  IN VARCHAR2            --> TAG que receberá a nova TAG
                       ,pr_posicao  IN PLS_INTEGER         --> Posição da tag na lista

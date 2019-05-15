@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Belli / Envolti
-   Data    : Agosto/2017.                   Ultima atualizacao: 22/10/2018
+   Data    : Agosto/2017.                   Ultima atualizacao: 26/04/2019
    
    Projeto:  Chamado 714566.
 
@@ -46,7 +46,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
               (Belli - Envolti - Chamado REQ0029352)  			   
 
    22/10/2018 - Ajuste no cursor da rotina de protesto automático (P352 - Cechet)
-              
+
+   26/04/2019 - inc0011095 no cursor cr_crapcob_aberto, filtrar apenas as cobranças não enviadas para cartório
+                e não protestadas (Carlos)        
    .............................................................................*/
 
      DECLARE
@@ -1360,6 +1362,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                ,crapcob.flgcbdda
                ,crapcob.cdcooper
                ,crapcob.inserasa
+               ,crapcob.insitcrt
                ,crapceb.qtdecprz
                ,crapcob.rowid
          FROM crapcob
@@ -1488,7 +1491,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                 -- não pode-se baixar caso o crapcob.inserasa for 1 (Pendente automática) ou 
                 -- 2 (Pendente manual) ou 3 (Solicitação enviada) ou 4 (Sol. Cancel. Enviadas)
                 -- 5 (Negativada) ou 7 (Ação Judicial)
-                rw_crapcob.inserasa NOT IN (1,2,3,4,5,7) THEN                           
+                rw_crapcob.inserasa NOT IN (1,2,3,4,5,7) --AND 
+                
+                -- cobrança não está em cartório
+                AND rw_crapcob.insitcrt NOT IN (1,2,3,5) 
+                
+                THEN                           
 
                 IF rw_crapcco.dsorgarq IN ('EMPRESTIMO','DESCONTO DE TITULO') THEN
                   IF pr_nmtelant = 'COMPEFORA' THEN

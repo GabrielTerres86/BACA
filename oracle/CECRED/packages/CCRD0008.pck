@@ -566,7 +566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
               ,gnetcvl
               ,crapmun mun1
               ,crapmun mun2
-       WHERE crapavt.nrdconta = 943037
+       WHERE crapavt.nrdconta = pr_nrdconta
         AND tbcadast_pessoa.nrcpfcgc = crapavt.nrcpfcgc
         AND tbcadast_pessoa.idpessoa = tbcadast_pessoa_fisica.idpessoa
         AND tbcadast_pessoa_endereco.idpessoa = tbcadast_pessoa_fisica.idpessoa

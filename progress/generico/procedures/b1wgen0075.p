@@ -120,7 +120,7 @@
 						   na camada do progress (INC0018113).
 						   
 	          30/07/2018 - Feito a inversao das chamadas da procedures pc_revalida_nome_cad_unc e pc_revalida_cnpj_cad_unc. (Kelvin)
-			  
+							
 			  17/04/2019 - Validar também o CNPJ da empresa se é maior que zero, não apenas pela nome.
 			               Para não ter problema ao cadastrar o cooperado como APOSENTADO.
 						   Alcemir Mouts (INC0011837).
@@ -589,6 +589,30 @@ PROCEDURE Valida_Dados:
                    par_nmdcampo = "cdempres"
                    aux_cdcritic = 40.
                LEAVE Valida.
+            END.
+
+        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+          RUN STORED-PROCEDURE pc_valida_emp_conta_salario
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdcooper, /* Cooperativa */
+                                               INPUT crapass.nrdconta, /* Número da conta */
+                                               INPUT DECI(par_nrcpfemp), /*CNPJ da empresa*/
+                                               INPUT par_cdempres, /*Código da empresa*/
+                                               OUTPUT ""). /* Descriçao da crítica */
+
+          CLOSE STORED-PROC pc_valida_emp_conta_salario
+             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+              
+          { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN aux_dscritic = pc_valida_emp_conta_salario.pr_dscritic
+            WHEN pc_valida_emp_conta_salario.pr_dscritic <> ?.
+
+          IF aux_dscritic <> ""  THEN
+            DO:
+               ASSIGN par_nmdcampo = "cdtipcta"
+                      aux_cdcritic = 0.
+              LEAVE Valida.
             END.
 
         /* cnpj da empresa */
@@ -2749,4 +2773,3 @@ PROCEDURE Grava_Dados_Ppe:
 
 
 END PROCEDURE.
-

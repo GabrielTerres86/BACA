@@ -39,7 +39,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 05/02/2019
+    Data    : Abril/2006                     Ultima Atualizacao: 08/05/2019
     
     Dados referentes ao programa:
 
@@ -555,6 +555,7 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
                            20 /* Contrato */
                            Projeto 470 - Marcelo Telleas Coelho
 
+              08/05/2019 - Ajustar parametros na chamada da pc_cadastrar_agendamento (Renato - Supero - P485)
 
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
@@ -2347,6 +2348,7 @@ PROCEDURE cadastrar-agendamento:
                           INPUT par_iptransa,  /* pr_iptransa */
 						              INPUT par_cdctrlcs, /* pr_cdctrlcs*/
                           INPUT par_iddispos,
+                          INPUT 0, /* pr_nrridlfp */
                          OUTPUT 0, /* pr_idlancto */
                          OUTPUT "",  /* pr_dstransa */                         
                          OUTPUT "",

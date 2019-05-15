@@ -187,7 +187,8 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                          ,pr_des_erro  OUT VARCHAR2) RETURN BOOLEAN;--> Mensagem de erro / (Retorno TRUE -> OK, FALSE -> NOK)
 
   /* Retorna a data por extenso em portugues */
-  FUNCTION fn_data_extenso (pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE) --> Data do movimento
+  FUNCTION fn_data_extenso (pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
+                           ,pr_flanoatu  IN BOOLEAN DEFAULT TRUE) --> Se deve pegar o ano atual
                    RETURN VARCHAR2;
 							 
   /* Procedimento para busca de motivos */												 
@@ -2503,7 +2504,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   END fn_valida_nome;   
 
   /* Retorna a data por extenso em portugues */
-  FUNCTION fn_data_extenso (pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE) --> Data do movimento
+  FUNCTION fn_data_extenso (pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
+                           ,pr_flanoatu  IN BOOLEAN DEFAULT TRUE) --> Se deve pegar o ano atual
                    RETURN VARCHAR2 IS
                              
     -- ..........................................................................
@@ -2527,9 +2529,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     vr_dsdatext VARCHAR2(500);
   BEGIN
   
+    IF pr_flanoatu THEN  
     vr_dsdatext := to_char(pr_dtmvtolt,'DD') ||' de '|| 
                    INITCAP(gene0001.vr_vet_nmmesano(to_char(pr_dtmvtolt,'MM')))|| ' de ' ||
                    to_char(SYSDATE,'RRRR');
+    ELSE
+      vr_dsdatext := to_char(pr_dtmvtolt,'DD') ||' de '|| 
+                   INITCAP(gene0001.vr_vet_nmmesano(to_char(pr_dtmvtolt,'MM')))|| ' de ' ||
+                   to_char(pr_dtmvtolt,'RRRR');
+    END IF;                   
     
     RETURN vr_dsdatext;
                                
