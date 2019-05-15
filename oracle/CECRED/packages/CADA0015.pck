@@ -5683,10 +5683,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 		vr_exc_erro EXCEPTION;
 
     -- Variaveis auxiliares
-    vr_tpoperac   INTEGER;
-    vr_nmtabela   VARCHAR2(80);
-    vr_tab_campos gene0002.typ_split;
-    vr_insit_atualiza INTEGER;
+    vr_tpoperac        INTEGER;
+    vr_nmtabela        VARCHAR2(80);
+    vr_tab_campos      gene0002.typ_split;
+    vr_tpincons        INTEGER;
+    vr_insit_atualiza  INTEGER;
     vr_idpessoa        tbcadast_pessoa.idpessoa%TYPE;
     vr_idalteracao     tbhistor_conta_comunic_soa.idalteracao%TYPE;
     vr_tpalteracao     tbhistor_crapass.tpoperacao%TYPE;
@@ -6549,12 +6550,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       IF vr_dscritic IS NOT NULL THEN
 				-- Efetuar rollback
         ROLLBACK;
-        vr_insit_atualiza := 3; --> Com erro
-        
+        -- PRB0040696 - Tratar casos de Deadlock, onde o processo será executado novamente 
+        -- na próxima execucao e apenas iremos gerar o alerta, sem envio de email
+        IF  UPPER(rw_pessoa_atlz.nmtabela) = 'CRAPTTL' AND instr(vr_dscritic,'ORA-00060') >= 1 THEN
+          --> Apenas alertar e manter situacao pendente de processamento
+          vr_tpincons := 1;
+          vr_insit_atualiza := rw_pessoa_atlz.insit_atualiza; 
+        ELSE
+          --> Manter erro
+          vr_tpincons := 2;
+          vr_insit_atualiza := 3; 
+        END IF;
+
         -- Insere na inconsistencia
         gene0005.pc_gera_inconsistencia(pr_cdcooper => nvl(rw_pessoa_atlz.cdcooper,3)
                                        ,pr_iddgrupo => 3 -- Erros de Script CRM
-                                       ,pr_tpincons => 2
+                                       ,pr_tpincons => vr_tpincons
                                        ,pr_dsregist => ' Cooper  : '||rw_pessoa_atlz.cdcooper ||
                                                        ' Conta   : '||rw_pessoa_atlz.nrdconta ||
                                                        ' Seq.tit.: '||rw_pessoa_atlz.idseqttl ||
