@@ -66,6 +66,7 @@
  * 040: [16/01/2019] Cássia de Oliveira (GFT): Remoção de impressão automatica quando pessoa fisica
  * 041: [09/03/2019] Rubens Lima (Mouts)     : PJ339 - Bloqueio CRM
  * 049: [29/01/2019] Márcio           (Mouts): Validar se CNAE informado é válido (PRB0040478) 
+ * 050: [07/05/2019] Daniel Lombardi  (Mouts): Nova function excluisva para validação de e-mails. (PRB0041686) 
  */
 
 // Definição de algumas variáveis globais 
@@ -781,7 +782,7 @@ function manterRotina() {
         }
 
         if (dsdemail != '') {
-            dsdemail = removeAcentos(removeCaracteresInvalidos(dsdemail));
+            dsdemail = removeAcentos(removeCaracteresInvalidosEmail(dsdemail));
         }
 
         if (nmprimtl != '') {
@@ -908,7 +909,7 @@ function manterRotina() {
         }
 
         if (dsdemail != '') {
-            dsdemail = removeAcentos(removeCaracteresInvalidos(dsdemail));
+            dsdemail = removeAcentos(removeCaracteresInvalidosEmail(dsdemail));
         }
 
         if (nmprimtl != '') {
@@ -969,6 +970,11 @@ function removeAcentos(str){
 function removeCaracteresInvalidos(str){
 	return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
 }
+
+function removeCaracteresInvalidosEmail(str) {
+    return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\(\)\-\_\=\@\+\[\]\{\}\?\;\:\.\,\/\>\<]/g, "");
+}
+
 function verificaCpfCgcRespSocial(inpessoa, nrcpfcgc) {
     
     $.ajax({
