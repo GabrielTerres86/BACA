@@ -140,6 +140,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
   --  Alterações:  09/05/2019 - Forçar execução da ultima execução 21:50 id -> 6
   --               (INC0015007 - André - MoutS)
   --
+  --               14/05/2019 - Ajuste para permitir selecionar execução emergencial da cooperativa selecionada
+  --               (PRB0041765 - André - MoutS)
+  --
   -----------------------------------------------------------------------------------------------
 
 
@@ -596,7 +599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
       END IF;
     END IF; */
 
-    gen_debitador_unico.pc_verifica_ctrl_ult_execucao(pr_cdcooper        => NULL
+    gen_debitador_unico.pc_verifica_ctrl_ult_execucao(pr_cdcooper        => pr_cdcooper
                                                      ,pr_cdprocesso      => pr_cdprocesso
                                                      ,pr_flultexe        => vr_flultexe
                                                      ,pr_qtdexec         => vr_qtdexec
