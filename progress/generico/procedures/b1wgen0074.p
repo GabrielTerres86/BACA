@@ -1549,6 +1549,9 @@ PROCEDURE Valida_Dados_Altera:
                    END.
                */
                
+               IF crapass.inpessoa = 1 THEN
+                 DO:
+               
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
                 RUN STORED-PROCEDURE pc_valida_conta_salario
@@ -1571,6 +1574,8 @@ PROCEDURE Valida_Dados_Altera:
                     
                     LEAVE ValidaAltera.
                   END.
+                  
+                 END.
                   
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }                  
                
