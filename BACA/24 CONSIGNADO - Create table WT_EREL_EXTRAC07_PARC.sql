@@ -1,50 +1,54 @@
 -- Create table
-CREATE TABLE WT_EREL_EXTRAC07_PARC 
-(NR_SEQ_PARC                   NUMBER(15)   NOT NULL,
- DATA_MOVIMENTO                DATE         NOT NULL, 
- NUM_PARC                      NUMBER(4)    NOT NULL,     
- DATA_GRAVACAO                 DATE,          
- COD_COOPERATIVA               NUMBER(12)   NOT NULL,    
- NUM_CONTA                     NUMBER(12)   NOT NULL,    
- NUM_CONTRATO_AILOS            NUMBER(12)   NOT NULL,  
- VAL_SALDO_PARC                NUMBER(15,2),  
- VAL_MORA_ATRASO               NUMBER(15,2),  
- VAL_MULTA_ATRASO              NUMBER(15,2),  
- VAL_IOF_ATRASO                NUMBER(15,2),  
- VAL_DESC_ANTECIPACAO          NUMBER(15,2),  
- DATA_PAGTO_PARC               DATE, 
- FLAG_PARCELA                  VARCHAR2(1)  
+CREATE TABLE TBEPR_CONSIG_PARCELAS_TMP
+(IDSEQPARC                  NUMBER(15)   NOT NULL,
+ CDCOOPER                   NUMBER(12)   NOT NULL,    
+ NRDCONTA                   NUMBER(12)   NOT NULL,    
+ NRCTREMP                   NUMBER(12)   NOT NULL, 
+ NRPARCELA                  NUMBER(4)    NOT NULL,     
+ DTMOVIMENTO                DATE         NOT NULL, 
+ DTGRAVACAO                 DATE         DEFAULT SYSDATE,  
+ VLSALDOPARC                NUMBER(15,2),  
+ VLMORAATRASO               NUMBER(15,2),  
+ VLMULTAATRASO              NUMBER(15,2),  
+ VLIOFATRASO                NUMBER(15,2),  
+ VLDESCANTEC                NUMBER(15,2),  
+ DTPAGTOPARC                DATE, 
+ INPARCELALIQ               VARCHAR2(1),
+ INSTATUSPROCES             VARCHAR2(1),
+ DSERROPROCES               VARCHAR2(500)  
 );
 
 -- Add comments to the table 
-comment on table WT_EREL_EXTRAC07_PARC is 'Tabela que armazena as informacoes das parcelas do contrato consignado enviados pela FIS Brasil';
+comment on table TBEPR_CONSIG_PARCELAS_TMP is 'Tabela que armazena as informacoes das parcelas do contrato consignado enviados pela FIS Brasil';
 
 -- Add comments to the columns 
-comment on column WT_EREL_EXTRAC07_PARC.NR_SEQ_PARC                is 'Sequencial da tabela.';
-comment on column WT_EREL_EXTRAC07_PARC.DATA_MOVIMENTO             is 'Data  que sera foi usada para efetuar a selecao das informacoes e gravacao, data informada no inicio do processamento';  
-comment on column WT_EREL_EXTRAC07_PARC.NUM_PARC                   is 'Numero da Parcela'; 
-comment on column WT_EREL_EXTRAC07_PARC.DATA_GRAVACAO              is 'Data em que o registro foi gravado na tabela';           
-comment on column WT_EREL_EXTRAC07_PARC.COD_COOPERATIVA            is 'Codigo que identifica a cooperativa';  
-comment on column WT_EREL_EXTRAC07_PARC.NUM_CONTA                  is 'Numero da conta';         
-comment on column WT_EREL_EXTRAC07_PARC.NUM_CONTRATO_AILOS         is 'Numero do contrato'; 
-comment on column WT_EREL_EXTRAC07_PARC.VAL_SALDO_PARC             is 'Saldo da Parcela que falta ser cobrada';     
-comment on column WT_EREL_EXTRAC07_PARC.VAL_MORA_ATRASO            is 'Valor da Mora';   
-comment on column WT_EREL_EXTRAC07_PARC.VAL_MULTA_ATRASO           is 'valor da Multa';  
-comment on column WT_EREL_EXTRAC07_PARC.VAL_IOF_ATRASO             is 'Valor de IOF por Atraso';    
-comment on column WT_EREL_EXTRAC07_PARC.VAL_DESC_ANTECIPACAO       is 'Valor dos Descontos Antecipados';
-comment on column WT_EREL_EXTRAC07_PARC.DATA_PAGTO_PARC            is 'Data do Pagamento da Parcela';    
-comment on column WT_EREL_EXTRAC07_PARC.FLAG_PARCELA               is 'Indicador se o emprestimo foi liquidado(0 – Em aberto, 1 – Liquidado)';
+comment on column TBEPR_CONSIG_PARCELAS_TMP.IDSEQPARC           is 'Sequencial da tabela.';
+comment on column TBEPR_CONSIG_PARCELAS_TMP.CDCOOPER            is 'Codigo que identifica a cooperativa';  
+comment on column TBEPR_CONSIG_PARCELAS_TMP.NRDCONTA            is 'Numero da conta';         
+comment on column TBEPR_CONSIG_PARCELAS_TMP.NRCTREMP            is 'Numero do contrato'; 
+comment on column TBEPR_CONSIG_PARCELAS_TMP.NRPARCELA           is 'Numero da Parcela'; 
+comment on column TBEPR_CONSIG_PARCELAS_TMP.DTMOVIMENTO         is 'Data  que sera foi usada para efetuar a selecao das informacoes e gravacao, data informada no inicio do processamento';  
+comment on column TBEPR_CONSIG_PARCELAS_TMP.DTGRAVACAO          is 'Data em que o registro foi gravado na tabela';           
+comment on column TBEPR_CONSIG_PARCELAS_TMP.VLSALDOPARC         is 'Saldo da Parcela que falta ser cobrada';     
+comment on column TBEPR_CONSIG_PARCELAS_TMP.VLMORAATRASO        is 'Valor da Mora';   
+comment on column TBEPR_CONSIG_PARCELAS_TMP.VLMULTAATRASO       is 'valor da Multa';  
+comment on column TBEPR_CONSIG_PARCELAS_TMP.VLIOFATRASO         is 'Valor de IOF por Atraso';    
+comment on column TBEPR_CONSIG_PARCELAS_TMP.VLDESCANTEC         is 'Valor dos Descontos Antecipados';
+comment on column TBEPR_CONSIG_PARCELAS_TMP.DTPAGTOPARC         is 'Data do Pagamento da Parcela';    
+comment on column TBEPR_CONSIG_PARCELAS_TMP.INPARCELALIQ        is 'Indicador se o emprestimo foi liquidado(0 – Em aberto, 1 – Liquidado)';
+comment on column TBEPR_CONSIG_PARCELAS_TMP.INSTATUSPROCES      is 'Indicador do status do processamento(1 - Pendente/2 - Processado/3 - Erro)';
+comment on column TBEPR_CONSIG_PARCELAS_TMP.DSERROPROCES        is 'Descrição do erro de processamento';
 
 -- Create/Recreate primary, unique and foreign key constraints 
-alter table WT_EREL_EXTRAC07_PARC
-  add constraint WT_EREL_EXTRAC07_PARC_PK primary key (NR_SEQ_PARC);
+alter table TBEPR_CONSIG_PARCELAS_TMP
+  add constraint TBEPR_CONSIG_PARCELAS_TMP_PK primary key (IDSEQPARC);
 
 -- Create/Recreate indexes 
-create index CECRED.WT_EREL_EXTRAC07_PARC_I1 
-    on CECRED.WT_EREL_EXTRAC07_PARC (COD_COOPERATIVA,NUM_CONTA,NUM_CONTRATO_AILOS,NUM_PARC );
+create index TBEPR_CONSIG_PARCELAS_TMP_IDX1 
+    on TBEPR_CONSIG_PARCELAS_TMP (CDCOOPER,NRDCONTA,NRCTREMP,NRPARCELA,DTMOVIMENTO );
 
 -- Create sequence 
-create sequence CECRED.WT_EREL_EXTRAC07_PARC_SEQ
+create sequence SEQTBEPR_CONSIG_PARCELAS_TMP
 minvalue 1
 maxvalue 999999999999999
 start with 1
@@ -53,19 +57,19 @@ nocache
 order;
 
 -- Create Trigger
-CREATE OR REPLACE TRIGGER CECRED.WT_EREL_EXTRAC07_PARC
-BEFORE INSERT ON WT_EREL_EXTRAC07_PARC
+CREATE OR REPLACE TRIGGER TRGTBEPR_CONSIG_PARCELAS_TMP
+BEFORE INSERT ON TBEPR_CONSIG_PARCELAS_TMP
 
 FOR EACH ROW
 
 BEGIN
   
-  IF :NEW.NR_SEQ_PARC IS NULL THEN
-    :NEW.NR_SEQ_PARC := WT_EREL_EXTRAC07_PARC_SEQ.NEXTVAL;
+  IF :NEW.IDSEQPARC IS NULL THEN
+    :NEW.IDSEQPARC := SEQTBEPR_CONSIG_PARCELAS_TMP.NEXTVAL;
   END IF;
 
 EXCEPTION
   WHEN OTHERS THEN
-    RAISE_APPLICATION_ERROR(-20100,'ERRO GERACAO SEQUENCE NR_SEQ_PARC - TABELA WT_EREL_EXTRAC07_PARC!');
+    RAISE_APPLICATION_ERROR(-20100,'ERRO GERACAO SEQUENCE IDSEQPARC - TABELA TBEPR_CONSIG_PARCELAS_TMP!');
 END;      
   
