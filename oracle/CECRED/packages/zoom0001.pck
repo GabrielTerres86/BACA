@@ -127,6 +127,9 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
   /* Tabela para guardar as ocupações */
   TYPE typ_tab_ocupacoes IS TABLE OF typ_ocupacoes INDEX BY PLS_INTEGER;  
               
+  --Tabela para guardar os segmentos
+  TYPE typ_tab_segmentos IS TABLE OF tbepr_segmento%ROWTYPE INDEX BY PLS_INTEGER; 
+              
   /* Procedure para encontrar operadores */
   PROCEDURE pc_busca_operadores_web(pr_cdoperad IN crapope.cdoperad%TYPE   --Operador                                   
                                    ,pr_nmoperad IN crapope.nmoperad%TYPE   --Nome do operador
@@ -636,6 +639,18 @@ PROCEDURE pc_consulta_contratos_ativos(pr_cdcooper  IN crapass.cdcooper%TYPE
                                   ,pr_nmdcampo  OUT VARCHAR2               --Nome do Campo
                                   ,pr_des_erro  OUT VARCHAR2);             --Saida OK/NOK            
                                                                                                           
+  
+  PROCEDURE pc_busca_segmentos_epr_web (pr_idsegmento IN tbepr_segmento.idsegmento%TYPE --> Código do Segmento
+                                       ,pr_dssegmento IN tbepr_segmento.dssegmento%TYPE --> Descrição do Segmento
+                                       ,pr_nrregist  IN INTEGER                         --> Quantidade de registros                            
+                                       ,pr_nriniseq  IN INTEGER                         --> Qunatidade inicial
+                                       ,pr_xmllog    IN VARCHAR2                        --XML com informações de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER                    --Código da crítica
+                                       ,pr_dscritic  OUT VARCHAR2                       --Descrição da crítica
+                                       ,pr_retxml    IN OUT NOCOPY XMLType              --Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2                       --Nome do Campo
+                                       ,pr_des_erro  OUT VARCHAR2);                     --Saida OK/NOK                                         
+                                                                                                           
 END ZOOM0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
@@ -9079,6 +9094,299 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
   END pc_busca_comissao_web;
+
+  PROCEDURE pc_busca_segmentos_epr (pr_idsegmento IN tbepr_segmento.idsegmento%TYPE --> Código do Segmento
+                                   ,pr_dssegmento IN tbepr_segmento.dssegmento%TYPE --> Descrição do Segmento
+                                   ,pr_cdcooper IN crapcop.cdcooper%TYPE   -- Cooperativa 
+                                   ,pr_nrregist IN INTEGER
+                                   ,pr_nriniseq IN INTEGER
+                                   ,pr_qtregist OUT INTEGER
+                                   ,pr_nmdcampo OUT VARCHAR2             -->Nome do campo com erro
+                                   ,pr_tab_segmentos OUT typ_tab_segmentos --Tabela linhas
+                                   ,pr_tab_erro OUT gene0001.typ_tab_erro -->Tabela Erros
+                                   ,pr_des_erro OUT VARCHAR2)IS --Tabela de erros 
+  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_segmentos_epr                            
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Douglas (AMcom)
+    Data     : Fevereiro/2019                           Ultima atualizacao
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Pesquisa segmento de emprestimo
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/                                    
+  
+  --/  busca as informacoes do segmento
+  CURSOR cr_segmento(pc_cdcooper crapcop.cdcooper%TYPE
+                    ,pc_idsegmento IN tbepr_segmento.idsegmento%TYPE            
+                    ,pc_dssegmento IN tbepr_segmento.dssegmento%TYPE) IS
+   SELECT ts.idsegmento
+         ,UPPER(ts.dssegmento) dssegmento
+     FROM cecred.tbepr_segmento ts
+    WHERE ts.cdcooper = pc_cdcooper
+      AND (pc_idsegmento = 0
+         OR ts.idsegmento = pc_idsegmento ) 
+       OR (pc_dssegmento = ''
+         OR ts.dssegmento = pc_dssegmento ) 
+    ORDER BY 1;
+    
+  rw_segmento cr_segmento%ROWTYPE;  
+  
+  vr_nrregist INTEGER := pr_nrregist;
+  
+  --Variaveis de Criticas
+  vr_exc_erro EXCEPTION;
+  
+  vr_index PLS_INTEGER;
+                              
+  BEGIN
+    
+    --Limpar tabelas auxiliares
+    pr_tab_segmentos.DELETE;  
+     
+    FOR rw_segmento IN cr_segmento(pc_cdcooper => pr_cdcooper
+                                  ,pc_idsegmento  => pr_idsegmento
+                                  ,pc_dssegmento  => pr_dssegmento) LOOP
+        
+      --Indice para a temp-table
+      vr_index:= pr_tab_segmentos.COUNT + 1;
+      pr_qtregist := nvl(pr_qtregist,0) + 1;
+        
+      /* controles da paginacao */
+      IF (pr_qtregist < pr_nriniseq) OR
+         (pr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+         --Proxima linha
+          CONTINUE;
+      END IF; 
+        
+      --Numero Registros
+      IF vr_nrregist > 0 THEN 
+          
+        --Verificar se já existe na temp-table                             
+        IF NOT pr_tab_segmentos.EXISTS(vr_index) THEN  
+                        
+            --Popular dados na tabela memoria
+            pr_tab_segmentos(vr_index).idsegmento:= rw_segmento.idsegmento;
+            pr_tab_segmentos(vr_index).dssegmento:= rw_segmento.dssegmento;
+
+          END IF;  
+            
+      END IF;
+        
+      --Diminuir registros
+      vr_nrregist:= nvl(vr_nrregist,0) - 1; 
+        
+    END LOOP;
+        
+    --Retorno OK
+    pr_des_erro:= 'OK';  
+  
+  END pc_busca_segmentos_epr;                             
+  
+  PROCEDURE pc_busca_segmentos_epr_web (pr_idsegmento IN tbepr_segmento.idsegmento%TYPE --> Código do Segmento
+                                       ,pr_dssegmento IN tbepr_segmento.dssegmento%TYPE --> Descrição do Segmento
+                                       ,pr_nrregist  IN INTEGER                         --> Quantidade de registros                            
+                                       ,pr_nriniseq  IN INTEGER                         --> Qunatidade inicial
+                                       ,pr_xmllog    IN VARCHAR2                        --XML com informações de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER                    --Código da crítica
+                                       ,pr_dscritic  OUT VARCHAR2                       --Descrição da crítica
+                                       ,pr_retxml    IN OUT NOCOPY XMLType              --Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2                       --Nome do Campo
+                                       ,pr_des_erro  OUT VARCHAR2)IS                    --Saida OK/NOK
+                                  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_segmentos_epr_web                            
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Douglas Pagel (AMcom)  
+    Data     : Fevereiro/2019                          Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Pesquisa de segmentos para emprestimo WEB
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/                                    
+   --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_reto VARCHAR2(3); 
+
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+    --Tabela de linhas de crédito
+    vr_tab_segmentos typ_tab_segmentos;
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    --Variaveis Locais
+    vr_qtregist INTEGER := 0;   
+    vr_clob     CLOB;   
+    vr_xml_temp VARCHAR2(32726) := ''; 
+        
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+    
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;                                       
+    vr_exc_erro  EXCEPTION;      
+  
+  
+  BEGIN
+    --limpar tabela erros
+    vr_tab_erro.DELETE;
+      
+    --Limpar tabela dados
+    vr_tab_segmentos.DELETE;
+      
+    --Inicializar Variaveis
+    vr_cdcritic:= 0;                         
+    vr_dscritic:= NULL;
+      
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    pc_busca_segmentos_epr (pr_idsegmento => nvl(pr_idsegmento,0)
+                           ,pr_dssegmento => nvl(pr_dssegmento,'')
+                           ,pr_cdcooper   => vr_cdcooper
+                           ,pr_nrregist   => pr_nrregist
+                           ,pr_nriniseq   => pr_nriniseq
+                           ,pr_qtregist   => vr_qtregist
+                           ,pr_nmdcampo   => pr_nmdcampo
+                           ,pr_tab_segmentos => vr_tab_segmentos
+                           ,pr_tab_erro   => vr_tab_erro
+                           ,pr_des_erro   => vr_des_reto);
+                           
+    --Se Ocorreu erro
+    IF vr_des_reto <> 'OK' THEN       
+       
+      --Se possuir erro na tabela
+      IF vr_tab_erro.COUNT > 0 THEN
+        
+        --Mensagem Erro
+        vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        
+      ELSE  
+        
+        --Mensagem Erro
+        vr_dscritic:= 'Erro na pc_busca_segmentos_epr_web.';
+        
+      END IF;          
+      
+      --Levantar Excecao
+      RAISE vr_exc_erro;  
+            
+    END IF;
+    
+    -- Monta documento XML de ERRO
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);                                          
+      
+    -- Criar cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><segmentos>');
+      
+    --Buscar Primeiro registro
+    vr_index:= vr_tab_segmentos.FIRST;
+        
+    --Percorrer todos os historicos
+    WHILE vr_index IS NOT NULL LOOP
+      
+      -- Carrega os dados           
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<segmento>'||
+                                                   '  <idsegmento>' || vr_tab_segmentos(vr_index).idsegmento||'</idsegmento>'||
+                                                   '  <dssegmento>' || vr_tab_segmentos(vr_index).dssegmento||'</dssegmento>'|| 
+                                                   '</segmento>'); 
+                                                              
+      --Proximo Registro
+      vr_index:= vr_tab_segmentos.NEXT(vr_index); 
+    
+    END LOOP;
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</segmentos></Root>'
+                           ,pr_fecha_xml      => TRUE);
+                  
+    -- Atualiza o XML de retorno
+    pr_retxml := xmltype(vr_clob);
+
+    -- Insere atributo na tag banco com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                             ,pr_tag   => 'segmentos'         --> Nome da TAG XML
+                             ,pr_atrib => 'qtregist'          --> Nome do atributo
+                             ,pr_atval => vr_qtregist         --> Valor do atributo
+                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                             
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_clob);  
+                                   
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF; 
+                                      
+    --Retorno
+    pr_des_erro:= 'OK'; 
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_segmentos_epr_web --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+  
+  END pc_busca_segmentos_epr_web;     
   
 END ZOOM0001;
 /

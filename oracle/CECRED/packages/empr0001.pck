@@ -1032,6 +1032,24 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                     ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
                                     ,pr_des_erro  OUT VARCHAR2); --> Erros do processo
 
+  PROCEDURE pc_insere_motivo_anulacao(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                     ,pr_cdagenci  IN crapass.cdagenci%TYPE --> Código da agência
+                                     ,pr_nrdcaixa  IN craperr.nrdcaixa%TYPE --> Número do caixa
+                                     ,pr_cdoperad  IN crapdev.cdoperad%TYPE --> Código do Operador
+                                     ,pr_nmdatela  IN VARCHAR2 --> Nome da tela
+                                     ,pr_idorigem  IN INTEGER --> Id do módulo de sistema    
+                                     ,pr_tpproduto IN tbcadast_motivo_anulacao.tpproduto%TYPE --> Tipo do produto
+                                     ,pr_nrdconta  IN tbmotivo_anulacao.nrdconta%TYPE
+                                     ,pr_nrctrato  IN tbmotivo_anulacao.nrctrato%TYPE
+                                     ,pr_tpctrlim  IN tbmotivo_anulacao.tpctrlim%TYPE
+                                     ,pr_cdmotivo  IN VARCHAR2
+                                     ,pr_dsmotivo  IN VARCHAR2                                     
+                                     ,pr_dsobservacao IN VARCHAR2                               
+                                     ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                                     ,pr_dscritic  OUT VARCHAR2 --> Descrição da crítica                                                                         
+                                     ,pr_des_erro  OUT VARCHAR2);--> Erros do processo
+
+
 END empr0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
@@ -17010,6 +17028,174 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         RAISE vr_exc_saida;
       END IF;
 
+      pc_insere_motivo_anulacao(pr_cdcooper => vr_cdcooper, 
+                                pr_cdagenci => vr_cdagenci, 
+                                pr_nrdcaixa => vr_nrdcaixa, 
+                                pr_cdoperad => vr_cdoperad, 
+                                pr_nmdatela => vr_nmdatela, 
+                                pr_idorigem => vr_idorigem, 
+                                pr_tpproduto => pr_tpproduto, 
+                                pr_nrdconta => pr_nrdconta, 
+                                pr_nrctrato => pr_nrctrato, 
+                                pr_tpctrlim => pr_tpctrlim, 
+                                pr_cdmotivo => pr_cdmotivo, 
+                                pr_dsmotivo => pr_dsmotivo,
+                                pr_dsobservacao => pr_dsobservacao, 
+                                pr_cdcritic => vr_cdcritic, 
+                                pr_dscritic => vr_dscritic, 
+                                pr_des_erro => pr_des_erro);
+    
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+      END IF;
+
+    --Salva
+    COMMIT;
+    --
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        pr_des_erro := 'NOK';
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral em empr0001.pc_busca_motivos_anulacao: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+    END;
+
+  END pc_grava_motivo_anulacao; 
+
+
+  PROCEDURE pc_insere_motivo_anulacao(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                     ,pr_cdagenci  IN crapass.cdagenci%TYPE --> Código da agência
+                                     ,pr_nrdcaixa  IN craperr.nrdcaixa%TYPE --> Número do caixa
+                                     ,pr_cdoperad  IN crapdev.cdoperad%TYPE --> Código do Operador
+                                     ,pr_nmdatela  IN VARCHAR2 --> Nome da tela
+                                     ,pr_idorigem  IN INTEGER --> Id do módulo de sistema    
+                                     ,pr_tpproduto IN tbcadast_motivo_anulacao.tpproduto%TYPE --> Tipo do produto
+                                     ,pr_nrdconta  IN tbmotivo_anulacao.nrdconta%TYPE
+                                     ,pr_nrctrato  IN tbmotivo_anulacao.nrctrato%TYPE
+                                     ,pr_tpctrlim  IN tbmotivo_anulacao.tpctrlim%TYPE
+                                     ,pr_cdmotivo  IN VARCHAR2
+                                     ,pr_dsmotivo  IN VARCHAR2                                     
+                                     ,pr_dsobservacao IN VARCHAR2                               
+                                     ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                                     ,pr_dscritic  OUT VARCHAR2 --> Descrição da crítica                                                                         
+                                     ,pr_des_erro  OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+    /* .............................................................................
+
+    Programa: pc_grava_motivos_anulacao
+    Sistema : Rotinas referentes ao PRJ438
+    Sigla   :
+    Autor   : AmCom
+    Data    : Março/18.                    Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Gravar ou Alterar motivo de anulação de emprestimos e limite de crédito informado em tela
+
+    Observacao: -----
+    ..............................................................................*/
+
+    DECLARE
+    
+     -- Buscar dados da cooperativa
+     CURSOR cr_crapcop(pr_cdcooper NUMBER) IS
+        SELECT cop.cdcooper
+          FROM crapcop cop
+         WHERE cop.cdcooper = pr_cdcooper;
+     rw_crapcop cr_crapcop%ROWTYPE;    
+
+     CURSOR c_motivo_atual(pr_cdcooper in number) IS
+     SELECT m.cdmotivo,
+            m.dsmotivo,
+            m.dsobservacao,
+            m.dtcadastro,
+            m.rowid
+       FROM tbmotivo_anulacao m
+      WHERE m.cdcooper = pr_cdcooper
+        and m.nrdconta = pr_nrdconta
+        and m.nrctrato = pr_nrctrato
+        and nvl(m.tpctrlim,0) = nvl(pr_tpctrlim,0);
+
+     CURSOR cr_motivo (prc_cdcooper IN tbcadast_motivo_anulacao.cdcooper%TYPE,
+                       prc_cdmotivo IN tbcadast_motivo_anulacao.cdmotivo%TYPE,
+                       prc_tpproduto IN tbcadast_motivo_anulacao.tpproduto%TYPE) IS
+       SELECT 1
+         FROM tbcadast_motivo_anulacao t
+        WHERE t.cdcooper  = prc_cdcooper
+          AND t.cdmotivo  = prc_cdmotivo
+          AND t.tpproduto = prc_tpproduto
+          AND t.inobservacao = 1
+        ;
+      --
+      r_motivo_atual c_motivo_atual%rowtype;
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- cursor genérico de calendário
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+      -- Variaveis padrao
+      vr_cdcooper NUMBER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_exigeobs NUMBER;
+      vr_dstpproduto VARCHAR2(25);
+
+      vr_nrdrowid ROWID;
+
+    BEGIN
+
+      -- Buscar Dados do Sistema para a cooperativa      
+      OPEN cr_crapcop(pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+       IF cr_crapcop%NOTFOUND
+        THEN
+          CLOSE cr_crapcop; 
+          vr_cdcritic := 0;
+          vr_dscritic := 'Cooperativa invalida!';
+          raise vr_exc_saida;
+       END IF;
+      CLOSE cr_crapcop; 
+      
+      vr_cdcooper := rw_crapcop.cdcooper;    
+      vr_cdoperad := pr_cdoperad;
+      vr_cdagenci := pr_cdagenci;
+      vr_nrdcaixa := pr_nrdcaixa;
+      vr_idorigem := pr_idorigem;
+
       --Buscar Data do Sistema para a cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -17061,15 +17247,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --
           -- Gravar LOG
           GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
-                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_cdoperad => pr_cdoperad
                               ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => vr_idorigem
+                              ,pr_dsorigem => pr_idorigem
                               ,pr_dstransa => 'Atualizacao do motivo de Anulacao'
                               ,pr_dttransa => TRUNC(SYSDATE)
                               ,pr_flgtrans => 0
                               ,pr_hrtransa => gene0002.fn_busca_time
                               ,pr_idseqttl => 0
-                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmdatela => pr_nmdatela
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
 
@@ -17263,8 +17449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                      ,pr_dsdadatu => vr_dstpproduto);
         end if;
       close c_motivo_atual;
-    --Salva
-    COMMIT;
+
     --
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -17276,25 +17461,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_cdcritic := vr_cdcritic;
           pr_dscritic := vr_dscritic;
         END IF;
-
         pr_des_erro := 'NOK';
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        
       WHEN OTHERS THEN
 
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro geral em empr0001.pc_busca_motivos_anulacao: ' || SQLERRM;
-
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        pr_dscritic := 'Erro geral em empr0001.pc_insere_motivo_anulacao: ' || SQLERRM;
 
     END;
 
-  END pc_grava_motivo_anulacao; 
+  END pc_insere_motivo_anulacao; 
+
+  
+
 
 END empr0001;
 /

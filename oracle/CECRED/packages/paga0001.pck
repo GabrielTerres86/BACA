@@ -14312,6 +14312,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --               24/01/2019 - Aumentar o período para a expiração das transações pendentes para 15 dias
     --                            Tipo da transacao 20 - Autorizacao de contratos por senha
     --                            Projeto 470 -- Marcelo Telles Coelho - Mouts
+    --
+    --               12/03/2018 - (AMCOM - P438) add tptransa = 21 e fn_proposta_n_aprovada 
+    --
     -----------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -14499,6 +14502,28 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 6;
       vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 3; 
       vr_notif_dsdmensg VARCHAR2(32000) := ' '; 
+      --
+      --/
+      FUNCTION fn_proposta_n_aprovada(pr_cdtransacao_pendente IN tbgen_trans_pend.cdtransacao_pendente%TYPE)
+        RETURN BOOLEAN IS
+       --/
+       vr_n_aprovada NUMBER;
+       --/
+      BEGIN
+       SELECT COUNT(*)
+         INTO vr_n_aprovada
+         FROM tbepr_trans_pend_efet_proposta p,
+              crawepr wpr
+        WHERE wpr.nrdconta = p.nrdconta
+          AND wpr.nrctremp = p.nrctremp
+          AND wpr.cdcooper = p.cdcooper
+          AND wpr.insitapr <> 1
+          AND p.cdtransacao_pendente = pr_cdtransacao_pendente;
+         --/  
+         RETURN ( vr_n_aprovada > 0 );  
+         --/
+      END fn_proposta_n_aprovada;
+      
             
     BEGIN
 	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
@@ -14787,7 +14812,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
            vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(11).hrfimpag,'hh24:mi'),'sssss');
         ELSIF vr_tptransa = 7 THEN -- Aplicações
            vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(8).hrfimpag,'hh24:mi'),'sssss');
-        ELSIF vr_tptransa = 6 THEN -- Crédito Pré-Aprovado
+        ELSIF vr_tptransa IN (6,21) THEN -- Crédito Pré-Aprovado / emprestimos/financiamentos
            vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(7).hrfimpag,'hh24:mi'),'sssss');
         ELSIF vr_tptransa = 4 THEN -- TED
            vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(4).hrfimpag,'hh24:mi'),'sssss');
@@ -14928,6 +14953,17 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 						  pr_flgalter := TRUE;
             END IF;
 					-- Fim Projeto 470
+										 
+
+            ELSIF  vr_tptransa IN (21) THEN --> Emprestimos/financiamentos
+              --> Verificar se ja se passou 7 dias desde a criação da pendencia
+              IF rw_tbgen_trans_pend.dtmvtolt + 7 < pr_dtmvtolt THEN
+              --Atualizar flag para true
+						  vr_flgalter := TRUE;
+						  pr_flgalter := TRUE;
+
+              END IF;           
+
 					ELSE
 						--Debito por agendamento
 						vr_dtauxili := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
@@ -14944,7 +14980,14 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 					END IF;
         END IF;
         END IF;
-
+        --
+        -- EMPRESITMOS/FINANCIAMENTOS (AMCOM - P438)
+        IF vr_tptransa = 21 AND fn_proposta_n_aprovada(rw_tbgen_trans_pend.cdtransacao_pendente)
+          THEN
+						vr_flgalter := TRUE;
+ 					  pr_flgalter := TRUE;
+        END IF;           
+        --/
         vr_dsparlp3 := ', vr_dtmvtopg:' || vr_dtmvtopg  ||
                        ', pr_dtmvtolt:' || pr_dtmvtolt  ||
                        ', SYSDATE:'     || SYSDATE      ||

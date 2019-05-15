@@ -56,6 +56,9 @@
                04/01/2018 - Incluido tt-tbpagto_tributos_trans_pend.
                             PRJ406-FGTS(Odirlei-AMcom)   
 
+               20/02/2019 - Incluido tt-tbepr_trans_pend_prop.
+                            (PRJ438 - Douglas / AMcom)
+
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-convenios_aceitos NO-UNDO
@@ -243,5 +246,10 @@ DEF TEMP-TABLE tt-tbctd_trans_pend NO-UNDO
   FIELD nrcontrato           AS DECIMAL
   FIELD vlcontrato           AS DECIMAL
   FIELD dhcontrato           AS DATE.
+
+  
+DEF TEMP-TABLE tt-tbepr_trans_pend_prop NO-UNDO
+  FIELD nrctremp        AS INTEGER
+  FIELD vlemprst        AS DECIMAL.
 
 /*............................................................................*/

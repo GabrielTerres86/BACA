@@ -48,6 +48,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
   --              salários (Lucas Skroch - Supero - P485)
   --    
   --              06/06/2018 Adicionado nova opção 4 - Desconto Titulos (Paulo Penteado (GFT)) 
+  --              20/02/2019 - Adicionado menus 55 e 56 e suas tratativas. (PRJ 438 - Douglas / AMcom)
+  --
+  --              02/05/2019 - Adicionado controle para cooperativas habilitadas para os menus 55 e 56. (PRJ 438 - Douglas / AMcom)
+  --  
   --    
   ---------------------------------------------------------------------------------------------------------------
 
@@ -123,6 +127,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
         52 - Tela inicial ATM > Meu Cadastro
         53 - Tela inicial ATM > Botão Pressione para visualizar seu saldo 
         54 - Tela inicial ATM > Pagamentos - PJ485 - FIM
+        55 - Simular e Contratar
+        56 - Acompanhamento de Proposta Credito
     
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para listar a configuracao dos itens de menu que podem ser exibidos/escondidos
@@ -142,6 +148,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
 
 				01/02/2019 - Adaptação da rotina para enviar a camada de serviços apenas os itens de menu 
                              a serem exibidos (Lucas Skroch - Supero - P485)
+                             
+                20/02/2019 - Adicionado menus 55 e 56 e suas tratativas. (PRJ 438 - Douglas / AMcom)
+                
+                02/05/2019 - Adicionado controle para cooperativas habilitadas para os menus 55 e 56. (PRJ 438 - Douglas / AMcom)
+                
     ............................................................................. */
     DECLARE
       -- Flag Recarga de Celular
@@ -239,6 +250,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       -- FlagTela inicial ATM > Pagamentos
       vr_flgpagatm INTEGER := 0;
       -- PJ485 - Fim
+      
+      --PRJ438
+      --Flag Tela Simular e Contratar
+      vr_flgsimcon INTEGER := 0;
+      --Flag Tela Acompanhamento de Proposta Credito
+      vr_flgacopro INTEGER := 0;
+      --Controle para cooperativas habilitadas	
+      vr_dslstcop VARCHAR2(4000);
       
       -- Retorna dados do credito pre aprovado      
       vr_tab_dados_cpa EMPR0002.typ_tab_dados_cpa;
@@ -540,7 +559,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                                       ,pr_compleme => 'MENU0001.pc_carrega_config_menu - Pagamento por Arquivo');
       END;
                                                                               
-                                                                              
+      --------------------------------------------------------------------------------------
+      -------------- VERIFICAR SE A CONTA PERMITE SIMULAR E CONTRATAR EMPRESTIMOS  ---------
+      --------------------------------------------------------------------------------------
+      --Flag Tela Simular e Contratar
+      vr_flgsimcon := 0;
+      --Flag Tela Acompanhamento de Proposta Credito
+      vr_flgacopro := 0;
+      BEGIN       
+        --Verifica se a cooperativa está habilitada para esta função
+        vr_dslstcop := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                                 pr_cdcooper => pr_cdcooper, 
+                                                 pr_cdacesso => 'LIBERA_COOP_SIMULA_IB');
+                                                 
+        --Só faz as validações se a cooperativa estiver habilitada                                           
+        IF gene0002.fn_existe_valor(pr_base => vr_dslstcop
+                                  , pr_busca => to_char(pr_cdcooper)
+                                  , pr_delimite => ';') = 'S' THEN                                                     
+          
+          --Só faz as validações se NÃO for um operador
+          IF (pr_nrcpfope is null OR pr_nrcpfope = 0) THEN
+              
+          -- Carrega a permissão da conta para o menu
+          CADA0006.pc_valida_adesao_produto(pr_cdcooper => pr_cdcooper,
+                                            pr_nrdconta => pr_nrdconta,
+                                            pr_cdprodut => 31, --Emprestimo
+                                            pr_cdcritic => vr_cdcritic,
+                                            pr_dscritic => vr_dscritic);
+          IF (vr_cdcritic IS NULL AND vr_dscritic IS NULL) THEN
+            --Tem permissao da conta mas
+            --Só exibe o menu se for PF e primeiro titlar ou PJ
+            OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta);
+                            
+            FETCH cr_crapass INTO rw_crapass;
+            CLOSE cr_crapass;
+            IF (rw_crapass.inpessoa = 1 and pr_idseqttl = 1)
+            OR (rw_crapass.inpessoa = 2) THEN
+              vr_flgsimcon := 1;
+              vr_flgacopro := 1;
+            END IF;
+          END IF;
+        END IF;
+      END IF;
+        
+      EXCEPTION
+        WHEN OTHERS THEN
+        CECRED.Pc_Internal_Exception(pr_cdcooper => pr_cdcooper 
+                                    ,pr_compleme => 'MENU0001.pc_carrega_config_menu - Simulacao Emprestimo.');
+      END;                                                                               
       --------------------------------------------------------------------------------------
       ------------------------------- GERAR O XML DE RETORNO -------------------------------
       --------------------------------------------------------------------------------------
@@ -927,6 +994,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                                                                         ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
                                                                         ,pr_habilitado => vr_flrempgt) ); -- Identifica se o cooperado realiza Pagamentos por Arquivo
 
+            -- Adicionar o Item de Menu do Simular e Contratar 
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 55 -- Lista de Dominio "55 - Simular e Contratar"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgsimcon) ); -- Identifica se o cooperado pode simular e contratar emprestimo
+           	
+            -- Adicionar o Item de Menu do Acompanhamento de Proposta Credito  
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 56 -- Lista de Dominio "56 - Simular e Contratar"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgacopro) ); -- Identifica se o cooperado pode acompanhar Proposta Credito
+           	   
 	   END IF;
                                                   
       EXCEPTION
