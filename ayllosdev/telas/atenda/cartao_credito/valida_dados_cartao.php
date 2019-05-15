@@ -34,6 +34,8 @@
  *				  012: [01/03/2017] Kelvin: Realizado ajuste para não desabilitar o campo "Nome da empresa" caso cooperado já tenha cartão. (SD 609533)
  *
  *                013: [18/03/2019] Anderson: Implementado tipo de envio do cartão (Supero)
+ *
+ *                014: [15/05/2019] Jefferson (MoutS): Inicialização da várialvel javascript flgdebit para corrigir travamento no CRM
  * --------------
  */
 
@@ -296,7 +298,7 @@ if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 			
             if ($cdadmcrd == 15 && $idastcjt != 1 && $floutros != 1) {
                 ?>
-				//var flgdebit = $('#flgdebit', '#frmNovoCartao').prop('checked');
+				var flgdebit = $('#flgdebit', '#frmNovoCartao').prop('checked');
                 if(flgdebit == 1 && idastcjt == 0 ){
                 //$('#flgdebit').removeAttr('disabled');
 				ativa("flgdebit");
