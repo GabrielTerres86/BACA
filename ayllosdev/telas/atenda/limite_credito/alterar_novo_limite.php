@@ -56,7 +56,7 @@
 
 	foreach ($params as $nomeParam) {
 		if (!in_array($nomeParam,array_keys($_POST))) {			
-			exibeErro("Parâmetros incorretos.");
+			exibeErro(utf8ToHtml("Parâmetros incorretos. " . $nomeParam)); //bruno - prj 438 - sprint 7 - novo limite
 		}	
 	}
 
@@ -120,128 +120,15 @@
 	$inconcje = $_POST['inconcje'];
 	$dtconbir = $_POST['dtconbir'];
 	$idcobope = $_POST['idcobope'];
-	
-	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) {
-		exibeErro("Conta/dv inválida.");
-	}
-	
-	// Verifica se número do contrato é um inteiro válido
-	if (!validaInteiro($nrctrlim)) {
-		exibeErro("Número de contrato inválido.");
-	}	
-	
-	// Verifica se número da linha de crédito é um inteiro válido
-	if (!validaInteiro($nrctrlim)) {
-		exibeErro("Linha de crédito inválida.");
-	}
-	
-	// Verifica se valor do limite é um decimal válido
-	if (!validaDecimal($vllimite)) {
-		exibeErro("Valor do Limite de Crédito inválido.");
-	}	
-	
-	// Valida impressão de nota promissória
-	if ($flgimpnp <> "yes" && $flgimpnp <> "no") {
-		exibeErro("Indicador de impressão da nota promissória inválido.");		
-	}
-	
-	// Verifica se valor do salário do avalista é um decimal válido
-	if (!validaDecimal($vlsalari)) {
-		exibeErro("Valor do Salário do Avalista inválido.");
-	}	
-	
-	// Verifica se valor do salário do conjugê é um decimal válido
-	if (!validaDecimal($vlsalcon)) {
-		exibeErro("Valor do Salário do Conjugê inválido.");
-	}	
-	
-	// Verifica se valor de outras é um decimal válido
-	if (!validaDecimal($vloutras)) {
-		exibeErro("Outros Valores inválido.");
-	}	
-	
-	// Verifica se valor do aluguel é um decimal válido
-	if (!validaDecimal($vlalugue)) {
-		exibeErro("Valor do Aluguel inválido.");
-	}		
-	
-	// Verifica se identificador de garantia é um inteiro válido
-	if (!validaInteiro($nrgarope)) {
-		exibeErro("Garantia inválida.");
-	}
-	
-	// Verifica se identificador de informação cadastral é um inteiro válido
-	if (!validaInteiro($nrinfcad)) {
-		exibeErro("Informação cadastral inválida.");
-	}
-	
-	// Verifica se identificador de liquidez é um inteiro válido
-	if (!validaInteiro($nrliquid)) {
-		exibeErro("Liquidez de garantia inválida.");
-	}
-	
-	// Verifica se identificador de patrimônio é um inteiro válido
-	if (!validaInteiro($nrpatlvr)) {
-		exibeErro("Patrimônio pessoal inválido.");
-	}
-	
-	// Verifica se identificador de percepção é um inteiro válido
-	if (!validaInteiro($nrperger)) {
-		exibeErro("Percepção geral inválida.");
-	}
-		
-	// Verifica se o percentual de faturamento é um decimal válido
-	if (!validaDecimal($perfatcl)) {
-		exibeErro("Percentual de Faturamento inválido.");
-	}		
-	
-	// Verifica se número da conta do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav1)) {
-		exibeErro("Conta/dv do 1o Avalista inválida.");
-	}
-	
-	// Verifica se número da conta do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav2)) {
-		exibeErro("Conta/dv do 2o Avalista inválida.");
-	}	
-	
-	// Verifica se CPF do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav1)) {
-		exibeErro("CPF do 1o Avalista inválido.");
-	}	
-	
-	// Verifica se CPF do Conjugê do 1° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav1)) {
-		exibeErro("CPF do Conjugê do 1o Avalista inválido.");
-	}	
-	
-	// Verifica se CPF do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav2)) {
-		exibeErro("CPF do 2o Avalista inválido.");
-	}	
-	
-	// Verifica se CPF do Conjugê do 2° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav2)) {
-		exibeErro("CPF do Conjugê do 2o Avalista inválido.");
-	}	
-	
-	// Verifica se CEP do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcepav1)) {
-		exibeErro("CEP do 1o Avalista inválido.");
-	}	
-	
-	// Verifica se CEP do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcepav2)) {
-		exibeErro("CEP do 2o Avalista inválido.");
-	}
-	
-	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($idcobope)) {
-		exibeErro("Garantia inválida.");
-	}
-	
-	$dsobserv = str_replace('"','',str_replace('>','',str_replace('<','',retiraAcentos(removeCaracteresInvalidos(utf8_decode($dsobserv))))));
+	// PRJ 438 - Sprint 7
+	$vlrecjg1 = isset($_POST["vlrecjg1"]) ? $_POST["vlrecjg1"] : "0,00";  
+	$vlrecjg2 = isset($_POST["vlrecjg2"]) ? $_POST["vlrecjg2"] : "0,00";
+	$cdnacio1 = $_POST["cdnacio1"];
+	$cdnacio2 = $_POST["cdnacio2"];
+	$inpesso1 = $_POST["inpesso1"];
+	$inpesso2 = $_POST["inpesso2"];
+	$dtnasct1 = $_POST["dtnasct1"];
+	$dtnasct2 = $_POST["dtnasct2"];
 	
 	// Monta o xml de requisição
 	$xmlSetLimite  = "";
@@ -321,6 +208,16 @@
 	$xmlSetLimite .= "		<inconcje>".$inconcje."</inconcje>";	
 	$xmlSetLimite .= "		<dtconbir>".$dtconbir."</dtconbir>";
 	$xmlSetLimite .= "		<idcobope>".$idcobope."</idcobope>";
+	// PRJ 438 - Sprint 7
+	$xmlSetLimite .= "		<vlrecjg1>".$vlrecjg1."</vlrecjg1>";
+	$xmlSetLimite .= "		<vlrecjg2>".$vlrecjg2."</vlrecjg2>";
+	$xmlSetLimite .= "		<cdnacio1>".$cdnacio1."</cdnacio1>";
+	$xmlSetLimite .= "		<cdnacio2>".$cdnacio2."</cdnacio2>";
+	$xmlSetLimite .= "		<inpesso1>".$inpesso1."</inpesso1>";
+	$xmlSetLimite .= "		<inpesso2>".$inpesso2."</inpesso2>";
+	$xmlSetLimite .= "		<dtnasct1>".$dtnasct1."</dtnasct1>";
+	$xmlSetLimite .= "		<dtnasct2>".$dtnasct2."</dtnasct2>";
+
 	$xmlSetLimite .= "	</Dados>";
 	$xmlSetLimite .= "</Root>";
 		
@@ -360,12 +257,29 @@
 	echo 'exibirMensagens("'.$stringArrayMsg.'","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));");';
 		
 	if ($flmudfai == 'N') {
-		echo "showConfirmacao('Deseja efetuar as consultas?','Confirma&ccedil;&atilde;o - Aimaro','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));atualizaDadosRating(\"divConteudoOpcao\");','efetuar_consultas();atualizaDadosRating(\"divConteudoOpcao\");','nao.gif','sim.gif');";
+		echo "showConfirmacao('Deseja efetuar as consultas?','Confirma&ccedil;&atilde;o - Aimaro','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));acessaTela(\"@\");','efetuar_consultas();acessaTela(\"@\");','nao.gif','sim.gif');";
+	}else{
+		echo "acessaTela(\"@\");";
 	}	
-	else {
+
 		// Gravar dados do rating do cooperado
-		echo 'atualizaDadosRating("divConteudoOpcao");';
-	}
+		// bruno - prj 438 - sprint 7 - tela rating
+		echo "
+		var aux_dataRating = {
+			nrdconta: '".$nrdconta."',									
+			nrgarope: '".$nrgarope."',
+			nrinfcad: '".$nrinfcad."',
+			nrliquid: '".$nrliquid."',
+			nrpatlvr: '".$nrpatlvr."',
+			nrperger: '".$nrperger."',
+			tpctrrat: tpctrrat,
+			nrctrrat: nrctrrat,	
+			iddivcri: 'nop',
+			redirect: 'script_ajax'
+		};
+	";
+	echo 'atualizarDadosRating(aux_dataRating, "");';
+	
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

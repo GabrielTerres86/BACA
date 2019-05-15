@@ -159,6 +159,8 @@
 	$flgimpnp = getByTagName($limite,"flgimpnp");
 	$dslimpro = getByTagName($limite,"dslimpro");	
 	$idcobope = getByTagName($limite,"idcobope");	
+	$nivrisco = getByTagName($limite,"nivrisco");	
+	$dsdtxfix = getByTagName($limite,"dsdtxfix");	
 	//$dsobserv = removeCaracteresInvalidos($dsobserv);
 	
 	$xml  = "<Root>";
@@ -205,7 +207,7 @@
 		}
 	}
 
-	include ("form_principal.php");
+	//include ("form_tela_principal.php"); - bruno - prj - 438 - sprint 7 - tela principal
 
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
@@ -216,6 +218,7 @@
 		exit();
 	}
 	
+	//bruno - prj 438 - sprint 7 - tela principal
 ?>
 <script type='text/javascript'>
 	//bruno - prj 470 - tela autorizacao
@@ -255,4 +258,13 @@
 	var_globais.idcobope = "<?php echo $idcobope; ?>";
 	var_globais.nivrisco = "<?php echo $nivrisco; ?>";	
 	var_globais.dsdtxfix = "<?php echo $dsdtxfix; ?>";
+	var_globais.dtultmaj = "<?php echo $dtultmaj; ?>";
+	var_globais.dtcanlim = "<?php echo $dtcanlim; ?>";
+
+	aux_cdcooper = '<?php echo $glbvars["cdcooper"]?>';
+	aux_tpdocmto = '<?php echo $tpdocmto ?>';
+	aux_GEDServidor = '<?php echo $GEDServidor;?>';
+
+	aux_dtmvtolt = '<?php echo $glbvars["dtmvtolt"]?>';
+
 </script>

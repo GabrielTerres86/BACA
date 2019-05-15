@@ -91,11 +91,13 @@
 	$idPrincipal = array_search("@",$glbvars["opcoesTela"]);
 	
 	// Se o índice da opção "@" foi encontrado 
-	if (!($idPrincipal === false)) {
-		$acessaaba = 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).','.$idPrincipal.',\''.$glbvars["opcoesTela"][$idPrincipal].'\');';
-	}	else {
-		$acessaaba = 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,\''.$glbvars["opcoesTela"][0].'\');';
-	}
+	// if (!($idPrincipal === false)) {
+	// 	$acessaaba = 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).','.$idPrincipal.',\''.$glbvars["opcoesTela"][$idPrincipal].'\');';
+	// }	else {
+	// 	$acessaaba = 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,\''.$glbvars["opcoesTela"][0].'\');';
+	// }
+	//bruno - prj 438 - sprint 7 - tela principal
+	$acessaaba = 'acessaTela(\'@\');';
 	
 	echo "callafterLimiteCred = \"".$acessaaba."\";";
 	

@@ -31,6 +31,8 @@
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	$nrdconta = $_POST["nrdconta"];
 	$nrdgrupo = $_POST["nrdgrupo"];
+	// PRJ 438 - Sprint 7 - Flag para nao validar o avalista, que já é validado anteriormente (0 não validar / 1 validar (default))
+	$flgValidarAvalistas = (isset($_POST['flgValidarAvalistas'])) ? $_POST['flgValidarAvalistas'] : 1;
 	
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -117,7 +119,11 @@
 		
 	echo "mostraMsgsGrupoEconomico();";
 	echo "formataGrupoEconomico();";
-	echo 'dsmetodo = \'validarAvalistas("'.$tipo.'");\';';
+	if($flgValidarAvalistas == 0){
+		echo 'dsmetodo = \'continuarSemValidarAvalistas("'.$tipo.'");\';';
+	}else{
+    	echo 'dsmetodo = \'validarAvalistas("'.$tipo.'");\';';
+	}
 	
 
 	
