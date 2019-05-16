@@ -17559,7 +17559,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 15/12/2017
+    --  Data     : Julho/2013.                   Ultima atualizacao: 15/05/2019
     --
     --  Dados referentes ao programa:
     --
@@ -17580,7 +17580,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --                            Ajuste mensagem de erro 
     --                           (Belli - Envolti - Chamado 779415)    
     --
-    --
+    --				 15/05/2019 - Merge branch P433 - API de Cobrança (Cechet)
+    --                          - Tratamento de exceção caso o rowid do cursor cr_crapcob seja inválido.
   BEGIN
     DECLARE
       --Selecionar retorno titulo cooperado
@@ -17627,10 +17628,23 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                       ', pr_dsmotivo:' || pr_dsmotivo || 
                       ', pr_dtmvtolt:' || pr_dtmvtolt || 
                       ', pr_cdoperad:' || pr_cdoperad; 
+      
+	  BEGIN
       --Selecionar registro cobranca
       OPEN cr_crapcob (pr_rowid => pr_idregcob);
       --Posicionar no proximo registro
-      FETCH cr_crapcob INTO rw_crapcob;
+          FETCH cr_crapcob
+              INTO rw_crapcob;
+      EXCEPTION
+          WHEN OTHERS THEN
+              vr_dscritic := SQLERRM;
+              IF cr_crapcob%ISOPEN THEN
+                  CLOSE cr_crapcob;
+              END IF;
+          
+              RAISE vr_exc_erro;
+      END;
+
       --Se nao encontrar
       IF cr_crapcob%NOTFOUND THEN
         --Fechar Cursor
