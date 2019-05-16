@@ -145,10 +145,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
     Objetivo  : Concentrar rotinas referente ao processo do Crédito Consignado
 
     Alteracoes: 06/05/2019 - P437 Consignado - Inclusão da rotina pc_efetiva_pagto_parc_consig 
-                Josiane Stiehler AMcom
-        14/05/2019 - P437 Consignado - Inclusão da rotina pc_envia_email_erro_int_consig 
-                Jackson Barcellos AMcom
-
+                             Josiane Stiehler - AMcom
+                14/05/2019 - P437 Consignado - Inclusão da rotina pc_envia_email_erro_int_consig 
+                             Jackson Barcellos - AMcom
+                16/05/2019 - P437 Consignado - Inclusão da rotina pc_atualiza_tbepr_consignado             
+                             Fernanda Kelli de Oliveira - AMcom
     ..............................................................................*/
 
   PROCEDURE pc_validar_dtpgto_antecipada (-- campos padrões
@@ -1810,7 +1811,7 @@ BEGIN
       Sistema  : AIMARO
       Sigla    : 
       Autor    : Fernanda Kelli - AMcom Sistemas de Informação
-      Data     : 14/05/2019
+      Data     : 16/05/2019
 
       Objetivo : Inserir/Atualizar as informações passadas como parâmetro na 
                  Tabela 
