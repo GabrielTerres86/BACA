@@ -40,6 +40,8 @@
 
 				29/08/2018 - Inclusão da tratativa da mensagem para borderos quando removido a Negativação via Serasa e selecionado a remoção para todas as COBS.
 
+        20/02/2019 - Novo campo Homologado API (Andrey Formigari - Supero)
+
 *************************************************************************/
 
 	session_start();
@@ -88,6 +90,7 @@
     $idreciprold = (int) $_POST["idreciprold"];
     $perdesconto = $_POST["perdesconto"];
 	$executandoProdutos = $_POST['executandoProdutos'];
+  $flgapihm = trim($_POST["flgapihm"]);
 
 	$xmlHabilitaConvenio  = "";
 	$xmlHabilitaConvenio .= "<Root>";
@@ -117,6 +120,7 @@
     $xmlHabilitaConvenio .= "   <idreciprold>".$idreciprold."</idreciprold>";
     $xmlHabilitaConvenio .= "   <perdesconto>".$perdesconto."</perdesconto>";
     $xmlHabilitaConvenio .= "   <inenvcob>".$inenvcob."</inenvcob>";	
+  $xmlHabilitaConvenio .= "   <flgapihm>".($flgapihm == "yes" ? 1 : 0)."</flgapihm>";
 	$xmlHabilitaConvenio .= " </Dados>";
 	$xmlHabilitaConvenio .= "</Root>";
 
