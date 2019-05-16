@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2019-04-16T15:06:23 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl_694" language="groovy" pageWidth="455" pageHeight="842" columnWidth="455" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="013718b1-e33b-49fe-95c2-b10f581d2c90">
+	<property name="ireport.zoom" value="1.6105100000000008"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_VLMAIDEP" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/dados/RL/RepresentanteLegal]]>
+	</queryString>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="dsnacion" class="java.lang.String">
+		<fieldDescription><![CDATA[dsnacion]]></fieldDescription>
+	</field>
+	<field name="rsestcvl" class="java.lang.String">
+		<fieldDescription><![CDATA[rsestcvl]]></fieldDescription>
+	</field>
+	<field name="nrcpfcgc" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpfcgc]]></fieldDescription>
+	</field>
+	<field name="dsendere" class="java.lang.String">
+		<fieldDescription><![CDATA[dsendere]]></fieldDescription>
+	</field>
+	<field name="nrendere" class="java.lang.String">
+		<fieldDescription><![CDATA[nrendere]]></fieldDescription>
+	</field>
+	<field name="nmbairro" class="java.lang.String">
+		<fieldDescription><![CDATA[nmbairro]]></fieldDescription>
+	</field>
+	<field name="nmcidade" class="java.lang.String">
+		<fieldDescription><![CDATA[nmcidade]]></fieldDescription>
+	</field>
+	<field name="cdufende" class="java.lang.String">
+		<fieldDescription><![CDATA[cdufende]]></fieldDescription>
+	</field>
+	<field name="nrcepend" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcepend]]></fieldDescription>
+	</field>
+	<detail>
+		<band height="45" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField>
+				<reportElement x="0" y="0" width="455" height="45" uuid="96ef356f-bccc-4163-b937-df59a87b833e">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[""+$F{nmprimtl}+", nacionalidade "+$F{dsnacion}+", "+$F{dsnacion}+", inscrito(a) no CPF sob nº "+$F{nrcpfcgc}+", com residência na "+$F{dsendere}+", nº "+$F{nrendere}+", bairro "+$F{nmbairro}+", cidade de "+$F{nmcidade}+"/"+$F{cdufende}+", CEP "+$F{nrcepend}+"."]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

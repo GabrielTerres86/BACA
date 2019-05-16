@@ -1,0 +1,517 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2019-04-23T15:43:33 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_liberacao_plataforma_api" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="25" bottomMargin="25" whenResourceMissingType="Key" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="1584"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<subDataset name="Dataset1" uuid="f407ae42-4367-4a46-9187-0eac1f304692">
+		<queryString>
+			<![CDATA[]]>
+		</queryString>
+	</subDataset>
+	<parameter name="PR_nmextcop" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/dados]]>
+	</queryString>
+	<field name="nmextcop" class="java.lang.String">
+		<fieldDescription><![CDATA[nmextcop]]></fieldDescription>
+	</field>
+	<field name="cdufdcop" class="java.lang.String">
+		<fieldDescription><![CDATA[cdufdcop]]></fieldDescription>
+	</field>
+	<field name="dsendweb" class="java.lang.String">
+		<fieldDescription><![CDATA[dsendweb]]></fieldDescription>
+	</field>
+	<field name="nrouvbcb" class="java.lang.String">
+		<fieldDescription><![CDATA[nrouvbcb]]></fieldDescription>
+	</field>
+	<field name="nrdocnpj" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdocnpj]]></fieldDescription>
+	</field>
+	<field name="dsendcop" class="java.lang.String">
+		<fieldDescription><![CDATA[dsendcop]]></fieldDescription>
+	</field>
+	<field name="nrcepend_coop" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcepend_coop]]></fieldDescription>
+	</field>
+	<field name="nrcepend_ass" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcepend_ass]]></fieldDescription>
+	</field>
+	<field name="cdufende_ass" class="java.lang.String">
+		<fieldDescription><![CDATA[cdufende_ass]]></fieldDescription>
+	</field>
+	<field name="nmcidade_coop" class="java.lang.String">
+		<fieldDescription><![CDATA[nmcidade_coop]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="dsnacion" class="java.lang.String">
+		<fieldDescription><![CDATA[dsnacion]]></fieldDescription>
+	</field>
+	<field name="dsestcvl" class="java.lang.String">
+		<fieldDescription><![CDATA[dsestcvl]]></fieldDescription>
+	</field>
+	<field name="nrcpfcgc" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpfcgc]]></fieldDescription>
+	</field>
+	<field name="dsendere" class="java.lang.String">
+		<fieldDescription><![CDATA[dsendere]]></fieldDescription>
+	</field>
+	<field name="nrendere" class="java.lang.String">
+		<fieldDescription><![CDATA[nrendere]]></fieldDescription>
+	</field>
+	<field name="nmbairro" class="java.lang.String">
+		<fieldDescription><![CDATA[nmbairro]]></fieldDescription>
+	</field>
+	<field name="nmcidade_ass" class="java.lang.String">
+		<fieldDescription><![CDATA[nmcidade_ass]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagenci]]></fieldDescription>
+	</field>
+	<field name="dtextenso" class="java.lang.String">
+		<fieldDescription><![CDATA[dtextenso]]></fieldDescription>
+	</field>
+	<field name="inpessoa" class="java.lang.String">
+		<fieldDescription><![CDATA[inpessoa]]></fieldDescription>
+	</field>
+	<field name="dtassinatura_digital" class="java.lang.String">
+		<fieldDescription><![CDATA[dtassinatura_digital]]></fieldDescription>
+	</field>
+	<field name="hrassinatura_digital" class="java.lang.String">
+		<fieldDescription><![CDATA[hrassinatura_digital]]></fieldDescription>
+	</field>
+	<field name="nmarquivo_termo" class="java.lang.String">
+		<fieldDescription><![CDATA[nmarquivo_termo]]></fieldDescription>
+	</field>
+	<field name="tp_autorizacao" class="java.lang.Integer">
+		<fieldDescription><![CDATA[tp_autorizacao]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="792">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<staticText>
+				<reportElement x="0" y="0" width="594" height="20" uuid="d8045afd-185d-467b-b96b-b866b8da93ca">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box topPadding="0"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="true" pdfFontName="Helvetica-Bold" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[TERMO DE LIBERAÇÃO E CONDIÇÕES DE USO DA INTERFACE DE COMUNICAÇÃO – API]]></text>
+			</staticText>
+			<frame>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="42" width="465" height="61" uuid="0329ae0a-db36-4190-a750-bafad95618a4">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<staticText>
+					<reportElement x="5" y="3" width="455" height="15" uuid="830ed6a7-bb44-48ba-b9d8-9770e8fa4d94">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font isBold="true" pdfFontName="Helvetica-Bold" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[COOPERATIVA]]></text>
+				</staticText>
+				<textField>
+					<reportElement isPrintRepeatedValues="false" x="5" y="20" width="455" height="35" uuid="29afe011-cf8e-4eb1-b790-8d831849fde7">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Justified">
+						<font fontName="SansSerif"/>
+					</textElement>
+					<textFieldExpression><![CDATA[""+$F{nmextcop}+", sociedade cooperativa de crédito, inscrita no CNPJ sob n° "+$F{nrdocnpj}+", estabelecida na "+$F{dsendcop}+", CEP "+$F{nrcepend_coop}+", cidade de "+$F{nmcidade_coop}+"/"+$F{cdufdcop}+"."]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="102" width="465" height="80" uuid="4b97e7e0-1afb-4d3e-96da-a4ab185d5670">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<staticText>
+					<reportElement x="5" y="3" width="455" height="15" uuid="7f87c58a-0751-40f3-a297-2453dd2651d6">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font isBold="true" pdfFontName="Helvetica-Bold" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[COOPERADO]]></text>
+				</staticText>
+				<textField isBlankWhenNull="true">
+					<reportElement key="" isPrintRepeatedValues="false" x="5" y="20" width="455" height="57" uuid="38581169-f4d7-4a9b-b885-84a6c81b82c3">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<printWhenExpression><![CDATA[new Boolean($F{inpessoa}.equals( "1" ))]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Justified"/>
+					<textFieldExpression><![CDATA[""+$F{nmprimtl}+", nacionalidade "+$F{dsnacion}+", estado civil "+$F{dsestcvl}+", inscrito(a) no CPF sob nº "+$F{nrcpfcgc}+", com residência na "+$F{dsendere}+", nº "+$F{nrendere}+", bairro "+$F{nmbairro}+", cidade de "+$F{nmcidade_ass}+"/"+$F{cdufende_ass}+", CEP "+$F{nrcepend_ass}+", titular da Conta Corrente nº "+$F{nrdconta}+", vinculada ao PA "+$F{cdagenci}+"."]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement isPrintRepeatedValues="false" x="5" y="20" width="455" height="57" uuid="5f09d89b-416e-4958-9c04-120ad5827eb1">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<printWhenExpression><![CDATA[new Boolean($F{inpessoa}.equals( "2" ))]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Justified"/>
+					<textFieldExpression><![CDATA[""+$F{nmprimtl}+", "+$F{dsnacion}+", "+$F{dsestcvl}+", inscrito(a) no CNPJ sob nº "+$F{nrcpfcgc}+", com sede na "+$F{dsendere}+", nº "+$F{nrendere}+", bairro "+$F{nmbairro}+", cidade de "+$F{nmcidade_ass}+"/"+$F{cdufende_ass}+", CEP "+$F{nrcepend_ass}+", portadora da Conta Corrente nº "+$F{nrdconta}+", vinculada ao PA "+$F{cdagenci}+"."]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement key="" positionType="Float" stretchType="RelativeToTallestObject" x="65" y="182" width="465" height="20" uuid="63c7745b-a4db-4a65-aa46-b713df761d3f">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[new Boolean($F{inpessoa}.equals("2"))]]></printWhenExpression>
+				</reportElement>
+				<box padding="0">
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<subreport>
+					<reportElement x="5" y="20" width="455" height="1" uuid="da3f52e1-f9d7-4bc2-8d54-b01a80cd929c">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("/dados/RL/RepresentanteLegal")]]></dataSourceExpression>
+					<subreportExpression><![CDATA["termo_liberacao_plataforma_api_representante_legal.jasper"]]></subreportExpression>
+				</subreport>
+				<staticText>
+					<reportElement x="5" y="3" width="455" height="15" uuid="3babb932-c686-4cbf-90e6-047d49267b05">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font isBold="true" pdfFontName="Helvetica-Bold" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[Representante Legal]]></text>
+				</staticText>
+			</frame>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="202" width="464" height="58" uuid="215ce08a-92e2-4998-933e-25f59734b9de">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box topPadding="5" bottomPadding="0"/>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["Pelo presente instrumento, a <style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">COOPERATIVA</style> autoriza o <style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">COOPERADO</style> acima qualificado a utilizar o canal de INTERFACE DE COMUNICAÇÃO – API, cuja descrição segue abaixo para todos os efeitos legais, declarando estar ciente e de pleno acordo com as regras e condições estabelecidas."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="300" width="464" height="35" uuid="781a7159-113b-45af-913d-e894d1c1452d"/>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["1.1.	O COOPERADO poderá ter acesso através do API aos produtos e serviços disponibilizados pela COOPERATIVA neste canal, ou ainda, outros que venham a ser disponibilizados posteriormente."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="395" width="464" height="15" uuid="1a8eea41-d2df-4633-b7e0-c5c19fa8f6c2">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">2.	DEFINIÇÕES DE TERMOS CONTRATUAIS:</style>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement key="" positionType="Float" stretchType="RelativeToTallestObject" x="65" y="260" width="464" height="40" uuid="8a7d2f9b-e55b-4120-b9bb-1f91bc8a4052">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">1.	A INTERFACE DE COMUNICAÇÃO – API</style> é um canal de comunicação disponibilizado pela COOPERATIVA que permite a integração dos produtos e serviços contratados, e os que venham a ser contratados posteriormente junto à COOPERATIVA, com o software do COOPERADO."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="338" width="464" height="57" uuid="0a35ecea-1052-4f98-aaf7-b5d9ea8cdecf"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["1.2.	A Cooperativa, a qualquer tempo, ao seu exclusivo critério, e mediante simples divulgação aos usuários deste canal de comunicação, poderá disponibilizar na internet novas informações, produtos e serviços, bem como excluir qualquer um dos já oferecidos na data da liberação do API, não gerando qualquer direito ao COOPERADO."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="410" width="464" height="70" uuid="9119961e-b255-464b-96cc-2c10250c3975"/>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["a.	DESENVOLVEDOR(ES): pessoa(s) física(s) e/ou jurídica(s) indicada(s) e contratada(s) pelo COOPERADO, às suas expensas, responsável pela programação e integração entre os softwares do COOPERADO e o da COOPERATIVA. O COOPERADO poderá, durante todo o tempo de utilização do API, substituir e/ou indicar novo(s) o(s) DESENVOLVEDOR(ES), sendo tal manejo registrado e armazenado no sistema interno da COOPERATIVA."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="580" width="464" height="32" uuid="5b3c6a54-47bf-4d98-b97a-59bcbed3ab8a">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["3.2.	Para utilização do API, o COOPERADO deverá possuir software próprio para ser integrado ao sistema da COOPERATIVA."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="520" width="464" height="60" uuid="824f9ec1-71a0-46d8-a83f-1d4e85b7add5"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["3.1.	O COOPERADO reconhece que todos os atos praticados mediante aposição de senha numérica, serão registrados e arquivados em meios magnéticos, sendo reconhecidos, para todos os fins de direito, como assinatura digital, como válidos, verdadeiros e processados por meios seguros e constituirão meio eficaz e prova inequívoca de concordância com o empréstimo ora realizado."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="480" width="464" height="40" uuid="837c2ed0-6371-45f7-8ac5-b900934dfed8"/>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">3.	DA LIBERAÇÃO DO API -</style> A liberação do API apenas poderá ser realizada no Posto de Atendimento da COOPERATIVA, mediante assinatura física ou eletrônica do Termo de Liberação pelo COOPERADO, representante(s) legal(is) ou procurador(es) do COOPERADO."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="612" width="464" height="28" uuid="b5f5605e-70c4-4e3a-bfda-a8e06dc4cccc">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["3.3.	A efetiva liberação do API somente ocorrerá após a aprovação pela COOPERATIVA e devidas homologações entre COOPERATIVA e COOPERADO."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="640" width="464" height="40" uuid="355ab3fe-3bfc-4723-8835-de6d14175a93"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["3.4.	O COOPERADO está ciente que a pessoa indicada como desenvolvedor receberá uma chave de acesso e entrará em contato com a COOPERATIVA para efetuar as homologações necessárias ao funcionamento do API."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="680" width="464" height="48" uuid="004318c6-dfe4-44de-840a-f0a67bde78db"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["3.5.	No momento da liberação do API, assim como durante todo o tempo de utilização deste canal de autoatendimento, o COOPERADO deverá indicar os dados do(s) seu(s) desenvolvedor(es) (nome, CPF/CNPJ, telefone, endereço, contato, e-mail, dentre outros), autorizando a prática de atos em seu nome."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="728" width="464" height="63" uuid="7fc788fc-a778-42ae-9737-ae70b71e19cb"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["3.6.	A(s) senha(s) e chave(s) de acesso são conferidas em caráter pessoal e intransferível, sendo que fica sob inteira responsabilidade do COOPERADO e seu(s) desenvolvedor(es) a guarda da(s) senha(s) e chaves de acesso, sendo que a COOPERATIVA não se responsabiliza por eventuais prejuízos decorrentes de quebra de sigilo ou uso indevido, pelo COOPERADO e/ ou seu(s) desenvolvedor(es)."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="792">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="346" width="464" height="28" uuid="7e283984-a449-4c59-8a6b-14deedfa62b9"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["e.	Garantir que o(s) desenvolvedor(es) seja(m) técnico(s) e legalmente habilitado(s) para tal função;"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="374" width="464" height="30" uuid="c50b89b5-78dd-4478-a4bd-d84e36091db9"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["f.	Realizar as devidas adequações no software de sua propriedade para que o mesmo se comunique com o API, assumindo toda e qualquer despesa/custo;"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="452" width="464" height="30" uuid="a5c452c7-9e37-495e-a9be-a4f9c40cff9c"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["i.	Garantir a veracidade, integridade, atualização, legalidade e confiabilidade dos meios de autenticação e de comunicação adotados e das informações fornecidas à COOPERATIVA;"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="512" width="464" height="40" uuid="802c102a-cc5a-4db9-a93c-581ee18ac7cc"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["k.	Manter dados e ambientes utilizados sem interferências externas, sendo proibido fazer engenharia reversa, descompilar, descriptografar, desmontar, entre outros, no todo ou em parte, quaisquer recursos do API;"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="434" width="464" height="18" uuid="c8304990-cd48-48ab-af9c-d4586c541cc1"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["h.	Baixar as atualizações do API disponibilizadas pela COOPERATIVA;"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="256" width="464" height="30" uuid="5c08308d-ecd2-418e-b040-735cd4bbfc0b"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["b.	Contratar o(s) desenvolvedor(es) que irá(ão) fazer as homologações e testes/ desenvolver o software/ manter e atualizar o software;"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="404" width="464" height="30" uuid="3dd33bc4-b01b-4f06-970e-5f5bbfc2a76c"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["g.	Promover os ajustes/ atualizações do software de sua propriedade, necessárias para continuar comunicando-se com o API;"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="286" width="464" height="40" uuid="fa0eee55-558d-4f94-9199-61b31f2f84df"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["c.	Repassar ao(s) desenvolvedor(es) todos documentos elaborados pela COOPERATIVA sobre o API, notadamente as presentes condições de uso e o Manual de Instruções Técnicas "+$F{nmarquivo_termo}+";"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="482" width="464" height="30" uuid="26c09c0c-0e65-466a-9c24-856e06aa76a0"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["j.	Utilizar o API em consonância com o Manual de Instruções Técnicas "+$F{nmarquivo_termo}+";"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="326" width="464" height="20" uuid="ff1784d6-de67-4ca0-bebb-f54830649d4c"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["d.	Arcar com todo e qualquer custo para utilização do API;"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="552" width="464" height="30" uuid="747b5401-d9b2-44e6-9498-b7c38fd65bc1"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["l.	Zelar pelo sigilo das senhas e chaves de acesso, inclusive as disponibilizadas ao desenvolvedor, responsabilizando-se pelas consequências da divulgação para terceiros."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="582" width="464" height="29" uuid="b7954623-fd6b-4099-8dcc-4bfa151b2105"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["4.4.	A COOPERATIVA poderá alterar as características do API, independentemente de qualquer aviso prévio ao COOPERADO."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="611" width="464" height="52" uuid="a23f7b51-1139-4b77-815b-d22176c48435"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["4.5.	O COOPERADO está ciente de que o uso do API de forma desatualizada ou a falta de ajustes/ atualizações do software de sua propriedade nos termos descritos anteriormente poderá acarretar a instabilidade e até interrupção do acesso ao API, bem como da integração com o software do COOPERADO."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="663" width="464" height="61" uuid="abece66b-d4be-4a67-8b0c-0946fa78b1c6"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["4.6.	O COOPERADO declara que recebeu e está de acordo com o Manual de Instruções Técnicas "+$F{nmarquivo_termo}+" enviado para o e-mail do seu desenvolvedor indicado na liberação do API, no qual estão dispostas as orientações de uso suficientes para os seus desenvolvedores integrarem o software com o API."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="227" width="464" height="29" uuid="2581a2bc-d398-49a0-82d2-d0f1c62af154"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["a.	Possuir software próprio para promover a integração com o sistema da COOPERATIVA, através do API;"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="213" width="464" height="14" uuid="96876e9c-bb6b-4e61-97a0-1b1c71974451">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["4.3.	É de responsabilidade do COOPERADO:"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="183" width="464" height="30" uuid="5470892d-0bf6-4cf0-8dd3-e310029f0315"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["4.2.	Os limites e condições acima mencionadas serão divulgados pela COOPERATIVA, por intermédio de seus Postos de Atendimento, canais de autoatendimento ou site."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="0" width="464" height="50" uuid="12f995bd-baa8-478c-bbc9-b394d4c891e6">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["3.7.	É de responsabilidade do COOPERADO os atos praticados por meio deste canal, ficando a COOPERATIVA isenta de qualquer responsabilidade por eventuais prejuízos sofridos, inclusive causados a terceiros, decorrentes de atos praticados mediante a utilização de senha pessoal."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="50" width="464" height="77" uuid="77eb9642-446e-470b-bdcd-88d7aca7af25"/>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">4.	CONDIÇÕES DE USO</style> - O API tem como finalidade melhorar a experiência do COOPERADO na utilização dos produtos e serviços ofertados pela COOPERATIVA, tornando-os mais eficientes e aumentando a rede de autoatendimento. Através do API o COOPERADO poderá promover a integração do seu software com os produtos da COOPERATIVA que já estiverem disponíveis neste canal e que tiverem sido aderidos pelo COOPERADO através de contrato/ termo especifico."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="127" width="464" height="56" uuid="01171fc2-69f8-47b2-beac-72c5ffca7b06"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["4.1.	A COOPERATIVA poderá estabelecer limites para as movimentações dentro do API em razão do horário de expediente bancário, dias úteis, finais de semana e/ou feriados, dentre outros. As movimentações fora das condições estabelecidas pela COOPERATIVA poderão ser rejeitadas ou não processadas."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="66" y="724" width="464" height="48" uuid="82918f3d-7488-4c83-8bd1-5ba882510840"/>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["4.7.	Os custos relacionados ao desenvolvimento/aquisição do software pelo Cooperado, se ainda não possuir, bem como ajustes e atualizações para integração com o API e respectiva manutenção para garantir o seu funcionamento são de responsabilidade única e exclusiva do COOPERADO."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="792">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="200" width="464" height="76" uuid="ef3c6a3a-0032-4ea8-ad43-7fa9417271eb"/>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">8.	DA ALTERAÇÃO CONTRATUA</style> - Quaisquer alterações que incluam, excluam ou modifiquem as presentes cláusulas serão publicadas e ficarão disponíveis ao COOPERADO via website ("+$F{dsendweb}+") ou disponibilizadas em sua conta online. As referidas alterações aplicar-se-ão para todos os contratos e todas as prorrogações que se fizerem após a data da publicação. Não havendo concordância com as alterações promovidas, o COOPERADO deverá comunicar em até 15 (quinze) dias da publicação."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="364" width="464" height="90" uuid="d1853fc2-df95-461c-8099-6341a015d3e0"/>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">10.	DA TOLERÂNCIA</style> - A eventual tolerância por parte da COOPERATIVA, no exigir do cumprimento do presente contrato, não acarretará ao cancelamento das penalidades previstas, as quais poderão ser aplicadas e exigidas a qualquer tempo, ainda que a tolerância ou a não aplicação das cominações ocorram repetidas vezes, consecutivas ou alternadamente, o que não implicará em precedentes, renovação ou modificação de quaisquer das disposições deste contrato, as quais permanecerão íntegras e em pleno vigor, como se nenhum favor tivesse ocorrido."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="534" width="464" height="30" uuid="34f407af-0bba-411f-8bcd-39f2e7a8ed47">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">12.	DO FORO</style> - As partes, de comum acordo, elegem o foro da Comarca do domicílio do COOPERADO, com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir quaisquer questões resultantes do presente contrato."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="324" width="464" height="40" uuid="8174f7e1-e210-489b-a37f-1e8c81268255">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified"/>
+				<textFieldExpression><![CDATA["9.1.	Na hipótese de a COOPERATIVA deixar de oferecer o API aos seus COOPERADOS, não se aplica o disposto acima, ficando o presente contrato rescindido por meio de divulgação dessa informação no site da COOPERATIVA."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="454" width="464" height="80" uuid="f9d4a61e-0e9f-4a64-9c74-507e1aa724fe"/>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">11.	DA SOLUÇÃO AMIGÁVEL DE CONFLITOS</style> - Para a solução amigável de eventuais conflitos relacionados à liberação e utilização do API, o COOPERADO poderá dirigir seu pedido ou reclamação ao Posto de Atendimento responsável pela sua conta. Está ainda à sua disposição o tele atendimento (0800 647 2214), e o website ("+$F{dsendweb}+"). Se não for solucionado o conflito, o COOPERADO poderá recorrer à Ouvidoria  ("+$F{nrouvbcb}+", em dias úteis, 08h00min às 17h00min)."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="276" width="464" height="48" uuid="15352d48-6611-4dcd-a54d-ae0e7d8e4a6f"/>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">9.	DO ENCERRAMENTO DO PRESENTE CONTRATO</style> - O presente contrato poderá ser rescindido por vontade de quaisquer das partes, mediante prévia comunicação escrita endereçada à outra parte, com no mínimo 15 (quinze) dias de antecedência."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="684" width="464" height="60" uuid="546f622c-247e-4052-a206-e09dc520978a">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[new Boolean($F{tp_autorizacao}.equals(1))]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" markup="styled"/>
+				<textFieldExpression><![CDATA["Assinado eletronicamente pelo <style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">CONTRATANTE</style> "+$F{nmprimtl}+", no dia "+$F{dtassinatura_digital}+", às "+$F{hrassinatura_digital}+", mediante aposição de senha numérica."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="123" y="663" width="350" height="21" uuid="412b55c1-83d2-409d-802c-6a33a8855c23">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[new Boolean($F{tp_autorizacao}.equals(2))]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Center" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">"+$F{nmprimtl}+"</style>"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="564" width="464" height="90" uuid="5a7241c0-a0bd-4c1a-bd19-56933c2ea22c"/>
+				<box topPadding="20" bottomPadding="20"/>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["E, por estarem assim justas e contratadas, firmam o presente termo em tantas vias quantas forem necessárias.<br /><br />"+$F{dtextenso}+"."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="714" width="464" height="30" uuid="449d95ab-537a-4006-8e79-d382b89d12b5">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" markup="styled"/>
+				<textFieldExpression><![CDATA["Assinado eletronicamente pela <style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">COOPERATIVA</style> "+$F{nmextcop}+", no dia "+$F{dtassinatura_digital}+", às "+$F{hrassinatura_digital}+"."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="150" width="464" height="50" uuid="bb540fbc-6267-43eb-83b7-3b8f4f7693a0">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">7.	DOS EFEITOS DO CONTRATO</style> - Este contrato obriga a COOPERATIVA e o COOPERADO, ao fiel cumprimento das cláusulas e condições estabelecidas no mesmo, sendo celebrado em caráter irrevogável e irretratável, obrigando, também, seus herdeiros, cessionários e sucessores, a qualquer título."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="60" width="464" height="90" uuid="57973511-7a27-4795-9245-794d32b86770"/>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">6.	DO VÍNCULO COOPERATIVO</style> - As partes declaram que este instrumento está vinculado às disposições legais cooperativistas, ao Estatuto Social da Cooperativa, às deliberações assembleares desta e às decisões do seu Conselho de Administração, os quais o COOPERADO está obrigado, uma vez que, livre e espontaneamente ingressou ao quadro social da Cooperativa, celebrando um Ato Cooperativo previsto no artigo 79 da Lei Federal nº 5.764/71. O COOPERADO reconhece o presente como negócio jurídico perfeito e acabado, devendo produzir, de imediato, os seus efeitos jurídicos."]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="65" y="0" width="464" height="60" uuid="26109682-a11f-408c-b851-6b1ff069f442"/>
+				<textElement textAlignment="Justified" markup="styled"/>
+				<textFieldExpression><![CDATA["<style fontName=\"SansSerif\" isBold=\"false\" pdfFontName=\"Helvetica-Bold\" pdfEncoding=\"\" isPdfEmbedded=\"true\">5.	DA CONFIDENCIALIDADE</style> - O COOPERADO e seu(s) desenvolvedor(es) se obrigam a manter, de forma permanente, o mais completo e absoluto sigilo sobre quaisquer dados, materiais, informações, documentos, especificações técnicas, dentre outros, da COOPERATIVA que venha a ter conhecimento, ou que lhe vier a ser confiado, em razão da liberação da API."]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
