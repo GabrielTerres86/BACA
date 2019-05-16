@@ -98,20 +98,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
                                            ,pr_dscritic      OUT VARCHAR2              --> Descricao da critica
                                            ,pr_des_erro      OUT VARCHAR2              --> Erros do processo
                                            );  
-
-  PROCEDURE pc_atualiza_tbepr_consignado(pr_cdcooper         IN tbepr_consignado.cdcooper%TYPE     --> Cooperativa
-                                        ,pr_nrdconta         IN tbepr_consignado.nrdconta%TYPE     --> Conta
-                                        ,pr_nrctremp         IN tbepr_consignado.nrctremp%TYPE     --> Contrato
-                                        ,pr_pejuro_anual     IN tbepr_consignado.pejuro_anual%TYPE --> Percentual da taxa de juros anual
-                                        ,pr_pecet_anual      IN tbepr_consignado.pecet_anual%TYPE  --> Percentual CET
-                                         -- campos padrões
-                                        ,pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
-                                        ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
-                                        ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
-                                        ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                        ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
-                                        ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
-                                        );     
                                         
   PROCEDURE pc_busca_dados_soa_fis_calcula (-- campos padrões
                                             pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
@@ -129,16 +115,21 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
                                          ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                          ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
                                          ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
-                                         ) ;                                                                                                                             
+                                         );                                                                                                                             
 
-   PROCEDURE pc_alt_emp_cooperado_desligado(pr_cdcooper      IN crapepr.cdcooper%TYPE  --> Cooperativa
-                                           ,pr_nrdconta      IN crapepr.nrdconta%TYPE  --> Conta
-                                           ,pr_flgdesligado  IN VARCHAR2               --> Indica se o cliente foi desligado (1 = Sim / 2 = Nao)
-                                           -- campos padrões
-                                           ,pr_cdcritic      OUT PLS_INTEGER           --> Codigo da critica
-                                           ,pr_dscritic      OUT VARCHAR2              --> Descricao da critica
-                                           ,pr_des_erro      OUT VARCHAR2              --> Erros do processo
-                                           );                                               
+  PROCEDURE pc_atualiza_tbepr_consignado(pr_nrdconta         IN tbepr_consignado.nrdconta%TYPE     --> Conta
+                                        ,pr_nrctremp         IN tbepr_consignado.nrctremp%TYPE     --> Contrato
+                                        ,pr_pejuro_anual     IN tbepr_consignado.pejuro_anual%TYPE --> Percentual da taxa de juros anual
+                                        ,pr_pecet_anual      IN tbepr_consignado.pecet_anual%TYPE  --> Percentual CET
+                                         -- campos padrões
+                                        ,pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
+                                        ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
+                                        ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
+                                        ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
+                                        ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
+                                        );     
+                                                                                      
 
 END EMPR0020;
 /
@@ -1306,14 +1297,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
                                                
      END  pc_envia_email_erro_int_consig;
     
-   PROCEDURE pc_alt_emp_cooperado_desligado(pr_cdcooper      IN crapepr.cdcooper%TYPE  --> Cooperativa
-                                           ,pr_nrdconta      IN crapepr.nrdconta%TYPE  --> Conta
-                                           ,pr_flgdesligado  IN VARCHAR2               --> Indica se o cliente foi desligado (1 = Sim / 2 = Nao)
-                                           -- campos padrões
-                                           ,pr_cdcritic      OUT PLS_INTEGER           --> Codigo da critica
-                                           ,pr_dscritic      OUT VARCHAR2              --> Descricao da critica
-                                           ,pr_des_erro      OUT VARCHAR2              --> Erros do processo
-                                           )IS
+  PROCEDURE pc_alt_emp_cooperado_desligado(pr_cdcooper      IN crapepr.cdcooper%TYPE  --> Cooperativa
+                                          ,pr_nrdconta      IN crapepr.nrdconta%TYPE  --> Conta
+                                          ,pr_flgdesligado  IN VARCHAR2               --> Indica se o cliente foi desligado (1 = Sim / 2 = Nao)
+                                          -- campos padrões
+                                          ,pr_cdcritic      OUT PLS_INTEGER           --> Codigo da critica
+                                          ,pr_dscritic      OUT VARCHAR2              --> Descricao da critica
+                                          ,pr_des_erro      OUT VARCHAR2              --> Erros do processo
+                                          )IS
    /*---------------------------------------------------------------------------------------------------------
       Programa  : pc_alt_emp_cooperado_desligado
       Sistema   : AIMARO
@@ -1330,7 +1321,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
       Alteração :
 
   ----------------------------------------------------------------------------------------------------------*/
- 
   BEGIN
     DECLARE
       -- Variavel de criticas
@@ -1422,110 +1412,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
     END;
     
   END pc_alt_emp_cooperado_desligado;  
-  
-  PROCEDURE pc_atualiza_tbepr_consignado(pr_cdcooper         IN tbepr_consignado.cdcooper%TYPE     --> Cooperativa
-                                        ,pr_nrdconta         IN tbepr_consignado.nrdconta%TYPE     --> Conta
-                                        ,pr_nrctremp         IN tbepr_consignado.nrctremp%TYPE     --> Contrato
-                                        ,pr_pejuro_anual     IN tbepr_consignado.pejuro_anual%TYPE --> Percentual da taxa de juros anual
-                                        ,pr_pecet_anual      IN tbepr_consignado.pecet_anual%TYPE  --> Percentual CET
-                                         -- campos padrões
-                                        ,pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
-                                        ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
-                                        ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
-                                        ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                        ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
-                                        ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
-                                        ) IS
-    /*---------------------------------------------------------------------------------------------------------
-      Programa : pc_atualiza_tbepr_consignado
-      Sistema  : AIMARO
-      Sigla    : 
-      Autor    : Fernanda Kelli - AMcom Sistemas de Informação
-      Data     : 14/05/2019
-
-      Objetivo : Atualizar as informações passadas como parâmetro 
-
-      Alteração :     
-     
-    ----------------------------------------------------------------------------------------------------------*/
-    BEGIN
-    DECLARE
-      /* Tratamento de erro */
-      vr_exc_erro EXCEPTION;
-
-      /* Descrição e código da critica */
-      vr_cdcritic crapcri.cdcritic%TYPE;
-      vr_dscritic VARCHAR2(4000);
-
-      -- variaveis de retorno
-     /* vr_tab_dados_param_consig typ_tab_dados_param_consig;
-      vr_qtregist         number;*/
-
-      -- variaveis de entrada vindas no xml
-      vr_cdcooper integer;
-      vr_cdoperad varchar2(100);
-      vr_nmdatela varchar2(100);
-      vr_nmeacao  varchar2(100);
-      vr_cdagenci varchar2(100);
-      vr_nrdcaixa varchar2(100);
-      vr_idorigem varchar2(100);
-
-      -- variáveis para armazenar as informaçoes em xml
-      vr_des_xml        clob;
-      vr_texto_completo varchar2(32600);
-      /*vr_index          varchar2(100);*/
-
-      procedure pc_escreve_xml( pr_des_dados in varchar2
-                              , pr_fecha_xml in boolean default false
-                              ) is
-      begin
-          gene0002.pc_escreve_xml( vr_des_xml
-                                 , vr_texto_completo
-                                 , pr_des_dados
-                                 , pr_fecha_xml );
-      end;
-
-    BEGIN
-      pr_nmdcampo := NULL;
-      pr_des_erro := 'OK';
-      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
-                              , pr_cdcooper => vr_cdcooper
-                              , pr_nmdatela => vr_nmdatela
-                              , pr_nmeacao  => vr_nmeacao
-                              , pr_cdagenci => vr_cdagenci
-                              , pr_nrdcaixa => vr_nrdcaixa
-                              , pr_idorigem => vr_idorigem
-                              , pr_cdoperad => vr_cdoperad
-                              , pr_dscritic => vr_dscritic);
-                              
-  --  fazer o insert na tabela tbepr_consignado, caso já exista fazer update dos valores (exceto do juros60).
-                                     
-
-      
-
-    EXCEPTION
-      WHEN vr_exc_erro THEN
-           /*  se foi retornado apenas código */
-           IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
-               /* buscar a descriçao */
-               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-           END IF;
-           /* variavel de erro recebe erro ocorrido */
-           pr_des_erro := 'NOK';
-           pr_cdcritic := nvl(vr_cdcritic,0);
-           pr_dscritic := vr_dscritic;
-             -- Carregar XML padrao para variavel de retorno
-              pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                             '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      WHEN OTHERS THEN
-             pr_des_erro := 'NOK';
-           /* montar descriçao de erro nao tratado */
-             pr_dscritic := 'erro não tratado na empr0020.pc_atualiza_tbepr_consignado. ' ||SQLERRM;
-             -- Carregar XML padrao para variavel de retorno
-              pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                             '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-    END;
-  END pc_atualiza_tbepr_consignado;  
   
   PROCEDURE pc_busca_dados_soa_fis_calcula (-- campos padrões
                                             pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
@@ -1907,122 +1793,154 @@ BEGIN
     END;
   end prc_log_erro_soa_fis_calcula;                                       
     
-   PROCEDURE pc_alt_emp_cooperado_desligado(pr_cdcooper      IN crapepr.cdcooper%TYPE  --> Cooperativa
-                                           ,pr_nrdconta      IN crapepr.nrdconta%TYPE  --> Conta
-                                           ,pr_flgdesligado  IN VARCHAR2               --> Indica se o cliente foi desligado (1 = Sim / 2 = Nao)
-                                           -- campos padrões
-                                           ,pr_cdcritic      OUT PLS_INTEGER           --> Codigo da critica
-                                           ,pr_dscritic      OUT VARCHAR2              --> Descricao da critica
-                                           ,pr_des_erro      OUT VARCHAR2              --> Erros do processo
-                                           )IS
-   /*---------------------------------------------------------------------------------------------------------
-      Programa  : pc_alt_emp_cooperado_desligado
-      Sistema   : AIMARO
-      Sigla     : 
-      Autor     : Fernanda Kelli de Oliveira - AMcom Sistemas de Informação
-      Data      : 14/05/2019
+  PROCEDURE pc_atualiza_tbepr_consignado(pr_nrdconta         IN tbepr_consignado.nrdconta%TYPE     --> Conta
+                                        ,pr_nrctremp         IN tbepr_consignado.nrctremp%TYPE     --> Contrato
+                                        ,pr_pejuro_anual     IN tbepr_consignado.pejuro_anual%TYPE --> Percentual da taxa de juros anual
+                                        ,pr_pecet_anual      IN tbepr_consignado.pecet_anual%TYPE  --> Percentual CET
+                                         -- campos padrões
+                                        ,pr_xmllog             IN VARCHAR2              --> XML com informacoes de LOG
+                                        ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
+                                        ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
+                                        ,pr_retxml             IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo          OUT VARCHAR2              --> Nome do campo com erro
+                                        ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
+                                        ) IS
+    /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_atualiza_tbepr_consignado
+      Sistema  : AIMARO
+      Sigla    : 
+      Autor    : Fernanda Kelli - AMcom Sistemas de Informação
+      Data     : 14/05/2019
 
-      Objetivo  : O sistema Aimaro receberá, via serviço da FIS Brasil, a informação quando cooperado 
-                  for desligado da Conveniada e esta rotina irá fazer a alteração da empresa para 
-                  9999 (Desligado Consignado) na conta e nos contratos do cooperado.
-                  
-                  Controle de COMMIT/ROLLBACK será feito pela rotina principal (JOB)
+      Objetivo : Inserir/Atualizar as informações passadas como parâmetro na 
+                 Tabela 
 
-      Alteração :
-
-  ----------------------------------------------------------------------------------------------------------*/
- 
-  BEGIN
-    DECLARE
-      -- Variavel de criticas
-      vr_cdcritic crapcri.cdcritic%TYPE;
-      vr_dscritic VARCHAR2(10000);
-
-      -- Tratamento de erros
-      vr_exc_erro EXCEPTION;
-      
-      -- Variáveis auxiliares
-      v_cdempres  crapttl.cdempres%type;
-        
+      Alteração :     
+     
+    ----------------------------------------------------------------------------------------------------------*/
     BEGIN
+    DECLARE
+      /* Tratamento de erro */
+      vr_exc_erro EXCEPTION;
+
+      /* Descrição e código da critica */
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
+
+      -- variaveis de entrada vindas no xml
+      vr_cdcooper integer;
+      vr_cdoperad varchar2(100);
+      vr_nmdatela varchar2(100);
+      vr_nmeacao  varchar2(100);
+      vr_cdagenci varchar2(100);
+      vr_nrdcaixa varchar2(100);
+      vr_idorigem varchar2(100);
+
+      -- variáveis para armazenar as informaçoes em xml
+      vr_des_xml        clob;
+      vr_texto_completo varchar2(32600);
       
-      IF pr_flgdesligado IS NULL THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Parâmetro pr_flgdesligado deve ser preenchido. Conta: '||pr_nrdconta|| ' da cooperativa: '||pr_cdcooper;
-        RAISE vr_exc_erro;          
-      ELSIF pr_flgdesligado = 1 THEN
-        --Buscar o Codigo da empresa onde o titular trabalha.       
-        BEGIN
-          SELECT t.cdempres
-            INTO v_cdempres
-            FROM crapttl t
-           WHERE t.cdcooper = pr_cdcooper
-             AND t.nrdconta = pr_nrdconta
-             AND t.idseqttl = 1;
-        EXCEPTION
-          WHEN NO_DATA_FOUND THEN
-            v_cdempres := null; 
-          WHEN OTHERS THEN
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao buscar a empresa da conta: '||pr_nrdconta|| ' da cooperativa: '||pr_cdcooper;
-            RAISE vr_exc_erro;
-        END;
-       
-        IF v_cdempres IS NOT NULL AND v_cdempres <> 9999 THEN
-          --Atualizar a empresa no Cadastro de titulares da conta para 9999 - Desligado Consignado
-          --Contas > Comercial > Empresa 
-          BEGIN
-            UPDATE crapttl t
-               SET t.cdempres = 9999 -- Desligado Consignado
-             WHERE t.cdcooper = pr_cdcooper
-               AND t.nrdconta = pr_nrdconta
-               AND t.idseqttl = 1; 
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_cdcritic := 0;
-              vr_dscritic := 'Erro ao atualizar a empresa da conta: '||pr_nrdconta|| ' da cooperativa: '||pr_cdcooper|| ' para 9999-Desligado Consignado.';
-              RAISE vr_exc_erro;  
-          END;
-          
-          --Atualizar a empresa nos Contratos de Consignado do cooperado e desvincular da empresa.
-          BEGIN
-           UPDATE crapepr c
-              SET c.cdempres = 9999
-            WHERE c.cdcooper = pr_cdcooper
-              AND c.nrdconta = pr_nrdconta              
-              AND c.inliquid = 0           --Contrato não liquidado
-              AND c.tpdescto = 2           --Desconto em Folha de Pgto
-              AND c.tpemprst = 1           --Empréstimo Pré-Fixado  
-              AND c.cdempres is not null 
-              AND c.cdempres <> 9999;       --ainda esta vinculada a uma empresa
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_cdcritic := 0;
-              vr_dscritic := 'Erro ao atualizar a empresa nos Contratos da conta: '||pr_nrdconta|| ' da cooperativa: '||pr_cdcooper|| ' para 9999-Desligado Consignado.';
-              RAISE vr_exc_erro;  
-          END;                    
-        END IF;  
-      END IF;
+      v_existe number:= 0;
       
+      procedure pc_escreve_xml( pr_des_dados in varchar2
+                              , pr_fecha_xml in boolean default false
+                              ) is
+      begin
+          gene0002.pc_escreve_xml( vr_des_xml
+                                 , vr_texto_completo
+                                 , pr_des_dados
+                                 , pr_fecha_xml );
+      end;
+
+    BEGIN
+      pr_nmdcampo := NULL;
       pr_des_erro := 'OK';
-      
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
+                              
+      --Verificar se o registro já foi criado
+       BEGIN
+         SELECT 1
+           INTO v_existe
+           FROM tbepr_consignado t
+          WHERE t.cdcooper = vr_cdcooper
+            AND t.nrdconta = pr_nrdconta
+            AND t.nrctremp = pr_nrctremp;
+       EXCEPTION
+         WHEN NO_DATA_FOUND THEN
+           v_existe := 0;
+         WHEN OTHERS THEN
+           vr_dscritic := 'Erro no select da tabela tbepr_consignado. '|| sqlerrm;
+           RAISE vr_exc_erro;                   
+       END; 
+       
+       --Inserir 
+       IF v_existe = 0 THEN
+         BEGIN
+           INSERT INTO cecred.tbepr_consignado
+             (cdcooper,
+              nrdconta,
+              nrctremp,
+              vljura60,
+              pejuro_anual,
+              pecet_anual)
+           values
+             (vr_cdcooper,
+              pr_nrdconta,
+              pr_nrctremp,
+              null,
+              pr_pejuro_anual,
+              pr_pecet_anual);
+         EXCEPTION
+           WHEN OTHERS THEN
+             vr_dscritic := 'Erro no insert na tabela tbepr_consignado. '|| sqlerrm;
+             RAISE vr_exc_erro;  
+         END;
+       ELSE
+         BEGIN
+           UPDATE tbepr_consignado t
+              SET t.pejuro_anual = pr_pejuro_anual,
+                  t.pecet_anual  = pr_pecet_anual
+            WHERE t.cdcooper = vr_cdcooper
+              AND t.nrdconta = pr_nrdconta
+              AND t.nrctremp = pr_nrctremp;
+         EXCEPTION
+           WHEN OTHERS THEN
+             vr_dscritic := 'Erro no update na tabela tbepr_consignado. '|| sqlerrm;
+             RAISE vr_exc_erro;  
+         END;                
+       END IF;
+
     EXCEPTION
       WHEN vr_exc_erro THEN
-        IF  vr_cdcritic <> 0 THEN
-            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        END IF;
-        pr_des_erro := 'NOK';
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-        --ROLLBACK;
+           /*  se foi retornado apenas código */
+           IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+               /* buscar a descriçao */
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           END IF;
+           /* variavel de erro recebe erro ocorrido */
+           pr_des_erro := 'NOK';
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+             -- Carregar XML padrao para variavel de retorno
+              pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                             '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       WHEN OTHERS THEN
-        pr_des_erro := 'NOK';
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina tela_consig.pc_excluir_param_consig_web: '||SQLERRM;        
-        --ROLLBACK;     
+             pr_des_erro := 'NOK';
+           /* montar descriçao de erro nao tratado */
+             pr_dscritic := 'erro não tratado na empr0020.pc_atualiza_tbepr_consignado. ' ||SQLERRM;
+             -- Carregar XML padrao para variavel de retorno
+             pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                             '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
-    
-  END pc_alt_emp_cooperado_desligado;                                           
+  END pc_atualiza_tbepr_consignado;                                           
                                              
 END EMPR0020;
 /
