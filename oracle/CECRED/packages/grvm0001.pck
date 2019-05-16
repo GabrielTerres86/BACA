@@ -2141,7 +2141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                     ||'<UF>'||pr_cdufecre||'</UF>'
                     ||'<CEP>'||pr_nrcepcre||'</CEP>'
                   ||'</pessoaContatoEndereco>'
-                  ||'<cidade><codigoMunicipioCETIP>'||pr_cdcidade||'</codigoMunicipioCETIP></cidade>'
+                  ||'<cidade><codigoMunicipioCETIP>'||pr_cdcidcre||'</codigoMunicipioCETIP></cidade>'
                   ||'<pessoaContatoTelefone>'
                     ||'<DDD>'||pr_nrdddcre||'</DDD>'
                     ||'<numero>'||pr_nrtelcre||'</numero>'
