@@ -2623,7 +2623,8 @@ PROCEDURE pc_gera_conciliacao_spb ( pr_tipo_concilacao  IN VARCHAR2 --> Tipo de 
                      ,pr_Nrcontrole_If VARCHAR2) IS 
   SELECT tce.*
   FROM tbspb_conciliacao_enviada tce
-  WHERE tce.nrcontrole_if = pr_Nrcontrole_If;
+  WHERE tce.nrcontrole_if = pr_Nrcontrole_If
+  AND   tce.cdmensagem    = pr_nmmensagem;
   rr_valmsgenvjd cr_valmsgenvjd%rowtype;
   
   /* Seleciona as informações das mensagens recebidas no Aimaro, de acordo com o período solicitado*/
