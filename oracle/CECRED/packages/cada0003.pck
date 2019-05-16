@@ -736,7 +736,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 13/12/2018
+  --  Data     : Julho/2014.                   Ultima atualizacao: 16/05/2019
   --
   -- Dados referentes ao programa:
   --
@@ -858,6 +858,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             13/12/2018 - Tratamento pra inserção de registro duplicado na TBCADAST_COLABORADOR
   --                          evitando que na hora de um colaborador contratar credito não passe
   --                          pelo fluxo correto (Tiago INC0027920)
+  --
+  --             16/05/2019 - Inclusão do tipo cancelado (4) na resrtição de situação no cursor cr_craprpp
+  --                          que realiza a busca do valor das parcelas de poupança programada
+  --                          PRB0041709 - Jackson
   ---------------------------------------------------------------------------------------------------------------
   
   vr_tab_retorno    LANC0001.typ_reg_retorno;
@@ -4287,7 +4291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           FROM craprpp a
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
-           AND cdsitrpp NOT IN(3,5);  --Cancelado/Vencido
+           AND cdsitrpp NOT IN(3,5,4);  --Cancelado/Vencido 
       rw_craprpp cr_craprpp%ROWTYPE;
 
       -- Cursor sobre a tabela de seguros de vida
