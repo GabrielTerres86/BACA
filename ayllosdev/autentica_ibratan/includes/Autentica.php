@@ -15,8 +15,8 @@ class Autentica extends Dados{
         "dstoken",
         "nrdconta",
         "tpproduto",
-        "nrproposta",
-        "tipoentrada"
+        "nrproposta"/*,
+        "tipoentrada"*/
     );
 
 

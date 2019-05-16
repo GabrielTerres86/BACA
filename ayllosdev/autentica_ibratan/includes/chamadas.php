@@ -9,10 +9,9 @@
 require_once('../includes/config.php');
 require_once('../includes/funcoes.php');
 require_once('../class/xmlfile.php');
+ini_set('session.cookie_domain', '.cecred.coop.br' );
 session_start();
-
 $glbvars = null;
-
 /**
  * Redirecionar para outra página com dados de $_POST
  *
@@ -47,7 +46,7 @@ function redirect_post($url, array $data, array $headers = null) {
 
 function efetuaLogin(){
     global $autentica, $retornoTelaUnica, $glbvars;
-    unset($_SESSION['glbvars']);
+    //unset($_SESSION['glbvars']);
     if(!isset($_SESSION['glbvars'])){
         // Monta o xml de requisição
         $xmlLogin  = "";

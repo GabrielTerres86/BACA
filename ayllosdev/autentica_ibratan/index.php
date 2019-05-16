@@ -54,7 +54,6 @@ if(validaEntradaUsuario()){
                         $keys = array_keys($_SESSION['glbvars']);
                         $glbvars = $_SESSION['glbvars'][$keys[0]];
                     }
-                            
                             /* Validar token */
                     validaToken();
     
