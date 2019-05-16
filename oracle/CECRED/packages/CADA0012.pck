@@ -2524,7 +2524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
         RAISE vr_exc_erro;
       END IF;
       
-      IF vr_vlparamt = '1' THEN
+      IF vr_vlparamt = '1' AND pr_flsituacao = 1 THEN
         -- Insere na crapalt
         pc_insere_crapalt(pr_idpessoa => pr_idpessoa
                          ,pr_cdcooper => pr_cdcooper
@@ -2711,7 +2711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
         RAISE vr_exc_erro;
       END IF;
       
-      IF vr_vlparamt = '1' THEN
+      IF vr_vlparamt = '1' AND pr_flsituacao = 1 THEN
         -- Insere na crapalt
         pc_insere_crapalt(pr_idpessoa => pr_idpessoa
                          ,pr_cdcooper => pr_cdcooper
@@ -2912,7 +2912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       RAISE vr_exc_erro;
     END IF;
       
-    IF vr_vlparamt = '1' THEN
+    IF vr_vlparamt = '1' AND pr_flsituacao = 1 THEN
       -- Insere na crapalt
       pc_insere_crapalt(pr_idpessoa => pr_idpessoa
                        ,pr_cdcooper => pr_cdcooper
@@ -3194,6 +3194,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       END IF;
       CLOSE btch0001.cr_crapdat;
           
+      IF pr_flsituacao = 1 THEN
       -- Insere na crapalt
       pc_insere_crapalt(pr_idpessoa => pr_idpessoa
                        ,pr_cdcooper => pr_cdcooper
@@ -3202,6 +3203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                        ,pr_dscritic => vr_dscritic);
       IF (TRIM(vr_dscritic) IS NOT NULL) THEN
         RAISE vr_exc_erro;
+      END IF;
       END IF;
                 
       -- Atualizar o canal TBCADAST_PESSOA_RENDA e a data de revisão
@@ -3278,7 +3280,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
         RAISE vr_exc_erro;
       END IF;
       
-      IF vr_vlparamt = '1' THEN
+      IF vr_vlparamt = '1' AND pr_flsituacao = 1 THEN
         -- Insere na crapalt
         pc_insere_crapalt(pr_idpessoa => pr_idpessoa
                          ,pr_cdcooper => pr_cdcooper
