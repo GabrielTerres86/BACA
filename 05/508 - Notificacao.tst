@@ -34,7 +34,7 @@ BEGIN
               ,cdicone
               ,inexibe_botao_acao_mobile
               ,dstexto_botao_acao_mobile
-              --,cdmenu_acao_mobile
+              ,cdmenu_acao_mobile
               --,dslink_acao_mobile
               --,dsparam_acao_mobile
               ,inenviar_push)
@@ -46,7 +46,7 @@ BEGIN
               ,15
               ,1
               ,'Atualizar agora'
-              --,
+              ,1003
               --,
               --,
               ,1)
@@ -69,13 +69,13 @@ BEGIN
               ,6
               ,'CADASTRO - Atualização cadastral'
               ,cd_cdmensagem
-              ,'#nomeresumido – Primeiro nome do cooperado.'
+              ,NULL
               ,0
               ,2
               ,'2'
               ,'1,2,3,4,5,6,7,8,9,10,11,12'
-              ,9
-              ,'fn_busca_contas_atualizar');
+              ,32400
+              ,'CADA0012.fn_busca_contas_atualizar');
               
   COMMIT;
 END;
