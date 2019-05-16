@@ -1,8 +1,8 @@
 /*..............................................................................
- 
+
    Programa: b1wgen0196.p
    Autora  : Odirlei Busana - AMcom.
-   Data    : 21/03/2017                        Ultima atualizacao: 12/04/2018
+   Data    : 21/03/2017                        Ultima atualizacao: 21/04/2019
 
    Dados referentes ao programa:
 
@@ -13,7 +13,7 @@
                22/06/2017 - Ajuste para calcular o risco da operacao de acordo
                             com a quantidade de dias em atraso. (Anderson)
 
-               15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
+               15/12/2017 - Insercao do campo idcobope. PRJ404 (Lombardi)
 
 	           12/10/2017 - Projeto 410 - passar como parametro da calcula_iof o
 			                numero do contrato (Jean - Mout´s)
@@ -29,6 +29,9 @@
 			   28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
 
                21/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
+
+               21/04/2019 - P450 - Cessao de Cartao deve ter Qualificacao 5-Cessao
+                            (Guilherme/AMcom)
 
  ..............................................................................*/
 
@@ -316,7 +319,7 @@ PROCEDURE grava_dados:
                                              INPUT ?, /* par_idcarenc */
                                              INPUT ?, /* par_dtcarenc */
 											                       INPUT 0, /* par_idfiniof */
-                                             INPUT 1,            /* par_idquapro */
+                                             INPUT 5, /* par_idquapro */ /* cessao de cartao */
                                              OUTPUT TABLE tt-erro,
                                              OUTPUT TABLE tt-msg-confirma,
                                              OUTPUT TABLE tt-ge-epr,
@@ -534,7 +537,7 @@ PROCEDURE grava_dados:
                         INPUT FALSE,        /* par_flgimppr */
                         INPUT FALSE,        /* par_flgimpnp */
                         INPUT aux_percetop,
-                        INPUT 1,            /* par_idquapro */
+                        INPUT 5,            /* par_idquapro */ /* cessao de cartao */
                         INPUT par_dtdpagto,
                         INPUT 1,            /* par_qtpromis */
                         INPUT FALSE,        /* par_flgpagto */
