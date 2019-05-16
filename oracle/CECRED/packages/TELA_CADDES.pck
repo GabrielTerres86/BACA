@@ -196,11 +196,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_caddes IS
         vr_idorigem VARCHAR2(100);
     
         -- Variaveis internas
-        vr_cont_tag          PLS_INTEGER := 0;
-        vr_dtsolicitacao_ini DATE;
-        vr_dtsolicitacao_fim DATE;
-        vr_dtretorno_ini     DATE;
-        vr_dtretorno_fim     DATE;
         vr_dsfrase           tbapi_desenvolvedor.dsfrase_desenvolvedor%TYPE;
         vr_dsuuid            VARCHAR2(36);
     
@@ -485,12 +480,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_caddes IS
             SELECT * FROM tbapi_desenvolvedor td WHERE td.cddesenvolvedor = pr_cddesenvolvedor;
         rw_desenvolvedor cr_desenvolvedor%ROWTYPE;
     
-        CURSOR cr_uuiddesen(pr_cddesenvolvedor tbapi_desenvolvedor.cddesenvolvedor%TYPE) IS
-            SELECT dschave
-              FROM tbapi_acesso_desenvolvedor
-             WHERE cddesenvolvedor = pr_cddesenvolvedor
-               AND cdsituacao_chave = 1;
-        rw_uuiddesen cr_uuiddesen%ROWTYPE;
     
     BEGIN
         pr_des_erro := 'OK';
@@ -790,8 +779,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_caddes IS
         vr_idorigem VARCHAR2(100);
     
         -- Variaveis internas
-        vr_cont_tag PLS_INTEGER := 0;
-        vr_dsfrase  tbapi_desenvolvedor.dsfrase_desenvolvedor%TYPE;
     
         CURSOR cr_checkdoc(pr_nrdocumento     tbapi_desenvolvedor.nrdocumento%TYPE
                           ,pr_cddesenvolvedor tbapi_desenvolvedor.cddesenvolvedor%TYPE
@@ -1458,7 +1445,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_caddes IS
         vr_nrdcaixa    VARCHAR2(100);
         vr_idorigem    VARCHAR2(100);
         vr_texto_email VARCHAR2(4000);
-        vr_dsfrase     tbapi_desenvolvedor.dsfrase_desenvolvedor%TYPE;
         vr_nmrescop    crapcop.nmrescop%TYPE; -- Razao Social da cooperativa
         vr_nmextcop    crapcop.nmextcop%TYPE; -- Nome da cooperativa
         vr_nrdocnpj    crapcop.nrdocnpj%TYPE; -- CNPJ da cooperativa
@@ -1541,14 +1527,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_caddes IS
                           'Conforme solicitado, estamos disponibilizando o Manual T&eacute;cnico para configura&ccedil;&atilde;o de seu sistema com a API do Sistema Ailos.<br />' ||
                           'Neste manual encontram-se as informa&ccedil;&otilde;es t&eacute;cnicas e descri&ccedil;&atilde;o das responsabilidades das partes, sobre a confidencialidade das informa&ccedil;&otilde;es.' ||
                           '<br />' || '<br />' ||
-                          'Gentileza contatar a equipe T&eacute;cnica da Ailos (CSTI), informar a frase abaixo para realizar a valida&ccedil;&atilde;o cadastral e liberar a <u>Chave de acesso UUID</u>.' ||
+                          'Gentileza contatar o n&uacute;cleo de Cobran&ccedil;a Banc&aacute;ria da Central Ailos e informar a frase abaixo para realizar a valida&ccedil;&atilde;o cadastral e liberar a <u>Chave de acesso UUID</u>.' ||
                           '<br /><br />' ||
                           'Frase do Desenvolvedor: <strong style="font-size: 16pt; font-family: Sans-serif,Arial,Tahoma,Arial;">' ||
                           rw_checkdesen.dsfrase_desenvolvedor || '</strong>' || '<br />' || '<br />' ||
                           'Atenciosamente,' || '<br />____________________________<br />' ||
-                          '<strong style="font-size: 10pt; font-family: Verdana,Tahoma,Arial; color: darkblue;">Equipe t&eacute;cnica CSTI</strong>' ||
+                          '<strong style="font-size: 10pt; font-family: Verdana,Tahoma,Arial; color: darkblue;">Cobran&ccedil;a Banc&aacute;ria</strong>' ||
                           '<br />' ||
-                          '<span style="font-size: 8pt; font-family: Tahoma,Verdana,Arial;color: rgb(68,114,196);">Tel.: (47) 3381-8777' ||
+                          '<span style="font-size: 8pt; font-family: Tahoma,Verdana,Arial;color: rgb(68,114,196);">Tel.: (47) 3231-4196' ||
                           '<br />Sistema de Cooperativas de Cr&eacute;dito - <strong>AILOS</strong></span>' ||
                           '<br />' || '<br />' ||
                           '<img src="https://www.viacredi.coop.br/static/images/logo-cecred.png" width="202px" style="margin-top: -10px; margin-left: -30px;">' ||
@@ -1721,7 +1707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_caddes IS
     
         vr_texto_email := '<html style="font-size: 10pt; font-family: Tahoma,Verdana,Arial;">' ||
                           'Caro Desenvolvedor!' || '<br />' ||
-                          '<br />Conforme contato realizado com nossa equipe de Suporte da Ailos (CSTI) estamos lhe enviando a chave de acesso UUID.' ||
+                          '<br />Conforme contato realizado com o n&uacute;cleo de Cobran&ccedil;a Banc&aacute;ria de nossa central, estamos lhe enviando a chave de acesso UUID.' ||
                           '<br />Essa chave &eacute; necess&aacute;ria para realizar a integra&ccedil;&atilde;o de seu sistema com a API do Sistema Ailos.' ||
                           '<br />' ||
                           '<br />Chave UUID: <strong style="font-size: 14pt; font-family: Courier New,Tahoma,Arial;">' ||
@@ -1729,8 +1715,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_caddes IS
                           '<br />Lembramos que essa chave &eacute; de uso exclusivo e restrito do desenvolvedor.' ||
                           '<br />' || '<br />Atenciosamente,' || '<br />____________________________' ||
                           '<br />' ||
-                          '<strong style="font-size: 10pt; font-family: Verdana,Tahoma,Arial; color: darkblue;">Equipe t&eacute;cnica CSTI</strong>' ||
-                          '<br /><span style="font-size: 8pt; font-family: Tahoma,Verdana,Arial;color: rgb(68,114,196);">Tel.: (47) 3381-8777<br />Sistema de Cooperativas de Cr&eacute;dito - <strong>AILOS</strong></span>' ||
+                          '<strong style="font-size: 10pt; font-family: Verdana,Tahoma,Arial; color: darkblue;">Cobran&ccedil;a Banc&aacute;ria</strong>' ||
+                          '<br /><span style="font-size: 8pt; font-family: Tahoma,Verdana,Arial;color: rgb(68,114,196);">Tel.: (47) 3231-4196<br />Sistema de Cooperativas de Cr&eacute;dito - <strong>AILOS</strong></span>' ||
                           '<br />' || '<br />' ||
                           '<img src="https://www.viacredi.coop.br/static/images/logo-cecred.png" width="202px" style="margin-top: -10px; margin-left: -30px;">' ||
                           '</html>';
@@ -1814,8 +1800,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_caddes IS
         vr_exc_saida EXCEPTION;
     
         -- Variaveis retornadas da gene0004.pc_extrai_dados
-        vr_texto_email VARCHAR2(4000);
-        vr_dsuuid      VARCHAR2(36);
     
         CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
             SELECT 1 FROM crapcop WHERE cdcooper = pr_cdcooper;
