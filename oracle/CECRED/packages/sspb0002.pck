@@ -2452,6 +2452,8 @@ BEGIN
      vr_retorno:= False;
   ELSIF ds_sitjd IN ('003','004','008','009','012','013','016','020','021','022','023','030','032','035','036') THEN
      vr_retorno:= False;   
+  ELSE
+     vr_retorno:= False;  
   END IF;
   RETURN vr_retorno;
      
