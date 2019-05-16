@@ -299,7 +299,7 @@ function manterRotina(operacao) {
 }
 
 function controlaLayout(operacao) {
-    altura = '360px';
+    altura = inpessoa == 1 ? '460px' : '360px';
     largura = '580px';
     divRotina.css('width', largura);
     $('#divConteudoOpcao').css('height', altura);
@@ -406,6 +406,46 @@ function controlaLayout(operacao) {
     }
     controlaFocoEnter("frmDadosComercial");
     controlaFocoEnter("frmManipulaRendi");
+
+    //FORM ATUALIZACAO CADASTRAL
+    var rIdCanalE  = $('label[for="idcanal_empresa"]' , '#' + nomeForm);
+    var rDtRevisaE = $('label[for="dtrevisa_empresa"]', '#' + nomeForm);
+    var rDsStatus = $('label[for="dsstatus"]', '#' + nomeForm);
+
+    rIdCanalE.addClass('rotulo').css('width', '120px');
+    rDtRevisaE.addClass('rotulo-linha').css('width', '80px');
+    rDsStatus.addClass('rotulo-linha').css('width', '70px');
+
+    var cIdCanalE  = $('#idcanal_empresa' , '#' + nomeForm);
+    var cDtRevisaE = $('#dtrevisa_empresa', '#' + nomeForm);
+    var cDsStatus = $('#dsstatus', '#' + nomeForm);
+
+    cIdCanalE.css('width', '70px');
+    cIdCanalE.css('text-align', 'center');
+    cDtRevisaE.css('width', '90px');
+    cDtRevisaE.css('text-align', 'center');
+    cDsStatus.css('width', '70px');
+    cDsStatus.css('text-align', 'center');
+    cIdCanalE.desabilitaCampo();
+    cDtRevisaE.desabilitaCampo();
+    cDsStatus.desabilitaCampo();
+
+    var rIdCanalR  = $('label[for="idcanal_renda"]' , '#' + nomeForm);
+    var rDtRevisaR = $('label[for="dtrevisa_renda"]', '#' + nomeForm);
+
+    rIdCanalR.addClass('rotulo').css('width', '120px');
+    rDtRevisaR.addClass('rotulo-linha').css('width', '80px');
+
+    var cIdCanalR  = $('#idcanal_renda' , '#' + nomeForm);
+    var cDtRevisaR = $('#dtrevisa_renda', '#' + nomeForm);
+
+    cIdCanalR.css('width', '70px');
+    cIdCanalR.css('text-align', 'center');
+    cDtRevisaR.css('width', '90px');
+    cDtRevisaR.css('text-align', 'center');
+    cIdCanalR.desabilitaCampo();
+    cDtRevisaR.desabilitaCampo();
+
 
     //FORM RENDAS AUTOMATICAS
     var rDtrefere = $('label[for="dtrefere"]', '#' + nomeForm);

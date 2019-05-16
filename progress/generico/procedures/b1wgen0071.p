@@ -164,6 +164,12 @@ PROCEDURE obtem-dados-gerenciar-email:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-email-cooperado.
 
+    DEF VAR aux_insituac AS INTE                                    NO-UNDO.
+    DEF VAR aux_dssituac AS CHAR                                    NO-UNDO.
+    DEF VAR aux_idcanal  AS INTE                                    NO-UNDO.
+    DEF VAR aux_dscanal  AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dtrevisa AS DATE                                    NO-UNDO.
+
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-email-cooperado.
  
@@ -241,8 +247,55 @@ PROCEDURE obtem-dados-gerenciar-email:
      
             RETURN "NOK".    
         END.
-                
     CREATE tt-email-cooperado.
+    
+    IF  par_cddopcao = "A"  THEN
+      DO:
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+        /* Efetuar a chamada a rotina Oracle */
+        RUN STORED-PROCEDURE pc_busca_tbcadast
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.nrcpfcgc /* Cpf */
+                                            ,INPUT crapcem.cddemail     /* Numero sequencial  */
+                                            ,INPUT "EMAIL"          /* Tabela que será buscada */ 
+                                            ,OUTPUT 0               /* Codigo da situacao */
+                                            ,OUTPUT ""              /* Descricao da situacao   */
+                                            ,OUTPUT 0               /* Codigo do Canal    */
+                                            ,OUTPUT ""              /* Descricao do Canal */
+                                            ,OUTPUT ?               /* Data da Revisao    */
+                                            ,OUTPUT "").            /* Descrição da crítica    */
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_busca_tbcadast
+         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+        ASSIGN aux_insituac = pc_busca_tbcadast.pr_insituac
+                              WHEN pc_busca_tbcadast.pr_insituac <> ?
+               aux_dssituac = pc_busca_tbcadast.pr_dssituac
+                              WHEN pc_busca_tbcadast.pr_dssituac <> ?
+               aux_idcanal  = pc_busca_tbcadast.pr_idcanal
+                              WHEN pc_busca_tbcadast.pr_idcanal <> ?
+               aux_dscanal  = pc_busca_tbcadast.pr_dscanal
+                              WHEN pc_busca_tbcadast.pr_dscanal <> ?
+               aux_dtrevisa = pc_busca_tbcadast.pr_dtrevisa
+                              WHEN pc_busca_tbcadast.pr_dtrevisa <> ?
+               aux_dscritic = pc_busca_tbcadast.pr_dscritic
+                              WHEN pc_busca_tbcadast.pr_dscritic <> ?.
+                             
+        /* Se retornou erro */
+        IF aux_dscritic <> "" THEN 
+          DO:
+              RUN gera_erro (INPUT par_cdcooper,
+                             INPUT par_cdagenci,
+                             INPUT par_nrdcaixa,
+                             INPUT 1, /** Sequencia **/
+                             INPUT 0,
+                             INPUT-OUTPUT aux_dscritic).
+          END.    
+                
+        ASSIGN tt-email-cooperado.dssituac = aux_dssituac
+               tt-email-cooperado.dsdcanal = aux_dscanal
+               tt-email-cooperado.dtrevisa = aux_dtrevisa.
+      END.
+ 
     ASSIGN tt-email-cooperado.cddemail = crapcem.cddemail
            tt-email-cooperado.dsdemail = crapcem.dsdemail
            tt-email-cooperado.secpscto = crapcem.secpscto

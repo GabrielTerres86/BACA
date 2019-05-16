@@ -9,6 +9,7 @@
    Objetivo  : Arquivo com variaveis utlizadas na BO b1wgen0071.p
 
    Alteracoes: 
+    - 23/03/2019 - Vitor S. Assanuma - Inclusao dos campos: dssituac; dsdcanal; dtrevisa
                             
 ..............................................................................*/
 
@@ -18,6 +19,9 @@ DEF TEMP-TABLE tt-email-cooperado NO-UNDO
     FIELD dsdemail AS CHAR
     FIELD secpscto AS CHAR
     FIELD nmpescto AS CHAR
+    FIELD dsdcanal AS CHAR
+    FIELD dssituac AS CHAR
+    FIELD dtrevisa AS DATE
     FIELD nrdrowid AS ROWID.
 
 

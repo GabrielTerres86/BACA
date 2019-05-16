@@ -21,6 +21,7 @@
 	if (!isset($_POST['nmdatela']) || !isset($_POST['nmrotina'])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','');
 	
 	$flgcadas  = $_POST['flgcadas'];
+	$inpessoa    = $_POST['inpessoa'];
 	
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($_POST["nmdatela"],$_POST["nmrotina"],'@',false)) <> '') {
