@@ -1381,7 +1381,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     CLOSE STORED-PROC pc_ret_trans_pend_prop
                       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
-                    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} } 
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
 
                     ASSIGN aux_dtdebito = "Nesta Data"
                            aux_vllantra = pc_ret_trans_pend_prop.pr_vlemprst 
@@ -12128,6 +12128,7 @@ PROCEDURE aprova_trans_pend:
                                                  vr_xml = pc_solicita_contrata_PROG.pr_retorno 
                                                           WHEN pc_solicita_contrata_PROG.pr_retorno <> ?.
                                                           
+                                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
                                     IF aux_msgretor <> "OK" THEN 
                                       DO:  
                                           /* Efetuar a leitura do XML*/ 
