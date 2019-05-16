@@ -11062,8 +11062,6 @@ procedure pc_busca_media_titulo(pr_cdcooper IN crapass.cdcooper%TYPE
     
      pc_busca_media_titulo(pr_cdcooper,pr_nrdconta,vr_med_tit,vr_liquidez);
       
-     vr_string := vr_string || fn_tag('Contrato',to_char(gene0002.fn_mask_contrato(wrk_tab_dados_limite(0).nrctrlim)));
-     vr_string := vr_string || fn_tag('Início Vigência',to_char(wrk_tab_dados_limite(0).dtinivig,'DD/MM/YYYY'));
      vr_string := vr_string || fn_tag('Limite',to_char(wrk_tab_dados_limite(0).vllimite,'999g999g990d00'));
      vr_string := vr_string || fn_tag('Saldo Utilizado',to_char(wrk_tab_dados_limite(0).vlutiliz,'999g999g990d00'));
      vr_string := vr_string || fn_tag('Garantia',vr_dsseqite); --bug 20410
@@ -11072,8 +11070,6 @@ procedure pc_busca_media_titulo(pr_cdcooper IN crapass.cdcooper%TYPE
       
     else
            
-     vr_string := vr_string || fn_tag('Contrato','-');
-     vr_string := vr_string || fn_tag('Início Vigência','-');
      vr_string := vr_string || fn_tag('Limite','-');
      vr_string := vr_string || fn_tag('Saldo Utilizado','-');
      vr_string := vr_string || fn_tag('Garantia','-');
