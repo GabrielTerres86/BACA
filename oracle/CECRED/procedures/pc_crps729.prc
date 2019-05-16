@@ -27,6 +27,8 @@
    
    06/03/2019 - Executar apenas em dias úteis na Central (Cechet)
    
+   16/05/2019 - Alterado o campo 49 de I para espaco em branco (INC0012559 - Joao Mannes - Mouts)
+   
   ............................................................................. */
   
   -- Declarações
@@ -346,7 +348,7 @@
                 || ' '                                                                            -- 46 -- Tipo da letra de câmbio -- Exclusivo para protesto de letra de câmbio
                 || rpad(' ', 8, ' ')                                                              -- 47 -- Complemento código de irregularidade -- Uso restrito do serviço de distribuição
                 || ' '                                                                            -- 48 -- Protesto por motivo de falência -- Fixo: vazio
-                || 'I'                                                                            -- 49 -- Instrumento de protesto -- Fixo: I
+                || ' '                                                                            -- 49 -- Instrumento de protesto -- Fixo: Espaço em branco (Era letra I)
                 || lpad('0', 10, '0')                                                             -- 50 -- Valor das demais despesas -- Uso restrito dos cartórios
                 || rpad(' ', 19, ' ')                                                             -- 51 -- Complemento do registro -- Fixo branco
                 || lpad(pr_nrseqarq, 4, '0')                                                      -- 52 -- Número seqüencial do registro no arquivo 
