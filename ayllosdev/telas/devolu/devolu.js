@@ -32,6 +32,8 @@
  *                08/05/2019 - Inclusão botão alterar alinea
  *                           - Validação do botão Alterar Alinea para mostrar apenas para o depto COMPE
  *							   e permissão no PERMIS (Luiz Otávio Olinger Momm - AMCOM)
+ *
+ *                16/05/2019 - Enviado a opção do botão para form_alinea (Luiz Otávio Olinger Momm - AMCOM)
  */
 
 // Definição de algumas variáveis globais
@@ -1080,6 +1082,7 @@ function buscaAlinea(opcao) {
 		url     : UrlSite + 'telas/devolu/form_alinea.php',
 		data    :
                 {
+                	opcao: opcao,
                     redirect: 'script_ajax'
                 },
 		error: function(objAjax,responseError,objExcept) {
