@@ -149,8 +149,19 @@ DEF TEMP-TABLE tt-dados_cartao NO-UNDO
     FIELD nrcctitg LIKE crawcrd.nrcctitg
     FIELD dsdpagto AS CHAR
     FIELD dsgraupr AS CHAR
-	FIELD flgprovi AS INTE
     FIELD nmempcrd LIKE crawcrd.nmempcrd
+	FIELD nrcpfcgc LIKE crapass.nrcpfcgc
+    FIELD dtnasctl LIKE crapass.dtnasctl
+    FIELD nrdocptl LIKE crapass.nrdocptl
+    FIELD nrcpfstl LIKE crapttl.nrcpfcgc
+    FIELD dtnasstl LIKE crapttl.dtnasttl
+    FIELD nrdocstl LIKE crapttl.nrdocttl
+    FIELD nmsegntl AS CHAR
+    FIELD nmconjug LIKE crapcje.nmconjug
+    FIELD dtnasccj LIKE crapcje.dtnasccj
+    FIELD nrrepinc AS CHAR
+    FIELD dsrepinc AS CHAR
+	FIELD flgprovi AS INTE
 	FIELD inupgrad LIKE crawcrd.inupgrad.
     
 DEF TEMP-TABLE tt-hab_cartao NO-UNDO
