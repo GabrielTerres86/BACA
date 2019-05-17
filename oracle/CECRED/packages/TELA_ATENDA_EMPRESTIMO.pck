@@ -1060,7 +1060,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
          AND consig.nrctremp = pr_nrctremp;
     EXCEPTION
       WHEN OTHERS THEN
-        pr_dscritic := 'Não foi possivel atualizar tbepr_consignado: '||SQLERRM;
+        pr_dscritic := 'Nao foi possivel atualizar tbepr_consignado: '||SQLERRM;
     END pc_altera_numero_proposta;
 
 END TELA_ATENDA_EMPRESTIMO;
