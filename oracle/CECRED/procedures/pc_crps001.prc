@@ -248,6 +248,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 							              (Reginaldo / AMcom / P450)
 
                12/02/2019 - Ajuste feito para melhorar o desempenho do programa. (Kelvin - PRB0040461)
+
+			   17/05/2019 - Adicionada verificação para recálculo somente se houve resgate (Jefferson - MoutS)
 							
      ............................................................................. */
 
@@ -2313,58 +2315,61 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                    vr_vlresgat := 0;
                  ELSE -- Não havendo erros
                    
-                   -- Verificar Saldo do cooperado
-                   extr0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper 
-                                              ,pr_rw_crapdat => rw_crapdat 
-                                              ,pr_cdagenci => 1 
-                                              ,pr_nrdcaixa => 0 
-                                              ,pr_cdoperad => '1' 
-                                              ,pr_nrdconta => rw_crapsld.nrdconta 
-                                              ,pr_vllimcre => vr_tab_crapass(rw_crapsld.nrdconta).vllimcre 
-                                              ,pr_dtrefere => rw_crapdat.dtmvtolt 
-                                              ,pr_flgcrass => FALSE 
-                                              ,pr_tipo_busca => 'A' -- Tipo Busca(A-dtmvtoan)
-                                              ,pr_des_reto => vr_des_erro 
-                                              ,pr_tab_sald => vr_tab_saldo 
-                                              ,pr_tab_erro => vr_tab_erro);
-                                                                  
-                   -- Se ocorreu erro
-                   IF vr_des_erro = 'NOK' THEN
-                     -- Tenta buscar o erro no vetor de erro
-                     IF vr_tab_erro.COUNT > 0 THEN
-                       vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-                       vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_crapsld.nrdconta;
+				   -- Se houve resgate
+				   IF vr_vlresgat > 0 THEN
+                     -- Verificar Saldo do cooperado
+                     extr0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper 
+                                                ,pr_rw_crapdat => rw_crapdat 
+                                                ,pr_cdagenci => 1 
+                                                ,pr_nrdcaixa => 0 
+                                                ,pr_cdoperad => '1' 
+                                                ,pr_nrdconta => rw_crapsld.nrdconta 
+                                                ,pr_vllimcre => vr_tab_crapass(rw_crapsld.nrdconta).vllimcre 
+                                                ,pr_dtrefere => rw_crapdat.dtmvtolt 
+                                                ,pr_flgcrass => FALSE 
+                                                ,pr_tipo_busca => 'A' -- Tipo Busca(A-dtmvtoan)
+                                                ,pr_des_reto => vr_des_erro 
+                                                ,pr_tab_sald => vr_tab_saldo 
+                                                ,pr_tab_erro => vr_tab_erro);
+                     
+                     -- Se ocorreu erro
+                     IF vr_des_erro = 'NOK' THEN
+                       -- Tenta buscar o erro no vetor de erro
+                       IF vr_tab_erro.COUNT > 0 THEN
+                         vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+                         vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_crapsld.nrdconta;
+                       ELSE
+                         vr_cdcritic:= 0;
+                         vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: '||rw_crapsld.nrdconta;
+                       END IF;
+                       
+                       IF vr_cdcritic <> 0 THEN
+                         vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' Conta: '||rw_crapsld.nrdconta;
+                       END IF;                              
+                       
+                       -- Levantar Excecao
+                       RAISE vr_exc_saida;
                      ELSE
-                       vr_cdcritic:= 0;
-                       vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: '||rw_crapsld.nrdconta;
+                       vr_dscritic:= NULL;
                      END IF;
-                                    
-                     IF vr_cdcritic <> 0 THEN
-                       vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' Conta: '||rw_crapsld.nrdconta;
-                     END IF;                              
-
-                     -- Levantar Excecao
-                     RAISE vr_exc_saida;
-                   ELSE
-                     vr_dscritic:= NULL;
-                   END IF;
-                   
-                   -- Buscar saldo
-                   IF vr_tab_saldo.COUNT > 0 THEN
-                     -- Acumular Saldo
-                     vr_vlsomvld := ROUND( NVL(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) ,2); 
-                   END IF;
-                
-                   -- Se a diferenças dos saldos é menor que o valor de resgate
-                   IF ABS( rw_crapsld.vlsddisp - vr_vlsomvld ) <> vr_vlresgat THEN
-                     -- A diferença deve ser utilizada como valor de resgate
-                     vr_vlresgat := ABS( rw_crapsld.vlsddisp - vr_vlsomvld );
-                   END IF;
-                  
-                   ---------------------------------------------------------
-                   -- Decrementar do saldo negativo o valor resgatado
-					   			 rw_crapsld.vlsddisp := rw_crapsld.vlsddisp + vr_vlresgat;
-                   ---------------------------------------------------------
+                     
+                     -- Buscar saldo
+                     IF vr_tab_saldo.COUNT > 0 THEN
+                       -- Acumular Saldo
+                       vr_vlsomvld := ROUND( NVL(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) ,2); 
+                     END IF;
+                     
+                     -- Se a diferenças dos saldos é menor que o valor de resgate
+                     IF ABS( rw_crapsld.vlsddisp - vr_vlsomvld ) <> vr_vlresgat THEN
+                       -- A diferença deve ser utilizada como valor de resgate
+                       vr_vlresgat := ABS( rw_crapsld.vlsddisp - vr_vlsomvld );
+                     END IF;
+                     
+                     ---------------------------------------------------------
+                     -- Decrementar do saldo negativo o valor resgatado
+					 rw_crapsld.vlsddisp := rw_crapsld.vlsddisp + vr_vlresgat;
+                     ---------------------------------------------------------
+                   END IF; -- Se houve resgate
 
                  END IF;
 
