@@ -1213,6 +1213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
            AND dtiniper = pr_dtiniper;
       rw_craptxi cr_craptxi%ROWTYPE;
       
+      rw_crapdat   btch0001.cr_crapdat%rowtype;
       -- Vetor para armazenamento
       vr_tab_total_juros     empr0011.typ_tab_total_juros;
       vr_tab_saldo_projetado empr0011.typ_tab_saldo_projetado;
@@ -1243,11 +1244,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       vr_tab_saldo_projetado.DELETE;
       vr_tab_total_juros.DELETE;
       
+      -- Busca do Calendário
+      open btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      fetch btch0001.cr_crapdat into rw_crapdat;
+      close btch0001.cr_crapdat;
+      
       vr_dtmvtolt := pr_dtcalcul;
       -- Função para retornar o dia anterior
-      vr_dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,       --> Cooperativa conectada
+      /*vr_dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,       --> Cooperativa conectada
                                                  pr_dtmvtolt  => vr_dtmvtolt - 1,   --> Data do movimento
-                                                 pr_tipo      => 'A');
+                                                 pr_tipo      => 'A'); */
+      -- ajustado devido a simulacao usar uma data futura, para isso deve respeitar sempre a data anterior atual
+      vr_dtmvtoan := rw_crapdat.dtmvtoan;
                                                  
       -- Buscar a taxa de juros
       OPEN cr_craplcr(pr_cdcooper => pr_cdcooper
@@ -1675,7 +1683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : James Prust Junior
-     Data    : Abril/2017                        Ultima atualizacao: 12/04/2018
+     Data    : Abril/2017                        Ultima atualizacao: 13/05/2019
 
      Dados referentes ao programa:
 
@@ -1688,7 +1696,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                  09/05/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
                  12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
-
+                 
+                 13/05/2019 - P437 - Consignado - Busca o valor do IOF calculado pela FIS Brasil para o 
+                                empréstimo Consignado.  Josiane Stiehler - AMcom
   ............................................................................. */
 
 
@@ -1698,6 +1708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
             ,cdusolcr
             ,tpctrato
             ,flgtaiof
+            ,nvl(tpmodcon,0) tpmodcon -- P437 - Consignado
         FROM craplcr
        WHERE cdcooper = pr_cdcooper
          AND cdlcremp = pr_cdlcremp;
@@ -1717,6 +1728,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
 
     -- Tabela para armazenar registros do tipo acima
     TYPE typ_tab_parcela IS TABLE OF typ_reg_parcela INDEX BY PLS_INTEGER;
+
+    -- P437 - Consignado - Seleciona o valor do IOF calculado pela FIS Brasil
+    CURSOR cr_crawepr (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE
+                      ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+     SELECT w.vliofepr
+       FROM crawepr w
+      WHERE w.cdcooper = pr_cdcooper
+        AND w.nrdconta = pr_nrdconta
+        AND w.nrctremp = pr_nrctremp;
+    rw_crawepr cr_crawepr%ROWTYPE;
 
     vr_tab_parcelas EMPR0011.typ_tab_parcelas;
 
@@ -1913,7 +1935,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
 
     -- Se o empréstimo for do tipo PP
     ELSIF pr_tpemprst = 1 THEN
-      
+      -- P437 - Consignado - Busca o IOF calculado Pela Fis Brasil
+      IF rw_craplcr.tpmodcon > 0 THEN  -- modalidade do consignado
+         OPEN cr_crawepr (pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrctremp => pr_nrctremp);
+         FETCH cr_crawepr INTO rw_crawepr;
+         -- se achou registro
+         IF cr_crawepr%FOUND THEN
+            vr_vliofpri:= rw_crawepr.vliofepr;
+            vr_vliofpritt:= rw_crawepr.vliofepr;
+            vr_vliofadi:= 0;
+            vr_vliofcpl:= 0;
+            vr_vltariof:= 0;
+            vr_vlpreemp:= pr_vlpreemp;
+            vr_vliofaditt:= 0;
+                
+            -- Condicao para verificar a imunidade tributaria
+            IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
+                                               ,pr_nrdconta => pr_nrdconta
+                                               ,pr_dtmvtolt => pr_dtmvtolt
+                                               ,pr_flgrvvlr => FALSE
+                                               ,pr_cdinsenc => 0
+                                               ,pr_vlinsenc => 0
+                                               ,pr_flgimune => vr_flgimune
+                                               ,pr_dsreturn => vr_dsreturn
+                                               ,pr_tab_erro => vr_tab_erro);
+                     
+            -- Condicao para verificar se houve erro
+            IF vr_dsreturn <> 'OK' THEN
+               -- Se possui erro no vetor
+               IF vr_tab_erro.COUNT > 0 THEN
+                  vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic || ' - ' || vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+               ELSE
+                  vr_dscritic := 'Não foi possivel verificar a imunidade tributaria';
+               END IF;
+               RAISE vr_exc_erro;
+            END IF;
+                  
+            pr_flgimune := CASE WHEN vr_flgimune THEN 1 ELSE 0 END;
+                
+         END IF;
+         CLOSE cr_crawepr;
+      ELSE      
       -- Buscar a taxa do IOF "0,038"
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                ,pr_nmsistem => 'CRED'
@@ -1997,7 +2061,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
           
           -- Valor Saldo Devedor
           vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
-
           -- Calculo do valor do IOF de acordo com as novas regras
           tiof0001.pc_calcula_valor_iof_epr(pr_tpoperac => 1 -- Contratação
                                            ,pr_cdcooper => pr_cdcooper
@@ -2111,7 +2174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
               if vr_dscritic is NOT null THEN
                 RAISE vr_exc_erro;
               END IF;
-              
+             
               -- Acumular IOF principal desta parcela
               vr_vliofpritt := abs(vr_vliofpritt + round(nvl(vr_vliofpri,0),2));
               vr_tab_parcela(vr_ind).vliofprincipal := round(nvl(vr_vliofpri,0),2);
@@ -2150,6 +2213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
           vr_tab_parcelas(vr_ind).vliofadc := vr_tab_parcela(vr_ind).vliofadicional;
         END IF;
       END LOOP;
+     END IF; -- modalidade do consignado            
     ELSIF pr_tpemprst = 2 THEN  -- Se o emprestimo for Pos-Fixado
       
       -- Se financia IOF e Tarifa
@@ -2339,10 +2403,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       END IF;
       -- Para PP
       IF pr_tpemprst = 1 THEN 
+         -- P437 - Consignado - Busca o IOF calculado Pela Fis Brasil
+         IF rw_craplcr.tpmodcon = 0 THEN  -- Não é modalidade de consignado
         -- Recalcular valor presente do saldo devedor
         vr_saldo_devedor := ROUND(vr_saldo_devedor * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
         -- Recalcula prestacao do emprestimo
         vr_vlpreemp := vr_saldo_devedor * (vr_txmensal / 100) / (1 - POWER((1 + (vr_txmensal / 100)), - pr_qtpreemp));
+         END IF;
       ELSE
         -- Acionar novamente a rotina de cálculo das Parcelas, desta vez teremos o saldo original do contrato e não mais a base do IOF
         TIOF0001.pc_calcula_iof_pos_fixado(pr_cdcooper        => pr_cdcooper
@@ -2368,9 +2435,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        -- Usar o vetor de parcelas
-        vr_vlpreemp := vr_tab_parcelas(1).vlparepr;
+        -- Buscar a primeira parcela sem carencia
+				FOR vr_indice IN 1..vr_tab_parcelas.count() LOOP
+					--
+					IF vr_tab_parcelas(vr_indice).flcarenc = 0 THEN
+						--
+						vr_vlpreemp := vr_tab_parcelas(vr_indice).vlparepr;
+						EXIT;
+						--
       END IF;  
+					--
+				END LOOP;
+				--
+      END IF; 
+			-- 
     END IF;
     
     -- Retornar a prestação calculada

@@ -32,7 +32,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 27/03/2019
+   Data    : 14/09/2005                        Ultima atualizacao: 13/05/2019
 
    Dados referentes ao programa:
 
@@ -856,6 +856,11 @@
           
 		 09/04/2019 - P437 - Consignado - Alterado a rotina recalcular_emprestimo, para receber os parâmetros par_dtvencto,
                       		 par_vlpreemp e par_vldoiof calculado pelo sistema FIS Brasil. Josiane Stiehler - AMcom 
+							 
+         13/05/2019 - P437 - Consignado - Incluido a chamada da rotina pc_altera_numero_proposta 
+		                                  Atualização do campo crawepr.vliofcon, para o consignado   - Josiane Stiehler - AMcom 
+										  
+		 16/05/2019 - P437 - Consignado - Alterada a obtem-propostas-emprestimo, inclusão do campo IDFINIOF na tt-proposta-epr - Fernanda Kelli de Oliveira - AMcom
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -2434,7 +2439,8 @@ PROCEDURE obtem-propostas-emprestimo:
                tt-proposta-epr.insitest = crawepr.insitest
                /*P437*/
                tt-proposta-epr.inaverba = crawepr.inaverba
-			   tt-proposta-epr.tpmodcon = aux_tpmodcon.
+			   tt-proposta-epr.tpmodcon = aux_tpmodcon
+			   tt-proposta-epr.idfiniof = crawepr.idfiniof. 
 
                IF crawepr.idfiniof > 0 THEN
                   DO:
@@ -4936,7 +4942,9 @@ PROCEDURE valida-dados-gerais:
 							END.
 						
 						/*Se Pre-fixado e Modalidade Consignado*/
-						IF par_tpemprst = 1 AND aux_tpmodcon <> ? THEN
+						IF par_tpemprst = 1 AND 
+						   aux_tpmodcon <> ? AND
+						   aux_tpmodcon > 0 THEN
 						DO:
 						  
 						  /* Não calcula o valor da prestacao, recebe o que veio do parametro*/
@@ -4966,7 +4974,7 @@ PROCEDURE valida-dados-gerais:
                                                            ,INPUT aux_qtdias_carencia /* dias de carencia */
                                                            ,INPUT aux_dscatbem     /* Bens em garantia */
                                                            ,INPUT par_idfiniof /* Indicador de financiamento de iof e tarifa */
-                                                        ,INPUT par_dsctrliq /* pr_dsctrliq */
+                                                           ,INPUT par_dsctrliq /* pr_dsctrliq */
                                                            ,INPUT "N" /* Nao gravar valor nas parcelas */
                                                            ,OUTPUT 0 /* Valor calculado da Parcela */
                                                            ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
@@ -6875,6 +6883,11 @@ PROCEDURE grava-proposta-completa:
 
        END.
 
+	FIND FIRST craplcr WHERE craplcr.cdcooper = par_cdcooper
+                   AND craplcr.cdlcremp = par_cdlcremp NO-LOCK NO-ERROR.
+    IF AVAILABLE craplcr THEN
+       ASSIGN aux_tpmodcon = craplcr.tpmodcon.
+	   
     IF NOT VALID-HANDLE(h-b1wgen0110) THEN
        RUN sistema/generico/procedures/b1wgen0110.p PERSISTENT SET h-b1wgen0110.
 
@@ -7328,9 +7341,13 @@ PROCEDURE grava-proposta-completa:
         /* Retornar valor da prestação */
         ASSIGN aux_dscritic = ""
                aux_dscritic = pc_calcula_iof_epr.pr_dscritic
-                              WHEN pc_calcula_iof_epr.pr_dscritic <> ?
-               aux_vlrdoiof = pc_calcula_iof_epr.pr_valoriof
-                              WHEN pc_calcula_iof_epr.pr_valoriof <> ?.
+                              WHEN pc_calcula_iof_epr.pr_dscritic <> ?.
+	    IF par_tpemprst = 1 and     /*P437 - consignado */
+		   aux_tpmodcon > 0 THEN
+		   ASSIGN	aux_vlrdoiof = par_vlrdoiof.
+		ELSE											   
+           ASSIGN aux_vlrdoiof = pc_calcula_iof_epr.pr_valoriof
+                                 WHEN pc_calcula_iof_epr.pr_valoriof <> ?.
         
         IF aux_dscritic <> "" THEN
         DO:
@@ -7406,13 +7423,10 @@ PROCEDURE grava-proposta-completa:
 			IF AVAIL crawepr THEN
 			DO:
 				aux_dtdpagto = crawepr.dtdpagto.
-				FIND FIRST craplcr 
-				WHERE craplcr.cdcooper = par_cdcooper
-				AND craplcr.cdlcremp = par_cdlcremp NO-LOCK NO-ERROR.
-				IF AVAILABLE craplcr THEN
-					ASSIGN aux_tpmodcon = craplcr.tpmodcon.
-			END.
-
+                                
+            END.
+	
+	
            IF   NOT AVAIL crawepr   THEN
                 IF   LOCKED crawepr   THEN
                      DO:
@@ -7497,8 +7511,14 @@ PROCEDURE grava-proposta-completa:
                                 crawepr.dtmvtolt = par_dtmvtolt
                                 crawepr.cdoperad = par_cdoperad
                                 crawepr.flgpreap = 0
-                                crawepr.flgdocdg = 0.
-                         VALIDATE crawepr.
+								crawepr.vliofepr =  IF par_tpemprst = 1 AND
+								                       aux_tpmodcon <> ? AND
+						                               aux_tpmodcon > 0 THEN
+													   par_vlrdoiof
+													ELSE
+													   crawepr.vliofepr /*P437 - consignado */
+								crawepr.flgdocdg = 0.													   
+                        VALIDATE crawepr.
 
                      END.  /* Fim Inclusao de proposta */
           
@@ -9241,6 +9261,10 @@ PROCEDURE altera-valor-proposta:
         ASSIGN aux_vlemprst     = crawepr.vlemprst
                aux_vlpreemp     = crawepr.vlpreemp
                crawepr.vlemprst = par_vlemprst
+			   crawepr.vliofepr = IF par_vlrdoiof < 0 THEN /*P437 - consignado */
+			                         ?
+								  ELSE
+								    par_vlrdoiof
                crawepr.vlpreemp = par_vlpreemp.
 
         /* PRJ 438 - Gravar data pagto recebida via parametro quando for opcao de Somente valor proposta */
@@ -10205,6 +10229,33 @@ PROCEDURE altera-numero-proposta:
 
         END.
 
+		/* Chamar rotina para alterar numero da proposta na tabela tbepr_consignado */
+		 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+		 RUN STORED-PROCEDURE pc_altera_numero_proposta 
+			  aux_handproc = PROC-HANDLE NO-ERROR
+							   (INPUT par_cdcooper,  /* Codigo da cooperativa */
+								INPUT par_nrdconta,  /* Numero da conta do cooperado */
+								INPUT par_nrctrant,  /* Numero da proposta de emprestimo antigo */
+								INPUT par_nrctremp,  /* Numero da proposta de emprestimo novo */
+								OUTPUT "").
+
+		  CLOSE STORED-PROC pc_altera_numero_proposta 
+				aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+		  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+		  
+		  ASSIGN aux_dscritic = ""                         
+				 aux_dscritic = pc_altera_numero_proposta.pr_dscritic 
+								WHEN pc_altera_numero_proposta.pr_dscritic <> ?.
+			  
+		  IF  aux_dscritic <> ""  THEN
+			  DO:                                  
+				  UNDO, LEAVE.
+	          END.
+    	/*fim informações do consignado*/
+	
+		
         IF   aux_cdcritic <> 0  OR
              aux_dscritic <> "" THEN
              UNDO, LEAVE.
@@ -14623,12 +14674,13 @@ PROCEDURE recalcular_emprestimo:
 					 aux_vlrdoiof = par_vlrdoiof
 					 aux_dtdpagto = crawepr.dtdpagto
                      crawepr.dtdpagto = par_dtvencto
-					 crawepr.dtvencto = par_dtvencto.
+					 crawepr.dtvencto = par_dtvencto
+					 crawepr.vliofepr = par_vlrdoiof.
 			  END.
 		   ELSE
 			  DO:
 			  ASSIGN aux_vlrparce = crawepr.vlpreemp
-					 aux_vlrdoiof  = -1.
+					 aux_vlrdoiof  = ?.
 			  END.
 	  
        IF   crawepr.tpemprst = 1   THEN
