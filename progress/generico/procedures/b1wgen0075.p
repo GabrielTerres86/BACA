@@ -590,8 +590,8 @@ PROCEDURE Valida_Dados:
         { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
           RUN STORED-PROCEDURE pc_valida_emp_conta_salario
-          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdcooper, /* Cooperativa */
-                                               INPUT crapass.nrdconta, /* Número da conta */
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                               INPUT par_nrdconta, /* Número da conta */
                                                INPUT DECI(par_nrcpfemp), /*CNPJ da empresa*/
                                                INPUT par_cdempres, /*Código da empresa*/
                                                OUTPUT ""). /* Descriçao da crítica */
