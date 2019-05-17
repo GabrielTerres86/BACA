@@ -1,3 +1,5 @@
+PL/SQL Developer Test script 3.0
+81
 DECLARE
   cd_cdmensagem NUMBER;
   ds_html CLOB;
@@ -79,3 +81,5 @@ BEGIN
               
   COMMIT;
 END;
+0
+0
