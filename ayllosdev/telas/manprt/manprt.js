@@ -4,7 +4,12 @@
  * DATA CRIA��O : 13/03/2018
  * OBJETIVO     : Biblioteca de fun��es da tela MANPRT
  */
+/*!
+  16/04/2019 - INC0011935 - Melhorias diversas nos layouts de teds e conciliação:
+               - modal de conciliação arrastável e correção das colunas para não obstruir as caixas de seleção;
+               - aumentadas as alturas das listas de teds e modal de conciliação, reajustes das colunas (Carlos)
 
+*/
 //Formul�rios e Tabela
 var frmCab = 'frmCab';
 var frmOpcao = 'frmOpcao';
@@ -608,14 +613,15 @@ function formataTabelaConciliacao() {
     var tabela = $('table', '#divRotina .divRegistros');
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '15px';
-    arrayLargura[1] = '230px';
+    arrayLargura[0] = '20px';
+    arrayLargura[1] = '210px';
     arrayLargura[2] = '120px';
     arrayLargura[3] = '80px';
     arrayLargura[4] = '80px';
     arrayLargura[5] = '65px';
     arrayLargura[6] = '80px';
     arrayLargura[7] = '80px';
+    arrayLargura[8] = '80px';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
@@ -626,6 +632,7 @@ function formataTabelaConciliacao() {
     arrayAlinha[5] = 'center';
     arrayAlinha[6] = 'center';
     arrayAlinha[7] = 'right';
+    arrayAlinha[8] = 'right';
 
     tabela.formataTabela([], arrayLargura, arrayAlinha, '');
 
@@ -639,21 +646,21 @@ function formataTabelaTeds() {
     var linha = $('table > tbody > tr', divRegistro);
 
     $('#' + frmTabela).css({ 'margin-top': '10px' });
-    divRegistro.css({ 'border': '1px solid #777', 'height': '130px'  });
+    divRegistro.css({ 'border': '1px solid #777', 'height': '220px'  });
 
     var ordemInicial = new Array();
     //ordemInicial = [[0,0]];	
 
     var arrayLargura = new Array();
     arrayLargura[0] = '210px';
-    arrayLargura[1] = '120px';
-    arrayLargura[2] = '90px';
+    arrayLargura[1] = '110px';
+    arrayLargura[2] = '70px';
     arrayLargura[3] = '80px';
-    arrayLargura[4] = '90px';
+    arrayLargura[4] = '80px';
     arrayLargura[5] = '50px';
 
     var arrayAlinha = new Array();
-    arrayAlinha[0] = 'center';
+    arrayAlinha[0] = 'left';
     arrayAlinha[1] = 'center';
     arrayAlinha[2] = 'center';
     arrayAlinha[3] = 'center';
