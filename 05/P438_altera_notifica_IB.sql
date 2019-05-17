@@ -4,7 +4,7 @@
 update tbgen_notif_msg_cadastro cad 
    set cad.dstexto_mensagem = 'Sua proposta de empréstimo foi aprovada.'
       ,cad.dshtml_mensagem = '<p><b>#nomecompleto</b></p>
-  <p>Sua proposta de empréstimo no valor de <b>R$ #valor</b> foi aprovada e encontra-se disponível para contratação no menu <u>EMPRÉSTIMOS</u> > <u>Acompanhamento de Propostas</u>.</p>
+  <p>Sua proposta de empréstimo no valor de <b>R$ #valor</b> foi aprovada e encontra-se disponível para contratação no menu <u>EMPRÉSTIMOS</u> > <u>Acompanhamento de Propostas</u> na Conta Online.</p>
   <p>Após leitura do contrato e confirmação com a sua senha de segurança o valor será creditado em conta corrente.</p>'
  where cad.cdmensagem = 493 
    and cad.cdorigem_mensagem = 8;
@@ -17,7 +17,7 @@ update tbgen_notif_msg_cadastro cad
 update tbgen_notif_msg_cadastro cad 
    set cad.dstexto_mensagem = 'Sua proposta de empréstimo possui uma nova situação.'
       ,cad.dshtml_mensagem = '<p><b>#nomecompleto</b></p>
-  <p>Sua proposta de empréstimo no valor de <b>R$ #valor</b> foi atualizada com uma nova situação e encontra-se disponível para consulta no menu <u>EMPRÉSTIMOS</u> > <u>Acompanhamento de Propostas</u>.</p>
+  <p>Sua proposta de empréstimo no valor de <b>R$ #valor</b> foi atualizada com uma nova situação e encontra-se disponível para consulta no menu <u>EMPRÉSTIMOS</u> > <u>Acompanhamento de Propostas</u> na Conta Online.</p>
   <p>Entre em contato com o PA para maiores informações.</p>'
  where cad.cdmensagem = 494 
    and cad.cdorigem_mensagem = 8;
