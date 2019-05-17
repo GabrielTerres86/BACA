@@ -13,6 +13,8 @@ DECLARE
     UNION 
     select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 359 as cdhistor, 22.37 as vllanmto, 562941 as nrborder from dual
     UNION 
+    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 359 as cdhistor, 39.73 as vllanmto, 562941 as nrborder from dual
+    UNION 
     select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 359 as cdhistor, 0.08 as vllanmto, 562941 as nrborder from dual
     UNION 
     select 1 as cdcooper, 2892022 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 3479 as nrdocmto, 359 as cdhistor, 592.58 as vllanmto, 551001 as nrborder from dual
