@@ -52,7 +52,7 @@ DEF VAR aux_qtminast AS INT                                            NO-UNDO.
                      (INPUT par_cdcooper,
                       INPUT par_cdagenci,
                       INPUT par_nrdcaixa,
-                      INPUT INTEGER(par_cdoperad),
+                      INPUT par_cdoperad,
                       INPUT par_nripuser,
                       INPUT par_iddispos,
                       INPUT par_nmdatela,
