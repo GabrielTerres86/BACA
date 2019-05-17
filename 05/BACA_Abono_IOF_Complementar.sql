@@ -2,51 +2,49 @@ DECLARE
   
 
   CURSOR cr_craplcm_iof IS
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 1985000   and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.01 and nrdocmto = 10043
+    select 1 as cdcooper, 1985000 as nrdconta,  to_date('25/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.01 as vllanmto, 10043 as nrdocmto, 548746 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 2577518   and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.04 and nrdocmto = 1081
+    select 1 as cdcooper, 2577518 as nrdconta,  to_date('25/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.14 as vllanmto, 1330 as nrdocmto, 561658 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 2577518   and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.14 and nrdocmto = 1330
+    select 1 as cdcooper, 2577518 as nrdconta,  to_date('25/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.19 as vllanmto, 1346 as nrdocmto, 561658 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 2577518   and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.19 and nrdocmto = 1346
+    select 1 as cdcooper, 3069060 as nrdconta,  to_date('25/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.03 as vllanmto, 2414 as nrdocmto, 564620 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 3069060   and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.03 and nrdocmto = 2414
+    select 1 as cdcooper, 3581055 as nrdconta,  to_date('25/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.02 as vllanmto, 24 as nrdocmto, 561664 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 3581055   and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.02 and nrdocmto = 24
+    select 1 as cdcooper, 3581055 as nrdconta,  to_date('25/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.03 as vllanmto, 29 as nrdocmto, 561664 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 3581055   and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.03 and nrdocmto = 29
+    select 1 as cdcooper, 6123490 as nrdconta,  to_date('25/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.01 as vllanmto, 9257 as nrdocmto, 563288 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 6123490   and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.01 and nrdocmto = 9257
+    select 1 as cdcooper, 6196420 as nrdconta,  to_date('25/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.01 as vllanmto, 26632 as nrdocmto, 563913 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 6196420   and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.01 and nrdocmto = 26632
+    select 1 as cdcooper, 9924701 as nrdconta,  to_date('25/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.01 as vllanmto, 52 as nrdocmto, 561154 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 9924701   and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.01 and nrdocmto = 52
+    select 1 as cdcooper, 80495192 as nrdconta,  to_date('25/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.01 as vllanmto, 2741 as nrdocmto, 562880 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 80495192      and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.01 and nrdocmto = 2741
+    select 1 as cdcooper, 80495192 as nrdconta,  to_date('25/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.03 as vllanmto, 2751 as nrdocmto, 562880 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 80495192      and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.03 and nrdocmto = 2751
+    select 1 as cdcooper, 80495192 as nrdconta,  to_date('25/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.01 as vllanmto, 2756 as nrdocmto, 562880 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 80495192      and dtmvtolt = to_date('25/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.01 and nrdocmto = 2756
+    select 1 as cdcooper, 6123490 as nrdconta,  to_date('26/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.01 as vllanmto, 9249 as nrdocmto, 563864 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 6123490   and dtmvtolt = to_date('26/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.01 and nrdocmto = 9249
+    select 1 as cdcooper, 6123490 as nrdconta,  to_date('26/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.01 as vllanmto, 9255 as nrdocmto, 563864 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 6123490   and dtmvtolt = to_date('26/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.01 and nrdocmto = 9255
+    select 1 as cdcooper, 8524700 as nrdconta,  to_date('26/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.03 as vllanmto, 502 as nrdocmto, 562802 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 8524700   and dtmvtolt = to_date('26/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.03 and nrdocmto = 502
+    select 1 as cdcooper, 8973709 as nrdconta,  to_date('29/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.05 as vllanmto, 409 as nrdocmto, 562305 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 8973709   and dtmvtolt = to_date('29/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.05 and nrdocmto = 409
+    select 1 as cdcooper, 2892022 as nrdconta,  to_date('30/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.04 as vllanmto, 3479 as nrdocmto, 551001 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 2892022   and dtmvtolt = to_date('30/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.04 and nrdocmto = 3479
+    select 1 as cdcooper, 3910989 as nrdconta,  to_date('30/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.01 as vllanmto, 742 as nrdocmto, 562941 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 3910989   and dtmvtolt = to_date('30/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.01 and nrdocmto = 742
+    select 1 as cdcooper, 8524700 as nrdconta,  to_date('30/04/2019','DD/MM/RRRR'), 325 as cdhistor, 0.11 as vllanmto, 502 as nrdocmto, 562802 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 8524700   and dtmvtolt = to_date('30/04/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.11 and nrdocmto = 502
+    select 1 as cdcooper, 3910989 as nrdconta,  to_date('03/05/2019','DD/MM/RRRR'), 325 as cdhistor, 0.01 as vllanmto, 742 as nrdocmto, 562941 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 3910989   and dtmvtolt = to_date('03/05/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.01 and nrdocmto = 742
+    select 1 as cdcooper, 3910989 as nrdconta,  to_date('06/05/2019','DD/MM/RRRR'), 325 as cdhistor, 0.01 as vllanmto, 742 as nrdocmto, 562941 as nrborder from dual
     UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 3910989   and dtmvtolt = to_date('06/05/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.01 and nrdocmto = 742
-    UNION
-    select cdcooper, nrdconta, vllanmto, nrdocmto, to_number(substr(cdpesqbb,-6,6)) as nrborder from craplcm where cdcooper = 1 and nrdconta = 3910989   and dtmvtolt = to_date('08/05/2019','DD/MM/RRRR') and cdhistor = 2321 and vllanmto = 0.01 and nrdocmto = 742;
+select 1 as cdcooper, 3910989 as nrdconta,  to_date('08/05/2019','DD/MM/RRRR'), 325 as cdhistor, 0.01 as vllanmto, 742 as nrdocmto, 562941 as nrborder from dual;
   rw_craplcm_iof cr_craplcm_iof%rowtype;
   
   /* Cursor genérico de calendário */
