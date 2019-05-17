@@ -1,25 +1,25 @@
 DECLARE
 
   CURSOR cr_craplcm_est IS
-    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 2805 as cdhistor, 16.99 as vllanmto, 562941 as nrborder from dual
+    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 359 as cdhistor, 16.99 as vllanmto, 562941 as nrborder from dual
     UNION 
-    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 2806 as cdhistor, 2.61 as vllanmto, 562941 as nrborder from dual
+    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 359 as cdhistor, 2.61 as vllanmto, 562941 as nrborder from dual
     UNION 
-    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 2807 as cdhistor, 0.04 as vllanmto, 562941 as nrborder from dual
+    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 359 as cdhistor, 0.04 as vllanmto, 562941 as nrborder from dual
     UNION 
-    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 2805 as cdhistor, 0.2 as vllanmto, 562941 as nrborder from dual
+    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 359 as cdhistor, 0.2 as vllanmto, 562941 as nrborder from dual
     UNION 
-    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 2807 as cdhistor, 0.11 as vllanmto, 562941 as nrborder from dual
+    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 359 as cdhistor, 0.11 as vllanmto, 562941 as nrborder from dual
     UNION 
-    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 2805 as cdhistor, 22.37 as vllanmto, 562941 as nrborder from dual
+    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 359 as cdhistor, 22.37 as vllanmto, 562941 as nrborder from dual
     UNION 
-    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 2807 as cdhistor, 0.08 as vllanmto, 562941 as nrborder from dual
+    select 1 as cdcooper, 3910989 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 742 as nrdocmto, 359 as cdhistor, 0.08 as vllanmto, 562941 as nrborder from dual
     UNION 
-    select 1 as cdcooper, 2892022 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 3479 as nrdocmto, 2807 as cdhistor, 592.58 as vllanmto, 551001 as nrborder from dual
+    select 1 as cdcooper, 2892022 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 3479 as nrdocmto, 359 as cdhistor, 592.58 as vllanmto, 551001 as nrborder from dual
     UNION 
-    select 1 as cdcooper, 80280161 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 200000851 as nrdocmto, 2807 as cdhistor, 689.47 as vllanmto, 564817 as nrborder from dual
+    select 1 as cdcooper, 80280161 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 200000851 as nrdocmto, 359 as cdhistor, 689.47 as vllanmto, 564817 as nrborder from dual
     UNION 
-    select 1 as cdcooper, 8524700 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 502 as nrdocmto, 2807 as cdhistor, 785.23 as vllanmto, 562802 as nrborder  from dual;
+    select 1 as cdcooper, 8524700 as nrdconta, (select dtmvtolt from crapdat where cdcooper = 1) as dtmvtolt, 502 as nrdocmto, 359 as cdhistor, 785.23 as vllanmto, 562802 as nrborder  from dual;
   rw_craplcm_est cr_craplcm_est%rowtype;
   
   /* Cursor genérico de calendário */
