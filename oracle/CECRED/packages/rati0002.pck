@@ -3318,7 +3318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       RAISE vr_exc_erro;
     END IF;
     
-    vr_vlarrast := SUBSTR(vr_dstextab_riscobacen,3,9);
+    vr_vlarrast := to_number(SUBSTR(vr_dstextab_riscobacen,3,9),'fm99999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
     
     -- Verifica se a cooperativa esta cadastrada
     OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
