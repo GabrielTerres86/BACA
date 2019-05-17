@@ -8831,6 +8831,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          IF vr_tab_pgto(vr_idx_pgto).rowidlfp IS NULL THEN
         -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
         -- Definir a situação como Erro quando for Intercompany e estado de crise ligado
+        vr_idsitlct := 'L';
+        vr_dsobslct := NULL;
+        --
         IF vr_inestcri > 0 THEN
           OPEN cr_craplcs(pr_cdcooper => pr_cdcooper
                          ,pr_nrdconta => vr_tab_pgto(vr_idx_pgto).nrdconta
@@ -8842,9 +8845,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           IF rw_craplcs.cdbantrf <> 85 THEN
             vr_idsitlct := 'E';
             vr_dsobslct := 'Erro encontrado - Estado de Crise Ativo';
-          ELSE
-            vr_idsitlct := 'L';
-            vr_dsobslct := NULL;
           END IF;
           CLOSE cr_craplcs;
         END IF;
