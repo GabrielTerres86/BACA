@@ -8303,6 +8303,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                 p_rowid IS NULL);
       rw_valida_ori cr_valida_ori%ROWTYPE;
 
+    -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    -- Buscar Banco da transferência da conta
+    CURSOR cr_craplcs(pr_cdcooper craplcs.cdcooper%TYPE
+                     ,pr_nrdconta craplcs.nrdconta%TYPE
+                     ,pr_cdempres crapccs.cdempres%TYPE) IS
+      SELECT b.cdbantrf
+        FROM craplcs a
+            ,crapccs b
+       WHERE b.cdcooper  = a.cdcooper
+         AND b.nrdconta  = a.nrdconta
+         AND b.cdempres  = pr_cdempres
+         AND a.cdcooper  = pr_cdcooper
+         AND a.nrdconta  = pr_nrdconta
+         AND a.dtmvtolt  = TRUNC(SYSDATE)
+         AND a.cdhistor IN(560,561,gene0001.fn_param_sistema('CRED',pr_cdcooper,'FOLHAIB_HIS_CRE_TECSAL'))
+         AND a.flgenvio  = 0;
+    rw_craplcs cr_craplcs%ROWTYPE;
+  
       -- Variaveis
       vr_tab_origem typ_tab_origem;
       vr_idx        VARCHAR2(20);
@@ -8317,6 +8335,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_dsdireto   VARCHAR(32767);
       vr_idtpcont   VARCHAR2(1);
       vr_indvalid   VARCHAR2(1);
+    vr_inestcri   NUMBER;         -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    vr_idsitlct   VARCHAR2(1);    -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    vr_dsobslct   VARCHAR2(1000); -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    vr_clobxmlc   CLOB;           -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
 
       -- Variáveis para tratamento do XML
       vr_lenght      NUMBER;
@@ -8798,10 +8820,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       OPEN  cr_nrseqlfp(pr_cdcooper,rw_crapemp.cdempres,vr_nrseqpag);
       FETCH cr_nrseqlfp INTO vr_nrseqlfp;
       CLOSE cr_nrseqlfp;
-
+    --
+    -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    -- Busca o indicador estado de crise
+    sspb0001.pc_estado_crise (pr_inestcri => vr_inestcri
+                             ,pr_clobxmlc => vr_clobxmlc);
+    -- Fim Pj 475
       FOR vr_idx_pgto IN vr_tab_pgto.first..vr_tab_pgto.last LOOP
 
          IF vr_tab_pgto(vr_idx_pgto).rowidlfp IS NULL THEN
+        -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+        -- Definir a situação como Erro quando for Intercompany e estado de crise ligado
+        IF vr_inestcri > 0 THEN
+          OPEN cr_craplcs(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => vr_tab_pgto(vr_idx_pgto).nrdconta
+                         ,pr_cdempres => rw_crapemp.cdempres);
+          FETCH cr_craplcs INTO rw_craplcs.cdbantrf;
+          IF cr_craplcs%NOTFOUND THEN
+            rw_craplcs.cdbantrf := 85;
+          END IF;
+          IF rw_craplcs.cdbantrf <> 85 THEN
+            vr_idsitlct := 'E';
+            vr_dsobslct := 'Erro encontrado - Estado de Crise Ativo';
+          ELSE
+            vr_idsitlct := 'L';
+            vr_dsobslct := NULL;
+          END IF;
+          CLOSE cr_craplcs;
+        END IF;
+        -- Fim Pj 475
 
             -- Ira um insert para cada conjunto de informações, dessa forma
             -- deve ser realizada a limpeza do registro e a carga para garantir
@@ -8810,7 +8857,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             rw_craplfp.cdcooper := pr_cdcooper;
             rw_craplfp.cdempres := rw_crapemp.cdempres;
             rw_craplfp.nrseqpag := vr_nrseqpag;
-            rw_craplfp.idsitlct := 'L'; -- Lançado
+        rw_craplfp.idsitlct := vr_idsitlct; -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+        rw_craplfp.dsobslct := vr_dsobslct; -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
             rw_craplfp.nrseqlfp := vr_nrseqlfp;
             rw_craplfp.nrdconta := vr_tab_pgto(vr_idx_pgto).nrdconta;
             rw_craplfp.idtpcont := vr_tab_pgto(vr_idx_pgto).idtpcont;
