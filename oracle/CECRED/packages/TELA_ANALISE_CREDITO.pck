@@ -2085,7 +2085,8 @@ procedure pc_gera_dados_persona(pr_persona in varchar2,
                                     pr_texto_novo     => vr_xml,
                                     pr_fecha_xml      => TRUE);
 
-           end if;
+           end if;          
+         close c_pessoa;  
       end loop;      
       /*FIM-QUADRO SOCIETARIO*/   
       
@@ -3021,7 +3022,7 @@ PROCEDURE pc_consulta_garantia(pr_cdcooper IN crapass.cdcooper%TYPE       --> Co
                           jfn.vlrftbru##10 +
                           jfn.vlrftbru##11 +
                           jfn.vlrftbru##12)) /
-                           decode(jfn.vlrftbru##1,0,0,1) +
+                           (decode(jfn.vlrftbru##1,0,0,1) +
                             decode(jfn.vlrftbru##2,0,0,1) +
                             decode(jfn.vlrftbru##3,0,0,1) +
                             decode(jfn.vlrftbru##4,0,0,1) +
@@ -3032,7 +3033,7 @@ PROCEDURE pc_consulta_garantia(pr_cdcooper IN crapass.cdcooper%TYPE       --> Co
                             decode(jfn.vlrftbru##9,0,0,1) +
                             decode(jfn.vlrftbru##10,0,0,1) +
                             decode(jfn.vlrftbru##11,0,0,1) +
-                            decode(jfn.vlrftbru##12,0,0,1),2),'999g999g990d00')
+                            decode(jfn.vlrftbru##12,0,0,1)),2),'999g999g990d00')
                   from crapjfn jfn
                   where jfn.cdcooper = pr_cdcooper
                   and   jfn.nrdconta = pr_nrdconta)) fatmedmensal --Soma tudo e divide pelos meses que tem lançamento
