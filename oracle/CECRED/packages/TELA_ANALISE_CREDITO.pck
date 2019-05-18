@@ -8104,7 +8104,7 @@ PROCEDURE pc_consulta_proposta_limite(pr_cdcooper IN crapass.cdcooper%TYPE      
                             ,pr_cdcritic    => vr_cdcritic
                             ,pr_dscritic    => vr_dscritic);  
                            
-   vr_string_contrato_epr := vr_string_contrato_epr||fn_tag('Endividamento Total do Fluxo',to_char(r_proposta_epr.vlemprst+vr_vlutiliz,'999g999g990d00'));       
+   vr_string_contrato_epr := vr_string_contrato_epr||fn_tag('Endividamento Total do Fluxo',to_char(vr_vlfinanc+vr_vlutiliz,'999g999g990d00'));       
     
    vr_string_contrato_epr := vr_string_contrato_epr||'</campos></subcategoria>';     
    vr_string_aux := null;
@@ -10499,7 +10499,7 @@ PROCEDURE pc_busca_rendas_aut(pr_cdcooper IN crapass.cdcooper%TYPE
       -- Somente os ultimos 4 Registros
       if vr_index > 4 then
         exit;
-      end if;a
+      end if;
       
     end loop;
     
