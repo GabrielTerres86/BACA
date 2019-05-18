@@ -2691,7 +2691,6 @@ PROCEDURE pc_gera_conciliacao_spb ( pr_tipo_concilacao  IN VARCHAR2 --> Tipo de 
             ,AgenciaDeb       VARCHAR2(50)
             ,ContaDeb         VARCHAR2(50)
             ,Valor            VARCHAR2(50)
-            ,Finalidade       VARCHAR2(50)
             ,Situacao         VARCHAR2(50)
             ,DataAgendamento  VARCHAR2(50)
             ,TipoMensagem     VARCHAR2(03)); 
@@ -2757,10 +2756,6 @@ BEGIN
       IF NOT vr_tab_msgenviadaaimaro.exists(vr_ind_msgenvi) THEN 
         vr_tab_msgenviadaaimaro(vr_ind_msgenvi).cdmensagem   := rr_msgenvaimaro.nmmensagem;
         vr_tab_msgenviadaaimaro(vr_ind_msgenvi).NrControleIF := rr_msgenvaimaro.nrcontrole_if;
-      ELSE
-        -- Retornar erro
-        vr_dscritic := 'Chave duplicada nas mensagens enviadas na conciliacao - '||vr_ind_msgenvi;
-        --RAISE vr_exc_erro;  
       END IF;    
       --
       vr_fgenviada:= False;
@@ -2803,9 +2798,7 @@ BEGIN
           vr_tab_criticaconciliacao(vr_index).CPFClienteDeb    := null;
           vr_tab_criticaconciliacao(vr_index).AgenciaDeb       := null;
           vr_tab_criticaconciliacao(vr_index).ContaDeb         := rr_msgenvaimaro.nrdconta;
-          --vr_tab_criticaconciliacao(vr_index).Valor            := replace(TRIM(TO_CHAR(rr_msgenvaimaro.vlmensagem,'FM99G999G999G990D00')),',','.');
           vr_tab_criticaconciliacao(vr_index).Valor            := TRIM(REPLACE(TO_CHAR(rr_msgenvaimaro.vlmensagem,'FM99999999990.00'),'.',','));
-          vr_tab_criticaconciliacao(vr_index).Finalidade       := null;
           vr_tab_criticaconciliacao(vr_index).Situacao         := vr_situacao_mensagem;
           vr_tab_criticaconciliacao(vr_index).TipoMensagem     := 'ENV'; 
           --
@@ -2814,6 +2807,7 @@ BEGIN
         vr_fgsitenv := fn_depara_situacao_enviada (vr_situacao_mensagem, rr_valmsgenvjd.dssituacao);
         --
         IF  not vr_fgsitenv THEN
+          -- 
           --Gravar critica de situação na tabela temporaria    
           vr_situacao_jd := fn_depara_descricao_jd(rr_valmsgenvjd.dssituacao);
           vr_index:= vr_index + 1;
@@ -2832,23 +2826,23 @@ BEGIN
           vr_tab_criticaconciliacao(vr_index).NrControleIF     := rr_msgenvaimaro.nrcontrole_if;     
           vr_tab_criticaconciliacao(vr_index).NrControlePagStr := null; 
           vr_tab_criticaconciliacao(vr_index).ISPBCred         := rr_msgenvaimaro.nrispb_cre;
-          vr_tab_criticaconciliacao(vr_index).ClienteCred      := null;
-          vr_tab_criticaconciliacao(vr_index).CPFClienteCred   := null;
-          vr_tab_criticaconciliacao(vr_index).AgenciaCred      := null;
-          vr_tab_criticaconciliacao(vr_index).ContaCred        := null;
+          vr_tab_criticaconciliacao(vr_index).ClienteCred      := rr_valmsgenvjd.Nmclicredtd;
+          vr_tab_criticaconciliacao(vr_index).CPFClienteCred   := rr_valmsgenvjd.Nrcnpj_Cpfclicredtd;
+          vr_tab_criticaconciliacao(vr_index).AgenciaCred      := rr_valmsgenvjd.Nragcredtd;
+          vr_tab_criticaconciliacao(vr_index).ContaCred        := rr_valmsgenvjd.Nrctcredtd;
           vr_tab_criticaconciliacao(vr_index).ISPBDeb          := rr_msgenvaimaro.nrispb_deb;
-          vr_tab_criticaconciliacao(vr_index).ClienteDeb       := null;
-          vr_tab_criticaconciliacao(vr_index).CPFClienteDeb    := null;
-          vr_tab_criticaconciliacao(vr_index).AgenciaDeb       := null;
+          vr_tab_criticaconciliacao(vr_index).ClienteDeb       := rr_valmsgenvjd.Nmclidebtd;
+          vr_tab_criticaconciliacao(vr_index).CPFClienteDeb    := rr_valmsgenvjd.Nrcnpj_Cpfclidebtd;
+          vr_tab_criticaconciliacao(vr_index).AgenciaDeb       := rr_valmsgenvjd.nragdebtd;
           vr_tab_criticaconciliacao(vr_index).ContaDeb         := rr_msgenvaimaro.nrdconta;
-          --vr_tab_criticaconciliacao(vr_index).Valor            := replace(TRIM(TO_CHAR(rr_msgenvaimaro.vlmensagem,'FM99G999G999G990D00')),',','.');
           vr_tab_criticaconciliacao(vr_index).Valor            := TRIM(REPLACE(TO_CHAR(rr_msgenvaimaro.vlmensagem,'FM99999999990.00'),'.',','));
-          vr_tab_criticaconciliacao(vr_index).Finalidade       := null;
           vr_tab_criticaconciliacao(vr_index).Situacao         := vr_situacao_mensagem;   
           vr_tab_criticaconciliacao(vr_index).TipoMensagem     := 'ENV';      
         END IF;
         -- Validar o legado
         IF rr_msgenvaimaro.nr_legado <> rr_valmsgenvjd.nrlegado THEN
+          vr_situacao_jd := fn_depara_descricao_jd(rr_valmsgenvjd.dssituacao);
+          --
           --Gravar critica de legado na tabela temporaria    
           vr_index:= vr_index + 1;
           vr_tab_criticaconciliacao(vr_index).Descricao := '<NumCtrlIF> '||rr_msgenvaimaro.nrcontrole_if||' divergente no LEGADO.';
@@ -2866,18 +2860,16 @@ BEGIN
           vr_tab_criticaconciliacao(vr_index).NrControleIF     := rr_msgenvaimaro.nrcontrole_if;     
           vr_tab_criticaconciliacao(vr_index).NrControlePagStr := null; 
           vr_tab_criticaconciliacao(vr_index).ISPBCred         := rr_msgenvaimaro.nrispb_cre;
-          vr_tab_criticaconciliacao(vr_index).ClienteCred      := null;
-          vr_tab_criticaconciliacao(vr_index).CPFClienteCred   := null;
-          vr_tab_criticaconciliacao(vr_index).AgenciaCred      := null;
-          vr_tab_criticaconciliacao(vr_index).ContaCred        := null;
+          vr_tab_criticaconciliacao(vr_index).ClienteCred      := rr_valmsgenvjd.Nmclicredtd;
+          vr_tab_criticaconciliacao(vr_index).CPFClienteCred   := rr_valmsgenvjd.Nrcnpj_Cpfclicredtd;
+          vr_tab_criticaconciliacao(vr_index).AgenciaCred      := rr_valmsgenvjd.Nragcredtd;
+          vr_tab_criticaconciliacao(vr_index).ContaCred        := rr_valmsgenvjd.Nrctcredtd;
           vr_tab_criticaconciliacao(vr_index).ISPBDeb          := rr_msgenvaimaro.nrispb_deb;
-          vr_tab_criticaconciliacao(vr_index).ClienteDeb       := null;
-          vr_tab_criticaconciliacao(vr_index).CPFClienteDeb    := null;
-          vr_tab_criticaconciliacao(vr_index).AgenciaDeb       := null;
+          vr_tab_criticaconciliacao(vr_index).ClienteDeb       := rr_valmsgenvjd.Nmclidebtd;
+          vr_tab_criticaconciliacao(vr_index).CPFClienteDeb    := rr_valmsgenvjd.Nrcnpj_Cpfclidebtd;
+          vr_tab_criticaconciliacao(vr_index).AgenciaDeb       := rr_valmsgenvjd.nragdebtd;
           vr_tab_criticaconciliacao(vr_index).ContaDeb         := rr_msgenvaimaro.nrdconta;
-          --vr_tab_criticaconciliacao(vr_index).Valor            := replace(TRIM(TO_CHAR(rr_msgenvaimaro.vlmensagem,'FM99G999G999G990D00')),',','.');
           vr_tab_criticaconciliacao(vr_index).Valor            := TRIM(REPLACE(TO_CHAR(rr_msgenvaimaro.vlmensagem,'FM99999999990.00'),'.',','));
-          vr_tab_criticaconciliacao(vr_index).Finalidade       := null;
           vr_tab_criticaconciliacao(vr_index).Situacao         := vr_situacao_mensagem; 
           vr_tab_criticaconciliacao(vr_index).TipoMensagem     := 'ENV';
         END IF;
@@ -2907,7 +2899,8 @@ BEGIN
       END IF; 
       --
       IF not vr_fgenviada THEN
-          --Gravar critica de falta de mensagem no Aimaro na tabela temporaria    
+          --Gravar critica de falta de mensagem no Aimaro na tabela temporaria  
+          vr_situacao_jd := fn_depara_descricao_jd(rr_msgenvjd.dssituacao);  
           vr_index:= vr_index + 1;
           vr_tab_criticaconciliacao(vr_index).Descricao        := '<NumCtrlIF> '||rr_msgenvjd.nrcontrole_if||' não encontrado na base AIMARO.';
           vr_tab_criticaconciliacao(vr_index).Critica          := null;         
@@ -2927,9 +2920,8 @@ BEGIN
           vr_tab_criticaconciliacao(vr_index).CPFClienteDeb    := rr_msgenvjd.nrcnpj_cpfclidebtd;
           vr_tab_criticaconciliacao(vr_index).AgenciaDeb       := rr_msgenvjd.nragdebtd;
           vr_tab_criticaconciliacao(vr_index).ContaDeb         := rr_msgenvjd.nrctdebtd;
-         -- vr_tab_criticaconciliacao(vr_index).Valor            := replace(TRIM(TO_CHAR(rr_msgenvjd.vllancamento,'FM99G999G999G990D00')),',','.');
           vr_tab_criticaconciliacao(vr_index).Valor            := TRIM(REPLACE(TO_CHAR(rr_msgenvjd.vllancamento,'FM99999999990.00'),'.',','));
-          vr_tab_criticaconciliacao(vr_index).Situacao         := rr_msgenvjd.dssituacao;
+          vr_tab_criticaconciliacao(vr_index).Situacao         := vr_situacao_jd;
           vr_tab_criticaconciliacao(vr_index).TipoMensagem     := 'ENV'; 
           --       
       END IF;   
@@ -2954,10 +2946,6 @@ BEGIN
       -- Atualiza a temp-table 
       IF NOT vr_tab_msgrecebidaaimaro.exists(vr_ind_msgrec) THEN 
         vr_tab_msgrecebidaaimaro(vr_ind_msgrec).nrcontrole_strpag := rr_msgrecaimaro.nrcontrole_str_pag;
-      ELSE
-        -- Retornar erro
-        vr_dscritic := 'Chave duplicada nas mensagens recebidas - '||vr_ind_msgrec;
-        --RAISE vr_exc_erro; 
       END IF;    
       --
       vr_fgrecebida:= False;
@@ -2982,21 +2970,19 @@ BEGIN
           vr_tab_criticaconciliacao(vr_index).HoraMsg          := TO_CHAR(rr_msgrecaimaro.dhmensagem,'hh24:mi:ss');
           vr_tab_criticaconciliacao(vr_index).AreaNeg          := rr_msgrecaimaro.nr_legado;    
           vr_tab_criticaconciliacao(vr_index).Mensagem         := rr_msgrecaimaro.nmmensagem;   
-          vr_tab_criticaconciliacao(vr_index).NrControleIF     := rr_msgrecaimaro.nrcontrole_str_pag;     
-          vr_tab_criticaconciliacao(vr_index).NrControlePagStr := null; 
+          vr_tab_criticaconciliacao(vr_index).NrControleIF     := null;     
+          vr_tab_criticaconciliacao(vr_index).NrControlePagStr := rr_msgrecaimaro.nrcontrole_str_pag; 
           vr_tab_criticaconciliacao(vr_index).ISPBCred         := rr_msgrecaimaro.nrispb_cre;
-          vr_tab_criticaconciliacao(vr_index).ClienteCred      := rr_msgrecaimaro.nrdconta;
+          vr_tab_criticaconciliacao(vr_index).ClienteCred      := null; --rr_msgrecaimaro.nrdconta;
           vr_tab_criticaconciliacao(vr_index).CPFClienteCred   := null;
           vr_tab_criticaconciliacao(vr_index).AgenciaCred      := null;
-          vr_tab_criticaconciliacao(vr_index).ContaCred        := null;
+          vr_tab_criticaconciliacao(vr_index).ContaCred        := rr_msgrecaimaro.nrdconta;
           vr_tab_criticaconciliacao(vr_index).ISPBDeb          := rr_msgrecaimaro.nrispb_deb;
           vr_tab_criticaconciliacao(vr_index).ClienteDeb       := null;
           vr_tab_criticaconciliacao(vr_index).CPFClienteDeb    := null;
           vr_tab_criticaconciliacao(vr_index).AgenciaDeb       := null;
           vr_tab_criticaconciliacao(vr_index).ContaDeb         := null;
-          --vr_tab_criticaconciliacao(vr_index).Valor            := replace(TRIM(TO_CHAR(rr_msgrecaimaro.vlmensagem,'FM99G999G999G990D00')),',','.');
           vr_tab_criticaconciliacao(vr_index).Valor            := TRIM(REPLACE(TO_CHAR(rr_msgrecaimaro.vlmensagem,'FM99999999990.00'),'.',','));
-          vr_tab_criticaconciliacao(vr_index).Finalidade       := null;
           vr_tab_criticaconciliacao(vr_index).Situacao         := vr_situacao_mensagem; 
           vr_tab_criticaconciliacao(vr_index).TipoMensagem     := 'REC';
           --
@@ -3005,6 +2991,7 @@ BEGIN
         vr_fgsitrec := fn_depara_situacao_recebida (vr_situacao_mensagem, rr_valmsgrecjd.dssituacao);
         --
         IF  not vr_fgsitrec THEN
+          --      
           --Gravar critica de situação na tabela temporaria  
           vr_situacao_jd := fn_depara_descricao_jd(rr_valmsgrecjd.dssituacao);  
           vr_index:= vr_index + 1;
@@ -3014,26 +3001,26 @@ BEGIN
           vr_tab_criticaconciliacao(vr_index).HoraMsg          := TO_CHAR(rr_msgrecaimaro.dhmensagem,'hh24:mi:ss');
           vr_tab_criticaconciliacao(vr_index).AreaNeg          := rr_msgrecaimaro.nr_legado;    
           vr_tab_criticaconciliacao(vr_index).Mensagem         := rr_msgrecaimaro.nmmensagem;   
-          vr_tab_criticaconciliacao(vr_index).NrControleIF     := rr_msgrecaimaro.nrcontrole_str_pag;     
-          vr_tab_criticaconciliacao(vr_index).NrControlePagStr := null; 
+          vr_tab_criticaconciliacao(vr_index).NrControleIF     := null;     
+          vr_tab_criticaconciliacao(vr_index).NrControlePagStr := rr_msgrecaimaro.nrcontrole_str_pag; 
           vr_tab_criticaconciliacao(vr_index).ISPBCred         := rr_msgrecaimaro.nrispb_cre;
-          vr_tab_criticaconciliacao(vr_index).ClienteCred      := rr_msgrecaimaro.nrdconta;
-          vr_tab_criticaconciliacao(vr_index).CPFClienteCred   := null;
-          vr_tab_criticaconciliacao(vr_index).AgenciaCred      := null;
-          vr_tab_criticaconciliacao(vr_index).ContaCred        := null;
+          vr_tab_criticaconciliacao(vr_index).ClienteCred      := rr_valmsgrecjd.nmclicredtd; --rr_msgrecaimaro.nrdconta; 
+          vr_tab_criticaconciliacao(vr_index).CPFClienteCred   := rr_valmsgrecjd.nrcnpj_cpfclicredtd;
+          vr_tab_criticaconciliacao(vr_index).AgenciaCred      := rr_valmsgrecjd.nragcredtd;
+          vr_tab_criticaconciliacao(vr_index).ContaCred        := rr_valmsgrecjd.nrctcredtd;
           vr_tab_criticaconciliacao(vr_index).ISPBDeb          := rr_msgrecaimaro.nrispb_deb;
-          vr_tab_criticaconciliacao(vr_index).ClienteDeb       := null;
-          vr_tab_criticaconciliacao(vr_index).CPFClienteDeb    := null;
-          vr_tab_criticaconciliacao(vr_index).AgenciaDeb       := null;
-          vr_tab_criticaconciliacao(vr_index).ContaDeb         := null;
-          --vr_tab_criticaconciliacao(vr_index).Valor            := replace(TRIM(TO_CHAR(rr_msgrecaimaro.vlmensagem,'FM99G999G999G990D00')),',','.');
+          vr_tab_criticaconciliacao(vr_index).ClienteDeb       := rr_valmsgrecjd.nmclidebtd;
+          vr_tab_criticaconciliacao(vr_index).CPFClienteDeb    := rr_valmsgrecjd.nrcnpj_cpfclidebtd;
+          vr_tab_criticaconciliacao(vr_index).AgenciaDeb       := rr_valmsgrecjd.nragdebtd;
+          vr_tab_criticaconciliacao(vr_index).ContaDeb         := rr_valmsgrecjd.nrctdebtd;
           vr_tab_criticaconciliacao(vr_index).Valor            := TRIM(REPLACE(TO_CHAR(rr_msgrecaimaro.vlmensagem,'FM99999999990.00'),'.',','));
-          vr_tab_criticaconciliacao(vr_index).Finalidade       := null;
-          vr_tab_criticaconciliacao(vr_index).Situacao         := vr_situacao_mensagem; 
+          vr_tab_criticaconciliacao(vr_index).Situacao         := vr_situacao_jd; 
           vr_tab_criticaconciliacao(vr_index).TipoMensagem     := 'REC';
         END IF;
         -- Validar o legado
         IF rr_msgrecaimaro.nr_legado <> rr_valmsgrecjd.nrlegado THEN
+          --           
+          vr_situacao_jd := fn_depara_descricao_jd(rr_valmsgrecjd.dssituacao);  
           --Gravar critica de legado na tabela temporaria    
           vr_index:= vr_index + 1;
           vr_tab_criticaconciliacao(vr_index).Descricao        := '<NumCtrlStrPag> '||rr_msgrecaimaro.nrcontrole_str_pag||' divergente no LEGADO.';
@@ -3042,24 +3029,21 @@ BEGIN
           vr_tab_criticaconciliacao(vr_index).HoraMsg          := TO_CHAR(rr_msgrecaimaro.dhmensagem,'hh24:mi:ss');
           vr_tab_criticaconciliacao(vr_index).AreaNeg          := rr_msgrecaimaro.nr_legado;    
           vr_tab_criticaconciliacao(vr_index).Mensagem         := rr_msgrecaimaro.nmmensagem;   
-          vr_tab_criticaconciliacao(vr_index).NrControleIF     := rr_msgrecaimaro.nrcontrole_str_pag;     
-          vr_tab_criticaconciliacao(vr_index).NrControlePagStr := null; 
+          vr_tab_criticaconciliacao(vr_index).NrControleIF     := null;     
+          vr_tab_criticaconciliacao(vr_index).NrControlePagStr := rr_msgrecaimaro.nrcontrole_str_pag; 
           vr_tab_criticaconciliacao(vr_index).ISPBCred         := rr_msgrecaimaro.nrispb_cre;
-          vr_tab_criticaconciliacao(vr_index).ClienteCred      := rr_msgrecaimaro.nrdconta;
-          vr_tab_criticaconciliacao(vr_index).CPFClienteCred   := null;
-          vr_tab_criticaconciliacao(vr_index).AgenciaCred      := null;
-          vr_tab_criticaconciliacao(vr_index).ContaCred        := null;
+          vr_tab_criticaconciliacao(vr_index).ClienteCred      := rr_valmsgrecjd.nmclicredtd; --rr_msgrecaimaro.nrdconta;
+          vr_tab_criticaconciliacao(vr_index).CPFClienteCred   := rr_valmsgrecjd.nrcnpj_cpfclicredtd;
+          vr_tab_criticaconciliacao(vr_index).AgenciaCred      := rr_valmsgrecjd.nragcredtd;
+          vr_tab_criticaconciliacao(vr_index).ContaCred        := rr_valmsgrecjd.nrctcredtd;
           vr_tab_criticaconciliacao(vr_index).ISPBDeb          := rr_msgrecaimaro.nrispb_deb;
-          vr_tab_criticaconciliacao(vr_index).ClienteDeb       := null;
-          vr_tab_criticaconciliacao(vr_index).CPFClienteDeb    := null;
-          vr_tab_criticaconciliacao(vr_index).AgenciaDeb       := null;
-          vr_tab_criticaconciliacao(vr_index).ContaDeb         := null;
-         -- vr_tab_criticaconciliacao(vr_index).Valor            := replace(TRIM(TO_CHAR(rr_msgrecaimaro.vlmensagem,'FM99G999G999G990D00')),',','.');
+          vr_tab_criticaconciliacao(vr_index).ClienteDeb       := rr_valmsgrecjd.nmclidebtd;
+          vr_tab_criticaconciliacao(vr_index).CPFClienteDeb    := rr_valmsgrecjd.nrcnpj_cpfclidebtd;
+          vr_tab_criticaconciliacao(vr_index).AgenciaDeb       := rr_valmsgrecjd.nragdebtd;
+          vr_tab_criticaconciliacao(vr_index).ContaDeb         := rr_valmsgrecjd.nrctdebtd;
           vr_tab_criticaconciliacao(vr_index).Valor            := TRIM(REPLACE(TO_CHAR(rr_msgrecaimaro.vlmensagem,'FM99999999990.00'),'.',','));
-          vr_tab_criticaconciliacao(vr_index).Finalidade       := null;
-          vr_tab_criticaconciliacao(vr_index).Situacao         := vr_situacao_mensagem; 
+          vr_tab_criticaconciliacao(vr_index).Situacao         := vr_situacao_jd; 
           vr_tab_criticaconciliacao(vr_index).TipoMensagem     := 'REC';
-
         END IF;
           
       END IF;   
@@ -3086,6 +3070,8 @@ BEGIN
       END IF; 
       --
       IF not vr_fgrecebida THEN
+          vr_situacao_jd := fn_depara_descricao_jd(rr_msgrecjd.dssituacao);
+          --
           --Gravar critica de falta de mensagem no Aimaro na tabela temporaria    
           vr_index:= vr_index + 1;
           vr_tab_criticaconciliacao(vr_index).Descricao        := '<NumCtrlStrPag> '||rr_msgrecjd.nrcontrole_strpag||' não encontrado na base AIMARO.';
@@ -3107,9 +3093,8 @@ BEGIN
           vr_tab_criticaconciliacao(vr_index).CPFClienteDeb    := rr_msgrecjd.nrcnpj_cpfclidebtd;
           vr_tab_criticaconciliacao(vr_index).AgenciaDeb       := rr_msgrecjd.nragdebtd;
           vr_tab_criticaconciliacao(vr_index).ContaDeb         := rr_msgrecjd.nrctdebtd;
-          --vr_tab_criticaconciliacao(vr_index).Valor            := replace(TRIM(TO_CHAR(rr_msgrecjd.vllancamento,'FM99G999G999G990D00')),',','.');
           vr_tab_criticaconciliacao(vr_index).Valor            := TRIM(REPLACE(TO_CHAR(rr_msgrecjd.vllancamento,'FM99999999990.00'),'.',','));
-          vr_tab_criticaconciliacao(vr_index).Situacao         := rr_msgrecjd.dssituacao; 
+          vr_tab_criticaconciliacao(vr_index).Situacao         := vr_situacao_jd; 
           vr_tab_criticaconciliacao(vr_index).TipoMensagem     := 'REC';
           --       
       END IF;   
@@ -3138,20 +3123,11 @@ BEGIN
         vr_ind_arqlog        UTL_FILE.file_type; 
         vr_ind_arqlog_rec    UTL_FILE.file_type; 
       BEGIN
-        /*BEGIN
-          SELECT dsdircop
-            INTO vr_dsdircop
-            FROM crapcop
-           WHERE cdcooper = 3; 
-        EXCEPTION
-        WHEN OTHERS THEN
-          vr_dsdircop := 'cecred';
-        END;*/
         --
         vr_cabecalho := 'Resultado;Critica;"Data Mensagem";Hora Mensagem;"Area Neg";Mensagem;'
                      || '"Nr Controle IF";"Nr Controle PagStr";"ISPBCred";"Cliente Creditado";'
                      || '"CPF/CNPJ Cliente Creditado";"Agencia Creditada";"Conta Creditada";"ISPBDeb";"Cliente Debitado";'
-                     || '"CPF/CNPJ Cliente Debitado";"Agencia Debitada";"Conta Debitada";"Valor";"Finalidade";"Situacao";"DataAgendamento"';
+                     || '"CPF/CNPJ Cliente Debitado";"Agencia Debitada";"Conta Debitada";"Valor";"Situacao";"DataAgendamento"';
        --
         vr_dircop_txt        := '/usr/sistemas/SPB/CONSPB/';
         vr_nom_arquivo       := 'CONCILIACAOENVSPB_'||TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS')||'.csv';
@@ -3203,7 +3179,6 @@ BEGIN
                   ||';'||vr_tab_criticaconciliacao(Idx).AgenciaDeb
                   ||';'||vr_tab_criticaconciliacao(Idx).ContaDeb 
                   ||';'||vr_tab_criticaconciliacao(Idx).Valor 
-                  ||';'||vr_tab_criticaconciliacao(Idx).Finalidade     
                   ||';'||vr_tab_criticaconciliacao(Idx).Situacao
                   ||';'||vr_tab_criticaconciliacao(Idx).DataAgendamento;
                     
@@ -3258,7 +3233,7 @@ EXCEPTION
         pr_cdcritic     := null;
         pr_dscritic     := null;
 
-        -- Enviar Email para o Financeiro
+        -- Enviar Email para o responsavel
         gene0003.pc_solicita_email(pr_cdcooper        => 3
                                   ,pr_cdprogra        => 'CONSPB'
                                   ,pr_des_destino     => pr_dsendere
