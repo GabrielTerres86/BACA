@@ -1961,11 +1961,7 @@ procedure pc_gera_dados_persona(pr_persona in varchar2,
              if r_avalistas_epr.nrctaav1 > 0 then
                 open c_pessoa(pr_cdcooper,r_avalistas_epr.nrctaav1);
                  fetch c_pessoa into r_pessoa;
-                  if c_pessoa%notfound then
-                    close c_pessoa;
-                    /*Message erro*/
-                  else
-
+                  if c_pessoa%found then
                     if r_avalistas_epr.nrctaav1 > 0 and r_avalistas_epr.nrctaav2 > 0 then
                       vr_filtro := '_1';
                     else
@@ -1995,10 +1991,7 @@ procedure pc_gera_dados_persona(pr_persona in varchar2,
              if r_avalistas_epr.nrctaav2 > 0 then
                 open c_pessoa(pr_cdcooper,r_avalistas_epr.nrctaav2);
                  fetch c_pessoa into r_pessoa;
-                  if c_pessoa%notfound then
-                    close c_pessoa;
-                    /*Message erro*/
-                  else
+                  if c_pessoa%found then
                     if r_avalistas_epr.nrctaav1 > 0 and r_avalistas_epr.nrctaav2 > 0 then
                       vr_filtro := '_2';
                     else
@@ -7197,6 +7190,7 @@ PROCEDURE pc_consulta_operacoes(pr_cdcooper  IN crawepr.cdcooper%TYPE       --> 
                vr_tab_tabela(vr_index).coluna8 := 'Aval conta '|| trim(gene0002.fn_mask_conta(r_busca_dados_descchq.nrdconta));
              
            END IF;
+           CLOSE c_busca_dados_descchq;
           
         END IF;
           --
@@ -7794,7 +7788,7 @@ PROCEDURE pc_consulta_proposta_limite(pr_cdcooper IN crapass.cdcooper%TYPE      
        rw_crapbpr cr_crapbpr%ROWTYPE;
        
    CURSOR cr_crawepr IS
-    SELECT c.dtlibera, c.vlemprst
+    SELECT c.dtlibera, c.vlemprst, c.idfiniof
     FROM crawepr c
     WHERE c.cdcooper = pr_cdcooper
     AND   c.nrdconta = pr_nrdconta
@@ -8075,7 +8069,7 @@ PROCEDURE pc_consulta_proposta_limite(pr_cdcooper IN crapass.cdcooper%TYPE      
       vr_totslddeved := r_crwepr.vlemprst - vr_totslddeved;
       
       /*Quando não financiar IOF, descontar IOF + Tarifa - bug 20969*/
-      if vr_idfiniof = 0 then
+      if r_crwepr.idfiniof = 0 then
         vr_totslddeved := vr_totslddeved - vr_vlrdoiof - vr_vlrtarif;
       end if;
       
@@ -12327,6 +12321,7 @@ PROCEDURE pc_detalhes_tit_bordero(pr_cdcooper       in crapcop.cdcooper%type   -
                vr_idtabtitulo := vr_idtabtitulo + 1;
         END LOOP;      
       END IF; 
+      close cr_crapcbd;
       ELSE -- bordero ainda esta aberto
         OPEN cr_crapass;
         FETCH cr_crapass INTO rw_crapass;
@@ -12359,6 +12354,7 @@ PROCEDURE pc_detalhes_tit_bordero(pr_cdcooper       in crapcop.cdcooper%type   -
                  vr_idtabtitulo := vr_idtabtitulo + 1;
           END LOOP;      
         END IF; 
+        close cr_crapcbd;
          
         /*Faz calculo de liquidez e concentracao e atualiza as criticas*/
         DSCT0002.pc_atualiza_calculos_pagador( pr_cdcooper => pr_cdcooper
