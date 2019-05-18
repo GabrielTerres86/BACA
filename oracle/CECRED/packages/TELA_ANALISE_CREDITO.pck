@@ -824,7 +824,9 @@ create or replace package body cecred.TELA_ANALISE_CREDITO is
   /*Socios conta PJ*/
   cursor c_socios(pr_cdcooper in number,
                   pr_nrdconta in number) is
-  select s.nrcpfcgc
+  select s.cdcooper,
+         s.nrdctato,
+         s.nrcpfcgc
     from crapavt s
    where s.cdcooper = pr_cdcooper
      and s.tpctrato = 6 /*procurad*/ 
@@ -2063,26 +2065,27 @@ procedure pc_gera_dados_persona(pr_persona in varchar2,
       /*QUADRO SOCIETARIO*/
       vr_nrfiltro := 0;
       for r_socios in c_socios(pr_cdcooper,pr_nrdconta) loop
-         -- Buscar informações da conta com o cpf  
-         for r_outras_contas in c_outras_contas(pr_cdcooper,r_socios.nrcpfcgc) loop
+         open c_pessoa(r_socios.cdcooper, r_socios.nrdctato);
+          fetch c_pessoa into r_pessoa;
+           if c_pessoa%found then
 
-            vr_nrfiltro := vr_nrfiltro+1;
-            vr_filtro := '_'||to_char(vr_nrfiltro);
-            pc_gera_dados_persona(pr_persona => 'QS '||r_outras_contas.nrdconta,
-                                  pr_persona_filtro => 'quadro'||vr_filtro,
-                                  pr_cdcooper => pr_cdcooper,
-                                  pr_nrdconta => r_outras_contas.nrdconta,
-                                  pr_idpessoa => r_outras_contas.idpessoa,
-                                  pr_nrcpfcgc => r_outras_contas.nrcpfcgc,
-                                  pr_inpessoa => r_outras_contas.inpessoa,
-                                  pr_xmlOut => vr_xml);
+              vr_nrfiltro := vr_nrfiltro+1;
+              vr_filtro := '_'||to_char(vr_nrfiltro);
+              pc_gera_dados_persona(pr_persona => 'QS '||r_pessoa.nrdconta,
+                                    pr_persona_filtro => 'quadro'||vr_filtro,
+                                    pr_cdcooper => pr_cdcooper,
+                                    pr_nrdconta => r_pessoa.nrdconta,
+                                    pr_idpessoa => r_pessoa.idpessoa,
+                                    pr_nrcpfcgc => r_pessoa.nrcpfcgc,
+                                    pr_inpessoa => r_pessoa.inpessoa,
+                                    pr_xmlOut => vr_xml);
 
-                                  pc_escreve_xml(pr_xml            => vr_dsxmlret,
-                                  pr_texto_completo => vr_string_completa,
-                                  pr_texto_novo     => vr_xml,
-                                  pr_fecha_xml      => TRUE);
+                                    pc_escreve_xml(pr_xml            => vr_dsxmlret,
+                                    pr_texto_completo => vr_string_completa,
+                                    pr_texto_novo     => vr_xml,
+                                    pr_fecha_xml      => TRUE);
 
-          end loop;
+           end if;
       end loop;      
       /*FIM-QUADRO SOCIETARIO*/   
       
@@ -10495,7 +10498,7 @@ PROCEDURE pc_busca_rendas_aut(pr_cdcooper IN crapass.cdcooper%TYPE
       -- Somente os ultimos 4 Registros
       if vr_index > 4 then
         exit;
-      end if;
+      end if;a
       
     end loop;
     
