@@ -8487,16 +8487,17 @@ PROCEDURE pc_consulta_proposta_cc (pr_cdcooper  IN crawepr.cdcooper%TYPE       -
   from craptdb t,
        crapcob c,
        crapsab s
-  where t.cdcooper = c.cdcooper
-  and   t.nrdconta = c.nrdconta
-  and   c.nrdocmto = t.nrdocmto
-  and   s.cdcooper = c.cdcooper
-  and   s.nrdconta = c.nrdconta
-  and   s.nrinssac = c.nrinssac
-  and   t.cdcooper = pr_cdcooper
+  where t.cdcooper = pr_cdcooper
   and   t.nrdconta = pr_nrdconta
   and   t.nrctrlim = pr_nrctrato
-  and   t.nrborder = pr_nrborder;
+  and   t.nrborder = pr_nrborder 
+  and   c.cdcooper = t.cdcooper
+  and   c.nrdconta = t.nrdconta
+  and   c.nrdocmto = t.nrdocmto
+  and   c.nrcnvcob = t.nrcnvcob
+  and   s.cdcooper = c.cdcooper
+  and   s.nrdconta = c.nrdconta
+  and   s.nrinssac = c.nrinssac;
   
   /*Chave para pesquisa da crítica do título*/
   cursor c_consulta_chave (pr_nrborder craptdb.nrborder%TYPE
