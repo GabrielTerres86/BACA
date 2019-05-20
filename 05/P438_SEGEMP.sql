@@ -206,31 +206,31 @@ insert into tbepr_subsegmento (CDCOOPER, IDSEGMENTO, IDSUBSEGMENTO, DSSUBSEGMENT
 values (17, 2, 21, 'Credito Empreendedor', 7081, 0, 0, 0.00, 0.00, 0.00, 77);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (1, 1, 3, 2, 30000.00);
+values (1, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (1, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (2, 1, 3, 2, 30000.00);
+values (2, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (2, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (3, 1, 3, 2, 30000.00);
+values (3, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (3, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (4, 1, 3, 2, 30000.00);
+values (4, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (4, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (5, 1, 3, 2, 30000.00);
+values (5, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (5, 1, 10, 0, 0.00);
@@ -239,40 +239,40 @@ insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISS
 values (6, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (6, 1, 3, 2, 30000.00);
+values (6, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (7, 1, 3, 2, 30000.00);
+values (7, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (7, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (8, 1, 3, 2, 30000.00);
+values (8, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (8, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (9, 1, 3, 2, 30000.00);
+values (9, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (9, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (10, 1, 3, 2, 30000.00);
+values (10, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (10, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (11, 1, 3, 2, 30000.00);
+values (11, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (11, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (12, 1, 3, 2, 30000.00);
+values (12, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (12, 1, 10, 0, 0.00);
@@ -281,10 +281,10 @@ insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISS
 values (13, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (13, 1, 3, 2, 30000.00);
+values (13, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (14, 1, 3, 2, 30000.00);
+values (14, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (14, 1, 10, 0, 0.00);
@@ -293,7 +293,7 @@ insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISS
 values (15, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (15, 1, 3, 2, 30000.00);
+values (15, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (16, 1, 3, 2, 30000.00);
@@ -302,37 +302,37 @@ insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISS
 values (16, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (17, 1, 3, 2, 30000.00);
+values (17, 1, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (17, 1, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (1, 2, 3, 2, 10000.00);
+values (1, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (1, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (2, 2, 3, 2, 10000.00);
+values (2, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (2, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (3, 2, 3, 2, 10000.00);
+values (3, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (3, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (4, 2, 3, 2, 10000.00);
+values (4, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (4, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (5, 2, 3, 2, 10000.00);
+values (5, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (5, 2, 10, 0, 0.00);
@@ -341,40 +341,40 @@ insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISS
 values (6, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (6, 2, 3, 2, 10000.00);
+values (6, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (7, 2, 3, 2, 10000.00);
+values (7, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (7, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (8, 2, 3, 2, 10000.00);
+values (8, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (8, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (9, 2, 3, 2, 10000.00);
+values (9, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (9, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (10, 2, 3, 2, 10000.00);
+values (10, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (10, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (11, 2, 3, 2, 10000.00);
+values (11, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (11, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (12, 2, 3, 2, 10000.00);
+values (12, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (12, 2, 10, 0, 0.00);
@@ -383,16 +383,16 @@ insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISS
 values (13, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (13, 2, 3, 2, 10000.00);
+values (13, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (14, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (14, 2, 3, 2, 10000.00);
+values (14, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (15, 2, 3, 2, 10000.00);
+values (15, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (15, 2, 10, 0, 0.00);
@@ -401,13 +401,13 @@ insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISS
 values (16, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (16, 2, 3, 2, 10000.00);
+values (16, 2, 3, 2, 30000.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
 values (17, 2, 10, 0, 0.00);
 
 insert into tbepr_segmento_canais_perm (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-values (17, 2, 3, 2, 10000.00);
+values (17, 2, 3, 0, 30000.00);
 
 insert into tbepr_segmento_tppessoa_perm (CDCOOPER, IDSEGMENTO, TPPESSOA)
 values (1, 1, 1);
