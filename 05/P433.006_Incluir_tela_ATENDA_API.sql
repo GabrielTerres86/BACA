@@ -76,7 +76,7 @@ BEGIN
         ('GRAVA_SERVICOS_COOP'
         ,'TELA_ATENDA_API'
         ,'pc_grava_servicos_coop'
-        ,'pr_nrdconta,pr_idservico_api,pr_dtadesao,pr_idsituacao_adesao,pr_ls_finalidades,pr_ls_desenvolvedores,pr_cddopcao'
+        ,'pr_nrdconta,pr_idservico_api,pr_dtadesao,pr_idsituacao_adesao,pr_tp_autorizacao,pr_ls_finalidades,pr_ls_desenvolvedores,pr_cddopcao'
         ,vr_nrseqrdr);
 		
 	
