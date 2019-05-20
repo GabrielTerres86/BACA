@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 30/07/2018
+    Data    : Maio/2010                   Ultima atualizacao: 17/05/2019
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -125,6 +125,8 @@
 			               Para não ter problema ao cadastrar o cooperado como APOSENTADO.
 						   Alcemir Mouts (INC0011837).
             
+			  17/05/2019 - Correcao INC00015454 na chamada da procedure pc_valida_emp_conta_salari (Augusto - SUPERO). 
+							
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -709,12 +711,12 @@ PROCEDURE Valida_Dados:
                    aux_cdcritic = 40.
                LEAVE Valida.
             END.
-
+            
         { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
           RUN STORED-PROCEDURE pc_valida_emp_conta_salario
-          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdcooper, /* Cooperativa */
-                                               INPUT crapass.nrdconta, /* Número da conta */
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                               INPUT par_nrdconta, /* Número da conta */
                                                INPUT DECI(par_nrcpfemp), /*CNPJ da empresa*/
                                                INPUT par_cdempres, /*Código da empresa*/
                                                OUTPUT ""). /* Descriçao da crítica */
