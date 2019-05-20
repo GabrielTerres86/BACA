@@ -25,6 +25,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
    
    07/03/2017 - Ajuste para aumentar o tamanho da variável vr_jobname (Adriano - SD 625356 ).
    
+   17/05/2019 - Ajuste para evitar criar agendamentos já expirados na execução desta rotina.
+                Evitando com isso, que o processo de efetivação dos agendamentos rode em duplicidade 
+                durante o dia, igual ao erro que tivemos em 15/05/2019. (Wagner  - PRB004791).
+   
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
     vr_cdprogra    VARCHAR2(40) := 'PC_JOB_AGENDEBTED';
@@ -64,7 +68,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
        AND cop.flgativo = 1;
 
     CURSOR cr_agendamento IS
+      WITH horarios AS (
       SELECT trim(substr(craptab.dstextab,1,2))||':'||trim(substr(craptab.dstextab,3,2)) hora_exec,
+             trim(substr(craptab.dstextab,1,2))||trim(substr(craptab.dstextab,3,2)) hora_exec_n,
              1 ordem_exec
         FROM craptab
        WHERE craptab.nmsistem = 'CRED'
@@ -74,6 +80,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
          AND craptab.cdcooper = 0
       UNION ALL
       SELECT trim(substr(craptab.dstextab,6,2))||':'||trim(substr(craptab.dstextab,8,2)) hora_exec,
+             trim(substr(craptab.dstextab,6,2))||trim(substr(craptab.dstextab,8,2)) hora_exec_n,
              2 ordem_exec
         FROM craptab
        WHERE craptab.nmsistem = 'CRED'
@@ -83,13 +90,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
          AND craptab.cdcooper = 0
       UNION ALL
       SELECT trim(substr(craptab.dstextab,11,2))||':'||trim(substr(craptab.dstextab,13,2)) hora_exec,
+             trim(substr(craptab.dstextab,11,2))||trim(substr(craptab.dstextab,13,2)) hora_exec_n,
              3 ordem_exec
         FROM craptab
        WHERE craptab.nmsistem = 'CRED'
          AND craptab.tptabela = 'GENERI'
          AND craptab.cdempres = 00
          AND craptab.cdacesso = 'HRAGENDEBTED'
-         AND craptab.cdcooper = 0;
+         AND craptab.cdcooper = 0)
+      -- Só irá gerar os agendamentos futuros,
+      -- horários já passados serão ignorados.  
+      SELECT h.hora_exec,
+             hora_exec_n,
+             ordem_exec
+        FROM horarios h
+       WHERE hora_exec_n >= to_char(SYSDATE,'hh24mi') 
+       ORDER BY ordem_exec;
     
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
@@ -197,7 +213,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
         --> Executar programa
         pc_crps705 (pr_cdcooper => pr_cdcooper, 
                     pr_flgresta => 0, 
-					pr_execucao => TO_NUMBER(SUBSTR(pr_dsjobnam,12,1)),
+				          	pr_execucao => TO_NUMBER(SUBSTR(pr_dsjobnam,12,1)),
                     pr_stprogra => vr_stprogra,
                     pr_infimsol => vr_infimsol, 
                     pr_cdcritic => vr_cdcritic, 
