@@ -51,7 +51,7 @@ BEGIN
 
      CURSOR cur_valida_exec_unica (prm_module VARCHAR2) IS
        SELECT COUNT(*) qtde
-         FROM v$session 
+         FROM gv$session 
         WHERE module = prm_module
           AND status = 'ACTIVE';     
 
