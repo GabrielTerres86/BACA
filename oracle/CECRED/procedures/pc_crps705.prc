@@ -1,6 +1,6 @@
 CREATE OR REPLACE PROCEDURE cecred.PC_CRPS705 ( pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
                                                ,pr_flgresta IN PLS_INTEGER             --> Flag padrão para utilização de restart
-											   ,pr_execucao IN PLS_INTEGER             --> Ordem de execução no dia
+											                         ,pr_execucao IN PLS_INTEGER             --> Ordem de execução no dia
                                                ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                                                ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
                                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
@@ -44,17 +44,25 @@ BEGIN
        WHERE cop.cdcooper = pr_cdcooper
          AND cop.flgativo = 1;
      rw_crapcop cr_crapcop%ROWTYPE;
+     
+     CURSOR cur_valida_exec_unica (prm_module VARCHAR2) IS
+       SELECT COUNT(*) qtde
+         FROM v$session 
+        WHERE module = prm_module
+          AND status = 'ACTIVE';     
 
      --Registro do tipo calendario
-     rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+     rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;    
 
      --Variaveis Locais
-     vr_flsgproc     BOOLEAN;
-     vr_cdcritic     INTEGER;
-     vr_dtmvtopg     DATE;
-     vr_cdprogra     VARCHAR2(10);
-     vr_dstransa     VARCHAR2(4000);
-     vr_dtmvtoan     DATE;
+     vr_flsgproc      BOOLEAN;
+     vr_cdcritic      INTEGER;
+     vr_dtmvtopg      DATE;
+     vr_cdprogra      VARCHAR2(10);
+     vr_cdprogra_ctrl VARCHAR2(30);
+     vr_dstransa      VARCHAR2(4000);
+     vr_dtmvtoan      DATE;
+     vr_qtd_exec      NUMBER;
      
      --Variaveis para retorno de erro
      vr_dscritic    VARCHAR2(4000);
@@ -81,12 +89,30 @@ BEGIN
    -- Inicio Bloco Principal pc_crps705
    ---------------------------------------
    BEGIN
-
+     
      --Atribuir o nome do programa que está executando
-     vr_cdprogra:= 'CRPS705';
+     vr_cdprogra      := 'CRPS705';
+     vr_cdprogra_ctrl := 'PC_CRPS705_'||pr_cdcooper;
+     
+     -- Garantir que não tenha outro processo executando ao mesmo tempo da mesma cooperativa
+     -- O Controle é feito pela session do ORacle gerada pelo "GENE0001.pc_informa_acesso".
+     OPEN cur_valida_exec_unica(vr_cdprogra_ctrl);
+       FETCH cur_valida_exec_unica
+        INTO vr_qtd_exec;
+     CLOSE cur_valida_exec_unica;    
+     -- Aborta o processo caso já exista uma sessão para a mesma cooperativa.
+     IF vr_qtd_exec > 0 THEN
+         -- Envio centralizado de log de erro
+         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                   ,pr_ind_tipo_log => 2 -- Erro tratato
+                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                    || vr_cdprogra_ctrl || ' --> '
+                                                    || 'Já existe uma execução deste programa em andamento.' );     
+         RAISE vr_exc_saida;                                           
+     END IF;       
 
      -- Incluir nome do módulo logado
-     GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS705'
+     GENE0001.pc_informa_acesso(pr_module => vr_cdprogra_ctrl
                                ,pr_action => NULL);
 
      -- Verifica se a cooperativa esta cadastrada
@@ -163,7 +189,7 @@ BEGIN
      pc_limpa_tabela;
 
      /* Valido somente para InternetBank, por isto pac 90 */
-    PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
+     PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
                                            ,pr_nrdconta => 0             --Numero da Conta
                                            ,pr_cdagenci => 90            --Código da Agencia
                                            ,pr_dtmvtolt => vr_dtmvtopg   --Data Proximo Pagamento
@@ -217,7 +243,7 @@ BEGIN
                                 ,pr_dtmvtopg    => vr_dtmvtopg         --Data Pagamento
                                 ,pr_inproces    => rw_crapdat.inproces --Indicador processo
                                 ,pr_flsgproc    => vr_flsgproc         --Flag segundo processamento
-								,pr_execucao    => pr_execucao         --Ordem de execução no dia
+						                		,pr_execucao    => pr_execucao         --Ordem de execução no dia
                                 ,pr_cdcritic    => vr_cdcritic         --Codigo da Critica
                                 ,pr_dscritic    => vr_dscritic);       --Descricao da critica;
      --Se ocorreu erro
