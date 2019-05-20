@@ -12,6 +12,8 @@
     Alteracoes: 
                              
                  04/12/2017 - Melhoria 458, adicionado coluna cpfcgrcb e table tt-crapcme2 - Antonio R. Junior (mouts)
+                 08/05/2019 - Incluso novo parametro nrdconta na tt-crapcme2.
+                             RITM0011928 - Jose Dill (Mouts)
                              
 .............................................................................*/
 
@@ -54,4 +56,5 @@ DEF TEMP-TABLE tt-crapcme2 NO-UNDO
     FIELD cdcooper LIKE crapcop.cdcooper
     FIELD nrcpfcgc AS CHAR
     FIELD tpoperac AS CHAR
-    FIELD dtmvtolt LIKE crapcme.dtmvtolt.
+    FIELD dtmvtolt LIKE crapcme.dtmvtolt
+    FIELD nrdconta LIKE crapcme.nrdconta.
