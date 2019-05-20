@@ -573,7 +573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                25/01/2018 - P510 - Ajustes na pc_gps_pagamento para receber o tipo Especie ou COnta e 
                             propagar para a gravacao na LGP passando por pc_gps_validar_sicredi, pc_gps_arrecadar_sicredi
                             e pc_atualiza_pagamento (Marcos-Envolti)      
-							
+
 			   14/05/2019 - INC0015051 - Ajustada e padronizada mensagem de retorno quando uma guia de SEFAZ DARE for inserida nos campos de tributos 
                             indevidamente.
                             (f0032175 - Guilherme Kuhnen).
@@ -6786,7 +6786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      Sistema : Rotinas acessadas pelas telas de cadastros Web
      Sigla   : INSS
      Autor   : Renato Darosci - Supero
-     Data    : Setembro/2016.                  Ultima atualizacao: 24/04/2019
+     Data    : Setembro/2016.                  Ultima atualizacao: 30/09/2016
 
      Dados referentes ao programa:
 
@@ -6801,9 +6801,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 							  
                  09/01/2019 - Ajustada a rotina para considerar arquivos criptografados e nao criptografados
                               (PTASK0010307 André MoutS).  
-							  
-                 24/04/2019 - RITM0011933 - Ajuste para compactar uma pasta e não mais uma lista
-                              de arquivos, que quando muito grande, causava erro (Andreatta-Mouts)
 							  
     ..............................................................................*/
     -- CURSORES
@@ -6821,11 +6818,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     vr_dtlibera       CONSTANT DATE := to_date('27/09/2016','DD/MM/YYYY');
 
     -- VARIÁVEIS
-
+    vr_tbdelete       vr_tab_delete; -- Guarda o nome dos arquivos a serem excluídos
     vr_dtvalida       DATE;
     vr_dsdireto       VARCHAR2(250);
-    vr_nmarqzip       VARCHAR2(500);
-    vr_nmpatzip       VARCHAR2(50);
+    vr_nmarqzip       VARCHAR2(50);
     vr_dsprocur       VARCHAR2(50);
     vr_list_arquivos  VARCHAR2(10000);
     vr_array_arquivo  gene0002.typ_split;
@@ -6836,6 +6832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     vr_typ_saida      VARCHAR2(3);
     vr_des_reto       VARCHAR2(30);
     vr_nmarqcri       VARCHAR2(1000);
+    vr_arquivos       VARCHAR2(32767);
     vr_arqcript       BOOLEAN;
 
     vr_cdcooper       NUMBER;
@@ -6951,6 +6948,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     vr_dsprocur := 'GPS.'||LPAD(pr_cdidenti,14,'0')||'.'||to_char(vr_dtvalida,'RRRRMMDD')||'.*';
 
     -- Retorna a lista dos arquivos do diretório, conforme máscara
+/*    gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
+                              ,pr_pesq     => vr_dsprocur
+                              ,pr_listarq  => vr_list_arquivos
+                              ,pr_des_erro => vr_dscritic);*/
     gene0001.pc_OScommand_Shell(pr_des_comando => 'ls '||vr_dsdireto || '/' || vr_dsprocur ||' 2> /dev/null'
                                ,pr_typ_saida   => vr_dscritic
                                ,pr_des_saida   => vr_list_arquivos);
@@ -6977,28 +6978,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     vr_dscomora:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_EXEC_SHELL');
     vr_dsdirbin:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'ROOT_CECRED_BIN');
 
-    -- Montar o nome da pasta e do arquivo ZIP
-    vr_nmpatzip := 'GPS.'||LPAD(pr_cdidenti,14,'0')||'.'||to_char(vr_dtvalida,'RRRRMMDD')||'.'||vr_cdoperad;
-    vr_nmarqzip := vr_nmpatzip||'.zip';    
-    
-    -- Criar a pasta
-    vr_comando:= ' mkdir ' ||vr_dsdireto||'/'||vr_nmpatzip;
-
-    -- Executar o comando no unix
-    GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                          ,pr_des_comando => vr_comando
-                          ,pr_typ_saida   => vr_typ_saida
-                          ,pr_des_saida   => vr_nmarqcri);
-
-    -- Se ocorreu erro dar RAISE
-    IF vr_typ_saida = 'ERR' THEN
-      pr_des_erro := 'Nao foi possivel executar comando unix: '||
-                      vr_comando||' - '||vr_nmarqcri;
-
-      -- retornando ao programa chamador
-      RAISE vr_exc_saida;
-    END IF;
-    
     -- Percorrer todos os arquivos encontrados na pasta
     FOR ind IN vr_array_arquivo.FIRST..vr_array_arquivo.LAST LOOP
       
@@ -7061,16 +7040,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
           END IF;
         END IF;
 
-        -- Move o arquivo para a pasta a zipar
-        GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_nmarqcri||' '||vr_dsdireto||'/'||vr_nmpatzip);
+        -- Guarda o nome do arquivo na lista para formar o arquivo ZIP
+        vr_arquivos := vr_arquivos||vr_nmarqcri||' ';
 
+        -- Guarda o nome do arquivo na lista de arquivos que serão aparados ao fim do processamento
+        vr_tbdelete(vr_tbdelete.count()+1) := vr_nmarqcri;
       END IF;
     END LOOP;
+
+    -- Montar o nome do arquivo ZIP
+    vr_nmarqzip := 'GPS.'||LPAD(pr_cdidenti,14,'0')||'.'||to_char(vr_dtvalida,'RRRRMMDD')||'.'||vr_cdoperad||'.zip';
 
     -- Compactar os arquivos
     GENE0002.pc_zipcecred(pr_cdcooper => pr_cdcooper
                          ,pr_tpfuncao => 'A'
-                         ,pr_dsorigem => vr_dsdireto||'/'||vr_nmpatzip||'/*'
+                         ,pr_dsorigem => vr_arquivos
                          ,pr_dsdestin => vr_dsdireto||'/'||vr_nmarqzip
                          ,pr_dspasswd => NULL
                          ,pr_des_erro => vr_dscritic);
@@ -7079,6 +7063,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     IF vr_dscritic IS NOT NULL THEN
       pr_des_erro := 'Erro ao compactar arquivos: '||vr_dscritic;
       RAISE vr_exc_saida;
+    END IF;
+
+    -- Se há arquivos para excluir
+    IF vr_tbdelete.COUNT() > 0 THEN
+      -- Percorre todos os arquivos
+      FOR ind IN vr_tbdelete.FIRST..vr_tbdelete.LAST LOOP
+        -- Exclui o arquivo temporario
+        GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_tbdelete(ind));
+      END LOOP;
     END IF;
 
     -- Efetuar a cópia do ZIP gerado para o diretório da internet
@@ -7099,10 +7092,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
        END IF;
     END IF;
 
-    -- Exclui o arquivo ZIP e a pasta de origem
+    -- Exclui o arquivo ZIP
     GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_dsdireto||'/'||vr_nmarqzip);
-    GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm -r -f '||vr_dsdireto||'/'||vr_nmpatzip);
-    
 
     -- Criar XML de retorno
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqzip>' || vr_nmarqzip || '</nmarqzip>');
