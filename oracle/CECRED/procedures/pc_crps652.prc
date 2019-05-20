@@ -909,6 +909,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
        vr_comando         VARCHAR2(1000);
        vr_typ_saida       VARCHAR2(1000);
        vr_setlinha        VARCHAR2(5000);
+	   vr_nmarquivo		  VARCHAR2(5000); -- Yuri Mouts 11/03
        vr_nrdrowid        ROWID;
        vr_menorida        BOOLEAN;
        vr_tem_craplcr     BOOLEAN;
@@ -6338,35 +6339,46 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
        FOR idx IN 1..8 LOOP
          -- Montar nome do arquivo de cada clob
          vr_setlinha:= vr_caminho|| vr_dtmvtolt || '_' ||vr_tempoatu;
+		 vr_nmarquivo := vr_dtmvtolt || '_' ||vr_tempoatu;  -- Yuri Mouts 11/03
          -- Complementar a string
          CASE idx
            WHEN 1 THEN
+			 vr_nmarquivo:= vr_nmarquivo ||'_carga_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_carga_in.txt';      /* Carga */
              vr_tparquiv:= 'completa';
            WHEN 2 THEN
+			 vr_nmarquivo:= vr_nmarquivo ||'_cadastral_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_cadastral_in.txt';  /* Carga MC */
              vr_tparquiv:= 'cadastral';
            WHEN 3 THEN
+			 vr_nmarquivo:= vr_nmarquivo ||'_financeira_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_financeira_in.txt'; /* Carga MF */
              vr_tparquiv:= 'financeira';
            WHEN 4 THEN
+			 vr_nmarquivo:= vr_nmarquivo ||'_gar_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_gar_in.txt';        /* Carga Garantia */
              vr_tparquiv:= 'garantia';
            WHEN 5 THEN
+			 vr_nmarquivo:= vr_nmarquivo ||'_rel_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_rel_in.txt';        /* Carga Relations */
              vr_tparquiv:= 'relation';
            WHEN 6 THEN
+			 vr_nmarquivo:= vr_nmarquivo ||'_pagamentos_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_pagamentos_in.txt'; /* Pagamentos */
              vr_tparquiv:= 'pagamentos';
            WHEN 7 THEN
+			 vr_nmarquivo:= vr_nmarquivo ||'_baixa_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_baixa_in.txt';      /* Baixas */
              vr_tparquiv:= 'baixa';
            WHEN 8 THEN
+			 vr_nmarquivo:= vr_nmarquivo ||'_pagboleto_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_pagboleto_in.txt';   /* Pagamentos Acordo */
              vr_tparquiv:= 'acordo';  
          END CASE;
          -- Salvar o nome de cada CLOB no vetor
-         vr_tab_nmclob(idx):= vr_setlinha;
+		 vr_tab_nmclob(idx):= vr_nmarquivo; -- Yuri Mouts 11/03
+       --vr_tab_nmclob(idx):= vr_setlinha;
+	     --
          -- Montar linha que sera gravada no arquivo
          vr_setlinha:= rpad('H',3,' ')||RPAD('AYLLOS',15,' ')||rpad('CYBER',15,' ')||RPAD(vr_tparquiv,10,' ')||
                        rpad('00000000',8,' ')||rpad(vr_dtmvtolt,8,' ')||chr(10);

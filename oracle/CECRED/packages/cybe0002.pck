@@ -33,6 +33,9 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0002 IS
   --              10/10/2017 - M434 - Adicionar dois novos parâmetros para atender o SPC/Brasil que usa chave 
   --                           de criptografia para o acesso ao SFTP. (Oscar)
   -- 
+  --			  11/03/2019 - XSLProcessor - Nao passar o diretório junto no nome do arquivo para chamados GENE0002
+  --						   Yuri - Mouts
+  --						   
   ---------------------------------------------------------------------------------------------------------------
 
   -- Funcao generica para buscar o nome resumido da cooperativa --
@@ -8662,8 +8665,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      pc_inicializa_clob;
 
      --Montar nome do arquivo
-     vr_setlinha := vr_caminho; -- Inicializa a variavel
-     vr_setlinha := vr_setlinha ||'CY_REAF_'||TO_CHAR(rw_crapdat.dtmvtoan,'DDMMYYYY')||'.txt'; /* Reabilitacao */
+     vr_setlinha := '';--vr_caminho; -- Inicializa a variavel -- Yuri Mouts
+     vr_setlinha := 'CY_REAF_'||TO_CHAR(rw_crapdat.dtmvtoan,'DDMMYYYY')||'.txt'; /* Reabilitacao */
+--   vr_setlinha := vr_setlinha ||'CY_REAF_'||TO_CHAR(rw_crapdat.dtmvtoan,'DDMMYYYY')||'.txt'; /* Reabilitacao */
 
      -- Monta o cabecalho do arquivo de reabilitação forcada de credito
      -- Verifica se existe registro para iniciar o processo
