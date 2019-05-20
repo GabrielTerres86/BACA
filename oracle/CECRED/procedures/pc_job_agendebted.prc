@@ -106,6 +106,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
         FROM horarios h
        WHERE hora_exec_n >= to_char(SYSDATE,'hh24mi') 
        ORDER BY ordem_exec;
+
+    CURSOR cr_job_duplicado(pr_job_name IN VARCHAR2) IS
+      SELECT COUNT(*) qtde
+        FROM dba_scheduler_jobs job
+       WHERE job.owner                = 'CECRED' --Fixo
+         AND job.job_name             LIKE pr_job_name||'%' -- mesmo job, mesma cooperativa e mesmo horário do dia
+         AND TRUNC(job.next_run_date) = TRUNC(SYSDATE); -- JOBS de hoje
+    
+    vr_qtexecucao_job NUMBER;
+    
     
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
@@ -167,24 +177,36 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
         
         FOR rw_agendamento IN cr_agendamento LOOP
           vr_jobname := 'PC_CRPS705_'||rw_agendamento.ordem_exec||rw_crapcop.cdcooper||'$';
-          vr_dsplsql := 'begin cecred.PC_JOB_AGENDEBTED(pr_cdcooper => '||rw_crapcop.cdcooper ||
-                                                      ',pr_cdprogra => '' PC_CRPS705  '''||
-                                                      ',pr_dsjobnam => '''||vr_jobname||'''); end;';
           
-          -- Faz a chamada ao programa paralelo atraves de JOB
-          gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper       --> Código da cooperativa
-                                ,pr_cdprogra  => vr_cdprogra       --> Código do programa
-                                ,pr_dsplsql   => vr_dsplsql        --> Bloco PLSQL a executar
-                                ,pr_dthrexe   => TO_TIMESTAMP(to_char((SYSDATE),'DD/MM/RRRR ')||rw_agendamento.hora_exec||':'||to_char(rw_crapcop.cdcooper,'fm00'),
-                                                                                'DD/MM/RRRR HH24:MI:SS') --> Incrementar mais 1 minuto
-                                ,pr_interva   => NULL                     --> apenas uma vez
-                                ,pr_jobname   => vr_jobname               --> Nome randomico criado
-                                ,pr_des_erro  => vr_dscritic);
+          -- Evitar gerar o mesmo job para o mesmo horário do dia
+          OPEN cr_job_duplicado(vr_jobname);
+            FETCH cr_job_duplicado
+             INTO vr_qtexecucao_job;
+          CLOSE cr_job_duplicado;   
+          
+          -- Se ainda não existe, permite a criação.
+          IF vr_qtexecucao_job = 0 THEN
+            
+            vr_dsplsql := 'begin cecred.PC_JOB_AGENDEBTED(pr_cdcooper => '||rw_crapcop.cdcooper ||
+                                                        ',pr_cdprogra => '' PC_CRPS705  '''||
+                                                        ',pr_dsjobnam => '''||vr_jobname||'''); end;';
+            
+            -- Faz a chamada ao programa paralelo atraves de JOB
+            gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper       --> Código da cooperativa
+                                  ,pr_cdprogra  => vr_cdprogra       --> Código do programa
+                                  ,pr_dsplsql   => vr_dsplsql        --> Bloco PLSQL a executar
+                                  ,pr_dthrexe   => TO_TIMESTAMP(to_char((SYSDATE),'DD/MM/RRRR ')||rw_agendamento.hora_exec||':'||to_char(rw_crapcop.cdcooper,'fm00'),
+                                                                                  'DD/MM/RRRR HH24:MI:SS') --> Incrementar mais 1 minuto
+                                  ,pr_interva   => NULL                     --> apenas uma vez
+                                  ,pr_jobname   => vr_jobname               --> Nome randomico criado
+                                  ,pr_des_erro  => vr_dscritic);
 
-          IF TRIM(vr_dscritic) is not null THEN
-            vr_dscritic := 'Falha na criacao do Job para execucao da '||vr_cdprogra||' (Coop:'||rw_crapcop.cdcooper||' Job: '||vr_jobname||'): '|| vr_dscritic;
-            RAISE vr_exc_email;              
+            IF TRIM(vr_dscritic) is not null THEN
+              vr_dscritic := 'Falha na criacao do Job para execucao da '||vr_cdprogra||' (Coop:'||rw_crapcop.cdcooper||' Job: '||vr_jobname||'): '|| vr_dscritic;
+              RAISE vr_exc_email;              
+            END IF;
           END IF;
+            
         END LOOP;
       END LOOP;  
     ELSE
