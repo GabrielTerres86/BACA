@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 30/07/2018
+    Data    : Maio/2010                   Ultima atualizacao: 17/05/2019
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -120,6 +120,8 @@
 						   na camada do progress (INC0018113).
 						   
 	          30/07/2018 - Feito a inversao das chamadas da procedures pc_revalida_nome_cad_unc e pc_revalida_cnpj_cad_unc. (Kelvin)
+
+			  17/05/2019 - Correcao INC00015454 na chamada da procedure pc_valida_emp_conta_salari (Augusto - SUPERO). 
 							
 .............................................................................*/
 
