@@ -67,9 +67,9 @@ begin
 	update crapcob set dsdinstr = ' ' where rowid = 'AAAS/0ABhAABeq9AAN';
 	update crapcob set dsdinstr = ' ' where rowid = 'AAAS/0ABbAABBqtAAJ';
 	update crapcob set dsdinstr = ' ' where rowid = 'AAAS/0ABbAAOIKTAAI';
-  commit;
-  EXCEPTION
-    WHEN others THEN
-      CECRED.pc_internal_exception;
-    rollback;
+	commit;
+  EXCEPTION
+    WHEN others THEN
+	  CECRED.pc_internal_exception;
+	  rollback;
 end;
