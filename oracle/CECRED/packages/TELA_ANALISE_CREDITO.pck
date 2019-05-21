@@ -276,6 +276,19 @@ PROCEDURE pc_consulta_analise_credito(pr_cdcooper  IN crawepr.cdcooper%TYPE     
                                  ,pr_cdcritic OUT PLS_INTEGER                 --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2                    --> Descricao da critica
                                  ,pr_dsxmlret OUT CLOB);
+                                 
+  PROCEDURE pc_detalhes_tit_bordero(pr_cdcooper       in crapcop.cdcooper%type   --> Cooperativa conectada
+                                   ,pr_nrdconta           in crapass.nrdconta%type   --> Conta do associado
+                                   ,pr_nrborder           in crapbdt.nrborder%type   --> Numero do bordero
+                                   ,pr_chave              in VARCHAR2                --> Lista de 'nosso numero' a ser pesquisado
+                                   ,pr_nrinssac           out crapsab.nrinssac%TYPE   --> Inscrição do sacado
+                                   ,pr_nmdsacad           out crapsab.nmdsacad%TYPE   --> Nome do Sacado
+                                   ,pr_tab_dados_biro     out  typ_tab_dados_biro    --> Tabela de retorno biro
+                                   ,pr_tab_dados_detalhe  out  typ_tab_dados_detalhe --> Tabela de retorno detalhe
+                                   ,pr_tab_dados_critica  out  typ_tab_dados_critica --> Tabela de retorno critica
+                                   ,pr_cdcritic           out pls_integer            --> Codigo da critica
+                                   ,pr_dscritic           out varchar2               --> Descricao da critica
+                                 ) ;                                  
 
   PROCEDURE pc_consulta_proposta_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE       --> Cooperativa
                                     ,pr_nrdconta  IN crawepr.nrdconta%TYPE       --> Conta
@@ -8442,7 +8455,11 @@ PROCEDURE pc_consulta_proposta_cc (pr_cdcooper  IN crawepr.cdcooper%TYPE       -
 
     Objetivo  : Consulta proposta do borderô de desconto de títulos
 
-    Alteracoes: 
+    Alteracoes: Adequações na rotina para ler as informações de forma correta,
+                21/05/2018 - Rafael Monteir (Mouts) 
+                
+                
+                
     
     TODO's: Valor liquido é valor calculado.
   ..............................................................................*/
@@ -8521,6 +8538,10 @@ PROCEDURE pc_consulta_proposta_cc (pr_cdcooper  IN crawepr.cdcooper%TYPE       -
         ,c.nrdctabb
         ,c.cdbandoc
         ,c.nrinssac --cpf/cnpj sem formação para buscar o volume carteira
+        ,t.cdbandoc || ';' ||
+         t.nrdctabb || ';' ||
+         t.nrcnvcob || ';' ||
+         t.nrdocmto chave
   from craptdb t,
        crapcob c,
        crapsab s
@@ -8536,20 +8557,6 @@ PROCEDURE pc_consulta_proposta_cc (pr_cdcooper  IN crawepr.cdcooper%TYPE       -
   and   s.nrdconta = c.nrdconta
   and   s.nrinssac = c.nrinssac;
   
-  /*Chave para pesquisa da crítica do título*/
-  cursor c_consulta_chave (pr_nrborder craptdb.nrborder%TYPE
-                          ,pr_nrdocmto craptdb.nrdocmto%TYPE) IS
-    select c.cdbandoc || ';' ||
-           c.nrdctabb || ';' ||
-           c.nrcnvcob || ';' ||
-           c.nrdocmto as chave
-     from craptdb c
-    where c.cdcooper = pr_cdcooper
-    and   c.nrdconta = pr_nrdconta
-    and   c.nrctrlim = pr_nrctrato
-    and   c.nrborder = pr_nrborder
-    and   c.nrdocmto = pr_nrdocmto;
-    
   /*Titulos a Vencer para para Volume Carteira Descontada*/
   cursor c_titulos_a_vencer (pr_nrinssac crapcob.nrinssac%TYPE) is
     select nvl(sum(c.vltitulo) - sum(vldpagto),0) as volCartVencer
@@ -8564,10 +8571,13 @@ PROCEDURE pc_consulta_proposta_cc (pr_cdcooper  IN crawepr.cdcooper%TYPE       -
                         
   --Variáveis
   vr_string         CLOB;
+  vr_string_aux     CLOB;
   vr_string_critica CLOB;
   vr_index          NUMBER;
   vr_index2         NUMBER;
-  vr_str_criticas   CLOB;
+  vr_idx_criticas   NUMBER;
+  vr_idx_secundar   NUMBER;
+
   vr_dsxml_mensagem CLOB;
   vr_dsxmlret CLOB;  
   
@@ -8599,9 +8609,15 @@ PROCEDURE pc_consulta_proposta_cc (pr_cdcooper  IN crawepr.cdcooper%TYPE       -
   vr_rel_txdanual    NUMBER;
 
   vr_vlliquid_total  craptdb.vlliquid%type := 0;
+  --
+  vr_tab_dados_biro         typ_tab_dados_biro;
+  vr_tab_dados_detalhe      typ_tab_dados_detalhe;  
+  vr_tab_dados_critica      typ_tab_dados_critica;
+  vr_nrinssac          crapsab.nrinssac%TYPE;
+  vr_nmdsacad          crapsab.nmdsacad%TYPE;  
 
                                          
-begin
+BEGIN
 
   vr_string := '<subcategoria>'||
                '<tituloTela>Borderô de Desconto de Títulos</tituloTela>';
@@ -8631,32 +8647,32 @@ begin
                            fn_tag('Taxa Diária',trim(to_char(vr_rel_txdiaria,'990d999'))|| '%');
     
    vr_index := 1;
+   vr_idx_secundar := 1;
    vr_index2 := 0; --para a tabela de criticas
    
    vr_tab_tabela.delete;
    vr_tab_tabela_secundaria.delete;
 
-    /*Monta cabeçalho da tabela com as críticas dos títulos do borderô*/
-    vr_string_critica := vr_string_critica||'<campo>
-                                             <nome>Crítica dos Títulos</nome>
+
+   /*Monta cabeçalho da tabela com as críticas dos títulos do borderô*/
+   vr_string_critica := vr_string_critica||'<campo>
+                                             <nome>Críticas dos Títulos</nome>
                                              <tipo>table</tipo>
                                              <valor>
                                              <linhas>';
-
    --Para cada título da proposta
-   for r_titulos in c_consulta_tits_bordero(pr_nrctrato => r_consulta_prop_desc_titulo.nrctrlim,
-                                            pr_nrborder => r_consulta_prop_desc_titulo.nrborder)  loop
+  FOR r_titulos in c_consulta_tits_bordero(pr_nrctrato => r_consulta_prop_desc_titulo.nrctrlim,
+                                           pr_nrborder => r_consulta_prop_desc_titulo.nrborder) LOOP 
 
-    if (vr_index = 1) then
+    IF (vr_index = 1) THEN
 
-      /*Monta a tabela com os títulos dos borderôs*/
-      vr_string := vr_string||'<campo>
-                               <nome>Títulos do Borderô</nome>
-                               <tipo>table</tipo>
-                               <valor>
-                               <linhas>';
-
-    end if;
+     /*Monta a tabela com os títulos dos borderôs*/
+     vr_string_aux := vr_string_aux||'<campo>
+                                      <nome>Títulos do Borderô</nome>
+                                      <tipo>table</tipo>
+                                      <valor>
+                                      <linhas>';
+    END IF;
    
     vr_tab_tabela(vr_index).coluna1 := r_titulos.nrcnvcob;
     vr_tab_tabela(vr_index).coluna2 := r_titulos.nrdocmto;
@@ -8668,22 +8684,24 @@ begin
     
     /*Verifica se o valor líquido do título é 0, se for calcula*/
     BEGIN
-    IF (r_titulos.vlliquid = 0) THEN
-      
-      IF  rw_crapdat.dtmvtolt > r_titulos.dtvencto THEN
+      IF (r_titulos.vlliquid = 0) THEN
+        
+        IF  rw_crapdat.dtmvtolt > r_titulos.dtvencto THEN
           vr_qtd_dias := rw_crapdat.dtmvtolt - r_titulos.dtvencto;
-      ELSE
+        ELSE
           vr_qtd_dias := r_titulos.dtvencto -  rw_crapdat.dtmvtolt;
+        END IF;
+        
+        vr_vldjuros := r_titulos.vltitulo * vr_qtd_dias * ((r_consulta_prop_desc_titulo.txmensal / 100) / 30);
+        r_titulos.vlliquid := ROUND((r_titulos.vltitulo - vr_vldjuros),2);
+        vr_vlliquid_total := vr_vlliquid_total+r_titulos.vlliquid;
+        
       END IF;
-      
-      vr_vldjuros := r_titulos.vltitulo * vr_qtd_dias * ((r_consulta_prop_desc_titulo.txmensal / 100) / 30);
-      r_titulos.vlliquid := ROUND((r_titulos.vltitulo - vr_vldjuros),2);
-      vr_vlliquid_total := vr_vlliquid_total+r_titulos.vlliquid;
-    END IF;
     EXCEPTION
       WHEN OTHERS THEN
         null;
     END;
+    
     vr_tab_tabela(vr_index).coluna8 := to_char(r_titulos.vlliquid,'999g999g990d00');
     vr_tab_tabela(vr_index).coluna9 := r_titulos.prazo;
     vr_tab_tabela(vr_index).coluna10 := r_titulos.restricoes;
@@ -8691,158 +8709,165 @@ begin
     /*Limpa a chave*/
     vr_chave := NULL;
     
-    /*Buscar a chave para pesquisar as críticas*/
-    open c_consulta_chave (pr_nrborder => r_consulta_prop_desc_titulo.nrborder
-                          ,pr_nrdocmto => r_titulos.nrdocmto);
-    fetch c_consulta_chave into vr_chave;
-    close c_consulta_chave;
-    
-
-  /*Consulta volume carteira a vencer em relação ao sacado*/    
-  open c_titulos_a_vencer(r_titulos.nrinssac);
-    fetch c_titulos_a_vencer into vr_val_venc;
-    if c_titulos_a_vencer%found then
-      vr_tab_tabela(vr_index).coluna12 := to_char(vr_val_venc,'999g999g990d00');
-    else
-      vr_tab_tabela(vr_index).coluna12 := 0;
-    end if;    
-  close c_titulos_a_vencer;
-  
-  /*Consulta informações pagador*/
-  pc_detalhes_tit_bordero_web (pr_cdcooper
-                              ,pr_nrdconta
-                              ,r_consulta_prop_desc_titulo.nrborder
-                              ,vr_chave
-                              ,null
-                               --------> out <--------
-                              ,pr_cdcritic
-                              ,pr_dscritic
-                              ,pr_retxml
-                              ,pr_nmdcampo
-                              ,pr_des_erro);
-
-
-  /* Extrai dados do XML */
-  BEGIN
-     vr_perc_concentracao := pr_retxml.extract('//detalhe/concpaga/node()').getstringval();
-     vr_perc_liquidez_vl  := pr_retxml.extract('//detalhe/liqpagcd/node()').getstringval();
-     vr_perc_liquidez_qt  := pr_retxml.extract('//detalhe/liqgeral/node()').getstringval();
-     
-     --se iniciar com vírgula concatena um 0 a esquerda
-     vr_tab_tabela(vr_index).coluna13 := case when substr(vr_perc_concentracao,1,1) = ',' 
-                                         then 0 || vr_perc_concentracao || '%'
-                                         else      vr_perc_concentracao || '%' end;
-     vr_tab_tabela(vr_index).coluna14 := vr_perc_liquidez_vl|| '%';
-     vr_tab_tabela(vr_index).coluna15 := vr_perc_liquidez_qt|| '%';
-
-  EXCEPTION
-    WHEN OTHERS THEN
-     vr_tab_tabela(vr_index).coluna13 := '-';
-     vr_tab_tabela(vr_index).coluna14 := '-';
-     vr_tab_tabela(vr_index).coluna15 := '-';
-  END;
-  
-  --Agora vê se tem críticas
-  BEGIN
-    vr_nrdocmto := pr_retxml.extract('//pagador/nrinssac/node()').getstringval(); 
-    
-    --desta forma ainda pega só a primeira crítica
-    vr_str_criticas  := pr_retxml.extract('//criticas/node()').getstringval(); --criticas array
-    
-    if length(vr_str_criticas) = 0 then
-      tem_criticas := false;
-    else
-      tem_criticas := true;
-    end if;
-
-    while tem_criticas loop
-
-      vr_pos_inic := instr(vr_str_criticas,'<dsc>') + 5;
-      vr_tamanho  := instr(vr_str_criticas,'</dsc>') - vr_pos_inic;
-
-      if (vr_pos_inic < vr_tamanho) then
-
-        vr_index2 := vr_index2 + 1;
-
-        vr_tab_tabela_secundaria(vr_index2).coluna1 := r_titulos.nrnosnum; --doc
-
-        vr_dsc_critica := substr(vr_str_criticas,vr_pos_inic,vr_tamanho);
-        vr_tab_tabela_secundaria(vr_index2).coluna2 := vr_dsc_critica; --dsc da crítica
-        
-        vr_pos_inic := instr(vr_str_criticas,'<vlr>') + 5;
-        vr_tamanho  := instr(vr_str_criticas,'</vlr>') - vr_pos_inic;
-        vr_vlr_critica := substr(vr_str_criticas,vr_pos_inic,vr_tamanho);
-        vr_tab_tabela_secundaria(vr_index2).coluna3 := vr_vlr_critica; --vlr da crítica
-
+    /*Consulta volume carteira a vencer em relação ao sacado*/    
+    open c_titulos_a_vencer(r_titulos.nrinssac);
+      fetch c_titulos_a_vencer into vr_val_venc;
+      if c_titulos_a_vencer%found then
+        vr_tab_tabela(vr_index).coluna12 := to_char(vr_val_venc,'999g999g990d00');
       else
-        tem_criticas := false; --condição de saída
-      end if;
-            
-      --atualiza
-      vr_str_criticas := substr(vr_str_criticas,vr_pos_inic + 18);
+        vr_tab_tabela(vr_index).coluna12 := 0;
+      end if;    
+    close c_titulos_a_vencer;    
 
-    end loop;
+    pc_detalhes_tit_bordero(pr_cdcooper    --> código da cooperativa
+                           ,pr_nrdconta          --> número da conta
+                           ,r_consulta_prop_desc_titulo.nrborder --> Numero do bordero
+                           ,r_titulos.chave              --> lista de 'nosso numero' a ser pesquisado
+                           --------> out <--------
+                           ,vr_nrinssac          --> Inscricao do sacado
+                           ,vr_nmdsacad          --> Nome do sacado
+                           ,vr_tab_dados_biro    -->  retorno do biro
+                           ,vr_tab_dados_detalhe -->  retorno dos detalhes
+                           ,vr_tab_dados_critica --> retorno das criticas
+                           ,vr_cdcritic          --> código da crítica
+                           ,vr_dscritic          --> descrição da crítica
+                           );
+          
+    -- Caso tenha erro
+    --IF (nvl(vr_cdcritic, 0) > 0) OR vr_dscritic IS NOT NULL THEN
+    --  RAISE vr_exc_erro;
+    --END IF;                                  
+
   
-     IF (vr_index2 > 0) THEN
+    -- Agora vê se tem críticas
+    BEGIN
+      
+      vr_nrdocmto := vr_nrinssac;
+      vr_idx_criticas  := vr_tab_dados_critica.first;
+                                                           
+      WHILE vr_idx_criticas IS NOT NULL LOOP
+          
+        vr_tab_tabela_secundaria(vr_idx_secundar).coluna1 := r_titulos.nrnosnum;           
+        vr_tab_tabela_secundaria(vr_idx_secundar).coluna2 := vr_tab_dados_critica(vr_idx_criticas).dsc;
+        vr_tab_tabela_secundaria(vr_idx_secundar).coluna3 := vr_tab_dados_critica(vr_idx_criticas).vlr; --vlr da crítica
+
+        vr_idx_secundar := vr_idx_secundar + 1;
+        vr_idx_criticas := vr_tab_dados_critica.next(vr_idx_criticas);
+      END LOOP;
+      --
+      IF (vr_tab_tabela_secundaria.count > 0) THEN
         vr_tab_tabela(vr_index).coluna11 := 'Sim';
-   ELSE
-       vr_tab_tabela(vr_index).coluna11 := 'Não';
-   END IF;
+      ELSE
+        vr_tab_tabela(vr_index).coluna11 := 'Não';
+      END IF;
+     
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_dscritic := SQLERRM;
+    END;
 
-  EXCEPTION
-    WHEN OTHERS THEN
-      NULL;
-  END;
+   
+    BEGIN
+      vr_perc_concentracao := vr_tab_dados_detalhe(0).concpaga;
+      vr_perc_liquidez_vl  := vr_tab_dados_detalhe(0).liqpagcd;
+      vr_perc_liquidez_qt  := vr_tab_dados_detalhe(0).liqgeral;
+            
+      --se iniciar com vírgula concatena um 0 a esquerda
+      vr_tab_tabela(vr_index).coluna13 := case when substr(vr_perc_concentracao,1,1) = ',' 
+                                          then 0 || vr_perc_concentracao || '%'
+                                          else      vr_perc_concentracao || '%' end;
+      vr_tab_tabela(vr_index).coluna14 := vr_perc_liquidez_vl|| '%';
+      vr_tab_tabela(vr_index).coluna15 := vr_perc_liquidez_qt|| '%'; 
 
-   /*Incrementa o índice*/
-   vr_index := vr_index+1;   
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_tab_tabela(vr_index).coluna13 := '-';
+        vr_tab_tabela(vr_index).coluna14 := '-';
+        vr_tab_tabela(vr_index).coluna15 := '-';
+    END;
+    /*Incrementa o índice*/
+    vr_index := vr_index+1;    
+  END LOOP;
+  --
+  IF vr_tab_tabela_secundaria.count > 0 THEN
+    vr_string_critica := vr_string_critica || fn_tag_table('Nosso Número;
+                                                            Crítica;
+                                                            Valor',vr_tab_tabela_secundaria);    
+  ELSE
+    vr_tab_tabela_secundaria(1).coluna1 := '-';
+    vr_tab_tabela_secundaria(1).coluna2 := '-';
+    vr_tab_tabela_secundaria(1).coluna3 := '-';
+    vr_string_critica := vr_string_critica || fn_tag_table('Nosso Número;
+                                                            Crítica;
+                                                            Valor',
+                                                            vr_tab_tabela_secundaria);
 
-   END LOOP;
-
+      
+  END IF;        
+  vr_string_critica := vr_string_critica||'</linhas></valor></campo>';
+  vr_string_critica := vr_string_critica||'</campos>';  
+  --
    /*Monta a tabela dos titulos*/
    IF vr_tab_tabela.COUNT > 0 THEN
      /*Gera Tags Xml*/
-     vr_string := vr_string||fn_tag_table('Convênio;Boleto Número;Nosso Número;Nome Pagador;CPF/CNPJ do Pagador;Data de Vencimento;Valor do Título;Valor Líquido;Prazo;Restrições;Críticas;Volume Carteira a Vencer;% Concentração por Pagador;% Liquidez do Pagador com a Cedente;% Liquidez Geral',vr_tab_tabela);
-     vr_string := vr_string||'</linhas></valor></campo>';
+     vr_string_aux := vr_string_aux||fn_tag_table('Convênio;
+                                                   Boleto Número;
+                                                   Nosso Número;
+                                                   Nome Pagador;
+                                                   CPF/CNPJ do Pagador;
+                                                   Data de Vencimento;
+                                                   Valor do Título;
+                                                   Valor Líquido;
+                                                   Prazo;
+                                                   Restrições;
+                                                   Críticas;
+                                                   Volume Carteira a Vencer;
+                                                   % Concentração por Pagador;
+                                                   % Liquidez do Pagador com a Cedente;
+                                                   % Liquidez Geral',
+                                                   vr_tab_tabela);
+     vr_string_aux := vr_string_aux||'</linhas></valor></campo>';
    ELSE
-     vr_tab_tabela(1).coluna1 := '-';
-     vr_tab_tabela(1).coluna2 := '-';
-     vr_tab_tabela(1).coluna3 := '-';
-     vr_tab_tabela(1).coluna4 := '-';
-     vr_tab_tabela(1).coluna5 := '-';
-     vr_tab_tabela(1).coluna6 := '-';
-     vr_tab_tabela(1).coluna7 := '-';
-     vr_tab_tabela(1).coluna8 := '-';
-     vr_tab_tabela(1).coluna9 := '-';
-     vr_tab_tabela(1).coluna10 := '-';
-     vr_tab_tabela(1).coluna11 := '-';
-     vr_tab_tabela(1).coluna12 := '-';
-     vr_string := vr_string||fn_tag_table('Convênio;Boleto Número;Nosso Número;Nome Pagador;CPF/CNPJ do Pagador;Data de Vencimento;Valor do Título;Valor Líquido;Prazo;Restrições;Críticas;Volume Carteira a Vencer;% Concentração por Pagador;% Liquidez do Pagador com a Cedente;% Liquidez Geral',vr_tab_tabela);
-     vr_string := vr_string||'</linhas></valor></campo>';
+     vr_tab_tabela(1).coluna1 := '-'; -- Convênio
+     vr_tab_tabela(1).coluna2 := '-'; -- Boleto Número
+     vr_tab_tabela(1).coluna3 := '-'; -- Nosso Número
+     vr_tab_tabela(1).coluna4 := '-'; -- Nome Pagador
+     vr_tab_tabela(1).coluna5 := '-'; -- CPF/CNPJ do Pagador
+     vr_tab_tabela(1).coluna6 := '-'; -- Data de Vencimento
+     vr_tab_tabela(1).coluna7 := '-'; -- Valor do Título
+     vr_tab_tabela(1).coluna8 := '-'; -- Valor Líquido
+     vr_tab_tabela(1).coluna9 := '-'; -- Prazo
+     vr_tab_tabela(1).coluna10 := '-'; -- Restrições
+     vr_tab_tabela(1).coluna11 := '-'; -- Críticas
+     vr_tab_tabela(1).coluna12 := '-'; -- Volume Carteira a Vencer
+     vr_tab_tabela(1).coluna13 := '-'; -- % Concentração por Pagador
+     vr_tab_tabela(1).coluna14 := '-'; -- % Liquidez do Pagador com a Cedente
+     vr_tab_tabela(1).coluna15 := '-'; -- % Liquidez Geral
+
+     vr_string_aux := vr_string_aux||fn_tag_table('Convênio; 
+                                                   Boleto Número;
+                                                   Nosso Número;
+                                                   Nome Pagador;
+                                                   CPF/CNPJ do Pagador;
+                                                   Data de Vencimento;
+                                                   Valor do Título;
+                                                   Valor Líquido;
+                                                   Prazo;
+                                                   Restrições;
+                                                   Críticas;
+                                                   Volume Carteira a Vencer;
+                                                   % Concentração por Pagador;
+                                                   % Liquidez do Pagador com a Cedente;
+                                                   % Liquidez Geral',
+                                                   vr_tab_tabela);
+     vr_string_aux := vr_string_aux||'</linhas></valor></campo>';
    END IF;
 
 
-    /*Se tiver críticas traz uma tabela em formato lista com as críticas*/
-    IF vr_tab_tabela_secundaria.COUNT >0 THEN
-
-      vr_string_critica := vr_string_critica || fn_tag_table('Nosso Número;Crítica;Valor',vr_tab_tabela_secundaria);
-      vr_string_critica := vr_string_critica || '</linhas></valor></campo>';
-
-    ELSE
-
-     vr_tab_tabela_secundaria(1).coluna1 := '-';
-     vr_tab_tabela_secundaria(1).coluna2 := '-';
-     vr_tab_tabela_secundaria(1).coluna3 := '-';
-     vr_string_critica := vr_string_critica || fn_tag_table('Nosso Número;Crítica;Valor',vr_tab_tabela_secundaria);
-     vr_string_critica := vr_string_critica||'</linhas></valor></campo>';
-      
-    END IF;
-    
-    vr_string_critica := vr_string_critica||'</campos>';
 
   END IF;
     
-  close c_consulta_prop_desc_titulo;
+  CLOSE c_consulta_prop_desc_titulo;
   
   vr_string := vr_string ||fn_tag('Quantidade de Títulos',r_consulta_prop_desc_titulo.qtdtitulos)||
                            fn_tag('Valor',TO_CHAR(r_consulta_prop_desc_titulo.vltitulo,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''))||
@@ -8850,7 +8875,7 @@ begin
                            fn_tag('Valor Médio',TO_CHAR(r_consulta_prop_desc_titulo.vlmedio,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''))||
                            fn_tag('Restrições',r_consulta_prop_desc_titulo.restricoes);
 
-  
+  vr_string := vr_string || vr_string_aux;
   vr_string := vr_string || vr_string_critica || '</subcategoria>';
   
   vr_dsxml_mensagem := NULL;
@@ -8868,8 +8893,6 @@ begin
   ELSE
   pr_dsxmlret := vr_string;
   END IF;
-                  
-  
 
  EXCEPTION
   WHEN OTHERS THEN
@@ -8877,6 +8900,7 @@ begin
     pr_dscritic := 'Erro pc_consulta_proposta_bordero: '||sqlerrm;   
 
 end;
+
 
 PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE       --> Cooperativa
                                     ,pr_nrdconta  IN crawepr.nrdconta%TYPE       --> Conta
