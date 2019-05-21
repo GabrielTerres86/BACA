@@ -343,7 +343,7 @@ function acessaTela(cddopcao) {
 			cddopcao: cddopcao,
             flpropos: flpropos,
             inpessoa: var_globais.inpessoa, //bruno - prj 438 - sprint 7 - novo limite
-			inconfir: 1,
+			inconfir: cddopcao == 'A' || cddopcao == 'P' ? 0 : 1, // Se for consulta NÃO fazer validação, senão, fazer validação
 			redirect: "html_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
@@ -464,7 +464,7 @@ function acessaOpcaoAba(nrOpcoes, id, cddopcao) {
 			cddopcao: cddopcao,
 			flpropos: flpropos,
             inpessoa: var_globais.inpessoa, //bruno - prj 438 - sprint 7 - novo limite
-			inconfir: 1,
+			inconfir: cddopcao == 'A' || cddopcao == 'P' ? 0 : 1, // Se for consulta NÃO fazer validação, senão, fazer validação
 			redirect: "html_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
