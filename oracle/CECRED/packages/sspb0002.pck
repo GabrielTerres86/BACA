@@ -2720,6 +2720,7 @@ PROCEDURE pc_gera_conciliacao_spb ( pr_tipo_concilacao  IN VARCHAR2 --> Tipo de 
   vr_exc_erro  EXCEPTION;
   vr_exc_email EXCEPTION; 
   vr_dscritic VARCHAR2(4000);
+  vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
   --
   -- Variáveis do programa
   vr_fgenviada         BOOLEAN;
@@ -2737,7 +2738,7 @@ PROCEDURE pc_gera_conciliacao_spb ( pr_tipo_concilacao  IN VARCHAR2 --> Tipo de 
   
   vr_qtde_regs          INTEGER;
   vr_situacao_jd        VARCHAR2(50);
-  
+  vr_aux_dscorpo  VARCHAR2(1000); 
   
   --
 BEGIN
@@ -3211,7 +3212,7 @@ BEGIN
             RAISE vr_exc_erro;
         END;
         --
-        pr_dscritic := 'Sua solicitação foi processada com sucesso e o(s) arquivo(s) '||vr_nom_arquivo||' - '||vr_nom_arquivo_rec||' já estão disponíveis no diretório: X:\SPB\CONSPB\';
+        vr_aux_dscorpo := 'Sua solicitação foi processada com sucesso e o(s) arquivo(s) '||vr_nom_arquivo||' - '||vr_nom_arquivo_rec||' já estão disponíveis no diretório: X:\SPB\CONSPB\';
         RAISE vr_exc_email;
       END;
   
@@ -3229,16 +3230,16 @@ EXCEPTION
         ELSE
           vr_aux_dsdemail:= gene0001.fn_param_sistema('CRED',0,'SPB_TED_SEM_CONTA');
         END IF;
-        
+        --
         pr_cdcritic     := null;
         pr_dscritic     := null;
-
+        --
         -- Enviar Email para o responsavel
         gene0003.pc_solicita_email(pr_cdcooper        => 3
                                   ,pr_cdprogra        => 'CONSPB'
-                                  ,pr_des_destino     => pr_dsendere
+                                  ,pr_des_destino     => vr_aux_dsdemail
                                   ,pr_des_assunto     => 'CONSPB - notificação arquivo de conciliação'
-                                  ,pr_des_corpo       => vr_aux_dsdemail
+                                  ,pr_des_corpo       => vr_aux_dscorpo
                                   ,pr_des_anexo       => ''
                                   ,pr_flg_enviar      => 'S'
                                   ,pr_flg_log_batch   => 'N' --> Incluir inf. no log
@@ -3249,13 +3250,40 @@ EXCEPTION
         END IF;
         COMMIT;
       END;
+      --
   WHEN vr_exc_erro THEN
     Rollback;
     pr_dscritic := vr_dscritic;
+    --
+    CECRED.pc_log_programa(pr_dstiplog  => 'E'
+                      ,pr_cdprograma    => 'SSBP0002'
+                      ,pr_cdcooper      => 3
+                      ,pr_tpexecucao    => 2 
+                      ,pr_tpocorrencia  => 2
+                      ,pr_cdcriticidade => 3
+                      ,pr_cdmensagem    => null
+                      ,pr_dsmensagem    => pr_dscritic
+                      ,pr_idprglog      => vr_idprglog
+                      ,pr_nmarqlog      => NULL);
+    --      
+    CECRED.pc_internal_exception( pr_cdcooper => 3 ,pr_compleme => pr_dscritic );
+    --
   WHEN OTHERS THEN
     Rollback;
     -- Monta mensagem de erro
     pr_dscritic := 'Erro em pc_gera_conciliacao_spb: ' || SQLERRM;
+    --
+    CECRED.pc_log_programa(pr_dstiplog  => 'E'
+                      ,pr_cdprograma    => 'SSBP0002'
+                      ,pr_cdcooper      => 3
+                      ,pr_tpexecucao    => 2 
+                      ,pr_tpocorrencia  => 2
+                      ,pr_cdcriticidade => 3
+                      ,pr_cdmensagem    => null
+                      ,pr_dsmensagem    => pr_dscritic
+                      ,pr_idprglog      => vr_idprglog
+                      ,pr_nmarqlog      => NULL);
+    --                   
     CECRED.pc_internal_exception( pr_cdcooper => 3 
                                  ,pr_compleme => pr_dscritic );
 

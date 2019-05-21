@@ -141,7 +141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSPB AS
     --    
     IF pr_dtmensagem_de is null or pr_dtmensagem_ate is null THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Período DE e/ou  ATE deve ser informado!';
+      vr_dscritic := 'Informe o período.';
       RAISE vr_exc_erro;
     END IF;
     --
@@ -154,6 +154,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSPB AS
       vr_dscritic := 'Erro no formato das datas do período! '||sqlerrm;
       RAISE vr_exc_erro;
     End;
+    --
+    If vr_dtmensagem_ate < vr_dtmensagem_de then
+      vr_cdcritic := 0;
+      vr_dscritic := 'Período inválido.';
+      RAISE vr_exc_erro;
+    End If;  
+    --  
     If (vr_dtmensagem_ate - vr_dtmensagem_de) > 6 then
       vr_cdcritic := 0;
       vr_dscritic := 'Período informado deve ser igual ou inferior a 7 dias!';
@@ -178,13 +185,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSPB AS
     END IF;                                                  
     --
     IF vr_qtd_reg_env = 0 and vr_qtd_reg_rec = 0 and pr_tipo_msg = 'T' THEN
-       vr_dscritic:= 'Não há dados no Aimaro para este período solicitado!'; 
+       vr_dscritic:= 'Não há dados no Aimaro para o período solicitado!'; 
        RAISE vr_exc_erro;  
     ELSIF vr_qtd_reg_env = 0 and pr_tipo_msg = 'E' THEN
-       vr_dscritic:= 'Não há dados de mensagens enviadas no Aimaro para este período solicitado!';   
+       vr_dscritic:= 'Não há dados de mensagens enviadas no Aimaro para o período solicitado!';   
        RAISE vr_exc_erro;  
     ELSIF vr_qtd_reg_rec = 0 and pr_tipo_msg = 'R' THEN
-       vr_dscritic:= 'Não há dados de mensagens recebidas no Aimaro para este período solicitado!';
+       vr_dscritic:= 'Não há dados de mensagens recebidas no Aimaro para o período solicitado!';
        RAISE vr_exc_erro;  
     END IF;  
 
@@ -206,13 +213,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSPB AS
     END IF;                                                  
     --
     IF vr_qtd_reg_env = 0 and vr_qtd_reg_rec = 0 and pr_tipo_msg = 'T' THEN
-       vr_dscritic:= 'Não há dados na JD para este período solicitado!'; 
+       vr_dscritic:= 'Não há dados na JD para o período solicitado!'; 
        RAISE vr_exc_erro;  
     ELSIF vr_qtd_reg_env = 0 and pr_tipo_msg = 'E' THEN
-       vr_dscritic:= 'Não há dados de mensagens enviadas na JD para este período solicitado!';   
+       vr_dscritic:= 'Não há dados de mensagens enviadas na JD para o período solicitado!';   
        RAISE vr_exc_erro;  
     ELSIF vr_qtd_reg_rec = 0 and pr_tipo_msg = 'R' THEN
-       vr_dscritic:= 'Não há dados de mensagens recebidas na JD para este período solicitado!';
+       vr_dscritic:= 'Não há dados de mensagens recebidas na JD para o período solicitado!';
        RAISE vr_exc_erro;  
     END IF;    
     
