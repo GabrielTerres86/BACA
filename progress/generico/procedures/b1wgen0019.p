@@ -1886,8 +1886,11 @@ PROCEDURE obtem-limite:
                        
                LEAVE Obtem_Limite.
            END.
-
-       RUN ver_cadastro IN h-b1wgen0001 (INPUT par_cdcooper,
+       
+       IF par_inconfir = 1 THEN
+           DO:
+           
+               RUN ver_cadastro IN h-b1wgen0001 (INPUT par_cdcooper,
                                          INPUT par_nrdconta,
                                          INPUT par_cdagenci, 
                                          INPUT par_nrdcaixa, 
@@ -1895,10 +1898,12 @@ PROCEDURE obtem-limite:
                                          INPUT par_idorigem,
                                         OUTPUT TABLE tt-erro).
         
-       DELETE PROCEDURE h-b1wgen0001.
-              
-       IF   RETURN-VALUE <> "OK"  THEN
-            LEAVE Obtem_Limite.
+               DELETE PROCEDURE h-b1wgen0001.
+                      
+               IF   RETURN-VALUE <> "OK"  THEN
+                    LEAVE Obtem_Limite.
+                    
+           END.
 
        FIND craplrt WHERE craplrt.cdcooper = craplim.cdcooper   AND
                           craplrt.cddlinha = craplim.cddlinha   NO-LOCK NO-ERROR.
