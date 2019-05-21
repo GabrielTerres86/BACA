@@ -46,7 +46,7 @@
 	        	return "Nov";
 	        	break;
 	    	case 12:
-	        	return "Des";
+	        	return "Dez";
 	        	break;
 		}
 	}
@@ -60,42 +60,50 @@
 				<th>Faturamento</th></tr>			
 		</thead>
 		<tbody>
-			<? $media = 0; 
-			   $primeiromes = 0;
-			   $primeiroano = 0;
-			   $ultimomes = 0;
-			   $ultimoano = 0;?>
-			<? foreach( $registros as $faturamento ) {
+			<?  $media = 0; 
+			    $primeiromes = 0;
+			    $primeiroano = 0;
+			    $ultimomes = 0;
+			    $ultimoano = 0;
+				foreach( $registros as $faturamento ) {
 					if ( getByTagName($faturamento->tags,'mesftbru') != 0 && getByTagName($faturamento->tags,'anoftbru') != 0) {
-			?>
-				<?  $media = $media + (float)str_replace(',','.',getByTagName($faturamento->tags,'vlrftbru')); 
-					if($primeiromes == 0){
-						$primeiromes = (int)getByTagName($faturamento->tags,'mesftbru');
-						$primeiroano = (int)getByTagName($faturamento->tags,'anoftbru');
-					} elseif((int)getByTagName($faturamento->tags,'anoftbru') <= $primeiroano){
-						if((int)getByTagName($faturamento->tags,'mesftbru') < $primeiromes){
+					    $media = $media + (float)str_replace(',','.',getByTagName($faturamento->tags,'vlrftbru')); 
+						if($primeiromes == 0){
 							$primeiromes = (int)getByTagName($faturamento->tags,'mesftbru');
 							$primeiroano = (int)getByTagName($faturamento->tags,'anoftbru');
+						}elseif((int)getByTagName($faturamento->tags,'anoftbru') < $primeiroano){
+							$primeiromes = (int)getByTagName($faturamento->tags,'mesftbru');
+							$primeiroano = (int)getByTagName($faturamento->tags,'anoftbru');
+						}elseif(((int)getByTagName($faturamento->tags,'anoftbru') == $primeiroano) && ((int)getByTagName($faturamento->tags,'mesftbru') < $primeiromes)){
+							$primeiromes = (int)getByTagName($faturamento->tags,'mesftbru');
 						}
-					}
-					if($ultimomes == 0){
-						$ultimomes = (int)getByTagName($faturamento->tags,'mesftbru');
-						$ultimoano = (int)getByTagName($faturamento->tags,'anoftbru');
-					} elseif((int)getByTagName($faturamento->tags,'anoftbru') >= $ultimoano){
-						if((int)getByTagName($faturamento->tags,'mesftbru') > $ultimomes){
+
+						if($ultimomes == 0){
 							$ultimomes = (int)getByTagName($faturamento->tags,'mesftbru');
 							$ultimoano = (int)getByTagName($faturamento->tags,'anoftbru');
-						}
-					}
-				?>
-				<tr><td><span><? echo getByTagName($faturamento->tags,'mesftbru') ?></span>
-						<? echo getByTagName($faturamento->tags,'mesftbru') ?>						
-						<input type="hidden" id="nrposext" name="nrposext" value="<? echo getByTagName($faturamento->tags,'nrposext') ?>" /></td>
-					<td><? echo getByTagName($faturamento->tags,'anoftbru') ?></td>						
-					<td><span><? echo str_replace(',','.',getByTagName($faturamento->tags,'vlrftbru')) ?></span>
-						<? echo number_format(str_replace(',','.',getByTagName($faturamento->tags,'vlrftbru')),2,',','.') ?></td></tr>				
-				<? } ?>
-			 <?}?>			
+						}elseif((int)getByTagName($faturamento->tags,'anoftbru') > $ultimoano){
+							$ultimomes = (int)getByTagName($faturamento->tags,'mesftbru');
+							$ultimoano = (int)getByTagName($faturamento->tags,'anoftbru');
+						}elseif(((int)getByTagName($faturamento->tags,'anoftbru') == $ultimoano) && ((int)getByTagName($faturamento->tags,'mesftbru') > $ultimomes)){
+							$ultimomes = (int)getByTagName($faturamento->tags,'mesftbru');
+						}?>
+
+						<tr>
+							<td>
+								<span><? echo getByTagName($faturamento->tags,'mesftbru') ?></span>
+								<? echo getByTagName($faturamento->tags,'mesftbru') ?>						
+								<input type="hidden" id="nrposext" name="nrposext" value="<? echo getByTagName($faturamento->tags,'nrposext') ?>" />
+							</td>
+							<td>
+								<? echo getByTagName($faturamento->tags,'anoftbru') ?>
+							</td>						
+							<td>
+								<span><? echo str_replace(',','.',getByTagName($faturamento->tags,'vlrftbru')) ?></span>
+								<? echo number_format(str_replace(',','.',getByTagName($faturamento->tags,'vlrftbru')),2,',','.') ?>
+							</td>
+						</tr>				
+					<? }
+				}?>			
 		</tbody>
 	</table>
 </div>
