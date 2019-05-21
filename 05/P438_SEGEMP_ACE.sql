@@ -15,7 +15,7 @@ INSERT INTO crapace
          cop.cdcooper cdcooper,
          1 nrmodulo,
          1 idevento,
-         1 idambace
+         2 idambace
     FROM crapcop cop, crapope ope
    WHERE cop.cdcooper = ope.cdcooper
      AND upper(ope.cdoperad) IN ('F0030513',
@@ -60,7 +60,7 @@ INSERT INTO crapace
          cop.cdcooper cdcooper,
          1 nrmodulo,
          1 idevento,
-         1 idambace
+         2 idambace
     FROM crapcop cop, crapope ope
    WHERE cop.cdcooper = ope.cdcooper
      AND upper(ope.cdoperad) IN ('F0030513',
