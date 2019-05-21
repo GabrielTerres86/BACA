@@ -1101,6 +1101,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
         AND ass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
 
+    CURSOR cr_crapret(pr_cdcooper crapret.cdcooper%TYPE,
+                      pr_nrdconta crapret.nrdconta%TYPE,
+                      pr_nrcnvcob crapret.nrcnvcob%TYPE,
+                      pr_nrdocmto crapret.nrdocmto%TYPE) IS
+      SELECT ret.cdcooper, ret.nrdconta 
+        FROM crapret ret
+       WHERE ret.cdcooper = pr_cdcooper
+         AND ret.nrdconta = pr_nrdconta
+         AND ret.nrcnvcob = pr_nrcnvcob
+         AND ret.nrdocmto = pr_nrdocmto
+         AND ret.cdocorre = 98
+         AND ret.cdmotivo = 'F2';
+    rw_crapret cr_crapret%ROWTYPE;
+
+
     --> Busca as informacoes da cobranca
     CURSOR cr_crapcob (pr_cdcooper crapcob.cdcooper%TYPE,
                        pr_nrdconta crapcob.nrdconta%TYPE,
@@ -1263,6 +1278,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
           
     END IF;
     
+    --> Buscar dados de cobrança da carta
+    OPEN cr_crapret(pr_cdcooper => pr_cdcooper, 
+                    pr_nrdconta => pr_nrdconta,
+                    pr_nrcnvcob => pr_nrcnvcob,
+                    pr_nrdocmto => pr_nrdocmto);
+    FETCH cr_crapret
+      INTO rw_crapret;
+
+    IF cr_crapret%NOTFOUND THEN --Faz a cobrança somente se ainda não foi cobrado
+      CLOSE cr_crapret;
+    
     -- 98 - Registro de impressao de carta de anuencia
     COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
                                        ,pr_cdocorre => 98   -- 98 - Registro de impressao de carta de anuencia
@@ -1320,6 +1346,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
 
       RAISE vr_exc_erro;
           
+      END IF;
+    
+    ELSE
+      CLOSE cr_crapret;
     END IF;
     
     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
