@@ -4312,7 +4312,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
            and c.insitlim = 3            
            and c.nrctrlim <> 0
 		   and o.cdcooper = c.cdcooper
-		   and o.cdoperad = c.cdoperad
+		   and o.cdoperad = decode(c.cdopeexc, ' ', c.cdoperad, c.cdopeexc)
         union
         select t.cdcooper
              , t.nrctrlim
