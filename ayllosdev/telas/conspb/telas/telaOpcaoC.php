@@ -1,10 +1,11 @@
 <!-- FORM OPCAO C -->
 <div class="row">
 
-    <div id="opcaoC" class="add10MarginTop divOpcoes">
+    <fieldset id="opcaoC" class="add10MarginTop divOpcoes">
+        <legend align="left">Filtro</legend>
 
         <!-- HORARIO -->
-        <label for="horaConciliacao">Hor&aacute;rio: </label>
+        <label for="horaConciliacao">Mensagem: </label>
         <select name="mensagem" id="mensagem" class="campo">
             <option value="T">Todas</option>
             <option value="E">Enviadas</option>
@@ -13,7 +14,7 @@
 
         <!-- PERIODO -->
         <!-- DE -->
-        <label for="horaConciliacao">Periodo: </label>
+        <label for="horaConciliacao">Per&iacute;odo: </label>
         <input type="text" name="periodoDe" id="periodoDe" class="campo data" value='' />
         <!-- ATE -->
         <span> 	&agrave; </span>
@@ -26,6 +27,6 @@
             a &aacute;rea de BI, para que a mesma execute a rotina INTEGRA_JDSPB, na ferramenta ODI.
         </div>
 
-    </div>
+    </fieldset>
 
 </div> <!-- FIM FORM OPCAO C -->

@@ -1,33 +1,47 @@
 /*
-    Autor: Bruno Luiz Katzjarowski;
+    Autor: Bruno Luiz Katzjarowski - Mout's;
     Data: 01/03/2019
 */
 
 /* REMOVER CARACTERISTICAS DO BOOTSTRAP */
 /* FIM REMOÇÂO CARACTERISTICAS DO BOOTSTRAP */
+*{font-family: Arial,Helvetica,sans-serif; font-size: 12px;}
 
 .add10MarginRight{margin-right: 10px;}
 .add10MarginLeft{margin-left: 10px;}
 .add10MarginTop{margin-top: 10px;}
+label{font-weight: bold;}
 
 .formCabecalho{
-    width: 450px;
-    padding: 5px;
-    padding-left: 20px;
-    padding-right: 20px;
+    width: 750px;
+    padding-top: 5px;
+    padding-bottom: 5px;
     border-top: 1px solid #777;
     border-bottom: 1px solid #777;
 }
 
-    #boxSelecao{ width: 250px;}
+    .formCabecalho #boxSelecao{ width: 645px; text-align: left;}
+    .formCabecalho #labelCdopcao{width:45px;}
+    #opcaoC legend{
+        font-size: 12px;
+        color: #333;
+        padding: 0px 2px;
+    }
+
+    
     #periodoDe, #periodoAte{width: 75px !important;}
+    label[for='horaConciliacao']{margin-left: 10px;}
+
+#opcaoC{
+    width: 728px;
+}
 
 .row{
     width: 750px;
 }
 
 .divOpcoes{
-    border: 1px solid #777;
+    border: 1px solid #bbb;
     padding: 10px;
 }
     #horaConciliacao{
@@ -35,10 +49,14 @@
     }
 
 .mensagemOpcaoC{
-    border: 1px solid #777;
+    border: 1px solid #bbb;
     width: 450px;
     margin-top: 10px;
     padding: 10px;
+}
+
+.divBotoes{
+    padding-bottom: 10px;
 }
 
 input{background-color: white !important;}

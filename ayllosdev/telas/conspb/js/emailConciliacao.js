@@ -1,6 +1,9 @@
 /**
- * Autor: Bruno Luiz Katzjarowski
+ * Autor: Bruno Luiz Katzjarowski - Mout's
  * Data: 12/05/2019
+ * 
+ * Ultima alteração:
+ *      20/05/2019 - Alterar criticas e algumas regras de validações - Bruno Luiz K. - Mout's
  */
 
 /**
@@ -25,8 +28,6 @@ function atribuirEventosModal(){
         return false;
         }
     });
-
-
 }
 
 /**
@@ -82,13 +83,19 @@ var executarConciliacaoManual = function(){
  * Validar campos de conciliação
  */
 function validaConciliacao(){
-    if($('#periodoDe').val() === ''){
-        messageAviso("Periodo \"De\" deve ser informado!", "setFocus('#periodoDe')",'error');
+    /**
+     * Validar Inserção de Dados nos campos de datas
+     */
+    if($('#periodoDe').val() === ''|| $('#periodoAte').val() === ''){
+        messageAviso("Informe o Per&iacute;odo.", "setFocus('#periodoAte')",'error');
         return false;
     }
     
-    if($('#periodoAte').val() === ''){
-        messageAviso("Periodo \"At&eacute;\" deve ser informado!", "setFocus('#periodoAte')",'error');
+    /**
+     * Validar Hora
+     */
+    if(!validatePeriodo($('#periodoDe').val(),$('#periodoAte').val())){
+        messageAviso("Per&iacute;odo inv&aacute;lido.", "setFocus('#periodoAte')",'error');
         return false;
     }
 
@@ -230,4 +237,26 @@ function validarCamposEmail(){
 function validateEmail(email) {
     var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(email);
+  }
+
+/**
+ * Validar se dataAte é maior que dataDe ou se os valores estão vazios
+ * @param {string} dataDe  dd/mm/yyyy
+ * @param {string} dataAte dd/mm/yyyy 
+ */
+function validatePeriodo(dataDe, dataAte){
+    
+    if(typeof dataDe == 'undefined'  || dataDe == null){return false;}
+    if(typeof dataAte == 'undefined' || dataAte == null){return false;}
+
+    var arrStartDate = dataDe.split("/");
+    var date1 = new Date(arrStartDate[2], arrStartDate[1], arrStartDate[0]);
+    var arrEndDate = dataAte.split("/");
+    var date2 = new Date(arrEndDate[2], arrEndDate[1], arrEndDate[0]);
+
+    if(date2 < date1){
+        return false;
+    }
+
+    return true;
   }

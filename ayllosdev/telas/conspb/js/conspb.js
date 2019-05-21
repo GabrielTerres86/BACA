@@ -26,6 +26,12 @@ var _modalEmailAberto = false;
     atribuirEventos();
     atribuirEventosCampos();
 
+    if(!detectIE()){
+        $('#opcaoC legend').attr('style','margin-left: -700px !important;');
+    }else{
+        $('#opcaoC legend').attr('style','margin-left: 5px !important;');
+    }
+
  });
 
 /**
