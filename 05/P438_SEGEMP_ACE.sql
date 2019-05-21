@@ -1,4 +1,8 @@
 
+Delete crapace ace
+where upper(ace.nmdatela) = 'SEGEMP';
+
+
 INSERT INTO crapace
   (nmdatela,
    cddopcao,
