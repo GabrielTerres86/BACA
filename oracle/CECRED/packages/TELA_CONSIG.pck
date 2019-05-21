@@ -2482,9 +2482,11 @@ BEGIN
                            '<cooperativa>'|| 
                              '<codigo>'||rw_dados_consig.codpromotora||'</codigo>'|| 
                            '</cooperativa>'||
-                           '<dataContratacao>'||vr_datainicio||'</dataContratacao>'||
-                           '<dataExpiracao>'||rw_dados_consig.datafim||'</dataExpiracao>'||
-                           '<numeroContrato>'||rw_dados_consig.codconvenio||'</numeroContrato>'|| -- codigo da empresa
+                           '<dataContratacao>'||vr_datainicio||'</dataContratacao>');
+          IF rw_dados_consig.datafim IS NOT NULL THEN                 
+             pc_escreve_xml('<dataExpiracao>'||rw_dados_consig.datafim||'</dataExpiracao>');
+          END IF;
+          pc_escreve_xml( '<numeroContrato>'||rw_dados_consig.codconvenio||'</numeroContrato>'|| -- codigo da empresa
                            '<tipoConveniada>'||
                              '<codigo>'||'3'||'</codigo>'||  -- 3- Consignado
                            '</tipoConveniada>'||

@@ -722,9 +722,11 @@ create or replace package body cecred.TELA_CADEMP is
                            '<cooperativa>'||
                              '<codigo>'||vr_codpromotora||'</codigo>'|| 
                            '</cooperativa>'||
-                           '<dataContratacao>'||rw_dados_consig.datainicio||'</dataContratacao>'||
-                           '<dataExpiracao>'||rw_dados_consig.datafim||'</dataExpiracao>'||
-                           '<numeroContrato>'||vr_codconvenio||'</numeroContrato>'|| -- codigo da empresa
+                           '<dataContratacao>'||rw_dados_consig.datainicio||'</dataContratacao>');
+        IF rw_dados_consig.datafim IS NOT NULL THEN
+           pc_escreve_xml('<dataExpiracao>'||rw_dados_consig.datafim||'</dataExpiracao>');
+        END IF;
+        pc_escreve_xml('<numeroContrato>'||vr_codconvenio||'</numeroContrato>'|| -- codigo da empresa
                            '<tipoConveniada>'||
                              '<codigo>'||'3'||'</codigo>'||  -- 3- Consignado
                            '</tipoConveniada>'||
