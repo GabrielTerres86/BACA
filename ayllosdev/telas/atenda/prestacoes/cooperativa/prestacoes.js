@@ -70,6 +70,8 @@
  *                   PJ450 - Diego Simas (AMcom)  
  * 049: [19/11/2018] Alterado layout da tela frmNovaProp (Dados da Solicitação), tela Garantias (agora Rating)
  *                    Avalistas, Interveniente e Dados da Alienação(frmHipoteca) - PRJ 438. (Mateus Z / Mouts)
+ * 050: [10/05/2019] P438 Bloqueio da impressao do contrato para linhas 7080 e 7081. (Douglas Pagel / AMcom)
+
 */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -3619,6 +3621,12 @@ function verificaImpressao(par_idimpres){
 	// Augusto - Supero
 	if (contratoMigrado != "0" && (idimpres == 2  || idimpres == 8 || idimpres == 6 || idimpres == 3 || idimpres == 7 || idimpres == 11)) {
 		showError("inform",'Consulta dispon&iacute;vel no contrato: '+contratoMigrado,"Alerta - Ayllos","");
+		return false;
+	}
+
+	//Bloqueio temporario para linhas de canais digitais. P438
+	if (idimpres == 9 && (arrayRegistros['cdlcremp'] == 7080 || arrayRegistros['cdlcremp'] == 7081) ) {
+		showError("inform",'Via do contrato digital dispon&iacute;vel no Smartshare!',"Alerta - Ayllos","");
 		return false;
 	}
 
