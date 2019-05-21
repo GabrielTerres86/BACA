@@ -20,7 +20,7 @@ label{font-weight: bold;}
     border-bottom: 1px solid #777;
 }
 
-    .formCabecalho #boxSelecao{ width: 645px; text-align: left;}
+    .formCabecalho #boxSelecao{ width: 625px; text-align: left;}
     .formCabecalho #labelCdopcao{width:45px;}
     #opcaoC legend{
         font-size: 12px;

@@ -69,7 +69,7 @@ var executarConciliacaoManual = function(){
             // Valida requisição, caso false, executa blockBackground 
             // para deixar fundo preto no modal do e-mail
             if(!validaErro(response,'blockBackground(1)')){
-                messageAviso("Solicita&ccedil;&atilde;o efetuada com sucesso. O arquivo est&aacute; sendo gerado e voc&ecirc; receber&aacute; um aviso de confirma&ccedil;&atilde;o pro e-mail.",
+                messageAviso("Solicita&ccedil;&atilde;o efetuada com sucesso. A concilia&ccedil;&atilde;o est&aacute; sendo processada e voc&ecirc; receber&aacute; uma notifica&ccedil;&atilde;o por e-mail quando estiver conclu&iacute;da",
                 'fechaRotina($("#divRotina"));resetarConspb();');
             }
         },
