@@ -1,7 +1,7 @@
 DECLARE
   CURSOR cr_cdcooper IS
     SELECT c.cdcooper
-         , to_date('25/04/2019','DD/MM/RRRR') dtmvtolt
+         , to_date('26/05/2019','DD/MM/RRRR') dtmvtolt
       FROM crapdat x
          , crapcop c
      WHERE x.cdcooper = c.cdcooper
