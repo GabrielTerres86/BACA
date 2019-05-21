@@ -2,7 +2,7 @@
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="442" pageHeight="620" whenNoDataType="AllSectionsNoDetail" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isFloatColumnFooter="true" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.81818181818182"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="48"/>
+	<property name="ireport.y" value="114"/>
 	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
 		<defaultValueExpression><![CDATA["C:\\Users\\t0030312\\Desktop\\Ayllos\\branches\\PRJ+STT\\relatorios\\"]]></defaultValueExpression>
 	</parameter>
@@ -102,6 +102,9 @@
 	</field>
 	<field name="nmextemp" class="java.lang.String">
 		<fieldDescription><![CDATA[/rlpgtib/head/@nmextemp]]></fieldDescription>
+	</field>
+	<field name="dtcredito" class="java.lang.String">
+		<fieldDescription><![CDATA[dtcredito]]></fieldDescription>
 	</field>
 	<variable name="vr_qtd_efetiva" class="java.lang.Integer" resetType="Group" resetGroup="gr_nrdocmto" calculation="Sum">
 		<variableExpression><![CDATA[$F{idsitlct} == "C" ?  new Integer(1) : new Integer(0)]]></variableExpression>
@@ -243,7 +246,7 @@
 	<group name="gr_nrdocmto">
 		<groupExpression><![CDATA[$F{nrdocmto}]]></groupExpression>
 		<groupHeader>
-			<band height="114">
+			<band height="113">
 				<textField>
 					<reportElement uuid="3ce7c65f-e912-49a9-b5e6-1b9ed1ede312" x="22" y="3" width="373" height="9"/>
 					<textElement textAlignment="Center">
@@ -256,7 +259,7 @@
 						<printWhenExpression><![CDATA[$F{tpemissa}!="SINTÉTICA"]]></printWhenExpression>
 					</reportElement>
 					<staticText>
-						<reportElement uuid="fe897a42-3c1e-48ed-9b85-744eb87c6e07" x="25" y="0" width="370" height="9"/>
+						<reportElement uuid="fe897a42-3c1e-48ed-9b85-744eb87c6e07" x="25" y="3" width="370" height="9"/>
 						<textElement textAlignment="Center">
 							<font fontName="SansSerif" size="7" isBold="true" isStrikeThrough="false" pdfFontName="Helvetica-Bold"/>
 						</textElement>
@@ -297,6 +300,13 @@
 						</textElement>
 						<text><![CDATA[ORIGEM]]></text>
 					</staticText>
+					<staticText>
+						<reportElement uuid="fe897a42-3c1e-48ed-9b85-744eb87c6e07" x="306" y="19" width="45" height="9"/>
+						<textElement>
+							<font fontName="SansSerif" size="7" isBold="true" isStrikeThrough="false" pdfFontName="Helvetica-Bold"/>
+						</textElement>
+						<text><![CDATA[CREDITADO]]></text>
+					</staticText>
 				</frame>
 				<staticText>
 					<reportElement uuid="fe897a42-3c1e-48ed-9b85-744eb87c6e07" x="94" y="62" width="126" height="9"/>
@@ -326,13 +336,6 @@
 					</textElement>
 					<text><![CDATA[DEBITO EM:]]></text>
 				</staticText>
-				<staticText>
-					<reportElement uuid="fe897a42-3c1e-48ed-9b85-744eb87c6e07" x="222" y="62" width="69" height="9"/>
-					<textElement>
-						<font fontName="SansSerif" size="7" isBold="true" isStrikeThrough="false" pdfFontName="Helvetica-Bold"/>
-					</textElement>
-					<text><![CDATA[CREDITO EM:]]></text>
-				</staticText>
 				<textField>
 					<reportElement uuid="3ce7c65f-e912-49a9-b5e6-1b9ed1ede312" x="284" y="70" width="132" height="9"/>
 					<textElement>
@@ -340,15 +343,8 @@
 					</textElement>
 					<textFieldExpression><![CDATA[$F{dssitcre}]]></textFieldExpression>
 				</textField>
-				<textField>
-					<reportElement uuid="3ce7c65f-e912-49a9-b5e6-1b9ed1ede312" x="222" y="70" width="69" height="9"/>
-					<textElement>
-						<font fontName="SansSerif" size="7" pdfFontName="Helvetica"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$F{dtcredit}]]></textFieldExpression>
-				</textField>
 				<staticText>
-					<reportElement uuid="fe897a42-3c1e-48ed-9b85-744eb87c6e07" x="284" y="62" width="132" height="9"/>
+					<reportElement uuid="fe897a42-3c1e-48ed-9b85-744eb87c6e07" x="284" y="63" width="132" height="9"/>
 					<textElement>
 						<font fontName="SansSerif" size="7" isBold="true" isStrikeThrough="false" pdfFontName="Helvetica-Bold"/>
 					</textElement>
@@ -443,6 +439,13 @@
 						<textFieldExpression><![CDATA[$F{dtmvtolt}]]></textFieldExpression>
 					</textField>
 				</frame>
+				<textField pattern="#,##0.00;-#,##0.00">
+					<reportElement uuid="3ce7c65f-e912-49a9-b5e6-1b9ed1ede312" x="269" y="3" width="77" height="9"/>
+					<textElement textAlignment="Right">
+						<font fontName="SansSerif" size="7" pdfFontName="Helvetica"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{vllancto}]]></textFieldExpression>
+				</textField>
 			</band>
 		</groupHeader>
 		<groupFooter>
@@ -549,7 +552,7 @@
 				<textFieldExpression><![CDATA[$F{dsorigem}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="3ce7c65f-e912-49a9-b5e6-1b9ed1ede312" x="318" y="0" width="77" height="9"/>
+				<reportElement uuid="3ce7c65f-e912-49a9-b5e6-1b9ed1ede312" x="351" y="0" width="44" height="9"/>
 				<textElement textAlignment="Right">
 					<font fontName="SansSerif" size="7" pdfFontName="Helvetica"/>
 				</textElement>
@@ -588,6 +591,13 @@
 					<paragraph lineSpacing="Single"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement uuid="bb0dc5dd-2905-4d06-a95e-a41d050650d0" x="306" y="0" width="45" height="9" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Arial" size="7" isBold="false" pdfFontName="Helvetica"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtcredito}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>

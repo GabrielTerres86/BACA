@@ -9775,7 +9775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                         pr_cdempres craplfp.cdempres%TYPE,
                         pr_nrseqpag craplfp.nrseqpag%TYPE,
                         pr_nrdconta craplfp.nrdconta%TYPE) IS
-         SELECT DECODE(lfp.idsitlct,'L','Lançado'
+         SELECT lfp.idtpcont,DECODE(lfp.idsitlct,'L','Lançado'
                                    ,'C','Creditado'
                                    ,'T','Transmitido'
                                    ,'D','Devolvido'
@@ -9811,6 +9811,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             AND ccs.nrdconta(+) = lfp.nrdconta
             AND ccs.nrcpfcgc(+) = lfp.nrcpfemp;
 
+         cursor cr_datadecredito(pr_cdcooper crapass.cdcooper%type,pr_nrseqpag craplfp.nrseqpag%type,pr_nrdconta crapass.nrdconta%type,pr_cdempres craplfp.cdempres%type
+         )is 
+         SELECT lfp.idtpcont,to_char(lcs.dttransf,'dd/mm/rr') data_transf,
+       pfp.nrseqpag,
+       pfp.idsitapr,
+       TO_CHAR(pfp.dtmvtolt, 'dd/mm/yy hh24:mi') dtmvtolt,
+       DECODE(pfp.idtppagt, 'A', 'Arquivo', 'C', 'Convencional', ' ') tppagt,
+       pfp.nrcpfapr,
+       TO_CHAR(pfp.dtsolest, 'hh24:mi') dtsolest,
+       pfp.cdopeest,
+       TO_CHAR(pfp.qtregpag, 'fm999g999g999g999g999g990') qtlctpag,
+       TO_CHAR(pfp.vllctpag, 'fm9g999g999g999g999g990d00') vllctpag,
+       TO_CHAR(NVL(pfp.dthordeb, pfp.dtdebito), 'dd/mm/rr hh24:mi') dtdebito,
+       DECODE(pfp.flsitdeb,
+              0,
+              'Pendente ' || dsobsdeb,
+              1,
+              'Debitado com sucesso',
+              ' ') dssitdeb,
+       pfp.flsitcre,
+       TO_CHAR(NVL(pfp.dthorcre, pfp.dtcredit), 'dd/mm/yyyy') dtcredit,
+       DECODE(pfp.flsitcre, 0, 'Pendente ' || dsobscre, 1, 'Creditado', ' ') dssitcre,
+       TO_CHAR(DECODE(pfp.idsitapr,
+                      1,
+                      folh0001.fn_valor_tarifa_folha(16,
+                                                     emp.nrdconta,
+                                                     emp.cdcontar,
+                                                     pfp.idopdebi,
+                                                     pfp.vllctpag),
+                      pfp.vltarapr),
+               'fm999990d00') vltarifa,
+       DECODE(pfp.flsittar, 0, 'Pendente', 1, 'Debitada', ' ') dssittar
+  FROM crapemp emp -->Cadastro de empresas
+      ,
+       crappfp pfp -->Pagamentos de folha de pagamanto
+      ,
+       craplfp lfp -->Lancamentos do pagamento de folha
+      ,
+       craplcs lcs -->Contem os lancamentos dos funcionarios das empresas que optaram por transferir o salario para outra instituicao financeira.
+ WHERE pfp.cdcooper = pr_cdcooper /*parametro*/
+   AND pfp.cdempres = pr_cdempres /*parametro*/
+   AND pfp.cdcooper = emp.cdcooper
+   AND pfp.cdempres = emp.cdempres
+   and pfp.nrseqpag = pr_nrseqpag /*parametro*/
+   and lfp.cdcooper = emp.cdcooper
+   and lfp.cdempres = emp.cdempres
+   and lfp.nrseqpag = pr_nrseqpag /*parametro*/
+   and lfp.nrdconta = pr_nrdconta /*parametro*/
+   and lcs.cdcooper = emp.cdcooper
+   and lcs.cdhistor(+) = 560
+   and lcs.nrridlfp(+)= lfp.progress_recid;
+  rw_datacredito cr_datadecredito%rowtype;
       -- Variaveis
       vr_des_xml  CLOB;
       vr_blnfound BOOLEAN;
@@ -9825,7 +9877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_dssituac VARCHAR2(10);
       vr_nrdrowid ROWID;
       vr_nmdirlgc VARCHAR(400);
-
+    vr_data_credito varchar2(22);
       -- Variaveis Excecao
       vr_exc_erro EXCEPTION;
 
@@ -9982,6 +10034,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                       pr_cdempres => rw_headtag.cdempres,
                                       pr_nrseqpag => rw_relpgto.nrseqpag,
                                       pr_nrdconta => pr_nrctalfp) LOOP
+                                   
+                                   if rw_craplfp.idtpcont =' T' then
+                                   open cr_datadecredito(pr_cdcooper,rw_relpgto.nrseqpag,replace(rw_craplfp.nrdconta,'.'),rw_headtag.cdempres);
+                                   fetch cr_datadecredito into rw_datacredito; --> verificar a necessidade deste cursor Brruno
+                                   vr_data_credito := rw_datacredito.data_transf;
+                                   else 
+                                   vr_data_credito :=  substr(rw_relpgto.dtcredit,1,8);
+                                   end if;
+                                   if cr_datadecredito%isopen then 
+                                   close cr_datadecredito;
+                                   end if;
+                                    
+    
             -- Cria tag lancto
             pc_escreve_xml('<lancto>
                                 <idsitlct>' || rw_craplfp.idsitlct || '</idsitlct>
@@ -9990,6 +10055,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                 <nrcpfcgc>' || rw_craplfp.nrcpfcgc || '</nrcpfcgc>
                                 <nmprimtl><![CDATA[' || NVL(rw_craplfp.nmprimtl,' ') || ']]></nmprimtl>
                                 <dsorigem><![CDATA[' || rw_craplfp.dsorigem || ']]></dsorigem>
+								<dtcredito>'|| vr_data_credito ||'</dtcredito>
                                 <vllancto>' || rw_craplfp.vllancto || '</vllancto>
                                 <dsobslct><![CDATA[' || NVL(rw_craplfp.dsobslct,' ') || ']]></dsobslct>
                                 <dsprotoc>'|| GENE0002.fn_mask(rw_relpgto.nrseqpag,'9999999999')|| GENE0002.fn_mask(rw_craplfp.nrseqlfp,'9999999999') ||'</dsprotoc>
