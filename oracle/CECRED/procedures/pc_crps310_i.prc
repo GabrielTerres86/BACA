@@ -347,6 +347,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                              
                  04/04/2019 - Inclusão de NVL() na gravação dos campos VLSLD59D e VLJURA60
                               P450 - Reginaldo/AMcom 
+                 22/05/2019 - Não permite saldo negativo em operacao TR paga antecipadamente 
+				              Procedure pc_lista_emp_price( ) - INC0013484 - Ramon Martins
+
   ............................................................................ */
 
     DECLARE
@@ -2440,6 +2443,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_vlpresta := pr_rw_crapepr.vlpreemp;
         -- Calcular o valor do atraso com base nos meses calculados
         vr_vlatraso := TRUNC(pr_rw_crapepr.vlpreemp * (vr_qtmesdec - vr_qtprecal_retor),2);
+
+        IF vr_vlatraso < 0 THEN
+          vr_vlatraso :=0;
+        END IF;
+
         -- Garantir que o valor de atraso não seja superior ao do saldo devedor
         IF vr_vlatraso > vr_vlsdeved_atual THEN
           vr_vlatraso := vr_vlsdeved_atual;
