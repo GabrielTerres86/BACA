@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 15/02/2018
+    Data    : Marco/2010                   Ultima atualizacao: 22/05/2019
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -213,6 +213,8 @@
                 13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
                              PRJ366 - tipo de conta (Odirlei-AMcom)                          
 
+				22/05/2019 - Realizar consistência de total percentual socit. apenas na inclusão e na alteração
+				             do percentual para maior. (Edmar - INC0013969) 
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1393,6 +1395,7 @@ PROCEDURE Valida_Dados:
     DEF VAR aux_nmdcampo AS CHAR                                    NO-UNDO.
     DEF VAR aux_inpessoa AS INTE                                    NO-UNDO.
     DEF VAR aux_idorgexp AS INTE                                    NO-UNDO.
+	DEF VAR aux_valpercs AS LOGICAL									NO-UNDO.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Valida dados do Representante/Procurador"
@@ -2018,6 +2021,21 @@ PROCEDURE Valida_Dados:
         /* alimenta o percentual da conta em questao */
         ASSIGN tot_persocio = par_persocio.
         
+		/*Quando alteração do procurador, não consistir total % societ. se alteração do % para menor */
+		ASSIGN aux_valpercs = TRUE.
+		FIND FIRST crapavt WHERE crapavt.cdcooper = par_cdcooper   AND
+		                       crapavt.tpctrato = 6 /*procurad*/ AND 
+							   crapavt.nrdconta = par_nrdconta   AND
+							   crapavt.nrctremp = par_idseqttl   AND
+							   crapavt.nrdctato = par_nrdctato
+							   NO-LOCK NO-ERROR.
+			IF  AVAIL crapavt  AND
+			    (par_persocio <= crapavt.persocio) THEN
+			    ASSIGN aux_valpercs = FALSE.
+		 
+		
+		IF  aux_valpercs THEN
+		    DO:  
         
                /* procuradores da conta */
                FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper   AND
@@ -2073,6 +2091,7 @@ PROCEDURE Valida_Dados:
            ASSIGN 
                aux_dscritic = "% Societ. total nao deve ultrapassar 100%.".
            LEAVE Valida.
+        END.
         END.
         
         /* validar os bens */
