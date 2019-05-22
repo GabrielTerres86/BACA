@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 09/11/2018
+     Data    : Maio/2001                       Ultima atualizacao: 04/04/2019
      
      Dados referentes ao programa:
 
@@ -194,7 +194,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                               
                  27/05/2014 - Ajuste na procedure "pc_calcula_juros_emp_60dias"
                               para calcular para o novo tipo de emprestimo. (James)
-				 
+                 
                  25/06/2014 - Alteração leitura crapris e crapvri. SoftDesk 137892 (Daniel) 
                                        
                  09/07/2014 - Melhorias para enviar as informações do Fluxo Financeiro
@@ -221,9 +221,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                               
                  04/12/2014 - Ajuste no calculo de dias de atraso. (James)      
                  
-				         02/01/2014 - Ajuste para nao gravar nulo no campo vljura60 para
+                         02/01/2014 - Ajuste para nao gravar nulo no campo vljura60 para
                               o emprestimo tipo novo. (James)
-				 
+                 
                  19/01/2015 - Ajuste quanto a data de fim da vigencia de contratos, onde 
                               hoje a procedure está pegando os dias de vigência da tabela 
                               craplrt.qtdiavig, o correto é buscar da tabela craplim.qdiavig
@@ -306,7 +306,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  23/04/2018 - P450 - Juros + 60 c/c relatório 227 e 354 (para a conta corrente) (Rangel Decker/AMCom)
 
                  14/05/2018 - Ajuste no controle de paralelismo por Agencia (PA), 
-				            - Incluido parametro de PA em query's - (Mario-AMcom)
+                            - Incluido parametro de PA em query's - (Mario-AMcom)
 
                  28/05/2018 - P450 - Corrigido data do risco para contratos menores que materialidade (Guilherme/AMcom)
 
@@ -323,7 +323,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  22/08/2018 - Adicionado cálculo de risco do borderô (Luis Fernando - GFT)
 
-  			     24/08/2018 - P450 - Gravar data de Risco para Limite de Crédito (Fabio Adriano - AMcom)
+                 24/08/2018 - P450 - Gravar data de Risco para Limite de Crédito (Fabio Adriano - AMcom)
 
                  12/09/2018 - P450 - Mudança na regra do Risco Refin (Guilherme/AMcom)
                  
@@ -343,6 +343,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  19/01/2019 - Ajustado calculo de risco atraso da modalidade 101, para ser igual ao emprestimo.
                               PRJ450 - Regulatorio(Odirlei-Ailos)
 
+                 20/09/2018 - Considerar o valor dos juros de mora no valor da divida do desconto de titulos. (Paulo Penteado GFT)
+                             
+                 04/04/2019 - Inclusão de NVL() na gravação dos campos VLSLD59D e VLJURA60
+                              P450 - Reginaldo/AMcom 
   ............................................................................ */
 
     DECLARE
@@ -371,7 +375,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,ass.inpessoa
               ,ass.cdagenci
               ,ass.nrmatric
-			  ,ass.inprejuz
+              ,ass.inprejuz
               ,to_char(ass.nrcpfcnpj_base,'FM00000000000') || 
                   to_char(DECODE(ass.inpessoa,1,1,2),'FM0') idx_ass
           FROM crapass ass
@@ -507,7 +511,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,crapepr.qtdias_atraso_refin
               ,crapepr.rowid rowidepr
               ,t.inrisco_melhora -- Risco Melhora Novo (Atual)
-          FROM crapepr, crawepr, cecred.tbrisco_operacoes t
+          FROM crapepr, crawepr, tbrisco_operacoes t
          WHERE crawepr.cdcooper = crapepr.cdcooper
            AND crawepr.nrdconta = crapepr.nrdconta
            AND crawepr.nrctremp = crapepr.nrctremp 
@@ -660,11 +664,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,tdb.vltitulo
               ,tdb.vlsldtit
               ,bdt.flverbor
-			  ,tdb.vlmratit
+              ,tdb.vlmratit
               ,tdb.vlpagmra
               ,COUNT(1)      OVER (PARTITION BY bdt.nrborder,cob.flgregis) qtd_max
               ,ROW_NUMBER () OVER (PARTITION BY bdt.nrborder,cob.flgregis
                                        ORDER BY bdt.nrborder,cob.flgregis) seq_atu
+              ,bdt.dtprejuz
+              ,bdt.inprejuz
+              ,(tdb.vlsdprej
+                /*+ (tdb.vlttjmpr - tdb.vlpgjmpr)
+                + (tdb.vlttmupr - tdb.vlpgmupr)
+                + (tdb.vljraprj - tdb.vlpgjrpr)
+                + (tdb.vliofprj - tdb.vliofppr)*/
+                                      ) AS vlsldatu -- Saldo atualizado
 
           FROM crapcob cob               
               ,craptdb tdb
@@ -1131,6 +1143,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_vltit999     NUMBER;                 --> Guardar o valor a vencer para titulos outros prazos
       vr_cdorigem     NUMBER;                 --> Inidice auxiliar para gravacao registro com e sem cobrança
       vr_nrborder     NUMBER;                 --> Número do borderô
+      vr_vlmratit     NUMBER;                 --> Valor do juros de mora
+      vr_vlmtatit     NUMBER;                 --> Valor da multa
+      vr_vlioftit     NUMBER;                 --> Valor do IOF
       vr_innivris     NUMBER;                 --> Nivel de risco
       vr_dtrisclq     DATE;
       vr_dtvencop     DATE;                   --> Data de Vencimento da Operacao
@@ -1143,11 +1158,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_vlvec360     crapris.vlvec360%TYPE; --> Valor a vencer nos próximos 360 dias
       vr_vlvec999     crapris.vlvec999%TYPE; --> Valor a vencer para outros casos
       vr_indocc       NUMBER;
+      vr_vlprjbdt     crapris.vlprjano%TYPE; --> Valor prejuizo bordero desconto de titulo
       vr_vlprjano     crapris.vlprjano%TYPE; --> Valor prejuizo no ano corrente
       vr_vlprjaan     crapris.vlprjaan%TYPE; --> Valor prejuizo no ano anterior
       vr_vlprjant     crapris.vlprjant%TYPE; --> Valor prejuizo anterior
       vr_vljura60     crapris.vljura60%TYPE; --> Valor dos Juros em Atraso a mais de 60 dias
-
+      vr_vljura60calc crapris.vljura60%TYPE; --> Valor dos Juros em Atraso a mais de 60 dias
+      vr_vljrre60     crapris.vljura60%TYPE; --> Valor dos Juros remuneratorio em Atraso a mais de 60 dias
       vr_cdcritic     crapcri.cdcritic%TYPE; --> Código da critica retornado pela "pc_busca_saldos_juros60"
       vr_dscritic     crapcri.dscritic%TYPE; --> Descrição da crítica retornada pela "pc_busca_saldos_juros60"
       
@@ -1388,14 +1405,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                       ,pr_dtlibera IN crawepr.dtlibera%TYPE
                                       ,pr_vlsdeved IN crapepr.vlsdeved%TYPE) RETURN NUMBER IS
         vr_qtdiajur  INTEGER;
-    		vr_diavtolt  INTEGER;
+            vr_diavtolt  INTEGER;
         vr_mesvtolt  INTEGER;
         vr_anovtolt  INTEGER;
         vr_diarefju  INTEGER;
         vr_mesrefju  INTEGER;
         vr_anorefju  INTEGER;
-		    vr_potencia  NUMBER(30,10);
-    		vr_vljurmes  crapepr.vljurmes%TYPE;
+            vr_potencia  NUMBER(30,10);
+            vr_vljurmes  crapepr.vljurmes%TYPE;
         vr_ehmensal  BOOLEAN := FALSE;
       BEGIN
         --Dia/Mes/Ano Referencia
@@ -1440,8 +1457,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- zerar Valor
           vr_vljurmes := 0;
         END IF;
-		
-		    RETURN vr_vljurmes;        
+        
+            RETURN vr_vljurmes;        
       END;
       
       -- Procedure para calcular o Juros 60 do produto Pos Fixado
@@ -3048,7 +3065,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           vr_qtdiaatr  := 0;
           vr_aux_nivel := 2;
           vr_dias      := 0;
-        END IF;
+          END IF;
         vr_nivel_atraso   := RISC0004.fn_calcula_niv_risco_atraso(vr_qtdiaatr);
 
 
@@ -4124,7 +4141,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                               ,pr_nrctremp IN crapris.nrctremp%TYPE
                               ,pr_cdmodali IN crapris.cdmodali%TYPE
                               ,pr_cdorigem IN crapris.cdorigem%TYPE
-		                          ,pr_dtrefere in crapris.dtrefere%TYPE) IS
+                                  ,pr_dtrefere in crapris.dtrefere%TYPE) IS
            -- Ajuste no cursor para tratar data do risco - Daniel(AMcom)
            SELECT r.dtrefere
                 , r.innivris
@@ -4801,7 +4818,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
              AND ris.nrdconta = pr_nrdconta
              AND ris.dtrefere = vr_dtrefere
              --AND ris.inddocto = 1
-			 AND (ris.inddocto = 1 OR ris.cdmodali = 1901)
+             AND (ris.inddocto = 1 OR ris.cdmodali = 1901)
              AND ris.vldivida > pr_vlarrasto --> Valor dos parâmetros
              AND (ris.innivris < pr_innivris);
 
@@ -5164,24 +5181,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                            ,pr_cdagenci  IN crapass.cdagenci%TYPE     --> Codigo Agencia
                                            ,pr_des_erro  OUT VARCHAR2) IS
       -- Cursor para verificar os ratings dos borderos 
-      CURSOR cr_crapbdt_rating (pr_cdcooper IN crapass.cdcooper%TYPE, pr_nrdconta IN crapass.nrdconta%TYPE) IS
-        SELECT
-          bdt.nrborder,
-          bdt.cdcooper
-        FROM 
-          crapbdt bdt
-        WHERE 
-          bdt.cdcooper = pr_cdcooper
+      CURSOR cr_crapbdt_prej (pr_cdcooper IN crapass.cdcooper%TYPE
+                             ,pr_nrdconta IN crapass.nrdconta%TYPE
+                             ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
+        SELECT bdt.nrborder
+              ,bdt.cdcooper
+          FROM crapbdt bdt
+         WHERE bdt.cdcooper  = pr_cdcooper
           AND bdt.nrdconta = pr_nrdconta
+           AND bdt.nrborder <> pr_nrborder
+           AND bdt.inprejuz  = 1
           AND bdt.insitbdt = 3
-		  AND bdt.flverbor = 1	
-      ;
-      rw_crapbdt_rating cr_crapbdt_rating%ROWTYPE;
+           AND bdt.flverbor  = 1;
+      rw_crapbdt_prej cr_crapbdt_prej%ROWTYPE;
+
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%type;
       vr_dscritic varchar2(10000);
       
-      vr_dsinrisc NUMBER;
       BEGIN      
                         
       -- Busca dos associados unindo com seu saldo na conta
@@ -5198,26 +5215,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             IF vr_tab_risco(vr_tab_crapnrc(rw_crapass.nrdconta).indrisco) > vr_risco_rating THEN
               vr_risco_rating := vr_tab_risco(vr_tab_crapnrc(rw_crapass.nrdconta).indrisco);
             END IF;
-          END IF;
             
-          -- Verifica riscos dos borderôs
-          OPEN cr_crapbdt_rating(pr_cdcooper=>pr_cdcooper,pr_nrdconta=>rw_crapass.nrdconta);
-          LOOP FETCH cr_crapbdt_rating INTO rw_crapbdt_rating;
-            EXIT WHEN cr_crapbdt_rating%NOTFOUND;
-            DSCT0003.pc_calcula_risco_bordero(pr_cdcooper=>pr_cdcooper,
-                                              pr_nrborder=>rw_crapbdt_rating.nrborder,
-                                              --OUT--
-                                              pr_dsinrisc=>vr_dsinrisc,
-                                              pr_cdcritic=>vr_cdcritic,
-                                              pr_dscritic=>vr_dscritic
-                                             );
-            IF (vr_dsinrisc>vr_risco_rating) THEN
-              vr_risco_rating := vr_dsinrisc;
-          END IF;
+            END IF;
             
-          END LOOP;
-          CLOSE cr_crapbdt_rating;
-          
           -- Inicializar sequencia de contrato de empréstimo
           vr_nrseqctr := 0;
           -- Vigência inicial com base na data atual
@@ -5522,7 +5522,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               -- Se a conta está em prejuízo, ajusta o nível de risco e o código de vencimento
               IF rw_crapass.inprejuz = 1 THEN
                 vr_risco_aux := 10;
-								
+                                
                 CASE
                   WHEN vr_qtdiaatr <= 360 THEN -- Prejuízo até 12 meses
                     vr_cdvencto := 310;
@@ -5558,6 +5558,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                                              , pr_cdcritic => vr_cdcritic
                                                              , pr_dscritic => vr_dscritic);
 
+              IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+                vr_dscritic := 'Erro ao calcular juros +60 para a conta ' || rw_crapass.nrdconta || ' (' || vr_dscritic || ')';
+                
+                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                         , pr_ind_tipo_log => 2 -- Erro tratado
+                                         , pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                              || pr_cdprogra || ' --> '
+                                                              || vr_dscritic );
+              END IF;
 
               -- Criar registro de risco para documento 3020
               -- Gravar temptable da crapris para posteriormente realizar o insert na tabela fisica
@@ -5566,7 +5575,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                 ,pr_innivris => vr_risco_aux
                                 ,pr_qtdiaatr => nvl(vr_qtdiaatr,0)                  
                                 ,pr_vldivida => vr_vlsrisco -- [Contratado - Utilizado]                  
-                                ,pr_vlsld59d => vr_vlsld59d -- Saldo devedor até 59 dias (saldo devedor total menos os juros +60)
+                                ,pr_vlsld59d => nvl(vr_vlsld59d,0) -- Saldo devedor até 59 dias (saldo devedor total menos os juros +60)
                                 ,pr_vlvec180 => nvl(vr_vlvec180,0)
                                 ,pr_vlvec360 => nvl(vr_vlvec360,0)
                                 ,pr_vlvec999 => nvl(vr_vlvec999,0)
@@ -5592,7 +5601,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                 ,pr_dtdrisco => NULL                     
                                 ,pr_qtdriclq => ABS(vr_qtdiaatr) --> valor absoluto                      
                                 ,pr_nrdgrupo => 0                                      
-                                ,pr_vljura60 => vr_vljuro60
+                                ,pr_vljura60 => nvl(vr_vljuro60,0)
                                 ,pr_inindris => vr_risco_aux
                                 ,pr_cdinfadi => ' '                                    
                                 ,pr_nrctrnov => 0                                      
@@ -5620,7 +5629,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                               ,pr_cdvencto => vr_cdvencto         --> Codigo do vencimento
                               ,pr_nrctremp => rw_crapass.nrdconta --> Nro contrato empréstimo
                               ,pr_nrseqctr => vr_nrseqctr         --> Seq contrato empréstimo
-                              ,pr_vlsrisco => vr_vlsld59d         --> Valor do risco a lançar
+                              ,pr_vlsrisco => nvl(vr_vlsld59d,0)  --> Valor do risco a lançar
                               ,pr_des_erro => vr_des_erro);
               -- Testar retorno de erro
               IF vr_des_erro IS NOT NULL THEN
@@ -5922,6 +5931,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_qtparcel := 1; -- Para desconto de duplicata sempre gera 1 parcela do Fluxo Financeiro
                 vr_dtvencop := NULL;
                 vr_vljura60 := 0;
+                vr_vlprjano := 0;
+                vr_vlprjaan := 0;
+                vr_vlprjant := 0;
+                vr_vlprjbdt := 0;
                 -- Limpar a temp-table
                 FOR vr_ind IN 1..23 LOOP
                   vr_tab_vlavence(vr_ind) := 0;
@@ -5945,7 +5958,27 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               IF NOT (rw_crapbdt.insittit = 2 AND (rw_crapbdt.indpagto IN(1,3,4) OR (rw_crapbdt.indpagto = 0 AND rw_crapbdt.cdbandoc = 085))) THEN
                 -- Acumular no valor do risco o valor líquido do titulo
                 IF (rw_crapbdt.flverbor=1) THEN 
-                  vr_vlsrisco := (rw_crapbdt.vlliquid - (rw_crapbdt.vltitulo - rw_crapbdt.vlsldtit) + (rw_crapbdt.vlmratit - rw_crapbdt.vlpagmra));--pagamento do titulo parcial
+
+                  -- calcula o juros de mora
+                  DSCT0003.pc_calcula_atraso_tit(pr_cdcooper => pr_cdcooper
+                                                ,pr_nrdconta => rw_crapbdt.nrdconta
+                                                ,pr_nrborder => rw_crapbdt.nrborder
+                                                ,pr_cdbandoc => rw_crapbdt.cdbandoc
+                                                ,pr_nrdctabb => rw_crapbdt.nrdctabb
+                                                ,pr_nrcnvcob => rw_crapbdt.nrcnvcob
+                                                ,pr_nrdocmto => rw_crapbdt.nrdocmto
+                                                ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                                                ,pr_vlmtatit => vr_vlmtatit
+                                                ,pr_vlmratit => vr_vlmratit
+                                                ,pr_vlioftit => vr_vlioftit
+                                                ,pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic);
+
+                  IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+                    RAISE vr_exc_erro;
+                  END IF;
+
+                  vr_vlsrisco := (rw_crapbdt.vlliquid - (rw_crapbdt.vltitulo - rw_crapbdt.vlsldtit) + (vr_vlmratit - rw_crapbdt.vlpagmra));--pagamento do titulo parcial
                 ELSE
                   vr_vlsrisco := rw_crapbdt.vlliquid;
                 END IF;
@@ -6004,7 +6037,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   vr_vlprxpar := vr_vlprxpar + vr_vlsrisco;
                 END IF;                
                 
-                vr_vljura60 := vr_vljura60 + rw_crapbdt.vljura60;
+                -- Realiza o cálculo dos juros + 60 de mora do título
+                DSCT0003.pc_calcula_juros60_tit(pr_cdcooper => pr_cdcooper    
+                                               ,pr_nrdconta => rw_crapbdt.nrdconta    
+                                               ,pr_nrborder => rw_crapbdt.nrborder    
+                                               ,pr_cdbandoc => rw_crapbdt.cdbandoc    
+                                               ,pr_nrdctabb => rw_crapbdt.nrdctabb    
+                                               ,pr_nrcnvcob => rw_crapbdt.nrcnvcob    
+                                               ,pr_nrdocmto => rw_crapbdt.nrdocmto    
+                                               ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt    
+                                               ,pr_vljura60 => vr_vljura60calc   
+                                               ,pr_vljrre60 => vr_vljrre60
+                                               ,pr_cdcritic => vr_cdcritic
+                                               ,pr_dscritic => vr_dscritic );
+
+                IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                  RAISE vr_exc_erro;
+                END IF;              
+                
+                vr_vljura60 := vr_vljura60 + vr_vljura60calc + vr_vljrre60;
 
                 IF vr_qtdprazo > 0 THEN
                   -- Copiar o valor do risco para a variavel específica de
@@ -6082,6 +6133,64 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               END IF;
               -- Se estivermos processando o ultimo registro Boleto + TpCobrança e houver valor acumulado
               IF rw_crapbdt.seq_atu = rw_crapbdt.qtd_max AND vr_vldestit > 0 THEN
+                DSCT0003.pc_calcula_risco_bordero(pr_cdcooper => pr_cdcooper
+                                                 ,pr_nrborder => rw_crapbdt.nrborder
+                                                 --OUT--
+                                                 ,pr_dsinrisc => vr_risco_aux
+                                                 ,pr_cdcritic => vr_cdcritic
+                                                 ,pr_dscritic => vr_dscritic );
+                
+                IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                  RAISE vr_exc_erro;
+                END IF; 
+                
+                IF rw_crapbdt.flverbor = 0 THEN
+                  -- Verificar se para a conta do borderô do produto antigo existe algum borderô do novo produto em prejuizo, pois deve
+                  -- arrastar o borderô do produto antigo para o risco H.
+                  OPEN cr_crapbdt_prej(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => rw_crapbdt.nrdconta
+                                      ,pr_nrborder => rw_crapbdt.nrborder);
+                  FETCH cr_crapbdt_prej INTO rw_crapbdt_prej;
+                  IF cr_crapbdt_prej%FOUND THEN
+                    vr_risco_aux := 9; 
+                  END IF;
+                  CLOSE cr_crapbdt_prej;
+                END IF;
+
+                IF (rw_crapbdt.inprejuz=1) THEN
+                  -- Se a data do prejuízo for de um mês superior ao corrente
+                  IF trunc(rw_crapbdt.dtprejuz,'mm') > trunc(pr_rw_crapdat.dtmvtolt,'mm') THEN
+                    -- Utilizamos fixo 50, pois a lógica Progress sempre chegava nesse valor para prejuizos futuros
+                    vr_indocc := 50;
+                  ELSE
+                    -- Retornar a quantidade de meses de diferença
+                    -- entre a data atual e a data do prejuizo, utilizamos
+                    -- trunc para considerar somente a diferença exata de meses
+                    -- do cálculo Oracle e somamos mais 1 inteiro
+                    vr_indocc := trunc(months_between(trunc(pr_rw_crapdat.dtmvtolt,'mm'),trunc(rw_crapbdt.dtprejuz,'mm')))+1;
+                  END IF;
+                  
+                  PREJ0005.pc_calcula_saldo_prej_risco(pr_cdcooper => pr_cdcooper
+                                                      ,pr_nrborder => rw_crapbdt.nrborder
+                                                      ,pr_vlsldprj => vr_vlprjbdt 
+                                                      ,pr_cdcritic => vr_cdcritic
+                                                      ,pr_dscritic => vr_dscritic);
+
+                  IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+                    RAISE vr_exc_erro;
+                  END IF;
+                  
+                  -- Lançar o prejuízo na coluna específica a diferença de meses
+                  -- já diminuindo o prejuízo os valores pagos somados na vr_vlrpagos
+                  IF vr_indocc <= 12 THEN
+                    vr_vlprjano := vr_vlprjbdt;
+                  ELSIF vr_indocc >= 13 AND vr_indocc <= 48 THEN
+                    vr_vlprjaan := vr_vlprjbdt;
+                  ELSE
+                    vr_vlprjant := vr_vlprjbdt;
+                  END IF;
+                END IF;
+                
                 -- Gerar Informacoes Docto 3020 --
                 -- Incrementar sequencial do contrato
                 vr_nrseqctr := vr_nrseqctr + 1;
@@ -6089,7 +6198,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 -- Gravar temptable da crapris para posteriormente realizar o insert na tabela fisica
                 pc_grava_crapris(  pr_nrdconta => rw_crapass.nrdconta                             
                                   ,pr_dtrefere => vr_dtrefere
-                                  ,pr_innivris => vr_risco_rating
+                                  ,pr_innivris => vr_risco_aux
                                   ,pr_qtdiaatr => ABS(vr_qtdiaatr)
                                   ,pr_vldivida => vr_vldestit
                                   ,pr_vlvec180 => nvl(vr_vltit180,0)
@@ -6099,11 +6208,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                   ,pr_vldiv180 => nvl(vr_vldiv180,0)
                                   ,pr_vldiv360 => nvl(vr_vldiv360,0)
                                   ,pr_vldiv999 => nvl(vr_vldiv999,0)
-                                  ,pr_vlprjano => 0                            
-                                  ,pr_vlprjaan => 0
+                                  ,pr_vlprjano => nvl(vr_vlprjano,0)
+                                  ,pr_vlprjaan => nvl(vr_vlprjaan,0)
+                                  ,pr_vlprjant => nvl(vr_vlprjant,0)
                                   ,pr_inpessoa => rw_crapass.inpessoa                             
                                   ,pr_nrcpfcgc => rw_crapass.nrcpfcgc 
-                                  ,pr_vlprjant => 0
                                   ,pr_inddocto => 1          -- Docto 3020
                                   ,pr_cdmodali => 0301 -- Desconto Duplicatas
                                   ,pr_nrctremp => vr_nrctrlim
@@ -6118,7 +6227,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                   ,pr_qtdriclq => 0                      
                                   ,pr_nrdgrupo => 0                                      
                                   ,pr_vljura60 => vr_vljura60
-                                  ,pr_inindris => vr_risco_rating
+                                  ,pr_inindris => vr_risco_aux
                                   ,pr_cdinfadi => ' '                                    
                                   ,pr_nrctrnov => 0                                      
                                   ,pr_flgindiv => 0                                    
@@ -6137,7 +6246,73 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   RAISE vr_exc_undo;
                 END IF;
                             
+                -- Se existir valor prejuizo ano atual
+                IF vr_vlprjano > 0 THEN
+                  -- Utilizar código vencimento 310
+                  vr_cdvencto := 310;
+                  -- Chamar rotina de gravação dos vencimentos do risco passando este valor
+                  pc_grava_crapvri(pr_nrdconta => rw_crapass.nrdconta    --> Num. da conta
+                                  ,pr_dtrefere => vr_dtrefere            --> Data de referência
+                                  ,pr_innivris => vr_risco_aux           --> Nível do risco
+                                  ,pr_cdmodali => 0301                   --> Cfme a linha de crédito
+                                  ,pr_cdvencto => vr_cdvencto            --> Codigo do vencimento
+                                  ,pr_nrctremp => vr_nrctrlim            --> Nro contrato empréstimo
+                                  ,pr_nrseqctr => vr_nrseqctr            --> Seq contrato empréstimo
+                                  ,pr_vlsrisco => vr_vlprjano            --> Valor do risco a lançar
+                                  ,pr_des_erro => vr_des_erro);
+                  -- Testar retorno de erro
+                  IF vr_des_erro IS NOT NULL THEN
+                    -- Gerar erro e roolback
+                    RAISE vr_exc_erro;
+                  END IF;
+                  
+                END IF;
+                -- Se existir valor prejuizo ano anterior
+                IF vr_vlprjaan > 0 THEN
+                  -- Utilizar código vencimento 320
+                  vr_cdvencto := 320;
+                            
+                  -- Chamar rotina de gravação dos vencimentos do risco passando este valor
+                  pc_grava_crapvri(pr_nrdconta => rw_crapass.nrdconta    --> Num. da conta
+                                  ,pr_dtrefere => vr_dtrefere            --> Data de referência
+                                  ,pr_innivris => vr_risco_aux           --> Nível do risco
+                                  ,pr_cdmodali => 0301                   --> Cfme a linha de crédito
+                                  ,pr_cdvencto => vr_cdvencto            --> Codigo do vencimento
+                                  ,pr_nrctremp => vr_nrctrlim            --> Nro contrato empréstimo
+                                  ,pr_nrseqctr => vr_nrseqctr            --> Seq contrato empréstimo
+                                  ,pr_vlsrisco => vr_vlprjaan            --> Valor do risco a lançar
+                                  ,pr_des_erro => vr_des_erro);
+                  -- Testar retorno de erro
+                  IF vr_des_erro IS NOT NULL THEN
+                    -- Gerar erro e roolback
+                    RAISE vr_exc_erro;
+                  END IF;
+                  
+                END IF;
+                -- Se existir valor prejuizo anos anteriores
+                IF vr_vlprjant > 0 THEN
+                  -- Utilizar código vencimento 330
+                  vr_cdvencto := 330;
+                            
+                  -- Chamar rotina de gravação dos vencimentos do risco passando este valor
+                  pc_grava_crapvri(pr_nrdconta => rw_crapass.nrdconta    --> Num. da conta
+                                  ,pr_dtrefere => vr_dtrefere            --> Data de referência
+                                  ,pr_innivris => vr_risco_aux           --> Nível do risco
+                                  ,pr_cdmodali => 0301                   --> Cfme a linha de crédito
+                                  ,pr_cdvencto => vr_cdvencto            --> Codigo do vencimento
+                                  ,pr_nrctremp => vr_nrctrlim            --> Nro contrato empréstimo
+                                  ,pr_nrseqctr => vr_nrseqctr            --> Seq contrato empréstimo
+                                  ,pr_vlsrisco => vr_vlprjant            --> Valor do risco a lançar
+                                  ,pr_des_erro => vr_des_erro);
+                  -- Testar retorno de erro
+                  IF vr_des_erro IS NOT NULL THEN
+                    -- Gerar erro e roolback
+                    RAISE vr_exc_erro;
+                  END IF;
+                            
+                END IF;
                 -- Para cada registro de parcelas no vetor a vencer
+                IF (rw_crapbdt.inprejuz <> 1) THEN
                 IF vr_tab_vlavence.COUNT > 0 THEN
                   FOR vr_ind IN vr_tab_vlavence.FIRST..vr_tab_vlavence.LAST LOOP
                     -- Se existe valor nesta posição
@@ -6149,7 +6324,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                       -- Chamar rotina de gravação dos vencimentos do risco
                       pc_grava_crapvri(pr_nrdconta => rw_crapass.nrdconta     --> Num. da conta
                                       ,pr_dtrefere => vr_dtrefere             --> Data de referência
-                                      ,pr_innivris => vr_risco_rating         --> Nível do risco
+                                        ,pr_innivris => vr_risco_aux            --> Nível do risco
                                       ,pr_cdmodali => 0301                    --> Desconto Duplicatas
                                       ,pr_cdvencto => vr_cdvencto             --> Codigo do vencimento
                                       ,pr_nrctremp => vr_nrctrlim             --> Nro contrato emprestimo
@@ -6164,6 +6339,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                     END IF;
                   END LOOP; -- Fim lançamentos registros a vencer
                 END IF; 
+                END IF;
               END IF; -- Fim tratamento ultimo registro da flag e valor acumulado
             END LOOP; -- Fim das buscas de titulos com e sem cobrança        
           END IF;
@@ -6988,7 +7164,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       END LOOP;  
       
       --> Carrega Temp-Table contendo as contas com risco soberano
- 	    pc_cria_table_risco_soberano(pr_cdcooper                  => pr_cdcooper
+        pc_cria_table_risco_soberano(pr_cdcooper                  => pr_cdcooper
                                   ,pr_tab_contas_risco_soberano => vr_tab_contas_risco_soberano);
 
 
