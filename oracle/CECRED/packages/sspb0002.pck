@@ -3208,11 +3208,11 @@ BEGIN
         EXCEPTION
           WHEN OTHERS THEN
             -- Retornar erro
-            vr_dscritic := 'Problema ao fechar o arquivo(s) de conciliacao <'||vr_dircop_txt||'/'||vr_nom_arquivo||'>: ' || sqlerrm;
+            vr_dscritic := 'Problema ao fechar o arquivo de conciliacao <'||vr_dircop_txt||'/'||vr_nom_arquivo||'>: ' || sqlerrm;
             RAISE vr_exc_erro;
         END;
         --
-        vr_aux_dscorpo := 'Sua solicitação foi processada com sucesso e o(s) arquivo(s) '||vr_nom_arquivo||' - '||vr_nom_arquivo_rec||' já estão disponíveis no diretório: X:\SPB\CONSPB\';
+        vr_aux_dscorpo := 'Sua solicitação foi processada com sucesso e o(s) arquivo(s) '||vr_nom_arquivo||' - '||vr_nom_arquivo_rec||' já está(ão) disponível(is) no diretório: X:\SPB\CONSPB\';
         RAISE vr_exc_email;
       END;
   
