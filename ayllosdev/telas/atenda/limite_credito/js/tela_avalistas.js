@@ -259,7 +259,7 @@ function formataAvalista(){
     var cCom = $('#complend', '#' + nomeForm);
     var cCax = $('#nrcxapst', '#' + nomeForm);
 
-    cCep.addClass('cep pesquisa').css('width', '65px').attr('maxlength', '9');
+    cCep.addClass('pesquisa').css('width', '65px').attr('maxlength', '9');
     cEnd.addClass('alphanum').css('width', '300px').attr('maxlength', '40');
     cNum.addClass('numerocasa').css('width', '65px').attr('maxlength', '7');
     cCom.addClass('alphanum').css('width', '300px').attr('maxlength', '40');
