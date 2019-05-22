@@ -1396,6 +1396,7 @@ PROCEDURE Valida_Dados:
     DEF VAR aux_nmdcampo AS CHAR                                    NO-UNDO.
     DEF VAR aux_inpessoa AS INTE                                    NO-UNDO.
     DEF VAR aux_idorgexp AS INTE                                    NO-UNDO.
+	DEF VAR aux_valpercs AS LOGICAL									NO-UNDO.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Valida dados do Representante/Procurador"
@@ -2020,7 +2021,22 @@ PROCEDURE Valida_Dados:
             
         /* alimenta o percentual da conta em questao */
         ASSIGN tot_persocio = par_persocio.
-        
+
+		/*Quando alteração do procurador, não consistir total % societ. se alteração do % para menor */
+		ASSIGN aux_valpercs = TRUE.
+		FIND FIRST crapavt WHERE crapavt.cdcooper = par_cdcooper   AND
+		                       crapavt.tpctrato = 6 /*procurad*/ AND 
+							   crapavt.nrdconta = par_nrdconta   AND
+							   crapavt.nrctremp = par_idseqttl   AND
+							   crapavt.nrdctato = par_nrdctato
+							   NO-LOCK NO-ERROR.
+			IF  AVAIL crapavt  AND
+			    (par_persocio <= crapavt.persocio) THEN
+			    ASSIGN aux_valpercs = FALSE.
+		 
+		
+		IF  aux_valpercs THEN
+		    DO:  
         
                /* procuradores da conta */
                FOR EACH crapavt WHERE crapavt.cdcooper = par_cdcooper   AND
@@ -2077,6 +2093,7 @@ PROCEDURE Valida_Dados:
                aux_dscritic = "% Societ. total nao deve ultrapassar 100%.".
            LEAVE Valida.
         END.
+		END.  
         
         /* validar os bens */
         IF NOT VALID-HANDLE(h-b1wgen0056) THEN
