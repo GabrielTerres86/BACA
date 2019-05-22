@@ -32,7 +32,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 14/13/2019
+   Data    : 14/09/2005                        Ultima atualizacao: 15/04/2019
 
    Dados referentes ao programa:
 
@@ -828,7 +828,11 @@
 	      29/03/2019 - Incidente 0033759 - Erro na geracao automatica da cessao de credito - Ramon		  
 
           20/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
-          
+          			 
+          15/04/2019 - P438 - Alterada valida-dados-gerais para não permitir utilizar linha ou finalidade de credito
+							que esteja cadastrada em SubSegmento de contratacao Online. (Douglas Pagel / AMcom)
+		
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -4329,6 +4333,47 @@ PROCEDURE valida-dados-gerais:
         IF  aux_flgpagto  THEN
             ASSIGN aux_dtdpagto = par_dtdpagt2.
 
+		/* Verificacao de linha de credito e finalidade somente OnLine - PRJ438*/		
+		IF (par_idorigem = 5) THEN
+			DO:
+			
+				{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                 /* Verifica se a linha esta cadastrada em algum subsegmento */
+                 RUN STORED-PROCEDURE pc_verifica_linha_segmento
+                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                     ,INPUT par_cdlcremp
+                                                     ,INPUT par_cdfinemp
+                                                     ,0
+													 ,0
+                                                     ,"").
+
+                 CLOSE STORED-PROC pc_verifica_linha_segmento
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                 ASSIGN aux_flgativo = 0
+                        aux_cdcritic = 0
+                        aux_dscritic = ""
+                        aux_cdcritic = INT(pc_verifica_linha_segmento.pr_cdcritic) WHEN pc_verifica_linha_segmento.pr_cdcritic <> ?
+                        aux_dscritic = pc_verifica_linha_segmento.pr_dscritic WHEN pc_verifica_linha_segmento.pr_dscritic <> ?
+                        aux_flgativo = INT(pc_verifica_linha_segmento.pr_flgativo) WHEN pc_verifica_linha_segmento.pr_flgativo <> ?.
+                                  
+                  IF   aux_cdcritic > 0   OR
+                       (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+                       DO:
+                           LEAVE.
+                       END.
+                                
+                  IF   aux_flgativo = 1  THEN
+                       DO:
+                           ASSIGN aux_dscritic = "Linha de Credito exclusiva para contratacao online.".
+                           LEAVE.
+						END.
+			
+			END.
+			
         IF   par_inconfir = 1   THEN
              DO:
                  RUN verifica_valores_linha (INPUT par_cdcooper,
