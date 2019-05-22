@@ -6753,7 +6753,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 							,crapage.cdagenci
 							,crapage.idcidade
 							,crapage.nrcepend
-							,crapage.dsendcop||decode(crapage.nrendere,0,null,','||crapage.nrendere) dsender_compl
+							,crapage.dsendcop||
+							decode(crapage.nrendere,0,null,','||crapage.nrendere)||
+							decode(crapage.dscomple, ' ', NULL, ','||crapage.dscomple) dsender_compl
 					FROM crapage
 				 WHERE crapage.cdcooper = pr_cdcooper
 					 AND crapage.cdagenci = pr_cdagenci;
@@ -6809,10 +6811,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             ,enc.nmbairro
             ,enc.cdufende
             ,enc.dsendere
-            , decode(enc.nrendere,0,null,','||enc.nrendere) nrendere
+            ,decode(enc.nrendere,0,null,','||enc.nrendere) nrendere
+						,enc.complend
             -- montar string com o endereço completo do associado
             ,enc.dsendere||
-             decode(enc.nrendere,0,null,','||enc.nrendere) dsender_compl
+             decode(enc.nrendere,0,null,','||enc.nrendere)||
+						 decode(enc.complend,' ',NULL,','||enc.complend) dsender_compl
             ,decode(nvl(trim(enc.cddbloco),'0'),'0',null,' bl-'||enc.cddbloco)||
              decode(nvl(trim(enc.nrdoapto),'0'),'0',null,' ap '||enc.nrdoapto) dsender_apbl
 
@@ -6940,7 +6944,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 					vr_ufendere VARCHAR2(5) := '';
 					vr_nmcidade VARCHAR2(50) := '';
 					vr_nmbairro VARCHAR2(50) := '';
-					vr_nrcepend VARCHAR2(15) := '';					
+					vr_nrcepend VARCHAR2(15) := '';
+					vr_complend VARCHAR2(50) := '';
 
         BEGIN
           BEGIN
@@ -6982,7 +6987,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 							vr_ufendere := rw_end_agencia.cdufdcop;
 							vr_nmcidade := rw_end_agencia.nmcidade;
 							vr_nmbairro := rw_end_agencia.nmbairro;
-							vr_nrcepend := rw_end_agencia.nrcepend;							
+							vr_nrcepend := rw_end_agencia.nrcepend;
+							vr_complend := rw_end_agencia.dscomple;					
 							
 						ELSE
 
@@ -7014,6 +7020,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 								vr_nmcidade := rw_crapenc.nmcidade;
 								vr_nmbairro := rw_crapenc.nmbairro;
 								vr_nrcepend := rw_crapenc.nrcepend;
+								vr_complend := rw_crapenc.complend;
 								
             END IF;
 						
@@ -7025,10 +7032,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               --USA OS 50 CARACTERES PARA O ENDEREÇO
               vr_aux_dsendcom := rpad(substr(nvl(vr_dsender_compl,' '),1,50),50,' ');
             ELSE
-              -- SEPARA 29 CARACTERES PARA ENDEREÇO E 21 PARA COMPLEMENTO
-              vr_aux_dsendcom := rpad(nvl((TRIM(substr(nvl(vr_dsendere,' '),1,29)) || 
+              -- SEPARA 30 CARACTERES PARA ENDEREÇO E 20 PARA COMPLEMENTO
+              vr_aux_dsendcom := rpad(nvl((TRIM(substr(nvl(vr_dsendere,' '),1,24)) || 
                                            TRIM(substr(nvl(vr_nrendere,' '),1,6)||
-                                           substr(nvl(vr_dsender_apbl,' '),1,15))),' '),50,' ');
+																					 substr(nvl(vr_complend, ' '),1,10)||
+                                           substr(nvl(vr_dsender_apbl,' '),1,10))),' '),50,' ');
             END IF;
 
       -- Gerar código sequencial de controle para o contrato (Renato-Supero)
