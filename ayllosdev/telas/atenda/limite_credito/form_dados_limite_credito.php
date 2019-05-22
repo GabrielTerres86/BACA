@@ -14,6 +14,7 @@
 	
 	<input id="nivrisco" name="nivrisco" type="hidden" />
 	<input id="dsdtxfix" name="dsdtxfix" type="hidden" />
+	<input name="idcobert" id="idcobert" type="hidden" value="0" />
 
 	<label for="vllimite"><? echo utf8ToHtml('Valor do Limite:') ?></label>	
 	<input id="vllimite" name="vllimite" type="text" />	

@@ -5159,7 +5159,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
               CRAPLIM.nrliquid,
               CRAPLIM.nrpatlvr,
               CRAPLIM.nrperger,
-              'A' nivrisco
+              'A' nivrisco,
+              CRAPLIM.idcobope
          from craplim,
               CRAPLRT,
               crapass
@@ -5243,6 +5244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrliquid', pr_tag_cont => to_char(rw_craplim.nrliquid), pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrpatlvr', pr_tag_cont => to_char(rw_craplim.nrpatlvr), pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrperger', pr_tag_cont => to_char(rw_craplim.nrperger), pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'idcobope', pr_tag_cont => to_char(rw_craplim.idcobope), pr_des_erro => vr_dscritic);
     
       vr_contador := vr_contador + 1;
     

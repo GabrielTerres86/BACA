@@ -254,6 +254,8 @@ var aux_vlrecjg1 = '';
 // PRJ 438
 var aux_dtmvtolt = '';
 
+var aux_operacao = ''; // Controlar se é alteraca ou inclusao
+
 /**
  * bruno - prj - 438 - sprint 7 - tela principal
  * Função para acessar opções da rotina
@@ -344,6 +346,7 @@ function acessaTela(cddopcao) {
             flpropos: flpropos,
             inpessoa: var_globais.inpessoa, //bruno - prj 438 - sprint 7 - novo limite
 			inconfir: cddopcao == 'A' || cddopcao == 'P' ? 0 : 1, // Se for consulta NÃO fazer validação, senão, fazer validação
+			aux_operacao: aux_operacao,
 			redirect: "html_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
@@ -1301,9 +1304,11 @@ function controlaPesquisas() {
 		buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'dsdlinha',$(this).val(),'dsdlinha',filtrosDesc,'frmNovoLimite');
 		$('#cddlinha', '#frmNovoLimite').attr('aux', '');
 		buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'dsdtxfix',$(this).val(),'dsdtxfix',filtrosDesc,'frmNovoLimite');
+		$('#cddlinha', '#frmNovoLimite').attr('aux', '');
+		buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'qtdiavig',$(this).val(),'qtdiavig',filtrosDesc,'frmNovoLimite');
 		return false;
     }).next().unbind('click').bind('click', function () {
-        filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + "|;dsdtxfix;;;|;flgstlcr;;;1;N";
+        filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + "|;dsdtxfix;;;|;flgstlcr;;;1;N|;qtdiavig;;;";
         colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center';
         fncOnClose = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
         mostraPesquisa(bo, procedure, titulo, '20', filtrosPesq, colunas, divRotina, fncOnClose);
