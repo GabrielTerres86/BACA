@@ -579,7 +579,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$telaPermitadaAcessoBacen = 1;
 				break;	
 			}
-			case "APLI. PROG": {
+			case "POUP. PROG": {
 				$nomeRotina = "Aplica&ccedil;&atilde;o Programada"; 
                 $urlRotina = "aplicacoes_programadas";
                 $strValue = ( isset($valores[4]->cdata) ) ? number_format(str_replace(",", ".", $valores[4]->cdata), 2, ",", ".") : '';
