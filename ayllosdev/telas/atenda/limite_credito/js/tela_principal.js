@@ -52,6 +52,7 @@ function atribuirEventosBotoes(){
         e.preventDefault();
         if(aux_hasAtivo){
             window.open('http://'+aux_GEDServidor+'/smartshare/clientes/viewerexterno.aspx?tpdoc='+aux_tpdocmto+'&conta='+var_globais.nrdconta+'&contrato='+aux_limites.ativo.nrctrlim+'&cooperativa='+aux_cdcooper, '_blank');   
+            aux_operacao = 'CI';
         }else{
             showError("error",
                 "Conta DEVE ter limite ATIVO.",
@@ -68,6 +69,7 @@ function atribuirEventosBotoes(){
         e.preventDefault();
         if(aux_hasAtivo){
             acessaTela('R');
+            aux_operacao = 'R';
         }else{
             showError("error",
                 "Conta DEVE ter limite ATIVO.",
@@ -90,7 +92,9 @@ function atribuirEventosBotoes(){
             showConfirmacao('Deseja cancelar o ' + strTitRotinaLC + ' atual?','Confirmação - Aimaro',
             'cancelarLimiteAtual('+aux_limites.ativo.nrctrlim+')',
             "blockBackground(parseInt($('#divRotina').css('z-index')))",
-            'sim.gif','nao.gif');return false;
+            'sim.gif','nao.gif');
+            aux_operacao = 'CL';
+            return false;
         }
     });
 
@@ -104,6 +108,7 @@ function atribuirEventosBotoes(){
             'excluirNovoLimite()',
             "blockBackground(parseInt($('#divRotina').css('z-index')))",
             'sim.gif','nao.gif');
+            aux_operacao = 'EX';
         }else{
             showError("error",
             "Conta DEVE ter limite em ESTUDO.",
@@ -121,6 +126,7 @@ function atribuirEventosBotoes(){
         
         if(getHasLimiteEmEstudo()){
             mostraTelaAltera();
+            aux_operacao = 'A';
         }else{
             showError("error",
                 "Conta DEVE ter limite em ESTUDO.",
@@ -137,6 +143,7 @@ function atribuirEventosBotoes(){
         e.preventDefault();
         if(getHasLimiteEmEstudo()){
             acessaTela('E');
+            aux_operacao = 'E';
         }else{
             showError("error",
                 "Conta DEVE ter limite em ESTUDO.",
@@ -152,6 +159,7 @@ function atribuirEventosBotoes(){
     $('#btImprimir').bind('click',function(e){
         e.preventDefault();
         acessaTela('I');
+        aux_operacao = 'IMP';
         return false;
     });
 
@@ -168,6 +176,7 @@ function atribuirEventosBotoes(){
             "blockBackground(parseInt($('#divRotina').css('z-index')))");
         }else{
             acessaTela('A');
+            aux_operacao = 'CA';
         }
         return false;
     });
@@ -180,6 +189,7 @@ function atribuirEventosBotoes(){
         aux_opcaoAtiva = "CONSULTA_PROPOSTO";
         if(getHasLimiteEmEstudo()){
             acessaTela('P');
+            aux_operacao = 'CP';
         }else{
             showError("error",
                 "Não existe limite proposto para consulta.",
@@ -195,6 +205,7 @@ function atribuirEventosBotoes(){
     $('#btUltimasAlteracoes').bind('click',function(e){
         e.preventDefault();
         acessaTela('U');
+        aux_operacao = 'U';
         return false;
     });
 
@@ -210,6 +221,7 @@ function atribuirEventosBotoes(){
                 "blockBackground(parseInt($('#divRotina').css('z-index')))");
         }else{
             acessaTela('N');
+            aux_operacao = 'I';
         }
         return false;
     });

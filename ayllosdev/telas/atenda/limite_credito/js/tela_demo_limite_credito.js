@@ -46,7 +46,21 @@ function formatarCamposDemoLimiteCredito(){
     }
 
     $('#demoQtdiavig','#'+nomeForm).desabilitaCampo();
-    $('#demoQtdiavig','#'+nomeForm).val(var_globais.qtdiavig);
+    if (aux_operacao == 'I') {        
+        $('#demoQtdiavig','#'+nomeForm).val($('#qtdiavig','#'+nomeForm).val());
+    } else if (aux_operacao == 'A') {
+        if ($('#qtdiavig','#'+nomeForm).val()) {
+            $('#demoQtdiavig','#'+nomeForm).val($('#qtdiavig','#'+nomeForm).val());
+        } else {
+            $('#demoQtdiavig','#'+nomeForm).val(aux_limites.pausado.qtdiavig);
+        }
+    } else {
+        if(aux_cddopcao == 'P'){
+            $('#demoQtdiavig','#'+nomeForm).val(aux_limites.pausado.qtdiavig);
+        }else{
+            $('#demoQtdiavig','#'+nomeForm).val(aux_limites.ativo.qtdiavig);
+        }
+    }
     
 }
 

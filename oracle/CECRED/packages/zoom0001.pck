@@ -646,7 +646,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
    Sigla   : CRED
 
    Autor   : Adriano Marchi
-   Data    : 30/11/2015                       Ultima atualizacao: 12/04/2018
+   Data    : 30/11/2015                       Ultima atualizacao: 21/05/2019
 
    Dados referentes ao programa:
 
@@ -677,6 +677,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                   Rotina para consultar informações de limite e adp - Daniel(AMcom)
 
 			   12/04/2018 - Inclusão da rotina pc_busca_motivo_demissao	
+         
+         21/05/2019 - Alterado pc_busca_craplrt, adicionado retorno de quantidades de dias vigencia da linha
+                      PRJ 438 (Mateus Z - Mouts)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -2942,6 +2945,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
           ,craplrt.dsdlinha
           ,craplrt.tpdlinha
           ,craplrt.txjurfix
+          ,craplrt.qtdiavig
       FROM craplrt
      WHERE craplrt.cdcooper = pr_cdcooper
        AND(pr_cddlinha = 0 
@@ -3043,6 +3047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                                      '  <dsdlinha>' || rw_craplrt.dsdlinha ||'</dsdlinha>'||                                                   
                                                      '  <dsdtxfix>' || to_char(rw_craplrt.txjurfix,'990D00','NLS_NUMERIC_CHARACTERS='',.''') || '% + TR' ||'</dsdtxfix>'||                                                   
                                                      '  <dsdtplin>' || (CASE rw_craplrt.tpdlinha WHEN 1 THEN 'Limite PF' ELSE 'Limite PJ' END) ||'</dsdtplin>'||
+                                                     '  <qtdiavig>' || rw_craplrt.qtdiavig ||'</qtdiavig>'||
                                                      '</linha>'); 
        END IF;  
        

@@ -65,7 +65,9 @@
 
 <fieldset class="fsLimiteCredito">
 
-	<legend><? echo utf8ToHtml('Dados da Solicitação') ?></legend>			
+	<legend><? echo utf8ToHtml('Dados da Solicitação') ?></legend>		
+
+	<input name="qtdiavig" id="qtdiavig" type="hidden" />	
 
 	<!-- PRJ 438 - Sprint 7 -->
 	<label for="nivrisco"><? echo utf8ToHtml('Nível de Risco:') ?></label>
