@@ -85,6 +85,7 @@
 			aux_limites.ativo.nrliquid = "<?php echo $limite->{'nrliquid'}; ?>";
 			aux_limites.ativo.nrpatlvr = "<?php echo $limite->{'nrpatlvr'}; ?>";
 			aux_limites.ativo.nrperger = "<?php echo $limite->{'nrperger'}; ?>";
+			aux_limites.ativo.idcobope = "<?php echo $limite->{'idcobope'}; ?>";
 			<?php
 		}else if($limite->{"lfgsitua"} == "1"){
 			?>
@@ -111,6 +112,7 @@
 			aux_limites.pausado.nrliquid = "<?php echo $limite->{'nrliquid'}; ?>";
 			aux_limites.pausado.nrpatlvr = "<?php echo $limite->{'nrpatlvr'}; ?>";
 			aux_limites.pausado.nrperger = "<?php echo $limite->{'nrperger'}; ?>";
+			aux_limites.pausado.idcobope = "<?php echo $limite->{'idcobope'}; ?>";
 			<?php
 		}
 	}
