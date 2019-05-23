@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 17/12/2018
+      Data: Janeiro/2010                        Ultima alteracao: 08/05/2019
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -318,11 +318,11 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
             21/05/2018 - Inclusao de parametros devido a analise de fraude.
                          PRJ381 - Antifraude(Odirlei-AMcom)
                       
-            26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 			   
             18/06/2018 - Retornar o complemento na consulta de extrato
                          (Douglas - Prj 467)
-
+			            
             15/08/2018 - Inclusão da operação 200 - URA
                          (Everton - Mouts - Projeto 427)
 			            
@@ -334,6 +334,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
                          estiver sendo executado pela URA (Douglas - Prj 427 URA)
                          
             17/12/2018 - Ajuste no tratamento de erro na consulta de dados do ECO (Douglas - SCTASK0039027)
+
+		    08/05/2019 - Ajustar parametros na chamada da rotina 
+                         pc_cadastrar_agendamento (Renato - Supero - P485)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -367,7 +370,7 @@ DEFINE VARIABLE aux_tpdsaldo AS INTEGER                     NO-UNDO.
 /* uso comum */                                             
 DEFINE VARIABLE aux_operacao AS INTEGER                     NO-UNDO.
 DEFINE VARIABLE aux_cdcritic AS INT                         NO-UNDO. /* cod critica */
-DEFINE VARIABLE aux_dscritic AS CHARACTER                   NO-UNDO.
+DEFINE VARIABLE aux_dscritic AS CHARACTER                   NO-UNDO.                                                            
 
 
 /* dados do associado nas operacoes */                     
@@ -416,6 +419,8 @@ DEFINE VARIABLE aux_tpusucar AS INTE                        NO-UNDO. /* Tipo de 
 DEFINE VARIABLE aux_idtipcar AS INTE                        NO-UNDO. /* Tipo do cartao.*/
 DEFINE VARIABLE aux_nrrecben AS DECI                        NO-UNDO. /* Numero de recebimento do beneficiario do inss */
 DEFINE VARIABLE aux_dtcompet AS CHAR                        NO-UNDO. /* Mes de competencia do demonstrativo do inss */
+DEFINE VARIABLE aux_nrremete AS INT                         NO-UNDO. /* conta/dv remetente. */
+DEFINE VARIABLE aux_cdagerem AS INTE                        NO-UNDO. /* Agencia remetente. */
 
 
 /* para validacao de pendencias de saque */
@@ -1112,6 +1117,12 @@ DO:
         IF   xField:NAME = "CDORGINS" THEN
              aux_cdorgins = INTE(xText:NODE-VALUE).
         /* Projeto ECO */ 
+		ELSE
+        IF  xField:NAME = "NRREMETE"   THEN
+            aux_nrremete = INTE(xText:NODE-VALUE).
+        ELSE
+		IF  xField:NAME = "CDAGEREM"   THEN
+            aux_cdagerem = INTE(xText:NODE-VALUE).
 
     END.
 
@@ -1150,15 +1161,15 @@ DO:
 
     DO  WHILE TRUE:
 
-      IF   aux_dscritic <> ""   THEN
-        DO:
+        IF   aux_dscritic <> ""   THEN
+             DO:
 
-          /* ---------- */
-          xDoc:CREATE-NODE(xField,"DSCRITIC","ELEMENT").
-          xRoot:APPEND-CHILD(xField).
-          xDoc:CREATE-NODE(xText,"","TEXT").
-          xText:NODE-VALUE = aux_dscritic.
-          xField:APPEND-CHILD(xText).
+                 /* ---------- */
+                 xDoc:CREATE-NODE(xField,"DSCRITIC","ELEMENT").
+                 xRoot:APPEND-CHILD(xField).
+                 xDoc:CREATE-NODE(xText,"","TEXT").
+                 xText:NODE-VALUE = aux_dscritic.
+                 xField:APPEND-CHILD(xText).
           IF aux_operacao = 200 THEN
             DO:
               /* ---------- */
@@ -1168,7 +1179,7 @@ DO:
               xText:NODE-VALUE = STRING(aux_cdcritic).
               xField:APPEND-CHILD(xText).
               
-            END.          
+             END.
              
         END.
         ELSE
@@ -1806,7 +1817,7 @@ DO:
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
-	      ELSE
+        ELSE
         IF   aux_operacao = 77   THEN
              DO:
                  RUN verifica_opcao_benef_inss.
@@ -1814,7 +1825,7 @@ DO:
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
-	      ELSE
+        ELSE
         IF   aux_operacao = 78   THEN
              DO:
                  RUN listar_beneficios_inss.
@@ -1822,7 +1833,7 @@ DO:
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
-	      ELSE
+		ELSE
         IF   aux_operacao = 79   THEN
              DO:
                  RUN consultar_eco.
@@ -1830,6 +1841,33 @@ DO:
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
+
+	    ELSE
+        IF   aux_operacao = 80   THEN
+             DO:
+                 RUN busca_modalidade.
+
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+        ELSE
+        IF   aux_operacao = 81   THEN
+             DO:
+                 RUN valida_modalidade_transferencia.
+
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+		ELSE
+        /* Inicio P485 */
+        IF   aux_operacao = 82   THEN
+             DO:
+                 RUN verifica_modalidade_conta.
+
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+        /* Fim P485 */ 
 
         LEAVE.
     END.
@@ -2191,21 +2229,21 @@ PROCEDURE valida_senha:
 
     DEF VAR aux_token AS CHAR NO-UNDO.
     DEF VAR aux_idorigem AS INTE NO-UNDO.
-    
+
     /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
     IF aux_idtaanew = 1 THEN
     DO:
         /* Se for o sistema novo a senha será enviada aberta, e devemos criptografar */
         ASSIGN aux_dssencar = ENCODE(aux_dssencar).
     END.
-    
+
     /* Toda operacao do TAA é com origem no TAA, por isso por default o valor é 4 */
     ASSIGN aux_idorigem = 4.
     /* Operacao 200 é utilizada apenas na URA, com isso vamos alterar a origem  para 6.*/
     IF aux_operacao = 200 THEN
         ASSIGN aux_idorigem = 6.
-    
-    
+
+
     RUN sistema/generico/procedures/b1wgen0025.p PERSISTENT SET h-b1wgen0025.
                                                                                      
     RUN valida_senha IN h-b1wgen0025( INPUT aux_cdcooper, 
@@ -2227,12 +2265,12 @@ PROCEDURE valida_senha:
       Se nao ocorreu erro na validacao de senha devera se criado um TOKEN
       esse TOKEN sera validado em outras rotinas TA para garantir que a senha eh valida
     */ 
-    
+
     /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
     IF aux_idtaanew = 1 THEN
     DO:
         /* Somente o sistema novo terá a geracao do TOKEN */
-        
+
         /* 
           Foram criados os seguintes parametros para na mensageria, que serao enviados gravados nessa nova tabela
           aux_idopeexe -> ID da Operacao que está sendo executado (Ex: "IB027","TA037","IB181")
@@ -3222,7 +3260,7 @@ PROCEDURE obtem_extrato_aplicacoes:
      
     /* EXTRATOS */
     RUN sistema/generico/procedures/b1wgen0004.p PERSISTENT SET h-b1wgen0004. /* Aplicações */
-    RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT SET h-b1wgen0006. /* Apli. Programada */
+    RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT SET h-b1wgen0006. /* Poup. Programada */
 
     /* Aplicações RDCA */
     RUN consulta-aplicacoes IN h-b1wgen0004
@@ -3437,7 +3475,7 @@ PROCEDURE obtem_extrato_aplicacoes:
         xRoot:APPEND-CHILD(xField).
 
         xDoc:CREATE-NODE(xText,"","TEXT").
-        xText:NODE-VALUE = "APLI.PROGRAMADA".
+        xText:NODE-VALUE = "POUP.PROGRAMADA".
         xField:APPEND-CHILD(xText).
 
 
@@ -3931,11 +3969,11 @@ PROCEDURE verifica_transferencia:
 	/* Efetuar a chamada a rotina Oracle */ 
 	RUN STORED-PROCEDURE pc_valid_repre_legal_trans
 		aux_handproc = PROC-HANDLE NO-ERROR (INPUT aux_cdcooper, /* Código da Cooperativa */
-                                         INPUT aux_nrdconta, /* Número da Conta */
-                                         INPUT 1,            /* Titular da Conta */
-                                         INPUT 0,            
-                                        OUTPUT 0,            /* Código da crítica */
-                                        OUTPUT "").          /* Descrição da crítica */
+											 INPUT aux_nrdconta, /* Número da Conta */
+											 INPUT 1,            /* Titular da Conta */
+                                             INPUT 0,            
+											OUTPUT 0,            /* Código da crítica */
+											OUTPUT "").          /* Descrição da crítica */
 	
 	/* Fechar o procedimento para buscarmos o resultado */ 
 	CLOSE STORED-PROC pc_valid_repre_legal_trans
@@ -3945,11 +3983,11 @@ PROCEDURE verifica_transferencia:
 	
 	/* Busca possíveis erros */ 
 	ASSIGN aux_cdcritic = 0
-         aux_dscritic = ""
-         aux_cdcritic = pc_valid_repre_legal_trans.pr_cdcritic 
-                          WHEN pc_valid_repre_legal_trans.pr_cdcritic <> ?
-         aux_dscritic = pc_valid_repre_legal_trans.pr_dscritic 
-                          WHEN pc_valid_repre_legal_trans.pr_dscritic <> ?.
+		   aux_dscritic = ""
+		   aux_cdcritic = pc_valid_repre_legal_trans.pr_cdcritic 
+						  WHEN pc_valid_repre_legal_trans.pr_cdcritic <> ?
+		   aux_dscritic = pc_valid_repre_legal_trans.pr_dscritic 
+						  WHEN pc_valid_repre_legal_trans.pr_dscritic <> ?.
 
     IF aux_dscritic <> "" THEN
         RETURN "NOK".
@@ -4197,6 +4235,8 @@ PROCEDURE efetua_transferencia:
                                  INPUT "",  /* pr_iptransa */
                                  INPUT "",  /* Numero controle consulta npc */   
                                  INPUT '', /* par_iddispos */
+                                 INPUT ?,  /* pr_nrridlfp */
+                                 
                                 OUTPUT 0, 
                                 OUTPUT "",  /* pr_dstransa */
                                 OUTPUT "",
@@ -5081,38 +5121,38 @@ PROCEDURE paga_titulo:
                                   RUN STORED-PROCEDURE pc_cadastrar_agendamento
                                       aux_handproc = PROC-HANDLE NO-ERROR
                                                   (INPUT aux_cdcooper,     
-                                                   INPUT 91,           /* par_cdagenci */
-                                                   INPUT 900,          /* par_nrdcaixa */
-                                                   INPUT "996",        /* par_cdoperad */
+                                                    INPUT 91,           /* par_cdagenci */
+                                                    INPUT 900,          /* par_nrdcaixa */
+                                                    INPUT "996",        /* par_cdoperad */
                                                    INPUT aux_nrdconta,                   
-                                                   INPUT 1,            /* par_idseqttl */
+                                                    INPUT 1,            /* par_idseqttl */
                                                    INPUT crapdat.dtmvtocd,                        
                                                    /* Projeto 363 - Novo ATM */
                                                    INPUT 4,            /* par_cdorigem */
-                                                   INPUT "TAA",        /* par_dsorigem */
+                                                    INPUT "TAA",        /* par_dsorigem */
                                                    INPUT "TAA",        /* par_nmdatela */
-                                                   INPUT 2,            /* par_cdtiptra */
-                                                   INPUT 2,            /* par_idtpdpag */
-                                                   INPUT aux_nmconban, /* par_dscedent */
-                                                   INPUT aux_dscodbar,           /* par_dscodbar */
-                                                   INPUT deci(aux_cdbarra1), /* par_lindigi1 */
-                                                   INPUT deci(aux_cdbarra2), /* par_lindigi2 */
-                                                   INPUT deci(aux_cdbarra3), /* par_lindigi3 */
-                                                   INPUT deci(aux_cdbarra4), /* par_lindigi4 */
-                                                   INPUT deci(aux_cdbarra5), /* par_lindigi5 */
-                                                   INPUT 856,          /* aux_cdhisdeb */
+                                                    INPUT 2,            /* par_cdtiptra */
+                                                    INPUT 2,            /* par_idtpdpag */
+                                                    INPUT aux_nmconban, /* par_dscedent */
+                                                    INPUT aux_dscodbar,           /* par_dscodbar */
+                                                    INPUT deci(aux_cdbarra1), /* par_lindigi1 */
+                                                    INPUT deci(aux_cdbarra2), /* par_lindigi2 */
+                                                    INPUT deci(aux_cdbarra3), /* par_lindigi3 */
+                                                    INPUT deci(aux_cdbarra4), /* par_lindigi4 */
+                                                    INPUT deci(aux_cdbarra5), /* par_lindigi5 */
+                                                    INPUT 856,          /* aux_cdhisdeb */
                                                    INPUT aux_datpagto,                      
                                                    INPUT aux_vldpagto,                      
-                                                   INPUT aux_dtvencto, /* Data de vencimento */
+                                                    INPUT aux_dtvencto, /* Data de vencimento */
                                                    INPUT 0, /* cddbanco */
                                                    INPUT 0, /* cdageban */
                                                    INPUT 0,             /* Conta destino */                        
                                                    INPUT aux_cdcoptfn,
                                                    INPUT aux_cdagetfn,
                                                    INPUT aux_nrterfin,
-                                                   INPUT 0,            /* par_nrcpfope */
-                                                   INPUT "0",          /* par_idtitdda */
-                                                   INPUT 0,            /* par_cdtrapen */
+                                                    INPUT 0,            /* par_nrcpfope */
+                                                    INPUT "0",          /* par_idtitdda */
+                                                    INPUT 0,            /* par_cdtrapen */
                                                    INPUT 0,
                                                    INPUT 0,
                                                    INPUT 0,
@@ -5122,12 +5162,14 @@ PROCEDURE paga_titulo:
                                                    INPUT "",   /* pr_iptransa */
                                                    INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
                                                    INPUT '', /* pr_iddispos */
+                                                   INPUT ?,  /* pr_nrridlfp */
+                                                   
                                                   OUTPUT 0,
-                                                  OUTPUT "",  /* pr_dstransa */
-                                                  OUTPUT "",
-                                                  OUTPUT 0,
-                                                  OUTPUT "",                         
-                                                  OUTPUT "").    /* pr_dscritic */
+                                                   OUTPUT "",  /* pr_dstransa */
+                                                   OUTPUT "",
+                                                   OUTPUT 0,
+                                                   OUTPUT "",                         
+                                                   OUTPUT "").    /* pr_dscritic */
                                                                                          
                                   CLOSE STORED-PROC pc_cadastrar_agendamento
                                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -5661,6 +5703,8 @@ PROCEDURE paga_convenio:
                                                   INPUT '',  /* pr_iptransa */
                                                   INPUT '',  /* Numero controle consulta npc */   
                                                   INPUT '', /* par_iddispos */
+                                                  INPUT ?,  /* pr_nrridlfp */
+                                                  
                                                  OUTPUT 0, 
                                                  OUTPUT "",  /* pr_dstransa */
                                                  OUTPUT "",
@@ -6129,22 +6173,22 @@ PROCEDURE efetua_agendamento_mensal:
             
             RUN STORED-PROCEDURE pc_agendamento_recorrente
                 aux_handproc = PROC-HANDLE NO-ERROR
-                                   (INPUT aux_cdcooper,
+                                                (INPUT aux_cdcooper,
                                     INPUT 91,                           
                                     INPUT 900,          /* par_nrdcaixa */
                                     INPUT "996",        /* par_cdoperad */
-                                    INPUT aux_nrdconta,
-                                    INPUT 1,
-                                    INPUT crapdat.dtmvtocd,
+                                                 INPUT aux_nrdconta,
+                                                 INPUT 1,
+                                                 INPUT crapdat.dtmvtocd,
                                     INPUT 4, /* cdorigem */
                                     INPUT "TAA",                        
                                     INPUT "TAA", /* nmprogra */ 
                                     INPUT aux_lsdataqd,                 
-                                    INPUT aux_cdhisdeb,
-                                    INPUT aux_vltransf,
-                                    INPUT aux_cddbanco,
-                                    INPUT aux_cdagetra,
-                                    INPUT aux_nrtransf, 
+                                                 INPUT aux_cdhisdeb,
+                                                 INPUT aux_vltransf,
+                                                 INPUT aux_cddbanco,
+                                                 INPUT aux_cdagetra,
+                                                 INPUT aux_nrtransf, 
                                     INPUT aux_tpoperac,                 
                                     INPUT aux_cdcoptfn,                 
                                     INPUT aux_cdagetfn,                 
@@ -6515,7 +6559,7 @@ PROCEDURE exclui_agendamentos:
                                               INPUT  aux_dtmvtolt,
                                               INPUT  aux_nrdocmto,
                                               INPUT  0, /* Idlancto */
-                                              INPUT  "TAA", /*Nome da tela*/
+											  INPUT  "TAA", /*Nome da tela*/
                                               INPUT  0, /*par_nrcpfope*/
                                               OUTPUT aux_dstransa,
                                               OUTPUT aux_dscritic).
@@ -10567,23 +10611,23 @@ PROCEDURE verifica_recarga:
 
 	RUN STORED-PROCEDURE pc_valida_recarga
 	  aux_handproc = PROC-HANDLE NO-ERROR
-                       (INPUT aux_cdcooper,  /* Cooperativa*/
-                        INPUT aux_nrdconta,  /* Nr. da conta */
-                        INPUT 0,             /* CPF Operador da conta */
-                        INPUT 1,             /* Titular da conta */
-                        INPUT aux_nrdddtel,  /* DDD */
-                        INPUT aux_nrcelular, /* Nr. do celular */
-                        INPUT aux_vlrecarga, /* Valor de recarga */
-                        INPUT DATE(aux_dtrecarga), /* Data de recarga */
-                        INPUT aux_qtmesagd,  /* Quantidade de mes agendamento (Somente opcao 3)*/
-                        INPUT aux_cddopcao,  /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */              
-                        INPUT 4,             /* Id origem (4-TAA)*/
+						 (INPUT aux_cdcooper,  /* Cooperativa*/
+						  INPUT aux_nrdconta,  /* Nr. da conta */
+						  INPUT 0,             /* CPF Operador da conta */
+						  INPUT 1,             /* Titular da conta */
+						  INPUT aux_nrdddtel,  /* DDD */
+						  INPUT aux_nrcelular, /* Nr. do celular */
+						  INPUT aux_vlrecarga, /* Valor de recarga */
+						  INPUT DATE(aux_dtrecarga), /* Data de recarga */
+						  INPUT aux_qtmesagd,  /* Quantidade de mes agendamento (Somente opcao 3)*/
+						  INPUT aux_cddopcao,  /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */              
+						  INPUT 4,             /* Id origem (4-TAA)*/
                         INPUT 91,            /* Agencia de Origem */ 
                         INPUT 900,           /* Caixa de Origem */ 
                         INPUT "TAA",         /* Programa que chamou */ 
-                        OUTPUT "",           /* Lista de datas para agendamento recorrente */
-                        OUTPUT 0,            /* Código da crítica.*/
-                        OUTPUT "").          /* Desc. da crítica */
+						  OUTPUT "",           /* Lista de datas para agendamento recorrente */
+						  OUTPUT 0,            /* Código da crítica.*/
+						  OUTPUT "").          /* Desc. da crítica */
 	
 	/* Fechar o procedimento para buscarmos o resultado */ 
 	CLOSE STORED-PROC pc_valida_recarga
@@ -10640,36 +10684,36 @@ PROCEDURE efetua_recarga:
 
 	RUN STORED-PROCEDURE pc_manter_recarga
 	  aux_handproc = PROC-HANDLE NO-ERROR
-                       (INPUT aux_cdcooper,        /* Cooperativa*/
-                        INPUT aux_nrdconta,        /* Nr. da conta */
-                        INPUT 1,                   /* Titular da conta */
-                        INPUT 0,                   /* CPF Operador da conta */
-                        INPUT aux_vlrecarga,       /* Valor da recarga */
-                        INPUT DATE(aux_dtrecarga), /* Data de recarga */              
-                        INPUT aux_lsdatagd,        /* Lista de datas para agendamento de recarga */
-                        INPUT aux_cddopcao,        /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */                            
-                        INPUT aux_nrdddtel,        /* DDD */
-                        INPUT aux_nrcelular,       /* Nr. do celular */
-                        INPUT aux_cdoperadora,     /* Cod. operadora */
-                        INPUT aux_cdproduto,       /* Cod. produto */
-                        INPUT aux_cdcoptfn,        /* Cooperativa terminal financeiro */
-                        INPUT aux_cdagetfn,        /* Agencia terminal financeiro */
-                        INPUT aux_nrterfin,        /* Nr. terminal financeiro */
-                        INPUT aux_nrcartao,        /* Nr. cartao */
-                        INPUT aux_nrsequni,        /* Nr. sequencial unico */
-                        INPUT 4,             /* Id origem (4-TAA)*/
+						 (INPUT aux_cdcooper,        /* Cooperativa*/
+              INPUT aux_nrdconta,        /* Nr. da conta */
+              INPUT 1,                   /* Titular da conta */
+              INPUT 0,                   /* CPF Operador da conta */
+              INPUT aux_vlrecarga,       /* Valor da recarga */
+              INPUT DATE(aux_dtrecarga), /* Data de recarga */              
+              INPUT aux_lsdatagd,        /* Lista de datas para agendamento de recarga */
+              INPUT aux_cddopcao,        /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */                            
+              INPUT aux_nrdddtel,        /* DDD */
+              INPUT aux_nrcelular,       /* Nr. do celular */
+              INPUT aux_cdoperadora,     /* Cod. operadora */
+              INPUT aux_cdproduto,       /* Cod. produto */
+              INPUT aux_cdcoptfn,        /* Cooperativa terminal financeiro */
+              INPUT aux_cdagetfn,        /* Agencia terminal financeiro */
+              INPUT aux_nrterfin,        /* Nr. terminal financeiro */
+              INPUT aux_nrcartao,        /* Nr. cartao */
+              INPUT aux_nrsequni,        /* Nr. sequencial unico */
+						  INPUT 4,             /* Id origem (4-TAA)*/
                         INPUT 91,            /* Agencia de Origem */ 
                         INPUT 900,           /* Caixa de Origem */ 
                         INPUT "TAA",         /* Programa que chamou */ 
-                        INPUT 0,             /* Indicador de aprovacao de transacao pendente */
-                        INPUT 0,             /* Indicador de operacao (transacao pendente) */
-                        INPUT 0,             /* Indicador se origem é mobile (Não) */
+              INPUT 0,             /* Indicador de aprovacao de transacao pendente */
+						  INPUT 0,             /* Indicador de operacao (transacao pendente) */
+			  INPUT 0,             /* Indicador se origem é mobile (Não) */
                         OUTPUT "",           /* ID dos lançamentos de agendamento de recarga */ 
-                        OUTPUT 0,            /* Indicador de assinatura conjunta */
-                        OUTPUT "",           /* Protocolo */
-                        OUTPUT "",           /* NSU Operadora */
-                        OUTPUT 0,            /* Código da crítica.*/
-                        OUTPUT "").          /* Desc. da crítica */
+              OUTPUT 0,            /* Indicador de assinatura conjunta */
+              OUTPUT "",           /* Protocolo */
+              OUTPUT "",           /* NSU Operadora */
+						  OUTPUT 0,            /* Código da crítica.*/
+						  OUTPUT "").          /* Desc. da crítica */
 	
 	/* Fechar o procedimento para buscarmos o resultado */ 
 	CLOSE STORED-PROC pc_manter_recarga
@@ -10918,7 +10962,7 @@ PROCEDURE verifica_opcao_benef_inss:
                   NO-LOCK NO-ERROR.
 
               IF AVAILABLE crapttl THEN
-              DO:
+         DO:
                   /* Busca todos os beneficios do cpf em questao */
                   FOR EACH crapdbi WHERE crapdbi.nrcpfcgc = crapttl.nrcpfcgc
                   NO-LOCK:
@@ -10931,16 +10975,16 @@ PROCEDURE verifica_opcao_benef_inss:
                                            AND craplcm.dtmvtolt >= (crapdat.dtmvtolt - 90)
                                            /*Buscar cdpesqbb até o primeiro ';' que é o NB(numero do beneficio)*/
                                            AND DEC(ENTRY(1,craplcm.cdpesqbb, ";")) = crapdbi.nrrecben
-                                           NO-LOCK NO-ERROR.
-                             
+                                NO-LOCK NO-ERROR.
+
                       IF AVAILABLE craplcm THEN
                               ASSIGN aux_flgsitbi = 1.
                   END.
               END.
           END.
       END.
-  END.
-  
+         END.
+         
   /* ---------- */
   xDoc:CREATE-NODE(xField,"FLGSITBI","ELEMENT").
   xRoot:APPEND-CHILD(xField).
@@ -10967,25 +11011,25 @@ PROCEDURE listar_beneficios_inss:
   DO:
        /* Somente Pessoa Fisica possui beneficio */
       IF crapass.inpessoa = 1 THEN
-      DO:
+        DO:
           /* Localizar o Cooperado */   
           FIND crapage WHERE crapage.cdcooper = crapass.cdcooper
                          AND crapage.cdagenci = crapass.cdagenci
                        NO-LOCK NO-ERROR .
-  
+          
           /* Buscar o CPF do titular*/ 
           FIND FIRST crapttl
              WHERE crapttl.cdcooper = crapass.cdcooper
                AND crapttl.nrdconta = crapass.nrdconta
                AND crapttl.idseqttl = aux_tpusucar
               NO-LOCK NO-ERROR.
-
+                               
           IF AVAILABLE crapttl THEN
           DO:
               /* Busca todos os beneficios do cpf em questao */
               FOR EACH crapdbi WHERE crapdbi.nrcpfcgc = crapttl.nrcpfcgc
               NO-LOCK:
-              
+
                   /* Verificar se  a conta em questao recebeu o beneficio */
                   FIND FIRST craplcm WHERE craplcm.cdcooper = crapass.cdcooper 
                                        AND craplcm.nrdconta = crapass.nrdconta
@@ -10995,7 +11039,7 @@ PROCEDURE listar_beneficios_inss:
                                        /*Buscar cdpesqbb até o primeiro ';' que é o NB(numero do beneficio)*/
                                        AND DEC(ENTRY(1,craplcm.cdpesqbb, ";")) = crapdbi.nrrecben
                                        NO-LOCK NO-ERROR.
-                         
+          
                   IF AVAILABLE craplcm THEN
                   DO:
                       CREATE tt-beneficios-inss.
@@ -11005,12 +11049,12 @@ PROCEDURE listar_beneficios_inss:
           END.
       END.
   END.
-  
+          
   FOR EACH tt-beneficios-inss NO-LOCK:
-  
+
       xDoc:CREATE-NODE(xRoot2,"BENEFICIO","ELEMENT").
       xRoot:APPEND-CHILD(xRoot2).
-
+        
       /* ---------- */
       xDoc:CREATE-NODE(xField,"NRRECBEN","ELEMENT").
       xRoot2:APPEND-CHILD(xField).
@@ -11018,17 +11062,17 @@ PROCEDURE listar_beneficios_inss:
       xDoc:CREATE-NODE(xText,"","TEXT").
       xText:NODE-VALUE = STRING(tt-beneficios-inss.nrrecben).
       xField:APPEND-CHILD(xText). 
-      
-      /* ---------- */
+   
+    /* ---------- */
       xDoc:CREATE-NODE(xField,"CDORGINS","ELEMENT").
       xRoot2:APPEND-CHILD(xField).
 
-      xDoc:CREATE-NODE(xText,"","TEXT").
+    xDoc:CREATE-NODE(xText,"","TEXT").
       xText:NODE-VALUE = STRING(crapage.cdorgins).
-      xField:APPEND-CHILD(xText).          
+    xField:APPEND-CHILD(xText).
   END.
-  
-  RETURN "OK".
+
+    RETURN "OK".
   
 END PROCEDURE.
 /* Fim Operacao 78 - listar_beneficios_inss */
@@ -11079,19 +11123,19 @@ PROCEDURE consultar_eco:
 
     /* Verificar se a opcao de consulta do ECO esta desabilitada */
     IF aux_habilita_consulta_eco = "0" THEN
-    DO:
+         DO:
         ASSIGN aux_dscritic = "A CONSULTA AOS DADOS DE EMPRESTIMO CONSIGNADO ONLINE " + 
                               "ESTA DESATIVADA NO MOMENTO".
-                              
-        RETURN "NOK".    
-    END.
 
+        RETURN "NOK".    
+         END.
+         
 
     /* Tipo de comprovante 1 == Extrato Emprestimo Consignado */ 
     IF aux_tpconben = 1 THEN
-    DO:
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
+        DO:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+          
         RUN STORED-PROCEDURE pc_extrato_emprestimo_inss aux_handproc = PROC-HANDLE NO-ERROR
                              (INPUT aux_cdcooper  /* Cooperativa */ 
                              ,INPUT aux_nrdconta  /* Conta */
@@ -11102,17 +11146,17 @@ PROCEDURE consultar_eco:
                              ,INPUT aux_nrterfin /* Numero Terminal */ 
                              ,OUTPUT "" /* XML de retorno */ 
                              ,OUTPUT ""). /* mensagem de erro */
-                             
+                               
 
         CLOSE STORED-PROC pc_extrato_emprestimo_inss aux_statproc = PROC-STATUS 
-             WHERE PROC-HANDLE = aux_handproc.
-        
+               WHERE PROC-HANDLE = aux_handproc.
+          
         ASSIGN aux_dserror = ""
                aux_dserror = pc_extrato_emprestimo_inss.pr_dsderror
                       WHEN pc_extrato_emprestimo_inss.pr_dsderror <> ?.  
                xml_req_ora  = pc_extrato_emprestimo_inss.pr_retorno. 
-        
-        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
     END.
 
     /* Tipo de comprovante 2 == Margem Consignavel */ 
@@ -11130,24 +11174,24 @@ PROCEDURE consultar_eco:
                              ,INPUT aux_nrterfin /* Numero Terminal */ 
                              ,OUTPUT "" /* XML de retorno */ 
                              ,OUTPUT ""). /* mensagem de erro */
-                             
+
 
         CLOSE STORED-PROC pc_margem_consignavel_inss aux_statproc = PROC-STATUS 
              WHERE PROC-HANDLE = aux_handproc.
-        
+
         ASSIGN aux_dserror = ""
                aux_dserror = pc_margem_consignavel_inss.pr_dsderror
                       WHEN pc_margem_consignavel_inss.pr_dsderror <> ?.  
                xml_req_ora  = pc_margem_consignavel_inss.pr_retorno. 
-        
+
         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
     END.
 
     IF  aux_dserror <> "" THEN
-        DO:
+                      DO:
            ASSIGN aux_dscritic = aux_dserror.
            RETURN "NOK".
-        END.        
+        END.
 
     CREATE X-DOCUMENT xDoc_ora.
     CREATE X-NODEREF  xRoot_ora.
@@ -11158,58 +11202,245 @@ PROCEDURE consultar_eco:
     /* Efetuar a leitura do XML*/ 
     SET-SIZE(ponteiro_xml_ora) = LENGTH(xml_req_ora) + 1. 
     PUT-STRING(ponteiro_xml_ora,1) = xml_req_ora. 
-     
+   
     xDoc_ora:LOAD("MEMPTR",ponteiro_xml_ora,FALSE). 
     xDoc_ora:GET-DOCUMENT-ELEMENT(xRoot_ora).
-    
+
     DO  aux_cont_raiz = 1 TO xRoot_ora:NUM-CHILDREN: 
-    
+
         xRoot_ora:GET-CHILD(xRoot_ora2,aux_cont_raiz).
-    
+
         IF xRoot_ora2:SUBTYPE <> "ELEMENT"   THEN 
          NEXT.                    
 
         IF  xRoot_ora2:NAME = "comprovante" THEN
             DO:
-                
+           
                 DO aux_cont = 1 TO xRoot_ora2:NUM-CHILDREN:
-                
+    
                     xRoot_ora2:GET-CHILD(xField_ora,aux_cont).
-                        
+                         
                     IF xField_ora:SUBTYPE <> "ELEMENT" THEN 
                         NEXT. 
-                    
+
                     xField_ora:GET-CHILD(xText_ora,1).            
-        
+    
                     CREATE tt-dados-comprovante-eco.
                     ASSIGN tt-dados-comprovante-eco.linha = xText_ora:NODE-VALUE.
                 END.            
             END.
     END.                
-
+    
     SET-SIZE(ponteiro_xml_ora) = 0. 
-
+    
     DELETE OBJECT xDoc_ora. 
     DELETE OBJECT xRoot_ora. 
     DELETE OBJECT xRoot_ora2. 
     DELETE OBJECT xField_ora. 
     DELETE OBJECT xText_ora.
-      
+
     /* Percorrer todas as linhas do comprovante */
     FOR EACH tt-dados-comprovante-eco NO-LOCK:
-        /* ---------- */
+    /* ---------- */
         xDoc:CREATE-NODE(xField,"LINHA","ELEMENT").
-        xRoot:APPEND-CHILD(xField).
-        
-        xDoc:CREATE-NODE(xText,"","TEXT").
-        xText:NODE-VALUE = tt-dados-comprovante-eco.linha.
-        xField:APPEND-CHILD(xText).
-    END.
+    xRoot:APPEND-CHILD(xField).
     
+    xDoc:CREATE-NODE(xText,"","TEXT").
+        xText:NODE-VALUE = tt-dados-comprovante-eco.linha.
+    xField:APPEND-CHILD(xText).
+    END.
+
     RETURN "OK".
-  
+
 END PROCEDURE.
 /* Fim Operacao 79 - consultar_eco */
+
+PROCEDURE busca_modalidade:
+    DEFINE VARIABLE aux_cdmodali AS INTEGER                        NO-UNDO.
+
+
+    IF   aux_cdagetra <> 0   THEN
+         DO:
+             FIND crapcop WHERE crapcop.cdagectl = aux_cdagetra
+                                NO-LOCK NO-ERROR.
+
+             IF   AVAIL crapcop   THEN
+                  ASSIGN aux_cdcooper = crapcop.cdcooper.
+         END.
+         
+    FIND FIRST crapass WHERE crapass.cdcooper = aux_cdcooper  AND
+                             crapass.nrdconta = aux_nrtransf NO-LOCK NO-ERROR.
+
+    IF   AVAIL crapass   THEN
+        DO:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+          
+          RUN STORED-PROCEDURE pc_busca_modalidade_tipo aux_handproc = PROC-HANDLE NO-ERROR
+                               (INPUT crapass.inpessoa 
+                               ,INPUT crapass.cdtipcta
+                               ,OUTPUT 0
+                               ,OUTPUT ""
+                               ,OUTPUT "").
+                               
+
+          CLOSE STORED-PROC pc_busca_modalidade_tipo aux_statproc = PROC-STATUS 
+               WHERE PROC-HANDLE = aux_handproc.
+          
+          ASSIGN aux_dscritic = ""
+                 aux_cdmodali = 0
+                 aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic 
+                                WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?
+                 aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?.
+          
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          IF  aux_dscritic <> ""  THEN
+              RETURN "NOK".
+        
+        END.
+
+   
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"CDMODALI","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_cdmodali).
+    xField:APPEND-CHILD(xText).
+
+    RETURN "OK".
+END PROCEDURE.
+/* Fim 80 - busca_modalidade */
+
+PROCEDURE valida_modalidade_transferencia:
+    DEFINE VARIABLE aux_cdmodali AS INTEGER                        NO-UNDO.    
+    DEFINE VARIABLE p_nrcpfemp   AS CHAR                           NO-UNDO.
+    DEFINE VARIABLE p_flgdeconta AS INTEGER                        NO-UNDO.
+
+    ASSIGN p_flgdeconta = 0.
+
+    IF   aux_cdagetra <> 0   THEN
+         DO:
+             FIND crapcop WHERE crapcop.cdagectl = aux_cdagetra
+                                NO-LOCK NO-ERROR.
+
+             IF   AVAIL crapcop   THEN
+                  ASSIGN aux_cdcooper = crapcop.cdcooper.
+         END.
+         
+    FIND FIRST crapass WHERE crapass.cdcooper = aux_cdcooper  AND
+                             crapass.nrdconta = aux_nrtransf NO-LOCK NO-ERROR.
+
+    IF   AVAIL crapass   THEN
+        DO:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+          
+          RUN STORED-PROCEDURE pc_busca_modalidade_tipo aux_handproc = PROC-HANDLE NO-ERROR
+                               (INPUT crapass.inpessoa 
+                               ,INPUT crapass.cdtipcta
+                               ,OUTPUT 0
+                               ,OUTPUT ""
+                               ,OUTPUT "").
+                               
+
+          CLOSE STORED-PROC pc_busca_modalidade_tipo aux_statproc = PROC-STATUS 
+               WHERE PROC-HANDLE = aux_handproc.
+          
+          ASSIGN aux_dscritic = ""
+                 aux_cdmodali = 0
+                 aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic 
+                                WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?
+                 aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?.
+          
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          IF  aux_dscritic <> ""  THEN
+              RETURN "NOK".
+
+          IF aux_cdmodali = 2 THEN
+            DO:
+              FIND FIRST crapttl WHERE crapttl.cdcooper = crapcop.cdcooper
+                                   AND crapttl.nrdconta = crapass.nrdconta
+                                   AND crapttl.idseqttl = 1    /* Dados do Primeiro Titular */
+                                   USE-INDEX crapttl1 NO-LOCK NO-ERROR.
+
+              IF  AVAIL crapttl THEN
+                  ASSIGN p_nrcpfemp = STRING(crapttl.nrcpfemp).
+
+              FIND FIRST crapass WHERE crapass.cdcooper = aux_cdagerem  AND
+                                       crapass.nrdconta = aux_nrremete NO-LOCK NO-ERROR.
+
+              IF   AVAIL crapass   THEN
+                  DO:
+                    IF STRING(crapass.nrcpfcgc) <> p_nrcpfemp THEN
+                      DO:
+                        ASSIGN p_flgdeconta = 1.
+                      END.
+                  END.
+            END.
+        END.
+
+   
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"FLGDECONTA","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(p_flgdeconta).
+    xField:APPEND-CHILD(xText).
+
+    RETURN "OK".
+END PROCEDURE.
+/* Fim 81 - valida_modalidade_transferencia */
+
+/* Inicio 82 - P485 - INICIO */
+PROCEDURE verifica_modalidade_conta:
+
+    DEFINE VARIABLE aux_cdmodali AS INTE NO-UNDO.
+           
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_busca_modalidade_conta aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT  aux_cdcooper 
+                  ,INPUT  aux_nrdconta 
+                  ,OUTPUT 0
+                  ,OUTPUT ""
+                  ,OUTPUT "").
+                         
+
+    CLOSE STORED-PROC pc_busca_modalidade_conta aux_statproc = PROC-STATUS 
+         WHERE PROC-HANDLE = aux_handproc.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdmodali = 0
+           aux_dscritic = pc_busca_modalidade_conta.pr_dscritic 
+                          WHEN pc_busca_modalidade_conta.pr_dscritic <> ?
+           aux_cdmodali = pc_busca_modalidade_conta.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade_conta.pr_cdmodalidade_tipo <> ?.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    /* Se retornou crítica */
+    IF  aux_dscritic <> "" THEN
+      DO:
+           RETURN "NOK".
+      END.
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"CDMODALI","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_cdmodali).
+    xField:APPEND-CHILD(xText).
+
+    RETURN "OK".
+
+END PROCEDURE.
+/* Inicio 82 - P485 - FIM */
+
 
 /* .......................................................................... */
 
