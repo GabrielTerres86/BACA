@@ -1460,7 +1460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
 				vr_dsendere VARCHAR2(60) := '';
 				vr_dsender_apbl VARCHAR2(200) := NULL;
 				vr_dsender_compl VARCHAR2(200) := '';
-				vr_nrendere VARCHAR2(5) := '';
+				vr_nrendere VARCHAR2(20) := '';
 				vr_ufendere VARCHAR2(5) := '';
 				vr_nmcidade VARCHAR2(50) := '';
 				vr_nmbairro VARCHAR2(50) := '';
@@ -2753,9 +2753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     dbms_lob.open(vr_obj_cartao_clob, dbms_lob.lob_readwrite);
     json.to_clob(vr_obj_cartao,vr_obj_cartao_clob);
 
-    dbms_output.put_line(vr_obj_cartao_clob);
-
-    pc_enviar_bancoob ( pr_cdcooper    => vr_cdcooper,  --> Codigo da cooperativa
+     pc_enviar_bancoob ( pr_cdcooper    => vr_cdcooper,  --> Codigo da cooperativa
                         pr_cdagenci    => vr_cdagenci,  --> Codigo da agencia
                         pr_cdoperad    => vr_cdoperad,  --> codigo do operador
                         pr_cdorigem    => vr_idorigem,  --> Origem da operacao

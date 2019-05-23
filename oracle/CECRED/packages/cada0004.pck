@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 23/11/2018
+    Data     : Agosto/2015.                   Ultima atualizacao: 11/01/2019
   
    Dados referentes ao programa:
   
@@ -843,6 +843,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   PROCEDURE pc_retorna_cartao_valido(pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
                                     ,pr_idtipcar IN INTEGER                --> Indica qual o cartao 
                                     ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indica o tipo de pessoa
+                                                                             -- 1 = PF
+                                                                             -- 2 = PJ
+                                                                             -- 4 = PF, retornar somente os cartões do titular da conta
                                     ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
@@ -5072,7 +5075,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pc_cria_registro_msg(pr_dsmensag => 'Imprimir Termo de Responsabilidade para acesso ao Autoatendimento e SAC.'
                           ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
-
+	
     CADA0006.pc_descricao_situacao_conta(pr_cdsituacao => 7
                                         ,pr_dssituacao => vr_dssituacao
                                         ,pr_des_erro => vr_des_reto
@@ -13211,6 +13214,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   PROCEDURE pc_retorna_cartao_valido(pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
                                     ,pr_idtipcar IN INTEGER                --> Indica qual o cartao 
                                     ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indica o tipo de pessoa
+                                                                             -- 1 = PF
+                                                                             -- 2 = PJ
+                                                                             -- 4 = PF, retornar somente os cartões do titular da conta
                                     ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
@@ -13245,7 +13251,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND crapcrm.nrdconta = pr_nrdconta
          AND crapcrm.cdsitcar = 2
          AND crapcrm.dtvalcar > rw_crapdat.dtmvtolt
-         AND crapcrm.tptitcar = CASE WHEN pr_inpessoa IN (1) THEN 1 ELSE crapcrm.tptitcar END
+         AND crapcrm.tptitcar = CASE WHEN pr_inpessoa IN (1,4) THEN 1 ELSE crapcrm.tptitcar END
+         AND crapcrm.tpusucar = CASE WHEN pr_inpessoa IN (4)   THEN 1 ELSE crapcrm.tpusucar END -- Somente cartão do titular da conta
          AND crapcrm.dtentcrm IS NOT NULL;
       rw_crapcrm cr_crapcrm%ROWTYPE;
       
@@ -13257,6 +13264,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND crawcrd.insitcrd = 4
          AND crawcrd.dtentreg < rw_crapdat.dtmvtolt
          AND crawcrd.dtvalida > rw_crapdat.dtmvtolt
+         AND (pr_inpessoa IN (1,2)
+          OR (pr_inpessoa = 4 AND crawcrd.nrcpftit IN (SELECT a.nrcpfcgc -- Somente cartão do titular da conta
+                                                         FROM crapass a
+                                                        WHERE a.cdcooper = crawcrd.cdcooper
+                                                          AND a.nrdconta = crawcrd.nrdconta)))
          AND crawcrd.dtcancel IS NULL;    
       rw_crawcrd cr_crawcrd%ROWTYPE;
     
@@ -13990,12 +14002,11 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
 				   nvl2(TRIM(tbend.dscomplemento), ', ' || tbend.dscomplemento || ' ', '') AS dsendere
 				  ,tbend.nmbairro
 				  ,tbend.nmcidade
-				  ,tbcadast_uf.cduf
+				  ,tbend.cdufende
 				  ,gene0002.fn_mask_cep(tbend.nrcep) AS nrcepend
 					,tbend.idtipoenvio
 		  FROM tbcrd_endereco_entrega tbend
 				  ,tbcrd_dominio_campo    tbdom
-				  ,tbcadast_uf
 	   WHERE tbend.idtipoenvio = tbdom.cddominio
 		   AND tbdom.nmdominio = 'TPENDERECOENTREGA'
 		   AND tbend.cdcooper = pr_cdcooper
@@ -14103,7 +14114,7 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
 																	 '<dsbairro>' || nvl(rw_busca_dados_entrega.nmbairro, '') || '</dsbairro>' ||
 																	 '<dscidade>' || nvl(rw_busca_dados_entrega.nmcidade, '') || '</dscidade>' ||
 																	 '<nrcepend>' || nvl(rw_busca_dados_entrega.nrcepend, '') || '</nrcepend>' ||
-																	 '<dsufende>' || nvl(rw_busca_dados_entrega.cduf, '') || '</dsufende>' ||
+																	 '<dsufende>' || nvl(rw_busca_dados_entrega.cdufende, '') || '</dsufende>' ||
 																	 '<nmresage>' || nvl(vr_nmresage, '') || '</nmresage>' ||
 																	 '<idtipoenvio>' || nvl(vr_idtipoenvio, 0) || '</idtipoenvio>' ||
                                    '<cdagenci>' || nvl(rw_busca_dados_entrega.cdagenci, 0) || '</cdagenci>' ||
