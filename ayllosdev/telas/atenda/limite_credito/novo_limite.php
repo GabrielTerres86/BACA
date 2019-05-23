@@ -45,6 +45,7 @@
 	$cddopcao = $_POST["cddopcao"];
 	$flpropos = $_POST["flpropos"];
 	$inconfir = (isset($_POST["inconfir"])) ? $_POST["inconfir"] : 1;	
+	$aux_operacao = (isset($_POST["aux_operacao"])) ? $_POST["aux_operacao"] : '';
 
 	//bruno - prj 438 - sprint 7 - novo limite
 	$inpessoa = $_POST['inpessoa'];
@@ -470,9 +471,16 @@
 		travaCamposLimite();
 	<? } ?>
 
+	<?php if ($cddopcao == 'P') { ?>
+		$("#idcobert", "#frmNovoLimite").val(aux_limites.pausado.idcobope);
+	<?php } else if ($cddopcao == 'N' && $aux_operacao == 'A') { ?>
+		$("#idcobert", "#frmNovoLimite").val(aux_limites.pausado.idcobope);
+	<?php } else if ($cddopcao == 'A') { ?>
+		$("#idcobert", "#frmNovoLimite").val(aux_limites.ativo.idcobope);
+	<?php } ?>
+
 	hideMsgAguardo();
 	bloqueiaFundo(divRotina);
-	
 </script>												
 
 <script>
