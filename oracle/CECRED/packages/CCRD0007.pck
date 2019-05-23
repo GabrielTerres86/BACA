@@ -13,7 +13,7 @@ CREATE OR REPLACE PACKAGE CECRED."CCRD0007" is
 
       Alteracoes: 23/07/2018 - Alteração na funcao fn_usa_bancoob_ws. Projeto 345(Lombardi).
 
-	  teste
+	  teste 2
 
   ---------------------------------------------------------------------------------------------------------------*/
 
