@@ -3805,6 +3805,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
             IF pr_tab_agendto(vr_index_agendto).dsorigem = 'DEBAUT' THEN
               vr_tab_relato(vr_index_relato).dsorigem := 'DEBITO AUTOMATICO';
+            ELSIF pr_tab_agendto(vr_index_agendto).dsorigem = 'PORTABILIDAD' THEN
+              -- Quando a origem for portabilidade, deve agrupar no relatório 
+              -- como Internet (Renato - Supero - 22/05/2019)
+              vr_tab_relato(vr_index_relato).dsorigem := 'INTERNET';
             ELSE
               vr_tab_relato(vr_index_relato).dsorigem:= pr_tab_agendto(vr_index_agendto).dsorigem;
             END IF;
@@ -27246,7 +27250,7 @@ end;';
             
           ELSE 
             vr_idportab := 0;
-            vr_nrridlfp := NULL;
+            vr_nrridlfp := 0;
             
             -- Fluxo atual
             vr_cti_nrcpfcgc := rw_crapcti.nrcpfcgc;

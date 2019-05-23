@@ -4235,7 +4235,7 @@ PROCEDURE efetua_transferencia:
                                  INPUT "",  /* pr_iptransa */
                                  INPUT "",  /* Numero controle consulta npc */   
                                  INPUT '', /* par_iddispos */
-                                 INPUT ?,  /* pr_nrridlfp */
+                                 INPUT 0,  /* pr_nrridlfp */
                                  
                                 OUTPUT 0, 
                                 OUTPUT "",  /* pr_dstransa */
@@ -5162,7 +5162,7 @@ PROCEDURE paga_titulo:
                                                    INPUT "",   /* pr_iptransa */
                                                    INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
                                                    INPUT '', /* pr_iddispos */
-                                                   INPUT ?,  /* pr_nrridlfp */
+                                                   INPUT 0,  /* pr_nrridlfp */
                                                    
                                                   OUTPUT 0,
                                                    OUTPUT "",  /* pr_dstransa */
@@ -5703,7 +5703,7 @@ PROCEDURE paga_convenio:
                                                   INPUT '',  /* pr_iptransa */
                                                   INPUT '',  /* Numero controle consulta npc */   
                                                   INPUT '', /* par_iddispos */
-                                                  INPUT ?,  /* pr_nrridlfp */
+                                                  INPUT 0,  /* pr_nrridlfp */
                                                   
                                                  OUTPUT 0, 
                                                  OUTPUT "",  /* pr_dstransa */

@@ -578,7 +578,7 @@ create or replace package cecred.PAGA0002 is
                                       ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                                       ,pr_cdctrlcs IN craplau.cdctrlcs%TYPE  --> Código de controle de consulta
                                       ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identificador do dispositivo mobile    
-                                      ,pr_nrridlfp IN NUMBER   DEFAULT NULL  --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
+                                      ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                                       /* parametros de saida */
                                       ,pr_idlancto OUT craplau.idlancto%TYPE --> ID Lancamento do agendamento
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
@@ -7599,7 +7599,7 @@ create or replace package body cecred.PAGA0002 is
                                       ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                                       ,pr_cdctrlcs IN craplau.cdctrlcs%TYPE  --> Código de controle de consulta
                                       ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identificador do dispositivo mobile    
-                                      ,pr_nrridlfp IN NUMBER   DEFAULT NULL  --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução 
+                                      ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução 
                                       /* parametros de saida */
                                       ,pr_idlancto OUT craplau.idlancto%TYPE --> ID Lancamento do agendamento
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
