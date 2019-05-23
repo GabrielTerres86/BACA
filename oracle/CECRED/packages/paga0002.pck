@@ -578,6 +578,7 @@ create or replace package cecred.PAGA0002 is
                                       ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                                       ,pr_cdctrlcs IN craplau.cdctrlcs%TYPE  --> Código de controle de consulta
                                       ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identificador do dispositivo mobile    
+                                      ,pr_nrridlfp IN NUMBER   DEFAULT NULL  --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                                       /* parametros de saida */
                                       ,pr_idlancto OUT craplau.idlancto%TYPE --> ID Lancamento do agendamento
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
@@ -1907,6 +1908,20 @@ create or replace package body cecred.PAGA0002 is
     IF length(pr_dstransf) > 25 THEN
       vr_cdcritic := 1407; -- Codigo identificador deve conter no maximo 25 caracteres
   	  RAISE vr_exc_erro;
+    END IF;
+
+	/* Transf. intercoop. */
+		IF pr_tpoperac IN (1,5) THEN
+			PCPS0001.pc_valida_transf_conta_salario(pr_cdcooper => pr_cdcooper
+																						 ,pr_nrdconta => pr_nrdconta
+																						 ,pr_cdageban => pr_cdageban
+																						 ,pr_nrctatrf => pr_nrctatrf
+																						 ,pr_des_erro => vr_des_erro
+																						 ,pr_dscritic => vr_dscritic);
+																						 
+			IF TRIM(vr_dscritic) IS NOT NULL THEN
+				RAISE vr_exc_erro;  
+			END IF;		
     END IF; 
 
     /* Quando informado a finalidade “157 - Tributos Municipais ISS - LCP 157" deve ser validado
@@ -7584,6 +7599,7 @@ create or replace package body cecred.PAGA0002 is
                                       ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                                       ,pr_cdctrlcs IN craplau.cdctrlcs%TYPE  --> Código de controle de consulta
                                       ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identificador do dispositivo mobile    
+                                      ,pr_nrridlfp IN NUMBER   DEFAULT NULL  --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução 
                                       /* parametros de saida */
                                       ,pr_idlancto OUT craplau.idlancto%TYPE --> ID Lancamento do agendamento
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
@@ -8688,12 +8704,15 @@ create or replace package body cecred.PAGA0002 is
             (idlancto
             ,cdfinalidade
             ,dshistorico
-            ,dsidentific)
+            ,dsidentific
+            ,nrridlfp
+            )
             VALUES
             (vr_idlancto
             ,pr_cdfinali
             ,pr_dshistor
-            ,pr_dstransf);
+            ,pr_dstransf
+            ,pr_nrridlfp);
           EXCEPTION -- Trata Msg - 27/11/2018 - Chamado REQ0029314
             WHEN OTHERS THEN
               -- No caso de erro de programa gravar tabela especifica de log 
