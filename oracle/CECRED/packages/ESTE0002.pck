@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 23/11/2017
+      Data     : Maio/2017                   Ultima atualizacao: 28/03/2019
 
       Dados referentes ao programa:
 
@@ -16,6 +16,9 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
 
                   12/12/2017 - Projeto 410 - inclusão do IOF sobre atraso - (JEan - MOut´S)
 
+				  28/03/2019 - P450 - inclusão da chamada da pc_json_variaveis_rating 
+				               responsável pela variaveis internas JSON. (Mário - AMcom)
+  
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -100,19 +103,21 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
                                ,pr_cdcritic   OUT crapcri.cdcritic%TYPE --> Código de critica encontrada
                                ,pr_des_erro   OUT VARCHAR2);
   
-  PROCEDURE pc_gera_json_pessoa_ass(pr_cdcooper IN crapass.cdcooper%TYPE
-                                   ,pr_nrdconta IN crapass.nrdconta%TYPE
-                                   ,pr_nrctremp IN crapepr.nrctremp%TYPE
-                  ,pr_flprepon IN BOOLEAN DEFAULT FALSE
-                                   ,pr_vlsalari IN NUMBER  DEFAULT 0
-                                   ,pr_persocio IN NUMBER  DEFAULT 0
-                                   ,pr_dtadmsoc IN DATE    DEFAULT NULL
-                                   ,pr_dtvigpro IN DATE    DEFAULT NULL
-                                   ,pr_tpprodut IN NUMBER  DEFAULT 0
-                                   ,pr_dsjsonan OUT json
-                                   ,pr_cdcritic OUT NUMBER
+  --> Procedure para montar o JSON   
+  PROCEDURE pc_gera_json_pessoa_ass(pr_cdcooper IN crapass.cdcooper%TYPE --> Código da cooperativa
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta do emprestimo
+                                   ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Numero do contrato de emprestimo
+                                   ,pr_flprepon IN BOOLEAN DEFAULT FALSE --> Flag Repon
+                                   ,pr_vlsalari IN NUMBER  DEFAULT 0  --> Valor do Salario Associado
+                                   ,pr_persocio IN NUMBER  DEFAULT 0 --> Percential do sócio
+                                   ,pr_dtadmsoc IN DATE    DEFAULT NULL --> Data Admissãio do Sócio
+                                   ,pr_dtvigpro IN DATE    DEFAULT NULL --> Data Vigência do Produto
+                                   ,pr_tpprodut IN NUMBER  DEFAULT 0 --> Tipo de Produto
+                                   ,pr_dsjsonan OUT json --> Retorno Variáveis Json
+                                   ,pr_cdcritic OUT NUMBER --> Código de critica encontrada
                                    ,pr_dscritic OUT VARCHAR2);
                                
+       
   PROCEDURE pc_gera_json_pessoa_avt ( pr_rw_crapavt  IN crapavt%ROWTYPE,        --> Dados do avalista
                                       ---- OUT ----
                                       pr_dsjsonavt OUT NOCOPY json,             --> Retorno do clob em modelo json dos dados do avalista
@@ -185,6 +190,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 							   (Reginaldo/AMcom)
 
                   16/04/2019 - Correção busca limite cheque especial, não estava filtrando o tipo de produto (Daniel - Ailos)
+
+                  23/01/2019 - P450 - Novas variaveis internas para o Json - Ailos X Ibratan
+                               relacionado ao empréstimo e desconto de título - (Fabio Adriano - AMcom)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1076,11 +1084,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
   END pc_resumo_aval;
 
-  
+  --> Procedure para montar o JSON     
   PROCEDURE pc_gera_json_pessoa_ass(pr_cdcooper IN crapass.cdcooper%TYPE
                                    ,pr_nrdconta IN crapass.nrdconta%TYPE
                                    ,pr_nrctremp IN crapepr.nrctremp%TYPE
-																	 ,pr_flprepon IN BOOLEAN DEFAULT FALSE
+                                   ,pr_flprepon IN BOOLEAN DEFAULT FALSE
                                    ,pr_vlsalari IN NUMBER  DEFAULT 0
                                    ,pr_persocio IN NUMBER  DEFAULT 0
                                    ,pr_dtadmsoc IN DATE    DEFAULT NULL
@@ -1096,7 +1104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 19/12/2018
+        Data     : Maio/2017.                    Ultima atualizacao: 13/03/2019
       
         Dados referentes ao programa:
       
@@ -1121,26 +1129,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                   01/08/2018 - Adicionado o parâmetro pr_tpprodut para distinguir qual configuração da PAREST 
                                irá buscar (Paulo Penteado GFT)
 
-                    03/09/2018 - P450 - Ajuste na tag causouPrejuizoCoop e criação da tag estaEmPrejuizoCoop
-                                 (Diego Simas/AMcom)
+                   03/09/2018 - P450 - Ajuste na tag causouPrejuizoCoop e criação da tag estaEmPrejuizoCoop
+                                (Diego Simas/AMcom)
 
-										11/10/2018 - P450 - Correção no cursor que identifica se o contrato de empréstimo está/esteve em prejuízo
-										             (Reginaldo/AMcom)
+                   11/10/2018 - P450 - Correção no cursor que identifica se o contrato de empréstimo está/esteve em prejuízo
+                                (Reginaldo/AMcom)
 
-                   01/11/2018 - P442 - Envio dos Scores Behaviour do Cooperado (MArcos Envolti)  
-				   
-				   19/12/2018 - P442 - Envio de quantidade dias em Estouro (Marcos Envolti)    
+                   01/11/2018 - P442 - Envio dos Scores Behaviour do Cooperado (MArcos Envolti)
 
-                    05/03/2019 - P637 - Motor de Crédito - Adequação dos campos conforme ESTE0005 
+				   19/12/2018 - P442 - Envio de quantidade dias em Estouro (Marcos Envolti)
+
+                    05/03/2019 - P637 - Motor de Crédito - Adequação dos campos conforme ESTE0005
                                 (Luciano Kienolt - Supero)
-                                
+
                     19/03/2019 - Adicionado as tags Histórico de SCR – Atraso – Últimas 3 bases,
                                  Histórico prejuízo SCR – Ultimas 3 bases,
                                  Operações de Cessão de Crédito Ativa.
-                                 P637 - Cartão - Luciano Kienolt - Supero                                                   
+                                 P637 - Cartão - Luciano Kienolt - Supero
                                
                     03/04/2019 - Adicionado cursor/tag de Valor Patrimonio Referencial
-                                 P637 - Cartão - Luciano Kienolt - Supero                               
+                                 P637 - Cartão - Luciano Kienolt - Supero
+
+                    13/03/2019 - P450 - Novas variaveis internas para o Json - Ailos X Ibratan
+                                 utilizando CNPJ Raiz, Informação do BI e 
+                                 Geração de todas variáveis - (Mário Bernat - AMcom)
 
     ..........................................................................*/
     DECLARE
@@ -1159,7 +1171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_obj_generic2  json := json();
       vr_obj_generic3  json := json();	
       vr_lst_generic2  json_list := json_list();
-			vr_lst_generic3  json_list := json_list();
+      vr_lst_generic3  json_list := json_list();
 			
 			-- Variáveis auxiliares
 			vr_tpcmpvrn VARCHAR2(100);
@@ -1247,9 +1259,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_inprejuz BOOLEAN;
       vr_flesprej BOOLEAN;
       vr_flemprej BOOLEAN;
-      vr_cont_SCR  NUMBER;      
-      vr_atrasoscr BOOLEAN; 
-      vr_dtdpagto_atr  DATE;
+      vr_cont_SCR       NUMBER;      
+      vr_atrasoscr      BOOLEAN; 
+      vr_dtdpagto_atr   DATE;
       vr_prejscr        BOOLEAN;
       			
 			--PlTables auxiliares
@@ -1336,6 +1348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 							,ass.nmprimtl
 							,ass.dtmvtolt
               ,ass.dtadmiss
+              ,ass.nrcpfcnpj_base
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = pr_nrdconta;
@@ -2477,7 +2490,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         END IF; 
       END IF;
     
-      -- Enviar os campos do PReAprovado
+      -- Enviar os campos do PreAprovado
       vr_obj_generic2.put('liberaPreAprovad', (nvl(vr_flglibera_pre_aprv,0)=1));
       vr_obj_generic2.put('limitePreAprovado', este0001.fn_decimal_ibra(nvl(vr_vllimdis,0)));
     
@@ -3596,14 +3609,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Adicionar o array de emprestimos no objeto informações adicionais
       vr_obj_generic2.put('opCredAberto', vr_lst_generic3);
      
-      --          
-
-
-
-
-
-
-
 
 
       -- Verificar co-responsabilidade
@@ -3925,6 +3930,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       IF pr_persocio IS NOT NULL THEN 
         vr_obj_generic2.put('valorPercentualProcuracao' ,Este0001.fn_Decimal_Ibra(pr_persocio));
       END IF;
+      
+      --AQUI ALTERACAO PF
+      vr_obj_generic2.put('QtConta', vr_tot_qtpclatr);
       
       -- Montar objeto para seguro
       vr_lst_generic3 := json_list();
@@ -5015,6 +5023,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_obj_generic2  json      := json();
     vr_lst_generico  json_list := json_list();
     vr_lst_generic2  json_list := json_list();
+    vr_obj_generic4  json      := json(); -- Variáveis internas
     
     vr_flavalis      BOOLEAN := FALSE;
     vr_flrespvl      BOOLEAN := FALSE;
@@ -5135,7 +5144,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
        3 – Desconto Cheques 
        4 – Desconto Títulos 
        5 – Cartão de Crédito 
-       6 – Limite de Crédito) */
+       6 – Limite de Crédito
+       9 – Consignado
+       10 - Rating
+	   12 - Limite de Pré-aprovado */
     -- Se for CDC
     IF rw_crawepr.cdfinemp = 58 and rw_crawepr.inlcrcdc = 1 THEN
       vr_obj_generico.put('segmentoCodigo'    ,0); 
@@ -5441,6 +5453,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
        
     -- Adicionar o JSON montado do Proponente no objeto principal
     vr_obj_analise.put('proponente',vr_obj_generico);
+    
+    -- Chamada das Novas variaveis internas para o Json
+    rati0003.pc_json_variaveis_rating(pr_cdcooper => pr_cdcooper --> Código da cooperativa
+                                     ,pr_nrdconta => pr_nrdconta --> Numero da conta do emprestimo
+                                     ,pr_nrctremp => pr_nrctremp --> Numero do contrato de emprestimo
+                                     ,pr_flprepon => true    --> Flag Repon
+                                     ,pr_vlsalari => 0       --> Valor do Salario Associado
+                                     ,pr_persocio => 0       --> Percential do sócio
+                                     ,pr_dtadmsoc => NULL    --> Data Admissãio do Sócio
+                                     ,pr_dtvigpro => NULL    --> Data Vigência do Produto
+                                     ,pr_tpprodut => 0       --> Tipo de Produto
+                                     ,pr_dsjsonvar => vr_obj_generic4 --> Retorno Variáveis Json
+                                     ,pr_cdcritic => vr_cdcritic  --> Código de critica encontrada
+                                     ,pr_dscritic => vr_dscritic);
+
+    -- Verifica inconsistencias
+    if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then  
+       RAISE vr_exc_erro;
+    end if;
+                  
+    -- Enviar informações das variáveis internas ao JSON
+    vr_obj_analise.put('variaveisInternas', vr_obj_generic4);	
 
     rw_crapass := NULL;
     --> Buscar dados do associado
@@ -6385,6 +6419,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_obj_generic2  json      := json();
     vr_lst_generico  json_list := json_list();
     vr_lst_generic2  json_list := json_list();
+    vr_obj_generic4  json      := json(); -- Variáveis internas
     
     vr_flavalis      BOOLEAN := FALSE;
     vr_flrespvl      BOOLEAN := FALSE;
@@ -6610,6 +6645,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
        
     -- Adicionar o JSON montado do Proponente no objeto principal
     vr_obj_analise.put('proponente',vr_obj_generico);
+
+    -- Chamada das Novas variaveis internas para o Json
+    rati0003.pc_json_variaveis_rating(pr_cdcooper => pr_cdcooper --> Código da cooperativa
+                                     ,pr_nrdconta => pr_nrdconta --> Numero da conta do emprestimo
+                                     ,pr_nrctremp => pr_nrctrlim --> Numero do contrato de emprestimo
+                                     ,pr_flprepon => true    --> Flag Repon
+                                     ,pr_vlsalari => 0       --> Valor do Salario Associado
+                                     ,pr_persocio => 0       --> Percential do sócio
+                                     ,pr_dtadmsoc => NULL    --> Data Admissãio do Sócio
+                                     ,pr_dtvigpro => NULL    --> Data Vigência do Produto
+                                     ,pr_tpprodut => 0       --> Tipo de Produto
+                                     ,pr_dsjsonvar => vr_obj_generic4 --> Retorno Variáveis Json
+                                     ,pr_cdcritic => vr_cdcritic  --> Código de critica encontrada
+                                     ,pr_dscritic => vr_dscritic);
+
+    -- Verifica inconsistencias
+    if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then  
+       RAISE vr_exc_erro;
+    end if;
+                  
+    -- Enviar informações das variáveis internas ao JSON
+    vr_obj_analise.put('variaveisInternas', vr_obj_generic4);
     
     rw_crapass := NULL;
     --> Buscar dados do associado
