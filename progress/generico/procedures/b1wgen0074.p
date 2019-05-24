@@ -1462,7 +1462,7 @@ PROCEDURE Valida_Dados_Altera:
                /* Mudando para Conta Integracao */
                IF  aux_inctaitg = 1  THEN
                    DO:
-                                     
+                                 
                       /* Nao pode mudar pra CI pois nao existe a agencia do
                          do BB cadastrado na cadcop */
                       IF  crapcop.cdagedbb = 0 THEN
@@ -1563,6 +1563,9 @@ PROCEDURE Valida_Dados_Altera:
                    END.
                */
                
+               IF crapass.inpessoa = 1 THEN
+                 DO:
+               
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
                 RUN STORED-PROCEDURE pc_valida_conta_salario
@@ -1585,6 +1588,8 @@ PROCEDURE Valida_Dados_Altera:
                     
                     LEAVE ValidaAltera.
                   END.
+                  
+                 END.
                   
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }                  
                
@@ -6090,7 +6095,7 @@ PROCEDURE Critica_Cadastro_Pf:
     ASSIGN aux_returnvl = "NOK".
 
     CriticaPf: DO ON ERROR UNDO CriticaPf, LEAVE CriticaPf:
-
+    
         /* P485 - Validaçao para conta salário */
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         
@@ -6244,11 +6249,11 @@ PROCEDURE Critica_Cadastro_Pf:
             /* Se a modalidade for 2 entao é conta salário */
             IF aux_cdmodali <> 2 THEN
               DO:
-            IF  craxttl.grescola = 0 THEN
-                RUN Trata_Critica
-                    ( INPUT craxttl.idseqttl,
-                      INPUT "Escolaridade", 
-                      INPUT {&TT-IDENT} ).
+                IF  craxttl.grescola = 0 THEN
+                    RUN Trata_Critica
+                        ( INPUT craxttl.idseqttl,
+                          INPUT "Escolaridade", 
+                          INPUT {&TT-IDENT} ).
               END.
 
             IF  craxttl.nmtalttl = "" THEN
