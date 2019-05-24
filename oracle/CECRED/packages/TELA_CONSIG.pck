@@ -2367,8 +2367,8 @@ BEGIN
       -- Extraindo os dados do XML que vem da tela CONSIG
       vr_cdempres     := TRIM(pr_retxml.extract('/Root/dto/cdempres/text()').getstringval());
       vr_datainicio   := TRIM(pr_retxml.extract('/Root/dto/datainicio/text()').getstringval());
-      vr_datainicio   := TO_CHAR(TO_DATE(vr_datainicio,'dd/mm/yyyy'),'yyyy-mm-dd')||'T'||
-                                       to_char(to_date(vr_datainicio,'dd/mm/yyyy hh24:mi:ss'),'hh24:mi:ss');
+      vr_datainicio   := TO_CHAR(sysdate,'yyyy-mm-dd')||'T'||
+                                       to_char(sysdate,'hh24:mi:ss');
       vr_indconsignado:= TRIM(pr_retxml.extract('/Root/dto/indconsignado/text()').getstringval());
       
       BEGIN
