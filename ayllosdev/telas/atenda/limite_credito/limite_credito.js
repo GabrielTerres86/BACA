@@ -48,6 +48,7 @@
  * 029: [27/06/2018] Christian Grosch (CECRED): Ajustes JS para execução do Ayllos em modo embarcado no CRM.
  * 030: [09/10/2018] Marco Antonio Rodrigues Amorim(Mout's) : Remove ponto do usuario e substitui virgula da casa decimal por ponto.
  * 031: [27/11/2018] Bruno Luiz Katzjarowski (Mout's): Criação da nova tela principal (nova rotina acessaTela) 
+ * 032: [15/05/2019] Anderson Schloegel (Mout's): PJ470 - Mout's - Desabilitar campo de contrato para aba Novo Limite
 */
  
 var callafterLimiteCred = '';
@@ -639,12 +640,14 @@ function validarNovoLimite(inconfir, inconfi2) {
     var_globais.vllimite = $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
     var_globais.flgimpnp = $("#flgimpnp", "#frmNovoLimite").val();
 	
+	// PJ470 - Mout's - Desabilitar campo de contrato
+
 	// Valida número do contrato
-    if (nrctrlim == "" || !validaNumero(nrctrlim, true, 0, 0)) {
-		hideMsgAguardo();
-        showError("error", "N&uacute;mero de contrato inv&aacute;lido.", "Alerta - Aimaro", "$('#nrctrlim','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	} 
+    //if (nrctrlim == "" || !validaNumero(nrctrlim, true, 0, 0)) {
+	//	hideMsgAguardo();
+    //    showError("error", "N&uacute;mero de contrato inv&aacute;lido.", "Alerta - Aimaro", "$('#nrctrlim','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+	//	return false;
+	//}
 	
 	// Valida linha de crédito
     if (cddlinha == "" || !validaNumero(cddlinha, true, 0, 0)) {
@@ -1066,6 +1069,7 @@ function controlaLayout(cddopcao) {
         // PRJ 438 - Sprint 7 - No momento o campo Nivel de Risco sempre estará desabilitado
         $('#nivrisco', '#' + nomeForm + ' .fsLimiteCredito').desabilitaCampo();
         $('#dsdtxfix', '#' + nomeForm + ' .fsLimiteCredito').desabilitaCampo();
+        $('#nrctrlim', '#' + nomeForm).desabilitaCampo(); // PJ470 - Mout's - Desabilitar campo de contrato
 
 	} else {
 		cTodosLimite.desabilitaCampo();
@@ -2519,6 +2523,29 @@ function AlteraNrContrato() {
 function validaAdesaoValorProduto(executar, vllimite) {
 	
     var vllimite = vllimite != null ? vllimite : $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
+	
+	// PJ470 - Mout's - buscar o nro do contrato via ajax
+    var verifica_contrato = $("#nrctrlim","#frmNovoLimite").val().replace(/\./g, "");;
+
+    if (verifica_contrato == null || verifica_contrato == 0) {
+    
+	$.ajax({
+		type: "POST", 
+		url: UrlSite + "telas/atenda/limite_credito/obtem_nro_contrato.php",
+		data: {
+			nrdconta: nrdconta
+		},	
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel retornar o n&uacute;mero do contrato.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			$("#nrctrlim", "#frmNovoLimite").val(response);
+			var_globais.nrctrlim = response;			
+			nrctrlim = response;			
+		}				
+	}); // fim PJ470
+    }
 	
 	$.ajax({
 		type: 'POST',

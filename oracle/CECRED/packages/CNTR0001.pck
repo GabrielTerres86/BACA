@@ -87,6 +87,14 @@ PROCEDURE pc_ver_protocolo (pr_cdcooper   IN NUMBER
                            ,pr_dsfrase_cooperativa OUT VARCHAR2 --> Descrição da crítica
                            );
 
+PROCEDURE pc_novo_num_cnt_limite (pr_nrdconta  IN NUMBER
+                                 ,pr_xmllog    IN VARCHAR2
+                                 ,pr_cdcritic OUT PLS_INTEGER
+                                 ,pr_dscritic OUT VARCHAR2
+                                 ,pr_retxml    IN OUT NOCOPY XMLType
+                                 ,pr_nmdcampo OUT VARCHAR2
+                                 ,pr_des_erro OUT VARCHAR2);
+
 END CNTR0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CNTR0001 AS
@@ -1115,6 +1123,80 @@ BEGIN
   END IF;
   
 END pc_ver_protocolo;
+
+PROCEDURE pc_novo_num_cnt_limite (pr_nrdconta  IN NUMBER
+                                 ,pr_xmllog    IN VARCHAR2
+                                 ,pr_cdcritic OUT PLS_INTEGER
+                                 ,pr_dscritic OUT VARCHAR2
+                                 ,pr_retxml    IN OUT NOCOPY XMLType
+                                 ,pr_nmdcampo OUT VARCHAR2
+                                 ,pr_des_erro OUT VARCHAR2) IS
+  -- Projeto 470 - SM 2
+  -- MArcelo Telles Coelho
+  -- Buscar um número do contrato de limite de crédito livre para a Cooperativa/Conta
+  --
+  -- Cursor para verificar se contrato já existe para a CDCOOPER/NRDCONTA
+  CURSOR cr_craplim (pr_cdcooper   IN NUMBER
+                    ,pr_nrdconta   IN NUMBER
+                    ,pr_nrctrlim   IN NUMBER) IS
+    SELECT 1 idexiste
+      FROM craplim a
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta
+       AND nrctrlim = pr_nrctrlim;
+  --
+  vr_idexiste NUMBER;
+  vr_nrctrlim NUMBER;
+   -- Variaveis de log
+  vr_cdcooper crapcop.cdcooper%TYPE;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem NUMBER;
+  vr_dsorigem VARCHAR2(1000);
+BEGIN
+  gene0001.pc_informa_acesso(pr_module => 'CNTR0001');
+  -- Extrai os dados vindos do XML
+  gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                          ,pr_cdcooper => vr_cdcooper
+                          ,pr_nmdatela => vr_nmdatela
+                          ,pr_nmeacao  => vr_nmeacao
+                          ,pr_cdagenci => vr_cdagenci
+                          ,pr_nrdcaixa => vr_nrdcaixa
+                          ,pr_idorigem => vr_idorigem
+                          ,pr_cdoperad => vr_cdoperad
+                          ,pr_dscritic => pr_dscritic);
+
+  IF pr_dscritic IS NOT NULL THEN
+    pr_dscritic := null;
+    vr_cdcooper := 1;
+    vr_idorigem := 1;
+  END IF;
+  --
+  LOOP
+    vr_nrctrlim := fn_sequence('CRAPLIM'
+                              ,'NRCTRLIM'
+                              ,TO_CHAR(vr_cdcooper));
+    OPEN cr_craplim(pr_cdcooper => vr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta
+                   ,pr_nrctrlim => vr_nrctrlim);
+    FETCH cr_craplim INTO vr_idexiste;
+    --Se nao encontrou 
+    IF cr_craplim%NOTFOUND THEN
+      CLOSE cr_craplim;
+      EXIT;
+    END IF;
+    CLOSE cr_craplim;
+  END LOOP;
+  --
+  pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+  --
+  gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => pr_dscritic);
+  gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'nrctrlim', pr_tag_cont => to_char(vr_nrctrlim), pr_des_erro => pr_dscritic);
+  --
+END pc_novo_num_cnt_limite;
 
 END CNTR0001;
 /

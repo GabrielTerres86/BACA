@@ -157,6 +157,7 @@
 *                   os campos já estejam salvos em váriaveis PRJ 438 (Mateus Z - Mouts)
 * 126: [05/02/2019] Tratamento para coluna Origem. P438. (Douglas Pagel / AMcom)
 * 127: [06/02/2019] Inclusao de controle para botoes quando for origem 3. P438. (Douglas Pagel / AMcom)
+* 128: [08/05/2019] Incluido tratamentos para autorizacao de contratos. (P470 - Bruno Luiz Katzjarowski / Mouts)
 
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
