@@ -5,6 +5,7 @@
  * OBJETIVO     : Biblioteca de funções na rotina Faturamento da tela de CONTAS
  *
  * ALTERACOES   : 05/08/2015 - Reformulacao cadastral (Gabriel-RKAM)
+ *                04/04/2019 - Adicionado campos de média de faturamente (Cássia de Oliveira - GFT)
  */
 
 var nrposext = '';
@@ -259,17 +260,21 @@ function manterRotina(operacao) {
 	});
 }
 function controlaLayout( operacao ) {	
-	altura  = ( in_array(operacao,['AC','IC','FI','FA','FE','']) ) ? '200px' : '150px';
+	altura  = ( in_array(operacao,['AC','IC','FI','FA','FE','']) ) ? '225px' : '150px';
 	largura = '400px';
 	divRotina.css('width',largura);	
 	$('#divConteudoOpcao').css('height',altura);	
+	$('.divFinanc').css({'height':'55px'});
 	
 	$('label[for="dtaltjfn"]','.divFinanc').addClass('rotulo').css({'width':'60px'});	
 	$('label[for="cdoperad"]','.divFinanc').css({'width':'60px'});
+	$('label[for="vlmediaf"]','.divFinanc').css({'width':'115px'});
 	$('#dtaltjfn','.divFinanc').css({'width':'74px'});	
 	$('#cdoperad','.divFinanc').css({'width':'58px'});
 	$('#nmoperad','.divFinanc').css({'width':'110px'});	
-	$('#dtaltjfn,#cdoperad,#nmoperad','.divFinanc').removeClass('campo').addClass('campoTelaSemBorda').prop('disabled',true);
+	$('#vlmediaf','.divFinanc').css({'width':'74px'});	
+	$('#nmperiod','.divFinanc').css({'width':'74px'});	
+	$('#dtaltjfn,#cdoperad,#nmoperad,#vlmediaf,#nmperiod','.divFinanc').removeClass('campo').addClass('campoTelaSemBorda').prop('disabled',true);
 	
 	// Operação consultando
 	if ( in_array(operacao,['AC','IC','FI','FA','FE','']) ) {		
