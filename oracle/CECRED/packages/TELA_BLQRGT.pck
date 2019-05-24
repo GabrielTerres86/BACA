@@ -105,7 +105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
     
       CURSOR cr_craprpp(pr_cdcooper IN crapcob.cdcooper%TYPE
                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-        SELECT 'POUP.PROG' dstipapl
+        SELECT 'APLI.PROG' dstipapl
               ,rpp.nrctrrpp
               ,rpp.vlsdrdpp
           FROM craprpp rpp

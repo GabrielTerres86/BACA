@@ -92,7 +92,7 @@
 						<td><span><? echo getByTagName($devolucoes[$i]->tags,'nmoperad'); ?></span>
 								  <? echo getByTagName($devolucoes[$i]->tags,'nmoperad'); ?>
 						</td>
-						<td id="dsaplica"  title="<? echo "Total Aplic.: ".formataMoeda(getByTagName($devolucoes[$i]->tags,'vlaplica'))."&#013;Total Poup.: ".formataMoeda(getByTagName($devolucoes[$i]->tags,'vlsldprp')); ?>">
+						<td id="dsaplica"  title="<? echo "Total Aplic.: ".formataMoeda(getByTagName($devolucoes[$i]->tags,'vlaplica'))."&#013;Total Apl Prog.: ".formataMoeda(getByTagName($devolucoes[$i]->tags,'vlsldprp')); ?>">
 										   <span><?echo getByTagName($devolucoes[$i]->tags,'dsaplica'); ?></span>
 												 <?echo getByTagName($devolucoes[$i]->tags,'dsaplica'); ?>
 						  <input type="hidden" id="vlaplica" name="tabvlaplica" value="<? echo getByTagName($devolucoes[$i]->tags,'vlaplica'); ?>" /> 

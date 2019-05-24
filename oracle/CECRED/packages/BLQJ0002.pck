@@ -334,8 +334,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     ELSIF pr_cdmodali = 2 THEN -- Aplicacao
       vr_dsmodali := 'da aplicacao';
       vr_vlsaldo := vr_tab_cooperado(1).vlsldapl;
-    ELSE -- Poupanca Programada
-      vr_dsmodali := 'da poupanca';
+    ELSE -- Aplicacao Programada
+      vr_dsmodali := 'da aplicacao programada';
       vr_vlsaldo := vr_tab_cooperado(1).vlsldppr;
     END IF;
     
@@ -1197,7 +1197,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     
     -- Verifica se o saldo da poupanca eh maior ou igual ao valor solicitado
     IF vr_vlsldrpp < pr_vlresgat THEN
-      vr_dscritic := 'Valor existente na poupanca programada ('||to_char(vr_vlsldrpp,'FM999G999G990D00')||
+      vr_dscritic := 'Valor existente na aplicacao programada ('||to_char(vr_vlsldrpp,'FM999G999G990D00')||
         ') inferior ao solicitado para resgate ('||to_char(pr_vlresgat,'FM999G999G990D00')||').';
       RAISE vr_exc_saida;
     END IF;
@@ -1243,7 +1243,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     
     -- Se sobrou saldo, entao deve-se gerar erro
     IF vr_vlsaldo > 0 THEN
-      vr_dscritic := 'Valor solicitado para resgate de poupanca programada superior ao existente.';
+      vr_dscritic := 'Valor solicitado para resgate de aplicacao programada superior ao existente.';
       RAISE vr_exc_saida;
     END IF;
   
@@ -2674,7 +2674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              b.cdmodali,
              decode(b.cdmodali,1,'Conta Corrente',
                                2,'Aplicacao',
-                                 'Poupanca Programada') dsmodali,
+                                 'Aplicacao Programada') dsmodali,
              b.dsoficio,
              b.vlordem,
              b.indbloqueio_saldo,
@@ -2779,7 +2779,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              b.dsoficio,
              decode(b.cdmodali,1,'Conta Corrente',
                                2,'Aplicacao',
-                                 'Poupanca Programada') dsmodali,
+                                 'Aplicacao Programada') dsmodali,
              b.vlordem,
              b.cdtransf_bacenjud
         FROM tbblqj_ordem_transf b,
