@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Marco/96.                       Ultima atualizacao: 02/05/2018
+       Data    : Marco/96.                       Ultima atualizacao: 02/05/2018 
 
        Dados referentes ao programa:
 
