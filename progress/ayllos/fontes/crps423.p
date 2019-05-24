@@ -490,6 +490,7 @@ PROCEDURE proc_processa_arquivo.
 
    DEFINE VARIABLE aux_qtregist AS INTEGER                            NO-UNDO.
    DEFINE VARIABLE aux_nrdconta AS INTEGER                            NO-UNDO.
+   DEFINE VARIABLE aux_nrcpfcgc AS DECIMAL                            NO-UNDO.
 
    ASSIGN aux_flgfirst = FALSE
           glb_cdcritic = 0
@@ -643,20 +644,6 @@ PROCEDURE proc_processa_arquivo.
                     
                    END.
                    
-               /* Elimina os erros */
-               
-               FOR EACH crapass WHERE crapass.cdcooper = glb_cdcooper AND
-                                      crapass.nrdctitg = STRING(aux_nrdconta)
-                                      NO-LOCK,                  
-                   EACH crapeca WHERE crapeca.cdcooper = crapass.cdcooper AND
-                                      crapeca.nrdconta = crapass.nrdconta AND
-                                      crapeca.tparquiv = 510 
-                                      EXCLUSIVE-LOCK:
-                   
-                   DELETE crapeca.
-                                    
-               END.
-               
                /* Calcula o digito da conta integracao - inclusive o "X" */
                RUN fontes/digbbx.p (INPUT  aux_nrdconta,
                                     OUTPUT glb_dsdctitg,
@@ -678,32 +665,60 @@ PROCEDURE proc_processa_arquivo.
                              crapass.cdcooper = glb_cdcooper AND
                              crapass.nrdconta = aux_nrdconta
                               NO-LOCK NO-ERROR. 
-                    END.
-                    
-               FIND crapeca WHERE 
-                    crapeca.cdcooper = glb_cdcooper     AND
-                    crapeca.tparquiv = 510              AND  
-                    crapeca.nrdconta = 0                AND
-                    crapeca.nrseqarq = crawarq.nrsequen AND  
-                    crapeca.nrdcampo = aux_nrdcampo NO-LOCK NO-ERROR.
+                              
+                        IF NOT AVAILABLE crapass THEN      
+                          DO:
+                              /* CPF */
+                              aux_nrcpfcgc = DECIMAL(SUBSTRING(aux_setlinha,55,11)).                              
 
-               IF   NOT AVAILABLE crapass AND NOT AVAILABLE crapeca THEN
-                    DO: 
-                        CREATE crapeca. 
-                        ASSIGN crapeca.nrdconta = 0
-                               crapeca.dtretarq = glb_dtmvtolt
-                               crapeca.nrdcampo = aux_nrdcampo
-                               aux_nrdcampo     = aux_nrdcampo + 1
-                               crapeca.nrseqarq = crawarq.nrsequen
-                               crapeca.tparquiv = 510
-                               crapeca.dscritic = "CI NAO CAD. " +
-                                       SUBSTRING(aux_setlinha,34,11)
-                               crapeca.cdcooper = glb_cdcooper.
-                        VALIDATE crapeca.
-                        NEXT. 
+                              /* Busca pelo cpf */
+                              FIND FIRST crapass WHERE
+                                   crapass.cdcooper = glb_cdcooper AND
+                                   crapass.nrcpfcgc = aux_nrcpfcgc
+                                   NO-LOCK NO-ERROR.                                  
+                          END.
+                         
                     END.
-               ELSE
-                    aux_nrdconta = crapass.nrdconta.
+                
+               IF AVAILABLE(crapass) THEN
+               DO:
+                   /* Elimina os erros */              
+                   FOR EACH crapeca WHERE crapeca.cdcooper = crapass.cdcooper AND
+                                          crapeca.nrdconta = crapass.nrdconta AND
+                                          crapeca.tparquiv = 510 
+                                          EXCLUSIVE-LOCK: 
+                       DELETE crapeca.                                        
+                   END.
+               END.                              
+
+               IF   NOT AVAILABLE crapass then
+                DO:                 
+                   FIND crapeca WHERE 
+                        crapeca.cdcooper = glb_cdcooper     AND
+                        crapeca.tparquiv = 510              AND  
+                        crapeca.nrdconta = 0                AND
+                        crapeca.nrseqarq = crawarq.nrsequen AND  
+                        crapeca.nrdcampo = aux_nrdcampo NO-LOCK NO-ERROR.
+               
+                   IF NOT AVAILABLE crapeca THEN
+                      DO: 
+                          CREATE crapeca. 
+                          ASSIGN crapeca.nrdconta = 0
+                                 crapeca.dtretarq = glb_dtmvtolt
+                                 crapeca.nrdcampo = aux_nrdcampo
+                                 aux_nrdcampo     = aux_nrdcampo + 1
+                                 crapeca.nrseqarq = crawarq.nrsequen
+                                 crapeca.tparquiv = 510
+                                 crapeca.dscritic = "CI NAO CAD. " +
+                                         SUBSTRING(aux_setlinha,34,11)
+                                 crapeca.cdcooper = glb_cdcooper.
+                          VALIDATE crapeca.                        
+                      END.
+                      
+                   NEXT. 
+                 END.
+                ELSE
+                   aux_nrdconta = crapass.nrdconta.
 
                /* se for tipo de registro com codigo de ocorrencia (erros) */
                IF   CAN-DO("31,32,37",STRING(aux_tpregist))   THEN
