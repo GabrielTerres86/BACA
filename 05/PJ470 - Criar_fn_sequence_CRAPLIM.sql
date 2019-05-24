@@ -14,4 +14,5 @@ BEGIN
        AND a.nmdcampo = 'NRCTRLIM'
        AND a.dsdchave = TO_CHAR(r1.cdcooper);
   END LOOP;
+  COMMIT;
 END;
