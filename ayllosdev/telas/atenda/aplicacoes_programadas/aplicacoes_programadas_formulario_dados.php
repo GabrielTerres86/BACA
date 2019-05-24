@@ -25,7 +25,7 @@
 <div id="divDadosPoupanca">
 	<form action="" class="condensado" method="post" name="frmDadosPoupanca" id="frmDadosPoupanca">
 		<fieldset>
-			<legend><? echo utf8ToHtml('Poupança Programada') ?> <? echo !empty($legend) ? ' - ' . $legend : '' ?></legend>
+			<legend><? echo utf8ToHtml('Aplicação Programada') ?> <? echo !empty($legend) ? ' - ' . $legend : '' ?></legend>
 									
 			<label for="vlprerpp"><? echo utf8ToHtml('Valor da Prestação:') ?></label>
 			<?php if ($flgAlterar) { ?>

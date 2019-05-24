@@ -183,7 +183,7 @@
                                             <input name="gar_pro_apli_sld" id="gar_pro_apli_sld" type="text" value="<?php echo $gar_vlaplpro; ?>" />
                                             <br />
 
-                                            <label for="gar_pro_poup"><?php echo utf8ToHtml('Poupança Programada:'); ?></label>
+                                            <label for="gar_pro_poup"><?php echo utf8ToHtml('Aplicação Programada:'); ?></label>
                                             <input name="gar_pro_poup" id="gar_pro_poup_1" value="1" type="radio" class="radio" />
                                             <label for="gar_pro_poup_1" class="radio">Sim</label>
                                             <input name="gar_pro_poup" id="gar_pro_poup_0" value="0" type="radio" class="radio" />
@@ -215,7 +215,7 @@
                                             <label for="gar_ter_apli_0" class="radio"><?php echo utf8ToHtml('Não'); ?></label>
                                             <br />
 
-                                            <label for="gar_ter_poup"><?php echo utf8ToHtml('Poupança Programada:'); ?></label>
+                                            <label for="gar_ter_poup"><?php echo utf8ToHtml('Aplicação Programada:'); ?></label>
                                             <input name="gar_ter_poup" id="gar_ter_poup_1" value="1" type="radio" class="radio" />
                                             <label for="gar_ter_poup_1" class="radio">Sim</label>
                                             <input name="gar_ter_poup" id="gar_ter_poup_0" value="0" type="radio" class="radio" />

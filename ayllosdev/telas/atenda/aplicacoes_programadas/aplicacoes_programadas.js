@@ -60,7 +60,7 @@ var callafterPoupanca = '';
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao) {
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, carregando poupan&ccedil;as programadas ...");
+	showMsgAguardo("Aguarde, carregando aplica&ccedil;&otilde;es programadas ...");
 	
 	callafterPoupanca = '';
 	
@@ -156,17 +156,17 @@ function acessaOpcaoCancelar() {
 		return false;
 	}
 	if (cdprodut < 0) {
-		showError("error","N&atilde;o &eacute; permitido cancelar planos de poupan&ccedil;a programada que foram migrados.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		showError("error","N&atilde;o &eacute; permitido cancelar planos de aplica&ccedil;&atilde;o programada que foram migrados.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 	
-	showConfirmacao("Deseja cancelar a poupan&ccedil;a programada?","Confirma&ccedil;&atilde;o - Aimaro","cancelarAplicacao()","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+	showConfirmacao("Deseja cancelar a aplica&ccedil;&atilde;o programada?","Confirma&ccedil;&atilde;o - Aimaro","cancelarAplicacao()","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
 }
 
 // Função para cancelamento da Aplicação
 function cancelarAplicacao() {	
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, cancelando poupan&ccedil;a programada ...");
+	showMsgAguardo("Aguarde, cancelando aplica&ccedil;&atilde;o programada ...");
 	
 	// Executa script de consulta através de ajax
 	$.ajax({		
@@ -200,11 +200,11 @@ function acessaOpcaoReativar() {
 		return false;
 	}
 	if (cdprodut < 0) {
-		showError("error","N&atilde;o &eacute; permitido reativar planos de poupan&ccedil;a programada que foram migrados.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		showError("error","N&atilde;o &eacute; permitido reativar planos de aplica&ccedil;&atilde;o programada que foram migrados.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 
-	showConfirmacao("Deseja reativar a poupan&ccedil;a programada?","Confirma&ccedil;&atilde;o - Aimaro","reativarAplicProgramada()","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+	showConfirmacao("Deseja reativar a aplica&ccedil;&atilde;o programada?","Confirma&ccedil;&atilde;o - Aimaro","reativarAplicProgramada()","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
 }
 
 // Função para reativar a aplicacao
@@ -214,13 +214,13 @@ function reativarAplicProgramada() {
 		return false;
 	}
 	if (cdprodut < 0) {
-		showError("error","N&atilde;o &eacute; permitido reativar planos de poupan&ccedil;a programada que foram migrados.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		showError("error","N&atilde;o &eacute; permitido reativar planos de aplica&ccedil;&atilde;o programada que foram migrados.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 	
 	
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, reativando poupan&ccedil;a programada ...");
+	showMsgAguardo("Aguarde, reativando aplica&ccedil;&atilde;o programada ...");
 	
 	// Executa script de consulta através de ajax
 	$.ajax({		
@@ -255,7 +255,7 @@ function consultarPoupanca() {
 	}
 	
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, consultando poupan&ccedil;a programada ...");	
+	showMsgAguardo("Aguarde, consultando aplica&ccedil;&atilde;o programada ...");	
 	
 	// Executa script de consulta através de ajax
 	$.ajax({		
@@ -320,7 +320,7 @@ function acessaOpcaoSuspender() {
 	}
 	
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, carregando dados da poupan&ccedil;a programada ...");	
+	showMsgAguardo("Aguarde, carregando dados da aplica&ccedil;&atilde;o programada ...");	
 	
 	// Executa script de consulta através de ajax
 	$.ajax({		
@@ -386,7 +386,7 @@ function validarSuspensaoAplicacao() {
 // Função para suspender a poupança programada
 function suspenderAplicacao(nrmesusp) {
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, suspendendo poupan&ccedil;a programada ...");	
+	showMsgAguardo("Aguarde, suspendendo aplica&ccedil;&atilde;o programada ...");	
 		
 	// Executa script de consulta através de ajax
 	$.ajax({		
@@ -425,7 +425,7 @@ function voltarDivResgate() {
 //Função para validar o bloqueio da aplicação
 function validaBloqueioAplicacao(){
 	// Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, validando bloqueio poupan&ccedil;a programada ...");
+    showMsgAguardo("Aguarde, validando bloqueio aplica&ccedil;&atilde;o programada ...");
 
     // Executa script de consulta através de ajax
     $.ajax({
@@ -493,7 +493,7 @@ function acessaOpcaoEfetuarResgate() {
 	var strHTML = "";
 	strHTML = '<form action="" method="post" name="frmResgate" id="frmResgate" onSubmit="return false;">';
 	strHTML += '	<fieldset>';
-	strHTML += '		<legend>Resgate da Poupan&ccedil;a Programada</legend>';
+	strHTML += '		<legend>Resgate da Aplica&ccedil;&atilde;o Programada</legend>';
 	
 	strHTML += '		<label for="tpresgat">Tipo de Resgate:</label>';
 	strHTML += '		<select name="tpresgat" id="tpresgat" class="campo">';
@@ -523,7 +523,7 @@ function acessaOpcaoEfetuarResgate() {
 	
 	strHTML += '	<div id="dvautoriza" name="dvautoriza">';
 	strHTML += '	<fieldset>';
-	strHTML += '	<legend>Autorizar Resgate da Poupan&ccedil;a</legend>';
+	strHTML += '	<legend>Autorizar Resgate da Aplica&ccedil;&atilde;o</legend>';
 	strHTML += '		<br />';
 	strHTML += '		<label for="cdopera2">Operador:</label>';
 	strHTML += '		<input name="cdopera2" type="text" class="campo" id="cdopera2" autocomplete="no">';
@@ -751,7 +751,7 @@ function acessaOpcaoAlterar() {
 	}
 	
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, carregando dados da poupan&ccedil;a programada ...");	
+	showMsgAguardo("Aguarde, carregando dados da aplica&ccedil;&atilde;o programada ...");	
 	
 	// Executa script de consulta através de ajax
 	$.ajax({		
@@ -819,7 +819,7 @@ function validarAlteracaoAplicacao() {
 // função para alterar a poupança programada
 function alterarAplicacao(vlprerpp,dtprxdeb) {
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, alterando poupan&ccedil;a programada ...");	
+	showMsgAguardo("Aguarde, alterando aplica&ccedil;&atilde;o programada ...");	
 
 	var indebito = $("#diadebit","#frmDadosPoupanca").val();
 	var dsfinali = $("#dsfinali","#frmDadosPoupanca").val();
@@ -950,7 +950,7 @@ function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext) {
 	var cdprodut = $("#cdprodut","#frmDadosPoupanca").val();
 	var dsfinali = $("#dsfinali","#frmDadosPoupanca").val();
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, incluindo poupan&ccedil;a programada ...");	
+	showMsgAguardo("Aguarde, incluindo aplica&ccedil;&atilde;o programada ...");	
 	// Executa script de consulta através de ajax
 	$.ajax({		
 		type: "POST",		

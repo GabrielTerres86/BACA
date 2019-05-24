@@ -43,7 +43,7 @@
 	<option value="2">2 - I.R Fisica</option>
 	<option value="3">3 - Emprestimo</option>
 	<option value="4">4 - Aplicacao</option>
-	<option value="5">5 - Poupanca Programada</option>
+	<option value="5">5 - Aplica&ccedil;&atilde;o Programada</option>
 	<option value="6">6 - I.R Juridica</option>
 	<option value="7">7 - Conta Investimento</option>
 	<option value="8">8 - Capital</option>
