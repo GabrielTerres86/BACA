@@ -150,7 +150,7 @@ IF  RETURN-VALUE = "NOK"  THEN
         IF  AVAILABLE tt-erro  THEN
             aux_dscritic = tt-erro.dscritic.
         ELSE
-            aux_dscritic = "Nao foi possivel carregar poupanca programada.".
+            aux_dscritic = "Nao foi possivel carregar aplicacao programada.".
             
         xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
         
@@ -161,7 +161,7 @@ FIND FIRST tt-dados-rpp NO-LOCK NO-ERROR.
 
 IF  NOT AVAILABLE tt-dados-rpp  THEN
     DO:
-        ASSIGN aux_dscritic = "Nao ha poupanca programada nesta conta."
+        ASSIGN aux_dscritic = "Nao ha aplicacao programada nesta conta."
                xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
         
         RETURN "NOK".
@@ -173,7 +173,7 @@ FOR EACH tt-dados-rpp NO-LOCK:
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "<POUPANCA><dtmvtolt>" + 
                                    STRING(tt-dados-rpp.dtmvtolt,"99/99/9999") +
-                                   "</dtmvtolt><dshistor>Poup. Prog. :" +
+                                   "</dtmvtolt><dshistor>Apli. Prog. :" +
                                    TRIM(STRING(tt-dados-rpp.vlprerpp,
                                                "zzz,zz9.99")) +
                                    "</dshistor><nrdocmto>" +
@@ -201,7 +201,7 @@ FOR EACH tt-dados-rpp NO-LOCK:
                                    TRIM(STRING(aux_vlblqapl_gar,
                                                "zzz,zzz,zzz,zz9.99")) +
                                    "</vlblqapl_gar><dsprodut>"  +
-                                    "Poupança Programada" +
+                                    "Aplicação Programada" +
                                    "</dsprodut></POUPANCA>".
                            
 END. /** Fim do FOR EACH tt-dados-rpp **/

@@ -5832,7 +5832,7 @@ PROCEDURE ver_saldos:
         IF   d-vldsaldo > 0   THEN 
              DO:
                  ASSIGN i-cod-erro = 0
-                        c-dsc-erro = "POUPANCA PROGRAMADA COM SALDO.".
+                        c-dsc-erro = "APLICACAO PROGRAMADA COM SALDO.".
 
                  { sistema/generico/includes/b1wgen0001.i }
                  

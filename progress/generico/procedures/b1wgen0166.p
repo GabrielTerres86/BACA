@@ -983,7 +983,7 @@ PROCEDURE Valida_empresa:
         YEAR(old_dtavsppr)  >= YEAR(par_dtavsppr)  THEN 
         DO:
             ASSIGN aux_dscritic = "JA HOUVE DEBITO NESTE MES! NAO E POSSIVEL ALTERAR"
-                                + " A DATA DE GERACAO DE AVISO DE POUP. PROGR., EM CASO DE"
+                                + " A DATA DE GERACAO DE AVISO DE APLI. PROGR., EM CASO DE"
                                 + " DUVIDAS FAVOR ENTRAR EM CONTATO COM A TI(Magui) PARA"
                                 + " ESCLARECIMENTO.".
     
@@ -1242,7 +1242,7 @@ PROCEDURE Gera_arquivo_log:
         DO:
             ASSIGN aux_verifi01 = par_tpdebppr
                    aux_verifi02 = old_tpdebppr
-                   aux_verifi03 = "Gera Aviso Poup.Prog.".
+                   aux_verifi03 = "Gera Aviso Apli.Prog.".
             RUN Gera_arquivo_log_2(INPUT par_cdcooper, INPUT par_cdopcao,
                                    INPUT par_dtmvtolt, INPUT par_cdoperad,
                                    INPUT par_cdempres, INPUT aux_verifi01,

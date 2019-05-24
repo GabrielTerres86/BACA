@@ -1570,7 +1570,7 @@ PROCEDURE consulta-lancamento-periodo.
         ASSIGN tt-lancamento_futuro.dtmvtolt = craprpp.dtdebito
                tt-lancamento_futuro.dsmvtolt = 
                                     STRING(craprpp.dtdebito,"99/99/9999")
-               tt-lancamento_futuro.dshistor = "DB.POUP.PROGR"
+               tt-lancamento_futuro.dshistor = "DB.APLI.PROGR"
                tt-lancamento_futuro.nrdocmto = 
                             STRING(craprpp.nrctrrpp,"zzz,zzz,zz9")
                tt-lancamento_futuro.indebcre = "D"

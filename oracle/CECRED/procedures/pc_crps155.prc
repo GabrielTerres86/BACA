@@ -92,6 +92,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS155(pr_cdcooper in craptab.cdcooper%ty
                14/03/2019 - PRB0040598 Feito o tratamento de erros para os jobs do paralelismo e exception others.
                             Erros no job do paralelismo disponíveis na view vw_consulta_execucao_jobs (Carlos)
 
+			   19/03/2019- Alteração para tratamento do relatorio unificado por cooperativa (411.2 - CIS Corporate)
+							
 ............................................................................. */
 /****** Decisoes sobre o VAR ************************************************
 Poupanca programada sera mensal com taxa provisoria senao houver mensal
@@ -255,6 +257,11 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
   --vr_xmltype       xmltype;
   vr_des_xml       clob;
   vr_dstexto       varchar2(32700);
+  
+    -- Variáveis para armazenar as informações em XML do relatorio global
+  vr_des_xml_total       clob;
+  vr_dstexto_total       varchar2(32700);
+
   -- Variável para o caminho e nome do arquivo base
   vr_nom_diretorio varchar2(200);
   vr_nom_arquivo   varchar2(200);
@@ -276,6 +283,11 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
   vr_idlog_ini_par tbgen_prglog.idprglog%type;    
   vr_tpexecucao    tbgen_prglog.tpexecucao%type; 
   vr_qterro        number := 0;
+
+  -- Variáveis para armazenar os totais para o relatorio global
+  qtaplica_total NUMBER := 0;
+  vlprerpp_total NUMBER := 0; --craprpp.vlprerpp%type;
+  vlsldapl_total NUMBER := 0; --craprpp.vlsdrdpp%type;
   
   -- Função que define se o relatório deve ser impresso ou somente deve gerar o arquivo LST
   function fn_imprime(pr_cdagenci in number) return varchar2 is
@@ -574,14 +586,19 @@ begin
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).nmprimtl := rw_craprpp.nmprimtl;
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).dsdacstp := to_char(rw_craprpp.cdsitdct)||lpad(to_char(rw_craprpp.cdtipcta), 2, '0');
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).dssituac := rw_craprpp.dssituac;
+
       -- Acumula os totalizadores
       if vr_vlsdrdpp > 0 then
         vr_tab_agencia(rw_craprpp.cdagenci).qtaplica := nvl(vr_tab_agencia(rw_craprpp.cdagenci).qtaplica, 0) + 1;
+		qtaplica_total := qtaplica_total + 1;
       end if;
       if rw_craprpp.cdsitrpp = 1 then
         vr_tab_agencia(rw_craprpp.cdagenci).vlprerpp := nvl(vr_tab_agencia(rw_craprpp.cdagenci).vlprerpp, 0) + rw_craprpp.vlprerpp;
+        vlprerpp_total := vlprerpp_total + rw_craprpp.vlprerpp;
       end if;
       vr_tab_agencia(rw_craprpp.cdagenci).vlsldapl := nvl(vr_tab_agencia(rw_craprpp.cdagenci).vlsldapl, 0) + vr_vlsdrdpp;
+      vlsldapl_total := vlsldapl_total + vr_vlsdrdpp;
+
       -- Criando base para calculo do VAR
       if vr_vlsdrdpp <= 0 then
         -- Não calcula e passa para o próximo registro
@@ -669,6 +686,26 @@ begin
     vr_indice_agencia := vr_tab_agencia.first;
     -- Se houver informação, deve criar o arquivo
     if vr_indice_agencia is not null then
+        
+		-- Deve gerar um arquivo global para todas as agencias
+        -- Inicializar o CLOB
+        vr_des_xml_total := null;
+        vr_dstexto_total := null;
+        dbms_lob.createtemporary(vr_des_xml_total, true);
+        dbms_lob.open(vr_des_xml_total, dbms_lob.lob_readwrite);
+
+        -- Inicilizar as informações do XML do relatorio total
+        gene0002.pc_escreve_xml(vr_des_xml_total,vr_dstexto_total,'<?xml version="1.0" encoding="utf-8"?>');
+        
+		-- Início da leitura das informações
+		-- Incluir o cabeçalho
+        gene0002.pc_escreve_xml(vr_des_xml_total,vr_dstexto_total,
+                      '<agencia cdagenci="999">'||
+                         '<nmresage>Resumo Cooperativa</nmresage>'||
+                         '<qtaplica>'||to_char(qtaplica_total, '9G999G990')||'</qtaplica>'||
+                         '<vlprerpp>'||to_char(vlprerpp_total, '999G999G999G990D00')||'</vlprerpp>'||
+                         '<vlsldapl>'||to_char(vlsldapl_total, '999G999G999G990D00')||'</vlsldapl>');
+	
       while vr_indice_agencia is not null loop
         
     -- Grava LOG de ocorrência inicial geração relatório
@@ -711,6 +748,20 @@ begin
                            '<dssituac>'||vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).dssituac||'</dssituac>'||
                            '<vlsldapl>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).vlsldapl, '9G999G990D00')||'</vlsldapl>'||
                         '</conta>');
+
+			gene0002.pc_escreve_xml(vr_des_xml_total,vr_dstexto_total,
+                        '<conta nrdconta="'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).nrdconta, 'fm9G999G999G9')||'">'||
+                           '<dsdacstp>'||vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).dsdacstp||'</dsdacstp>'||
+                           '<nmprimtl>'||SUBSTR(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).nmprimtl,0,40)||'</nmprimtl>'||
+                           '<nrramemp>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).nrramemp, '9999')||'</nrramemp>'||
+                           '<nrctrrpp>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).nrctrrpp, 'fm9999G999')||'</nrctrrpp>'||
+                           '<diapoupa>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).diapoupa, '00')||'</diapoupa>'||
+                           '<vlprerpp>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).vlprerpp, '9G999G990D00')||'</vlprerpp>'||
+                           '<qtprepag>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).qtprepag, '990')||'</qtprepag>'||
+                           '<dssituac>'||vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).dssituac||'</dssituac>'||
+                           '<vlsldapl>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).vlsldapl, '9G999G990D00')||'</vlsldapl>'||
+                        '</conta>');
+
           vr_indice_aplicacao := vr_tab_agencia(vr_indice_agencia).tab_aplicacao.next(vr_indice_aplicacao);
         end loop;
         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</agencia>',true);
@@ -802,7 +853,38 @@ begin
         -- Passar para a próxima agência
         vr_indice_agencia := vr_tab_agencia.next(vr_indice_agencia);
       end loop;
-    end if;
+
+      gene0002.pc_escreve_xml(vr_des_xml_total,vr_dstexto_total,'</agencia>',true);
+
+      -- Nome base do arquivo é crrl124_
+      vr_nom_arquivo := 'crrl124_999';
+      -- Gerar o arquivo de XML com mesmo nome e na mesma pasta do arquivo de saída
+      gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
+                                  pr_cdprogra  => vr_cdprogra,         --> Programa chamador
+                                  pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
+                                  pr_dsxml     => vr_des_xml_total,          --> Arquivo XML de dados (CLOB)
+                                  pr_dsxmlnode => '/agencia/conta',    --> Nó base do XML para leitura dos dados
+                                  pr_dsjasper  => 'crrl124.jasper',    --> Arquivo de layout do iReport
+                                  pr_dsparams  => null,                --> Enviar como parâmetro apenas a agência
+                                  pr_dsarqsaid => vr_nom_diretorio||'/'||vr_nom_arquivo||'.lst', --> Arquivo final com código da agência
+                                  pr_flg_gerar => 'N',
+                                  pr_qtcoluna  => 132,
+                                  pr_flg_impri => fn_imprime(999),    --> Chamar a impressão (Imprim.p)
+                                  pr_nmformul  => '132dm',             --> Nome do formulário para impressão
+                                  pr_nrcopias  => 1,                   --> Número de cópias para impressão
+                                  pr_des_erro  => vr_dscritic);        --> Saída com erro
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_des_xml_total);
+      dbms_lob.freetemporary(vr_des_xml_total);
+      -- Limpar variavel texto do clob
+      vr_dstexto_total := NULL;
+      -- Testar se houve erro
+      if vr_dscritic is not null then
+        -- Gerar exceção
+        vr_cdcritic := 0;
+        raise vr_exc_saida;
+      end if;
+	end if;
     
     --Grava data fim para o JOB na tabela de LOG 
     pc_log_programa(pr_dstiplog   => 'F',    
