@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
 
     Programa: INET0002                         
     Autor   : Jorge Hamaguchi / Jean Deschamps
-    Data    : Novembro/2015                      Ultima Atualizacao: 27/06/2018
+    Data    : Novembro/2015                      Ultima Atualizacao: 20/02/2019
 
     Dados referentes ao programa:
 
@@ -33,6 +33,9 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                 27/06/2018 - Ajustes de exception em comandos DML e procedures. (Jean Michel)
 				
 				12/11/2018 - Ajustes no retorno dos dados de transações pendentes, correção para retornar '0,00' quando o valor for ' '. (Guilherme Kuhnen - INC0023927)
+                
+                20/02/2019 - Inclusão da pc_ret_trans_pend_prop para trnasacoes pendente de emprestimos
+                             (PRJ438 - Douglas Pagel / AMcom).   
                 
 ..............................................................................*/
 
@@ -923,6 +926,38 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
                                       ,pr_clobxmlc OUT CLOB                       --> XML com informações de Log
                                       ,pr_cdcritic OUT INTEGER                    --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2);                 --> Descrição da crítica
+
+  PROCEDURE pc_cria_trans_pend_efet_prop(pr_cdagenci  IN crapage.cdagenci%TYPE                   --> Codigo do PA
+                                        ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                   --> Numero do Caixa
+                                        ,pr_cdoperad  IN crapope.cdoperad%TYPE                   --> Codigo do Operados
+                                        ,pr_nmdatela  IN craptel.nmdatela%TYPE                   --> Nome da Tela
+                                        ,pr_idorigem  IN INTEGER                                 --> Origem da solicitacao
+                                        ,pr_idseqttl  IN crapttl.idseqttl%TYPE                   --> Sequencial de Titular               
+                                        ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE                   --> Numero do cpf do operador juridico
+                                        ,pr_nrcpfrep  IN crapopi.nrcpfope%TYPE                   --> Numero do cpf do representante legal
+                                        ,pr_cdcoptfn  IN tbgen_trans_pend.cdcoptfn%TYPE          --> Cooperativa do Terminal
+                                        ,pr_cdagetfn  IN tbgen_trans_pend.cdagetfn%TYPE          --> Agencia do Terminal
+                                        ,pr_nrterfin  IN tbgen_trans_pend.nrterfin%TYPE          --> Numero do Terminal Financeiro
+                                        ,pr_dtmvtolt  IN DATE                                    --> Data do movimento     
+                                        ,pr_cdcooper  IN tbtransf_trans_pend.cdcooper%TYPE       --> Codigo da cooperativa
+                                        ,pr_nrdconta  IN tbtransf_trans_pend.nrdconta%TYPE       --> Numero da Conta
+                                        ,pr_idastcjt  IN crapass.idastcjt%TYPE                   --> Indicador de Assinatura Conjunta
+                                        ,pr_nrctremp  IN crawepr.nrctremp%TYPE                   --> numero do da proposta
+                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE                   --> Codigo de Critica
+                                        ,pr_dscritic OUT crapcri.dscritic%TYPE);                 --> Descricao de Critica
+
+
+  PROCEDURE pc_ret_trans_pend_prop( pr_cdcooper IN crapcop.cdcooper%TYPE              --> Código da Cooperativa
+                                   ,pr_cdoperad IN crapope.cdoperad%TYPE              --> Código do Operador
+                                   ,pr_nmdatela IN craptel.nmdatela%TYPE              --> Nome da Tela
+                                   ,pr_idorigem IN INTEGER                            --> Identificador de Origem 
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE              --> Número da Conta
+                                   ,pr_idseqttl IN crapttl.idseqttl%TYPE              --> Titular da Conta
+                                   ,pr_cdtrapen IN VARCHAR2                           --> Codigo da Transacao
+                                   ,pr_cdcritic OUT INTEGER                           --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2                          --> Descrição da crítica
+                                   ,pr_nrctremp OUT tbepr_trans_pend_efet_proposta.nrctremp%TYPE   --> Número da proposta da pendencia
+                                   ,pr_vlemprst OUT crawepr.vlemprst%TYPE);   --> Número da proposta da pendencia
                                       
 																								 
 END INET0002;
@@ -935,7 +970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --  Sistema  : Procedimentos Multiplas Assinaturas PJ
   --  Sigla    : CRED
   --  Autor    : Jorge Hamaguchi / Jean Deschamps
-  --  Data     : Novembro/2015.                   Ultima atualizacao: 27/06/2018
+  --  Data     : Novembro/2015.                   Ultima atualizacao: 20/02/2019
   --
   -- Dados referentes ao programa:
   --
@@ -977,6 +1012,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --             18/05/2018 - Adicionado o procedimento pc_cria_trans_pend_dscto_tit (Paulo Penteado (GFT))
   --
   --      			 27/06/2018 - Ajustes de exception em comandos DML e procedures. (Jean Michel)
+  --
+  --             20/02/2019 - Inclusão da pc_ret_trans_pend_prop para trnasacoes pendente de emprestimos
+  --                          (PRJ438 - Douglas Pagel / AMcom).  
+  --                        
+  ---            21/02/2019 - Alteração das rotinas pc_cria_msgs_trans, pc_reprova_trans_pend
+  --                          para contemplar o novo Tipo Transacao = 21 (Emprestimos/Financiamentos)
+  --                          (PJ 438 - Rafael R. Santos / AMcom).  
+  --                        - Inclusão da procedure pc_cria_trans_pend_efet_prop
+
   ---------------------------------------------------------------------------------------------------------------
 
   --INC0011323
@@ -2187,6 +2231,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --                          PRJ319-SMS Cobrança (Odirlei-AMcom)
   --             29/01/2018 - Incluir o tipo de transação 18 - Resgate de cheques
   --                          SM 454.1 Márcio Mouts  
+  --
+  --             12/03/2018 - (AmCom) - Add tptransa 21 - emprestimos/financiamentos
+  --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -2431,6 +2478,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       
       rw_tbctd_trans_pend cr_tbctd_trans_pend%ROWTYPE;
    
+      --Tipo Transacao 21 (Emprestimos/Financiamentos)
+      CURSOR cr_pend_efet_proposta( pr_cddoitem IN tbepr_trans_pend_efet_proposta.cdtransacao_pendente%TYPE) IS  
+      SELECT pep.cdcooper
+            ,pep.nrctremp 
+            ,wepr.vlemprst           
+      FROM   tbepr_trans_pend_efet_proposta pep,
+             crawepr wepr
+      WHERE  pep.cdtransacao_pendente = pr_cddoitem
+        AND  pep.cdcooper = wepr.cdcooper
+        AND  pep.nrdconta = wepr.nrdconta
+        AND  pep.nrctremp = wepr.nrctremp;
+      --/
+      rw_pend_efet_proposta cr_pend_efet_proposta%ROWTYPE;
+      --
 
       --Variaveis Locais
       vr_idastcjt crapass.idastcjt%TYPE;
@@ -3102,6 +3163,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                  || '<b> no valor de R$</b> '||TO_CHAR(rw_tbctd_trans_pend.vlcontrato,'fm999g999g990d00');
       -- Fim PJ470
 
+        WHEN pr_tptransa = 21 THEN -- Emprestimos/financiamentos          
+
+         OPEN cr_pend_efet_proposta(pr_cddoitem => pr_cdtranpe);
+         FETCH cr_pend_efet_proposta INTO rw_pend_efet_proposta;
+         IF cr_pend_efet_proposta%NOTFOUND THEN
+            --Fechar Cursor
+            CLOSE cr_pend_efet_proposta;
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Registro de Proposta de  Emprestimo/financiamento pendente nao encontrado.';
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+            
+         ELSE
+            --Fechar Cursor
+            CLOSE cr_pend_efet_proposta;
+         END IF;
+         --/ 
+         pr_dsdmensg := pr_dsdmensg ||
+                        '<b>Proposta de emprestimo/financiamento </b> no valor de <b>R$ ' ||
+                        TO_CHAR(rw_pend_efet_proposta.vlemprst,'fm999g999g990d00')||'</b>.<br>';
+
+        
 
         ELSE
           vr_dscritic := 'Tipo de transação invalida.';
@@ -3153,6 +3236,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --
   -- Alteração :  19/05/2017 - Inclusão de tratativa para quando for tipo 13 - Recarga de celular
   --                          pois o controle é feito pela tbrecarga_trans_pend. Projeto 321. (Lombardi)
+  --
+  --              12/03/2019 - Rafael (AmCom) Inclusão da pc_atualiza_proposta para tipo transacao 21 Emprestimos/financiamentos
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -3270,6 +3355,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     WHERE  tbrecarga_trans_pend.cdtransacao_pendente = pr_cddoitem;
     rw_tbrecarga_trans_pend cr_tbrecarga_trans_pend%ROWTYPE;
 	      	  
+    PROCEDURE pc_atualiza_proposta(pr_cdtransacao_pendente IN tbepr_trans_pend_efet_proposta.cdtransacao_pendente%TYPE) IS      
+    --
+    --/
+    CURSOR cr_pend_efet_proposta(pr_cdtransacao_pendente IN tbepr_trans_pend_efet_proposta.cdtransacao_pendente%TYPE) IS
+       SELECT cdtransacao_pendente, 
+              cdcooper, 
+              nrdconta, 
+              nrctremp
+         FROM tbepr_trans_pend_efet_proposta pep
+        WHERE pep.cdtransacao_pendente = pr_cdtransacao_pendente; 
+    --
+    rw_pend_efet_proposta cr_pend_efet_proposta%ROWTYPE;
+    --/      
+    vr_des_erro VARCHAR2(100);
+    --/
+    BEGIN
+    
+     OPEN cr_pend_efet_proposta(pr_cdtransacao_pendente);
+     FETCH cr_pend_efet_proposta INTO rw_pend_efet_proposta;
+       IF cr_pend_efet_proposta%FOUND
+         THEN 
+          --/ atualiza a proposta
+          UPDATE crawepr epr
+             SET epr.insitest = 6
+           WHERE epr.cdcooper = rw_pend_efet_proposta.cdcooper
+             AND epr.nrctremp = rw_pend_efet_proposta.nrctremp
+             AND epr.nrdconta = rw_pend_efet_proposta.nrdconta;
+          --/
+          empr0001.pc_insere_motivo_anulacao
+                     (pr_cdcooper => rw_pend_efet_proposta.cdcooper, 
+                      pr_cdagenci => pr_cdagenci, 
+                      pr_nrdcaixa => pr_nrdcaixa, 
+                      pr_cdoperad => pr_cdoperad, 
+                      pr_nmdatela => pr_nmdatela, 
+                      pr_idorigem => pr_cdorigem, 
+                      pr_tpproduto => 1, -- emprestimo
+                      pr_nrdconta => rw_pend_efet_proposta.nrdconta,
+                      pr_nrctrato => rw_pend_efet_proposta.nrctremp,
+                      pr_tpctrlim => NULL, 
+                      pr_cdmotivo => 9,
+                      pr_dsmotivo => 'Transação pendente não aprovada pelo sócio',
+                      pr_dsobservacao => 'Transação pendente não aprovada pelo sócio', 
+                      pr_cdcritic => vr_cdcritic, 
+                      pr_dscritic => vr_dscritic, 
+                      pr_des_erro => vr_des_erro);
+         --/
+         IF NOT ( vr_dscritic IS NULL )
+           THEN
+             CLOSE cr_pend_efet_proposta;
+             RAISE vr_exc_erro;                                              
+         END IF;
+       
+       END IF; 
+     CLOSE cr_pend_efet_proposta;
+     --/
+     --/
+    END pc_atualiza_proposta;
+
 	  ------------------------------------------------------
 	
     -------------- INICIO BLOCO PRINCIPAL ----------------
@@ -3490,6 +3633,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
               ELSE 
                 CLOSE cr_tbrecarga_trans_pend;
               END IF;
+            
+            ELSIF rw_tbgen_trans_pend.tptransacao = 21 -- Emprestimos/financiamentos 
+              THEN
+               --/
+               pc_atualiza_proposta(rw_tbgen_trans_pend.cdtransacao_pendente);
+            
             END IF;
 			
 			      FOR rw_tbgen_aprova_trans_pend IN cr_tbgen_aprova_trans_pend (pr_cddoitem  => vr_cddoitem
@@ -6981,10 +7130,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         rw_tbctd_trans_pend cr_tbctd_trans_pend%ROWTYPE;      
 
       
+      --Tipo Transacao 21 (Emprestimos/Financiamentos)
+      CURSOR cr_pend_efet_proposta(pr_cddoitem IN tbepr_trans_pend_efet_proposta.cdtransacao_pendente%TYPE) IS  
+      SELECT pep.cdcooper
+            ,wepr.vlemprst
+            ,wepr.dtdpagto AS dtprimeiro_vencto
+            ,wepr.qtpreemp AS nrparcelas
+            ,wepr.vlpreemp AS vlparcela
+            ,wepr.percetop AS vlpercentual_cet
+            ,sim.vlrtarif AS vltarifa
+            ,wepr.txmensal AS vltaxa_mensal
+            ,sim.vliofepr AS vliof
+            ,NULL vlpercentual_iof
+       FROM  tbepr_trans_pend_efet_proposta pep,
+             crawepr wepr,
+             crapsim sim
+       WHERE pep.cdtransacao_pendente = pr_cddoitem
+         AND pep.cdcooper = wepr.cdcooper
+         AND pep.nrdconta = wepr.nrdconta
+         AND pep.nrctremp = wepr.nrctremp
+         AND wepr.nrsimula = sim.nrsimula(+)
+         AND wepr.nrdconta = sim.nrdconta(+)
+         AND wepr.cdcooper = sim.cdcooper(+);
+      --/
+      rw_pend_efet_proposta cr_pend_efet_proposta%ROWTYPE;
+      --
+      --
+
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
-
+      --
       -- Tratamento de erros
       vr_exc_erro EXCEPTION;
 
@@ -7152,6 +7328,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_dtrecarga VARCHAR2(200);
       vr_dttransa  VARCHAR2(200);
       vr_nmproduto VARCHAR2(200);
+      
+      --Emprestimos/Financiamentos
+      vr_qtdparce_ef VARCHAR2(100);
+      vr_vldparce_ef VARCHAR2(100);
+      vr_dtpriven_ef VARCHAR2(100);
+      vr_vlpercet_ef VARCHAR2(100);
+      vr_vltarifa_ef VARCHAR2(100);
+      vr_vltaxmen_ef VARCHAR2(100);
+      vr_vlrdoiof_ef VARCHAR2(100);
+      vr_vlperiof_ef VARCHAR2(100);
       
       --> Tributos
       vr_dsidenti_pagto   tbpagto_tributos_trans_pend.dsidenti_pagto%TYPE;
@@ -8687,8 +8873,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             vr_dsoritra := 'Posto de Atendimento';
             vr_dsvltran := TO_CHAR(rw_cr_tbctd_trans_pend.vlcontrato,'fm999g999g990d00');
             vr_dsdtefet := NULL;
-      --Fim PJ470
-      ELSE
+      --Fim PJ470  
+
+      WHEN vr_tptranpe = 21 THEN -- Emprestimos/Financiamentos
+      --/
+       OPEN cr_pend_efet_proposta(pr_cddoitem => vr_cdtranpe);
+         FETCH cr_pend_efet_proposta INTO rw_pend_efet_proposta;
+          IF cr_pend_efet_proposta%NOTFOUND THEN
+              --Fechar Cursor
+              CLOSE cr_pend_efet_proposta;
+              CONTINUE;
+          ELSE
+              --Fechar Cursor
+              CLOSE cr_pend_efet_proposta;
+                      
+              --Controle de paginação
+              vr_qttotpen := vr_qttotpen + 1;
+            IF ((vr_qttotpen <= vr_nriniseq) OR
+                   (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                   CONTINUE;
+            END IF;
+          END IF;
+           --
+           --/Valor a somar
+           vr_vlasomar := rw_pend_efet_proposta.vlemprst;
+           --
+           --/Variaveis resumo
+           vr_dsvltran := TO_CHAR(rw_pend_efet_proposta.vlemprst,'fm999g999g990d00'); -- Valor
+           vr_dsdtefet := 'Nesta Data'; -- Data Efetivacao
+           vr_dsdescri := 'Proposta de Emprestimo/Financiamento - ' || TO_CHAR(rw_pend_efet_proposta.nrparcelas) || ' vezes de R$ ' || TO_CHAR(rw_pend_efet_proposta.vlparcela,'fm999g999g990d00'); -- Descricao
+           vr_dstptran := 'Emprestimo/Financiamento'; -- Tipo de Transacao
+           vr_dsagenda := 'NÃO'; -- Agendamento
+           --  
+           -- Variaveis especificas
+           vr_qtdparce_ef := rw_pend_efet_proposta.nrparcelas; --Quantidade de Parcelas
+           vr_vldparce_ef := TO_CHAR(rw_pend_efet_proposta.vlparcela,'fm999g999g990d00'); --Valor da Parcela
+           vr_dtpriven_ef := TO_CHAR(rw_pend_efet_proposta.dtprimeiro_vencto,'DD/MM/RRRR'); --Primeiro Vencimento
+           vr_vlpercet_ef := TO_CHAR(rw_pend_efet_proposta.vlpercentual_cet,'fm999g999g990d00'); --CET
+           vr_vltarifa_ef := TO_CHAR(rw_pend_efet_proposta.vltarifa,'fm999g999g990d00'); --Tarifa
+           vr_vltaxmen_ef := TO_CHAR(rw_pend_efet_proposta.vltaxa_mensal,'fm999g999g990d00'); --Taxa Mensal
+           vr_vlrdoiof_ef := TO_CHAR(rw_pend_efet_proposta.vliof,'fm999g999g990d00'); --IOF
+           vr_vlperiof_ef := TO_CHAR(rw_pend_efet_proposta.vlpercentual_iof,'fm999g999g990d0000'); --Percentual IOF
+           --
+         ELSE
 
                 vr_dscritic := 'Tipo de transação não encontrado.';
                 --Levantar Excecao
@@ -9039,7 +9266,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             || '<dados_campo><label>Valor</label><valor>'||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
             || '<dados_campo><label>Número do Contrato</label><valor>'||vr_nrcntato||'</valor></dados_campo>'
             || '<dados_campo><label>Tipo de Documento</label><valor>'||vr_dsdescri||'</valor></dados_campo>';
-         -- Fim Prj 470
+         -- Fim Prj 470	  
+
+         ELSIF vr_tptranpe = 21 THEN -- Emprestimos/Financiamentos
+            vr_xml_auxi := vr_xml_auxi
+            || '<dados_campo><label>Valor do Emprestimo/Financiamento</label><valor>'      ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
+            || '<dados_campo><label>Quantidade de Parcelas</label><valor>'||vr_qtdparce_ef||'</valor></dados_campo>'
+            || '<dados_campo><label>Valor da Parcela</label><valor>'      ||vr_vldparce_ef||'</valor></dados_campo>'
+            || '<dados_campo><label>Primeiro Vencimento</label><valor>'   ||vr_dtpriven_ef||'</valor></dados_campo>'
+            || '<dados_campo><label>CET</label><valor>'                   ||vr_vlpercet_ef||'</valor></dados_campo>'
+            || '<dados_campo><label>Tarifa</label><valor>'                ||vr_vltarifa_ef||'</valor></dados_campo>'
+            || '<dados_campo><label>Taxa Mensal</label><valor>'           ||vr_vltaxmen_ef||'</valor></dados_campo>'
+            || '<dados_campo><label>IOF</label><valor>'                   ||vr_vlrdoiof_ef||'</valor></dados_campo>';
+
+
+
          END IF;
          
          vr_xml_auxi := vr_xml_auxi || '</dados_detalhe>';
@@ -13253,5 +13494,247 @@ BEGIN
   END;
 END pc_ret_trans_pend_ctd;
 
+PROCEDURE pc_cria_trans_pend_efet_prop(pr_cdagenci  IN crapage.cdagenci%TYPE                   --> Codigo do PA
+                                        ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                   --> Numero do Caixa
+                                        ,pr_cdoperad  IN crapope.cdoperad%TYPE                   --> Codigo do Operados
+                                        ,pr_nmdatela  IN craptel.nmdatela%TYPE                   --> Nome da Tela
+                                        ,pr_idorigem  IN INTEGER                                 --> Origem da solicitacao
+                                        ,pr_idseqttl  IN crapttl.idseqttl%TYPE                   --> Sequencial de Titular               
+                                        ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE                   --> Numero do cpf do operador juridico
+                                        ,pr_nrcpfrep  IN crapopi.nrcpfope%TYPE                   --> Numero do cpf do representante legal
+                                        ,pr_cdcoptfn  IN tbgen_trans_pend.cdcoptfn%TYPE          --> Cooperativa do Terminal
+                                        ,pr_cdagetfn  IN tbgen_trans_pend.cdagetfn%TYPE          --> Agencia do Terminal
+                                        ,pr_nrterfin  IN tbgen_trans_pend.nrterfin%TYPE          --> Numero do Terminal Financeiro
+                                        ,pr_dtmvtolt  IN DATE                                    --> Data do movimento     
+                                        ,pr_cdcooper  IN tbtransf_trans_pend.cdcooper%TYPE       --> Codigo da cooperativa
+                                        ,pr_nrdconta  IN tbtransf_trans_pend.nrdconta%TYPE       --> Numero da Conta
+                                        ,pr_idastcjt  IN crapass.idastcjt%TYPE                   --> Indicador de Assinatura Conjunta
+                                        ,pr_nrctremp  IN crawepr.nrctremp%TYPE                   --> numero do da proposta
+                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE                   --> Codigo de Critica
+                                        ,pr_dscritic OUT crapcri.dscritic%TYPE) IS               --> Descricao de Critica
+    /* .............................................................................
+
+     Programa: pc_cria_trans_pend_efet_prop
+     Sistema : 
+     Sigla   : CRED
+     Autor   : Rafael R. Santos - AMcom
+     Data    : Fevereiro/2019.                    Ultima atualizacao: --/--/----
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina referente a geração de registro de pendencia referente a proposta de emprestimo/financiamento
+
+     Observacao: -----
+
+     Alteracoes: -----
+    ..............................................................................*/	
+
+
+    --
+    -- Variáveis
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
+    vr_dscritic crapcri.dscritic%TYPE := '';
+    vr_exec_saida EXCEPTION;
+    vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
+    vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
+    --/
+  BEGIN
+    --/
+    inet0002.pc_cria_transacao_operador(pr_cdagenci => pr_cdagenci
+                                       ,pr_nrdcaixa => pr_nrdcaixa
+                                       ,pr_cdoperad => pr_cdoperad
+                                       ,pr_nmdatela => pr_nmdatela
+                                       ,pr_idorigem => pr_idorigem
+                                       ,pr_idseqttl => pr_idseqttl
+                                       ,pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrcpfope => pr_nrcpfope
+                                       ,pr_nrcpfrep => pr_nrcpfrep
+                                       ,pr_cdcoptfn => pr_cdcoptfn
+                                       ,pr_cdagetfn => pr_cdagetfn
+                                       ,pr_nrterfin => pr_nrterfin
+                                       ,pr_dtmvtolt => pr_dtmvtolt
+                                       ,pr_cdtiptra => 21 --/ Emprestimos/financiamento
+                                       ,pr_idastcjt => pr_idastcjt
+                                       ,pr_tab_crapavt => vr_tab_crapavt
+                                       ,pr_cdtranpe => vr_cdtranpe
+                                       ,pr_dscritic => vr_dscritic);
+                                         
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exec_saida;
+    END IF;
+    --/
+    BEGIN
+      --/
+      INSERT INTO
+        tbepr_trans_pend_efet_proposta
+            (cdtransacao_pendente, 
+             cdcooper, 
+             nrdconta, 
+             nrctremp)
+        VALUES
+            (vr_cdtranpe
+            ,pr_cdcooper
+            ,pr_nrdconta
+            ,pr_nrctremp);
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao incluir registro tbepr_trans_pend_efet_proposta: ' || SQLERRM;
+        RAISE vr_exec_saida;
+    END;
+    --/
+    inet0002.pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
+                                     ,pr_nrdcaixa => pr_nrdcaixa
+                                     ,pr_cdoperad => pr_cdoperad
+                                     ,pr_nmdatela => pr_nmdatela
+                                     ,pr_idorigem => pr_idorigem
+                                     ,pr_idseqttl => pr_idseqttl
+                                     ,pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_nrcpfrep => pr_nrcpfrep
+                                     ,pr_dtmvtolt => pr_dtmvtolt
+                                     ,pr_cdtiptra => 21 --/ Emprestimos/financiamento
+                                     ,pr_tab_crapavt => vr_tab_crapavt
+                                     ,pr_cdtranpe => vr_cdtranpe
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+    --/
+    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+       RAISE vr_exec_saida;
+    END IF;
+
+    COMMIT;
+
+  EXCEPTION
+    WHEN vr_exec_saida THEN
+      pr_cdcritic := NVL(vr_cdcritic,0);
+      
+      IF NVL(pr_cdcritic,0) > 0 THEN
+         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      ELSE  
+         pr_dscritic := vr_dscritic;
+      END IF;
+        
+      ROLLBACK;
+
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_efet_prop: '|| SQLERRM; 
+      ROLLBACK; 
+  END pc_cria_trans_pend_efet_prop;
+
+  PROCEDURE pc_ret_trans_pend_prop( pr_cdcooper IN crapcop.cdcooper%TYPE              --> Código da Cooperativa
+                                   ,pr_cdoperad IN crapope.cdoperad%TYPE              --> Código do Operador
+                                   ,pr_nmdatela IN craptel.nmdatela%TYPE              --> Nome da Tela
+                                   ,pr_idorigem IN INTEGER                            --> Identificador de Origem 
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE              --> Número da Conta
+                                   ,pr_idseqttl IN crapttl.idseqttl%TYPE              --> Titular da Conta
+                                   ,pr_cdtrapen IN VARCHAR2                           --> Codigo da Transacao
+                                   ,pr_cdcritic OUT INTEGER                           --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2                          --> Descrição da crítica
+                                   ,pr_nrctremp OUT tbepr_trans_pend_efet_proposta.nrctremp%TYPE   --> Número da proposta da pendencia
+                                   ,pr_vlemprst OUT crawepr.vlemprst%TYPE) IS                      --> Valor da proposta da pendencia            
+  BEGIN
+    /* .............................................................................
+
+     Programa: pc_ret_trans_pend_prop
+     Sistema : 
+     Sigla   : CRED
+     Autor   : Douglas Pagel - AMcom
+     Data    : Fevereiro/2019.                    Ultima atualizacao: --/--/----
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina referente a busca de registros de transacao pendente de propostas.
+
+     Observacao: -----
+
+     Alteracoes: -----
+    ..............................................................................*/	
+  
+  DECLARE
+                                       
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+			vr_exc_saida EXCEPTION;  
+      
+       -- Seleciona registro de trans. pend.
+	    CURSOR cr_tbtrans_prop(pr_cdcooper IN crapass.cdcooper%TYPE
+                            ,pr_nrdconta IN crapass.nrdconta%TYPE
+                            ,pr_cdtrapen IN VARCHAR2) IS 
+			  SELECT prop.nrctremp
+				  FROM tbepr_trans_pend_efet_proposta prop
+         WHERE (prop.cdcooper = pr_cdcooper OR pr_cdcooper = 0)
+           AND (prop.nrdconta = pr_nrdconta OR pr_nrdconta = 0)
+           AND (pr_cdtrapen IS NULL OR (prop.cdtransacao_pendente IN (SELECT regexp_substr(pr_cdtrapen, '[^;]+', 1, ROWNUM) parametro
+               FROM dual CONNECT BY LEVEL <= LENGTH(regexp_replace(pr_cdtrapen ,'[^;]+','')) + 1)));  
+               
+      CURSOR cr_crawepr(pr_cdcooper IN crapass.cdcooper%TYPE
+                       ,pr_nrdconta IN crapass.nrdconta%TYPE 
+                       ,pr_nrctremp IN crawepr.nrctremp%TYPE) IS
+        SELECT epr.vlemprst
+          FROM crawepr epr
+         WHERE epr.cdcooper = pr_cdcooper
+           AND epr.nrdconta = pr_nrdconta
+           AND epr.nrctremp = pr_nrctremp;                         
+  
+  BEGIN
+      OPEN cr_tbtrans_prop(pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_cdtrapen => pr_cdtrapen);
+      FETCH cr_tbtrans_prop INTO pr_nrctremp; --parametro de interesse
+                           
+      --Se nao encontrou 
+      IF cr_tbtrans_prop%NOTFOUND THEN
+          --Fechar Cursor
+          CLOSE cr_tbtrans_prop;
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Registro da pendencia nao encontrado.';
+          --Levantar Excecao
+          RAISE vr_exc_saida;
+      ELSE
+        OPEN cr_crawepr (pr_cdcooper => pr_cdcooper
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrctremp => pr_nrctremp);
+        FETCH cr_crawepr INTO pr_vlemprst;
+        
+        IF cr_crawepr%NOTFOUND THEN
+           --Fechar Cursor
+           CLOSE cr_crawepr;
+           vr_cdcritic:= 0;
+           vr_dscritic:= 'Registro da proposta nao encontrado.';
+           --Levantar Excecao
+           RAISE vr_exc_saida;
+        END IF;
+        
+          
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_tbtrans_prop;
+      CLOSE cr_crawepr;
+      
+  EXCEPTION
+			WHEN vr_exc_saida THEN
+				
+        pr_cdcritic:= NVL(vr_cdcritic,0);
+
+        IF NVL(pr_cdcritic,0) > 0 THEN
+          pr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+        ELSE
+          pr_dscritic:= vr_dscritic;
+        END IF;
+        
+      WHEN OTHERS THEN
+        pr_cdcritic := NVL(vr_cdcritic,0);
+        pr_dscritic := 'Erro nao tratado na INET0002.pc_ret_trans_pend_prop: ' || SQLERRM;
+		END;    
+    
+  END pc_ret_trans_pend_prop;
 END INET0002;
 /

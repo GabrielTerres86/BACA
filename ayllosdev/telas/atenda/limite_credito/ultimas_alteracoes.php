@@ -147,6 +147,11 @@
 	</table>
 </div>	
 
+<!-- bruno - prj - 438 - sprint 7 - tela principal -->
+<div id="divBotoes">
+	<a href="#" class="botao" id="btVoltarImpressao" onClick="acessaTela('@');  return false;">Voltar</a>	
+</div>
+
 <script type="text/javascript">
 	formataUltimasAlteracoes();	
 	hideMsgAguardo();

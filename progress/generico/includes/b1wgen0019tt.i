@@ -107,8 +107,9 @@ DEF TEMP-TABLE tt-cabec-limcredito NO-UNDO
     FIELD tprenova LIKE craplim.tprenova
     FIELD dstprenv AS CHAR
     FIELD dslimpro AS CHAR
-    FIELD idcobope AS INTE.
-
+    FIELD idcobope AS INTE
+    FIELD dsdtxfix AS CHAR
+    FIELD nivrisco AS CHAR.
 
 DEF TEMP-TABLE tt-ultimas-alteracoes NO-UNDO
     FIELD nrctrlim AS INTE  
@@ -132,7 +133,10 @@ DEF TEMP-TABLE tt-proposta-limcredito NO-UNDO
     FIELD nrperger LIKE craplim.nrperger
     FIELD nrcpfcjg AS DECI 
     FIELD nrctacje AS INTE
-    FIELD dtconbir AS DATE.
+    FIELD dtconbir AS DATE
+    FIELD dsdtxfix AS CHAR
+    FIELD nivrisco AS CHAR
+    FIELD inconcje AS INTE.
 
 DEF TEMP-TABLE tt-dados-ctr NO-UNDO
     FIELD nmextcop AS CHAR
@@ -236,7 +240,11 @@ DEF TEMP-TABLE tt-dados-prp NO-UNDO
     FIELD nrctacje AS INTE
     FIELD inpesso1 AS INTE
     FIELD inpesso2 AS INTE
-    FIELD idcobope AS INTE.
+    FIELD idcobope AS INTE
+    FIELD inpessoa AS INTE
+    FIELD dtiniatv AS DATE
+    FIELD dsrmativ AS CHAR
+    FIELD vlfatmes AS DECI.
 
 DEF TEMP-TABLE tt-dados-rescisao NO-UNDO
     FIELD nmextcop AS CHAR

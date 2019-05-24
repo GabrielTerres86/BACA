@@ -25,6 +25,7 @@
  * 014: [14/12/2017] Incluido campos hidden flintcdc e inintegra_cont, Prj. 402 (Jean Michel)
  * 014: [14/08/2018] Incluido botão Anular e input hidden com o valor da situação insitest (Mateus Z - Mouts - P438)
  * 015: [08/11/2018] Criação do botão de Altera Somente Bens - PRJ438 - Sprint 5 (Mateus Z / Mouts)
+*  016: [05/02/2019] Inclusao da coluna origem. P438. (Douglas Pagel / AMcom)
  */
 ?>
 
@@ -43,7 +44,8 @@
 				<th>Fin</th>
 				<th>Ac</th>
 				<th><? echo utf8ToHtml('Situação');?></th>
-				<th><? echo utf8ToHtml('Decisão');?></th></tr>
+				<th><? echo utf8ToHtml('Decisão');?></th>
+				<th>Origem</th></tr>
 		</thead>
 		<tbody>
 			<? foreach( $registros as $registro ) {
@@ -57,7 +59,28 @@
                     case 2:
                         $tipo = "Pos-fixado";
                         break;
-                } ?>
+                } 
+				switch (getByTagName($registro->tags,'cdorigem')) {
+                    case 1:
+                        $tipoOrigem = "Aimaro";
+                        break;
+                    case 2:
+                        $tipoOrigem = "Caixa";
+                        break;
+                    case 3:
+                        $tipoOrigem = "Internet";
+                        break;
+					case 4:
+                        $tipoOrigem = "Cash";
+                        break;
+					case 5:
+                        $tipoOrigem = "Aimaro";
+                        break;
+					case 5:
+                        $tipoOrigem = "URA";
+                        break;
+                }
+				?>
 				<tr><td><span><? echo dataParaTimestamp(getByTagName($registro->tags,'dtmvtolt')) ?></span>
 						<? echo getByTagName($registro->tags,'dtmvtolt') ?></td>
 					<td><span><? echo getByTagName($registro->tags,'nrctremp') ?></span>
@@ -104,7 +127,8 @@
 					<td><? echo stringTabela(getByTagName($registro->tags,'cdfinemp'),10,'maiuscula') ?></td>
 					<td><? echo stringTabela(getByTagName($registro->tags,'cdoperad'),10,'maiuscula') ?></td>					
 					<td><? echo getByTagName($registro->tags,'dssitest') ?></td>
-					<td><? echo getByTagName($registro->tags,'dssitapr') ?></td></tr>
+					<td><? echo getByTagName($registro->tags,'dssitapr') ?></td>
+					<td><? echo stringTabela($tipoOrigem,40,'maiuscula'); ?></td></tr>
 			<? } ?>
 		</tbody>
 	</table>

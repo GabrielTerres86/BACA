@@ -311,7 +311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --  Sistema  : Procedimentos gerais para execucao de instrucoes de baixa
   --  Sigla    : CRED
   --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 27/02/2019
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 13/05/2019
   --
   -- Dados referentes ao programa:
   --
@@ -355,6 +355,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                
   27/02/2019 - Regra deve considerar o sinal de igual para criticar o valor de abatimento
                (Envolti - Belli - INC0032975)            
+
+  13/05/2019 - inc0012700 Tratamento na rotina pc_inst_cancel_protesto_85 para não permitir cancelar as instruções
+               de protesto que estão sem confirmação de protesto (Carlos)
 
   -------------------------------------------------------------------------------------------------------------*/
   --Ch 839539
@@ -3705,7 +3708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                 IF vr_des_erro = 'NOK' THEN
                   --Levantar Excecao
                   RAISE vr_exc_erro;
-                END IF;
+            END IF;
                 --                 
               END IF;
               --
@@ -4439,6 +4442,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 					END IF;
 					--
 				WHEN 2 THEN -- titulo enviado a cartorio          
+
+          IF rw_crapcob.insrvprt = 1 THEN -- 0 nenhum; 1 ieptb; 2 bb
+            vr_cdcritic := 1464;
+            vr_dscritic := 'Título pendente de confirmação no cartório, tente no próximo dia útil.';
+            RAISE vr_exc_erro;
+          END IF;  
 
           -- utilizar a data do movimento específica para protesto          
           vr_dtmvtolt := cobr0011.fn_busca_dtmvtolt(pr_cdcooper => pr_cdcooper);          

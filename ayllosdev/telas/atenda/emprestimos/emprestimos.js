@@ -155,6 +155,9 @@
 * 124: [07/03/2019] Permite inclusao / cadastro de avalista via CRM - Chamado INC0033825 (Gabriel Marcos / Jefferson / Mouts).
 * 125: [06/05/2019] Ajuste para salvar os campos de portabilidade, para que quando abrir a tela de portabilidade (alteração)
 *                   os campos já estejam salvos em váriaveis PRJ 438 (Mateus Z - Mouts)
+* 126: [05/02/2019] Tratamento para coluna Origem. P438. (Douglas Pagel / AMcom)
+* 127: [06/02/2019] Inclusao de controle para botoes quando for origem 3. P438. (Douglas Pagel / AMcom)
+
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -760,6 +763,11 @@ function controlaOperacao(operacao) {
         	    showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Aimaro', '');
         		return false;
         	}
+			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
+			if (cdorigem == 3) {
+        	    showError('error', 'Não é permitido alterar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+        		return false;
+        	}
             booPrimeiroBen = false; //809763
             idSocio = 0;
             if (msgDsdidade != '') {
@@ -797,6 +805,11 @@ function controlaOperacao(operacao) {
             return false;
             break;
         case 'A_NUMERO' :
+			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
+			if (cdorigem == 3) {
+        	    showError('error', 'Não é permitido alterar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+        		return false;
+        	}
             mensagem = 'abrindo altera ...';
             cddopcao = 'A';
             break;
@@ -1391,6 +1404,7 @@ function controlaOperacao(operacao) {
                 if ($(this).hasClass('corSelecao')) {
                     portabil = $('#portabil', $(this)).val();
                     err_efet = $('#err_efet', $(this)).val();
+					cdorigem = $('#cdorigem', $(this)).val();
                 }
             });
 
@@ -1399,6 +1413,11 @@ function controlaOperacao(operacao) {
                 showError('error', 'Não é permitida a efetivação manual de proposta de portabilidade.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);');
                 return false;
             }
+			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
+			if (cdorigem == 3) {
+        	    showError('error', 'Não é permitido efetivar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+        		return false;
+        	}
 
             mensagem = 'carregando tela de efetivacao da proposta...';
             cddopcao = 'F';
@@ -2232,7 +2251,7 @@ function controlaLayout(operacao) {
         divRegistro.css('height', '150px');
 
         altura = '230px';
-        largura = '950px';
+        largura = '1050px';
 
         var ordemInicial = new Array();
         //ordemInicial = [[0, 0]];
@@ -2249,6 +2268,8 @@ function controlaLayout(operacao) {
         arrayLargura[8] = '35px';
         arrayLargura[9] = '65px';
         arrayLargura[10] = '120px';
+		arrayLargura[11] = '80px';
+		arrayLargura[12] = '65px';
 
         var arrayAlinha = new Array();
         arrayAlinha[0] = 'center';
@@ -2263,6 +2284,7 @@ function controlaLayout(operacao) {
         arrayAlinha[9] = 'center';
         arrayAlinha[10] = 'center';
         arrayAlinha[11] = 'center';
+		arrayAlinha[12] = 'center';
 
         var metodoTabela = 'controlaOperacao(\'TA\')';
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);

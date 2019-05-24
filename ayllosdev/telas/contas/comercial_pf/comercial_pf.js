@@ -99,6 +99,7 @@ function chamaPrincipal(urlScript, nmdireto, nmrotina, nmdfonte, id, opcao) {
                 nmdatela: "CONTAS",
                 nmrotina: nmrotina,
                 flgcadas: flgcadas,
+                inpessoa: inpessoa,
                 opcao: opcao,
                 redirect: 'script_ajax'
             },

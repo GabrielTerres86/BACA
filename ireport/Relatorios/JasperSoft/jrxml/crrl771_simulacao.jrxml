@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-03-06T17:43:09 -->
+<!-- 2019-05-02T14:25:07 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl771_simulacao" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="b70aae67-d612-45f6-872b-f7f8cb2e3101">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<queryString language="xPath">
@@ -84,208 +84,372 @@
 	<field name="dscarenc" class="java.lang.String">
 		<fieldDescription><![CDATA[Dados_emprestimo/dscarenc]]></fieldDescription>
 	</field>
+	<field name="label_dtcarenc" class="java.lang.String">
+		<fieldDescription><![CDATA[Dados_emprestimo/label_dtcarenc]]></fieldDescription>
+	</field>
+	<field name="label_vlparcar" class="java.lang.String">
+		<fieldDescription><![CDATA[Dados_emprestimo/label_vlparcar]]></fieldDescription>
+	</field>
+	<field name="label_dscarenc" class="java.lang.String">
+		<fieldDescription><![CDATA[Dados_emprestimo/label_dscarenc]]></fieldDescription>
+	</field>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
 	<title>
-		<band height="310" splitType="Stretch">
+		<band height="277" splitType="Stretch">
 			<textField>
-				<reportElement x="2" y="0" width="264" height="20" uuid="780bb093-2e08-42cd-9901-72e662561101"/>
-				<textElement textAlignment="Left"/>
+				<reportElement x="2" y="0" width="398" height="20" uuid="780bb093-2e08-42cd-9901-72e662561101"/>
+				<textElement textAlignment="Left">
+					<font fontName="Courier New" size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{nome_cooperativa}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="268" y="0" width="133" height="20" uuid="13c9c433-d334-4218-86ec-7f96bbaeb2fe"/>
-				<textElement textAlignment="Left" verticalAlignment="Top"/>
-				<textFieldExpression><![CDATA[$F{nome_resum_cooperativa}]]></textFieldExpression>
-			</textField>
-			<textField>
 				<reportElement x="481" y="0" width="73" height="20" uuid="0a7be43e-100a-4927-a685-e2550d14afcf"/>
-				<textElement textAlignment="Left"/>
+				<textElement textAlignment="Left">
+					<font fontName="Courier New" size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{Data_Emissao_1}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="410" y="0" width="70" height="20" uuid="1e4db04c-c55a-4c4c-965c-3170c77c8874">
+				<reportElement x="400" y="0" width="79" height="20" uuid="1e4db04c-c55a-4c4c-965c-3170c77c8874">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
-				<textElement textAlignment="Center"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[Data Emissao:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="42" y="29" width="100" height="21" uuid="7f8f3d24-aa03-41f0-b824-168bca572277"/>
+				<reportElement x="42" y="20" width="100" height="21" uuid="7f8f3d24-aa03-41f0-b824-168bca572277"/>
+				<textElement>
+					<font fontName="Courier New" size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{Conta}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="2" y="29" width="38" height="21" uuid="0e1acb53-99ef-421e-b17e-c6ec7075dbf6">
+				<reportElement x="2" y="20" width="38" height="21" uuid="0e1acb53-99ef-421e-b17e-c6ec7075dbf6">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[Conta:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="164" y="30" width="56" height="20" uuid="aeec4ea4-9eca-4a07-9696-ab553a21b1d1"/>
+				<reportElement x="152" y="20" width="68" height="20" uuid="aeec4ea4-9eca-4a07-9696-ab553a21b1d1"/>
+				<textElement>
+					<font fontName="Courier New" size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[Simulação:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="224" y="29" width="42" height="21" uuid="967f3766-d628-443e-8cfc-39ddeb523487"/>
-				<textElement textAlignment="Left"/>
+				<reportElement x="224" y="20" width="42" height="21" uuid="967f3766-d628-443e-8cfc-39ddeb523487"/>
+				<textElement textAlignment="Left">
+					<font fontName="Courier New" size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{Simulacao_1}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="452" y="30" width="26" height="20" uuid="a9d2e52c-5e75-450a-afb0-0bc7b6eafbe2"/>
-				<textElement textAlignment="Center"/>
+				<reportElement x="440" y="20" width="38" height="20" uuid="a9d2e52c-5e75-450a-afb0-0bc7b6eafbe2"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[Pac:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="483" y="30" width="67" height="20" uuid="303d719e-376e-4ee7-b2e7-b7c861ce8919"/>
-				<textElement textAlignment="Center"/>
+				<reportElement x="481" y="20" width="67" height="20" uuid="303d719e-376e-4ee7-b2e7-b7c861ce8919"/>
+				<textElement textAlignment="Left">
+					<font fontName="Courier New" size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{Pac_1}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="5" y="62" width="552" height="17" uuid="356e75d0-cd25-4b9b-836a-9bdd4c29b191"/>
-				<textElement textAlignment="Center"/>
-				<text><![CDATA[ SIMULACAO DE EMPRESTIMO ]]></text>
+				<reportElement x="5" y="55" width="552" height="17" uuid="356e75d0-cd25-4b9b-836a-9bdd4c29b191"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[ SIMULACÃO DE EMPRÉSTIMO]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="144" y="82" width="333" height="15" uuid="02756225-b267-4434-bbb3-7e8b23652746"/>
-				<textElement textAlignment="Left"/>
+				<reportElement x="159" y="82" width="389" height="15" uuid="02756225-b267-4434-bbb3-7e8b23652746"/>
+				<textElement textAlignment="Left">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{descricao_finalidade}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="84" y="82" width="58" height="15" uuid="926d5331-fc34-41b0-a61a-a443d3140182"/>
+				<reportElement x="60" y="82" width="97" height="15" uuid="926d5331-fc34-41b0-a61a-a443d3140182"/>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[Finalidade:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="84" y="110" width="469" height="13" uuid="9ad1aa20-5c09-4d05-bea6-f7460dd6c44e"/>
-				<textElement textAlignment="Left"/>
+				<reportElement x="84" y="105" width="469" height="13" uuid="9ad1aa20-5c09-4d05-bea6-f7460dd6c44e"/>
+				<textElement textAlignment="Left">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{desc_lin_cred_emprestimo}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="5" y="133" width="108" height="14" uuid="45a9a9a3-c35a-4d0b-a5db-6393a0f4e642"/>
-				<textElement textAlignment="Right"/>
+				<reportElement x="5" y="129" width="147" height="13" uuid="45a9a9a3-c35a-4d0b-a5db-6393a0f4e642"/>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[Valor solicitado:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="120" y="133" width="133" height="13" uuid="05ba381b-5185-4436-9fef-f5d433e4fbef"/>
-				<textElement textAlignment="Left"/>
+				<reportElement x="157" y="129" width="123" height="13" uuid="05ba381b-5185-4436-9fef-f5d433e4fbef">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{Valor_Solicitado}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="280" y="133" width="273" height="13" uuid="745c3612-c9a2-4073-b9d6-38c13a736868"/>
+				<reportElement x="441" y="129" width="109" height="13" uuid="745c3612-c9a2-4073-b9d6-38c13a736868">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{data_liberacao}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="5" y="149" width="108" height="15" uuid="3fc7d5fc-4de1-48d7-b18c-eb4ce9064ff0"/>
-				<textElement textAlignment="Right"/>
+				<reportElement x="5" y="143" width="147" height="13" uuid="3fc7d5fc-4de1-48d7-b18c-eb4ce9064ff0">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[Taxa Mensal:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="120" y="149" width="80" height="14" uuid="2e785d3c-6c35-4aef-ba10-69c0cdf14a86"/>
-				<textElement textAlignment="Left"/>
+				<reportElement x="157" y="143" width="123" height="13" uuid="2e785d3c-6c35-4aef-ba10-69c0cdf14a86">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{taxa_mensal}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="120" y="166" width="90" height="14" uuid="0adbb2e1-07a2-4dae-a312-d3ebaf5506db"/>
-				<textElement textAlignment="Left"/>
+				<reportElement x="157" y="158" width="123" height="13" uuid="0adbb2e1-07a2-4dae-a312-d3ebaf5506db">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{qtd_parcela}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="5" y="166" width="108" height="14" uuid="5840d150-12d1-45e1-a1e6-8af2b8808bb7"/>
-				<textElement textAlignment="Right"/>
+				<reportElement x="5" y="158" width="147" height="13" uuid="5840d150-12d1-45e1-a1e6-8af2b8808bb7"/>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[Qtd. de parcelas:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="6" y="183" width="106" height="15" uuid="901f07fd-1350-40a3-b1d7-a1fb7ef9eeb1"/>
-				<textElement textAlignment="Right"/>
+				<reportElement x="5" y="173" width="147" height="13" uuid="901f07fd-1350-40a3-b1d7-a1fb7ef9eeb1">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[Tributos:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="120" y="183" width="148" height="14" uuid="1c128519-1498-4fe6-9a6c-fa1d8e82dbf4"/>
-				<textElement textAlignment="Left"/>
+				<reportElement x="157" y="173" width="123" height="13" uuid="1c128519-1498-4fe6-9a6c-fa1d8e82dbf4"/>
+				<textElement textAlignment="Left">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{Tributos}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="120" y="201" width="148" height="15" uuid="970c04b9-4de0-49f5-9b33-4e8d57c05d5d">
+				<reportElement x="157" y="189" width="123" height="13" uuid="970c04b9-4de0-49f5-9b33-4e8d57c05d5d">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
-				<textElement textAlignment="Left"/>
+				<textElement textAlignment="Left">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{Tarifa}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="7" y="201" width="105" height="15" uuid="403de084-1d1e-4139-9832-c03274c5318c">
+				<reportElement x="5" y="189" width="147" height="13" uuid="403de084-1d1e-4139-9832-c03274c5318c">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
-				<textElement textAlignment="Right"/>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[Tarifa:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="7" y="219" width="105" height="15" uuid="f03a542a-c53e-441c-ab2f-ecdb0a37299c">
+				<reportElement x="5" y="204" width="147" height="13" uuid="f03a542a-c53e-441c-ab2f-ecdb0a37299c">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
-				<textElement textAlignment="Right"/>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[Financia IOF/Tarifa:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="120" y="220" width="160" height="15" uuid="2fab08ea-66ba-476f-9d34-36c886d1a430">
+				<reportElement x="157" y="204" width="123" height="13" uuid="2fab08ea-66ba-476f-9d34-36c886d1a430">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
+				<textElement>
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{financia_iof_tarifa}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="120" y="238" width="160" height="15" uuid="8fe9480e-129d-4312-9392-6f7e73e257d2">
+				<reportElement x="157" y="219" width="123" height="13" uuid="8fe9480e-129d-4312-9392-6f7e73e257d2">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
+				<textElement>
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{vl_Liquido_liberado}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="6" y="237" width="106" height="15" uuid="b48c190c-db22-4dbe-97c5-a44ceb2d1ca2"/>
-				<textElement textAlignment="Right"/>
+				<reportElement x="5" y="219" width="147" height="13" uuid="b48c190c-db22-4dbe-97c5-a44ceb2d1ca2"/>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[Vl.Liquido Liberado:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="12" y="256" width="100" height="15" uuid="747b37bf-61a7-42a0-8d67-64126d6a986f">
+				<reportElement x="5" y="234" width="147" height="13" uuid="747b37bf-61a7-42a0-8d67-64126d6a986f">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
-				<textElement textAlignment="Right"/>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<text><![CDATA[CET(%a.a.):]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="120" y="256" width="160" height="15" uuid="956fb47b-c4fb-4f59-b484-975257971839">
+				<reportElement x="157" y="234" width="123" height="13" uuid="956fb47b-c4fb-4f59-b484-975257971839">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
+				<textElement>
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{cet_a_a}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="5" y="291" width="48" height="16" uuid="c523d0b2-ef1a-40d8-90ae-9e771512d09e"/>
-				<text><![CDATA[Parcelas]]></text>
+				<reportElement x="1" y="261" width="99" height="16" uuid="c523d0b2-ef1a-40d8-90ae-9e771512d09e"/>
+				<textElement>
+					<font size="10" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[PARCELAS]]></text>
 			</staticText>
-			<textField>
-				<reportElement x="280" y="150" width="273" height="16" uuid="21588eda-783a-4bee-88d9-8d60a77d8faa"/>
-				<textFieldExpression><![CDATA[$F{dtcarenc}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="282" y="191" width="273" height="16" uuid="dad01e37-6eea-4d9e-b833-a77cd1176acb">
+			<textField isBlankWhenNull="true">
+				<reportElement x="441" y="203" width="109" height="13" uuid="21588eda-783a-4bee-88d9-8d60a77d8faa">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
+				<textElement>
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtcarenc}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="441" y="173" width="109" height="13" uuid="dad01e37-6eea-4d9e-b833-a77cd1176acb">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{vlparcar}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="282" y="171" width="273" height="16" uuid="cf249297-595a-4744-9edf-de7f86994162">
+				<reportElement x="441" y="142" width="109" height="13" uuid="cf249297-595a-4744-9edf-de7f86994162">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
+				<textElement>
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{valor_parcela}]]></textFieldExpression>
 			</textField>
-			<textField>
-				<reportElement x="280" y="212" width="275" height="16" uuid="fe977536-4b93-45c3-9f59-3ccb5917b4fe">
+			<textField isBlankWhenNull="true">
+				<reportElement x="441" y="188" width="109" height="13" uuid="fe977536-4b93-45c3-9f59-3ccb5917b4fe">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
+				<textElement>
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
 				<textFieldExpression><![CDATA[$F{dscarenc}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="280" y="233" width="277" height="16" uuid="5dfb47a0-6267-4781-ba6d-16d38657a899">
+				<reportElement x="441" y="157" width="109" height="13" uuid="5dfb47a0-6267-4781-ba6d-16d38657a899">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Carencia}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="289" y="129" width="147" height="13" uuid="bdc95131-85fa-44d9-836c-433db9dd2a61">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
-				<textFieldExpression><![CDATA[$F{Carencia}]]></textFieldExpression>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Data de Liberacão:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="289" y="142" width="147" height="13" uuid="a6f6ba89-c697-47d7-8c97-1eca1bf11218">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Vl. da Parcela:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="289" y="157" width="147" height="13" uuid="32c69f25-48b6-4b87-80e1-c252ca610d78">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Carência:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="289" y="173" width="147" height="13" uuid="e6cd169c-1af9-4e0c-8954-7baeb229ae2d">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{label_vlparcar}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="289" y="189" width="147" height="13" uuid="cb7ddb06-baf5-4c5e-ae9b-b6d5d912591b">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{label_dscarenc}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="289" y="203" width="147" height="13" uuid="7b383c6b-6f7a-407f-92b0-aad71d5fcda2">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{label_dtcarenc}]]></textFieldExpression>
 			</textField>
 		</band>
 	</title>
@@ -296,6 +460,7 @@
 			<subreport>
 				<reportElement x="0" y="0" width="555" height="18" isRemoveLineWhenBlank="true" uuid="967db9ee-9e56-4fe8-88a0-29aca13976c4">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//Dados_emprestimo/Parcelas/Parcela")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["crrl771_simulacao_sub.jasper"]]></subreportExpression>
@@ -305,12 +470,18 @@
 	<summary>
 		<band height="75" splitType="Stretch">
 			<staticText>
-				<reportElement x="2" y="2" width="552" height="48" uuid="ad9ca365-a127-4328-817e-6063d811b008"/>
-				<text><![CDATA[Esta simulacao nao vale como proposta,  e apenas uma ferramenta para auxiliar na sua decisao.  A taxa utilizada,  as tarifas e eventuais despesas podem variar de acordo  com  o  perfil  do  cooperado  e  as  caracteristicas  de  cada produto. A efetivacao  do  emprestimo/financiamento esta sujeita  a analise e a aprovacao de credito. ]]></text>
+				<reportElement x="5" y="2" width="549" height="48" uuid="ad9ca365-a127-4328-817e-6063d811b008"/>
+				<textElement>
+					<font size="10" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[Esta simulacão não vale como proposta,  é apenas uma ferramenta para auxiliar na sua decisão.  A taxa utilizada,  as tarifas e eventuais despesas podem variar de acordo  com  o  perfil  do  cooperado  e  as  características  de  cada produto. A efetivacão  do  empréstimo/financiamento esta sujeita  a análise e a aprovacão de crédito. ]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="57" width="554" height="13" uuid="fca27c9c-abc6-4903-81c2-fedee31cf712"/>
-				<text><![CDATA[*Para efeito de calculo todos os meses sao considerados com 30 dias.]]></text>
+				<reportElement x="5" y="57" width="549" height="13" uuid="fca27c9c-abc6-4903-81c2-fedee31cf712"/>
+				<textElement>
+					<font size="10" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[*Para efeito de cálculo todos os meses são considerados com 30 dias.]]></text>
 			</staticText>
 		</band>
 	</summary>

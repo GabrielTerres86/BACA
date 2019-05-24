@@ -797,6 +797,10 @@ PROCEDURE obtem-endereco:
 
     DEF VAR aux_nrdconta AS INTE                                    NO-UNDO.
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
+    DEF VAR aux_dssituac AS CHAR                                    NO-UNDO.
+    DEF VAR aux_idcanal  AS INTE                                    NO-UNDO.
+    DEF VAR aux_dscanal  AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dtrevisa AS DATE                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-endereco-cooperado.
@@ -897,6 +901,48 @@ PROCEDURE obtem-endereco:
                                      INPUT par_cdagenci,
                                      INPUT par_nrdcaixa,
                                      INPUT TRUE ).
+                                     
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+            /* Efetuar a chamada a rotina Oracle */
+            RUN STORED-PROCEDURE pc_busca_tbcadast
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.nrcpfcgc /* Cpf */
+                                                ,INPUT par_idseqttl     /* Numero sequencial  */
+                                                ,INPUT "ENDERECO"       /* Tabela que será buscada */ 
+                                                ,OUTPUT 0               /* Codigo da situacao */
+                                                ,OUTPUT ""              /* Descricao da situacao   */
+                                                ,OUTPUT 0               /* Codigo do Canal    */
+                                                ,OUTPUT ""              /* Descricao do Canal */
+                                                ,OUTPUT ?               /* Data da Revisao    */
+                                                ,OUTPUT "").            /* Descrição da crítica    */
+            /* Fechar o procedimento para buscarmos o resultado */ 
+            CLOSE STORED-PROC pc_busca_tbcadast
+             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+            ASSIGN aux_dssituac = pc_busca_tbcadast.pr_dssituac
+                                  WHEN pc_busca_tbcadast.pr_dssituac <> ?
+                   aux_idcanal  = pc_busca_tbcadast.pr_idcanal
+                                  WHEN pc_busca_tbcadast.pr_idcanal <> ?
+                   aux_dscanal  = pc_busca_tbcadast.pr_dscanal
+                                  WHEN pc_busca_tbcadast.pr_dscanal <> ?
+                   aux_dtrevisa = pc_busca_tbcadast.pr_dtrevisa
+                                  WHEN pc_busca_tbcadast.pr_dtrevisa <> ?
+                   aux_dscritic = pc_busca_tbcadast.pr_dscritic
+                                  WHEN pc_busca_tbcadast.pr_dscritic <> ?.
+                                 
+            /* Se retornou erro */
+            IF aux_dscritic <> "" THEN 
+              DO:
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1, /** Sequencia **/
+                                 INPUT 0,
+                                 INPUT-OUTPUT aux_dscritic).
+              END.    
+
+            ASSIGN tt-endereco-cooperado.dssituac = aux_dssituac
+                   tt-endereco-cooperado.dsdcanal = aux_dscanal
+                   tt-endereco-cooperado.dtrevisa = aux_dtrevisa.
                                      
         END.
     ELSE
@@ -1191,7 +1237,7 @@ PROCEDURE gerenciar-atualizacao-endereco:
                                 END.
                         END.
                     ELSE
-                        ASSIGN aux_dscritic = "Endereco nao cadastrado.".
+                        ASSIGN aux_dscritic = "11 - Endereco nao cadastrado.".
                 END.
 
             LEAVE.
@@ -1236,7 +1282,7 @@ PROCEDURE gerenciar-atualizacao-endereco:
                                 END.
                         END.
                     ELSE
-                        ASSIGN aux_dscritic = "Endereco nao cadastrado.".
+                        ASSIGN aux_dscritic = "12 - Endereco nao cadastrado.".
                 END.
 
             LEAVE.

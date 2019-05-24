@@ -30,6 +30,8 @@
 			   01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 			                Transferencia entre PAs (Heitor - RKAM)
                                              
+               23/03/2019 - Inclusão dos campos de dsdcanal; dtrevisa (Vitor S. Assanuma - GFT)
+                                             
 .............................................................................*/
 
 
@@ -54,7 +56,10 @@ DEF TEMP-TABLE tt-endereco-cooperado                                    NO-UNDO
     FIELD cddbloco AS CHAR
     FIELD qtprebem AS INTE
     FIELD vlprebem AS DECI
-    FIELD idorigem AS INTE.
+    FIELD idorigem AS INTE
+    FIELD dssituac AS CHAR
+    FIELD dsdcanal AS CHAR
+    FIELD dtrevisa AS DATE.
 
 DEF TEMP-TABLE tt-endereco                                              NO-UNDO
     FIELD nrcepend AS INTE FORMAT "99999,999"

@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 26/01/2018
+   Data    : Marco/2007                        Ultima atualizacao: 13/05/2019
 
    Dados referentes ao programa:
 
@@ -70,6 +70,9 @@
                             (Douglas - Chamado 805008)
 
                            26/01/2018 - Ajustes referente ao novo IB (PRJ285 - Rafael)
+                           
+                           13/05/2019 - Tratamento de 'null' para o campo dsdinstr da crapcob
+                                        na procedure consultar-bloqueto (Tiago INC0015000).
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -375,7 +378,10 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    STRING(tt-consulta-blt.dtmvtolt,
                                           "99/99/9999") +
                                    "</dtmvtolt><dsdinstr>" +
-                                   tt-consulta-blt.dsdinstr +
+                                   (IF tt-consulta-blt.dsdinstr = ? THEN 
+                                      " "
+                                   ELSE
+                                      tt-consulta-blt.dsdinstr) +
                                    "</dsdinstr><dsdoccop>" +
                                    STRING(tt-consulta-blt.dsdoccop) + 
                                    "</dsdoccop><dtvencto>" +

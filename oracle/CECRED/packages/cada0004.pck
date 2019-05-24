@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 11/01/2019
+    Data     : Agosto/2015.                   Ultima atualizacao: 15/05/2019
   
    Dados referentes ao programa:
   
@@ -70,6 +70,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
 				 12/12/2018 - Criado Procedure para salvar a data da assinatura eletronica TA Online. (Anderson-Alan Supero P432)
                  
 				 13/02/2019 - XSLProcessor
+
+                 15/05/2019 - Merge branch P433 - API de Cobrança (Cechet)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -99,7 +101,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                 pacote_tarifa BOOLEAN,
                 vldevolver NUMBER(32,8),
                 insituacprvd tbprevidencia_conta.insituac%TYPE,
-                idportab NUMBER);
+                idportab NUMBER,
+				insitapi NUMBER);
   TYPE typ_tab_valores_conta IS TABLE OF typ_rec_valores_conta
     INDEX BY PLS_INTEGER;
   
@@ -6701,7 +6704,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 03/12/2017
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 15/05/2019
     --
     --  Dados referentes ao programa:
     --
@@ -6736,6 +6739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     -- 
 	--             05/06/2017 - Recuperar informacoes de previdencia (Claudio - CIS Corporate).                 
     -- 
+    --             15/05/2019 - Merge branch P433 - API de Cobrança (Cechet)
     -- ..........................................................................*/
     
     ---------------> CURSORES <-----------------
@@ -6785,6 +6789,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       WHERE tbcc_portabilidade_envia.cdcooper = pr_cdcooper
         AND tbcc_portabilidade_envia.nrdconta = pr_nrdconta
         AND tbcc_portabilidade_envia.idsituacao IN (1,2,3,5);
+    
+	--> Busca informção da Plataforma de API
+	CURSOR cr_checkapi IS
+      SELECT 1
+        FROM tbapi_cooperado_servico
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND idsituacao_adesao = 1;
+     rw_checkapi cr_checkapi%ROWTYPE; 
     
     --------------> TempTable <-----------------
     vr_tab_saldos             EXTR0001.typ_tab_saldos;
@@ -7583,6 +7596,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_valores_conta(vr_idxval).insituacprvd := vr_insituacprvd;
     pr_tab_valores_conta(vr_idxval).idportab := vr_permportab;
     
+	pr_tab_valores_conta(vr_idxval).insitapi := 0;
+    
+    BEGIN
+      OPEN cr_checkapi;
+      FETCH cr_checkapi INTO rw_checkapi;
+
+      IF cr_checkapi%FOUND THEN
+        pr_tab_valores_conta(vr_idxval).insitapi := 1;
+      END IF;
+      CLOSE cr_tbprevidencia_conta;
+    EXCEPTION 
+       WHEN OTHERS THEN
+         null;
+       END;
+    
     /* Busca o pacote tarifas */
     OPEN cr_pacotes_tarifas;
     FETCH cr_pacotes_tarifas INTO rw_pacotes_tarifas;
@@ -7965,6 +7993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                         '<vldevolver>'|| vr_tab_valores_conta(i).vldevolver ||'</vldevolver>'||
                         '<insituacprvd>'|| vr_tab_valores_conta(i).insituacprvd ||'</insituacprvd>'||
                         '<idportab>'||  vr_tab_valores_conta(i).idportab ||'</idportab>'||
+						'<insitapi>'||  vr_tab_valores_conta(i).insitapi ||'</insitapi>'||
                         '</Registro>');                                               
                                                                      
                                                                      

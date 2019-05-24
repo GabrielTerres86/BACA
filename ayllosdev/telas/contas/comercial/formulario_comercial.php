@@ -107,7 +107,31 @@
 		
 		<br style="clear:both" />
 	</fieldset>
+	<?php if ($_POST['inpessoa'] == 1) { ?>
+		<fieldset>
+			<legend><? echo utf8ToHtml('Atualização Cadastral');?></legend>
 	
+			<label for="idcanal_empresa">Empresa Canal:</label>
+			<input name="idcanal_empresa" id="idcanal_empresa" type="text"  value="<? echo getByTagName($comercial,'dscanale') ?>" />
+
+			<label for="dtrevisa_empresa"><? echo utf8ToHtml('Data revisão:'); ?></label>
+			<input name="dtrevisa_empresa" id="dtrevisa_empresa" type="text"  value="<? echo getByTagName($comercial,'dtrevise') ?>" />
+
+			<label for="dsstatus"><? echo utf8ToHtml('Status:'); ?></label>
+			<input name="dsstatus" id="dsstatus" type="text"  value="<? echo getByTagName($comercial,'dssituae') ?>" />
+
+			<label for="idcanal_renda">Renda Canal:</label>
+			<input name="idcanal_renda" id="idcanal_renda" type="text"  value="<? echo getByTagName($comercial,'dscanalr') ?>" />
+
+			<label for="dtrevisa_renda"><? echo utf8ToHtml('Data revisão:'); ?></label>
+			<input name="dtrevisa_renda" id="dtrevisa_renda" type="text"  value="<? echo getByTagName($comercial,'dtrevisr') ?>" />
+
+			<label for="dsstatus"><? echo utf8ToHtml('Status:'); ?></label>
+			<input name="dsstatus" id="dsstatus" type="text"  value="<? echo getByTagName($comercial,'dssituar') ?>" />
+			
+		    <br style="clear:both" />
+		</fieldset>
+	<?php } ?>
 	<fieldset>
 		<legend><? echo utf8ToHtml('Rendas automáticas') ?></legend>
 

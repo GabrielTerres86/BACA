@@ -9,6 +9,8 @@
  * --------------
  * ALTERAÇÕES   : 
  * --------------
+ *                  14/05/2019 - Ajustado para permitir operadores do departamento 18 a 
+ *                               ativar programas do debitador (André - MoutS - PRDB0041765)
  */
 
  session_start();
@@ -21,7 +23,7 @@
  //----------------------------------------------------------------------------------------------------------------------------------	
 // Controle de Erros
 //----------------------------------------------------------------------------------------------------------------------------------
-if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
+if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' && $glbvars['cddepart'] <> 18 ) {
     $msgErro	= "Acesso n&atilde;o permitido.";
     exibirErro('error', $msgErro, 'Alerta - Ayllos','',false);
 }

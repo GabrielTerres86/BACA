@@ -1098,7 +1098,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     -- Cursores
     -- Cursor para dados da simulação
     CURSOR cr_crapsim(pr_cdcooper IN crapsim.cdcooper%TYPE
-                     ,pr_nrdconta IN crapsim.nrdconta%TYPE) IS
+                     ,pr_nrdconta IN crapsim.nrdconta%TYPE
+                     ,pr_cdorigem IN INTEGER) IS
       SELECT *
         FROM crapsim sim
        WHERE sim.cdcooper = pr_cdcooper
@@ -1106,12 +1107,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
          AND sim.dtmvtolt BETWEEN vr_dt_ini AND vr_dt_fim
          AND NOT ( vr_dt_ini IS NULL ) 
          AND NOT ( vr_dt_fim IS NULL )
+         AND ( ( pr_cdorigem = 3 AND sim.cdorigem = pr_cdorigem )
+          OR ( NVL(pr_cdorigem,0) != 3 ) )
+         AND NOT EXISTS ( SELECT 1
+                            FROM crawepr wpr
+                           WHERE wpr.cdcooper = sim.cdcooper
+                             AND wpr.nrdconta = sim.nrdconta
+                             AND wpr.nrsimula = sim.nrsimula )
       UNION  
       SELECT *
         FROM crapsim sim
        WHERE sim.cdcooper = pr_cdcooper
          AND sim.nrdconta = pr_nrdconta         
-         AND sim.dtmvtolt BETWEEN nvl(vr_dt_ini,to_date('01/01/1500','dd/mm/rrrr')) AND nvl(vr_dt_fim,to_date('01/01/3999','dd/mm/rrrr'));
+         AND sim.dtmvtolt BETWEEN nvl(vr_dt_ini,to_date('01/01/1500','dd/mm/rrrr')) AND nvl(vr_dt_fim,to_date('01/01/3999','dd/mm/rrrr'))
+         AND ( ( pr_cdorigem = 3 AND sim.cdorigem = pr_cdorigem )
+          OR ( NVL(pr_cdorigem,0) != 3 ) )
+         AND NOT EXISTS ( SELECT 1
+                            FROM crawepr wpr
+                           WHERE wpr.cdcooper = sim.cdcooper
+                             AND wpr.nrdconta = sim.nrdconta
+                             AND wpr.nrsimula = sim.nrsimula );
     rw_crapsim cr_crapsim%ROWTYPE;
     
     --Cursor para associado
@@ -1158,7 +1173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
       vr_dt_fim := fn_get_parametros().dtmvtolt_fim;
       
       --Carrega a tabela de retorno com os dados da simulações
-      FOR rw_crapsim in cr_crapsim(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta) LOOP
+      FOR rw_crapsim in cr_crapsim(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta, pr_cdorigem => pr_cdorigem) LOOP
         --Incrementa indice da Tabela de retorno  
         vr_index:= pr_tcrapsim.count + 1;
         
@@ -1460,6 +1475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                                 ,pr_tab_erro => pr_tab_erro); 
                                                 
            IF trim(vr_dscritic) is not null THEN
+      
               gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                                    ,pr_cdagenci => 1
                                    ,pr_nrdcaixa => 1
@@ -2536,38 +2552,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
         
       END IF;
 
-      ccet0001.pc_calculo_cet_emprestimos(pr_cdcooper => pr_cdcooper
-                                        , pr_dtmvtolt => pr_dtmvtolt
-                                        , pr_nrdconta => pr_nrdconta
-                                        , pr_cdprogra => pr_cdorigem
-                                        , pr_inpessoa => rw_crapass.inpessoa
-                                        , pr_cdusolcr => 2
-                                        , pr_cdlcremp => pr_cdlcremp
-                                        , pr_tpemprst => pr_tpemprst
-                                        , pr_nrctremp => 0
-                                        , pr_dtlibera => pr_dtlibera
-                                        , pr_vlemprst => pr_vlemprst
-                                        , pr_txmensal => vr_txmensal
-                                        , pr_vlpreemp => vr_vlpreemp
-                                        , pr_qtpreemp => pr_qtparepr
-                                        , pr_dtdpagto => pr_dtdpagto
-                                        , pr_cdfinemp => pr_cdfinemp
-                                        , pr_dscatbem => vr_dscatbem
-                                        , pr_idfiniof => pr_idfiniof
-                                        , pr_dsctrliq => ''
-                                        , pr_idgravar => 'N' 
-                                        , pr_txcetano => vr_txcetano
-                                        , pr_txcetmes => vr_txcetmes
-                                        , pr_cdcritic => vr_cdcritic
-                                        , pr_dscritic => vr_dscritic);
+      --> Apenas calcular CET se irá gravar
+      IF  pr_flggrava > 0 THEN
+        ccet0001.pc_calculo_cet_emprestimos(pr_cdcooper => pr_cdcooper
+                                          , pr_dtmvtolt => pr_dtmvtolt
+                                          , pr_nrdconta => pr_nrdconta
+                                          , pr_cdprogra => pr_cdorigem
+                                          , pr_inpessoa => rw_crapass.inpessoa
+                                          , pr_cdusolcr => 2
+                                          , pr_cdlcremp => pr_cdlcremp
+                                          , pr_tpemprst => pr_tpemprst
+                                          , pr_nrctremp => 0
+                                          , pr_dtlibera => pr_dtlibera
+                                          , pr_vlemprst => pr_vlemprst
+                                          , pr_txmensal => vr_txmensal
+                                          , pr_vlpreemp => vr_vlpreemp
+                                          , pr_qtpreemp => pr_qtparepr
+                                          , pr_dtdpagto => pr_dtdpagto
+                                          , pr_cdfinemp => pr_cdfinemp
+                                          , pr_dscatbem => vr_dscatbem
+                                          , pr_idfiniof => pr_idfiniof
+                                          , pr_dsctrliq => ''
+                                          , pr_idgravar => 'N' 
+                                          , pr_txcetano => vr_txcetano
+                                          , pr_txcetmes => vr_txcetmes
+                                          , pr_cdcritic => vr_cdcritic
+                                          , pr_dscritic => vr_dscritic);
                                         
-    IF NOT ( TRIM(vr_dscritic) IS NULL) THEN
-      RAISE vr_exc_saida;  
-    END IF;                                        
+        IF NOT ( TRIM(vr_dscritic) IS NULL) THEN
+          RAISE vr_exc_saida;  
+        END IF;                                        
      
-    pr_txcetano := ROUND(vr_txcetano, 2);
+        pr_txcetano := ROUND(vr_txcetano, 2);
         
-    vr_dt_validade := fn_data_validade();
+        vr_dt_validade := fn_data_validade();
+      END IF;
      
     IF  pr_flggrava > 0 THEN
       IF pr_cddopcao = 'I' THEN
@@ -2699,6 +2718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
       pr_retorno.idcarenc := pr_idcarenc;
       pr_retorno.dtcarenc := pr_dtcarenc;
       
+      IF  pr_flggrava > 0 THEN
       --Se for alteração limpa a tabela de parcelas simulacao
       IF pr_cddopcao = 'A' THEN
 
@@ -2882,7 +2902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                  
         END IF; 
       END IF;
-
+      end if;
       pr_des_reto := 'OK'; 
 
     EXCEPTION

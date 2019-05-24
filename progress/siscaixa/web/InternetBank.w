@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 20/12/2018
+   Data    : Julho/2004.                       Ultima atualizacao: 20/02/2019
 
    Dados referentes ao programa:
 
@@ -744,6 +744,11 @@
 
                  20/12/2018 - Adicionar validação de senha na Inclusão de Custódia de cheque e Aprovação de Pagamento 
 				             (Douglas - INC0025643 e INC0025728)
+
+                 20/02/2019 - Incluído operacao221 para simulacao de emprestimo 
+                              (PRJ438 - Douglas Pagem/ AMcom)
+                              
+
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1976,6 +1981,10 @@ PROCEDURE process-web-request :
                (
                   /** Nao utiliza criptografia se for pagamento de FGTS e DAE **/
                   CAN-DO("199",STRING(aux_operacao)) AND aux_idefetiv = 1
+               ) OR
+               (
+                  /** Nao utiliza criptografia se for contratacao de emprestimo **/
+                  CAN-DO("221",STRING(aux_operacao))
                )
                )
            )
@@ -2628,6 +2637,9 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 200 THEN /* Validar Frase e Senha do InternetBank. Gerar token de transações */
                 RUN proc_operacao200.
+         ELSE
+            IF  aux_operacao = 221 THEN /* Contratacao emprestimo simulado */
+                RUN proc_operacao221.
 
             
     END.
@@ -10006,6 +10018,40 @@ PROCEDURE proc_operacao200:
 END PROCEDURE.
 
 
+PROCEDURE proc_operacao221:
+
+    aux_nrctremp = INT(GET-VALUE("aux_nrctremp")).
+  
+    RUN sistema/internet/fontes/InternetBank221.p(INPUT aux_cdcooper,
+                                                  INPUT canal_cdagenci, 
+                                                  INPUT canal_nrdcaixa, 
+                                                  INPUT "1",              
+                                                  INPUT aux_nripuser,
+                                                  INPUT aux_iddispmobile,
+                                                  INPUT canal_nmprogra,
+                                                  INPUT aux_nrdconta,
+                                                  INPUT aux_idseqttl,
+                                                  INPUT aux_dtmvtolt,
+                                                  INPUT aux_nrcpfope,
+                                                  INPUT canal_cdorigem,
+                                                  INPUT canal_cdcoptfn,
+                                                  INPUT canal_cdagetfn,
+                                                  INPUT canal_nrterfin,
+                                                  INPUT aux_nrctremp,
+                                                  
+                                                  OUTPUT aux_dsmsgerr,
+                                                  OUTPUT TABLE xml_operacao).
+    
+    IF  RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr.
+    ELSE
+        FOR EACH xml_operacao NO-LOCK:
+            {&out} xml_operacao.dslinxml.
+        END. 
+    
+    {&out} aux_tgfimprg.        
+
+END PROCEDURE.
 /*............................................................................*/
 
 /* _UIB-CODE-BLOCK-END */

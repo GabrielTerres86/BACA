@@ -748,11 +748,17 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
-
 			case "PORTABILIDADE": {
 				$nomeRotina = "Portabilidade";
 				$urlRotina = "portabilidade";
 				$strValue = (isset($valores[23]->cdata) ? (($valores[23]->cdata == "1")  ? "SIM" : "NAO") : "NAO");
+				$telaPermitadaAcessoBacen = 1;
+				break;
+			}
+      case "PLATAFORMA_API": {
+				$nomeRotina = "Plataforma API";
+				$urlRotina = "plataforma_api";
+				$strValue = (isset($valores[24]->cdata) ? (($valores[24]->cdata == 1)  ? "SIM" : "NAO") : "NAO");
 				$telaPermitadaAcessoBacen = 1;
 				break;
 			}

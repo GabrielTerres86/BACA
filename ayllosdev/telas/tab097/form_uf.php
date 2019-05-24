@@ -4,9 +4,9 @@
  * CRIAÇÃO      	: Jaison Fernando
  * DATA CRIAÇÃO 	: Novembro/2015
  * OBJETIVO     	: Form para a tela TAB097
- * ÚLTIMA ALTERAÇÃO : --/--/----
+ * ÚLTIMA ALTERAÇÃO : 17/04/2019
  * --------------
- * ALTERAÇÕES   	: 
+ * ALTERAÇÕES   	: 17/04/2019 - Adicionado nova tabela referente a indexcecao 3 RITM0012246 (Mateus Z - Mouts)
  * --------------
  */ 
     session_start();
@@ -45,8 +45,14 @@
 		exibirErro('error',$xmlObj->roottag->tags[0]->cdata,'Alerta - Ayllos','',false);
 	}
 
+	if($indexcecao == 2){
 	$param_ufnegdif = $xmlObj->roottag->tags[0]->tags[1]->tags[0];
 	$qtminimo_negativacao = getByTagName($param_ufnegdif->tags,'qtminimo_negativacao');
+	} else if($indexcecao == 3){
+		$param_ufnegrec = $xmlObj->roottag->tags[0]->tags[2]->tags[0];
+		$qtminimo_negativacao = getByTagName($param_ufnegrec->tags,'qtminimo_negativacao');
+	}
+	
 ?>
 
 <script type="text/javascript">
@@ -89,7 +95,7 @@
                                             </tr>
 											<?php
 												// Se for excecao da negativacao Serasa
-												if ($indexcecao == 2) {
+												if ($indexcecao == 2 || $indexcecao == 3) {
 													?>
 													<tr>
 														<td>

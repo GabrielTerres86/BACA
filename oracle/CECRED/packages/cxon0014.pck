@@ -691,6 +691,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --
   --              25/02/2019 - Inclusão de novas validações no código de barras para DARF/DAS
   --                           (sctask0046009 - Adriano).
+  --
+  --              08/05/2019 - Aplicar critica da quantidade de dias para "data vencimento" e "periodo de apuração" para DARF 64 e 153.
+  --                           Com isso, em caso de falhas na digitação pelo cooperado o sistema irá criticar.
+  --                           (INC0014834 - Wagner - Sustentação).  
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -6975,7 +6979,7 @@ END pc_gera_titulos_iptu_prog;
          NULL;
     END;
   END pc_verifica_digito;
-  
+
   
   /* Calcular Digito adicional */
   PROCEDURE pc_calcula_dv_adicional (pr_cdbarras IN VARCHAR2       --Codigo barras
@@ -7380,7 +7384,12 @@ END pc_gera_titulos_iptu_prog;
   -- Frequencia: -----
   -- Objetivo  : Procedure para validação dos dias de tolerancia nos convênios Sicredi
   --
-  -- Alterações: 02/01/2018 - incluido validação de vencimento/validade bancoob. PRJ406 - FGTS(Odirlei-AMcom)
+  -- Alterações: 02/01/2018 - incluido validação de vencimento/validade bancoob. PRJ406 - FGTS(Odirlei-AMcom)  
+  --
+  --             08/05/2019 - Aplicar critica da quantidade de dias para "data vencimento" e "periodo de apuração" para DARF 64 e 153.
+  --                          Com isso, em caso de falhas na digitação pelo cooperado o sistema irá criticar.
+  --                          (INC0014834 - Wagner - Sustentação).
+  --   
   ---------------------------------------------------------------------------------------------------------------
 
   --> Validar convenio
@@ -7593,6 +7602,30 @@ END pc_gera_titulos_iptu_prog;
         --Retornar data dias
         vr_dttolera:= CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_codigo_barras,21,3)) --Numero de Dias
                                                    ,pr_inanocal => vr_inanocal); --Indicador do Ano
+                                                   
+        /* Criticar quantidade de dias inválidos no código de barras - INICIO */
+        -- Para a Data de Vencimento
+        IF SUBSTR(pr_codigo_barras,21,3) IS NOT NULL AND 
+           (To_Number(SUBSTR(pr_codigo_barras,21,3)) < 1 OR
+            To_Number(SUBSTR(pr_codigo_barras,21,3)) > 366) THEN
+          --Mensagem erro
+          pr_cdcritic:= 0;
+          pr_dscritic:= 'Data do vecimento invalida.';
+          RAISE vr_exc_erro;
+      END IF;
+        
+        -- Para o Período de Apuração
+        IF SUBSTR(pr_codigo_barras,42,3) IS NOT NULL AND 
+           (To_Number(SUBSTR(pr_codigo_barras,42,3)) < 1 OR
+            To_Number(SUBSTR(pr_codigo_barras,42,3)) > 366) THEN
+          --Mensagem erro
+          pr_cdcritic:= 0;
+          pr_dscritic:= 'Periodo de apuracao invalido.';
+          RAISE vr_exc_erro;
+        END IF;
+        
+        /* Criticar quantidade de dias inválidos no código de barras - FIM */
+                                                           
       END IF;
       /* DARF NUMERADO / DAS */
       IF pr_cdempcon IN (385,328) AND pr_cdsegmto = 5 THEN /* DARFC0385 ou DAS - SIMPLES NACIONAL */
@@ -8101,8 +8134,8 @@ END pc_gera_titulos_iptu_prog;
           IF NOT vr_flagdvok THEN
                   
             vr_cdcritic:= 8;
-            vr_des_erro:= '';         
-                  
+            vr_des_erro:= '';
+            
             --Levantar Excecao
             RAISE vr_exc_erro;
                   
@@ -8755,7 +8788,7 @@ END pc_gera_titulos_iptu_prog;
           ELSE
             --Levantar Excecao
             RAISE vr_exc_erro;
-          END IF;
+        END IF;
         END IF;
       --> Bancoob
       ELSIF rw_crapcon.tparrecd = 2 THEN
@@ -9358,6 +9391,10 @@ END pc_gera_titulos_iptu_prog;
   --              25/02/2019 - Inclusão de novas validações no código de barras para DARF/DAS
   --                           (sctask0046009 - Adriano).
   --
+  --              08/05/2019 - Aplicar critica da quantidade de dias para "data vencimento" e "periodo de apuração" para DARF 64 e 153.
+  --                           Com isso, em caso de falhas na digitação pelo cooperado o sistema irá criticar.
+  --                           (INC0014834 - Wagner - Sustentação).
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -9797,8 +9834,8 @@ END pc_gera_titulos_iptu_prog;
               IF NOT vr_flagdvok THEN
                 
                 vr_cdcritic:= 8;
-                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);          
-                
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                          
                 --Levantar Excecao
                 RAISE vr_exc_erro;
                 
@@ -9970,6 +10007,66 @@ END pc_gera_titulos_iptu_prog;
         END IF;
         --Fechar Cursor
         CLOSE cr_crapstb;
+        
+        /* Criticar quantidade de dias inválidos no código de barras - INICIO */
+        -- Para a Data de Vencimento
+        IF SUBSTR(pr_cdbarras,21,3) IS NOT NULL AND 
+           (To_Number(SUBSTR(pr_cdbarras,21,3)) < 1 OR
+            To_Number(SUBSTR(pr_cdbarras,21,3)) > 366) THEN
+          --Mensagem erro
+          vr_cod_erro:= 0;
+          vr_des_erro:= 'Data do vecimento invalida.';
+          --Criar erro
+          CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cod_agencia
+                               ,pr_nrdcaixa => vr_nrdcaixa
+                               ,pr_cod_erro => vr_cod_erro
+                               ,pr_dsc_erro => vr_des_erro
+                               ,pr_flg_erro => TRUE
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+          --Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          ELSE
+            vr_cdcritic:= vr_cod_erro;
+            vr_dscritic:= vr_des_erro;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
+        
+        -- Para o Período de Apuração
+        IF SUBSTR(pr_cdbarras,42,3) IS NOT NULL AND 
+           (To_Number(SUBSTR(pr_cdbarras,42,3)) < 1 OR
+            To_Number(SUBSTR(pr_cdbarras,42,3)) > 366) THEN
+          --Mensagem erro
+          vr_cod_erro:= 0;
+          vr_des_erro:= 'Periodo de apuracao invalido.';
+          --Criar erro
+          CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cod_agencia
+                               ,pr_nrdcaixa => vr_nrdcaixa
+                               ,pr_cod_erro => vr_cod_erro
+                               ,pr_dsc_erro => vr_des_erro
+                               ,pr_flg_erro => TRUE
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+          --Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          ELSE
+            vr_cdcritic:= vr_cod_erro;
+            vr_dscritic:= vr_des_erro;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
+        
+        /* Criticar quantidade de dias inválidos no código de barras - FIM */
+        
         /* Calculo da Data Limite */
         --Retornar ano do codigo barras
         vr_inanocal:= CXON0014.fn_ret_ano_barras_darf(pr_innumano => TO_NUMBER(SUBSTR(pr_cdbarras,20,1)));

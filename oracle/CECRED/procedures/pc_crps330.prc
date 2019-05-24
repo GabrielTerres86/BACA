@@ -34,6 +34,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --              04/07/2017 - #701001 Correção do parametro cdcritic para dscritic na rotina fn_busca_critica
   --                           da exception vr_exc_saida (Carlos)
+  --
+  --              22/04/2019 - Alterar a regra de negativação para o Serasa por estado. Permitir parametrizar a quantidade
+  --                           de dias desejado.
+  --                           Jose Dill (Mouts). Requisição - RITM0012246
   ---------------------------------------------------------------------------------------------------------------
   
   -- Atualiza a situacao do boleto como enviada
@@ -213,13 +217,26 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                 c.nrconven
            FROM crapcco c,
                 crapcob b,
-                tbcobran_param_negativacao a
+                tbcobran_param_negativacao a,
+                crapsab sab,
+                tbcobran_param_exc_neg_serasa exc                
           WHERE a.cdcooper = pr_cdcooper
             AND b.cdcooper = a.cdcooper
             AND b.inserasa = 2
-            AND b.dtretser + a.qtdias_negativacao <= pr_dtmvtolt
+            --AND b.dtretser + a.qtdias_negativacao <= pr_dtmvtolt
+            AND b.dtretser + DECODE(exc.dsuf,NULL,a.qtdias_negativacao,exc.qtminimo_negativacao) <= pr_dtmvtolt
+            /*RITM0012246 - Incluído as tabelas crapsab e tbcobran_param_exc_neg_serasa para permitir utilizar 
+              a quantidade de dias para negativação parametrizada na TAB097 associada a um estado. Desta forma,
+              será considerado a qtde dias informada para o estado, caso o mesmo esteja cadastrado. Se não estiver
+              continuára utilizando o valor padrão cadastrado na TAB097, como é feito atualmente */
             AND c.cdcooper = b.cdcooper
-            AND c.nrconven = b.nrcnvcob; 
+            AND c.nrconven = b.nrcnvcob
+            --
+            AND sab.cdcooper = b.cdcooper
+            AND sab.nrdconta = b.nrdconta
+            AND sab.nrinssac = b.nrinssac
+            AND sab.cdufsaca = exc.dsuf (+)
+            AND 3            = exc.indexcecao (+); 
        
        
        -- Busca Dados do Credor

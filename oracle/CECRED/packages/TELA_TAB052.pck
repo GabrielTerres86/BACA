@@ -1358,11 +1358,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     END IF;
 
     ---- VALIDAÇÕES NOVOS CAMPOS - OPERACIONAL ----
-/*    
+    
     IF pr_vlmxassi > pr_vlmxassi_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Valor Máximo Dispensa Assinatura Internet Banking deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'Valor Máximo Dispensa Assinatura Internet Banking deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'vlmxassi';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1371,7 +1371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_qttliqcp > pr_qttliqcp_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Minimo de Liquidez do Cedente x Pagador (Qtd. de Titulos) deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'Minimo de Liquidez do Cedente x Pagador (Qtd. de Titulos) deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'qttliqcp';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1380,7 +1380,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_vltliqcp > pr_vltliqcp_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Minimo de Liquidez do Cedente x Pagador (Valor dos Titulos) deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'Minimo de Liquidez do Cedente x Pagador (Valor dos Titulos) deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'vltliqcp';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1389,7 +1389,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_qtmintgc > pr_qtmintgc_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Minimo de Liquidez de Titulos Geral do Cedente (Qtd de Titulos) deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'Minimo de Liquidez de Titulos Geral do Cedente (Qtd de Titulos) deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'qtmintgc';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1398,7 +1398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_vlmintgc > pr_vlmintgc_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Minimo de Liquidez de Titulos Geral do Cedente (Valor dos Titulos) deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'Minimo de Liquidez de Titulos Geral do Cedente (Valor dos Titulos) deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'vlmintgc';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1407,7 +1407,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_qtmesliq > pr_qtmesliq_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Período em meses para realizar o cálculo de liquidez deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'Período em meses para realizar o cálculo de liquidez deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'qtmesliq';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1416,7 +1416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_pcmxctip > pr_pcmxctip_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Concentração máxima de títulos por pagador deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'Concentração máxima de títulos por pagador deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'pcmxctip';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1425,7 +1425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_qtmxdene > pr_qtmxdene_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Quantidade máxima de dias para envio para Esteira deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'Quantidade máxima de dias para envio para Esteira deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'qtmxdene';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1434,7 +1434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_qtdiexbo > pr_qtdiexbo_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Quantidade de dias para expirar borderô deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'Quantidade de dias para expirar borderô deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'qtdiexbo';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1443,7 +1443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_qtmxtbib > pr_qtmxtbib_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Quantidade máxima de títulos por borderô IB deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'Quantidade máxima de títulos por borderô IB deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'qtmxtbib';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1452,12 +1452,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_qtmxtbay > pr_qtmxtbay_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Quantidade máxima de títulos por borderô Ayllos deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'Quantidade máxima de títulos por borderô Ayllos deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'qtmxtbay';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
     END IF;
-*/
+
 
     ---- VALIDAÇÕES CECRED ----
     IF pr_vllimite > pr_vllimite_c THEN

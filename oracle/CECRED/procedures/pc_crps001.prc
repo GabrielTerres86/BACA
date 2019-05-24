@@ -249,6 +249,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
                12/02/2019 - Ajuste feito para melhorar o desempenho do programa. (Kelvin - PRB0040461)
 							
+               12/02/2019 - Ajustes para melhorar desempenho do programa. (Jackson - PRB0041703)
+			                    - Removido HINT que forçava uso de índice no cursor cr_crapass.
+						              - Corrigida condição do cursor cr_crapfdc2, aplicando UPPER ao campo crapfdc.nrdctitg
+                            para uso de acordo com o índice definido.
+
+			   17/05/2019 - Adicionada verificação para recálculo somente se houve resgate (Jefferson - MoutS)
+
      ............................................................................. */
 
      DECLARE
@@ -572,8 +579,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
        --Selecionar informacoes dos associados
        CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE) IS
-         SELECT  /*+ INDEX (crapass crapass##crapass7) */
-                 crapass.nrdconta
+         SELECT  crapass.nrdconta
                 ,crapass.vllimcre
                 ,crapass.tpextcta
                 ,crapass.inpessoa
@@ -625,7 +631,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          FROM crapfdc crapfdc
          WHERE crapfdc.cdcooper = pr_cdcooper
          AND   crapfdc.nrcheque = pr_nrcheque
-         AND   crapfdc.nrdctitg = pr_nrdctitg;
+         AND   UPPER(crapfdc.nrdctitg) = UPPER(pr_nrdctitg);
 
       --Selecionar Transferencias entre cooperativas
       CURSOR cr_craptco (pr_cdcooper IN craptco.cdcopant%TYPE
@@ -2313,6 +2319,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                    vr_vlresgat := 0;
                  ELSE -- Não havendo erros
                    
+				   -- Se houve resgate
+				   IF vr_vlresgat > 0 THEN
                    -- Verificar Saldo do cooperado
                    extr0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper 
                                               ,pr_rw_crapdat => rw_crapdat 
@@ -2365,6 +2373,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                    -- Decrementar do saldo negativo o valor resgatado
 					   			 rw_crapsld.vlsddisp := rw_crapsld.vlsddisp + vr_vlresgat;
                    ---------------------------------------------------------
+                   END IF; -- Se houve resgate
 
                  END IF;
 

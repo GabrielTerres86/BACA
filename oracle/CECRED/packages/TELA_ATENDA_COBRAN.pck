@@ -80,6 +80,7 @@ CREATE OR REPLACE PACKAGE cecred.tela_atenda_cobran IS
                                   ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                   ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
                                   ,pr_inenvcob    IN crapceb.inenvcob%TYPE --> Forma de envio de arquivo de cobrança                                
+								  ,pr_flgapihm    IN crapceb.flgapihm%TYPE --> Flag representando o uso da API
                                   ,pr_blnewreg    IN BOOLEAN --> Identifica se é um novo registro
                                   ,pr_retxml      IN xmltype --> Arquivo de retorno do XML
                                    -- OUT
@@ -110,6 +111,7 @@ CREATE OR REPLACE PACKAGE cecred.tela_atenda_cobran IS
                                       ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                       ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
                                       ,pr_inenvcob    IN crapceb.inenvcob%TYPE --> Forma de envio de arquivo de cobrança                                
+									  ,pr_flgapihm    IN crapceb.flgapihm%TYPE --> Flag representando o uso da API
                                       ,pr_xmllog      IN VARCHAR2 --> XML com informacoes de LOG
                                       ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
                                       ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
@@ -1948,6 +1950,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                   ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                   ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
                                   ,pr_inenvcob    IN crapceb.inenvcob%TYPE --> Forma de envio de arquivo de cobrança
+								  ,pr_flgapihm    IN crapceb.flgapihm%TYPE --> Flag representando o uso da API
                                   ,pr_blnewreg    IN BOOLEAN --> Identifica se é um novo registro
                                   ,pr_retxml      IN xmltype --> Arquivo de retorno do XML
                                    -- OUT
@@ -1994,6 +1997,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 
                     18/12/2018 - Correção na habilitação do convênio para inclusão na CIP
                                  (Andre Clemer - Supero)
+                    
+					18/02/2019 - Novo campo tela ATENDA -> Cobranca (Homologado API)
+								 (Andrey Formigari - Supero)
                     
         ..............................................................................*/
         DECLARE
@@ -2097,6 +2103,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                       ,crapceb.qtdecprz
                       ,crapceb.qtdfloat
                       ,crapceb.inenvcob
+					  ,crapceb.dhhomapi
+                      ,crapceb.cdhomapi
+                      ,crapceb.flgapihm
                   FROM crapceb
                  WHERE crapceb.cdcooper = pr_cdcooper
                    AND crapceb.nrdconta = pr_nrdconta
@@ -2118,6 +2127,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                       ,crapceb.qtdecprz
                       ,crapceb.qtdfloat
                       ,crapceb.inenvcob
+					  ,crapceb.dhhomapi
+                      ,crapceb.cdhomapi
+                      ,crapceb.flgapihm
                   FROM tbcobran_crapceb crapceb
                  WHERE crapceb.cdcooper = pr_cdcooper
                    AND crapceb.nrdconta = pr_nrdconta
@@ -2987,6 +2999,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                       ,crapceb.qtlimmip = pr_qtlimmip
                       ,crapceb.qtdecprz = pr_qtdecprz
                       ,crapceb.inenvcob = pr_inenvcob
+					  ,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
+                      ,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
+                      ,crapceb.flgapihm = pr_flgapihm
                  WHERE crapceb.cdcooper = vr_cdcooper
                    AND crapceb.nrdconta = pr_nrdconta
                    AND crapceb.nrconven = pr_nrconven
@@ -3020,6 +3035,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 										,crapceb.qtlimmip = pr_qtlimmip
 										,crapceb.qtdecprz = pr_qtdecprz
 										,crapceb.inenvcob = pr_inenvcob
+										,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
+										,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
+										,crapceb.flgapihm = pr_flgapihm
 							 WHERE crapceb.cdcooper = vr_cdcooper
 								 AND crapceb.nrdconta = pr_nrdconta
 								 AND crapceb.nrconven = pr_nrconven
@@ -3309,6 +3327,24 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                                          END);
             END IF;
         
+			-- Se alterou Homologado API
+            IF rw_crapceb.flgapihm <> pr_flgapihm AND vr_blnfound THEN
+                gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                         ,pr_nmdcampo => 'Homologado API'
+                                         ,pr_dsdadant => CASE
+                                                             WHEN rw_crapceb.flgapihm = 1 THEN
+                                                              'SIM'
+                                                             ELSE
+                                                              'NAO'
+                                                         END
+                                         ,pr_dsdadatu => CASE
+                                                             WHEN pr_flgapihm = 1 THEN
+                                                              'SIM'
+                                                             ELSE
+                                                              'NAO'
+                                                         END);
+             END IF;
+        
             -- Se alterou o Serviço de Protesto
             IF rw_crapceb.insrvprt <> pr_insrvprt THEN
                 gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
@@ -3554,6 +3590,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                       ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                       ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
                                       ,pr_inenvcob    IN crapceb.inenvcob%TYPE --> Forma de envio de arquivo de cobrança
+                                      ,pr_flgapihm    IN crapceb.flgapihm%TYPE --> Flag representando o uso da API
                                       ,pr_xmllog      IN VARCHAR2 --> XML com informacoes de LOG
                                       ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
                                       ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
@@ -3625,6 +3662,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                 ,pr_idreciprold => pr_idreciprold
                                 ,pr_perdesconto => pr_perdesconto
                                 ,pr_inenvcob    => pr_inenvcob
+								,pr_flgapihm	=> pr_flgapihm
                                 ,pr_blnewreg    => FALSE
                                 ,pr_retxml      => pr_retxml
                                  -- OUT
@@ -6973,6 +7011,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                     ,pr_idreciprold => NULL
                                     ,pr_perdesconto => vr_perdesconto
                                     ,pr_inenvcob    => vr_convenio(16)
+									,pr_flgapihm	=> 0
                                     ,pr_blnewreg    => TRUE
                                     ,pr_retxml      => pr_retxml
                                      -- OUT
@@ -8045,6 +8084,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                     ,pr_idreciprold => NULL
                                     ,pr_perdesconto => vr_perdesconto
                                     ,pr_inenvcob    => vr_convenio(16)
+									,pr_flgapihm	=> 0
                                     ,pr_blnewreg    => FALSE
                                     ,pr_retxml      => pr_retxml
                                      -- OUT

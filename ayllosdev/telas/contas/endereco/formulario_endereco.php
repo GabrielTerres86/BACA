@@ -79,10 +79,23 @@
 			<option value="2" <? if (getByTagName($endereco,'idorigem') == '2' ){ echo ' selected'; } ?>> Cooperativa </option>
 			<option value="3" <? if (getByTagName($endereco,'idorigem') == '3' ){ echo ' selected'; } ?>> Terceiros </option>
 		</select>
-		
 		<br style="clear:both" />
-	
 	</fieldset>
+
+	<?php if ($inpessoa == 1) { ?>
+	<fieldset>
+		<legend><? echo utf8ToHtml('Atualização Cadastral');?></legend>
+			<label for="idcanal"><? echo utf8ToHtml('Canal:'); ?></label>
+			<input name="idcanal" id="idcanal" type="text"  value="<? echo getByTagName($endereco,'dsdcanal') ?>" />
+		
+			<label for="dtrevisa"><? echo utf8ToHtml('Data de revisão:'); ?></label>
+			<input name="dtrevisa" id="dtrevisa" type="text"  value="<? echo getByTagName($endereco,'dtrevisa') ?>" />
+	
+			<label for="dsstatus"><? echo utf8ToHtml('Status:'); ?></label>
+			<input name="dsstatus" id="dsstatus" type="text"  value="<? echo getByTagName($endereco,'dssituac') ?>" />
+		<br style="clear:both" />
+	</fieldset>
+	<?php } ?>
 	
 	<fieldset name="fieldCorrespondencia" id="fieldCorrespondencia">
 	

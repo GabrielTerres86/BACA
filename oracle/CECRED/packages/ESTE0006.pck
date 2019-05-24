@@ -1891,6 +1891,13 @@ END pc_incluir_bordero_esteira;
                                                           ,pr_nrctremp => rw_crapbdt.nrctrlim);*/
 
          vr_obj_bordero.put('protocoloPolitica'          ,trim(rw_crapbdt.dsprotoc));
+		 
+		 -- Tratativa exclusiva para ambiente de homologacao, não deve existir o parametro "URI_WEBSRV_ESTEIRA_HOMOL"
+		 -- em ambiente produtivo
+		 IF (trim(gene0001.fn_param_sistema('CRED',pr_cdcooper,'URI_WEBSRV_ESTEIRA_HOMOL')) IS NOT NULL) THEN
+		   vr_obj_bordero.put('ambienteTemp','true');
+		   vr_obj_bordero.put('urlRetornoTemp', gene0001.fn_param_sistema('CRED',pr_cdcooper,'URI_WEBSRV_ESTEIRA_HOMOL') );
+		 END IF;
 
          -- Copiar parâmetro
          vr_nmarquiv := pr_nmarquiv;

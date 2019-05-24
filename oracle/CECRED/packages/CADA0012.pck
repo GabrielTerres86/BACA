@@ -13,6 +13,7 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
   -- Objetivo  :
   --
   ---------------------------------------------------------------------------------------------------------------
+  FUNCTION fn_busca_contas_atualizar RETURN CLOB;
 
   -- Rotina para cadastro de bens
   PROCEDURE pc_cadast_pessoa_bem(pr_idpessoa        IN NUMBER -- identificador unico da pessoa (fk tbcadast_pessoa)
@@ -43,6 +44,7 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
                                       pr_cdoperad IN VARCHAR2, -- Codigo do operador
                                       pr_cdagenci IN NUMBER, -- Codigo da agencia
                                       pr_fltoken  IN VARCHAR2 DEFAULT 'S', -- Flag se deve ser alterado o token
+                                      pr_tpcanal_sistema  IN NUMBER DEFAULT 10, -- Sistema que esta solicitando acesso 10-CRM, 13-Ibracred
                                       pr_dstoken  OUT VARCHAR2, -- Token de retorno nos casos de sucesso na validacao
                                       pr_dscritic OUT VARCHAR2);  -- Retorno de Erro
 
@@ -185,6 +187,13 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
 														      ,pr_retorno  OUT xmltype -- XML de retorno
 														      ,pr_dscritic OUT VARCHAR2); -- Retorno de Erro
 
+ -- Rotina para retorno de identificacao pessoa
+  PROCEDURE pc_retorna_identificacao(pr_idpessoa IN NUMBER -- Registro de pessoa
+                                    ,pr_cdcooper IN NUMBER -- Cooperativa
+                                    ,pr_dscanal  IN VARCHAR2 -- Cooperativa
+                                    ,pr_retorno  OUT xmltype -- XML de retorno
+                                    ,pr_dscritic OUT VARCHAR2);
+
   -- Rotina para retorno dos dados da matricula do cooperado
   PROCEDURE pc_retorna_matricula(pr_cdcooper IN NUMBER  -- Codigo da cooperativa
                                 ,pr_idpessoa IN NUMBER  -- Identificador unico da pessoa
@@ -218,6 +227,13 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
   PROCEDURE pc_retorna_pessoa_telefone(pr_idpessoa IN NUMBER -- Registro de bens
                                       ,pr_retorno  OUT xmltype -- XML de retorno
                                       ,pr_dscritic OUT VARCHAR2); -- Retorno de Erro
+                                      
+  PROCEDURE pc_confirma_pessoa_telefone(pr_cdcooper       IN NUMBER -- Numero da cooperativa
+                                       ,pr_idpessoa       IN NUMBER -- Registro de telefone
+                                       ,pr_nrseq_telefone IN NUMBER -- Numero sequecial do telefone
+                                       ,pr_flsituacao     IN NUMBER -- Situacao: 1 - Ativo/ 2 - Rejeitado
+                                       ,pr_idcanal        IN NUMBER -- Canal que efetuou a atualização
+                                       ,pr_dscritic      OUT VARCHAR2);                                   
   -- Rotina para cadastrar email
   PROCEDURE pc_cadast_pessoa_email(pr_dsemail                IN VARCHAR2 -- Descricao do email
                                   ,pr_nmpessoa_contato       IN VARCHAR2 -- Pessoa de contato no e-mail
@@ -238,6 +254,14 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
   PROCEDURE pc_retorna_pessoa_email(pr_idpessoa IN NUMBER -- Registro de bens
                                    ,pr_retorno  OUT xmltype -- XML de retorno
                                    ,pr_dscritic OUT VARCHAR2); -- Retorno de Erro
+ -- Rotina para confirmar email                                   
+  PROCEDURE pc_confirma_pessoa_email(pr_cdcooper       IN NUMBER -- Numero da cooperativa
+                                    ,pr_idpessoa       IN NUMBER -- Registro de email
+                                    ,pr_nrseq_email    IN NUMBER -- Numero sequecial do email
+                                    ,pr_flsituacao     IN NUMBER -- Situacao: 1 - Ativo/ 2 - Rejeitado
+                                    ,pr_idcanal        IN NUMBER -- Canal que efetuou a atualização
+                                    ,pr_dscritic      OUT VARCHAR2);                           
+                                   
   -- Rotina para cadastrar endereço
   PROCEDURE pc_cadast_pessoa_endereco(pr_idpessoa            IN NUMBER -- Identificador unico da pessoa (FK tbcadast_pessoa)
                                      ,pr_nrseq_endereco      IN OUT NUMBER -- Numero sequencial do endereco
@@ -262,6 +286,14 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
                                      ,pr_cdoperad_altera IN VARCHAR2 -- Operador que esta efetuando a exclusao
                                      ,pr_cdcritic        OUT INTEGER                                     -- Codigo de erro
                                      ,pr_dscritic            OUT VARCHAR2); -- Retorno de Erro
+
+  -- Rotina para confirmação do endereço                                     
+  PROCEDURE pc_confirma_pessoa_endereco(pr_cdcooper       IN NUMBER -- Numero da cooperativa
+                                       ,pr_idpessoa       IN NUMBER -- Registro de endereço
+                                       ,pr_nrseq_endereco IN NUMBER -- Numero sequecial do endereço
+                                       ,pr_flsituacao     IN NUMBER -- Situacao: 1 - Ativo/ 2 - Rejeitado
+                                       ,pr_idcanal        IN NUMBER -- Canal que efetuou a atualização
+                                       ,pr_dscritic      OUT VARCHAR2);
 
   -- Rotina para retorno de endereço
   PROCEDURE pc_retorna_pessoa_endereco(pr_idpessoa IN NUMBER -- Registro de bens
@@ -316,6 +348,14 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
                                    ,pr_retorno  OUT xmltype -- XML de retorno
                                    ,pr_dscritic OUT VARCHAR2); -- Retorno de Erro
 
+  -- Rotina para confirmar renda
+  PROCEDURE pc_confirma_pessoa_renda(pr_cdcooper       IN NUMBER -- Numero da cooperativa
+                                    ,pr_idpessoa       IN NUMBER -- Registro de renda
+                                    ,pr_nrseq_renda    IN NUMBER -- Numero sequecial do renda
+                                    ,pr_flsituacao     IN NUMBER -- Situacao: 1 - Ativo/ 2 - Rejeitado
+                                    ,pr_idcanal        IN NUMBER -- Canal que efetuou a atualização
+                                    ,pr_dscritic      OUT VARCHAR2);
+                                    
   -- Rotina para cadastrar relacionamento
   PROCEDURE pc_cadast_pessoa_relacao(pr_idpessoa         IN NUMBER      -- Identificador unico da pessoa (FK tbcadast_pessoa_fisica)
                                     ,pr_nrseq_relacao    IN OUT NUMBER  -- Numero sequencial do dependente
@@ -323,6 +363,14 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
                                     ,pr_tprelacao        IN NUMBER      -- Tipo de relacionamento (1-Conjuge/ / 3-Pai / 4-Mae)
                                     ,pr_cdoperad_altera  IN VARCHAR2
                                     ,pr_dscritic         OUT VARCHAR2); -- Retorno de Erro
+
+  -- Rotina para confirmar empresa
+  PROCEDURE pc_confirma_pessoa_empresa(pr_cdcooper       IN NUMBER -- Numero da cooperativa
+                                      ,pr_idpessoa       IN NUMBER -- Registro de empresa
+                                      ,pr_nrseq_empresa IN NUMBER -- Numero sequecial do empresa
+                                      ,pr_flsituacao     IN NUMBER -- Situacao: 1 - Ativo/ 2 - Rejeitado
+                                      ,pr_idcanal        IN NUMBER -- Canal que efetuou a atualização
+                                      ,pr_dscritic      OUT VARCHAR2);
 
   -- Rotina para excluir relacionamento
   PROCEDURE pc_exclui_pessoa_relacao(pr_idpessoa        IN NUMBER         -- Identificador de pessoa
@@ -583,9 +631,65 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
                                        ,pr_retorno  OUT xmltype -- XML de retorno
                                        ,pr_dscritic             OUT VARCHAR2);
 
+  -- Retorna o parametro cadastrado na CADPAR                                        
+  PROCEDURE pc_busca_parametro_tarifas(pr_cdcooper IN NUMBER
+                                      ,pr_cdpartar IN NUMBER
+                                      ,pr_vlparamt OUT VARCHAR2
+                                      ,pr_dscritic OUT VARCHAR2);
+                                                     
+  -- Retorna via XML o parametro cadastrado na CADPAR                                               
+  PROCEDURE pc_busca_parametro_tarifas_web(pr_cdcooper IN NUMBER
+                                          ,pr_cdpartar IN NUMBER
+                                          ,pr_retorno   IN OUT NOCOPY xmltype 
+                                          ,pr_dscritic OUT VARCHAR2); 
+                                          
+  -- Busca a situação, canal e data de revisão das tabelas de TBCADAST
+  PROCEDURE pc_busca_tbcadast(pr_nrcpfcgc IN NUMBER
+                             ,pr_idseqttl IN NUMBER
+                             ,pr_nmtabela IN VARCHAR2
+                             -- OUT
+                             ,pr_insituac OUT NUMBER
+                             ,pr_dssituac OUT VARCHAR2
+                             ,pr_idcanal  OUT NUMBER
+                             ,pr_dscanal  OUT VARCHAR2
+                             ,pr_dtrevisa OUT DATE
+                             ,pr_dscritic OUT VARCHAR2);
 END cada0012;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
+  -- Variáveis para armazenar as informações em XML
+  vr_des_xml         clob;
+  vr_texto_completo  varchar2(32600);
+
+  FUNCTION fn_busca_contas_atualizar RETURN CLOB IS
+    BEGIN
+      RETURN 'SELECT alt.cdcooper
+                    ,alt.nrdconta
+                    ,ttl.idseqttl
+                    ,null dsvariaveis
+                FROM tbcadast_pessoa tps
+          INNER JOIN crapass ass ON  ass.nrcpfcgc = tps.nrcpfcgc
+          INNER JOIN crapalt alt ON ass.cdcooper = alt.cdcooper AND ass.nrdconta = alt.nrdconta
+          INNER JOIN crapttl ttl ON ass.cdcooper = ttl.cdcooper AND ass.nrdconta = ttl.nrdconta
+               WHERE alt.dtaltera = (SELECT MAX(dtaltera) FROM crapalt WHERE  nrdconta = ass.nrdconta AND cdcooper = ass.cdcooper AND tpaltera = 1)
+                 AND TO_CHAR(alt.dtaltera, ''MM'') = TO_CHAR((SELECT dtmvtolt FROM crapdat WHERE cdcooper = alt.cdcooper), ''MM'')
+                 AND (alt.dtaltera + NVL((SELECT dsconteu
+                                            FROM   crappat pat
+                                      INNER JOIN crappco pco ON pat.cdpartar = pco.cdpartar
+                                           WHERE pco.cdcooper = alt.cdcooper
+                                             AND pat.cdpartar = 66),0)*30) <= (SELECT dtmvtolt FROM crapdat WHERE cdcooper = alt.cdcooper)';
+  END fn_busca_contas_atualizar; 
+
+  -- Rotina para escrever texto na variável CLOB do XML
+  PROCEDURE pc_escreve_xml(pr_des_dados in varchar2
+                         ,pr_fecha_xml in boolean default false
+                          ) is
+  BEGIN
+   gene0002.pc_escreve_xml( vr_des_xml
+                          , vr_texto_completo
+                          , pr_des_dados
+                          , pr_fecha_xml );
+  END pc_escreve_xml;
 
   -- Rotina generica para retornar os dados da tabela via xml
   PROCEDURE pc_retorna_dados_xml (pr_idpessoa IN NUMBER    --> Id de pessoa
@@ -637,6 +741,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
     vr_qtdretor      NUMBER := 0;
     vr_dscursor      VARCHAR2(32000);
     vr_dsdcampo      VARCHAR2(4000);
+    vr_nmcidade      VARCHAR(300);
+    vr_cdestado      VARCHAR(300);
+    vr_canal         VARCHAR(300);
+    vr_nmempres      VARCHAR(300);
+    vr_vlminimo      NUMBER(25,2);
+    vr_vlmaximo      NUMBER(25,2);
+    vr_dsfaixar      VARCHAR2(4000);
+    vr_separador     VARCHAR2(2);
+    vr_vlrenda       NUMBER(25,2);
 
 
   BEGIN
@@ -724,6 +837,98 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                                 ,pr_tag_cont => vr_dsdcampo
                                 ,pr_des_erro => pr_dscritic);
 
+          -- Tratativa para buscar o nome da cidade caso seja TBCADAST_PESSOA_ENDERECO
+          IF (UPPER(vr_tab_campos(i).column_name) = 'IDCIDADE' AND UPPER(pr_nmtabela) = 'TBCADAST_PESSOA_ENDERECO') THEN
+            vr_nmcidade := '';
+            IF (vr_dsdcampo IS NOT NULL) THEN
+              SELECT dscidade, cdestado INTO vr_nmcidade, vr_cdestado FROM crapmun WHERE idcidade = vr_dsdcampo;
+            END IF;
+
+            -- Insere os detalhes
+            gene0007.pc_insere_tag(pr_xml      => vr_xml
+                                  ,pr_tag_pai  => pr_dsnofilh
+                                  ,pr_posicao  => vr_qtdretor
+                                  ,pr_tag_nova => 'NMCIDADE'
+                                  ,pr_tag_cont => vr_nmcidade
+                                  ,pr_des_erro => pr_dscritic);
+
+            -- Insere os detalhes
+            gene0007.pc_insere_tag(pr_xml      => vr_xml
+                                  ,pr_tag_pai  => pr_dsnofilh
+                                  ,pr_posicao  => vr_qtdretor
+                                  ,pr_tag_nova => 'DSESTADO'
+                                  ,pr_tag_cont => vr_cdestado
+                                  ,pr_des_erro => pr_dscritic);
+          END IF;
+
+          -- Tratativa para retornar a situação por escrito quando TELEFONE e EMAIL
+          IF ((UPPER(vr_tab_campos(i).column_name) = 'INSITUACAO')
+             AND UPPER(pr_nmtabela) IN('TBCADAST_PESSOA_TELEFONE', 'TBCADAST_PESSOA_EMAIL')) THEN
+            -- Insere os detalhes
+            gene0007.pc_insere_tag(pr_xml      => vr_xml
+                                  ,pr_tag_pai  => pr_dsnofilh
+                                  ,pr_posicao  => vr_qtdretor
+                                  ,pr_tag_nova => 'FLSITUACAO'
+                                  ,pr_tag_cont => CASE WHEN NVL(vr_dsdcampo, 1) = 1 THEN 'Ativo' ELSE 'Inativo' END
+                                  ,pr_des_erro => pr_dscritic);
+          END IF;
+
+          -- Tratativa para retornar o Canal
+          IF ((UPPER(vr_tab_campos(i).column_name)) IN ('IDCANAL', 'IDCANAL_EMPRESA', 'IDCANAL_RENDA')
+             AND UPPER(pr_nmtabela) IN('TBCADAST_PESSOA_TELEFONE'
+                                      ,'TBCADAST_PESSOA_EMAIL'
+                                      ,'TBCADAST_PESSOA_RENDA'
+                                      ,'TBCADAST_PESSOA_ENDERECO'
+                                      )) THEN
+            vr_canal := '';
+            IF (vr_dsdcampo IS NOT NULL) THEN
+              -- Busca o codigo no dominio e retorna a descricao
+              SELECT DSCODIGO INTO vr_canal FROM TBCADAST_DOMINIO_CAMPO WHERE NMDOMINIO = 'TBCADAST_CANAL' AND CDDOMINIO = vr_dsdcampo;
+            END IF;
+
+            -- Insere os detalhes
+            gene0007.pc_insere_tag(pr_xml      => vr_xml
+                                  ,pr_tag_pai  => pr_dsnofilh
+                                  ,pr_posicao  => vr_qtdretor
+                                  ,pr_tag_nova => 'CANAL_ALTERACAO' || SUBSTR(UPPER(vr_tab_campos(i).column_name),8)
+                                  ,pr_tag_cont => vr_canal
+                                  ,pr_des_erro => pr_dscritic);
+          END IF;
+
+          -- Tratativa para buscar o nome da empresa caso seja TBCADAST_PESSOA_RENDA
+          IF (UPPER(vr_tab_campos(i).column_name) = 'IDPESSOA_FONTE_RENDA' AND UPPER(pr_nmtabela) = 'TBCADAST_PESSOA_RENDA') THEN
+            vr_nmempres := '';
+            IF (vr_dsdcampo IS NOT NULL) THEN
+              SELECT nmpessoa INTO vr_nmempres FROM tbcadast_pessoa WHERE idpessoa = vr_dsdcampo;
+            END IF;
+
+            -- Insere os detalhes
+            gene0007.pc_insere_tag(pr_xml      => vr_xml
+                                  ,pr_tag_pai  => pr_dsnofilh
+                                  ,pr_posicao  => vr_qtdretor
+                                  ,pr_tag_nova => 'NMEMPRES'
+                                  ,pr_tag_cont => vr_nmempres
+                                  ,pr_des_erro => pr_dscritic);
+          END IF;
+          
+          -- Tratativa para calcular faixa de renda
+          IF (UPPER(vr_tab_campos(i).column_name) = 'VLRENDA' AND UPPER(pr_nmtabela) = 'TBCADAST_PESSOA_RENDA') THEN
+          
+            SELECT VALUE INTO vr_separador FROM nls_session_parameters WHERE parameter = 'NLS_NUMERIC_CHARACTERS';
+            vr_vlrenda := to_number(REPLACE(REPLACE(vr_dsdcampo,'.',''),',',SUBSTR(vr_separador, 1, 1)));
+            
+            vr_vlminimo := vr_vlrenda - (vr_vlrenda*0.2);
+            vr_vlmaximo := vr_vlrenda + (vr_vlrenda*0.2);
+            vr_dsfaixar := 'R$' || to_char(vr_vlminimo,'fm999g999g990d00', 'NLS_NUMERIC_CHARACTERS = '',.''') ||
+                           ' à R$' || to_char(vr_vlmaximo,'fm999g999g990d00', 'NLS_NUMERIC_CHARACTERS = '',.''');
+            -- Insere os detalhes
+            gene0007.pc_insere_tag(pr_xml      => vr_xml
+                                  ,pr_tag_pai  => pr_dsnofilh
+                                  ,pr_posicao  => vr_qtdretor
+                                  ,pr_tag_nova => 'DSFAIXA_RENDA'
+                                  ,pr_tag_cont => vr_dsfaixar
+                                  ,pr_des_erro => pr_dscritic);
+          END IF;
         END LOOP;
 
         vr_qtdretor := vr_qtdretor + 1;
@@ -740,7 +945,99 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                      SQLERRM;
   END pc_retorna_dados_xml;
 
+  PROCEDURE pc_insere_crapalt(pr_idpessoa IN NUMBER
+                             ,pr_cdcooper IN NUMBER
+                             ,pr_dtmvtolt IN TIMESTAMP
+                             ,pr_dsaltera IN VARCHAR2
+                             ,pr_dscritic OUT VARCHAR2) IS
+/* ..........................................................................
+  --
+  --  Programa : pc_insere_crapalt
+  --  Sistema  : Conta-Corrente - Cooperativa de Credito
+  --  Sigla    : CADA
+  --  Autor    : Vitor S. Assanuma (GFT)
+  --  Data     : Março/2019.                   Ultima atualizacao:
+  --
+  --  Dados referentes ao programa:
+  --
+  --   Frequencia: Sempre que for chamado
+  --   Objetivo  : Rotina para atualizar a crapalt
+  --
+  --  Alteração :
+  --
+  --
+  -- ..........................................................................*/
+  -- Variaveis de erro
+  vr_dscritic VARCHAR(500);
+  vr_exc_erro EXCEPTION;
+  
+  vr_flg_criou_lot BOOLEAN;
+  vr_dtmvtolt TIMESTAMP;
 
+  CURSOR cr_craptps IS
+      SELECT
+         ass.nrdconta
+        ,ass.nrmatric
+      FROM
+        TBCADAST_PESSOA tps
+      INNER JOIN
+        crapass ass ON  ass.nrcpfcgc = tps.nrcpfcgc
+      WHERE tps.idpessoa = pr_idpessoa
+        AND ass.cdcooper = pr_cdcooper;
+    rw_craptps cr_craptps%ROWTYPE;
+  BEGIN
+    -- Busca o numero da conta e a matricula
+    OPEN  cr_craptps();
+    FETCH cr_craptps into rw_craptps;
+    IF (cr_craptps%NOTFOUND) THEN
+      CLOSE cr_craptps;
+      vr_dscritic := 'Erro ao buscar data na TBCADAST_PESSOA';
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_craptps;
+    
+    vr_dtmvtolt := pr_dtmvtolt;
+    vr_flg_criou_lot := FALSE;
+    
+    WHILE NOT vr_flg_criou_lot LOOP  
+      -- Atualiza a Crapalt
+      BEGIN
+        INSERT INTO crapalt (
+           crapalt.nrdconta
+          ,crapalt.dtaltera
+          ,crapalt.tpaltera
+          ,crapalt.dsaltera
+          ,crapalt.cdcooper
+          ,crapalt.flgctitg
+          ,crapalt.cdoperad)
+        VALUES(
+          rw_craptps.nrdconta,
+          vr_dtmvtolt,
+          1,
+          pr_dsaltera,
+          pr_cdcooper,
+          1,
+          rw_craptps.nrmatric
+        );
+      EXCEPTION
+        -- Caso nao consiga inserir na Crapalt por dupkey, refaz toda a transação
+        WHEN DUP_VAL_ON_INDEX THEN   
+          vr_dtmvtolt := vr_dtmvtolt + 1/24/60/60;
+          CONTINUE;
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar crapalt: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+      vr_flg_criou_lot := TRUE;
+    END LOOP;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na pc_insere_crapalt: ' || SQLERRM;
+  END pc_insere_crapalt;
 
   -- Rotina para cadastro de bens
   PROCEDURE pc_cadast_pessoa_bem(pr_idpessoa        IN NUMBER
@@ -853,6 +1150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                                       pr_cdoperad IN VARCHAR2, -- Codigo do operador
                                       pr_cdagenci IN NUMBER, -- Codigo da agencia
                                       pr_fltoken  IN VARCHAR2 DEFAULT 'S', -- Flag se deve ser alterado o token
+                                      pr_tpcanal_sistema  IN NUMBER DEFAULT 10, -- Sistema que esta solicitando acesso 10-CRM, 13-Ibracred
                                       pr_dstoken  OUT VARCHAR2, -- Token de retorno nos casos de sucesso na validacao
                                       pr_dscritic OUT VARCHAR2) IS  -- Retorno de Erro
     /* ..........................................................................
@@ -869,7 +1167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
     --   Objetivo  : Rotina para validar o acesso do operador na Cooperativa e do PA
 		--               a partir do sistema de CRM
     --
-    --  Alteração : 15/02/2019 - PJ339 Bloqueio CRM - Rubens Lima - Mouts.
+    --  Alteração : 16/05/2019 - 508.1 - Atualização cadastral - Cassia - GFT
     --
     --
     -- ..........................................................................*/
@@ -916,7 +1214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 			CLOSE cr_crapope;
 
 			-- Se operador não possui acesso ao CRM
-			IF rw_crapope.flgutcrm = 0 THEN
+      IF rw_crapope.flgutcrm = 0 and pr_tpcanal_sistema = 10 THEN
 				-- Gerar crítica
 				vr_dscritic := 'Operador não está habilitado para acessar o sistema CRM.';
 				-- Levantar exceção
@@ -1809,6 +2107,145 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                      SQLERRM;
   END pc_retorna_dados_conta;
 
+  -- Rotina para retorno de identificacao pessoa
+  PROCEDURE pc_retorna_identificacao(pr_idpessoa IN NUMBER -- Registro de pessoa
+                                    ,pr_cdcooper IN NUMBER -- Cooperativa
+                                    ,pr_dscanal  IN VARCHAR2 -- Canal
+                                    ,pr_retorno  OUT xmltype -- XML de retorno
+                                    ,pr_dscritic OUT VARCHAR2) IS -- Retorno de Erro
+  /* ..........................................................................
+    --
+    --  Programa : pc_retorna_identificacao
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CADA
+    --  Autor    : Vitor S. Assanuma (GFT)
+    --  Data     : Março/2019.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para identificar o cooperado logando
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    vr_dscritic VARCHAR2(500);
+
+    -- Retorno da procedure
+    vr_vlparamt    VARCHAR(500);
+    vr_nrtentativa NUMBER;
+    vr_flexcedeu   BOOLEAN;
+    vr_flatualizar BOOLEAN;
+    vr_dtatualizar DATE;
+
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%rowtype;
+
+    -- Cursor para buscar a conta utilizando idpessoa
+    CURSOR cr_tbpessoa IS
+      SELECT
+         tps.idpessoa
+        ,tps.nrtentativa
+        ,alt.dtaltera
+      FROM
+        TBCADAST_PESSOA tps
+      INNER JOIN
+        crapass ass ON  ass.nrcpfcgc = tps.nrcpfcgc
+      INNER JOIN
+        crapalt alt ON ass.cdcooper = alt.cdcooper AND ass.nrdconta = alt.nrdconta
+      WHERE tps.idpessoa = pr_idpessoa
+        AND ass.cdcooper = pr_cdcooper
+        AND alt.dtaltera = (SELECT MAX(dtaltera) FROM crapalt WHERE cdcooper = pr_cdcooper AND nrdconta = ass.nrdconta);
+    rw_tbpessoa cr_tbpessoa%ROWTYPE;
+    BEGIN
+      -- Inicialização de variáveis
+      vr_nrtentativa := 0;
+      vr_flexcedeu   := FALSE;
+      vr_flatualizar := FALSE;
+
+      -- Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      IF (btch0001.cr_crapdat%NOTFOUND) THEN
+        CLOSE btch0001.cr_crapdat;
+        vr_dscritic := 'Erro ao buscar data na crapdat';
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE btch0001.cr_crapdat;
+
+      -- Abre o cursor de pessoa para buscar as datas de alteração
+      OPEN cr_tbpessoa;
+      FETCH cr_tbpessoa INTO rw_tbpessoa;
+      IF (cr_tbpessoa%NOTFOUND) THEN
+        CLOSE cr_tbpessoa;
+        vr_dscritic := 'Pessoa não encontrada';
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_tbpessoa;
+
+      -- Busca o parâmetro cadastrado para verificar se é para notificar
+      pc_busca_parametro_tarifas(pr_cdcooper => pr_cdcooper
+                                ,pr_cdpartar => 66
+                                ,pr_vlparamt => vr_vlparamt
+                                ,pr_dscritic => vr_dscritic);
+      IF (TRIM(vr_dscritic) IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Soma a data da ultima alteração com a quantidade de meses*30 (para ficar em dias) do parâmetro.
+      vr_dtatualizar := rw_tbpessoa.dtaltera + NVL(vr_vlparamt, 0)*30;
+
+      -- Verifica se já passou o período para notificar e se está no mês de aniversário OU se já foi notificado alguma vez
+      IF ((((vr_dtatualizar <= rw_crapdat.dtmvtolt) AND (TO_CHAR(vr_dtatualizar, 'MM') = TO_CHAR(rw_tbpessoa.dtaltera, 'MM'))
+          ) OR (NVL(rw_tbpessoa.nrtentativa, 0) > 0))) THEN
+        -- Seta para atualizar
+        vr_flatualizar := TRUE;
+
+        -- Soma 1 as tentativas
+        vr_nrtentativa := NVL(rw_tbpessoa.nrtentativa, 0) + 1;
+
+        -- Atualizar o numero de tentativas
+        UPDATE TBCADAST_PESSOA SET nrtentativa = NVL(nrtentativa, 0)+1 WHERE idpessoa = pr_idpessoa;
+      ELSE
+        -- Senão atualizar o numero de tentativas para 0
+        UPDATE TBCADAST_PESSOA SET nrtentativa = 0 WHERE idpessoa = pr_idpessoa;
+      END IF;
+
+      -- Verifica se passou de 3 tentativas e é para notificar
+      IF (vr_nrtentativa > 3) THEN
+        vr_flexcedeu := TRUE;
+      END IF;
+
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>' ||
+                     '<root>'
+                       || '<idpessoa>'      || pr_idpessoa    || '</idpessoa>'
+                       || '<nrcooperativa>' || pr_cdcooper    || '</nrcooperativa>'
+                       || '<flatualizacao>' || CASE WHEN vr_flatualizar THEN 'TRUE' ELSE 'FALSE' END || '</flatualizacao>'
+                       || '<nrtentativa>'   || vr_nrtentativa || '</nrtentativa>'
+                       || '<flexcedeu>'     || CASE WHEN vr_flexcedeu   THEN 'TRUE' ELSE 'FALSE' END || '</flexcedeu>'
+                     );
+      pc_escreve_xml ('</root>',true);
+      pr_retorno := xmltype.createxml(vr_des_xml);
+
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        -- Montar descrição de erro não tratado
+        pr_dscritic := 'Erro não tratado na pc_retorna_identificacao: ' || SQLERRM;
+  END pc_retorna_identificacao;
 
   -- Rotina para retorno dos dados da matricula do cooperado
   PROCEDURE pc_retorna_matricula(pr_cdcooper IN NUMBER  -- Codigo da cooperativa
@@ -2036,6 +2473,92 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                      SQLERRM;
   END;
 
+  PROCEDURE pc_confirma_pessoa_telefone(pr_cdcooper       IN NUMBER -- Numero da cooperativa
+                                       ,pr_idpessoa       IN NUMBER -- Registro de telefone
+                                       ,pr_nrseq_telefone IN NUMBER -- Numero sequecial do telefone
+                                       ,pr_flsituacao     IN NUMBER -- Situacao: 1 - Ativo/ 2 - Rejeitado
+                                       ,pr_idcanal        IN NUMBER -- Canal que efetuou a atualização
+                                       ,pr_dscritic      OUT VARCHAR2) IS -- Retorno de Erro
+    /* ..........................................................................
+    --
+    --  Programa : pc_confirma_pessoa_telefone
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CADA
+    --  Autor    : Vitor S. Assanuma (GFT)
+    --  Data     : Março/2019.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para confirmar o telefone da pessoa
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+    -- Variaveis de erro
+    vr_dscritic VARCHAR(500);
+    vr_exc_erro EXCEPTION;
+
+    vr_vlparamt VARCHAR(500);
+
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%rowtype;
+    BEGIN
+      -- Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat into rw_crapdat;
+      IF (btch0001.cr_crapdat%NOTFOUND) THEN
+        CLOSE btch0001.cr_crapdat;
+        vr_dscritic := 'Erro ao buscar data na crapdat';
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE btch0001.cr_crapdat;
+           
+      -- Busca o parâmetro cadastrado para verificar se é para inserir na crapalt
+      pc_busca_parametro_tarifas(pr_cdcooper => pr_cdcooper
+                                ,pr_cdpartar => 67
+                                ,pr_vlparamt => vr_vlparamt
+                                ,pr_dscritic => vr_dscritic);
+      IF (TRIM(vr_dscritic) IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      IF vr_vlparamt = '1' AND pr_flsituacao = 1 THEN
+        -- Insere na crapalt
+        pc_insere_crapalt(pr_idpessoa => pr_idpessoa
+                         ,pr_cdcooper => pr_cdcooper
+                         ,pr_dtmvtolt =>  to_date(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||' '||to_char(sysdate,'hh24:mi:ss'), 'DD/MM/RRRR hh24:mi:ss') 
+                         ,pr_dsaltera => 'Confirmação do Telefone'
+                         ,pr_dscritic => vr_dscritic);
+        IF (TRIM(vr_dscritic) IS NOT NULL) THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+      
+      BEGIN
+        UPDATE TBCADAST_PESSOA_TELEFONE 
+          SET idcanal    = pr_idcanal 
+             ,insituacao = pr_flsituacao
+             ,dtrevisao  = rw_crapdat.dtmvtolt
+          WHERE idpessoa = pr_idpessoa
+            AND nrseq_telefone = pr_nrseq_telefone;
+            
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar TBCADAST_PESSOA_TELEFONE: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        -- Montar descrição de erro não tratado
+        pr_dscritic := 'Erro não tratado na pc_confirma_pessoa_telefone: ' || SQLERRM;
+  END pc_confirma_pessoa_telefone;
+
+
   -- Rotina para cadastrar email
   PROCEDURE pc_cadast_pessoa_email(pr_dsemail                IN VARCHAR2 -- Descricao do email
                                   ,pr_nmpessoa_contato       IN VARCHAR2 -- Pessoa de contato no e-mail
@@ -2136,6 +2659,91 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       pr_dscritic := 'Erro não tratado na pc_retorna_pessoa_email: ' ||
                      SQLERRM;
   END;
+
+  PROCEDURE pc_confirma_pessoa_email(pr_cdcooper       IN NUMBER -- Numero da cooperativa
+                                    ,pr_idpessoa       IN NUMBER -- Registro de email
+                                    ,pr_nrseq_email    IN NUMBER -- Numero sequecial do email
+                                    ,pr_flsituacao     IN NUMBER -- Situacao: 1 - Ativo/ 2 - Rejeitado
+                                    ,pr_idcanal        IN NUMBER -- Canal que efetuou a atualização
+                                    ,pr_dscritic      OUT VARCHAR2) IS -- Retorno de Erro
+    /* ..........................................................................
+    --
+    --  Programa : pc_confirma_pessoa_email
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CADA
+    --  Autor    : Vitor S. Assanuma (GFT)
+    --  Data     : Março/2019.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para confirmar o email da pessoa
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+    -- Variaveis de erro
+    vr_dscritic VARCHAR(500);
+    vr_exc_erro EXCEPTION;
+
+    vr_vlparamt VARCHAR(500);
+
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%rowtype;
+    BEGIN  
+      -- Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat into rw_crapdat;
+      IF (btch0001.cr_crapdat%NOTFOUND) THEN
+        CLOSE btch0001.cr_crapdat;
+        vr_dscritic := 'Erro ao buscar data na crapdat';
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE btch0001.cr_crapdat;
+          
+      -- Busca o parâmetro cadastrado para verificar se é para inserir na crapalt
+      pc_busca_parametro_tarifas(pr_cdcooper => pr_cdcooper
+                                ,pr_cdpartar => 67
+                                ,pr_vlparamt => vr_vlparamt
+                                ,pr_dscritic => vr_dscritic);
+      IF (TRIM(vr_dscritic) IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      IF vr_vlparamt = '1' AND pr_flsituacao = 1 THEN
+        -- Insere na crapalt
+        pc_insere_crapalt(pr_idpessoa => pr_idpessoa
+                         ,pr_cdcooper => pr_cdcooper
+                         ,pr_dtmvtolt => to_date(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||' '||to_char(sysdate,'hh24:mi:ss'), 'DD/MM/RRRR hh24:mi:ss')
+                         ,pr_dsaltera => 'Confirmação do Email'
+                         ,pr_dscritic => vr_dscritic);
+        IF (TRIM(vr_dscritic) IS NOT NULL) THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+          
+      -- Atualizar o canal TBCADAST_PESSOA_EMAIL e a data de revisão
+      BEGIN
+        UPDATE TBCADAST_PESSOA_EMAIL 
+          SET idcanal    = pr_idcanal 
+             ,insituacao = pr_flsituacao
+             ,dtrevisao  = rw_crapdat.dtmvtolt
+          WHERE idpessoa = pr_idpessoa
+            AND nrseq_email = pr_nrseq_email;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar TBCADAST_PESSOA_EMAIL: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        -- Montar descrição de erro não tratado
+        pr_dscritic := 'Erro não tratado na pc_confirma_pessoa_email: ' || SQLERRM;
+  END pc_confirma_pessoa_email;  
 
   -- Rotina para cadastrar endereço
   PROCEDURE pc_cadast_pessoa_endereco(pr_idpessoa            IN NUMBER -- Identificador unico da pessoa (FK tbcadast_pessoa)
@@ -2252,6 +2860,95 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                      SQLERRM;
   END;
 
+  PROCEDURE pc_confirma_pessoa_endereco(pr_cdcooper       IN NUMBER -- Numero da cooperativa
+                                       ,pr_idpessoa       IN NUMBER -- Registro de endereço
+                                       ,pr_nrseq_endereco IN NUMBER -- Numero sequecial do endereço
+                                       ,pr_flsituacao     IN NUMBER -- Situacao: 1 - Ativo/ 2 - Rejeitado
+                                       ,pr_idcanal        IN NUMBER -- Canal que efetuou a atualização
+                                       ,pr_dscritic      OUT VARCHAR2) IS -- Retorno de Erro
+    /* ..........................................................................
+    --
+    --  Programa : pc_confirma_pessoa_endereco
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CADA
+    --  Autor    : Vitor S. Assanuma (GFT)
+    --  Data     : Março/2019.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para confirmar o endereço da pessoa
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+    -- Variaveis de erro
+    vr_dscritic VARCHAR(500);
+    vr_exc_erro EXCEPTION;
+    
+    vr_vlparamt VARCHAR(500);
+
+   -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%rowtype;
+  BEGIN
+    
+    -- Leitura do calendário da cooperativa
+    OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat into rw_crapdat;
+    IF (btch0001.cr_crapdat%NOTFOUND) THEN
+      CLOSE btch0001.cr_crapdat;
+      vr_dscritic := 'Erro ao buscar data na crapdat';
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE btch0001.cr_crapdat;
+    
+    -- Busca o parâmetro cadastrado para verificar se é para inserir na crapalt
+    pc_busca_parametro_tarifas(pr_cdcooper => pr_cdcooper
+                              ,pr_cdpartar => 66
+                              ,pr_vlparamt => vr_vlparamt
+                              ,pr_dscritic => vr_dscritic);
+    IF (TRIM(vr_dscritic) IS NOT NULL) THEN
+      RAISE vr_exc_erro;
+    END IF;
+      
+    IF vr_vlparamt = '1' AND pr_flsituacao = 1 THEN
+      -- Insere na crapalt
+      pc_insere_crapalt(pr_idpessoa => pr_idpessoa
+                       ,pr_cdcooper => pr_cdcooper
+                       ,pr_dtmvtolt => to_date(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||' '||to_char(sysdate,'hh24:mi:ss'), 'DD/MM/RRRR hh24:mi:ss')
+                       ,pr_dsaltera => 'Confirmação do Endereço'
+                       ,pr_dscritic => vr_dscritic);
+      IF (TRIM(vr_dscritic) IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+                     
+    -- Atualizar o canal TBCADAST_PESSOA_ENDERECO e a data de revisão
+    BEGIN
+      UPDATE TBCADAST_PESSOA_ENDERECO 
+        SET idcanal   = pr_idcanal 
+           ,dtrevisao = rw_crapdat.dtmvtolt
+           ,statusrevisao = pr_flsituacao
+        WHERE idpessoa       = pr_idpessoa
+          AND nrseq_endereco = pr_nrseq_endereco;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao atualizar TBCADAST_PESSOA_ENDERECO: '||SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+    
+    -- Atualiza o numero de tentativas para 0
+    UPDATE TBCADAST_PESSOA SET nrtentativa = 0 WHERE idpessoa = pr_idpessoa;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na pc_confirma_pessoa_endereco: ' || SQLERRM;
+  END pc_confirma_pessoa_endereco;
+  
   PROCEDURE pc_cadast_pessoa_rend_compl(pr_idpessoa        IN NUMBER -- Identificador unico da pessoa (FK tbcadast_pessoa_fisica)
                                        ,pr_nrseq_renda     IN OUT NUMBER -- Numero sequencial do rendimento
                                        ,pr_tprenda         IN NUMBER -- Tipo de rendimento
@@ -2455,6 +3152,167 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       pr_dscritic := 'Erro não tratado na pc_retorna_pessoa_renda: ' ||
                      SQLERRM;
   END;
+
+  PROCEDURE pc_confirma_pessoa_renda(pr_cdcooper       IN NUMBER -- Numero da cooperativa
+                                    ,pr_idpessoa       IN NUMBER -- Registro de renda
+                                    ,pr_nrseq_renda    IN NUMBER -- Numero sequecial do renda
+                                    ,pr_flsituacao     IN NUMBER -- Situacao: 1 - Ativo/ 2 - Rejeitado
+                                    ,pr_idcanal        IN NUMBER -- Canal que efetuou a atualização
+                                    ,pr_dscritic      OUT VARCHAR2) IS -- Retorno de Erro
+    /* ..........................................................................
+    --
+    --  Programa : pc_confirma_pessoa_renda
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CADA
+    --  Autor    : Vitor S. Assanuma (GFT)
+    --  Data     : Março/2019.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para confirmar o renda da pessoa
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+    -- Variaveis de erro
+    vr_dscritic VARCHAR(500);
+    vr_exc_erro EXCEPTION;
+
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%rowtype;
+    BEGIN  
+
+      -- Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat into rw_crapdat;
+      IF (btch0001.cr_crapdat%NOTFOUND) THEN
+        CLOSE btch0001.cr_crapdat;
+        vr_dscritic := 'Erro ao buscar data na crapdat';
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE btch0001.cr_crapdat;
+          
+      IF pr_flsituacao = 1 THEN
+      -- Insere na crapalt
+      pc_insere_crapalt(pr_idpessoa => pr_idpessoa
+                       ,pr_cdcooper => pr_cdcooper
+                       ,pr_dtmvtolt => to_date(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||' '||to_char(sysdate,'hh24:mi:ss'), 'DD/MM/RRRR hh24:mi:ss')  
+                       ,pr_dsaltera => 'Confirmação da Renda'
+                       ,pr_dscritic => vr_dscritic);
+      IF (TRIM(vr_dscritic) IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;
+      END IF;
+                
+      -- Atualizar o canal TBCADAST_PESSOA_RENDA e a data de revisão
+      BEGIN
+        UPDATE TBCADAST_PESSOA_RENDA 
+          SET idcanal_renda    = pr_idcanal 
+             ,dtrevisao_renda  = rw_crapdat.dtmvtolt
+             ,statusrevisao_renda = pr_flsituacao
+          WHERE idpessoa = pr_idpessoa
+            AND nrseq_renda = pr_nrseq_renda;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar TBCADAST_PESSOA_RENDA: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        -- Montar descrição de erro não tratado
+        pr_dscritic := 'Erro não tratado na pc_confirma_pessoa_renda: ' || SQLERRM;
+  END pc_confirma_pessoa_renda;
+
+  PROCEDURE pc_confirma_pessoa_empresa(pr_cdcooper       IN NUMBER -- Numero da cooperativa
+                                      ,pr_idpessoa       IN NUMBER -- Registro de empresa
+                                      ,pr_nrseq_empresa IN NUMBER -- Numero sequecial do empresa
+                                      ,pr_flsituacao     IN NUMBER -- Situacao: 1 - Ativo/ 2 - Rejeitado
+                                      ,pr_idcanal        IN NUMBER -- Canal que efetuou a atualização
+                                      ,pr_dscritic      OUT VARCHAR2) IS -- Retorno de Erro
+    /* ..........................................................................
+    --
+    --  Programa : pc_confirma_pessoa_empresa
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CADA
+    --  Autor    : Vitor S. Assanuma (GFT)
+    --  Data     : Março/2019.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para confirmar o empresa da pessoa
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+    -- Variaveis de erro
+    vr_dscritic VARCHAR(500);
+    vr_exc_erro EXCEPTION;
+
+    vr_vlparamt VARCHAR(500);
+
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%rowtype;
+    BEGIN  
+
+      -- Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat into rw_crapdat;
+      IF (btch0001.cr_crapdat%NOTFOUND) THEN
+        CLOSE btch0001.cr_crapdat;
+        vr_dscritic := 'Erro ao buscar data na crapdat';
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE btch0001.cr_crapdat;
+                
+      -- Busca o parâmetro cadastrado para verificar se é para inserir na crapalt
+      pc_busca_parametro_tarifas(pr_cdcooper => pr_cdcooper
+                                ,pr_cdpartar => 67
+                                ,pr_vlparamt => vr_vlparamt
+                                ,pr_dscritic => vr_dscritic);
+      IF (TRIM(vr_dscritic) IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      IF vr_vlparamt = '1' AND pr_flsituacao = 1 THEN
+        -- Insere na crapalt
+        pc_insere_crapalt(pr_idpessoa => pr_idpessoa
+                         ,pr_cdcooper => pr_cdcooper
+                         ,pr_dtmvtolt => to_date(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||' '||to_char(sysdate,'hh24:mi:ss'), 'DD/MM/RRRR hh24:mi:ss')
+                         ,pr_dsaltera => 'Confirmação da Empresa'
+                         ,pr_dscritic => vr_dscritic);
+        IF (TRIM(vr_dscritic) IS NOT NULL) THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+                
+      -- Atualizar o canal TBCADAST_PESSOA_RENDA e a data de revisão
+      BEGIN
+        UPDATE TBCADAST_PESSOA_RENDA 
+          SET idcanal_empresa    = pr_idcanal 
+             ,dtrevisao_empresa  = rw_crapdat.dtmvtolt
+             ,statusrevisao_empresa = pr_flsituacao
+          WHERE idpessoa = pr_idpessoa
+            AND nrseq_renda = pr_nrseq_empresa;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar TBCADAST_PESSOA_RENDA com dados da EMPRESA: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        -- Montar descrição de erro não tratado
+        pr_dscritic := 'Erro não tratado na pc_confirma_pessoa_empresa: ' || SQLERRM;
+  END pc_confirma_pessoa_empresa;
 
   -- Rotina para cadastrar relacionamento
   PROCEDURE pc_cadast_pessoa_relacao(pr_idpessoa         IN NUMBER -- Identificador unico da pessoa (FK tbcadast_pessoa_fisica)
@@ -5418,5 +6276,359 @@ PROCEDURE pc_retorna_cep(pr_cdcep              IN NUMBER -- Registro de cep
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro não tratado na pc_retorna_relacionamentos: ' ||SQLERRM;
 	END pc_retorna_relacionamentos;
+
+  PROCEDURE pc_busca_parametro_tarifas(pr_cdcooper IN NUMBER
+                                      ,pr_cdpartar IN NUMBER
+                                      ,pr_vlparamt OUT VARCHAR2
+                                      ,pr_dscritic OUT VARCHAR2) IS
+    /* ..........................................................................
+    --
+    --  Programa : pc_busca_parametro_tarifas
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CADA
+    --  Autor    : Vitor S. Assanuma (GFT)
+    --  Data     : Março/2019.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para buscar os parametros cadastrados na CADPAR
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    vr_dscritic VARCHAR2(500);
+
+    -- Cursor dos parametros
+    CURSOR cr_crappat IS
+      SELECT dsconteu
+      FROM   crappat pat
+      INNER JOIN crappco pco ON pat.cdpartar = pco.cdpartar
+      WHERE pco.cdcooper = pr_cdcooper
+        AND pat.cdpartar = pr_cdpartar;
+    rw_crappat cr_crappat%ROWTYPE;
+  BEGIN
+    -- Abre o cursor buscando o parametro
+    OPEN cr_crappat;
+    FETCH cr_crappat INTO rw_crappat;
+    IF (cr_crappat%NOTFOUND) THEN
+      CLOSE cr_crappat;
+      vr_dscritic := 'Parametro não encontrado.';
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crappat;
+    -- Retorna o parametro encontrado
+    pr_vlparamt := rw_crappat.dsconteu;
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na pc_busca_parametro_tarifas: ' || SQLERRM;
+  END pc_busca_parametro_tarifas;
+
+  PROCEDURE pc_busca_parametro_tarifas_web(pr_cdcooper IN NUMBER
+                                          ,pr_cdpartar IN NUMBER
+                                          ,pr_retorno   IN OUT NOCOPY xmltype
+                                          ,pr_dscritic OUT VARCHAR2) IS
+    /* ..........................................................................
+    --
+    --  Programa : pc_busca_parametro_tarifas_web
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CADA
+    --  Autor    : Vitor S. Assanuma (GFT)
+    --  Data     : Março/2019.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para buscar os parametros cadastrados na CADPAR
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    vr_dscritic VARCHAR2(500);
+
+    -- Retorno da procedure
+    vr_vlparamt VARCHAR(500);
+    BEGIN
+      pc_busca_parametro_tarifas(pr_cdcooper => pr_cdcooper
+                                ,pr_cdpartar => pr_cdpartar
+                                ,pr_vlparamt => vr_vlparamt
+                                ,pr_dscritic => vr_dscritic);
+      IF (TRIM(vr_dscritic) IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                      '<root><vlparamt>'||vr_vlparamt||'</vlparamt>');
+      pc_escreve_xml ('</root>',true);
+      pr_retorno := xmltype.createxml(vr_des_xml);
+
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        -- Montar descrição de erro não tratado
+        pr_dscritic := 'Erro não tratado na pc_busca_parametro_tarifas_web: ' || SQLERRM;
+  END pc_busca_parametro_tarifas_web;
+
+  -- Busca a situação, canal e data de revisão das tabelas de TBCADAST
+  PROCEDURE pc_busca_tbcadast(pr_nrcpfcgc IN NUMBER
+                             ,pr_idseqttl IN NUMBER
+                             ,pr_nmtabela IN VARCHAR2
+                             -- OUT
+                             ,pr_insituac OUT NUMBER
+                             ,pr_dssituac OUT VARCHAR2
+                             ,pr_idcanal  OUT NUMBER
+                             ,pr_dscanal  OUT VARCHAR2
+                             ,pr_dtrevisa OUT DATE
+                             ,pr_dscritic OUT VARCHAR2) IS
+  /* ..........................................................................
+  --
+  --  Programa : pc_busca_tbcadast
+  --  Sistema  : Conta-Corrente - Cooperativa de Credito
+  --  Sigla    : CADA
+  --  Autor    : Vitor S. Assanuma (GFT)
+  --  Data     : Março/2019.                   Ultima atualizacao:
+  --
+  --  Dados referentes ao programa:
+  --
+  --   Frequencia: Sempre que for chamado
+  --   Objetivo  : Rotina para buscar os dados das tabelas de cadastro para ser consumido no progress
+  --
+  --  Alteração :
+  --
+  --
+  -- ..........................................................................*/
+  --> Tratamento de erros
+  vr_exc_erro EXCEPTION;
+  vr_dscritic VARCHAR2(500);
+
+  --> Variáveis locais
+  vr_idpessoa tbcadast_pessoa.idpessoa%TYPE;
+
+  --> Cursores
+  -- Endereço
+  CURSOR cr_tbendereco(pr_idpessoa IN tbcadast_pessoa.idpessoa%TYPE) IS
+    SELECT
+       tpe.idpessoa
+      ,tpe.statusrevisao
+      ,tds.dscodigo AS dssituacao
+      ,tpe.idcanal
+      ,tdc.dscodigo AS dscanal
+      ,to_char(tpe.dtrevisao, 'DD/MM/YYYY') AS dtrevisao
+    FROM
+      tbcadast_pessoa_endereco tpe
+    LEFT JOIN
+      tbcadast_dominio_campo tdc ON tpe.idcanal = tdc.cddominio AND tdc.nmdominio = 'TBCADAST_CANAL'
+    LEFT JOIN
+      tbcadast_dominio_campo tds ON tpe.statusrevisao = tds.cddominio AND tds.nmdominio = 'TBCADAST_STATUSREVISAO'
+    WHERE tpe.idpessoa       = pr_idpessoa
+      AND tpe.nrseq_endereco = pr_idseqttl;
+  rw_tbendereco cr_tbendereco%ROWTYPE;
+
+  -- Telefone
+  CURSOR cr_tbtelefone(pr_idpessoa IN tbcadast_pessoa.idpessoa%TYPE) IS
+    SELECT
+       tpf.idpessoa
+      ,tpf.insituacao
+      ,CASE WHEN tpf.insituacao = 1 THEN 'Ativo' ELSE 'Inativo' END AS dssituacao
+      ,tpf.idcanal
+      ,tdc.dscodigo AS dscanal
+      ,to_char(tpf.dtrevisao, 'DD/MM/YYYY') AS dtrevisao
+    FROM
+      crapass ass
+    JOIN 
+      crapttl ttl ON ass.cdcooper = ttl.cdcooper AND ass.nrdconta = ttl.nrdconta AND ass.nrcpfcgc = ttl.nrcpfcgc
+    JOIN 
+      craptfc tfc ON ass.cdcooper = tfc.cdcooper AND ass.nrdconta = tfc.nrdconta AND ttl.idseqttl = tfc.idseqttl 
+    JOIN 
+      tbcadast_pessoa pes ON pes.nrcpfcgc = ass.nrcpfcgc
+    JOIN 
+      tbcadast_pessoa_telefone tpf ON pes.idpessoa = tpf.idpessoa AND tfc.nrtelefo = tpf.nrtelefone
+    LEFT JOIN
+      tbcadast_dominio_campo tdc ON tpf.idcanal = tdc.cddominio AND tdc.nmdominio = 'TBCADAST_CANAL'
+    WHERE tpf.idpessoa       = pr_idpessoa
+      AND tfc.cdseqtfc = pr_idseqttl;
+  rw_tbtelefone cr_tbtelefone%ROWTYPE;
+
+  -- Email
+  CURSOR cr_tbemail(pr_idpessoa IN tbcadast_pessoa.idpessoa%TYPE) IS
+    SELECT
+       tpe.idpessoa
+      ,tpe.insituacao
+      ,CASE WHEN tpe.insituacao = 1 THEN 'Ativo' ELSE 'Inativo' END AS dssituacao
+      ,tpe.idcanal
+      ,tdc.dscodigo AS dscanal
+      ,to_char(tpe.dtrevisao, 'DD/MM/YYYY') AS dtrevisao
+    FROM
+      tbcadast_pessoa_email tpe
+    LEFT JOIN
+      tbcadast_dominio_campo tdc ON tpe.idcanal = tdc.cddominio AND tdc.nmdominio = 'TBCADAST_CANAL'
+    WHERE tpe.idpessoa       = pr_idpessoa
+      AND tpe.nrseq_email = pr_idseqttl;
+  rw_tbemail cr_tbemail%ROWTYPE;
+
+  -- Renda
+  CURSOR cr_tbrenda(pr_idpessoa IN tbcadast_pessoa.idpessoa%TYPE) IS
+    SELECT
+       tpr.idpessoa
+      ,tpr.statusrevisao_renda
+      ,tds.dscodigo AS dssituacao
+      ,tpr.idcanal_renda   AS idcanal
+      ,tdc.dscodigo        AS dscanal
+      ,to_char(tpr.dtrevisao_renda, 'DD/MM/YYYY') AS dtrevisao
+    FROM
+      tbcadast_pessoa_renda tpr
+    LEFT JOIN
+      tbcadast_dominio_campo tdc ON tpr.idcanal_renda = tdc.cddominio AND tdc.nmdominio = 'TBCADAST_CANAL'
+    LEFT JOIN
+      tbcadast_dominio_campo tds ON tpr.statusrevisao_renda = tds.cddominio AND tds.nmdominio = 'TBCADAST_STATUSREVISAO'
+    WHERE tpr.idpessoa       = pr_idpessoa
+      AND tpr.nrseq_renda = pr_idseqttl;
+  rw_tbrenda cr_tbrenda%ROWTYPE;
+
+  -- Empresa
+  CURSOR cr_tbempresa(pr_idpessoa IN tbcadast_pessoa.idpessoa%TYPE) IS
+    SELECT
+       tpr.idpessoa
+      ,tpr.statusrevisao_empresa
+      ,tds.dscodigo AS dssituacao
+      ,tpr.idcanal_empresa   AS idcanal
+      ,tdc.dscodigo          AS dscanal
+      ,to_char(tpr.dtrevisao_empresa, 'DD/MM/YYYY') AS dtrevisao
+    FROM
+      tbcadast_pessoa_renda tpr
+    LEFT JOIN
+      tbcadast_dominio_campo tdc ON tpr.idcanal_empresa = tdc.cddominio AND tdc.nmdominio = 'TBCADAST_CANAL'
+    LEFT JOIN
+      tbcadast_dominio_campo tds ON tpr.statusrevisao_empresa = tds.cddominio AND tds.nmdominio = 'TBCADAST_STATUSREVISAO'
+    WHERE tpr.idpessoa       = pr_idpessoa
+      AND tpr.nrseq_renda = pr_idseqttl;
+  rw_tbempresa cr_tbempresa%ROWTYPE;
+
+  BEGIN
+    -- Checa os parametros
+    IF (pr_nrcpfcgc is NULL OR pr_idseqttl IS NULL OR pr_nmtabela IS NULL) THEN
+      vr_dscritic := 'CPF, Sequencial ou Tabela esta vazio';
+      RAISE vr_exc_erro;
+    END IF;
+
+    --Start dos outs
+    pr_insituac := 1;
+    pr_dssituac := 'Ativo';
+    pr_idcanal  := 0;
+    pr_dscanal  := '';
+
+    --Busca a IDPESSOA pelo CPF
+    SELECT idpessoa INTO vr_idpessoa FROM TBCADAST_PESSOA WHERE nrcpfcgc = pr_nrcpfcgc;
+    IF vr_idpessoa IS NULL THEN
+      vr_dscritic := 'Erro ao buscar a pessoa, pessoa nao encontrada';
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Tratamento para cada tabela
+    CASE UPPER(pr_nmtabela)
+      WHEN 'ENDERECO' THEN
+        OPEN cr_tbendereco(pr_idpessoa => vr_idpessoa);
+        FETCH cr_tbendereco INTO rw_tbendereco;
+        IF cr_tbendereco%NOTFOUND THEN
+          CLOSE cr_tbendereco;
+          RETURN;
+        END IF;
+        CLOSE cr_tbendereco;
+
+        -- Retorno dos valores
+        pr_insituac := rw_tbendereco.statusrevisao;
+        pr_dssituac := rw_tbendereco.dssituacao;
+        pr_idcanal  := NVL(rw_tbendereco.idcanal, 0);
+        pr_dscanal  := rw_tbendereco.dscanal;
+        pr_dtrevisa := TO_DATE(rw_tbendereco.dtrevisao, 'DD/MM/RRRR');
+      WHEN 'TELEFONE' THEN
+        OPEN cr_tbtelefone(pr_idpessoa => vr_idpessoa);
+        FETCH cr_tbtelefone INTO rw_tbtelefone;
+        IF cr_tbtelefone%NOTFOUND THEN
+          CLOSE cr_tbtelefone;
+          RETURN;
+        END IF;
+        CLOSE cr_tbtelefone;
+
+        -- Retorno dos valores
+        pr_insituac := rw_tbtelefone.insituacao;
+        pr_dssituac := rw_tbtelefone.dssituacao;
+        pr_idcanal  := NVL(rw_tbtelefone.idcanal, 0);
+        pr_dscanal  := rw_tbtelefone.dscanal;
+        pr_dtrevisa := TO_DATE(rw_tbtelefone.dtrevisao, 'DD/MM/RRRR');
+      WHEN 'EMAIL' THEN
+        OPEN cr_tbemail(pr_idpessoa => vr_idpessoa);
+        FETCH cr_tbemail INTO rw_tbemail;
+        IF cr_tbemail%NOTFOUND THEN
+          CLOSE cr_tbemail;
+          RETURN;
+        END IF;
+        CLOSE cr_tbemail;
+
+        -- Retorno dos valores
+        pr_insituac := rw_tbemail.insituacao;
+        pr_dssituac := rw_tbemail.dssituacao;
+        pr_idcanal  := NVL(rw_tbemail.idcanal, 0);
+        pr_dscanal  := rw_tbemail.dscanal;
+        pr_dtrevisa := TO_DATE(rw_tbemail.dtrevisao, 'DD/MM/RRRR');
+     WHEN 'EMPRESA' THEN
+        OPEN cr_tbempresa(pr_idpessoa => vr_idpessoa);
+        FETCH cr_tbempresa INTO rw_tbempresa;
+        IF cr_tbempresa%NOTFOUND THEN
+          CLOSE cr_tbempresa;
+          RETURN;
+        END IF;
+        CLOSE cr_tbempresa;
+
+        -- Retorno dos valores
+        pr_insituac := rw_tbempresa.statusrevisao_empresa;
+        pr_dssituac := rw_tbempresa.dssituacao;
+        pr_idcanal  := NVL(rw_tbempresa.idcanal, 0);
+        pr_dscanal  := rw_tbempresa.dscanal;
+        pr_dtrevisa := TO_DATE(rw_tbempresa.dtrevisao, 'DD/MM/RRRR');
+      WHEN 'RENDA' THEN
+        OPEN cr_tbrenda(pr_idpessoa => vr_idpessoa);
+        FETCH cr_tbrenda INTO rw_tbrenda;
+        IF cr_tbrenda%NOTFOUND THEN
+          CLOSE cr_tbrenda;
+          RETURN;
+        END IF;
+        CLOSE cr_tbrenda;
+
+        -- Retorno dos valores
+        pr_insituac := rw_tbrenda.statusrevisao_renda;
+        pr_dssituac := rw_tbrenda.dssituacao;
+        pr_idcanal  := NVL(rw_tbrenda.idcanal, 0);
+        pr_dscanal  := rw_tbrenda.dscanal;
+        pr_dtrevisa := TO_DATE(rw_tbrenda.dtrevisao, 'DD/MM/RRRR');
+      ELSE
+        vr_dscritic := 'Opcao de tabela nao encontrada';
+        RAISE vr_exc_erro;
+    END CASE;
+  EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        -- Montar descrição de erro não tratado
+        pr_dscritic := 'Erro não tratado na pc_busca_tbcadast: ' || SQLERRM;
+  END pc_busca_tbcadast;
 END cada0012;
 /

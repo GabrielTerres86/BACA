@@ -325,6 +325,10 @@
 
                  21/03/2019 - Ajuste no Termo de Recisao para assinatura eletronica
                               Pj470 SM 1 - Ze Gracik - Mouts
+                 05/05/2019 - PRJ 438 - Sprint 7 - Alterado rotinas de gravar/alterar limite com os novos campos da tela avalista,
+                                alterado impressao de proposta PJ - (Mateus Z - Mouts).
+
+
 ..............................................................................*/
 
 
@@ -600,7 +604,13 @@ PROCEDURE obtem-cabecalho-limite:
                                                   ELSE
                                                   IF craplim.tprenova = "M" THEN
                                                      "Manual"
-                                                  ELSE "".
+                                                  ELSE ""
+                   /* PRJ 438 - Sprint 7 - Retornar a taxa da linha de credito */
+                   tt-cabec-limcredito.nivrisco = "A"
+                   tt-cabec-limcredito.dsdtxfix = IF   AVAIL craplrt   THEN
+                                                         STRING(craplrt.txjurfix) + '% + TR'
+                                                    ELSE
+                                                         "".
         END.                                  
     ELSE
         ASSIGN tt-cabec-limcredito.vllimite = 0 
@@ -620,7 +630,9 @@ PROCEDURE obtem-cabecalho-limite:
                tt-cabec-limcredito.qtrenova = 0
                tt-cabec-limcredito.dtrenova = ?
                tt-cabec-limcredito.tprenova = ""
-               tt-cabec-limcredito.dstprenv = "".
+               tt-cabec-limcredito.dstprenv = ""
+			   tt-cabec-limcredito.nivrisco = "A"
+			   tt-cabec-limcredito.dsdtxfix = "".
 
     FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
                              craplim.nrdconta = par_nrdconta AND
@@ -1878,18 +1890,23 @@ PROCEDURE obtem-limite:
                LEAVE Obtem_Limite.
            END.
 
-       RUN ver_cadastro IN h-b1wgen0001 (INPUT par_cdcooper,
-                                         INPUT par_nrdconta,
-                                         INPUT par_cdagenci, 
-                                         INPUT par_nrdcaixa, 
-                                         INPUT par_dtmvtolt,
-                                         INPUT par_idorigem,
-                                        OUTPUT TABLE tt-erro).
+       IF par_inconfir = 1 THEN
+           DO:
+           
+             RUN ver_cadastro IN h-b1wgen0001 (INPUT par_cdcooper,
+                                               INPUT par_nrdconta,
+                                               INPUT par_cdagenci, 
+                                               INPUT par_nrdcaixa, 
+                                               INPUT par_dtmvtolt,
+                                               INPUT par_idorigem,
+                                              OUTPUT TABLE tt-erro).
         
-       DELETE PROCEDURE h-b1wgen0001.
+             DELETE PROCEDURE h-b1wgen0001.
               
-       IF   RETURN-VALUE <> "OK"  THEN
-            LEAVE Obtem_Limite.
+             IF   RETURN-VALUE <> "OK"  THEN
+                  LEAVE Obtem_Limite.
+
+           END.
 
        FIND craplrt WHERE craplrt.cdcooper = craplim.cdcooper   AND
                           craplrt.cddlinha = craplim.cddlinha   NO-LOCK NO-ERROR.
@@ -1912,10 +1929,18 @@ PROCEDURE obtem-limite:
                   tt-proposta-limcredito.vltotsfn = craplim.vltotsfn
                   tt-proposta-limcredito.nrperger = craplim.nrperger
                   tt-proposta-limcredito.dtconbir = craplim.dtconbir
+                  tt-proposta-limcredito.nivrisco = "A"
+                  tt-proposta-limcredito.inconcje = craplim.inconcje
                   tt-proposta-limcredito.dsdlinha = IF   AVAIL craplrt   THEN
                                                          craplrt.dsdlinha
                                                     ELSE
-                                                         "".
+                                                         ""
+                  /* PRJ 438 - Sprint 7 - Retornar a taxa da linha de credito */                                       
+                  tt-proposta-limcredito.dsdtxfix = IF   AVAIL craplrt   THEN
+                                                         STRING(craplrt.txjurfix) + '% + TR'
+                                                    ELSE
+                                                         ""
+                                                         .
        ELSE           
            ASSIGN tt-proposta-limcredito.nrctrpro = 0
                   tt-proposta-limcredito.vllimpro = 0
@@ -1927,7 +1952,11 @@ PROCEDURE obtem-limite:
                   tt-proposta-limcredito.nrliquid = 0
                   tt-proposta-limcredito.nrpatlvr = 0
                   tt-proposta-limcredito.vltotsfn = 0
-                  tt-proposta-limcredito.nrperger = 0.
+                  tt-proposta-limcredito.nrperger = 0
+                  /* PRJ 438 - Sprint 7 - Retornar a taxa da linha de credito */
+                  tt-proposta-limcredito.dsdtxfix = ""
+                  tt-proposta-limcredito.nivrisco = "A"
+                  tt-proposta-limcredito.inconcje = 0.
 
        ASSIGN aux_flgtrans = TRUE.
                       
@@ -3598,6 +3627,12 @@ PROCEDURE cadastrar-novo-limite:
     DEF  INPUT PARAM par_complen1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme1 AS DECI                           NO-UNDO.
+	  /* PRJ 438 Sprint 7 */
+	  DEF  INPUT PARAM par_vlrecjg1 AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio1 AS INTE                           NO-UNDO.
+	  DEF  INPUT PARAM par_inpesso1 AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtnasct1 AS DATE                           NO-UNDO.    
+    
     /** ------------------- Parametros do 2 avalista ------------------- **/
     DEF  INPUT PARAM par_nrctaav2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdaval2 AS CHAR                           NO-UNDO.
@@ -3619,6 +3654,12 @@ PROCEDURE cadastrar-novo-limite:
     DEF  INPUT PARAM par_complen2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme2 AS DECI                           NO-UNDO.
+	  /* PRJ 438 Sprint 7 */
+	  DEF  INPUT PARAM par_vlrecjg2 AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio2 AS INTE                           NO-UNDO.
+	  DEF  INPUT PARAM par_inpesso2 AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtnasct2 AS DATE                           NO-UNDO.
+    
     DEF  INPUT PARAM par_inconcje AS INTE                           NO-UNDO.   
     DEF  INPUT PARAM par_dtconbir AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_idcobope AS INTE                           NO-UNDO.
@@ -4039,15 +4080,15 @@ PROCEDURE cadastrar-novo-limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT 0,
+                                                    INPUT par_cdnacio1,
                                                     INPUT 0,
                                                     INPUT par_vlrenme1,
                                                     INPUT par_nrender1,
                                                     INPUT par_complen1,
                                                     INPUT par_nrcxaps1,
-                                                    INPUT 0,  /* inpessoa 1o avail */
-                                                    INPUT ?,  /* dtnascto 1o avail */
-													INPUT 0, /* par_vlrecjg1 */
+                                                    INPUT par_inpesso1,  /* inpessoa 1o avail */
+                                                    INPUT par_dtnasct1,  /* dtnascto 1o avail */
+                                                    INPUT par_vlrecjg1, /* par_vlrecjg1 */
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -4065,15 +4106,15 @@ PROCEDURE cadastrar-novo-limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT 0,
+                                                    INPUT par_cdnacio2,
                                                     INPUT 0,
                                                     INPUT par_vlrenme2,
                                                     INPUT par_nrender2,
                                                     INPUT par_complen2,
                                                     INPUT par_nrcxaps2,
-                                                    INPUT 0,  /* inpessoa 2o avail */
-                                                    INPUT ?,  /* dtnascto 2o avail */
-													INPUT 0, /* par_vlrecjg2 */
+                                                    INPUT par_inpesso2,  /* inpessoa 1o avail */
+                                                    INPUT par_dtnasct2,  /* dtnascto 1o avail */
+                                                    INPUT par_vlrecjg2, /* par_vlrecjg2 */
                                                     INPUT "",
                                                    OUTPUT TABLE tt-erro).
         
@@ -4968,7 +5009,87 @@ PROCEDURE gera-impressao-limite:
          tt-dados-prp.vllimite FORMAT "zzz,zzz,zz9.99"
          rel_cabobser                             FORMAT "x(12)" 
          SKIP
-         WITH NO-BOX NO-LABELS WIDTH 96 FRAME f_dados.
+         WITH NO-BOX NO-LABELS WIDTH 96 FRAME f_dados_fisica.
+         
+    FORM SKIP
+         "DADOS DO ASSOCIADO"
+         SKIP 
+         "Conta/dv:"                  
+         tt-dados-prp.nrdconta FORMAT "zzzz,zzz,9"
+         "Matricula:"          AT 29  
+         tt-dados-prp.nrmatric FORMAT "zzz,zz9"
+         "PA"                  AT 50
+         tt-dados-prp.nmresage FORMAT "x(22)"
+         SKIP(1)
+         "Nome do(s) titular(es):"    
+         tt-dados-prp.nmprimtl FORMAT "x(50)"
+         SKIP
+         tt-dados-prp.nmsegntl AT 25 FORMAT "x(50)" 
+         SKIP
+         "CPF/CNPJ:"                  
+         tt-dados-prp.nrcpfcgc FORMAT "x(18)"
+         "Admissao:"           AT 61  
+         tt-dados-prp.dtadmiss FORMAT "99/99/9999"
+         SKIP
+         "Empresa:"                   
+         tt-dados-prp.dsempres FORMAT "x(25)"
+         "Inicio da Atividade:"           AT 50  
+         tt-dados-prp.dtiniatv FORMAT "99/99/9999"
+         SKIP
+         "Ramo de Atividade:"
+         tt-dados-prp.dsrmativ FORMAT "x(50)"
+         SKIP(1)
+         "Telefone/Ramal:"            
+         tt-dados-prp.nrdofone FORMAT "X(20)"
+         SKIP(1)
+         "Tipo de conta:"             
+         tt-dados-prp.dstipcta FORMAT "x(20)"
+         "Situacao da conta:"  AT 38  
+         tt-dados-prp.dssitdct FORMAT "x(22)"
+         SKIP(1)
+         "RECIPROCIDADE"
+         SKIP 
+         "Saldo medio do trimestre:"  
+         tt-dados-prp.vlsmdtri FORMAT "zzzzzz,zz9.99"
+         "Capital:"            AT 41  
+         tt-dados-prp.vlcaptal FORMAT "zzzzzz,zz9.99"
+         "Plano:"              AT 64  
+         tt-dados-prp.vlprepla FORMAT "zzz,zz9.99"
+         SKIP(1)
+         "Aplicacoes:"                
+         tt-dados-prp.vlaplica FORMAT "zzz,zzz,zz9.99"
+         SKIP(1)
+         "FATURAMENTO"
+         SKIP 
+         "Faturamento Medio Mensal:"                   
+         tt-dados-prp.vlfatmes FORMAT "zzz,zzz,zz9.99"
+         SKIP
+         "Concentracao Faturamento Unico Cliente:" 
+         tt-dados-prp.perfatcl FORMAT "zzz,zzz,zz9.99"
+         SKIP(1)
+         "Limite de credito atual:"   
+         tt-dados-prp.vllimcre FORMAT "zzz,zzz,zz9.99"
+         "Aluguel:"            AT 61  
+         tt-dados-prp.vlalugue FORMAT "zzzz,zz9.99"
+         SKIP(1)
+         "Limite de cartao(es) de credito:"
+         tt-dados-prp.vltotccr FORMAT "zzz,zzz,zz9.99"
+         SKIP(1)
+         "DIVIDA"
+         SKIP 
+         "Saldo devedor de emprestimos:" 
+         tt-dados-prp.vltotemp FORMAT "zzz,zzz,zz9.99"
+         "Prestacoes:" AT 49 
+         tt-dados-prp.vltotpre FORMAT "zzz,zzz,zz9.99"
+         SKIP
+         "TOTAL OP.CREDITO:"          
+         tt-dados-prp.vlutiliz FORMAT "zzz,zzz,zz9.99"
+         SKIP 
+         "Limite de credito proposto:" 
+         tt-dados-prp.vllimite FORMAT "zzz,zzz,zz9.99"
+         rel_cabobser                             FORMAT "x(12)" 
+         SKIP
+         WITH NO-BOX NO-LABELS WIDTH 96 FRAME f_dados_juridica.     
        
     FORM rel_dsobserv FORMAT "x(76)"
          WITH DOWN NO-BOX NO-LABELS WIDTH 96 FRAME f_dados_2.
@@ -5647,7 +5768,27 @@ PROCEDURE gera-impressao-limite:
                        tt-dados-prp.nmextcop  tt-dados-prp.nrctrlim
                        WITH FRAME f_coop.
                     
-               DISPLAY STREAM str_limcre
+               IF  tt-dados-prp.inpessoa > 1  THEN 
+                   DO:
+                      DISPLAY STREAM str_limcre
+                               tt-dados-prp.nrdconta  tt-dados-prp.nrmatric
+                               tt-dados-prp.nmresage  tt-dados-prp.nmprimtl
+                               tt-dados-prp.dtadmiss  tt-dados-prp.nrcpfcgc
+                               tt-dados-prp.nmsegntl  tt-dados-prp.dsempres
+                               tt-dados-prp.dstipcta  tt-dados-prp.dssitdct
+                               tt-dados-prp.vlsmdtri  tt-dados-prp.vlcaptal 
+                               tt-dados-prp.vlprepla  tt-dados-prp.vlaplica 
+                               tt-dados-prp.vlfatmes  tt-dados-prp.perfatcl 
+                               tt-dados-prp.vllimcre  tt-dados-prp.vlalugue  
+                               tt-dados-prp.vltotccr  tt-dados-prp.vltotemp  
+                               tt-dados-prp.vltotpre  tt-dados-prp.vlutiliz  
+                               tt-dados-prp.vllimite  tt-dados-prp.dtiniatv  
+                               tt-dados-prp.dsrmativ
+                               rel_cabobser WITH FRAME f_dados_juridica.                               
+                   END.
+               ELSE
+                   DO:
+                      DISPLAY STREAM str_limcre
                        tt-dados-prp.nrdconta  tt-dados-prp.nrmatric
                        tt-dados-prp.nmresage  tt-dados-prp.nmprimtl
                        tt-dados-prp.dtadmiss  tt-dados-prp.nrcpfcgc
@@ -5660,7 +5801,9 @@ PROCEDURE gera-impressao-limite:
                        tt-dados-prp.vlalugue  tt-dados-prp.vltotccr
                        tt-dados-prp.vltotemp  tt-dados-prp.vltotpre
                        tt-dados-prp.vlutiliz  tt-dados-prp.vllimite
-                       rel_cabobser WITH FRAME f_dados.
+                               rel_cabobser WITH FRAME f_dados_fisica.                   
+                   END.
+                    
                
                ASSIGN aux_restoobs = LENGTH(aux_dsobserv) MODULO 76
                       aux_incontad = 1.
@@ -7785,6 +7928,11 @@ PROCEDURE obtem-dados-proposta:
     DEF VAR aux_nrcpfcjg AS DECI                                    NO-UNDO.
     DEF VAR aux_nrctacje AS INTE                                    NO-UNDO.
 	DEF VAR aux_nmsegntl AS CHAR								    NO-UNDO.
+    /* PRJ 438 - Sprint 7 */
+    DEF VAR aux_dsrmativ AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dtiniatv AS DATE                                    NO-UNDO.
+    DEF VAR aux_vlfatmes AS DECI                                    NO-UNDO.
+    DEF VAR aux_perfatcl AS DECI                                    NO-UNDO.
 
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0002 AS HANDLE                                  NO-UNDO.
@@ -8347,7 +8495,36 @@ PROCEDURE obtem-dados-proposta:
                                NO-LOCK NO-ERROR.
 
             IF   AVAIL crapjur  THEN
-                 ASSIGN aux_cdempres = crapjur.cdempres.
+                DO:
+                    ASSIGN aux_cdempres = crapjur.cdempres
+                        /* PRJ 438 - Sprint 7 */
+                        aux_dtiniatv = crapjur.dtiniatv
+                        aux_vlfatmes = crapjur.vlfatano / 12.
+                        
+                    /* PRJ 438 - Sprint 7 */    
+                    IF   crapjur.cdrmativ <> 0   AND
+                         crapjur.cdseteco <> 0   THEN
+                       DO:
+                            FIND gnrativ WHERE 
+                                         gnrativ.cdseteco = crapjur.cdseteco AND
+                                         gnrativ.cdrmativ = crapjur.cdrmativ
+                                         NO-LOCK NO-ERROR.
+
+                            ASSIGN aux_dsrmativ = IF   AVAILABLE gnrativ THEN 
+                                                                STRING(gnrativ.cdrmativ) + " - " + gnrativ.nmrmativ
+                                                           ELSE 
+                                                                "".
+                       END.            
+                         
+                END.
+                
+            /* PRJ 438 - Sprint 7 */    
+            FIND FIRST crapjfn WHERE crapjfn.cdcooper = par_cdcooper  AND
+                                     crapjfn.nrdconta = par_nrdconta
+                               NO-LOCK NO-ERROR.
+
+            IF   AVAIL crapjfn  THEN
+                    ASSIGN aux_perfatcl = crapjfn.perfatcl.
                  
             ASSIGN aux_nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,
                                   "99999999999999"),"xx.xxx.xxx/xxxx-xx").
@@ -8442,7 +8619,13 @@ PROCEDURE obtem-dados-proposta:
            tt-dados-prp.nrcpfcjg = aux_nrcpfcjg
            tt-dados-prp.nrctacje = aux_nrctacje
            tt-dados-prp.inconcje = craplim.inconcje
-           tt-dados-prp.idcobope = craplim.idcobope.
+           tt-dados-prp.idcobope = craplim.idcobope
+           tt-dados-prp.inpessoa = crapass.inpessoa
+           /* PRJ 438 - Sprint 7 */
+           tt-dados-prp.dtiniatv = aux_dtiniatv
+           tt-dados-prp.dsrmativ = aux_dsrmativ
+           tt-dados-prp.vlfatmes = aux_vlfatmes
+           tt-dados-prp.perfatcl = aux_perfatcl.
 
     /* Salvar os CPF/CNPJ dos avais e o tipo de pessoa */
     FOR EACH tt-dados-avais NO-LOCK.
@@ -9627,6 +9810,11 @@ PROCEDURE alterar-novo-limite:
     DEF  INPUT PARAM par_complen1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme1 AS DECI                           NO-UNDO.
+    /* PRJ 438 Sprint 7 */
+	  DEF  INPUT PARAM par_vlrecjg1 AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio1 AS INTE                           NO-UNDO.
+	  DEF  INPUT PARAM par_inpesso1 AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtnasct1 AS DATE                           NO-UNDO.
     /** ------------------- Parametros do 2 avalista ------------------- **/
     DEF  INPUT PARAM par_nrctaav2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdaval2 AS CHAR                           NO-UNDO.
@@ -9648,6 +9836,11 @@ PROCEDURE alterar-novo-limite:
     DEF  INPUT PARAM par_complen2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme2 AS DECI                           NO-UNDO.
+    /* PRJ 438 Sprint 7 */
+	  DEF  INPUT PARAM par_vlrecjg2 AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio2 AS INTE                           NO-UNDO.
+	  DEF  INPUT PARAM par_inpesso2 AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtnasct2 AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_inconcje AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtconbir AS DATE                           NO-UNDO.   
     DEF  INPUT PARAM par_idcobope AS INTE                           NO-UNDO.
@@ -10058,15 +10251,15 @@ PROCEDURE alterar-novo-limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT 0,
+                                                    INPUT par_cdnacio1,
                                                     INPUT 0,
                                                     INPUT par_vlrenme1,
                                                     INPUT par_nrender1,
                                                     INPUT par_complen1,
                                                     INPUT par_nrcxaps1,
-                                                    INPUT 0,  /* inpessoa 1o avail */
-                                                    INPUT ?,  /* dtnascto 1o avail */
-													INPUT 0, /* par_vlrecjg1 */
+                                                    INPUT par_inpesso1,
+                                                    INPUT par_dtnasct1,
+                                                    INPUT par_vlrecjg1,
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -10084,15 +10277,15 @@ PROCEDURE alterar-novo-limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT 0,
+                                                    INPUT par_cdnacio2,
                                                     INPUT 0,
                                                     INPUT par_vlrenme2,
                                                     INPUT par_nrender2,
                                                     INPUT par_complen2,
                                                     INPUT par_nrcxaps2,
-                                                    INPUT 0,  /* inpessoa 2o avail */
-                                                    INPUT ?,  /* dtnascto 2o avail */
-													INPUT 0, /* par_vlrecjg2 */
+                                                    INPUT par_inpesso2,
+                                                    INPUT par_dtnasct2,
+                                                    INPUT par_vlrecjg2,
                                                     INPUT "").
         
         DELETE PROCEDURE h-b1wgen9999.
@@ -10339,118 +10532,39 @@ PROCEDURE busca-dados-avalistas:
 
     IF  AVAIL(craplim) THEN
         DO:
-            /*********SEGUNDO AVALISTA********************************/
-            FIND crapass WHERE crapass.cdcooper = craplim.cdcooper
-                           AND crapass.nrdconta = craplim.nrctaav2
-                           NO-LOCK NO-ERROR.
-
-            IF  AVAIL(crapass) THEN
-                DO:
-                    EMPTY TEMP-TABLE tt-dados-avais.
-
-                    RUN sistema/generico/procedures/b1wgen0028.p 
-                                   PERSISTENT SET h-b1wgen0028.
-                                                    
-                    RUN carrega_avalista IN h-b1wgen0028
-                                              ( INPUT  craplim.cdcooper,
-                                                INPUT  0,
-                                                INPUT  0,
-                                                INPUT  par_cdoperad,
-                                                INPUT  par_nmdatela,
-                                                INPUT  1,
-                                                INPUT  craplim.nrdconta,
-                                                INPUT  1,
-                                                INPUT  par_dtmvtolt,
-                                                INPUT  craplim.nrctaav2,
-                                                INPUT  crapass.nrcpfcgc,
-                                                INPUT  YES,
-                                                OUTPUT TABLE tt-dados-avais,
-                                                OUTPUT TABLE tt-erro). 
-                    DELETE PROCEDURE h-b1wgen0028.
         
-                    IF  CAN-FIND(FIRST tt-erro)   THEN
-                        RETURN "NOK".
-        
-                    FIND tt-dados-avais NO-ERROR.
-                    IF  AVAIL tt-dados-avais THEN 
-                        DO:
-                            ASSIGN lim_nmdavali    = tt-dados-avais.nmdavali
-                                   lim_nrcpfcgc    = tt-dados-avais.nrcpfcgc
-                                   lim_tpdocavl    = tt-dados-avais.tpdocava
-                                   lim_dscpfavl    = tt-dados-avais.nrdocava
-                                   lim_nmdcjavl    = tt-dados-avais.nmconjug
-                                   lim_nrcpfccg    = tt-dados-avais.nrcpfcjg
-                                   lim_tpdoccjl    = tt-dados-avais.tpdoccjg
-                                   lim_dscfcavl    = tt-dados-avais.nrdoccjg
-                                   lim_dsendavl[1] = tt-dados-avais.dsendre1
-                                   lim_dsendavl[2] = tt-dados-avais.dsendre2
-                                   lim_nmcidade    = tt-dados-avais.nmcidade
-                                   lim_cdufresd    = tt-dados-avais.cdufresd
-                                   lim_nrcepend    = tt-dados-avais.nrcepend
-                                   lim_nrendere    = tt-dados-avais.nrendere
-                                   lim_complend    = tt-dados-avais.complend
-                                   lim_nrcxapst    = tt-dados-avais.nrcxapst.
+            RUN sistema/generico/procedures/b1wgen9999.p
+                    PERSISTENT SET h-b1wgen9999.
+
+                IF  NOT VALID-HANDLE(h-b1wgen9999)  THEN
+                   DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Handle invalido para BO "
+                                              + "b1wgen9999.".
+                        LEAVE.
                         END.
                     
-                END.
-
-            /********PRIMEIRO AVALISTA********************************/
-            FIND crapass WHERE crapass.cdcooper = craplim.cdcooper
-                           AND crapass.nrdconta = craplim.nrctaav1
-                           NO-LOCK NO-ERROR.
-
-            IF  AVAIL(crapass) THEN
-                DO:
-                    EMPTY TEMP-TABLE tt-dados-avais.
-
-                    RUN sistema/generico/procedures/b1wgen0028.p 
-                                   PERSISTENT SET h-b1wgen0028.
-                                        
-                    RUN carrega_avalista IN h-b1wgen0028
+                RUN lista_avalistas IN h-b1wgen9999
                                               ( INPUT  par_cdcooper,
                                                 INPUT  0,
                                                 INPUT  0,
                                                 INPUT  par_cdoperad,
                                                 INPUT  par_nmdatela,
                                                 INPUT  1,
-                                                INPUT  craplim.nrdconta,
+                                                INPUT par_nrdconta,
                                                 INPUT  1,
-                                                INPUT  par_dtmvtolt,
+                                                INPUT 3,
+                                                INPUT par_nrctrlim,
                                                 INPUT  craplim.nrctaav1,
-                                                INPUT  crapass.nrcpfcgc,
-                                                INPUT  YES,
+                                                INPUT craplim.nrctaav2,
                                                 OUTPUT TABLE tt-dados-avais,
                                                 OUTPUT TABLE tt-erro). 
-                    DELETE PROCEDURE h-b1wgen0028.
-        
-                    IF  CAN-FIND(FIRST tt-erro)   THEN
+
+                DELETE PROCEDURE h-b1wgen9999.
+
+                IF  RETURN-VALUE <> "OK"  THEN
                         RETURN "NOK".
         
-                    FIND tt-dados-avais NO-LOCK NO-ERROR.
-                    IF  AVAIL tt-dados-avais THEN 
-                        DO:
-                            CREATE tt-dados-avais.
-                            ASSIGN tt-dados-avais.nmdavali = lim_nmdavali   
-                                   tt-dados-avais.nrcpfcgc = lim_nrcpfcgc   
-                                   tt-dados-avais.tpdocava = lim_tpdocavl   
-                                   tt-dados-avais.nrdocava = lim_dscpfavl   
-                                   tt-dados-avais.nmconjug = lim_nmdcjavl   
-                                   tt-dados-avais.nrcpfcjg = lim_nrcpfccg   
-                                   tt-dados-avais.tpdoccjg = lim_tpdoccjl   
-                                   tt-dados-avais.nrdoccjg = lim_dscfcavl   
-                                   tt-dados-avais.dsendre1 = lim_dsendavl[1]
-                                   tt-dados-avais.dsendre2 = lim_dsendavl[2]
-                                   tt-dados-avais.nmcidade = lim_nmcidade   
-                                   tt-dados-avais.cdufresd = lim_cdufresd   
-                                   tt-dados-avais.nrcepend = lim_nrcepend   
-                                   tt-dados-avais.nrendere = lim_nrendere   
-                                   tt-dados-avais.complend = lim_complend   
-                                   tt-dados-avais.nrcxapst = lim_nrcxapst.
-
-                            VALIDATE tt-dados-avais.
-                        END.
-                    
-                END.
         END. 
 
     RETURN "OK".

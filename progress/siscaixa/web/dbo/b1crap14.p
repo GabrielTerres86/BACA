@@ -228,6 +228,11 @@
 			 15/02/2019 - Ajuste para validar o codigo barras para (DARF NUMERADO)
 						  conforme ja esta sendo feito com  DAS
 						 (Adriano - SCTASK0046009).
+						 
+             08/05/2019 - Aplicar critica da quantidade de dias para "data vencimento" e "periodo de apuração" para DARF 64 e 153.
+  --                      Com isso, em caso de falhas na digitação pelo cooperado o sistema irá criticar.
+  --                     (INC0014834 - Wagner - Sustentação).  
+  
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -1417,6 +1422,46 @@ PROCEDURE gera-faturas.
 
                         RETURN "NOK".
                 END.
+				
+			/* Criticar quantidade de dias inválidos no código de barras - INICIO */
+			/* Data do Vencimento */
+            IF  SUBSTR(p-codigo-barras,21,3) <> ? AND
+			    (INTE(SUBSTR(p-codigo-barras,21,3)) < 1 OR 
+			     INTE(SUBSTR(p-codigo-barras,21,3)) > 366 ) THEN
+                DO:
+                    ASSIGN i-cod-erro  = 0
+                           c-desc-erro = "Data do vecimento invalida.".
+
+                    RUN cria-erro (INPUT p-cooper,
+                                   INPUT p-cod-agencia,
+                                   INPUT aux_nrdcaixa,
+                                   INPUT i-cod-erro,
+                                   INPUT c-desc-erro,
+                                   INPUT YES).
+
+                    RETURN "NOK".
+                END.
+				
+			/* Periodo de Apuracao */
+            IF  SUBSTR(p-codigo-barras,42,3) <> ? AND
+			    (INTE(SUBSTR(p-codigo-barras,42,3)) < 1 OR 
+			     INTE(SUBSTR(p-codigo-barras,42,3)) > 366 ) THEN
+                DO:
+                    ASSIGN i-cod-erro  = 0
+                           c-desc-erro = "Periodo de apuracao invalido.".
+
+                        RUN cria-erro (INPUT p-cooper,
+                                       INPUT p-cod-agencia,
+                                       INPUT aux_nrdcaixa,
+                                       INPUT i-cod-erro,
+                                       INPUT c-desc-erro,
+                                       INPUT YES).
+
+                        RETURN "NOK".
+                END.
+			/* Criticar quantidade de dias inválidos no código de barras - FIM */
+				
+				
         END.
 
         

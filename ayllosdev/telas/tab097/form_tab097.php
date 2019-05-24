@@ -4,9 +4,9 @@
  * CRIAÇÃO      	: Jaison Fernando
  * DATA CRIAÇÃO 	: Novembro/2015
  * OBJETIVO     	: Form para a tela TAB097
- * ÚLTIMA ALTERAÇÃO : --/--/----
+ * ÚLTIMA ALTERAÇÃO : 17/04/2019
  * --------------
- * ALTERAÇÕES   	: 
+ * ALTERAÇÕES   	: 17/04/2019 - Adicionado nova tabela referente a indexcecao 3 RITM0012246 (Mateus Z - Mouts)
  * --------------
  */
 
@@ -253,6 +253,67 @@
                             <td>
                                 <img class="clsExcUFNegDif" onclick="confirmaExclusao('UF','2|<?php echo $dsuf ?>');" src="<?php echo $UrlImagens; ?>geral/panel-error_16x16.gif" style="width:10px; height:10px; margin-top:3px; margin-right:3px;" />
 								<img class="clsAltUFNegDif" onclick="abreTelAlteracao('2|<?php echo $dsuf ?>');" src="<?php echo $UrlImagens; ?>geral/servico_ativo.gif" style="width:13px; height:13px; margin-top:3px; margin-right:3px;" />
+                                <?php echo $dsuf ?>
+                            </td>
+                            <td><?php echo $nmuf ?></td>
+							<td><?php echo $qtminimo_negativacao2 ?></td>
+                        </tr>
+                        <?php
+                    }
+				?>
+				</tbody>
+			</table>
+		</div>
+
+	</fieldset>
+
+    <br />
+
+    <fieldset id="fsetFormulario" name="fsetFormulario" style="padding:0px; margin:0px; padding-bottom:10px;">
+    <legend> <? echo utf8ToHtml('UFs com prazo para negativa&ccedil;&atilde;o ap&oacute;s retorno Serasa'); ?> </legend>
+        <?php
+            // Somente CECRED podera utilizar acao
+            if ($glbvars["cdcooper"] == 3) {
+                ?>
+                <table width="100%" id="tabAcaoUFNegRec">
+                    <tr>
+                        <td>
+                            <label for="acao_uf_neg_rec"><? echo utf8ToHtml('A&ccedil;&atilde;o:') ?></label>                   
+                            <select id="acao_uf_neg_rec" name="acao_uf_neg_rec">
+                                <option value="I"> Incluir</option>
+                                <option value="ALT"> Alterar</option>
+                                <option value="E"> Excluir</option>
+                            </select>
+                            <a href="#" class="botao" id="btnOKCNAEUF" onClick="executarAcao('UFNegRec');return false;" style="text-align: right;">OK</a>
+                        </td>
+                    </tr>
+                </table>
+                <?php
+            }
+        ?>
+        
+        <div id="divUFNegRec" class="divRegistros">
+            <table width="100%">
+                <thead>
+                    <tr>
+                        <th><?php echo utf8ToHtml('UF') ?></th>
+                        <th><?php echo utf8ToHtml('Descri&ccedil;&atilde;o') ?></th>
+                        <th><?php echo utf8ToHtml('Prazo') ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php
+                    foreach( $param_ufnegrec as $r ) {
+                        $qtminimo_negativacao2 = getByTagName($r->tags,'qtminimo_negativacao');
+                        $dsuf = getByTagName($r->tags,'dsuf');
+                        $key  = retornaKeyArrayMultidimensional($estados,'SIGLA',$dsuf);
+                        $nmuf = mb_strtoupper(html_entity_decode($estados[$key]['NOME']));
+                        $indexcecao = getByTagName($r->tags,'indexcecao');
+                        ?>
+                        <tr>
+                            <td>
+                                <img class="clsExcUFNegRec" onclick="confirmaExclusao('UF','3|<?php echo $dsuf ?>');" src="<?php echo $UrlImagens; ?>geral/panel-error_16x16.gif" style="width:10px; height:10px; margin-top:3px; margin-right:3px;" />
+                                <img class="clsAltUFNegRec" onclick="abreTelAlteracao('3|<?php echo $dsuf ?>');" src="<?php echo $UrlImagens; ?>geral/servico_ativo.gif" style="width:13px; height:13px; margin-top:3px; margin-right:3px;" />
                                 <?php echo $dsuf ?>
                             </td>
                             <td><?php echo $nmuf ?></td>

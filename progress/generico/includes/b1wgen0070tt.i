@@ -14,6 +14,7 @@
                22/01/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 			                Transferencia entre PAs (Heitor - RKAM)    
                             
+               23/03/2019 - Inclusao dos campos: dssituac; dsdcanal; dtrevisa (Vitor S. Assanuma - GFT)
 ..............................................................................*/
 
 
@@ -32,7 +33,10 @@ DEF TEMP-TABLE tt-telefone-cooperado                                    NO-UNDO
     FIELD nrdrowid AS ROWID
     FIELD nrfonres AS CHAR
     FIELD idsittfc AS INTE
-    FIELD idorigem AS INTE.
+    FIELD idorigem AS INTE
+    FIELD dssituac AS CHAR
+    FIELD dsdcanal AS CHAR
+    FIELD dtrevisa AS DATE.
 
 DEF TEMP-TABLE tt-operadoras-celular                                    NO-UNDO
     FIELD cdopetfn AS INTE

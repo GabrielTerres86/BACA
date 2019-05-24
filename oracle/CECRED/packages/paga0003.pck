@@ -434,6 +434,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 						
 	     16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
+
+		 14/05/2019 - INC0015051 - Ajustada e padronizada mensagem de retorno quando uma guia de SEFAZ DARE for inserida nos campos de tributos 
+                      indevidamente.
+                      (f0032175 - Guilherme Kuhnen).
 			 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -1428,7 +1432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       IF pr_flmobile = 1 THEN -- Canal Mobile
         vr_dscritic := vr_dstpguia ||' deve ser paga na opção ''Tributos - '||vr_dstpguia ||''' do menu de serviços';
       ELSE -- Conta Online
-        vr_dscritic := vr_dstpguia ||' deve ser paga na opção ''Pagamentos - Tributos - '||vr_dstpguia ||''' do menu de serviços';
+        vr_dscritic := 'Convênio deve ser pago na opção ''Pagamentos - Boletos Diversos'' do menu de serviços.'; --INC0015051
       END IF;
       
       --Levantar Excecao
@@ -1966,7 +1970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         
         -- CONVÊNIO - Se o primeiro dígito do código de barras for 8
         ELSIF SUBSTR(pr_cdbarras, 0, 1) = 8 THEN
-          vr_dscritic := 'Convênio deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços';
+          vr_dscritic := 'Convênio deve ser pago na opção ''Pagamentos - Boletos Diversos'' do menu de serviços.'; --INC0015051
         
         -- BOLETO - Se não cair em nenhuma condição anterior
         ELSE
@@ -5810,7 +5814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
          IF pr_flmobile = 1 THEN
             vr_dscritic := 'Convênio deve ser pago na opção ''Pagamentos - Boletos e Convênios''';
          ELSE
-            vr_dscritic := 'Convênio deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços.';
+            vr_dscritic := 'Convênio deve ser pago na opção ''Pagamentos - Boletos Diversos'' do menu de serviços.'; --INC0015051
          END IF;
          RAISE vr_exc_saida;
       END IF;  

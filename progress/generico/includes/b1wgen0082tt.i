@@ -63,7 +63,8 @@ DEF TEMP-TABLE tt-cadastro-bloqueto
 	FIELD qtlimmip LIKE crapceb.qtlimmip
     FIELD qtdecprz LIKE crapceb.qtdecprz
     FIELD idrecipr LIKE crapceb.idrecipr
-    FIELD inenvcob LIKE crapceb.inenvcob.
+    FIELD inenvcob LIKE crapceb.inenvcob
+	FIELD flgapihm LIKE crapceb.flgapihm.
 
 DEF TEMP-TABLE tt-crapcco 
     FIELD nrconven AS CHAR

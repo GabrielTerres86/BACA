@@ -27,6 +27,12 @@
    
    06/03/2019 - Executar apenas em dias úteis na Central (Cechet)
    
+   10/05/2019 - Estavam sendo incluídos indevidamente registros de confirmação com retorno
+                do IEPTB 5 (Devolvido pelo cartório por irregularidade - Sem custas) e
+                6 (Devolvido pelo cartório por irregularidade - Com custas). Na procedure
+                pc_gera_desistencia e cursor cr_craprem foi incluido restrição desses
+                tpocorre. (PRB0041759 - AJFink)
+
   ............................................................................. */
   
   -- Declarações
@@ -1287,6 +1293,7 @@
          AND tbcobran_confirmacao_ieptb.nrdconta = craprem.nrdconta
          AND tbcobran_confirmacao_ieptb.nrcnvcob = craprem.nrcnvcob
          AND tbcobran_confirmacao_ieptb.nrdocmto = craprem.nrdocmto
+         AND tbcobran_confirmacao_ieptb.tpocorre not in ('5','6') --PRB0041759
          AND crapcob.cdbandoc                    = 85 -- REVISAR
          AND crapcob.insrvprt                    = 1  -- REVISAR
          AND craprem.cdocorre                    IN(10, 11)

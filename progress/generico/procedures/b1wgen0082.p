@@ -25,7 +25,7 @@
 
   Programa: b1wgen0082.p
   Autor   : Gabriel
-  Data    : 08/12/2010                        Ultima Alteracao: 13/12/2016
+  Data    : 08/12/2010                        Ultima Alteracao: 20/02/2019
   
   Dados referentes ao programa:
   
@@ -134,6 +134,8 @@
 						   forma de envio de arquivo de cobranca na tt. (Reinert)
 
               13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
+
+			  20/02/2019 - Novo campo Homologado API (Andrey Formigari - Supero)
 
 .............................................................................*/
 
@@ -306,7 +308,8 @@ PROCEDURE carrega-convenios-ceb:
 			   tt-cadastro-bloqueto.qtlimmip = crapceb.qtlimmip
                tt-cadastro-bloqueto.qtdecprz = crapceb.qtdecprz
                tt-cadastro-bloqueto.idrecipr = crapceb.idrecipr
-               tt-cadastro-bloqueto.inenvcob = crapceb.inenvcob.
+               tt-cadastro-bloqueto.inenvcob = crapceb.inenvcob
+			   tt-cadastro-bloqueto.flgapihm = crapceb.flgapihm.
 
         IF   AVAIL crapcem   AND   crapceb.cddemail > 0  THEN
              ASSIGN tt-cadastro-bloqueto.cddemail = crapcem.cddemail
