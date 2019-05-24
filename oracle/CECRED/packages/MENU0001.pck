@@ -146,6 +146,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                 10/10/2018 - Adicionado as opções 7 - Pacote de Serviços, 8 - Pagamento por Arquivo - Remessa e 
                              9 - Pagamento por Arquivo - Retorno (Dougas - Prj 285 Nova Conta Online)
 
+                01/03/2019 - Ajustar o PACOTE DE SERVICOS para ser exibido quando a cooperativa possuir qualquer pacote cadastrado
+                            (Douglas - SCTASK0049271)  
+
                 30/01/2019 - Removido diversas opções de menus da conta online para portabilidade de salários (Lucas Skroch - Supero - P485)
 
 				01/02/2019 - Adaptação da rotina para enviar a camada de serviços apenas os itens de menu 
@@ -514,19 +517,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                                 ,pr_cont     => vr_tagoco
                                 ,pr_des_erro => vr_dscritic);
                                                                                                                                                       
-          -- Percorrer todos os nodos para verificar se algum deles possui valor
-          FOR vr_pos_exc IN 0 .. vr_tagoco - 1  LOOP
-            vr_vlrtag := GENE0007.fn_valor_tag(pr_xml     => vr_xmldoc
-                                              ,pr_pos_exc => vr_pos_exc
-                                              ,pr_nomtag  => 'possuipac');
-              
-            -- Verificar se existe valor '1'
-            IF vr_vlrtag = '1' THEN
+          -- Verificar se existe algum pacote de tarifas cadastradas
+          IF vr_tagoco > 0 THEN
               -- Habilitar o item de menu
               vr_flgpctse := 1;
             END IF;
-          END LOOP;
-          
         END IF;
         
         -- Fechar Cursor
