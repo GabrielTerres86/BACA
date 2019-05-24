@@ -6,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 21/05/2019
+   Data    : Fevereiro/2018                    Ultima atualizacao: 23/05/2019
 
    Dados referentes ao programa:
 
@@ -37,6 +37,10 @@
                 Na procedcure pc_gera_remessa e cursor cr_craprem foi incluido nvl no
                 dtdocmto. (PRB0041801 - AJFink)
 
+   16/05/2019 - Alterado o campo 49 de I para espaco em branco (INC0012559 - Joao Mannes - Mouts)
+   
+   23/05/2019 - inc0014378 na rotina pc_gera_remessa, fixar o endereço do primeiro titular para evitar
+                duplicidade no envio dos arquivos (Carlos)
   ............................................................................. */
   
   -- Declarações
@@ -356,7 +360,7 @@
                 || ' '                                                                            -- 46 -- Tipo da letra de câmbio -- Exclusivo para protesto de letra de câmbio
                 || rpad(' ', 8, ' ')                                                              -- 47 -- Complemento código de irregularidade -- Uso restrito do serviço de distribuição
                 || ' '                                                                            -- 48 -- Protesto por motivo de falência -- Fixo: vazio
-                || 'I'                                                                            -- 49 -- Instrumento de protesto -- Fixo: I
+                || ' '                                                                            -- 49 -- Instrumento de protesto -- Fixo: Espaço em branco (Era letra I)
                 || lpad('0', 10, '0')                                                             -- 50 -- Valor das demais despesas -- Uso restrito dos cartórios
                 || rpad(' ', 19, ' ')                                                             -- 51 -- Complemento do registro -- Fixo branco
                 || lpad(pr_nrseqarq, 4, '0')                                                      -- 52 -- Número seqüencial do registro no arquivo 
@@ -569,6 +573,7 @@
          AND crapenc.cdcooper = crapass.cdcooper
          AND crapenc.nrdconta = crapass.nrdconta
          AND crapenc.tpendass = 9 -- Comercial
+         AND crapenc.idseqttl = 1
          AND crapsab.cdcooper = crapcob.cdcooper
          AND crapsab.nrdconta = crapcob.nrdconta
          AND crapsab.nrinssac = crapcob.nrinssac
