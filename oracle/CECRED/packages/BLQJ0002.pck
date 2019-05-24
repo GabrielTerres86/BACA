@@ -3770,19 +3770,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     RW_HORARIO_ENCERRAMENTO CR_HORARIO_ENCERRAMENTO%ROWTYPE;    
    
     -- Busca as ordens no monitoramento que estão com saldo zerado
-    CURSOR cr_monit_zerado_ou_prejuizo IS
+    CURSOR cr_monitoramento_zerado IS
       SELECT
             C.IDORDEM
        FROM 
             TBBLQJ_MONITORA_ORDEM_BLOQ C
       WHERE
-            C.VLSALDO = 0 
-            OR EXISTS (SELECT 1 FROM tbblqj_ordem_online b,crapass a
-                           WHERE b.idordem  = c.idordem
-                             AND a.cdcooper = c.cdcooper
-                             AND a.nrdconta = c.nrdconta
-                             AND a.inprejuz = 1
-                             AND b.instatus = 1) ;
+            C.VLSALDO = 0;
 
     CURSOR conta_monitorada is
       SELECT
@@ -4303,14 +4297,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        END IF; -- Saldo maior que zero
      END LOOP; -- Loop sobre o monitoramento
      
-     FOR rw_monit_zerado_ou_prejuizo IN cr_monit_zerado_ou_prejuizo LOOP
+     FOR rw_monitoramento_zerado IN cr_monitoramento_zerado LOOP         
        -- Coloca o registro de solicitacao como processado com sucesso      
-       pc_atualiza_situacao(pr_idordem => rw_monit_zerado_ou_prejuizo.idordem,
+       pc_atualiza_situacao(pr_idordem => rw_monitoramento_zerado.idordem,
                             pr_instatus => 2);          
        -- Deleta os monitoramentos que estão com saldo zerado
        BEGIN
          DELETE tbblqj_monitora_ordem_bloq
-          WHERE idordem = rw_monit_zerado_ou_prejuizo.idordem;
+          WHERE idordem = rw_monitoramento_zerado.idordem;
        EXCEPTION
          WHEN OTHERS THEN
            vr_dscritic := 'Erro ao excluir na tbblqj_ordem_bloq_desbloq: '||SQLERRM;
