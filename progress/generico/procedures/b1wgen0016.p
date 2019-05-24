@@ -5625,7 +5625,8 @@ PROCEDURE aprova_trans_pend:
                                 
                                 RETURN "NOK".
                             END.
-                  /*END.*/
+                  END.
+                    
                            
             END. /*IF AVAILABLE tbgen_trans_pend THEN*/
              
