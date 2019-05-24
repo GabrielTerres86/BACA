@@ -6,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 06/03/2019
+   Data    : Fevereiro/2018                    Ultima atualizacao: 21/05/2019
 
    Dados referentes ao programa:
 
@@ -32,6 +32,10 @@
                 6 (Devolvido pelo cartório por irregularidade - Com custas). Na procedure
                 pc_gera_desistencia e cursor cr_craprem foi incluido restrição desses
                 tpocorre. (PRB0041759 - AJFink)
+
+   21/05/2019 - Arquivo de remessa gerado com XML quebrado devido dtdocmto vazio.
+                Na procedcure pc_gera_remessa e cursor cr_craprem foi incluido nvl no
+                dtdocmto. (PRB0041801 - AJFink)
 
   ............................................................................. */
   
@@ -515,7 +519,7 @@
             ,decode(crapcob.cddespec, 1, 'DMI', 2, 'DSI', '   ') cddespec                                 -- Campo 12 - Transação
             ,rpad(crapcob.dsdoccop, 11, ' ') dsdoccop                                                     -- Campo 13 - Transação
             --,to_char(crapcob.dtemiexp, 'DDMMYYYY') dtemiexp                                               -- Campo 14 - Transação
-            ,to_char(crapcob.dtdocmto, 'DDMMYYYY') dtemiexp                                               -- Campo 14 - Transação
+            ,to_char(nvl(crapcob.dtdocmto,crapcob.dtmvtolt), 'DDMMYYYY') dtemiexp                         -- Campo 14 - Transação --PRB0041801
             ,to_char(crapcob.dtvencto, 'DDMMYYYY') dtvencto                                               -- Campo 15 - Transação
             --,lpad(replace(trim(to_char(crapcob.vltitulo, '999999999990D90')), ',', ''), 14, '0') vltitulo -- Campo 17/18 - Transação
 						,lpad(TRUNC(crapcob.vltitulo * 100), 14, '0') vltitulo                                        -- Campo 17/18 - Transação
