@@ -5572,7 +5572,7 @@ PROCEDURE aprova_trans_pend:
                         CLOSE STORED-PROC pc_ret_trans_pend_prop
                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
-                        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} } 
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
                         
                         /* Busca possíveis erros */ 
                         ASSIGN aux_cdcritic = 0
@@ -5625,7 +5625,8 @@ PROCEDURE aprova_trans_pend:
                                 
                                 RETURN "NOK".
                             END.
-                  /*END.*/
+                  END.
+                    
                            
             END. /*IF AVAILABLE tbgen_trans_pend THEN*/
              
