@@ -3826,6 +3826,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
                 --
                 IF NVL(vr_nrdocumento,0) = pr_nrcpfcgc
                 AND vr_node_name_4 = 'MODALIDADE' THEN
+                  BEGIN
                   -- Buscar valor da TAG
                   vr_valu_node_4  := xmldom.getFirstChild(vr_item_node_4);
                   vr_cdmodalidade := fn_getValue(vr_valu_node_4);
@@ -3837,6 +3838,11 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
                   vr_tab_bloco(vr_tab_bloco.count()+1).dsbloco    := vr_dsendereco;
                   vr_tab_bloco(vr_tab_bloco.count()).cdmodalidade := vr_cdmodalidade;
                   vr_dsendereco := '//LISTA_RESPOSTAS';
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      NULL;
+                  END;
+                  
                 END IF;
               END IF;
               --====================================================================
@@ -3868,6 +3874,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
                   --
                   IF NVL(vr_nrdocumento,0) = pr_nrcpfcgc
                   AND vr_node_name_5 = 'MODALIDADE' THEN
+                    BEGIN
                     -- Buscar valor da TAG
                     vr_valu_node_5  := xmldom.getFirstChild(vr_item_node_5);
                     vr_cdmodalidade := fn_getValue(vr_valu_node_5);
@@ -3879,6 +3886,10 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
                     vr_tab_bloco(vr_tab_bloco.count()+1).dsbloco    := vr_dsendereco;
                     vr_tab_bloco(vr_tab_bloco.count()).cdmodalidade := vr_cdmodalidade;
                     vr_dsendereco := '//LISTA_RESPOSTAS';
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        NULL;
+                    END;                    
                   END IF;
                 END IF;
                 --====================================================================
@@ -3906,6 +3917,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
                     --
                     IF NVL(vr_nrdocumento,0) = pr_nrcpfcgc
                     AND vr_node_name_6 = 'MODALIDADE' THEN
+                      BEGIN
                       -- Buscar valor da TAG
                       vr_valu_node_6  := xmldom.getFirstChild(vr_item_node_6);
                       vr_cdmodalidade := fn_getValue(vr_valu_node_6);
@@ -3917,6 +3929,10 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
                       vr_tab_bloco(vr_tab_bloco.count()+1).dsbloco    := vr_dsendereco;
                       vr_tab_bloco(vr_tab_bloco.count()).cdmodalidade := vr_cdmodalidade;
                       vr_dsendereco := '//LISTA_RESPOSTAS';
+                      EXCEPTION
+                        WHEN OTHERS THEN
+                          NULL;
+                      END;                        
                     END IF;
                   END IF;
                 END LOOP;
@@ -3949,6 +3965,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           INTO vr_clob
           FROM DUAL;
         --
+        IF vr_tab_bloco(i).cdmodalidade IS NOT NULL THEN
         BEGIN
           INSERT INTO tbgen_modalidade_biro
             (nrconbir,
@@ -3982,7 +3999,12 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
             CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
             pr_dscritic := 'Erro ao inserir na TBGEN_MODALIDE_BIRO: '||SQLERRM;
         END;
+        END IF;
       END LOOP;
+    EXCEPTION
+      WHEN OTHERS THEN
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
+        pr_dscritic := 'Erro ao inserir na TBGEN_MODALIDE_BIRO: '||SQLERRM;        
     END PC_INCLUI_MODALIDADE_BIRO;
   BEGIN
     -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
@@ -4165,9 +4187,10 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           END;
         ELSE
 
+		 /*Alterado em 20/05/2019 - Retorno de mais de uma lista de observacao*/
 			BEGIN
-			  pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO/DESCRICAO','S',vr_dsobserv, vr_dscritic);
-			  pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO/MENSAGEM', 'S',vr_dsmsgobs, vr_dscritic);
+			  pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO[1]/DESCRICAO','S',vr_dsobserv, vr_dscritic);
+			  pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO[1]/MENSAGEM', 'S',vr_dsmsgobs, vr_dscritic);
 			EXCEPTION
 			  WHEN OTHERS THEN
 				-- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
@@ -9039,7 +9062,7 @@ PROCEDURE pc_busca_consulta_biro(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Codi
          AND crapcbd.inreterr = 0  -- Nao houve erros
          AND crapcbc.nrconbir = crapcbd.nrconbir
          AND crapcbc.inprodut <> 7
-       ORDER BY crapcbd.dtconbir DESC; -- Buscar a consulta mais recente
+       ORDER BY crapcbd.dtconbir DESC, DTREAPRO; -- Buscar a consulta mais recente
   
   BEGIN
     -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
@@ -12011,7 +12034,7 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
       BEGIN
         UPDATE crapprp
            SET dtdrisco = decode(vr_inconscr,1,nvl(vr_dtconmax_scr, dtdrisco),dtdrisco),
-               dtcnsspc = (SELECT trunc(nvl(crapcbd.dtreapro, crapcbd.dtconbir))
+               dtcnsspc = (SELECT MAX(trunc(nvl(crapcbd.dtreapro, crapcbd.dtconbir)))
                              FROM crapmbr,
                                   crapcbd
                             WHERE crapcbd.nrconbir = vr_nrconbir
@@ -12330,7 +12353,7 @@ BEGIN
    begin
       update crapprp
       set    dtdrisco = decode(vr_inconscr,1,nvl(vr_dtconmax_scr, dtdrisco),dtdrisco)
-            ,dtcnsspc = (select trunc(nvl(crapcbd.dtreapro, crapcbd.dtconbir))
+            ,dtcnsspc = (select MAX(trunc(nvl(crapcbd.dtreapro, crapcbd.dtconbir)))
                          from   crapmbr
                                ,crapcbd
                          where  crapcbd.nrconbir = vr_nrconbir

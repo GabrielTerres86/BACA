@@ -925,6 +925,14 @@ PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA
                                            ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                            ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
+                                           
+  FUNCTION fn_dstipcta(pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE,  --> Tipo de pessoa
+                       pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)   --> Tipo de conta
+                       RETURN VARCHAR2;
+                       
+  FUNCTION fn_dssitdct(pr_cdsitdct IN crapass.cdsitdct%TYPE)  --> Codigo da situacao da conta
+                       RETURN VARCHAR2;
+                                           
 END CADA0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS

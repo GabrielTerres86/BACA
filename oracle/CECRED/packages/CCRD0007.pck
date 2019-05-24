@@ -13,8 +13,6 @@ CREATE OR REPLACE PACKAGE CECRED."CCRD0007" is
 
       Alteracoes: 23/07/2018 - Alteração na funcao fn_usa_bancoob_ws. Projeto 345(Lombardi).
 
-	  teste 2
-
   ---------------------------------------------------------------------------------------------------------------*/
 
   --> Verificar se usa o motor de credito para cartao
@@ -708,6 +706,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
         pr_dscritic := vr_dscritic;
     END;
 
+    -- Pj 438 - Marcelo Telles Coelho - Mouts - 07/04/2019
+    -- Startar job de atualização das informações da Tela Única
+    IF pr_dscritic IS NULL
+--    AND pr_tpenvest <> 'M' -- Não foi chamada para Motor
+    THEN
+      tela_analise_credito.pc_job_dados_analise_credito(pr_cdcooper  => pr_cdcooper
+                                                       ,pr_nrdconta  => pr_nrdconta
+                                                       ,pr_tpproduto => 7 -- Cartão de Crédito
+                                                       ,pr_nrctremp  => pr_nrctrcrd
+                                                       ,pr_dscritic  => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+    END IF;
+    -- Fim Pj 438
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -889,6 +903,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
         RAISE vr_exc_erro;
       END IF;
     END IF;
+
+    -- Pj 438 - Marcelo Telles Coelho - Mouts - 07/04/2019
+    -- Startar job de atualização das informações da Tela Única
+    IF pr_dscritic IS NULL
+--    AND pr_tpenvest <> 'M' -- Não foi chamada para Motor
+    THEN
+      tela_analise_credito.pc_job_dados_analise_credito(pr_cdcooper  => pr_cdcooper
+                                                       ,pr_nrdconta  => pr_nrdconta
+                                                       ,pr_tpproduto => 7 -- Cartão de Crédito
+                                                       ,pr_nrctremp  => pr_nrctrcrd
+                                                       ,pr_dscritic  => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+    -- Fim Pj 438
 
   EXCEPTION
     WHEN vr_exc_erro THEN
