@@ -4358,6 +4358,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                   
             14/09/2018 - Gravar data de cancelamento da solicitação do cartão (Renato - Supero)
 
+			24/05/2019 - Gerar log de cancelamento de proposta.
+			             Alcemir Jr. (PRB0041672).
+
     ..........................................................................*/
 
 		
@@ -4452,6 +4455,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         RAISE vr_exc_erro;
     END;
 
+	gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad
+                        ,pr_dscritic => ' '
+                        ,pr_dsorigem => 'AIMARO WEB'
+                        ,pr_dstransa => 'Cancelamento proposta de Cartão de crédito. Contrato :' || pr_nrctrcrd
+                        ,pr_dttransa => trunc(SYSDATE)
+                        ,pr_flgtrans => 0
+                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'ATENDA_CRD'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_rowid);  
+
+
 		-- Se o cartao recem cancelado era titular, devemos repassar a titularidade
 		IF rw_eh_titular.flgprcrd = 1 THEN		
 			OPEN cr_primeiro_cartao_ativo(pr_cdcooper => vr_cdcooper,
@@ -4473,7 +4490,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 						vr_dscritic := 'Erro ao vincular novo titular. Erro: '||SQLERRM;
 						RAISE vr_exc_erro;
 				 END;
+
+				 gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid
+                                          ,pr_nmdcampo => 'nrctrcrd'
+                                          ,pr_dsdadant => pr_nrctrcrd
+                                          ,pr_dsdadatu => rw_primeiro_cartao_ativo.nrctrcrd); 
+                                                                    
+                 gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid
+                                          ,pr_nmdcampo => 'flgprcrd'
+                                          ,pr_dsdadant => rw_primeiro_cartao_ativo.flgprcrd
+                                          ,pr_dsdadatu => 1); 
+
+
 			END IF;
+		   
 			--
 			CLOSE cr_primeiro_cartao_ativo;
 		END IF;
