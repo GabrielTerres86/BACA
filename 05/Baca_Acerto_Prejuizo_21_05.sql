@@ -171,8 +171,7 @@ BEGIN
                                           ,vllanmto
                                           ,dthrtran
                                           ,cdoperad
-                                          ,cdcooper
-                                          ,dsoperac)
+                                          ,cdcooper)
                                     VALUES(pr_dtmvtolt      -- dtmvtolt
                                           ,1                -- cdagenci
                                           ,pr_nrdconta      -- nrdconta
@@ -181,8 +180,7 @@ BEGIN
                                           ,pr_vllanmto      -- vllanmto
                                           ,SYSDATE          -- dthrtran
                                           ,pr_cdoperad      -- cdoperad
-                                          ,pr_cdcooper
-                                          ,0);
+                                          ,pr_cdcooper);
     EXCEPTION
       WHEN OTHERS THEN
         pr_cdcritic := 0;
