@@ -27,6 +27,7 @@
  * 015: [09/10/2015] James					  : Desenvolvimento do projeto 126.
  * 016: [21/06/2016] Douglas         (CECRED) : Removido aspas simples dos parametros do campo Titularidade (Chamado 457339)
  * 017: [18/03/2019] Anderson-Alan   (SUPERO) : Implementado tipo de envio do cartão - PJ429
+ * 018: [24/05/2019] Alcemir Jr.     (Ailos)  : Ajuste ao sair do campo CPF. (PRB0041678)
  */
 
 	session_start();
@@ -522,7 +523,11 @@
 				
 				carregarRepresentante("N",0,$(this).val());
 			} else {				
-				$("#dtnasccr","#frmNovoCartao").val("").prop("disabled",true).attr("class","campoTelaSemBorda");
+				if ($(this).val() == "") {
+				    $("#dtnasccr","#frmNovoCartao").val("").prop("disabled",false).attr("class","campo");
+				}else{
+					$("#dtnasccr","#frmNovoCartao").val("").prop("disabled",true).attr("class","campoTelaSemBorda");
+				}
 			}	
 			
 			return true;
