@@ -6,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 06/03/2019
+   Data    : Fevereiro/2018                    Ultima atualizacao: 23/05/2019
 
    Dados referentes ao programa:
 
@@ -29,6 +29,8 @@
    
    16/05/2019 - Alterado o campo 49 de I para espaco em branco (INC0012559 - Joao Mannes - Mouts)
    
+   23/05/2019 - inc0014378 na rotina pc_gera_remessa, fixar o endereço do primeiro titular para evitar
+                duplicidade no envio dos arquivos (Carlos)
   ............................................................................. */
   
   -- Declarações
@@ -561,6 +563,7 @@
          AND crapenc.cdcooper = crapass.cdcooper
          AND crapenc.nrdconta = crapass.nrdconta
          AND crapenc.tpendass = 9 -- Comercial
+         AND crapenc.idseqttl = 1
          AND crapsab.cdcooper = crapcob.cdcooper
          AND crapsab.nrdconta = crapcob.nrdconta
          AND crapsab.nrinssac = crapcob.nrinssac
@@ -2879,7 +2882,9 @@ BEGIN
 	-- Escrever o log no arquivo
   pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729 --> Finalizado o processamento das remessas.'); -- Texto para escrita
   --
+
 	COMMIT;
+
 	--
 EXCEPTION
   WHEN vr_exc_erro THEN
