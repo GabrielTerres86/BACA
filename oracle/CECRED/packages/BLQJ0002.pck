@@ -153,6 +153,43 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
                                ,pr_des_erro OUT VARCHAR2);           --Saida OK/NOK                                
   -- PJ 416 - Fim                            
                             
+  -- P530 - Inicio
+  PROCEDURE pc_verifica_conta_bloqueio(pr_cdcooper IN crapass.cdcooper%TYPE
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE
+                                      ,pr_id_conta_monitorada OUT NUMBER -- retorna 1 para conta monitorada e 0 não monitorada
+--                                      ,pr_dsretxml OUT xmltype  --> XML de retorno CLOB
+                                      ,pr_cdcritic OUT NUMBER
+                                      ,pr_dscritic OUT VARCHAR2);
+
+    TYPE typ_reg_concmn IS RECORD (
+      cdcooper             crapcop.cdcooper%TYPE
+     ,nmrescop             crapcop.nmrescop%TYPE
+     ,nrdconta             tbblqj_monitora_ordem_bloq.nrdconta%TYPE
+     ,nrcpfcnpj             tbblqj_monitora_ordem_bloq.nrcpfcnpj%TYPE
+     ,dsoficio             tbblqj_monitora_ordem_bloq.dsoficio%TYPE
+     ,nmjuiz                tbblqj_ordem_bloq_desbloq.nmjuiz%TYPE   
+    );
+    /* Definicao de tabela que compreende os registros acima declarados */
+    TYPE typ_tab_concmn IS TABLE OF typ_reg_concmn INDEX BY BINARY_INTEGER;                                  
+
+  PROCEDURE pc_consultar_concmn( pr_nrdconta IN VARCHAR2
+                                 ,pr_nrcpfcgc IN VARCHAR2
+                                 ,pr_vcooper IN NUMBER                                 
+                                 ,pr_nriniseq IN NUMBER
+                                 ,pr_nrregist IN NUMBER
+                                 -- campos padrões
+                                 ,pr_xmllog           IN VARCHAR2              --> XML com informacoes de LOG
+                                 ,pr_cdcritic        OUT PLS_INTEGER           --> Codigo da critica
+                                 ,pr_dscritic        OUT VARCHAR2              --> Descricao da critica
+                                 ,pr_retxml           IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo        OUT VARCHAR2              --> Nome do campo com erro
+                                 ,pr_des_erro        OUT VARCHAR2    
+                                 ); 
+  
+  -- P530 - Fim
+  
+  
+
 
 END BLQJ0002;
 /
@@ -179,6 +216,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                              PJ 450 - Diego Simas - AMcom             
           13/02/2019 - Inclusao de regras para contas com bloqueio judicial
                      - Projeto 530 BACENJUD - Everton(AMcom).
+
+          09/04/2019 - Projeto Bacenjud fase 2
+                     - Renato Cordeiro - AMcom
 
   .............................................................................*/
 
@@ -3730,13 +3770,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     RW_HORARIO_ENCERRAMENTO CR_HORARIO_ENCERRAMENTO%ROWTYPE;    
    
     -- Busca as ordens no monitoramento que estão com saldo zerado
-    CURSOR cr_monitoramento_zerado IS
+    CURSOR cr_monit_zerado_ou_prejuizo IS
       SELECT
             C.IDORDEM
        FROM 
             TBBLQJ_MONITORA_ORDEM_BLOQ C
       WHERE
-            C.VLSALDO = 0;
+            C.VLSALDO = 0 
+            OR EXISTS (SELECT 1 FROM tbblqj_ordem_online b,crapass a
+                           WHERE b.idordem  = c.idordem
+                             AND a.cdcooper = c.cdcooper
+                             AND a.nrdconta = c.nrdconta
+                             AND a.inprejuz = 1
+                             AND b.instatus = 1) ;
 
     CURSOR conta_monitorada is
       SELECT
@@ -4257,14 +4303,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        END IF; -- Saldo maior que zero
      END LOOP; -- Loop sobre o monitoramento
      
-     FOR rw_monitoramento_zerado IN cr_monitoramento_zerado LOOP         
+     FOR rw_monit_zerado_ou_prejuizo IN cr_monit_zerado_ou_prejuizo LOOP
        -- Coloca o registro de solicitacao como processado com sucesso      
-       pc_atualiza_situacao(pr_idordem => rw_monitoramento_zerado.idordem,
+       pc_atualiza_situacao(pr_idordem => rw_monit_zerado_ou_prejuizo.idordem,
                             pr_instatus => 2);          
        -- Deleta os monitoramentos que estão com saldo zerado
        BEGIN
          DELETE tbblqj_monitora_ordem_bloq
-          WHERE idordem = rw_monitoramento_zerado.idordem;
+          WHERE idordem = rw_monit_zerado_ou_prejuizo.idordem;
        EXCEPTION
          WHEN OTHERS THEN
            vr_dscritic := 'Erro ao excluir na tbblqj_ordem_bloq_desbloq: '||SQLERRM;
@@ -4419,6 +4465,182 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
   END pc_val_ope_juridico;
   -- PJ 416 - Fim  
 ----------------------------------------------------------------    
+  
+  -- P530 - Inicio
+  PROCEDURE pc_verifica_conta_bloqueio(pr_cdcooper IN crapass.cdcooper%TYPE
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE
+                                      ,pr_id_conta_monitorada OUT NUMBER -- 1:monitorada e 0:não monitorada
+--                                      ,pr_dsretxml OUT xmltype  --> XML de retorno CLOB
+                                      ,pr_cdcritic OUT NUMBER
+                                      ,pr_dscritic OUT VARCHAR2) IS
+               
+    CURSOR cr_conta_monitorada IS 
+      SELECT
+            1
+       FROM 
+            TBBLQJ_MONITORA_ORDEM_BLOQ C
+      WHERE
+            C.Cdcooper = pr_cdcooper
+        AND C.Nrdconta = pr_nrdconta;
+        
+    rw_conta_monitorada cr_conta_monitorada%ROWTYPE;
+                
+  BEGIN
+    pr_cdcritic := 0;
+    pr_dscritic := null;
+    
+    OPEN cr_conta_monitorada;
+    FETCH cr_conta_monitorada INTO rw_conta_monitorada;
+    IF cr_conta_monitorada%FOUND THEN
+       pr_id_conta_monitorada := 1;
+    ELSE
+       pr_id_conta_monitorada := 0;
+    END IF;
+
+--    pr_dsretxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro pc_verifica_conta_bloqueio. Coop:'||pr_cdcooper||' Conta:'||pr_nrdconta||'. '||SQLERRM;
+--      pr_dsretxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+--                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END  pc_verifica_conta_bloqueio;  
+  
+  --P530
+  PROCEDURE pc_consultar_concmn( pr_nrdconta IN VARCHAR2
+                                 ,pr_nrcpfcgc IN VARCHAR2
+                                 ,pr_vcooper IN NUMBER                                                                  
+                                 ,pr_nriniseq IN NUMBER
+                                 ,pr_nrregist IN NUMBER
+                                 -- campos padrões
+                                 ,pr_xmllog           IN VARCHAR2              --> XML com informacoes de LOG
+                                 ,pr_cdcritic        OUT PLS_INTEGER           --> Codigo da critica
+                                 ,pr_dscritic        OUT VARCHAR2              --> Descricao da critica
+                                 ,pr_retxml           IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo        OUT VARCHAR2              --> Nome do campo com erro
+                                 ,pr_des_erro        OUT VARCHAR2    
+                                 ) IS
+  
+    vr_dsmensag VARCHAR2(4000);
+    
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    
+    -- Variaveis de dados vindos do XML pr_retxml
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    vr_qtregist    number;
+    
+    -- variáveis para armazenar as informaçoes em xml
+    vr_des_xml        clob;
+    vr_texto_completo varchar2(32600);
+    vr_index          varchar2(100);
+
+    procedure pc_escreve_xml( pr_des_dados in varchar2
+                            , pr_fecha_xml in boolean default false
+                            ) is
+    begin
+        gene0002.pc_escreve_xml( vr_des_xml
+                               , vr_texto_completo
+                               , pr_des_dados
+                               , pr_fecha_xml );
+    end;
+       
+  BEGIN
+    pr_nmdcampo := NULL;
+    pr_des_erro := 'OK';
+    -- Extrai os dados vindos do XML pr_retxml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+    IF  TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+    END IF;
+           
+    -- inicializar o clob
+    vr_des_xml := null;
+    dbms_lob.createtemporary(vr_des_xml, true);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    -- inicilizar as informaçoes do xml
+    vr_texto_completo := null;
+    
+    IF (pr_vcooper > -1) THEN
+       vr_cdcooper := pr_vcooper;
+    END IF; 
+    
+    SELECT count(1)
+    INTO vr_qtregist
+    FROM   crapcop cop
+    INNER JOIN tbblqj_monitora_ordem_bloq b on b.cdcooper = cop.cdcooper
+    INNER JOIN tbblqj_ordem_bloq_desbloq bd on bd.idordem = b.idordem
+    WHERE (b.cdcooper = vr_cdcooper OR vr_cdcooper = 0) AND (b.nrdconta = pr_nrdconta OR pr_nrdconta = '0') AND (b.nrcpfcnpj =  pr_nrcpfcgc OR pr_nrcpfcgc = '0');
+
+    pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                      '<root>');             
+    for cur in (SELECT * FROM (                                 
+                  SELECT row_number() OVER (ORDER BY cop.nmrescop,b.nrdconta) linha,
+                         cop.nmrescop, b.cdcooper, b.nrdconta, b.nrcpfcnpj, b.dsoficio, bd.nmjuiz 
+                  FROM   crapcop cop
+                  INNER JOIN tbblqj_monitora_ordem_bloq b on b.cdcooper = cop.cdcooper
+                  INNER JOIN tbblqj_ordem_bloq_desbloq bd on bd.idordem = b.idordem
+                  WHERE (b.cdcooper = vr_cdcooper OR vr_cdcooper = 0) AND (b.nrdconta = pr_nrdconta OR pr_nrdconta = '0') AND (b.nrcpfcnpj =  pr_nrcpfcgc OR pr_nrcpfcgc = '0') 
+                  ORDER BY cop.nmrescop,b.nrdconta
+               )WHERE linha BETWEEN pr_nriniseq AND pr_nriniseq + pr_nrregist 
+               
+        )loop   
+          -- ler os registros e incluir no xml
+          pc_escreve_xml('<inf>'||
+                           '<cdcooper>'||   cur.cdcooper    ||'</cdcooper>'||
+                           '<nmrescop>'||   cur.nmrescop    ||'</nmrescop>'||
+                           '<nrdconta>'||   cur.nrdconta    ||'</nrdconta>'||
+                          '<nrcpfcnpj>'||   cur.nrcpfcnpj   ||'</nrcpfcnpj>'||
+                           '<dsoficio>'||   cur.dsoficio    ||'</dsoficio>'||
+                             '<nmjuiz>'||   cur.nmjuiz      ||'</nmjuiz>'||
+                         '</inf>');
+      end loop;
+      pc_escreve_xml ('<dados qtregist="' || vr_qtregist ||'" ></dados></root>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
+
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+      
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+         IF  vr_cdcritic <> 0 THEN
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         END IF;
+         pr_des_erro := 'NOK';
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := vr_dscritic;
+         pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
+                                          '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
+         ROLLBACK;
+    WHEN OTHERS THEN
+         pr_des_erro := 'NOK';
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_desabilitar_empr_consig_web: '||SQLERRM;
+         pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
+                                          '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
+         ROLLBACK;
+  
+  END;      
   
 END BLQJ0002;
 /
