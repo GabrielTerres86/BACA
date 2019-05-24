@@ -47,7 +47,6 @@
 	$cddopcao = $_POST["cddopcao"];
 	$flpropos = $_POST["flpropos"];
 	$inconfir = (isset($_POST["inconfir"])) ? $_POST["inconfir"] : 1;	
-	$aux_operacao = (isset($_POST["aux_operacao"])) ? $_POST["aux_operacao"] : '';
 
 	//bruno - prj 438 - sprint 7 - novo limite
 	$inpessoa = $_POST['inpessoa'];
@@ -358,9 +357,9 @@
 						<? include('form_dados_limite_credito.php') ?>
 					</div>
 				<?php } else { ?>
-			<div id="divDadosLimite">
-				<? include('form_limite_credito.php') ?>
-			</div>
+					<div id="divDadosLimite">
+						<? include('form_limite_credito.php') ?>
+					</div>
 				<?php } ?>
 			
 				<?php /* PRJ 438 - Sprint 7 - Comentado pois a tela não deve mais ser exibida
@@ -369,9 +368,13 @@
 			</div>
 				*/ ?>
       
-      <div id="divUsoGAROPC"></div>
+      			<div id="divUsoGAROPC"></div>
   
-      <div id="divFormGAROPC"></div>      
+      			<div id="divFormGAROPC"></div>
+
+      			<div id="divDadosObservacoes">
+					<?php include('form_observacoes.php') ?>
+				</div>
 			
 				<div id='divFormRating'> <!-- bruno - prj 438 - sprint 7 - tela rating  -->
 					<?php 
@@ -381,10 +384,6 @@
 						$inprodut   = 3; // Limite de Credito
 						include('form_rating.php');
 					?>
-				</div>
-			
-			<div id="divDadosObservacoes">
-					<?php include('form_observacoes.php') ?>
 				</div>
 
 				<!-- bruno - prj 438 - sprint 7 - tela demonstracao -->
@@ -454,7 +453,7 @@
   
   $("#btnContinuarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
 		// bruno - prj 438 - sprint 7 - remover telas
-		gravarGAROPC('idcobert','frmNovoLimite','abrirRating();$("#divFormGAROPC").css("display", "none");$("#divBotoesGAROPC").css("display", "none");$("#frmNovoLimite").css("width", 515);bloqueiaFundo($("#divDadosObservacoes"));');
+		gravarGAROPC('idcobert','frmNovoLimite','lcrShowHideDiv("divDadosObservacoes","divFormGAROPC");$("#divBotoesGAROPC").css("display", "none");$("#frmNovoLimite").css("width", 515);bloqueiaFundo($("#divDadosObservacoes"));');
     return false;
 	});
 
@@ -467,13 +466,7 @@
 		travaCamposLimite();
 	<? } ?>
 
-	<?php if ($cddopcao == 'P') { ?>
-		$("#idcobert", "#frmNovoLimite").val(aux_limites.pausado.idcobope);
-	<?php } else if ($cddopcao == 'N' && $aux_operacao == 'A') { ?>
-		$("#idcobert", "#frmNovoLimite").val(aux_limites.pausado.idcobope);
-	<?php } else if ($cddopcao == 'A') { ?>
-		$("#idcobert", "#frmNovoLimite").val(aux_limites.ativo.idcobope);
-	<?php } ?>
+	setarDadosIdcobertAndObservacao();
 
 	hideMsgAguardo();
 	bloqueiaFundo(divRotina);
