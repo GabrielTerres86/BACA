@@ -1,0 +1,1 @@
+<?php header('Location: ../../panic/panic.page.php'); ?>
