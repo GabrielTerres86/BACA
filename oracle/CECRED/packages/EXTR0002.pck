@@ -536,7 +536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 02/05/2019
+    Data    : Agosto/2011                        Ultima atualizacao: 24/05/2019
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -4663,6 +4663,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              02/05/2019 - No cursor cr_cred_npc trocar codigo "TpOpJD" de "CB" que não existe para "CO -
   --                           Cancelamento da Baixa Operacional enviada pelo Banco Recebedor".
   --                           (INC0013795-AJFink)
+  --
+  --              24/05/2019 - Ao definir a descrição do histórico era utilizado CRED.COBRANCA quando data
+  --                           do movimento igual a data da baixa operacional. Alterado para ser sempre
+  --                           CRED.COBRANCA - PREVISAO. (RITM0020190-AJFink)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -7025,11 +7029,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_cred_npc.dtcredito;
           pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_cred_npc.dtcredito,'DD/MM/YYYY');
           
-          IF rw_cred_npc.dtcredito > rw_crapdat.dtmvtolt THEN
+--RITM0020190
+--          IF rw_cred_npc.dtcredito > rw_crapdat.dtmvtolt THEN
             pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA - PREVISAO';
-          ELSE
-            pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA';
-          END IF;
+--          ELSE
+--            pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA';
+--          END IF;
           
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(rw_cred_npc.qtcredito,'fm999g999g990');
           pr_tab_lancamento_futuro(vr_index).indebcre:= 'C';
