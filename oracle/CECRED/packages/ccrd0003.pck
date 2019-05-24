@@ -8585,7 +8585,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           RAISE vr_exc_saida;
         END IF;
         
-        -- percorre a pltable 
+        -- verifica criticas para enviar por email
         
         IF TRIM(vr_criticas) IS NOT NULL THEN
           gene0003.pc_solicita_email(pr_cdcooper              => vr_cdcooper
