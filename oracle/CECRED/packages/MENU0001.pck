@@ -1018,13 +1018,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                                                                               ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
                                                                               ,pr_habilitado => vr_flgacopro) ); -- Identifica se o cooperado pode acompanhar Proposta Credito
 
-        END IF;
-        -- Adicionar o Item de Menu de Tela Conta Corrente > Salários > Portabilidade de Salário
-        GENE0002.pc_escreve_xml(pr_xml            => vr_clob
-                               ,pr_texto_completo => vr_xml_temp
-                               ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 57 -- Lista de Dominio 57 - Conta Corrente > Salários > Portabilidade de Salário
+	        -- Adicionar o Item de Menu de Tela Conta Corrente > Salários > Portabilidade de Salário
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 57 -- Lista de Dominio 57 - Conta Corrente > Salários > Portabilidade de Salário
                                                                           ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
                                                                           ,pr_habilitado => vr_flgctapot ) ); 
+
+        END IF;
+        
       EXCEPTION
         WHEN OTHERS THEN
           CECRED.Pc_Internal_Exception(pr_cdcooper => pr_cdcooper 
