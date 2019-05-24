@@ -282,6 +282,9 @@
 							 
 				13/02/2019 - Correcao da finalidade 400 (Tributos Municipais ISS - LCP) para 157
                              (Jonata  - Mouts / INC0032530).
+                             
+        08/05/2019 - Tratar o erro na cme para TED em especie.
+                     RITM0011928 - Jose Dill (Mouts)                             
 ----------------------------------------------------------------------------- **/
                              
 {dbo/bo-erro1.i}
@@ -2057,6 +2060,8 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
 
     VALIDATE craplot.
     END.
+
+    ASSIGN p-nro-docmto     = craptvl.nrdocmto. /*RITM0011928 - Tratar o erro #6 para a opçao 20 no Caixa on-line. Erro ocorria ao incluir a CME. */ 
 
     /*--- Grava Autenticacao Arquivo/Spool --*/
     RUN dbo/b1crap00.p PERSISTENT SET h_b1crap00.
