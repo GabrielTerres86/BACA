@@ -20,7 +20,12 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   --                (Gustavo Sene - GFT)    
   --
   ---------------------------------------------------------------------------------------------------------------
-    
+
+  -- Validar se o título está no serasa
+  FUNCTION fn_flserasa (pr_flserasa NUMBER, 
+                        pr_qtdianeg NUMBER,
+                        pr_inserasa NUMBER) RETURN BOOLEAN;
+                        
   -- Procedure para gerar o protesto do titulo
   PROCEDURE pc_inst_protestar (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
                               ,pr_nrdconta IN crapcob.nrdconta%TYPE   --> Numero da Conta
@@ -311,7 +316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --  Sistema  : Procedimentos gerais para execucao de instrucoes de baixa
   --  Sigla    : CRED
   --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 13/05/2019
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 20/05/2019
   --
   -- Dados referentes ao programa:
   --
@@ -359,6 +364,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   13/05/2019 - inc0012700 Tratamento na rotina pc_inst_cancel_protesto_85 para não permitir cancelar as instruções
                de protesto que estão sem confirmação de protesto (Carlos)
 
+  20/05/2019 - inc0011296 Na rotina pc_inst_protestar, corrigida a validação de existência de negativação e 
+               centralizada a regra na function fn_flserasa (Carlos)
   -------------------------------------------------------------------------------------------------------------*/
   --Ch 839539
   vr_cdprogra      tbgen_prglog.cdprograma%type := 'COBR0007';
@@ -589,6 +596,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
        AND ret.nrdocmto = pr_nrdocmto
        AND ret.cdocorre = pr_cdocorre
     ORDER BY ret.progress_recid ASC;
+
+  FUNCTION fn_flserasa (pr_flserasa NUMBER, 
+                        pr_qtdianeg NUMBER,
+                        pr_inserasa NUMBER) RETURN BOOLEAN IS 
+  /* ............................................................................
+
+    Programa: fn_flserasa
+    Autor   : Carlos Henrique Weinhold
+    Data    : Maio/2019
+    Objetivo  : Validar se o título está no serasa
+  ............................................................................ */   
+           
+  BEGIN
+    RETURN (pr_flserasa = 1 OR pr_qtdianeg <> 0 OR pr_inserasa <> 0);
+  EXCEPTION
+    WHEN OTHERS THEN
+      RETURN FALSE;
+  END fn_flserasa;
 
   ------------------------------ PROCEDURES --------------------------------    
   --> Grava informações para resolver erro de programa/ sistema
@@ -3189,9 +3214,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       ------ VALIDACOES PARA RECUSAR ------
 
       --- Verificar se possui SERASA --- 
-      IF rw_crapcob_ret.flserasa = 1    AND
-         (rw_crapcob_ret.qtdianeg <> 0  OR
-          rw_crapcob_ret.inserasa <> 0) THEN
+      IF COBR0007.fn_flserasa(rw_crapcob_ret.flserasa,
+                              rw_crapcob_ret.qtdianeg,
+                              rw_crapcob_ret.inserasa) THEN
         -- Verificar situacao no Serasa
         --Não existia o vr_cdcritic nesse caso, porem, setando vr_cdcritic segue a mesma
         --regra do retorno de uma chama de rotina, por exemplo, COBR0007.pc_efetua_val_recusa_padrao
