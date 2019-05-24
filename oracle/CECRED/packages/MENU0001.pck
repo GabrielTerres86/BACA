@@ -50,6 +50,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
   --              06/06/2018 Adicionado nova opção 4 - Desconto Titulos (Paulo Penteado (GFT)) 
   --              20/02/2019 - Adicionado menus 55 e 56 e suas tratativas. (PRJ 438 - Douglas / AMcom)
   --
+  --              26/02/2019 - Inclusão do item 57 (Gilberto - Supero)
   --              02/05/2019 - Adicionado controle para cooperativas habilitadas para os menus 55 e 56. (PRJ 438 - Douglas / AMcom)
   --  
   --    
@@ -90,7 +91,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
         7 - Pacote de Serviços
         8 - Pagamento por Arquivo - Remessa
         9 - Pagamento por Arquivo - Retorno
-		14 - Conta Corrente > Consultas > Extrato - PJ485 - Inicio
+        14 - Conta Corrente > Consultas > Extrato - PJ485 - Inicio
         15 - Conta Corrente > Consultas > Lançamentos Futuros
         16 - Conta Corrente > Demais extratos > Extrato de Tarifas
         17 - Conta Corrente > Salários > Comprovante Salarial
@@ -129,6 +130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
         54 - Tela inicial ATM > Pagamentos - PJ485 - FIM
         55 - Simular e Contratar
         56 - Acompanhamento de Proposta Credito
+        57 - Conta Corrente > Salários > Portabilidade de Salário
     
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para listar a configuracao dos itens de menu que podem ser exibidos/escondidos
@@ -144,7 +146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                 10/10/2018 - Adicionado as opções 7 - Pacote de Serviços, 8 - Pagamento por Arquivo - Remessa e 
                              9 - Pagamento por Arquivo - Retorno (Dougas - Prj 285 Nova Conta Online)
 
-				30/01/2019 - Removido diversas opções de menus da conta online para portabilidade de salários (Lucas Skroch - Supero - P485)
+                30/01/2019 - Removido diversas opções de menus da conta online para portabilidade de salários (Lucas Skroch - Supero - P485)
 
 				01/02/2019 - Adaptação da rotina para enviar a camada de serviços apenas os itens de menu 
                              a serem exibidos (Lucas Skroch - Supero - P485)
@@ -250,6 +252,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       -- FlagTela inicial ATM > Pagamentos
       vr_flgpagatm INTEGER := 0;
       -- PJ485 - Fim
+      -- FlagTela Portabilidade de Salário
+      vr_flgctapot INTEGER := 0;
       
       --PRJ438
       --Flag Tela Simular e Contratar
@@ -310,11 +314,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
            AND ttl.idseqttl = pr_idseqttl;
       rw_crapttl cr_crapttl%ROWTYPE;
 
-	  -- Cursor para verificar se existe a pessoa e o tipo de pessoa e conta - PJ485 - Inicio
+      -- Cursor para verificar se existe a pessoa e o tipo de pessoa e conta - PJ485 - Inicio
       CURSOR cr_modalidade_tipo(pr_cdcooper IN crapass.cdcooper%type
                                ,pr_nrdconta IN crapass.nrdconta%type) IS
       
          SELECT nvl(c.cdmodalidade_tipo,0) cdmodalidade_tipo
+               ,a.inpessoa
            FROM crapass a,       
                 tbcc_tipo_conta c
           WHERE c.inpessoa     = a.inpessoa
@@ -464,7 +469,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                                              pr_nrcpfcgc => rw_crapttl.nrcpfcgc,  --> CPF do Cooperado
                                              pr_tab_bene => vr_tab_benef, --> PL TABLE para listar os beneficios
                                              pr_dscritic => vr_dscritic); --> Mensagem de erro 
-                                    
+
             IF vr_tab_benef.COUNT > 0 THEN
               vr_flgbinss := 1;
             END IF;
@@ -614,12 +619,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       -- Monta Retorno XML
       dbms_lob.createtemporary(vr_clob, TRUE);
       dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-                                                                              
+                  
       -- Cabecalho do XML
       GENE0002.pc_escreve_xml(pr_xml            => vr_clob
-                              ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><CECRED>');
-
+      
       /* Caso for conta salário, envia apenas os menus a serem exibidos para conta salário - PJ485 - Inicio
          Caso contrário, segue a rotina como funciona atualmente */
       BEGIN
@@ -631,6 +636,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
         FETCH cr_modalidade_tipo INTO rw_modalidade_tipo;
         CLOSE cr_modalidade_tipo;
         
+        IF  rw_modalidade_tipo.inpessoa = 1 THEN -- Pessoa Física
+            vr_flgctapot := 1;
+        END IF;
+        --DBMS_OUTPUT.PUT_LINE('rw_modalidade_tipo.inpessoa :'||rw_modalidade_tipo.inpessoa||' vr_flgctapot :'||vr_flgctapot);
+
         -- Caso encontrar e for de portabilidade de salario = 2, habilita os menus na conta online
         IF rw_modalidade_tipo.cdmodalidade_tipo = 2 THEN                                                      
            vr_flgconext := 1; -- item 14
@@ -873,7 +883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                                    ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 42 -- Lista de Dominio "Investimentos > Cotas Capital > Consultar"
                                                                               ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
                                                                               ,pr_habilitado => vr_flgcotcon) ); 
-                                                                
+                                                                              
             -- Adicionar o Item de Menu de Conveniências > Perfil > Informações Cadastrais na Conta Online
             GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                                    ,pr_texto_completo => vr_xml_temp
@@ -928,9 +938,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                                    ,pr_texto_completo => vr_xml_temp
                                    ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 54 -- Lista de Dominio "54 - Tela inicial ATM > Menu Pagamentos"
                                                                               ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
-                                                                              ,pr_habilitado => vr_flgpagatm) );
-
-	   ELSE
+                                                                              ,pr_habilitado => vr_flgpagatm) ); 
+            
+        ELSE
             
             -- Adicionar o Item de Menu da Recarga de celular
             GENE0002.pc_escreve_xml(pr_xml            => vr_clob
@@ -1007,9 +1017,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                                    ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 56 -- Lista de Dominio "56 - Simular e Contratar"
                                                                               ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
                                                                               ,pr_habilitado => vr_flgacopro) ); -- Identifica se o cooperado pode acompanhar Proposta Credito
-           	   
-	   END IF;
-                                                  
+
+        END IF;
+        -- Adicionar o Item de Menu de Tela Conta Corrente > Salários > Portabilidade de Salário
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 57 -- Lista de Dominio 57 - Conta Corrente > Salários > Portabilidade de Salário
+                                                                          ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                          ,pr_habilitado => vr_flgctapot ) ); 
       EXCEPTION
         WHEN OTHERS THEN
           CECRED.Pc_Internal_Exception(pr_cdcooper => pr_cdcooper 

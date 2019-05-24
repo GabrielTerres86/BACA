@@ -21,7 +21,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PORTAB IS
                                 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                                 ,pr_des_erro OUT VARCHAR2); --> Descricao do erro
-
+                                
   PROCEDURE pc_busca_dados_contest_en(pr_nrdconta IN crapcdr.nrdconta%TYPE --> Numero da conta
                                      ,pr_nrsolicitacao IN tbcc_portabilidade_envia.nrsolicitacao%TYPE
                                      ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
@@ -56,13 +56,13 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PORTAB IS
 
   PROCEDURE pc_solicita_portabilidade(pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
                                      ,pr_cdbccxlt IN crapban.cdbccxlt%TYPE --> Codigo do banco folha
-																		 ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+									 ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                      ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
                                      ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2); --> Descricao do erro
-
+                                     
   PROCEDURE pc_busca_motivos_regularizar(pr_idsituacao IN tbcc_portabilidade_recebe.idsituacao%TYPE
                                         ,pr_xmllog     IN VARCHAR2 --> XML com informacoes de LOG
                                         ,pr_cdcritic   OUT PLS_INTEGER --> Codigo da critica
@@ -77,7 +77,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PORTAB IS
                                          ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                          ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                                          ,pr_des_erro OUT VARCHAR2); --> Descricao do erro
-
+                                         
   PROCEDURE pc_busca_motivos_contestacao(pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
                                         ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                         ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -118,7 +118,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PORTAB IS
                                     ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);
-
+                                    
   PROCEDURE pc_contesta_portabilidade(pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
                                      ,pr_cdmotivo IN tbcc_portab_env_contestacao.cdmotivo%TYPE --> Motivo da contestacao
                                      ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
@@ -572,7 +572,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_tag_nova => 'dtretorno',
                              pr_tag_cont => rw_portab_envia.dtretorno,
                              pr_des_erro => vr_dscritic);
-    
+                             
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
@@ -650,7 +650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     END;
   
   END pc_busca_dados_envia;
-
+  
   PROCEDURE pc_busca_dados_contest_en(pr_nrdconta IN crapcdr.nrdconta%TYPE --> Numero da conta
                                      ,pr_nrsolicitacao IN tbcc_portabilidade_envia.nrsolicitacao%TYPE
                                 	   ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
@@ -1088,7 +1088,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                  ORDER BY tpg.dtregularizacao DESC) t
          WHERE rownum = 1;
       rw_portab_contest cr_portab_contest%ROWTYPE;
-			
+    
 			CURSOR cr_dominio(pr_nmdominio tbcc_dominio_campo.nmdominio%TYPE
 			                 ,pr_cddominio tbcc_dominio_campo.cddominio%TYPE) IS
 					SELECT dom.dscodigo
@@ -1138,7 +1138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       OPEN cr_portab_contest(pr_nrnu_portabilidade => pr_nrnu_portabilidade);
       FETCH cr_portab_contest INTO rw_portab_contest;
       CLOSE cr_portab_contest;
-			
+    
 			IF rw_portab_contest.idsituacao = 5 THEN
 				--
 				IF rw_portab_contest.dsdomret IS NOT NULL AND rw_portab_contest.cdmotret IS NOT NULL THEN
@@ -1360,7 +1360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_tag_nova => 'dtsolicitacao',
                              pr_tag_cont => rw_portab_recebe.dtsolicitacao,
                              pr_des_erro => vr_dscritic);
-    
+                             
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
@@ -1423,7 +1423,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_tag_nova => 'dssituacao',
                              pr_tag_cont => rw_portab_recebe.situacao,
                              pr_des_erro => vr_dscritic);
-														 
+                             
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
@@ -1667,6 +1667,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     Objetivo  : Rotina para solicitar portabilidade.
     
     Alteracoes: -----
+    
+          07/05/2019 - Não permitir solicitações de portabilidade com CNPJ do 
+                       empregador nulo ou igual a zero. (Renato Darosci - Supero)
     ..............................................................................*/
     DECLARE
     
@@ -1692,16 +1695,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       CURSOR cr_craptfc(pr_cdcooper IN crapass.cdcooper%TYPE
                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
         SELECT craptfc.nrdddtfc
-                      ,craptfc.nrtelefo
-                  FROM craptfc
-                 WHERE craptfc.cdcooper = pr_cdcooper
-                   AND craptfc.nrdconta = pr_nrdconta
-                   AND craptfc.tptelefo IN (1, 2, 3)
-                 ORDER BY CASE tptelefo
-                            WHEN 2 THEN -- priorizar celular
-                             0
-                            ELSE -- demais telefones
-                             tptelefo
+             , craptfc.nrtelefo
+          FROM craptfc
+         WHERE craptfc.cdcooper = pr_cdcooper
+           AND craptfc.nrdconta = pr_nrdconta
+           AND craptfc.tptelefo IN (1, 2, 3)
+         ORDER BY CASE tptelefo
+                    WHEN 2 THEN -- priorizar celular
+                     0
+                    ELSE -- demais telefones
+                     tptelefo
                   END ASC; -- retorna apenas uma ocorrencia conforme prioridade na ordenacao
       rw_craptfc cr_craptfc%ROWTYPE;
     
@@ -1879,7 +1882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
         RAISE vr_exc_erro;
       END IF;
     
-      IF TRIM(rw_crapttl.nrcpfemp) IS NULL THEN
+      IF NVL(rw_crapttl.nrcpfemp,0) = 0 THEN
         vr_dscritic := 'CNPJ do empregador nao encontrado.';
         RAISE vr_exc_erro;
       END IF;
@@ -2897,231 +2900,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     
     Objetivo  : Rotina para retornar os dados para o termo de portabilidade
     
-    Alteracoes:
+    Alteracoes: Rotina pc_efetua_copia_pdf foi alterado por Gilberto - Março/2019
     ..............................................................................*/
   
     -- Cria o registro de data
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
   
     -- Tratamento de erros
-    vr_exc_saida EXCEPTION;
+    vr_exc_erro EXCEPTION;
   
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(10000);
-    vr_tab_erro gene0001.typ_tab_erro;
     vr_des_reto VARCHAR2(10);
-  
+    
     -- Variaveis de log
-    vr_cdcooper INTEGER;
-    vr_cdoperad VARCHAR2(100);
-    vr_nmdatela VARCHAR2(100);
-    vr_nmeacao  VARCHAR2(100);
-    vr_cdagenci VARCHAR2(100);
-    vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100);
-  
-    -- Variaveis
-    vr_xml_temp    VARCHAR2(32726) := '';
-    vr_clob        CLOB;
-    vr_qtde_dias   VARCHAR2(200);
-    vr_dsqtde_dias VARCHAR2(200);
-		vr_nrtelefo    VARCHAR2(100);
-  
-    vr_nom_direto VARCHAR2(200); --> Diretório para gravação do arquivo
-    vr_dsjasper   VARCHAR2(100); --> nome do jasper a ser usado
-    vr_nmarqim    VARCHAR2(50); --> nome do arquivo PDF
-  
-    CURSOR cr_solicitacao(pr_dsrowid VARCHAR2) IS
-      SELECT tpe.dtsolicitacao
-            ,gene0002.fn_mask_conta(tpe.nrdconta) nrdconta
-            ,gene0002.fn_mask_cpf_cnpj(tpe.nrcpfcgc, 1) nrcpfcgc
-            ,'(' || lpad(tpe.nrddd_telefone, 2, '0') || ')' || tpe.nrtelefone telefone
-            ,tpe.nmprimtl
-            ,gene0002.fn_mask_cpf_cnpj(tpe.nrcnpj_empregador, 2) nrcnpj_empregador
-            ,tpe.dsnome_empregador
-            ,lpad(ban.cdbccxlt, 3, '0') || ' - ' || ban.nmresbcc banco
-            ,tpe.nrispb_banco_folha
-            ,gene0002.fn_mask_cpf_cnpj(tpe.nrcnpj_banco_folha, 2) nrcnpj_banco_folha
-            ,dom.dscodigo tipo_conta
-            ,tpe.dsdemail
-            ,ope.nmoperad
-            ,ope.cdagenci pa
-            ,tpe.cdagencia
-            ,prm.dsvlrprm img_cooperativa
-        FROM tbcc_portabilidade_envia tpe
-            ,crapban                  ban
-            ,tbcc_dominio_campo       dom
-            ,crapope                  ope
-            ,crapprm                  prm
-       WHERE tpe.nrispb_banco_folha = ban.nrispbif
-         AND tpe.cdtipo_conta = dom.cddominio
-         AND dom.nmdominio = 'TIPO_CONTA_PCPS'
-         AND tpe.cdoperador = ope.cdoperad
-         AND prm.cdacesso = 'IMG_LOGO_COOP'
-         AND prm.cdcooper = tpe.cdcooper
-         AND tpe.rowid = pr_dsrowid;
-    rw_solicitacao cr_solicitacao%ROWTYPE;
-  
-    CURSOR cr_dias_comp IS
-      SELECT o.dsconteu
-        FROM crappco o
-       WHERE o.cdpartar = 63
-         AND o.cdcooper = 3;
-    rw_dias_comp cr_dias_comp%ROWTYPE;
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      pr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_dssrvarq VARCHAR2(200);
+      vr_dsdirarq VARCHAR2(200);
+      vr_tab_erro gene0001.typ_tab_erro;
   
   BEGIN
-    -- Extrai os dados vindos do XML
-    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
-                             pr_cdcooper => vr_cdcooper,
-                             pr_nmdatela => vr_nmdatela,
-                             pr_nmeacao  => vr_nmeacao,
-                             pr_cdagenci => vr_cdagenci,
-                             pr_nrdcaixa => vr_nrdcaixa,
-                             pr_idorigem => vr_idorigem,
-                             pr_cdoperad => vr_cdoperad,
-                             pr_dscritic => vr_dscritic);
-  
-    -- Abre o cursor de data
-    OPEN btch0001.cr_crapdat(vr_cdcooper);
-    FETCH btch0001.cr_crapdat
-      INTO rw_crapdat;
-    CLOSE btch0001.cr_crapdat;
-  
-    -- Abre o cursor com os dados do termo
-    OPEN cr_solicitacao(pr_dsrowid => pr_dsrowid);
-    FETCH cr_solicitacao
-      INTO rw_solicitacao;
-  
-    IF cr_solicitacao%NOTFOUND THEN
-      CLOSE cr_solicitacao;
-      vr_dscritic := 'Solicitacao nao encontrada.';
-      RAISE vr_exc_saida;
-    END IF;
-    CLOSE cr_solicitacao;
-  
-    -- Abre o cursor com a parametrização de dias para aceite compulsório
-    OPEN cr_dias_comp;
-    FETCH cr_dias_comp
-      INTO rw_dias_comp;
-  
-    IF cr_dias_comp%NOTFOUND OR
-       rw_dias_comp.dsconteu IS NULL THEN
-      CLOSE cr_dias_comp;
-      vr_dscritic := 'Parametro de dias para aceite compulsorio nao cadastrado.';
-      RAISE vr_exc_saida;
-    END IF;
-    CLOSE cr_dias_comp;
-  
-    BEGIN
-      vr_qtde_dias   := to_number(rw_dias_comp.dsconteu);
-      vr_dsqtde_dias := gene0002.fn_valor_extenso(pr_idtipval => 'I', pr_valor => vr_qtde_dias);
+      -- Extrai os dados vindos do XML
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcooper,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => pr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
     
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Parametro de dias para aceite compulsorio invalido.';
-        RAISE vr_exc_saida;
-    END;
-  
-    --busca diretorio padrao da cooperativa
-    vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
+      -- Se houve retorno de erro
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+         RAISE vr_exc_erro;
+      END IF;
+      ---- Alteração gilberto 07/03/2019
+      PCPS0001.pc_gerar_termo_portab(pr_dsrowid  => pr_dsrowid
                                           ,pr_cdcooper => vr_cdcooper
-                                          ,pr_nmsubdir => 'rl');
-  
-    -- Monta documento XML de Dados
-    dbms_lob.createtemporary(vr_clob, TRUE);
-    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-  
-    -- Criar cabeçalho do XML
-    gene0002.pc_escreve_xml(pr_xml            => vr_clob,
-                            pr_texto_completo => vr_xml_temp,
-                            pr_texto_novo     => '<?xml version="1.0" encoding="utf-8"?><adesao>');
-  
-		vr_nrtelefo := rw_solicitacao.telefone;
-		IF TRIM(NVL(vr_nrtelefo,'')) = '()' THEN
-			 vr_nrtelefo := ' ';
-		END IF;
-		
-    gene0002.pc_escreve_xml(pr_xml            => vr_clob,
-                            pr_texto_completo => vr_xml_temp,
-                            pr_texto_novo     => '<qtde_dias>' || vr_qtde_dias || '</qtde_dias>' ||
-                                                 '<dsqtde_dias>' || vr_dsqtde_dias ||
-                                                 '</dsqtde_dias>' || '<dtsolicitacao>' ||
-                                                 to_char(rw_solicitacao.dtsolicitacao, 'DD/MM/RRRR') ||
-                                                 '</dtsolicitacao>' || '<nrdconta>' ||
-                                                 rw_solicitacao.nrdconta || '</nrdconta>' ||
-                                                 '<nrcpfcgc>' || rw_solicitacao.nrcpfcgc ||
-                                                 '</nrcpfcgc>' || '<telefone>' ||
-                                                 vr_nrtelefo || '</telefone>' ||
-                                                 '<nmprimtl>' || rw_solicitacao.nmprimtl ||
-                                                 '</nmprimtl>' || '<nrcnpj_empregador>' ||
-                                                 rw_solicitacao.nrcnpj_empregador ||
-                                                 '</nrcnpj_empregador>' || '<dsnome_empregador>' ||
-                                                 rw_solicitacao.dsnome_empregador ||
-                                                 '</dsnome_empregador>' || '<banco>' ||
-                                                 rw_solicitacao.banco || '</banco>' ||
-                                                 '<nrispb_banco_folha>' ||
-                                                 rw_solicitacao.nrispb_banco_folha ||
-                                                 '</nrispb_banco_folha>' || '<nrcnpj_banco_folha>' ||
-                                                 rw_solicitacao.nrcnpj_banco_folha ||
-                                                 '</nrcnpj_banco_folha>' || '<tipo_conta>' ||
-                                                 rw_solicitacao.tipo_conta || '</tipo_conta>' ||
-                                                 '<dsdemail>' || NVL(rw_solicitacao.dsdemail, ' ') ||
-                                                 '</dsdemail>' || '<nmoperad>' ||
-                                                 rw_solicitacao.nmoperad || '</nmoperad>' || '<pa>' ||
-                                                 rw_solicitacao.pa || '</pa>' || '<cdagencia>' ||
-                                                 rw_solicitacao.cdagencia || '</cdagencia>' ||
-                                                 '<img_cooperativa>' ||
-                                                 rw_solicitacao.img_cooperativa ||
-                                                 '</img_cooperativa>');
-  
-    -- Encerrar a tag raiz
-    gene0002.pc_escreve_xml(pr_xml            => vr_clob,
-                            pr_texto_completo => vr_xml_temp,
-                            pr_texto_novo     => '</adesao>',
-                            pr_fecha_xml      => TRUE);
-  
-    vr_dsjasper := 'termo_solicitacao_portabilidade.jasper';
-    vr_nmarqim  := '/TermoAdesaoPortabilidade_' || to_char(SYSDATE, 'DDMMYYYYHH24MISS') || '.pdf';
-  
-    -- Solicita geracao do PDF
-    gene0002.pc_solicita_relato(pr_cdcooper  => vr_cdcooper,
-                                pr_cdprogra  => 'ATENDA',
-                                pr_dtmvtolt  => rw_crapdat.dtmvtolt,
-                                pr_dsxml     => vr_clob,
-                                pr_dsxmlnode => '/adesao',
-                                pr_dsjasper  => vr_dsjasper,
-                                pr_dsparams  => NULL,
-                                pr_dsarqsaid => vr_nom_direto || vr_nmarqim,
-                                pr_cdrelato  => 733,
-                                pr_flg_gerar => 'S',
-                                pr_qtcoluna  => 80,
-                                pr_sqcabrel  => 1,
-                                pr_flg_impri => 'N',
-                                pr_nmformul  => ' ',
-                                pr_nrcopias  => 1,
-                                pr_parser    => 'R',
-                                pr_nrvergrl  => 1,
-                                pr_des_erro  => vr_dscritic);
-  
+                                    ,pr_cdcritic => vr_cdcritic
+                                    ,pr_dscritic => vr_dscritic
+                                    ,pr_dssrvarq => vr_dssrvarq
+                                    ,pr_dsdirarq => vr_dsdirarq);
+                                       
+      -- Se houve retorno de erro
+      IF nvl(vr_cdcritic, 0) > 0 OR
+         TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
     -- copia contrato pdf do diretorio da cooperativa para servidor web
     gene0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper,
                                  pr_cdagenci => NULL,
                                  pr_nrdcaixa => NULL,
-                                 pr_nmarqpdf => vr_nom_direto || vr_nmarqim,
+                                   pr_nmarqpdf => vr_dsdirarq || vr_dssrvarq,
                                  pr_des_reto => vr_des_reto,
                                  pr_tab_erro => vr_tab_erro);
   
-    -- Libera a memoria do CLOB
-    dbms_lob.close(vr_clob);
-  
+      -- Se houve retorno de erro
+      IF nvl(vr_des_reto, 'OK') <> 'OK' THEN
+        IF vr_tab_erro.COUNT > 0 THEN
+           vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+           vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
     -- Criar XML de retorno
     pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||
-                                   vr_nmarqim || '</nmarqpdf>');
-  
-    COMMIT;
+                                   vr_dssrvarq || '</nmarqpdf>'); 
   EXCEPTION
-    WHEN vr_exc_saida THEN
+    WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
       ROLLBACK;
@@ -3131,7 +2985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     
     WHEN OTHERS THEN
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral em pc_imprimir_termo_portab: ' || SQLERRM;
+      pr_dscritic := 'Erro geral em TELA_ATENDA_PORTAB.pc_imprimir_termo_portab: ' || SQLERRM;
       ROLLBACK;
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -3402,23 +3256,23 @@ PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numer
                             pr_texto_novo     => '<cop_nmextcop>' || rw_crapcop.nmextcop || '</cop_nmextcop>' ||
 												 '<cop_nmrescop>' || rw_crapcop.nmrescop || '</cop_nmrescop>' ||
                          '<cop_nrdocnpj>' || vr_nrcpfcgc_cop ||'</cop_nrdocnpj>' || 
-                         '<cop_nmcidade>' || rw_crapcop.nmcidade ||'</cop_nmcidade>' || 
-                         '<cop_dsendcop>' || rw_crapcop.dsendcop ||'</cop_dsendcop>' || 
-                         '<cop_cdufdcop>' || rw_crapcop.cdufdcop ||'</cop_cdufdcop>' || 
-                         '<cop_nrcepend>' || gene0002.fn_mask_cep(rw_crapcop.nrcepend) ||'</cop_nrcepend>' || 
-                         '<cop_dsendweb>' || rw_crapcop.dsendweb ||'</cop_dsendweb>' || 
-                         '<cop_dataextenso>' || rw_crapcop.dataextenso ||'</cop_dataextenso>' || 
-                         '<cop_nrtelura>' || nvl(trim(rw_crapcop.nrtelura), ' ') ||'</cop_nrtelura>' || 
-                         '<cop_nrtelouv>' || nvl(trim(rw_crapcop.nrtelouv), ' ') ||'</cop_nrtelouv>' ||  												 
-                         '<tit_nrdconta>' || gene0002.fn_mask_conta(rw_crapass.nrdconta) ||'</tit_nrdconta>' ||  
-                         '<tit_nmprimtl>' || nvl(trim(rw_crapass.nmprimtl), ' ') ||'</tit_nmprimtl>' ||  
-                         '<tit_nrcpfcgc>' || vr_nrcpfcgc_ass ||'</tit_nrcpfcgc>' ||  
-                         '<tit_xxx_dsnacion>' || nvl(trim(rw_crapass.dsnacion), ' ') ||'</tit_xxx_dsnacion>' ||  
-                         '<tit_xxx_dsregcas>' || nvl(trim(rw_crapass.dsestcvl), ' ') ||'</tit_xxx_dsregcas>' ||  
-                         '<tit_dsendere>' || nvl(trim(rw_crapass.dsendere), ' ') ||'</tit_dsendere>' ||  
-                         '<tit_nrendere>' || nvl(trim(rw_crapass.nrendere), ' ') ||'</tit_nrendere>' ||  
-                         '<tit_nmbairro>' || nvl(trim(rw_crapass.nmbairro), ' ') ||'</tit_nmbairro>' ||  
-                         '<tit_nmcidade>' || nvl(trim(rw_crapass.nmcidade), ' ') ||'</tit_nmcidade>' ||  
+												 '<cop_nmcidade>' || rw_crapcop.nmcidade ||'</cop_nmcidade>' || 
+												 '<cop_dsendcop>' || rw_crapcop.dsendcop ||'</cop_dsendcop>' || 
+												 '<cop_cdufdcop>' || rw_crapcop.cdufdcop ||'</cop_cdufdcop>' || 
+												 '<cop_nrcepend>' || gene0002.fn_mask_cep(rw_crapcop.nrcepend) ||'</cop_nrcepend>' || 
+												 '<cop_dsendweb>' || rw_crapcop.dsendweb ||'</cop_dsendweb>' || 
+												 '<cop_dataextenso>' || rw_crapcop.dataextenso ||'</cop_dataextenso>' || 
+												 '<cop_nrtelura>' || nvl(trim(rw_crapcop.nrtelura), ' ') ||'</cop_nrtelura>' || 
+												 '<cop_nrtelouv>' || nvl(trim(rw_crapcop.nrtelouv), ' ') ||'</cop_nrtelouv>' ||  												 
+												 '<tit_nrdconta>' || gene0002.fn_mask_conta(rw_crapass.nrdconta) ||'</tit_nrdconta>' ||  
+												 '<tit_nmprimtl>' || nvl(trim(rw_crapass.nmprimtl), ' ') ||'</tit_nmprimtl>' ||  
+												 '<tit_nrcpfcgc>' || vr_nrcpfcgc_ass ||'</tit_nrcpfcgc>' ||  
+												 '<tit_xxx_dsnacion>' || nvl(trim(rw_crapass.dsnacion), ' ') ||'</tit_xxx_dsnacion>' ||  
+												 '<tit_xxx_dsregcas>' || nvl(trim(rw_crapass.dsestcvl), ' ') ||'</tit_xxx_dsregcas>' ||  
+												 '<tit_dsendere>' || nvl(trim(rw_crapass.dsendere), ' ') ||'</tit_dsendere>' ||  
+												 '<tit_nrendere>' || nvl(trim(rw_crapass.nrendere), ' ') ||'</tit_nrendere>' ||  
+												 '<tit_nmbairro>' || nvl(trim(rw_crapass.nmbairro), ' ') ||'</tit_nmbairro>' ||  
+												 '<tit_nmcidade>' || nvl(trim(rw_crapass.nmcidade), ' ') ||'</tit_nmcidade>' ||  
                          '<tit_cdufende>' || nvl(trim(rw_crapass.cdufende), ' ') ||'</tit_cdufende>' ||  
                          '<tit_nrcepend>' || gene0002.fn_mask_cep(rw_crapass.nrcepend) ||'</tit_nrcepend>' ||  
                          '<tit_nmresage>' || rw_crapass.nmextage ||'</tit_nmresage>' ||                          
@@ -3495,7 +3349,7 @@ PROCEDURE pc_imprimir_termo_conta(pr_cdcooper IN crapenc.cdcooper%TYPE --> Numer
       pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END pc_imprimir_termo_conta;
-
+  
   PROCEDURE pc_contesta_portabilidade(pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
                                      ,pr_cdmotivo IN tbcc_portab_env_contestacao.cdmotivo%TYPE --> Motivo do cancelamento
                                      ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
