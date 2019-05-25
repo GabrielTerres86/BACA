@@ -1064,6 +1064,7 @@
 		$xml .= "   	<dscatbem>".$dscatbem."</dscatbem>";
 		$xml .= "   	<idfiniof>".$idfiniof."</idfiniof>";		
 		$xml .= "		<dsctrliq>" . $dsctrliq . "</dsctrliq>";
+    $xml .= "   <dtcarenc>".$dtcarenc."</dtcarenc>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
 

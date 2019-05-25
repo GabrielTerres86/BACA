@@ -2419,8 +2419,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
           vr_vlemprst := pr_vlemprst;
           vr_vllibera := pr_vlemprst;
           
-          IF pr_idfiniof = 1 THEN
-             vr_vlemprst := nvl(vr_vlemprst,0) + nvl(vr_vlrtarif,0);
+          IF pr_idfiniof = 0 THEN
+             vr_vlemprst := nvl(vr_vlemprst,0) - nvl(vr_vlrtarif,0);
            END IF;
            
           -- Calcular o IOF da operação
@@ -2455,8 +2455,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
             RAISE vr_exc_saida;  
           END IF;                                                       
         
-          IF pr_idfiniof = 1 THEN
-             vr_vlemprst := nvl(vr_vlemprst,0) + nvl(vr_valoriof,0);
+          IF pr_idfiniof = 0 THEN
+             vr_vlemprst := nvl(vr_vlemprst,0) - nvl(vr_valoriof,0);
              vr_vllibera := vr_vlemprst;
            END IF; 
            
@@ -2574,6 +2574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                           , pr_idfiniof => pr_idfiniof
                                           , pr_dsctrliq => ''
                                           , pr_idgravar => 'N' 
+																				, pr_dtcarenc => CASE WHEN pr_idcarenc > 0 THEN pr_dtcarenc ELSE null END
                                           , pr_txcetano => vr_txcetano
                                           , pr_txcetmes => vr_txcetmes
                                           , pr_cdcritic => vr_cdcritic

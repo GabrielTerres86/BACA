@@ -665,19 +665,18 @@ function formataContratos() {
     ordemInicial = [[0, 0]];
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '30px';
-    arrayLargura[1] = '30px';
-    arrayLargura[2] = '70px';
+    arrayLargura[0] = '35px';
+    arrayLargura[1] = '35px';
+    arrayLargura[2] = '60px';
     arrayLargura[3] = '130px';
     arrayLargura[4] = '35px'; //tipo cobranca
     arrayLargura[5] = '60px';
-    arrayLargura[6] = '90px';
+    arrayLargura[6] = '80px';
     arrayLargura[7] = '60px';
     arrayLargura[8] = '70px';
-    arrayLargura[9] = '70px';
-    arrayLargura[10] = '90px';
-    arrayLargura[11] = '90px';
-    arrayLargura[12] = '90px';
+    arrayLargura[9] = '55px';
+    arrayLargura[10] = '75px';
+    arrayLargura[11] = '75px';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
@@ -1834,6 +1833,8 @@ function gerarBoleto() {
                 gerarBoletoPrejuizo();
             } else if (tpemprst == 1) {
                 gerarBoletoPP();
+            } else if (tpemprst == 2) {
+                gerarBoletoPOS();
             } else {
                 gerarBoletoTR();
             }
@@ -2330,6 +2331,267 @@ function mostraValoresPP() {
     return false;
 }
 
+function gerarBoletoPOS() {
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/cobemp/tab_gerar_boleto_pos.php',
+        data: {
+            avalista: glbAvalista,
+            nrdconta: glbNrdconta,
+            nrctremp: glbNrctremp,
+            tpemprst: glbTpemprst,
+            redirect: 'script_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
+        },
+        success: function(response) {
+
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    $('#divGerarBoleto').html(response);
+                    exibeRotina($('#divRotina'));
+                    
+                    formataGerarBoletoPOS();
+
+                    hideMsgAguardo();
+                    bloqueiaFundo($('#divRotina'));
+                    $('#divRotina').centralizaRotinaH();
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', error.message, 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            } else {
+                try {
+                    eval(response);
+                    controlaFoco();
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            }
+        }
+    });
+    return false;
+}
+
+
+function formataGerarBoletoPOS() {
+
+    // Ajusta tamanho do form
+    $('#divRotina').css('width', '780px');
+
+    var frm = "frmGerarBoletoPOS";
+
+    // Rotulos
+    var rRdvencto = $('label[for="rdvencto"]', '#' + frm);
+    rRdvencto.addClass('rotulo').css('width', '270px');
+
+    // Campos
+    var cDtvencto = $('#dtvencto', '#' + frm);
+    var cRdvencto1 = $('#rdvencto1', '#' + frm);
+    var cRdvencto2 = $('#rdvencto2', '#' + frm);
+    var cRdsacado1 = $('#rdsacado1', '#' + frm);
+    var cRdsacado2 = $('#rdsacado2', '#' + frm);
+    var cNrcpfava  = $('#nrcpfava',  '#' + frm);
+
+    cDtvencto.css({'width': '75px'}).setMask('DATE', '', '', '');
+    cRdvencto1.css({'margin-left': '200px'});
+    cRdvencto2.css({'margin-left': '200px'});
+    cRdsacado1.css({'margin-left': '200px'});
+    cRdsacado2.css({'margin-left': '200px'});
+    cNrcpfava.css({'width': '250px'}).addClass('campo').val('').desabilitaCampo();
+    cDtvencto.desabilitaCampo();
+
+    $("#dtvencto").datepicker('disable');
+
+    layoutPadrao();
+
+    return false;
+}
+
+function formataParcelasPOS() {
+
+    valorAtraso = 0;
+    $("input[type=hidden][name='vlatraso[]']").each(function() {
+        // Valor total a atual
+        valorAtraso += retiraMascara(this.value);
+    });
+
+    $("input[type=hidden][name='vlmtapar[]']").each(function() {
+        // Valor total a atual
+        valorAtraso += retiraMascara(this.value);
+    });
+
+    $("input[type=hidden][name='vlmrapar[]']").each(function() {
+        // Valor total a atual
+        valorAtraso += retiraMascara(this.value);
+    });
+
+    $("input[type=hidden][name='vliofcpl[]']").each(function() {
+        // Valor total a atual
+        valorAtraso += retiraMascara(this.value);
+    });
+
+    var rTotAtras = $('label[for="totatras"]', '#frmVlParc');
+    var cTotAtras = $('#totatras', '#frmVlParc');
+
+    rTotAtras.addClass('rotulo').css({'width': '140px', 'padding-top': '3px', 'padding-bottom': '3px'});
+    cTotAtras.addClass('campo').css({'width': '70px', 'padding-top': '3px', 'padding-bottom': '3px'});
+    cTotAtras.addClass('rotulo moeda').desabilitaCampo();
+
+    $('#totatras', '#frmVlParc').val(valorAtraso.toFixed(2).replace(".", ","));
+
+    var rTotpagto = $('label[for="totpagto"]', '#frmVlParc');
+    rTotpagto.addClass('rotulo').css({'margin-left': '355px'});
+
+    layoutPadrao();
+
+    return false;
+}
+
+
+function mostraValoresPOS() {
+
+    var checado = 0;
+
+    if (document.getElementById("rdvencto1").checked == true) {
+        checado = 1;
+    }
+
+    if (document.getElementById("rdvencto2").checked == true) {
+
+        if ($('#dtvencto', '#frmGerarBoletoPOS').val() == '') {
+            showError('error', 'Data Futura deve ser Informata!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
+            return false;
+        } else {
+            checado = 2;
+        }
+    }
+
+    if (checado == 0) {
+        showError('error', 'Escolha uma Opcao de Vencimento!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
+        return false;
+    }
+
+    // Se possuir avalista
+    if (glbAvalista == 1) {
+        var sacadoChecked = normalizaNumero($('input[name="rdsacado"]:checked').val());
+
+        if (sacadoChecked == 0) {
+            showError('error', 'Escolha uma Opcao de Sacado!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
+            return false;
+        }
+
+        if (sacadoChecked == 2) {
+            if ($('#nrcpfava', '#frmGerarBoletoPOS').val() == '') {
+                showError('error', 'Avalista deve ser Informado!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
+                return false;
+            }
+        }
+
+        $('#rdsacado1, #rdsacado2, #nrcpfava', '#frmGerarBoletoPOS').desabilitaCampo();
+    }
+
+    glbTipoVcto = checado;
+
+    $('#divParcelas').css({'display': 'block'});
+    $('#divBotoesGerarBoletoPOS').css({'display': 'none'});
+
+    $('#rdvencto1', '#frmGerarBoletoPOS').desabilitaCampo();
+    $('#rdvencto2', '#frmGerarBoletoPOS').desabilitaCampo();
+
+    layoutPadrao();
+
+    $("#dtvencto").datepicker('disable');
+
+    buscaParcelasPOS();
+
+    return false;
+}
+
+function confirmaGeracaoBoletoPOS() {
+
+    recalculaTotal();
+
+    var dataVencimento;
+    var valorBoleto;
+
+    if (document.getElementById("rdvencto1").checked == true) {
+        dataVencimento = $('#dtmvtolt', '#frmGerarBoletoPOS').val();
+    } else {
+        dataVencimento = $('#dtvencto', '#frmGerarBoletoPOS').val();
+    }
+
+    valorBoleto = $('#totpagto', '#frmVlParc').val();
+
+    if (valorBoleto == '0,00') {
+        showError('error', 'Nenhum valor informado. Total a Pagar Zerado!', 'Alerta - Ayllos', "bloqueiaFundo($('#divRotina'))");
+        return false;
+    }
+
+    var msg = '<center>Sera gerado um boleto no valor de R$ ' + valorBoleto + ' <br/> com vencimento em ' + dataVencimento + '.<br/>Confirma Geracao?</center>';
+    showConfirmacao(msg, 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuaGeracaoBoleto(\'POS\');', 'cancelaConfirmacao()', 'sim.gif', 'nao.gif');
+
+}
+
+function buscaParcelasPOS() {
+
+    var dtvencto = '';
+
+    if (document.getElementById("rdvencto1").checked == true) {
+        dtvencto = $('#dtmvtolt', '#frmGerarBoletoPOS').val();
+    } else {
+        dtvencto = $('#dtvencto', '#frmGerarBoletoPOS').val();
+    }
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/cobemp/busca_parcelas_pos.php',
+        data: {
+            nrdconta: glbNrdconta,
+            nrctremp: glbNrctremp,
+            dtvencto: dtvencto,
+            redirect: 'script_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
+        },
+        success: function(response) {
+
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    $('#divParcelas').html(response);
+                    controlaLayout('C_PAG_PREST');
+                    formataParcelasPP();
+
+                    hideMsgAguardo();
+                    bloqueiaFundo($('#divRotina'));
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', error.message, 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            } else {
+                try {
+                    eval(response);
+                    controlaFoco();
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            }
+        }
+    });
+    return false;
+}
+
 function copiarTextoSMS()
 {
     $('#textosms', '#frmEnviarSMS').focus();
@@ -2444,6 +2706,48 @@ function efetuaGeracaoBoleto(tpemprst) {
             dsparepr = '';
         } else {
 
+            var parcelasPagas = new Array();
+            var nrParcela;
+
+            $("input[type=checkbox][name='checkParcelas[]']:checked").each(function() {
+                nrParcela = this.id.split("_")[1];
+                parcelasPagas.push(nrParcela);
+            });
+
+            dsparepr = parcelasPagas.toString();
+        }
+
+    } else if (tpemprst == 'POS') {
+
+        var nrcpfava = normalizaNumero($('#nrcpfava', '#frmGerarBoletoPOS').val());
+
+        if (document.getElementById("rdvencto1").checked == true) {
+            dataVencimento = $('#dtmvtolt', '#frmGerarBoletoPOS').val();
+        } else {
+            dataVencimento = $('#dtvencto', '#frmGerarBoletoPOS').val();
+        }
+
+        totalPagar    = $('#totpagto', '#frmVlParc').val().toString().replace(".", "");
+        totalAtraso   = $('#totatras', '#frmVlParc').val().toString().replace(".", "");
+        totalContrato = $('#totatual', '#frmVlParc').val().toString().replace(".", "");
+
+
+        if (parseFloat(totalPagar) == parseFloat(totalContrato)) {
+            tpparepr = 4; // 4 = Quitação do contrato
+        }
+
+        if (parseFloat(totalPagar) == parseFloat(totalAtraso)) {
+            tpparepr = 2; //2 = Total do atraso
+        }
+
+        if (parseFloat(totalPagar) < parseFloat(totalAtraso)) {
+            tpparepr = 3; // 3 = Parcial do atraso
+        }
+
+
+        if (tpparepr == 4) {
+            dsparepr = '';
+        } else {
 
             var parcelasPagas = new Array();
             var nrParcela;

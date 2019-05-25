@@ -24,6 +24,9 @@
                             
                19/06/2015 - Incluido o campo innivris na temp-table tt-ocorren.
                             (James).
+                            
+               09/01/2019 - P298.2.2 - Luciano (Supero) - Na tela Atenda > Ocorrencias> Prejuízo> 
+                            deverá apresentar as informaçoes de prejuízo do contrato Pós-Fixado.
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-ocorren NO-UNDO
@@ -72,7 +75,17 @@ DEFINE TEMP-TABLE tt-prejuizos NO-UNDO
      FIELD nrctremp AS INTE
      FIELD dtprejuz AS DATE
      FIELD vlprejuz AS DECI
-     FIELD vlsdprej AS DECI.
+     FIELD vlsdprej AS DECI
+     FIELD nrdiaatr AS INTE
+     FIELD nrdiaprj AS INTE
+     FIELD nrdiatot AS INTE
+     FIELD vljrmprj AS DECI
+     FIELD vlttmupr AS DECI
+     FIELD vlttjmpr AS DECI
+     FIELD vltiofpr AS DECI
+     FIELD vlrpagos AS DECI
+     FIELD vlrabono AS DECI
+     FIELD vlsaldev AS DECI.
 
 DEFINE TEMP-TABLE tt-spc NO-UNDO
        FIELD nrctremp AS INTE

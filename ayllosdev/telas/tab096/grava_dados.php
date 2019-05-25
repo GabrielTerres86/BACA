@@ -31,6 +31,7 @@
 	$prazobxa = (isset($_POST['prazobxa'])) ? $_POST['prazobxa'] : ''  ;	
 	$vlrminpp = (isset($_POST['vlrminpp'])) ? $_POST['vlrminpp'] : ''  ;	
 	$vlrmintr = (isset($_POST['vlrmintr'])) ? $_POST['vlrmintr'] : ''  ;	
+	$vlrminpos = (isset($_POST['vlrminpos'])) ? $_POST['vlrminpos'] : ''  ;	
 	$descprej = (isset($_POST['descprej'])) ? $_POST['descprej'] : ''  ;
 	$dslinha1 = (isset($_POST['dslinha1'])) ? $_POST['dslinha1'] : ''  ;	
 	$dslinha2 = (isset($_POST['dslinha2'])) ? $_POST['dslinha2'] : ''  ;	
@@ -55,6 +56,7 @@
 	$xmlCarregaDados .= "   <prazobxa>".$prazobxa."</prazobxa>";	
 	$xmlCarregaDados .= "   <vlrminpp>".$vlrminpp."</vlrminpp>";	
 	$xmlCarregaDados .= "   <vlrmintr>".$vlrmintr."</vlrmintr>";	
+	$xmlCarregaDados .= "   <vlrminpos>".$vlrminpos."</vlrminpos>";
 	$xmlCarregaDados .= "   <descprej>".$descprej."</descprej>";
 	$xmlCarregaDados .= "   <dslinha1>".$dslinha1."</dslinha1>";	
 	$xmlCarregaDados .= "   <dslinha2>".$dslinha2."</dslinha2>";	

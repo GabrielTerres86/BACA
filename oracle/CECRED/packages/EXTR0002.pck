@@ -4007,15 +4007,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_extrato_epr(vr_index).qtpresta:= 0;
         END IF;    
         /*Historicos que nao vao compor o saldo, mas vao aparecer no relatorio*/
-        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711,2566,2567, /*2382,*/ 2411, 2415, 2423,2416,2390,2475,2394,2476,2735,
+        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711,2566,2567, /*2382,*/ /*2411,*/ 2415, 2423,2416,2390,2475,2394,2476,2735,
                                    --> Novos historicos de estorno de financiamento
-                                   2784,2785,2786,2787) THEN 
+                                   2784,2785,2786,2787,2882,2883,2887,2884,2954,2953,2735
+                                   ,2359,2471,2358,2472) THEN 
           --marcar para nao mostrar saldo
           pr_extrato_epr(vr_index).flgsaldo:= FALSE;                           
         END IF;
         /*Historicos que nao vao aparecer no relatorio, mas vao compor saldo */
         IF rw_craplem.cdhistor IN (1040,1041,1042,1043 /* PP */
-                                  ,2471,2472,2358,2359 /* POS */) THEN
+                                  ,2471,2472,2358,2359,2878,2883,2887,2882,2884,2885,2888,2954,2953,2388,2390,2405,2411,2415 /* POS */) THEN
           --marcar com false para nao listar
           pr_extrato_epr(vr_index).flglista:= FALSE;  
         END IF;        
@@ -4029,7 +4030,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            IF rw_craplem.cdhistor IN (1733,1734,1735,1736, 2382, 2411, 2415, 2423,2416,2390,2475,2394,2476,2735) THEN
              pr_extrato_epr(vr_index).flgsaldo := FALSE;
            END IF;  
+        END IF;
              
+				-- Se for POS e estiver Em Prejuizo
+				IF rw_crapepr.tpemprst = 2 AND
+           rw_crapepr.inprejuz = 1 THEN
+					--
+					IF rw_craplem.cdhistor IN(2471,2472,2358,2359,2878,2884,2885,2888,2405,2411,2415,2735) THEN
+						--
+						pr_extrato_epr(vr_index).flgsaldo:= FALSE;
+						--
+					END IF;
+					--
         END IF;
               
         --Valor Lancamento
@@ -13418,6 +13430,7 @@ END pc_consulta_ir_pj_trim;
                 ,crapepr.inprejuz
                 ,crapepr.vlaqiofc
                 ,crapepr.cdfinemp
+								,crapepr.dtprejuz
           FROM crapepr crapepr
           WHERE crapepr.cdcooper = pr_cdcooper
           AND   crapepr.nrdconta = pr_nrdconta
@@ -13800,7 +13813,12 @@ END pc_consulta_ir_pj_trim;
         IF pr_flgimpri THEN
           -- A utilizacao da taxa diaria para conversao anual eh devido o 
           -- contrato antigo nao possuir taxa mensal
+         IF rw_crawepr.tpemprst = 2 THEN
+           -- se for POS nao precisa dividir por 100 pq ja grava o valor correto
+           vr_txanual  := TRUNC((POWER(1 + (rw_crawepr.txdiaria), 360) - 1) * 100, 5);
+         ELSE
           vr_txanual  := TRUNC((POWER(1 + (rw_crawepr.txdiaria / 100), 360) - 1) * 100, 5);
+         END IF;
           vr_txnomina := TRUNC(((POWER(1 + (vr_txanual / 100), 1/12) - 1) * 12) * 100, 5);
 
           --Selecionar Modalidade
@@ -14298,7 +14316,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Jaison Fernando
-  --  Data     : Maio/2017                           Ultima atualizacao: 10/05/2018
+  --  Data     : Maio/2017                           Ultima atualizacao: 18/01/2019
   --
   -- Dados referentes ao programa:
   --
@@ -14306,8 +14324,22 @@ END pc_consulta_ir_pj_trim;
   -- Objetivo   : Procedure para Imprimir Extrato Emprestimo Pos-Fixado
   --
   -- Alterações : 10/05/2018 - P410 - AJustes IOF (Marcos-Envolti)
+  --              
+  --              10/01/2019 - P298 - Ajustado campo "Variação indexador" para receber o valor crawepr.vlperidx. (Anderson-Alan Supero)
+	--
+	--              18/01/2019 - P298.2.2 - Ajuste do "Extrato da operacao de prejuizo" - Nagasava (Supero)
+	--
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
+        -- Busca dos dados da cooperativa
+        CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+          SELECT crapcop.nmrescop
+                 ,crapcop.nmextcop
+                 ,crapcop.nrdocnpj
+          FROM crapcop crapcop
+          WHERE crapcop.cdcooper = pr_cdcooper;
+        rw_crapcop cr_crapcop%ROWTYPE;
+
         -- Buscar cadastro auxiliar de emprestimo
         CURSOR cr_crapepr (pr_cdcooper IN crapepr.cdcooper%type,
                            pr_nrdconta IN crapepr.nrdconta%type,
@@ -14325,6 +14357,16 @@ END pc_consulta_ir_pj_trim;
                 ,crapepr.inprejuz
                 ,crapepr.qttolatr
                 ,crapepr.cdfinemp
+								,crapepr.vlsdprej
+								,crapepr.vlttmupr
+								,crapepr.vlpgmupr
+								,crapepr.vlttjmpr
+								,crapepr.vlpgjmpr
+								,crapepr.vltiofpr
+								,crapepr.vlpiofpr
+								,crapepr.dtprejuz
+                ,crapepr.vlpreemp
+                ,crapepr.qtprepag
             FROM crapepr
            WHERE crapepr.cdcooper = pr_cdcooper
              AND crapepr.nrdconta = pr_nrdconta
@@ -14336,6 +14378,9 @@ END pc_consulta_ir_pj_trim;
                            pr_nrctremp IN crawepr.nrctremp%type) is
           SELECT crawepr.dtdpagto
                 ,crawepr.percetop
+                ,crawepr.txdiaria
+				,crawepr.vlperidx
+                ,crawepr.cddindex
             FROM crawepr
            WHERE crawepr.cdcooper = pr_cdcooper
              AND crawepr.nrdconta = pr_nrdconta
@@ -14347,6 +14392,8 @@ END pc_consulta_ir_pj_trim;
           SELECT craplcr.perjurmo
                 ,craplcr.dslcremp
                 ,craplcr.flgcobmu
+                ,craplcr.cdmodali
+                ,craplcr.cdsubmod
             FROM craplcr
            WHERE craplcr.cdcooper = pr_cdcooper 
              AND craplcr.cdlcremp = pr_cdlcremp;
@@ -14355,6 +14402,7 @@ END pc_consulta_ir_pj_trim;
         CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
                          ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
           SELECT crapass.cdagenci
+                ,crapass.nmprimtl
             FROM crapass
            WHERE crapass.cdcooper = pr_cdcooper
              AND crapass.nrdconta = pr_nrdconta;
@@ -14381,6 +14429,30 @@ END pc_consulta_ir_pj_trim;
            AND nrctremp = pr_nrctremp
            AND nrparepr = pr_nrparepr;
         rw_crappep_taxa cr_crappep_taxa%ROWTYPE;
+
+        -- Cursor para buscar nome do indexador
+        CURSOR cr_crapind (pr_cddindex IN crapind.cddindex%TYPE) IS
+		  SELECT crapind.nmdindex
+		    FROM crapind
+		   WHERE crapind.cddindex = pr_cddindex;
+         rw_crapind cr_crapind%ROWTYPE;
+
+        -- Cursor para buscar a modalidade
+        CURSOR cr_gnmodal(pr_cdmodali IN gnmodal.cdmodali%TYPE) IS
+          SELECT gnmodal.cdmodali
+                ,gnmodal.dsmodali
+            FROM gnmodal
+           WHERE gnmodal.cdmodali = pr_cdmodali;
+        rw_gnmodal cr_gnmodal%ROWTYPE;
+        -- Cursor para buscar a sub modalidade
+        CURSOR cr_gnsbmod(pr_cdmodali IN gnsbmod.cdmodali%TYPE
+                         ,pr_cdsubmod IN gnsbmod.cdsubmod%TYPE) IS
+          SELECT gnsbmod.cdsubmod
+                ,gnsbmod.dssubmod
+            FROM gnsbmod
+           WHERE gnsbmod.cdmodali = pr_cdmodali
+             AND gnsbmod.cdsubmod = pr_cdsubmod;
+        rw_gnsbmod cr_gnsbmod%ROWTYPE;
 
         -- cursor genérico de calendário
         rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -14421,7 +14493,9 @@ END pc_consulta_ir_pj_trim;
         vr_vlsaldo1  NUMBER;
         vr_flginfor  BOOLEAN:= FALSE;
 				vr_flginfor2 BOOLEAN:= FALSE;
+				vr_flginfor3 BOOLEAN:= FALSE;
         vr_dslinpar  VARCHAR2(200); 
+				vr_dstexinf3 VARCHAR2(2000);
         vr_dstexto   VARCHAR2(32600);
 				vr_flgloop   BOOLEAN := FALSE;
         vr_vlsdeved  NUMBER(25,2);
@@ -14433,6 +14507,11 @@ END pc_consulta_ir_pj_trim;
         vr_vltxiofpri NUMBER := 0;
         vr_vltxiofadc NUMBER := 0;
         vr_vltxiofcpl number := 0;
+        vr_txanual  crawepr.txmensal%TYPE;
+        vr_txnomina crawepr.txmensal%TYPE;
+        vr_nmdindex crapind.nmdindex%TYPE := '';
+				vr_vlsdprej crapepr.vlsdprej%TYPE;
+        vr_vlajuste NUMBER;
 
         --Variaveis de Erro
         vr_cdcritic INTEGER;
@@ -14454,6 +14533,23 @@ END pc_consulta_ir_pj_trim;
         OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
         FETCH btch0001.cr_crapdat INTO rw_crapdat;
         CLOSE btch0001.cr_crapdat;
+
+        -- Verifica se a cooperativa esta cadastrada
+        OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
+        FETCH cr_crapcop INTO rw_crapcop;
+        -- Se nao encontrar
+        IF cr_crapcop%NOTFOUND THEN
+          -- Fechar o cursor pois haverá raise
+          CLOSE cr_crapcop;
+          -- Montar mensagem de critica
+          vr_cdcritic:= 651;
+          vr_dscritic:= NULL;
+          --Levantar Excecao
+          RAISE vr_exc_erro; 
+        ELSE
+          -- Apenas fechar o cursor
+          CLOSE cr_crapcop;
+        END IF;
 
         --Selecionar associado
         OPEN cr_crapass (pr_cdcooper => pr_cdcooper
@@ -14511,6 +14607,15 @@ END pc_consulta_ir_pj_trim;
         FETCH cr_craplcr INTO rw_craplcr;
         CLOSE cr_craplcr;
 
+        -- Seleciona o nome do indexador
+        vr_nmdindex := '';
+        OPEN cr_crapind (rw_crawepr.cddindex);
+        FETCH cr_crapind INTO rw_crapind;
+        IF cr_crapind%FOUND THEN
+          vr_nmdindex := rw_crapind.nmdindex;
+        END IF;
+        CLOSE cr_crapind;
+
         IF rw_craplcr.flgcobmu = 1 THEN
           -- Leitura do indicador de uso da tabela de taxa de juros                                                    
           vr_parempctl := tabe0001.fn_busca_dstextab (pr_cdcooper => 3 -- Fixo CECRED
@@ -14529,6 +14634,19 @@ END pc_consulta_ir_pj_trim;
           vr_parempctl := 0;
         END IF;
 
+        --Selecionar Modalidade
+        OPEN cr_gnmodal (pr_cdmodali => rw_craplcr.cdmodali);
+        FETCH cr_gnmodal INTO rw_gnmodal;
+        --Fechar Cursor
+        CLOSE cr_gnmodal;
+
+        --Selecionar Sub Modalidade
+        OPEN cr_gnsbmod (pr_cdmodali => rw_craplcr.cdmodali
+                        ,pr_cdsubmod => rw_craplcr.cdsubmod);
+        FETCH cr_gnsbmod INTO rw_gnsbmod;
+        --Fechar Cursor
+        CLOSE cr_gnsbmod;
+
         --Valor Emprestimo
         vr_vlemprst := 'R$ '||trim(to_char(rw_crapepr.vlemprst,'fm999g999g990d00')); 
         --Taxa Mensal Juros
@@ -14544,16 +14662,36 @@ END pc_consulta_ir_pj_trim;
         END IF;
         --Juros de Mora
         vr_txinmens := trim(to_char(rw_craplcr.perjurmo + rw_crapepr.txmensal,'fm990d00')||'%');
+        -- A utilizacao da taxa diaria para conversao anual eh devido o 
+        -- contrato antigo nao possuir taxa mensal
+        vr_txanual  := TRUNC((POWER(1 + (rw_crawepr.txdiaria), 360) - 1) * 100, 5);
+        vr_txnomina := TRUNC(((POWER(1 + (vr_txanual / 100), 1/12) - 1) * 12) * 100, 5);
         
         --Se deve imprimir
         IF pr_flgimpri THEN
           --Gravar Informacoes do cabecalho no XML
           vr_dstexto:= '<conta tpemprst="' || rw_crapepr.tpemprst || '" flgmensag="N" dscmensag=""' ||
                        '  nrdconta="' || to_char(pr_nrdconta,'fm9999g999g0')                        ||
+                       '" nmprimtl="' || RPAD(rw_crapass.nmprimtl,30,' ')                           || 
                        '" cdagenci="' || rw_crapage.cdagenci                                        ||
                        '" cdagenci_emp="' || rw_crapepr.cdagenci                                    ||
                        '" nmresage="' || rw_crapage.nmresage                                        ||
                        '" nrctremp="' || to_char(rw_crapepr.nrctremp,'fm999g999g990')               ||
+                       '" nmextcop="' || rw_crapcop.nmextcop                                        ||
+                       '" nmrescop="' || rw_crapcop.nmrescop                                        ||
+                       '" dtmvtolt="' || to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY')                  ||
+                       '" nrdocnpj="' || gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)           ||
+                       '" vlparcel="' || to_char(rw_crapepr.vlpreemp,'fm9999g999g990d00')           ||
+                       '" percetop="' || to_char(rw_crawepr.percetop,'fm9999g999g990d00000')        ||
+                       '" dtultpgt="' || to_char(ADD_MONTHS(rw_crawepr.dtdpagto, rw_crapepr.qtpreemp - 1),'DD/MM/YYYY') ||
+                       '" cdmodali="' || rw_gnmodal.cdmodali                                        ||
+                       '" dsmodali="' || rw_gnmodal.dsmodali                                        ||
+                       '" cdsubmod="' || rw_gnsbmod.cdsubmod                                        ||
+                       '" dssubmod="' || gene0007.fn_caract_acento(rw_gnsbmod.dssubmod,1,'#$&%¹²³ªº°*!?<>|','                  ') ||
+                       '" txanual="'  || to_char(vr_txanual,'fm9999g999g990d00000')                 ||
+                       '" txnominal="'|| to_char(vr_txnomina,'fm9999g999g990d00000')                ||
+                       '" qtpreapg="' || to_char(rw_crapepr.qtpreemp - rw_crapepr.qtprepag,'fm990')                          ||
+                       '" qtpreemp="' || to_char(rw_crapepr.qtpreemp,'fm990')                       ||
                        '" nrconta_cartao="">';
           --Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
@@ -14592,7 +14730,8 @@ END pc_consulta_ir_pj_trim;
 						  '" p_vltxiofadc="'||to_char((nvl(vr_vltxiofadc, 0) * 100), 'fm9999g999g990d00000')||'%'    ||
                           '" p_vltxiofpri="'||to_char((nvl(vr_vltxiofpri, 0) * 100), 'fm9999g999g990d00000')||'%'    ||
                           '" p_dscet="'||rw_crawepr.percetop||'%'||
-                          '" p_dsindexador="CDI 100%">';
+                          '" p_dsindexador="'||vr_nmdindex||' '||to_char(rw_crawepr.vlperidx,'FM990D00')||'%">';
+
           --Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
 
@@ -14659,6 +14798,15 @@ END pc_consulta_ir_pj_trim;
               --Liquidada
               vr_indpgesq:= 'Liquidada'; 
             END IF;  
+						-- Verifica prejuízo
+						IF rw_crapepr.inprejuz = 1 AND 
+							 (vr_tab_parcela_epr(vr_contaesq).dtultpag IS NULL OR
+							  vr_tab_parcela_epr(vr_contaesq).vlsdvpar <> 0) AND
+							 vr_tab_parcela_epr(vr_contaesq).indpagto = 1 THEN
+							--
+							vr_indpgesq:= 'Prejuizo'; 
+							--
+						END IF;
             --Montar a String para gravar na tabela
             vr_dslinpar:= RPAD(to_char(vr_tab_parcela_epr(vr_contaesq).nrparepr,'fm990')||')',5,' ')||
                           to_char(vr_tab_parcela_epr(vr_contaesq).dtparepr,'DD/MM/YY')||' '||
@@ -14684,6 +14832,15 @@ END pc_consulta_ir_pj_trim;
             ELSIF vr_tab_parcela_epr(vr_contadir).indpagto = 1 THEN 
               --Liquidada
               vr_indpgdir:= 'Liquidada'; 
+            END IF;  
+						-- Verifica prejuízo
+						IF rw_crapepr.inprejuz = 1 AND 
+							 (vr_tab_parcela_epr(vr_contadir).dtultpag IS NULL OR
+							  vr_tab_parcela_epr(vr_contadir).vlsdvpar <> 0) AND
+							 vr_tab_parcela_epr(vr_contadir).indpagto = 1 THEN
+							--
+							vr_indpgdir:= 'Prejuizo'; 
+							--
             END IF;  
             --Concatenar as 2 strings
             vr_dslinpar:= vr_dslinpar ||
@@ -14732,6 +14889,8 @@ END pc_consulta_ir_pj_trim;
           vr_index_extrato:= vr_tab_extrato_epr.NEXT(vr_index_extrato);
         END LOOP;   
         
+        vr_vlajuste := 0;
+        
         --Percorrer todo o extrato emprestimo para carregar tabela auxiliar
         vr_index_novo:= vr_tab_extrato_epr_novo.FIRST;
         WHILE vr_index_novo IS NOT NULL LOOP
@@ -14758,6 +14917,19 @@ END pc_consulta_ir_pj_trim;
             pr_tab_extrato_epr_aux(vr_index_epr_aux).qtdiacal:= vr_tab_extrato_epr_novo(vr_index_novo).qtdiacal;
             pr_tab_extrato_epr_aux(vr_index_epr_aux).vltaxprd:= vr_tab_extrato_epr_novo(vr_index_novo).vltaxprd;            
 
+						IF vr_tab_extrato_epr_novo(vr_index_novo).cdhistor IN(2359,2471,2358,2472) THEN
+							--
+							vr_vlajuste := nvl(vr_vlajuste, 0) + pr_tab_extrato_epr_aux(vr_index_epr_aux).vllanmto;
+							--
+						END IF;
+
+            IF vr_tab_extrato_epr_novo(vr_index_novo).cdhistor = 2735 THEN
+              --Flag Informacao
+              vr_flginfor3:= TRUE;
+              --Descricao do Extrato
+              pr_tab_extrato_epr_aux(vr_index_epr_aux).dsextrat:= vr_tab_extrato_epr_novo(vr_index_novo).dsextrat||'***';
+            END IF;
+						
             --Primeira Ocorrencia
             IF vr_flgloop = FALSE THEN
               /* Saldo Inicial */
@@ -14791,6 +14963,14 @@ END pc_consulta_ir_pj_trim;
                 pr_tab_extrato_epr_aux(vr_index_epr_aux).vlsaldo:= vr_vlsaldo1;
               END IF;    
             END IF;
+						
+						-- Para o contrato POS em prejuizo, o saldo sera atualizado conforme o ajuste lancado
+            IF vr_tab_extrato_epr_novo(vr_index_novo).cdhistor IN(2701, 2391, 382, 391, 383, 2388) THEN
+              IF (abs(pr_tab_extrato_epr_aux(vr_index_epr_aux).vlsaldo) - abs(vr_vlajuste)) = 0 THEN
+                pr_tab_extrato_epr_aux(vr_index_epr_aux).vlsaldo := 0;
+                vr_vlsaldo1 := 0;
+								END IF;
+            END IF;
           EXCEPTION
             WHEN vr_exc_proximo THEN
               NULL;
@@ -14801,6 +14981,9 @@ END pc_consulta_ir_pj_trim;
           
         --Se deve Imprimir
         IF pr_flgimpri THEN
+					IF vr_flginfor3 THEN
+            vr_dstexinf3:= '*** Demonstracao do IOF complementar referente as parcelas em atraso. Valor devido, mas nao altera o saldo devedor.';
+          END IF; 
           -- Busca as parcelas para pagamento
           EMPR0011.pc_busca_pagto_parc_pos_prog(pr_cdcooper => pr_cdcooper
 			                                   ,pr_cdprogra => pr_nmdatela
@@ -14822,9 +15005,24 @@ END pc_consulta_ir_pj_trim;
             RAISE vr_exc_erro;
           END IF;
 
+          IF rw_crapepr.inprejuz = 1 THEN
+						--
+						vr_vlsdprej := nvl(rw_crapepr.vlsdprej, 0) +
+						              (nvl(rw_crapepr.vlttmupr, 0) - nvl(rw_crapepr.vlpgmupr, 0)) +
+													(nvl(rw_crapepr.vlttjmpr, 0) - nvl(rw_crapepr.vlpgjmpr, 0)) +
+													(nvl(rw_crapepr.vltiofpr, 0) - nvl(rw_crapepr.vlpiofpr, 0));
+						--
+						vr_dstexto:= 'Saldo para Liquidacao do Prejuizo '||to_char(pr_dtmvtolt,'DD/MM/YYYY')||' R$: '||to_char(vr_vlsdprej,'fm9g999g990d00');
+						--
+					ELSE
+						--
           vr_dstexto:= 'Saldo para Liquidacao em '||to_char(pr_dtmvtolt,'DD/MM/YYYY')||' R$: '||to_char(vr_vlsdeved,'fm9g999g990d00');
+						--
+					END IF;
+					
           --Finalizar TAG parcelas e Montar Cabecalho do Extrato
-          vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="" dstexinf2="" dstexinf3="">';
+          vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="" dstexinf2="" dstexinf3="'|| vr_dstexinf3 ||'">';
+					
 					--Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
 
@@ -14989,6 +15187,8 @@ END pc_consulta_ir_pj_trim;
   --              25/05/2017 - Passagem do tpemprst. Permitir gerar extrato de Pos-Fixado. (Jaison/James - PRJ298)
   --
   --              11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).
+  --
+  --              11/01/2019 - PJ298.2.2 - Transferencia produto POS fixado para prejuizo (Rafael Faria - Supero)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -15043,6 +15243,10 @@ END pc_consulta_ir_pj_trim;
         2405 - TRANSFERENCIA EMP/ FIN TR SUSPEITA DE FRAUDE
         2412 - TRANSFERENCIA PREJUIZO C/C SUSPEITA DE FRAUDE
         2735 - IOF PREJUIZO
+		2878 - TRANSFERENCIA EMPRESTIMO POS P/ PREJUIZO
+		2884 - TRANSFERENCIA EMPRESTIMO POS C/ SUSPEITA DE FRAUDE
+		2885 - TRANSFERENCIA FINANCIAMENTO POS P/ PREJUIZO
+		2888 - TRANSFERENCIA FINANCIAME. POS C/SUSPEITA DE FRAUDE
 
 		*/
         --Selecionar Lancamento Emprestimo
@@ -15054,7 +15258,7 @@ END pc_consulta_ir_pj_trim;
           WHERE craplem.cdcooper = pr_cdcooper 
           AND   craplem.nrdconta = pr_nrdconta 
           AND   craplem.nrctremp = pr_nrctremp 
-          AND   craplem.cdhistor IN (99,349, 2381, 2396, 2401, 2405, 2385, 2400, 2735);
+          AND   craplem.cdhistor IN (99,349, 2381, 2396, 2401, 2405, 2385, 2400, 2735, 2878, 2884, 2885, 2888);
         rw_craplem cr_craplem%ROWTYPE;
         --Tipo de Tabela para Break-by do emprestimo
         TYPE typ_tab_extrato_epr_novo IS TABLE OF typ_reg_extrato_epr INDEX BY VARCHAR2(100);

@@ -32,6 +32,8 @@
 			    10/09/2018 - Ajuste no layout da tela de risco
 					         PJ 450 - Diego Simas - AMcom
 							 
+				11/01/2019 - Implementado informações com os dados dos prejuizos - P298.2.2 - Anderson-Alan Supero
+							 
  ***********************************************************************/
 
 var contWin = 0;  // Vari&aacute;vel para contagem do n&uacute;mero de janelas abertas para impress&atilde;o de extratos
@@ -321,24 +323,25 @@ function formataPrejuizos() {
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
-	divRegistro.css({'height':'235px', 'width':'910px'});
+	divRegistro.css({'height':'235px', 'width':'980px'});
 	
 	var ordemInicial = new Array();
 	
 			
 	var arrayLargura = new Array();
 	arrayLargura[0] = '65px';
-	arrayLargura[1] = '60px';
+	arrayLargura[1] = '65px';
 	arrayLargura[2] = '65px';
 	arrayLargura[3] = '65px';
-	arrayLargura[4] = '50px';
-	arrayLargura[5] = '50px';
-	arrayLargura[6] = '55px';
-	arrayLargura[7] = '70px';
-	arrayLargura[8] = '68px';
-	arrayLargura[9] = '65px';
-	arrayLargura[10] = '65px';
+	arrayLargura[4] = '40px';
+	arrayLargura[5] = '40px';
+	arrayLargura[6] = '40px';
+	arrayLargura[7] = '50px';
+	arrayLargura[8] = '50px';
+	arrayLargura[9] = '60px';
+	arrayLargura[10] = '55px';
 	arrayLargura[11] = '65px';
+	arrayLargura[12] = '65px';
 		
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
@@ -353,6 +356,8 @@ function formataPrejuizos() {
 	arrayAlinha[9] = 'center';
 	arrayAlinha[10] = 'center';
 	arrayAlinha[11] = 'center';
+	arrayAlinha[12] = 'center';
+	arrayAlinha[13] = 'center';
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
 	ajustarCentralizacao();	

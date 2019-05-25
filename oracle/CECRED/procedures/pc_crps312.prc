@@ -129,6 +129,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
               12/02/2018 - P403 - Removido a matriz typ_mat_prej e adicionado o prejuizo do borderô em uma union
                            no cursor cr_crapepr_crapass com a origem DSCTIT. (Paulo Penteado GFT) 
 
+              09/01/2019 - P298 - O relatório 264 deverá apresentar aos contratos de produto Pós-fixado 
+                           transferidos para prejuízo.
+
 ................................................................................. */
 
     DECLARE
@@ -300,7 +303,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
                ,crapepr.dtdpagto
                ,crapepr.vljurmes
                ,crapepr.txmensal
-               ,DECODE(crapepr.tpemprst,0,'TR',1,'PP','-') tpemprst
+               ,DECODE(crapepr.tpemprst,0,'TR',1,'PP',2,'POS','-') tpemprst
                ,crapepr.rowid linha
                ,crapepr.vlttmupr
                ,crapepr.vlttjmpr

@@ -73,8 +73,12 @@
 		<label for="vlsdprej" style="width: 92px;">Saldo Atualiz.:</label>
 		<input name="vlsdprej" id="vlsdprej" type="text" value="" />
 				
+		<label for="nrdiaatr"><? echo utf8ToHtml('Dias em Atraso:') ?></label>
+		<input name="nrdiaatr" id="nrdiaatr" type="text" value=""/>
+		
 		<label for="tpdrisco"><? echo utf8ToHtml('Classif. Risco:') ?></label>
 		<input name="tpdrisco" id="tpdrisco" type="text" value=""/>
+		
 	</fieldset>
 	
 </form>	

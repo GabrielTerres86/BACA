@@ -6090,8 +6090,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             -- 2388 Pagto Prejuizo - Melhoria 324
             -- 2473 Pagto Juros + 60 - Melhoria 324
 
-           -- NOVA M324
-            pr_tab_dados_epr(vr_indadepr).vlsdeved := 0;
+            -- se for POS nao zera o saldo
+           IF rw_crapepr.tpemprst = 2 AND pr_nmdatela = 'ATENDA' THEN
+             pr_tab_dados_epr(vr_indadepr).vlsdeved := pr_tab_dados_epr(vr_indadepr).vlsdprej;
+           ELSE  
+             -- NOVA M324
+             pr_tab_dados_epr(vr_indadepr).vlsdeved := 0;
+           END IF;
 
             -- Valores abono prejuizo
             FOR r_craplem2 IN cr_craplem2(prc_nrctremp => rw_crapepr.nrctremp) LOOP

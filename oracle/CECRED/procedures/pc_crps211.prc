@@ -68,6 +68,8 @@ create or replace procedure cecred.pc_crps211(pr_cdcooper  in craptab.cdcooper%t
                18/12/2013 - Conversão Progress >> Oracle PL/SQL (Daniel - Supero).
 
 			   10/09/2017 - Melhoria 324 - tratar historicos 2381, 2396, 2401, 2408 (Jean - Mout´S)
+
+			   11/01/2019 - PJ298.2.2 - Adicionado historicos prejuizo Pos Fixado (Rafael Faria - Supero)
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -94,7 +96,8 @@ create or replace procedure cecred.pc_crps211(pr_cdcooper  in craptab.cdcooper%t
        and craplem.cdhistor in ( 88,  93,  95,  99,  91,
                                  92,  94, 277, 349, 353,
                                 392, 393, 395, 441, 443,
-							                  2381, 2396, 2401) -- Melhoria 324 - inclusao das transferencias a prejuizo
+							    2381, 2396, 2401, -- Melhoria 324 - inclusao das transferencias a prejuizo
+								2878, 2885) -- Historicos POS preju
        and craphis.cdhistor = craplem.cdhistor
        and craphis.cdcooper = craplem.cdcooper;
   -- Buscar os lançamentos em depósitos à vista
@@ -281,7 +284,7 @@ begin
                         rw_craplem.indebcre,
                         rw_craplem.vllanmto);
       aux_vlcrdcax := aux_vlcrdcax - rw_craplem.vllanmto;
-    elsif rw_craplem.cdhistor in (91,92,94,277,349,353,392,393,395,441,443, 2381, 2396, 2401) then
+    elsif rw_craplem.cdhistor in (91,92,94,277,349,353,392,393,395,441,443, 2381, 2396, 2401, 2878,2885) then
       -- 91	PG. EMPR. C/C
       -- 92	PG. EMPR. CX.
       -- 94	DESC/ABON.EMP
@@ -296,6 +299,8 @@ begin
 	  -- 2381 - TRF PREJUIZO EMP PP (M324)
 	  -- 2396 - TRF PREJUIZO FIN PP (M324)
 	  -- 2401 - TRF PREJUIZO EMP/FIN TR (M324)
+	  -- 2878 - TRANSFERENCIA EMPRESTIMO POS P/ PREJUIZO
+	  -- 2885 - TRANSFERENCIA FINANCIAMENTO POS P/ PREJUIZO
 	  
       inclui_craphis_pl(rw_craplem.cdhistor,
                         rw_craplem.dshistor,
@@ -429,7 +434,7 @@ begin
       vr_tot_qthistor := 0;
       --
       while vr_indice is not null loop
-        if vr_indice in (88, 91, 92, 94, 277, 349, 353, 392, 393, 395, 2381, 2396, 2401) then
+        if vr_indice in (88, 91, 92, 94, 277, 349, 353, 392, 393, 395, 2381, 2396, 2401, 2878,2885) then
           if vr_craphis.exists(vr_indice) then
             pc_escreve_xml('<Pagamentos>');
             pc_escreve_xml('<dshistor>'||vr_craphis(vr_indice).dshistor||'</dshistor>'||
@@ -478,7 +483,7 @@ begin
     while vr_indice is not null loop
       if vr_indice in (  2,  15, 108, 282,
                         88,  93,  95,  99,
-                        91,  92,  94, 277, 349, 353, 392, 393, 395, 441, 443, 2381, 2396, 2401) then
+                        91,  92,  94, 277, 349, 353, 392, 393, 395, 441, 443, 2381, 2396, 2401, 2878,2885) then
         vr_indice_aux := vr_indice;
       end if;
       vr_indice := vr_craphis.next(vr_indice);

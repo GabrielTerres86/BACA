@@ -10617,7 +10617,7 @@ function calculaCet(operacao) {
     var cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
     var tpemprst = $('#tpemprst', '#frmNovaProp').val();
     var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();    
-
+    var dtcarenc = $('#dtcarenc', '#frmNovaProp').val();
     //bruno - prj 470 - tela autorizacao
     if(possuiPortabilidade != ""){
         aux_portabilidade = possuiPortabilidade;
@@ -10641,6 +10641,7 @@ function calculaCet(operacao) {
             operacao: operacao,
        portabilidade: possuiPortabilidade,
             dsctrliq: arrayProposta['dsctrliq'],
+            dtcarenc: dtcarenc,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -11591,6 +11592,15 @@ function calculaDataCarencia(idForm) {
 				hideMsgAguardo();
                 bloqueiaFundo(divRotina);
 				eval(response);
+
+                dtcarenc = $("#dtcarenc", idForm).val();
+                // se ambos os campos estiverem com data válida
+                if (validaData(dtdpagto) && validaData(dtcarenc)) {
+                    // inverte o ano e une para ficar no formato AAAAMM e compara as datas
+                    if (parseInt(dtdpagto.split('/').reverse().splice(0, 2).join('')) <= parseInt(dtcarenc.split('/').reverse().splice(0, 2).join(''))) {
+                        showError('error','O campo Data de Pagamento nao pode ser menor ou igual ao mes do campo Data Pagto 1a Carencia.', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+                    }
+                }
             return false;
 			} catch(error) {
 				hideMsgAguardo();

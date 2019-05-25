@@ -1082,6 +1082,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                      INPUT tt-proposta-epr.idfiniof, /* idfiniof */
                                      INPUT aux_dsctrliq, /* dsctrliq */
                                      INPUT "N",
+									 INPUT tt-proposta-epr.dtcarenc, 
                                     OUTPUT aux_percetop, /* taxa cet ano */
                                     OUTPUT aux_txcetmes, /* taxa cet mes */
                                     OUTPUT TABLE tt-erro). 

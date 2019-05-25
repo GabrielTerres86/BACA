@@ -16,6 +16,15 @@ require_once('../../includes/funcoes.php');
 require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 isPostMethod();
+
+$xml  = "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <nmdominio>TPEMPRST</nmdominio>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+$xmlResult = mensageria($xml, "EMPR9999", "BUSCA_DOMINIO_EPR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObject = getObjectXML($xmlResult);
+$xmlDomini = $xmlObject->roottag->tags[0]->tags;
 ?>
 
 <div id="divContratos" name="divContratos" >
@@ -34,7 +43,7 @@ isPostMethod();
                     <th>Parcelas</th>
                     <th>Valor</th>
                     <th>Vl. IOF Atraso</th>
-                    <th>Valor Atraso</th>
+                    <th>Valor <br/> Atraso</th>
                     <th>Saldo</th>
                     <th>Saldo Preju&iacute;zo</th>
                 </tr>
@@ -44,7 +53,12 @@ isPostMethod();
             $conta = 0;
             foreach ($registros as $r) {
                 $conta++;
-                $tipo = (getByTagName($r->tags, 'tpemprst') == "0") ? "Price TR" : "Price Pre-fixado";
+				$tipo = '';
+				foreach ($xmlDomini as $reg) {
+                    if (getByTagName($reg->tags,'CDDOMINIO') == getByTagName($r->tags,'tpemprst')) {
+                        $tipo = getByTagName($reg->tags,'DSCODIGO');
+                    }
+                }
 				$valor = getByTagName($r->tags, 'vlemprst');
                 if ($valor > 0) {
                     ?>

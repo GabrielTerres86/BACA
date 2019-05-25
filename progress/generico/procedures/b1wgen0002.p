@@ -831,6 +831,8 @@
           			 
           15/04/2019 - P438 - Alterada valida-dados-gerais para não permitir utilizar linha ou finalidade de credito
 							que esteja cadastrada em SubSegmento de contratacao Online. (Douglas Pagel / AMcom)
+
+          11/05/2019 - P298.2.2 - Ajuste de valores de prejuizo (Rafael Faria - Supero)
 		
 
  ..............................................................................*/
@@ -9343,6 +9345,7 @@ PROCEDURE altera-valor-proposta:
                              INPUT par_idfiniof,
                              INPUT aux_dsctrliq,
                              INPUT "N",
+                             INPUT crawepr.dtcarenc,
                             OUTPUT aux_percetop, /* taxa cet ano */
                             OUTPUT aux_txcetmes, /* taxa cet mes */
                             OUTPUT TABLE tt-erro). 
@@ -11944,7 +11947,8 @@ PROCEDURE obtem-dados-conta-contrato:
             ASSIGN  aux_flpgmujm          = FALSE
                     tt-dados-epr.vlsdprej = crapepr.vlsdprej +
                                (tt-dados-epr.vlttmupr - tt-dados-epr.vlpgmupr ) +
-                               (tt-dados-epr.vlttjmpr - tt-dados-epr.vlpgjmpr ).
+                               (tt-dados-epr.vlttjmpr - tt-dados-epr.vlpgjmpr ) +
+                               (tt-dados-epr.vltiofpr - tt-dados-epr.vlpiofpr ).
 
             /* Verificacao para saber se foi pago multa e juros de mora */
             IF tt-dados-epr.vlttmupr - tt-dados-epr.vlpgmupr <= 0  AND
@@ -11957,8 +11961,23 @@ PROCEDURE obtem-dados-conta-contrato:
                                    NO-LOCK:
 
                 IF  craplem.cdhistor = 391  OR   /** pagto prejuizo **/
-                    craplem.cdhistor = 382  THEN /** pagto prejuizo orig **/
+                    craplem.cdhistor = 382  OR   /** pagto prejuizo orig **/
+                    craplem.cdhistor = 2388  OR  /* 2388 - PAGAMENTO DE PREJUIZO VALOR PRINCIPAL */
+                    craplem.cdhistor = 2473  OR  /* 2473 - PAGAMENTO JUROS +60 PREJUIZO */
+                    craplem.cdhistor = 2389  OR  /* 2389 - PAGAMENTO JUROS PREJUIZO */
+                    craplem.cdhistor = 2390  OR  /* 2390 - PAGAMENTO MULTA ATRASO PREJUIZO */
+                    craplem.cdhistor = 2475     /* 2475 - PAGAMENTO JUROS MORA PREJUIZO */
+                    THEN 
                     ASSIGN tt-dados-epr.vlrpagos = tt-dados-epr.vlrpagos +
+                                                   craplem.vllanmto.
+
+                IF  craplem.cdhistor = 2392  OR   /* 2392 - ESTORNO PAGAMENTO DE PREJUIZO VALOR PRINCIPAL */
+                    craplem.cdhistor = 2474  OR   /* 2474 - ESTORNO PAGAMENTO JUROS +60 PREJUIZO */
+                    craplem.cdhistor = 2393  OR  /* 2393 - ESTORNO PAGAMENTO DE JUROS PREJUIZO */
+                    craplem.cdhistor = 2394  OR  /* 2394 - ESTORNO PAGAMENTO MULTA ATRASO PREJUIZO */
+                    craplem.cdhistor = 2476  
+                    THEN 
+                    ASSIGN tt-dados-epr.vlrpagos = tt-dados-epr.vlrpagos -
                                                    craplem.vllanmto.
 
                 /* Somente sera mostrado o valor do Saldo Prejuizo Original,
@@ -11968,14 +11987,37 @@ PROCEDURE obtem-dados-conta-contrato:
                     ASSIGN tt-dados-epr.slprjori = tt-dados-epr.slprjori -
                                                    craplem.vllanmto.
 
-                IF  craplem.cdhistor = 383  THEN
-                    ASSIGN tt-dados-epr.vlrabono = craplem.vllanmto.
+                IF  craplem.cdhistor = 383 OR craplem.cdhistor = 2391 THEN
+                    ASSIGN tt-dados-epr.vlrabono = tt-dados-epr.vlrabono + craplem.vllanmto.
+                    
+                IF  craplem.cdhistor = 2395 THEN
+                    ASSIGN tt-dados-epr.vlrabono = tt-dados-epr.vlrabono - craplem.vllanmto.
 
                 IF  craplem.cdhistor = 390  THEN  /** pagto outras desp **/
                     ASSIGN tt-dados-epr.vlacresc = tt-dados-epr.vlacresc +
                                                    craplem.vllanmto.
 
             END. /** Fim do FOR EACH craplem **/
+
+            /* desconta o abono do pagamento */
+            ASSIGN tt-dados-epr.vlrpagos = tt-dados-epr.vlrpagos - tt-dados-epr.vlrabono.
+            
+            /* busca o IOF*/
+            FOR EACH craplcm WHERE craplcm.cdcooper = par_cdcooper     AND
+                                   craplcm.nrdconta = crapepr.nrdconta AND
+                                   craplcm.cdpesqbb = STRING(crapepr.nrctremp, "zz.zzz.zz9") AND
+                                   craplcm.cdagenci = 1                AND
+                                   craplcm.cdbccxlt = 100              AND
+                                   craplcm.cdoperad = '1'              AND
+                                   craplcm.nrdolote = 8457             AND
+                                   craplcm.cdhistor = 2317             
+                                   NO-LOCK:
+                              
+               ASSIGN tt-dados-epr.vlrpagos = tt-dados-epr.vlrpagos +
+                                                   craplem.vllanmto.
+
+            END. /* LOOP LCM*/
+            
 
             /* Como nao tem historico para multa e juros de mora, precisamos
                diminuir do valor total pago da multa e juros de mora      */
@@ -13542,6 +13584,7 @@ PROCEDURE calcula_cet_novo:
     DEF INPUT PARAM par_idfiniof AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_dsctrliq AS CHAR                               NO-UNDO.
     DEF INPUT PARAM par_idgravar AS CHAR                               NO-UNDO.
+    DEF INPUT PARAM par_dtcarenc AS DATE                               NO-UNDO.
 
     DEF OUTPUT PARAM par_txcetano AS DECI                              NO-UNDO. 
     DEF OUTPUT PARAM par_txcetmes AS DECI                              NO-UNDO. 
@@ -13577,6 +13620,7 @@ PROCEDURE calcula_cet_novo:
                           INPUT par_idfiniof,
                           INPUT par_dsctrliq,
                           INPUT par_idgravar,
+                          INPUT par_dtarenc,
                          OUTPUT 0,
                          OUTPUT 0,
                          OUTPUT 0,
@@ -14541,6 +14585,7 @@ PROCEDURE recalcular_emprestimo:
                             INPUT crawepr.idfiniof,
                             INPUT aux_dsctrliq,
                             INPUT "N",
+                            INPUT crawepr.dtcarenc,
                            OUTPUT aux_percetop, /* taxa cet ano */
                            OUTPUT aux_txcetmes, /* taxa cet mes */
                            OUTPUT TABLE tt-erro). 

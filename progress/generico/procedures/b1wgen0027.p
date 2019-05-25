@@ -96,6 +96,9 @@
                               
                 12/03/2018 - Alterado para buscar descricao do tipo de conta do oracle. 
                              PRJ366 (Lombardi).
+                             
+                09/01/2019 - P298.2.2 - Luciano (Supero) - Na tela Atenda > Ocorrencias> Prejuízo> 
+                             deverá apresentar as informaçoes de prejuízo do contrato Pós-Fixado.
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0027tt.i }
@@ -930,7 +933,20 @@ PROCEDURE lista_prejuizos:
                tt-prejuizos.nrctremp = tt-dados-epr.nrctremp
                tt-prejuizos.dtprejuz = tt-dados-epr.dtprejuz
                tt-prejuizos.vlprejuz = tt-dados-epr.vlprejuz
-               tt-prejuizos.vlsdprej = tt-dados-epr.vlsdprej.
+               tt-prejuizos.vlsdprej = tt-dados-epr.slprjori
+               tt-prejuizos.nrdiaatr = IF tt-dados-epr.dtprejuz - tt-dados-epr.dtdpagto <0 THEN
+                                          0
+                                       ELSE
+                                          tt-dados-epr.dtprejuz - tt-dados-epr.dtdpagto 
+               tt-prejuizos.nrdiaprj = par_dtmvtolt - tt-dados-epr.dtprejuz
+               tt-prejuizos.nrdiatot = tt-prejuizos.nrdiaatr + tt-prejuizos.nrdiaprj 
+               tt-prejuizos.vljrmprj = tt-dados-epr.vljrmprj
+               tt-prejuizos.vlttmupr = tt-dados-epr.vlttmupr
+               tt-prejuizos.vlttjmpr = tt-dados-epr.vlttjmpr
+               tt-prejuizos.vltiofpr = tt-dados-epr.vltiofpr
+               tt-prejuizos.vlrpagos = tt-dados-epr.vlrpagos
+               tt-prejuizos.vlrabono = tt-dados-epr.vlrabono
+               tt-prejuizos.vlsaldev = tt-dados-epr.vlsdprej.
     END.
                                    
     RUN proc_gerar_log (INPUT par_cdcooper,

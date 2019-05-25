@@ -52,6 +52,7 @@
  * 039: [17/10/2018] Marcos (Envolti): Inclusão de campos do projeto 442
  * 040: [22/11/2018] Mateus Z (Mouts): Novos campos adicionados nas telas Avalistas, Interveniente e Dados da Alienação(frmHipoteca) - PRJ 438.
  * 041: [23/11/2018] Bruno Luiz Katzjarowski - Mout's: Ocultação de telas. - Prj - 438
+ * 042: [21/01/2019] - PRJ298.2.2 - Pagamento do prejuízo de forma manual - Nagasava (Supero)
  */
 ?>
 
@@ -299,6 +300,7 @@
       /* IOF Prejuizo */
       arrayRegistros['vltiofpr'] = '<? echo getByTagName($registros,'vltiofpr'); ?>';
       arrayRegistros['vlpiofpr'] = '<? echo getByTagName($registros,'vlpiofpr'); ?>';
+      arrayRegistros['nrdiaatr'] = '<? echo getByTagName($registros,'nrdiaatr'); ?>';
       
 			</script><?
 			
@@ -407,6 +409,7 @@
 			if (arrayProposta['tpemprst'] == 2) {
       			arrayProposta['idcarenc'] = '<? echo getByTagName($proposta,'idcarenc'); ?>';
       			arrayProposta['dtcarenc'] = '<? echo getByTagName($proposta,'dtcarenc'); ?>';
+				arrayProposta['vlprecar'] = '<? echo getByTagName($proposta,'vlprecar'); ?>';
 			}
 
 			
@@ -1021,6 +1024,8 @@
 		include('tabela_pagamento_pos.php');
 	}else if (in_array($operacao,array('C_PAG_PREST_PREJU'))){
 		include('tabela_pagamento_prejuizo.php');
+	}else if (in_array($operacao,array('C_PAG_PREST_POS_PRJ'))){
+		include('tabela_pagamento_prejuizo_pos.php');
 	} else if (in_array($operacao,array('C_MICRO_PERG'))) {
 		include ('questionario.php');
 	} else if (in_array($operacao,array('PORTAB_CRED_C'))) {

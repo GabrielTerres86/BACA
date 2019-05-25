@@ -57,6 +57,8 @@ var vlpagpar = 0;
 var glb_nriniseq = 1;
 var glb_nrregist = 50;
 var idSocio = 0;
+var nrparepr_pos  = 0;
+var vlpagpar_pos  = 0;
 //var arrayBensAssoc = new Array();
 var valorTotAPagar, valorAtual, valorTotAtual;
 
@@ -84,6 +86,9 @@ function controlaOperacao(operacao) {
         case 'C_DESCONTO':
             mensagem = 'consultando desconto ...';
             break;
+        case 'C_DESCONTO_POS':
+            mensagem = 'consultando desconto ...';
+            break;
         default   :
             cddopcao = 'C';
             mensagem = 'abrindo consultar...';
@@ -92,10 +97,16 @@ function controlaOperacao(operacao) {
 
     var inconcje = 0;
 
+    $('#divContratos > .divRegistros .corSelecao #tpemprst').val()
+
     if (typeof arrayProposta != 'undefined') { // Consulta ao conjuge
         if (inpessoa == 1 && arrayRendimento['inconcje'] == 'yes') {
             inconcje = 1;
         }
+    }
+
+    if (typeof $('#divContratos > .divRegistros .corSelecao #tpemprst').val() != 'undefined'){
+        tpemprst = $('#divContratos > .divRegistros .corSelecao #tpemprst').val();
     }
 
     var dtcnsspc = (typeof arrayProtCred == 'undefined') ? '' : arrayProtCred['dtcnsspc'];
@@ -132,6 +143,8 @@ function controlaOperacao(operacao) {
             inprodut: 1,
             nrdocmto: nrctremp,
             dtcopemp: dataGlobal,
+            nrparepr_pos: nrparepr_pos,
+            vlpagpar_pos: vlpagpar_pos,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -141,7 +154,7 @@ function controlaOperacao(operacao) {
         success: function(response) {
 
             if (response.indexOf('showError("error"') == -1) {
-                if (operacao == 'C_DESCONTO') {
+                if (operacao == 'C_DESCONTO' || operacao == 'C_DESCONTO_POS') {
                     eval(response);
                     hideMsgAguardo();
                     bloqueiaFundo(divRotina);
@@ -237,6 +250,7 @@ function controlaLayout(operacao) {
         arrayLargura[7] = '60px';
         arrayLargura[8] = '45px';
         arrayLargura[9] = '57px';
+        arrayLargura[9] = '42px';
 
         var arrayAlinha = new Array();
         arrayAlinha[0] = 'center';
@@ -257,6 +271,9 @@ function controlaLayout(operacao) {
         $("th:eq(0)", tabela).unbind('click');
 
         // Adiciona função que ao selecionar o checkbox header, marca/desmarca todos os checkboxs da tabela
+        if (typeof $('#divContratos > .divRegistros .corSelecao #tpemprst').val() != 'undefined'){
+            tpemprst = $('#divContratos > .divRegistros .corSelecao #tpemprst').val();
+        }
 
         // Click do chekbox de Todas as parcelas
         $("input[type=checkbox][name='checkTodos']").unbind('click').bind('click', function() {
@@ -273,14 +290,25 @@ function controlaLayout(operacao) {
 
             vlpagpar = "";
 
+            var vlr = 0;
+
             $("input[type=text][name='vlpagpar[]']").each(function() {
                 nrParcela = this.id.split("_")[1];
                 vlPagar = this.value;
 
+                vlr = selec ? $('#check_' + nrParcela).attr('vldescto') : '0,00';
+
                 vlpagpar = (vlpagpar == "") ? nrParcela + ";" + vlPagar : vlpagpar + "|" + nrParcela + ";" + vlPagar;
+
+                //se for pos
+                if (tpemprst == 2){
+                    descontoPos(nrParcela, vlr);
+                }
             });
 
+            if (tpemprst != 2){
             desconto(0);
+            }
 
             // Limpar Valor a pagar
             cVlpagmto.val("");
@@ -296,16 +324,29 @@ function controlaLayout(operacao) {
         $("input[name='checkParcelas[]']", tabela).unbind('click').bind('click', function() {
             nrParcela = this.id.split("_")[1];
             habilitaDesabilitaCampo(this, true);
+            vlr = $(this).is(':checked') ? $(this).attr('vldescto') : '0,00';
+
+            //se for pos
+            if (tpemprst == 2){
+                descontoPos(nrParcela, vlr);
+            }else{
             desconto(nrParcela);
+            }
+            
             cVlpagmto.val("");
         });
 
         $("input[type=text][name='vlpagpar[]']").blur(function() {
             recalculaTotal();
             nrParcela = this.id.split("_")[1];
+            vlr = $(this).is(':checked') ? $(this).attr('vldescto') : '0,00';
 
             if (!$(this).prop("disabled")) {
+                if (tpemprst == 2){
+                    descontoPos(nrParcela, vlr);
+                }else{
                 desconto(nrParcela);
+                }
             }
             cVlpagmto.val("");
         });
@@ -530,4 +571,21 @@ function desconto(parcela) {
     }
 
     controlaOperacao("C_DESCONTO");
+}
+
+function descontoPos (parcela,valor) {
+    $('#vldespar_' + parcela ,'#divTabela').html(valor);
+}
+
+function verificaDescontoPos(campo , insitpar , parcela) {
+
+    var vlpagan = $("#vlpagan_" + parcela,"#divTabela");
+
+    if (isHabilitado(campo) && retiraMascara(vlpagan.val()) != retiraMascara(campo.val()) && insitpar == 3) { // 3 - A Vencer
+        nrparepr_pos = parcela;
+        vlpagpar_pos = converteMoedaFloat(campo.val());
+        controlaOperacao("C_DESCONTO_POS");
+    }
+    vlpagan.val(campo.val());
+
 }

@@ -619,7 +619,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   --Tabelas de Memoria para Pagamentos das Parcelas Emprestimo
   vr_tab_pgto_parcel  EMPR0001.typ_tab_pgto_parcel;
   vr_tab_calculado    EMPR0001.typ_tab_calculado;
-  vr_tab_calculado11  EMPR0011.typ_tab_calculado;
+	vr_tab_calculado2   EMPR0011.typ_tab_calculado;
   vr_tab_parcelas_pos EMPR0011.typ_tab_parcelas;
   
   -- Rowid de retorno lançamento de tarifa
@@ -1985,6 +1985,7 @@ BEGIN
                                           ,pr_vlsprojt => rw_crapepr.vlsprojt
                                           ,pr_qttolatr => rw_crapepr.qttolatr
                                           ,pr_tab_parcelas => vr_tab_parcelas_pos
+																					,pr_tab_calculado => vr_tab_calculado2
                                           ,pr_cdcritic => vr_cdcritic
                                           ,pr_dscritic => vr_dscritic);
           -- Se houve erro

@@ -33,6 +33,8 @@ BEGIN
               09/11/2018 - Ajustes para nao debitar IOF em conta corrente para pagamentos de conta em prejuizo CC.
                            PRJ450 - Regulatorio(Odirlei-AMcom)
               
+			  09/05/2019 - P298.2.2 Tratamento para juros +60 PosFixado (Rafael Faria - Supero)
+              
     ............................................................................. */
 
   DECLARE
@@ -302,12 +304,14 @@ BEGIN
           
         END IF;
         --      
+        vr_qtdjuros60 := 0;
+        vr_juros_atualizado := 0;
         -- Buscar o valor atualizado do juros+60 e juros atualizado na mensal
         FOR rw_craplem_juros in cr_craplem_juros(rw_crapepr.cdcooper
                                                 ,rw_crapepr.nrdconta
                                                 ,rw_crapepr.nrctremp) LOOP
-          vr_qtdjuros60 := rw_craplem_juros.sum_vllanmto_jr60;
-          vr_juros_atualizado := rw_craplem_juros.sum_vllanmto_jratlz;
+          vr_qtdjuros60 := nvl(rw_craplem_juros.sum_vllanmto_jr60,0);
+          vr_juros_atualizado := nvl(rw_craplem_juros.sum_vllanmto_jratlz,0);
         END LOOP;
         --
         

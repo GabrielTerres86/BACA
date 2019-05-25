@@ -407,7 +407,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                crawepr.txdiaria,
                crawepr.percetop,
                crawepr.vlpreemp,
-               crawepr.qtpreemp
+               crawepr.qtpreemp,
+               crawepr.tpemprst,
+               crawepr.cddindex
           FROM crawepr
          WHERE crawepr.cdcooper = pr_cdcooper
            AND crawepr.nrdconta = pr_nrdconta
@@ -480,6 +482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_dtprvcto               crappep.dtvencto%TYPE;
       vr_dtulvcto               crappep.dtvencto%TYPE;
       vr_txjuranu               crawepr.txmensal%TYPE;
+      vr_indRemun               VARCHAR2(2); -- IndRemun (06 - TR, 08 -	CDI)
       vr_txjurnom               VARCHAR2(100);
       vr_txjurefp               VARCHAR2(100);
       vr_vlrtxcet               VARCHAR2(100);
@@ -492,6 +495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_nrtelefo               VARCHAR2(15);
       vr_des_erro               VARCHAR2(3);
       vr_cdmodali_portabilidade VARCHAR2(50);
+      vr_tpdetaxa               VARCHAR2(2) := 01; --(01 -- PRICE FIX, 02 -- POS FIX)
     BEGIN
       vr_nrtelefo := ' ';      
     
@@ -696,11 +700,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
                                  
-      vr_txjuranu := TRUNC((POWER(1 + (rw_crawepr.txdiaria / 100), 360) - 1) * 100, 5);
+      
+      IF rw_crawepr.tpemprst = 2 THEN
+        -- POS já grava o valor correto, por isso nao precisa dividir /100
+        vr_txjuranu := TRUNC((POWER(1 + (rw_crawepr.txdiaria), 360) - 1) * 100, 5);
+        vr_indRemun := (CASE WHEN rw_crawepr.cddindex = 1 THEN '08' ELSE '06' END); -- IndRemun (06 - TR, 08 -	CDI)
+      ELSE
+        vr_txjuranu := TRUNC((POWER(1 + (rw_crawepr.txdiaria / 100), 360) - 1) * 100, 5);
+      END IF;
+
       vr_txjurnom := REPLACE(TO_CHAR(TRUNC(((POWER(1 + (vr_txjuranu / 100), 1/12) - 1) * 12) * 100, 5)),',','.');
+      
       vr_txjurefp := REPLACE(TRIM(TO_CHAR(vr_txjureft,'99999999990D00')),',','.');
       vr_vlrtxcet := REPLACE(TRIM(TO_CHAR(rw_crawepr.percetop,'99999999990D00000')),',','.');
       vr_vlpreemp := REPLACE(TRIM(TO_CHAR(rw_crawepr.vlpreemp,'9999999999990D00')),',','.');
+      vr_tpdetaxa := (CASE WHEN rw_crawepr.tpemprst = 2 THEN '02' ELSE '01' END);
       
       /* IncluirVeicular */
       IF (rw_craplcr.cdmodali || rw_craplcr.cdsubmod) = '0401' AND pr_insitapr IN (1,3) AND rw_tbepr_portabilidade.dtaprov_portabilidade IS NULL  THEN
@@ -718,7 +732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                      pr_cnpjcpfc => TO_CHAR(rw_crapass.nrcpfcgc),
                                      pr_nmclient => rw_crapass.nmprimtl,
                                      pr_nrtelcli => vr_nrtelefo,
-                                     pr_tpdetaxa => '01',
+                                     pr_tpdetaxa => vr_tpdetaxa,
                                      pr_txjurnom => vr_txjurnom,
                                      pr_txjureft => vr_txjurefp,
                                      pr_txcet    => vr_vlrtxcet,
@@ -736,6 +750,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                      pr_ufendere => rw_crapcop.cdufdcop,
                                      pr_cepender => TO_CHAR(rw_crapcop.nrcepend), 
                                      pr_idsolici => vr_idsolici,
+                                     pr_indRemun => vr_indRemun,
                                      pr_des_erro => vr_des_erro, 
                                      pr_dscritic => vr_dscritic);
                                      
@@ -775,7 +790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                     pr_cnpjcpfc => TO_CHAR(rw_crapass.nrcpfcgc),
                                     pr_nmclient => rw_crapass.nmprimtl, 
                                     pr_nrtelcli => vr_nrtelefo,
-                                    pr_tpdetaxa => '01',
+                                    pr_tpdetaxa => vr_tpdetaxa,
                                     pr_txjurnom => vr_txjurnom,
                                     pr_txjureft => vr_txjurefp,
                                     pr_txcet    => vr_vlrtxcet,
@@ -794,6 +809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                     pr_ufendere => rw_crapcop.cdufdcop, 
                                     pr_cepender => TO_CHAR(rw_crapcop.nrcepend), 
                                     pr_idsolici => vr_idsolici, 
+                                    pr_indRemun => vr_indRemun,
                                     pr_des_erro => vr_des_erro,
                                     pr_dscritic => vr_dscritic);
                             

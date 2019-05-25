@@ -42,6 +42,12 @@
 	<br style="clear:both" />	
 	<?php } ?>
 
+	<?php if ($tpproduto ==  0) {?>
+	<label for="vlrminpos"><? echo utf8ToHtml('Valor m&iacute;nimo do boleto - POS:') ?></label>
+	<input name="vlrminpos" id="vlrminpos" type="text" />
+	<br style="clear:both" />
+	<?php } ?>
+
 	<label for="descprej"><? echo utf8ToHtml('Desconto M&aacute;ximo Contrato Preju&iacute;zo:') ?></label>
 	<input name="descprej" id="descprej" type="text" style="margin-right: 5px"/>				
 	<label><? echo utf8ToHtml(' %') ?></label>

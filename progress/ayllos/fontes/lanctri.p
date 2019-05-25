@@ -1429,6 +1429,7 @@ DO WHILE TRUE:
                              INPUT crawepr.idfiniof, /* IDFINIOF */
                              INPUT aux_par_dsctrliq, /* dsctrliq */
                              INPUT "S",
+							 INPUT crawepr.dtcarenc,
                             OUTPUT aux_percetop, /* taxa cet ano */
                             OUTPUT aux_txcetmes, /* taxa cet mes */
                             OUTPUT TABLE tt-erro).

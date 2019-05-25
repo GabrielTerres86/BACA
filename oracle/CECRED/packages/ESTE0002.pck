@@ -4693,6 +4693,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                   09/07/2018 - Inclusao de campos para projeto CDC.
                                PRJ439 - CDC(Odirlei-AMcom)
         
+                  14/12/2018 - Adicionado o valor da parcela carencia (Rafael Faria - Supero)
+        
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -4769,6 +4771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
              ,wpr.hrinclus
              ,lcr.perjurmo
              ,lcr.txmensal
+             ,wpr.vlprecar
         FROM crawepr wpr
             ,craplcr lcr
             ,crapfin fin      
@@ -5188,6 +5191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_obj_generico.put('quantParcela'  , rw_crawepr.qtpreemp);
     vr_obj_generico.put('primeiroVencto', fn_Data_ibra_motor(rw_crawepr.dtvencto));
     vr_obj_generico.put('valorParcela'  , ESTE0001.fn_decimal_ibra(rw_crawepr.vlpreemp));
+    vr_obj_generico.put('valorParcelaCarencia'  , ESTE0001.fn_decimal_ibra(nvl(rw_crawepr.vlprecar,0)));
 
     vr_obj_generico.put('renegociacao', nvl(rw_crawepr.flgreneg,0) = 1);
 

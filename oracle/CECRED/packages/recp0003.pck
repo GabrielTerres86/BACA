@@ -729,8 +729,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 							,epr.dtdpagto
 							,epr.vlsprojt
 							,epr.qttolatr
+							,wpr.dtdpagto wdtdpagto
+							,wpr.txmensal wtxmensal
          FROM crapepr epr
-        WHERE epr.cdcooper = pr_cdcooper
+				     ,crawepr wpr
+        WHERE epr.cdcooper = wpr.cdcooper
+				  AND epr.nrdconta = wpr.nrdconta
+					AND epr.nrctremp = wpr.nrctremp
+				  AND epr.cdcooper = pr_cdcooper
           AND epr.nrdconta = pr_nrdconta
           AND epr.nrctremp = pr_nrctremp;
       rw_crapepr cr_crapepr%ROWTYPE;      
@@ -1277,8 +1283,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 																												,pr_dtefetiv => rw_crapepr.dtmvtolt
 																												,pr_cdlcremp => rw_crapepr.cdlcremp
 																												,pr_vlemprst => rw_crapepr.vlemprst
-																												,pr_txmensal => rw_crapepr.txmensal
-																												,pr_dtdpagto => rw_crapepr.dtdpagto
+																												,pr_txmensal => rw_crapepr.wtxmensal
+																												,pr_dtdpagto => rw_crapepr.wdtdpagto
 																												,pr_vlsprojt => rw_crapepr.vlsprojt
 																												,pr_qttolatr => rw_crapepr.qttolatr
 																												,pr_nrparcel => 0

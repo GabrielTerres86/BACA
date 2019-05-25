@@ -1440,6 +1440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     vr_des_reto        VARCHAR2(10);
     vr_tab_erro        GENE0001.typ_tab_erro;
         vr_tab_parcelas    EMPR0011.typ_tab_parcelas;
+		vr_tab_calculado   empr0011.typ_tab_calculado;
         vr_tab_parc_compe  EMPR0011.typ_tab_parcelas;
         vr_tab_price       empr0011.typ_tab_price;
     
@@ -1485,6 +1486,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                                                         ,pr_vlsprojt     => pr_vlsprojt
                                                                         ,pr_qttolatr     => pr_qttolatr
                                                                         ,pr_tab_parcelas => vr_tab_parcelas
+																		,pr_tab_calculado => vr_tab_calculado
                                                                         ,pr_cdcritic     => pr_cdcritic
                                                                         ,pr_dscritic     => pr_dscritic
                                                                         );
@@ -1522,6 +1524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                                                             ,pr_vlsprojt     => pr_vlsprojt
                                                                             ,pr_qttolatr     => pr_qttolatr
                                                                             ,pr_tab_parcelas => vr_tab_parc_compe
+																			,pr_tab_calculado => vr_tab_calculado
                                                                             ,pr_cdcritic     => pr_cdcritic
                                                                             ,pr_dscritic     => pr_dscritic
                                                                             );

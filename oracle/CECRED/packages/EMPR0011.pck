@@ -32,6 +32,15 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_parcelas IS TABLE OF typ_reg_tab_parcelas INDEX BY BINARY_INTEGER;
 
+	/* Tipo que compreende o registro da tab. temporaria tt-calculado */
+  TYPE typ_reg_calculado IS RECORD(
+     vlsdeved NUMBER(25, 10)
+    ,vlsderel NUMBER(25, 10)
+		);
+
+  /* Definicao de tabela que compreende os registros acima declarados */
+  TYPE typ_tab_calculado IS TABLE OF typ_reg_calculado INDEX BY BINARY_INTEGER;
+
   /* Type para armazenar o Saldo Projetado */
   TYPE typ_reg_tab_saldo_projetado IS RECORD(
        taxa_periodo         NUMBER(25,8) := 0
@@ -208,6 +217,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                    ,pr_vlsprojt     IN  crapepr.vlsprojt%TYPE      --> Saldo Devedor Projetado
                                    ,pr_qttolatr     IN  crapepr.qttolatr%TYPE      --> Tolerancia para cobranca de multa e mora parcelas atraso
                                    ,pr_tab_parcelas OUT EMPR0011.typ_tab_parcelas --> Temp-Table contendo todas as parcelas calculadas
+																	 ,pr_tab_calculado OUT empr0011.typ_tab_calculado --> Tabela com totais calculados
                                    ,pr_cdcritic     OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                    ,pr_dscritic     OUT crapcri.dscritic%TYPE);   --> Descricao da critica
 
@@ -754,13 +764,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_dia_data_inicial := to_char(pr_dtrefjur,'DD');
         vr_mes_data_inicial := to_char(pr_dtrefjur,'MM');
         vr_ano_data_inicial := to_char(pr_dtrefjur,'RRRR');
-      
-        -- Condicao para verificar se eh Mensal
-        --IF pr_ehmensal THEN          
-          IF vr_dia_data_inicial >= 28 THEN
-            vr_dia_data_inicial := 30;
-          END IF;
-        --END IF;
       
         -- Guardar dia, mes e ano separamente do vencimento
         vr_dia_data_final := to_char(pr_data_final, 'DD');
@@ -1590,10 +1593,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           pr_tab_parcelas(vr_nrparepr).dtvencto := vr_dtcarenc;
           pr_tab_parcelas(vr_nrparepr).flcarenc := 1;
           pr_tab_parcelas(vr_nrparepr).vlrdtaxa := vr_vlrdtaxa;
-
-          -- Avanca da data da carencia para o proximo mês
-          vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
-		  --
 		  pr_tab_parcelas(vr_nrparepr).dtultpag     := NULL;
 		  pr_tab_parcelas(vr_nrparepr).insitpar     := 0;
 		  pr_tab_parcelas(vr_nrparepr).vlpagpar     := 0;
@@ -1617,6 +1616,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 		  
 		  -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
           vr_nrparepr := NVL(vr_nrparepr,0) + 1;
+          -- Avanca da data da carencia para o proximo mês
+          vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
 		  --
                 END IF;
              
@@ -3110,6 +3111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                    ,pr_vlsprojt     IN crapepr.vlsprojt%TYPE
                                    ,pr_qttolatr     IN crapepr.qttolatr%TYPE      --> Tolerancia para cobranca de multa e mora parcelas atraso
                                    ,pr_tab_parcelas OUT EMPR0011.typ_tab_parcelas --> Temp-Table contendo todas as parcelas calculadas
+																	 ,pr_tab_calculado OUT empr0011.typ_tab_calculado --> Tabela com totais calculados
                                    ,pr_cdcritic     OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                    ,pr_dscritic     OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
   BEGIN
@@ -3119,7 +3121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : James Prust Junior
-       Data    : Abril/2017                         Ultima atualizacao: 10/05/2018
+       Data    : Abril/2017                         Ultima atualizacao: 09/01/2019
 
        Dados referentes ao programa:
 
@@ -3244,11 +3246,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_exc_erro   EXCEPTION;
 
 			-- Indice para o Array de historicos
-      vr_vllanmto   craplem.vllanmto%TYPE;
       vr_vlsdeved   NUMBER := 0; --> Saldo devedor
-      vr_vlprepag   NUMBER := 0; --> Qtde parcela paga
       vr_vlpreapg   NUMBER := 0; --> Qtde parcela a pagar
-      vr_vlpagsld   NUMBER := 0; --> Valor pago saldo
       vr_vlsderel   NUMBER := 0; --> Saldo para relatórios
       vr_vlsdvctr   NUMBER := 0;
 
@@ -3555,6 +3554,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 				--
       END LOOP;
 
+			-- Se o empréstimo ainda não estiver liberado e não esteja liquidado
+			IF pr_dtmvtolt <= rw_crawepr.dtlibera AND rw_crapepr.inliquid <> 1 THEN
+				-- Continuar com os valores da tabela
+				pr_tab_calculado(1).vlsdeved := rw_crapepr.vlemprst;
+				pr_tab_calculado(1).vlsderel := rw_crapepr.vlemprst;
+				--
+			ELSE
+				-- Utilizar informações do cálculo
+				pr_tab_calculado(1).vlsdeved := vr_vlsdeved;
+				pr_tab_calculado(1).vlsderel := vr_vlsderel;
+        --
+			END IF;
+      --
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Apenas retornar a variável de saida
@@ -3630,6 +3642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_dtmvtolt     crapdat.dtmvtolt%TYPE;
       vr_dtmvtoan     crapdat.dtmvtoan%TYPE;
       vr_tab_parcelas typ_tab_parcelas;
+			vr_tab_calculado typ_tab_calculado;
       vr_vlpreapg     NUMBER := 0;
       vr_vlprvenc     NUMBER := 0;
       vr_vlpraven     NUMBER := 0;
@@ -3676,6 +3689,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                              ,pr_vlsprojt => rw_crapepr.vlsprojt
                              ,pr_qttolatr => rw_crapepr.qttolatr
                              ,pr_tab_parcelas => vr_tab_parcelas
+														 ,pr_tab_calculado => vr_tab_calculado
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic);
                              
@@ -3784,6 +3798,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_dtmvtoan     crapdat.dtmvtoan%TYPE;
       vr_blnachou     BOOLEAN;
       vr_tab_parcelas typ_tab_parcelas;
+			vr_tab_calculado typ_tab_calculado;
 
       -- Variaveis tratamento de erros
       vr_cdcritic     crapcri.cdcritic%TYPE;
@@ -3854,6 +3869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                              ,pr_vlsprojt => rw_crapepr.vlsprojt
                              ,pr_qttolatr => rw_crapepr.qttolatr
                              ,pr_tab_parcelas => vr_tab_parcelas
+														 ,pr_tab_calculado => vr_tab_calculado
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic);                     
                              
@@ -7004,6 +7020,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                       ,pr_dtrefcor  IN  crapepr.dtrefcor%TYPE     --> Data de Referencia do ultimo lancamento de juros de correcao
                                       ,pr_nmdatela  IN  VARCHAR2 DEFAULT 'EMPR0011' --> Nome da tela
                                       ,pr_tab_price IN OUT typ_tab_price          --> Tab do Price                                     
+                                      ,pr_inliqpep  OUT NUMBER                    --> Indica se a parcela do empréstimo foi liquidada
+                                      ,pr_vlsdeved  OUT NUMBER                    --> Saldo devedor do empréstimo
                                       ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                       ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS
   BEGIN
@@ -7329,6 +7347,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Verificar se liquidou a parcela
       vr_inliquid := CASE nvl(vr_vlsdvpar,0) WHEN 0 THEN 1 ELSE 0 END;
       
+      -- Retornar se a parcela foi ou não liquidada
+      pr_inliqpep := vr_inliquid;
+      
       --Atualizar Informacoes Parcelas
       BEGIN
         UPDATE crappep SET 
@@ -7365,7 +7386,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                           ,crapepr.dtrefcor = pr_dtmvtolt
         WHERE crapepr.cdcooper = pr_cdcooper
           AND crapepr.nrdconta = pr_nrdconta
-          AND crapepr.nrctremp = pr_nrctremp;
+          AND crapepr.nrctremp = pr_nrctremp
+        RETURNING vlsdeved INTO pr_vlsdeved; -- Retornar o saldo
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar crapepr. '||sqlerrm;
@@ -7813,6 +7835,297 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
   END pc_valida_pagamentos_pos_web;
 
+  -- Rotina destinada a geração dos dados de antecipação para o MITRA
+  PROCEDURE pc_mitra_gera_antecipacao(pr_cdcooper    IN tbepr_mitra_pagamento.cdcooper%TYPE
+                                     ,pr_nrdconta    IN tbepr_mitra_pagamento.nrdconta%TYPE
+                                     ,pr_nrctremp    IN tbepr_mitra_pagamento.nrctremp%TYPE
+                                     ,pr_vlsdeved    IN tbepr_mitra_pagamento.vlsaldo_devedor%TYPE
+                                     ,pr_vlrpagto    IN tbepr_mitra_pagamento.vlantecipacao%TYPE
+                                     ,pr_nrpeppag    IN tbepr_mitra_pagamento.nrparcela_antecip%TYPE
+                                     ,pr_inliqpep    IN NUMBER
+                                     ,pr_dscritic   OUT VARCHAR2) IS
+    
+    /* .............................................................................
+
+       Programa: pc_mitra_gera_antecipacao
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Renato Darosci
+       Data    : Abril/2019                         Ultima atualizacao: 08/05/2019
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+
+       Objetivo  : Procedure para gerar os dados de antecipação 
+
+       Alteracoes: 
+       
+              08/05/2019 - Ajustar o calculo da taxa de amortização para as novas
+                           parcelas geradas pela antecipação (Renato Darosci - Supero)
+    ............................................................................. */
+  
+    -- Buscar o novo id para geração dos dados
+    CURSOR cr_idantecip IS
+      SELECT NVL(MAX(t.idantecipacao),0) + 1
+        FROM tbepr_mitra_pagamento t;
+    
+    -- Buscar a ultima antecipação criada para o contrato
+    CURSOR cr_last_antecip IS 
+      SELECT t.idantecipacao
+           , t.dsindentificador
+        FROM tbepr_mitra_pagamento t
+       WHERE t.cdcooper = pr_cdcooper
+         AND t.nrdconta = pr_nrdconta
+         AND t.nrctremp = pr_nrctremp
+       ORDER BY t.dtantecipacao DESC
+              , LENGTH(t.dsindentificador) DESC
+              , t.dsindentificador DESC;
+    rg_last_antecip     cr_last_antecip%ROWTYPE;
+    
+    -- Buscar dados do empréstimo
+    CURSOR cr_crqtdpep IS
+      SELECT epr.dtdpagto
+           , COUNT(pep.nrparepr)  qtparepr
+        FROM crawepr  epr
+           , crappep  pep
+       WHERE epr.cdcooper = pep.cdcooper
+         AND epr.nrdconta = pep.nrdconta
+         AND epr.nrctremp = pep.nrctremp
+         AND pep.cdcooper = pr_cdcooper
+         AND pep.nrdconta = pr_nrdconta
+         AND pep.nrctremp = pr_nrctremp
+       GROUP BY epr.dtdpagto;
+    rg_crqtdpep   cr_crqtdpep%ROWTYPE;
+    
+    -- Buscar todas as parcelas não liquidadas do emprestimo
+    CURSOR cr_crappep IS
+      SELECT ROWNUM  nrparnew
+           , pep.nrparepr
+           , pep.dtvencto
+           , pep.vltaxatu  vlamortz -- Será calculado no registro da antecipação
+           , pep.inliquid
+        FROM crappep  pep
+       WHERE pep.cdcooper = pr_cdcooper
+         AND pep.nrdconta = pr_nrdconta
+         AND pep.nrctremp = pr_nrctremp
+         AND pep.inliquid = 0 -- não liquidadas
+       ORDER BY pep.dtvencto ASC;
+        
+    -- Variáveis
+    TYPE typ_tab_crappep IS TABLE OF cr_crappep%ROWTYPE INDEX BY BINARY_INTEGER;
+    vr_tbparcel     typ_tab_crappep;
+    vr_idanteci     tbepr_mitra_pagamento.idantecipacao%TYPE;
+    vr_dsantepr     tbepr_mitra_pagamento.dsindentificador%TYPE;
+    vr_cdascant     NUMBER;
+    vr_qtcaract     NUMBER;
+    vr_cdcritic     NUMBER;
+    vr_dscritic     VARCHAR2(1000);
+    vr_vldataxa     NUMBER;
+    vr_tpamortz     NUMBER;
+    vr_vlamortz     NUMBER;
+    vr_dtanteci     DATE;
+    
+    vr_exc_erro     EXCEPTION;
+  BEGIN
+  
+    -- Buscar data do sistema
+    OPEN  btch0001.cr_crapdat(pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO btch0001.rw_crapdat;
+    
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      CLOSE btch0001.cr_crapdat;
+      
+      vr_dscritic := gene0001.fn_busca_critica(1);
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Fechar o Cursor
+    CLOSE btch0001.cr_crapdat;
+  
+     -- Percorrer todas as parcelas que não foram liquidadas
+    FOR rg_crappep IN cr_crappep LOOP
+      -- Adiciona as parcelas no registro de memória
+      vr_tbparcel(rg_crappep.nrparnew) := rg_crappep;   
+    END LOOP;
+    
+    -- Se não encontrar parcelas para gerar adiantamento
+    IF vr_tbparcel.COUNT() = 0 THEN
+      -- Sai da rotina, pois não há antecipação para gerar
+      RETURN;
+    END IF;  
+  
+    -- Buscar a ultima antecipação registrada
+    OPEN  cr_last_antecip;
+    FETCH cr_last_antecip INTO rg_last_antecip; --vr_dsantepr;
+    
+    -- Se nenhum registro foi encontrado, deve assumir "A" como valor inicial
+    -- O registro será sempre realizado em maiúsculo, apesar de no momento da escritar
+    -- será utilizado minusculo.
+    IF cr_last_antecip%NOTFOUND THEN
+      
+      -- Fechar o cursor
+      CLOSE cr_last_antecip;
+    
+      vr_dsantepr := 'A';
+      
+    ELSE
+      
+      -- Fechar o cursor
+      CLOSE cr_last_antecip; 
+     
+      /*** REALIZA O CALCULO DO PRÓXIMO DÍGITO A SER UTILIZADO ***/
+      -- Ler o código asc do caracter (APENAS O PRIMEIRO)
+      vr_cdascant := ASCII(SUBSTR(rg_last_antecip.dsindentificador,1,1));
+      
+      -- Guardar a quantidade de caracteres existes 
+      vr_qtcaract := LENGTH(rg_last_antecip.dsindentificador);
+      
+      -- Deve ser incrementado o caracter, sendo assim A será B, B será C... etc
+      vr_cdascant := vr_cdascant + 1;
+      
+      -- Se chegar ao 91, quer dizer que passou de Z
+      IF vr_cdascant > 90 THEN
+        -- Deve voltar a utilizar "A"
+        vr_cdascant := 65;
+        
+        -- Incrementa a quantidade de caracteres
+        vr_qtcaract := NVL(vr_qtcaract,0) + 1;
+      END IF;
+      
+      -- Forma o identificador 
+      vr_dsantepr := RPAD(CHR(vr_cdascant),vr_qtcaract,CHR(vr_cdascant));
+      
+    END IF;
+    
+    -- Amortização
+    vr_vlamortz := 0;
+    
+    -- Buscar a quantidade total de parcelas do empréstimo
+    OPEN  cr_crqtdpep;
+    FETCH cr_crqtdpep INTO rg_crqtdpep;
+    CLOSE cr_crqtdpep;
+    
+    -- Percorrer as parcelas do empréstimo não liquidadas
+    IF vr_tbparcel.COUNT > 0 THEN
+      -- Percorre para calcular as taxas e totalizar
+      FOR ind IN vr_tbparcel.FIRST..vr_tbparcel.LAST LOOP
+        -- Percorer
+        IF vr_tbparcel(ind).dtvencto >= rg_crqtdpep.dtdpagto THEN
+          -- Calcular o valor da amortização 
+          vr_tbparcel(ind).vlamortz := /*ROUND(*/(1 / rg_crqtdpep.qtparepr)/*, 9)*/;
+        ELSE
+          vr_tbparcel(ind).vlamortz := 0;
+        END IF;
+        
+        -- Quando for uma parcela ainda não liquidada
+        IF vr_tbparcel(ind).inliquid = 0 THEN
+          -- Somar o valor total
+          vr_vlamortz := vr_vlamortz + vr_tbparcel(ind).vlamortz;
+        END IF;
+        
+      END LOOP;
+      
+      -- Percorre novamente para calcular a taxa para a antecipação
+      FOR ind IN vr_tbparcel.FIRST..vr_tbparcel.LAST LOOP
+        -- Calcular o valor da amortização 
+        vr_tbparcel(ind).vlamortz := /*ROUND(*/(vr_tbparcel(ind).vlamortz / vr_vlamortz)/*, 9)*/;
+      END LOOP;
+      
+    END IF;
+        
+    -- Verifica o tipo de amortização a ser registrado
+    -- Se a parcela paga, foi liquidada
+    IF pr_inliqpep = 1 THEN
+      vr_tpamortz := 2; -- Total
+    ELSE
+      vr_tpamortz := 1; -- Parcial
+    END IF;
+    
+    -- Buscar o próximo id para ser utilizado
+    OPEN  cr_idantecip;
+    FETCH cr_idantecip INTO vr_idanteci;
+    CLOSE cr_idantecip;
+        
+    BEGIN
+      vr_dtanteci := to_date(to_char(btch0001.rw_crapdat.dtmvtolt,'DD/MM/YYYY')||' '||
+                             to_char(SYSDATE,'HH24:MI:SS'),'DD/MM/YYYY HH24:MI:SS');
+    
+      -- Insere o cabeçalho da antecipação gerada
+      INSERT INTO tbepr_mitra_pagamento
+                         (idantecipacao
+                         ,cdcooper
+                         ,nrdconta
+                         ,nrctremp
+                         ,dsindentificador
+                         ,dtantecipacao
+                         ,vlsaldo_devedor
+                         ,tppagamento
+                         ,tpamortizacao
+                         ,vlantecipacao
+                         ,nrparcela_antecip)
+                  VALUES (vr_idanteci         -- idantecipacao
+                         ,pr_cdcooper         -- cdcooper
+                         ,pr_nrdconta         -- nrdconta
+                         ,pr_nrctremp         -- nrctremp
+                         ,vr_dsantepr         -- dsindentificador
+                         ,vr_dtanteci         -- dtantecipacao
+                         ,pr_vlsdeved         -- vlsaldo_devedor
+                         ,1                   -- tppagamento -- Postecipado
+                         ,vr_tpamortz         -- tpamortizacao -- Total / Parcial
+                         ,pr_vlrpagto         -- vlantecipacao
+                         ,pr_nrpeppag);       -- nrparcela_antecip
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao incluir dados para o MITRA: '||SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+    
+    -- Calcula a taxa conforme a quantidade de parcelas
+    -- vr_vldataxa := (1 / vr_tbparcel.COUNT());
+    
+    -- Para cara uma das parcelas, realizar o calculo da taxa e gravar na tabela
+    FOR ind IN vr_tbparcel.FIRST..vr_tbparcel.LAST LOOP
+      -- Calcular a nova taxa de amortização para a parcela
+      --vr_tbparcel(ind).txamortiz := vr_vldataxa;
+    
+      BEGIN
+        -- Inserir o registro da parcela
+        INSERT INTO tbepr_mitra_pagamento_parcela
+                      (idantecipacao
+                      ,nrnova_parcela
+                      ,nrparepr
+                      ,txamortizacao)
+                VALUES(vr_idanteci                  -- idantecipacao
+                      ,vr_tbparcel(ind).nrparnew    -- nrnova_parcela
+                      ,vr_tbparcel(ind).nrparepr    -- nrparepr
+                      ,vr_tbparcel(ind).vlamortz); -- txamortizacao
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao incluir dados das parcelas para o MITRA: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+    END LOOP; 
+    
+    -- Limpar a collection
+    vr_tbparcel.DELETE;
+        
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Apenas retornar a variável de saida
+      IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+      
+      -- retornar a mensagem de erro
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      -- Apenas retornar a variável de saida
+      pr_dscritic := 'Erro na procedure PC_MITRA_GERA_ANTECIPACAO: ' || SQLERRM;
+  END pc_mitra_gera_antecipacao;
+  
+  
+  
   PROCEDURE pc_gera_pagto_pos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
                              ,pr_cdprogra  IN crapprg.cdprogra%TYPE --> Codigo do Programa
                              ,pr_dtcalcul  IN crapdat.dtmvtolt%TYPE --> Data de calculo das parcelas
@@ -7988,6 +8301,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_blnachou_ordem1    BOOLEAN;
       vr_blnachou_ordem2    BOOLEAN;
     
+      -- Renato Darosci (Supero) - 29/04/2019
+      vr_vlsdeved           NUMBER; -- Guardar o saldo devedor retornado 
+      vr_inliqpep           NUMBER; -- Guardar o flag que indica liquidação da parcela paga
+      
       -- Variaveis Erro
       vr_cdcritic           INTEGER;
       vr_dscritic           VARCHAR2(4000);
@@ -8271,6 +8588,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                   ,pr_dtrefcor  => rw_crapepr.dtrefcor
                                   ,pr_tab_price => pr_tab_price
 																	,pr_nmdatela  => pr_nmdatela
+                                  ,pr_inliqpep  => vr_inliqpep
+                                  ,pr_vlsdeved  => vr_vlsdeved
                                   ,pr_cdcritic  => vr_cdcritic
                                   ,pr_dscritic  => vr_dscritic);
       
@@ -8278,6 +8597,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;      
+        
+         
+        -- Rotina para gerar os dados da antecipação para o MITRA
+        pc_mitra_gera_antecipacao(pr_cdcooper  => pr_cdcooper   -- Cooperativa
+                                 ,pr_nrdconta  => pr_nrdconta   -- Conta do cooperado
+                                 ,pr_nrctremp  => pr_nrctremp   -- Número do contrato de empréstimo
+                                 ,pr_vlsdeved  => vr_vlsdeved   -- Saldo devedor do empréstimo
+                                 ,pr_vlrpagto  => pr_vlpagpar   -- Valor pago da parcela
+                                 ,pr_nrpeppag  => rw_crappep.nrparepr -- Número da parcela do empréstimo
+                                 ,pr_inliqpep  => vr_inliqpep   -- Indica se a parcela paga foi liquidada
+                                 ,pr_dscritic  => vr_dscritic); -- Retorno de críticas
+          
+        -- Se houve erro
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF; 
+        
       END IF; -- Parcela a Vencer
 
       -- Faz a liquidacao do contrato
@@ -8829,7 +9165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                   ,2371,2373,2347,2346 -- Juros de Mora
                   ,2375,2377           -- Juros de Mora Aval
                   ,2566,2567           -- Desconto
-                  ,2540,2539);         -- IOF
+                  ,2540,2539,2607,2608); -- IOF
 
       -- Variaveis gerais
       vr_cdhistor craphis.cdhistor%TYPE;

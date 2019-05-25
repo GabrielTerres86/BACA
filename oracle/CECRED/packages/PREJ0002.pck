@@ -2020,6 +2020,30 @@ BEGIN
       FunctionResult := 0;
     END IF;
 
+	ELSIF rw_crapepr.tpemprst = 2 THEN -- Pos
+    --
+		FOR rw_crappep IN cr_crappep(pr_cdcooper
+                                ,pr_nrdconta
+                                ,pr_nrctremp
+                                ,rw_crapdat.dtmvtoan
+                                ,rw_crapepr.cdagenci
+																) LOOP
+
+      --
+			vr_dtvencto := rw_crappep.dtvencto;
+			--
+    END LOOP;
+		--
+    IF vr_dtvencto IS NOT NULL THEN
+      -- Calcular a quantidade de dias em atraso
+      FunctionResult := rw_crapdat.dtmvtolt - vr_dtvencto;
+			--
+    ELSE
+      -- Sem atraso e risco A
+      FunctionResult := 0;
+			--
+    END IF;
+		--
   END IF;
 
   RETURN(FunctionResult);
