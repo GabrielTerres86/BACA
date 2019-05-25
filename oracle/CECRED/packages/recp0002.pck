@@ -913,6 +913,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     
       SELECT tpdescto
             ,tpemprst
+            ,inprejuz
         FROM crapepr
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
@@ -968,7 +969,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       CLOSE cr_crapepr;
 
     -- Operacao nao permitida para emprestimos consignados
-    IF rw_crapepr.tpdescto = 2 THEN
+    IF rw_crapepr.tpdescto = 2 AND NVL(rw_crapepr.inprejuz,0) = 0 THEN
       vr_cdcritic := 987;
       RAISE vr_exc_erro;  
     END IF;
