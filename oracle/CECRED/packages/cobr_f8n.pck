@@ -120,7 +120,19 @@ CREATE OR REPLACE PACKAGE CECRED.cobr_f8n AS
                                         ,pr_insitdda   IN NUMBER -- Situação do processo DDA
                                         ,pr_inregcip   IN NUMBER -- Indicador de registro na CIP
                                         ,pr_infrmems   IN NUMBER -- Indica a forma de emissão
+                                        ,pr_fldelote   IN NUMBER DEFAULT 0 -- Indica se é geração de lote
                                         ,pr_cdcritic  OUT NUMBER
+                                        ,pr_dscritic  OUT VARCHAR2 );
+    
+    -- Executar as rotinas de finalização dos passos para geração de um lote de boletos
+    PROCEDURE pc_finaliza_geracao_lote(pr_cdcooper   IN NUMBER
+                                      ,pr_nrdconta   IN NUMBER
+                                      ,pr_nrcnvcob   IN NUMBER
+                                      ,pr_insitdda   IN NUMBER   -- Situação do processo DDA
+                                      ,pr_inregcip   IN NUMBER   -- Indicador de registro na CIP
+                                      ,pr_infrmems   IN NUMBER   -- Indica a forma de emissão 
+                                      ,pr_idlottck   IN VARCHAR2 -- GUID indicador do lote
+                                      ,pr_cdcritic  OUT NUMBER
                                         ,pr_dscritic  OUT VARCHAR2 );
 
 END cobr_f8n;
@@ -465,6 +477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr_f8n AS
                                       ,pr_insitdda   IN NUMBER -- Situação do processo DDA
                                       ,pr_inregcip   IN NUMBER -- Indicador de registro na CIP
                                       ,pr_infrmems   IN NUMBER -- Indica a forma de emissão
+                                      ,pr_fldelote   IN NUMBER DEFAULT 0 -- Indica se é geração de lote
                                       ,pr_cdcritic  OUT NUMBER
                                       ,pr_dscritic  OUT VARCHAR2 ) IS
   
@@ -578,8 +591,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr_f8n AS
     END IF;
     
     
-    -- Verificar se o boleto deve ser registrado eletronicamente
-    IF pr_inregcip = 1 THEN
+    -- Verificar se o boleto deve ser registrado eletronicamente e se não estiver processando lote
+    IF pr_inregcip = 1 AND NVL(pr_fldelote,0) = 0 THEN
       -- Registrar os boletos do cooperado na CIP    
       pc_registra_tit_cip_online_f8n (pr_cdcooper => pr_cdcooper 
 		  								               ,pr_nrdconta => pr_nrdconta
@@ -609,7 +622,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr_f8n AS
                          ,pr_nrcnvcob                 -- nrcnvcob
                          ,pr_dslogtit                 -- dslogtit
                          ,'996'                       -- cdoperad
-                         ,TRUNC(SYSDATE)              -- dtaltera
+                         ,SYSDATE                     -- dtaltera
                          ,gene0002.fn_busca_time() ); -- hrtransa
       
     EXCEPTION
@@ -617,6 +630,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr_f8n AS
         vr_dscritic := 'Erro ao inserir logs do boleto gerado.';
         RAISE vr_exc_erro;
     END;
+    
+    -- Se não estiver processando um lote
+    IF NVL(pr_fldelote,0) = 0 THEN
     
     -- Buscar os parametros de cobrança
     OPEN  cr_crapcco;
@@ -730,6 +746,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr_f8n AS
       RAISE vr_exc_erro;
     END IF;
     
+    END IF; -- PRocessamento de lote
+    
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Se receber apenas o código da crítica
@@ -746,6 +764,236 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr_f8n AS
       pr_cdcritic := 0;
       pr_dscritic := 'Erro ao finalizar geracao do boleto: '||SQLERRM;
   END pc_finaliza_geracao_boleto;
+
+  -- Executar as rotinas de finalização dos passos para geração de um lote de boletos
+  PROCEDURE pc_finaliza_geracao_lote(pr_cdcooper   IN NUMBER
+                                    ,pr_nrdconta   IN NUMBER
+                                    ,pr_nrcnvcob   IN NUMBER
+                                    ,pr_insitdda   IN NUMBER   -- Situação do processo DDA
+                                    ,pr_inregcip   IN NUMBER   -- Indicador de registro na CIP
+                                    ,pr_infrmems   IN NUMBER   -- Indica a forma de emissão 
+                                    ,pr_idlottck   IN VARCHAR2 -- GUID indicador do lote
+                                    ,pr_cdcritic  OUT NUMBER
+                                    ,pr_dscritic  OUT VARCHAR2 ) IS
+  /**
+  -- VER RENATO
+  
+  FALTA IMPLEMENTAR O CONTROLE DE TARIFAÇÃO PARA EVITAR QUE UM LOTE SEJA TARIFADO MAIS DE UMA VEZ
+  
+  **/
+    -- Buscar parametros de cobrança
+    CURSOR cr_crapcco IS
+      SELECT cco.cdagenci
+           , cco.cdbccxlt
+           , cco.nrdolote
+        FROM crapcco cco
+       WHERE cco.cdcooper = pr_cdcooper
+         AND cco.nrconven = pr_nrcnvcob;
+    rg_crapcco   cr_crapcco%ROWTYPE;
+    
+    -- Buscar os dados dos cooperado
+    CURSOR cr_crapass IS
+      SELECT ass.nrdctitg
+           , ass.inpessoa
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rg_crapass    cr_crapass%ROWTYPE;
+    
+    -- Buscar a quantidade de boletos gerados com sucesso no lote
+    CURSOR cr_qtboleto IS
+      SELECT COUNT(1) qtboleto
+        FROM tbcobran_ticket_lote_boleto  t
+       WHERE t.idlottck = UPPER(pr_idlottck);
+    
+    -- Variáveis
+    vr_exc_erro    EXCEPTION;
+    vr_cdcritic    NUMBER;
+    vr_dscritic    VARCHAR2(2000);
+    vr_cdmotivo    VARCHAR2(10);
+    vr_cdhistor    NUMBER;
+    vr_cdhisest    NUMBER;
+    vr_vltarifa    NUMBER;
+    vr_dtdivulg    DATE;
+    vr_dtvigenc    DATE;
+    vr_cdfvlcop    NUMBER;
+    vr_dsridlat    VARCHAR2(50);
+    vr_tab_erro    GENE0001.typ_tab_erro;
+    vr_qtboleto    NUMBER := 0;
+    
+  BEGIN
+    
+    -- Buscar a quantidade de boletos gerados com sucesso no lote
+    OPEN  cr_qtboleto;
+    FETCH cr_qtboleto INTO vr_qtboleto;
+    CLOSE cr_qtboleto;
+    
+    -- Se nenhum boleto foi gerado com sucesso
+    IF NVL(vr_qtboleto,0) = 0 THEN
+      -- Sair da rotina, pois não há boletos para registrar e não deve gerar tarifa
+      vr_dscritic := 'Lote sem registro de boleto gerado.';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Buscar a data do sistema
+    OPEN  btch0001.cr_crapdat(pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO btch0001.rw_crapdat;
+    
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      CLOSE btch0001.cr_crapdat;
+      
+      vr_cdcritic := 1;
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Fechar
+    CLOSE btch0001.cr_crapdat;
+    
+        
+    -- Verificar se o boleto deve ser registrado eletronicamente e se não estiver processando lote
+    IF pr_inregcip = 1 THEN
+      -- Registrar os boletos do cooperado na CIP    
+      pc_registra_tit_cip_online_f8n (pr_cdcooper => pr_cdcooper 
+		  								               ,pr_nrdconta => pr_nrdconta
+			  							               ,pr_cdcritic => vr_cdcritic
+				  						               ,pr_dscritic => vr_dscritic);
+    
+      -- Se retornar erro
+      IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+    
+    END IF;
+    
+    -- Buscar os parametros de cobrança
+    OPEN  cr_crapcco;
+    FETCH cr_crapcco INTO rg_crapcco;
+      
+    -- Se não encontrar convenio
+    IF cr_crapcco%NOTFOUND THEN
+      CLOSE cr_crapcco;
+       
+      vr_dscritic := 'Nao foi possivel localizar o convenio de cobranca.';
+      RAISE vr_exc_erro;
+    END IF;
+      
+    -- Fechar cursor
+    CLOSE cr_crapcco;
+      
+    -- Buscar os dados do cooperado
+    OPEN  cr_crapass;
+    FETCH cr_crapass INTO rg_crapass;
+      
+    -- Se não encontrar o beneficiario
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      
+      vr_dscritic := 'Nao foi possivel localizar o beneficiario.';
+      RAISE vr_exc_erro;
+    END IF;
+      
+    -- Fechar o cursor 
+    CLOSE cr_crapass;
+      
+    -- Limpar a variável
+    vr_cdmotivo := ' ';
+      
+    -- Verificar o motivo 
+    IF rg_crapass.inpessoa IN (1,2) THEN
+      -- Se for um sacado DDA
+      IF pr_insitdda = 1 THEN
+        vr_cdmotivo := vr_cdmotivo||'A4';
+      END IF;
+        
+      -- Se o registro do titulo é online
+      IF pr_inregcip = 1 THEN
+        vr_cdmotivo := vr_cdmotivo||'R1';
+      END IF;
+        
+      -- Se a forma de emissão é COOPERATIVA EMITE-EXPEDE
+      IF pr_infrmems = 3 THEN
+        vr_cdmotivo := vr_cdmotivo||'P1';
+      END IF;
+        
+    END IF;
+     
+    -- Remove o espaço ou recebe null
+    vr_cdmotivo := TRIM(vr_cdmotivo);
+         
+    -- Carregar dados da tarifa (conforme chamada da B1wnet0001 - gravar-boleto)
+    TARI0001.pc_carrega_dados_tarifa_cobr(pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_nrconven => pr_nrcnvcob
+                                         ,pr_dsincide => 'RET'
+                                         ,pr_cdocorre => 2
+                                         ,pr_cdmotivo => vr_cdmotivo
+                                         ,pr_inpessoa => rg_crapass.inpessoa
+                                         ,pr_vllanmto => 1 
+                                         ,pr_cdprogra => NULL
+                                         ,pr_flaputar => 1
+                                         ,pr_cdhistor => vr_cdhistor 
+                                         ,pr_cdhisest => vr_cdhisest
+                                         ,pr_vltarifa => vr_vltarifa
+                                         ,pr_dtdivulg => vr_dtdivulg
+                                         ,pr_dtvigenc => vr_dtvigenc
+                                         ,pr_cdfvlcop => vr_cdfvlcop
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+                                           
+    -- Se retornar erro
+    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+      
+    -- Gerar o lançamento de tarifa
+    TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper      => pr_cdcooper
+                                    ,pr_nrdconta      => pr_nrdconta
+                                    ,pr_dtmvtolt      => btch0001.rw_crapdat.dtmvtolt
+                                    ,pr_cdhistor      => vr_cdhistor
+                                    ,pr_vllanaut      => (vr_vltarifa * vr_qtboleto)
+                                    ,pr_cdoperad      => '996'
+                                    ,pr_cdagenci      => rg_crapcco.cdagenci
+                                    ,pr_cdbccxlt      => rg_crapcco.cdbccxlt
+                                    ,pr_nrdolote      => rg_crapcco.nrdolote
+                                    ,pr_tpdolote      => 1
+                                    ,pr_nrdocmto      => 0
+                                    ,pr_nrdctabb      => pr_nrdconta
+                                    ,pr_nrdctitg      => rg_crapass.nrdctitg
+                                    ,pr_cdpesqbb      => NULL
+                                    ,pr_cdbanchq      => 0
+                                    ,pr_cdagechq      => 0
+                                    ,pr_nrctachq      => 0
+                                    ,pr_flgaviso      => FALSE
+                                    ,pr_tpdaviso      => 0
+                                    ,pr_cdfvlcop      => vr_cdfvlcop
+                                    ,pr_inproces      => 0
+                                    ,pr_rowid_craplat => vr_dsridlat
+                                    ,pr_tab_erro      => vr_tab_erro
+                                    ,pr_cdcritic      => vr_cdcritic
+                                    ,pr_dscritic      => vr_dscritic);
+      
+    -- Se retornar erro
+    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Se receber apenas o código da crítica
+      IF NVL(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+      
+      -- Retornar as criticas
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      
+    WHEN OTHERS THEN
+       -- Retornar as criticas
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro ao finalizar geracao do lote: '||SQLERRM;
+  END pc_finaliza_geracao_lote;
 
 END cobr_f8n;
 /
