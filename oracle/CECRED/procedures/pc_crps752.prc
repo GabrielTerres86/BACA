@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps752(pr_cdcooper IN crapcop.cdcooper%TY
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Odirlei Busana - AMcom
-     Data    : Setembro/2018                       Ultima atualizacao: 20/09/2018
+     Data    : Setembro/2018                       Ultima atualizacao: 25/04/2019
 
      Dados referentes ao programa:
 
@@ -19,7 +19,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps752(pr_cdcooper IN crapcop.cdcooper%TY
      Objetivo  : Solicitação 001
                  Processamento dos prejuizos de conta corrente, como pagamento e liquidação.
 
-     Alteracoes: 
+     Alteracoes: 25/04/2019 - Inclusão de chamdaa da "PREJ0006.pc_processa_debt_inc_prj" para processar os débitos 
+                 ocorridos no dia e incrementar o saldo do prejuízo (quando aplicável).
+                 P450 - Reginaldo/AMcom
          
   ............................................................................ */
 
@@ -122,6 +124,9 @@ BEGIN
     vr_dscritic := 'Prejuizo de conta corrente não esta ativo para esta cooperativa.';
     RAISE vr_exc_fimprg;  
   END IF;
+  
+  -- Processa os débitos ocorridos no dia na conta corrente e incrementa o saldo do prejuízo
+  PREJ0006.pc_processa_debt_inc_prj(pr_cdcooper => pr_cdcooper);
   
   --> Verificar se é o ultimo dia do mês
   IF to_char(rw_crapdat.dtmvtolt,'MM') <> to_char(rw_crapdat.dtmvtopr,'MM') THEN

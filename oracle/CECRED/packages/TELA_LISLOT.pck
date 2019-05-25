@@ -116,7 +116,7 @@ BEGIN
       and  v.nrdconta = pr_nrdconta
       and  v.cdhistor = pr_cdhistor
       AND  v.cdhistor <> 2323 
-      and  v.cdhistor in (2408,2412,2716,2717,2718,2719,2720,2738,2739,2721,2723,2733,2725,2727,2729,2722,2732,2724,2726,2728,2730)
+      AND  v.cdhistor in (2408,2412,2716,2717,2718,2719,2720,2738,2739,2721,2723,2733,2725,2727,2729,2722,2732,2724,2726,2728,2730,2970,2971)
     ORDER BY v.dtmvtolt desc;       
     rw_det_prej_lislot cr_det_prej_lislot%ROWTYPE;
     
@@ -273,14 +273,18 @@ BEGIN
            v.cdoperad   ,
            v.cdcooper   
            --v.idprejuizo  
-    FROM TBCC_PREJUIZO_DETALHE v             
+    FROM TBCC_PREJUIZO_DETALHE v,
+         craphis h              
      WHERE v.cdcooper = pr_cdcooper
       and  v.nrdconta = decode(pr_nrdconta,0,v.nrdconta,pr_nrdconta) --decode(0/*pr*/,0,v.nrdconta,/*pr*/0) --pr_nrdconta
       and  v.cdhistor = pr_cdhistor
       and  v.dtmvtolt >= TO_DATE(par_dtinicio, 'DD/MM/YYYY')
       and  v.dtmvtolt <= TO_DATE(par_dttermin, 'DD/MM/YYYY')
+      AND  v.cdcooper = h.cdcooper
+      AND  v.cdhistor = h.cdhistor
+      AND  h.nmestrut =  'TBCC_PREJUIZO_DETALHE'
       AND  v.cdhistor <> 2323 
-      and  v.cdhistor in (2408,2412,2716,2717,2718,2719,2720,2738,2739,2721,2723,2733,2725,2727,2729,2722,2732,2724,2726,2728,2730)
+--      and  v.cdhistor in (2408,2412,2716,2717,2718,2719,2720,2738,2739,2721,2723,2733,2725,2727,2729,2722,2732,2724,2726,2728,2730,2970,2971)
     ORDER BY v.dtmvtolt desc;       
     rw_det_prej_lislot cr_det_prej_lislot%ROWTYPE;
     

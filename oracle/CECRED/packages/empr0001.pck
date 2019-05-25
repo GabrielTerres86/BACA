@@ -1138,6 +1138,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --                          P450 - Reginaldo/AMcom
   --	                               
   --             04/01/2019 - chamado INC0027294 (Fabio-Amcom)
+		
+  --
+  --             15/05/2019 - Alteração na "pc_efetua_liquidacao_empr" para incluir tratamento para conta corrente 
+  --                          em prejuízo (débito da conta transitória)
+  --                          (Reginaldo/AMcom - P450)  	                               
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -14010,6 +14015,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    27/09/2016 - Tornar o parametro PR_TAB_PGTO_PARCEL um parametro
                                 "IN OUT" (Renato/Supero - P.302 - Acordos)
 
+                   15/05/2019 - Tratamento para conta corrente em prejuízo (débito
+                                da conta transitória)
+                                (Reginaldo/AMcom - P450)
+
     ............................................................................. */
 
     DECLARE
@@ -14097,6 +14106,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Variaveis Excecao
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
+
+      vr_inprejuz BOOLEAN; -- Indica se a conta corrente está em prejuízo
 
     BEGIN
       --Inicializar variavel erro
@@ -14395,31 +14406,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;
         END LOOP;  --rw_crappep
 
+        -- Verifica se a conta está em prejuízo
+        vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
+                                                      , pr_nrdconta => pr_nrdconta);
+
         --Percorrer os Lancamentos
         vr_index_lanc:= vr_tab_lanc.FIRST;
         WHILE vr_index_lanc IS NOT NULL LOOP
 
-          /* Lanca em C/C e atualiza o lote */
-          empr0001.pc_cria_lancamento_cc_chave (pr_cdcooper => vr_tab_lanc(vr_index_lanc).cdcooper --> Cooperativa conectada
-                                         ,pr_dtmvtolt => vr_tab_lanc(vr_index_lanc).dtmvtolt --> Movimento atual
-                                         ,pr_cdagenci => vr_tab_lanc(vr_index_lanc).cdagenci --> Código da agência
-                                         ,pr_cdbccxlt => vr_tab_lanc(vr_index_lanc).cdbccxlt --> Número do caixa
-                                         ,pr_cdoperad => vr_tab_lanc(vr_index_lanc).cdoperad --> Código do Operador
-                                         ,pr_cdpactra => vr_tab_lanc(vr_index_lanc).cdpactra --> P.A. da transação
-                                         ,pr_nrdolote => vr_tab_lanc(vr_index_lanc).nrdolote --> Numero do Lote
-                                         ,pr_nrdconta => vr_tab_lanc(vr_index_lanc).nrdconta --> Número da conta
-                                         ,pr_cdhistor => vr_tab_lanc(vr_index_lanc).cdhistor --> Codigo historico
-                                         ,pr_vllanmto => vr_tab_lanc(vr_index_lanc).vllanmto --> Valor da parcela emprestimo
-                                         ,pr_nrparepr => 0                                   --> Número parcelas empréstimo
-                                         ,pr_nrctremp => vr_tab_lanc(vr_index_lanc).nrctremp --> Número do contrato de empréstimo
-                                         ,pr_nrseqava => vr_tab_lanc(vr_index_lanc).nrseqava --> Pagamento: Sequencia do avalista
-                                               ,pr_nrseqdig => vr_nrseqdig
-                                         ,pr_des_reto => vr_des_erro                         --> Retorno OK / NOK
-                                         ,pr_tab_erro => pr_tab_erro);                       --> Tabela com possíves erros
-          --Se Retornou erro
-          IF vr_des_erro <> 'OK' THEN
-            --Sair
-            RAISE vr_exc_saida;
+          IF NOT vr_inprejuz THEN
+            /* Lanca em C/C e atualiza o lote */
+            empr0001.pc_cria_lancamento_cc_chave (pr_cdcooper => vr_tab_lanc(vr_index_lanc).cdcooper --> Cooperativa conectada
+                                                 ,pr_dtmvtolt => vr_tab_lanc(vr_index_lanc).dtmvtolt --> Movimento atual
+                                                 ,pr_cdagenci => vr_tab_lanc(vr_index_lanc).cdagenci --> Código da agência
+                                                 ,pr_cdbccxlt => vr_tab_lanc(vr_index_lanc).cdbccxlt --> Número do caixa
+                                                 ,pr_cdoperad => vr_tab_lanc(vr_index_lanc).cdoperad --> Código do Operador
+                                                 ,pr_cdpactra => vr_tab_lanc(vr_index_lanc).cdpactra --> P.A. da transação
+                                                 ,pr_nrdolote => vr_tab_lanc(vr_index_lanc).nrdolote --> Numero do Lote
+                                                 ,pr_nrdconta => vr_tab_lanc(vr_index_lanc).nrdconta --> Número da conta
+                                                 ,pr_cdhistor => vr_tab_lanc(vr_index_lanc).cdhistor --> Codigo historico
+                                                 ,pr_vllanmto => vr_tab_lanc(vr_index_lanc).vllanmto --> Valor da parcela emprestimo
+                                                 ,pr_nrparepr => 0                                   --> Número parcelas empréstimo
+                                                 ,pr_nrctremp => vr_tab_lanc(vr_index_lanc).nrctremp --> Número do contrato de empréstimo
+                                                 ,pr_nrseqava => vr_tab_lanc(vr_index_lanc).nrseqava --> Pagamento: Sequencia do avalista
+                                                 ,pr_nrseqdig => vr_nrseqdig
+                                                 ,pr_des_reto => vr_des_erro                         --> Retorno OK / NOK
+                                                 ,pr_tab_erro => pr_tab_erro);                       --> Tabela com possíves erros
+            --Se Retornou erro
+            IF vr_des_erro <> 'OK' THEN
+              --Sair
+              RAISE vr_exc_saida;
+            END IF;
+          ELSE 
+            IF nvl(vr_tab_lanc(vr_index_lanc).vllanmto, 0) > 0 THEN
+              -- Lança débito na conta transitória (Bloqueado Prejuízo)
+              PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => vr_tab_lanc(vr_index_lanc).cdcooper
+                                          , pr_nrdconta => vr_tab_lanc(vr_index_lanc).nrdconta
+                                          , pr_vlrlanc => vr_tab_lanc(vr_index_lanc).vllanmto
+                                          , pr_dtmvtolt => vr_tab_lanc(vr_index_lanc).dtmvtolt
+                                          , pr_dsoperac => 'Liq. Emprestimo: ' || vr_tab_lanc(vr_index_lanc).nrctremp || 
+                                                         ' Hist. ' || vr_tab_lanc(vr_index_lanc).cdhistor
+                                          , pr_cdcritic => vr_cdcritic
+                                          , pr_dscritic => vr_dscritic);
+                                          
+              IF trim(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+                --Sair
+                RAISE vr_exc_saida;
+              END IF;
+            END IF;
           END IF;
 
           --Marcar que transacao ocorreu

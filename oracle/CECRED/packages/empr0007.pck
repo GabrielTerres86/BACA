@@ -338,7 +338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Lucas Reinert
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 27/12/2018
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 29/04/2019
   --
   -- Dados referentes ao programa:
   --
@@ -369,6 +369,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 	--             27/12/2018 - Inclusão de tratamento na "pc_pagar_epr_cobranca" para contas corrente em 
 	--                          prejuízo (debitar da conta transitória e não da conta corrente).
 	--  												P450 - Reginaldo/AMcom
+  --
+  --             29/04/2019 - Ajuste na procedure "pg_pagar_epr_cobranca" para correção no tratamento de contas em prejuízo 
+  --                          para debitar corretamente o valor pago da Conta Transitória (Bloqueados Prejuízo).
+	--													450 - Reginaldo/AMcom
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_busca_convenios(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
@@ -1069,7 +1073,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Carlos Rafael Tanholi
-      Data    : Agosto/15.                    Ultima atualizacao: 27/12/2018
+      Data    : Agosto/15.                    Ultima atualizacao: 29/04/2019
 
       Dados referentes ao programa:
 
@@ -1091,6 +1095,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 															 
 									27/12/2018 - Inclusão de tratamento para contas corrente em prejuízo (debitar da
 									             conta transitória e não da conta corrente).
+															 P450 - Reginaldo/AMcom
+                  29/04/2019 - Correção no tratamento de contas em prejuízo para debitar corretamente o valor 
+                               pago da Conta Transitória (Bloqueados Prejuízo).
 															 P450 - Reginaldo/AMcom
     ..............................................................................*/
 
@@ -1115,6 +1122,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 		-- Variaveis locais
     vr_dsparcel gene0002.typ_split;
 		vr_vldpagto crapepr.vlsdeved%TYPE;    
+    vr_vldpagto_aux crapepr.vlsdeved%TYPE;
     vr_vltotpag craplcm.vllanmto%TYPE;
     vr_flgdel   BOOLEAN;
     vr_flgativo PLS_INTEGER;
@@ -1325,6 +1333,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               RAISE vr_exc_saida;
             END IF;
 
+            vr_vldpagto_aux := vr_vldpagto;
+
             OPEN cr_crapepr;
             FETCH cr_crapepr INTO rw_crapepr;
       			
@@ -1373,6 +1383,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               -- Gera exceção
               RAISE vr_exc_saida;
             END IF;
+            
+            vr_vldpagto := vr_vldpagto + vr_vldpagto_aux;
             
             END IF; 
             
@@ -2026,23 +2038,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
              RAISE vr_exc_saida;
           END IF;          
   																				 
-					-- Se a conta está em prejuízo, lança débito referente ao valor pago na conta transitória - Reginaldo/AMcom
-					IF vr_prejuzcc THEN
-					  PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
-						                            , pr_nrdconta => pr_nrdconta
-																				, pr_dtmvtolt => pr_dtmvtolt
-																				, pr_vlrlanc  => vr_vldpagto
-																				, pr_cdcritic => vr_cdcritic
-																				, pr_dscritic => vr_dscritic);
-																				
-						IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-						  vr_dscritic := 'Erro ao debitar pagamento das parcelas do Bloqueado Prejuizo (' || vr_dscritic || ')';
-							
-							RAISE vr_exc_saida;
+          -- Se está liquidando o contrato
+          IF vr_tab_calculado(vr_tab_calculado.FIRST).vlsdeved = vr_vldpagto THEN
+            vr_vldpagto:= 0; -- Na liquidação de empréstimo PP o valor já é debitado das Conta Transitória (Bloqueados Prejuízo)
+          END IF;  																				 
+      		END IF;  																				 
         END IF;
-					END IF;  																				 
+        -- Se a conta está em prejuízo, lança débito referente ao valor pago na conta transitória - Reginaldo/AMcom
+        IF vr_vldpagto > 0 AND vr_prejuzcc THEN
+          PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
+                                      , pr_nrdconta => pr_nrdconta
+                                      , pr_dtmvtolt => pr_dtmvtolt
+                                      , pr_vlrlanc  => vr_vldpagto
+                                      , pr_dsoperac => 'Pagto Emprestimo: ' || pr_nrctremp || ' na COBEMP.'
+                                      , pr_cdcritic => vr_cdcritic
+                                      , pr_dscritic => vr_dscritic);
+
+          IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            vr_dscritic := 'Erro ao debitar pagamento das parcelas do Bloqueado Prejuizo (' || vr_dscritic || ')';
+            RAISE vr_exc_saida;
+          END IF;
         END IF;
-      END IF;
+      
  		EXCEPTION	
 		  WHEN vr_exc_saida THEN
 				-- Se possui código de crítica e não foi informado a descrição

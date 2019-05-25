@@ -237,6 +237,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     --                          para evitar violação de chave única por duplicidade do número do documento.
     --                          Ajuste na procedure "pc_pagar_IOF_contrato_conta" para evitar lançamento com valor "zero".
     --                          (Reginaldo/AMcom - P450)
+  --
+  --             19/03/2019 - Ajuste na rotina "pc_pagar_contrato_emprestimo" para debitar corretamente da conta transitória
+  --                          o valor pago no contrato de empréstimo, caso a conta esteja em prejuízo.
+  --                          (Reginaldo/AMcom - P450)	
+  --
+  --              25/04/2019 - Ajuste na "pc_pagar_contrato_acordo" para inclusão de lançamentos com os históricos 2970 e 2971
+  --                           em substituição aos históricos 2193  e 2194 (bloqueio/desbloqueio de acordo) quando a conta estiver 
+  --                           em prejuízo. Os novos históricos são lançados na tabela TBCC_PREJUIZO_DETALHE, diferente dos 
+  --                           históricos originais que são lançados na CRAPLCM.
+  --                           (Reginaldo/AMcom - P450)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -1980,6 +1990,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     
     END IF;   
   
+    -- Se a conta está em prejuízo, debita o valor pago da Conta Transitória (Bloqueado Prejuízo)
+    IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
+                                      , pr_nrdconta => pr_nrdconta) AND
+       pr_vltotpag > 0 THEN
+       
+       PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
+                                   , pr_nrdconta => pr_nrdconta
+                                   , pr_vlrlanc  => pr_vltotpag
+                                   , pr_dtmvtolt => pr_crapdat.dtmvtolt
+                                   , pr_cdcritic => vr_cdcritic
+                                   , pr_dscritic => vr_dscritic);
+                                   
+       IF trim(vr_dscritic) IS NOT NULL OR NVL(vr_cdcritic, 0) > 0 THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao debitar da conta em prejuízo o valor pago no contrato de empréstimo.';
+					--
+          RAISE vr_exp_erro;
+					--
+       END IF;
+    END IF;  
   EXCEPTION
     WHEN vr_exp_erro THEN
       -- Retornar total pago como zero
@@ -2404,49 +2434,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       vr_vlparcel := nvl(vr_vlparcel,0) + rw_acordo.vlbloqueado;
       
       IF rw_crapass.inprejuz = 0 THEN
-      -- Gera o lançamento na conta para descontar o saldo bloqueado
-      EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_acordo.cdcooper                  --> Cooperativa conectada
-                                    ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt --> Movimento atual
-                                    ,pr_cdagenci => rw_crapass.cdagenci          --> Código da agência
-                                    ,pr_cdbccxlt => 100                          --> Número do caixa
-                                    ,pr_cdoperad => pr_cdoperad                  --> Código do Operador
-                                    ,pr_cdpactra => rw_crapass.cdagenci          --> P.A. da transação
-                                    ,pr_nrdolote => 650001                       --> Numero do Lote
-                                    ,pr_nrdconta => rw_acordo.nrdconta           --> Número da conta
-                                    ,pr_cdhistor => 2194                         --> Codigo historico 2194 - CR.DESB.ACORD
-                                    ,pr_vllanmto => rw_acordo.vlbloqueado        --> Valor da parcela emprestimo
-                                    ,pr_nrparepr => pr_nrparcel                  --> Número parcelas empréstimo
-                                    ,pr_nrctremp => 0                            --> Número do contrato de empréstimo
-                                    ,pr_des_reto => vr_des_erro                  --> Retorno OK / NOK
-                                    ,pr_tab_erro => vr_tab_erro);                --> Tabela com possíves erros
+        -- Gera o lançamento na conta para descontar o saldo bloqueado
+        EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_acordo.cdcooper                  --> Cooperativa conectada
+                                      ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt --> Movimento atual
+                                      ,pr_cdagenci => rw_crapass.cdagenci          --> Código da agência
+                                      ,pr_cdbccxlt => 100                          --> Número do caixa
+                                      ,pr_cdoperad => pr_cdoperad                  --> Código do Operador
+                                      ,pr_cdpactra => rw_crapass.cdagenci          --> P.A. da transação
+                                      ,pr_nrdolote => 650001                       --> Numero do Lote
+                                      ,pr_nrdconta => rw_acordo.nrdconta           --> Número da conta
+                                      ,pr_cdhistor => 2194                         --> Codigo historico 2194 - CR.DESB.ACORD
+                                      ,pr_vllanmto => rw_acordo.vlbloqueado        --> Valor da parcela emprestimo
+                                      ,pr_nrparepr => pr_nrparcel                  --> Número parcelas empréstimo
+                                      ,pr_nrctremp => 0                            --> Número do contrato de empréstimo
+                                      ,pr_des_reto => vr_des_erro                  --> Retorno OK / NOK
+                                      ,pr_tab_erro => vr_tab_erro);                --> Tabela com possíves erros
     
-      -- Se ocorreu erro
-      IF vr_des_erro <> 'OK' THEN
-        -- Se possui algum erro na tabela de erros
-        IF vr_tab_erro.COUNT() > 0 THEN
-          pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
-          pr_cdcritic := 0;
-          pr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
+        -- Se ocorreu erro
+        IF vr_des_erro <> 'OK' THEN
+          -- Se possui algum erro na tabela de erros
+          IF vr_tab_erro.COUNT() > 0 THEN
+            pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            pr_cdcritic := 0;
+            pr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
+          END IF;
+          RAISE vr_exc_erro;
         END IF;
-        RAISE vr_exc_erro;
-      END IF;
-            ELSE
-                PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => rw_acordo.cdcooper
-                                            , pr_nrdconta => rw_acordo.nrdconta
-                                                                        , pr_vlrlanc  => rw_acordo.vlbloqueado
-                                                                        , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
-                                                                        , pr_cdcritic => vr_cdcritic
-                                                                        , pr_dscritic => vr_dscritic); 
+      ELSE
+        PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => rw_acordo.cdcooper
+                                    , pr_nrdconta => rw_acordo.nrdconta
+                                    , pr_vlrlanc  => rw_acordo.vlbloqueado
+                                    , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                    , pr_cdcritic => vr_cdcritic
+                                    , pr_dscritic => vr_dscritic); 
                                                         
-              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic;
+        IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
                     
-                    RAISE vr_exc_erro;
-                END IF;
-            END IF;
+          RAISE vr_exc_erro;
+        END IF;
+        
+        PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => rw_acordo.cdcooper
+                                          , pr_nrdconta => rw_acordo.nrdconta
+                                          , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                          , pr_cdhistor => 2971 -- Equivalente ao histórico 2194 que é lançado na CRAPLCM
+                                          , pr_vllanmto => rw_acordo.vlbloqueado
+                                          , pr_dthrtran => SYSDATE
+                                          , pr_cdcritic => vr_cdcritic
+                                          , pr_dscritic => vr_dscritic);
+                                          
+        IF nvl(vr_cdcritic, 0) > 0 AND vr_dscritic IS NOT NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
       
       -- ZERAR O VALOR BLOQUEADO NA TABELA DE ACORDO
       BEGIN
@@ -3011,21 +3056,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           END IF;
           RAISE vr_exc_erro;
         END IF;
-                ELSE
-                    PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_acordo.cdcooper
-                                                , pr_nrdconta => rw_acordo.nrdconta
-                                                                            , pr_vlrlanc  => vr_vlparcel
-                                                                            , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
-                                      , pr_cdcritic => vr_cdcritic
-                                                                            , pr_dscritic => vr_dscritic);
-                                                                            
-                    IF nvl(vr_cdcritic, 0) > 0 AND vr_dscritic IS NOT NULL THEN
-                        pr_cdcritic := vr_cdcritic;
-                        pr_dscritic := vr_dscritic;
+      ELSE
+        PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => rw_acordo.cdcooper
+                                    , pr_nrdconta => rw_acordo.nrdconta
+                                    , pr_vlrlanc  => vr_vlparcel
+                                    , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                    , pr_cdcritic => vr_cdcritic
+                                    , pr_dscritic => vr_dscritic);
+
+        IF nvl(vr_cdcritic, 0) > 0 AND vr_dscritic IS NOT NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+
+          RAISE vr_exc_erro;
+        END IF;
+           
+        PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => rw_acordo.cdcooper
+                                        , pr_nrdconta => rw_acordo.nrdconta
+                                        , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                        , pr_cdhistor => 2970 -- Equivalente ao histórico 2193 que é lançado na CRAPLCM
+                                        , pr_vllanmto => vr_vlparcel
+                                        , pr_dthrtran => SYSDATE
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic);
+
+        IF nvl(vr_cdcritic, 0) > 0 AND vr_dscritic IS NOT NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
                         
-                        RAISE vr_exc_erro;
-                    END IF;
-                END IF;
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
       
         -- Alterar o valor bloqueado no acordo, com o valor lançado
         BEGIN

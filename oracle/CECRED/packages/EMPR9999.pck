@@ -224,7 +224,7 @@ create or replace package body cecred.EMPR9999 as
   --  Sistema  : Rotinas focando nas funcionalidades genericas
   --  Sigla    : EMPR
   --  Autor    : Pedro Cruz (GFT)
-  --  Data     : Julho/2018.                   Ultima atualizacao: 26/07/2018
+  --  Data     : Julho/2018.                   Ultima atualizacao: 17/04/2019
   --
   -- Dados referentes ao programa:
   --
@@ -255,7 +255,11 @@ create or replace package body cecred.EMPR9999 as
   --
   --             14/12/2018 - P298.2 - Inclusão da proposta Pós fixado no simulador (Andre Clemer - Supero)
   --                        - pc_busca_dominio;
-
+  --
+  --             17/04/2019 - Remoção de chamada equivocada da procedure "PREJ0003.pc_gera_debt_cta_prj" no
+  --                          bloco de processamento de IOF pago da procedure "pc_pagar_emprestimo_prejuizo".
+  --                          P450 - Reginaldo/AMcom
+  --
   ---------------------------------------------------------------------------------------------------------------
   /* Tratamento de erro */
   vr_exc_erro EXCEPTION;
@@ -897,6 +901,30 @@ create or replace package body cecred.EMPR9999 as
                                         ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                         ,pr_dscritic OUT VARCHAR2) IS                 -- Descrição da crítica
 
+    /* ..........................................................................
+      Programa : pc_pagar_emprestimo_prejuizo
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : 
+      Data     :                             Ultima atualizacao: 17/04/2019
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamada
+      Objetivo  : Realizar o calculo e pagamento de prejuízo
+          
+      Alteração : 29/11/2018 - Ajustado para gerar lanc. hist 384 na tabela de prejuizo detalhe, 
+                               para pagamentos com conta em prejuiz CC. PRJ450 - Regulatorio (Odirlei-AMcom)
+							    
+									27/12/2018 - Alteração no tratamento para contas corrente em prejuízo (verificar através
+									             da função PREJ0003.fn_verifica_preju_conta ao invés de usar o "pr_nmdatela").
+															 P450 - Reginaldo/AMcom
+                               
+                  17/04/2019 - Remoção de chamada equivocada da procedure "PREJ0003.pc_gera_debt_cta_prj" no
+                               bloco de processamento de IOF pago.
+                               P450 - Reginaldo/AMcom
+    ..........................................................................*/
+    
     -- Buscar o valor total de lançamentos referente ao pagamento do prejuízo original
     CURSOR cr_craplem(pr_cdhistor  craplem.cdhistor%TYPE) IS
       SELECT SUM(lem.vllanmto) vllanmto
