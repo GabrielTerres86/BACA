@@ -17,6 +17,10 @@
                             
                30/01/2017 - Adicionado o codigo da transacao no xml de resposta
                             (Dionathan).
+                            
+               12/04/2018 - Inclusao de novos campo para realizaçao 
+                            de analise de fraude. 
+                            PRJ381 - AntiFraude (Odirlei-AMcom)             
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -38,6 +42,9 @@ DEFINE INPUT  PARAMETER par_cdditens AS CHAR        NO-UNDO.
 DEFINE INPUT  PARAMETER par_indvalid AS INTE        NO-UNDO.
 DEFINE INPUT  PARAMETER par_idseqttl AS INTEGER     NO-UNDO.
 DEFINE INPUT  PARAMETER par_nrcpfope AS DECIMAL     NO-UNDO.
+DEFINE INPUT  PARAMETER par_iptransa AS CHAR        NO-UNDO.
+DEFINE INPUT  PARAMETER par_flmobile AS LOGI        NO-UNDO.
+DEFINE INPUT  PARAMETER par_iddispos AS CHAR        NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -77,6 +84,9 @@ RUN aprova_trans_pend IN h-b1wgen0016 (INPUT par_cdcooper,
                                        INPUT par_cdditens,
                                        INPUT par_indvalid,
                                        INPUT par_nrcpfope,
+                                       INPUT par_iptransa,
+                                       INPUT par_flmobile,
+                                       INPUT par_iddispos,
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-criticas_transacoes_oper,
                                       OUTPUT out_flgaviso).
@@ -109,6 +119,21 @@ DO:
 				ASSIGN aux_dscritic = aux_dscritic + "\nVerifique as transacoes nao aprovadas.".
 
 			ASSIGN xml_dsmsgerr = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>".
+            
+            
+            IF  NOT out_flgaviso  THEN
+                DO:
+                    xml_dsmsgerr = xml_dsmsgerr + "<PROTOCOLOS>".
+                    
+                    FOR EACH tt-criticas_transacoes_oper WHERE  tt-criticas_transacoes_oper.flgtrans = TRUE NO-LOCK:
+                        ASSIGN xml_dsmsgerr = xml_dsmsgerr + 
+                                              "<dsprotoc>" + tt-criticas_transacoes_oper.dsprotoc + "</dsprotoc>".            
+		END.
+                    
+                    xml_dsmsgerr = xml_dsmsgerr + "</PROTOCOLOS>".
+                END.
+                        
+            
 		END.
 	ELSE
 		DO:
@@ -117,6 +142,7 @@ DO:
 				   
 			RETURN "NOK".
 		END.
+      
 END.
 ELSE /* Validacao */
 DO:
@@ -170,7 +196,20 @@ DO:
                               tt-criticas_transacoes_oper.dscritic +
                               "</dscritic><cdtransa>"+
                               STRING(tt-criticas_transacoes_oper.cdtransa) +
-                              "</cdtransa></TRANSACAO>".
+                              "</cdtransa><dtdebito>" +
+                              (IF tt-criticas_transacoes_oper.dtcritic = "Nesta Data" OR 
+                                  tt-criticas_transacoes_oper.dtcritic = ""           THEN 
+                                  STRING(par_dtmvtolt,"99/99/9999")
+                               ELSE       
+                               IF tt-criticas_transacoes_oper.dtcritic = "Mes atual" THEN
+                                  STRING(DATE(MONTH(par_dtmvtolt),1,YEAR(par_dtmvtolt)),"99/99/9999")
+                               ELSE
+                                  STRING(DATE(tt-criticas_transacoes_oper.dtcritic),"99/99/9999")) +
+                              "</dtdebito><dtmvtolt>" +
+                              STRING(par_dtmvtolt,"99/99/9999") +
+                              "</dtmvtolt><cdtiptra>" +
+                              STRING(tt-criticas_transacoes_oper.cdtiptra) +
+                              "</cdtiptra></TRANSACAO>".
     END.
                               
     ASSIGN aux_dslinxml = aux_dslinxml + "</APROVADAS><DESAPROVADAS>"
@@ -183,11 +222,13 @@ DO:
             DO:
                 ASSIGN aux_dtcritic = tt-criticas_transacoes_oper.dtcritic.                         
             END.
-		ELSE IF  STRING(tt-criticas_transacoes_oper.dtcritic) = "Mes atual" THEN
+        ELSE 
+        IF  STRING(tt-criticas_transacoes_oper.dtcritic) = "Mes atual" THEN
             DO:
                 ASSIGN aux_dtcritic = tt-criticas_transacoes_oper.dtcritic.                         
             END.
-        ELSE IF tt-criticas_transacoes_oper.dtcritic <> ? THEN            
+        ELSE 
+        IF  tt-criticas_transacoes_oper.dtcritic <> ? THEN            
             DO:
                 ASSIGN aux_dtcritic = STRING(DATE(tt-criticas_transacoes_oper.dtcritic),"99/99/9999").
             END.
@@ -209,7 +250,20 @@ DO:
                               tt-criticas_transacoes_oper.dscritic +
                               "</dscritic><cdtransa>"+
                               STRING(tt-criticas_transacoes_oper.cdtransa) +
-                              "</cdtransa></TRANSACAO>".
+                              "</cdtransa><dtdebito>" +
+                              (IF tt-criticas_transacoes_oper.dtcritic = "Nesta Data" OR 
+                                  tt-criticas_transacoes_oper.dtcritic = ""           THEN 
+                                  STRING(par_dtmvtolt,"99/99/9999")
+                               ELSE       
+                               IF tt-criticas_transacoes_oper.dtcritic = "Mes atual" THEN
+                                  STRING(DATE(MONTH(par_dtmvtolt),1,YEAR(par_dtmvtolt)),"99/99/9999")
+                               ELSE
+                                  STRING(DATE(tt-criticas_transacoes_oper.dtcritic),"99/99/9999")) +
+                              "</dtdebito><dtmvtolt>" +
+                              STRING(par_dtmvtolt,"99/99/9999") +
+                              "</dtmvtolt><cdtiptra>" +
+                              STRING(tt-criticas_transacoes_oper.cdtiptra) +
+                              "</cdtiptra></TRANSACAO>".
     
     END.
     
