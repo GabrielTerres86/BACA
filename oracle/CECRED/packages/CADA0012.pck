@@ -1164,7 +1164,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                                       pr_cdoperad IN VARCHAR2, -- Codigo do operador
                                       pr_cdagenci IN NUMBER, -- Codigo da agencia
                                       pr_fltoken  IN VARCHAR2 DEFAULT 'S', -- Flag se deve ser alterado o token
-                                      pr_tpcanal_sistema  IN NUMBER DEFAULT 10, -- Sistema que esta solicitando acesso 10-CRM, 13-Ibracred
+                                      pr_tpcanal_sistema  IN NUMBER DEFAULT 10, -- Sistema que esta solicitando acesso 10-CRM, 13 - Ibracred
                                       pr_dstoken  OUT VARCHAR2, -- Token de retorno nos casos de sucesso na validacao
                                       pr_dscritic OUT VARCHAR2) IS  -- Retorno de Erro
     /* ..........................................................................

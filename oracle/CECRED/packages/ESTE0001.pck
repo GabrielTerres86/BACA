@@ -1296,6 +1296,23 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       
     END IF;
 		
+    -- Pj 438 - Marcelo Telles Coelho - Mouts - 07/04/2019
+    -- Startar job de atualização das informações da Tela Única
+    IF pr_dscritic IS NULL AND pr_tpenvest <> 'M' -- Não foi chamada para Motor
+    OR 
+       (pr_dscritic IS NULL AND pr_tpenvest IS NULL AND pr_dsoperacao = 'REENVIO DA PROPOSTA PARA ANALISE DE CREDITO')
+    THEN
+      tela_analise_credito.pc_job_dados_analise_credito(pr_cdcooper  => pr_cdcooper
+                                                       ,pr_nrdconta  => pr_nrdconta
+                                                       ,pr_tpproduto => 2 -- Empréstimos/Financiamentos
+                                                       ,pr_nrctremp  => pr_nrctremp
+                                                       ,pr_dscritic  => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+    -- Fim Pj 438
+
 		IF pr_tpenvest = 'M' AND pr_dsmetodo = 'POST' THEN
 	    --> Transformar texto em objeto json
 			BEGIN

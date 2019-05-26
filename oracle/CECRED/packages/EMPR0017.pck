@@ -16,10 +16,10 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0017 AS
   ---------------------------------------------------------------------------------------------------------------
 
   TYPE typ_dados_contrato_ccb IS RECORD
-         (nrdconta NUMBER(10), -- num conta
-          nrctremp NUMBER(10), -- num contrato
+         (nrdconta NUMBER(10),   -- num conta
+          nrctremp NUMBER(10),   -- num contrato
           nmextcop VARCHAR2(50), -- nome coop
-          nrdocnpj NUMBER(25), -- cnpj coop
+          nrdocnpj NUMBER(25),   -- cnpj coop
           dsendcop VARCHAR2(40), -- endereco
           nrendcop NUMBER(10), --numero
           nrcepend NUMBER(10), --cep

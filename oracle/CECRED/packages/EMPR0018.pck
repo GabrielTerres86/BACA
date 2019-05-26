@@ -485,7 +485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
   /* -------------------------------------------------------------------------------------------------------------
 
     Programa: EMPR0018           Antigo: sistema/generico/procedures/b1wgen0097.p
-    Autor   : Douglas Pagel / AMcom 
+    Autor   : Douglas Pagel/AMcom 
     Data    : 18/12/2018               ultima Atualizacao: --
      
     Dados referentes ao programa:
