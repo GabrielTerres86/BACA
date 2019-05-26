@@ -564,7 +564,7 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
               
               25/05/2019 - Ajuste na utilizacao do PLSQL_altera_session_, para quando nao for 
                            um bloco transactio utilizar a include que inclui este bloco.
-                           PRJ438 - Agilidade de credito (Odirlei)          
+                           PRJ438 - Agilidade de credito ( Odirlei)          
               
 
  .....................................................................................................*/
