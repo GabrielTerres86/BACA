@@ -562,6 +562,10 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
               07/03/2019 - Inclusao registro de assinatura na aprovacao de transacao de emprestimo.
                            (PRJ438 Douglas / AMcom).
               
+              25/05/2019 - Ajuste na utilizacao do PLSQL_altera_session_, para quando nao for 
+                           um bloco transactio utilizar a include que inclui este bloco.
+                           PRJ438 - Agilidade de credito (Odirlei)          
+              
 
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
@@ -5553,7 +5557,7 @@ PROCEDURE aprova_trans_pend:
                 ELSE IF tbgen_trans_pend.tptransacao = 21 THEN /* Contrataçao Emprestimo */
                     DO:
                         /* Efetuar a chamada a rotina Oracle */ 
-                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
                         
                         RUN STORED-PROCEDURE pc_ret_trans_pend_prop
                           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
@@ -5572,7 +5576,6 @@ PROCEDURE aprova_trans_pend:
                         CLOSE STORED-PROC pc_ret_trans_pend_prop
                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
-                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
                         
                         /* Busca possíveis erros */ 
                         ASSIGN aux_cdcritic = 0
@@ -5586,11 +5589,14 @@ PROCEDURE aprova_trans_pend:
                                               WHEN pc_ret_trans_pend_prop.pr_nrctremp <> ?
                                aux_vlemprst = pc_ret_trans_pend_prop.pr_vlemprst 
                                               WHEN pc_ret_trans_pend_prop.pr_vlemprst <> ?.
+
+                        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }   
+                        
                         IF aux_nrctremp > 0 THEN
                             DO:
                                 CREATE tt-tbepr_trans_pend_prop.
                                 ASSIGN tt-tbepr_trans_pend_prop.nrctremp = aux_nrctremp.
-                                ASSIGN tt-tbepr_trans_pend_prop.vlemprst = aux_vlemprst.
+                                ASSIGN tt-tbepr_trans_pend_prop.vlemprst = ROUND(aux_vlemprst,2).
 
                                 ASSIGN tt-tbgen_trans_pend.idmovimento_conta  = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0).
                             END.
