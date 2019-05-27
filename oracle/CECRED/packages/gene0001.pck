@@ -46,6 +46,11 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  09/01/2019 - Inclusão da rotina de controle de execução de programa com PRAGMA             
   --               ( Belli - Envolti - PRB0040466 )
 	--
+  --  01/05/2019 - Adicionado  Origem = 14 - Descto. Folha (CONSIGNADO) (P437 - JDB AMcom)
+  -- 
+  --  16/05/2019 - Realizar o ajuste do vetor de origens conforme cadastro da tabela TBGEN_CANAL_ENTRADA, pois
+  --               os cadastros estavam com divergencias. (Renato Darosci - Supero)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /** ---------------------------------------------------- **/
@@ -78,14 +83,17 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                                                       ,'CONVENIOS'
                                                       ,'DESC. TITULOS');
 
-  /** ------------------------------------------------------------**/
+  /** -------------------------------------------------------------------------**/
   /** Variavel para geracao de log - Origem da Solicitacao     **/
   /**                                                          **/
-  /** -> Origem = 1 - AYLLOS                                   **/
+  /** ATENÇÃO: REALIZAR O CADASTRO DAS ORIGENS TAMBÉM NA TBGEN_CANAL_ENTRADA E **/
+  /**          NA INCLUDE PROGRESS: generico/includes/var_internet.i           **/
+  /**                                                                          **/
+  /** -> Origem = 1 - AIMARO                                                   **/
   /** -> Origem = 2 - CAIXA                                    **/
   /** -> Origem = 3 - INTERNET                                 **/
-  /** -> Origem = 4 - CASH                                     **/
-  /** -> Origem = 5 - INTRANET (AYLLOS WEB)                    **/
+  /** -> Origem = 4 - TAA                                                      **/
+  /** -> Origem = 5 - INTRANET (AIMARO WEB)                                    **/
   /** -> Origem = 6 - URA                                      **/
   /** -> Origem = 7 - PROCESSO (PROCESSO BATCH)                **/
   /** -> Origem = 8 - MENSAGERIA (DEBITO ONLINE CARTAO BANCOOB)**/
@@ -94,10 +102,38 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /** -> Origem = 11 - ACORDO (WEBSERVICE DE ACORDOS)             **/
   /** -> Origem = 12 - ANTIFRAUDE (WEBSERVICE ANALISE ANTIFRAUDE) 	**/
   /** -> Origem = 13 - COBRANCA (RENOVACAO AUTOMATICA) 	**/
-  /** ---------------------------------------------------------**/
+  /** -> Origem = 14 - SAS (STATISTICAL ANALYSIS SYSTEM)                       **/
+  /** -> Origem = 15 - SIPAGNET (SISTEMA BANCOOB - CARTOES DE CREDITO CECRED)  **/
+  /** -> Origem = 16 - FIS                                                     **/
+  /** -> Origem = 17 - CDC PORTAL                                              **/
+  /** -> Origem = 18 - CDC MOBILE                                              **/
+  /** -> Origem = 19 - QUANTA (QUANTA PREVIDENCIA)                             **/
+  /** -> Origem = 20 - Descto. Folha (CONSIGNADO)                              **/
+  /** -> Origem = 21 - API (PLATAFORMA API) 	                                 **/ 
+  /** -------------------------------------------------------------------------**/
 
-  TYPE typ_des_dorigens IS VARRAY(13) OF VARCHAR2(13);
-  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AIMARO','CAIXA','INTERNET','CASH','AIMARO WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE','COBRANCA');
+  TYPE typ_des_dorigens IS VARRAY(21) OF VARCHAR2(13);
+  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AIMARO'       -- 1
+                                                         ,'CAIXA'        -- 2
+                                                         ,'INTERNET'     -- 3
+                                                         ,'TAA'          -- 4
+                                                         ,'AIMARO WEB'   -- 5
+                                                         ,'URA'          -- 6
+                                                         ,'PROCESSO'     -- 7
+                                                         ,'MENSAGERIA'   -- 8
+                                                         ,'ESTEIRA'      -- 9
+                                                         ,'MOBILE'       -- 10
+                                                         ,'ACORDO'       -- 11
+                                                         ,'ANTIFRAUDE'   -- 12
+                                                         ,'COBRANCA'     -- 13
+                                                         ,'SAS'          -- 14
+                                                         ,'SIPAGNET'     -- 15
+                                                         ,'FIS'          -- 16
+                                                         ,'CDC PORTAL'   -- 17
+                                                         ,'CDC MOBILE'   -- 18
+                                                         ,'QUANTA'       -- 19
+                                                         ,'CONSIGNADO'   -- 20
+                                                         ,'API' );       -- 21
 
 
   /** ---------------------------------------------------- **/

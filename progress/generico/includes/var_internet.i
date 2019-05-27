@@ -72,6 +72,10 @@
 			   20/03/2017 - Incluido novo codigo de origem 13 -  COBRANCA (RENOVACAO AUTOMATICA) 
 			                PRJ319.2 - SMS Cobrança (Odirlei-AMcom)
                             
+         16/05/2019 - Realizar o ajuste do vetor de origens conforme cadastro 
+                      da tabela TBGEN_CANAL_ENTRADA, pois os cadastros estavam 
+                      com divergencias. (Renato Darosci - Supero)
+  
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-erro NO-UNDO LIKE craperr.
@@ -84,14 +88,18 @@ DEF VAR aux_datdodia AS DATE                                           NO-UNDO.
 DEF VAR des_dorigens AS CHAR                                           NO-UNDO.
 DEF VAR aux_srvintra AS CHAR                                           NO-UNDO.
 
-/** --------------------------------------------------------- **/
+/** -------------------------------------------------------------------------**/
 /** Variavel para geracao de log - Origem da Solicitacao      **/
 /**                                                           **/
+/** ATENÇAO: REALIZAR O CADASTRO DAS ORIGENS TAMBÉM NA TBGEN_CANAL_ENTRADA E **/
+/**          NA PACKAGE ORACLE: GENE0001                                     **/
+/**                                                                          **/
 /** -> Origem = 1 - AIMARO                                    **/
 /** -> Origem = 2 - CAIXA                                     **/
 /** -> Origem = 3 - INTERNET                                  **/
-/** -> Origem = 4 - CASH                                      **/
-/** -> Origem = 5 - INTRANET (AYLLOS WEB)                     **/
+/** -> Origem = 4 - TAA                                                      **/
+/** -> Origem = 5 - INTRANET (AIMARO WEB)                                    **/
+/** -> Origem = 6 - URA                                                      **/
 /** -> Origem = 7 - PROCESSO (PROCESSO BATCH)                 **/
 /** -> Origem = 8 - MENSAGERIA (DEBITO ONLINE CARTAO BANCOOB) **/
 /** -> Origem = 9 - ESTEIRA (WEBSERVICE ESTEIRA DE CREDITO)   **/
@@ -99,10 +107,19 @@ DEF VAR aux_srvintra AS CHAR                                           NO-UNDO.
 /** -> Origem = 11 - ACORDO (WEBSERVICE DE ACORDOS)           **/  
 /** -> Origem = 12 - ANTIFRAUDE (WEBSERVICE ANALISE ANTIFRAUDE) **/
 /** -> Origem = 13 - COBRANCA (RENOVACAO AUTOMATICA)          **/
-/** --------------------------------------------------------- **/
+/** -> Origem = 14 - SAS (STATISTICAL ANALYSIS SYSTEM)                       **/
+/** -> Origem = 15 - SIPAGNET (SISTEMA BANCOOB - CARTOES DE CREDITO CECRED)  **/
+/** -> Origem = 16 - FIS                                                     **/
+/** -> Origem = 17 - CDC PORTAL                                              **/
+/** -> Origem = 18 - CDC MOBILE                                              **/
+/** -> Origem = 19 - QUANTA (QUANTA PREVIDENCIA)                             **/
+/** -> Origem = 20 - Descto. Folha (CONSIGNADO)                              **/
+/** -> Origem = 21 - API (PLATAFORMA API) 	                                 **/ 
+/** -------------------------------------------------------------------------**/
 
-ASSIGN des_dorigens = "AIMARO,CAIXA,INTERNET,CASH,AIMARO WEB,URA,PROCESSO,MENSAGERIA,ESTEIRA,MOBILE,ACORDO,ANTIFRAUDE,COBRANCA".
-
+ASSIGN des_dorigens = "AIMARO,CAIXA,INTERNET,TAA,AIMARO WEB,URA,PROCESSO,MENSAGERIA,ESTEIRA,MOBILE," +
+                      "ACORDO,ANTIFRAUDE,COBRANCA,SAS,SIPAGNET,FIS,CDC PORTAL,CDC MOBILE,QUANTA,CONSIGNADO," +
+                      "API".
 
 /** Armazenar data do servidor **/
 ASSIGN aux_datdodia = TODAY.
