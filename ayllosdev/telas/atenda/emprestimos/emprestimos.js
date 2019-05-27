@@ -151,7 +151,8 @@
 * 121: [31/10/2018] Criada função alteraProposta para abrir diretamente o fluxo para alterar a proposta, removendo a tela de opções de alteração - PRJ - 438 (Mateus Z - Mouts)
 * 122: [07/03/2019] Permite inclusao / cadastro de avalista via CRM - Chamado INC0033825 (Gabriel Marcos / Jefferson / Mouts).
 * 123: [09/04/2019] Ajustar maiscula/minuscula no processo (Christian - Envolti).
- 
+* 129: [27/05/2019] Ajuste do Erro 269 apresentado na tela atenda/emprestimos - Gabriel Marcos (Mouts).
+
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -4423,7 +4424,7 @@ function controlaLayout(operacao) {
         if(cInpessoa.val() == ""){
             var __cpfcnpj_conjuge = $('#nrcpfcgc', '#frmIntevAnuente').val();
             var __tipoInterv = (validaCpfCnpj(__cpfcnpj_conjuge,1) ? '1' : (validaCpfCnpj(__cpfcnpj_conjuge,'2') ? '2' : '' )); 
-            inpessoa = __tipoInterv;
+            //inpessoa = __tipoInterv;
             cInpessoa.val(__tipoInterv);
         }
 
@@ -7139,7 +7140,8 @@ function validaDados(cdcooper, tela) { //bruno - prj 438 - 14625 - TELA_SOLICITA
 
         if (perfatcl <= 0 || perfatcl > 100) {
             //return limpaMsg(false, '269 - Valor errado.'); BUG18425
-            return limpaMsg(false, 'Cadastro incompleto. Passe pela tela CONTAS.');
+            showError('error', 'Cadastro incompleto. Passe pela tela CONTAS.', 'Alerta - Aimaro', 'hideMsgAguardo();');
+            return false;
         }
 
     } else if (in_array(operacao, ['A_DADOS_PROP', 'A_DADOS_PROP'])) {
