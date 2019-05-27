@@ -21,6 +21,10 @@
                12/04/2018 - Inclusao de novos campo para realizaçao 
                             de analise de fraude. 
                             PRJ381 - AntiFraude (Odirlei-AMcom)             
+                            
+               25/05/2019 - Ajuste na validacao da data de critica
+                            PRJ438 - Agilidade de credito (Odirlei)          
+                            
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -228,7 +232,7 @@ DO:
                 ASSIGN aux_dtcritic = tt-criticas_transacoes_oper.dtcritic.                         
             END.
         ELSE 
-        IF  tt-criticas_transacoes_oper.dtcritic <> ? THEN            
+        IF  tt-criticas_transacoes_oper.dtcritic <> ? AND tt-criticas_transacoes_oper.dtcritic <> "" THEN            
             DO:
                 ASSIGN aux_dtcritic = STRING(DATE(tt-criticas_transacoes_oper.dtcritic),"99/99/9999").
             END.
