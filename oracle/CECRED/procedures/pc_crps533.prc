@@ -344,6 +344,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
 			   07/12/2018 - Incluido parametros na abertura do cursor, Melhoria no processo de devoluções de cheques.
                             Adriano (INC0022559).
+
+			   01/02/2019 - Tratamento para gerar alinea 49 na segunda apresentação da alinea 20
+                      (Adriano - INC0011272).
+
 ............................................................................. */
 
      DECLARE
@@ -2145,6 +2149,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                ORDER BY craplcm.progress_recid DESC;
             rw_cr_craplcm_ali28 cr_craplcm_ali28%ROWTYPE;            
 
+			      --Selecionar os lancamentos
+            CURSOR cr_craplcm_ali20 (pr_cdcooper IN craplcm.cdcooper%TYPE
+                                    ,pr_nrdconta IN craplcm.nrdconta%TYPE
+                                    ,pr_nrdocmto IN craplcm.nrdocmto%TYPE) IS
+              SELECT craplcm.dtmvtolt
+                FROM craplcm craplcm
+               WHERE craplcm.cdcooper = pr_cdcooper
+                 AND craplcm.nrdconta = pr_nrdconta
+                 AND craplcm.nrdocmto = pr_nrdocmto
+                 AND craplcm.cdpesqbb = '20'
+                 AND craplcm.cdhistor IN (47, 191, 338, 573)
+               ORDER BY craplcm.progress_recid DESC;
+            rw_cr_craplcm_ali20 cr_craplcm_ali20%ROWTYPE;            
+
             --Selecionar os lançamentos
             CURSOR cr_craplcm3 (pr_cdcooper IN craplcm.cdcooper%TYPE
                                ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
@@ -3903,6 +3921,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                 END IF;
                                 --Fechar cursor
                                 CLOSE cr_craplcm_ali28;
+                              END IF;
+
+							                -- INC0011272
+                              IF  vr_cdalinea = 20 THEN
+                                /* Se ja existir devolucao com a alinea 20, devolver com a alinea 49 */
+                                --Selecionar os lancamentos
+                                OPEN cr_craplcm_ali20 (pr_cdcooper => pr_cdcooper
+                                                      ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
+                                                      ,pr_nrdocmto => vr_nrdocmto);
+                                --Posicionar no proximo registro
+                                FETCH cr_craplcm_ali20 INTO rw_cr_craplcm_ali20;
+                                --Se encontrou registro
+                                IF cr_craplcm_ali20%FOUND THEN
+                                  vr_cdalinea:= 49;
+                                END IF;
+                                --Fechar cursor
+                                CLOSE cr_craplcm_ali20;
                               END IF;
 
                               --Executar rotina para criar registros de devolucao/taxa de cheques.
