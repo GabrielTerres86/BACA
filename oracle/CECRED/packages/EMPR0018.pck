@@ -3515,8 +3515,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     --/ variaveis para montagem do layout das parcelas no jasper
     --
     TYPE c_refcur IS REF CURSOR;
-    vr_query LONG;
-    vr_query_1 LONG;
+    vr_query CLOB;
+    vr_query_1 CLOB;
     vr_query_2 LONG;
     c_dummy c_refcur;
     vr_nrparepr_1 INTEGER;
@@ -3626,7 +3626,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
       END LOOP;      
     END monta_subquery_parcelas;
     
-    FUNCTION fn_query_parcelas RETURN LONG IS
+    FUNCTION fn_query_parcelas RETURN CLOB IS
     --/
     BEGIN
     vr_query_1 := 'SELECT parcela,
