@@ -5160,10 +5160,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
               CRAPLIM.nrpatlvr,
               CRAPLIM.nrperger,
               'A' nivrisco,
-              CRAPLIM.idcobope
+              CRAPLIM.idcobope,
+              crapprp.dsobserv##1 dsobserv
          from craplim,
               CRAPLRT,
-              crapass
+              crapass,
+              crapprp
         where craplim.cdcooper = pr_cdcooper
           and craplim.nrdconta = pr_nrdconta
           and craplim.tpctrlim = 1 -- Apenas limites de crédito
@@ -5172,6 +5174,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
           and CRAPLRT.Cddlinha = craplim.cddlinha
           and crapass.cdcooper = craplim.cdcooper
           and crapass.nrdconta = craplim.nrdconta
+          and crapprp.cdcooper = craplim.cdcooper
+          and crapprp.nrdconta = craplim.nrdconta
+          and crapprp.nrctrato = craplim.nrctrlim
         order by craplim.insitlim desc;
         
         cursor cr_tip_pessoa(pr_cdcooper craplim.cdcooper%type) is
@@ -5245,6 +5250,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrpatlvr', pr_tag_cont => to_char(rw_craplim.nrpatlvr), pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrperger', pr_tag_cont => to_char(rw_craplim.nrperger), pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'idcobope', pr_tag_cont => to_char(rw_craplim.idcobope), pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsobserv', pr_tag_cont => to_char(rw_craplim.dsobserv), pr_des_erro => vr_dscritic);
     
       vr_contador := vr_contador + 1;
     

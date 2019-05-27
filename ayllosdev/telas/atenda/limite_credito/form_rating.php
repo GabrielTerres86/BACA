@@ -53,7 +53,7 @@
 
 <script type='text/javascript'>
 	$('#btVoltarRating').unbind('click').bind('click',function(){
-		lcrShowHideDiv('divDadosLimite','divFormRating');
+		lcrShowHideDiv('divDadosObservacoes','divFormRating');
 	});
 
 	//metodoContinue

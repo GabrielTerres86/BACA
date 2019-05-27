@@ -165,7 +165,9 @@ var aux_limites = {
         nrinfcad: "",
         nrliquid: "",
         nrpatlvr: "",
-        nrperger: ""
+        nrperger: "",
+        idcobope: "",
+        dsobserv: ""
     },
     pausado: {
         dtpropos: "",
@@ -187,7 +189,9 @@ var aux_limites = {
         nrinfcad: "",
         nrliquid: "",
         nrpatlvr: "",
-        nrperger: ""
+        nrperger: "",
+        idcobope: "",
+        dsobserv: ""
     }
 };
 
@@ -347,7 +351,6 @@ function acessaTela(cddopcao) {
             flpropos: flpropos,
             inpessoa: var_globais.inpessoa, //bruno - prj 438 - sprint 7 - novo limite
 			inconfir: cddopcao == 'A' || cddopcao == 'P' ? 0 : 1, // Se for consulta NÃO fazer validação, senão, fazer validação
-			aux_operacao: aux_operacao,
 			redirect: "html_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
@@ -789,6 +792,8 @@ function cadastrarNovoLimite() {
     var dtnasct2 = (typeof aux_dtnasct1 == 'undefined') ? '' : aux_dtnasct1;
 	var vlrecjg2 = (typeof aux_vlrecjg1 == 'undefined') ? '' : aux_vlrecjg1;
 
+	var dsobserv = removeAcento($("#dsobserv", "#frmNovoLimite").val());
+
 	// Executa script de cadastro do limite atravé	s de ajax
 	$.ajax({		
 		type: "POST", 
@@ -804,7 +809,7 @@ function cadastrarNovoLimite() {
             vloutras: vloutras > 0 ? $("#vloutras", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
             vlalugue: vlalugue > 0 ? $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
             inconcje: ($("#inconcje_1", "#frmNovoLimite").prop('checked')) ? 1 : 0,
-            dsobserv: $("#dsobserv", "#frmNovoLimite").val(),
+            dsobserv: dsobserv,
 			dtconbir: dtconbir,			
 			/** Variáveis globais alimentadas na função validaDadosRating em rating.js **/
             //bruno - prj 438 - sprint 7 - tela rating
@@ -942,9 +947,7 @@ function trataGAROPC(cddopcao, nrctrlim) {
 	    $('#frmGAROPC').remove();
 	    abrirTelaGAROPC(cddopcao, nrctrlim);
 	} else {
-	    //bruno - prj 438 - sprint 7 - remover observacao
-	    //lcrShowHideDiv('divDadosObservacoes','divDadosRenda');
-	    abrirRating();
+	    lcrShowHideDiv('divDadosObservacoes','divFormGAROPC');
 	    $('#divRotina').css({'display':'block'});
 	    bloqueiaFundo($('#divRotina'));
 	}
@@ -1873,6 +1876,8 @@ function alterarNovoLimite() {
     var dtnasct2 = (typeof aux_dtnasct1 == 'undefined') ? '' : aux_dtnasct1;
 	var vlrecjg2 = (typeof aux_vlrecjg1 == 'undefined') ? '' : aux_vlrecjg1;
 
+	var dsobserv = removeAcento($("#dsobserv", "#frmNovoLimite").val());
+
     var dataAlterar = {
 		nrdconta: nrdconta,
         nrctrlim: $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, ""),
@@ -1884,7 +1889,7 @@ function alterarNovoLimite() {
         vloutras: $("#vloutras", "#frmNovoLimite").val().replace(/\./g, ""),
         vlalugue: $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, ""),
         inconcje: ($("#inconcje_1", "#frmNovoLimite").prop('checked')) ? 1 : 0,
-        dsobserv: $("#dsobserv", "#frmNovoLimite").val(),
+            dsobserv: dsobserv,
 		dtconbir: dtconbir,			
 		/** Variáveis globais alimentadas na função validaDadosRating em rating.js **/
         // bruno - prj 438 - sprint 7 - tela rating
@@ -3258,4 +3263,29 @@ function chamarImpressaoLimiteCredito(flagCancelamento){
         funcaoGeraProtocolo: "acessaOpcaoAba(8,0,'@');"
 	};
 	mostraTelaAutorizacaoContrato(params);
+}		
+ 
+function setarDadosIdcobertAndObservacao(){
+
+	if (aux_cddopcao == 'P') {
+		$("#idcobert", "#frmNovoLimite").val(aux_limites.pausado.idcobope);
+		$("#dsobserv", "#frmNovoLimite").val(aux_limites.pausado.dsobserv);
+	} else if (aux_cddopcao == 'N' && aux_operacao == 'A') {
+		$("#idcobert", "#frmNovoLimite").val(aux_limites.pausado.idcobope);
+		$("#dsobserv", "#frmNovoLimite").val(aux_limites.pausado.dsobserv);
+	} else if (aux_cddopcao == 'A') {
+		$("#idcobert", "#frmNovoLimite").val(aux_limites.ativo.idcobope);
+		$("#dsobserv", "#frmNovoLimite").val(aux_limites.ativo.dsobserv);
+	}
+}
+
+function removeAcento (text){       
+    text = text.toLowerCase();                                                         
+    text = text.replace(new RegExp('[ÁÀÂÃ]','gi'), 'a');
+    text = text.replace(new RegExp('[ÉÈÊ]','gi'), 'e');
+    text = text.replace(new RegExp('[ÍÌÎ]','gi'), 'i');
+    text = text.replace(new RegExp('[ÓÒÔÕ]','gi'), 'o');
+    text = text.replace(new RegExp('[ÚÙÛ]','gi'), 'u');
+    text = text.replace(new RegExp('[Ç]','gi'), 'c');
+    return text;                 
 }
