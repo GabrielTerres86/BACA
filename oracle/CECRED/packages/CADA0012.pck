@@ -43,6 +43,7 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
                                       pr_cdoperad IN VARCHAR2, -- Codigo do operador
                                       pr_cdagenci IN NUMBER, -- Codigo da agencia
                                       pr_fltoken  IN VARCHAR2 DEFAULT 'S', -- Flag se deve ser alterado o token
+                                      pr_tpcanal_sistema  IN NUMBER DEFAULT 10, -- Sistema que esta solicitando acesso 10-CRM, 13-Ibracred
                                       pr_dstoken  OUT VARCHAR2, -- Token de retorno nos casos de sucesso na validacao
                                       pr_dscritic OUT VARCHAR2);  -- Retorno de Erro
 
@@ -849,6 +850,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                                       pr_cdoperad IN VARCHAR2, -- Codigo do operador
                                       pr_cdagenci IN NUMBER, -- Codigo da agencia
                                       pr_fltoken  IN VARCHAR2 DEFAULT 'S', -- Flag se deve ser alterado o token
+                                      pr_tpcanal_sistema  IN NUMBER DEFAULT 10, -- Sistema que esta solicitando acesso 10-CRM, 13-Ibracred
                                       pr_dstoken  OUT VARCHAR2, -- Token de retorno nos casos de sucesso na validacao
                                       pr_dscritic OUT VARCHAR2) IS  -- Retorno de Erro
     /* ..........................................................................
@@ -912,14 +914,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 		-- Fechar cursor
 		CLOSE cr_crapage;
 
+    if pr_tpcanal_sistema = 13 then /*Ibratan Tela Unica PRJ438*/
+      tela_analise_credito.pc_gera_token_ibratan(pr_cdcooper => pr_cdcooper, 
+                                                 pr_cdagenci => pr_cdagenci,
+                                                 pr_cdoperad => pr_cdoperad,
+                                                 pr_dstoken =>  pr_dstoken,
+                                                 pr_cdcritic => vr_cdcritic,
+                                                 pr_dscritic => vr_dscritic);
+      if vr_dscritic is not null then
+        RAISE vr_exc_erro;
+      end if;
+                                                 
+    else     
+
 		-- Se PA não possui acesso ao CRM
-		IF rw_crapage.flgutcrm = 0 THEN
+    IF rw_crapage.flgutcrm = 0 and pr_tpcanal_sistema = 10 THEN
 			-- Gerar crítica
 			vr_dscritic := 'PA não está habilitado para acessar o sistema CRM.';
 			-- Levantar exceção
 			RAISE vr_exc_erro;
 
-		ELSIF rw_crapage.flgutcrm IN (1,2) THEN -- PA está habilitado para acessar o CRM
+    ELSIF rw_crapage.flgutcrm IN (1,2) or pr_tpcanal_sistema <> 10 THEN -- PA está habilitado para acessar o CRM
 			-- Buscar registro do operador
 			OPEN cr_crapope;
 			FETCH cr_crapope INTO rw_crapope;
@@ -938,7 +953,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 			CLOSE cr_crapope;
 
 			-- Se operador não possui acesso ao CRM
-			IF rw_crapope.flgutcrm = 0 THEN
+      IF rw_crapope.flgutcrm = 0 and pr_tpcanal_sistema = 10 THEN
 				-- Gerar crítica
 				vr_dscritic := 'Operador não está habilitado para acessar o sistema CRM.';
 				-- Levantar exceção
@@ -965,6 +980,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 			END IF;
 		END IF;
 
+    end if;
   EXCEPTION
 		WHEN vr_exc_erro THEN
 			-- Se possui código da crítica
