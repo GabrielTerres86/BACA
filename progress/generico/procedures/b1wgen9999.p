@@ -1036,6 +1036,19 @@ PROCEDURE lista_avalistas:
                                             crapttl.vldrendi[6]. 
                      END.
 
+                IF   crapass.inpessoa = 2 THEN /*Faturamento Avalista PJ*/
+                     DO:
+                         RUN calcula-faturamento (INPUT  par_cdcooper,
+                                                  INPUT  par_cdagenci,
+                                                  INPUT  par_nrdcaixa,
+                                                  INPUT  par_idorigem,
+                                                  INPUT  crapass.nrdconta, /*Conta avalista*/
+                                                  INPUT  "",
+                                                  OUTPUT aux_vlmedfat).
+				            
+                         ASSIGN aux_vlrenmes = aux_vlmedfat.
+                     END.      
+
                ASSIGN aux_vledvmto = 0. 
 
                 /* endevidamento do aval cooperado */
@@ -1144,6 +1157,7 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.complend = crapenc.complend
                        tt-dados-avais.nrcxapst = crapenc.nrcxapst
                        tt-dados-avais.inpessoa = crapass.inpessoa
+                       tt-dados-avais.dtnascto = crapass.dtnasctl
 					   tt-dados-avais.vlrencjg = aux_vlrencjg
 					   tt-dados-avais.nrctacjg = aux_nrctacjg.
 
@@ -1195,6 +1209,7 @@ PROCEDURE lista_avalistas:
                    tt-dados-avais.complend = crapavt.complend
                    tt-dados-avais.nrcxapst = crapavt.nrcxapst
                    tt-dados-avais.inpessoa = crapavt.inpessoa
+                   tt-dados-avais.dtnascto = crapavt.dtnascto
 				   tt-dados-avais.vlrencjg = crapavt.vlrencjg
 				   tt-dados-avais.nrctacjg = 0.
 
@@ -1293,6 +1308,19 @@ PROCEDURE lista_avalistas:
                                         crapttl.vldrendi[6]. 
                 END.
 
+                IF   crapass.inpessoa = 2 THEN /*Faturamento Avalista PJ*/
+                    DO:
+                        RUN calcula-faturamento (INPUT  par_cdcooper,
+                                                 INPUT  par_cdagenci,
+                                                 INPUT  par_nrdcaixa,
+                                                 INPUT  par_idorigem,
+                                                 INPUT  crapass.nrdconta, /*Conta avalista*/
+                                                 INPUT  "",
+                                                 OUTPUT aux_vlmedfat).
+				            
+                        ASSIGN aux_vlrenmes = aux_vlmedfat.
+                    END.
+
                 FIND FIRST crapcem WHERE crapcem.cdcooper = par_cdcooper     AND
                                          crapcem.nrdconta = crapass.nrdconta AND
                                          crapcem.idseqttl = 1 
@@ -1390,6 +1418,7 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.complend = crapenc.complend
                        tt-dados-avais.nrcxapst = crapenc.nrcxapst
                        tt-dados-avais.inpessoa = crapass.inpessoa
+                       tt-dados-avais.dtnascto = crapass.dtnasctl
 					   tt-dados-avais.vlrencjg = aux_vlrencjg
 					   tt-dados-avais.nrctacjg = aux_nrctacjg.
             END.
