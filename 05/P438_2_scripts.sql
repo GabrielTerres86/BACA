@@ -1,5 +1,41 @@
 DECLARE
+ vr_nrseqrdr number;
+ vr_nrseqaca number;
 BEGIN
+  
+    /*Cadastros ACA*/
+    insert into craprdr(nrseqrdr, 
+                        nmprogra, 
+                        dtsolici)
+                 values(null,
+                        'TELA_ANALISE_CREDITO',
+                        sysdate) returning nrseqrdr into vr_nrseqrdr;
+      
+    insert into crapaca(nrseqaca, 
+                        nmdeacao, 
+                        nmpackag, 
+                        nmproced, 
+                        lstparam, 
+                        nrseqrdr) 
+                values (null,
+                        'GERA_TOKEN_IBRATAN',
+                        'TELA_ANALISE_CREDITO',
+                        'PC_GERA_TOKEN_IBRATAN',
+                        'pr_cdcooper,pr_cdoperad,pr_cdagenci,pr_fltoken',
+                        vr_nrseqrdr);
+
+    insert into crapaca(nrseqaca, 
+                        nmdeacao, 
+                        nmpackag, 
+                        nmproced, 
+                        lstparam, 
+                        nrseqrdr) 
+                values (null,
+                        'CONSULTA_XML',
+                        'TELA_ANALISE_CREDITO',
+                        'pc_consulta_analise_creditoweb',
+                        'pr_nrdconta,pr_tpproduto,pr_nrcontrato',
+                        vr_nrseqrdr);
 
   FOR rw_crapcop IN ( SELECT * FROM crapcop )LOOP
  
