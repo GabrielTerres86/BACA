@@ -1120,8 +1120,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
          AND dir.DIRECTORY_NAME = prm.dsvlrprm;
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
-        vr_des_saida := 'Directory padrão não encontrado: '||vr_des_saida;
-        RAISE vr_exc_erro;
+        vr_directory := NULL;
+        vr_path := NULL;
       WHEN OTHERS THEN
         vr_des_saida := 'Erro não previsto ao buscar Directory padrão: '||sqlerrm;
         RAISE vr_exc_erro;
@@ -1137,13 +1137,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         into vr_caminho
               from dual;
     END;
-    GENE0001.pc_OScommand_Shell(pr_des_comando => '"cp ' ||vr_caminho||'/'||pr_arquivo||' ' || vr_path||'/'||pr_arquivo||'"'
+    GENE0001.pc_OScommand_Shell(pr_des_comando => 'cp "' ||vr_caminho||'/'||pr_arquivo||'" "' || vr_path||'/'||pr_arquivo||'"'
                    ,pr_typ_saida   => vr_typ_saida
                    ,pr_des_saida   => vr_des_saida);
     -- Gerar o CLOB a partir do arquivo no directory do Oracle
     vr_clob := DBMS_XSLPROCESSOR.read2clob(vr_directory, pr_arquivo, 1);
     -- Remover o arquivo do diretório Temp
-    GENE0001.pc_OScommand_Shell(pr_des_comando => '"rm ' ||vr_path||'/'||pr_arquivo||'"'
+    GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm "' ||vr_path||'/'||pr_arquivo||'"'
                    ,pr_typ_saida   => vr_typ_saida
                    ,pr_des_saida   => vr_des_saida);
 
@@ -1309,8 +1309,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
            AND dir.DIRECTORY_NAME = prm.dsvlrprm;
       EXCEPTION
         WHEN NO_DATA_FOUND THEN
-          vr_des_saida := 'Directory padrão não encontrado: '||vr_des_saida;
-          RAISE vr_exc_erro;
+          vr_directory := NULL;
+          vr_path := NULL;
         WHEN OTHERS THEN
           vr_des_saida := 'Erro não previsto ao buscar Directory padrão: '||sqlerrm;
           RAISE vr_exc_erro;
@@ -2793,8 +2793,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
            AND dir.DIRECTORY_NAME = prm.dsvlrprm;
       EXCEPTION
         WHEN NO_DATA_FOUND THEN
-          vr_des_saida := 'GENE0002.pc_XML_para_arquivo --> || Directory padrão não encontrado';
-          RAISE vr_exc_erro;
+          vr_directory := NULL;
+          vr_path := NULL;
         WHEN OTHERS THEN
           vr_des_saida := 'GENE0002.pc_XML_para_arquivo --> '||sqlerrm;
           RAISE vr_exc_erro;
