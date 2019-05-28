@@ -152,6 +152,7 @@
 * 122: [07/03/2019] Permite inclusao / cadastro de avalista via CRM - Chamado INC0033825 (Gabriel Marcos / Jefferson / Mouts).
 * 123: [09/04/2019] Ajustar maiscula/minuscula no processo (Christian - Envolti).
 * 129: [27/05/2019] Ajuste do Erro 269 apresentado na tela atenda/emprestimos - Gabriel Marcos (Mouts).
+* 130: [28/05/2019] Alteracao do CS 32577 foi queimado pelo CS seguinte - Gabriel Marcos (Mouts).
 
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
@@ -1930,6 +1931,8 @@ function manterRotina(operacao) {
     var dsdbeavt = (typeof aux_dsdbeavt == 'undefined') ? '' : aux_dsdbeavt;
 
     var vlpreant = (typeof vleprori == 'undefined') ? '' : vleprori;
+
+    var dsdopcao = "SVP"; -- Gabriel Mouts
 
     var nrctrant = (typeof nrctremp == 'undefined') ? '' : nrctremp;
 
