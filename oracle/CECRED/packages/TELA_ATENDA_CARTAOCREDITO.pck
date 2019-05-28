@@ -4368,6 +4368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 		                               ,pr_nrdconta crawcrd.nrdconta%TYPE
 										               ,pr_cdadmcrd crawcrd.cdadmcrd%TYPE) IS
 			SELECT d.nrctrcrd
+			      ,d.flgprcrd
 			  FROM crawcrd d
 			 WHERE d.cdcooper = pr_cdcooper
 			   AND d.nrdconta = pr_nrdconta
