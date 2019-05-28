@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 25/01/2019
+   Data    : Marco/2001                      Ultima atualizacao: 28/05/2019
 
    Dados referentes ao programa:
 
@@ -186,6 +186,9 @@
                13/07/2018 - Correcao na procedure autentica_cheques que estava gerando
                             10 autenticoes para cada deposito de cheque (Tiago/Fabricio)
                             
+               09/11/2018 - Incluso a validaçao referente a conta salário para nao permitir recebimento
+                            de crédito de CNPJ diferente ao do empregador. (P485 - Augusto SUPERO)
+                            
                16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
 
@@ -193,7 +196,11 @@
 
                
                25/01/2019 - P450 - Correçao parametro geraçao lançamento (bo 200), dtmvtocd (Renato Cordeiro - AMcom)
-
+               
+               28/05/2019 - Removida validacao de deposito para conta salario incluida no projeto P485. Area de negocio
+                            identificou apos a liberacao do projeto, necessidade da cooperativa integralizar 
+                            capital na nova conta salario atraves desta rotina (Diego).
+                            
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/
