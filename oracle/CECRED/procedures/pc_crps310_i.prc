@@ -513,6 +513,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,crapepr.qtdias_atraso_refin
               ,crapepr.rowid rowidepr
               ,t.inrisco_melhora -- Risco Melhora Novo (Atual)
+							,crapepr.vlsprojt
+							,crapepr.dtrefjur
+							,crapepr.dtrefcor
           FROM crapepr, crawepr, tbrisco_operacoes t
          WHERE crawepr.cdcooper = crapepr.cdcooper
            AND crawepr.nrdconta = crapepr.nrdconta
