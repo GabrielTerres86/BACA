@@ -3869,9 +3869,9 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
               WHERE prj.cdcooper = pr_cdcooper
                 AND prj.nrdconta = rw_contaprej.nrdconta
                 AND dtliquidacao IS NULL;
+				
+		     CONTINUE; -- Avança para a próxima conta, pois não deve efetuar nenhum pagamento
            END IF;
-           
-           CONTINUE; -- Avança para a próxima conta, pois não deve efetuar nenhum pagamento
          END IF;
          
          --> Verificar se ainda possui saldo para de prejuizo para regularizar
