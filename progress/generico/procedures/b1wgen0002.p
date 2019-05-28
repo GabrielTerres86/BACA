@@ -13620,7 +13620,7 @@ PROCEDURE calcula_cet_novo:
                           INPUT par_idfiniof,
                           INPUT par_dsctrliq,
                           INPUT par_idgravar,
-                          INPUT par_dtarenc,
+                          INPUT par_dtcarenc,
                          OUTPUT 0,
                          OUTPUT 0,
                          OUTPUT 0,
