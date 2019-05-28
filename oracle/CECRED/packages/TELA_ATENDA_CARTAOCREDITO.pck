@@ -4400,7 +4400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-
+	vr_rowid  rowid;
 		-- Variaveis internas
 		vr_cdadmcrd crawcrd.cdadmcrd%TYPE;
 
