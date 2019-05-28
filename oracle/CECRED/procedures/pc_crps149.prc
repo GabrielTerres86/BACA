@@ -252,10 +252,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                31/10/2018 - PJ450 RF04 - Gravando saldo refinanciado na crapepr através da 
                             RISC0004.pc_gravar_saldo_refinanciamento (Douglas Pagel/AMcom)
 
-               02/05/2019 - Substituição dos INSERTs da CRAPLCM pela centralizadora de lançamentos (LANC0001)
-                            Inclusão de tratamento para conta corrente em prejuízo (lançamentos de débito)
-                            P450 - Reginaldo/AMcom
-
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -602,14 +598,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_des_reto VARCHAR2(3);
   vr_index_pos PLS_INTEGER;
   
-  --Tipo da tabela de saldos
-  vr_indsaldo BINARY_INTEGER;
-  vr_tab_saldo EXTR0001.typ_tab_saldos;	
-
-  -- Variáveis usadas na chamada da centralizadora de lançamentos (LANC0001)
-  vr_incrineg INTEGER; -- Indicador de crítica de negócio
-  vr_tab_retorno LANC0001.typ_reg_retorno; -- Tabela com dados retornados pela centralizadora (LANC0001)
-
   --tabela de Memoria dos detalhes de emprestimo
   vr_tab_crawepr EMPR0001.typ_tab_crawepr;
   -- Tabela Temporaria
@@ -1596,30 +1584,42 @@ BEGIN
         -- Apenas Fecha Cursor
         CLOSE cr_craplot;
         
-        LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
-                                         , pr_dtmvtolt => rw_craplot.dtmvtolt
-                                         , pr_cdagenci => rw_craplot.cdagenci
-                                         , pr_cdbccxlt => rw_craplot.cdbccxlt
-                                         , pr_nrdolote => rw_craplot.nrdolote
-                                         , pr_nrdconta => rw_crabepr.nrdconta
-                                         , pr_nrdctabb => rw_crabepr.nrdconta
-                                         , pr_nrdctitg => GENE0002.fn_mask(rw_crabepr.nrdconta,'99999999')
-                                         , pr_nrdocmto => GENE0002.fn_mask(rw_crabepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || 
-                                                                           (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') 
-                                         , pr_cdhistor => 15 -- CR.EMPRESTIMO
-                                         , pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
-                                         , pr_cdpesqbb => GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999')
-                                         , pr_vllanmto => vr_vlemprst
-                                         , pr_incrineg => vr_incrineg
-                                         , pr_tab_retorno => vr_tab_retorno
-                                         , pr_cdcritic => vr_cdcritic
-                                         , pr_dscritic => vr_dscritic);
-                                         
-       IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN 
+        --Inserir Lancamento
+        BEGIN
+          INSERT INTO craplcm
+             (cdcooper
+             ,dtmvtolt
+             ,cdagenci
+             ,cdbccxlt
+             ,nrdolote
+             ,nrdconta
+             ,nrdctabb
+             ,nrdctitg
+             ,nrdocmto
+             ,cdhistor
+             ,nrseqdig
+             ,cdpesqbb
+             ,vllanmto)
+          VALUES  
+             (pr_cdcooper
+             ,rw_craplot.dtmvtolt
+             ,rw_craplot.cdagenci
+             ,rw_craplot.cdbccxlt
+             ,rw_craplot.nrdolote
+             ,rw_crabepr.nrdconta
+             ,rw_crabepr.nrdconta
+             ,GENE0002.fn_mask(rw_crabepr.nrdconta,'99999999')
+             ,GENE0002.fn_mask(rw_crabepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') -- rw_crabepr.nrctremp
+             ,15 -- CR.EMPRESTIMO
+             ,nvl(rw_craplot.nrseqdig,0) + 1
+             ,GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999')
+             ,vr_vlemprst);
+        EXCEPTION
+          WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na tabela craplcm (15) . ' || SQLERRM;
            --Sair do programa
            RAISE vr_exc_saida;
-       END IF;
+        END;
           
         --Atualizar capa do Lote
         BEGIN
@@ -2078,29 +2078,42 @@ BEGIN
           vr_valor_creditado := nvl(vr_valor_creditado,0) + nvl(vr_valor,0);
                
           IF nvl(vr_valor,0) > 0 THEN
-            LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
-                                             , pr_cdagenci => rw_craplot.cdagenci
-                                             , pr_cdbccxlt => rw_craplot.cdbccxlt
-                                             , pr_nrdolote => rw_craplot.nrdolote
-                                             , pr_nrdconta => rw_crapepr.nrdconta
-                                             , pr_nrdctabb => rw_crapepr.nrdconta
-                                             , pr_nrdctitg => rw_crapepr.nrdconta
-                                             , pr_nrdocmto => rw_crabepr.nrctremp + nvl(rw_craplot.nrseqdig,0) + 1
-                                             , pr_cdhistor => 622 -- CR.EMPRESTIMO
-                                             , pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
-                                             , pr_cdcooper => pr_cdcooper
-                                             , pr_cdpesqbb => GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999') || vr_sem_cpmf
-                                             , pr_vllanmto => vr_valor
-                                             , pr_incrineg => vr_incrineg
-                                             , pr_tab_retorno => vr_tab_retorno
-                                             , pr_cdcritic => vr_cdcritic
-                                             , pr_dscritic => vr_dscritic);
-                                             
-            IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+            BEGIN
+              --Inserir Lancamento
+              INSERT INTO craplcm
+                 (dtmvtolt
+                 ,cdagenci
+                 ,cdbccxlt
+                 ,nrdolote
+                 ,nrdconta
+                 ,nrdctabb
+                 ,nrdctitg
+                 ,nrdocmto
+                 ,cdhistor
+                 ,nrseqdig
+                 ,cdcooper
+                 ,cdpesqbb
+                 ,vllanmto)
+              VALUES
+                 (rw_craplot.dtmvtolt
+                 ,rw_craplot.cdagenci
+                 ,rw_craplot.cdbccxlt
+                 ,rw_craplot.nrdolote
+                 ,rw_crapepr.nrdconta
+                 ,rw_crapepr.nrdconta
+                 ,rw_crapepr.nrdconta
+                 ,rw_crabepr.nrctremp + nvl(rw_craplot.nrseqdig,0) + 1
+                 ,622 -- CR.EMPRESTIMO
+                 ,nvl(rw_craplot.nrseqdig,0) + 1
+                 ,pr_cdcooper
+                 ,GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999') || vr_sem_cpmf
+                 ,vr_valor);
+            EXCEPTION
+            WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir na tabela craplcm (622) . ' || SQLERRM;
               --Sair do programa
               RAISE vr_exc_saida;
-            END IF;
+            END;  
           
             --Atualizar capa do Lote
             BEGIN
@@ -2136,45 +2149,42 @@ BEGIN
            vr_vlsaldo_refinanciado := vr_vlsaldo_refinanciado + vr_vlsderel;
         END IF;  
         
-        LANC0001.pc_gerar_lancamento_conta( pr_dtmvtolt => rw_craplot.dtmvtolt
-                                          , pr_cdagenci => rw_craplot.cdagenci
-                                          , pr_cdbccxlt => rw_craplot.cdbccxlt
-                                          , pr_nrdolote => rw_craplot.nrdolote
-                                          , pr_nrdconta => rw_crapepr.nrdconta
-                                          , pr_nrdctabb => rw_crapepr.nrdconta
-                                          , pr_nrdctitg => GENE0002.fn_mask(rw_crapepr.nrdconta,'99999999')
-                                          , pr_nrdocmto => GENE0002.fn_mask(rw_crapepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') --GENE0002.fn_mask(rw_crapepr.nrctremp,'99999999')
-                                          , pr_cdhistor => 282 -- DB.EMPRESTIMO
-                                          , pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
-                                          , pr_cdpesqbb => GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999')
-                                          , pr_vllanmto => vr_vlsderel
-                                          , pr_cdcooper => pr_cdcooper	   
-                                          , pr_incrineg => vr_incrineg
-                                          , pr_tab_retorno => vr_tab_retorno
-                                          , pr_cdcritic => vr_cdcritic
-                                          , pr_dscritic => vr_dscritic);
-                                          
-        IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
-          IF vr_incrineg = 0 THEN
+        -- Gera Debito Emprestimo(Saldo Devedor)
+        BEGIN
+          INSERT INTO craplcm
+             (dtmvtolt
+             ,cdagenci
+             ,cdbccxlt
+             ,nrdolote
+             ,nrdconta
+             ,nrdctabb
+             ,nrdctitg
+             ,nrdocmto
+             ,cdhistor
+             ,nrseqdig
+             ,cdpesqbb
+             ,vllanmto
+             ,cdcooper)
+          VALUES
+             (rw_craplot.dtmvtolt
+             ,rw_craplot.cdagenci
+             ,rw_craplot.cdbccxlt
+             ,rw_craplot.nrdolote
+             ,rw_crapepr.nrdconta
+             ,rw_crapepr.nrdconta
+             ,GENE0002.fn_mask(rw_crapepr.nrdconta,'99999999')
+             ,GENE0002.fn_mask(rw_crapepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') --GENE0002.fn_mask(rw_crapepr.nrctremp,'99999999')
+             ,282 -- DB.EMPRESTIMO
+             ,nvl(rw_craplot.nrseqdig,0) + 1
+             ,GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999')
+             ,vr_vlsderel
+             ,pr_cdcooper);
+        EXCEPTION
+        WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir na tabela craplcm (282) . ' || SQLERRM;
           --Sair do programa
           RAISE vr_exc_saida;
-          ELSE
-            PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
-                                        , pr_nrdconta => rw_crapepr.nrdconta
-                                        , pr_vlrlanc  => vr_vlsderel
-                                        , pr_dtmvtolt => rw_craplot.dtmvtolt
-                                        , pr_dsoperac => 'Hist. 282 - DB.EMPRESTIMO. (PC_CRPS249)'
-                                        , pr_cdcritic => vr_cdcritic
-                                        , pr_dscritic => vr_dscritic);
-                                        
-            IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
-              vr_dscritic := 'Erro ao inserir na tabela TBCC_PREJUIZO_LANCAMENTO (282) . ' || SQLERRM;
-              --Sair do programa
-              RAISE vr_exc_saida;
-            END IF;
-          END IF;
-        END IF;
+        END; 
             
         --Diminuir saldo
         vr_vlrsaldo := nvl(vr_vlrsaldo,0) - nvl(vr_vlsdeved,0);
@@ -2661,29 +2671,42 @@ BEGIN
         -- Apenas Fecha Cursor
         CLOSE cr_craplot;
         
-        LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
-                                         , pr_dtmvtolt => rw_craplot.dtmvtolt
-                                         , pr_cdagenci => rw_craplot.cdagenci
-                                         , pr_cdbccxlt => rw_craplot.cdbccxlt
-                                         , pr_nrdolote => rw_craplot.nrdolote
-                                         , pr_nrdconta => rw_crabepr.nrdconta
-                                         , pr_nrdctabb => rw_crabepr.nrdconta
-                                         , pr_nrdctitg => GENE0002.FN_MASK(rw_crabepr.nrdconta,'99999999')
-                                         , pr_nrdocmto => rw_crabepr.nrctremp
-                                         , pr_cdhistor => 2 -- Credito Bloqueado de Emprestimo
-                                         , pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
-                                         , pr_cdpesqbb => GENE0002.FN_MASK(rw_crabepr.nrdconta,'99999999')
-                                         , pr_vllanmto => vr_valor_total
-                                         , pr_incrineg => vr_incrineg
-                                         , pr_tab_retorno => vr_tab_retorno
-                                         , pr_cdcritic => vr_cdcritic
-                                         , pr_dscritic => vr_dscritic);
-                                         
-        IF trim(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+        BEGIN
+          --Inserir Lancamento
+          INSERT INTO craplcm
+             (cdcooper
+             ,dtmvtolt
+             ,cdagenci
+             ,cdbccxlt
+             ,nrdolote
+             ,nrdconta
+             ,nrdctabb
+             ,nrdctitg
+             ,nrdocmto
+             ,cdhistor
+             ,nrseqdig
+             ,cdpesqbb
+             ,vllanmto)
+          VALUES  
+             (pr_cdcooper
+             ,rw_craplot.dtmvtolt
+             ,rw_craplot.cdagenci
+             ,rw_craplot.cdbccxlt
+             ,rw_craplot.nrdolote
+             ,rw_crabepr.nrdconta
+             ,rw_crabepr.nrdconta
+             ,GENE0002.FN_MASK(rw_crabepr.nrdconta,'99999999')
+             ,rw_crabepr.nrctremp
+             ,2 -- Credito Bloqueado de Emprestimo
+             ,nvl(rw_craplot.nrseqdig,0) + 1
+             ,GENE0002.FN_MASK(rw_crabepr.nrdconta,'99999999')
+             ,vr_valor_total);
+        EXCEPTION
+        WHEN OTHERS THEN
          vr_dscritic := 'Erro ao inserir na tabela craplcm (2). '||SQLERRM;
          --Sair do programa
          RAISE vr_exc_saida;
-        END IF;
+        END;
           
         --Atualizar capa do Lote
         BEGIN
@@ -2863,46 +2886,46 @@ BEGIN
         
         --Tem Saldo
         IF nvl(vr_vlrsaldo,0) > 0  THEN
-          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
-                                           , pr_dtmvtolt => rw_craplot.dtmvtolt
-                                           , pr_cdagenci => rw_craplot.cdagenci
-                                           , pr_cdbccxlt => rw_craplot.cdbccxlt
-                                           , pr_nrdolote => rw_craplot.nrdolote
-                                           , pr_nrdconta => rw_crabepr.nrdconta
-                                           , pr_nrdctabb => rw_crabepr.nrdconta
-                                           , pr_nrdctitg => GENE0002.FN_MASK(rw_crabepr.nrdconta,'99999999')
-                                           , pr_nrdocmto => GENE0002.fn_mask(rw_crabepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') --, rw_crabepr.nrctremp
-                                           , pr_cdhistor => vr_cdhistor --322 -- IOF Sobre Emprestimo.
-                                           , pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
-                                           , pr_cdpesqbb => lpad(to_char(vr_vlrsaldo        ,'fm999g999g990d00'),14,' ') || lpad(to_char(rw_crabepr.vlemprst,'fm999g999g990d00'),14,' ') || lpad(to_char(vr_totliqui        ,'fm999g999g990d00'),14,' ')
-                                           , pr_vllanmto => vr_vliofaux
-                                           , pr_incrineg => vr_incrineg
-                                           , pr_tab_retorno => vr_tab_retorno
-                                           , pr_cdcritic => vr_cdcritic
-                                           , pr_dscritic => vr_dscritic);
-                                           
-          IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
-            IF vr_incrineg = 0 THEN
+          BEGIN
+            --Inserir Lancamento          
+            INSERT INTO craplcm
+               (cdcooper
+               ,dtmvtolt
+               ,cdagenci
+               ,cdbccxlt
+               ,nrdolote
+               ,nrdconta
+               ,nrdctabb
+               ,nrdctitg
+               ,nrdocmto
+               ,cdhistor
+               ,nrseqdig
+               ,cdpesqbb
+               ,vllanmto)
+            VALUES  
+               (pr_cdcooper
+               ,rw_craplot.dtmvtolt
+               ,rw_craplot.cdagenci
+               ,rw_craplot.cdbccxlt
+               ,rw_craplot.nrdolote
+               ,rw_crabepr.nrdconta
+               ,rw_crabepr.nrdconta
+               ,GENE0002.FN_MASK(rw_crabepr.nrdconta,'99999999')
+               ,GENE0002.fn_mask(rw_crabepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') --, rw_crabepr.nrctremp
+               ,vr_cdhistor --322 -- IOF Sobre Emprestimo.
+               ,nvl(rw_craplot.nrseqdig,0) + 1
+                -- controlar para que mantenha 14 posicoes para cada valor devido a 
+                -- outros programas lerem esse valor(crps501)
+               ,lpad(to_char(vr_vlrsaldo        ,'fm999g999g990d00'),14,' ') ||
+                lpad(to_char(rw_crabepr.vlemprst,'fm999g999g990d00'),14,' ') || 
+                lpad(to_char(vr_totliqui        ,'fm999g999g990d00'),14,' ')
+               ,vr_vliofaux);
+          EXCEPTION
+          WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na tabela craplcm (322). ' || SQLERRM;
             --Sair do programa
             RAISE vr_exc_saida;
-            ELSE
-              -- Lança o débito na conta transitória (Bloqueados Prejuízo)
-              PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
-                                          , pr_nrdconta => rw_crabepr.nrdconta
-                                          , pr_vlrlanc  => vr_vliofaux
-                                          , pr_dtmvtolt => rw_craplot.dtmvtolt
-                                          , pr_dsoperac => 'Hist. 322 - IOF Sobre Emprestimo. (PC_CRPS249)'
-                                          , pr_cdcritic => vr_cdcritic
-                                          , pr_dscritic => vr_dscritic);
-                                         
-              IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
-                vr_dscritic := 'Erro ao inserir na tabela TBCC_PREJUIZO_LANCAMENTO (322). ' || SQLERRM;
-                --Sair do programa
-                RAISE vr_exc_saida;
-              END IF;                           
-            END IF;
-          END IF;
+          END;
            
           --Atualizar capa do Lote
           BEGIN
@@ -3137,29 +3160,42 @@ BEGIN
         CLOSE cr_crapcop;
       END IF;            
    
-      LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
-                                       , pr_dtmvtolt => rw_craplot.dtmvtolt
-                                       , pr_cdagenci => rw_craplot.cdagenci
-                                       , pr_cdbccxlt => rw_craplot.cdbccxlt
-                                       , pr_nrdolote => rw_craplot.nrdolote
-                                       , pr_nrdconta => rw_crapcop.nrctactl
-                                       , pr_nrdctabb => rw_crapcop.nrctactl
-                                       , pr_nrdctitg => GENE0002.fn_mask(rw_crapcop.nrctactl,'99999999')
-                                       , pr_nrdocmto => rw_rapassecdc_compartilhado.nrctremp
-                                       , pr_cdhistor => 2736 -- CREDITO CDC
-                                       , pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
-                                       , pr_cdpesqbb => GENE0002.fn_mask(rw_rapassecdc_compartilhado.nrctremp,'99999999')
-                                       , pr_vllanmto => rw_rapassecdc_compartilhado.vlrepasse  
-                                       , pr_incrineg => vr_incrineg
-                                       , pr_tab_retorno => vr_tab_retorno        
-                                       , pr_cdcritic => vr_cdcritic
-                                       , pr_dscritic => vr_dscritic);
-                                       
-      IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+      --Inserir Lancamento
+      BEGIN
+        INSERT INTO craplcm
+           (cdcooper
+           ,dtmvtolt
+           ,cdagenci
+           ,cdbccxlt
+           ,nrdolote
+           ,nrdconta
+           ,nrdctabb
+           ,nrdctitg
+           ,nrdocmto
+           ,cdhistor
+           ,nrseqdig
+           ,cdpesqbb
+           ,vllanmto)
+        VALUES  
+           (pr_cdcooper
+           ,rw_craplot.dtmvtolt
+           ,rw_craplot.cdagenci
+           ,rw_craplot.cdbccxlt
+           ,rw_craplot.nrdolote
+           ,rw_crapcop.nrctactl
+           ,rw_crapcop.nrctactl
+           ,GENE0002.fn_mask(rw_crapcop.nrctactl,'99999999')
+           ,rw_rapassecdc_compartilhado.nrctremp
+           ,2736 -- CREDITO CDC
+           ,nvl(rw_craplot.nrseqdig,0) + 1
+           ,GENE0002.fn_mask(rw_rapassecdc_compartilhado.nrctremp,'99999999')
+           ,rw_rapassecdc_compartilhado.vlrepasse);
+      EXCEPTION
+        WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir na tabela craplcm (CDC) . ' || SQLERRM;
          --Sair do programa
          RAISE vr_exc_saida;
-      END IF;
+      END;
         
       --Atualizar capa do Lote
       BEGIN
@@ -3204,45 +3240,42 @@ BEGIN
       -- Apenas Fecha Cursor
       CLOSE cr_craplot;
    
-      LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
-                                       , pr_dtmvtolt => rw_craplot.dtmvtolt
-                                       , pr_cdagenci => rw_craplot.cdagenci
-                                       , pr_cdbccxlt => rw_craplot.cdbccxlt
-                                       , pr_nrdolote => rw_craplot.nrdolote
-                                       , pr_nrdconta => rw_crapcop.nrctactl
-                                       , pr_nrdctabb => rw_crapcop.nrctactl
-                                       , pr_nrdctitg => GENE0002.fn_mask(rw_crapcop.nrctactl,'99999999')
-                                       , pr_nrdocmto => rw_rapassecdc_compartilhado.nrctremp
-                                       , pr_cdhistor => 2737 -- DEBITO CDC
-                                       , pr_nrseqdig => NVL(rw_craplot.nrseqdig,0) + 1
-                                       , pr_cdpesqbb => GENE0002.fn_mask(rw_rapassecdc_compartilhado.nrctremp,'99999999')
-                                       , pr_vllanmto => rw_rapassecdc_compartilhado.vlrepasse
-                                       , pr_incrineg => vr_incrineg
-                                       , pr_tab_retorno => vr_tab_retorno
-                                       , pr_cdcritic => vr_cdcritic
-                                       , pr_dscritic => vr_dscritic);
-                                       
-      IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
-        IF vr_incrineg = 0 THEN
+      --Inserir Lancamento
+      BEGIN
+        INSERT INTO craplcm
+           (cdcooper
+           ,dtmvtolt
+           ,cdagenci
+           ,cdbccxlt
+           ,nrdolote
+           ,nrdconta
+           ,nrdctabb
+           ,nrdctitg
+           ,nrdocmto
+           ,cdhistor
+           ,nrseqdig
+           ,cdpesqbb
+           ,vllanmto)
+        VALUES  
+           (pr_cdcooper
+           ,rw_craplot.dtmvtolt
+           ,rw_craplot.cdagenci
+           ,rw_craplot.cdbccxlt
+           ,rw_craplot.nrdolote
+           ,rw_crapcop.nrctactl
+           ,rw_crapcop.nrctactl
+           ,GENE0002.fn_mask(rw_crapcop.nrctactl,'99999999')
+           ,rw_rapassecdc_compartilhado.nrctremp
+           ,2737 -- DEBITO CDC
+           ,NVL(rw_craplot.nrseqdig,0) + 1
+           ,GENE0002.fn_mask(rw_rapassecdc_compartilhado.nrctremp,'99999999')
+           ,rw_rapassecdc_compartilhado.vlrepasse);
+      EXCEPTION
+        WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir na tabela craplcm (CDC) . ' || SQLERRM;
          --Sair do programa
          RAISE vr_exc_saida;
-        ELSE
-          PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
-                                      , pr_nrdconta => rw_crapcop.nrctactl
-                                      , pr_vlrlanc  => rw_rapassecdc_compartilhado.vlrepasse
-                                      , pr_dtmvtolt => rw_craplot.dtmvtolt
-                                      , pr_dsoperac => 'Hist. 2737 - DEBITO CDC. (PC_CRPS249)'
-                                      , pr_cdcritic => vr_cdcritic
-                                      , pr_dscritic => vr_dscritic);
-                                      
-          IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
-            vr_dscritic := 'Erro ao inserir na tabela TBCC_PREJUIZO_LANCAMENTO (2737) . ' || SQLERRM;
-            --Sair do programa
-            RAISE vr_exc_saida;
-          END IF;
-        END IF;
-      END IF;
+      END;
             
       --Atualizar capa do Lote
       BEGIN

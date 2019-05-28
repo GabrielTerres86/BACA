@@ -226,7 +226,7 @@ create or replace package body cecred.EMPR9999 as
   --  Sistema  : Rotinas focando nas funcionalidades genericas
   --  Sigla    : EMPR
   --  Autor    : Pedro Cruz (GFT)
-  --  Data     : Julho/2018.                   Ultima atualizacao: 17/04/2019
+  --  Data     : Julho/2018.                   Ultima atualizacao: 26/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -921,10 +921,7 @@ create or replace package body cecred.EMPR9999 as
 									27/12/2018 - Alteração no tratamento para contas corrente em prejuízo (verificar através
 									             da função PREJ0003.fn_verifica_preju_conta ao invés de usar o "pr_nmdatela").
 															 P450 - Reginaldo/AMcom
-                               
-                  17/04/2019 - Remoção de chamada equivocada da procedure "PREJ0003.pc_gera_debt_cta_prj" no
-                               bloco de processamento de IOF pago.
-                               P450 - Reginaldo/AMcom
+
     ..........................................................................*/
     
     -- Buscar o valor total de lançamentos referente ao pagamento do prejuízo original
