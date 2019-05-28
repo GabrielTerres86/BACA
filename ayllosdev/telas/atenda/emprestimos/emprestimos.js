@@ -1932,7 +1932,7 @@ function manterRotina(operacao) {
 
     var vlpreant = (typeof vleprori == 'undefined') ? '' : vleprori;
 
-    var dsdopcao = "SVP"; -- Gabriel Mouts
+    var dsdopcao = "SVP"; // Gabriel Mouts
 
     var nrctrant = (typeof nrctremp == 'undefined') ? '' : nrctremp;
 
