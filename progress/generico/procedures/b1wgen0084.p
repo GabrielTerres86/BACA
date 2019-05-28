@@ -4790,6 +4790,7 @@ PROCEDURE grava_efetivacao_proposta:
                              INPUT crawepr.idfiniof, /* */
                              INPUT aux_dsctrliq, /* Contratos Liquidados */
                              INPUT "S", /* Gravar */
+							 INPUT crawepr.dtcarenc, /* Data de carencia*/
                             OUTPUT 0,
                             OUTPUT 0,
                             OUTPUT 0,

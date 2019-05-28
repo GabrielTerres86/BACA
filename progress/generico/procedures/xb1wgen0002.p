@@ -2345,7 +2345,7 @@ PROCEDURE calcula_cet_novo:
                                  INPUT aux_idfiniof,
                                  INPUT aux_dsctrliq,
                                  INPUT "N",
-								 INUPT aux_dtcarenc,
+								 INPUT aux_dtcarenc,
                                 OUTPUT aux_txcetano,
                                 OUTPUT aux_txcetmes,
                                 OUTPUT TABLE tt-erro ). 

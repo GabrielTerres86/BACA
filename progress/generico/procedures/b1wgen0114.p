@@ -963,6 +963,7 @@ PROCEDURE Grava_Dados:
      DEF   VAR aux_dtulvcto AS DATE                     NO-UNDO.
      DEF   VAR aux_cdmodali AS CHAR                     NO-UNDO.
      DEF   VAR aux_nrcpfcgc LIKE crapass.nrcpfcgc       NO-UNDO.
+	 DEF   VAR aux_indremun AS CHAR                     NO-UNDO.
 
      EMPTY TEMP-TABLE tt-emprestimo.
      EMPTY TEMP-TABLE tt-erro.
@@ -1036,6 +1037,16 @@ PROCEDURE Grava_Dados:
         DO:
             crawepr.dsobscmt = "".
         END.
+
+		/*vr_indRemun := (CASE WHEN rw_crawepr.cddindex = 1 THEN '08' ELSE '06' END); IndRemun (06 - TR, 08 -	CDI)*/
+		IF crawepr.cddindex = 1 THEN
+		  DO:
+		    aux_indremun = "08".
+		  END.
+		ELSE
+		  DO:
+		    aux_indremun = "06".
+		  END.
 
         IF (par_flgalter AND 
             LENGTH(par_dsobstel + "" + par_dscmaprv) > 650)
@@ -1349,6 +1360,7 @@ PROCEDURE Grava_Dados:
                                                                          INPUT aux_nmcidade,
                                                                          INPUT aux_cdufende,
                                                                          INPUT STRING(aux_nrcepend),
+																		 INPUT aux_indremun,
                                                                         OUTPUT 0,
                                                                         OUTPUT "",
                                                                         OUTPUT "").
@@ -1422,6 +1434,7 @@ PROCEDURE Grava_Dados:
                                                                          INPUT aux_nmcidade,
                                                                          INPUT aux_cdufende,
                                                                          INPUT STRING(aux_nrcepend),
+																		 INPUT aux_indremun,
                                                                         OUTPUT 0,
                                                                         OUTPUT "",
                                                                         OUTPUT "").
