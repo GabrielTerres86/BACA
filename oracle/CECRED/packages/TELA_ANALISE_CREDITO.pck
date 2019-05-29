@@ -10284,7 +10284,7 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
       UPDATE crapope
          SET cddsenha = vr_dstoken
        WHERE upper(cdoperad) = upper(vr_cdoperad);
-      COMMIT;
+      --COMMIT;
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao atualizar CRAPOPE: '||SQLERRM;
@@ -10305,13 +10305,13 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
         pr_dscritic := vr_dscritic;
       END IF;
 
-      ROLLBACK;
+      --ROLLBACK;
     WHEN OTHERS THEN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := 'Erro geral pc_gera_token_ibratan: ' || SQLERRM;
       pr_dstoken := NULL;
 
-      ROLLBACK;
+      --ROLLBACK;
   END pc_gera_token_ibratan;
   --------------------------------------------------------------------------------------------------------------
   -- FIM pc_gera_token_ibratan
