@@ -1982,6 +1982,8 @@ function manterRotina(operacao) {
 
     var vlpreant = (typeof vleprori == 'undefined') ? '' : vleprori;
 
+    var dsdopcao = "SVP";
+
     var nrctrant = (typeof nrctremp == 'undefined') ? '' : nrctremp;
 
     var nrctreax = (operacao == 'F_NUMERO') ? new_nrctremp : nrctremp;
