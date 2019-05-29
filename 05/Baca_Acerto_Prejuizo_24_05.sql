@@ -580,7 +580,6 @@ BEGIN
                                   pr_vlrlanc  => pr_vllanmto,
                                   pr_dtmvtolt => pr_dtmvtolt,
                                   pr_nrdocmto => pr_nrdocmto,
-                                  pr_dsoperac => NULL,
                                   pr_cdcritic => pr_cdcritic,
                                   pr_dscritic => pr_dscritic);
 
