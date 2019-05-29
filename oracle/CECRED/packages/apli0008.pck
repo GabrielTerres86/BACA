@@ -1076,6 +1076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
       vr_tmp_craplot cobr0011.cr_craplot%ROWTYPE;
       vr_nrseqdig    craplot.nrseqdig%type; -- Sequencia de digitação
       vr_nrseqted    crapmat.nrseqted%type; -- Recuperar a sequence da conta de apl. programada
+      vr_solcoord INTEGER;
     
       -- Variaveis auxiliares
       vr_exc_erro_nrb EXCEPTION; -- Sem rollback
@@ -1119,6 +1120,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                   Raise vr_exc_erro_nrb;
         End;
          
+        /* Na conta online e mobile devemos validar os valores minimos cfme CADSOA 
+           no aimaro web o sistema chama na etapa de validacao, pois tem permissao de coordenador */
+        IF pr_idorigem = 3 /* INTERNET */ THEN
+          CADA0006.pc_valida_valor_de_adesao(pr_cdcooper => pr_cdcooper
+                                            ,pr_nrdconta => pr_nrdconta
+                                            ,pr_cdprodut => 16          -- Poup./Apl. Programada
+                                            ,pr_vlcontra => pr_vlprerpp
+                                            ,pr_idorigem => pr_idorigem
+                                            ,pr_cddchave => 0
+                                            ,pr_solcoord => vr_solcoord
+                                            ,pr_cdcritic => pr_cdcritic
+                                            ,pr_dscritic => pr_dscritic);
+          IF pr_cdcritic > 0 OR pr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro_nrb;
+          END IF;
+        END IF;
+
         -- A proc. pc_obtem_taxa_modalidade não é executada novamente, esta já foi invocada na tela
 
         SAVEPOINT RAC_savepoint;
@@ -1609,6 +1627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
         vr_exc_saida EXCEPTION; 
         vr_nrdrowid rowid;
         vr_dstransa VARCHAR2(80) := 'Alteracao de aplicacao programada';
+        vr_solcoord INTEGER;
       
         -- Cursores
         -- Apl. Programada
@@ -1682,6 +1701,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
           IF vr_dscritic IS NOT NULL THEN
              RAISE vr_exc_saida;
           END IF;
+
+          /* Na conta online e mobile devemos validar os valores minimos cfme CADSOA 
+          no aimaro web o sistema chama na etapa de validacao, pois tem permissao de coordenador */
+          IF pr_idorigem = 3 /* INTERNET */ THEN
+            CADA0006.pc_valida_valor_de_adesao(pr_cdcooper => pr_cdcooper
+                                              ,pr_nrdconta => pr_nrdconta
+                                              ,pr_cdprodut => 16          -- Poup./Apl. Programada
+                                              ,pr_vlcontra => pr_vlprerpp
+                                              ,pr_idorigem => pr_idorigem
+                                              ,pr_cddchave => 0
+                                              ,pr_solcoord => vr_solcoord
+                                              ,pr_cdcritic => vr_cdcritic
+                                              ,pr_dscritic => vr_dscritic);
+            IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+            END IF;
+          END IF;
+
           -- Guardar valores anterior e Atualizar valores da Prestaçao
           vr_vlprerpp_ant := rw_craprpp.vlprerpp;
           vr_dsfinali_ant := rw_craprpp.dsfinali;
