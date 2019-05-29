@@ -281,6 +281,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
               10/03/2019 - Inclusão do indicador de validação do CPF/CNPJ Layout 5.
                            Gabriel Marcos (Mouts) - SCTASK0038352.
 
+              23/05/2019 - Implementado para antes de processar este processo, cancelar os 
+                           agendamento pendentes DEBNET.
+                           (PRB0041528 - Andre - MoutS)
+
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -356,6 +360,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   vr_nrrefere     VARCHAR2(25);
   vr_qtdigito     INTEGER;
   vr_cdconven     gnconve.cdconven%type := 0;
+  vr_cdcriticcanc PLS_INTEGER;
+  vr_dscriticcanc VARCHAR2(4000);
 
   ---------------------------------- CURSORES  ----------------------------------
   
@@ -865,6 +871,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
       -- Envio centralizado de log de erro
       RAISE vr_excsaida;
     END IF;
+    
+    -- Cancelar agendamentos DEBNET caso tenha ficado algum pendente
+    PAGA0001.pc_PAGA0001_cancela_debitos(pr_cdcooper => pr_cdcooper
+                                        ,pr_dtmvtopg => rw_crapdat.dtmvtolt
+                                        ,pr_cdcritic => vr_cdcriticcanc
+                                        ,pr_dscritic => vr_dscriticcanc);
     
     -- Carregar tabela de contas migradas
     FOR rw_tco IN cr_craptco LOOP 

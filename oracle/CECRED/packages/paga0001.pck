@@ -1276,7 +1276,13 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                      ,pr_cdprograma     IN VARCHAR2 DEFAULT 'PAGA0001'
                                      ,pr_tpexecucao     IN NUMBER DEFAULT 0 -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
                                      ,pr_cdcriticidade  IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 2 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)                                      
-                                      );                                  
+                                      ); 
+                                       
+  /* Procedure para cancelar agendamentos pendentes apos termino do ciclo de pagamento dos agentamentos */
+  PROCEDURE pc_PAGA0001_cancela_debitos (pr_cdcooper IN crapcop.cdcooper%TYPE
+                                        ,pr_dtmvtopg  IN crapdat.dtmvtolt%TYPE --> Data Pagamento
+                                        ,pr_cdcritic OUT INTEGER               --> Codigo da Critica
+                                        ,pr_dscritic OUT VARCHAR2);                                                                      
 END PAGA0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
@@ -27591,7 +27597,345 @@ end;';
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
   END pc_controla_log_programa;
     
-    
+  /* Procedure para cancelar agendamentos pendentes apos termino do ciclo de pagamento dos agentamentos */
+  PROCEDURE pc_PAGA0001_cancela_debitos (pr_cdcooper IN crapcop.cdcooper%TYPE
+                                        ,pr_dtmvtopg  IN crapdat.dtmvtolt%TYPE --> Data Pagamento
+                                        ,pr_cdcritic OUT INTEGER               --> Codigo da Critica
+                                        ,pr_dscritic OUT VARCHAR2) IS          --> Descricao da critica
+    -- ..........................................................................
+    --  Programa : pc_PAGA0001_cancela_debitos
+    --  Sistema  : Rotinas Internet
+    --  Sigla    : CRED
+    --  Autor    : Andre (MoutS)
+    --  Data     : Abril/2019                  Ultima atualizacao: 30/04/2019
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Chamar a procedure pc_cancela_debitos pelo Progress
+    --
+    --  Alteracoes: 
+    -- ..........................................................................
+  BEGIN
+    DECLARE
+      --Variaveis de Erro
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
+      
+      -- Variaveis para verificao termino ciclo de pagamentos
+      vr_flultexe INTEGER;
+      vr_qtdexec  INTEGER;
+      
+      -- Envio de email
+      vr_texto_email     varchar2(4000); 
+      vr_endereco_email  crapprm.dsvlrprm%TYPE;
 
+      --Variavel para arquivo de dados
+      vr_input_file utl_file.file_type;
+      
+      -- Dados do arquivo anexo email
+      vr_nom_direto   VARCHAR2(400);
+      vr_nom_anexo    VARCHAR2(500);
+      
+      vr_dtultexec     DATE;
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+      
+      --Armazenar a temptable ordenada
+      vr_tab_agendto typ_tab_agendto;
+      
+      -- Cursor do lançamento automático
+      CURSOR cr_craplau ( pr_progress_recid IN craplau.progress_recid%TYPE) IS
+        SELECT craplau.cdcooper
+               ,craplau.cdagenci
+               ,craplau.dtmvtopg
+               ,craplau.cdtiptra
+               ,craplau.vllanaut
+               ,craplau.dttransa
+               ,craplau.nrdocmto
+               ,craplau.dslindig
+               ,craplau.dsorigem
+               ,craplau.idseqttl
+               ,craplau.nrdconta
+               ,craplau.dscedent
+               ,craplau.hrtransa
+               ,craplau.cdhistor
+               ,craplau.cdseqtel
+               ,craphis.cdhistor||'-'||craphis.dshistor dshistor
+               ,craplau.nrseqagp
+               ,craplau.dtmvtolt
+               ,craplau.nrseqdig
+               ,craplau.ROWID
+               ,craplau.progress_recid
+               ,craplau.nrcrcard
+               ,craplau.dscodbar    
+               ,craplau.cdempres     
+               ,craplau.idlancto
+               ,crapass.nrctacns
+               ,crapass.cdagenci cdagenci_ass
+        FROM   craplau,
+               craphis,
+               crapass
+        WHERE craplau.cdcooper = craphis.cdcooper
+          AND craplau.cdhistor = craphis.cdhistor
+          AND crapass.cdcooper = craplau.cdcooper
+          AND crapass.nrdconta = craplau.nrdconta
+          AND craplau.progress_recid = pr_progress_recid;
+          rw_craplau cr_craplau%ROWTYPE;
+      
+      vr_index_agendto VARCHAR2(300);
+
+      CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+        SELECT crapcop.cdcooper
+              ,crapcop.nmrescop
+              ,crapcop.cdagesic
+          FROM crapcop
+         WHERE crapcop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+      
+      -- Cadastro de horas de execucao dos programas
+      CURSOR cr_craphec(pr_cdcooper IN craphec.cdcooper%TYPE,
+                        pr_dtmvtopg IN DATE) IS
+        SELECT to_date(to_char(pr_dtmvtopg,'ddmmyyyy')||to_char(to_date(case when nvl(craphec.hriniexe,0) > 86000 then 0 else craphec.hriniexe end, 'sssss'), 'hh24:mi'),'ddmmyyyyhh24:mi') dtultexec
+          FROM craphec
+         WHERE craphec.cdcooper = pr_cdcooper
+           AND UPPER(craphec.dsprogra) = UPPER('TAA E INTERNET');
+      rw_craphec cr_craphec%ROWTYPE;
+
+    BEGIN
+      -- Inclui nome do modulo logado 
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'PAGA0001.pc_PAGA0001_cancela_debitos');
+
+      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
+                                            ,pr_cdcooper => pr_cdcooper 
+                                            ,pr_nmsubdir => '/salvar'); --> Utilizaremos o salvar
+      vr_nom_anexo := 'DEBNET_CANC_' || to_char(pr_dtmvtopg, 'RRRRMMDD') || '.csv';
+
+      OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      CLOSE cr_crapcop;  
+      
+      -- Verifica se a data esta cadastrada
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois haverá raise
+        CLOSE BTCH0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;
+        
+      OPEN cr_craphec (pr_cdcooper => rw_crapcop.cdcooper,
+                       pr_dtmvtopg => pr_dtmvtopg);
+      FETCH cr_craphec INTO rw_craphec;
+      CLOSE cr_craphec;
+      vr_dtultexec := rw_craphec.dtultexec;
+      IF vr_dtultexec IS NULL THEN
+         vr_dscritic := 'Horario da ultima execucao DEBNET nao encontrado.';
+         RAISE vr_exc_saida;
+      END IF;
+        
+      IF (rw_crapdat.dtmvtolt = pr_dtmvtopg) AND (SYSDATE > vr_dtultexec) THEN
+        
+        -- Carregar as informações dos agendamentos da cooperativa
+        PAGA0001.pc_obtem_agend_debitos(pr_cdcooper    => rw_crapcop.cdcooper,
+                                        pr_dtmvtopg    => pr_dtmvtopg,
+                                        pr_inproces    => 0,
+                                        pr_cdprogra    => 'DEBNET',
+                                        pr_tab_agendto => vr_tab_agendto,
+                                        pr_cdcritic    => vr_cdcritic,
+                                        pr_dscritic    => vr_dscritic);
+            
+        -- Se retornou alguma critica
+        IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+      
+        vr_index_agendto:= vr_tab_agendto.FIRST;
+        WHILE vr_index_agendto IS NOT NULL LOOP
+          --Inicializar variavel erro
+          vr_cdcritic:= NULL;
+          vr_dscritic:= NULL;
+              
+          OPEN cr_craplau (pr_progress_recid  => vr_tab_agendto(vr_index_agendto).prorecid);
+          FETCH cr_craplau INTO rw_craplau;
+          IF cr_craplau%FOUND THEN
+            CLOSE cr_craplau;
+
+            -- Verificar se já abrimos o arquivo 
+            IF NOT utl_file.IS_OPEN(vr_input_file) THEN
+              -- Tenta abrir o arquivo de dados em modo gravacao
+              gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_direto  --> Diretório do arquivo
+                                      ,pr_nmarquiv => vr_nom_anexo   --> Nome do arquivo
+                                      ,pr_tipabert => 'W'            --> Modo de abertura (R,W,A)
+                                      ,pr_utlfileh => vr_input_file  --> Handle do arquivo aberto
+                                      ,pr_des_erro => vr_dscritic);  --> Erro
+
+              IF vr_dscritic IS NOT NULL THEN
+                 -- Levantar Excecao
+                 RAISE vr_exc_saida;
+              END IF;
+
+              -- Escrever o cabecalho no arquivo de anexo do email
+              gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_file             --> Handle do arquivo aberto
+                                            ,pr_des_text  => 'COOPERATIVA;CONTA;' ||
+                                                             'HISTORICO;NRDOCTO;'||
+                                                             'VALOR;SEQTEL');  --> Texto para escrita
+            END IF;
+
+             --Se for TED
+             IF vr_tab_agendto(vr_index_agendto).cdtiptra = 4 THEN /* TED */
+                 -- TED não cancela
+                 CONTINUE;
+             --Se for transferencia
+             ELSIF vr_tab_agendto(vr_index_agendto).dsorigem = 'DEBAUT' THEN
+               -- Executar rotina de debito de convenios nossos (CECRED)
+               -- *Débito automático: realizar o cancelamento e inserir os lançamentos com a crítica de "saldo insuficiente" nos arquivos de retorno aos convênios
+               -- Gerar registros na crapndb para devolucao de debitos automaticos
+              CONV0001.pc_gerandb(pr_cdcooper => rw_craplau.cdcooper -- CÓDIGO DA COOPERATIVA
+                                 ,pr_cdhistor => rw_craplau.cdhistor -- CÓDIGO DO HISTÓRICO
+                                 ,pr_nrdconta => rw_craplau.nrdconta -- NUMERO DA CONTA
+                                 ,pr_cdrefere => rw_craplau.nrdocmto -- CÓDIGO DE REFERÊNCIA
+                                 ,pr_vllanaut => rw_craplau.vllanaut -- VALOR LANCAMENTO
+                                 ,pr_cdseqtel => rw_craplau.cdseqtel -- CÓDIGO SEQUENCIAL
+                                 ,pr_nrdocmto => rw_craplau.nrdocmto         -- NÚMERO DO DOCUMENTO
+                                 ,pr_cdagesic => rw_crapcop.cdagesic -- AGÊNCIA SICREDI
+                                 ,pr_nrctacns => rw_craplau.nrctacns -- CONTA DO CONSÓRCIO
+                                 ,pr_cdagenci => rw_craplau.cdagenci_ass -- CODIGO DO PA
+                                 ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                                 ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
+                                 ,pr_codcriti => 717 -- CÓDIGO DO ERRO INSUFICIENCIA DE SALDO
+                                 ,pr_cdcritic => vr_cdcritic -- CÓDIGO DO ERRO
+                                 ,pr_dscritic => vr_dscritic); -- DESCRICAO DO ERRO
+                  
+              -- VERIFICA SE HOUVE ERRO NA PROCEDURE PC_GERANDB
+              IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                RAISE vr_exc_saida;
+              END IF;
+                  
+              -- Inclui nome do modulo logado
+              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'PAGA0001.pc_PAGA0001_cancela_debitos');
+
+             END IF;
+           
+            BEGIN
+              -- Atualiza registros de lancamentos automaticos
+              UPDATE craplau
+                 SET craplau.insitlau = 4
+                    ,craplau.dtdebito = pr_dtmvtopg
+                    ,craplau.cdcritic = 717
+               WHERE craplau.rowid = rw_craplau.rowid;
+              -- Verifica se houve problema na atualização do registro
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_cdcritic := 1035;
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craplau: '||
+                            'insitlau:3' ||
+                            ', dtdebito:'||pr_dtmvtopg||
+                            ', cdcritic:'||NVL(vr_cdcritic, 0)||
+                            ' com rowid:'||rw_craplau.rowid||
+                            '. '||sqlerrm;
+
+                -- No caso de erro de programa gravar tabela especifica de log  
+                CECRED.pc_internal_exception;                                                             
+                RAISE vr_exc_saida;
+            END;
+                    
+            -- Escrever o cabecalho no arquivo
+            gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_file             --> Handle do arquivo aberto
+                                          ,pr_des_text  => rw_crapcop.cdcooper || ';' ||
+                                                           GENE0002.fn_mask_conta(rw_craplau.nrdconta) || ';' ||
+                                                           rw_craplau.dshistor || ';' ||
+                                                           rw_craplau.nrdocmto || ';' ||
+                                                           to_char(rw_craplau.vllanaut,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''') || ';' ||
+                                                           rw_craplau.cdseqtel);  --> Texto para escrita
+
+         ELSE
+           CLOSE cr_craplau; 
+         END IF;
+              
+          --Buscar o proximo registro do vetor
+          vr_index_agendto:= vr_tab_agendto.NEXT(vr_index_agendto);
+        END LOOP; -- vr_tab_agendto
+      END IF; -- dtmvtolt = 
+
+      IF utl_file.IS_OPEN(vr_input_file) THEN
+        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+      END IF;
+                        
+      vr_endereco_email := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                    ,pr_cdcooper => 0
+                                                    ,pr_cdacesso => 'EMAIL_CANC_DEBSIC');
+                
+      IF gene0001.fn_exis_arquivo(vr_nom_direto || '/' || vr_nom_anexo) AND (trim(vr_endereco_email) IS NOT NULL) THEN
+          vr_texto_email:= 'Ocorreram lançamentos DEBNET pendentes apos fechamento do movimento.<br> '||
+                           'Cooperativa: '|| pr_cdcooper ||'.<br> '||
+                           'Data do Mês: '|| pr_dtmvtopg;
+                                   
+          -- Comando para enviar e-mail para a Sustentação e convênios
+          GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper --> Cooperativa conectada
+                                    ,pr_cdprogra        => 'pc_PAGA0001_cancela_debitos' --> Programa conectado
+                                    ,pr_des_destino     => vr_endereco_email --> Um ou mais detinatários separados por ';' ou ','
+                                    ,pr_des_assunto     => 'Acompanhamento Debitos automaticos' --> Assunto do e-mail
+                                    ,pr_des_corpo       => vr_texto_email --> Corpo (conteudo) do e-mail
+                                    ,pr_des_anexo       => vr_nom_direto || '/' || vr_nom_anexo --> Um ou mais anexos separados por ';' ou ','
+                                    ,pr_flg_remove_anex => 'S' --> Remover os anexos passados
+                                    ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
+                                    ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                    ,pr_des_erro        => vr_dscritic);   
+                                           
+          -- Se retornou alguma critica
+          IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            --esta exception não grava log
+            RAISE vr_exc_saida;
+          END IF;
+
+      END IF; 
+      
+      -- Retira nome do modulo logado
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        --Grava tabela de log
+        pc_controla_log_programa(pr_cdcooper      => 3
+                                ,pr_dstiplog      => 'E' -- Tipo de Log - E = erro
+                                ,pr_tpocorrencia  => 1   -- 1-Erro de negocio
+                                ,pr_cdcriticidade => 1
+                                ,pr_cdmensagem    => nvl(pr_cdcritic,0)  -- Codigo do Log
+                                ,pr_dsmensagem    => pr_dscritic                                                                                            
+                                 );  
+
+      WHEN OTHERS THEN
+        -- Erro
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'PAGA0001.pc_PAGA0001_cancela_debitos.'||sqlerrm;
+
+        -- No caso de erro de programa gravar tabela especifica de log  
+        CECRED.pc_internal_exception;                                                             
+
+        --Grava tabela de log
+        pc_controla_log_programa(pr_cdcooper      => 3
+                                ,pr_dstiplog      => 'E' -- Tipo de Log - E = erro
+                                ,pr_tpocorrencia  => 2  
+                                ,pr_cdcriticidade => 2
+                                ,pr_cdmensagem    => nvl(pr_cdcritic,0)  -- Codigo do Log
+                                ,pr_dsmensagem    => pr_dscritic                                                                                            
+                                 );                      
+    END;
+  END pc_PAGA0001_cancela_debitos;          
 END PAGA0001;
 /
