@@ -487,7 +487,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   --
   --  Programa: CCRD0006
   --  Autor   : Andrei Vieira
-  --  Data    : Junho/2017                     Ultima Atualizacao: 21/12/2018
   --  Dados referentes ao programa:
   --
   --  Objetivo  : Package referente a regras de leitura e geracao de arquivos XML de domicilio bancario
@@ -506,7 +505,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
  
                   21/12/2018 - Ajustes para tratar estouro de variável 
                                (Adriano - INC0029689).
- 
 */
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                     pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
@@ -517,7 +515,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_flgerlog             BOOLEAN := FALSE;
 
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
-
     BEGIN
       --> Controlar geração de log de execução dos jobs
       BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
@@ -6985,7 +6982,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               ,tbdomic_liqtrans_arquivo arq
          WHERE lau.cdcooper = pr_cdcooper
            AND trunc(lau.dtmvtopg) = trunc(nvl(pr_dtprocesso,sysdate))
-           AND lau.cdhistor in (2444,2443,2442,2450,2453,2478,2484,2485,2486,2487,2488,2489,2490,2491,2492,2445,2546) --crédito
            AND lau.dtdebito IS NULL
            AND lct.insituacao in (0,2)          --Alteração necessária para confirmar débito apenas quando retorna arquivo com confirmação
            AND pdv.nrliquidacao = substr(lau.cdseqtel,1,21)
@@ -8453,6 +8449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2491;
              ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN -- SAFRAPAY
                vr_cdhistor := 2492;
+
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2445;
              END IF;
@@ -8489,6 +8486,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2500;
              ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN -- ADYEN
                vr_cdhistor := 2501;
+
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2449;
              END IF;
@@ -8525,6 +8523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2509;
              ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN -- ADYEN
                vr_cdhistor := 2510;
+
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2457;
              END IF;
