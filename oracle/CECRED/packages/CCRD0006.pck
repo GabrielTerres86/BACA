@@ -487,7 +487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   --
   --  Programa: CCRD0006
   --  Autor   : Andrei Vieira
-  --  Data    : Junho/2017                     Ultima Atualizacao: 21/12/2018
+  --  Data    : Junho/2017                     Ultima Atualizacao: 22/04/2019
   --  Dados referentes ao programa:
   --
   --  Objetivo  : Package referente a regras de leitura e geracao de arquivos XML de domicilio bancario
@@ -506,7 +506,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
  
                   21/12/2018 - Ajustes para tratar estouro de variável 
                                (Adriano - INC0029689).
- 
+
+                  22/04/2019 - Inclusão de CNPJs/Códigos Cartões Parceiros para apresentar nome 
+                               do arquirente no extrato Aimaro.
+                               (Jackson - RITM0013845).
 */
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                     pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
@@ -517,7 +520,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     vr_flgerlog             BOOLEAN := FALSE;
 
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
-
     BEGIN
       --> Controlar geração de log de execução dos jobs
       BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
@@ -6985,7 +6987,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               ,tbdomic_liqtrans_arquivo arq
          WHERE lau.cdcooper = pr_cdcooper
            AND trunc(lau.dtmvtopg) = trunc(nvl(pr_dtprocesso,sysdate))
-           AND lau.cdhistor in (2444,2443,2442,2450,2453,2478,2484,2485,2486,2487,2488,2489,2490,2491,2492,2445,2546) --crédito
+           AND lau.cdhistor in (2444,2443,2442,2450,2453,2478,2484,2485,2486,2487,2488,2489,2490,2491,2492,2445,2546,
+                               2843, 2844, 2845, 2846, 2847, 2848, 2849, 2850, 2851, 2852, 2853) --crédito
            AND lau.dtdebito IS NULL
            AND lct.insituacao in (0,2)          --Alteração necessária para confirmar débito apenas quando retorna arquivo com confirmação
            AND pdv.nrliquidacao = substr(lau.cdseqtel,1,21)
@@ -8453,6 +8456,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2491;
              ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN -- SAFRAPAY
                vr_cdhistor := 2492;
+             -- Inicio1 RITM0013845
+             ELSIF rw_lancamento.nrcnpj_credenciador = 19250003000101 THEN  --  PAGO  
+               vr_cdhistor := 2843;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 08965639000113 THEN  --  PAYU  
+               vr_cdhistor := 2844;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 17768068000118 THEN  --  PINPAG  
+               vr_cdhistor := 2845;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 18577728000146 THEN  --  ESFERA 5  
+               vr_cdhistor := 2846;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 22121209000146 THEN  --  STRIPE BRASIL 
+               vr_cdhistor := 2847;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 16668076000120 THEN  --  SUMUP 
+               vr_cdhistor := 2848;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 20250105000106 THEN  --  LISTO TECNOLOGIA  
+               vr_cdhistor := 2849;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 14380200000121 THEN  --  IFOOD 
+               vr_cdhistor := 2850;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 14625224000101 THEN  --  STELO 
+               vr_cdhistor := 2851;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 20551972000181 THEN  --  BEBLUE  
+               vr_cdhistor := 2852;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 01425787003383 THEN  --  CREDICARD 
+               vr_cdhistor := 2853;
+             -- Fim1 RITM0013845
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2445;
              END IF;
@@ -8489,6 +8516,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2500;
              ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN -- ADYEN
                vr_cdhistor := 2501;
+             -- Inicio2 RITM0013845
+             ELSIF rw_lancamento.nrcnpj_credenciador = 19250003000101 THEN  --  PAGO  
+               vr_cdhistor := 2854;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 08965639000113 THEN  --  PAYU  
+               vr_cdhistor := 2855;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 17768068000118 THEN  --  PINPAG  
+               vr_cdhistor := 2856;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 18577728000146 THEN  --  ESFERA 5  
+               vr_cdhistor := 2857;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 22121209000146 THEN  --  STRIPE BRASIL 
+               vr_cdhistor := 2858;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 16668076000120 THEN  --  SUMUP 
+               vr_cdhistor := 2859;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 20250105000106 THEN  --  LISTO TECNOLOGIA  
+               vr_cdhistor := 2860;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 14380200000121 THEN  --  IFOOD 
+               vr_cdhistor := 2861;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 14625224000101 THEN  --  STELO 
+               vr_cdhistor := 2862;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 20551972000181 THEN  --  BEBLUE  
+               vr_cdhistor := 2863;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 01425787003383 THEN  --  CREDICARD 
+               vr_cdhistor := 2864;
+             -- Fim2 RITM0013845
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2449;
              END IF;
@@ -8525,6 +8576,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                vr_cdhistor := 2509;
              ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN -- ADYEN
                vr_cdhistor := 2510;
+             -- Inicio3 RITM0013845
+             ELSIF rw_lancamento.nrcnpj_credenciador = 19250003000101 THEN  --  PAGO  
+               vr_cdhistor := 2865;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 08965639000113 THEN  --  PAYU  
+               vr_cdhistor := 2866;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 17768068000118 THEN  --  PINPAG  
+               vr_cdhistor := 2867;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 18577728000146 THEN  --  ESFERA 5  
+               vr_cdhistor := 2868;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 22121209000146 THEN  --  STRIPE BRASIL 
+               vr_cdhistor := 2869;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 16668076000120 THEN  --  SUMUP 
+               vr_cdhistor := 2870;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 20250105000106 THEN  --  LISTO TECNOLOGIA  
+               vr_cdhistor := 2871;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 14380200000121 THEN  --  IFOOD 
+               vr_cdhistor := 2872;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 14625224000101 THEN  --  STELO 
+               vr_cdhistor := 2873;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 20551972000181 THEN  --  BEBLUE  
+               vr_cdhistor := 2874;
+             ELSIF rw_lancamento.nrcnpj_credenciador = 01425787003383 THEN  --  CREDICARD 
+               vr_cdhistor := 2875;
+             -- Fim3 RITM0013845
              ELSE  -- OUTROS CREDENCIADORES
                vr_cdhistor := 2457;
              END IF;
