@@ -301,6 +301,9 @@
            
                06/12/2018 - Ajuste na busca de enderecos para nao utilizar a sequencia 1 fixa.
                             PRB0040414 - Heitor (Mouts)
+                            
+               14/05/2019 - Ajuste na valida-avalistas para na verificacao de CPF de associado considerar apenas contas com situacao
+                            1, 5 e 9, contas fora dessas situacoes nao serao consideradas de associado. PRJ 438 - Mateus Z (Mouts)
            
 .............................................................................*/
 
@@ -3731,7 +3734,10 @@ PROCEDURE valida-avalistas:
            DO:
                FIND LAST crapass WHERE crapass.cdcooper = par_cdcooper AND
                                        crapass.nrcpfcgc = par_nrcpfav1 AND
-                                       crapass.dtdemiss = ? 
+                                       crapass.dtdemiss = ? AND
+                                       (crapass.cdsitdct = 1 OR
+                                        crapass.cdsitdct = 5 OR
+                                        crapass.cdsitdct = 9)
                                        NO-LOCK NO-ERROR.
        
                IF  AVAILABLE crapass  THEN
@@ -3748,7 +3754,10 @@ PROCEDURE valida-avalistas:
            DO:
                FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND
                                         crapass.nrcpfcgc = par_nrcpfav2 AND
-                                        crapass.dtdemiss = ? 
+                                        crapass.dtdemiss = ? AND
+                                       (crapass.cdsitdct = 1 OR
+                                        crapass.cdsitdct = 5 OR
+                                        crapass.cdsitdct = 9)
                                         NO-LOCK NO-ERROR.
        
                IF  AVAILABLE crapass  THEN
