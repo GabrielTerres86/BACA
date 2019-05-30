@@ -68,7 +68,7 @@ declare
   INNER JOIN crapbdt bdt ON (tdb.cdcooper = bdt.cdcooper AND tdb.nrborder = bdt.nrborder)
   WHERE ((tdb.cdcooper = 1 AND ((tdb.nrborder = 548804 AND tdb.nrdocmto = 3052147)
                         OR (tdb.nrborder = 553375 AND tdb.nrdocmto = 3052151)
-                        OR (tdb.nrborder = 558863 AND tdb.nrdocmto = 5541)
+                      --  OR (tdb.nrborder = 558863 AND tdb.nrdocmto = 5541)
                         OR (tdb.nrborder = 547167 AND tdb.nrdocmto = 251))
         )
      --OR (tdb.cdcooper = 5 AND   tdb.nrborder = 14350 AND tdb.nrdocmto = 696) 
