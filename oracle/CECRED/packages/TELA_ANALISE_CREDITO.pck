@@ -3228,7 +3228,9 @@ PROCEDURE pc_consulta_garantia(pr_cdcooper IN crapass.cdcooper%TYPE       --> Co
 
     Objetivo  : Rotina para consultar as garantias do proponente PF ou PJ
 
-    Alteracoes:
+    Alteracoes:30/05/2019 - Ajuste na mascara e correcao do texto do label.
+                            Bug 22092 - PRJ438 - Gabriel Marcos (Mouts).
+
   ..............................................................................*/
 
   vr_dsxmlret             CLOB;
@@ -4405,7 +4407,7 @@ PROCEDURE pc_consulta_garantia(pr_cdcooper IN crapass.cdcooper%TYPE       --> Co
      vr_tab_tabela(vr_index).coluna5 := r_alienacoes.nota;
      vr_tab_tabela(vr_index).coluna6 := r_alienacoes.nrserie;
      vr_tab_tabela(vr_index).coluna7 := r_alienacoes.anomodelo;
-     vr_tab_tabela(vr_index).coluna8 := to_char(r_alienacoes.valormercado,'999g999g9990d00');
+     vr_tab_tabela(vr_index).coluna8 := to_char(r_alienacoes.valormercado,'999g999g990d00');
      vr_tab_tabela(vr_index).coluna9 := gene0002.fn_mask_cpf_cnpj(
                                                   r_alienacoes.cpfbem,
                                                     CASE WHEN 
@@ -4418,7 +4420,7 @@ PROCEDURE pc_consulta_garantia(pr_cdcooper IN crapass.cdcooper%TYPE       --> Co
 
   if vr_tab_tabela.COUNT > 0 then
     /*Gera Tags Xml*/
-    vr_string := vr_string||fn_tag_table('Categoria;Descrição;Marca;Modelo;Nota;Número de Série;Ano de Fabricação;Valor de Mercado;CPF/CNPJ Interveniente',vr_tab_tabela);
+    vr_string := vr_string||fn_tag_table('Categoria;Descrição;Marca;Modelo;Nota Fiscal;Número de Série;Ano de Fabricação;Valor de Mercado;CPF/CNPJ Interveniente',vr_tab_tabela);
   else
     vr_tab_tabela(1).coluna1 := '-';
     vr_tab_tabela(1).coluna2 := '-';
@@ -4429,7 +4431,7 @@ PROCEDURE pc_consulta_garantia(pr_cdcooper IN crapass.cdcooper%TYPE       --> Co
     vr_tab_tabela(1).coluna7 := '-';
     vr_tab_tabela(1).coluna8 := '-';
     vr_tab_tabela(1).coluna9 := '-';
-    vr_string := vr_string||fn_tag_table('Categoria;Descrição;Marca;Modelo;Nota;Número de Série;Ano de Fabricação;Valor de Mercado;CPF/CNPJ Interveniente',vr_tab_tabela);
+    vr_string := vr_string||fn_tag_table('Categoria;Descrição;Marca;Modelo;Nota Fiscal;Número de Série;Ano de Fabricação;Valor de Mercado;CPF/CNPJ Interveniente',vr_tab_tabela);
   end if;
 
    vr_string := vr_string||'</linhas>
