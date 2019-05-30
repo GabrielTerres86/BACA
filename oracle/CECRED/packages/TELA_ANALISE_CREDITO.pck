@@ -11814,7 +11814,9 @@ procedure pc_busca_media_titulo(pr_cdcooper IN crapass.cdcooper%TYPE
 
     Objetivo  : Recupera a media dos ultimos 6 meses para desconto de titulo/bordero.
 
-    Alteracoes:
+    Alteracoes: 30/05/2019 - Apresentar simbolo de % na tela unica para o campo Liquidez.
+                             Bug 22071 - PRJ438 - Gabriel Marcos (Mouts).
+
   ..............................................................................*/
      
       cursor c1 is
@@ -11902,8 +11904,8 @@ procedure pc_busca_media_titulo(pr_cdcooper IN crapass.cdcooper%TYPE
      end;
      
      pr_out_media_tit := to_char(wrk_valor,'999g999g990d00');
-     pr_out_liquidez := to_char(wrk_liquidez,'999g999g990d00');
-   
+     pr_out_liquidez  := case when wrk_liquidez > 0 then to_char(round(wrk_liquidez,2))||'%' end;
+
    end pc_busca_media_titulo;
    
     PROCEDURE pc_consulta_desc_titulo (pr_cdcooper IN crapass.cdcooper%TYPE       --> Cooperativa
