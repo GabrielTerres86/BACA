@@ -6426,7 +6426,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       FROM tbcc_portabilidade_envia
       WHERE tbcc_portabilidade_envia.cdcooper = pr_cdcooper
         AND tbcc_portabilidade_envia.nrdconta = pr_nrdconta
-        AND tbcc_portabilidade_envia.idsituacao IN (1,2,3,5);
+        AND tbcc_portabilidade_envia.idsituacao IN (1,2,3,5,9);
     
     --------------> TempTable <-----------------
     vr_tab_saldos             EXTR0001.typ_tab_saldos;
