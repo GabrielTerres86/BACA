@@ -5143,13 +5143,6 @@ PROCEDURE consulta_dados_cartao:
     DEF VAR aux_nmempttl LIKE crapass.nmprimtl   NO-UNDO.
     DEF VAR aux_nrcnpjtl LIKE crapass.nrcpfcgc   NO-UNDO.
     
-    DEF VAR aux_nrdocstl LIKE crapttl.nrdocttl                      NO-UNDO.
-	  DEF VAR aux_dtnasstl LIKE crapttl.dtnasttl                      NO-UNDO.
-    DEF VAR aux_nrcpfstl LIKE crapttl.nrcpfcgc                      NO-UNDO.
-    DEF VAR aux_nmsegntl AS CHAR                                    NO-UNDO.
-    DEF VAR aux_dsrepinc AS CHAR                                    NO-UNDO.
-    DEF VAR aux_nrrepinc AS CHAR                                    NO-UNDO.
-    
     DEF  BUFFER crabass FOR crapass.
     
     EMPTY TEMP-TABLE tt-erro.
@@ -5288,7 +5281,7 @@ PROCEDURE consulta_dados_cartao:
     ELSE
         ASSIGN aux_vllimite = STRING(crawcrd.vllimcrd,"zz,zzz,zz9.99").
     
-    FOR FIRST crapass FIELDS(inpessoa vllimdeb nrcpfcgc nmprimtl dtnasctl nrdocptl)
+    FOR FIRST crapass FIELDS(inpessoa vllimdeb nrcpfcgc nmprimtl)
                      WHERE crapass.cdcooper = par_cdcooper  AND
                        crapass.nrdconta = par_nrdconta  NO-LOCK:
     END.
@@ -5522,27 +5515,6 @@ PROCEDURE consulta_dados_cartao:
       
     END. 
        
-    IF crapass.inpessoa = 1 THEN
-      DO:
-        FOR FIRST crapttl FIELDS(nmextttl nrdocttl dtnasttl nrcpfcgc) 
-			                     WHERE crapttl.cdcooper = crapass.cdcooper AND
-								                 crapttl.nrdconta = crapass.nrdconta AND
-                                 crapttl.idseqttl = 2 NO-LOCK:
-		      ASSIGN aux_nmsegntl = crapttl.nmextttl
-                 aux_nrdocstl = crapttl.nrdocttl
-                 aux_dtnasstl = crapttl.dtnasttl
-                 aux_nrcpfstl = crapttl.nrcpfcgc.
-    END. 
-      END.
-       
-    FIND crapcje WHERE crapcje.cdcooper = crapass.cdcooper AND 
-                       crapcje.nrdconta = crapass.nrdconta AND 
-                       crapcje.idseqttl = 1 USE-INDEX crapcje1 NO-ERROR.
-              
-    IF AVAILABLE crapcje THEN
-      ASSIGN aux_nmconjug = crapcje.nmconjug
-             aux_dtnasccj = crapcje.dtnasccj.
-       
     CREATE tt-dados_cartao.
     ASSIGN tt-dados_cartao.nrcrcard = crawcrd.nrcrcard  
            tt-dados_cartao.nrdoccrd = crawcrd.nrdoccrd
@@ -5592,15 +5564,6 @@ PROCEDURE consulta_dados_cartao:
            tt-dados_cartao.nrcctitg = crawcrd.nrcctitg
            tt-dados_cartao.dsdpagto = aux_dsdpagto
            tt-dados_cartao.dsgraupr = aux_dstitula
-           tt-dados_cartao.nrcpfcgc = crapass.nrcpfcgc
-           tt-dados_cartao.dtnasctl = crapass.dtnasctl
-           tt-dados_cartao.nrdocptl = crapass.nrdocptl
-           tt-dados_cartao.nrcpfstl = aux_nrcpfstl
-           tt-dados_cartao.dtnasstl = aux_dtnasstl
-           tt-dados_cartao.nrdocstl = aux_nrdocstl
-           tt-dados_cartao.nmsegntl = aux_nmsegntl
-           tt-dados_cartao.nmconjug = aux_nmconjug
-           tt-dados_cartao.dtnasccj = aux_dtnasccj           
            tt-dados_cartao.flgprovi = aux_flgprovi
            tt-dados_cartao.nmempcrd = crawcrd.nmempcrd
            tt-dados_cartao.inupgrad = crawcrd.inupgrad.

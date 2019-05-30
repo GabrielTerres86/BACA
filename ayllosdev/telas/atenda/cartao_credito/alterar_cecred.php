@@ -79,6 +79,7 @@ $nrcrcard = getByTagName($dados,"NRCRCARD");
 $nrctrcrd = getByTagName($dados,"NRCTRCRD");
 $dscartao = getByTagName($dados,"DSCARTAO");
 $nmextttl = getByTagName($dados,"NMEXTTTL");
+$nmtitcrd = getByTagName($dados,"NMTITCRD");
 $nrcpftit = getByTagName($dados,"NRCPFTIT");
 $nmempttl = getByTagName($dados,"nmempttl");
 $nrcnpjtl = getByTagName($dados,"nrcnpjtl");
@@ -122,22 +123,6 @@ $dsgraupr = getByTagName($dados,"dsgraupr");
 $nrdoccrd = getByTagName($dados,"nrdoccrd");
 $nmresadm = getByTagName($dados,"nmresadm");
         
-// Primeiro Titular
-$nmtitcrd = getByTagName($dados,"NMTITCRD");
-$nrcpfcgc = getByTagName($dados,"NRCPFCGC");
-$dtnasctl = getByTagName($dados,"DTNASCTL");
-$nrdocptl = getByTagName($dados,"NRDOCPTL");
-
-// Segundo Titular    
-$nrcpfstl = getByTagName($dados,"NRCPFSTL");
-$dtnasstl = getByTagName($dados,"DTNASSTL");
-$nrdocstl = getByTagName($dados,"NRDOCSTL");
-$nmsegntl = getByTagName($dados,"NMSEGNTL");
-
-// Conjuge
-$nmconjug = getByTagName($dados,"NMCONJUG");
-$dtnasccj = getByTagName($dados,"DTNASCCJ");
-
 if (getByTagName($dados,"DDDEBANT") == 0){
     $dddebant = "";
 } else {
