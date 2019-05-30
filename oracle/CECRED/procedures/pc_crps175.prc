@@ -1200,23 +1200,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                    -- Guarda as informacoes de aplicacao rdca 60 ativas por agencia. Dados para Contabilidade
                    IF rw_craprda.inpessoa = 1 THEN
                       -- Verifica se existe valor para agencia corrente de pessoa fisica
-                      IF vr_typ_tab_vlrdcage_fis.EXISTS(rw_craprda.cdagenci) THEN
+                      IF vr_typ_tab_vlrdcage_fis.EXISTS(rw_craprda.cdageass) THEN
                          -- Soma os valores por agencia de pessoa fisica
-                         vr_typ_tab_vlrdcage_fis(rw_craprda.cdagenci) := vr_typ_tab_vlrdcage_fis(rw_craprda.cdagenci) + Nvl(vr_vlsdrdca,0);
+                         vr_typ_tab_vlrdcage_fis(rw_craprda.cdageass) := vr_typ_tab_vlrdcage_fis(rw_craprda.cdageass) + Nvl(vr_vlsdrdca,0);
                       ELSE
                          -- Inicializa o array com o valor inicial de pessoa fisica
-                         vr_typ_tab_vlrdcage_fis(rw_craprda.cdagenci) := Nvl(vr_vlsdrdca,0);
+                         vr_typ_tab_vlrdcage_fis(rw_craprda.cdageass) := Nvl(vr_vlsdrdca,0);
                       END IF;
                       -- Gravando as informacoe para gerar o valor total de aplicacao rdca 60 ativas de pessoa fisica
                       vr_tot_rdcagefis := vr_tot_rdcagefis + Nvl(vr_vlsdrdca,0);
                    ELSE
                       -- Verifica se existe valor para agencia corrente de pessoa juridica
-                      IF vr_typ_tab_vlrdcage_jur.EXISTS(rw_craprda.cdagenci) THEN
+                      IF vr_typ_tab_vlrdcage_jur.EXISTS(rw_craprda.cdageass) THEN
                          -- Soma os valores por agencia de pessoa juridica
-                         vr_typ_tab_vlrdcage_jur(rw_craprda.cdagenci) := vr_typ_tab_vlrdcage_jur(rw_craprda.cdagenci) + Nvl(vr_vlsdrdca,0);
+                         vr_typ_tab_vlrdcage_jur(rw_craprda.cdageass) := vr_typ_tab_vlrdcage_jur(rw_craprda.cdageass) + Nvl(vr_vlsdrdca,0);
                       ELSE
                          -- Inicializa o array com o valor inicial de pessoa juridica
-                         vr_typ_tab_vlrdcage_jur(rw_craprda.cdagenci) := Nvl(vr_vlsdrdca,0);
+                         vr_typ_tab_vlrdcage_jur(rw_craprda.cdageass) := Nvl(vr_vlsdrdca,0);
                       END IF;
 
                       -- Gravando as informacoe para gerar o valor total de aplicacao rdca 60 ativas de pessoa juridica

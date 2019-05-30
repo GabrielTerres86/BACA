@@ -389,6 +389,10 @@ BEGIN
 				              gerar arquivo de compensacao microcredito apenas para as filiadas.
 							  Heitor (Mouts)
 
+                 20/05/2019 - PJ298.2.2 - Ajustado para nao gerar ajuste_microcredito para POS
+                              com a migracao da carteira estava gerando registros para contratos POS migrados
+                              (Rafael Faria - Supero)
+
   ............................................................................. */
 
   DECLARE
@@ -5096,52 +5100,55 @@ BEGIN
         --Agupar valores microcrédito das filiadas por finalidade
          IF pr_cdcooper = 3 AND (TRUNC(pr_rw_crapdat.dtmvtolt,'mm') <> TRUNC(pr_rw_crapdat.dtmvtopr,'mm')) THEN
 
-            IF ((vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (1,4) AND
-                vr_tab_crapris(vr_des_chave_crapris).cdusolcr = 1) OR
-                (vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (2,3)) AND
-                 vr_tab_crapris(vr_des_chave_crapris).cdusolcr = 0) AND
-               vr_tab_crapris(vr_des_chave_crapris).dsorgrec <> ' ' THEN
+            -- com a migracao da carteira ira gerar contrato pos com isso deve ignroar
+            IF vr_tab_crapris(vr_des_chave_crapris).tpemprst = 'TR' THEN
+              IF ((vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (1,4) AND
+                  vr_tab_crapris(vr_des_chave_crapris).cdusolcr = 1) OR
+                  (vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (2,3)) AND
+                   vr_tab_crapris(vr_des_chave_crapris).cdusolcr = 0) AND
+                 vr_tab_crapris(vr_des_chave_crapris).dsorgrec <> ' ' THEN
 
-            -- Garantir que a finalidade exista na PL Table
-            IF NOT vr_tab_miccred_fin.exists(vr_tab_crapris(vr_des_chave_crapris).cdfinemp) THEN
-                 vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr    := 0;
-                 vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlaprrec    := 0;
-                 vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlprvper    := 0;
-                 vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar91  := 0;
-                 vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar95  := 0;
-              vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar441 := 0;
-            END IF;
-
-            --Apenas contratos liberados no mês
-               IF vr_tab_crapris(vr_des_chave_crapris).dtinictr BETWEEN TRUNC(pr_rw_crapdat.dtmvtolt,'mm') 
-                                                                 AND pr_rw_crapdat.dtmvtolt THEN
-              vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr + vr_tab_dados_epr(vr_indice).vlemprst;
-            END IF;
-
-            vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlaprrec := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlaprrec + vr_tab_dados_epr(vr_indice).vljurmes;
-            vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlprvper := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlprvper + vr_vlpreatr;
-
-            -- Busca valor de parcelas pagas
-               FOR rw_craplem in cr_craplem(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-                                           ,pr_nrctremp => vr_tab_crapris(vr_des_chave_crapris).nrctremp) LOOP
-              IF rw_craplem.cdhistor = 91 then
-                vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar91 := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar91 + rw_craplem.vllanmto;
-              ELSIF rw_craplem.cdhistor = 95 then
-                vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar95 := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar95 + rw_craplem.vllanmto;
-              ELSE
-                vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar441 := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar441 + rw_craplem.vllanmto;
+              -- Garantir que a finalidade exista na PL Table
+              IF NOT vr_tab_miccred_fin.exists(vr_tab_crapris(vr_des_chave_crapris).cdfinemp) THEN
+                   vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr    := 0;
+                   vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlaprrec    := 0;
+                   vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlprvper    := 0;
+                   vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar91  := 0;
+                   vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar95  := 0;
+                vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar441 := 0;
               END IF;
-            END LOOP;
 
-            --Agupar valores microcrédito das filiadas por nível de risco
-               IF vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (1,4) THEN
-              IF vr_tab_miccred_nivris.exists(vr_dsnivris) THEN
-                vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_tab_miccred_nivris(vr_dsnivris).vlslddev + vr_vldivida;
-              ELSE
-                vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_vldivida;
+              --Apenas contratos liberados no mês
+                 IF vr_tab_crapris(vr_des_chave_crapris).dtinictr BETWEEN TRUNC(pr_rw_crapdat.dtmvtolt,'mm') 
+                                                                   AND pr_rw_crapdat.dtmvtolt THEN
+                vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr + vr_tab_dados_epr(vr_indice).vlemprst;
+              END IF;
+
+              vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlaprrec := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlaprrec + vr_tab_dados_epr(vr_indice).vljurmes;
+              vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlprvper := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlprvper + vr_vlpreatr;
+
+              -- Busca valor de parcelas pagas
+                 FOR rw_craplem in cr_craplem(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
+                                             ,pr_nrctremp => vr_tab_crapris(vr_des_chave_crapris).nrctremp) LOOP
+                IF rw_craplem.cdhistor = 91 then
+                  vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar91 := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar91 + rw_craplem.vllanmto;
+                ELSIF rw_craplem.cdhistor = 95 then
+                  vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar95 := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar95 + rw_craplem.vllanmto;
+                ELSE
+                  vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar441 := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar441 + rw_craplem.vllanmto;
+                END IF;
+              END LOOP;
+
+              --Agupar valores microcrédito das filiadas por nível de risco
+                 IF vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (1,4) THEN
+                IF vr_tab_miccred_nivris.exists(vr_dsnivris) THEN
+                  vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_tab_miccred_nivris(vr_dsnivris).vlslddev + vr_vldivida;
+                ELSE
+                  vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_vldivida;
+                END IF;
               END IF;
             END IF;
-          END IF;
+          END IF; -- TR
 
           --Agrupar informações operação finame
           IF vr_tab_crapris(vr_des_chave_crapris).cdmodali = 201 THEN
