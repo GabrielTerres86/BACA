@@ -48,6 +48,7 @@
  * 029: [27/06/2018] Christian Grosch (CECRED): Ajustes JS para execução do Ayllos em modo embarcado no CRM.
  * 030: [09/10/2018] Marco Antonio Rodrigues Amorim(Mout's) : Remove ponto do usuario e substitui virgula da casa decimal por ponto.
  * 031: [27/11/2018] Bruno Luiz Katzjarowski (Mout's): Criação da nova tela principal (nova rotina acessaTela) 
+ * 032: [30/05/2019] Mateus Zimmermann (Mout's): PRJ 438 - Criadada váriaveis para armazenar conta e contrato formatados. 
 */
  
 var callafterLimiteCred = '';
@@ -136,7 +137,8 @@ var var_globais = {
     nivrisco: '',
     dsdtxfix: '',
     dtultmaj: '',
-    dtcanlim: ''
+    dtcanlim: '',
+    nrdcontaFormatada: ''
 }
 
 //bruno - prj - 438 - sprint 7 - tela principal
@@ -165,7 +167,8 @@ var aux_limites = {
         nrpatlvr: "",
         nrperger: "",
         idcobope: "",
-        dsobserv: ""
+        dsobserv: "",
+        nrctrlimFormatado: ""
     },
     pausado: {
         dtpropos: "",
