@@ -153,9 +153,11 @@
 * 123: [09/04/2019] Ajustar maiscula/minuscula no processo (Christian - Envolti).
 * 124: [19/04/2019] Ajuste na tela garantia de operação, para salvar seus dados apenas no 
 *                   final da inclusão, alteração de empréstimo - PRJ 438. (Mateus Z / Mouts)
+* 125: [06/05/2019] Ajuste para salvar os campos de portabilidade, para que quando abrir a tela de portabilidade (alteração)
+*                   os campos já estejam salvos em váriaveis PRJ 438 (Mateus Z - Mouts)
 * 129: [27/05/2019] Ajuste do Erro 269 apresentado na tela atenda/emprestimos - Gabriel Marcos (Mouts).
 * 130: [28/05/2019] Alteracao do CS 32577 foi queimado pelo CS seguinte - Gabriel Marcos (Mouts).
- 
+
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -412,6 +414,11 @@ var idlsbemfin = false;
 var vlemprst_antigo = 0;
 var dsctrliq_antigo = '';
 
+// PRJ 438 - Variaveis para salvar as informações, para serem usados em caso de portabilidade
+var nrctrempPortabil = 0;
+var tplcrempPortabil = 0;
+var flgimpprPortabil = '';
+var flgimpnpPortabil = '';
 $.getScript(UrlSite + "telas/atenda/emprestimos/impressao.js");
 $.getScript(UrlSite + "telas/atenda/emprestimos/simulacao/simulacao.js");
 $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
@@ -642,9 +649,24 @@ function controlaOperacao(operacao) {
                 nomeAcaoCall = ''; // Reseta a global
             }
         });
-        if ((nrctremp == '' || tplcremp == 0 || flgimppr == '' || flgimpnp == '') && (operacao != 'PORTAB_CRED_I')) {
-            return false;
+
+        // PRJ 438 - Salvar os valores para serem usados em caso de portabilidade
+        if(nrctremp != '' && tplcremp != 0 && flgimppr != '' && flgimpnp != ''){
+        	nrctrempPortabil = nrctremp;
+			tplcrempPortabil = tplcremp;
+			flgimpprPortabil = flgimppr;
+			flgimpnpPortabil = flgimpnp;
         }
+        
+        if(portabil == 'S'){
+        	if ((nrctrempPortabil == '' || tplcrempPortabil == 0 || flgimpprPortabil == '' || flgimpnpPortabil == '') && (operacao != 'PORTAB_CRED_I')) {
+	            return false;
+	        }
+        } else {
+	        if ((nrctremp == '' || tplcremp == 0 || flgimppr == '' || flgimpnp == '') && (operacao != 'PORTAB_CRED_I')) {
+	            return false;
+	        }
+       	}
 
     }
 
@@ -2764,12 +2786,17 @@ function controlaLayout(operacao) {
                     controlaOperacao('PORTAB_CRED_A');
                 });
 
-                //atribui o novo parametro para o evento click do botao
-                $("#btSalvar", "#divBotoes").attr('onClick', "buscaLiquidacoes('PORTAB_A');");
-                //fiz esta adaptacao tecnica para obrigar o IE a executar a nova funcao se o botao for clicado.
-                $("#btSalvar", "#divBotoes").unbind('click').bind('click', function() {
-                    buscaLiquidacoes('PORTAB_A');
-                });
+                if ($.browser.msie) {
+                	//atribui o novo parametro para o evento click do botao
+                	$("#btSalvar", "#divBotoes").attr('onClick', "buscaLiquidacoes('PORTAB_A');");
+				    //fiz esta adaptacao tecnica para obrigar o IE a executar a nova funcao se o botao for clicado.
+	                $("#btSalvar", "#divBotoes").unbind('click').bind('click', function() {
+	                    buscaLiquidacoes('PORTAB_A');
+	                });
+				} else {
+	                //atribui o novo parametro para o evento click do botao
+                	$("#btSalvar", "#divBotoes").attr('onClick', "buscaLiquidacoes('PORTAB_A');");
+				}
 
                 //desabilita o campo tipo de emprestimo
                 cTipoEmpr.attr('disabled', 'disabled');
