@@ -8319,9 +8319,9 @@ PROCEDURE pc_consulta_proposta_cc (pr_cdcooper  IN crawepr.cdcooper%TYPE       -
     Alteracoes: Adequações na rotina para ler as informações de forma correta,
                 21/05/2018 - Rafael Monteir (Mouts) 
                 
-                
-                
-    
+                30/05/2019 - Remover linha Taxa Anual e coluna Convenio.
+                             Bug 21826 (Sprint 11) - PRJ438 - Gabriel Marcos (Mouts).
+
     TODO's: Valor liquido é valor calculado.
   ..............................................................................*/
 
@@ -8468,7 +8468,7 @@ PROCEDURE pc_consulta_proposta_cc (pr_cdcooper  IN crawepr.cdcooper%TYPE       -
   vr_vldjuros       NUMBER; 
   --Para verificar as taxas de acordo com a versão do bordero
   vr_rel_txdiaria    NUMBER;
-  vr_rel_txdanual    NUMBER;
+  --vr_rel_txdanual    NUMBER;
 
   vr_vlliquid_total  craptdb.vlliquid%type := 0;
   --
@@ -8494,10 +8494,10 @@ BEGIN
       -- Se for bordero novo utiliza Juros Simples, senão Juros Composto
       if (r_consulta_prop_desc_titulo.flverbor = 1) then
         vr_rel_txdiaria := apli0001.fn_round(((r_consulta_prop_desc_titulo.txmensal / 100) / 30) * 100,7); 
-        vr_rel_txdanual := apli0001.fn_round(((r_consulta_prop_desc_titulo.txmensal / 100) * 12) * 100,6); 
+        --vr_rel_txdanual := apli0001.fn_round(((r_consulta_prop_desc_titulo.txmensal / 100) * 12) * 100,6); 
       ELSE
         vr_rel_txdiaria := apli0001.fn_round(((r_consulta_prop_desc_titulo.txmensal / 100) / 30) * 100,7);                    
-        vr_rel_txdanual := apli0001.fn_round((power(1 + (r_consulta_prop_desc_titulo.txmensal / 100), 12) - 1) * 100,6);
+        --vr_rel_txdanual := apli0001.fn_round((power(1 + (r_consulta_prop_desc_titulo.txmensal / 100), 12) - 1) * 100,6);
       end if;
     
       vr_string := vr_string || '<campos>'||
@@ -8505,7 +8505,7 @@ BEGIN
                            fn_tag('Borderô',r_consulta_prop_desc_titulo.nrborder)||
                            fn_tag('Contrato',gene0002.fn_mask_contrato(r_consulta_prop_desc_titulo.nrctrlim))||
                            fn_tag('Limite',to_char(r_consulta_prop_desc_titulo.vllimite,'999g999g990d00'))||
-                           fn_tag('Taxa Anual',trim(to_char(vr_rel_txdanual,'990d999'))|| '%')||
+                           --fn_tag('Taxa Anual',trim(to_char(vr_rel_txdanual,'990d999'))|| '%')||
                            fn_tag('Taxa Mensal',trim(to_char(r_consulta_prop_desc_titulo.txmensal,'990d999'))|| '%')||
                            fn_tag('Taxa Diária',trim(to_char(vr_rel_txdiaria,'990d999'))|| '%');
     
@@ -8538,13 +8538,12 @@ BEGIN
                                       <linhas>';
     END IF;
    
-    vr_tab_tabela(vr_index).coluna1 := r_titulos.nrcnvcob;
-    vr_tab_tabela(vr_index).coluna2 := r_titulos.nrdocmto;
-    vr_tab_tabela(vr_index).coluna3 := r_titulos.nrnosnum;
-    vr_tab_tabela(vr_index).coluna4 := r_titulos.nmdsacad;
-    vr_tab_tabela(vr_index).coluna5 := r_titulos.cpfcgc;
-    vr_tab_tabela(vr_index).coluna6 := to_char(r_titulos.dtvencto,'DD/MM/YYYY');
-    vr_tab_tabela(vr_index).coluna7 := to_char(r_titulos.vltitulo,'999g999g990d00');
+    vr_tab_tabela(vr_index).coluna1 := r_titulos.nrdocmto;
+    vr_tab_tabela(vr_index).coluna2 := r_titulos.nrnosnum;
+    vr_tab_tabela(vr_index).coluna3 := r_titulos.nmdsacad;
+    vr_tab_tabela(vr_index).coluna4 := r_titulos.cpfcgc;
+    vr_tab_tabela(vr_index).coluna5 := to_char(r_titulos.dtvencto,'DD/MM/YYYY');
+    vr_tab_tabela(vr_index).coluna6 := to_char(r_titulos.vltitulo,'999g999g990d00');
     
     /*Verifica se o valor líquido do título é 0, se for calcula*/
     BEGIN
@@ -8566,8 +8565,8 @@ BEGIN
         null;
     END;
     
-    vr_tab_tabela(vr_index).coluna8 := to_char(r_titulos.vlliquid,'999g999g990d00');
-    vr_tab_tabela(vr_index).coluna9 := r_titulos.prazo;
+    vr_tab_tabela(vr_index).coluna7 := to_char(r_titulos.vlliquid,'999g999g990d00');
+    vr_tab_tabela(vr_index).coluna8 := r_titulos.prazo;
     --vr_tab_tabela(vr_index).coluna10 := r_titulos.restricoes;
     
     /*Limpa a chave*/
@@ -8577,9 +8576,9 @@ BEGIN
     open c_titulos_a_vencer(r_titulos.nrinssac);
       fetch c_titulos_a_vencer into vr_val_venc;
       if c_titulos_a_vencer%found then
-        vr_tab_tabela(vr_index).coluna12 := to_char(vr_val_venc,'999g999g990d00');
+        vr_tab_tabela(vr_index).coluna11 := to_char(vr_val_venc,'999g999g990d00');
       else
-        vr_tab_tabela(vr_index).coluna12 := 0;
+        vr_tab_tabela(vr_index).coluna11 := 0;
       end if;    
     close c_titulos_a_vencer;    
 
@@ -8619,9 +8618,9 @@ BEGIN
     END;
     IF vr_tem_restricao THEN
       vr_contador_restricao := vr_contador_restricao + 1;
-      vr_tab_tabela(vr_index).coluna10 := 'Sim';
+      vr_tab_tabela(vr_index).coluna9 := 'Sim';
     ELSE
-      vr_tab_tabela(vr_index).coluna10 := 'Nao';
+      vr_tab_tabela(vr_index).coluna9 := 'Nao';
     END IF; 
     --
     -- Agora vê se tem críticas
@@ -8641,9 +8640,9 @@ BEGIN
       END LOOP;
       --
       IF (vr_tab_tabela_secundaria.count > 0) THEN
-        vr_tab_tabela(vr_index).coluna11 := 'Sim';
+        vr_tab_tabela(vr_index).coluna10 := 'Sim';
       ELSE
-        vr_tab_tabela(vr_index).coluna11 := 'Não';
+        vr_tab_tabela(vr_index).coluna10 := 'Não';
       END IF;
      
     EXCEPTION
@@ -8658,17 +8657,17 @@ BEGIN
       vr_perc_liquidez_qt  := vr_tab_dados_detalhe(0).liqgeral;
             
       --se iniciar com vírgula concatena um 0 a esquerda
-      vr_tab_tabela(vr_index).coluna13 := case when substr(vr_perc_concentracao,1,1) = ',' 
+      vr_tab_tabela(vr_index).coluna12 := case when substr(vr_perc_concentracao,1,1) = ',' 
                                           then 0 || vr_perc_concentracao || '%'
                                           else      vr_perc_concentracao || '%' end;
-      vr_tab_tabela(vr_index).coluna14 := vr_perc_liquidez_vl|| '%';
-      vr_tab_tabela(vr_index).coluna15 := vr_perc_liquidez_qt|| '%'; 
+      vr_tab_tabela(vr_index).coluna13 := vr_perc_liquidez_vl|| '%';
+      vr_tab_tabela(vr_index).coluna14 := vr_perc_liquidez_qt|| '%'; 
 
     EXCEPTION
       WHEN OTHERS THEN
+        vr_tab_tabela(vr_index).coluna12 := '-';
         vr_tab_tabela(vr_index).coluna13 := '-';
         vr_tab_tabela(vr_index).coluna14 := '-';
-        vr_tab_tabela(vr_index).coluna15 := '-';
     END;
     /*Incrementa o índice*/
     vr_index := vr_index+1;    
@@ -8695,8 +8694,7 @@ BEGIN
    /*Monta a tabela dos titulos*/
    IF vr_tab_tabela.COUNT > 0 THEN
      /*Gera Tags Xml*/
-     vr_string_aux := vr_string_aux||fn_tag_table('Convênio;
-                                                   Boleto Número;
+     vr_string_aux := vr_string_aux||fn_tag_table('Boleto Número;
                                                    Nosso Número;
                                                    Nome Pagador;
                                                    CPF/CNPJ do Pagador;
@@ -8713,24 +8711,22 @@ BEGIN
                                                    vr_tab_tabela);
      vr_string_aux := vr_string_aux||'</linhas></valor></campo>';
    ELSE
-     vr_tab_tabela(1).coluna1 := '-'; -- Convênio
-     vr_tab_tabela(1).coluna2 := '-'; -- Boleto Número
-     vr_tab_tabela(1).coluna3 := '-'; -- Nosso Número
-     vr_tab_tabela(1).coluna4 := '-'; -- Nome Pagador
-     vr_tab_tabela(1).coluna5 := '-'; -- CPF/CNPJ do Pagador
-     vr_tab_tabela(1).coluna6 := '-'; -- Data de Vencimento
-     vr_tab_tabela(1).coluna7 := '-'; -- Valor do Título
-     vr_tab_tabela(1).coluna8 := '-'; -- Valor Líquido
-     vr_tab_tabela(1).coluna9 := '-'; -- Prazo
-     vr_tab_tabela(1).coluna10 := '-'; -- Restrições
-     vr_tab_tabela(1).coluna11 := '-'; -- Críticas
-     vr_tab_tabela(1).coluna12 := '-'; -- Volume Carteira a Vencer
-     vr_tab_tabela(1).coluna13 := '-'; -- % Concentração por Pagador
-     vr_tab_tabela(1).coluna14 := '-'; -- % Liquidez do Pagador com a Cedente
-     vr_tab_tabela(1).coluna15 := '-'; -- % Liquidez Geral
+     vr_tab_tabela(1).coluna1  := '-'; -- Boleto Número
+     vr_tab_tabela(1).coluna2  := '-'; -- Nosso Número
+     vr_tab_tabela(1).coluna3  := '-'; -- Nome Pagador
+     vr_tab_tabela(1).coluna4  := '-'; -- CPF/CNPJ do Pagador
+     vr_tab_tabela(1).coluna5  := '-'; -- Data de Vencimento
+     vr_tab_tabela(1).coluna6  := '-'; -- Valor do Título
+     vr_tab_tabela(1).coluna7  := '-'; -- Valor Líquido
+     vr_tab_tabela(1).coluna8  := '-'; -- Prazo
+     vr_tab_tabela(1).coluna9  := '-'; -- Restrições
+     vr_tab_tabela(1).coluna10 := '-'; -- Críticas
+     vr_tab_tabela(1).coluna11 := '-'; -- Volume Carteira a Vencer
+     vr_tab_tabela(1).coluna12 := '-'; -- % Concentração por Pagador
+     vr_tab_tabela(1).coluna13 := '-'; -- % Liquidez do Pagador com a Cedente
+     vr_tab_tabela(1).coluna14 := '-'; -- % Liquidez Geral
 
-     vr_string_aux := vr_string_aux||fn_tag_table('Convênio; 
-                                                   Boleto Número;
+     vr_string_aux := vr_string_aux||fn_tag_table('Boleto Número;
                                                    Nosso Número;
                                                    Nome Pagador;
                                                    CPF/CNPJ do Pagador;
