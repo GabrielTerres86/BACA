@@ -60,7 +60,6 @@
 	$xmlObj = getObjectXML($xmlResult);
 	
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		echo '__last_avalista.lastMessage = "'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'";'; //bruno - prj 438 - bug 14444
 		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina); $(\'#nrcpfcgc\', \'#frmDadosAval\').focus();',false);
 	}
 	

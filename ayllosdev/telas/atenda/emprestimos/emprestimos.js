@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 09/04/2019
+ * FONTE        : emprestimos.js                            Última alteração: 30/05/2019
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -157,6 +157,7 @@
 *                   os campos já estejam salvos em váriaveis PRJ 438 (Mateus Z - Mouts)
 * 129: [27/05/2019] Ajuste do Erro 269 apresentado na tela atenda/emprestimos - Gabriel Marcos (Mouts).
 * 130: [28/05/2019] Alteracao do CS 32577 foi queimado pelo CS seguinte - Gabriel Marcos (Mouts).
+* 131: [30/05/2019] Ajustes nos comportamentos das telas Avalistas e Interveninente - PRJ 438 - Mateus Z (Mouts).
 
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
@@ -180,13 +181,6 @@ var __TELA_DADOS_SOLICITACAO = 'TELA_DADOS_SOLICITACAO'; //bruno - prj 438 - bug
 /*
  VARIAVEIS DE CONTROLE
 */
-var __last_avalista = { //bruno - prj 438 - bug 14444
-	habilitado: true,
-	nrctaava: '', //Número da conta do avalista
-	nrcpfcgc: '',  //Numero de cpf/cnpj do avalista
-    lastMessage: '' //Ultima mensagem de erro (caso tenha)
-};
-
 //bruno - prj 438 - bug 14625
 var __flag_dataPagamento = false; //Validar se a chamada de validaDados do campo data de pagamento da tela dados da solicitação retornou corretamente.
                                   //para não bugar a tela de liquidações e garopc.
@@ -235,8 +229,6 @@ var bemcdcooper = '';
 var bemnrdconta = '';
 var bemidseqttl = '';
 var bemnrcpfcgc = '';
-
-var nrcpfcgcOld = 0;
 
 var ddmesnov = '';
 var dtdpagt2 = '';
@@ -478,6 +470,10 @@ var campos_garopc_emp = {
 
 // PRJ 438 - Flag para verificar se já passou pela GAROPC (garantia de aplicação)
 var flgPassouGAROPC = false;
+
+// PRJ 438 - Variaveis para auxiliar na tela de Avalista e Interveninente
+var aux_contaAvalInterv = 0;
+var aux_cpfAvalInterv = 0;
 
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 
@@ -3073,22 +3069,6 @@ function controlaLayout(operacao) {
         cDsnacio.css('width', '150px');
         cDtnascto.addClass('data').css({'width': '100px'});
 
-        //bruno - prj 438 - bug 14444
-        // cConta.unbind('change').bind('change', function() {
-
-        //     nrctaava = normalizaNumero($(this).val());
-
-        //     if (nrctaava != 0) {
-        //         // Verifica se a conta é válida
-        //         if (!validaNroConta(nrctaava)) {
-        //             showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Anota', 'focaCampoErro(\'nrctaava\',\'frmDadosAval\');bloqueiaFundo(divRotina);');
-        //             return false;
-        //         } else {
-        //             Busca_Associado(nrctaava, 0, contAvalistas - 1);
-        //         }
-        //     }
-        // });
-
         // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação (keydown)
         cConta.unbind('keydown').bind('keydown', function(e, triggerEvent) { //bruno - prj 438 - bug 14444
 
@@ -3106,31 +3086,18 @@ function controlaLayout(operacao) {
 
                 // Armazena o número da conta na variável global
                 nrctaava = normalizaNumero($(this).val());
-                nrctaavaOld = nrctaava;
-                __last_avalista.nrctaava = nrctaava; //bruno - prj 438 - bug 14444
 
                 if (nrctaava != 0) {
                     // Verifica se a conta é válida
                     if (!validaNroConta(nrctaava)) {
+                    	hideMsgAguardo();
                         showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Anota', 'focaCampoErro(\'nrctaava\',\'frmDadosAval\');bloqueiaFundo(divRotina);');
                         return false;
                     } else {
                         Busca_Associado(nrctaava, 0, contAvalistas - 1);
                     }
                 } else {
-                    //	$('#'+nomeForm).limpaFormulario();
-                    // odirlei prj339
-                    /*cTodos.habilitaCampo();
-                    cTodos_1.habilitaCampo();
-                    cTodos_2.habilitaCampo();
-                    cTodos_3.habilitaCampo();
-                    cTodos_4.habilitaCampo();
-                    cConta.desabilitaCampo().val(nrctaava);
-                    cQntd.desabilitaCampo().val(arrayProposta['qtpromis']);
 
-                    $('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeForm).desabilitaCampo();
-                    controlaPesquisas();
-                    cNome.focus();*/
                     cInpessoa.habilitaCampo();
                     cInpessoa.focus();
                     
@@ -3167,18 +3134,21 @@ function controlaLayout(operacao) {
 
         // PRJ 438 - Sprint 5 - Bug 13494
         // Se pressionar alguma tecla no campo cpf, verificar a tecla pressionada e toma a devida ação (keydown)
-        cCPF.unbind('keydown').bind('keydown', function (e) {
+        cCPF.unbind('keydown').bind('keydown', function (e, triggerEvent) {
+
+        	if(typeof triggerEvent == 'undefined'){
+                triggerEvent = {keyCode: 0};
+            }
 
             if (divError.css('display') == 'block') {
                 return false;
             }
 
             // Se é a tecla TAB, verificar numero conta e realizar as devidas operações
-            if (e.keyCode == 13 || e.keyCode == 9) {
+            if (e.keyCode == 13 || e.keyCode == 9 || triggerEvent.keyCode == __BOTAO_ENTER) {
 
                 // Armazena o número da conta na variável global
                 nrcpfcgc = normalizaNumero(cCPF.val());
-                nrcpfcgcOld = nrcpfcgc;
 
                 pessoa = normalizaNumero(cInpessoa.val());
 
@@ -3186,6 +3156,7 @@ function controlaLayout(operacao) {
 
                     // Valida o CPF
                     if (!validaCpfCnpj(nrcpfcgc, pessoa)) {
+                    	hideMsgAguardo();
                         showError('error', 'CPF/CNPJ inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#nrcpfcgc","#frmDadosAval").focus();bloqueiaFundo(divRotina);');
                         return false;
                     } else {
@@ -4214,24 +4185,12 @@ function controlaLayout(operacao) {
         cNacio.addClass('codigo pesquisa').css('width', '30px'); //bruno - prj 438 - bug 14585
         cDsnacio.css('width', '150px'); //bruno - prj 438 - bug 14585
 
-        cConta.unbind('change').bind('change', function() {
-
-            nrctaava = normalizaNumero($(this).val());
-
-            if (nrctaava != 0) {
-                // Verifica se a conta é válida
-                if (!validaNroConta(nrctaava)) {
-                    showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Anota', 'focaCampoErro(\'nrctaava\',\'frmIntevAnuente\');bloqueiaFundo(divRotina);');
-                    return false;
-                } else {
-                    Busca_Associado(nrctaava, 0, contIntervis - 1);
-                    controlaCamposTelaInterveniente(); //bruno - prj 438 - bug 14962
-                }
-            }
-        });
-
         // Se pressionar alguma tecla no campo numero da conta, verificar a tecla pressionada e toda a devida ação
-        cConta.unbind('keydown').bind('keydown', function(e) {
+        cConta.unbind('keydown').bind('keydown', function(e, triggerEvent) {
+
+        	if(typeof triggerEvent == 'undefined'){
+                triggerEvent = {keyCode: 0};
+            }
 
             if (divError.css('display') == 'block') {
                 return false;
@@ -4239,7 +4198,7 @@ function controlaLayout(operacao) {
 
             // Se é a tecla ENTER, verificar numero conta e realizar as devidas operações
             // PRJ 438 - Sprint 4 - Adicionado keyCode == 13
-            if (e.keyCode == 9 || e.keyCode == 13) {
+            if (e.keyCode == 9 || e.keyCode == 13 || triggerEvent.keyCode == __BOTAO_ENTER) {
                 // Armazena o número da conta na variável global
                 nrctaava = normalizaNumero($(this).val());
                 nrctaavaOld = nrctaava;
@@ -4249,6 +4208,7 @@ function controlaLayout(operacao) {
 
                     // Verifica se a conta é válida
                     if (!validaNroConta(nrctaava)) {
+                    	hideMsgAguardo();
                         showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Anota', 'focaCampoErro(\'nrctaava\',\'frmIntevAnuente\');bloqueiaFundo(divRotina);');
                         return false;
                     }
@@ -4268,13 +4228,17 @@ function controlaLayout(operacao) {
             }
         });
 
-        cCPF.unbind('keydown').bind('keydown', function (e) {
+        cCPF.unbind('keydown').bind('keydown', function (e, triggerEvent) {
+
+        	if(typeof triggerEvent == 'undefined'){
+                triggerEvent = {keyCode: 0};
+            }
 
             if (divError.css('display') == 'block') {
                 return false;
             }
 
-            if (e.keyCode == 9 || e.keyCode == 13) {
+            if (e.keyCode == 9 || e.keyCode == 13 || triggerEvent.keyCode == __BOTAO_ENTER) {
 
                 // Armazena o número da conta na variável global
                 nrcpfcgc = normalizaNumero(cCPF.val());
@@ -4286,6 +4250,7 @@ function controlaLayout(operacao) {
 
                     // Valida o CPF
                     if (!validaCpfCnpj(nrcpfcgc, pessoa)) {
+                    	hideMsgAguardo();
 	                    showError('error', 'CPF/CNPJ inv&aacute;lido.', 'Valida&ccedil;&atilde;o CPF', '$("#nrcpfcgc","#frmIntevAnuente").focus();bloqueiaFundo(divRotina);');
                         return false;
                     } else {
@@ -5063,6 +5028,29 @@ function attArray(novaOp, cdcooper) {
         return false;
     }
 
+    if (operacao == 'A_DADOS_AVAL' || operacao == 'A_INTEV_ANU') {
+
+    	if (operacao == 'A_DADOS_AVAL') {
+    		var nomeForm = 'frmDadosAval';
+    	} else if (operacao == 'A_INTEV_ANU') {
+    		var nomeForm = 'frmIntevAnuente';
+    	}
+
+    	var aux_conta = normalizaNumero($('#nrctaava', '#' + nomeForm).val());
+	    var aux_cpf = normalizaNumero($('#nrcpfcgc', '#' + nomeForm).val());
+
+	    //bruno - prj 438 - bug 6666
+	    if(aux_conta && aux_conta != aux_contaAvalInterv){
+	        $('#nrctaava', '#' + nomeForm).trigger('keydown',{keyCode: 13});
+	        return false;
+	    }
+
+	    if(aux_cpf && aux_cpf != aux_cpfAvalInterv){
+	        $('#nrcpfcgc', '#' + nomeForm).trigger('keydown',{keyCode: 13});
+	        return false;
+	    }
+    }
+
     //bruno - prj 438 - bug 14587
     if(operacao == 'A_DADOS_AVAL'){
         if(!validaTelaAvalistas()){
@@ -5602,6 +5590,10 @@ function atualizaTela() {
         $('#vlrencjg', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['vlrencjg']);
         $('#nrctacjg', '#frmDadosAval').val(arrayAvalistas[contAvalistas]['nrctacjg']);
 
+        // PRJ 438
+        aux_contaAvalInterv = normalizaNumero(arrayAvalistas[contAvalistas]['nrctaava']);
+		aux_cpfAvalInterv = normalizaNumero(arrayAvalistas[contAvalistas]['nrcpfcgc']);
+
         contAvalistas++;
 
         $('legend:first', '#frmDadosAval').html('Dados dos Avalistas/Fiadores ' + contAvalistas);
@@ -5832,8 +5824,6 @@ function atualizaTela() {
 
         //bruno - prj 438 - bug 14585
         $('#dtnascto', '#frmIntevAnuente').val(arrayIntervs[contIntervis]['dtnascto']);
-        
-
 
 	    //bruno - prj 438 - bug 14284
         if(typeof arrayIntervs[contIntervis]['inpessoa'] == "undefined" || arrayIntervs[contIntervis]['inpessoa'] == ""){
@@ -5842,6 +5832,9 @@ function atualizaTela() {
 	        $('#inpessoa', '#frmIntevAnuente').val(__tipoInterv);
         }
 
+        // PRJ 438
+        aux_contaAvalInterv = normalizaNumero(arrayIntervs[contIntervis]['nrctaava']);
+		aux_cpfAvalInterv = normalizaNumero(arrayIntervs[contIntervis]['nrcpfcgc']);
 
         contIntervis++;
 
@@ -5920,6 +5913,11 @@ function atualizaTela() {
         $('#percetop', '#frmDemonstracaoEmprestimo').val(arrayProposta['percetop']);
         $('#vlemprst', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlemprst']);
         $('#vlpreemp', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlpreemp']);
+	
+	} else if (in_array(operacao, ['I_DADOS_AVAL', 'AI_DADOS_AVAL']))  {
+    	
+    	aux_contaAvalInterv = 0;
+    	aux_cpfAvalInterv = 0;
     }
 
     return false;
@@ -5941,11 +5939,23 @@ function insereAvalista(OpContinua) {
 
     var aux_conta = normalizaNumero($('#nrctaava', '#frmDadosAval').val());
     var aux_cpf = normalizaNumero($('#nrcpfcgc', '#frmDadosAval').val());
-    var aux_nome = normalizaNumero($("#nmdavali", "#frmDadosAval").val());
 
-    //bruno - prj 438 - bug 6666
-    if($('#nrcpfcgc','#frmDadosAval').val() == "" && $('#nmdavali','#frmDadosAval').val() == "" && $('#nrctaava','#frmDadosAval').val()){
+    if(aux_conta && aux_conta != aux_contaAvalInterv){
         $('#nrctaava', '#frmDadosAval').trigger('keydown',{keyCode: 13});
+        return false;
+    }
+
+    if(aux_cpf && aux_cpf != aux_cpfAvalInterv){
+        $('#nrcpfcgc', '#frmDadosAval').trigger('keydown',{keyCode: 13});
+        return false;
+    }
+
+    if (aux_conta == 0 && aux_cpf == 0) {
+        if (nomeAcaoCall == 'A_AVALISTA') {
+            controlaOperacao('F_AVALISTA');
+        } else {
+        	controlaOperacao(OpContinua);
+        }
         return false;
     }
 
@@ -5958,21 +5968,7 @@ function insereAvalista(OpContinua) {
         return false;
     }
 
-    if(!__last_avalista.habilitado){ //bruno - prj 438 - bug 14444
-        showError('error', __last_avalista.lastMessage, 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
-        return false;
-    }
-
     i = arrayAvalistas.length;
-
-    if (aux_conta == 0 && aux_cpf == 0) {
-        if (nomeAcaoCall == 'A_AVALISTA') {
-            controlaOperacao('F_AVALISTA');
-        } else {
-        controlaOperacao(OpContinua);
-        }
-        return false;
-    }
 
     eval('var arrayAvalista' + i + ' = new Object();');
     eval('arrayAvalista' + i + '["nrctaava"] = $("#nrctaava","#frmDadosAval").val();');
@@ -6202,10 +6198,20 @@ function deletaHipoteca(operacao) {
 
 function insereIntervente(operacao, opContinua) {
 
-    var conta = normalizaNumero($('#nrctaava', '#frmIntevAnuente').val());
-    var cpf = normalizaNumero($('#nrcpfcgc', '#frmIntevAnuente').val());
+    var aux_conta = normalizaNumero($('#nrctaava', '#frmIntevAnuente').val());
+    var aux_cpf = normalizaNumero($('#nrcpfcgc', '#frmIntevAnuente').val());
 
-    if (conta == 0 && cpf == 0) {
+    if(aux_conta && aux_conta != aux_contaAvalInterv){
+        $('#nrctaava', '#frmIntevAnuente').trigger('keydown',{keyCode: 13});
+        return false;
+    }
+
+    if(aux_cpf && aux_cpf != aux_cpfAvalInterv){
+        $('#nrcpfcgc', '#frmIntevAnuente').trigger('keydown',{keyCode: 13});
+        return false;
+    }
+
+    if (aux_conta == 0 && aux_cpf == 0) {
         controlaOperacao(opContinua);
         return false;
     }
@@ -6390,19 +6396,21 @@ function Busca_Associado(nrctaava, nrcpfcgc, indxaval) {
                     hideMsgAguardo();
                     bloqueiaFundo(divRotina);
 
-                    //bruno - prj 438 - bug 14444
-                    if(fonteBusca == 'busca_avalista.php'){
-                        __last_avalista.habilitado = true;
-                        __last_avalista.lastMessage = '';
-                    }
-
                     verificaBusca();
                 } else {
                     hideMsgAguardo();
                     //bruno - prj 438 - bug 14444
                     if(fonteBusca == 'busca_avalista.php'){
-                        __last_avalista.habilitado = false;
+
+                    	var nomeForm = 'frmDadosAval';
+
+                    } else if(fonteBusca == 'busca_intervente.php'){
+
+                    	var nomeForm = 'frmIntevAnuente';
                     }
+
+                    $('#nrctaava', '#' + nomeForm).val('');
+
                     eval(response);
                 }
 
@@ -6498,6 +6506,9 @@ function carregaBusca() {
             $('select,input', '#' + formBusca + ' fieldset').desabilitaCampo();
         }
         $('#nrctaava', '#' + formBusca).habilitaCampo().focus();
+
+        aux_contaAvalInterv = normalizaNumero(arrayAvalBusca['nrctaava']);
+        aux_cpfAvalInterv = normalizaNumero(arrayAvalBusca['nrcpfcgc']);
 
     }
 
@@ -12372,10 +12383,12 @@ function buscarContasPorCpfCnpj(tipoConsulta, campoFoco){
                 			// Chamar função para ajustar o layout da tela Avalista passando false(nao cooperado) no parametro cooperado
                     		controlaCamposTelaAvalista(false);
                     		habilitarCamposAvalistaInterveniente(nomeForm);
+                    		aux_cpfAvalInterv = nrcpfcgc;
                 		} else if(tipoConsulta == 'interv'){
                 			// Chamar função para ajustar o layout da tela Interveniente passando false(nao cooperado) no parametro cooperado
                     		controlaCamposTelaInterveniente(false);
                     		habilitarCamposAvalistaInterveniente(nomeForm);
+                    		aux_cpfAvalInterv = nrcpfcgc;
                 		}else if(tipoConsulta == "aval-cje"){ //bruno - prj 438 - bug 13500
                             $('#nrctacjg','#fsetConjugeAval').desabilitaCampo();
                 		}
@@ -12916,7 +12929,7 @@ function habilitarCamposAvalistaInterveniente(nomeForm){
         cTodos_3.habilitaCampo();
         if(nomeForm == 'frmDadosAval'){
         	cTodos_4.habilitaCampo();
-	        cConta.desabilitaCampo().val(nrctaava);
+	        cConta.desabilitaCampo();
 	        cQntd.desabilitaCampo().val(arrayProposta['qtpromis']);
         } else if (nomeForm == 'frmIntevAnuente'){
         	cConta.desabilitaCampo();
