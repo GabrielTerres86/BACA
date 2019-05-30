@@ -1,12 +1,11 @@
 <?php 
 /*!
- * FONTE        : grava_dados.php
- * CRIACAO      : Jaison Fernando
- * DATA CRIACAO : Novembro/2017
- * OBJETIVO     : Grava os dados
+ * FONTE        : valida_dados.php
+ * CRIACAO      : Mateus Zimmermann (Mouts)
+ * DATA CRIACAO : Abril/2019
+ * OBJETIVO     : Valida os dados
  
-   Alteracoes   : 19/04/2019 - Ajuste na tela garantia de operação, para salvar seus dados apenas no 
-                               final da inclusão, alteração de empréstimo - PRJ 438. (Mateus Z / Mouts)
+   Alteracoes   : 
  */
 
     session_start();
@@ -19,7 +18,6 @@
 
     // Guardo os parametos do POST em variaveis	
     $nmdatela     = (isset($_POST['nmdatela']))     ? $_POST['nmdatela']     : '';
-    $idcobert     = (isset($_POST['idcobert']))     ? $_POST['idcobert']     : 0;
     $tipaber      = (isset($_POST['tipaber']))      ? $_POST['tipaber']      : '';
     $nrdconta     = (isset($_POST['nrdconta']))     ? $_POST['nrdconta']     : 0;
     $nrctater     = (isset($_POST['nrctater']))     ? $_POST['nrctater']     : 0;
@@ -38,8 +36,6 @@
     $vlaplter     = (isset($_POST['vlaplter']))     ? $_POST['vlaplter']     : 0;
     $inpouter     = (isset($_POST['inpouter']))     ? $_POST['inpouter']     : 0;
     $vlpouter     = (isset($_POST['vlpouter']))     ? $_POST['vlpouter']     : 0;
-    $ret_nomcampo = (isset($_POST['ret_nomcampo'])) ? $_POST['ret_nomcampo'] : '';
-    $ret_nomformu = (isset($_POST['ret_nomformu'])) ? $_POST['ret_nomformu'] : '';
     $ret_execfunc = (isset($_POST['ret_execfunc'])) ? $_POST['ret_execfunc'] : '';
     $err_execfunc = (isset($_POST['err_execfunc'])) ? $_POST['err_execfunc'] : '';
 
@@ -47,7 +43,6 @@
     $xml .= "<Root>";
     $xml .= "  <Dados>";
     $xml .= "    <nmdatela>".$nmdatela."</nmdatela>";
-    $xml .= "    <idcobert>".$idcobert."</idcobert>";
     $xml .= "    <tipaber>".$tipaber."</tipaber>";
     $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
     $xml .= "    <nrctater>".$nrctater."</nrctater>";
@@ -69,7 +64,7 @@
     $xml .= "  </Dados>";
     $xml .= "</Root>";
 
-    $xmlResult = mensageria($xml, "TELA_GAROPC", "GAROPC_GRAVA_DADOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml, "TELA_GAROPC", "GAROPC_VALIDA_DADOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObject = getObjectXML($xmlResult);
 
     if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
@@ -80,7 +75,6 @@
 
     $registros = $xmlObject->roottag->tags[0];
 
-    echo "$('#".$ret_nomcampo."', '#".$ret_nomformu."').val('".getByTagName($registros->tags,'IDCOBERT')."');";
     echo "fechaRotina($('#divUsoGAROPC'));";
 
     echo $ret_execfunc;
