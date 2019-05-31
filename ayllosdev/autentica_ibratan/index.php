@@ -35,10 +35,10 @@ include('includes/chamadas.php');
 $teste = false;
 
 if(validaEntradaUsuario()){
-	
+    
     /** $autentica Obtem todos os dados passados por parametro via $_POST (Dados class) */
     if(isset($_POST)){
-		
+        
         if(count($_POST)> 0){
 
             /*
@@ -54,7 +54,7 @@ if(validaEntradaUsuario()){
                 
                     $_POST['cdcooper']   = preg_replace( '/[^0-9]/', '', $_POST['cdcooper'] );
                     $_POST['cdagenci']   = preg_replace( '/[^0-9]/', '', $_POST['cdagenci'] );
-                    //$_POST['cdoperad']   = preg_replace( '/[^0-9]/', '', $_POST['cdoperad'] );
+                    $_POST['cdoperad']   = $_POST['cdoperad'];
                     $_POST['nrcpfcgc']   = preg_replace( '/[^0-9]/', '', $_POST['nrcpfcgc'] );
                     $_POST['nrdconta']   = preg_replace( '/[^0-9]/', '', $_POST['nrdconta'] );
                     $_POST['tpproduto']  = preg_replace( '/[^0-9]/', '', $_POST['tpproduto'] );
@@ -83,7 +83,7 @@ if(validaEntradaUsuario()){
 
             $_POST['cdcooper']   = preg_replace( '/[^0-9]/', '', $_POST['cdcooper'] );
             $_POST['cdagenci']   = preg_replace( '/[^0-9]/', '', $_POST['cdagenci'] );
-            //$_POST['cdoperad']   = preg_replace( '/[^0-9]/', '', $_POST['cdoperad'] );
+            $_POST['cdoperad']   = $_POST['cdoperad'];
             $_POST['nrcpfcgc']   = preg_replace( '/[^0-9]/', '', $_POST['nrcpfcgc'] );
             $_POST['nrdconta']   = preg_replace( '/[^0-9]/', '', $_POST['nrdconta'] );
             $_POST['tpproduto']  = preg_replace( '/[^0-9]/', '', $_POST['tpproduto'] );
@@ -137,7 +137,7 @@ if(validaEntradaUsuario()){
                         $_SESSION['params']  = $autentica->getParametros();
 
                         $url = 'http://'.$_SERVER['SERVER_NAME'].'/telas/tela_analise_credito';
-						//$url = 'http://wsayllosdev.cecred.coop.br/telas/tela_analise_credito';						
+                        //$url = 'http://wsayllosdev.cecred.coop.br/telas/tela_analise_credito';                        
 
                         // echo '<pre>';
                         // print_r($_SESSION);
