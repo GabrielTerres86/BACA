@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 28/05/2019
+   Data    : Maio/2015                      Ultima atualizacao: 05/07/2018
 
    Dados referentes ao programa:
 
@@ -18,8 +18,6 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
                05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída
                             da procedure: pc_consulta_arq_folha_ib e da função: fn_cdtarifa_cdfaixav,
                             Prj.363 (Jean Michel).           
-  
-			   28/05/2019 - Projeto XSLProcessor - Yuri Mouts
   
 ..............................................................................*/
 
@@ -4579,6 +4577,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     vr_chave      VARCHAR2(25);
     vr_dtexecde   DATE;
     vr_idtipcon   NUMBER;
+    vr_idportab   BOOLEAN; -- Indica que o cooperado tem portabilidade ativa
+    vr_idprtrlz   NUMBER;  -- Indica que portabilidade foi realizada
 
     -- Variaveis de Erro
     vr_cdcritic   crapcri.cdcritic%TYPE;
@@ -4873,6 +4873,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           -- Fecha cursor
           CLOSE cr_crapass;
 
+          -- Verfica se o cooperado tem portabilidade de salãrio vigente
+          BEGIN
+            vr_idportab := PCPS0001.fn_verifica_portabilidade(pr_cdcooper => pr_cdcooper
+                                                             ,pr_nrdconta => vr_nrdconta);
+          EXCEPTION 
+            WHEN OTHERS THEN
+              -- Em caso de erro não para o processo e mantem o valor na conta do cooperado
+              vr_idportab := FALSE;
+          END;
+          
+          -- Se indicar que a conta possui portabilidade
+          IF vr_idportab THEN
+            -- Esta alteração possivelmente causará impactos, principalmente no relatório de rendimentos.
+            -- Tentei alinhar com os analistas Ailos e as areas envolvidas que não deveria ser alterado
+            -- o processo de entrada do valor na conta do cooperado, porém não consegui convence-los, pois
+            -- alegaram que querem tratar de forma diferente esses valores movimentados e que fazem parte
+            -- do fluxo de portabilidade de salário (Renato Darosci - Supero - 23/02/2019)
+            vr_cdhistor := 2943; -- CREDITO SALARIO - CONTA SALARIO
+          ELSE
+            -- Utiliza o parametro correto da configuração da folha de pagamento
+            vr_cdhistor := rw_craplfp.cdhiscre;
+          END IF;
+          
           -- Inicializa as variaveis
           vr_idsitlct := 'C';
           vr_dsobslct := NULL;
@@ -4898,7 +4921,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                                ,pr_nrdconta => vr_nrdconta
                                                ,pr_nrdocmto => rw_craplfp.cdempres || rw_craplfp.nrseqpag || to_char(rw_craplfp.nrseqlfp,'fm00000')
                                                ,pr_vllanmto => rw_craplfp.vllancto
-                                               ,pr_cdhistor => rw_craplfp.cdhiscre
+                                               ,pr_cdhistor => vr_cdhistor -- rw_craplfp.cdhiscre (Renato - Supero - 23/02/2019)
                                                ,pr_nrseqdig => rw_craplot_fol.nrseqdig
                                                ,pr_nrdctabb => vr_nrdconta
                                                ,pr_nrdctitg => GENE0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg
@@ -4915,7 +4938,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             pc_inserir_lanaut(pr_cdcooper => pr_cdcooper
                              ,pr_nrdconta => vr_nrdconta
                              ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
-                             ,pr_cdhistor => rw_craplfp.cdhiscre
+                             ,pr_cdhistor => vr_cdhistor -- rw_craplfp.cdhiscre (Renato - Supero - 23/02/2019)
                              ,pr_vlrenda  => rw_craplfp.vllancto
                              ,pr_cdagenci => 1
                              ,pr_cdbccxlt => 100
@@ -4935,7 +4958,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                      , pr_cdcooper => pr_cdcooper
                                      , pr_tpexecucao => 0
                                      , pr_tpocorrencia => 2 
-                                     , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  CREDITO ' || rw_craplfp.cdhiscre || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') || ' NÃO EFETUADO: ' || SQLERRM
+                                     , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  CREDITO ' || vr_cdhistor || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') || ' NÃO EFETUADO: ' || SQLERRM
                                      , pr_idprglog => vr_idprglog);                
             END IF;              
                          
@@ -4953,7 +4976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                    , pr_cdcooper => pr_cdcooper
                                    , pr_tpexecucao => 0
                                    , pr_tpocorrencia => 2 
-                                   , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  CREDITO ' || rw_craplfp.cdhiscre || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') || ' NÃO EFETUADO: ' || SQLERRM
+                                   , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  CREDITO ' || vr_cdhistor || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') || ' NÃO EFETUADO: ' || SQLERRM
                                    , pr_idprglog => vr_idprglog);
               
           END;
@@ -4973,6 +4996,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           -- Salva o lancamento de credito na conta e atualiza a situacao
           COMMIT;
 
+          -- Define o indentificador de transferencia de portabilidade como não realizo
+          vr_idprtrlz := 0;
+          
+          -- Se a conta possui portabilidade ativa
+          IF vr_idportab THEN
+            -- Realizar a transferencia de valor ou agendar para o dia seguinte (Rotina Pragma)
+            PCPS0001.pc_transf_salario_portab(pr_cdcooper => pr_cdcooper
+                                             ,pr_nrdconta => vr_nrdconta
+                                             ,pr_nrridlfp => rw_craplfp.progress_recid  -- ID da CRAPLFP
+                                             ,pr_vltransf => rw_craplfp.vllancto
+                                             ,pr_idportab => vr_idprtrlz
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+            
+            -- Não vai validar as mensagens de erro, pois se ocorreu erro já
+            -- registrou log no arquivo da portabilidade e na VERLOG
+            vr_cdcritic := NULL;
+            vr_dscritic := NULL;
+                                  
+          END IF;
+          
           -- Caso seja o primeiro registro reseta o total de credito
           IF rw_craplfp.numdebfol = 1 THEN
             vr_vlsalliq := 0;
@@ -4986,12 +5030,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                  , pr_cdcooper => pr_cdcooper
                                  , pr_tpexecucao => 0
                                  , pr_tpocorrencia => 1 
-                                 , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – CREDITO ' ||rw_craplfp.cdhiscre || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')
+                                 , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – CREDITO ' ||vr_cdhistor || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')
                                  , pr_idprglog => vr_idprglog);           
           END IF;
 
           -- Caso tenha desconto em folha
-          IF rw_craplfp.fldebfol = 1 THEN
+          -- E: não tenha realizado uma portabilidade do salário, pois a area
+          -- de negócio definiu que Conta Salário não terá débitos (Renato - Supero - 23/02/2019)
+          IF rw_craplfp.fldebfol = 1 AND NVL(vr_idprtrlz,0) = 0 THEN
 
             -- Se NAO ocorreu erro na inclusao da LCM ou atualizacao da LOT/LFP
             IF NOT vr_blnerror THEN
@@ -10012,8 +10058,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       IF pr_idorigem = 3 THEN
 
         -- Montar o nome do arquivo do XML
-        -- Projeto XSLProcessor, prever vir conteudo nulo na sessão
-        vr_nmarquiv := to_char(pr_cdcooper,'FM000')||'.'||pr_nrdconta||'.'||nvl(trim(pr_dssessao),to_char(localtimestamp,'hhmissff'))||'.XMLDADOSFOLHA.txt';
+        vr_nmarquiv := to_char(pr_cdcooper,'FM000')||'.'||pr_nrdconta||'.'||pr_dssessao||'.XMLDADOSFOLHA.txt';
 
         -- Inicializar XML de retorno
         dbms_lob.createtemporary(pr_retxml, TRUE);
