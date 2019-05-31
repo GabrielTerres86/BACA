@@ -24,6 +24,8 @@
 * 009: [05/12/2017] Lombardi         (CECRED) : Gravação do campo idcobope. Projeto 404
  * 010: [15/03/2018] Diego Simas	 (AMcom)  : Alterado para exibir tratativas quando o limite de crédito foi 
  *                                              cancelado de forma automática pelo Aimaro.  
+ * 011: [31/05/2019] Mateus Z   	 (Mouts)  : PRJ 438 - Ajuste na exibição de criticas relacionadas a cancelamento por
+ *                                              motivo de inadimplencia.
  */	  
 ?>
 
@@ -131,14 +133,17 @@
 				$travaCamposLimite = 'S';
 				echo '<script type="text/javascript">';
 				echo 'hideMsgAguardo();';
-				echo 'showError("error","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, n&atilde;o &eacute; poss&iacute;vel realizar a opera&ccedil;&atilde;o!","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
-				echo '</script>';				
+				echo 'fechaRotina(divRotina);';
+				echo 'bloqueiaFundo(divRotina);';
+				echo 'showError(\'error\',\'Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, n&atilde;o &eacute; poss&iacute;vel realizar a opera&ccedil;&atilde;o!\',\'Alerta - Aimaro\',\'exibeRotina(divRotina); acessaTela("@")\');';
+				echo '</script>';
+				exit;
 			}else{			
 				$travaCamposLimite = 'S';
 				// MENSAGEM DE INADIMPLÊNCIA
 				echo '<script type="text/javascript">';
 				echo 'hideMsgAguardo();';
-				echo 'showError("error","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, &eacute; necess&aacute;rio senha do coordenador!","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+				echo 'showError(\'error\',\'Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, &eacute; necess&aacute;rio senha do coordenador!\',\'Alerta - Aimaro\',\'\');';
 				echo '</script>';				
 				// PEDE SENHA COORDENADOR
 				echo '<script type="text/javascript">';
