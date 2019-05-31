@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
   --
   --  Programa: DSCC0001                        Antiga: generico/procedures/b1wgen0009.p
   --  Autor   : Jaison
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 20/08/2018
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 31/05/2019
   --
   --  Dados referentes ao programa:
   --
@@ -17,6 +17,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
   -- 		      12/07/2017 - Chamado 687332 - Alteração da gravação da coluna CDSEQTEL na CRAPLAU - Jean (Mout´S)
   --
   --			  20/08/2018 - Ajuste na performace para liberar borderôs (Andrey Formigari - Mouts)
+  --
+  --			  31/05/2019 - Inclusão de historico 2973 em cursor que verifica cheques devolvidos do emitente do cheque (Luis Fagundes - AMCOM)
   --------------------------------------------------------------------------------------------------------------*/
 
 	TYPE typ_reg_cstdsc IS
@@ -433,7 +435,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --
   --  Programa: DSCC0001                        Antiga: generico/procedures/b1wgen0009.p
   --  Autor   : Jaison
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 27/06/2018
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 31/05/2019
   --
   --  Dados referentes ao programa:
   --
@@ -464,6 +466,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       19/09/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts PRB0040066).
 
       27/09/2018 - INC0023556 Incluído parametro resgate cheque para não executar.
+	  
+	  31/05/2019 - Inclusão de historico 2973 em cursor que verifica cheques devolvidos do emitente do cheque (Luis Fagundes - AMCOM)
 				              
   --------------------------------------------------------------------------------------------------------------*/
 
