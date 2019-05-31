@@ -199,7 +199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
 
     Programa: BLQJ0002
     Autor   : Andrino Carlos de Souza Junior (Mout's)
-    Data    : Dezembro/2016                Ultima Atualizacao: 08/01/2019
+    Data    : Dezembro/2016                Ultima Atualizacao: 27/08/2018
      
     Dados referentes ao programa:
    
@@ -214,10 +214,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
 
                 27/08/2018 - Inclusão de regra do BACENJUD 
                              PJ 450 - Diego Simas - AMcom             
-							 
-                08/01/2019 - Remoção da atualização da capa do lote
-                             Yuri - Mouts
-							 
           13/02/2019 - Inclusao de regras para contas com bloqueio judicial
                      - Projeto 530 BACENJUD - Everton(AMcom).
 
@@ -942,7 +938,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                            ,506
                            ,11
                            ,pr_cdcooper
-                           ,1)
+                           ,0)
                    RETURNING cdcooper
                             ,dtmvtolt
                             ,cdagenci
@@ -971,13 +967,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       -- Apenas Fechar Cursor
       CLOSE cr_craplot; 
     END IF;
-    -- Como não incrementa mais no update, Busca o sequencial 
-    -- Remoção da atualização da capa do Lote
-    rw_craplot.nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT',
-                                       pr_nmdcampo => 'NRSEQDIG',
-                                       pr_dsdchave => to_char(pr_cdcooper)||';'||
-                                       to_char(pr_dtmvtolt,'DD/MM/RRRR')||
-                                       ';99;400;506');
     
     -- Cria Registro na CRAPLRG
     BEGIN
@@ -1023,8 +1012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     END;
         
     --Atualizar capa do Lote
-    -- Remoção da atualização da capa do lote
-/*    BEGIN
+    BEGIN
       UPDATE craplot SET craplot.qtinfoln = NVL(rw_craplot.qtinfoln,0) + 1
                         ,craplot.qtcompln = NVL(rw_craplot.qtcompln,0) + 1
                         ,craplot.nrseqdig = NVL(rw_craplot.nrseqdig,0) + 1
@@ -1034,7 +1022,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         vr_dscritic := 'Erro ao atualizar tabela craplot. ' || SQLERRM;
         --Sair do programa
         RAISE vr_exc_saida;
-    END;*/
+    END;
                   
   EXCEPTION
     WHEN vr_exc_saida THEN
