@@ -1,5 +1,32 @@
 
 
+
+update tbcapt_custodia_aplicacao set qtcotas = 10000000 where dscodigo_b3 = 'RDB0180D355' ;
+update tbcapt_custodia_aplicacao set qtcotas = 1088 where dscodigo_b3 = 'RDB0180XPA2' ;
+update tbcapt_custodia_aplicacao set qtcotas = 419165 where dscodigo_b3 = 'RDB0180XO0P' ;
+update tbcapt_custodia_aplicacao set qtcotas = 200000 where dscodigo_b3 = 'RDB0180D3W9' ;
+update tbcapt_custodia_aplicacao set qtcotas = 10154004 where dscodigo_b3 = 'RDB0180SHPU' ;
+update tbcapt_custodia_aplicacao set qtcotas = 3000000 where dscodigo_b3 = 'RDB0180WW9I' ;
+update tbcapt_custodia_aplicacao set qtcotas = 1390899 where dscodigo_b3 = 'RDB0180SL76' ;
+update tbcapt_custodia_aplicacao set qtcotas = 21856 where dscodigo_b3 = 'RDB0180SIHT' ;
+update tbcapt_custodia_aplicacao set qtcotas = 200000 where dscodigo_b3 = 'RDB0180IJOU' ;
+update tbcapt_custodia_aplicacao set qtcotas = 4026 where dscodigo_b3 = 'RDB0180SJDB' ;
+update tbcapt_custodia_aplicacao set qtcotas = 15064 where dscodigo_b3 = 'RDB0180XAEK' ;
+update tbcapt_custodia_aplicacao set qtcotas = 33012 where dscodigo_b3 = 'RDB0180SINA' ;
+update tbcapt_custodia_aplicacao set qtcotas = 0 where dscodigo_b3 = 'RDB018230HU' ;
+update tbcapt_custodia_aplicacao set qtcotas = 1163780 where dscodigo_b3 = 'RDB0180SFNP' ;
+update tbcapt_custodia_aplicacao set qtcotas = 0 where dscodigo_b3 = 'RDB0180X0ON' ;
+update tbcapt_custodia_aplicacao set qtcotas = 2058215 where dscodigo_b3 = 'RDB0180X026' ;
+update tbcapt_custodia_aplicacao set qtcotas = 1767844 where dscodigo_b3 = 'RDB0190OTOU' ;
+update tbcapt_custodia_aplicacao set qtcotas = 16598871 where dscodigo_b3 = 'RDB0181PD2W' ;
+update tbcapt_custodia_aplicacao set qtcotas = 1095571 where dscodigo_b3 = 'RDB01818FJE' ;
+update tbcapt_custodia_aplicacao set qtcotas = 7572638 where dscodigo_b3 = 'RDB0180E1CG' ;
+update tbcapt_custodia_aplicacao set qtcotas = 1080085 where dscodigo_b3 = 'RDB0192GELK' ;
+update tbcapt_custodia_aplicacao set qtcotas = 213915 where dscodigo_b3 = 'RDB0191FQJR' ;
+update tbcapt_custodia_aplicacao set qtcotas = 315033 where dscodigo_b3 = 'RDB0190Q2DA' ;
+update tbcapt_custodia_aplicacao set qtcotas = 918196 where dscodigo_b3 = 'RDB01905BJN' ;
+update tbcapt_custodia_aplicacao set qtcotas = 0 where dscodigo_b3 = 'RDB0192TEJE' ;
+
 update tbcapt_custodia_aplicacao set qtcotas = 0 where dscodigo_b3 = 'RDB0180SDRL';
 update tbcapt_custodia_aplicacao set qtcotas = 0 where dscodigo_b3 = 'RDB0180SEMY';
 update tbcapt_custodia_aplicacao set qtcotas = 0 where dscodigo_b3 = 'RDB0180SFCZ';
