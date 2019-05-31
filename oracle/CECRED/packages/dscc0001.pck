@@ -5306,7 +5306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 AND lcm.cdagechq = pr_cdagechq
 			 AND lcm.nrctachq = pr_nrctachq
 			 AND lcm.nrdocmto IN (pr_nrcheque, pr_nrcheque + 1000000)
-			 AND lcm.cdhistor IN (24,27,399,351,657);			
+			 AND lcm.cdhistor IN (24,27,399,351,2973,657);			
 			 
   -- Verificar se o cheque ainda está pendente de entrega
 	CURSOR cr_crapdcc(pr_cdcooper IN crapdcc.cdcooper%TYPE
