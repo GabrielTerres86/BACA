@@ -811,6 +811,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                       
 		 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
 				      (Reinert)
+              
+         22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
+                      estabelecimento. (Edmar - INC0014177)     
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -1992,6 +1995,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --                            apresentação da crítica 983 para o usuário.
     --                            Chamado SCTASK0015964 - Gabriel (Mouts).
     --
+    --               13/02/2019 - Inclusao de regras para contas com bloqueio judicial
+    --                          - Projeto 530 BACENJUD - Everton(AMcom).
+    --
+    
     DECLARE
       -- Descrição e código da critica
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2147,6 +2154,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       END LOOP;
       --Fim PJ 416
       
+   
       IF vr_conta_monitorada = 'N'THEN -- PJ 416 Verifica se a conta está sendo monitorada
       -- Se a conta não estiver sendo monitorada, mantem a verificação dos lançamentos como era antes
       -- Busca de todos os lançamentos
@@ -2195,10 +2203,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           -- e se o progress_recid é maior que o último lançamento utilizado pelo monitoramento
           IF rw_craplcm_ign.inhistor = 1 AND rw_craplcm_ign.indebcre = 'C' AND rw_craplcm_ign.indutblq = 'S' and rw_craplcm_ign.progress_recid > vr_idprogress_recid THEN
           -- controlar o valor do lançamento em relação ao valor do saldo do monitoramento
-          
+           /*-----Comentado para buscar sempre o saldo atual - P530 BANCEJUD-------
             IF rw_craplcm_ign.vllanmto >= vr_saldo_monitoramento THEN
               rw_craplcm_ign.vllanmto:= rw_craplcm_ign.vllanmto - vr_saldo_monitoramento;
-              vr_saldo_monitoramento:=0;
+              vr_saldo_monitoramento:=0;*/
               -- Chama rotina que compõe o saldo do dia
               pc_compor_saldo_dia(pr_vllanmto => rw_craplcm_ign.vllanmto
                                  ,pr_inhistor => rw_craplcm_ign.inhistor
@@ -2223,9 +2231,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                 -- Levantar exceção
                 RAISE vr_exc_erro;
               END IF;
-            ELSE
+           -- ELSE
               vr_saldo_monitoramento:= vr_saldo_monitoramento - rw_craplcm_ign.vllanmto;
-            END IF;
+            --END IF;
          
           ELSE
             -- Chama rotina que compõe o saldo do dia
@@ -3127,6 +3135,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
                     13/07/2018 - Ajustar SQL que busca o nome do estabelecimento para retirar os caracteres
                                  que "quebram" o XML (PRJ 467 - Douglas Quisinski)
+                                 
+                    22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
+                                 estabelecimento. (Edmar - INC0014177)            
     */
     DECLARE
       -- Varíaveis para montagem do novo registro
@@ -3307,6 +3318,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         AND dcb.tpmensag = substr(to_char(pr_nrdocmto, 'fm00000000000000000000'), 1, 4)  -- Tipo Mensagem
         AND dcb.nrnsucap = substr(to_char(pr_nrdocmto, 'fm00000000000000000000'), 5, 6); -- NSU                                                                       
       rw_lanc_cart_deb cr_lanc_cart_deb%ROWTYPE;  
+      
+      -- cursor para buscar o estabelecimento, restringindo também a hora da operação
+      CURSOR cr_lanc_cart_deb_hr (pr_cdcooper craplcm.cdcooper%TYPE
+                                 ,pr_nrdconta craplcm.nrdconta%TYPE
+						                     ,pr_dtmvtolt craplcm.dtmvtolt%TYPE
+                                 ,pr_cdhistor craplcm.cdhistor%TYPE
+                                 ,pr_nrdocmto craplcm.nrdocmto%TYPE) IS
+       SELECT lcm.dtmvtolt AS dtmvtolt_lcm, 
+        lcm.dtrefere AS dtrefere_lcm, 
+        to_char(lcm.nrdocmto),       
+        TRIM(GENE0007.fn_caract_acento(pr_texto    => SUBSTR(dcb.dsdtrans,1,23)
+                                      ,pr_insubsti => 1)) ESTABELECIMENTO, 
+        dcb.*
+       FROM craplcm lcm, crapdcb dcb
+       WHERE dcb.cdcooper = lcm.cdcooper -- Cooperativa
+        AND dcb.nrdconta = lcm.nrdconta -- Conta
+        AND dcb.nrcrcard = lcm.cdpesqbb -- Cartao
+        AND dcb.dtdtrans = lcm.dtrefere -- Data
+        AND dcb.vldtrans = lcm.vllanmto -- Valor
+        AND dcb.cdhistor = lcm.cdhistor -- Historico
+        AND lcm.cdcooper = pr_cdcooper 
+        AND lcm.nrdconta = pr_nrdconta
+        AND lcm.dtmvtolt = pr_dtmvtolt
+        AND lcm.cdhistor = pr_cdhistor
+        AND dcb.tpmensag             = substr(to_char(pr_nrdocmto, 'fm00000000000000000000'), 1, 4)  -- Tipo Mensagem
+        AND dcb.nrnsucap             = substr(to_char(pr_nrdocmto, 'fm00000000000000000000'), 5, 6) -- NSU   
+        AND lpad(dcb.hrdtrgmt,6,'0') = substr(to_char(pr_nrdocmto, 'fm00000000000000000000'), 15, 6); -- Hora transação                                                                    
+      rw_lanc_cart_deb_hr cr_lanc_cart_deb_hr%ROWTYPE;
       
       -- cursor para encontrat o estabelecimento do estorno, buscando pela origem
       CURSOR cr_lanc_est_cart_deb (pr_cdcooper craplcm.cdcooper%TYPE
@@ -3640,6 +3679,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         IF (vr_ds_historico_deb LIKE '%;'|| rw_craplcm.cdhistor ||';%') OR 
            (vr_ds_historico_est LIKE '%;'|| rw_craplcm.cdhistor ||';%') THEN
            
+           /* Primeiramente tenta localizar o estabelecimento consideratando TAMBÉM o
+              horário da operação. Caso não encontre, faz novamente a busca, sem considerar
+              o horário, como já estava implementado anteriormente. */
+           OPEN cr_lanc_cart_deb_hr(pr_cdcooper => rw_craplcm.cdcooper
+                                   ,pr_nrdconta => rw_craplcm.nrdconta
+                                   ,pr_dtmvtolt => rw_craplcm.dtmvtolt
+                                   ,pr_cdhistor => rw_craplcm.cdhistor
+                                   ,pr_nrdocmto => rw_craplcm.nrdocmto); 
+           FETCH cr_lanc_cart_deb_hr INTO rw_lanc_cart_deb_hr;
+           IF cr_lanc_cart_deb_hr%FOUND THEN
+              pr_tab_extr(vr_ind_tab).dscomple := rw_lanc_cart_deb_hr.ESTABELECIMENTO;                     
+           END IF; 
+           
+           IF pr_tab_extr(vr_ind_tab).dscomple IS NULL OR
+              cr_lanc_cart_deb_hr%NOTFOUND THEN              
+           
            OPEN cr_lanc_cart_deb(pr_cdcooper => rw_craplcm.cdcooper
                                 ,pr_nrdconta => rw_craplcm.nrdconta
                                 ,pr_dtmvtolt => rw_craplcm.dtmvtolt
@@ -3673,7 +3728,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
            END IF;
            
            CLOSE cr_lanc_cart_deb;
-           
+           END IF; 
+           CLOSE cr_lanc_cart_deb_hr;
         END IF;
                 
         IF ','||pr_lshiscon||',' LIKE ('%,'||rw_craplcm.cdhistor||',%') THEN
@@ -4167,7 +4223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_ds_historico_deb :=  gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                         pr_cdacesso => 'HIST_CARTAO_DEBITO');
 										  
-      vr_ds_historico_est := 	gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+      vr_ds_historico_est :=   gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                         pr_cdacesso => 'HIST_EST_CARTAO_DEBITO');	
                                          
       -- Busca de todos os lançamentos
@@ -6334,7 +6390,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         IF vr_vldsaldo > 0 THEN
           -- Monta critica
           vr_cdcritic := NULL;
-          vr_dscritic := 'POUPANCA PROGRAMADA COM SALDO.';
+          vr_dscritic := 'APLICACAO PROGRAMADA COM SALDO.';
           -- Gera exceção
           RAISE vr_exc_erro;
         END IF;
