@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 19/03/2019
+    Data    : Fevereiro/2011               ultima Atualizacao: 03/06/2019
 
     Dados referentes ao programa:
 
@@ -337,6 +337,9 @@
           
               19/03/2019 - P437 - Consignado - incluido parametro valor parcela (par_vlpreemp) na rotina  
 			                      grava_parcelas_proposta - Fernanda Kelli de oliveira (AMcom)		  
+              03/06/2019 - P437 - Consignado - Na grava_efetivacao_proposta, para o consignado enviar o contrato para FIS Brasil,
+                                  ou seja gravar o evento SOA chamando a rotina pc_grava_evento_prop_consig. (Josiane Stiehler -AMcom)
+                                  
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -4852,6 +4855,30 @@ PROCEDURE grava_efetivacao_proposta:
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
            END.
         END.
+       
+        /* P437 - Consignado - Grava Evento SOA */
+        IF  crawepr.tpemprst = 1 AND 
+	        crawepr.tpdescto = 2  THEN
+	        DO:
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+              RUN STORED-PROCEDURE pc_grava_evento_prop_consig
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper       /* Código da cooperativa */
+                                                  ,INPUT par_nrdconta       /* Número da conta */
+                                                  ,INPUT par_nrctremp       /* Número da proposta */
+                                                  ,OUTPUT "").              /* Critica */
+
+              /* Fechar o procedimento para buscarmos o resultado */ 
+              CLOSE STORED-PROC pc_grava_evento_prop_consig
+              
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+              
+              /* Se retornou erro */
+              ASSIGN aux_dscritic = ""
+                     aux_dscritic = pc_grava_evento_prop_consig.pr_dscritic WHEN pc_grava_evento_prop_consig.pr_dscritic <> ?.
+              IF aux_dscritic <> "" THEN
+                UNDO EFETIVACAO, LEAVE EFETIVACAO.
+           END.
        
        ASSIGN aux_flgtrans = TRUE.
 
