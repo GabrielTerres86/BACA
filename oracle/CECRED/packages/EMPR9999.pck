@@ -36,7 +36,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR9999 AS
   --
   --             14/12/2018 - P298.2 - Inclusão da proposta Pós fixado no simulador (Andre Clemer - Supero)
   --                        - pc_busca_dominio;
-
+  --
+  --             13/05/2019 - PJ298.2. - Ajustado para pagar multa e juros de emprestimo em prejuizo (Rafael Faria - Supero)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Trazer a qualificao da operacao Na alteraçao e inclusao de proposta. (migração progress: b1wgen0002.p/proc_qualif_operacao)
@@ -255,7 +257,11 @@ create or replace package body cecred.EMPR9999 as
   --
   --             14/12/2018 - P298.2 - Inclusão da proposta Pós fixado no simulador (Andre Clemer - Supero)
   --                        - pc_busca_dominio;
-
+  --
+  --             17/04/2019 - Remoção de chamada equivocada da procedure "PREJ0003.pc_gera_debt_cta_prj" no
+  --                          bloco de processamento de IOF pago da procedure "pc_pagar_emprestimo_prejuizo".
+  --                          P450 - Reginaldo/AMcom
+  --
   ---------------------------------------------------------------------------------------------------------------
   /* Tratamento de erro */
   vr_exc_erro EXCEPTION;
@@ -897,6 +903,27 @@ create or replace package body cecred.EMPR9999 as
                                         ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                         ,pr_dscritic OUT VARCHAR2) IS                 -- Descrição da crítica
 
+    /* ..........................................................................
+      Programa : pc_pagar_emprestimo_prejuizo
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : 
+      Data     :                             Ultima atualizacao: 17/04/2019
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamada
+      Objetivo  : Realizar o calculo e pagamento de prejuízo
+          
+      Alteração : 29/11/2018 - Ajustado para gerar lanc. hist 384 na tabela de prejuizo detalhe, 
+                               para pagamentos com conta em prejuiz CC. PRJ450 - Regulatorio (Odirlei-AMcom)
+							    
+									27/12/2018 - Alteração no tratamento para contas corrente em prejuízo (verificar através
+									             da função PREJ0003.fn_verifica_preju_conta ao invés de usar o "pr_nmdatela").
+															 P450 - Reginaldo/AMcom
+
+    ..........................................................................*/
+    
     -- Buscar o valor total de lançamentos referente ao pagamento do prejuízo original
     CURSOR cr_craplem(pr_cdhistor  craplem.cdhistor%TYPE) IS
       SELECT SUM(lem.vllanmto) vllanmto
@@ -1076,8 +1103,8 @@ create or replace package body cecred.EMPR9999 as
     vr_vlpgjmpr := NULL;
     vr_vlsdprej := NULL;
 
-    -- Se for o tipo de empréstimo 1
-    IF pr_tpemprst = 1 THEN
+    -- Se for o tipo de empréstimo 1 PP e 2 POS
+    IF pr_tpemprst in  (1,2) THEN
       -- 1o Valor de Multa
       IF (pr_vlttmupr - pr_vlpgmupr) >= vr_vlapagar THEN
         vr_vlpgmupr := pr_vlpgmupr + vr_vlapagar;
@@ -2227,6 +2254,7 @@ create or replace package body cecred.EMPR9999 as
 
    --Tabelas de Memoria para Pagamentos das Parcelas Emprestimo
    vr_tab_parcelas_pos EMPR0011.typ_tab_parcelas;
+	 vr_tab_calculado    empr0011.typ_tab_calculado;
 
    vr_tab_price EMPR0011.typ_tab_price;
 
@@ -2271,6 +2299,7 @@ create or replace package body cecred.EMPR9999 as
                                              ,pr_vlsprojt => pr_vlsprojt        --rw_crapepr.vlsprojt
                                              ,pr_qttolatr => pr_qttolar         --rw_crapepr.qttolatr
                                              ,pr_tab_parcelas => vr_tab_parcelas_pos
+																						 ,pr_tab_calculado => vr_tab_calculado
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);																				 
 																						 

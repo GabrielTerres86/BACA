@@ -40,6 +40,9 @@
                              1590 - DEPOSITO TRANSPORTE DE VALORES (ESTABELECIMENTOS)
                              2692 - DB TRANSPORTE DE VALORES (ESTABELECIMENTOS)
                              Marcelo Telles Coelho - Projeto 420 - PLD
+                08/05/2019 - Permitir que TEDs em especie sejam exibidas na TRAESP para contas de nao cooperados.
+                             RITM0011928 - Jose Dill (Mouts)
+                
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -1338,7 +1341,53 @@ PROCEDURE consulta-dados-fechamento:
           ASSIGN aux_vllanmto = 0.
         END.
     END.
+    
+    /* RITM0011928 - Permitir que TEDs em especie sejam exibidas na TRAESP para contas de nao cooperados.*/ 
+    FOR EACH crapcme WHERE crapcme.dtmvtolt = par_dtmvtolt AND
+                           crapcme.nrdconta = 0    
+                           BREAK BY crapcme.cdcooper
+                                 BY crapcme.tpoperac
+                                 BY crapcme.cpfcgrcb:
 
+        ASSIGN aux_vllanmto = aux_vllanmto + crapcme.vllanmto.
+        
+        IF LAST-OF(cpfcgrcb) THEN
+          DO:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+          /* Efetuar a chamada a rotina Oracle */
+          RUN STORED-PROCEDURE pc_busca_limite_operacao
+           aux_handproc = PROC-HANDLE NO-ERROR
+                       ( INPUT crapcme.cdcooper /* pr_cdcooper --> Codigo da cooperativa */
+                        ,INPUT crapcme.tpoperac /* pr_tpoperac --> tipo da operacao */
+                        /* --------- OUT --------- */
+                        ,OUTPUT 0          /* pr_cdcritic --> Codigo da critica  */
+                        ,OUTPUT ""          /* pr_dscritic --> Descriçao da critica    */
+                        ,OUTPUT 0 ).        /* pr_vloperac --> Retorno da operacao     */
+
+          /* Fechar o procedimento para buscarmos o resultado */
+          CLOSE STORED-PROC pc_busca_limite_operacao
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN aux_vloperac = pc_busca_limite_operacao.pr_vloperac
+                     WHEN pc_busca_limite_operacao.pr_vloperac <> ?.
+
+          IF aux_vllanmto >= aux_vloperac THEN
+            DO:
+              CREATE tt-crapcme2.
+              ASSIGN tt-crapcme2.cdcooper = crapcme.cdcooper
+                     tt-crapcme2.tpoperac = STRING(crapcme.tpoperac)
+                     tt-crapcme2.nrcpfcgc = STRING(crapcme.cpfcgrcb)
+                     tt-crapcme2.dtmvtolt = crapcme.dtmvtolt.
+                     tt-crapcme2.nrdconta = 0.
+            END.
+          ASSIGN aux_vllanmto = 0.
+        END.
+    END.
+    /* Fim RITM0011928 */
+    
+        
     FOR EACH tt-crapcme2,
               EACH crapass WHERE crapass.cdcooper = tt-crapcme2.cdcooper AND
                                  crapass.nrcpfcgc = DECIMAL(tt-crapcme2.nrcpfcgc),
@@ -1379,7 +1428,48 @@ PROCEDURE consulta-dados-fechamento:
                                            STRING(STRING(crapass.nrcpfcgc,"99999999999999"),"xx.xxx.xxx/xxxx-xx")).
 
     END.
+        
+    /* RITM0011928 - Permitir que TEDs em especie sejam exibidas na TRAESP para contas de nao cooperados.*/ 
+    FOR EACH tt-crapcme2,
+             /* EACH crapass WHERE crapass.cdcooper = tt-crapcme2.cdcooper AND
+                                 crapass.nrcpfcgc = DECIMAL(tt-crapcme2.nrcpfcgc),*/
+                   EACH crapcme WHERE (IF par_cdcooper <> 3 THEN
+                              (crapcme.cdcooper = par_cdcooper    AND
+                                       crapcme.infrepcf <> 2             )     ELSE
+                                       crapcme.infrepcf <> 2             )     AND
+                                       crapcme.dtmvtolt = tt-crapcme2.dtmvtolt AND
+                                       STRING(crapcme.tpoperac) = tt-crapcme2.tpoperac AND
+                                       crapcme.cdcooper = tt-crapcme2.cdcooper AND
+                                       crapcme.nrdconta = 0 AND
+                                       crapcme.cpfcgrcb = DECIMAL(tt-crapcme2.nrcpfcgc)
+                            NO-LOCK:
 
+        ASSIGN par_contador = par_contador + 1.
+
+        CREATE tt-crapcme.
+        ASSIGN tt-crapcme.cdcooper = crapcme.cdcooper
+               tt-crapcme.cdagenci = crapcme.cdagenci
+               tt-crapcme.nrdconta = crapcme.nrdconta
+               tt-crapcme.nmprimtl = crapcme.nmpesrcb  
+               tt-crapcme.nrdocmto = crapcme.nrdocmto
+               tt-crapcme.tpoperac = (IF crapcme.tpoperac = 1 THEN
+                                      "DEPOSITO" ELSE
+                                        IF crapcme.tpoperac = 2 THEN
+                                        "SAQUE" ELSE
+                                        "PAGAMENTO")
+               tt-crapcme.recursos = crapcme.recursos
+               tt-crapcme.dstrecur = crapcme.dstrecur
+               tt-crapcme.flinfdst = crapcme.flinfdst
+               tt-crapcme.vllanmto = crapcme.vllanmto
+               tt-crapcme.dtmvtolt = crapcme.dtmvtolt
+               tt-crapcme.infrepcf = "Informar"
+               tt-crapcme.nrdrowid = ROWID(crapcme)
+               tt-crapcme.dsdjusti = crapcme.dsdjusti
+               tt-crapcme.nrcpfcgc = STRING(STRING(crapcme.cpfcgrcb,"99999999999"),"xxx.xxx.xxx-xx"). 
+        
+    END.
+    /* Fim RITM0011928 */    
+    
     IF par_contador = 0 THEN
         DO:
             ASSIGN aux_cdcritic = 011

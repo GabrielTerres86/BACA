@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-12-12T12:19:22 -->
+<!-- 2019-05-17T10:10:31 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_solicitacao_portabilidade" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -81,6 +81,15 @@
 	</field>
 	<field name="img_cooperativa" class="java.lang.String">
 		<fieldDescription><![CDATA[img_cooperativa]]></fieldDescription>
+	</field>
+	<field name="dtassina_eletronica" class="java.lang.String">
+		<fieldDescription><![CDATA[dtassina_eletronica]]></fieldDescription>
+	</field>
+	<field name="hrassina_eletronica" class="java.lang.String">
+		<fieldDescription><![CDATA[hrassina_eletronica]]></fieldDescription>
+	</field>
+	<field name="isass_eletronica" class="java.lang.Integer">
+		<fieldDescription><![CDATA[isass_eletronica]]></fieldDescription>
 	</field>
 	<background>
 		<band splitType="Stretch"/>
@@ -492,6 +501,7 @@
 						<reportElement mode="Transparent" x="176" y="0" width="95" height="15" forecolor="#000000" uuid="17dbb9d0-71f2-41c8-8cfe-db52b1599d8d">
 							<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+							<printWhenExpression><![CDATA[$F{isass_eletronica} != 1]]></printWhenExpression>
 						</reportElement>
 						<textElement verticalAlignment="Middle">
 							<paragraph firstLineIndent="5"/>
@@ -514,8 +524,9 @@
 					</textField>
 					<textField>
 						<reportElement x="271" y="0" width="193" height="15" uuid="95268a2e-eb0d-47c2-b119-3f6acae2a2ce">
-							<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+							<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+							<printWhenExpression><![CDATA[$F{isass_eletronica} != 1]]></printWhenExpression>
 						</reportElement>
 						<textElement verticalAlignment="Middle"/>
 						<textFieldExpression><![CDATA[$F{nmoperad}]]></textFieldExpression>
@@ -524,27 +535,44 @@
 			</frame>
 		</band>
 		<band height="80">
+			<printWhenExpression><![CDATA[$F{isass_eletronica} == 0]]></printWhenExpression>
 			<frame>
 				<reportElement x="0" y="10" width="595" height="70" uuid="8bb5d640-6653-4948-8ee9-87e49059bc82">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
 				<line>
-					<reportElement x="147" y="40" width="300" height="1" uuid="479c01fb-f977-42d1-997d-7a5a5e3beaf7">
+					<reportElement x="147" y="45" width="300" height="1" uuid="479c01fb-f977-42d1-997d-7a5a5e3beaf7">
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					</reportElement>
 					<graphicElement>
 						<pen lineWidth="0.5"/>
 					</graphicElement>
 				</line>
 				<staticText>
-					<reportElement x="0" y="28" width="595" height="42" uuid="5f87320e-4a99-4b0d-b9fc-16299722455d"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font isBold="false"/>
-						<paragraph lineSpacingSize="1.0" firstLineIndent="15"/>
+					<reportElement x="0" y="48" width="595" height="11" uuid="466f794e-1f08-459f-9942-c8476ab7ada4">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center" markup="none">
+						<font fontName="Courier New" size="9" isBold="false" isUnderline="false"/>
 					</textElement>
-					<text><![CDATA[Assinatura do cooperado solicitante]]></text>
+					<text><![CDATA[Assinatura do cooperado solicitante ]]></text>
 				</staticText>
+			</frame>
+		</band>
+		<band height="50">
+			<printWhenExpression><![CDATA[$F{isass_eletronica} == 1]]></printWhenExpression>
+			<frame>
+				<reportElement x="95" y="0" width="405" height="50" uuid="4b2bb327-ac5c-408a-b3d5-214a77fa0a3a"/>
+				<textField>
+					<reportElement x="0" y="0" width="405" height="40" uuid="ac36b70e-092e-4fe5-890c-26b99144e079"/>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="9" isBold="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Assinado eletronicamente pelo COOPERADO " + $F{nmprimtl} + ", no dia " + $F{dtassina_eletronica} + " às " + $F{hrassina_eletronica} + ", mediante aposição de senha numérica e letras de segurança."]]></textFieldExpression>
+				</textField>
 			</frame>
 		</band>
 	</detail>

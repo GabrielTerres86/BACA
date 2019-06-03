@@ -14,6 +14,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
   -- Alterado: 23/01/2018 - Daniel AMcom
   -- Ajuste: Criada procedure pc_busca_dados_risco
   --
+  -- Alterado: 21/05/2019 - P450 - Correção em registros duplicados na procedure pc_busca_dados_risco
+  --                        (AMcom - Mario)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   /* Busca dados de risco das contas (contratos de empréstimo e limite de crédito) */
@@ -411,7 +414,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                    AND int.cdcooper = pr_cdcooper
                    AND pai.idgrupo  = pr_idgrupo
               ) dados
-         WHERE nrdconta <> pr_nrdconta
+         WHERE dados.nrdconta NOT IN (SELECT as2.nrdconta
+                                        FROM crapass ass
+                                            ,crapass as2
+                                       WHERE ass.cdcooper = pr_cdcooper
+                                         AND ass.nrdconta = pr_nrdconta
+                                         AND as2.cdcooper = ass.cdcooper
+                                         AND as2.nrcpfcnpj_base = ass.nrcpfcnpj_base)
+
         ORDER BY nrdconta;    
     rw_contas_grupo cr_contas_grupo%ROWTYPE;
     

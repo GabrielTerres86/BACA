@@ -499,12 +499,12 @@
 					</td>
 					<!-- Início PJ 416 - BacenJud -->									
 					<td>
-						<label for="indutblq">Considerar para Bloquei Judicial?</label>
+						<label for="indutblq">Bacen Jud &#45; Bloqueia/Debita:</label>
 						<select id="indutblq" name="indutblq">
 							<option value="S">Sim </option>
 							<option value="N">N&atilde;o </option>
 						</select>
-						<!-- Campo hidden para salvar o operador que autorizou mudar o campo "Considerar para Bloquei Judicial" para "nao" -->
+						<!-- Campo hidden para salvar o operador que autorizou mudar o campo "Bacen Jud – Bloqueia/Debita" para "nao" -->
 						<input type="hidden" name="operauto" id="operauto" value="">
 					</td>
                     <!-- Fim PJ 416 - BacenJud -->
@@ -541,7 +541,7 @@
 							<option value="1">Sim </option>
 							<option value="0">N&atilde;o </option>
 						</select>
-						<!-- Campo hidden para salvar o operador que autorizou mudar o campo "Considerar para Bloquei Judicial" para "nao" -->
+						<!-- Campo hidden para salvar o operador que autorizou mudar o campo "Bacen Jud – Bloqueia/Debita:" para "nao" -->
 						<!-- <input type="hidden" name="operauto" id="operauto" value=""> -->
 					</td>
                     <!-- Inicio SM 5 - 364 - RMM -->					

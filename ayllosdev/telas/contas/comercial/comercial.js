@@ -187,6 +187,7 @@ function controlaOperacao(operacao, flgConcluir) {
             vldrend3: vldrend3, tpdrend4: tpdrend4,
             vldrend4: vldrend4, flgcadas: flgcadas,
             inpolexp: inpolexp,
+            inpessoa: inpessoa,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {

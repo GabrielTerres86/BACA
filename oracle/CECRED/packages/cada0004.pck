@@ -928,6 +928,14 @@ PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA
                                            ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                            ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
+                                           
+  FUNCTION fn_dstipcta(pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE,  --> Tipo de pessoa
+                       pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)   --> Tipo de conta
+                       RETURN VARCHAR2;
+                       
+  FUNCTION fn_dssitdct(pr_cdsitdct IN crapass.cdsitdct%TYPE)  --> Codigo da situacao da conta
+                       RETURN VARCHAR2;
+                                           
 END CADA0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
@@ -4468,6 +4476,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     -- 
     --              07/03/2019 - Correcao na mensagem de cadastro vencido (Cassia de Oliveira - GFT)
+    
+    --              09/04/2019 - Projeto Bacenjud fase 2 (Renato Cordeiro - AMcom)
+    --
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -5055,6 +5066,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     vr_dssituacao tbcc_situacao_conta.dssituacao%TYPE;
     
+    vr_id_conta_monitorada    NUMBER(1);
+
   BEGIN
   
     vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
@@ -6330,6 +6343,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda); 
       END IF;
     END LOOP;
+
+    BEGIN
+      blqj0002.pc_verifica_conta_bloqueio(pr_cdcooper => pr_cdcooper, 
+                                          pr_nrdconta => pr_nrdconta, 
+                                          pr_id_conta_monitorada => vr_id_conta_monitorada, 
+                                          pr_cdcritic => vr_cdcritic, 
+                                          pr_dscritic => vr_dscritic);
+      IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      IF vr_id_conta_monitorada = 1 THEN
+        pc_cria_registro_msg(pr_dsmensag             => 'Cooperado possui bloqueio judicial. Conforme normativa do BACEN, débitos não serão habilitados.',
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+      END IF;
+    END;
 
 	-- Verifica se a conta possui algum grupo economico novo
     vr_tab_mensagens.DELETE;

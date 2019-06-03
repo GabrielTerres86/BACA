@@ -138,6 +138,7 @@ BEGIN
     vr_tab_crappep  typ_tab_crappep;
 
     vr_tab_parcelas EMPR0011.typ_tab_parcelas;
+		vr_tab_calculado empr0011.typ_tab_calculado;
 
     ------------------------------- VARIAVEIS -------------------------------
     vr_txdiaria                craplcr.txdiaria%TYPE;
@@ -252,6 +253,7 @@ BEGIN
                                       ,pr_vlsprojt => rw_crapepr.vlsprojt
                                       ,pr_qttolatr => rw_crapepr.qttolatr
                                       ,pr_tab_parcelas => vr_tab_parcelas
+																			,pr_tab_calculado => vr_tab_calculado
                                       ,pr_cdcritic => vr_cdcritic
                                       ,pr_dscritic => vr_dscritic);
       -- Se houve erro

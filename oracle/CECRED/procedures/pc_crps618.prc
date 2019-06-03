@@ -8,7 +8,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
     Sistema : Cobranca - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Rafael
-    Data    : janeiro/2012.                     Ultima atualizacao: 30/11/2018
+    Data    : janeiro/2012.                     Ultima atualizacao: 21/05/2019
  
     Dados referentes ao programa:
  
@@ -128,6 +128,9 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
 
                 30/11/2018 - Título deve ser enviado para a CIP independente da remessa para a PG.
                              (INC0025924 - AJFink)
+
+                21/05/2019 - Incluido controle de lock de título quando registro online
+                             (P433 - API de Cobrança - Cechet)
 
   ******************************************************************************/
 
@@ -976,6 +979,14 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
         order by cob.nrinssac;
       rw_titulo cr_titulo%rowtype;
       --
+      -- cursor para locar o registro se for registro online;
+      cursor cr_tit_lock(pr_crapcob_rowid in rowid) is
+        SELECT ROWID rowid_cob
+          FROM crapcob cob
+         WHERE cob.rowid = pr_crapcob_rowid
+         FOR UPDATE;
+      rw_tit_lock cr_tit_lock%ROWTYPE;
+      --      
       vr_tab_lote_titulo typ_tab_lote_titulo;
       vr_tab_remessa_dda ddda0001.typ_tab_remessa_dda;
       vr_tab_retorno_dda ddda0001.typ_tab_retorno_dda;
@@ -1018,6 +1029,13 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
             vr_idregdes := 0; --marcar o registro como considerado na integração
             vr_crapcob_rowid := vr_tab_lote_titulo(i).crapcob_rowid;
             --
+            
+            -- se for registro online então locar o boleto
+            IF vr_tpdenvio = 1 THEN              
+              open cr_tit_lock(pr_crapcob_rowid => vr_crapcob_rowid);
+              FETCH cr_tit_lock INTO rw_tit_lock;              
+            END IF;
+            
             open cr_titulo(pr_crapcob_rowid => vr_crapcob_rowid
                           ,pr_cdcooper_cr => pr_cdcooper_in
                           ,pr_nrdconta_cr => pr_nrdconta_in
@@ -1080,10 +1098,19 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
               end if;
               --
             end if;
+            
+            -- fechar cursor de lock de boleto
+            IF cr_tit_lock%ISOPEN THEN
+              CLOSE cr_tit_lock;
+            END IF;
             --
           exception
             when others then
               begin
+                -- fechar cursor de lock de boleto
+                IF cr_tit_lock%ISOPEN THEN
+                  CLOSE cr_tit_lock;
+                END IF;              
                 --
                 vr_iderro := 'S';--ocorreu erro no processamento
                 --

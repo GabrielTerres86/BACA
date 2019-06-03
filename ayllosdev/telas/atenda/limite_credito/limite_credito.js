@@ -48,6 +48,7 @@
  * 029: [27/06/2018] Christian Grosch (CECRED): Ajustes JS para execução do Ayllos em modo embarcado no CRM.
  * 030: [09/10/2018] Marco Antonio Rodrigues Amorim(Mout's) : Remove ponto do usuario e substitui virgula da casa decimal por ponto.
  * 031: [27/11/2018] Bruno Luiz Katzjarowski (Mout's): Criação da nova tela principal (nova rotina acessaTela) 
+ * 032: [15/05/2019] Anderson Schloegel (Mout's): PJ470 - Mout's - Desabilitar campo de contrato para aba Novo Limite
 */
  
 var callafterLimiteCred = '';
@@ -164,7 +165,9 @@ var aux_limites = {
         nrinfcad: "",
         nrliquid: "",
         nrpatlvr: "",
-        nrperger: ""
+        nrperger: "",
+        idcobope: "",
+        dsobserv: ""
     },
     pausado: {
         dtpropos: "",
@@ -186,7 +189,9 @@ var aux_limites = {
         nrinfcad: "",
         nrliquid: "",
         nrpatlvr: "",
-        nrperger: ""
+        nrperger: "",
+        idcobope: "",
+        dsobserv: ""
     }
 };
 
@@ -346,7 +351,6 @@ function acessaTela(cddopcao) {
             flpropos: flpropos,
             inpessoa: var_globais.inpessoa, //bruno - prj 438 - sprint 7 - novo limite
 			inconfir: cddopcao == 'A' || cddopcao == 'P' ? 0 : 1, // Se for consulta NÃO fazer validação, senão, fazer validação
-			aux_operacao: aux_operacao,
 			redirect: "html_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
@@ -639,12 +643,14 @@ function validarNovoLimite(inconfir, inconfi2) {
     var_globais.vllimite = $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
     var_globais.flgimpnp = $("#flgimpnp", "#frmNovoLimite").val();
 	
+	// PJ470 - Mout's - Desabilitar campo de contrato
+
 	// Valida número do contrato
-    if (nrctrlim == "" || !validaNumero(nrctrlim, true, 0, 0)) {
-		hideMsgAguardo();
-        showError("error", "N&uacute;mero de contrato inv&aacute;lido.", "Alerta - Aimaro", "$('#nrctrlim','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	} 
+    //if (nrctrlim == "" || !validaNumero(nrctrlim, true, 0, 0)) {
+	//	hideMsgAguardo();
+    //    showError("error", "N&uacute;mero de contrato inv&aacute;lido.", "Alerta - Aimaro", "$('#nrctrlim','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+	//	return false;
+	//}
 	
 	// Valida linha de crédito
     if (cddlinha == "" || !validaNumero(cddlinha, true, 0, 0)) {
@@ -786,6 +792,8 @@ function cadastrarNovoLimite() {
     var dtnasct2 = (typeof aux_dtnasct1 == 'undefined') ? '' : aux_dtnasct1;
 	var vlrecjg2 = (typeof aux_vlrecjg1 == 'undefined') ? '' : aux_vlrecjg1;
 
+	var dsobserv = removeAcento($("#dsobserv", "#frmNovoLimite").val());
+
 	// Executa script de cadastro do limite atravé	s de ajax
 	$.ajax({		
 		type: "POST", 
@@ -801,7 +809,7 @@ function cadastrarNovoLimite() {
             vloutras: vloutras > 0 ? $("#vloutras", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
             vlalugue: vlalugue > 0 ? $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
             inconcje: ($("#inconcje_1", "#frmNovoLimite").prop('checked')) ? 1 : 0,
-            dsobserv: $("#dsobserv", "#frmNovoLimite").val(),
+            dsobserv: dsobserv,
 			dtconbir: dtconbir,			
 			/** Variáveis globais alimentadas na função validaDadosRating em rating.js **/
             //bruno - prj 438 - sprint 7 - tela rating
@@ -939,9 +947,7 @@ function trataGAROPC(cddopcao, nrctrlim) {
 	    $('#frmGAROPC').remove();
 	    abrirTelaGAROPC(cddopcao, nrctrlim);
 	} else {
-	    //bruno - prj 438 - sprint 7 - remover observacao
-	    //lcrShowHideDiv('divDadosObservacoes','divDadosRenda');
-	    abrirRating();
+	    lcrShowHideDiv('divDadosObservacoes','divFormGAROPC');
 	    $('#divRotina').css({'display':'block'});
 	    bloqueiaFundo($('#divRotina'));
 	}
@@ -1066,6 +1072,7 @@ function controlaLayout(cddopcao) {
         // PRJ 438 - Sprint 7 - No momento o campo Nivel de Risco sempre estará desabilitado
         $('#nivrisco', '#' + nomeForm + ' .fsLimiteCredito').desabilitaCampo();
         $('#dsdtxfix', '#' + nomeForm + ' .fsLimiteCredito').desabilitaCampo();
+        $('#nrctrlim', '#' + nomeForm).desabilitaCampo(); // PJ470 - Mout's - Desabilitar campo de contrato
 
 	} else {
 		cTodosLimite.desabilitaCampo();
@@ -1869,6 +1876,8 @@ function alterarNovoLimite() {
     var dtnasct2 = (typeof aux_dtnasct1 == 'undefined') ? '' : aux_dtnasct1;
 	var vlrecjg2 = (typeof aux_vlrecjg1 == 'undefined') ? '' : aux_vlrecjg1;
 
+	var dsobserv = removeAcento($("#dsobserv", "#frmNovoLimite").val());
+
     var dataAlterar = {
 		nrdconta: nrdconta,
         nrctrlim: $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, ""),
@@ -1880,7 +1889,7 @@ function alterarNovoLimite() {
         vloutras: $("#vloutras", "#frmNovoLimite").val().replace(/\./g, ""),
         vlalugue: $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, ""),
         inconcje: ($("#inconcje_1", "#frmNovoLimite").prop('checked')) ? 1 : 0,
-        dsobserv: $("#dsobserv", "#frmNovoLimite").val(),
+            dsobserv: dsobserv,
 		dtconbir: dtconbir,			
 		/** Variáveis globais alimentadas na função validaDadosRating em rating.js **/
         // bruno - prj 438 - sprint 7 - tela rating
@@ -2519,6 +2528,29 @@ function AlteraNrContrato() {
 function validaAdesaoValorProduto(executar, vllimite) {
 	
     var vllimite = vllimite != null ? vllimite : $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
+	
+	// PJ470 - Mout's - buscar o nro do contrato via ajax
+    var verifica_contrato = $("#nrctrlim","#frmNovoLimite").val().replace(/\./g, "");;
+
+    if (verifica_contrato == null || verifica_contrato == 0) {
+    
+	$.ajax({
+		type: "POST", 
+		url: UrlSite + "telas/atenda/limite_credito/obtem_nro_contrato.php",
+		data: {
+			nrdconta: nrdconta
+		},	
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel retornar o n&uacute;mero do contrato.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			$("#nrctrlim", "#frmNovoLimite").val(response);
+			var_globais.nrctrlim = response;			
+			nrctrlim = response;			
+		}				
+	}); // fim PJ470
+    }
 	
 	$.ajax({
 		type: 'POST',
@@ -3231,4 +3263,29 @@ function chamarImpressaoLimiteCredito(flagCancelamento){
         funcaoGeraProtocolo: "acessaOpcaoAba(8,0,'@');"
 	};
 	mostraTelaAutorizacaoContrato(params);
+}		
+ 
+function setarDadosIdcobertAndObservacao(){
+
+	if (aux_cddopcao == 'P') {
+		$("#idcobert", "#frmNovoLimite").val(aux_limites.pausado.idcobope);
+		$("#dsobserv", "#frmNovoLimite").val(aux_limites.pausado.dsobserv);
+	} else if (aux_cddopcao == 'N' && aux_operacao == 'A') {
+		$("#idcobert", "#frmNovoLimite").val(aux_limites.pausado.idcobope);
+		$("#dsobserv", "#frmNovoLimite").val(aux_limites.pausado.dsobserv);
+	} else if (aux_cddopcao == 'A') {
+		$("#idcobert", "#frmNovoLimite").val(aux_limites.ativo.idcobope);
+		$("#dsobserv", "#frmNovoLimite").val(aux_limites.ativo.dsobserv);
+	}
+}
+
+function removeAcento (text){       
+    text = text.toLowerCase();                                                         
+    text = text.replace(new RegExp('[ÁÀÂÃ]','gi'), 'a');
+    text = text.replace(new RegExp('[ÉÈÊ]','gi'), 'e');
+    text = text.replace(new RegExp('[ÍÌÎ]','gi'), 'i');
+    text = text.replace(new RegExp('[ÓÒÔÕ]','gi'), 'o');
+    text = text.replace(new RegExp('[ÚÙÛ]','gi'), 'u');
+    text = text.replace(new RegExp('[Ç]','gi'), 'c');
+    return text;                 
 }

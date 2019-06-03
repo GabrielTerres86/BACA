@@ -625,6 +625,20 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
                                pr_tpcanal_atualizacao IN NUMBER, -- Canal que foi feito a atualizacao (1-Ayllos/2-Caixa/3-Internet/4-Cash/5-Ayllos WEB/6-URA/7-Batch/8-Mensageria/9-Mobile/10-CRM)
                                pr_dscritic OUT VARCHAR2);  -- Retorno de Erro
 
+  -- Rotina para retorno dos Bancos participantes da Portabilidade de Salário  
+	PROCEDURE pc_retorna_instituicao_finan(pr_cdbccxlt 	IN crapban.cdbccxlt%TYPE  
+                                        ,pr_idportab 	IN NUMBER 
+                                        ,pr_dsretxml  OUT xmltype -- XML de retorno CLOB
+                                        ,pr_dscritic  OUT VARCHAR2) ;
+
+  -- Rotina para retorno das listagem dos empregadores do cooperado
+  PROCEDURE pc_retorna_empregador_coop(pr_cdcooper 	IN NUMBER
+                                      ,pr_nrdconta 	IN NUMBER  
+                                      ,pr_idseqttl 	IN NUMBER
+                                      ,pr_nrcpfcgc 	IN NUMBER
+                                      ,pr_dsretxml  OUT xmltype
+                                      ,pr_dscritic  OUT VARCHAR2);
+
   -- Rotina para retorno dos relacionamentos da pessoa
   PROCEDURE pc_retorna_relacionamentos( pr_idpessoa  IN NUMBER   -- Identificador da pessoa
                                        ,pr_tprelacao IN VARCHAR2 -- Filtro para o tipo de relacao
@@ -1150,7 +1164,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                                       pr_cdoperad IN VARCHAR2, -- Codigo do operador
                                       pr_cdagenci IN NUMBER, -- Codigo da agencia
                                       pr_fltoken  IN VARCHAR2 DEFAULT 'S', -- Flag se deve ser alterado o token
-                                      pr_tpcanal_sistema  IN NUMBER DEFAULT 10, -- Sistema que esta solicitando acesso 10-CRM, 13-Ibracred
+                                      pr_tpcanal_sistema  IN NUMBER DEFAULT 10, -- Sistema que esta solicitando acesso 10-CRM, 13 - Ibracred
                                       pr_dstoken  OUT VARCHAR2, -- Token de retorno nos casos de sucesso na validacao
                                       pr_dscritic OUT VARCHAR2) IS  -- Retorno de Erro
     /* ..........................................................................
@@ -1168,6 +1182,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 		--               a partir do sistema de CRM
     --
     --  Alteração : 16/05/2019 - 508.1 - Atualização cadastral - Cassia - GFT
+	--              27/05/2019 - PJ438 - Alterações devido chamada via Ibratan - Paulo Martins
     --
     --
     -- ..........................................................................*/
@@ -1196,6 +1211,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 		vr_dscritic VARCHAR2(4000);
 
   BEGIN
+   
+    -- Buscar registro do PA
+		OPEN cr_crapage;
+		FETCH cr_crapage INTO rw_crapage;
+
+		-- Se não encontrou PA
+		IF cr_crapage%NOTFOUND THEN
+			-- Fechar cursor
+			CLOSE cr_crapage;
+			-- Gerar crítica
+			vr_cdcritic := 962;
+			vr_dscritic := '';
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+		END IF;
+		-- Fechar cursor
+		CLOSE cr_crapage;
+
+    if pr_tpcanal_sistema = 13 then /*Ibratan Tela Unica PRJ438*/
+      tela_analise_credito.pc_gera_token_ibratan(pr_cdcooper => pr_cdcooper, 
+                                                 pr_cdagenci => pr_cdagenci,
+                                                 pr_cdoperad => pr_cdoperad,
+                                                 pr_dstoken =>  pr_dstoken,
+                                                 pr_cdcritic => vr_cdcritic,
+                                                 pr_dscritic => vr_dscritic);
+      if vr_dscritic is not null then
+        RAISE vr_exc_erro;
+      end if;
+                                                 
+    else     
+
+		-- Se PA não possui acesso ao CRM
+    IF rw_crapage.flgutcrm = 0 and pr_tpcanal_sistema = 10 THEN
+			-- Gerar crítica
+			vr_dscritic := 'PA não está habilitado para acessar o sistema CRM.';
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+
+    ELSIF rw_crapage.flgutcrm IN (1,2) or pr_tpcanal_sistema <> 10 THEN -- PA está habilitado para acessar o CRM
 			-- Buscar registro do operador
 			OPEN cr_crapope;
 			FETCH cr_crapope INTO rw_crapope;
@@ -1239,32 +1293,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
           pr_dstoken := rw_crapope.cddsenha;
         END IF;
 			END IF;
-  
-    -- Buscar registro do PA
-    OPEN cr_crapage;
-    FETCH cr_crapage INTO rw_crapage;
-
-    -- Se não encontrou PA
-    IF cr_crapage%NOTFOUND THEN
-      -- Fechar cursor
-      CLOSE cr_crapage;
-      -- Gerar crítica
-      vr_cdcritic := 962;
-      vr_dscritic := '';
-      -- Levantar exceção
-      RAISE vr_exc_erro;
 		END IF;
-    -- Fechar cursor
-    CLOSE cr_crapage;
 
-    -- Se PA não possui acesso ao CRM
-   IF (rw_crapage.flgutcrm = 0 AND rw_crapope.flgutcrm=3) THEN
-      -- Gerar crítica
-      vr_dscritic := 'PA não está habilitado para acessar o sistema CRM.';
-      -- Levantar exceção
-      RAISE vr_exc_erro;
-   END IF;
-
+    end if;
   EXCEPTION
 		WHEN vr_exc_erro THEN
 			-- Se possui código da crítica
@@ -5743,7 +5774,191 @@ PROCEDURE pc_retorna_cep(pr_cdcep              IN NUMBER -- Registro de cep
                      ' OPERA:'||pr_cdoperadaprov||' - '||
                      SQLERRM;
   END pc_cadast_aprov_saque_cotas;
-  
+  --
+  PROCEDURE pc_retorna_instituicao_finan(pr_cdbccxlt  IN crapban.cdbccxlt%TYPE  --Código do banco 
+                                        ,pr_idportab  IN NUMBER -- Indicador de Portabilidade
+                                        ,pr_dsretxml  OUT xmltype -- XML de retorno CLOB
+                                        ,pr_dscritic  OUT VARCHAR2) is
+ /* ---------------------------------------------------------------------------------------------------------------
+
+    Programa : pc_retorna_instituicao_finan
+    Sistema  : Conta-Corrente - Cooperativa de Credito  
+    Sigla    : CADA
+    Autor    : Gilberto - Supero
+    Data     : Fevereiro/2019.
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo  : Rotinas Retornar o retorno dos Bancos participantes da Portabilidade de Salário
+    Alteracoes:
+
+  ---------------------------------------------------------------------------------------------------------------*/
+  -- Cursor para buscar os Bancos
+    CURSOR cr_banco IS
+       SELECT c.cdbccxlt cdbanco
+                 ,UPPER(TRIM(c.nmextbcc))  dsbanco
+                 ,c.nrispbif nrispbif
+                 ,c.nrcnpjif nrcnpjif
+                 ,ROWNUM - 1 seq
+              FROM cecred.crapban c
+             WHERE (c.cdbccxlt = 1 or c.nrispbif > 0 )
+               AND c.cdbccxlt = decode(nvl(pr_cdbccxlt,0),0,c.cdbccxlt,pr_cdbccxlt)
+               AND (c.nrcnpjif > 0 and NVL(pr_idportab,0) = 1)
+           UNION  
+         SELECT c.cdbccxlt cdbanco
+               ,UPPER(TRIM(c.nmextbcc))  dsbanco
+               ,c.nrispbif nrispbif
+               ,c.nrcnpjif nrcnpjif
+               ,ROWNUM - 1 seq
+            FROM cecred.crapban c
+           WHERE (c.cdbccxlt = 1 or c.nrispbif > 0 )
+             AND  c.cdbccxlt = decode(nvl(pr_cdbccxlt,0),0,c.cdbccxlt,pr_cdbccxlt)
+             AND NVL(pr_idportab,0) <> 1 
+           order by 1;
+
+   rw_banco cr_banco%ROWTYPE;
+
+  -- Tratamento de erros
+  vr_exc_saida EXCEPTION;
+  -- Variaveis gerais
+  vr_clob     CLOB;
+  vr_xml_temp VARCHAR2(32767);
+
+  BEGIN
+    -- Criar documento XML
+    dbms_lob.createtemporary(vr_clob, TRUE); 
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite); 
+    -- Insere o cabeçalho do XML 
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob 
+                           ,pr_texto_completo => vr_xml_temp 
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>'); 
+    ---                       
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob 
+                           ,pr_texto_completo => vr_xml_temp 
+                           ,pr_texto_novo     => '<bancos>');
+    -- Loop sobre a tabela de pessoas
+    FOR rw_banco IN cr_banco LOOP
+        -- Montar XML com registros do texto
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '<banco>'
+                                                   ||'<cdbanco>'||rw_banco.cdbanco||'</cdbanco>'
+                                                   ||'<dsbanco>'||rw_banco.dsbanco||'</dsbanco>'
+                                                   ||'<nrispbif>'||rw_banco.nrispbif||'</nrispbif>'
+                                                   ||'<nrcnpjif>'||rw_banco.nrcnpjif||'</nrcnpjif>'
+                                                   ||'</banco>'
+                                                    );
+    END LOOP;
+    -- Encerrar a tag raiz 
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob 
+                           ,pr_texto_completo => vr_xml_temp 
+                           ,pr_texto_novo     => '</bancos>');
+                                                          
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob 
+                           ,pr_texto_completo => vr_xml_temp 
+                           ,pr_texto_novo     => '</root>' 
+                           ,pr_fecha_xml      => TRUE);
+    -- Converte para XML
+
+ 
+   pr_dsretxml := xmltype(vr_clob);
+   
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Falha ao listar Bancos. Dúvidas entrar em contato com o SAC pelo telefone 0800 647 2200. ';
+  END pc_retorna_instituicao_finan;
+  --
+  PROCEDURE pc_retorna_empregador_coop(pr_cdcooper 	IN NUMBER
+                                      ,pr_nrdconta 	IN NUMBER  
+                                      ,pr_idseqttl 	IN NUMBER
+                                      ,pr_nrcpfcgc 	IN NUMBER
+                                      ,pr_dsretxml  OUT xmltype
+                                      ,pr_dscritic  OUT VARCHAR2) is
+ /* ---------------------------------------------------------------------------------------------------------------
+    Programa : pc_retorna_empregador_coop
+    Sistema  : Conta-Corrente - Cooperativa de Credito  
+    Sigla    : CADA
+    Autor    : Gilberto - Supero
+    Data     : Março/2019.
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo  : Listar Empregador – Buscar a listagem dos empregadores do cooperado
+    Alteracoes:
+
+  ---------------------------------------------------------------------------------------------------------------*/
+  -- Cursor para buscar os Empregadores
+    CURSOR cr_emprega IS
+      SELECT t.nrdconta
+           , t.idseqttl
+           , 2          inpessoa -- PJ - Fixo
+           , t.nrcpfemp nrdocemp
+           , t.nmextemp nmempreg
+           , t.dsproftl dsfuncao
+           , to_char(t.dtadmemp,'DD/MM/RRRR') dtadmiss
+        FROM crapttl t
+       WHERE t.cdcooper    = pr_cdcooper
+         AND t.nrdconta    = NVL(pr_nrdconta, t.nrdconta)
+         AND ((t.idseqttl  = NVL(pr_idseqttl, t.idseqttl) AND pr_nrdconta IS NOT NULL) 
+                OR pr_idseqttl IS NULL)
+         AND t.nrcpfcgc    = NVL(pr_nrcpfcgc, t.nrcpfcgc);
+
+  rw_emprega cr_emprega%ROWTYPE;
+  -- Tratamento de erros
+  vr_exc_saida EXCEPTION;
+  -- Variaveis gerais
+  vr_clob     CLOB;
+  vr_xml_temp VARCHAR2(32767);
+
+  BEGIN
+    -- Criar documento XML
+    dbms_lob.createtemporary(vr_clob, TRUE); 
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite); 
+    -- Insere o cabeçalho do XML 
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob 
+                           ,pr_texto_completo => vr_xml_temp 
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>'); 
+    ---                       
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob 
+                           ,pr_texto_completo => vr_xml_temp 
+                           ,pr_texto_novo     => '<empregadores>');
+    -- Loop sobre a tabela de pessoas
+    FOR rw_emprega IN cr_emprega LOOP
+        -- Montar XML com registros do texto
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob 
+                               ,pr_texto_completo => vr_xml_temp 
+                               ,pr_texto_novo     => '<empregador>'
+                                ||'<nrdconta>'||rw_emprega.nrdconta ||'</nrdconta>'
+                                ||'<idseqttl>'||rw_emprega.idseqttl ||'</idseqttl>'
+                                ||'<inpessoa>'||rw_emprega.inpessoa ||'</inpessoa>'
+                                ||'<nrdocemp>'||rw_emprega.nrdocemp ||'</nrdocemp>'
+                                ||'<nmempreg>'||rw_emprega.nmempreg ||'</nmempreg>'
+                                ||'<dsfuncao>'||rw_emprega.dsfuncao ||'</dsfuncao>'
+                                ||'<dtadmiss>'||rw_emprega.dtadmiss ||'</dtadmiss>'
+                                ||'</empregador>');
+    END LOOP;
+    -- Encerrar a tag raiz 
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob 
+                           ,pr_texto_completo => vr_xml_temp 
+                           ,pr_texto_novo     => '</empregadores>');
+                                                          
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob 
+                           ,pr_texto_completo => vr_xml_temp 
+                           ,pr_texto_novo     => '</root>' 
+                           ,pr_fecha_xml      => TRUE);
+    -- Converte para XML
+
+   pr_dsretxml := xmltype(vr_clob);
+   
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Falha ao listar Empregador. Dúvidas entrar em contato com o SAC pelo telefone 0800 647 2200. ';
+  END pc_retorna_empregador_coop;
+  --
   -- Rotina para retorno dos relacionamentos da pessoa
   PROCEDURE pc_retorna_relacionamentos( pr_idpessoa  IN NUMBER   -- Identificador da pessoa
                                        ,pr_tprelacao IN VARCHAR2 -- Filtro para o tipo de relacao

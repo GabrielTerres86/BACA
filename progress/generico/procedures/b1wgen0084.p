@@ -323,8 +323,8 @@
                            
               31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts         
 
-              19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)              
-                           
+              19/10/2018 - P442 - Inclusao de opcao OUTROS VEICULOS onde ha procura por CAMINHAO (Marcos-Envolti)     
+			  
 			  13/12/2018 - P442 - Ao checar Chassi alienado em outros contratos, descartar refinanciamentos (Marcos-Envolti)         
                            
 			  03/01/2019 - Ajuste na gravação do IOF do emprestimo (INC0029419) Daniel			
@@ -2757,7 +2757,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
                            AND crapbpr.nrdconta = par_nrdconta
                            AND crapbpr.nrctrpro = par_nrctremp
                            AND crapbpr.flgalien = TRUE
-                           AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,OUTROS VEICULOS",crapbpr.dscatbem)
+                               AND CAN-DO("AUTOMOVEL,MOTO,CAMINHAO,OUTROS VEICULOS",crapbpr.dscatbem)
                            NO-LOCK:
             FOR EACH crapepr WHERE crapepr.cdcooper = crapbpr.cdcooper
                                AND crapepr.nrdconta = crapbpr.nrdconta
@@ -2793,11 +2793,11 @@ PROCEDURE valida_dados_efetivacao_proposta:
                                    INPUT-OUTPUT aux_dscritic).
             
                     RETURN "NOK".
-                END.
+    END.
             END.
         END.
     END.
-            END.
+      END.
 
            
 
@@ -4143,7 +4143,7 @@ PROCEDURE grava_efetivacao_proposta:
                                 tt-erro.dscritic = aux_dscritic.
                            UNDO EFETIVACAO , LEAVE EFETIVACAO.
                         END.
-
+         
                   END. /* NOT CAN-FIND */
 
           END. /* crawepr.tpemprst = 1 */
@@ -4311,8 +4311,8 @@ PROCEDURE grava_efetivacao_proposta:
        ELSE 
            ASSIGN aux_dtrisref = ?.
        /***********************/
-          
-       
+         
+                    
 
        /* Acionar rotina que gera a qualificacao da operacao */
        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -4798,6 +4798,7 @@ PROCEDURE grava_efetivacao_proposta:
                              INPUT crawepr.idfiniof, /* */
                              INPUT aux_dsctrliq, /* Contratos Liquidados */
                              INPUT "S", /* Gravar */
+							 INPUT crawepr.dtcarenc, /* Data de carencia*/
                             OUTPUT 0,
                             OUTPUT 0,
                             OUTPUT 0,
@@ -4824,7 +4825,7 @@ PROCEDURE grava_efetivacao_proposta:
 
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
            END.
-       
+         
         /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
         IF crapass.inpessoa = 1 THEN
         DO:
@@ -4855,8 +4856,8 @@ PROCEDURE grava_efetivacao_proposta:
               CREATE tt-erro.
               ASSIGN tt-erro.cdcritic = aux_cdcritic
                      tt-erro.dscritic = aux_dscritic.
-            UNDO EFETIVACAO, LEAVE EFETIVACAO.
-        END.
+               UNDO EFETIVACAO, LEAVE EFETIVACAO.
+           END.
         END.
        
        ASSIGN aux_flgtrans = TRUE.

@@ -309,7 +309,7 @@ if ($flgTitular && empty($desabilitaOpcoesDebito)) {
                 <div id="divBotoes" >
 				
                     <input class="btnVoltar" id="backChoose" type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(0, 1, 4); return false;" />
-                    <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao('M'); return false;" />
+                    <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao('C'); return false;" />
 
                 
 					<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 

@@ -146,7 +146,7 @@ IF  RETURN-VALUE = "NOK"  THEN
             aux_dscritic = tt-erro.dscritic.
         ELSE
             aux_dscritic = "Nao foi possivel carregar extrato da " +
-                           "poupanca programada.".
+                           "aplicacao programada.".
             
         xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
         

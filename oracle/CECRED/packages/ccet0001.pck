@@ -191,6 +191,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCET0001 IS
                                       ,pr_idfiniof  IN crapepr.idfiniof%TYPE -- Indicador de financiamento do IOF e tarifa
                                       ,pr_dsctrliq  IN VARCHAR2 DEFAULT NULL -- Numeros dos contratos de liquidacao
                                       ,pr_idgravar  IN VARCHAR2 DEFAULT 'N'   -- Indicador de gravação ou não na tabela de calculo
+																			,pr_dtcarenc  IN crawepr.dtcarenc%TYPE DEFAULT NULL -- Data de carencia
                                       ,pr_txcetano OUT NUMBER                -- Taxa cet ano
                                       ,pr_txcetmes OUT NUMBER                -- Taxa cet mes 
                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -233,6 +234,9 @@ create or replace package body cecred.CCET0001 is
   --
   --              05/10/2017 - Correcao no calculo realizado para o valor da tarifa do CET, quando a proposta ainda nao esta
   --                           efetivada. Heitor (Mouts) - Chamado 746478.
+  --
+  --              17/04/2019 - PRJ298.2 - Alteracao do calculo do CET para o POS (Supero - Nagasava)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   pr_cdcritic NUMBER;
@@ -2868,6 +2872,7 @@ create or replace package body cecred.CCET0001 is
                                       ,pr_idfiniof  IN crapepr.idfiniof%TYPE -- Indicador de financiamento do IOF e tarifa
                                       ,pr_dsctrliq  IN VARCHAR2 DEFAULT NULL -- Numeros dos contratos de liquidacao
                                       ,pr_idgravar  IN VARCHAR2 DEFAULT 'N'  -- Indicador de gravação ou não na tabela de calculo
+																			,pr_dtcarenc  IN crawepr.dtcarenc%TYPE DEFAULT NULL -- Data de carencia
                                       ,pr_txcetano OUT NUMBER                -- Taxa cet ano
                                       ,pr_txcetmes OUT NUMBER                -- Taxa cet mes 
                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -2895,6 +2900,7 @@ create or replace package body cecred.CCET0001 is
               
               12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
 
+              17/04/2019 - PRJ298.2 - Alteracao do calculo do CET para o POS (Supero - Nagasava)
   ............................................................................. */
     DECLARE
       vr_vlpreemp NUMBER;                -- Valor da parcela
@@ -3089,7 +3095,7 @@ create or replace package body cecred.CCET0001 is
                                  ,pr_dtdpagto        => pr_dtdpagto
                                  ,pr_dtlibera        => pr_dtlibera
                                  ,pr_tpemprst        => pr_tpemprst
-                                 ,pr_dtcarenc        => rw_dados.dtcarenc
+                                    ,pr_dtcarenc        => nvl(pr_dtcarenc, rw_dados.dtcarenc)
                                  ,pr_qtdias_carencia => vr_qtdias_carencia
                                  ,pr_dscatbem        => pr_dscatbem
                                  ,pr_idfiniof        => pr_idfiniof
@@ -3194,55 +3200,8 @@ create or replace package body cecred.CCET0001 is
         
       END IF;                                      
       
-      -- Se for Pos-Fixado
-      IF pr_tpemprst = 2 THEN
-        vr_vltotdiv := 0;
-        --> buscar Valor total da divida
-        OPEN cr_crappep_vldivida 
-                        (pr_cdcooper => pr_cdcooper 
-                        ,pr_nrdconta => pr_nrdconta
-                        ,pr_nrctremp => pr_nrctremp);
-        FETCH cr_crappep_vldivida INTO vr_vltotdiv;
-        IF cr_crappep_vldivida%NOTFOUND THEN 
-          CLOSE cr_crappep_vldivida;
-          vr_vltotdiv := 0;
-          vr_dscritic := 'Parcela de emprestimo nao encontrada.';
-          RAISE vr_exc_erro;
-        ELSE
-          CLOSE cr_crappep_vldivida;          
-        END IF;  
-        
-        --Concatena as liquidacoes
-        vr_dsctrliq := NVL(pr_dsctrliq, '0');
-        
-        IF pr_idfiniof > 0 THEN
-           vr_vlfinanc := (pr_vlemprst + nvl(vr_vlrdoiof,0) + nvl(vr_vlrtarif ,0));
-        ELSE
-          vr_vlfinanc := pr_vlemprst;
-        END IF;
-
-        -- Chama o calculo da parcela
-        EMPR0011.pc_busca_prest_principal_pos(pr_cdcooper        => pr_cdcooper
-                                             ,pr_dtefetiv        => rw_dados.dtmvtolt
-                                             ,pr_dtcalcul        => (CASE WHEN rw_dados.dtmvtolt IS NULL THEN pr_dtmvtolt ELSE rw_dados.dtmvtolt END)
-                                             ,pr_cdlcremp        => pr_cdlcremp
-                                             ,pr_dtcarenc        => rw_dados.dtcarenc
-                                             ,pr_dtdpagto        => pr_dtdpagto
-                                             ,pr_qtpreemp        => pr_qtpreemp
-                                             ,pr_vlemprst        => vr_vlfinanc
-                                             ,pr_qtdias_carencia => vr_qtdias_carencia
-                                             ,pr_vlpreemp        => vr_vlpreemp
-                                             ,pr_vljurcor        => vr_vljurcor
-                                             ,pr_cdcritic        => vr_cdcritic
-                                             ,pr_dscritic        => vr_dscritic);
-        -- Se retornou erro
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-      ELSE
         -- Valor total da divida
         vr_vltotdiv := round(nvl(pr_qtpreemp,0) * nvl(vr_vlpreemp,0),2);
-      END IF;
       
       -- Se financia IOF no emprestimo
       IF pr_idfiniof = 1 THEN

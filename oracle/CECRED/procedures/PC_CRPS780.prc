@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao: 
+  Data    : Abril/2017.                    Ultima atualizacao: 09/01/2019
 
   Dados referentes ao programa:
 
@@ -27,6 +27,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
                            Exclusão da implementação referente a transferência de 
                            conta corrente conforme solicitação SM 6 - M324
                            (Rafael Monteiro - Mout'S).
+							09/01/2019 - PRJ298.2.2 - Inclusao da Transferencia para prejuizo para o Pos - Nagasava (Supero)
     ............................................................................. */
 
    vl_flgprocesso integer := 3; -- para efeito de testes 1--gera só emprestimos; 2--gera so cc; 3--ambos
@@ -62,7 +63,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
          AND epr.cdcooper = ris.cdcooper
          AND epr.nrdconta = ris.nrdconta
          AND epr.nrctremp = ris.nrctremp
-         AND epr.tpemprst IN (0,1)
+         AND epr.tpemprst IN (0,1,2) -- 0 - TR / 1 - PP / 2 - Pos
          AND epr.inprejuz = 0
          AND epr.inliquid = 0
          AND ris.innivris IN (9,10) -- risco H
@@ -70,9 +71,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
          AND ris.inddocto = 1
          AND (TRUNC(dat.dtmvtolt) - TRUNC(ris.dtdrisco)) > 179
          --AND ris.qtdiaatr > 179
-         AND DECODE(epr.tpemprst,1,PREJ0002.fn_dias_atraso_emp(epr.cdcooper,
+         AND DECODE(epr.tpemprst,0,ris.qtdiaatr,PREJ0002.fn_dias_atraso_emp(epr.cdcooper,
                                                    epr.nrdconta,
-                                                   epr.nrctremp),ris.qtdiaatr) > 179
+																																					  epr.nrctremp)) > 179
          AND ris.dttrfprj IS NOT NULL
          AND ris.dttrfprj <= dat.dtmvtolt -- data atual
          AND ris.dtrefere = dat.dtmvtoan -- dia de ontem
@@ -196,7 +197,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
               -- Confirmar a transferencia quando sem erro ou confirmar o log na base caso com erro
               COMMIT;            
             -- 
-            ELSE /* emprestimo TR */
+            ELSIF rw_busca_epr.tpemprst = 0 THEN /* emprestimo TR */
               -- Transferir TR
               PREJ0001.pc_transfere_epr_prejuizo_TR(pr_cdcooper => rw_busca_cooper.cdcooper
                                                    ,pr_cdagenci => rw_busca_epr.cdagenci
@@ -236,6 +237,47 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
             
               -- Confirmar a transferencia quando sem erro ou confirmar o log na base caso com erro
               COMMIT;            
+						ELSIF rw_busca_epr.tpemprst = 2 THEN -- Pos
+							-- Transferir Pos
+              PREJ0001.pc_transfere_epr_prejuizo_pos(pr_cdcooper => rw_busca_cooper.cdcooper
+                                                   ,pr_cdagenci => rw_busca_epr.cdagenci
+                                                   ,pr_nrdcaixa => 0
+                                                   ,pr_cdoperad => '1'
+                                                   ,pr_nrdconta => rw_busca_epr.nrdconta
+                                                   ,pr_idseqttl => 1
+                                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                   ,pr_nrctremp => rw_busca_epr.nrctremp
+                                                   ,pr_des_reto => vr_des_reto --> Retorno OK / NOK
+                                                   ,pr_tab_erro => vr_tab_erro
+																									 ); -- TO DO: Revisar os parametros
+   
+              IF vr_des_reto <> 'OK' THEN
+                IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+                  vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+                  vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+                ELSE
+                  vr_cdcritic := 0;
+                  vr_dscritic := 'Não foi possivel Transferir contrato PP . Conta:'||to_char(rw_busca_epr.nrdconta)
+                                 ||' Contrato: '|| to_char(rw_busca_epr.nrctremp);
+                END IF; 
+                -- Gerar LOG
+                gene0001.pc_gera_log(pr_cdcooper => rw_busca_cooper.cdcooper
+                                    ,pr_cdoperad => '1'
+                                    ,pr_dscritic => vr_dscritic
+                                    ,pr_dsorigem => 'AIMARO'
+                                    ,pr_dstransa => 'Falha Transf Prejuizo PP'
+                                    ,pr_dttransa => trunc(sysdate)
+                                    ,pr_flgtrans => 1
+                                    ,pr_hrtransa => to_number(to_char(sysdate,'HH24MISS'))
+                                    ,pr_idseqttl => 1
+                                    ,pr_nmdatela => 'CRPS780'
+                                    ,pr_nrdconta => rw_busca_epr.nrdconta
+                                    ,pr_nrdrowid => vr_nrdrowid);
+
+              END IF;
+							-- Confirmar a transferencia quando sem erro ou confirmar o log na base caso com erro
+              COMMIT;
+							--										 
             END IF;
           END LOOP;
         END IF; -- VALIDAR SE A COOP PODE TER TRANSFERENCIA

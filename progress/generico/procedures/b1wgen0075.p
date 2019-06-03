@@ -1334,6 +1334,86 @@ PROCEDURE Grava_Dados:
                UNDO Grava, LEAVE Grava.
             END.
 
+        IF  crapass.inpessoa = 1 THEN
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                /* Efetuar a chamada a rotina Oracle */
+                RUN STORED-PROCEDURE pc_retorna_IdPessoa
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.nrcpfcgc            
+                                                    ,OUTPUT 0 
+                                                    ,OUTPUT "").               /* Descrição da crítica*/
+                /* Fechar o procedimento para buscarmos o resultado */  
+                CLOSE STORED-PROC pc_retorna_IdPessoa
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                ASSIGN aux_dscritic = pc_retorna_IdPessoa.pr_dscritic
+                                  WHEN pc_retorna_IdPessoa.pr_dscritic <> ?.
+                /* Se retornou erro */
+                IF aux_dscritic <> "" THEN 
+                  DO:
+                      RUN gera_erro (INPUT par_cdcooper,
+                                     INPUT par_cdagenci,
+                                     INPUT par_nrdcaixa,
+                                     INPUT 1, /** Sequencia **/
+                                     INPUT 0,
+                                     INPUT-OUTPUT aux_dscritic).
+                  END.
+
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                /* Efetuar a chamada a rotina Oracle */
+                RUN STORED-PROCEDURE pc_confirma_pessoa_renda
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                    ,INPUT pc_retorna_IdPessoa.pr_idpessoa
+                                                    ,INPUT 1                /*Numero sequecial do endereço*/
+                                                    ,INPUT 1                /*Situacao: 1 - Ativo/ 2 - Rejeitado*/
+                                                    ,INPUT 3                /*Canal que efetuou a atualização*/
+                                                    ,OUTPUT "").            /* Descrição da crítica*/
+                /* Fechar o procedimento para buscarmos o resultado */  
+                CLOSE STORED-PROC pc_confirma_pessoa_renda
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+                ASSIGN aux_dscritic = pc_confirma_pessoa_renda.pr_dscritic
+                                  WHEN pc_confirma_pessoa_renda.pr_dscritic <> ?.
+                /* Se retornou erro */
+                IF aux_dscritic <> "" THEN 
+                  DO:
+                      RUN gera_erro (INPUT par_cdcooper,
+                                     INPUT par_cdagenci,
+                                     INPUT par_nrdcaixa,
+                                     INPUT 1, /** Sequencia **/
+                                     INPUT 0,
+                                     INPUT-OUTPUT aux_dscritic).
+                  END.
+
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                /* Efetuar a chamada a rotina Oracle */
+                RUN STORED-PROCEDURE pc_confirma_pessoa_empresa
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                    ,INPUT pc_retorna_IdPessoa.pr_idpessoa
+                                                    ,INPUT 1                /*Numero sequecial do endereço*/
+                                                    ,INPUT 1                /*Situacao: 1 - Ativo/ 2 - Rejeitado*/
+                                                    ,INPUT 3                /*Canal que efetuou a atualização*/
+                                                    ,OUTPUT "").            /* Descrição da crítica*/
+                /* Fechar o procedimento para buscarmos o resultado */  
+                CLOSE STORED-PROC pc_confirma_pessoa_empresa
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+                ASSIGN aux_dscritic = pc_confirma_pessoa_empresa.pr_dscritic
+                                  WHEN pc_confirma_pessoa_empresa.pr_dscritic <> ?.
+                /* Se retornou erro */
+                IF aux_dscritic <> "" THEN 
+                  DO:
+                      RUN gera_erro (INPUT par_cdcooper,
+                                     INPUT par_cdagenci,
+                                     INPUT par_nrdcaixa,
+                                     INPUT 1, /** Sequencia **/
+                                     INPUT 0,
+                                     INPUT-OUTPUT aux_dscritic).
+                  END.
+            END.
+
         /* Se nao for politicamente exposto, excluir tabela 
         tbcadast_politico_exposto */
         IF par_inpolexp <> 1 THEN

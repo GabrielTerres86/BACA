@@ -8,6 +8,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB096 IS
     ,pzbxavct       crapprm.dsvlrprm%TYPE
     ,vlrminpp       crapprm.dsvlrprm%TYPE
     ,vlrmintr       crapprm.dsvlrprm%TYPE
+    ,vlrminpos      crapprm.dsvlrprm%TYPE
     ,dslinha1       crapprm.dsvlrprm%TYPE
     ,dslinha2       crapprm.dsvlrprm%TYPE
     ,dslinha3       crapprm.dsvlrprm%TYPE
@@ -26,6 +27,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB096 IS
                             ,pr_prazobxa IN crapprm.dsvlrprm%TYPE --> Prazo de baixa para o boleto após vencimento: xx dias út(il/eis)
                             ,pr_vlrminpp IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – PP
                             ,pr_vlrmintr IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – TR
+                            ,pr_vlrminpos IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – POS
                             ,pr_dslinha1 IN crapprm.dsvlrprm%TYPE --> Instruções: Linha 1
                             ,pr_dslinha2 IN crapprm.dsvlrprm%TYPE --> Instruções: Linha 2
                             ,pr_dslinha3 IN crapprm.dsvlrprm%TYPE --> Instruções: Linha 3
@@ -63,6 +65,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB096 IS
                             ,pr_prazobxa IN crapprm.dsvlrprm%TYPE --> Prazo de baixa para o boleto após vencimento: xx dias út(il/eis)
                             ,pr_vlrminpp IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – PP
                             ,pr_vlrmintr IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – TR
+                            ,pr_vlrminpos IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – POS
                             ,pr_dslinha1 IN crapprm.dsvlrprm%TYPE --> Instruções: Linha 1
                             ,pr_dslinha2 IN crapprm.dsvlrprm%TYPE --> Instruções: Linha 2
                             ,pr_dslinha3 IN crapprm.dsvlrprm%TYPE --> Instruções: Linha 3
@@ -120,6 +123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB096 IS
     txt_prz_bx_vencto     VARCHAR2(30);
     txt_vlr_min_pp        VARCHAR2(30);
     txt_vlr_min_tr        VARCHAR2(30);
+    txt_vlr_min_pos       VARCHAR2(30);
     txt_instr_linha_1     VARCHAR2(30);
     txt_instr_linha_2     VARCHAR2(30);
     txt_instr_linha_3     VARCHAR2(30);
@@ -297,6 +301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB096 IS
       txt_prz_bx_vencto   := 'COBEMP_PRZ_BX_VENCTO';
       txt_vlr_min_pp      := 'COBEMP_VLR_MIN_PP';
       txt_vlr_min_tr      := 'COBEMP_VLR_MIN_TR';
+      txt_vlr_min_pos     := 'COBEMP_VLR_MIN_POS';
       txt_instr_linha_1   := 'COBEMP_INSTR_LINHA_1';
       txt_instr_linha_2   := 'COBEMP_INSTR_LINHA_2';
       txt_instr_linha_3   := 'COBEMP_INSTR_LINHA_3';
@@ -348,6 +353,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB096 IS
      IF trim(pr_vlrmintr) IS NOT NULL THEN
        atualiza_parametro(pr_cdacesso => txt_vlr_min_tr
                          ,pr_dsvlrprm => pr_vlrmintr
+                         ,pr_cdoperad => vr_cdoperad);
+    END IF;
+
+    -- Valor mínimo do boleto – POS
+     IF trim(pr_vlrminpos) IS NOT NULL THEN
+       atualiza_parametro(pr_cdacesso => txt_vlr_min_pos
+                         ,pr_dsvlrprm => pr_vlrminpos
                          ,pr_cdoperad => vr_cdoperad);
     END IF;
 
@@ -543,6 +555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB096 IS
       txt_prz_bx_vencto     VARCHAR2(30);
       txt_vlr_min_pp        VARCHAR2(30);
       txt_vlr_min_tr        VARCHAR2(30);
+      txt_vlr_min_pos       VARCHAR2(30);
       txt_instr_linha_1     VARCHAR2(30);
       txt_instr_linha_2     VARCHAR2(30);
       txt_instr_linha_3     VARCHAR2(30);
@@ -577,6 +590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB096 IS
         txt_prz_bx_vencto   := 'COBEMP_PRZ_BX_VENCTO';
         txt_vlr_min_pp      := 'COBEMP_VLR_MIN_PP';
         txt_vlr_min_tr      := 'COBEMP_VLR_MIN_TR';
+        txt_vlr_min_pos     := 'COBEMP_VLR_MIN_POS';
         txt_instr_linha_1   := 'COBEMP_INSTR_LINHA_1';
         txt_instr_linha_2   := 'COBEMP_INSTR_LINHA_2';
         txt_instr_linha_3   := 'COBEMP_INSTR_LINHA_3';
@@ -628,6 +642,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB096 IS
       OPEN cr_crapprm(vr_cdcooper
                      ,txt_vlr_min_tr);
       FETCH cr_crapprm INTO vr_reg_cobemp.vlrmintr;
+      CLOSE cr_crapprm;
+
+      -- Valor mínimo do boleto – POS
+      OPEN cr_crapprm(vr_cdcooper
+                     ,txt_vlr_min_pos);
+      FETCH cr_crapprm INTO vr_reg_cobemp.vlrminpos;
       CLOSE cr_crapprm;
 
       -- Desconto Máximo Contrato Prejuízo
@@ -701,6 +721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB096 IS
 			gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'pzbxavct', pr_tag_cont => vr_reg_cobemp.pzbxavct, pr_des_erro => vr_dscritic);
 			gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'vlrminpp', pr_tag_cont => vr_reg_cobemp.vlrminpp, pr_des_erro => vr_dscritic);
 			gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'vlrmintr', pr_tag_cont => vr_reg_cobemp.vlrmintr, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'vlrminpos', pr_tag_cont => vr_reg_cobemp.vlrminpos, pr_des_erro => vr_dscritic);
 			gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'descprej', pr_tag_cont => vr_reg_cobemp.descprej, pr_des_erro => vr_dscritic);
 			gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'dslinha1', pr_tag_cont => vr_reg_cobemp.dslinha1, pr_des_erro => vr_dscritic);
 			gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'dslinha2', pr_tag_cont => vr_reg_cobemp.dslinha2, pr_des_erro => vr_dscritic);

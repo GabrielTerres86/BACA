@@ -32,6 +32,7 @@ $nrdconta = $_POST['nrdconta'];
 $cdfinemp = $_POST['cdfinemp'];
 $dsctrliq = isset($_POST['dsctrliq']) ? $_POST['dsctrliq'] : '';
 $idfiniof = isset($_POST['idfiniof']) ? $_POST['idfiniof'] : '0';
+$dtcarenc = isset($_POST['dtcarenc']) ? $_POST['dtcarenc'] : '';
 
 $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 
@@ -65,6 +66,7 @@ $xml .= "		<vlpreemp>" . $vlpreemp . "</vlpreemp>";
 $xml .= "		<qtpreemp>" . $qtpreemp . "</qtpreemp>";
 $xml .= "		<dsctrliq>" . $dsctrliq . "</dsctrliq>";
 $xml .= "		<idfiniof>" . $idfiniof . "</idfiniof>";
+$xml .= "		<dtcarenc>" . $dtcarenc . "</dtcarenc>";
 $xml .= "	</Dados>";
 $xml .= "</Root>";
 

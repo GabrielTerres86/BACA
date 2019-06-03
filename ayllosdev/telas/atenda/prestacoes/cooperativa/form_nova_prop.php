@@ -116,6 +116,7 @@
 			<label for="flgNo" class="radio"><? echo utf8ToHtml('Não') ?></label>
 		<br />
 		
+		<div id="linCarencia">
 			<label for="idcarenc"><? echo utf8ToHtml("Carência:") ?></label>
 			<select name="idcarenc" id="idcarenc">
             <?php
@@ -132,11 +133,15 @@
                 }
             ?>
 			</select>
+
+			<label for="vlprecar"> <? echo utf8ToHtml("Valor da Parcela 1ª Carência:") ?> </label>
+			<input name="vlprecar" id="vlprecar" type="text" value="" />
 			<br />
 		
 			<label for="dtcarenc"> <? echo utf8ToHtml("Data Pagto 1ª Carência:") ?> </label>
 			<input name="dtcarenc" id="dtcarenc" type="text" value="" />
 		<br />
+		</div>
 						
 			<label for="dsctrliq"><? echo utf8ToHtml('Liquidações:') ?></label>
 			<input name="dsctrliq" id="dsctrliq" type="text" value="" />

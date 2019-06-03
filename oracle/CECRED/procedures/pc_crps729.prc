@@ -6,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 06/03/2019
+   Data    : Fevereiro/2018                    Ultima atualizacao: 23/05/2019
 
    Dados referentes ao programa:
 
@@ -33,6 +33,14 @@
                 pc_gera_desistencia e cursor cr_craprem foi incluido restrição desses
                 tpocorre. (PRB0041759 - AJFink)
 
+   21/05/2019 - Arquivo de remessa gerado com XML quebrado devido dtdocmto vazio.
+                Na procedcure pc_gera_remessa e cursor cr_craprem foi incluido nvl no
+                dtdocmto. (PRB0041801 - AJFink)
+
+   16/05/2019 - Alterado o campo 49 de I para espaco em branco (INC0012559 - Joao Mannes - Mouts)
+   
+   23/05/2019 - inc0014378 na rotina pc_gera_remessa, fixar o endereço do primeiro titular para evitar
+                duplicidade no envio dos arquivos (Carlos)
   ............................................................................. */
   
   -- Declarações
@@ -352,7 +360,7 @@
                 || ' '                                                                            -- 46 -- Tipo da letra de câmbio -- Exclusivo para protesto de letra de câmbio
                 || rpad(' ', 8, ' ')                                                              -- 47 -- Complemento código de irregularidade -- Uso restrito do serviço de distribuição
                 || ' '                                                                            -- 48 -- Protesto por motivo de falência -- Fixo: vazio
-                || 'I'                                                                            -- 49 -- Instrumento de protesto -- Fixo: I
+                || ' '                                                                            -- 49 -- Instrumento de protesto -- Fixo: Espaço em branco (Era letra I)
                 || lpad('0', 10, '0')                                                             -- 50 -- Valor das demais despesas -- Uso restrito dos cartórios
                 || rpad(' ', 19, ' ')                                                             -- 51 -- Complemento do registro -- Fixo branco
                 || lpad(pr_nrseqarq, 4, '0')                                                      -- 52 -- Número seqüencial do registro no arquivo 
@@ -515,7 +523,7 @@
             ,decode(crapcob.cddespec, 1, 'DMI', 2, 'DSI', '   ') cddespec                                 -- Campo 12 - Transação
             ,rpad(crapcob.dsdoccop, 11, ' ') dsdoccop                                                     -- Campo 13 - Transação
             --,to_char(crapcob.dtemiexp, 'DDMMYYYY') dtemiexp                                               -- Campo 14 - Transação
-            ,to_char(crapcob.dtdocmto, 'DDMMYYYY') dtemiexp                                               -- Campo 14 - Transação
+            ,to_char(nvl(crapcob.dtdocmto,crapcob.dtmvtolt), 'DDMMYYYY') dtemiexp                         -- Campo 14 - Transação --PRB0041801
             ,to_char(crapcob.dtvencto, 'DDMMYYYY') dtvencto                                               -- Campo 15 - Transação
             --,lpad(replace(trim(to_char(crapcob.vltitulo, '999999999990D90')), ',', ''), 14, '0') vltitulo -- Campo 17/18 - Transação
 						,lpad(TRUNC(crapcob.vltitulo * 100), 14, '0') vltitulo                                        -- Campo 17/18 - Transação
@@ -565,6 +573,7 @@
          AND crapenc.cdcooper = crapass.cdcooper
          AND crapenc.nrdconta = crapass.nrdconta
          AND crapenc.tpendass = 9 -- Comercial
+         AND crapenc.idseqttl = 1
          AND crapsab.cdcooper = crapcob.cdcooper
          AND crapsab.nrdconta = crapcob.nrdconta
          AND crapsab.nrinssac = crapcob.nrinssac

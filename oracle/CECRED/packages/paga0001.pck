@@ -3805,6 +3805,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
             IF pr_tab_agendto(vr_index_agendto).dsorigem = 'DEBAUT' THEN
               vr_tab_relato(vr_index_relato).dsorigem := 'DEBITO AUTOMATICO';
+            ELSIF pr_tab_agendto(vr_index_agendto).dsorigem = 'PORTABILIDAD' THEN
+              -- Quando a origem for portabilidade, deve agrupar no relatório 
+              -- como Internet (Renato - Supero - 22/05/2019)
+              vr_tab_relato(vr_index_relato).dsorigem := 'INTERNET';
             ELSE
               vr_tab_relato(vr_index_relato).dsorigem:= pr_tab_agendto(vr_index_agendto).dsorigem;
             END IF;
@@ -14523,7 +14527,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
          RETURN ( vr_n_aprovada > 0 );  
          --/
       END fn_proposta_n_aprovada;
-      
+            
             
     BEGIN
 	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
@@ -26847,7 +26851,7 @@ end;';
       vr_flultexe  INTEGER;
       vr_qtdexec   INTEGER;
       vr_cdispbif  INTEGER;
-            
+      
       vr_idportab     NUMBER;
       vr_nrridlfp     tbted_det_agendamento.nrridlfp%TYPE;
       
@@ -27264,7 +27268,7 @@ end;';
           END IF;
           --Fechar Cursor
           CLOSE cr_crapban;        
-         
+          
           -- Verificar se é um agendamento de portabilidade
           IF rw_craplau.dsorigem = 'PORTABILIDAD' THEN
             vr_idportab := 1;
@@ -27303,7 +27307,7 @@ end;';
             
           ELSE 
             vr_idportab := 0;
-            vr_nrridlfp := NULL;
+            vr_nrridlfp := 0;
             
             -- Fluxo atual
             vr_cti_nrcpfcgc := rw_crapcti.nrcpfcgc;

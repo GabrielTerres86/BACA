@@ -2438,12 +2438,12 @@ BEGIN
       vr_cdusolcr NUMBER := 0;                -- Uso linha de credito
       vr_vlfinanc NUMBER := 0;
       vr_cdfvlcop crapfco.cdfvlcop%TYPE;
-      --
-      vr_info_propri1    varchar2(100);
-      vr_info_propri2    varchar2(100);
-      vr_info_propri3    varchar2(2000);
-      vr_tag_propri_tmp  varchar2(2000);      
-      
+	  -- Variáveis de portabilidade
+      nrcnpjbase_if_origem VARCHAR2(100);
+      nrcontrato_if_origem VARCHAR2(100);
+      nomcredora_if_origem VARCHAR2(100);
+      vr_retxml            xmltype;
+      vr_portabilidade     BOOLEAN := FALSE;
     BEGIN
       -- Abre o cursor com as informacoes da cooperativa
       OPEN  cr_crapcop;
@@ -2682,21 +2682,60 @@ BEGIN
       FETCH cr_interv INTO vr_nminterv;
       CLOSE cr_interv;
 
+      -- Buscar dados de portabilidade
+      CECRED.empr0006.pc_consulta_portabil_crt(pr_cdcooper   => pr_cdcooper
+                                              ,pr_nrdconta   => pr_nrdconta
+                                              ,pr_nrctremp   => pr_nrctremp
+                                              ,pr_tpoperacao => 1
+                                              ,pr_cdcritic   => vr_cdcritic
+                                              ,pr_dscritic   => vr_dscritic
+                                              ,pr_retxml     => vr_retxml);
+                                               
+      IF vr_retxml.existsNode('/Dados/inf/nrcnpjbase_if_origem') > 0 AND
+         vr_retxml.existsNode('/Dados/inf/nrcontrato_if_origem') > 0 THEN
+        vr_portabilidade := TRUE;
+        nrcnpjbase_if_origem := TRIM(vr_retxml.extract('/Dados/inf/nrcnpjbase_if_origem/text()').getstringval());
+        nrcontrato_if_origem := TRIM(vr_retxml.extract('/Dados/inf/nrcontrato_if_origem/text()').getstringval());
+        nomcredora_if_origem := TRIM(vr_retxml.extract('/Dados/inf/nmif_origem/text()').getstringval());
+      ELSE
+        nrcnpjbase_if_origem := '';
+        nrcontrato_if_origem := '';
+        nomcredora_if_origem := '';
+      END IF;
+
       -- MODELO VEICULOS
       IF rw_craplcr.tpctrato = 2 THEN
-        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') || ' PÓS – FIXADO';
-        vr_dsjasper := 'crrl100_2'  || (CASE WHEN TRIM(vr_nminterv) IS NULL THEN '4' ELSE '5' END) || '.jasper';
-        vr_nmarqimp := '/crrl100_2' || (CASE WHEN TRIM(vr_nminterv) IS NULL THEN '4' ELSE '5' END) || '_' || pr_nrdconta || pr_nrctremp || '.pdf';
+        IF vr_portabilidade THEN
+          vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') || ' PÓS – FIXADO<br>PORTABILIDADE DE CRÉDITO';
+          vr_dsjasper := 'crrl100_2'  || (CASE WHEN TRIM(vr_nminterv) IS NULL THEN '4' ELSE '5' END) || '_portab.jasper';
+          vr_nmarqimp := '/crrl100_2' || (CASE WHEN TRIM(vr_nminterv) IS NULL THEN '4' ELSE '5' END) || '_' || pr_nrdconta || pr_nrctremp || '_portab.pdf';
+        ELSE
+          vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') || ' PÓS – FIXADO';
+          vr_dsjasper := 'crrl100_2'  || (CASE WHEN TRIM(vr_nminterv) IS NULL THEN '4' ELSE '5' END) || '.jasper';
+          vr_nmarqimp := '/crrl100_2' || (CASE WHEN TRIM(vr_nminterv) IS NULL THEN '4' ELSE '5' END) || '_' || pr_nrdconta || pr_nrctremp || '.pdf';
+        END IF;
       -- MODELO IMOVEIS
       ELSIF rw_craplcr.tpctrato = 3 THEN
-        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE IMÓVEL No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') || ' PÓS – FIXADO';
-        vr_dsjasper := 'crrl100_2'  || (CASE WHEN TRIM(vr_nminterv) IS NULL THEN '2' ELSE '3' END) || '.jasper';
-        vr_nmarqimp := '/crrl100_2' || (CASE WHEN TRIM(vr_nminterv) IS NULL THEN '2' ELSE '3' END) || '_' || pr_nrdconta || pr_nrctremp || '.pdf';
+        IF vr_portabilidade THEN
+          vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE IMÓVEL No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') || ' PÓS – FIXADO<br>PORTABILIDADE DE CRÉDITO';
+          vr_dsjasper := 'crrl100_2'  || (CASE WHEN TRIM(vr_nminterv) IS NULL THEN '2' ELSE '3' END) || '_portab.jasper';
+          vr_nmarqimp := '/crrl100_2' || (CASE WHEN TRIM(vr_nminterv) IS NULL THEN '2' ELSE '3' END) || '_' || pr_nrdconta || pr_nrctremp || '_portab.pdf';
+        ELSE
+          vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE IMÓVEL No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') || ' PÓS – FIXADO';
+          vr_dsjasper := 'crrl100_2'  || (CASE WHEN TRIM(vr_nminterv) IS NULL THEN '2' ELSE '3' END) || '.jasper';
+          vr_nmarqimp := '/crrl100_2' || (CASE WHEN TRIM(vr_nminterv) IS NULL THEN '2' ELSE '3' END) || '_' || pr_nrdconta || pr_nrctremp || '.pdf';
+        END IF;
       -- MODELO NORMAL
       ELSE
-        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') || ' PÓS – FIXADO';
-        vr_dsjasper := 'crrl100_26.jasper';
-        vr_nmarqimp := '/crrl100_26_' || pr_nrdconta || pr_nrctremp || '.pdf';
+        IF vr_portabilidade THEN
+          vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') || ' PÓS – FIXADO<br>PORTABILIDADE DE CRÉDITO';
+          vr_dsjasper := 'crrl100_26_portab.jasper';
+          vr_nmarqimp := '/crrl100_26_' || pr_nrdconta || pr_nrctremp || '_portab.pdf';
+        ELSE
+          vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') || ' PÓS – FIXADO';
+          vr_dsjasper := 'crrl100_26.jasper';
+          vr_nmarqimp := '/crrl100_26_' || pr_nrdconta || pr_nrctremp || '.pdf';
+        END IF;
       END IF;
 
       -- Caso seja VEICULOS ou IMOVEIS
@@ -2745,18 +2784,6 @@ BEGIN
         gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, '<bens>');
         WHILE vr_des_chave IS NOT NULL LOOP  -- varre temp table de bens
           -- Gera xml para cada bem encontrado
-
-          --Bug 14490
-          vr_tag_propri_tmp := vr_tab_bens(vr_des_chave).proprietario;
-          vr_info_propri1 := Substr(VR_TAG_PROPRI_TMP,1,Instr(Substr(VR_TAG_PROPRI_TMP,1,85),' ', -1));
-          
-          vr_info_propri2 := Substr(vr_tag_propri_tmp,length(vr_info_propri1) + 1,
-                                    Instr(
-                                       Substr(vr_tag_propri_tmp,length(vr_info_propri1) + 1 ,85),
-                                    ' ', -1));
-          
-          vr_info_propri3 := Trim(substr(vr_tag_propri_tmp,length(vr_info_propri2) + length(vr_info_propri1)));
-          --
           
           gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
                                   '<bem>'              ||
@@ -2768,11 +2795,9 @@ BEGIN
                                   '  <cor>'            || vr_tab_bens(vr_des_chave).dscorbem                     	   || '</cor>'            ||
                                   '  <dsbem>'          || 'Descrição do bem: ' || vr_tab_bens(vr_des_chave).dscatbem || ' '                 ||
                                                            vr_tab_bens(vr_des_chave).dsbem                           || '</dsbem>'          ||
-                                  --Bug 14490
-                                  '  <proprietario>'   || vr_info_propri1                                            || '</proprietario>'   ||
-                                  '  <dados_pessoais>' || vr_info_propri2                                            || '</dados_pessoais>' ||
-                                  '  <endereco>'      || vr_info_propri3                                            || '</endereco>'       ||
-                                  --
+                                  '  <proprietario>'   || vr_tab_bens(vr_des_chave).proprietario                     || '</proprietario>'   ||
+                                  '  <dados_pessoais>' || vr_tab_bens(vr_des_chave).dados_pessoais                    || '</dados_pessoais>' ||
+                                  '  <endereco>'       || vr_tab_bens(vr_des_chave).endereco                         || '</endereco>'       ||
                                   '  <conjuge>'        || vr_tab_bens(vr_des_chave).conjuge                          || '</conjuge>'        ||
                                   '  <avaliacao>'      || 'Avaliação: R$ '||to_char(vr_tab_bens(vr_des_chave).avaliacao,'FM999G999G999G990D00') || '</avaliacao>' ||
                                   '</bem>');
@@ -2893,7 +2918,7 @@ BEGIN
                              '<ind_add_item>' || vr_ind_add_item                             || '</ind_add_item>' || -- Indicador se possui terceiro garantidor (0-Nao / 1-Sim)
                              '<ind_add_bem>'  || vr_ind_add_bem                              || '</ind_add_bem>'  || -- Indicador se possui bem como garantia (0-Nao / 1-Sim)
                              '<negociavel>'   || vr_negociavel                               || '</negociavel>'   || -- Indicador de impressao do texto "nao negociavel"
-                             '<titulo>'       || vr_dstitulo                                 || '</titulo>'       ||
+                             '<titulo><![CDATA['       || vr_dstitulo                        || ']]></titulo>'    ||
                              '<dsqrcode>'     || vr_qrcode                                   || '</dsqrcode>'     ||
                              '<credora>'      || vr_credora                                  || '</credora>'      ||
                              '<emitente>'     || vr_emitente                                 || '</emitente>'     ||
@@ -2926,6 +2951,8 @@ BEGIN
                              '<vlminpre>'     || 'R$ ' || to_char(vr_vlminpre,'FM99G999G990D00') || ' + ' || to_char(rw_crawepr.vlperidx,'FM990D00') || '% do ' || rw_crawepr.nmdindex || '</vlminpre>' ||
                              '<dtpagcar>'     || rw_crawepr.dscarencia                       || '</dtpagcar>'     ||
                              '<dtpricar>'     || nvl(to_char(rw_crawepr.dtcarenc,'DD/MM/YYYY'),UPPER('Sem carência'))   || '</dtpricar>'     ||
+							 '<dsdcredo>'     || nomcredora_if_origem || ' ' || nrcnpjbase_if_origem || '</dsdcredo>' ||
+                             '<nrctrpor>'     || nrcontrato_if_origem || '</nrctrpor>' ||
 
                              vr_tab_avl(1).descricao ||
                              vr_tab_avl(2).descricao

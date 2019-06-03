@@ -78,6 +78,8 @@
 
              31/08/2018 - Adicionado cartao de assinatura a partir da conta do cheque
 						   autenticado na leitora. (Prj. Acelera - Reinert)
+
+             05/04/2019 - PRB0040581 Ajustes para tratar lock (Andreatta-Mouts)
 -->
 
 <html>
@@ -590,23 +592,60 @@
                                                v_nome        = ""
                                                aux_nmcopdst  = "".
                                                                                                             
-                                        FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper AND
-                                                               crapmdw.cdagenci = INT(v_pac)       AND
-                                                               crapmdw.nrdcaixa = INT(v_caixa)     
-                                                               EXCLUSIVE-LOCK:
+                                         /* Eliminar crapmdw */ 
+                                         IF NOT VALID-HANDLE(h-b1crap61) THEN
+                                           RUN dbo/b1crap61.p PERSISTENT SET h-b1crap61.
                    
-                                            DELETE crapmdw.
+                                         RUN elimina_crapmdw IN h-b1crap61 (INPUT v_coop,
+                                         								    INPUT v_pac,
+                                         								    INPUT v_caixa,
+                                                                            INPUT 0).
                    
+                                         IF VALID-HANDLE(h-b1crap61) THEN
+                                            DELETE PROCEDURE h-b1crap61.
+                                         
+                                         IF RETURN-VALUE = "NOK" THEN 
+                                            DO:
+                                         
+                                         	  FIND FIRST craperr WHERE craperr.cdcooper = crapcop.cdcooper AND
+                                         							   craperr.cdagenci = INT(v_pac)       AND
+                                         							   craperr.nrdcaixa = INT(v_caixa)
+                                         							   NO-LOCK NO-ERROR.
+                                         							   
+                                         	  IF AVAIL craperr  THEN
+                                              DO:
+                                         		 RUN JavaScript("window.open('mensagem.p','werro','height=220,width=400,scrollbars=yes,alwaysRaised=true')").
+                                         	     LEAVE.
                                         END.            
+                                           END.
 
-                                        FOR EACH crapmrw WHERE crapmrw.cdcooper = crapcop.cdcooper AND
-                                                              crapmrw.cdagenci = INT(v_pac)       AND
-                                                              crapmrw.nrdcaixa = INT(v_caixa) 
-                                                              EXCLUSIVE-LOCK:
+                                         /* Eliminar crapmrw */ 
+                                         IF NOT VALID-HANDLE(h-b1crap61) THEN
+                                           RUN dbo/b1crap61.p PERSISTENT SET h-b1crap61.
                                      
-                                           DELETE crapmrw.
+                                         RUN elimina_crapmrw IN h-b1crap61 (INPUT v_coop,
+                                         								    INPUT v_pac,
+                                         								    INPUT v_caixa).
                                      
+                                         IF VALID-HANDLE(h-b1crap61) THEN
+                                            DELETE PROCEDURE h-b1crap61.
+                                         
+                                         IF RETURN-VALUE = "NOK" THEN 
+                                            DO:
+                                         
+                                         	  FIND FIRST craperr WHERE craperr.cdcooper = crapcop.cdcooper AND
+                                         							   craperr.cdagenci = INT(v_pac)       AND
+                                         							   craperr.nrdcaixa = INT(v_caixa)
+                                         							   NO-LOCK NO-ERROR.
+                                         							   
+                                         	  IF AVAIL craperr  THEN
+                                                 DO:
+													 RUN JavaScript("window.open('mensagem.p','werro','height=220,width=400,scrollbars=yes,alwaysRaised=true')").
+													 LEAVE.
                                        END.
+                                           END.
+                               
+                                        
                                
                                         IF get-value("v_dscopcao") = "cheque"  THEN
                                            DO:
@@ -660,13 +699,32 @@
                                               IF v_altcompt = "sim"  THEN
                                                  DO:                                                                     
                                                     /* limpar dados */
-                                                    FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper AND
-                                                                           crapmdw.cdagenci = INT(v_pac)       AND
-                                                                           crapmdw.nrdcaixa = INT(v_caixa)     
-                                                                           EXCLUSIVE-LOCK:
-                                                        DELETE crapmdw.
+                                                     IF NOT VALID-HANDLE(h-b1crap61) THEN
+                                                       RUN dbo/b1crap61.p PERSISTENT SET h-b1crap61.
                    
+                                                     RUN elimina_crapmdw IN h-b1crap61 (INPUT v_coop,
+                                                                      INPUT v_pac,
+                                                                      INPUT v_caixa,
+                                                                                                                  INPUT 0).
+                                                     
+                                                     IF VALID-HANDLE(h-b1crap61) THEN
+                                                      DELETE PROCEDURE h-b1crap61.
+                                                     
+                                                     IF RETURN-VALUE = "NOK" THEN 
+                                                      DO:
+                                                     
+                                                        FIND FIRST craperr WHERE craperr.cdcooper = crapcop.cdcooper AND
+                                                                     craperr.cdagenci = INT(v_pac)       AND
+                                                                     craperr.nrdcaixa = INT(v_caixa)
+                                                                     NO-LOCK NO-ERROR.
+                                                                     
+                                                        IF AVAIL craperr  THEN
+                                                        DO:
+                                                         RUN JavaScript("window.open('mensagem.p','werro','height=220,width=400,scrollbars=yes,alwaysRaised=true')").
+                                                         LEAVE.
                                                     END.                                                                  
+                                                 
+                                                       END.                                                          
                                                  
                                                     ASSIGN v_valorcomput = v_valor1
                                                            v_altcompt    = "nao".
@@ -797,6 +855,18 @@
                                                                                                   INPUT v_at_situa,
                                                                                                   OUTPUT TABLE tt-depositos-env).
                                                  
+                                                       /* Em caso de erro */
+                                                        IF RETURN-VALUE = "NOK" THEN 
+                                                        DO:
+                                                         FIND FIRST craperr WHERE craperr.cdcooper = crapcop.cdcooper AND
+                                                                      craperr.cdagenci = INT(v_pac)       AND
+                                                                      craperr.nrdcaixa = INT(v_caixa) 
+                                                                      NO-LOCK NO-ERROR.
+                                                         
+                                                         IF AVAIL craperr  THEN
+                                                          RUN JavaScript("window.open('mensagem.p','werro','height=220,width=400,scrollbars=yes,alwaysRaised=true')").
+                                                        END.
+                                                       
                                                        IF v_id_compt <> "" THEN
                                                           ASSIGN v_id_compt = ""
                                                                  v_at_compt = ""
@@ -811,13 +881,30 @@
                                                     /*Para cada envelope processado corretamente sera excluido seu respectivo
                                                       registro na crapmdw para que este, nao seja listado em tela caso
                                                       o processo seja parado para listar os envelopes com erro e pendentes.*/
-                                                    FOR FIRST crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper AND
-                                                                            crapmdw.cdagenci = INT(v_pac)       AND
-                                                                            crapmdw.nrdcaixa = INT(v_caixa)     AND
-                                                                            crapmdw.nrcheque = INT(get-value("v_nrconfer" + STRING(aux_contador)))
-                                                                            EXCLUSIVE-LOCK.
+                                                    IF NOT VALID-HANDLE(h-b1crap61) THEN
+                                                       RUN dbo/b1crap61.p PERSISTENT SET h-b1crap61.
+                                                      
+                                                    RUN elimina_crapmdw IN h-b1crap61 (INPUT v_coop,
+                                                                      INPUT v_pac,
+                                                                      INPUT v_caixa,
+                                                                      INT(get-value("v_nrconfer" + STRING(aux_contador)))).
+                                                    
+                                                    IF VALID-HANDLE(h-b1crap61) THEN
+                                                      DELETE PROCEDURE h-b1crap61.
+                                                    
+                                                    IF RETURN-VALUE = "NOK" THEN 
+                                                      DO:
+                                                    
+                                                        FIND FIRST craperr WHERE craperr.cdcooper = crapcop.cdcooper AND
+                                                                     craperr.cdagenci = INT(v_pac)       AND
+                                                                     craperr.nrdcaixa = INT(v_caixa)
+                                                                     NO-LOCK NO-ERROR.
                                                                              
-                                                        DELETE crapmdw.
+                                                        IF AVAIL craperr  THEN
+                                                        DO:
+                                                         RUN JavaScript("window.open('mensagem.p','werro','height=220,width=400,scrollbars=yes,alwaysRaised=true')").
+                                                         LEAVE.
+                                                        END.
 
                                                     END.
                                                  
@@ -1132,8 +1219,16 @@
                                                                                              crapmdw.cdagenci = INT(v_pac)       AND
                                                                                              crapmdw.nrdcaixa = INT(v_caixa)     AND
                                                                                              crapmdw.cdhistor = 386)  THEN 
-                                                                RUN reinicia-crapmdw IN THIS-PROCEDURE(INPUT INT(v_pac),
+
+                                                             IF NOT VALID-HANDLE(h-b1crap61) THEN
+                                                                   RUN dbo/b1crap61.p PERSISTENT SET h-b1crap61.
+                                                             
+                                                             RUN reinicia_crapmdw IN h-b1crap61(INPUT v_coop,
+                                                                                                INPUT INT(v_pac),
                                                                                                        INPUT INT(v_caixa)).
+                                                    
+                                                             IF VALID-HANDLE(h-b1crap61) THEN
+                                                                DELETE PROCEDURE h-b1crap61.
                                                     
                                                              FOR EACH craperr WHERE craperr.cdcooper = crapcop.cdcooper  AND
                                                                                     craperr.cdagenci = INTE(v_pac)       AND
@@ -1222,22 +1317,57 @@
                                                                 END.
                                                              
                                                              /* limpar registro temporarios de deposito do cheque */
-                                                             FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper AND
-                                                                                    crapmdw.cdagenci = INT(v_pac)       AND
-                                                                                    crapmdw.nrdcaixa = INT(v_caixa)     
-                                                                                    EXCLUSIVE-LOCK:
+                                                             IF NOT VALID-HANDLE(h-b1crap61) THEN
+                                                               RUN dbo/b1crap61.p PERSISTENT SET h-b1crap61.
+                                                            
+                                                             RUN elimina_crapmdw IN h-b1crap61 (INPUT v_coop,
+                                                                              INPUT v_pac,
+                                                                              INPUT v_caixa,
+                                                                                                                              INPUT 0).
+                                                             
+                                                             IF VALID-HANDLE(h-b1crap61) THEN
+                                                              DELETE PROCEDURE h-b1crap61.
+                                                             
+                                                             IF RETURN-VALUE = "NOK" THEN 
+                                                              DO:
+                                                             
+                                                                FIND FIRST craperr WHERE craperr.cdcooper = crapcop.cdcooper AND
+                                                                             craperr.cdagenci = INT(v_pac)       AND
+                                                                             craperr.nrdcaixa = INT(v_caixa)
+                                                                             NO-LOCK NO-ERROR.
                                                     
-                                                                 DELETE crapmdw.
+                                                                IF AVAIL craperr  THEN
+                                                                DO:
+                                                                 RUN JavaScript("window.open('mensagem.p','werro','height=220,width=400,scrollbars=yes,alwaysRaised=true')").
+                                                                 LEAVE.
+                                                                END.
                                                     
                                                              END.
                                                     
-                                                             FOR EACH crapmrw WHERE crapmrw.cdcooper = crapcop.cdcooper AND
-                                                                                    crapmrw.cdagenci = INT(v_pac)       AND
-                                                                                    crapmrw.nrdcaixa = INT(v_caixa) 
-                                                                                    EXCLUSIVE-LOCK:
+                                                                                           /* Eliminar crapmrw */ 
+                                                             IF NOT VALID-HANDLE(h-b1crap61) THEN
+                                                               RUN dbo/b1crap61.p PERSISTENT SET h-b1crap61.
+                                                            
+                                                             RUN elimina_crapmrw IN h-b1crap61 (INPUT v_coop,
+                                                                              INPUT v_pac,
+                                                                              INPUT v_caixa).
+                                                             
+                                                             IF VALID-HANDLE(h-b1crap61) THEN
+                                                              DELETE PROCEDURE h-b1crap61.
+                                                             
+                                                             IF RETURN-VALUE = "NOK" THEN 
+                                                              DO:
                                                     
-                                                                 DELETE crapmrw.
+                                                                FIND FIRST craperr WHERE craperr.cdcooper = crapcop.cdcooper AND
+                                                                             craperr.cdagenci = INT(v_pac)       AND
+                                                                             craperr.nrdcaixa = INT(v_caixa)
+                                                                             NO-LOCK NO-ERROR.
                                                     
+                                                                IF AVAIL craperr  THEN
+                                                                DO:
+                                                                 RUN JavaScript("window.open('mensagem.p','werro','height=220,width=400,scrollbars=yes,alwaysRaised=true')").
+                                                                   LEAVE.
+                                                                END.	  
                                                              END.
                                                     
                                                              /* redireciona para o inicio da tela */
@@ -1260,6 +1390,17 @@
                                                                                                     INPUT v_at_compt,
                                                                                                     INPUT v_at_situa,
                                                                                                     OUTPUT TABLE tt-depositos-env).
+                                                        /* Em caso de erro */
+                                                        IF RETURN-VALUE = "NOK" THEN 
+                                                        DO:
+                                                         FIND FIRST craperr WHERE craperr.cdcooper = crapcop.cdcooper AND
+                                                                      craperr.cdagenci = INT(v_pac)       AND
+                                                                      craperr.nrdcaixa = INT(v_caixa) 
+                                                                      NO-LOCK NO-ERROR.
+                                                         
+                                                         IF AVAIL craperr  THEN
+                                                          RUN JavaScript("window.open('mensagem.p','werro','height=220,width=400,scrollbars=yes,alwaysRaised=true')").
+                                                        END.  
                                                     
                                                         IF v_id_compt <> ""  THEN
                                                            ASSIGN v_id_compt = ""
@@ -1872,23 +2013,7 @@
                 
                 END.
 
-       END. 
-
-    PROCEDURE reinicia-crapmdw:
-
-        DEF INPUT PARAM p-cod-agencia AS INT NO-UNDO.
-        DEF INPUT PARAM p-nr-caixa    AS INT NO-UNDO.
-
-        FOR EACH crapmdw WHERE crapmdw.cdcooper   = crapcop.cdcooper AND
-                               crapmdw.cdagenci   = p-cod-agencia    AND 
-                               crapmdw.nrdcaixa   = p-nr-caixa       
-                               EXCLUSIVE-LOCK:
-
-            ASSIGN crapmdw.inautent = NO.
-
         END.
-
-    END PROCEDURE.
 
 
 

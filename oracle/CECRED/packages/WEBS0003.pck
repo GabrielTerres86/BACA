@@ -360,6 +360,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
 			Alteração : 
               
 		..........................................................................*/
+		  -- Pj 438 - Marcelo Telles Coelho - Mouts - 07/04/2019
+      vr_cdcooper NUMBER;
+      vr_nrdconta NUMBER;
+      vr_nrctrprp NUMBER;
+      vr_dscritic VARCHAR2(1000);
+      vr_exc_erro EXCEPTION;
+      -- Fim Pj 438
 		PRAGMA AUTONOMOUS_TRANSACTION;
 		BEGIN
 			UPDATE tbgen_webservice_aciona
@@ -368,11 +375,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0003 IS
 						,dsresposta_requisicao = replace(pr_dsresposta_requisicao, '&quot;', '"')
 						,nrreenvio             = nvl(pr_nrreenvio, nrreenvio)
 						,nrctrprp              = CASE WHEN pr_nrctrprp > 0 THEN pr_nrctrprp ELSE nrctrprp END
-			 WHERE idacionamento = pr_idacionamento;
+			 WHERE idacionamento = pr_idacionamento
+       RETURNING cdcooper
+                ,nrdconta
+                ,nrctrprp INTO vr_cdcooper
+                              ,vr_nrdconta
+                              ,vr_nrctrprp;
+		
+      -- Pj 438 - Marcelo Telles Coelho - Mouts - 07/04/2019
+      -- Startar job de atualização das informações da Tela Única
+      IF pr_dscritic IS NULL
+--      AND pr_tpenvest <> 'M' -- Não foi chamada para Motor
+      THEN
+        tela_analise_credito.pc_job_dados_analise_credito(pr_cdcooper  => vr_cdcooper
+                                                         ,pr_nrdconta  => vr_nrdconta
+                                                         ,pr_tpproduto => 2 -- Empréstimos/Financiamentos
+                                                         ,pr_nrctremp  => vr_nrctrprp
+                                                         ,pr_dscritic  => vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+      -- Fim Pj 438
 		
 			--> Commit para garantir que guarde as informações do log de acionamento
 			COMMIT;
 		EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
 			WHEN OTHERS THEN
 				pr_dscritic := 'Erro ao atualizar tbgen_webservice_aciona: ' || SQLERRM;
 				ROLLBACK;

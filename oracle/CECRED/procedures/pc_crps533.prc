@@ -317,12 +317,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                08/05/2018 - Efetuado manutenção para não enviar o relatório crrl564 a intranet. Ele não é mais usado
                             pela área de negócio (Jonata - MOUTS SCTASK0012408)                           
                            
-			   18/05/2018 - Se conta está encerrada, gera devolução (crítica 64)                    
+			   18/05/2018 - Se conta está encerrada, gera devolução (crítica 64)              
                            
                28/05/2018 - ROLLBACK --> Chamado #861675.
                            Tivemos que voltar versão devido a não estar enviando os cheques para BBC
                            nestes casos, de devolução automática. (Wagner/Sustentação).
-                           
+
 			   19/06/2018 - Removida a alteração realizada em 18/05/2018, pois foi realizado a solicitação para retirada 
 							do requisito do projeto. (Renato Darosci - Supero)
                            
@@ -344,6 +344,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
 			   07/12/2018 - Incluido parametros na abertura do cursor, Melhoria no processo de devoluções de cheques.
                             Adriano (INC0022559).
+
+			   01/02/2019 - Tratamento para gerar alinea 49 na segunda apresentação da alinea 20
+                      (Adriano - INC0011272).
+
 ............................................................................. */
 
      DECLARE
@@ -2130,7 +2134,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  AND craplcm.cdhistor IN (47, 191, 338, 573)
                ORDER BY craplcm.progress_recid DESC;
             rw_craplcm2 cr_craplcm2%ROWTYPE;
-            
+
             --Selecionar os lancamentos
             CURSOR cr_craplcm_ali28 (pr_cdcooper IN craplcm.cdcooper%TYPE
                                ,pr_nrdconta IN craplcm.nrdconta%TYPE
@@ -2144,6 +2148,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  AND craplcm.cdhistor IN (47, 191, 338, 573)
                ORDER BY craplcm.progress_recid DESC;
             rw_cr_craplcm_ali28 cr_craplcm_ali28%ROWTYPE;            
+
+			      --Selecionar os lancamentos
+            CURSOR cr_craplcm_ali20 (pr_cdcooper IN craplcm.cdcooper%TYPE
+                                    ,pr_nrdconta IN craplcm.nrdconta%TYPE
+                                    ,pr_nrdocmto IN craplcm.nrdocmto%TYPE) IS
+              SELECT craplcm.dtmvtolt
+                FROM craplcm craplcm
+               WHERE craplcm.cdcooper = pr_cdcooper
+                 AND craplcm.nrdconta = pr_nrdconta
+                 AND craplcm.nrdocmto = pr_nrdocmto
+                 AND craplcm.cdpesqbb = '20'
+                 AND craplcm.cdhistor IN (47, 191, 338, 573)
+               ORDER BY craplcm.progress_recid DESC;
+            rw_cr_craplcm_ali20 cr_craplcm_ali20%ROWTYPE;            
 
             --Selecionar os lançamentos
             CURSOR cr_craplcm3 (pr_cdcooper IN craplcm.cdcooper%TYPE
@@ -2214,7 +2232,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
               AND   crapfdc.nrctachq = pr_nrctachq
               AND   crapfdc.nrcheque = pr_nrcheque;
             rw_crapfdc cr_crapfdc%ROWTYPE;
-            
+
             --Selecionar o indicador do estado do cheque atualizado
             CURSOR cr_crapfdc_incheque(pr_crapfdc_rowid ROWID) IS
               SELECT crapfdc.incheque
@@ -2371,7 +2389,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
               WHERE crapass.cdcooper = pr_cdcooper
                 AND crapass.nrdconta = pr_nrdconta;
             rw_crapass_pa cr_crapass_pa%ROWTYPE;
-            
+
             /* Variaveis Locais pc_integra_todas_coop */
             vr_input_file utl_file.file_type;
             vr_flgrejei   BOOLEAN;
@@ -2785,7 +2803,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_sqlotchq:= TO_NUMBER(SUBSTR(vr_setlinha,97,03));
                       vr_cdtpddoc:= TO_NUMBER(SUBSTR(vr_setlinha,148,03));
                       vr_cdpesqbb:= vr_setlinha;
-
+                    
                       vr_dados_log := ' Coop= '   ||pr_cdcooper||
                                       ' Banco= '  ||vr_cdbanchq||
                                       ' Agência= '||vr_cdagechq||
@@ -3021,7 +3039,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         --Ir para a proxima linha do arquivo
                         RAISE vr_exc_pula;
                       END IF; --cr_crapass%NOTFOUND
-
+            
                       --Verificar se a situacao da conta (somente para não integradas)
                       IF vr_nrdconta_incorp IS NULL THEN
                         IF vr_tab_crapass(vr_nrdconta).cdsitdtl IN (2,4,5,6,7,8) THEN
@@ -3903,6 +3921,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                 END IF;
                                 --Fechar cursor
                                 CLOSE cr_craplcm_ali28;
+                              END IF;
+
+							                -- INC0011272
+                              IF  vr_cdalinea = 20 THEN
+                                /* Se ja existir devolucao com a alinea 20, devolver com a alinea 49 */
+                                --Selecionar os lancamentos
+                                OPEN cr_craplcm_ali20 (pr_cdcooper => pr_cdcooper
+                                                      ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
+                                                      ,pr_nrdocmto => vr_nrdocmto);
+                                --Posicionar no proximo registro
+                                FETCH cr_craplcm_ali20 INTO rw_cr_craplcm_ali20;
+                                --Se encontrou registro
+                                IF cr_craplcm_ali20%FOUND THEN
+                                  vr_cdalinea:= 49;
+                                END IF;
+                                --Fechar cursor
+                                CLOSE cr_craplcm_ali20;
                               END IF;
 
                               --Executar rotina para criar registros de devolucao/taxa de cheques.
@@ -5190,7 +5225,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                            vr_dircop_email:= gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
                                                                   ,pr_cdcooper => rw_crapfdc.cdcooper
                                                                   ,pr_nmsubdir => 'salvar');                                         
-                           
+                         
                            -- Corpo do e-mail para enviar para a área de compensação
                            vr_des_corpo:= 'ATENÇÃO a movimentação do cheque abaixo iria gerar uma situação de cheque negativa. Favor abrir um incidente para a sustentação analisar o problema!'||chr(10)||
                                          'Cooperativa: '||rw_crapfdc.cdcooper||chr(10)||
@@ -5225,24 +5260,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                            || vr_dados_log);
                            END IF;                                                     
                          ELSE
-                           -- Mudar situacao do cheque contra-ordenado
-                           BEGIN
-                             UPDATE crapfdc
-                                SET crapfdc.dtliqchq = NULL,
-                                    crapfdc.vlcheque = 0,
-                                    crapfdc.cdbandep = 0,
-                                    crapfdc.cdagedep = 0,
-                                    crapfdc.nrctadep = 0,
-                                    crapfdc.cdtpdchq = 0,
-                                    crapfdc.incheque = crapfdc.incheque - 5,
-                                    crapfdc.cdageaco = 0
-                              WHERE crapfdc.rowid = rw_crapfdc.rowid;
-                           EXCEPTION
-                             WHEN OTHERS THEN
-                               vr_des_erro:= 'Erro ao atualizar a tabela crapfdc, devolucao contra-ordem.' 
-                                             ||' Rotina pc_crps533.pc_integra_todas_coop.'||SQLERRM;
-                             RAISE vr_exc_erro;
-                           END;
+                         -- Mudar situacao do cheque contra-ordenado
+                         BEGIN
+                           UPDATE crapfdc
+                              SET crapfdc.dtliqchq = NULL,
+                                  crapfdc.vlcheque = 0,
+                                  crapfdc.cdbandep = 0,
+                                  crapfdc.cdagedep = 0,
+                                  crapfdc.nrctadep = 0,
+                                  crapfdc.cdtpdchq = 0,
+                                  crapfdc.incheque = crapfdc.incheque - 5,
+                                  crapfdc.cdageaco = 0
+                            WHERE crapfdc.rowid = rw_crapfdc.rowid;
+                         EXCEPTION
+                           WHEN OTHERS THEN
+                             vr_des_erro:= 'Erro ao atualizar a tabela crapfdc, devolucao contra-ordem.' 
+                                           ||' Rotina pc_crps533.pc_integra_todas_coop.'||SQLERRM;
+                           RAISE vr_exc_erro;
+                         END;
                          END IF;
                          
                          -- Atualizar alinea do cheque contra-ordenado

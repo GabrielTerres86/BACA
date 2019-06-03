@@ -50,6 +50,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATURAT AS
 			   07/11/2017 - Alteracao em relatorio impresso para Rating Proposta
                             com layout mais organizado e parecido com o Rating Atual
                             Heitor (Mouts) - Melhoria 442
+
+               23/05/2019 - PJ298.2.2 - Migração dos contratos ajuste de tamanho do campo. (Rafael Faria - Supero)
    */               
    
   PROCEDURE pc_verifica_rating_ativo(pr_nrdconta IN crapass.nrdconta%TYPE -- Número da conta
@@ -249,7 +251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
                                                      ' -->  Operador '|| pr_cdoperad || ' - ' ||
                                                      'Atualizou o Risco da conta/dv ' || 
                                                      LTrim(RTRIM(gene0002.fn_mask(pr_nrdconta, 'zzzz.zzz.9'))) || ', ' || pr_dsoperad || 
-                                                    ', contrato ' || gene0002.fn_mask(pr_nrctrrat,'z.zzz.zz9') || ' de ' || pr_indrisco ||
+                                                    ', contrato ' || gene0002.fn_mask_contrato(pr_nrctrrat) || ' de ' || pr_indrisco ||
                                                     ' para ' || pr_novorisc || '.');
      
       /* Sem alteraçao na nota do Rating */     
@@ -263,7 +265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
                                                      ' -->  Operador '|| pr_cdoperad || ' - ' ||
                                                      'Atualizou o Rating da conta/dv ' || 
                                                      LTrim(RTRIM(gene0002.fn_mask(pr_nrdconta, 'zzzz.zzz.9'))) || ', ' || pr_dsoperad || 
-                                                    ', contrato ' || gene0002.fn_mask(pr_nrctrrat,'z.zzz.zz9') || 
+                                                    ', contrato ' || gene0002.fn_mask_contrato(pr_nrctrrat) || 
                                                     ', sem alterar a nota do mesmo.');
      
      /* Com alteraçao na nota */
@@ -277,7 +279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
                                                      ' -->  Operador '|| pr_cdoperad || ' - ' ||
                                                      'Atualizou o Rating da conta/dv ' || 
                                                      LTrim(RTRIM(gene0002.fn_mask(pr_nrdconta, 'zzzz.zzz.9'))) || ', ' || pr_dsoperad || 
-                                                    ', contrato ' || gene0002.fn_mask(pr_nrctrrat,'z.zzz.zz9') || ', risco ' || pr_indrisco || 
+                                                    ', contrato ' || gene0002.fn_mask_contrato(pr_nrctrrat) || ', risco ' || pr_indrisco || 
                                                     ' e nota ' || to_char(pr_nrnotrat,'fm990d00') || ' para o risco ' ||
                                                     pr_novorisc || ' e nota ' || to_char(pr_novanota,'fm990d00') || '.');
      
@@ -2334,7 +2336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
                                ,pr_texto_novo     => '<rating>'||                                                       
                                                      '  <cdagenci>' || vr_tab_ratings(vr_index).cdagenci ||'</cdagenci>'||
                                                      '  <nrdconta>' || LTrim(RTRIM(gene0002.fn_mask(vr_tab_ratings(vr_index).nrdconta, 'zzzz.zzz.9')))||'</nrdconta>'||
-                                                     '  <nrctrrat>' || gene0002.fn_mask(vr_tab_ratings(vr_index).nrctrrat,'zzzz.zzz') ||'</nrctrrat>'||
+                                                     '  <nrctrrat>' || gene0002.fn_mask_contrato(vr_tab_ratings(vr_index).nrctrrat) ||'</nrctrrat>'||
                                                      '  <tpctrrat>' || vr_tab_ratings(vr_index).tpctrrat ||'</tpctrrat>'||
                                                      '  <indrisco>' || vr_tab_ratings(vr_index).indrisco ||'</indrisco>'|| 
                                                      '  <dtmvtolt>' || to_char(vr_tab_ratings(vr_index).dtmvtolt,'dd/mm/rrrr') ||'</dtmvtolt>'||
@@ -2438,7 +2440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATURAT AS
                                ,pr_texto_novo     => '<rating>'||                                                       
                                                      '  <cdagenci>' || vr_tab_ratings(vr_index).cdagenci ||'</cdagenci>'||
                                                      '  <nrdconta>' || LTrim(RTRIM(gene0002.fn_mask(vr_tab_ratings(vr_index).nrdconta, 'zzzz.zzz.9')))||'</nrdconta>'||
-                                                     '  <nrctrrat>' || gene0002.fn_mask(vr_tab_ratings(vr_index).nrctrrat,'zzzz.zzz') ||'</nrctrrat>'||
+                                                     '  <nrctrrat>' || gene0002.fn_mask_contrato(vr_tab_ratings(vr_index).nrctrrat) ||'</nrctrrat>'||
                                                      '  <tpctrrat>' || vr_tab_ratings(vr_index).tpctrrat ||'</tpctrrat>'||
                                                      '  <indrisco>' || vr_tab_ratings(vr_index).indrisco ||'</indrisco>'|| 
                                                      '  <dtmvtolt>' || to_char(vr_tab_ratings(vr_index).dtmvtolt,'dd/mm/rrrr') ||'</dtmvtolt>'||

@@ -712,6 +712,59 @@ PROCEDURE gerenciar-email:
                         CREATE tt-crapcem-new.
                         BUFFER-COPY crapcem TO tt-crapcem-new.
 
+                        IF  crapass.inpessoa = 1 THEN
+                          DO:
+                              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                              /* Efetuar a chamada a rotina Oracle */
+                              RUN STORED-PROCEDURE pc_retorna_IdPessoa
+                              aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.nrcpfcgc            
+                                                                  ,OUTPUT 0 
+                                                                  ,OUTPUT "").               /* Descrição da crítica*/
+                              /* Fechar o procedimento para buscarmos o resultado */  
+                              CLOSE STORED-PROC pc_retorna_IdPessoa
+                               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                              ASSIGN aux_dscritic = pc_retorna_IdPessoa.pr_dscritic
+                                                WHEN pc_retorna_IdPessoa.pr_dscritic <> ?.
+                              /* Se retornou erro */
+                              IF aux_dscritic <> "" THEN 
+                                DO:
+                                    RUN gera_erro (INPUT par_cdcooper,
+                                                   INPUT par_cdagenci,
+                                                   INPUT par_nrdcaixa,
+                                                   INPUT 1, /** Sequencia **/
+                                                   INPUT 0,
+                                                   INPUT-OUTPUT aux_dscritic).
+                                END.
+
+                              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                              /* Efetuar a chamada a rotina Oracle */
+                              RUN STORED-PROCEDURE pc_confirma_pessoa_email
+                              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                                  ,INPUT pc_retorna_IdPessoa.pr_idpessoa
+                                                                  ,INPUT crapcem.cddemail /*Numero sequecial do telefone*/
+                                                                  ,INPUT 1                /*Situacao: 1 - Ativo/ 2 - Rejeitado*/
+                                                                  ,INPUT 3                /*Canal que efetuou a atualização*/
+                                                                  ,OUTPUT "").            /* Descrição da crítica*/
+                              /* Fechar o procedimento para buscarmos o resultado */  
+                              CLOSE STORED-PROC pc_confirma_pessoa_email
+                               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+                              ASSIGN aux_dscritic = pc_confirma_pessoa_email.pr_dscritic
+                                                WHEN pc_confirma_pessoa_email.pr_dscritic <> ?.
+                              /* Se retornou erro */
+                              IF aux_dscritic <> "" THEN 
+                                DO:
+                                    RUN gera_erro (INPUT par_cdcooper,
+                                                   INPUT par_cdagenci,
+                                                   INPUT par_nrdcaixa,
+                                                   INPUT 1, /** Sequencia **/
+                                                   INPUT 0,
+                                                   INPUT-OUTPUT aux_dscritic).
+                                END.
+                          END.
+
                         IF  par_nmdatela = "CONTAS"  AND
                             par_flgerlog             THEN
                             DO:

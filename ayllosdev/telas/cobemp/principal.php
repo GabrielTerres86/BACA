@@ -44,6 +44,8 @@ $nrparepr = (isset($_POST['nrparepr'])) ? $_POST['nrparepr'] : 0;
 $vlpagpar = (isset($_POST['vlpagpar'])) ? $_POST['vlpagpar'] : 0;
 $nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0;
 $nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0;
+$nrparepr_pos = (isset($_POST['nrparepr_pos'])) ? $_POST['nrparepr_pos'] : 0;
+$vlpagpar_pos = (isset($_POST['vlpagpar_pos'])) ? $_POST['vlpagpar_pos'] : 0;
 
 $dtcopemp = (isset($_POST['dtcopemp'])) ? $_POST['dtcopemp'] : '';
 
@@ -105,6 +107,43 @@ if (in_array($operacao, array('C_PAG_PREST', 'C_DESCONTO'))) {
 
         echo "$('#vldespar_' + $nr_parcela ,'#divTabela').html(' $vldespar ');";
     }
+} else if(in_array($operacao,array('C_DESCONTO_POS'))) {
+
+        // Montar o xml de Requisicao
+        $xml  = "<Root>";
+        $xml .= "   <Dados>";
+        if ($dtcopemp == '') {
+        $xml .= "       <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+        } else {
+            $xml .= "   <dtmvtolt>" . $dtcopemp . "</dtmvtolt>";
+        }
+        $xml .= "       <dtmvtoan>".$glbvars["dtmvtoan"]."</dtmvtoan>";
+        $xml .= "       <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+        $xml .= "       <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= "       <nrctremp>".$nrctremp."</nrctremp>";
+        $xml .= "       <nrparepr>".$nrparepr_pos."</nrparepr>";
+        $xml .= "       <vlsdvpar>".$vlpagpar_pos."</vlsdvpar>";
+        $xml .= "   </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml, "EMPR0011", "EMPR0011_BUSCA_DESC_POS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObject = getObjectXML($xmlResult);
+
+        //-----------------------------------------------------------------------------------------------
+        // Controle de Erros
+        //-----------------------------------------------------------------------------------------------
+
+        if(strtoupper($xmlObject->roottag->tags[0]->name == 'ERRO')){   
+            $msgErro = $xmlObject->roottag->tags[0]->cdata;
+            if($msgErro == null || $msgErro == ''){
+                $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+            }
+            exibirErro('error',$msgErro,'Alerta - Aimaro',"controlaOperacao('')",false);
+        }
+
+        $registro = $xmlObject->roottag->tags[0];
+
+        echo "$('#vldespar_".$nrparepr_pos."','#divTabela').html('TE".getByTagName($registro->tags,'vldescto')."');";
 }
 
 $qtregist = $xmlObjeto->roottag->tags[0]->attributes['QTREGIST'];

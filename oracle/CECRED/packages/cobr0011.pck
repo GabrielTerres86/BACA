@@ -5,7 +5,7 @@ create or replace package cecred.cobr0011 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Supero
-  --  Data     : Março/2018.                   Ultima atualização: 
+  --  Data     : Março/2018.                   Ultima atualização: 15/05/2019 
   --
   -- Dados referentes ao programa:
   --
@@ -17,6 +17,8 @@ create or replace package cecred.cobr0011 is
   -- 24/09/2018 : Merge da atualização CS 25859 - Extrato de TED IEPTB (André Supero)
   -- 04/10/2018 : Ajustado sequence para lançamentos na conta da central. - (Fabio Stein Supero)
   --              Ajustado CPNJ do emissor da TED. - (Fabio Stein Supero)
+  -- 15/05/2019 : Incluso chamada da rotina DSCT0001.pc_efetua_baixa_titulo após processar a liquidação
+  --              dos titulos pagos em cartorio. Ajuste alinhado com Rafael Cechet (Daniel - Ailos)   
 ---------------------------------------------------------------------------------------------------------------*/
   
   -- Public type declarations
@@ -3353,6 +3355,13 @@ create or replace package body cecred.cobr0011 IS
 		--
 		vr_exc_erro  EXCEPTION;
 		--
+        vr_tab_titulos   PAGA0001.typ_tab_titulos;
+    
+        vr_index_desc          VARCHAR2(20);
+        vr_index_titulo        VARCHAR2(20);
+    
+        vr_tab_erro2     GENE0001.typ_tab_erro;
+    
 	BEGIN
 		--
 		OPEN cr_conciliados;
@@ -3372,6 +3381,9 @@ create or replace package body cecred.cobr0011 IS
 				vr_vloutcre := 0;
 				--
 			END IF;
+      
+            vr_tab_descontar.DELETE;
+      
 			-- Processar liquidacao
 			paga0001.pc_processa_liquidacao(pr_idtabcob            => rw_conciliados.crapcob_id               -- Rowid da Cobranca
                                      ,pr_nrispbpg            => 5463212                                 -- ISPB da Central Ailos
@@ -3416,6 +3428,57 @@ create or replace package body cecred.cobr0011 IS
 				--
 			END IF;
       
+      -- Realiza liquidacao dos titulos descontados (se houver)
+      -- Limpar tabela titulos
+      vr_tab_titulos.DELETE;
+      
+      -- Montar indice para acesso a tabela descontar
+      vr_index_desc:= vr_tab_descontar.FIRST;
+      
+      WHILE vr_index_desc IS NOT NULL LOOP
+
+       -- Adicionar na tabela de titulo os descontados
+       vr_index_titulo:= lpad(vr_tab_descontar(vr_index_desc).nrdconta,10,'0')||
+                         lpad(vr_tab_titulos.count+1,10,'0');
+       vr_tab_titulos(vr_index_titulo):= vr_tab_descontar(vr_index_desc);
+
+       -- Se for ultimo registro da conta
+       IF vr_index_desc = vr_tab_descontar.LAST OR
+         (vr_tab_descontar(vr_index_desc).nrdconta <>
+          vr_tab_descontar(vr_tab_descontar.NEXT(vr_index_desc)).nrdconta) THEN
+         -- Limpar tabela erro
+         vr_tab_erro2.DELETE;
+
+         -- Efetuar a baixa do titulo
+         DSCT0001.pc_efetua_baixa_titulo (pr_cdcooper    => rw_conciliados.cdcooper --Codigo Cooperativa
+                                         ,pr_cdagenci    => rw_conciliados.cdagenci --Codigo Agencia    -- Ligeirinho alderado de 0 p/ Agencia do PA
+                                         ,pr_nrdcaixa    => 0                       --Numero Caixa
+                                         ,pr_cdoperad    => 0                       --Codigo operador
+                                         ,pr_dtmvtolt    => rw_conciliados.dtmvtolt --Data Movimento
+                                         ,pr_idorigem    => 1  --AYLLOS--           --Identificador Origem pagamento
+                                         ,pr_nrdconta    => vr_tab_descontar(vr_index_desc).nrdconta         --Numero da conta
+                                         ,pr_indbaixa    => 1                       --Indicador Baixa /* 1-Pagamento 2- Vencimento */
+                                         ,pr_dtintegr    => rw_conciliados.dtmvtolt -- Data de integração do pagamento
+                                         ,pr_tab_titulos => vr_tab_titulos          --Titulos a serem baixados
+                                         ,pr_cdcritic    => vr_cdcritic             --Codigo Critica
+                                         ,pr_dscritic    => vr_dscritic             --Descricao Critica
+                                         ,pr_tab_erro    => vr_tab_erro2);          --Tabela erros
+                                         
+         -- Se ocorreu erro
+         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+           -- Levantar Excecao
+           RAISE vr_exc_erro;
+         END IF;                                
+                                         
+         --Limpar tabela titulos
+         vr_tab_titulos.DELETE;
+       END IF;
+       --Proximo registro da tabela descontados
+       vr_index_desc:= vr_tab_descontar.NEXT(vr_index_desc);
+      END LOOP; --vr_tab_descontar
+      
+      
+      
 			PAGA0001.pc_realiza_lancto_cooperado(pr_cdcooper => rw_conciliados.cdcooper --Codigo Cooperativa
 																					,pr_dtmvtolt => rw_conciliados.dtmvtolt --Data Movimento
 																					,pr_cdagenci => rw_conciliados.cdagenci --Codigo Agencia
@@ -3428,7 +3491,7 @@ create or replace package body cecred.cobr0011 IS
 																					);
 
 		 --Se ocorreu erro
-		 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+		 IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
 			 --Levantar Excecao
 			 RAISE vr_exc_erro;
 		 END IF;

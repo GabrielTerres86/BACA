@@ -144,6 +144,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBEMP IS
 																	 ,pr_des_erro OUT VARCHAR2);                    --> Erros do processo
 
   PROCEDURE pc_busca_prazo_venc(pr_inprejuz IN INTEGER                        --> Indicador de prejuizo
+                               ,pr_tpemprst IN INTEGER                        --> Tipo de Conta Emprestimo        
                                ,pr_xmllog   IN VARCHAR2                       --> XML com informações de LOG
 															 ,pr_cdcritic OUT PLS_INTEGER                   --> Código da crítica
 															 ,pr_dscritic OUT VARCHAR2                      --> Descrição da crítica
@@ -1369,6 +1370,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
                   09/08/2017 - Nao permitir geracao para produto Pos-Fixado. (Jaison/James - PRJ298)
       Alteracoes: 14/11/2017 - Ajsute para devolver informacao de liquidacao do contrato (Jonata - RKAM P364).
+      
+                  15/01/2019 - Emitir boletos para contratos pós fixado em atraso através da tela COBEMP.
+                               (P298.2.2 - Luciano - Supero)
     ..............................................................................*/
 			DECLARE
 			----------------------------- VARIAVEIS ---------------------------------
@@ -1587,14 +1591,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
 						LOOP
               
-              -- Se for Pos-Fixado, vai para proximo
-              IF vr_tab_dados_epr(vr_ind_cde).tpemprst = 2 THEN
-                -- Sai do loop se for o último registro ou se chegar no número de registros solicitados
-                EXIT WHEN (vr_ind_cde = vr_tab_dados_epr.LAST OR vr_ind_cde = (pr_nriniseq + pr_nrregist) - 1);
-                vr_ind_cde := vr_tab_dados_epr.NEXT(vr_ind_cde);
-                CONTINUE;
-              END IF;
-
               vr_dstipcob := '';
               vr_vlsdeved := 0;
 
@@ -2193,6 +2189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 	END pc_gerar_pdf_boletos_w;
 
   PROCEDURE pc_busca_prazo_venc(pr_inprejuz IN INTEGER                        --> Indicador de prejuizo
+                               ,pr_tpemprst IN INTEGER                        --> Tipo de Conta Emprestimo  
                                ,pr_xmllog   IN VARCHAR2                       --> XML com informações de LOG
 															 ,pr_cdcritic OUT PLS_INTEGER                   --> Código da crítica
 															 ,pr_dscritic OUT VARCHAR2                      --> Descrição da crítica
@@ -2217,6 +2214,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 		Observacao: -----
 
 		Alteracoes: 08/03/2017 - Criacao de funcionamento quando prejuizo. (P210.2 - Jaison/Daniel)
+                18/01/2019 - Para gerar boleto de pagamento parcial do atraso ou pagamento total 
+                             do atraso o vencimento pode ser de até 30 dias (conforme parâmetro 
+                             cadastrado na tela TAB096) pois o CDI já está calculado. 
+                             (P298.2.2 - Luciano - Supero)
 	..............................................................................*/
 		DECLARE
 			----------------------------- VARIAVEIS ---------------------------------
@@ -6086,7 +6087,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
       Observacao: -----
 
-      Alteracoes: 
+      Alteracoes: 31/01/2019 - Alteração da mensagem de boletagem massiva (Gerar boletos)
+                              (P298.2.2 - Luciano - Supero)
     ..............................................................................*/
 		DECLARE
 
@@ -6313,7 +6315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       
       COMMIT;
 
-      vr_dsmsg := 'Solicitação de Boletagem efetuada efetuada com sucesso. Aguarde e-mail de conclusão.';
+      vr_dsmsg := 'Solicitação de Boletagem efetuada com sucesso. Aguarde e-mail de conclusão.';
       
       -- Criar cabecalho do XML
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');

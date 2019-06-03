@@ -211,6 +211,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
 	--
   --             01/03/2019 - Ajuste na impressão da carta de anuência (P352 - Cechet)
 	--
+  --             21/05/2019 - Alteração para não duplicar o retorno na pc_relat_carta_anuencia_web (INC0014612 - Joao Mannes - Mouts)
+	--
   ---------------------------------------------------------------------------*/
   -- Chamada AyllosWeb Rotina para retornar lista de convenios ceb e suas situações
   PROCEDURE pc_consulta_conv_sit_web (pr_telcdcop    IN crapcop.cdcooper%TYPE DEFAULT 0 --> cooperativa
@@ -1463,23 +1465,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
                              ,pr_cdcritic => vr_cdcritic    --> Retorna codigo de critica 
                              ,pr_dscritic => vr_dscritic);  --> Retorno de critica
                              
-    -- Verificacao do calendario
-    OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
-    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-    CLOSE BTCH0001.cr_crapdat;                             
-                                 
-   COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid
-                                     ,pr_cdocorre => 98   -- Instrucao Rejeitada
-                                     ,pr_cdmotivo => 'F2' -- Motivo
-                                     ,pr_vltarifa => 0    -- Valor da Tarifa  
-                                     ,pr_cdbcoctl => 0
-                                     ,pr_cdagectl => 0
-                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                     ,pr_cdoperad => '1'
-                                     ,pr_nrremass => 0
-                                     ,pr_dtcatanu => to_date(pr_dtcatanu,'DD/MM/RRRR')
-                                     ,pr_cdcritic => vr_cdcritic
-                                     ,pr_dscritic => vr_dscritic);                                                  
     -- Se retornou erro
     IF NVL(vr_cdcritic,0) > 0 OR 
        TRIM(vr_dscritic) IS NOT NULL THEN

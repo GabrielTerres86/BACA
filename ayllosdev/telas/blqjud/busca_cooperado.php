@@ -111,7 +111,7 @@
 		if ($cdtppesq == 1) { $tabela .=				"<th align=\'CENTER\'>Capital</th>";}
 		if ($cdtppesq == 4) { $tabela .=				"<th align=\'CENTER\'>Aplica&ccedil;&atilde;o</th>";
                               $tabela .=				"<th align=\'CENTER\'>Conta Corrente</th>";
-                              $tabela .=				"<th align=\'CENTER\'>Poupan&ccedil;a Programada</th>";
+                              $tabela .=				"<th align=\'CENTER\'>Aplica&ccedil;&atilde;o Programada</th>";
                               $tabela .=				"<th align=\'CENTER\'>Bloqueado Preju&iacute;zo</th>";
                             }
 		$tabela .=			"</tr>";

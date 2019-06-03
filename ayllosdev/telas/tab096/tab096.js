@@ -126,6 +126,7 @@ function formataFormulario() {
     var rPrazobxa = $('label[for="prazobxa"]', '#frmTab096');
     var rVlrminpp = $('label[for="vlrminpp"]', '#frmTab096');
     var rVlrmintr = $('label[for="vlrmintr"]', '#frmTab096');
+    var rVlrminpos = $('label[for="vlrminpos"]', '#frmTab096');
     var rDescprej = $('label[for="descprej"]', '#frmTab096');
     var rLinha1 = $('label[for="dslinha1"]', '#frmTab096');
     var rLinha2 = $('label[for="dslinha2"]', '#frmTab096');
@@ -144,6 +145,7 @@ function formataFormulario() {
 	rPrazobxa.addClass('rotulo').css('width','320px');
 	rVlrminpp.addClass('rotulo').css('width','320px');
 	rVlrmintr.addClass('rotulo').css('width','320px');
+    rVlrminpos.addClass('rotulo').css('width','320px');
 	rDescprej.addClass('rotulo').css('width','320px');
 	rLinha1.addClass('rotulo').css('width','200px');
     rLinha2.addClass('rotulo').css('width','200px');
@@ -160,6 +162,7 @@ function formataFormulario() {
     var cPrazobxa = $('#prazobxa', '#frmTab096');
     var cVlrminpp = $('#vlrminpp', '#frmTab096');
     var cVlrmintr = $('#vlrmintr', '#frmTab096');
+    var cVlrminpos = $('#vlrminpos', '#frmTab096');
     var cDescprej = $('#descprej', '#frmTab096');
     var cLinha1 = $('#dslinha1', '#frmTab096');
     var cLinha2 = $('#dslinha2', '#frmTab096');
@@ -178,6 +181,7 @@ function formataFormulario() {
     cPrazobxa.css('width', '127px').addClass('inteiro').attr('maxlength','2');
     cVlrminpp.css('width', '127px').addClass('moeda');
     cVlrmintr.css('width', '127px').addClass('moeda');
+    cVlrminpos.css('width', '127px').addClass('moeda');
     cDescprej.css('width', '127px').addClass('moeda');
     cLinha1.css('width', '500px').addClass('alphanum').attr('maxlength','50');
     cLinha2.css('width', '500px').addClass('alphanum').attr('maxlength','50');
@@ -257,6 +261,13 @@ function formataFormulario() {
         });
 
         cVlrmintr.keypress(function(e) {
+            if (e.keyCode == 13 || e.keyCode == 09 || e.keyCode == 18) {
+                cVlrminpos.focus();
+                return false;
+            }
+        });
+
+        cVlrminpos.keypress(function(e) {
             if (e.keyCode == 13 || e.keyCode == 09 || e.keyCode == 18) {
                 cDescprej.focus();
                 return false;
@@ -420,6 +431,7 @@ function grava_dados() {
     var prazobxa = $('#prazobxa', '#frmTab096').val();
     var vlrminpp = $('#vlrminpp', '#frmTab096').val();
     var vlrmintr = $('#vlrmintr', '#frmTab096').val();
+    var vlrminpos = $('#vlrminpos', '#frmTab096').val();
     var descprej = $('#descprej', '#frmTab096').val();
     var dslinha1 = $('#dslinha1', '#frmTab096').val();
     var dslinha2 = $('#dslinha2', '#frmTab096').val();
@@ -451,6 +463,7 @@ function grava_dados() {
             prazobxa: prazobxa,
             vlrminpp: vlrminpp,
             vlrmintr: vlrmintr,
+            vlrminpos: vlrminpos,
             descprej: descprej,
             dslinha1: dslinha1,
             dslinha2: dslinha2,

@@ -868,7 +868,7 @@ PROCEDURE consulta-bloqueio-jud:
                       "Aplicacao".
             WHEN 3 THEN
                ASSIGN tt-dados-blq.dsmodali = 
-                      "Poup. Programada".
+                      "Apli. Programada".
             WHEN 4 THEN
                ASSIGN tt-dados-blq.dsmodali = 
                      "Capital".
@@ -1017,7 +1017,7 @@ PROCEDURE retorna-valor-blqjud:
     DEF INPUT  PARAM par_cdtipmov AS INT                               NO-UNDO.
             /* 0-Todos / 1-Bloq Normal  /  2-Transf. /  3-Blq Capital */
     DEF INPUT  PARAM par_cdmodali AS INT                               NO-UNDO.
-            /* 0-Todos / 1-DEP VISTA / 2-APLICACAO / 3-POUP PRG. / 4-CAPITAL */
+            /* 0-Todos / 1-DEP VISTA / 2-APLICACAO / 3-APLI PRG. / 4-CAPITAL */
     DEF INPUT  PARAM par_dtmvtolt AS DATE                              NO-UNDO.
 
     DEF OUTPUT PARAM ret_vlbloque AS DECI                              NO-UNDO.
@@ -1399,7 +1399,7 @@ PROCEDURE Gera_Impressao:
            tt-imprime-total.dsmodali = "Conta Corrente".
     CREATE tt-imprime-total.
     ASSIGN tt-imprime-total.cdtipmov = 1
-           tt-imprime-total.dsmodali = "Poup. Programada".
+           tt-imprime-total.dsmodali = "Apli. Programada".
     CREATE tt-imprime-total.
     ASSIGN tt-imprime-total.cdtipmov = 2
            tt-imprime-total.dsmodali = "Transferencia".
@@ -1426,7 +1426,7 @@ PROCEDURE Gera_Impressao:
         CASE crapblj.cdmodali:
              WHEN 1 THEN ASSIGN aux_dsmodali = "Conta Corrente".
              WHEN 2 THEN ASSIGN aux_dsmodali = "Aplicacao".
-             WHEN 3 THEN ASSIGN aux_dsmodali = "Poup. Programada".
+             WHEN 3 THEN ASSIGN aux_dsmodali = "Apli. Programada".
              WHEN 4 THEN ASSIGN aux_dsmodali = "Capital".
         END CASE.
            

@@ -45,7 +45,6 @@
 	$cddopcao = $_POST["cddopcao"];
 	$flpropos = $_POST["flpropos"];
 	$inconfir = (isset($_POST["inconfir"])) ? $_POST["inconfir"] : 1;	
-	$aux_operacao = (isset($_POST["aux_operacao"])) ? $_POST["aux_operacao"] : '';
 
 	//bruno - prj 438 - sprint 7 - novo limite
 	$inpessoa = $_POST['inpessoa'];
@@ -377,6 +376,10 @@
   
       <div id="divFormGAROPC"></div>      
 			
+      			<div id="divDadosObservacoes">
+					<?php include('form_observacoes.php') ?>
+				</div>
+			
 				<div id='divFormRating'> <!-- bruno - prj 438 - sprint 7 - tela rating  -->
 					<?php 
 						// Variavel que indica se é uma operação para cadastrar nova proposta ou consulta - Utiliza na include rating_busca_dados.php
@@ -387,10 +390,6 @@
 					?>
 				</div>
 			
-			<div id="divDadosObservacoes">
-					<?php include('form_observacoes.php') ?>
-				</div>
-
 				<!-- bruno - prj 438 - sprint 7 - tela demonstracao -->
 				<div id='divDemoLimiteCredito'>
 					<?php 
@@ -458,7 +457,7 @@
   
   $("#btnContinuarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
 		// bruno - prj 438 - sprint 7 - remover telas
-		gravarGAROPC('idcobert','frmNovoLimite','abrirRating();$("#divFormGAROPC").css("display", "none");$("#divBotoesGAROPC").css("display", "none");$("#frmNovoLimite").css("width", 515);bloqueiaFundo($("#divDadosObservacoes"));');
+		gravarGAROPC('idcobert','frmNovoLimite','lcrShowHideDiv("divDadosObservacoes","divFormGAROPC");$("#divBotoesGAROPC").css("display", "none");$("#frmNovoLimite").css("width", 515);bloqueiaFundo($("#divDadosObservacoes"));');
     return false;
 	});
 
@@ -471,13 +470,7 @@
 		travaCamposLimite();
 	<? } ?>
 
-	<?php if ($cddopcao == 'P') { ?>
-		$("#idcobert", "#frmNovoLimite").val(aux_limites.pausado.idcobope);
-	<?php } else if ($cddopcao == 'N' && $aux_operacao == 'A') { ?>
-		$("#idcobert", "#frmNovoLimite").val(aux_limites.pausado.idcobope);
-	<?php } else if ($cddopcao == 'A') { ?>
-		$("#idcobert", "#frmNovoLimite").val(aux_limites.ativo.idcobope);
-	<?php } ?>
+	setarDadosIdcobertAndObservacao();
 
 	hideMsgAguardo();
 	bloqueiaFundo(divRotina);

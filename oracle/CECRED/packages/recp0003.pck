@@ -78,6 +78,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                 -pc_pagar_emprestimo_prejuizo
                                                 -pc_pagar_emprestimo_folha    
                          da RECP0001 para EMPR999;      Rangel Decker (AMcom)                                                                                                                          
+                         
   ---------------------------------------------------------------------------------------------------------------*/
 
   vr_flgerlog BOOLEAN := FALSE;
@@ -715,8 +716,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 							,epr.dtdpagto
 							,epr.vlsprojt
 							,epr.qttolatr
+							,wpr.dtdpagto wdtdpagto
+							,wpr.txmensal wtxmensal
          FROM crapepr epr
-        WHERE epr.cdcooper = pr_cdcooper
+				     ,crawepr wpr
+        WHERE epr.cdcooper = wpr.cdcooper
+				  AND epr.nrdconta = wpr.nrdconta
+					AND epr.nrctremp = wpr.nrctremp
+				  AND epr.cdcooper = pr_cdcooper
           AND epr.nrdconta = pr_nrdconta
           AND epr.nrctremp = pr_nrctremp;
       rw_crapepr cr_crapepr%ROWTYPE;      
@@ -957,7 +964,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    CONTINUE;                                          
                  END IF;
 
-                 vr_vllancam := 0;
                  vr_nracordo := TO_NUMBER(SUBSTR(vr_setlinha,29,13));
                  vr_dtquitac := TRUNC(SYSDATE);
 
@@ -1040,7 +1046,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          EXIT LEITURA_TXT;
                        END IF;
 
-                       vr_vllancam := NVL(vr_vllancam,0) + NVL(ABS(vr_vltotpag),0); 
+                       vr_vllancam := NVL(vr_vllancam,0) + NVL(ABS(vr_vltotpag),0);
                        
                      END IF;
 
@@ -1262,8 +1268,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 																												,pr_dtefetiv => rw_crapepr.dtmvtolt
 																												,pr_cdlcremp => rw_crapepr.cdlcremp
 																												,pr_vlemprst => rw_crapepr.vlemprst
-																												,pr_txmensal => rw_crapepr.txmensal
-																												,pr_dtdpagto => rw_crapepr.dtdpagto
+																												,pr_txmensal => rw_crapepr.wtxmensal
+																												,pr_dtdpagto => rw_crapepr.wdtdpagto
 																												,pr_vlsprojt => rw_crapepr.vlsprojt
 																												,pr_qttolatr => rw_crapepr.qttolatr
 																												,pr_nrparcel => 0
@@ -1296,11 +1302,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                         END IF;
                        
                         vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);
-												--
                       END IF;
-                      
-                    END IF;
 
+				  END IF;
                    BEGIN
                      UPDATE crapcyc 
                         SET flgehvip = decode(cdmotcin,2,flgehvip,7,flgehvip,flvipant),
@@ -1485,7 +1489,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                      ROLLBACK; -- Desfaz acoes
                      EXIT LEITURA_TXT;                                          
                  END;   
-                  
                END IF; --Arquivo aberto
              END LOOP;
              

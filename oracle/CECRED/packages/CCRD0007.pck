@@ -706,6 +706,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
         pr_dscritic := vr_dscritic;
     END;
 
+    -- Pj 438 - Marcelo Telles Coelho - Mouts - 07/04/2019
+    -- Startar job de atualização das informações da Tela Única
+    IF pr_dscritic IS NULL
+--    AND pr_tpenvest <> 'M' -- Não foi chamada para Motor
+    THEN
+      tela_analise_credito.pc_job_dados_analise_credito(pr_cdcooper  => pr_cdcooper
+                                                       ,pr_nrdconta  => pr_nrdconta
+                                                       ,pr_tpproduto => 7 -- Cartão de Crédito
+                                                       ,pr_nrctremp  => pr_nrctrcrd
+                                                       ,pr_dscritic  => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+    END IF;
+    -- Fim Pj 438
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -887,6 +903,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
         RAISE vr_exc_erro;
       END IF;
     END IF;
+
+    -- Pj 438 - Marcelo Telles Coelho - Mouts - 07/04/2019
+    -- Startar job de atualização das informações da Tela Única
+    IF pr_dscritic IS NULL
+--    AND pr_tpenvest <> 'M' -- Não foi chamada para Motor
+    THEN
+      tela_analise_credito.pc_job_dados_analise_credito(pr_cdcooper  => pr_cdcooper
+                                                       ,pr_nrdconta  => pr_nrdconta
+                                                       ,pr_tpproduto => 7 -- Cartão de Crédito
+                                                       ,pr_nrctremp  => pr_nrctrcrd
+                                                       ,pr_dscritic  => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+    -- Fim Pj 438
 
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -1297,7 +1329,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
 							,crapage.cdagenci
 							,crapage.idcidade
 							,crapage.nrcepend
-							,crapage.dsendcop||decode(crapage.nrendere,0,null,','||crapage.nrendere) dsender_compl
+							,crapage.dsendcop||
+							decode(crapage.nrendere,0,null,','||crapage.nrendere)||
+							decode(crapage.dscomple, ' ', NULL, ','||crapage.dscomple) dsender_compl
 					FROM crapage
 				 WHERE crapage.cdcooper = pr_cdcooper
 					 AND crapage.cdagenci = pr_cdagenci;
@@ -1323,10 +1357,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
           ,enc.nmbairro
           ,enc.cdufende
           ,enc.dsendere
-          , decode(enc.nrendere,0,null,','||enc.nrendere) nrendere
+          ,decode(enc.nrendere,0,null,','||enc.nrendere) nrendere
+					,enc.complend
           -- montar string com o endereço completo do associado
           ,enc.dsendere||
-           decode(enc.nrendere,0,null,','||enc.nrendere) dsender_compl
+           decode(enc.nrendere,0,null,','||enc.nrendere)||
+					 decode(enc.complend,' ',NULL,','||enc.complend) dsender_compl
           ,decode(nvl(trim(enc.cddbloco),'0'),'0',null,' bl-'||enc.cddbloco)||
            decode(nvl(trim(enc.nrdoapto),'0'),'0',null,' ap '||enc.nrdoapto) dsender_apbl
       FROM crapenc enc
@@ -1463,6 +1499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
 				vr_nmcidade VARCHAR2(50) := '';
 				vr_nmbairro VARCHAR2(50) := '';
 				vr_nrcepend VARCHAR2(15) := '';
+				vr_complend VARCHAR2(50) := '';
 
         -- Objeto json
         vr_obj_VoReqAltaDeContaCartao    json := json();
@@ -1520,40 +1557,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
 						vr_dsender_compl := rw_end_agencia.dsender_compl;
 						vr_nmbairro := rw_end_agencia.nmbairro;
 						vr_nrcepend := rw_end_agencia.nrcepend;
+						vr_complend := rw_end_agencia.dscomple;
 						
 						
 					ELSE
-          -- Busca Endereço do Cooperado
-          OPEN cr_crapenc(pr_cdcooper => rw_crawcrd.cdcooper,
-                          pr_nrdconta => rw_crawcrd.nrdconta,
-														pr_tpendass => vr_tpendass);
-          FETCH cr_crapenc INTO rw_crapenc;
+						-- Busca Endereço do Cooperado
+						OPEN cr_crapenc(pr_cdcooper => rw_crawcrd.cdcooper,
+														pr_nrdconta => rw_crawcrd.nrdconta,
+															pr_tpendass => vr_tpendass);
+						FETCH cr_crapenc INTO rw_crapenc;
 
-          -- Se nao encontrar Endereço
-          IF cr_crapenc%NOTFOUND THEN
+						-- Se nao encontrar Endereço
+						IF cr_crapenc%NOTFOUND THEN
 
-            -- Fechar o cursor pois efetuaremos raise
-            CLOSE cr_crapenc;
-            -- Montar mensagem de critica
-            vr_dscritic := 'Endereco nao encontrado. '                     ||
-                           'Cooperativa: ' || TO_CHAR(rw_crawcrd.cdcooper) ||
-                           ' Conta: ' || TO_CHAR(rw_crawcrd.nrdconta)      || '.';
-            RAISE vr_exc_saida;
-          ELSE
-            -- Apenas fechar o cursor
-            CLOSE cr_crapenc;
-							
-							vr_dsender_apbl := rw_crapenc.dsender_apbl;
-							vr_dsender_compl := rw_crapenc.dsender_compl;
-							vr_dsendere := rw_crapenc.dsendere;
-							vr_nrendere := rw_crapenc.nrendere; 
-							vr_ufendere := rw_crapenc.cdufende;
-							vr_nmcidade := rw_crapenc.nmcidade;
-							vr_nmbairro := rw_crapenc.nmbairro;
-							vr_nrcepend := rw_crapenc.nrcepend;
-							
-							
-          END IF;
+							-- Fechar o cursor pois efetuaremos raise
+							CLOSE cr_crapenc;
+							-- Montar mensagem de critica
+							vr_dscritic := 'Endereco nao encontrado. '                     ||
+														 'Cooperativa: ' || TO_CHAR(rw_crawcrd.cdcooper) ||
+														 ' Conta: ' || TO_CHAR(rw_crawcrd.nrdconta)      || '.';
+							RAISE vr_exc_saida;
+						ELSE
+							-- Apenas fechar o cursor
+							CLOSE cr_crapenc;
+								
+								vr_dsender_apbl := rw_crapenc.dsender_apbl;
+								vr_dsender_compl := rw_crapenc.dsender_compl;
+								vr_dsendere := rw_crapenc.dsendere;
+								vr_nrendere := rw_crapenc.nrendere; 
+								vr_ufendere := rw_crapenc.cdufende;
+								vr_nmcidade := rw_crapenc.nmcidade;
+								vr_nmbairro := rw_crapenc.nmbairro;
+								vr_nrcepend := rw_crapenc.nrcepend;
+								vr_complend := rw_crapenc.complend;
+								
+						END IF;
 					END IF;
 
           -- verificar quantos caracteres serão destinados ao endereço sd204641
@@ -1561,8 +1599,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
             --usa os 50 caracteres para o endereço
 						vr_aux_dsendcom := rpad(substr(vr_dsender_compl,1,50),50,' ');						
           ELSE
-            -- separa 29 caracteres para endereço e 21 para complemento
-            vr_aux_dsendcom := rpad((TRIM(substr(vr_dsendere,1,29)) || TRIM(substr(vr_nrendere,1,6)||substr(vr_dsender_apbl,1,15))),50,' ');
+						-- SEPARA 30 CARACTERES PARA ENDEREÇO E 20 PARA COMPLEMENTO
+						vr_aux_dsendcom := rpad(nvl((TRIM(substr(nvl(vr_dsendere,' '),1,24)) || 
+																				 TRIM(substr(nvl(vr_nrendere,' '),1,6)||
+																				 substr(nvl(vr_complend, ' '),1,10)||
+																				 substr(nvl(vr_dsender_apbl,' '),1,10))),' '),50,' ');
           END IF;
 
           -- Gerar código sequencial de controle para o contrato
@@ -2751,7 +2792,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     dbms_lob.open(vr_obj_cartao_clob, dbms_lob.lob_readwrite);
     json.to_clob(vr_obj_cartao,vr_obj_cartao_clob);
 
-     pc_enviar_bancoob ( pr_cdcooper    => vr_cdcooper,  --> Codigo da cooperativa
+    dbms_output.put_line(vr_obj_cartao_clob);
+
+    pc_enviar_bancoob ( pr_cdcooper    => vr_cdcooper,  --> Codigo da cooperativa
                         pr_cdagenci    => vr_cdagenci,  --> Codigo da agencia
                         pr_cdoperad    => vr_cdoperad,  --> codigo do operador
                         pr_cdorigem    => vr_idorigem,  --> Origem da operacao

@@ -244,6 +244,7 @@ PROCEDURE pc_atualizar_situacao(pr_cdcooper IN crapcop.cdcooper%TYPE            
 															,pr_cidadend IN VARCHAR2              --> Cidade Endereço Carta Portabilidade
 															,pr_ufendere IN VARCHAR2              --> UF Endereço Carta Portabilidade
 															,pr_cepender IN VARCHAR2              --> CEP Endereço Carta Portabilidade
+															,pr_indRemun IN VARCHAR2 DEFAULT NULL   --> IndRemun (06 - TR, 08 -	CDI)
 															,pr_idsolici OUT INTEGER              --> ID da solicitação (0 - Se não foi realizada com sucesso) 
 														  ,pr_des_erro OUT VARCHAR2             --> Indicador erro OK/NOK
 														  ,pr_dscritic OUT VARCHAR2);           --> Descricao erro
@@ -279,6 +280,7 @@ PROCEDURE pc_atualizar_situacao(pr_cdcooper IN crapcop.cdcooper%TYPE            
 															 ,pr_cidadend IN VARCHAR2              --> Cidade Endereço Carta Portabilidade
 															 ,pr_ufendere IN VARCHAR2              --> UF Endereço Carta Portabilidade
 															 ,pr_cepender IN VARCHAR2              --> CEP Endereço Carta Portabilidade
+															 ,pr_indRemun IN VARCHAR2 DEFAULT NULL   --> IndRemun (06 - TR, 08 -	CDI)
 															 ,pr_idsolici OUT INTEGER              --> ID da solicitação (0 - Se não foi realizada com sucesso) 
 														   ,pr_des_erro OUT VARCHAR2             --> Indicador erro OK/NOK
 														   ,pr_dscritic OUT VARCHAR2);           --> Descricao erro												 
@@ -3346,7 +3348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
         -- Tipo de Taxa
         pc_cria_tag(pr_dsnomtag => 'TpTx'
                    ,pr_dspaitag => vr_nmmetodo
-                   ,pr_dsvaltag => 1 -- PRE-FIXADA
+                   ,pr_dsvaltag => (CASE WHEN vr_tab_dados_epr(1).tpemprst = 2 THEN 2 ELSE 1 END) -- PRE-FIXADA
                    ,pr_postag   => 0
                    ,pr_dstpdado => 'int'
                    ,pr_deftpdad => 'xsi:type'
@@ -4425,7 +4427,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
 
       -- A utilizacao da taxa diaria para conversao anual eh devido o 
       -- contrato antigo nao possuir taxa mensal
-      vr_txanual  := TRUNC((POWER(1 + (rw_crawepr.txdiaria / 100), 360) - 1) * 100, 5);
+      IF rw_crawepr.tpemprst = 2 THEN
+        -- POS já grava o valor correto, por isso nao precisa dividir /100
+        vr_txanual  := TRUNC((POWER(1 + (rw_crawepr.txdiaria), 360) - 1) * 100, 5);
+      ELSE
+        vr_txanual  := TRUNC((POWER(1 + (rw_crawepr.txdiaria / 100), 360) - 1) * 100, 5);
+      END IF;
+      
       vr_txnomina := TRUNC(((POWER(1 + (vr_txanual / 100), 1/12) - 1) * 12) * 100, 5);
 
       -- Descricao da cidade e data
@@ -4527,7 +4535,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
                                  ,pr_dtmvtolt  => NULL                          --> Data do movimento atual
                                  ,pr_dsxml     => vr_clobxml                    --> Arquivo XML de dados
                                  ,pr_dsxmlnode => '/raiz/dados'                 --> Nó base do XML para leitura dos dados
-                                 ,pr_dsjasper  => 'crrl073_termo_novo.jasper'   --> Arquivo de layout do iReport
+                                 ,pr_dsjasper  => (CASE WHEN rw_crawepr.tpemprst = 2 THEN 'crrl073_termo.jasper' ELSE 'crrl073_termo_novo.jasper' END)   --> Arquivo de layout do iReport
                                  ,pr_dsparams  => NULL                          --> Sem parâmetros                                         
                                  ,pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqimp --> Arquivo final com o path
                                  ,pr_qtcoluna  => 132                           --> Colunas do relatorio
@@ -4646,6 +4654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
 															,pr_cidadend IN VARCHAR2              --> Cidade Endereço Carta Portabilidade
 															,pr_ufendere IN VARCHAR2              --> UF Endereço Carta Portabilidade
 															,pr_cepender IN VARCHAR2              --> CEP Endereço Carta Portabilidade
+															,pr_indRemun IN VARCHAR2 DEFAULT NULL   --> IndRemun (06 - TR, 08 -	CDI)
 															,pr_idsolici OUT INTEGER              --> ID da solicitação (0 - Se não foi realizada com sucesso) 
 														  ,pr_des_erro OUT VARCHAR2             --> Indicador erro OK/NOK
 														  ,pr_dscritic OUT VARCHAR2) IS         --> Descricao erro
@@ -5202,6 +5211,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
         RAISE vr_exc_erro;
       END IF;
 
+      -- Somente ser for POS Fixado
+      IF pr_tpdetaxa = '02' THEN
+        pc_cria_tag(pr_dsnomtag => 'IndRemun'
+                   ,pr_dspaitag => vr_nmetodo
+                   ,pr_dsvaltag => pr_indRemun -- (06 - TR, 08 - CDI)
+                   ,pr_postag   => 0
+                   ,pr_dstpdado => 'string'
+                   ,pr_deftpdad => 'xsi:type'
+                   ,pr_xml      => vr_xml
+                   ,pr_des_erro => pr_des_erro
+                   ,pr_dscritic => pr_dscritic);
+
+        -- Verifica se ocorreu erro
+        IF pr_des_erro = 'NOK' THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+
       -- Busca do diretorio base da cooperativa para a geração de arquivos
       vr_nmdireto:= gene0001.fn_diretorio(pr_tpdireto => 'C'           --> /usr/coop
 				    			     	 	 		   	       ,pr_cdcooper => pr_cdcooper   --> Cooperativa
@@ -5358,6 +5385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
 															,pr_cidadend IN VARCHAR2              --> Cidade Endereço Carta Portabilidade
 															,pr_ufendere IN VARCHAR2              --> UF Endereço Carta Portabilidade
 															,pr_cepender IN VARCHAR2              --> CEP Endereço Carta Portabilidade
+															,pr_indRemun IN VARCHAR2 DEFAULT NULL   --> IndRemun (06 - TR, 08 -	CDI)
 															,pr_idsolici OUT INTEGER              --> ID da solicitação (0 - Se não foi realizada com sucesso) 
 														  ,pr_des_erro OUT VARCHAR2             --> Indicador erro OK/NOK
 														  ,pr_dscritic OUT VARCHAR2) IS         --> Descricao erro
@@ -5896,6 +5924,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
       -- Verifica se ocorreu erro
       IF pr_des_erro = 'NOK' THEN
         RAISE vr_exc_erro;
+      END IF;
+
+       -- Somente ser for POS Fixado
+      IF pr_tpdetaxa = '02' THEN
+        pc_cria_tag(pr_dsnomtag => 'IndRemun'
+                   ,pr_dspaitag => vr_nmetodo
+                   ,pr_dsvaltag => pr_indRemun -- (06 - TR, 08 - CDI)
+                   ,pr_postag   => 0
+                   ,pr_dstpdado => 'string'
+                   ,pr_deftpdad => 'xsi:type'
+                   ,pr_xml      => vr_xml
+                   ,pr_des_erro => pr_des_erro
+                   ,pr_dscritic => pr_dscritic);
+
+        -- Verifica se ocorreu erro
+        IF pr_des_erro = 'NOK' THEN
+          RAISE vr_exc_erro;
+        END IF;
       END IF;
 
       -- Busca do diretorio base da cooperativa para a geração de arquivos
@@ -6655,7 +6701,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
 
               -- Verifica se retornou erro
               IF vr_dscritic IS NOT NULL THEN
-                pr_dscritic := vr_dscritic;
                 RAISE vr_exc_saida;
               END IF;
 
@@ -6691,15 +6736,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
 
                 -- Verifica se retornou erro
                 IF vr_dscritic IS NOT NULL THEN
-                  pr_dscritic := 'Portabilidade recusada pela IF Credora ou rejeitada pela CIP';
+                  vr_dscritic := 'Portabilidade recusada pela IF Credora ou rejeitada pela CIP';
                 RAISE vr_exc_saida;
               END IF;
            
                 IF vr_nodecount > 0 THEN
-                  pr_dscritic := 'Portabilidade recusada pela IF Credora ou rejeitada pela CIP';
+                  vr_dscritic := 'Portabilidade recusada pela IF Credora ou rejeitada pela CIP';
                   RAISE vr_exc_saida;                 
             ELSE
-                  pr_dscritic := 'Solicitacao de Portabilidade em andamento. Aguardando retorno dos dados atualizados da IF Credora';
+                  vr_dscritic := 'Solicitacao de Portabilidade em andamento. Aguardando retorno dos dados atualizados da IF Credora';
               RAISE vr_exc_saida;
             END IF;
               END IF;

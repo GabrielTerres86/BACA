@@ -1270,9 +1270,6 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     IF  tbgen_trans_pend.tptransacao = 6 THEN
                     aux_dstiptra = "Credito Pre-Aprovado".
                     ELSE
-                    IF  tbgen_trans_pend.tptransacao = 21 THEN
-                    aux_dstiptra = "Credito Emprestimo".
-                    ELSE
                     IF  tbgen_trans_pend.tptransacao = 7 THEN
                  aux_dstiptra = aux_dstptran.
                 ELSE
@@ -1369,11 +1366,11 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                     
                     RUN STORED-PROCEDURE pc_ret_trans_pend_prop
-                      aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0,                                     /* Código da Cooperativa */
-                                                           INPUT "",                                     /* Código do Operador */
-                                                           INPUT "",                                    /* Nome da Tela */
+                      aux_handproc = PROC-HANDLE NO-ERROR (INPUT tbgen_trans_pend.cdcooper,            /* Código da Cooperativa */
+                                                           INPUT "996",                                 /* Código do Operador */
+                                                           INPUT "INTERNETBANK",                        /* Nome da Tela */
                                                            INPUT 1,                                     /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
-                                                           INPUT 0,                                     /* Número da Conta */
+                                                           INPUT tbgen_trans_pend.nrdconta,            /* Número da Conta */
                                                            INPUT 1,                                     /* Titular da Conta */
                                                            INPUT STRING(tbgen_trans_pend.cdtransacao_pendente), /* Codigo da Transacao */
                                                           OUTPUT 0,                                     /* Código da crítica */
@@ -1390,7 +1387,8 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     ASSIGN aux_dtdebito = "Nesta Data"
                            aux_vllantra = pc_ret_trans_pend_prop.pr_vlemprst 
                                           WHEN pc_ret_trans_pend_prop.pr_vlemprst <> ?
-                           aux_dscedent = "PROPOSTA DE EMPRESTIMO " + STRING(pc_ret_trans_pend_prop.pr_nrctremp).
+                           aux_dscedent = "PROPOSTA DE EMPRESTIMO " + STRING(pc_ret_trans_pend_prop.pr_nrctremp)
+                           aux_dstiptra = "Credito Emprestimo".
                   END.
 
                 ELSE

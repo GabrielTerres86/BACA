@@ -3629,6 +3629,383 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
     vr_nrdconta NUMBER;                --> Receber a conta da pessoa relacionada
 		vr_intippes NUMBER;                --> Receber o enquadramento do tipo de pessoa na proposta
     vr_tpctrato crapavt.tpctrato%TYPE;
+    --
+    PROCEDURE PC_INCLUI_MODALIDADE_BIRO (pr_retxml    IN XMLTYPE
+                                        ,pr_nrconbir  IN crapcbd.nrconbir%TYPE
+                                        ,pr_nrseqdet  IN crapcbd.nrseqdet%TYPE
+                                        ,pr_nrcpfcgc  IN crapass.nrcpfcgc%TYPE
+                                        ,pr_dscritic OUT VARCHAR2
+                                        ) IS
+    -- PRJ 438 - Marcelo Telles Coelho - Mouts
+    -- Buscar bloco que contenha a tag <MODALIDADE>
+    -- e gravar na tabela TBGEN_MODALIDADE_BIRO
+      TYPE typ_reg_tags IS RECORD(
+        nmtag      VARCHAR2(100),
+        nrloop     NUMBER);
+      TYPE typ_tab_tags IS TABLE OF typ_reg_tags INDEX BY PLS_INTEGER;
+      vr_tab_tags typ_tab_tags;
+      vr_indice_tag NUMBER;
+      --
+      TYPE typ_reg_modalidade IS RECORD(
+        dsendereco varchar2(1000));
+      TYPE typ_tab_modalidade IS TABLE OF typ_reg_modalidade INDEX BY PLS_INTEGER;
+      vr_tab_modalidade typ_tab_modalidade;
+      --
+      TYPE typ_reg_bloco IS RECORD(
+        dsbloco      VARCHAR2(1000),
+        cdmodalidade NUMBER);
+      TYPE typ_tab_bloco IS TABLE OF typ_reg_bloco INDEX BY PLS_INTEGER;
+      vr_tab_bloco typ_tab_bloco;
+      -- Variaveis
+      vr_clob         CLOB;
+      vr_nrnodo       NUMBER;
+      vr_nrseqdet     NUMBER;
+      vr_dsendereco   VARCHAR2(1000);
+      vr_cdmodalidade NUMBER;
+      vr_nrdocumento  NUMBER;
+      -- Documento
+      vr_xmltype xmlType;
+      vr_parser  xmlparser.Parser;
+      vr_doc     xmldom.DOMDocument;
+      -- Root
+      vr_node_root xmldom.DOMNodeList;
+      vr_item_root xmldom.DOMNode;
+      vr_elem_root xmldom.DOMElement;
+      -- SubItens
+      vr_node_list_1 xmldom.DOMNodeList;
+      vr_node_name_1 VARCHAR2(100);
+      vr_item_node_1 xmldom.DOMNode;
+      vr_elem_node_1 xmldom.DOMElement;
+      vr_node_list_2 xmldom.DOMNodeList;
+      vr_node_name_2 VARCHAR2(100);
+      vr_item_node_2 xmldom.DOMNode;
+      vr_elem_node_2 xmldom.DOMElement;
+      vr_node_list_3 xmldom.DOMNodeList;
+      vr_node_name_3 VARCHAR2(100);
+      vr_item_node_3 xmldom.DOMNode;
+      vr_elem_node_3 xmldom.DOMElement;
+      vr_valu_node_3 xmldom.DOMNode;
+      vr_node_list_4 xmldom.DOMNodeList;
+      vr_node_name_4 VARCHAR2(100);
+      vr_item_node_4 xmldom.DOMNode;
+      vr_elem_node_4 xmldom.DOMElement;
+      vr_valu_node_4 xmldom.DOMNode;
+      vr_node_list_5 xmldom.DOMNodeList;
+      vr_node_name_5 VARCHAR2(100);
+      vr_item_node_5 xmldom.DOMNode;
+      vr_elem_node_5 xmldom.DOMElement;
+      vr_valu_node_5 xmldom.DOMNode;
+      vr_node_list_6 xmldom.DOMNodeList;
+      vr_node_name_6 VARCHAR2(100);
+      vr_item_node_6 xmldom.DOMNode;
+      vr_elem_node_6 xmldom.DOMElement;
+      vr_valu_node_6 xmldom.DOMNode;
+      -- Rotina para substituir caracteres
+      FUNCTION fn_getValue(pr_conteudo IN xmldom.DOMNode)RETURN VARCHAR2 IS
+  BEGIN
+        RETURN gene0007.fn_caract_controle(xmldom.getNodeValue(pr_conteudo));
+      END fn_getValue;
+      --
+    BEGIN
+      vr_tab_tags.DELETE;
+      vr_tab_modalidade.DELETE;
+      vr_tab_bloco.DELETE;
+      vr_indice_tag := 1;
+      vr_nrnodo     := 0;
+      vr_dsendereco := '//LISTA_RESPOSTAS';
+      pr_dscritic   := NULL;
+      vr_tab_tags(vr_indice_tag).nmtag := 'LISTA_RESPOSTAS';
+      vr_tab_tags(vr_indice_tag).nrloop := 0;
+
+      -- Faz o parse do XMLTYPE para o XMLDOM e libera o parser ao fim
+      vr_parser := xmlparser.newParser;
+      xmlparser.parseClob(vr_parser, pr_retxml.getClobVal());
+      vr_doc    := xmlparser.getDocument(vr_parser);
+      xmlparser.freeParser(vr_parser);
+
+      -- Buscar nodo LISTA_RESPOSTAS
+      vr_node_root := xmldom.getElementsByTagName(vr_doc, 'LISTA_RESPOSTAS');
+      vr_item_root := xmldom.item(vr_node_root, 0);
+      vr_elem_root := xmldom.makeElement(vr_item_root);
+
+      -- Faz o get de toda a lista SISMSG
+      vr_node_list_1 := xmldom.getChildrenByTagName(vr_elem_root, '*');
+
+      -- Percorrer os elementos
+      FOR i IN 0 .. xmldom.getLength(vr_node_list_1) - 1 LOOP
+        -- Buscar o item atual
+        vr_item_node_1 := xmldom.item(vr_node_list_1, i);
+        -- Captura o nome e tipo do nodo
+        vr_node_name_1 := xmldom.getNodeName(vr_item_node_1);
+        -- Sair se o nodo não for elemento
+        IF xmldom.getNodeType(vr_item_node_1) <> xmldom.ELEMENT_NODE THEN
+          CONTINUE;
+        END IF;
+      
+        IF vr_node_name_1 <> vr_tab_tags(vr_indice_tag).nmtag THEN
+          vr_indice_tag := vr_indice_tag + 1;
+          vr_tab_tags(vr_indice_tag).nmtag := vr_node_name_1;
+          vr_tab_tags(vr_indice_tag).nrloop := 1;
+          vr_nrnodo := vr_nrnodo + 1;
+          vr_tab_modalidade(vr_tab_tags(vr_indice_tag).nrloop).dsendereco := vr_tab_tags(vr_indice_tag).nmtag||'['||vr_nrnodo||']';
+        END IF;
+        --===============================================
+        -- Buscar todos os filhos deste nó
+        vr_elem_node_2 := xmldom.makeElement(vr_item_node_1);
+        -- Faz o get de toda a lista de folhas da SEGCAB
+        vr_node_list_2 := xmldom.getChildrenByTagName(vr_elem_node_2, '*');
+        -- Percorrer os elementos
+        FOR i IN 0 .. xmldom.getLength(vr_node_list_2) - 1 LOOP
+          -- Buscar o item atual
+          vr_item_node_2 := xmldom.item(vr_node_list_2, i);
+          -- Captura o nome e tipo do nodo
+          vr_node_name_2 := xmldom.getNodeName(vr_item_node_2);
+          -- Sair se o nodo não for elemento
+          IF xmldom.getNodeType(vr_item_node_2) <> xmldom.ELEMENT_NODE THEN
+            CONTINUE;
+          END IF;
+          IF vr_node_name_2 <> vr_tab_tags(vr_indice_tag).nmtag THEN
+            vr_indice_tag := vr_indice_tag + 1;
+            vr_tab_tags(vr_indice_tag).nmtag := vr_node_name_2;
+            vr_tab_tags(vr_indice_tag).nrloop := 2;
+            vr_tab_modalidade(vr_tab_tags(vr_indice_tag).nrloop).dsendereco := vr_tab_tags(vr_indice_tag).nmtag;
+          END IF;
+          --====================================================================
+          -- Buscar todos os filhos deste nó
+          vr_elem_node_3 := xmldom.makeElement(vr_item_node_2);
+          -- Faz o get de toda a lista de filhos
+          vr_node_list_3 := xmldom.getChildrenByTagName(vr_elem_node_3, '*');
+          -- Percorrer os elementos
+          FOR i IN 0 .. xmldom.getLength(vr_node_list_3) - 1 LOOP
+            -- Buscar o item atual
+            vr_item_node_3 := xmldom.item(vr_node_list_3, i);
+            -- Captura o nome e tipo do nodo
+            vr_node_name_3 := xmldom.getNodeName(vr_item_node_3);
+            -- Sair se o nodo não for elemento
+            IF xmldom.getNodeType(vr_item_node_3) <> xmldom.ELEMENT_NODE THEN
+              CONTINUE;
+            END IF;
+            IF vr_node_name_3 <> vr_tab_tags(vr_indice_tag).nmtag THEN
+              vr_indice_tag := vr_indice_tag + 1;
+              vr_tab_tags(vr_indice_tag).nmtag := vr_node_name_3;
+              vr_tab_tags(vr_indice_tag).nrloop := 3;
+              vr_tab_modalidade(vr_tab_tags(vr_indice_tag).nrloop).dsendereco := vr_tab_tags(vr_indice_tag).nmtag;
+              --
+              IF vr_node_name_3 = 'DOCUMENTO' THEN
+                -- Buscar valor da TAG
+                vr_valu_node_3 := xmldom.getFirstChild(vr_item_node_3);
+                vr_nrdocumento := fn_getValue(vr_valu_node_3);
+              END IF;
+            END IF;
+            --====================================================================
+            -- Buscar todos os filhos deste nó
+            vr_elem_node_4 := xmldom.makeElement(vr_item_node_3);
+            -- Faz o get de toda a lista de filhos
+            vr_node_list_4 := xmldom.getChildrenByTagName(vr_elem_node_4, '*');
+            -- Percorrer os elementos
+            FOR i IN 0 .. xmldom.getLength(vr_node_list_4) - 1 LOOP
+              -- Buscar o item atual
+              vr_item_node_4 := xmldom.item(vr_node_list_4, i);
+              -- Captura o nome e tipo do nodo
+              vr_node_name_4 := xmldom.getNodeName(vr_item_node_4);
+              -- Sair se o nodo não for elemento
+              IF xmldom.getNodeType(vr_item_node_4) <> xmldom.ELEMENT_NODE THEN
+                CONTINUE;
+              END IF;
+              IF vr_node_name_4 <> vr_tab_tags(vr_indice_tag).nmtag THEN
+                vr_indice_tag := vr_indice_tag + 1;
+                vr_tab_tags(vr_indice_tag).nmtag := vr_node_name_4;
+                vr_tab_tags(vr_indice_tag).nrloop := 4;
+                vr_tab_modalidade(vr_tab_tags(vr_indice_tag).nrloop).dsendereco := vr_tab_tags(vr_indice_tag).nmtag;
+                --
+                IF vr_node_name_4 = 'DOCUMENTO' THEN
+                  -- Buscar valor da TAG
+                  vr_valu_node_4 := xmldom.getFirstChild(vr_item_node_4);
+                  vr_nrdocumento := fn_getValue(vr_valu_node_4);
+                END IF;
+                --
+                IF NVL(vr_nrdocumento,0) = pr_nrcpfcgc
+                AND vr_node_name_4 = 'MODALIDADE' THEN
+                  BEGIN
+                  -- Buscar valor da TAG
+                  vr_valu_node_4  := xmldom.getFirstChild(vr_item_node_4);
+                  vr_cdmodalidade := fn_getValue(vr_valu_node_4);
+                  --
+                  FOR i IN 1 .. vr_tab_modalidade.COUNT() - 1 LOOP
+                    vr_dsendereco := vr_dsendereco || '/' || vr_tab_modalidade(i).dsendereco;
+                  END LOOP;
+                  --
+                  vr_tab_bloco(vr_tab_bloco.count()+1).dsbloco    := vr_dsendereco;
+                  vr_tab_bloco(vr_tab_bloco.count()).cdmodalidade := vr_cdmodalidade;
+                  vr_dsendereco := '//LISTA_RESPOSTAS';
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      NULL;
+                  END;
+                  
+                END IF;
+              END IF;
+              --====================================================================
+              -- Buscar todos os filhos deste nó
+              vr_elem_node_5 := xmldom.makeElement(vr_item_node_4);
+              -- Faz o get de toda a lista de filhos
+              vr_node_list_5 := xmldom.getChildrenByTagName(vr_elem_node_5, '*');
+              -- Percorrer os elementos
+              FOR i IN 0 .. xmldom.getLength(vr_node_list_5) - 1 LOOP
+                -- Buscar o item atual
+                vr_item_node_5 := xmldom.item(vr_node_list_5, i);
+                -- Captura o nome e tipo do nodo
+                vr_node_name_5 := xmldom.getNodeName(vr_item_node_5);
+                -- Sair se o nodo não for elemento
+                IF xmldom.getNodeType(vr_item_node_5) <> xmldom.ELEMENT_NODE THEN
+                  CONTINUE;
+                END IF;
+                IF vr_node_name_5 <> vr_tab_tags(vr_indice_tag).nmtag THEN
+                  vr_indice_tag := vr_indice_tag + 1;
+                  vr_tab_tags(vr_indice_tag).nmtag := vr_node_name_5;
+                  vr_tab_tags(vr_indice_tag).nrloop := 5;
+                  vr_tab_modalidade(vr_tab_tags(vr_indice_tag).nrloop).dsendereco := vr_tab_tags(vr_indice_tag).nmtag;
+                  --
+                  IF vr_node_name_5 = 'DOCUMENTO' THEN
+                    -- Buscar valor da TAG
+                    vr_valu_node_5 := xmldom.getFirstChild(vr_item_node_5);
+                    vr_nrdocumento := fn_getValue(vr_valu_node_5);
+                  END IF;
+                  --
+                  IF NVL(vr_nrdocumento,0) = pr_nrcpfcgc
+                  AND vr_node_name_5 = 'MODALIDADE' THEN
+                    BEGIN
+                    -- Buscar valor da TAG
+                    vr_valu_node_5  := xmldom.getFirstChild(vr_item_node_5);
+                    vr_cdmodalidade := fn_getValue(vr_valu_node_5);
+                    --
+                    FOR i IN 1 .. vr_tab_modalidade.COUNT() - 1 LOOP
+                      vr_dsendereco := vr_dsendereco || '/' || vr_tab_modalidade(i).dsendereco;
+                    END LOOP;
+                    --
+                    vr_tab_bloco(vr_tab_bloco.count()+1).dsbloco    := vr_dsendereco;
+                    vr_tab_bloco(vr_tab_bloco.count()).cdmodalidade := vr_cdmodalidade;
+                    vr_dsendereco := '//LISTA_RESPOSTAS';
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        NULL;
+                    END;                    
+                  END IF;
+                END IF;
+                --====================================================================
+                -- Buscar todos os filhos deste nó
+                vr_elem_node_6 := xmldom.makeElement(vr_item_node_5);
+                -- Faz o get de toda a lista de filhos do nó passado
+                vr_node_list_6 := xmldom.getChildrenByTagName(vr_elem_node_6,
+                                                              '*');
+                -- Percorrer os elementos
+                FOR i IN 0 .. xmldom.getLength(vr_node_list_6) - 1 LOOP
+                  -- Buscar o item atual
+                  vr_item_node_6 := xmldom.item(vr_node_list_6, i);
+                  -- Captura o nome e tipo do nodo
+                  vr_node_name_6 := xmldom.getNodeName(vr_item_node_6);
+                  IF vr_node_name_6 <> vr_tab_tags(vr_indice_tag).nmtag THEN
+                    vr_indice_tag := vr_indice_tag + 1;
+                    vr_tab_tags(vr_indice_tag).nmtag := vr_node_name_6;
+                    vr_tab_tags(vr_indice_tag).nrloop := 6;
+                    --
+                    IF vr_node_name_6 = 'DOCUMENTO' THEN
+                      -- Buscar valor da TAG
+                      vr_valu_node_6  := xmldom.getFirstChild(vr_item_node_6);
+                      vr_nrdocumento := fn_getValue(vr_valu_node_6);
+                    END IF;
+                    --
+                    IF NVL(vr_nrdocumento,0) = pr_nrcpfcgc
+                    AND vr_node_name_6 = 'MODALIDADE' THEN
+                      BEGIN
+                      -- Buscar valor da TAG
+                      vr_valu_node_6  := xmldom.getFirstChild(vr_item_node_6);
+                      vr_cdmodalidade := fn_getValue(vr_valu_node_6);
+                      --
+                      FOR i IN 1 .. vr_tab_modalidade.COUNT() - 1 LOOP
+                        vr_dsendereco := vr_dsendereco || '/' || vr_tab_modalidade(i).dsendereco;
+                      END LOOP;
+                      --
+                      vr_tab_bloco(vr_tab_bloco.count()+1).dsbloco    := vr_dsendereco;
+                      vr_tab_bloco(vr_tab_bloco.count()).cdmodalidade := vr_cdmodalidade;
+                      vr_dsendereco := '//LISTA_RESPOSTAS';
+                      EXCEPTION
+                        WHEN OTHERS THEN
+                          NULL;
+                      END;                        
+                    END IF;
+                  END IF;
+                END LOOP;
+                vr_tab_modalidade.DELETE(5);
+              END LOOP;
+              vr_tab_modalidade.DELETE(4);
+              vr_tab_modalidade.DELETE(5);
+            END LOOP;
+            vr_tab_modalidade.DELETE(3);
+            vr_tab_modalidade.DELETE(4);
+            vr_tab_modalidade.DELETE(5);
+          END LOOP;
+          vr_tab_modalidade.DELETE(2);
+          vr_tab_modalidade.DELETE(3);
+          vr_tab_modalidade.DELETE(4);
+          vr_tab_modalidade.DELETE(5);
+        END LOOP;
+        vr_tab_modalidade.DELETE(1);
+        vr_tab_modalidade.DELETE(2);
+        vr_tab_modalidade.DELETE(3);
+        vr_tab_modalidade.DELETE(4);
+        vr_tab_modalidade.DELETE(5);
+      END LOOP;
+      --
+      -- Efetuar o insert na tabela TBGEN_MODALIDADE_BIRO
+      --
+      FOR i IN 1 .. vr_tab_bloco.COUNT() LOOP
+        DBMS_OUTPUT.PUT_LINE(i || '=' || vr_tab_bloco(i).dsbloco);
+        SELECT EXTRACT(pr_retxml,vr_tab_bloco(i).dsbloco).getClobVal()
+          INTO vr_clob
+          FROM DUAL;
+        --
+        IF vr_tab_bloco(i).cdmodalidade IS NOT NULL THEN
+        BEGIN
+          INSERT INTO tbgen_modalidade_biro
+            (nrconbir,
+             nrseqdet,
+             cdmodbir,
+             nrcpfcgc,
+             xmlmodal)
+          VALUES
+            (pr_nrconbir,
+             pr_nrseqdet,
+             vr_tab_bloco(i).cdmodalidade,
+             pr_nrcpfcgc,
+             vr_clob);
+        EXCEPTION
+          WHEN DUP_VAL_ON_INDEX THEN
+            BEGIN
+              UPDATE tbgen_modalidade_biro
+                 SET xmlmodal = vr_clob
+               WHERE nrconbir = pr_nrconbir
+                 AND nrseqdet = pr_nrseqdet
+                 AND cdmodbir = vr_tab_bloco(i).cdmodalidade;
+            EXCEPTION
+              WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
+                vr_dscritic := 'Erro ao alterar a CRAPPRM: '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
+            pr_dscritic := 'Erro ao inserir na TBGEN_MODALIDE_BIRO: '||SQLERRM;
+        END;
+        END IF;
+      END LOOP;
+    EXCEPTION
+      WHEN OTHERS THEN
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
+        pr_dscritic := 'Erro ao inserir na TBGEN_MODALIDE_BIRO: '||SQLERRM;        
+    END PC_INCLUI_MODALIDADE_BIRO;
   BEGIN
     -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_processa_retorno_req');  
@@ -3810,9 +4187,10 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           END;
         ELSE
 
+		 /*Alterado em 20/05/2019 - Retorno de mais de uma lista de observacao*/
 			BEGIN
-			  pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO/DESCRICAO','S',vr_dsobserv, vr_dscritic);
-			  pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO/MENSAGEM', 'S',vr_dsmsgobs, vr_dscritic);
+			  pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO[1]/DESCRICAO','S',vr_dsobserv, vr_dscritic);
+			  pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES[1]/LISTA_OBSERVACAO/OBSERVACAO[1]/MENSAGEM', 'S',vr_dsmsgobs, vr_dscritic);
 			EXCEPTION
 			  WHEN OTHERS THEN
 				-- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
@@ -5289,6 +5667,58 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           vr_crapcbd.vlopescr := vr_vltotsfn;
         END IF;
 
+        -- PRJ 438 - INICIO - Valor total das operacoes vencidas dos ultimos 12 meses
+        IF pr_retxml.existsnode(vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_01D_14D') > 0 THEN  
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_01D_14D','N',vr_vltotsfn, vr_dscritic);
+          vr_crapcbd.vlopesme := nvl(vr_crapcbd.vlopesme,0) + vr_vltotsfn;
+        END IF;
+        
+        IF pr_retxml.existsnode(vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_15D_30D') > 0 THEN  
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_15D_30D','N',vr_vltotsfn, vr_dscritic);
+          vr_crapcbd.vlopesme := nvl(vr_crapcbd.vlopesme,0) + vr_vltotsfn;
+        END IF;
+        
+        IF pr_retxml.existsnode(vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_31D_60D') > 0 THEN  
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_31D_60D','N',vr_vltotsfn, vr_dscritic);
+          vr_crapcbd.vlopesme := nvl(vr_crapcbd.vlopesme,0) + vr_vltotsfn;
+        END IF;
+        
+        IF pr_retxml.existsnode(vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_61D_90D') > 0 THEN  
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_61D_90D','N',vr_vltotsfn, vr_dscritic);
+          vr_crapcbd.vlopesme := nvl(vr_crapcbd.vlopesme,0) + vr_vltotsfn;
+        END IF;
+        
+        IF pr_retxml.existsnode(vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_91D_120D') > 0 THEN  
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_91D_120D','N',vr_vltotsfn, vr_dscritic);
+          vr_crapcbd.vlopesme := nvl(vr_crapcbd.vlopesme,0) + vr_vltotsfn;
+        END IF;
+        
+        IF pr_retxml.existsnode(vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_121D_150D') > 0 THEN  
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_121D_150D','N',vr_vltotsfn, vr_dscritic);
+          vr_crapcbd.vlopesme := nvl(vr_crapcbd.vlopesme,0) + vr_vltotsfn;
+        END IF;
+        
+        IF pr_retxml.existsnode(vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_151D_180D') > 0 THEN  
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_151D_180D','N',vr_vltotsfn, vr_dscritic);
+          vr_crapcbd.vlopesme := nvl(vr_crapcbd.vlopesme,0) + vr_vltotsfn;
+        END IF;
+        
+        IF pr_retxml.existsnode(vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_181D_240D') > 0 THEN  
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_181D_240D','N',vr_vltotsfn, vr_dscritic);
+          vr_crapcbd.vlopesme := nvl(vr_crapcbd.vlopesme,0) + vr_vltotsfn;
+        END IF;
+        
+        IF pr_retxml.existsnode(vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_241D_300D') > 0 THEN  
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_241D_300D','N',vr_vltotsfn, vr_dscritic);
+          vr_crapcbd.vlopesme := nvl(vr_crapcbd.vlopesme,0) + vr_vltotsfn;
+        END IF;
+        
+        IF pr_retxml.existsnode(vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_301D_360D') > 0 THEN  
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_VENCIDOS/VPER_301D_360D','N',vr_vltotsfn, vr_dscritic);
+          vr_crapcbd.vlopesme := nvl(vr_crapcbd.vlopesme,0) + vr_vltotsfn;
+        END IF;
+        -- PRJ 438 - FIM - Valor total das operacoes vencidas dos ultimos 12 meses
+
         -- Verifica se existe dados na consulta de creditos a liberar
         IF pr_retxml.existsnode(vr_nmtagaux||'CREDITOS_LIBERAR/VAL_TOTAL') > 0 THEN  
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_LIBERAR/VAL_TOTAL','N',vr_vltotsfn, vr_dscritic);
@@ -5300,6 +5730,12 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_BAIXADOS_PREJUIZOS/VAL_TOTAL','N',vr_vltotsfn, vr_dscritic);
           vr_crapcbd.vltotsfn := nvl(vr_crapcbd.vltotsfn,0) + vr_vltotsfn;
           vr_crapcbd.vlprejui := vr_vltotsfn;
+        END IF;
+
+        -- PRJ 438 - Valor total das operacoes em prejuizo dos ultimos 12 meses
+        IF pr_retxml.existsnode(vr_nmtagaux||'CREDITOS_BAIXADOS_PREJUIZOS/VPER_01D_360D') > 0 THEN  
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CREDITOS_BAIXADOS_PREJUIZOS/VPER_01D_360D','N',vr_vltotsfn, vr_dscritic);
+          vr_crapcbd.vlprejme := vr_vltotsfn;
         END IF;
 
         -- Verifica se existe dados no resumo de informacoes do Bacen
@@ -5339,6 +5775,17 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           vr_dscritic := 'Erro ao alterar a CRAPCBD (bacen): '||SQLERRM;
           RAISE vr_exc_saida;
       END;
+   
+      -- PRJ 438 - Marcelo Telles Coelho - Mouts
+      PC_INCLUI_MODALIDADE_BIRO (pr_retxml   => pr_retxml
+                                ,pr_nrconbir => pr_nrconbir
+                                ,pr_nrseqdet => vr_nrseqdet
+                                ,pr_nrcpfcgc => vr_crapcbd.nrcpfcgc
+                                ,pr_dscritic => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      -- Fim PRJ 438
    
       -- Limpa o conteudo da variavel de registro
       vr_crapcbd := NULL;
@@ -8615,7 +9062,7 @@ PROCEDURE pc_busca_consulta_biro(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Codi
          AND crapcbd.inreterr = 0  -- Nao houve erros
          AND crapcbc.nrconbir = crapcbd.nrconbir
          AND crapcbc.inprodut <> 7
-       ORDER BY crapcbd.dtconbir DESC; -- Buscar a consulta mais recente
+       ORDER BY crapcbd.dtconbir DESC, DTREAPRO; -- Buscar a consulta mais recente
   
   BEGIN
     -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
@@ -11587,7 +12034,7 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
       BEGIN
         UPDATE crapprp
            SET dtdrisco = decode(vr_inconscr,1,nvl(vr_dtconmax_scr, dtdrisco),dtdrisco),
-               dtcnsspc = (SELECT trunc(nvl(crapcbd.dtreapro, crapcbd.dtconbir))
+               dtcnsspc = (SELECT MAX(trunc(nvl(crapcbd.dtreapro, crapcbd.dtconbir)))
                              FROM crapmbr,
                                   crapcbd
                             WHERE crapcbd.nrconbir = vr_nrconbir
@@ -11906,7 +12353,7 @@ BEGIN
    begin
       update crapprp
       set    dtdrisco = decode(vr_inconscr,1,nvl(vr_dtconmax_scr, dtdrisco),dtdrisco)
-            ,dtcnsspc = (select trunc(nvl(crapcbd.dtreapro, crapcbd.dtconbir))
+            ,dtcnsspc = (select MAX(trunc(nvl(crapcbd.dtreapro, crapcbd.dtconbir)))
                          from   crapmbr
                                ,crapcbd
                          where  crapcbd.nrconbir = vr_nrconbir

@@ -485,7 +485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
   /* -------------------------------------------------------------------------------------------------------------
 
     Programa: EMPR0018           Antigo: sistema/generico/procedures/b1wgen0097.p
-    Autor   : Douglas Pagel / AMcom 
+    Autor   : Douglas Pagel/AMcom 
     Data    : 18/12/2018               ultima Atualizacao: --
      
     Dados referentes ao programa:
@@ -2419,8 +2419,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
           vr_vlemprst := pr_vlemprst;
           vr_vllibera := pr_vlemprst;
           
-          IF pr_idfiniof = 1 THEN
-             vr_vlemprst := nvl(vr_vlemprst,0) + nvl(vr_vlrtarif,0);
+          IF pr_idfiniof = 0 THEN
+             vr_vlemprst := nvl(vr_vlemprst,0) - nvl(vr_vlrtarif,0);
            END IF;
            
           -- Calcular o IOF da operação
@@ -2455,8 +2455,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
             RAISE vr_exc_saida;  
           END IF;                                                       
         
-          IF pr_idfiniof = 1 THEN
-             vr_vlemprst := nvl(vr_vlemprst,0) + nvl(vr_valoriof,0);
+          IF pr_idfiniof = 0 THEN
+             vr_vlemprst := nvl(vr_vlemprst,0) - nvl(vr_valoriof,0);
              vr_vllibera := vr_vlemprst;
            END IF; 
            
@@ -2574,6 +2574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                           , pr_idfiniof => pr_idfiniof
                                           , pr_dsctrliq => ''
                                           , pr_idgravar => 'N' 
+																				, pr_dtcarenc => CASE WHEN pr_idcarenc > 0 THEN pr_dtcarenc ELSE null END
                                           , pr_txcetano => vr_txcetano
                                           , pr_txcetmes => vr_txcetmes
                                           , pr_cdcritic => vr_cdcritic
@@ -3514,8 +3515,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     --/ variaveis para montagem do layout das parcelas no jasper
     --
     TYPE c_refcur IS REF CURSOR;
-    vr_query LONG;
-    vr_query_1 LONG;
+    vr_query CLOB;
+    vr_query_1 CLOB;
     vr_query_2 LONG;
     c_dummy c_refcur;
     vr_nrparepr_1 INTEGER;
@@ -3625,7 +3626,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
       END LOOP;      
     END monta_subquery_parcelas;
     
-    FUNCTION fn_query_parcelas RETURN LONG IS
+    FUNCTION fn_query_parcelas RETURN CLOB IS
     --/
     BEGIN
     vr_query_1 := 'SELECT parcela,

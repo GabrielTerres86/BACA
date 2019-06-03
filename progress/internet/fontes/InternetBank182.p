@@ -20,6 +20,8 @@
                14/11/2018 - Ajuste para passar a modalidade do tpo da conta do cooperado
 							atraves do servico (PRJ 485 - Lucas Skroch)  
 
+               10/04/2019 - PJ530-Bacenjud fase 2 - Retorna ID conta monitorada
+                            (Renato Cordeiro - AMcom)
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -53,6 +55,7 @@ DEF VAR aux_dtadmiss AS CHAR                                           NO-UNDO.
 DEF VAR aux_dtdemiss AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_idpessoa AS DECI                                           NO-UNDO.
+DEF VAR aux_id_conta_monitorada         AS INT                         NO-UNDO.
 DEF VAR aux_nrcpfcgc LIKE crapass.nrcpfcgc                             NO-UNDO.
 DEF VAR aux_nrcpfpre LIKE crapsnh.nrcpfcgc                             NO-UNDO.
 
@@ -262,6 +265,32 @@ ELSE
             END.
     END.
 
+
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+RUN STORED-PROCEDURE pc_verifica_conta_bloqueio
+  aux_handproc = PROC-HANDLE NO-ERROR
+                     (INPUT par_cdcooper, 
+                      INPUT par_nrdconta,
+                      OUTPUT 0,
+                      OUTPUT 0,
+                      OUTPUT "").
+                      
+CLOSE STORED-PROC pc_verifica_conta_bloqueio aux_statproc = PROC-STATUS
+      WHERE PROC-HANDLE = aux_handproc.
+
+ASSIGN aux_id_conta_monitorada = 0       
+       aux_cdcritic = 0
+       aux_dscritic = ""
+       aux_id_conta_monitorada = pc_verifica_conta_bloqueio.pr_id_conta_monitorada
+                      WHEN pc_verifica_conta_bloqueio.pr_id_conta_monitorada <> ?
+       aux_cdcritic = pc_verifica_conta_bloqueio.pr_cdcritic
+                      WHEN pc_verifica_conta_bloqueio.pr_cdcritic <> ?
+       aux_dscritic = pc_verifica_conta_bloqueio.pr_dscritic
+                      WHEN pc_verifica_conta_bloqueio.pr_dscritic <> ?.      
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
 RUN STORED-PROCEDURE pc_retorna_idpessoa
@@ -470,9 +499,10 @@ ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmtitula>" +
                                aux_dtdemiss +
                                "</dtdemiss><cdmodali>" + /* INICIO Projeto 485 - Portabilidade de salario */
                                STRING(aux_cdmodali) +
-                               "</cdmodali></CORRENTISTA>" + /* FIM Projeto 485 - Portabilidade de salario */
+                               "</cdmodali><flctamon>" + /* FIM Projeto 485 - Portabilidade de salario */
+                               STRING(aux_id_conta_monitorada,"9") +
+                               "</flctamon></CORRENTISTA>" + 
                                aux_xml.
-
 
 RETURN "OK".
 

@@ -6567,6 +6567,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
                 15/05/2019 - Inclusão de envio de email ao cair no Erro geral.
                              Alcemir Mouts (PRB0041487).
+
+	            24/05/2019 - Ajuste para quando não encontrar o endereço do cooperado
+                             gerar critica e pular para o proximo registro e enviar
+                             as criticas por email.
+                             Alcemir Jr. (PRB0041782).
+                             
                         
      ..............................................................................*/
     DECLARE
@@ -6641,6 +6647,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       -- Saida da OS Command
       vr_typ_saida VARCHAR2(4000);
 
+      -- criticas 
+      vr_criticas CLOB;
+      
       ------------------------------- CURSORES ---------------------------------
       -- Busca listagem das cooperativas
       CURSOR cr_crapcol IS
@@ -6902,7 +6911,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 							,crapage.cdagenci
 							,crapage.idcidade
 							,crapage.nrcepend
-							,crapage.dsendcop||decode(crapage.nrendere,0,null,','||crapage.nrendere) dsender_compl
+							,crapage.dsendcop||
+							decode(crapage.nrendere,0,null,','||crapage.nrendere)||
+							decode(crapage.dscomple, ' ', NULL, ','||crapage.dscomple) dsender_compl
 					FROM crapage
 				 WHERE crapage.cdcooper = pr_cdcooper
 					 AND crapage.cdagenci = pr_cdagenci;
@@ -6958,10 +6969,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             ,enc.nmbairro
             ,enc.cdufende
             ,enc.dsendere
-            , decode(enc.nrendere,0,null,','||enc.nrendere) nrendere
+            ,decode(enc.nrendere,0,null,','||enc.nrendere) nrendere
+						,enc.complend
             -- montar string com o endereço completo do associado
             ,enc.dsendere||
-             decode(enc.nrendere,0,null,','||enc.nrendere) dsender_compl
+             decode(enc.nrendere,0,null,','||enc.nrendere)||
+						 decode(enc.complend,' ',NULL,','||enc.complend) dsender_compl
             ,decode(nvl(trim(enc.cddbloco),'0'),'0',null,' bl-'||enc.cddbloco)||
              decode(nvl(trim(enc.nrdoapto),'0'),'0',null,' ap '||enc.nrdoapto) dsender_apbl
 
@@ -7092,7 +7105,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 					vr_ufendere VARCHAR2(5) := '';
 					vr_nmcidade VARCHAR2(50) := '';
 					vr_nmbairro VARCHAR2(50) := '';
-					vr_nrcepend VARCHAR2(15) := '';					
+					vr_nrcepend VARCHAR2(15) := '';
+					vr_complend VARCHAR2(50) := '';
 
         BEGIN
           BEGIN
@@ -7134,7 +7148,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 							vr_ufendere := rw_end_agencia.cdufdcop;
 							vr_nmcidade := rw_end_agencia.nmcidade;
 							vr_nmbairro := rw_end_agencia.nmbairro;
-							vr_nrcepend := rw_end_agencia.nrcepend;							
+							vr_nrcepend := rw_end_agencia.nrcepend;
+							vr_complend := rw_end_agencia.dscomple;					
 							
 						ELSE
 
@@ -7153,7 +7168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               vr_dscritic := 'Endereco nao encontrado. '                     ||
                              'Cooperativa: ' || TO_CHAR(rw_crawcrd.cdcooper) ||
                              ' Conta: ' || TO_CHAR(rw_crawcrd.nrdconta)      || '.';
-              RAISE vr_exc_saida;
+              RAISE vr_exc_loop_detalhe;
             ELSE
               -- Apenas fechar o cursor
               CLOSE cr_crapenc;
@@ -7166,6 +7181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 								vr_nmcidade := rw_crapenc.nmcidade;
 								vr_nmbairro := rw_crapenc.nmbairro;
 								vr_nrcepend := rw_crapenc.nrcepend;
+								vr_complend := rw_crapenc.complend;
 								
             END IF;
 						
@@ -7177,10 +7193,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               --USA OS 50 CARACTERES PARA O ENDEREÇO
               vr_aux_dsendcom := rpad(substr(nvl(vr_dsender_compl,' '),1,50),50,' ');
             ELSE
-              -- SEPARA 29 CARACTERES PARA ENDEREÇO E 21 PARA COMPLEMENTO
-              vr_aux_dsendcom := rpad(nvl((TRIM(substr(nvl(vr_dsendere,' '),1,29)) || 
+              -- SEPARA 30 CARACTERES PARA ENDEREÇO E 20 PARA COMPLEMENTO
+              vr_aux_dsendcom := rpad(nvl((TRIM(substr(nvl(vr_dsendere,' '),1,24)) || 
                                            TRIM(substr(nvl(vr_nrendere,' '),1,6)||
-                                           substr(nvl(vr_dsender_apbl,' '),1,15))),' '),50,' ');
+																					 substr(nvl(vr_complend, ' '),1,10)||
+                                           substr(nvl(vr_dsender_apbl,' '),1,10))),' '),50,' ');
             END IF;
 
       -- Gerar código sequencial de controle para o contrato (Renato-Supero)
@@ -7733,7 +7750,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
           -- Processar alterações de dados dos Cooperados que possuem Cartão de Crédito
           FOR rw_crapcrd_loop_alt IN cr_crapcrd_loop_alt(rw_crapcol.cdcooper) LOOP
-            
+            BEGIN  
              /*OPEN cr_crawcrd_loop_alt (pr_cdcooper => rw_crapcrd_loop_alt.cdcooper,
                                       pr_cdadmcrd => rw_crapcrd_loop_alt.cdadmcrd,
                                       pr_tpcartao => rw_crapcrd_loop_alt.tpcartao,
@@ -7977,6 +7994,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             -- fecha cursores
             CLOSE cr_crapalt;            
             CLOSE cr_altlimit;
+            
+            EXCEPTION 
+              WHEN vr_exc_loop_detalhe THEN
+                
+                -- fecha cursores
+                CLOSE cr_crapalt;            
+                CLOSE cr_altlimit;
+            
+                IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+                  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic); -- Buscar a descrição
+                END IF;
+
+                IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                  -- Envio centralizado de log de erro
+                  btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Programa roda para todas as coops. Por isto fixo cecred (3)
+                                            ,pr_ind_tipo_log => 2 -- Erro tratato
+                                            ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
+                                                                              || vr_cdprogra || ' --> '
+                                                                              || vr_dscritic );
+                END IF;
+                
+                vr_criticas := nvl(vr_criticas,'') || '<br>' || vr_dscritic || '<br>';
+            END;
             
           END LOOP;
 
@@ -8482,6 +8522,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                                               || vr_cdprogra || ' --> '
                                                                               || vr_dscritic );
                 END IF;
+                
+                vr_criticas := nvl(vr_criticas,'') || '<br>' || vr_dscritic || '<br>';
+                
               WHEN OTHERS THEN
                 CECRED.pc_internal_exception;
                 -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
@@ -8549,7 +8592,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         IF vr_typ_saida = 'ERR' THEN
           RAISE vr_exc_saida;
         END IF;
-
+        
+        -- verifica criticas para enviar por email
+        
+        IF TRIM(vr_criticas) IS NOT NULL THEN
+          gene0003.pc_solicita_email(pr_cdcooper              => vr_cdcooper
+                                          ,pr_cdprogra        => vr_cdprogra
+                                          ,pr_des_destino     => 'cartoes@ailos.coop.br'
+                                          ,pr_des_assunto     => 'Criticas - Arquivo CCB3'
+                                          ,pr_des_anexo       => NULL
+                                          ,pr_des_corpo       => 'As solicitacoes listadas abaixo nao foram enviadas no arquivo:  '|| vr_nmrquivo||
+                                                                 '<br><br>'|| vr_criticas
+                                          ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                          ,pr_des_erro        => vr_dsderro);
+                                          
+          IF trim(vr_dsderro) IS NOT NULL THEN
+            vr_dscritic:= vr_dsderro;
+            --Levantar Excecao
+            RAISE vr_exc_saida;
+          END IF;
+                
+        END IF;
+        
         -- ATUALIZA REGISTRO REFERENTE A SEQUENCIA DE ARQUIVOS
         BEGIN
           UPDATE

@@ -86,7 +86,7 @@ PROCEDURE carrega-apl-blqrgt:
    
     CREATE tt-crapcpc.
     ASSIGN tt-crapcpc.cdprodut = 1
-           tt-crapcpc.nmprodut = "POUP.PROG"
+           tt-crapcpc.nmprodut = "APLI.PROG"
            tt-crapcpc.idtipapl = "A". 
     
     CREATE tt-crapcpc.
@@ -1163,7 +1163,7 @@ PROCEDURE valida-bloqueio-judicial:
              IF (aux_vlsldpou - aux_vlblqjud) < aux_vlsbloqu THEN
                DO:
                  aux_dscritic = 
-                         "Poupanca ja Bloqueada Judicialmente.".
+                         "Aplicacao ja Bloqueada Judicialmente.".
 
                  RUN gera_erro 
                      (INPUT par_cdcooper,

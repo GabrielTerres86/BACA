@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Lombardi
-    Data     : Janeiro/2018.                   Ultima atualizacao: 01/10/2018
+    Data     : Janeiro/2018.                   Ultima atualizacao: 16/05/2019
   
    Dados referentes ao programa:
   
@@ -332,7 +332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Lombardi
-  --  Data     : Janeiro/2018.                   Ultima atualizacao: 08/09/2018
+  --  Data     : Janeiro/2018.                   Ultima atualizacao: 16/05/2019
   --
   -- Dados referentes ao programa:
   --
@@ -639,7 +639,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
             IF vr_vlcontra IS NOT NULL AND
               (vr_vlcontra < rw_proddest.vlminimo_adesao OR
                vr_vlcontra > rw_proddest.vlmaximo_adesao) THEN
-              vr_dscritic := 'Conta ' || gene0002.fn_mask_conta(pr_nrdconta) || ' nao atende aos requisitos do tipo de conta destino ('||rw_produtos.dsproduto||').';
+              --vr_dscritic := 'Conta ' || gene0002.fn_mask_conta(pr_nrdconta) || ' nao atende aos requisitos do tipo de conta destino ('||rw_produtos.dsproduto||').';
+              IF vr_vlcontra < rw_proddest.vlminimo_adesao THEN
+                vr_dscritic := 'Valor contratado para '||rw_produtos.dsproduto||' está abaixo do mínimo exigido (R$ '||to_char(rw_proddest.vlminimo_adesao,'FM999g999g999g999g999g999g999g990d90')||').';
+              ELSE
+                vr_dscritic := 'Valor contratado para '||rw_produtos.dsproduto||' está acima do máximo permitido (R$ '||to_char(rw_proddest.vlmaximo_adesao,'FM999g999g999g999g999g999g999g990d90')||').';
+              END IF;
               RAISE vr_exc_saida;
             END IF;
           
@@ -1004,7 +1009,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Lombardi
-        Data    : Janeiro/18.                    Ultima atualizacao: --/--/----
+        Data    : Janeiro/18.                    Ultima atualizacao: 16/05/2019
     
         Dados referentes ao programa:
     
@@ -1014,7 +1019,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 16/05/2019 - Inclusão do tipo cancelado (4) na resrtição de situação no cursor cr_craprpp
+                                 que realiza a busca do valor das parcelas de poupança programada
+                    PRB0041709 - Jackson
     ..............................................................................*/
   BEGIN
     DECLARE
@@ -1130,7 +1137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND nrctrrpp <> pr_nrctrrpp
-           AND cdsitrpp NOT IN (3, 5);
+           AND cdsitrpp NOT IN (3, 5, 4); -- PRB0041709 Inclusão do tipo cancelado 4
       
       -- Buscar o valor de aplicações
       CURSOR cr_crapaar (pr_cdcooper IN crapaar.cdcooper%TYPE

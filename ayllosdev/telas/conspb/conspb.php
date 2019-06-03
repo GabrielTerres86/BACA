@@ -1,24 +1,13 @@
 <? 
 /*!
- * FONTE        : conspb.php
- * CRIAÇÃO      : Douglas Quisinski
- * DATA CRIAÇÃO : 30/07/2015
- * OBJETIVO     : Mostrar tela CONSPB
- * --------------
- * ALTERAÇÕES   : 01/06/2016 - Ajustado as includes dos forms da tela (Douglas - Chamado 443701)
- * --------------
+ * Autor:      : Bruno Luiz Katzjarowsski
+ * Data : 12/05/2019
  */
-?>
+//  error_reporting(E_ALL);
+//  ini_set('display_errors', 1);
 
-<? 
-	session_start();
-	require_once('../../includes/config.php');
-	require_once('../../includes/funcoes.php');	
-	require_once('../../includes/controla_secao.php');
-	require_once('../../class/xmlfile.php');
-	isPostMethod();
-	
-	require_once("../../includes/carrega_permissoes.php");	
+	require_once('includes/requires_principal.php');
+	//require_once("../../includes/carrega_permissoes.php");	
 ?>
 
 <html>
@@ -27,12 +16,15 @@
 		<meta http-equiv="Pragma" content="no-cache">
 		<title><? echo $TituloSistema; ?></title>
 		<link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
+		<link href="css/conspb.css?keyrand=<?php echo mt_rand(); ?>" rel="stylesheet" type="text/css">
 		<script type="text/javascript" src="../../scripts/scripts.js" charset="utf-8"></script>
 		<script type="text/javascript" src="../../scripts/dimensions.js"></script>
 		<script type="text/javascript" src="../../scripts/funcoes.js"></script>
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
-		<script type="text/javascript" src="conspb.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="js/jquery.mask_jqueryOld.js"></script>
+		<script type="text/javascript" src="js/emailConciliacao.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="js/conspb.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -57,7 +49,7 @@
 									<table width="100%"  border="0" cellspacing="0" cellpadding="0">
 										<tr>
 											<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">CONSPB - Conciliação de TED/TEC</td>
+											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">CONSPB - Concilia&ccedil;&atilde;o da Conta Liquida&ccedil;&atilde;o</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
 											<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
@@ -66,32 +58,23 @@
 								</td>
 							</tr>
 							<tr>
-								<td id="tdConteudoTela" class="tdConteudoTela" align="center">								
-									<table width="100%" border="0" cellpadding="3" cellspacing="0">
-										<tr>
-											<td style="border: 1px solid #F4F3F0;">
-												<table width="100%" border="0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
-													<tr>
-														<td align="center">
-															<table width="660" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
-																<tr>
-																	<td>
-																		<div id="divRotina"></div>
-																		<div id="divUsoGenerico"></div>
-																		
-																		<div id="divTela">
-																			<? include('form_cabecalho.php'); ?>
-																			<? include('tab_conspb.php'); ?>
-																		</div>
-																	</td>
-																</tr>
-															</table>					
-														</td>
-													</tr>
-												</table>
-											</td>
-										</tr>
-									</table>																
+								<td id="tdConteudoTela" class="tdConteudoTela" align="center">
+									<div id='caixaCinza'>						
+										<?php
+											require('telas/cabecalho.php');
+											require('telas/telaOpcaoA.php');
+											require('telas/telaOpcaoC.php');
+											require('telas/botoes.php');
+										?>
+									</div>		
+
+									<!-- ROTINA -->
+									<div id="divRotina">
+										<?php
+											//include da tela de modal
+											include('telas/modal.php');
+										?>
+									</div>											
 								</td>
 							</tr>
 						</table>

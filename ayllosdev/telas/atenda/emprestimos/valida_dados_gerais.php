@@ -241,6 +241,7 @@
 	echo "arrayProposta['dtlibera'] = '".$dtlibera."';";	
 	echo "arrayProposta['idcobope'] = '".$idcobope."';";	
     echo "arrayProposta['idfiniof'] = '".$idfiniof."';";
+	echo "arrayProposta['vliofepr'] = '".$vliofepr."';";
 	echo "aDadosPropostaFinalidade['dsnivris'] = arrayProposta['nivrisco'];";
 	
 	echo "$('#vlpreemp','#frmNovaProp').val('".$vlpreemp."');";
@@ -255,4 +256,5 @@
     echo "$('#idfiniof','#frmNovaProp').val('".$idfiniof."');";
     echo "$('#vlprecar','#frmNovaProp').val('".$vlprecar."');";
     echo "$('#vlprecar','#frmNovaProp').trigger('blur');";
+	echo "$('#vliofepr','#frmNovaProp').val('".$vliofepr."');";
 ?>

@@ -349,6 +349,10 @@ end;
                           
              12/02/2019 - Ajuste da revitalização de lotes craplcm  Jose Dill - Mout (INC0032794)
 
+             20/02/2019 - Tratamento para Portabilidade Pós-Fixado
+                          P298.2.2 - Pos Fixado - Luciano Kienolt - Supero                 
+
+
              22/03/2019 - Alterado para tratar a devolução de TEC salário, via CRAPLCM. Este novo fluxo se faz 
                           necessário, pois a nova portabilidade de salário, com contas CRAPASS/CRAPLCM, utilizará
                           o envio de valores como TEC. Projeto 485 - Portabilidade de salário (Renato Darosci - Supero)                   
@@ -4839,6 +4843,171 @@ END pc_trata_arquivo_cir0060;
                     || ' --> ' || sqlerrm;
     END;
 
+    
+    /* Procedimento para liquidacao de emprestimo POS */
+    PROCEDURE pc_liq_contrato_emprest_pos(pr_cdcooper IN crapcop.cdcooper%type
+                                         ,pr_nrdconta IN crapass.nrdconta%type
+                                         ,pr_nrctremp IN crapepr.nrctremp%type
+                                         ,pr_dtmvtolt IN crapdat.dtmvtolt%type
+                                         ,pr_dtmvtoan IN crapdat.dtmvtoan%type
+                                         ,pr_cdagenci IN craplot.cdagenci%type
+                                         ,pr_cdagelot IN craplot.cdagenci%type
+                                         ,pr_dscritic OUT varchar2) IS
+      --Tabelas de Memoria para Pagamentos das Parcelas Emprestimo
+      vr_tab_parcelas    EMPR0011.typ_tab_parcelas;
+      vr_tab_calculado   EMPR0011.typ_tab_calculado;
+	  vr_tab_price       EMPR0011.typ_tab_price;
+      -- Tabela memória WPR
+      vr_index_crawepr     VARCHAR2(30);
+      -- Cursor de Emprestimos
+      CURSOR cr_crapepr(pr_cdcooper IN crawepr.cdcooper%TYPE,
+                        pr_nrdconta IN crawepr.nrdconta%TYPE,
+                        pr_nrctremp IN crawepr.nrctremp%TYPE) IS
+        SELECT epr.tpemprst
+              ,epr.cdlcremp
+              ,epr.vlemprst
+              ,epr.vlsprojt
+              ,epr.qttolatr
+              ,epr.cdagenci   
+              ,wepr.txmensal txmensal_w
+              ,wepr.dtdpagto dtdpagto_w 
+              ,wepr.dtlibera dtlibera_w                      
+              ,epr.dtmvtolt                    
+          FROM crawepr wepr
+              ,crapepr epr
+         WHERE epr.cdcooper  = pr_cdcooper
+           AND epr.nrdconta  = pr_nrdconta
+           AND epr.nrctremp  = pr_nrctremp
+           AND wepr.cdcooper = epr.cdcooper
+           AND wepr.nrdconta = epr.nrdconta
+           AND wepr.nrctremp = epr.nrctremp;
+      rw_crapepr  cr_crapepr%ROWTYPE;
+      vr_tab_crawepr EMPR0001.typ_tab_crawepr;
+      
+      -- Busca os dados da linha de credito
+      CURSOR cr_craplcr(pr_cdcooper IN craplcr.cdcooper%TYPE
+                       ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
+        SELECT dsoperac
+              ,cddindex
+              ,perjurmo
+              ,flgcobmu
+          FROM craplcr
+         WHERE cdcooper = pr_cdcooper
+           AND cdlcremp = pr_cdlcremp;
+      rw_craplcr cr_craplcr%ROWTYPE;      
+
+      -- Registro tipo Data
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+
+      -- Variaveis Locais
+      vr_floperac        BOOLEAN;
+      vr_blnachou        BOOLEAN;      
+
+    BEGIN
+      -- Seleciona o calendario
+      OPEN  BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      vr_blnachou := BTCH0001.cr_crapdat%FOUND;
+      CLOSE BTCH0001.cr_crapdat;
+      -- Se NAO achou
+      IF NOT vr_blnachou THEN
+        vr_cdcritic := 1;
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Buscar dados da Proposta
+      OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctremp);
+      FETCH cr_crapepr
+       INTO rw_crapepr;
+      CLOSE cr_crapepr;      
+    
+      -- Procedure chamada para buscar o valor calculado da parcela
+      EMPR0011.pc_busca_pagto_parc_pos(pr_cdcooper => pr_cdcooper
+                                      ,pr_cdprogra => vr_glb_cdprogra||'_1'
+                                      ,pr_dtmvtolt => pr_dtmvtolt
+                                      ,pr_dtmvtoan => gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                                                 ,pr_dtmvtolt => pr_dtmvtolt - 1
+                                                                                 ,pr_tipo => 'A')
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_nrctremp => pr_nrctremp
+                                      ,pr_dtefetiv => rw_crapepr.dtmvtolt
+                                      ,pr_cdlcremp => rw_crapepr.cdlcremp
+                                      ,pr_vlemprst => rw_crapepr.vlemprst
+                                      ,pr_txmensal => rw_crapepr.txmensal_w
+                                      ,pr_dtdpagto => rw_crapepr.dtdpagto_w
+                                      ,pr_vlsprojt => rw_crapepr.vlsprojt
+                                      ,pr_qttolatr => rw_crapepr.qttolatr
+                                      ,pr_tab_parcelas  => vr_tab_parcelas  
+		                                  ,pr_tab_calculado => vr_tab_calculado
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+                                                                          
+      -- Se ocorreu erro
+      IF vr_des_reto <> 'OK' THEN
+        -- Se tem erro
+        IF vr_tab_erro.count > 0 THEN
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        END IF;
+        -- Sair da rotina
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Limpa PLTable
+      vr_tab_price.DELETE;          
+      
+		  IF vr_tab_parcelas.COUNT() > 0 THEN    
+        -- Percorrer todos os registros
+        FOR idx IN vr_tab_parcelas.FIRST..vr_tab_parcelas.LAST LOOP
+	  			--
+		  		empr0011.pc_gera_pagto_pos(pr_cdcooper  => pr_cdcooper
+			  							  ,pr_cdprogra  => vr_glb_cdprogra
+				  						  ,pr_dtcalcul  => pr_dtmvtolt
+					  					  ,pr_flgbatch  => TRUE  
+                                          ,pr_nrdconta   => pr_nrdconta
+                                          ,pr_nrctremp   => pr_nrctremp
+										  ,pr_nrparepr  => vr_tab_parcelas(idx).nrparepr 
+										  ,pr_vlpagpar  => vr_tab_parcelas(idx).vlatrpag
+										  ,pr_idseqttl  => 1
+										  ,pr_cdagenci   => rw_crapepr.cdagenci
+										  ,pr_cdpactra   => rw_crapepr.cdagenci
+                                    ,pr_nrdcaixa  => 1
+										  ,pr_cdoperad  => '1'
+										  ,pr_nrseqava  => 0 -- Fixo
+										  ,pr_idorigem  => 7 -- BATCH
+										  ,pr_nmdatela  => vr_glb_cdprogra
+										  ,pr_tab_price => vr_tab_price
+										  ,pr_cdcritic   => vr_cdcritic
+										  ,pr_dscritic  => vr_dscritic
+										  );
+  		    --
+	  			IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+	  			--
+			  END LOOP;
+			  --
+		  END IF;
+		--        
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        -- Incrementar a critica as mensagens da liquidacao
+        pr_dscritic := ' Liquidacao '
+                    || '|' || pr_cdagenci
+                    || '|' || pr_nrdconta
+                    || '|' || pr_nrctremp
+                    || '|' || vr_aux_NUPortdd
+                    || ' --> ' || vr_dscritic;
+      WHEN OTHERS THEN
+        pr_dscritic := ' Liquidacao '
+                    || '|' || pr_cdagenci
+                    || '|' || pr_nrdconta
+                    || '|' || pr_nrctremp
+                    || '|' || vr_aux_NUPortdd
+                    || ' --> ' || sqlerrm;
+    END;
+
     /* Procedimento para liquidacao de emprestimo antigo */
     PROCEDURE pc_liq_contrato_emprest_ant(pr_cdcooper IN crapcop.cdcooper%type
                                          ,pr_nrdconta IN crapass.nrdconta%type
@@ -6373,7 +6542,7 @@ END pc_trata_arquivo_cir0060;
             CLOSE cr_crapepr;
             -- Armazenar informações
             vr_aux_nrctremp := rw_crapepr.nrctremp;
-            vr_aux_tpemprst := rw_crapepr.tpemprst; /*PP ou TR*/
+            vr_aux_tpemprst := rw_crapepr.tpemprst; /*PP, TR ou POS*/
 
             -- Buscar informações do contrato
             empr0001.pc_obtem_dados_empresti (pr_cdcooper       => rw_crapcop_portab.cdcooper --> Cooperativa conectada
@@ -7390,7 +7559,7 @@ END pc_trata_arquivo_cir0060;
                       ,cdoperad
                       ,tpdmoeda
                       ,rowid
-                  into vr_aux_dtmvtolt            -- rw_craplot.dtmvtolt
+                  into rw_craplot.dtmvtolt
                       ,rw_craplot.cdagenci
                       ,rw_craplot.cdbccxlt
                       ,rw_craplot.nrdolote
@@ -7415,6 +7584,7 @@ END pc_trata_arquivo_cir0060;
           CLOSE cr_craplot;
         END IF;
         -- Verificar se já não existe lançamento na conta do Cooperado
+        vr_aux_dtmvtolt := rw_craplot.dtmvtolt; -- PJ298.2.2 - Erro de homologacao
         vr_aux_existlcm := 0;
         vr_aux_vllanmto := NULL;
         OPEN cr_craplcm_exis(pr_cdcooper => rw_crapcop_portab.cdcooper
@@ -7463,6 +7633,18 @@ END pc_trata_arquivo_cir0060;
                                        ,pr_cdagenci => rw_crapepr.cdagenci
                                        ,pr_cdagelot => rw_craplot.cdagenci
                                        ,pr_dscritic => vr_dscritic);
+                                       
+          ELSIF vr_aux_tpemprst = 2 THEN -- PÓS
+            -- Chamar liquidação Empréstimo PÓS
+            pc_liq_contrato_emprest_pos(pr_cdcooper => rw_crapcop_portab.cdcooper --rw_crapcop_portab.cdcooper
+                                       ,pr_nrdconta => rw_portab.nrdconta
+                                       ,pr_nrctremp => vr_aux_nrctremp
+                                       ,pr_dtmvtolt => vr_aux_dtmvtolt
+                                       ,pr_dtmvtoan => rw_crapdat_portab.dtmvtoan
+                                       ,pr_cdagenci => rw_crapepr.cdagenci
+                                       ,pr_cdagelot => rw_craplot.cdagenci
+                                       ,pr_dscritic => vr_dscritic);
+                                                  
           ELSIF vr_aux_tpemprst = 0 THEN -- TR
             -- Chamar Liquidação Empréstimo Antigo
             pc_liq_contrato_emprest_ant(pr_cdcooper   => rw_crapcop_portab.cdcooper

@@ -11,6 +11,8 @@
 				  25/07/2018 - Adicionado campo insitdec na tela. PRJ345(Lombardi).
 				  
 				  31/07/2018 - Ajustado select insitcrd com as devidas situações. (Reinert)
+          
+          25/04/2019 - ajuste para validar atualizacao cartão. Alcemir Jr. (PRB0041672).
  */		
  
 session_start();
@@ -102,5 +104,5 @@ $nmempres = (isset($_POST['nmempres'])) ? $_POST['nmempres'] : "";
 <br/>	
 <div id="divBotoesDetalhe" style="padding-bottom:10px; ">
 	<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divRotina')); return false;" >Voltar</a>
-	<a href="#" class="botao" id="btConfirmar" onClick="confirmaAtualizaCartao();">Confirmar</a>
+	<a href="#" class="botao" id="btConfirmar" onClick="confirmaAtualizaCartao(1);">Confirmar</a>
 </div>

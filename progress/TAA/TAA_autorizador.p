@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 08/05/2019
+      Data: Janeiro/2010                        Ultima alteracao: 23/05/2019
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -322,7 +322,7 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 			   
             18/06/2018 - Retornar o complemento na consulta de extrato
                          (Douglas - Prj 467)
-			            
+			      
             15/08/2018 - Inclusão da operação 200 - URA
                          (Everton - Mouts - Projeto 427)
 			            
@@ -335,8 +335,10 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
                          
             17/12/2018 - Ajuste no tratamento de erro na consulta de dados do ECO (Douglas - SCTASK0039027)
 
-		    08/05/2019 - Ajustar parametros na chamada da rotina 
+            08/05/2019 - Ajustar parametros na chamada da rotina 
                          pc_cadastrar_agendamento (Renato - Supero - P485)
+
+            23/05/2019 - Adicionado operacao 80 - verifica_conta_monitorada. (Reinert - P530)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -1121,7 +1123,7 @@ DO:
         IF  xField:NAME = "NRREMETE"   THEN
             aux_nrremete = INTE(xText:NODE-VALUE).
         ELSE
-		IF  xField:NAME = "CDAGEREM"   THEN
+        IF  xField:NAME = "CDAGEREM"   THEN
             aux_cdagerem = INTE(xText:NODE-VALUE).
 
     END.
@@ -1181,7 +1183,7 @@ DO:
               
              END.
              
-        END.
+             END.
         ELSE
         IF   aux_operacao = 9999    THEN
              DO:
@@ -1867,7 +1869,15 @@ DO:
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
-        /* Fim P485 */ 
+        /* Fim P485 */
+        ELSE
+        IF   aux_operacao = 83 THEN
+             DO:
+                 RUN verifica_conta_monitorada.
+                 
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
 
         LEAVE.
     END.
@@ -2276,7 +2286,7 @@ PROCEDURE valida_senha:
           aux_idopeexe -> ID da Operacao que está sendo executado (Ex: "IB027","TA037","IB181")
           aux_tpintera -> Tipo de Interacao (O IB181 , além de outros, que possuim mais de uma operacao mas sempre sao chamados pelo mesmo codigo)
         */ 
-        
+
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         
         /* Efetuar a chamada a rotina Oracle */ 
@@ -4235,7 +4245,7 @@ PROCEDURE efetua_transferencia:
                                  INPUT "",  /* pr_iptransa */
                                  INPUT "",  /* Numero controle consulta npc */   
                                  INPUT '', /* par_iddispos */
-                                 INPUT ?,  /* pr_nrridlfp */
+                                 INPUT 0,  /* pr_nrridlfp */
                                  
                                 OUTPUT 0, 
                                 OUTPUT "",  /* pr_dstransa */
@@ -5162,7 +5172,7 @@ PROCEDURE paga_titulo:
                                                    INPUT "",   /* pr_iptransa */
                                                    INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
                                                    INPUT '', /* pr_iddispos */
-                                                   INPUT ?,  /* pr_nrridlfp */
+                                                   INPUT 0,  /* pr_nrridlfp */
                                                    
                                                   OUTPUT 0,
                                                    OUTPUT "",  /* pr_dstransa */
@@ -5703,7 +5713,7 @@ PROCEDURE paga_convenio:
                                                   INPUT '',  /* pr_iptransa */
                                                   INPUT '',  /* Numero controle consulta npc */   
                                                   INPUT '', /* par_iddispos */
-                                                  INPUT ?,  /* pr_nrridlfp */
+                                                  INPUT 0,  /* pr_nrridlfp */
                                                   
                                                  OUTPUT 0, 
                                                  OUTPUT "",  /* pr_dstransa */
@@ -11440,6 +11450,52 @@ PROCEDURE verifica_modalidade_conta:
 
 END PROCEDURE.
 /* Inicio 82 - P485 - FIM */
+
+/* Operacao 83 - verifica_conta_monitorada */
+PROCEDURE verifica_conta_monitorada:
+
+  DEF VAR aux_flgctmon AS INTE                                  NO-UNDO.
+
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+RUN STORED-PROCEDURE pc_verifica_conta_bloqueio
+  aux_handproc = PROC-HANDLE NO-ERROR
+                     (INPUT aux_cdcooper, 
+                      INPUT aux_nrdconta,
+                      OUTPUT 0,
+                      OUTPUT 0,
+                      OUTPUT "").
+                     
+CLOSE STORED-PROC pc_verifica_conta_bloqueio aux_statproc = PROC-STATUS
+      WHERE PROC-HANDLE = aux_handproc.
+
+ASSIGN aux_flgctmon = 0       
+       aux_cdcritic = 0
+       aux_dscritic = ""
+       aux_flgctmon = pc_verifica_conta_bloqueio.pr_id_conta_monitorada
+                      WHEN pc_verifica_conta_bloqueio.pr_id_conta_monitorada <> ?
+       aux_cdcritic = pc_verifica_conta_bloqueio.pr_cdcritic
+                      WHEN pc_verifica_conta_bloqueio.pr_cdcritic <> ?
+       aux_dscritic = pc_verifica_conta_bloqueio.pr_dscritic
+                      WHEN pc_verifica_conta_bloqueio.pr_dscritic <> ?.      
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+  IF aux_dscritic <> "" THEN
+    RETURN "NOK".
+    
+  /* ---------- */
+  xDoc:CREATE-NODE(xField,"FLGCTMON","ELEMENT").
+  xRoot:APPEND-CHILD(xField).
+  
+  
+  xDoc:CREATE-NODE(xText,"","TEXT").
+  xText:NODE-VALUE = STRING(aux_flgctmon).
+  xField:APPEND-CHILD(xText).
+
+
+END PROCEDURE.
+/* Fim Operacao 83 - verifica_conta_monitorada */
 
 
 /* .......................................................................... */

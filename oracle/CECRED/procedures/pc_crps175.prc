@@ -28,7 +28,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
 
                03/03/98 - Acerto na alteracao anterior (Deborah).
 
-               28/04/98 - Tratamento para milenio e troca para V8 (Margarete).
+               28/04/98 - Tratamento para milenio e troca para V8 (Margarete). 
 
                26/01/99 - Tratar IOF e abono (Deborah).
 

@@ -541,6 +541,9 @@ BEGIN
                                  
                     13/02/2019 - Inclusao de regras para contas com bloqueio judicial
                                - Projeto 530 BACENJUD - Everton(AMcom).
+
+                    10/04/2019 - PJ530-Bacenjud fase 2 - Não permite Debitos para conta monitorada e histórico com bacenjud ativo
+                                 (Renato Cordeiro - AMcom)
     ..............................................................................*/
 
 DECLARE
@@ -553,6 +556,17 @@ DECLARE
 		vr_vltransf       NUMBER;                  -- Valor a transferir para Conta Transitória (somente para Créditos)
 
     vr_dsidenti       craplcm.dsidenti%type;
+
+    vr_id_conta_monitorada NUMBER(1);
+    
+    CURSOR cr_craphis (pr_cdcooper IN NUMBER,
+                       pr_cdhistor IN NUMBER) IS
+       SELECT h.indutblq
+			       ,h.inhistor
+       FROM craphis h
+       WHERE h.cdcooper = pr_cdcooper
+         AND h.cdhistor = pr_cdhistor;
+    rw_craphis  cr_craphis%ROWTYPE;
 
     vr_exc_erro       EXCEPTION;
 BEGIN
@@ -576,6 +590,27 @@ BEGIN
 				 RAISE vr_exc_erro;
 			END IF;
 		END IF;
+
+    if vr_reg_historico.indebcre = 'D' then -- se é débito
+    
+        blqj0002.pc_verifica_conta_bloqueio(pr_cdcooper => pr_cdcooper, -- rotina testa se conta monitorada ou não
+                                            pr_nrdconta => pr_nrdconta, 
+                                            pr_id_conta_monitorada => vr_id_conta_monitorada, 
+                                            pr_cdcritic => pr_cdcritic, 
+                                            pr_dscritic => pr_dscritic);
+		  	IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+	  			RAISE vr_exc_erro;
+  			END IF;
+        IF vr_id_conta_monitorada = 1 THEN -- Se conta monitorada
+          OPEN cr_craphis(pr_cdcooper, pr_cdhistor);
+          FETCH cr_craphis INTO rw_craphis;
+          IF rw_craphis.indutblq = 'N' AND rw_craphis.inhistor = 11 then -- se o histórico DEBITO não permite débitos
+            pr_cdcritic := 717; -- critico falta de saldo
+  		  		RAISE vr_exc_erro;
+          END IF;
+          CLOSE cr_craphis;
+        end if;
+    end if;
 
     -- Se deve processar internamente o lote (CRAPLOT)
 		IF pr_inprolot = 1 THEN
@@ -618,6 +653,9 @@ BEGIN
       pr_tab_retorno.progress_recid_lot := rw_craplot.progress_recid;
 		END IF;
 
+    --Trata caractere inválido PRB0040625
+    vr_dsidenti := replace(pr_dsidenti,'´','');
+    
 		INSERT INTO craplcm (
 				dtmvtolt
 			, cdagenci
@@ -679,7 +717,7 @@ BEGIN
 			, pr_dtrefere
 			, pr_hrtransa
 			, pr_cdoperad
-			, pr_dsidenti
+      , vr_dsidenti
 			, pr_cdcooper
 			, pr_nrdctitg
 			, pr_dscedent

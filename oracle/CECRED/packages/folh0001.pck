@@ -8538,8 +8538,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
        WHERE ban.cdbccxlt = pr_cdbccxlt
          AND ban.flgdispb = 1; 
     rw_crapban cr_crapban%ROWTYPE; 
+    --
+    vr_inestcri   NUMBER;         -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    vr_clobxmlc   CLOB;           -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
   BEGIN
 
+    -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    -- Busca o indicador estado de crise
+    sspb0001.pc_estado_crise (pr_inestcri => vr_inestcri
+                             ,pr_clobxmlc => vr_clobxmlc);
+    -- Fim Pj 475
     -- Se não veio parametro de tipo de conta
     IF pr_idtpcont IS NULL THEN
       -- Buscar associado
@@ -8763,7 +8771,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           -- Fechar cursor
           CLOSE cr_crapban;
       END IF;
-
+        --
+        -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+        -- Definir a situação como Erro quando for Intercompany e estado de crise ligado
+        IF vr_inestcri > 0 THEN
+          pr_dsalerta := 'Erro encontrado - Estado de Crise Ativo';
+          RETURN;
+        END IF;
+        -- Fim Pj 475
       END IF;
 
     END IF;
