@@ -6564,6 +6564,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                            - No Cursor cr_nrctaitg vamos utilizar o and w.nrcctitg > 0 ao 
                              invés de usar o insitcrd = 4, assim garantimos que só vamos
                              pegar a conta cartã correta (Lucas Ranghetti PRB0041677)
+                
+                15/05/2019 - Inclusão de envio de email ao cair no Erro geral.
+                             Alcemir Mouts (PRB0041487).
+
+	            24/05/2019 - Ajuste para quando não encontrar o endereço do cooperado
+                             gerar critica e pular para o proximo registro e enviar
+                             as criticas por email.
+                             Alcemir Jr. (PRB0041782).
+                             
                         
      ..............................................................................*/
     DECLARE
@@ -6638,6 +6647,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       -- Saida da OS Command
       vr_typ_saida VARCHAR2(4000);
 
+      -- criticas 
+      vr_criticas CLOB;
+      
       ------------------------------- CURSORES ---------------------------------
       -- Busca listagem das cooperativas
       CURSOR cr_crapcol IS
@@ -6899,7 +6911,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 							,crapage.cdagenci
 							,crapage.idcidade
 							,crapage.nrcepend
-							,crapage.dsendcop||decode(crapage.nrendere,0,null,','||crapage.nrendere) dsender_compl
+							,crapage.dsendcop||
+							decode(crapage.nrendere,0,null,','||crapage.nrendere)||
+							decode(crapage.dscomple, ' ', NULL, ','||crapage.dscomple) dsender_compl
 					FROM crapage
 				 WHERE crapage.cdcooper = pr_cdcooper
 					 AND crapage.cdagenci = pr_cdagenci;
@@ -6955,10 +6969,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             ,enc.nmbairro
             ,enc.cdufende
             ,enc.dsendere
-            , decode(enc.nrendere,0,null,','||enc.nrendere) nrendere
+            ,decode(enc.nrendere,0,null,','||enc.nrendere) nrendere
+						,enc.complend
             -- montar string com o endereço completo do associado
             ,enc.dsendere||
-             decode(enc.nrendere,0,null,','||enc.nrendere) dsender_compl
+             decode(enc.nrendere,0,null,','||enc.nrendere)||
+						 decode(enc.complend,' ',NULL,','||enc.complend) dsender_compl
             ,decode(nvl(trim(enc.cddbloco),'0'),'0',null,' bl-'||enc.cddbloco)||
              decode(nvl(trim(enc.nrdoapto),'0'),'0',null,' ap '||enc.nrdoapto) dsender_apbl
 
@@ -7089,7 +7105,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 					vr_ufendere VARCHAR2(5) := '';
 					vr_nmcidade VARCHAR2(50) := '';
 					vr_nmbairro VARCHAR2(50) := '';
-					vr_nrcepend VARCHAR2(15) := '';					
+					vr_nrcepend VARCHAR2(15) := '';
+					vr_complend VARCHAR2(50) := '';
 
         BEGIN
           BEGIN
@@ -7131,7 +7148,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 							vr_ufendere := rw_end_agencia.cdufdcop;
 							vr_nmcidade := rw_end_agencia.nmcidade;
 							vr_nmbairro := rw_end_agencia.nmbairro;
-							vr_nrcepend := rw_end_agencia.nrcepend;							
+							vr_nrcepend := rw_end_agencia.nrcepend;
+							vr_complend := rw_end_agencia.dscomple;					
 							
 						ELSE
 
@@ -7150,7 +7168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               vr_dscritic := 'Endereco nao encontrado. '                     ||
                              'Cooperativa: ' || TO_CHAR(rw_crawcrd.cdcooper) ||
                              ' Conta: ' || TO_CHAR(rw_crawcrd.nrdconta)      || '.';
-              RAISE vr_exc_saida;
+              RAISE vr_exc_loop_detalhe;
             ELSE
               -- Apenas fechar o cursor
               CLOSE cr_crapenc;
@@ -7163,6 +7181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 								vr_nmcidade := rw_crapenc.nmcidade;
 								vr_nmbairro := rw_crapenc.nmbairro;
 								vr_nrcepend := rw_crapenc.nrcepend;
+								vr_complend := rw_crapenc.complend;
 								
             END IF;
 						
@@ -7174,10 +7193,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               --USA OS 50 CARACTERES PARA O ENDEREÇO
               vr_aux_dsendcom := rpad(substr(nvl(vr_dsender_compl,' '),1,50),50,' ');
             ELSE
-              -- SEPARA 29 CARACTERES PARA ENDEREÇO E 21 PARA COMPLEMENTO
-              vr_aux_dsendcom := rpad(nvl((TRIM(substr(nvl(vr_dsendere,' '),1,29)) || 
+              -- SEPARA 30 CARACTERES PARA ENDEREÇO E 20 PARA COMPLEMENTO
+              vr_aux_dsendcom := rpad(nvl((TRIM(substr(nvl(vr_dsendere,' '),1,24)) || 
                                            TRIM(substr(nvl(vr_nrendere,' '),1,6)||
-                                           substr(nvl(vr_dsender_apbl,' '),1,15))),' '),50,' ');
+																					 substr(nvl(vr_complend, ' '),1,10)||
+                                           substr(nvl(vr_dsender_apbl,' '),1,10))),' '),50,' ');
             END IF;
 
       -- Gerar código sequencial de controle para o contrato (Renato-Supero)
@@ -7730,7 +7750,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
           -- Processar alterações de dados dos Cooperados que possuem Cartão de Crédito
           FOR rw_crapcrd_loop_alt IN cr_crapcrd_loop_alt(rw_crapcol.cdcooper) LOOP
-            
+            BEGIN  
              /*OPEN cr_crawcrd_loop_alt (pr_cdcooper => rw_crapcrd_loop_alt.cdcooper,
                                       pr_cdadmcrd => rw_crapcrd_loop_alt.cdadmcrd,
                                       pr_tpcartao => rw_crapcrd_loop_alt.tpcartao,
@@ -7974,6 +7994,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             -- fecha cursores
             CLOSE cr_crapalt;            
             CLOSE cr_altlimit;
+            
+            EXCEPTION 
+              WHEN vr_exc_loop_detalhe THEN
+                
+                -- fecha cursores
+                CLOSE cr_crapalt;            
+                CLOSE cr_altlimit;
+            
+                IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+                  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic); -- Buscar a descrição
+                END IF;
+
+                IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                  -- Envio centralizado de log de erro
+                  btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Programa roda para todas as coops. Por isto fixo cecred (3)
+                                            ,pr_ind_tipo_log => 2 -- Erro tratato
+                                            ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
+                                                                              || vr_cdprogra || ' --> '
+                                                                              || vr_dscritic );
+                END IF;
+                
+                vr_criticas := nvl(vr_criticas,'') || '<br>' || vr_dscritic || '<br>';
+            END;
             
           END LOOP;
 
@@ -8479,6 +8522,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                                               || vr_cdprogra || ' --> '
                                                                               || vr_dscritic );
                 END IF;
+                
+                vr_criticas := nvl(vr_criticas,'') || '<br>' || vr_dscritic || '<br>';
+                
               WHEN OTHERS THEN
                 CECRED.pc_internal_exception;
                 -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
@@ -8491,7 +8537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                           ,pr_des_anexo       => NULL
                                           ,pr_des_corpo       => 'Erro ao gerar arquivo '|| vr_nmrquivo||
                                                                  '<br><br>'||'Critica: ' || vr_dscritic
-                                          ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                          ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
                                           ,pr_des_erro        => vr_dsderro);
                 --Se ocorreu erro
                 IF trim(vr_dsderro) IS NOT NULL THEN
@@ -8546,7 +8592,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         IF vr_typ_saida = 'ERR' THEN
           RAISE vr_exc_saida;
         END IF;
-
+        
+        -- verifica criticas para enviar por email
+        
+        IF TRIM(vr_criticas) IS NOT NULL THEN
+          gene0003.pc_solicita_email(pr_cdcooper              => vr_cdcooper
+                                          ,pr_cdprogra        => vr_cdprogra
+                                          ,pr_des_destino     => 'cartoes@ailos.coop.br'
+                                          ,pr_des_assunto     => 'Criticas - Arquivo CCB3'
+                                          ,pr_des_anexo       => NULL
+                                          ,pr_des_corpo       => 'As solicitacoes listadas abaixo nao foram enviadas no arquivo:  '|| vr_nmrquivo||
+                                                                 '<br><br>'|| vr_criticas
+                                          ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                          ,pr_des_erro        => vr_dsderro);
+                                          
+          IF trim(vr_dsderro) IS NOT NULL THEN
+            vr_dscritic:= vr_dsderro;
+            --Levantar Excecao
+            RAISE vr_exc_saida;
+          END IF;
+                
+        END IF;
+        
         -- ATUALIZA REGISTRO REFERENTE A SEQUENCIA DE ARQUIVOS
         BEGIN
           UPDATE
@@ -8592,6 +8659,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em ARQBCB/CRPS671: ' || SQLERRM;
+
+        gene0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper
+                                  ,pr_cdprogra        => vr_cdprogra
+                                  ,pr_des_destino     => gene0001.fn_param_sistema('CRED',vr_cdcooper,'CRD_RESPONSAVEL')
+                                  ,pr_des_assunto     => 'Erro geral em ARQBCB/CRPS671'
+                                  ,pr_des_anexo       => NULL
+                                  ,pr_des_corpo       => 'Erro ao gerar arquivo '|| vr_nmrquivo||
+                                                         '<br><br>'||'Critica: ' || pr_dscritic 
+                                  ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                  ,pr_des_erro        => vr_dsderro);
 
         -- Desfaz as alterações da base
         ROLLBACK;
@@ -8796,6 +8873,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 
                    30/04/2019 - Utilizar o vr_nrcctitg no lugar do rw_crawcrd.nrcctitg 
                                 no insert do crawcrd da segunda via dos cartões (Lucas Ranghetti PRB0041609)
+
+                   15/05/2019 - Retirado a restrição de código de critica, com isso todas 
+							    as criticas saíram no relatório. Alcemir Mouts (PRB0041490).
+
+                   15/05/2019 - Incluido validação para quando a proposta é via WMS.
+					            Alcemir Mouts (PRB0041673).
+
+	               15/05/2019 - Ajuste na lógica da criação do lote sms e no envio.
+								Alcemir Mouts (PRB0041487)			
     ............................................................................ */
 
     DECLARE
@@ -8910,12 +8996,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         vr_vet_nmtipsol  typ_vet_nmtipsol;
       
       -- Definicao do vetor com os códigos de lote de SMS criado por cooperativa
+     TYPE typ_reg_nrdlote IS
+     RECORD (lsnrdlote   VARCHAR2(4000),
+             vrlimtsms   NUMBER(5) := 0,
+             vrultlote   NUMBER);
+                   
       TYPE typ_tab_nrdlote IS
-       TABLE OF NUMBER(10)
+       TABLE OF typ_reg_nrdlote
        INDEX BY BINARY_INTEGER;
 
       -- Vetor para armazenar os códigos de lote de SMS criado por cooperativa
       vr_vet_nrdlote typ_tab_nrdlote;
+      
+      -- armazenar os lotes de sms para envio
+      vr_vet_lsnrdlote gene0002.typ_split;
       
       -- Armazena o indicador de envio de SMS para o produto, por cooperativa
       TYPE typ_tab_enviasms IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
@@ -9001,10 +9095,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   crc.cdcodigo = rej.cdcritic
               
          
-        WHERE rej.dshistor = 'CCR3'
-          AND (rej.cdcritic > 10 
-          AND rej.cdcritic < 900  
-           OR rej.cdcritic = 999)
+        WHERE rej.dshistor = 'CCR3'        
           AND rej.dtmvtolt = pr_dtmvtolt
           AND rej.cdcooper = pr_cdcooper                  
                   
@@ -9590,7 +9681,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_idlotaux   tbgen_sms_lote.idlote_sms%TYPE; --> Lote do SMS auxiliar
         
             BEGIN
-            
+          -- zerar lote
+          vr_idlotsms := 0;
+          
               -- Se foi informado o rowid da alteração de limite
           IF pr_rwatulim.dsdrowid IS NOT NULL THEN
                 
@@ -9633,15 +9726,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         RAISE vr_exc_erro;
                       END IF;
 
-                       vr_limitsms :=  nvl(vr_limitsms,0)*0;
+                       vr_vet_nrdlote(pr_cdcooper).vrlimtsms := 0;
                       
                     END IF;
                       
                     --Se existe e se tiver mais de um registro no lote
-                    IF  vr_vet_nrdlote.EXISTS(pr_cdcooper) AND  vr_limitsms > 1  THEN
+                    IF  vr_vet_nrdlote.EXISTS(pr_cdcooper) AND  vr_vet_nrdlote(pr_cdcooper).vrlimtsms > 1  THEN
                       
                         --Se no lote ter mais de mil registro, criar outro lote.
-                      	IF mod(nvl(vr_limitsms,0), 1000) = 0 THEN
+                      	IF mod(nvl(vr_vet_nrdlote(pr_cdcooper).vrlimtsms,0), 1000) = 0 THEN
                             -- Cria o lote de sms
                        		esms0001.pc_cria_lote_sms(pr_cdproduto     => 21 -- CARTAO CREDITO CECRED
                                                ,pr_idtpreme      => 'SMSCRDBCB'
@@ -9656,11 +9749,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       	END IF;  
                     END IF; -- vr_idlotsms IS NULL
                     
-                    vr_limitsms := nvl(vr_limitsms,0) + 1;
-                    vr_vet_nrdlote(pr_cdcooper) := vr_idlotsms;
+                    vr_vet_nrdlote(pr_cdcooper).vrlimtsms := nvl(vr_vet_nrdlote(pr_cdcooper).vrlimtsms,0) + 1;
                     
+                    IF vr_idlotsms > 0 THEN                    
+                      IF NOT (INSTR(vr_vet_nrdlote(pr_cdcooper).lsnrdlote || ';',';' || vr_idlotsms ||';') > 0) THEN
+                        vr_vet_nrdlote(pr_cdcooper).lsnrdlote := TRIM(vr_vet_nrdlote(pr_cdcooper).lsnrdlote) || ';' || vr_idlotsms;  
+                        --setar ultimo lote 
+                        vr_vet_nrdlote(pr_cdcooper).vrultlote := vr_idlotsms;
+                      END IF;
+                    END IF;
+                                                              
                     -- Gerar registro do SMS a ser enviado
-                    esms0001.pc_escreve_sms(pr_idlote_sms => vr_vet_nrdlote(pr_cdcooper)
+                    esms0001.pc_escreve_sms(pr_idlote_sms => vr_vet_nrdlote(pr_cdcooper).vrultlote
                                            ,pr_cdcooper   => pr_cdcooper
                                            ,pr_nrdconta   => pr_nrdconta
                                            ,pr_idseqttl   => 1
@@ -9682,7 +9782,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   -- Fechar o cursor
                   CLOSE cr_craptfc;
                   
-                vr_idlotaux := vr_vet_nrdlote(pr_cdcooper); -- Carrega o id do lote na var auxiliar
+                vr_idlotaux := vr_vet_nrdlote(pr_cdcooper).vrultlote; -- Carrega o id do lote na var auxiliar
               ELSE
                 vr_idlotaux := null;        -- Esvazia o id do lote na var auxiliar
                 END IF;  -- NVL(vr_enviasms,0) = 1 -- Se envia SMS
@@ -12225,7 +12325,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     IF (rw_crawcrd.nrcctitg = vr_nrdctitg AND              /* Mesma conta cartao */
                         rw_crawcrd.nrcrcard > 0 AND                        /* Numeracao de cartao preenchida */
                         vr_final_cartao_aimaro = vr_final_cartao_cabal AND /* Mesmo final de cartao */
-                        rw_crawcrd.insitcrd = 2                            /* Solicitado */ ) THEN
+                        ((rw_crawcrd.insitcrd = 2) or (SUBSTR(rw_crawcrd.nrcrcard,7,5) = '00000' AND rw_crawcrd.insitcrd = 1))) THEN    /* Solicitado ou Aprovado*/ 
+						 /*
+                          OR (SUBSTR(rw_crawcrd.nrcrcard,7,5) = '00000' AND rw_crawcrd.insitcrd = 1)
+                          
+                          Esta condição foi colocada devido ao arquivo vir com dois registros
+                          um com Nr. cartão zerado porem com crítica (rejeitado), fazendo com que o 
+                          campo insitcrd fosse atualizado de 2 - solicitado para 1 - aprovado.
+                          e outro com o Nr. cartão completo, onde não caia neste IF, pois o registro anterior que 
+                          foi rejeitado estava jogando o insitcrd para 1 - aprovado.
+                        */
                        vr_origemws := true;  
                     END IF;
                   EXCEPTION
@@ -12718,31 +12827,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       IF  vr_vet_nrdlote.COUNT > 0 THEN
         
         vr_indice := vr_vet_nrdlote.FIRST;
+        vr_vet_lsnrdlote := gene0002.fn_quebra_string(vr_vet_nrdlote(vr_indice).lsnrdlote,';');
         
-        LOOP        
-          -- Após processar os arquivos, deve verificar se foi gerado lote de envio de SMS
-          --> Enviar lote de SMS para o Aymaru
-          pc_enviar_lote_SMS(pr_cdcooper => vr_cdcooper_ori
-                            ,pr_idlotsms => vr_vet_nrdlote(vr_indice)
-                            ,pr_dscritic => vr_dscritic
-                            ,pr_cdcritic => vr_cdcritic);
-                        
-          -- Se houve retorno de algum erro      
-          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-            -- Em caso de erro deve setar o lote como FALHA
-           /* BEGIN
-              UPDATE tbgen_sms_lote lot
-                 SET lot.idsituacao = 'F' -- Falha
-               WHERE lot.idlote_sms = vr_idlotsms;
-            EXCEPTION 
-              WHEN OTHERS THEN
-                -- Não irá alterar a mensagem de erro, para que mostre a mensagem de retorno do AYMARU
-                RAISE vr_exc_saida;
-            END;  */
+        LOOP  
+          
+          FOR idx IN 1..vr_vet_lsnrdlote.count() LOOP
             
-            pc_log_message;
-          END IF;
-
+            -- se for nulo pular para o proximo
+            IF TRIM(vr_vet_lsnrdlote(idx)) IS NULL THEN
+              continue;
+            END IF;
+                  
+            -- Após processar os arquivos, deve verificar se foi gerado lote de envio de SMS
+            --> Enviar lote de SMS para o Aymaru
+            pc_enviar_lote_SMS(pr_cdcooper => vr_cdcooper_ori
+                              ,pr_idlotsms => vr_vet_lsnrdlote(idx)
+                              ,pr_dscritic => vr_dscritic
+                              ,pr_cdcritic => vr_cdcritic);
+                          
+            -- Se houve retorno de algum erro      
+            IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+              -- Em caso de erro deve setar o lote como FALHA
+             /* BEGIN
+                UPDATE tbgen_sms_lote lot
+                   SET lot.idsituacao = 'F' -- Falha
+                 WHERE lot.idlote_sms = vr_idlotsms;
+              EXCEPTION 
+                WHEN OTHERS THEN
+                  -- Não irá alterar a mensagem de erro, para que mostre a mensagem de retorno do AYMARU
+                  RAISE vr_exc_saida;
+              END;  */
+              
+              pc_log_message;
+            END IF;
+          
+          END LOOP;
           
           -- Fechar a situação do lote
          /* ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlotsms
@@ -12755,6 +12874,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           EXIT WHEN vr_vet_nrdlote.LAST = vr_indice;
 
           vr_indice := vr_vet_nrdlote.NEXT(vr_indice);
+
+          vr_vet_lsnrdlote := gene0002.fn_quebra_string(vr_vet_nrdlote(vr_indice).lsnrdlote,';');
           
         END LOOP;   
       END IF;
