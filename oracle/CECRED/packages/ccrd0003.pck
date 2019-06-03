@@ -7106,7 +7106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 					vr_nmcidade VARCHAR2(50) := '';
 					vr_nmbairro VARCHAR2(50) := '';
 					vr_nrcepend VARCHAR2(15) := '';
-					vr_complend VARCHAR2(50) := '';
+					vr_complend VARCHAR2(200) := '';
 
         BEGIN
           BEGIN
