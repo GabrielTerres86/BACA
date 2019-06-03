@@ -66,7 +66,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
   --  Sistema  : Rotinas para limpeza de microfilmagens
   --  Sigla    : LIMP
   --  Autor    : Alisson C. Berrido  - AMcom
-  --  Data     : Fevereiro/2014.                   Ultima atualizacao: 02/08/2017
+  --  Data     : Fevereiro/2014.                   Ultima atualizacao: 03/06/2019
   --
   -- Dados referentes ao programa:
   --
@@ -79,7 +79,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
   --
   --            05/12/2018 - SCTASK38225 (Yuri - Mouts)
   --                         Substituido o método XSLPROCESSOR pela chamada da GENE0002.
-                           
+  --
+  --            03/06/2019 - Inclusão do historico 2973 nas validações de Cheques devolvidos de deposito (Luis Fagundes/AMCOM)                         
   ---------------------------------------------------------------------------------------------------------------
 
   /* Procedure que processa as contas para microfilmagem */
@@ -220,6 +221,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
                07/04/2015 - Ajustado critica duplicada. (Daniel).
                
                07/04/2015 - Retirado acentuação ao efetuar log de erro (Daniel)     
+                        
+               03/06/2019 - Incluido Historico 2973 nas validações de cheques devolvidos de deposito - Luis Fagundes/AMCOM  			   
                         
 
      ............................................................................. */
@@ -870,7 +873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
          --Dia Movimento
          vr_reg_ddmvtolt:= TO_CHAR(rw_craplcm.dtmvtolt,'DD');
          /* CH.DEV.PRC., CH.DEV.FPR., CHQ.DEVOL., CH.DEV.TRF., DEV.CH.DEP., DEV.CH.DESCTO */
-         IF rw_craplcm.cdhistor IN (24,27,47,78,156,191,338,351,399,573) THEN
+         IF rw_craplcm.cdhistor IN (24,27,47,78,156,191,338,351,2973,399,573) THEN --PJ 565 RF 020
            IF pr_tab_craphis.EXISTS(rw_craplcm.cdhistor) THEN
              vr_reg_dshistor:= rpad(pr_tab_craphis(rw_craplcm.cdhistor).dshistor||
                                     rw_craplcm.cdpesqbb,21,' ');
@@ -903,7 +906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
          END IF;
 
          /* CH.DEV.PRC., CH.DEV.FPR., CHQ.DEVOL., CH.DEV.TRF., DEV.CH.DEP., DEV.CH.DESCTO */
-         IF rw_craplcm.cdhistor IN (24,27,47,78,156,191,338,351,399,573) AND
+         IF rw_craplcm.cdhistor IN (24,27,47,78,156,191,338,351,2973,399,573) AND --PJ 565 RF 020
            TRIM(rw_craplcm.cdpesqbb) IS NOT NULL THEN
            --Selecionar Alineas
            OPEN cr_crapali (pr_cdalinea => to_number(rw_craplcm.cdpesqbb));

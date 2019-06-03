@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 11/07/2018
+     Data    : Marco/2005.                     Ultima atualizacao: 03/06/2019
 
      Dados referentes ao programa:
 
@@ -376,7 +376,7 @@ BEGIN
                  29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
                               PRJ450 - Renato Cordeiro (AMcom)         
 
-
+				   03/06/2019 - Inserido historico 2973 em condição que verifica o devoluções de cheques de deposito - Luis Fagundes/AMCOM
      ............................................................................. */
 
   DECLARE
@@ -4504,7 +4504,7 @@ BEGIN
              --Mudar historico para 290 se for 297
              IF vr_cdhistor = 297 THEN
                vr_cdhistor:= 290;
-             ELSIF vr_cdhistor NOT IN (351,611,613,614,658,668,661,471,662) THEN
+             ELSIF vr_cdhistor NOT IN (351,2973,611,613,614,658,668,661,471,662) THEN --PJ 565 RF 020
                vr_cdhistor:= 290;
              END IF;
              --Inserir Lancamento
