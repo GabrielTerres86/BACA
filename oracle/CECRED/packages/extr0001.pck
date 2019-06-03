@@ -1079,6 +1079,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 		  FROM tbrecarga_operadora tope
 		 WHERE tope.flgsituacao = 1;
 
+  -- Selecionar os codigos dos historicos de credito em cc ref resgate de produtos pcapta
+  CURSOR cr_crapcpc IS
+   SELECT DISTINCT cdhsvrcc 
+     FROM crapcpc
+    WHERE idsitpro = 1;
+
   /* Tabelas de memória para guardar registros cfme estrutura das Temp Tables */
   vr_tab_extr typ_tab_extrato_conta;    --> tt-extrato_conta
   vr_tab_depo typ_tab_dep_identificado; --> tt-dep-identificado
@@ -1998,6 +2004,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --               13/02/2019 - Inclusao de regras para contas com bloqueio judicial
     --                          - Projeto 530 BACENJUD - Everton(AMcom).
     --
+    --               03/06/2019 - Adicionado tratamento para os historicos de credito de resgate de aplic. pcapta
+    --                          - para resgates que ocorrem em dias não úteis. Projeto 411.2 (Anderson).
+
     
     DECLARE
       -- Descrição e código da critica
@@ -2019,6 +2028,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_cdhishcb VARCHAR2(4000);
 			-- Históricos operadoras de celular
 			vr_cdhisope VARCHAR2(4000);
+      -- Históricos credito de resgate pcapta
+      vr_cdhisrgt VARCHAR2(4000);
       -- Flag selecionar crapsda
       vr_crapsda BOOLEAN;
       vr_lscdhist_ret     VARCHAR2(1000);
@@ -2357,7 +2368,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 					vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
 				END LOOP;
 
-        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,508,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope; --> Lista com códigos de histórico a retornar         
+        -- Selecionar os códigos de históricos das operadoras ativas
+        FOR rw_crapcpc IN cr_crapcpc LOOP
+        	vr_cdhisrgt := vr_cdhisrgt || ',' || rw_crapcpc.cdhsvrcc;
+        END LOOP;
+
+        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,508,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope || nvl(vr_cdhisrgt,' '); --> Lista com códigos de histórico a retornar         
         -- Buscar lançamentos no dia apenas dos historicos listados acima
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper    --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
