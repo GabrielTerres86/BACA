@@ -1,13 +1,14 @@
 /*!
  * FONTE        : estorn.js
- * CRIA«√O      : James Prust Junior
- * DATA CRIA«√O : 14/09/2015
- * OBJETIVO     : Biblioteca de funÁıes da tela ESTORN
+ * CRIA√á√ÉO      : James Prust Junior
+ * DATA CRIA√á√ÉO : 14/09/2015
+ * OBJETIVO     : Biblioteca de fun√ß√µes da tela ESTORN
  * --------------
- * ALTERA«’ES   : 29/08/2018 - Tratar o estorno de pagamento da C/C em prejuÌzo
+ * ALTERA√á√ïES   : 29/08/2018 - Tratar o estorno de pagamento da C/C em preju√≠zo
  *   			               PJ 450 - Diego Simas - AMcom
- *  - 15/09/2018 - Inclus„o do Desconto de TÌtulos (Vitor S. Assanuma - GFT)
- *  - 29/10/2018 - Adicionado variavel cdtpprod e adicionada a pesquisa de bordeto na opÁ„o E (C·ssia de Oliveitra - GFT)
+ *  - 15/09/2018 - Inclus√£o do Desconto de T√≠tulos (Vitor S. Assanuma - GFT)
+ *  - 29/10/2018 - Adicionado variavel cdtpprod e adicionada a pesquisa de bordeto na op√ß√£o E (C√°ssia de Oliveitra - GFT)
+ *  - 20/05/2019 - Fix das chamadas nos nomes dos forms e corre√ß√£o das lupas (Vitor S. Assanuma - GFT)
  * --------------
  */
 $(document).ready(function() {
@@ -91,7 +92,7 @@ function formataCabecalho() {
 	rCddopcao = $('label[for="cddopcao"]','#frmCab');
 	cCddopcao = $('#cddopcao','#frmCab');
 
-	//RÛtulos
+	//R√≥tulos
 	rCddopcao.css('width','44px');	
 
 	//Campos	
@@ -134,7 +135,7 @@ function formataCampos(){
 
 			cCdtpprod.unbind('keypress').bind('keypress', function(e) {
 				if ( divError.css('display') == 'block' ) { return false; }
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if ( e.keyCode == 13 ) {
 					cNrdconta.focus();
 					return false;
@@ -143,7 +144,7 @@ function formataCampos(){
 			
 			cNrdconta.unbind('keypress').bind('keypress', function(e) {
 				if ( divError.css('display') == 'block' ) { return false; }
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if ( e.keyCode == 13 ) {
 					if ( normalizaNumero( cNrdconta.val() ) == 0 ) {
 						mostraPesquisaAssociado('nrdconta', 'frmEstornoPagamento');
@@ -156,7 +157,7 @@ function formataCampos(){
 			
 			cNrctremp.unbind('keypress').bind('keypress', function(e) {
 				if ( divError.css('display') == 'block' ) { return false; }		
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if ( e.keyCode == 13 ) {
 					if (cCdtpprod.val() == 1){
 						if ( normalizaNumero( cNrctremp.val() ) == 0 ) {
@@ -179,7 +180,7 @@ function formataCampos(){
 		    	//Limpa o campo
 		    	cNrctremp.val('');
 
-		    	//Verifica qual opÁ„o foi selecionada: 1 - Emprestimo PP | 2 - Desconto de TÌtulos
+		    	//Verifica qual op√ß√£o foi selecionada: 1 - Emprestimo PP | 2 - Desconto de T√≠tulos
 		    	if (cCdtpprod.val() == 1){ 
 		    		rNrctremp.html("Contrato:")
 		    	}else{
@@ -189,7 +190,7 @@ function formataCampos(){
 			trocaBotao('estadoInicial();', 'ajustaBotaoContinuar()', 'Continuar');
 		break;
 		
-		// Estornar Pagamento de PrejuÌzo C/C
+		// Estornar Pagamento de Preju√≠zo C/C
 		case 'ECT':
 		
 			var cNrdconta = $('#nrdconta', '#frmEstornoPagamentoCT');
@@ -211,7 +212,7 @@ function formataCampos(){
 				if (divError.css('display') == 'block') {
 					return false;
 				}
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if (e.keyCode == 13) {
 					if (normalizaNumero(cNrdconta.val()) == 0) {
 						mostraPesquisaAssociado('nrdconta', 'frmEstornoPagamentoCT');
@@ -248,7 +249,7 @@ function formataCampos(){
 			
 			cNrdconta.unbind('keypress').bind('keypress', function(e) {
 				if ( divError.css('display') == 'block' ) { return false; }
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if ( e.keyCode == 13 ) {
 					if ( normalizaNumero( cNrdconta.val() ) == 0 ) {
 						mostraPesquisaAssociado('nrdconta', 'frmEstornoPagamento');
@@ -261,7 +262,7 @@ function formataCampos(){
 
 		    cCdtpprod.unbind('keypress').bind('keypress', function(e) {
 				if ( divError.css('display') == 'block' ) { return false; }
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if ( e.keyCode == 13 ) {
 					cNrdconta.focus();
 					return false;
@@ -270,7 +271,7 @@ function formataCampos(){
 			
 			cNrctremp.unbind('keypress').bind('keypress', function(e) {
 				if ( divError.css('display') == 'block' ) { return false; }		
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if ( e.keyCode == 13 ) {
 					if (cCdtpprod.val() == 1){
 						if ( normalizaNumero( cNrctremp.val() ) == 0 ) {
@@ -289,7 +290,7 @@ function formataCampos(){
 		    	//Limpa o campo
 		    	cNrctremp.val('');
 
-		    	//Verifica qual opÁ„o foi selecionada: 1 - Emprestimo PP | 2 - Desconto de TÌtulos
+		    	//Verifica qual op√ß√£o foi selecionada: 1 - Emprestimo PP | 2 - Desconto de T√≠tulos
 		    	if (cCdtpprod.val() == 1){ 
 		    		rNrctremp.html("Contrato:")
 		    	}else{
@@ -322,7 +323,7 @@ function formataCampos(){
 				if (divError.css('display') == 'block') {
 					return false;
 				}
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if (e.keyCode == 13) {
 					if (normalizaNumero(cNrdconta.val()) == 0) {
 						mostraPesquisaAssociado('nrdconta', 'frmEstornoPagamentoCT');
@@ -376,7 +377,7 @@ function formataCampos(){
 
 			cCdtpprod.unbind('keypress').bind('keypress', function(e) {
 				if ( divError.css('display') == 'block' ) { return false; }
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if ( e.keyCode == 13 ) {
 					cNrdconta.focus();
 					return false;
@@ -385,7 +386,7 @@ function formataCampos(){
 
 		    cNrdconta.unbind('keypress').bind('keypress', function(e) {
 				if ( divError.css('display') == 'block' ) { return false; }
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if ( e.keyCode == 13 ) {
 					if ( normalizaNumero( cNrdconta.val() ) == 0 ) {
 						mostraPesquisaAssociado('nrdconta', 'frmEstornoPagamento');
@@ -398,7 +399,7 @@ function formataCampos(){
 			
 			cNrctremp.unbind('keypress').bind('keypress', function(e) {
 				if (divError.css('display') == 'block' ) { return false; }
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if ( e.keyCode == 13 ) {
 					if (cCdtpprod.val() == 1){
 						if ( normalizaNumero( cNrctremp.val() ) == 0 ) {
@@ -419,7 +420,7 @@ function formataCampos(){
 			
 			cDtiniest.unbind('keypress').bind('keypress', function(e) {
 				if (divError.css('display') == 'block' ) { return false; }
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if (e.keyCode == 13){
 					cDtfinest.focus();
 					return false;
@@ -428,7 +429,7 @@ function formataCampos(){
 			
 			cDtfinest.unbind('keypress').bind('keypress', function(e) {
 				if (divError.css('display') == 'block' ) { return false; }
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if (e.keyCode == 13){
 					cCdagenci.focus();
 					return false;
@@ -437,7 +438,7 @@ function formataCampos(){
 			
 			cCdagenci.unbind('keypress').bind('keypress', function(e) {
 				if (divError.css('display') == 'block' ) { return false; }
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if (e.keyCode == 13){
 				//	cCdagenci.focus();
 				    geraImpressaoEstorno();
@@ -449,7 +450,7 @@ function formataCampos(){
 		    	//Limpa o campo
 		    	cNrctremp.val('');
 
-		    	//Verifica qual opÁ„o foi selecionada: 1 - Emprestimo PP | 2 - Desconto de TÌtulos
+		    	//Verifica qual op√ß√£o foi selecionada: 1 - Emprestimo PP | 2 - Desconto de T√≠tulos
 		    	if (cCdtpprod.val() == 1){ 
 		    		rNrctremp.html("Contrato:")
 		    	}else{
@@ -503,7 +504,7 @@ function formataCampos(){
 				if (divError.css('display') == 'block') {
 					return false;
 				}
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if (e.keyCode == 13) {
 					cDtiniest.focus();
 					return false;
@@ -514,7 +515,7 @@ function formataCampos(){
 				if (divError.css('display') == 'block') {
 					return false;
 				}
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if (e.keyCode == 13) {
 					cDtfinest.focus();
 					return false;
@@ -525,7 +526,7 @@ function formataCampos(){
 				if (divError.css('display') == 'block') {
 					return false;
 				}
-				// Se È a tecla ENTER,
+				// Se √© a tecla ENTER,
 				if (e.keyCode == 13) {
 					geraImpressaoEstorno();
 					return false;
@@ -599,10 +600,10 @@ function controlaPesquisas() {
 
     if (cddopcao == 'R') {
         nmformul = 'frmImpressaoEstorno';
-    }
-
-	if (cddopcao == 'ECT') {
+    }else if (cddopcao == 'ECT' || cddopcao == 'CCT') {
 		nmformul = 'frmEstornoPagamentoCT';
+	}else if (cddopcao == 'RCT'){
+		nmformul = 'frmImpressaoEstornoCT';	
 	}
 
 	// Atribui a classe lupa para os links e desabilita todos
@@ -641,10 +642,10 @@ function controlaPesquisas() {
 			if ($("#nrctremp","#" + nmformul).prop("disabled") == true){
 				return;
 			}
-			if ($('#cdtpprod','#frmEstornoPagamento').val() == 1){
+			if ($('#cdtpprod', "#"+nmformul).val() == 1){
 				mostraContrato();
 			}else{
-				mostrarPesquisaBordero($('#frmEstornoPagamento #nrdconta').val(), $('#frmEstornoPagamento #nrctremp').val());
+				mostrarPesquisaBordero($('#nrdconta', "#"+nmformul).val(), $('#nrctremp', "#"+nmformul).val());
 			}
 		});
 	}	
@@ -657,7 +658,7 @@ function mostraContrato() {
 	
 	showMsgAguardo('Aguarde, buscando ...');
 
-	// Executa script de confirmaÁ„o atravÈs de ajax
+	// Executa script de confirma√ß√£o atrav√©s de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -667,7 +668,7 @@ function mostraContrato() {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();			
-			showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
 			$('#divRotina').html(response);
@@ -1014,7 +1015,7 @@ function buscaContrato() {
         },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"unblockBackground();");
+            showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"unblockBackground();");
         },
         success: function(response) {
 			try {
@@ -1039,7 +1040,7 @@ function carregaTelaFiltrarContrato(){
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde...");
 	
-	// Carrega conte˙do da opÁ„o atravÈs de ajax
+	// Carrega conte√∫do da op√ß√£o atrav√©s de ajax
 	$.ajax({
 		type: "POST",
 		url: UrlSite + "telas/estorn/carrega_tela_estorno_pagamento.php",
@@ -1071,7 +1072,7 @@ function carregaLancamentosPagamentos(){
     var cNrctremp = $('#nrctremp','#frmEstornoPagamento');
     var cCdtpprod = $('#cdtpprod','#frmEstornoPagamento');
 
-    // Carrega dados parametro atravÈs de ajax
+    // Carrega dados parametro atrav√©s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -1083,7 +1084,7 @@ function carregaLancamentosPagamentos(){
 		},
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi possÌvel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            showError('error', 'N&atilde;o foi poss√≠vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
         },
         success: function(response){		
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
@@ -1114,7 +1115,7 @@ function carregaLancamentosPagamentosCT(cNrdconta) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, buscando os dados...");
 
-	// Carrega dados parametro atravÈs de ajax
+	// Carrega dados parametro atrav√©s de ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -1125,7 +1126,7 @@ function carregaLancamentosPagamentosCT(cNrdconta) {
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'N&atilde;o foi possÌvel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+			showError('error', 'N&atilde;o foi poss√≠vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
 		},
 		success: function (response) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
@@ -1229,7 +1230,7 @@ function carregaTelaConsultarEstornos(){
     var cNrctremp = $('#nrctremp','#frmEstornoPagamento');
     var cCdtpprod = $('#cdtpprod','#frmEstornoPagamento');
 
-    // Carrega dados parametro atravÈs de ajax
+    // Carrega dados parametro atrav√©s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -1242,7 +1243,7 @@ function carregaTelaConsultarEstornos(){
 		},
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi possÌvel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            showError('error', 'N&atilde;o foi poss√≠vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
         },
         success: function(response){	
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
@@ -1274,7 +1275,7 @@ function carregaTelaConsultarEstornosCT() {
 
 	var cNrdconta = $('#nrdconta', '#frmEstornoPagamentoCT');
 	
-	// Carrega dados parametro atravÈs de ajax
+	// Carrega dados parametro atrav√©s de ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -1285,7 +1286,7 @@ function carregaTelaConsultarEstornosCT() {
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'N&atilde;o foi possÌvel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+			showError('error', 'N&atilde;o foi poss√≠vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
 		},
 		success: function (response) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
@@ -1326,7 +1327,7 @@ function carregaTelaConsultarDetalhesEstorno(){
         },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"unblockBackground();");
+            showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"unblockBackground();");
         },
         success: function(response) {			
 			$('#divRotina').html(response);
@@ -1362,7 +1363,7 @@ function buscaDetalhesEstorno(){
         },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','N„o foi possÌvel concluir a requisiÁ„o.','Alerta - Ayllos',"unblockBackground();");
+            showError('error','N√£o foi poss√≠vel concluir a requisi√ß√£o.','Alerta - Ayllos',"unblockBackground();");
         },
         success: function(response) {
 			try {
@@ -1435,7 +1436,7 @@ function geraImpressaoEstornoCT() {
 
 function removeCaracteresInvalidos(str){
 	str.replace(/\r\n/g,' ').replace("'","");
-	return str.replace(/[^A-z0-9\s¿¡¬√ƒ≈‡·‚„‰Â“”‘’÷ÿÚÛÙıˆ¯»… ÀËÈÍÎ«ÁÃÕŒœÏÌÓÔŸ⁄€‹˘˙˚¸ˇ—Ò\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
+	return str.replace(/[^A-z0-9\s√Ä√Å√Ç√É√Ñ√Ö√†√°√¢√£√§√•√í√ì√î√ï√ñ√ò√≤√≥√¥√µ√∂√∏√à√â√ä√ã√®√©√™√´√á√ß√å√ç√é√è√¨√≠√Æ√Ø√ô√ö√õ√ú√π√∫√ª√º√ø√ë√±\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
 }
 
 
@@ -1489,14 +1490,14 @@ function ajustaBotaoContinuarCT() {
 	
 }
 
-// FunÁ„o para abrir a pesquisa de borderos
+// Fun√ß√£o para abrir a pesquisa de borderos
 function mostrarPesquisaBordero(nrdconta, nrctremp){
 	var normNrconta = normalizaNumero(nrdconta) > 0 ? normalizaNumero(nrdconta) : '';
 	var nrBorder    = normalizaNumero(nrctremp) > 0 ? normalizaNumero(nrctremp) : '';
 
-	//DefiniÁ„o dos filtros
+	//Defini√ß√£o dos filtros
 	var filtros	= "Conta;nrdconta;100px;S;"+normNrconta+";S;nrdconta|Nr. Bordero;nrctremp;100px;S;"+nrBorder+";S;nrctremp|Dt Venc;dtlibbdt;;N;;N;dtlibbdt|Emprestado;vltottit;;N;;N;vltottit|Qt. Titulos;qttottit;;N;;N;qttottit";
-	//Campos que ser„o exibidos na tela
+	//Campos que ser√£o exibidos na tela
 	var colunas = 'Numero da Conta;nrdconta;0%;center;;N|Bordero;nrborder;20%;center|Dt.Lib;dtlibbdt;20%;center|Emprestado;vltottit;30%;center|Qt. Titulos;qttottit;30%;center';
 	//Exibir a pesquisa
 	mostraPesquisa("DSCT0003", "BUSCAR_BORDEROS_LIBERADOS", "Borderos","100",filtros,colunas, null, null, 'frmEstornoPagamento');
