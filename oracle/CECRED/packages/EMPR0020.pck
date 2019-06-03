@@ -56,7 +56,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
                                         ,pr_des_reto    OUT VARCHAR              --> Retorno OK / NOK
                                         ,pr_tab_erro    OUT gene0001.typ_tab_erro);
 
-  PROCEDURE pc_inc_alt_tbepr_consig_pagto (pr_idsequencia IN number, --tbepr_consignado_pagamento.idsequencia%TYPE,
+  PROCEDURE pc_atualiza_tbepr_consig_pagto(pr_idsequencia IN number, --tbepr_consignado_pagamento.idsequencia%TYPE,
                                            pr_cdcooper    IN number, --tbepr_consignado_pagamento.cdcooper%TYPE,
                                            pr_nrdconta    IN number, --tbepr_consignado_pagamento.nrdconta%TYPE,
                                            pr_nrctremp    IN number, --tbepr_consignado_pagamento.nrctremp%TYPE,
@@ -79,6 +79,17 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
                                           pr_dsxmlali   OUT XmlType,               -- XML de saida do pagamento
                                           pr_dscritic   OUT VARCHAR2); --> Descricao Erro
                                           
+   PROCEDURE pc_grava_evento_prop_consig(pr_cdcooper    IN crapepr.cdcooper%TYPE, -- código da cooperativa
+                                         pr_nrdconta    IN crapepr.nrdconta%TYPE, -- Número da conta
+                                         pr_nrctremp    IN crapepr.nrctremp%TYPE, -- Número do contrato de emprestimo
+                                         pr_dscritic   OUT VARCHAR2);
+                                            
+   PROCEDURE pc_gera_xml_efet_prop_consig(pr_cdcooper    IN crapepr.cdcooper%TYPE, -- código da cooperativa
+                                          pr_nrdconta    IN crapepr.nrdconta%TYPE, -- Número da conta
+                                          pr_nrctremp    IN crapepr.nrctremp%TYPE, -- Número do contrato de emprestimo
+                                          pr_dsxmlali   OUT XmlType,               -- XML de saida do pagamento
+                                          pr_dscritic   OUT VARCHAR2);
+                                                                                    
    PROCEDURE  pc_envia_email_erro_int_consig(pr_cdcooper    IN crapepr.cdcooper%TYPE, --Cooperativa
                                               pr_nrdconta    IN crapepr.nrdconta%TYPE, --Conta
                                               pr_nrctremp    IN crapepr.nrctremp%TYPE, --Contrato
@@ -812,7 +823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
               RAISE vr_exc_saida;
            END IF;
 
-           pc_inc_alt_tbepr_consig_pagto (pr_idsequencia => null,        -- Numero sequencial da tabela
+           pc_atualiza_tbepr_consig_pagto(pr_idsequencia => null,        -- Numero sequencial da tabela
                                           pr_cdcooper    => pr_cdcooper, -- codigo da cooperativa
                                           pr_nrdconta    => pr_nrdconta, -- numero da conta
                                           pr_nrctremp    => pr_nrctremp, -- Numero do contrato
@@ -1000,7 +1011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
     END;
     END pc_efetiva_pagto_parc_consig;     
     
-    PROCEDURE pc_inc_alt_tbepr_consig_pagto (pr_idsequencia IN number, --tbepr_consignado_pagamento.idsequencia%TYPE,
+    PROCEDURE pc_atualiza_tbepr_consig_pagto(pr_idsequencia IN number, --tbepr_consignado_pagamento.idsequencia%TYPE,
                                              pr_cdcooper    IN number, --tbepr_consignado_pagamento.cdcooper%TYPE,
                                              pr_nrdconta    IN number, --tbepr_consignado_pagamento.nrdconta%TYPE,
                                              pr_nrctremp    IN number, --tbepr_consignado_pagamento.nrctremp%TYPE,
@@ -1028,55 +1039,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
      vr_dscritic  varchar2(2000);
      vr_exc_saida exception;
   BEGIN 
- /*       IF pr_idsequencia IS NULL THEN
-          BEGIN   
-            INSERT INTO tbepr_consignado_pagamento
-                 (idsequencia,
-                  cdcooper,
-                  nrdconta,
-                  nrctremp,
-                  nrparepr,
-                  vlparepr,
-                  vlpagpar,
-                  dtvencto,
-                  instatus,
-                  dtincreg,
-                  dtupdreg)
-              VALUES
-                 (null,
-                  pr_cdcooper,
-                  pr_nrdconta,
-                  pr_nrctremp,
-                  pr_nrparepr,
-                  pr_vlparepr,
-                  pr_vlpagpar,
-                  pr_dtvencto,
-                  pr_instatus,
-                  sysdate,
-                  null);
-           EXCEPTION
-             WHEN OTHERS THEN
-               vr_dscritic:= 'Erro no insert da tabela tbepr_consignado_pagamento - ' ||sqlerrm;
-               RAISE vr_exc_saida;
-           END;      
-         ELSE
-           BEGIN
-             UPDATE tbepr_consignado_pagamento
-                SET instatus = pr_instatus,
-                    dtupdreg = dtupdreg
-              WHERE idsequencia = pr_idsequencia;
-           EXCEPTION
-             WHEN OTHERS THEN
-               vr_dscritic:= 'Erro no updateda tabela tbepr_consignado_pagamento - '||sqlerrm;
-               RAISE vr_exc_saida;               
-           END;      
-         END IF;*/
-         null;
-     EXCEPTION
-        WHEN vr_exc_saida THEN
-           pr_dscritic:= vr_dscritic; 
-      END;
-    END pc_inc_alt_tbepr_consig_pagto;
+    IF pr_idsequencia IS NULL THEN
+       BEGIN   
+          INSERT INTO tbepr_consignado_pagamento
+               (idsequencia,
+                cdcooper,
+                nrdconta,
+                nrctremp,
+                nrparepr,
+                vlparepr,
+                vlpagpar,
+                dtvencto,
+                instatus,
+                dtincreg,
+                dtupdreg)
+            VALUES
+               (null,
+                pr_cdcooper,
+                pr_nrdconta,
+                pr_nrctremp,
+                pr_nrparepr,
+                pr_vlparepr,
+                pr_vlpagpar,
+                pr_dtvencto,
+                pr_instatus,
+                sysdate,
+                null);
+       EXCEPTION
+         WHEN OTHERS THEN
+         vr_dscritic:= 'Erro no insert da tabela tbepr_consignado_pagamento - ' ||sqlerrm;
+         RAISE vr_exc_saida;
+       END;      
+    ELSE
+       BEGIN
+           UPDATE tbepr_consignado_pagamento
+              SET instatus = pr_instatus,
+                  dtupdreg = dtupdreg
+            WHERE idsequencia = pr_idsequencia;
+       EXCEPTION
+         WHEN OTHERS THEN
+         vr_dscritic:= 'Erro no updateda tabela tbepr_consignado_pagamento - '||sqlerrm;
+         RAISE vr_exc_saida;               
+       END;      
+     END IF;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+      pr_dscritic:= vr_dscritic; 
+    END;
+    END pc_atualiza_tbepr_consig_pagto;
     
     FUNCTION fn_ret_status_pagto_consignado (pr_cdcooper    IN number,--tbepr_consignado_pagamento.cdcooper%TYPE, -- código da cooperativa
                                              pr_nrdconta    IN number,--tbepr_consignado_pagamento.nrdconta%TYPE, -- Número da conta
@@ -1098,15 +1108,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
      ----------------------------------------------------------------------------------------------------------*/
     BEGIN
       DECLARE
-       vr_instatus number;--tbepr_consignado_pagamento.instatus%TYPE;
+       vr_instatus tbepr_consignado_pagamento.instatus%TYPE;
 
        CURSOR cr_consig_pagto IS      
-          SELECT 0 instatus  -- 1- Enviado, 2 - Pagamento efetuado FIS, 3- Erro
-            FROM dual; --tbepr_consignado_pagamento
-         /*  WHERE cdcooper = pr_cdcooper
+          SELECT instatus  -- 1- Enviado, 2 - Pagamento efetuado FIS, 3- Erro
+            FROM tbepr_consignado_pagamento
+           WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta
              AND nrctremp = pr_nrctremp
-             AND nrparepr = pr_nrparepr;*/
+             AND nrparepr = pr_nrparepr;
        BEGIN
          vr_instatus:= 0;
          FOR rw_consig_pagto IN cr_consig_pagto
@@ -1138,17 +1148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
     ............................................................................... */
                           
     DECLARE
-      -- Código do programa
-      vr_cdprogra crapprg.cdprogra%TYPE;
-      -- Erro para parar a cadeia
-      vr_exc_saida exception;
-
-      -------------- Cursores específicos ----------------
-
-         
-                      
       -------------- Variáveis e Tipos -------------------
-                        
       vr_cdcritic crapcri.cdcritic%TYPE; --> Código da crítica
       vr_dscritic     VARCHAR2(2000);    --> Descrição da crítica
                               
@@ -1161,6 +1161,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
       -- Temporárias para o CLOB
       vr_clobxml CLOB;                   -- CLOB para armazenamento das informações do arquivo
       vr_clobaux VARCHAR2(32767);        -- Var auxiliar para montagem do arquivo
+
+      -- Código do programa
+      vr_cdprogra crapprg.cdprogra%TYPE;
+      -- Exceção
+      vr_exc_saida exception;
 
                           
     BEGIN
@@ -1203,6 +1208,464 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
                          sqlerrm;
       END;
       END pc_gera_xml_pagamento_consig;
+      
+      -- Envia proposta para FIS Brasil, gravando evento SOA
+      PROCEDURE pc_grava_evento_prop_consig(pr_cdcooper    IN crapepr.cdcooper%TYPE, -- código da cooperativa
+                                            pr_nrdconta    IN crapepr.nrdconta%TYPE, -- Número da conta
+                                            pr_nrctremp    IN crapepr.nrctremp%TYPE, -- Número do contrato de emprestimo
+                                            pr_dscritic   OUT VARCHAR2) IS --> Descricao Erro
+
+      BEGIN
+      /* .............................................................................
+         Programa : pc_grava_evento_prop_consig
+         Sistema  : AIMARO
+         Sigla    : 
+         Autor    : Josiane Stiehler - AMcom
+         Data     : 29/05/2019                      Última Alteração:
+                          
+        Alterações : Grava o XML gerado da efetivação da proposta no evento SOA
+                                
+      ............................................................................... */
+                            
+      DECLARE
+        -- Código do programa
+        vr_cdprogra crapprg.cdprogra%TYPE;
+
+        vr_dsxmlali XMLType;
+        -- ID Evento SOA
+        vr_idevento   tbgen_evento_soa.idevento%type;    
+
+        --Variaveis Erro
+        vr_dscritic VARCHAR2(4000);
+
+        --Variaveis Excecao
+        vr_exc_saida EXCEPTION;
+      
+      BEGIN
+         -- Gera o XML do pagamento a ser gravado no evento SOA
+         pc_gera_xml_efet_prop_consig(pr_cdcooper  => pr_cdcooper, -- código da cooperativa
+                                      pr_nrdconta  => pr_nrdconta, -- Número da conta
+                                      pr_nrctremp  => pr_nrctremp, -- Número do contrato de emprestimo
+                                      pr_dsxmlali  => vr_dsxmlali, -- XML de saida do pagamento
+                                      pr_dscritic  => vr_dscritic); 
+
+         -- Tratar saida com erro                          
+         IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+         END IF;                                  
+           
+         -- gera evento soa para o pagamento de consignado
+         soap0003.pc_gerar_evento_soa(pr_cdcooper               => pr_cdcooper
+                                     ,pr_nrdconta               => pr_nrdconta
+                                     ,pr_nrctrprp               => pr_nrctremp
+                                     ,pr_tpevento               => 'EFETIVA_PROPOSTA'
+                                     ,pr_tproduto_evento        => 'CONSIGNADO'
+                                     ,pr_tpoperacao             => 'INSERT'
+                                     ,pr_dsconteudo_requisicao  => vr_dsxmlali.getClobVal()
+                                     ,pr_idevento               => vr_idevento
+                                     ,pr_dscritic               => vr_dscritic);
+         -- Tratar saida com erro                          
+         IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+         END IF;
+      EXCEPTION
+        WHEN vr_exc_saida THEN
+          pr_dscritic:= vr_dscritic;
+        WHEN OTHERS THEN
+          -- Montar descrição de erro não tratado
+          pr_dscritic := 'Erro não tratado na empr0020.pc_grava_evento_prop_consig ' ||sqlerrm;
+      END;
+      END pc_grava_evento_prop_consig;
+      
+      
+      -- Montar o XML da efetivação da proposta a ser gravado no evento SOA
+      PROCEDURE pc_gera_xml_efet_prop_consig(pr_cdcooper    IN crapepr.cdcooper%TYPE, -- código da cooperativa
+                                             pr_nrdconta    IN crapepr.nrdconta%TYPE, -- Número da conta
+                                             pr_nrctremp    IN crapepr.nrctremp%TYPE, -- Número do contrato de emprestimo
+                                             pr_dsxmlali   OUT XmlType,               -- XML de saida do pagamento
+                                             pr_dscritic   OUT VARCHAR2) IS --> Descricao Erro
+
+      BEGIN
+      /* .............................................................................
+         Programa : pc_gera_xml_efet_prop_consig
+         Sistema  : AIMARO
+         Sigla    : 
+         Autor    : Josiane Stiehler - AMcom
+         Data     : 29/05/2019                      Última Alteração:
+                          
+        Alterações : Gera o XML da efetivação da proposta gravando no evento SOA a ser enviada a FIS Brasil
+                                
+      ............................................................................... */
+                            
+      DECLARE
+        CURSOR cr_crapepr IS
+        SELECT decode(epr.idfiniof,1,'true','false') idfiniof,
+               epr.cdcooper,
+               epr.nrdconta,
+               epr.nrctremp,
+               epr.qtpreemp,
+               epr.txmensal,
+               epr.vlemprst,
+               epr.vlpreemp,
+               epr.vltarifa,
+               emp.nrcepend,
+               emp.nrendemp,
+               emp.cdufdemp,
+               emp.cdempres,
+               emp.nrdocnpj,
+               gene0007.fn_caract_acento (pr_texto    => emp.nmextemp,
+                                          pr_insubsti => 1) nmextemp,
+               gene0007.fn_caract_acento (pr_texto    => emp.nmcidade,
+                                          pr_insubsti => 1) nmcidade,
+               gene0007.fn_caract_acento (pr_texto    => emp.nmbairro,
+                                          pr_insubsti => 1) nmbairro,
+               gene0007.fn_caract_acento (pr_texto    => emp.dsendemp,
+                                          pr_insubsti => 1) dsendemp,
+               decode(con.tpmodconvenio,1,161, 
+                  decode(con.tpmodconvenio,2,162, 
+                         decode(con.tpmodconvenio,3,163,null))) tpmodconvenio 
+          FROM crapepr epr,
+               crapemp emp,
+               tbcadast_empresa_consig con
+         WHERE emp.cdcooper = epr.cdcooper
+           AND emp.cdempres = epr.cdempres
+           AND emp.cdcooper = con.cdcooper
+           AND emp.cdempres = con.cdempres
+           AND epr.cdcooper = pr_cdcooper
+           AND epr.nrdconta = pr_nrdconta
+           AND epr.nrctremp = pr_nrctremp;
+        
+        rw_crapepr cr_crapepr%ROWTYPE;
+             
+         
+        CURSOR cr_tbepr_consig IS
+          SELECT con.pecet_anual,
+                 con.pejuro_anual
+            FROM tbepr_consignado con
+           WHERE con.cdcooper = pr_cdcooper
+             AND con.nrdconta = pr_nrdconta
+             AND con.nrctremp = pr_nrctremp;
+             
+          rw_tbepr_consig cr_tbepr_consig%ROWTYPE;
+            
+
+        CURSOR cr_crawepr IS
+          SELECT to_char(epr.dtdpagto,'yyyy/mm/dd') dtdpagto,
+                 epr.dtdpagto dtdpagto1,
+                 epr.vliofepr,
+                 epr.vlemprst
+            FROM crawepr epr
+           WHERE epr.cdcooper = pr_cdcooper
+             AND epr.nrdconta = pr_nrdconta
+             AND epr.nrctremp = pr_nrctremp;
+
+       rw_crawepr cr_crawepr%ROWTYPE;
+
+        CURSOR cr_crapass (pr_nrdconta IN crapttl.nrdconta%type) IS
+          SELECT to_char(ttl.dtnasttl,'yyyy/mm/dd')||'T'||'00:00:00' dtnasttl,
+                 ttl.nrcpfcgc,
+                 gene0007.fn_caract_acento (pr_texto    => pas.nmprimtl,
+                                            pr_insubsti => 1) nmprimtl,
+                 ttl.cdnacion,
+                 ttl.nrdocttl,
+                 ttl.cdsexotl,
+                 ttl.nrcadast,
+                 ttl.cdnatopc,
+                 ttl.dsnatura,
+                 enc.dsendere,
+                 enc.nrendere,
+                 enc.nmbairro,
+                 enc.nmcidade,
+                 enc.cdufende,
+                 enc.nrcepend,
+                 enc.tpendass,
+                 pas.inpessoa
+            FROM crapass pas,
+                 crapttl ttl,
+                 crapenc enc
+           WHERE pas.cdcooper = ttl.cdcooper
+             AND pas.nrdconta = ttl.nrdconta
+             AND ttl.cdcooper = enc.cdcooper
+             AND ttl.nrdconta = enc.nrdconta
+             AND ttl.idseqttl = 1
+             AND enc.tpendass = 10 -- residencial
+             AND pas.cdcooper = pr_cdcooper
+             AND pas.nrdconta = pr_nrdconta;
+             
+        rw_crapass cr_crapass%ROWTYPE;  
+      
+       CURSOR cr_crapcop IS
+        SELECT cop.cdbcoctl,
+               cop.cdagectl
+          FROM crapcop cop 
+         WHERE cop.cdcooper = pr_cdcooper;
+        
+        rw_crapcop cr_crapcop%ROWTYPE;
+ 
+        rw_crapdat btch0001.cr_crapdat%ROWTYPE;                        
+ 
+       -------------- Variáveis e Tipos -------------------
+        vr_dscritic     VARCHAR2(2000);    --> Descrição da crítica
+                                
+        -- Varchar2 temporário
+        vr_dsxmltemp VARCHAR2(32767);
+
+        -- Temporárias para o CLOB
+        vr_clobxml CLOB;                   -- CLOB para armazenamento das informações do arquivo
+        vr_clobaux VARCHAR2(32767);        -- Var auxiliar para montagem do arquivo
+
+        -- Exception
+        vr_exc_saida exception;
+        
+        vr_qtcarencia   number;
+            
+      BEGIN
+        --Inicializar variavel erro
+        pr_dscritic := NULL;
+  
+        -- busca data movimento da cooperativa        
+        OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+        FETCH btch0001.cr_crapdat 
+         INTO rw_crapdat;
+        CLOSE btch0001.cr_crapdat;
+        
+        --Busca  dados do contrato
+        OPEN cr_crapepr;
+        FETCH cr_crapepr 
+         INTO rw_crapepr;
+        
+        IF cr_crapepr%NOTFOUND THEN
+           vr_dscritic:= 'Contrato não encontrado';
+           CLOSE cr_crapepr;
+           RAISE vr_exc_saida;
+        END IF; 
+        CLOSE cr_crapepr;
+        
+        --Busca  dados do contrato
+        OPEN cr_crawepr;
+        FETCH cr_crawepr 
+         INTO rw_crawepr;
+        
+        IF cr_crawepr%NOTFOUND THEN
+           vr_dscritic:= 'Proposta não encontrado';
+           CLOSE cr_crawepr;
+           RAISE vr_exc_saida;
+        END IF; 
+        CLOSE cr_crawepr;
+        
+        -- dados do contrato
+        OPEN cr_tbepr_consig;
+        FETCH cr_tbepr_consig 
+         INTO rw_tbepr_consig;
+         
+        IF cr_tbepr_consig%NOTFOUND THEN
+           vr_dscritic:= 'CET não encontrado para o contrato: '||pr_nrctremp ;
+           CLOSE cr_crapass;
+           RAISE vr_exc_saida;
+        END IF; 
+        CLOSE cr_tbepr_consig;
+        
+        -- dados do cooperado
+        OPEN cr_crapass (pr_nrdconta => rw_crapepr.nrdconta);
+        FETCH cr_crapass 
+         INTO rw_crapass;
+       
+        IF cr_crapass%NOTFOUND THEN
+           vr_dscritic:= 'Dados do cooperado não encontrado: '||rw_crapepr.nrdconta ;
+           CLOSE cr_crapass;
+           RAISE vr_exc_saida;
+        END IF;   
+        CLOSE cr_crapass;  
+
+        -- dados da cooperativa
+        OPEN cr_crapcop;
+        FETCH cr_crapcop 
+          INTO rw_crapcop;
+       
+        IF cr_crapcop%NOTFOUND THEN
+           vr_dscritic:= 'Cooperativa não encontrado: '||pr_cdcooper ;
+           CLOSE cr_crapcop;
+           RAISE vr_exc_saida;
+        END IF;   
+        CLOSE cr_crapcop;  
+
+        -- dias de carência
+        vr_qtcarencia:= trunc(rw_crapdat.dtmvtolt) - trunc(rw_crawepr.dtdpagto1);
+        
+        -- Inicializar as informações do XML de dados
+        dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
+        dbms_lob.open(vr_clobxml,dbms_lob.lob_readwrite);
+                        
+        -- Escrever no arquivo XML
+        gene0002.pc_escreve_xml(vr_clobxml
+                               ,vr_clobaux
+                               ,'<?xml version="1.0" encoding="UTF-8"?><Root>');
+                          
+        -- Monta XML do pagamento do consignado   
+        vr_dsxmltemp:= '<convenioCredito>
+                          <cooperativa>
+                            <codigo>'||rw_crapepr.cdcooper||'</codigo>
+                          </cooperativa>
+                          <numeroContrato>'||rw_crapepr.cdempres||'</numeroContrato>
+                        </convenioCredito>
+                        <configuracaoCredito>
+                          <diasCarencia>'||vr_qtcarencia||'</diasCarencia>
+                          <financiaIOF>'||rw_crapepr.idfiniof||'</financiaIOF>
+                          <financiaTarifa>'||rw_crapepr.idfiniof||'</financiaTarifa>
+                        </configuracaoCredito>
+                        <propostaContratoCredito>
+                          <CETPercentAoAno>'||rw_tbepr_consig.pecet_anual||'</CETPercentAoAno>
+                          <dataPrimeiraParcela>'||rw_crawepr.dtdpagto||'</dataPrimeiraParcela>
+                          <produto> 
+                            <codigo>'||rw_crapepr.tpmodconvenio||'</codigo>
+                          </produto>
+                          <quantidadeParcelas>'||rw_crapepr.qtpreemp||'</quantidadeParcelas>
+                          <taxaJurosRemuneratorios>'||rw_crapepr.txmensal||'</taxaJurosRemuneratorios>
+                          <taxaJurosRemuneratoriosAnual>'||rw_tbepr_consig.pejuro_anual||'</taxaJurosRemuneratoriosAnual>
+                          <tipoLiberacao>
+                            <codigo>1</codigo>
+                          </tipoLiberacao>
+                          <tipoLiquidacao>
+                            <codigo>4</codigo>
+                          </tipoLiquidacao> 
+                          <tributoIOFValor>'||rw_crawepr.vliofepr||'</tributoIOFValor>
+                          <valor>'||rw_crapepr.vlemprst||'</valor>
+                          <valorBase>'||rw_crawepr.vlemprst||'</valorBase> 
+                          <dataProposta>'||to_char(sysdate,'yyyy/mm/dd')||'T'||to_char(sysdate,'hh24:mi:ss')||'</dataProposta>
+                          <emitente> 
+                            <dataNascOuConstituicao>'||rw_crapass.dtnasttl||'</dataNascOuConstituicao>
+                            <identificadorReceitaFederal>'||rw_crapass.nrcpfcgc||'</identificadorReceitaFederal>
+                            <razaoSocialOuNome>'||rw_crapass.nmprimtl||'</razaoSocialOuNome>
+                            <nacionalidade>
+                              <codigo>'||rw_crapass.cdnacion||'</codigo>
+                            </nacionalidade>
+                            <tipo> 
+                              <codigo>'||rw_crapass.inpessoa||'</codigo>
+                            </tipo>
+                            <contaCorrente>
+                              <agencia>
+                                <codigo>'||rw_crapcop.cdagectl||'</codigo>
+                              </agencia>
+                              <banco>
+                                <codigo>'||rw_crapcop.cdbcoctl||'</codigo>
+                              </banco>
+                              <codigoConta>'||rw_crapepr.nrdconta||'</codigoConta>
+                              <cooperativa>
+                                <codigo>'||pr_cdcooper||'</codigo>
+                              </cooperativa>
+                            </contaCorrente>
+                            <numeroTitularidade>'||'1'||'</numeroTitularidade>
+                            <pessoaContatoEndereco>
+                              <CEP>'||rw_crapass.nrcepend||'</CEP>
+                              <cidade>
+                                <descricao>'||rw_crapass.nmcidade||'</descricao>
+                              </cidade>
+                              <nomeBairro>'||rw_crapass.nmbairro||'</nomeBairro>
+                              <numeroLogradouro>'||rw_crapass.nrendere||'</numeroLogradouro>
+                              <tipoEndereco>
+                                <codigo>'||rw_crapass.tpendass||'</codigo>
+                              </tipoEndereco>
+                              <tipoENomeLogradouro>'||rw_crapass.dsendere||'</tipoENomeLogradouro>
+                              <UF>'||rw_crapass.cdufende||'</UF>
+                            </pessoaContatoEndereco>
+                          </emitente>
+                          <identificadorProposta>'||rw_crapepr.nrctremp||'</identificadorProposta>
+                          <statusProposta>
+                            <codigo>'||'26'||'</codigo>
+                          </statusProposta>
+                        </propostaContratoCredito>
+                        <pessoaDocumento>
+                          <identificador>'||rw_crapass.nrdocttl||'</identificador>
+                          <tipo>
+                            <sigla>'||'CI'||'</sigla>
+                          </tipo>
+                        </pessoaDocumento>
+                        <pessoaFisicaOcupacao>
+                          <naturezaOcupacao>
+                            <codigo>'||rw_crapass.cdnatopc||'</codigo>
+                          </naturezaOcupacao>
+                        </pessoaFisicaOcupacao>
+                        <pessoaFisicaDetalhamento>
+                          <estadoCivil>
+                            <codigo>4</codigo> '|| -- Fixo 4 -Solteiro
+                         ' </estadoCivil>
+                          <sexo>
+                            <codigo>'||rw_crapass.cdsexotl||'</codigo>
+                          </sexo> 
+                        </pessoaFisicaDetalhamento>
+                        <pessoaFisicaRendimento>
+                          <identificadorRegistroFuncionario>'||rw_crapass.nrcadast||'</identificadorRegistroFuncionario>
+                        </pessoaFisicaRendimento>
+                        <remuneracaoColaborador>
+                          <empregador>
+                            <identificadorReceitaFederal>'||rw_crapepr.nrdocnpj||'</identificadorReceitaFederal>
+                            <razaoSocialOuNome>'||rw_crapepr.nmextemp||'</razaoSocialOuNome>
+                          </empregador>
+                        </remuneracaoColaborador>
+                        <beneficio />
+                        <listaPessoasEndereco>
+                          <pessoaEndereco>
+                            <parametroConsignado>
+                              <tipoPessoaEndereco>'||'EMPREGADOR'||'</tipoPessoaEndereco>
+                            </parametroConsignado>
+                            <pessoaContatoEndereco>
+                              <CEP>'||rw_crapepr.nrcepend||'</CEP>
+                              <cidade>
+                                <descricao>'||rw_crapepr.nmcidade||'</descricao>
+                              </cidade>
+                              <nomeBairro>'||rw_crapepr.nmbairro ||'</nomeBairro>
+                              <numeroLogradouro>'||rw_crapepr.nrendemp||'</numeroLogradouro>
+                              <tipoENomeLogradouro>'||rw_crapepr.dsendemp||'</tipoENomeLogradouro>
+                              <UF>'||rw_crapepr.cdufdemp||'</UF>
+                            </pessoaContatoEndereco>
+                          </pessoaEndereco>
+                        </listaPessoasEndereco>
+                        <parcela>
+                          <valor>'||rw_crapepr.vlpreemp||'</valor>
+                        </parcela>
+                        <tarifa>
+                          <valor>'||rw_crapepr.vltarifa||'</valor>
+                        </tarifa>
+                        <inadimplencia>
+                          <despesasCartorarias>0.0</despesasCartorarias>
+                        </inadimplencia>
+                        <usuarioDominioCecred>
+                          <codigo>'||''||'</codigo>
+                        </usuarioDominioCecred>
+                        <parametroConsignado> 
+                          <codigoFisTabelaJuros>'||'1'||'</codigoFisTabelaJuros>
+                          <indicadorContaPrincipal>'||'true'||'</indicadorContaPrincipal> 
+                          <naturalidade>'||rw_crapass.dsnatura||'</naturalidade>
+                           <dataCalculoLegado>'||to_char(rw_crapdat.dtmvtolt,'yyyy/mm/dd')||' </dataCalculoLegado>
+                        </parametroConsignado> '; 
+        
+        -- Enviar o mesmo ao CLOB
+        gene0002.pc_escreve_xml(vr_clobxml
+                               ,vr_clobaux
+                               ,vr_dsxmltemp);  
+                    
+                        
+        -- Finalizar o XML
+        gene0002.pc_escreve_xml(vr_clobxml
+                               ,vr_clobaux
+                               ,'</Root>'
+                               ,TRUE);      
+        -- E converter o CLOB para o XMLType de retorno
+        pr_dsxmlali := XmlType.createXML(vr_clobxml);
+                        
+        --Fechar Clob e Liberar Memoria  
+        dbms_lob.close(vr_clobxml);
+        dbms_lob.freetemporary(vr_clobxml); 
+            
+      EXCEPTION
+        WHEN vr_exc_saida THEN
+          pr_dscritic:=  vr_dscritic;
+        WHEN OTHERS THEN
+          -- Montar descrição de erro não tratado
+          pr_dscritic := 'Erro não tratado na empr0020.pc_gera_xml_pagamento_consig ' ||sqlerrm;
+      END;
+      END pc_gera_xml_efet_prop_consig;
+
       
       PROCEDURE  pc_envia_email_erro_int_consig(pr_cdcooper  IN crapepr.cdcooper%TYPE, --Cooperativa
                                               pr_nrdconta    IN crapepr.nrdconta%TYPE, --Conta
