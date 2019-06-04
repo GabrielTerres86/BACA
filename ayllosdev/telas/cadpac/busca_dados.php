@@ -79,6 +79,10 @@
         echo "$('#cdestado', '#frmCadpac').val('".getByTagName($registros->tags,'CDUFDCOP')."');";
         echo "$('#dsdemail', '#frmCadpac').val('".getByTagName($registros->tags,'DSDEMAIL')."');";
         echo "$('#dsmailbd', '#frmCadpac').val('".getByTagName($registros->tags,'DSMAILBD')."');";
+
+        echo "$('#dsemailpj', '#frmCadpac').val('".getByTagName($registros->tags,'DSEMAILPJ')."');";
+        echo "$('#dsemailpf', '#frmCadpac').val('".getByTagName($registros->tags,'DSEMAILPF')."');";
+
         echo "$('#dsinform1', '#frmCadpac').val('".getByTagName($registros->tags,'DSINFORM1')."');";
         echo "$('#dsinform2', '#frmCadpac').val('".getByTagName($registros->tags,'DSINFORM2')."');";
         echo "$('#dsinform3', '#frmCadpac').val('".getByTagName($registros->tags,'DSINFORM3')."');";

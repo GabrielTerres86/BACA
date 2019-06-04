@@ -202,7 +202,7 @@ function Grid() {
                 } else {
                     popup.inicializar(response);
                 }
-                formatar();
+                formatar(cdalcada);
             }
         });
     }
@@ -235,7 +235,7 @@ function Grid() {
         });
     }
 
-    var formatar = function () {
+    var formatar = function (cdalcada) {
 
         var divRegistro = $('div.divRegistros', '#divGrid');
         var tabela = $('table', divRegistro);
@@ -259,14 +259,14 @@ function Grid() {
         var arrayLargura = new Array();
         arrayLargura[0] = '150px';
         arrayLargura[1] = '290px';
-        if (cabecalho.getOpcaoSelecionada() == 'A') {
+        if (cabecalho.getOpcaoSelecionada() != 'C' && cdalcada != 1) {
             arrayLargura[2] = '200px';
         }
 
         var arrayAlinha = new Array();
         arrayAlinha[0] = 'left';
         arrayAlinha[1] = 'left';
-        if (cabecalho.getOpcaoSelecionada() == 'A') {
+        if (cabecalho.getOpcaoSelecionada() != 'C' && cdalcada != 1) {
             arrayAlinha[2] = 'center';
         }
 
@@ -455,7 +455,7 @@ function PopupAprovadores() {
                 hideMsgAguardo();
                 $('#divGrid').html(response);
                 fechaRotina($('#divEmailAprovador'));
-                Grid.formatar();
+                Grid.formatar(cdalcada);
                 exibeRotina($('#divRotina'));
                 if (fncAfter){
                     eval(fncAfter);
