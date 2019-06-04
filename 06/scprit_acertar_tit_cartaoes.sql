@@ -29,6 +29,15 @@ declare
           con.inpessoa          
   HAVING COUNT(con.cdadmcrd) > 1;
   rw_principal cr_principal%ROWTYPE;
+  
+  CURSOR cr_crawcrd_b (pr_cdcooper NUMBER,
+                       pr_nrdconta NUMBER,
+                       pr_cdadmcrd NUMBER) IS
+    SELECT c.flgprcrd,ROWID FROM crawcrd c
+     WHERE c.cdcooper = pr_cdcooper
+       AND c.nrdconta = pr_nrdconta
+       AND c.cdadmcrd = pr_cdadmcrd;
+  rw_crawcrd_b cr_crawcrd_b%ROWTYPE;   
  
   CURSOR cr_admcrd (pr_cdcooper NUMBER,
                     pr_nrdconta NUMBER) IS 
@@ -68,12 +77,39 @@ declare
 
   vr_nrdrowid ROWID;
   vr_adm VARCHAR2(50);
-
+  vr_nom_diretorio varchar2(200);
+  vr_nmarqdat varchar2(200);
+  vr_arquivo_txt utl_file.file_type;
+  vr_dscritic VARCHAR2(4000);
+  vr_dslinha VARCHAR2(4000);
 BEGIN
   
+  -- gerar arquivo contabil
+  vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C',
+                                            pr_cdcooper => 3,
+                                            pr_nmsubdir => 'log');
+                                            
+  vr_nmarqdat := 'script_retorno_INC0012357.log';                                         
+                                            
 
+  -- Abre o arquivo para escrita
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio,    --> Diretório do arquivo
+                           pr_nmarquiv => vr_nmarqdat,         --> Nome do arquivo
+                           pr_tipabert => 'W',                 --> Modo de abertura (R,W,A)
+                           pr_utlfileh => vr_arquivo_txt,      --> Handle do arquivo aberto
+                           pr_des_erro => vr_dscritic);
+                                                                               
+                                                
   -- loop principal
   FOR rw_principal IN cr_principal LOOP
+    
+    FOR rw_crawcrd_b IN cr_crawcrd_b(rw_principal.cdcooper,
+                                     rw_principal.nrdconta,
+                                     rw_principal.cdadmcrd) LOOP
+      vr_dslinha := 'update crawcrd set flgprcrd = ' || rw_crawcrd_b.flgprcrd || ' WHERE rowid = ' || '''' || rw_crawcrd_b.rowid || '''' || ';';   
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_dslinha);  
+    END LOOP;
+    
     
     FOR rw_admcrd IN cr_admcrd(rw_principal.cdcooper,
                                rw_principal.nrdconta) LOOP
@@ -127,6 +163,12 @@ BEGIN
     END LOOP;   
     
   END LOOP; -- fim loop principal 
+  vr_dslinha := ' commit;';
+  gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_dslinha); 
+  
+  
+  gene0001.pc_fecha_arquivo(vr_arquivo_txt);
+   
   
   COMMIT;
   
