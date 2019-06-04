@@ -6378,6 +6378,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     -- 
 	--             05/06/2017 - Recuperar informacoes de previdencia (Claudio - CIS Corporate).                 
     -- 
+    --           30/05/2019 - Alterado para considerar também a situação 9 quando exibir existencia 
+    --                        de portabilidade.  (Renato Darosci - Supero - P485)
     -- ..........................................................................*/
     
     ---------------> CURSORES <-----------------
