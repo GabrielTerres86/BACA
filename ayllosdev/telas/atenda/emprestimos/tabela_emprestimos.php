@@ -161,6 +161,9 @@
 						<input type="hidden" id="tpemprst" name="tpemprst" value="<? echo getByTagName($registro->tags,'tpemprst') ?>" />
 						<input type="hidden" id="tpmodcon" name="tpmodcon" value="<? echo getByTagName($registro->tags,'tpmodcon') ?>" />
 						<input type="hidden" id="dtdpagto" name="dtdpagto" value="<? echo getByTagName($registro->tags,'dtdpagto') ?>" />
+						<input type="hidden" id="vlemprstt" name="vlemprstt" value="<? echo getByTagName($registro->tags,'vlemprst') ?>" />
+						<input type="hidden" id="qtpreemp" name="qtpreemp" value="<? echo getByTagName($registro->tags,'qtpreemp') ?>" />
+						<input type="hidden" id="idfiniof" name="idfiniof" value="<? echo getByTagName($registro->tags,'idfiniof') ?>" />
 					    <!-- PRJ - 438 - Rating  -->
 						<input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
 						<input type="hidden" id="flintcdc" name="flintcdc" value="<? echo getByTagName($registro->tags,'flintcdc') ?>" />

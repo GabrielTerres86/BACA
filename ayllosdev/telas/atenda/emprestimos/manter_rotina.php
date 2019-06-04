@@ -47,6 +47,7 @@
 	require_once('../../../includes/funcoes.php');
 	require_once('../../../includes/controla_secao.php');
 	require_once('../../../class/xmlfile.php');
+	require_once('wssoa.php');
 	isPostMethod();
 
 	// Guardo os parâmetos do POST em variáveis
@@ -178,14 +179,80 @@
 	//P437
 	$gConsig = isset($_POST['gConsig']) ? $_POST['gConsig'] : '0';	
 	$vliofepr = -1;
+	$pecet_anual = -1;
+	$pejuro_anual = -1;
+	
 	if($gConsig == 1){
 		$vliofepr = (isset($_POST['vliofepr'])) ? $_POST['vliofepr'] : -1 ;
+		/*
 		$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis&vlparepr=97,62&vliofepr=4');	
 		$obj = json_decode($raw_data); 	
 		if (isset($obj->vlparepr)){
 			$vlpreemp = $obj->vlparepr;
 			$vliofepr = $obj->vliofepr;	
-		}			
+		}
+		*/
+		//Busca XML BD converte em json e comunica com a FIS	
+		$xml  = '';
+		$xml .= '<Root>';
+		$xml .= '	<dto>';
+		$xml .= '       <cdlcremp>'.$cdlcremp.'</cdlcremp>';
+		$xml .= '       <vlemprst>'.$vlemprst.'</vlemprst>';
+		$xml .= '       <nrdconta>'.$nrdconta.'</nrdconta>';
+		$xml .= '       <fintaxas>'.$idfiniof.'</fintaxas>';
+		$xml .= '       <quantidadeparcelas>'.$qtpreemp.'</quantidadeparcelas>';
+		$xml .= '       <dataprimeiraparcela>'.$dtdpagto.'</dataprimeiraparcela>';
+		$xml .= '	</dto>';
+		$xml .= '</Root>';
+		
+		$xmlResult = mensageria(
+			$xml,
+			"TELA_ATENDA_EMPRESTIMO",
+			"PRO_BUSCA_DADOS_CALC_FIS",
+			$glbvars["cdcooper"],
+			$glbvars["cdagenci"],
+			$glbvars["nrdcaixa"],
+			$glbvars["idorigem"],
+			$glbvars["cdoperad"],
+			"</Root>");
+
+		$xmlObj = getObjectXML($xmlResult);
+
+		if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
+			gravaLog("TELA_ATENDA_EMPRESTIMO","PRO_LOG_ERRO_SOA_FIS_CALCULA","Erro gerando o xml com dados.",$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,$nrdconta,$glbvars,'1','2');
+		}else{	
+			$xml = simplexml_load_string($xmlResult);
+			$json = json_encode($xml);
+			//echo "cttc('".$json."');";
+			$rs = chamaServico($json,$Url_SOA, $Auth_SOA);
+			//echo "cttc('".$rs."');";
+			
+			if (isset($rs->msg)){
+				gravaLog("TELA_ATENDA_EMPRESTIMO","PRO_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro tratado pela fis.",$rs->msg,$nrdconta,$glbvars,$json,json_encode($rs));				
+			}else if (isset($rs->errorMessage)){
+				gravaLog("TELA_ATENDA_EMPRESTIMO","PRO_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro nao tratado pela fis.",$rs->errorMessage,$nrdconta,$glbvars,'1','2');					
+			}			
+			else if (isset($rs->parcela->valor) && isset($rs->sistemaTransacao->dataHoraRetorno)){
+				if ($rs->parcela->valor > 0 && $rs->sistemaTransacao->dataHoraRetorno != ""){
+					$vlparepr = str_replace(".", ",",$rs->parcela->valor);
+					$vliofepr = str_replace(".", ",",$rs->credito->tributoIOFValor);
+					$pecet_anual = str_replace(".", ",",$rs->credito->CETPercentAoAno);	
+					$pejuro_anual = str_replace(".", ",",$rs->credito->taxaJurosRemuneratoriosAnual);
+					if ($nrctremp > 0){
+						if ($operacao == 'F_NUMERO'){
+							gravaTbeprConsignado($nrdconta,$nrctrant,$pejuro_anual,$pecet_anual,$glbvars);
+						}else{
+							gravaTbeprConsignado($nrdconta,$nrctremp,$pejuro_anual,$pecet_anual,$glbvars);
+						}						
+					}
+				}else{
+					gravaLog("TELA_ATENDA_EMPRESTIMO","PRO_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro nao tratado pela fis.","valores de retorno em branco",$nrdconta,$glbvars,'1','2');
+				}
+			}
+			
+		}
+		//FIM Busca XML BD converte em json e comunica com a FIS		
+		
 	}
 
 	// PRJ 438
@@ -532,7 +599,7 @@
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
 		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodoErro,false);
 	}
-
+	
 	if ( $xmlObjeto->roottag->tags[0]->attributes['RECIDEPR'] != '') {
 		$recidepr  = $xmlObjeto->roottag->tags[0]->attributes['RECIDEPR'];
 		$nrctremp  = $xmlObjeto->roottag->tags[0]->attributes['NRCTREMP'];
@@ -542,6 +609,10 @@
 	if ($operacao == 'F_VALOR') {
 		$flmudfai  = $xmlObjeto->roottag->tags[0]->attributes['FLMUDFAI'];
 	}
+	
+	//P437 atualizar informacoes consignado
+	if ($gConsig == 1 && $nrctremp > 0)
+		gravaTbeprConsignado($nrdconta,$nrctremp,$pejuro_anual,$pecet_anual,$glbvars);
 
 	if($operacao == 'VI' ) {
 		$operamail = 'Novo Emprestimo';

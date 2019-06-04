@@ -111,7 +111,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 				else if (isset($rs->parcela->valor) && isset($rs->sistemaTransacao->dataHoraRetorno)){
 					if ($rs->parcela->valor > 0 && $rs->sistemaTransacao->dataHoraRetorno != ""){
 						$vlpreemp = str_replace(".", ",",$rs->parcela->valor);
-						echo "cttc('".$vlpreemp."');";
+						//echo "cttc('".$vlpreemp."');";
 						$vliofepr = str_replace(".", ",",$rs->credito->tributoIOFValor);
 						$percetop = str_replace(".", ",",$rs->credito->CETPercentAoAno);	
 						$jurosAnual = str_replace(".", ",",$rs->credito->taxaJurosRemuneratoriosAnual);

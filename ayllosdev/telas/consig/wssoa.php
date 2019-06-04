@@ -121,7 +121,7 @@ function chamaServico($data,$Url_SOA, $Auth_SOA){
 		} ]
 	  }
 	}';
-	
+	//echo "cttc('".$data."');";
 	return envServico($url, "POST", $arrayHeader, $data);
 }
 
@@ -135,6 +135,7 @@ function envServico($url, $method, $arrayHeader, $data) {
 	$GLOBALS["httpcode"] = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 	curl_close($ch);
 	//echo '<pre>'.htmlentities($result).'</pre>';
+	//echo "cttc('".$result."');";
 	$result = json_decode($result);
 	if (isset($result->sistemaTransacao->dataHoraRetorno)){
 		if($result->sistemaTransacao->dataHoraRetorno != ""){

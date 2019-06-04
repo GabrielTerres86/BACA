@@ -130,6 +130,11 @@
 	} else {
 		$glbvars["redirect"] = "html";
 	}
+  
+  // Variaveis para SOA
+    $Url_SOA = "http://servicosinternosint.cecred.coop.br";
+    $Auth_SOA = "Basic aWJzdnJjb3JlOndlbGNvbWUx "; 
+
 	
 	// Dados de acesso ao Oracle
 	if ( preg_match('/^0303/', trim(SERVERNAMEAPP)) ) { // verifica o servidor gravado na constante

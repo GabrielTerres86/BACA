@@ -10,8 +10,20 @@
  * --------------
  * 
  */
-require_once('../../../../includes/funcoes.php');
-require_once('../../../../class/xmlfile.php');
+if (file_exists('../../../../includes/funcoes.php')){
+	require_once('../../../../includes/funcoes.php');
+}else{
+	require_once('../../../includes/funcoes.php');
+}
+if (file_exists('../../../../class/xmlfile.php')){
+	require_once('../../../../class/xmlfile.php');
+}else{
+	require_once('../../../class/xmlfile.php');
+}
+
+
+
+
 /*
 // Variaveis para SOA 
 $Url_SOA = "http://servicosinternosint.cecred.coop.br";
@@ -68,6 +80,7 @@ function chamaServico($data,$Url_SOA, $Auth_SOA){
 }
 	';
 	//echo '<pre>'.$data.'</pre>';
+	//echo "cttc('".$data."');";
 	return envServico($url, "POST", $arrayHeader, $data);
 }
 
@@ -83,6 +96,7 @@ function envServico($url, $method, $arrayHeader, $data) {
 	curl_close($ch);
 	//echo '<pre>'.htmlentities($result).'</pre>';
 	//echo $result;
+	//echo "cttc('".$result."');";
 	$result = json_decode($result);
 	return $result;
 
@@ -100,8 +114,8 @@ function gravaTbeprConsignado($nrdconta,$nrctremp,$pejuro_anual,$pecet_anual,$gl
 	$xml .= '</Root>';
 	$xmlResult = mensageria(
 		$xml,
-		"TELA_ATENDA_SIMULACAO",
-		"LOG_ERRO_SOA_FIS_CALCULA",
+		"TELA_ATENDA_EMPRESTIMO",
+		"GRAVA_TBEPR_CONSIGNADO",
 		$glbvars["cdcooper"],
 		$glbvars["cdagenci"],
 		$glbvars["nrdcaixa"],
@@ -132,7 +146,7 @@ function gravaLog($tela,$acao,$dstransal,$dscriticl,$nrdconta,$glbvars,$json,$rs
 	$xml .= '       <json_req>'.utf8_decode(mb_strimwidth($json, 0, 3995, "...")).'</json_req>';
 	$xml .= '       <json_res>'.utf8_encode(mb_strimwidth($rs, 0, 3995, "...")).'</json_res>';
 	$xml .= '	</dto>';
-	$xml .= '</Root>';
+	$xml .= '</Root>';	
 	$xmlResult = mensageria(
 		$xml,
 		$tela,

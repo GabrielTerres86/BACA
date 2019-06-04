@@ -539,7 +539,7 @@ function confirmaAverbacao(){
 function controlaOperacao(operacao) {
 	//console.log('Operacao: '+operacao);
 	
-	// Averbar P437 s3
+	// Averbar P437 s3	
 	if ((operacao == 'T_EFETIVA') && ($("#divEmpres table tr.corSelecao").find("input[id='tpemprst']").val() == '1') && ($("#divEmpres table tr.corSelecao").find("input[id='tpmodcon']").val() > 0)){
         if (!(($("#divEmpres table tr.corSelecao").find("input[id='inaverba']").val() == '1') || ($("#divEmpres table tr.corSelecao").find("input[id='inaverba']").val() == 'yes'))){
 		    showError('error', 'N&atilde;o &eacute; poss&iacute;vel efetivar esta opera&ccedil;&atilde;o. Verifique averba&ccedil;&atilde;o.', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
@@ -1477,6 +1477,10 @@ function controlaOperacao(operacao) {
             cddopcao = 'R';
             if (gConsig == 1){
                 dtdpagto = $("#divEmpres table tr.corSelecao").find("input[id='dtdpagto']").val();           
+				vlempres = $("#divEmpres table tr.corSelecao").find("input[id='vlemprstt']").val();  
+				qtparepr = $("#divEmpres table tr.corSelecao").find("input[id='qtpreemp']").val();  
+				idfiniof = $("#divEmpres table tr.corSelecao").find("input[id='idfiniof']").val(); 
+				cdlcremp = $("#divEmpres table tr.corSelecao").find("input[id='cdlcremp']").val(); 				
             }
             break;
 		case 'ACIONAMENTOS': /* Esteira - Acionamentos - Consulta */
@@ -1629,6 +1633,7 @@ function controlaOperacao(operacao) {
             arrayDadosPortabilidade = new Array();
             numeroProposta = ''
             aux_cdmodali_simulacao = '';
+			gConsig = 0;
     }//fim Swith
 
     var inconcje = 0;
