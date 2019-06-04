@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Junho/93.                         Ultima atualizacao: 20/02/2019
+   Data    : Junho/93.                         Ultima atualizacao: 04/06/2019
 
    Dados referentes ao programa:
 
@@ -96,6 +96,9 @@
                              
                20/02/2019 - Inclusao de log de fim de execucao do programa 
                             (Belli - Envolti - Chamado REQ0039739)
+                            
+               04/06/2019 - P565.1-RF20 - Inclusao do histórico 2973-DEV.CH.DEP.
+                            (Fernanda Kelli de Oliveira - AMCom)                            
 ............................................................................. */
                
 DEF STREAM str_1.     /*  Para os lotes listados  */
@@ -402,7 +405,7 @@ FOR EACH crapsol WHERE crapsol.cdcooper = glb_cdcooper   AND
                  ELSE
                       ASSIGN rel_dshistor = STRING(craplcm.cdhistor,"zzz9")
                                             + " - " + craphis.dshistor +
-                              (IF CAN-DO("24,27,47,78,156,191,338,351,399,573",
+                              (IF CAN-DO("24,27,47,78,156,191,338,351,399,573,2973",
                                               STRING(craplcm.cdhistor))
                                             THEN craplcm.cdpesqbb
                                             ELSE "")
