@@ -1,0 +1,39 @@
+BEGIN
+  EXECUTE IMMEDIATE 'ALTER SESSION SET
+                      nls_calendar = ''GREGORIAN''
+                      nls_comp = ''BINARY''
+                      nls_date_format = ''DD-MON-RR''
+                      nls_date_language = ''AMERICAN''
+                      nls_iso_currency = ''AMERICA''
+                      nls_language = ''AMERICAN''
+                      nls_length_semantics = ''BYTE''
+                      nls_nchar_conv_excp = ''FALSE''
+                      nls_numeric_characters = ''.,''
+                      nls_sort = ''BINARY''
+                      nls_territory = ''AMERICA''
+                      nls_time_format = ''HH.MI.SSXFF AM''
+                      nls_time_tz_format = ''HH.MI.SSXFF AM TZR''
+                      nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
+                      nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
+                      
+  BEGIN
+    sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBPCPS_ENCERRA_CTA_SAL');
+  EXCEPTION
+    WHEN OTHERS THEN
+	  NULL;
+  END;
+  
+  --Incluir o DROP sempre que houver alteração de configuração de um JOB já existente
+  sys.dbms_scheduler.create_job(job_name        => 'CECRED.JBPCPS_ENCERRA_CTA_SAL',
+                                job_type        => 'PLSQL_BLOCK',
+                                job_action      => 'BEGIN PCPS0001.pc_deslig_conta_salario(); END;',
+                                start_date      => to_date(to_char(SYSDATE,'dd-mm-yyyy')||' 20:15:00',
+                                                           'dd-mm-yyyy hh24:mi:ss'),
+                                repeat_interval => 'Freq=DAILY;ByDay=MON;ByHour=20;ByMinute=15;BySecond=0',
+                                end_date        => to_date(NULL),
+                                job_class       => 'DEFAULT_JOB_CLASS',
+                                enabled         => TRUE,
+                                auto_drop       => TRUE,
+                                comments        => '');
+END;
+/
