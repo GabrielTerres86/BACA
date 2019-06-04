@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 15/02/2018
+    Data    : Marco/2010                   Ultima atualizacao: 22/05/2019
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -215,6 +215,9 @@
 
                 05/04/2019 - Alterado o documento de Ficha Cadastral
                              de 7 para 54 (Jefferson - MoutS)
+
+				22/05/2019 - Realizar consistência de total percentual socit. apenas na inclusão e na alteração
+				             do percentual para maior. (Edmar - INC0013969) 
 
 .....................................................................................*/
 
@@ -467,6 +470,7 @@ PROCEDURE Busca_Dados_Id:
         EMPTY TEMP-TABLE tt-erro.
         FIND crabavt WHERE ROWID(crabavt) = par_nrdrowid NO-LOCK NO-ERROR.
 
+
         IF  NOT AVAILABLE crabavt THEN
             DO:
                ASSIGN par_dscritic = "Representante/Procurador nao encontrado".
@@ -606,7 +610,7 @@ PROCEDURE Busca_Dados_Id:
                     RUN sistema/generico/procedures/b1wgen0052b.p 
                         PERSISTENT SET h-b1wgen0052b.
 
-              ASSIGN tt-crapavt.cdoeddoc = "".
+			  ASSIGN tt-crapavt.cdoeddoc = "".
               RUN busca_org_expedidor IN h-b1wgen0052b 
                                  ( INPUT crabavt.idorgexp,
                                   OUTPUT tt-crapavt.cdoeddoc,
@@ -4380,7 +4384,6 @@ PROCEDURE Exclui_Dados:
     DEF VAR aux_tpatlcad AS INT                                     NO-UNDO.
     DEF VAR aux_msgatcad AS CHAR                                    NO-UNDO.
     DEF VAR aux_chavealt AS CHAR                                    NO-UNDO.   
-    DEF VAR aux_cdorgexp AS CHAR                                    NO-UNDO.   
 
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
 
@@ -4514,19 +4517,6 @@ Exclui: DO TRANSACTION
                             crapcrl.idseqmen = crapavt.nrctremp
                             NO-LOCK:
                      
-                       /* Retornar orgao expedidor */
-                       IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
-                              RUN sistema/generico/procedures/b1wgen0052b.p 
-                                  PERSISTENT SET h-b1wgen0052b.
-
-                       ASSIGN aux_cdorgexp = "".
-                       RUN busca_org_expedidor IN h-b1wgen0052b 
-                                             ( INPUT crapcrl.idorgexp,
-                                              OUTPUT aux_cdorgexp,
-                                              OUTPUT aux_cdcritic, 
-                                              OUTPUT aux_dscritic).
-
-                       DELETE PROCEDURE h-b1wgen0052b.   
 
                        IF  RETURN-VALUE = "NOK" THEN
                        DO:
@@ -4555,7 +4545,7 @@ Exclui: DO TRANSACTION
                                             INPUT crapcrl.nmrespon,
                                             INPUT crapcrl.tpdeiden,
                                             INPUT crapcrl.nridenti,
-                                            INPUT aux_cdorgexp,
+                                            INPUT "",
                                             INPUT crapcrl.cdufiden,
                                             INPUT crapcrl.dtemiden,
                                             INPUT crapcrl.dtnascin,
