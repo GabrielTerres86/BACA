@@ -2564,6 +2564,14 @@ function removeCaracteresInvalidos(str, flgRemAcentos){
 	
 }
 
+/*! OBJETIVO  : Remover caracteres invalidos no email
+                Mantém apenas letras A-z (maúsculas e minúsculas, sem acentos), números 0-9 e os caracteres _ @ . % + -
+	PARAMETROS: str -> Texto que contera os caracteres invalidos que irao ser removidos
+*/
+function removeCaracteresInvalidosEmail(str) {
+    return str.replace(/[^\w@.%+-]/g, "");
+}
+
 //Função para remover Todos os Caracteres epeciais e acentos
 function removeTodosCaracteresInvalidos(str) {
     return str.replace(/[^\w\s\.]/g, "");

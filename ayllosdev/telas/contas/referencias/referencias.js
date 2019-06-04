@@ -175,7 +175,15 @@ function manterRotina( operacao ) {
 	nmcidade = trim(nmcidade);
 	dsdemail = trim(dsdemail);
 	nrtelefo = trim(nrtelefo);
-	
+
+	if (dsdemail != '') {
+	    if (!validaEmail(dsdemail)) {
+	        showError('error', 'E-mail inv&aacute;lido.', 'Alerta - Aimaro', 'hideMsgAguardo();focaCampoErro(\'dsdemail\',\'frmReferencias\');');
+	        return false;
+	    }
+	    dsdemail = removeCaracteresInvalidosEmail(dsdemail);
+	}
+
 	// Executa script de confirmação através de ajax
 	$.ajax({		
 		type: 'POST',

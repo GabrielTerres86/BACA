@@ -182,9 +182,13 @@ function manterRotina( operacao ) {
 	nrdrowid = $('#nrdrowid','#'+nomeForm).val();
 	
 	if (dsdemail != '') {
-		dsdemail = removeAcentos(removeCaracteresInvalidos(dsdemail));
+	    if (!validaEmail(dsdemail)) {
+	        showError('error', 'E-mail inv&aacute;lido.', 'Alerta - Aimaro', 'hideMsgAguardo();focaCampoErro(\'dsdemail\',\'' + nomeForm + '\');');
+	        return false;
+	    }
+	    dsdemail = removeCaracteresInvalidosEmail(dsdemail);
 	}
-	
+
 	if (nmpescto != '') {
 		nmpescto = removeAcentos(removeCaracteresInvalidos(nmpescto));
 	}
