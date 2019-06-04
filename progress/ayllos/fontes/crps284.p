@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/2000.                     Ultima atualizacao: 20/01/2014
+   Data    : Marco/2000.                     Ultima atualizacao: 04/06/2019
 
    Dados referentes ao programa:
 
@@ -26,7 +26,10 @@
                20/01/2014 - Incluir VALIDATE craplcm, craplot (Lucas R.)
                
                29/05/2018 - Alteraçao INSERT na craplcm pela chamada da rotina LANC0001
-                            PRJ450 - Renato Cordeiro (AMcom)         
+                            PRJ450 - Renato Cordeiro (AMcom)  
+                            
+               04/06/2019 - P565.1-RF20 - Inclusao do histórico 2973-DEV.CH.DEP.
+                            (Fernanda Kelli de Oliveira - AMCom)             
 
 ............................................................................. */
  
@@ -100,7 +103,7 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper               AND
                        crablcm.dtmvtolt = glb_dtmvtolt               AND
                        crablcm.nrdconta > glb_nrctares               AND
                    NOT CAN-DO(aux_lscontas,STRING(crablcm.nrdconta)) AND 
-                       CAN-DO("24,27,351,399",STRING(crablcm.cdhistor))
+                       CAN-DO("24,27,351,399,2973",STRING(crablcm.cdhistor))
                        USE-INDEX craplcm4 NO-LOCK BREAK BY crablcm.nrdconta
                        TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
 
