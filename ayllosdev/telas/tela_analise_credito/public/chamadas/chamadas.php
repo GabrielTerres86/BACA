@@ -5,8 +5,8 @@
  * Time: 16:29
  * Projeto: ailos_prj438_s9
  */
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+//error_reporting(E_ALL);
+// ini_set('display_errors', 1);
 ini_set('memory_limit', '2048M');
 
 /*

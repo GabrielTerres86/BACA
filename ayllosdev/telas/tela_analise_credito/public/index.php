@@ -35,5 +35,8 @@ if(AUTENTICA_USUARIO){
     }
 }
 
+$_SESSION['GEDServidor'] = '';
+$_SESSION['GEDServidor'] = $GEDServidor;
+
 $database 	= new Database();
 $core 		= new Core($configCore);
