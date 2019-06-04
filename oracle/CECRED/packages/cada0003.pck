@@ -473,6 +473,38 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                                            pr_nmdcampo OUT VARCHAR2,              --> Nome do campo com erro
                                            pr_des_erro OUT VARCHAR2);             --> Erros do processo   
 
+  PROCEDURE pc_atualiza_reapre_cheque(pr_cdcooper IN crapcop.cdcooper%TYPE           --> Codigo da cooperativa
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE              --> Número da conta
+                                      ,pr_flgreapre_autom IN tbchq_param_conta.flgreapre_autom%TYPE --> Flag
+                                      ,pr_cdoperad IN VARCHAR2               --> Operador
+                                      ,pr_cdopecor IN VARCHAR2               --> Operador Coordenador
+                                      ,pr_dscritic OUT VARCHAR2);          --> Descrição da crítica   
+                                      
+  PROCEDURE pc_atualiza_reapre_cheque_xml(pr_cdcooper IN crapcop.cdcooper%TYPE           --> Codigo da cooperativa
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE              --> Número da conta
+                                      ,pr_flgreapre_autom IN tbchq_param_conta.flgreapre_autom%TYPE --> Flag
+                                      ,pr_cdoperad IN VARCHAR2               --> Operador
+                                      ,pr_cdopecor IN VARCHAR2               --> Operador Coordenador
+                                      ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                      ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2);           --> Erros do processo                                        
+                                                 
+  PROCEDURE pc_busca_reapre_cheque_xml (pr_cdcooper     IN crapcop.cdcooper%TYPE           --> Codigo da cooperativa
+                                      ,pr_nrdconta    IN crapass.nrdconta%TYPE              --> Número da conta
+                                      ,pr_xmllog      IN VARCHAR2                        --> XML com informações de LOG
+                                      ,pr_cdcritic    OUT PLS_INTEGER                    --> Código da crítica
+                                      ,pr_dscritic    OUT VARCHAR2                       --> Descrição da crítica
+                                      ,pr_retxml      IN OUT NOCOPY XMLType              --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo    OUT VARCHAR2                       --> Nome do campo com erro
+                                      ,pr_des_erro    OUT VARCHAR2);                     --> Descrição do erro    
+                                        
+ PROCEDURE pc_busca_reapre_cheque(pr_cdcooper     IN crapcop.cdcooper%TYPE           --> Codigo da cooperativa
+                                  ,pr_nrdconta    IN crapass.nrdconta%TYPE              --> Número da contae
+                                  ,pr_flgreapre_autom OUT tbchq_param_conta.flgreapre_autom%TYPE); --> Flag   
+
   PROCEDURE pc_busca_cidades(pr_idcidade     IN crapmun.idcidade%TYPE --> Identificador unico do cadstro de cidade
                             ,pr_cdcidade     IN crapmun.cdcidbge%TYPE --> Codigo da cidade CETIP/IBGE/CORREIOS/SFN
                             ,pr_dscidade     IN crapmun.dscidade%TYPE --> Nome da cidade
@@ -869,7 +901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
                              ,pr_nrdconta crapass.nrdconta%TYPE) IS
-    SELECT tbchq.flgdevolu_autom
+    SELECT tbchq.flgdevolu_autom, tbchq.flgreapre_autom
       FROM tbchq_param_conta tbchq
      WHERE tbchq.cdcooper = pr_cdcooper
        AND tbchq.nrdconta = pr_nrdconta;
@@ -8474,6 +8506,223 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         ROLLBACK;           
    END pc_grava_tbchq_param_conta_xml;
    
+  PROCEDURE pc_atualiza_reapre_cheque(pr_cdcooper IN crapcop.cdcooper%TYPE           --> Codigo da cooperativa
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE              --> Número da conta
+                                      ,pr_flgreapre_autom IN tbchq_param_conta.flgreapre_autom%TYPE --> Flag
+                                      ,pr_cdoperad IN VARCHAR2               --> Operador
+                                      ,pr_cdopecor IN VARCHAR2               --> Operador Coordenador
+                                      ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica                                                         
+										  
+    /* .............................................................................
+    Programa: pc_atualiza_param_conta_cheque
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Autor   : Lucas H.(Supero)
+    Data    : Março/2019                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Atualizar campo tabela TBCHQ_PARAM_CONTA para registrar se cheques devolvidos serão reapresentados sem necessidade de contatar o cooperado.
+
+    Alteracoes: -----
+    ..............................................................................*/   
+    vr_exc_saida  EXCEPTION;
+    vr_dsflgreapre_antes VARCHAR2(3);
+    vr_dsflgreapre_depois VARCHAR2(3);
+    
+    CURSOR cr_crapope IS
+    SELECT  ope.nmoperad 
+      FROM crapope ope
+     WHERE ope.cdcooper = pr_cdcooper
+       AND upper(ope.cdoperad) = upper(pr_cdoperad);
+     rw_crapope cr_crapope%ROWTYPE;
+     
+  BEGIN
+    
+      OPEN cr_crapope;
+      FETCH cr_crapope INTO rw_crapope;
+      
+      IF cr_crapope%ISOPEN THEN
+        CLOSE cr_crapope;
+      END IF;
+
+      -- verificar se existe registro
+      OPEN cr_tbchq_param_conta(pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_tbchq_param_conta INTO rw_tbchq_param_conta;        
+          
+      IF cr_tbchq_param_conta%NOTFOUND THEN      
+        CLOSE cr_tbchq_param_conta;        
+      END IF;
+          
+	    -- So atualiza se for diferente do anterior
+      IF rw_tbchq_param_conta.flgreapre_autom <> pr_flgreapre_autom THEN          
+        BEGIN 
+          UPDATE tbchq_param_conta t
+           SET t.flgreapre_autom = pr_flgreapre_autom
+         WHERE t.cdcooper = pr_cdcooper
+           AND t.nrdconta = pr_nrdconta;  
+        EXCEPTION 
+          WHEN OTHERS THEN
+            pr_dscritic := 'Erro ao atualizar registro na tbchq_param_conta: ' || SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+              
+        IF pr_flgreapre_autom = 1 THEN
+          vr_dsflgreapre_depois := 'SIM';
+          vr_dsflgreapre_antes  := 'NAO';
+        ELSE
+          vr_dsflgreapre_depois := 'NAO';
+          vr_dsflgreapre_antes  := 'SIM';
+        END IF;
+              
+        --Escrever No LOG
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => 'contas.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY hh24:mi:ss') ||
+                                                      ' -->  Operador ' || pr_cdoperad || ' - ' || rw_crapope.nmoperad  ||
+                                                      ' atraves do Coordenador ' || pr_cdopecor || ' alterou na conta ' ||
+                                                      pr_nrdconta || ' o campo Reap. Aut. Cheque de ' || 
+                                                      pr_flgreapre_autom || ' para ' || pr_flgreapre_autom || '.');
+            
+      END IF;	
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN        
+      NULL;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral em CADA0003.pc_atualiza_reapre_cheque: ' || SQLERRM;            
+  END pc_atualiza_reapre_cheque;
+  
+  PROCEDURE pc_atualiza_reapre_cheque_xml(pr_cdcooper IN crapcop.cdcooper%TYPE           --> Codigo da cooperativa
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE              --> Número da conta
+                                      ,pr_flgreapre_autom IN tbchq_param_conta.flgreapre_autom%TYPE --> Flag
+                                      ,pr_cdoperad IN VARCHAR2               --> Operador
+                                      ,pr_cdopecor IN VARCHAR2               --> Operador Coordenador
+                                      ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                      ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2) IS           --> Erros do processo 
+	    /* .............................................................................
+      Programa: pc_atualiza_reapre_cheque_xml
+      Sistema : Conta-Corrente - Cooperativa de Credito
+      Sigla   : CRED
+      Autor   : Lucas H. - Supero
+      Data    : Março/2019                   Ultima atualizacao: --/--/----
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para chamar a rotina de gravação/alteração do parametro de
+                  reapresentacao automatica de cheque.
+
+      Alteracoes: 
+
+      ............................................................................. */
+      vr_dscritic VARCHAR2(100);
+      vr_exc_saida  EXCEPTION;
+    BEGIN
+    
+      pc_atualiza_reapre_cheque(pr_cdcooper => pr_cdcooper, 
+                                 pr_nrdconta => pr_nrdconta, 
+                                 pr_flgreapre_autom => pr_flgreapre_autom, 
+                                 pr_cdoperad => pr_cdoperad, 
+                                 pr_cdopecor => pr_cdopecor, 
+                                 pr_dscritic => vr_dscritic);
+                        
+      IF vr_dscritic IS NOT NULL THEN
+        pr_dscritic := vr_dscritic;
+        RAISE vr_exc_saida;
+      END IF;
+      
+    EXCEPTION                                    
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := 0;
+        IF pr_dscritic IS NULL THEN
+          pr_dscritic := 'Erro geral (CADA003.pc_grava_tbchq_param_conta_xml): ' || SQLERRM;
+        END IF;
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;           
+     
+  END pc_atualiza_reapre_cheque_xml;                                      
+  
+  PROCEDURE pc_busca_reapre_cheque_xml(pr_cdcooper     IN crapcop.cdcooper%TYPE           --> Codigo da cooperativa
+                                      ,pr_nrdconta    IN crapass.nrdconta%TYPE              --> Número da conta
+                                      ,pr_xmllog      IN VARCHAR2                        --> XML com informações de LOG
+                                      ,pr_cdcritic    OUT PLS_INTEGER                    --> Código da crítica
+                                      ,pr_dscritic    OUT VARCHAR2                       --> Descrição da crítica
+                                      ,pr_retxml      IN OUT NOCOPY XMLType              --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo    OUT VARCHAR2                       --> Nome do campo com erro
+                                      ,pr_des_erro    OUT VARCHAR2) IS                   --> Descrição do erro
+
+    vr_flgreapre_autom INTEGER;
+  BEGIN
+     
+    cada0003.pc_busca_reapre_cheque(pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_flgreapre_autom => vr_flgreapre_autom);
+                        
+    -- Criar cabecalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    
+    -- Criar nodo filho
+    pr_retxml := XMLTYPE.appendChildXML(pr_retxml
+                                        ,'/Root'
+                                        ,XMLTYPE('<param>'
+                                               ||'  <flgreapre>'||vr_flgreapre_autom||'</flgreapre>'
+                                               ||'</param>'));    
+  EXCEPTION                                    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral (CADA003.pc_busca_reapre_cheque_xml): ' || SQLERRM;
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;       
+  END pc_busca_reapre_cheque_xml;
+   
+  PROCEDURE pc_busca_reapre_cheque(pr_cdcooper     IN crapcop.cdcooper%TYPE           --> Codigo da cooperativa
+                                  ,pr_nrdconta    IN crapass.nrdconta%TYPE              --> Número da contae
+                                  ,pr_flgreapre_autom OUT tbchq_param_conta.flgreapre_autom%TYPE) IS --> Flag           
+
+    /* .............................................................................
+    Programa: pc_busca_reapre_cheque
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Lucas Henrique
+    Data    : Março/2019                        Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para carregar se reapresenta cheque automatico ou nao
+
+    Alteracoes: 
+
+    ............................................................................. */    
+    
+  BEGIN
+  
+    OPEN cr_tbchq_param_conta(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_tbchq_param_conta INTO rw_tbchq_param_conta;        
+        
+    IF cr_tbchq_param_conta%FOUND THEN
+      CLOSE cr_tbchq_param_conta;  
+      -- Se char registro, retorna se devolucao esta automatica ou nao
+      pr_flgreapre_autom := rw_tbchq_param_conta.flgreapre_autom;
+    ELSE 
+      CLOSE cr_tbchq_param_conta;  
+      -- Se nao tiver registro cadastrado, retorna 0 - Nao
+      pr_flgreapre_autom := 0;
+    END IF;
+  END pc_busca_reapre_cheque;     
 
   PROCEDURE pc_busca_cidades(pr_idcidade     IN crapmun.idcidade%TYPE --> Identificador unico do cadstro de cidade
                             ,pr_cdcidade     IN crapmun.cdcidbge%TYPE --> Codigo da cidade CETIP/IBGE/CORREIOS/SFN

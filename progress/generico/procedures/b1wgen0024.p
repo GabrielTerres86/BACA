@@ -233,6 +233,9 @@
                21/12/2017 - Ajuste para nao alterar nome da empresa do conjuge no emprestimo.
                             PRJ-339(Odirlei-AMcom)
                
+               25/04/2019 - Ajuste para impressao dos relatórios crrl530 e crrl219.
+                            Acelera - Reapresentacao automatica de cheques (Lombardi).
+               
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -611,6 +614,15 @@ PROCEDURE gera-pdf-impressao:
     DEF  INPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmarqpdf AS CHAR                           NO-UNDO.
     
+    DEF    VAR       aux_confarqu AS CHAR                           NO-UNDO.
+
+    IF par_nmarqimp MATCHES "*crrl530_*"  THEN 
+       aux_confarqu = "--conf 80col.conf".
+    ELSE IF par_nmarqimp MATCHES "*crrl219_*"  THEN
+       aux_confarqu = "--conf 234col.conf".
+    ELSE 
+       aux_confarqu = "".
+        
     /** Retirar caracteres especiais para impressoras matriciais **/
     UNIX SILENT VALUE ("cat " + par_nmarqimp + 
                        " | /usr/local/cecred/bin/convertePCL.pl > " +
@@ -629,7 +641,7 @@ PROCEDURE gera-pdf-impressao:
     ELSE
          /** Converte documento para o formato PDF **/        
          UNIX SILENT VALUE ("gnupdf.pl --in " + par_nmarqimp + "_PCL " +
-                            "--out " + par_nmarqpdf + " 2>/dev/null").
+                            "--out " + par_nmarqpdf + " " + aux_confarqu + " 2>/dev/null").
         
     IF SEARCH(par_nmarqimp) <> ? THEN
         UNIX SILENT VALUE ("rm " + par_nmarqimp + "_PCL 2>/dev/null").
@@ -647,8 +659,17 @@ PROCEDURE gera-pdf-impressao-sem-pcl:
     DEF  INPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmarqpdf AS CHAR                           NO-UNDO.
     
+    DEF    VAR       aux_confarqu AS CHAR                           NO-UNDO.
+    
+    IF par_nmarqimp MATCHES "*crrl530_*"  THEN 
+       aux_confarqu = "--conf 80col.conf".
+    ELSE IF par_nmarqimp MATCHES "*crrl219_*"  THEN
+       aux_confarqu = "--conf 234col.conf".
+    ELSE 
+       aux_confarqu = "".
+       
     UNIX SILENT VALUE ("gnupdf.pl --in " + par_nmarqimp +
-                              " --out " + par_nmarqpdf + " 2>/dev/null").
+                              " --out " + par_nmarqpdf + " " + aux_confarqu + " 2>/dev/null").
 
     IF SEARCH(par_nmarqimp) <> ? THEN
         UNIX SILENT VALUE ("rm " + par_nmarqimp + " 2>/dev/null").

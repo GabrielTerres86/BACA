@@ -404,6 +404,15 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
        AND crapage.cdagenci = pr_cdagenci;
   rw_crapage cr_crapage%ROWTYPE;
 
+  --Buscar flag de reapresentação automatica de cheque
+  CURSOR cr_reapr (pr_cdcooper IN craptab.cdcooper%TYPE,
+                   pr_nrdconta IN craptfc.nrdconta%TYPE) IS
+    SELECT flgreapre_autom as flgreapr
+      FROM tbchq_param_conta
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta;
+  rw_reapr cr_reapr%ROWTYPE;  
+
   -- Tipo de registro para armazenar o conteudo dos arquivos
   TYPE typ_crawrel  IS
   RECORD (cdagenci crapass.cdagenci%TYPE
@@ -424,7 +433,8 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
          ,dtlibera DATE
          ,insitprv NUMBER(03)
          ,flgmigra NUMBER(01)
-				 ,cdageapr crapcop.cdagectl%TYPE);
+     ,cdageapr crapcop.cdagectl%TYPE
+     ,flgreapr tbchq_param_conta.flgreapre_autom%TYPE);
 
   -- Tipo de registro para armazenar o conteudo dos boletos
   TYPE typ_crawbol  IS
@@ -545,6 +555,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
 
   vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
   vr_tab_retorno lanc0001.typ_reg_retorno;
+  vr_flgreapr    VARCHAR2(03);
 
   PROCEDURE pc_escreve_xml(pr_des_dados in VARCHAR2,
                            pr_idtipo    IN NUMBER) IS
@@ -1727,6 +1738,13 @@ BEGIN
                             substr(vr_ind_crawrel,7,10)||  -- Conta
                             substr(vr_ind_crawrel,17,10)|| -- Cheque
                             substr(vr_ind_crawrel,27,5);   -- Sequencial
+        -- Busca a flag de reapresentacao
+        OPEN cr_reapr(pr_cdcooper => pr_cdcooper,
+                pr_nrdconta => vr_tab_crawrel(vr_ind_crawrel).nrdconta);
+        FETCH cr_reapr INTO rw_reapr;
+        CLOSE cr_reapr; 
+        
+        vr_tab_crawrel(vr_ind_crawrel).flgreapr   := rw_reapr.flgreapr;   
 
         vr_tab_crawrel_2(vr_ind_crawrel_2) := vr_tab_crawrel(vr_ind_crawrel);
 
@@ -1755,7 +1773,6 @@ BEGIN
             vr_dscritic := 'Erro ao atualizar tabela CRAPCEC: ' ||SQLERRM;
             RAISE vr_exc_saida;
         END;
-
       END IF; -- Final de validação para do corpo do arquivo (quando NAO EH primeira linha)
     END LOOP; -- Loop das linhas do arquivo
 
@@ -1858,7 +1875,8 @@ BEGIN
                      '<nrcheque>'|| to_char(vr_tab_crawrel(vr_ind_crawrel).nrcheque,'999G999G990')      ||'</nrcheque>'||
                      '<nralinea>'|| vr_tab_crawrel(vr_ind_crawrel).nralinea                             ||'</nralinea>'||
                      '<dsalinea>'|| substr(vr_dsalinea,1,25)                                            ||'</dsalinea>'||
-                     '<vlcheque>'|| to_char(vr_tab_crawrel(vr_ind_crawrel).vlcheque,'FM99G999G990D00')  ||'</vlcheque>'||
+                     '<vlcheque>'|| 'R$ '||to_char(vr_tab_crawrel(vr_ind_crawrel).vlcheque,'FM99G999G990D00')  ||'</vlcheque>'||
+                     '<nrctachq>'|| vr_tab_crawrel(vr_ind_crawrel).nrctachq                             ||'</nrctachq>'|| 
                   '</cheque>',1);
 
     -- Verifica se a conta posterior eh diferente da conta atual
@@ -1875,7 +1893,7 @@ BEGIN
 
 
       pc_escreve_xml(  '<qtdecheq>'|| vr_qtdecheq                                   ||'</qtdecheq>'||
-                       '<totdcheq>'|| to_char(vr_totdcheq,'FM99G999G990D00') ||'</totdcheq>'||
+                       '<totdcheq>'|| 'R$ '||to_char(vr_totdcheq,'FM99G999G990D00') ||'</totdcheq>'||
                      '</conta>',1);
     END IF;
 
@@ -1907,6 +1925,7 @@ BEGIN
                                   pr_nmformul  => '80col',             --> Nome do formulário para impressão
                                   pr_nrcopias  => 1,                   --> Número de cópias para impressão
                                   pr_dspathcop => vr_dspathcop,        --> Diretorio para copia dos arquivos
+                                  pr_nrvergrl => 1,
                                   pr_des_erro  => vr_dscritic);        --> Saida com erro
 
       IF vr_dscritic IS NOT NULL THEN
@@ -2045,6 +2064,12 @@ BEGIN
         vr_dssitprv := 'SIM';
       END IF;
 
+      IF vr_tab_crawrel_2(vr_ind_crawrel_2).flgreapr = 1 THEN 
+        vr_flgreapr := 'SIM';
+      ELSE
+        vr_flgreapr := 'NAO';
+      END IF;
+
       -- Insere detalhes
       pc_escreve_xml('<cheque>' ||
                        '<nrdconta>'|| gene0002.fn_mask_conta(vr_tab_crawrel_2(vr_ind_crawrel_2).nrdconta)        ||'</nrdconta>'||
@@ -2053,7 +2078,7 @@ BEGIN
 											 '<cdageapr>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).cdageapr                                ||'</cdageapr>'||
                        '<cdbanchq>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).cdbanchq                                ||'</cdbanchq>'||
                        '<nralinea>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nralinea                                ||'</nralinea>'||
-                       '<vlcheque>'|| to_char(vr_tab_crawrel_2(vr_ind_crawrel_2).vlcheque,'FM99G999G990D00')     ||'</vlcheque>'||
+                       '<vlcheque>'|| 'R$ '||to_char(vr_tab_crawrel_2(vr_ind_crawrel_2).vlcheque,'FM99G999G990D00')     ||'</vlcheque>'||
                        '<dsprodut>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).dsprodut                                ||'</dsprodut>'||
                        '<lotborde>'|| to_char(vr_tab_crawrel_2(vr_ind_crawrel_2).lotborde,'FM999G999G990')       ||'</lotborde>'||
                        '<dtmvtolt>'|| to_char(vr_tab_crawrel_2(vr_ind_crawrel_2).dtmvtolt,'DD/MM/YY')            ||'</dtmvtolt>'||
@@ -2061,6 +2086,7 @@ BEGIN
                        '<nrprevia>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrprevia                                ||'</nrprevia>'||
                        '<insitprv>'|| vr_dssitprv                                                                ||'</insitprv>'||
  											 '<nrctachq>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrctachq                                ||'</nrctachq>'||
+             '<flgreapr>'|| vr_flgreapr                                                                ||'</flgreapr>'||
                      '</cheque>',3);
 
     END IF; -- Final do IF de verificacao de agencia igual ou diferente de zeros
@@ -2083,7 +2109,7 @@ BEGIN
                          '<totcaixa>'|| to_char(vr_totcaixa,'FM99G999G990D00')        ||'</totcaixa>'||
                          '<qtdecheq>'|| to_char(vr_qtdcstod + vr_qtddscon +
                                         vr_qtdlnchq + vr_qtdcaixa)                    ||'</qtdecheq>'||
-                         '<totdcheq>'|| to_char(vr_totcstod+vr_totdscon+vr_totlnchq+
+                         '<totdcheq>'|| 'R$ '||to_char(vr_totcstod+vr_totdscon+vr_totlnchq+
                                                 vr_totcaixa,'FM99G999G990D00')        ||'</totdcheq>'||
                        '</agencia>',3);
       END IF;
@@ -2137,6 +2163,7 @@ BEGIN
                                     pr_nmformul  => '234dh',            --> Nome do formulário para impressão
                                     pr_nrcopias  => 1,                   --> Número de cópias para impressão
                                     pr_dspathcop => vr_dspathcop,        --> Diretorio para copia dos arquivos
+                                    pr_nrvergrl => 1,
                                     pr_des_erro  => vr_dscritic);        --> Saida com erro
 
         IF vr_dscritic IS NOT NULL THEN
@@ -2221,6 +2248,7 @@ BEGIN
                                       pr_fldosmail => 'S',                              --> Converter anexo para DOS antes de enviar
                                       pr_dscmaxmail => ' | tr -d "\032"',               --> Complemento do comando converte-arquivo
                                       pr_dspathcop => vr_dspathcop,        --> Diretorio para copia dos arquivos
+                                      pr_nrvergrl => 1,                                      
                                       pr_des_erro  => vr_dscritic);        --> Saida com erro
         END IF;
 

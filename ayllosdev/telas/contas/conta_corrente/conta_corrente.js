@@ -48,6 +48,8 @@
  *                13/04/2018 - Alterado funcao voltarRotina para voltar para FATCA/CRS - PRJ 414(Mateus Z - Mouts)
  *
  *                05/07/2018 - Ajustar para gravar corretamente a categoria para PJ (Renato Darosci - Supero)
+ *
+ *			      27/02/2019 - ACELERA - Buscar flag reapresentação automatica de cheque - (Lucas H - SUPERO)				  
  */
 var operacao = '';
 var nrdrowid = '';
@@ -306,6 +308,7 @@ function manterRotina(operacao) {
 	flgdevolu_autom_alt = $('input[name="flgdevolu_autom"]:checked', '#' + nomeForm).val();
 	opCoordenador = $('#operauto', '#frmSenha').val();
 	
+	flgreapre = $('input[name="flgreapre"]:checked', '#' + nomeForm).val(); 
     // Executa script de confirmação através de ajax
     $.ajax({
         type: 'POST',
@@ -323,7 +326,7 @@ function manterRotina(operacao) {
             operacao: operacao, flgcadas: flgcadas, indserma: indserma,
 				cdconsul: cdconsul, idastcjt: idastcjt,	cdageant: cdageant,
 			flgdevolu_autom: flgdevolu_autom_alt, cdopecor: opCoordenador,
-			inpessoa: inpessoa, flblqtal: flblqtal,
+			inpessoa: inpessoa, flblqtal: flblqtal, flgreapre: flgreapre,
 				redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -359,6 +362,9 @@ function manterRotina(operacao) {
 
 function controlaLayout(operacao) {
     altura = '460px';
+	if ($('input[name="idastcjt"]').length != 0) {
+		altura = '485px';
+	}	
     largura = '612px';
     divRotina.css('width', largura);
     $('#divConteudoOpcao').css('height', altura);
@@ -370,7 +376,7 @@ function controlaLayout(operacao) {
     var cTodos = $('input, select', '#' + nomeForm);
     var cCodigo = $('#cdagepac,#cdsecext', '#' + nomeForm);
     var cRadio = $('input[name="flgiddep"],input[name="tpextcta"],input[name="tpavsdeb"],input[name="flgrestr"],' +
-				   'input[name="indserma"],input[name="flgdevolu_autom"],input[name="idastcjt"],input[name="inlbacen"]', '#' + nomeForm);
+				   'input[name="indserma"],input[name="flgdevolu_autom"],input[name="idastcjt"],input[name="inlbacen"],input[name="flgreapre"]', '#' + nomeForm);
     var cSelect = $('select', '#' + nomeForm);
     var cDatas = $('#dtabtcoo,#dtabtcct,#dtelimin,#dtdemiss,#dtcnsscr', '#' + nomeForm);
 
@@ -418,7 +424,8 @@ function controlaLayout(operacao) {
     var rGeral_4 = $('label[for="cdconsultor"]', '#' + nomeForm);
     var rGeral_5 = $('label[for="indserma"],label[for="flblqtal"]', '#' + nomeForm);
 	var rGeral_6 = $('label[for="idastcjt"],label[for="idastcjt"]', '#' + nomeForm);
-	var rGeral_7 = $('label[for="flgdevolu_autom"],label[for="flgdevolu_autom"]', '#' + nomeForm);
+    var rGeral_7 = $('label[for="flgdevolu_autom"]', '#' +nomeForm);
+    var rGeral_8 = $('label[for="flgreapre"]', '#' +nomeForm);
 
     var cCdoplcpa = $('#cdoplcpa', '#' + nomeForm).val();
     var cDestino = $('#dssecext,#nmconsultor', '#' + nomeForm);
@@ -432,6 +439,7 @@ function controlaLayout(operacao) {
     rGeral_5.addClass('rotulo').css('width', '110px');
 	rGeral_7.css('width', '120px');
 	rGeral_6.addClass('rotulo').css('width', '275px');	
+    rGeral_8.css('width', '195px');
 	cDestino.addClass('descricao').css('width', '171px');
 
     // FIELDSET CONSULTAS

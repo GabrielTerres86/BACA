@@ -2,11 +2,12 @@
 
      Programa: sistema/generico/procedures/xb1wgen0109.p
      Autor   : Rogerius Militão
-     Data    : Agosto/2011                       Ultima atualizacao: 00/00/0000
+     Data    : Agosto/2011                       Ultima atualizacao: 21/03/2019
 
      Objetivo  : BO de Comunicacao XML x BO - Telas imprel
 
-     Alteracoes: 
+     Alteracoes: 21/03/2019 - Adicionado do campo periodo na tabela tt-nmrelato para utilizar no 
+                              relatorio 219. Acelera - Reapresentacao automática de cheques (Lombardi).
 
 .............................................................................*/
 
@@ -22,6 +23,7 @@ DEF VAR aux_dsiduser AS CHAR                                           NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdrelat AS INTE                                           NO-UNDO.
 DEF VAR aux_cdagenca AS INTE                                           NO-UNDO.
+DEF VAR aux_cdperiod AS INTE INIT 1                                    NO-UNDO.
 DEF VAR aux_flgtermi AS LOGICAL                                        NO-UNDO.
 DEF VAR aux_contador AS INTE                                           NO-UNDO.
 
@@ -48,6 +50,7 @@ DEF VAR aux_nmarqpdf AS CHAR                                           NO-UNDO.
              WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
              WHEN "nrdrelat" THEN aux_nrdrelat = INTE(tt-param.valorCampo).
              WHEN "cdagenca" THEN aux_cdagenca = INTE(tt-param.valorCampo).
+             WHEN "cdperiod" THEN aux_cdperiod = INTE(tt-param.valorCampo).
              WHEN "flgtermi" THEN aux_flgtermi = LOGICAL(tt-param.valorCampo).
              WHEN "contador" THEN aux_contador = INTE(tt-param.valorCampo).
              WHEN "nmarqimp" THEN aux_nmarqimp = tt-param.valorCampo.
@@ -89,6 +92,7 @@ PROCEDURE Gera_Impressao:
                           INPUT aux_cddopcao,
                           INPUT aux_nrdrelat,
                           INPUT aux_cdagenca,
+                          INPUT aux_cdperiod,
                          OUTPUT aux_nmarqimp,
                          OUTPUT aux_nmarqpdf,
                          OUTPUT TABLE tt-erro).

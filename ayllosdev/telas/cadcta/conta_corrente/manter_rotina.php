@@ -39,6 +39,8 @@
  *
  *                05/06/2017 - Alteração nas chamadas AJAX da revisão cadastral e no processo de salvar (CONTA-CORRENTE).
  *                             (Andrey Formigari - Mouts. SD 678767)
+ *
+ * 				  27/02/2019 - ACELERA - Buscar flag reapresentação automatica de cheque - (Lucas H - SUPERO)
  */
     session_start();
 	require_once('../../../includes/config.php');
@@ -81,6 +83,7 @@
 	$cdconsul = (isset($_POST['cdconsul'])) ? $_POST['cdconsul'] : '' ; //Melhoria 126
 	$cdageant = (isset($_POST['cdageant'])) ? $_POST['cdageant'] : '' ; //Melhoria 147
 	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '' ;
+	$flgreapr = (isset($_POST['flgreapre'])) ? $_POST['flgreapre'] : '' ;
 
 	$cdopecor        = (isset($_POST['cdopecor'])) ? $_POST['cdopecor'] : '' ; //Melhoria 69
 	$flgdevolu_autom = (isset($_POST['flgdevolu_autom'])) ? $_POST['flgdevolu_autom'] : '' ; //Melhoria 69
@@ -351,6 +354,37 @@
 				exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);								
 			} 			
 			//Fim melhoria 69
+			
+			// ACELERA
+			$xml  = "";
+			$xml .= "<Root>";
+			$xml .= "  <Dados>"; 
+			$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+			$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
+			$xml .= '       <flgreapre_autom>'.$flgreapr.'</flgreapre_autom>';
+			$xml .= '       <cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
+			$xml .= '       <cdopecor>'.$cdopecor.'</cdopecor>';
+			$xml .= "  </Dados>";
+			$xml .= "</Root>";
+			
+			// Executa script para envio do XML
+			$xmlResult = mensageria($xml, "CONTAS", 'ATUALIZA_REAPRE_CHEQUE', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"],  "</Root>");
+			$xmlObjeto1 = getObjectXML($xmlResult);			
+						
+			//-----------------------------------------------------------------------------------------------
+			// Controle de Erros
+			//-----------------------------------------------------------------------------------------------
+			if(strtoupper($xmlObjeto1->roottag->tags[0]->name == 'ERRO')){	
+			
+				$msgErro = $xmlObjeto1->roottag->tags[0]->cdata;
+				$nmdcampo = $xmlObjeto1->roottag->tags[0]->attributes["NMDCAMPO"];					
+				
+				if($msgErro == null || $msgErro == ''){
+					$msgErro = $xmlObjeto1->roottag->tags[0]->tags[0]->tags[4]->cdata;
+				}								
+				exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);								
+			} 			
+			//Fim ACELERA
 			
 			// Verificar se existe "Verificacaoo de Revisão Cadastral"
 			$stringArrayMsg = "";
