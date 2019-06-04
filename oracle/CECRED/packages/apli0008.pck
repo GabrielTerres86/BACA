@@ -11320,35 +11320,39 @@ END pc_calc_app_programada;
           RAISE vr_exc_erro;
         END IF;     
 
-    IF (pr_dtmvtolt IS NULL) THEN
            -- Verifica se a cooperativa esta cadastrada
             OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
-     
             FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-     
             -- Se não encontrar
             IF BTCH0001.cr_crapdat%NOTFOUND THEN
-       
                   -- Fechar o cursor pois haverá raise
                   CLOSE BTCH0001.cr_crapdat;
-           
                   -- Montar mensagem de critica
                   vr_cdcritic := 1;
                   vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-           
                    -- Gera exceção
                   RAISE vr_exc_erro;
+        END IF;
        
-       ELSE
+        IF (pr_dtmvtolt IS NULL) THEN            
               vr_dtmvtolt := rw_crapdat.dtmvtolt;
               vr_dtmvtopr := rw_crapdat.dtmvtopr;
               vr_dtresgat := rw_crapdat.dtmvtolt;
+        END IF;
+        
+        /* Se o batch estiver em execucao */
+        IF rw_crapdat.inproces > 1 THEN
+           vr_dtmvtolt := rw_crapdat.dtmvtocd;
+           vr_dtmvtopr := gene0005.fn_valida_dia_util(pr_cdcooper => vr_cdcooper
+                                                     ,pr_dtmvtolt => (rw_crapdat.dtmvtocd + 1)
+                                                     ,pr_tipo => 'P'
+                                                     ,pr_feriado => true
+                                                     ,pr_excultdia => true);
+           vr_dtresgat := rw_crapdat.dtmvtocd;
+        END IF;
 
                 -- Apenas fechar o cursor
                 CLOSE BTCH0001.cr_crapdat;
-             END IF;
-       
-        END IF;
 
         IF lower(pr_flgctain) = 'yes' THEN
            vr_flgctain := 1;
