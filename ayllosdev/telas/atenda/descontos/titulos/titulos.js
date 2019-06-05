@@ -48,6 +48,7 @@
  * 031: [15/08/2018] Criada tela 'Motivos' e botão 'Anular'. PRJ 438 (Mateus Z - Mouts)
  * 032: [25/08/2018] Cassia de Oliveira (GFT): Criacao da funcao visualizarDetalhesPrejuizo()
  * 033: [05/09/2018] Luis Fernando (GFT): Ajustada rotina de selecao de bordero para incluir prejuizo 
+ * 034: [04/06/2019] Mateus Z  (Mouts) : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 - SM2
  */
 
  // variaveis propostas
@@ -107,6 +108,10 @@ var decisao = ""; // Variável para armazenar a decisão atualmente selecionado
 var valor_limite = 0; // Variável para armazenar  o valor do limite atualmente selecionado
 
 var fl_inprejuz = 0;
+// Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+var aux_vllimite_anterior = 0;
+// Fim Pj470 - SM2
+
 
 // ALTERAÇÃO 001: Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
@@ -3859,7 +3864,7 @@ function formataTabelaCriticas(div){
 /**
  * Autor: Bruno Luiz Katzjarowski - Mout's
  * Data: 18/12/2018;
- * prj 438 - Tela Autorizacao
+ * prj 470 - Tela Autorizacao
  */
 function chamarImpressao(tipo){
 

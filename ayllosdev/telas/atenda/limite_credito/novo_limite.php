@@ -24,6 +24,7 @@
 * 009: [05/12/2017] Lombardi         (CECRED) : Gravação do campo idcobope. Projeto 404
  * 010: [15/03/2018] Diego Simas	 (AMcom)  : Alterado para exibir tratativas quando o limite de crédito foi 
  *                                              cancelado de forma automática pelo Aimaro.  
+ * 011: [04/06/2019] Mateus Z  (Mouts) : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 - SM2
  */	  
 
 	session_start();
@@ -262,7 +263,9 @@
 	var nrctacje        = "<? echo $nrctacje;  ?>";
 	
 	dtconbir            = "<? echo $dtconbir;  ?>";
-		
+	
+    aux_vllimite_anterior = "<?php echo number_format(str_replace(",",".",$vllimite),2,",","."); ?>";
+	
 	var aux_rating = {
 		nrgarope: "<? echo $nrgarope;  ?>",
 		nrinfcad: "<? echo $nrinfcad;  ?>",		

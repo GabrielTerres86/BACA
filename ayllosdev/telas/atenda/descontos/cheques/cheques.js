@@ -36,6 +36,7 @@
  * 020: [11/12/2017] Augusto / Marcos (Supero) : P404 - Inclusão de Garantia de Cobertura das Operações de Crédito
  * 021: [06/02/2018] Mateus Z  (Mouts)  : Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia.
  * 022: [16/04/2018] Lombardi  (CECRED) : Adicionado parametro vlcompcr no ajax da function verificarEmitentes. PRJ366
+ * 023: [04/06/2019] Mateus Z  (Mouts) : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 - SM2
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -76,6 +77,10 @@ var aux_inconfi6 = ""; /*Variável usada para controlar validações que serão 
 var cNrcpfcnpj = [];
 var cDsemiten = [];
 var ChqsRemovidos = [];
+
+// Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+var aux_vllimite_anterior = 0;
+// Fim Pj470 - SM2
 
 // ALTERAÇÃO 001: Carrega biblioteca javascript referente aos AVALISTAS
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
@@ -529,22 +534,14 @@ function mostraImprimirLimite() {
  * Data: 18/12/2018;
  * bruno - prj 470 - tela autorizacao
  */
-function chamarImpressaoChequeLimite(params){
-
-	var aux_vllimite = "";
-	if(typeof params == "undefined"){
-		aux_vllimite = aux_telaAutorizavllimite;
-	}else{
-		aux_vllimite = params.vllimite;
-	}
-
+function chamarImpressaoChequeLimite(){
 
 	//bruno - prj 470 - tela autorizacao
 	var params = {
 		nrdconta : nrdconta,
 		obrigatoria: 1,
 		tpcontrato: 27,
-		vlcontrato: aux_vllimite,
+		vlcontrato: $("#vllimite","#frmDadosLimiteDscChq").val().replace(/\./g,""), //vllimite,
 		nrcontrato: nrcontrato,
 		funcaoImpressao: "mostraImprimirLimite();",
 		funcaoGeraProtocolo: 'carregaLimitesCheques();'

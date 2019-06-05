@@ -49,6 +49,7 @@
  * 030: [09/10/2018] Marco Antonio Rodrigues Amorim(Mout's) : Remove ponto do usuario e substitui virgula da casa decimal por ponto.
  * 031: [27/11/2018] Bruno Luiz Katzjarowski (Mout's): Criação da nova tela principal (nova rotina acessaTela) 
  * 032: [15/05/2019] Anderson Schloegel (Mout's): PJ470 - Mout's - Desabilitar campo de contrato para aba Novo Limite
+ * 033: [04/06/2019] Mateus Z  (Mouts) : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 - SM2
 */
  
 var callafterLimiteCred = '';
@@ -81,6 +82,10 @@ var strTitRotinaUC = inpessoa == 1 ? "LIMITE DE CR&Eacute;DITO" : "LIMITE EMPRES
 
 // array com os dados do rating das singulares
 var arrayRatingSingulares = new Array();
+
+// Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+var aux_vllimite_anterior = "";
+// Fim Pj470 - SM2
 
 // Carrega biblioteca javascript referente ao RATING
 $.getScript(UrlSite + 'includes/rating/rating.js');
@@ -453,8 +458,15 @@ function acessaOpcaoAba(nrOpcoes, id, cddopcao) {
 		var urlOperacao = UrlSite + "telas/atenda/limite_credito/novo_limite.php";
 		flpropos = true;
     }else if(cddopcao == 'IA'){
-        //bruno - prj 470 - tela autorizacao
+
+    	var aux_vllimite = $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
+    	aux_vllimite_anterior = aux_vllimite_anterior.replace(/\./g, "");
+
+    	if (aux_vllimite_anterior == aux_vllimite) {
+			acessaOpcaoAba(8,0,'@');
+		} else {
         chamarImpressaoLimiteCredito(false);
+		}
         return false;
 	}	
 		
@@ -3248,17 +3260,21 @@ function setarDadosLimiteCredito(){
  * Data: 18/12/2018;
  * prj 470 - tela autorizacao
  */
-function chamarImpressaoLimiteCredito(flagCancelamento){
+function chamarImpressaoLimiteCredito(flagCancelamento, flgAlteracao){
 
     if(typeof flagCancelamento == 'undefined'){
         flagCancelamento = false;
     }
+
+    var nrctrlim = flagCancelamento ? var_globais.nrctrlim : $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, "");
+    var vllimite = flagCancelamento ? var_globais.vllimite : $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
+
 	var params = {
 		nrdconta : nrdconta,
 		obrigatoria: 1,
 		tpcontrato: (flagCancelamento ? 25 : 29), //Cancelamento == 29, inclusao == 25
-		nrcontrato: var_globais.nrctrlim,
-		vlcontrato: var_globais.vllimite,
+		nrcontrato: nrctrlim,
+		vlcontrato: vllimite,
         funcaoImpressao: (flagCancelamento ? "carregarImpresso(4,'no','no','"+var_globais.nrctrlim+"');" : "acessaOpcaoAba(8,2,'I');"),
         funcaoGeraProtocolo: "acessaOpcaoAba(8,0,'@');"
 	};

@@ -341,8 +341,7 @@
 		$msg[] = str_replace('|@|','<br>',getByTagName($mensagem->tags,'dsmensag'));
 	}
 	$stringArrayMsg = implode( "|", $msg);
-	//prj 470 - tela autorizacao
-	echo 'exibirMensagens("'.$stringArrayMsg.'","atualizaDadosRating(\"divOpcoesDaOpcao3\");"); aux_telaAutorizavllimite = "'.$vllimite.'" ;';
+	echo 'exibirMensagens("'.$stringArrayMsg.'","atualizaDadosRating(\"divOpcoesDaOpcao3\");");';
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

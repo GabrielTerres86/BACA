@@ -29,6 +29,7 @@
  * 013: [26/06/2017] Jonata            (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364)
  * 014: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
  * 015: [13/04/2018] Lombardi     (CECRED) : Incluida chamada da function validaValorProduto. PRJ366
+ * 016: [04/06/2019] Mateus Z      (Mouts) : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 SM2
  */
 ?>
 
@@ -240,7 +241,9 @@
 		echo '$("#dsdbens2","#frmDadosLimiteDscChq").val("'.trim($dados[11]->cdata).'");';	
 		echo '$("#dsobserv","#frmDadosLimiteDscChq").val("'.str_replace(chr(13),"\\n",str_replace(chr(10),"\\r",$dados[12]->cdata)).'");';
 		echo '$("#antnrctr","#frmDadosLimiteDscChq").val("'.formataNumericos('zzz.zz9',$dados[14]->cdata,'.').'");';
-
+		// Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+		echo 'aux_vllimite_anterior = "'.number_format(str_replace(",",".",$dados[15]->cdata),2,",",".").'";';
+		// Fim Pj470 - SM2
 	}
 
 	// Na consulta não permitir manipulação dos campos
@@ -350,7 +353,17 @@
 	$("#btnContinuarRendas","#divBotoesRenda").unbind("click").bind("click",function() {
 		<? if ($cddopcao == "A") { ?>
 			$('#divBotoesRenda').css('display','none');
-			informarRating("divDscChq_Renda","dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');","carregaLimitesCheques()");
+			// Pj470 - SM2 -- Mateus Zimmermann -- Mouts 
+			var aux_vllimite = normalizaNumero($("#vllimite","#frmDadosLimiteDscChq").val());
+			aux_vllimite_anterior = normalizaNumero(aux_vllimite_anterior);
+			var aux_fncRatingSuccess = '';
+			if(aux_vllimite_anterior != aux_vllimite){
+				aux_fncRatingSuccess = "chamarImpressaoChequeLimite();";
+			}else{
+				aux_fncRatingSuccess = "carregaLimitesCheques();";
+			}
+			informarRating("divDscChq_Renda","dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');", aux_fncRatingSuccess);
+			// Fim Pj470 - SM2	
 		<? } elseif ($cddopcao == "C") { ?>
 			$('#divBotoesRenda').css('display','none');
 			informarRating("divDscChq_Renda","dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');","carregaLimitesCheques()");

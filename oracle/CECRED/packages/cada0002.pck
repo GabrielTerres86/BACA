@@ -315,6 +315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,cdconta    VARCHAR2(100) --pj470
                             ,nrcheque_i VARCHAR2(100) --pj470
                             ,nrcheque_f VARCHAR2(100) --pj470
+                            ,dsativo    VARCHAR2(100) --pj470 - SM2
                             ,auxiliar   VARCHAR2(100)
                             ,auxiliar2  VARCHAR2(100)
                             ,auxiliar3  VARCHAR2(100)
@@ -3310,6 +3311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
             vr_tab_dados(vr_index)('dtinclusao') := vr_cratpro(vr_ind).dtinclusao;
             vr_tab_dados(vr_index)('hrinclusao') := vr_cratpro(vr_ind).hrinclusao;
             vr_tab_dados(vr_index)('dsfrase') := vr_cratpro(vr_ind).dsfrase;
+            vr_tab_dados(vr_index)('dsativo') := vr_cratpro(vr_ind).dsativo; -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
          IF vr_cratpro(vr_ind).cdtippro IN (30,31)
          THEN
               vr_tab_dados(vr_index)('dsoperacao') := vr_cratpro(vr_ind).dsoperacao;
@@ -3367,6 +3369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       gene0007.pc_gera_tag(pr_nome_tag  => 'cdconta'   , pr_tab_tag   => vr_tab_tags);
       gene0007.pc_gera_tag(pr_nome_tag  => 'nrcheque_i', pr_tab_tag   => vr_tab_tags);
       gene0007.pc_gera_tag(pr_nome_tag  => 'nrcheque_f', pr_tab_tag   => vr_tab_tags);
+      gene0007.pc_gera_tag(pr_nome_tag  => 'dsativo', pr_tab_tag   => vr_tab_tags); -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
       -- Fim PJ470
       -- Carrega as TAG´s do XML referente a descrição (novo nodo)
       gene0007.pc_gera_tag(pr_nome_tag  => 'dsinform.1', pr_tab_tag   => vr_tab_tagd);
@@ -3825,6 +3828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     rw_xmldata.cdconta    := NVL(fn_extract('/Root/Dados/cdconta/text()'),'-');
     rw_xmldata.nrcheque_i := NVL(fn_extract('/Root/Dados/nrcheque_i/text()'),'-');
     rw_xmldata.nrcheque_f := NVL(fn_extract('/Root/Dados/nrcheque_f/text()'),'-');
+    rw_xmldata.dsativo    := NVL(fn_extract('/Root/Dados/nrcheque_f/text()'),'-'); -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
     -- Fim pj470
 
     
