@@ -8354,6 +8354,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     Alteracoes: 29/11/2016 - Retirado COMMIT pois estava ocasionando problemas na
                              abertura de contas na MATRIC criando registros com PA
                              zerado (Tiago/Thiago).
+                
+                22/05/2019 - As alterações do campo Dev Auto. Cheques não estavam sendo 
+                             salvas, para contas alteradas que ainda não possuiam cadastro 
+                             de parametro na tabela de controle.             
+                             
     ............................................................................. */
     vr_exc_saida  EXCEPTION;
     vr_dsflgdevolu_antes VARCHAR2(3);
@@ -8382,24 +8387,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           
       IF cr_tbchq_param_conta%NOTFOUND THEN      
         CLOSE cr_tbchq_param_conta;  
-        -- Caso for opcao "I", iremos inserir registro com o flgdevolu_autom como true(default)
-        IF pr_cddopcao = 'I' THEN
-          BEGIN
-            INSERT INTO tbchq_param_conta
-                        (cdcooper
-                        ,nrdconta
-                        ,flgdevolu_autom)
-                        VALUES
-                        (pr_cdcooper
-                        ,pr_nrdconta
-                        ,pr_flgdevolu_autom); -- defatult e 1-sim
-          EXCEPTION
-            WHEN OTHERS THEN          
-              pr_dscritic := 'Erro ao inserir registro na tbchq_param_conta: ' || SQLERRM;
-              RAISE vr_exc_saida;
-          END;      
-          
-        END IF;
+        
+        BEGIN
+          INSERT INTO tbchq_param_conta
+                      (cdcooper
+                      ,nrdconta
+                      ,flgdevolu_autom)
+                      VALUES
+                      (pr_cdcooper
+                      ,pr_nrdconta
+                      ,pr_flgdevolu_autom); -- defatult e 1-sim
+        EXCEPTION
+          WHEN OTHERS THEN          
+            pr_dscritic := 'Erro ao inserir registro na tbchq_param_conta: ' || SQLERRM;
+            RAISE vr_exc_saida;
+        END;      
+        
       ELSE
         CLOSE cr_tbchq_param_conta;
         -- Se for opcao "A", ira atualizar conforme parametro pr_flgdevolu_autom(1/0)
@@ -9663,7 +9666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       IF vr_cdcritic <> 0 THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
@@ -9899,7 +9902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       WHEN vr_exc_saida THEN
       
         IF TRIM(vr_dscritic) IS NULL THEN
-          vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+          vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
         END IF;
         
         pr_cdcritic := pr_cdcritic;
@@ -10413,7 +10416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       IF vr_cdcritic <> 0 THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
@@ -10541,7 +10544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       IF vr_cdcritic <> 0 THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
@@ -10736,7 +10739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       IF vr_cdcritic <> 0 THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
@@ -12370,7 +12373,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       
       IF vr_cdcritic <> 0 THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
@@ -12873,7 +12876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       IF vr_cdcritic <> 0 THEN
      
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
      
       END IF;
 
@@ -13277,7 +13280,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       IF vr_cdcritic <> 0 THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
@@ -13403,7 +13406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       IF vr_cdcritic <> 0 THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
@@ -14007,7 +14010,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       IF vr_cdcritic <> 0 THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
@@ -14470,7 +14473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       
       IF vr_cdcritic <> 0 THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
@@ -14578,7 +14581,7 @@ exception
   when vr_exc_saida then
     IF vr_cdcritic <> 0 THEN
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
     ELSE
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
@@ -14697,7 +14700,7 @@ exception
   when vr_exc_saida then
     IF vr_cdcritic <> 0 THEN
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
     ELSE
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
@@ -14831,7 +14834,7 @@ exception
   when vr_exc_saida then
     IF vr_cdcritic <> 0 THEN
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
     ELSE
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
