@@ -220,6 +220,17 @@ create or replace package cecred.SICR0001 is
                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
                                   ,pr_dscritic OUT VARCHAR2);                   --> descrição do erro se ocorrer
 
+  /* Procedimento para verificar/controlar a execução da DEBNET e DEBSIC */
+  PROCEDURE pc_SICR0001_controle_exec_deb ( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da coopertiva
+                                           ,pr_cdtipope  IN VARCHAR2                     --> Tipo de operacao I-incrementar e C-Consultar
+                                           ,pr_dtmvtolt  IN DATE                         --> Data do movimento
+                                           ,pr_cdprogra  IN crapprg.cdprogra%TYPE        --> Codigo do programa
+                                           ,pr_flultexe OUT INTEGER                       --> Retorna se é a ultima execução do procedimento
+                                           ,pr_qtdexec  OUT INTEGER                       --> Retorna a quantidade
+                                           ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
+                                           ,pr_dscritic OUT VARCHAR2);                   --> descrição do erro se ocorrer
+
+
   /* Procedimento para sumarizar os agendamentos da debnet */
   PROCEDURE pc_sumario_debsic(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa inicial
                              ,pr_cdcopfin IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa final
@@ -3747,6 +3758,111 @@ create or replace package body cecred.SICR0001 is
                   pr_ind_tipo_log  => 2);
   END pc_identifica_crapatr;
 
+  /* Procedimento para verificar se o horario da execução da DEBNET e DEBSIC já é maior que o último horário */
+  PROCEDURE pc_valida_horario_exec_deb ( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da coopertiva
+                                        ,pr_dtmvtolt  IN DATE                         --> Data do movimento
+                                        ,pr_cdprogra  IN crapprg.cdprogra%TYPE        --> Codigo do programa
+                                        ,pr_flultexe OUT INTEGER                      --> Retorna se é a ultima execução do procedimento
+                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
+                                        ,pr_dscritic OUT VARCHAR2) IS                 --> descrição do erro se ocorrer
+  /*---------------------------------------------------------------------------------------------------------------
+  --  Programa : pc_valida_horario_exec_deb
+  --   Sistema : Conta-Corrente - Cooperativa de Credito
+  --   Sigla   : CRED
+  --   Autor   : André Bohn - MoutS
+  --   Data    : Maio/2019                       Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Sempre que chamado
+  -- Objetivo  : Procedimento para verificar se o horário atual, é maior que o horário da ultima execução da DEBNET e DEBSIC
+  --
+  -- Alteracoes: 
+  --
+--------------------------------------------------------------------------------------------------------------------*/
+    -------------> CURSOR <--------------
+
+     -- Busca o último horário de execução no debitador único
+      CURSOR cr_ulthrdeb(pr_cdprogra IN VARCHAR2,
+                         pr_dtmvtopg IN DATE) IS
+      SELECT MAX(to_date(to_char(pr_dtmvtopg,'ddmmyyyy')||to_char(tdeb.dhprocessamento, 'hh24:mi'),'ddmmyyyyhh24:mi:ss')) dtultexec 
+        FROM tbgen_debitador_horario tdeb, tbgen_debitador_horario_proc tdproc
+       WHERE tdeb.idhora_processamento = tdproc.idhora_processamento  
+         AND tdproc.cdprocesso  LIKE '%'||pr_cdprogra;
+       rw_ulthrdeb cr_ulthrdeb%ROWTYPE;
+
+    ------------- Variaveis ---------------
+    vr_cdprogra  VARCHAR2(50);
+    vr_dtultexec DATE   := NULL;
+    vr_job_name_running dba_scheduler_jobs.job_name%TYPE;
+    vr_start_date       VARCHAR2(18);
+    vr_ds_erro          crapcri.dscritic%TYPE;
+    
+  BEGIN
+    -- Inclui nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'SICR0001.pc_valida_horario_exec_deb');
+
+    IF upper(pr_cdprogra) = 'DEBSIC' THEN
+      vr_cdprogra := 'CRPS642';
+    ELSIF upper(pr_cdprogra) = 'DEBSIC_PRIORI' THEN
+      vr_cdprogra := 'CRPS642_PRIORI';
+    ELSIF upper(pr_cdprogra) = 'DEBNET' THEN
+      vr_cdprogra := 'CRPS509';
+    ELSIF upper(pr_cdprogra) = 'DEBNET_PRIORI' THEN
+      vr_cdprogra := 'CRPS509_PRIORI';
+    ELSIF upper(pr_cdprogra) = 'CRPS663' THEN -- DEBCNS
+      vr_cdprogra := 'CRPS663';      
+    ELSE
+      -- Se não for DEBNET, DEBSIC ou DEBCNS não faz a verificação 
+      vr_cdprogra := NULL;
+    END IF;
+    
+    pr_flultexe := 0;
+
+    IF vr_cdprogra IS NOT NULL THEN
+      OPEN cr_ulthrdeb (pr_cdprogra => vr_cdprogra,
+                        pr_dtmvtopg => pr_dtmvtolt);
+      FETCH cr_ulthrdeb INTO rw_ulthrdeb;
+      CLOSE cr_ulthrdeb;
+      vr_dtultexec := rw_ulthrdeb.dtultexec;
+      IF vr_dtultexec IS NOT NULL THEN
+         --> Verificar se o horário atual é maior que o horário da última execução
+        IF (SYSDATE > vr_dtultexec) THEN
+          -- Verificar se há algun JOB do Debitador rodando para a Cooperativa
+          gen_debitador_unico.pc_verifica_job_running(pr_cdcooper             => pr_cdcooper
+                                 ,pr_idhora_processamento => NULL
+                                 ,pr_job_name_running     => vr_job_name_running
+                                 ,pr_start_date           => vr_start_date
+                                 ,pr_ds_erro              => vr_ds_erro);
+
+          -- Somente considera como última execução caso não tenha algum JOB do Debitador rodando para a Cooperativa (Running)
+          IF (vr_job_name_running IS NULL) AND (vr_ds_erro IS NULL) THEN
+            pr_flultexe := 1;
+          END IF;
+        END IF;        
+      END IF;
+    END IF;
+
+    -- Retira nome do modulo logado
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+  EXCEPTION
+     WHEN OTHERS THEN 
+       pr_cdcritic := 9999;
+       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'sicr0001.pc_valida_horario_exec_deb.'||sqlerrm;
+
+      -- No caso de erro de programa gravar tabela especifica de log  
+      CECRED.pc_internal_exception (pr_cdcooper => 3);                                                             
+
+      --Grava tabela de log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+                  
+  END pc_valida_horario_exec_deb;
+  
   /* Procedimento para verificar/controlar a execução da DEBNET e DEBSIC */
   PROCEDURE pc_controle_exec_deb ( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da coopertiva
                                   ,pr_cdtipope  IN VARCHAR2                     --> Tipo de operacao I-incrementar, C-Consultar e V-Validar
@@ -3782,7 +3898,10 @@ create or replace package body cecred.SICR0001 is
   --             05/09/2018 - Ajuste mensagem do parâmetro QTD_EXEC_vr_cdprogra:
   --                          - Estava concatenando "_EXEC" no final desse parâmetro
   --                            (Ana - Envolti - Chamado INC0023351)
-
+  --
+  --             23/05/2019 - Ajustado para considerar o último horário do debitador único
+  --                          para o programa verificado, identificando a última execução do dia.
+  --                          (PRB0041528 - André - MoutS)
 --------------------------------------------------------------------------------------------------------------------*/
     -------------> CURSOR <--------------
     CURSOR cr_crapprm (pr_cdcooper crapprm.cdcooper%TYPE,
@@ -3806,6 +3925,9 @@ create or replace package body cecred.SICR0001 is
     vr_dtctlexc  DATE   := NULL;
     vr_qtctlexc  INTEGER := 0;
     vr_qtdexec   INTEGER := 0;
+    vr_flultexe  INTEGER := 0;
+    vr_cdcritic  crapcri.cdcritic%TYPE;
+    vr_dscritic  VARCHAR2(4000);
 
   BEGIN
     -- Inclui nome do modulo logado - 15/12/2017 - Ch 788828
@@ -3924,6 +4046,24 @@ create or replace package body cecred.SICR0001 is
       pr_flultexe := 1;
     ELSE
       pr_flultexe := 0;
+      -- PRB0041528 - Caso a cadeia de execução do debitador único seja abortado, e não incremente a quantidade
+      --              de execução, verifica se o horario atual (sysdate) é maior que o horário da última execução
+      --              do programa sendo processado e considera como última execução, pois existem ações
+      --              que obrigatoriamente devem ocorrer, senão o time de sustentação tem que cancelar manualmente
+      --              agendamentos, pagamentos e debitos automáticos. 
+      pc_valida_horario_exec_deb(pr_cdcooper => pr_cdcooper
+                                ,pr_dtmvtolt => pr_dtmvtolt
+                                ,pr_cdprogra => vr_cdprogra
+                                ,pr_flultexe => vr_flultexe
+                                ,pr_cdcritic => vr_cdcritic
+                                ,pr_dscritic => vr_dscritic);
+                                 
+      IF vr_cdcritic IS NULL THEN
+        IF nvl(vr_flultexe, 0) = 1 THEN
+          pr_flultexe := 1;
+          vr_qtdexec  := rw_crapprm_qtd.dsvlrprm;
+        END IF; 
+      END IF;   
     END IF;
 
     pr_qtdexec := vr_qtdexec;
@@ -3956,6 +4096,46 @@ create or replace package body cecred.SICR0001 is
                   pr_ind_tipo_log  => 2);
   END pc_controle_exec_deb;
   
+  /* Procedimento para verificar/controlar a execução da DEBNET, DEBSIC e DEBCNS progress*/
+  PROCEDURE pc_SICR0001_controle_exec_deb ( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da coopertiva
+                                           ,pr_cdtipope  IN VARCHAR2                     --> Tipo de operacao I-incrementar, C-Consultar e V-Validar
+                                           ,pr_dtmvtolt  IN DATE                         --> Data do movimento
+                                           ,pr_cdprogra  IN crapprg.cdprogra%TYPE        --> Codigo do programa
+                                           ,pr_flultexe OUT INTEGER                      --> Retorna se é a ultima execução do procedimento
+                                           ,pr_qtdexec  OUT INTEGER                      --> Retorna a quantidade
+                                           ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
+                                           ,pr_dscritic OUT VARCHAR2) IS                 --> descrição do erro se ocorrer
+  /*---------------------------------------------------------------------------------------------------------------
+  --  Programa : pc_SICR0001_controle_exec_deb
+  --   Sistema : Conta-Corrente - Cooperativa de Credito
+  --   Sigla   : CRED
+  --   Autor   : André Bohn - MoutS
+  --   Data    : maio/2019                       Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Sempre que chamado
+  -- Objetivo  : Chamar o procedimento pc_controle_exec_deb desta package pelo progress
+  --             pois o nome esta duplicado com a package gen_debitador_unico
+  --
+  -- Alteracoes: 
+  --
+  --
+--------------------------------------------------------------------------------------------------------------------*/
+
+  BEGIN
+    
+    pc_controle_exec_deb(pr_cdcooper => pr_cdcooper  
+                        ,pr_cdtipope => pr_cdtipope 
+                        ,pr_dtmvtolt => pr_dtmvtolt 
+                        ,pr_cdprogra => pr_cdprogra 
+                        ,pr_flultexe => pr_flultexe 
+                        ,pr_qtdexec  => pr_qtdexec  
+                        ,pr_cdcritic => pr_cdcritic 
+                        ,pr_dscritic => pr_dscritic);
+    
+  END pc_SICR0001_controle_exec_deb; 
+   
  /* Procedimento para sumarizar os agendamentos da debnet */
   PROCEDURE pc_sumario_debsic(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa inicial
                              ,pr_cdcopfin IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa final
@@ -4200,7 +4380,9 @@ create or replace package body cecred.SICR0001 is
     --  Frequencia: Sempre que for chamado
     --  Objetivo  : Chamar a procedure pc_cancela_debitos pelo Progress
     --
-    --  Alteracoes: 
+    --  Alteracoes: 17/05/2019 - Ajuste para considerar a execução do cancelamento
+    --                           após o horário limite configurado na craphec
+    --                           (PRB0041528 - Andre - MoutS)
     -- ..........................................................................
   BEGIN
     DECLARE
@@ -4209,9 +4391,8 @@ create or replace package body cecred.SICR0001 is
       vr_dscritic VARCHAR2(4000);
       
       -- Variaveis para verificao termino ciclo de pagamentos
-      vr_flultexe INTEGER;
-      vr_qtdexec  INTEGER;
-      
+      vr_dtultexec     DATE; 
+           
       -- Envio de email
       vr_texto_email     varchar2(4000); 
       vr_endereco_email  crapprm.dsvlrprm%TYPE;
@@ -4319,17 +4500,16 @@ create or replace package body cecred.SICR0001 is
           AND craplau.dsorigem IN ('INTERNET','TAA','CAIXA')
           AND craplau.tpdvalor = 1;
           rw_craplau cr_craplau%ROWTYPE;
-          
-      CURSOR cr_crapprm(pr_cdcooper IN crapprm.cdcooper%TYPE,
-                        pr_nmsistem IN crapprm.nmsistem%TYPE,
-                        pr_cdacesso IN crapprm.cdacesso%TYPE) IS
-        SELECT prm.dsvlrprm
-          FROM crapprm prm
-         WHERE prm.nmsistem = pr_nmsistem
-           AND prm.cdcooper IN (pr_cdcooper, 0) --> Busca tanto da passada, quanto da geral (se existir)
-           AND prm.cdacesso = pr_cdacesso
-         ORDER BY prm.cdcooper DESC; --> Trará a cooperativa passada primeiro, e caso não encontre nela, trará da 0(zero)          
 
+      -- Cadastro de horas de execucao dos programas
+      CURSOR cr_craphec(pr_cdcooper IN craphec.cdcooper%TYPE,
+                        pr_dtmvtopg IN DATE) IS
+        SELECT to_date(to_char(pr_dtmvtopg,'ddmmyyyy')||to_char(to_date(case when nvl(craphec.hriniexe,0) > 86000 then 0 else craphec.hriniexe end, 'sssss'), 'hh24:mi'),'ddmmyyyyhh24:mi') dtultexec
+          FROM craphec
+         WHERE craphec.cdcooper = pr_cdcooper
+           AND UPPER(craphec.cdprogra) = UPPER('CRPS636');
+      rw_craphec cr_craphec%ROWTYPE;
+      
     BEGIN
       -- Inclui nome do modulo logado 
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'SICR0001.pc_SICR0001_cancela_debitos');
@@ -4356,111 +4536,104 @@ create or replace package body cecred.SICR0001 is
           CLOSE BTCH0001.cr_crapdat;
         END IF;
         
-        IF rw_crapdat.dtmvtolt = pr_dtmvtopg THEN
+        OPEN cr_craphec (pr_cdcooper => rw_crapcop.cdcooper,
+                         pr_dtmvtopg => pr_dtmvtopg);
+        FETCH cr_craphec INTO rw_craphec;
+        CLOSE cr_craphec;
+        vr_dtultexec := rw_craphec.dtultexec;
+        IF vr_dtultexec IS NULL THEN
+           vr_dscritic := 'Horario da ultima execucao DEBSIC nao encontrado.';
+           RAISE vr_exc_saida;
+        END IF;
+                
+        IF (rw_crapdat.dtmvtolt = pr_dtmvtopg) AND (SYSDATE > vr_dtultexec) THEN
         
-          SICR0001.pc_controle_exec_deb(pr_cdcooper => rw_crapcop.cdcooper --> Código da coopertiva
-                                       ,pr_cdtipope => 'C' --> Tipo de operacao I-incrementar e C-Consultar
-                                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data do movimento
-                                       ,pr_cdprogra => 'DEBSIC' --> Codigo do programa
-                                       ,pr_flultexe => vr_flultexe --> Retorna se é a ultima execução do procedimento
-                                       ,pr_qtdexec  => vr_qtdexec --> Retorna a quantidade
-                                       ,pr_cdcritic => vr_cdcritic --> Codigo da critica de erro
-                                       ,pr_dscritic => vr_dscritic); --> descrição do erro se ocorrer
+          FOR rw_craplau IN cr_craplau ( pr_cdcooper => rw_crapcop.cdcooper,
+                                         pr_dtmvtopg => pr_dtmvtopg) LOOP
 
-          IF nvl(vr_cdcritic, 0) > 0
-          OR TRIM(vr_dscritic) IS NOT NULL THEN
-            --Não gra log aqui porque gera na rotina chamada
-            RAISE vr_exc_saida;
-          END IF;      
+            -- Verificar se já abrimos o arquivo 
+            IF NOT utl_file.IS_OPEN(vr_input_file) THEN
+              -- Tenta abrir o arquivo de dados em modo gravacao
+              gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_direto  --> Diretório do arquivo
+                                      ,pr_nmarquiv => vr_nom_anexo   --> Nome do arquivo
+                                      ,pr_tipabert => 'W'            --> Modo de abertura (R,W,A)
+                                      ,pr_utlfileh => vr_input_file  --> Handle do arquivo aberto
+                                      ,pr_des_erro => vr_dscritic);  --> Erro
 
-          IF nvl(vr_flultexe, 0) = 1 THEN 
-          
-            FOR rw_craplau IN cr_craplau ( pr_cdcooper => rw_crapcop.cdcooper,
-                                           pr_dtmvtopg => pr_dtmvtopg) LOOP
-
-              -- Verificar se já abrimos o arquivo 
-              IF NOT utl_file.IS_OPEN(vr_input_file) THEN
-                -- Tenta abrir o arquivo de dados em modo gravacao
-                gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_direto  --> Diretório do arquivo
-                                        ,pr_nmarquiv => vr_nom_anexo   --> Nome do arquivo
-                                        ,pr_tipabert => 'W'            --> Modo de abertura (R,W,A)
-                                        ,pr_utlfileh => vr_input_file  --> Handle do arquivo aberto
-                                        ,pr_des_erro => vr_dscritic);  --> Erro
-
-                IF vr_dscritic IS NOT NULL THEN
-                   -- Levantar Excecao
-                   RAISE vr_exc_saida;
-                END IF;
-
-                -- Escrever o cabecalho no arquivo
-                gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_file             --> Handle do arquivo aberto
-                                              ,pr_des_text  => 'COOPERATIVA;CONTA;' ||
-                                                               'HISTORICO;NRDOCTO;'||
-                                                               'VALOR;SEQTEL');  --> Texto para escrita
+              IF vr_dscritic IS NOT NULL THEN
+                 -- Levantar Excecao
+                 RAISE vr_exc_saida;
               END IF;
 
-              IF rw_craplau.cdhistor  IN (1019, 1230, 1231, 1232, 1233, 1234) THEN 
-                -- Gerar registros na crapndb para devolucao de debitos automaticos
-                CONV0001.pc_gerandb(pr_cdcooper => rw_craplau.cdcooper -- CÓDIGO DA COOPERATIVA
-                                   ,pr_cdhistor => rw_craplau.cdhistor -- CÓDIGO DO HISTÓRICO
-                                   ,pr_nrdconta => rw_craplau.nrdconta -- NUMERO DA CONTA
-                                   ,pr_cdrefere => rw_craplau.nrdocmto -- CÓDIGO DE REFERÊNCIA
-                                   ,pr_vllanaut => rw_craplau.vllanaut -- VALOR LANCAMENTO
-                                   ,pr_cdseqtel => rw_craplau.cdseqtel -- CÓDIGO SEQUENCIAL
-                                   ,pr_nrdocmto => rw_craplau.nrdocmto         -- NÚMERO DO DOCUMENTO
-                                   ,pr_cdagesic => rw_crapcop.cdagesic -- AGÊNCIA SICREDI
-                                   ,pr_nrctacns => rw_craplau.nrctacns -- CONTA DO CONSÓRCIO
-                                   ,pr_cdagenci => rw_craplau.cdagenci_ass -- CODIGO DO PA
-                                   ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
-                                   ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
-                                   ,pr_codcriti => 717 -- CÓDIGO DO ERRO INSUFICIENCIA DE SALDO
-                                   ,pr_cdcritic => vr_cdcritic -- CÓDIGO DO ERRO
-                                   ,pr_dscritic => vr_dscritic); -- DESCRICAO DO ERRO
-                
-                -- VERIFICA SE HOUVE ERRO NA PROCEDURE PC_GERANDB
-                IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                  RAISE vr_exc_saida;
-                END IF;
-                
-                -- Inclui nome do modulo logado
-                GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'SICR0001.pc_SICR0001_cancela_debitos');
-              END IF;
-              
-              BEGIN
-                -- Atualiza registros de lancamentos automaticos
-                UPDATE craplau
-                   SET craplau.insitlau = 3
-                      ,craplau.dtdebito = pr_dtmvtopg
-                      ,craplau.cdcritic = 717
-                 WHERE craplau.rowid = rw_craplau.rowid;
-                -- Verifica se houve problema na atualização do registro
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_cdcritic := 1035;
-                  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craplau: '||
-                              'insitlau:3' ||
-                              ', dtdebito:'||pr_dtmvtopg||
-                              ', cdcritic:'||NVL(vr_cdcritic, 0)||
-                              ' com rowid:'||rw_craplau.rowid||
-                              '. '||sqlerrm;
-
-                  -- No caso de erro de programa gravar tabela especifica de log  
-                  CECRED.pc_internal_exception;                                                             
-                  RAISE vr_exc_saida;
-              END;
-                  
-              --vr_texto_email := vr_texto_email||'Conta:'||rw_craplau.nrdconta||' -' ||rw_craplau.cdhistor ||' - '||rw_craplau.dshistor ||' - '|| to_char(rw_craplau.vllanaut,'999,999,999.00')||'<br>'; 
               -- Escrever o cabecalho no arquivo
               gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_file             --> Handle do arquivo aberto
-                                            ,pr_des_text  => rw_crapcop.cdcooper || ';' ||
-                                                             GENE0002.fn_mask_conta(rw_craplau.nrdconta) || ';' ||
-                                                             rw_craplau.dshistor || ';' ||
-                                                             rw_craplau.nrdocmto || ';' ||
-                                                             to_char(rw_craplau.vllanaut,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''') || ';' ||
-                                                             rw_craplau.cdseqtel);  --> Texto para escrita
+                                            ,pr_des_text  => 'COOPERATIVA;CONTA;' ||
+                                                             'HISTORICO;NRDOCTO;'||
+                                                             'VALOR;SEQTEL');  --> Texto para escrita
+            END IF;
 
-            END LOOP; -- Craplau
-          END IF; -- nvl(vr_flultexe, 0) = 1
+            IF rw_craplau.cdhistor  IN (1019, 1230, 1231, 1232, 1233, 1234) THEN 
+              -- Gerar registros na crapndb para devolucao de debitos automaticos
+              CONV0001.pc_gerandb(pr_cdcooper => rw_craplau.cdcooper -- CÓDIGO DA COOPERATIVA
+                                 ,pr_cdhistor => rw_craplau.cdhistor -- CÓDIGO DO HISTÓRICO
+                                 ,pr_nrdconta => rw_craplau.nrdconta -- NUMERO DA CONTA
+                                 ,pr_cdrefere => rw_craplau.nrdocmto -- CÓDIGO DE REFERÊNCIA
+                                 ,pr_vllanaut => rw_craplau.vllanaut -- VALOR LANCAMENTO
+                                 ,pr_cdseqtel => rw_craplau.cdseqtel -- CÓDIGO SEQUENCIAL
+                                 ,pr_nrdocmto => rw_craplau.nrdocmto         -- NÚMERO DO DOCUMENTO
+                                 ,pr_cdagesic => rw_crapcop.cdagesic -- AGÊNCIA SICREDI
+                                 ,pr_nrctacns => rw_craplau.nrctacns -- CONTA DO CONSÓRCIO
+                                 ,pr_cdagenci => rw_craplau.cdagenci_ass -- CODIGO DO PA
+                                 ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                                 ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
+                                 ,pr_codcriti => 717 -- CÓDIGO DO ERRO INSUFICIENCIA DE SALDO
+                                 ,pr_cdcritic => vr_cdcritic -- CÓDIGO DO ERRO
+                                 ,pr_dscritic => vr_dscritic); -- DESCRICAO DO ERRO
+                
+              -- VERIFICA SE HOUVE ERRO NA PROCEDURE PC_GERANDB
+              IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                RAISE vr_exc_saida;
+              END IF;
+                
+              -- Inclui nome do modulo logado
+              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'SICR0001.pc_SICR0001_cancela_debitos');
+            END IF;
+              
+            BEGIN
+              -- Atualiza registros de lancamentos automaticos
+              UPDATE craplau
+                 SET craplau.insitlau = 3
+                    ,craplau.dtdebito = pr_dtmvtopg
+                    ,craplau.cdcritic = 717
+               WHERE craplau.rowid = rw_craplau.rowid;
+              -- Verifica se houve problema na atualização do registro
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_cdcritic := 1035;
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craplau: '||
+                            'insitlau:3' ||
+                            ', dtdebito:'||pr_dtmvtopg||
+                            ', cdcritic:'||NVL(vr_cdcritic, 0)||
+                            ' com rowid:'||rw_craplau.rowid||
+                            '. '||sqlerrm;
+
+                -- No caso de erro de programa gravar tabela especifica de log  
+                CECRED.pc_internal_exception;                                                             
+                RAISE vr_exc_saida;
+            END;
+                  
+            --vr_texto_email := vr_texto_email||'Conta:'||rw_craplau.nrdconta||' -' ||rw_craplau.cdhistor ||' - '||rw_craplau.dshistor ||' - '|| to_char(rw_craplau.vllanaut,'999,999,999.00')||'<br>'; 
+            -- Escrever o cabecalho no arquivo
+            gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_file             --> Handle do arquivo aberto
+                                          ,pr_des_text  => rw_crapcop.cdcooper || ';' ||
+                                                           GENE0002.fn_mask_conta(rw_craplau.nrdconta) || ';' ||
+                                                           rw_craplau.dshistor || ';' ||
+                                                           rw_craplau.nrdocmto || ';' ||
+                                                           to_char(rw_craplau.vllanaut,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''') || ';' ||
+                                                           rw_craplau.cdseqtel);  --> Texto para escrita
+
+          END LOOP; -- Craplau
+
         END IF; -- dtmvtolt = 
       END LOOP; -- Crapcop
       
@@ -4468,15 +4641,13 @@ create or replace package body cecred.SICR0001 is
         gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
       END IF;
                         
-      OPEN cr_crapprm(pr_cdcooper => 0,
-                      pr_nmsistem => 'CRED',
-                      pr_cdacesso => 'EMAIL_CANC_DEBSIC');
-      FETCH cr_crapprm INTO vr_endereco_email;
-      CLOSE cr_crapprm;
+      vr_endereco_email := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                    ,pr_cdcooper => 0
+                                                    ,pr_cdacesso => 'EMAIL_CANC_DEBSIC');
                 
       IF gene0001.fn_exis_arquivo(vr_nom_direto || '/' || vr_nom_anexo) AND (trim(vr_endereco_email) IS NOT NULL) THEN
           vr_texto_email:= 'Ocorreram lançamentos de débito automatico Sicredi pendentes apos fechamento do movimento.<br> '||
-                           'Data do Mês: '||rw_crapdat.dtmvtolt;
+                           'Data do Mês: '||pr_dtmvtopg;
                                    
           -- Comando para enviar e-mail para a Sustentação e convênios
           GENE0003.pc_solicita_email(pr_cdcooper        => 3 --> Cooperativa conectada
