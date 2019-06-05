@@ -7,7 +7,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Autor    : Odirlei Busana - AMcom
     Data     : Agosto/2015.                   Ultima atualizacao: 15/05/2019
   
-   Dados referentes ao programa:
+   Dados referentes ao programa: 
   
    Frequencia: -----
    Objetivo  : Rotinas para buscar detalhes de cadastros
@@ -5091,7 +5091,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pc_cria_registro_msg(pr_dsmensag => 'Imprimir Termo de Responsabilidade para acesso ao Autoatendimento e SAC.'
                           ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
-	
+
     CADA0006.pc_descricao_situacao_conta(pr_cdsituacao => 7
                                         ,pr_dssituacao => vr_dssituacao
                                         ,pr_des_erro => vr_des_reto
@@ -5392,7 +5392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         EXIT;
     END IF;
     END LOOP;
-
+      
     IF vr_flgpreju THEN
       IF vr_flgpreju_ativo THEN
       pc_cria_registro_msg(pr_dsmensag             => 'Conta Corrente com Emprestimo em Prejuizo',
@@ -5415,8 +5415,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         IF (rw_crapbdt_preju.dtliqprj IS NULL) THEN
           vr_flgpreju_bdt := TRUE;
           vr_flgpreju_bdt_liq := FALSE;
-          EXIT;
-        END IF;
+        EXIT;
+      END IF;
       END IF;
     END LOOP;
     
@@ -5447,7 +5447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     CLOSE cr_craptdb_atrasados;
     
     -- FIM MENSAGENS PREJUÍZO --
-
+    
     IF pr_cdcooper IN (16,1) THEN /* Se Viacredi AltoVale ou Viacredi*/
       pc_ret_criticas_altovale(pr_cdcooper => pr_cdcooper            --> Codigo da cooperativa
                               ,pr_nrcpfcgc => rw_crapass.nrcpfcgc    --> CPF/CNPJ do cooperado
@@ -6769,6 +6769,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	--             05/06/2017 - Recuperar informacoes de previdencia (Claudio - CIS Corporate).                 
     -- 
     --             15/05/2019 - Merge branch P433 - API de Cobrança (Cechet)
+	--
+    --             30/05/2019 - Alterado para considerar também a situação 9 quando exibir existencia 
+    --                          de portabilidade.  (Renato Darosci - Supero - P485)
     -- ..........................................................................*/
     
     ---------------> CURSORES <-----------------
@@ -6817,7 +6820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       FROM tbcc_portabilidade_envia
       WHERE tbcc_portabilidade_envia.cdcooper = pr_cdcooper
         AND tbcc_portabilidade_envia.nrdconta = pr_nrdconta
-        AND tbcc_portabilidade_envia.idsituacao IN (1,2,3,5);
+        AND tbcc_portabilidade_envia.idsituacao IN (1,2,3,5,9);
     
 	--> Busca informção da Plataforma de API
 	CURSOR cr_checkapi IS
