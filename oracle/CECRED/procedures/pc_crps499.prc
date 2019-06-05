@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps499(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Novembro/2007                   Ultima atualizacao: 12/04/2017
+   Data    : Novembro/2007                   Ultima atualizacao: 05/06/2019
 
    Dados referentes ao programa:
 
@@ -99,6 +99,8 @@ create or replace procedure cecred.pc_crps499(pr_cdcooper  in craptab.cdcooper%t
                
                12/04/2017 - #642388 Inclusão tratamento no cursor da crapcop para que não seja 
                             executado nas cooperativas inativas (Carlos)
+
+               05/06/2019 - Inclusão de Historico 2973 em cursor que busca lancamentos de chequee de deposito - CECRED (Luis Fagundes/AMCOM) 
 
 ............................................................................. */
   -- Buscar os dados das cooperativas
@@ -428,7 +430,7 @@ create or replace procedure cecred.pc_crps499(pr_cdcooper  in craptab.cdcooper%t
            craplcm
      where craplcm.cdcooper = pr_cdcooper
        and craplcm.dtmvtolt between pr_dtinimes and pr_dtfimmes
-       and craplcm.cdhistor in (399,24,27,351)
+       and craplcm.cdhistor in (399,24,27,351,2973)
        and craplcm.dsidenti = 'CTL'
        and crapass.cdcooper = pr_cdcooper
        and crapass.nrdconta = craplcm.nrdconta
