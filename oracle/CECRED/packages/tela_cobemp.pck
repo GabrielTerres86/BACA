@@ -39,6 +39,16 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBEMP IS
     qtmaxbol crapprm.dsvlrprm%TYPE,
     blqrsgcc crapprm.dsvlrprm%TYPE);
 
+ TYPE typ_reg_tel IS RECORD
+		(nrdddtfc       craptfc.nrdddtfc%TYPE
+		,nrtelefo       craptfc.nrtelefo%TYPE
+		,nrdramal       craptfc.nrdramal%TYPE
+		,destptfc       VARCHAR2(100)
+		,nmpescto       craptfc.nmpescto%TYPE
+		,nmopetfn       VARCHAR2(100));
+
+
+  TYPE type_tab_tel IS TABLE OF typ_reg_tel INDEX BY BINARY_INTEGER;
   tab_import tbrecup_boleto_import%ROWTYPE;
 
   PROCEDURE pc_buscar_email(pr_nrdconta IN INTEGER
@@ -51,7 +61,13 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBEMP IS
                            ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                            ,pr_des_erro OUT VARCHAR2);
 
-  PROCEDURE pc_buscar_telefone(pr_nrdconta IN INTEGER
+  PROCEDURE pc_buscar_telefone(pr_cdcooper IN  crapcob.cdcooper%TYPE
+							  ,pr_nrdconta IN INTEGER
+                              ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                              ,pr_tab_tel  OUT type_tab_tel);
+
+  PROCEDURE pc_buscar_telefone_web(pr_nrdconta IN INTEGER
                               ,pr_nriniseq IN INTEGER --> Registro inicial da listagem
                               ,pr_nrregist IN INTEGER --> Numero de registros p/ paginaca
                               ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
@@ -496,24 +512,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
   END pc_buscar_email;
 
-  PROCEDURE pc_buscar_telefone(pr_nrdconta IN INTEGER
-                              ,pr_nriniseq IN INTEGER --> Registro inicial da listagem
-                              ,pr_nrregist IN INTEGER --> Numero de registros p/ paginaca
-                              ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+  PROCEDURE pc_buscar_telefone(pr_cdcooper IN  crapcob.cdcooper%TYPE
+							  ,pr_nrdconta IN INTEGER
                               ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
-                              ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
-                              ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
-                              ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+                              ,pr_tab_tel  OUT type_tab_tel) IS --> Tabela com os resultados
   BEGIN
 
     /* .............................................................................
 
-    Programa: pc_buscar_email
+    Programa: pc_buscar_telefone
     Sistema : Cobrança - Cooperativa de Credito
     Sigla   : COB
-    Autor   : Daniel Zimmermann
-    Data    : Agosto/15.                    Ultima atualizacao:
+    Autor   : Dioni/Supero
+    Data    : Abril/19.                    Ultima atualizacao:
 
     Dados referentes ao programa:
 
@@ -553,46 +565,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
       -- Variaveis de log
       vr_cdcooper INTEGER;
-      vr_cdoperad VARCHAR2(100);
-      vr_nmdatela VARCHAR2(100);
-      vr_nmeacao  VARCHAR2(100);
-      vr_cdagenci VARCHAR2(100);
-      vr_nrdcaixa VARCHAR2(100);
-      vr_idorigem VARCHAR2(100);
-      vr_contador INTEGER := 0; -- Contador p/ posicao no XML
-      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
-      vr_flgresgi BOOLEAN := FALSE;
+      vr_contador INTEGER := 0;
 
       vr_nmopetfn VARCHAR2(100);
       vr_destptfc VARCHAR2(100);
 
     BEGIN
 
-      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
-                               pr_cdcooper => vr_cdcooper,
-                               pr_nmdatela => vr_nmdatela,
-                               pr_nmeacao  => vr_nmeacao,
-                               pr_cdagenci => vr_cdagenci,
-                               pr_nrdcaixa => vr_nrdcaixa,
-                               pr_idorigem => vr_idorigem,
-                               pr_cdoperad => vr_cdoperad,
-                               pr_dscritic => vr_dscritic);
-
-      -- Criar cabeçalho do XML
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
-      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'Root',
-                             pr_posicao  => 0,
-                             pr_tag_nova => 'Dados',
-                             pr_tag_cont => NULL,
-                             pr_des_erro => vr_dscritic);
-
-      FOR rw_telefones IN cr_telefones(pr_cdcooper => vr_cdcooper,
+      FOR rw_telefones IN cr_telefones(pr_cdcooper => pr_cdcooper,
                                        pr_nrdconta => pr_nrdconta) LOOP
 
         vr_contador := vr_contador + 1;
-
-        IF ((vr_contador >= pr_nriniseq) AND (vr_contador < (pr_nriniseq + pr_nrregist))) THEN
 
           vr_nmopetfn := ' ';
 
@@ -610,6 +593,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                 vr_nmopetfn := 'INTELIG';
               WHEN 36 THEN
                 vr_nmopetfn := 'CLARO';
+			  ELSE
+			    vr_nmopetfn := '';
             END CASE;
           END IF;
 
@@ -625,8 +610,132 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                 vr_destptfc := 'COMERCIAL';
               WHEN 4 THEN
                 vr_destptfc := 'CONTATO';
+			  ELSE
+                vr_destptfc := '';
             END CASE;
           END IF;
+
+		  pr_tab_tel(vr_contador).nrdddtfc := rw_telefones.nrdddtfc;
+		  pr_tab_tel(vr_contador).nrtelefo := rw_telefones.nrtelefo;
+		  pr_tab_tel(vr_contador).nrdramal := rw_telefones.nrdramal;
+		  pr_tab_tel(vr_contador).destptfc := vr_destptfc;
+		  pr_tab_tel(vr_contador).nmpescto := rw_telefones.nmpescto;
+		  pr_tab_tel(vr_contador).nmopetfn := vr_nmopetfn;
+
+      END LOOP;
+
+    EXCEPTION
+      WHEN vr_null THEN
+        NULL;
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+        ROLLBACK;
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela COBEMP: ' || SQLERRM;
+        ROLLBACK;
+    END;
+
+  END pc_buscar_telefone;
+  
+  PROCEDURE pc_buscar_telefone_web(pr_nrdconta IN INTEGER
+								  ,pr_nriniseq IN INTEGER --> Registro inicial da listagem
+								  ,pr_nrregist IN INTEGER --> Numero de registros p/ paginaca
+								  ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+								  ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+								  ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+								  ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+								  ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+								  ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_buscar_email_web
+    Sistema : Cobrança - Cooperativa de Credito
+    Sigla   : COB
+    Autor   : Daniel Zimmermann
+    Data    : Agosto/15.                    Ultima atualizacao: Abril/19
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina busca telefone boletos emprestimos.
+
+    Observacao: -----
+
+    Alteracoes: Dioni/Supero Ajuste para chamar a procedure 'pc_buscar_email' com a lógica de busca dos telefones
+    ..............................................................................*/
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      vr_null      EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_contador INTEGER := 0; -- Contador p/ posicao no XML
+      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
+      vr_flgresgi BOOLEAN := FALSE;
+
+      vr_nmopetfn VARCHAR2(100);
+      vr_destptfc VARCHAR2(100);
+
+      vr_ind_tel INTEGER := 0; -- Indice para a PL/Table retornada da procedure	  
+      vr_tab_tel tela_cobemp.type_tab_tel; -- PL/Table com os dados retornados da procedure
+
+    BEGIN
+
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcooper,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => vr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
+
+
+	  tela_cobemp.pc_buscar_telefone(pr_cdcooper => vr_cdcooper
+									  ,pr_nrdconta => pr_nrdconta
+									  ,pr_cdcritic => vr_cdcritic
+									  ,pr_dscritic => vr_dscritic
+									  ,pr_tab_tel  => vr_tab_tel);
+
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Root',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'Dados',
+                             pr_tag_cont => NULL,
+                             pr_des_erro => vr_dscritic);
+
+	  FOR vr_ind_tel IN vr_tab_tel.first .. vr_tab_tel.last LOOP       
+
+        vr_contador := vr_contador + 1;
+
+        IF ((vr_contador >= pr_nriniseq) AND (vr_contador < (pr_nriniseq + pr_nrregist))) THEN          
 
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'Dados',
@@ -638,37 +747,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                                  pr_tag_pai  => 'telefone',
                                  pr_posicao  => vr_auxconta,
                                  pr_tag_nova => 'nrdddtfc',
-                                 pr_tag_cont => TO_CHAR(rw_telefones.nrdddtfc),
+                                 pr_tag_cont => TO_CHAR(vr_tab_tel(vr_ind_tel).nrdddtfc),
                                  pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'telefone',
                                  pr_posicao  => vr_auxconta,
                                  pr_tag_nova => 'nrtelefo',
-                                 pr_tag_cont => TO_CHAR(rw_telefones.nrtelefo),
+                                 pr_tag_cont => TO_CHAR(vr_tab_tel(vr_ind_tel).nrtelefo),
                                  pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'telefone',
                                  pr_posicao  => vr_auxconta,
                                  pr_tag_nova => 'nrdramal',
-                                 pr_tag_cont => TO_CHAR(rw_telefones.nrdramal),
+                                 pr_tag_cont => TO_CHAR(vr_tab_tel(vr_ind_tel).nrdramal),
                                  pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'telefone',
                                  pr_posicao  => vr_auxconta,
                                  pr_tag_nova => 'tptelefo',
-                                 pr_tag_cont => vr_destptfc,
+                                 pr_tag_cont => vr_tab_tel(vr_ind_tel).destptfc,
                                  pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'telefone',
                                  pr_posicao  => vr_auxconta,
                                  pr_tag_nova => 'nmpescto',
-                                 pr_tag_cont => TO_CHAR(rw_telefones.nmpescto),
+                                 pr_tag_cont => vr_tab_tel(vr_ind_tel).nmpescto,
                                  pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'telefone',
                                  pr_posicao  => vr_auxconta,
                                  pr_tag_nova => 'nmopetfn',
-                                 pr_tag_cont => vr_nmopetfn,
+                                 pr_tag_cont => vr_tab_tel(vr_ind_tel).nmopetfn,
                                  pr_des_erro => vr_dscritic);
 
           vr_auxconta := vr_auxconta + 1;
@@ -720,7 +829,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
         ROLLBACK;
     END;
 
-  END pc_buscar_telefone;
+  END pc_buscar_telefone_web;
+  
   
   PROCEDURE pc_buscar_celular(pr_nrdconta IN INTEGER
                              ,pr_nriniseq IN INTEGER --> Registro inicial da listagem

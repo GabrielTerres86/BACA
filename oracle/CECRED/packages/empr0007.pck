@@ -25,6 +25,10 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
   --            
   --             16/01/2019 - Adicionado novo campo (vlminpos) no record type typ_reg_cobemp.
   --                          (P298.2.2 - Luciano - Supero)
+  --  
+  --             23/04/2019 - Alterada rotina para envio do boleto por e-mail para
+  --                          recuperar o texto da crapprm.
+  --                          (P559 - André Clemer - Supero)
   --
   ---------------------------------------------------------------------------
 
@@ -72,7 +76,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 		,nmpescto       tbrecup_cobranca.nmcontato%TYPE
 		,nrctacob       tbrecup_cobranca.nrdconta_cob%TYPE
     ,lindigit       VARCHAR(60)
-    ,dsparcel       tbrecup_cobranca.dsparcelas%TYPE);
+    ,dsparcel       tbrecup_cobranca.dsparcelas%TYPE
+    ,incobran       crapcob.incobran%TYPE);
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_cde IS TABLE OF typ_reg_cde INDEX BY BINARY_INTEGER;
@@ -3912,6 +3917,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 							 ,cde.nmcontato nmpescto
 							 ,cde.nrdconta_cob nrctacob
                ,cde.dsparcelas
+               ,cob.incobran
            FROM crapcob cob, tbrecup_cobranca cde, crapass ass
           WHERE cde.cdcooper = pr_cdcooper                            --> Cód. cooperativa
 					  AND (pr_cdagenci = 0     OR ass.cdagenci =  pr_cdagenci)  --> PA
@@ -4090,6 +4096,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
           pr_tab_cde(vr_ind_cde).dtdpagto := rw_crapcob.dtdpagto;
           pr_tab_cde(vr_ind_cde).vldpagto := rw_crapcob.vldpagto;
           pr_tab_cde(vr_ind_cde).dsparcel := rw_crapcob.dsparcelas;
+          pr_tab_cde(vr_ind_cde).incobran := rw_crapcob.incobran;
+
 
           cobr0005.pc_buscar_titulo_cobranca(pr_cdcooper => pr_cdcooper
 --                                            ,pr_rowidcob => rw_crapcob.rowidcob
@@ -4316,7 +4324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 							 AND cde.nrboleto = pr_nrdocmto;
 						vr_dstransa := 'Enviado boleto por SMS refente ao contrato nr: ' || to_char(pr_nrctremp);
 						vr_dsmensag := 'Boleto enviado por SMS (' || to_char(pr_nrdddsms, '000') || ') ' ||
-						               to_char(pr_nrtelsms, '9999g9999','nls_numeric_characters=.-');
+						               to_char(pr_nrtelsms);
 					-- IMPRESSAO
 					WHEN 3 THEN
  						vr_dstransa := 'Boleto impresso refente ao contrato nr: ' || to_char(pr_nrctremp);
@@ -8133,6 +8141,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
 		Alteracoes: 27/09/2016 - Incluida verificacao de contratos de acordo,
                              Prj. 302 (Jean Michel).
+
+                    23/04/2019 - Alterada rotina para envio do boleto por e-mail para
+                             recuperar o texto da crapprm.
+                             (P559 - André Clemer - Supero)
 	..............................................................................*/
 		DECLARE
 			----------------------------- VARIAVEIS ---------------------------------
@@ -8162,6 +8174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
       -- variaveis do email
       vr_dscorema   VARCHAR2(4000); -- corpo do email                 
+      vr_texto_email  VARCHAR2(4000);
       vr_des_erro VARCHAR2(4000);
       
        vr_flgativo INTEGER := 0;
@@ -8359,18 +8372,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
             FROM crapcop cop
            WHERE cop.cdcooper = pr_cdcooper;
         
+          vr_texto_email := gene0001.fn_param_sistema(pr_cdcooper => vr_tab_cob(vr_tab_cob.FIRST).cdcooper
+                                                     ,pr_nmsistem => 'CRED'
+                                                     ,pr_cdacesso => 'COBEMP_TXT_EMAIL');
+
+          vr_texto_email := REPLACE(vr_texto_email,'#Cooperativa#',vr_nmrescop);
+          vr_texto_email := REPLACE(vr_texto_email,'#Cooperado#',vr_tab_cob(vr_tab_cob.FIRST).dspagad1);
+          vr_texto_email := REPLACE(vr_texto_email,'#LinhaDigitavel#',vr_tab_cob(vr_tab_cob.FIRST).lindigit);
+          vr_texto_email := REPLACE(vr_texto_email,'#Contrato#',to_char(vr_tab_cob(vr_tab_cob.FIRST).nrctremp)); -- Emprestimo
+          vr_texto_email := REPLACE(vr_texto_email,'#Bordero#',to_char(vr_tab_cob(vr_tab_cob.FIRST).nrctremp)); -- Desconto de titulo
+          vr_texto_email := REPLACE(vr_texto_email,'#Valor#',vr_tab_cob(vr_tab_cob.FIRST).vltitulo);
+          vr_texto_email := REPLACE(vr_texto_email,'#Vencimento#',to_char(vr_tab_cob(vr_tab_cob.FIRST).dtvencto,'DD/MM/YYYY'));
+          vr_texto_email := REPLACE(vr_texto_email,'#Email#',pr_dsdemail);
+          
           -- corpo do email
-          vr_dscorema := '<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >';                    
-          vr_dscorema := vr_dscorema || 
-                         'Bom dia, <br/><br/>' ||
-                         'Esta mensagem refere-se ao boleto emitido pela ' || vr_nmrescop || 
-                         ' para o cooperado: <br/><br/>' ||
-                         'Nome: ' || vr_tab_cob(vr_tab_cob.FIRST).dspagad1 || '<br/>' ||
-                         'E-mail: ' || pr_dsdemail;        
-          vr_dscorema := vr_dscorema || '<br/><br/>';
-          vr_dscorema := vr_dscorema || 'Boleto em anexo.<br/><br/>';
-          vr_dscorema := vr_dscorema || 'D&uacute;vidas, entrar em contato no telefone (47) 3231-1700.<br/>';          
-          vr_dscorema := vr_dscorema || '</meta>';                        
+          vr_dscorema := '<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >' || vr_texto_email || '</meta>';
 					
  					-- Gera impressão do boleto
 					gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                   --> Cooperativa conectada
