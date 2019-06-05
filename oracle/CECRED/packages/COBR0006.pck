@@ -277,9 +277,9 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                inavisms  crapcob.inavisms%TYPE,
                insmsant  crapcob.insmsant%TYPE,
                insmsvct  crapcob.insmsvct%TYPE,
-               insmspos  crapcob.insmspos%TYPE);
-  TYPE typ_tab_crapcob IS TABLE OF typ_rec_crapcob
-    INDEX BY VARCHAR2(50);
+    insmspos crapcob.insmspos%TYPE,
+    vlabatim crapcob.vlabatim%TYPE);
+  TYPE typ_tab_crapcob IS TABLE OF typ_rec_crapcob INDEX BY VARCHAR2(50);
 
   --> type para armazenar os dados do sacado do segmento Q
   TYPE typ_rec_sacado
@@ -1425,6 +1425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).insmsant := pr_rec_cobranca.insmsant;
     pr_tab_crapcob(vr_index).insmsvct := pr_rec_cobranca.insmsvct;
     pr_tab_crapcob(vr_index).insmspos := pr_rec_cobranca.insmspos;
+    pr_tab_crapcob(vr_index).vlabatim := pr_rec_cobranca.vlabatim;
     -- Atualizar os totalizadores
     pr_qtbloque := pr_qtbloque + 1;
     pr_vlrtotal := pr_vlrtotal + NVL(pr_rec_cobranca.vltitulo, 0);
@@ -2294,7 +2295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 vlrmulta,
                 inemiten,
                 flgdprot,
-				insrvprt,
+				        insrvprt,
                 flgaceit,
                 idseqttl,
                 cdoperad,
@@ -2316,7 +2317,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 inpagdiv,                
                 inenvcip,
                 inregcip,
-                dtvctori
+                dtvctori,
+                vlabatim
                 )
         VALUES (pr_tab_crapcob(vr_idx_cob).cdcooper,
                 pr_tab_crapcob(vr_idx_cob).dtmvtolt,
@@ -2359,7 +2361,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).vlrmulta,
                 pr_tab_crapcob(vr_idx_cob).inemiten,
                 pr_tab_crapcob(vr_idx_cob).flgdprot,
-				pr_tab_crapcob(vr_idx_cob).insrvprt,
+				        pr_tab_crapcob(vr_idx_cob).insrvprt,
                 pr_tab_crapcob(vr_idx_cob).flgaceit,
                 pr_tab_crapcob(vr_idx_cob).idseqttl,
                 pr_tab_crapcob(vr_idx_cob).cdoperad,
@@ -2380,7 +2382,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).inpagdiv,
                 pr_tab_crapcob(vr_idx_cob).inenvcip,
                 vr_inregcip,
-                pr_tab_crapcob(vr_idx_cob).dtvencto)
+                pr_tab_crapcob(vr_idx_cob).dtvencto,
+                nvl(pr_tab_crapcob(vr_idx_cob).vlabatim,0)
+                )
         RETURNING ROWID INTO vr_new_rowid;
       
       IF pr_tab_crapcob(vr_idx_cob).flgregis = 1 THEN      
@@ -5705,8 +5709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
     -- 34.3P Valor de Abatimento
     pr_rec_cobranca.vlabatim := pr_tab_linhas('VLABATIM').numero;
-    IF pr_rec_cobranca.vlabatim > 0  AND 
-       pr_rec_cobranca.vlabatim >= pr_rec_cobranca.vltitulo  THEN
+    IF pr_rec_cobranca.vlabatim >= pr_rec_cobranca.vltitulo THEN
       -- Valor do Abatimento Maior ou Igual ao Valor do Titulo
       vr_rej_cdmotivo := '34';
       RAISE vr_exc_reje;
@@ -8964,8 +8967,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- 37.7 Valor de Abatimento
     pr_rec_cobranca.vlabatim := pr_tab_linhas('VLABATIM').numero;
     
-    IF ((pr_rec_cobranca.vlabatim > 0)                         AND 
-        (pr_rec_cobranca.vlabatim >= pr_rec_cobranca.vltitulo)) THEN
+    IF pr_rec_cobranca.vlabatim >= pr_rec_cobranca.vltitulo THEN
        
       -- Valor do Abatimento Maior ou Igual ao Valor do Titulo 
       vr_rej_cdmotivo := '34';
