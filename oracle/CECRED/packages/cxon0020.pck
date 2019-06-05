@@ -1351,7 +1351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 08/05/2019
+      Data     : Junho/2015.                   Ultima atualizacao: 05/06/2019
 
       Dados referentes ao programa:
 
@@ -1401,6 +1401,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
 				  08/05/2019 - Tratamento para travar envio de 2 TEDs simultaneamente, ocorre erro na validacao do saldo
                                do deposito a vista - (Jose Gracik/Mouts - RITM0012961)
+
+                  05/06/2019 - Tratar INC0011406 relacionado ao horario de aprovacao da TED (Diego).
+
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
