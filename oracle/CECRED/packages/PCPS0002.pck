@@ -318,7 +318,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     -- Objetivo  : Realizar a leitura dos dados e geração do arquivo APCS101
     --
     -- Alteracoes: 
-    --             
+    --  
+    --       04/06/2019 - Limpar registros de erros de envios anteriores. (Renato Darosci - Supero)          
     ---------------------------------------------------------------------------------------------------------------
     
     -- Buscar os dados das solicitações que estão para ser enviadas
@@ -356,6 +357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     
     -- Procedure para atualizar o registro de solicitação para SOLICITADA
     PROCEDURE pc_portabilidade_OK(pr_dsdrowid  IN VARCHAR2) IS
+      
     BEGIN
       
       UPDATE tbcc_portabilidade_envia  t
@@ -365,7 +367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
            , t.dsdominio_motivo = NULL -- Limpar motivos de erro no reenvio
            , t.cdmotivo         = NULL --
        WHERE ROWID = pr_dsdrowid;
-       
+      
     END;
     
     -- Rotina generica para inserir os tags - Reduzir parametros e centralizar tratamento de erros
@@ -573,6 +575,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       /******************* FIM - Grupo Destino *******************/
       /******************* FIM - Grupo Portabilidade Conta Salário *******************/
       
+      
+      -- Limpar erros de envios anteriores
+      DELETE tbcc_portabilidade_env_erros t
+       WHERE t.cdcooper      = rg_dados.cdcooper
+         AND t.nrdconta      = rg_dados.nrdconta
+         AND t.nrsolicitacao = rg_dados.nrsolicitacao;
+       
       -- Atualizar registro processado
       pc_portabilidade_OK(rg_dados.dsdrowid);
       
@@ -2338,6 +2347,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     -- Objetivo  : Realizar a leitura dos cancelamentos pendentes e enviar via arquivo
     --
     -- Alteracoes: 
+    --
+    --       04/06/2019 - Limpar registros de erros de envios anteriores. (Renato Darosci - Supero)
     --             
     ---------------------------------------------------------------------------------------------------------------
     
@@ -2458,6 +2469,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                    ,pr_posicao  => vr_nrposxml);
           
       /******************* FIM - Grupo Portabilidade Conta Salário *******************/
+      
+      -- Limpar erros de envios anteriores
+      DELETE tbcc_portabilidade_env_erros t
+       WHERE t.cdcooper      = rg_dados.cdcooper
+         AND t.nrdconta      = rg_dados.nrdconta
+         AND t.nrsolicitacao = rg_dados.nrsolicitacao;
       
       -- Atualizar registro processado
       pc_cancelamento_solicitado(rg_dados.dsdrowid);
