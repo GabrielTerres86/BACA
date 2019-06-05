@@ -412,6 +412,12 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 	--             18/12/2018 - Correção na habilitação do convênio para inclusão na CIP
     --                          (Andre Clemer - Supero)
 		--
+	--             16/05/2019 - Correção no cursor principal das procedures
+	--                          pc_cancela_boletos e pc_susta_boletos
+	--                          para só selecionar boletos que estão em protesto
+	--                          e não os que estão no SERASA
+    --                          (Roberto Holz - Mout´s)
+		--
     ---------------------------------------------------------------------------
 
     -- Busca dos valores do contrato
@@ -5469,7 +5475,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                AND nrcnvcob = pr_nrconven
                AND dtdpagto IS NULL
                AND dtdbaixa IS NULL
-               AND (insitcrt = 0 OR insitcrt = 1);
+               AND (insitcrt = 0 OR insitcrt = 1)
+			   AND flgdprot = decode(insitcrt,0,1,flgdprot); -- INC0011123 -> Condição incluída para que
+			                                                 -- boletos que estão em negativação Serasa não
+															 -- sejam selecionados, assim somente selecionando
+															 -- os que estão protestados
+															 -- (Holz - Mout´s      16/05/2019)
+			   
         rw_boletos cr_boletos%ROWTYPE;
     
         -- Cria o registro de data
@@ -5598,7 +5610,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                AND nrcnvcob = pr_nrconven
                AND dtdpagto IS NULL
                AND dtdbaixa IS NULL
-               AND (insitcrt = 2 OR insitcrt = 3);
+               AND (insitcrt = 2 OR insitcrt = 3)
+			   AND flgdprot = decode(insitcrt,0,1,flgdprot); -- INC0011123 -> Condição incluída para que
+			                                                 -- boletos que estão em negativação Serasa não
+															 -- sejam selecionados, assim somente selecionando
+															 -- os que estão protestados
+															 -- (Holz - Mout´s      16/05/2019)
+			   
         rw_boletos cr_boletos%ROWTYPE;
     
         -- Cria o registro de data
