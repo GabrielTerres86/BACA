@@ -106,9 +106,9 @@ BEGIN
   --Atualizar sequence da Acredicoop para a execução do programa crps330 pegar a sequence 759 na próxima execução, conforme esperado pelo SERASA
   UPDATE crapsqu
      SET nrseqatu = 758
-   WHERE UPPER(squ.nmtabela) = 'CRAPCOB'
-     AND UPPER(squ.nmdcampo) = 'NRSEQARQ'
-     AND UPPER(squ.dsdchave) = '2';
+   WHERE UPPER(nmtabela) = 'CRAPCOB'
+     AND UPPER(nmdcampo) = 'NRSEQARQ'
+     AND UPPER(dsdchave) = '2';
 
   COMMIT;
 
