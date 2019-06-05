@@ -3584,7 +3584,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         RAISE vr_exc_saida;
       END IF;
 			
-      -- varrer temptable de emprestimos
+      -- PJ637
+      vr_lst_generic3 := json_list();
+	  
+	  -- varrer temptable de emprestimos
       vr_idxempr := vr_tab_dados_epr.first;
       WHILE vr_idxempr IS NOT NULL LOOP
 
