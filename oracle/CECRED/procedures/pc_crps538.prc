@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 15/03/2018
+   Data    : Novembro/2009.                   Ultima atualizacao: 03/06/2019
 
    Dados referentes ao programa:
 
@@ -453,6 +453,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                07/01/2019 - Alterações nas regras de devolucao da ABBC, alterado conforme 
                             instrucoes da requisicao. Chamado SCTASK0023401 - Gabriel (Mouts).			   
                              		     
+			   31/01/2019 - Adicionado parametro para indicar finalizacao do job (Luis Fernando - GFT)	              		     
+
+			   03/06/2019 - Corrigido problema com devolução de titulo que tinha como critica 966, 965
+			                cdcritic sendo apagado quando não deveria (Tiago)
    .............................................................................*/
 
      DECLARE
@@ -2291,8 +2295,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        
        --Procedimento para gravar dados na tabela memoria cratrej
        PROCEDURE pc_gera_cratrej (pr_craprej IN craprej%ROWTYPE) IS
-
+         vr_cdcrtica crapcri.cdcritic%TYPE;
        BEGIN         
+         
          -- Inclusao do nome do modulo logado - 15/03/2018 - Chamado 801483
          GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra || '.pc_gera_cratrej', pr_action => NULL); 
          BEGIN
@@ -2319,7 +2324,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                             pr_VLDPAGTO => null,
                                             pr_DSXML    => null,
                                             pr_dscrient => pr_craprej.cdpesqbb,
-                                            pr_cdcrisai => vr_cdcritic,
+                                            pr_cdcrisai => vr_cdcrtica,
                                             pr_dscrisai => vr_dscritic
                                             );
          EXCEPTION
@@ -3905,9 +3910,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                           ,pr_nrispbds => vr_nrispbif_rec
                                           ,pr_cdcriret => vr_cdcrignc
                                           ,pr_dscritic => vr_dscritic );
-                                    
-                         vr_cdcritic := vr_cdcrignc;
-                         IF NVL(vr_cdcritic,0) > 0 THEN
+                         
+                         IF NVL(vr_cdcrignc,0) > 0 THEN
+                           vr_cdcritic := vr_cdcrignc;
                            RAISE vr_exc_sair;
                          END IF;  
                       
@@ -4096,8 +4101,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_nrispbds => vr_nrispbif_rec
                                     ,pr_cdcriret => vr_cdcrignc
                                     ,pr_dscritic => vr_dscritic ); 
-                   vr_cdcritic := vr_cdcrignc;
-                   IF NVL(vr_cdcritic,0) > 0 THEN
+                   
+                   IF NVL(vr_cdcrignc,0) > 0 THEN
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF; 
                    
@@ -4133,8 +4139,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_nrispbds => vr_nrispbif_rec
                                     ,pr_cdcriret => vr_cdcrignc
                                     ,pr_dscritic => vr_dscritic );  
-                   vr_cdcritic := vr_cdcrignc;
-                   IF NVL(vr_cdcritic,0) > 0 THEN
+                   
+                   IF NVL(vr_cdcrignc,0) > 0 THEN
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF; 
                                         
@@ -4230,8 +4237,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                       ,pr_nrispbds => vr_nrispbif_rec
                                       ,pr_cdcriret => vr_cdcrignc
                                       ,pr_dscritic => vr_dscritic ); 
-                     vr_cdcritic := vr_cdcrignc;
-                     IF NVL(vr_cdcritic,0) > 0 THEN
+                     
+                     IF NVL(vr_cdcrignc,0) > 0 THEN
+                       vr_cdcritic := vr_cdcrignc;
                        RAISE vr_exc_sair;
                      END IF;  
                      
@@ -4415,8 +4423,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_nrispbds => vr_nrispbif_rec
                                     ,pr_cdcriret => vr_cdcrignc
                                     ,pr_dscritic => vr_dscritic );
-                   vr_cdcritic := vr_cdcrignc;
-                   IF NVL(vr_cdcritic,0) > 0 THEN
+                   
+                   IF NVL(vr_cdcrignc,0) > 0 THEN
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF;  
                    
@@ -4573,8 +4582,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_nrispbds => vr_nrispbif_rec
                                     ,pr_cdcriret => vr_cdcrignc
                                     ,pr_dscritic => vr_dscritic ); 
-                   vr_cdcritic := vr_cdcrignc;
-                   IF NVL(vr_cdcritic,0) > 0 THEN
+                   
+                   IF NVL(vr_cdcrignc,0) > 0 THEN
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF; 
                    
@@ -4733,8 +4743,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_nrispbds => vr_nrispbif_rec
                                     ,pr_cdcriret => vr_cdcrignc
                                     ,pr_dscritic => vr_dscritic );  
-                   vr_cdcritic := vr_cdcrignc;
-                   IF NVL(vr_cdcritic,0) > 0 THEN
+                   
+                   IF NVL(vr_cdcrignc,0) > 0 THEN
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF; 
                    
@@ -4958,8 +4969,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_nrispbds => vr_nrispbif_rec
                                     ,pr_cdcriret => vr_cdcrignc
                                     ,pr_dscritic => vr_dscritic );
-                   vr_cdcritic := vr_cdcrignc;
-                   IF NVL(vr_cdcritic,0) > 0 THEN
+                   
+                   IF NVL(vr_cdcrignc,0) > 0 THEN
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF;                                
                  
@@ -5010,8 +5022,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_nrispbds => vr_nrispbif_rec
                                     ,pr_cdcriret => vr_cdcrignc
                                     ,pr_dscritic => vr_dscritic ); 
-                   vr_cdcritic := vr_cdcrignc;
-                   IF NVL(vr_cdcritic,0) > 0 THEN
+                   
+                   IF NVL(vr_cdcrignc,0) > 0 THEN
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF;  
                    
@@ -5505,8 +5518,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_nrispbds => vr_nrispbif_rec
                                     ,pr_cdcriret => vr_cdcrignc
                                     ,pr_dscritic => vr_dscritic ); 
-                   vr_cdcritic := vr_cdcrignc;
-                   IF NVL(vr_cdcritic,0) > 0 THEN
+                   
+                   IF NVL(vr_cdcrignc,0) > 0 THEN
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF;  
                    
@@ -5555,8 +5569,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_nrispbds => vr_nrispbif_rec
                                     ,pr_cdcriret => vr_cdcrignc
                                     ,pr_dscritic => vr_dscritic ); 
-                   vr_cdcritic := vr_cdcrignc;
-                   IF NVL(vr_cdcritic,0) > 0 THEN
+                   
+                   IF NVL(vr_cdcrignc,0) > 0 THEN
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF;  
                    
@@ -5880,8 +5895,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_nrispbds => vr_nrispbif_rec
                                     ,pr_cdcriret => vr_cdcrignc
                                     ,pr_dscritic => vr_dscritic ); 
-                   vr_cdcritic := vr_cdcrignc;
-                   IF NVL(vr_cdcritic,0) > 0 THEN
+                   
+                   IF NVL(vr_cdcrignc,0) > 0 THEN
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF;  
                    
@@ -5935,8 +5951,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                   ,pr_nrispbds => vr_nrispbif_rec
                                   ,pr_cdcriret => vr_cdcrignc
                                   ,pr_dscritic => vr_dscritic );
-                 vr_cdcritic := vr_cdcrignc;
-                 IF NVL(vr_cdcritic,0) > 0 THEN
+                 
+                 IF NVL(vr_cdcrignc,0) > 0 THEN
+                   vr_cdcritic := vr_cdcrignc;
                    RAISE vr_exc_sair;
                  END IF;  
 
@@ -6457,8 +6474,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                   ,pr_nrispbds => NULL
                                   ,pr_cdcriret => vr_cdcrignc
                                   ,pr_dscritic => vr_dscritic ); 
-                 vr_cdcritic := vr_cdcrignc;
-                 IF NVL(vr_cdcritic,0) > 0 THEN
+                 
+                 IF NVL(vr_cdcrignc,0) > 0 THEN
+                   vr_cdcritic := vr_cdcrignc;
                    RAISE vr_exc_sair;
                  END IF;  
                  
