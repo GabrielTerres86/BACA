@@ -2393,6 +2393,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 
      Observacao: -----
      Alteracoes: 09/07/2018 - Alterada chamada da procedure ccrd0007.pc_alterar_cartao_bancoob passando o parâmetro pr_idseqttl fixo 1. Paulo Silva (Supero).
+
+                 05/06/2019 - Implementado LOG caso não encontra o registro de alteração de limite de cartão
+                              e ajustado cursor cr_limatu. 
+                              Alcemir Jr. (INC0012482).
      ..............................................................................*/
     DECLARE
       --Busca dados da Proposta
@@ -2470,11 +2474,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                  where a.cdcooper = x.cdcooper
                                    AND a.nrdconta = x.nrdconta
                                    AND a.nrctrcrd = x.nrctrcrd 
-                                   AND a.nrproposta_est = x.nrproposta_est); 
+                                   AND a.nrproposta_est = x.nrproposta_est
+                                   AND x.tpsituacao = 6 --Em Análise
+                                   AND x.insitdec   = 1 --Sem aprovacao
+                                   ); 
       rw_limatu cr_limatu%ROWTYPE;
+      
+      CURSOR cr_limatu_log IS
+        SELECT a.idatualizacao,
+               a.cdcooper,
+               a.nrdconta,
+               a.nrconta_cartao,
+               a.dtalteracao,
+               a.tpsituacao,
+               a.vllimite_anterior,
+               a.vllimite_alterado,
+               a.cdcanal,
+               a.cdoperad,
+               a.insitdec,
+               a.nrctrcrd,
+               a.nrproposta_est                    
+          FROM tbcrd_limite_atualiza a
+          JOIN crawcrd crd
+            ON crd.cdcooper = a.cdcooper
+           AND crd.nrdconta = a.nrdconta
+           AND crd.nrctrcrd = a.nrctrcrd
+           AND crd.nrcctitg > 0 /* Se a proposta nao tem conta cartao 
+                                   ela nao foi pro bancoob, logo nao
+                                   pode ter uma alteracao de limite */
+         WHERE a.cdcooper = pr_cdcooper
+           AND a.nrdconta = pr_nrdconta
+           AND a.nrctrcrd = pr_nrctrcrd 
+           AND a.nrproposta_est = pr_nrctrest;
+       rw_limatu_log cr_limatu_log%ROWTYPE;
       
       ----- VARIÁVEIS -----
       vr_vllimite     crawcrd.vllimcrd%TYPE;
+      vr_idprglog     NUMBER;
     
     BEGIN
 
@@ -2500,7 +2536,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         FETCH cr_limatu INTO rw_limatu;
         IF cr_limatu%FOUND THEN
           vr_vllimite := rw_limatu.vllimite_alterado;
-      END IF;
+        ELSE
+          
+          FOR rw_limatu_log  IN cr_limatu_log LOOP
+                                          
+            cecred.pc_log_programa(PR_DSTIPLOG   => 'E'
+                                  ,PR_CDPROGRAMA => 'WEBS0001_log_crd' 
+                                  ,pr_cdcooper   => pr_cdcooper
+                                  ,pr_dsmensagem => 'cdcooper: ' || rw_limatu_log.cdcooper || 
+                                                    ' nrdconta: ' || rw_limatu_log.nrdconta ||
+                                                    ' nrconta_cartao: ' || rw_limatu_log.nrconta_cartao || 
+                                                    ' dtalteracao: ' || to_char(rw_limatu_log.dtalteracao) || 
+                                                    ' tpsituacao: ' || rw_limatu_log.tpsituacao || 
+                                                    ' vllimite_anterior: ' || rw_limatu_log.vllimite_anterior || 
+                                                    ' vllimite_alterado: ' || rw_limatu_log.vllimite_alterado || 
+                                                    ' cdcanal: ' || rw_limatu_log.cdcanal || 
+                                                    ' cdoperad: ' || rw_limatu_log.cdoperad || 
+                                                    ' insitdec: ' || rw_limatu_log.insitdec || 
+                                                    ' nrctrcrd: ' || rw_limatu_log.nrctrcrd || 
+                                                    ' nrproposta_est: ' || rw_limatu_log.nrproposta_est                                                                                                                                                                    
+                                  ,PR_IDPRGLOG   => vr_idprglog);
+
+            
+          END LOOP;
+          
+        END IF;
         CLOSE cr_limatu;
        
       END IF;
