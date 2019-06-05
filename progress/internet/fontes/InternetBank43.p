@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Dezembro/2008                     Ultima atualizacao: 03/09/2011
+   Data    : Dezembro/2008                     Ultima atualizacao: 23/05/2019
    
    Dados referentes ao programa:
    
@@ -15,7 +15,10 @@
    Alteracoes: 03/09/2011 - Gerar nova senha do operador (Guilherme).
 
    12/04/2018 - Ajuste da mensagem quando não exigir ass. conjunta (Ricardo Linhares).
- 			  
+   
+   23/05/2019 - Remoção da HASHTAG # da mensagem, pois no novo IB não é feito a quebra
+                de linha, sendo assim, este simbolo era exibido em tela.
+				PRB0041593- Wagner - Sustentação. 			  
  
 ..............................................................................*/
  
@@ -140,7 +143,7 @@ END.
 FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
 IF  AVAILABLE tt-erro  THEN
-    aux_dscritic = aux_dscritic + "#" + tt-erro.dscritic.
+    aux_dscritic = aux_dscritic + " " + tt-erro.dscritic.
     
 xml_dsmsgerr = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>".
                                                        
