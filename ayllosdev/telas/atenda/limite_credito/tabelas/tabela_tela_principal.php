@@ -2,9 +2,10 @@
 /**
  * Autor: Bruno Luiz Katzjarowski - Mout's
  * Data: 27/11/2018;
- * Ultima alteração:
+ * Ultima alteração: 30/05/2019
  * 
- * Alterações:
+ * Alterações: 30/05/2019 - Ajuste para pegar o número do contrato formatado, para serer usado
+ *                          no link do DigiDoc - PRJ 438 (Mateus Z / Mouts)
  */
 ?>
 <div class="divRegistros">	
@@ -88,6 +89,7 @@
 
 			aux_limites.ativo.idcobope = "<?php echo $limite->{'idcobope'}; ?>";
 			aux_limites.ativo.dsobserv = "<?php echo $limite->{'dsobserv'}; ?>";
+			aux_limites.ativo.nrctrlimFormatado = "<?php echo formataNumericos("z.zzz.zz9",$limite->{'nrctrlim'},"."); ?>";
 			<?php
 		}else if($limite->{"lfgsitua"} == "1"){
 			?>

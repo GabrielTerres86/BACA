@@ -50,6 +50,8 @@
  * 031: [27/11/2018] Bruno Luiz Katzjarowski (Mout's): Criação da nova tela principal (nova rotina acessaTela) 
  * 032: [15/05/2019] Anderson Schloegel (Mout's): PJ470 - Mout's - Desabilitar campo de contrato para aba Novo Limite
  * 033: [04/06/2019] Mateus Z  (Mouts) : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 - SM2
+ * 034: [30/05/2019] Mateus Zimmermann (Mout's): PRJ 438 - Criadada váriaveis para armazenar conta e contrato formatados. 
+
 */
  
 var callafterLimiteCred = '';
@@ -143,7 +145,8 @@ var var_globais = {
     nivrisco: '',
     dsdtxfix: '',
     dtultmaj: '',
-    dtcanlim: ''
+    dtcanlim: '',
+    nrdcontaFormatada: ''
 }
 
 //bruno - prj - 438 - sprint 7 - tela principal
@@ -172,7 +175,8 @@ var aux_limites = {
         nrpatlvr: "",
         nrperger: "",
         idcobope: "",
-        dsobserv: ""
+        dsobserv: "",
+        nrctrlimFormatado: ""
     },
     pausado: {
         dtpropos: "",

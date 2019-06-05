@@ -13,8 +13,8 @@
 */
 
 // DESATIVAR em prod
- error_reporting(E_ALL);
- ini_set('display_errors', 1);
+ // error_reporting(E_ALL);
+ // ini_set('display_errors', 1);
 ini_set('session.cookie_domain', '.cecred.coop.br' );
 
 // inicio
@@ -555,7 +555,7 @@ function generateBloco($vetor = array(), $modo = 'screen') {
                 // texto simples
                 $bloco .= '<p class="title-string">';
                 $bloco .= '<b> ' . verificaTexto($nome) . ' </b>';
-                $bloco .= '<span class="upper">'.strtoupper(verificaTexto($valor)).'</span>';
+                $bloco .= '<span class="upper">'.verificaTexto($valor).'</span>';
                 $bloco .= '</p>';
 
             // dado de tipo: ERRO
@@ -564,7 +564,7 @@ function generateBloco($vetor = array(), $modo = 'screen') {
                 // se houve erro
                 $bloco .= '<p class="title-erro">';
                 $bloco .= '<b> ' . verificaTexto($nome) . ' </b>';
-                $bloco .= '<span class="upper">'.strtoupper(verificaTexto($valor)).'</span>';
+                $bloco .= '<span class="upper">'.verificaTexto($valor).'</span>';
                 $bloco .= '</p>';
 
             // dado de tipo: LINK
@@ -572,6 +572,11 @@ function generateBloco($vetor = array(), $modo = 'screen') {
 
                 // link
                 $bloco .= '<p class="title-string">';
+
+                // alteração do ambiente do digidoc
+                $valor  = str_replace('GEDServidor', $_SESSION['GEDServidor'], $valor);
+                $valor  = str_replace('gedervidor', $_SESSION['GEDServidor'], $valor);
+                $valor  = str_replace('0303hmlged01', $_SESSION['GEDServidor'], $valor);
                 $bloco .= '<b> <a href="'. verificaTexto($valor) .'" target="_blank"> ' . verificaTexto($nome) . '</a> <i class="fas fa-external-link-alt" alt="abre em outra janela" title="abre em outra janela"></i></b>';
                 $bloco .= '</p>';
 
@@ -750,19 +755,19 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                                 if ($zebra == 1) {
 
                                     // cor 1
-                                    $table .= '<tr class="'. ($cont == 1 ? "primeira-linha" : ""). ' zebra1">';
+                                    $table .= '<tr class="'. ($cont == 1 ? "primeira-linha" : "outras-linhas"). ' zebra1">';
                                     $zebra++;
 
                                 } else {
 
                                     // cor 2
-                                    $table .= '<tr class="'. ($cont == 1 ? "primeira-linha" : ""). ' zebra2">';
+                                    $table .= '<tr class="'. ($cont == 1 ? "primeira-linha" : "outras-linhas"). ' zebra2">';
                                     $zebra = 1;
                                 }
 
                             // quando gera HTML para PDF
                             } else {
-                                $table .= '<tr '. ($cont == 1 ? "class=\"primeira-linha\"" : ""). '>';
+                                $table .= '<tr '. ($cont == 1 ? "class=\"primeira-linha\"" : "class=\"outras-linhas\""). '>';
                             }
 
                             // percorre vetor de dados e escreve na tela
@@ -908,7 +913,7 @@ function verificaTexto($string = '-'){
 
         // verifica se é um campo que veio do fn_tag
         if ((isset($string['campo']['nome'])) && (isset($string['campo']['tipo']))  && (isset($string['campo']['valor']))) {
-            return '<b>' . $string['campo']['nome'] . ':</b> <span class="upper">' . trim(strtoupper($string['campo']['valor'])) . '</span>';
+            return '<b>' . trim($string['campo']['nome']) . ':</b> <span class="upper">' . trim($string['campo']['valor']) . '</span>';
         } else {
             return '-';
         }
@@ -942,7 +947,7 @@ function verificaTexto($string = '-'){
         } else {
 
             // zero
-            return $string;
+            return trim($string);
         }
     }
 

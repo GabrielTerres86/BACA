@@ -169,7 +169,11 @@ function validarPermissao($nmdatela,$nmrotina,$cddopcao='') {
 	return "";
 }
 
-function validaToken(){
+function validaToken($dados_cdcooper,
+                     $dados_cdagenci,
+                     $dados_nrdcaixa,
+                     $dados_idorigem,
+                     $dados_cdoperad){
     global $glbvars,$autentica,$retornoTelaUnica;
     
     // Devemos validar o token do operador
@@ -183,11 +187,16 @@ function validaToken(){
     $xmlResult = mensageria($xml,
         "CADA0011",
         "VALIDA_TOKEN",
-        $glbvars["cdcooper"],
-        $glbvars["cdagenci"],
-        $glbvars["nrdcaixa"],
-        $glbvars["idorigem"],
-        $glbvars["cdoperad"],
+        $dados_cdcooper,
+        $dados_cdagenci,
+        $dados_nrdcaixa,
+        $dados_idorigem,
+        $dados_cdoperad,
+        // $glbvars["cdcooper"],
+        // $glbvars["cdagenci"],
+        // $glbvars["nrdcaixa"],
+        // $glbvars["idorigem"],
+        // $glbvars["cdoperad"],
         "</Root>");
 
     $xmlData = simplexml_load_string($xmlResult);

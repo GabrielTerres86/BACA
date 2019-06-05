@@ -2,9 +2,10 @@
 /**
  * Autor: Bruno Luiz Katzjarowski;
  * Data: 27/11/2018
- * Ultima alteração:
+ * Ultima alteração: 30/05/2019
  * 
- * Alterações:
+ * Alterações: 30/05/2019 - Ajuste para pegar o número da conta formatado, para serer usado
+ *                          no link do DigiDoc - PRJ 438 (Mateus Z / Mouts)
  */
 
 //Include de principal.php para recuperar variaveis globais contidas nas telas anteriores
@@ -67,4 +68,5 @@ $xmlLimites = new SimpleXMLElement($xmlResult);
 
 <script>
     var_globais.nrdconta = "<?php echo $nrdconta ?>";
+    var_globais.nrdcontaFormatada = "<?php echo formataContaDVsimples($nrdconta) ?>";
 </script>
