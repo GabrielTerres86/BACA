@@ -26510,6 +26510,9 @@ end;';
                    12/04/2019 - Incluir validação para setar parametros no processamento
                                 de transferencias de valores, relacionados à portabilidade
                                 de Salário ( Renato Darosci - Supero - P485)
+                                
+                   05/06/2019 - Ajuste para impedir que seja repassado o valor nulo como
+                                id da folha de pagamento (Renato Darosci - Supero)
      ..........................................................................*/
 
 
@@ -27062,7 +27065,7 @@ end;';
           -- Verificar se é um agendamento de portabilidade
           IF rw_craplau.dsorigem = 'PORTABILIDAD' THEN
             vr_idportab := 1;
-            vr_nrridlfp := rw_craplau.nrridlfp;
+            vr_nrridlfp := NVL(rw_craplau.nrridlfp,0);
             
             -- Buscar os dados no registro da portabilidade
             OPEN  cr_portab(pr_cdcooper
@@ -27129,7 +27132,7 @@ end;';
                                        ,pr_cdispbif => vr_cdispbif  --> ISPB Banco Favorecido=
 					                             ,pr_idagenda => 2
                                        ,pr_idportab => vr_idportab
-                                       ,pr_nrridlfp => vr_nrridlfp
+                                       ,pr_nrridlfp => NVL(vr_nrridlfp,0)
                                        -- saida        
                                        ,pr_dsprotoc => vr_dsprotoc  --> Retorna protocolo    
                                        ,pr_tab_protocolo_ted => vr_tab_protocolo_ted --> dados do protocolo
