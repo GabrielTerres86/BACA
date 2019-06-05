@@ -4030,11 +4030,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --           14/03/2019 - Alterado o valor de lançamento do histórico 2677 de resgate na operação de crédito, trocado o valor liquido 
     --                        calculado na liberação do borderô pelo valor liquido calculado no momento do resgate, pois o extrato da
     --                        operação não estava fechando devido a diferença dos juros (Paulo Penteado GFT) 
-    --
-    --           20/05/2019 - Remocao de savepoint que podia em alguns casos gerar erro ao
-    --                        resgatar borderos de desconto de titulos.
-    --                        Chamado PRB0040399 - Gabriel Marcos (Mouts)    
-    --    
     -- .........................................................................
     ------------------------------- CURSORES ---------------------------------
     --Buscar informacoes de lote
@@ -4262,13 +4257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_idxtit:= pr_tab_titulos.NEXT(vr_idxtit);
     END LOOP;
   
----------------------------------------------------------------------------
---  Retirado o SAVEPOINT desse processo, pois pode gerar erro ao resgatar o 
---  borderô de desconto de títulos.    
-
---  SAVEPOINT vr_resgate;
----------------------------------------------------------------------------
-
+    SAVEPOINT vr_resgate;
     vr_dscritic := NULL;
     
     --> Lockar a tabela de lote
@@ -5049,7 +5038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
   EXCEPTION
     --Rotina chamada pela procedure pc_crps702 que grava o log na tbgen_prglog_ocorrencia
     WHEN vr_exc_erro THEN
-      --ROLLBACK TO vr_resgate;
+      ROLLBACK TO vr_resgate;
       -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic ||
@@ -5058,7 +5047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);     
-      --ROLLBACK TO vr_resgate;      
+      ROLLBACK TO vr_resgate;      
       -- Erro
       -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
       pr_cdcritic := 9999;
