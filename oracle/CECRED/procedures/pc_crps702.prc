@@ -27,9 +27,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps702(pr_cdcooper IN crapcop.cdcooper%TY
                                                  3) TBGEN_PRGLOG(Mensagem com codigo, parâmetros)
                               (Chamado REQ0011078 - 06/04/2018)
                               
-                 20/05/2019 - Melhoria na geracao de logs em caso de erro e envio do mesmo por e-mail.
-                              Chamado PRB0040399 - Gabriel Marcos (Mouts)    
-                      
   ............................................................................ */
 
 
@@ -37,7 +34,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps702(pr_cdcooper IN crapcop.cdcooper%TY
 
   -- Código do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS702';
-  vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
   -- Excluido vr_nomdojob CONSTANT VARCHAR2(100) := 'JBCOBRAN_CRPS702'; -- Chamado REQ0011078 - 06/04/2018
 
   -- Tratamento de erros
@@ -46,7 +42,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps702(pr_cdcooper IN crapcop.cdcooper%TY
   vr_exc_fim_ok_salto_dia EXCEPTION; -- Controle correto do resumo - Chamado REQ0011078 - 06/04/2018
   vr_cdcritic   PLS_INTEGER;
   vr_dscritic   VARCHAR2(4000);
-  vr_dscriConcat VARCHAR2(4000);
   vr_dsparc02   VARCHAR2(4000);
   vr_dsparc03   VARCHAR2(4000);
   vr_dsparc04   VARCHAR2(4000);
@@ -625,8 +620,6 @@ BEGIN
                          '. ' || vr_dsparc02 || 
                          vr_dsparc03 || 
                          vr_dsparc04 || 
-                         pr_cdcooper ||
-                         rw_crapceb_nbloq.nrdconta ||
                          '. Executa proximo.'; 
           vr_cdcritic := NVL(vr_cdcritic,0);           
           --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
@@ -636,9 +629,6 @@ BEGIN
                                ,pr_cdcritic => vr_cdcritic
                                ,pr_cdcricid => 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica  
                                );
-          IF  length(nvl(vr_dscriConcat,0)) + length (nvl(vr_dscritic,0))  < 4000 THEN  -- paulo k                
-            vr_dscriConcat := vr_dscriConcat || chr(10) || vr_dscritic;   
-          END IF; 
           vr_cdcritic := NULL;
           vr_dscritic := NULL;
           -- Retorna nome do módulo logado - Chamado REQ0011078 - 06/04/2018
@@ -666,13 +656,6 @@ BEGIN
   
   -- Gravação de Log do processo
   pc_controla_log_batch(pr_dstiplog => 'F');
-  
-  IF  TRIM(vr_dscriConcat) IS NOT NULL THEN -- paulo k     
-    COBR0009.pc_notifica_cobranca(pr_dsassunt  => 'PC_CRPS702 - Atualização de status de convênio de cobrança' -- paulo k
-                                 ,pr_dsmensag => 'Ocorreu falha ao atualizar o status de convênio de cobrança: ' || chr(10) || vr_dscriConcat
-                                                  ||'('||vr_idprglog||'). (pc_crps702)'       
-                                 ,pr_idprglog => vr_idprglog);                                  
-  END IF;
   
   -- Salvar informações atualizadas
   COMMIT;
