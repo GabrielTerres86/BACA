@@ -8741,7 +8741,7 @@ PROCEDURE pc_consulta_proposta_limite(pr_cdcooper IN crapass.cdcooper%TYPE      
                   NVL(vr_vlutiliz,0) +
                   NVL(vr_vllimcred,0); --Cartão de Crédito
                            
-   vr_string_contrato_epr := vr_string_contrato_epr||fn_tag('Endividamento Total do Fluxo',to_char(vr_vlendtot,'999g999g990d00'));       
+   --vr_string_contrato_epr := vr_string_contrato_epr||fn_tag('Endividamento Total do Fluxo',to_char(vr_vlendtot,'999g999g990d00'));       
     
    vr_string_contrato_epr := vr_string_contrato_epr||'</campos></subcategoria>';     
    vr_string_aux := null;
