@@ -7570,6 +7570,9 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
 			Objetivo  : Procedure responsável por agendar os jobs da integração PCPS.
 	  
 			Alteracoes:
+               05/06/2019 - Alterar para que não sejam agendados jobs com horário
+                            anterior ao atual, com objetivo de evitar que dois jobs 
+                            agendados atrasados, não rodem ao mesmo tempo. (Renato - Supero)
 		..............................................................................*/		
     
 		-- Cursor responsável por retornar os horários de agendamento dos jobs
@@ -7624,20 +7627,23 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
 				--
 				FOR vr_idx IN 1 .. vr_lstdados.count LOOP
     		  vr_dthrexe := TO_TIMESTAMP_TZ(TO_CHAR(SYSDATE ,'DD/MM/RRRR') || ' ' || vr_lstdados(vr_idx) || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
-					--
-					vr_jobname := 'JB_PCPS_ENVIA$';
-					GENE0001.pc_submit_job(pr_cdcooper => 3,
-																 pr_cdprogra => 'PCPS0002',
-																 pr_dsplsql  => 'BEGIN PCPS0002.pc_processa_envio_PCPS; END;',
-																 pr_dthrexe  => vr_dthrexe,
-																 pr_interva  => NULL,
-																 pr_jobname  => vr_jobname,
-																 pr_des_erro => vr_dscritic);
-					--
-					IF vr_dscritic IS NOT NULL THEN
-						RAISE vr_exc_erro; -- Não podemos parar o processamento
-					END IF;
-					--
+					-- Verifica se o horário do job é maior que o horário atual
+          IF vr_dthrexe > SYSDATE THEN
+            --
+            vr_jobname := 'JB_PCPS_ENVIA$';
+            GENE0001.pc_submit_job(pr_cdcooper => 3,
+                                   pr_cdprogra => 'PCPS0002',
+                                   pr_dsplsql  => 'BEGIN PCPS0002.pc_processa_envio_PCPS; END;',
+                                   pr_dthrexe  => vr_dthrexe,
+                                   pr_interva  => NULL,
+                                   pr_jobname  => vr_jobname,
+                                   pr_des_erro => vr_dscritic);
+            --
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro; -- Não podemos parar o processamento
+            END IF;
+            --
+          END IF; 
 				END LOOP;
       
       -- Parametro: 59 - Horario de processamento do arquivo de aceite compulsorio
@@ -7645,20 +7651,23 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
 				--
 				FOR vr_idx IN 1 .. vr_lstdados.count LOOP
           vr_dthrexe := TO_TIMESTAMP_TZ(TO_CHAR(SYSDATE ,'DD/MM/RRRR') || ' ' || vr_lstdados(vr_idx) || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
-					--
-					vr_jobname := 'JB_PCPS_COMPULS$';
-					GENE0001.pc_submit_job(pr_cdcooper => 3,
-																 pr_cdprogra => 'PCPS0002',
-																 pr_dsplsql  => 'BEGIN PCPS0002.pc_proc_arquivo_APCS(16); END;',
-																 pr_dthrexe  => vr_dthrexe,
-																 pr_interva  => NULL,
-																 pr_jobname  => vr_jobname,
-																 pr_des_erro => vr_dscritic);
-					--
-					IF vr_dscritic IS NOT NULL THEN
-						RAISE vr_exc_erro; -- Não podemos parar o processamento
-					END IF;
-					--
+					-- Verifica se o horário do job é maior que o horário atual
+          IF vr_dthrexe > SYSDATE THEN
+            --
+            vr_jobname := 'JB_PCPS_COMPULS$';
+            GENE0001.pc_submit_job(pr_cdcooper => 3,
+                                   pr_cdprogra => 'PCPS0002',
+                                   pr_dsplsql  => 'BEGIN PCPS0002.pc_proc_arquivo_APCS(16); END;',
+                                   pr_dthrexe  => vr_dthrexe,
+                                   pr_interva  => NULL,
+                                   pr_jobname  => vr_jobname,
+                                   pr_des_erro => vr_dscritic);
+            --
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro; -- Não podemos parar o processamento
+            END IF;
+            --
+          END IF;
 				END LOOP;
 			
       -- Parametro: 60 - Horario para envio dos e-mails de pendencias de avaliacao de solicitacao de portabilidade
@@ -7666,20 +7675,23 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
 				--
 				FOR vr_idx IN 1 .. vr_lstdados.count LOOP
           vr_dthrexe := TO_TIMESTAMP_TZ(TO_CHAR(SYSDATE ,'DD/MM/RRRR') || ' ' || vr_lstdados(vr_idx) || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
-					--
-					vr_jobname := 'JB_PCPS_EMAIL$';
-					GENE0001.pc_submit_job(pr_cdcooper => 3,
-																 pr_cdprogra => 'PCPS0002',
-																 pr_dsplsql  => 'BEGIN PCPS0002.pc_email_pa_portabilidade(); END;',
-																 pr_dthrexe  => vr_dthrexe,
-																 pr_interva  => NULL,
-																 pr_jobname  => vr_jobname,
-																 pr_des_erro => vr_dscritic);
-					--
-					IF vr_dscritic IS NOT NULL THEN
-						RAISE vr_exc_erro; -- Não podemos parar o processamento
-					END IF;
-					--
+					-- Verifica se o horário do job é maior que o horário atual
+          IF vr_dthrexe > SYSDATE THEN
+            --
+            vr_jobname := 'JB_PCPS_EMAIL$';
+            GENE0001.pc_submit_job(pr_cdcooper => 3,
+                                   pr_cdprogra => 'PCPS0002',
+                                   pr_dsplsql  => 'BEGIN PCPS0002.pc_email_pa_portabilidade(); END;',
+                                   pr_dthrexe  => vr_dthrexe,
+                                   pr_interva  => NULL,
+                                   pr_jobname  => vr_jobname,
+                                   pr_des_erro => vr_dscritic);
+            --
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro; -- Não podemos parar o processamento
+            END IF;
+            --
+          END IF;
 				END LOOP;
 		
       -- Parametro: 62 - Horario para processamento dos arquivos de retorno PCPS
@@ -7687,20 +7699,23 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
 				--
 				FOR vr_idx IN 1 .. vr_lstdados.count LOOP
           vr_dthrexe := TO_TIMESTAMP_TZ(TO_CHAR(SYSDATE ,'DD/MM/RRRR') || ' ' || vr_lstdados(vr_idx) || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
-					--
-					vr_jobname := 'JB_PCPS_RECEBE$';
-					GENE0001.pc_submit_job(pr_cdcooper => 3,
-																 pr_cdprogra => 'PCPS0002',
-																 pr_dsplsql  => 'BEGIN PCPS0002.pc_processa_receb_PCPS; END;',
-																 pr_dthrexe  => vr_dthrexe,
-																 pr_interva  => NULL,
-																 pr_jobname  => vr_jobname,
-																 pr_des_erro => vr_dscritic);
-					--
-					IF vr_dscritic IS NOT NULL THEN
-						RAISE vr_exc_erro; -- Não podemos parar o processamento
-					END IF;
-					--
+					-- Verifica se o horário do job é maior que o horário atual
+          IF vr_dthrexe > SYSDATE THEN
+            --
+            vr_jobname := 'JB_PCPS_RECEBE$';
+            GENE0001.pc_submit_job(pr_cdcooper => 3,
+                                   pr_cdprogra => 'PCPS0002',
+                                   pr_dsplsql  => 'BEGIN PCPS0002.pc_processa_receb_PCPS; END;',
+                                   pr_dthrexe  => vr_dthrexe,
+                                   pr_interva  => NULL,
+                                   pr_jobname  => vr_jobname,
+                                   pr_des_erro => vr_dscritic);
+            --
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro; -- Não podemos parar o processamento
+            END IF;
+            --
+          END IF;
 				END LOOP;
 				--
 			END IF;
@@ -7708,18 +7723,22 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
     
     -- Agendar processamento do arquivo APCS109 - Irá descompactar e mover os arquivos APCS109 do dia
     vr_dthrexe := TO_TIMESTAMP_TZ(TO_CHAR(SYSDATE ,'DD/MM/RRRR') || ' 22:30' || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
-    --
-    vr_jobname := 'JB_PCPS_APCS109$';
-    GENE0001.pc_submit_job(pr_cdcooper => 3,
-                           pr_cdprogra => 'PCPS0002',
-                           pr_dsplsql  => 'BEGIN PCPS0002.pc_proc_arquivo_APCS(17); END;',
-                           pr_dthrexe  => vr_dthrexe,
-                           pr_interva  => NULL,
-                           pr_jobname  => vr_jobname,
-                           pr_des_erro => vr_dscritic);
-    --
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro; -- Não podemos parar o processamento
+    
+    -- Verifica se o horário do job é maior que o horário atual
+    IF vr_dthrexe > SYSDATE THEN
+      --
+      vr_jobname := 'JB_PCPS_APCS109$';
+      GENE0001.pc_submit_job(pr_cdcooper => 3,
+                             pr_cdprogra => 'PCPS0002',
+                             pr_dsplsql  => 'BEGIN PCPS0002.pc_proc_arquivo_APCS(17); END;',
+                             pr_dthrexe  => vr_dthrexe,
+                             pr_interva  => NULL,
+                             pr_jobname  => vr_jobname,
+                             pr_des_erro => vr_dscritic);
+      --
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro; -- Não podemos parar o processamento
+      END IF;
     END IF;
     
 	EXCEPTION
