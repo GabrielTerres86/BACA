@@ -6131,6 +6131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     END IF;    
     CLOSE cr_limatu;
     
+    vr_nrctrcrd_aux := vr_nrctrcrd;
     
     OPEN cr_limultalt(pr_nrcontacartao => rw_crawcrd.nrcctitg);
     FETCH cr_limultalt INTO rw_limultalt;
