@@ -921,7 +921,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
         IF rw_crapdat.dtmvtolt > vr_dtdebito THEN
           LOOP 
             EXIT WHEN rw_crapdat.dtmvtolt < vr_dtdebito;
-            vr_dtdebito := add_months(rw_craprpp.dtdebito,1);
+            vr_dtdebito := add_months(vr_dtdebito,1);
           END LOOP;
         END IF;
 
@@ -934,33 +934,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
         
         --atualizado a tabela de poupanca programada
         IF vr_dscritic IS NULL THEN
-        BEGIN
+          BEGIN
             IF (rw_craprpp.flgteimosinha = 1)      AND  -- teimosinha ativa
                (rw_crapdat.dtmvtolt < vr_dtultdeb) AND  -- até data ultima data possivel de debito, antes de virar o mes             
                (vr_vlaplica < vr_vlprerpp)         THEN -- debitou parcial
                 
-              UPDATE craprpp SET dtaltrpp = rw_crapdat.dtmvtolt
-                           ,vlsppant = vr_vlprerpp - vr_vlaplica
-              WHERE craprpp.rowid = rw_craprpp.rowid;                    
-
-          ELSE
+                UPDATE craprpp SET dtaltrpp = rw_crapdat.dtmvtolt
+                                  ,vlsppant = vr_vlprerpp - vr_vlaplica
+                WHERE craprpp.rowid = rw_craprpp.rowid;                    
+                
+            ELSE              
                 /* Sempre que mudar a data do debito para o mes seguinte 
                    o indebito devera ser zerado */  
                 vr_indebito := 0;
             
-              UPDATE craprpp SET indebito = vr_indebito
-                                ,cdsitrpp = vr_cdsitrpp
-                                ,dtdebito = vr_dtdebito
-                                ,vlsppant = 0
-              WHERE craprpp.rowid = rw_craprpp.rowid;                    
-          END IF;
-        EXCEPTION
-          WHEN OTHERS THEN
-            --gerando a critica
-            vr_dscritic := 'Erro ao atualizar a tabela craprpp para a conta '||rw_craprpp.nrdconta||'. '||SQLERRM;
-            --abortando o sistema
-            RAISE vr_exc_saida;
-          END;                  
+                UPDATE craprpp SET indebito = vr_indebito
+                                  ,cdsitrpp = vr_cdsitrpp
+                                  ,dtdebito = vr_dtdebito
+                                  ,vlsppant = 0
+                WHERE craprpp.rowid = rw_craprpp.rowid;                    
+            END IF;
+          EXCEPTION
+            WHEN OTHERS THEN
+              --gerando a critica
+              vr_dscritic := 'Erro ao atualizar a tabela craprpp para a conta '||rw_craprpp.nrdconta||'. '||SQLERRM;
+              --abortando o sistema
+              RAISE vr_exc_saida;
+            END;                  
         END IF;
         
         --se o programa controla restart, atualiza o numero da conta processada
