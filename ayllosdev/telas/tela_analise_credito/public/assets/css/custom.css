@@ -709,3 +709,16 @@ a:link.btn-side-by-side, a:hover.btn-side-by-side, .btn-side-by-side,  .btn-side
   color: #22789c;
 
 }
+
+@media print {
+
+    .navbar {
+      display: none !important;
+    }
+    .sidebar{
+      display: none !important;
+    }
+    nav {
+      display: none !important;
+    }
+}
