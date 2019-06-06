@@ -5,7 +5,7 @@ set define off
 
 
 UPDATE CRAWEPR
-   SET DSNIVORI = DECODE( dsnivris, '2', 'A', '3', 'B', '4', 'C', '5', 'D', '6', 'E', '7', 'F','8', 'G', '9', 'H' ) 
+   SET DSNIVORI = 'D'
  WHERE CDCOOPER = 1
    AND NRDCONTA = 2140101
    AND NRCTREMP IN ( 1356136 );
