@@ -1664,7 +1664,9 @@ Alteracoes: -----
          AND crapcbd.inreterr = 0  -- Nao houve erros
          AND crapcbc.nrconbir = crapcbd.nrconbir
          AND crapcbc.inprodut <> 7
-         ORDER BY crapcbd.dtconbir DESC, DTREAPRO DESC;
+         AND craprpf.nrseqdet IS NOT NULL
+         AND trunc(crapass.dtdscore) = trunc(crapcbd.dtconbir)
+		 ORDER BY crapcbd.dtconbir DESC, DTREAPRO DESC;
   
   BEGIN
     -- Busca os detalhes das consultas de biros
