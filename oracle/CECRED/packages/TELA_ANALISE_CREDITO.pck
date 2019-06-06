@@ -400,7 +400,7 @@ create or replace package body cecred.TELA_ANALISE_CREDITO is
   --  Programa : TELA_ANALISE_CREDITO
   --  Sistema  : Aimaro/Ibratan
   --  Autor    : Equipe Mouts
-  --  Data     : Março/2019                 Ultima atualizacao: 30/05/2019
+  --  Data     : Março/2019                 Ultima atualizacao: 06/06/2019
   --
   -- Dados referentes ao programa:
   --
@@ -1654,8 +1654,8 @@ Alteracoes: -----
              craprpf --resumo das operações financeiras
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta
-         and crapcbd.nrconbir = craprpf.nrconbir (+)
-         AND crapcbd.nrseqdet = craprpf.nrseqdet (+)
+         and crapcbd.nrconbir = craprpf.nrconbir
+         AND crapcbd.nrseqdet = craprpf.nrseqdet
          AND crapcbd.cdcooper = crapass.cdcooper
          AND (crapcbd.nrdconta = crapass.nrdconta
           OR  crapcbd.nrcpfcgc = crapass.nrcpfcgc)
@@ -4750,7 +4750,7 @@ SELECT gene0002.fn_mask_conta(Decode(a.nrdconta,NULL,0,a.nrdconta)) conta
       vr_tab_tabela(1).coluna7 := '-'; vr_tab_tabela(1).coluna8 := '-'; vr_tab_tabela(1).coluna9 := '-';
       vr_tab_tabela(1).coluna10 := '-'; vr_tab_tabela(1).coluna11 := '-'; vr_tab_tabela(1).coluna12 := '-';
       vr_tab_tabela(1).coluna13 := '-';
-      --vr_tab_tabela(1).coluna14 := '-'; vr_tab_tabela(1).coluna15 := '-'; vr_tab_tabela(1).coluna16 := '-';
+      vr_tab_tabela(1).coluna14 := '-'; vr_tab_tabela(1).coluna15 := '-'; vr_tab_tabela(1).coluna16 := '-';
       vr_string := vr_string||fn_tag_table('Conta;Tipo;CPF;Nome;Nacionalidade;Data de Nascimento;CEP;Rua;Complemento;Número;Cidade;Bairro;Estado;Cpf do Cônjuge;Nome do Cônjuge;Conta do Cônjuge',vr_tab_tabela);
     else /*Tabela vazia Pessoa Juridica*/
       vr_tab_tabela(1).coluna1 := '-'; vr_tab_tabela(1).coluna2 := '-'; vr_tab_tabela(1).coluna3 := '-';
@@ -4981,7 +4981,7 @@ SELECT gene0002.fn_mask_conta(Decode(a.nrdconta,NULL,0,a.nrdconta)) conta
        end if;
        close c_busca_desconto_cheque;       
     elsif pr_tpproduto = c_limite_desc_titulo then
-     if pr_chamador = '0' then
+     if pr_chamador = 'O' then
       open c_busca_limite_credito;
        fetch c_busca_limite_credito into r_busca_limite_credito;
 
@@ -8738,8 +8738,7 @@ PROCEDURE pc_consulta_proposta_limite(pr_cdcooper IN crapass.cdcooper%TYPE      
    /*Cálculo do Endividamento total do fluxo*/
    vr_vlendtot := NVL(vr_vlfinanc_andamento,0) + --Proposta Esteira
                   NVL(vr_vlfinanc,0) + -- Financiado
-                  NVL(vr_vlutiliz,0) -
-                  NVL(vr_total_liquidacoes,0) +
+                  NVL(vr_vlutiliz,0) +
                   NVL(vr_vllimcred,0); --Cartão de Crédito
                            
    vr_string_contrato_epr := vr_string_contrato_epr||fn_tag('Endividamento Total do Fluxo',to_char(vr_vlendtot,'999g999g990d00'));       
@@ -9539,7 +9538,8 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
       vr_tab_tabela(vr_index).coluna8  := r_proposta_out_epr.contratos;
       vr_tab_tabela(vr_index).coluna9  := vr_garantia;
       vr_tab_tabela(vr_index).coluna10 := r_proposta_out_epr.decisao;
-      vr_tab_tabela(vr_index).coluna11 := r_proposta_out_epr.situacao;
+      vr_tab_tabela(vr_index).coluna11 := CASE WHEN r_proposta_out_epr.situacao IS NOT NULL THEN
+                                          r_proposta_out_epr.situacao ELSE '-' END;
       
       vr_total_proposta := vr_total_proposta+r_proposta_out_epr.vlemprst;  
     end if;
