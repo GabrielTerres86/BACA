@@ -13,9 +13,18 @@
 */
 
 // DESATIVAR em prod
- // error_reporting(E_ALL);
- // ini_set('display_errors', 1);
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
 ini_set('session.cookie_domain', '.cecred.coop.br' );
+
+// novo limite de memoria
+ini_set('memory_limit','500M');
+
+// Increase max_execution_time. If a large pdf fails, increase it even more.
+ini_set('max_execution_time', 180);
+
+// Increase this for old PHP versions (like 5.3.3). If a large pdf fails, increase it even more.
+ini_set('pcre.backtrack_limit', 1000000);
 
 // inicio
 session_start();
