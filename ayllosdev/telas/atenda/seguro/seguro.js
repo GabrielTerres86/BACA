@@ -1740,6 +1740,10 @@ function carregaPropriedadesFormPrestVida(){
     $(ben+','+parent).bind("keyup", function () {
 	    this.value = removeCaracteresInvalidos(this.value);
     });
+
+    $(ben+','+parent).bind("blur", function () {
+	    this.value = removeCaracteresInvalidos(this.value);
+    });
 	
 	// Bloqueia a digitação de caracteres com a tecla Alt + ..
     $(ben+','+parent).bind("keydown", function (e) {
