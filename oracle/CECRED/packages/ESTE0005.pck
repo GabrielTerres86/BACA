@@ -117,10 +117,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 				  18/04/2019 - P637 - Fazer a chamada da pc_gera_json_pessoa_ass da ESTE0002
                               (Luciano Kienolt - Supero)
 
+                  06/06/2019 - incluido variavel vr_nrctrcrd_aux para passar na tela analise credito - PRJ438 - Paulo Martins
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Cursor generico de calendario
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+  vr_nrctrcrd_aux crawcrd.nrctrcrd%TYPE;
 
   --> Extrair a descricao de critica do json de retorno
   FUNCTION fn_retorna_critica (pr_jsonreto IN VARCHAR2) RETURN VARCHAR2 IS
@@ -708,7 +711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       tela_analise_credito.pc_job_dados_analise_credito(pr_cdcooper  => pr_cdcooper
                                                        ,pr_nrdconta  => pr_nrdconta
                                                        ,pr_tpproduto => 7 -- Cartão de Crédito
-                                                       ,pr_nrctremp  => pr_nrctrcrd
+                                                       ,pr_nrctremp  => vr_nrctrcrd_aux --pr_nrctrcrd
                                                        ,pr_dscritic  => vr_dscritic);
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
@@ -6127,6 +6130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_tplimcrd := 0; -- concessao
     END IF;    
     CLOSE cr_limatu;
+    
     
     OPEN cr_limultalt(pr_nrcontacartao => rw_crawcrd.nrcctitg);
     FETCH cr_limultalt INTO rw_limultalt;
