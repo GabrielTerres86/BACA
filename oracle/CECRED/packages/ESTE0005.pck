@@ -10,6 +10,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0005 is
       Dados referentes ao programa:
 
       Objetivo  : Para solicitações e alterações de limites de credito de cartões utilizar a comunicação com O Motor e a Esteira de Crédito da IBRATAN.
+	  
 
       Alteracoes:
 
