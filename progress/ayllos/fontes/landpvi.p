@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 01/02/2018
+   Data    : Outubro/91.                     Ultima atualizacao: 06/06/2019
 
    Dados referentes ao programa:
 
@@ -522,7 +522,10 @@
                             flag de conta integraçao. PRJ366 (Lombardi).
 				 
                29/05/2018 - Alteraçao INSERT na craplcm pela chamada da rotina LANC0001
-                            PRJ450 - Renato Cordeiro ( AMcom )         
+                            PRJ450 - Renato Cordeiro ( AMcom )  
+                            
+               04/06/2019 - P565.1-RF20 - Inclusao do histórico 2973-DEV.CH.DEP.
+                           (Fernanda Kelli de Oliveira - AMCom)             
 
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
@@ -1057,6 +1060,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                           INPUT tel_cdhistor = 156  OR
                           INPUT tel_cdhistor = 191  OR
                           INPUT tel_cdhistor = 351  OR
+                          INPUT tel_cdhistor = 2973  OR
                           INPUT tel_cdhistor = 399) THEN
                          DO:
                              READKEY.
@@ -1303,6 +1307,18 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                      END.
            END.
        ELSE
+       IF  tel_cdhistor = 2973  AND
+           tel_cdalinea <> 0   THEN
+           DO:
+                IF   NOT CAN-FIND (crapali WHERE crapali.cdalinea = 
+                                                 tel_cdalinea) THEN
+                     DO:
+                         glb_cdcritic = 412.
+                         NEXT-PROMPT tel_cdalinea WITH FRAME f_landpv.
+                         NEXT.
+                     END.
+           END.
+       ELSE
        IF tel_cdhistor = 127 OR tel_cdhistor = 451 THEN
        DO:
            ASSIGN glb_cdcritic = 93.
@@ -1388,12 +1404,12 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                    OR
                   (tel_cdhistor = 399 AND aux_flchcoop = YES) 
                    OR
-                  (tel_cdhistor = 21  OR tel_cdhistor = 24    OR
-                   tel_cdhistor = 27  OR tel_cdhistor = 47    OR
-                   tel_cdhistor = 49  OR tel_cdhistor = 156   OR
-                   tel_cdhistor = 191 OR tel_cdhistor = 521   OR
-                   tel_cdhistor = 621 OR tel_cdhistor = 1873  OR
-                   tel_cdhistor = 1874)  THEN
+                  (tel_cdhistor = 21   OR tel_cdhistor = 24    OR
+                   tel_cdhistor = 27   OR tel_cdhistor = 47    OR
+                   tel_cdhistor = 49   OR tel_cdhistor = 156   OR
+                   tel_cdhistor = 191  OR tel_cdhistor = 521   OR
+                   tel_cdhistor = 621  OR tel_cdhistor = 1873  OR
+                   tel_cdhistor = 1874 OR tel_cdhistor = 2973)  THEN
                    DO:
                        ASSIGN glb_nrchqsdv = INT(SUBSTR(STRING(tel_nrdocmto,
                                                     "9999999"),1,6))
@@ -4083,7 +4099,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                    tel_cdhistor = 156 OR 
                    tel_cdhistor = 191 OR 
                    tel_cdhistor = 399) OR
-                   (tel_cdhistor = 351  AND tel_cdalinea > 0) THEN vr_cdpesqbb = STRING(tel_cdalinea,"99").
+                   (tel_cdhistor = 351  AND tel_cdalinea > 0) OR
+                   (tel_cdhistor = 2973  AND tel_cdalinea > 0) THEN vr_cdpesqbb = STRING(tel_cdalinea,"99").
              ELSE IF  tel_cdhistor = 275 OR
                         tel_cdhistor = 317 OR
                         tel_cdhistor = 3501 OR
