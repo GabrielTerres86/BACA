@@ -3584,6 +3584,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         RAISE vr_exc_saida;
       END IF;
 			
+      -- PJ637
+      vr_lst_generic3 := json_list();
+	  
       -- varrer temptable de emprestimos
       vr_idxempr := vr_tab_dados_epr.first;
       WHILE vr_idxempr IS NOT NULL LOOP
@@ -5458,27 +5461,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     -- Adicionar o JSON montado do Proponente no objeto principal
     vr_obj_analise.put('proponente',vr_obj_generico);
     
-    -- Chamada das Novas variaveis internas para o Json
-    rati0003.pc_json_variaveis_rating(pr_cdcooper => pr_cdcooper --> Código da cooperativa
-                                     ,pr_nrdconta => pr_nrdconta --> Numero da conta do emprestimo
-                                     ,pr_nrctremp => pr_nrctremp --> Numero do contrato de emprestimo
-                                     ,pr_flprepon => true    --> Flag Repon
-                                     ,pr_vlsalari => 0       --> Valor do Salario Associado
-                                     ,pr_persocio => 0       --> Percential do sócio
-                                     ,pr_dtadmsoc => NULL    --> Data Admissãio do Sócio
-                                     ,pr_dtvigpro => NULL    --> Data Vigência do Produto
-                                     ,pr_tpprodut => 0       --> Tipo de Produto
-                                     ,pr_dsjsonvar => vr_obj_generic4 --> Retorno Variáveis Json
-                                     ,pr_cdcritic => vr_cdcritic  --> Código de critica encontrada
-                                     ,pr_dscritic => vr_dscritic);
+    -- Nao faz Variaveis Internas se for CDC
+    IF rw_crawepr.inlcrcdc <> 1 THEN
+      -- Chamada das Novas variaveis internas para o Json
+      rati0003.pc_json_variaveis_rating(pr_cdcooper => pr_cdcooper --> Código da cooperativa
+                                       ,pr_nrdconta => pr_nrdconta --> Numero da conta do emprestimo
+                                       ,pr_nrctremp => pr_nrctremp --> Numero do contrato de emprestimo
+                                       ,pr_flprepon => true    --> Flag Repon
+                                       ,pr_vlsalari => 0       --> Valor do Salario Associado
+                                       ,pr_persocio => 0       --> Percential do sócio
+                                       ,pr_dtadmsoc => NULL    --> Data Admissãio do Sócio
+                                       ,pr_dtvigpro => NULL    --> Data Vigência do Produto
+                                       ,pr_tpprodut => 0       --> Tipo de Produto
+                                       ,pr_dsjsonvar => vr_obj_generic4 --> Retorno Variáveis Json
+                                       ,pr_cdcritic => vr_cdcritic  --> Código de critica encontrada
+                                       ,pr_dscritic => vr_dscritic);
 
-    -- Verifica inconsistencias
-    if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then  
-       RAISE vr_exc_erro;
-    end if;
+      -- Verifica inconsistencias
+      if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then  
+         RAISE vr_exc_erro;
+      end if;
                   
-    -- Enviar informações das variáveis internas ao JSON
-    vr_obj_analise.put('variaveisInternas', vr_obj_generic4);	
+      -- Enviar informações das variáveis internas ao JSON
+      vr_obj_analise.put('variaveisInternas', vr_obj_generic4);	
+    END IF;
 
     rw_crapass := NULL;
     --> Buscar dados do associado
