@@ -322,6 +322,14 @@ declare
        and o.cdcooper=1;
   rw_crapope cr_crapope%rowtype;
   
+  cursor cr_crapope_existe (pr_cdoperad crapope.cdoperad%type
+                           ,pr_cdcooper crapope.cdcooper%type) is
+    select *
+      from crapope o
+     where upper(o.cdoperad)=upper(pr_cdoperad)
+       and o.cdcooper=pr_cdcooper;
+  rw_crapope_existe cr_crapope_existe%rowtype;
+  
 begin
    open cr_crapope;
   fetch cr_crapope into rw_crapope;
@@ -329,6 +337,18 @@ begin
   
   for rw_crapcop in cr_crapcop loop
     for rw_carga in cr_carga loop 
+      
+      OPEN cr_crapope_existe(pr_cdoperad => rw_carga.cdoperad
+                            ,pr_cdcooper => rw_crapcop.cdcooper);
+      FETCH cr_crapope_existe INTO rw_crapope_existe;
+
+      IF cr_crapope_existe%FOUND THEN
+        CLOSE cr_crapope_existe;
+        --dbms_output.put_line('Usuário já existe: ' || rw_carga.cdoperad || ' para cooperativa: ' || rw_crapcop.cdcooper);
+        continue;
+        -- se ja tiver usuário nao cria
+      END IF;
+      CLOSE cr_crapope_existe;
       
       --dbms_output.put_line('Criando usuário: ' || rw_carga.cdoperad || ' para cooperativa: ' || rw_crapcop.cdcooper);
       begin
