@@ -7573,6 +7573,8 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
                05/06/2019 - Alterar para que não sejam agendados jobs com horário
                             anterior ao atual, com objetivo de evitar que dois jobs 
                             agendados atrasados, não rodem ao mesmo tempo. (Renato - Supero)
+                            
+               07/06/2019 - Verificar os jobs agendados por horário. (Renato - Supero)
 		..............................................................................*/		
     
 		-- Cursor responsável por retornar os horários de agendamento dos jobs
@@ -7584,6 +7586,17 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
 				  AND cdcooper = 3;
 		rw_crappco cr_crappco%ROWTYPE;
 		
+    -- Busca registros de jobs 
+    CURSOR cr_job_duplicado(pr_job_name IN VARCHAR2
+                           ,pr_dhexcjob IN DATE) IS
+      SELECT COUNT(*) qtde
+        FROM dba_scheduler_jobs job
+       WHERE job.owner                = 'CECRED' --Fixo
+         AND job.job_name             LIKE pr_job_name||'%' -- mesmo job, mesma cooperativa e mesmo horário do dia
+         AND job.next_run_date  BETWEEN (pr_dhexcjob-(15/60/24)) AND (pr_dhexcjob+(15/60/24)); -- JOBS 15 minutos antes ou depois do agendamento atual
+    
+    vr_qtdejobs    NUMBER;
+    
 		-- Variável interna
 		vr_dsconteu    crappco.dsconteu%TYPE;
 		vr_dthrexe     TIMESTAMP;
@@ -7629,20 +7642,31 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
     		  vr_dthrexe := TO_TIMESTAMP_TZ(TO_CHAR(SYSDATE ,'DD/MM/RRRR') || ' ' || vr_lstdados(vr_idx) || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
 					-- Verifica se o horário do job é maior que o horário atual
           IF vr_dthrexe > SYSDATE THEN
-            --
+            -- Zerar contador 
+            vr_qtdejobs := 0;
+            -- Nome do Job
             vr_jobname := 'JB_PCPS_ENVIA$';
-            GENE0001.pc_submit_job(pr_cdcooper => 3,
-                                   pr_cdprogra => 'PCPS0002',
-                                   pr_dsplsql  => 'BEGIN PCPS0002.pc_processa_envio_PCPS; END;',
-                                   pr_dthrexe  => vr_dthrexe,
-                                   pr_interva  => NULL,
-                                   pr_jobname  => vr_jobname,
-                                   pr_des_erro => vr_dscritic);
+            -- Busca a quantidade de jobs que estão agendados para executar 15 minutos antes e após esse horário
+            OPEN  cr_job_duplicado(vr_jobname, vr_dthrexe);
+            FETCH cr_job_duplicado INTO vr_qtdejobs;
+            CLOSE cr_job_duplicado;
             --
-            IF vr_dscritic IS NOT NULL THEN
-              RAISE vr_exc_erro; -- Não podemos parar o processamento
+            -- Se não há nenhum job agendado para horário próximo
+            IF NVL(vr_qtdejobs, 0) = 0 THEN           
+              --
+              GENE0001.pc_submit_job(pr_cdcooper => 3,
+                                     pr_cdprogra => 'PCPS0002',
+                                     pr_dsplsql  => 'BEGIN PCPS0002.pc_processa_envio_PCPS; END;',
+                                     pr_dthrexe  => vr_dthrexe,
+                                     pr_interva  => NULL,
+                                     pr_jobname  => vr_jobname,
+                                     pr_des_erro => vr_dscritic);
+              --
+              IF vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_erro; -- Não podemos parar o processamento
+              END IF;
+              --
             END IF;
-            --
           END IF; 
 				END LOOP;
       
@@ -7653,20 +7677,31 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
           vr_dthrexe := TO_TIMESTAMP_TZ(TO_CHAR(SYSDATE ,'DD/MM/RRRR') || ' ' || vr_lstdados(vr_idx) || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
 					-- Verifica se o horário do job é maior que o horário atual
           IF vr_dthrexe > SYSDATE THEN
-            --
+            -- Zerar contador 
+            vr_qtdejobs := 0;
+            -- Nome do Job
             vr_jobname := 'JB_PCPS_COMPULS$';
-            GENE0001.pc_submit_job(pr_cdcooper => 3,
-                                   pr_cdprogra => 'PCPS0002',
-                                   pr_dsplsql  => 'BEGIN PCPS0002.pc_proc_arquivo_APCS(16); END;',
-                                   pr_dthrexe  => vr_dthrexe,
-                                   pr_interva  => NULL,
-                                   pr_jobname  => vr_jobname,
-                                   pr_des_erro => vr_dscritic);
+            -- Busca a quantidade de jobs que estão agendados para executar 15 minutos antes e após esse horário
+            OPEN  cr_job_duplicado(vr_jobname, vr_dthrexe);
+            FETCH cr_job_duplicado INTO vr_qtdejobs;
+            CLOSE cr_job_duplicado;
             --
-            IF vr_dscritic IS NOT NULL THEN
-              RAISE vr_exc_erro; -- Não podemos parar o processamento
+            -- Se não há nenhum job agendado para horário próximo
+            IF NVL(vr_qtdejobs, 0) = 0 THEN           
+              --
+              GENE0001.pc_submit_job(pr_cdcooper => 3,
+                                     pr_cdprogra => 'PCPS0002',
+                                     pr_dsplsql  => 'BEGIN PCPS0002.pc_proc_arquivo_APCS(16); END;',
+                                     pr_dthrexe  => vr_dthrexe,
+                                     pr_interva  => NULL,
+                                     pr_jobname  => vr_jobname,
+                                     pr_des_erro => vr_dscritic);
+              --
+              IF vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_erro; -- Não podemos parar o processamento
+              END IF;
+              --
             END IF;
-            --
           END IF;
 				END LOOP;
 			
@@ -7677,20 +7712,31 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
           vr_dthrexe := TO_TIMESTAMP_TZ(TO_CHAR(SYSDATE ,'DD/MM/RRRR') || ' ' || vr_lstdados(vr_idx) || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
 					-- Verifica se o horário do job é maior que o horário atual
           IF vr_dthrexe > SYSDATE THEN
-            --
+            -- Zerar contador 
+            vr_qtdejobs := 0;
+            -- Nome do Job
             vr_jobname := 'JB_PCPS_EMAIL$';
-            GENE0001.pc_submit_job(pr_cdcooper => 3,
-                                   pr_cdprogra => 'PCPS0002',
-                                   pr_dsplsql  => 'BEGIN PCPS0002.pc_email_pa_portabilidade(); END;',
-                                   pr_dthrexe  => vr_dthrexe,
-                                   pr_interva  => NULL,
-                                   pr_jobname  => vr_jobname,
-                                   pr_des_erro => vr_dscritic);
+            -- Busca a quantidade de jobs que estão agendados para executar 15 minutos antes e após esse horário
+            OPEN  cr_job_duplicado(vr_jobname, vr_dthrexe);
+            FETCH cr_job_duplicado INTO vr_qtdejobs;
+            CLOSE cr_job_duplicado;
             --
-            IF vr_dscritic IS NOT NULL THEN
-              RAISE vr_exc_erro; -- Não podemos parar o processamento
+            -- Se não há nenhum job agendado para horário próximo
+            IF NVL(vr_qtdejobs, 0) = 0 THEN           
+              --
+              GENE0001.pc_submit_job(pr_cdcooper => 3,
+                                     pr_cdprogra => 'PCPS0002',
+                                     pr_dsplsql  => 'BEGIN PCPS0002.pc_email_pa_portabilidade(); END;',
+                                     pr_dthrexe  => vr_dthrexe,
+                                     pr_interva  => NULL,
+                                     pr_jobname  => vr_jobname,
+                                     pr_des_erro => vr_dscritic);
+              --
+              IF vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_erro; -- Não podemos parar o processamento
+              END IF;
+              --
             END IF;
-            --
           END IF;
 				END LOOP;
 		
@@ -7701,20 +7747,31 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
           vr_dthrexe := TO_TIMESTAMP_TZ(TO_CHAR(SYSDATE ,'DD/MM/RRRR') || ' ' || vr_lstdados(vr_idx) || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR');
 					-- Verifica se o horário do job é maior que o horário atual
           IF vr_dthrexe > SYSDATE THEN
-            --
+            -- Zerar contador 
+            vr_qtdejobs := 0;
+            -- Nome do Job
             vr_jobname := 'JB_PCPS_RECEBE$';
-            GENE0001.pc_submit_job(pr_cdcooper => 3,
-                                   pr_cdprogra => 'PCPS0002',
-                                   pr_dsplsql  => 'BEGIN PCPS0002.pc_processa_receb_PCPS; END;',
-                                   pr_dthrexe  => vr_dthrexe,
-                                   pr_interva  => NULL,
-                                   pr_jobname  => vr_jobname,
-                                   pr_des_erro => vr_dscritic);
+            -- Busca a quantidade de jobs que estão agendados para executar 15 minutos antes e após esse horário
+            OPEN  cr_job_duplicado(vr_jobname, vr_dthrexe);
+            FETCH cr_job_duplicado INTO vr_qtdejobs;
+            CLOSE cr_job_duplicado;
             --
-            IF vr_dscritic IS NOT NULL THEN
-              RAISE vr_exc_erro; -- Não podemos parar o processamento
+            -- Se não há nenhum job agendado para horário próximo
+            IF NVL(vr_qtdejobs, 0) = 0 THEN           
+              --
+              GENE0001.pc_submit_job(pr_cdcooper => 3,
+                                     pr_cdprogra => 'PCPS0002',
+                                     pr_dsplsql  => 'BEGIN PCPS0002.pc_processa_receb_PCPS; END;',
+                                     pr_dthrexe  => vr_dthrexe,
+                                     pr_interva  => NULL,
+                                     pr_jobname  => vr_jobname,
+                                     pr_des_erro => vr_dscritic);
+              --
+              IF vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_erro; -- Não podemos parar o processamento
+              END IF;
+              --
             END IF;
-            --
           END IF;
 				END LOOP;
 				--
@@ -7726,18 +7783,29 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
     
     -- Verifica se o horário do job é maior que o horário atual
     IF vr_dthrexe > SYSDATE THEN
-      --
+      -- Zerar contador 
+      vr_qtdejobs := 0;
+      -- Nome do Job
       vr_jobname := 'JB_PCPS_APCS109$';
-      GENE0001.pc_submit_job(pr_cdcooper => 3,
-                             pr_cdprogra => 'PCPS0002',
-                             pr_dsplsql  => 'BEGIN PCPS0002.pc_proc_arquivo_APCS(17); END;',
-                             pr_dthrexe  => vr_dthrexe,
-                             pr_interva  => NULL,
-                             pr_jobname  => vr_jobname,
-                             pr_des_erro => vr_dscritic);
+      -- Busca a quantidade de jobs que estão agendados para executar 15 minutos antes e após esse horário
+      OPEN  cr_job_duplicado(vr_jobname, vr_dthrexe);
+      FETCH cr_job_duplicado INTO vr_qtdejobs;
+      CLOSE cr_job_duplicado;
       --
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro; -- Não podemos parar o processamento
+      -- Se não há nenhum job agendado para horário próximo
+      IF NVL(vr_qtdejobs, 0) = 0 THEN           
+        --
+        GENE0001.pc_submit_job(pr_cdcooper => 3,
+                               pr_cdprogra => 'PCPS0002',
+                               pr_dsplsql  => 'BEGIN PCPS0002.pc_proc_arquivo_APCS(17); END;',
+                               pr_dthrexe  => vr_dthrexe,
+                               pr_interva  => NULL,
+                               pr_jobname  => vr_jobname,
+                               pr_des_erro => vr_dscritic);
+        --
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro; -- Não podemos parar o processamento
+        END IF;
       END IF;
     END IF;
     
