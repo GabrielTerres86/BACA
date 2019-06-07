@@ -344,11 +344,14 @@ end;
 			 07/12/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT D
                           Jose Dill - Mouts
                           
-       12/02/2019 - Ajuste da revitalização de lotes craplcm 
-                    Jose Dill - Mout (INC0032794)  
+            12/02/2019 - Ajuste da revitalização de lotes craplcm 
+                          Jose Dill - Mout (INC0032794)  
                     
-       06/03/2019 - Permitir as mensagens SEL e RDC executarem com o processo rodando. 
-                    Jose Dill - Mouts                              
+            06/03/2019 - Permitir as mensagens SEL, SLB e RDC executarem com o processo rodando. 
+                         Jose Dill - Mouts  (INC0011395)    
+						 
+			07/06/2019 - Permitir processamento de mensagens LTR independente do processo batch da 
+			             AILOS (Diego). 			                         
  
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -7752,6 +7755,7 @@ END pc_trata_arquivo_cir0060;
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SEL%' -- Sprint D          
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SLB%' -- Sprint D 
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'RDC%'         
+		  AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'LTR%'
           THEN
           -- Se o processo estiver rodando
           IF NOT fn_verifica_processo THEN
@@ -9279,6 +9283,7 @@ END pc_trata_arquivo_cir0060;
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SEL%' 
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'RDC%'       
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SLB%'  
+		  AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'LTR%'
           AND NOT vr_aux_tagCABInf
           THEN
             IF NOT fn_verifica_processo THEN
