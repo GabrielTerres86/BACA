@@ -19,11 +19,11 @@ BEGIN
 				,25
 				,1
 				,0
-				,apr.idmotivo
+				,79
 				,1
 		  FROM tbepr_param_conta apr
 			  ,crapass ass
-		  WHERE apr.idmotivo IS NOT NULL
+		  WHERE apr.idmotivo IS NULL
 			AND apr.flglibera_pre_aprv = 0
 			AND ass.cdcooper = apr.cdcooper
 			AND ass.nrdconta = apr.nrdconta;
