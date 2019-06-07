@@ -11009,14 +11009,13 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
     if trim(rw_crapope.cddsenha) is null then
     -- Gera o codigo do token
     vr_dstoken := substr(dbms_random.random,1,10);
---    vr_dstoken := upper(vr_cdoperad);--'teste';
 
     -- Atualiza a tabela de senha do operador
     BEGIN
       UPDATE crapope
          SET cddsenha = vr_dstoken
        WHERE upper(cdoperad) = upper(vr_cdoperad);
-      COMMIT;
+      
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao atualizar CRAPOPE: '||SQLERRM;
