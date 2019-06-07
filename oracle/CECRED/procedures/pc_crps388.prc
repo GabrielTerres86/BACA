@@ -283,7 +283,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
 
               23/05/2019 - Implementado para antes de processar este processo, cancelar os 
                            agendamento pendentes DEBNET.
-                           (PRB0041528 - Andre - MoutS)
+                           (PRB0041528 - Andre B - MoutS)
 
   ..............................................................................*/
 

@@ -20529,7 +20529,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --               29/08/2018 - Revitalização Sistemas - Ajuste para update unico (Andreatta-Mouts)
 
 	--               09/05/2019 - Incluído tratamento dentro da pc_gera_arq_coop_cnab240  excluido o antigo tratamento. 
-	                              (Daniel Lombardi - Mouts'S)
+	--                            (Daniel Lombardi - Mouts'S)
     -- .........................................................................
 
   BEGIN

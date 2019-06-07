@@ -45,7 +45,7 @@
    
    21/02/2018 - Ajustar layout do relatorio conforme o crps662 (Lucas Ranghetti #852207)
    
-   29/05/2019 - Verificar última execução pela rotina do oracle (Andre - MoutS - PRB0041528)
+   29/05/2019 - Verificar última execução pela rotina do oracle (Andre B - MoutS - PRB0041528)
    
 ..............................................................................*/
 

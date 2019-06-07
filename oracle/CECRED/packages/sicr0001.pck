@@ -373,7 +373,7 @@ create or replace package body cecred.SICR0001 is
 
                  05/04/2019 - Criada a rotina pc_SICR0001_cancela_debitos, para que não fiquem
                               debitos automaticos e boletos pendentes da Sicredi após fechamento
-				                     (Andre - MoutS - Chamado PRB0040541)
+				                     (Andre B - MoutS - Chamado PRB0040541)
   ..............................................................................*/
 
   -- Objetos para armazenar as variáveis da notificação
