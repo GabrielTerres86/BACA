@@ -5,7 +5,9 @@
  * DATA CRIAÇÃO : 18/12/2018
  * OBJETIVO     : Biblioteca de funções JavaScript
  * --------------  
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 06/09/2019 - Ajuste na validaSenhaAutorizacaoContrato para validar casos de obrigatoria == '1'
+ *							   estava deixando passando com campo vazio. PRJ 470 SM2 (Mateus Z / Mouts)
+ *
  * --------------
  */
 
@@ -185,6 +187,22 @@ function validaSenhaAutorizacaoContrato(funcaoImpressao) {
 		if(valorVazio){
 			hideMsgAguardo();
 			showError("error", "Todos os campos de senha s&atilde;o obrigat&oacute;rios", "Alerta - Aimaro", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
+			return false;
+		}
+	}
+
+	if(autorizacao_globais.obrigatoria == '1'){ // Validar se tem pelo menos 1 campo preenchido
+
+		var camposSenhaVazios = true;
+		$('.dssencar', '#frmAutorizacaoContrato').each(function(){
+		   	if($(this).val() != ""){
+		     	camposSenhaVazios = false;
+		    }
+		});
+
+		if(camposSenhaVazios){
+			hideMsgAguardo();
+			showError("error", "Pelo menos 1 campo de senha deve ser preenchido", "Alerta - Aimaro", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
 			return false;
 		}
 	}
