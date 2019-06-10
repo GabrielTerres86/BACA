@@ -6,6 +6,7 @@
  * OBJETIVO     : Tabela que apresenta a consulta VERPRO
  * --------------
 	* ALTERAÇÕES   : 03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *                 10/06/2019 - Adicionado campos Situação nos detalhes PRJ 470 SM2 (Mateus z / Mouts).
  * --------------
  */ 
 
@@ -63,6 +64,9 @@
   								  <input type="hidden" id="hrinclusao" name="hrinclusao" value="<? echo getByTagName($r->tags,'hrinclusao') ?>" />
   								  <input type="hidden" id="dsfrase" name="dsfrase" value="<? echo getByTagName($r->tags,'dsfrase') ?>" />
   								  <input type="hidden" id="dstippro" name="dstippro" value="<? echo getByTagName($r->tags,'dstippro') ?>" />
+
+  								  <!-- Pj470 - SM2 -- Mateus Zimmermann -- Mouts -->
+  								  <input type="hidden" id="dsativo" name="dsativo" value="<? echo getByTagName($r->tags,'dsativo') ?>" />
 
 								  <!-- bruno - prj 470 - tela autorizacao -->
   								  <input type="hidden" id="dsoperacao" name="dsoperacao" value="<? echo getByTagName($r->tags,'dsoperacao') ?>" />

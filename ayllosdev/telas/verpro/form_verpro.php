@@ -24,6 +24,7 @@
  * 015: [05/09/2017] - Alteração referente ao Projeto Assinatura conjunta (Proj 397)
  * 016: [03/01/2018] - Alteração para tratar os tipos 24-FGTS e 23-DAE (Proj 406).
  * 017: [19/03/2019] - Alterado o id do protocolo de desconto de titulo do 22 para o 32 (Paulo Penteado GFT)
+ * 018: [10/06/2019] - Adicionado campos Situação nos detalhes PRJ 470 SM2 (Mateus z / Mouts).
  */
 
 session_start();
@@ -81,7 +82,10 @@ $nrcheque_f = (isset($_POST['nrcheque_f']) ? $_POST['nrcheque_f'] : '');
 
 
 //Bordero
-$qttitbor = $_POST['dslinha2'];
+$qttitbor = $_POST['dslinha2'];		 
+// Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+$dsativo = $_POST['dsativo'];
+
 
 $aux_dslinha1 = explode('#', $dslinha1);
 $aux_dslinha2 = explode('#', $dslinha2);
@@ -837,6 +841,14 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 												<?php }?>
                                                 <label for="dsprotoc">Protocolo:</label>
                                                 <input name="dsprotoc" id="dsprotoc" type="text" value="<?php echo $dsprotoc ?>" />
+                                                <!-- Pj470 - SM2 -- Mateus Zimmermann -- Mouts -->
+                                                <?php if ($cdtippro >= 25 && $cdtippro <= 31) { ?>
+
+                                                    <label for="dsativo"><?php echo utf8ToHtml('Situação:') ?></label>
+                                                    <input name="dsativo" id="dsativo" type="text" value="<?php echo $dsativo ?>" />
+
+                                                <?php } ?>
+                                                <!-- Fim Pj470 - SM2 -->
 
                                                 <?php if ($cdtippro >= 25 && $cdtippro <= 31) { // PRJ 470 ?>
 
