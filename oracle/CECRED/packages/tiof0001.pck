@@ -2614,6 +2614,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       vr_qtdias_carencia  pls_integer;
       vr_tpmodcon craplcr.tpmodcon%tYPE; /*P437*/
       
+      CURSOR cr_craplcr IS
+        SELECT nvl(tpmodcon,0) tpmodcon
+          FROM craplcr 
+				 WHERE craplcr.cdcooper = pr_cdcooper
+				   AND craplcr.cdlcremp = pr_cdlcremp;
+      rw_craplcr cr_craplcr%ROWTYPE;
       
     BEGIN
 
@@ -2623,20 +2629,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       vr_dtcarenc := TO_DATE(pr_dtcarenc, 'DD/MM/YYYY');
 
       --Buscar o Tipo da modalidade do consignado
-      BEGIN
-        SELECT nvl(tpmodcon,0)
-          INTO vr_tpmodcon
-          FROM cecred.craplcr 
-				 WHERE craplcr.cdcooper = pr_cdcooper
-				   AND craplcr.cdlcremp = pr_cdlcremp;
-      EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-          vr_tpmodcon := 0;
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro na busca da Modalidade do Consignado. '||sqlerrm;
-          RAISE vr_exc_saida;   
-      END;
-
+      OPEN cr_craplcr; 
+      FETCH cr_craplcr
+      INTO rw_craplcr;
+      
+      IF cr_craplcr%NOTFOUND THEN
+        vr_tpmodcon := 0;
+      ELSE
+         vr_tpmodcon :=rw_craplcr.tpmodcon;
+      END IF;
+      CLOSE cr_craplcr;
+                  
       -- Busca quantidade de dias da carencia
       EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => pr_idcarencia
                                          ,pr_qtddias    => vr_qtdias_carencia

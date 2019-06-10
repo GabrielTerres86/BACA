@@ -43,7 +43,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONSIG IS
     cdcooper             crapemp.cdcooper%TYPE
    ,cdempres             crapemp.cdempres%TYPE
    ,nrdconta             crapemp.nrdconta%TYPE
-   ,indconsignado        cecred.tbcadast_empresa_consig.indconsignado%TYPE
+   ,indconsignado        tbcadast_empresa_consig.indconsignado%TYPE
    ,nmextemp             crapemp.nmextemp%TYPE
    ,nmresemp             crapemp.nmresemp%TYPE
    ,tpmodconvenio        cecred.tbcadast_empresa_consig.tpmodconvenio%TYPE
@@ -808,7 +808,14 @@ BEGIN
 
     -- Tratamento de erros
     vr_exc_erro EXCEPTION;
-
+    
+    CURSOR cr_consig IS
+      SELECT tec.idemprconsig
+        FROM cecred.tbcadast_empresa_consig tec      
+       WHERE tec.cdempres = pr_cdempres
+         AND tec.cdcooper = pr_cdcooper;
+   rw_consig cr_consig      %ROWTYPE;
+   
   BEGIN
     pr_dsmensag := NULL;
 
@@ -827,19 +834,20 @@ BEGIN
     END IF;
     
     /*P437 - Consignado*/
-    BEGIN
-      SELECT tec.idemprconsig
-        INTO pr_idemprconsig
-        FROM cecred.tbcadast_empresa_consig tec      
-       WHERE tec.cdempres = pr_cdempres
-         AND tec.cdcooper = pr_cdcooper;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro na rotina tela_consig.pc_habilitar_empr_consig.' || sqlerrm;
-        RAISE vr_exc_erro;   
-    END;  
-
+    OPEN cr_consig;
+    FETCH cr_consig 
+    INTO rw_consig;
+        
+    IF cr_consig%NOTFOUND THEN
+       vr_cdcritic := 0;
+       vr_dscritic := 'Erro na rotina tela_consig.pc_alterar_empr_consig.' || sqlerrm;
+       CLOSE cr_consig;
+       RAISE vr_exc_erro;   
+    ELSE
+       pr_idemprconsig := rw_consig.idemprconsig;
+    END IF; 
+    CLOSE cr_consig;
+      
     UPDATE cecred.tbcadast_empresa_consig tec
        SET indconsignado        = pr_indconsignado
           ,dtativconsignado     = pr_dtativconsignado
@@ -1255,6 +1263,14 @@ BEGIN
     -- Tratamento de erros
     vr_exc_erro EXCEPTION;
 
+   CURSOR cr_consig IS
+     SELECT tec.idemprconsig
+       INTO pr_idemprconsig
+       FROM cecred.tbcadast_empresa_consig tec      
+      WHERE tec.cdempres = pr_cdempres
+        AND tec.cdcooper = pr_cdcooper;
+   rw_consig cr_consig      %ROWTYPE;
+
   BEGIN
     pr_dsmensag := NULL;
 
@@ -1300,19 +1316,20 @@ BEGIN
       END IF;
       
       /*P437 - Consignado*/
-      BEGIN
-        SELECT tec.idemprconsig
-          INTO pr_idemprconsig
-          FROM cecred.tbcadast_empresa_consig tec      
-         WHERE tec.cdempres = pr_cdempres
-           AND tec.cdcooper = pr_cdcooper;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro na rotina tela_consig.pc_habilitar_empr_consig.' || sqlerrm;
-          RAISE vr_exc_erro;   
-      END;     
-
+      OPEN cr_consig;
+      FETCH cr_consig 
+      INTO rw_consig;
+          
+      IF cr_consig%NOTFOUND THEN
+         vr_cdcritic := 0;
+         vr_dscritic := 'Erro na rotina tela_consig.pc_habilitar_empr_consig.' || sqlerrm;
+         CLOSE cr_consig;
+         RAISE vr_exc_erro;   
+      ELSE
+         pr_idemprconsig := rw_consig.idemprconsig;
+      END IF; 
+      CLOSE cr_consig;
+      
       pr_dsmensag := 'Convênio de consignado habilitado com sucesso.';
 
     ELSE
@@ -1861,6 +1878,16 @@ BEGIN
     vr_diaenvioarquivo    NUMBER;
     vr_idemprconsigparam  NUMBER;
 
+   CURSOR cr_crapemp is
+     SELECT p.dtfchfol
+      FROM crapemp p
+          ,tbcadast_empresa_consig tec
+     WHERE tec.cdcooper = p.cdcooper
+       AND tec.cdempres = p.cdempres
+       AND tec.cdcooper = pr_cdcooper
+       AND tec.cdempres = pr_cdempres;
+   rw_crapemp  cr_crapemp%ROWTYPE;
+
   BEGIN
 
     pr_dsmensag := NULL;
@@ -1885,15 +1912,20 @@ BEGIN
     END IF;
 
     --Buscar a Dia de Fechamento da Folha
-    SELECT p.dtfchfol
-      INTO vr_dtfchfol
-      FROM cecred.crapemp p
-          ,cecred.tbcadast_empresa_consig tec
-     WHERE tec.cdcooper = p.cdcooper
-       AND tec.cdempres = p.cdempres
-       AND tec.cdcooper = pr_cdcooper
-       AND tec.cdempres = pr_cdempres;
-
+    OPEN cr_crapemp;
+    FETCH cr_crapemp 
+    INTO rw_crapemp;
+        
+    IF cr_crapemp%NOTFOUND THEN
+       vr_cdcritic := 0;
+       vr_dscritic := 'Erro na rotina tela_consig.pc_inc_param_consig.' || sqlerrm;
+       CLOSE cr_crapemp;
+       RAISE vr_exc_erro;   
+    ELSE
+       vr_dtfchfol := rw_crapemp.dtfchfol;
+    END IF; 
+    CLOSE cr_crapemp;
+    
     --Regra: O dia do envio do arquivo deverá ser igual ou menor que a da data cadastrada no campo “Dia fechamento folha”;
     IF vr_diaenvioarquivo > vr_dtfchfol THEN
       vr_dscritic := 'O dia do envio do arquivo deve ser igual ou menor que o dia de fechamento da folha.';
@@ -2719,31 +2751,42 @@ BEGIN
     -- Variavel temporária para LOG 
     vr_dslogtel VARCHAR2(32767) := '';
     
+    CURSOR cr_crapcyc (pr_nrdconta IN crapcyc.nrdconta%TYPE, 
+                       pr_nrctremp in crapcyc.nrctremp%type)  IS
+      SELECT count(*) vr_existe_crapcyc
+        FROM crapcyc c 
+       WHERE c.cdcooper = pr_cdcooper
+         AND c.cdorigem = pr_cdorigem
+         AND c.nrdconta = pr_nrdconta
+         AND c.nrctremp = pr_nrctremp;
+    rw_crapcyc cr_crapcyc%ROWTYPE;
+    
+    CURSOR cr_crapepr IS
+      SELECT DISTINCT 
+             c.nrdconta,
+             c.nrctremp
+        FROM crapepr c
+       WHERE c.cdcooper = pr_cdcooper
+         AND c.cdempres = pr_cdempres
+         AND c.inliquid = 0;
+    
   BEGIN
     pr_des_erro := 'OK';
     
-    FOR r1 IN(select DISTINCT 
-                     c.nrdconta,
-                     c.nrctremp
-                from crapepr c
-               where c.cdcooper = pr_cdcooper
-                 and c.cdempres = pr_cdempres
-                 and c.inliquid = 0)     
+    FOR r1 IN cr_crapepr   
     LOOP
       vr_existe_crapcyc := 0; 
-      BEGIN        
-        SELECT count(*)
-          INTO vr_existe_crapcyc 
-          FROM cecred.crapcyc c 
-         WHERE c.cdcooper = pr_cdcooper
-           AND c.cdorigem = pr_cdorigem
-           AND c.nrdconta = r1.nrdconta
-           AND c.nrctremp = r1.nrctremp;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro no SELECT da CRAPCYC: '|| sqlerrm;
-          raise vr_exc_erro;            
-      END;
+      OPEN cr_crapcyc (pr_nrdconta => r1.nrdconta,
+                       pr_nrctremp => r1.nrctremp);
+      FETCH cr_crapcyc 
+      INTO rw_crapcyc;
+          
+      IF cr_crapcyc%NOTFOUND THEN
+         vr_existe_crapcyc := 0; 
+      ELSE
+         vr_existe_crapcyc := rw_crapcyc.vr_existe_crapcyc;
+      END IF; 
+      CLOSE cr_crapcyc;
       
       IF vr_existe_crapcyc = 0 AND pr_indinterromper = 1 THEN          
         BEGIN
@@ -2904,24 +2947,27 @@ BEGIN
     -- Tratamento de erros
     vr_exc_erro EXCEPTION;
 
-    cursor cr_param_consig(pr_idemprconsigparam in number) is
-      select to_char(t.dtinclpropostade,'DD/MM') dtinclpropostade
+    CURSOR cr_param_consig(pr_idemprconsigparam in number) is
+      SELECT to_char(t.dtinclpropostade,'DD/MM') dtinclpropostade
             ,to_char(t.dtinclpropostaate,'DD/MM') dtinclpropostaate
             ,to_char(t.dtenvioarquivo,'DD/MM') dtenvioarquivo
             ,to_char(t.dtvencimento,'DD/MM') dtvencimento
-        from cecred.tbcadast_emp_consig_param  t
-       where t.idemprconsigparam = pr_idemprconsigparam;
+        FROM tbcadast_emp_consig_param  t
+       WHERE t.idemprconsigparam = pr_idemprconsigparam;
 
      rw_param_consig cr_param_consig%ROWTYPE;
 
+   CURSOR cr_param IS
+     SELECT t.idemprconsigparam
+       FROM tbcadast_emp_consig_param  t
+      WHERE t.idemprconsig = (SELECT e.idemprconsig 
+                                FROM cecred.tbcadast_empresa_consig e 
+                               WHERE e.cdempres = pr_cdempres
+                                 AND e.cdcooper = pr_cdcooper);
+
   BEGIN
     
-    FOR r1 IN(select t.idemprconsigparam
-                from cecred.tbcadast_emp_consig_param  t
-               where t.idemprconsig = (select e.idemprconsig 
-                                         from cecred.tbcadast_empresa_consig e 
-                                        where e.cdempres = pr_cdempres
-                                          and e.cdcooper = pr_cdcooper) )
+    FOR r1 IN cr_param
     LOOP
   
       --recuperar os dados para fazer o log

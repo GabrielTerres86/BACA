@@ -738,9 +738,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
       vr_des_xml        clob;
       vr_texto_completo varchar2(32600);
       vr_index          varchar2(100);
-      
-      vr_consignado     NUMBER := 0; -- 1 - Consignado 0 - Não Consignado
+     
+      CURSOR cr_craplcr (pr_cdcooper IN craplcr.cdcooper%TYPE) is
+        SELECT nvl(tpmodcon,0) tpmodcon
+          FROM craplcr
+         WHERE cdcooper = pr_cdcooper
+           AND cdlcremp = pr_cdlcremp;
 
+      rw_craplcr cr_craplcr%ROWTYPE;
+            
       procedure pc_escreve_xml( pr_des_dados in varchar2
                               , pr_fecha_xml in boolean default false
                               ) is
@@ -766,19 +772,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
       
       
       --Verificar se é uma linha de crédito do Consignado
-      BEGIN
-        SELECT 1
-          INTO vr_consignado
-          FROM cecred.craplcr
-         WHERE nvl(tpmodcon,0) > 0 --Tipo da modalidade do consignado  
-           AND cdlcremp = pr_cdlcremp;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Problema na verificacao da linha de credito. Erro: '||sqlerrm;
-          raise vr_exc_erro;
-      END;
+      OPEN cr_craplcr (pr_cdcooper => vr_cdcooper);
+      FETCH cr_craplcr INTO rw_craplcr;
+      CLOSE cr_craplcr;
         
-      IF vr_consignado = 1 THEN 
+      IF nvl(rw_craplcr.tpmodcon,0) > 0 THEN 
        
        --Valida Informações Poposta
        tela_atenda_emprestimo.pc_valida_inf_proposta( pr_cdcooper          => vr_cdcooper
@@ -917,26 +915,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
       
       vr_consignado     NUMBER := 0; -- 1 - Consignado 0 - Não Consignado
 
+     CURSOR cr_craplcr IS
+        SELECT nvl(tpmodcon,0) tpmodcon
+          FROM craplcr
+         WHERE cdcooper = pr_cdcooper
+           AND cdlcremp = pr_cdlcremp;
+
+      rw_craplcr cr_craplcr%ROWTYPE;
+      
     BEGIN
       pr_des_erro := 'OK';
       
       --Verificar se é uma linha de crédito do Consignado
-      BEGIN
-        SELECT 1
-          INTO vr_consignado
-          FROM cecred.craplcr
-         WHERE nvl(tpmodcon,0) > 0 --Tipo da modalidade do consignado  
-           AND cdlcremp = pr_cdlcremp
-           AND cdcooper = pr_cdcooper;
-      EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-          vr_consignado := 0;
-        WHEN OTHERS THEN
-          vr_dscritic := 'Problema na verificacao da linha de credito. Erro: '||sqlerrm;
-          raise vr_exc_erro;
-      END;
+      OPEN cr_craplcr;
+      FETCH cr_craplcr INTO rw_craplcr;
+      CLOSE cr_craplcr;
         
-      IF vr_consignado = 1 THEN 
+      IF nvl(rw_craplcr.tpmodcon,0) > 0 THEN 
        
        --Valida Informações Poposta
        tela_atenda_emprestimo.pc_valida_inf_proposta( pr_cdcooper          => pr_cdcooper
