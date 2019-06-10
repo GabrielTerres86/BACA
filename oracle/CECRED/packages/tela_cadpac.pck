@@ -84,6 +84,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                         ,pr_hhfim_bancoob IN VARCHAR2             --> Horario final de pagamento bancoob 
                         ,pr_hhcan_bancoob IN VARCHAR2             --> Horario limite cancelamento de pagamento bancoob                         
                         ,pr_vllimpag      IN crapage.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
+                        ,pr_dtabertu      IN VARCHAR2
+                        ,pr_dtfechto      IN VARCHAR2
                         ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
                         ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
                         ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
@@ -251,7 +253,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
          ,nrlatitu crapage.nrlatitu%TYPE
          ,nrlongit crapage.nrlongit%TYPE
          ,flmajora crapage.flmajora%TYPE
-         ,vllimpag crapage.vllimpag%TYPE);
+         ,vllimpag crapage.vllimpag%TYPE
+         ,dtabertu VARCHAR2(10)
+         ,dtfechto VARCHAR2(10));
 
   -- Definicao do tipo de tabela registro
   TYPE typ_tab_crapage IS TABLE OF typ_reg_crapage INDEX BY PLS_INTEGER;
@@ -374,6 +378,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
               ,crapage.nrlongit
               ,crapage.flmajora
               ,crapage.vllimpag
+              ,to_char(crapage.dtabertu,'DD/MM/RRRR') dtabertu
+              ,to_char(crapage.dtfechto,'DD/MM/RRRR') dtfechto
           FROM crapage
          WHERE crapage.cdcooper = pr_cdcooper
            AND crapage.cdagenci = pr_cdagenci;
@@ -653,6 +659,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         pr_tab_crapage(pr_cdagenci).nrlongit := rw_crapage.nrlongit;
         pr_tab_crapage(pr_cdagenci).flmajora := rw_crapage.flmajora;
         pr_tab_crapage(pr_cdagenci).vllimpag := rw_crapage.vllimpag;
+        pr_tab_crapage(pr_cdagenci).dtabertu := rw_crapage.dtabertu;
+        pr_tab_crapage(pr_cdagenci).dtfechto := rw_crapage.dtfechto;
 
       END IF;
 
@@ -1366,6 +1374,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                               ,pr_tag_nova => 'vllimpag'
                               ,pr_tag_cont => TO_CHAR(vr_tab_crapage(pr_cdagenci).vllimpag,'FM999G999G999G990D00')
                               ,pr_des_erro => vr_dscritic);
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'dtabertu'
+                              ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).dtabertu
+                              ,pr_des_erro => vr_dscritic);
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'dtfechto'
+                              ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).dtfechto
+                              ,pr_des_erro => vr_dscritic);
       END IF;
 
     EXCEPTION
@@ -1544,6 +1564,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                         ,pr_hhfim_bancoob IN VARCHAR2 --> Horario final de pagamento bancoob 
                         ,pr_hhcan_bancoob IN VARCHAR2 --> Horario limite cancelamento de pagamento bancoob 
                         ,pr_vllimpag      IN crapage.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
+                        ,pr_dtabertu      IN VARCHAR2
+                        ,pr_dtfechto      IN VARCHAR2
                         ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
                         ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
                         ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
@@ -2843,6 +2865,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                 ,crapage.vlmaxsgr = pr_vlmaxsgr
                 ,crapage.flmajora = pr_flmajora
                 ,crapage.vllimpag = pr_vllimpag
+                ,crapage.dtabertu = to_date(pr_dtabertu,'DD/MM/RRRR')
+                ,crapage.dtfechto = to_date(pr_dtfechto,'DD/MM/RRRR')
            WHERE crapage.cdcooper = vr_cdcooper
              AND crapage.cdagenci = pr_cdagenci;
 
@@ -3084,7 +3108,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                      ,nrordage
                      ,cddsenha
                      ,dtaltsnh
-                     ,flmajora)
+                     ,flmajora
+                     ,dtabertu
+                     ,dtfechto)
                VALUES(vr_cdcooper
                      ,pr_cdagenci
                      ,pr_nmextage
@@ -3139,7 +3165,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                      ,pr_cdagenci
                      ,pr_cdagenci
                      ,TRUNC(SYSDATE)
-                     ,pr_flmajora);
+                     ,pr_flmajora
+                     ,decode(pr_dtabertu,NULL,NULL,to_date(pr_dtabertu,'DD/MM/RRRR'))
+                     ,decode(pr_dtfechto,NULL,NULL,to_date(pr_dtfechto,'DD/MM/RRRR')));
 
         EXCEPTION
           WHEN OTHERS THEN
@@ -3804,6 +3832,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_dsdcampo => 'Flag Majoracao'
                  ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).flmajora) ELSE '-' END)
                  ,pr_vldepois => TO_CHAR(pr_flmajora));
+      
+      pc_item_log(pr_cdcooper => vr_cdcooper
+                 ,pr_cddopcao => pr_cddopcao
+                 ,pr_cdoperad => vr_cdoperad
+                 ,pr_cdagenci => pr_cdagenci
+                 ,pr_dsdcampo => 'Dt Abertura'
+                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).dtabertu,'DD/MM/RRRR') ELSE '-' END)
+                 ,pr_vldepois => TO_CHAR(pr_dtabertu,'DD/MM/RRRR'));
+
+      pc_item_log(pr_cdcooper => vr_cdcooper
+                 ,pr_cddopcao => pr_cddopcao
+                 ,pr_cdoperad => vr_cdoperad
+                 ,pr_cdagenci => pr_cdagenci
+                 ,pr_dsdcampo => 'Dt Fechamento'
+                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).dtfechto,'DD/MM/RRRR') ELSE '-' END)
+                 ,pr_vldepois => TO_CHAR(pr_dtfechto,'DD/MM/RRRR'));
+      
       -- Se NAO encontrou registro, cria um vazio
       IF NOT vr_tab_crapage.EXISTS(pr_cdagenci) THEN
         vr_tab_crapage(pr_cdagenci).nmresage := ' ';
