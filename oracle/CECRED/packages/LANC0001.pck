@@ -302,6 +302,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
   --
   -- Alterado  : 04/12/2018 - Atendimento estória 12541 - Tratamento saldo deposito em cheque em conta em prejuizo
   --                          (Renato - AMcom - PRJ 450)
+	-- 
+	--             07/06/2019 - Incluído parâmetro pr_incrineg = 1 para crítica 717 retornada em casos de débitos em 
+	--                          contas monitoradas
   ---------------------------------------------------------------------------------------------------------------
 
 -- Record para armazenar dados dos históricos para evitar consultas repetitivas
@@ -606,6 +609,7 @@ BEGIN
           FETCH cr_craphis INTO rw_craphis;
           IF rw_craphis.indutblq = 'N' AND rw_craphis.inhistor = 11 then -- se o histórico DEBITO não permite débitos
             pr_cdcritic := 717; -- critico falta de saldo
+					  pr_incrineg := 1;    -- Indica que trata-se de crítica de negócio e não erro de BD
   		  		RAISE vr_exc_erro;
           END IF;
           CLOSE cr_craphis;
