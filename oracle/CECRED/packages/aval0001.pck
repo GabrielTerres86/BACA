@@ -325,6 +325,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
      Alteracoes: 12/06/2015 - Conversao Progress >> Oracle (PLSQL) - Jéssica (DB1)
                  14/02/2019 - Ajuste retorno para busca de contratos com tpcrtato <> 1
                               Ana - Envolti - INC0032752
+                 10/06/2019 - Evitar registro de "sujeira" na tabela de logs.
+                              Este log nao e relevante para a analise de credito (tela unica).
+                              Bug 22300 - PRJ438 - Gabriel Marcos (Mouts).
     ---------------------------------------------------------------------------------------------------------------*/
 
     ------------------------------- CURSORES ---------------------------------
@@ -1757,10 +1760,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
     Objetivo  : Rotina referente a consulta de contratos avalizados modo Caracter
 
     Alteracoes: 22/06/2015 - Desenvolvimento - Jéssica (DB1)
-
-	            10/06/2019 - Evitar registro de "sujeira" na tabela de logs.
-                             Este log nao e relevante para a analise de credito (tela unica).
-                             Bug 22300 - PRJ438 - Gabriel Marcos (Mouts).
                  
   ---------------------------------------------------------------------------------------------------------------*/
 
