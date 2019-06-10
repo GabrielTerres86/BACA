@@ -1665,18 +1665,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
         -- Retorno não OK          
         pr_des_erro:= vr_retornvl;
         
-        --> Registra o erro - INC0032752
-        CECRED.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdcooper      => pr_cdcooper, 
-                               pr_tpocorrencia  => 1, 
-                               pr_cdprograma    => vr_cdprogra, 
-                               pr_tpexecucao    => 3, --Online
-                               pr_cdcriticidade => 1,
-                               pr_cdmensagem    => vr_cdcritic,    
-                               pr_dsmensagem    => vr_dscritic||vr_dsparame,
-                               pr_idprglog      => vr_idprglog,
-                               pr_nmarqlog      => NULL);
-                             
+        -- Nao gravar se rotina for chamada pela analise de credito
+        IF pr_nmdatela <> tela_analise_credito.pr_nmdatela THEN
+
+          --> Registra o erro - INC0032752
+          CECRED.pc_log_programa(pr_dstiplog      => 'E', 
+                                 pr_cdcooper      => pr_cdcooper, 
+                                 pr_tpocorrencia  => 1, 
+                                 pr_cdprograma    => vr_cdprogra, 
+                                 pr_tpexecucao    => 3, --Online
+                                 pr_cdcriticidade => 1,
+                                 pr_cdmensagem    => vr_cdcritic,    
+                                 pr_dsmensagem    => vr_dscritic||vr_dsparame,
+                                 pr_idprglog      => vr_idprglog,
+                                 pr_nmarqlog      => NULL);
+
+        END IF;                             
         
         -- Chamar rotina de gravação de erro
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
@@ -1753,6 +1757,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
     Objetivo  : Rotina referente a consulta de contratos avalizados modo Caracter
 
     Alteracoes: 22/06/2015 - Desenvolvimento - Jéssica (DB1)
+
+	            10/06/2019 - Evitar registro de "sujeira" na tabela de logs.
+                             Este log nao e relevante para a analise de credito (tela unica).
+                             Bug 22300 - PRJ438 - Gabriel Marcos (Mouts).
                  
   ---------------------------------------------------------------------------------------------------------------*/
 

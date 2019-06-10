@@ -1,6 +1,8 @@
 create or replace package cecred.TELA_ANALISE_CREDITO is
 
-/* Tabelas para armazenar os retornos dos birôs, titulos e detalhes*/
+  pr_nmdatela constant varchar(40) := 'TELA_ANALISE_CREDITO';
+
+  /* Tabelas para armazenar os retornos dos birôs, titulos e detalhes*/
 
   --TempTable para retornar valores para tela Atenda (Antigo b1wgen0001tt.i/tt-valores_conta)
   TYPE typ_rec_valores_conta
@@ -6772,6 +6774,11 @@ PROCEDURE pc_consulta_operacoes(pr_cdcooper  IN crawepr.cdcooper%TYPE       --> 
 
       Frequencia: Sempre que for chamado
       Objetivo  : Procedure que busca os contratos que a conta da pessoa é avalista
+
+	  Alteracoes: 10/06/2019 - Evitar registro de "sujeira" na tabela de logs.
+                               Este log nao e relevante para a analise de credito (tela unica).
+                               Bug 22300 - PRJ438 - Gabriel Marcos (Mouts).
+                 
     ---------------------------------------------------------------------------------------------------------------------*/
     --
     -- Variaveis de trabalho
@@ -6892,7 +6899,7 @@ PROCEDURE pc_consulta_operacoes(pr_cdcooper  IN crawepr.cdcooper%TYPE       --> 
                                          ,pr_nrdcaixa => NULL
                                          ,pr_idorigem => 5
                                          ,pr_dtmvtolt => NULL
-                                         ,pr_nmdatela => 'TELA_UNICA'
+                                         ,pr_nmdatela => pr_nmdatela--'TELA_UNICA'
                                          ,pr_cdoperad => NULL
                                          ,pr_nrdconta => pr_nrdconta
                                          ,pr_nrcpfcgc => NULL
