@@ -1,10 +1,4 @@
-rem PL/SQL Developer Test Script
 
-set feedback off
-set autoprint off
-
-rem Execute PL/SQL Block
--- Created on 31/05/2019 by F0032710 
 declare 
   CURSOR cr_craprda30 IS 
    SELECT    craprda.cdcooper,
@@ -137,4 +131,3 @@ EXCEPTION
     ROLLBACK;
   
 end;
-/
