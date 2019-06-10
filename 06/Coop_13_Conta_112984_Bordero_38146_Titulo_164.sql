@@ -838,6 +838,6 @@ BEGIN
   IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
     RAISE vr_exc_erro;
   END IF;
-  COMMIT;
+ -- COMMIT;
     
 END;

@@ -1080,7 +1080,7 @@ BEGIN
      WHERE cdcooper = rw_pagamentos.cdcooper
        AND nrdconta = rw_pagamentos.nrdconta
        AND nrborder = rw_pagamentos.nrborder;
-    COMMIT;
+    --COMMIT;
     
     UPDATE craptdb
        SET insittit = 4,
@@ -1126,7 +1126,7 @@ BEGIN
        AND nrcnvcob = rw_pagamentos.nrcnvcob
        AND nrdctabb = rw_pagamentos.nrdctabb
        AND cdbandoc = rw_pagamentos.cdbandoc;
-    COMMIT;
+    --COMMIT;
     
     /*
     dbms_output.put_line('----------------------------------');
@@ -1258,7 +1258,7 @@ BEGIN
        AND nrcnvcob = rw_pagamentos.nrcnvcob
        AND nrdctabb = rw_pagamentos.nrdctabb
        AND cdbandoc = rw_pagamentos.cdbandoc;
-    COMMIT;   
+    --COMMIT;   
     --dbms_output.put_line('aaaa ' || rw_pagamentos.nrdocmto);
     pc_pagar_titulo_operacao(pr_cdcooper => rw_pagamentos.cdcooper
                             ,pr_cdagenci => rw_pagamentos.cdagenci
@@ -1289,6 +1289,6 @@ BEGIN
   
   
     
-  COMMIT;
+  --COMMIT;
   
 END;
