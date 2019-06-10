@@ -307,9 +307,7 @@ PROCEDURE grava_liquidacao_empr:
                        STRING(craplem.cdhistor)) THEN
                 ASSIGN aux_vllancre = aux_vllancre + craplem.vllanmto.
            ELSE /* Debitos */
-           IF   CAN-DO("1036,1059,1037,1038,1716,1707,1714,1705,1042,1040,2013,2014,
-                        2305,2304,2536,2535,2306,2597,2598,2307,2599,2600, 
-                        2601,2602,2591,2592,2593,2594,2603,2604,2605,2606",
+           IF   CAN-DO("1036,1059,1037,1038,1716,1707,1714,1705,1042,1040,2013,2014,2305,2304,2536,2535,2306,2597,2598,2307,2599,2600,2601,2602,2591,2592,2593,2594,2603,2604,2605,2606",
                        STRING(craplem.cdhistor)) THEN
                 ASSIGN aux_vllandeb = aux_vllandeb + craplem.vllanmto.
           
