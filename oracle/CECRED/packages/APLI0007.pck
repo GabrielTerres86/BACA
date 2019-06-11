@@ -1099,7 +1099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,0 cdprodut
                       ,lap.dtmvtolt
                       ,lap.cdhistor
-                      ,lap.vllanmto * decode(hst.idtipo_lancto,4 /* Rendimento */,-1, 1) vllanmto
+                      ,lap.vllanmto
                       ,hst.idtipo_arquivo
                       ,hst.idtipo_lancto
                       ,hst.cdoperacao_b3
@@ -1110,7 +1110,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,lap.progress_recid
 					  ,lap.vlpvlrgt valorbase
 					  ,hst.cdhistorico		
-					  ,to_char(lap.progress_recid) ordena							  
                   FROM craplap lap
                       ,craprda rda
                       ,crapdtc dtc
@@ -1149,7 +1148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,rac.cdprodut
                       ,lac.dtmvtolt
                       ,lac.cdhistor
-                      ,lac.vllanmto * decode(hst.idtipo_lancto,4 /* Rendimento */,-1, 1) vllanmto
+                      ,lac.vllanmto
                       ,hst.idtipo_arquivo
                       ,hst.idtipo_lancto
                       ,hst.cdoperacao_b3 
@@ -1160,7 +1159,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,lac.progress_recid
 					  ,lac.vlbasren valorbase
 					  ,hst.cdhistorico
-					  ,lpad(nrseqrgt,10,0)||hst.idtipo_lancto ordena
                   FROM craplac lac
                       ,craprac rac
                       ,tbcapt_custodia_aplicacao capl
@@ -1190,8 +1188,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
          ORDER BY lct.dtmvtolt
                  ,lct.nrdconta
                  ,lct.nraplica
-                 --,lct.progress_recid desc; /* Necessario para calcular o valor base */
-                 ,lct.ordena desc;
+                 ,lct.idtipo_lancto
+                 ,lct.vllanmto desc;
+      rw_lcto_rgt cr_lctos_rgt%ROWTYPE;
       
       -- Valor total de resgate no dia
       CURSOR cr_resgat(pr_cdcooper crapcop.cdcooper%TYPE     --> Cooperativa
@@ -1228,6 +1227,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                    AND hst.idtipo_lancto = 2 -- Somente Resgate
                  ) lct;
                    
+
+      TYPE typ_tab_reg_lanctos IS
+        TABLE OF cr_lctos_rgt%ROWTYPE
+        INDEX BY PLS_INTEGER;
+                
+      TYPE typ_reg_aplicacao IS
+        TABLE OF typ_tab_reg_lanctos
+        INDEX BY VARCHAR(028);
+        
+      vr_tab_reg_aplicacao typ_reg_aplicacao;
+      vr_idx_aplic         VARCHAR(028);
+      vr_idx               pls_integer;
+      vr_tipo_lancto       tbcapt_custodia_lanctos.idtipo_lancto%TYPE;
+      vr_aplicacao         tbcapt_custodia_aplicacao.idaplicacao%TYPE;
+
+                   
       -- Conversão valor em cota
       vr_qtcotas      tbcapt_custodia_aplicacao.qtcotas%TYPE;  
          
@@ -1244,7 +1259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       vr_sldaplic     craprda.vlsdrdca%TYPE;
       --vr_vlpreco_unit tbcapt_custodia_aplicacao.vlpreco_unitario%TYPE; --NUMBER(25,8)
       vr_vlpreco_unit NUMBER(38,30);
-	  vr_vlbase       NUMBER(38,30);
+      vr_vlbase       NUMBER(38,30);
       vr_qtcotas_resg tbcapt_custodia_aplicacao.qtcotas%TYPE; 
       
       -- Controle de lançamento anterior
@@ -1452,127 +1467,142 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           /*vr_cdhistor_ant := 0;
           vr_idlancto_ant := 0;*/
           
-          -- Buscar todos os movimentos de Operações dos últimos 2 dias  
-          -- que ainda não estejam marcados para envio (idlctcus is null)
-          FOR rw_lcto IN cr_lctos_rgt(rw_cop.cdcooper,vr_dtmvto2a,rw_crapdat.dtmvtolt,vr_dtinictd) LOOP
-            -- Se mudou data, conta ou aplicação
-            IF vr_dtmvtolt <> rw_lcto.dtmvtolt OR vr_nrdconta <> rw_lcto.nrdconta OR vr_nraplica <> rw_lcto.nraplica THEN
-              -- Armazenar quantidade de cotas 
-              vr_qtcotas := rw_lcto.qtcotas;
-              vr_vlbase := 0;
-              -- Quando não houver carencia
-              IF fn_tem_carencia(pr_dtmvtapl => rw_lcto.dtmvtapl
-                                ,pr_qtdiacar => rw_lcto.qtdiacar
-                                ,pr_dtmvtres => rw_lcto.dtmvtolt) = 'N' THEN  
-                -- Calcular saldo da aplicação anteriormente ao(s) resgates
-                vr_sldaplic := 0;
-                pc_busca_saldo_anterior(pr_cdcooper  => rw_cop.cdcooper         --> Cooperativa
-                                       ,pr_nrdconta  => rw_lcto.nrdconta        --> Conta
-                                       ,pr_nraplica  => rw_lcto.nraplica        --> Aplicação
-                                       ,pr_tpaplica  => rw_lcto.tpaplrdc        --> Tipo aplicação
-                                       ,pr_cdprodut  => rw_lcto.cdprodut        --> Codigo produto 
-                                       ,pr_dtmvtolt  => rw_crapdat.dtmvtolt     --> Data movimento
-                                       ,pr_dtmvtsld  => rw_lcto.dtmvtolt        --> Data do saldo desejado
-                                       ,pr_tpconsul  => 'R'                     --> Resgates
-                                       ,pr_sldaplic  => vr_sldaplic             --> Saldo na data
-                                       ,pr_idcritic => vr_idcritic              --> Identificador critica
-                                       ,pr_cdcritic => vr_cdcritic              --> Codigo da critica
-                                       ,pr_dscritic => vr_dscritic);            --> Retorno de críticaca
-                -- Código comum, para gravação do LOG independente de sucesso ou não
-                IF vr_dscritic IS NOT NULL THEN
-                  -- Houve erro
-                  vr_dscritic := 'Nao foi possivel buscar saldo Anterior Cooper '||rw_cop.cdcooper
-                              || ',Conta '||rw_lcto.nrdconta
-                              || ',Aplica '||rw_lcto.nraplica
-                              || ',Data Solicitada '||rw_lcto.dtmvtolt
-                              ||' -> '|| vr_dscritic;
-                  RAISE vr_exc_saida;
-                END IF;
-                -- Se o saldo for zero, significa que houve um resgate total, então precisamos buscar 
-                -- o valor dos resgates efetuados neste dia para a conta e aplicação
-                IF vr_sldaplic = 0 THEN
-                  OPEN cr_resgat(pr_cdcooper  => rw_cop.cdcooper    --> Cooperativa
-                                ,pr_nrdconta  => rw_lcto.nrdconta   --> Conta
-                                ,pr_nraplica  => rw_lcto.nraplica   --> Aplicação
-                                ,pr_tpaplrdc  => rw_lcto.tpaplrdc   --> TIpo da aplicação
-                                ,pr_dtmvtolt  => rw_lcto.dtmvtolt); --> Data
-                  
-                  FETCH cr_resgat 
-                   INTO vr_sldaplic;
-                  CLOSE cr_resgat;
-                END IF; 
-                -- Se mesmo assim ainda está zero, vamos usar o próprio valor do lançamento como saldo
-                IF vr_sldaplic = 0 THEN
-                  vr_sldaplic := rw_lcto.vllanmto;
-                END IF;
-                  -- Calcular preço unitario
-				          IF vr_qtcotas = 0 THEN
-				            -- comentado pois estava estourando a variavel de log						   
-				            --pr_dsdaviso := pr_dsdaviso || vr_dscarque || fn_get_time_char || ' Resgate com cotas zerada! '||  rw_cop.cdcooper ||' '|| rw_lcto.nrdconta ||' '|| rw_lcto.nraplica;
-				            continue;
-				          ELSE
-							vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
-						  END IF;
-						  /*
-							Autor : David Valente
-							Em 05/03/2019 P411
-
-							Calculo da quantidade de cotas referente a operação atual
-							alterado para compatibilizar com a B3;
-							vr_qtftcota é uma CONSTANTE COM O VALOR  = R$0,01 (1 Centavo)
-							REGRA ANTIGA -> vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
-						  */
-						  vr_qtcotas_resg := fn_converte_valor_em_cota(rw_lcto.valorbase);
-																				  
-              ELSE
-                -- Quando carencia usar sempre a pu da emissão
-                vr_vlpreco_unit := rw_lcto.vlpreco_registro;
-				vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);															 
-				
-              END IF;
-              -- Armazena informações do registro atual
-              vr_dtmvtolt := rw_lcto.dtmvtolt;
-              vr_nrdconta := rw_lcto.nrdconta;
-              vr_nraplica := rw_lcto.nraplica;  
-            /*  vr_cdhistor_ant := rw_lcto.cdhistor;
-              vr_idlancto_ant := NULL;
-            ELSE
-              -- Se estamos na mesma conta, data e aplicação e não mudou o histórico
-              -- Significa que é um novo resgate, então não podemos vincular este ao anterior
-              IF vr_cdhistor_ant = rw_lcto.cdhistor THEN
-                vr_idlancto_ant := NULL;
-              ELSE
-                -- Mudou o histórico, então vincularemos este ao anterior e vamos 
-                -- guardar o histórico deste para o próximo teste
-                vr_cdhistor_ant := rw_lcto.cdhistor;
-              END IF;*/
-            END IF;
-            
-		   
-/*
-               Autor : David Valente
-               Em 05/03/2019
-
-               Calculo da quantidade de cotas referente a operação atual
-               alterado para compatibilizar com a B3;
-               vr_qtftcota é uma CONSTANTE COM O VALOR  = R$0,01 (1 Centavo)
-               REGRA ANTIGA -> vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
-            */
-            --vr_qtcotas_resg := trunc(rw_lcto.valorbase / vr_qtftcota);
-           
-            vr_vlbase := vr_vlbase + rw_lcto.vllanmto;
           
-            /* Se for IR e Rendimento nao vamos continuar */
-            IF rw_lcto.idtipo_lancto in (3, 4) THEN
-               continue;
-            END IF;
+          /* Logica considera que idtipo_lancto virá apenas [2 - resgate, 3 - ir, 4 - rendimento] */
+          /* Logica responsavel por agrupar os lancamentos de RESGATE, IR e RENDIMENTO. Como nao existe
+             um campo que vincule esses lancamentos, vamos realizar o vinculo através da ordenacao
+             sobre o tipo de lancamento e o valor.
+             O objetivo eh povoar um tabela de memoria com as aplicacoes (indice vr_idx_aplic) com uma
+             posicao para cada resgate daquele dia (vr_idx). Como o valor estah ordenado descrescente,
+             cada vez que estiver no cursor um lcto de IR ou RENDIMENTO, ele agruparah com os resgates
+             de forma decrescente.
+             - Pode existir resgates que nao tenham IR e RENDIMENTO, nesse caso ficarah apenas o registro
+             do resgate mesmo.
+             - O SQL pode retornar lctos de IR e RENDIMENTO que nao possuem resgate, pois os resgates jah
+             foram enviados em outra ocasiao. Nesse cenario apenas ignoraremos os registros.
+          /*
             
-            vr_qtcotas_resg := fn_converte_valor_em_cota(vr_vlbase);
-            vr_vlbase := 0; /* Zera para não ficarmos com lixo */
+            Tratar excessoes
+          */                 
+          vr_idx_aplic   := '';
+          vr_idx         := 0;
+          vr_tipo_lancto := 0;
+          vr_aplicacao   := 0;
+          vr_tab_reg_aplicacao.delete();
+          
+          FOR rw_lcto IN cr_lctos_rgt(rw_cop.cdcooper,vr_dtmvto2a,rw_crapdat.dtmvtolt,vr_dtinictd) LOOP
+          
+                                         
+             -- Se mudou aplicacao ou o historico reinicia o vr_idx de resgate
+             IF vr_aplicacao <> rw_lcto.idaplcus or vr_dtmvtolt <> rw_lcto.dtmvtolt or vr_tipo_lancto <> rw_lcto.idtipo_lancto THEN
+                vr_idx := 0;
+             END IF;
+               
+             -- indice sera a aplicacao + data do lcto
+             vr_idx_aplic := lpad(rw_lcto.idaplcus,20,'0') || to_char(trunc(rw_lcto.dtmvtolt),'rrrrmmdd');
+             
+             IF rw_lcto.idtipo_lancto = 2 THEN /* Resgate */
+                vr_idx := vr_idx + 1;
+                vr_tab_reg_aplicacao(vr_idx_aplic)(vr_idx) := rw_lcto;
+                vr_tab_reg_aplicacao(vr_idx_aplic)(vr_idx).valorbase := rw_lcto.vllanmto;
+             ELSIF rw_lcto.idtipo_lancto = 3 THEN /* IR */
+               vr_idx := vr_idx + 1;
+               IF vr_tab_reg_aplicacao.exists(vr_idx_aplic) THEN
+                 IF vr_tab_reg_aplicacao(vr_idx_aplic).exists(vr_idx) THEN
+                   vr_tab_reg_aplicacao(vr_idx_aplic)(vr_idx).valorbase := vr_tab_reg_aplicacao(vr_idx_aplic)(vr_idx).valorbase + rw_lcto.vllanmto;
+                 END IF;
+               END IF;
+             ELSIF rw_lcto.idtipo_lancto = 4 THEN /* Rendimento */
+               vr_idx := vr_idx + 1;
+               IF vr_tab_reg_aplicacao.exists(vr_idx_aplic) THEN
+                 IF vr_tab_reg_aplicacao(vr_idx_aplic).exists(vr_idx) THEN
+                   vr_tab_reg_aplicacao(vr_idx_aplic)(vr_idx).valorbase := vr_tab_reg_aplicacao(vr_idx_aplic)(vr_idx).valorbase - rw_lcto.vllanmto;
+                 END IF;
+               END IF;
+             END IF;             
+             -- Armazena ultimos valores aplicacao, tipo lcto e data
+             vr_aplicacao   := rw_lcto.idaplcus;
+             vr_tipo_lancto := rw_lcto.idtipo_lancto;
+             vr_dtmvtolt    := rw_lcto.dtmvtolt;          
+          END LOOP;
+          
+          -- Navega a tabela de memoria
+          vr_idx_aplic:= vr_tab_reg_aplicacao.FIRST;
+          WHILE vr_idx_aplic IS NOT NULL LOOP
+            
+            -- Navegar todos os resgates daquela aplicacao
+            vr_idx := vr_tab_reg_aplicacao(vr_idx_aplic).FIRST;
+            WHILE vr_idx IS NOT NULL LOOP
+              rw_lcto_rgt := vr_tab_reg_aplicacao(vr_idx_aplic)(vr_idx);
+              
+              /* No primeiro resgate, busca o PU da aplicacao */
+              IF vr_idx = 1 THEN
+                -- Armazenar quantidade de cotas 
+                vr_qtcotas := rw_lcto_rgt.qtcotas;
+                -- Quando não houver carencia
+                IF fn_tem_carencia(pr_dtmvtapl => rw_lcto_rgt.dtmvtapl
+                                  ,pr_qtdiacar => rw_lcto_rgt.qtdiacar
+                                  ,pr_dtmvtres => rw_lcto_rgt.dtmvtolt) = 'N' THEN  
+                  -- Calcular saldo da aplicação anteriormente ao(s) resgates
+                  vr_sldaplic := 0;
+                  pc_busca_saldo_anterior(pr_cdcooper  => rw_cop.cdcooper         --> Cooperativa
+                                         ,pr_nrdconta  => rw_lcto_rgt.nrdconta        --> Conta
+                                         ,pr_nraplica  => rw_lcto_rgt.nraplica        --> Aplicação
+                                         ,pr_tpaplica  => rw_lcto_rgt.tpaplrdc        --> Tipo aplicação
+                                         ,pr_cdprodut  => rw_lcto_rgt.cdprodut        --> Codigo produto 
+                                         ,pr_dtmvtolt  => rw_crapdat.dtmvtolt     --> Data movimento
+                                         ,pr_dtmvtsld  => rw_lcto_rgt.dtmvtolt        --> Data do saldo desejado
+                                         ,pr_tpconsul  => 'R'                     --> Resgates
+                                         ,pr_sldaplic  => vr_sldaplic             --> Saldo na data
+                                         ,pr_idcritic => vr_idcritic              --> Identificador critica
+                                         ,pr_cdcritic => vr_cdcritic              --> Codigo da critica
+                                         ,pr_dscritic => vr_dscritic);            --> Retorno de críticaca
+                  -- Código comum, para gravação do LOG independente de sucesso ou não
+                  IF vr_dscritic IS NOT NULL THEN
+                    -- Houve erro
+                    vr_dscritic := 'Nao foi possivel buscar saldo Anterior Cooper '||rw_cop.cdcooper
+                                || ',Conta '||rw_lcto_rgt.nrdconta
+                                || ',Aplica '||rw_lcto_rgt.nraplica
+                                || ',Data Solicitada '||rw_lcto_rgt.dtmvtolt
+                                ||' -> '|| vr_dscritic;
+                    RAISE vr_exc_saida;
+                  END IF;
+                  -- Se o saldo for zero, significa que houve um resgate total, então precisamos buscar 
+                  -- o valor dos resgates efetuados neste dia para a conta e aplicação
+                  IF vr_sldaplic = 0 THEN
+                    OPEN cr_resgat(pr_cdcooper  => rw_cop.cdcooper    --> Cooperativa
+                                  ,pr_nrdconta  => rw_lcto_rgt.nrdconta   --> Conta
+                                  ,pr_nraplica  => rw_lcto_rgt.nraplica   --> Aplicação
+                                  ,pr_tpaplrdc  => rw_lcto_rgt.tpaplrdc   --> TIpo da aplicação
+                                  ,pr_dtmvtolt  => rw_lcto_rgt.dtmvtolt); --> Data
+                  
+                    FETCH cr_resgat 
+                     INTO vr_sldaplic;
+                    CLOSE cr_resgat;
+                  END IF; 
+                  -- Se mesmo assim ainda está zero, vamos usar o próprio valor do lançamento como saldo
+                  IF vr_sldaplic = 0 THEN
+                    vr_sldaplic := rw_lcto_rgt.vllanmto;
+                  END IF;
+                  -- Calcular preço unitario
+                  IF vr_qtcotas = 0 THEN
+                    -- pula para o proximo resgate, se houver
+                    vr_idx := vr_tab_reg_aplicacao(vr_idx_aplic).NEXT(vr_idx);
+                    continue;
+                  ELSE
+                    vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
+                  END IF;
+                ELSE
+                  -- Quando carencia usar sempre a pu da emissão
+                  vr_vlpreco_unit := rw_lcto_rgt.vlpreco_registro;
+                END IF;
+              END IF;
+            
+              vr_qtcotas_resg := fn_converte_valor_em_cota(rw_lcto_rgt.valorbase);
 
-            -- Devemos gerar o registro de CUstódia do Lançamento
-            BEGIN
-              INSERT INTO TBCAPT_CUSTODIA_LANCTOS
+              -- Devemos gerar o registro de CUstódia do Lançamento
+              BEGIN
+                INSERT INTO TBCAPT_CUSTODIA_LANCTOS
                          (idaplicacao
                          ,idtipo_arquivo
                          ,idtipo_lancto
@@ -1584,93 +1614,98 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                          ,idsituacao
                          ,dtregistro
                          /*,idlancto_origem*/)
-                   VALUES(rw_lcto.idaplcus
-                         ,rw_lcto.idtipo_arquivo
-                         ,rw_lcto.idtipo_lancto
-                         ,rw_lcto.cdhistor
-                         ,rw_lcto.cdoperacao_b3
-                         ,rw_lcto.vllanmto
-                         ,vr_qtcotas_resg
-                         ,vr_vlpreco_unit
-                         ,0 -- Pendente de Envio
-                         ,rw_lcto.dtmvtolt
-                         /*,vr_idlancto_ant*/)
-                RETURNING idlancamento
-                     INTO vr_idlancamento;
-            EXCEPTION
-              WHEN OTHERS THEN
-                -- Erro não tratado 
-                vr_cdcritic := 1034;   
-                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' TBCAPT_CUSTODIA_LANCTOS: '
-                            || 'idaplicacao: '||rw_lcto.idaplcus
-                            || ', idtipo_arquivo: '||rw_lcto.idtipo_arquivo
-                            || ', idtipo_lancto: '||rw_lcto.idtipo_lancto
-                            || ', cdhistor: '||rw_lcto.cdhistor
-                            || ', cdoperacao_b3: '||rw_lcto.cdoperacao_b3
-                            || ', vlregistro: '||rw_lcto.vllanmto
-                            || ', qtcotas: '||vr_qtcotas_resg
-                            || ', vlpreco_unitario: '||vr_vlpreco_unit
-                            || ', idsituacao: '||0 -- Pendente de Envio
-                            || ', dtregistro: '||rw_lcto.dtmvtolt
-                            || '. '||sqlerrm;
-                RAISE vr_exc_saida;
-            END;
+                     VALUES(rw_lcto_rgt.idaplcus
+                           ,rw_lcto_rgt.idtipo_arquivo
+                           ,rw_lcto_rgt.idtipo_lancto
+                           ,rw_lcto_rgt.cdhistor
+                           ,rw_lcto_rgt.cdoperacao_b3
+                           ,rw_lcto_rgt.vllanmto
+                           ,vr_qtcotas_resg
+                           ,vr_vlpreco_unit
+                           ,0 -- Pendente de Envio
+                           ,rw_lcto_rgt.dtmvtolt
+                           /*,vr_idlancto_ant*/)
+                 RETURNING idlancamento
+                      INTO vr_idlancamento;
+              EXCEPTION
+                WHEN OTHERS THEN
+                 -- Erro não tratado 
+                  vr_cdcritic := 1034;   
+                  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' TBCAPT_CUSTODIA_LANCTOS: '
+                              || 'idaplicacao: '||rw_lcto_rgt.idaplcus
+                              || ', idtipo_arquivo: '||rw_lcto_rgt.idtipo_arquivo
+                              || ', idtipo_lancto: '||rw_lcto_rgt.idtipo_lancto
+                              || ', cdhistor: '||rw_lcto_rgt.cdhistor
+                              || ', cdoperacao_b3: '||rw_lcto_rgt.cdoperacao_b3
+                              || ', vlregistro: '||rw_lcto_rgt.vllanmto
+                              || ', qtcotas: '||vr_qtcotas_resg
+                              || ', vlpreco_unitario: '||vr_vlpreco_unit
+                              || ', idsituacao: '||0 -- Pendente de Envio
+                              || ', dtregistro: '||rw_lcto_rgt.dtmvtolt
+                              || '. '||sqlerrm;
+                  RAISE vr_exc_saida;
+              END;
             
-            -- Guardar id do lançamento gerado
-            --vr_idlancto_ant := vr_idlancamento;
+              -- Guardar id do lançamento gerado
+              --vr_idlancto_ant := vr_idlancamento;
             
-            -- Para aplicações de captação
-            IF rw_lcto.tpaplrdc in(3,4) THEN 
-              -- Atualizar a tabela CRAPLAC
-              BEGIN
-                UPDATE craplac
-                   SET idlctcus = vr_idlancamento
-                 WHERE ROWID = rw_lcto.rowid_lct;
+              -- Para aplicações de captação
+              IF rw_lcto_rgt.tpaplrdc in(3,4) THEN 
+                -- Atualizar a tabela CRAPLAC
+                BEGIN
+                  UPDATE craplac
+                     SET idlctcus = vr_idlancamento
+                     WHERE ROWID = rw_lcto_rgt.rowid_lct;
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    -- Erro não tratado 
+                    vr_cdcritic := 1035;
+                    vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' craplac: '
+                                || 'idlctcus:' || vr_idlancamento 
+                                || ' com ROWID: '||rw_lcto_rgt.rowid_lct||'. '||sqlerrm;
+                    RAISE vr_exc_saida;
+                END; 
+              ELSE 
+                -- Atualizar a tabela CRAPLAP
+                BEGIN
+                  UPDATE craplap 
+                     SET idlctcus = vr_idlancamento
+                     WHERE ROWID = rw_lcto_rgt.rowid_lct;
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    -- Erro não tratado 
+                    vr_cdcritic := 1035;
+                    vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' craplap: '
+                                || 'idlctcus:' || vr_idlancamento 
+                                  || ' com ROWID: '||rw_lcto_rgt.rowid_lct||'. '||sqlerrm;
+                    RAISE vr_exc_saida;
+                END; 
+              END IF;
+            
+              -- Atualizar a quantidade de cotas e valor unitário no registro da aplicação
+              BEGIN 
+                UPDATE tbcapt_custodia_aplicacao apl
+                   SET apl.qtcotas = greatest(0,apl.qtcotas-vr_qtcotas_resg)
+                      ,apl.vlpreco_unitario = vr_vlpreco_unit
+                   WHERE apl.idaplicacao = rw_lcto_rgt.idaplcus;
               EXCEPTION
                 WHEN OTHERS THEN
                   -- Erro não tratado 
                   vr_cdcritic := 1035;
-                  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' craplac: '
-                              || 'idlctcus:' || vr_idlancamento 
-                              || ' com ROWID: '||rw_lcto.rowid_lct||'. '||sqlerrm;
+                  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' tbcapt_custodia_aplicacao: '
+                              || 'qtcotas: qtcotas-'||vr_qtcotas_resg
+                              || ' com idaplicacao : '||rw_lcto_rgt.idaplcus
+                              || '. '||sqlerrm;
                   RAISE vr_exc_saida;
               END; 
-            ELSE 
-              -- Atualizar a tabela CRAPLAP
-              BEGIN
-                UPDATE craplap 
-                   SET idlctcus = vr_idlancamento
-                 WHERE ROWID = rw_lcto.rowid_lct;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  -- Erro não tratado 
-                  vr_cdcritic := 1035;
-                  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' craplap: '
-                              || 'idlctcus:' || vr_idlancamento 
-                              || ' com ROWID: '||rw_lcto.rowid_lct||'. '||sqlerrm;
-                  RAISE vr_exc_saida;
-              END; 
-            END IF;
-            
-            -- Atualizar a quantidade de cotas e valor unitário no registro da aplicação
-            BEGIN 
-              UPDATE tbcapt_custodia_aplicacao apl
-                 SET apl.qtcotas = greatest(0,apl.qtcotas-vr_qtcotas_resg)
-                    ,apl.vlpreco_unitario = vr_vlpreco_unit
-               WHERE apl.idaplicacao = rw_lcto.idaplcus;
-            EXCEPTION
-              WHEN OTHERS THEN
-                -- Erro não tratado 
-                vr_cdcritic := 1035;
-                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' tbcapt_custodia_aplicacao: '
-                            || 'qtcotas: qtcotas-'||vr_qtcotas_resg
-                            || ' com idaplicacao : '||rw_lcto.idaplcus
-                            || '. '||sqlerrm;
-                RAISE vr_exc_saida;
-            END; 
-            
-            -- Incrementar contador de Registros
-            vr_qtregrgt := vr_qtregrgt + 1;
+              -- Incrementar contador de Registros
+              vr_qtregrgt := vr_qtregrgt + 1;
+              
+              vr_idx := vr_tab_reg_aplicacao(vr_idx_aplic).NEXT(vr_idx);
+            END LOOP;
+          
+          
+            vr_idx_aplic:= vr_tab_reg_aplicacao.NEXT(vr_idx_aplic);
           END LOOP;
         END IF;
       END LOOP;  
