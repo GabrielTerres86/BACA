@@ -157,8 +157,6 @@ function formataCamposTela(cddopcao){
 		var rFlmajora = $('label[for="flmajora"]', '#frmCadpac');
         var rFlgutcrm = $('label[for="flgutcrm"]', '#frmCadpac');
         var rCdagefgt = $('label[for="cdagefgt"]', '#frmCadpac');
-		var rDtabertu = $('label[for="dtabertu"]', '#frmCadpac');
-		var rDtfechto = $('label[for="dtfechto"]', '#frmCadpac');
 
         var rDsendcop = $('label[for="dsendcop"]', '#frmCadpac');
         var rNrendere = $('label[for="nrendere"]', '#frmCadpac');
@@ -238,8 +236,7 @@ function formataCamposTela(cddopcao){
 		var cFlmajora = $('#flmajora', '#frmCadpac');
         var cFlgutcrm = $('#flgutcrm', '#frmCadpac');
         var cCdagefgt = $('#cdagefgt', '#frmCadpac');
-		var cDtabertu = $('#dtabertu', '#frmCadpac');
-		var cDtfechto = $('#dtfechto', '#frmCadpac');
+
 
         var cDsendcop = $('#dsendcop', '#frmCadpac');
         var cNrendere = $('#nrendere', '#frmCadpac');
@@ -321,8 +318,7 @@ function formataCamposTela(cddopcao){
 		rFlmajora.addClass('rotulo').css({'width': '130px'});
         rFlgutcrm.addClass('rotulo-linha').css({'width': '285px'});
         rCdagefgt.addClass('rotulo').css({'width': '130px'});
-		rDtabertu.addClass('rotulo').css({'width': '130px'});
-        rDtfechto.addClass('rotulo-linha').css({'width': '265px'});
+
 
         rDsendcop.addClass('rotulo').css({'width': '130px'});
         rNrendere.addClass('rotulo').css({'width': '130px'});
@@ -403,9 +399,6 @@ function formataCamposTela(cddopcao){
 		
 		cFlgutcrm.addClass('campo').css({'width':'60px'});
         cCdagefgt.addClass('campo inteiro').css({'width':'60px'}).attr('maxlength','10');
-
-		cDtabertu.addClass('campo').css({'width':'80px'}).setMask("DATE","","","");
-		cDtfechto.addClass('campo').css({'width':'80px'}).setMask("DATE","","","");
 
         cDsendcop.addClass('campo').css({'width':'411px'}).attr('maxlength','40');
         cNrendere.addClass('campo').css({'width':'80px'}).attr('maxlength','10').setMask('INTEGER','zzzzzzzzzz','','');
@@ -654,22 +647,6 @@ function formataCamposTela(cddopcao){
             });
             
             cCdagefgt.unbind('keypress').bind('keypress', function(e) {
-			    if ( divError.css('display') == 'block' ) { return false; }
-			    if ( e.keyCode == 9 || e.keyCode == 13 ) {                   
-                    cDtabertu.focus();
-                    return false;
-                }
-            });
-			
-			cDtabertu.unbind('keypress').bind('keypress', function(e) {
-			    if ( divError.css('display') == 'block' ) { return false; }
-			    if ( e.keyCode == 9 || e.keyCode == 13 ) {                   
-                    cDtfechto.focus();
-                    return false;
-                }
-            });
-			
-			cDtfechto.unbind('keypress').bind('keypress', function(e) {
 			    if ( divError.css('display') == 'block' ) { return false; }
 			    if ( e.keyCode == 9 || e.keyCode == 13 ) {                   
                     acessaOpcaoAba(1);
@@ -1670,8 +1647,6 @@ function gravarPAC() {
     var vlmaxsgr = $('#vlmaxsgr','#frmCadpac').val();
 	var flmajora = $('#flmajora','#frmCadpac').val();
     var vllimpag = $('#vllimpag','#frmCadpac').val();
-	var dtabertu = $('#dtabertu','#frmCadpac').val();
-	var dtfechto = $('#dtfechto','#frmCadpac').val();
 
     showMsgAguardo("Aguarde, processando...");
 
@@ -1757,8 +1732,6 @@ function gravarPAC() {
             vlmaxsgr: vlmaxsgr,
 			flmajora: flmajora,
             vllimpag: vllimpag,
-			dtabertu: dtabertu,
-			dtfechto: dtfechto,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {

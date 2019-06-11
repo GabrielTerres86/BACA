@@ -125,8 +125,6 @@
         echo "$('#vlmaxsgr', '#frmCadpac').val('".getByTagName($registros->tags,'VLMAXSGR')."');";
 		echo "$('#flmajora', '#frmCadpac').val('".getByTagName($registros->tags,'FLMAJORA')."');";
         echo "$('#vllimpag', '#frmCadpac').val('".getByTagName($registros->tags,'VLLIMPAG')."');";
-		echo "$('#dtabertu', '#frmCadpac').val('".getByTagName($registros->tags,'DTABERTU')."');";
-		echo "$('#dtfechto', '#frmCadpac').val('".getByTagName($registros->tags,'DTFECHTO')."');";
     }
 
     if ($cddopcao == 'C') {
