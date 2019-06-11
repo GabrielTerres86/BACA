@@ -5,6 +5,7 @@
  * DATA CRIAÇÃO : 03/08/2018
  * OBJETIVO     : Tela para entrada de informações de pagamento de empréstimo.
    ALTERACOES   :
+                  11/06/2019 - P450 - Ajuste na variavel do nr Contrato (Luiz/AMcom)
  */
 	session_start();
 	require_once('../../../includes/config.php');
