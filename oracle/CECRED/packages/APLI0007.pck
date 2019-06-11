@@ -22,6 +22,13 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
   --                          a considerar como processados os arquivos quando são colocados na 
   --                          pasta envia. (Daniel - Envolti)
   --
+  -- Alterações: 05/03/2019 - P411 
+  --				          Ajuste Calculo da quantidade de cotas referente a operação atual
+  --						  alterado para compatibilizar com a B3;							  
+  --						  REGRA ANTIGA -> vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);
+  --						  REGRA NOVA   -> vr_qtcotas_resg := fn_converte_valor_em_cota(rw_lcto.valorbase);						  
+  --                        - (David Valente - Envolti)
+  --
   --             03/04/2019 - Projeto 411 - Fase 2 - Parte 2 - Conciliação Despesa B3 e Outros Detalhes
   --                          Procedimento para tratar custo fornecedor aplicação - B3 
   --                          Ajusta mensagens de erros e trata de forma a permitir a monitoração automatica.
