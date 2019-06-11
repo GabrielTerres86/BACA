@@ -424,6 +424,38 @@ BEGIN
                                      ,'Majoração Automática do Cartão de Crédito'
                                      ,1); --> Por conta
   
+  -- Motivo para decsontos de títulos
+  INSERT INTO tbgen_motivo(idmotivo
+						  ,dsmotivo
+						  ,cdproduto
+						  ,flgreserva_sistema
+						  ,flgativo
+						  ,flgtipo
+						  ,flgexibe)
+			  VALUES(78
+					,'Desconto de titulo em atraso'
+					,25
+					,0
+					,1
+					,0
+					,0);
+  
+  -- Motivo para BACA de integração de cargas antigas
+  INSERT INTO tbgen_motivo(idmotivo
+						  ,dsmotivo
+						  ,cdproduto
+						  ,flgreserva_sistema
+						  ,flgativo
+						  ,flgtipo
+						  ,flgexibe)
+			  VALUES(79
+					,'Bloqueio manual'
+					,25
+					,1
+					,1
+					,0
+					,0);
+					
 	INSERT INTO tbgen_motivo(idmotivo
 							,dsmotivo
 							,cdproduto
@@ -437,6 +469,7 @@ BEGIN
 			,1
 			,1
 			,1
+			,1);
   
   -- Transformar tbepr_param_conta para nova estrutura
   -- Transformar tbepr_param_conta para nova estrutura
@@ -464,7 +497,8 @@ BEGIN
      WHERE par.cdcooper = ass.cdcooper
        AND par.nrdconta = ass.nrdconta
        AND pre.cdcooper = ass.cdcooper
-       AND pre.inpessoa = ass.inpessoa;    
+       AND pre.inpessoa = ass.inpessoa
+	   AND par.flglibera_pre_aprv <> 0; 
   
   -- Carga de registro inicial de histórico     
   INSERT INTO TBCC_HIST_PARAM_PESSOA_PROD(cdcooper          
@@ -496,9 +530,7 @@ BEGIN
        AND par.nrdconta = ass.nrdconta
        AND pre.cdcooper = ass.cdcooper
        AND pre.inpessoa = ass.inpessoa
-       --AND par.dtatualiza_pre_aprv IS NULL
-       ;           
-       
+       AND par.flglibera_pre_aprv <> 0;
   
   -- Gravar
   commit;
