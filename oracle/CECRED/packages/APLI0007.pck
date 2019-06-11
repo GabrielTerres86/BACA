@@ -40,11 +40,11 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
                         ,pr_tpaplica IN NUMBER
                         ,pr_nrdconta IN NUMBER
                         ,pr_nraplica IN NUMBER) RETURN VARCHAR2;
-  
-														  
-															
-															
-																					
+
+  -- Retornar true caso a aplicação esteja em carencia
+  FUNCTION fn_tem_carencia(pr_dtmvtapl crapdat.dtmvtolt%type
+                          ,pr_qtdiacar craprac.qtdiacar%TYPE
+                          ,pr_dtmvtres crapdat.dtmvtolt%TYPE) RETURN VARCHAR2;      
   
   -- Função para mostrar a descrição conforme o tipo do Arquivo enviado 
   FUNCTION fn_tparquivo_custodia(pr_idtipo_arquivo IN NUMBER        -- Tipo do Arquivo (1-Registro,2-Resgate,3-Exclusão,9-Conciliação)
@@ -58,10 +58,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
                           
   -- Rotina para processar retorno de conciliação pendentes de processamento
   PROCEDURE pc_processo_controle(pr_tipexec   IN NUMBER     --> Tipo da Execução
-                                ,pr_dsinform OUT CLOB   --> Descrição de informativos na execução
+                                ,pr_dsinform OUT CLOB       --> Descrição de informativos na execução
                                 ,pr_dscritic OUT VARCHAR2); --> Descrição de critica
   
-					
+
 END APLI0007;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
@@ -1084,7 +1084,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
            --> Valor de aplicação maior ou igual ao valor mínimo
            AND lac.vllanmto >= nvl(pr_vlminctd,0); 
            
-
       -- Busca das Operações nas aplicações custodiadas não enviados a B3
       CURSOR cr_lctos_rgt(pr_cdcooper NUMBER
                          ,pr_dtmvtoan DATE
@@ -1188,7 +1187,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                    --> Aplicação já custodiada
                    AND nvl(rac.idaplcus,0) > 0
                    AND capl.dscodigo_b3 IS NOT NULL) lct
-																										 
          ORDER BY lct.dtmvtolt
                  ,lct.nrdconta
                  ,lct.nraplica
@@ -1303,7 +1301,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           -- Buscar todos os movimentos de aplicação dos últimos 2 dias  
           -- que ainda não estejam marcados para envio (idlctcus is null)
           FOR rw_lcto IN cr_lctos(rw_cop.cdcooper,vr_dtmvto2a,rw_crapdat.dtmvtolt,vr_dtinictd,vr_vlinictd) LOOP
-			
             -- Converter valor aplicação em contas
             vr_qtcotas := fn_converte_valor_em_cota(rw_lcto.vllanmto);
 			
@@ -1458,7 +1455,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           -- Buscar todos os movimentos de Operações dos últimos 2 dias  
           -- que ainda não estejam marcados para envio (idlctcus is null)
           FOR rw_lcto IN cr_lctos_rgt(rw_cop.cdcooper,vr_dtmvto2a,rw_crapdat.dtmvtolt,vr_dtinictd) LOOP
-			
             -- Se mudou data, conta ou aplicação
             IF vr_dtmvtolt <> rw_lcto.dtmvtolt OR vr_nrdconta <> rw_lcto.nrdconta OR vr_nraplica <> rw_lcto.nraplica THEN
               -- Armazenar quantidade de cotas 
@@ -1482,7 +1478,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                                        ,pr_idcritic => vr_idcritic              --> Identificador critica
                                        ,pr_cdcritic => vr_cdcritic              --> Codigo da critica
                                        ,pr_dscritic => vr_dscritic);            --> Retorno de críticaca
-				
                 -- Código comum, para gravação do LOG independente de sucesso ou não
                 IF vr_dscritic IS NOT NULL THEN
                   -- Houve erro
@@ -1493,7 +1488,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                               ||' -> '|| vr_dscritic;
                   RAISE vr_exc_saida;
                 END IF;
-				
                 -- Se o saldo for zero, significa que houve um resgate total, então precisamos buscar 
                 -- o valor dos resgates efetuados neste dia para a conta e aplicação
                 IF vr_sldaplic = 0 THEN
@@ -1507,15 +1501,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                    INTO vr_sldaplic;
                   CLOSE cr_resgat;
                 END IF; 
-				
                 -- Se mesmo assim ainda está zero, vamos usar o próprio valor do lançamento como saldo
                 IF vr_sldaplic = 0 THEN
                   vr_sldaplic := rw_lcto.vllanmto;
                 END IF;
-				 
                   -- Calcular preço unitario
 				          IF vr_qtcotas = 0 THEN
-				            pr_dsdaviso := pr_dsdaviso || vr_dscarque || fn_get_time_char || ' Resgate com cotas zerada! '||  rw_cop.cdcooper ||' '|| rw_lcto.nrdconta ||' '|| rw_lcto.nraplica;
+				            -- comentado pois estava estourando a variavel de log						   
+				            --pr_dsdaviso := pr_dsdaviso || vr_dscarque || fn_get_time_char || ' Resgate com cotas zerada! '||  rw_cop.cdcooper ||' '|| rw_lcto.nrdconta ||' '|| rw_lcto.nraplica;
 				            continue;
 				          ELSE
 							vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
@@ -1537,12 +1530,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
 				vr_qtcotas_resg := trunc(rw_lcto.vllanmto / vr_vlpreco_unit);															 
 				
               END IF;
-			  
               -- Armazena informações do registro atual
               vr_dtmvtolt := rw_lcto.dtmvtolt;
               vr_nrdconta := rw_lcto.nrdconta;
               vr_nraplica := rw_lcto.nraplica;  
-		   
             /*  vr_cdhistor_ant := rw_lcto.cdhistor;
               vr_idlancto_ant := NULL;
             ELSE
@@ -4291,7 +4282,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       	  
       -- Somente proceder se conciliação estiver ativa e ainda não efetuada para o dia
       IF pr_flprccnc = 'S' AND pr_dtultcnc < trunc(SYSDATE) THEN 
-	  
         -- Busca do dia util anterior
         vr_dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper  => 3
                                                   ,pr_dtmvtolt  => trunc(SYSDATE)-1
@@ -4324,7 +4314,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao definir data a partir do nome do Arquivo';
           END;
-		 
           -- A data do arquivo não pode ser inferior ao dia util anterior
           IF vr_dtmvtoan > vr_dtmvtolt THEN
             -- Gerar critica
@@ -4724,7 +4713,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
   
   -- Rotina para processar retorno de conciliação pendentes de processamento
   PROCEDURE pc_processo_controle(pr_tipexec   IN NUMBER       --> Tipo da Execução
-                                ,pr_dsinform OUT CLOB     --> Descrição de informativos na execução
+                                ,pr_dsinform OUT CLOB         --> Descrição de informativos na execução
                                 ,pr_dscritic OUT VARCHAR2) IS --> Retorno de crítica
   BEGIN
     ---------------------------------------------------------------------------------------------------------------
@@ -4795,9 +4784,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       vr_flprccnc := gene0001.fn_param_sistema('CRED',0,'FLG_CONCILIA_CUSTODIA_B3'); 
       vr_dtultcnc := to_date(gene0001.fn_param_sistema('CRED',0,'DAT_CONCILIA_CUSTODIA_B3'),'dd/mm/rrrr'); 
       
-											  
-											
-
       -- Montar o texto da janela de execução
       vr_dsjanexe := 'das '||to_char(vr_hriniprc,'hh24:mi')||' até as '||to_char(vr_hrfimprc,'hh24:mi');
       
@@ -4811,7 +4797,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
         
         -- Somente executar quando ocorreu virada do dia, estamos em dia útil e sem o processo em execução
         IF rw_crapdat.dtmvtolt = TRUNC(SYSDATE) AND rw_crapdat.inproces = 1 THEN 
-					
           -- Caso estejamos dentro da janela de comunição entre Ayllos X B3
           IF SYSDATE BETWEEN vr_hriniprc AND vr_hrfimprc THEN
             -- Incluir tag para monitoramento do job
@@ -5175,3 +5160,4 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
   END pc_processo_controle;
   
 END APLI0007;
+/
