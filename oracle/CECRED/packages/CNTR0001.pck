@@ -98,6 +98,7 @@ PROCEDURE pc_novo_num_cnt_limite (pr_nrdconta  IN NUMBER
 PROCEDURE pc_inativa_protocolo(pr_cdcooper  IN crapcop.cdcooper%TYPE
                               ,pr_nrdconta  IN crapass.nrdconta%TYPE
                               ,pr_cdtippro  IN crappro.cdtippro%TYPE
+                              ,pr_nrdocmto  IN crappro.nrdocmto%TYPE
                               ,pr_dscritic OUT VARCHAR2);
 END CNTR0001;
 /
@@ -513,6 +514,7 @@ BEGIN
   pc_inativa_protocolo(pr_cdcooper  => pr_cdcooper
                       ,pr_nrdconta  => pr_nrdconta
                       ,pr_cdtippro  => pr_cdtippro
+                      ,pr_nrdocmto  => pr_nrcontrato
                       ,pr_dscritic  => vr_dscritic);
   -- Fim Pj470 - SM2
    --Gerar protocolo
@@ -1183,18 +1185,21 @@ END pc_novo_num_cnt_limite;
 PROCEDURE pc_inativa_protocolo(pr_cdcooper  IN crapcop.cdcooper%TYPE
                               ,pr_nrdconta  IN crapass.nrdconta%TYPE
                               ,pr_cdtippro  IN crappro.cdtippro%TYPE
+                              ,pr_nrdocmto  IN crappro.nrdocmto%TYPE
                               ,pr_dscritic OUT VARCHAR2) IS
  -- Cursor
  -- Buscar protocolos ativos
  -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
   CURSOR cr_crappro (pr_cdcooper in crapcop.cdcooper%TYPE,
                      pr_nrdconta in crapass.nrdconta%TYPE,
+                     pr_nrdocmto in crappro.nrdocmto%TYPE,
                      pr_cdtippro IN NUMBER) IS
   SELECT rowid dsrosid_crappro
     FROM crappro
    WHERE cdcooper = pr_cdcooper
      AND nrdconta = pr_nrdconta
      AND cdtippro = pr_cdtippro
+     AND nrdocmto = pr_nrdocmto
      AND flgativo = 1;
 BEGIN
   pr_dscritic := null;
@@ -1202,7 +1207,8 @@ BEGIN
   -- Verificar se existe protocolo ativo para a Cooperativa/Conta/Tipo, se existir inativa o mesmo.
   FOR rv_crappro in cr_crappro (pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
-                               ,pr_cdtippro => pr_cdtippro)
+                               ,pr_cdtippro => pr_cdtippro
+                               ,pr_nrdocmto => pr_nrdocmto)
   LOOP
     UPDATE crappro a
        SET a.flgativo = 0

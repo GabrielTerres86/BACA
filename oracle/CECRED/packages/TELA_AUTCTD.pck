@@ -261,6 +261,7 @@ BEGIN
     cntr0001.pc_inativa_protocolo(pr_cdcooper  => vr_cdcooper
                                  ,pr_nrdconta  => vr_nrdconta
                                  ,pr_cdtippro  => pr_tpcontrato
+                                 ,pr_nrdocmto  => pr_nrcontrato
                                  ,pr_dscritic  => vr_dscritic);
     -- Fim Pj470 - SM2
 

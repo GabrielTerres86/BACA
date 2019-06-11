@@ -536,13 +536,20 @@ function mostraImprimirLimite() {
  */
 function chamarImpressaoChequeLimite(){
 
+	var aux_nrctrato = 0;
+	if(operacao == 'I'){
+		aux_nrctrato = nrcontrato;
+	} else {
+		aux_nrctrato = $("#nrctrlim","#frmDadosLimiteDscChq").val().replace(/\./g,"");
+	}
+
 	//bruno - prj 470 - tela autorizacao
 	var params = {
 		nrdconta : nrdconta,
 		obrigatoria: 1,
 		tpcontrato: 27,
 		vlcontrato: $("#vllimite","#frmDadosLimiteDscChq").val().replace(/\./g,""), //vllimite,
-		nrcontrato: nrcontrato,
+		nrcontrato: aux_nrctrato,
 		funcaoImpressao: "mostraImprimirLimite();",
 		funcaoGeraProtocolo: 'carregaLimitesCheques();'
 	};
