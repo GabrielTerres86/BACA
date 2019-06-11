@@ -470,6 +470,21 @@ BEGIN
 			,1
 			,1
 			,1);
+			
+	INSERT INTO tbgen_motivo(idmotivo
+							,dsmotivo
+							,cdproduto
+							,flgreserva_sistema
+							,flgativo
+							,flgexibe
+							,flgtipo) 
+	  VALUES(70
+			,'Carga de liberacao.'
+			,25
+			,1
+			,1
+			,1
+			,1);
   
   -- Transformar tbepr_param_conta para nova estrutura
   -- Transformar tbepr_param_conta para nova estrutura
@@ -497,8 +512,7 @@ BEGIN
      WHERE par.cdcooper = ass.cdcooper
        AND par.nrdconta = ass.nrdconta
        AND pre.cdcooper = ass.cdcooper
-       AND pre.inpessoa = ass.inpessoa
-	   AND par.flglibera_pre_aprv <> 0; 
+       AND pre.inpessoa = ass.inpessoa; 
   
   -- Carga de registro inicial de histórico     
   INSERT INTO TBCC_HIST_PARAM_PESSOA_PROD(cdcooper          
@@ -529,8 +543,7 @@ BEGIN
      WHERE par.cdcooper = ass.cdcooper
        AND par.nrdconta = ass.nrdconta
        AND pre.cdcooper = ass.cdcooper
-       AND pre.inpessoa = ass.inpessoa
-       AND par.flglibera_pre_aprv <> 0;
+       AND pre.inpessoa = ass.inpessoa;
   
   -- Gravar
   commit;
