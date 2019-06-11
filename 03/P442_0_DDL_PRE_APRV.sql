@@ -514,37 +514,6 @@ BEGIN
        AND pre.cdcooper = ass.cdcooper
        AND pre.inpessoa = ass.inpessoa; 
   
-  -- Carga de registro inicial de histórico     
-  INSERT INTO TBCC_HIST_PARAM_PESSOA_PROD(cdcooper          
-                                         ,tppessoa          
-                                         ,nrcpfcnpj_base    
-                                         ,nrdconta
-                                         ,dtoperac          
-                                         ,dtvigencia_paramet
-                                         ,cdproduto         
-                                         ,cdoperac_produto  
-                                         ,flglibera         
-                                         ,idmotivo          
-                                         ,cdoperad)
-    SELECT ass.cdcooper
-          ,ass.inpessoa
-          ,ass.nrcpfcnpj_Base
-          ,0
-          ,par.dtatualiza_pre_aprv
-          ,trunc(add_months(nvl(par.dtatualiza_pre_aprv,SYSDATE),pre.qtmesblq))
-          ,25
-          ,1
-          ,par.flglibera_pre_aprv
-          ,nvl(par.idmotivo,DECODE(par.flglibera_pre_aprv,0,70,71))
-          ,'1'
-      FROM crapass ass 
-          ,tbepr_param_conta par
-          ,crappre pre
-     WHERE par.cdcooper = ass.cdcooper
-       AND par.nrdconta = ass.nrdconta
-       AND pre.cdcooper = ass.cdcooper
-       AND pre.inpessoa = ass.inpessoa;
-  
   -- Gravar
   commit;
 end;
