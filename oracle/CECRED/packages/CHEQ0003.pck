@@ -959,7 +959,7 @@ BEGIN
                                               pr_nrdconta => pr_nrdconta, 
                                               pr_nrdctabb => pr_nrdconta,
                                               pr_nrdocmto => nvl(vr_nrdocmto, 0),
-                                              pr_cdhistor => (CASE pr_tpopechq WHEN 1 THEN 351 ELSE 399 END), 
+                                              pr_cdhistor => (CASE pr_tpopechq WHEN 1 THEN 2973 ELSE 399 END), -- Quando devolução contra ordem tambem por Historico 2973
                                               pr_vllanmto => rw_crapfdc.vlcheque, 
                                               pr_cdcooper => pr_cdcoopdp, 
                                               pr_cdbanchq => rw_crapfdc.cdbanchq, 
