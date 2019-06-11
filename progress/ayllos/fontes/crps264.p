@@ -268,7 +268,7 @@
               07/12/2018 - Melhoria no processo de devoluções de cheques.
                            Alcemir Mout's (INC0022559).
 						   
-			  04/06/2019 - P565.1-RF20 - Inclusao do histórico 2973-DEV.CH.DEP na proc gera_lancamento.
+			        04/06/2019 - P565.1-RF20 - Inclusao do histórico 2973-DEV.CH.DEP na proc gera_lancamento.
                            (Fernanda Kelli de Oliveira - AMCom)
 
 ..............................................................................*/
@@ -1450,14 +1450,14 @@ PROCEDURE gera_lancamento:
                                                 UNDO, RETURN "NOK".
                                        END.
                                       
-									  /*P565.1-RF20 Se encontrar um lançamento anterior com o histórico 2662, 
+									                     /*P565.1-RF20 Se encontrar um lançamento anterior com o histórico 2662, 
                                          faz um lançamento pelo histórico 2973, senao faz pelo histórico 351 */
                                        FIND FIRST craplcm1 
-                                            WHERE craplcm.cdcooper = aux_cdcooper     AND
-                                                  craplcm.nrdconta = crapcst.nrdconta AND
-                                                  craplcm.nrdocmto = crapcst.nrcheque AND
-                                                  craplcm.cdhistor = 2662   /*DEPOSITO DE CHEQUES EM CUSTODIA*/                                                         
-                                                  EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                                            WHERE craplcm1.cdcooper = aux_cdcooper     AND
+                                                  craplcm1.nrdconta = crapcst.nrdconta AND
+                                                  craplcm1.nrdocmto = crapcst.nrdocmto AND
+                                                  craplcm1.cdhistor = 2662   /*DEPOSITO DE CHEQUES EM CUSTODIA*/                                                         
+                                                  NO-LOCK NO-ERROR.
 
                                            IF AVAILABLE craplcm1 THEN
                                              ASSIGN  aux2_cdhistor = 2973. /*DEVOLUCAO DE CHEQUE ACOLHIDO EM DEPOSITO - SALDO BLOQUEADO*/
