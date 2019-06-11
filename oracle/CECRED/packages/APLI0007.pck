@@ -1468,7 +1468,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           vr_idlancto_ant := 0;*/
           
           
-          /* Logica considera que idtipo_lancto virá apenas [2 - resgate, 3 - ir, 4 - rendimento] */
           /* Logica responsavel por agrupar os lancamentos de RESGATE, IR e RENDIMENTO. Como nao existe
              um campo que vincule esses lancamentos, vamos realizar o vinculo através da ordenacao
              sobre o tipo de lancamento e o valor.
@@ -1480,9 +1479,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
              do resgate mesmo.
              - O SQL pode retornar lctos de IR e RENDIMENTO que nao possuem resgate, pois os resgates jah
              foram enviados em outra ocasiao. Nesse cenario apenas ignoraremos os registros.
-          /*
-            
-            Tratar excessoes
           */                 
           vr_idx_aplic   := '';
           vr_idx         := 0;
