@@ -2447,6 +2447,7 @@ PROCEDURE calcula_taxa_emprestimo:
                                           INPUT 1, /* idfiniof */
                                           INPUT "", /* dsctrliq */
                                           INPUT "N",
+                                          INPUT ?, /* dtcarenc */
                                           OUTPUT par_percetop,
                                           OUTPUT aux_txcetmes,
                                           OUTPUT TABLE tt-erro).
