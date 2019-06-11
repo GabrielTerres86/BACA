@@ -56,7 +56,7 @@ BEGIN
     BEGIN
       IF rw_ope.cdcooper = 3 THEN
         INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
-        VALUES ('IMPPRE', 'L', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
+        VALUES ('IMPPRE', 'I', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
@@ -65,7 +65,7 @@ BEGIN
 
     BEGIN
       INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
-      VALUES ('IMPPRE', 'I', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
+      VALUES ('IMPPRE', 'L', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
     EXCEPTION
       WHEN OTHERS THEN
         NULL;
