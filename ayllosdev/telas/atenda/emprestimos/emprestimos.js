@@ -7239,7 +7239,7 @@ function validaDados(cdcooper, tela) { //bruno - prj 438 - 14625 - TELA_SOLICITA
 
         if (perfatcl <= 0 || perfatcl > 100) {
             //return limpaMsg(false, '269 - Valor errado.'); BUG18425
-            showError('error', 'Cadastro incompleto. Passe pela tela CONTAS.', 'Alerta - Aimaro', 'hideMsgAguardo();');
+            showError('error', 'Cadastro incompleto. Passe pela tela CONTAS.', 'Alerta - Aimaro', 'hideMsgAguardo(); divRotina.show(); encerraRotina(true);');
             return false;
         }
 
