@@ -1,13 +1,14 @@
 <?php
 /*!
  * FONTE        : upgrade_downgrade.php
- * CRIAÇÃO      : Jean Michel
- * DATA CRIAÇÃO : Abril/2014
- * OBJETIVO     : Mostrar opção de troca de Administradoras de cartões da tela ATENDA
+ * CRIAÃ‡ÃƒO      : Jean Michel
+ * DATA CRIAÃ‡ÃƒO : Abril/2014
+ * OBJETIVO     : Mostrar opÃ§Ã£o de troca de Administradoras de cartÃµes da tela ATENDA
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÃ‡Ã•ES   :
  * --------------
- * 000:
+ *       12/06/2019 : Ajuste na funÃ§Ã£o que valida se Ã© titular, para mostrar erro caso ocorra.
+                      Alcemir Jr. (PRB0041916).
  */
 
 	session_start();
@@ -19,15 +20,15 @@
 	
 	$funcaoAposErro = 'bloqueiaFundo(divRotina);';
 	
-	// Verifica permissão
+	// Verifica permissÃ£o
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"D")) <> "") {
 		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);	
 	}			
 	
-	// Verifica se o número do cartao foi informado
+	// Verifica se o nÃºmero do cartao foi informado
 	if (!isset($_POST["nrcrcard"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);	
 	
-	// Verifica se o número da conta foi informado
+	// Verifica se o nÃºmero da conta foi informado
 	if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);	
 
 	$nrdconta = $_POST["nrdconta"];
@@ -38,10 +39,10 @@
 
 	
 		
-	// Verifica se o número do cartao é um inteiro válido
+	// Verifica se o nÃºmero do cartao Ã© um inteiro vÃ¡lido
 	if (!validaInteiro($nrcrcard)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	
-	// Verifica se o número da conta é um inteiro válido
+	// Verifica se o nÃºmero da conta Ã© um inteiro vÃ¡lido
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	
 
@@ -70,7 +71,7 @@
 		//Cria objeto para classe de tratamento de XML
 		$xmlObjNovoCartao = getObjectXML($xmlResult);
 		
-		// Se ocorrer um erro, mostra crítica
+		// Se ocorrer um erro, mostra crÃ­tica
 		if (strtoupper($xmlObjNovoCartao->roottag->tags[0]->name) == "ERRO") {
 			exibeErro($xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		}
@@ -88,18 +89,23 @@
 		$admresult = mensageria($logXML, "ATENDA_CRD", "VALIDAR_EH_TITULAR", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		
 		$procXML = simplexml_load_string($admresult);
-		
-		$titular = $procXML->Dados->contas->conta->titular;
-		//echo "/* \n É titular: $titular \n */ ";
-		if($titular == 'S')
-			return true;
-		else
-			return false;
-
+	  
+    // Se ocorrer um erro, mostra critica
+	  if ($procXML->Erro->Registro->dscritic != '') {
+		  exibirErro('error',$procXML->Erro->Registro->dscritic,'Alerta - Aimaro',$funcaoAposErro);	
+	  }else{
+  
+		  $titular = $procXML->Dados->contas->conta->titular;
+		  //echo "/* \n Ã‰ titular: $titular \n */ ";
+		  if($titular == 'S')
+			  return true;
+		  else
+			  return false;
+    }
 }
 	
 	
-	// Monta o xml de requisição
+	// Monta o xml de requisiÃ§Ã£o
 	$xmlGetCartao  = "";
 	$xmlGetCartao .= "<Root>";
 	$xmlGetCartao .= "	<Cabecalho>";
@@ -125,7 +131,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjCartao = getObjectXML($xmlResult);
 
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro);	
 	}else{
@@ -200,7 +206,7 @@ justificativa[0] = {
 };
 //downgrade
 justificativa[1] = {
-		'<?php echo ("Nao possui interesse nos benefícios do produto."); ?>':"<?php echo ("Nao possui interesse nos benefícios do produto."); ?>",
+		'<?php echo ("Nao possui interesse nos benefÃ­cios do produto."); ?>':"<?php echo ("Nao possui interesse nos benefÃ­cios do produto."); ?>",
 		'<?php echo ("Valor da anuidade."); ?>':"<?php echo ("Valor da anuidade."); ?>",
 		'<?php echo ("Atualizacao de renda."); ?>':"<?php echo ("Atualizacao de renda."); ?>"	
 };
@@ -224,9 +230,9 @@ function populaSelect(id, dataset){
     }
 }
 populaSelect("dsjustificativa",undefined);
-// Mostra o div da Tela da opção
+// Mostra o div da Tela da opÃ§Ã£o
 $("#divOpcoesDaOpcao1").css("display","block");
-// Esconde os cartões
+// Esconde os cartÃµes
 $("#divConteudoCartoes").css("display","none");
 
 $("#dsadmatu").prop("disabled",true);
@@ -234,6 +240,6 @@ $("#dsadmatu").prop("disabled",true);
 // Esconde mensagem de aguardo
 hideMsgAguardo();
 
-// Bloqueia conteúdo que esta átras do div da rotina
+// Bloqueia conteÃºdo que esta Ã¡tras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
 </script>
