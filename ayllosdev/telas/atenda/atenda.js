@@ -591,7 +591,6 @@ function abreDocumentos(){
     $("#divRotina").html($("#rotinaDocumentos").html());
     mostraRotina();
     bloqueiaFundo($('#divRotina'));
-    executandoProdutos = true;
 }
 
 // Função para limpar campos com dados da conta

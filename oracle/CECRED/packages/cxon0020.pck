@@ -1357,7 +1357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 28/08/2018
+      Data     : Junho/2015.                   Ultima atualizacao: 05/06/2019
 
       Dados referentes ao programa:
 
@@ -1404,7 +1404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   24/08/2018 - Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE - TIAGO)                 
                   
                   28/08/2018 - Tratamento de exceção pra chamada AFRA0004.pc_monitora_operacao (Tiago - RITM0025395)
-                  
+
                   08/02/2019 - Realizado a inclusão de parametro para indicar que está sendo realizada uma 
                                transferencia de salário via portabilidade, de forma que o programa possa tratar
                                a requisição como TEC de salário. Foram realizados os ajustes também para que 
@@ -1412,6 +1412,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                
                   03/05/2019 - Alterado para que não seja gerada tarifa para transferencias de portabilidade de 
                                salário. (Renato Darosci - Supero - Projeto 485)
+
+				  08/05/2019 - Tratamento para travar envio de 2 TEDs simultaneamente, ocorre erro na validacao do saldo
+                               do deposito a vista - (Jose Gracik/Mouts - RITM0012961)
+
+                  05/06/2019 - Tratar INC0011406 relacionado ao horario de aprovacao da TED (Diego).
+
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
@@ -1472,6 +1478,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND craptvl.vldocrcb = pr_vldocmto;
     rw_craptvl_max cr_craptvl_max%ROWTYPE;
 
+	/* Validar dep. a vista em transferencias sequencias */
+    CURSOR cr_craptvl2_max(pr_cdcooper craptvl.cdcooper%TYPE,
+                           pr_dtmvtocd craptvl.dtmvtolt%TYPE,
+                           pr_nrdconta craptvl.nrdconta%TYPE) IS
+      SELECT MAX(hrtransa) hrtransa
+        FROM craptvl
+       WHERE craptvl.cdcooper = pr_cdcooper
+         AND craptvl.dtmvtolt = pr_dtmvtocd
+         AND craptvl.tpdoctrf = 3
+         AND craptvl.nrdconta = pr_nrdconta;
+    rw_craptvl2_max cr_craptvl2_max%ROWTYPE;
 
     -- Buscar dados historico
     CURSOR cr_craphis (pr_cdcooper craphis.cdcooper%TYPE,
@@ -1847,7 +1864,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       END IF;
     END IF;    
     -- Fim INC0030535
-    
+
     -- Se for uma transação de portabilidade de salário (P485 - Renato Darosci - Supero)
     IF NVL(pr_idportab,0) = 1 THEN
       -- Indica como 2 por configurar uma TEC
@@ -1859,12 +1876,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       
     /* Se alterar numero de controle, ajustar procedure atualiza-doc-ted */
     vr_nrctrlif := vr_idtected||to_char(rw_crapdat.dtmvtocd,'RRMMDD')
-                              ||to_char(rw_crapcop.cdagectl,'fm0000')
-                              -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
-                              -- Buscar o NRDOCMTO para evitar duplicidadr de NumCtrlIF
-                              -- || to_char(SYSDATE,'sssss')
-                              --   /* para evitar duplicidade devido paralelismo */
-                              ||to_char(pr_nrdocmto,'fm00000000');
+                      ||to_char(rw_crapcop.cdagectl,'fm0000')
+                       -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+                       -- Buscar o NRDOCMTO para evitar duplicidadr de NumCtrlIF
+                       -- || to_char(SYSDATE,'sssss')
+                       --   /* para evitar duplicidade devido paralelismo */
+                      ||to_char(pr_nrdocmto,'fm00000000');
     -- Fim Projeto 475
 
     IF pr_flmobile = 1 THEN /* Canal Mobile */
@@ -1889,6 +1906,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
     IF pr_idagenda = 1 THEN
 
+	  /* Garantir o horario de funcionamento do SPB */
+	  IF sspb0003.fn_valida_horario_ted(pr_cdcooper => pr_cdcooper) then
+         vr_cdcritic := 0;
+         vr_dscritic := 'Operação deve ser realizada dentro do horário estabelecido para transferências na data atual.';
+         RAISE vr_exc_erro; 
+      END IF; 
+
       /* Controle para envio de 2 TEDs iguais pelo ambiente Mobile */
       OPEN cr_craptvl_max( pr_cdcooper => rw_crapcop.cdcooper,
                            pr_dtmvtocd => rw_crapdat.dtmvtocd,
@@ -1911,6 +1935,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       END IF;
       CLOSE cr_craptvl_max;
 
+       /* Controle para envio de 2 TEDs da mesma conta ao mesmo tempo sem validar o saldo do dep. a vista */
+      OPEN cr_craptvl2_max( pr_cdcooper => rw_crapcop.cdcooper,
+                            pr_dtmvtocd => rw_crapdat.dtmvtocd,
+                            pr_nrdconta => pr_nrdconta);
+      FETCH cr_craptvl2_max INTO rw_craptvl2_max;
+
+      -- se ja existe um lançamento com os mesmos dados em menos de 30 segundos (30 seg) apresentar alerta
+      IF cr_craptvl2_max%FOUND AND
+        (to_char(SYSDATE,'SSSSS') - nvl(rw_craptvl2_max.hrtransa,0)) <= 30 THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Ja existe TED em processamento. ' ||
+                       'Consulte extrato ou tente novamente em 30 segundos.';
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_craptvl2_max;	
     END IF;
 
 	--Bacenjud - SM 1
@@ -2191,7 +2230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         vr_dscritic := 'Não foi possivel inserir transferencia: '||SQLERRM;
         RAISE vr_exc_erro;
     END;
-    
+
     -- Indicar que a transação não é uma transferencia de salário(TEC)   (Renato - Supero - P485)
     vr_flgctsal := FALSE;
     
@@ -2238,15 +2277,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-    
-      -- Se for bloqueio judicial (bacenjud), utiliza o historico 1406-TR.BLOQ.JUD
-      IF pr_tpctafav = 9 THEN
-        vr_cdhisted := 1406;
-      ELSE
-      -- definir historico de ted
-      vr_cdhisted := 555;
-      END IF;
-      
+
+    -- Se for bloqueio judicial (bacenjud), utiliza o historico 1406-TR.BLOQ.JUD
+    IF pr_tpctafav = 9 THEN
+      vr_cdhisted := 1406;
+    ELSE
+    -- definir historico de ted
+    vr_cdhisted := 555;
+    END IF;
+
     ELSE
       -- Portabilidade não deve cobrar tarifa
       vr_vllantar := 0;    
@@ -3115,17 +3154,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
     -- Verifica senha, apenas se não for TEC de salário (Renato - Supero - P485)
     IF NVL(pr_idportab,1) = 0 THEN
-      -- Verificar cadastro de senha
-      OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
-                       pr_nrdconta => pr_nrdconta,
-                       pr_idseqttl => pr_idseqttl,
-                       pr_nrcpfcgc => 0);
-      IF cr_crapsnh%NOTFOUND THEN
-        CLOSE cr_crapsnh;
-        vr_dscritic := 'Senha para conta on-line nao cadastrada';
-        RAISE vr_exc_erro;
-      END IF;
+    -- Verificar cadastro de senha
+    OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
+                     pr_nrdconta => pr_nrdconta,
+                     pr_idseqttl => pr_idseqttl,
+                     pr_nrcpfcgc => 0);
+    IF cr_crapsnh%NOTFOUND THEN
       CLOSE cr_crapsnh;
+      vr_dscritic := 'Senha para conta on-line nao cadastrada';
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crapsnh;
     END if;
 
     -- se for pessoa juridica

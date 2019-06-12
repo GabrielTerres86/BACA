@@ -43,7 +43,7 @@
    <script type="text/javascript" src="../../scripts/mascara.js"></script>
    <script type="text/javascript" src="../../scripts/menu.js"></script>
    <script type="text/javascript" src="../../scripts/jquery.mask.min.js"></script>
-   <script type="text/javascript" src="tab097.js"></script>	
+   <script type="text/javascript" src="tab097.js?keyrand=<?php echo mt_rand(); ?>"></script>	
   </head>
 
   <body>

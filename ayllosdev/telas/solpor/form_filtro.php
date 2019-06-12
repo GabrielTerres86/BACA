@@ -16,8 +16,13 @@ require_once("../../includes/controla_secao.php");
 isPostMethod();
 // Classe para leitura do xml de retorno
 require_once("../../class/xmlfile.php");
+require_once("../../includes/carrega_permissoes.php");
 
 $cddopcao = (!empty($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
+
+if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"], $cddopcao, false)) <> "") {
+	exibeErro($msgError);
+}
 
 function exibeErro($msgErro) {
 	echo '<script type="text/javascript">';
@@ -138,3 +143,8 @@ $dominios = $xmlObj->roottag->tags[0]->tags;
 	</div>
 	<input type="hidden" id="cdcooper" value="<?=$glbvars["cdcooper"]?>"/>
 </form>
+<script>
+	cabecalho.desabilitarTodosComponentes();
+	filtro.formatar(cabecalho.getOpcaoSelecionada());
+	hideMsgAguardo();
+</script>

@@ -3678,6 +3678,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
             C.NRDCONTA,
             C.IDORDEM;
 
+    CURSOR cr_monitoramento_final_periodo IS
+      SELECT
+            A.NRDCONTA,
+            A.CDAGENCI,
+            A.CDMODALI, 
+            C.DSOFICIO, 
+            A.DSPROCESSO, 
+            A.NMJUIZ,
+            B.TPORDEM,
+            B.CDCOOPER,
+            C.IDORDEM,
+            C.VLSALDO VLORDEM,
+            C.IDPROGRES_RECID PROGRESS_RECID_MON,
+            A.VLORDEM VLORDEMORI,
+            C.VLBLOQUEADO,
+            D.NMPRIMTL,
+            E.NMRESCOP,
+            C.NRCPFCNPJ
+       FROM 
+            TBBLQJ_MONITORA_ORDEM_BLOQ C,
+            TBBLQJ_ORDEM_BLOQ_DESBLOQ  A,
+            TBBLQJ_ORDEM_ONLINE        B,
+            CRAPASS                    D,
+            CRAPCOP                    E
+      WHERE
+            A.IDORDEM  = B.IDORDEM
+        AND C.IDORDEM  = B.IDORDEM
+        AND A.CDMODALI = 1 -- Depósito a Vista - Conta Corrente
+        AND A.IDORDEM  = B.IDORDEM
+        AND D.CDCOOPER = B.CDCOOPER
+        AND D.NRDCONTA = A.NRDCONTA
+        AND E.CDCOOPER = B.CDCOOPER
+   ORDER BY
+            C.NRCPFCNPJ,
+            C.DSOFICIO,
+            B.CDCOOPER,            
+            C.NRDCONTA,
+            C.IDORDEM;
+            
+   rw_monitoramento_final_periodo cr_monitoramento_final_periodo%ROWTYPE;
+
   -- Busca de lançamentos na data 
     CURSOR cr_lancamento(pr_cdcooper        IN crapcop.cdcooper%TYPE    --> Cooperativa conectada
                          ,pr_nrdconta       IN crapass.nrdconta%TYPE    --> Número da conta
@@ -3902,15 +3943,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
    -- monitoradas
    IF to_number(to_char(sysdate, 'HH24MI')) > vr_hororario_encerramento THEN
      -- Busca os dados do monitoramento
-     FOR rw_monitoramento IN cr_monitoramento LOOP
+     FOR rw_monitoramento_final_periodo IN cr_monitoramento_final_periodo LOOP
       -- 
       vr_monitoramento_encerrado:='S';
       
       -- Atualiza na tabela de bloqueios
       BEGIN
         UPDATE tbblqj_ordem_bloq_desbloq
-           SET vloperacao = rw_monitoramento.VLBLOQUEADO
-            WHERE idordem = rw_monitoramento.idordem;
+           SET vloperacao = rw_monitoramento_final_periodo.VLBLOQUEADO
+            WHERE idordem = rw_monitoramento_final_periodo.idordem;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar na tbblqj_ordem_bloq_desbloq: '||SQLERRM;
@@ -3918,13 +3959,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       END;
 
       -- Coloca o registro de solicitacao como processado com sucesso      
-      pc_atualiza_situacao(pr_idordem => rw_monitoramento.idordem,
+      pc_atualiza_situacao(pr_idordem => rw_monitoramento_final_periodo.idordem,
                            pr_instatus => 2);          
                                  
       -- excluir o monitoramento.                     
       BEGIN
         DELETE tbblqj_monitora_ordem_bloq
-         WHERE idordem = rw_monitoramento.idordem;
+         WHERE idordem = rw_monitoramento_final_periodo.idordem;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar na tbblqj_ordem_bloq_desbloq: '||SQLERRM;

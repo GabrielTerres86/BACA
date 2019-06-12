@@ -46,14 +46,17 @@ if (!validaInteiro($inpessoa)) {
 // tipo == 0 (COO)
 // tipo == 1 (CEE)
 $desTipo = "";
+$desHint = "";
 if ($tipo == 0) {
   $cdcatego_liq = array(20, 18);
   $cdcatego_reg = array(24);
   $desTipo = "COO";
+  $desHint = "Cooperado Emite e Expede";
 } else {
   $cdcatego_liq = array(19);
   $cdcatego_reg = array(23);
   $desTipo = "CEE";
+  $desHint = "Cooperativa Emite e Expede";
 }
 
 // Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
@@ -92,7 +95,7 @@ function buscaTarifas($nrconven, $cdcatego, $inpessoa) {
   <?php
   $contTar = 0;
   foreach ($convenios as $convenio) {
-    echo "<div style='padding: 10px 5px;text-align: left;background-color: #CBD1C5;font-weight: bolder;color: #60635d;'>Conv&ecirc;nio $convenio - $desTipo</div>";
+    echo "<div style='padding: 10px 5px;text-align: left;background-color: #CBD1C5;font-weight: bolder;color: #60635d;'>Conv&ecirc;nio $convenio - <span title='$desHint' class='hint_tar'>$desTipo</span></div>";
     foreach ($cdcatego_liq as $cdcatego) {
   ?>
     <table cellspacing="1" cellpadding="0" bgcolor="#CBD1C5" style="border-collapse: separate;">
@@ -165,6 +168,8 @@ hideMsgAguardo();
 
 // Bloqueia conte&uacute;do que est&aacute; &aacute;tras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
+
+$('.hint_tar').tooltip();
 
 var ordemInicial = new Array();
 

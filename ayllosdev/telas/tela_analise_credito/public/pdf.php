@@ -180,7 +180,7 @@ function mask_proposta($val) {
 		$proposta = mask_proposta($_SESSION['params']['nrproposta']);
 		define(PROPOSTA, $proposta);
 	} else {
-		define(CONTA,        '-');
+		define(PROPOSTA, '-');
 	}
 
 	# logo cooperativa

@@ -85,7 +85,10 @@
 	
 	<fieldset style="padding:0px; margin:0px; padding-bottom:10px;">
 	<legend> <? echo utf8ToHtml('Texto E-mail'); ?> </legend>
+	
 	<textarea name="dstxtema" id="dstxtema" rows="4" cols="56" maxlength="1000" style="margin-left: 15px; margin-top: 10px; margin-bottom: 10px;" ></textarea>
+	
+		<p style=" margin-left: 15px; font-family:Arial, Helvetica, sans-serif; font-size:11px;"><? echo utf8ToHtml('Obs.: Os campos "#LinhaDigitavel#", "#Cooperativa#", "#Cooperado#", #Contrato#, #Valor#, #Vencimento# e #Email# s&atilde;o preenchidos automaticamente pelo sistema.') ?></p>
 	</fieldset>
 	<br style="clear:both" />
 

@@ -1,9 +1,10 @@
 /**
  * Autor: Bruno Luiz Katzjarowski - Mout's
  * Data: 27/11/2018
- * Ultima alteração:
+ * Ultima alteração: 30/05/2019
  * 
- * Alterações:
+ * Alterações: 30/05/2019 - Ajuste no link do Digidoc para pegar usar o número conta e contrato 
+ *                          formatados - PRJ 438 (Mateus Z / Mouts)
  * 
  */
 $(document).ready(function(){
@@ -51,7 +52,7 @@ function atribuirEventosBotoes(){
     $('#btConsultarImagem').bind('click',function(e){
         e.preventDefault();
         if(aux_hasAtivo){
-            window.open('http://'+aux_GEDServidor+'/smartshare/clientes/viewerexterno.aspx?tpdoc='+aux_tpdocmto+'&conta='+var_globais.nrdconta+'&contrato='+aux_limites.ativo.nrctrlim+'&cooperativa='+aux_cdcooper, '_blank');   
+            window.open('http://'+aux_GEDServidor+'/smartshare/clientes/viewerexterno.aspx?tpdoc='+aux_tpdocmto+'&conta='+var_globais.nrdcontaFormatada+'&contrato='+aux_limites.ativo.nrctrlimFormatado+'&cooperativa='+aux_cdcooper, '_blank');   
             aux_operacao = 'CI';
         }else{
             showError("error",

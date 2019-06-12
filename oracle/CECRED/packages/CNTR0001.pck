@@ -95,6 +95,11 @@ PROCEDURE pc_novo_num_cnt_limite (pr_nrdconta  IN NUMBER
                                  ,pr_nmdcampo OUT VARCHAR2
                                  ,pr_des_erro OUT VARCHAR2);
 
+PROCEDURE pc_inativa_protocolo(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                              ,pr_nrdconta  IN crapass.nrdconta%TYPE
+                              ,pr_cdtippro  IN crappro.cdtippro%TYPE
+                              ,pr_nrdocmto  IN crappro.nrdocmto%TYPE
+                              ,pr_dscritic OUT VARCHAR2);
 END CNTR0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CNTR0001 AS
@@ -137,6 +142,7 @@ procedure pc_cria_trans_pend_ctd(pr_nrdconta         IN crapass.nrdconta%TYPE   
    vr_nrdconta         crapass.nrdconta%TYPE;
    vr_nrcpfrep         crapass.nrcpfcgc%TYPE;
    vr_lixo             VARCHAR2(100);
+   vr_dsaprovador      VARCHAR2(200); -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
    
    -- Rowid tabela de log
    vr_nrdrowid ROWID;
@@ -441,21 +447,9 @@ PROCEDURE pc_gera_protocolo_ctd(pr_cdcooper IN NUMBER
   
    Alteracoes:
 */
- -- Cursor
- -- Verificar duplicidade de protocolo
-  CURSOR cr_crappro (pr_cdcooper in crapcop.cdcooper%TYPE,
-                     pr_nrdconta in crapass.nrdconta%TYPE,
-                     pr_dscomplemento IN VARCHAR2) IS
-  SELECT 1
-    FROM crappro
-   WHERE cdcooper = pr_cdcooper
-     AND nrdconta = pr_nrdconta
-     AND dtmvtolt = TRUNC(SYSDATE)
-     AND dsinform##2 LIKE '%'||pr_dscomplemento||'%';
  --Variáveis
    vr_nmprintl crapass.nmprimtl%TYPE;  
    vr_nrdrowid ROWID;
-   vr_idtem_crappro NUMBER;
 
  --Variáveis para descrição do protocolo
    vr_dsinfor1   varchar2(100);
@@ -502,7 +496,6 @@ BEGIN
     FROM crapass
     WHERE cdcooper = pr_cdcooper
     AND nrdconta = pr_nrdconta;
-    
   EXCEPTION
     WHEN OTHERS THEN
       vr_nmprintl := '-';
@@ -516,25 +509,14 @@ BEGIN
   END IF;
 
   vr_dsinfor3 := 'Documento autorizado mediante digitação de senha por:' || pr_dsaprovador;
-  
-  -- Verificar se o protocolo para o cheque já foi gerado para a conta e dia
-  IF pr_dscomplemento IS NOT NULL THEN
-    OPEN cr_crappro (pr_cdcooper => pr_cdcooper,
-                     pr_nrdconta => pr_nrdconta,
-                     pr_dscomplemento => pr_dscomplemento);
-    FETCH cr_crappro
-     INTO vr_idtem_crappro;
-
-    IF cr_crappro%NOTFOUND THEN
-      vr_idtem_crappro := 0;
-    END IF;
-    CLOSE cr_crappro;
     --
-    IF vr_idtem_crappro = 1 THEN
-      RAISE vr_exc_sair;
-    END IF;
-  END IF;
-
+  -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+  pc_inativa_protocolo(pr_cdcooper  => pr_cdcooper
+                      ,pr_nrdconta  => pr_nrdconta
+                      ,pr_cdtippro  => pr_cdtippro
+                      ,pr_nrdocmto  => pr_nrcontrato
+                      ,pr_dscritic  => vr_dscritic);
+  -- Fim Pj470 - SM2
    --Gerar protocolo
    GENE0006.pc_gera_protocolo(pr_cdcooper => pr_cdcooper --> Código da cooperativa
                              ,pr_dtmvtolt => trunc(SYSDATE) --> Data Aprovação
@@ -979,7 +961,8 @@ BEGIN
         AND a.dtmvtolt = pr_dtmvtolt
         AND a.nrdocmto = pr_nrdocmto
         AND ((pr_cdrecid_crapcdc IS NULL)
-          OR (pr_cdrecid_crapcdc IS NOT NULL AND a.dsinform##3 LIKE '%'||pr_cdrecid_crapcdc||'%'));
+          OR (pr_cdrecid_crapcdc IS NOT NULL AND a.dsinform##3 LIKE '%'||pr_cdrecid_crapcdc||'%'))
+        AND a.flgativo = 1;
    EXCEPTION
    WHEN OTHERS THEN
      NULL;
@@ -1030,7 +1013,8 @@ PROCEDURE pc_ver_protocolo (pr_cdcooper   IN NUMBER
       WHERE cdcooper = pr_cdcooper
         AND nrdconta = pr_nrdconta
         AND cdtippro = pr_tpcontrato
-        AND nrdocmto = pr_nrcontrato;
+        AND nrdocmto = pr_nrcontrato
+        AND flgativo = 1;
 
    -- Cursor para buscar o nome da cooperativa
    CURSOR cr_crapcop (pr_cdcooper IN NUMBER) IS
@@ -1197,6 +1181,44 @@ BEGIN
   gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'nrctrlim', pr_tag_cont => to_char(vr_nrctrlim), pr_des_erro => pr_dscritic);
   --
 END pc_novo_num_cnt_limite;
+
+PROCEDURE pc_inativa_protocolo(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                              ,pr_nrdconta  IN crapass.nrdconta%TYPE
+                              ,pr_cdtippro  IN crappro.cdtippro%TYPE
+                              ,pr_nrdocmto  IN crappro.nrdocmto%TYPE
+                              ,pr_dscritic OUT VARCHAR2) IS
+ -- Cursor
+ -- Buscar protocolos ativos
+ -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+  CURSOR cr_crappro (pr_cdcooper in crapcop.cdcooper%TYPE,
+                     pr_nrdconta in crapass.nrdconta%TYPE,
+                     pr_nrdocmto in crappro.nrdocmto%TYPE,
+                     pr_cdtippro IN NUMBER) IS
+  SELECT rowid dsrosid_crappro
+    FROM crappro
+   WHERE cdcooper = pr_cdcooper
+     AND nrdconta = pr_nrdconta
+     AND cdtippro = pr_cdtippro
+     AND nrdocmto = pr_nrdocmto
+     AND flgativo = 1;
+BEGIN
+  pr_dscritic := null;
+  --
+  -- Verificar se existe protocolo ativo para a Cooperativa/Conta/Tipo, se existir inativa o mesmo.
+  FOR rv_crappro in cr_crappro (pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_cdtippro => pr_cdtippro
+                               ,pr_nrdocmto => pr_nrdocmto)
+  LOOP
+    UPDATE crappro a
+       SET a.flgativo = 0
+     WHERE ROWID = rv_crappro.dsrosid_crappro;
+  END LOOP;
+  --
+EXCEPTION
+WHEN OTHERS THEN
+  pr_dscritic := 'Erro alteração CRAPPRO - '||sqlerrm;
+END pc_inativa_protocolo;
 
 END CNTR0001;
 /

@@ -2,7 +2,7 @@
  * FONTE        : verpro.js
  * CRIAÇÃO      : Rogerius Militão (DB1) 
  * DATA CRIAÇÃO : 25/10/2011
- * OBJETIVO     : Biblioteca de funções da tela VERPRO       Última alteração: 23/03/2017
+ * OBJETIVO     : Biblioteca de funções da tela VERPRO       Última alteração: 10/06/2019
  * --------------
  * ALTERAÇÕES   :
  * 001: 02/07/2012 - Jorge (CECRED) : Alterado funcao Gera_Impressao(), novo esquema para impressao.
@@ -18,6 +18,7 @@
  * 011: 02/01/2018 - Alterações referente a inclusão das opções 24 - FGTS e 23 - DAE.
  * 011: 26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
  * 013: 19/03/2019 - Alterado o id do protocolo de desconto de titulo do 22 para o 32 (Paulo Penteado GFT)
+ * 014: 10/06/2019 - Adicionado campos Situação nos detalhes PRJ 470 SM2 (Mateus z / Mouts).
  * --------------
  */
 
@@ -57,6 +58,9 @@ var dtinclusao = '';
 var hrinclusao = '';
 var dsfrase    = '';
 var dstippro    = '';
+
+// Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+var dsativo = '';
 
 //bruno - prj 470 - tela autorizacao
 var dsoperacao = "";
@@ -418,6 +422,9 @@ function selecionaTabela(tr) {
     dsfrase    = $('#dsfrase', tr).val();
     dstippro    = $('#dstippro',tr).val();
 
+    // Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+    dsativo    = $('#dsativo', tr).val();
+
     //bruno - prj 470 - tela autorizacao
     dsoperacao = $('#dsoperacao',tr).val();
     cdbanco =    $('#cdbanco',tr).val();
@@ -483,6 +490,8 @@ function mostraProtocolo() {
 
             dsfrase: dsfrase,
             dstippro: dstippro,
+            // Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+            dsativo: dsativo,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -592,6 +601,8 @@ function formataVerpro() {
     rHrinclusao = $('label[for="hrinclusao"]', '#' + frmDados);
     rDsfrase    = $('label[for="dsfrase"]', '#' + frmDados);
 
+	// Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+    rDsativo = $('label[for="dsativo"]', '#' + frmDados);
 
     
     rNrborder = $('label[for="nrborder"]', '#' + frmDados);
@@ -685,7 +696,9 @@ function formataVerpro() {
     rHrinclusao.addClass('rotulo').css({'width': '130px'});
     rDsfrase.addClass('rotulo').css({'width': '130px'});
     
-    
+   	// Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+    rDsativo.addClass('rotulo').css({'width': '130px'});
+
     rNrborder.addClass('rotulo').css({'width': '115px'});
     rQttitbor.addClass('rotulo').css({'width': '115px'});
     
@@ -776,6 +789,8 @@ function formataVerpro() {
     cHrinclusao = $('#hrinclusao', '#' + frmDados);
     cDsfrase    = $('#dsfrase', '#' + frmDados);
 
+	// Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+    cDsativo    = $('#dsativo', '#' + frmDados);
 
     //Campos do bordero
     
@@ -866,6 +881,9 @@ function formataVerpro() {
     cDtinclusao.css({'width': '400px'});
     cHrinclusao.css({'width': '400px'});
     cDsfrase.addClass('alphanum').css('width','400px').css('overflow-x','hidden').css('height','75').css('margin-left', '-25px');    
+
+	// Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+    cDsativo.css({'width': '400px'});
     
     cNrborder.css({'width': '440px'});
     cQttitbor.css({'width': '440px'});

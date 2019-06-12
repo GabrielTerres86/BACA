@@ -279,6 +279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB097 IS
 
       -- Variaveis
       vr_auxconta INTEGER := 0;
+      vr_auxconta_uf INTEGER := 0;
 
     BEGIN
       -- Criar cabecalho do XML
@@ -305,6 +306,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB097 IS
                             ,pr_tag_cont => NULL
                             ,pr_des_erro => vr_dscritic);
 
+      --RITM0012246 - Inclusão de uma tag para receber as informações do tipo 3
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'ufneg'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+      
       -- Listagem de parametrizacao das excecoes de negativacao no Serasa
       FOR rw_param IN cr_param(pr_indexcecao => pr_indexcecao
                               ,pr_dsuf       => pr_dsuf) LOOP
@@ -320,7 +329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB097 IS
                                 ,pr_des_erro => vr_dscritic);
 
         -- Indicador da excecao: 2 - UF utiliza excecao na parametrizacao dos dias de negativacao
-        ELSE
+        ELSIF rw_param.indexcecao = 2 THEN 
 
           GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                                 ,pr_tag_pai  => 'ufnegdif'
@@ -351,6 +360,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB097 IS
                                 ,pr_des_erro => vr_dscritic);
 
           vr_auxconta := vr_auxconta + 1;
+
+        -- RITM0012246 - Indicador da excecao: 3 - UF utiliza excecao na parametrizacao dos dias de negativacao
+        ELSIF rw_param.indexcecao = 3 THEN 
+          GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                                ,pr_tag_pai  => 'ufneg'
+                                ,pr_posicao  => 0
+                                ,pr_tag_nova => 'infneg'
+                                ,pr_tag_cont => NULL
+                                ,pr_des_erro => vr_dscritic);
+
+          GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                                ,pr_tag_pai  => 'infneg'
+                                ,pr_posicao  => vr_auxconta_uf
+                                ,pr_tag_nova => 'dsuf'
+                                ,pr_tag_cont => rw_param.dsuf
+                                ,pr_des_erro => vr_dscritic);
+
+          GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                                ,pr_tag_pai  => 'infneg'
+                                ,pr_posicao  => vr_auxconta_uf
+                                ,pr_tag_nova => 'qtminimo_negativacao'
+                                ,pr_tag_cont => rw_param.qtminimo_negativacao
+                                ,pr_des_erro => vr_dscritic);
+
+          GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                                ,pr_tag_pai  => 'infneg'
+                                ,pr_posicao  => vr_auxconta_uf
+                                ,pr_tag_nova => 'qtmaximo_negativacao'
+                                ,pr_tag_cont => rw_param.qtmaximo_negativacao
+                                ,pr_des_erro => vr_dscritic);
+
+          vr_auxconta_uf := vr_auxconta_uf + 1;
 
         END IF;
 

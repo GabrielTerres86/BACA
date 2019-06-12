@@ -103,6 +103,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                31/10/2018 - Adicionado na impressão do rel 494 tratativa do valor do titulo conforme a versão 
                             do produto do borderô, e quando for a nova versão somar o valor de apropriação de
                             juros de mora (Paulo Penteado GFT)
+               
+               05/06/2019 - Correção no valor de juros de mora do título (Paulo Penteado GFT, Lucas Silva GFT)
      ............................................................................. */
 
      DECLARE
@@ -277,6 +279,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                              ,pr_nrborder IN craptdb.nrborder%TYPE
                              ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
          SELECT craptdb.vltitulo
+               ,craptdb.vlsldtit
+               ,craptdb.vlpagmra
                ,craptdb.vlliquid
                ,craptdb.cdbandoc
                ,craptdb.nrdctabb
@@ -288,7 +292,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                ,craptdb.dtvencto
                ,craptdb.dtlibbdt
                ,craptdb.nrborder
-               ,craptdb.vlsldtit + (craptdb.vlmratit - craptdb.vlpagmra) vltitmra
                ,crapass.cdagenci
                ,crapass.nmprimtl
                ,crapass.inpessoa
@@ -354,6 +357,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
        /***** Variaveis RDCA para BO *****/
        vr_cdprogra     VARCHAR2(10);
        vr_cdcritic     INTEGER;
+       vr_dscritic     crapcri.dscritic%TYPE; --> Descrição da crítica retornada pela "pc_busca_saldos_juros60"
 
        --Variavel usada para montar o indice da tabela de memoria
       vr_index_crrl493 VARCHAR2(40);
@@ -368,6 +372,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
        vr_bor_totvljur NUMBER;
        vr_bor_vlrmedio NUMBER;
        vr_vltitulo     craptdb.vltitulo%TYPE;
+       vr_vlmratit     NUMBER;                 --> Valor do juros de mora
+       vr_vlmtatit     NUMBER;                 --> Valor da multa
+       vr_vlioftit     NUMBER;                 --> Valor do IOF
 
        --Variaveis para saldo
        vr_nmdsacad crapsab.nmdsacad%TYPE;
@@ -1912,7 +1919,27 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
              IF rw_crapbdt.flverbor = 0 THEN
                vr_vltitulo := rw_craptdb.vltitulo;
              ELSE
-               vr_vltitulo := rw_craptdb.vltitmra;
+               
+               --[Projeto 403] No produto novo, deve-se calcular os juros de mora na data da mensal ao invés de ler da craptdb
+               DSCT0003.pc_calcula_atraso_tit(pr_cdcooper => pr_cdcooper
+                                             ,pr_nrdconta => rw_craptdb.nrdconta
+                                             ,pr_nrborder => rw_craptdb.nrborder
+                                             ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                             ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                             ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                             ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                             ,pr_vlmtatit => vr_vlmtatit
+                                             ,pr_vlmratit => vr_vlmratit
+                                             ,pr_vlioftit => vr_vlioftit
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+
+               IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 RAISE vr_exc_erro;
+               END IF;
+             
+               vr_vltitulo := rw_craptdb.vlsldtit + (vr_vlmratit - rw_craptdb.vlpagmra);
              END IF;
 
              --Atualizar tabela memória para gerar relatório 495

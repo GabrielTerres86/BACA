@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 13/12/2018
  * OBJETIVO     : Solicita senha de autorização
  
-   Alterações   :  
+   Alterações   :  04/06/2019 - Ajuste para exibir alerta de acordo com retorno 
+                                dsmensagem do oracle - PRJ 470 (Mateus Z / Mouts)
  
  **************************************************************************************/
 	session_start();
@@ -52,8 +53,18 @@
     $qtcartoes = $xmlObject->inf->qtcartoes;
     $inpessoa  = $xmlObject->inf->inpessoa;
     $flgsenha  = $qtcartoes > 0 ? 1 : 0;
+    // Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+    $dsmensagem = $xmlObject->inf->dsmensagem;
 
 ?>	
+<? if($dsmensagem){ ?>
+    <!-- Pj470 - SM2 -- Mateus Zimmermann -- Mouts -->
+    <script>
+        fechaRotina($('#divUsoGenerico'));
+        showError("inform",'<? echo utf8ToHtml($dsmensagem) ?>',"Alerta - Aimaro","exibeRotina($('#divUsoGenerico'))");
+    </script>
+    <!-- Fim Pj470 - SM2 -->
+<? } ?>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>
 		<td align="center">		

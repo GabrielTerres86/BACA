@@ -26,7 +26,7 @@
  * 011: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 012: [28/03/2018] Andre Avila (GFT):  Alteração da opção retorno dos botões.
  * 013: [03/05/2018] Andre Avila (GFT):  Alteração da opção retorno do botão cancelar.
-
+ * 014: [04/06/2019] Mateus Z  (Mouts) : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 - SM2
  */
 
 
@@ -244,7 +244,9 @@
 		echo '$("#dsdbens2","#frmDadosLimiteDscTit").val("'.trim($dados[11]->cdata).'");';	
 		echo '$("#dsobserv","#frmDadosLimiteDscTit").val("'.str_replace(chr(13),"\\n",str_replace(chr(10),"\\r",$dados[12]->cdata)).'");';
 		echo '$("#antnrctr","#frmDadosLimiteDscTit").val("'.formataNumericos('zzz.zz9',$dados[14]->cdata,'.').'");';
-
+		// Pj470 - SM2 -- Mateus Zimmermann -- Mouts
+		echo 'aux_vllimite_anterior = "'.number_format(str_replace(",",".",$dados[15]->cdata),2,",",".").'";';
+		// Fim Pj470 - SM2
 	}
 	?>
 	
@@ -347,12 +349,18 @@
 	$('#btnContinuarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
 		if (operacao == 'A') {
 			$('#divBotoesRenda').css('display','none');
-
+			var aux_vllimite = normalizaNumero($("#vllimite","#frmDadosLimiteDscTit").val());
+			aux_vllimite_anterior = normalizaNumero(aux_vllimite_anterior);
+			if(aux_vllimite_anterior != aux_vllimite){
+				aux_fncRatingSuccess = "chamarImpressao('PROPOSTA');";
+			} else {
+				aux_fncRatingSuccess = "carregaLimitesTitulosPropostas();";
+			}
 			/*Motor em contingencia*/
 			if(flctgmot){
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulosPropostas()");
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",aux_fncRatingSuccess);
 			}else{
-				fncRatingSuccess = 'carregaLimitesTitulosPropostas()';
+				fncRatingSuccess = aux_fncRatingSuccess;
 				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDscTit_Renda;divBotoesRenda');
 			}
 		} else if (operacao == 'C') {

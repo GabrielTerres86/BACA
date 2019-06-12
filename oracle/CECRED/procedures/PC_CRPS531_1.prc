@@ -355,7 +355,10 @@ end;
 
              22/03/2019 - Alterado para tratar a devolução de TEC salário, via CRAPLCM. Este novo fluxo se faz 
                           necessário, pois a nova portabilidade de salário, com contas CRAPASS/CRAPLCM, utilizará
-                          o envio de valores como TEC. Projeto 485 - Portabilidade de salário (Renato Darosci - Supero)                   
+                          o envio de valores como TEC. Projeto 485 - Portabilidade de salário (Renato Darosci - Supero)                                      
+                          
+             23/05/2019 - Aceitar mensagem PAG0142R2 para contas 10000003 e 20000006, agencia 100, finalidades 8 e 14.
+                          (Lucas Afonso/Cechet)
  
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -3193,6 +3196,40 @@ end;
           vr_valu_node := xmldom.getFirstChild(vr_item_node);
           vr_aux_descrica := fn_getValue(vr_valu_node);
 
+          IF vr_node_name = 'Grupo_PAG0142R2_CtDebtd' then
+            -- Buscar todos os filhos deste nó
+            vr_elem_node := xmldom.makeElement(vr_item_node);
+            -- Faz o get de toda a lista de folhas da SEGCAB
+            vr_node_list_segcab := xmldom.getChildrenByTagName(vr_elem_node,'*');
+
+            -- Percorrer os elementos
+            FOR i IN 0..xmldom.getLength(vr_node_list_segcab)-1 LOOP
+
+              -- Buscar o item atual
+              vr_item_node_segcab := xmldom.item(vr_node_list_segcab, i);
+              -- Captura o nome e tipo do nodo
+              vr_node_name_segcab := xmldom.getNodeName(vr_item_node_segcab);
+
+              -- Sair se o nodo não for elemento
+              IF xmldom.getNodeType(vr_item_node_segcab) <> xmldom.ELEMENT_NODE THEN
+                CONTINUE;
+              END IF;
+
+              -- Para a tag NR_OPERACAO
+              IF vr_node_name_segcab = 'TpCtDebtd' THEN
+            -- Buscar valor da TAG
+                vr_aux_descrica  := fn_getValue(xmldom.getFirstChild(vr_item_node_segcab));
+                vr_aux_TpCtDebtd := vr_aux_descrica;
+              END IF;
+              -- Para a tag NR_OPERACAO
+              IF vr_node_name_segcab = 'CtDebtd' THEN
+                -- Buscar valor da TAG
+                vr_aux_descrica := fn_getValue(xmldom.getFirstChild(vr_item_node_segcab));
+                vr_aux_CtDebtd  := vr_aux_descrica;
+              END IF;
+            END LOOP;
+          END IF;
+          
           -- Gravar variaveis conforme tag em leitura
           IF vr_node_name = 'Grupo_STR0006R2_CtDebtd' THEN
             -- Buscar todos os filhos deste nó
@@ -8200,7 +8237,7 @@ END pc_trata_arquivo_cir0060;
                                ,'LDL0024'                                       -- Aviso Alteração Horários Câmara LDL - Alexandre Borgmann - Mouts
                                ,'STR0006R2'                                     -- Cielo finalidade 15 gravar e não gerar STR0010 - Alexandre Borgmann - Mouts
                                ,'STR0004R2'                                     -- Rede  ISPBIFDebtd=00000000 (BCO DO BRASIL S.A.) e FinlddIF=23 (Transferência de Recursos - REDECARD – 23)
-                               ,'PAG0108R2','PAG0143R2'                         -- TED
+                               ,'PAG0108R2','PAG0142R2','PAG0143R2'             -- TED
                                ,'STR0037R2','PAG0137R2'                         -- TEC
                                ,'STR0010R2','PAG0111R2'                         -- Devolucao TED/TEC enviado com erro
                                ,'STR0003R2'                                     -- Liquidacao de transferencia de numerarios
@@ -8400,7 +8437,7 @@ END pc_trata_arquivo_cir0060;
           -- FIM projeto 475
           --
           -- Mensagem nao tratada pelo sistema CECRED e devemos enviar uma mensagem STR0010 como resposta. SD 553778
-          IF vr_aux_CodMsg IN('PAG0142R2','STR0034R2','PAG0134R2') THEN
+          IF vr_aux_CodMsg IN('STR0034R2','PAG0134R2') THEN
             -- Buscar Coop destino
             rw_crapcop_mensag := NULL;
             OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd);
@@ -8677,6 +8714,24 @@ END pc_trata_arquivo_cir0060;
           RAISE vr_exc_next;
         END IF;
 
+    IF vr_aux_CodMsg IN('PAG0142R2')                   AND
+      (vr_aux_FinlddCli NOT IN ('8','14')              OR
+       vr_aux_CtCredtd  NOT IN ('10000003','20000006') OR
+       vr_aux_AgCredtd  <> '100')                      THEN
+      -- Buscar Coop destino
+      rw_crapcop_mensag := NULL;
+      OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd);
+      FETCH cr_busca_coop
+       INTO rw_crapcop_mensag;
+      CLOSE cr_busca_coop;
+      -- Mensagem Invalida para o Tipo de Transacao ou Finalidade
+      vr_log_msgderro := 'Mensagem Invalida para o Tipo de Transacao ou Finalidade.';
+      -- Gerar XML de erro
+      pc_gera_erro_xml(pr_dsdehist => 'Mensagem Invalida para o Tipo de Transacao ou Finalidade.'
+                      ,pr_codierro => 4
+                      ,pr_dscritic => vr_dscritic);
+    END IF;
+    
     -- Antecipaçao de Recebíveis - LTR - Mauricio
     IF vr_aux_CodMsg in ('LTR0005R2','STR0006R2','LTR0005R2',
                          'LDL0020R2','LTR0004'

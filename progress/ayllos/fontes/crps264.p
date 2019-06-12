@@ -266,8 +266,10 @@
                            a situacao regularizada - Adriano (Supero) - PRJ435.
 
               07/12/2018 - Melhoria no processo de devoluções de cheques.
-                           Alcemir Mout's (INC0022559).
-
+                           Alcemir Mout's (INC0022559).		 
+                          
+              15/03/2019 - Adicionada flag de reapresentacao automatica de cheque.
+                          (Lucas H. - Supero)
 
 ..............................................................................*/
 
@@ -377,6 +379,8 @@ DEF        VAR aux_dstipcta AS CHAR                                  NO-UNDO.
 DEF        VAR aux_des_erro AS CHAR                                  NO-UNDO.
 DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
 
+DEF        VAR aux_flgreapr AS INT                                   NO-UNDO.
+
 DEF BUFFER crabcop FOR crapcop.
 DEF BUFFER crabtco FOR craptco.
 
@@ -392,6 +396,7 @@ DEF TEMP-TABLE tt-relchdv NO-UNDO
     FIELD dsorigem AS CHAR FORMAT "x(13)"
     FIELD dstipcta AS CHAR FORMAT "x(15)"
     FIELD benefici AS CHAR FORMAT "x(10)"
+    FIELD flgreapr AS CHAR FORMAT "x(3)"
     INDEX nrdconta IS PRIMARY nrdconta
           nrcheque. 
 
@@ -2434,13 +2439,14 @@ PROCEDURE gera_arquivo_cecred:
         "Operador"       AT 98
         "Origem"         AT 107
         "Benefic."       AT 121
+        "Reap.Aut.Cheq." AT 132
         SKIP          
         "Pesquisa"       AT 12
         SKIP
         "---------- -------------------------------------"         AT 01
         "--------------- --------- -------------- -- --- --------" AT 50
-        "------------- ----------"                                 AT 107
-        WITH DOWN NO-BOX NO-LABELS WIDTH 132 FRAME f_cabec.
+        "------------- ---------- --------------"                  AT 107
+        WITH DOWN NO-BOX NO-LABELS WIDTH 234 FRAME f_cabec.
 
    FORM tt-relchdv.nrdconta AT 01  FORMAT "zzzz,zzz,9"                     
         tt-relchdv.nmprimtl AT 12  FORMAT "x(37)"                          
@@ -2452,8 +2458,9 @@ PROCEDURE gera_arquivo_cecred:
         tt-relchdv.cdoperad AT 98  FORMAT "x(08)"                          
         tt-relchdv.dsorigem AT 107 FORMAT "x(13)"                          
         tt-relchdv.benefici AT 121 FORMAT "x(10)"
+        tt-relchdv.flgreapr AT 132 FORMAT "X(3)" 
         tt-relchdv.cdpesqui AT 012 FORMAT "x(37)"                          
-        WITH DOWN NO-BOX NO-LABELS WIDTH 132 FRAME f_todos_cecred.
+        WITH DOWN NO-BOX NO-LABELS WIDTH 234 FRAME f_todos_cecred.
 
    FORM SKIP(1)
         "Quantidade"                                 AT 62   
@@ -2486,7 +2493,7 @@ PROCEDURE gera_arquivo_cecred:
         aux_totvlrej                                 AT 73
 
         
-        WITH DOWN NO-BOX NO-LABELS WIDTH 132 FRAME f_totais.
+        WITH DOWN NO-BOX NO-LABELS WIDTH 234 FRAME f_totais.
    
    FIND FIRST crapage WHERE crapage.cdcooper = p-cdcooper AND 
                             crapage.flgdsede = TRUE
@@ -2546,11 +2553,11 @@ PROCEDURE gera_arquivo_cecred:
           aux_vldtotal = 0
           flg_devolbcb = FALSE.
 
-   { includes/cabrel132_1.i }
+   { includes/cabrel234_1.i }
 
-   OUTPUT STREAM str_1 TO VALUE(aux_dscooper + aux_nmarqchq) PAGED PAGE-SIZE 80.
+   OUTPUT STREAM str_1 TO VALUE(aux_dscooper + aux_nmarqchq) PAGED PAGE-SIZE 84.
 
-   VIEW STREAM str_1 FRAME f_cabrel132_1.
+   VIEW STREAM str_1 FRAME f_cabrel234_1.
    
    ASSIGN aux_totqtcax = 0
           aux_totvlcax = 0
@@ -2890,6 +2897,38 @@ PROCEDURE gera_arquivo_cecred:
                        tt-relchdv.cdagenci = crapass.cdagenci WHEN AVAILABLE crapass
                        tt-relchdv.cdoperad = crapdev.cdoperad
                        tt-relchdv.dstipcta = aux_dstipcta.
+                       
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                RUN STORED-PROCEDURE pc_busca_reapre_cheque
+                  aux_handproc = PROC-HANDLE NO-ERROR
+                                          (INPUT p-cdcooper, /* cooperativa */
+                                           INPUT tt-relchdv.nrdconta, /* conta */
+                                           OUTPUT 0).               /* Flag */
+                
+                CLOSE STORED-PROC pc_busca_reapre_cheque
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+         
+                ASSIGN aux_flgreapr = pc_busca_reapre_cheque.pr_flgreapre_autom 
+                                       WHEN pc_busca_reapre_cheque.pr_flgreapre_autom <> ?.
+              
+                IF aux_flgreapr = 1 THEN
+                    ASSIGN tt-relchdv.flgreapr = "SIM".
+                ELSE 
+                    ASSIGN tt-relchdv.flgreapr = "NAO".
+                  
+                IF aux_des_erro = "NOK"  THEN
+                   DO:
+                       glb_dscritic = aux_dscritic.
+                       UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                                         glb_cdprogra + "' --> '" + glb_dscritic +
+                                         " CRED-GENERI-00-VALORESVLB-001 " +
+                                         " >> log/proc_message.log").
+                       RETURN.
+                   END.
+             
+                       
             END.
                       
        IF   crapdev.cdpesqui = "" THEN
@@ -3348,7 +3387,9 @@ PROCEDURE gera_arquivo_cecred:
    
    /* VIACON - O relatorio contera informacao de contas da cooperativa e contas incorporadas */
    FOR EACH tt-relchdv
-       BREAK BY tt-relchdv.nrdconta:
+       BREAK BY tt-relchdv.cdagenci
+             BY tt-relchdv.dsorigem
+             BY tt-relchdv.nrdconta:
 
        IF   FIRST (tt-relchdv.nrdconta) THEN
             DO:
@@ -3361,7 +3402,7 @@ PROCEDURE gera_arquivo_cecred:
                              tt-relchdv.vllanmto   tt-relchdv.cdalinea
                              tt-relchdv.cdagenci   tt-relchdv.cdoperad
                              tt-relchdv.dsorigem   tt-relchdv.benefici
-                             tt-relchdv.cdpesqui   
+                             tt-relchdv.cdpesqui   tt-relchdv.flgreapr
                              WITH FRAME f_todos_cecred.
 
        DOWN STREAM str_1 WITH FRAME f_todos_cecred.
@@ -3438,7 +3479,7 @@ PROCEDURE gera_arquivo_cecred:
        END.
    END.
 
-   ASSIGN glb_nmformul = "132col"
+   ASSIGN glb_nmformul = "234col"
           glb_nmarqimp = aux_dscooper + aux_nmarqchq
           glb_nrcopias = 1.
 

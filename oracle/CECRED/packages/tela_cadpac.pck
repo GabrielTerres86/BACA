@@ -39,7 +39,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                         ,pr_nmcidade     IN crapage.nmcidade%TYPE --> Nome da cidade onde esta localizado o PA
                         ,pr_cdufdcop     IN crapage.cdufdcop%TYPE --> Sigla do estado onde esta localizado o PA
                         ,pr_dsdemail     IN crapage.dsdemail%TYPE --> E-mail do PA
-                        ,pr_dsmailbd     IN crapage.dsmailbd%TYPE --> E-mail envio borderos cadastrados via Internet Banking
+                        ,pr_dsmailbd     IN crapage.dsmailbd%TYPE --> E-mail envio borderos cadastrados via Internet Banking                        
+												,pr_dsemailpj    IN crapage.dsemailpj%TYPE --> E-mail Reciprocidade PJ
+												,pr_dsemailpf    IN crapage.dsemailpf%TYPE --> E-mail Reciprocidade PF												
                         ,pr_dsinform1    IN crapage.dsinform##1%TYPE --> Descricao do endereco do PA a ser impresso no cheque
                         ,pr_dsinform2    IN crapage.dsinform##2%TYPE --> Descricao do endereco do PA a ser impresso no cheque
                         ,pr_dsinform3    IN crapage.dsinform##3%TYPE --> Descricao do endereco do PA a ser impresso no cheque
@@ -195,7 +197,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
          ,nmcidade crapage.nmcidade%TYPE
          ,cdufdcop crapage.cdufdcop%TYPE
          ,dsdemail crapage.dsdemail%TYPE
-         ,dsmailbd crapage.dsmailbd%TYPE
+         ,dsmailbd crapage.dsmailbd%TYPE				 
+				 ,dsemailpj crapage.dsemailpj%TYPE
+				 ,dsemailpf crapage.dsemailpf%TYPE				 
          ,dsinform1 crapage.dsinform##1%TYPE
          ,dsinform2 crapage.dsinform##2%TYPE
          ,dsinform3 crapage.dsinform##3%TYPE
@@ -329,6 +333,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
               ,crapage.cdufdcop
               ,crapage.dsdemail
               ,crapage.dsmailbd
+							,crapage.dsemailpj
+							,crapage.dsemailpf
               ,crapage.dsinform##1 dsinform1
               ,crapage.dsinform##2 dsinform2
               ,crapage.dsinform##3 dsinform3
@@ -592,7 +598,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         pr_tab_crapage(pr_cdagenci).nmcidade := rw_crapage.nmcidade;
         pr_tab_crapage(pr_cdagenci).cdufdcop := rw_crapage.cdufdcop;
         pr_tab_crapage(pr_cdagenci).dsdemail := rw_crapage.dsdemail;
-        pr_tab_crapage(pr_cdagenci).dsmailbd := rw_crapage.dsmailbd;
+        pr_tab_crapage(pr_cdagenci).dsmailbd := rw_crapage.dsmailbd;				
+				pr_tab_crapage(pr_cdagenci).dsemailpj := rw_crapage.dsemailpj;
+				pr_tab_crapage(pr_cdagenci).dsemailpf := rw_crapage.dsemailpf;				
         pr_tab_crapage(pr_cdagenci).dsinform1 := rw_crapage.dsinform1;
         pr_tab_crapage(pr_cdagenci).dsinform2 := rw_crapage.dsinform2;
         pr_tab_crapage(pr_cdagenci).dsinform3 := rw_crapage.dsinform3;
@@ -983,6 +991,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                               ,pr_des_erro => vr_dscritic);
 
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'dsemailpj'
+                              ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).dsemailpj
+                              ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'dsemailpf'
+                              ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).dsemailpf
+                              ,pr_des_erro => vr_dscritic);
+
+			 GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
                               ,pr_tag_nova => 'dsinform1'
@@ -1477,7 +1499,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                         ,pr_nmcidade     IN crapage.nmcidade%TYPE --> Nome da cidade onde esta localizado o PA
                         ,pr_cdufdcop     IN crapage.cdufdcop%TYPE --> Sigla do estado onde esta localizado o PA
                         ,pr_dsdemail     IN crapage.dsdemail%TYPE --> E-mail do PA
-                        ,pr_dsmailbd     IN crapage.dsmailbd%TYPE --> E-mail envio borderos cadastrados via Internet Banking
+                        ,pr_dsmailbd     IN crapage.dsmailbd%TYPE --> E-mail envio borderos cadastrados via Internet Banking                        
+												,pr_dsemailpj    IN crapage.dsemailpj%TYPE --> E-mail Reciprocidade PJ
+												,pr_dsemailpf    IN crapage.dsemailpf%TYPE --> E-mail Reciprocidade PF												
                         ,pr_dsinform1    IN crapage.dsinform##1%TYPE --> Descricao do endereco do PA a ser impresso no cheque
                         ,pr_dsinform2    IN crapage.dsinform##2%TYPE --> Descricao do endereco do PA a ser impresso no cheque
                         ,pr_dsinform3    IN crapage.dsinform##3%TYPE --> Descricao do endereco do PA a ser impresso no cheque
@@ -2796,7 +2820,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                 ,crapage.nmcidade = NVL(pr_nmcidade,' ')
                 ,crapage.cdufdcop = NVL(pr_cdufdcop,' ')
                 ,crapage.dsdemail = NVL(pr_dsdemail,' ')
-                ,crapage.dsmailbd = NVL(pr_dsmailbd,' ')
+                ,crapage.dsmailbd = NVL(pr_dsmailbd,' ')								
+								,crapage.dsemailpj = NVL(pr_dsemailpj,' ')
+								,crapage.dsemailpf = NVL(pr_dsemailpf,' ')								
                 ,crapage.dsinform##1 = NVL(pr_dsinform1,' ')
                 ,crapage.dsinform##2 = NVL(pr_dsinform2,' ')
                 ,crapage.dsinform##3 = NVL(pr_dsinform3,' ')
@@ -3033,6 +3059,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                      ,cdufdcop
                      ,dsdemail
                      ,dsmailbd
+										 
+										 ,dsemailpj
+										 ,dsemailpf
+										 
                      ,dsinform##1
                      ,dsinform##2
                      ,dsinform##3
@@ -3085,7 +3115,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                      ,NVL(pr_nmcidade,' ')
                      ,NVL(pr_cdufdcop,' ')
                      ,NVL(pr_dsdemail,' ')
-                     ,NVL(pr_dsmailbd,' ')
+                     ,NVL(pr_dsmailbd,' ')										 
+										 ,NVL(pr_dsemailpj,' ')
+										 ,NVL(pr_dsemailpf,' ')										 
                      ,NVL(pr_dsinform1,' ')
                      ,NVL(pr_dsinform2,' ')
                      ,NVL(pr_dsinform3,' ')
@@ -3436,6 +3468,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_dsdcampo => 'e-mail bordero'
                  ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN vr_tab_crapage(pr_cdagenci).dsmailbd ELSE '-' END)
                  ,pr_vldepois => NVL(pr_dsmailbd, ' '));
+
+      pc_item_log(pr_cdcooper => vr_cdcooper
+                 ,pr_cddopcao => pr_cddopcao
+                 ,pr_cdoperad => vr_cdoperad
+                 ,pr_cdagenci => pr_cdagenci
+                 ,pr_dsdcampo => 'e-mail reciprocidade PJ'
+                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN vr_tab_crapage(pr_cdagenci).dsemailpj ELSE '-' END)
+                 ,pr_vldepois => NVL(pr_dsemailpj, ' '));
+								 
+      pc_item_log(pr_cdcooper => vr_cdcooper
+                 ,pr_cddopcao => pr_cddopcao
+                 ,pr_cdoperad => vr_cdoperad
+                 ,pr_cdagenci => pr_cdagenci
+                 ,pr_dsdcampo => 'e-mail reciprocidade PF'
+                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN vr_tab_crapage(pr_cdagenci).dsemailpf ELSE '-' END)
+                 ,pr_vldepois => NVL(pr_dsemailpf, ' '));
 
       pc_item_log(pr_cdcooper => vr_cdcooper
                  ,pr_cddopcao => pr_cddopcao

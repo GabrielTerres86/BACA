@@ -105,6 +105,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
           ,cdconta    VARCHAR2(100)
           ,nrcheque_i VARCHAR2(100)
           ,nrcheque_f VARCHAR2(100)
+          ,dsativo    VARCHAR2(100)
           -- Fim Projeto 470
           );
 
@@ -1441,6 +1442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
               ,co.nmprepos
               ,co.nrcpfpre
               ,co.dscedent
+              ,DECODE(co.flgativo,1,'ATIVO','INATIVO') dsativo -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
          FROM crappro co
         WHERE co.cdcooper  = pr_cdcooper
           AND co.nrdconta  = pr_nrdconta
@@ -1468,6 +1470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
               ,co.nmprepos
               ,co.nrcpfpre
               ,co.dscedent
+              ,DECODE(co.flgativo,1,'ATIVO','INATIVO') dsativo -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
          FROM crappro co
         WHERE co.cdcooper  = pr_cdcooper
           AND co.nrdconta  = pr_nrdconta
@@ -1682,6 +1685,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           pr_protocolo(vr_index).dtinclusao := TRIM(gene0002.fn_busca_entrada(2,rw_crappro.dsinform##2, '#'));
           pr_protocolo(vr_index).hrinclusao := TRIM(gene0002.fn_busca_entrada(3,rw_crappro.dsinform##2, '#'));
           pr_protocolo(vr_index).dsfrase    := TRIM(gene0002.fn_busca_entrada(1,rw_crappro.dsinform##3, '#'));
+          pr_protocolo(vr_index).dsativo    := rw_crappro.dsativo; -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+          --
           IF rw_crappro.cdtippro IN (30 -- Solicitação de Sustação de Chq.
                                     ,31) -- Sol.Canc.de Folha/Tal.de Chq. (Termo)
           THEN

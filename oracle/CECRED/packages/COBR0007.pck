@@ -18,7 +18,8 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   -- 
   --    16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
   --                (Gustavo Sene - GFT)    
-  --
+  --    24/05/2019 - Configurado campo que enviava null na pc_inst_protestar. 
+  --                 (Daniel Lombardi - Mout'S)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Validar se o título está no serasa
@@ -3067,7 +3068,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           BEGIN
             UPDATE crapcob SET crapcob.flgdprot = 0,
                                crapcob.qtdiaprt = 0,
-                               crapcob.dsdinstr = '',
+                               crapcob.dsdinstr = ' ',
                                crapcob.insrvprt = 0,
                                crapcob.dtbloque = NULL,
                                crapcob.insitcrt = 0,

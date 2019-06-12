@@ -54,11 +54,12 @@ if(validaEntradaUsuario()){
                 
                     $_POST['cdcooper']   = preg_replace( '/[^0-9]/', '', $_POST['cdcooper'] );
                     $_POST['cdagenci']   = preg_replace( '/[^0-9]/', '', $_POST['cdagenci'] );
-                    //$_POST['cdoperad']   = preg_replace( '/[^0-9]/', '', $_POST['cdoperad'] );
+                    $_POST['cdoperad']   = $_POST['cdoperad'];
                     $_POST['nrcpfcgc']   = preg_replace( '/[^0-9]/', '', $_POST['nrcpfcgc'] );
                     $_POST['nrdconta']   = preg_replace( '/[^0-9]/', '', $_POST['nrdconta'] );
                     $_POST['tpproduto']  = preg_replace( '/[^0-9]/', '', $_POST['tpproduto'] );
                     $_POST['nrproposta'] = preg_replace( '/[^0-9]/', '', $_POST['nrproposta'] );
+                    $_POST['dstoken']    = $_POST['dstoken'];
 
                     echo '<br>posterior teste';
 
@@ -83,12 +84,12 @@ if(validaEntradaUsuario()){
 
             $_POST['cdcooper']   = preg_replace( '/[^0-9]/', '', $_POST['cdcooper'] );
             $_POST['cdagenci']   = preg_replace( '/[^0-9]/', '', $_POST['cdagenci'] );
-            //$_POST['cdoperad']   = preg_replace( '/[^0-9]/', '', $_POST['cdoperad'] );
+            $_POST['cdoperad']   = $_POST['cdoperad'];
             $_POST['nrcpfcgc']   = preg_replace( '/[^0-9]/', '', $_POST['nrcpfcgc'] );
             $_POST['nrdconta']   = preg_replace( '/[^0-9]/', '', $_POST['nrdconta'] );
             $_POST['tpproduto']  = preg_replace( '/[^0-9]/', '', $_POST['tpproduto'] );
             $_POST['nrproposta'] = preg_replace( '/[^0-9]/', '', $_POST['nrproposta'] );
-    
+            $_POST['dstoken']    = $_POST['dstoken'];
             /*
             * Anderson Schloegel
             * Se o PA vier vazio, zerado ou nulo, colocar PA = 1
@@ -107,7 +108,6 @@ if(validaEntradaUsuario()){
 
             $_SESSION['globalCDCOOPER'] = $_POST['cdcooper'];
     
-
             // autentica
             $autentica->atribuiDados($_POST);
 
@@ -129,7 +129,7 @@ if(validaEntradaUsuario()){
                         $glbvars = $_SESSION['glbvars'][$keys[0]];
                     }
                     /* Validar token */
-                    validaToken();
+                    validaToken($_POST['cdcooper'],$_POST['cdagenci'],1,5,$_POST['cdoperad']);
                     
                     /* Se não retornar nenhum erro */
                     if(!isset($retornoTelaUnica['error'])){
@@ -137,11 +137,6 @@ if(validaEntradaUsuario()){
                         $_SESSION['params']  = $autentica->getParametros();
 
                         $url = 'http://'.$_SERVER['SERVER_NAME'].'/telas/tela_analise_credito';
-						//$url = 'http://wsayllosdev.cecred.coop.br/telas/tela_analise_credito';						
-
-                        // echo '<pre>';
-                        // print_r($_SESSION);
-                        // die();            
 
                         try{
                             header('Location: '.$url);

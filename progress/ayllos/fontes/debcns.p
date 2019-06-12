@@ -44,6 +44,9 @@
    14/02/2018 - Retirar validaçao do horario de pagamento SICREDI (Lucas Ranghetti #838937)
    
    21/02/2018 - Ajustar layout do relatorio conforme o crps662 (Lucas Ranghetti #852207)
+   
+   29/05/2019 - Verificar última execução pela rotina do oracle (Andre B - MoutS - PRB0041528)
+   
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -124,6 +127,10 @@ DEF VAR aux_qtefetiv  AS  DECIMAL                                      NO-UNDO.
 DEF VAR aux_qtnefeti  AS  DECIMAL                                      NO-UNDO.
 DEF VAR aux_qtpenden  AS  DECIMAL                                      NO-UNDO.
 DEF VAR aux_qttotlan  AS  DECIMAL                                      NO-UNDO.  
+DEF VAR aux_cdcritic2 AS  INTE                                         NO-UNDO.
+DEF VAR aux_dscritic2 AS  CHAR                                         NO-UNDO.
+DEF VAR aux_flultexe  AS  INTE                                         NO-UNDO.
+DEF VAR aux_qtdexecd  AS  INTE                                         NO-UNDO.
                                                                        
 DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
     FIELD cdcooper LIKE crapcop.cdcooper
@@ -552,8 +559,46 @@ DO  WHILE TRUE:
             
             MESSAGE "Aguarde, debitando consorcios ...".
             
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+            /* Buscar a quantidade de execuções da DEBCNS */ 
+            RUN STORED-PROCEDURE pc_SICR0001_controle_exec_deb
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT aux_cdcooper,  /* pr_cdcooper */
+                                         INPUT "C",           /* pr_cdtipope  I-incrementar e C-Consultar */
+                                         INPUT glb_dtmvtolt,  /* pr_dtmvtolt */
+                                         INPUT "CRPS663",      /* pr_cdprogra */
+                                        OUTPUT 0,             /* pr_flultexe */
+                                        OUTPUT 0,             /* pr_qtdexec  */
+                                        OUTPUT 0,             /* pr_cdcritic */
+                                        OUTPUT "").           /* pr_dscritic */
+ 
+            CLOSE STORED-PROC pc_SICR0001_controle_exec_deb
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_cdcritic2 = 0
+                   aux_dscritic2 = ""
+                   aux_flultexe  = 0
+                   aux_qtdexecd  = 2
+                   aux_cdcritic2 = pc_SICR0001_controle_exec_deb.pr_cdcritic 
+                                      WHEN pc_SICR0001_controle_exec_deb.pr_cdcritic <> ?
+                   aux_dscritic2 = pc_SICR0001_controle_exec_deb.pr_dscritic 
+                                      WHEN pc_SICR0001_controle_exec_deb.pr_dscritic <> ?
+                   aux_flultexe = pc_SICR0001_controle_exec_deb.pr_flultexe
+                                      WHEN pc_SICR0001_controle_exec_deb.pr_flultexe <> ?                   
+                   aux_qtdexecd = pc_SICR0001_controle_exec_deb.pr_qtdexec
+                                      WHEN pc_SICR0001_controle_exec_deb.pr_qtdexec <> ?.            
+            
+            /**** Se for ultima execuçao do dia quantidade fica com 3 */
+            IF aux_flultexe = 1 THEN
+              ASSIGN aux_qtdexecd = 3.
+            ELSE  
+              ASSIGN aux_qtdexecd = 2.
+            
             RUN efetua-debito-consorcio(INPUT TRUE,
-			                                  INPUT 2). /* Segunda execucao */
+			                                  INPUT aux_qtdexecd). /* PRB0041528 - Passa o nr da execucao atual */
             
             HIDE MESSAGE NO-PAUSE.
             

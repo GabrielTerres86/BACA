@@ -2006,7 +2006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --
     --               03/06/2019 - Adicionado tratamento para os historicos de credito de resgate de aplic. pcapta
     --                          - para resgates que ocorrem em dias não úteis. Projeto 411.2 (Anderson).
-
+    
     
     DECLARE
       -- Descrição e código da critica

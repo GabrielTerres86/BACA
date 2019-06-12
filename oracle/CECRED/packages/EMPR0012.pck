@@ -432,6 +432,11 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE    -- Código de erro 
                                        ,pr_dscritic OUT crapcri.dscritic%TYPE);   -- Descrição de erro                              
                                     
+  PROCEDURE pc_gera_numero_proposta(pr_cdcooper IN tbgen_evento_soa.cdcooper%TYPE --> Coodigo Cooperativa  
+                                   ,pr_nrctremp OUT crawepr.nrctremp%TYPE
+                                   ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica                                                                                              
+                                    
 
 END EMPR0012;
 /
@@ -2874,11 +2879,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
         and (tce.cdcooper=wpr.cdcooper and tce.nrdconta=epr.nrdconta and tce.nrctremp=epr.nrctremp)
         and (tcc.idcooperado_cdc=tce.idcooperado_cdc)
         and  tcc.idcooperado_cdc=coalesce(pr_idcoooperado_cdc, tcc.idcooperado_cdc)
-        and (tcv.idvendedor=coalesce(pr_idvendedor, tce.idvendedor) and tcv.flgativo=1)
+        and (tcv.idvendedor=coalesce(pr_idvendedor, tce.idvendedor))
         and (tcuv.idcooperado_cdc=tcc.idcooperado_cdc and tcuv.idvendedor=tcv.idvendedor)
         and (tcu.idusuario=tcuv.idusuario and tcu.flgativo=1)
-        and ((tcpc.idcomissao=tcc.idcomissao and pr_tipo_comissao=1) OR (tcpc.idcomissao=tcv.idcomissao and pr_tipo_comissao=2))
-        and  tcu.flgadmin=decode(pr_tipo_comissao,1,1,0);
+        and ((tcpc.idcomissao=tcc.idcomissao and pr_tipo_comissao=1) OR (tcpc.idcomissao=tcv.idcomissao and pr_tipo_comissao=2));
      
   BEGIN
 
@@ -8015,6 +8019,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
         ROLLBACK;
 
   END pc_valida_geracao_contrato;
+  
+ PROCEDURE pc_gera_numero_proposta(pr_cdcooper IN tbgen_evento_soa.cdcooper%TYPE --> Coodigo Cooperativa  
+                                  ,pr_nrctremp OUT crawepr.nrctremp%TYPE
+                                  ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                   ) IS --> Saida OK/NOK
+   /* .............................................................................
+      Programa: pc_gera_numero_proposta 
+      Sistema : Conta-Corrente - Cooperativa de Credito
+      Sigla   : CRED
+      Autor   : Daniel Zimmermann (Ailos)
+      Data    :                          Ultima atualizacao:
+   
+      Dados referentes ao programa:
+   
+      Frequencia: Sempre que for chamado.
+      Objetivo  : Gera numero proposta CDC
+   
+      Alteracoes:
+   ............................................................................. */
+   
+    -- Variáveis de Erro          
+    vr_exc_erro EXCEPTION;
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
+    vr_dscritic crapcri.dscritic%TYPE := '';
+    vr_nrctremp crawepr.nrctremp%TYPE := 0;
+ 
+ BEGIN
+   
+   -- Rotina para criar lote
+   vr_nrctremp := fn_sequence(pr_nmtabela => 'CRAWEPR',
+                              pr_nmdcampo => 'NRCTREMP_CDC',
+                              pr_dsdchave => TO_CHAR(pr_cdcooper));
+                              
+   IF vr_nrctremp = 0 THEN
+     vr_cdcritic := 0;
+     vr_dscritic := 'Erro busca do numero da proposta';
+     RAISE vr_exc_erro;
+   END IF;        
+   
+   pr_nrctremp := vr_nrctremp;                   
+ 
+ EXCEPTION
+   WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+   WHEN OTHERS THEN
+     pr_cdcritic := 0;
+     pr_dscritic := 'Erro geral no programa: ' || SQLERRM;
+   
+ END pc_gera_numero_proposta;
   
 
 END EMPR0012;

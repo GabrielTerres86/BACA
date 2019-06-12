@@ -1371,7 +1371,6 @@ END pc_incluir_bordero_esteira;
        AND tdb.nrinssac = cob.nrinssac
      INNER JOIN cecred.crapsab sab -- dados do sacado, para pegar o nome do sacado corretamente
         ON sab.nrinssac = cob.nrinssac
-       AND sab.cdtpinsc = cob.cdtpinsc
        AND sab.cdcooper = cob.cdcooper
        AND sab.nrdconta = cob.nrdconta
      WHERE tdb.cdcooper = pr_cdcooper

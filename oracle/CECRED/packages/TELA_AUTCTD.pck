@@ -257,12 +257,28 @@ BEGIN
           vr_vlpreapv := 0;
       END IF;
     END IF;
+    -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+    cntr0001.pc_inativa_protocolo(pr_cdcooper  => vr_cdcooper
+                                 ,pr_nrdconta  => vr_nrdconta
+                                 ,pr_cdtippro  => pr_tpcontrato
+                                 ,pr_nrdocmto  => pr_nrcontrato
+                                 ,pr_dscritic  => vr_dscritic);
+    -- Fim Pj470 - SM2
 
    --Verifica se o valor do contrato excede o Maior Valor entre (Minimo do contrato e Pre Aprovado)
    IF (NVL(pr_vlcontrato,0) > GREATEST(vr_vlmincnt, vr_vlpreapv)) THEN
       --Escreve o XML
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtcartoes', pr_tag_cont => to_char(vr_qtcartoes), pr_des_erro => vr_dscritic);
+      --
+      -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+      IF pr_tpcontrato IN (27 -- Limite de Desc. Chq. (Contrato)
+                          ,28 -- Limite de Desc. Tit. (Contrato)
+                          ,29)-- Limite de Crédito (Contrato)
+      THEN
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'dsmensagem', pr_tag_cont => 'Necessaria assinatura fisica no contrato!', pr_des_erro => vr_dscritic);
+      END IF;
+      -- Fim Pj470 - SM2
       --Finalizou com sucesso
       pr_des_erro := 'OK';
      --Sair do programa
@@ -324,6 +340,15 @@ BEGIN
          --Escreve o XML
          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtcartoes', pr_tag_cont => to_char(vr_qtcartoes), pr_des_erro => vr_dscritic);
+         --
+         -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+         IF pr_tpcontrato IN (27 -- Limite de Desc. Chq. (Contrato)
+                             ,28 -- Limite de Desc. Tit. (Contrato)
+                             ,29)-- Limite de Crédito (Contrato)
+         THEN
+           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'dsmensagem', pr_tag_cont => 'Necessaria assinatura fisica no contrato!', pr_des_erro => vr_dscritic);
+         END IF;
+         -- Fim Pj470 - SM2
          --Finalizou com sucesso
          pr_des_erro := 'OK';  
          --Sair do programa

@@ -35,6 +35,8 @@
 *
 *
 *			     15/07/2016 - Incluir flg de devolução automatica - Melhoria 69(Lucas Ranghetti #484923)
+*
+* 				 27/02/2019 - ACELERA - Buscar flag reapresentação automatica de cheque - (Lucas H - SUPERO)
 */	
 
 //recupera tag com a conta consorcio
@@ -251,6 +253,11 @@ foreach($tipos_conta as $tipo_conta) {
 			<label for="idastcjtOp2" class="radio"><?php echo utf8ToHtml('Não') ?></label>
 			<br />
 		<?php } ?>
+		<label for="flgreapre"><? echo utf8ToHtml('Reap. Aut. Cheques Depositados:') ?></label>
+            <input name="flgreapre" id="flgreapreOp1" type="radio" class="radio" value="1" <? if ($flgreapre == 1) { echo ' checked'; } ?> />
+            <label for="flgreapreOp1" class="radio">Sim</label>		
+			<input name="flgreapre" id="flgreapreOp2" type="radio" class="radio" value="0" <? if ($flgreapre == 0) { echo ' checked'; } ?> />
+			<label for="flgreapreOp2" class="radio"><?php echo utf8ToHtml('Não') ?></label>		
 		
 	</fieldset>
 	
