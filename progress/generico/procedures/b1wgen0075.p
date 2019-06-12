@@ -1447,25 +1447,6 @@ PROCEDURE Grava_Dados:
                     ASSIGN bcrapttl.inpolexp = par_inpolexp.
                                    
                 END.
-                
-                IF NOT VALID-HANDLE(h-b1wgen0137) THEN
-                    RUN sistema/generico/procedures/b1wgen0137.p 
-                    PERSISTENT SET h-b1wgen0137.
-                  
-                RUN gera_pend_digitalizacao IN h-b1wgen0137                    
-                          ( INPUT par_cdcooper,
-                            INPUT par_nrdconta,
-                            INPUT par_idseqttl,
-                            INPUT crapttl.nrcpfcgc,
-                            INPUT par_dtmvtolt,
-                            INPUT "37", /* PESSOA EXPOSTA POLITICAMENTE - PEP */
-                            INPUT par_cdoperad,
-                           OUTPUT aux_cdcritic,
-                           OUTPUT aux_dscritic).
-
-                IF  VALID-HANDLE(h-b1wgen0137) THEN
-                  DELETE OBJECT h-b1wgen0137.
-
             END.
         END.   
 
