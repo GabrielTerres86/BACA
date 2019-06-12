@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 08/01/2019
+    Data      : Julho/2014                Ultima Atualizacao: 22/02/2019
     
     Dados referentes ao programa:
 
@@ -119,8 +119,12 @@
         
         13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
                 
+                20/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
+                
                 08/01/2019 - Ajuste da taxa mensal na impressao do contrato 
                              INC0028548 (Douglas Pagel / AMcom).
+                
+				22/02/2019 - P485. Validaçao de conta salário na exibiçao do banner Pré Aprovado no TAA. (Augusto/Supero)
                 
 ..............................................................................*/
 
@@ -668,6 +672,7 @@ PROCEDURE grava_dados:
     DEF VAR aux_recidepr AS INTE                                    NO-UNDO.
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
     DEF VAR aux_nivrisco AS CHAR                                    NO-UNDO.
+    DEF VAR aux_vlprecar AS CHAR                                    NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
 
     DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
@@ -948,7 +953,8 @@ PROCEDURE grava_dados:
                                                OUTPUT tt-proposta-epr.flgpagto,
                                                OUTPUT tt-proposta-epr.dtdpagto,
                                                OUTPUT aux_vlutiliz,
-                                               OUTPUT aux_nivrisco).
+                                               OUTPUT aux_nivrisco,
+                                               OUTPUT aux_vlprecar).
     
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
@@ -1112,6 +1118,7 @@ PROCEDURE grava_dados:
                                                    INPUT 0,  /* par_nrcxaps1 */
                                                    INPUT 0,
                                                    INPUT ?,
+												   INPUT 0, /* par_vlrecjg1 */
                                                    /* Avalista 2 */
                                                    INPUT "", /* aux_nmdaval2 */
                                                    INPUT 0,  /* aux_nrcpfav2 */
@@ -1136,6 +1143,7 @@ PROCEDURE grava_dados:
                                                    INPUT 0,  /* aux_nrcxaps2 */
                                                    INPUT 0,
                                                    INPUT ?,
+												   INPUT 0, /* par_vlrecjg2 */
                                                    INPUT "",
                                                    INPUT aux_flgerlog,
                                                    INPUT aux_dsjusren,
@@ -1143,7 +1151,9 @@ PROCEDURE grava_dados:
                                                    INPUT 0, /* idcobope */
                                                    INPUT 0, /* idfiniof */
                                                    INPUT "", /* DSCATBEM */
-                                                   INPUT 1, /* par_inresapr */
+												   INPUT 1,
+												   INPUT "TP", /*par_dsdopcao*/
+                                                   INPUT 0,
                                                    OUTPUT TABLE tt-erro,
                                                    OUTPUT TABLE tt-msg-confirma,
                                                    OUTPUT aux_recidepr,
@@ -3227,11 +3237,54 @@ PROCEDURE verifica_mostra_banner_taa:
     DEF VAR aux_ponteiro AS INTE                                    NO-UNDO.
     DEF VAR aux_dtmvtolt AS CHAR                                    NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdmodali AS INTE                                    NO-UNDO.
 
     ASSIGN par_flgdobnr = TRUE
            aux_dtmvtolt = STRING(DAY(par_dtmvtolt), "99")      + "/" +
                           STRING(MONTH(par_dtmvtolt), "99")    + "/" +
                           STRING(YEAR(par_dtmvtolt), "9999").
+
+    
+    /* P485 - Validaçao para conta salário */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_busca_modalidade_conta aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT  par_cdcooper 
+                  ,INPUT  par_nrdconta 
+                  ,OUTPUT 0
+                  ,OUTPUT ""
+                  ,OUTPUT "").
+                         
+
+    CLOSE STORED-PROC pc_busca_modalidade_conta aux_statproc = PROC-STATUS 
+         WHERE PROC-HANDLE = aux_handproc.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdmodali = 0
+           aux_dscritic = pc_busca_modalidade_conta.pr_dscritic 
+                          WHEN pc_busca_modalidade_conta.pr_dscritic <> ?
+           aux_cdmodali = pc_busca_modalidade_conta.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade_conta.pr_cdmodalidade_tipo <> ?.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    /* Se retornou crítica */
+    IF  aux_dscritic <> "" THEN
+      DO:
+           RETURN "NOK".
+      END.
+    
+    /* Se a modalidade for 2 entao é conta salário */
+    IF aux_cdmodali = 2 THEN
+      DO:
+        par_flgdobnr = FALSE.
+        RETURN "OK".
+      END.
+    
+    /* P485 - Validaçao para conta salário */    
+    
+    
+    
 
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
