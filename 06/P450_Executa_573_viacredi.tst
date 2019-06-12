@@ -18,13 +18,13 @@ DECLARE
         FROM crapcop cop
        WHERE cop.cdcooper = decode(pr_cdcooper,0,cop.cdcooper,pr_cdcooper)
          AND cop.flgativo = 1
-         AND cop.cdcooper NOT IN(1,3)
+         AND cop.cdcooper <> 3
        ORDER BY cop.cdcooper DESC;
     rw_crapcop cr_crapcop%ROWTYPE;
 
 
 BEGIN
-  vr_cdcooper := 0; -- deve ser 0, outro numero so para testes
+  vr_cdcooper := 1; -- deve ser 0, outro numero so para testes
   
   FOR rw_crapcop IN cr_crapcop(vr_cdcooper) LOOP
     vr_contareg := 0;  
