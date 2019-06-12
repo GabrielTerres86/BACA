@@ -190,7 +190,7 @@ DECLARE
 
 
 BEGIN
-    vr_cdcooper := 1; -- deve ser 0, outro numero so para testes
+    vr_cdcooper := 0; -- deve ser 0, outro numero so para testes
     vr_dtrefere := to_date('31/05/2019','dd/mm/YYYY');
     
     -- Valor para individualizar as operacoes
