@@ -1018,7 +1018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
     CLOSE cr_craptps;
     
     OPEN cr_crapalt(pr_nrdconta => rw_craptps.nrdconta);
-                   
+    
         
     IF (cr_crapalt%NOTFOUND) THEN
       -- Atualiza a Crapalt
@@ -1230,24 +1230,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 		vr_dscritic VARCHAR2(4000);
 
   BEGIN
-   
-    -- Buscar registro do PA
-		OPEN cr_crapage;
-		FETCH cr_crapage INTO rw_crapage;
-
-		-- Se não encontrou PA
-		IF cr_crapage%NOTFOUND THEN
-			-- Fechar cursor
-			CLOSE cr_crapage;
-			-- Gerar crítica
-			vr_cdcritic := 962;
-			vr_dscritic := '';
-			-- Levantar exceção
-			RAISE vr_exc_erro;
-		END IF;
-		-- Fechar cursor
-		CLOSE cr_crapage;
-
     if pr_tpcanal_sistema = 13 then /*Ibratan Tela Unica PRJ438*/
       tela_analise_credito.pc_gera_token_ibratan(pr_cdcooper => pr_cdcooper, 
                                                  pr_cdagenci => pr_cdagenci,
@@ -1260,15 +1242,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       end if;
                                                  
     else     
-
-		-- Se PA não possui acesso ao CRM
-    IF rw_crapage.flgutcrm = 0 and pr_tpcanal_sistema = 10 THEN
-			-- Gerar crítica
-			vr_dscritic := 'PA não está habilitado para acessar o sistema CRM.';
-			-- Levantar exceção
-			RAISE vr_exc_erro;
-
-    ELSIF rw_crapage.flgutcrm IN (1,2) or pr_tpcanal_sistema <> 10 THEN -- PA está habilitado para acessar o CRM
 			-- Buscar registro do operador
 			OPEN cr_crapope;
 			FETCH cr_crapope INTO rw_crapope;
@@ -1312,7 +1285,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
           pr_dstoken := rw_crapope.cddsenha;
         END IF;
 			END IF;
+  
+        -- Buscar registro do PA
+        OPEN cr_crapage;
+        FETCH cr_crapage INTO rw_crapage;
+
+        -- Se não encontrou PA
+        IF cr_crapage%NOTFOUND THEN
+          -- Fechar cursor
+          CLOSE cr_crapage;
+          -- Gerar crítica
+          vr_cdcritic := 962;
+          vr_dscritic := '';
+          -- Levantar exceção
+          RAISE vr_exc_erro;
 		END IF;
+        -- Fechar cursor
+        CLOSE cr_crapage;
+
+        -- Se PA não possui acesso ao CRM
+       IF (rw_crapage.flgutcrm = 0 AND rw_crapope.flgutcrm=3) THEN
+          -- Gerar crítica
+          vr_dscritic := 'PA não está habilitado para acessar o sistema CRM.';
+          -- Levantar exceção
+          RAISE vr_exc_erro;
+       END IF; 
 
     end if;
   EXCEPTION
