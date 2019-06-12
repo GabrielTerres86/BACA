@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-312
+324
 
 DECLARE
     ------------------------- PL TABLE ---------------------------------------
@@ -192,6 +192,18 @@ DECLARE
 BEGIN
     vr_cdcooper := 0; -- deve ser 0, outro numero so para testes
     vr_dtrefere := to_date('31/05/2019','dd/mm/YYYY');
+    
+------- ATUALIZAR CONTRATO JUROS 60 - EMPRESTIMO ------
+UPDATE crapris t
+  SET t.flgindiv = 1
+ WHERE t.cdcooper = 1
+   AND t.dtrefere = '31/05/2019'
+   AND t.nrdconta = 6741169
+   AND t.nrctremp = 1103813
+   AND t.cdmodali = 299
+   ;
+------- ATUALIZAR CONTRATO JUROS 60 - EMPRESTIMO ------
+
     
     -- Valor para individualizar as operacoes
     vr_vlindivi := TO_NUMBER(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
