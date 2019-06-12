@@ -726,6 +726,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                              (Fabio Stein - Supero)
                              
                 13/03/2019 - PRB0040599 Tratamento de exception na rotina pc_verifica_tarifa_operacao (Carlos)
+                
+                15/04/2019 - RIT0011981 - Incluir um round de duas casas decimais para não haver distorção de preço no extrato e 
+                          demais lugares onde este valor é utilizado.                    
+                          Jose Dill (Mouts)              
+
   */
  
   ---------------------------------------------------------------------------------------------------------------
@@ -1313,7 +1318,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             vr_vltarifa:= rw_crapfco.vltarifa;
           END IF;
           --
-          vr_vltarids := vr_vltarifa - (vr_vltarifa * (rw_tar_ctc.perdesconto / 100));
+          -- RITM0011981 - Incluir um round de duas casas decimais para não haver distorção de preço no extrato e 
+          --               demais lugares onde este valor é utilizado.
+          vr_vltarids := Round(vr_vltarifa - (vr_vltarifa * (rw_tar_ctc.perdesconto / 100)),2);
+          
           
           --Se foi solicitado para apurar a tarifação
           IF pr_flaputar = 1 THEN 
