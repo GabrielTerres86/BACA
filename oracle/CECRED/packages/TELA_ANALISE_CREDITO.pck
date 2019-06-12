@@ -406,7 +406,8 @@ create or replace package body cecred.TELA_ANALISE_CREDITO is
   --
   -- Objetivo  : Centralizar consultas para analise de credito
   --
-  -- Alteracoes:
+  -- Alteracoes: 12/06/2019 - Ajuste para zerar as váriaveis de Garantia de Aplicação 
+  --                          antes de serem populadas (Mateus Z / Mouts)
   --
   ---------------------------------------------------------------------------
     
@@ -1459,6 +1460,17 @@ FUNCTION fn_le_json_motor_auto_aprov(p_cdcooper IN NUMBER
                                  ,pr_chamador => pr_chamador
                                  ,pr_retorno  => vr_retorno
                                  ,pr_retxml   => vr_retxml);
+                                 
+      vr_permingr := 0;
+      vr_vlgarnec := 0;
+      vr_inaplpro := 0;
+      vr_vlaplpro := 0;
+      vr_inpoupro := 0;
+      vr_vlpoupro := 0;
+      vr_inresaut := 0;
+      vr_nrctater := 0;
+      vr_inaplter := 0;
+      vr_inpouter := 0;
                              
       if vr_retorno = 0 then
         vr_garantia := 'Sem Garantia';
@@ -4253,6 +4265,17 @@ SELECT gene0002.fn_mask_conta(Decode(a.nrdconta,NULL,0,a.nrdconta)) conta
                                ,pr_chamador => 'P'
                                ,pr_retorno   => vr_retorno_xml
                                ,pr_retxml   => pr_retxml);
+                               
+  vr_permingr := 0;
+  vr_vlgarnec := 0;
+  vr_inaplpro := 0;
+  vr_vlaplpro := 0;
+  vr_inpoupro := 0;
+  vr_vlpoupro := 0;
+  vr_inresaut := 0;
+  vr_nrctater := 0;
+  vr_inaplter := 0;
+  vr_inpouter := 0;                             
                                  
   /* Extrai dados do XML */
   if vr_retorno_xml = 1 then
