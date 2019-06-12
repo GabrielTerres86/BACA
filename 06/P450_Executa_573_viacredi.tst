@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-45
+47
 
 DECLARE
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -45,6 +45,7 @@ BEGIN
     END IF;
     
   END LOOP; -- CRAPCOP
-end;
+  
+END;
 0
 0
