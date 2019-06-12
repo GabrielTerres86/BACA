@@ -27,7 +27,25 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
   --             01/04/2019 - P411.3 adicionado o controle de carência nas pc_posicao_saldo_aplicacao_pos | pre (David Valente - Envolti)
   --             
   --             24/04/2019 - P411.2 correcao da busca da faixa regressiva de IR (Anderson)
+
+  --             25/04/2019 - Projeto 411 - Fase 2 - Parte 2 - Conciliação Despesa B3 e Outros Detalhes
+  --                          Procedimento para tratar custo fornecedor aplicação - B3 
+  -- 
+  --                          Procedimento de Log - tabela: tbgen prglog ocorrencia 
+  --                         (Envolti - David Valente - P411.3 fase 2)
+  --
   --------------------------------------------------------------------------------------------------------------- */
+
+  --Procedures Rotina de Log - tabela: tbgen prglog ocorrencia
+  PROCEDURE pc_log(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                  ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                  ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                  ,pr_tpexecuc IN NUMBER   DEFAULT 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                  ,pr_dscrilog IN VARCHAR2 DEFAULT NULL
+                  ,pr_cdcritic IN NUMBER DEFAULT NULL
+                  ,pr_nmrotina IN VARCHAR2 DEFAULT 'APLI0006' -- Null assume nome da Package
+                  ,pr_cdcooper IN VARCHAR2 DEFAULT 0
+                  );
 
   -- Rotina referente a atualizar saldo de aplicacoes de aplicacao pós
   PROCEDURE pc_posicao_saldo_aplicacao_pos(pr_cdcooper IN craprac.cdcooper%TYPE --> Código da Cooperativa
@@ -124,6 +142,62 @@ END apli0006;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
 
+
+  --Procedures Rotina de Log - tabela: tbgen prglog ocorrencia
+  PROCEDURE pc_log(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                  ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                  ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                  ,pr_tpexecuc IN NUMBER   DEFAULT 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                  ,pr_dscrilog IN VARCHAR2 DEFAULT NULL
+                  ,pr_cdcritic IN NUMBER DEFAULT NULL
+                  ,pr_nmrotina IN VARCHAR2 DEFAULT 'APLI0006' -- Null assume nome da Package
+                  ,pr_cdcooper IN VARCHAR2 DEFAULT 0
+                  ) 
+  IS
+    -- ..........................................................................
+    --
+    --  Programa : pc log
+    --  Sistema  : Rotina de Log - tabela: tbgen prglog ocorrencia
+    --  Sigla    : GENE
+    --  Autor    : Envolti - David - Projeto 411 - Fase 2 - Conciliação Despesa
+    --  Data     : 25/04/2019                       Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Chamar a rotina de Log para gravação de criticas.
+    --
+    --   Alteracoes: 
+    --
+    -- .............................................................................
+    --
+  vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
+  vr_nmrotina VARCHAR2 (32)              := 'APLI00006';
+  vr_dscrilog crapcri.dscritic%TYPE;
+  BEGIN
+    vr_dscrilog := pr_dscrilog;
+    IF pr_nmrotina IS NOT NULL THEN
+      vr_nmrotina := pr_nmrotina;      
+    END IF;
+      
+    -- Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => pr_dstiplog -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                          ,pr_tpocorrencia  => pr_tpocorre -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                          ,pr_cdcriticidade => pr_cdcricid -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                          ,pr_tpexecucao    => pr_tpexecuc -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                          ,pr_dsmensagem    => vr_dscrilog
+                          ,pr_cdmensagem    => pr_cdcritic
+                          ,pr_cdprograma    => pr_nmrotina
+                          ,pr_cdcooper      => pr_cdcooper 
+                          ,pr_idprglog      => vr_idprglog
+                          );     
+
+  EXCEPTION   
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log  
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+  END pc_log;
+  --     
   -- Rotina referente a calculo para obter saldo atualizado de aplicacao pós
   PROCEDURE pc_posicao_saldo_aplicacao_pos(pr_cdcooper IN craprac.cdcooper%TYPE --> Código da Cooperativa
                                           ,pr_nrdconta IN craprac.nrdconta%TYPE --> Número da Conta
@@ -174,6 +248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
                               CIS Corporate
 
                 24/04/2019 - P411.2 correcao da busca da faixa regressiva de IR (Anderson)
+
     ..............................................................................*/
     DECLARE
 
@@ -374,11 +449,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
       vr_vlsldtot := pr_vlbascal;
       vr_dtperiod := vr_dtinical;
 
-      IF vr_vlsldtot IS NULL OR
-         vr_vlsldtot <= 0 THEN
+      -- Caso o saldo seja nulo ou menor igual a zero
+      IF vr_vlsldtot IS NULL OR vr_vlsldtot <= 0 THEN
+        
+        -- P411.3 fase 2
+        vr_dscritic := gene0001.fn_busca_critica(1467) ||
+                       'PC_ASSINATURA=>'||
+                       '  pr_cdcooper:'||pr_cdcooper||
+                       ', pr_nrdconta:'||pr_nrdconta||
+                       ', pr_nraplica:'||pr_nraplica||
+                       ', pr_dtiniapl:'||pr_dtiniapl||
+                       ', pr_txaplica:'||pr_txaplica||
+                       ', pr_idtxfixa:'||pr_idtxfixa||
+                       ', pr_cddindex:'||pr_cddindex||
+                       ', pr_qtdiacar:'||pr_qtdiacar||
+                       ', pr_idgravir:'||pr_idgravir||
+                       ', pr_idaplpgm:'||pr_idaplpgm||
+                       ', pr_dtinical:'||pr_dtinical||
+                       ', pr_dtfimcal:'||pr_dtfimcal||
+                       ', pr_idtipbas:'||pr_idtipbas||
+                       ', 
+                       PC_ESPECIFICA=>
+                          pr_vlbascal:'||pr_vlbascal||
+                       ', vr_vlsldtot:'||vr_vlsldtot||
+                       ', vr_dtinical:'||vr_dtinical||
+                       ', pr_vlsldtot:'||pr_vlsldtot||
+                       ', pr_vlsldrgt:'||pr_vlsldrgt;      
+                    
+        -- Log de erro de execucao
+        pc_log(pr_cdcritic => 1467, pr_dscrilog => vr_dscritic);
 
-        vr_dscritic := 'Saldo nao informado.';
-        RAISE vr_exc_saida;
+        -- Limpa as váriaveis de log        
+        vr_dscritic := NULL;
+
+        -- Limpa as variaveis para seguir o procedimento
+        pr_vlsldtot := 0;
+        pr_vlsldrgt := 0;
+        
+        -- Não aborta a execução
+        RAISE vr_exc_null;
 
       END IF;
 
@@ -614,12 +723,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
+        -- Log de erro de execucao
+        pc_log(pr_cdcritic => pr_cdcritic, pr_dscrilog => pr_dscritic || ' - SAIDA 2' );
       WHEN OTHERS THEN
         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper, 
                                      pr_compleme => 'Conta: ' || pr_nrdconta ||
                                                     ' Aplicacao: ' || pr_nraplica);
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em Calculos de Aplicacao POS: ' || SQLERRM;
+        -- Log de erro de execucao
+        pc_log(pr_cdcritic => pr_cdcritic, pr_dscrilog => pr_dscritic || ' - SAIDA 3');
     END;
 
   END pc_posicao_saldo_aplicacao_pos;
@@ -869,11 +982,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
       vr_vlsldtot := pr_vlbascal;
       vr_dtperiod := vr_dtinical;
 
-      IF vr_vlsldtot IS NULL OR
-         vr_vlsldtot <= 0 THEN
+      IF vr_vlsldtot IS NULL OR vr_vlsldtot <= 0 THEN 
+         -- P411.3 fase 2
+        vr_dscritic := 'PC_ASSINATURA=>'||
+                       '  pr_cdcooper:'||pr_cdcooper||
+                       ', pr_nrdconta:'||pr_nrdconta||
+                       ', pr_nraplica:'||pr_nraplica||
+                       ', pr_dtiniapl:'||pr_dtiniapl||
+                       ', pr_txaplica:'||pr_txaplica||
+                       ', pr_idtxfixa:'||pr_idtxfixa||
+                       ', pr_cddindex:'||pr_cddindex||
+                       ', pr_qtdiacar:'||pr_qtdiacar||
+                       ', pr_idgravir:'||pr_idgravir||
+                       ', pr_idaplpgm:'||pr_idaplpgm||
+                       ', pr_dtinical:'||pr_dtinical||
+                       ', pr_dtfimcal:'||pr_dtfimcal||
+                       ', pr_idtipbas:'||pr_idtipbas||
+                       ', 
+                        PC_ESPECIFICA=>
+                          pr_vlbascal:'||pr_vlbascal||
+                       ', vr_vlsldtot:'||vr_vlsldtot||
+                       ', vr_dtinical:'||vr_dtinical||
+                       ', pr_vlsldtot:'||pr_vlsldtot||
+                       ', pr_vlsldrgt:'||pr_vlsldrgt;       
+                    
+        -- Log de erro de execucao
+        pc_log(pr_cdcritic => 1467, pr_dscrilog => vr_dscritic);
+ 
+        -- Limpa as váriaveis de log        
+        vr_dscritic := NULL;
+        
+        -- Limpa as variáveis para seguir o procedimento
+        pr_vlsldtot := 0;
+        pr_vlsldrgt := 0;
 
-        vr_dscritic := 'Saldo nao informado.';
-        RAISE vr_exc_saida;
+        -- Não aborta a execução
+        RAISE vr_exc_null;
 
       END IF;
 
