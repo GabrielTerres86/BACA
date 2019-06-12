@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2019-04-25T10:32:36 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="442" pageHeight="732" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="220"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="530"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["\\\\pkgdesen2\\micros\\cecred\\andrino\\CRPS535\\"]]></defaultValueExpression>
+	</parameter>
+	<queryString language="xPath">
+		<![CDATA[/crps535/conta]]>
+	</queryString>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagenci]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="nrfonres" class="java.lang.String">
+		<fieldDescription><![CDATA[nrfonres]]></fieldDescription>
+	</field>
+	<field name="vltarifa" class="java.lang.String">
+		<fieldDescription><![CDATA[vltarifa]]></fieldDescription>
+	</field>
+	<field name="qtdecheq" class="java.lang.String">
+		<fieldDescription><![CDATA[qtdecheq]]></fieldDescription>
+	</field>
+	<field name="totdcheq" class="java.lang.String">
+		<fieldDescription><![CDATA[totdcheq]]></fieldDescription>
+	</field>
+	<field name="hrfimouv" class="java.lang.String">
+		<fieldDescription><![CDATA[@hrfimouv]]></fieldDescription>
+	</field>
+	<field name="hrfimsac" class="java.lang.String">
+		<fieldDescription><![CDATA[@hrfimsac]]></fieldDescription>
+	</field>
+	<field name="hriniouv" class="java.lang.String">
+		<fieldDescription><![CDATA[@hriniouv]]></fieldDescription>
+	</field>
+	<field name="hrinisac" class="java.lang.String">
+		<fieldDescription><![CDATA[@hrinisac]]></fieldDescription>
+	</field>
+	<field name="nrtelouv" class="java.lang.String">
+		<fieldDescription><![CDATA[@nrtelouv]]></fieldDescription>
+	</field>
+	<field name="nrtelsac" class="java.lang.String">
+		<fieldDescription><![CDATA[@nrtelsac]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="44" splitType="Prevent">
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+			<subreport>
+				<reportElement x="0" y="0" width="442" height="44" isPrintInFirstWholeBand="true" uuid="16d8200f-b44c-4b59-bb23-b744a9c0210e"/>
+				<subreportParameter name="PR_CDAGENCI">
+					<subreportParameterExpression><![CDATA[$F{cdagenci}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_VLTARIFA">
+					<subreportParameterExpression><![CDATA[$F{vltarifa}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_CDRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_CDRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PAGE_NUMBER">
+					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRESCOP">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NRDCONTA">
+					<subreportParameterExpression><![CDATA[$F{nrdconta}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_DTMVTOLT">
+					<subreportParameterExpression><![CDATA[$P{PR_DTMVTOLT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMMODULO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMMODULO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMDESTIN">
+					<subreportParameterExpression><![CDATA[$P{PR_NMDESTIN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_TOTDCHEQ">
+					<subreportParameterExpression><![CDATA[$F{totdcheq}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMRELATO">
+					<subreportParameterExpression><![CDATA[$P{PR_NMRELATO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NMPRIMTL">
+					<subreportParameterExpression><![CDATA[$F{nmprimtl}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_SQSOLICI">
+					<subreportParameterExpression><![CDATA[$P{PR_SQSOLICI}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_QTDECHEQ">
+					<subreportParameterExpression><![CDATA[$F{qtdecheq}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_PROGERAD">
+					<subreportParameterExpression><![CDATA[$P{PR_PROGERAD}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PR_NRFONRES">
+					<subreportParameterExpression><![CDATA[$F{nrfonres}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//cheque")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl530_detalhe.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+</jasperReport>
