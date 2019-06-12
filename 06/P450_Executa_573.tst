@@ -18,7 +18,8 @@ DECLARE
         FROM crapcop cop
        WHERE cop.cdcooper = decode(pr_cdcooper,0,cop.cdcooper,pr_cdcooper)
          AND cop.flgativo = 1
-         AND cop.cdcooper <> 3;
+         AND cop.cdcooper <> 3
+       ORDER BY cop.cdcooper DESC;
     rw_crapcop cr_crapcop%ROWTYPE;
 
 
