@@ -1155,14 +1155,6 @@
           document.form.submit(); 
           return false; 
       }
-       
-      if(((document.form.nrficpre.value == '0' || document.form.nrficpre.value == '') && $("#aux_indicdiv").val() == 0 && document.getElementById("flgdispe").checked)){
-        if($("#aux_nrseqeve").children(":selected").attr("tpevento") == 7 ||
-           $("#aux_nrseqeve").children(":selected").attr("tpevento") == 12){
-          alert('Número da Ficha de Presença deve ser informado.');
-          return false;
-        }
-      }
 					
       if ((vaux.substring(1, 2) == 'A') || (document.form.aux_stdopcao.value == 'i')) {
         if (document.form.aux_cddopcao.value != 'sa') {
