@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
    Sistema : Caixa On-line
    Sigla   : CRED
    Autor   : Elton
-   Data    : Outubro/2011                      Ultima atualizacao: 25/06/2018
+   Data    : Outubro/2011                      Ultima atualizacao: 20/07/2018
 
    Dados referentes ao programa:
 
@@ -110,27 +110,34 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
 
                26/08/2013 - Convers¿o Progress para Oracle (Alisson - AMcom)
 
-			   25/04/2016 - Remocao de caracteres invalidos no nome da agencia 
+			   25/04/2016 - Remocao de caracteres invalidos no nome da agencia
 							conforme solicitado no chamado 429584 (Kelvin)
 
                21/11/2016 - Alterado idorigem Mobile de 9 para 10.
-                            PRJ335 - Analise de fraudes (Odirlei-AMcom) 
+                            PRJ335 - Analise de fraudes (Odirlei-AMcom)
 
                21/11/2016 - Rotina pc_executa_envio_ted - Inclusao de parametros.
                                    pc_envio_ted - Tratamento para gerar registro de analise de fraude
-                            PRJ335 - Analise de fraudes (Odirlei-AMcom) 
-							
-               12/12/2016 - Nao cobrar tarifa de TED quando a origem for do 
+                            PRJ335 - Analise de fraudes (Odirlei-AMcom)
+
+               12/12/2016 - Nao cobrar tarifa de TED quando a origem for do
                             BacenJud (Andrino - Mouts). Projeto 341-Bacenjud
-							
+
                15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
-			   
+
 			   25/06/2018 - Adicionado CPF/CNPJ e nome do favorecido no e-mail enviado em casos de fraude.
 							(SCTASK0015124 - Kelvin).
-							
+               20/07/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA
+                            Everton Souza - Mouts
+               01/09/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA - SPRINT B
+                            Marcelo Telles Coelho - Mouts
+
+			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
+                     Heitor (Mouts)
+
 ..............................................................................*/
-  --  antigo tt-protocolo-ted 
-  TYPE typ_reg_protocolo_ted 
+  --  antigo tt-protocolo-ted
+  TYPE typ_reg_protocolo_ted
         IS RECORD ( cdtippro crappro.cdtippro%TYPE
                    ,dtmvtolt crappro.dtmvtolt%TYPE
                    ,dttransa crappro.dttransa%TYPE
@@ -181,24 +188,24 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                                   ,pr_vllanmto IN craplcm.vllanmto%TYPE  --> Valor do lançamento
                                   ,pr_cdfinali IN INTEGER                --> Codigo de finalidade
                                   ,pr_dshistor IN VARCHAR2               --> Descriçao de historico
-                                  ,pr_cdispbif IN crapcti.nrispbif%TYPE  --> Oito primeiras posicoes do cnpj. 
+                                  ,pr_cdispbif IN crapcti.nrispbif%TYPE  --> Oito primeiras posicoes do cnpj.
                                   ,pr_idagenda IN INTEGER                --> Indicador de agendamento
-                                  /* parametros de saida */                               
+                                  /* parametros de saida */
                                   ,pr_dstransa OUT VARCHAR2              --> Descrição de transação
                                   ,pr_cdcritic OUT INTEGER               --> Codigo do erro
                                   ,pr_dscritic OUT VARCHAR2);            --> Descricao do erro
-                                  
-  
+
+
   --> Procedure para executar o envio da TED
-  PROCEDURE pc_executa_envio_ted 
-                          (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa    
+  PROCEDURE pc_executa_envio_ted
+                          (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
                           ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Agencia
-                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Caixa Operador    
+                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Caixa Operador
                           ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Operador Autorizacao
-                          ,pr_idorigem IN INTEGER                --> Origem                 
+                          ,pr_idorigem IN INTEGER                --> Origem
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
-                          ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta Remetente        
-                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular                
+                          ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta Remetente
+                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular
                           ,pr_nrcpfope IN crapopi.nrcpfope%TYPE  --> CPF operador juridico
                           ,pr_cddbanco IN crapcti.cddbanco%TYPE  --> Banco destino
                           ,pr_cdageban IN crapcti.cdageban%TYPE  --> Agencia destino
@@ -217,22 +224,24 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
+                          ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
+                          ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                           -- saida
-                          ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
+                          ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
                           ,pr_cdcritic OUT INTEGER               --> Codigo do erro
-                          ,pr_dscritic OUT VARCHAR2);            --> Descricao do erro 
+                          ,pr_dscritic OUT VARCHAR2);            --> Descricao do erro
 
   --> Procedure para executar o envio da TED chamada pelo Progress
-  PROCEDURE pc_executa_envio_ted_prog 
-                          (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa    
+  PROCEDURE pc_executa_envio_ted_prog
+                          (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
                           ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Agencia
-                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Caixa Operador    
+                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Caixa Operador
                           ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Operador Autorizacao
-                          ,pr_idorigem IN INTEGER                --> Origem                 
+                          ,pr_idorigem IN INTEGER                --> Origem
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
-                          ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta Remetente        
-                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular                
+                          ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta Remetente
+                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular
                           ,pr_nrcpfope IN crapopi.nrcpfope%TYPE  --> CPF operador juridico
                           ,pr_cddbanco IN crapcti.cddbanco%TYPE  --> Banco destino
                           ,pr_cdageban IN crapcti.cdageban%TYPE  --> Agencia destino
@@ -252,85 +261,87 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
                           -- saida
-                          ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
+                          ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo
                           ,pr_tab_protocolo_ted OUT CLOB --> dados do protocolo
                           ,pr_cdcritic OUT INTEGER               --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2);
 
-  PROCEDURE pc_enviar_ted (pr_cdcooper IN INTEGER  --> Cooperativa            
-                          ,pr_idorigem IN INTEGER  --> Origem                 
-                          ,pr_cdageope IN INTEGER  --> PAC Operador           
-                          ,pr_nrcxaope IN INTEGER  --> Caixa Operador    
+  PROCEDURE pc_enviar_ted (pr_cdcooper IN INTEGER  --> Cooperativa
+                          ,pr_idorigem IN INTEGER  --> Origem
+                          ,pr_cdageope IN INTEGER  --> PAC Operador
+                          ,pr_nrcxaope IN INTEGER  --> Caixa Operador
                           ,pr_cdoperad IN VARCHAR2 --> Operador Autorizacao
                           ,pr_cdopeaut IN VARCHAR2 --> Operador Autorizacao
-                          ,pr_vldocmto IN NUMBER   --> Valor TED             
-                          ,pr_nrdconta IN INTEGER  --> Conta Remetente        
-                          ,pr_idseqttl IN INTEGER  --> Titular                
-                          ,pr_nmprimtl IN VARCHAR2 --> Nome Remetente         
-                          ,pr_nrcpfcgc IN NUMBER   --> CPF/CNPJ Remetente     
-                          ,pr_inpessoa IN INTEGER  --> Tipo Pessoa Remetente  
-                          ,pr_cdbanfav IN INTEGER  --> Banco Favorecido       
-                          ,pr_cdagefav IN INTEGER  --> Agencia Favorecido     
-                          ,pr_nrctafav IN NUMBER   --> Conta Favorecido       
-                          ,pr_nmfavore IN VARCHAR2 --> Nome Favorecido        
-                          ,pr_nrcpffav IN NUMBER   --> CPF/CNPJ Favorecido    
-                          ,pr_inpesfav IN INTEGER  --> Tipo Pessoa Favorecido 
-                          ,pr_tpctafav IN INTEGER  --> Tipo Conta Favorecido  
-                          ,pr_dshistor IN VARCHAR2 --> Descriçao do Histórico 
+                          ,pr_vldocmto IN NUMBER   --> Valor TED
+                          ,pr_nrdconta IN INTEGER  --> Conta Remetente
+                          ,pr_idseqttl IN INTEGER  --> Titular
+                          ,pr_nmprimtl IN VARCHAR2 --> Nome Remetente
+                          ,pr_nrcpfcgc IN NUMBER   --> CPF/CNPJ Remetente
+                          ,pr_inpessoa IN INTEGER  --> Tipo Pessoa Remetente
+                          ,pr_cdbanfav IN INTEGER  --> Banco Favorecido
+                          ,pr_cdagefav IN INTEGER  --> Agencia Favorecido
+                          ,pr_nrctafav IN NUMBER   --> Conta Favorecido
+                          ,pr_nmfavore IN VARCHAR2 --> Nome Favorecido
+                          ,pr_nrcpffav IN NUMBER   --> CPF/CNPJ Favorecido
+                          ,pr_inpesfav IN INTEGER  --> Tipo Pessoa Favorecido
+                          ,pr_tpctafav IN INTEGER  --> Tipo Conta Favorecido
+                          ,pr_dshistor IN VARCHAR2 --> Descriçao do Histórico
                           ,pr_dstransf IN VARCHAR2 --> Identificacao Transf.
-                          ,pr_cdfinali IN INTEGER  --> Finalidade TED                              
+                          ,pr_cdfinali IN INTEGER  --> Finalidade TED
                           ,pr_cdispbif IN INTEGER  --> ISPB Banco Favorecido
                           ,pr_flmobile IN INTEGER DEFAULT 0 --> Indicador se origem é do Mobile
-                          ,pr_idagenda IN INTEGER  --> Tipo de agendamento                          
+                          ,pr_idagenda IN INTEGER  --> Tipo de agendamento
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
+                          ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
+                          ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                           -- saida
-                          ,pr_nrdocmto OUT INTEGER --> Documento TED        
-                          ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL      
-                          ,pr_nrreclcm OUT ROWID   --> Autenticacao LCM      
+                          ,pr_nrdocmto OUT INTEGER --> Documento TED
+                          ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL
+                          ,pr_nrreclcm OUT ROWID   --> Autenticacao LCM
                           ,pr_cdcritic OUT INTEGER  --> Codigo do erro
-                          ,pr_dscritic OUT VARCHAR2 --> Descrição da critica      
+                          ,pr_dscritic OUT VARCHAR2 --> Descrição da critica
                           ,pr_des_erro OUT VARCHAR2 );
 
   /******************************************************************************/
   /**                  Procedure para validar TED                              **/
   /******************************************************************************/
-  PROCEDURE pc_validar_ted ( pr_cdcooper IN INTEGER  --> Cooperativa            
-                            ,pr_idorigem IN INTEGER  --> Origem                 
-                            ,pr_cdageope IN INTEGER  --> PAC Operador           
-                            ,pr_nrcxaope IN INTEGER  --> Caixa Operador         
-                            ,pr_vldocmto IN NUMBER   --> Valor TED             
-                            ,pr_nrdconta IN INTEGER  --> Conta Remetente        
-                            ,pr_idseqttl IN INTEGER  --> Titular                
-                            ,pr_nmprimtl IN VARCHAR2 --> Nome Remetente         
-                            ,pr_nrcpfcgc IN NUMBER   --> CPF/CNPJ Remetente     
-                            ,pr_inpessoa IN INTEGER  --> Tipo Pessoa Remetente  
-                            ,pr_cdbanfav IN INTEGER  --> Banco Favorecido       
-                            ,pr_cdagefav IN INTEGER  --> Agencia Favorecido     
-                            ,pr_nrctafav IN NUMBER   --> Conta Favorecido       
-                            ,pr_nmfavore IN VARCHAR2 --> Nome Favorecido        
-                            ,pr_nrcpffav IN NUMBER   --> CPF/CNPJ Favorecido    
-                            ,pr_inpesfav IN INTEGER  --> Tipo Pessoa Favorecido 
-                            ,pr_tpctafav IN INTEGER  --> Tipo Conta Favorecido  
-                            ,pr_cdfinali IN INTEGER  --> Finalidade TED         
-                            ,pr_dshistor IN VARCHAR2 --> Descriçao do Histórico 
-                            ,pr_cdispbif IN INTEGER  --> ISPB Banco Favorecido  
+  PROCEDURE pc_validar_ted ( pr_cdcooper IN INTEGER  --> Cooperativa
+                            ,pr_idorigem IN INTEGER  --> Origem
+                            ,pr_cdageope IN INTEGER  --> PAC Operador
+                            ,pr_nrcxaope IN INTEGER  --> Caixa Operador
+                            ,pr_vldocmto IN NUMBER   --> Valor TED
+                            ,pr_nrdconta IN INTEGER  --> Conta Remetente
+                            ,pr_idseqttl IN INTEGER  --> Titular
+                            ,pr_nmprimtl IN VARCHAR2 --> Nome Remetente
+                            ,pr_nrcpfcgc IN NUMBER   --> CPF/CNPJ Remetente
+                            ,pr_inpessoa IN INTEGER  --> Tipo Pessoa Remetente
+                            ,pr_cdbanfav IN INTEGER  --> Banco Favorecido
+                            ,pr_cdagefav IN INTEGER  --> Agencia Favorecido
+                            ,pr_nrctafav IN NUMBER   --> Conta Favorecido
+                            ,pr_nmfavore IN VARCHAR2 --> Nome Favorecido
+                            ,pr_nrcpffav IN NUMBER   --> CPF/CNPJ Favorecido
+                            ,pr_inpesfav IN INTEGER  --> Tipo Pessoa Favorecido
+                            ,pr_tpctafav IN INTEGER  --> Tipo Conta Favorecido
+                            ,pr_cdfinali IN INTEGER  --> Finalidade TED
+                            ,pr_dshistor IN VARCHAR2 --> Descriçao do Histórico
+                            ,pr_cdispbif IN INTEGER  --> ISPB Banco Favorecido
                             ,pr_idagenda IN INTEGER  --> Indicador de agendamento
                             ,pr_des_erro OUT VARCHAR2);
 
   FUNCTION fn_verifica_lote_uso(pr_rowid rowid) RETURN NUMBER;
-                                                             
+
   --Bacenjud - SM 1
-  PROCEDURE pc_executa_reenvio_ted 
-                          (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa    
+  PROCEDURE pc_executa_reenvio_ted
+                          (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
                           ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Agencia
-                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Caixa Operador    
+                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Caixa Operador
                           ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Operador Autorizacao
-                          ,pr_idorigem IN INTEGER                --> Origem                 
+                          ,pr_idorigem IN INTEGER                --> Origem
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
-                          ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta Remetente        
-                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular                
+                          ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta Remetente
+                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular
                           ,pr_nrcpfope IN crapopi.nrcpfope%TYPE  --> CPF operador juridico
                           ,pr_cddbanco IN crapcti.cddbanco%TYPE  --> Banco destino
                           ,pr_cdageban IN crapcti.cdageban%TYPE  --> Agencia destino
@@ -349,10 +360,10 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           -- saida
-                          ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
+                          ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
                           ,pr_cdcritic OUT INTEGER               --> Codigo do erro
-                          ,pr_dscritic OUT VARCHAR2);            --> Descricao do erro  
+                          ,pr_dscritic OUT VARCHAR2);            --> Descricao do erro
   --Fim Bacenjud - SM 1
 END CXON0020;
 /
@@ -364,54 +375,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     Sistema  : Procedimentos e funcoes das transacoes do caixa online
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Junho/2013.                   Ultima atualizacao: 12/12/2017 
-  
+    Data     : Junho/2013.                   Ultima atualizacao: 01/03/2019
+
     Dados referentes ao programa:
-  
+
     Frequencia: -----
     Objetivo  : Procedimentos e funcoes das transacoes do caixa online
-    
+
     Alteração : 14/03/2016 - Removido save point da procedure e alterado por rollback em
                              toda a transação caso ocorra problemas. SD 417330 (Kelvin).
 
-                27/04/2016 - Adicionado tratamento para verificar isencao ou nao                             
+                27/04/2016 - Adicionado tratamento para verificar isencao ou nao
                              de tarifa no envio de TED Eletrônica. PRJ 218/2 (Reinert).
-    
+
                 14/06/2016 - Ajuste para incluir o UPPER em campos de indice ao ler a tabela craptvl
                              (Adriano - SD 469449).
-                             
+
                 22/07/2016 - Correção de xml sendo limpo após execução da rotina pc_executa_envio_ted_prog (Carlos)
-    
+
                 25/07/2016 - Ajuste para retornar corretamente o xml pois estava gerando problemas para
                              o progress receber os valores de data e nome de tags com o caracter "#"
                              (Adriano).
-                               
+
                 29/08/2016 - #456682 Inclusão de verificação de fraude na rotina pc_validar_ted (Carlos)
-                
+
                 05/10/2016 - Implementei correcoes e alteracoes na pc_enviar_ted SD 535051. (Carlos Rafael Tanholi).
-                
+
                 21/11/2016 - Rotina pc_executa_envio_ted - Inclusao de parametros.
                                    pc_envio_ted - Tratamento para gerar registro de analise de fraude
-                            PRJ335 - Analise de fraudes (Odirlei-AMcom) 
-                
-                20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
+                            PRJ335 - Analise de fraudes (Odirlei-AMcom)
+
+                20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado
                             (Adriano - SD 620221).
-                
+
                 25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
+			                 crapass, crapttl, crapjur
 							 (Adriano - P339).
-     
+
                 12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
-                            
+
                 08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
 
 				13/08/2017 - Ajustes realizados:
 						     > Pegar o erro corretamente;
-							 > Devolver critica através de parâmetros 
+							 > Devolver critica através de parâmetros
 							  (Jonata - RKAM / P364).
 
-                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure
                              pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+                             
+                23/01/2019 - Tratar a geração do numero de documento para evitar duplicidade 
+                             (Jose Dill Mouts INC0030535)             
+                             
+                01/03/2019 - Se o banco ainda não estiver operante no SPB (Data de inicio da operação), 
+                             deve bloquear o envio da TED.
+                             (Jonata - Mouts INC0031899).
+         
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -490,10 +509,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     AND    craplot.cdbccxlt = pr_cdbccxlt
     AND    craplot.nrdolote = pr_nrdolote;
   rw_craplot cr_craplot%ROWTYPE;
-  
+
   --Bacenjud - SM 1
   vr_reenvio NUMBER(1) := 0;
-  
+
   /* Procedure para buscar tarifa ted */
   PROCEDURE pc_busca_tarifa_ted (pr_cdcooper IN INTEGER --Codigo Cooperativa
                                 ,pr_cdagenci IN INTEGER --Codigo Agencia
@@ -518,7 +537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
   -- Frequencia: -----
   -- Objetivo  : Procedure para buscar tarifa ted
   --
-  -- Alteracoes: 01/10/2015 - Retirado soma do parametro pr_vllanmto conforme era no progress (Odirlei-Amcom) 
+  -- Alteracoes: 01/10/2015 - Retirado soma do parametro pr_vllanmto conforme era no progress (Odirlei-Amcom)
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -620,7 +639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
-      
+
     EXCEPTION
        WHEN vr_exc_erro THEN
          pr_cdcritic:= vr_cdcritic;
@@ -630,53 +649,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          pr_dscritic:= 'Erro na rotina CXON0020.pc_busca_tarifa_ted. '||SQLERRM;
     END;
   END pc_busca_tarifa_ted;
-  
+
   /******************************************************************************/
   /**                  Procedure para validar TED                              **/
   /******************************************************************************/
-  PROCEDURE pc_validar_ted ( pr_cdcooper IN INTEGER  --> Cooperativa            
-                            ,pr_idorigem IN INTEGER  --> Origem                 
-                            ,pr_cdageope IN INTEGER  --> PAC Operador           
-                            ,pr_nrcxaope IN INTEGER  --> Caixa Operador         
-                            ,pr_vldocmto IN NUMBER   --> Valor TED             
-                            ,pr_nrdconta IN INTEGER  --> Conta Remetente        
-                            ,pr_idseqttl IN INTEGER  --> Titular                
-                            ,pr_nmprimtl IN VARCHAR2 --> Nome Remetente         
-                            ,pr_nrcpfcgc IN NUMBER   --> CPF/CNPJ Remetente     
-                            ,pr_inpessoa IN INTEGER  --> Tipo Pessoa Remetente  
-                            ,pr_cdbanfav IN INTEGER  --> Banco Favorecido       
-                            ,pr_cdagefav IN INTEGER  --> Agencia Favorecido     
-                            ,pr_nrctafav IN NUMBER   --> Conta Favorecido       
-                            ,pr_nmfavore IN VARCHAR2 --> Nome Favorecido        
-                            ,pr_nrcpffav IN NUMBER   --> CPF/CNPJ Favorecido    
-                            ,pr_inpesfav IN INTEGER  --> Tipo Pessoa Favorecido 
-                            ,pr_tpctafav IN INTEGER  --> Tipo Conta Favorecido  
-                            ,pr_cdfinali IN INTEGER  --> Finalidade TED         
-                            ,pr_dshistor IN VARCHAR2 --> Descriçao do Histórico 
-                            ,pr_cdispbif IN INTEGER  --> ISPB Banco Favorecido  
+  PROCEDURE pc_validar_ted ( pr_cdcooper IN INTEGER  --> Cooperativa
+                            ,pr_idorigem IN INTEGER  --> Origem
+                            ,pr_cdageope IN INTEGER  --> PAC Operador
+                            ,pr_nrcxaope IN INTEGER  --> Caixa Operador
+                            ,pr_vldocmto IN NUMBER   --> Valor TED
+                            ,pr_nrdconta IN INTEGER  --> Conta Remetente
+                            ,pr_idseqttl IN INTEGER  --> Titular
+                            ,pr_nmprimtl IN VARCHAR2 --> Nome Remetente
+                            ,pr_nrcpfcgc IN NUMBER   --> CPF/CNPJ Remetente
+                            ,pr_inpessoa IN INTEGER  --> Tipo Pessoa Remetente
+                            ,pr_cdbanfav IN INTEGER  --> Banco Favorecido
+                            ,pr_cdagefav IN INTEGER  --> Agencia Favorecido
+                            ,pr_nrctafav IN NUMBER   --> Conta Favorecido
+                            ,pr_nmfavore IN VARCHAR2 --> Nome Favorecido
+                            ,pr_nrcpffav IN NUMBER   --> CPF/CNPJ Favorecido
+                            ,pr_inpesfav IN INTEGER  --> Tipo Pessoa Favorecido
+                            ,pr_tpctafav IN INTEGER  --> Tipo Conta Favorecido
+                            ,pr_cdfinali IN INTEGER  --> Finalidade TED
+                            ,pr_dshistor IN VARCHAR2 --> Descriçao do Histórico
+                            ,pr_cdispbif IN INTEGER  --> ISPB Banco Favorecido
                             ,pr_idagenda IN INTEGER  --> Indicador de agendamento
                             ,pr_des_erro OUT VARCHAR2)IS --> Indicador se retornou com erro (OK ou NOK)
-    
+
   /*---------------------------------------------------------------------------------------------------------------
-  
+
       Programa : pc_validar_ted             Antigo: b1crap20/validar-ted
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 20/03/2017
-  
+      Data     : Junho/2015.                   Ultima atualizacao: 01/03/2019
+
       Dados referentes ao programa:
-  
+
       Frequencia: Sempre que for chamado
       Objetivo  : Procedure para validar TED
-    
+
       Alteração : 08/06/2015 - Conversão Progress -> Oracle (Odirlei-Amcom)
-    
-                  20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
+
+                  20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado
                               (Adriano - SD 620221).
-    
+
+                  01/03/2019 - Se o banco ainda não estiver operante no SPB (Data de inicio da operação), 
+                               deve bloquear o envio da TED.
+                               (Jonata - Mouts INC0031899).
+
   ---------------------------------------------------------------------------------------------------------------*/
-    ---------------> CURSORES <-----------------        
+    ---------------> CURSORES <-----------------
     -- Buscar dados do associado
     CURSOR cr_crapass (pr_cdcooper  crapass.cdcooper%TYPE,
                        pr_nrdconta  crapass.nrdconta%TYPE) IS
@@ -687,23 +710,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
-    rw_crapass cr_crapass%ROWTYPE;       
-    
+    rw_crapass cr_crapass%ROWTYPE;
+
     -- Validar banco
     CURSOR cr_crapban (pr_cdispbif crapban.nrispbif%TYPE,
                        pr_cdbccxlt crapban.cdbccxlt%TYPE) IS
       SELECT flgdispb
-        FROM crapban 
-       WHERE (crapban.nrispbif = pr_cdispbif AND pr_cdbccxlt = 0) 
+            ,dtinispb
+        FROM crapban
+       WHERE (crapban.nrispbif = pr_cdispbif AND pr_cdbccxlt = 0)
          OR  (crapban.cdbccxlt = pr_cdbccxlt AND pr_cdbccxlt > 0);
     rw_crapban cr_crapban%ROWTYPE;
-       
+
     -- Verificacao de cpf/cnpj fraudulento
     CURSOR cr_crapcbf(pr_tpfraude crapcbf.tpfraude%TYPE,
                       pr_dsfraude crapcbf.dsfraude%TYPE) IS
       SELECT 1
         FROM crapcbf
-       WHERE tpfraude = pr_tpfraude 
+       WHERE tpfraude = pr_tpfraude
          AND UPPER(dsfraude) = UPPER(pr_dsfraude);
     rw_crapcbf cr_crapcbf%ROWTYPE;
 
@@ -736,15 +760,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND m.dstransa = pr_dstransa
        ORDER BY m.progress_recid DESC;
 
-      
+
     ------------> ESTRUTURAS DE REGISTRO <-----------
-    
+
     --Tabela de memória de limites de horario
     vr_tab_limite INET0001.typ_tab_limite;
     vr_index      PLS_INTEGER;
-                                       
+
     ---------------> VARIAVEIS <-----------------
-    --Variaveis de erro    
+    --Variaveis de erro
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
     rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
@@ -752,37 +776,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     vr_nrdipatu  VARCHAR2(1000);
     vr_des_corpo VARCHAR2(1000);
     vr_cpfcnpj   VARCHAR2(40);
-      
+
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
-    
-    vr_nrcxaope NUMBER;     
+
+    vr_nrcxaope NUMBER;
     vr_flgretor BOOLEAN;
     vr_tppessoa INTEGER;
     vr_dstextab craptab.dstextab%TYPE;
 
   BEGIN
-      
+
     IF pr_idorigem IN (3,4) THEN  /** 3-Internet  4-CASH/TAA **/
       vr_nrcxaope := pr_nrdconta || pr_idseqttl;
     ELSE
       vr_nrcxaope := pr_nrcxaope;
     END IF;
-    
+
     --Eliminar erro
     CXON0000.pc_elimina_erro(pr_cooper      => pr_cdcooper
                             ,pr_cod_agencia => pr_cdageope
                             ,pr_nro_caixa   => vr_nrcxaope
                             ,pr_cdcritic    => vr_cdcritic
                             ,pr_dscritic    => vr_dscritic);
-    
+
     vr_cdcritic := 0;
     vr_dscritic := NULL;
-    
+
     --> Buscar dados cooperativa
     OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
-      
+
     --> verificar se encontra registro
     IF cr_crapcop%NOTFOUND THEN
       CLOSE cr_crapcop;
@@ -790,16 +814,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     ELSE
       CLOSE cr_crapcop;
-    END IF;     
-    
+    END IF;
+
     /*SD 244456 - VANESSA*/
-    IF pr_cdfinali IN (99,99999,999) AND TRIM(pr_dshistor) IS NULL THEN 
+    IF pr_cdfinali IN (99,99999,999) AND TRIM(pr_dshistor) IS NULL THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Informe a descriçao do histórico';
       RAISE vr_exc_erro;
     END IF;
     /* FIM SD 244456*/
-    
+
     --Buscar Horario Operacao
     INET0001.pc_horario_operacao (pr_cdcooper   => pr_cdcooper  -- Código Cooperativa
                                  ,pr_cdagenci   => pr_cdageope  -- Agencia do Associado
@@ -814,21 +838,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       --levantar Excecao
       RAISE vr_exc_erro;
-    END IF;           
-    
+    END IF;
+
     vr_index := vr_tab_limite.first;
     /* Agendamento de TED deve ser possível realizar em qualquer horário e dia,
        mesmo não sendo útil */
     IF vr_tab_limite.exists(vr_index) = FALSE  OR   -- Não encontrou
        ((vr_tab_limite(vr_index).idesthor = 1  OR   -- Estourou o horario
-       vr_tab_limite(vr_index).iddiauti = 2)   AND 
+       vr_tab_limite(vr_index).iddiauti = 2)   AND
        NOT pr_idagenda IN(2,3))                THEN -- Não é dia util
-    
+
       vr_cdcritic := 676; --> 676 - Horario esgotado para digitacao.
       vr_dscritic := NULL;
       RAISE vr_exc_erro;
-    END IF;   
-    
+    END IF;
+
     -- Validar data cooper
     OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -842,7 +866,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     ELSE
        CLOSE btch0001.cr_crapdat;
     END IF;
-    
+
     -- Validar cooperado
     OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta);
@@ -853,99 +877,108 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       vr_cdcritic := 9;
       vr_dscritic := NULL;
       RAISE vr_exc_erro;
-      
+
     ELSE
       CLOSE cr_crapass;
     END IF;
-    
+
     -- Verificar nome
     IF TRIM(pr_nmprimtl) IS NULL  THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Nome do remetente incorreto';
       RAISE vr_exc_erro;
     END IF;
-    
+
     -- Validar cpf ou cnpj
     GENE0005.pc_valida_cpf_cnpj (pr_nrcalcul => pr_nrcpfcgc --> Numero a ser verificado
                                 ,pr_stsnrcal => vr_flgretor  --> Situacao
                                 ,pr_inpessoa => vr_tppessoa);--> Tipo Inscricao Cedente
-    
-    IF vr_flgretor = FALSE THEN 
+
+    IF vr_flgretor = FALSE THEN
       vr_cdcritic := 27; --> 027 - CPF/CNPJ com erro.
       vr_dscritic := NULL;
-      RAISE vr_exc_erro;            
-    END IF;            
-    
+      RAISE vr_exc_erro;
+    END IF;
+
     -- Validar tipo de pessoa
     IF pr_inpessoa <> vr_tppessoa THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Tipo de pessoa do remetente incorreto.';
       RAISE vr_exc_erro;
     END IF;
-    
+
     -- Validar codigo do banco favorecido
     IF pr_cdbanfav = rw_crapcop.cdbcoctl THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Nao e posssivel efetuar transferencia entre IFs do Sistema AILOS.';
       RAISE vr_exc_erro;
     END IF;
-    
+
     -- Validar banco
     OPEN cr_crapban (pr_cdispbif => pr_cdispbif,
                      pr_cdbccxlt => pr_cdbanfav);
     FETCH cr_crapban INTO rw_crapban;
-      
+
     IF cr_crapban%NOTFOUND THEN
       vr_cdcritic := 57; --> BANCO NAO CADASTRADO.
       vr_dscritic := NULL;
       CLOSE cr_crapban;
-      RAISE vr_exc_erro;  
+      RAISE vr_exc_erro;
     END IF;
     CLOSE cr_crapban;
-    
+
     -- Verificar se banco esta em operação no SPB
     IF rw_crapban.flgdispb = 0 /*FALSE*/ THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Banco do favorecido não opera no SPB.';
       RAISE vr_exc_erro;
     END IF;
+    
+    -- Verificar se banco já está em operação no SPB
+    IF rw_crapban.flgdispb = 1 /*true*/      AND 
+       trunc(SYSDATE) < rw_crapban.dtinispb  THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Banco nao iniciou as atividades no SPB. Data de inicio ' || to_char(rw_crapban.dtinispb,'DD/MM/RRRR') || '.';
+      RAISE vr_exc_erro;
+    END IF;
+    
     -- Validar agencia
     IF TRIM(pr_cdagefav) IS NULL THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Agencia invalida.';
       RAISE vr_exc_erro;
     END IF;
-    
+
     -- Verificar conta favorecida
-    IF nvl(pr_nrctafav,0) = 0 THEN 
+    IF nvl(pr_nrctafav,0) = 0 THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Conta do favorecido deve ser informada.';
       RAISE vr_exc_erro;
     END IF;
-    IF TRIM(pr_nmfavore) IS NULL THEN 
+    IF TRIM(pr_nmfavore) IS NULL THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Nome favorecido deve ser informado.';
       RAISE vr_exc_erro;
     END IF;
-    
-    IF pr_inpesfav = 1 THEN 
-        
+
+    IF pr_inpesfav = 1 THEN
+
       -- Valida CPF enviado
       GENE0005.pc_valida_cpf(pr_nrcalcul => pr_nrcpffav   --Numero a ser verificado
                             ,pr_stsnrcal => vr_flgretor);   --Situacao
-    
-    IF vr_flgretor = FALSE THEN 
+
+    IF vr_flgretor = FALSE THEN
       vr_cdcritic := 27; --> 027 - CPF/CNPJ com erro.
       vr_dscritic := NULL;
-      RAISE vr_exc_erro;            
-    END IF;    
-    
+      RAISE vr_exc_erro;
+    END IF;
+
     ELSE
-        
+
       -- Valida CPF/CNPJ enviado
       GENE0005.pc_valida_cnpj(pr_nrcalcul => pr_nrcpffav   --Numero a ser verificado
                              ,pr_stsnrcal => vr_flgretor);   --Situacao
-          
+
       IF vr_flgretor = FALSE THEN
         vr_cdcritic := 27; --> 027 - CPF/CNPJ com erro.
         vr_dscritic := NULL;
@@ -953,7 +986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     END IF;
 
     END IF;
-      
+
     IF pr_inpesfav = 1 THEN
       vr_tpfraude := 2;
     ELSE
@@ -990,8 +1023,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                       '<b>Conta: </b>'||gene0002.fn_mask_conta(pr_nrdconta) || '<br>' ||
                       '<b>CPF/CNPJ destino: </b>' || vr_cpfcnpj || '<br>' ||
                       '<b>Nome Favorecido: </b>' || pr_nmfavore;
-                      
-                      
+
+
       -- Envio de e-mail informando que houve a tentativa
       gene0003.pc_solicita_email(pr_cdcooper => pr_cdcooper,
                                  pr_cdprogra => 'CXON0020',
@@ -1010,48 +1043,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         vr_dscritic := 'Dados inconsistentes. Impossibilidade de realizar a transação.';
         RAISE vr_exc_erro;
     END IF;
-    
+
     END IF;
     CLOSE cr_crapcbf;
 
-    
+
     -- Ler tabela generica -  Tipo de conta
-    vr_dstextab := tabe0001.fn_busca_dstextab( pr_cdcooper => rw_crapcop.cdcooper 
-                                              ,pr_nmsistem => 'CRED'           
-                                              ,pr_tptabela => 'GENERI'         
-                                              ,pr_cdempres => 00               
-                                              ,pr_cdacesso => 'TPCTACRTED'     
+    vr_dstextab := tabe0001.fn_busca_dstextab( pr_cdcooper => rw_crapcop.cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_tptabela => 'GENERI'
+                                              ,pr_cdempres => 00
+                                              ,pr_cdacesso => 'TPCTACRTED'
                                               ,pr_tpregist => pr_tpctafav   );
-    
+
     IF vr_dstextab IS NULL THEN
       vr_cdcritic := 17; --> Tipo de conta errado
       vr_dscritic := NULL;
-      RAISE vr_exc_erro; 
+      RAISE vr_exc_erro;
     END IF;
-    
+
     -- Ler tabela generica
-    vr_dstextab := tabe0001.fn_busca_dstextab( pr_cdcooper => rw_crapcop.cdcooper 
-                                              ,pr_nmsistem => 'CRED'           
-                                              ,pr_tptabela => 'GENERI'         
-                                              ,pr_cdempres => 00               
-                                              ,pr_cdacesso => 'FINTRFTEDS'     
+    vr_dstextab := tabe0001.fn_busca_dstextab( pr_cdcooper => rw_crapcop.cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_tptabela => 'GENERI'
+                                              ,pr_cdempres => 00
+                                              ,pr_cdacesso => 'FINTRFTEDS'
                                               ,pr_tpregist => pr_cdfinali   );
-    
+
     IF vr_dstextab IS NULL THEN
       vr_cdcritic := 362; --> Finalidade nao cadastrada.
       vr_dscritic := NULL;
-      RAISE vr_exc_erro; 
+      RAISE vr_exc_erro;
     END IF;
-    
+
     -- Validar valor
-    IF pr_vldocmto = 0 THEN 
+    IF pr_vldocmto = 0 THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Valor da TED deve ser informado.';
       RAISE vr_exc_erro;
     END IF;
-    
+
     pr_des_erro := 'OK';
-    
+
   EXCEPTION
     WHEN vr_exc_erro THEN
       --Criar Erro
@@ -1063,7 +1096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                             ,pr_flg_erro => TRUE
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
-      pr_des_erro := 'NOK'; 
+      pr_des_erro := 'NOK';
     WHEN OTHERS THEN
       vr_dscritic := 'Nao foi possivel validar TED:'||SQLERRM;
       CXON0000.pc_cria_erro( pr_cdcooper => pr_cdcooper
@@ -1074,9 +1107,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                             ,pr_flg_erro => TRUE
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
-      pr_des_erro := 'NOK'; 
+      pr_des_erro := 'NOK';
   END pc_validar_ted;
-  
+
   /******************************************************************************/
   /**                  Procedure para verificar os dados da TED                **/
   /******************************************************************************/
@@ -1096,29 +1129,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                   ,pr_vllanmto IN craplcm.vllanmto%TYPE  --> Valor do lançamento
                                   ,pr_cdfinali IN INTEGER                --> Codigo de finalidade
                                   ,pr_dshistor IN VARCHAR2               --> Descriçao de historico
-                                  ,pr_cdispbif IN crapcti.nrispbif%TYPE  --> Oito primeiras posicoes do cnpj. 
+                                  ,pr_cdispbif IN crapcti.nrispbif%TYPE  --> Oito primeiras posicoes do cnpj.
                                   ,pr_idagenda IN INTEGER                --> Indicador de agendamento
-                                  /* parametros de saida */                               
+                                  /* parametros de saida */
                                   ,pr_dstransa OUT VARCHAR2              --> Descrição de transação
                                   ,pr_cdcritic OUT INTEGER               --> Codigo do erro
                                   ,pr_dscritic OUT VARCHAR2) IS          --> Descricao do erro
   /*---------------------------------------------------------------------------------------------------------------
-  
+
       Programa : pc_verifica_dados_ted             Antigo: b1wgen0015/verifica-dados-ted
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
       Data     : Junho/2015.                   Ultima atualizacao: 08/06/2015
-  
+
       Dados referentes ao programa:
-  
+
       Frequencia: Sempre que for chamado
       Objetivo  : Procedure para verificar os dados da TED
-    
+
       Alteração : 08/06/2015 - Conversão Progress -> Oracle (Odirlei-Amcom)
-    
+
   ---------------------------------------------------------------------------------------------------------------*/
-    ---------------> CURSORES <-----------------        
+    ---------------> CURSORES <-----------------
     -- Buscar dados do associado
     CURSOR cr_crapass (pr_cdcooper  crapass.cdcooper%TYPE,
                        pr_nrdconta  crapass.nrdconta%TYPE) IS
@@ -1129,8 +1162,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
-    rw_crapass cr_crapass%ROWTYPE;     
-  
+    rw_crapass cr_crapass%ROWTYPE;
+
     -- Buscar titulares
     CURSOR cr_crapttl ( pr_cdcooper crapass.cdcooper%TYPE,
                         pr_nrdconta crapass.nrdconta%TYPE,
@@ -1143,8 +1176,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
        WHERE ttl.cdcooper = pr_cdcooper
          AND ttl.nrdconta = pr_nrdconta
          AND ttl.idseqttl = pr_idseqttl ;
-    rw_crapttl cr_crapttl%ROWTYPE;     
-    
+    rw_crapttl cr_crapttl%ROWTYPE;
+
     -- buscar erro
     CURSOR cr_craperr(pr_cdcooper craperr.cdcooper%TYPE,
                       pr_cdagenci craperr.cdagenci%TYPE,
@@ -1154,30 +1187,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
        WHERE craperr.cdcooper = pr_cdcooper
          AND craperr.cdagenci = pr_cdagenci
          AND craperr.nrdcaixa = pr_nrdcaixa;
-    
-    
+
+
     ------------> ESTRUTURAS DE REGISTRO <-----------
-                                       
+
     ---------------> VARIAVEIS <-----------------
-    --Variaveis de erro    
+    --Variaveis de erro
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
-      
+
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
-        
+
     vr_nmextttl crapttl.nmextttl%TYPE;
     vr_nrcpfcgc crapttl.nrcpfcgc%TYPE;
     vr_des_erro  VARCHAR2(200);
-    
-    
+
+
   BEGIN
     pr_dstransa := 'Transferencia de TED';
-    
+
     --> Buscar dados cooperativa
     OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
-      
+
     --> verificar se encontra registro
     IF cr_crapcop%NOTFOUND THEN
       CLOSE cr_crapcop;
@@ -1186,7 +1219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     ELSE
       CLOSE cr_crapcop;
     END IF;
-    
+
     -- Buscar dados do associado
     OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta);
@@ -1194,13 +1227,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     -- verificar se localizou
     IF cr_crapass%NOTFOUND THEN
       CLOSE cr_crapass;
-      vr_dscritic := 'Associado nao cadastrado.';      
+      vr_dscritic := 'Associado nao cadastrado.';
       RAISE vr_exc_erro;
-      
+
     ELSE
       CLOSE cr_crapass;
     END IF;
-    
+
     -- se for pessoa fisica
     IF rw_crapass.inpessoa = 1 THEN
       -- buscar dados titular
@@ -1208,49 +1241,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                        pr_nrdconta => pr_nrdconta,
                        pr_idseqttl => pr_idseqttl);
       FETCH cr_crapttl INTO rw_crapttl;
-      
+
       IF cr_crapttl%NOTFOUND THEN
         CLOSE cr_crapttl;
         vr_dscritic := 'Titular nao cadastrado.';
         RAISE vr_exc_erro;
       END IF;
       CLOSE cr_crapttl;
-      
+
       vr_nmextttl := rw_crapttl.nmextttl;
       vr_nrcpfcgc := rw_crapttl.nrcpfcgc;
-      
+
     ELSE
       -- se for pessoa juridica, usar informações da crapass
       vr_nmextttl := rw_crapass.nmprimtl;
       vr_nrcpfcgc := rw_crapass.nrcpfcgc;
     END IF;
-        
-    cxon0020.pc_validar_ted( pr_cdcooper => pr_cdcooper    --> Cooperativa            
-                            ,pr_idorigem => pr_idorigem   --> Origem                 
-                            ,pr_cdageope => pr_cdagenci   --> PAC Operador           
-                            ,pr_nrcxaope => pr_nrdcaixa   --> Caixa Operador         
-                            ,pr_vldocmto => pr_vllanmto   --> Valor TED             
-                            ,pr_nrdconta => pr_nrdconta   --> Conta Remetente        
-                            ,pr_idseqttl => pr_idseqttl   --> Titular                
-                            ,pr_nmprimtl => vr_nmextttl   --> Nome Remetente         
-                            ,pr_nrcpfcgc => vr_nrcpfcgc   --> CPF/CNPJ Remetente     
-                            ,pr_inpessoa => (CASE rw_crapass.inpessoa    --> Tipo Pessoa Remetente  
+
+    cxon0020.pc_validar_ted( pr_cdcooper => pr_cdcooper    --> Cooperativa
+                            ,pr_idorigem => pr_idorigem   --> Origem
+                            ,pr_cdageope => pr_cdagenci   --> PAC Operador
+                            ,pr_nrcxaope => pr_nrdcaixa   --> Caixa Operador
+                            ,pr_vldocmto => pr_vllanmto   --> Valor TED
+                            ,pr_nrdconta => pr_nrdconta   --> Conta Remetente
+                            ,pr_idseqttl => pr_idseqttl   --> Titular
+                            ,pr_nmprimtl => vr_nmextttl   --> Nome Remetente
+                            ,pr_nrcpfcgc => vr_nrcpfcgc   --> CPF/CNPJ Remetente
+                            ,pr_inpessoa => (CASE rw_crapass.inpessoa    --> Tipo Pessoa Remetente
                                                WHEN 1 THEN rw_crapass.inpessoa
                                                ELSE 2
-                                             END)  
-                            ,pr_cdbanfav => pr_cddbanco   --> Banco Favorecido       
-                            ,pr_cdagefav => pr_cdageban   --> Agencia Favorecido     
-                            ,pr_nrctafav => pr_nrctatrf   --> Conta Favorecido       
-                            ,pr_nmfavore => pr_nmtitula   --> Nome Favorecido        
-                            ,pr_nrcpffav => pr_nrcpfcgc   --> CPF/CNPJ Favorecido    
-                            ,pr_inpesfav => pr_inpessoa   --> Tipo Pessoa Favorecido 
-                            ,pr_tpctafav => pr_intipcta   --> Tipo Conta Favorecido  
-                            ,pr_cdfinali => pr_cdfinali   --> Finalidade TED         
-                            ,pr_dshistor => pr_dshistor   --> Descriçao do Histórico 
-                            ,pr_cdispbif => pr_cdispbif   --> ISPB Banco Favorecido  
+                                             END)
+                            ,pr_cdbanfav => pr_cddbanco   --> Banco Favorecido
+                            ,pr_cdagefav => pr_cdageban   --> Agencia Favorecido
+                            ,pr_nrctafav => pr_nrctatrf   --> Conta Favorecido
+                            ,pr_nmfavore => pr_nmtitula   --> Nome Favorecido
+                            ,pr_nrcpffav => pr_nrcpfcgc   --> CPF/CNPJ Favorecido
+                            ,pr_inpesfav => pr_inpessoa   --> Tipo Pessoa Favorecido
+                            ,pr_tpctafav => pr_intipcta   --> Tipo Conta Favorecido
+                            ,pr_cdfinali => pr_cdfinali   --> Finalidade TED
+                            ,pr_dshistor => pr_dshistor   --> Descriçao do Histórico
+                            ,pr_cdispbif => pr_cdispbif   --> ISPB Banco Favorecido
                             ,pr_idagenda => pr_idagenda   --> Indicador de agendamento
                             ,pr_des_erro => vr_des_erro); --> Indicador se retornou com erro (OK ou NOK)
-    
+
     IF vr_des_erro <> 'OK' THEN
       -- buscar erro
       vr_dscritic := NULL;
@@ -1259,83 +1292,85 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                       pr_nrdcaixa => pr_nrdconta||pr_idseqttl);
       FETCH cr_craperr INTO vr_dscritic;
       CLOSE cr_craperr;
-      
+
       -- se nao encontrou a critica ou esta em branco, define mensagem
       vr_dscritic := nvl(vr_dscritic,'TED invalida.');
       RAISE vr_exc_erro;
-      
+
     END IF;
-    
+
   EXCEPTION
-    WHEN vr_exc_erro THEN      
+    WHEN vr_exc_erro THEN
       IF vr_cdcritic = 0 AND TRIM(vr_dscritic) IS NULL THEN
         vr_dscritic := 'Não foi possivel verificar dados TED';
       END IF;
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
-      pr_dscritic := 'Não foi possivel verificar dados TED: '||SQLERRM; 
+      pr_dscritic := 'Não foi possivel verificar dados TED: '||SQLERRM;
   END pc_verifica_dados_ted;
-  
+
   /******************************************************************************/
   /**                  Procedure para envio do TED                             **/
   /******************************************************************************/
-  PROCEDURE pc_enviar_ted (pr_cdcooper IN INTEGER  --> Cooperativa            
-                          ,pr_idorigem IN INTEGER  --> Origem                 
-                          ,pr_cdageope IN INTEGER  --> PAC Operador           
-                          ,pr_nrcxaope IN INTEGER  --> Caixa Operador    
+  PROCEDURE pc_enviar_ted (pr_cdcooper IN INTEGER  --> Cooperativa
+                          ,pr_idorigem IN INTEGER  --> Origem
+                          ,pr_cdageope IN INTEGER  --> PAC Operador
+                          ,pr_nrcxaope IN INTEGER  --> Caixa Operador
                           ,pr_cdoperad IN VARCHAR2 --> Operador Autorizacao
                           ,pr_cdopeaut IN VARCHAR2 --> Operador Autorizacao
-                          ,pr_vldocmto IN NUMBER   --> Valor TED             
-                          ,pr_nrdconta IN INTEGER  --> Conta Remetente        
-                          ,pr_idseqttl IN INTEGER  --> Titular                
-                          ,pr_nmprimtl IN VARCHAR2 --> Nome Remetente         
-                          ,pr_nrcpfcgc IN NUMBER   --> CPF/CNPJ Remetente     
-                          ,pr_inpessoa IN INTEGER  --> Tipo Pessoa Remetente  
-                          ,pr_cdbanfav IN INTEGER  --> Banco Favorecido       
-                          ,pr_cdagefav IN INTEGER  --> Agencia Favorecido     
-                          ,pr_nrctafav IN NUMBER   --> Conta Favorecido       
-                          ,pr_nmfavore IN VARCHAR2 --> Nome Favorecido        
-                          ,pr_nrcpffav IN NUMBER   --> CPF/CNPJ Favorecido    
-                          ,pr_inpesfav IN INTEGER  --> Tipo Pessoa Favorecido 
-                          ,pr_tpctafav IN INTEGER  --> Tipo Conta Favorecido  
-                          ,pr_dshistor IN VARCHAR2 --> Descriçao do Histórico 
+                          ,pr_vldocmto IN NUMBER   --> Valor TED
+                          ,pr_nrdconta IN INTEGER  --> Conta Remetente
+                          ,pr_idseqttl IN INTEGER  --> Titular
+                          ,pr_nmprimtl IN VARCHAR2 --> Nome Remetente
+                          ,pr_nrcpfcgc IN NUMBER   --> CPF/CNPJ Remetente
+                          ,pr_inpessoa IN INTEGER  --> Tipo Pessoa Remetente
+                          ,pr_cdbanfav IN INTEGER  --> Banco Favorecido
+                          ,pr_cdagefav IN INTEGER  --> Agencia Favorecido
+                          ,pr_nrctafav IN NUMBER   --> Conta Favorecido
+                          ,pr_nmfavore IN VARCHAR2 --> Nome Favorecido
+                          ,pr_nrcpffav IN NUMBER   --> CPF/CNPJ Favorecido
+                          ,pr_inpesfav IN INTEGER  --> Tipo Pessoa Favorecido
+                          ,pr_tpctafav IN INTEGER  --> Tipo Conta Favorecido
+                          ,pr_dshistor IN VARCHAR2 --> Descriçao do Histórico
                           ,pr_dstransf IN VARCHAR2 --> Identificacao Transf.
-                          ,pr_cdfinali IN INTEGER  --> Finalidade TED                              
+                          ,pr_cdfinali IN INTEGER  --> Finalidade TED
                           ,pr_cdispbif IN INTEGER  --> ISPB Banco Favorecido
                           ,pr_flmobile IN INTEGER DEFAULT 0 --> Indicador se origem é do Mobile
-                          ,pr_idagenda IN INTEGER  --> Tipo de agendamento                          
+                          ,pr_idagenda IN INTEGER  --> Tipo de agendamento
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
-                          ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile                         
+                          ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
+                          ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
+                          ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                           -- saida
-                          ,pr_nrdocmto OUT INTEGER --> Documento TED        
-                          ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL      
-                          ,pr_nrreclcm OUT ROWID   --> Autenticacao LCM      
+                          ,pr_nrdocmto OUT INTEGER --> Documento TED
+                          ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL
+                          ,pr_nrreclcm OUT ROWID   --> Autenticacao LCM
                           ,pr_cdcritic OUT INTEGER  --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2 --> Descrição da critica
                           ,pr_des_erro OUT VARCHAR2 )IS  --> Indicador se retornou com erro (OK ou NOK)
 
   /*---------------------------------------------------------------------------------------------------------------
-  
+
       Programa : pc_enviar_ted             Antigo: b1crap20/enviar-ted
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 28/08/2018
-  
+      Data     : Junho/2015.                   Ultima atualizacao: 05/06/2019
+
       Dados referentes ao programa:
-  
+
       Frequencia: Sempre que for chamado
       Objetivo  : Procedure para envio do TED
-    
+
       Alteração : 08/06/2015 - Conversão Progress -> Oracle (Odirlei-Amcom)
-      
-                  04/02/2016 - Aumento no tempo de verificacao de TED duplicada. De 30 seg. para 
+
+                  04/02/2016 - Aumento no tempo de verificacao de TED duplicada. De 30 seg. para
                                10 min. (Jorge/David) - SD 397867
-                               
-                  26/02/2016 - Inclusão de log de lote em uso - TARI0001.pc_gera_log_lote_uso (Odirlei-AMcom)             
-                  
+
+                  26/02/2016 - Inclusão de log de lote em uso - TARI0001.pc_gera_log_lote_uso (Odirlei-AMcom)
+
                   01/03/2016 - Removido tratamento de TED duplicada contendo select na craptvl sem nrdconta
                                e ajustado a critica (Odirlei-AMcom)
 
@@ -1344,33 +1379,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
                   14/03/2016 - Removido save point da procedure e alterado por rollback em
                                toda a transação caso ocorra problemas. SD 417330 (Kelvin).
-    
+
                   14/06/2016 - Ajuste para incluir o UPPER em campos de indice ao ler a tabela craptvl
                               (Adriano - SD 469449).
-                               
+
                   05/10/2016 - Removi as chamadas para gera_log_lote_uso, ajustei os campos do insert na craptvl
                                movi a chamada da procedure gera_log_ope_cartao para antes do UPDATE na craplot.
                                SD 535051. (Carlos Rafael Tanholi).
-                 
-				          14/11/2016 - Alterado cdorigem 9 para 10, novo cdorigem especifico para mobile
-	                             PRJ335 - Analise de Fraude(Odirlei-AMcom) 
+
+				 14/11/2016 - Alterado cdorigem 9 para 10, novo cdorigem especifico para mobile
+	                          PRJ335 - Analise de Fraude(Odirlei-AMcom)
 
                   21/11/2016 - Tratamento para gerar analise de fraude das TEDs.
-                               PRJ335 - Analise de Fraude(Odirlei-AMcom) 
-                               
+                               PRJ335 - Analise de Fraude(Odirlei-AMcom)
+
                   26/04/2017 - Ajustado para nao realizar analise de fraude para efetivações
-                               de agendamento. PRJ335 - Analise de Fraude(Odirlei-AMcom)               
+                               de agendamento. PRJ335 - Analise de Fraude(Odirlei-AMcom)
 
-				          15/08/2017 - Ajuste para devolver critica através de parâmetros (Jonata - RKAM / P364).
+				  15/08/2017 - Ajuste para devolver critica através de parâmetros (Jonata - RKAM / P364).
 
-                  12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                  12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure
                                pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
                                
                   24/08/2018 - Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE - TIAGO)                 
                   
                   28/08/2018 - Tratamento de exceção pra chamada AFRA0004.pc_monitora_operacao (Tiago - RITM0025395)
+
+                  08/02/2019 - Realizado a inclusão de parametro para indicar que está sendo realizada uma 
+                               transferencia de salário via portabilidade, de forma que o programa possa tratar
+                               a requisição como TEC de salário. Foram realizados os ajustes também para que 
+                               seja utilizado o histórico correto (Renato - Supero - Projeto 485)
+                               
+                  03/05/2019 - Alterado para que não seja gerada tarifa para transferencias de portabilidade de 
+                               salário. (Renato Darosci - Supero - Projeto 485)
+
+                  05/06/2019 - Tratar INC0011406 relacionado ao horario de aprovacao da TED (Diego).
+
   ---------------------------------------------------------------------------------------------------------------*/
-    ---------------> CURSORES <-----------------        
+    ---------------> CURSORES <-----------------
     -- Buscar dados do associado
     CURSOR cr_crapass (pr_cdcooper  crapass.cdcooper%TYPE,
                        pr_nrdconta  crapass.nrdconta%TYPE) IS
@@ -1384,15 +1430,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
-    rw_crapass cr_crapass%ROWTYPE;       
-    
+    rw_crapass cr_crapass%ROWTYPE;
+
     -- Validar banco
     CURSOR cr_crapban (pr_cdispbif crapban.nrispbif%TYPE) IS
       SELECT flgdispb
-        FROM crapban 
+        FROM crapban
        WHERE crapban.nrispbif = pr_cdispbif;
     rw_crapban cr_crapban%ROWTYPE;
-    
+
     -- Verificar tranferencia de valores (DOC C, DOC D E TEDS)
     CURSOR cr_craptvl (pr_cdcooper craptvl.cdcooper%TYPE,
                        pr_nrctrlif craptvl.idopetrf%TYPE)IS
@@ -1403,7 +1449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND craptvl.tpdoctrf = 3 /* TED SPB */
        AND UPPER(craptvl.idopetrf) = UPPER(pr_nrctrlif);
     rw_craptvl cr_craptvl%ROWTYPE;
-         
+
     /* Validar transferencia duplicadas */
     CURSOR cr_craptvl_max( pr_cdcooper craptvl.cdcooper%TYPE,
                            pr_dtmvtocd craptvl.dtmvtolt%TYPE,
@@ -1428,8 +1474,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND craptvl.nrcctrcb = pr_nrctafav
          AND craptvl.vldocrcb = pr_vldocmto;
     rw_craptvl_max cr_craptvl_max%ROWTYPE;
-         
-         
+
     -- Buscar dados historico
     CURSOR cr_craphis (pr_cdcooper craphis.cdcooper%TYPE,
                        pr_cdhistor craphis.cdhistor%TYPE)IS
@@ -1437,8 +1482,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         FROM craphis
        WHERE craphis.cdcooper = pr_cdcooper
          AND craphis.cdhistor = pr_cdhistor;
-    rw_craphis cr_craphis%ROWTYPE;     
-    
+    rw_craphis cr_craphis%ROWTYPE;
+
     -- Verificar se ja existe lcm
     CURSOR cr_craplcm (pr_cdcooper craplcm.cdcooper%TYPE,
                        pr_nrdconta craplcm.nrdctabb%TYPE,
@@ -1455,8 +1500,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND craplcm.nrdolote = pr_nrdolote
          AND craplcm.nrdctabb = pr_nrdconta
          AND craplcm.nrdocmto = pr_nrdocmto;
-    rw_craplcm cr_craplcm%ROWTYPE;     
-    
+    rw_craplcm cr_craplcm%ROWTYPE;
+
     -- Verificar lote
     CURSOR cr_craplot (pr_cdcooper  craplot.cdcooper%TYPE,
                        pr_dtmvtolt  craplot.dtmvtolt%TYPE,
@@ -1475,38 +1520,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND craplot.dtmvtolt = pr_dtmvtolt
          AND craplot.cdagenci = pr_cdageope
          AND craplot.cdbccxlt = pr_cdbccxlt
-         AND craplot.nrdolote = pr_nrdolote
-       FOR UPDATE NOWAIT;
+         AND craplot.nrdolote = pr_nrdolote;
+
     rw_craplot_tvl cr_craplot%ROWTYPE;
     rw_craplot_lcm cr_craplot%ROWTYPE;
-    
+    vr_nrseqdig    craplot.nrseqdig%type;
+
     --> Buscar dados da tarifa
     CURSOR cr_craplat (pr_rowid ROWID) IS
       SELECT lat.cdlantar
         FROM craplat lat
-       WHERE lat.rowid = pr_rowid; 
-    rw_craplat cr_craplat%ROWTYPE;   
-    
+       WHERE lat.rowid = pr_rowid;
+    rw_craplat cr_craplat%ROWTYPE;
+
     ------------> ESTRUTURAS DE REGISTRO <-----------
-    
+
     --Tabela de memória de limites de horario
     vr_tab_limite INET0001.typ_tab_limite;
     vr_index      PLS_INTEGER;
-                                       
+
     ---------------> VARIAVEIS <-----------------
-    --Variaveis de erro    
+    --Variaveis de erro
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
+    vr_des_erro VARCHAR2(4000);
     vr_tab_erro GENE0001.typ_tab_erro;
     vr_tab_saldo EXTR0001.typ_tab_saldos;
-    
+
     rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
-      
+
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
     vr_exc_log  EXCEPTION;
-    
-    vr_nrcxaope NUMBER;     
+
+    vr_nrcxaope NUMBER;
     vr_flgretor BOOLEAN;
     vr_tppessoa INTEGER;
 		vr_idorigem INTEGER;
@@ -1536,15 +1583,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     vr_vlsldisp   NUMBER;
     vr_vltarifa   NUMBER;
     vr_debtarifa  BOOLEAN := FALSE;
+    -- Everton - Mouts - Projeto 475
+    vr_trace_nmmensagem tbspb_msg_enviada.nmmensagem%TYPE;
+    vr_nrseq_mensagem10 tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem20 tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
+    vr_flvldhor            NUMBER;
+    vr_aux_exisdoc NUMBER;
+    -- Renato Supero - P485 - Indica se é uma TED ou TEC de salário
+    vr_flgctsal   BOOLEAN := FALSE; 
+    vr_idtected   NUMBER;  -- Indicador para formar o número de controle da IF
 
     --Rowid lancamento tarifa
     vr_rowid_craplat ROWID;
 
 	vr_qtacobra   INTEGER;
-	vr_fliseope   INTEGER;		
-    
+	vr_fliseope   INTEGER;
+
     vr_idanalise_fraude tbgen_analise_fraude.idanalise_fraude%TYPE;
-    
+
     ---------------- SUB-ROTINAS ------------------
     -- Procedimento para inserir o lote e não deixar tabela lockada
     PROCEDURE pc_insere_lote (pr_cdcooper IN craplot.cdcooper%TYPE,
@@ -1562,15 +1619,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
       -- Pragma - abre nova sessao para tratar a atualizacao
       PRAGMA AUTONOMOUS_TRANSACTION;
-        
+
       rw_craplot cr_craplot%ROWTYPE;
       vr_nrdolote craplot.nrdolote%TYPE;
-        
+
     BEGIN
       vr_nrdolote := pr_nrdolote;
-      
-      FOR vr_contador IN 1..100 LOOP
-        BEGIN         
+
           -- verificar lote
           OPEN cr_craplot (pr_cdcooper  => pr_cdcooper,
                            pr_dtmvtolt  => pr_dtmvtolt,
@@ -1578,29 +1633,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                            pr_cdbccxlt  => pr_cdbccxlt,
                            pr_nrdolote  => vr_nrdolote);
           FETCH cr_craplot INTO rw_craplot;
-          -- se não deu erro no fecth é pq o registro não esta em lock
-          EXIT;           
-            
-        EXCEPTION
-          WHEN OTHERS THEN
-            IF cr_craplot%ISOPEN THEN
-              CLOSE cr_craplot;
-            END IF;
-            
-            -- se for a ultima tentativa, guardar a critica
-            IF vr_contador = 100 THEN
-              pr_dscritic := 'Tabela CRAPLOT em uso(lote: '||vr_nrdolote||').';
-            END IF;
-            sys.dbms_lock.sleep(0.1);  
-        END;
-      END LOOP;
-      
-      -- se encontrou erro ao buscar lote, abortar programa
-      IF pr_dscritic IS NOT NULL THEN
-        ROLLBACK;
-        RETURN;
-      END IF;
-        
+
       IF cr_craplot%NOTFOUND THEN
         -- criar registros de lote na tabela
         INSERT INTO craplot
@@ -1639,31 +1672,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                      rw_craplot.cdbccxlt,
                      rw_craplot.nrdolote,
                      rw_craplot.nrseqdig;
-          
-      ELSE
-        -- Atualizar lote para reservar nrseqdig
-        UPDATE craplot
-           SET craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
-         WHERE craplot.rowid = rw_craplot.rowid
-        RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig; 
-        
+        COMMIT;
       END IF;
+
       CLOSE cr_craplot;
       pr_craplot := rw_craplot;
-        
-      COMMIT;
-      
+
     EXCEPTION
       WHEN OTHERS THEN
         IF cr_craplot%ISOPEN THEN
           CLOSE cr_craplot;
         END IF;
-        
-        ROLLBACK;        
+
+        ROLLBACK;
         -- se ocorreu algum erro durante a criac?o
         pr_dscritic := 'Erro ao inserir/atualizar lote '||rw_craplot.nrdolote||': '||SQLERRM;
     END pc_insere_lote;
-    
+
     -------------------- Programa Principal -----------------
   BEGIN
     IF pr_idorigem IN (3,4) THEN  /** 3-Internet  4-CASH/TAA **/
@@ -1671,21 +1696,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     ELSE
       vr_nrcxaope := pr_nrcxaope;
     END IF;
-    
+
     --Eliminar erro
     CXON0000.pc_elimina_erro(pr_cooper      => pr_cdcooper
                             ,pr_cod_agencia => pr_cdageope
                             ,pr_nro_caixa   => vr_nrcxaope
                             ,pr_cdcritic    => vr_cdcritic
                             ,pr_dscritic    => vr_dscritic);
-    
+
     vr_cdcritic := 0;
     vr_dscritic := NULL;
-    
+
     --> Buscar dados cooperativa
     OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
-      
+
     --> verificar se encontra registro
     IF cr_crapcop%NOTFOUND THEN
       CLOSE cr_crapcop;
@@ -1693,8 +1718,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     ELSE
       CLOSE cr_crapcop;
-    END IF;     
-    
+    END IF;
+
     -- Validar data cooper
     OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -1708,23 +1733,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     ELSE
        CLOSE btch0001.cr_crapdat;
     END IF;
-    
-    IF rw_crapcop.flgoppag = 0 /*FALSE*/ AND  -- Não operando com o pag. (camara de compensacao) 
-       rw_crapcop.flgopstr = 0 /*FALSE*/ THEN -- Não opera com o str. 
+
+    IF rw_crapcop.flgoppag = 0 /*FALSE*/ AND  -- Não operando com o pag. (camara de compensacao)
+       rw_crapcop.flgopstr = 0 /*FALSE*/ THEN -- Não opera com o str.
       vr_cdcritic := 0;
       vr_dscritic := 'Cooperativa nao esta operando no SPB.';
       RAISE vr_exc_erro;
     END IF;
-    
+
     -- verificar caixa
     IF nvl(pr_cdageope,0) = 0   OR
        nvl(pr_nrcxaope,0) = 0   OR
        pr_cdoperad IS NULL  THEN
       vr_cdcritic := 0;
       vr_dscritic := 'ERRO!!! PA ZERADO. FECHE O CAIXA E AVISE O CPD.';
-      RAISE vr_exc_erro;   
-    END IF;   
-    
+      RAISE vr_exc_erro;
+    END IF;
+
     -- Validar cooperado
     OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta);
@@ -1735,11 +1760,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       vr_cdcritic := 9;
       vr_dscritic := NULL;
       RAISE vr_exc_erro;
-      
+
     ELSE
       CLOSE cr_crapass;
     END IF;
-    
+
     vr_nrdolote := 23000 + pr_nrcxaope;
     vr_tpdolote := 25;
     vr_cdhistor := 523;
@@ -1747,7 +1772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     vr_nrlotlcm := 11000 + pr_nrcxaope;
     vr_tplotlcm := 1;
     rw_craplot_tvl := NULL;
-    
+
     -- Procedimento para inserir o lote e não deixar tabela lockada
 	--Bacenjud - SM 1
     IF vr_reenvio = 0 THEN
@@ -1763,26 +1788,87 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                     pr_cdopecxa => pr_cdoperad,
                     pr_dscritic => vr_dscritic,
                     pr_craplot  => rw_craplot_tvl);
-    
+
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
-    END IF;  
+    END IF;
     END IF;
 	--Fim Bacenjud - SM 1
-    
-    /* Busca a proxima sequencia do campo CRAPMAT.NRSEQTED */
-    vr_nrseqted := fn_sequence( 'CRAPMAT'
-                               ,'NRSEQTED'
-                               ,rw_crapcop.cdcooper
-                               ,'N');
-    -- retornar numero do documento
-    pr_nrdocmto := vr_nrseqted;
-    
+
+    -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+    -- Passou a utiliza a SSPB0001.fn_nrdocmto_nrctrlif
+    -- /* Busca a proxima sequencia do campo CRAPMAT.NRSEQTED */
+    -- vr_nrseqted := fn_sequence( 'CRAPMAT'
+    --                            ,'NRSEQTED'
+    --                            ,rw_crapcop.cdcooper
+    --                            ,'N');
+    -- -- retornar numero do documento
+    pr_nrdocmto := SSPB0001.fn_nrdocmto_nrctrlif;
+    --
+    -- INC0030535 - Validar se ja existe número de documento (Jose Dill - Mouts)
+    vr_aux_exisdoc := 0;
+    Select count(*) into vr_aux_exisdoc 
+    From Craptvl tvl
+    Where tvl.cdcooper = rw_crapcop.cdcooper
+    and   tvl.tpdoctrf = 3
+    and   tvl.nrdocmto = pr_nrdocmto;
+    --
+    IF  vr_aux_exisdoc > 0 THEN
+        For vr_cont IN 1..5 Loop
+          Select Max(tvl.nrdocmto) + 1 into pr_nrdocmto 
+          From Craptvl tvl
+          Where tvl.cdcooper = rw_crapcop.cdcooper
+          and   tvl.tpdoctrf = 3;
+          -- Validar se existe
+          vr_aux_exisdoc := 0;
+          Select count(*) into vr_aux_exisdoc 
+          From Craptvl tvl
+          Where tvl.cdcooper = rw_crapcop.cdcooper
+          and   tvl.tpdoctrf = 3
+          and   tvl.nrdocmto = pr_nrdocmto;
+          --
+          IF vr_aux_exisdoc = 0 THEN
+             Exit;
+          END IF;   
+          --
+        End Loop;
+    END IF;  
+
+    IF vr_aux_exisdoc > 0  THEN
+      IF pr_idagenda <> 2 THEN --TED Online
+        vr_cdcritic := 0;
+        vr_dscritic := 'Não foi possível efetuar a operação. Tente novamente.'; 
+        RAISE vr_exc_erro;
+      ELSE
+        vr_cdcritic := 0;
+        vr_dscritic := 'Não foi possível efetuar a operação.'||'CRAPTVL: Coop - '
+                                                             ||rw_crapcop.cdcooper||
+                                                             ' Tipo: 3'||
+                                                             ' Documento: '||pr_nrdocmto; 
+        RAISE vr_exc_erro;        
+      END IF;
+    END IF;    
+    -- Fim INC0030535
+
+    -- Se for uma transação de portabilidade de salário (P485 - Renato Darosci - Supero)
+    IF NVL(pr_idportab,0) = 1 THEN
+      -- Indica como 2 por configurar uma TEC
+      vr_idtected := 2;
+    ELSE
+      -- Indicar como 1 por configurar como uma TED
+      vr_idtected := 1;
+    END IF;
+      
     /* Se alterar numero de controle, ajustar procedure atualiza-doc-ted */
-    vr_nrctrlif := '1'||to_char(rw_crapdat.dtmvtocd,'RRMMDD')
+    vr_nrctrlif := vr_idtected||to_char(rw_crapdat.dtmvtocd,'RRMMDD')
                       ||to_char(rw_crapcop.cdagectl,'fm0000')
+                       -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+                       -- Buscar o NRDOCMTO para evitar duplicidadr de NumCtrlIF
+                       -- || to_char(SYSDATE,'sssss')
+                       --   /* para evitar duplicidade devido paralelismo */
                       ||to_char(pr_nrdocmto,'fm00000000');
-    
+    -- Fim Projeto 475
+
     IF pr_flmobile = 1 THEN /* Canal Mobile */
       vr_nrctrlif := vr_nrctrlif ||'M';
     ELSIF pr_idorigem = 1 THEN /* Origem BacenJud - Ayllos */
@@ -1790,7 +1876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     ELSE /* Canal InternetBank */
       vr_nrctrlif := vr_nrctrlif ||'I';
     END IF;
-                      
+
     -- Verificar tranferencia de valores (DOC C, DOC D E TEDS)
     OPEN cr_craptvl (pr_cdcooper => rw_crapcop.cdcooper,
                      pr_nrctrlif => vr_nrctrlif);
@@ -1800,10 +1886,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       CLOSE cr_craptvl;
       vr_cdcritic := 0;
       vr_dscritic := 'ERRO!!! NR. DOCUMENTO DUPLICADO, TENTE NOVAMENTE.';
-      RAISE vr_exc_erro;    
-    END IF; 
+      RAISE vr_exc_erro;
+    END IF;
 
     IF pr_idagenda = 1 THEN
+
+	  /* Garantir o horario de funcionamento do SPB */
+	  IF sspb0003.fn_valida_horario_ted(pr_cdcooper => pr_cdcooper) then
+         vr_cdcritic := 0;
+         vr_dscritic := 'Operação deve ser realizada dentro do horário estabelecido para transferências na data atual.';
+         RAISE vr_exc_erro; 
+      END IF; 
 
       /* Controle para envio de 2 TEDs iguais pelo ambiente Mobile */
       OPEN cr_craptvl_max( pr_cdcooper => rw_crapcop.cdcooper,
@@ -1816,9 +1909,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                            pr_nrctafav => pr_nrctafav,
                            pr_vldocmto => pr_vldocmto);
       FETCH cr_craptvl_max INTO rw_craptvl_max;
-      
+
       -- se ja existe um lançamento com os mesmos dados em menos de 10 minutos (600 seg) apresentar alerta
-      IF cr_craptvl_max%FOUND AND 
+      IF cr_craptvl_max%FOUND AND
         (to_char(SYSDATE,'SSSSS') - nvl(rw_craptvl_max.hrtransa,0)) <= 600 THEN
         vr_cdcritic := 0;
         vr_dscritic := 'Ja existe TED de mesmo valor e favorecido. ' ||
@@ -1826,13 +1919,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         RAISE vr_exc_erro;
       END IF;
       CLOSE cr_craptvl_max;
-      
     END IF;
-    
+
 	--Bacenjud - SM 1
     IF vr_reenvio = 0 THEN
     /* Grava uma autenticacao */
-    CXON0000.pc_grava_autenticacao_internet 
+    CXON0000.pc_grava_autenticacao_internet
                           (pr_cooper       => pr_cdcooper     --> Codigo Cooperativa
                           ,pr_nrdconta     => pr_nrdconta     --> Numero da Conta
                           ,pr_idseqttl     => pr_idseqttl     --> Sequencial do titular
@@ -1855,46 +1947,166 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_registro     => pr_nrrectvl     --> ROWID do registro debito
                           ,pr_cdcritic     => vr_cdcritic     --> Codigo do erro
                           ,pr_dscritic     => vr_dscritic);   --> Descricao do erro
-    
+
     --Se ocorreu erro
     IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-     
+    -- Everton - Mouts - Projeto 475
+    -- Fase 10 - controle mensagem SPB
+    sspb0003.pc_grava_trace_spb(pr_cdfase                 => 10
+                               ,pr_idorigem               => 'E'
+                               ,pr_nmmensagem             => 'MSG_TEMPORARIA'
+                               ,pr_nrcontrole             => vr_nrctrlif
+                               ,pr_nrcontrole_str_pag     => NULL
+                               ,pr_nrcontrole_dev_or      => NULL
+                               ,pr_dhmensagem             => sysdate
+                               ,pr_insituacao             => 'OK'
+                               ,pr_dsxml_mensagem         => null
+                               ,pr_dsxml_completo         => null
+                               ,pr_nrseq_mensagem_xml     => null
+                               ,pr_nrdconta               => pr_nrdconta
+                               ,pr_cdcooper               => pr_cdcooper
+                               ,pr_cdproduto              => 30 -- TED
+                               ,pr_nrseq_mensagem         => vr_nrseq_mensagem10
+                               ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                               ,pr_dscritic               => vr_dscritic
+                               ,pr_des_erro               => vr_des_erro);
+    -- Se ocorreu erro
+    IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levantar Excecao
+      vr_cdcritic := 0;
+      RAISE vr_exc_erro;
+    END IF;
     --> Para as origens InternetBank e Mobile,
     --> Deve ser gerado o registro de analise de fraude antes de
     --> realizar a operação
-    IF pr_idorigem IN (3) AND 
+    IF pr_idorigem IN (3) AND
        pr_idagenda <> 2   THEN --> Nao gerar analise para agendamentos
-    
+
       IF pr_flmobile = 1 THEN
 			  vr_idorigem := 10; --> MOBILE
       ELSE
         vr_idorigem := pr_idorigem;
       END IF;
-      
+
       vr_idanalise_fraude := NULL;
-      --> Rotina para Inclusao do registro de analise de fraude  
-      AFRA0001.pc_Criar_Analise_Antifraude( pr_cdcooper    => pr_cdcooper   
-                                          ,pr_cdagenci    => pr_cdageope   
-                                          ,pr_nrdconta    => pr_nrdconta   
-                                          ,pr_cdcanal     => vr_idorigem    
+      --> Rotina para Inclusao do registro de analise de fraude
+      AFRA0001.pc_Criar_Analise_Antifraude( pr_cdcooper    => pr_cdcooper
+                                          ,pr_cdagenci    => pr_cdageope
+                                          ,pr_nrdconta    => pr_nrdconta
+                                          ,pr_cdcanal     => vr_idorigem
                                           ,pr_iptransacao => pr_iptransa
-                                          ,pr_dtmvtolt    => rw_crapdat.dtmvtocd   
-                                          ,pr_cdproduto   => 30 --> TED 
-										                      ,pr_cdoperacao  => 12 --> TED Eletronica 
+                                          ,pr_dtmvtolt    => rw_crapdat.dtmvtocd
+                                          ,pr_cdproduto   => 30 --> TED
+										                      ,pr_cdoperacao  => 12 --> TED Eletronica
                                           ,pr_dstransacao => pr_dstransa
                                           ,pr_tptransacao => 1 --> Online
                                           ,pr_iddispositivo => pr_iddispos
                                           ,pr_idanalise_fraude => vr_idanalise_fraude
                                           ,pr_dscritic   => vr_dscritic);
       vr_dscritic := NULL;
+    ELSE
+      -- Everton - Mouts - Projeto 475
+      -- Se não entrou na rotina para Inclusao do registro de analise de fraude
+      -- mesmo assim gerar mensagem para controle
+      -- Fase 20 - controle mensagem SPB
+      IF pr_idagenda = 2 THEN
+        vr_trace_nmmensagem := 'Agend.Aprov.OFSAA';
+      ELSE
+        vr_trace_nmmensagem := 'Não utiliza OFSAA';
+      END IF;
+      --
+      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                 ,pr_nmmensagem             => vr_trace_nmmensagem
+                                 ,pr_nrcontrole             => vr_nrctrlif
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'OK'
+                                 ,pr_dsxml_mensagem         => null
+                                 ,pr_dsxml_completo         => null
+                                 ,pr_nrseq_mensagem_xml     => null
+                                 ,pr_nrdconta               => pr_nrdconta
+                                 ,pr_cdcooper               => pr_cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+      -- Se ocorreu erro
+      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levantar Excecao
+        vr_cdcritic := 0;
+        RAISE vr_exc_erro;
     END IF;
+    --
+    END IF;
+    ELSE
+      -- Everton - Mouts - Projeto 475
+      -- Fase 10 - controle mensagem SPB
+      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 10
+                                 ,pr_idorigem               => 'E'
+                                 ,pr_nmmensagem             => 'MSG_TEMPORARIA'
+                                 ,pr_nrcontrole             => vr_nrctrlif
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'OK'
+                                 ,pr_dsxml_mensagem         => null
+                                 ,pr_dsxml_completo         => null
+                                 ,pr_nrseq_mensagem_xml     => null
+                                 ,pr_nrdconta               => pr_nrdconta
+                                 ,pr_cdcooper               => pr_cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem10
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+      -- Se ocorreu erro
+      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levantar Excecao
+        vr_cdcritic := 0;
+        RAISE vr_exc_erro;
+      END IF;
+      -- Fase 20 - controle mensagem SPB
+      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                 ,pr_nmmensagem             => 'Não utiliza OFSAA'
+                                 ,pr_nrcontrole             => vr_nrctrlif
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'OK'
+                                 ,pr_dsxml_mensagem         => null
+                                 ,pr_dsxml_completo         => null
+                                 ,pr_nrseq_mensagem_xml     => null
+                                 ,pr_nrdconta               => pr_nrdconta
+                                 ,pr_cdcooper               => pr_cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+      -- Se ocorreu erro
+      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levantar Excecao
+        vr_cdcritic := 0;
+        RAISE vr_exc_erro;
+      END IF;
+    --
     END IF;
 	--Fim Bacenjud - SM 1
-    
+
     BEGIN
+      vr_nrseqdig := fn_sequence('CRAPLOT'
+						                    ,'NRSEQDIG'
+						                    ,''||rw_crapcop.cdcooper||';'
+							                     ||to_char(rw_craplot_tvl.dtmvtolt,'DD/MM/RRRR')||';'
+							                     ||rw_craplot_tvl.cdagenci||';'
+							                     ||rw_craplot_tvl.cdbccxlt||';'
+							                     ||rw_craplot_tvl.nrdolote);
+
       INSERT INTO craptvl
                 (craptvl.cdcooper
                 ,craptvl.tpdoctrf
@@ -1928,14 +2140,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 ,craptvl.flgtitul
                 ,craptvl.flgenvio
                 ,craptvl.nrispbif
-                ,craptvl.nrautdoc                
+                ,craptvl.nrautdoc
                 ,craptvl.flgpesdb
                 ,craptvl.flgpescr
                 ,craptvl.idanafrd
+                ,craptvl.idmsgenv
+                ,craptvl.nrridlfp -- Id lançamento folha
                )
          VALUES (rw_crapcop.cdcooper     --> craptvl.cdcooper
                 ,3                       --> craptvl.tpdoctrf
-                ,vr_nrctrlif             --> craptvl.idopetrf     
+                ,vr_nrctrlif             --> craptvl.idopetrf
                 ,pr_nrdconta             --> craptvl.nrdconta
                 ,pr_idseqttl             --> craptvl.idseqttl
                 ,pr_nrcpfcgc             --> craptvl.cpfcgemi
@@ -1953,7 +2167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 ,pr_cdageope             --> craptvl.cdagenci
                 ,11                      --> craptvl.cdbccxlt
                 ,pr_nrdocmto             --> craptvl.nrdocmto
-                ,rw_craplot_tvl.nrseqdig     --> craptvl.nrseqdig 
+                ,vr_nrseqdig             --> craptvl.nrseqdig 
                 ,pr_nrctafav             --> craptvl.nrcctrcb
                 ,pr_cdfinali             --> craptvl.cdfinrcb
                 ,pr_tpctafav             --> craptvl.tpdctacr
@@ -1975,14 +2189,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                     ELSE 0        /*FALSE*/
                   END)
                 ,vr_idanalise_fraude     --> craptvl.idanafrd
+                ,vr_nrseq_mensagem10 --> craptvl.idmsgenv
+                ,pr_nrridlfp
                 )
         RETURNING craptvl.tpdctadb, craptvl.flgtitul
              INTO rw_craptvl.tpdctadb, rw_craptvl.flgtitul;
-    EXCEPTION 
+    EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Não foi possivel inserir transferencia: '||SQLERRM;
         RAISE vr_exc_erro;
     END;
+
+    -- Indicar que a transação não é uma transferencia de salário(TEC)   (Renato - Supero - P485)
+    vr_flgctsal := FALSE;
     
 	--Bacenjud - SM 1
     IF vr_reenvio = 0 THEN
@@ -2000,14 +2219,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                     pr_cdopecxa => pr_cdoperad,
                     pr_craplot  => rw_craplot_lcm,
                     pr_dscritic => vr_dscritic);
-    
+
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
-    END IF;  
-    
+    END IF;
+
     -- inicializar valor
     vr_vllanto_aux := 1;
-    
+
+    -- Se não for transferencia de portabilidade de salário (Renato - Supero - P485)
+    IF NVL(pr_idportab,0) = 0 THEN
+      
     -- Rotina para buscar valor tarifa TED/DOC
     CXON0020.pc_busca_tarifa_ted (pr_cdcooper => rw_crapcop.cdcooper --> Codigo Cooperativa
                                  ,pr_cdagenci => pr_cdageope         --> Codigo Agencia
@@ -2024,7 +2246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-    
+
     -- Se for bloqueio judicial (bacenjud), utiliza o historico 1406-TR.BLOQ.JUD
     IF pr_tpctafav = 9 THEN
       vr_cdhisted := 1406;
@@ -2032,9 +2254,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     -- definir historico de ted
     vr_cdhisted := 555;
     END IF;
+
+    ELSE
+      -- Portabilidade não deve cobrar tarifa
+      vr_vllantar := 0;    
     
+      -- Histórico da TED/TEC de transferencia de salário de portabilidade
+      vr_cdhisted := 2944; -- NOSSA REMESSA TEC COMPE CECRED - CONTA SALARIO
+      
+      -- Indicar que está realizando uma TEC de Salário
+      vr_flgctsal := TRUE;
+    END IF;
+
     /* Grava uma autenticacao */
-    CXON0000.pc_grava_autenticacao_internet 
+    CXON0000.pc_grava_autenticacao_internet
                           (pr_cooper       => pr_cdcooper     --> Codigo Cooperativa
                           ,pr_nrdconta     => pr_nrdconta     --> Numero da Conta
                           ,pr_idseqttl     => pr_idseqttl     --> Sequencial do titular
@@ -2062,7 +2295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-    
+
     -- Buscar dados historico
     OPEN cr_craphis (pr_cdcooper => rw_crapcop.cdcooper,
                      pr_cdhistor => vr_cdhisted);
@@ -2076,16 +2309,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     END IF;
     CLOSE cr_craphis;
-    
+
     -- Verifico se ja existe registro com mesmo nrdocmto, se existir
-    -- buscar ultimo sequencial de TED na crapmat                   
+    -- buscar ultimo sequencial de TED na crapmat
     OPEN cr_craplcm ( pr_cdcooper => rw_crapcop.cdcooper,
                       pr_nrdconta => pr_nrdconta,
                       pr_dtmvtolt => rw_crapdat.dtmvtocd,
                       pr_cdagenci => pr_cdageope,
                       pr_nrdolote => vr_nrlotlcm,
                       pr_nrdocmto => pr_nrdocmto);
-          
+
     FETCH cr_craplcm INTO rw_craplcm;
     -- se localizar
     IF cr_craplcm%FOUND THEN
@@ -2096,12 +2329,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                  ,'N');
       -- retornar numero do documento
       pr_nrdocmto := vr_nrseqted;
-    
-    END IF; 
+
+    END IF;
     CLOSE cr_craplcm;
-    
+
     vr_hrtransa := gene0002.fn_busca_time;
     BEGIN
+      vr_nrseqdig := fn_sequence('CRAPLOT'
+						                    ,'NRSEQDIG'
+						                    ,''||rw_crapcop.cdcooper||';'
+							                     ||to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR')||';'
+							                     ||rw_craplot_lcm.cdagenci||';'
+							                     ||rw_craplot_lcm.cdbccxlt||';'
+							                     ||rw_craplot_lcm.nrdolote);
+    
       INSERT INTO craplcm
                   (craplcm.cdcooper
                   ,craplcm.dtmvtolt
@@ -2130,7 +2371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                     ,to_char(pr_nrdconta,'fm00000000') --> craplcm.nrdctitg
                   ,pr_nrdocmto                       --> craplcm.nrdocmto
                   ,rw_craphis.cdhistor               --> craplcm.cdhistor
-                    ,rw_craplot_lcm.nrseqdig             --> craplcm.nrseqdig
+                  ,vr_nrseqdig             --> craplcm.nrseqdig
                   ,pr_vldocmto                       --> craplcm.vllanmto
                   ,0                                 --> craplcm.vldoipmf
                   ,vr_ultsqlcm                       --> craplcm.nrautdoc
@@ -2144,7 +2385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         vr_dscritic := 'Não foi possivel gerar lcm:'||SQLERRM;
         RAISE vr_exc_erro;
     END;
-    
+
     IF vr_vllantar <> 0 THEN
 		  /* Verificar isenção ou não de tarifa */
 		  TARI0001.pc_verifica_tarifa_operacao(pr_cdcooper => rw_crapcop.cdcooper -- Cooperativa
@@ -2167,7 +2408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         --Levantar Exececao
         RAISE vr_exc_erro;
       END IF;
-		
+
       -- Buscar dados historico
       OPEN cr_craphis (pr_cdcooper => rw_crapcop.cdcooper,
                        pr_cdhistor => vr_cdhistar);
@@ -2180,12 +2421,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
-      CLOSE cr_craphis; 
-            
+      CLOSE cr_craphis;
+
       --Limpar tabela saldo e erro
       vr_tab_saldo.DELETE;
       vr_tab_erro.DELETE;
-      
+
       /** Verifica se possui saldo para fazer a operacao **/
 
       EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => rw_crapcop.cdcooper
@@ -2197,11 +2438,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                   ,pr_vllimcre   => rw_crapass.vllimcre
                                   ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan)
                                   ,pr_dtrefere   => rw_crapdat.dtmvtolt
-                                  ,pr_flgcrass   => FALSE                                                        
+                                  ,pr_flgcrass   => FALSE
                                   ,pr_des_reto   => vr_dscritic
                                   ,pr_tab_sald   => vr_tab_saldo
                                   ,pr_tab_erro   => vr_tab_erro);
-                                  
+
       --Se ocorreu erro
       IF vr_dscritic = 'NOK' THEN
         -- Tenta buscar o erro no vetor de erro
@@ -2219,17 +2460,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
       --Verificar o saldo retornado
       IF vr_tab_saldo.Count = 0 THEN
-        
+
         --Montar mensagem erro
         vr_cdcritic:= 0;
         vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';
-        
+
         --Levantar Excecao
         RAISE vr_exc_erro;
       ELSE
         --Total disponivel recebe valor disponivel + limite credito
         vr_vlsldisp:= nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) + nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
-        
+
         --Se o saldo nao for suficiente
         IF vr_vlsldisp >= vr_vllantar THEN
           vr_debtarifa := TRUE;
@@ -2242,7 +2483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       ELSIF vr_fliseope <> 1 THEN
 
         IF pr_idagenda = 1 OR
-           vr_debtarifa    THEN 
+           vr_debtarifa    THEN
           --Realizar lancamento tarifa
           TARI0001.pc_lan_tarifa_online (pr_cdcooper => rw_crapcop.cdcooper  --Codigo Cooperativa
                                         ,pr_cdagenci => 1                    --Codigo Agencia destino
@@ -2268,7 +2509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                         ,pr_cdagetfn => rw_crapass.cdagenci  --Codigo Agencia Terminal
                                         ,pr_nrterfin => 0                    --Numero Terminal Financeiro
                                         ,pr_nrsequni => 0                    --Numero Sequencial Unico
-                                        ,pr_nrautdoc => rw_craplot_lcm.nrseqdig + 1 --Numero Autenticacao Documento
+                                        ,pr_nrautdoc => vr_nrseqdig + 1      --Numero Autenticacao Documento
                                         ,pr_dsidenti => NULL                 --Descricao Identificacao
                                         ,pr_cdfvlcop => vr_cdfvlcop          --Codigo Faixa Valor Cooperativa
                                         ,pr_inproces => rw_crapdat.inproces  --Indicador Processo
@@ -2290,7 +2531,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
             RAISE vr_exc_erro;
           END IF;
         ELSE
-          
+
           --Inicializar variavel retorno erro
           TARI0001.pc_cria_lan_auto_tarifa (pr_cdcooper => pr_cdcooper   --Codigo Cooperativa
                                            ,pr_nrdconta => pr_nrdconta   --Numero da Conta
@@ -2331,41 +2572,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
             RAISE vr_exc_erro;
           END IF;
         END IF;
-        
+
         --> Caso possua analise de fraude  e gerou tarifa
         --> atualizar a analise com o numero da tarifa, para
         --> caso necessario conseguir estorna-la
-        IF nvl(vr_idanalise_fraude,0) > 0 AND 
+        IF nvl(vr_idanalise_fraude,0) > 0 AND
            (vr_rowid_craplat IS NOT NULL OR vr_cdlantar IS NOT NULL) THEN
-           
+
           IF vr_cdlantar IS NULL THEN
             --> Buscar dados da tarifa
-            OPEN cr_craplat (pr_rowid => vr_rowid_craplat);          
-            FETCH cr_craplat INTO rw_craplat;            
+            OPEN cr_craplat (pr_rowid => vr_rowid_craplat);
+            FETCH cr_craplat INTO rw_craplat;
             CLOSE cr_craplat;
             vr_cdlantar := rw_craplat.cdlantar;
       END IF;
-            
+
           IF vr_cdlantar IS NOT NULL THEN
             BEGIN
-              UPDATE tbgen_analise_fraude 
-                 SET tbgen_analise_fraude.cdlantar = vr_cdlantar 
+              UPDATE tbgen_analise_fraude
+                 SET tbgen_analise_fraude.cdlantar = vr_cdlantar
                WHERE tbgen_analise_fraude.idanalise_fraude = vr_idanalise_fraude;
-            EXCEPTION 
+            EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao atualizar analise de fraude: '||SQLERRM;
                 RAISE vr_exc_erro;
-            END;            
+            END;
     END IF;
-    
-        END IF;  -- Fim IF analise 
+
+        END IF;  -- Fim IF analise
       END IF;
     END IF;
     END IF;
 	--Fim Bacenjud - SM 1
-    
+
 	  --Bacenjud - SM 1
-    --Como nao passa pelas rotinas de autenticacao e insercao de transferencia de valores, 
+    --Como nao passa pelas rotinas de autenticacao e insercao de transferencia de valores,
     --setamos abaixo com os mesmos valores que seriam setados acima
     IF vr_reenvio = 1 THEN
       vr_hrtransa         := gene0002.fn_busca_time;
@@ -2373,24 +2614,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       rw_craptvl.tpdctadb := 1;
     END IF;
     --Fim Bacenjud - SM 1
-	
-    --Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE)    
-    IF pr_nrcpfcgc = pr_nrcpffav THEN    
+
+    --Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE)
+    IF pr_nrcpfcgc = pr_nrcpffav THEN
       BEGIN
-        AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_crapcop.cdcooper
-                                      ,pr_nrdconta   => pr_nrdconta
-                                      ,pr_idseqttl   => pr_idseqttl
-                                      ,pr_vlrtotal   => pr_vldocmto
-                                      ,pr_flgagend   => CASE pr_idagenda WHEN 1 THEN 0 ELSE 1 END
-                                      ,pr_idorigem   => pr_idorigem
-                                      ,pr_cdoperacao => 12 --TED
-                                      ,pr_idanalis   => vr_idanalise_fraude
-                                      ,pr_cdcritic   => vr_cdcritic
-                                      ,pr_dscritic   => vr_dscritic);  
-                                    
-        IF nvl(vr_cdcritic,0) > 0 OR                                    
+      AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_crapcop.cdcooper
+                                    ,pr_nrdconta   => pr_nrdconta
+                                    ,pr_idseqttl   => pr_idseqttl
+                                    ,pr_vlrtotal   => pr_vldocmto
+                                    ,pr_flgagend   => CASE pr_idagenda WHEN 1 THEN 0 ELSE 1 END
+                                    ,pr_idorigem   => pr_idorigem
+                                    ,pr_cdoperacao => 12 --TED
+                                    ,pr_idanalis   => vr_idanalise_fraude
+                                    ,pr_cdcritic   => vr_cdcritic
+                                    ,pr_dscritic   => vr_dscritic);
+
+        IF nvl(vr_cdcritic,0) > 0 OR
            TRIM(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exc_erro;   
+          RAISE vr_exc_erro;
         END IF;
 
       EXCEPTION
@@ -2399,12 +2640,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
             btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                        pr_ind_tipo_log => 2, --> erro tratado
                                        pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                          ' - CXON0020.pc_enviar_ted --> ' || 
+                                                          ' - CXON0020.pc_enviar_ted --> ' ||
                                                           vr_cdcritic||' -> '||vr_dscritic,
                                        pr_nmarqlog     => vr_nmarqlog);
 
-            vr_cdcritic := NULL;                         
-            vr_dscritic := NULL;    
+            vr_cdcritic := NULL;
+            vr_dscritic := NULL;
         WHEN OTHERS THEN
               vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
               btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
@@ -2412,105 +2653,85 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                          pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                           ' - CXON0020.pc_enviar_ted --> ' || sqlerrm,
                                          pr_nmarqlog     => vr_nmarqlog);
-                                                
-              vr_cdcritic := NULL;                         
-              vr_dscritic := NULL;                         
+
+              vr_cdcritic := NULL;
+              vr_dscritic := NULL;
       END;
-                                                                       
-                                    
+
+
     END IF;
 
     --> Caso possua processo de analise de fraude, não deve enviar a TED para a cabine
     --> Processo ocorrerá apos o retorno da analise
-    IF nvl(vr_idanalise_fraude,0) = 0 THEN 
+    IF nvl(vr_idanalise_fraude,0) = 0 THEN
+      -- Marcelo Telles Coelho - Projeto 475 - Sprint B
+      -- Se for efetivação de agendamento não deve verificar o horário de abertura da cabine
+      IF pr_idagenda = 2 THEN
+        vr_flvldhor := 0;
+      ELSE
+        vr_flvldhor := 1;
+      END IF;
+      -- Fim Projeto 475
     -- Procedimento para envio do TED para o SPB
-    SSPB0001.pc_proc_envia_tec_ted 
+    SSPB0001.pc_proc_envia_tec_ted
                           (pr_cdcooper =>  rw_crapcop.cdcooper  --> Cooperativa
-                          ,pr_cdagenci =>  pr_cdageope          --> Cod. Agencia  
-                          ,pr_nrdcaixa =>  pr_nrcxaope          --> Numero  Caixa  
-                          ,pr_cdoperad =>  pr_cdoperad          --> Operador     
+                          ,pr_cdagenci =>  pr_cdageope          --> Cod. Agencia
+                          ,pr_nrdcaixa =>  pr_nrcxaope          --> Numero  Caixa
+                          ,pr_cdoperad =>  pr_cdoperad          --> Operador
                           ,pr_titulari =>  (rw_craptvl.flgtitul = 1) --> Mesmo Titular.
-                          ,pr_vldocmto =>  pr_vldocmto          --> Vlr. DOCMTO    
-                          ,pr_nrctrlif =>  vr_nrctrlif          --> NumCtrlIF   
+                          ,pr_vldocmto =>  pr_vldocmto          --> Vlr. DOCMTO
+                          ,pr_nrctrlif =>  vr_nrctrlif          --> NumCtrlIF
                           ,pr_nrdconta =>  pr_nrdconta          --> Nro Conta
-                          ,pr_cdbccxlt =>  pr_cdbanfav          --> Codigo Banco 
-                          ,pr_cdagenbc =>  pr_cdagefav          --> Cod Agencia 
-                          ,pr_nrcctrcb =>  pr_nrctafav          --> Nr.Ct.destino   
-                          ,pr_cdfinrcb =>  pr_cdfinali          --> Finalidade     
-                          ,pr_tpdctadb =>  rw_craptvl.tpdctadb  --> Tp. conta deb 
-                          ,pr_tpdctacr =>  pr_tpctafav          --> Tp conta cred  
-                          ,pr_nmpesemi =>  pr_nmprimtl          --> Nome Do titular 
-                          ,pr_nmpesde1 =>  NULL                 --> Nome De 2TTT 
-                          ,pr_cpfcgemi =>  pr_nrcpfcgc          --> CPF/CNPJ Do titular 
+                          ,pr_cdbccxlt =>  pr_cdbanfav          --> Codigo Banco
+                          ,pr_cdagenbc =>  pr_cdagefav          --> Cod Agencia
+                          ,pr_nrcctrcb =>  pr_nrctafav          --> Nr.Ct.destino
+                          ,pr_cdfinrcb =>  pr_cdfinali          --> Finalidade
+                          ,pr_tpdctadb =>  rw_craptvl.tpdctadb  --> Tp. conta deb
+                          ,pr_tpdctacr =>  pr_tpctafav          --> Tp conta cred
+                          ,pr_nmpesemi =>  pr_nmprimtl          --> Nome Do titular
+                          ,pr_nmpesde1 =>  NULL                 --> Nome De 2TTT
+                          ,pr_cpfcgemi =>  pr_nrcpfcgc          --> CPF/CNPJ Do titular
                           ,pr_cpfcgdel =>  0                    --> CPF sec TTL
-                          ,pr_nmpesrcb =>  pr_nmfavore          --> Nome Para 
+                          ,pr_nmpesrcb =>  pr_nmfavore          --> Nome Para
                           ,pr_nmstlrcb =>  NULL                 --> Nome Para 2TTL
                           ,pr_cpfcgrcb =>  pr_nrcpffav          --> CPF/CNPJ Para
                           ,pr_cpstlrcb =>  0                    --> CPF Para 2TTL
-                          ,pr_tppesemi =>  pr_inpessoa          --> Tp. pessoa De  
-                          ,pr_tppesrec =>  pr_inpesfav          --> Tp. pessoa Para 
-                          ,pr_flgctsal =>  FALSE                --> CC Sal
+                          ,pr_tppesemi =>  pr_inpessoa          --> Tp. pessoa De
+                          ,pr_tppesrec =>  pr_inpesfav          --> Tp. pessoa Para
+                          ,pr_flgctsal =>  vr_flgctsal          --> CC Sal 
                           ,pr_cdidtran =>  pr_dstransf          --> tipo de transferencia
-                          ,pr_cdorigem =>  pr_idorigem          --> Cod. Origem    
+                          ,pr_cdorigem =>  pr_idorigem          --> Cod. Origem
                           ,pr_dtagendt =>  NULL                 --> data egendamento
                           ,pr_nrseqarq =>  0                    --> nr. seq arq.
                           ,pr_cdconven =>  0                    --> Cod. Convenio
-                          ,pr_dshistor =>  pr_dshistor          --> Dsc do Hist.  
-                          ,pr_hrtransa =>  vr_hrtransa          --> Hora transacao 
+                          ,pr_dshistor =>  pr_dshistor          --> Dsc do Hist.
+                          ,pr_hrtransa =>  vr_hrtransa          --> Hora transacao
                           ,pr_cdispbif =>  pr_cdispbif          --> ISPB Banco
+                          ,pr_flvldhor =>  vr_flvldhor          --> --> Flag para verificar se deve validar o horario permitido para TED(1-valida,0-nao valida) -- Marcelo Telles Coelho - Projeto 475 - Sprint B
                           --------- SAIDA  --------
                           ,pr_cdcritic =>  vr_cdcritic          --> Codigo do erro
                           ,pr_dscritic =>  vr_dscritic );	    --> Descricao do erro
-                          
+
     IF nvl(vr_cdcritic,0) <> 0 OR
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
-    END IF; 
     END IF;
-  
+    END IF;
+
     --Bacenjud - SM 1
     IF vr_reenvio = 0 THEN
-    -- verificar se lote esta lockado
-    IF fn_verifica_lote_uso(pr_rowid => rw_craplot_tvl.rowid ) = 1 THEN
-      vr_dscritic:= 'Registro de lote '||rw_craplot_tvl.nrdolote||' em uso. Tente novamente.';  
-      -- apensa jogar critica em log
-      RAISE vr_exc_log;
-    END IF;
-    
-    -- Atualizar lote para craptvl
-    BEGIN
-      UPDATE craplot
-         SET craplot.qtcompln = nvl(craplot.qtcompln,0) + 1,
-             craplot.vlcompcr = nvl(craplot.vlcompcr,0) + pr_vldocmto,
-             craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1,
-             craplot.vlinfocr = nvl(craplot.vlinfocr,0) + pr_vldocmto
-       WHERE craplot.rowid = rw_craplot_tvl.rowid; 
-    EXCEPTION 
-      WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possivel atualizar lote '||rw_craplot_tvl.nrdolote||' :'||SQLERRM;
-        -- apensa jogar critica em log
-        RAISE vr_exc_log;
-    END;
-                                                 
-    -- verificar se lote esta lockado
-    IF fn_verifica_lote_uso(pr_rowid => rw_craplot_lcm.rowid ) = 1 THEN
-      vr_dscritic:= 'Registro de lote '||rw_craplot_lcm.nrdolote||' em uso. Tente novamente.';  
-      -- apensa jogar critica em log
-      RAISE vr_exc_log;
-    END IF;
-    
 		IF pr_flmobile = 1 THEN
 			vr_idorigem := 10; --> MOBILE
 		ELSE
 			IF pr_idorigem = 0 THEN
 				vr_idorigem := 7;
-			ELSE 
+			ELSE
 				vr_idorigem := pr_idorigem;
 			END IF;
     END IF;
-		
+
    /* GRAVA LOG OPERADOR CARTAO */
-    CADA0004.pc_gera_log_ope_cartao 
+    CADA0004.pc_gera_log_ope_cartao
                           (pr_cdcooper        => pr_cdcooper     --> Codigo Cooperativa
                           ,pr_nrdconta        => pr_nrdconta     --> Numero da Conta
                           ,pr_indoperacao     => 3               --> TED
@@ -2520,49 +2741,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_cdhistor        => vr_cdhisted
                           ,pr_nrcartao        => '0'
                           ,pr_vllanmto        => pr_vldocmto
-                          ,pr_cdoperad        => pr_cdoperad     
-                          ,pr_cdbccrcb        => pr_cdbanfav     
+                          ,pr_cdoperad        => pr_cdoperad
+                          ,pr_cdbccrcb        => pr_cdbanfav
                           ,pr_cdfinrcb        => pr_cdfinali
-													,pr_cdpatrab        => pr_cdageope     
-													,pr_nrseqems        => 0 
+													,pr_cdpatrab        => pr_cdageope
+													,pr_nrseqems        => 0
 													,pr_nmreceptor      => ''
 													,pr_nrcpf_receptor  => 0
                           ,pr_dscritic        => vr_dscritic);   --> Descricao do erro
-    
+
     --Se ocorreu erro
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-    
-    -- Atualizar lote para craplcm
-    BEGIN
-      UPDATE craplot
-         SET craplot.qtcompln = nvl(craplot.qtcompln,0) + 1,
-             craplot.vlcompdb = nvl(craplot.vlcompdb,0) + pr_vldocmto,
-             craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1,
-             craplot.vlinfodb = nvl(craplot.vlinfodb,0) + pr_vldocmto
-       WHERE craplot.rowid = rw_craplot_lcm.rowid; 
-    EXCEPTION 
-      WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possivel atualizar lote '||rw_craplot_lcm.nrdolote||' :'||SQLERRM;
-        -- apensa jogar critica em log
-        RAISE vr_exc_log;
-    END;   
     END IF;
 	--Fim Bacenjud - SM 1
-                          
+
     COMMIT;
     pr_des_erro := 'OK';
-    
+
   EXCEPTION
-    --> exception para apenas gerar log e não abortar envio de TED, pois 
-     -- script já foi executado 
+    --> exception para apenas gerar log e não abortar envio de TED, pois
+     -- script já foi executado
     WHEN vr_exc_log THEN
       /* Se aconteceu erro, gera o log e envia o erro por e-mail */
       vr_nmarqlog := 'proc_message.log';
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper, 
-                                 pr_ind_tipo_log => 2, 
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                 pr_ind_tipo_log => 2,
                                  pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR HH24:MI:SS')||' - '||
                                                     'CXON0020 - enviar-ted'               ||
                                                     ' - ERRO APOS ENVIAR TED  --> '              ||
@@ -2576,11 +2782,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                                     ', Critica: '       || vr_dscritic,
                                  pr_nmarqlog     => vr_nmarqlog);
 
-      -- buscar destinatarios do email                           
+      -- buscar destinatarios do email
       vr_email_dest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'ERRO_ENVIO_TED');
-      
+
       -- Gravar conteudo do email, controle com substr para não estourar campo texto
-      vr_conteudo := substr('ERRO APOS ENVIAR TED '|| 
+      vr_conteudo := substr('ERRO APOS ENVIAR TED '||
                      '<br>Cooperativa: '    || to_char(pr_cdcooper, '990')           ||
                       '<br>Conta: '         || gene0002.fn_mask_conta(pr_nrdconta)   ||
                       '<br>Documento: '     || to_char(pr_nrdocmto,'999G999G999G990')||
@@ -2589,7 +2795,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                       '<br>Agencia Fav.: '  || pr_cdagefav ||
                       '<br>Conta Fav.: '    || pr_nrctafav ||
                       '<br>Critica: '       || vr_dscritic,1,4000);
-                      
+
       vr_dscritic := NULL;
       --/* Envia e-mail para o Operador */
       gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
@@ -2602,48 +2808,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                 ,pr_flg_remete_coop => 'N' --> Se o envio ser¿ do e-mail da Cooperativa
                                 ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
                                 ,pr_des_erro        => vr_dscritic);
-      vr_dscritic := NULL;  
+      vr_dscritic := NULL;
       COMMIT;
       pr_des_erro := 'OK';
-      
+
     WHEN vr_exc_erro THEN
-      
+
       IF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL THEN
         vr_dscritic := 'Erro ao efetuar o envio da TED. Tente Novamente.';
       END IF;
-      
-      -- rollback do ted      
+
+      -- rollback do ted
       ROLLBACK;
-      
+
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
-      
-      pr_des_erro := 'NOK'; 
+
+      pr_des_erro := 'NOK';
     WHEN OTHERS THEN
 
-      -- rollback do ted      
+      -- rollback do ted
       ROLLBACK;
-      
+
       pr_cdcritic := 'Erro ao efetuar o envio da TED. Tente Novamente.:'||SQLERRM;
       pr_dscritic := vr_dscritic;
-      
-      pr_des_erro := 'NOK'; 
-      
+
+      pr_des_erro := 'NOK';
+
   END pc_enviar_ted;
 
 
   /******************************************************************************/
   /**             Procedure para executar o envio da TED                       **/
   /******************************************************************************/
-  PROCEDURE pc_executa_envio_ted 
-                          (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa    
+  PROCEDURE pc_executa_envio_ted
+                          (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
                           ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Agencia
-                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Caixa Operador    
+                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Caixa Operador
                           ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Operador Autorizacao
-                          ,pr_idorigem IN INTEGER                --> Origem                 
+                          ,pr_idorigem IN INTEGER                --> Origem
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
-                          ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta Remetente        
-                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular                
+                          ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta Remetente
+                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular
                           ,pr_nrcpfope IN crapopi.nrcpfope%TYPE  --> CPF operador juridico
                           ,pr_cddbanco IN crapcti.cddbanco%TYPE  --> Banco destino
                           ,pr_cdageban IN crapcti.cdageban%TYPE  --> Agencia destino
@@ -2662,30 +2868,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
+                          ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
+                          ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                           -- saida
-                          ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
+                          ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
                           ,pr_cdcritic OUT INTEGER               --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2) IS          --> Descricao do erro
 
   /*---------------------------------------------------------------------------------------------------------------
-  
+
       Programa : pc_executa_envio_ted             Antigo: b1wgen0015/executa-envio-ted
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
       Data     : Junho/2015.                   Ultima atualizacao: 13/06/2018
-  
+
       Dados referentes ao programa:
-  
+
       Frequencia: Sempre que for chamado
       Objetivo  : Procedure para executar o envio da TED
-    
+
       Alteração : 09/06/2015 - Conversão Progress -> Oracle (Odirlei-Amcom)
-    
+
                   08/10/2015 - Ajustado para gerar o numero da conta no protocolo com "."
                                conforme progress SD341797 (Odirlei-Amcom)
-                               
+
                   08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
 
 				  13/08/2017 - Ajuste para pegar o erro corretamente (Jonata - RKAM / P364).
@@ -2693,7 +2901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 				  13/06/2018 - Ajuste para limpar caracteres especiais (Andrey Formigari - MOUTS).
 
   ---------------------------------------------------------------------------------------------------------------*/
-    ---------------> CURSORES <-----------------        
+    ---------------> CURSORES <-----------------
     -- Buscar dados do associado
     CURSOR cr_crapass (pr_cdcooper  crapass.cdcooper%TYPE,
                        pr_nrdconta  crapass.nrdconta%TYPE) IS
@@ -2707,9 +2915,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
-    rw_crapass cr_crapass%ROWTYPE;  
-    rw_crabass cr_crapass%ROWTYPE;  
-    
+    rw_crapass cr_crapass%ROWTYPE;
+    rw_crabass cr_crapass%ROWTYPE;
+
     -- Verificar cadasto de senhas
     CURSOR cr_crapsnh (pr_cdcooper crapass.cdcooper%TYPE,
                        pr_nrdconta crapass.nrdconta%TYPE,
@@ -2729,7 +2937,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND crapsnh.tpdsenha = 1
          AND (crapsnh.nrcpfcgc = pr_nrcpfcgc OR pr_nrcpfcgc = 0);
     rw_crapsnh cr_crapsnh%ROWTYPE;
-    
+
     -- Verificar cadasto de senhas
     CURSOR cr_crapavt (pr_cdcooper crapavt.cdcooper%TYPE,
                        pr_nrdconta crapavt.nrdconta%TYPE,
@@ -2743,8 +2951,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND crapavt.nrdconta = pr_nrdconta
          AND crapavt.tpctrato = 6
          AND crapavt.nrcpfcgc = pr_nrcpfcgc;
-    rw_crapavt cr_crapavt%ROWTYPE; 
-    
+    rw_crapavt cr_crapavt%ROWTYPE;
+
     -- Buscar titulares
     CURSOR cr_crapttl ( pr_cdcooper crapass.cdcooper%TYPE,
                         pr_nrdconta crapass.nrdconta%TYPE,
@@ -2758,7 +2966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND ttl.nrdconta = pr_nrdconta
          AND ttl.idseqttl = pr_idseqttl ;
     rw_crapttl cr_crapttl%ROWTYPE;
-    
+
     -- buscar erro
     CURSOR cr_craperr(pr_cdcooper craperr.cdcooper%TYPE,
                       pr_cdagenci craperr.cdagenci%TYPE,
@@ -2767,8 +2975,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         FROM craperr
        WHERE craperr.cdcooper = pr_cdcooper
          AND craperr.cdagenci = pr_cdagenci
-         AND craperr.nrdcaixa = pr_nrdcaixa;   
-    
+         AND craperr.nrdcaixa = pr_nrdcaixa;
+
     -- localizar crapaut
     CURSOR cr_crapaut (pr_rowid ROWID) IS
       SELECT crapaut.dtmvtolt,
@@ -2778,21 +2986,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         FROM crapaut
        WHERE crapaut.rowid = pr_rowid
        FOR UPDATE NOWAIT;
-    rw_crapaut cr_crapaut%ROWTYPE;  
-    
+    rw_crapaut cr_crapaut%ROWTYPE;
+
     -- Validar banco
     CURSOR cr_crapban (pr_cdispbif crapban.nrispbif%TYPE) IS
       SELECT flgdispb,
              nmextbcc
-        FROM crapban 
+        FROM crapban
        WHERE crapban.nrispbif = pr_cdispbif;
-       
+
     CURSOR cr_crapban2 (pr_cdbccxlt crapban.cdbccxlt%TYPE) IS
       SELECT flgdispb,
              nmextbcc
-        FROM crapban 
+        FROM crapban
        WHERE crapban.cdbccxlt = pr_cdbccxlt;
-          
+
     rw_crapban cr_crapban%ROWTYPE;
 
     CURSOR cr_crappod(pr_cdcooper crappod.cdcooper%TYPE
@@ -2805,18 +3013,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND pod.nrdconta = pr_nrdconta
          AND pod.cddpoder = 10
          AND pod.flgconju = 1;
-          
+
     rw_crappod cr_crappod%ROWTYPE;
-    
+
     -- Buscar dados agencia favorecido
     CURSOR cr_crapagb (pr_cddbanco crapagb.cddbanco%TYPE,
                        pr_cdageban crapagb.cdageban%TYPE) IS
-      SELECT gene0007.fn_caract_acento(crapagb.nmageban,1) nmageban 
+      SELECT gene0007.fn_caract_acento(crapagb.nmageban,1) nmageban
         FROM crapagb
        WHERE crapagb.cddbanco = pr_cddbanco
          AND crapagb.cdageban = pr_cdageban;
     rw_crapagb cr_crapagb%ROWTYPE;
-    
+
     -- Buscar dados protocolo
     CURSOR cr_crappro (pr_cdcooper crappro.cdcooper%TYPE,
                        pr_dsprotoc crappro.dsprotoc%TYPE) IS
@@ -2838,7 +3046,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
        WHERE crappro.cdcooper = pr_cdcooper
          AND upper(crappro.dsprotoc) = upper(pr_dsprotoc);
     rw_crappro cr_crappro%ROWTYPE;
-         
+
     -- Buscar dados operador juridico
     CURSOR cr_crapopi (pr_cdcooper crapopi.cdcooper%TYPE,
                        pr_nrdconta crapopi.nrdconta%TYPE,
@@ -2848,27 +3056,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
        WHERE crapopi.cdcooper = pr_cdcooper
          AND crapopi.nrdconta = pr_nrdconta
          AND crapopi.nrcpfope = pr_nrcpfope;
-    rw_crapopi cr_crapopi%rowtype;     
-         
+    rw_crapopi cr_crapopi%rowtype;
+
     ------------> ESTRUTURAS DE REGISTRO <-----------
-    
+
     --Tabela de memória de limites de horario
     vr_tab_limite INET0001.typ_tab_limite;
     vr_index      PLS_INTEGER;
-                                       
+
     ---------------> VARIAVEIS <-----------------
-    --Variaveis de erro    
+    --Variaveis de erro
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
     vr_tab_erro GENE0001.typ_tab_erro;
     vr_des_erro VARCHAR2(50);
-    
+
     rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
-      
+
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
     vr_exc_log  EXCEPTION;
-    
+
     vr_nmextttl crapttl.nmextttl%TYPE;
     vr_nmprepos crapass.nmprimtl%TYPE;
     vr_nrcpfcgc crapttl.nrcpfcgc%TYPE;
@@ -2885,13 +3093,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     vr_nmarqlog VARCHAR2(100);
     vr_email_dest VARCHAR2(500);
     vr_conteudo   VARCHAR2(4000);
-    
+
   BEGIN
-    
+
     --> Buscar dados cooperativa
     OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
-      
+
     --> verificar se encontra registro
     IF cr_crapcop%NOTFOUND THEN
       CLOSE cr_crapcop;
@@ -2900,31 +3108,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     ELSE
       CLOSE cr_crapcop;
     END IF;
-  
+
     -- Buscar dados associados
     OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
                     pr_nrdconta => pr_nrdconta);
     FETCH cr_crapass INTO rw_crapass;
-      
+
     IF cr_crapass%NOTFOUND THEN
       CLOSE cr_crapass;
       vr_cdcritic := 9; -- 009 - Associado nao cadastrado.
       RAISE vr_exc_erro;
     END IF;
     CLOSE cr_crapass;
-      
+
+    -- Verifica senha, apenas se não for TEC de salário (Renato - Supero - P485)
+    IF NVL(pr_idportab,1) = 0 THEN
     -- Verificar cadastro de senha
     OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta,
                      pr_idseqttl => pr_idseqttl,
-                     pr_nrcpfcgc => 0); 
+                     pr_nrcpfcgc => 0);
     IF cr_crapsnh%NOTFOUND THEN
       CLOSE cr_crapsnh;
       vr_dscritic := 'Senha para conta on-line nao cadastrada';
       RAISE vr_exc_erro;
-    END IF;    
+    END IF;
     CLOSE cr_crapsnh;
-      
+    END if;
+
     -- se for pessoa juridica
     IF rw_crapass.inpessoa = 1 THEN
       -- buscar dados titular
@@ -2932,34 +3143,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                        pr_nrdconta => pr_nrdconta,
                        pr_idseqttl => pr_idseqttl);
       FETCH cr_crapttl INTO rw_crapttl;
-      
+
       IF cr_crapttl%NOTFOUND THEN
         CLOSE cr_crapttl;
         vr_dscritic := 'Titular nao cadastrado.';
         RAISE vr_exc_erro;
       END IF;
       CLOSE cr_crapttl;
-      
+
       vr_nmextttl := rw_crapttl.nmextttl;
       vr_nrcpfcgc := rw_crapttl.nrcpfcgc;
-    
+
     ELSE
-      
+
       vr_nmextttl := rw_crapass.nmprimtl;
       vr_nrcpfcgc := rw_crapass.nrcpfcgc;
-      
-      -- Buscar dados do preposto apenas quando nao possuir 
+
+      -- Buscar dados do preposto apenas quando nao possuir
       -- assinatura multipla
       IF rw_crapass.idastcjt = 0 THEN
-      
+
         -- Buscar dados de avalista
         OPEN cr_crapavt (pr_cdcooper => rw_crapsnh.cdcooper,
                          pr_nrdconta => rw_crapsnh.nrdconta,
                          pr_nrcpfcgc => rw_crapsnh.nrcpfcgc);
-        FETCH cr_crapavt INTO rw_crapavt;               
+        FETCH cr_crapavt INTO rw_crapavt;
         IF cr_crapavt%FOUND THEN
           CLOSE cr_crapavt;
-            
+
           -- Buscar dados associados preposto
           OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => rw_crapavt.nrdctato);
@@ -2970,26 +3181,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
             vr_nmprepos := rw_crapavt.nmdavali;
           END IF;
           CLOSE cr_crapass;
-            
+
         END IF;
         CLOSE cr_crapavt;
-        
+
       END IF;
-      
+
     END IF;
-    
+
 	--Bacenjud - SM 1
     IF vr_reenvio = 0 THEN
     --Atualizar registro movimento da internet
     IF rw_crapass.idastcjt = 0 THEN
       BEGIN
-        UPDATE crapmvi 
+        UPDATE crapmvi
            SET crapmvi.vlmovted = crapmvi.vlmovted + pr_vllanmto
         WHERE crapmvi.cdcooper = pr_cdcooper
              AND crapmvi.nrdconta = pr_nrdconta
              AND crapmvi.idseqttl = pr_idseqttl
              AND crapmvi.dtmvtolt = pr_dtmvtolt;
-        
+
         --Nao atualizou nenhum registro
         IF SQL%ROWCOUNT = 0 THEN
           -- Cria o registro do movimento da internet
@@ -3033,7 +3244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                        ,pr_nrdconta => rw_crappod.nrdconta
                        ,pr_idseqttl => 0
                        ,pr_nrcpfcgc => rw_crappod.nrcpfpro);
-                                
+
         FETCH cr_crapsnh INTO rw_crapsnh;
 
         IF cr_crapsnh%NOTFOUND THEN
@@ -3043,13 +3254,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
           CLOSE cr_crapsnh;
 
           BEGIN
-            UPDATE crapmvi 
+            UPDATE crapmvi
                SET crapmvi.vlmovted = crapmvi.vlmovted + pr_vllanmto
             WHERE crapmvi.cdcooper = pr_cdcooper
                  AND crapmvi.nrdconta = pr_nrdconta
                  AND crapmvi.idseqttl = rw_crapsnh.idseqttl
                  AND crapmvi.dtmvtolt = pr_dtmvtolt;
-            
+
             --Nao atualizou nenhum registro
             IF SQL%ROWCOUNT = 0 THEN
               -- Cria o registro do movimento da internet
@@ -3091,56 +3302,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     END IF;
 	END IF;
 	--Fim Bacenjud - SM 1
- 
+
     -- Enviar TED
-    pc_enviar_ted (pr_cdcooper => pr_cdcooper --> Cooperativa            
-                  ,pr_idorigem => pr_idorigem --> Origem                 
-                  ,pr_cdageope => pr_cdagenci --> PAC Operador           
-                  ,pr_nrcxaope => pr_nrdcaixa --> Caixa Operador    
+    pc_enviar_ted (pr_cdcooper => pr_cdcooper --> Cooperativa
+                  ,pr_idorigem => pr_idorigem --> Origem
+                  ,pr_cdageope => pr_cdagenci --> PAC Operador
+                  ,pr_nrcxaope => pr_nrdcaixa --> Caixa Operador
                   ,pr_cdoperad => pr_cdoperad --> Operador Autorizacao
                   ,pr_cdopeaut => pr_cdoperad --> Operador Autorizacao
-                  ,pr_vldocmto => pr_vllanmto --> Valor TED             
-                  ,pr_nrdconta => pr_nrdconta --> Conta Remetente        
-                  ,pr_idseqttl => pr_idseqttl --> Titular                
-                  ,pr_nmprimtl => vr_nmextttl --> Nome Remetente         
-                  ,pr_nrcpfcgc => vr_nrcpfcgc --> CPF/CNPJ Remetente     
-                  ,pr_inpessoa => rw_crapass.inpessoa --> Tipo Pessoa Remetente  
-                  ,pr_cdbanfav => pr_cddbanco --> Banco Favorecido       
-                  ,pr_cdagefav => pr_cdageban --> Agencia Favorecido     
-                  ,pr_nrctafav => pr_nrctatrf --> Conta Favorecido       
-                  ,pr_nmfavore => gene0007.fn_caract_acento(pr_nmtitula, 1) --> Nome Favorecido        
-                  ,pr_nrcpffav => pr_nrcpfcgc --> CPF/CNPJ Favorecido    
-                  ,pr_inpesfav => pr_inpessoa --> Tipo Pessoa Favorecido 
-                  ,pr_tpctafav => pr_intipcta --> Tipo Conta Favorecido  
-                  ,pr_dshistor => pr_dshistor --> Descriçao do Histórico 
+                  ,pr_vldocmto => pr_vllanmto --> Valor TED
+                  ,pr_nrdconta => pr_nrdconta --> Conta Remetente
+                  ,pr_idseqttl => pr_idseqttl --> Titular
+                  ,pr_nmprimtl => vr_nmextttl --> Nome Remetente
+                  ,pr_nrcpfcgc => vr_nrcpfcgc --> CPF/CNPJ Remetente
+                  ,pr_inpessoa => rw_crapass.inpessoa --> Tipo Pessoa Remetente
+                  ,pr_cdbanfav => pr_cddbanco --> Banco Favorecido
+                  ,pr_cdagefav => pr_cdageban --> Agencia Favorecido
+                  ,pr_nrctafav => pr_nrctatrf --> Conta Favorecido
+                  ,pr_nmfavore => gene0007.fn_caract_acento(pr_nmtitula, 1) --> Nome Favorecido
+                  ,pr_nrcpffav => pr_nrcpfcgc --> CPF/CNPJ Favorecido
+                  ,pr_inpesfav => pr_inpessoa --> Tipo Pessoa Favorecido
+                  ,pr_tpctafav => pr_intipcta --> Tipo Conta Favorecido
+                  ,pr_dshistor => pr_dshistor --> Descriçao do Histórico
                   ,pr_dstransf => gene0007.fn_caract_acento(pr_dstransf, 1) --> Identificacao Transf.
-                  ,pr_cdfinali => pr_cdfinali --> Finalidade TED                              
+                  ,pr_cdfinali => pr_cdfinali --> Finalidade TED
                   ,pr_cdispbif => pr_cdispbif --> ISPB Banco Favorecido
                   ,pr_flmobile => pr_flmobile --> Indicador se origem é do Mobile
-                  ,pr_idagenda => pr_idagenda --> Tipo de agendamento                          
+                  ,pr_idagenda => pr_idagenda --> Tipo de agendamento
                   ,pr_iptransa => pr_iptransa --> IP da transacao no IBank/mobile
-                  ,pr_dstransa => pr_dstransa --> Descrição da transacao no IBank/mobile                                            
+                  ,pr_dstransa => pr_dstransa --> Descrição da transacao no IBank/mobile
                   ,pr_iddispos => pr_iddispos --> ID Dispositivo mobile
+                  ,pr_idportab => pr_idportab --> Indicar transferencia de valor de portabilidade de salário
+                  ,pr_nrridlfp => pr_nrridlfp --> Indicador do registro do lançamento de folha de pagamento
                   -- saida
-                  ,pr_nrdocmto => vr_nrdocmto --> Documento TED        
-                  ,pr_nrrectvl => vr_nrrectvl --> Autenticacao TVL      
-                  ,pr_nrreclcm => vr_nrreclcm --> Autenticacao LCM      
+                  ,pr_nrdocmto => vr_nrdocmto --> Documento TED
+                  ,pr_nrrectvl => vr_nrrectvl --> Autenticacao TVL
+                  ,pr_nrreclcm => vr_nrreclcm --> Autenticacao LCM
                   ,pr_cdcritic => vr_cdcritic --> Código da critica
-                  ,pr_dscritic => vr_dscritic --> Descrição da critica   
+                  ,pr_dscritic => vr_dscritic --> Descrição da critica
                   ,pr_des_erro => vr_des_erro);
-                  
+
     IF vr_des_erro <> 'OK' THEN
-      
+
       IF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL THEN
         vr_dscritic := 'TED invalida.';
       END IF;
-      
-      RAISE vr_exc_erro;  
-    END IF;              
-    
+
+      RAISE vr_exc_erro;
+    END IF;
+
     /** PROTOCOLO PARA REGISTRO NA TABELA CRAPTVL **/
-             
-    -- localizar autenticação     
+
+    -- localizar autenticação
     --Bacenjud - SM 1
     --Nao deve gerar protocolo de autenticacao se for reenvio de TED Bacenjud
 	IF vr_reenvio = 0 THEN
@@ -3152,12 +3365,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         IF cr_crapaut%NOTFOUND THEN
           vr_dscritic := 'Registro de autenticacao nao encontrado.';
           CLOSE cr_crapaut;
-          RAISE vr_exc_log;  
+          RAISE vr_exc_log;
         END IF;
-        
+
         CLOSE cr_crapaut;
         EXIT; -- sair do loop
-      EXCEPTION  
+      EXCEPTION
         WHEN OTHERS THEN
           -- se cursor estiver aberto, deve fechar
           IF cr_crapaut%ISOPEN THEN
@@ -3166,74 +3379,74 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
           -- se for o ultima tentativa, abortar o programa
           IF vr_contador = 10 THEN
             vr_dscritic := 'Registro de autenticacao esta sendo alterado.';
-            RAISE vr_exc_log; 
+            RAISE vr_exc_log;
           END IF;
           continue;
       END;
-    END LOOP;               
-    
+    END LOOP;
+
     IF pr_cddbanco = 0 THEN
       vr_cddbanco := '   ';
     ELSE
       vr_cddbanco := to_char(pr_cddbanco,'fm000');
-    END IF; 
-    
+    END IF;
+
     vr_dsinfor1 := 'TED';
     vr_dsinfor2 := vr_nmextttl||'#'||to_char(vr_cddbanco,'fm000');
-    
+
     -- Obtem dados do banco do favorecido para Protocolo
     IF pr_cdispbif = 0 THEN
       OPEN cr_crapban2 (pr_cdbccxlt => pr_cddbanco);
       FETCH cr_crapban2 INTO rw_crapban;
-      
+
       IF cr_crapban2%FOUND THEN
-        vr_dsinfor2 := vr_dsinfor2 ||' - '||REPLACE(upper(TRIM(rw_crapban.nmextbcc)),'&','e'); 
+        vr_dsinfor2 := vr_dsinfor2 ||' - '||REPLACE(upper(TRIM(rw_crapban.nmextbcc)),'&','e');
       END IF;
       CLOSE cr_crapban2;
     ELSE
-      
+
       OPEN cr_crapban (pr_cdispbif => pr_cdispbif);
       FETCH cr_crapban INTO rw_crapban;
-      
+
       IF cr_crapban%FOUND THEN
-        vr_dsinfor2 := vr_dsinfor2 ||' - '||REPLACE(upper(TRIM(rw_crapban.nmextbcc)),'&','e'); 
+        vr_dsinfor2 := vr_dsinfor2 ||' - '||REPLACE(upper(TRIM(rw_crapban.nmextbcc)),'&','e');
       END IF;
       CLOSE cr_crapban;
     END IF;
-     
+
     vr_dsinfor2 := vr_dsinfor2 ||'#'||to_char(pr_cdageban,'fm0000');
-    
+
     --> Obtem dados da agencia do favorecido para Protocolo
     OPEN cr_crapagb (pr_cddbanco => pr_cddbanco,
                      pr_cdageban => pr_cdageban);
     FETCH cr_crapagb INTO rw_crapagb;
-    
+
     IF cr_crapagb%FOUND THEN
-      vr_dsinfor2 := vr_dsinfor2 ||' - '||TRIM(rw_crapagb.nmageban); 
+      vr_dsinfor2 := vr_dsinfor2 ||' - '||TRIM(rw_crapagb.nmageban);
     END IF;
     CLOSE cr_crapagb;
-    
+
     vr_dsinfor2 := vr_dsinfor2 ||'#';
-    
+
     --> Formata dados do favorecido para Protocolo
     vr_dsinfor2 := vr_dsinfor2||
                   TRIM(gene0002.fn_mask(to_char(pr_nrctatrf),'zzzzzzzzzzzzzzzzzzz.9'))||
                   '#'||gene0002.fn_mask(pr_cdispbif,'zzzzzzzzz9');
     vr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc,pr_inpessoa);
     vr_dsinfor3 := TRIM(pr_nmtitula) ||'#'|| vr_dscpfcgc ||'#';
-    
+
     --> Formata dados da TED para Protocolo
-     
+
     -- Ler tabela generica
-    vr_dstextab := tabe0001.fn_busca_dstextab( pr_cdcooper => rw_crapcop.cdcooper 
-                                              ,pr_nmsistem => 'CRED'           
-                                              ,pr_tptabela => 'GENERI'         
-                                              ,pr_cdempres => 00               
-                                              ,pr_cdacesso => 'FINTRFTEDS'     
+    vr_dstextab := tabe0001.fn_busca_dstextab( pr_cdcooper => rw_crapcop.cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_tptabela => 'GENERI'
+                                              ,pr_cdempres => 00
+                                              ,pr_cdacesso => 'FINTRFTEDS'
                                               ,pr_tpregist => pr_cdfinali   );
-    
+
     vr_dsinfor3 := vr_dsinfor3 || TRIM(upper(vr_dstextab)) ||'#'|| pr_dstransf;
-    
+
     --Gerar protocolo
     GENE0006.pc_gera_protocolo(pr_cdcooper => pr_cdcooper             --> Código da cooperativa
                               ,pr_dtmvtolt => rw_crapaut.dtmvtolt     --> Data movimento
@@ -3256,32 +3469,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                               ,pr_dsprotoc => pr_dsprotoc             --> Descrição do protocolo
                               ,pr_dscritic => vr_dscritic             --> Descrição crítica
                               ,pr_des_erro => vr_des_erro);           --> Descrição dos erros de processo
-                                      
+
     --Se ocorreu erro
     IF vr_des_erro = 'NOK' THEN
-      RAISE vr_exc_log;                           
-    ELSE    
+      RAISE vr_exc_log;
+    ELSE
     /* Se não aconteceu erro o processo gera as informações do protocolo */
       -- Buscar dados protocolo
       OPEN cr_crappro (pr_cdcooper => pr_cdcooper,
                        pr_dsprotoc => pr_dsprotoc);
       FETCH cr_crappro INTO rw_crappro;
       IF cr_crappro%FOUND THEN
-        CLOSE cr_crappro;  
-        
+        CLOSE cr_crappro;
+
         rw_crapopi := NULL;
         -- Buscar dados operador juridico
         OPEN cr_crapopi (pr_cdcooper => pr_cdcooper,
                          pr_nrdconta => pr_nrdconta,
                          pr_nrcpfope => rw_crappro.nrcpfope);
-        FETCH cr_crapopi INTO rw_crapopi;     
-        CLOSE cr_crapopi;           
-        
-        /** Se incluir novo campo para o protocolo, verificar a 
+        FETCH cr_crapopi INTO rw_crapopi;
+        CLOSE cr_crapopi;
+
+        /** Se incluir novo campo para o protocolo, verificar a
             procedure lista_protocolos da BO bo_algoritmo_seguranca,
-            onde ocorre consulta de protocolos para o InternetBank **/                
+            onde ocorre consulta de protocolos para o InternetBank **/
         vr_idxpro := pr_tab_protocolo_ted.count;
-        
+
         pr_tab_protocolo_ted(vr_idxpro).cdtippro    := rw_crappro.cdtippro;
         pr_tab_protocolo_ted(vr_idxpro).dtmvtolt    := rw_crappro.dtmvtolt;
         pr_tab_protocolo_ted(vr_idxpro).dttransa    := rw_crappro.dttransa;
@@ -3299,22 +3512,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         pr_tab_protocolo_ted(vr_idxpro).nrcpfope    := rw_crappro.nrcpfope;
         pr_tab_protocolo_ted(vr_idxpro).cdbcoctl    := rw_crapcop.cdbcoctl;
         pr_tab_protocolo_ted(vr_idxpro).cdagectl    := rw_crapcop.cdagectl;
-        
+
       END IF;
-      
+
       /** Armazena protocolo na autenticacao da craptvl **/
       BEGIN
-        UPDATE crapaut 
+        UPDATE crapaut
            SET crapaut.dsprotoc = pr_dsprotoc
-         WHERE crapaut.rowid = vr_nrrectvl;  
+         WHERE crapaut.rowid = vr_nrrectvl;
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 'Não foi possivel atualizar protocolo na autenticação: '||SQLERRM;
           RAISE vr_exc_log;
       END;
-      
+
       /** PROTOCOLO PARA REGISTRO NA TABELA CRAPLCM **/
-      -- localizar autenticação     
+      -- localizar autenticação
       FOR vr_contador IN 1..10 LOOP
         BEGIN
           OPEN cr_crapaut (pr_rowid => vr_nrreclcm);
@@ -3323,23 +3536,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
           IF cr_crapaut%NOTFOUND THEN
             vr_dscritic := 'Registro de autenticacao nao encontrado.';
             CLOSE cr_crapaut;
-            RAISE vr_exc_log;  
+            RAISE vr_exc_log;
           ELSE
             /** Armazena protocolo na autenticacao da craplcm **/
             BEGIN
-              UPDATE crapaut 
+              UPDATE crapaut
                  SET crapaut.dsprotoc = pr_dsprotoc
-               WHERE crapaut.rowid = vr_nrreclcm;  
+               WHERE crapaut.rowid = vr_nrreclcm;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_cdcritic := 'Não foi possivel atualizar protocolo na autenticação: '||SQLERRM;
                 RAISE vr_exc_log;
-            END;  
+            END;
           END IF;
-          
+
           CLOSE cr_crapaut;
           EXIT; -- sair do loop
-        EXCEPTION  
+        EXCEPTION
           WHEN OTHERS THEN
             -- se cursor estiver aberto, deve fechar
             IF cr_crapaut%ISOPEN THEN
@@ -3348,7 +3561,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
             -- se for o ultima tentativa, abortar o programa
             IF vr_contador = 10 THEN
               vr_dscritic := 'Registro de autenticacao esta sendo alterado.';
-              RAISE vr_exc_log; 
+              RAISE vr_exc_log;
             END IF;
             continue;
         END;
@@ -3356,15 +3569,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     END IF;
 	END IF;
 	--Fim Bacenjud - SM 1
-    
+
   EXCEPTION
-    --> exception para apenas gerar log e não abortar envio de TED, pois 
-     -- script já foi executado 
+    --> exception para apenas gerar log e não abortar envio de TED, pois
+     -- script já foi executado
     WHEN vr_exc_log  THEN
       /* Se aconteceu erro, gera o log e envia o erro por e-mail */
       vr_nmarqlog := 'proc_message.log';
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper, 
-                                 pr_ind_tipo_log => 2, 
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                 pr_ind_tipo_log => 2,
                                  pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR HH24:MI:SS')||' - '||
                                                     'b1wgen0015 - executa-envio-ted'               ||
                                                     ' - ERRO GERACAO PROTOCOLO  --> '              ||
@@ -3374,7 +3587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                                     ', Valor: '         || to_char(pr_vllanmto,'999G999G999G990D00') ||
                                                     ', Informacao 1: '  || vr_dsinfor1 ||
                                                     ', Informacao 2: '  || vr_dsinfor2 ||
-                                                    ', Informacao 3: '  || vr_dsinfor3 || 
+                                                    ', Informacao 3: '  || vr_dsinfor3 ||
                                                     ', CPF Operador: '  || to_char(pr_nrcpfope,'99999999999990')         ||
                                                     ', CPF crapsnh: '   || to_char(rw_crapsnh.nrcpfcgc,'99999999999990') ||
                                                     ', Nome Preposto: ' || vr_nmprepos ||
@@ -3385,18 +3598,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                                     ', Critica: '||vr_dscritic,
                                  pr_nmarqlog     => vr_nmarqlog);
 
-      -- buscar destinatarios do email                           
+      -- buscar destinatarios do email
       vr_email_dest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'ERRO_ENVIO_TED');
-      
+
       -- Gravar conteudo do email, controle com substr para não estourar campo texto
-      vr_conteudo := substr('ERRO GERACAO PROTOCOLO - PROCEDURE executa-envio-ted'|| 
+      vr_conteudo := substr('ERRO GERACAO PROTOCOLO - PROCEDURE executa-envio-ted'||
                      '<br>Cooperativa: '     || to_char(pr_cdcooper, '990')           ||
                       '<br>Conta: '         || gene0002.fn_mask_conta(pr_nrdconta)   ||
                       '<br>Documento: '     || to_char(vr_nrdocmto,'999G999G999G990')||
                       '<br>Valor: '         || to_char(pr_vllanmto,'999G999G999G990D00') ||
                       '<br>Informacao 1: '  || vr_dsinfor1 ||
                       '<br>Informacao 2: '  || vr_dsinfor2 ||
-                      '<br>Informacao 3: '  || vr_dsinfor3 || 
+                      '<br>Informacao 3: '  || vr_dsinfor3 ||
                       '<br>CPF Operador: '  || to_char(pr_nrcpfope,'99999999999990')         ||
                       '<br>CPF crapsnh: '   || to_char(rw_crapsnh.nrcpfcgc,'99999999999990') ||
                       '<br>Nome Preposto: ' || vr_nmprepos ||
@@ -3405,7 +3618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                       '<br>Sequencia Autenticacao: '|| to_char(rw_crapaut.nrsequen,'99G990')||
                       '<br>Caixa Autenticacao: '    || to_char(rw_crapaut.nrdcaixa,'990')||
                       '<br>Critica: '               || vr_dscritic,1,4000);
-                      
+
       vr_dscritic := NULL;
       --/* Envia e-mail para o Operador */
       gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
@@ -3418,9 +3631,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                 ,pr_flg_remete_coop => 'N' --> Se o envio ser¿ do e-mail da Cooperativa
                                 ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
                                 ,pr_des_erro        => vr_dscritic);
-       
+
     WHEN vr_exc_erro THEN
-      
+
       IF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL THEN
         vr_dscritic := 'Não foi possivel executar o envio da TED. Tente Novamente.';
       END IF;
@@ -3432,22 +3645,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       -- rollback do ted
       ROLLBACK;
       pr_dscritic := 'Não foi possivel executar o envio da TED. Tente Novamente.:'||SQLERRM;
-  
-  END pc_executa_envio_ted;  
-  
-  
+
+  END pc_executa_envio_ted;
+
+
   /******************************************************************************/
   /**             Procedure para executar o envio da TED                       **/
   /******************************************************************************/
-  PROCEDURE pc_executa_envio_ted_prog 
-                          (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa    
+  PROCEDURE pc_executa_envio_ted_prog
+                          (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
                           ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Agencia
-                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Caixa Operador    
+                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Caixa Operador
                           ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Operador Autorizacao
-                          ,pr_idorigem IN INTEGER                --> Origem                 
+                          ,pr_idorigem IN INTEGER                --> Origem
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
-                          ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta Remetente        
-                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular                
+                          ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta Remetente
+                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular
                           ,pr_nrcpfope IN crapopi.nrcpfope%TYPE  --> CPF operador juridico
                           ,pr_cddbanco IN crapcti.cddbanco%TYPE  --> Banco destino
                           ,pr_cdageban IN crapcti.cdageban%TYPE  --> Agencia destino
@@ -3467,95 +3680,95 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
                           -- saida
-                          ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
+                          ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo
                           ,pr_tab_protocolo_ted OUT CLOB --> dados do protocolo
                           ,pr_cdcritic OUT INTEGER               --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2) IS          --> Descricao do erro
   /*---------------------------------------------------------------------------------------------------------------
-  
-      Programa : pc_executa_envio_ted_prog             
+
+      Programa : pc_executa_envio_ted_prog
       Sistema  : Rotinas acessadas pelo Progress
       Sigla    : CRED
       Autor    : Carlos Henrique W.
       Data     : Abril/2016.                   Ultima atualizacao: 25/07/2016
-  
+
       Dados referentes ao programa:
-  
+
       Frequencia: Sempre que for chamado
       Objetivo  : Procedure para envio do TED
-    
+
       Alteração : 25/07/2016 - Ajuste para retornar corretamente o xml pois estava gerando problemas para
                                o progress receber os valores de data e nome de tags com o caracter "#"
                                (Adriano).
-                               
-  
-  ---------------------------------------------------------------------------------------------------------------*/                          
+
+
+  ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
-    -- Variaveis de XML 
+    -- Variaveis de XML
     vr_xml_temp VARCHAR2(32767);
-    
+
     vr_tab_protocolo_ted CXON0020.typ_tab_protocolo_ted;
-    
+
     vr_dscritic VARCHAR2(4000);
     BEGIN
       pc_executa_envio_ted(
                 pr_cdcooper => pr_cdcooper,
-                pr_cdagenci => pr_cdagenci, 
-                pr_nrdcaixa => pr_nrdcaixa, 
-                pr_cdoperad => pr_cdoperad, 
-                pr_idorigem => pr_idorigem, 
-                pr_dtmvtolt => pr_dtmvtolt, 
-                pr_nrdconta => pr_nrdconta, 
-                pr_idseqttl => pr_idseqttl, 
-                pr_nrcpfope => pr_nrcpfope, 
-                pr_cddbanco => pr_cddbanco, 
-                pr_cdageban => pr_cdageban, 
-                pr_nrctatrf => pr_nrctatrf, 
-                pr_nmtitula => pr_nmtitula, 
-                pr_nrcpfcgc => pr_nrcpfcgc, 
-                pr_inpessoa => pr_inpessoa, 
-                pr_intipcta => pr_intipcta, 
-                pr_vllanmto => pr_vllanmto, 
-                pr_dstransf => pr_dstransf, 
-                pr_cdfinali => pr_cdfinali, 
-                pr_dshistor => pr_dshistor, 
-                pr_cdispbif => pr_cdispbif, 
-                pr_flmobile => pr_flmobile, 
-                pr_idagenda => pr_idagenda, 
+                pr_cdagenci => pr_cdagenci,
+                pr_nrdcaixa => pr_nrdcaixa,
+                pr_cdoperad => pr_cdoperad,
+                pr_idorigem => pr_idorigem,
+                pr_dtmvtolt => pr_dtmvtolt,
+                pr_nrdconta => pr_nrdconta,
+                pr_idseqttl => pr_idseqttl,
+                pr_nrcpfope => pr_nrcpfope,
+                pr_cddbanco => pr_cddbanco,
+                pr_cdageban => pr_cdageban,
+                pr_nrctatrf => pr_nrctatrf,
+                pr_nmtitula => pr_nmtitula,
+                pr_nrcpfcgc => pr_nrcpfcgc,
+                pr_inpessoa => pr_inpessoa,
+                pr_intipcta => pr_intipcta,
+                pr_vllanmto => pr_vllanmto,
+                pr_dstransf => pr_dstransf,
+                pr_cdfinali => pr_cdfinali,
+                pr_dshistor => pr_dshistor,
+                pr_cdispbif => pr_cdispbif,
+                pr_flmobile => pr_flmobile,
+                pr_idagenda => pr_idagenda,
                 pr_iptransa => pr_iptransa,
                 pr_dstransa => pr_dstransa,
                 pr_iddispos => pr_iddispos,
-                pr_dsprotoc => pr_dsprotoc, 
-                pr_tab_protocolo_ted => vr_tab_protocolo_ted, 
-                pr_cdcritic => pr_cdcritic, 
+                pr_dsprotoc => pr_dsprotoc,
+                pr_tab_protocolo_ted => vr_tab_protocolo_ted,
+                pr_cdcritic => pr_cdcritic,
                 pr_dscritic => pr_dscritic);
-                
-    -- se possui codigo, porém não possui descrição                     
-    IF nvl(pr_cdcritic,0) > 0 AND 
+
+    -- se possui codigo, porém não possui descrição
+    IF nvl(pr_cdcritic,0) > 0 AND
        TRIM(pr_dscritic) IS NULL THEN
       -- buscar descrição
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);        
-    END IF;   
-    
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+    END IF;
+
     --> DESCARREGAR TEMPTABLE DE LIMITES PARA O CLOB <---
     -- Criar documento XML
-    dbms_lob.createtemporary(pr_tab_protocolo_ted, TRUE); 
-    dbms_lob.open(pr_tab_protocolo_ted, dbms_lob.lob_readwrite);       
+    dbms_lob.createtemporary(pr_tab_protocolo_ted, TRUE);
+    dbms_lob.open(pr_tab_protocolo_ted, dbms_lob.lob_readwrite);
 
-    -- Insere o cabeçalho do XML 
-    gene0002.pc_escreve_xml(pr_xml            => pr_tab_protocolo_ted 
-                           ,pr_texto_completo => vr_xml_temp 
-                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>'); 
+    -- Insere o cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => pr_tab_protocolo_ted
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>');
 
     FOR vr_contador IN nvl(vr_tab_protocolo_ted.FIRST,0)..nvl(vr_tab_protocolo_ted.LAST,-1) LOOP
-      
+
       -- Montar XML com registros de carencia
-      gene0002.pc_escreve_xml(pr_xml            => pr_tab_protocolo_ted 
-                             ,pr_texto_completo => vr_xml_temp 
-                             ,pr_texto_novo     => '<protocolo>' 
+      gene0002.pc_escreve_xml(pr_xml            => pr_tab_protocolo_ted
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<protocolo>'
                                                 ||   '<cdtippro>'||vr_tab_protocolo_ted(vr_contador).cdtippro    ||'</cdtippro>'
-                                                ||   '<dtmvtolt>'||NVL(TO_CHAR(vr_tab_protocolo_ted(vr_contador).dtmvtolt,'DD/MM/RRRR'),' ') ||'</dtmvtolt>'                                                
+                                                ||   '<dtmvtolt>'||NVL(TO_CHAR(vr_tab_protocolo_ted(vr_contador).dtmvtolt,'DD/MM/RRRR'),' ') ||'</dtmvtolt>'
                                                 ||   '<dttransa>'||NVL(TO_CHAR(vr_tab_protocolo_ted(vr_contador).dttransa,'DD/MM/RRRR'),' ') ||'</dttransa>'
                                                 ||   '<hrautent>'||vr_tab_protocolo_ted(vr_contador).hrautent    ||'</hrautent>'
                                                 ||   '<vldocmto>'||vr_tab_protocolo_ted(vr_contador).vldocmto    ||'</vldocmto>'
@@ -3573,22 +3786,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                                 ||   '<cdagectl>'||vr_tab_protocolo_ted(vr_contador).cdagectl ||'</cdagectl>'
                                                 || '</protocolo>');
     END LOOP;
-       
-    -- Encerrar a tag raiz 
-    gene0002.pc_escreve_xml(pr_xml            => pr_tab_protocolo_ted 
-                           ,pr_texto_completo => vr_xml_temp 
-                           ,pr_texto_novo     => '</raiz>' 
+
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => pr_tab_protocolo_ted
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</raiz>'
                            ,pr_fecha_xml      => TRUE);
 
     vr_xml_temp := NULL;
 
-    EXCEPTION 
+    EXCEPTION
       WHEN OTHERS THEN
         pr_dscritic := 'Não foi possivel verificar operacao:'|| SQLERRM;
-    END;                          
+    END;
   END pc_executa_envio_ted_prog;
-  
-  FUNCTION fn_verifica_lote_uso(pr_rowid rowid) RETURN NUMBER IS 
+
+  FUNCTION fn_verifica_lote_uso(pr_rowid rowid) RETURN NUMBER IS
     -- Verificar lote
     CURSOR cr_craplot IS
       SELECT craplot.rowid
@@ -3597,14 +3810,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
        FOR UPDATE NOWAIT;
     rw_craplot cr_craplot%ROWTYPE;
   BEGIN
-    /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */ 
+    /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
     FOR i IN 1..100 LOOP
       BEGIN
         -- Leitura do lote
         OPEN cr_craplot;
         FETCH cr_craplot INTO rw_craplot;
         CLOSE cr_craplot;
-        
+
         EXIT;
       EXCEPTION
         WHEN OTHERS THEN
@@ -3620,19 +3833,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
           sys.dbms_lock.sleep(0.1);
       END;
     END LOOP;
-    
-    RETURN 0; --> liberado   
+
+    RETURN 0; --> liberado
   END;
-  
-  PROCEDURE pc_executa_reenvio_ted 
-                          (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa    
+
+  PROCEDURE pc_executa_reenvio_ted
+                          (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
                           ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Agencia
-                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Caixa Operador    
+                          ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE  --> Caixa Operador
                           ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Operador Autorizacao
-                          ,pr_idorigem IN INTEGER                --> Origem                 
+                          ,pr_idorigem IN INTEGER                --> Origem
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
-                          ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta Remetente        
-                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular                
+                          ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta Remetente
+                          ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular
                           ,pr_nrcpfope IN crapopi.nrcpfope%TYPE  --> CPF operador juridico
                           ,pr_cddbanco IN crapcti.cddbanco%TYPE  --> Banco destino
                           ,pr_cdageban IN crapcti.cdageban%TYPE  --> Agencia destino
@@ -3651,14 +3864,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           -- saida
-                          ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
+                          ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
                           ,pr_cdcritic OUT INTEGER               --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2) IS          --> Descricao do erro
   BEGIN
     --Seta variavel de reenvio para poder desviar o fluxo no envio de TED, quando necessario
     vr_reenvio := 1;
-    
+
     pc_executa_envio_ted(pr_cdcooper          => pr_cdcooper,
                          pr_cdagenci          => pr_cdagenci,
                          pr_nrdcaixa          => pr_nrdcaixa,
@@ -3688,7 +3901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                          pr_tab_protocolo_ted => pr_tab_protocolo_ted,
                          pr_cdcritic          => pr_cdcritic,
                          pr_dscritic          => pr_dscritic);
-    
+
     --Limpa a variavel de reenvio
     vr_reenvio := 0;
   END pc_executa_reenvio_ted;
