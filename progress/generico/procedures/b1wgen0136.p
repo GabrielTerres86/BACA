@@ -28,7 +28,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0136.p
    Autor   : Gabriel
-   Data    : Maio/2012                           Ultima atualizacao: 30/05/2017
+   Data    : Maio/2012                           Ultima atualizacao: 30/05/2019
 
    Dados referentes ao programa:
 
