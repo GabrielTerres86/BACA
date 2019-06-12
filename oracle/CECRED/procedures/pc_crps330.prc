@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Programa: PC_CRPS330
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Novembro/2015                     Ultima Atualizacao: - 04/07/2017
+  --  Data    : Novembro/2015                     Ultima Atualizacao: - 12/06/2019
   --
   --  Dados referentes ao programa:
   --
@@ -37,8 +37,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --              22/04/2019 - Alterar a regra de negativação para o Serasa por estado. Permitir parametrizar a quantidade
   --                           de dias desejado.
-  --                           Jose Dill (Mouts). Requisição - RITM0012246
-  ---------------------------------------------------------------------------------------------------------------
+  --                           Jose Dill (Mouts). Requisição - RITM0012246 
+  /*
+                  12/06/2019 - INC0017147 Na rotina pc_clob_para_arquivo, ao ocorrer erro, decrementar a sequencia do
+                               arquivo e seguir o fluxo do processo (Carlos)
+  ---------------------------------------------------------------------------------------------------------------*/
   
   -- Atualiza a situacao do boleto como enviada
   PROCEDURE pc_atualiza_situacao(pr_rowid    IN  ROWID,
@@ -729,7 +732,26 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                                          ,pr_arquivo => 'temporario.txt'
                                          ,pr_des_erro => vr_dscritic);
             IF vr_dscritic IS NOT NULL THEN
-              RAISE vr_exc_saida;
+              -- Decrementar a sequence do arquivo e ir para a próxima cooperativa
+              vr_nrseqarq := fn_sequence(pr_nmtabela => 'CRAPCOB',
+                                         pr_nmdcampo => 'NRSEQARQ',
+                                         pr_dsdchave => rw_crapcop.cdcooper,
+                                         pr_flgdecre => 'S');
+
+              -- Libera a memoria do CLOB
+              dbms_lob.close(vr_clob);
+
+              -- Logar critica encontrada
+              cecred.pc_log_programa(PR_DSTIPLOG   => 'E'
+                                    ,PR_CDPROGRAMA => vr_nomdojob
+                                    ,pr_tpocorrencia => 1
+                                    ,pr_dsmensagem => 'Coop: ' || rw_crapcop.cdcooper || ' - ' || vr_dscritic
+                                    ,PR_IDPRGLOG   => vr_idprglog);
+
+              -- Ir para a próxima cooperativa
+              vr_dscritic := '';
+              ROLLBACK;              
+              continue;
             END IF;
                        
             -- Converte o arquivo para o formato ANSI
