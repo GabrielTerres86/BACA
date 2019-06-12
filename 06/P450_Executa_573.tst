@@ -1,6 +1,5 @@
 PL/SQL Developer Test script 3.0
-45
-
+46
 DECLARE
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     vr_contareg       PLS_INTEGER;                                 --> Número da conta
@@ -45,6 +44,7 @@ BEGIN
     END IF;
     
   END LOOP; -- CRAPCOP
+  
 end;
 0
 0
