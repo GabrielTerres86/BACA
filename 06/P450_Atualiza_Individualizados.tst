@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-324
+326
 
 DECLARE
     ------------------------- PL TABLE ---------------------------------------
@@ -202,6 +202,8 @@ UPDATE crapris t
    AND t.nrctremp = 1103813
    AND t.cdmodali = 299
    ;
+
+COMMIT;
 ------- ATUALIZAR CONTRATO JUROS 60 - EMPRESTIMO ------
 
     
