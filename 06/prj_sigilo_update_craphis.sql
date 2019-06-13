@@ -397,6 +397,7 @@ BEGIN
   vr_tbhistorico(2425) := 104;
   vr_tbhistorico(2433) := 201;
   vr_tbhistorico(2553) := 104;
+  vr_tbhistorico(2740) := 106;
 
   vr_index := vr_tbhistorico.first;
 
