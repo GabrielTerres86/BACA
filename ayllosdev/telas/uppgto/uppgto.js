@@ -6,11 +6,13 @@
  * --------------
  * ALTERAÇÕES   :
  * --------------
+ * 13/06/2019 - Inclusao da opcao E - Upload de TED - Anderson Schloegel - Mout's
  */
  
 //Formulários e Tabela
 var frmCab      = 'frmCab';
 var frmArquivo  = 'frmArquivo';
+var frmArquivoTed  = 'frmArquivoTed'; // P500 - Mouts - Anderson Schloegel
 var frmConsulta = 'frmConsulta';
 var frmRelatorio = 'frmRelatorio';
 var frmConsultaLog = 'frmConsultaLog';
@@ -43,6 +45,9 @@ function estadoInicial() {
 	$('#divRelatorio').css({'display':'none'});
 	$('#divConsultaLog').css({'display':'none'});
 	$('#divTabela').css({'display':'none'});
+	$('#divArquivosTed').css({'display':'none'}); 	// P500 - Mouts - Anderson Schloegel
+	$('#fRemessasTed').css({'display':'none'}); 	// P500 - Mouts - Anderson Schloegel
+	$('#divtbcriticasted').html(''); 				// P500 - Mouts - Anderson Schloegel
 	
 	trocaBotao('');
 	
@@ -170,6 +175,114 @@ function formataDetalhes(){
 	cDsocorre.desabilitaCampo();	
 	
 }
+
+// P500 - Mouts - Anderson Schloegel
+function formataOpcaoE(){
+	
+	rNrdconta			= $('label[for="nrdconta"]','#'+frmArquivoTed); 
+	rNmprimtl	        = $('label[for="nmprimtl"]','#'+frmArquivoTed);        
+	
+	cNrdconta			= $('#nrdconta','#'+frmArquivoTed); 
+	cNmprimtl			= $('#nmprimtl','#'+frmArquivoTed); 
+	cTodosCabecalho		= $('input[type="text"],select','#'+frmArquivoTed);
+	btnOK1				= $('#btnOK1','#'+frmArquivoTed);
+
+	rNrdconta.addClass('rotulo').css({'width':'40px'});
+	rNmprimtl.addClass('rotulo').css({'width':'40px'});
+
+	cNrdconta.addClass('conta pesquisa').css({'width':'80px'})
+	cNmprimtl.addClass('alphanum').css({'width':'420px'}).attr('maxlength','48');
+
+	$('#userfile','#'+frmArquivoTed).css({'width':'600px'})
+
+	cNrdconta.habilitaCampo();
+	cNmprimtl.desabilitaCampo();
+	
+	cNrdconta.val('');
+	cNmprimtl.val('');
+	$('#userfile','#'+frmArquivoTed).val('');
+
+	$('#fCriticasTed').css({'display':'none'});
+	$('table.tituloRegistros').css({'display':'none'});
+	
+	btnOK1.unbind('click').bind('click', function() { 	
+		
+		if ( cNrdconta.hasClass('campoTelaSemBorda')  ) { return false; }
+		
+		// Armazena o número da conta na variável global
+		var nrdconta = normalizaNumero( cNrdconta.val() );
+		
+		// Verifica se o número da conta é vazio
+		if ( nrdconta == '' ) { return false; }
+	
+		// Verifica se a conta é válida
+		if ( !validaNroConta(nrdconta) ) { 
+			showError('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\''+ frmArquivoTed +'\');');
+			return false; 
+		}
+
+		cTodosCabecalho.removeClass('campoErro');
+		
+		// Se chegou até aqui, a conta é diferente de vazio e é válida, então realizar a operação desejada
+        consultaConta(frmArquivoTed);
+
+        // consulta ao enviar clique de OK dos dados da conta
+		$.ajax({
+	        type: "POST",
+	        url: UrlSite + "telas/uppgto/busca_remessas_ted.php",
+	        data: {
+	            cddopcao: 'e',
+	            nrdconta: nrdconta,
+	            redirect: "script_ajax"
+	        },
+	        error: function (objAjax, responseError, objExcept) {
+	        	console.log(' response error: ' , response);
+	            hideMsgAguardo();
+	            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#nrdconta','#frmFiltro').focus();");
+	        },
+	        success: function (response) {
+
+	        	try {
+
+	        		eval(response);
+
+	        	} catch(error) {
+
+	        		console.log('erro tc');
+
+	        	}
+
+	        }
+
+	    });
+
+		return false;
+			
+	});	
+
+	cNrdconta.unbind('keypress').bind('keypress', function(e) {
+
+		//alert('keypress');
+		if ( divError.css('display') == 'block' ) { return false; }		
+		// Se é a tecla ENTER, 
+		if ( e.keyCode == 13 ) {
+			if (cNrdconta.val() == '' ) {
+				mostraPesquisaAssociado('nrdconta|nmprimtl', frmArquivoTed );
+				return false;
+			}
+			btnOK1.click();
+			return false;
+		} else if ( e.keyCode == 118 ) {
+			mostraPesquisaAssociado('nrdconta|nmprimtl', frmArquivoTed );
+			return false;
+		}
+	});	
+	
+	layoutPadrao();
+	controlaPesquisas();		
+	
+	return false;
+} // fim P500
 
 function formataOpcaoT(){
 	
@@ -520,7 +633,6 @@ function formataOpcaoL(){
 	cDtiniper.habilitaCampo();
 	cDtfimper.habilitaCampo();
 	
-	
 	cTodosCabecalho		= $('input[type="text"],select','#'+frmConsultaLog);
 	btnOK1				= $('#btnOK1','#'+frmConsultaLog);
 	
@@ -580,7 +692,6 @@ function formataOpcaoL(){
 		}
 	});	
 	
-
 	layoutPadrao();
 	return false;
 }
@@ -588,6 +699,8 @@ function formataOpcaoL(){
 function btnContinuar() {
 
 	$('input,select', '#frmCab').removeClass('campoErro');
+
+	$('#fCriticasTed').html('<div id="divtbcriticasted" class="divRegistros" center></div>'); // P500 - Mout's - Anderson Schloegel
 
 	// Se chegou até aqui, o cnae é diferente do vazio e é válida, então realizar a operação desejada
 	realizaOperacao();
@@ -598,6 +711,16 @@ function btnContinuar() {
 function buscaOpcao() {
 
     showMsgAguardo('Aguarde, buscando dados ...');
+
+    // P500 - Mouts - Anderson Schloegel
+	if(cddopcao == 'E'){		
+		formataOpcaoE();
+		trocaBotao('Importar');		
+		$('#divArquivosTed').css({'display':'block'});
+		$('#divBotoes').css({'display':'block'});		
+		$('#nrdconta','#'+frmArquivo).focus();
+		$('fCriticasTed').show();
+	} // fim P500
 
 	if(cddopcao == 'T'){		
 		formataOpcaoT();
@@ -630,7 +753,6 @@ function buscaOpcao() {
 		$('#divBotoes').css({'display':'block'});
 		$('#nrdconta','#'+frmRelatorio).focus();
 	}
-	
 	
 	hideMsgAguardo();
 
@@ -675,16 +797,27 @@ function realizaOperacao() {
 	else if (cddopcao == "L"){ frmUtil = frmConsultaLog; }	
 	else if (cddopcao == "R"){ frmUtil = frmRelatorio; }
 	else if (cddopcao == "T"){ frmUtil = frmArquivo; } 
+	else if (cddopcao == "E"){ frmUtil = frmArquivoTed; }  // P500 - Mouts - Anderson Schloegel
 	
 	if( !$('#nrdconta','#'+frmUtil).hasClass('campoTelaSemBorda') ){
 		showError("error", "Conta deve ser informada.", "Alerta - Ayllos", "return false;");
 		return false;
 	}
 	
+	// P500 - Mout's - Anderson Schloegel
+	if (cddopcao == "E") {
+		var confereArquivoTed = $('#userfile','#frmArquivoTed').val();
+		if (confereArquivoTed.length == 0) {
+			showError("error", "Arquivo deve ser informado.", "Alerta - Ayllos", "return false;");
+			return false;
+		}
+	} // fim P500
+
 	if (cddopcao == "C"){  	   showMsgAguardo("Aguarde, consultando..."); buscaRemessas(0,10); return false; } 
 	else if (cddopcao == "L"){ showMsgAguardo("Aguarde, consultando..."); buscaLogRemessas(); return false; }	
 	else if (cddopcao == "R"){ showMsgAguardo("Aguarde, excluindo...");  geraRelatorio(); return false;}
 	else if (cddopcao == "T"){ showMsgAguardo("Aguarde, importando...");  confirmaUploadArquivo(cddopcao); return false;} 
+	else if (cddopcao == "E"){ showMsgAguardo("Aguarde, importando...");  confirmaUploadArquivoTed(cddopcao); return false;} // P500 - Mouts - Anderson Schloegel
 	else { showMsgAguardo("Aguarde, liberando aplicacao..."); }
 	
 }
@@ -737,6 +870,11 @@ function consultaConta(frmParametro){
 function confirmaUploadArquivo(cddopcao){
 	showConfirmacao('Confirma importa&ccedil;&atilde;o?'	,'Confirma&ccedil;&atilde;o - UPPGTO','importarArquivo("' + cddopcao + '")','return false','sim.gif','nao.gif'); return false; 
 }
+// P500 - Mout's - Anderson Schloegel
+function confirmaUploadArquivoTed(cddopcao){
+	hideMsgAguardo();
+	showConfirmacao('Confirma importa&ccedil;&atilde;o?'	,'Confirma&ccedil;&atilde;o - UPPGTO','importarArquivoTed("' + cddopcao + '")','return false','sim.gif','nao.gif'); return false; 
+} // fim P500
 
 function importarArquivo(cddopcao){
 
@@ -767,6 +905,39 @@ function importarArquivo(cddopcao){
 
 }
 
+// P500 - Mouts - Anderson Schloegel
+function importarArquivoTed(cddopcao){
+
+	//alert( 'teste importarArquivoTed');
+	// Link para o action do formulario
+	var action = UrlSite + 'telas/uppgto/upload_ted.php';
+    var frmEnvia = $('#'+frmArquivoTed);
+
+	// Incluir o campo de login para validação (campo necessario para validar sessao)
+    $('#sidlogin', frmEnvia).remove(); 
+	$('#cddopcao', frmEnvia).remove();
+	$('#flglimpa', frmEnvia).remove(); 
+	$('#nudconta', frmEnvia).remove(); 
+	
+	$(frmEnvia).append('<input type="hidden" id="sidlogin" name="sidlogin" />'); 	
+	$(frmEnvia).append('<input type="hidden" id="cddopcao" name="cddopcao" value="' + cddopcao + '" />');	
+	$(frmEnvia).append('<input type="hidden" id="flglimpa" name="flglimpa" value="0" />'); 
+	$(frmEnvia).append('<input type="hidden" id="nudconta" name="nudconta" value="' + normalizaNumero($('#nrdconta', frmEnvia).val()) + '" />');		
+	
+	// Seta o valor conforme id do menu
+	$('#sidlogin',frmEnvia).val( $('#sidlogin','#frmMenu').val() ); 
+		
+	// Configuro o formulário para posteriormente submete-lo
+	$(frmEnvia).attr('method','post');
+	$(frmEnvia).attr('action',action);		
+	$(frmEnvia).attr("target",'frameBlank');			
+	
+	//console.log('dados do form: ', frmEnvia);
+
+	$(frmEnvia).submit();
+
+}
+
 function sucessoOpcaoT(){	
 	hideMsgAguardo();	
 	estadoInicial();
@@ -778,6 +949,27 @@ function criticaOpcaoT(tabela){
 	$('#divtbcriticas').html(tabela);
 	
 	formataTabelaCriticas();
+}
+
+function sucessoOpcaoE(){
+	hideMsgAguardo();	
+	estadoInicial();
+	showError('inform','Arquivo importado com sucesso.','Alerta - Ayllos','',false);
+
+}
+
+function criticaOpcaoE(tabela){	
+	hideMsgAguardo();	
+	$('#divtbcriticasted').html(tabela);
+	formataTabelaCriticasTed();
+}
+
+function criticaOpcaoE2(tabela){	
+	hideMsgAguardo();	
+	//alert('criticaOpcaoE2');
+	$('#divtbremessasted').html(tabela);
+	// alert(' teste bacon defumado');
+	formataTabelaCriticasTed2();
 }
 
 
@@ -941,6 +1133,63 @@ function formataTabelaCriticas(){
     return false;
 }
 
+// P500 - Mout's - Anderson Schloegel
+function formataTabelaCriticasTed(){
+    var divRegistro = $('#divtbcriticasted');
+    var tabela = $('table', divRegistro);
+    var linha = $('table > tbody > tr', divRegistro);
+
+    //$('table', divRegistro).css({'width':'100%'});
+
+	$('#divtbcriticasted').css({'display':'block'});
+    divRegistro.css({ 'height': '162px' });
+    divRegistro.css({ 'width' : '100%'  });
+
+    var ordemInicial = new Array();
+
+    var arrayLargura = new Array();
+
+    arrayLargura[0] = '40px';
+    
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'right';
+    arrayAlinha[1] = 'left';
+    
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+        
+    return false;
+}
+// fim P500
+
+// P500 - Mout's - Anderson Schloegel
+function formataTabelaCriticasTed2(){
+	//alert('formataTabela');
+    var divRegistro = $('#divtbremessasted');
+    var tabela = $('table', divRegistro);
+    var linha = $('table > tbody > tr', divRegistro);
+
+    //$('table', divRegistro).css({'width':'100%'});
+
+	$('#divtbremessasted').css({'display':'block'});
+    divRegistro.css({ 'height': '162px' });
+    divRegistro.css({ 'width' : '100%'  });
+
+    var ordemInicial = new Array();
+
+    var arrayLargura = new Array();
+
+    arrayLargura[0] = '40px';
+    
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'right';
+    arrayAlinha[1] = 'left';
+    
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+        
+    return false;
+}
+// fim P500
+
 function formataTabelaRemessas() {
 
     var divRegistro = $('div.divRegistros', '#divTabela');
@@ -1062,3 +1311,50 @@ function trocaBotao(botao) {
 function msgError(tipo,msg,callback){
 	showError(tipo,msg,"Alerta - Ayllos",callback);
 }
+
+
+// P500 - Mout's - Anderson Schloegel
+function downloadArquivoRemessaTed(nrseqarq, nomereme){
+
+	/*
+	*
+	* Faz o download do arquivo de remessas da tela E
+	*
+	*/
+
+	$.ajax({
+        type: "POST",
+        url: UrlSite + "telas/uppgto/busca_remessas_arquivo.php",
+        data: {
+            cddopcao: 'e',
+            nrseqarq: nrseqarq,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+        	console.log(' response error: ' , response);
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#nrdconta','#frmFiltro').focus();");
+        },
+        success: function (response) {
+
+			var filename = nomereme;
+
+			var blob = new Blob([response], {type: 'text/csv'});
+		    if(window.navigator.msSaveOrOpenBlob) {
+		        window.navigator.msSaveBlob(blob, filename);
+		    }
+		    else{
+		        var elem = window.document.createElement('a');
+		        elem.href = window.URL.createObjectURL(blob);
+		        elem.download = filename;        
+		        document.body.appendChild(elem);
+		        elem.click();        
+		        document.body.removeChild(elem);
+		    }
+
+
+        }
+
+    });
+
+} // fim P500
