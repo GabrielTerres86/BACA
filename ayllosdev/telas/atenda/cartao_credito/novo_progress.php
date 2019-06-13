@@ -26,6 +26,8 @@
  * 014: [26/08/2015] James					  : Remover o form da impressao.
  * 015: [09/10/2015] James					  : Desenvolvimento do projeto 126.
  * 016: [21/06/2016] Douglas         (CECRED) : Removido aspas simples dos parametros do campo Titularidade (Chamado 457339)
+ * 017: [18/03/2019] Anderson-Alan   (SUPERO) : Implementado tipo de envio do cartão - PJ429
+ * 018: [24/05/2019] Alcemir Jr.     (Ailos)  : Ajuste ao sair do campo CPF. (PRB0041678)
  */
 
 	session_start();
@@ -161,7 +163,7 @@
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
-	//$xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
 
 	echo "<!--  $xmlResult  -->";
@@ -184,6 +186,25 @@
 		exibirErro('error', $msgErro, 'Alerta - Ayllos', $funcaoAposErro);
 	}
 	$habilitarEdicaoEmpresaPlastico = (!empty($xmlObj->roottag->tags[0]->tags[0]->tags[0]->cdata) ? $xmlObj->roottag->tags[0]->tags[0]->tags[0]->cdata : "0");
+
+	// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	$coop_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
+	$pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
+
+	if ($coop_envia_cartao && !$pa_envia_cartao) {
+		echo "<script>showError('error', 'Nenhuma op&ccedil;&atilde;o de envio definida para o PA, por favor, entre em contato com a SEDE para que seja realizada a parametriza&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);') </script>";
+	} elseif ($coop_envia_cartao) {
+		echo '<script>novo_fluxo_envio = true;</script>';
+	}
 ?>
 
 <style>
@@ -353,10 +374,7 @@
 			<div id="limiteDiv">
 				<? if($tipo == "dbt"){?>
 				<select class='campo' id='vllimpro' name='vllimpro' disabled readonly>
-					<?php
-					//for ($i = 0; $i < count($cdLimite); $i++){
-						?><option value="0,00" ><?echo formataMoeda(0.00); ?></option>
-					<?php //} ?>
+					<option value="0,00" ><?echo formataMoeda(0.00); ?></option>
 				</select>
 				<?php
 				}else{
@@ -387,16 +405,20 @@
 						<option value='3'>Boleto</option>
 					</select>
 			<label for="tpenvcrd"><? echo utf8ToHtml('Envio:') ?></label>
-			<select class='campo' id='tpenvcrd' name='tpenvcrd'>
-						<option value='1' selected>Cooperativa</option>
-						<!--option value='0'>Cooperado</option      OPÇÃO RETIRADO TEMPORÁRIAMENTE, PARA QUE SEJA ENVIADO SEMPRE PARA A COOPERATIVA (RENATO - SUPERO)-->
+			<select class="campo" id="tpenvcrd" name="tpenvcrd">
+				<option <?php if ($pa_envia_cartao) { echo "selected"; } ?> value="0">Cooperado</option>
+				<option <?php if (!$pa_envia_cartao) { echo "selected"; } ?> value="1">Cooperativa</option>
 					</select>				
 			<br />
 		</fieldset>
 		
 		<div id="divBotoes" >
-			<input class="btnVoltar" type="image" src="<?echo $UrlImagens; ?>botoes/voltar.gif" onClick="opcaoNovo(1);return false;" />
-			<input type="image" id="btnsaveRequest" src="<?echo $UrlImagens; ?>botoes/prosseguir.gif" onClick="$('#nmtitcrd').click(); $('#nmextttl').click(); verificaEfetuaGravacao();return false;" />
+			<input type="button" class="botao btnVoltar" onclick="opcaoNovo(1);return false;" value="Voltar" />
+			<?php if ($coop_envia_cartao && !$pa_envia_cartao) { ?>
+			<input type="button" class="botao botaoDesativado" id="btnsaveRequest" onclick="return false;" value="Prosseguir" />
+			<?php } else { ?>
+			<input type="button" class="botao" id="btnsaveRequest" onclick="$('#nmtitcrd').click(); $('#nmextttl').click(); verificaEfetuaGravacao();return false;" value="Prosseguir" />
+			<?php } ?>
 			<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
 				cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
 				nrdcaixa="<?php echo $glbvars['nrdcaixa']; ?>" 
@@ -426,7 +448,6 @@
 
     </div>
 <script type="text/javascript">
-
 
 	function prosseguir(){
 		$('#nmtitcrd').click(); 
@@ -502,7 +523,11 @@
 				
 				carregarRepresentante("N",0,$(this).val());
 			} else {				
-				$("#dtnasccr","#frmNovoCartao").val("").prop("disabled",true).attr("class","campoTelaSemBorda");
+				if ($(this).val() == "") {
+				    $("#dtnasccr","#frmNovoCartao").val("").prop("disabled",false).attr("class","campo");
+				}else{
+					$("#dtnasccr","#frmNovoCartao").val("").prop("disabled",true).attr("class","campoTelaSemBorda");
+				}
 			}	
 			
 			return true;
