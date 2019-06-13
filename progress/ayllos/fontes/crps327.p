@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo        
-   Data    : Setembro/2002                   Ultima atualizacao: 04/06/2019
+   Data    : Setembro/2002                   Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -85,9 +85,8 @@
 	           24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
-            
-              04/06/2019 - P565.1-RF20 - Inclusao do histórico 2973-DEV.CH.DEP.
-                           (Fernanda Kelli de Oliveira - AMCom)
+
+
 ............................................................................. */
 
 DEF STREAM str_1.   /*  Para relatorio - 277        */
@@ -693,10 +692,9 @@ DO  i = 1 TO aux_contador:
                               DO:
                                   CASE crapdpb.cdhistor:
                                
-                                       WHEN 3    THEN aux_cdhistor = 24.
-                                       WHEN 4    THEN aux_cdhistor = 27.
-                                       WHEN 357  THEN aux_cdhistor = 657.
-                                       WHEN 2662 THEN aux_cdhistor = 2973. /*Se 2662 (DEPOSITO DE CHEQUES EM CUSTODIA) entao 2973(DEVOLUCAO DE CHEQUE ACOLHIDO EM DEPOSITO)*/
+                                       WHEN 3   THEN aux_cdhistor = 24.
+                                       WHEN 4   THEN aux_cdhistor = 27.
+                                       WHEN 357 THEN aux_cdhistor = 657.
                                        OTHERWISE     aux_cdhistor = 351.
                          
                                   END CASE.
