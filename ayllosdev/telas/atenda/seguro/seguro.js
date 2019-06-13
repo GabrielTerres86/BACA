@@ -62,6 +62,8 @@
 				  04/09/2018 - Alterado a impressão da proposta seguro prestamista PRJ 438 e incluído campo contrato 
 				  			   para o tipo seguro prestamista. PRJ 438 (Mateus Z - MoutS).
                   04/12/2018 - Retornar saldo devedor para valor do seguro prestamista - Paulo Martins - 438 Sprint 7
+
+				  13/06/2019 - Corrigido a entrada de caracteres especiais na entrada do nome do beneficiario (Tiago)
  * */
  
 //**************************************************
@@ -1738,6 +1740,10 @@ function carregaPropriedadesFormPrestVida(){
 		
     // Para evitar a digitação de caracteres especiais que ocasiona erro na recuperação através de XML
     $(ben+','+parent).bind("keyup", function () {
+	    this.value = removeCaracteresInvalidos(this.value);
+    });
+	
+    $(ben+','+parent).bind("blur", function () {
 	    this.value = removeCaracteresInvalidos(this.value);
     });
 	
