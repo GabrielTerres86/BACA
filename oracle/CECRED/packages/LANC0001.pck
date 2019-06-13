@@ -303,9 +303,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
   -- Alterado  : 04/12/2018 - Atendimento estória 12541 - Tratamento saldo deposito em cheque em conta em prejuizo
   --                          (Renato - AMcom - PRJ 450)
   --
+  --             03/06/2019 - Incluida validacao para nao atualizar/inserir CRAPLOT dos lotes removidos na primeira fase
+  --                          do projeto de remocao de lotes (Pagamentos, Transferencias, Poupanca Programada)
+  --                          Heitor (Mouts) - Projeto Revitalizacao (Remocao de Lotes)
+  --
   --             07/06/2019 - Incluído parâmetro pr_incrineg = 1 para crítica 717 retornada em casos de débitos em 
   --                          contas monitoradas. (Reinert)
----------------------------------------------------------------------------------------------------------------
+  ---------------------------------------------------------------------------------------------------------------
 
 -- Record para armazenar dados dos históricos para evitar consultas repetitivas
 TYPE typ_reg_historico IS RECORD (
@@ -555,7 +559,7 @@ DECLARE
     vr_nrseqdig       craplot.nrseqdig%TYPE;   -- Aramazena o valor do campo "nrseqdig" da CRAPLOT para referência na CRAPLCM
     vr_flgcredi       BOOLEAN;                 -- Flag indicadora para Crédito/Débito
     vr_inprejuz       BOOLEAN;                 -- Indicador de conta em prejuízo
---		vr_vlsldblq       tbblqj_monitora_ordem_bloq.vlsaldo%TYPE; -- Saldo bloqueado por BACENJUD (somente para Créditos)
+--    vr_vlsldblq       tbblqj_monitora_ordem_bloq.vlsaldo%TYPE; -- Saldo bloqueado por BACENJUD (somente para Créditos)
     vr_vltransf       NUMBER;                  -- Valor a transferir para Conta Transitória (somente para Créditos)
 
     vr_dsidenti       craplcm.dsidenti%type;
@@ -618,6 +622,7 @@ BEGIN
 
     -- Se deve processar internamente o lote (CRAPLOT)
     IF pr_inprolot = 1 THEN
+      if pr_nrdolote not in (7050,8383,8473,10104,10105,10115,11900,15900,23900) then
         IF vr_reg_historico.indebcre = 'C' THEN
           vr_flgcredi := TRUE;
         ELSE
@@ -655,6 +660,7 @@ BEGIN
 
         pr_tab_retorno.rowidlot := rw_craplot.rowid;
         pr_tab_retorno.progress_recid_lot := rw_craplot.progress_recid;
+      end if;
     END IF;
 
     --Trata caractere inválido PRB0040625
@@ -751,16 +757,16 @@ BEGIN
         vr_vltransf := pr_vllanmto;
 
         -- Processar bloqueio BACENJUD
---				vr_vlsldblq := fn_obtem_saldo_blq_bacenjud(pr_cdcooper
---				                                         , pr_nrdconta);
+--        vr_vlsldblq := fn_obtem_saldo_blq_bacenjud(pr_cdcooper
+--                                                 , pr_nrdconta);
 
---				IF vr_vlsldblq > 0 THEN
---					IF vr_vltransf > vr_vlsldblq THEN
---						vr_vltransf := vr_vltransf - vr_vlsldblq;
---					ELSE
---						vr_vltransf := 0;
---					END IF;
---			  END IF;
+--        IF vr_vlsldblq > 0 THEN
+--          IF vr_vltransf > vr_vlsldblq THEN
+--            vr_vltransf := vr_vltransf - vr_vlsldblq;
+--          ELSE
+--            vr_vltransf := 0;
+--          END IF;
+--        END IF;
 
         --> Verificar se for os historicos de desbloqueio
 --        IF pr_cdhistor IN (1404,1405) THEN
