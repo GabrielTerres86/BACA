@@ -352,13 +352,18 @@ end;
              20/02/2019 - Tratamento para Portabilidade Pós-Fixado
                           P298.2.2 - Pos Fixado - Luciano Kienolt - Supero                 
 
+             06/03/2019 - Permitir as mensagens SEL, SLB e RDC executarem com o processo rodando. 
+                          Jose Dill - Mouts  (INC0011395)    
 
              22/03/2019 - Alterado para tratar a devolução de TEC salário, via CRAPLCM. Este novo fluxo se faz 
                           necessário, pois a nova portabilidade de salário, com contas CRAPASS/CRAPLCM, utilizará
-                          o envio de valores como TEC. Projeto 485 - Portabilidade de salário (Renato Darosci - Supero)                                      
-                          
+                          o envio de valores como TEC. Projeto 485 - Portabilidade de salário (Renato Darosci - Supero)                   
+ 
              23/05/2019 - Aceitar mensagem PAG0142R2 para contas 10000003 e 20000006, agencia 100, finalidades 8 e 14.
                           (Lucas Afonso/Cechet)
+ 
+             07/06/2019 - Permitir processamento de mensagens LTR independente do processo batch da 
+			              AILOS (Diego).                        
  
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -8257,6 +8262,8 @@ END pc_trata_arquivo_cir0060;
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'LDL%' -- Sprint D
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SEL%' -- Sprint D          
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SLB%' -- Sprint D          
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'RDC%'         
+		  AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'LTR%'
           THEN
           -- Se o processo estiver rodando
           IF NOT fn_verifica_processo THEN
@@ -9826,6 +9833,10 @@ END pc_trata_arquivo_cir0060;
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SLC%'
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'CIR%' -- Sprint D 
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'LDL%' -- Sprint D           
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SEL%' 
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'RDC%'       
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SLB%'  
+		  AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'LTR%'
           AND NOT vr_aux_tagCABInf
           THEN
             IF NOT fn_verifica_processo THEN

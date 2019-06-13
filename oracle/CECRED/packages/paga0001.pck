@@ -1276,7 +1276,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                      ,pr_cdprograma     IN VARCHAR2 DEFAULT 'PAGA0001'
                                      ,pr_tpexecucao     IN NUMBER DEFAULT 0 -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
                                      ,pr_cdcriticidade  IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 2 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)                                      
-                                      ); 
+                                      );                                  
                                        
   /* Procedure para cancelar agendamentos pendentes apos termino do ciclo de pagamento dos agentamentos */
   PROCEDURE pc_PAGA0001_cancela_debitos (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -26730,6 +26730,9 @@ end;';
                    12/04/2019 - Incluir validação para setar parametros no processamento
                                 de transferencias de valores, relacionados à portabilidade
                                 de Salário ( Renato Darosci - Supero - P485)
+                                
+                   05/06/2019 - Ajuste para impedir que seja repassado o valor nulo como
+                                id da folha de pagamento (Renato Darosci - Supero)
      ..........................................................................*/
 
 
@@ -27282,7 +27285,7 @@ end;';
           -- Verificar se é um agendamento de portabilidade
           IF rw_craplau.dsorigem = 'PORTABILIDAD' THEN
             vr_idportab := 1;
-            vr_nrridlfp := rw_craplau.nrridlfp;
+            vr_nrridlfp := NVL(rw_craplau.nrridlfp,0);
             
             -- Buscar os dados no registro da portabilidade
             OPEN  cr_portab(pr_cdcooper
@@ -27349,7 +27352,7 @@ end;';
                                        ,pr_cdispbif => vr_cdispbif  --> ISPB Banco Favorecido=
 					                             ,pr_idagenda => 2
                                        ,pr_idportab => vr_idportab
-                                       ,pr_nrridlfp => vr_nrridlfp
+                                       ,pr_nrridlfp => NVL(vr_nrridlfp,0)
                                        -- saida        
                                        ,pr_dsprotoc => vr_dsprotoc  --> Retorna protocolo    
                                        ,pr_tab_protocolo_ted => vr_tab_protocolo_ted --> dados do protocolo
@@ -27682,7 +27685,7 @@ end;';
       -- Variaveis para verificao termino ciclo de pagamentos
       vr_flultexe INTEGER;
       vr_qtdexec  INTEGER;
-      
+    
       -- Envio de email
       vr_texto_email     varchar2(4000); 
       vr_endereco_email  crapprm.dsvlrprm%TYPE;
@@ -27994,6 +27997,6 @@ end;';
                                  );                      
     END;
   END pc_PAGA0001_cancela_debitos;     
-       
+
 END PAGA0001;
 /
