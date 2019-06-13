@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 06/09/2018 
+    Data    : Marco/07.                       Ultima atualizacao: 20/05/2019
     
     Dados referentes ao programa:
 
@@ -268,7 +268,13 @@
               07/12/2018 - Melhoria no processo de devoluções de cheques.
                            Alcemir Mout's (INC0022559).
 
-
+	          20/05/2019 - Ajuste para que, quando nao encontrar a conta de um registro de devolucao,
+			               o programa nao sera abortado. Sera encaminhando um e-mail para a equipe 
+						   de compensacao (Com copia para a  sustentacao) informando
+						   qual o cheque com problema e que a devolucao deve ser feita por carta
+						   (Adriano - PRB0041791).
+						   
+						   
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -573,7 +579,9 @@ PROCEDURE gera_lancamento:
 
     DEF VAR aux_verifloc AS INTEGER NO-UNDO.    
     DEFINE VARIABLE     aux_dscritic    AS CHAR                     NO-UNDO.
-
+	
+	DEF VAR h-b1wgen0011 AS HANDLE                                  NO-UNDO.
+	
     IF  NOT VALID-HANDLE(h-b1wgen0153) THEN
         RUN sistema/generico/procedures/b1wgen0153.p 
             PERSISTENT SET h-b1wgen0153.
@@ -589,900 +597,990 @@ PROCEDURE gera_lancamento:
             DO:
                 ASSIGN aux_flcraptco = FALSE.
                 
-        FIND FIRST crapass WHERE crapass.cdcooper = crapdev.cdcooper AND
-                                 crapass.nrdconta = crapdev.nrdconta
-                                 NO-LOCK NO-ERROR.
+				FIND FIRST crapass WHERE crapass.cdcooper = crapdev.cdcooper AND
+										 crapass.nrdconta = crapdev.nrdconta
+										 NO-LOCK NO-ERROR.
 
-        IF  NOT AVAILABLE crapass THEN
-            DO:
-                /* Tratamento para cheques migrados aonde o formulário do cheque 
-                   encontra-se na cooperativa antiga. */
-                FIND crabtco WHERE crabtco.cdcopant = crapdev.cdcooper AND
-                                   crabtco.nrctaant = crapdev.nrdctabb AND
-                                   crabtco.nrdconta = crapdev.nrdconta AND
-                                   crabtco.tpctatrf = 1                AND
-                                   crabtco.flgativo = TRUE
-                                   NO-LOCK NO-ERROR.
-                                  
-                IF  NOT AVAILABLE crabtco THEN
-                    DO:
-                glb_cdcritic = 251.
-                RUN fontes/critic.p. 
-                UNIX SILENT VALUE
-                         ("echo " + STRING(TIME,"HH:MM:SS") +
-                         " - " + glb_cdprogra + "' --> '"  +
-                         "Coop: "  + STRING(crapdev.cdcooper) +
-                         "Conta: " + STRING(crapdev.nrdconta,"zzzz,zz9,9") +
-                         glb_dscritic + 
-                         " >> log/proc_message.log").
+				IF  NOT AVAILABLE crapass THEN
+					DO:
+						/* Tratamento para cheques migrados aonde o formulário do cheque 
+						   encontra-se na cooperativa antiga. */
+						FIND crabtco WHERE crabtco.cdcopant = crapdev.cdcooper AND
+										   crabtco.nrctaant = crapdev.nrdctabb AND
+										   crabtco.nrdconta = crapdev.nrdconta AND
+										   crabtco.tpctatrf = 1                AND
+										   crabtco.flgativo = TRUE
+										   NO-LOCK NO-ERROR.
+										  
+						IF  NOT AVAILABLE crabtco THEN
+							DO:
+								glb_cdcritic = 251.
+								RUN fontes/critic.p. 
+								
+								IF NOT VALID-HANDLE(h-b1wgen0011) THEN
+									RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
+										
+								RUN enviar_email_completo IN h-b1wgen0011 (INPUT glb_cdcooper,
+																		   INPUT glb_cdprogra,
+																		   INPUT "cpd@ailos.coop.br",
+																		   INPUT "compe@ailos.coop.br,sustentacao@ailos.coop.br",
+																		   INPUT "CRPS264 - Devolucoes de cheque - Problemas no processo",
+																		   INPUT "",			
+																		   INPUT "",
+																		   INPUT "\nO programa crps264.p nao conseguiu efetuar a devolucao do cheque:"+											         
+																				 "\nCooperativa: " + STRING(crapdev.cdcooper) + "," + 	
+																				 "\nConta: " + STRING(crapdev.nrdconta,"zzzzzz,zz9,9") + "," +
+																				 "\nCheque: " + STRING(crapdev.nrcheque) +	"," +
+																				 "\nAlinea: " + STRING(crapdev.cdalinea) +	"," +
+																				 "\nMotivo: " + glb_dscritic +	"," +
+																				 "\n<b> Necessario efetuar a devolucao manualmente, atraves de carta.</b>" + 
+																				 "\n\n\n" + 
+																				 "<u>Dados tecnicos:</u> \n" + 
+																				 "NRDCONTA: " + string(crapdev.nrdconta)  + ",\n" + 
+																				 "NRDCTABB: " + string(crapdev.nrdctabb)  + ",\n" + 
+																				 "CDHISTOR: " + string(crapdev.cdhistor)  + ",\n" + 
+																				 "VLLANMTO: " + string(crapdev.vllanmto)  + ",\n" + 
+																				 "CDALINEA: " + string(crapdev.cdalinea)  + ",\n" + 
+																				 "INSITDEV: " + string(crapdev.insitdev)  + ",\n" + 
+																				 "CDBCCXLT: " + string(crapdev.cdbccxlt)  + ",\n" + 
+																				 "DTMVTOLT: " + string(crapdev.dtmvtolt)  + ",\n" + 
+																				 "CDOPERAD: " + string(crapdev.cdoperad)  + ",\n" + 
+																				 "NRDCTACR: " + string(crapdev.nrdctacr)  + ",\n" + 
+																				 "NRDOLOTE: " + string(crapdev.nrdolote)  + ",\n" + 
+																				 "CDBANCHQ: " + string(crapdev.cdbanchq)  + ",\n" + 
+																				 "CDPESQUI: " + string(crapdev.cdpesqui)  + ",\n" + 
+																				 "CDAGECHQ: " + string(crapdev.cdagechq)  + ",\n" + 
+																				 "CDCOOPER: " + string(crapdev.cdcooper)  + ",\n" + 
+																				 "NRCTACHQ: " + string(crapdev.nrctachq)  + ",\n" + 
+																				 "INDCTITG: " + string(crapdev.indctitg)  + ",\n" + 
+																				 "NRDCTITG: " + string(crapdev.nrdctitg)  + ",\n" + 
+																				 "INDEVARQ: " + string(crapdev.indevarq)  + ",\n" + 
+																				 "NRCHEQUE: " + string(crapdev.nrcheque)  + ",\n" + 
+																				 "CDBANDEP: " + string(crapdev.cdbandep)  + ",\n" + 
+																				 "CDAGEDEP: " + string(crapdev.cdagedep)  + ",\n" + 
+																				 "NRCTADEP: " + string(crapdev.nrctadep)  + ".\n", 
+																		   INPUT TRUE).
+								
+								ASSIGN glb_cdcritic = 0
+									   glb_dscritic = "".
+								
+								IF  VALID-HANDLE(h-b1wgen0011) THEN
+									DELETE OBJECT h-b1wgen0011.
 
-                IF  VALID-HANDLE(h-b1wgen0153) THEN
-                    DELETE OBJECT h-b1wgen0153.
+								/* Elimina o registro da crapdev.*/
+								DELETE crapdev.
+								 
+								NEXT.
+								
+							END.
+						ELSE
+							DO:
+								 ASSIGN aux_flcraptco = TRUE.
 
-                UNDO TRANS_1, RETURN "NOK".
-            END.
-                ELSE
-                    DO:
-                         ASSIGN aux_flcraptco = TRUE.
+								 FIND crapass WHERE crapass.cdcooper = crabtco.cdcopant 
+												AND crapass.nrdconta = crabtco.nrctaant
+												NO-LOCK NO-ERROR.
+								 
+								 IF  NOT AVAILABLE crapass THEN
+									 DO:
+										glb_cdcritic = 251.
+										RUN fontes/critic.p. 
+										
+										IF NOT VALID-HANDLE(h-b1wgen0011) THEN
+											RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
+												
+										RUN enviar_email_completo IN h-b1wgen0011 (INPUT glb_cdcooper,
+																				   INPUT glb_cdprogra,
+																				   INPUT "cpd@ailos.coop.br",
+																				   INPUT "compe@ailos.coop.br,sustentacao@ailos.coop.br",
+																				   INPUT "CRPS264 - Devolucoes de cheque - Problemas no processo",
+																				   INPUT "",			
+																				   INPUT "",
+																				   INPUT "\nO programa crps264.p nao conseguiu efetuar a devolucao do cheque:"+											         
+																						 "\nCooperativa: " + STRING(crapdev.cdcooper) +	"," +
+																						 "\nConta: " + STRING(crapdev.nrdconta,"zzzzzz,zz9,9") +	"," +
+																						 "\nCheque: " + STRING(crapdev.nrcheque) +	"," +
+																						 "\nAlinea: " + STRING(crapdev.cdalinea) +	"," +
+																						 "\nMotivo: " + glb_dscritic +	"," +
+																						 "\n<b> Necessario efetuar a devolucao manualmente, atraves de carta.</b>" + 
+																						 "\n\n\n" + 
+																						 "<u>Dados tecnicos:</u> \n" +  
+																						 "NRDCONTA: " + string(crapdev.nrdconta)  + ",\n" + 
+																						 "NRDCTABB: " + string(crapdev.nrdctabb)  + ",\n" + 
+																						 "CDHISTOR: " + string(crapdev.cdhistor)  + ",\n" + 
+																						 "VLLANMTO: " + string(crapdev.vllanmto)  + ",\n" + 
+																						 "CDALINEA: " + string(crapdev.cdalinea)  + ",\n" + 
+																						 "INSITDEV: " + string(crapdev.insitdev)  + ",\n" + 
+																						 "CDBCCXLT: " + string(crapdev.cdbccxlt)  + ",\n" + 
+																						 "DTMVTOLT: " + string(crapdev.dtmvtolt)  + ",\n" + 
+																						 "CDOPERAD: " + string(crapdev.cdoperad)  + ",\n" + 
+																						 "NRDCTACR: " + string(crapdev.nrdctacr)  + ",\n" + 
+																						 "NRDOLOTE: " + string(crapdev.nrdolote)  + ",\n" + 
+																						 "CDBANCHQ: " + string(crapdev.cdbanchq)  + ",\n" + 
+																						 "CDPESQUI: " + string(crapdev.cdpesqui)  + ",\n" + 
+																						 "CDAGECHQ: " + string(crapdev.cdagechq)  + ",\n" + 
+																						 "CDCOOPER: " + string(crapdev.cdcooper)  + ",\n" + 
+																						 "NRCTACHQ: " + string(crapdev.nrctachq)  + ",\n" + 
+																						 "INDCTITG: " + string(crapdev.indctitg)  + ",\n" + 
+																						 "NRDCTITG: " + string(crapdev.nrdctitg)  + ",\n" + 
+																						 "INDEVARQ: " + string(crapdev.indevarq)  + ",\n" + 
+																						 "NRCHEQUE: " + string(crapdev.nrcheque)  + ",\n" + 
+																						 "CDBANDEP: " + string(crapdev.cdbandep)  + ",\n" + 
+																						 "CDAGEDEP: " + string(crapdev.cdagedep)  + ",\n" + 
+																						 "NRCTADEP: " + string(crapdev.nrctadep)  + ".\n", 
+																				   INPUT TRUE).
+										
+										ASSIGN glb_cdcritic = 0
+										       glb_dscritic = "".
+										
+										IF  VALID-HANDLE(h-b1wgen0011) THEN
+										    DELETE OBJECT h-b1wgen0011.
+								
+										/* Elimina o registro da crapdev.*/
+										DELETE crapdev.
+										 
+										NEXT.
+										
+									 END.
+									 
+							END.
+							
+					END.
 
-                         FIND crapass WHERE crapass.cdcooper = crabtco.cdcopant 
-                                        AND crapass.nrdconta = crabtco.nrctaant
-                                        NO-LOCK NO-ERROR.
-                         
-                         IF  NOT AVAILABLE crapass THEN
-                             DO:
-                                 glb_cdcritic = 251.
-                                 RUN fontes/critic.p. 
-                                 UNIX SILENT VALUE
-                                          ("echo " + STRING(TIME,"HH:MM:SS") +
-                                          " - " + glb_cdprogra + "' --> '"  +
-                                          "Coop: "  + STRING(crapdev.cdcooper) +
-                                          "Conta: " + STRING(crapdev.nrdconta,"zzzz,zz9,9") +
-                                          glb_dscritic + 
-                                          " >> log/proc_message.log").
-                             
-                                 IF  VALID-HANDLE(h-b1wgen0153) THEN
-                                     DELETE OBJECT h-b1wgen0153.
-                             
-                                 UNDO TRANS_1, RETURN "NOK".
-                             END.
-                    END.
-            END.
+				ASSIGN glb_cdcritic = 0    
+					   glb_inrestar = 0
+					   aux_nrdconta_tco = 0
+					   aux_cdagectl = 0
+					   aux_cdcopant = 0.
+					
+				IF  crapdev.cdpesqui = "TCO" THEN
+					DO:
+						FIND craptco WHERE craptco.cdcopant = p-cdcooper       AND
+										   craptco.nrctaant = crapdev.nrdconta AND
+										   craptco.tpctatrf = 1                AND
+										   craptco.flgativo = TRUE
+										   NO-LOCK NO-ERROR.
+												
+						IF   AVAILABLE craptco THEN
+							 ASSIGN aux_cdcooper = craptco.cdcooper
+									aux_nrdconta = craptco.nrdconta
+									aux_nrctalcm = craptco.nrdconta.
+						ELSE
+							 ASSIGN aux_cdcooper = p-cdcooper
+									aux_nrdconta = crapdev.nrdconta
+									aux_nrctalcm = crapdev.nrdctabb.
+					END.
+				ELSE
+				DO:
+					IF  aux_flcraptco THEN
+						ASSIGN aux_cdcooper = crabtco.cdcooper
+							   aux_nrdconta = crapdev.nrdconta
+							   aux_nrctalcm = crapdev.nrdconta.
+					ELSE
+					ASSIGN aux_cdcooper = p-cdcooper
+						   aux_nrdconta = crapdev.nrdconta
+						   aux_nrctalcm = crapdev.nrdctabb.
 
-        ASSIGN glb_cdcritic = 0    
-               glb_inrestar = 0
-               aux_nrdconta_tco = 0
-               aux_cdagectl = 0
-               aux_cdcopant = 0.
-            
-        IF  crapdev.cdpesqui = "TCO" THEN
-            DO:
-                FIND craptco WHERE craptco.cdcopant = p-cdcooper       AND
-                                   craptco.nrctaant = crapdev.nrdconta AND
-                                   craptco.tpctatrf = 1                AND
-                                   craptco.flgativo = TRUE
-                                   NO-LOCK NO-ERROR.
-                                        
-                IF   AVAILABLE craptco THEN
-                     ASSIGN aux_cdcooper = craptco.cdcooper
-                            aux_nrdconta = craptco.nrdconta
-                            aux_nrctalcm = craptco.nrdconta.
-                ELSE
-                     ASSIGN aux_cdcooper = p-cdcooper
-                            aux_nrdconta = crapdev.nrdconta
-                            aux_nrctalcm = crapdev.nrdctabb.
-            END.
-        ELSE
-        DO:
-            IF  aux_flcraptco THEN
-                ASSIGN aux_cdcooper = crabtco.cdcooper
-                       aux_nrdconta = crapdev.nrdconta
-                       aux_nrctalcm = crapdev.nrdconta.
-            ELSE
-            ASSIGN aux_cdcooper = p-cdcooper
-                   aux_nrdconta = crapdev.nrdconta
-                   aux_nrctalcm = crapdev.nrdctabb.
+					/* VIACON - Se for conta migrada das cooperativas 4 ou 15 devera
+					tratar aux_nrctalcm para receber a nova conta. O campo
+					crapdev.nrdctabb contem o numero da conta cheque */ 
+					IF  p-cdcooper = 1  OR    /* Viacredi    */
+						p-cdcooper = 13 OR    /* Scrcred     */
+						p-cdcooper = 9  THEN  /* Transulcred */ DO:
 
-            /* VIACON - Se for conta migrada das cooperativas 4 ou 15 devera
-            tratar aux_nrctalcm para receber a nova conta. O campo
-            crapdev.nrdctabb contem o numero da conta cheque */ 
-            IF  p-cdcooper = 1  OR    /* Viacredi    */
-                p-cdcooper = 13 OR    /* Scrcred     */
-                p-cdcooper = 9  THEN  /* Transulcred */ DO:
+						RUN verifica_incorporacao(INPUT  p-cdcooper,
+												  INPUT  crapdev.nrdconta,
+												  INPUT  crapdev.nrcheque,
+												  OUTPUT aux_cdcopant,
+												  OUTPUT aux_nrdconta_tco,
+												  OUTPUT aux_cdagectl).
 
-                RUN verifica_incorporacao(INPUT  p-cdcooper,
-                                          INPUT  crapdev.nrdconta,
-                                          INPUT  crapdev.nrcheque,
-                                          OUTPUT aux_cdcopant,
-                                          OUTPUT aux_nrdconta_tco,
-                                          OUTPUT aux_cdagectl).
+						/* Se aux_nrdconta_tco > 0 eh incorporacao */
+						IF aux_nrdconta_tco > 0 THEN
+							ASSIGN aux_nrctalcm = crapdev.nrdconta. 
+					   
+					END.
+						
+				END.
 
-                /* Se aux_nrdconta_tco > 0 eh incorporacao */
-                IF aux_nrdconta_tco > 0 THEN
-                    ASSIGN aux_nrctalcm = crapdev.nrdconta. 
-               
-            END.
-                
-        END.
+						
+						
+				IF  crapass.inpessoa = 1 THEN
+					DO:
+						ASSIGN aux_cdtarifa = "DEVOLCHQPF" 
+							   aux_cdtarbac = "DEVCHQBCPF". 
+					END.
+				  
+				ELSE
+					DO:
+						ASSIGN aux_cdtarifa = "DEVOLCHQPJ" 
+							   aux_cdtarbac = "DEVCHQBCPJ". 
+					END.
+					
+				IF  aux_cdtarifa = "DEVOLCHQPF" OR aux_cdtarifa = "DEVOLCHQPJ" THEN
+					DO:
+						RUN carrega_dados_tarifa_vigente IN h-b1wgen0153
+														(INPUT  p-cdcooper,
+														 INPUT  aux_cdtarifa,
+														 INPUT  1, 
+														 INPUT  glb_cdprogra,
+														 OUTPUT aux_cdhistor,
+														 OUTPUT aux_cdhisest,
+														 OUTPUT aux_vltarifa,
+														 OUTPUT aux_dtdivulg,
+														 OUTPUT aux_dtvigenc,
+														 OUTPUT aux_cdfvlcop,
+														 OUTPUT TABLE tt-erro).
+						
+						IF  RETURN-VALUE = "NOK"  THEN
+							DO:                                              
+							   FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-                
-                
-        IF  crapass.inpessoa = 1 THEN
-            DO:
-                ASSIGN aux_cdtarifa = "DEVOLCHQPF" 
-                       aux_cdtarbac = "DEVCHQBCPF". 
-            END.
-          
-        ELSE
-            DO:
-                ASSIGN aux_cdtarifa = "DEVOLCHQPJ" 
-                       aux_cdtarbac = "DEVCHQBCPJ". 
-            END.
-            
-        IF  aux_cdtarifa = "DEVOLCHQPF" OR aux_cdtarifa = "DEVOLCHQPJ" THEN
-            DO:
-                RUN carrega_dados_tarifa_vigente IN h-b1wgen0153
-                                                (INPUT  p-cdcooper,
-                                                 INPUT  aux_cdtarifa,
-                                                 INPUT  1, 
-                                                 INPUT  glb_cdprogra,
-                                                 OUTPUT aux_cdhistor,
-                                                 OUTPUT aux_cdhisest,
-                                                 OUTPUT aux_vltarifa,
-                                                 OUTPUT aux_dtdivulg,
-                                                 OUTPUT aux_dtvigenc,
-                                                 OUTPUT aux_cdfvlcop,
-                                                 OUTPUT TABLE tt-erro).
-                
-                IF  RETURN-VALUE = "NOK"  THEN
-                    DO:                                              
-                       FIND FIRST tt-erro NO-LOCK NO-ERROR.
+							   IF AVAIL tt-erro THEN  
+								  UNIX SILENT VALUE("echo " + 
+									   STRING(TIME,"HH:MM:SS") +
+									   " - " + glb_cdprogra + "' --> '"
+									   + tt-erro.dscritic +  
+									   " >> log/proc_message.log").   
 
-                       IF AVAIL tt-erro THEN  
-                          UNIX SILENT VALUE("echo " + 
-                               STRING(TIME,"HH:MM:SS") +
-                               " - " + glb_cdprogra + "' --> '"
-                               + tt-erro.dscritic +  
-                               " >> log/proc_message.log").   
+							   IF  VALID-HANDLE(h-b1wgen0153) THEN
+								   DELETE OBJECT h-b1wgen0153.
+				
+							   UNDO TRANS_1, RETURN "NOK".
+							END.
+						
+					END.
+				
+				/* BUSCA INFORMACOES TAXA BACEN*/
+				IF  aux_cdtarbac = "DEVCHQBCPJ" OR aux_cdtarbac = "DEVCHQBCPF" THEN
+					DO:
+						RUN carrega_dados_tarifa_vigente IN h-b1wgen0153
+														(INPUT  p-cdcooper,
+														 INPUT  aux_cdtarbac,
+														 INPUT  1, 
+														 INPUT  glb_cdprogra,
+														 OUTPUT aux_cdhisbac,
+														 OUTPUT aux_cdhisest,
+														 OUTPUT aux_vltarbac,
+														 OUTPUT aux_dtdivulg,
+														 OUTPUT aux_dtvigenc,
+														 OUTPUT aux_cdfvlbac,
+														 OUTPUT TABLE tt-erro).
+						
+						IF  RETURN-VALUE = "NOK"  THEN
+							DO:
+								FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-                       IF  VALID-HANDLE(h-b1wgen0153) THEN
-                           DELETE OBJECT h-b1wgen0153.
-        
-                       UNDO TRANS_1, RETURN "NOK".
-                    END.
-                
-            END.
-        
-        /* BUSCA INFORMACOES TAXA BACEN*/
-        IF  aux_cdtarbac = "DEVCHQBCPJ" OR aux_cdtarbac = "DEVCHQBCPF" THEN
-            DO:
-                RUN carrega_dados_tarifa_vigente IN h-b1wgen0153
-                                                (INPUT  p-cdcooper,
-                                                 INPUT  aux_cdtarbac,
-                                                 INPUT  1, 
-                                                 INPUT  glb_cdprogra,
-                                                 OUTPUT aux_cdhisbac,
-                                                 OUTPUT aux_cdhisest,
-                                                 OUTPUT aux_vltarbac,
-                                                 OUTPUT aux_dtdivulg,
-                                                 OUTPUT aux_dtvigenc,
-                                                 OUTPUT aux_cdfvlbac,
-                                                 OUTPUT TABLE tt-erro).
-                
-                IF  RETURN-VALUE = "NOK"  THEN
-                    DO:
-                        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+								IF AVAIL tt-erro THEN 
+								   UNIX SILENT VALUE("echo " + 
+										STRING(TIME,"HH:MM:SS") +
+										" - " + glb_cdprogra + "' --> '"
+										+ tt-erro.dscritic +  
+										" >> log/proc_message.log").   
+							   
+							   IF  VALID-HANDLE(h-b1wgen0153) THEN
+								   DELETE OBJECT h-b1wgen0153.
+				
+							   UNDO TRANS_1, RETURN "NOK".
+							END.
+						
+					END.
+					   
+				CASE p-cddevolu:
 
-                        IF AVAIL tt-erro THEN 
-                           UNIX SILENT VALUE("echo " + 
-                                STRING(TIME,"HH:MM:SS") +
-                                " - " + glb_cdprogra + "' --> '"
-                                + tt-erro.dscritic +  
-                                " >> log/proc_message.log").   
-                       
-                       IF  VALID-HANDLE(h-b1wgen0153) THEN
-                           DELETE OBJECT h-b1wgen0153.
-        
-                       UNDO TRANS_1, RETURN "NOK".
-                    END.
-                
-            END.
-               
-        CASE p-cddevolu:
+					/*  BANCOOB  */
+					WHEN 1 THEN  IF   crapdev.cdbanchq <> 756 THEN
+									  NEXT.
 
-            /*  BANCOOB  */
-            WHEN 1 THEN  IF   crapdev.cdbanchq <> 756 THEN
-                              NEXT.
+					/*  CONTA BASE  */
+					WHEN 2 THEN DO:
+									IF   crapdev.cdbanchq <> 1  THEN
+										 NEXT.
 
-            /*  CONTA BASE  */
-            WHEN 2 THEN DO:
-                            IF   crapdev.cdbanchq <> 1  THEN
-                                 NEXT.
+									ASSIGN aux_ctpsqitg = crapdev.nrdctabb.
+					 
+									RUN existe_conta_integracao.
+									
+									IF   aux_nrdctitg <> ""   THEN
+										 NEXT.
+								END.
+									
+					/*  CONTA INTEGRACAO  */
+					WHEN 3 THEN DO:
+									IF   crapdev.cdbanchq <> 1  THEN
+										 NEXT.
 
-                            ASSIGN aux_ctpsqitg = crapdev.nrdctabb.
-             
-                            RUN existe_conta_integracao.
-                            
-                            IF   aux_nrdctitg <> ""   THEN
-                                 NEXT.
-                        END.
-                            
-            /*  CONTA INTEGRACAO  */
-            WHEN 3 THEN DO:
-                            IF   crapdev.cdbanchq <> 1  THEN
-                                 NEXT.
+									ASSIGN aux_ctpsqitg =
+													f_ver_contaitg(crapdev.nrdctitg).
 
-                            ASSIGN aux_ctpsqitg =
-                                            f_ver_contaitg(crapdev.nrdctitg).
+									RUN existe_conta_integracao.
+									
+									IF   aux_nrdctitg = ""   THEN
+										 NEXT.
+								END.                
 
-                            RUN existe_conta_integracao.
-                            
-                            IF   aux_nrdctitg = ""   THEN
-                                 NEXT.
-                        END.                
+					/*  CECRED */
+					WHEN 5 OR WHEN 6 THEN DO:
+									
+							IF   crapdev.cdbanchq <> crapcop.cdbcoctl THEN
+								NEXT.
 
-            /*  CECRED */
-            WHEN 5 OR WHEN 6 THEN DO:
-                            
-                    IF   crapdev.cdbanchq <> crapcop.cdbcoctl THEN
-                        NEXT.
+					END.
 
-            END.
+				END CASE.
 
-        END CASE.
+				/* Historicos que indicam cheque devolvido */
+				IF   CAN-DO("47,191,338,573",STRING(crapdev.cdhistor))  THEN
+					 DO:
+						 glb_nrcalcul = 
+								  INT(SUBSTR(STRING(crapdev.nrcheque,"9999999"),1,6)).
 
-        /* Historicos que indicam cheque devolvido */
-        IF   CAN-DO("47,191,338,573",STRING(crapdev.cdhistor))  THEN
-             DO:
-                 glb_nrcalcul = 
-                          INT(SUBSTR(STRING(crapdev.nrcheque,"9999999"),1,6)).
+						 DO WHILE TRUE:
 
-                 DO WHILE TRUE:
+							FIND crapfdc WHERE crapfdc.cdcooper = p-cdcooper        AND
+											   crapfdc.cdbanchq = crapdev.cdbanchq  AND
+											   crapfdc.cdagechq = crapdev.cdagechq  AND
+											   crapfdc.nrctachq = crapdev.nrctachq  AND
+											   crapfdc.nrcheque = INT(glb_nrcalcul)
+											   USE-INDEX crapfdc1
+											   EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
-                    FIND crapfdc WHERE crapfdc.cdcooper = p-cdcooper        AND
-                                       crapfdc.cdbanchq = crapdev.cdbanchq  AND
-                                       crapfdc.cdagechq = crapdev.cdagechq  AND
-                                       crapfdc.nrctachq = crapdev.nrctachq  AND
-                                       crapfdc.nrcheque = INT(glb_nrcalcul)
-                                       USE-INDEX crapfdc1
-                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+							IF   NOT AVAILABLE crapfdc   THEN
+								 IF  LOCKED crapfdc   THEN
+									  DO:
+										  PAUSE 1 NO-MESSAGE.
+										  NEXT.
+									  END.
+								 ELSE
+									  DO:
+										  glb_cdcritic = 268. 
+										  LEAVE.
+									  END.
+								 
+							LEAVE.
 
-                    IF   NOT AVAILABLE crapfdc   THEN
-                         IF  LOCKED crapfdc   THEN
-                              DO:
-                                  PAUSE 1 NO-MESSAGE.
-                                  NEXT.
-                              END.
-                         ELSE
-                              DO:
-                                  glb_cdcritic = 268. 
-                                  LEAVE.
-                              END.
-                         
-                    LEAVE.
+						 END.  /*  Fim do DO WHILE TRUE  */
 
-                 END.  /*  Fim do DO WHILE TRUE  */
+						 IF   glb_cdcritic > 0   THEN
+							  DO:
+								  RUN fontes/critic.p.
+								  UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+													" - " + glb_cdprogra + "' --> '"  +
+													glb_dscritic +
+													"COOP: " + STRING(crapdev.cdcooper) +
+													"CTA: " + STRING(crapdev.nrdconta) +
+													"CBS: " + STRING(crapdev.nrdctabb) +
+													"DOC: " + STRING(crapdev.nrcheque) +
+													" >> log/proc_message.log").
+								  
+								  IF  VALID-HANDLE(h-b1wgen0153) THEN
+									  DELETE OBJECT h-b1wgen0153. 
 
-                 IF   glb_cdcritic > 0   THEN
-                      DO:
-                          RUN fontes/critic.p.
-                          UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                            " - " + glb_cdprogra + "' --> '"  +
-                                            glb_dscritic +
-                                            "COOP: " + STRING(crapdev.cdcooper) +
-                                            "CTA: " + STRING(crapdev.nrdconta) +
-                                            "CBS: " + STRING(crapdev.nrdctabb) +
-                                            "DOC: " + STRING(crapdev.nrcheque) +
-                                            " >> log/proc_message.log").
-                          
-                          IF  VALID-HANDLE(h-b1wgen0153) THEN
-                              DELETE OBJECT h-b1wgen0153. 
+								  UNDO TRANS_1, RETURN "NOK".
+							  END.
 
-                          UNDO TRANS_1, RETURN "NOK".
-                      END.
+						 /*  Leitura do lote de devolucao de cheque  */
+						 DO WHILE TRUE:
 
-                 /*  Leitura do lote de devolucao de cheque  */
-                 DO WHILE TRUE:
+							IF   p-cddevolu = 1 THEN       /*  BANCOOB  */
+								 FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
+													craplot.dtmvtolt = glb_dtmvtolt AND
+													craplot.cdagenci = aux_cdagenci AND
+													craplot.cdbccxlt = aux_cdbccxlt AND
+													craplot.nrdolote = 10110
+													EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+							ELSE
+							IF   p-cddevolu = 2 THEN       /*  CONTA BASE  */
+								 FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
+													craplot.dtmvtolt = glb_dtmvtolt AND
+													craplot.cdagenci = aux_cdagenci AND
+													craplot.cdbccxlt = aux_cdbccxlt AND
+													craplot.nrdolote = 8451
+													EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+							ELSE
+							IF   p-cddevolu = 3 THEN       /*  CONTA INTEGRACAO  */
+								 FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
+													craplot.dtmvtolt = glb_dtmvtolt AND
+													craplot.cdagenci = aux_cdagenci AND
+													craplot.cdbccxlt = aux_cdbccxlt AND
+													craplot.nrdolote = 10109
+													EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+							ELSE
+							IF   p-cddevolu = 5 OR
+								 p-cddevolu = 6 THEN       /*  CECRED  */
+								 FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
+													craplot.dtmvtolt = glb_dtmvtolt AND
+													craplot.cdagenci = aux_cdagenci AND
+													craplot.cdbccxlt = aux_cdbccxlt AND
+													craplot.nrdolote = 10117
+													EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
-                    IF   p-cddevolu = 1 THEN       /*  BANCOOB  */
-                         FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
-                                            craplot.dtmvtolt = glb_dtmvtolt AND
-                                            craplot.cdagenci = aux_cdagenci AND
-                                            craplot.cdbccxlt = aux_cdbccxlt AND
-                                            craplot.nrdolote = 10110
-                                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                    ELSE
-                    IF   p-cddevolu = 2 THEN       /*  CONTA BASE  */
-                         FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
-                                            craplot.dtmvtolt = glb_dtmvtolt AND
-                                            craplot.cdagenci = aux_cdagenci AND
-                                            craplot.cdbccxlt = aux_cdbccxlt AND
-                                            craplot.nrdolote = 8451
-                                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                    ELSE
-                    IF   p-cddevolu = 3 THEN       /*  CONTA INTEGRACAO  */
-                         FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
-                                            craplot.dtmvtolt = glb_dtmvtolt AND
-                                            craplot.cdagenci = aux_cdagenci AND
-                                            craplot.cdbccxlt = aux_cdbccxlt AND
-                                            craplot.nrdolote = 10109
-                                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                    ELSE
-                    IF   p-cddevolu = 5 OR
-                         p-cddevolu = 6 THEN       /*  CECRED  */
-                         FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
-                                            craplot.dtmvtolt = glb_dtmvtolt AND
-                                            craplot.cdagenci = aux_cdagenci AND
-                                            craplot.cdbccxlt = aux_cdbccxlt AND
-                                            craplot.nrdolote = 10117
-                                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+							IF   NOT AVAILABLE craplot   THEN
+								 IF   LOCKED craplot   THEN
+									  DO:
+										  PAUSE 1 NO-MESSAGE.
+										  NEXT.
+									  END.
+								 ELSE
+									  DO:
+										  CREATE craplot.
+										  ASSIGN craplot.dtmvtolt = glb_dtmvtolt
+												 craplot.cdagenci = aux_cdagenci
+												 craplot.cdbccxlt = aux_cdbccxlt
+												 craplot.tplotmov = 1
+												 craplot.cdcooper = aux_cdcooper.
 
-                    IF   NOT AVAILABLE craplot   THEN
-                         IF   LOCKED craplot   THEN
-                              DO:
-                                  PAUSE 1 NO-MESSAGE.
-                                  NEXT.
-                              END.
-                         ELSE
-                              DO:
-                                  CREATE craplot.
-                                  ASSIGN craplot.dtmvtolt = glb_dtmvtolt
-                                         craplot.cdagenci = aux_cdagenci
-                                         craplot.cdbccxlt = aux_cdbccxlt
-                                         craplot.tplotmov = 1
-                                         craplot.cdcooper = aux_cdcooper.
+										  CASE p-cddevolu:
+											  WHEN 1 THEN craplot.nrdolote = 10110.
+											  WHEN 2 THEN craplot.nrdolote = 8451.
+											  WHEN 3 THEN craplot.nrdolote = 10109.
+											  WHEN 5 OR WHEN 6 THEN 
+														  craplot.nrdolote = 10117.
+										  END CASE.
+									  END.
+							LEAVE.
+						 END.  /*  Fim do DO WHILE TRUE  */
 
-                                  CASE p-cddevolu:
-                                      WHEN 1 THEN craplot.nrdolote = 10110.
-                                      WHEN 2 THEN craplot.nrdolote = 8451.
-                                      WHEN 3 THEN craplot.nrdolote = 10109.
-                                      WHEN 5 OR WHEN 6 THEN 
-                                                  craplot.nrdolote = 10117.
-                                  END CASE.
-                              END.
-                    LEAVE.
-                 END.  /*  Fim do DO WHILE TRUE  */
+						 /* FIND na craplcm deve ser feito na cooperativa atual com a 
+							conta nova. Como o registro crapdev de conta MIGRADA eh 
+							alimentado com a conta antiga(crapdev.nrdctabb), e antes
+							estava utilizando crapdev.nrdctabb independente de conta
+							migrada, poderia encontrar um lancamento em outra conta 
+							da VIACREDI, com o mesmo numero da conta antiga na ACREDI, 
+							e nao faria esta devolucao */ 
 
-                 /* FIND na craplcm deve ser feito na cooperativa atual com a 
-                    conta nova. Como o registro crapdev de conta MIGRADA eh 
-                    alimentado com a conta antiga(crapdev.nrdctabb), e antes
-                    estava utilizando crapdev.nrdctabb independente de conta
-                    migrada, poderia encontrar um lancamento em outra conta 
-                    da VIACREDI, com o mesmo numero da conta antiga na ACREDI, 
-                    e nao faria esta devolucao */ 
+						 DO aux_verifloc = 1 TO 10:
+															  
+							/* VIACON - aux_nrctalcm deve conter a nova conta se for conta incorporada  */ 
+							FIND craplcm WHERE craplcm.cdcooper = aux_cdcooper     AND
+											   craplcm.dtmvtolt = craplot.dtmvtolt AND
+											   craplcm.cdagenci = craplot.cdagenci AND
+											   craplcm.cdbccxlt = craplot.cdbccxlt AND
+											   craplcm.nrdolote = craplot.nrdolote AND
+											   craplcm.nrdctabb = aux_nrctalcm     AND
+											   craplcm.nrdocmto = crapdev.nrcheque  
+											   EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+											   
+							IF   NOT AVAIL craplcm THEN
+								 DO:
+									 IF   LOCKED craplcm THEN
+										  DO:
+											  glb_cdcritic = 77.
+											  PAUSE 1 NO-MESSAGE.
+											  NEXT.
+										  END.
+									 ELSE
+										  DO: 
+											  glb_cdcritic = 0.
+											  LEAVE.
+										  END.
+								 END.
+							ELSE
+								 DO:
+									 glb_cdcritic = 92.
+									 LEAVE.
+								 END.
+						 END.
 
-                 DO aux_verifloc = 1 TO 10:
-                                                      
-                    /* VIACON - aux_nrctalcm deve conter a nova conta se for conta incorporada  */ 
-                    FIND craplcm WHERE craplcm.cdcooper = aux_cdcooper     AND
-                                       craplcm.dtmvtolt = craplot.dtmvtolt AND
-                                       craplcm.cdagenci = craplot.cdagenci AND
-                                       craplcm.cdbccxlt = craplot.cdbccxlt AND
-                                       craplcm.nrdolote = craplot.nrdolote AND
-                                       craplcm.nrdctabb = aux_nrctalcm     AND
-                                       craplcm.nrdocmto = crapdev.nrcheque  
-                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                                       
-                    IF   NOT AVAIL craplcm THEN
-                         DO:
-                             IF   LOCKED craplcm THEN
-                                  DO:
-                                      glb_cdcritic = 77.
-                                      PAUSE 1 NO-MESSAGE.
-                                      NEXT.
-                                  END.
-                             ELSE
-                                  DO: 
-                                      glb_cdcritic = 0.
-                                      LEAVE.
-                                  END.
-                         END.
-                    ELSE
-                         DO:
-                             glb_cdcritic = 92.
-                             LEAVE.
-                         END.
-                 END.
+						 IF   glb_cdcritic <> 0 THEN
+							  DO:
+								  RUN fontes/critic.p.
+								  PAUSE(2) NO-MESSAGE.
+								  UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+													" - " + glb_cdprogra + "' --> '"  +
+													glb_dscritic +
+													" Coop: " + STRING(aux_cdcooper) + 
+													" Data: " + STRING(craplot.dtmvtolt) +
+													" Lote: " + STRING(craplot.nrdolote) + 
+													" CTA: " + STRING(aux_nrctalcm) +
+													" CBS: " + STRING(crapdev.nrdctabb) +
+													" DOC: " + STRING(crapdev.nrcheque) +
+													" >> log/proc_message.log").
 
-                 IF   glb_cdcritic <> 0 THEN
-                      DO:
-                          RUN fontes/critic.p.
-                          PAUSE(2) NO-MESSAGE.
-                          UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                            " - " + glb_cdprogra + "' --> '"  +
-                                            glb_dscritic +
-                                            " Coop: " + STRING(aux_cdcooper) + 
-                                            " Data: " + STRING(craplot.dtmvtolt) +
-                                            " Lote: " + STRING(craplot.nrdolote) + 
-                                            " CTA: " + STRING(aux_nrctalcm) +
-                                            " CBS: " + STRING(crapdev.nrdctabb) +
-                                            " DOC: " + STRING(crapdev.nrcheque) +
-                                            " >> log/proc_message.log").
+								  glb_cdcritic = 0.
 
-                          glb_cdcritic = 0.
+								  IF  VALID-HANDLE(h-b1wgen0153) THEN
+									  DELETE OBJECT h-b1wgen0153.
 
-                          IF  VALID-HANDLE(h-b1wgen0153) THEN
-                              DELETE OBJECT h-b1wgen0153.
+								  UNDO, RETURN "NOK".
+							  END.
+													 
+						 /* VIACON - cria lancamento na coop atual */
 
-                          UNDO, RETURN "NOK".
-                      END.
-                                             
-                 /* VIACON - cria lancamento na coop atual */
+						 CREATE craplcm.
+						 ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
+								craplcm.cdagenci = craplot.cdagenci
+								craplcm.cdbccxlt = craplot.cdbccxlt
+								craplcm.nrdolote = craplot.nrdolote
+								craplcm.nrdconta = aux_nrdconta
+								craplcm.nrdctabb = aux_nrctalcm
+								craplcm.nrdocmto = crapdev.nrcheque
+								craplcm.cdhistor = crapdev.cdhistor
+								craplcm.nrseqdig = craplot.nrseqdig + 1
+								craplcm.vllanmto = crapdev.vllanmto
+								craplcm.cdoperad = crapdev.cdoperad
+								craplcm.cdpesqbb = IF   crapdev.cdalinea <> 0 THEN
+														STRING(crapdev.cdalinea)
+												   ELSE "21"
+								craplcm.cdcooper = aux_cdcooper
+								craplcm.cdbanchq = crapdev.cdbanchq
+								craplcm.cdagechq = crapdev.cdagechq
+								craplcm.nrctachq = crapdev.nrctachq
+								
+								craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
+								craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
+								craplot.qtinfoln = craplot.qtinfoln + 1
+								craplot.qtcompln = craplot.qtcompln + 1
+								craplot.nrseqdig = craplot.nrseqdig + 1
 
-                 CREATE craplcm.
-                 ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                        craplcm.cdagenci = craplot.cdagenci
-                        craplcm.cdbccxlt = craplot.cdbccxlt
-                        craplcm.nrdolote = craplot.nrdolote
-                        craplcm.nrdconta = aux_nrdconta
-                        craplcm.nrdctabb = aux_nrctalcm
-                        craplcm.nrdocmto = crapdev.nrcheque
-                        craplcm.cdhistor = crapdev.cdhistor
-                        craplcm.nrseqdig = craplot.nrseqdig + 1
-                        craplcm.vllanmto = crapdev.vllanmto
-                        craplcm.cdoperad = crapdev.cdoperad
-                        craplcm.cdpesqbb = IF   crapdev.cdalinea <> 0 THEN
-                                                STRING(crapdev.cdalinea)
-                                           ELSE "21"
-                        craplcm.cdcooper = aux_cdcooper
-                        craplcm.cdbanchq = crapdev.cdbanchq
-                        craplcm.cdagechq = crapdev.cdagechq
-                        craplcm.nrctachq = crapdev.nrctachq
-                        
-                        craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
-                        craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
-                        craplot.qtinfoln = craplot.qtinfoln + 1
-                        craplot.qtcompln = craplot.qtcompln + 1
-                        craplot.nrseqdig = craplot.nrseqdig + 1
+								crapfdc.incheque = crapfdc.incheque - 5
+								crapfdc.dtliqchq = ?
+								crapfdc.vlcheque = 0
+								crapfdc.vldoipmf = 0 NO-ERROR.
 
-                        crapfdc.incheque = crapfdc.incheque - 5
-                        crapfdc.dtliqchq = ?
-                        crapfdc.vlcheque = 0
-                        crapfdc.vldoipmf = 0 NO-ERROR.
+						 VALIDATE craplot.
 
-                 VALIDATE craplot.
+						 IF   crapfdc.cdbantic <> 0 THEN
+							  ASSIGN crapfdc.cdbantic = 0
+									 crapfdc.cdagetic = 0
+									 crapfdc.nrctatic = 0
+									 crapfdc.dtlibtic = ?
+									 crapfdc.dtatutic = ?.
 
-                 IF   crapfdc.cdbantic <> 0 THEN
-                      ASSIGN crapfdc.cdbantic = 0
-                             crapfdc.cdagetic = 0
-                             crapfdc.nrctatic = 0
-                             crapfdc.dtlibtic = ?
-                             crapfdc.dtatutic = ?.
-
-                 IF   p-cddevolu = 2  OR   /* Conta Base */
-                      p-cddevolu = 3  THEN /* Conta Integracao */
-                      craplcm.nrdctitg = crapdev.nrdctitg.
-                 ELSE     
-                      craplcm.nrdctitg = "".
+						 IF   p-cddevolu = 2  OR   /* Conta Base */
+							  p-cddevolu = 3  THEN /* Conta Integracao */
+							  craplcm.nrdctitg = crapdev.nrdctitg.
+						 ELSE     
+							  craplcm.nrdctitg = "".
 
 
-                 IF   p-cddevolu = 5 OR p-cddevolu = 6 THEN
-                      DO:
-                          ASSIGN craplcm.nrdctitg = "".
-                          
-                          /* Atribui Valor para Alinea na GNCPCHQ */
-                          FIND LAST gncpchq WHERE 
-                                       gncpchq.cdcooper = aux_cdcooper     AND
-                                       gncpchq.dtmvtolt = crapfdc.dtliqchq AND
-                                       gncpchq.cdbanchq = crapfdc.cdbanchq AND
-                                       gncpchq.cdagechq = crapdev.cdagechq AND
-                                       gncpchq.nrctachq = crapdev.nrctachq AND
-                                       gncpchq.nrcheque = INT(crapdev.nrcheque)
-                                       AND
-                                      (gncpchq.cdtipreg = 3                OR
-                                       gncpchq.cdtipreg = 4)               AND
-                                       gncpchq.vlcheque = crapdev.vllanmto
-                                       USE-INDEX gncpchq1 EXCLUSIVE-LOCK
-                                       NO-ERROR.
+						 IF   p-cddevolu = 5 OR p-cddevolu = 6 THEN
+							  DO:
+								  ASSIGN craplcm.nrdctitg = "".
+								  
+								  /* Atribui Valor para Alinea na GNCPCHQ */
+								  FIND LAST gncpchq WHERE 
+											   gncpchq.cdcooper = aux_cdcooper     AND
+											   gncpchq.dtmvtolt = crapfdc.dtliqchq AND
+											   gncpchq.cdbanchq = crapfdc.cdbanchq AND
+											   gncpchq.cdagechq = crapdev.cdagechq AND
+											   gncpchq.nrctachq = crapdev.nrctachq AND
+											   gncpchq.nrcheque = INT(crapdev.nrcheque)
+											   AND
+											  (gncpchq.cdtipreg = 3                OR
+											   gncpchq.cdtipreg = 4)               AND
+											   gncpchq.vlcheque = crapdev.vllanmto
+											   USE-INDEX gncpchq1 EXCLUSIVE-LOCK
+											   NO-ERROR.
 
-                          IF    AVAILABLE gncpchq THEN
-                                DO:
-                                    IF   crapdev.cdalinea <> 0 THEN
-                                         gncpchq.cdalinea = crapdev.cdalinea.
-                                    ELSE 
-                                         gncpchq.cdalinea = 21.
-                                END.
-                                
-                          IF    p-cddevolu = 5 THEN  /* 1a devolucao - 13:30* */
-                                DO:
-                                    crapdev.indevarq = 2.   /* Envia */
-                                END.
-                          ELSE /* 2a devolucao – 19:00 – Sessao de Prevencao a Fraudes e Impedimentos*/
-                               /* Somente alineas 20, 21, 24, 25, 28, 30, 35 e 70 */
-                               /* Na segunda Devolucao envia todos com o 
-                                  indicador = 1, para saber quem ja foi env. */
-                               crapdev.indevarq = 1.  /* Envia */
-                               
-                          craplcm.dsidenti = STRING(crapdev.indevarq,"9").
-                      END.
-                 ELSE
-                      craplcm.dsidenti = "2".
+								  IF    AVAILABLE gncpchq THEN
+										DO:
+											IF   crapdev.cdalinea <> 0 THEN
+												 gncpchq.cdalinea = crapdev.cdalinea.
+											ELSE 
+												 gncpchq.cdalinea = 21.
+										END.
+										
+								  IF    p-cddevolu = 5 THEN  /* 1a devolucao - 13:30* */
+										DO:
+											crapdev.indevarq = 2.   /* Envia */
+										END.
+								  ELSE /* 2a devolucao – 19:00 – Sessao de Prevencao a Fraudes e Impedimentos*/
+									   /* Somente alineas 20, 21, 24, 25, 28, 30, 35 e 70 */
+									   /* Na segunda Devolucao envia todos com o 
+										  indicador = 1, para saber quem ja foi env. */
+									   crapdev.indevarq = 1.  /* Envia */
+									   
+								  craplcm.dsidenti = STRING(crapdev.indevarq,"9").
+							  END.
+						 ELSE
+							  craplcm.dsidenti = "2".
 
-                VALIDATE craplcm.
-                        
-             END.
-        ELSE             /*  taxa de devolucao de cheque  */
-        IF   crapdev.cdhistor = 46  AND
-             crapass.inpessoa <> 3 THEN
-             DO:
-               IF (aux_cdtarifa = "DEVOLCHQPF"  OR 
-                   aux_cdtarifa = "DEVOLCHQPJ") AND 
-                   aux_vltarifa > 0             THEN
-                   DO:
+						VALIDATE craplcm.
+								
+					 END.
+				ELSE             /*  taxa de devolucao de cheque  */
+				IF   crapdev.cdhistor = 46  AND
+					 crapass.inpessoa <> 3 THEN
+					 DO:
+					   IF (aux_cdtarifa = "DEVOLCHQPF"  OR 
+						   aux_cdtarifa = "DEVOLCHQPJ") AND 
+						   aux_vltarifa > 0             THEN
+						   DO:
 
-                        RUN cria_lan_auto_tarifa IN h-b1wgen0153
-                                                (INPUT aux_cdcooper,
-                                                 INPUT aux_nrdconta, 
-                                                 INPUT glb_dtmvtolt,
-                                                 INPUT aux_cdhistor, 
-                                                 INPUT aux_vltarifa,
-                                                 INPUT crapdev.cdoperad,
-                                                 INPUT 1, /*cdagenci*/
-                                                 INPUT 100, /* par_cdbccxlt */
-                                                 INPUT 8452, /*par_nrdolote */
-                                                 INPUT 1,   /* par_tpdolote */
-                                                 INPUT crapdev.nrcheque,
-                                                 INPUT crapdev.nrdctabb,
-                                                 INPUT crapdev.nrdctitg,
-                                                 INPUT "Fato gerador tarifa:" + STRING(crapdev.nrcheque),  /*par_cdpesqbb*/
-                                                 INPUT crapdev.cdbanchq,   
-                                                 INPUT crapdev.cdagechq,   
-                                                 INPUT crapdev.nrctachq,   
-                                                 INPUT FALSE, /*par_flgaviso*/
-                                                 INPUT 0,  /*par_tpaviso*/
-                                                 INPUT aux_cdfvlcop,
-                                                 INPUT glb_inproces,
-                                                 OUTPUT TABLE tt-erro).
-                                              
-                        IF  RETURN-VALUE = "NOK"  THEN
-                            DO:
-                               FIND FIRST tt-erro NO-LOCK NO-ERROR.
+								RUN cria_lan_auto_tarifa IN h-b1wgen0153
+														(INPUT aux_cdcooper,
+														 INPUT aux_nrdconta, 
+														 INPUT glb_dtmvtolt,
+														 INPUT aux_cdhistor, 
+														 INPUT aux_vltarifa,
+														 INPUT crapdev.cdoperad,
+														 INPUT 1, /*cdagenci*/
+														 INPUT 100, /* par_cdbccxlt */
+														 INPUT 8452, /*par_nrdolote */
+														 INPUT 1,   /* par_tpdolote */
+														 INPUT crapdev.nrcheque,
+														 INPUT crapdev.nrdctabb,
+														 INPUT crapdev.nrdctitg,
+														 INPUT "Fato gerador tarifa:" + STRING(crapdev.nrcheque),  /*par_cdpesqbb*/
+														 INPUT crapdev.cdbanchq,   
+														 INPUT crapdev.cdagechq,   
+														 INPUT crapdev.nrctachq,   
+														 INPUT FALSE, /*par_flgaviso*/
+														 INPUT 0,  /*par_tpaviso*/
+														 INPUT aux_cdfvlcop,
+														 INPUT glb_inproces,
+														 OUTPUT TABLE tt-erro).
+													  
+								IF  RETURN-VALUE = "NOK"  THEN
+									DO:
+									   FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-                               IF AVAIL tt-erro THEN  
-                                  UNIX SILENT VALUE("echo " + 
-                                       STRING(TIME,"HH:MM:SS") +
-                                       " - " + glb_cdprogra + "' --> '"
-                                       + tt-erro.dscritic +  
-                                       " >> log/proc_message.log").     
+									   IF AVAIL tt-erro THEN  
+										  UNIX SILENT VALUE("echo " + 
+											   STRING(TIME,"HH:MM:SS") +
+											   " - " + glb_cdprogra + "' --> '"
+											   + tt-erro.dscritic +  
+											   " >> log/proc_message.log").     
 
-                               IF  VALID-HANDLE(h-b1wgen0153) THEN
-                                   DELETE OBJECT h-b1wgen0153.
+									   IF  VALID-HANDLE(h-b1wgen0153) THEN
+										   DELETE OBJECT h-b1wgen0153.
 
-                               UNDO TRANS_1, RETURN "NOK".
-                           END.
-                   END.
+									   UNDO TRANS_1, RETURN "NOK".
+								   END.
+						   END.
 
-               /*cria lancamento para tarifa dev cheque- Taxa BACEN*/     
-               IF (aux_cdtarbac = "DEVCHQBCPJ"  OR 
-                   aux_cdtarbac = "DEVCHQBCPF") AND 
-                   aux_vltarbac > 0             THEN
-                   DO:
+					   /*cria lancamento para tarifa dev cheque- Taxa BACEN*/     
+					   IF (aux_cdtarbac = "DEVCHQBCPJ"  OR 
+						   aux_cdtarbac = "DEVCHQBCPF") AND 
+						   aux_vltarbac > 0             THEN
+						   DO:
 
-                       RUN cria_lan_auto_tarifa IN h-b1wgen0153
-                                               (INPUT aux_cdcooper,
-                                                INPUT aux_nrdconta, 
-                                                INPUT glb_dtmvtolt,
-                                                INPUT aux_cdhisbac, 
-                                                INPUT aux_vltarbac,
-                                                INPUT crapdev.cdoperad,
-                                                INPUT 1, /*cdagenci*/
-                                                INPUT 100, /* par_cdbccxlt */
-                                                INPUT 8452, /*par_nrdolote */
-                                                INPUT 1,   /* par_tpdolote */
-                                                INPUT 0, /*nrdocmto*/
-                                                INPUT crapdev.nrdctabb,
-                                                INPUT crapdev.nrdctitg,
-                                                INPUT "Fato gerador tarifa:" + STRING(crapdev.nrcheque),  /*par_cdpesqbb*/
-                                                INPUT crapdev.cdbanchq,   
-                                                INPUT crapdev.cdagechq,   
-                                                INPUT crapdev.nrctachq,   
-                                                INPUT FALSE, /*par_flgaviso*/
-                                                INPUT 0,  /*par_tpaviso*/
-                                                INPUT aux_cdfvlbac,
-                                                INPUT glb_inproces,
-                                                OUTPUT TABLE tt-erro).
-                                             
-                       IF  RETURN-VALUE = "NOK"  THEN
-                           DO:
-                              FIND FIRST tt-erro NO-LOCK NO-ERROR.
+							   RUN cria_lan_auto_tarifa IN h-b1wgen0153
+													   (INPUT aux_cdcooper,
+														INPUT aux_nrdconta, 
+														INPUT glb_dtmvtolt,
+														INPUT aux_cdhisbac, 
+														INPUT aux_vltarbac,
+														INPUT crapdev.cdoperad,
+														INPUT 1, /*cdagenci*/
+														INPUT 100, /* par_cdbccxlt */
+														INPUT 8452, /*par_nrdolote */
+														INPUT 1,   /* par_tpdolote */
+														INPUT 0, /*nrdocmto*/
+														INPUT crapdev.nrdctabb,
+														INPUT crapdev.nrdctitg,
+														INPUT "Fato gerador tarifa:" + STRING(crapdev.nrcheque),  /*par_cdpesqbb*/
+														INPUT crapdev.cdbanchq,   
+														INPUT crapdev.cdagechq,   
+														INPUT crapdev.nrctachq,   
+														INPUT FALSE, /*par_flgaviso*/
+														INPUT 0,  /*par_tpaviso*/
+														INPUT aux_cdfvlbac,
+														INPUT glb_inproces,
+														OUTPUT TABLE tt-erro).
+													 
+							   IF  RETURN-VALUE = "NOK"  THEN
+								   DO:
+									  FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-                              IF AVAIL tt-erro THEN 
-                                 UNIX SILENT VALUE("echo " + 
-                                      STRING(TIME,"HH:MM:SS") +
-                                      " - " + glb_cdprogra + "' --> '"
-                                      + tt-erro.dscritic +  
-                                      " >> log/proc_message.log").    
+									  IF AVAIL tt-erro THEN 
+										 UNIX SILENT VALUE("echo " + 
+											  STRING(TIME,"HH:MM:SS") +
+											  " - " + glb_cdprogra + "' --> '"
+											  + tt-erro.dscritic +  
+											  " >> log/proc_message.log").    
 
-                              IF  VALID-HANDLE(h-b1wgen0153) THEN
-                                  DELETE OBJECT h-b1wgen0153.
-                            
-                              UNDO TRANS_1, RETURN "NOK".
-                          END.
-                   END. /*fim do if taxa bacen*/
-                     END. /* Fim do historico 46 */
+									  IF  VALID-HANDLE(h-b1wgen0153) THEN
+										  DELETE OBJECT h-b1wgen0153.
+									
+									  UNDO TRANS_1, RETURN "NOK".
+								  END.
+						   END. /*fim do if taxa bacen*/
+							 END. /* Fim do historico 46 */
 
-        ASSIGN crapdev.insitdev = 1 /* 1 = devolvido */
-               crapdev.indctitg = IF   p-cddevolu = 3 THEN  /*  CONTA ITG  */
-                                       TRUE
-                                  ELSE FALSE.
-                                  
-                /* iremos verificar se registro criado na craplcm anteriormente é historico 47, 
-                   caso seja devmos criar outro com o 399 - DEVOLUCAO DE CHEQUE DESCONTADO */
-                IF  crapdev.cdhistor = 47 AND 
-                   (p-cddevolu = 5 OR p-cddevolu = 6) THEN
-                    DO:                     
-                       
-                       FIND CURRENT craplot NO-LOCK NO-ERROR.                        
-                       RELEASE craplot.
-                       
-                       /* Desconto */
-                       FOR LAST crapcdb FIELDS(cdcooper nrdconta nrcheque cdbanchq cdagechq nrctachq insitchq) 
-                                         WHERE crapcdb.cdcooper = aux_cdcooper
-                                           AND crapcdb.cdcmpchq = crapfdc.cdcmpchq
-                                           AND crapcdb.cdbanchq = crapfdc.cdbanchq
-                                           AND crapcdb.cdagechq = crapfdc.cdagechq                                          
-                                           AND crapcdb.nrctachq = crapfdc.nrctachq
-                                           AND crapcdb.nrcheque = crapfdc.nrcheque
-                                           AND CAN-DO("0,2",STRING(crapcdb.insitchq))
-                                           AND NOT CAN-DO("0,2",STRING(crapcdb.insitana)) /* Inclusao Paulo Martins - Mouts (SCTASK0018345)*/
-                                           AND crapcdb.dtdevolu = ?
-                                           EXCLUSIVE-LOCK:
-                       END.                        
-                       
-                       IF  AVAILABLE crapcdb THEN          
-                           DO:                               
-                               /* criar lancamento com o historico 399 e historico 10119 */
-                               DO  WHILE TRUE:
-                        
-                                   FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
-                                                      craplot.dtmvtolt = glb_dtmvtolt AND
-                                                      craplot.cdagenci = aux_cdagenci AND
-                                                      craplot.cdbccxlt = aux_cdbccxlt AND
-                                                      craplot.nrdolote = 10119
-                                                      EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+				ASSIGN crapdev.insitdev = 1 /* 1 = devolvido */
+					   crapdev.indctitg = IF   p-cddevolu = 3 THEN  /*  CONTA ITG  */
+											   TRUE
+										  ELSE FALSE.
+										  
+						/* iremos verificar se registro criado na craplcm anteriormente é historico 47, 
+						   caso seja devmos criar outro com o 399 - DEVOLUCAO DE CHEQUE DESCONTADO */
+						IF  crapdev.cdhistor = 47 AND 
+						   (p-cddevolu = 5 OR p-cddevolu = 6) THEN
+							DO:                     
+							   
+							   FIND CURRENT craplot NO-LOCK NO-ERROR.                        
+							   RELEASE craplot.
+							   
+							   /* Desconto */
+							   FOR LAST crapcdb FIELDS(cdcooper nrdconta nrcheque cdbanchq cdagechq nrctachq insitchq) 
+												 WHERE crapcdb.cdcooper = aux_cdcooper
+												   AND crapcdb.cdcmpchq = crapfdc.cdcmpchq
+												   AND crapcdb.cdbanchq = crapfdc.cdbanchq
+												   AND crapcdb.cdagechq = crapfdc.cdagechq                                          
+												   AND crapcdb.nrctachq = crapfdc.nrctachq
+												   AND crapcdb.nrcheque = crapfdc.nrcheque
+												   AND CAN-DO("0,2",STRING(crapcdb.insitchq))
+												   AND NOT CAN-DO("0,2",STRING(crapcdb.insitana)) /* Inclusao Paulo Martins - Mouts (SCTASK0018345)*/
+												   AND crapcdb.dtdevolu = ?
+												   EXCLUSIVE-LOCK:
+							   END.                        
+							   
+							   IF  AVAILABLE crapcdb THEN          
+								   DO:                               
+									   /* criar lancamento com o historico 399 e historico 10119 */
+									   DO  WHILE TRUE:
+								
+										   FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
+															  craplot.dtmvtolt = glb_dtmvtolt AND
+															  craplot.cdagenci = aux_cdagenci AND
+															  craplot.cdbccxlt = aux_cdbccxlt AND
+															  craplot.nrdolote = 10119
+															  EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
-                                   IF   NOT AVAILABLE craplot   THEN
-                                        IF   LOCKED craplot   THEN
-                                             DO:
-                                                 PAUSE 1 NO-MESSAGE.
-                                                 NEXT.
-                                             END.
-                                        ELSE
-                                             DO:
-                                                 CREATE craplot.
-                                                 ASSIGN craplot.dtmvtolt = glb_dtmvtolt
-                                                        craplot.cdagenci = aux_cdagenci
-                                                        craplot.cdbccxlt = aux_cdbccxlt
-                                                        craplot.tplotmov = 1
-                                                        craplot.cdcooper = aux_cdcooper
-                                                        craplot.nrdolote = 10119.                                                 
-                                             END.                   
-                                  LEAVE.
-                               END.
-                               
-                               DO aux_verifloc = 1 TO 10:
-                                                              
-                                  /* VIACON - aux_nrctalcm deve conter a nova conta se for conta incorporada  */ 
-                                  FIND craplcm WHERE craplcm.cdcooper = aux_cdcooper     AND
-                                                     craplcm.dtmvtolt = craplot.dtmvtolt AND
-                                                     craplcm.cdagenci = craplot.cdagenci AND
-                                                     craplcm.cdbccxlt = craplot.cdbccxlt AND
-                                                     craplcm.nrdolote = craplot.nrdolote AND
-                                                     craplcm.nrdctabb = aux_nrctalcm     AND
-                                                     craplcm.nrdocmto = crapcdb.nrcheque  
-                                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                                                     
-                                  IF   NOT AVAIL craplcm THEN
-                                       DO:
-                                           IF   LOCKED craplcm THEN
-                                                DO:
-                                                    glb_cdcritic = 77.
-                                                    PAUSE 1 NO-MESSAGE.
-                                                    NEXT.
-                                                END.
-                                           ELSE
-                                                DO: 
-                                                    glb_cdcritic = 0.
-                                                    LEAVE.
-                                                END.
-                                       END.
-                                  ELSE
-                                       DO:
-                                           glb_cdcritic = 92.
-                                           LEAVE.
-                                       END.
-                               END.
+										   IF   NOT AVAILABLE craplot   THEN
+												IF   LOCKED craplot   THEN
+													 DO:
+														 PAUSE 1 NO-MESSAGE.
+														 NEXT.
+													 END.
+												ELSE
+													 DO:
+														 CREATE craplot.
+														 ASSIGN craplot.dtmvtolt = glb_dtmvtolt
+																craplot.cdagenci = aux_cdagenci
+																craplot.cdbccxlt = aux_cdbccxlt
+																craplot.tplotmov = 1
+																craplot.cdcooper = aux_cdcooper
+																craplot.nrdolote = 10119.                                                 
+													 END.                   
+										  LEAVE.
+									   END.
+									   
+									   DO aux_verifloc = 1 TO 10:
+																	  
+										  /* VIACON - aux_nrctalcm deve conter a nova conta se for conta incorporada  */ 
+										  FIND craplcm WHERE craplcm.cdcooper = aux_cdcooper     AND
+															 craplcm.dtmvtolt = craplot.dtmvtolt AND
+															 craplcm.cdagenci = craplot.cdagenci AND
+															 craplcm.cdbccxlt = craplot.cdbccxlt AND
+															 craplcm.nrdolote = craplot.nrdolote AND
+															 craplcm.nrdctabb = aux_nrctalcm     AND
+															 craplcm.nrdocmto = crapcdb.nrcheque  
+															 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+															 
+										  IF   NOT AVAIL craplcm THEN
+											   DO:
+												   IF   LOCKED craplcm THEN
+														DO:
+															glb_cdcritic = 77.
+															PAUSE 1 NO-MESSAGE.
+															NEXT.
+														END.
+												   ELSE
+														DO: 
+															glb_cdcritic = 0.
+															LEAVE.
+														END.
+											   END.
+										  ELSE
+											   DO:
+												   glb_cdcritic = 92.
+												   LEAVE.
+											   END.
+									   END.
 
-                               IF   glb_cdcritic <> 0 THEN
-                                    DO:
-                                        RUN fontes/critic.p.
-                                        PAUSE(2) NO-MESSAGE.
-                                        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                                          " - " + glb_cdprogra + "' --> '"  +
-                                                          glb_dscritic +
-                                                          " Coop: " + STRING(aux_cdcooper) + 
-                                                          " Data: " + STRING(craplot.dtmvtolt) +
-                                                          " Lote: " + STRING(craplot.nrdolote) + 
-                                                          " CTA: " + STRING(aux_nrctalcm) +
-                                                          " CBS: " + STRING(crapdev.nrdctabb) +
-                                                          " DOC: " + STRING(crapdev.nrcheque) +
-                                                          " >> log/proc_message.log").
+									   IF   glb_cdcritic <> 0 THEN
+											DO:
+												RUN fontes/critic.p.
+												PAUSE(2) NO-MESSAGE.
+												UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+																  " - " + glb_cdprogra + "' --> '"  +
+																  glb_dscritic +
+																  " Coop: " + STRING(aux_cdcooper) + 
+																  " Data: " + STRING(craplot.dtmvtolt) +
+																  " Lote: " + STRING(craplot.nrdolote) + 
+																  " CTA: " + STRING(aux_nrctalcm) +
+																  " CBS: " + STRING(crapdev.nrdctabb) +
+																  " DOC: " + STRING(crapdev.nrcheque) +
+																  " >> log/proc_message.log").
 
-                                        glb_cdcritic = 0.
+												glb_cdcritic = 0.
 
-                                        UNDO, RETURN "NOK".
-                               END.
-                               
-                               CREATE craplcm.
-                               ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                                      craplcm.cdagenci = craplot.cdagenci
-                                      craplcm.cdbccxlt = craplot.cdbccxlt
-                                      craplcm.nrdolote = craplot.nrdolote
-                                      craplcm.nrdconta = crapcdb.nrdconta
-                                      craplcm.nrdctabb = aux_nrctalcm
-                                      craplcm.nrdocmto = crapcdb.nrcheque
-                                      craplcm.cdhistor = 399
-                                      craplcm.nrseqdig = craplot.nrseqdig + 1
-                                      craplcm.vllanmto = crapdev.vllanmto
-                                      craplcm.cdoperad = crapdev.cdoperad
-                                      craplcm.cdpesqbb = IF   crapdev.cdalinea <> 0 THEN
-                                                              STRING(crapdev.cdalinea)
-                                                         ELSE "21"
-                                      craplcm.cdcooper = crapcdb.cdcooper
-                                      craplcm.cdbanchq = crapcdb.cdbanchq
-                                      craplcm.cdagechq = crapcdb.cdagechq
-                                      craplcm.nrctachq = crapcdb.nrctachq
-                                      craplcm.hrtransa = TIME
-                                      
-                                      craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
-                                      craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
-                                      craplot.qtinfoln = craplot.qtinfoln + 1
-                                      craplot.qtcompln = craplot.qtcompln + 1
-                                      craplot.nrseqdig = craplot.nrseqdig + 1 NO-ERROR.
+												UNDO, RETURN "NOK".
+									   END.
+									   
+									   CREATE craplcm.
+									   ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
+											  craplcm.cdagenci = craplot.cdagenci
+											  craplcm.cdbccxlt = craplot.cdbccxlt
+											  craplcm.nrdolote = craplot.nrdolote
+											  craplcm.nrdconta = crapcdb.nrdconta
+											  craplcm.nrdctabb = aux_nrctalcm
+											  craplcm.nrdocmto = crapcdb.nrcheque
+											  craplcm.cdhistor = 399
+											  craplcm.nrseqdig = craplot.nrseqdig + 1
+											  craplcm.vllanmto = crapdev.vllanmto
+											  craplcm.cdoperad = crapdev.cdoperad
+											  craplcm.cdpesqbb = IF   crapdev.cdalinea <> 0 THEN
+																	  STRING(crapdev.cdalinea)
+																 ELSE "21"
+											  craplcm.cdcooper = crapcdb.cdcooper
+											  craplcm.cdbanchq = crapcdb.cdbanchq
+											  craplcm.cdagechq = crapcdb.cdagechq
+											  craplcm.nrctachq = crapcdb.nrctachq
+											  craplcm.hrtransa = TIME
+											  
+											  craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
+											  craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
+											  craplot.qtinfoln = craplot.qtinfoln + 1
+											  craplot.qtcompln = craplot.qtcompln + 1
+											  craplot.nrseqdig = craplot.nrseqdig + 1 NO-ERROR.
 
-                               VALIDATE craplot.
-                               VALIDATE craplcm.
-                               
-                               ASSIGN crapcdb.insitchq = 3.  /* Devolvido */
-                           END.
-                       ELSE /* nao encontrou crapcdb */
-                           DO:
-                              /* Custodia */
-                              FOR LAST crapcst FIELDS(cdcooper nrdconta nrcheque cdbanchq cdagechq nrctachq insitchq) 
-                                                WHERE crapcst.cdcooper = aux_cdcooper
-                                                  AND crapcst.cdcmpchq = crapfdc.cdcmpchq
-                                                  AND crapcst.cdbanchq = crapfdc.cdbanchq
-                                                  AND crapcst.cdagechq = crapfdc.cdagechq
-                                                  AND crapcst.nrctachq = crapfdc.nrctachq
-                                                  AND crapcst.nrcheque = crapfdc.nrcheque
-                                                  AND CAN-DO("0,2",STRING(crapcst.insitchq))
-												  AND crapcst.dtdevolu = ?
-												  AND crapcst.nrborder = 0
-                                                  EXCLUSIVE-LOCK:
-                              END.
-                        
-                              IF  AVAILABLE crapcst THEN
-                                  DO:
-                                      /* criar lancamento com o historico 351 e lote 10119 */
-                                      DO  WHILE TRUE:
-                                
-                                          FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
-                                                             craplot.dtmvtolt = glb_dtmvtolt AND
-                                                             craplot.cdagenci = aux_cdagenci AND
-                                                             craplot.cdbccxlt = aux_cdbccxlt AND
-                                                             craplot.nrdolote = 10119
-                                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+									   VALIDATE craplot.
+									   VALIDATE craplcm.
+									   
+									   ASSIGN crapcdb.insitchq = 3.  /* Devolvido */
+								   END.
+							   ELSE /* nao encontrou crapcdb */
+								   DO:
+									  /* Custodia */
+									  FOR LAST crapcst FIELDS(cdcooper nrdconta nrcheque cdbanchq cdagechq nrctachq insitchq) 
+														WHERE crapcst.cdcooper = aux_cdcooper
+														  AND crapcst.cdcmpchq = crapfdc.cdcmpchq
+														  AND crapcst.cdbanchq = crapfdc.cdbanchq
+														  AND crapcst.cdagechq = crapfdc.cdagechq
+														  AND crapcst.nrctachq = crapfdc.nrctachq
+														  AND crapcst.nrcheque = crapfdc.nrcheque
+														  AND CAN-DO("0,2",STRING(crapcst.insitchq))
+														  AND crapcst.dtdevolu = ?
+														  AND crapcst.nrborder = 0
+														  EXCLUSIVE-LOCK:
+									  END.
+								
+									  IF  AVAILABLE crapcst THEN
+										  DO:
+											  /* criar lancamento com o historico 351 e lote 10119 */
+											  DO  WHILE TRUE:
+										
+												  FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
+																	 craplot.dtmvtolt = glb_dtmvtolt AND
+																	 craplot.cdagenci = aux_cdagenci AND
+																	 craplot.cdbccxlt = aux_cdbccxlt AND
+																	 craplot.nrdolote = 10119
+																	 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
-                                          IF   NOT AVAILABLE craplot   THEN
-                                               IF   LOCKED craplot   THEN
-                                                    DO:
-                                                        PAUSE 1 NO-MESSAGE.
-                                                        NEXT.
-                                                    END.
-                                               ELSE
-                                                    DO:
-                                                        CREATE craplot.
-                                                        ASSIGN craplot.dtmvtolt = glb_dtmvtolt
-                                                               craplot.cdagenci = aux_cdagenci
-                                                               craplot.cdbccxlt = aux_cdbccxlt
-                                                               craplot.tplotmov = 1
-                                                               craplot.cdcooper = aux_cdcooper
-                                                               craplot.nrdolote = 10119.                                                        
-                                                    END.                   
-                                         LEAVE.
-                                      END.
-                                      
-                                      DO  aux_verifloc = 1 TO 10:
-                                                              
-                                          /* VIACON - aux_nrctalcm deve conter a nova conta se for conta incorporada  */ 
-                                          FIND craplcm WHERE craplcm.cdcooper = aux_cdcooper     AND
-                                                             craplcm.dtmvtolt = craplot.dtmvtolt AND
-                                                             craplcm.cdagenci = craplot.cdagenci AND
-                                                             craplcm.cdbccxlt = craplot.cdbccxlt AND
-                                                             craplcm.nrdolote = craplot.nrdolote AND
-                                                             craplcm.nrdctabb = aux_nrctalcm     AND
-                                                             craplcm.nrdocmto = crapcst.nrcheque  
-                                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                                                             
-                                          IF   NOT AVAIL craplcm THEN
-                                               DO:
-                                                   IF   LOCKED craplcm THEN
-                                                        DO:
-                                                            glb_cdcritic = 77.
-                                                            PAUSE 1 NO-MESSAGE.
-                                                            NEXT.
-                                                        END.
-                                                   ELSE
-                                                        DO: 
-                                                            glb_cdcritic = 0.
-                                                            LEAVE.
-                                                        END.
-                                               END.
-                                          ELSE
-                                               DO:
-                                                   glb_cdcritic = 92.
-                                                   LEAVE.
-                                               END.
-                                       END.
+												  IF   NOT AVAILABLE craplot   THEN
+													   IF   LOCKED craplot   THEN
+															DO:
+																PAUSE 1 NO-MESSAGE.
+																NEXT.
+															END.
+													   ELSE
+															DO:
+																CREATE craplot.
+																ASSIGN craplot.dtmvtolt = glb_dtmvtolt
+																	   craplot.cdagenci = aux_cdagenci
+																	   craplot.cdbccxlt = aux_cdbccxlt
+																	   craplot.tplotmov = 1
+																	   craplot.cdcooper = aux_cdcooper
+																	   craplot.nrdolote = 10119.                                                        
+															END.                   
+												 LEAVE.
+											  END.
+											  
+											  DO  aux_verifloc = 1 TO 10:
+																	  
+												  /* VIACON - aux_nrctalcm deve conter a nova conta se for conta incorporada  */ 
+												  FIND craplcm WHERE craplcm.cdcooper = aux_cdcooper     AND
+																	 craplcm.dtmvtolt = craplot.dtmvtolt AND
+																	 craplcm.cdagenci = craplot.cdagenci AND
+																	 craplcm.cdbccxlt = craplot.cdbccxlt AND
+																	 craplcm.nrdolote = craplot.nrdolote AND
+																	 craplcm.nrdctabb = aux_nrctalcm     AND
+																	 craplcm.nrdocmto = crapcst.nrcheque  
+																	 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+																	 
+												  IF   NOT AVAIL craplcm THEN
+													   DO:
+														   IF   LOCKED craplcm THEN
+																DO:
+																	glb_cdcritic = 77.
+																	PAUSE 1 NO-MESSAGE.
+																	NEXT.
+																END.
+														   ELSE
+																DO: 
+																	glb_cdcritic = 0.
+																	LEAVE.
+																END.
+													   END.
+												  ELSE
+													   DO:
+														   glb_cdcritic = 92.
+														   LEAVE.
+													   END.
+											   END.
 
-                                       IF   glb_cdcritic <> 0 THEN
-                                            DO:
-                                                RUN fontes/critic.p.
-                                                PAUSE(2) NO-MESSAGE.
-                                                UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                                                  " - " + glb_cdprogra + "' --> '"  +
-                                                                  glb_dscritic +
-                                                                  " Coop: " + STRING(aux_cdcooper) + 
-                                                                  " Data: " + STRING(craplot.dtmvtolt) +
-                                                                  " Lote: " + STRING(craplot.nrdolote) + 
-                                                                  " CTA: " + STRING(aux_nrctalcm) +
-                                                                  " CBS: " + STRING(crapdev.nrdctabb) +
-                                                                  " DOC: " + STRING(crapdev.nrcheque) +
-                                                                  " >> log/proc_message.log").
+											   IF   glb_cdcritic <> 0 THEN
+													DO:
+														RUN fontes/critic.p.
+														PAUSE(2) NO-MESSAGE.
+														UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+																		  " - " + glb_cdprogra + "' --> '"  +
+																		  glb_dscritic +
+																		  " Coop: " + STRING(aux_cdcooper) + 
+																		  " Data: " + STRING(craplot.dtmvtolt) +
+																		  " Lote: " + STRING(craplot.nrdolote) + 
+																		  " CTA: " + STRING(aux_nrctalcm) +
+																		  " CBS: " + STRING(crapdev.nrdctabb) +
+																		  " DOC: " + STRING(crapdev.nrcheque) +
+																		  " >> log/proc_message.log").
 
-                                                glb_cdcritic = 0.
-                                                UNDO, RETURN "NOK".
-                                       END.
-                                      
-                                      CREATE craplcm.
-                                      ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                                             craplcm.cdagenci = craplot.cdagenci
-                                             craplcm.cdbccxlt = craplot.cdbccxlt
-                                             craplcm.nrdolote = craplot.nrdolote
-                                             craplcm.nrdconta = crapcst.nrdconta
-                                             craplcm.nrdctabb = aux_nrctalcm
-                                             craplcm.nrdocmto = crapcst.nrcheque
-                                             craplcm.cdhistor = 351  
-                                             craplcm.nrseqdig = craplot.nrseqdig + 1
-                                             craplcm.vllanmto = crapdev.vllanmto
-                                             craplcm.cdoperad = crapdev.cdoperad
-                                             craplcm.cdpesqbb = IF   crapdev.cdalinea <> 0 THEN
-                                                                     STRING(crapdev.cdalinea)
-                                                                ELSE "21"
-                                             craplcm.cdcooper = crapcst.cdcooper
-                                             craplcm.cdbanchq = crapcst.cdbanchq
-                                             craplcm.cdagechq = crapcst.cdagechq
-                                             craplcm.nrctachq = crapcst.nrctachq
-                                             craplcm.hrtransa = TIME
-                                             
-                                             craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
-                                             craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
-                                             craplot.qtinfoln = craplot.qtinfoln + 1
-                                             craplot.qtcompln = craplot.qtcompln + 1
-                                             craplot.nrseqdig = craplot.nrseqdig + 1 NO-ERROR.
-                                    
-                                      VALIDATE craplot.
-                                      VALIDATE craplcm.
-                                      
-                                      ASSIGN crapcst.insitchq = 3.  /* Devolvido */
-                                  END.
-                           END.
-                    END. /* crapdev.cdhistor = 47 */
-        
-        IF   crapdev.cdpesqui = "TCO" THEN
-             ASSIGN aux_cdcooper = p-cdcooper
-                    aux_nrdconta = crapdev.nrdconta.
-            END.
+														glb_cdcritic = 0.
+														UNDO, RETURN "NOK".
+											   END.
+											  
+											  CREATE craplcm.
+											  ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
+													 craplcm.cdagenci = craplot.cdagenci
+													 craplcm.cdbccxlt = craplot.cdbccxlt
+													 craplcm.nrdolote = craplot.nrdolote
+													 craplcm.nrdconta = crapcst.nrdconta
+													 craplcm.nrdctabb = aux_nrctalcm
+													 craplcm.nrdocmto = crapcst.nrcheque
+													 craplcm.cdhistor = 351  
+													 craplcm.nrseqdig = craplot.nrseqdig + 1
+													 craplcm.vllanmto = crapdev.vllanmto
+													 craplcm.cdoperad = crapdev.cdoperad
+													 craplcm.cdpesqbb = IF   crapdev.cdalinea <> 0 THEN
+																			 STRING(crapdev.cdalinea)
+																		ELSE "21"
+													 craplcm.cdcooper = crapcst.cdcooper
+													 craplcm.cdbanchq = crapcst.cdbanchq
+													 craplcm.cdagechq = crapcst.cdagechq
+													 craplcm.nrctachq = crapcst.nrctachq
+													 craplcm.hrtransa = TIME
+													 
+													 craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
+													 craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
+													 craplot.qtinfoln = craplot.qtinfoln + 1
+													 craplot.qtcompln = craplot.qtcompln + 1
+													 craplot.nrseqdig = craplot.nrseqdig + 1 NO-ERROR.
+											
+											  VALIDATE craplot.
+											  VALIDATE craplcm.
+											  
+											  ASSIGN crapcst.insitchq = 3.  /* Devolvido */
+										  END.
+								   END.
+							END. /* crapdev.cdhistor = 47 */
+				
+				IF   crapdev.cdpesqui = "TCO" THEN
+					 ASSIGN aux_cdcooper = p-cdcooper
+							aux_nrdconta = crapdev.nrdconta.
+					END.
         ELSE /* Conta = 0 */
             DO:                  
                 /*  CECRED */
@@ -1502,10 +1600,9 @@ PROCEDURE gera_lancamento:
             END.
         
         VALIDATE crapdev.
+		
         IF crapdev.nrdconta > 0 THEN
         DO:
-             /*MESSAGE "cdcooper: " + STRING(crapdev.cdcooper).
-             MESSAGE "nrdconta: " + STRING(crapdev.nrdconta).*/
             /*Inicio tratamento estorno da tarifa de ADP*/
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
             

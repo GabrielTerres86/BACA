@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Setembro/2013                      Ultima atualizacao: 06/09/2018
+   Data    : Setembro/2013                      Ultima atualizacao: 20/05/2019
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -138,6 +138,9 @@
    01/03/2019 - Ajuste nas buscas do registro na crapdev quando 
                 campos de deposito estao nulos.
                 Chamado - PRB0040630 - Andre Bohn (Mouts).
+				
+   20/05/2019 - Ajuste na rotina gera-devolu para validar a conta, quando enviada
+				(Adriano - PRB0041791).
 				
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
@@ -3174,6 +3177,29 @@ PROCEDURE gera-devolu:
         RETURN "NOK".
     END.
 
+	IF par_nrdconta > 0 THEN
+	DO:
+		FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+						   crapass.nrdconta = par_nrdconta 
+						   NO-LOCK NO-ERROR.
+						   
+		IF NOT AVAIL crapass THEN
+		DO:
+			ASSIGN aux_cdcritic = 9
+				   aux_dscritic = "".
+			 
+			RUN gera_erro (INPUT par_cdcooper,
+						   INPUT 0,
+						   INPUT 0,
+						   INPUT 1, /*sequencia*/
+						   INPUT aux_cdcritic,
+						   INPUT-OUTPUT aux_dscritic).
+			 
+			RETURN "NOK".
+		END.
+		
+	END.
+	
     /* Leitura da tabela com o valor definido para cheque VLB */ 
     RUN busca-valor-cheque(INPUT par_cdcooper,
                            INPUT "CRED"      , /* par_nmsistem */
