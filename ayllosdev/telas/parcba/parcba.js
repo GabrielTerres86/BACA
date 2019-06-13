@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 21/09/2018
  * OBJETIVO     : Biblioteca de funções da tela PARCBA
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : RITM0011945 - Gabriel (Mouts) 15/04/2019 - Adicionado campo dtmvtolt
  * --------------
  */
 
@@ -305,7 +305,7 @@ function confirmouExclusao(){
 	var cdtransa = $("#cdtransa","#frmExcParametro").val();
 
 	if (cdtransa != ""){
-		manterParametro("E",cdtransa,"","","","");	
+		manterParametro("E",cdtransa,"","","","","");	
 	}
 }
 
@@ -493,9 +493,9 @@ function buscaDesHistoricoAilos(cdhistor){
 		   
     if (cdhistor != ""){
 		if (cddotipo.val() == "PT" || cddotipo.val() == "ET") {
-			manterParametro("BHT","",cdhistor,"","",""); //buscar descrição historico ailos
+			manterParametro("BHT","",cdhistor,"","","",""); //buscar descrição historico ailos
 		} else {
-       manterParametro("BH","",cdhistor,"","","");	//buscar descrição historico ailos
+       manterParametro("BH","",cdhistor,"","","","");	//buscar descrição historico ailos
     }
     }
 
@@ -858,7 +858,7 @@ function buscaDesTrasacaoBancoob(cddopcao,cdtransa){
 	
 
 	if (cdtransa != ""){
-       manterParametro(cddopcao,cdtransa,"","","","");	//buscar descrição historico ailos
+       manterParametro(cddopcao,cdtransa,"","","","","");	//buscar descrição historico ailos
     }
 
 }
@@ -981,7 +981,7 @@ function InserirParametro(cddopcao,cdtransa,cdhistor,dstransa,indebcre_transa,in
 function ExcluirTransacao (cdtransa){
 	
 	if (cdtransa != ""){
-	   manterParametro("EH",cdtransa,"","","","");	
+	   manterParametro("EH",cdtransa,"","","","","");	
 	}
 	
 }
@@ -1167,7 +1167,7 @@ function ConsultaHistoricoAilos(linha) {
 	var cdtransa = $("td:eq(0)", linha ).html();
 	
 	if (cdtransa != null){			
-	  	manterParametro("CH",cdtransa,"","","","");		
+	  	manterParametro("CH",cdtransa,"","","","","");		
     }	
 }
 
@@ -1196,7 +1196,7 @@ function setarDesHistoricoAilosTarifa(dshistor,dscontabil,nrctadeb_pf,nrctacrd_p
 	$("#nrctacrd_pj","#frmCadTarifa").val(nrctacrd_pj);
 }
 
-function manterParametro(cddopcao,cdtransa,cdhistor,dstransa,indebcre_transa,indebcre_histor){
+function manterParametro(cddopcao,cdtransa,cdhistor,dstransa,indebcre_transa,indebcre_histor,dtmvtolt){
     //Requisição para processar a opção que foi selecionada
     var lscdhistor = '';
     var lsindebcre = '';
@@ -1213,6 +1213,7 @@ function manterParametro(cddopcao,cdtransa,cdhistor,dstransa,indebcre_transa,ind
 	        lscdhistor:          lscdhistor,
 			lsindebcre:          lsindebcre,
 			dstransa:     dstransa,			
+			dtmvtolt:			dtmvtolt, 
 			redirect:     "script_ajax"
 		},
         error: function(objAjax,responseError,objExcept) {
@@ -1284,7 +1285,7 @@ function consultaParametro(){
   var cdtransa = $("#cdtransa","#frmConParametro").val();
   var cdhistor = $("#cdhistor","#frmConParametro").val();
 
-  manterParametro("C",cdtransa,cdhistor,"","","");
+  manterParametro("C",cdtransa,cdhistor,"","","","");
         
 }
 
@@ -1321,7 +1322,7 @@ function IniciaHistoricoAilos(){
 function buscaLinhaCadastroHistorico(cdtransa,cddopcao){
 	
 	if (cdtransa != ""){
-		manterParametro(cddopcao,cdtransa,"","","","");
+		manterParametro(cddopcao,cdtransa,"","","","","");
 	}
 
 }
@@ -1426,6 +1427,18 @@ function estadoInicialConsultaTarifa(){
 }
 
 function estadoInicialConciliacao () {
+
+	// Fieldset
+    $("#fscadtra","#frmGeraConciliacao").css({"display":"block"});  
+
+	// Rotulo
+	$('label[for="dtmvtolt"]',"#frmGeraConciliacao").addClass("rotulo").css({"width":"50px"});
+
+	// Campo
+	$("#dtmvtolt","#frmGeraConciliacao").css({"width":"100px"}).addClass("data").habilitaCampo(); 
+	
+	layoutPadrao();
+
 	//Retorna para a principal
 	flgVoltarGeral = 1;
 
@@ -1452,10 +1465,14 @@ function estadoInicialConciliacao () {
 
 	//Exibe cabeçalho e define tamanho da tela
 	$("#frmGeraConciliacao","#divGeraConciliacao").css({"display":"block"});
+	
+	//Foca o campo da Opção
+	$("#dtmvtolt","#frmGeraConciliacao").focus();	
 }
 
 function geraConciliacao() {
-	showConfirmacao('Confirma a solicita&ccedil;&atilde;o de concilia&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','manterParametro("G","","","","","");','','sim.gif','nao.gif');
+    var dtmvtolt = $("#dtmvtolt","#frmGeraConciliacao").val();
+	showConfirmacao('Confirma a solicita&ccedil;&atilde;o de concilia&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','manterParametro("G","","","","","", \'' + dtmvtolt + '\');','','sim.gif','nao.gif');
 }
 
 function finalizaConciliacao() {

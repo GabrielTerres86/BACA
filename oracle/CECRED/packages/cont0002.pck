@@ -57,6 +57,7 @@ CREATE OR REPLACE PACKAGE CECRED.cont0002 IS
 
 
   PROCEDURE pc_processa_arquivo_bancoob(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                       ,pr_dtmvtolt IN  DATE    
                                        ,pr_cdcritic OUT NUMBER                --> Desc. da crítica
                                        ,pr_dscritic OUT VARCHAR2);
 
@@ -95,11 +96,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                 Processamento dos ajustes solicitado no Projeto 421 - Melhorias nas
                 ferramentas contabeis e fiscais.
 
-    Alteracoes:
+    Alteracoes:  RITM0011945 - Gabriel (Mouts) 15/04/2019 - Adicionado campo dtmvtolt
 
   ********************************************************************************/
 
   PROCEDURE pc_processa_arquivo_bancoob(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                       ,pr_dtmvtolt IN  DATE                           
                                        ,pr_cdcritic OUT NUMBER                --> Desc. da crítica
                                        ,pr_dscritic OUT VARCHAR2) is
 
@@ -207,7 +209,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
   begin
     BEGIN
       --arquivos a serem listados
-      vr_nomedarq := '756-2011%TRANSACOES_CEXT'||to_char(SYSDATE,'RRRR-MM-DD')||'.CSV';
+      --vr_nomedarq := '756-2011%TRANSACOES_CEXT'||to_char(SYSDATE,'RRRR-MM-DD')||'.CSV';
+      -- RITM0011945
+      vr_nomedarq := '756-2011%TRANSACOES_CEXT'||to_char(pr_dtmvtolt + 1,'RRRR-MM-DD')||'.CSV';
 
       vr_nmdircop := gene0001.fn_diretorio(pr_tpdireto => 'M'
                                           ,pr_cdcooper => pr_cdcooper
