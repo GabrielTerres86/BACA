@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 30/04/2019
+    Data      : Marco/2008                    Ultima Atualizacao: 09/05/2019
     
     Dados referentes ao programa:
 
@@ -561,6 +561,9 @@
                           
                30/04/2019 - Na procedure exclui_cartao permitir exclusao apenas de cartoes bancoob
                             com situacao em estudo (Lucas Ranghetti PRB0041657)
+            
+               09/05/2019 - Incluido campo inupgrad da tabela crawcrd na temp-table 
+				            Alcemir Mouts (PRB0041641).
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -832,7 +835,7 @@ PROCEDURE lista_cartoes:
 
     DEF VAR aux_vltotccr AS DECI NO-UNDO.
     DEF VAR aux_dssitcrd AS CHAR NO-UNDO.
-
+        
     DEF VAR aux_flgprovi LIKE crapcrd.flgprovi NO-UNDO.
         
     EMPTY TEMP-TABLE tt-erro.
@@ -893,9 +896,9 @@ PROCEDURE lista_cartoes:
            aux_dstransa = "Listar cartoes de credito.".    
            
     FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd dtinsori flgprcrd
-                            dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
-                      WHERE crawcrd.cdcooper = par_cdcooper    AND
-                            crawcrd.nrdconta = par_nrdconta    NO-LOCK:
+                               dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
+                         WHERE crawcrd.cdcooper = par_cdcooper    AND
+                           crawcrd.nrdconta = par_nrdconta    NO-LOCK:
                                                                       
         FIND crapadc WHERE crapadc.cdcooper = par_cdcooper      AND
                            crapadc.cdadmcrd = crawcrd.cdadmcrd  
@@ -5562,7 +5565,8 @@ PROCEDURE consulta_dados_cartao:
            tt-dados_cartao.dsdpagto = aux_dsdpagto
            tt-dados_cartao.dsgraupr = aux_dstitula
            tt-dados_cartao.flgprovi = aux_flgprovi
-           tt-dados_cartao.nmempcrd = crawcrd.nmempcrd.
+           tt-dados_cartao.nmempcrd = crawcrd.nmempcrd
+           tt-dados_cartao.inupgrad = crawcrd.inupgrad.
            
     RUN proc_gerar_log (INPUT par_cdcooper,
                         INPUT par_cdoperad,
