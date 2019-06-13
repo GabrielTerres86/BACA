@@ -431,6 +431,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
   END pc_envia_email_alcada;
   --
   PROCEDURE pc_ativa_contrato(pr_cdcooper IN  crapceb.cdcooper%TYPE                           -- Identificador da cooperativa
+		                         ,pr_nrdconta IN  crapceb.nrdconta%TYPE                           -- Numero da conta
+														 ,pr_nrconven IN  crapceb.nrconven%TYPE                           -- Numero do convenio BB
+														 ,pr_nrcnvceb IN  crapceb.nrcnvceb%TYPE                           -- Numero do convenio CECRED
                              ,pr_idrecipr IN  crapceb.idrecipr%TYPE                           -- Identificador do cálculo de reciprocidade
 														 ,pr_dtinicio IN  tbrecip_calculo.dtinicio_vigencia_contrato%TYPE -- Data de início de vigência do contrato
                              ,pr_cdcritic OUT PLS_INTEGER                                     -- Código da crítica
@@ -461,6 +464,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 						,tbcobran_crapceb.nrcnvceb
 			  FROM tbcobran_crapceb
 			 WHERE tbcobran_crapceb.idrecipr = pr_idrecipr
+			   AND tbcobran_crapceb.nrcnvceb = pr_nrcnvceb
+			   AND tbcobran_crapceb.nrconven = pr_nrconven
+			   AND tbcobran_crapceb.nrdconta = pr_nrdconta
 			   AND tbcobran_crapceb.cdcooper = pr_cdcooper;
 		--
 		rw_tbcobran_crapceb cr_tbcobran_crapceb%ROWTYPE;
@@ -563,6 +569,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 	END pc_ativa_contrato;
 	--
 	PROCEDURE pc_inativa_contrato(pr_cdcooper IN  crapceb.cdcooper%TYPE                        -- Identificador da cooperativa
+		                           ,pr_nrdconta IN  crapceb.nrdconta%TYPE                        -- Numero da conta
+															 ,pr_nrconven IN  crapceb.nrconven%TYPE                        -- Numero do convenio BB
+															 ,pr_nrcnvceb IN  crapceb.nrcnvceb%TYPE                        -- Numero do convenio CECRED
 															 ,pr_idrecipr IN  crapceb.idrecipr%TYPE                        -- Identificador do cálculo de reciprocidade
 															 ,pr_dtfim    IN  tbrecip_calculo.dtfim_vigencia_contrato%TYPE -- Data final da vigência do contrato
 															 ,pr_cdcritic OUT PLS_INTEGER                                  -- Código da crítica
@@ -599,6 +608,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			UPDATE crapceb 
 			   SET crapceb.insitceb = 2 -- Inativo
 			 WHERE crapceb.idrecipr = pr_idrecipr
+			   AND crapceb.nrcnvceb = pr_nrcnvceb
+			   AND crapceb.nrconven = pr_nrconven
+			   AND crapceb.nrdconta = pr_nrdconta
 			   AND crapceb.cdcooper = pr_cdcooper
 				 AND crapceb.insitceb = 1; -- Ativo
 			--
@@ -609,6 +621,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 					UPDATE tbcobran_crapceb crapceb
 						 SET crapceb.insitceb = 2 -- Inativo
 					 WHERE crapceb.idrecipr = pr_idrecipr
+					   AND crapceb.nrcnvceb = pr_nrcnvceb
+					   AND crapceb.nrconven = pr_nrconven
+					   AND crapceb.nrdconta = pr_nrdconta
 						 AND crapceb.cdcooper = pr_cdcooper
 						 AND crapceb.insitceb = 1; -- Ativo
 					--
@@ -2303,6 +2318,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 					IF rw_contratos.insitceb = 3 THEN
 						--
 						pc_ativa_contrato(pr_cdcooper => rw_contratos.cdcooper   -- IN
+						                 ,pr_nrdconta => rw_contratos.nrdconta   -- IN
+														 ,pr_nrconven => rw_contratos.nrconven   -- IN
+														 ,pr_nrcnvceb => rw_contratos.nrcnvceb   -- IN
 														 ,pr_idrecipr => rw_contratos.idrecipr   -- IN
 														 ,pr_dtinicio => rw_crapdat.dtmvtolt + 1 -- IN
 														 ,pr_cdcritic => vr_cdcritic             -- OUT
@@ -2312,6 +2330,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 					ELSIF rw_contratos.insitceb = 1 THEN
 						--
 						pc_inativa_contrato(pr_cdcooper => rw_contratos.cdcooper -- IN
+						                   ,pr_nrdconta => rw_contratos.nrdconta -- IN
+															 ,pr_nrconven => rw_contratos.nrconven -- IN
+															 ,pr_nrcnvceb => rw_contratos.nrcnvceb -- IN
 															 ,pr_idrecipr => rw_contratos.idrecipr -- IN
 															 ,pr_dtfim    => rw_crapdat.dtmvtolt   -- IN
 															 ,pr_cdcritic => vr_cdcritic           -- OUT
