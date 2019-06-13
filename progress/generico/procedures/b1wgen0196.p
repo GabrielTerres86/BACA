@@ -500,6 +500,7 @@ PROCEDURE grava_dados:
                                            INPUT 0,  /* idfiniof */
                                            INPUT "", /* dsctrliq */
                                            INPUT "N",
+                                           INPUT ?, /*par_dtcarenc*/
                                            OUTPUT aux_percetop,
                                            OUTPUT aux_txcetmes,
                                            OUTPUT TABLE tt-erro).

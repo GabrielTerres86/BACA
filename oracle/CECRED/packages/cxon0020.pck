@@ -1413,9 +1413,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   03/05/2019 - Alterado para que não seja gerada tarifa para transferencias de portabilidade de 
                                salário. (Renato Darosci - Supero - Projeto 485)
 
-				  08/05/2019 - Tratamento para travar envio de 2 TEDs simultaneamente, ocorre erro na validacao do saldo
-                               do deposito a vista - (Jose Gracik/Mouts - RITM0012961)
-
                   05/06/2019 - Tratar INC0011406 relacionado ao horario de aprovacao da TED (Diego).
 
   ---------------------------------------------------------------------------------------------------------------*/
@@ -1477,18 +1474,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND craptvl.nrcctrcb = pr_nrctafav
          AND craptvl.vldocrcb = pr_vldocmto;
     rw_craptvl_max cr_craptvl_max%ROWTYPE;
-
-	/* Validar dep. a vista em transferencias sequencias */
-    CURSOR cr_craptvl2_max(pr_cdcooper craptvl.cdcooper%TYPE,
-                           pr_dtmvtocd craptvl.dtmvtolt%TYPE,
-                           pr_nrdconta craptvl.nrdconta%TYPE) IS
-      SELECT MAX(hrtransa) hrtransa
-        FROM craptvl
-       WHERE craptvl.cdcooper = pr_cdcooper
-         AND craptvl.dtmvtolt = pr_dtmvtocd
-         AND craptvl.tpdoctrf = 3
-         AND craptvl.nrdconta = pr_nrdconta;
-    rw_craptvl2_max cr_craptvl2_max%ROWTYPE;
 
     -- Buscar dados historico
     CURSOR cr_craphis (pr_cdcooper craphis.cdcooper%TYPE,
@@ -1934,22 +1919,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         RAISE vr_exc_erro;
       END IF;
       CLOSE cr_craptvl_max;
-
-       /* Controle para envio de 2 TEDs da mesma conta ao mesmo tempo sem validar o saldo do dep. a vista */
-      OPEN cr_craptvl2_max( pr_cdcooper => rw_crapcop.cdcooper,
-                            pr_dtmvtocd => rw_crapdat.dtmvtocd,
-                            pr_nrdconta => pr_nrdconta);
-      FETCH cr_craptvl2_max INTO rw_craptvl2_max;
-
-      -- se ja existe um lançamento com os mesmos dados em menos de 30 segundos (30 seg) apresentar alerta
-      IF cr_craptvl2_max%FOUND AND
-        (to_char(SYSDATE,'SSSSS') - nvl(rw_craptvl2_max.hrtransa,0)) <= 30 THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Ja existe TED em processamento. ' ||
-                       'Consulte extrato ou tente novamente em 30 segundos.';
-        RAISE vr_exc_erro;
-      END IF;
-      CLOSE cr_craptvl2_max;	
     END IF;
 
 	--Bacenjud - SM 1

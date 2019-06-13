@@ -107,7 +107,7 @@
 									   
                 21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                              grava-proposta-completa. PRJ402 - Integracao CDC
-                             (Reinert)                                                                  
+                             (Reinert)						                  
                 
                 12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
                 
@@ -116,14 +116,14 @@
                              faixa de valor (rotina grava_dados_conta) (Carlos)
 
 				28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
+        
+        13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
                 
-                13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
-
                 20/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
                 
                 08/01/2019 - Ajuste da taxa mensal na impressao do contrato 
                              INC0028548 (Douglas Pagel / AMcom).
-
+                
 				22/02/2019 - P485. Validaçao de conta salário na exibiçao do banner Pré Aprovado no TAA. (Augusto/Supero)
                 
 ..............................................................................*/
@@ -1189,7 +1189,7 @@ PROCEDURE grava_dados:
 
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
-
+      
        RUN grava_efetivacao_proposta IN h-b1wgen0084(INPUT par_cdcooper,
                                                      INPUT par_cdagenci,
                                                      INPUT par_nrdcaixa,
@@ -1217,14 +1217,14 @@ PROCEDURE grava_dados:
                                                      OUTPUT aux_dsmesage,
                                                      OUTPUT TABLE tt-ratings,
                                                      OUTPUT TABLE tt-erro).
-
+       
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
-
+       
        ASSIGN aux_flgtrans = TRUE.
-
+       
     END. /* END GRAVA: DO TRANSACTION */
-
+  
     IF NOT TEMP-TABLE tt-erro:HAS-RECORDS AND
        (aux_cdcritic > 0 OR aux_dscritic <> "") THEN
        DO:
@@ -1675,7 +1675,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                                                 ,INPUT par_nrdconta
                                                 ,INPUT par_nrctremp
                                                 ,INPUT par_dtmvtolt
-                                                ,INPUT crapass.inpessoa                                                
+                                                ,INPUT crapass.inpessoa
                                                 ,INPUT par_cdlcremp
                                                 ,INPUT crawepr.cdfinemp
                                                 ,INPUT crawepr.qtpreemp
@@ -2145,14 +2145,14 @@ PROCEDURE calcula_parcelas_emprestimo:
            ASSIGN aux_cdcritic = 0
                   aux_dscritic = "Parametros pre-aprovado nao cadastrado".
         
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1,
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-           RETURN "NOK".
-       END.
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+        END.
 
     /* Buscar pre-aprovado da conta */
     FOR crapcpa FIELDS(vlcalpar cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
@@ -2376,7 +2376,7 @@ PROCEDURE calcula_taxa_emprestimo:
                                       OUTPUT aux_dtvigenc,
                                       OUTPUT aux_cdfvlcop,
                                       OUTPUT TABLE tt-erro).
-
+                                      
     
     IF RETURN-VALUE <> "OK"  THEN
        DO:
@@ -2387,8 +2387,8 @@ PROCEDURE calcula_taxa_emprestimo:
          IF VALID-HANDLE(h-b1wgen0153) THEN
             DELETE PROCEDURE h-b1wgen0153.
         
-       RETURN "NOK".
-    
+         RETURN "NOK".
+       
        END.
     
     /* Busca a tarifa especial */
@@ -2416,8 +2416,8 @@ PROCEDURE calcula_taxa_emprestimo:
          IF VALID-HANDLE(h-b1wgen0153) THEN
             DELETE PROCEDURE h-b1wgen0153.
         
-       RETURN "NOK".
-    
+         RETURN "NOK".
+       
        END.
     
     /* Valor da tarifa */
@@ -2447,10 +2447,11 @@ PROCEDURE calcula_taxa_emprestimo:
                                           INPUT 1, /* idfiniof */
                                           INPUT "", /* dsctrliq */
                                           INPUT "N",
+                                          INPUT ?, /* dtcarenc */
                                           OUTPUT par_percetop,
                                           OUTPUT aux_txcetmes,
                                           OUTPUT TABLE tt-erro).
-
+                                          
     IF RETURN-VALUE <> "OK"  THEN
        DO:
      
@@ -2460,8 +2461,8 @@ PROCEDURE calcula_taxa_emprestimo:
          IF VALID-HANDLE(h-b1wgen0153) THEN
             DELETE PROCEDURE h-b1wgen0153.
         
-       RETURN "NOK".
-
+         RETURN "NOK".
+       
        END.
 
     /* Calcula o IOF */
@@ -2483,7 +2484,7 @@ PROCEDURE calcula_taxa_emprestimo:
                      OUTPUT par_vltaxiof,
                      OUTPUT par_vltariof,
                      OUTPUT TABLE tt-erro).
-    
+                     
     IF RETURN-VALUE <> "OK"  THEN
        DO:
      
@@ -2493,8 +2494,8 @@ PROCEDURE calcula_taxa_emprestimo:
          IF VALID-HANDLE(h-b1wgen0153) THEN
             DELETE PROCEDURE h-b1wgen0153.
         
-       RETURN "NOK".
-
+         RETURN "NOK".
+       
        END.
 
     ASSIGN par_vlliquid = par_vlemprst - par_vlrtarif - par_vltariof.

@@ -985,8 +985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
   vr_dscritic VARCHAR(500);
   vr_exc_erro EXCEPTION;
   
-  vr_flg_criou_lot BOOLEAN;
-  vr_dtmvtolt TIMESTAMP;
+  vr_dsaltera VARCHAR2(30000);
 
   CURSOR cr_craptps IS
       SELECT
@@ -999,6 +998,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       WHERE tps.idpessoa = pr_idpessoa
         AND ass.cdcooper = pr_cdcooper;
     rw_craptps cr_craptps%ROWTYPE;
+    
+    CURSOR cr_crapalt (pr_nrdconta NUMBER) IS
+      SELECT (1) 
+        FROM crapalt 
+       WHERE cdcooper = pr_cdcooper 
+         AND nrdconta = pr_nrdconta 
+         AND dtaltera = pr_dtmvtolt;
+         
   BEGIN
     -- Busca o numero da conta e a matricula
     OPEN  cr_craptps();
@@ -1010,10 +1017,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
     END IF;
     CLOSE cr_craptps;
     
-    vr_dtmvtolt := pr_dtmvtolt;
-    vr_flg_criou_lot := FALSE;
+    OPEN cr_crapalt(pr_nrdconta => rw_craptps.nrdconta);
     
-    WHILE NOT vr_flg_criou_lot LOOP  
+        
+    IF (cr_crapalt%NOTFOUND) THEN
       -- Atualiza a Crapalt
       BEGIN
         INSERT INTO crapalt (
@@ -1026,7 +1033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
           ,crapalt.cdoperad)
         VALUES(
           rw_craptps.nrdconta,
-          vr_dtmvtolt,
+          pr_dtmvtolt,
           1,
           pr_dsaltera,
           pr_cdcooper,
@@ -1034,17 +1041,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
           rw_craptps.nrmatric
         );
       EXCEPTION
-        -- Caso nao consiga inserir na Crapalt por dupkey, refaz toda a transação
-        WHEN DUP_VAL_ON_INDEX THEN   
-          vr_dtmvtolt := vr_dtmvtolt + 1/24/60/60;
-          CONTINUE;
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir na crapalt: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+    ELSE
+      SELECT dsaltera INTO vr_dsaltera 
+        FROM crapalt 
+       WHERE cdcooper = pr_cdcooper 
+         AND nrdconta = rw_craptps.nrdconta 
+         AND dtaltera = pr_dtmvtolt;
+      BEGIN
+        UPDATE crapalt 
+           SET dsaltera = vr_dsaltera || ' ' || pr_dsaltera
+         WHERE cdcooper = pr_cdcooper 
+           AND nrdconta = rw_craptps.nrdconta 
+           AND dtaltera = pr_dtmvtolt;
+      EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar crapalt: '||SQLERRM;
           RAISE vr_exc_erro;
       END;
-      vr_flg_criou_lot := TRUE;
-    END LOOP;
-
+    END IF;
+    CLOSE cr_crapalt;
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -2556,7 +2575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
         -- Insere na crapalt
         pc_insere_crapalt(pr_idpessoa => pr_idpessoa
                          ,pr_cdcooper => pr_cdcooper
-                         ,pr_dtmvtolt =>  to_date(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||' '||to_char(sysdate,'hh24:mi:ss'), 'DD/MM/RRRR hh24:mi:ss') 
+                         ,pr_dtmvtolt =>  rw_crapdat.dtmvtolt
                          ,pr_dsaltera => 'Confirmação do Telefone'
                          ,pr_dscritic => vr_dscritic);
         IF (TRIM(vr_dscritic) IS NOT NULL) THEN
@@ -2743,7 +2762,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
         -- Insere na crapalt
         pc_insere_crapalt(pr_idpessoa => pr_idpessoa
                          ,pr_cdcooper => pr_cdcooper
-                         ,pr_dtmvtolt => to_date(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||' '||to_char(sysdate,'hh24:mi:ss'), 'DD/MM/RRRR hh24:mi:ss')
+                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                          ,pr_dsaltera => 'Confirmação do Email'
                          ,pr_dscritic => vr_dscritic);
         IF (TRIM(vr_dscritic) IS NOT NULL) THEN
@@ -2944,7 +2963,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       -- Insere na crapalt
       pc_insere_crapalt(pr_idpessoa => pr_idpessoa
                        ,pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => to_date(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||' '||to_char(sysdate,'hh24:mi:ss'), 'DD/MM/RRRR hh24:mi:ss')
+                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                        ,pr_dsaltera => 'Confirmação do Endereço'
                        ,pr_dscritic => vr_dscritic);
       IF (TRIM(vr_dscritic) IS NOT NULL) THEN
@@ -3226,7 +3245,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       -- Insere na crapalt
       pc_insere_crapalt(pr_idpessoa => pr_idpessoa
                        ,pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => to_date(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||' '||to_char(sysdate,'hh24:mi:ss'), 'DD/MM/RRRR hh24:mi:ss')  
+                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                        ,pr_dsaltera => 'Confirmação da Renda'
                        ,pr_dscritic => vr_dscritic);
       IF (TRIM(vr_dscritic) IS NOT NULL) THEN
@@ -3312,7 +3331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
         -- Insere na crapalt
         pc_insere_crapalt(pr_idpessoa => pr_idpessoa
                          ,pr_cdcooper => pr_cdcooper
-                         ,pr_dtmvtolt => to_date(to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||' '||to_char(sysdate,'hh24:mi:ss'), 'DD/MM/RRRR hh24:mi:ss')
+                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                          ,pr_dsaltera => 'Confirmação da Empresa'
                          ,pr_dscritic => vr_dscritic);
         IF (TRIM(vr_dscritic) IS NOT NULL) THEN

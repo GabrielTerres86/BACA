@@ -2719,10 +2719,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
       
         vr_cdcritic crapcri.cdcritic%TYPE;       -- Cód. Erro
         vr_dscritic VARCHAR2(1000);              -- Desc. Erro
+
+        --Registro do tipo calendario
+        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
       
         vr_exc_saida EXCEPTION; 
         vr_nrdrowid rowid;
         vr_dstransa VARCHAR2(80) := 'Suspensao de aplicacao programada';
+        vr_dtmvtolt crapdat.dtmvtolt%TYPE;
+        vr_dtdebito craprpp.dtdebito%TYPE;
       
         -- Cursores
         -- Apl. Programada
@@ -2770,7 +2775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
              RAISE vr_exc_saida;
           END IF;
     
-        IF  (rw_craprpp.cdsitrpp = 3 OR rw_craprpp.cdsitrpp = 4) AND rw_craprpp.cdprodut = 0  THEN 
+        IF  (rw_craprpp.cdsitrpp = 3 OR rw_craprpp.cdsitrpp = 4) AND rw_craprpp.cdprodut <= 0  THEN 
              vr_cdcritic := 0;
              vr_dscritic := 'Este e um plano antigo que nao pode ser reativado. Cadastre um novo plano';
              RAISE vr_exc_saida;
@@ -2787,27 +2792,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
              RAISE vr_exc_saida;
           END IF;
 
+        OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+        FETCH btch0001.cr_crapdat
+         INTO rw_crapdat;
+        -- Se não encontrar
+        IF btch0001.cr_crapdat%NOTFOUND THEN
+          -- Fechar o cursor pois efetuaremos raise
+          CLOSE btch0001.cr_crapdat;
+          -- Montar mensagem de critica
+          vr_cdcritic := 1;
+          RAISE vr_exc_saida;
+        ELSE
+          vr_dtmvtolt := rw_crapdat.dtmvtolt;
+          CLOSE btch0001.cr_crapdat;
+        END IF;
+
+        /* Calcular a proxima data de debito */
+        vr_dtdebito := rw_craprpp.dtdebito;
+        /* Precaucao: a proxima data de debito sempre devera ser superior a data atual,
+           caso contrario podemos ficar raspando a conta muitas vezes ate que a data fique maior que a atual */
+        IF vr_dtmvtolt > vr_dtdebito THEN
+          LOOP 
+            EXIT WHEN vr_dtmvtolt < vr_dtdebito;
+            vr_dtdebito := add_months(vr_dtdebito,1);
+          END LOOP;
+        END IF;
+
           BEGIN
             IF  rw_craprpp.cdsitrpp = 2  THEN
                         UPDATE craprpp SET
                          dtrnirpp = NULL,
                          dtaltrpp = pr_dtmvtolt,
-                         cdsitrpp = 1
+                         dtdebito = vr_dtdebito,
+                         cdsitrpp = 1,
+                         indebito = 0
                        WHERE current of cr_craprpp;
             ELSIF rw_craprpp.cdsitrpp = 3  THEN
                         UPDATE craprpp SET
                          dtcancel = NULL,
-                         dtdebito = rw_craprpp.dtfimper,
+                         dtdebito = vr_dtdebito,
                          dtaltrpp = pr_dtmvtolt,
-                         cdsitrpp = 1
+                         cdsitrpp = 1,
+                         indebito = 0
                        WHERE current of cr_craprpp;
             ELSIF  rw_craprpp.cdsitrpp = 4  THEN
                     IF  rw_craprpp.dtrnirpp < pr_dtmvtolt  THEN
                             UPDATE craprpp SET
                              dtcancel = NULL,
-                             dtdebito = rw_craprpp.dtfimper,
+                             dtdebito = vr_dtdebito,
                              dtaltrpp = pr_dtmvtolt,
-                             cdsitrpp = 1
+                             cdsitrpp = 1,
+                             indebito = 0
                            WHERE current of cr_craprpp;
                     ELSE
                             UPDATE craprpp SET

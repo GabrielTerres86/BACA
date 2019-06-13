@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-04-26T16:17:43 -->
+<!-- 2019-06-12T16:36:13 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="442" pageHeight="732" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.8181818181818183"/>
 	<property name="ireport.x" value="0"/>
@@ -160,8 +160,7 @@
 	<group name="Dados">
 		<groupExpression><![CDATA[$F{nrdconta}]]></groupExpression>
 		<groupHeader>
-			<band height="70">
-				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<band height="80">
 				<staticText>
 					<reportElement x="340" y="11" width="76" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
 					<textElement>
@@ -185,50 +184,50 @@
 					</textElement>
 					<text><![CDATA[CONTA/DV:]]></text>
 				</staticText>
-				<staticText>
-					<reportElement x="100" y="11" width="11" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
-					<textElement textAlignment="Justified">
-						<font fontName="Courier New" size="9"/>
-					</textElement>
-					<text><![CDATA[-]]></text>
-				</staticText>
 				<textField>
-					<reportElement x="169" y="11" width="170" height="11" uuid="32eb2ba7-24e6-46dc-a1a6-45bf2e0e7703"/>
+					<reportElement x="58" y="21" width="250" height="11" uuid="32eb2ba7-24e6-46dc-a1a6-45bf2e0e7703">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
 					<textElement>
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$P{PR_NMPRIMTL}]]></textFieldExpression>
 				</textField>
 				<staticText>
-					<reportElement mode="Opaque" x="1" y="37" width="441" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
+					<reportElement mode="Opaque" x="1" y="47" width="441" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[RELACAO DE CHEQUES DEVOLVIDOS]]></text>
 				</staticText>
 				<textField>
-					<reportElement x="50" y="11" width="49" height="11" uuid="3cbbb7d4-f7c0-4046-b79d-3bb513f4305a"/>
+					<reportElement x="50" y="11" width="180" height="11" uuid="3cbbb7d4-f7c0-4046-b79d-3bb513f4305a"/>
 					<textElement textAlignment="Left">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$P{PR_NRDCONTA}.trim()]]></textFieldExpression>
 				</textField>
 				<staticText>
-					<reportElement x="2" y="59" width="36" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
+					<reportElement x="2" y="69" width="36" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[BANCO]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="123" y="59" width="41" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
+					<reportElement x="123" y="69" width="41" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[CHEQUE]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="164" y="59" width="45" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b">
+					<reportElement x="164" y="69" width="45" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					</reportElement>
@@ -238,28 +237,28 @@
 					<text><![CDATA[MOT.DEV]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="215" y="59" width="100" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
+					<reportElement x="215" y="69" width="100" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[VALOR]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="38" y="59" width="36" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
+					<reportElement x="38" y="69" width="36" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[AG.]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="77" y="59" width="43" height="11" uuid="989e241b-a2b1-4404-8536-5059381a5285"/>
+					<reportElement x="77" y="69" width="43" height="11" uuid="989e241b-a2b1-4404-8536-5059381a5285"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[C.C]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="322" y="59" width="76" height="11" uuid="b7dd8744-9c9e-4628-b26a-445d6941adb7">
+					<reportElement x="322" y="69" width="76" height="11" uuid="b7dd8744-9c9e-4628-b26a-445d6941adb7">
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Right">
@@ -268,35 +267,42 @@
 					<text><![CDATA[ENTREGUE - PA]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="111" y="11" width="58" height="11" uuid="a7b46c7f-2740-44fa-9c2f-05b2db58b7c6"/>
+					<reportElement x="1" y="21" width="58" height="11" uuid="a7b46c7f-2740-44fa-9c2f-05b2db58b7c6">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
 					<textElement textAlignment="Justified">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[COOPERADO:]]></text>
 				</staticText>
 				<textField>
-					<reportElement x="401" y="59" width="19" height="11" uuid="434c74d7-5de3-4e65-962d-2d97e5e52aa3"/>
+					<reportElement x="401" y="69" width="19" height="11" uuid="434c74d7-5de3-4e65-962d-2d97e5e52aa3"/>
 					<textElement textAlignment="Left">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$P{PR_CDAGENCI}]]></textFieldExpression>
 				</textField>
 				<staticText>
-					<reportElement x="0" y="26" width="442" height="11" uuid="6ac87cea-4d3b-42ab-bb80-e6b463cb0c37"/>
+					<reportElement x="0" y="36" width="442" height="11" uuid="6ac87cea-4d3b-42ab-bb80-e6b463cb0c37">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[----------------------------------------------------------------------------------]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="1" y="48" width="441" height="11" uuid="703430b6-ac8b-4e3b-8087-14998e43cfc2"/>
+					<reportElement x="1" y="58" width="441" height="11" uuid="703430b6-ac8b-4e3b-8087-14998e43cfc2">
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[----------------------------------------------------------------------------------]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="33" y="59" width="8" height="11" uuid="926b67d1-4fa3-4616-88cb-e78a83df63fa">
+					<reportElement mode="Transparent" x="33" y="69" width="8" height="11" uuid="926b67d1-4fa3-4616-88cb-e78a83df63fa">
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					</reportElement>
@@ -306,35 +312,35 @@
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="71" y="59" width="8" height="11" uuid="87cb96e4-49a5-474f-ac84-7f631bb7279a"/>
+					<reportElement mode="Transparent" x="71" y="69" width="8" height="11" uuid="87cb96e4-49a5-474f-ac84-7f631bb7279a"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="118" y="59" width="8" height="11" uuid="e60497a5-3294-4880-8766-2af53eee9f05"/>
+					<reportElement mode="Transparent" x="118" y="69" width="8" height="11" uuid="e60497a5-3294-4880-8766-2af53eee9f05"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="206" y="59" width="8" height="11" uuid="35ab524c-a4ee-4f44-9d75-5f414a221ecd"/>
+					<reportElement mode="Transparent" x="206" y="69" width="8" height="11" uuid="35ab524c-a4ee-4f44-9d75-5f414a221ecd"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="313" y="59" width="8" height="11" uuid="dbf11f89-f15e-4c4c-8b05-f3bdfce60df1"/>
+					<reportElement mode="Transparent" x="313" y="69" width="8" height="11" uuid="dbf11f89-f15e-4c4c-8b05-f3bdfce60df1"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="160" y="59" width="8" height="11" uuid="ba72d93e-c9ac-4b54-9706-040733ed5f1d">
+					<reportElement mode="Transparent" x="160" y="69" width="8" height="11" uuid="ba72d93e-c9ac-4b54-9706-040733ed5f1d">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					</reportElement>
@@ -344,21 +350,21 @@
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="434" y="59" width="8" height="11" uuid="c32d3038-5821-4577-ba28-2c1df7b18a55"/>
+					<reportElement mode="Transparent" x="434" y="69" width="8" height="11" uuid="c32d3038-5821-4577-ba28-2c1df7b18a55"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="-1" y="59" width="8" height="11" uuid="9922b0ed-cf0a-4184-95bb-ba17b5dbcf28"/>
+					<reportElement mode="Transparent" x="-1" y="69" width="8" height="11" uuid="9922b0ed-cf0a-4184-95bb-ba17b5dbcf28"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="0" y="37" width="8" height="11" uuid="b46b48c4-8a76-40b4-b119-4282cdaf6791">
+					<reportElement mode="Transparent" x="0" y="47" width="8" height="11" uuid="b46b48c4-8a76-40b4-b119-4282cdaf6791">
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Center">
@@ -367,7 +373,7 @@
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="434" y="37" width="8" height="11" uuid="23eae90e-6c39-498c-bbb2-c9c283e9e5e4">
+					<reportElement mode="Transparent" x="434" y="47" width="8" height="11" uuid="23eae90e-6c39-498c-bbb2-c9c283e9e5e4">
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Center">
