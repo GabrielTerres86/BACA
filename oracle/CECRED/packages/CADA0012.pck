@@ -961,7 +961,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 
   PROCEDURE pc_insere_crapalt(pr_idpessoa IN NUMBER
                              ,pr_cdcooper IN NUMBER
-                             ,pr_dtmvtolt IN TIMESTAMP
+                             ,pr_dtmvtolt IN DATE
                              ,pr_dsaltera IN VARCHAR2
                              ,pr_dscritic OUT VARCHAR2) IS
 /* ..........................................................................
@@ -1000,70 +1000,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
     rw_craptps cr_craptps%ROWTYPE;
     
     CURSOR cr_crapalt (pr_nrdconta NUMBER) IS
-      SELECT (1) 
+      SELECT dsaltera 
         FROM crapalt 
        WHERE cdcooper = pr_cdcooper 
          AND nrdconta = pr_nrdconta 
          AND dtaltera = pr_dtmvtolt;
+    rw_crapalt cr_crapalt%ROWTYPE;
          
   BEGIN
     -- Busca o numero da conta e a matricula
-    OPEN  cr_craptps();
-    FETCH cr_craptps into rw_craptps;
-    IF (cr_craptps%NOTFOUND) THEN
-      CLOSE cr_craptps;
-      vr_dscritic := 'Erro ao buscar data na TBCADAST_PESSOA';
-      RAISE vr_exc_erro;
-    END IF;
-    CLOSE cr_craptps;
-    
-    OPEN cr_crapalt(pr_nrdconta => rw_craptps.nrdconta);
-    
-        
-    IF (cr_crapalt%NOTFOUND) THEN
-      -- Atualiza a Crapalt
-      BEGIN
-        INSERT INTO crapalt (
-           crapalt.nrdconta
-          ,crapalt.dtaltera
-          ,crapalt.tpaltera
-          ,crapalt.dsaltera
-          ,crapalt.cdcooper
-          ,crapalt.flgctitg
-          ,crapalt.cdoperad)
-        VALUES(
-          rw_craptps.nrdconta,
-          pr_dtmvtolt,
-          1,
-          pr_dsaltera,
-          pr_cdcooper,
-          1,
-          rw_craptps.nrmatric
-        );
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao inserir na crapalt: '||SQLERRM;
-          RAISE vr_exc_erro;
-      END;
-    ELSE
-      SELECT dsaltera INTO vr_dsaltera 
-        FROM crapalt 
-       WHERE cdcooper = pr_cdcooper 
-         AND nrdconta = rw_craptps.nrdconta 
-         AND dtaltera = pr_dtmvtolt;
-      BEGIN
-        UPDATE crapalt 
-           SET dsaltera = vr_dsaltera || ' ' || pr_dsaltera
-         WHERE cdcooper = pr_cdcooper 
-           AND nrdconta = rw_craptps.nrdconta 
-           AND dtaltera = pr_dtmvtolt;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar crapalt: '||SQLERRM;
-          RAISE vr_exc_erro;
-      END;
-    END IF;
-    CLOSE cr_crapalt;
+    FOR rw_craptps IN cr_craptps LOOP
+      OPEN cr_crapalt(pr_nrdconta => rw_craptps.nrdconta);
+      FETCH cr_crapalt INTO rw_crapalt;    
+      
+      IF (cr_crapalt%NOTFOUND) THEN
+        -- Atualiza a Crapalt
+        BEGIN
+          INSERT INTO crapalt (
+             crapalt.nrdconta
+            ,crapalt.dtaltera
+            ,crapalt.tpaltera
+            ,crapalt.dsaltera
+            ,crapalt.cdcooper
+            ,crapalt.flgctitg
+            ,crapalt.cdoperad)
+          VALUES(
+            rw_craptps.nrdconta,
+            pr_dtmvtolt,
+            1,
+            pr_dsaltera,
+            pr_cdcooper,
+            1,
+            rw_craptps.nrmatric
+          );
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao inserir na crapalt: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+      ELSE
+        BEGIN
+          UPDATE crapalt 
+             SET dsaltera = rw_crapalt.dsaltera || ' ' || pr_dsaltera
+           WHERE cdcooper = pr_cdcooper 
+             AND nrdconta = rw_craptps.nrdconta 
+             AND dtaltera = pr_dtmvtolt;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar crapalt: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+      END IF;
+      CLOSE cr_crapalt;
+    END LOOP;
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -1230,6 +1219,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 		vr_dscritic VARCHAR2(4000);
 
   BEGIN
+   
+    -- Buscar registro do PA
+		OPEN cr_crapage;
+		FETCH cr_crapage INTO rw_crapage;
+
+		-- Se não encontrou PA
+		IF cr_crapage%NOTFOUND THEN
+			-- Fechar cursor
+			CLOSE cr_crapage;
+			-- Gerar crítica
+			vr_cdcritic := 962;
+			vr_dscritic := '';
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+		END IF;
+		-- Fechar cursor
+		CLOSE cr_crapage;
+
     if pr_tpcanal_sistema = 13 then /*Ibratan Tela Unica PRJ438*/
       tela_analise_credito.pc_gera_token_ibratan(pr_cdcooper => pr_cdcooper, 
                                                  pr_cdagenci => pr_cdagenci,
@@ -1242,6 +1249,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       end if;
                                                  
     else     
+
+		-- Se PA não possui acesso ao CRM
+    IF rw_crapage.flgutcrm = 0 and pr_tpcanal_sistema = 10 THEN
+			-- Gerar crítica
+			vr_dscritic := 'PA não está habilitado para acessar o sistema CRM.';
+			-- Levantar exceção
+			RAISE vr_exc_erro;
+
+    ELSIF rw_crapage.flgutcrm IN (1,2) or pr_tpcanal_sistema <> 10 THEN -- PA está habilitado para acessar o CRM
 			-- Buscar registro do operador
 			OPEN cr_crapope;
 			FETCH cr_crapope INTO rw_crapope;
@@ -1285,31 +1301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
           pr_dstoken := rw_crapope.cddsenha;
         END IF;
 			END IF;
-  
-        -- Buscar registro do PA
-        OPEN cr_crapage;
-        FETCH cr_crapage INTO rw_crapage;
-
-        -- Se não encontrou PA
-        IF cr_crapage%NOTFOUND THEN
-          -- Fechar cursor
-          CLOSE cr_crapage;
-          -- Gerar crítica
-          vr_cdcritic := 962;
-          vr_dscritic := '';
-          -- Levantar exceção
-          RAISE vr_exc_erro;
 		END IF;
-        -- Fechar cursor
-        CLOSE cr_crapage;
-
-        -- Se PA não possui acesso ao CRM
-       IF (rw_crapage.flgutcrm = 0 AND rw_crapope.flgutcrm=3) THEN
-          -- Gerar crítica
-          vr_dscritic := 'PA não está habilitado para acessar o sistema CRM.';
-          -- Levantar exceção
-          RAISE vr_exc_erro;
-       END IF; 
 
     end if;
   EXCEPTION
