@@ -234,7 +234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0011 IS
       SELECT cddsenha
         FROM crapope
        WHERE cdcooper = pr_cdcooper
-         AND cdoperad = pr_cdoperad;
+         AND upper(cdoperad) = upper(pr_cdoperad);
     rw_crapope cr_crapope%ROWTYPE;
 
     -- Tratamento de erros
