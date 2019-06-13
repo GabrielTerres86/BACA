@@ -13835,6 +13835,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                    12/04/2019 - Considerar os lançamentos de origem da portabilidade para 
                                 realizar a transferencias de valores, relacionados à 
                                 portabilidade de Salário ( Renato Darosci - Supero - P485)
+                   
+                   11/06/2019 - Inclusao da origem AIMARO para tratar o envio de TED/Transferência em lote.
+                                Jose Dill - Mouts (P500 - Upload TED)             
     -----------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -13914,7 +13917,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           AND ((    craplau.cdcooper = pr_cdcooper
               AND   craplau.dtmvtopg = pr_dtmvtopg
               AND   craplau.insitlau = 1
-              AND   craplau.dsorigem IN ('INTERNET','TAA', 'PORTABILIDAD')  -- P485 - Considerar também Portabilidade
+              AND   craplau.dsorigem IN ('INTERNET','TAA', 'PORTABILIDAD','AIMARO')  -- P485 - Considerar também Portabilidade --P500 Upload de Arquivo
               AND    craplau.tpdvalor = 0)
               OR
              (    craplau.cdcooper  = pr_cdcooper

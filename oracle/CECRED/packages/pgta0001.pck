@@ -120,6 +120,42 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
          TABLE OF typ_reg_rel_pgt_arq 
          INDEX BY VARCHAR2(15);
 
+    -- Tabela de memoria para armazenar as criticas encontradas no Header e Trailer 
+    -- P500
+    TYPE typ_erros_headtrailer IS
+        RECORD(tporigem varchar2(15)
+              ,tperrocnab tbtransf_erros_cnab.tperrocnab%type
+              ,dscampo    varchar2(240));
+
+    TYPE typ_tab_typ_erros_headtrailer IS
+        TABLE OF typ_erros_headtrailer
+        INDEX BY PLS_INTEGER;
+    
+    TYPE typ_dados_segmento_a IS
+        RECORD (cdbco_comp varchar2(03),
+              nrlote_ser  varchar2(04),
+              dstipo_reg  varchar2(01),
+              nrseq_reg   varchar2(05),
+              cdsegmento  varchar2(01),     
+              dstipo_mov  varchar2(01),     
+              cdbco_fav   varchar2(03),     
+              cdage_conta varchar2(05),     
+              nrdconta    varchar2(13),     
+              nmfavorecido varchar2(30),    
+              dtprv_pgto  varchar2(08),    
+              dsmoeda     varchar2(03),     
+              vlrpgto     varchar2(15),     
+              dshistorico varchar2(20),     
+              dsins_fav   varchar2(01),     
+              nr_cpf_cnpj_fav varchar2(14), 
+              dsfinalidade varchar2(05),
+              tperrocnab  varchar2(02),
+              dslinha_seg_a varchar2(240));  
+     TYPE typ_tab_dados_segmento_a IS
+        TABLE OF typ_dados_segmento_a
+        INDEX BY PLS_INTEGER;           
+    
+        
     -- Procedure para Verificar o Aceite do Cooperado ao Convenio
     PROCEDURE pc_verif_aceite_conven(pr_cdcooper      IN crapcop.cdcooper%TYPE  -- Código da cooperativa
                                     ,pr_nrdconta      IN crapass.nrdconta%TYPE  -- Numero Conta do cooperado
@@ -587,7 +623,43 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
   FUNCTION fn_converte_fator_vencimento(pr_dtmvtolt IN DATE    --Data Movimento
                                        ,pr_nrdfator IN INTEGER --Fator de vencimento
                                        ) RETURN DATE;
-                                   
+                                       
+  procedure pc_verifica_layout_ted (pr_cdcooper   in craphis.cdcooper%type
+                               ,pr_nrdconta   in crapass.nrdconta%type
+                               ,pr_nmarquiv   in varchar2
+                               ,pr_retxml in out nocopy XMLType
+                               ,pr_cdcritic  out pls_integer
+                               ,pr_dscritic  out varchar2); 
+                               
+ procedure pc_importa_arquivo_ted (pr_cdcooper   in crapatr.cdcooper%type  --> Número da cooperativa do cooperado
+                                   ,pr_nrdconta   in crapass.nrdconta%type  --> Número da conta do cooperado
+                                   ,pr_dsarquiv   IN VARCHAR2       --> Informações do arquivo
+                                   ,pr_dsdireto   IN VARCHAR2       --> Informações do diretório do arquivo                                  
+                                   ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
+                                   ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2);  
+                                    
+procedure pc_consulta_arquivo_remessa   (pr_cdcooper   in crapatr.cdcooper%type  --> Número da cooperativa do cooperado
+                                   ,pr_nrdconta   in crapass.nrdconta%type  --> Número da conta do cooperado
+                                   ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
+                                   ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2);        --> Erros do processo                             
+                                                                                                    
+
+procedure pc_salva_arquivo_remessa (pr_nrseq_arq_ted   in tbtransf_arquivo_ted.nrseq_arq_ted%type  --> Número de identificação do arquivo
+                                   ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
+                                   ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2);        --> Erros do processo 
+                                                                     
 END PGTA0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
@@ -665,6 +737,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
   --Tipo de Dados para cursor data
   rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+  
+  --P500
+  vr_nrseq_arq_ted  VARCHAR2(06);
+  vr_nmarvalidar    VARCHAR2(100); 
+  vr_id_nrseq_arq_ted  tbtransf_arquivo_ted.nrseq_arq_ted%type;
+  vr_clob_ted       CLOB;
+  vr_qtreg_lote     INTEGER :=0;
+  vr_qtreg_header_lote INTEGER :=0;
+  vr_qtreg_arq_total   INTEGER :=0;
+  vr_vlrpgt_segm_a  NUMBER(15,2):= 0;
+  vr_nr_seq_gravada INTEGER:= 0;
+
   
   -- Procedure para Verificar o Aceite do Cooperado ao Convenio
   PROCEDURE pc_verif_aceite_conven (pr_cdcooper      IN crapcop.cdcooper%TYPE  -- Código da cooperativa
@@ -11919,6 +12003,2465 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     RETURN TRUNC(vr_dtvencto);
     --
   END fn_converte_fator_vencimento;
+  
+/* Funcao para validacao dos caracteres */
+FUNCTION fn_valida_caracteres (pr_flgnumer IN BOOLEAN,  -- Validar Numeros?
+                               pr_flgletra IN BOOLEAN,  -- Validar Letras?
+                               pr_listaesp IN VARCHAR2, -- Lista de Caracteres Validos
+                               pr_dsvalida IN VARCHAR2  -- Texto para ser validado
+                              ) RETURN BOOLEAN IS       -- ERRO -> TRUE
+/* ............................................................................
+
+  Programa: fn_valida_caracteres                           antiga:b1wgen0090/valida_caracteres
+  Autor   : Douglas Quisinski
+  Data    : Dezembro/2015                  Ultima atualizacao:
+
+  Dados referentes ao programa:
+
+  Objetivo  : Rotina de validacao de caracteres com base parametros informados
+              Se o texto que esta sendo validado tiver algum caracter que nao esta na lista
+              vai retornar ERRO -> TRUE
+
+  Parametros : pr_flgnumer : Validar lista de numeros ?
+               pr_flgletra : Validar lista de letras  ?
+               pr_listaesp : Lista de caracteres validados.
+               pr_validar  : Campo a ser validado.
+
+  Alteracoes: 
+............................................................................ */   
+  vr_dsvalida VARCHAR2(30000);
+      
+  vr_numeros  VARCHAR2(10) := '0123456789';
+--Necessario acrescentar esta variavel por causa da 
+  --funcao CAN-DO do Progress, que permite simbolos como "(" e ")";
+  vr_simbolos VARCHAR2(10) := '().,/-_:';
+  vr_letras   VARCHAR2(49) := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  --vr_letras   VARCHAR2(49) := 'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÀÄÂÃÉÈËÊÍÌÏÎÓÒÖÔÕÚÙÜÛÇ';
+  vr_validar  VARCHAR2(30000);
+  vr_caracter VARCHAR2(1);
+      
+  TYPE typ_tab_char IS TABLE OF VARCHAR2(1) INDEX BY VARCHAR2(1);
+  vr_tab_char typ_tab_char;
+            
+BEGIN
+      
+  vr_dsvalida := REPLACE(UPPER(pr_dsvalida),' ','');
+  -- Caso nao tenha campos a validar retorna OK
+  IF TRIM(vr_dsvalida) IS NULL THEN
+    RETURN FALSE;
+  END IF;
+
+  -- Numeros
+  IF pr_flgnumer THEN
+    -- Todos os caracteres devem ser numeros
+    vr_validar:= vr_validar || vr_numeros;
+  END IF;
+
+  -- Letras 
+  IF pr_flgletra THEN
+    -- Todos os caracteres devem ser numeros
+    vr_validar:= vr_validar || vr_letras;
+  END IF;
+      
+  -- Lista Caracteres Aceitos
+  IF TRIM(pr_listaesp) IS NOT NULL THEN
+    vr_validar:= vr_validar || pr_listaesp;
+  END IF;
+
+--Necessario permitir simbolos "(" e ")";
+  vr_validar := vr_validar || vr_simbolos;
+  FOR vr_pos IN 1..length(vr_validar) LOOP
+    vr_caracter:= SUBSTR(vr_validar,vr_pos,1);
+    vr_tab_char(vr_caracter) := vr_caracter;
+  END LOOP;
+    
+  FOR vr_pos IN 1..length(vr_dsvalida) LOOP
+    vr_caracter:= SUBSTR(vr_dsvalida,vr_pos,1);
+    IF NOT vr_tab_char.exists(vr_caracter) THEN
+      RETURN TRUE;
+    END IF;
+  END LOOP;
+
+  RETURN FALSE;
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN FALSE;
+END fn_valida_caracteres;
+
+
+PROCEDURE pc_val_headerarq_cnab240_ted (pr_linha_arquivo in varchar2
+                             ,pr_nrdconta in integer
+                             ,pr_cdcooper in integer
+                             ,pr_tab_erros_headtrailer in out NOCOPY pgta0001.typ_tab_typ_erros_headtrailer -- Tabela de Memoria com as criticas
+                             ,pr_cdcritic  out pls_integer
+                             ,pr_dscritic  out varchar2) is
+
+    /* .............................................................................
+    
+        Programa: pc_val_headerarq_cnab240_ted
+        Sistema : CECRED
+        Autor   : Jose Dill
+        Data    : Maior/19.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Objetivo  : Validar as informações do Header do arquivo cnab 240 para teds e trasnferências.
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+
+  --> Buscar dados do associado
+  CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
+                     pr_nrdconta crapass.nrdconta%TYPE) IS
+  SELECT ass.nrcpfcgc,
+         ass.inpessoa
+    FROM crapass ass
+   WHERE ass.cdcooper = pr_cdcooper
+     AND ass.nrdconta = pr_nrdconta
+     AND ass.dtdemiss is null;
+  rw_crapass cr_crapass%ROWTYPE;
+
+  --> Buscar agência 
+  CURSOR cr_crapage (pr_cdcooper crapass.cdcooper%TYPE,
+                     pr_cdagenci varchar2) IS     
+  SELECT *
+  FROM crapcop cop 
+  WHERE cop.cdcooper = pr_cdcooper
+  AND   lpad(cdagectl, 5, '0') = pr_cdagenci;
+  rw_crapage cr_crapage%ROWTYPE;
+
+  --Variaveis de exceção
+  vr_exc_erro EXCEPTION;        
+  
+  vr_index      integer;             
+  vr_bco_comp varchar2(03);
+  vr_lote_ser varchar2(04);
+  vr_insc_emp varchar2(01);
+  vr_nrcpfcgc varchar2(14);
+  vr_age_cop  varchar2(05);
+  vr_nrdconta varchar2(13);
+  vr_nmempre  varchar2(30);
+  vr_cdremre  varchar2(01);
+  vr_dtgerarq varchar2(08);
+  vr_layout   varchar2(03);
+  --
+    
+BEGIN
+  /* Somatoria total de registros no arquivo */
+  vr_qtreg_arq_total := vr_qtreg_arq_total + 1;
+  -- 
+  /*Código do Banco na Compensação */ 
+  vr_bco_comp := substr(pr_linha_arquivo,1,3);
+  IF vr_bco_comp <> '085' THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AZ';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_bco_comp;
+  END IF;
+  /*Lote de Serviço*/
+  vr_lote_ser := substr(pr_linha_arquivo,4,4);
+  IF vr_lote_ser <> '0000' THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'HH';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_lote_ser;
+  END IF;
+  /*Tipo Inscrição da Empresa*/
+  vr_insc_emp := substr(pr_linha_arquivo,18,1);
+  IF vr_insc_emp not in ('1','2') THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AE';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_insc_emp;
+  END IF;
+  /*Número Inscrição (CPF/CNPJ)*/
+  vr_nrcpfcgc:= substr(pr_linha_arquivo,19,14);
+  --> Buscar dados do associado
+  OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+                   pr_nrdconta => pr_nrdconta);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%NOTFOUND THEN
+    CLOSE cr_crapass;
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AE';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_nrcpfcgc;
+  ELSE
+    CLOSE cr_crapass;
+    --
+    IF rw_crapass.nrcpfcgc <> TO_NUMBER(vr_nrcpfcgc) THEN       	
+      vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+      pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+      pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AE';
+      pr_tab_erros_headtrailer(vr_index).dscampo := vr_nrcpfcgc;
+    END IF;  
+    --    
+    IF rw_crapass.inpessoa <> TO_NUMBER(vr_insc_emp) THEN       	
+      vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+      pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+      pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AE';
+      pr_tab_erros_headtrailer(vr_index).dscampo := vr_insc_emp;
+    END IF;  
+
+  END IF;  
+  /*Agência Cooperativa*/
+  vr_age_cop := substr(pr_linha_arquivo,53,5);
+  OPEN cr_crapage (pr_cdcooper => pr_cdcooper,
+                   pr_cdagenci => vr_age_cop);
+  FETCH cr_crapage INTO rw_crapage;
+  IF cr_crapage%NOTFOUND THEN
+    CLOSE cr_crapage;
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AG';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_age_cop;
+  ELSE
+    CLOSE cr_crapage;
+  END IF;    
+  /*Conta Corrente + Dígito*/
+  vr_nrdconta := substr(pr_linha_arquivo,59,13);
+  IF TO_NUMBER(vr_nrdconta) <> pr_nrdconta THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'C1';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_nrdconta;
+  END IF;
+  /*Nome da Empresa*/
+  vr_nmempre := substr(pr_linha_arquivo,73,30);
+  IF vr_nmempre IS NULL THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'NE';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_nmempre;
+  END IF;
+  /*Código remessa/Retorno*/
+  vr_cdremre := substr(pr_linha_arquivo,143,1);
+  IF vr_cdremre <> '1' THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'HK';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_cdremre;
+  END IF;
+  /*Data geração do Arquivo*/
+  vr_dtgerarq := substr(pr_linha_arquivo,144,8);
+  IF to_date(vr_dtgerarq,'DDMMYYYY') < (SYSDATE - 30) THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'DG';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_dtgerarq;
+  END IF;
+  /*Número sequencial do arquivo*/
+  vr_nrseq_arq_ted := substr(pr_linha_arquivo,158,6);
+  --
+  IF TO_NUMBER(vr_nrseq_arq_ted) <= vr_nr_seq_gravada THEN  
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AH';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_nrseq_arq_ted;
+  END IF;
+
+  /*Nº versão Layout*/
+  vr_layout := substr(pr_linha_arquivo,164,3);
+  IF vr_layout <> '087' THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'HL';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_layout;
+  END IF; 
+  --
+  BEGIN
+    
+    -- Grava a linha do header do arquivo na tabela de controle 
+    INSERT INTO tbtransf_arquivo_ted_linhas (nrseq_arq_ted_linha, 
+                                            nrseq_arq_ted,                                           
+                                            dslinha_arq, 
+                                            dsret_cnab, 
+                                            dstipo_reg,
+                                            dtgeracao)
+                                    values (null,
+                                            vr_id_nrseq_arq_ted,                                         
+                                            substr(pr_linha_arquivo,1,240),
+                                            'BD',
+                                            '0',
+                                            sysdate);
+    --   
+  EXCEPTION
+   WHEN OTHERS THEN
+      vr_dscritic := 'Erro ao inserir dados do header arq na tbtransf_arquivo_ted_linhas: '||sqlerrm;
+      RAISE vr_exc_erro;
+  END;   
+EXCEPTION
+  WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+  WHEN OTHERS THEN
+      pr_dscritic:= 'Erro na proc pc_val_headerarq_cnab240_ted '||sqlerrm;
+
+END pc_val_headerarq_cnab240_ted;
+
+PROCEDURE pc_val_headerlot_cnab240_ted (pr_linha_arquivo in varchar2
+                             ,pr_nrdconta in integer
+                             ,pr_cdcooper in integer
+                             ,pr_tab_erros_headtrailer in out NOCOPY pgta0001.typ_tab_typ_erros_headtrailer -- Tabela de Memoria com as criticas
+                             ,pr_cdcritic  out pls_integer
+                             ,pr_dscritic  out varchar2) is
+
+    /* .............................................................................
+    
+        Programa: pc_val_headerlot_cnab240_ted
+        Sistema : CECRED
+        Autor   : Jose Dill
+        Data    : Maior/19.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Objetivo  : Validar as informações do Header Lote do arquivo cnab 240 para teds e trasnferências.
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+
+ --> Buscar dados do associado
+  CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
+                     pr_nrdconta crapass.nrdconta%TYPE) IS
+  SELECT ass.nrcpfcgc,
+         ass.inpessoa
+    FROM crapass ass
+   WHERE ass.cdcooper = pr_cdcooper
+     AND ass.nrdconta = pr_nrdconta;
+  rw_crapass cr_crapass%ROWTYPE;
+
+  --> Buscar agência 
+  CURSOR cr_crapage (pr_cdcooper crapass.cdcooper%TYPE,
+                     pr_cdagenci varchar2) IS     
+  SELECT *
+  FROM crapcop cop 
+  WHERE cop.cdcooper = pr_cdcooper
+  AND   lpad(cdagectl, 5, '0') = pr_cdagenci;
+  rw_crapage cr_crapage%ROWTYPE;
+  
+  --Variaveis de exceção
+  vr_exc_erro EXCEPTION;        
+  
+  vr_index      integer;             
+  vr_bco_comp varchar2(03);
+  vr_lote_ser varchar2(04);
+  vr_tpoperac varchar2(01);
+  vr_tpservic varchar2(02);
+  vr_insc_emp varchar2(01);
+  vr_nrcpfcgc varchar2(14);
+  vr_age_cop  varchar2(05);
+  vr_nrdconta varchar2(13);
+  vr_nmempre  varchar2(30);
+  vr_layout   varchar2(03);
+    
+BEGIN
+  /* Somatoria para validar qtde de registros do lote */
+  vr_qtreg_lote := vr_qtreg_lote + 1;
+  /* Somatoria para validar qtde de registros do header lote */
+  vr_qtreg_header_lote := vr_qtreg_header_lote + 1;
+  /* Somatoria total de registros no arquivo */
+  vr_qtreg_arq_total := vr_qtreg_arq_total + 1;
+  --
+  /*Código do Banco na Compensação */ 
+  vr_bco_comp := substr(pr_linha_arquivo,1,3);
+  IF vr_bco_comp <> '085' THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Lote';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AZ';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_bco_comp;
+  END IF;
+  /*Tipo de operacao*/
+  vr_tpoperac := substr(pr_linha_arquivo,9,1);
+  IF vr_tpoperac <> 'D' THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Lote';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AB';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_tpoperac;
+  END IF;
+  /*Tipo de serviço*/
+  vr_tpservic := substr(pr_linha_arquivo,10,2);
+  IF vr_tpservic <> '01' THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Lote';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AC';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_tpservic;
+  END IF;  
+  /*Nº versão Layout*/
+  vr_layout := substr(pr_linha_arquivo,14,3);
+  IF vr_layout <> '018' THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Lote';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'HL';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_layout;
+  END IF;   
+  /*Tipo Inscrição da Empresa*/
+  vr_insc_emp := substr(pr_linha_arquivo,18,1);
+  IF vr_insc_emp not in ('1','2') THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Lote';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AE';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_insc_emp;
+  END IF;  
+  /*Número Inscrição (CPF/CNPJ)*/
+  vr_nrcpfcgc:= substr(pr_linha_arquivo,19,14);
+  --> Buscar dados do associado
+  OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+                   pr_nrdconta => pr_nrdconta);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%NOTFOUND THEN
+    CLOSE cr_crapass;
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Lote';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AE';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_nrcpfcgc;    
+  ELSE
+    CLOSE cr_crapass;
+    --
+    IF rw_crapass.nrcpfcgc <> TO_NUMBER(vr_nrcpfcgc) THEN       	
+      vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+      pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Lote';
+      pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AE';
+      pr_tab_erros_headtrailer(vr_index).dscampo := vr_nrcpfcgc;
+    END IF;    
+    --
+    IF rw_crapass.inpessoa <> TO_NUMBER(vr_insc_emp) THEN       	
+      vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+      pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Lote';
+      pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AE';
+      pr_tab_erros_headtrailer(vr_index).dscampo := vr_insc_emp;
+    END IF;        
+  END IF;  
+  /*Agência Cooperativa*/
+  vr_age_cop := substr(pr_linha_arquivo,53,5);
+  OPEN cr_crapage (pr_cdcooper => pr_cdcooper,
+                   pr_cdagenci => vr_age_cop);
+  FETCH cr_crapage INTO rw_crapage;
+  IF cr_crapage%NOTFOUND THEN
+    CLOSE cr_crapage;
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Lote';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AG';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_age_cop;
+  ELSE
+    CLOSE cr_crapage;
+  END IF;    
+  
+  /*Conta Corrente + Dígito*/
+  vr_nrdconta := substr(pr_linha_arquivo,59,13);
+  IF TO_NUMBER(vr_nrdconta) <> pr_nrdconta THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Lote';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'C1';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_nrdconta;
+  END IF;
+  /*Nome da Empresa*/
+  vr_nmempre := substr(pr_linha_arquivo,73,30);
+  IF vr_nmempre IS NULL THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Header Lote';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'NE';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_nmempre;
+  END IF; 
+  BEGIN
+    -- Grava a linha do header do lote na tabela de controle 
+    INSERT INTO tbtransf_arquivo_ted_linhas (nrseq_arq_ted_linha, 
+                                            nrseq_arq_ted,                                           
+                                            dslinha_arq, 
+                                            dsret_cnab,
+                                            dstipo_reg,
+                                            dtgeracao)
+                                    values (null,
+                                            vr_id_nrseq_arq_ted,                                         
+                                            substr(pr_linha_arquivo,1,240),
+                                            'BD',
+                                            '1',
+                                            sysdate);
+    --   
+  EXCEPTION
+   WHEN OTHERS THEN
+      vr_dscritic := 'Erro ao inserir dados do header lot na tbtransf_arquivo_ted_linhas: '||sqlerrm;
+      RAISE vr_exc_erro;
+  END;
+
+EXCEPTION
+  WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+  WHEN OTHERS THEN
+      pr_dscritic:= 'Erro na proc pc_val_headerlot_cnab240_ted '||sqlerrm;
+
+END pc_val_headerlot_cnab240_ted;
+
+PROCEDURE pc_val_trailerlot_cnab240_ted (pr_linha_arquivo in varchar2
+                             ,pr_nrdconta in integer
+                             ,pr_cdcooper in integer
+                             ,pr_tab_erros_headtrailer in out NOCOPY pgta0001.typ_tab_typ_erros_headtrailer -- Tabela de Memoria com as criticas
+                             ,pr_cdcritic  out pls_integer
+                             ,pr_dscritic  out varchar2) is
+
+    /* .............................................................................
+    
+        Programa: pc_val_trailerlot_cnab240_ted
+        Sistema : CECRED
+        Autor   : Jose Dill
+        Data    : Maior/19.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Objetivo  : Validar as informações do Trailer do lote cnab 240 para teds e trasnferências.
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+
+  vr_index     integer;             
+  vr_bco_comp  varchar2(03);
+  vr_lote_ser  varchar2(04);
+  vr_qtde_lote varchar2(06);
+  vr_vlr_ope   varchar2(18);
+  
+  vr_exc_erro  exception;
+
+    
+BEGIN
+  /* Somatoria para validar qtde de registros do lote */
+  vr_qtreg_lote := vr_qtreg_lote + 1;
+  /* Somatoria total de registros no arquivo */
+  vr_qtreg_arq_total := vr_qtreg_arq_total + 1;
+  --
+  /*Código do Banco na Compensação */ 
+  vr_bco_comp := substr(pr_linha_arquivo,1,3);
+  IF vr_bco_comp <> '085' THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Trailer Lote';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AZ';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_bco_comp;
+  END IF;
+  /*Quantidade de lote arquivo*/
+  vr_qtde_lote := substr(pr_linha_arquivo,18,6);
+  IF TO_NUMBER(vr_qtde_lote) <> vr_qtreg_lote THEN 
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Trailer Lote';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'TA';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_qtde_lote;
+  END IF;  
+  /*Valor total das Operações*/
+  vr_vlr_ope := substr(pr_linha_arquivo,24,18);
+  IF TO_NUMBER(vr_vlr_ope) <> vr_vlrpgt_segm_a THEN 
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Trailer Lote';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'VT';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_vlr_ope;
+  END IF;  
+  --
+  BEGIN
+    -- Grava a linha do trailer do lote na tabela de controle 
+    INSERT INTO tbtransf_arquivo_ted_linhas (nrseq_arq_ted_linha, 
+                                            nrseq_arq_ted,                                           
+                                            dslinha_arq, 
+                                            dsret_cnab, 
+                                            dstipo_reg,
+                                            dtgeracao)
+                                    values (null,
+                                            vr_id_nrseq_arq_ted,                                         
+                                            substr(pr_linha_arquivo,1,240),
+                                            'BD',
+                                            '5',
+                                            sysdate);
+    --   
+  EXCEPTION
+   WHEN OTHERS THEN
+      vr_dscritic := 'Erro ao inserir dados do trailer lot na tbtransf_arquivo_ted_linhas: '||sqlerrm;
+      RAISE vr_exc_erro;
+  END;    
+  
+EXCEPTION
+  WHEN vr_exc_erro THEN
+    pr_dscritic := vr_dscritic; 
+    -- 
+  WHEN OTHERS THEN
+    pr_dscritic:= 'Erro na proc pc_val_trailerlot_cnab240_ted '||sqlerrm;
+    --
+END pc_val_trailerlot_cnab240_ted;
+
+PROCEDURE pc_val_trailerarq_cnab240_ted (pr_linha_arquivo in varchar2
+                             ,pr_nrdconta in integer
+                             ,pr_cdcooper in integer
+                             ,pr_tab_erros_headtrailer in out NOCOPY pgta0001.typ_tab_typ_erros_headtrailer -- Tabela de Memoria com as criticas
+                             ,pr_cdcritic  out pls_integer
+                             ,pr_dscritic  out varchar2) is
+
+    /* .............................................................................
+    
+        Programa: pc_val_trailerarq_cnab240_ted
+        Sistema : CECRED
+        Autor   : Jose Dill
+        Data    : Maior/19.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Objetivo  : Validar as informações do Trailer do arquivo cnab 240 para teds e trasnferências.
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+
+  vr_index     integer;             
+  vr_bco_comp  varchar2(03);
+  vr_lote_ser  varchar2(04);
+  vr_qtde_lote varchar2(06);
+  vr_qtde_reg  varchar2(06);
+  vr_exc_erro  exception;
+    
+BEGIN
+  /* Somatoria total de registros no arquivo */
+  vr_qtreg_arq_total := vr_qtreg_arq_total + 1;
+  --
+  /*Código do Banco na Compensação */ 
+  vr_bco_comp := substr(pr_linha_arquivo,1,3);
+  IF vr_bco_comp <> '085' THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Trailer Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AZ';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_bco_comp;
+  END IF;
+  /*Lote de Serviço*/
+  vr_lote_ser := substr(pr_linha_arquivo,4,4);
+  IF vr_lote_ser <> '9999' THEN
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Trailer Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'AC';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_lote_ser;
+  END IF;
+  /*Quantidade de lote arquivo*/
+  vr_qtde_lote := substr(pr_linha_arquivo,18,6);
+  IF TO_NUMBER(vr_qtde_lote) <> vr_qtreg_header_lote THEN 
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Trailer Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'TA';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_qtde_lote;
+  END IF;  
+  /*Quantidade de registros arquivo*/
+  vr_qtde_reg := substr(pr_linha_arquivo,24,6);
+  IF TO_NUMBER(vr_qtde_reg) <> vr_qtreg_arq_total THEN 
+    vr_index := pr_tab_erros_headtrailer.COUNT() + 1;
+    pr_tab_erros_headtrailer(vr_index).tporigem := 'Trailer Arq';
+    pr_tab_erros_headtrailer(vr_index).tperrocnab := 'TA';
+    pr_tab_erros_headtrailer(vr_index).dscampo := vr_qtde_reg;
+  END IF;  
+  BEGIN
+    -- Grava a linha do trailer do arquivo na tabela de controle 
+    INSERT INTO tbtransf_arquivo_ted_linhas (nrseq_arq_ted_linha, 
+                                            nrseq_arq_ted,                                           
+                                            dslinha_arq, 
+                                            dsret_cnab, 
+                                            dstipo_reg,
+                                            dtgeracao)
+                                    values (null,
+                                            vr_id_nrseq_arq_ted,                                         
+                                            substr(pr_linha_arquivo,1,240),
+                                            'BD',
+                                            '9',
+                                            sysdate);
+    --   
+  EXCEPTION
+   WHEN OTHERS THEN
+      vr_dscritic := 'Erro ao inserir dados do trailer arq na tbtransf_arquivo_ted_linhas: '||sqlerrm;
+      RAISE vr_exc_erro;
+  END;    
+  
+EXCEPTION
+  WHEN vr_exc_erro THEN
+    pr_dscritic := vr_dscritic; 
+    -- 
+  WHEN OTHERS THEN
+      pr_dscritic:= 'Erro na proc pc_val_trailer_cnab240_ted '||sqlerrm;
+
+END pc_val_trailerarq_cnab240_ted;
+
+PROCEDURE pc_val_segment_a_cnab240_ted (pr_linha_arquivo in varchar2
+                             ,pr_nrdconta in integer
+                             ,pr_cdcooper in integer
+                             ,pr_tab_dados_segmento_a in out NOCOPY pgta0001.typ_tab_dados_segmento_a -- Tabela de memoria do segmento a
+                             ,pr_cdcritic  out pls_integer
+                             ,pr_dscritic  out varchar2) is
+
+    /* .............................................................................
+    
+        Programa: pc_val_segment_a_cnab240_ted
+        Sistema : CECRED
+        Autor   : Jose Dill
+        Data    : Maior/19.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Objetivo  : Validar as informações do segmento A do arquivo cnab 240 para teds e trasnferências.
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+
+  CURSOR cr_bcofav (pr_bcofav in number) IS 
+  SELECT 1
+  FROM crapban ban
+  WHERE ban.cdbccxlt = pr_bcofav;
+  rr_bcofav cr_bcofav%ROWTYPE;  
+
+  CURSOR cr_crapagb (pr_cddbanco in number
+                   ,pr_cdagenci in number) IS   
+  SELECT *
+  FROM crapagb agb
+  WHERE agb.cddbanco = pr_cddbanco
+  and   agb.cdageban = pr_cdagenci;
+  rr_crapagb cr_crapagb%ROWTYPE;  
+  
+  CURSOR cr_crapcop (pr_cdcooper in number
+                    ,pr_cdagenci in number) IS    
+  SELECT cop.cdagectl
+  FROM crapcop cop
+  WHERE cop.cdcooper = pr_cdcooper
+    and cop.cdagectl = pr_cdagenci;
+  rr_crapcop cr_crapcop%ROWTYPE; 
+
+ --> Buscar dados do associado
+  CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
+                     pr_nrdconta crapass.nrdconta%TYPE) IS
+  SELECT ass.nrcpfcgc,
+         ass.inpessoa
+    FROM crapass ass
+   WHERE ass.cdcooper = pr_cdcooper
+     AND ass.nrdconta = pr_nrdconta
+     AND ass.dtdemiss is null;
+  rw_crapass cr_crapass%ROWTYPE;
+
+ --> Buscar dados da finalidade
+  CURSOR cr_crapfin (pr_cdcooper crapass.cdcooper%TYPE,
+                     pr_finalide integer) IS  
+  SELECT tab.tpregist, tab.dstextab 
+  FROM craptab tab
+  WHERE tab.cdacesso = 'FINTRFTEDS'
+  AND tab.cdcooper   = pr_cdcooper
+  AND tab.tpregist   = pr_finalide;
+  rr_crapfin cr_crapfin%ROWTYPE;
+  
+  -- Exceptions
+  vr_erro_segmento_a exception;
+  vr_exc_saida       exception;
+   
+  
+  -- Variaveis    
+  vr_index     integer;             
+  vr_bco_comp  varchar2(03);
+  vr_lote_ser  varchar2(04);
+  vr_cdsegme   varchar2(01);
+  vr_tpmovime  varchar2(01);
+  vr_bcofavo   varchar2(03);
+  vr_agefav    varchar2(05);
+  vr_nrdconta  varchar2(12);
+  vr_nrddgcta  varchar2(01);
+  vr_nmfavor   varchar2(30);
+  vr_dtpgto    varchar2(08);
+  vr_tpmoeda   varchar2(03);
+  vr_vlrpgt    varchar2(15);
+  vr_insc_emp  varchar2(01);
+  vr_nrcpfcgc  varchar2(14);
+  vr_finalida  varchar2(05);
+  vr_histra    varchar2(20);
+  vr_stsnrcal  boolean;
+  vr_inpessoa  integer:= null;
+
+    
+BEGIN
+  /* Seleciona todas as informacoes do arquivo para gravar na tabela temp e depois faz as validações*/
+  vr_bco_comp := substr(pr_linha_arquivo,1,3);
+  vr_lote_ser := substr(pr_linha_arquivo,4,4);
+  vr_cdsegme := substr(pr_linha_arquivo,14,1);
+  vr_tpmovime := substr(pr_linha_arquivo,15,1);
+  vr_bcofavo := substr(pr_linha_arquivo,21,3);
+  vr_agefav := substr(pr_linha_arquivo,24,5);
+  vr_nmfavor := substr(pr_linha_arquivo,44,30);
+  vr_nmfavor := replace(vr_nmfavor,'&','e');
+  -- Validar os caracteres especiais do favorecido
+  IF fn_valida_caracteres(pr_flgnumer => FALSE,   -- Validar Numeros
+                        pr_flgletra => TRUE,   -- Validar Letras
+                        pr_listaesp => '',     -- Lista Caracteres Validos (incluir caracteres que sao validos apenas para este campo)
+                        pr_dsvalida => vr_nmfavor ) THEN 
+    vr_dscritic:= 'Nome do favorecido possui caracteres especiais. '||vr_nmfavor;
+    raise vr_exc_saida;
+  END IF;
+  --
+  vr_agefav := substr(pr_linha_arquivo,24,5);
+  vr_nrdconta:= substr(pr_linha_arquivo,30,12);
+  vr_nrddgcta:= substr(pr_linha_arquivo,42,1);
+  vr_dtpgto := substr(pr_linha_arquivo,94,8);
+  vr_tpmoeda := substr(pr_linha_arquivo,102,3);
+  vr_vlrpgt := substr(pr_linha_arquivo,120,15);
+  vr_vlrpgt_segm_a := vr_vlrpgt_segm_a + TO_NUMBER(vr_vlrpgt);
+  vr_finalida := substr(pr_linha_arquivo,220,5);
+  vr_histra := substr(pr_linha_arquivo,178,20);
+  vr_histra := replace(vr_histra,'&','e');
+  -- Validar os caracteres especiais do histrocio
+  IF fn_valida_caracteres(pr_flgnumer => FALSE,   -- Validar Numeros
+                        pr_flgletra => TRUE,   -- Validar Letras
+                        pr_listaesp => '',     -- Lista Caracteres Validos (incluir caracteres que sao validos apenas para este campo)
+                        pr_dsvalida => vr_histra ) THEN 
+    vr_dscritic:= 'Historico possui caracteres especiais. '||vr_histra;
+    raise vr_exc_saida;
+  END IF;
+  --  
+  vr_insc_emp := substr(pr_linha_arquivo,203,1);
+  vr_nrcpfcgc:= substr(pr_linha_arquivo,204,14);
+  --
+  -- Atualiza temp
+  vr_index := pr_tab_dados_segmento_a.COUNT() + 1;
+  pr_tab_dados_segmento_a(vr_index).cdbco_comp := vr_bco_comp;
+  pr_tab_dados_segmento_a(vr_index).nrlote_ser := vr_lote_ser;
+  pr_tab_dados_segmento_a(vr_index).dstipo_reg := '3'; 
+  pr_tab_dados_segmento_a(vr_index).cdsegmento := vr_cdsegme;
+  pr_tab_dados_segmento_a(vr_index).dstipo_mov := vr_tpmovime;
+  pr_tab_dados_segmento_a(vr_index).cdbco_fav := vr_bcofavo;
+  pr_tab_dados_segmento_a(vr_index).cdage_conta := vr_agefav;
+  pr_tab_dados_segmento_a(vr_index).nrdconta := Substr(vr_nrdconta||vr_nrddgcta,2,12);
+  pr_tab_dados_segmento_a(vr_index).nmfavorecido := vr_nmfavor;
+  pr_tab_dados_segmento_a(vr_index).dtprv_pgto := vr_dtpgto ;
+  pr_tab_dados_segmento_a(vr_index).dsmoeda := vr_tpmoeda;
+  pr_tab_dados_segmento_a(vr_index).vlrpgto := vr_vlrpgt;
+  pr_tab_dados_segmento_a(vr_index).dshistorico := vr_histra;
+  pr_tab_dados_segmento_a(vr_index).dsins_fav := vr_insc_emp;
+  pr_tab_dados_segmento_a(vr_index).nr_cpf_cnpj_fav := vr_nrcpfcgc;
+  pr_tab_dados_segmento_a(vr_index).dsfinalidade := vr_finalida;
+  pr_tab_dados_segmento_a(vr_index).dslinha_seg_a := substr(pr_linha_arquivo,1,240);
+  --  
+  /* Somatoria para validar qtde de registros do lote */
+  vr_qtreg_lote := vr_qtreg_lote + 1;
+  /* Somatoria total de registros no arquivo */
+  vr_qtreg_arq_total := vr_qtreg_arq_total + 1;
+  --
+  /*Código do Banco na Compensação */ 
+  IF vr_bco_comp <> '085' THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AZ';
+     raise vr_erro_segmento_a;
+  END IF;
+  /*Lote de Serviço*/
+  /*IF vr_lote_ser <> '0001' THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AC';
+     raise vr_erro_segmento_a;
+  END IF;*/
+ 
+  /*Código Segmento*/
+  IF vr_cdsegme <> 'A' THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AI';
+     raise vr_erro_segmento_a;
+  END IF; 
+   /*Tipo de Movimento*/
+  IF vr_tpmovime not in ('1','2','3') THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AJ';
+     raise vr_erro_segmento_a;
+  END IF; 
+  /*Código Banco Favorecido*/
+  OPEN cr_bcofav (TO_NUMBER(vr_bcofavo));  
+  FETCH cr_bcofav into rr_bcofav;
+  IF cr_bcofav%NOTFOUND THEN
+     CLOSE cr_bcofav; 
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AL';
+     raise vr_erro_segmento_a;
+  END IF;     
+  CLOSE cr_bcofav;  
+  --
+  /*Agência Mantedora da conta*/
+  IF vr_bcofavo = '085' THEN
+    /* Se o banco for da cooperatia e o tipo de conta for conta corrente ou poupança, valida agência*/
+    IF vr_tpmovime in ('1','2') THEN
+      OPEN cr_crapcop (pr_cdcooper, TO_NUMBER(vr_agefav));  
+      FETCH cr_crapcop into rr_crapcop;
+      IF cr_crapcop%NOTFOUND THEN
+         CLOSE cr_crapcop;
+         pr_tab_dados_segmento_a(vr_index).tperrocnab := 'A2';
+         raise vr_erro_segmento_a; 
+      END IF;     
+      CLOSE cr_crapcop;
+    END IF;
+  ELSE
+    /* Valida agência de outros bancos */
+    OPEN cr_crapagb (TO_NUMBER(vr_bcofavo), TO_NUMBER(vr_agefav));  
+    FETCH cr_crapagb into rr_crapagb;
+    IF cr_crapagb%NOTFOUND THEN
+       CLOSE cr_crapagb;
+       pr_tab_dados_segmento_a(vr_index).tperrocnab := 'A2';
+       raise vr_erro_segmento_a; 
+    END IF;     
+    CLOSE cr_crapagb;    
+  END IF;
+  /*Digito da conta*/
+  IF ltrim(vr_nrddgcta) is null THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'C2';
+     raise vr_erro_segmento_a;  
+  END IF; 
+  /*Número da Conta Corrente*/
+  IF vr_nrdconta = '000000000000' THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'C1';
+     raise vr_erro_segmento_a;    
+  ELSE
+    IF  vr_bcofavo = '085' THEN         
+      --> Buscar dados do associado
+      OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+                       pr_nrdconta => TO_NUMBER(vr_nrdconta||vr_nrddgcta));
+      FETCH cr_crapass INTO rw_crapass;
+      IF cr_crapass%NOTFOUND THEN        
+         CLOSE cr_crapass;
+         pr_tab_dados_segmento_a(vr_index).tperrocnab := 'C1';
+         raise vr_erro_segmento_a; 
+      END IF; 
+      CLOSE cr_crapass;  
+    END IF;
+  END IF; 
+  
+  /*Nome do Favorecido*/
+  IF ltrim(vr_nmfavor) IS NULL THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AO';
+     raise vr_erro_segmento_a;
+  END IF; 
+ 
+  /*Data prevista para pagamento*/
+  IF TO_DATE(vr_dtpgto,'DDMMYYYY') <= TRUNC(SYSDATE) THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AP';
+     raise vr_erro_segmento_a;
+  END IF; 
+   
+  /*Tipo da Moeda*/
+  IF vr_tpmoeda <> 'BRL' THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AQ';
+     raise vr_erro_segmento_a;
+  END IF;
+ 
+  /*Valor do Pagamento/Débito*/
+  IF TO_NUMBER(vr_vlrpgt) = 0 THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AR';
+     raise vr_erro_segmento_a;
+  END IF;   
+ 
+  /*Tipo Inscrição da Empresa*/
+  IF vr_insc_emp not in ('1','2') THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AT';
+     raise vr_erro_segmento_a;
+  END IF;
+  /*Número Inscrição (CPF/CNPJ)*/
+  -- Validação Básica
+  gene0005.pc_valida_cpf_cnpj(TO_NUMBER(vr_nrcpfcgc),
+                              vr_stsnrcal,
+                              vr_inpessoa);
+  IF NOT vr_stsnrcal THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AT';
+     raise vr_erro_segmento_a;
+  END IF;
+  -- Valida se o tipo de pessoa esta correto (1 - PF)
+  IF vr_insc_emp = '1' AND vr_inpessoa <> 1 THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AT';
+     raise vr_erro_segmento_a;
+  END IF;
+  -- Valida se o tipo de pessoa esta correto (2 PJ)
+  IF vr_insc_emp = '2' AND vr_inpessoa <> 2 THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AT';
+     raise vr_erro_segmento_a;
+  END IF;  
+  
+  /*Finalidade da Operação/TED*/
+  OPEN cr_crapfin (pr_cdcooper, TO_NUMBER(vr_finalida));  
+  FETCH cr_crapfin into rr_crapfin;
+  IF cr_crapfin%NOTFOUND THEN
+     CLOSE cr_crapfin; 
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'YD';
+     raise vr_erro_segmento_a;
+  END IF;     
+  CLOSE cr_crapfin;      
+
+  /*Histórico da Transação*/
+  IF vr_finalida = '99999'  THEN
+    IF ltrim(vr_histra) IS NULL THEN
+       pr_tab_dados_segmento_a(vr_index).tperrocnab := 'YE';
+       raise vr_erro_segmento_a;
+    END IF;
+  END IF;
+  -- Não encontrou nenhuma inconsistência
+  pr_tab_dados_segmento_a(vr_index).tperrocnab := 'BD';
+        
+EXCEPTION
+  WHEN vr_exc_saida THEN
+      pr_dscritic := vr_dscritic;  
+  WHEN vr_erro_segmento_a THEN
+      NULL;
+  WHEN OTHERS THEN
+      pr_dscritic:= 'Erro na proc pc_val_segment_a_cnab240_ted. Cta: '||vr_nrdconta||' Dtpgt: '||vr_dtpgto||' Vlr'||vr_vlrpgt||' - '||sqlerrm;
+ 
+END pc_val_segment_a_cnab240_ted;
+
+
+                             
+procedure pc_verifica_layout_ted (pr_cdcooper   in craphis.cdcooper%type
+                             ,pr_nrdconta   in crapass.nrdconta%type
+                             ,pr_nmarquiv   in varchar2
+                             ,pr_retxml in out nocopy XMLType
+                             ,pr_cdcritic  out pls_integer
+                             ,pr_dscritic  out varchar2) is
+
+  ---------------------------------------------------------------------------
+  --
+  --  Programa : pc_verifica_layout_ted
+  --  Sistema  : Ayllos Web
+  --  Autor    : Jose Dill
+  --  Data     : Maio/2019                Ultima atualizacao:
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Objetivo  : Validar as informações do arquivo (header, trailer, segmento a)
+  --             
+  --
+  -- Alteracoes:
+  --
+  ---------------------------------------------------------------------------
+
+  CURSOR cr_errocnab (pr_tperrocnab  tbtransf_erros_cnab.tperrocnab%type) IS
+  SELECT tec.dserrocnab 
+  FROM TBTRANSF_ERROS_CNAB tec
+  WHERE tec.tperrocnab =pr_tperrocnab;
+  rr_errocnab cr_errocnab%rowtype;
+  
+  CURSOR cr_crapban (pr_cdbanco crapban.cdbccxlt%type) IS
+  SELECT ban.nrispbif
+  FROM crapban ban
+  WHERE ban.cdbccxlt = pr_cdbanco;
+  rr_crapban cr_crapban%rowtype;
+  
+  CURSOR cr_arqrem (pr_cdcooper tbtransf_arquivo_ted.cdcooper%type
+                   ,pr_nrdconta tbtransf_arquivo_ted.nrdconta%type
+                   ,pr_nrseqarq tbtransf_arquivo_ted.nrseq_arquivo%type) IS
+  SELECT 
+    ltrim(substr(tatl.dslinha_arq,1,230) || tatl.dsret_cnab||substr(tatl.dslinha_arq,233,8)) linharem
+  FROM tbtransf_arquivo_ted tat
+  , tbtransf_arquivo_ted_linhas tatl
+  WHERE tatl.nrseq_arq_ted = tat.nrseq_arq_ted
+  AND   tat.nrdconta = pr_nrdconta
+  AND   tat.cdcooper = pr_cdcooper
+  AND   tat.nrseq_arquivo = pr_nrseqarq
+  AND   ltrim(tatl.cdbco_comp) IS NOT NULL  /*TEMPORARIO - PENDENCIA*/
+  ORDER BY tatl.nrseq_arq_ted_linha ASC;
+  rr_arqrem  cr_arqrem%rowtype; 
+  
+  -- Declaracao de variaveis
+  vr_contador  number := 0;
+  vr_exc_saida exception;
+  vr_cdcritic  pls_integer;
+  vr_destexto  varchar2(100);
+  vr_nmdireto  varchar2(100);
+  vr_linhaxml  varchar2(100);
+  vr_linhaarq  varchar2(4000);
+  vr_dscritic  varchar2(1000);
+  vr_utlfile   utl_file.file_type;
+  vr_nrdconta  crapass.nrdconta%type;
+  vr_index     integer :=0;
+  
+  /* Variaveis dos arquivos */
+  vr_tipo_registro varchar2(01);
+  vr_cod_febraban varchar2(02);
+  
+  vr_existe_header_arq  boolean := false;
+  vr_existe_header_lot  boolean := false;
+  vr_existe_trailer_arq boolean := false;
+  vr_existe_trailer_lot boolean := false;
+  vr_cdtiptra           integer;
+  vr_cdhisdeb           integer;
+  vr_dtmvtopg           date;
+  vr_vllanmto           number(15,2);
+  vr_cddbanco           integer; 
+  vr_cdageban           integer;
+  vr_nrctadst           integer;
+  vr_idlancto           craplau.idlancto%TYPE;
+  vr_dstrans1           varchar2(500) := NULL;
+  vr_msgofatr           varchar2(500);
+  vr_cdempcon           number;
+  vr_cdsegmto           varchar2(500);
+  vr_cdfinali           number;
+  vr_gravou_ted         boolean := False;  
+  vr_dsretorno          varchar2(500);
+  vr_qtde_carac         integer;
+  vr_qtlinhas           integer := 0;
+  vr_qtlinhas_total     integer := 0;
+  
+  vr_linha_header_arq   VARCHAR2(240);
+  vr_linha_header_lot   VARCHAR2(240);
+  vr_linha_trailer_arq  VARCHAR2(240);
+  vr_linha_trailer_lot  VARCHAR2(240);  
+  vr_arq_ted_rowid      ROWID;
+  
+  vr_nmtitula VARCHAR2(500);
+  vr_intipcta crapcti.intipcta%TYPE;        
+  vr_inpessoa crapcti.inpessoa%TYPE;
+  vr_nrcpffav crapcti.nrcpfcgc%TYPE;
+  vr_cdispbif crapban.nrispbif%TYPE;
+  vr_nrctatrf NUMBER(13);
+  vr_dscpfcgc VARCHAR2(500);
+  vr_nmdcampo VARCHAR2(500);                  
+  vr_msgaviso VARCHAR2(1000) := NULL;
+  vr_tab_erro gene0001.typ_tab_erro; --> Tabela com erros
+  vr_flgctafa BOOLEAN;
+  vr_nmtitul2 VARCHAR2(500);
+  
+   
+  vr_arq_remessa        CLOB;
+  vr_texto_arq_remessa  VARCHAR2(32767);
+  
+  --pl table com os dados do relatorio
+  vr_tab_err_headtrailer pgta0001.typ_tab_typ_erros_headtrailer;
+  vr_tab_dados_segmento_a pgta0001.typ_tab_dados_segmento_a;
+
+
+PROCEDURE pc_grava_favorito_ted IS
+ /* Objetivo: Criar o registro de favorito para a transferência ou TED */
+   
+ PRAGMA AUTONOMOUS_TRANSACTION; 
+ 
+BEGIN
+  -- Executa rotina para gravar favorito
+  IF vr_cdtiptra = 4 THEN
+      /* TED */
+      -- Busca ISPB
+      OPEN cr_crapban (vr_cddbanco);
+      FETCH cr_crapban INTO rr_crapban;
+      IF cr_crapban%FOUND THEN
+        vr_cdispbif := rr_crapban.nrispbif;
+      ELSE
+        --gerar erro
+        null;
+      END IF;
+      CLOSE cr_crapban;
+            
+      -- Chamar a rotina valida-inclusao-conta-transferencia convertida da Bo15
+      cada0002.pc_val_inclui_conta_transf(pr_cdcooper => pr_cdcooper
+                                         ,pr_cdagenci => 90
+                                         ,pr_nrdcaixa => 900
+                                         ,pr_cdoperad => '1'
+                                         ,pr_nmdatela => 'PGTA0001'
+                                         ,pr_idorigem => 1 
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_idseqttl => 1 
+                                         ,pr_dtmvtolt => TRUNC(SYSDATE) --pr_dtmvtolt ???
+                                         ,pr_flgerlog => 1 /*TRUE*/
+                                         ,pr_cddbanco => vr_cddbanco 
+                                         ,pr_cdispbif => vr_cdispbif
+                                         ,pr_cdageban => vr_cdageban
+                                         ,pr_nrctatrf => vr_nrctatrf
+                                         ,pr_intipdif => 2
+                                         ,pr_intipcta => vr_intipcta
+                                         ,pr_insitcta => 2
+                                         ,pr_inpessoa => vr_inpessoa
+                                         ,pr_nrcpfcgc => vr_nrcpffav
+                                         ,pr_flvldinc => 1
+                                         ,pr_rowidcti => NULL
+                                         ,pr_nmtitula => vr_nmtitula
+                                         ,pr_dscpfcgc => vr_dscpfcgc
+                                         ,pr_nmdcampo => vr_nmdcampo
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+            
+      /* Desconsiderar critica de Favorecido ja cadastrado */
+      IF (nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL) AND nvl(vr_cdcritic, 0) <> 979 THEN
+          IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+              pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          ELSE
+              pr_dscritic := vr_dscritic;
+          END IF;
+      END IF;
+            
+      /* Não chamar a inclusao se favorecido jah cadastrado */
+      IF nvl(vr_cdcritic, 0) <> 979 THEN
+          -- Se tudo corer bem com a validação:
+          -- Chamar a rotina para inclusão do favorecido
+          cada0002.pc_inclui_conta_transf(pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
+                                         ,pr_cdagenci => 90          --> Codigo da agencia
+                                         ,pr_nrdcaixa => 900         --> Numero do caixa
+                                         ,pr_cdoperad => '1'         --> Cod. do operador
+                                         ,pr_nmdatela => 'PGTA0001'  --> Nome da tela
+                                         ,pr_idorigem => 1           --> Identificador de origem 
+                                         ,pr_nrdconta => pr_nrdconta --> Numero da conta
+                                         ,pr_idseqttl => 1           --> Seq. do titular
+                                         ,pr_dtmvtolt => TRUNC(SYSDATE) --> Data do movimento ???
+                                         ,pr_nrcpfope => 0              --> CPF operador juridico ???
+                                         ,pr_flgerlog => 1 /*TRUE*/ --> flg geracao log
+                                         ,pr_cddbanco => vr_cddbanco --> Codigo do banco destino
+                                         ,pr_cdageban => vr_cdageban --> Agencia destino
+                                         ,pr_nrctatrf => vr_nrctatrf --> Nr. conta transf
+                                         ,pr_nmtitula => vr_nmtitula --> Nome titular
+                                         ,pr_nrcpfcgc => vr_nrcpffav --> CPF titulat 
+                                         ,pr_inpessoa => vr_inpessoa --> Tipo pessoa
+                                         ,pr_intipcta => vr_intipcta --> Tipo de conta
+                                         ,pr_intipdif => 2           --> tipo de inst. financeira da conta (Outras)
+                                         ,pr_rowidcti => NULL        --> Recid da cta transf
+                                         ,pr_cdispbif => vr_cdispbif --> Nr do ISPB do banco
+                                          -- OUT
+                                         ,pr_msgaviso => vr_msgaviso --> Mensagem de aviso
+                                         ,pr_des_erro => vr_des_erro --> Indicador se retornou com erro (OK ou NOK)
+                                         ,pr_cdcritic => vr_cdcritic --> Codigo da critica
+                                         ,pr_dscritic => pr_dscritic); --> Descricao da critica
+                
+          IF vr_des_erro <> 'OK' THEN
+              IF TRIM(pr_dscritic) IS NULL THEN
+                  vr_dscritic := 'Erro na inclusao da conta favorita.'||pr_dscritic;
+                  RAISE vr_exc_saida;
+              END IF;
+          END IF;
+                
+      END IF;
+            
+  ELSE
+            
+      /* Validar a conta de destino da transferencia */
+      inet0001.pc_valida_conta_destino(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
+                                      ,pr_cdagenci => 90          --Agencia do Associado
+                                      ,pr_nrdcaixa => 900         --Numero caixa
+                                      ,pr_cdoperad => '1'         --Codigo Operador
+                                      ,pr_nrdconta => pr_nrdconta --Numero da conta
+                                      ,pr_idseqttl => 1           --Identificador Sequencial titulo
+                                      ,pr_cdagectl => vr_cdageban --Codigo Agencia
+                                      ,pr_nrctatrf => vr_nrctatrf --Numero Conta Transferencia
+                                      ,pr_dtmvtolt => TRUNC(SYSDATE) --Data Movimento ???
+                                      ,pr_cdtiptra => vr_cdtiptra --Tipo de Transferencia
+                                      ,pr_flgctafa => vr_flgctafa --Indicador conta cadastrada ???
+                                      ,pr_nmtitula => vr_nmtitula --Nome titular
+                                      ,pr_nmtitul2 => vr_nmtitul2 --Nome segundo titular???
+                                      ,pr_cddbanco => vr_cddbanco --Codigo banco
+                                      ,pr_dscritic => vr_des_erro --Retorno OK/NOK
+                                      ,pr_tab_erro => vr_tab_erro); --Tabela de retorno de erro
+            
+      IF vr_des_erro <> 'OK' THEN
+          IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+              vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+          ELSE
+              vr_dscritic := 'Erro na validacao da conta destino.';
+          END IF;
+          -- se retornou critica deve abortar processo
+          RAISE vr_exc_saida;
+      END IF;
+            
+      IF NOT vr_flgctafa THEN
+          cada0002.pc_inclui_conta_transf(pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
+                                         ,pr_cdagenci => 90          --> Codigo da agencia
+                                         ,pr_nrdcaixa => 900         --> Numero do caixa
+                                         ,pr_cdoperad => '1'         --> Cod. do operador
+                                         ,pr_nmdatela => 'PGTA0001'  --> Nome da tela
+                                         ,pr_idorigem => 1           --> Identificador de origem
+                                         ,pr_nrdconta => pr_nrdconta --> Numero da conta
+                                         ,pr_idseqttl => 1           --> Seq. do titular 
+                                         ,pr_dtmvtolt => TRUNC(SYSDATE) --> Data do movimento ???
+                                         ,pr_nrcpfope => 0              --> CPF operador juridico
+                                         ,pr_flgerlog => 1 /*TRUE*/     --> flg geracao log
+                                         ,pr_cddbanco => vr_cddbanco --> Codigo do banco destino
+                                         ,pr_cdageban => vr_cdageban --> Agencia destino
+                                         ,pr_nrctatrf => vr_nrctatrf --> Nr. conta transf
+                                         ,pr_nmtitula => NULL        --> Nome titular
+                                         ,pr_nrcpfcgc => 0           --> CPF titulat
+                                         ,pr_inpessoa => 0           --> Tipo pessoa
+                                         ,pr_intipcta => 1           --> Tipo de conta
+                                         ,pr_intipdif => 1           --> tipo de inst. financeira da conta
+                                         ,pr_rowidcti => NULL        --> Recid da cta transf
+                                         ,pr_cdispbif => vr_cdispbif --> Nr do ISPB do banco
+                                          -- OUT
+                                         ,pr_msgaviso => vr_msgaviso --> Mensagem de aviso
+                                         ,pr_des_erro => vr_des_erro --> Indicador se retornou com erro (OK ou NOK)
+                                         ,pr_cdcritic => vr_cdcritic --> Codigo da critica
+                                         ,pr_dscritic => pr_dscritic); --> Descricao da critica
+                
+          IF vr_des_erro <> 'OK' THEN
+              IF TRIM(pr_dscritic) IS NULL THEN
+                  vr_dscritic := 'Erro na inclusao da conta favorita.'||pr_dscritic;
+                  RAISE vr_exc_saida;
+              END IF;
+          END IF;
+      END IF;
+  END IF;
+  --
+  COMMIT;
+  --
+  EXCEPTION 
+    WHEN vr_exc_saida THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+    WHEN others THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro não tratado na rotina PGTA0001.pc_grava_favorito_ted: '||sqlerrm;
+
+END pc_grava_favorito_ted;
+  
+BEGIN
+
+  -- Busca do diretorio base da cooperativa
+  vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'
+                                      ,pr_cdcooper => pr_cdcooper);
+
+  -- Se o arquivo estiver aberto
+  IF  utl_file.IS_OPEN(vr_utlfile) THEN
+    -- Fechar o arquivo
+    GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_utlfile); --> Handle do arquivo aberto;
+  END  IF; 
+  -- Abre arquivo 
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto||'/arq',
+                           pr_nmarquiv => pr_nmarquiv,
+                           pr_tipabert => 'R',
+                           pr_utlfileh => vr_utlfile,
+                           pr_des_erro => vr_dscritic);
+  
+  --Se ocorreu erro
+  IF vr_dscritic is not null THEN
+    /* Tratamento de erro */
+    pr_dscritic:= vr_dscritic;
+    raise vr_exc_saida;
+  END IF;                            
+  --
+  vr_tab_err_headtrailer.DELETE;
+  vr_tab_dados_segmento_a.DELETE;
+  --
+  -- Verificar a qtde de linhas do arquivo para tratar o header e o trailer 
+  BEGIN 
+    LOOP  
+      -- Varre linhas do arquivo
+      gene0001.pc_le_linha_arquivo(vr_utlfile,vr_linhaarq);
+      --
+      vr_qtlinhas_total :=  vr_qtlinhas_total + 1;
+      IF vr_qtlinhas_total > 2000 THEN
+         vr_dscritic:= 'Arquivo com mais de 2000 linhas!';
+         raise vr_exc_saida;
+      END IF;
+    END LOOP;  
+    EXCEPTION
+      WHEN no_data_found THEN
+       -- Acabou a leitura do arquivo
+           -- Se o arquivo estiver aberto
+      IF  utl_file.IS_OPEN(vr_utlfile) THEN
+        -- Fechar o arquivo
+        GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_utlfile); --> Handle do arquivo aberto;
+      END  IF;
+  END;
+  -- Abre arquivo para execução das validações
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto||'/arq',
+                           pr_nmarquiv => pr_nmarquiv,
+                           pr_tipabert => 'R',
+                           pr_utlfileh => vr_utlfile,
+                           pr_des_erro => vr_dscritic);
+  
+  --Se ocorreu erro
+  IF vr_dscritic is not null THEN
+    /* Tratamento de erro */
+    pr_dscritic:= vr_dscritic;
+    raise vr_exc_saida;
+  END IF;                            
+  --           
+  --
+  BEGIN
+    BEGIN 
+      LOOP  
+        -- Varre linhas do arquivo
+        gene0001.pc_le_linha_arquivo(vr_utlfile,vr_linhaarq);
+        --
+        vr_qtde_carac := length(ltrim(vr_linhaarq));
+        IF vr_qtde_carac > 241 THEN
+           vr_dscritic:= 'Arquivo com linha superior a 240 caracteres!';
+           raise vr_exc_saida;
+        END IF; 
+        IF vr_qtde_carac < 240 THEN
+           vr_dscritic:= 'Arquivo nao processado - Tamanho de linha invalida (CNAB 240)';
+           raise vr_exc_saida;
+        END IF;         
+        vr_qtlinhas := vr_qtlinhas + 1;
+        IF vr_qtlinhas = 1 THEN
+          -- Gravar o registro de cabeçalho na tabela de controle  
+          BEGIN
+            /*Número sequencial do arquivo*/
+            vr_nrseq_arq_ted := substr(vr_linhaarq,158,6);
+            /*Busca ultima sequencia gravada antes de incluir o registro na tabela de controle*/
+            SELECT NVL(MAX(tat.nrseq_arquivo),0) INTO vr_nr_seq_gravada
+            FROM tbtransf_arquivo_ted tat
+            WHERE tat.cdcooper = pr_cdcooper
+            AND   tat.nrdconta = pr_nrdconta;            
+            --
+            INSERT INTO tbtransf_arquivo_ted (nrseq_arq_ted,   
+                                             nmarquivo, 
+                                             nrseq_arquivo,
+                                             nrdconta,    
+                                             cdcooper, 
+                                             dtgeracao, 
+                                             dsarquivo)
+                                     values (null , 
+                                             vr_nmarvalidar,             
+                                             vr_nrseq_arq_ted,
+                                             pr_nrdconta, 
+                                             pr_cdcooper,   
+                                             sysdate, 
+                                             vr_clob_ted)
+                                     RETURNING nrseq_arq_ted, rowid
+                                     INTO vr_id_nrseq_arq_ted, vr_arq_ted_rowid;     
+           --
+          EXCEPTION
+           WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao inserir dados na tbtransf_arquivo_ted: '||sqlerrm;
+              RAISE vr_exc_saida;
+          END;   
+        END IF;       
+
+        -- Identificar o tipo de registro
+        vr_tipo_registro:= substr(vr_linhaarq,8,1);
+        --
+        /* Realiza validações das linhas iniciais e finais (header e trailer)quando é segmento A */
+        IF vr_tipo_registro = '3' THEN
+           IF vr_qtlinhas in (1,2) --Tipo de registro Header Arquivo e Lote
+           OR vr_qtlinhas = (vr_qtlinhas_total  -1) -- Tipo de registro Trailer Lote
+           OR vr_qtlinhas =  vr_qtlinhas_total      -- Tipo de registro Trailer Arquivo
+           THEN
+             vr_index := vr_tab_err_headtrailer.COUNT() + 1;
+             IF vr_qtlinhas = 1 THEN
+                vr_tab_err_headtrailer(vr_index).tporigem := 'Header Arq';
+             ELSIF  vr_qtlinhas = 2 THEN
+                 vr_tab_err_headtrailer(vr_index).tporigem := 'Header Lote';
+             ELSIF vr_qtlinhas = (vr_qtlinhas_total - 1) THEN
+                 vr_tab_err_headtrailer(vr_index).tporigem := 'Trailer Lote';               
+             ELSIF vr_qtlinhas = vr_qtlinhas_total THEN
+                 vr_tab_err_headtrailer(vr_index).tporigem := 'Trailer Arq';               
+             END IF;
+             vr_tab_err_headtrailer(vr_index).tperrocnab := 'HJ';
+             vr_tab_err_headtrailer(vr_index).dscampo := vr_tipo_registro;  
+             --
+             CONTINUE;
+           END IF;
+        END IF;  
+        /* Realiza validações das linhas iniciais e finais (header e trailer) */
+        IF vr_qtlinhas in (1,2) --Tipo de registro Header Arquivo e Lote
+        OR vr_qtlinhas = (vr_qtlinhas_total  -1) -- Tipo de registro Trailer Lote
+        OR vr_qtlinhas =  vr_qtlinhas_total      -- Tipo de registro Trailer Arquivo
+        THEN
+          
+          IF vr_qtlinhas = 1 and vr_tipo_registro <> '0' THEN
+            vr_index := vr_tab_err_headtrailer.COUNT() + 1; 
+            vr_tab_err_headtrailer(vr_index).tporigem := 'Header Arq';
+            vr_tab_err_headtrailer(vr_index).tperrocnab := 'HJ';
+            vr_tab_err_headtrailer(vr_index).dscampo := vr_tipo_registro;  
+            continue;            
+          ELSIF  vr_qtlinhas = 2 and vr_tipo_registro <> '1' THEN
+            vr_index := vr_tab_err_headtrailer.COUNT() + 1;
+            vr_tab_err_headtrailer(vr_index).tporigem := 'Header Lote';
+            vr_tab_err_headtrailer(vr_index).tperrocnab := 'HJ';
+            vr_tab_err_headtrailer(vr_index).dscampo := vr_tipo_registro;  
+            continue;            
+          ELSIF vr_qtlinhas = (vr_qtlinhas_total - 1) and vr_tipo_registro <> '5' THEN
+            vr_index := vr_tab_err_headtrailer.COUNT() + 1;
+            vr_tab_err_headtrailer(vr_index).tporigem := 'Trailer Lote';               
+            vr_tab_err_headtrailer(vr_index).tperrocnab := 'HJ';
+            vr_tab_err_headtrailer(vr_index).dscampo := vr_tipo_registro;  
+            continue;            
+          ELSIF vr_qtlinhas = vr_qtlinhas_total and vr_tipo_registro <> '9' THEN
+            vr_index := vr_tab_err_headtrailer.COUNT() + 1;
+            vr_tab_err_headtrailer(vr_index).tporigem := 'Trailer Arq';  
+            vr_tab_err_headtrailer(vr_index).tperrocnab := 'HJ';
+            vr_tab_err_headtrailer(vr_index).dscampo := vr_tipo_registro;  
+            continue;            
+          END IF;
+        END IF;         
+        
+        IF vr_tipo_registro = '0' and vr_qtlinhas = 1 THEN
+           -- HEADER DO ARQUIVO
+           vr_existe_header_arq:= true;
+           --
+           pc_val_headerarq_cnab240_ted (pr_linha_arquivo         => vr_linhaarq
+                                , pr_nrdconta                  => pr_nrdconta
+                                , pr_cdcooper                  => pr_cdcooper
+                                , pr_tab_erros_headtrailer => vr_tab_err_headtrailer
+                                , pr_cdcritic              => vr_cdcritic
+                                , pr_dscritic              => vr_dscritic);
+           -- 
+           --Se ocorreu erro
+           IF vr_dscritic is not null THEN
+              /* Tratamento de erro */
+              raise vr_exc_saida;
+           END IF;  
+           --
+           vr_linha_header_arq :=  substr(vr_linhaarq,1,240);                          
+           --  
+        ELSIF vr_tipo_registro = '1' and vr_qtlinhas = 2 THEN
+           -- HEADER DO LOTE
+           vr_existe_header_lot:= true;
+           --
+           pc_val_headerlot_cnab240_ted (pr_linha_arquivo  => vr_linhaarq
+                                , pr_nrdconta              => pr_nrdconta
+                                , pr_cdcooper              => pr_cdcooper
+                                , pr_tab_erros_headtrailer => vr_tab_err_headtrailer
+                                , pr_cdcritic              => vr_cdcritic
+                                , pr_dscritic              => vr_dscritic);
+           -- 
+           --Se ocorreu erro
+           IF vr_dscritic is not null THEN
+              /* Tratamento de erro */
+              raise vr_exc_saida;
+           END IF;    
+           --
+           vr_linha_header_lot :=  substr(vr_linhaarq,1,240);                         
+           --                                          
+        ELSIF vr_tipo_registro = '3' THEN
+           -- SEGMENTO A
+           pc_val_segment_a_cnab240_ted (pr_linha_arquivo  => vr_linhaarq
+                                , pr_nrdconta              => pr_nrdconta
+                                , pr_cdcooper              => pr_cdcooper
+                                , pr_tab_dados_segmento_a  => vr_tab_dados_segmento_a
+                                , pr_cdcritic              => vr_cdcritic
+                                , pr_dscritic              => vr_dscritic); 
+           --Se ocorreu erro
+           IF vr_dscritic is not null THEN
+              /* Tratamento de erro */
+              raise vr_exc_saida;
+           END IF;                             
+           --                                  
+        ELSIF vr_tipo_registro = '5' and vr_qtlinhas = (vr_qtlinhas_total  -1) THEN
+           -- TRAILER DO LOTE
+           vr_existe_trailer_lot:= true;
+           --
+           pc_val_trailerlot_cnab240_ted (pr_linha_arquivo  => vr_linhaarq
+                                , pr_nrdconta              => pr_nrdconta
+                                , pr_cdcooper              => pr_cdcooper
+                                , pr_tab_erros_headtrailer => vr_tab_err_headtrailer
+                                , pr_cdcritic              => vr_cdcritic
+                                , pr_dscritic              => vr_dscritic);
+           --Se ocorreu erro
+           IF vr_dscritic is not null THEN
+              /* Tratamento de erro */
+              raise vr_exc_saida;
+           END IF;  
+           --
+           vr_linha_trailer_lot :=  substr(vr_linhaarq,1,240);                            
+           --                                       
+        ELSIF vr_tipo_registro = '9' and vr_qtlinhas = (vr_qtlinhas_total) THEN
+           -- TRAILER DO ARQUIVO
+           vr_existe_trailer_arq:= true;
+           --
+           pc_val_trailerarq_cnab240_ted (pr_linha_arquivo  => vr_linhaarq
+                                , pr_nrdconta              => pr_nrdconta
+                                , pr_cdcooper              => pr_cdcooper
+                                , pr_tab_erros_headtrailer => vr_tab_err_headtrailer
+                                , pr_cdcritic              => vr_cdcritic
+                                , pr_dscritic              => vr_dscritic); 
+           --Se ocorreu erro
+           IF vr_dscritic is not null THEN
+              /* Tratamento de erro */
+              raise vr_exc_saida;
+           END IF;  
+           --
+           vr_linha_trailer_arq :=  substr(vr_linhaarq,1,240);                           
+           --                                        
+        ELSE
+          /* Validar tipo de registro diferente de 0,1,3,5 e 9 (exceção)
+              Gerar a critica HJ.
+          */
+          vr_index := vr_tab_err_headtrailer.COUNT() + 1;
+          IF vr_qtlinhas = 1 THEN
+             vr_tab_err_headtrailer(vr_index).tporigem := 'Header Arq';
+          ELSIF vr_qtlinhas = 2 THEN
+             vr_tab_err_headtrailer(vr_index).tporigem := 'Header Lote';
+          ELSIF vr_qtlinhas = (vr_qtlinhas_total-1) THEN
+             vr_tab_err_headtrailer(vr_index).tporigem := 'Trailer Lote';
+          ELSIF vr_qtlinhas = vr_qtlinhas_total THEN
+             vr_tab_err_headtrailer(vr_index).tporigem := 'Trailer Arq';
+          ELSE
+             vr_tab_err_headtrailer(vr_index).tporigem := 'Segmento A';     
+          END IF;     
+          vr_tab_err_headtrailer(vr_index).tperrocnab := 'HJ';
+          vr_tab_err_headtrailer(vr_index).dscampo := vr_tipo_registro;           
+        END IF;
+                        
+
+      END LOOP;
+    EXCEPTION
+      WHEN no_data_found THEN
+         -- Acabou a leitura do arquivo
+         NULL;
+    END;    
+    
+    /*Verificar se foram geradas criticas no Header e Trailer. Se foram, gera o XML com as criticas */   
+    IF vr_tab_err_headtrailer.COUNT() > 0 THEN
+       --
+       ROLLBACK; --Para as informacoes incluídas para o header e o trailer
+       --
+       -- Criar cabeçalho do XML
+       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Root',
+                               pr_posicao  => 0,
+                               pr_tag_nova => 'Dados',
+                               pr_tag_cont => NULL,
+                               pr_des_erro => vr_dscritic);
+     
+       --
+       vr_contador:= 0;
+       FOR vr_idx IN vr_tab_err_headtrailer.FIRST..vr_tab_err_headtrailer.LAST LOOP
+         --Gravar xml com as criticas geradas no header e trailer
+          
+         OPEN cr_errocnab (vr_tab_err_headtrailer(vr_idx).tperrocnab);
+         FETCH cr_errocnab INTO rr_errocnab;
+         CLOSE cr_errocnab;
+         vr_dsretorno:= vr_tab_err_headtrailer(vr_idx).tporigem ||' - '||rr_errocnab.dserrocnab||' - '||vr_tab_err_headtrailer(vr_idx).dscampo;
+         --
+         -- Insere as tags
+         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                                 pr_tag_pai  => 'Dados',
+                                 pr_posicao  => 0,
+                                 pr_tag_nova => 'criticas',
+                                 pr_tag_cont => NULL,
+                                 pr_des_erro => vr_dscritic);
+           
+         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                                 pr_tag_pai  => 'criticas',
+                                 pr_posicao  => vr_contador,
+                                 pr_tag_nova => 'dscritic',
+                                 pr_tag_cont => vr_dsretorno,
+                                 pr_des_erro => vr_dscritic);
+                                       
+         vr_contador:= vr_contador + 1;                   
+                            
+       END LOOP;  
+       
+    END IF;
+    --   
+    IF vr_tab_dados_segmento_a.COUNT() > 0 AND  vr_tab_err_headtrailer.COUNT() = 0 THEN
+       --Processa o Segmento A, caso nao haja criticas no HEADER/TRAILERs
+       FOR vr_idx IN vr_tab_dados_segmento_a.FIRST..vr_tab_dados_segmento_a.LAST LOOP
+         -- Chamar a rotina para agendamento das transferências
+         IF vr_tab_dados_segmento_a(vr_idx).tperrocnab = 'BD'  THEN
+            -- BD - Registro do arquivo integro
+            IF vr_tab_dados_segmento_a(vr_idx).cdbco_fav = '085'  THEN
+               -- Agendamento de transferência
+               vr_cdtiptra:= 5;
+               vr_cdhisdeb:= 1009;
+            ELSE
+              -- Agendamento de Ted
+              vr_cdtiptra:= 4;
+              vr_cdhisdeb:= 555;
+            END IF;
+            --
+            vr_dtmvtopg:=  TO_DATE(vr_tab_dados_segmento_a(vr_idx).dtprv_pgto,'DDMMYYYY');
+            vr_vllanmto:= TO_NUMBER(vr_tab_dados_segmento_a(vr_idx).vlrpgto,'999999999999999') / 100;
+            vr_cddbanco:= TO_NUMBER(vr_tab_dados_segmento_a(vr_idx).cdbco_fav);
+            vr_cdageban:= TO_NUMBER(vr_tab_dados_segmento_a(vr_idx).cdage_conta);
+            vr_nrctadst:= TO_NUMBER(vr_tab_dados_segmento_a(vr_idx).nrdconta);
+            vr_cdfinali:= TO_NUMBER(vr_tab_dados_segmento_a(vr_idx).dsfinalidade);
+            /* Dados favorecido TED */
+            vr_nmtitula := vr_tab_dados_segmento_a(vr_idx).nmfavorecido; --pr_nmtitula;
+            vr_intipcta := vr_tab_dados_segmento_a(vr_idx).dstipo_mov;   --pr_intipcta;
+            vr_inpessoa := vr_tab_dados_segmento_a(vr_idx).dsins_fav;    --pr_inpessoa;
+            vr_nrcpffav := vr_tab_dados_segmento_a(vr_idx).nr_cpf_cnpj_fav; --pr_nrcpfcgc;
+            vr_nrctatrf := TO_NUMBER(vr_tab_dados_segmento_a(vr_idx).nrdconta);
+            --
+            vr_idlancto:= NULL;
+            vr_dscritic:= NULL;
+            --
+            -- Executa rotina para gravar favorito
+            pc_grava_favorito_ted;
+            --
+            PAGA0002.pc_cadastrar_agendamento
+                               ( pr_cdcooper => pr_cdcooper  --> Codigo da cooperativa
+                                ,pr_cdagenci => 90           --> Codigo da agencia 
+                                ,pr_nrdcaixa => 900          --> Numero do caixa 
+                                ,pr_cdoperad => '1'          --> Codigo do operador
+                                ,pr_nrdconta => pr_nrdconta  --> Numero da conta do cooperado
+                                ,pr_idseqttl => 1            --> Sequencial do titular
+                                ,pr_dtmvtolt => TRUNC(SYSDATE) --pr_dtmvtolt  --> Data do movimento 
+                                ,pr_cdorigem => 1            --> Origem ???
+                                ,pr_dsorigem => 'AIMARO'     --> Descrição de origem do registro 
+                                ,pr_nmprogra => 'PGTA0001'   --> Nome do programa que chamou
+                                ,pr_cdtiptra => vr_cdtiptra  --> Tipo de transação
+                                ,pr_idtpdpag => 0            --> Indicador de tipo de agendamento
+                                ,pr_dscedent => ' '          --> Descrição do cedente
+                                ,pr_dscodbar => ' '          --> Descrição codbarras
+                                ,pr_lindigi1 => 0            --> 1° parte da linha digitavel
+                                ,pr_lindigi2 => 0            --> 2° parte da linha digitavel
+                                ,pr_lindigi3 => 0            --> 3° parte da linha digitavel
+                                ,pr_lindigi4 => 0            --> 4° parte da linha digitavel
+                                ,pr_lindigi5 => 0            --> 5° parte da linha digitavel
+                                ,pr_cdhistor => vr_cdhisdeb  --> Codigo do historico
+                                ,pr_dtmvtopg => vr_dtmvtopg  --> Data de pagamento
+                                ,pr_vllanaut => vr_vllanmto  --> Valor do lancamento automatico
+                                ,pr_dtvencto => NULL         --> Data de vencimento
+                                ,pr_cddbanco => vr_cddbanco  --> Codigo do banco
+                                ,pr_cdageban => vr_cdageban  --> Codigo de agencia bancaria
+                                ,pr_nrctadst => vr_nrctadst  --> Numero da conta destino
+                                ,pr_cdcoptfn => null --pr_cdcoptfn  --> Codigo que identifica a cooperativa do cash.
+                                ,pr_cdagetfn => null --pr_cdagetfn  --> Numero do pac do cash.
+                                ,pr_nrterfin => null --pr_nrterfin  --> Numero do terminal financeiro.
+
+                                ,pr_nrcpfope => 0 --pr_nrcpfope  --> Numero do cpf do operador juridico ???
+                                ,pr_idtitdda => 0            --> Contem o identificador do titulo dda.
+                                ,pr_cdtrapen => 0            --> Codigo da Transacao Pendente
+                                ,pr_flmobile => 0 --pr_flmobile  --> Indicador Mobile ???
+                                ,pr_idtipcar => 0            --> Indicador Tipo Cartão Utilizado
+                                ,pr_nrcartao => 0            --> Nr Cartao
+
+                                ,pr_cdfinali => vr_cdfinali  --> Codigo de finalidade
+                                ,pr_dstransf => ''           --> Descricao da transferencia ???
+                                ,pr_dshistor => '' --pr_dshistor  --> Descricao da finalidade ???
+                                ,pr_iptransa => null --pr_iptransa  --> IP da transacao no IBank/mobile ???
+                                ,pr_cdctrlcs => null         
+                                ,pr_iddispos => null --pr_iddispos  --> Identificador do dispositivo movel??? 
+                                /* parametros de saida */
+                                ,pr_idlancto => vr_idlancto
+                                ,pr_dstransa => vr_dstrans1  --> Descrição de transação
+                                ,pr_msgofatr => vr_msgofatr
+                                ,pr_cdempcon => vr_cdempcon
+                                ,pr_cdsegmto => vr_cdsegmto
+                                ,pr_dscritic => vr_dscritic);--> Descricao critica  
+            
+                     
+         END IF;     
+         
+         -- Gravar os registros nas tabelas de controle  
+         BEGIN
+           --
+           -- Grava as informações do agendamento na tabela de controle
+           INSERT INTO tbtransf_arquivo_ted_linhas (nrseq_arq_ted_linha, 
+                                                    nrseq_arq_ted, 
+                                                    cdbco_comp, 
+                                                    nrlote_ser, 
+                                                    dstipo_reg, 
+                                                    nrseq_reg, 
+                                                    cdsegmento, 
+                                                    dstipo_mov, 
+                                                    cdbco_fav, 
+                                                    cdage_conta, 
+                                                    nrdconta, 
+                                                    nmfavorecido, 
+                                                    dtprv_pgto, 
+                                                    dsmoeda, 
+                                                    vlrpgto, 
+                                                    dshistorico, 
+                                                    dsins_fav, 
+                                                    nr_cpf_cnpj_fav, 
+                                                    dsfinalidade, 
+                                                    dslinha_arq, 
+                                                    dsret_cnab, 
+                                                    dtgeracao,
+                                                    idlancto,
+                                                    dserro)
+                                            values (null,
+                                                    vr_id_nrseq_arq_ted,
+                                                    vr_tab_dados_segmento_a(vr_idx).cdbco_comp,
+                                                    vr_tab_dados_segmento_a(vr_idx).nrlote_ser,
+                                                    vr_tab_dados_segmento_a(vr_idx).dstipo_reg,
+                                                    vr_tab_dados_segmento_a(vr_idx).nrseq_reg,
+                                                    vr_tab_dados_segmento_a(vr_idx).cdsegmento,
+                                                    vr_tab_dados_segmento_a(vr_idx).dstipo_mov,
+                                                    vr_tab_dados_segmento_a(vr_idx).cdbco_fav,
+                                                    vr_tab_dados_segmento_a(vr_idx).cdage_conta,
+                                                    vr_tab_dados_segmento_a(vr_idx).nrdconta,
+                                                    vr_tab_dados_segmento_a(vr_idx).nmfavorecido,
+                                                    vr_tab_dados_segmento_a(vr_idx).dtprv_pgto,
+                                                    vr_tab_dados_segmento_a(vr_idx).dsmoeda,
+                                                    vr_tab_dados_segmento_a(vr_idx).vlrpgto,
+                                                    vr_tab_dados_segmento_a(vr_idx).dshistorico,
+                                                    vr_tab_dados_segmento_a(vr_idx).dsins_fav,
+                                                    vr_tab_dados_segmento_a(vr_idx).nr_cpf_cnpj_fav,
+                                                    vr_tab_dados_segmento_a(vr_idx).dsfinalidade,
+                                                    vr_tab_dados_segmento_a(vr_idx).dslinha_seg_a,
+                                                    vr_tab_dados_segmento_a(vr_idx).tperrocnab,
+                                                    sysdate,
+                                                    vr_idlancto,
+                                                    vr_dscritic);
+           --
+           vr_dscritic := null;
+           vr_idlancto := null;                                         
+           --        
+         EXCEPTION
+           WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao inserir dados do segmento a na tabela tbtransf_arquivo_ted_linhas: Cta-'||vr_tab_dados_segmento_a(vr_idx).nrdconta||' Dt-'||vr_tab_dados_segmento_a(vr_idx).dtprv_pgto||' Vlr-'||vr_tab_dados_segmento_a(vr_idx).vlrpgto||sqlerrm;
+              RAISE vr_exc_saida;
+         END;      
+
+       END LOOP;          
+    END IF;
+    --
+    /* Gerar o arquivo de remessa com o retorno do segmento A */   
+    IF vr_tab_dados_segmento_a.COUNT() > 0 AND  vr_tab_err_headtrailer.COUNT() = 0 THEN
+      -- Inicializa CLOB XML
+      dbms_lob.createtemporary(vr_arq_remessa, TRUE);
+      dbms_lob.open(vr_arq_remessa, dbms_lob.lob_readwrite);
+      --
+      vr_linha_header_arq := substr(vr_linha_header_arq,1,142)||'2'||substr(vr_linha_header_arq,144,97);
+      gene0002.pc_escreve_xml(vr_arq_remessa,vr_texto_arq_remessa,vr_linha_header_arq||chr(10));
+      gene0002.pc_escreve_xml(vr_arq_remessa,vr_texto_arq_remessa,vr_linha_header_lot||chr(10));
+      --
+      -- Segmento A
+      FOR rr_arqrem in cr_arqrem (pr_cdcooper, pr_nrdconta, vr_nrseq_arq_ted) LOOP
+         --
+         gene0002.pc_escreve_xml(vr_arq_remessa,vr_texto_arq_remessa,rr_arqrem.linharem||chr(10));
+         --
+      END LOOP;
+      --
+      gene0002.pc_escreve_xml(vr_arq_remessa,vr_texto_arq_remessa,vr_linha_trailer_lot||chr(10));
+      gene0002.pc_escreve_xml(vr_arq_remessa,vr_texto_arq_remessa,vr_linha_trailer_arq,TRUE);
+      --
+      -- Atualizar o arquivo de remessa na tabela de controle com o status de retorno no arquivo
+      UPDATE TBTRANSF_ARQUIVO_TED TAT
+      SET tat.dsarquivo = vr_arq_remessa,
+          tat.nmarquivo = REPLACE(REPLACE(tat.nmarquivo,'TXT','RET'),'REM','RET')
+      WHERE       tat.ROWID = vr_arq_ted_rowid
+      and tat.nrseq_arq_ted = vr_id_nrseq_arq_ted;
+      --      
+      -- Liberando a memoria alocada pro CLOB
+      dbms_lob.close(vr_arq_remessa);
+      dbms_lob.freetemporary(vr_arq_remessa);
+    END IF;
+    --      
+    -- Se o arquivo estiver aberto
+    IF  utl_file.IS_OPEN(vr_utlfile) THEN
+      -- Fechar o arquivo
+      GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_utlfile); --> Handle do arquivo aberto;
+    END  IF;
+    COMMIT;
+    --
+  EXCEPTION
+    -- Caso chegue ao fim do arquivo
+    -- ou esteja vazio, fecha o mesmo
+    WHEN no_data_found THEN
+      gene0001.pc_fecha_arquivo(vr_utlfile);
+    -- Acontecimento mais comum
+    WHEN vr_exc_saida THEN
+      raise vr_exc_saida;
+    WHEN others THEN
+      IF substr(sqlcode,2,5) = 29282 THEN
+        vr_dscritic := 'Arquivo não encontrado ou com nomes incompatíveis: '||sqlerrm;
+      ELSE
+        vr_dscritic := 'Erro ao verificar layout: '||sqlerrm;
+      END IF;
+      RAISE vr_exc_saida;
+  END;
+ 
+  --Se ocorreu erro
+  IF vr_dscritic is not null THEN
+    raise vr_exc_saida;
+  END IF;  
+
+   
+EXCEPTION
+
+  WHEN vr_exc_saida THEN
+      
+    pr_cdcritic := vr_cdcritic;
+    pr_dscritic := vr_dscritic;
+
+  WHEN others THEN
+
+    pr_cdcritic := 0;
+    pr_dscritic := 'Erro não tratado na rotina PGTA0001.pc_verifica_layout_ted: '||sqlerrm;
+      
+END pc_verifica_layout_ted;
+
+procedure pc_importa_arquivo_ted   (pr_cdcooper   in crapatr.cdcooper%type  --> Número da cooperativa do cooperado
+                                   ,pr_nrdconta   in crapass.nrdconta%type  --> Número da conta do cooperado
+                                   ,pr_dsarquiv   IN VARCHAR2       --> Informações do arquivo
+                                   ,pr_dsdireto   IN VARCHAR2       --> Informações do diretório do arquivo                                  
+                                   ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
+                                   ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2) IS        --> Erros do processo
+
+  ---------------------------------------------------------------------------
+  --
+  --  Programa : pc_importa_arquivo_ted
+  --  Sistema  : Ayllos Web
+  --  Autor    : Jose Dill
+  --  Data     : Maio/2019                Ultima atualizacao:
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Objetivo  : Realizar a importação do arquivo de TED/Transferência
+  --          
+  --
+  -- Alteracoes:
+  --
+  ---------------------------------------------------------------------------
+
+  CURSOR cr_infarq (pr_nrdconta tbtransf_arquivo_ted.nrdconta%type) IS 
+  SELECT max(tat.nrseq_arquivo) nrseq_arq
+  FROM TBTRANSF_ARQUIVO_TED tat
+  WHERE tat.nrdconta = pr_nrdconta;
+   
+  -- Declaracao padrao de variaveis
+  vr_dscritic  varchar2(1000);
+  vr_database  varchar2(100);
+  vr_exc_saida exception;
+  vr_exc_layout exception;
+  vr_cdcritic  pls_integer;
+  vr_nrsequen  pls_integer;
+  vr_nrdrowid  rowid;
+  vr_dsupload  VARCHAR2(100);
+  vr_dirarqui  VARCHAR2(100);
+  vr_typ_said  VARCHAR2(50); -- Critica
+  vr_des_erro  VARCHAR2(500); -- Critica
+  vr_typ_saida VARCHAR2(100);
+  vr_des_saida VARCHAR2(2000);
+  vr_dscomand VARCHAR2(1000);
+    
+  vr_contador  number := 0;
+  vr_flgarqui  boolean := false;
+
+  -- Variáveis da proc
+  vr_nrdcontavld  crapass.nrdconta%type;
+  vr_nrsequencial  integer;
+  vr_nrsequencial_atual  integer:= 0;
+  
+  -- Variaveis padrao                            
+  vr_nmdatela  varchar2(100);                                  
+  vr_nmeacao   varchar2(100);                                  
+  vr_cdagenci  varchar2(100);                                  
+  vr_nrdcaixa  varchar2(100);                                  
+  vr_idorigem  varchar2(100);                                  
+  vr_cdoperad  varchar2(100);  
+  vr_cdcooper  integer;
+  vr_caract_arq integer;
+ 
+BEGIN
+  -- Extrai cooperativa do xml
+  gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                          ,pr_cdcooper => vr_cdcooper
+                          ,pr_nmdatela => vr_nmdatela
+                          ,pr_nmeacao  => vr_nmeacao
+                          ,pr_cdagenci => vr_cdagenci
+                          ,pr_nrdcaixa => vr_nrdcaixa
+                          ,pr_idorigem => vr_idorigem
+                          ,pr_cdoperad => vr_cdoperad
+                          ,pr_dscritic => vr_dscritic);
+
+  -- Aborta em caso de erro
+  IF trim(vr_dscritic) is not null THEN
+    NULL;
+  END IF;
+    
+  /* Realizar a validação do arquivo */
+ 
+  /* Nome do arquivo - Inicio */
+  vr_nmarvalidar := '';
+  vr_caract_arq  := length(pr_dsarquiv) - 22;
+  vr_nmarvalidar := SUBSTR(pr_dsarquiv,vr_caract_arq,23);
+  IF SUBSTR(vr_nmarvalidar,1,3) <> 'TED' THEN
+     vr_dscritic := 'Nome do arquivo nao esta no padrao!';
+     raise vr_exc_saida;
+  END IF;  
+  /* Nome do arquivo - Extensao */
+  IF SUBSTR(vr_nmarvalidar,21,3) NOT IN ('TXT','REM') THEN
+     vr_dscritic := 'Extensao do arquivo nao esta no padrao!'||SUBSTR(vr_nmarvalidar,21,3);
+     raise vr_exc_saida;
+  END IF;
+  /* Conta corrente */
+  vr_nrdcontavld := TO_NUMBER(SUBSTR(vr_nmarvalidar,5,8));
+  IF vr_nrdcontavld <> pr_nrdconta THEN
+     vr_dscritic := 'Numero da conta do arquivo nao corresponde a conta informada no arquivo!';
+     raise vr_exc_saida;
+  END IF;  
+  /* Numero sequencial */ 
+  vr_nrsequencial := TO_NUMBER(SUBSTR(vr_nmarvalidar,14,6));
+  --Verificar o ultimo sequencial desta conta (pendente - depende das novas tabelas)
+  OPEN cr_infarq (pr_nrdconta);
+  FETCH cr_infarq  INTO vr_nrsequencial_atual;
+  CLOSE cr_infarq;
+  IF vr_nrsequencial <= NVL(vr_nrsequencial_atual,0) THEN
+     vr_dscritic := 'Numero sequencial do arquivo inferior ao ultimo processado!';
+     raise vr_exc_saida;
+  END IF;  
+
+  /* Validar o tamanho do arquivo */ 
+  -- Se for superior a 10mb criticar
+  
+  /* Validar informações do HEADER e TRAILER */
+  -- Busca ambiente conectado
+  vr_database := GENE0001.fn_database_name;
+
+  -- Nao permitido em ambiente de producao
+  if instr(upper(vr_database),'P',1) > 0 then 
+    vr_dscritic := 'Ambiente não permite esta operação.';
+    raise vr_exc_saida;
+  end if;
+    
+  -- Busca o diretório do upload do arquivo
+  vr_dsupload := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                      ,pr_cdcooper => pr_cdcooper
+                                      ,pr_nmsubdir => 'upload');
+                                        
+  -- Busca o diretório do upload do arquivo
+  vr_dirarqui := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                      ,pr_cdcooper => pr_cdcooper
+                                      ,pr_nmsubdir => 'arq');
+
+
+
+  WHILE NOT vr_flgarqui LOOP
+
+      GENE0001.pc_OScommand_Shell(gene0001.fn_param_sistema('CRED',0,'SCRIPT_RECEBE_ARQUIVOS')||' '||pr_dsdireto||pr_dsarquiv||' S'
+                                 ,pr_typ_saida   => vr_typ_said
+                                 ,pr_des_saida   => vr_des_erro);
+ 
+    -- Testar erro
+    IF vr_typ_said = 'ERR' THEN
+      -- O comando shell executou com erro, gerar log e sair do processo
+      vr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Verifica se o arquivo existe
+    IF GENE0001.fn_exis_arquivo(pr_caminho => vr_dsupload||'/'||pr_dsarquiv) THEN
+      vr_flgarqui := true;
+    -- Tenta criar copia dez vezes
+    ELSIF vr_contador = 10 THEN
+      vr_flgarqui := true;
+    END IF;
+      
+    vr_contador := vr_contador + 1;
+    
+  END LOOP;
+    
+  vr_contador := 0;
+
+  -- Verifica se o arquivo existe
+  IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsupload||'/'||pr_dsarquiv) THEN
+    -- Retorno de erro
+    vr_dscritic := 'Arquivo não encontrado no diretório: '||REPLACE(vr_dsupload,'/','-')||'-'||pr_dsarquiv;
+    RAISE vr_exc_saida;
+  END IF;
+  --
+  vr_clob_ted := gene0002.fn_arq_para_clob(vr_dsupload, pr_dsarquiv);
+  --   
+  /* Move o arquivo lido para o diretório salvar */
+  gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_dsupload||'/'||pr_dsarquiv||' '||vr_dirarqui||'/'||pr_dsarquiv||' 2> /dev/null'
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_des_saida);
+
+  -- Se retornar uma indicação de erro
+  IF NVL(vr_typ_saida,' ') = 'ERR' THEN
+    vr_cdcritic := 1054; -- Erro pc_OScommand_Shell                       
+    raise vr_exc_saida;
+  END IF;
+
+  -- Faz validacoes basicas no conteudo do arquivo
+  pc_verifica_layout_ted (pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nmarquiv => pr_dsarquiv
+                     ,pr_retxml   => pr_retxml
+                     ,pr_cdcritic => vr_cdcritic
+                     ,pr_dscritic => vr_dscritic); 
+
+  -- Retorna inconsistencias caso encontradas
+  IF nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null THEN
+    raise vr_exc_saida;
+  END IF;
+  --
+  pr_des_erro := 'OK';
+  --
+ 
+EXCEPTION
+  
+  WHEN vr_exc_saida THEN
+    rollback;
+    pr_cdcritic := vr_cdcritic;
+    pr_dscritic := vr_dscritic;
+    pr_des_erro := 'NOK';
+    -- Carregar XML padrão para variável de retorno não utilizada.
+    -- Existe para satisfazer exigência da interface.
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      
+  WHEN OTHERS THEN 
+    rollback;    
+    pr_cdcritic := 0;
+    pr_dscritic := 'Erro não tratado na PGTA0001.pc_importa_arquivo_ted: '||sqlerrm;
+    pr_des_erro := 'NOK';
+    -- Carregar XML padrão para variável de retorno não utilizada.
+    -- Existe para satisfazer exigência da interface.
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+END pc_importa_arquivo_ted;
+
+procedure pc_consulta_arquivo_remessa   (pr_cdcooper   in crapatr.cdcooper%type  --> Número da cooperativa do cooperado
+                                   ,pr_nrdconta   in crapass.nrdconta%type  --> Número da conta do cooperado
+                                   ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
+                                   ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2) IS        --> Erros do processo
+
+  ---------------------------------------------------------------------------
+  --
+  --  Programa : pc_consulta_arquivo_remessa
+  --  Sistema  : Ayllos Web
+  --  Autor    : Jose Dill
+  --  Data     : Maio/2019                Ultima atualizacao:
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Objetivo  : Buscar as informacoes dos arquivos de remessa TED/Transferência
+  --          
+  --
+  -- Alteracoes:
+  --
+  ---------------------------------------------------------------------------
+  CURSOR cr_arqrem (pr_cdcooper in tbtransf_arquivo_ted.cdcooper%type
+                   ,pr_nrdconta in tbtransf_arquivo_ted.nrdconta%type ) IS
+  SELECT tat.nmarquivo
+        ,TO_CHAR(trunc(tat.dtgeracao),'DD/MM/YYYY') dtgeracao
+        ,tat.dsarquivo 
+        ,tat.nrseq_arq_ted
+  FROM tbtransf_arquivo_ted tat
+  WHERE tat.nrdconta = pr_nrdconta
+  AND   tat.cdcooper = pr_cdcooper 
+  ORDER BY tat.dtgeracao desc;
+     
+  -- Declaracao padrao de variaveis
+  vr_dscritic  varchar2(1000);
+  vr_exc_saida exception;
+  vr_cdcritic  pls_integer;
+      
+  
+  -- Variaveis padrao                            
+  vr_nmdatela  varchar2(100);                                  
+  vr_nmeacao   varchar2(100);                                  
+  vr_cdagenci  varchar2(100);                                  
+  vr_nrdcaixa  varchar2(100);                                  
+  vr_idorigem  varchar2(100);                                  
+  vr_cdoperad  varchar2(100);  
+  vr_cdcooper  integer;
+  
+  vr_contador  integer;
+  vr_sequencia integer;
+  
+BEGIN
+
+  -- Extrai cooperativa do xml
+  gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                          ,pr_cdcooper => vr_cdcooper
+                          ,pr_nmdatela => vr_nmdatela
+                          ,pr_nmeacao  => vr_nmeacao
+                          ,pr_cdagenci => vr_cdagenci
+                          ,pr_nrdcaixa => vr_nrdcaixa
+                          ,pr_idorigem => vr_idorigem
+                          ,pr_cdoperad => vr_cdoperad
+                          ,pr_dscritic => vr_dscritic);
+
+  -- Aborta em caso de erro
+  IF trim(vr_dscritic) is not null THEN
+    NULL;
+  END IF;
+
+  -- Criar cabeçalho do XML
+  pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+  gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                         pr_tag_pai  => 'Root',
+                         pr_posicao  => 0,
+                         pr_tag_nova => 'Remessa',
+                         pr_tag_cont => NULL,
+                         pr_des_erro => vr_dscritic);
+  vr_contador:= 0;
+  vr_sequencia:= 0;
+  --
+  FOR rr_arqrem IN cr_arqrem(pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta=> pr_nrdconta) LOOP
+                            
+    vr_sequencia:= vr_sequencia + 1;       
+    -- Insere as tags
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Remessa',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'DadosRem',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+               
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosRem',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'sequenci',
+                           pr_tag_cont => vr_sequencia,
+                           pr_des_erro => vr_dscritic);
+                           
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosRem',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'nomereme',
+                           pr_tag_cont => rr_arqrem.nmarquivo,
+                           pr_des_erro => vr_dscritic);                           
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosRem',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'datareme',
+                           pr_tag_cont => rr_arqrem.dtgeracao,
+                           pr_des_erro => vr_dscritic);
+                           
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosRem',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'nrseqarq',
+                           pr_tag_cont => rr_arqrem.nrseq_arq_ted,
+                           pr_des_erro => vr_dscritic);  
+                           
+                                                                                     
+    vr_contador:= vr_contador + 1;                                            
+  END LOOP;                                   
+  --
+ 
+EXCEPTION
+  
+  WHEN vr_exc_saida THEN
+
+    pr_cdcritic := vr_cdcritic;
+    pr_dscritic := vr_dscritic;
+    pr_des_erro := 'NOK';
+    -- Carregar XML padrão para variável de retorno não utilizada.
+    -- Existe para satisfazer exigência da interface.
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      
+  WHEN OTHERS THEN 
+        
+    pr_cdcritic := 0;
+    pr_dscritic := 'Erro não tratado na PGTA0001.pc_consulta_arquivo_remessa: '||sqlerrm;
+    pr_des_erro := 'NOK';
+    -- Carregar XML padrão para variável de retorno não utilizada.
+    -- Existe para satisfazer exigência da interface.
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+END pc_consulta_arquivo_remessa;
+
+
+procedure pc_salva_arquivo_remessa (pr_nrseq_arq_ted   in tbtransf_arquivo_ted.nrseq_arq_ted%type  --> Número de identificação do arquivo
+                                   ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
+                                   ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2) IS        --> Erros do processo
+
+  ---------------------------------------------------------------------------
+  --
+  --  Programa : pc_salva_arquivo_remessa
+  --  Sistema  : Ayllos Web
+  --  Autor    : Jose Dill
+  --  Data     : Maio/2019                Ultima atualizacao:
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Objetivo  : Buscar o arquivo de retorno para fazer o seu download
+  --          
+  --
+  -- Alteracoes:
+  --
+  ---------------------------------------------------------------------------
+  CURSOR cr_arqrem (pr_nrseq_arq_ted in tbtransf_arquivo_ted.nrseq_arq_ted%type) IS
+  SELECT tat.dsarquivo 
+        ,tat.nmarquivo
+  FROM tbtransf_arquivo_ted tat
+  WHERE tat.nrseq_arq_ted = pr_nrseq_arq_ted;
+     
+  -- Declaracao padrao de variaveis
+  vr_dscritic  varchar2(1000);
+  vr_exc_saida exception;
+  vr_cdcritic  pls_integer;
+  
+  vr_arq_rem_0  VARCHAR2(32767);
+  vr_arq_rem_1  VARCHAR2(32767);
+  vr_arq_rem_2  VARCHAR2(32767);    
+  vr_arq_rem_3  VARCHAR2(32767);
+  vr_arq_rem_4  VARCHAR2(32767);
+  vr_arq_rem_5  VARCHAR2(32767);
+  vr_arq_rem_6  VARCHAR2(32767);
+  vr_arq_rem_7  VARCHAR2(32767);
+  vr_arq_rem_8  VARCHAR2(32767);
+  vr_arq_rem_9  VARCHAR2(32767);
+  vr_arq_rem_10 VARCHAR2(32767);
+  vr_arq_rem_11 VARCHAR2(32767);
+  vr_arq_rem_12 VARCHAR2(32767);
+  vr_arq_rem_13 VARCHAR2(32767);
+  vr_arq_rem_14 VARCHAR2(32767);
+  vr_arq_rem_15 VARCHAR2(32767);
+  vr_arq_rem_16 VARCHAR2(32767);
+  vr_arq_rem_17 VARCHAR2(32767);
+  vr_arq_rem_18 VARCHAR2(32767);
+  vr_arq_rem_19 VARCHAR2(32767);
+  
+  -- Variaveis padrao                            
+  vr_nmdatela  varchar2(100);                                  
+  vr_nmeacao   varchar2(100);                                  
+  vr_cdagenci  varchar2(100);                                  
+  vr_nrdcaixa  varchar2(100);                                  
+  vr_idorigem  varchar2(100);                                  
+  vr_cdoperad  varchar2(100);  
+  vr_cdcooper  integer;
+  
+  vr_contador  integer;
+  vr_sequencia integer;
+  
+BEGIN
+
+ 
+  -- Extrai cooperativa do xml
+  gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                          ,pr_cdcooper => vr_cdcooper
+                          ,pr_nmdatela => vr_nmdatela
+                          ,pr_nmeacao  => vr_nmeacao
+                          ,pr_cdagenci => vr_cdagenci
+                          ,pr_nrdcaixa => vr_nrdcaixa
+                          ,pr_idorigem => vr_idorigem
+                          ,pr_cdoperad => vr_cdoperad
+                          ,pr_dscritic => vr_dscritic);
+
+  -- Aborta em caso de erro
+  IF trim(vr_dscritic) is not null THEN
+    NULL;
+  END IF;
+
+  -- Criar cabeçalho do XML
+  pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+  gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                         pr_tag_pai  => 'Root',
+                         pr_posicao  => 0,
+                         pr_tag_nova => 'Download',
+                         pr_tag_cont => NULL,
+                         pr_des_erro => vr_dscritic);
+  vr_contador:= 0;
+  vr_sequencia:= 0;
+    FOR rr_arqrem IN cr_arqrem(pr_nrseq_arq_ted => pr_nrseq_arq_ted) LOOP
+                            
+    vr_sequencia:= vr_sequencia + 1;       
+    -- Insere as tags
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Download',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'DadosDown',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);              
+   
+    vr_arq_rem_0:= substr( rr_arqrem.dsarquivo,1, 32737);
+    vr_arq_rem_1:= substr( rr_arqrem.dsarquivo,32738, 32737);
+    vr_arq_rem_2:= substr( rr_arqrem.dsarquivo,65475, 32737);
+    vr_arq_rem_3:= substr( rr_arqrem.dsarquivo,98212, 32737);
+    vr_arq_rem_4:= substr( rr_arqrem.dsarquivo,130949, 32737);
+    vr_arq_rem_5:= substr( rr_arqrem.dsarquivo,163686, 32737);
+    vr_arq_rem_6:= substr( rr_arqrem.dsarquivo,196423, 32737);
+    vr_arq_rem_7:= substr( rr_arqrem.dsarquivo,229160, 32737);
+    vr_arq_rem_8:= substr( rr_arqrem.dsarquivo,261897, 32737);
+    vr_arq_rem_9:= substr( rr_arqrem.dsarquivo,294634, 32737);
+    vr_arq_rem_10:= substr( rr_arqrem.dsarquivo,327371, 32737);
+    vr_arq_rem_11:= substr( rr_arqrem.dsarquivo,360108, 32737);
+    vr_arq_rem_12:= substr( rr_arqrem.dsarquivo,392845, 32737);
+    vr_arq_rem_13:= substr( rr_arqrem.dsarquivo,425582, 32737);
+    vr_arq_rem_14:= substr( rr_arqrem.dsarquivo,458319, 32737);
+    vr_arq_rem_15:= substr( rr_arqrem.dsarquivo,491056, 32737);
+    vr_arq_rem_16:= substr( rr_arqrem.dsarquivo,523793, 32737);
+    vr_arq_rem_17:= substr( rr_arqrem.dsarquivo,556530, 32737);
+    vr_arq_rem_18:= substr( rr_arqrem.dsarquivo,589267, 32737);
+    vr_arq_rem_19:= substr( rr_arqrem.dsarquivo,622004, 32737);
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosDown',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'arqclob1',
+                           pr_tag_cont => vr_arq_rem_0||vr_arq_rem_1,                                       
+                           pr_des_erro => vr_dscritic);
+                           
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosDown',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'arqclob2',
+                           pr_tag_cont => vr_arq_rem_2||vr_arq_rem_3,                                       
+                           pr_des_erro => vr_dscritic);
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosDown',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'arqclob3',
+                           pr_tag_cont => vr_arq_rem_4||vr_arq_rem_5,                                       
+                           pr_des_erro => vr_dscritic);
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosDown',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'arqclob4',
+                           pr_tag_cont => vr_arq_rem_6||vr_arq_rem_7,                                       
+                           pr_des_erro => vr_dscritic);
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosDown',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'arqclob5',
+                           pr_tag_cont => vr_arq_rem_8||vr_arq_rem_9,                                       
+                           pr_des_erro => vr_dscritic);
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosDown',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'arqclob6',
+                           pr_tag_cont => vr_arq_rem_10||vr_arq_rem_11,                                       
+                           pr_des_erro => vr_dscritic);                   
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosDown',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'arqclob7',
+                           pr_tag_cont => vr_arq_rem_12||vr_arq_rem_13,                                       
+                           pr_des_erro => vr_dscritic);  
+                           
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosDown',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'arqclob8',
+                           pr_tag_cont => vr_arq_rem_14||vr_arq_rem_15,                                       
+                           pr_des_erro => vr_dscritic);  
+                           
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosDown',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'arqclob9',
+                           pr_tag_cont => vr_arq_rem_16||vr_arq_rem_17,                                       
+                           pr_des_erro => vr_dscritic);  
+                           
+                           
+     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'DadosDown',
+                           pr_posicao  => vr_contador,
+                           pr_tag_nova => 'arqclob10',
+                           pr_tag_cont => vr_arq_rem_18||vr_arq_rem_19,                                       
+                           pr_des_erro => vr_dscritic);  
+                                                                                                                                                                                                 
+    vr_contador:= vr_contador + 1;                                            
+  END LOOP;                                   
+  --
+ 
+EXCEPTION
+  
+  WHEN vr_exc_saida THEN
+
+    pr_cdcritic := vr_cdcritic;
+    pr_dscritic := vr_dscritic;
+    pr_des_erro := 'NOK';
+    -- Carregar XML padrão para variável de retorno não utilizada.
+    -- Existe para satisfazer exigência da interface.
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      
+  WHEN OTHERS THEN 
+        
+    pr_cdcritic := 0;
+    pr_dscritic := 'Erro não tratado na PGTA0001.pc_salva_arquivo_remessa: '||sqlerrm;
+    pr_des_erro := 'NOK';
+    -- Carregar XML padrão para variável de retorno não utilizada.
+    -- Existe para satisfazer exigência da interface.
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+END pc_salva_arquivo_remessa;
+
 
 
 END PGTA0001;
