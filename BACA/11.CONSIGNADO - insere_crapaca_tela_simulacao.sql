@@ -17,7 +17,7 @@ VALUES
   'TELA_ATENDA_SIMULACAO',    -- nmpackag
   'pc_valida_simul_consig',   -- nmproced
   'pr_nrdconta,pr_cdlcremp',              -- lstparam
-  (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_SIMULACAO')); -- nrseqrdr
+  (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_SIMULACAO'))
 /
 commit
 /

@@ -45,5 +45,7 @@ SELECT nrseqrdr
    
  
 commit;
+
 END;
+/
 

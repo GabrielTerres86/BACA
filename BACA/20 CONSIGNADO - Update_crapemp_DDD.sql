@@ -117,3 +117,4 @@ begin
 
   dbms_output.put_line('Sem DDD: '||aux_count||'  - COM DDD :'||aux_count_ddd);
 end;  
+/
