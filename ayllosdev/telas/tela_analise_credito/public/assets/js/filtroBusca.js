@@ -34,10 +34,16 @@ function getFiltro() {
 
             var listaFiltros = Array();
 
-            if(response.ok){
+            teste = response.data.personas;
 
+            if(teste) {
+                console.log('ok');
+            if(response.ok){
                 listaFiltros = montaListaFiltro(response.data.personas);
                 montaFiltroBusca(listaFiltros);
+            }
+            } else {
+                console.log(' nop');
             }
         }
     });
@@ -256,19 +262,23 @@ function montaListaFiltro(personas){
             var subcategorias = makeArray(categoria.subcategorias.subcategoria, 'busca');
             subcategorias.forEach(function(subcategoria){
 
+                // se existe subcategoria
                 if(typeof subcategoria.separador === "undefined"){
+
                     var filtroFinal = {
                         tituloBusca: filtroGarantia.tituloBusca,
                         nomeBusca: filtroGarantia.nomeBusca
                     };
 
+                    // se existe campos
+                    if(typeof subcategoria.campos !== "undefined"){
+
                     filtroFinal.tituloBusca += subcategoria.tituloTela + ' # '; //ID dos campos
                     filtroFinal.nomeBusca += "."+slugify(subcategoria.tituloTela); //Texto no campo de busca
 
-                    if(typeof subcategoria.campos !== "undefined"){
-
                         var campos = makeArray(subcategoria.campos.campo, 'busca');
 
+                        // se existe campo
                         if(typeof campos.campo !== "undefined"){
 
                             campos.forEach(function(campo){
@@ -276,7 +286,8 @@ function montaListaFiltro(personas){
                                     tituloBusca: filtroFinal.tituloBusca,
                                     nomeBusca: filtroFinal.nomeBusca
                                 };
-                                //Se existir o nome do campo
+    
+                            // se existe nome do campo
                                 if(typeof campo.nome !== "undefined"){
                                     filtroCampo.tituloBusca += campo.nome;
                                     filtroCampo.nomeBusca += "."+slugify(campo.nome);

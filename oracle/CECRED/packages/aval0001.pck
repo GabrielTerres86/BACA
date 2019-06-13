@@ -325,6 +325,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
      Alteracoes: 12/06/2015 - Conversao Progress >> Oracle (PLSQL) - Jéssica (DB1)
                  14/02/2019 - Ajuste retorno para busca de contratos com tpcrtato <> 1
                               Ana - Envolti - INC0032752
+                 10/06/2019 - Evitar registro de "sujeira" na tabela de logs.
+                              Este log nao e relevante para a analise de credito (tela unica).
+                              Bug 22300 - PRJ438 - Gabriel Marcos (Mouts).
     ---------------------------------------------------------------------------------------------------------------*/
 
     ------------------------------- CURSORES ---------------------------------
@@ -1665,6 +1668,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
         -- Retorno não OK          
         pr_des_erro:= vr_retornvl;
         
+        -- Nao gravar se rotina for chamada pela analise de credito
+        IF pr_nmdatela <> tela_analise_credito.pr_nmdatela THEN
+
         --> Registra o erro - INC0032752
         CECRED.pc_log_programa(pr_dstiplog      => 'E', 
                                pr_cdcooper      => pr_cdcooper, 
@@ -1677,6 +1683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AVAL0001 AS
                                pr_idprglog      => vr_idprglog,
                                pr_nmarqlog      => NULL);
                              
+        END IF;                             
         
         -- Chamar rotina de gravação de erro
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
