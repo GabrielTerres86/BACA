@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 06/09/2018 
+    Data    : Marco/07.                       Ultima atualizacao: 20/05/2019
     
     Dados referentes ao programa:
 
@@ -266,11 +266,17 @@
                            a situacao regularizada - Adriano (Supero) - PRJ435.
 
               07/12/2018 - Melhoria no processo de devoluções de cheques.
-                           Alcemir Mout's (INC0022559).		 
-                          
+                           Alcemir Mout's (INC0022559).
+
               15/03/2019 - Adicionada flag de reapresentacao automatica de cheque.
                           (Lucas H. - Supero)
+	          20/05/2019 - Ajuste para que, quando nao encontrar a conta de um registro de devolucao,
+			               o programa nao sera abortado. Sera encaminhando um e-mail para a equipe 
+						   de compensacao (Com copia para a  sustentacao) informando
+						   qual o cheque com problema e que a devolucao deve ser feita por carta
+						   (Adriano - PRB0041791).
 
+						   
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -579,6 +585,8 @@ PROCEDURE gera_lancamento:
     DEF VAR aux_verifloc AS INTEGER NO-UNDO.    
     DEFINE VARIABLE     aux_dscritic    AS CHAR                     NO-UNDO.
 
+	DEF VAR h-b1wgen0011 AS HANDLE                                  NO-UNDO.
+	
     IF  NOT VALID-HANDLE(h-b1wgen0153) THEN
         RUN sistema/generico/procedures/b1wgen0153.p 
             PERSISTENT SET h-b1wgen0153.
@@ -613,18 +621,62 @@ PROCEDURE gera_lancamento:
                     DO:
                 glb_cdcritic = 251.
                 RUN fontes/critic.p. 
-                UNIX SILENT VALUE
-                         ("echo " + STRING(TIME,"HH:MM:SS") +
-                         " - " + glb_cdprogra + "' --> '"  +
-                         "Coop: "  + STRING(crapdev.cdcooper) +
-                         "Conta: " + STRING(crapdev.nrdconta,"zzzz,zz9,9") +
-                         glb_dscritic + 
-                         " >> log/proc_message.log").
 
-                IF  VALID-HANDLE(h-b1wgen0153) THEN
-                    DELETE OBJECT h-b1wgen0153.
+								IF NOT VALID-HANDLE(h-b1wgen0011) THEN
+									RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
+										
+								RUN enviar_email_completo IN h-b1wgen0011 (INPUT glb_cdcooper,
+																		   INPUT glb_cdprogra,
+																		   INPUT "cpd@ailos.coop.br",
+																		   INPUT "compe@ailos.coop.br,sustentacao@ailos.coop.br",
+																		   INPUT "CRPS264 - Devolucoes de cheque - Problemas no processo",
+																		   INPUT "",			
+																		   INPUT "",
+																		   INPUT "\nO programa crps264.p nao conseguiu efetuar a devolucao do cheque:"+											         
+																				 "\nCooperativa: " + STRING(crapdev.cdcooper) + "," + 	
+																				 "\nConta: " + STRING(crapdev.nrdconta,"zzzzzz,zz9,9") + "," +
+																				 "\nCheque: " + STRING(crapdev.nrcheque) +	"," +
+																				 "\nAlinea: " + STRING(crapdev.cdalinea) +	"," +
+																				 "\nMotivo: " + glb_dscritic +	"," +
+																				 "\n<b> Necessario efetuar a devolucao manualmente, atraves de carta.</b>" + 
+																				 "\n\n\n" + 
+																				 "<u>Dados tecnicos:</u> \n" + 
+																				 "NRDCONTA: " + string(crapdev.nrdconta)  + ",\n" + 
+																				 "NRDCTABB: " + string(crapdev.nrdctabb)  + ",\n" + 
+																				 "CDHISTOR: " + string(crapdev.cdhistor)  + ",\n" + 
+																				 "VLLANMTO: " + string(crapdev.vllanmto)  + ",\n" + 
+																				 "CDALINEA: " + string(crapdev.cdalinea)  + ",\n" + 
+																				 "INSITDEV: " + string(crapdev.insitdev)  + ",\n" + 
+																				 "CDBCCXLT: " + string(crapdev.cdbccxlt)  + ",\n" + 
+																				 "DTMVTOLT: " + string(crapdev.dtmvtolt)  + ",\n" + 
+																				 "CDOPERAD: " + string(crapdev.cdoperad)  + ",\n" + 
+																				 "NRDCTACR: " + string(crapdev.nrdctacr)  + ",\n" + 
+																				 "NRDOLOTE: " + string(crapdev.nrdolote)  + ",\n" + 
+																				 "CDBANCHQ: " + string(crapdev.cdbanchq)  + ",\n" + 
+																				 "CDPESQUI: " + string(crapdev.cdpesqui)  + ",\n" + 
+																				 "CDAGECHQ: " + string(crapdev.cdagechq)  + ",\n" + 
+																				 "CDCOOPER: " + string(crapdev.cdcooper)  + ",\n" + 
+																				 "NRCTACHQ: " + string(crapdev.nrctachq)  + ",\n" + 
+																				 "INDCTITG: " + string(crapdev.indctitg)  + ",\n" + 
+																				 "NRDCTITG: " + string(crapdev.nrdctitg)  + ",\n" + 
+																				 "INDEVARQ: " + string(crapdev.indevarq)  + ",\n" + 
+																				 "NRCHEQUE: " + string(crapdev.nrcheque)  + ",\n" + 
+																				 "CDBANDEP: " + string(crapdev.cdbandep)  + ",\n" + 
+																				 "CDAGEDEP: " + string(crapdev.cdagedep)  + ",\n" + 
+																				 "NRCTADEP: " + string(crapdev.nrctadep)  + ".\n", 
+																		   INPUT TRUE).
+								
+								ASSIGN glb_cdcritic = 0
+									   glb_dscritic = "".
+								
+								IF  VALID-HANDLE(h-b1wgen0011) THEN
+									DELETE OBJECT h-b1wgen0011.
 
-                UNDO TRANS_1, RETURN "NOK".
+								/* Elimina o registro da crapdev.*/
+								DELETE crapdev.
+								 
+								NEXT.
+
             END.
                 ELSE
                     DO:
@@ -638,20 +690,66 @@ PROCEDURE gera_lancamento:
                              DO:
                                  glb_cdcritic = 251.
                                  RUN fontes/critic.p. 
-                                 UNIX SILENT VALUE
-                                          ("echo " + STRING(TIME,"HH:MM:SS") +
-                                          " - " + glb_cdprogra + "' --> '"  +
-                                          "Coop: "  + STRING(crapdev.cdcooper) +
-                                          "Conta: " + STRING(crapdev.nrdconta,"zzzz,zz9,9") +
-                                          glb_dscritic + 
-                                          " >> log/proc_message.log").
+										
+										IF NOT VALID-HANDLE(h-b1wgen0011) THEN
+											RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
+												
+										RUN enviar_email_completo IN h-b1wgen0011 (INPUT glb_cdcooper,
+																				   INPUT glb_cdprogra,
+																				   INPUT "cpd@ailos.coop.br",
+																				   INPUT "compe@ailos.coop.br,sustentacao@ailos.coop.br",
+																				   INPUT "CRPS264 - Devolucoes de cheque - Problemas no processo",
+																				   INPUT "",			
+																				   INPUT "",
+																				   INPUT "\nO programa crps264.p nao conseguiu efetuar a devolucao do cheque:"+											         
+																						 "\nCooperativa: " + STRING(crapdev.cdcooper) +	"," +
+																						 "\nConta: " + STRING(crapdev.nrdconta,"zzzzzz,zz9,9") +	"," +
+																						 "\nCheque: " + STRING(crapdev.nrcheque) +	"," +
+																						 "\nAlinea: " + STRING(crapdev.cdalinea) +	"," +
+																						 "\nMotivo: " + glb_dscritic +	"," +
+																						 "\n<b> Necessario efetuar a devolucao manualmente, atraves de carta.</b>" + 
+																						 "\n\n\n" + 
+																						 "<u>Dados tecnicos:</u> \n" +  
+																						 "NRDCONTA: " + string(crapdev.nrdconta)  + ",\n" + 
+																						 "NRDCTABB: " + string(crapdev.nrdctabb)  + ",\n" + 
+																						 "CDHISTOR: " + string(crapdev.cdhistor)  + ",\n" + 
+																						 "VLLANMTO: " + string(crapdev.vllanmto)  + ",\n" + 
+																						 "CDALINEA: " + string(crapdev.cdalinea)  + ",\n" + 
+																						 "INSITDEV: " + string(crapdev.insitdev)  + ",\n" + 
+																						 "CDBCCXLT: " + string(crapdev.cdbccxlt)  + ",\n" + 
+																						 "DTMVTOLT: " + string(crapdev.dtmvtolt)  + ",\n" + 
+																						 "CDOPERAD: " + string(crapdev.cdoperad)  + ",\n" + 
+																						 "NRDCTACR: " + string(crapdev.nrdctacr)  + ",\n" + 
+																						 "NRDOLOTE: " + string(crapdev.nrdolote)  + ",\n" + 
+																						 "CDBANCHQ: " + string(crapdev.cdbanchq)  + ",\n" + 
+																						 "CDPESQUI: " + string(crapdev.cdpesqui)  + ",\n" + 
+																						 "CDAGECHQ: " + string(crapdev.cdagechq)  + ",\n" + 
+																						 "CDCOOPER: " + string(crapdev.cdcooper)  + ",\n" + 
+																						 "NRCTACHQ: " + string(crapdev.nrctachq)  + ",\n" + 
+																						 "INDCTITG: " + string(crapdev.indctitg)  + ",\n" + 
+																						 "NRDCTITG: " + string(crapdev.nrdctitg)  + ",\n" + 
+																						 "INDEVARQ: " + string(crapdev.indevarq)  + ",\n" + 
+																						 "NRCHEQUE: " + string(crapdev.nrcheque)  + ",\n" + 
+																						 "CDBANDEP: " + string(crapdev.cdbandep)  + ",\n" + 
+																						 "CDAGEDEP: " + string(crapdev.cdagedep)  + ",\n" + 
+																						 "NRCTADEP: " + string(crapdev.nrctadep)  + ".\n", 
+																				   INPUT TRUE).
+										
+										ASSIGN glb_cdcritic = 0
+										       glb_dscritic = "".
+										
+										IF  VALID-HANDLE(h-b1wgen0011) THEN
+										    DELETE OBJECT h-b1wgen0011.
+								
+										/* Elimina o registro da crapdev.*/
+										DELETE crapdev.
                              
-                                 IF  VALID-HANDLE(h-b1wgen0153) THEN
-                                     DELETE OBJECT h-b1wgen0153.
+										NEXT.
                              
-                                 UNDO TRANS_1, RETURN "NOK".
                              END.
+									 
                     END.
+							
             END.
 
         ASSIGN glb_cdcritic = 0    
@@ -1507,10 +1605,9 @@ PROCEDURE gera_lancamento:
             END.
         
         VALIDATE crapdev.
+		
         IF crapdev.nrdconta > 0 THEN
         DO:
-             /*MESSAGE "cdcooper: " + STRING(crapdev.cdcooper).
-             MESSAGE "nrdconta: " + STRING(crapdev.nrdconta).*/
             /*Inicio tratamento estorno da tarifa de ADP*/
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
             
