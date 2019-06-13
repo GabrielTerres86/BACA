@@ -660,6 +660,14 @@ BEGIN
 
         pr_tab_retorno.rowidlot := rw_craplot.rowid;
         pr_tab_retorno.progress_recid_lot := rw_craplot.progress_recid;
+      ELSE
+        vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
+                                    ,pr_nmdcampo => 'NRSEQDIG'
+                                    ,pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                    to_char(pr_dtmvtolt, 'DD/MM/RRRR')||';'||
+                                    to_char(pr_cdagenci)||';'||
+                                    to_char(pr_cdbccxlt)||';'||
+                                    to_char(pr_nrdolote));
       end if;
     END IF;
 
