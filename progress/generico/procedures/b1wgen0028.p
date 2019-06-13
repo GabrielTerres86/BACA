@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 09/05/2019
+    Data      : Marco/2008                    Ultima Atualizacao: 13/06/2019
     
     Dados referentes ao programa:
 
@@ -564,6 +564,9 @@
             
                09/05/2019 - Incluido campo inupgrad da tabela crawcrd na temp-table 
 				            Alcemir Mouts (PRB0041641).
+		       
+			   13/06/2019 - Popular novo campo da tabela nova_proposta.
+			                Alcemir Jr. (INC0015816). 
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1111,6 +1114,7 @@ PROCEDURE carrega_dados_inclusao:
     DEF VAR aux_dsmensag AS CHAR                                    NO-UNDO.
 
     DEF VAR aux_nmbandei AS CHAR                                    NO-UNDO.
+	DEF VAR aux_dddebito_tit AS INT                                 NO-UNDO.
 
     DEF BUFFER crabass FOR crapass.
     
@@ -1863,6 +1867,19 @@ PROCEDURE carrega_dados_inclusao:
     IF AVAILABLE crapcje THEN
       ASSIGN aux_nmconjug = crapcje.nmconjug
              aux_dtnasccj = crapcje.dtnasccj.
+
+    ASSIGN aux_dddebito_tit = 0.
+    
+	/* buscar o cartão titular para pegar o dia do débito da fatura */
+	FIND crawcrd WHERE crawcrd.cdcooper = par_cdcooper AND
+                       crawcrd.nrdconta = par_nrdconta AND 
+					   crawcrd.flgprcrd = 1            AND
+					   crawcrd.insitcrd <> 5           AND 
+					   crawcrd.insitcrd <> 6
+                       NO-LOCK NO-ERROR.
+      
+	IF AVAILABLE crawcrd THEN
+	   ASSIGN aux_dddebito_tit = crawcrd.dddebito.
 
     CREATE tt-nova_proposta.
     ASSIGN tt-nova_proposta.dsgraupr = aux_dsgraupr 

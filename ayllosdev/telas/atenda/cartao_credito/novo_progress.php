@@ -28,6 +28,7 @@
  * 016: [21/06/2016] Douglas         (CECRED) : Removido aspas simples dos parametros do campo Titularidade (Chamado 457339)
  * 017: [18/03/2019] Anderson-Alan   (SUPERO) : Implementado tipo de envio do cartão - PJ429
  * 018: [24/05/2019] Alcemir Jr.     (Ailos)  : Ajuste ao sair do campo CPF. (PRB0041678)
+ * 019: [13/06/2019] Alcemir Jr.     (Ailos)  : Setar campo dddebito conforme titular (INC0015816). 
  */
 
 	session_start();
@@ -126,6 +127,7 @@
 	$inpessoa = getByTagName($dados,"INPESSOA");
 	$cdtipcta = getByTagName($dados,"CDTIPCTA");
 	$nmbandei = getByTagName($dados,"NMBANDEI");
+	$dddebito_tit = getByTagName($dados,"DDDEBITO_TIT");
 	
 	// Primeiro Titular
     $nmtitcrd = getByTagName($dados,"NMTITCRD");
@@ -350,7 +352,7 @@
 			<select name="dddebito" id="dddebito" class="campo">
 			<?php
 			for ($i = 0; $i < count($eDDDEBITO); $i++){
-				?><option value="<?echo $eDDDEBITO[$i]; ?>"<?if ($i == 0) { echo " selected"; } ?>><?echo $eDDDEBITO[$i] ?></option><?php
+				?><option value="<?echo $eDDDEBITO[$i]; ?>"<?if ($$dddebito_tit == $eDDDEBITO[$i]) { echo " selected"; } ?>><?echo $eDDDEBITO[$i] ?></option><?php
 			}
 			?>
 			</select>
@@ -581,6 +583,7 @@
 								
 								$('#dddebito').append($("<option></option>").attr("value",ddDebit).text(ddDebit)); 
 								$("#dddebito").attr("disabled",true);
+								$("#dddebito").val(<?php echo $dddebito_tit?>);
 								
 								$("#vllimpro").attr("disabled",true);
 								$("#vllimpro").val("<? echo number_format( $dadosTitular['vllimmul'],2,",",".");?>");
@@ -604,6 +607,7 @@
 							
 							$('#dddebito').append($("<option></option>").attr("value",ddDebit).text(ddDebit)); 
 							$("#dddebito").attr("disabled",true);
+							$("#dddebito").val(<?php echo $dddebito_tit?>);
 							
 							$("#vllimpro").attr("disabled",true);
 							desativa("vllimpro");
