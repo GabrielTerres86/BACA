@@ -3487,6 +3487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_hrlimini INTEGER;
 	    vr_hrlimfim INTEGER;
 			vr_idesthor INTEGER;
+      vr_limitecr crapass.vllimcre%type :=0;/*limite de credito por padrão irá ser zero*/
       
       -- Rowid tabela de log
       vr_nrdrowid ROWID;
@@ -4003,12 +4004,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           END IF;  
           
         ELSE
+         /*-----------------------------------------------------------------*/
+          if upper(pr_nmdatela) ='CRPS688' then
+             if gene0011.UsarLimCredParaDebAplicAgend(pr_cdcooper) then        
+             vr_limitecr := rw_crapass.vllimcre;  
+             end if;      
+          else  
+          if gene0011.UsarLimCredParaDebAplicManual(pr_cdcooper=>pr_cdcooper) then
+             vr_limitecr := rw_crapass.vllimcre;
+             end if;
+          end if;
+          /*-----------------------------------------------------------------*/
+         
           EXTR0001.pc_obtem_saldo_dia_sd(pr_cdcooper => pr_cdcooper
                                         ,pr_cdagenci => pr_cdagenci
                                         ,pr_nrdcaixa => pr_nrdcaixa
                                         ,pr_cdoperad => pr_cdoperad
                                         ,pr_nrdconta => rw_crapass.nrdconta
-                                        ,pr_vllimcre => rw_crapass.vllimcre
+                                        ,pr_vllimcre => vr_limitecr --> Se usará o limite de credito depende do parametro da cooperativa
                                         ,pr_tipo_busca => 'A' --Chamado 291693 (Heitor - RKAM)
                                         ,pr_des_reto => vr_des_reto
                                         ,pr_tab_sald => vr_tab_sald
@@ -4152,10 +4165,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 RAISE vr_exc_erro;    
               
               ELSE
-                -- Gera mensagem de confirmação
-                vr_ind := pr_tab_msg_confirma.COUNT;
-                pr_tab_msg_confirma(vr_ind).inconfir := 3;
-                pr_tab_msg_confirma(vr_ind).dsmensag := 'Saldo CC insuficiente para operacao.'; 
+              /*passado a critica como acima, não devera efetuar a aplicação*/
+                vr_cdcritic := 1283;
+                vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+                RAISE vr_exc_erro;
+               
+                
                 
               END IF;
                             
