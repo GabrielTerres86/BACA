@@ -7,7 +7,7 @@ BEGIN
     FROM cecred.craprdr  
    WHERE nmprogra = 'EMPR0014';
   
-  --Incluir a ação INC_ALT_VENC_PARCELA 
+  --Incluir a ação VALIDA_AVERBACAO 
   INSERT INTO cecred.crapaca
     (nmdeacao
     ,nmpackag
