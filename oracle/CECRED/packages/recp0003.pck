@@ -964,6 +964,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    CONTINUE;                                          
                  END IF;
 
+				 vr_vllancam := 0;
                  vr_nracordo := TO_NUMBER(SUBSTR(vr_setlinha,29,13));
                  vr_dtquitac := TRUNC(SYSDATE);
 
