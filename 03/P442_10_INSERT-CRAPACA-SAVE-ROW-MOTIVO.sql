@@ -2,45 +2,6 @@ declare
   vr_nrseqrdr number;
 
 BEGIN
-
-  -- Movendo a opção 
-  UPDATE CRAPTEL TEL
-   SET TEL.CDOPPTEL = TEL.CDOPPTEL||',D'
-      ,TEL.LSOPPTEL = TEL.LSOPPTEL||',DESABILITAR OPERACAO'
-  WHERE TEL.NMDATELA = 'ATENDA'
-   AND TEL.NMROTINA = 'LIMITE CRED';
-  
-  -- Removendo desabilitar operações
-  DELETE craptel tel
-   WHERE UPPER(tel.NMDATELA) = 'ATENDA'
-     AND UPPER(tel.NMROTINA) = 'DESABILITAR OPERACOES';
-  
-  DELETE CRAPACE ACE
-   WHERE ACE.CDCOOPER = 1
-     AND UPPER(ACE.NMDATELA) = 'ATENDA'
-     AND UPPER(ACE.NMROTINA) = 'DESABILITAR OPERACOES'
-     AND UPPER(ACE.CDDOPCAO) = '@';
-  
-  -- Movendo ACA da package tela_contas_desab para tela_atenda_limite
-  UPDATE crapaca aca
-     SET aca.nmpackag = 'TELA_ATENDA_LIMITE'
-  WHERE aca.nmproced IN('pc_grava_dados_conta','pc_busca_dados_conta')
-    AND aca.nmpackag = 'TELA_CONTAS_DESAB';  
-  
-  -- Removendo Aca não mais utilizada    
-  DELETE CRAPACA ACA
-   WHERE ACA.NMPACKAG = 'TELA_CONTAS_DESAB';    
-     
-     
-  -- Movendo os acessos do Alterar para o Limite de Credito   
-  UPDATE CRAPACE ACE
-     SET ACE.CDDOPCAO = 'D'
-        ,ACE.NMROTINA = 'LIMITE CRED'
-   WHERE ACE.CDCOOPER = 1
-     AND UPPER(ACE.NMDATELA) = 'ATENDA'
-     AND UPPER(ACE.NMROTINA) = 'DESABILITAR OPERACOES'
-     AND UPPER(ACE.CDDOPCAO) = 'A';   
-
   BEGIN
     INSERT INTO craprdr(nmprogra,dtsolici) VALUES('TELA_ATENDA_PREAPV',SYSDATE)
              RETURNING nrseqrdr INTO vr_nrseqrdr; 
@@ -83,7 +44,7 @@ BEGIN
   EXCEPTION
     WHEN OTHERS THEN
       NULL;
-  END;         
-   
+  END;
+
   commit;
 end;
