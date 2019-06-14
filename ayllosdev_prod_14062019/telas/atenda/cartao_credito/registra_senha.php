@@ -1,0 +1,79 @@
+<?php 
+
+		session_start();
+		require_once('../../../includes/config.php');
+		require_once('../../../includes/funcoes.php');
+		require_once('../../../includes/controla_secao.php');
+		require_once('../../../class/xmlfile.php');
+		isPostMethod();		
+		if((!isset($_POST['nrdconta'])) || 
+		   (!isset($_POST['nrctrcrd'])) ||
+		   (!isset($_POST['nrcpf']) )   ||
+		   (!isset($_POST['indtipo_senha']))){
+			echo "showError(\"error\", \"Erro ao enviar proposta ao bancoob.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+			return;
+		}
+        function formatnumber($nub){
+                if(intval($nub) < 10){
+                    return "0".$nub;
+                }else{
+                    return $nub;
+                }
+        }
+        $indtipo_senha  = $_POST['indtipo_senha'];
+		$funcaoAposErro = 'bloqueiaFundo(divRotina);';	
+		$nrdconta       = $_POST['nrdconta'];
+		$nrctrcrd       = $_POST['nrctrcrd'];
+		$nrcpf          =  $_POST['nrcpf'];
+		$nmaprovador    =  $_POST['nmaprovador'];
+		$glbadc         = $_POST['glbadc'];
+		$inpessoa       = $_POST['inpessoa'];
+		$dsgraupr       = $_POST['dsgraupr'];
+		$cdopelib       = isset($_POST['cdopelib']) ? $_POST['cdopelib'] : 0;
+		if($inpessoa == 1 && $dsgraupr != 5){
+			$xml  = "<Root>";
+            $xml .= " <Dados>";
+            $xml .= "   <nrctrcrd>$nrctrcrd</nrctrcrd>";
+            $xml .= "   <nrdconta>$nrdconta</nrdconta>";
+            $xml .= " </Dados>";
+            $xml .= "</Root>";
+            $admresult = mensageria($xml, "ATENDA_CRD", "BUSCAR_ASSINATURA_REPRESENTANTE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+            $objectResult = simplexml_load_string( $admresult );
+			
+			foreach($objectResult->Dados->representantes->representante as $representante){
+				$nmaprovador = $representante->nome;
+				$nrcpf       = $representante->nrcpfcgf;
+				break;
+			}
+			
+		}
+
+		$now = getdate();
+		$data =formatnumber($now['mday'])."/".formatnumber($now['mon'])."/".$now['year'];
+		$hora = formatnumber($now['hours']).":".formatnumber($now['minutes']);
+        
+        $bancoobXML  = "<Root>";
+		$bancoobXML .= " <Dados>";
+        $bancoobXML .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+		$bancoobXML .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$bancoobXML .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+		$bancoobXML .= "   <indtipo_senha>".$indtipo_senha."</indtipo_senha>";
+        $bancoobXML .= "   <dtaprovacao>".$data."</dtaprovacao>";
+		$bancoobXML .= "   <hraprovacao>".$hora."</hraprovacao>";
+		$bancoobXML .= "   <nrcpf>".str_replace("-","",str_replace(".","",$nrcpf))."</nrcpf>";
+		$bancoobXML .= "   <nmaprovador>".$nmaprovador."</nmaprovador>";
+		$bancoobXML .= "   <cdoperad>".$cdopelib."</cdoperad>";
+		$bancoobXML .= " </Dados>";
+		$bancoobXML .= "</Root>";
+		$admresult = mensageria($bancoobXML, "ATENDA_CRD", "INSERE_APROVADOR_CRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObject = getObjectXML($admresult);
+
+		if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+			$msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;		
+			echo "error = true;showError(\"error\", \"$msg.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+			exit();
+		}
+		
+        ?>
+		
+		

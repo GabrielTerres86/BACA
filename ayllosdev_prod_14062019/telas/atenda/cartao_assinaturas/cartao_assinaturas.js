@@ -1,0 +1,456 @@
+/*!
+ * FONTE        : cartao_assinaturas.js
+ * CRIAÇÃO      : Rodolpho Telmo (DB1)
+ * DATA CRIAÇÃO : 05/04/2010 
+ * OBJETIVO     : Biblioteca de funções da rotina IMPRESSÕES da tela de Cartao assinatura
+ * --------------
+ * ALTERAÇÕES   :
+ * 29/06/2012 - Jorge        (CECRED) : Ajuste para novo esquema de impressao.
+ * 			 						    Adicionado confirmacao de impressao quando chamada funcao imprime().
+ *										Retirado campo "redirect" popup de form de impressao. 
+ *
+ * 01/08/2013 - Jean Michel  (CECRED) : Ajuste p/ impressão de cartões de assinatura de proc/tit.
+ * 02/09/2015 - Projeto Reformulacao cadastral (Tiago Castro - RKAM)
+ * 19/10/2015 - Ajuste no layout na div DivConteudoOpcao que estava quebrando. SD 310056 (Kelvin)
+ * 01/08/2016 - Adicionado classe controlaFoco - (Evandro - RKAM)				
+ * --------------
+ */
+
+var nrcpfcgc = "";
+var nrdctato = "";
+var nrdrowid = "";
+var operacao = "";
+
+
+
+// Função para acessar opções da rotina
+function acessaOpcaoAba(nrOpcoes, id, opcao) {
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando impress&otilde;es ...");
+
+    // Atribui cor de destaque para aba da opção
+    for (var i = 0; i < nrOpcoes; i++) {
+        if (!$("#linkAba" + id)) {
+            continue;
+        }
+
+        if (id == i) { // Atribui estilos para foco da opção
+            $("#linkAba" + id).attr("class", "txtBrancoBold");
+            $("#imgAbaEsq" + id).attr("src", UrlImagens + "background/mnu_sle.gif");
+            $("#imgAbaDir" + id).attr("src", UrlImagens + "background/mnu_sld.gif");
+            $("#imgAbaCen" + id).css("background-color", "#969FA9");
+            continue;
+        }
+
+        $("#linkAba" + i).attr("class", "txtNormalBold");
+        $("#imgAbaEsq" + i).attr("src", UrlImagens + "background/mnu_nle.gif");
+        $("#imgAbaDir" + i).attr("src", UrlImagens + "background/mnu_nld.gif");
+        $("#imgAbaCen" + i).css("background-color", "#C6C8CA");
+    }
+
+    // Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: "POST",
+        dataType: "html",
+        url: UrlSite + "telas/atenda/cartao_assinaturas/cartao_assinatura.php",
+        data: {
+            nrdconta: nrdconta,
+            idseqttl: 1,
+            inpessoa: inpessoa,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", bloqueiaFundo(divRotina));
+        },
+        success: function (response) {
+            if (flgcadas == 'M') { // Se vem da MATRIC (Cadastro de nova c/c) abrir a impressao completa automaticamente e vai para a ATENDA
+                encerraRotina();
+                imprime('completo', 'YES', inpessoa);
+                showMsgAguardo('Aguarde, carregando tela ATENDA ...');
+                setaParametros('ATENDA', '', nrdconta, flgcadas);
+
+                setTimeout(function () {
+                    direcionaTela('ATENDA', 'no');
+                }, 5000);
+
+            } else {
+                $("#divConteudoOpcao").html(response);
+				controlaFoco();
+            }
+            return false;
+        }
+    });
+}
+
+//Função para controle de navegação
+ function controlaFoco() {
+	 	
+	$('#divConteudoOpcao #divImpCartaoAssinatura').each(function () {
+        $(this).find("div").addClass("FluxoNavega");		
+		$(this).find("div").first().addClass("FirstInputModal").focus();
+		$(this).find("div").last().addClass("LastInputModal");
+	});
+	
+	var CountLoop = 500;
+	$('.FluxoNavega').each(function () { 
+	    CountLoop++;
+		$(this).attr('tabindex', CountLoop);
+	});
+	
+	//Se estiver com foco na classe FluxoNavega
+    $(".FluxoNavega").focus(function(){		 
+		$(this).bind('keydown', function(e) {
+		  if(e.keyCode == 13) {
+			$(this).click();
+		  }
+		});
+	});
+	
+    //Se estiver com foco na classe LastInputModal
+    $(".LastInputModal").focus(function(){
+		var pressedShift = false; 
+		
+		$(this).bind('keyup', function(e) {
+			if(e.keyCode == 16) {
+			   pressedShift=false;//Quando tecla shift for solta passa valor false 
+			} 
+		})
+		 
+		$(this).bind('keydown', function(e) {
+		  e.stopPropagation();
+		  e.preventDefault();
+
+		  if(e.keyCode == 13) {
+			$(".LastInputModal").click();
+		  }
+		  if(e.keyCode == 16) {
+				pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+		  } 
+		  if((e.keyCode == 9) && pressedShift == true) {
+				return setFocusCampo($(target), e, false, 0);
+		  } 
+		  else if(e.keyCode == 9){
+			  $(".FirstInputModal").focus();	
+		  } 
+		});
+	});
+	
+	$(".FirstInputModal").focus();
+}
+
+/*!
+ * OBJETIVO : Função que verifica se deve ser mostrada alguma mensagem ao usuário
+ * PARÂMETRO: idImpressao [String] -> Nome de qual impressão deseja-se imprimir. Os valores válidos são os "id" das div desta rotina
+ */
+function verificaMsg(idImpressao, inpessoa) {
+
+    if (idImpressao == 'todos' || idImpressao == 'procurador' || idImpressao == 'titular') {
+        impressaoCartaoAssinatura(inpessoa, idImpressao);
+    } else if (relatorios[idImpressao]['msg'] != '') {
+        if (relatorios[idImpressao]['flag'] == 'yes') {
+            showError("error", relatorios[idImpressao]['msg'], "Alerta - Aimaro", 'bloqueiaFundo(divRotina)');
+        } else {
+            showError("inform", relatorios[idImpressao]['msg'], "Alerta - Aimaro", 'bloqueiaFundo(divRotina)');
+            controlaImpressao(idImpressao, inpessoa);
+        }
+    } else {
+        controlaImpressao(idImpressao, inpessoa);
+    }
+}
+
+/*!
+ * OBJETIVO : Função de controle as impressões da rotina
+ * PARÂMETRO: idImpressao [String] -> Nome de qual impressão deseja-se imprimir. Os valores válidos são os "id" das div desta rotina
+ */
+function controlaImpressao(idImpressao, inpessoa) {
+
+    if (idImpressao == 'ficha_cadastral') {
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeFichaCadastral(divRotina);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+        return true;
+    } else if (idImpressao == 'financeiro') {
+        showConfirmacao('Deseja o informativo financeiro preenchido ?', 'Confirma&ccedil;&atilde;o - Aimaro', 'bloqueiaFundo(divRotina);imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);imprime(\'' + idImpressao + '\',\'NO\',\'' + inpessoa + '\');', 'sim.gif', 'nao.gif');
+        return true;
+    } else if (idImpressao == 'cartao_assinatura') {
+        telaCartaoAssinatura(inpessoa);
+    } else if (idImpressao == 'declaracao_pep') {
+        showConfirmacao('Deseja visualizar a impress&atilde;o da declara&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeDeclaracao();', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+        return true;
+    } else if (idImpressao != '') {
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+    }
+}
+
+function controlaLayout(inpessoa) {
+
+    if (inpessoa == 1) {
+        $('#tabelaImpressoes', '#divRotina').css('margin-left', '-108px');
+    } else {
+        $('#tabelaImpressoes', '#divRotina').css('margin-left', '-32px');
+    }
+
+    $("#divConteudoOpcao").fadeTo(0, 0.01);
+
+    if ($("#divImpCartaoAssinatura").length) {
+        if (inpessoa == 1) {
+            $("#divConteudoOpcao").css("width", "540px");
+        } else {
+            $("#divConteudoOpcao").css("width", "345px");
+
+        }
+
+        $('div', '#divImpCartaoAssinatura').css({
+            'display': 'block',
+            'float': 'left',
+            'margin': '2px',
+            'font-weight': 'bold',
+            'border-color': '#949ead',
+            'border-style': 'solid',
+            'background-color': '#ced3c6',
+            'border-width': '1px',
+            'cursor': 'auto',
+            'padding': '17px 21px'
+        });
+
+        if (inpessoa == 1) {
+            $('#financeiro', '#divImpCartaoAssinatura').css({ 'display': 'none' });
+            $('div', '#divImpCartaoAssinatura').css({ 'padding': '17px 21px' });
+        } else {
+            $('#financeiro', '#divImpCartaoAssinatura').css({ 'display': 'block' });
+            $('div', '#divImpCartaoAssinatura').css({ 'padding': '17px 12px' });
+        }
+
+        // Trocando a classe no evento hover
+        $('div', '#divImpCartaoAssinatura').hover(
+			function () {
+			    $(this).css({ 'background-color': '#f7f3f7', 'border-width': '3px', 'cursor': 'pointer' });
+			    if (inpessoa == 1) {
+			        $(this).css({ 'padding': '15px 19px' });
+			    } else {
+			        $(this).css({ 'padding': '15px 10px' });
+			    }
+			},
+			function () {
+			    $(this).css({ 'background-color': '#ced3c6', 'border-width': '1px', 'cursor': 'auto' });
+			    if (inpessoa == 1) {
+			        $(this).css({ 'padding': '17px 21px' });
+			    } else {
+			        $(this).css({ 'padding': '17px 12px' });
+			    }
+			}
+		);
+
+        // Adicionando evento click
+        $('div', '#divImpCartaoAssinatura').click(function () {
+            if ($(this).attr('id') != 'btVoltar') verificaMsg($(this).attr('id'), $('#inpessoa', '#divImpCartaoAssinatura').val());
+        });
+
+    } else {
+
+        if (inpessoa == 1) {
+            $("#divConteudoOpcao").css("width", "729px");
+        } else {
+            $("#divConteudoOpcao").css("width", "590px");
+        }
+
+        $('div', '#divImpressoes').css({
+            'display': 'block',
+            'float': 'left',
+            'margin': '2px',
+            'font-weight': 'bold',
+            'border-color': '#949ead',
+            'border-style': 'solid',
+            'background-color': '#ced3c6',
+            'border-width': '1px',
+            'cursor': 'auto',
+            'padding': '17px 21px'
+        });
+
+        // Diferenciando  a classe hover de acordo com o tipo da pessoa
+        if (inpessoa == 1) {
+            $('#financeiro', '#divImpressoes').css({ 'display': 'none' });
+            $('div', '#divImpressoes').css({ 'padding': '17px 21px' });
+        } else {
+            $('#financeiro', '#divImpressoes').css({ 'display': 'block' });
+            $('div', '#divImpressoes').css({ 'padding': '17px 12px' });
+        }
+
+        // Trocando a classe no evento hover
+        $('div', '#divImpressoes').hover(
+			function () {
+			    $(this).css({ 'background-color': '#f7f3f7', 'border-width': '3px', 'cursor': 'pointer' });
+			    if (inpessoa == 1) {
+			        $(this).css({ 'padding': '15px 19px' });
+			    } else {
+			        $(this).css({ 'padding': '15px 10px' });
+			    }
+			},
+			function () {
+			    $(this).css({ 'background-color': '#ced3c6', 'border-width': '1px', 'cursor': 'auto' });
+			    if (inpessoa == 1) {
+			        $(this).css({ 'padding': '17px 21px' });
+			    } else {
+			        $(this).css({ 'padding': '17px 12px' });
+			    }
+			}
+		);
+
+        // Adicionando evento click
+        $('div', '#divImpressoes').click(function () {
+            if ($(this).attr('id') != 'btVoltar') verificaMsg($(this).attr('id'), $('#inpessoa', '#divImpressoes').val());
+        });
+    }
+
+    hideMsgAguardo();
+    bloqueiaFundo(divRotina);
+    removeOpacidade('divConteudoOpcao');
+    return false;
+}
+
+function imprime(idImpressao, flgpreen, inpessoa) {
+
+    $('#tprelato', '#frmCabAtenda').remove();
+    $('#flgpreen', '#frmCabAtenda').remove();
+    $('#inpessoa', '#frmCabAtenda').remove();
+    $('#_nrdconta', '#frmCabAtenda').remove();
+    $('#_idseqttl', '#frmCabAtenda').remove();
+    $('#sidlogin', '#frmCabAtenda').remove();
+
+    // Insiro input do tipo hidden do formulário para enviá-los posteriormente
+    $('#frmCabAtenda').append('<input type="hidden" id="tprelato" name="tprelato" />');
+    $('#frmCabAtenda').append('<input type="hidden" id="flgpreen" name="flgpreen" />');
+    $('#frmCabAtenda').append('<input type="hidden" id="inpessoa" name="inpessoa" />');
+    $('#frmCabAtenda').append('<input type="hidden" id="_nrdconta" name="_nrdconta" />');
+    $('#frmCabAtenda').append('<input type="hidden" id="_idseqttl" name="_idseqttl" />');
+    $('#frmCabAtenda').append('<input type="hidden" id="sidlogin" name="sidlogin" />');
+
+    // Agora insiro os devidos valores nos inputs criados
+    $('#tprelato', '#frmCabAtenda').val(idImpressao);
+    $('#flgpreen', '#frmCabAtenda').val(flgpreen);
+    $('#inpessoa', '#frmCabAtenda').val(inpessoa);
+    $('#_nrdconta', '#frmCabAtenda').val(normalizaNumero(nrdconta));
+    $('#_idseqttl', '#frmCabAtenda').val(idseqttl);
+    $('#sidlogin', '#frmCabAtenda').val($('#sidlogin', '#frmMenu').val());
+
+    var action = UrlSite + 'telas/atenda/cartao_assinaturas/imp_impressoes.php';
+    var callafter = "bloqueiaFundo(divRotina);";
+
+    carregaImpressaoAyllos("frmCabAtenda", action, callafter);
+
+}
+
+function telaCartaoAssinatura(inpessoa) {
+    $.ajax({
+        type: "POST",
+        dataType: "html",
+        url: UrlSite + "telas/atenda/cartao_assinaturas/cartao_assinatura.php",
+        data: {
+            nrdconta: nrdconta,
+            idseqttl: 1,
+            inpessoa: inpessoa,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", bloqueiaFundo(divRotina));
+        },
+        success: function (response) {
+            $("#divConteudoOpcao").html(response);
+            return false;
+        }
+    });
+}
+
+function impressaoCartaoAssinatura(inpessoa, tpimpressao) {
+
+    if (tpimpressao == 'todos') {
+        imprimirCartaoAssinatura(3);
+    } else {
+        $.ajax({
+            type: "POST",
+            dataType: "html",
+            url: UrlSite + "telas/atenda/cartao_assinaturas/consulta_impressao.php",
+            data: {
+                nrdconta: nrdconta,
+                idseqttl: 1,
+                inpessoa: inpessoa,
+                tpimpressao: tpimpressao,
+                nrcpfcgc: nrcpfcgc,
+                nrdctato: nrdctato,
+                nrdrowid: nrdrowid,
+                operacao: operacao,
+                redirect: "html_ajax"
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", bloqueiaFundo(divRotina));
+            },
+            success: function (response) {
+                $("#divConteudoOpcao").html(response);
+                return false;
+            }
+        });
+    }
+}
+
+function imprimirCartaoAssinatura(tipoimpr) {
+
+    $('#frmImpressao').empty();
+    $('#frmImpressao').append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + $('#sidlogin', '#frmMenu').val() + '" />');
+
+    if (tipoimpr == 1) { /* Titular */
+
+        $('table > tbody > tr', 'div.divRegistros').each(function () {
+            if ($(this).hasClass('corSelecao')) {
+                nrdconta = $('input[name="nrdconta"]', $(this)).val();
+                nrdctato = $('input[name="nrdctato"]', $(this)).val();
+                idseqttl = $('input[name="idseqttl"]', $(this)).val();
+                nrcpfcgc = $('input[name="nrcpfcgc"]', $(this)).val();
+            }
+        });
+
+        $('#frmImpressao').append('<input type="hidden" id="nrdconta" name="nrdconta" value="' + nrdconta + '" />');
+        $('#frmImpressao').append('<input type="hidden" id="idseqttl" name="idseqttl" value="' + idseqttl + '" />');
+        $('#frmImpressao').append('<input type="hidden" id="nrcpfcgc" name="nrcpfcgc" value="' + nrcpfcgc + '" />');
+        $('#frmImpressao').append('<input type="hidden" id="nrdctato" name="nrdctato" value="' + nrdctato + '" />');
+        $('#frmImpressao').append('<input type="hidden" id="tppessoa" name="tppessoa" value="1" />');
+
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeCartaoAssinatura(1);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+    } else if (tipoimpr == 2) { /* Procurador */
+
+        $('table > tbody > tr', 'div.divRegistros').each(function () {
+            if ($(this).hasClass('corSelecao')) {
+                nrdconta = $('input[name="nrdconta"]', $(this)).val();
+                nrcpfcgc = $('input[name="nrcpfcgc"]', $(this)).val();
+                nrdctato = $('input[name="nrdctato"]', $(this)).val();
+            }
+        });
+
+        $('#frmImpressao').append('<input type="hidden" id="nrdconta" name="nrdconta" value="' + nrdconta + '" />');
+        $('#frmImpressao').append('<input type="hidden" id="idseqttl" name="idseqttl" value="0" />');
+        $('#frmImpressao').append('<input type="hidden" id="nrcpfcgc" name="nrcpfcgc" value="' + nrcpfcgc + '" />');
+        $('#frmImpressao').append('<input type="hidden" id="nrdctato" name="nrdctato" value="' + nrdctato + '" />');
+        $('#frmImpressao').append('<input type="hidden" id="tppessoa" name="tppessoa" value="2" />');
+
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeCartaoAssinatura(2);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+    } else if (tipoimpr == 3) { /* Todos */
+
+        $('#frmImpressao').append('<input type="hidden" id="nrdconta" name="nrdconta" value="' + nrdconta + '" />');
+        $('#frmImpressao').append('<input type="hidden" id="idseqttl" name="idseqttl" value="0" />');
+        $('#frmImpressao').append('<input type="hidden" id="nrcpfcgc" name="nrcpfcgc" value="0" />');
+        $('#frmImpressao').append('<input type="hidden" id="nrdctato" name="nrdctato" value="0" />');
+        $('#frmImpressao').append('<input type="hidden" id="tppessoa" name="tppessoa" value="3" />');
+
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeCartaoAssinatura(3);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+    }
+}
+
+function imprimeCartaoAssinatura(tppessoa) {
+
+    var action = UrlSite + 'telas/atenda/cartao_assinaturas/imprime_cartao_ass.php';
+    var callafter = "bloqueiaFundo(divRotina);";
+
+    carregaImpressaoAyllos("frmImpressao", action, callafter);
+
+}

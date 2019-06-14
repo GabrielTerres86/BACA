@@ -1,0 +1,229 @@
+/*
+Autor: Bruno Luiz Katzjarowski - Mout's;
+Data: 10/11/2018;
+Ultima alteração;
+
+Alterações:
+	1 - Adicionar borda #777 acima e abaixo do combobox cddopcao - Bruno Luiz k. - Mout's
+*/
+#formCddopcao{width: 758px !important;}
+#frmLogSPB a{
+	float: none !important;
+}
+
+#formCddopcao{
+	height: 26px;
+	text-align: center;
+}
+	#formCddOpcao div{margin: auto;display: block; float: left; width: 100%;}
+
+#tdConteudoTela{background-color: white;}
+#divTelaInteira{background-color: #F4F3F0;}
+#cddopcao{
+    width: 80% !important;
+}
+.logspb{
+	max-width: 950px;
+	min-width: 750px;
+	width: 750px;
+}
+#frmLogSPB{
+	width: 758px !important;
+	margin-top: 0;
+}
+
+.semBordaBottom{border-bottom: 0px solid #777 !important;}
+.comBordaBottom{border-bottom: 1px solid #777 !important;}
+.semBordaTop{border-top: 0px solid #777 !important;}
+.comBordaTop{border-top: 1px solid #777 !important;}
+
+.logspb .bloco{
+	display: inline-block;
+	float: left;
+	width: 360px;
+	height: auto;
+}
+	.logspb input, .logspb select{margin: 4px !important;}
+	.logspb .bloco div{
+		display: inline-block;
+		float: left;
+		height: auto;
+	}
+		.logspb .bloco .rotulo{
+			width: 100px;
+			padding-top: 5px;
+		}
+		.logspb .bloco .rotulo-linha{
+			width: 25px;
+			padding-top: 5px;
+		}
+		.logspb .bloco label[for='textDataAte'], .logspb .bloco label[for='textValorAte']{text-align: center;}
+		.logspb .bloco #labelTextDataAte, .logspb .bloco #labelTextValorAte{text-align: center;}
+		.logspb .bloco #textDataDe, .logspb .bloco #textDataAte, .logspb .bloco #textValorDe, .logspb .bloco #textValorAte{width: 100px;}
+		.logspb .bloco #selTipo, .logspb .bloco #selCooperativas{width: 100px;max-width: 100px;}
+		.logspb .bloco #selOrigem, .logspb .bloco #selContaDv{width: 156px;max-width: 156px;}
+		.logspb .bloco #selIfContraparte{width: 200px;max-width: 200px;}
+
+
+.Botoes{
+	text-align: center;
+	display: block;
+}
+	.Botoes a{
+		margin: 0 auto;
+	}
+	
+
+/*
+divPrincipal
+*/
+
+#divPrincipalLogSpb, #divRegistgros{
+	margin: auto;
+	/*max-width: 50%;*/
+}
+
+.divTabelaLogSpb, .divBotoesDetalhes{
+	margin: auto;
+	/*width: 60%;
+	max-width: 65%;*/
+	padding: 10px;
+}
+
+.divBotoesDetalhes a{
+	float: none;
+}
+
+
+.divRegistros{
+	overflow-y: scroll;
+	overflow-x: scroll;
+	height: 300px;
+	width: 750px;
+	padding: 10px;
+}
+
+
+
+
+/* 
+LAYOUT DETALHES_CONSULTA_CM.PHP
+ */
+ /* #detalhesConsultaCM{
+	 width: 1200px;
+ } */
+ #detalhesConsultaCM table{
+ 	padding-top: 10px;
+ }
+ 	#tabelLayout2, #tabelLayout3, #tabelLayout4{width: 450px !important;}
+
+ 	#detalhesConsultaCM table thead tr{
+		margin-right: 2px !important;
+		background-color: #ffbaad; 
+		font-weight: bold; 
+		padding: 7px; 
+		margin-right: 2px;
+		border-right: 2px solid white !important;
+		font-size: 12px;
+		font-weight: bold;
+		color: #000;
+	 }
+ 	#detalhesConsultaCM table td{
+		padding: 7px;
+		font-size: 11px;
+		text-align: center;
+		/*border-right: 1px dotted #999;*/
+		/*background-color: white;*/
+	}
+	#detalhesConsultaCM table tr{height: 35px;}
+	#detalhesConsultaCM table th{
+		height: 22px;
+		padding: 0px 5px;
+		/*border-right: 1px dotted #999;*/
+		background-color: #f7d3ce;
+	}
+
+	#detalhesConsultaCM table tbody tr:nth-child(even){
+		background-color: #eeeaee;
+	}
+	#detalhesConsultaCM table tbody tr:nth-child(odd){
+		background-color: white;
+	}
+
+
+.colunaXML{
+	cursor: pointer;
+}
+.botoesLogspb{
+	margin-top: 10px;
+	border-top: 1px solid black;
+	padding: 10px;
+}
+
+/* CONSULTA S */
+#detalhesConsultaS{
+	max-width: 755px;
+	margin: auto;
+	display: block;
+}
+	#detalhesConsultaS input, #detalhesConsultaS textarea{margin-top: 5px;} 
+	#detalhesConsultaS span{display: block; text-align: center; font-weight: bold;}
+	#mensagemSDiv1, #mensagemSDiv2{
+		margin: auto;
+		display: inline-block;
+		width: 60%;
+		max-width: 65%;
+		padding: 10px;
+	}
+	#mensagemSDiv1{width: 450px !important;}
+	#mensagemSDiv2{width: 750px !important;max-width: 750px;}
+	#mensagemSDiv1 label, #mensagemSDiv2 label{
+		display: inline-block;
+		text-align: right;
+		width: 125px;
+	}
+	#mensagemSDiv1 #dsmotivo{width: 156px; height: 80px;}
+	#mensagemSDiv1 label[for='dsmotivo']{vertical-align: top;}
+
+	#mensagemSDiv2 .left-div, #mensagemSDiv2 .right-div{
+		display: inline-block; 
+		*display: inline; /* hackzinho para forçar o inline-block no IE6~7 */
+		width: 350px;
+	}
+
+
+
+/*
+Estilo tabela de consulta
+*/
+
+.colunaConsulta{
+	padding: 7px !important; 
+	margin-right: 2px !important;
+	border: none !important;
+	border-right: 2px solid white !important;
+}
+
+.linhaCabecalho{
+	margin-right: 2px !important;
+	background-color: #ffbaad; 
+	font-weight: bold; 
+	padding: 7px; 
+	margin-right: 2px;
+	border-right: 2px solid white !important;
+	font-size: 12px;
+    font-weight: bold;
+    color: #000;
+}
+
+.tabelaBorda{
+    border-right: 2px solid #f2f2f2 !important;
+}
+
+.tabelaConsultaLog tr .corSelecao{
+	background-color: #ffbaad !important;
+}
+
+.corFundoCabecalho{
+	background-color: rgb(247, 211, 206) !important;
+}

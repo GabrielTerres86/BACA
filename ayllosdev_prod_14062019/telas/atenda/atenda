@@ -1,0 +1,553 @@
+//************************************************************************//
+//*** Fonte: atenda.js                                                 ***//
+//*** Autor: David                                                     ***//
+//*** Data : Agosto/2007                  Última Alteração: 05/12/2014 ***//
+//***                                                                  ***//
+//*** Objetivo  : Biblioteca de funções da tela ATENDA                 ***//
+//***                                                                  ***//	 
+//*** Alterações: 12/09/2008 - Incluir variável global inpessoa        ***//
+//***                        - Ativar rotina Cartões Magnéticos na     ***//
+//***                          funcao focoRotina() (David).            ***//
+//***                        - Ativar rotina Descontos na função       ***//
+//***                          focoRotina() (Guilherme).               ***//
+//***                                                                  ***//
+//***             13/08/2009 - Alterado consultaAssociado para         ***//
+//***                          utilizar paginação (Guilherme).         ***//
+//***                                                                  ***//
+//***             12/01/2010 - Retirar funcoes de pesquisa associados. ***//
+//***                          Utilizar biblioteca genérica (David).   ***//
+//***                                                                  ***//
+//***             29/06/2011 - Tableless (Rogerius - DB1).		       ***//
+/*
+ *				  05/08/2011 - Limpar rotina Ficha cadastral (Gabriel)
+ *				  
+ *				  01/11/2011 - Retirado os tratamentos para não listar
+ *							   a rotina 'Seguro'(Marcelo Pereira - GATI)
+ *							   
+ *				  16/01/2012 - Ajustes diversos (David).		
+ *						
+ *				  13/03/2012 - Adicionado parametro para manter referencia
+ *							   da janela de impressao. (Jorge)
+ *							   
+ *				  26/06/2012 - Alterado funcao imprimeAnotacoes(),
+ * 							   adequado para submeter impressao. (Jorge)
+ *
+ *				  26/09/2013 - Alterado funcao obtemCabecalho(),
+ * 							   adequado para ter botao de Cartao Ass.
+							   (Jean Michel)
+							   
+			      02/07/2014 - Tratamento na funcao limparDadosCampos
+				               para nao limpar o campo que contem o nome
+							   do servidor do GED (SmartShare) e o codigo
+							   da cooperativa.
+							   (Fabricio)
+							   
+				  30/09/2014 - Ajustando funcao LimpaCampo para limpar
+				               corretamente quando a tela é carregada
+							   (André Santos - SUPERO)
+							   
+			      05/11/2014 - Incluso novo parâmetro flgerlog com valor "yes"
+				               na requisição ajax realizada na função obtemCabecalho()
+							   (Daniel)
+***************************************************************************/
+
+var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela ATENDA
+var flgMostraAnota  = false; // Flag que indica se anotações devem ser mostradas após as mensagens
+
+var nrdconta = ""; // Variável global para armazenar nr. da conta/dv
+var nrdctitg = ""; // Variável global para armazenar nr. da conta integração
+var inpessoa = ""; // Variável global para armazenar o tipo de pessoa (física/jurídica)
+var cdcooper = ""; // Variável global para armazenar o codigo da cooperativa
+var dscsersm = ""; // Variável global para armazenar o o servidor do smartshare
+var contWinAnot = 0; // Para impressão das anotações
+
+$(document).ready(function() {
+	
+	// Mostra mensagem de aguardo	
+	showMsgAguardo("Aguarde, carregando configura&ccedil;&otilde;es da tela ...");
+	
+	// Evento onKeyUp no campo "nrdconta"
+	$("#nrdconta","#frmCabAtenda").bind("keyup",function(e) { 
+		// Seta máscara ao campo
+		if (!$(this).setMaskOnKeyUp("INTEGER","zzzz.zzz-z","",e)) {
+			return false;
+		}
+		
+		// Se foi alterado o número da conta, limpa o campo "nrdctitg" e não permite acessar as rotinas
+		if (flgAcessoRotina && retiraCaracteres($(this).val(),"0123456789",true) != nrdconta) {
+			$("#nrdctitg","#frmCabAtenda").val("0.000.000-0");
+			flgAcessoRotina = false;
+		}
+	});
+	
+	// Evento onKeyDown no campo "nrdconta"
+	$("#nrdconta","#frmCabAtenda").bind("keydown",function(e) {
+		// Captura código da tecla pressionada
+		var keyValue = getKeyValue(e);
+		
+		// Se o botão enter foi pressionado, carrega dados da conta
+		if (keyValue == 13) {
+			obtemCabecalho(); 
+			return false;
+		}	
+						
+		// Seta máscara ao campo
+		return $(this).setMaskOnKeyDown("INTEGER","zzzz.zzz-z","",e);
+	});	
+	
+	// Evento onBlur no campo "nrdconta"
+	$("#nrdconta","#frmCabAtenda").bind("blur",function() {
+		if ($(this).val() == "") {
+			return true;
+		}
+		
+		// Valida número da conta
+		if (!validaNroConta(retiraCaracteres($(this).val(),"0123456789",true))) {
+			showError("error","Conta/dv inv&aacute;lida.","Alerta - Aimaro","$('#nrdconta','#frmCabAtenda').focus()");
+			limparDadosCampos();
+			return false;
+		} 
+		
+		return true;
+	});
+	
+	// Evento onKeyUp no campo "nrdctitg"
+	$("#nrdctitg","#frmCabAtenda").bind("keyup",function(e) {																							
+		// Se foi alterado o número da conta/itg, limpa o campo "nrdconta" e não permite acessar as rotinas
+		if (flgAcessoRotina && retiraCaracteres($(this).val(),"0123456789X",true) != nrdctitg) {
+			$("#nrdconta","#frmCabAtenda").val("");
+			flgAcessoRotina = false;
+		}																							 
+	});	
+	
+	// Evento onKeyDown no campo "nrdctitg"
+	$("#nrdctitg","#frmCabAtenda").bind("keydown",function(e) {
+		// Captura código da tecla pressionada
+		var keyValue = getKeyValue(e);
+
+		// Se o botão enter foi pressionado, carrega dados da conta
+		if (keyValue == 13) {
+			$(this).blur();
+			obtemCabecalho();
+			return false;
+		}			
+	});			
+	
+	$("#nrdctitg","#frmCabAtenda").setMask("STRING","9.999.999-9",".-","");	
+
+	$("#nrdconta","#frmCabAtenda").focus();							
+	
+	hideMsgAguardo();
+});
+
+// Função para setar foco na rotina
+function focoRotina(id,flgEvent) { 
+	if (!flgAcessoRotina || $("#labelRot" + id).html() == "&nbsp;") {
+		return false;
+	}
+
+	if (flgEvent) { // MouserOver
+		$("#labelRot" + id).css({
+			backgroundColor: "#FFB4A0",
+			cursor: "pointer"
+		});
+		$("#valueRot" + id).css({
+			backgroundColor: "#FFB4A0",
+			cursor: "pointer"
+		});		
+	} else { // MouseOut
+		$("#labelRot" + id).css({
+			backgroundColor: "#E3E2DD",
+			cursor: "default"
+		});
+		$("#valueRot" + id).css({
+			backgroundColor: "#E3E2DD",
+			cursor: "default"
+		});
+	}
+}
+
+// Função para fechar div com mensagens de alerta
+function encerraMsgsAlerta() {
+	// Esconde div
+	$("#divMsgsAlerta").css("visibility","hidden");
+	
+	$("#divListaMsgsAlerta").html("&nbsp;");
+	
+	if (flgMostraAnota) {
+		// Mostra div 
+		$("#divAnotacoes").css("visibility","visible");
+		
+		// Bloqueia conteúdo que está átras do div de Anotações
+		blockBackground(parseInt($("#divAnotacoes").css("z-index")));
+		
+		// Flag para não mostrar a tela de anotações
+		flgMostraAnota = false;
+	} else {
+		// Esconde div de bloqueio
+		unblockBackground();
+	}
+}
+
+// Função para esconder as Anotações
+function encerraAnotacoes() {
+	// Esconde div da rotina
+	$("#divAnotacoes").css("visibility","hidden");
+	
+	$("#divListaAnotacoes").html("&nbsp;");	
+
+	unblockBackground();
+}
+
+// Função para buscar anotações do associado
+function buscaAnotacoes() {
+	// Mostra mensagem de aguardo	
+	showMsgAguardo("Aguarde, carregando anota&ccedil;&otilde;es ...");
+	
+	// Carrega dados da conta através de ajax
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/atenda/busca_anotacoes.php", 
+		data: {
+			nrdconta: nrdconta,			
+			redirect: "html_ajax" // Tipo de retorno do ajax
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divAnotacoes').css('z-index')))");
+		},
+		success: function(response) {
+			$("#divListaAnotacoes").html(response);
+		}				
+	});	
+}
+
+// Função para imprimir anotações do associado
+function imprimeAnotacoes() {
+	
+	$('input,select','#frmAnotacoes').habilitaCampo();
+	$('#nrdconta','#frmAnotacoes').val(nrdconta);	
+	
+	var action    = $('#frmAnotacoes').attr('action');	
+	var callafter = "blockBackground(parseInt($('#divAnotacoes').css('z-index')));$('input, select', '#frmAnotacoes,.classDisabled').desabilitaCampo();";
+	
+	carregaImpressaoAyllos("frmAnotacoes",action,callafter);
+	
+}				
+
+
+// Função para acessar rotinas da tela ATENDA
+function acessaRotina(nomeValidar,nomeTitulo,nomeURL) {
+	// Verifica se é uma chamada válida
+	if (!flgAcessoRotina) {
+		return false;
+	}
+	
+	// Mostra mensagem de aguardo	
+	showMsgAguardo("Aguarde, carregando rotina de " + nomeTitulo + " ...");
+	
+	var url = UrlSite + "telas/atenda/" + nomeURL + "/" + nomeURL;
+	
+	// Carrega biblioteca javascript da rotina
+	// Ao carregar efetua chamada do conteúdo da rotina através de ajax
+	
+	$.getScript(url + ".js",function() {
+		
+		$.ajax({
+			type: "POST",
+			dataType: "html",
+			url: url + ".php",
+			data: {
+				nrdconta: nrdconta,
+				nmdatela: "ATENDA",
+				nmrotina: nomeValidar,
+				redirect: "html_ajax" // Tipo de retorno do ajax
+			},
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","");
+			},
+			success: function(response) {
+				$("#divRotina").html(response);
+			}				 
+		}); 
+	});
+	
+}
+
+// Função para visualizar div da rotina
+function mostraRotina() { 
+	$("#divRotina").css("visibility","visible");
+	$("#divRotina").centralizaRotinaH();
+
+}
+
+// Função para esconder div da rotina e carregar dados da conta novamente
+function encerraRotina(flgCabec) {		
+	$("#divRotina").css({"width":"545px","visibility":"hidden"});
+	$("#divRotina").html("");
+
+	// Para esconder o F2
+	nmrotina = ""
+	
+	if (flgCabec) {
+		obtemCabecalho();		
+	}
+}	
+
+// Função para carregar dados da conta informada
+function obtemCabecalho() {
+
+	var flgdigit;
+	var aux_nrdconta;
+	
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando dados da conta/dv ...");		
+	
+	// Armazena conta/dv e conta/itg informadas
+	nrdconta = retiraCaracteres($("#nrdconta","#frmCabAtenda").val(),"0123456789",true);
+	nrdctitg = retiraCaracteres($("#nrdctitg","#frmCabAtenda").val().toUpperCase(),"0123456789X",true);
+	cdcooper = $("#hdnCooper","#frmCabAtenda").val();
+	dscsersm = $("#hdnServSM","#frmCabAtenda").val();
+	
+	flgerlog = "yes";
+	
+	// Se nenhum dos tipos de conta foi informado
+	if (nrdconta == "" && nrdctitg == "") {
+		hideMsgAguardo();
+		showError("error","Informe o n&uacute;mero da Conta/dv ou da Conta/Itg.","Alerta - Aimaro","$('#nrdconta','#frmCabAtenda').focus()");
+		return false;
+	}
+
+	// Se conta/dv foi informada, valida
+	if (nrdconta != "") { 
+		if (!validaNroConta(nrdconta)) {
+			hideMsgAguardo();
+			showError("error","Conta/dv inv&aacute;lida.","Alerta - Aimaro","$('#nrdconta','#frmCabAtenda').focus()");
+			limparDadosCampos();
+			return false;
+		}
+	} 
+
+	// Carrega dados da conta através de ajax
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/atenda/obtem_cabecalho.php", 		
+		data: {
+			nrdconta: nrdconta,
+			nrdctitg: nrdctitg,
+			flgerlog: flgerlog,
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","$('#nrdconta','#frmCabAtenda').focus()");
+		},
+		success: function(response) {			
+			try {
+				eval(response);
+				flgdigit = "N";
+				flgdigit = $("#hdnFlgdig","#frmCabAtenda").val();
+				aux_nrdconta = $("#nrdconta","#frmCabAtenda").val();
+				aux_nrdconta = aux_nrdconta.replace('-','.');
+								
+				if (flgdigit == "S"){
+					$("#divSemCartaoAss").html("<a class='txtNormal' href='http://" + dscsersm + "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + aux_nrdconta + "&cooperativa=" + cdcooper + "' target='_blank' >&nbsp;Cart&atilde;o Ass.</a>");
+				}else{
+					$("#divSemCartaoAss").html("<a class='txtNormal' style='margin-left: 1px; cursor:default' >&nbsp;Cart&atilde;o Ass.</a>");
+				}
+			} catch(error) {
+				hideMsgAguardo();					
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Aimaro","$('#nrdconta','#frmCabAtenda').focus()");				
+			}			
+		}				
+	}); 
+			
+}
+
+// Função para limpar campos com dados da conta
+function limparDadosCampos() { 
+	// Limpa campos com dados pessoais da conta
+	for (i = 0; i < document.frmCabAtenda.length; i++) {
+		if ((document.frmCabAtenda.elements[i].name != "hdnServSM") && (document.frmCabAtenda.elements[i].name != "hdnCooper"))
+			document.frmCabAtenda.elements[i].value = "";
+	}
+		
+	// Limpa campos com saldos da conta
+	for (i = 0; i < 24; i++) {
+		$("#labelRot" + i).html("&nbsp;");
+		$("#valueRot" + i).html("&nbsp;");
+	} 
+		
+}
+
+// Função que formata formulario inicial
+function formataCabecalho() {
+
+	// link
+	$('a','#frmCabAtenda').addClass('txtNormal');
+	
+	// linha
+	$('hr','#frmCabAtenda').css({'margin':'3px 0 3px 0'});
+
+	// rotulo
+	rNrdconta = $('label[for="nrdconta"]','#frmCabAtenda');
+	rNrdctitg = $('label[for="nrdctitg"]','#frmCabAtenda');
+	rDssititg = $('label[for="dssititg"]','#frmCabAtenda');
+	rNrmatric = $('label[for="nrmatric"]','#frmCabAtenda');
+	rCdagenci = $('label[for="cdagenci"]','#frmCabAtenda');
+	rNrctainv = $('label[for="nrctainv"]','#frmCabAtenda');
+	rDtadmiss = $('label[for="dtadmiss"]','#frmCabAtenda');
+	rDtadmemp = $('label[for="dtadmemp"]','#frmCabAtenda');
+	rDtaltera = $('label[for="dtaltera"]','#frmCabAtenda');
+	rDtdemiss = $('label[for="dtdemiss"]','#frmCabAtenda');
+	rNmprimtl = $('label[for="nmprimtl"]','#frmCabAtenda');
+	rDsnatopc = $('label[for="dsnatopc"]','#frmCabAtenda');
+	rNrramfon = $('label[for="nrramfon"]','#frmCabAtenda');
+	rDsnatura = $('label[for="dsnatura"]','#frmCabAtenda');
+	rNrcpfcgc = $('label[for="nrcpfcgc"]','#frmCabAtenda');
+	rDstipcta = $('label[for="dstipcta"]','#frmCabAtenda');
+	rDssitdct = $('label[for="dssitdct"]','#frmCabAtenda');
+	rIndnivel = $('label[for="indnivel"]','#frmCabAtenda');
+	rCdempres = $('label[for="cdempres"]','#frmCabAtenda');
+	rCdsecext = $('label[for="cdsecext"]','#frmCabAtenda');
+	rCdturnos = $('label[for="cdturnos"]','#frmCabAtenda');
+	rCdtipsfx = $('label[for="cdtipsfx"]','#frmCabAtenda');
+	rQtdevolu = $('label[for="qtdevolu"]','#frmCabAtenda');
+	rQtdddeve = $('label[for="qtdddeve"]','#frmCabAtenda');
+	rDtabtcct = $('label[for="dtabtcct"]','#frmCabAtenda');
+	rFtsalari = $('label[for="ftsalari"]','#frmCabAtenda');
+	rVlprepla = $('label[for="vlprepla"]','#frmCabAtenda');
+	rQttalret = $('label[for="qttalret"]','#frmCabAtenda');
+
+	rNrdconta.addClass('rotulo');	
+	rNrdctitg.addClass('rotulo-linha').css({'width':'65px'});
+	rDssititg.addClass('rotulo-linha');
+	rNrmatric.addClass('rotulo').css({'width':'111px'});	
+	rCdagenci.addClass('rotulo-linha').css({'width':'38px'});	
+	rNrctainv.addClass('rotulo-linha').css({'width':'83px'});	
+	rDtadmiss.addClass('rotulo-linha').css({'width':'75px'});
+	rDtadmemp.addClass('rotulo').css({'width':'111px'});	
+	rDtaltera.addClass('rotulo-linha').css({'width':'137px'});
+	rDtdemiss.addClass('rotulo-linha').css({'width':'75px'});	
+	rNmprimtl.addClass('rotulo').css({'width':'111px'});	
+	rDsnatopc.addClass('rotulo').css({'width':'111px'});	
+	rNrramfon.addClass('rotulo-linha').css({'width':'55px'});
+	rDsnatura.addClass('rotulo').css({'width':'111px'});	
+	rNrcpfcgc.addClass('rotulo-linha').css({'width':'55px'});
+	rDstipcta.addClass('rotulo').css({'width':'111px'});	
+	rDssitdct.addClass('rotulo-linha').css({'width':'55px'});
+	rIndnivel.addClass('rotulo').css({'width':'111px'});	
+	rCdempres.addClass('rotulo-linha').css({'width':'56px'});
+	rCdsecext.addClass('rotulo-linha').css({'width':'39px'});	
+	rCdturnos.addClass('rotulo-linha').css({'width':'39px'});
+	rCdtipsfx.addClass('rotulo-linha').css({'width':'71px'});
+	rQtdevolu.addClass('rotulo').css({'width':'111px'});	
+	rQtdddeve.addClass('rotulo-linha').css({'width':'105px'});	
+	rDtabtcct.addClass('rotulo-linha').css({'width':'78px'});	
+	rFtsalari.addClass('rotulo').css({'width':'111px'});	
+	rVlprepla.addClass('rotulo-linha').css({'width':'105px'});	
+	rQttalret.addClass('rotulo-linha').css({'width':'78px'});
+
+	// campo
+	cNrdconta = $('#nrdconta','#frmCabAtenda');
+	cNrdctitg = $('#nrdctitg','#frmCabAtenda');
+	cDssititg = $('#dssititg','#frmCabAtenda');
+	cNrmatric = $('#nrmatric','#frmCabAtenda');
+	cCdagenci = $('#cdagenci','#frmCabAtenda');
+	cNrctainv = $('#nrctainv','#frmCabAtenda');
+	cDtadmiss = $('#dtadmiss','#frmCabAtenda');
+	cDtadmemp = $('#dtadmemp','#frmCabAtenda');
+	cDtaltera = $('#dtaltera','#frmCabAtenda');
+	cDtdemiss = $('#dtdemiss','#frmCabAtenda');
+	cNmprimtl = $('#nmprimtl','#frmCabAtenda');
+	cDsnatopc = $('#dsnatopc','#frmCabAtenda');
+	cNrramfon = $('#nrramfon','#frmCabAtenda');
+	cDsnatura = $('#dsnatura','#frmCabAtenda');
+	cNrcpfcgc = $('#nrcpfcgc','#frmCabAtenda');
+	cDstipcta = $('#dstipcta','#frmCabAtenda');
+	cDssitdct = $('#dssitdct','#frmCabAtenda');
+	cIndnivel = $('#indnivel','#frmCabAtenda');
+	cCdempres = $('#cdempres','#frmCabAtenda');
+	cCdsecext = $('#cdsecext','#frmCabAtenda');
+	cCdturnos = $('#cdturnos','#frmCabAtenda');
+	cCdtipsfx = $('#cdtipsfx','#frmCabAtenda');
+	cQtdevolu = $('#qtdevolu','#frmCabAtenda');
+	cQtdddeve = $('#qtdddeve','#frmCabAtenda');
+	cDtabtcct = $('#dtabtcct','#frmCabAtenda');
+	cFtsalari = $('#ftsalari','#frmCabAtenda');
+	cVlprepla = $('#vlprepla','#frmCabAtenda');
+	cQttalret = $('#qttalret','#frmCabAtenda');
+
+	cNrdconta.css({'width':'70px','text-align':'right'});
+	cNrdctitg.css({'width':'70px','text-align':'right'});
+	cDssititg.css({'width':'50px'});
+	cNrmatric.css({'width':'48px'});
+	cCdagenci.css({'width':'25px'});
+	cNrctainv.css({'width':'75px'});
+	cDtadmiss.css({'width':'63px'});
+	cDtadmemp.css({'width':'63px'});
+	cDtaltera.css({'width':'75px'});
+	cDtdemiss.css({'width':'63px'});
+	cNmprimtl.css({'width':'425px'});
+	cDsnatopc.css({'width':'194px'});
+	cNrramfon.css({'width':'170px'});
+	cDsnatura.css({'width':'194px'});
+	cNrcpfcgc.css({'width':'170px'});
+	cDstipcta.css({'width':'194px'});
+	cDssitdct.css({'width':'170px'});
+	cIndnivel.css({'width':'38px'});;
+	cCdempres.css({'width':'45px'});
+	cCdsecext.css({'width':'45px'});
+	cCdturnos.css({'width':'38px'});
+	cCdtipsfx.css({'width':'30px'});
+	cQtdevolu.css({'width':'80px'});
+    cQtdddeve.css({'width':'80px'});
+    cDtabtcct.css({'width':'70px'});
+    cFtsalari.css({'width':'80px'});
+    cVlprepla.css({'width':'80px'});
+	cQttalret.css({'width':'70px'});
+	
+		// ie
+	if ( $.browser.msie ) {
+
+		$('hr','#frmCabAtenda').css({'margin':'0'});
+	
+		rCdagenci.css({'width':'41px'});	
+		rNrctainv.css({'width':'86px'});	
+		rDtadmiss.css({'width':'78px'});
+		
+		rDtaltera.css({'width':'140px'});
+		rDtdemiss.css({'width':'77px'});	
+		
+		rNrramfon.css({'width':'58px'});
+		rNrcpfcgc.css({'width':'58px'});
+		rDssitdct.css({'width':'58px'});
+		
+		rCdempres.css({'width':'59px'});
+		rCdsecext.css({'width':'42px'});	
+		rCdturnos.css({'width':'42px'});
+		rCdtipsfx.css({'width':'74px'});
+		
+		rQtdddeve.css({'width':'107px'});	
+		rDtabtcct.css({'width':'81px'});	
+		rVlprepla.css({'width':'107px'});	
+		rQttalret.css({'width':'81px'});
+	}
+
+	$('input, select', '#frmCabAtenda').desabilitaCampo();
+	cNrdconta.habilitaCampo();
+	cNrdctitg.habilitaCampo();
+	
+	layoutPadrao();
+
+}
+
+
+function ajustarCentralizacao() {
+	var x = $.browser.msie ? $(window).innerWidth() : $("body").offset().width;
+	x = x - 178;
+	$('#divRotina').css({'width': x+'px'});
+	$('#divRotina').centralizaRotinaH();
+	return false;
+}

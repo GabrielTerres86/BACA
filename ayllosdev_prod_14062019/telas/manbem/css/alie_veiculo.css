@@ -1,0 +1,142 @@
+#frmTipo {		
+    line-height: 25px;
+    margin:0 0 15px 0;
+    text-align: left;
+}
+	#frmTipo .fieldVeiculos{
+		float: left;
+		width: 50%;
+	}
+    #frmTipo .bloco{        
+        display:inline-table;
+        padding:2px 5px;
+        margin:15px 0;
+		width:100%;
+    }
+    #frmTipo hr{
+        margin:20px 0 10px ;
+        border-bottom: 1px solid #969FA9;
+        width:100%;
+    }
+    #frmTipo select, 
+    #frmTipo input[type="text"]{
+        width:150px;   
+        height: 20px;   
+        background-color: #fff;
+        padding: 2px 4px 1px 4px;
+        color: #333;
+        text-transform:uppercase
+    }
+    #frmTipo label{
+        min-width:140px;
+        display:inline-table;
+        text-align:right;
+        height: 25px;
+        font-weight: bold;
+        color: #111;
+    }
+    #frmTipo select
+    ,#frmTipo input[type="text"] 
+    ,#frmTipo label  {
+        font-size: 11px;
+    }
+    #frmTipo input[type="text"].menor, #frmTipo select#ufdplaca{
+        width:45px;
+        padding: 0!important;
+        min-width: 30px;
+    }
+    #frmTipo label.menor{
+        min-width:46px;
+    }
+    #frmTipo #nrdplaca{
+         width:101px!important;
+    }
+    #frmTipo fieldset {
+        clear: both;
+        border: 1px solid #bbb;
+        margin: 3px;
+        padding: 0px 3px 5px 3px;
+    }
+    #frmTipo fieldset legend{
+       text-align: center;
+    }
+    #frmTipo #nrmodbem, #frmTipo #nrmodbemC { width:87px; }
+    select[readonly] {
+        background: #eee;
+        pointer-events: none;
+        touch-action: none;
+    }
+   
+    /************************************************* Table ******************/
+    .table_alie_veiculo{
+        border:1px solid #777;
+    }
+     .table_alie_veiculo thead tr th{
+        background-color:#777;
+        min-width:100px;
+        border:0;
+        color: #fff;
+        text-transform:uppercase;
+    }
+    .table_alie_veiculo tbody tr td{
+        background-color:#fff;
+        min-width:100px;
+        text-transform:uppercase!important;
+        text-align: center;
+        padding: 0 13px;
+    }
+    .thd_menor{
+        min-width:10px!important;
+        max-width:20px!important;
+    }
+
+    .erro{
+        color: #f00;
+        text-transform:uppercase!important;
+    }
+    .errorInput
+    {
+        border: 1px solid #f00!important;
+    }
+    .errorLabel{
+        color: #f00!important;
+    }
+    #msgErro{
+        text-align: center;
+        display: none;
+    }
+
+    /*********** mensagem de erro ***************/
+    center {
+        text-align: left!important;
+    }
+
+    .bloqueado
+    {
+        background: #ccc!important;
+    }
+    /*************************** Form Interveniente ************************/
+	
+	label#lbsemfip {
+		min-width: 30px;
+		text-indent: -15px;
+		display:none;
+	}
+	input#dssemfip {
+		width: 13px;
+		height: 13px;
+		padding: 0;
+		margin:5px 0 5px 2px;
+		vertical-align: bottom;
+		position: relative;
+		top: -1px;
+		overflow: hidden;
+		display:none;
+	}
+	label#lsanobem {
+		min-width: 20px;
+	}
+	#frmTipo input#nranobem.menor {
+		width: 30px;
+	}
+	#frmTipo #nrmodbem.errorInput, #frmTipo #nrmodbemC.errorInput { width: 80px; }

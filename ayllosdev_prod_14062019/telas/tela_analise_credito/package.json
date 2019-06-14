@@ -1,0 +1,35 @@
+{
+  "name": "ailos_prj438_s8",
+  "version": "1.0.0",
+  "description": "Mout's - Ailos - Projeto de tela unica de avaliação de credito",
+  "main": "public/index.php",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.7.1",
+    "bootstrap": "^4.2.1",
+    "jquery": "^3.3.1",
+    "popper.js": "^1.14.7"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xlogel/ailos_prj438_s8.git"
+  },
+  "keywords": [
+    "Mout's",
+    "Ailos",
+    "PRJ",
+    "438",
+    "S8",
+    "Tela",
+    "unica"
+  ],
+  "author": "Mout's - Anderson Schloegel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/xlogel/ailos_prj438_s8/issues"
+  },
+  "homepage": "https://github.com/xlogel/ailos_prj438_s8#readme"
+}

@@ -1,0 +1,24 @@
+{
+    "name": "mouts/ailos_proj438_s8",
+    "description": "Mout's - Ailos - Projeto de tela unica de avaliação de credito",
+    "type": "project",
+    "config": {
+        "vendor-dir": "public/vendor"
+    },
+    "autoload": {
+        "classmap": [
+          "public/assets/classes/"
+        ]
+      },
+    "require": {
+    },
+    "authors": [
+        {
+            "name": "Anderson - Mout's",
+            "email": "anderson.schloegel@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require-dev": {
+    }
+}

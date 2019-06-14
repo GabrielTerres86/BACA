@@ -1,0 +1,424 @@
+/*!
+ * FONTE        : endereco.js
+ * CRIAÇÃO      : Gabriel Capoia (DB1)
+ * DATA CRIAÇÃO : Maio/2010 
+ * OBJETIVO     : Biblioteca de funções da rotina Endereco da tela de CONTAS
+ * --------------
+ * ALTERAÇÕES   : 
+ * --------------
+ * 000: [11/02/2011] Rodolpho/Rogérius. (DB1) Adicionado pesquisa CEP.
+ * 001: [03/05/2011] Rogérius Militao   (DB1) Adicionado o campo "dtinires" (inicio de residencia) com o tratamento
+ * 002: [05/07/2011] Henrique Pettenuci       Adicionado os campos nrdoapto e cddbloco.
+ */
+
+var nomeForm = 'frmEndereco'; // Nome do Formulário 
+ 
+function acessaOpcaoAba(nrOpcoes,id,opcao) {  
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando...");
+	
+	// Atribui cor de destaque para aba da opção
+	for (var i = 0; i < nrOpcoes; i++) {
+		if (id == i) { // Atribui estilos para foco da opção
+			$("#linkAba" + id).attr("class","txtBrancoBold");
+			$("#imgAbaEsq" + id).attr("src",UrlImagens + "background/mnu_sle.gif");				
+			$("#imgAbaDir" + id).attr("src",UrlImagens + "background/mnu_sld.gif");
+			$("#imgAbaCen" + id).css("background-color","#969FA9");
+			continue;			
+		}
+		
+		$("#linkAba" + i).attr("class","txtNormalBold");
+		$("#imgAbaEsq" + i).attr("src",UrlImagens + "background/mnu_nle.gif");			
+		$("#imgAbaDir" + i).attr("src",UrlImagens + "background/mnu_nld.gif");
+		$("#imgAbaCen" + i).css("background-color","#C6C8CA");
+	}
+		
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST", 
+		dataType: "html",
+		url: UrlSite + "telas/contas/endereco/principal.php",
+		data: {
+			nrdconta: nrdconta,
+			idseqttl: idseqttl,
+			redirect: "html_ajax"
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina));
+		},
+		success: function(response) {
+			if ( response.indexOf('showError("error"') == -1 ) {
+				$('#divConteudoOpcao').html(response);
+			} else {
+				eval( response );
+				controlaFoco( operacao );
+			}
+			return false;
+		}				
+	});
+		
+}
+
+function controlaOperacao(operacao, msgRetorno) {
+	
+	if ( !verificaContadorSelect() ) return false;
+	
+	// Verifica permissões de acesso
+	if ( (operacao == 'EA') && (flgAlterar != '1') ) { 
+		showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		return false;
+	} 
+		
+	// Mostra mensagem de aguardo
+	var msgOperacao = '';
+	switch (operacao) {					
+		case 'CA': // Consulta para Alteração
+			msgOperacao = 'abrindo formulário';
+			break;
+		case 'EA': 
+			msgOperacao = 'abrindo formulário';
+			break;
+		// Alteração para Consulta
+		case 'AE': 
+			showConfirmacao('Deseja substituir ENDERECO ATUAL pelo ENDERECO da INTERNET ?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina(\'AE\')','controlaOperacao(\'EI\')','sim.gif','nao.gif');
+			return false;
+			break;
+		case 'EI': 
+			showConfirmacao('Deseja EXCLUIR endereco cadastrado na INTERNET ?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina(\'EI\')','controlaOperacao(\'CA\')','sim.gif','nao.gif');
+			return false;
+			break;
+		case 'AC': 
+			showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			return false;
+			break;	
+		// Alteração para Validação - Validando Alteração
+		case 'AV': 
+			manterRotina(operacao);
+			return false;
+			break;	
+		// Validação para Alteração - Salvando Alteração
+		case 'VA': 
+			manterRotina(operacao);
+			return false;
+			break;
+		case 'FA':
+			msgOperacao = 'finalizando altera&ccedil;&atilde;o';
+			break;
+		case 'FAE':
+			msgOperacao = 'finalizando altera&ccedil;&atilde;o';
+			break;
+		case 'FEI':
+			msgOperacao = 'finalizando exclus&atilde;o';
+			break;		
+		// Qualquer outro valor: Cancelando Operação
+		default: 
+			msgOperacao = 'abrindo formul&aacute;rio';
+			break;			
+	}	
+	showMsgAguardo('Aguarde, ' + msgOperacao + '...');
+	
+	idseqttl = $('#idseqttl option:selected','#frmCabContas').val();		
+	
+	// Executa script de através de ajax
+	$.ajax({		
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/contas/endereco/principal.php', 
+		data: {
+			nrdconta: nrdconta,
+			idseqttl: idseqttl,
+			operacao: operacao,
+			redirect: "html_ajax"
+		},  
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		},
+		success: function(response) {
+			if ( response.indexOf('showError("error"') == -1 ) {
+				$('#divConteudoOpcao').html(response);
+			} else {
+				eval( response );
+			}
+			controlaFoco( operacao );
+			return false;	
+		}				
+	});			
+}
+
+
+// 001: adicionao campo "dtinires"
+function manterRotina(operacao) {
+
+	hideMsgAguardo();		
+	var msgOperacao = '';
+	switch (operacao) {	
+		case 'VA': msgOperacao = 'Aguarde, alterando ...'; break;
+		case 'AV': msgOperacao = 'Aguarde, validando alteração ...'; break;										
+		case 'AE': msgOperacao = 'Aguarde, alterando para dados da internet ...'; break;										
+		case 'EI': msgOperacao = 'Aguarde, excluindo dados da internet ...'; break;										
+		default: return false; break;
+	}
+	showMsgAguardo( msgOperacao );
+	
+	if ( operacao == 'AE' || operacao == 'EI' ) {
+		var incasprp = '';
+		var vlalugue = '';	
+		var dsendere = '';
+		var nrendere = '';
+		var complend = '';
+		var nrdoapto = '';
+		var cddbloco = '';
+		var nmbairro = '';
+		var nrcepend = '';
+		var nmcidade = '';
+		var cdufende = '';
+		var nrcxapst = '';
+		var dtinires = '';	
+		var nranores = '';	
+
+	} else {
+		var incasprp = $('#incasprp','#'+nomeForm).val();
+		var vlalugue = number_format(parseFloat($('#vlalugue','#'+nomeForm).val().replace(/[.]*/g,'').replace(',','.')),2,',','');	
+		var dsendere = $('#dsendere','#'+nomeForm).val();
+		var nrendere = $('#nrendere','#'+nomeForm).val();
+		var complend = $('#complend','#'+nomeForm).val();
+		var nrdoapto = $('#nrdoapto','#'+nomeForm).val();
+		var cddbloco = $('#cddbloco','#'+nomeForm).val();
+		var nmbairro = $('#nmbairro','#'+nomeForm).val();
+		var nrcepend = $('#nrcepend','#'+nomeForm).val();
+		var nmcidade = $('#nmcidade','#'+nomeForm).val();
+		var cdufende = $('#cdufende','#'+nomeForm).val();
+		var nrcxapst = $('#nrcxapst','#'+nomeForm).val();
+		var dtinires = $('#dtinires','#'+nomeForm).val();
+		var nranores = $('#nranores','#'+nomeForm).val();
+
+	}
+	
+	nrendere = normalizaNumero( nrendere );
+	nrcepend = normalizaNumero( nrcepend );
+	nrcxapst = normalizaNumero( nrcxapst );
+	nrdoapto = normalizaNumero( nrdoapto );
+	
+	dsendere = trim( dsendere );
+	complend = trim( complend );
+	nmbairro = trim( nmbairro );
+	nmcidade = trim( nmcidade );
+	cddbloco = trim( cddbloco );
+	
+	$.ajax({		
+		type: 'POST',
+		url: UrlSite + 'telas/contas/endereco/manter_rotina.php', 		
+		data: {
+			nrdconta: nrdconta, idseqttl: idseqttl, 				
+			incasprp: incasprp, vlalugue: vlalugue, 
+			dsendere: dsendere, nrendere: nrendere, 
+			nmbairro: nmbairro, nrcepend: nrcepend, 
+			nmcidade: nmcidade, cdufende: cdufende, 
+			nrcxapst: nrcxapst, complend: complend, 
+			nrdoapto: nrdoapto, cddbloco: cddbloco,
+			operacao: operacao, dtinires: dtinires,                           
+			nranores: nranores, redirect: 'script_ajax'                                 
+		},                                                          
+		error: function(objAjax,responseError,objExcept) {          
+			hideMsgAguardo();                                       
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		},
+		success: function(response) {
+			try {
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			}
+		}				
+	});
+}
+
+function controlaLayout(operacao) {
+
+	// CONTROLA A ALTURA DA TELA  
+	largura = ( in_array(operacao,['EA']) ) ? '540px' : '520px';		
+	divRotina.css('height','160px');
+	divRotina.css('width',largura);		
+	
+	// SELETORES GENÉRICOS
+	var cTodos	= $('input, select','#'+nomeForm);
+	var cSelect	= $('select','#'+nomeForm);
+	
+	// RÓTULOS - IMÓVEL	
+	var rImovel = $('label[for="incasprp"],label[for="ib_incasprp"]','#'+nomeForm);
+	var rValor  = $('label[for="vlalugue"],label[for="ib_vlalugue"]','#'+nomeForm);	
+	var rInicio = $('label[for="dtinires"],label[for="ib_dtinires"]','#'+nomeForm);
+	var rTemp   = $('label[for="nranores"],label[for="ib_nranores"]','#'+nomeForm);
+	
+	rImovel.addClass('rotulo').css('width','178px');
+	rValor.addClass('rotulo-linha').css('width','40px');	
+	rInicio.addClass('rotulo').css('width','178px');
+	rTemp.addClass('rotulo-linha').css('width','110px');	
+	
+	// RÓTULOS - ENDEREÇO 
+	var rCep	= $('label[for="nrcepend"],label[for="ib_nrcepend"]','#'+nomeForm);
+	var rEnd	= $('label[for="dsendere"],label[for="ib_dsendere"]','#'+nomeForm);
+	var rNum	= $('label[for="nrendere"],label[for="ib_nrendere"]','#'+nomeForm);
+	var rCom	= $('label[for="complend"],label[for="ib_complend"]','#'+nomeForm);
+	var rApt	= $('label[for="nrdoapto"],label[for="ib_nrdoapto"]','#'+nomeForm);
+	var rBlo	= $('label[for="cddbloco"],label[for="ib_cddbloco"]','#'+nomeForm);
+	var rCax	= $('label[for="nrcxapst"],label[for="ib_nrcxapst"]','#'+nomeForm);	
+	var rBai	= $('label[for="nmbairro"],label[for="ib_nmbairro"]','#'+nomeForm);
+	var rEst	= $('label[for="cdufende"],label[for="ib_cdufende"]','#'+nomeForm);	
+	var rCid	= $('label[for="nmcidade"],label[for="ib_nmcidade"]','#'+nomeForm);
+	
+	rCep.addClass('rotulo').css('width','55px');
+	rEnd.addClass('rotulo-linha').css('width','25px');
+	rNum.addClass('rotulo-linha').css('width','15px');
+	rCom.addClass('rotulo').css('width','55px');
+	rApt.addClass('rotulo-linha').css('width','35px');
+	rBlo.addClass('rotulo-linha').css('width','35px');
+	rBai.addClass('rotulo').css('width','55px');
+	rCax.addClass('rotulo-linha').css('width','52px');
+	rCid.addClass('rotulo').css('width','55px');
+	rEst.addClass('rotulo-linha').css('width','52px');
+	
+	// CAMPOS - IMÓVEL
+	var cImovel	= $('#incasprp,#ib_incasprp','#'+nomeForm);
+	var cValor  = $('#vlalugue,#ib_vlalugue','#'+nomeForm);		
+	var cInicio = $('#dtinires,#ib_dtinires','#'+nomeForm);
+	var cTemp   = $('#nranores,#ib_nranores','#'+nomeForm);
+	
+	cImovel.css('width','150px');
+	cValor.addClass('moeda').css('width','104px');	
+	cInicio.addClass('dataMesAno').css('width','60px').attr('maxlength','7');
+	cTemp.addClass('alphanum').css('width','124px').attr('maxlength','3');
+	
+	// CAMPOS - ENDEREÇO
+	var cCep	= $('#nrcepend,#ib_nrcepend','#'+nomeForm);
+	var cEnd	= $('#dsendere,#ib_dsendere','#'+nomeForm);
+	var cNum	= $('#nrendere,#ib_nrendere','#'+nomeForm);
+	var cCom	= $('#complend,#ib_complend','#'+nomeForm);
+	var cApt	= $('#nrdoapto,#ib_nrdoapto','#'+nomeForm);
+	var cBlo	= $('#cddbloco,#ib_cddbloco','#'+nomeForm);
+	var cCax	= $('#nrcxapst,#ib_nrcxapst','#'+nomeForm);		
+	var cBai	= $('#nmbairro,#ib_nmbairro','#'+nomeForm);
+	var cEst	= $('#cdufende,#ib_cdufende','#'+nomeForm);	
+	var cCid	= $('#nmcidade,#ib_nmcidade','#'+nomeForm);
+
+	cCep.addClass('cep pesquisa').css('width','65px').attr('maxlength','9');
+	cEnd.addClass('alphanum').css('width','240px').attr('maxlength','40');
+	cNum.addClass('numerocasa').css('width','47px').attr('maxlength','7');
+	cCom.addClass('alphanum').css('width','277px').attr('maxlength','40');	
+	cApt.addClass('numerocasa').css('width','35px').attr('maxlength','4');
+	cBlo.addClass('alphanum').css('width','30px').attr('maxlength','3');
+	cCax.addClass('caixapostal').css('width','59px').attr('maxlength','6');	
+	cBai.addClass('alphanum').css('width','300px').attr('maxlength','40');	
+	cEst.css('width','65px');	
+	cCid.addClass('alphanum').css('width','300px').attr('maxlength','25');
+	
+	switch(operacao) {	
+		case 'CA': // Consulta Alteração
+			cTodos.habilitaCampo();
+			$('#dsendere,#cdufende,#nmbairro,#nmcidade,#nranores','#'+nomeForm).desabilitaCampo();
+			montaSelect('b1wgen0059.p','busca_tpimovel','incasprp','incasprp','dscasprp',incasprp);
+			layoutPadrao();
+			break;
+		case 'EA': 
+			cTodos.desabilitaCampo();
+			break;			
+		default:			
+			cTodos.desabilitaCampo();
+			montaSelect('b1wgen0059.p','busca_tpimovel','incasprp','incasprp','dscasprp',incasprp);
+			layoutPadrao();	
+			break;
+	}
+	
+	cCep.trigger('blur');
+	cNum.trigger('blur');
+	cCax.trigger('blur');
+   
+	controlaPesquisas();
+	
+	hideMsgAguardo();
+	bloqueiaFundo(divRotina);
+	removeOpacidade('divConteudoOpcao');
+	divRotina.centralizaRotinaH();	
+	controlaFoco(operacao);
+
+	return false;	
+}	
+
+function controlaPesquisas() {		
+	
+	// Atribui a classe lupa para os links e desabilita todos
+	$('a','#'+nomeForm).addClass('lupa').css('cursor','auto');	
+
+	// a variavel camposOrigem deve ser composta:
+	// 1) os cincos primeiros campos são os retornados para o formulario de origem
+	// 2) o sexto campo é o campo q será focado após o retorno ao formulario de origem, que
+	// pelo requisito na maioria dos casos será o NUMERO do endereço	
+	var camposOrigem = 'nrcepend;dsendere;nrendere;complend;nrcxapst;nmbairro;cdufende;nmcidade';	
+	
+	/*-------------------------------------*/
+	/*       CONTROLE DAS PESQUISAS        */
+	/*-------------------------------------*/
+	
+	// Percorrendo todos os links
+	$('a','#'+nomeForm).each( function() {
+		if ( !$(this).prev().hasClass('campoTelaSemBorda') ) { $(this).css('cursor','pointer'); }
+	});
+
+	/*-------------------------------------*/
+	/*   CONTROLE DAS BUSCA DESCRIÇÕES     */
+	/*-------------------------------------*/
+	$('#nrcepend','#'+nomeForm).buscaCEP(nomeForm, camposOrigem, divRotina);
+
+	// 001: adicionado o evento no campo "dtinires"
+	$('#dtinires','#'+nomeForm).unbind('change').bind('change', function() {
+		if ($(this).val() != '') { 
+			trataInicioResid($(this).val());
+		} else {
+			$('#nranores','#'+nomeForm).val('');
+		}
+		return false;
+	});
+
+}
+
+function controlaFoco(operacao) {
+	if (in_array(operacao,['AC',''])) {
+		$('#btAlterar','#divBotoes').focus();
+	} else {
+		$('select[name=\'incasprp\']','#'+nomeForm).focus();
+	}
+	return false;
+}
+
+// 001: faz a validação do valor digitado.
+function trataInicioResid (dtinires) {
+
+	hideMsgAguardo();		
+	showMsgAguardo( "Aguarde, tratando início de residencia..." );
+
+	$.ajax({		
+	type: 'POST',
+	url: UrlSite + 'telas/contas/endereco/tratar_inicio_res.php', 		
+	data: {
+		dtinires: dtinires, 			
+		redirect: 'script_ajax'                                 
+	},                                                          
+	error: function(objAjax,responseError,objExcept) {          
+		hideMsgAguardo();                                       
+		showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+	},
+	success: function(response) {
+		try {
+			eval(response);
+		} catch(error) {
+			hideMsgAguardo();
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		}
+	}				
+	});
+	
+	return false;
+}

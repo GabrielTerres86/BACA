@@ -1,0 +1,447 @@
+<? 
+/*!
+ * FONTE        : cadcta.php
+ * CRIAÇÃO      : Mateus Zimmermann (Mouts)
+ * DATA CRIAÇÃO : Janeiro/03/2010 
+ * OBJETIVO     : Mostrar tela CADCTA
+ * --------------
+ * ALTERAÇÕES   :
+ * --------------
+ *
+ */
+
+session_start();
+
+	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+require_once("../../includes/config.php");
+require_once("../../includes/funcoes.php");	
+require_once("../../includes/controla_secao.php");
+
+	// Verifica se tela foi chamada pelo método POST
+isPostMethod();
+
+	// Classe para leitura do xml de retorno
+require_once("../../class/xmlfile.php");
+
+	// Carrega permissões do operador
+require_once("../../includes/carrega_permissoes.php");		
+
+setVarSession("rotinasTela",$rotinasTela);
+setVarSession("opcoesTela",$opcoesTela);
+
+$nmtelant = $_POST['nmtelant'];
+$flgAlterar_cadcta = (in_array('A', $glbvars['opcoesTela']));
+
+// Armazena variáveis vindas do CRM
+$crm_inacesso = isset($glbvars['CRM_INACESSO']) ? $glbvars['CRM_INACESSO'] : 0;
+$crm_nrdconta = isset($glbvars['CRM_NRDCONTA']) ? $glbvars['CRM_NRDCONTA'] : 0;
+$crm_nrcpfcgc = isset($glbvars['CRM_NRCPFCGC']) ? $glbvars['CRM_NRCPFCGC'] : 0;
+$crm_cdoperad = isset($glbvars['CRM_CDOPERAD']) ? $glbvars['CRM_CDOPERAD'] : '';
+$crm_cdagenci = isset($glbvars['CRM_CDAGENCI']) ? $glbvars['CRM_CDAGENCI'] : 0;
+
+?>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">	
+	<meta http-equiv="Pragma" content="no-cache">
+	<title><?php echo $TituloSistema; ?></title>
+	<link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
+	<link href="../../css/estilo.css" rel="stylesheet" type="text/css">
+	<script type="text/javascript" src="../../scripts/scripts.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../../scripts/dimensions.js"></script>
+	<script type="text/javascript" src="../../scripts/funcoes.js"></script>
+	<script type="text/javascript" src="../../scripts/mascara.js"></script>
+	<script type="text/javascript" src="../../scripts/menu.js?keyrand<? echo rand(); ?>"></script>
+	<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
+	<script type="text/javascript" src="cadcta.js?keyrand=<?php echo mt_rand(); ?>"></script>
+</head>
+<body>
+	<table width="100%" border="0" cellpadding="0" cellspacing="0">
+		<tr>
+			<td><?php include("../../includes/topo.php"); ?></td>
+		</tr>
+		<tr>
+			<td id="tdConteudo" valign="top">
+				<table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
+					<tr> 
+						<td width="175" valign="top">
+							<table width="100%" border="0" cellpadding="0" cellspacing="0">
+								<tr>
+									<td id="tdMenu"><?php include("../../includes/menu.php"); ?></td>
+								</tr>  
+							</table>
+						</td>
+						<td id="tdTela" valign="top">
+							<table width="100%" border="0" cellpadding="0" cellspacing="0">
+								<tr>
+									<td>
+										<table width="100%"  border="0" cellspacing="0" cellpadding="0">
+											<tr>
+												<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
+												<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">CADCTA - Dados da Conta</td>
+												<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
+												<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
+												<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
+											</tr>
+										</table>
+									</td>
+								</tr>
+								<tr>
+									<td id="tdConteudoTela" class="tdConteudoTela" align="center">								
+										<table width="100%" border="0" cellpadding="3" cellspacing="0">
+											<tr>
+												<td style="border: 1px solid #F4F3F0;">
+													<table width="100%" border="0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
+														<tr>
+															<td align="center">
+																<table width="600" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
+																	<tr>
+																		<td>	
+                                                                            <div id="divMsgsAlerta">
+                                                                                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                                                                    <tr>
+                                                                                        <td align="center">		
+                                                                                            <table border="0" cellpadding="0" cellspacing="0" width="500">
+                                                                                                <tr>
+                                                                                                    <td>
+                                                                                                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                                                                            <tr>
+                                                                                                                <td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
+                                                                                                                <td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">MENSAGENS DE ALERTA</td>
+                                                                                                                <td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" id="btVoltar" onClick="encerraMsgsAlerta();return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
+                                                                                                                <td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
+                                                                                                            </tr>
+                                                                                                        </table>     
+                                                                                                    </td> 
+                                                                                                </tr> 																						
+                                                                                                <tr>
+                                                                                                    <td class="tdConteudoTela" align="center">
+                                                                                                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                                                                            <tr>
+                                                                                                                <td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
+                                                                                                                    <table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
+                                                                                                                        <tr>
+                                                                                                                            <td align="center" valign="center">
+                                                                                                                                <div id="divListaMsgsAlerta" style="overflow-y: scroll; overflow-x: hidden; height: 210px; width: 100%;">&nbsp;</div>																																					
+                                                                                                                            </td>
+                                                                                                                        </tr>
+                                                                                                                    </table>																												
+                                                                                                                </td>
+                                                                                                            </tr>
+                                                                                                        </table>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                            </table>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                </table>																			
+                                                                            </div>
+                                                                        
+																			<!-- INCLUDE DA TELA DE PESQUISA ENDERECO -->
+																			<? require_once("../../includes/pesquisa/pesquisa_endereco.php"); ?>
+
+																			<!-- INCLUDE DA TELA DE INCLUSAO ENDERECO -->
+																			<? require_once("../../includes/pesquisa/formulario_endereco.php"); ?>
+
+																			<!-- INCLUDE DA TELA DE PESQUISA -->
+																			<? require_once("../../includes/pesquisa/pesquisa.php"); ?>
+
+																			<!-- INCLUDE DA TELA DE PESQUISA ASSOCIADO -->
+																			<? require_once("../../includes/pesquisa/pesquisa_associados.php"); ?> 																			
+                                                                            
+                                                                            <div id="divTela">
+                                                                                <div id="divTabela"></div>
+                                                                                <div id="divRotina"></div>
+                                                                                <div id="divUsoGenerico"></div>
+
+                                                                                <form name="frmCabCadcta" id="frmCabCadcta" class="formulario condensado">
+                                                                                
+                                                                                    <input name="nrdrowid_procurador" id="nrdrowid_procurador" type="hidden" />
+                                                                                    <input name="nrdrowid_infor" id="nrdrowid_infor" type="hidden" />
+                                                                                    <input name="idTableTTL" id="idTableTTL" type="hidden" value="0"/>
+                                                                                    <input name="nrcpfcgc" id="nrcpfcgc" type="hidden" />
+                                                                                    <input name="nmextttl" id="nmextttl" type="hidden" />
+                                                                                    
+                                                                                    <label for="nrdconta">Conta/dv:</label>
+                                                                                    <input name="nrdconta" id="nrdconta" type="text" />
+
+                                                                                    <label for="idseqttl">Seq.Titular:</label>
+                                                                                    <select id="idseqttl" name="idseqttl">
+                                                                                        <option value="1"></option>
+                                                                                    </select>
+
+                                                                                    <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
+
+                                                                                    <input type="image" src="<? echo $UrlImagens; ?>/botoes/ok.gif" onClick="obtemCabecalho();return false;" />					
+
+                                                                                    <label for="cdagenci">PA:</label>
+                                                                                    <input name="cdagenci" id="cdagenci" type="text" />							
+                                                                                    <label for="nrmatric"><? echo utf8ToHtml('Matrícula:') ?></label>
+                                                                                    <input name="nrmatric" id="nrmatric" type="text" />
+                                                                                    </br>
+                                                                                    <hr />
+                                                                                    
+                                                                                    
+                                                                                    <input name="cdtipcta_idx" id="cdtipcta_idx" type="hidden" />
+                                                                                    <label for="cdtipcta">Tipo de Conta:</label>
+                                                                                    <input name="cdtipcta" id="cdtipcta" type="text" />
+
+                                                                                    <label for="nrdctitg">Cta./ITG:</label>
+                                                                                    <input name="nrdctitg" id="nrdctitg" type="text" />
+                                                                                    
+                                                                                    <label for="cdsitdct"><? echo utf8ToHtml('Situação:') ?></label>
+                                                                                    <input name="cdsitdct" id="cdsitdct" type="text" />
+
+                                                                                    <div class="pessoaJuridica">
+                                                                                        <label for="nmctajur">Nome da Conta:</label>
+                                                                                        <input name="nmctajur" id="nmctajur" type="text"/>
+                                                                                    </div>
+
+                                                                                    <br />	
+                                                                                
+                                                                                </form>
+                                                                            </div>
+																		</td>
+																	</tr>				
+																	<!-- inicio dos titulares -->
+																	<tr>		
+																		<td>
+																			<div class="cnt2-1 titulares">
+																				<form id="frmConsultaDados" class="formulario" name="frmConsultaDados">
+																					<fieldset>
+																						<legend>Titulares</legend>
+																						<div class="divRegistros">
+																							<table>
+																								<thead>
+																									<tr><th>Conta/dv</th>
+																										<th>Nome</th>
+																										<th>CPF/CNPJ</th>
+																										<th>Relacionamento</th>
+																									</tr>			
+																								</thead>
+																								<tbody> 
+
+																								</tbody>		
+																							</table>
+																						</div>
+																					</fieldset>
+																				</form>
+																			</div>
+																		</td>
+																	</tr>
+																	<!-- fim dos titulares -->
+
+																	<!-- inicio dos responsaveis legais -->
+																	<tr class="pessoaFisica">
+																		<td>
+																			<div class="cnt2-1 responsaveislegais">
+																				<form id="frmConsultaDados" class="formulario" name="frmConsultaDados">
+																					<fieldset>
+																						<legend><? echo utf8ToHtml('Responsáveis Legais') ?> </legend>
+																						<div class="divRegistros">
+																							<table>
+																								<thead>
+																									<tr><th>Conta/dv</th>
+																										<th>Nome</th>
+																										<th>CPF/CNPJ</th>
+																										<th>Documento</th>
+																									</tr>			
+																								</thead>
+																								<tbody> 
+
+																								</tbody>		
+																							</table>
+																						</div>
+																					</fieldset>
+																				</form>
+																			</div>
+																		</td>
+																	</tr>
+																	<!-- fim dos responsaveis legais -->
+
+																	<!-- inicio dos procuradores -->
+																	<tr>				
+																		<td>
+																			<div class="cnt2-1 procuradores">
+																				<form id="frmConsultaDados" class="formulario" name="frmConsultaDados">
+																					<fieldset>
+																						<legend>Procuradores</legend>
+																						<div class="divRegistros">
+																							<table>
+																								<thead>
+																									<tr><th>Conta/dv</th>
+																										<th>Nome</th>
+																										<th>CPF/CNPJ</th>
+																										<th>C.I</th>
+																										<th>Vigencia</th>
+																									</tr>			
+																								</thead>
+																								<tbody> 
+																									
+																								</tbody>		
+																							</table>
+																						</div>
+																					</fieldset>
+																				</form>
+																			</div>
+																		</td>
+																	</tr>
+																	<!-- fim dos procuradores -->
+                                                                    
+                                                                    <!-- inicio dos representantes -->
+																	<tr class="pessoaJuridica">				
+																		<td>
+																			<div class="cnt2-1 representantes">
+																				<form id="frmConsultaDados" class="formulario" name="frmConsultaDados">
+																					<fieldset>
+																						<legend>Representantes</legend>
+																						<div class="divRegistros">
+																							<table>
+																								<thead>
+																									<tr><th>Conta/dv</th>
+																										<th>Nome</th>
+																										<th>CPF/CNPJ</th>
+																										<th>C.I</th>
+																										<th>Vigencia</th>
+																									</tr>			
+																								</thead>
+																								<tbody> 
+																									
+																								</tbody>		
+																							</table>
+																						</div>
+																					</fieldset>
+																				</form>
+																			</div>
+																		</td>
+																	</tr>
+																	<!-- fim dos representantes -->
+
+                                                                    
+																	<!-- inicio dos informativos -->
+																	<tr class="pessoaFisica">			
+																		<td>
+																			<div class="cnt2-1 informativos">
+																				<form id="frmConsultaDados" class="formulario" name="frmConsultaDados">
+																					<fieldset>
+																						<legend>Informativos</legend>
+																						<div class="divRegistros">
+																							<table>
+																								<thead>
+																									<tr><th>Informativo</th>
+																										<th>Forma envio</th>
+																										<th>Periodo</th>
+																										<th>Recebimento</th>
+																									</tr>			
+																								</thead>
+																								<tbody> 
+																									
+																								</tbody>		
+																							</table>
+																						</div>
+																					</fieldset>
+																				</form>
+																			</div>
+																		</td>
+																	</tr>
+																	<!-- fim dos informativos -->
+
+																	<!-- inicio dos participacao empresas -->
+																	<tr class="pessoaJuridica">		
+																		<td>
+																			<div class="cnt2-1 participacaoEmpresas">
+																				<form id="frmConsultaDados" class="formulario" name="frmConsultaDados">
+																					<fieldset>
+																						<legend><? echo utf8ToHtml('Participação Empresas') ?></legend>
+																						<div class="divRegistros">
+																							<table>
+																								<thead>
+																									<tr><th>Conta/dv</th>
+																										<th><? echo utf8ToHtml('Razão Social') ?></th>
+																										<th>C.N.P.J.</th>
+																										<th><? echo utf8ToHtml('%Societário') ?></th>
+																									</tr>			
+																								</thead>
+																								<tbody> 
+																									
+																								</tbody>		
+																							</table>
+																						</div>
+																					</fieldset>
+																				</form>
+																			</div>
+																		</td>
+																	</tr>
+																	<!-- fim dos participacao empresas -->
+																	<tr>
+																		<td id="rowDadosDaConta">
+																			
+																		</td>
+																	</tr>	
+																</table>					
+															</td>
+														</tr>
+													</table>
+												</td>
+											</tr>
+										</table>																
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>
+<style>
+	.cnt2-1{width: 100%;display: inline-block;}
+	#frmCabCadcta{opacity: 1 !important;}
+</style>
+<script type="text/javascript">
+
+    // Declara os flags para as opções da Rotina de Bens
+    var flgAlterar_cadcta = '<? echo $flgAlterar_cadcta; ?>';
+
+    // Alimenta variáveis do CRM para o js
+    var crm_inacesso = <?php echo $crm_inacesso; ?>;
+    var crm_nrdconta = '<?php echo formataContaDVsimples($crm_nrdconta); ?>';
+    var crm_nrcpfcgc = normalizaNumero('<?php echo $crm_nrcpfcgc; ?>');
+    var crm_cdoperad = '<?php echo $crm_cdoperad; ?>';
+    var crm_cdagenci = <?php echo $crm_cdagenci; ?>;
+
+    $('#divTabela').css('display','block');
+
+	// Se foi chamada pela tela MATRIC (inclusao de nova conta), carregar as rotinas para finalizar cadastro
+	var nmrotina = '<? echo $_POST['nmrotina']; ?>';
+	var nrdconta = '<? echo $_POST['nrdconta']; ?>';
+	var nmtelant = '<? echo $_POST['nmtelant']; ?>'; 					 // Nome da tela anterior chamadora
+	var flgcadas = '<? echo ($nmtelant == 'MATRIC') ? 'M' : 'C'; ?>';
+	var flgimped = '<? echo ($nmtelant == 'IMPEDI') ? true : false; ?>';
+	var executandoImpedimentos = '<? echo $_POST['executandoImpedimentos']; ?>'; // Se esta sendo rodada a rotina de Impedimentos
+	var produtosCancM = new Array();	                 				 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMContas = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMCheque = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	
+	if (executandoImpedimentos){
+		var produtos =  "<? echo $_POST['produtosCancM']; ?>";
+		var produtosAtenda = "<? echo $_POST['produtosCancMAtenda']; ?>";
+		var produtosContas = "<? echo $_POST['produtosCancMContas']; ?>";
+		var produtosCheque = "<? echo $_POST['produtosCancMCheque']; ?>";
+		var posicao = '<? echo $_POST['posicao']; ?>';
+		produtosCancM = produtos.split("|");		
+		produtosCancMAtenda = produtosAtenda.split("|");
+		produtosCancMContas = produtosContas.split("|");
+		produtosCancMCheque = produtosCheque.split("|");
+	}
+	
+	if (nrdconta != '') {
+		$("#nrdconta","#frmCabCadcta").val(nrdconta);
+		$("#idseqttl","#frmCabCadcta").val(1);
+	}
+	
+	
+
+</script>
