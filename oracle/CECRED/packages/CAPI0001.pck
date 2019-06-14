@@ -32,7 +32,8 @@ CREATE OR REPLACE PACKAGE CECRED.CAPI0001 IS
 --
 --                13/12/2018 - Remoção da atualização da capa de lote de COTAS
 --                             Yuri - Mouts
-
+--                13/06/2019 - Desconsidera a utilização do limite de credito para determinadas cooperativas
+--                              RITM0011293
 ---------------------------------------------------------------------------------------------------------
   -- Rotina para integralizar as cotas
   PROCEDURE pc_integraliza_cotas(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -342,6 +343,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
     vr_tab_saldo extr0001.typ_tab_saldos; --> Tabela de retorno da rotina
     vr_des_reto  VARCHAR2(3);
 
+    vr_vllimcre craplim.vllimite%type := 0; -->valor do limite de cotas bruno
+    
     -- Cursor para encontrar a conta/corrente
     CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -376,6 +379,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
     INTO rw_crapass;
    CLOSE cr_crapass;
 
+  ---valor do limite de credito irá depender da cooperativa permitir ou não usar o limite de credito;
+ if (gene0011.UsarLimCredParaDebPlanoCotas(pr_cdcooper=> pr_cdcooper)) then
+    vr_vllimcre := rw_crapass.vllimcre;
+ end if;
 
     -- Obtem os saldos do dia
     extr0001.pc_obtem_saldo_dia(pr_cdcooper   => pr_cdcooper
@@ -384,7 +391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
                                ,pr_nrdcaixa   => pr_nrdcaixa
                                ,pr_cdoperad   => pr_cdoperad
                                ,pr_nrdconta   => pr_nrdconta
-                               ,pr_vllimcre   => rw_crapass.vllimcre
+                               ,pr_vllimcre   => vr_vllimcre -->valor limite de credito bruno
                                ,pr_dtrefere   => pr_dtmvtolt
                                ,pr_flgcrass   => FALSE
                                ,pr_tipo_busca => 'A'
