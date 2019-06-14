@@ -6,6 +6,7 @@
  * OBJETIVO     : Rotina para busca valores PP.
  * --------------
  * ALTERAÇÕES   : 03/03/2017 - Inclusao de indicador se possui avalista. (P210.2 - Jaison/Daniel)
+ *                   04/2019 - Não permitir selecção de datas P437 S6 Consignado JDB AMcom
  * --------------
  */
 ?>
@@ -21,6 +22,8 @@ isPostMethod();
 $avalista = (isset($_POST['avalista'])) ? $_POST['avalista'] : 0;
 $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 $nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
+$tpdescto =(isset($_POST['tpdescto'])) ? $_POST['tpdescto'] : -1; /*P437 S6*/
+$tpemprst =(isset($_POST['tpemprst'])) ? $_POST['tpemprst'] : -1; /*P437 S6*/
 
 // Montar o xml de Requisicao
 $xml  = "<Root>";
@@ -108,9 +111,9 @@ $maxDate = $xmlObj->roottag->cdata;
 
     <fieldset>
         <legend align="left">Vencimento</legend>
-        <input type="radio" id="rdvencto1" class="campo" name="rdvencto" value="1" onclick="habilitaDataVencimentoTR(false)" /> <label style="margin-left:10px">Nesta Data</label>
+        <input type="radio" <? echo ($tpdescto == 2 && $tpemprst == 1) ? 'checked' : ''; ?> id="rdvencto1" class="campo" name="rdvencto" value="1" onclick="habilitaDataVencimentoTR(false)" /> <label style="margin-left:10px">Nesta Data</label>
         <br style="clear:both" />	
-        <input type="radio" id="rdvencto2" class="campo" name="rdvencto" value="2" onclick="habilitaDataVencimentoTR(true)" /> <label style="margin-left:10px">Data Futura:</label>
+        <input type="radio" <? echo ($tpdescto == 2 && $tpemprst == 1) ? "disabled='disabled'" : ""; ?>  id="rdvencto2" class="campo" name="rdvencto" value="2" onclick="habilitaDataVencimentoTR(true)" /> <label style="margin-left:10px">Data Futura:</label>
         <input type="text" id="dtvencto" class="campo" name="dtvencto" readonly="true"/>
         <input type="hidden" id="dtmvtolt" class="campo" name="dtmvtolt" value="<?php echo $glbvars["dtmvtolt"]; ?>"/>
     </fieldset>

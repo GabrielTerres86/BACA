@@ -11,6 +11,7 @@
  *                20/09/2017 - Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  *                13/12/2018 - Projeto 298 - Inclusos novos campos tpemprst e campos de carencia (Andre Clemer - Supero)
  * 				  28/02/2018 - Alterado para buscar os dados na mensageria Oracle (P438 Douglas Pagel / AMcom) 
+ * 				  03/2018 - Ajustes para inclusa e alteracao de simulacoes do consignado (P437 JDB / AMcom) 
  * */
 
 session_start();
@@ -18,10 +19,17 @@ require_once('../../../../includes/config.php');
 require_once('../../../../includes/funcoes.php');
 require_once('../../../../includes/controla_secao.php');
 require_once('../../../../class/xmlfile.php');
+require_once('../wssoa.php');
+
 isPostMethod();
 
 // Guardo os parâmetos do POST em variáveis	
 $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
+$gconsig = (isset($_POST['gconsig'])) ? $_POST['gconsig'] : '';
+$vlparepr = '';
+$vliofepr = '';
+$vlrcet = '';
+$jurosAnual = '';
 $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 $idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '';
 $nrsimula = (isset($_POST['nrsimula'])) ? $_POST['nrsimula'] : '';
@@ -30,7 +38,8 @@ $vlemprst = (isset($_POST['vlemprst'])) ? $_POST['vlemprst'] : '';
 $qtparepr = (isset($_POST['qtparepr'])) ? $_POST['qtparepr'] : '';
 $dtlibera = (isset($_POST['dtlibera'])) ? $_POST['dtlibera'] : '';
 $dtdpagto = (isset($_POST['dtdpagto'])) ? $_POST['dtdpagto'] : '';
-$percetop = (isset($_POST['percetop'])) ? $_POST['percetop'] : '';
+//$percetop = (isset($_POST['percetop'])) ? $_POST['percetop'] : '';
+$percetop = '';
 $cdfinemp = (isset($_POST['cdfinemp'])) ? $_POST['cdfinemp'] : '';
 $idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1';
 $tpemprst = (isset($_POST['tpemprst'])) ? $_POST['tpemprst'] : '';
@@ -40,6 +49,62 @@ $cddopcao = (($operacao == "A_SIMULACAO") ? "A" : "I");
 
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
     exibirErro('error', $msgError, 'Alerta - Aimaro', '', false);
+}
+
+//se consignado busca valor de parcela e iof consumir soa exemplo tela manbem
+if ($gconsig == '1'){		
+		//Busca XML BD converte em json e comunica com a FIS	
+		$xml  = '';
+		$xml .= '<Root>';
+		$xml .= '	<dto>';
+		$xml .= '       <cdlcremp>'.$cdlcremp.'</cdlcremp>';
+		$xml .= '       <vlemprst>'.$vlemprst.'</vlemprst>';
+		$xml .= '       <nrdconta>'.$nrdconta.'</nrdconta>';
+		$xml .= '       <fintaxas>'.$idfiniof.'</fintaxas>';
+		$xml .= '       <quantidadeparcelas>'.$qtparepr.'</quantidadeparcelas>';
+		$xml .= '       <dataprimeiraparcela>'.$dtdpagto.'</dataprimeiraparcela>';
+		$xml .= '	</dto>';
+		$xml .= '</Root>';
+		
+		$xmlResult = mensageria(
+			$xml,
+			"TELA_ATENDA_SIMULACAO",
+			"SIM_BUSCA_DADOS_CALC_FIS",
+			$glbvars["cdcooper"],
+			$glbvars["cdagenci"],
+			$glbvars["nrdcaixa"],
+			$glbvars["idorigem"],
+			$glbvars["cdoperad"],
+			"</Root>");
+
+		$xmlObj = getObjectXML($xmlResult);
+
+		if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
+			gravaLog("TELA_ATENDA_SIMULACAO","SIM_LOG_ERRO_SOA_FIS_CALCULA","Erro gerando o xml com dados.",$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,$nrdconta,$glbvars,'1','2');
+		}else{	
+			$xml = simplexml_load_string($xmlResult);
+			$json = json_encode($xml);
+			//echo "cttc('".$json."');";
+			$rs = chamaServico($json,$Url_SOA, $Auth_SOA);
+			//echo "cttc('".$rs."');";
+			
+			if (isset($rs->msg)){
+				gravaLog("TELA_ATENDA_SIMULACAO","SIM_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro tratado pela fis.",$rs->msg,$nrdconta,$glbvars,$json,json_encode($rs));				
+			}else if (isset($rs->errorMessage)){
+				gravaLog("TELA_ATENDA_SIMULACAO","SIM_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro nao tratado pela fis.",$rs->errorMessage,$nrdconta,$glbvars,'1','2');					
+			}			
+			else if (isset($rs->parcela->valor) && isset($rs->sistemaTransacao->dataHoraRetorno)){
+				if ($rs->parcela->valor > 0 && $rs->sistemaTransacao->dataHoraRetorno != ""){
+					$vlparepr = str_replace(".", ",",$rs->parcela->valor);
+					$vliofepr = str_replace(".", ",",$rs->credito->tributoIOFValor);
+					$vlrcet = str_replace(".", ",",$rs->credito->CETPercentAoAno);	
+					$jurosAnual = str_replace(".", ",",$rs->credito->taxaJurosRemuneratoriosAnual);
+				}else{
+					gravaLog("TELA_ATENDA_SIMULACAO","SIM_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro nao tratado pela fis.","valores de retorno em branco",$nrdconta,$glbvars,'1','2');
+				}
+			}
+			
+		}
 }
 
 // Monta o xml de requisição
@@ -68,6 +133,8 @@ $xml.= "        <tpemprst>" . $tpemprst . "</tpemprst>";
 $xml.= "        <idcarenc>" . $idcarenc . "</idcarenc>";
 $xml.= "        <dtcarenc>" . $dtcarenc . "</dtcarenc>";
 $xml .= "		<flgerlog>1</flgerlog>";
+$xml .= "		<vlparepr>".str_replace(",", ".",str_replace(".","",$vlparepr))."</vlparepr>";
+$xml .= "		<vliofepr>".str_replace(",", ".",str_replace(".","",$vliofepr))."</vliofepr>";
 $xml.= "	</Dados>";
 $xml.= "</Root>";
 

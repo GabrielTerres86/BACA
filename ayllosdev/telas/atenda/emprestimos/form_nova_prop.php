@@ -27,6 +27,7 @@
  * 016: [13/07/2018] Alterada a função chamada ao clicar no botão Concluir. (Mateus Z / Mouts - PRJ438)
  * 017: [18/10/2018] Alterado layout da tela Nova Proposta. PRJ438 (Mateus Z / Mouts)
  * 018: [14/12/2018] P298.2 - Incluso campo Prest. Carên. Estim. (Andre Clemer - Supero)
+ * 019: [03/2019]    Inclusão do input hidden com o valor do IOF P437 AMcom JDB
  */
  ?> 
 
@@ -160,6 +161,10 @@
 			<label for="flgNo" class="radio"><? echo utf8ToHtml('Não') ?></label>
 		</div>
 			
+		<div id="divInaverba">			
+			<label for="inaverba"><? echo utf8ToHtml('Averbado:') ?></label>
+			<input name="inaverba" readonly id="inaverba" type="text" value=""  />			
+		</div>
 		<br />
 
 		<label for="dtdpagto">Data de Pagamento:</label>

@@ -103,10 +103,19 @@
                         <input type="hidden" id="err_efet" name="err_efet" value="<? echo getByTagName($registro->tags,'err_efet') ?>" />
 						<input type="hidden" id="insitapr" name="insitapr" value="<? echo getByTagName($registro->tags,'insitapr') ?>" />
 						<input type="hidden" id="cdlcremp" name="cdlcremp" value="<? echo getByTagName($registro->tags,'cdlcremp') ?>" />
-					    <input type="hidden" id="vlfinanc" name="vlfinanc" value="<? echo getByTagName($registro->tags,'vlfinanc') ?>" />
+					    <input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
+						<input type="hidden" id="vlfinanc" name="vlfinanc" value="<? echo getByTagName($registro->tags,'vlfinanc') ?>" />
 						<input type="hidden" id="dssitest" name="dssitest" value="<? echo getByTagName($registro->tags,'dssitest') ?>" />
             <input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
 						<input type="hidden" id="insitest" name="insitest" value="<? echo getByTagName($registro->tags,'insitest') ?>" />
+						<!-- PRJ - 437 - Consignado s3 -->
+						<input type="hidden" id="inaverba" name="inaverba" value="<? echo getByTagName($registro->tags,'inaverba') ?>" />
+						<input type="hidden" id="tpemprst" name="tpemprst" value="<? echo getByTagName($registro->tags,'tpemprst') ?>" />
+						<input type="hidden" id="tpmodcon" name="tpmodcon" value="<? echo getByTagName($registro->tags,'tpmodcon') ?>" />
+						<input type="hidden" id="dtdpagto" name="dtdpagto" value="<? echo getByTagName($registro->tags,'dtdpagto') ?>" />
+						<input type="hidden" id="vlemprstt" name="vlemprstt" value="<? echo getByTagName($registro->tags,'vlemprst') ?>" />
+						<input type="hidden" id="qtpreemp" name="qtpreemp" value="<? echo getByTagName($registro->tags,'qtpreemp') ?>" />
+						<input type="hidden" id="idfiniof" name="idfiniof" value="<? echo getByTagName($registro->tags,'idfiniof') ?>" />
 					    <!-- PRJ - 438 - Rating  -->
 						<input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
 						<input type="hidden" id="flintcdc" name="flintcdc" value="<? echo getByTagName($registro->tags,'flintcdc') ?>" />
@@ -159,6 +168,8 @@
 	<?php } else { echo "<!-- flgGrvOnline=$flgGrvOnline -->"; } ?>
 	<a href="#" class="botao" id="btPortabilidade"  onClick="controlaOperacao('PORTAB_CRED_I');">Portabilidade</a>
 	<a href="#" class="botao" id="btEnvEsteira"  onClick="controlaOperacao('ENV_ESTEIRA')">Analisar</a>
+	<!-- PRJ 437 s3-->
+	<a href="#" class="botaoDesativado" id="btAverbar"  onClick="controlaOperacao('AVERBAR')">Averba&ccedil;&atilde;o</a>
 	<a href="#" class="botao" id="btAcionamentos"  onClick="controlaOperacao('ACIONAMENTOS')">Detalhes Proposta</a>
 	<?php
 	//PRJ - 438 - Automatizada

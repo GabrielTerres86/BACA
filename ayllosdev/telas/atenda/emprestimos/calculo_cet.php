@@ -9,6 +9,7 @@
  * ALTERAÇÕES   : 12/11/2015 - Implementacao do parametro cdfinemp na chamada da
  *                             procedure calcula_cet_novo. (Projeto Portabilidade -
  *                             Carlos Rafael Tanholi)
+ *				   03/2019 - Projeto 437 - AMcom JDB Calculo do CET com consignado
  * --------------
  * 
  */
@@ -33,6 +34,12 @@ $cdfinemp = $_POST['cdfinemp'];
 $dsctrliq = isset($_POST['dsctrliq']) ? $_POST['dsctrliq'] : '';
 $idfiniof = isset($_POST['idfiniof']) ? $_POST['idfiniof'] : '0';
 $dtcarenc = isset($_POST['dtcarenc']) ? $_POST['dtcarenc'] : '';
+//P437
+$vliofepr = '-1';
+$gConsig = isset($_POST['gConsig']) ? $_POST['gConsig'] : '0';
+if ($gConsig == '1'){
+	$vliofepr = isset($_POST['vliofepr']) ? $_POST['vliofepr'] : '';
+}
 
 $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 
@@ -67,6 +74,8 @@ $xml .= "		<qtpreemp>" . $qtpreemp . "</qtpreemp>";
 $xml .= "		<dsctrliq>" . $dsctrliq . "</dsctrliq>";
 $xml .= "		<idfiniof>" . $idfiniof . "</idfiniof>";
 $xml .= "		<dtcarenc>" . $dtcarenc . "</dtcarenc>";
+//P437
+$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
 $xml .= "	</Dados>";
 $xml .= "</Root>";
 

@@ -1,6 +1,6 @@
 <?php
 /*!
- * FONTE        : incluir_linha_credito.php                    Última alteração: 06/01/2019
+ * FONTE        : incluir_linha_credito.php                    Última alteração: 03/2019
  * CRIAÇÃO      : Andrei (RKAM)
  * DATA CRIAÇÃO : Julho/2016 
  * OBJETIVO     : Rotina para incluir uma linha de crédito
@@ -14,7 +14,7 @@
                    27/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298)
 
                    10/10/2017 - Inclusao do campo % Mínimo Garantia e opção 4 no campo Modelo. (Lombardi - PRJ404)
-				   
+					  03/2019 - Projeto 437 AMcom JDB
 				   06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
  */
 ?>
@@ -83,6 +83,7 @@
   $tpprodut = (isset($_POST["tpprodut"])) ? $_POST["tpprodut"] : 0;
   $cddindex = (isset($_POST["cddindex"])) ? $_POST["cddindex"] : 0;
   $vlperidx	= (isset($_POST["vlperidx"])) ? $_POST["vlperidx"] : 0;
+  $tpmodcon = (isset($_POST["tpmodcon"])) ? $_POST["tpmodcon"] : 0;
     
   validaDados();
   
@@ -167,6 +168,7 @@
   $xml 	   .= "     <cddindex>".$cddindex."</cddindex>";
   $xml 	   .= "     <permingr>".$permingr."</permingr>";
   $xml 	   .= "     <vlperidx>".$vlperidx."</vlperidx>";
+  $xml 	   .= "     <tpmodcon>".$tpmodcon."</tpmodcon>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	

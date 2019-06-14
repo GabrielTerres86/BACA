@@ -106,6 +106,8 @@ var dtmvtolt  = '';
 var nrdrecid  = '';
 var tplcremp  = '';
 var tpemprst  = 0;
+//P437
+var tpdescto = 0;
 var intpextr  = '';
 var cdlcremp  = 0;
 var qttolatr  = 0;
@@ -239,12 +241,24 @@ function controlaOperacao(operacao) {
     var inintegra_cont = $("#tabPrestacao table tr.corSelecao").find("input[id='inintegra_cont']").val();
     var tpfinali       = $("#tabPrestacao table tr.corSelecao").find("input[id='tpfinali']").val();
     var cdoperad       = $("#tabPrestacao table tr.corSelecao").find("input[id='cdoperad']").val();
+	//P437
+	var tpdescto       = $("#tabPrestacao table tr.corSelecao").find("input[id='tpdescto']").val();	
+	var tpemprst       = $("#tabPrestacao table tr.corSelecao").find("input[id='tpemprst']").val();
 
 	if(tpfinali == 3 && cdoperad=='AUTOCDC'){
         
         // botao Registrar GRV
 		if (operacao == 'D_EFETIVA'){
 				showError('error', 'Não é permitido desfazer efetivação, proposta com origem na integração CDC!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+				return false;			
+		// botao efetivar
+		}
+    }
+	//P437
+	if(tpemprst == 1 && tpdescto == 2 ){        
+        // botao Registrar GRV
+		if (operacao == 'D_EFETIVA'){
+				showError('error', 'N&atilde;o &eacute; poss&iacute;vel desfazer efetiva&ccedil;&atilde;o. Efetue liquida&ccedil;&atilde;o do contrato!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
 				return false;			
 		// botao efetivar
 		}
@@ -284,6 +298,10 @@ function controlaOperacao(operacao) {
 
 				if (typeof $('#tpemprst', $(this) ).val() != 'undefined'){
 					tpemprst = $('#tpemprst', $(this) ).val();
+				}
+				//P437
+				if (typeof $('#tpdescto', $(this) ).val() != 'undefined'){
+					tpdescto = $('#tpdescto', $(this) ).val();
 				}
 				
 				if (typeof $('#dsdavali', $(this) ).val() != 'undefined'){
@@ -584,6 +602,8 @@ function controlaOperacao(operacao) {
 			prejuizo: inprejuz,
 			dtpesqui: dtpesqui,
 			tpemprst: tpemprst,
+			//P437
+			tpdescto: tpdescto,
 			nrparepr: nrparepr,
 			vlpagpar: vlpagpar,
             dtvencto: dtvencto,
@@ -2356,6 +2376,8 @@ function atualizaTela(){
 		$('#dsfinemp','#frmNovaProp').val( arrayProposta['dsfinemp'] );
 		$('#dtlibera','#frmNovaProp').val( arrayProposta['dtlibera'] );
 		$('#tpemprst','#frmNovaProp').val( arrayProposta['tpemprst'] );
+		//P437
+		$('#tpdescto','#frmNovaProp').val( arrayProposta['tpdescto'] );
 		$('#dslcremp','#frmNovaProp').val( arrayProposta['dslcremp'] );
 		$('#dsquapro','#frmNovaProp').val( arrayProposta['dsquapro'] );
 		$('#dsquaprc','#frmNovaProp').val( arrayProposta['dsquaprc'] );
@@ -3367,6 +3389,18 @@ function validaPagamento(){
 	
 	showMsgAguardo('Aguarde, validando pagamento...');
 	var vlapagar = $('#totpagto', '#frmVlParc').val();
+    //P437 S6
+	var parc = "";	
+	//Carregar parcelas
+	$("input[type=checkbox][name='checkParcelas[]']").each(function() {
+		checked = false;
+		checked = this.checked;
+		if(checked != false)
+		{
+			parc = parc + this.id.split("_")[1] + ';' ;						
+            
+		}
+	});
 	
 	// Carregar os dados de antecipação
 	verificaAntecipacaopgto();
@@ -3379,6 +3413,7 @@ function validaPagamento(){
 			nrdconta: nrdconta,
 			vlapagar: vlapagar,
 			nrctremp: nrctremp,
+			    parc: parc,
 			redirect: 'script_ajax'
 		},
 		error: function(objAjax,responseError,objExcept) {

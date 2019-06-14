@@ -51,6 +51,7 @@
  * 040: [24/10/2018] Remover tela de rendimentos e bens - Bruno Luiz Katzjarowski - Mout's - PRJ 438
  * 041: [18/10/2018] Adicionado novos campos nas telas Avalista e Interveniente - PRJ 438. (Mateus Z / Mouts)
  * 042: [07/11/2018] Esconder tela de Dados da Proposta - Bruno luiz K. - Mout's
+ * 043:    [03/2019] Projeto 437 adicionado informações do consignado AMcom JDB
  */
 
 	session_start();
@@ -58,6 +59,7 @@
 	require_once('../../../includes/funcoes.php');
 	require_once('../../../includes/controla_secao.php');
 	require_once('../../../class/xmlfile.php');
+	require_once('wssoa.php');
 	isPostMethod();
 
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
@@ -99,6 +101,80 @@
 	$executandoProdutos = $_POST['executandoProdutos'];
 	$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm'])?$_POST['sitaucaoDaContaCrm']:'');
 	
+	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1' ;
+	
+	//P437	
+	$gConsig = isset($_POST['gConsig']) ? $_POST['gConsig'] : '0';	
+	$vliofepr = -1;
+	$pecet_anual = -1;
+	$pejuro_anual = -1;
+	if(($gConsig == 1) && (($vlpreemp > 0) || ($vlempres > 0) )){
+		$vliofepr = (isset($_POST['vliofepr'])) ? $_POST['vliofepr'] : -1 ;
+		/*
+		$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis&vlparepr=97,62&vliofepr=4');	
+		$obj = json_decode($raw_data); 	
+		if (isset($obj->vlparepr)){
+			$vlpreemp = $obj->vlparepr;
+			$vliofepr = $obj->vliofepr;	
+		}
+		*/
+		//Busca XML BD converte em json e comunica com a FIS	
+		$xml  = '';
+		$xml .= '<Root>';
+		$xml .= '	<dto>';
+		$xml .= '       <cdlcremp>'.$cdlcremp.'</cdlcremp>';
+		$xml .= '       <vlemprst>'.$vlempres.'</vlemprst>';
+		$xml .= '       <nrdconta>'.$nrdconta.'</nrdconta>';
+		$xml .= '       <fintaxas>'.$idfiniof.'</fintaxas>';
+		$xml .= '       <quantidadeparcelas>'.$qtparepr.'</quantidadeparcelas>';
+		$xml .= '       <dataprimeiraparcela>'.$dtdpagto.'</dataprimeiraparcela>';
+		$xml .= '	</dto>';
+		$xml .= '</Root>';
+		
+		$xmlResult = mensageria(
+			$xml,
+			"TELA_ATENDA_EMPRESTIMO",
+			"PRO_BUSCA_DADOS_CALC_FIS",
+			$glbvars["cdcooper"],
+			$glbvars["cdagenci"],
+			$glbvars["nrdcaixa"],
+			$glbvars["idorigem"],
+			$glbvars["cdoperad"],
+			"</Root>");
+		$xmlObj = getObjectXML($xmlResult);
+
+		if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
+			gravaLog("TELA_ATENDA_EMPRESTIMO","PRO_LOG_ERRO_SOA_FIS_CALCULA","Erro gerando o xml com dados.",$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,$nrdconta,$glbvars,'1','2');
+		}else{	
+			$xml = simplexml_load_string($xmlResult);
+			$json = json_encode($xml);
+			//echo "cttc('".$json."');";
+			$rs = chamaServico($json,$Url_SOA, $Auth_SOA);
+			//echo "cttc('".$rs."');";
+			
+			if (isset($rs->msg)){
+				gravaLog("TELA_ATENDA_EMPRESTIMO","PRO_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro tratado pela fis.",$rs->msg,$nrdconta,$glbvars,$json,json_encode($rs));				
+			}else if (isset($rs->errorMessage)){
+				gravaLog("TELA_ATENDA_EMPRESTIMO","PRO_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro nao tratado pela fis.",$rs->errorMessage,$nrdconta,$glbvars,'1','2');					
+			}			
+			else if (isset($rs->parcela->valor) && isset($rs->sistemaTransacao->dataHoraRetorno)){
+				if ($rs->parcela->valor > 0 && $rs->sistemaTransacao->dataHoraRetorno != ""){
+					$vlpreemp = str_replace(".", ",",$rs->parcela->valor);
+					$vliofepr = str_replace(".", ",",$rs->credito->tributoIOFValor);
+					$pecet_anual = str_replace(".", ",",$rs->credito->CETPercentAoAno);	
+					$pejuro_anual = str_replace(".", ",",$rs->credito->taxaJurosRemuneratoriosAnual);
+					if ($nrctremp > 0)
+						gravaTbeprConsignado($nrdconta,$nrctremp,$pejuro_anual,$pecet_anual,$glbvars);
+				}else{
+					gravaLog("TELA_ATENDA_EMPRESTIMO","PRO_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro nao tratado pela fis.","valores de retorno em branco",$nrdconta,$glbvars,'1','2');
+				}
+			}
+			
+		}
+		//FIM Busca XML BD converte em json e comunica com a FIS
+		
+	}
+	
 	$dateArray = explode("/", $glbvars["dtmvtolt"]);
 	
 	// Adiciona o número de dias informado a data atual
@@ -111,8 +187,30 @@
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 
 	$procedure = (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC','A_SOMBENS'))) ? 'obtem-dados-proposta-emprestimo' : 'obtem-propostas-emprestimo';
+	
+	// PRJ - 437 - Consignado s3 
+	if(in_array($operacao,array('AVERBACAO'))) {
+	
+		$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
+		$xml .= "   <nrctremp>" . $nrctremp . "</nrctremp>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+				
 
-	if (in_array($operacao,array('A_NOVA_PROP','A_NUMERO','A_VALOR','A_AVALISTA','TI','TE','TC','','A_SOMBENS'))) {
+		$xmlResult = mensageria($xml, "EMPR0014", "VALIDA_AVERBACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getObjectXML($xmlResult);
+
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {			
+		   echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina);controlaOperacao();");';
+           exit;
+		}else{
+			echo 'showError("error","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina);controlaOperacao();");';			
+			exit;
+		}
+	}
+	else if (in_array($operacao,array('A_NOVA_PROP','A_NUMERO','A_VALOR','A_AVALISTA','TI','TE','TC','','A_SOMBENS'))) {
 
 		$xml = "<Root>";
 		$xml .= "	<Cabecalho>";
@@ -341,8 +439,10 @@
 			arrayProposta['flintcdc'] = '<? echo getByTagName($proposta,'flintcdc'); ?>';
 			arrayProposta['inintegra_cont'] = '<? echo getByTagName($proposta,'inintegra_cont'); ?>';
 			arrayProposta['tpfinali'] = '<? echo getByTagName($proposta,'tpfinali'); ?>';
-
-      vleprori 	 = arrayProposta['vlemprst'];
+			//P437
+			arrayProposta['inaverba'] = '<? echo getByTagName($proposta,'inaverba') != '' ? getByTagName($proposta,'inaverba') : '0'; ?>';
+			arrayProposta['tpmodcon'] = '<? echo getByTagName($proposta,'tpmodcon'); ?>';			
+            vleprori 	 = arrayProposta['vlemprst'];
 			bkp_vlpreemp = arrayProposta["vlpreemp"];
 			bkp_dslcremp = arrayProposta["dslcremp"];
 			bkp_dsfinemp = arrayProposta["dsfinemp"];
@@ -899,6 +999,10 @@
 		$xml .= "	  <nrdconta>".$nrdconta."</nrdconta>";
 		$xml .= "	  <idseqttl>".$idseqttl."</idseqttl>";
 		$xml .= "     <nrctremp>".$nrctremp."</nrctremp>";
+		//P437
+		$xml .= "     <dtdpagto>".$dtdpagto."</dtdpagto>";
+		$xml .= "	  <vlpreempi>".$vlpreemp."</vlpreempi>";
+		$xml .= "     <vlrdoiof>".$vliofepr."</vlrdoiof>";		
 		$xml .= "  </Dados>";
 		$xml .= "</Root>";
 		
@@ -999,6 +1103,7 @@
 		$xml .= "   <idfiniof>".$idfiniof."</idfiniof>";
 		$xml .= "   <dsctrliq>".$dsctrliq."</dsctrliq>";
 		$xml .= "   <idgravar>N</idgravar>";
+		$xml .= "	<vlrdoiof>".str_replace(',', '.', str_replace('.', '', $vliofepr)). "</vlrdoiof>";
 		$xml .= " </Dados>";
 		$xml .= "</Root>";
 
@@ -1064,7 +1169,8 @@
 		$xml .= "   	<dscatbem>".$dscatbem."</dscatbem>";
 		$xml .= "   	<idfiniof>".$idfiniof."</idfiniof>";		
 		$xml .= "		<dsctrliq>" . $dsctrliq . "</dsctrliq>";
-    $xml .= "   <dtcarenc>".$dtcarenc."</dtcarenc>";
+        $xml .= "       <dtcarenc>".$dtcarenc."</dtcarenc>";
+		$xml .= "		<vlrdoiof>" . $vliofepr . "</vlrdoiof>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
 

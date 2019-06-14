@@ -23,6 +23,7 @@
  *							   (CODIGO, NOME E CNPJ DA EMPRESA). (INC0018113 - Kelvin)
  *				   20/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
  *	                           corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
+ *   			   03/2019 	  - Projeto 437 Ajuste label matricula
  */
 ?>
 <form name="frmDadosComercial" id="frmDadosComercial" class="formulario">	
@@ -102,7 +103,7 @@
 		<label for="vlsalari">Rendim.:</label>
 		<input name="vlsalari" id="vlsalari" type="text" value="<?php echo getByTagName($comercial,'vlsalari') ?>" />		
 		
-		<label for="nrcadast"><?php echo utf8ToHtml('Cad. Emp.:') ?></label>
+		<label for="nrcadast"><?php echo utf8ToHtml('Matr. Emp.:') ?></label>
 		<input name="nrcadast" id="nrcadast" type="text" value="<?php echo getByTagName($comercial,'nrcadast') ?>" />
 		
 		<br style="clear:both" />

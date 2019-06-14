@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
  *
  *                01/03/2017 - Inclusao de indicador se possui avalista e coluna de Saldo Prejuizo. (P210.2 - Jaison/Daniel)
+ *                   04/2019 - Inclusão do campo tpdescto P437 Consignado JDB AMcom
  * --------------
  */
 
@@ -79,6 +80,7 @@ $xmlDomini = $xmlObject->roottag->tags[0]->tags;
 							<input type="hidden" id="nrcnvcob" name="nrcnvcob" value="<?php echo getByTagName($r->tags,'nrcnvcob') ?>" />
 							<input type="hidden" id="nrctacob" name="nrctacob" value="<?php echo getByTagName($r->tags,'nrctacob') ?>" />
                             <input type="hidden" id="avalista" name="avalista" value="<?php echo getByTagName($r->tags,'avalista') ?>" />
+                            <input type="hidden" id="tpdescto" name="tpdescto" value="<?php echo getByTagName($r->tags,'tpdescto') ?>" />
                             <input type="hidden" id="vlsdprej" name="vlsdprej" value="<?php echo number_format(str_replace(",",".",getByTagName($r->tags,'vlsdprej')),2,",",".");?>" />
                             <input type="hidden" id="vliofcpl" name="vliofcpl" value="<?php echo number_format(str_replace(",",".",getByTagName($r->tags,'vliofcpl')),2,",",".");?>" />
                         </td>

@@ -26,6 +26,7 @@
  *                11/05/2017 - Exibir produto Pos-Fixado. (Jaison/James - PRJ298)
 
  *                17/01/2018 - Inclusão do botão "Alterar Qualificação" ( Diego Simas - AMcom )
+ *					 03/2019 - Adicionado tipo de desconto P437 Jackson Barcellos AMcom
  * --------------------------------------------------------------------------------------------------
  */
  
@@ -73,6 +74,8 @@
 						<input type="hidden" id="flgimppr" name="flgimppr" value="<?php echo getByTagName($banco->tags,'flgimppr') ?>" />
 						<input type="hidden" id="flgimpnp" name="flgimpnp" value="<?php echo getByTagName($banco->tags,'flgimpnp') ?>" />
 						<input type="hidden" id="tpemprst" name="tpemprst" value="<?php echo getByTagName($banco->tags,'tpemprst') ?>" />
+						<!-- P437 -->
+						<input type="hidden" id="tpdescto" name="tpdescto" value="<?php echo getByTagName($banco->tags,'tpdescto') ?>" />
 						<input type="hidden" id="dsdavali" name="dsdavali" value="<?php echo getByTagName($banco->tags,'dsdavali') ?>" />
                         <input type="hidden" id="cdorigem" name="cdorigem" value="<?php echo getByTagName($banco->tags,'cdorigem') ?>" />
 						<input type="hidden" id="liquidia" name="liquidia" value="<?php echo getByTagName($banco->tags,'liquidia') ?>" />

@@ -16,6 +16,7 @@
  * 007: [30/06/2015] Ajustes referente Projeto 215 - DV 3 (Daniel)
  * 008: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 009: [13/12/2018] Projeto 298.2 - Inclusos novos campos tpemprst e campos de carencia (Andre Clemer - Supero)
+ * 010: [03/2018] Projeto 437 - Inclusao do consignado - JDB AMcom
  */
 
 //******************************
@@ -396,8 +397,10 @@ function buscarDadosSimulacao(nrsimula, operacao, tela) {
 				
                 eval(response);
                 hideMsgAguardo();
-                if (operacao == 'GPR' || operacao == 'TI')
+                if (operacao == 'GPR' || operacao == 'TI'){					
+					buscadtconsig();					
                     bloqueiaFundo($('#divRotina'));
+				}
                 else
                     bloqueiaFundo($('#divUsoGenerico'));
 					
@@ -453,6 +456,7 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
         url: UrlSite + "telas/atenda/emprestimos/simulacao/inclusao_alteracao.php",
         data: {
             nrdconta: nrdconta,
+			gconsig: gConsig,
             idseqttl: idseqttl,
             vlemprst: vlemprst,
             qtparepr: qtparepr,

@@ -59,8 +59,12 @@
 				  (Projeto 357 - Reinert)
 
      06/08/2018 - Ajuste na formatação do campo e-mail (Andrey Formigari - Mouts)
+     28/02/2019 - Projeto 437 Consignado AMcom - JDB (ID 20190208_437) - Ajutes conforme changeset feito por outra empresa	 (14/09/2018 - Tratamento para o projeto 437 Consignado (incluir  flnecont e tpmodcon,  remover indescsg))
 ************************************************************************************************/
 
+//P437 s2
+//Variavel parametro Cooperativa com Consignado
+var CooperConsig ;
 
 // Definição de algumas variáveis globais
 var cddopcao, cTodosCabecalho;
@@ -89,6 +93,8 @@ var
         cCdufdemp,
         cNrcepend,
         cNrdocnpj,
+		//P437
+		cNrdddemp,
         cNrfonemp,
         cNrfaxemp,
         cDsdemail,
@@ -108,6 +114,8 @@ var
         old_cCdufdemp,
         old_cNrcepend,
         old_cNrdocnpj,
+		//P437
+		old_cNrdddemp,
         old_cNrfonemp,
         old_cNrfaxemp,
         old_cDsdemail;
@@ -157,6 +165,10 @@ var cTodosFormEmprestimo,
         cTpdebcot,
         cDtavsemp,
         cDtavscot,
+		// -> ID 20190208_437
+		cTpmodcon,
+        cFlnecont,
+		//<-
 // Campos  old (Para a procedure Gera_log)
         old_cIndescsg,
         old_cDtfchfol,
@@ -171,7 +183,11 @@ var cTodosFormEmprestimo,
         old_cTpdebemp,
         old_cTpdebcot,
         old_cDtavsemp,
-        old_cDtavscot;
+        old_cDtavscot,
+		// -> ID 20190208_437
+		old_cTpmodcon,
+        old_cFlnecont;
+		//<-
 
 
 
@@ -229,6 +245,9 @@ function estadoInicial() {
 		 $('#cddopcao', '#frmCab').val("I");
 		LiberaFormulario();
 	}	
+	//P437 s2
+	CooperConsig = document.getElementById('glb_val_cooper_consignado').value ;
+	
 }
 
 function formataCabecalho() {
@@ -252,6 +271,8 @@ function formataCabecalho() {
     var cNmbairro = $('#nmbairro', '#frmInfEmpresa');
     var cNmcidade = $('#nmcidade', '#frmInfEmpresa');
     var cCdufdemp = $('#cdufdemp', '#frmInfEmpresa');
+	//P437
+	var cNrdddemp = $('#nrdddemp', '#frmInfEmpresa');
     var cNrfonemp = $('#nrfonemp', '#frmInfEmpresa');
     var cNrfaxemp = $('#nrfaxemp', '#frmInfEmpresa');
     var cDsdemail = $('#dsdemail', '#frmInfEmpresa');
@@ -279,6 +300,8 @@ function formataCabecalho() {
     cNmbairro.attr('maxlength', '15');
     cNmcidade.attr('maxlength', '25');
     cCdufdemp.attr('maxlength', '2');
+	//P437
+	cNrdddemp.attr('maxlength', '2');
     cNrfonemp.attr('maxlength', '15');
     cNrfaxemp.attr('maxlength', '15');
     cDsdemail.attr('maxlength', '60');
@@ -327,6 +350,35 @@ function controlaFoco() {
 
 }
 
+// -> ID 20190208_437
+function validaPermissao(){
+	var validaPerm = true;
+	$.ajax({		
+		type: "POST",
+        async: false,
+		url: UrlSite + "telas/cademp/validaPermissao.php", 
+		data: {
+			cddopcao: cddopcao,
+			redirect: "script_ajax"
+		}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				hideMsgAguardo();				
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}				
+	});
+	return validaPerm;
+}
+//<-
+
 function LiberaFormulario() {
 
     if ($('#cddopcao', '#frmCab').hasClass('campoTelaSemBorda')) {
@@ -339,6 +391,11 @@ function LiberaFormulario() {
     }
 
     cddopcao = cCddopcao.val();
+	
+	// -> ID 20190208_437
+	if (!(validaPermissao()))
+		return false;
+	//<-
 
     formataInfEmpresas();
 
@@ -387,6 +444,8 @@ function formataInfEmpresas() {
     var rCdufdemp = $('label[for="cdufdemp"]', '#frmInfEmpresa');
     var rNrcepend = $('label[for="nrcepend"]', '#frmInfEmpresa');
     var rNrdocnpj = $('label[for="nrdocnpj"]', '#frmInfEmpresa');
+	//P437
+	var rNrdddemp = $('label[for="nrdddemp"]', '#frmInfEmpresa');
     var rNrfonemp = $('label[for="nrfonemp"]', '#frmInfEmpresa');
     var rNrfaxemp = $('label[for="nrfaxemp"]', '#frmInfEmpresa');
     var rDsdemail = $('label[for="dsdemail"]', '#frmInfEmpresa');
@@ -405,8 +464,10 @@ function formataInfEmpresas() {
     rCdufdemp.css({width: "90px"});
     rNrcepend.css({width: '62px'});
     rNrdocnpj.css({width: '90px'});
-    rNrfonemp.css({width: "90px"});
-    rNrfaxemp.css({width: '152px'});
+	//P437
+	rNrdddemp.css({width: "90px"});
+    rNrfonemp.css({width: "62px"});
+    rNrfaxemp.css({width: '44px'});
     rDsdemail.css({width: "90px"});
 
     cCdempres = $('#cdempres', '#frmInfEmpresa');
@@ -424,6 +485,8 @@ function formataInfEmpresas() {
     cCdufdemp = $('#cdufdemp', '#frmInfEmpresa');
     cNrcepend = $('#nrcepend', '#frmInfEmpresa');
     cNrdocnpj = $('#nrdocnpj', '#frmInfEmpresa');
+	//P437
+	cNrdddemp = $('#nrdddemp', '#frmInfEmpresa');
     cNrfonemp = $('#nrfonemp', '#frmInfEmpresa');
     cNrfaxemp = $('#nrfaxemp', '#frmInfEmpresa');
     cDsdemail = $('#dsdemail', '#frmInfEmpresa');
@@ -443,8 +506,10 @@ function formataInfEmpresas() {
     cCdufdemp.css({width: '30px'}).addClass('alpha ');
     cNrcepend.css({width: '100px'}).addClass('cep');
     cNrdocnpj.css({width: '135px'}).addClass('cnpj');
+	//P437
+	cNrdddemp.css({width: '30px'}).setMask("INTEGER", "zz");
     cNrfonemp.css({width: '131px'});
-    cNrfaxemp.css({width: '131px'});
+    cNrfaxemp.css({width: '150px'});
     cDsdemail.css({width: '423px'});
 
 	//cDsdemail.addClass('email');
@@ -516,6 +581,11 @@ function formataInfEmpresas() {
     var rDtavsemp = $('label[for="dtavsemp"]', '#frmInfEmprestimo');
     var rTpdebcot = $('label[for="tpdebcot"]', '#frmInfEmprestimo');
     var rDtavscot = $('label[for="dtavscot"]', '#frmInfEmprestimo');
+	
+	// -> ID 20190208_437
+	var rTpmodcon = $('label[for="tpmodcon"]', '#frmInfEmprestimo');
+    var rFlnecont = $('label[for="flnecont"]', '#frmInfEmprestimo');
+	// <-
 
     rIndescsg.css({width: '210px'});
     rDtfchfol.css({width: '199px'});
@@ -531,6 +601,10 @@ function formataInfEmpresas() {
     rDtavsemp.css({width: '152px'});
     rTpdebcot.css({width: '150px'});
     rDtavscot.css({width: '152px'});
+	// -> ID 20190208_437
+	rTpmodcon.css({width: '190px'});
+    rFlnecont.css({width: '190px'});
+	//<-
 
     cIndescsg = $('#indescsg', '#frmInfEmprestimo');
     cDtfchfol = $('#dtfchfol', '#frmInfEmprestimo');
@@ -546,7 +620,11 @@ function formataInfEmpresas() {
     cDtavsemp = $('#dtavsemp', '#frmInfEmprestimo');
     cTpdebcot = $('#tpdebcot', '#frmInfEmprestimo');
     cDtavscot = $('#dtavscot', '#frmInfEmprestimo');
-
+	// -> ID 20190208_437
+	cTpmodcon = $('#tpmodcon', '#frmInfEmprestimo');
+    cFlnecont = $('#flnecont', '#frmInfEmprestimo');
+	//<-
+	
     cDdmesnov.css({width: '30px'}).setMask('INTEGER','99');
     cDtlimdeb.css({width: '30px'}).setMask('INTEGER','99');
     cTpconven.css({width: '355px'});
@@ -557,6 +635,9 @@ function formataInfEmpresas() {
     cDtavsemp.addClass('data').css({'width': '80px', 'float': 'left'});
     cTpdebcot.css({width: '120px'});
     cDtavscot.addClass('data').css({'width': '80px', 'float': 'left'});
+	// -> ID 20190208_437
+	cTpmodcon.css({width: '120px'});
+	//<-
 
     highlightObjFocus($('#frmInfEmprestimo'));
     /*Formatando Formulario Emprestimo*/
@@ -610,10 +691,27 @@ function controlaOperacao() {
                             '$("#nrdocnpj","#frmInfEmpresa").focus();');
                     return false;
                 }
+				// -> ID 20190208_437
+				if (cddopcao == 'I') {
+					if (!validaCNPJCadastrado(cnpj))
+					{
+						return false;
+					}
+				}
+				//<-
+				
             }else{
                 showError('error','campo de CNPJ ser informado!',
                           'Campo Obrigat&oacute;rio!',
                           '$("#nrdocnpj","#frmInfEmpresa").focus();');
+                return false;
+            }
+			
+			//P437
+			if (cNrdddemp.val() == 0) {
+                showError('error','N&uacute;mero de DDD deve ser informado!',
+                          'Campo Obrigat&oacute;rio!',
+                          '$("#nrdddemp","#frmInfEmpresa").focus();');
                 return false;
             }
 
@@ -774,10 +872,18 @@ function controlaOperacao() {
             }
 			
             // Se estiver checado, efetuamos as validacoes necessarias
-            if (cIndescsg.is(":checked") && (cDtfchfol.val()=="" || (cDtfchfol.val() <= 0 || cDtfchfol.val() > 28))){
-                showError('error','Dia Fechamento Folha deve ser entre 1 e 28.','Campo obrigat&oacute;rio','$("#dtfchfol","#frmInfEmprestimo").focus();');
-                return false;
-        }
+			//P437 s2
+            if (CooperConsig != 'S'){
+				if (cIndescsg.is(":checked") && (cDtfchfol.val()=="" || (cDtfchfol.val() <= 0 || cDtfchfol.val() > 28))){
+					showError('error','Dia Fechamento Folha deve ser entre 1 e 28.','Campo obrigat&oacute;rio','$("#dtfchfol","#frmInfEmprestimo").focus();');
+					return false;
+				}
+			}else{
+				if (cFlnecont.is(":checked") && (cDtfchfol.val()=="" || (cDtfchfol.val() <= 0 || cDtfchfol.val() > 28))){			
+					showError('error','Dia Fechamento Folha deve ser entre 1 e 28.','Campo obrigat&oacute;rio','$("#dtfchfol","#frmInfEmprestimo").focus();');
+					return false;
+				}
+			}
         }
 
         if (cddopcao == "C") {
@@ -957,10 +1063,19 @@ function controlaFocoFormulariosEmpresa() {
         });
         cNrcepend.unbind('keypress').bind('keypress', function(e) {
             if (e.keyCode == 9 || e.keyCode == 13) {
+                cNrdddemp.focus();
+                return false;
+            }
+        }); 
+		
+		//P437
+		cNrdddemp.unbind('keypress').bind('keypress', function(e) {
+            if (e.keyCode == 9 || e.keyCode == 13) {
                 cNrfonemp.focus();
                 return false;
             }
-        });        
+        });
+		
         cNrfonemp.unbind('keypress').bind('keypress', function(e) {
             if (e.keyCode == 9 || e.keyCode == 13) {
                 cNrfaxemp.focus();
@@ -1046,13 +1161,24 @@ function controlaFocoFormulariosEmpresa() {
         cTodosFormEmprestimo.habilitaCampo();
         cDtavsemp.desabilitaCampo();
         cDtavscot.desabilitaCampo();
-
-        cIndescsg.unbind('keypress').bind('keypress', function(e) {
-            if (e.keyCode == 9 || e.keyCode == 13) {
-                cDtfchfol.focus();
-                return false;
-            }
-        });
+		//P437 s2
+		if (CooperConsig != 'S'){
+			cIndescsg.unbind('keypress').bind('keypress', function(e) {
+				if (e.keyCode == 9 || e.keyCode == 13) {
+					cDtfchfol.focus();
+					return false;
+				}
+			});
+		}else{
+			cFlnecont.unbind('keypress').bind('keypress', function(e) {
+				if (e.keyCode == 9 || e.keyCode == 13) {
+					cDtfchfol.focus();
+					return false;
+				}
+			});
+		}
+		
+		
         cDtfchfol.unbind('keypress').bind('keypress', function(e) {
             if (e.keyCode == 9 || e.keyCode == 13) {
                 cFlgarqrt.focus();
@@ -1119,6 +1245,42 @@ function controlaFocoFormulariosEmpresa() {
             }
             cDtavscot.val(dat_calcu);
         });
+		
+		// -> ID 20190208_437
+		//Informacoes consignado
+		
+		if (CooperConsig == 'S'){
+			//tpmodcon
+			cTpmodcon.unbind('keypress').bind('keypress', function(e) {
+				if (e.keyCode == 9 || e.keyCode == 13) {
+					cDdmesnov.focus();
+					return false;
+				}
+			});
+			cTpmodcon.desabilitaCampo();
+			if (cddopcao == "I") {
+				cTpmodcon.val("");
+			}
+			
+			//ddmesnov
+			cDdmesnov.focus().unbind('keypress').bind('keypress', function(e) {
+				if (e.keyCode == 9 || e.keyCode == 13) {
+					cFlnecont.focus();
+					return false;
+				}
+			});
+			
+			cFlnecont.desabilitaCampo();
+			//flnecont
+			cFlnecont.focus().unbind('keypress').bind('keypress', function(e) {
+				if (e.keyCode == 9 || e.keyCode == 13) {
+					controlaOperacao();
+					return false;
+				}
+			});
+		}
+		//<-
+		
         /*Formulario Emprestimo */
         
         if (cddopcao == "A" && cCdempres.val() == '') {
@@ -1204,12 +1366,18 @@ function monitorarCTRLV(evento, x_dsdemail) {
 function alteraInclui() {
 
 	//Variaveis para tratamento de caracteres invalidos
-    var nmextemp, nmresemp, nmcontat, dsendemp, dscomple, nmbairro, nmcidade, cdufdemp, nrfonemp, nrfaxemp, dsdemail;
+    var nmextemp, nmresemp, nmcontat, dsendemp, dscomple, nmbairro, nmcidade, cdufdemp, nrdddemp,nrfonemp, nrfaxemp, dsdemail;
 		
     var cnpj;
 
     /* Altera valor nos campos Checkbox */
-    cIndescsg.is(':checked') ? cIndescsg.val(2) : cIndescsg.val(1);
+    // -> ID 20190208_437
+	if (CooperConsig != 'S'){
+		cIndescsg.is(':checked') ? cIndescsg.val(2) : cIndescsg.val(1);
+	}else{
+		cFlnecont.is(':checked') ? cFlnecont.val(1) : cFlnecont.val(0);
+	}
+	//<-
     cFlgpagto.is(':checked') ? cFlgpagto.val("yes") : cFlgpagto.val("no");
     cFlgpgtib.is(':checked') ? cFlgpgtib.val("yes") : cFlgpgtib.val("no");
     cFlgarqrt.is(':checked') ? cFlgarqrt.val("yes") : cFlgarqrt.val("no");
@@ -1227,6 +1395,8 @@ function alteraInclui() {
 	nmbairro = removeCaracteresInvalidos(cNmbairro.val().toUpperCase()); // Bairro
 	nmcidade = removeCaracteresInvalidos(cNmcidade.val().toUpperCase()); // Cidade
 	cdufdemp = removeCaracteresInvalidos(cCdufdemp.val());				 // UF
+	//P437
+	nrdddemp = removeCaracteresInvalidos(cNrdddemp.val());				 // DDD
 	nrfonemp = removeCaracteresInvalidos(cNrfonemp.val());				 // Telefone
 	nrfaxemp = removeCaracteresInvalidos(cNrfaxemp.val());				 // Fax
 	dsdemail = removeCaracteresInvalidos(cDsdemail.val());				 // Email
@@ -1259,6 +1429,8 @@ function alteraInclui() {
             cdufdemp: cdufdemp,
             nrcepend: normalizaNumero(cNrcepend.val()),
             nrdocnpj: normalizaNumero(cNrdocnpj.val()),
+			//P437
+			nrdddemp: nrdddemp,
             nrfonemp: nrfonemp,
             nrfaxemp: nrfaxemp,
             dsdemail: dsdemail,
@@ -1276,6 +1448,8 @@ function alteraInclui() {
             old_cdufdemp: old_cCdufdemp,
             old_nrcepend: normalizaNumero(old_cNrcepend),
             old_nrdocnpj: normalizaNumero(old_cNrdocnpj),
+			//P437
+			old_nrdddemp: old_cNrdddemp,
             old_nrfonemp: old_cNrfonemp,
             old_nrfaxemp: old_cNrfaxemp,
             old_dsdemail: old_cDsdemail,
@@ -1312,7 +1486,11 @@ function alteraInclui() {
             cdempfol: cCdempfol.val(),
             dtavsemp: cDtavsemp.val(),
             dtavscot: cDtavscot.val(),
-            old_flgvlddv: old_cFlgvlddv,
+			// -> ID 20190208_437
+			tpmodcon: cTpmodcon.val(),
+            flnecont: cFlnecont.val(),
+            //<-
+			old_flgvlddv: old_cFlgvlddv,
             old_tpconven: old_cTpconven,
             old_tpdebemp: old_cTpdebemp,
             old_tpdebcot: old_cTpdebcot,
@@ -1323,6 +1501,10 @@ function alteraInclui() {
             old_cdempfol: old_cCdempfol,
             old_dtavsemp: old_cDtavsemp,
             old_dtavscot: old_cDtavscot,
+			// -> ID 20190208_437
+			old_tpmodcon: old_cTpmodcon,
+            old_flnecont: old_cFlnecont,
+			//<-
             redirect: "script_ajax"
         },
         error: function(objAjax, responseError, objExcept) {
@@ -1394,6 +1576,45 @@ function define_cdempres() {
     });
 }
 
+// -> ID 20190208_437
+// Valida a existencia de CNPJ já cadastrado
+function validaCNPJCadastrado(cnpj) {
+     var retornoValida = true;
+	 $.ajax({
+        type: 'POST',
+        async: false,
+        url: UrlSite + 'telas/cademp/valida_cnpjempresa.php',
+        data: {
+            nrdocnpj: cnpj,
+            redirect: 'script_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError(
+                'error',
+                'Nao foi possivel concluir a operacao.',
+                'Alerta - Ayllos',
+                '$("#nrdocnpj","#frmInfEmpresa").focus();');
+			retornoValida = false;
+        },
+        success: function (response) {
+            hideMsgAguardo();
+			eval(response);
+			if (cdemprescnpj != '')	
+			{
+				showError(
+					'error',
+					'CNPJ j&aacute; v&iacute;nculado &aacute; empresa ' + cdemprescnpj + '. N&atilde;o &eacute; poss&iacute;vel cadastrar.',
+					'Alerta - Ayllos',
+					'$("#nrdocnpj","#frmInfEmpresa").focus();');
+				retornoValida = false;
+			}
+				
+        }//success
+    });//ajax
+	return retornoValida;
+}
+//<-
 
 // Busca as informações da empresa
 function buscaEmpresas() {
@@ -1541,6 +1762,8 @@ function selecionaEmpresa() {
                 cCdufdemp.val($('#hcdufdemp', $(this)).val());
                 cNrcepend.val($('#hnrcepend', $(this)).val());
                 cNrdocnpj.val($('#hnrdocnpj', $(this)).val());
+				//P437
+				cNrdddemp.val($('#hnrdddemp', $(this)).val());
                 cNrfonemp.val($('#hnrfonemp', $(this)).val());
                 cNrfaxemp.val($('#hnrfaxemp', $(this)).val());
                 cDsdemail.val($('#hdsdemail', $(this)).val());
@@ -1561,6 +1784,8 @@ function selecionaEmpresa() {
                 old_cCdufdemp = $('#hcdufdemp', $(this)).val();
                 old_cNrcepend = $('#hnrcepend', $(this)).val();
                 old_cNrdocnpj = $('#hnrdocnpj', $(this)).val();
+				//P437
+				old_cNrdddemp = $('#hnrdddemp', $(this)).val();
                 old_cNrfonemp = $('#hnrfonemp', $(this)).val();
                 old_cNrfaxemp = $('#hnrfaxemp', $(this)).val();
                 old_cDsdemail = $('#hdsdemail', $(this)).val();
@@ -1573,8 +1798,12 @@ function selecionaEmpresa() {
                 cTpdebemp.val($('#htpdebemp', $(this)).val());
                 cTpdebcot.val($('#htpdebcot', $(this)).val());
                 cIndescsg.val($('#hindescsg', $(this)).val());
-                cIndescsg.val() == 2 ? cIndescsg.attr('checked', 'checked') : cIndescsg.removeAttr('checked');
-                cFlgpagto.val($('#hflgpagto', $(this)).val());
+                // -> ID 20190208_437
+				if (CooperConsig != 'S'){
+					cIndescsg.val() == 2 ? cIndescsg.attr('checked', 'checked') : cIndescsg.removeAttr('checked');
+				}
+                //<-
+				cFlgpagto.val($('#hflgpagto', $(this)).val());
                 cFlgpagto.val() == 'yes' ? cFlgpagto.attr('checked', 'checked') : cFlgpagto.removeAttr('checked');
                 cFlgarqrt.val($('#hflgarqrt', $(this)).val());
                 cFlgarqrt.val() == 'yes' ? cFlgarqrt.attr('checked', 'checked') : cFlgarqrt.removeAttr('checked');
@@ -1588,7 +1817,11 @@ function selecionaEmpresa() {
                 cCdcontar.val($('#hcdcontar', $(this)).val());
                 cDscontar.val($('#hdscontar', $(this)).val());
                 cVllimfol.val($('#hvllimfol', $(this)).val());
-
+				// -> ID 20190208_437
+				cTpmodcon.val($('#htpmodcon', $(this)).val());
+                cFlnecont.val($('#hflnecont', $(this)).val());
+                cFlnecont.val() == 1 ? cFlnecont.attr('checked', 'checked') : cFlnecont.removeAttr('checked');
+				//<-
                 old_cFlgvlddv = $('#hflgvlddv', $(this)).val();
                 old_cTpconven = $('#htpconven', $(this)).val();
                 old_cTpdebemp = $('#htpdebemp', $(this)).val();
@@ -1603,7 +1836,10 @@ function selecionaEmpresa() {
                 old_cFlgpgtib = $('#hflgpgtib', $(this)).val();
                 old_cCdcontar = $('#hcdcontar', $(this)).val();
                 old_cVllimfol = $('#hvllimfol', $(this)).val();
-
+				// -> ID 20190208_437
+				old_cTpmodcon = $('#htpmodcon', $(this)).val();
+                old_cFlnecont = $('#hflnecont', $(this)).val();
+				//<-
                 cCdempres.desabilitaCampo();
             }
         });

@@ -3,7 +3,7 @@
 
   Fonte: form_consulta.php
   Autor: Andrei - RKAM
-  Data : Julho/2016                       Última Alteração: 06/01/2019
+  Data : Julho/2016                       Última Alteração: 03/2019
 
   Objetivo  : Mostrar o form com as informaões da linha de crédito.
 
@@ -18,8 +18,9 @@
 
  			  10/10/2017 - Inclusao do campos % Mínimo Garantia e adicionado 
 						   opção 4 no campo Modelo. (Lombardi - PRJ404)
-
-			  06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
+					  
+			   06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
+				  03/2019 - Projeto 437 AMcom JDB
 
  * ********************************************************************* */
 
@@ -184,6 +185,33 @@
 		<a style="padding: 3px 0 0 3px;" href="#" onClick="controlaPesquisa('3'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>	
 		<input  type="text" id="dssubmod" name="dssubmod"value="<?echo getByTagName($linha->tags,'dssubmod'); ?>" >
 				
+		<br />
+		
+		<!-- tpmodcon -->
+		<label for="tpmodcon"><? echo utf8ToHtml('Modalidade Consignado') ?>:</label>
+		<select id="tpmodcon" name="tpmodcon"	>
+			<option
+				<?php echo (getByTagName($linha->tags,'tpmodcon') == '' ? "selected" : "");?>
+				value="">
+			<? echo utf8ToHtml('Selecione') ?>				
+			</option>
+			<option
+				<?php echo (getByTagName($linha->tags,'tpmodcon') == 1 ? "selected" : "");?>
+				value="1">
+			<? echo utf8ToHtml('Privado') ?>				
+			</option>
+			<option
+				<?php echo (getByTagName($linha->tags,'tpmodcon') == 2 ? "selected" : "");?>
+				value="2">
+			<? echo utf8ToHtml('P&uacute;blico') ?>				
+			</option> 
+			<option
+				<?php echo (getByTagName($linha->tags,'tpmodcon') == 3 ? "selected" : "");?>
+				value="3">
+				<? echo utf8ToHtml('INSS') ?> 
+			</option> 
+		</select>
+
 		<br style="clear:both" />
 							
 		
