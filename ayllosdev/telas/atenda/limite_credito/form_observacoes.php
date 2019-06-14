@@ -20,7 +20,9 @@
 
 <div id="divBotoes">
 	<input type="image" id="btVoltarObservacoes" src="<? echo $UrlImagens; ?>botoes/voltar.gif">
-	<input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="setDadosRating(nrgarope, nrinfcad, nrliquid, nrpatlvr);informarRating('divDadosObservacoes' , metodoContinue , metodoCancel, metodoSucesso );return false;">
+  <!-- bruno - prj 438 - sprint 7 - novo limite -->
+  <input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="$('#divDadosObservacoes').hide();abrirRating();return false;">
+	<!-- <input type="image" id="btSalvar" src="<? //echo $UrlImagens; ?>botoes/continuar.gif" onClick="setDadosRating(nrgarope, nrinfcad, nrliquid, nrpatlvr);informarRating('divDadosObservacoes' , metodoContinue , metodoCancel, metodoSucesso );return false;"> -->
 </div>
 
 <script>
@@ -31,7 +33,7 @@
       $('#divBotoesGAROPC').css('display', 'block');
       $('#divDadosObservacoes').css('display', 'none');
     } else {    
-      lcrShowHideDiv('divDadosRenda','divDadosObservacoes');
+      lcrShowHideDiv('divDadosLimite','divDadosObservacoes'); //bruno - prj 438 - sprint 7 - novo limite
     }    
     return false;
 	}); 

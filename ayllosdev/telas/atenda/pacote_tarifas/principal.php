@@ -63,6 +63,30 @@
     $registros = $xmlObjBuscaPacotes->roottag->tags[0]->tags;
     $qtregist = $xmlObjBuscaPacotes->roottag->tags[1]->name;
 	
+	$xmlBuscaModalidade  = "";
+	$xmlBuscaModalidade .= "<Root>";
+	$xmlBuscaModalidade .= "   <Dados>";
+	$xmlBuscaModalidade .= "	   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xmlBuscaModalidade .= "	   <nrdconta>".$nrdconta."</nrdconta>";
+	$xmlBuscaModalidade .= "   </Dados>";
+	$xmlBuscaModalidade .= "</Root>";
+		
+	// Executa script para envio do XML	
+	$xmlResult = mensageria($xmlBuscaModalidade, "ATENDA", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	
+	$xmlObjBuscaModalidade = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObjBuscaModalidade->roottag->tags[0]->name) == "ERRO") {
+	
+		$msgErro  = $xmlObjBuscaModalidade->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			 
+		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);		
+						
+	}
+	
+	$modalidade = $xmlObjBuscaModalidade->roottag->tags[0]->cdata;
+	
 	include('tab_pacote_tarifas.php');
 			
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript

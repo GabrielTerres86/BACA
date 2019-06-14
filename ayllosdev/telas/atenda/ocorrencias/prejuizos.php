@@ -14,6 +14,8 @@
                     19/06/2018 - Atualizado os detalhes da aba Prejuízo para considerar o prejuízo da Conta Corrente
                                  Diego Simas - AMcom - PRJ450
         
+					11/01/2019 - Implementado informações com os dados dos prejuizos - P298.2.2 - Anderson-Alan Supero
+        
 	
 	************************************************************************/
 	
@@ -128,6 +130,8 @@
           			<th title="Dias em Preju&iacute;zo"><? echo utf8ToHtml('Dias Preju'); ?></th>
           			<th title="Dias Total em Atraso"><? echo utf8ToHtml('Dias Tot Atr'); ?></th>
 					<th title="Juros Remunerat&oacute;rio"><? echo utf8ToHtml('Jur Rem'); ?></th>  
+					<th title="Multa"><? echo utf8ToHtml('Multa'); ?></th>
+					<th title="Juros de mora"><? echo utf8ToHtml('Jur Mora'); ?></th>
 					<th title="Imposto sobre Opera&ccedil;&otilde;es Financeiras"><? echo utf8ToHtml('IOF'); ?></th>  
           			<th title="Valor Pago Preju&iacute;zo"><? echo utf8ToHtml('Pg Preju'); ?></th>
           			<th title="Valor Abono Preju&iacute;zo"><? echo utf8ToHtml('Abo Preju'); ?></th>
@@ -148,20 +152,52 @@
 								<?php echo $prejuizos[$i]->tags[2]->cdata; ?>
 						</td>
 						<td><!-- Valor Transferido para Prejuízo -->
-							<span><?php echo str_replace(",",".",$prejuizos[$i]->tags[3]->cdata) ?></span>
+							<span><?php echo str_replace(",",".",$prejuizos[$i]->tags[3]->cdata); ?></span>
 								<?php echo number_format(str_replace(",",".",$prejuizos[$i]->tags[3]->cdata),2,",","."); ?>
 						</td>
-						<td><span>----</span>----</td><!-- Saldo Atual -->
-						<td><span>----</span>----</td><!-- Dias em Atraso -->
-						<td><span>----</span>----</td><!-- Dias em Prejuízo -->
-						<td><span>----</span>----</td><!-- Dias Total em Atraso -->
-						<td><span>----</span>----</td><!-- Juros Remuneratório -->
-						<td><span>----</span>----</td><!-- IOF -->
-						<td><span>----</span>----</td><!-- Valor Pago Prejuízo  -->
-						<td><span>----</span>----</td><!-- Valor Abono Prejuízo  -->
-						<td><!-- Saldo Devedor  -->
-							<span><?php echo str_replace(",",".",$prejuizos[$i]->tags[4]->cdata) ?></span>
+						<td><!-- Saldo Atual -->
+							<span><?php echo str_replace(",",".",$prejuizos[$i]->tags[4]->cdata); ?></span>
 								<?php echo number_format(str_replace(",",".",$prejuizos[$i]->tags[4]->cdata),2,",","."); ?>
+						</td>
+						<td><!-- Dias em Atraso -->
+							<span><?php echo $prejuizos[$i]->tags[5]->cdata; ?></span>
+								<?php echo $prejuizos[$i]->tags[5]->cdata; ?>
+						</td>
+						<td><!-- Dias em Preju?zo -->
+							<span><?php echo $prejuizos[$i]->tags[6]->cdata; ?></span>
+								<?php echo $prejuizos[$i]->tags[6]->cdata; ?>
+						</td>
+						<td><!-- Dias Total em Atraso -->
+							<span><?php echo $prejuizos[$i]->tags[7]->cdata; ?></span>
+								<?php echo $prejuizos[$i]->tags[7]->cdata; ?>
+						</td>
+						<td><!-- Juros Remunerat?rio -->
+							<span><?php echo str_replace(",",".",$prejuizos[$i]->tags[8]->cdata); ?></span>
+								<?php echo number_format(str_replace(",",".",$prejuizos[$i]->tags[8]->cdata),2,",","."); ?>
+						</td>
+						<td><!-- Multa -->
+							<span><?php echo str_replace(",",".",$prejuizos[$i]->tags[9]->cdata); ?></span>
+								<?php echo number_format(str_replace(",",".",$prejuizos[$i]->tags[9]->cdata),2,",","."); ?>
+						</td>
+						<td><!-- Juros de mora -->
+							<span><?php echo str_replace(",",".",$prejuizos[$i]->tags[10]->cdata); ?></span>
+								<?php echo number_format(str_replace(",",".",$prejuizos[$i]->tags[10]->cdata),2,",","."); ?>
+						</td>
+						<td><!-- IOF -->
+							<span><?php echo str_replace(",",".",$prejuizos[$i]->tags[11]->cdata); ?></span>
+								<?php echo number_format(str_replace(",",".",$prejuizos[$i]->tags[11]->cdata),2,",","."); ?>
+						</td>
+						<td><!-- Valor Pago Preju?zo  -->
+							<span><?php echo str_replace(",",".",$prejuizos[$i]->tags[12]->cdata); ?></span>
+								<?php echo number_format(str_replace(",",".",$prejuizos[$i]->tags[12]->cdata),2,",","."); ?>
+						</td>
+						<td><!-- Valor Abono Preju?zo  -->
+							<span><?php echo str_replace(",",".",$prejuizos[$i]->tags[13]->cdata); ?></span>
+								<?php echo number_format(str_replace(",",".",$prejuizos[$i]->tags[13]->cdata),2,",","."); ?>
+						</td>
+						<td><!-- Saldo Devedor  -->
+							<span><?php echo str_replace(",",".",$prejuizos[$i]->tags[14]->cdata) ?></span>
+								<?php echo number_format(str_replace(",",".",$prejuizos[$i]->tags[14]->cdata),2,",","."); ?>
 						</td>
 					</tr>
 				<?  
@@ -203,6 +239,8 @@
 							<span><?php echo str_replace(",",".",getByTagName($param->tags,'vljuprej')) ?></span>
 							<?php echo number_format(str_replace(",",".",getByTagName($param->tags,'vljuprej')),2,",","."); ?>
 						</td>
+                        <td><span>----</span>----</td><!-- Multa -->
+                        <td><span>----</span>----</td><!-- Juros de Mora -->
 						<td><!-- IOF  -->
 							<span><?php echo str_replace(",",".",getByTagName($param->tags,'valoriof')) ?></span>
 							<?php echo number_format(str_replace(",",".",getByTagName($param->tags,'valoriof')),2,",","."); ?>

@@ -32,6 +32,11 @@ ALTERACOES     :
             <label for="vlpreemp">Prest.:</label>
             <input name="vlpreemp" id="vlpreemp" type="text" value="" />
 
+            <?php if ($tpemprst == 2) { ?>
+            <label for="vlprecar"><? echo utf8ToHtml('Vl. parcela carên.:') ?></label>
+            <input name="vlprecar" id="vlprecar" type="text" value="" />
+            <?php } ?>
+
             <label for="percetop">CET(%a.a.):</label>
             <input name="percetop" id="percetop" type="text" value="" />
             <br />
@@ -40,7 +45,7 @@ ALTERACOES     :
     </form>
     <div id="divBotoesFormSimulacao" style="margin-top:5px; margin-bottom:5px;">
         <? if ( $operacao == 'C_DEMONSTRATIVO_EMPRESTIMO' ) { ?>
-            <a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('C_COMITE_APROV'); return false;">Voltar</a>
+            <a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('C_PROT_CRED'); return false;">Voltar</a>
             <a href="#" class="botao" id="btSalvar"  onClick="controlaOperacao('TC'); return false;">Continuar</a>
         <? } ?>
     </div>

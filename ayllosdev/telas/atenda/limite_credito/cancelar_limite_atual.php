@@ -41,6 +41,8 @@
 
 	$nrdconta = $_POST["nrdconta"];
 	$nrctrlim = $_POST["nrctrlim"];
+	// PRJ 470
+	$vllimite = isset($_POST["vllimite"]) ? $_POST["vllimite"] : 0;
 	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -89,16 +91,22 @@
 	$idPrincipal = array_search("@",$glbvars["opcoesTela"]);
 	
 	// Se o índice da opção "@" foi encontrado 
-	if (!($idPrincipal === false)) {
-		$acessaaba = 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).','.$idPrincipal.',\''.$glbvars["opcoesTela"][$idPrincipal].'\');';
-	}	else {
-		$acessaaba = 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,\''.$glbvars["opcoesTela"][0].'\');';
-	}
+	// if (!($idPrincipal === false)) {
+	// 	$acessaaba = 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).','.$idPrincipal.',\''.$glbvars["opcoesTela"][$idPrincipal].'\');';
+	// }	else {
+	// 	$acessaaba = 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,\''.$glbvars["opcoesTela"][0].'\');';
+	// }
+	//bruno - prj 438 - sprint 7 - tela principal
+	$acessaaba = 'acessaTela(\'@\');';
 	
 	echo "callafterLimiteCred = \"".$acessaaba."\";";
 	
-	// Mostra confirmacao de impressao do termo de rescisão do contrato
-	echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","carregarImpresso(4,\'no\',\'no\',\''.$nrctrlim.'\');","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'.$acessaaba.'","sim.gif","nao.gif");';	
+	// Mostra confirmacao de impressao do termo de rescis?o do contrato
+	// echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","carregarImpresso(4,\'no\',\'no\',\''.$nrctrlim.'\');","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'.$acessaaba.'","sim.gif","nao.gif");';	
+	// PRJ 470
+	//echo 'chamarMostraTelaAutorizacaoContrato("carregarImpresso(4,\'no\',\'no\',\''.$nrctrlim.'\');");';
+	//bruno - prj 470 - tela autorizacao
+	echo 'chamarImpressaoLimiteCredito(true);';
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

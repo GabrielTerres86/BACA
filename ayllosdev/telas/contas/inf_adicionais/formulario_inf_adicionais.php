@@ -18,13 +18,13 @@
  <form name="frmInfAdicional" id="frmInfAdicional" class="formulario">
 
  		<label for="nrinfcad"><? echo utf8ToHtml('Informações cadastrais:') ?></label><br />
-		<input name="nrinfcad" id="nrinfcad" type="text" value="<? echo getByTagName($infAdicionais,'nrinfcad'); ?>" />
+		<input name="nrinfcad" id="nrinfcad" type="text" value="<? echo $nrinfcad; ?>" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsinfcad" id="dsinfcad" type="text" value="<? echo getByTagName($infAdicionais,'dsinfcad'); ?>" />
 		<br />
 		
 		<label for="nrpatlvr"><? echo utf8ToHtml('Patrimônio pessoal livre em relação ao endividamento:') ?></label><br />
-		<input name="nrpatlvr" id="nrpatlvr" type="text" value="<? echo getByTagName($infAdicionais,'nrpatlvr'); ?>" />
+		<input name="nrpatlvr" id="nrpatlvr" type="text" value="<? echo $nrpatlvr; ?>" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dspatlvr" id="dspatlvr" type="text" value="<? echo getByTagName($infAdicionais,'dspatlvr'); ?>" />
 		<br />

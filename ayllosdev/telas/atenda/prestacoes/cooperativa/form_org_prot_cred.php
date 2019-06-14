@@ -9,7 +9,7 @@
  * 001 [08/04/2014] Alterado fluxo de botao voltar e continuar. (Jorge)
  * 002 [28/11/2014] Retirar consula do 2.do titular (Jonata-RKAM)
  * 003 [01/12/2014] Incluir telas das consultas automatizadas (Jonata-RKAM)
-
+ * 004 [21/11/2018] Alterado layout da tela Garantias, que agora se chama Rating - PRJ 438 (Mateus Z / Mouts)
  */	
  ?>
 
@@ -17,7 +17,7 @@
 
 	<input id="nrctremp" name="nrctremp" type="hidden" value="" />
 	
-	<fieldset>
+	<fieldset style="display: none;">
 		<legend><? echo utf8ToHtml('Orgãos de Proteção ao Crédito') ?></legend>
 	
 		<label for="dtcnsspc"><? echo utf8ToHtml('Consulta 1º Tit.:') ?></label>
@@ -34,7 +34,7 @@
 		<br />
 	</fieldset>
 	
-	<fieldset>
+	<fieldset style="display: none;">
 		<legend><? echo utf8ToHtml('Central de Risco - Bacen') ?></legend>
 	
 		<label for="dtdrisco"><? echo utf8ToHtml('Consulta 1º Tit.:') ?></label>
@@ -67,7 +67,13 @@
 	</fieldset>
 	
 	<fieldset>
-		<legend><? echo utf8ToHtml('Garantias') ?></legend>
+		<legend><? echo utf8ToHtml('Rating') ?></legend>
+
+		<label for="nrinfcad">Inf. cadastrais:</label>
+		<input name="nrinfcad" id="nrinfcad" type="text" value="" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dsinfcad" id="dsinfcad" type="text" value="" />
+		<br />
 	
 		<label for="nrgarope">Garantia:</label>
 		<input name="nrgarope" id="nrgarope" type="text" value="" />
@@ -99,7 +105,7 @@
 
 <div id="divBotoes">
 	<? if ($operacao == 'C_PROT_CRED') { ?>
-		<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"    onClick="controlaOperacao('C_BENS_ASSOC'); return false;" />
+		<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"    onClick="controlaOperacao('C_NOVA_PROP'); return false;" />
 		<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_PROTECAO_TIT'); return false;" /> <!-- C_COMITE_APROV -->
 	<? } ?>
 </div>

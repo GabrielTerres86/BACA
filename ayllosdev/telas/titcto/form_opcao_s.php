@@ -88,6 +88,22 @@
 			<label for="vlderesg"></label>
 			<input type="text" id="vlderesg" name="vlderesg" value="<?=$dados->novo->vlderesg?>" />
 
+			<br />
+			
+			<label for="dsprejui">Transfer&ecirc;ncia Preju&iacute;zo:</label>
+			<label for="qtprejui"></label>
+			<input type="text" id="qtprejui" name="qtprejui" value="<?=$dados->novo->qtprejui?>" />
+			<label for="vlprejui"></label>
+			<input type="text" id="vlprejui" name="vlprejui" value="<?=$dados->novo->vlprejui?>" />
+
+			<br />
+
+			<label for="dsestorn">Estorno Pagamento:</label>
+			<label for="qtestorn"></label>
+			<input type="text" id="qtestorn" name="qtestorn" value="<?=$dados->novo->qtestorn?>" />
+			<label for="vlestorn"></label>
+			<input type="text" id="vlestorn" name="vlestorn" value="<?=$dados->novo->vlestorn?>" />
+
 			<br style="clear:both" /><br />
 			
 			<label for="dscredit">SALDO ATUAL:</label>

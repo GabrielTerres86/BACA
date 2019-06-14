@@ -122,6 +122,8 @@
 	
 	$nrctrcrd = $_POST['nrctrcrd'];
 	
+	$cddopcao = $_POST['cddopcao'];
+	
 	$executandoProdutos = $_POST['executandoProdutos'];
 	
 	// Verifica se número da conta é um inteiro válido
@@ -213,6 +215,18 @@
 		}
 	}
 
+	// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	$pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
+	$novo_fluxo_envio = (!empty($pa_envia_cartao) ? true : false);
 
 	// Monta o xml de requisi&ccedil;&atilde;o
 	$xmlSetCartao  = "";
@@ -337,17 +351,45 @@
 	}
 	/* FIM procedimento temporario */
 	
+	$xmlConsulta = "<Root>";
+    $xmlConsulta .= " <Dados>";
+	$xmlConsulta.= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+    $xmlConsulta.= " </Dados>";
+    $xmlConsulta.= "</Root>";
+
+    $xmlResult = mensageria($xmlConsulta, "ATENDA_CRD", "BUSCA_PARAMETRO_APROVADOR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObject = getObjectXML($xmlResult);
 	
-	
+    if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+		exibeErro($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	}
+
+    $parametroAprovador = !empty($xmlObject->roottag->tags[0]->cdata) ? $xmlObject->roottag->tags[0]->cdata : 0;
+
 	$cecredCartoes = array(11,12,13,14,15,16,17,18);
 	if(in_array(  intval($cdadmcrd),$cecredCartoes) && $bAtivoPiloto){
 
 		echo "hideMsgAguardo();";
 		if(isset($nrctrcrd) && isset($cdadmcrd)) {
-			if ($alguemAssinou) {
-				echo "enviarBancoob(".$nrctrcrd.")";
+			echo "nrctrcrd = ".$nrctrcrd.";";
+
+			if ($cddopcao == "M") {
+				echo "if (flgBancoob) enviarBancoob(".$nrctrcrd."); else voltarParaTelaPrincipal();";
 			} else {
-			echo "solicitaSenha($nrctrcrd, $cdadmcrd);";
+			if ($novo_fluxo_envio && $cddopcao != "A") {
+				echo "cdadmcrd = ".$cdadmcrd."; consultaEnderecos(1);";
+			} else {
+				if ($alguemAssinou) {
+						echo "enviarBancoob(".$nrctrcrd.");";
+				} else {
+
+					if ($parametroAprovador == 0) {
+						echo "solicitaSenha($nrctrcrd, cTipoSenha.COOPERADO);";
+					} else {
+						echo "solicitaTipoSenha($nrctrcrd, 'novo');";
+					}
+				}
+			}
 			}
 		} else {
 			exibirErro('error',utf8ToHtml("O Contrato não pôde ser gerado."),'Alerta - Aimaro',$funcaoAposErro,false);
@@ -374,7 +416,7 @@
 	
 	$confmsg = "Deseja visualizar a impress&atilde;o?";
 	$conftit = "Confirma&ccedil;&atilde;o - Aimaro";
-	$confsim = "gerarImpressao(2,".$opcao.",".$cdadmcrd.",".$nrctrcrd.",0);";	
+	$confsim = "gerarImpressao(2,".$opcao.",".$cdadmcrd.",".$nrctrcrd.",0);";
 	$msgdconf = 'showConfirmacao("'.$confmsg.'","'.$conftit.'","'.$confsim.'",callafterCartaoCredito,"sim.gif","nao.gif");';	
 	
 	// Mostra a mensagem de informação para verificar atualização cadastral se for adm BB

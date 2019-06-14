@@ -14,6 +14,9 @@
  *  
  * 10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)
  * 
+ *				  14/09/2018 - Adicionado campo do valor max de estorno para desconto de titulo (Cássia de Oliveira - GFT)
+ *                30/10/2018 - PJ 438 - Adicionado 2 novos parametros (avtperda e vlperavt) - Mateus Z (Mouts)
+ *                11/12/2018 - PRJ 470 - Adicionado 2 novos parametros (inpreapv e vlmincnt) - Mateus Z (Mouts)
  */
 
 session_start();
@@ -49,6 +52,11 @@ $qtdibsem = isset($_POST['qtdibsem']) ? $_POST['qtdibsem'] : 0;
 $qtditava = isset($_POST['qtditava']) ? $_POST['qtditava'] : 0; //PJ 438 - Márcio (Mouts)
 $qtditapl = isset($_POST['qtditapl']) ? $_POST['qtditapl'] : 0; //PJ 438 - Márcio (Mouts)
 $qtditsem = isset($_POST['qtditsem']) ? $_POST['qtditsem'] : 0; //PJ 438 - Márcio (Mouts)
+$avtperda = isset($_POST['avtperda']) ? $_POST['avtperda'] : 0; // PJ438 - Sprint 5 - Mateus Z (Mouts)
+$vlperavt = isset($_POST['vlperavt']) ? $_POST['vlperavt'] : 0; // PJ438 - Sprint 5 - Mateus Z (Mouts)
+$vlmaxdst = isset($_POST['vlmaxdst']) ? $_POST['vlmaxdst'] : 0;
+$inpreapv = isset($_POST['inpreapv']) ? $_POST['inpreapv'] : ''; // PRJ 470
+$vlmincnt = isset($_POST['vlmincnt']) ? $_POST['vlmincnt'] : 0;  // PRJ 470
 
 $cdopcao = $cddopcao == 'AC' ? $cdopcao = 'C' : $cdopcao = $cddopcao;
 
@@ -93,7 +101,13 @@ if ($cdopcao == 'C') {
 	$xml .= "   <qtditapl>".$qtditapl."</qtditapl>"; // PJ438 - Márcio (Mouts)
 	$xml .= "   <qtditsem>".$qtditsem."</qtditsem>"; // PJ438 - Márcio (Mouts)	
     $xml .= "   <pctaxpre>".str_replace(',','.', $pctaxpre)."</pctaxpre>";
-    $xml .= "   <qtdictcc>".$qtdictcc."</qtdictcc>";    
+    $xml .= "   <qtdictcc>".$qtdictcc."</qtdictcc>";
+	$xml .= "   <avtperda>".$avtperda."</avtperda>"; // PJ438 - Sprint 5 - Mateus Z (Mouts)
+    $xml .= "   <vlperavt>".str_replace(',','.', $vlperavt)."</vlperavt>"; // PJ438 - Sprint 5 - Mateus Z (Mouts)
+    $xml .= "   <vlmaxdst>".str_replace(',','.', $vlmaxdst)."</vlmaxdst>";
+    $xml .= "   <inpreapv>".$inpreapv."</inpreapv>"; // PRJ 470
+    $xml .= "   <vlmincnt>".str_replace(',','.', $vlmincnt)."</vlmincnt>"; // PRJ 470
+
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
@@ -118,6 +132,11 @@ $registros = $xmlObj->roottag->tags[0]->tags;
 
 if ($cdopcao == 'C') {
     foreach ($registros as $r) {
+
+        //prj 438 - bug 14179 - bruno
+        $aux_vlperavt = getByTagName($r->tags, 'vlperavt');
+        $aux_vlperavt = str_replace(',','.',str_replace('.','',$aux_vlperavt));
+
         echo '$("#prtlmult", "#frmTab089").val("' . getByTagName($r->tags, 'prtlmult') . '");';
         echo '$("#prestorn", "#frmTab089").val("' . getByTagName($r->tags, 'prestorn') . '");';
         echo '$("#prpropos", "#frmTab089").val("' . getByTagName($r->tags, 'prpropos') . '");';
@@ -144,6 +163,13 @@ if ($cdopcao == 'C') {
 		echo '$("#qtditava", "#frmTab089").val("' . getByTagName($r->tags, 'qtditava') . '");'; // PJ438 - Márcio (Mouts)
 		echo '$("#qtditapl", "#frmTab089").val("' . getByTagName($r->tags, 'qtditapl') . '");'; // PJ438 - Márcio (Mouts)
 		echo '$("#qtditsem", "#frmTab089").val("' . getByTagName($r->tags, 'qtditsem') . '");'; // PJ438 - Márcio (Mouts)		
+		echo '$("#avtperda", "#frmTab089").val("' . getByTagName($r->tags, 'avtperda') . '");'; // PJ438 - Sprint 5 - Mateus Z (Mouts)
+	    //BUG 14179 - Prj 438 - bruno
+        echo '$("#vlperavt", "#frmTab089").val("' .($aux_vlperavt > 0 ? getByTagName($r->tags, 'vlperavt') : '') . '");'; // PJ438 - Sprint 5 - Mateus Z (Mouts)
+        echo '$("#vlmaxdst", "#frmTab089").val("' . getByTagName($r->tags, 'vlmaxdst') . '");';	
+		echo '$("#inpreapv", "#frmTab089").val("' . getByTagName($r->tags, 'inpreapv') . '");'; // PRJ 470
+        echo '$("#vlmincnt", "#frmTab089").val("' . getByTagName($r->tags, 'vlmincnt') . '");'; // PRJ 470
+
     }
 }
 

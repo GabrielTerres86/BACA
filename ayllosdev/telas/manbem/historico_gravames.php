@@ -10,10 +10,10 @@
 <?
 	session_start();
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
-	require_once("../../../../includes/config.php");
-	require_once("../../../../includes/funcoes.php");
-//	require_once('../../../../includes/controla_secao.php');
-	require_once('../../../../class/xmlfile.php');
+	require_once("../../includes/config.php");
+	require_once("../../includes/funcoes.php");
+//	require_once('../../includes/controla_secao.php');
+	require_once('../../class/xmlfile.php');
 	isPostMethod();
 
 	//$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
@@ -22,6 +22,8 @@
 	$dschassi = (isset($_POST['dschassi'])) ? $_POST['dschassi'] : '';
 	$nrregist = 1000;//(isset($_POST["nrregist"])) ? $_POST["nrregist"] : 15;
 	$nriniseq = (isset($_POST["nriniseq"])) ? $_POST["nriniseq"] : 1;
+	$dtrefere = (isset($_POST["dtrefere"])) ? $_POST["dtrefere"] : '';
+	$dtrefate = (isset($_POST["dtrefate"])) ? $_POST["dtrefate"] : '';
 
 	if ($nrctrpro.length > 0) {
 
@@ -47,8 +49,8 @@
 		$xml .= "		<tparquiv>TODAS</tparquiv>";
 		$xml .= "		<cdcoptel>".$glbvars["cdcooper"]."</cdcoptel>";			
 		$xml .= "		<nrseqlot>0</nrseqlot>";
-		$xml .= "		<dtrefere/>";
-		$xml .= "		<dtrefate/>";
+		$xml .= "		<dtrefere>".$dtrefere."</dtrefere>";
+		$xml .= "		<dtrefate>".$dtrefate."</dtrefate>";
 		$xml .= "		<cdagenci>0</cdagenci>";
 		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 		$xml .= "		<nrctrpro>".$nrctrpro."</nrctrpro>";
@@ -72,8 +74,12 @@
 				   ,$glbvars["idorigem"]
 				   ,$glbvars["cdoperad"]
 				   ,"</Root>");
+				   
+		//echo ( $xmlResult);die;
 
-		$xmlObjeto = getObjectXML($xmlResult);
+		$xmlObjeto = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
+		
+		//var_dump($xmlResult);die;
 
 		// Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
@@ -97,7 +103,7 @@
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">HIST&Oacute;RICO DE GRAVAMES</td>
+								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">HIST&Oacute;RICO GRAVAME</td>
 								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divUsoGenerico'),divRotina);"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
 							</tr>

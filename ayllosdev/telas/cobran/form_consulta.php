@@ -23,6 +23,9 @@
  * 27/09/2017 - Receber o campo qtdiaprt, inserasa como parametro (Douglas - Chamado 754911)
  *
  * 30/05/2018 - Alterações referente ao PRJ352
+ *
+ * 08/05/2019 - inc0012536 adicionada a validação do código da espécie 2 (duplicata de serviço) juntamente com a UF não 
+ *              autorizada. Duplicatas de serviço dos estados listados não podem ir para protesto (Carlos)
  */
  
  	session_start();
@@ -48,6 +51,7 @@
 	$insitcrt   = $_POST['insitcrt'];
 	$dtvencto	= $_POST['dtvencto'];
 	$cdufsaca   = $_POST['cdufsaca'];
+	$cddespec   = $_POST['cddespec'];
 	
 	switch( $operacao ) {
 		case 'log':			$procedure = 'buca_log';			break;	

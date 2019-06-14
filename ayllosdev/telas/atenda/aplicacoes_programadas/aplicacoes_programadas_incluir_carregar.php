@@ -162,7 +162,7 @@
 		<br />
 		
 		<label for="vlprerpp">Valor da Presta&ccedil;&atilde;o:</label>
-		<input name="vlprerpp" type="text" class="campo" id="vlprerpp" value="0,00" />
+		<input name="vlprerpp" type="text" class="campo" id="vlprerpp" value="" />
 		<br />
 
 		<label for="dsfinali">Finalidade:</label>
@@ -212,7 +212,10 @@ function valida_campo(){
 $("#dtinirpp","#frmDadosPoupanca").setMask("DATE","","","divRotina");
 $("#mesdtvct","#frmDadosPoupanca").setMask("INTEGER","99","","");
 $("#anodtvct","#frmDadosPoupanca").setMask("INTEGER","9999","","");
-$("#vlprerpp","#frmDadosPoupanca").setMask("DECIMAL","zzz,zzz.zz9,99","","");
+$("#vlprerpp","#frmDadosPoupanca").setMask("DECIMAL","zzz.zzz.zz9,99","","");
+
+$("#tpemiext","#frmDadosPoupanca").hide();
+$('label[for="tpemiext"]','#frmDadosPoupanca').hide();
 
 $("#dtinirpp","#frmDadosPoupanca").unbind("keydown");
 $("#dtinirpp","#frmDadosPoupanca").unbind("keyup");

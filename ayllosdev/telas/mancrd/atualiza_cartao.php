@@ -1,13 +1,15 @@
 <?php
 /* 
   FONTE        : atualiza_cartao.php
-  CRIA«√O      : Kelvin Souza Ott
-  DATA CRIA«√O : 29/06/2017
-  OBJETIVO     : Rotina para controlar as operaÁıes da tela MANCRD
+  CRIA√á√ÉO      : Kelvin Souza Ott
+  DATA CRIA√á√ÉO : 29/06/2017
+  OBJETIVO     : Rotina para controlar as opera√ß√µes da tela MANCRD
   --------------
-  ALTERA«’ES   : 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
+  ALTERA√á√ïES   : 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
 				 
 				 25/07/2018 - Adicionado campo insitdec na tela. PRJ345(Lombardi).
+         
+         24/05/2019 - Validar atualizacaoo do cartao. Alcemir Jr. (PRB0041672).
   -------------- 
  */
 ?> 
@@ -33,6 +35,8 @@ $flgprcrd = (isset($_POST['flgprcrd'])) ? $_POST['flgprcrd'] : 0;
 $nrctrcrd = (isset($_POST['nrctrcrd'])) ? $_POST['nrctrcrd'] : 0;
 $nmempres = (isset($_POST['nmempres'])) ? $_POST['nmempres'] : "";
 $insitdec = (isset($_POST['insitdec'])) ? $_POST['insitdec'] : 0;
+$flgvalid = (isset($_POST['flgvalid'])) ? $_POST['flgvalid'] : 0;
+
 
 if($nrcctitg == ""){
 	exibirErro('error', 'Campo Conta Cartao e de preenchimento obrigatorio!', 'Alerta - Ayllos', "bloqueiaFundo(divRotina);$('#nrcctitg','#frmDetalheCartao').focus();", false);   
@@ -64,35 +68,84 @@ if(strlen($nmempres) > 23 && $nrcrcard == 0) {
 	return;
 }	
 
-$xml = "<Root>";
-$xml .= " <Dados>";
-$xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
-$xml .= "   <nrcrcard>" . $nrcrcard . "</nrcrcard>";
-$xml .= "   <nrcctitg>" . $nrcctitg . "</nrcctitg>";
-$xml .= "   <cdadmcrd>" . $cdadmcrd . "</cdadmcrd>";
-$xml .= "   <nrcpftit>" . $nrcpftit . "</nrcpftit>";
-$xml .= "   <flgdebit>" . $flgdebit . "</flgdebit>";
-$xml .= "   <nmtitcrd>" . $nmtitcrd . "</nmtitcrd>";
-$xml .= "   <insitcrd>" . $insitcrd . "</insitcrd>";
-$xml .= "   <insitdec>" . $insitdec . "</insitdec>";
-$xml .= "   <flgprcrd>" . $flgprcrd . "</flgprcrd>";
-$xml .= "   <nrctrcrd>" . $nrctrcrd . "</nrctrcrd>";
-$xml .= "   <nmempres>" . $nmempres . "</nmempres>";
-$xml .= " </Dados>";
-$xml .= "</Root>";
+	if ($flgvalid == 1) { 
+		// validar atualiza√ß√£o do cart√£o
+		$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
+		$xml .= "   <nrcrcard>" . $nrcrcard . "</nrcrcard>";
+		$xml .= "   <nrcctitg>" . $nrcctitg . "</nrcctitg>";
+		$xml .= "   <nrcpftit>" . $nrcpftit . "</nrcpftit>";	
+		$xml .= "   <cdadmcrd>" . $cdadmcrd . "</cdadmcrd>";	
+		$xml .= "   <nrctrcrd>" . $nrctrcrd . "</nrctrcrd>";
+		$xml .= "   <flgprcrd>" . $flgprcrd . "</flgprcrd>";	
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "TELA_MANCRD", "PC_ATUALIZA_CARTAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-$xmlObj = getObjectXML($xmlResult);
+		$xmlResult = mensageria($xml, "TELA_MANCRD", "PC_VALIDA_ATUALIZA_CARTOES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getObjectXML($xmlResult);
+	    
+		if (strtoupper($xmlObj->roottag->tags[0]->tags[0]->name) == "MSG") {
+		   
+		   if (strtoupper($xmlObj->roottag->tags[0]->tags[0]->cdata) != "") {
+		        $msgConfirmacao = $xmlObj->roottag->tags[0]->tags[0]->cdata;
+			
+			    echo "showConfirmacao('".$msgConfirmacao."',
+				    				  'Confirma&ccedil;&atilde;o - Aimaro',
+								      'confirmaAtualizaCartao(0);',
+									  'hideMsgAguardo();','sim.gif','nao.gif');";
+                exit();											  
+	        } 
+		}else{
 
-if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-    $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-    if ($msgErro == "") {
-        $msgErro = $xmlObj->roottag->tags[0]->cdata;
+			if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			    if ($msgErro == "") {
+			       $msgErro = $xmlObj->roottag->tags[0]->cdata;
+				}
+		
+				exibirErro('error', $msgErro, 'Alerta - Ayllos', "", false);  		
+				return false;
+			}	
+	        // se chegou aqui √© pq n√£o deu erro
+	        $flgvalid = 0; 
+		}
+
+	}
+  
+  
+	if ($flgvalid == 0) {
+    $xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
+    $xml .= "   <nrcrcard>" . $nrcrcard . "</nrcrcard>";
+    $xml .= "   <nrcctitg>" . $nrcctitg . "</nrcctitg>";
+    $xml .= "   <cdadmcrd>" . $cdadmcrd . "</cdadmcrd>";
+    $xml .= "   <nrcpftit>" . $nrcpftit . "</nrcpftit>";
+    $xml .= "   <flgdebit>" . $flgdebit . "</flgdebit>";
+    $xml .= "   <nmtitcrd>" . $nmtitcrd . "</nmtitcrd>";
+    $xml .= "   <insitcrd>" . $insitcrd . "</insitcrd>";
+    $xml .= "   <insitdec>" . $insitdec . "</insitdec>";
+    $xml .= "   <flgprcrd>" . $flgprcrd . "</flgprcrd>";
+    $xml .= "   <nrctrcrd>" . $nrctrcrd . "</nrctrcrd>";
+    $xml .= "   <nmempres>" . $nmempres . "</nmempres>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    $xmlResult = mensageria($xml, "TELA_MANCRD", "PC_ATUALIZA_CARTAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
+
+    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        if ($msgErro == "") {
+            $msgErro = $xmlObj->roottag->tags[0]->cdata;
+        }
+        exibirErro('error', $msgErro, 'Alerta - Ayllos', "", false);    
+    } 
+    else{
+	    exibirErro('inform', 'Cartao atualizado com sucesso.', 'Alerta - Ayllos', "fechaRotina($('#divRotina'));buscaCartoes();", false);
     }
-    exibirErro('error', $msgErro, 'Alerta - Ayllos', "", false);    
-} 
-else{
-	exibirErro('inform', 'Cartao atualizado com sucesso.', 'Alerta - Ayllos', "fechaRotina($('#divRotina'));buscaCartoes();", false);
-}
+    
+  }
 
 ?>

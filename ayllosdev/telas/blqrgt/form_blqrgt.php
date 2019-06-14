@@ -10,7 +10,7 @@
  */
  ?>
  <fieldset style="padding: 10px <? echo $cddopcao == 'L' ? '110px' : '180px';?> 5px <? echo $cddopcao == 'L' ? '110px' : '180px';?>;">
-  <legend align="center">Bloqueios de Aplica&ccedil;&atilde;o/Poupan&ccedil;a </legend>
+  <legend align="center">Bloqueios de Aplica&ccedil;&atilde;o </legend>
   <div id="divBloqueiosAplicacao" class="divRegistros">
 	<?php if ($countBloqueios > 0) { ?>
 		<table>
@@ -42,7 +42,7 @@
 	<?php
 	} else {
 		?><center><?
-		echo "Sem aplica&ccedil;&otilde;es/poupan&ccedil;a bloqueadas para a conta informada.";
+		echo "Sem aplica&ccedil;&otilde;es bloqueadas para a conta informada.";
 		?></center><?
 	} ?>
   </div>

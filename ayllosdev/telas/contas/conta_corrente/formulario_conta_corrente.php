@@ -40,6 +40,8 @@
 				 
 *
 *				 26/09/2017 - Correcao no label do campo dtdemis. SD 761666 (Carlos Rafael Tanholi)
+*
+*			     27/02/2019 - ACELERA - Buscar flag reapresentação automatica de cheque - (Lucas H - SUPERO)			
 */	
 
 //recupera tag com a conta consorcio
@@ -95,6 +97,28 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 }
 
 $situacoes = $xmlObj->roottag->tags[0]->tags;
+
+
+//------------
+$xml = "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <cdcooper>".$glbvars['cdcooper']."</cdcooper>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResultModalidade = mensageria($xml, "ATENDA", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObjModalidade = getObjectXML($xmlResultModalidade);
+
+if (strtoupper($xmlObjModalidade->roottag->tags[0]->name) == "ERRO") {
+	$msgErro = $xmlObjModalidade->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	if ($msgErro == "") {
+		$msgErro = $xmlObjModalidade->roottag->tags[0]->cdata;
+	}
+	exibeErro($msgErro);
+}
+$modalidade = $xmlObjModalidade->roottag->tags[0]->cdata;
+//------------
 
 ?>
 <script>
@@ -214,10 +238,16 @@ foreach($tipos_conta as $tipo_conta) {
 			<input name="tpavsdeb" id="tpavsdebOp2" type="radio" class="radio" value="0" <? if (getByTagName($registro,'tpavsdeb') == '0') { echo ' checked'; } ?> />
 			<label for="tpavsdebOp2" class="radio"><? echo utf8ToHtml('Não') ?></label>						
 			
+		<?
+		$cdsecext = getByTagName($registro,'cdsecext');
+		if (empty($cdsecext) && $modalidade == 2 && $flgcadas == 'M') {
+			$cdsecext = 999;
+		}
+		?>
 		<label for="cdsecext">Destino Extrato:</label>
-			<input name="cdsecext" id="cdsecext" type="text" value="<? echo getByTagName($registro,'cdsecext') ?>" />
+			<input name="cdsecext" id="cdsecext" type="text" value="<?=$cdsecext?>" />
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-			<input name="dssecext" id="dssecext" type="text" value="<? echo getByTagName($registro,'dssecext') ?>" />	
+			<input name="dssecext" id="dssecext" type="text" value="<?=getByTagName($registro,'dssecext')?>" />
 		<br />
 			
 		<?php $disabled=($glbvars['nvoperad']!=3) ? "disabled" : ""; ?>
@@ -263,6 +293,11 @@ foreach($tipos_conta as $tipo_conta) {
 		<input name="flblqtal" id="flblqtalOp2" type="radio" class="radio" value="0" <?php if (getByTagName($registro,'flblqtal') == 'no') { echo ' checked'; } ?> />
 		<label for="flblqtalOp2" class="radio"><?php echo utf8ToHtml('Não') ?></label>
 		<br />
+		<label for="flgreapre"><? echo utf8ToHtml('Reap. Aut. Cheques Depositados:') ?></label>
+            <input name="flgreapre" id="flgreapreOp1" type="radio" class="radio" value="1" <? if ($flgreapre == 1) { echo ' checked'; } ?> />
+            <label for="flgreapreOp1" class="radio">Sim</label>		
+			<input name="flgreapre" id="flgreapreOp2" type="radio" class="radio" value="0" <? if ($flgreapre == 0) { echo ' checked'; } ?> />
+			<label for="flgreapreOp2" class="radio"><?php echo utf8ToHtml('Não') ?></label>		
 		
 	</fieldset>
 	

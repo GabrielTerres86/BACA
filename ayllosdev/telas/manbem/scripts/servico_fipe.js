@@ -11,8 +11,8 @@ $(function(){
         if(validaValorCombo($(this)))
         {
             var urlPagina= "telas/manbem/fipe/busca_marcas.php";
-            var tipoVeiculo = trataTipoVeiculo($(this).val());
-            var data = jQuery.param({ idelhtml:idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax'});
+            var tipoVeiculo = trataTipoVeiculo( $(this).val() );
+            var data = jQuery.param({ idelhtml:idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax' });
             buscaFipeServico(urlPagina,data);				
         }
     });

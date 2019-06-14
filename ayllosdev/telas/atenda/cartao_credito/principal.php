@@ -211,7 +211,7 @@ function voltarParaTelaPrincipal(){
 					<?  for ($i = 0; $i < count($ccredito); $i++) {
                             $motorResp = getDecisao($nrdconta, getByTagName($ccredito[$i]->tags,'NRCTRCRD'),$glbvars);
 							
-							$mtdClick = "selecionaCartao('".getByTagName($ccredito[$i]->tags,'NRCTRCRD')."' , '".getByTagName($ccredito[$i]->tags,'NRCRCARD')."' , '".getByTagName($ccredito[$i]->tags,'CDADMCRD')."' , '".$i."' , '".$cor."' , '".getByTagName($ccredito[$i]->tags,'DSSITCRD')."','".getByTagName($ccredito[$i]->tags,'FLGCCHIP')."','".$motorResp[0]."','".getByTagName($ccredito[$i]->tags,"FLGPROVI")."','".$dtassele."','".$dsvlrprm."','".getByTagName($ccredito[$i]->tags,"DTINSORI")."');";
+							$mtdClick = "selecionaCartao('".getByTagName($ccredito[$i]->tags,'NRCTRCRD')."' , '".getByTagName($ccredito[$i]->tags,'NRCRCARD')."' , '".getByTagName($ccredito[$i]->tags,'CDADMCRD')."' , '".$i."' , '".$cor."' , '".getByTagName($ccredito[$i]->tags,'DSSITCRD')."','".getByTagName($ccredito[$i]->tags,'FLGCCHIP')."','".$motorResp[0]."','".getByTagName($ccredito[$i]->tags,"FLGPROVI")."','".$dtassele."','".$dsvlrprm."','".getByTagName($ccredito[$i]->tags,"DTINSORI")."',".getByTagName($ccredito[$i]->tags,'FLGPRCRD').");";
 					?>
 						<?;?>
 						<tr id="<?php echo $i; ?>" onFocus="<? echo $mtdClick;?>" onClick="<? echo $mtdClick;?>">
@@ -250,6 +250,7 @@ function voltarParaTelaPrincipal(){
 				       $sitaucaoDaContaCrm == '7' || 
 				       $sitaucaoDaContaCrm == '8'  )){?>
 				<a href="#" id="btnnovo" class="botao" <?php if (!in_array("N",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='$methodNovo(" . $glbvars["cdcooper"] . "); return false;'"; } ?>>Novo</a>		
+				<a href="#" id="btnalterarendereco" onClick="alterarEndereco();" class="botao">Alterar Endere&ccedil;o</a>
 			<?}?>
 			
 			

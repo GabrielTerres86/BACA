@@ -1,11 +1,13 @@
 //*********************************************************************************************//
 //*** Fonte: tab097.js                                                 						***//
 //*** Autor: Jaison Fernando                                           						***//
-//*** Data : Novembro/2015                  Última Alteração: 03/08/2017  					***//
+//*** Data : Novembro/2015                  Última Alteração: 17/04/2019  					***//
 //***                                                                  						***//
 //*** Objetivo  : Biblioteca de funções da tela TAB097                 						***//
 //***                                                                  						***//	 
 //*** Alterações: 03/08/2017 - Ajuste para utilizar a packge ZOOM0001(Adriano).             ***//
+//***             17/04/2019 - Adicionado nova tabela referente a indexcecao 3.             ***//
+//***                          RITM0012246 (Mateus Z - Mouts)                               ***//
 //*********************************************************************************************//
 
 var cCddopcao;
@@ -101,6 +103,7 @@ function formataFormulario() {
     var rAcao_cnae            = $('label[for="acao_cnae"]',            '#frmTab097');
     var rAcao_uf              = $('label[for="acao_uf"]',              '#frmTab097');
     var rAcao_uf_neg_dif      = $('label[for="acao_uf_neg_dif"]',      '#frmTab097');
+    var rAcao_uf_neg_rec      = $('label[for="acao_uf_neg_rec"]',      '#frmTab097');
 	
 	rQtminimo_negativacao.addClass('rotulo').css('width','200px');
 	rQtmaximo_negativacao.addClass('rotulo').css('width','200px');
@@ -111,6 +114,7 @@ function formataFormulario() {
     rAcao_cnae.addClass('rotulo').css('width', '200px');
     rAcao_uf.addClass('rotulo').css('width', '200px');
     rAcao_uf_neg_dif.addClass('rotulo').css('width', '200px');
+    rAcao_uf_neg_rec.addClass('rotulo').css('width', '200px');
 
     var cQtminimo_negativacao = $('#qtminimo_negativacao', '#frmTab097');
     var cQtmaximo_negativacao = $('#qtmaximo_negativacao', '#frmTab097');
@@ -121,6 +125,7 @@ function formataFormulario() {
     var cAcao_cnae            = $('#acao_cnae',            '#frmTab097');
     var cAcao_uf              = $('#acao_uf',              '#frmTab097');
     var cAcao_uf_neg_dif      = $('#acao_uf_neg_dif',      '#frmTab097');
+    var cAcao_uf_neg_rec      = $('#acao_uf_neg_rec',      '#frmTab097');
 
     cQtminimo_negativacao.css('width', '80px').setMask('INTEGER', 'zz', '', '');
     cQtmaximo_negativacao.css('width', '80px').setMask('INTEGER', 'zz', '', '');
@@ -132,15 +137,19 @@ function formataFormulario() {
     cAcao_cnae.css('width', '80px');
     cAcao_uf.css('width', '80px');
     cAcao_uf_neg_dif.css('width', '80px');
+    cAcao_uf_neg_rec.css('width', '80px');
     
     // Oculta botoes excluir e tabela Acao
     $(".clsExcCNAE").hide();
     $(".clsExcUF").hide();
     $(".clsExcUFNegDif").hide();
     $(".clsAltUFNegDif").hide();
+    $(".clsExcUFNegRec").hide();
+    $(".clsAltUFNegRec").hide();
     $("#tabAcao").hide();
     $("#tabAcaoUF").hide();
     $("#tabAcaoUFNegDif").hide();
+    $("#tabAcaoUFNegRec").hide();
 
     if (cddopcao == "C") {
 
@@ -159,6 +168,7 @@ function formataFormulario() {
         $("#tabAcao").show();
         $("#tabAcaoUF").show();
         $("#tabAcaoUFNegDif").show();
+        $("#tabAcaoUFNegRec").show();
 		
         $('#divMsgAjuda').css('display', 'block');
         $('#divBotao').css('display', 'block');
@@ -255,6 +265,7 @@ function controlaOperacao(nriniseq,nrregist) {
                 formataGridCNAE();
                 formataGridUF();
                 formataGridUFNegDif();
+                formataGridUFNegRec();
                 cTodosCabecalho.desabilitaCampo();
 
                 hideMsgAguardo();
@@ -314,7 +325,7 @@ function confirmaInclusao(acao) {
 
         if (dsuf == '') {
             showError("error", "Informe a UF.", "Alerta - Ayllos", "$('#dsuf','#frmUF').focus();bloqueiaFundo($('#divRotina'));");
-        } else if (indexcecao == 2 && qtminimo_negativacao == 0) {
+        } else if ((indexcecao == 2 || indexcecao == 3) && qtminimo_negativacao == 0) {
             showError("error", "Informe o prazo.", "Alerta - Ayllos", "$('#qtminimo_negativacao','#frmUF').focus();bloqueiaFundo($('#divRotina'));");
         } else {
             var dsvalor = indexcecao + '|' + dsuf + '|' + qtminimo_negativacao + '|' + qtmaximo_negativacao;
@@ -448,6 +459,30 @@ function formataGridUFNegDif() {
     return false;
 }
 
+function formataGridUFNegRec() {
+
+    var divRegistro = $('#divUFNegRec');
+    var tabela = $('table', divRegistro);
+    var linha = $('table > tbody > tr', divRegistro);
+
+    divRegistro.css({ 'height': '70px' });
+
+    var ordemInicial = new Array();
+    ordemInicial = [[0, 0]];
+
+    var arrayLargura = new Array();
+    arrayLargura[0] = '100px';
+    arrayLargura[2] = '100px';
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'left';
+    arrayAlinha[2] = 'center';
+
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+    return false;
+}
+
 function executarAcao(acao_combo) {
 
     switch (acao_combo) {
@@ -467,6 +502,17 @@ function executarAcao(acao_combo) {
             var dsvalor = $('#hdnvalor', '#frmTab097').val();
             var acao_combo = 'UFNegDif';
             break; 
+        case 'UFNegRec':
+            var cddopcao = $('#acao_uf_neg_rec', '#frmTab097').val();
+            var dsvalor = '3|NA';
+            var page = 'form_uf.php';
+            break;
+        case 'ALT_UFNegRec':
+            var cddopcao = 'A';
+            var page = 'form_uf.php';
+            var dsvalor = $('#hdnvalor', '#frmTab097').val();
+            var acao_combo = 'UFNegRec';
+            break;     
         default: // CNAE
             var cddopcao = $('#acao_cnae', '#frmTab097').val();
             var page = 'form_cnae.php';
@@ -477,6 +523,8 @@ function executarAcao(acao_combo) {
     $(".clsExcUF").hide();
     $(".clsExcUFNegDif").hide();
     $(".clsAltUFNegDif").hide();
+    $(".clsExcUFNegRec").hide();
+    $(".clsAltUFNegRec").hide();
 
     if (cddopcao == "E") { // Excluir
 

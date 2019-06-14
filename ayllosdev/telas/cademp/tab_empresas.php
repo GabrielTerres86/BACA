@@ -1,4 +1,4 @@
-<?php
+<? 
 /*!
  * FONTE        : tab_empresas.php
  * CRIAÇÃO      : Michel Candido - (Gati Tecnologia)
@@ -10,11 +10,9 @@
  *                17/05/2016 - Correcao para exibicao do campo dtfchfol. Remocao do campo tpdebppr e dtavsppr.
  *                             Inclusao do campo dtlimdeb. (Jaison/Marcos)
  *
- *				  28/07/2016 - Removio comando session_start e tratei acentuacao da tabela. SD 491925 (Carlos R.)
- *
- *      		  14/09/2018 - Tratamento para o projeto 437 Consignado (incluir  flnecont e tpmodcon)
-*/ 
-// Includes para variáveis globais de controle, e biblioteca de funções
+ */	
+// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
+session_start();
 require_once("../../includes/config.php");
 require_once("../../includes/funcoes.php");
 require_once("../../includes/controla_secao.php");
@@ -26,9 +24,9 @@ isPostMethod();
 		<table >
 			<thead>
 				<tr>
-					<th>C&oacute;digo</th>
-					<th>Empresa</th>
-					<th>Raz&atilde;o Social</th>
+					<th><? echo utf8ToHtml('Codigo'); ?></th>
+					<th><? echo utf8ToHtml('Empresa');  ?></th>
+					<th><? echo utf8ToHtml('Razao Social');  ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -63,17 +61,15 @@ isPostMethod();
 						<input type="hidden" id="hdscomple" name="dscomple" value="<?php echo getByTagName($r->tags,'dscomple');?>" />
 						<input type="hidden" id="hdsdemail" name="dsdemail" value="<?php echo getByTagName($r->tags,'dsdemail');?>" />
 						<input type="hidden" id="hdsendemp" name="dsendemp" value="<?php echo getByTagName($r->tags,'dsendemp');?>" />
-						<input type="hidden" id="hdtfchfol" name="dtfchfol" value="<?php echo str_pad(getByTagName($r->tags,'dtfchfol'), 2, 0, STR_PAD_LEFT);?>" />
+						<input type="hidden" id="hdtfchfol" name="dtfchfol" value="<?php echo str_pad(getByTagName($r->tags,'dtfchfol'), 2, "0", STR_PAD_LEFT);?>" />
 						<input type="hidden" id="hindescsg" name="indescsg" value="<?php echo getByTagName($r->tags,'indescsg');?>" />
 						<input type="hidden" id="hnmbairro" name="nmbairro" value="<?php echo getByTagName($r->tags,'nmbairro');?>" />
 						<input type="hidden" id="hnmcidade" name="nmcidade" value="<?php echo getByTagName($r->tags,'nmcidade');?>" />
 						<input type="hidden" id="hnrcepend" name="nrcepend" value="<?php echo formataCep(getByTagName($r->tags,'nrcepend')); ?>" />
 						<input type="hidden" id="hnrdocnpj" name="nrdocnpj" value="<?php echo formatar(getByTagName($r->tags,'nrdocnpj'), 'cnpj'); ?>" />
-						<input type="hidden" id="hnrendemp" name="nrendemp" value="<?php echo getByTagName($r->tags,'nrendemp');?>" />
+						<input type="hidden" id="hnrendemp" name="nrendemp" value="<?php echo mascara(getByTagName($r->tags,'nrendemp'), "###.###");?>" />
 						<input type="hidden" id="hnrfaxemp" name="nrfaxemp" value="<?php echo getByTagName($r->tags,'nrfaxemp');?>" />
 						<input type="hidden" id="hnrfonemp" name="nrfonemp" value="<?php echo getByTagName($r->tags,'nrfonemp');?>" />
-						<!-- P437 -->
-						<input type="hidden" id="hnrdddemp" name="nrdddemp" value="<?php echo getByTagName($r->tags,'nrdddemp');?>" />
 						<input type="hidden" id="hflgarqrt" name="flgarqrt" value="<?php echo getByTagName($r->tags,'flgarqrt');?>" />
 						<input type="hidden" id="hflgvlddv" name="flgvlddv" value="<?php echo getByTagName($r->tags,'flgvlddv');?>" />
 						<input type="hidden" id="hflgpgtib" name="flgpgtib" value="<?php echo getByTagName($r->tags,'flgpgtib');?>" />
@@ -82,8 +78,6 @@ isPostMethod();
 						<input type="hidden" id="hvllimfol" name="vllimfol" value="<?php echo formataMoeda(getByTagName($r->tags,'vllimfol')); ?>" />
 						<input type="hidden" id="hdtultufp" name="dtultufp" value="<?php echo getByTagName($r->tags,'dtultufp');?>" />
                         <input type="hidden" id="hdtlimdeb" name="dtlimdeb" value="<?php echo getByTagName($r->tags,'dtlimdeb');?>" />
-						<input type="hidden" id="htpmodcon" name="tpmodcon" value="<?php echo getByTagName($r->tags,'tpmodcon');?>" />
-						<input type="hidden" id="hflnecont" name="flnecont" value="<?php echo getByTagName($r->tags,'flnecont');?>" />
 						<!-- CAMPOS COM OS DADOS PARA POPULAR OS FORMULARIOS CONFORME A EMPRESA ESCOLHIDA -->
 					</td>
 					<td>

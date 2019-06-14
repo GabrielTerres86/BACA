@@ -5,6 +5,11 @@
  * DATA CRIA��O : 14/03/2018 
  * OBJETIVO     : Tabela que apresenta as TED recebidas
  */	
+/*
+  16/04/2019 - INC0011935 - Melhorias diversas nos layouts de teds e conciliação:
+               - modal de conciliação arrastável e correção das colunas para não obstruir as caixas de seleção;
+               - aumentadas as alturas das listas de teds e modal de conciliação, reajustes das colunas (Carlos)
+*/
 ?>
 
 <form id="frmTabela" class="formulario" >
@@ -21,10 +26,10 @@
 				</tr>
 			</thead>
 			<tbody>
-				<? for ($x = 0; $x <= ($qtregist - 1); $x++) { ?>
+				<? for ($x = 0; $x <= ($qtregist -1); $x++) { ?>
 					<tr>
 						
-						<td><span><? echo getByTagName($registro[$x]->tags,'nmremetente') ?></span>
+						<td width="210"><span><? echo getByTagName($registro[$x]->tags,'nmremetente') ?></span>
 							      <? echo getByTagName($registro[$x]->tags,'nmremetente') ?>
 								  <input type="hidden" id="idlancto" name="idlancto" value="<? echo getByTagName($registro[$x]->tags,'idlancto') ?>" />
 								  <input type="hidden" id="nmcartorio" name="nmcartorio" value="<? echo getByTagName($registro[$x]->tags,'nmcartorio') ?>" />
@@ -39,16 +44,16 @@
 								  <input type="hidden" id="cidade" name="cidade" value="<? echo getByTagName($registro[$x]->tags,'cidade') ?>" />
 								  <input type="hidden" id="status" name="status" value="<? echo getByTagName($registro[$x]->tags,'status') ?>" />
 						</td>
-                        <td><span><? echo getByTagName($registro[$x]->tags,'cnpj_cpf') ?></span>
+                        <td width="110"><span><? echo getByTagName($registro[$x]->tags,'cnpj_cpf') ?></span>
 							      <? echo getByTagName($registro[$x]->tags,'cnpj_cpf') ?>
 						</td>
-                        <td><span><? echo getByTagName($registro[$x]->tags,'banco') , '/' , getByTagName($registro[$x]->tags,'agencia') ?></span>
+                        <td width="70"><span><? echo getByTagName($registro[$x]->tags,'banco') , '/' , getByTagName($registro[$x]->tags,'agencia') ?></span>
 							      <? echo getByTagName($registro[$x]->tags,'banco') , '/' , getByTagName($registro[$x]->tags,'agencia') ?>
 						</td>
 						<td><span><? echo getByTagName($registro[$x]->tags,'conta') ?></span>
 							      <? echo getByTagName($registro[$x]->tags,'conta') ?>
 						</td>
-						<td><span><? echo getByTagName($registro[$x]->tags,'dtrecebimento') ?></span>
+						<td width="80"><span><? echo getByTagName($registro[$x]->tags,'dtrecebimento') ?></span>
 							      <? echo getByTagName($registro[$x]->tags,'dtrecebimento') ?>
 						</td>
 						<td><span><? echo getByTagName($registro[$x]->tags,'valor') ?></span>
@@ -60,43 +65,7 @@
 			</tbody>
 		</table>
 	</div>
-	<div id="divPesquisaRodape" class="divPesquisaRodape">
-		<table>	
-			<tr>
-				<td>
-					<?
-						
-						//
-						if (isset($qtregist) and $qtregist == 0) $nriniseq = 0;
-						
-						// Se a pagina��o n�o est� na primeira, exibe bot�o voltar
-						if ($nriniseq > 1) { 
-							?> <a class='paginacaoAnt'><<< Anterior</a> <? 
-						} else {
-							?> &nbsp; <?
-						}
-					?>
-				</td>
-				<td>
-					<?
-						if (isset($nriniseq)) { 
-							?> Exibindo <? echo $nriniseq; ?> at&eacute; <? if (($nriniseq + $nrregist) > $qtregist) { echo $qtregist; } else { echo ($nriniseq + $nrregist - 1); } ?> de <? echo $qtregist; ?><?
-						}
-					?>
-				</td>
-				<td>
-					<?
-						// Se a pagina��o n�o est� na �ltima p�gina, exibe bot�o proximo
-						if ($qtregist > ($nriniseq + $nrregist - 1)) {
-							?> <a class='paginacaoProx'>Pr&oacute;ximo >>></a> <?
-						} else {
-							?> &nbsp; <?
-						}
-					?>			
-				</td>
-			</tr>
-		</table>
-	</div>
+	<br />
 	<div class="complemento">
 		<input type="hidden" id="idlancto" value=""/>
 	</div>
@@ -178,16 +147,3 @@
 	<input type="hidden" name="dscartor" id="dscartor" value="<?php echo $dscartor; ?>">
 	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 </form>
-
-<script type="text/javascript">
-
-	$('a.paginacaoAnt').unbind('click').bind('click', function() {
-		controlaOperacao(<? echo "'".$operacao."','".($nriniseq - $nrregist)."','".$nrregist."'"; ?>);
-	});
-	$('a.paginacaoProx').unbind('click').bind('click', function() {
-		controlaOperacao(<? echo "'".$operacao."','".($nriniseq + $nrregist)."','".$nrregist."'"; ?>);
-	});	
-	
-	$('#divRegistros','#divTela').formataTabela();
-	$('#divPesquisaRodape','#divTela').formataRodapePesquisa();
-</script>

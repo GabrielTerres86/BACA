@@ -1028,8 +1028,6 @@ function formataConsultaLanc(){
 }
 
 function conLanc(nriniseq,nrregist){
-
-	
 	var dtmvtolt = $("#dtmvtolt","#frmConLancamento").val();
 
 	if (dtmvtolt != ''){
@@ -1041,11 +1039,10 @@ function conLanc(nriniseq,nrregist){
 			var cdhistor_padrao = $("#cdhistor_padrao","#frmConLancamento").val();
 			var dslancamento = $("#dslancamento","#frmConLancamento").val();				
 			var opevlrlan = $("#opevlrlan","#frmConLancamento").val();	
+			var cdoperad = $("#cdoperad","#frmConLancamento").val();
 						
 			var mensagem = 'Consultando Lancamentos...';			
 
-		
-			
 			showMsgAguardo(mensagem);
 			
 			//Requisição para validar conta contabil
@@ -1063,6 +1060,7 @@ function conLanc(nriniseq,nrregist){
 					vllanmto: vllanmto,
 					cdhistor_padrao: cdhistor_padrao,
 					dslancamento: dslancamento,					
+					cdoperad: cdoperad,
 					opevlrlan: opevlrlan,			
 					redirect:     "script_ajax"
 				},
@@ -2605,9 +2603,6 @@ function excluirLinhaGerencialRat(linha){
 }
 
 function criarLinhaLanc(seq,cdhistor,nrctadeb,nrctacrd,vllanmto,cdhistor_padrao,dsoperador,cdoperad,dslancamento){
-	
-
-
 	var tr = $('<tr>') // Linha
 			.attr('id',"id_".concat(cdhistor))
 			.append($('<td>') // Coluna: conta contabil				
@@ -3282,7 +3277,7 @@ function cofirmaAlteracaoLanc(){
 	var cdhistor_padrao = $("#cdhistor_padrao","#frmIncLancamento").val();
 	var dslancamento = $("#dslancamento","#frmIncLancamento").val();	
 	
-	
+	dslancamento = removeAcentos(removeCaracteresInvalidos(removeCaracteresSlip(dslancamento)));
 	
     if (cdhistor != "" &&
 		nrctadeb != "" &&
@@ -3292,7 +3287,7 @@ function cofirmaAlteracaoLanc(){
 		dslancamento != "" &&
 		tab_seqslip != ""){
 
-	controlaAlteracaoLanc
+	//controlaAlteracaoLanc
 		lscdgerencial = retLscdgerencial();
 		lsvllanmto = retLsvllanmto();
 		lscdrisco_operacional = retLscdrisco_operacional();
@@ -3410,7 +3405,7 @@ function cofirmaInclusaoLanc(){
 	var cdhistor_padrao = $("#cdhistor_padrao","#frmIncLancamento").val();
 	var dslancamento = $("#dslancamento","#frmIncLancamento").val();	
 	
-	
+	dslancamento = removeAcentos(removeCaracteresInvalidos(removeCaracteresSlip(dslancamento)));
 	
     if (
 		nrctadeb != "" &&
@@ -3419,7 +3414,6 @@ function cofirmaInclusaoLanc(){
 		cdhistor_padrao != "" &&
 		dslancamento != ""){
 
-	
 		lscdgerencial = retLscdgerencial();
 		lsvllanmto = retLsvllanmto();
 		lscdrisco_operacional = retLscdrisco_operacional();

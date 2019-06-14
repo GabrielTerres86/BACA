@@ -5,6 +5,7 @@ Data: 12/11/2018
 Ultima alteração:
 
 Alterações:
+Data: 03/05/2019 : INC0011194 :Foi removido o método "function decodeString" Thiago Fronza - Mout'S  
 */
 define("PULAR_LINHA", "\n");
 define("DELIMITAR_COLUNA", ";");
@@ -45,26 +46,5 @@ function writeArchive($fileName = "archive", $cabecalho = null, $valores = null)
 	unlink($tmpName); //deletar arquivo temporario
 	exit();
 }
-
-/**
- * @author Bruno Luiz K.;
- * 
- * @param      $string
- * @param bool $desc
- *
- * @return mixed|null|string|string[]
- */
-function decodeString($string, $desc = false){
-	if($desc){
-		$string = html_entity_decode($string, ENT_QUOTES);
-		$string = strip_tags($string);
-	}
-	$codificacaoAtual = mb_detect_encoding($string, 'auto', true);
-	$content = mb_convert_encoding($string, 'ISO-8859-1', $codificacaoAtual);
-	$content = str_replace(";",".",$content);
-	
-	return $content;
-}
-
 
 ?>

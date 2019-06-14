@@ -25,11 +25,7 @@
  * 014: [14/12/2017] Incluido campos hidden flintcdc e inintegra_cont, Prj. 402 (Jean Michel)
  * 014: [14/08/2018] Incluido botão Anular e input hidden com o valor da situação insitest (Mateus Z - Mouts - P438)
  * 015: [08/11/2018] Criação do botão de Altera Somente Bens - PRJ438 - Sprint 5 (Mateus Z / Mouts)
- * 016: [14/02/2019] Inclusão dos campos nota do rating, origem da nota e status da análise P450 (Luiz Otávio Olinger Momm - AMCOM).
- * 017: [25/02/2019] Inclusão do botão Alterar Rating P450 (Luiz Otávio Olinger Momm - AMCOM).
- * 018: [07/03/2019] Adicionado verificação se Cooperativa pode ou não Alterar Rating P450 (Luiz Otávio Olinger Momm - AMCOM).
- * 019: [15/03/2019] P450 - Inclusão da consulta Rating (Luiz Otávio Olinger Momm - AMCOM).
- * 020: [05/02/2019] Inclusao da coluna origem. P438. (Douglas Pagel / AMcom).
+*  016: [05/02/2019] Inclusao da coluna origem. P438. (Douglas Pagel / AMcom)
  */
 ?>
 
@@ -49,53 +45,10 @@
 				<th>Ac</th>
 				<th><? echo utf8ToHtml('Situação');?></th>
 				<th><? echo utf8ToHtml('Decisão');?></th>
-                <th><? echo utf8ToHtml('Nota<br>Rating');?></th>
-                <th><? echo utf8ToHtml('OrigemRat');?></th>
-                <th><? echo utf8ToHtml('Status');?></th>
-				<th><? echo utf8ToHtml('Origem');?></th>
-                <!-- [017] -->
-            </tr>
+				<th>Origem</th></tr>
 		</thead>
 		<tbody>
 			<? foreach( $registros as $registro ) {
-
-                /* [019] */
-                $msgErro = '';
-                $notaRating = '';
-                $origemRating = '';
-                $situacaoRating = '';
-                if ((int)$nrdconta > 0) {
-                    $xml = "<Root>";
-                    $xml .= "<Dados>";
-                    $xml .= "	<nrdconta>".$nrdconta."</nrdconta>";
-                    $xml .= "	<nrctro>".getByTagName($registro->tags,'nrctremp')."</nrctro>";
-                    $xml .= "	<tpctro>90</tpctro>";
-                    $xml .= "</Dados>";
-                    $xml .= "</Root>";
-
-                    $xmlResult = mensageria($xml, "RATI0003", "CONSULTAR_RISCO_RATING", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-                    $xmlObj = getObjectXML($xmlResult);
-
-                    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-                        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-
-                        if ($msgErro == "") {
-                            $msgErro = $xmlObj->roottag->tags[0]->cdata;
-                        }
-                    } else {
-                        // Aguardando estória para a implantação da impressão do rating motor
-                        $retornoRating = $xmlObj->roottag->tags[0]->tags;
-                        foreach ($retornoRating as $rating) {
-                            $notaRating = getByTagName($rating->tags,'PR_DESC_RATING');
-                            $origemRating = getByTagName($rating->tags,'PR_ORIGEM_RATING');
-                            $situacaoRating = getByTagName($rating->tags,'PR_DESC_SIT');
-                        }
-                    }
-
-                    unset($xmlResult);
-                }
-                /* [019] */
-
                 switch (getByTagName($registro->tags,'tpemprst')) {
                     case 0:
                         $tipo = "Price TR";
@@ -107,7 +60,6 @@
                         $tipo = "Pos-fixado";
                         break;
                 } 
-				 
 				switch (getByTagName($registro->tags,'cdorigem')) {
                     case 1:
                         $tipoOrigem = "Aimaro";
@@ -151,19 +103,10 @@
                         <input type="hidden" id="err_efet" name="err_efet" value="<? echo getByTagName($registro->tags,'err_efet') ?>" />
 						<input type="hidden" id="insitapr" name="insitapr" value="<? echo getByTagName($registro->tags,'insitapr') ?>" />
 						<input type="hidden" id="cdlcremp" name="cdlcremp" value="<? echo getByTagName($registro->tags,'cdlcremp') ?>" />
-					    <input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
-						<input type="hidden" id="vlfinanc" name="vlfinanc" value="<? echo getByTagName($registro->tags,'vlfinanc') ?>" />
+					    <input type="hidden" id="vlfinanc" name="vlfinanc" value="<? echo getByTagName($registro->tags,'vlfinanc') ?>" />
 						<input type="hidden" id="dssitest" name="dssitest" value="<? echo getByTagName($registro->tags,'dssitest') ?>" />
-						<input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
+            <input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
 						<input type="hidden" id="insitest" name="insitest" value="<? echo getByTagName($registro->tags,'insitest') ?>" />
-						<!-- PRJ - 437 - Consignado s3 -->
-						<input type="hidden" id="inaverba" name="inaverba" value="<? echo getByTagName($registro->tags,'inaverba') ?>" />
-						<input type="hidden" id="tpemprst" name="tpemprst" value="<? echo getByTagName($registro->tags,'tpemprst') ?>" />
-						<input type="hidden" id="tpmodcon" name="tpmodcon" value="<? echo getByTagName($registro->tags,'tpmodcon') ?>" />
-						<input type="hidden" id="dtdpagto" name="dtdpagto" value="<? echo getByTagName($registro->tags,'dtdpagto') ?>" />
-						<input type="hidden" id="vlemprstt" name="vlemprstt" value="<? echo getByTagName($registro->tags,'vlemprst') ?>" />
-						<input type="hidden" id="qtpreemp" name="qtpreemp" value="<? echo getByTagName($registro->tags,'qtpreemp') ?>" />
-						<input type="hidden" id="idfiniof" name="idfiniof" value="<? echo getByTagName($registro->tags,'idfiniof') ?>" />
 					    <!-- PRJ - 438 - Rating  -->
 						<input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($registro->tags,'cdfinemp') ?>" />
 						<input type="hidden" id="flintcdc" name="flintcdc" value="<? echo getByTagName($registro->tags,'flintcdc') ?>" />
@@ -185,18 +128,12 @@
 					<td><? echo stringTabela(getByTagName($registro->tags,'cdoperad'),10,'maiuscula') ?></td>					
 					<td><? echo getByTagName($registro->tags,'dssitest') ?></td>
 					<td><? echo getByTagName($registro->tags,'dssitapr') ?></td>
-					<!-- [016][019] -->
-                    <td><? echo $notaRating; ?></td>
-                    <td><? echo $origemRating; ?></td>
-                    <td><? echo $situacaoRating; ?></td>
 					<td><? echo stringTabela($tipoOrigem,40,'maiuscula'); ?></td></tr>
-                    <!-- [016][019] -->
-                    </tr>
 			<? } ?>
-
 		</tbody>
 	</table>
 </div>
+
 <div id="divBotoes">
 	<a href="#" class="botao" id="btVoltar"    onclick="encerraRotina(true); return false;">Voltar</a>
 	<a href="#" class="botao" id="btAlterar"   onclick="controlaOperacao('TA');">Alterar</a>
@@ -222,8 +159,6 @@
 	<?php } else { echo "<!-- flgGrvOnline=$flgGrvOnline -->"; } ?>
 	<a href="#" class="botao" id="btPortabilidade"  onClick="controlaOperacao('PORTAB_CRED_I');">Portabilidade</a>
 	<a href="#" class="botao" id="btEnvEsteira"  onClick="controlaOperacao('ENV_ESTEIRA')">Analisar</a>
-	<!-- PRJ 437 s3-->
-	<a href="#" class="botaoDesativado" id="btAverbar"  onClick="controlaOperacao('AVERBAR')">Averba&ccedil;&atilde;o</a>
 	<a href="#" class="botao" id="btAcionamentos"  onClick="controlaOperacao('ACIONAMENTOS')">Detalhes Proposta</a>
 	<?php
 	//PRJ - 438 - Automatizada
@@ -233,15 +168,5 @@
 	<!--<a href="#" class="botao" id="btAlteraSomenteBens" style='display: none;' onClick="botaoAlteraSomenteBens();">Alterar Somente Ve&iacute;culos</a>-->
 	<!-- PRJ 438 -->
 	<a href="#" class="botao" id="btAnular"  onClick="controlaOperacao('MOTIVOS')">Anular</a>
-	<?php
-    // 018
-    if ($permiteAlterarRating) {
-    ?>
-    <!-- 017 -->
-    <a href="#" class="botao" id="btAlterarRating"  onClick="controlaOperacao('ALTERAR_RATING')">Alterar Rating</a>
-    <!-- 017 -->
-    <?php
-    }
-    // 018
-    ?>
+	
 </div>

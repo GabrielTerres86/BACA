@@ -328,7 +328,7 @@ function formataDetalheCartao(){
 	return false;
 }
 
-function confirmaAtualizaCartao(){
+function confirmaAtualizaCartao(flgvalid){
 	
 	var aux_flgdebit, aux_flgprcrd;
 	
@@ -341,23 +341,30 @@ function confirmaAtualizaCartao(){
 		aux_flgprcrd = 1;			
 	else
 		aux_flgprcrd = 0;
-	
-	showConfirmacao('Deseja atualizar o cart&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'atualizaCartao(' + normalizaNumero($("#frmDetalheCartao #nrdconta").val()) + ',\'' 
-																												 + $("#nrcrcard").val() + '\',\'' 
-																												 + $("#nrcctitg").val() + '\','
-																												 + $("#dsadmcrd").val() + ',\''
-																												 + $("#nrcpftit").val() + '\','
-																												 + aux_flgdebit + ',\'' 
-																											     + $("#nmtitcrd").val() + '\','
-																												 + $("#nrctrcrd").val() + ',\''
-																												 + $("#nmempres").val() + '\',\''
-																												 + aux_flgprcrd + '\','
-																												 + $("#insitcrd").val() + ','
-																												 + $("#insitdec").val() + ');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');	
-	
+
+
+	if (flgvalid == 1) {
+		showConfirmacao('Deseja atualizar o cart&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'atualizaCartao(' + normalizaNumero($("#frmDetalheCartao #nrdconta").val()) + ',\'' 
+																													 + $("#nrcrcard").val() + '\',\'' 
+																													 + $("#nrcctitg").val() + '\','
+																													 + $("#dsadmcrd").val() + ',\''
+																													 + $("#nrcpftit").val() + '\','
+																													 + aux_flgdebit + ',\'' 
+																												     + $("#nmtitcrd").val() + '\','
+																													 + $("#nrctrcrd").val() + ',\''
+																													 + $("#nmempres").val() + '\',\''
+																													 + aux_flgprcrd + '\','
+																													 + $("#insitcrd").val() + ','
+																													 + $("#insitdec").val() + ', 1);', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');	
+   }else{
+        atualizaCartao(normalizaNumero($("#frmDetalheCartao #nrdconta").val()),$("#nrcrcard").val(), $("#nrcctitg").val() ,
+                                       $("#dsadmcrd").val(), $("#nrcpftit").val() , aux_flgdebit, $("#nmtitcrd").val() ,
+									   $("#nrctrcrd").val(), $("#nmempres").val() , aux_flgprcrd ,$("#insitcrd").val() ,
+									   $("#insitdec").val(), 0);   
+   }
 }
 
-function atualizaCartao(nrdconta, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, flgdebit, nmtitcrd, nrctrcrd, nmempres, flgprcrd, insitcrd, insitdec){
+function atualizaCartao(nrdconta, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, flgdebit, nmtitcrd, nrctrcrd, nmempres, flgprcrd, insitcrd, insitdec, flgvalid){
 	
 	showMsgAguardo('Aguarde, atualizando detalhes do cartao...');
 	
@@ -379,6 +386,7 @@ function atualizaCartao(nrdconta, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, flgdeb
 			,flgprcrd : flgprcrd
 			,nrctrcrd : nrctrcrd
 			,nmempres : nmempres
+			,flgvalid : flgvalid
 			,redirect: 'html_ajax'			
 			}, 
 		error: function(objAjax,responseError,objExcept) {

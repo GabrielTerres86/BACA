@@ -25,7 +25,7 @@
                     <th><? echo utf8ToHtml('Lcr');?></th>
                     <th>Valor</th>
                     <th><? echo utf8ToHtml('N° Parcelas');?></th>
-                    <th>Vl. Parcela</th>
+                    <th>Vl. Parcela</th>                    
                     <th>Produto</th>
                 </tr>
             </thead>		

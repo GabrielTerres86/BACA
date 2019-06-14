@@ -6,6 +6,7 @@
  * OBJETIVO     : Tabela que apresenta a consulta VERPRO
  * --------------
 	* ALTERAÇÕES   : 03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *                 10/06/2019 - Adicionado campos Situação nos detalhes PRJ 470 SM2 (Mateus z / Mouts).
  * --------------
  */ 
 
@@ -57,6 +58,24 @@
   								  <input type="hidden" id="nrseqaut" name="nrseqaut" value="<? echo getByTagName($r->tags,'nrseqaut') ?>" />								  
   								  <input type="hidden" id="nrdocmto" name="nrdocmto" value="<? echo getByTagName($r->tags,'nrdocmto') ?>" />								  
   								  <input type="hidden" id="flgpagto" name="flgpagto" value="<? echo getByTagName($r->tags,'flgpagto') ?>" />								  								  								  
+
+  								  <!-- PRJ 470 -->
+  								  <input type="hidden" id="dtinclusao" name="dtinclusao" value="<? echo getByTagName($r->tags,'dtinclusao') ?>" />
+  								  <input type="hidden" id="hrinclusao" name="hrinclusao" value="<? echo getByTagName($r->tags,'hrinclusao') ?>" />
+  								  <input type="hidden" id="dsfrase" name="dsfrase" value="<? echo getByTagName($r->tags,'dsfrase') ?>" />
+  								  <input type="hidden" id="dstippro" name="dstippro" value="<? echo getByTagName($r->tags,'dstippro') ?>" />
+
+  								  <!-- Pj470 - SM2 -- Mateus Zimmermann -- Mouts -->
+  								  <input type="hidden" id="dsativo" name="dsativo" value="<? echo getByTagName($r->tags,'dsativo') ?>" />
+
+								  <!-- bruno - prj 470 - tela autorizacao -->
+  								  <input type="hidden" id="dsoperacao" name="dsoperacao" value="<? echo getByTagName($r->tags,'dsoperacao') ?>" />
+  								  <input type="hidden" id="cdbanco"    name="cdbanco" value="<? echo getByTagName($r->tags,'cdbanco') ?>" />
+  								  <input type="hidden" id="cdagencia"  name="cdagencia" value="<? echo getByTagName($r->tags,'cdagencia') ?>" />
+  								  <input type="hidden" id="cdconta"    name="cdconta" value="<? echo getByTagName($r->tags,'cdconta') ?>" />
+  								  <input type="hidden" id="nrcheque_i" name="nrcheque_i" value="<? echo getByTagName($r->tags,'nrcheque_i') ?>" />
+  								  <input type="hidden" id="nrcheque_f" name="nrcheque_f" value="<? echo getByTagName($r->tags,'nrcheque_f') ?>" />
+
   								  <input type="hidden" id="dslinha1" name="dslinha1" value="<? echo getByTagName($r->tags[12]->tags,'dsinform.1') ?>" />								  
   								  <input type="hidden" id="dslinha2" name="dslinha2" value="<? echo getByTagName($r->tags[12]->tags,'dsinform.2') ?>" />								  
   								  <input type="hidden" id="dslinha3" name="dslinha3" value="<? echo getByTagName($r->tags[12]->tags,'dsinform.3') ?>" />								  

@@ -22,6 +22,7 @@
  * 011: [14/11/2017] Jonata (RKAM)    : Retirado botão de envio TED (P364).
  * 012: [27/12/2017] Renato (Supero)  : Alterado para incluir os botões Desligar e Saque Parcial conforme tela CADMAT (M329)
  * 013: [18/07/2018] Andrey Formigari : Novo campo Nome Social (#SCTASK0017525 - Mouts)
+ * 014: [13/02/2019] Rubens Lima (Mouts)  : Novo campo para controle dos botoes Desligar e Saque Parcial (PJ339 - Mouts)
  */ 
 
 	session_start();	
@@ -47,6 +48,7 @@
 	$flgAcessoCRM   = 'N';
 	$flgDesligarCRM = 'N';
 	$flgSaldoPclCRM = 'N';
+	$inSaqDes		= '0'; //Indicador saque parcial e desligamento (0-Nao, 1-Sim)
 	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0  ;
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
@@ -106,8 +108,28 @@
 		$alertas      = ( isset($xmlObjeto->roottag->tags[4]->tags) ) ? $xmlObjeto->roottag->tags[4]->tags : array();
 		$responsaveis = ( isset($xmlObjeto->roottag->tags[5]->tags) ) ? $xmlObjeto->roottag->tags[5]->tags : array();
     $titulares 	  = ( isset($xmlObjeto->roottag->tags[6]->tags) ) ? $xmlObjeto->roottag->tags[6]->tags[0] : array();
+		$tpPessoa	  = ( getByTagName($registro,'inpessoa') == '' ) ? 1 : getByTagName($registro,'inpessoa');
 
-		$tpPessoa	  = ( getByTagName($registro,'inpessoa') == '' ) ? 1 : getByTagName($registro,'inpessoa');	
+		//------------
+		$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <cdcooper>".$glbvars['cdcooper']."</cdcooper>";
+		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResultModalidade = mensageria($xml, "ATENDA", "BUSCA_MODALIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjModalidade = getObjectXML($xmlResultModalidade);
+
+		if (strtoupper($xmlObjModalidade->roottag->tags[0]->name) == "ERRO") {
+			$msgErro = $xmlObjModalidade->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			if ($msgErro == "") {
+				$msgErro = $xmlObjModalidade->roottag->tags[0]->cdata;
+			}
+			exibeErro($msgErro);
+		}
+		$modalidade = $xmlObjModalidade->roottag->tags[0]->cdata;
+		//------------
 		
 		$msg = Array();
 		
@@ -326,6 +348,7 @@
 		$flgAcessoCRM   = $xmlObj->roottag->tags[0]->cdata;
 		$flgDesligarCRM = $xmlObj->roottag->tags[1]->cdata;
 		$flgSaldoPclCRM = $xmlObj->roottag->tags[2]->cdata;
+		$inSaqDes	    = $xmlObj->roottag->tags[3]->cdata;
 		
 	}
 ?>
@@ -432,6 +455,7 @@
 	flgAcessoCRM    = '<?php echo $flgAcessoCRM;    ?>';
 	flgDesligarCRM  = '<?php echo $flgDesligarCRM;  ?>';
 	flgSaldoPclCRM  = '<?php echo $flgSaldoPclCRM;  ?>';
+	inSaqDes 		= '<?php echo $inSaqDes;  		?>';
 	
 	strMsg = '<?php echo $strMsg; ?>';
 	

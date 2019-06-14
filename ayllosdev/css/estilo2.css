@@ -12,7 +12,6 @@
  * 004: [17/02/2012] Rog�rius Milit�o      (DB1): Alterado "form.formulario a" para ajustar a novo botao. 
  * 005: [19/04/2012] Rogerius Milit�o/Guilherme Strube (DB1/CECRED): Adaptar divBotoes para tag img
  * 006: [17/11/2014] J�ssica			   (DB1): Inserido um divRotina2 para atender a op��o C da tela Movtos.
- * 007: [03/2019] P437 nova cor de grid AMcom JDB.
  */	
 
 *  {font-family:Arial,Helvetica,sans-serif;font-size:12px;margin:0px;padding:0px;border:0px;text-decoration:none;}
@@ -226,7 +225,6 @@ th.headerSortUp {background-image:url(../imagens/geral/ordem_cresc.gif);}
 th.headerSortDown {background-image:url(../imagens/geral/ordem_decres.gif);}   
 
 tr.corPar{background-color:#fff;}
-tr.corParAux{background-color:#d4d4d4;}
 tr.corImpar{background-color:#eeeaee;}
 tr.corSelecao{background-color:#ffbaad;}
 

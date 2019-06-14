@@ -15,6 +15,7 @@
  *			       15/07/2016 - Incluir rotina para buscar o flg de devolução automatica - Melhoria 69 (Lucas Ranghetti #484923)
  *                 01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                              pois a BO não utiliza o mesmo (Renato Darosci)
+ *				   27/02/2019 - ACELERA - Buscar flag reapresentação automatica de cheque - (Lucas H - SUPERO)
  */
 	session_start();
 	require_once('../../../includes/config.php');
@@ -158,6 +159,24 @@
 
 	//Fim Melhoria 126
 	
+	//ACELERA - Flag reapresentação automatica de cheque
+	$nmdeacao = "BUSCA_REAPRE_CHEQUE";
+	
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	// Executa script para envio do XML
+	$xmlResult = mensageria($xml, "CONTAS", $nmdeacao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"],  "</Root>");
+	$xmlObjeto1 = getObjectXML($xmlResult);
+	
+	$flgreapre = getByTagName($xmlObjeto1->roottag->tags[0]->tags, 'flgreapre');
+	
+	//FIM ACELERA - Flag reapresentação automatica de cheque
 	include('formulario_conta_corrente.php');
 ?>
 <script type="text/javascript">

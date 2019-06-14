@@ -78,7 +78,7 @@
 		echo 'bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);';		
 		
 		// Mostra mensagem de confirmação para finalizar a operação
-		echo "showConfirmacao('".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','cadastrarNovoCartao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";		
+		echo "showConfirmacao('".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','cadastrarNovoCartao(\"I\")','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";
 		exit();
 		
 	} else {

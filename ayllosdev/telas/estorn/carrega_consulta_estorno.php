@@ -6,6 +6,7 @@
  * OBJETIVO     : Rotina para carregar os estornos realizados
  * --------------
  * ALTERAÇÕES   : 
+ *  - 15/09/2018 - Inclusão do Desconto de Títulos (Vitor S. Assanuma - GFT)
  * -------------- 
  */
     session_start();
@@ -21,11 +22,13 @@
 
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 	$nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
-	
+	$cdtpprod = (isset($_POST['cdtpprod'])) ? $_POST['cdtpprod'] : 0;
+
 	$xml  = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <nrctremp>".$nrctremp."</nrctremp>";	
+	$xml .= "   <cdtpprod>".$cdtpprod."</cdtpprod>";	
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 

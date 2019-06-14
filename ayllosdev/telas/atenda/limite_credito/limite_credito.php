@@ -82,7 +82,7 @@
                       <?php 
 											$idPrincipal = 0;	
 											// Mostrar opções da rotina de capital no layer conforme permissão do operador
-											for ($i = 0; $i < count($opcoesTela); $i++) {
+											for ($i = 0; $i < 1; $i++) { //bruno - prj - 438 - sprint 7 - tela principal
 												if (($opcoesTela[$i] == "C") OR ($opcoesTela[$i] == "R")) {
 													continue;
 												}

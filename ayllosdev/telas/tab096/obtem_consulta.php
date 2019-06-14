@@ -53,6 +53,7 @@
 	$pzbxavct = getByTagName($xmlObj->roottag->tags,'pzbxavct');
 	$vlrminpp = getByTagName($xmlObj->roottag->tags,'vlrminpp');
 	$vlrmintr = getByTagName($xmlObj->roottag->tags,'vlrmintr');
+	$vlrminpos = getByTagName($xmlObj->roottag->tags,'vlrminpos');
 	$descprej = getByTagName($xmlObj->roottag->tags,'descprej');
 	$dslinha1 = getByTagName($xmlObj->roottag->tags,'dslinha1');
 	$dslinha2 = getByTagName($xmlObj->roottag->tags,'dslinha2');
@@ -102,6 +103,7 @@
 	$('#prazobxa','#frmTab096').val('<? echo $pzbxavct; ?>');
 	$('#vlrminpp','#frmTab096').val('<? echo formataMoeda($vlrminpp); ?>');
 	$('#vlrmintr','#frmTab096').val('<? echo formataMoeda($vlrmintr); ?>');			
+	$('#vlrminpos','#frmTab096').val('<? echo formataMoeda($vlrminpos); ?>');
 	$('#descprej','#frmTab096').val('<? echo formataMoeda($descprej); ?>');
 	$('#dslinha1','#frmTab096').val('<? echo $dslinha1; ?>');
 	$('#dslinha2','#frmTab096').val('<? echo $dslinha2; ?>');

@@ -37,6 +37,8 @@
 		<script type="text/javascript" src="../../scripts/menu.js?keyrand=<?php echo mt_rand(); ?>"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
 		<script type="text/javascript" src="mantal.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="../../includes/autorizacao_contrato/autorizacao_contrato.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">

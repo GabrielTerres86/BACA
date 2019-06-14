@@ -184,7 +184,7 @@ if ($flavalis == 1) {
 
                                             <div id="divBotoesGerarBoleto" style="margin-bottom: 5px; text-align:center;">
                                                 <a href="#" class="botao" id="btVoltar" style="float:none" onClick="<?php echo 'fechaRotina($(\'#divRotina\')); '; ?> return false;">Voltar</a>
-                                                <a href="#" class="botao" id="btEnviar" style="float:none" onClick="listaTitulos(); return false;">Avancar</a>
+                                                <a href="#" class="botao" id="btEnviar" style="float:none" onClick="listaTitulos(); return false;">Avan&ccedil;ar</a>
                                             </div>
 
                                             <br style="clear:both" />   

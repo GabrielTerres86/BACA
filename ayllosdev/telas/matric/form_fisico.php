@@ -19,7 +19,6 @@
  *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
  * 				  16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).   
  *				  13/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)  
- *   			   03/2019 	  - Projeto 437 Ajuste label matricula
  * -------------- 
  */  
 ?>
@@ -94,8 +93,10 @@
 		
 		<label for="dtemdptl">Dt. Emi.:</label>
 		<input name="dtemdptl" id="dtemdptl" type="text" value="<? echo getByTagName($registro,'dtemdptl') ?>" />
+
+		<input style="margin:3px 5px;" <?=($modalidade == 2 ? 'checked' : '')?> type="checkbox" id="flgctsal" name="flgctsal" value="1" /> <label>Conta Modalidade Sal&aacute;rio</label>
+
 		<br style="clear:both" />
-		
 	</fieldset>
 	
 	<fieldset>
@@ -153,7 +154,7 @@
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="nmresemp" id="nmresemp" type="text" value="<? echo getByTagName($registro,'nmresemp') ?>" />
 		
-		<label for="nrcadast">Matr. Emp.:</label>
+		<label for="nrcadast">Cad. Emp.:</label>
 		<input name="nrcadast" id="nrcadast" type="text" value="<? echo getByTagName($registro,'nrcadast') ?>" />	
 		<br />
 		

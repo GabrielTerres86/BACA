@@ -1088,17 +1088,23 @@ function formataOpcaoS() {
     rDsderesg = $('label[for="dsderesg"]', '#' + frmOpcao);
     rDscredit = $('label[for="dscredit"]', '#' + frmOpcao);
     rDsvencto = $('label[for="dsvencto"]', '#' + frmOpcao);
+    rDsprejui = $('label[for="dsprejui"]', '#' + frmOpcao);
+    rDsestorn = $('label[for="dsestorn"]', '#' + frmOpcao);
 
     rQtsldant = $('label[for="qtsldant"]', '#' + frmOpcao);
     rQttitulo = $('label[for="qttitulo"]', '#' + frmOpcao);
     rQtvencid = $('label[for="qtvencid"]', '#' + frmOpcao);
     rQtderesg = $('label[for="qtderesg"]', '#' + frmOpcao);
     rQtcredit = $('label[for="qtcredit"]', '#' + frmOpcao);
+    rQtprejui = $('label[for="qtprejui"]', '#' + frmOpcao);
+    rQtestorn = $('label[for="qtestorn"]', '#' + frmOpcao);
     rVlsldant = $('label[for="vlsldant"]', '#' + frmOpcao);
     rVltitulo = $('label[for="vltitulo"]', '#' + frmOpcao);
     rVlvencid = $('label[for="vlvencid"]', '#' + frmOpcao);
     rVlderesg = $('label[for="vlderesg"]', '#' + frmOpcao);
     rVlcredit = $('label[for="vlcredit"]', '#' + frmOpcao);
+    rVlprejui = $('label[for="vlprejui"]', '#' + frmOpcao);
+    rVlestorn = $('label[for="vlestorn"]', '#' + frmOpcao);
 
     rLqtdedas = $('label[for="lqtdedas"]', '#' + frmOpcao);
     rLvalores = $('label[for="lvalores"]', '#' + frmOpcao);
@@ -1112,17 +1118,23 @@ function formataOpcaoS() {
     rDsderesg.addClass('rotulo').css({'width': '250px'});
     rDscredit.addClass('rotulo').css({'width': '250px'});
     rDsvencto.addClass('rotulo').css({'width': '250px'});
+    rDsprejui.addClass('rotulo').css({'width': '250px'});
+    rDsestorn.addClass('rotulo').css({'width': '250px'});
 
     rQtsldant.addClass('rotulo-linha').css({'width': '20px'});
     rQttitulo.addClass('rotulo-linha').css({'width': '20px'});
     rQtvencid.addClass('rotulo-linha').css({'width': '20px'});
     rQtderesg.addClass('rotulo-linha').css({'width': '20px'});
     rQtcredit.addClass('rotulo-linha').css({'width': '20px'});
+    rQtprejui.addClass('rotulo-linha').css({'width': '20px'});
+    rQtestorn.addClass('rotulo-linha').css({'width': '20px'});
     rVlsldant.addClass('rotulo-linha').css({'width': '20px'});
     rVltitulo.addClass('rotulo-linha').css({'width': '20px'});
     rVlvencid.addClass('rotulo-linha').css({'width': '20px'});
     rVlderesg.addClass('rotulo-linha').css({'width': '20px'});
     rVlcredit.addClass('rotulo-linha').css({'width': '20px'});
+    rVlprejui.addClass('rotulo-linha').css({'width': '20px'});
+    rVlestorn.addClass('rotulo-linha').css({'width': '20px'});
 
     rLqtdedas.addClass('rotulo').css({'width': '350px'});
     rLvalores.addClass('rotulo-linha').css({'width': '130px'});
@@ -1134,11 +1146,15 @@ function formataOpcaoS() {
     cQtvencid = $("#qtvencid", '#' + frmOpcao);
     cQtderesg = $("#qtderesg", '#' + frmOpcao);
     cQtcredit = $("#qtcredit", '#' + frmOpcao);
+    cQtprejui = $("#qtprejui", '#' + frmOpcao);
+    cQtestorn = $("#qtestorn", '#' + frmOpcao);
     cVlsldant = $("#vlsldant", '#' + frmOpcao);
     cVltitulo = $("#vltitulo", '#' + frmOpcao);
     cVlvencid = $("#vlvencid", '#' + frmOpcao);
     cVlderesg = $("#vlderesg", '#' + frmOpcao);
     cVlcredit = $("#vlcredit", '#' + frmOpcao);
+    cVlprejui = $("#vlprejui", '#' + frmOpcao);
+    cVlestorn = $("#vlestorn", '#' + frmOpcao);
     cDtvencto = $("#dtvencto", '#' + frmOpcao);
 
     cTpcobran.css({'width': '145px'});
@@ -1148,11 +1164,15 @@ function formataOpcaoS() {
     cQtvencid.css({'width': '120px'}).addClass('inteiro');
     cQtderesg.css({'width': '120px'}).addClass('inteiro');
     cQtcredit.css({'width': '120px'}).addClass('inteiro');
+    cQtprejui.css({'width': '120px'}).addClass('inteiro');
+    cQtestorn.css({'width': '120px'}).addClass('inteiro');
     cVlsldant.css({'width': '120px'}).addClass('monetario');
     cVltitulo.css({'width': '120px'}).addClass('monetario');
     cVlvencid.css({'width': '120px'}).addClass('monetario');
     cVlderesg.css({'width': '120px'}).addClass('monetario');
     cVlcredit.css({'width': '120px'}).addClass('monetario');
+    cVlprejui.css({'width': '120px'}).addClass('monetario');
+    cVlestorn.css({'width': '120px'}).addClass('monetario');
     cDtvencto.css({'width': '90px'}).addClass('data');
 
     /* CONTABIL RESIDUAL*/

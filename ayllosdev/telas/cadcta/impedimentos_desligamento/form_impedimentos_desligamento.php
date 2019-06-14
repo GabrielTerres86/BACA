@@ -157,7 +157,7 @@
 							</tr>
 							<tr>
 								<td>								
-									<label class="checkbox">Resgate da poupan&ccedil;a programada</label>
+									<label class="checkbox">Resgate da aplica&ccedil;&atilde;o programada</label>
 								</td>
 								<td>
 									<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vlsrdrpp')); ?></label>

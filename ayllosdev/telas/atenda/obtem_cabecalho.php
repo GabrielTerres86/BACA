@@ -580,7 +580,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				break;	
 			}
 			case "POUP. PROG": {
-				$nomeRotina = "Poupan&ccedil;a Programada"; 
+				$nomeRotina = "Aplica&ccedil;&atilde;o Programada"; 
                 $urlRotina = "aplicacoes_programadas";
                 $strValue = ( isset($valores[4]->cdata) ) ? number_format(str_replace(",", ".", $valores[4]->cdata), 2, ",", ".") : '';
 				$telaPermitadaAcessoBacen = 1;
@@ -748,11 +748,17 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
-
 			case "PORTABILIDADE": {
 				$nomeRotina = "Portabilidade";
 				$urlRotina = "portabilidade";
 				$strValue = (isset($valores[23]->cdata) ? (($valores[23]->cdata == "1")  ? "SIM" : "NAO") : "NAO");
+				$telaPermitadaAcessoBacen = 1;
+				break;
+			}
+      case "PLATAFORMA_API": {
+				$nomeRotina = "Plataforma API";
+				$urlRotina = "plataforma_api";
+				$strValue = (isset($valores[24]->cdata) ? (($valores[24]->cdata == 1)  ? "SIM" : "NAO") : "NAO");
 				$telaPermitadaAcessoBacen = 1;
 				break;
 			}

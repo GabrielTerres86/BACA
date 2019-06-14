@@ -52,6 +52,7 @@
  * 039: [17/10/2018] Marcos (Envolti): Inclusão de campos do projeto 442
  * 040: [22/11/2018] Mateus Z (Mouts): Novos campos adicionados nas telas Avalistas, Interveniente e Dados da Alienação(frmHipoteca) - PRJ 438.
  * 041: [23/11/2018] Bruno Luiz Katzjarowski - Mout's: Ocultação de telas. - Prj - 438
+ * 042: [21/01/2019] - PRJ298.2.2 - Pagamento do prejuízo de forma manual - Nagasava (Supero)
  */
 ?>
 
@@ -80,8 +81,6 @@
 	$nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
 	$prejuizo = (isset($_POST['prejuizo'])) ? $_POST['prejuizo'] : 0;
 	$tpemprst = (isset($_POST['tpemprst'])) ? $_POST['tpemprst'] : 0;
-	//P437
-	$tpdescto = (isset($_POST['tpdescto'])) ? $_POST['tpdescto'] : 0;
 	$nrparepr = (isset($_POST['nrparepr'])) ? $_POST['nrparepr'] : 0;
 	$vlpagpar = (isset($_POST['vlpagpar'])) ? $_POST['vlpagpar'] : 0;
 	$nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0; 
@@ -232,8 +231,6 @@
 			arrayRegistros['nmprimtl'] = '<? echo getByTagName($registros,'nmprimtl'); ?>';
 			arrayRegistros['nrctremp'] = '<? echo getByTagName($registros,'nrctremp'); ?>';
 			arrayRegistros['vlemprst'] = '<? echo getByTagName($registros,'vlemprst'); ?>';
-			//P437
-			arrayRegistros['tpdescto'] = '<? echo getByTagName($registros,'tpdescto'); ?>';			
 			arrayRegistros['vlsdeved'] = '<? echo formataMoeda($vlsldliq); ?>';
 			arrayRegistros['vlpreemp'] = '<? echo getByTagName($registros,'vlpreemp'); ?>';
 			arrayRegistros['vlprepag'] = '<? echo getByTagName($registros,'vlprepag'); ?>'; 
@@ -303,6 +300,7 @@
       /* IOF Prejuizo */
       arrayRegistros['vltiofpr'] = '<? echo getByTagName($registros,'vltiofpr'); ?>';
       arrayRegistros['vlpiofpr'] = '<? echo getByTagName($registros,'vlpiofpr'); ?>';
+      arrayRegistros['nrdiaatr'] = '<? echo getByTagName($registros,'nrdiaatr'); ?>';
       
 			</script><?
 			
@@ -411,6 +409,7 @@
 			if (arrayProposta['tpemprst'] == 2) {
       			arrayProposta['idcarenc'] = '<? echo getByTagName($proposta,'idcarenc'); ?>';
       			arrayProposta['dtcarenc'] = '<? echo getByTagName($proposta,'dtcarenc'); ?>';
+				arrayProposta['vlprecar'] = '<? echo getByTagName($proposta,'vlprecar'); ?>';
 			}
 
 			
@@ -1025,6 +1024,8 @@
 		include('tabela_pagamento_pos.php');
 	}else if (in_array($operacao,array('C_PAG_PREST_PREJU'))){
 		include('tabela_pagamento_prejuizo.php');
+	}else if (in_array($operacao,array('C_PAG_PREST_POS_PRJ'))){
+		include('tabela_pagamento_prejuizo_pos.php');
 	} else if (in_array($operacao,array('C_MICRO_PERG'))) {
 		include ('questionario.php');
 	} else if (in_array($operacao,array('PORTAB_CRED_C'))) {

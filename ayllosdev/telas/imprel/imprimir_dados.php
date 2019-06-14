@@ -5,7 +5,11 @@
  * DATA CRIAÇÃO : 24/08/2011
  * OBJETIVO     : Carregar dados para impressões do IMPREL	
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 21/03/2019 - Adicionado do campo periodo para o relatorio 219. 
+ *                             Acelera - Reapresentacao automática de cheques (Lombardi).  
+ *                
+ *                25/04/2019 - Ajuste para impressao do relatório crrl530.
+ *                             Acelera - Reapresentacao automatica de cheques (Lombardi).
  * -------------- 
  */ 
 ?>
@@ -44,8 +48,18 @@
 	$cddopcao 	= $_POST['cddopcao'];
 	$nrdrelat 	= $_POST['nrdrelat'];
 	$cdagenca 	= $_POST['cdagenca'];
-	$dsiduser 	= session_id();	
+	$cdperiod 	= $_POST['cdperiod'];
 	
+	switch ($nrdrelat) {
+    case 13: // 13 -> 219-Devolucoes do Dia
+        $dsiduser = 'crrl219_' . session_id();
+        break;
+    case 34: // 34 -> 530-Relaçao de Cheque Devolvidos
+        $dsiduser = 'crrl530_' . session_id();
+        break;
+    default:
+        $dsiduser = session_id();
+	}
 
 	// Monta o xml de requisição
 	$xml  = '';
@@ -63,6 +77,7 @@
 	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
 	$xml .= '		<nrdrelat>'.$nrdrelat.'</nrdrelat>';
 	$xml .= '		<cdagenca>'.$cdagenca.'</cdagenca>';
+	$xml .= '		<cdperiod>'.$cdperiod.'</cdperiod>';
 	$xml .= '	</Dados>';                                  
 	$xml .= '</Root>';
 

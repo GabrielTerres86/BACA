@@ -15,7 +15,7 @@
 		$tpacao     = $_POST['tpacao'];
 		$inpessoa   = $_POST['inpessoa'];
 		$dsiduser   = session_id();
-
+		
 		$funcaoAposErro = 'bloqueiaFundo(divRotina);';	
 		if($tpacao == "montagrid"){
 			
@@ -41,7 +41,7 @@
 				if($bancoob  == 2){
 					$admresult = mensageria($bancoobXML, "ATENDA_CRD", "INCLUIR_PROPOSTA_ESTEIRA", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 					$procXML = simplexml_load_string($admresult);
-					echo "showError(\"inform\", \"".utf8ToHtml("Solicitação enviada para esteira com sucesso.")."\", \"Alerta - Aimaro\", \"voltarParaTelaPrincipal();\");";
+					echo "showError(\"inform\", \"".utf8ToHtml("Solicitação enviada para esteira com sucesso.")."\", \"Alerta - Aimaro\", \"alertarCooperado(cTipoAcao.NOVO_CARTAO);voltarParaTelaPrincipal();\");";
 					echo "/* Encaminhado para a esteira \n $bancoobXML \n Retorno \n $admresult */";
 				}else{
 					$admresult = mensageria($bancoobXML, "CCRD0007", "SOLICITAR_CARTAO_BANCOOB", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
@@ -244,11 +244,11 @@
 			}else{
 				if($bancoob){
 					?>
-					showError("inform", "<? echo utf8ToHtml( "Alteração Efetuada com Sucesso."); ?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("inform", "<? echo utf8ToHtml( "Alteração Efetuada com Sucesso."); ?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));alertarCooperado(cTipoAcao.NOVO_CARTAO);");
 					<?
 				}else{
 					?>
-					showError("inform", "<? echo utf8ToHtml( "Alteração enviada para esteira com sucesso."); ?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("inform", "<? echo utf8ToHtml( "Alteração enviada para esteira com sucesso."); ?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));alertarCooperado(cTipoAcao.NOVO_CARTAO);");
 					<?
 				}
 				

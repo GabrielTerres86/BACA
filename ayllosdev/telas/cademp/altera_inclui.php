@@ -1,24 +1,21 @@
 <?php
 /*!
  * FONTE        : salvar_dados.php
- * CRIAï¿½ï¿½O      : Michel Candido Gati Tecnologia
- * DATA CRIAï¿½ï¿½O : 21/08/2013
+ * CRIAÇÃO      : Michel Candido Gati Tecnologia
+ * DATA CRIAÇÃO : 21/08/2013
  *
  * ALTERACAO    : 08/07/2015 - Adicionado validacao de campos referente a dias da tela de tarifas. (Jorge/Elton) - Emergencial
  *                18/05/2016 - Adicionado o campo dtlimdeb. (Jaison/Marcos)
  *				  20/07/2016 - Corrigi os erros de utilizacao de variaveis nao declaradas. SD 471925 (Carlos R.)	
  *                04/12/2017 - Alterar armazenamento da variavel flgdgfib dos valores "true" e "false" para "yes" e "no" (Lucas Ranghetti #802339)
- *				  28/02/2019 - Projeto 437 Consignado AMcom - JDB (ID 20190208_437) - Ajutes conforme changeset feito por outra empresa
- *
  *
  */
- 
+
     session_start();
     require_once('../../includes/config.php');
     require_once('../../includes/funcoes.php');
     require_once('../../includes/controla_secao.php');
     require_once('../../class/xmlfile.php');
-	require_once('../consig/wssoa.php');
     isPostMethod();
 
 	$nmresemp = ( isset($_POST["nmresemp"]) ) ? substr($_POST["nmresemp"],0,15) : '';
@@ -39,8 +36,6 @@
     $nmcidade = ( isset($_POST["nmcidade"]) ) ? $_POST["nmcidade"] : '';
     $cdufdemp = ( isset($_POST["cdufdemp"]) ) ? $_POST["cdufdemp"] : '';
     $nrfonemp = ( isset($_POST["nrfonemp"]) ) ? $_POST["nrfonemp"] : '';
-	//P437
-	$nrdddemp = ( isset($_POST["nrdddemp"]) ) ? $_POST["nrdddemp"] : '';
     $nrfaxemp = ( isset($_POST["nrfaxemp"]) ) ? $_POST["nrfaxemp"] : '';
     $dsdemail = ( isset($_POST["dsdemail"]) ) ? $_POST["dsdemail"] : '';
     $ddmesnov = ( isset($_POST["ddmesnov"]) ) ? $_POST["ddmesnov"] : '';
@@ -57,17 +52,7 @@
     $tpdebemp = ( isset($_POST["tpdebemp"]) ) ? $_POST["tpdebemp"] : '';
     $tpdebcot = ( isset($_POST["tpdebcot"]) ) ? $_POST["tpdebcot"] : '';
     $tpdebppr = ( isset($_POST["tpdebppr"]) ) ? $_POST["tpdebppr"] : '';
-	//P437 s2
-	if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
-		$indescsg = ( isset($_POST["indescsg"]) ) ? $_POST["indescsg"] : '';
-	}else {
-		$indescsg = ( isset($_POST["flnecont"]) ) ? $_POST["flnecont"] : '';
-        if ($indescsg == '1'){
-            $indescsg = 2;
-        }
-	}
-	
-	
+    $indescsg = ( isset($_POST["indescsg"]) ) ? $_POST["indescsg"] : '';
     $flgpagto = ( isset($_POST["flgpagto"]) ) ? $_POST["flgpagto"] : '';
     $flgarqrt = ( isset($_POST["flgarqrt"]) ) ? $_POST["flgarqrt"] : '';
     $dtfchfol = ( isset($_POST["dtfchfol"]) ) ? $_POST["dtfchfol"] : '';
@@ -97,8 +82,6 @@
     $old_nmcidade = ( isset($_POST["old_nmcidade"]) ) ? $_POST["old_nmcidade"] : '';
     $old_cdufdemp = ( isset($_POST["old_cdufdemp"]) ) ? $_POST["old_cdufdemp"] : '';
     $old_nrfonemp = ( isset($_POST["old_nrfonemp"]) ) ? $_POST["old_nrfonemp"] : '';
-	//P437
-	$old_nrdddemp = ( isset($_POST["old_nrdddemp"]) ) ? $_POST["old_nrdddemp"] : '';
     $old_nrfaxemp = ( isset($_POST["old_nrfaxemp"]) ) ? $_POST["old_nrfaxemp"] : '';
     $old_dsdemail = ( isset($_POST["old_dsdemail"]) ) ? $_POST["old_dsdemail"] : '';
     $old_ddmesnov = ( isset($_POST["old_ddmesnov"]) ) ? $_POST["old_ddmesnov"] : '';
@@ -113,17 +96,8 @@
     $old_tpdebemp = ( isset($_POST["old_tpdebemp"]) ) ? $_POST["old_tpdebemp"] : '';
     $old_tpdebcot = ( isset($_POST["old_tpdebcot"]) ) ? $_POST["old_tpdebcot"] : '';
     $old_tpdebppr = ( isset($_POST["old_tpdebppr"]) ) ? $_POST["old_tpdebppr"] : '';
-	//P437 s2
-	if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
-		$old_indescsg = ( isset($_POST["old_indescsg"]) ) ? $_POST["old_indescsg"] : '';	
-	}else{
-		$old_indescsg = ( isset($_POST["old_flnecont"]) ) ? $_POST["old_flnecont"] : '';
-        if ($old_indescsg == '1'){
-            $old_indescsg = 2;
-        }
-	}
-    	
-	$old_flgpagto = ( isset($_POST["old_flgpagto"]) ) ? $_POST["old_flgpagto"] : '';
+    $old_indescsg = ( isset($_POST["old_indescsg"]) ) ? $_POST["old_indescsg"] : '';
+    $old_flgpagto = ( isset($_POST["old_flgpagto"]) ) ? $_POST["old_flgpagto"] : '';
     $old_flgarqrt = ( isset($_POST["old_flgarqrt"]) ) ? $_POST["old_flgarqrt"] : '';
     $old_dtfchfol = ( isset($_POST["old_dtfchfol"]) ) ? $_POST["old_dtfchfol"] : '';
     $old_cdempfol = ( isset($_POST["old_cdempfol"]) ) ? $_POST["old_cdempfol"] : '';
@@ -153,13 +127,9 @@
     } else {
         $flgdgfib = no;  // Flag de digitalizacao: Se for TRUE, deve mudar pra FALSE
     }
-	//P437 s2
-	if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
-		$auxIndescsg = $indescsg=="2"?"yes":"no";
-	}else{
-		$auxIndescsg = $indescsg=="1"?"yes":"no"; 
-	}
-	
+
+    $auxIndescsg = $indescsg=="2"?"yes":"no";
+
 	$cdcooper = ( isset($glbvars["cdcooper"]) ) ? $glbvars["cdcooper"] : '';
 	$cdagenci = ( isset($glbvars["cdagenci"]) ) ? $glbvars["cdagenci"] : '';
 	$nrdcaixa = ( isset($glbvars["nrdcaixa"]) ) ? $glbvars["nrdcaixa"] : '';
@@ -226,74 +196,6 @@
     }
 
     /*VALIDA SE OS DADOS DA EMPRESA ESTAO CORRETOS*/
-	//P437 s2
-	if ($opcao == 'A') {
-        if ($dscomple == '' || $dscomple == ' ') {
-            $dscomple = '-';
-        }
-		//Enviar informacoes para FIS
-		$xml  = '';
-		$xml .= '<Root>';
-		$xml .= '	<dto>';
-		$xml .= '       <cdempres>'.$cdempres.'</cdempres>';
-		$xml .= '       <codconvenio>'.$cdempres.'</codconvenio>';
-		$xml .= '       <numcnpjloja>'.$nrdocnpj.'</numcnpjloja>';
-		$xml .= '       <descnomeloja>'.$nmresemp.'</descnomeloja>';
-		$xml .= '       <descrazaoloja>'.$nmextemp.'</descrazaoloja>';
-		$xml .= '       <ceplogradouro>'.$nrcepend.'</ceplogradouro>';
-		$xml .= '       <desclogradouro>'.$dsendemp.'</desclogradouro>';
-        $xml .= '       <numlogradouro>'.$nrendemp.'</numlogradouro>';
-		$xml .= '       <desccompllogradouro>'.$dscomple.'</desccompllogradouro>';
-		$xml .= '       <descbairrologradouro>'.$nmbairro.'</descbairrologradouro>';
-		$xml .= '       <desccidadelogradouro>'.$nmcidade.'</desccidadelogradouro>';
-		$xml .= '       <uflogradouro>'.$cdufdemp.'</uflogradouro>';
-		$xml .= '       <dddloja>'.$nrdddemp.'</dddloja>';
-		$xml .= '       <telloja>'.$nrfonemp.'</telloja>';
-		$xml .= '       <numConta>'.$nrdconta.'</numConta>';
-		$xml .= '	</dto>';
-		$xml .= '</Root>';
-	
-		$xmlResult = mensageria(
-			$xml,
-			"TELA_CADEMP",
-			"BUSCA_CONSIG",
-			$glbvars["cdcooper"],
-			$glbvars["cdagenci"],
-			$glbvars["nrdcaixa"],
-			$glbvars["idorigem"],
-			$glbvars["cdoperad"],
-			"</Root>");
-		$xmlObj = getObjectXML($xmlResult);
-
-		if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
-
-			exibirErro(
-				"error",
-				$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
-				"Alerta - Ayllos",
-				"estadoInicial();",
-				false);
-			
-			exit();
-		}else{
-			//cham SOA x FIS
-			$xml = simplexml_load_string($xmlResult);
-			//print_r($xml);
-			$json = json_encode($xml);	
-			$retSOAxFIS = chamaServico($json,$Url_SOA, $Auth_SOA);          
-		}		
-		
-		if($retSOAxFIS == "ERRO"){
-			exibirErro(
-				"error",
-				"Erro ao enviar empresa para FIS",
-				"Alerta - Ayllos",
-				"",
-				false);
-			
-			exit();
-		}
-	}
 
     $xml  = "";
     $xml .= "<Root>";
@@ -333,8 +235,6 @@
     $xml.="          <nrcepend>$nrcepend</nrcepend>";
     $xml.="          <nrdocnpj>$nrdocnpj</nrdocnpj>";
     $xml.="          <nrfonemp>$nrfonemp</nrfonemp>";
-	//P437
-	$xml.="          <nrdddemp>$nrdddemp</nrdddemp>";
     $xml.="          <nrfaxemp>$nrfaxemp</nrfaxemp>";
     $xml.="          <dsdemail>$dsdemail</dsdemail>";
     $xml.="          <nrlotfol>$nrlotfol</nrlotfol>";
@@ -560,11 +460,7 @@
 
     $xml .= "        <old_nrfaxemp>$old_nrfaxemp</old_nrfaxemp>";
     $xml .= "        <new_nrfaxemp>$nrfaxemp</new_nrfaxemp>";
-	
-	//P437
-	$xml .= "        <old_nrfonemp>$old_nrdddemp</old_nrfonemp>";
-    $xml .= "        <new_nrfonemp>$nrdddemp</new_nrfonemp>";
-	
+
     $xml .= "        <old_nrfonemp>$old_nrfonemp</old_nrfonemp>";
     $xml .= "        <new_nrfonemp>$nrfonemp</new_nrfonemp>";
 

@@ -55,6 +55,10 @@
     $cdufdcop = (isset($_POST['cdufdcop'])) ? $_POST['cdufdcop'] : '';
     $dsdemail = (isset($_POST['dsdemail'])) ? $_POST['dsdemail'] : '';
     $dsmailbd = (isset($_POST['dsmailbd'])) ? $_POST['dsmailbd'] : '';
+    
+    $dsemailpj = (isset($_POST['dsemailpj'])) ? $_POST['dsemailpj'] : '';
+    $dsemailpf = (isset($_POST['dsemailpf'])) ? $_POST['dsemailpf'] : '';
+
     $dsinform1 = (isset($_POST['dsinform1'])) ? $_POST['dsinform1'] : '';
     $dsinform2 = (isset($_POST['dsinform2'])) ? $_POST['dsinform2'] : '';
     $dsinform3 = (isset($_POST['dsinform3'])) ? $_POST['dsinform3'] : '';
@@ -151,6 +155,8 @@
     $xml .= "   <cdufdcop>".$cdufdcop."</cdufdcop>";
     $xml .= "   <dsdemail>".$dsdemail."</dsdemail>";
     $xml .= "   <dsmailbd>".$dsmailbd."</dsmailbd>";
+    $xml .= "   <dsemailpj>".$dsemailpj."</dsemailpj>";
+    $xml .= "   <dsemailpf>".$dsemailpf."</dsemailpf>";
     $xml .= "   <dsinform1>".utf8_decode($dsinform1)."</dsinform1>";
     $xml .= "   <dsinform2>".utf8_decode($dsinform2)."</dsinform2>";
     $xml .= "   <dsinform3>".utf8_decode($dsinform3)."</dsinform3>";

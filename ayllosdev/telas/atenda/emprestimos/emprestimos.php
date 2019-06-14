@@ -7,7 +7,6 @@
 * --------------
 * ALTERAÇÕES   :
 *             12/08/2016 - Adicionado classe (SetFoco) - necessaria para navegação com teclado - (Evandro - RKAM)
-*			  03/2019 - Adicionada tela para mostrar grid de velidacoes do consignado JDB AMcom  
 * --------------
 */	 
 ?>
@@ -57,10 +56,6 @@ if ($flgAcesso == '') exibirErro('error','Seu usuário não possui permissão de
                 </tr>    
                 <tr>
                     <td class="tdConteudoTela" align="center">	
-					
-						<!-- INCLUDE COM AS MENSAGEM -->
-						<? include('../msg_alerta.php')?>
-					
                         <table width="100%" border="0" cellspacing="0" cellpadding="0">
                             <tr>
                                 <td>

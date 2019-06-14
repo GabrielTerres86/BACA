@@ -11,13 +11,15 @@
  * 002: [04/08/2015] Gabriel (Rkam)	    - Reformulacao cadastral.
  * 003: [15/09/2017] Alterações referente a melhoria 339 (Kelvin).
  * 004: [27/09/2017] Kelvin  (CECRED)	- Removido campos nrdoapto, cddbloco e nrcxapst (PRJ339).
+ * 005: [15/03/2019] Anderson (SUPERO)  - Implementado titulo dinamico Comercial/Residencial (PJ429).
  */	 
 ?>
 <form name="frmEndereco" id="frmEndereco" class="formulario">
 
 	<fieldset name="fieldResidencial" id="fieldResidencial">
 	
-		<legend> Residencial </legend>
+		<legend> <?php if ($inpessoa == 2) { echo 'Comercial'; }
+		          else if ($inpessoa == 1) { echo 'Residencial'; } ?></legend>
 
 		<label for="incasprp"><? echo utf8ToHtml(' Tipo do Imóvel:') ?></label>
 		<select name="incasprp" id="incasprp" >
@@ -77,14 +79,34 @@
 			<option value="2" <? if (getByTagName($endereco,'idorigem') == '2' ){ echo ' selected'; } ?>> Cooperativa </option>
 			<option value="3" <? if (getByTagName($endereco,'idorigem') == '3' ){ echo ' selected'; } ?>> Terceiros </option>
 		</select>
-		
 		<br style="clear:both" />
-	
 	</fieldset>
+
+	<?php if ($inpessoa == 1) { ?>
+	<fieldset>
+		<legend><? echo utf8ToHtml('Atualização Cadastral');?></legend>
+			<label for="idcanal"><? echo utf8ToHtml('Canal:'); ?></label>
+			<input name="idcanal" id="idcanal" type="text"  value="<? echo getByTagName($endereco,'dsdcanal') ?>" />
+		
+			<label for="dtrevisa"><? echo utf8ToHtml('Data de revisão:'); ?></label>
+			<input name="dtrevisa" id="dtrevisa" type="text"  value="<? echo getByTagName($endereco,'dtrevisa') ?>" />
+	
+			<label for="dsstatus"><? echo utf8ToHtml('Status:'); ?></label>
+			<input name="dsstatus" id="dsstatus" type="text"  value="<? echo getByTagName($endereco,'dssituac') ?>" />
+		<br style="clear:both" />
+	</fieldset>
+	<?php } ?>
 	
 	<fieldset name="fieldCorrespondencia" id="fieldCorrespondencia">
 	
 		<legend> <? echo utf8ToHtml('Correspondência') ?> </legend>
+		
+		<label  for="flgutires"><? echo utf8ToHtml('Utilizar endereço residencial') ?></label>
+		<input type="checkbox" id="flgutires" name="flgutires" style="margin:3px 0px 0px 3px;"/>			
+		
+		<label  for="lovendco"><? echo utf8ToHtml('Buscar endereço cobrança') ?></label>
+		<input name="lovendcoinput" id="lovendcoinput" type="text" style="display:none;"/>
+		<a id="lovendco" ><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		
 		<label for="nrcepend"><? echo utf8ToHtml('CEP:') ?></label>
 		<input name="nrcepend" id="nrcepend" type="text" value="<? echo getByTagName($enderecoCorrespondencia,'nrcepend') ?>" />

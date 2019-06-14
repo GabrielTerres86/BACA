@@ -6,7 +6,7 @@
  * DATA CRIAÇÃO : Setembro/2018
  * OBJETIVO     : Alterar as propostas de cartão de crédito
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 18/03/2019 - PJ429 - Implementado tipo de envio do cartão - Anderson-Alan (Supero)
  * --------------
  *
  *
@@ -129,6 +129,31 @@ if (getByTagName($dados,"DDDEBANT") == 0){
     $dddebant = getByTagName($dados,"DDDEBANT");
 }
 
+
+// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
+$xml = "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObjeto = getObjectXML($xmlResult);
+
+$coop_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
+$pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
+
+$xmlSituacao = "<Root>";
+$xmlSituacao .= " <Dados>";
+$xmlSituacao .= "   <nrdconta>$nrdconta</nrdconta>";
+$xmlSituacao .= "   <nrctrcrd>$nrctrcrd</nrctrcrd>";
+$xmlSituacao .= " </Dados>";
+$xmlSituacao .= "</Root>";
+
+
+$xmlResult = mensageria($xmlSituacao, "ATENDA_CRD", "BUSCAR_SITUACAO_DECISAO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObjeto = simplexml_load_string($xmlResult);
+$flgBancoob = ($xmlObjeto->Dados->cartoes->sitdec == "Refazer" ? true : false);
 ?>
 
 <form action="" name="frmNovoCartao" id="frmNovoCartao" method="post" onSubmit="return false;">
@@ -218,7 +243,11 @@ if (getByTagName($dados,"DDDEBANT") == 0){
                     <input type="text" name="vlalugue" id="vlalugue" class="campo" value="0,00" />
                     <br />
                     <label for="vllimpro"><?php echo utf8ToHtml('Limite Proposto:') ?></label>
+                    <? if (!$flgBancoob) { ?>
+                    <input  class='campo' id='vllimpro' onchange="validaNovoLimite()" name='vllimpro' data-old="<?php echo $vllimite; ?>" value="<?php echo $vllimite; ?>">
+                    <? } else { ?>
                     <input  class='campo' id='vllimpro' name='vllimpro' value="<?php echo $vllimite; ?>">
+                    <? } ?>
 
                     <label for="flgdebit"><?php echo utf8ToHtml('Habilita função débito:') ?></label>
                     <input type="checkbox" <?=$flgdebit?> name="flgdebit" id="flgdebit" class="campo" dtb="1" disabled />
@@ -239,15 +268,15 @@ if (getByTagName($dados,"DDDEBANT") == 0){
                     </select>
                     <label for="tpenvcrd"><?php echo utf8ToHtml('Envio:') ?></label>
                     <select class='campo' disabled id='tpenvcrd' name='tpenvcrd'>
-                        <option value='1' selected>Cooperativa</option>
-                        <!--option value='0'>Cooperado</option      OPÇÃO RETIRADO TEMPORÁRIAMENTE, PARA QUE SEJA ENVIADO SEMPRE PARA A COOPERATIVA (RENATO - SUPERO)-->
+                        <option <?php if ($pa_envia_cartao) { echo "selected"; } ?> value="0">Cooperado</option>
+                        <option <?php if (!$pa_envia_cartao) { echo "selected"; } ?> value="1">Cooperativa</option>
                     </select>
                     <br />
                 </fieldset>
-                <div id="divBotoes" >
+                <div id="divBotoes">
 				
                     <input class="btnVoltar" id="backChoose" type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(0, 1, 4); return false;" />
-                    <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao(); return false;" />
+                    <input class="" type="image" id="btnsaveRequest" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao('M'); return false;" />
 
                 
 					<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
@@ -284,6 +313,20 @@ if (getByTagName($dados,"DDDEBANT") == 0){
 
 
 <script type="text/javascript">
+    function validaNovoLimite() {
+        var limiteAntigo = $("#vllimpro").data("old"),
+            limiteNovo = $("#vllimpro").val();
+
+        limiteAntigo = normalizaNumero(limiteAntigo || 0);
+        limiteNovo = normalizaNumero(limiteNovo || 0);
+        flgBancoob = false;
+        if (limiteNovo != limiteAntigo) {
+            flgBancoob = true;
+        }
+    }
+    
+    <? if ($flgBancoob) { echo "flgBancoob = true;"; }?>
+    
     controlaLayout('frmNovoCartao');
 
     $("#divOpcoesDaOpcao1").css("display","block");

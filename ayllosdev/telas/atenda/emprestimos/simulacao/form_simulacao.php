@@ -104,7 +104,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
             <input name="dtdpagto" id="dtdpagto" type="text" value="" />
             <br />
 
-            <div id="linCarencia">
+            <div id="linCarencia" class="divCarencia">
                 <label for="idcarenc"><? echo utf8ToHtml("Carência:") ?></label>
                 <select name="idcarenc" id="idcarenc">
                 <?php

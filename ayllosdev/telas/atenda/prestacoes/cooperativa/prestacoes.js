@@ -70,7 +70,9 @@
  *                   PJ450 - Diego Simas (AMcom)  
  * 049: [19/11/2018] Alterado layout da tela frmNovaProp (Dados da Solicitação), tela Garantias (agora Rating)
  *                    Avalistas, Interveniente e Dados da Alienação(frmHipoteca) - PRJ 438. (Mateus Z / Mouts)
- *				     05/2018 - Valida o pagamento se consignado - JDB AMcom
+ * 050: [10/05/2019] P438 Bloqueio da impressao do contrato para linhas 7080 e 7081. (Douglas Pagel / AMcom)
+ * 051: [25/05/2019] - PRJ298.2.2 - Pagamento do prejuízo de forma manual - Nagasava (Supero)
+
 */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -104,8 +106,6 @@ var dtmvtolt  = '';
 var nrdrecid  = '';
 var tplcremp  = '';
 var tpemprst  = 0;
-//P437
-var tpdescto = 0;
 var intpextr  = '';
 var cdlcremp  = 0;
 var qttolatr  = 0;
@@ -228,6 +228,7 @@ function controlaOperacao(operacao) {
 	var nrcpfcgc_busca = 0;
 	var qtpergun = 0;
 	var nrseqrrq = 0;
+	var vlprecar = '';
 
 	if ( in_array(operacao,['']) ) {
 		nrctremp = '';
@@ -238,24 +239,12 @@ function controlaOperacao(operacao) {
     var inintegra_cont = $("#tabPrestacao table tr.corSelecao").find("input[id='inintegra_cont']").val();
     var tpfinali       = $("#tabPrestacao table tr.corSelecao").find("input[id='tpfinali']").val();
     var cdoperad       = $("#tabPrestacao table tr.corSelecao").find("input[id='cdoperad']").val();
-	//P437
-	var tpdescto       = $("#tabPrestacao table tr.corSelecao").find("input[id='tpdescto']").val();	
-	var tpemprst       = $("#tabPrestacao table tr.corSelecao").find("input[id='tpemprst']").val();
 
 	if(tpfinali == 3 && cdoperad=='AUTOCDC'){
         
         // botao Registrar GRV
 		if (operacao == 'D_EFETIVA'){
 				showError('error', 'Não é permitido desfazer efetivação, proposta com origem na integração CDC!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
-				return false;			
-		// botao efetivar
-		}
-    }
-	//P437
-	if(tpemprst == 1 && tpdescto == 2 ){        
-        // botao Registrar GRV
-		if (operacao == 'D_EFETIVA'){
-				showError('error', 'N&atilde;o &eacute; poss&iacute;vel desfazer efetiva&ccedil;&atilde;o. Efetue liquida&ccedil;&atilde;o do contrato!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
 				return false;			
 		// botao efetivar
 		}
@@ -295,10 +284,6 @@ function controlaOperacao(operacao) {
 
 				if (typeof $('#tpemprst', $(this) ).val() != 'undefined'){
 					tpemprst = $('#tpemprst', $(this) ).val();
-				}
-				//P437
-				if (typeof $('#tpdescto', $(this) ).val() != 'undefined'){
-					tpdescto = $('#tpdescto', $(this) ).val();
 				}
 				
 				if (typeof $('#dsdavali', $(this) ).val() != 'undefined'){
@@ -473,7 +458,10 @@ function controlaOperacao(operacao) {
 			fechaRotina($('#divUsoGenerico'),$('#divRotina'));
 			mensagem = 'abrindo pagamento de prejuizo...';
 			break;
-
+		case 'C_PAG_PREST_POS_PRJ':
+			fechaRotina($('#divUsoGenerico'),$('#divRotina'));
+			mensagem = 'abrindo pagamento de prejuizo pos...';
+			break;
 		case 'D_EFETIVA' :
 			mensagem = 'validando informa&ccedil;&otilde;es';
 			cddopcao = 'D';
@@ -596,8 +584,6 @@ function controlaOperacao(operacao) {
 			prejuizo: inprejuz,
 			dtpesqui: dtpesqui,
 			tpemprst: tpemprst,
-			//P437
-			tpdescto: tpdescto,
 			nrparepr: nrparepr,
 			vlpagpar: vlpagpar,
             dtvencto: dtvencto,
@@ -769,10 +755,11 @@ function controlaLayout(operacao) {
 		altura   = '270px';
 		largura  = '485px';
 		
+		
 		var rRotulos     = $('label[for="dtprejuz"],label[for="vlprejuz"],label[for="slprjori"],label[for="vlrpagos"],label[for="vlttmupr"],label[for="vlttjmpr"],label[for="vltiofpr"],label[for="vlsdprej"]','#'+nomeForm);
 		var cTodos       = $('select,input','#'+nomeForm);
 
-		var rRotuloLinha = $('label[for="vlacresc"],label[for="vljraprj"],label[for="vljrmprj"],label[for="vlrabono"],label[for="vlpgmupr"],label[for="vlpgjmpr"],label[for="vlpiofpr"],label[for="tpdrisco"]','#'+nomeForm);
+		var rRotuloLinha = $('label[for="vlacresc"],label[for="vljraprj"],label[for="vljrmprj"],label[for="vlrabono"],label[for="vlpgmupr"],label[for="vlpgjmpr"],label[for="vlpiofpr"],label[for="tpdrisco"],label[for="nrdiaatr"]','#'+nomeForm);
 
 		var cTodosMoeda  = $('#vlrabono,#vlprejuz,#vljrmprj,#slprjori,#vljraprj,#vlrpagos,#vlacresc,#vlsdprej,#vlttmupr,#vlpgmupr,#vlttjmpr,#vlpgjmpr,#vlpiofpr,#vltiofpr,#vliofcpl','#'+nomeForm);
 
@@ -780,10 +767,21 @@ function controlaLayout(operacao) {
 		cTodosMoeda.addClass('monetario');
 		cTodos.addClass('campo').css('width','123px');
 
+		$('#nrdiaatr').css('text-align','right');
+		$('#dtprejuz').css('text-align','right');
+
 		rRotulos.addClass('rotulo').css('width','95px');
 		rRotuloLinha.addClass('rotulo-linha').css('width','112px');;
 
 		cTodos.desabilitaCampo();
+
+		if (tpemprst == 2) {
+		    $('label[for="tpdrisco"]').hide();
+		    $('#tpdrisco').hide();
+		} else {
+		    $('label[for="nrdiaatr"]').hide();
+		    $('#nrdiaatr').hide();
+		}
 
 	} else if ( in_array(operacao,['TC']) ) {
 
@@ -804,7 +802,7 @@ function controlaLayout(operacao) {
 		var r_Linha2    = $('label[for="txmensal"],label[for="txjuremp"],label[for="vljurmes"],label[for="vljuracu"],label[for="dspreapg"],label[for="qtmesdec"]','#'+nomeForm );
 		var cTodosGr    = $('#dsdaval1,#dsdaval2,#dsdpagto,#dslcremp,#dsfinemp','#'+nomeForm);
 
-		var cMoeda      = $('#vlemprst,#vlsdeved,#vlpreemp,#vlprepag,#vlpreapg,#vljuracu,#vljurmes,#vlmtapar,#vlmrapar,#vltotpag,#vliofcpl','#'+nomeForm);
+		var cMoeda      = $('#vlemprst,#vlsdeved,#vlpreemp,#vlprecar,#vlprepag,#vlpreapg,#vljuracu,#vljurmes,#vlmtapar,#vlmrapar,#vltotpag,#vliofcpl','#'+nomeForm);
 		var cContrato   = $('#nrctremp','#'+nomeForm);
 		var cTaxaMes	= $('#txmensal','#'+nomeForm);
 		var cTaxaJuros  = $('#txjuremp','#'+nomeForm);
@@ -871,6 +869,7 @@ function controlaLayout(operacao) {
 		var rLnCred      = $('label[for="cdlcremp"]','#'+nomeForm);
 		var rDsLnCred    = $('label[for="dslcremp"]','#'+nomeForm);
 		var rVlPrest     = $('label[for="vlpreemp"]','#'+nomeForm);
+		var rVlPreCar    = $('label[for="vlprecar"]','#'+nomeForm);
 		var rFinali      = $('label[for="cdfinemp"]','#'+nomeForm);
 		var rDsFinali    = $('label[for="dsfinemp"]','#'+nomeForm);
 		var rQtParc      = $('label[for="qtpreemp"]','#'+nomeForm);
@@ -900,6 +899,7 @@ function controlaLayout(operacao) {
 		var cLnCred      = $('#cdlcremp','#'+nomeForm);
 		var cDsLnCred    = $('#dslcremp','#'+nomeForm);
 		var cVlPrest     = $('#vlpreemp','#'+nomeForm);
+		var cVlPreCar   = $('#vlprecar','#'+nomeForm);
 		var cFinali      = $('#cdfinemp','#'+nomeForm);
 		var cDsFinali    = $('#dsfinemp','#'+nomeForm);
 		var cQtParc      = $('#qtpreemp','#'+nomeForm);
@@ -933,6 +933,7 @@ function controlaLayout(operacao) {
         cLnCred.css('width','35px').attr('maxlength','3');
         cDsLnCred.css('width','108px');
         cVlPrest.addClass('moeda').css('width','90px');
+        cVlPreCar.addClass('moeda').css('width','90px');
         cFinali.addClass('rotulo').css('width','35px');
         cDsFinali.css('width','108px');
         cQtParc.addClass('rotulo').css('width','50px').setMask('INTEGER','zz9','','');
@@ -979,6 +980,7 @@ function controlaLayout(operacao) {
         rQtParc.css('width','140px');
         rLiquidacoes.css('width','140px');
         rFlgdocje.addClass('rotulo-linha').css('width','259px');
+		rVlPreCar.addClass('rotulo-linha').css('width','259px');
 
 		rDsratpro.addClass('rotulo-linha').css('width','200px');
 		rDsratatu.addClass('rotulo-linha').css('width','316px');
@@ -999,6 +1001,16 @@ function controlaLayout(operacao) {
 		}
 
 		cTodos.desabilitaCampo();
+
+        if (tpemprst == 2) { // Se for Pos-Fixado
+            $("#linCarencia", "#frmNovaProp").show();
+            rVlPreCar.show();
+            cVlPreCar.show();
+        } else {
+            $("#linCarencia", "#frmNovaProp").hide();
+            rVlPreCar.hide();
+            cVlPreCar.hide();
+        }
 
 	} else if (in_array(operacao,['C_COMITE_APROV'])) {
 
@@ -1665,7 +1677,15 @@ function controlaLayout(operacao) {
 	}else if (in_array(operacao,['C_PAG_PREST_PREJU'])){
 
 		nomeForm = 'frmVlParcPreju';
-		altura   = '210px';
+		altura   = '240px';
+		largura  = '260px';
+		var cAbono  = $('#vlabono','#'+nomeForm);
+		var cPagto = $('#vlpagto','#'+nomeForm);
+		
+	}else if (in_array(operacao,['C_PAG_PREST_POS_PRJ'])){
+		
+		nomeForm = 'frmVlParcPrejuPos';
+		altura   = '240px';
 		largura  = '260px';
 		var cAbono  = $('#vlabono','#'+nomeForm);
 		var cPagto = $('#vlpagto','#'+nomeForm);
@@ -2092,13 +2112,18 @@ function controlaLayout(operacao) {
 	} else if (in_array(operacao, ['C_DEMONSTRATIVO_EMPRESTIMO'])){
 		 nomeForm = 'frmDemonstracaoEmprestimo';
 		 largura = '345px';
+		 if (tpemprst == 2) {
+			altura = '230px';
+		 } else {
 		 altura = '205px';
+		 }
 
 		 var rVlemprst = $('label[for="vlemprst"]', '#' + nomeForm);
 		 var rVliofepr = $('label[for="vliofepr"]', '#' + nomeForm);
 		 var rVlrtarif = $('label[for="vlrtarif"]', '#' + nomeForm);
 		 var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
 		 var rVlpreemp = $('label[for="vlpreemp"]', '#' + nomeForm);
+		 var rVlprecar = $('label[for="vlprecar"]', '#' + nomeForm);
 		 var rPercetop = $('label[for="percetop"]', '#' + nomeForm);
 
 		 var cVlemprst = $('#vlemprst', '#' + nomeForm);
@@ -2106,6 +2131,7 @@ function controlaLayout(operacao) {
 		 var cVlrtarif = $('#vlrtarif', '#' + nomeForm);
 		 var cVlrtotal = $('#vlrtotal', '#' + nomeForm);
 		 var cVlpreemp = $('#vlpreemp', '#' + nomeForm);
+		 var cVlprecar = $('#vlprecar', '#' + nomeForm);
 		 var cPercetop = $('#percetop', '#' + nomeForm);
 
 		 rVlemprst.addClass('rotulo').css('width', '100px');
@@ -2113,6 +2139,7 @@ function controlaLayout(operacao) {
 		 rVlrtarif.addClass('rotulo').css('width', '100px');
 		 rVlrtotal.addClass('rotulo').css('width', '100px');
 		 rVlpreemp.addClass('rotulo').css('width', '100px');
+		 rVlprecar.addClass('rotulo').css('width', '100px');
 		 rPercetop.addClass('rotulo').css('width', '100px');
 
 		 cVlemprst.addClass('moeda');
@@ -2120,6 +2147,7 @@ function controlaLayout(operacao) {
 		 cVlrtarif.addClass('moeda');
 		 cVlrtotal.addClass('moeda');
 		 cVlpreemp.addClass('moeda');
+		 cVlprecar.addClass('moeda');
 		 cPercetop.addClass('moeda');
 
 		 cVlemprst.desabilitaCampo();
@@ -2127,6 +2155,7 @@ function controlaLayout(operacao) {
 		 cVlrtarif.desabilitaCampo();
 		 cVlrtotal.desabilitaCampo();
 		 cVlpreemp.desabilitaCampo();
+		 cVlprecar.desabilitaCampo();
 		 cPercetop.desabilitaCampo();
 	}
 
@@ -2301,6 +2330,8 @@ function atualizaTela(){
     $('#vltiofpr','#frmPreju').val( utf8_decode(arrayRegistros['vltiofpr']) );
     $('#vlpiofpr','#frmPreju').val( utf8_decode(arrayRegistros['vlpiofpr']) );
 		
+        $('#nrdiaatr','#frmPreju').val( utf8_decode(arrayRegistros['nrdiaatr']) );
+		
 		
 	}else if (in_array(operacao,['C_NOVA_PROP','C_NOVA_PROP_V'])){
 
@@ -2309,6 +2340,7 @@ function atualizaTela(){
 		$('#vlemprst','#frmNovaProp').val( arrayProposta['vlemprst'] );
 		$('#cdlcremp','#frmNovaProp').val( arrayProposta['cdlcremp'] );
 		$('#vlpreemp','#frmNovaProp').val( arrayProposta['vlpreemp'] );
+		$('#vlprecar','#frmNovaProp').val( arrayProposta['vlprecar'] );
 		$('#cdfinemp','#frmNovaProp').val( arrayProposta['cdfinemp'] );
 		$('#qtpreemp','#frmNovaProp').val( arrayProposta['qtpreemp'] );
 		$('#idquapro','#frmNovaProp').val( arrayProposta['idquapro'] );
@@ -2324,8 +2356,6 @@ function atualizaTela(){
 		$('#dsfinemp','#frmNovaProp').val( arrayProposta['dsfinemp'] );
 		$('#dtlibera','#frmNovaProp').val( arrayProposta['dtlibera'] );
 		$('#tpemprst','#frmNovaProp').val( arrayProposta['tpemprst'] );
-		//P437
-		$('#tpdescto','#frmNovaProp').val( arrayProposta['tpdescto'] );
 		$('#dslcremp','#frmNovaProp').val( arrayProposta['dslcremp'] );
 		$('#dsquapro','#frmNovaProp').val( arrayProposta['dsquapro'] );
 		$('#dsquaprc','#frmNovaProp').val( arrayProposta['dsquaprc'] );
@@ -2680,6 +2710,7 @@ function atualizaTela(){
 			$('#vlrtotal', '#frmDemonstracaoEmprestimo').val(arrayRegistros['vlemprst']);
 			$('#percetop', '#frmDemonstracaoEmprestimo').val(arrayProposta['percetop']);
 			$('#vlpreemp', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlpreemp']);
+			$('#vlprecar', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlprecar']);
 	}
 
 	return false;
@@ -3208,6 +3239,27 @@ function validaPagamentoPreju(){
 	}
 }
 
+function validaPagamentoPrejuPos(){
+
+	var vlprincipal = retiraMascara($('#vlprincipal', '#frmVlParcPreju').val()) || 0;
+	var vljuros     = retiraMascara($('#vljuros'    , '#frmVlParcPreju').val()) || 0;
+	var vlmulta     = retiraMascara($('#vlmulta'    , '#frmVlParcPreju').val()) || 0;
+    var vlrdiof     = retiraMascara($('#vlrdiof'    , '#frmVlParcPreju').val()) || 0;
+	var vlpagto     = retiraMascara($('#vlpagto'    , '#frmVlParcPreju').val()) || 0;
+	var vlabono     = retiraMascara($('#vlabono'    , '#frmVlParcPreju').val()) || 0;
+
+	//Validar para não permitir que todos os campos estejam vazios/zerados
+	if(vlpagto > 0 || vlabono > 0) {
+		if(vlprincipal > 0 || vljuros > 0 || vlmulta > 0 || vlrdiof > 0){
+	showConfirmacao('Confirma pagamento do prejuízo?','Confirma&ccedil;&atilde;o - Aimaro','pagPrestPrejuPos();','$(\'#btVoltar\').click();','sim.gif','nao.gif');
+		}else{
+			showError('error','Contrato liquidado.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+		}
+	} else {
+		showError('error','Atenção! Informe valor de pagamento.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+	}
+}
+
 function pagPrestPreju (){
 	showMsgAguardo('Aguarde, validando prejuizo...');
 
@@ -3259,25 +3311,63 @@ function pagPrestPreju (){
 	});
 }
 
+function pagPrestPrejuPos (){
+	showMsgAguardo('Aguarde, validando prejuizo...');
+
+	var valordopagto = (retiraMascara($('#vlpagto', '#frmVlParcPreju').val()) || 0);
+	var valordoabono = (retiraMascara($('#vlabono', '#frmVlParcPreju').val()) || 0);
+	
+	var vlprincipal = (retiraMascara($('#vlprincipal', '#frmVlParcPreju').val()) || 0);
+	var vljuros = (retiraMascara($('#vljuros', '#frmVlParcPreju').val()) || 0);
+	var vlmulta = (retiraMascara($('#vlmulta', '#frmVlParcPreju').val()) || 0);
+    var vlrdiof = (retiraMascara($('#vlrdiof', '#frmVlParcPreju').val()) || 0);
+	
+	var totalDivida = (vlprincipal + vljuros + vlmulta + vlrdiof) || 0;
+	var totalArredondamento = parseFloat(totalDivida.toFixed(2));
+	var totalPagamento = (valordopagto + valordoabono) || 0;
+	
+	if (valordopagto > totalArredondamento){
+		hideMsgAguardo();
+		showError('error','Pagamento não permitido, valor informado é superior ao saldo devedor do contrato.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+		return false;
+	}
+	
+	if (valordoabono > totalDivida){
+		hideMsgAguardo();
+		showError('error','Pagamento não permitido, valor do abono informado é superior ao saldo devedor do contrato.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+		return false;
+	}
+	
+	// Carrega conteúdo da opção através do Ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/pagto_prejuizo_pos.php',
+		data: {
+			nrdconta: nrdconta,
+			nrctremp: nrctremp,
+			vldabono: valordoabono,
+			vlpagmto: valordopagto,
+			redirect: 'html_ajax'
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			eval( response );
+			return false;
+		}
+	});
+}
+
 function validaPagamento(){
 
 	
 	showMsgAguardo('Aguarde, validando pagamento...');
 	var vlapagar = $('#totpagto', '#frmVlParc').val();
-    //P437 S6
-	var parc = "";	
-	//Carregar parcelas
-	$("input[type=checkbox][name='checkParcelas[]']").each(function() {
-		checked = false;
-		checked = this.checked;
-		if(checked != false)
-		{
-			parc = parc + this.id.split("_")[1] + ';' ;						
-            
-		}
-	});
 	
-
 	// Carregar os dados de antecipação
 	verificaAntecipacaopgto();
 	
@@ -3289,7 +3379,6 @@ function validaPagamento(){
 			nrdconta: nrdconta,
 			vlapagar: vlapagar,
 			nrctremp: nrctremp,
-			    parc: parc,
 			redirect: 'script_ajax'
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -3656,6 +3745,12 @@ function verificaImpressao(par_idimpres){
 	// Augusto - Supero
 	if (contratoMigrado != "0" && (idimpres == 2  || idimpres == 8 || idimpres == 6 || idimpres == 3 || idimpres == 7 || idimpres == 11)) {
 		showError("inform",'Consulta dispon&iacute;vel no contrato: '+contratoMigrado,"Alerta - Ayllos","");
+		return false;
+	}
+
+	//Bloqueio temporario para linhas de canais digitais. P438
+	if (idimpres == 9 && (arrayRegistros['cdlcremp'] == 7080 || arrayRegistros['cdlcremp'] == 7081) ) {
+		showError("inform",'Via do contrato digital dispon&iacute;vel no Smartshare!',"Alerta - Ayllos","");
 		return false;
 	}
 
@@ -4673,7 +4768,11 @@ function validarLiquidacao(){
 		return false; }
 	
 	if (tpemprst == 2) { // Pos-Fixado
+		if (inprejui == 0){
 		controlaOperacao('C_PAG_PREST_POS');
+		}else {
+			controlaOperacao('C_PAG_PREST_POS_PRJ');
+		}
 	} else {
 	if ( liquidia == 1 ) {
 		showConfirmacao('Deseja Realizar Liquidação do Contrato?','Confirma&ccedil;&atilde;o - Aimaro','exibeValorLiquidacao();','controlaOperacao(\'C_PAG_PREST\');','sim.gif','nao.gif');
@@ -4812,4 +4911,3 @@ function hideCamposCategoriaVeiculos(hide){ //PRJ 438 - Bruno
 		$('.fieldVeiculos').show();
 	}
 }
-

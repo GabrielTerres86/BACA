@@ -9,6 +9,7 @@
  *
  *                02/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                             pois a BO não utiliza o mesmo (Renato Darosci)
+ *                04/04/2019 - Tratamento de erro para solucinar o problema no cadastro - PRB0041543 (Jose Gracik - Mouts)
  */
 ?>
  
@@ -126,7 +127,7 @@
 		
 		// Se não existe necessidade de Revisão Cadastral
 		} else {		
-			echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')';			
+			echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'proximaRotina(\"\")\')';
 		}
 	} 
 	

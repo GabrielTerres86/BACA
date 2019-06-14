@@ -38,14 +38,14 @@
 			$this->Ln();
 			$this->Ln();				
 					
-			$this->MultiCell(0,0.35,"AUTORIZAÇÃO DE DÉBITO EM CONTA-CORRENTE PARA CRÉDITO NA POUPANÇA PROGRAMADA\n===========================================================================",0,"C",0);		  
+			$this->MultiCell(0,0.35,"AUTORIZAÇÃO DE DÉBITO EM CONTA-CORRENTE PARA CRÉDITO NA APLICAÇÂO PROGRAMADA\n===========================================================================",0,"C",0);		  
 			                         
 			$this->Ln();
 			$this->Ln();	
 			$this->Ln();				
 			
 			$this->Cell(6,0.35,"Conta/dv: ".formataNumericos("zzzz.zzz-9",$dadosAutorizacao["NRDCONTA"],".-"),0,0,"L",0,"");
-			$this->Cell(6,0.35,"Número da Poupança: ".formataNumericos("zzz.zzz.zz9",$dadosAutorizacao["NRCTRRPP"],"."),0,0,"C",0,"");
+			$this->Cell(6,0.35,"Número da Aplicação: ".formataNumericos("zzz.zzz.zz9",$dadosAutorizacao["NRCTRRPP"],"."),0,0,"C",0,"");
 			$this->Cell(6,0.35,"Valor: ".number_format(str_replace(",",".",$dadosAutorizacao["VLPRERPP"]),2,",","."),0,1,"R",0,"");
 						
 			$this->Ln();						
@@ -56,7 +56,7 @@
 			$this->Ln();
 			$this->Ln();	
 
-			$this->MultiCell(0,0.35,"O associado acima qualificado, autoriza débito mensal em conta-corrente de depósitos à vista, com vencimento em ".$dadosAutorizacao["DTVCTOPP"].", na importancia de R$ ".number_format(str_replace(",",".",$dadosAutorizacao["VLPRERPP"]),2,",",".")." (".str_replace("*","",$dadosAutorizacao["DSPRERPP"]).") a partir do mês de ".$dadosAutorizacao["DSMESANO"]." de ".$dadosAutorizacao["NRANOINI"].", para crédito na sua POUPANÇA PROGRAMADA ".$dadosAutorizacao["NMRESCOP"].".",0,"J",0);			
+			$this->MultiCell(0,0.35,"O associado acima qualificado, autoriza débito mensal em conta-corrente de depósitos à vista, com vencimento em ".$dadosAutorizacao["DTVCTOPP"].", na importancia de R$ ".number_format(str_replace(",",".",$dadosAutorizacao["VLPRERPP"]),2,",",".")." (".str_replace("*","",$dadosAutorizacao["DSPRERPP"]).") a partir do mês de ".$dadosAutorizacao["DSMESANO"]." de ".$dadosAutorizacao["NRANOINI"].", para crédito na sua APLICAÇÂO PROGRAMADA ".$dadosAutorizacao["NMRESCOP"].".",0,"J",0);			
 			
 			$this->Ln();
 			$this->Ln();
@@ -70,7 +70,7 @@
 			$this->Ln();
 			$this->Ln();	
 
-			$this->MultiCell(0,0.35,"A POUPANÇA PROGRAMADA tem as seguintes caracteristicas:",0,"J",0);			
+			$this->MultiCell(0,0.35,"A APLICAÇÂO PROGRAMADA tem as seguintes caracteristicas:",0,"J",0);			
 			
 			$this->Ln();
 			

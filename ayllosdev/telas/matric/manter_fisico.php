@@ -16,6 +16,8 @@
  * 				  16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).
  *                17/10/2017 - Ajuste para carregar idade ao validadr dados. PRJ339-CRM (Odirle/AMcom).
  *				  13/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+ *				  26/03/2019 - Adicionado tratamento para remover caracteres inválidos dos campos
+ *                             Endereço e Complemento (PRB0040594 - Jefferson - MoutS)
  */
 ?> 
 
@@ -38,6 +40,7 @@
 	$tpdocptl = (isset($_POST['tpdocptl'])) ? $_POST['tpdocptl'] : '' ;
 	$nrdocptl = (isset($_POST['nrdocptl'])) ? $_POST['nrdocptl'] : '' ;
 	$cdoedptl = (isset($_POST['cdoedptl'])) ? $_POST['cdoedptl'] : '' ;
+	$flgctsal = (isset($_POST['flgctsal'])) ? $_POST['flgctsal'] : false ;
 	$cdufdptl = (isset($_POST['cdufdptl'])) ? $_POST['cdufdptl'] : '' ;
 	$dtemdptl = (isset($_POST['dtemdptl'])) ? $_POST['dtemdptl'] : '' ;
 	$tpnacion = (isset($_POST['tpnacion'])) ? $_POST['tpnacion'] : '' ;
@@ -110,10 +113,8 @@
 		
 		// Retirar caracteres nao desejados
 		if ($key == 'complend' || $key == 'dsendere') {
-			$array1 = array("=","%","&","#","+","?","'",",",".","/",";","[","]","!","@","$","(",")","*","|",":","<",">","~","{","~","}","~");
-
 			// limpeza dos caracteres nos campos 
-			$value = trim(str_replace( $array1, " " , $value));
+			$value = removeCaracteresInvalidos($value, true);
 		}
 		
 		$xml .= "<$key>$value</$key>";   

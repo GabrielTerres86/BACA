@@ -39,7 +39,7 @@
 	// Executa script para envio do XML
 	$xmlResult = mensageria($xml, "TELA_ATENDA_SIMULACAO", "SIMULA_IMPRIME_SIMULACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	// Cria objeto para classe de tratamento de XML
-	$xmlObj = getObjectXML($xmlResult);
+	$xmlObj = getObjectXML($xmlResult);	
 	
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ){
 		$msg = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
@@ -49,7 +49,7 @@
 	
 	// Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
 	$nmarqpdf = $xmlObj->roottag->tags[1]->cdata;
-
+	
 	// Chama função para mostrar PDF do impresso gerado no browser
 	visualizaPDF($nmarqpdf);
 ?>

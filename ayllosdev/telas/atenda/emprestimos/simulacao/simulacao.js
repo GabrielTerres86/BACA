@@ -16,7 +16,6 @@
  * 007: [30/06/2015] Ajustes referente Projeto 215 - DV 3 (Daniel)
  * 008: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 009: [13/12/2018] Projeto 298.2 - Inclusos novos campos tpemprst e campos de carencia (Andre Clemer - Supero)
- * 010: [03/2018] Projeto 437 - Inclusao do consignado - JDB AMcom
  */
 
 //******************************
@@ -190,6 +189,8 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
     cValorTotal.addClass('rotulo moeda').css('width', '90px').desabilitaCampo();
 
     if (operacao == 'C_SIMULACAO' || operacao == "E_SIMULACAO") {
+        nomeForm = 'frmSimulacao';
+
         $('#divProcSimulacoesTabela').css('display', 'none');
         $('#divProcSimulacoesFormulario').css('display', 'block');
         $('#divProcParcelasTabela').css('display', 'block');
@@ -366,10 +367,10 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
     return false;
 }
 
-
 // Inclui/altera uma simulação
 function buscarDadosSimulacao(nrsimula, operacao, tela) {
-	
+
+
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         dataType: "html",
@@ -395,10 +396,8 @@ function buscarDadosSimulacao(nrsimula, operacao, tela) {
 				
                 eval(response);
                 hideMsgAguardo();
-                if (operacao == 'GPR' || operacao == 'TI'){					
-					buscadtconsig();					
+                if (operacao == 'GPR' || operacao == 'TI')
                     bloqueiaFundo($('#divRotina'));
-				}
                 else
                     bloqueiaFundo($('#divUsoGenerico'));
 					
@@ -407,8 +406,8 @@ function buscarDadosSimulacao(nrsimula, operacao, tela) {
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
-    });	
-	
+    });
+
 }
 
 // Inclui/altera uma simulação
@@ -454,7 +453,6 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
         url: UrlSite + "telas/atenda/emprestimos/simulacao/inclusao_alteracao.php",
         data: {
             nrdconta: nrdconta,
-			gconsig: gConsig,
             idseqttl: idseqttl,
             vlemprst: vlemprst,
             qtparepr: qtparepr,

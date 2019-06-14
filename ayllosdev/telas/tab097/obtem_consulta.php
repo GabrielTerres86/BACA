@@ -7,6 +7,7 @@
 	  Objetivo  : Carrega os dados da tela TAB097.
 	                                                                 
 	  Alterações: 03/08/2017 - Ajuste para chamar a rotina CONSULTA_CNAE (Adriano).
+	              17/04/2019 - Adicionado nova tabela referente a indexcecao 3 RITM0012246 (Mateus Z - Mouts)
 				  
 	***********************************************************************/
 
@@ -90,6 +91,7 @@
 
 	$param_uf = $xmlObj->roottag->tags[0]->tags[0]->tags;
 	$param_ufnegdif = $xmlObj->roottag->tags[0]->tags[1]->tags;
+	$param_ufnegrec = $xmlObj->roottag->tags[0]->tags[2]->tags;
 
 	include('form_tab097.php');
 ?>

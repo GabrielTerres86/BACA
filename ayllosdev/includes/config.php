@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: config.php                                                ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   Ultima Alteracao: 04/10/2018 ***//
+	//*** Data : Julho/2007                   Ultima Alteracao: 22/11/2016 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Variaveis globais de controle                        ***//
 	//***                                                                  ***//	 
@@ -35,8 +35,6 @@
 	//***						   configuracoes de producao criptografadas***//
 	//***						   (Carlos Rafael Tanholi) SD 489051       ***//	
 	//***																   ***//	
- 	//***       04/10/2018 - DefiniÃ§Ã£o da variavel de ambiente NMSISTEMA   ***// 
-	//***                    (Guilherme/AMcom)                             ***//	
 	//************************************************************************//
 	
 	// carrega o arquivo .cfg de dados do sistema Ayllos
@@ -55,16 +53,12 @@
 
 	// valida a existencia do servidor e da configuracao para o mesmo no arquivo config.cfg
 	if ( trim($serverCFG) == '' || array_key_exists($serverCFG, $array_dados_ini) == false ) {
-		echo 'ConfiguraÃ§Ã£o inexistente para o servidor ' . $serverCFG . ' no arquivo de configuraÃ§Ãµes (config.cfg)';
+		echo 'Configuração inexistente para o servidor ' . $serverCFG . ' no arquivo de configurações (config.cfg)';
 		exit();
 	}
 
 	// Pega o nome do server 
 	define("SERVERNAMECFG", $serverCFG);    
-
-  // Definir nome do Sistema
-	define("NMSISTEMA", "AIMARO");
-  // Padronizar o uso da variavel de ambiente no sistema
 
 	// Nome do servidor com banco de dados PROGRESS
 	$DataServer = ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['DATA_SERVER']) : $array_dados_ini[SERVERNAMECFG]['DATA_SERVER'];
@@ -130,11 +124,6 @@
 	} else {
 		$glbvars["redirect"] = "html";
 	}
-  
-  // Variaveis para SOA
-    $Url_SOA = "http://servicosinternosint.cecred.coop.br";
-    $Auth_SOA = "Basic aWJzdnJjb3JlOndlbGNvbWUx "; 
-
 	
 	// Dados de acesso ao Oracle
 	if ( preg_match('/^0303/', trim(SERVERNAMEAPP)) ) { // verifica o servidor gravado na constante

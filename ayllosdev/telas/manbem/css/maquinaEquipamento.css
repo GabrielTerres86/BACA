@@ -1,0 +1,27 @@
+/*
+Autor: Bruno luiz Katzjarowski - Mout's;
+Data: 30/10/2018;
+
+Alterações:
+001
+*/
+#dsmarceq{
+	width: 459px !important;
+}
+
+#nrmodbemE{
+	width: 55px !important;
+}
+
+#nrcpfcgcE{
+	width: 180px !important;
+}
+
+.fieldMaquinaEquipamento label[for='dschassi']{
+	padding-left: -30px !important;
+	width: 60px !important;
+}
+
+.fieldMaquinaEquipamento label[for='nrcpfcgc']{
+	padding-left: 69px !important; 
+}

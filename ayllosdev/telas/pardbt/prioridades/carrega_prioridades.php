@@ -123,8 +123,8 @@
             }
         }
         echo "</div></td>" ;
-        echo	"<td style=\"vertical-align: middle; overflow-x: hidden;\" title=\"" . getByTagName($processo->tags, 'dsprocesso') . "\">" .
-                 trim(getByTagName($processo->tags, 'cdprocesso')) . "</td>" ;
+        echo	"<td style=\"vertical-align: middle; overflow-x: hidden;\" title=\"" . getByTagName($processo->tags, 'cdprocesso') . "\">" .
+                 trim(getByTagName($processo->tags, 'dsprocesso')) . "</td>" ;
         echo	"<td style=\"vertical-align: middle;\">"; 
         echo        "<select class=\"campo\" name=\"ativar\" onchange=\"alternarAtivo('" . getByTagName($processo->tags, 'cdprocesso') . "','" . 
             getByTagName($processo->tags, 'dsprocesso') . "','" . $ativo . "');\" style=\"font-size: 10px;\"><option value=\"S\" " . ($ativo == 'S' ? ' selected' : '') . 

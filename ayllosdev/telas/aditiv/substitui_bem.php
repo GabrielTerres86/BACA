@@ -1,4 +1,3 @@
-	
 <?
 /*!
  * FONTE        : substitui_bem.php
@@ -18,10 +17,10 @@
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
+
     $nrdconta		= (isset($_POST['nrdconta']))   ? $_POST['nrdconta']   : 0  ;
 	$nrctremp		= (isset($_POST['nrctremp']))   ? $_POST['nrctremp']   : 0  ;
 	$tpctrato		= (isset($_POST['tpctrato']))   ? $_POST['tpctrato']   : 0  ;
-
 
     $dscatbem 		= (isset($_POST['dscatbem']))   ? $_POST['dscatbem']   : 0  ;
 	$dstipbem 		= (isset($_POST['dstipbem']))   ? $_POST['dstipbem']   : 0  ;
@@ -41,6 +40,9 @@
 	$nrcpfcgc       = (isset($_POST['nrcpfcgc']))   ? $_POST['nrcpfcgc']   : 0 ;
 	$idseqbem		= (isset($_POST['idseqbem']))   ? $_POST['idseqbem']   : 0  ;
     $cdoperad       = (isset($_POST['cdoperad']))   ? $_POST['cdoperad']   : 0  ;
+    $nrgravam       = (isset($_SESSION["nrgravam"])) ? $_SESSION["nrgravam"]  : '';
+
+	unset($_SESSION["nrgravam"]);
 
     $xmlCarregaDados  = "";
     $xmlCarregaDados .= "<Root>";
@@ -66,6 +68,7 @@
     $xmlCarregaDados .= "  <nrcpfcgc>" . $nrcpfcgc . "</nrcpfcgc>";
     $xmlCarregaDados .= "  <idseqbem>" . $idseqbem . "</idseqbem>";
     $xmlCarregaDados .= "  <cdopeapr>" . $cdoperad . "</cdopeapr>";
+    $xmlCarregaDados .= "  <nrgravam>" . $nrgravam . "</nrgravam>";
     $xmlCarregaDados .= " </Dados>";
     $xmlCarregaDados .= "</Root>";
 
@@ -78,7 +81,6 @@
                         ,$glbvars["idorigem"]
                         ,$glbvars["cdoperad"]
                         ,"</Root>");
-
     $xmlObjectAlteracao = getObjectXML($xmlResultAlteracao);
 
     if (strtoupper($xmlObjectAlteracao->roottag->tags[0]->name) == 'ERRO') {

@@ -36,7 +36,7 @@
 	$insolici = $_POST['insolici'];
     $flvalest = $_POST['flvalest']; //validar se ja esta na Esteira de Credito	
 	$nmdatela = $_POST['nmdatela'];
-
+	
 	//bruno - prj 438 - sprint 5 - consulta automatizada
 	$nome_acao = isset($_POST['nome_acao']) ? $_POST['nome_acao'] : '';
 
@@ -69,7 +69,7 @@
 		// Se retornou erro		   
 		if ($xmlObj->Erro->Registro->dscritic != '') {
 		  $msgErro = utf8ToHtml($xmlObj->Erro->Registro->dscritic);
-		 //bruno - prj 438 - sprint 5 - consulta automatizada
+			//bruno - prj 438 - sprint 5 - consulta automatizada
 			if($nome_acao == "EMPRESTIMOS_CONSULTA"){
 				echo 'hideMsgAguardo();showError("inform","'.$msgErro.'","Alerta - Aimaro","bloqueiaFundo(divRotina)","NaN");';
 				exit();
@@ -84,7 +84,7 @@
 				exit();
 			}else{
 			exibirErro('inform','Consultas efetuadas com sucesso!','Alerta - Aimaro',$metodo, false);
-			}
+		    }
 		}
 					
 	}

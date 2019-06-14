@@ -270,10 +270,10 @@ function formataTabela() {
 	var ordemInicial = new Array();
 
 	var arrayLargura = new Array();
-	arrayLargura[0] = '56px';
-	arrayLargura[1] = '158px';
-	arrayLargura[2] = '77px';
-	arrayLargura[3] = '225px';
+	arrayLargura[0] = '80px';
+	arrayLargura[1] = '170px';
+	arrayLargura[2] = '64px';
+	arrayLargura[3] = '212px';
 	arrayLargura[4] = '29px';
 	
 

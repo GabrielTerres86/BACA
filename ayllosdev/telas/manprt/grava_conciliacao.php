@@ -51,4 +51,4 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	exibirErro('error',utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos',"bloqueiaFundo($('#divRotina'));",false);
 }
 
-exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso.','Alerta - Ayllos','estadoInicial();', false);
+exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso.','Alerta - Ayllos','realizaoConsultaTed(nriniseq, nrregist);fechaRotina($(\'#divRotina\'));$(\'#divRotina\').html(\'\');', false);

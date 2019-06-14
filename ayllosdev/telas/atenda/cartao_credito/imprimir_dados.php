@@ -17,6 +17,12 @@
 					
 				  12/07/2012 - Alterado parametro de $pdf->Output,     
 							   Condicao para Navegador Chrome (Jorge).	
+                 
+          18/03/2019 - PJ429 - Implementado tipo de envio do cartão
+                 Anderson-Alan (Supero)
+                 
+          25/03/2019 - PJ429 - Implementado mensagem para operador caso 
+                 endereço de entrega esteja como PA / Outro PA. Anderson (Supero)
 							   
 	************************************************************************/ 
 
@@ -36,7 +42,8 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"M")) <> "") {
-		?><script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
+		?>
+                 <script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
 		exit();
 	}	
 
@@ -76,7 +83,8 @@
 	if (!validaInteiro($cdmotivo)) {
 		?><script language="javascript">alert('C&oacute;digo da solicita&ccedil;&atilde;o de segunda via inv&aacute;lido.');</script><?php
 		exit();
-	}	
+	}
+	
 
 	if ($idimpres == 1  || $idimpres == 2  || $idimpres == 3  || $idimpres == 7  || $idimpres == 8  || $idimpres == 9  || 
 	    $idimpres == 10 || $idimpres == 11 || $idimpres == 12 || $idimpres == 13 || $idimpres == 14 || $idimpres == 15 || 

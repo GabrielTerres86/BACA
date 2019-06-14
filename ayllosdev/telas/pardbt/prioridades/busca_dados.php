@@ -99,8 +99,8 @@
 
 		echo "<tr>";	
 		echo	"<td style=\"vertical-align: middle;\">" . getByTagName($processo->tags, 'nrprioridade') . "</td>" ;
-        echo	"<td style=\"vertical-align: middle; text-align: justify; overflow-x: hidden;\" title=\"" . getByTagName($processo->tags, 'dsprocesso') . "\">" . 
-		        getByTagName($processo->tags, 'cdprocesso') . "</td>" ;
+        echo	"<td style=\"vertical-align: middle; text-align: justify; overflow-x: hidden;\" title=\"" . getByTagName($processo->tags, 'cdprocesso') . "\">" . 
+		        getByTagName($processo->tags, 'dsprocesso') . "</td>" ;
         echo	"<td style=\"vertical-align: middle;\">" . utf8ToHtml($ativo) . "</td>" ;
         echo    "<td style=\"vertical-align: middle;\">" . utf8ToHtml($indeb_sem_saldo) . "</td>";
         echo    "<td style=\"vertical-align: middle;\">" . utf8ToHtml($indeb_parcial) . "</td>";

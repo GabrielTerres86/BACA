@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: consultar_dados_cartao.php                                ***//
 	//*** Autor: Guilherme                                                 ***//
-	//*** Data : Março/2008                   Última Alteração: 14/10/2015 ***//
+	//*** Data : Março/2008                   Última Alteração: 09/05/2019 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Mostrar opção de Consulta da rotina de Cartões de    ***//
 	//***             Crédito da tela ATENDA                               ***//
@@ -27,9 +27,16 @@
 	//***             31/08/2017 - Alterar os botões da tela e incluir o   ***//
 	//***                          novo botão de histórico de alteração    ***//
 	//***                          de limite de crédito (Renato - Prj360)  ***//
-  //***                                                                  ***//
-  //***             12/12/2018 - Adicionado flag cartão provisorio.      ***//
-  //***                          (P432)                                  ***//
+    //***                                                                  ***//
+    //***             12/12/2018 - Adicionado flag cartão provisorio.      ***//
+    //***                          (P432)                                  ***//
+	//***                                                                  ***//
+	//***             22/02/2019 - Adicionados campos de exibição do  	   ***//
+    //***                          endereço de entrega do cartão de 	   ***//
+	//***						   crédito (Lucas - P429)       		                    ***//
+	//***                                                                  ***//
+  //***             09/05/2019 - incluido campo inupgrade como hidden    ***//
+  //***                          Alcemir Mouts (PRB0041641).             ***//                    
 	//************************************************************************//			
 	
 	session_start();
@@ -140,11 +147,15 @@
 	$nmopetaa = getByTagName($dados,"nmopetaa");
 	$cdadmcrd = getByTagName($dados,"cdadmcrd");
 	$flgdebit = ((getByTagName($dados,"flgdebit") == "no") ? "" : "checked");
-    $dtrejeit = getByTagName($dados,"dtrejeit");
-    $nrcctitg = getByTagName($dados,"nrcctitg");
-    $dsdpagto = getByTagName($dados,"dsdpagto");
-    $dsgraupr = getByTagName($dados,"dsgraupr");
+  $dtrejeit = getByTagName($dados,"dtrejeit");
+  $nrcctitg = getByTagName($dados,"nrcctitg");
+  $dsdpagto = getByTagName($dados,"dsdpagto");
+  $dsgraupr = getByTagName($dados,"dsgraupr");
 	$flgprovi = getByTagName($dados,"flgprovi");
+  $inupgrad = getByTagName($dados,"inupgrad");
+		   
+
+	
 		   
 	if (getByTagName($dados,"DDDEBANT") == 0){
 		$dddebant = "";
@@ -161,6 +172,31 @@
 	echo '	exibirMensagens("'.implode( "|", $aMensagem).'","bloqueiaFundo(divRotina)");';
 	echo '</script>';	
 
+	
+	$xmlConsulta = "<Root>";
+    $xmlConsulta .= " <Dados>";
+	$xmlConsulta.= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+    $xmlConsulta.= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xmlConsulta.= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+    $xmlConsulta.= " </Dados>";
+    $xmlConsulta.= "</Root>"; 
+    $xmlResult = mensageria($xmlConsulta, "ATENDA_CRD", "RETORNA_DADOS_ENTREGA_CARTAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    
+	$xmlObject = getObjectXML($xmlResult);
+	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+		exibeErro($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	}
+
+	$incrdent = $xmlObject->roottag->tags[0]->tags[0]->cdata;
+	$dstipend = $xmlObject->roottag->tags[0]->tags[1]->cdata;
+	$dsendere = $xmlObject->roottag->tags[0]->tags[2]->cdata;
+	$dsbairro = $xmlObject->roottag->tags[0]->tags[3]->cdata;
+	$dscidade = $xmlObject->roottag->tags[0]->tags[4]->cdata;
+	$nrcepend = $xmlObject->roottag->tags[0]->tags[5]->cdata;
+	$dsufende = $xmlObject->roottag->tags[0]->tags[6]->cdata;
+	$nmresage = $xmlObject->roottag->tags[0]->tags[7]->cdata;
+	$cdagenci = $xmlObject->roottag->tags[0]->tags[9]->cdata;
+	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -335,11 +371,39 @@
 				
 				<label for="nrctamae"><? echo utf8ToHtml('Conta-Mãe:') ?></label>
 				<input type="text" name="nrctamae" id="nrctamae" value="<?php echo formataNumericos("9999.9999.9999.9999",$nrctamae,"."); ?>" />
-				
+			
 				<label for="flgprovi"><? echo utf8ToHtml('Cartão Provisório:') ?></label>
-				<input type="text" name="flgprovi" id="flgprovi" value="<?php echo $flgprovi == 1 ? "Sim" : "N&#227;o"; ?>" />
+				<input type="text" name="flgprovi" id="flgprovi" value="<?php echo $flgprovi == 1 ? "Sim" : "N&#227;o"; ?>" />			
+        
+        <input type="hidden" name="inupgrad" id="inupgrad" value="<?php echo $inupgrad; ?>" />
+				
+				<? if ($incrdent == 1) { ?>
+				<fieldset style="padding-left: 50px;">
+					<legend><? echo utf8ToHtml('Endereço de envio do cartão:') ?></legend>
+					<label for="dstipend"><? echo utf8ToHtml('Tipo:') ?></label>					
+					<input type="text" name="dstipend" id="dstipend" value="<?php echo $dstipend; ?>" />
 
+					<? if (!empty($nmresage)) { ?>
+						<label for="dstipend"><? echo utf8ToHtml('PA:') ?></label>
+						<input type="text" name="nmresage" id="nmresage" value="<?php echo $cdagenci." - ".$nmresage; ?>" />
+					<? } ?>
+					
+					<label for="dsendere"><? echo utf8ToHtml('Endereço:') ?></label>
+					<input type="text" name="dsendere" id="dsendere" value="<?php echo $dsendere; ?>" />		
+					 
+					<label for="dsbairro"><? echo utf8ToHtml('Bairro:') ?></label>
+					<input type="text" name="dsbairro" id="dsbairro" value="<? echo $dsbairro; ?>" />
+					<label for="dscidade"><? echo utf8ToHtml('Cidade:') ?></label>
+					<input type="text" name="dscidade" id="dscidade" value="<? echo $dscidade; ?>" />		 
+					
+					<label for="nrcepend"><? echo utf8ToHtml('CEP:') ?></label>
+					<input type="text" name="nrcepend" id="nrcepend" value="<?php echo $nrcepend; ?>" />		
+					<label for="dsufende"><? echo utf8ToHtml('UF:') ?></label>
+					<input type="text" name="dsufende" id="dsufende" value="<?php echo $dsufende; ?>" />		
+			
 			</fieldset>
+				<? } ?>
+
 		</form>
 	</div>
 	<div id="ValidaSenha">
@@ -359,7 +423,7 @@
 				<?php
 				//Desabilitar o botão Imprimir Termo de Adesão para os cartões BB
 				if ($cdadmcrd!=83&&$cdadmcrd!=85&&$cdadmcrd!=87):?>
-					<a id="continuaAprovacaoBTN" style="display:none "  class="botao" onclick="solicitaSenha(<?php echo $nrctrcrd; ?>) ;" ><? echo utf8ToHtml("Continuar Aprovação");?> </a>
+					<a id="continuaAprovacaoBTN" style="display:none " class="botao" onclick="continuarCartaoProposta(<?php echo $nrctrcrd; ?>);" ><? echo utf8ToHtml("Continuar");?> </a>
 					<a  style="display:none " cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
 					cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
 					nrdcaixa="<?php echo $glbvars['nrdcaixa']; ?>" 
@@ -383,8 +447,7 @@
 	}else{
 		$(".imprimeTermoBTN").show();
 		hideMsgAguardo();
-		bloqueiaFundo(divRotina);				
 	}
 	controlaLayout('frmDadosCartao');
-
+	bloqueiaFundo(divRotina);
 </script>

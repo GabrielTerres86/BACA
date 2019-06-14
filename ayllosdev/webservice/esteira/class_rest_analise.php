@@ -122,6 +122,8 @@ class RestAnalise extends RestServerJson{
                 return false;            
             }
             
+            $segueFluxoAtacado = (isset($oDados->indicadoresGeradosRegra->segueFluxoAtacado))? $oDados->indicadoresGeradosRegra->segueFluxoAtacado : FALSE;
+            
 			      // Processa a informacao do banco de dados        
 			      $xml  = "<Root>";
 			      $xml .= " <Dados>";
@@ -139,6 +141,7 @@ class RestAnalise extends RestServerJson{
 			      $xml .= "   <nrperger>".$oDados->indicadoresGeradosRegra->percepcaoGeralEmpresa."</nrperger>";
                   $xml .= "   <desscore>".$oDados->indicadoresGeradosRegra->descricaoScoreBVS."</desscore>";
                   $xml .= "   <datscore>".$oDados->indicadoresGeradosRegra->dataScoreBVS."</datscore>";
+                  $xml .= "   <idfluata>".$segueFluxoAtacado."</idfluata>";
 			      $xml .= "   <dsrequis>".$this->getFileContents()."</dsrequis>";
 			      $xml .= "   <namehost>".$this->getNameHost()."</namehost>";
 			      $xml .= " </Dados>";

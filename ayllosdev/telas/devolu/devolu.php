@@ -6,7 +6,8 @@
  * OBJETIVO     : Mostrar tela DEVOLU
  * --------------
  * ALTERAÇÕES   : 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923)
- *					   
+ *                09/05/2019 - Validação do botão Alterar Alinea para mostrar apenas para o depto COMPE
+ *							   e permissão no PERMIS (Luiz Otávio Olinger Momm - AMCOM)
  * --------------
  */
 ?>
@@ -22,11 +23,17 @@
 	require_once("../../includes/carrega_permissoes.php");
 
     $nometela = str_replace(".php", "", basename($_SERVER['PHP_SELF']));	
+
+    $permissaoAlterarAlinea = 'NOK';
+    if ($glbvars['cddepart'] == 4) {
+    	$permissaoAlterarAlinea = 'OK';
+    }	
 ?>
 
 <script>
 	var dtmvtolt = '<? echo $glbvars['dtmvtolt']?>';
 	var cdcooper = '<? echo $glbvars['cdcooper']?>';
+	var permissaoAlterarAlinea = '<?=$permissaoAlterarAlinea?>';
 </script>
 <html>
     <head>

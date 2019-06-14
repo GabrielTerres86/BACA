@@ -136,7 +136,7 @@
 	$executar = "hideMsgAguardo();";	
 	
 	// Confirma operação
-	$executar .= "showConfirmacao(\"Deseja incluir a poupan&ccedil;a programada?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"incluirAplProg(\\\"".$dtinirpp."\\\",\\\"".$diadtvct."\\\",\\\"".$mesdtvct."\\\",\\\"".$anodtvct."\\\",\\\"".$vlprerpp."\\\" ,\\\"".$tpemiext."\\\" ,\\\"".$cdprodut."\\\",\\\"".$dsfinali."\\\")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+	$executar .= "showConfirmacao(\"Deseja incluir a aplica&ccedil;&atilde;o programada?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"incluirAplProg(\\\"".$dtinirpp."\\\",\\\"".$diadtvct."\\\",\\\"".$mesdtvct."\\\",\\\"".$anodtvct."\\\",\\\"".$vlprerpp."\\\" ,\\\"".$tpemiext."\\\" ,\\\"".$cdprodut."\\\",\\\"".$dsfinali."\\\")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
 	
 	// Se ocorrer um erro, mostra crítica
 	if ($mensagem != "") {

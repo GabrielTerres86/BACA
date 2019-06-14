@@ -9,6 +9,9 @@
 	//***                                                                  ***//	 
 	//*** Alterações: 27/07/2018 - Derivação para Aplicação Programada     ***//
 	//****                         (Proj. 411.2 - CIS Corporate)           ***//  
+	//****                                                                 ***//  
+	//****            07/06/2019 - Alterado para chamar o Oracle           ***//
+	//****                         (Anderson)                              ***//  
 	//************************************************************************//
 	
 	session_start();
@@ -47,36 +50,23 @@
 		exibeErro("N&uacute;mero de contrato inv&aacute;lido.");
 	}	
 	
-	// Monta o xml de requisição
 	$xmlReativar  = "";
 	$xmlReativar .= "<Root>";
-	$xmlReativar .= "	<Cabecalho>";
-	$xmlReativar .= "		<Bo>b1wgen0006.p</Bo>";
-	$xmlReativar .= "		<Proc>reativar-aplicacao-programada</Proc>";
-	$xmlReativar .= "	</Cabecalho>";
 	$xmlReativar .= "	<Dados>";
-	$xmlReativar .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xmlReativar .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-	$xmlReativar .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xmlReativar .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlReativar .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-	$xmlReativar .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
 	$xmlReativar .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xmlReativar .= "		<idseqttl>1</idseqttl>";
 	$xmlReativar .= "		<nrctrrpp>".$nrctrrpp."</nrctrrpp>";	
 	$xmlReativar .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";	
+	$xmlReativar .= "        <flgerlog>1</flgerlog>"; 
 	$xmlReativar .= "	</Dados>";
 	$xmlReativar .= "</Root>";	
 	
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlReativar);
-	
-	// Cria objeto para classe de tratamento de XML
+    $xmlResult = mensageria($xmlReativar, "APLI0008", "REATIVA_APL_PROG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjReativar = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjReativar->roottag->tags[0]->name) == "ERRO") {
-		exibeErro($xmlObjReativar->roottag->tags[0]->tags[0]->tags[4]->cdata);
+		$msgErro = $xmlObjReativar->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
 	} 
 	
 	// Esconde mensagem de aguardo	

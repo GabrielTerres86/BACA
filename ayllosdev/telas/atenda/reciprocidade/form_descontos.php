@@ -195,6 +195,46 @@ if ($cddopcao != 'C' || $idvinculacao == 0 || empty($nmvinculacao)) {
 	$idvinculacao = getByTagName($vinculacao->tags, "idvinculacao");
 }
 
+if ($cddopcao == 'I') {
+	// Monta o xml de requisição
+	$xmlGetDadosAtenda = "";
+	$xmlGetDadosAtenda .= "<Root>";	
+	$xmlGetDadosAtenda .= "	<Dados>";
+	$xmlGetDadosAtenda .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
+	$xmlGetDadosAtenda .= "		<idseqttl>1</idseqttl>";
+	$xmlGetDadosAtenda .= "		<nrdctitg></nrdctitg>";
+	$xmlGetDadosAtenda .= "		<dtmvtolt>" . $glbvars["dtmvtolt"] . "</dtmvtolt>";
+	$xmlGetDadosAtenda .= "		<dtmvtopr>" . $glbvars["dtmvtopr"] . "</dtmvtopr>";
+	$xmlGetDadosAtenda .= "		<dtmvtoan>" . $glbvars["dtmvtoan"] . "</dtmvtoan>";
+	$xmlGetDadosAtenda .= "		<dtiniper>" . date("d/m/Y") . "</dtiniper>";
+	$xmlGetDadosAtenda .= "		<dtfimper>" . date("d/m/Y") . "</dtfimper>";
+	$xmlGetDadosAtenda .= "		<nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
+	$xmlGetDadosAtenda .= "		<idorigem>" . $glbvars["idorigem"] . "</idorigem>";
+	$xmlGetDadosAtenda .= "		<inproces>" . $glbvars["inproces"] . "</inproces>";
+	$xmlGetDadosAtenda .= "		<flgerlog>N</flgerlog>";
+	$xmlGetDadosAtenda .= "	</Dados>";
+	$xmlGetDadosAtenda .= "</Root>";
+		
+	// Executa script para envio do XML
+	$xmlResult = mensageria($xmlGetDadosAtenda, "ATENDA", "CARREGA_DADOS_ATENDA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");     
+
+	// Cria objeto para classe de tratamento de XML
+	$xmlObjDadosAtenda = getObjectXML($xmlResult);
+
+	// Se ocorrer um erro, mostra crítica	
+	if (strtoupper($xmlObjDadosAtenda->roottag->tags[0]->name) == "ERRO") {
+		exibeErro($xmlObjDadosAtenda->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	}
+
+	$valores = ( isset($xmlObjDadosAtenda->roottag->tags[2]->tags[0]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[2]->tags[0]->tags : null;
+	$vr_deposito = ( isset($valores[5]->cdata) ) ? number_format(str_replace(",", ".", $valores[5]->cdata), 2, ",", ".") : '';
+	$vr_aplicacoes = ( isset($valores[2]->cdata) ) ? number_format(str_replace(",", ".", $valores[2]->cdata), 2, ",", ".") : '';
+	if ($vr_deposito < 0) {
+		$vr_deposito = number_format(str_replace(",", ".", 0), 2, ",", ".");
+	}
+
+}
+
 ?>
 <style>
 img,input[type="image"]{outline: none}.inteiro{text-align: left !important}
@@ -326,7 +366,7 @@ atualizacaoDesconto = false;
 		</td>
 	</tr>
 	<tr class="corPar">
-		<td>Data fim do contrato</td>
+		<td>Data fim do contrato (meses)</td>
 		<td align="right">
 			<input type="hidden" id="dtfimcontrato_old" value="<?php echo $vr_dtfimcontrato; ?>">
 			<select class="campo" style="width:153px" name="dtfimcontrato" id="dtfimcontrato">
@@ -352,14 +392,14 @@ atualizacaoDesconto = false;
 		<td>&nbsp;</td>
 	</tr>
 	<tr class="corPar">
-		<td>Desconto concedido COO</td>
+		<td>Desconto concedido <span title="Cooperado Emite e Expede" class="hint">COO</span></td>
 		<td align="right">
 			<span>%</span>
 			<input name="" id="vldescontoconcedido_coo" value="<?php echo $vldesconto_concedido_coo; ?>" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corImpar">
-		<td>Desconto concedido CEE</td>
+		<td>Desconto concedido <span title="Cooperativa Emite e Expede" class="hint">CEE</span></td>
 		<td align="right">
 			<span>%</span>
 			<input name="" id="vldescontoconcedido_cee" value="<?php echo $vldesconto_concedido_cee; ?>" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
@@ -370,7 +410,7 @@ atualizacaoDesconto = false;
 	<legend align="left">Desconto adicional</legend>
 	<table width="100%" class="tabelaDesconto">
 		<tr class="corPar">
-			<td width="60%">Desconto adicional COO</td>
+			<td width="60%">Desconto adicional <span title="Cooperado Emite e Expede" class="hint">COO</span></td>
 			<td align="right" width="40%">
 				<span>%</span>
 				<input name="vldesconto_coo_old" id="vldesconto_coo_old" type="hidden" value="<?php echo $vr_vldesconto_adicional_coo; ?>" />
@@ -378,7 +418,7 @@ atualizacaoDesconto = false;
 			</td>
 		</tr>
 		<tr class="corImpar">
-			<td>Data fim desc. Adicional COO</td>
+			<td>Data fim desc. Adicional <span title="Cooperado Emite e Expede" class="hint">COO</span> (meses)</td>
 			<td align="right">
 				<input name="dtfimadicional_coo_old" id="dtfimadicional_coo_old" type="hidden" value="<?php echo $vr_idfim_desc_adicional_coo; ?>" />
 				<select name="dtfimadicional_coo" id="dtfimadicional_coo" class="campo campoTelaSemBorda" disabled style="width:153px">
@@ -390,7 +430,7 @@ atualizacaoDesconto = false;
 			</td>
 		</tr>
 		<tr class="corPar">
-			<td>Desconto adicional CEE</td>
+			<td>Desconto adicional <span title="Cooperativa Emite e Expede" class="hint">CEE</span></td>
 			<td align="right">
 				<span>%</span>
 				<input name="vldesconto_cee_old" id="vldesconto_cee_old" type="hidden" value="<?php echo $vr_vldesconto_adicional_cee; ?>" />
@@ -398,7 +438,7 @@ atualizacaoDesconto = false;
 			</td>
 		</tr>
 		<tr class="corImpar">
-			<td>Data fim desc. Adicional CEE</td>
+			<td>Data fim desc. Adicional <span title="Cooperativa Emite e Expede" class="hint">CEE</span> (meses)</td>
 			<td align="right">
 				<input name="dtfimadicional_cee_old" id="dtfimadicional_cee_old" type="hidden" value="<?php echo $vr_idfim_desc_adicional_cee; ?>" />
 				<select name="dtfimadicional_cee" id="dtfimadicional_cee" class="campo campoTelaSemBorda" disabled style="width:153px">
@@ -414,13 +454,13 @@ atualizacaoDesconto = false;
 			<td width="40%">&nbsp;</td>
 		</tr>
 		<tr class="corImpar">
-			<td>Tarifa negociada COO</td>
+			<td>Tarifa negociada <span title="Cooperado Emite e Expede" class="hint">COO</span></td>
 			<td align="center">
 				<a href="#" class="botao" onclick="acessaTarifa(0); return false;">Visualizar</a>
 			</td>
 		</tr>
 		<tr class="corPar">
-			<td>Tarifa negociada CEE</td>
+			<td>Tarifa negociada <span title="Cooperativa Emite e Expede" class="hint">CEE</span></td>
 			<td align="center">
 				<a href="#" class="botao" onclick="acessaTarifa(1); return false;">Visualizar</a>
 			</td>
@@ -499,6 +539,7 @@ $('.per').setMask('DECIMAL','zz0,00',',','');
 
 $('.imgEditar').tooltip();	
 $('.imgExcluir').tooltip();
+$('.hint').tooltip();
 
 
 $("input.calculo").blur(function() {

@@ -8,7 +8,8 @@
  * ALTERAÇÕES   :
  * --------------
  * 001: [29/04/2011] Rogerius (DB1): reorganizado os campos de endereco conforme o padrao do zoom generico do CEP
- *
+ * 002: [22/11/2018] Mateus Z (Mouts): Alterado o layout da tela - PRJ 438.
+ * 003: [07/02/2019] Bruno L. Katzjarowski (Mout's): Adicionando campo data de pagamento/abertura
  */	
  ?>
 
@@ -24,49 +25,41 @@
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<br />	
 				
-		<label for="nmdavali">Nome:</label>
-		<input name="nmdavali" id="nmdavali" type="text" value="" />
-		
+		<label for="inpessoa">Tipo Natureza:</label>
+		<input name="inpessoa" id="inpessoa" type="text" value="" />
+		<input name="dspessoa" id="dspessoa" type="text" value="" />		
+		<br />
 		
 		<label for="nrcpfcgc">C.P.F.:</label>
 		<input name="nrcpfcgc" id="nrcpfcgc" type="text" value="" />
 		<br />			
 				
-		<label for="tpdocava">Doc.:</label>
-		<select name="tpdocava" id="tpdocava">
-			<option value=""  > - </option> 
-			<option value="CH">CH</option>
-			<option value="CI">CI</option>
-			<option value="CP">CP</option>
-			<option value="CT">CT</option>
-		</select>
-		<input name="nrdocava" id="nrdocava" type="text" value="" />
+		<label for="nmdavali">Nome:</label>
+		<input name="nmdavali" id="nmdavali" type="text" value="" />
+		<br />
 		
-		<label for="dsnacion">Nacio.:</label>
+		<label for="dsnacion">Nacionalidade:</label>
 		<input name="dsnacion" id="dsnacion" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<br />		
+
+		<!-- bruno - prj 438 - bug 14668 -->
+		<label for="dtnascto">Data Nasc.:</label>
+		<input name="dtnascto" id="dtnascto" type="text" value="" />
+		</br>
+
 	</fieldset>
 	
-	<fieldset>
-		<legend><? echo utf8ToHtml('Dados Conjugê') ?></legend>
+	<fieldset id="fsetConjugeInterv">
+		<legend><? echo utf8ToHtml('Dados Cônjuge') ?></legend>
 						
-		<label for="nmconjug"><?php echo utf8ToHtml('Conjugê:') ?></label>
-		<input name="nmconjug" id="nmconjug" type="text" value="" />
+		<label for="nrctacjg">Conta:</label>
+		<input name="nrctacjg" id="nrctacjg" type="text" value="" />
 						
 		<label for="nrcpfcjg">C.P.F.:</label>
 		<input name="nrcpfcjg" id="nrcpfcjg" type="text" value="" />
 		<br />
 			
-		<label for="tpdoccjg">Doc.:</label>
-		<select name="tpdoccjg" id="tpdoccjg">
-			<option value=""  > - </option> 
-			<option value="CH">CH</option>
-			<option value="CI">CI</option>
-			<option value="CP">CP</option>
-			<option value="CT">CT</option>
-		</select>
-		<input name="nrdoccjg" id="nrdoccjg" type="text" value="" />
+		<label for="nmconjug"><?php echo utf8ToHtml('Cônjuge:') ?></label>
+		<input name="nmconjug" id="nmconjug" type="text" value="" />
 		<br />
 		
 	</fieldset>
@@ -105,16 +98,16 @@
 	</fieldset>	
 	
 	<fieldset>
-		<legend><? echo utf8ToHtml('Forma de Contato') ?></legend>					
+		<legend><? echo utf8ToHtml('Contato') ?></legend>					
+		
+		<label for="nrfonres">Telefone:</label>
+		<input name="nrfonres" id="nrfonres" type="text" value="" />
 		
 		<label for="dsdemail">E-mail:</label>
 		<input name="dsdemail" id="dsdemail" type="text" value="" />
+		<br />
 		
-		<label for="nrfonres">Fone:</label>
-		<input name="nrfonres" id="nrfonres" type="text" value="" />
 	</fieldset>	
-
-	
   
 </form>
 

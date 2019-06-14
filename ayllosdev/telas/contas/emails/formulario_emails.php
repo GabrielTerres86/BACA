@@ -22,6 +22,17 @@
 	<label for="nmpescto">Nome Contato:</label>
 	<input name="nmpescto" id="nmpescto" type="text" value="<? echo getByTagName($registro,'nmpescto') ?>" />
 	<br />
+
+	<?php if ($inpessoa == 1) { ?>
+		<label for="dssituac"><? echo utf8ToHtml('Situação:'); ?></label>
+		<input name="dssituac" id="dssituac" type="text"  value="<? echo getByTagName($registro,'dssituac') ?>" />
+
+		<label for="dsdcanal"><? echo utf8ToHtml('Canal:'); ?></label>
+		<input name="dsdcanal" id="dsdcanal" type="text"  value="<? echo getByTagName($registro,'dsdcanal') ?>" />
+
+		<label for="dtrevisa"><? echo utf8ToHtml('Data revisão:'); ?></label>
+		<input name="dtrevisa" id="dtrevisa" type="text"  value="<? echo getByTagName($registro,'dtrevisa') ?>" />
+	<?php } ?>
 	
 </form>
 

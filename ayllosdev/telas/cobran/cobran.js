@@ -28,6 +28,8 @@
  * 27/09/2017 - Adicionar o campo qtdiaprt, inserasa como parametro para a tela de instrucoes (Douglas - Chamado 754911)
  * 21/12/2017 - Adicionar validação para que sejam informados os campos de data inicial e final na opção "R" da tela (Douglas - Chamado 807531)
  * 30/05/2018 - Alterações referente ao PRJ352
+ * 08/05/2019 - inc0012536 adicionada a validação do código da espécie 2 (duplicata de serviço) juntamente com a UF não autorizada.
+ *              Duplicatas de serviço dos estados listados não podem ir para protesto (Carlos)
  */
 
 //Formulários e Tabela
@@ -56,7 +58,7 @@ var registro;
 var cdcooper, nrinssac, nrnosnum, dsdoccop, nmdsacad, flgcbdda, flgsacad, flgreaux, dsendsac, complend, nmbaisac, nmcidsac, cdufsaca, nrcepsac,
 	dscjuros, dscmulta, dscdscto, dtdocmto, dsdespec, flgaceit, dsstacom, dtvencto, vltitulo, vldesabt, qtdiaprt, dtdpagto, vldpagto,
 	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg,
-    dsavisms, dssmsant, dssmsvct, dssmspos, flgdprot, insitcrt;
+    dsavisms, dssmsant, dssmsvct, dssmspos, flgdprot, insitcrt, cddespec;
 
 $(document).ready(function () {
     estadoInicial();
@@ -1229,6 +1231,7 @@ function selecionaTabela(tr) {
         qtdianeg = $('#qtdianeg', tr).val();
         flgdprot = $('#flgdprot', tr).val();
         insitcrt = $('#insitcrt', tr).val();
+        cddespec = $('#cddespec', tr).val();        
     }
 
     $('[onclick^=geraCartaAnuencia]').length &&
@@ -1335,10 +1338,10 @@ function imprimirCartaAnuencia(){
         return false;
 	}
 	
-
     $('input,select', '#frmReport').habilitaCampo();
     $('#cdcooper', '#frmReport').val(cdcooper);
     $('#nrdconta', '#frmReport').val(nrdconta);
+    $('#nrcnvcob', '#frmReport').val(nrcnvcob);	
     $('#nrdocmto', '#frmReport').val(nrdocmto);
     $('#cdbandoc', '#frmReport').val(cdbandoc);
     $('#dtcatanu', '#frmReport').val(dtcatanu);
@@ -1382,6 +1385,7 @@ function buscaConsulta(operacao) {
             insitcrt: insitcrt,
 			dtvencto: dtvencto,
             cdufsaca: cdufsaca,
+            cddespec: cddespec,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {

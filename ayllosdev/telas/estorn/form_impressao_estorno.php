@@ -14,6 +14,12 @@
 	<div>
 		<fieldset>	
 			<legend>Filtros</legend>
+
+			<label for="cdtpprod">Tipo:</label>
+			<select id="cdtpprod" name="cdtpprod">
+	   			<option value='1'>1 - Empr&eacute;stimo PP</option>
+				<option value='2'>2 - Desconto de T&iacute;tulos</option>
+    		</select>
 			
 			<label for="nrdconta"><?php echo utf8ToHtml('Conta/DV:') ?></label>
 			<input type="text" id="nrdconta" name="nrdconta" class="conta" value=""/>

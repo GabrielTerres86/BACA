@@ -175,8 +175,9 @@ function buscaDescricao(businessObject, nomeProcedure, tituloPesquisa, campoCodi
  *              colunas        -> 
  *              divBloqueia    -> [Opcional]
  *              fncOnClose     -> [Opcional]
+ * 				focaCampo      -> Opcional, foca em um determinado campo - string - [nomeCampo|divCampo] (Bruno Luiz K. Mout's - PRJ 438)
  */
-function mostraPesquisa(businessObject, nomeProcedure, tituloPesquisa, quantReg, filtros, colunas, divBloqueia, fncOnClose,nomeRotina, cdCooper) {	    
+function mostraPesquisa(businessObject, nomeProcedure, tituloPesquisa, quantReg, filtros, colunas, divBloqueia, fncOnClose,nomeRotina, cdCooper,focaCampo) {	    
 
 	if (cdCooper == '' || cdCooper == null || cdCooper == "undefined"){
 		cdCooper = 0;
@@ -414,20 +415,20 @@ function mostraPesquisa(businessObject, nomeProcedure, tituloPesquisa, quantReg,
 		} else {
 			fechaRotina($('#divPesquisa'));			
 		}
-	    //bruno - prj 438 - BUG 17929
-		if (typeof focaCampo !== 'undefined') {
-		    var campo = focaCampo.split('|');
-		    var _campoNome = arrayFiltros = filtros.split("|")[0].split(';')[1];
-		    if (campo.length === 2) {
-		        if ($('#' + _campoNome, '#' + campo[1]).val() !== '') {
-		            $('#' + campo[0], '#' + campo[1]).focus();
-		        } else {
-		            $('#' + _campoNome, '#' + campo[1]).focus();
-		        }
-		    }
+				
+		//bruno - prj 438 - BUG 17929
+		if(typeof focaCampo !== 'undefined'){
+			var campo = focaCampo.split('|');	
+			var _campoNome = arrayFiltros = filtros.split("|")[0].split(';')[1];
+			if(campo.length === 2){
+				if($('#'+_campoNome,'#'+campo[1]).val() !== ''){
+					$('#'+campo[0],'#'+campo[1]).focus();
+				}else{
+					$('#'+_campoNome,'#'+campo[1]).focus();
+				}
+			}
 		}
-
-        
+				
 		return false;
 	});		
 	

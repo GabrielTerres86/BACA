@@ -1,7 +1,7 @@
 /***********************************************************************
  Fonte: lcredi.js                                                  
  Autor: Andrei - RKAM
- Data : JULHO/2016                Última Alteração: 10/07/2018
+ Data : JULHO/2016                Última Alteração: 06/01/2019
                                                                    
  Objetivo  : Cadastro de servicos ofertados na tela LCREDI
                                                                    	 
@@ -16,7 +16,8 @@
               28/05/2018 - Aumentado o limite de 3 para 4 o campo Grupo. (Andrey Formigari- Mout's)
               
               10/07/2018 - sctask0014375 uso da funcao removeCaracteresInvalidos (Carlos)
-					  03/2019 - Projeto 437 AMcom JDB
+
+			  06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
 
 ************************************************************************/
 
@@ -173,13 +174,13 @@ function formataFormularioConsulta() {
     $('label[for="manterpo"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
     $('label[for="flgimpde"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "130px" });
     $('label[for="dsorgrec"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
-	$('label[for="tpmodcon"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
     $('label[for="flglispr"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
     $('label[for="dssitlcr"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "130px" });
     $('label[for="cdmodali"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
     $('label[for="cdsubmod"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
 
     $('label[for="cddindex"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
+	$('label[for="vlperidx"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "180px" });
     $('label[for="txjurfix"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
     $('label[for="txjurvar"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "180px" });
     $('label[for="txjurvarDesc"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "70px" });
@@ -224,10 +225,9 @@ function formataFormularioConsulta() {
     $('#flgtaiof', '#frmConsulta').css({ 'width': '80px', 'text-align': 'left' }).desabilitaCampo(); 
     $('#vltrfesp', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '10').setMask("DECIMAL", "zzz.zz9,99", "", "");
     $('#flgcrcta', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo(); 
-    $('#manterpo', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '4'); 
+    $('#manterpo', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '3'); 
     $('#flgimpde', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
     $('#dsorgrec', '#frmConsulta').css({ 'width': '335px', 'text-align': 'left' }).desabilitaCampo();
-	$('#tpmodcon', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
     $('#flglispr', '#frmConsulta').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
     $('#dssitlcr', '#frmConsulta').css({ 'width': '215px', 'text-align': 'left' }).desabilitaCampo();
     $('#cdmodali', '#frmConsulta').css({ 'width': '60px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '5').setMask("INTEGER", "zzzzz", "", "");
@@ -236,6 +236,7 @@ function formataFormularioConsulta() {
     $('#dssubmod', '#frmConsulta').css({ 'width': '370px', 'text-align': 'left' }).addClass('alphanum').attr('maxlength', '50').desabilitaCampo();
 
     $('#cddindex', '#frmConsulta').css({ 'width': '100px' }).desabilitaCampo();
+	$('#vlperidx', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
     $('#txjurfix', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
     $('#txjurvar', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
     $('#txpresta', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
@@ -638,15 +639,6 @@ function formataFormularioConsulta() {
         }
 
     });
-	
-	$("#cdmodali", "#frmConsulta").change(function() {
-		if (($('#cdmodali', "#frmConsulta").val() == '02') && ($('#cdsubmod', "#frmConsulta").val() == '02')) {
-			$('#tpmodcon', '#frmConsulta').habilitaCampo();
-		}else{
-			$('#tpmodcon', '#frmConsulta').desabilitaCampo();
-			$('#tpmodcon', '#frmConsulta').val('') ;
-		}
-	});
 
     // Se pressionar cdmodali
     $('#cdmodali', '#frmConsulta').unbind('keypress').bind('keypress', function (e) {
@@ -673,7 +665,7 @@ function formataFormularioConsulta() {
         }
 
     });
-	
+
     //Define ação para o campo cdsubmod
     $("#cdsubmod", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
 
@@ -688,16 +680,6 @@ function formataFormularioConsulta() {
         }
 
     });
-	
-	
-	$("#cdsubmod", "#frmConsulta").change(function() {
-		if (($('#cdmodali', "#frmConsulta").val() == '02') && ($('#cdsubmod', "#frmConsulta").val() == '02')) {
-			$('#tpmodcon', '#frmConsulta').habilitaCampo();
-		}else{
-			$('#tpmodcon', '#frmConsulta').desabilitaCampo();
-			$('#tpmodcon', '#frmConsulta').val('') ;
-		}
-	});
 
     // Se pressionar cdsubmod
     $('#cdsubmod', '#frmConsulta').unbind('keypress').bind('keypress', function (e) {
@@ -717,14 +699,7 @@ function formataFormularioConsulta() {
 
             $(this).removeClass('campoErro');
             buscaDescricao(bo, procedure, titulo, 'cdsubmod', 'dssubmod', $('#cdsubmod', '#frmConsulta').val(), 'dssubmod', filtrosDesc, 'frmConsulta');
-			
-			if (($('#cdmodali', "#frmConsulta").val() == '02') && ($('#cdsubmod', "#frmConsulta").val() == '02')) {
-				$('#tpmodcon', '#frmConsulta').habilitaCampo();
-			}else{
-				$('#tpmodcon', '#frmConsulta').desabilitaCampo();
-				$('#tpmodcon', '#frmConsulta').val('') ;
-			}
-			
+
             $(this).focus();
 
             return false;
@@ -735,6 +710,27 @@ function formataFormularioConsulta() {
 
     //Define ação para o campo cddindex
     $("#cddindex", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+            $(this).nextAll('.campo:first').focus();
+
+            return false;
+        }
+
+    });
+
+	//Define ação para o campo vlperidx
+    $('#vlperidx', '#frmConsulta').unbind('change').bind('change', function () {
+
+        calculaTaxas($(this).attr('name'));
+    });
+
+    //Define ação para o campo vlperidx
+    $("#vlperidx", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
@@ -1168,14 +1164,6 @@ function formataFormularioConsulta() {
         $('#txmensal', '#frmConsulta').desabilitaCampo();
         $('#txdiaria', '#frmConsulta').desabilitaCampo();
         $('#dsfinemp', '#frmConsulta').desabilitaCampo();
-	
-		
-		if (($('#cdmodali', "#frmConsulta").val() == '02') && ($('#cdsubmod', "#frmConsulta").val() == '02')) {
-			$('#tpmodcon', '#frmConsulta').habilitaCampo();
-		}else{
-			$('#tpmodcon', '#frmConsulta').desabilitaCampo();
-			$('#tpmodcon', '#frmConsulta').val('') ;
-		}
 
         ($('#cddopcao', '#frmCab').val() == 'I') ? $("#tpctrato", "#frmConsulta").habilitaCampo() : $("#tpctrato", "#frmConsulta").desabilitaCampo();
 
@@ -1454,7 +1442,6 @@ function alterarLinhaCredito() {
     var manterpo = $('#manterpo', '#frmConsulta').val();
     var flgimpde = $('#flgimpde', '#frmConsulta').val();
     var dsorgrec = $('#dsorgrec', '#frmConsulta').val();
-	var tpmodcon = $('#tpmodcon', '#frmConsulta').val();
     var flglispr = $('#flglispr', '#frmConsulta').val();    
     var cdmodali = $('#cdmodali', '#frmConsulta').val();    
     var cdsubmod = $('#cdsubmod', '#frmConsulta').val();   
@@ -1480,6 +1467,7 @@ function alterarLinhaCredito() {
     var cdhistor = $('#cdhistor', '#frmConsulta').val();
     var tpprodut = $('#tpprodut', '#frmConsulta').val();
     var cddindex = (tpprodut == 1 ? 0 : $('#cddindex', '#frmConsulta').val());
+	var vlperidx = isNaN(parseFloat($('#vlperidx', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlperidx', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."));
 
     //Mostra mensagem de aguardo
     showMsgAguardo('Aguarde, alterando linha ...');
@@ -1511,7 +1499,6 @@ function alterarLinhaCredito() {
             manterpo: manterpo,
             flgimpde: flgimpde,
             dsorgrec: dsorgrec,
-			tpmodcon: tpmodcon,
             flglispr: flglispr,
             cdmodali: cdmodali,
             cdsubmod: cdsubmod,
@@ -1537,6 +1524,7 @@ function alterarLinhaCredito() {
             cdhistor: cdhistor,
             tpprodut: tpprodut,
             cddindex: cddindex,
+			vlperidx: vlperidx,
             redirect: 'html_ajax' // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1579,7 +1567,6 @@ function incluirLinhaCredito() {
     var manterpo = $('#manterpo', '#frmConsulta').val();
     var flgimpde = $('#flgimpde', '#frmConsulta').val();
     var dsorgrec = $('#dsorgrec', '#frmConsulta').val();
-	var tpmodcon = $('#tpmodcon', '#frmConsulta').val();
     var flglispr = $('#flglispr', '#frmConsulta').val();
     var cdmodali = $('#cdmodali', '#frmConsulta').val();
     var cdsubmod = $('#cdsubmod', '#frmConsulta').val();
@@ -1605,6 +1592,7 @@ function incluirLinhaCredito() {
     var cdhistor = $('#cdhistor', '#frmConsulta').val();
     var tpprodut = $('#tpprodut', '#frmConsulta').val();
     var cddindex = (tpprodut == 1 ? 0 : $('#cddindex', '#frmConsulta').val());
+	var vlperidx = isNaN(parseFloat($('#vlperidx', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlperidx', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."));
 
     //Mostra mensagem de aguardo
     showMsgAguardo('Aguarde, incluindo linha ...');
@@ -1636,7 +1624,6 @@ function incluirLinhaCredito() {
             manterpo: manterpo,
             flgimpde: flgimpde,
             dsorgrec: dsorgrec,
-			tpmodcon: tpmodcon,
             flglispr: flglispr,
             cdmodali: cdmodali,
             cdsubmod: cdsubmod,
@@ -1663,6 +1650,7 @@ function incluirLinhaCredito() {
             finalidades: RegLinha,
             tpprodut: tpprodut,
             cddindex: cddindex,
+			vlperidx: vlperidx,
             redirect: 'html_ajax' // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {

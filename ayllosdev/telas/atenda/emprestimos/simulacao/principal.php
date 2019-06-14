@@ -49,13 +49,13 @@ if (!validaInteiro($idseqttl)) {
 // Monta o xml de requisição
 $xml = "";
 $xml.= "<Root>";
-$xml.= "	<Dados>";
-$xml.= "		<nrdconta>" . $nrdconta . "</nrdconta>";
-$xml.= "		<idseqttl>" . $idseqttl . "</idseqttl>";
+$xml .= "	<Dados>";
+$xml .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
+$xml .= "		<idseqttl>" . $idseqttl . "</idseqttl>";
 $xml .= "		<dtmvtolt>" . $glbvars["dtmvtolt"] . "</dtmvtolt>";
 $xml .= "		<flgerlog>1</flgerlog>";
-$xml.= "	</Dados>";
-$xml.= "</Root>";
+$xml .= "	</Dados>";
+$xml .= "</Root>";
 
 // Executa script para envio do XML
 $xmlResult = mensageria($xml, "TELA_ATENDA_SIMULACAO", "SIMULA_BUSCA_SIMULACOES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");

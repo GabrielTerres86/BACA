@@ -14,6 +14,7 @@
  *                             pois a BO não utiliza o mesmo (Renato Darosci)
  * 				        03/10/2017 - Projeto 410 - RF 52 / 62 - Tela impressão declaração optante simples nacional (Diogo - Mouts)
  * 				  12/04/2018 - Inclusão da opção de Declaração FATCA/CRS - PRJ 414 (Mateus Z - Mouts).
+ *				  16/01/2019 - Inclusão do botão Ficha-Proposta (Cássia de Oliveira - GFT)
  */
  
 	session_start();
@@ -100,6 +101,11 @@
         <div id="declaracao_pj_cooperativa">Declara&ccedil;&atilde;o de pessoa jur&iacute;dica cooperativa</div>
     <? } ?>
 	<div id="declaracao_fatca_crs">Declara&ccedil;&atilde;o FATCA/CRS</div>
+	<!-- Inicio - Botão Ficha-Proposta - Cássia de Oliveira (GFT)!-->
+	<? if ($inpessoa == 1) { ?>
+			<div id="ficha_proposta">Ficha-Proposta</div>
+	<? } ?>
+	<!-- Fim - Botão Ficha-Proposta - Cássia de Oliveira (GFT)!-->
 	<div id="btVoltar" onClick="fechaRotina(divRotina);return false;">Cancelar</div>
 	<input type="hidden" id="inpessoa" name="inpessoa" value="<?echo $inpessoa;?>" />
 </div>

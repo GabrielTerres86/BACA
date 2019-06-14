@@ -35,7 +35,7 @@
     ,#frmTipo label  {
         font-size: 11px;
     }
-    #frmTipo input[type="text"].menor, #frmTipo select#ufdplaca{
+    #frmTipo input[type="text"].menor, #ufdplaca{
         width:45px!important;
         padding: 0!important;
         min-width: 30px;
@@ -55,7 +55,7 @@
      #frmTipo fieldset legend{
        text-align: center;
     }
-    #frmTipo #nrmodbem, #frmTipo #nrmodbemC 
+    #frmTipo #nrmodbem, #frmTipo #nrmodbemC
     {
         width:102px!important;
     }
@@ -115,25 +115,3 @@
     }
     /*************************** Form Interveniente ************************/
     
-	label#lbsemfip {
-		min-width: 30px;
-		text-indent: -15px;
-		display:none;
-	}
-	input#dssemfip {
-		width: 13px;
-		height: 13px;
-		padding: 0;
-		margin:5px 0 5px 2px;
-		vertical-align: bottom;
-		position: relative;
-		top: -1px;
-		overflow: hidden;
-		display:none;
-	}
-	label#lsanobem {
-		min-width: 20px;
-	}
-	#frmTipo input#nranobem.menor {
-		width: 30px;
-	}

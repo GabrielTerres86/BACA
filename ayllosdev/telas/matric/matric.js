@@ -63,6 +63,10 @@
  * 037: [16/01/2018] Lucas Reinert			 : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
  * 038: [13/07/2018] Andrey Formigari (Mouts): Novo campo Nome Social (#SCTASK0017525)
  * 039: [04/09/2018] Alcemir          (Mouts): alterado atualizarContasAntigasDemitidas(), incluido parametro operauto (operador autorizador). (SM 364) 
+ * 040: [16/01/2019] Cássia de Oliveira (GFT): Remoção de impressão automatica quando pessoa fisica
+ * 041: [09/03/2019] Rubens Lima (Mouts)     : PJ339 - Bloqueio CRM
+ * 049: [29/01/2019] Márcio           (Mouts): Validar se CNAE informado é válido (PRB0040478) 
+ * 050: [07/05/2019] Daniel Lombardi  (Mouts): Nova function excluisva para validação de e-mails. (PRB0041686) 
  */
 
 // Definição de algumas variáveis globais 
@@ -93,6 +97,7 @@ var flgCpfCnpj = ''; // Permissão para alterar o cpf ou o cnpj
 var flgAcessoCRM = ''; // Permissão de acesso do operador ao CRM
 var flgDesligarCRM = ''; // Permissão para o botão Desligar
 var flgSaldoPclCRM = ''; // Permissão para o botão Saldo Parcial
+var inSaqDes = ''; //Permissao para realizar saques parciais e desligamento pelo Aimaro
 
 // Opções que o operador tem acesso na rotina PROCURADORES da tela MATRIC
 var flgAlterarProc = ''; // Permissão para Alterar Procurador
@@ -704,6 +709,7 @@ function manterRotina() {
         dtcnscpf = $('#dtcnscpf', '#frmFisico').val();
         nrdocptl = normalizaTexto($('#nrdocptl', '#frmFisico').val());
         cdoedptl = normalizaTexto($('#cdoedptl', '#frmFisico').val());
+        flgctsal = $('#flgctsal', '#frmFisico').prop('checked');
         dtemdptl = $('#dtemdptl', '#frmFisico').val();
         tpnacion = $('#tpnacion', '#frmFisico').val();
         cdnacion = $('#cdnacion', '#frmFisico').val();
@@ -776,7 +782,7 @@ function manterRotina() {
         }
 
         if (dsdemail != '') {
-            dsdemail = removeAcentos(removeCaracteresInvalidos(dsdemail));
+            dsdemail = removeAcentos(removeCaracteresInvalidosEmail(dsdemail));
         }
 
         if (nmprimtl != '') {
@@ -819,8 +825,7 @@ function manterRotina() {
 				cdtipcta: cdtipcta, inhabmen: inhabmen, dthabmen: dthabmen, 
 				verrespo: verrespo, permalte: permalte, cdufnatu: cdufnatu, 
 				inconrfb: inconrfb, hrinicad: hrinicad, arrayFilhos: arrayFilhos, 
-				idorigee: idorigee,
-				nmsocial: nmsocial,
+				idorigee: idorigee, nmsocial: nmsocial, flgctsal: flgctsal,
                 redirect: 'script_ajax'
             },
             error: function (objAjax, responseError, objExcept) {
@@ -862,6 +867,7 @@ function manterRotina() {
         rowidcem = $("#rowidcem", "#frmJuridico").val();
         dsdemail = $("#dsdemail", "#frmJuridico").val();
         cdcnae = $('#cdcnae', '#frmJuridico').val();
+		dscnae = $('#dscnae', '#frmJuridico').val();
         dsendere = $('#dsendere', '#frmJuridico').val();
         nrendere = normalizaNumero($('#nrendere', '#frmJuridico').val());
         complend = $('#complend', '#frmJuridico').val();
@@ -903,7 +909,7 @@ function manterRotina() {
         }
 
         if (dsdemail != '') {
-            dsdemail = removeAcentos(removeCaracteresInvalidos(dsdemail));
+            dsdemail = removeAcentos(removeCaracteresInvalidosEmail(dsdemail));
         }
 
         if (nmprimtl != '') {
@@ -933,7 +939,7 @@ function manterRotina() {
 				dtdemiss: dtdemiss, cdmotdem: cdmotdem, cdsitcpf: cdsitcpf, 
 				rowidass: rowidass, qtparcel: qtparcel,	dtdebito: dtdebito, 
 				vlparcel: vlparcel, operacao: operacao, cdtipcta: cdtipcta, 
-				cdcnae: cdcnae, inconrfb: inconrfb, nmttlrfb: nmttlrfb, 
+				cdcnae: cdcnae,dscnae: dscnae, inconrfb: inconrfb, nmttlrfb: nmttlrfb, 
 				hrinicad: hrinicad, arrayFilhos: arrayFilhos,  
                 arrayFilhosAvtMatric: arrayFilhosAvtMatric,
                 arrayBensMatric: arrayBensMatric, idorigee: idorigee,
@@ -955,6 +961,18 @@ function manterRotina() {
             }
         });
     }
+}
+
+function removeAcentos(str){
+	return str.replace(/[àáâãäå]/g,"a").replace(/[ÀÁÂÃÄÅ]/g,"A").replace(/[ÒÓÔÕÖØ]/g,"O").replace(/[òóôõöø]/g,"o").replace(/[ÈÉÊË]/g,"E").replace(/[èéêë]/g,"e").replace(/[Ç]/g,"C").replace(/[ç]/g,"c").replace(/[ÌÍÎÏ]/g,"I").replace(/[ìíîï]/g,"i").replace(/[ÙÚÛÜ]/g,"U").replace(/[ùúûü]/g,"u").replace(/[ÿ]/g,"y").replace(/[Ñ]/g,"N").replace(/[ñ]/g,"n");
+}
+
+function removeCaracteresInvalidos(str){
+	return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
+}
+
+function removeCaracteresInvalidosEmail(str) {
+    return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\(\)\-\_\=\@\+\[\]\{\}\?\;\:\.\,\/\>\<]/g, "");
 }
 
 function verificaCpfCgcRespSocial(inpessoa, nrcpfcgc) {
@@ -1134,8 +1152,11 @@ function controlaBotoes() {
 
             $('#btVoltarCns').css('display', 'inline');
 			
-            // Verifica se o operador não possui acesso ao CRM
-            if (flgAcessoCRM == 'N') {
+            //PRJ339 - Se possui par?metro para efetuar saque e desligamento pelo AIMARO
+			if (inSaqDes == 1 || trim(crm_nrdconta) != '') {
+              
+                //Verifica se veio pelo AIMARO ou CRM atrav?s do n?mero da contaCRM
+                if (trim(crm_nrdconta) == '' ){
 
                 if ($('input[name="inpessoa"]:checked', '#frmFiltro').val() == 1) {
 
@@ -1153,7 +1174,7 @@ function controlaBotoes() {
                         $('#btDesligarAlt').css('display', 'inline');
                     }
 
-                    $('#btVoltarCns', '#divBotoes').css('display', 'inline');
+                    //$('#btVoltarCns', '#divBotoes').css('display', 'inline');
 
                 } else {
 
@@ -1181,21 +1202,25 @@ function controlaBotoes() {
                 if (!$('#dtdemiss', '#frmFisico').val()) {
                     $('#btDemissCRM').css('display', 'inline');
                 }
+				$('#btDemissCRM').trocaClass('botaoDesativado', 'botao').attr("onClick", "verificaProdutosAtivosCRM(); return false;");
 
+				/*
                 if (flgDesligarCRM == 'S') {
                     // Troca a classe do botão e atribui a chamada da função do OnClick
                     $('#btDemissCRM').trocaClass('botaoDesativado', 'botao').attr("onClick", "verificaProdutosAtivosCRM(); return false;");
-                }
+                }*/
 
+				$('#btSaqueCRM').css('display', 'inline');
+                /*
                 if (flgSaldoPclCRM == 'S') {
                     // Exibir o botão de saque parcial
                     $('#btSaqueCRM').css('display', 'inline');
                 }
-
+				*/
             }
             
             break;
-
+        }
         case 'CI':
 
             if (isHabilitado($('#cdagepac', '#frmFiltro')) == false && $('#cdagepac', '#frmFiltro').val() == '') {
@@ -1219,7 +1244,7 @@ function controlaBotoes() {
                         controlaOperacao('IV');
                     }));
 
-                    $('#btVoltarInc').css('display', 'inline');
+                    //$('#btVoltarInc').css('display', 'inline');
                     $('#btProsseguirInc').css('display', 'inline');
 
                 } else {
@@ -1231,7 +1256,7 @@ function controlaBotoes() {
 
                     }));
 
-                    $('#btVoltarInc').css('display', 'inline');
+                    //$('#btVoltarInc').css('display', 'inline');
                     $('#btProsseguirInc').css('display', 'inline');
 
                 }
@@ -2552,8 +2577,14 @@ function verificaRelatorio() {
 
                 // Se esta incluindo, efetuar consultas
 						var metodo = ($('#opcao', '#frmCabMatric').val() == 'CI') ? 'efetuar_consultas();' : 'controlaVoltar()';
-
+				// Inicio - Ficha-Proposta - Cássia de Oliveira (GFT)
+				var inpessoa = $('input[name="inpessoa"]:checked', '#frmFiltro').val();
+				if(cddopcao == 'CR' || inpessoa == 2){
                 showConfirmacao("Deseja visualizar a impress&atilde;o?", "Confirma&ccedil;&atilde;o - Aimaro", "imprime();", metodo, "sim.gif", "nao.gif");
+				}else{
+					eval(metodo);
+				}
+				// Fim - Ficha-Proposta - Cássia de Oliveira (GFT)
             } else {
                 try {
                     eval(response);

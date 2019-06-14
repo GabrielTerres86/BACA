@@ -231,8 +231,6 @@ function Filtro() {
                     eval(response);
                 } else {
                     $('#divFiltro').html(response);
-                    filtro.formatar(cabecalho.getOpcaoSelecionada());
-                    hideMsgAguardo();
                 }
             }
         });
@@ -312,7 +310,7 @@ function Grid() {
 
     this.carregar = function (cddopcao, pagina) {
         var cdcooper = filtro.getCooperativaSelecionada();
-        var nrdconta = filtro.getConta();
+        var nrdconta = normalizaNumero(filtro.getConta() || 0);
         var cdagenci = filtro.getPA();
         var dtsolicitacao_ini = filtro.getDataSolicitacaoInicial();
         var dtsolicitacao_fim = filtro.getDataSolicitacaoFinal();
@@ -394,7 +392,6 @@ function estadoInicial() {
 }
 
 function LiberaCampos() {
-    cabecalho.desabilitarTodosComponentes();
     filtro.carregar(cabecalho.getOpcaoSelecionada());
     return false;
 }
@@ -688,8 +685,8 @@ function exibirReprovacaoPortabilidade(dsrowid) {
                 $('#divUsoGenerico').html(response);
                 hideMsgAguardo();
                 bloqueiaFundo($('#divUsoGenerico'));
-                ajustarCentralizacao($('#divUsoGenerico'));
-            }
+				ajustarCentralizacao($('#divUsoGenerico'));
+			}
 		}
 	});
 }

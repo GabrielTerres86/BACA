@@ -1,7 +1,7 @@
 <?php
 /*************************************************************************
 	Fonte: principal.php
-	Autor: Gabriel						Ultima atualizacao: 27/03/2017
+	Autor: Gabriel						Ultima atualizacao: 20/02/2019
 	Data : Dezembro/2010
 	
 	Objetivo: Listar os convenios de cobranca.
@@ -36,6 +36,8 @@
 				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)  
 
                 27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)
+
+              20/02/2019 - Novo campo Homologado API (Andrey Formigari - Supero)
 
 *************************************************************************/
 
@@ -209,12 +211,13 @@ function exibeErro($msgErro) {
 					   $qtdecprz =  getByTagName($convenios[$i]->tags,'qtdecprz');
   					   $idrecipr =  getByTagName($convenios[$i]->tags,'idrecipr');
   					   $inenvcob =  getByTagName($convenios[$i]->tags,'inenvcob');
+            $flgapihm =  (getByTagName($convenios[$i]->tags,'flgapihm') == 1) ? "SIM" : "NAO";
 						
                        // Verificar se existe algum convenio ativo(insitceb == 1)
                        if ($insitceb == 1 && $aux_insitceb == 0 ){
                            $aux_insitceb = $insitceb;
                        } 
-                       $mtdClick = "selecionaConvenio( '".$i."', '".$nrconven."','".$dsorgarq."','".$nrcnvceb."','".$insitceb."','".$dtcadast."','".$cdoperad."','".$inarqcbr."','".$cddemail."' ,'".$dsdemail."','".$flgcruni."','".$flgcebhm."','".$flgregis."','".$flgregon."','".$flgpgdiv."','".$flcooexp."','".$flceeexp."','".$cddbanco."','".$flserasa."','".$flsercco."','".$qtdfloat."','".$flprotes."','".$qtlimaxp."','".$qtlimmip."','".$qtdecprz."','".$idrecipr."','".$inenvcob."');";
+          $mtdClick = "selecionaConvenio( '".$i."', '".$nrconven."','".$dsorgarq."','".$nrcnvceb."','".$insitceb."','".$dtcadast."','".$cdoperad."','".$inarqcbr."','".$cddemail."' ,'".$dsdemail."','".$flgcruni."','".$flgcebhm."','".$flgregis."','".$flgregon."','".$flgpgdiv."','".$flcooexp."','".$flceeexp."','".$cddbanco."','".$flserasa."','".$flsercco."','".$qtdfloat."','".$flprotes."','".$qtlimaxp."','".$qtlimmip."','".$qtdecprz."','".$idrecipr."','".$inenvcob."','".$flgapihm."');";
 					?>
 					<tr id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 						
@@ -300,6 +303,7 @@ function exibeErro($msgErro) {
 	<input type="hidden" id= "qtdecprz"    name="qtdecprz">
 	<input type="hidden" id= "idrecipr"    name="idrecipr">
 	<input type="hidden" id= "inenvcob"    name="inenvcob">
+    <input type="hidden" id= "flgapihm"    name="flgapihm">
 
     <?php
 	// Habilitar botão apenas se possuir cobrança ativa
@@ -317,8 +321,11 @@ function exibeErro($msgErro) {
 	?>
 		<a href="#" class="botao" <? if (in_array("X",$glbvars["opcoesTela"])) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?>>Cancelamento</a>
 		<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
-		<a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('A','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
-		<a href="#" class="botao" onclick="carregaReciprocidade(); return false;">Voltar</a>
+		
+    <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('A','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
+      
+      
+      <a href="#" class="botao" onclick="carregaReciprocidade(); return false;">Voltar</a>
 	<?php
 	} else {
 	?>

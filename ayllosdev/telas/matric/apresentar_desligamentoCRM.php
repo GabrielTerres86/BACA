@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 26/12/2017
  * OBJETIVO     : Retornar dados para o formulario de desligamento da tela MATRIC
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 22/04/2019 - Buscar o valor correto de cotas PRB0041599 - Tiago
  * --------------
  */ 
 	session_start();
@@ -68,11 +68,37 @@
     }
 	
 	// Ler os valores vindos do XML
-	$vldcotas = $xmlObj->roottag->tags[0]->cdata; 
+	//$vldcotas = $xmlObj->roottag->tags[0]->cdata; 
 	$nrdconta = $xmlObj->roottag->tags[1]->cdata;
 	$cdmotivo = $xmlObj->roottag->tags[2]->cdata; 
 	$dsmotivo = $xmlObj->roottag->tags[3]->cdata;
 	$rowiddes = $xmlObj->roottag->tags[4]->cdata;
+	
+	
+	// Monta o xml de requisição
+    $xml   = "";
+    $xml  .= "<Root>";
+    $xml  .= "  <Dados>";
+    $xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
+    $xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
+    $xml  .= "  </Dados>";
+    $xml  .= "</Root>";
+
+    // Executa script para envio do XML
+    $xmlResult = mensageria($xml, "CADA0003", "BUSCAR_SALDO_COTAS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
+
+    // Se ocorrer um erro, mostra crítica
+    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+
+        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		
+        exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','fechaRotina($(\'#divRotina\'));',false);
+
+    }
+	
+	$vldcotas = $xmlObj->roottag->tags[0]->tags[0]->cdata; 	
+	
 
 	include('form_desligamentoCRM.php');
 

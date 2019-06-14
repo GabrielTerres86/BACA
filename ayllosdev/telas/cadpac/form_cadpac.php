@@ -10,6 +10,7 @@
  *                19/12/2017 - Incluido campos FGTS. PRJ406 -FGTS(Odirlei-AMcom)
  *                03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
  *                26/09/2018 - Adicionar opção no campo flgutcrm e alteração no nome do label - Bruno Luiz Katzjarowski - Mouts
+ *				  06/03/2019 - Alterar label Contratação de Crédito Pré-Aprovado. (PRJ438 - Douglas Pagel / AMcom)	
  * --------------
  */	
 ?>
@@ -201,6 +202,19 @@
                         <input type="text" id="dsdemail" name="dsdemail" />
                         <label for="dsmailbd">E-mail Borderô:</label>
                         <input type="text" id="dsmailbd" name="dsmailbd" />
+
+                        <br clear="all" />
+
+                        <label for="dsemailpj" class="hint" title="E-mail Reciprocidade PJ">E-mail Recip PJ:</label>
+                        <input type="text" id="dsemailpj" name="dsemailpj" />
+                        
+                        <br clear="all" />
+
+                        <label for="dsemailpf" class="hint" title="E-mail Reciprocidade PF">E-mail Recip PF:</label>
+                        <input type="text" id="dsemailpf" name="dsemailpf" />
+
+                        <br clear="all" />
+
                         <label for="dsinform1">Dados para impressão dos cheques:</label>
                         <input type="text" id="dsinform1" name="dsinform1" />
                         <label for="dsinform2"></label>
@@ -257,11 +271,13 @@
                         <label for="hhenvelo">Depósito TAA:</label>
                         <input type="text" id="hhenvelo" name="hhenvelo" value="00:00" />
                         <label for="rotulo_h">h</label>
-                        <label for="hhcpaini">Contratação de Crédito Pré-Aprovado:</label>
+                        <label for="hhcpaini">Contratação de Crédito Pré - Aprovado e Empréstimo e Financiamento:</label>
                         <input type="text" id="hhcpaini" name="hhcpaini" value="00:00" />
                         <label for="hhcpafim">até</label>
                         <input type="text" id="hhcpafim" name="hhcpafim" value="00:00" />
                         <label for="rotulo_h">h</label>
+                        <br clear="all" />
+                        <br clear="all" />
                         <br clear="all" />
                         <br clear="all" />
                         <label for="hhlimcan">Cancelamento de pagamentos:</label>

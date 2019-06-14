@@ -1,7 +1,7 @@
 /***********************************************************************
       Fonte: cobranca.js
       Autor: Gabriel
-      Data : Dezembro/2010             Ultima atualizacao : 19/04/2017
+      Data : Dezembro/2010             Ultima atualizacao : 20/02/2019
 
       Objetivo  : Biblioteca de funcoes da rotina CONBRANCA tela ATENDA.
 
@@ -60,6 +60,8 @@
 				               (Douglas - Chamado 641198)
 
 				  13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
+
+                  20/02/2019 - Novo campo Homologado API (Andrey Formigari - Supero)
 
  ***********************************************************************/
 
@@ -173,7 +175,7 @@ function habilitaSetor(setorLogado) {
  }
 
 // Destacar convenio selecinado e setar valores do item selecionado
-function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flgregon, flgpgdiv, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob) {
+ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flgregon, flgpgdiv, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flgapihm) {
 
     var qtConvenios = $("#qtconven", "#divConteudoOpcao").val();
 
@@ -203,6 +205,7 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
     $("#qtdecprz", "#divConteudoOpcao").val(qtdecprz);
     $("#idrecipr", "#divConteudoOpcao").val(idrecipr);
 	$("#inenvcob", "#divConteudoOpcao").val(inenvcob);
+    $("#flgapihm", "#divConteudoOpcao").val(flgapihm);
 
 	// Numero do convenio selecionado
 	nrconven_imprimir = normalizaNumero(nrconven);
@@ -290,6 +293,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
     var qtdecprz = $("#qtdecprz", "#divConteudoOpcao").val();
     var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
 	var inenvcob = $("#inenvcob", "#divConteudoOpcao").val();
+    var flgapihm = $("#flgapihm", "#divConteudoOpcao").val();
 	var emails;
 
 	var flsercco = $("#flsercco","#divConteudoOpcao").val();
@@ -343,6 +347,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
         qtdfloat = "";
         qtdecprz = "";
         idrecipr = 0;
+        flgapihm = "NAO";
 	}
 
     if (cddbanco == "") {
@@ -378,6 +383,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
             flcooexp: flcooexp,
             flceeexp: flceeexp,
             flserasa: flserasa,
+            flgapihm: flgapihm,
             cddbanco: cddbanco,
 			qtTitulares: qtTitulares,
             titulares: titulares,
@@ -785,6 +791,7 @@ function realizaHabilitacao() {
     var idrecipr = $("#idrecipr", "#divOpcaoConsulta").val();
 	var inenvcob = $("#inenvcob", "#divOpcaoConsulta").val();
     var idreciprold = $("#idreciprold", "#divOpcaoConsulta").val();
+	var flgapihm = $("#flgapihm", "#divOpcaoConsulta").val();
 
     nrconven = normalizaNumero(nrconven);
     qtdfloat = normalizaNumero(qtdfloat);
@@ -854,6 +861,7 @@ function realizaHabilitacao() {
             flgpgdiv: flgpgdiv,
 			flcooexp: flcooexp,
 			flceeexp: flceeexp,
+			flgapihm: flgapihm,
 			flserasa: flserasa,
 			flseralt: flseralt,
 			flposbol: flposbol,

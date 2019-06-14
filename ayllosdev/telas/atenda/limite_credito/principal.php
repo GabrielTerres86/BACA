@@ -159,6 +159,8 @@
 	$flgimpnp = getByTagName($limite,"flgimpnp");
 	$dslimpro = getByTagName($limite,"dslimpro");	
 	$idcobope = getByTagName($limite,"idcobope");	
+	$nivrisco = getByTagName($limite,"nivrisco");	
+	$dsdtxfix = getByTagName($limite,"dsdtxfix");	
 	//$dsobserv = removeCaracteresInvalidos($dsobserv);
 	
 	$xml  = "<Root>";
@@ -205,7 +207,7 @@
 		}
 	}
 
-	include ("form_principal.php");
+	//include ("form_tela_principal.php"); - bruno - prj - 438 - sprint 7 - tela principal
 
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
@@ -216,4 +218,53 @@
 		exit();
 	}
 	
+	//bruno - prj 438 - sprint 7 - tela principal
 ?>
+<script type='text/javascript'>
+	//bruno - prj 470 - tela autorizacao
+	/**
+	 * Salvar variaveis globais
+	 */
+    var_globais.vllimite = "<?php echo $vllimite; ?>";
+	var_globais.dslimcre = "<?php echo $dslimcre; ?>";
+	var_globais.dtmvtolt = "<?php echo $dtmvtolt; ?>";
+	var_globais.dsfimvig = "<?php echo $dsfimvig; ?>";	
+	var_globais.dtfimvig = "<?php echo $dtfimvig; ?>";
+	var_globais.nrctrlim = "<?php echo $nrctrlim; ?>";
+	var_globais.qtdiavig = "<?php echo $qtdiavig; ?>";
+	var_globais.dsencfi1 = "<?php echo $dsencfi1; ?>";
+	var_globais.dsencfi2 = "<?php echo $dsencfi2; ?>";
+	var_globais.dsencfi3 = "<?php echo $dsencfi3; ?>";
+	var_globais.dssitlli = "<?php echo $dssitlli; ?>";
+	var_globais.dsmotivo = "<?php echo $dsmotivo; ?>";
+	var_globais.nmoperad = "<?php echo $nmoperad; ?>";
+	var_globais.flgpropo = "<?php echo $flgpropo; ?>";
+	var_globais.nrctrpro = "<?php echo $nrctrpro; ?>";
+	var_globais.cdlinpro = "<?php echo $cdlinpro; ?>";
+	var_globais.vllimpro = "<?php echo $vllimpro; ?>";	
+	var_globais.nmopelib = "<?php echo $nmopelib; ?>";
+	var_globais.flgenvio = "<?php echo $flgenvio; ?>";
+	var_globais.flgenpro = "<?php echo $flgenpro; ?>";
+	var_globais.cddlinha = "<?php echo $cddlinha; ?>";
+	var_globais.dsdlinha = "<?php echo $dsdlinha; ?>";
+	var_globais.tpdocmto = "<?php echo $tpdocmto; ?>";
+	var_globais.flgdigit = "<?php echo $flgdigit; ?>";
+	var_globais.dsobserv = "<?php echo $dsobserv; ?>";	
+	var_globais.dstprenv = "<?php echo $dstprenv; ?>";
+	var_globais.dtrenova = "<?php echo $dtrenova; ?>";
+	var_globais.qtrenova = "<?php echo $qtrenova; ?>";
+	var_globais.flgimpnp = "<?php echo $flgimpnp; ?>";
+	var_globais.dslimpro = "<?php echo $dslimpro; ?>";	
+	var_globais.idcobope = "<?php echo $idcobope; ?>";
+	var_globais.nivrisco = "<?php echo $nivrisco; ?>";	
+	var_globais.dsdtxfix = "<?php echo $dsdtxfix; ?>";
+	var_globais.dtultmaj = "<?php echo $dtultmaj; ?>";
+	var_globais.dtcanlim = "<?php echo $dtcanlim; ?>";
+
+	aux_cdcooper = '<?php echo $glbvars["cdcooper"]?>';
+	aux_tpdocmto = '<?php echo $tpdocmto ?>';
+	aux_GEDServidor = '<?php echo $GEDServidor;?>';
+
+	aux_dtmvtolt = '<?php echo $glbvars["dtmvtolt"]?>';
+
+</script>

@@ -246,7 +246,9 @@
 	echo 'idLinhaL = 0;';
 	
 	// Carrega os limites de desconto de CHEQUES
-	echo 'mostraImprimirLimite();';
+	//echo 'mostraImprimirLimite();';
+	//prj 470 - tela autorizacao
+	echo "chamarImpressaoChequeLimite({ vllimite: ".$vllimite."});";
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

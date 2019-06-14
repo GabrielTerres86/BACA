@@ -72,6 +72,7 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 050:	[26/04/2018] Lombardi (CECRED)		: Criada nova rotina buscaSituacoesConta. Projeto 366 - Reestruturação dos tipos e situações de conta.
  * 051: [10/04/2018] Luis Fernando (Gft)	: Criada nova função getClassXml que devolve um objeto modificado do xmlFile fazendo algumas alterações em métodos para facilitar a construção
  * 052: [20/08/2018] Maykon (Envolti) : P442 - Criadas funcoes para Fipe, Aditiv e Manbem
+ * 053: [16/10/2018] Bruno Luiz Katzjarowski (Mout's) : Criar rotina para detectar encode da string e converter para o encode da página
   */
 
 // Função para requisição de dados através de XML 
@@ -569,7 +570,7 @@ function retornaUFs() {
 	return $estados;
 }
 
-function retornaCategorias() {
+function retornaCategorias() { //rubens - prj 438 - bug 14626
 	$categorias[0]["IDENTIFICADOR"]  = "AUTOMOVEL";
 	$categorias[0]["DESCRICAO"]   = "Automóvel";
 	$categorias[1]["IDENTIFICADOR"]  = "CAMINHAO";

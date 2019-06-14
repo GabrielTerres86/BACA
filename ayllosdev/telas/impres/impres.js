@@ -21,6 +21,7 @@
  * 10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * 19/08/2018 - Inclusão de novos relatórios para Poupança Programada / Aplicação Programada
  * 28/08/2018 - Cassia de Oliveira (GFT): Adicionado funcionalidade de extrato de Desconto de Títulos
+ * 14/11/2018 - Vitor S Assanuma (GFT): Inserção da lupa para borderôs
  * --------------
  */
 
@@ -228,12 +229,12 @@ function atualizaSeletor() {
     rCddopcao = $('label[for="cddopcao"]', '#' + frmCab);
     rNrdconta = $('label[for="nrdconta"]', '#' + frmCab);
     rTpextrat = $('label[for="tpextrat"]', '#' + frmCab);
-    rNrdborde = $('label[for="nrdborde"]', '#' + frmCab);
+    rNrdborde = $('label[for="nrborder"]', '#' + frmCab);
 
     cCddopcao = $('#cddopcao', '#' + frmCab);
     cNrdconta = $('#nrdconta', '#' + frmCab);
     cTpextrat = $('#tpextrat', '#' + frmCab);
-    cNrdborde = $('#nrdborde', '#' + frmCab);
+    cNrdborde = $('#nrborder', '#' + frmCab);
 
     cTodosCabecalho = $('input[type="text"],select', '#' + frmCab);
     btnOK1 = $('#btnOK1', '#' + frmCab);
@@ -491,6 +492,20 @@ function controlaPesquisas() {
         });
     }
 
+     /*--------------------*/
+    /*  CONTROLE BORDERO */
+    /*--------------------*/
+    var linkContrato = $('#nrborder', '#' + frmCab).next();
+
+    if (linkContrato.prev().hasClass('campoTelaSemBorda')) {
+        linkContrato.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
+    } else {
+        linkContrato.css('cursor', 'pointer').unbind('click').bind('click', function () {
+            mostrarPesquisaBordero();
+            return false;
+        });
+    }
+
 
     return false;
 }
@@ -500,15 +515,16 @@ function controlaPesquisas() {
 function formataCabecalho() {
 
     // cabecalho
-    rCddopcao.addClass('rotulo').css({ 'width': '42px' });
+    rCddopcao.addClass('rotulo').css({ 'width': '82px' });
     rNrdconta.addClass('rotulo-linha').css({ 'width': '45px' });
-    rTpextrat.addClass('rotulo-linha').css({ 'width': '39px' });
+    rTpextrat.addClass('rotulo-linha').css({ 'width': '79px' });
     rNrdborde.addClass('rotulo-linha').css({ 'width': '170px' });
 
     cCddopcao.css({ 'width': '400px' })
     cNrdconta.addClass('conta pesquisa').css({ 'width': '70px' });
     cTpextrat.css({ 'width': '275px' });
     cNrdborde.css({ 'width': '70px' });
+    cNrdborde.css({ 'text-align': 'right' });
 
     if ($.browser.msie) {
         //	cTpextrat.css({'width':'280px'});
@@ -601,7 +617,7 @@ function formataCabecalho() {
 
     });
 
-    $('#nrborder').hide();
+    $('#nrborderdiv').hide();
 
     layoutPadrao();
     controlaPesquisas();
@@ -613,17 +629,17 @@ function formataDados() {
     $('fieldset').css({ 'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '0 3px 5px 3px' });
     $('fieldset > legend').css({ 'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px' });
 
-    rDtrefere.addClass('rotulo').css({ 'width': '53px' });
+    rDtrefere.addClass('rotulo').css({ 'width': '98px' });
     rDtreffim.addClass('rotulo-linha').css({ 'width': '85px' });
     rFlgtarif.addClass('rotulo-linha').css({ 'width': '77px' });
-    rInrelext.addClass('rotulo').css({ 'width': '53px' });
+    rInrelext.addClass('rotulo').css({ 'width': '98px' });
     rInselext.addClass('rotulo-linha').css({ 'width': '93px' });
     rTpmodelo.addClass('rotulo').css({ 'width': '51px' });
     rNrctremp.addClass('rotulo-linha').css({ 'width': '65px' });
-    rNraplica.addClass('rotulo').css({ 'width': '53px' });
+    rNraplica.addClass('rotulo').css({ 'width': '98px' });
     rNranoref.addClass('rotulo-linha').css({ 'width': '69px' });
     rFlgemiss.addClass('rotulo-linha').css({ 'width': '93px' });
-    rTpinform.addClass('rotulo').css({ 'width': '53px' });
+    rTpinform.addClass('rotulo').css({ 'width': '98px' });
     rNrperiod.addClass('rotulo-linha').css({ 'width': '65px' });
     rBtnoK3.css({ 'width': '1px' });
 
@@ -757,7 +773,7 @@ function montarTabela() {
         var flgtarif = (arrayImpres[i]['tpextrat'] == 1 ? (arrayImpres[i]['flgtarif'] == 'no' ? 'Nao' : 'Sim') : '');
         var inrelext = arrayImpres[i]['inrelext'] > 0 ? arrayImpres[i]['inrelext'] : '';
         var inselext = (arrayImpres[i]['inselext'] > 0 && arrayImpres[i]['tpextrat'] > 1) ? arrayImpres[i]['inselext'] : '';
-        var nrctremp = arrayImpres[i]['nrctremp'] > 0 ? mascara(arrayImpres[i]['nrctremp'], '####.###') : '';
+        var nrctremp = arrayImpres[i]['nrctremp'] > 0 ? mascara(arrayImpres[i]['nrctremp'], '###.###.###') : '';
         var nraplica = arrayImpres[i]['nraplica'] > 0 ? mascara(arrayImpres[i]['nraplica'], '####.###') : '';
         var nranoref = arrayImpres[i]['nranoref'] > 0 ? arrayImpres[i]['nranoref'] : '';
         var flgemiss = arrayImpres[i]['flgemiss'] == 'no' ? 'Process' : '<a href="javascript:Gera_Impressao(\'' + i + '\')"><img src="' + UrlImagens + 'icones/ico_impressora.png" border="0"> Agora</a>';
@@ -801,7 +817,7 @@ function formataTabela() {
     arrayLargura[4] = '25px';
     arrayLargura[5] = '32px';
     arrayLargura[6] = '25px';
-    arrayLargura[7] = '52px';
+    arrayLargura[7] = '80px';
     arrayLargura[8] = '50px';
     arrayLargura[9] = '27px';
 
@@ -1447,7 +1463,7 @@ function controlaOk(opcao) {
     }
 
     if (opcao == 2) {
-
+                
         if (divError.css('display') == 'block') { return false; }
         if (cNrdconta.hasClass('campoTelaSemBorda')) { return false; }
 
@@ -1466,9 +1482,9 @@ function controlaOk(opcao) {
         cTpmodelo.val('1');
         cTodosCabecalho.removeClass('campoErro');
         if (cTpextrat.val() == '13'){
-            $("#nrborder").show();
+            $("#nrborderdiv").show();
         }else{
-        manterRotina('VD');
+            manterRotina('VD');
         }
 
         if (cddopcao == 'C') {
@@ -1513,7 +1529,7 @@ function controlaOk(opcao) {
         $("#nrborder","#frmImprimir").val(normalizaNumero(cNrdborde.val()));     
         $("#limorbor","#frmImprimir").val('3');
 
-        var action = UrlSite + 'telas/atenda/descontos/titulos/imprimir_dados_dsctit.php';
+        var action = UrlSite + 'telas/impres/imprimir_dados_dsctit.php';
         
         carregaImpressaoAyllos("frmImprimir",action);
         return false;
@@ -1910,7 +1926,24 @@ function controlaFoco(cddopcao) {
             }
 
         });
-
+    
 
     }
+}
+
+
+// Função para abrir a pesquisa de borderos
+function mostrarPesquisaBordero(){
+    var normNrconta = $('#frmCab #nrdconta').val();
+    var nrBorder = $('#frmCab #nrborder').val();
+
+    normNrconta = normalizaNumero(normNrconta) > 0 ? normalizaNumero(normNrconta) : '';
+    nrBorder    = normalizaNumero(nrBorder) > 0 ? normalizaNumero(nrBorder) : '';
+
+    //Definição dos filtros
+    var filtros = "Conta;nrdconta;100px;S;"+normNrconta+";S;nrdconta|Nr. Bordero;nrborder;100px;S;"+nrBorder+";S;nrborder|Dt Venc;dtlibbdt;;N;;N;dtlibbdt|Emprestado;vltottit;;N;;N;vltottit|Qt. Títulos;qttottit;;N;;N;qttottit";
+    //Campos que serão exibidos na tela
+    var colunas = 'Numero da Conta;nrdconta;0%;center;;N|Bordero;nrborder;20%;center|Dt.Lib;dtlibbdt;20%;center|Emprestado;vltottit;30%;center|Qt. Títulos;qttottit;30%;center';
+    //Exibir a pesquisa
+    mostraPesquisa("DSCT0003", "BUSCAR_BORDEROS_LIBERADOS", "Borderos","100",filtros,colunas, null, null, 'frmCab');
 }

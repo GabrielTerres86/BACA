@@ -11,14 +11,15 @@
  *	                                    campos da tela (Daniel).
  * 15/08/2013 - Carlos       (CECRED) : Alteração da sigla PAC para PA.
  * 24/12/2014 - Jorge/Gielow (CECRED) : Ajuste de tamanho dos campos para adequar em IE 10 11 e Campo PA com 3 casas.
+ * 21/03/2019 - Lombardi     (CECRED) : Adicionado do campo periodo para o relatorio 219. Acelera - Reapresentacao automática de cheques.
  * --------------
  */
 
 //Formulários e Tabela
 var frmCab   		= 'frmCab';
 
-var rCddopcao, rNrdrelat, rCdagenca, 
-	cCddopcao, cNrdrelat, cCdagenca, cTodosCabecalho, btnOK;
+var rCddopcao, rNrdrelat, rCdagenca, rCdperiod, 
+	cCddopcao, cNrdrelat, cCdagenca, cCdperiod, cTodosCabecalho, btnOK;
 
 var flgvepac 		= '';
 var arrayImprel		= new Array();
@@ -102,10 +103,12 @@ function formataCabecalho() {
 	rCddopcao			= $('label[for="cddopcao"]','#'+frmCab); 
 	rNrdrelat	        = $('label[for="nrdrelat"]','#'+frmCab);        
 	rCdagenca	        = $('label[for="cdagenca"]','#'+frmCab);        
+	rCdperiod	        = $('label[for="cdperiod"]','#'+frmCab);        
 	
 	cCddopcao			= $('#cddopcao','#'+frmCab); 
 	cNrdrelat			= $('#nrdrelat','#'+frmCab); 
 	cCdagenca			= $('#cdagenca','#'+frmCab); 
+	cCdperiod			= $('#cdperiod','#'+frmCab); 
 	
 	cTodosCabecalho		= $('input[type="text"],select','#'+frmCab);
 	btnOK				= $('#btnOK','#'+frmCab);
@@ -114,9 +117,11 @@ function formataCabecalho() {
 	rCddopcao.addClass('rotulo').css({'width':'57px'});
 	rNrdrelat.addClass('rotulo-linha').css({'width':'55px'});
 	rCdagenca.addClass('rotulo-linha').css({'width':'30px'});
+	rCdperiod.addClass('rotulo').css({'width':'57px','display':'none'});
 
 	cCddopcao.css({'width':'500px'})
 	cNrdrelat.css({'width':'462px'});	
+	cCdperiod.css({'width':'100px','display':'none'});
 	
 	if ( $.browser.msie ) {
 		cNrdrelat.css({'width':'462px'});			
@@ -168,14 +173,27 @@ function formataCabecalho() {
 		} 
 	});	
 	
+	cCdperiod.unbind('keypress').bind('keypress', function(e) {
+		if ( divError.css('display') == 'block' ) { return false; }		
+
+		// Se é a tecla ENTER, 
+		if ( e.keyCode == 13 ) {
+			btnProsseguir.click();			
+			return false;
+		} 
+	});	
+	
 	cNrdrelat.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }	
 		
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+				/*
 				cNrdrelat.desabilitaCampo();
 				trocaBotao('Concluir');
 				cCdagenca.habilitaCampo();	
 				cCdagenca.focus();
+				*/
+				btnContinuar();
 				return false;
 		}	
 	});
@@ -234,12 +252,18 @@ function btnContinuar() {
 	if ( cCddopcao.hasClass('campo') ) {
 		btnOK.click();	
 		
-	} else if ( cCdagenca.hasClass('campoTelaSemBorda') && cNrdrelat.val() != '' && arrayImprel[cNrdrelat.val()] == 'yes' ) {
+	} else if ( cCdagenca.hasClass('campoTelaSemBorda') && cNrdrelat.val() != '' && arrayImprel[cNrdrelat.val()][0] == 'yes' ) {
 		cNrdrelat.desabilitaCampo();
 		cCdagenca.habilitaCampo().focus();
 		trocaBotao('Concluir');
 		
-	} else if ( ( cCddopcao.hasClass('campoTelaSemBorda') && cNrdrelat.hasClass('campoTelaSemBorda') ) ||  arrayImprel[cNrdrelat.val()] == 'no' ) {
+	} else if ( cCdperiod.hasClass('campoTelaSemBorda') && cNrdrelat.val() != '' && arrayImprel[cNrdrelat.val()][1] == 'yes' ) {
+		cNrdrelat.desabilitaCampo();
+		rCdperiod.css({'display':'block'});
+		cCdperiod.css({'display':'block'}).habilitaCampo().focus();
+		trocaBotao('Concluir');
+		
+	} else if ( ( cCddopcao.hasClass('campoTelaSemBorda') && cNrdrelat.hasClass('campoTelaSemBorda') ) ||  (arrayImprel[cNrdrelat.val()][0] == 'no' && arrayImprel[cNrdrelat.val()][1] == 'no')) {
 		// Verifica PA 
 		if ( cCdagenca.hasClass('campo') && cCdagenca.val() == '' ) { 
 			showError('error','PA inv&aacute;lido.','Alerta - Ayllos','cCdagenca.focus();'); 

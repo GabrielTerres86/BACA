@@ -6,6 +6,7 @@
  * --------------
  * ALTERAÇÕES   : 03/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
  * 				  13/04/2018 - Alterado funcao voltarRotina para chamar a FATCA/CRS - PRJ 414 (Mateus - Mouts).
+ *                04/04/2019 - Tratamento de erro para solucinar o problema no cadastro - PRB0041543 (Jose Gracik - Mouts)
  * --------------
  */ 
 
@@ -180,13 +181,8 @@ function manterRotina(operacao) {
 		},
 		success: function(response) {
 			try {
-				
+		
 				eval(response);
-				
-				// Se esta fazendo o cadastro apos MATRIC, fechar rotina e ir pra proxima
-				if  (operacao == 'VA' && (flgcadas == 'M' || flgContinuar)) {
-					proximaRotina();
-				}
 				
 				return false;
 			} catch(error) {

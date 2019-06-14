@@ -5,6 +5,8 @@
  * --------------
  * 000: [25/09/2018] Lombardi (CECRED): Tratamento para nao permitir solicitacao de novos Cartoes BB.
  * 001: [18/10/2018] Lombardi (CECRED): Comentado tratamento para nao permitir solicitacao de novos Cartoes BB.
+ * 002: [16/01/2019] Lombardi (CECRED): Tratamento para nao permitir solicitacao de novos Cartoes BB.
+ * 003: [29/03/2019] Elton    (Ailos) : Tratamento temporario para nao permitir solicitacao de novos Cartoes BB para a cooperativa Credelesc.
  */
 ?>
 
@@ -143,17 +145,16 @@
 							
 	if (contaDoOperador($nrdconta,$glbvars)) exibirErro('error', utf8ToHtml("Não é possível solicitar cartão de crédito para a própria conta do Operador."),'Alerta - Aimaro',$funcaoAposErro);
 				
-	$sNomeCartaoDebito   = 'Cartão CECRED Débito';
-	$sNomeCartaoMultiplo = 'Cartão CECRED Múltiplo';
+	$sNomeCartaoDebito   = 'Cartão AILOS Débito';
+	$sNomeCartaoMultiplo = 'Cartão AILOS Múltiplo';
 	$sNomeCartaoBB       = 'Cartão Banco do Brasil';
 	/* Se for pesso juridica, mudar o nome dos botoes */
 	if(isset($inpessoa)){
 		if($inpessoa > 1){
-			$sNomeCartaoDebito   = 'Cartão CECRED Empresas Débito';
-			$sNomeCartaoMultiplo = 'Cartão CECRED Empresas';
+			$sNomeCartaoDebito   = 'Cartão AILOS Empresas Débito';
+			$sNomeCartaoMultiplo = 'Cartão AILOS Empresas';
 		}
 	}
-				
 ?>
 <script>
 <?if($cdsitdct == 5){ ?>
@@ -164,6 +165,15 @@
 $(document).ready(function(){
 	if(inpessoa != 1)
 		$("#bbcard").hide();
+	
+	<?php // Tratamento temporario para nao permitir solicitacao de novos Cartoes BB para cooperativa Credelesc
+	$dtmvtolt = substr($glbvars["dtmvtolt"], 6, 4).'-'.substr($glbvars["dtmvtolt"], 3, 2).'-'.substr ($glbvars["dtmvtolt"], 0, 2);
+	if ($glbvars["cdcooper"] == 8 &&   // Credelesc 
+		strtotime($dtmvtolt) >= strtotime('2019-05-10') && strtotime($dtmvtolt) <= strtotime('2019-05-20')) {
+		echo '$("#bbcard").hide();';
+	}
+	?>
+	
 	/*
 	<?php // Tratamento para nao permitir solicitacao de novos Cartoes BB
 	$dtmvtolt = substr($glbvars["dtmvtolt"], 6, 4).'-'.substr($glbvars["dtmvtolt"], 3, 2).'-'.substr ($glbvars["dtmvtolt"], 0, 2);
@@ -219,9 +229,9 @@ function goBB(opt){
 function goCecred(){
 	<?
 	if($desabilitarNovo){
-			$mensagemDes = utf8ToHtml('O titular desta conta já possui Cartões CECRED de todas bandeiras disponíveis.');
+			$mensagemDes = utf8ToHtml('O titular desta conta já possui Cartões AILOS de todas bandeiras disponíveis.');
 			if($inpessoa ==2)
-				$mensagemDes = utf8ToHtml('Esta conta já possui cartão de crédito CECRED titular.');
+				$mensagemDes = utf8ToHtml('Esta conta já possui cartão de crédito AILOS titular.');
 		?>
 			showError("error", "<? echo $mensagemDes;?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return;

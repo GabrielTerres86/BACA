@@ -1,7 +1,7 @@
 <?
 /*************************************************************************
 	Fonte: consulta-habilita.php
-	Autor: Gabriel						Ultima atualizacao: 13/12/2016
+	Autor: Gabriel						Ultima atualizacao: 20/02/2019
 	Data : Dezembro/2010
 	
 	Objetivo: Tela para visualizar a consulta/habilitacao da rotina 
@@ -48,6 +48,8 @@
 				09/04/2018 - Chamada da rotina para verificar se o tipo de conta permite produto 
 				             6 - Cobrança Bancária. PRJ366 (Lombardi).
 
+				20/02/2019 - Nova campo Homologado API (Andrey Formigari - Supero)
+
 *************************************************************************/
 
 session_start();
@@ -81,6 +83,7 @@ $flceeexp    = trim($_POST["flceeexp"]);
 $flserasa    = trim($_POST["flserasa"]);
 $cddbanco	 = trim($_POST["cddbanco"]);
 $flgcebhm    = trim($_POST["flgcebhm"]);
+$flgapihm    = trim($_POST["flgapihm"]);
 $cddopcao    = trim($_POST["cddopcao"]);
 $dsdmesag    = $_POST["dsdmesag"];
 $titulares   = $_POST["titulares"];
@@ -401,6 +404,12 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                         <select name="flgcebhm" id="flgcebhm" class="<?php echo $campo; ?>">
                             <option value="yes" <? if ($flgcebhm == "SIM") { ?> selected <? } ?> >   SIM </option>
                             <option value="no"  <? if ($flgcebhm == "NAO") { ?> selected <? } ?> >  N&Atilde;O </option>
+                        </select>
+						<br style="clear: both;" />
+                        <label for="flgapihm" style="width: 210px;"><? echo utf8ToHtml('Homologado API:') ?></label>
+                        <select name="flgapihm" id="flgapihm" class="<?php echo $campo; ?>">
+                            <option value="yes" <? if ($flgapihm == "SIM") { ?> selected <? } ?> >   SIM </option>
+                            <option value="no"  <? if ($flgapihm == "NAO") { ?> selected <? } ?> >  N&Atilde;O </option>
                         </select>
                     </div>
                 </div>

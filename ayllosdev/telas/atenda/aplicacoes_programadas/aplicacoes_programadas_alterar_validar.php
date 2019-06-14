@@ -97,7 +97,7 @@
 	$executar = "hideMsgAguardo();";
 	
 	// Confirma operação
-	$executar .= "showConfirmacao(\"Deseja alterar a poupan&ccedil;a programada?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"alterarAplicacao(\\\"".$vlprerpp."\\\",\\\"".$dtdebito."\\\")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+	$executar .= "showConfirmacao(\"Deseja alterar a aplica&ccedil;&atilde;o programada?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"alterarAplicacao(\\\"".$vlprerpp."\\\",\\\"".$dtdebito."\\\")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
 	
 	// Se ocorrer um erro, mostra crítica
 	if ($mensagem != "") {

@@ -9,6 +9,8 @@
  *					           tag <a> novo layout, alterado para não mostrar
  * 							   form ao carregar a tela (Daniel).
  *                15/08/2013 - Alteração da sigla PAC para PA (Carlos).
+ *                21/03/2019 - Adicionado do campo periodo para o relatorio 219. 
+ *                             Acelera - Reapresentacao automática de cheques (Lombardi).
  * --------------
  */
 
@@ -33,7 +35,7 @@
 	if ( $cddopcao == 'C' or ($cddopcao == 'D' and  getByTagName($r->tags,'flgrelat') == 'yes') ) { 
 	?>
 	<option value="<? echo getByTagName($r->tags,'contador'); ?>"><? echo getByTagName($r->tags,'nmrelato'); ?></option>
-	<script>arrayImprel[<? echo getByTagName($r->tags,'contador');?>] = '<? echo getByTagName($r->tags,'flgvepac'); ?>';</script>
+	<script>arrayImprel[<? echo getByTagName($r->tags,'contador');?>] = ['<? echo getByTagName($r->tags,'flgvepac'); ?>', '<? echo getByTagName($r->tags,'periodo'); ?>'];</script>
 	<?php
 	}}
 	?>
@@ -41,6 +43,12 @@
 
 	<label for="cdagenca"><? echo utf8ToHtml('PA:') ?></label>
 	<input id="cdagenca" name="cdagenca" type="text"/>
+	
+	<label for="cdperiod"><? echo utf8ToHtml('Período:') ?></label>
+	<select id="cdperiod" name="cdperiod">
+		<option value="5">Diurno</option>
+		<option value="6">Noturno</option>
+	</select>
 	
 	<br style="clear:both" />	
 	

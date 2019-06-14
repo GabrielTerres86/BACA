@@ -20,7 +20,7 @@
  * 011: [15/12/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
  * 012: [21/05/2018] Inserção do campo idquapro. PRJ366 (Lombardi)
  * 013: [20/12/2018] P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
- * 014: [03/2019] P347 - Validacoes consignado
+ * 014: [09/04/2019] P298.2.2 - Permitir a alteração da proposta para o POS (Nagasava - Supero)
  */
 ?>
 <?
@@ -29,7 +29,6 @@
 	require_once('../../../includes/funcoes.php');
 	require_once('../../../includes/controla_secao.php');	
 	require_once('../../../class/xmlfile.php');
-	require_once('wssoa.php');
 	isPostMethod();		
 	
 	// Guardo os parâmetos do POST em variáveis	
@@ -65,87 +64,13 @@
 	$dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '';
 	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1';
 	$idquapro = (isset($_POST['idquapro'])) ? $_POST['idquapro'] : 0 ;
-
-	$vlpreemp = (isset($_POST['vlpreemp'])) ? $_POST['vlpreemp'] : 0 ;	
-	$gConsig = (isset($_POST['gConsig'])) ? $_POST['gConsig'] : 0 ;
-	$vliofepr = -1;
-	$pecet_anual = -1;
-	$pejuro_anual = -1;
-
-	if($gConsig == 1){
-		$vlpreemp = (isset($_POST['vlpreemp'])) ? $_POST['vlpreemp'] : 0 ;
-		$vliofepr = (isset($_POST['vliofepr'])) ? $_POST['vliofepr'] : 0 ;
-		/*
-		$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis&vlparepr=97,62&vliofepr=4');	
-		$obj = json_decode($raw_data); 	
-		if (isset ($obj->vlparepr)){
-			$vlpreemp = $obj->vlparepr;
-			$vliofepr = $obj->vliofepr;	
-		}
-		*/
-		//Busca XML BD converte em json e comunica com a FIS	
-		$xml  = '';
-		$xml .= '<Root>';
-		$xml .= '	<dto>';
-		$xml .= '       <cdlcremp>'.$cdlcremp.'</cdlcremp>';
-		$xml .= '       <vlemprst>'.$vlemprst.'</vlemprst>';
-		$xml .= '       <nrdconta>'.$nrdconta.'</nrdconta>';
-		$xml .= '       <fintaxas>'.$idfiniof.'</fintaxas>';
-		$xml .= '       <quantidadeparcelas>'.$qtpreemp.'</quantidadeparcelas>';
-		$xml .= '       <dataprimeiraparcela>'.$dtdpagto.'</dataprimeiraparcela>';
-		$xml .= '	</dto>';
-		$xml .= '</Root>';
-		
-		$xmlResult = mensageria(
-			$xml,
-			"TELA_ATENDA_EMPRESTIMO",
-			"PRO_BUSCA_DADOS_CALC_FIS",
-			$glbvars["cdcooper"],
-			$glbvars["cdagenci"],
-			$glbvars["nrdcaixa"],
-			$glbvars["idorigem"],
-			$glbvars["cdoperad"],
-			"</Root>");
-
-		$xmlObj = getObjectXML($xmlResult);
-
-		if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
-			gravaLog("TELA_ATENDA_EMPRESTIMO","PRO_LOG_ERRO_SOA_FIS_CALCULA","Erro gerando o xml com dados.",$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,$nrdconta,$glbvars,'1','2');
-		}else{	
-			$xml = simplexml_load_string($xmlResult);
-			$json = json_encode($xml);
-			//echo "cttc('".$json."');";
-			$rs = chamaServico($json,$Url_SOA, $Auth_SOA);
-			//echo "cttc('".$rs."');";
-			
-			if (isset($rs->msg)){
-				gravaLog("TELA_ATENDA_EMPRESTIMO","PRO_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro tratado pela fis.",$rs->msg,$nrdconta,$glbvars,$json,json_encode($rs));				
-			}else if (isset($rs->errorMessage)){
-				gravaLog("TELA_ATENDA_EMPRESTIMO","PRO_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro nao tratado pela fis.",$rs->errorMessage,$nrdconta,$glbvars,'1','2');					
-			}			
-			else if (isset($rs->parcela->valor) && isset($rs->sistemaTransacao->dataHoraRetorno)){
-				if ($rs->parcela->valor > 0 && $rs->sistemaTransacao->dataHoraRetorno != ""){
-					$vlpreemp = str_replace(".", ",",$rs->parcela->valor);
-					$vliofepr = str_replace(".", ",",$rs->credito->tributoIOFValor);
-					$pecet_anual = str_replace(".", ",",$rs->credito->CETPercentAoAno);	
-					$pejuro_anual = str_replace(".", ",",$rs->credito->taxaJurosRemuneratoriosAnual);
-					//gravaTbeprConsignado($nrdconta,$nrctremp,$pejuro_anual,$pecet_anual,$glbvars);
-				}else{
-					gravaLog("TELA_ATENDA_EMPRESTIMO","PRO_LOG_ERRO_SOA_FIS_CALCULA","Retorno erro nao tratado pela fis.","valores de retorno em branco",$nrdconta,$glbvars,'1','2');
-				}
-			}
-			
-		}
-		//FIM Busca XML BD converte em json e comunica com a FIS	
-	}
-
 	$cddopcao = 'A';
-
+	
 	if( $operacao == 'TI' ){ $cddopcao = 'I'; }
 	else if( $operacao == 'I_INICIO' ){ $cddopcao = 'I'; }
 	
-	/* Sempre quando o emprestimo for PP, vamos atualizar a data de liberacao do emprestimo para a data atual. Projeto do Estorno 215 */
-	if ($tpemprst == 1){
+	/* Sempre quando o emprestimo for PP (ou POS - PRJ298), vamos atualizar a data de liberacao do emprestimo para a data atual. Projeto do Estorno 215 */
+	if ($tpemprst == 1 || $tpemprst == 2){
 		$dtlibera = $glbvars["dtmvtolt"];
 	}
 						
@@ -195,11 +120,7 @@
     $xml .= "		<idcarenc>".$idcarenc."</idcarenc>";
     $xml .= "		<dtcarenc>".$dtcarenc."</dtcarenc>";
     $xml .= "		<idfiniof>".$idfiniof."</idfiniof>";    
-	$xml .= '		<idquapro>'.$idquapro.'</idquapro>';	
-	if ($gConsig == 1){
-		$xml .= '		<vlpreempi>'.$vlpreemp.'</vlpreempi>';
-		$xml .= '		<vlrdoiof>'.$vliofepr.'</vlrdoiof>';
-	}
+	$xml .= '		<idquapro>'.$idquapro.'</idquapro>';
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	
@@ -275,43 +196,11 @@
 			<?
 			exit();
 		
-		}else{			
+		}else{
 			echo 'inconfir = 1;';
 			echo 'inconfi2 = 30;';
-			$xmlaux = simplexml_load_string($xmlResult);			
-			$total = sizeof($xmlaux->Erro->Registro);
-			if ( $total > 1){
-				?>
-				strHTML = '<table class="tituloRegistros" id="tblErrosConsig" cellpadding="1" cellspacing="1"><thead><tr id="trCabecalho" name="trCabecalho"><th class="header" id="tdTitLinha"><strong>Ln</strong></th><th class="header" id="tdMensagem"><strong>Mensagem</strong></th></tr>'; 
-				<?php
-				for($i=0; $i<$total; $i++){									
-					$linha = $i+1;
-					if ($linha % 2 == 0){					
-						$classLinha = 'class= "odd corPar"';
-					}else{
-						$classLinha = 'class= "even corImpar"';
-					}
-					$msg = $xmlaux->Erro->Registro[$i]->dscritic;
-					$idLinha = "trLinha$i";
-					?>					
-					strHTML += '<tr <?php echo $classLinha; ?> id="<?php echo $idLinha; ?>">'; 
-					strHTML += '<td align="center" ><?php echo $linha; ?> </td> '; 
-					strHTML += '<td align="center" ><?php echo $msg; ?> </td> '; 
-					strHTML += '</tr>';
-					<?php
-				}
-				?>
-				strHTML += '</table>'; 			
-				$("#divListaMsgsAlerta").html(strHTML);
-				$("#divMsgsAlerta").css({visibility:"visible",display: "block",});
-				hideMsgAguardo();				
-				blockBackground(parseInt($('#divMsgsAlerta').css('z-index')));
-				<?php		
-				return;				
-			}else{
-				exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
-			}			
-					
+			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+		
 		}
 		
 	}
@@ -368,5 +257,4 @@
     echo "$('#vlprecar','#frmNovaProp').val('".$vlprecar."');";
     echo "$('#vlprecar','#frmNovaProp').trigger('blur');";
 	echo "$('#vliofepr','#frmNovaProp').val('".$vliofepr."');";
-		
 ?>

@@ -1,11 +1,11 @@
 <? 
 /*!
  * FONTE            : busca_modelos.php
- * CRIAÃ‡ÃƒO        : Maykon D. Granemann / ENVOLTI
- * DATA CRIAÇÃO     : 14/08/2018
+ * CRIAÃ‡ÃƒO          : Maykon D. Granemann / ENVOLTI
+ * DATA CRIAÃ‡ÃƒO     : 14/08/2018
  * OBJETIVO         : 
  * --------------
- * ALTERAÇÕES     :
+ * ALTERAÃ‡Ã•ES   :
  * --------------
  */
 ?> 
@@ -20,13 +20,13 @@
     require_once('uteis/xml_convert_values.php');
     require_once('../includes/utils.php');
     isPostMethod();
-	
+
 	$aux = "";
 
     /******************************************************* Chama Serviço Fipe *****************************************************************/
     $idElementoHtml  	= (isset($_POST['idelhtml'])) ? $_POST['idelhtml'] : 0  ;
     $cdTipoVeiculo		= (isset($_POST['tipveicu'])) ? $_POST['tipveicu'] : 0  ;
-    $cdMarcaVeiculo		= (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0  ;
+    $cdMarcaVeiculo		= (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0  ; 
 	$dsbemfin			= (isset($_POST['dsbemfin'])) ? $_POST['dsbemfin'] : 0  ;
 	$nrmodbem			= (isset($_POST['nrmodbem'])) ? $_POST['nrmodbem'] : 0  ;
     $urlServicoOperacao = $Url_SOA."/osb-soa/ListaDominioRestService/v1/ObterListaMarcaModelosFipe";
@@ -47,7 +47,7 @@
 
     $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$Auth_SOA);
     $xmlReturn = ChamaServico($urlServicoOperacao, "POST", $arrayHeader, $data);
-    /**************************************************** Fim Chamada Serviço Fipe ****************************************************************/
+    /**************************************************** Fim Chamada ServiÃ§o Fipe ****************************************************************/
 
     /*************************************************** Tratamento dados retornados **************************************************************/
     $nameTagList = 'modelo';
@@ -69,7 +69,7 @@
 				urlPagina= \"telas/manbem/fipe/busca_anos.php\";
 				cdMarcaFipe = $('#'+idElementMarca).val();
 				cdModeloFipe = ".$comboItem->value.";
-				data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe ,cdmodfip: cdModeloFipe, redirect: 'script_ajax', nrmodbem: '$nrmodbem' });
+				data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe , cdmodfip: cdModeloFipe, redirect: 'script_ajax', nrmodbem: '$nrmodbem' });
 				buscaFipeServico(urlPagina,data);";
 		}
     }

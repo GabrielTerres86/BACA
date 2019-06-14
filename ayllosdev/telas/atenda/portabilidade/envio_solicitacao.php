@@ -71,6 +71,7 @@
 	$dsmotivo           = getByTagName($registro->tags,'dsmotivo');
 	$cdsituacao 		= getByTagName($registro->tags,'cdsituacao');
 	$dsrowid            = getByTagName($registro->tags,'dsrowid');
+	$nrsolicitacao      = getByTagName($registro->tags,'nrsolicitacao');
 	/***
 	 ** Deve apresentar na tela os campos que estao gravados na ultima solicitacao de portabilidade:
      **
@@ -88,6 +89,7 @@
 	 **      N/A        [I]nclusao
 	***/
 	$cddopcao 			= ( ( in_array($cdsituacao, array(1,2,3,5,6,9)) ) ? 'C' : ( ( in_array($cdsituacao, array(4,8)) ) ? 'A' : 'I' ) );
+	
 ?>
 <form action="<?php echo $UrlSite; ?>telas/atenda/portabilidade/impressao_termo.php" name="frmTermo" class="formulario" id="frmTermo" method="post">
     <input type="hidden" id="dsrowid" name="dsrowid" value="">
@@ -205,7 +207,63 @@
 		<br style="clear:both"/>
 		
 		<label for="dsmotivo" class="clsCampos">Motivo(s):</label>
-		<textarea id="dsmotivo" class="campoTelaSemBorda" readonly disabled style="width: 513px;height: 60px;margin-right: 19px;"><?=utf8_decode($dsmotivo)?></textarea>
+		<textarea id="dsmotivo" class="campoTelaSemBorda" readonly disabled style="width: 513px;height: 60px;margin-right: 18px;"><?=utf8_decode($dsmotivo)?></textarea>
+	</fieldset>
+	
+	<?php
+		/*
+		*** Busca dados da contestação
+		*/
+		
+		$xml  = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "   <nrsolicitacao>".$nrsolicitacao."</nrsolicitacao>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+		
+		$xmlResult = mensageria($xml, "ATENDA", "BUSCA_DADOS_CONTESTACAO_ENVIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObject = getObjectXML($xmlResult);
+		
+		if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
+			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			exibirErro('error',$msgErro,'Alerta - Aimaro','acessaOpcaoAba(2,0,"0")', false);
+		}
+		
+		$contestacao = $xmlObject->roottag->tags[0];
+		
+		$dssituacao = getByTagName($contestacao->tags,'dssituacao');
+		$identificador = getByTagName($contestacao->tags,'identificador');
+		$dtsolicita = getByTagName($contestacao->tags,'dtsolicita');
+		$dtretorno = getByTagName($contestacao->tags,'dtretorno');
+		$dsmotivo = getByTagName($contestacao->tags,'dsmotivo');
+		$dsretornno = getByTagName($contestacao->tags,'dsretorno');
+		$cddominio = getByTagName($contestacao->tags,'cddominio');
+	?>
+	
+	<fieldset style="padding: 5px">
+		<legend>Status da Contesta&ccedil;&atilde;o</legend>
+		<label for="dssituacao" class="clsCampos">Situa&ccedil;&atilde;o:</label>
+		<input type="text" id="dssituacao" name="dssituacao" readonly="readonly" class="campo" value="<?php echo $dssituacao; ?>" />
+
+		<label for="nr_identificador" class="clsCampos">Identificador:</label>
+		<input type="text" id="nr_identificador" name="nr_identificador" readonly="readonly" class="campo" value="<?php echo $identificador; ?>" />
+		
+		<br style="clear:both"/>
+		
+		<label for="dtsolicita" class="clsCampos">Data Solicita&ccedil;&atilde;o:</label>
+		<input type="text" id="dtsolicita" name="dtsolicita" readonly="readonly" class="campo" value="<?php echo $dtsolicita; ?>" />
+		
+		<label for="dtretorno" class="clsCampos">Data Retorno:</label>
+		<input type="text" id="dtretorno" name="dtretorno" readonly="readonly" class="campo" value="<?php echo $dtretorno; ?>" />
+		
+		<br style="clear:both"/>
+		
+		<label for="dsmotivo" class="clsCampos">Motivo:</label>
+		<textarea id="dsmotivo" class="campoTelaSemBorda" readonly disabled style="width: 416;height: 60px;margin-right: 18px;"><?=$dsmotivo?></textarea>
+		
+		<label for="dsretornno" class="clsCampos">Retorno:</label>
+		<textarea id="dsretornno" class="campoTelaSemBorda" readonly disabled style="width: 416px;height: 60px;margin-right: 18px;margin-top:5px;"><?=utf8_decode($dsretornno)?></textarea>
 	</fieldset>
 	
 	</div>
@@ -217,17 +275,21 @@
 
 	<?php if ($cddopcao == 'A' || $cddopcao == 'I') { ?>
 	<a class="botao"           id="btSolicitar"     href="#" onclick="controlaOperacao('S')">Solicitar Portabilidade</a>
-	<a class="botaoDesativado" id="btImprimirTermo" href="#" onclick="return false;">Imprimir Termo</a>
+	<br />
+	<a style="margin-top: 5px;" class="botaoDesativado" id="btImprimirTermo" href="#" onclick="return false;">Imprimir Termo</a>
 	<?php } else { ?>
 	<a class="botaoDesativado" id="btSolicitar"     href="#" onclick="return false;">Solicitar Portabilidade</a>
-	<a class="botao"           id="btImprimirTermo" href="#" onclick="imprimirTermoAdesao('<?php echo $dsrowid; ?>')">Imprimir Termo</a>
+	<br />
+	<a style="margin-top: 5px;" class="botao"           id="btImprimirTermo" href="#" onclick="imprimirTermoAdesao('<?php echo $dsrowid; ?>')">Imprimir Termo</a>
 	<?php } ?>
 
-	<?php if (in_array($cdsituacao, array(1,2,3,9))) { ?>
-	<a class="botao" id="btCancelar" href="#" onclick="controlaOperacao('E')">Cancelar Portabilidade</a>
+	<?php if (in_array($cdsituacao, array(1,3,9)) || ($cdsituacao == 2 && trim($nrnu_portabilidade) != "")) { ?>
+	<a style="margin-top: 5px;" class="botao" id="btCancelar" href="#" onclick="controlaOperacao('E')">Cancelar Portabilidade</a>
 	<?php } else { ?>
-	<a class="botaoDesativado" id="btCancelar" href="#" onclick="return false;">Cancelar Portabilidade</a>
+	<a style="margin-top: 5px;" class="botaoDesativado" id="btCancelar" href="#" onclick="return false;">Cancelar Portabilidade</a>
 	<?php } ?>
+	
+	<a style="margin-top: 5px;" class="<?=( ($cddominio == 1 || $cddominio == 2) || ($cdsituacao != 3) ? 'botaoDesativado' : 'botao')?>" id="botaoContestarPortabilidade" onclick="<?=(($cddominio == 1 || $cddominio == 2) || ($cdsituacao != 3) ? '' : 'controlaOperacao(\'CP\');')?>return false;" href="#">Contestar</a>
 
 	
 </div>
