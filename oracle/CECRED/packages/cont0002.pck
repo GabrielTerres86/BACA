@@ -224,7 +224,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
 
       vr_tab_nmarqtel := gene0002.fn_quebra_string(vr_dslisarq);
 
-
       -- interar arquivos
       FOR idx IN 1..vr_tab_nmarqtel.count() LOOP
 
@@ -269,7 +268,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
 
            CLOSE cr_crapcop;
 
+           -- Se for nulo pega data do nome do arquivo.
+           -- Caso tela nao informe data ou for pelo job.
+           IF pr_dtmvtolt IS NULL THEN
            vr_dtmvtolt := to_date(REPLACE(SUBSTR(vr_tab_nmarqtel(idx),LENGTH(vr_tab_nmarqtel(idx))-13,10),'-',''),'yyyymmdd') - 1;
+           -- Caso tela informe a data ignoramos a data do nome do arq.
+           -- E utilizamos a data informada no label.
+           ELSE 
+             vr_dtmvtolt := pr_dtmvtolt;
+           END IF;                 
 
            vr_tot_neg := 0;
            vr_tot_pos := 0;
@@ -1206,6 +1213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
       CLOSE btch0001.cr_crapdat;
 
       pc_processa_arquivo_bancoob(pr_cdcooper => vr_cdcooper
+                                 ,pr_dtmvtolt => NULL      
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
 
