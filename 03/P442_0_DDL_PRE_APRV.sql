@@ -438,7 +438,7 @@ BEGIN
 					,0
 					,1
 					,0
-					,0);
+					,1);
   
   -- Motivo para BACA de integração de cargas antigas
   INSERT INTO tbgen_motivo(idmotivo
@@ -454,7 +454,7 @@ BEGIN
 					,1
 					,1
 					,0
-					,0);
+					,1);
 					
 	INSERT INTO tbgen_motivo(idmotivo
 							,dsmotivo
