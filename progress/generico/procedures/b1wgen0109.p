@@ -75,6 +75,8 @@
                              ocorrencias TIC) (Carlos)
 
 				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+        
+                13/06/2019 - RITM0021049 Inclusao relatorios 392 e 572 (Yuri Mouts)
 
 
 ............................................................................*/
@@ -131,23 +133,25 @@ ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
        proglist[23] = "crrl362"
        proglist[24] = "crrl372"
        proglist[25] = "crrl386"
-       proglist[26] = "crrl395"
-       proglist[27] = "crrl396"
-       proglist[28] = "crrl426"
-       proglist[29] = "crrl456"
-       proglist[30] = "crrl481"
-       proglist[31] = "crrl497"
-       proglist[32] = "crrl529"
-       proglist[33] = "crrl593"
-       proglist[34] = "crrl597"
-       proglist[35] = "crrl598"
-       proglist[36] = "crrl599"
-       proglist[37] = "crrl626"
-       proglist[38] = "crrl668"
-       proglist[39] = "crrl620_credito"
-       proglist[40] = "crrl620_matric"
-       proglist[41] = "crrl620_cadastro"
-       proglist[42] = "crrl692"
+       proglist[26] = "crrl392"
+       proglist[27] = "crrl395"
+       proglist[28] = "crrl396"
+       proglist[29] = "crrl426"
+       proglist[30] = "crrl456"
+       proglist[31] = "crrl481"
+       proglist[32] = "crrl497"
+       proglist[33] = "crrl529"
+       proglist[34] = "crrl572"
+       proglist[35] = "crrl593"
+       proglist[36] = "crrl597"
+       proglist[37] = "crrl598"
+       proglist[38] = "crrl599"
+       proglist[39] = "crrl626"
+       proglist[40] = "crrl668"
+       proglist[41] = "crrl620_credito"
+       proglist[42] = "crrl620_matric"
+       proglist[43] = "crrl620_cadastro"
+       proglist[44] = "crrl692"
       
        aux_qtrelato = EXTENT(proglist)
        
@@ -176,23 +180,25 @@ ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
        cmd[23] = "362-Cartas a serem Solicitadas p/PA  "
        cmd[24] = "372-Saldo Conta Investimento(CI)     "
        cmd[25] = "386-Diferencas de Caixas (Mensal)    "
-       cmd[26] = "395-Cadastros de Conta Integracao    "
-       cmd[27] = "396-Criticas dos retornos C/C Integr."
-       cmd[28] = "426-Ctas Duplicadas (maiores 16 anos)"
-       cmd[29] = "456-Credito aplicacoes RDC"
-       cmd[30] = "481-Poupanca a vencer em 5 dias uteis"
-       cmd[31] = "497-Tit. Dscto Debitados Beneficiario"
-       cmd[32] = "529-Cheque Devolvido (AILOS)         "
-       cmd[33] = "593-Cheques nao digitalizados        "
-       cmd[34] = "597-Contratacao Seguro Prestamista   "
-       cmd[35] = "598-Emprestimos Sem Seg.Prestamista  "
-       cmd[36] = "599-Relac. Chq Compe p/PA apos proc  "
-       cmd[37] = "626-Relac. de ocorrencias TIC "
-       cmd[38] = "668-Emprestimos prefixados em atraso "
-       cmd[39] = "620-Docs nao Digitalizados_Credito   "
-       cmd[40] = "620-Docs nao Digitalizados_Matricula "
-       cmd[41] = "620-Docs nao Digitalizados_Cadastro  "
-       cmd[42] = "692-Limites de Credito Vencidos".
+       cmd[26] = "392-Pedido de Talonarios             "
+       cmd[27] = "395-Cadastros de Conta Integracao    "
+       cmd[28] = "396-Criticas dos retornos C/C Integr."
+       cmd[29] = "426-Ctas Duplicadas (maiores 16 anos)"
+       cmd[30] = "456-Credito aplicacoes RDC           "
+       cmd[31] = "481-Poupanca a vencer em 5 dias uteis"
+       cmd[32] = "497-Tit. Dscto Debitados Beneficiario"
+       cmd[33] = "529-Cheque Devolvido (AILOS)         "
+       cmd[34] = "572-Pedido Formulario Continuo       "
+       cmd[35] = "593-Cheques nao digitalizados        "
+       cmd[36] = "597-Contratacao Seguro Prestamista   "
+       cmd[37] = "598-Emprestimos Sem Seg.Prestamista  "
+       cmd[38] = "599-Relac. Chq Compe p/PA apos proc  "
+       cmd[39] = "626-Relac. de ocorrencias TIC "
+       cmd[40] = "668-Emprestimos prefixados em atraso "
+       cmd[41] = "620-Docs nao Digitalizados_Credito   "
+       cmd[42] = "620-Docs nao Digitalizados_Matricula "
+       cmd[43] = "620-Docs nao Digitalizados_Cadastro  "
+       cmd[44] = "692-Limites de Credito Vencidos".
 
        pac[08] = FALSE.
 
