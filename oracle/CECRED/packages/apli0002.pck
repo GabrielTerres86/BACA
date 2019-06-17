@@ -4006,11 +4006,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         ELSE
          /*-----------------------------------------------------------------*/
           if upper(pr_nmdatela) ='CRPS688' then
-             if gene0011.UsarLimCredParaDebAplicAgend(pr_cdcooper) then        
+             if APLI0009.UsarLimCredParaDebAplicAgend(pr_cdcooper) then        
              vr_limitecr := rw_crapass.vllimcre;  
              end if;      
           else  
-          if gene0011.UsarLimCredParaDebAplicManual(pr_cdcooper=>pr_cdcooper) then
+          if APLI0009.UsarLimCredParaDebAplicManual(pr_cdcooper=>pr_cdcooper) then
              vr_limitecr := rw_crapass.vllimcre;
              end if;
           end if;

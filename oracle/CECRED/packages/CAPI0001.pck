@@ -380,7 +380,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
    CLOSE cr_crapass;
 
   ---valor do limite de credito irá depender da cooperativa permitir ou não usar o limite de credito;
- if (gene0011.UsarLimCredParaDebPlanoCotas(pr_cdcooper=> pr_cdcooper)) then
+ if (APLI0009.UsarLimCredParaDebPlanoCotas(pr_cdcooper=> pr_cdcooper)) then
     vr_vllimcre := rw_crapass.vllimcre;
  end if;
 
