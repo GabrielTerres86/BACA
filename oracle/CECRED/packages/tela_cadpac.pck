@@ -3833,6 +3833,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).flmajora) ELSE '-' END)
                  ,pr_vldepois => TO_CHAR(pr_flmajora));
       
+	  /*
       pc_item_log(pr_cdcooper => vr_cdcooper
                  ,pr_cddopcao => pr_cddopcao
                  ,pr_cdoperad => vr_cdoperad
@@ -3848,7 +3849,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_dsdcampo => 'Dt Fechamento'
                  ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).dtfechto,'DD/MM/RRRR') ELSE '-' END)
                  ,pr_vldepois => TO_CHAR(pr_dtfechto,'DD/MM/RRRR'));
-      
+      */
+	  
       -- Se NAO encontrou registro, cria um vazio
       IF NOT vr_tab_crapage.EXISTS(pr_cdagenci) THEN
         vr_tab_crapage(pr_cdagenci).nmresage := ' ';
