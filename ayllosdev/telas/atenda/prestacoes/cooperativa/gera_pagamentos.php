@@ -61,7 +61,7 @@
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
-	$xmlResult = mensageria($xml, "EMPR00020", "GERA_PGTO_PARC_CONSIG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlResult = mensageria($xml, "ATENDA", "GERA_PGTO_PARC_CONSIG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
 	$xmlObjeto = getObjectXML($xmlResult);	
 
 	$param = $xmlObjeto->roottag->tags[0];
