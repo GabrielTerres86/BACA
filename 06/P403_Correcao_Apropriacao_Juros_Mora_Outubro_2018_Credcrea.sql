@@ -177,5 +177,5 @@ UPDATE tbdsct_lancamento_bordero lcb
    AND lcb.progress_recid = 3122;
 
 
---COMMIT;
+COMMIT;
 END;
