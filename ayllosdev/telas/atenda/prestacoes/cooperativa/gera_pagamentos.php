@@ -12,6 +12,7 @@
 	  [24/05/2013] Lucas R. (CECRED): Incluir camada nas includes "../".
 	  [04/11/2013] Adriano  (CECRED): Incluído a passagem do parâmetro cdpactra.
 	  [10/06/2014] James	(CECRED): Ajuste para enviar a sequencia do avalista como parametro na procedure "gera_pagamentos_parcelas". (James)
+	  [19/06/2019] Jackson Barcellos (AMcom) P437: Chama rotina de pagamentos consignado
 	                                                                  
 	***********************************************************************/
 
@@ -40,6 +41,35 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {		
 		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
+	}
+	
+	//P437
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= " <Dados>";	
+	$xml .= "	<nrdconta>".$nrdconta."</nrdconta>";	
+	$xml .= "	<cdpactra>".$glbvars["cdpactra"]."</cdpactra>";	
+    $xml .= "	<idseqttl>".$idseqttl."</idseqttl>";	
+	$xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";	
+	$xml .= "	<flgerlog>TRUE</flgerlog>";
+	$xml .= "	<nrctremp>".$nrctremp."</nrctremp>";
+	$xml .= "	<dtmvtoan>".$glbvars["dtmvtoan"]."</dtmvtoan>";
+	$xml .= "	<totatual>".$totatual."</totatual>";
+	$xml .= "	<totpagto>".$totpagto."</totpagto>";
+	$xml .= "	<nrseqava>".$nrseqavl."</nrseqava>";
+	$xml .= retornaXmlFilhos( $camposPc, $dadosPrc, 'Pagamentos', 'Itens');
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "EMPR00020", "GERA_PGTO_PARC_CONSIG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto = getObjectXML($xmlResult);	
+
+	$param = $xmlObjeto->roottag->tags[0];
+	
+	
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		$msgErro  = $xmlObjCarregaDados->roottag->tags[0]->tags[0]->tags[4]->cdata;	
+		exibirErro('error',$msgErro,'Alerta - Aimaro','bloqueiaFundo(divRotina);removeOpacidade(\'divConteudoOpcao\');fechaRotina($(\'#divUsoGenerico\'),$(\'#divRotina\'));',false);
 	}
 
 	$xml  = "";
