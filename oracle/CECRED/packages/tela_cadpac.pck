@@ -3833,23 +3833,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).flmajora) ELSE '-' END)
                  ,pr_vldepois => TO_CHAR(pr_flmajora));
       
-	  /*
-      pc_item_log(pr_cdcooper => vr_cdcooper
+	  pc_item_log(pr_cdcooper => vr_cdcooper
                  ,pr_cddopcao => pr_cddopcao
                  ,pr_cdoperad => vr_cdoperad
                  ,pr_cdagenci => pr_cdagenci
                  ,pr_dsdcampo => 'Dt Abertura'
-                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).dtabertu,'DD/MM/RRRR') ELSE '-' END)
-                 ,pr_vldepois => TO_CHAR(pr_dtabertu,'DD/MM/RRRR'));
+                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN to_char(to_date(vr_tab_crapage(pr_cdagenci).dtabertu,'dd/mm/rrrr')) ELSE '-' END)
+                 ,pr_vldepois => TO_CHAR(to_date(pr_dtabertu,'DD/MM/RRRR'),'dd/mm/rrrr'));
 
       pc_item_log(pr_cdcooper => vr_cdcooper
                  ,pr_cddopcao => pr_cddopcao
                  ,pr_cdoperad => vr_cdoperad
                  ,pr_cdagenci => pr_cdagenci
                  ,pr_dsdcampo => 'Dt Fechamento'
-                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).dtfechto,'DD/MM/RRRR') ELSE '-' END)
-                 ,pr_vldepois => TO_CHAR(pr_dtfechto,'DD/MM/RRRR'));
-      */
+                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN to_char(to_date(vr_tab_crapage(pr_cdagenci).dtfechto,'dd/mm/rrrr')) ELSE '-' END)
+                 ,pr_vldepois => TO_CHAR(to_date(pr_dtfechto,'DD/MM/RRRR'),'dd/mm/rrrr'));
 	  
       -- Se NAO encontrou registro, cria um vazio
       IF NOT vr_tab_crapage.EXISTS(pr_cdagenci) THEN
