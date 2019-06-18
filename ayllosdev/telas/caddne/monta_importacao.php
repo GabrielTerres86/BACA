@@ -33,18 +33,21 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../class/xmlfile.php");
 	
-	$cduflogr  = $_POST["cduflogr"];
+	$listauf  = $_POST["listauf"];
 	$dirArqDne = dirname(__FILE__) ."/arquivos/";
 	$controle  = "";	
 	
+	if($listauf == 'NADA'){
+		$controle = "OK";
+	}else{
+
+		$arrayUF = explode(';', $listauf);
+		
 	// abre o diretório
 	$diretorio = opendir($dirArqDne);
 	while (($nome_item = readdir($diretorio)) !== false) {
-		
-		if ((strtoupper(substr($nome_item,0,3)) == strtoupper($cduflogr)."_") || 
-		    (($cduflogr == "UNID_OPER") && strpos(strtoupper($nome_item),$cduflogr."_") === 0) ||
-			(($cduflogr == "CPC") && strpos(strtoupper($nome_item),$cduflogr."_") === 0) ||
-			(($cduflogr == "GRANDE_USUARIO") && strpos(strtoupper($nome_item),$cduflogr."_") === 0)) {		
+			foreach ($arrayUF as $uf) {
+				if (strpos(strtoupper('_'.$nome_item.'.'),'_'.$uf.'.') !== false) {					
 			$controle = "OK";
 			$filename = $nome_item;
 			$nmarquiv = $dirArqDne.$filename;
@@ -54,40 +57,53 @@
 			require("../../includes/gnuclient_upload_file.php");			
 		}
 	}
+		}	
+	}
 	
 	if ($controle != "OK") {
 		exibeErro("Arquivo de transi&ccedil;&atilde;o do arquivo n&atilde;o encontrado.");
 	} else {		
 		unlink($Arq);			 	
 		
-		$xmlCarregaDados  = "";
-		$xmlCarregaDados .= "<Root>";
-		$xmlCarregaDados .= "	<Cabecalho>";
-		$xmlCarregaDados .= "		<Bo>b1wgen0038.p</Bo>";
-		$xmlCarregaDados .= "		<Proc>grava-importacao</Proc>";
-		$xmlCarregaDados .= "	</Cabecalho>";
-		$xmlCarregaDados .= "	<Dados>";
-		$xmlCarregaDados .= "    	<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-		$xmlCarregaDados .= "    	<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-		$xmlCarregaDados .= "    	<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-		$xmlCarregaDados .= "	 	<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-		$xmlCarregaDados .= "	 	<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-		$xmlCarregaDados .= "	 	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-		$xmlCarregaDados .= "		<cdufende>".$cduflogr."</cdufende>";
-		$xmlCarregaDados .= "	</Dados>";
-		$xmlCarregaDados .= "</Root>";
+		if($listauf != 'NADA'){
 
-		// Executa script para envio do XML
-		$xmlResult = getDataXML($xmlCarregaDados);
-		
-		$xmlObjCarregaDados = getObjectXML($xmlResult);
-		
-		$dados = $xmlObjCarregaDados->roottag->tags[0]->tags[0];
-		
-		// Se ocorrer um erro, mostra crítica
-		if (strtoupper($xmlObjCarregaDados->roottag->tags[0]->name) == "ERRO") {
-			exibeErro($xmlObjCarregaDados->roottag->tags[0]->tags[0]->tags[4]->cdata);
+			$flg_unid_oper = in_array('UNID_OPER', $arrayUF) ? 1 : 0;
+			$flg_grande_usuario = in_array('CPC', $arrayUF) ? 1 : 0;
+			$flg_cpc = in_array('GRANDE_USUARIO', $arrayUF) ? 1 : 0;
+
+			if (($key = array_search('UNID_OPER', $arrayUF)) !== false) {
+		    	unset($arrayUF[$key]);
+			}
+
+			if (($key = array_search('CPC', $arrayUF)) !== false) {
+		    	unset($arrayUF[$key]);
+			}
+
+			if (($key = array_search('GRANDE_USUARIO', $arrayUF)) !== false) {
+		    	unset($arrayUF[$key]);
+			}
+
+			$listauf = implode(';', $arrayUF);
+
 		}
+		
+		$xml = new XmlMensageria();
+		$xml->add('proc_arq_unid_oper',$flg_unid_oper);
+    	$xml->add('proc_arq_grande_usuario',$flg_grande_usuario);
+    	$xml->add('proc_arq_cpc',$flg_cpc);
+    	$xml->add('proc_arq_sigla_estado',$listauf);
+
+		$xmlResult = mensageria($xml, "TELA_CADDNE", 'EXECUTA_CARGA', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = simplexml_load_string($xmlResult);
+
+		if(!is_null($xmlObj->Erro->Registro)){
+			if ($xmlObj->Erro->Registro->dscritic != '') {
+				$msgErro = utf8ToHtml($xmlObj->Erro->Registro->dscritic);
+				exibeErro($msgErro);
+			}
+		}
+
+		echo 'showError("inform","Importação agendada com sucesso!","Alerta - Ayllos","hideMsgAguardo()");';
 	}
 	
 	// Função para exibir erros na tela através de javascript

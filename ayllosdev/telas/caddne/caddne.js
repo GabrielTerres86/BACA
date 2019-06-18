@@ -85,7 +85,7 @@ function formataCabecalho(){
 	rNrceplog.css('padding-left','25px').addClass('rotulo-linha');
 	$('input','#frmCabCaddne').css('margin-left','10px');
 	
-	cCddopcao.css('width','36px');
+	cCddopcao.css('width','150px');
 	cNrcepend.css('width','64px').attr('maxlength','9');;
 	cNrcepend.addClass('cep pesquisa').habilitaCampo();
 	cCddopcao.habilitaCampo().focus();	
@@ -224,6 +224,8 @@ function importa_arquivos() {
 		listauf.sort();
 		showMsgAguardo("Aguarde, processando arquivo de " + listauf[0] + " ...");
 		setTimeout(function(){ limpa_acentosLista(listauf); listauf=null; },100);
+	}else{
+		grava_importacao();
 	}
 	
 }
@@ -237,22 +239,25 @@ function grava_importacao(){
 	
 	if(listauf.length > 0){
 		listauf.sort();
-		showMsgAguardo("Aguarde, gravando arquivo de " + listauf[0] + " ...");
-		setTimeout(function(){ efetua_grava_importacao(listauf); listauf=null; },100);
+		showMsgAguardo("Aguarde, gravando arquivos ...");
+		efetua_grava_importacao(listauf);
+	} else {
+		efetua_grava_importacao('NADA');
 	}
 
 }
 
 function efetua_grava_importacao(listauf){
 
-	var cduflogr = listauf.shift();
+	if(listauf != 'NADA'){
+		listauf = listauf.join(';');
+	}
 	
 	$.ajax({		
 		type: "POST", 
 		url: UrlSite + "telas/caddne/monta_importacao.php",
-		async: false,
 		data: {
-			cduflogr: cduflogr,		   
+			listauf: listauf,		   
 			redirect: "script_ajax" // Tipo de retorno do ajax
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -261,18 +266,8 @@ function efetua_grava_importacao(listauf){
 		},
 		success: function(response) {				
 			try {				
-				if ($.trim(response) != "") {
 					hideMsgAguardo();					
 					eval(response);
-				} else {			
-					if (listauf.length > 0) {
-						showMsgAguardo("Aguarde, gravando arquivo de " + listauf[0] + " ...");
-						setTimeout(function() { efetua_grava_importacao(listauf); listauf=null; },100);
-					} else {
-						hideMsgAguardo();
-						showError("inform","Endereços importados com sucesso.","Alerta - Ayllos","formataImportacao();copia_arquivos();");
-					}
-				}
 			} catch(error) {
 				hideMsgAguardo();					
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","$('#nrcepend','#frmCabCaddne').focus()");							
@@ -336,7 +331,7 @@ function limpa_acentosLista(listauf){
 					setTimeout(function(){ limpa_acentosLista(listauf); listauf=null; },100);
 				}else{
 					hideMsgAguardo();
-					showConfirmacao('Os endereços foram carregados, deseja finalizar a importa&ccedil;&atilde;o?','Endere&ccedil;os','grava_importacao();',msgErro,'sim.gif','nao.gif');
+					grava_importacao();
 				}
 			} catch(error) {
 				hideMsgAguardo();	
@@ -542,4 +537,27 @@ function marcaTodosUfs(){
 
 function desmarcaTodosUfs(){
 	$("#frmImportacao").find("input[type=checkbox]").prop("checked", false); 
+}
+
+function exibirMensagemConfirmacao(){
+	
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/caddne/mensagem_confirma_importacao.php",
+		data: {
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","$('#nrcepend','#frmCabCaddne').focus()");							
+		},
+		success: function(response) {				
+			try {
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();					
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","$('#nrcepend','#frmCabCaddne').focus()");							
+			}				
+		}							
+	});
 }

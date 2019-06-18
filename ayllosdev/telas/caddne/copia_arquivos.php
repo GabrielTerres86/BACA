@@ -8,11 +8,14 @@
 	/*************************************************************************
 	  Fonte: grava_endereco.php                                               
 	  Autor: Henrique                                                  
-	  Data : Agosto/2011                       Última Alteração: 13/08/2015
+	  Data : Agosto/2011                       Última Alteração: 08/05/2019
 	                                                                   
 	  Objetivo  : Gravar os dados da tela CADDNE.              
 	                                                                 
-	  Alterações: 13/08/2015 - Remover o caminho fixo. (James)
+	  Alterações: 13/08/2015 - Remover o caminho fixo. (James)	  
+
+	              08/05/2019 - Alterado a forma de como busca as siglas dos estados
+	                           no nome do arquivo (Mateus Z - Mouts)									   			  
 	                                                                  
 	***********************************************************************/
 
@@ -35,7 +38,7 @@
 	}
 	
 	// Apaga os arquivos que estao na pasta
-	array_map("unlink",glob(dirname(__FILE__) ."/arquivos/*"));
+	array_map("unlink",glob("/var/www/ayllos/telas/caddne/arquivos/*"));
 		
 	$xmlCarregaDados  = "";
 	$xmlCarregaDados .= "<Root>";
@@ -84,11 +87,18 @@
 			echo '$("#GRANDE_USUARIO","#frmImportacao").prop("disabled",false);';
 		} else {
 		
-			$entrada = substr($arquivos->tags[0]->cdata,strrpos($arquivos->tags[0]->cdata,"_")+1,2);
+			$arrayEstados = array( "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RO", "RS", "RR", "SC", "SE", "SP", "TO" );
+
+			$startIndex = min(strrpos($arquivos->tags[0]->cdata,"_"), strrpos($arquivos->tags[0]->cdata,"."));
+			$length = abs(strrpos($arquivos->tags[0]->cdata,"_") - strrpos($arquivos->tags[0]->cdata,"."));
+
+			$entrada = substr($arquivos->tags[0]->cdata, $startIndex + 1, $length - 1);
 			
+			if(in_array($entrada, $arrayEstados)){
 			echo '$("#'.$entrada.'","#frmImportacao").prop("checked",true);';
 			echo '$("#'.$entrada.'","#frmImportacao").prop("disabled",false);';
 			$estados .= $entrada.",";
+			}
 		}
 	}
 	echo '$("#estados","#frmImportacao").val("'.$estados.'");';

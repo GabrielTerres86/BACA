@@ -7,7 +7,7 @@
 	//***                                                                  ***/
 	//*** Objetivo  : Mostrar tela CADDNE.                                 ***/
 	//***                                                                  ***/
-	//*** Alterações: 										   			   ***/
+	//*** Alterações: [07/05/2019] - Adicionado mt_rand na chamada do caddne.js ***/
 	//***                                                                  ***/
 	//************************************************************************/
 	
@@ -41,7 +41,7 @@
    <script type="text/javascript" src="../../scripts/mascara.js"></script>
    <script type="text/javascript" src="../../scripts/menu.js"></script>	
    <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-   <script type="text/javascript" src="caddne.js"></script>	
+   <script type="text/javascript" src="caddne.js?keyrand=<?php echo mt_rand(); ?>"></script>	
   </head>
 
   <body>
@@ -108,7 +108,7 @@
 																					<span></span>																					
 																					<input type="image" id="btAlterar" style="display:none;" src="<? echo $UrlImagens; ?>botoes/alterar.gif" onClick="valida_endereco();" />
 																					<input type="image" id="btExcluir" style="display:none;" src="<? echo $UrlImagens; ?>botoes/excluir.gif" onClick="showConfirmacao('Confirma a exclus&atilde;o do endere&ccedil;o?','Endere&ccedil;o','exclui_endereco();','estado_inicial();','sim.gif','nao.gif');" />
-																					<input type="image" id="btImportar" style="display:none;" src="<? echo $UrlImagens; ?>botoes/ok.gif" onClick="importa_arquivos();" />
+																					<input type="image" id="btImportar" style="display:none;" src="<? echo $UrlImagens; ?>botoes/ok.gif" onClick="exibirMensagemConfirmacao();" />
 																					<input type="image" id="btVoltar" style="display:none;" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="estado_inicial();" />
 																				</div>
 																			</div>
