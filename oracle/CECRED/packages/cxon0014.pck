@@ -13263,7 +13263,7 @@ END pc_gera_titulos_iptu_prog;
     Sistema  : CECRED
     Sigla    : CXON
     Autor    : Odirlei Busana - AMcom
-    Data     : Abril/2018                   Ultima atualizacao: 05/04/2018
+    Data     : Abril/2018                   Ultima atualizacao: 18/06/2019
 
    Dados referentes ao programa:
 
@@ -13271,7 +13271,9 @@ END pc_gera_titulos_iptu_prog;
 
    Objetivo  : Procedure para gerar a linha digitavel a fatura em base do codigo de barras
 
-   Alteracoes:
+   Alteracoes: 18/06/2019 - PRB0041451 - Ajuste para corrigir erro registrado na tabela tbgen_erro_sistema.
+                                         O calculo da linha digitavel so deve ser feito quando receber um 
+										 codigo de barras valido (Diego).
 
 
   ---------------------------------------------------------------------------------------------------------------*/
@@ -13284,6 +13286,10 @@ END pc_gera_titulos_iptu_prog;
     vr_flgretor BOOLEAN;
 
   BEGIN
+
+    IF  TRIM(pr_cdbarras) is null THEN
+        RETURN;
+    END IF;
 
     FOR idx IN 1..4 LOOP
       CASE idx
