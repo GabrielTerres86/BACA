@@ -141,7 +141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
   --  Programa : TELA_ENVNOT
   --  Sistema  : Ayllos Web
   --  Autor    : -
-  --  Data     : -                          Ultima atualizacao: 16/04/2019
+  --  Data     : -                          Ultima atualizacao: 17/06/2019
   --
   -- Dados referentes ao programa:
   --
@@ -150,7 +150,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
   -- Alteracoes: 16/04/2019 - Retirada de critica em "if" para permitir o agendamento de notificacoes 
   --                          que estejam importando um arquivo csv com uma lista de cooperados.
   --                          Chamado RITM0011955 - Gabriel Marcos (Mouts).
-  --
+  /*
+      17/06/2019 - PRB0041586 na rotina pc_lista_mensagens_manuais, filtro para trazer apenas os
+                   últimos 6 meses, melhoria na montagem do xml e melhoria do cursor cr_mensagens;
+                   melhoria nos índices das tabelas tbgen_notif_manual_prm e tbgen_notificacao (Carlos)
+  */
   ----------------------------------------------------------------------------------------------------------
 
   NMDATELA CONSTANT VARCHAR2(6) := 'ENVNOT';
@@ -1251,16 +1255,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
               FROM crapope ope
              WHERE ope.cdcooper = man.cdcooper
                AND UPPER(ope.cdoperad) = UPPER(man.cdoperad)) nmoperad
-          ,(SELECT COUNT(*) FROM tbgen_notificacao ntf WHERE ntf.cdmensagem = msg.cdmensagem) qtenviados
-          ,(SELECT COUNT(*) FROM tbgen_notificacao ntf WHERE ntf.cdmensagem = msg.cdmensagem AND ntf.dhleitura IS NOT NULL) qtlidos
+            ,(SELECT COUNT(1)||';'||SUM(CASE
+                                        WHEN ntf.dhleitura IS NOT NULL THEN 1
+                                        ELSE                                0
+                                  END) lidos
+                FROM  tbgen_notificacao ntf WHERE ntf.cdmensagem = msg.cdmensagem
+                 AND trunc(ntf.dhcadastro) >= trunc(man.dhcadastro_mensagem)
+             ) QTENVIADOS               
       FROM tbgen_notif_manual_prm   man
           ,tbgen_notif_msg_cadastro msg
      WHERE man.cdmensagem = msg.cdmensagem
        AND man.cdcooper = pr_cdcooper -- Só enxerga as mensagens cadastradas pela mesma cooperativa
+       AND trunc(man.dhcadastro_mensagem) >= (SYSDATE - 181)
      ORDER BY man.dhcadastro_mensagem DESC;
     
     -- Variáveis
-    vr_contador NUMBER(10);
+--    vr_contador NUMBER(10);
     
     -- Variavel de criticas
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1278,6 +1288,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
     
+    -- Variaveis de XML
+    vr_retxml CLOB;
+    vr_xml_temp VARCHAR2(32767);
+
   BEGIN
     
     -- Extrai os dados vindos do XML
@@ -1290,29 +1304,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
                             ,pr_idorigem => vr_idorigem
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
-    
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'mensagens', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+
+    -- Criar documento XML
+    dbms_lob.createtemporary(vr_retxml, TRUE);
+    dbms_lob.open(vr_retxml, dbms_lob.lob_readwrite);
+
+    -- Insere o cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root><Dados><mensagens>');
     
     -- Obtém os dados das mensagens
-    vr_contador := 0;
     FOR rw_mensagem IN cr_mensagens(vr_cdcooper) LOOP
       -- Gera o XML
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'mensagens', pr_posicao => 0, pr_tag_nova => 'mensagem', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'mensagem', pr_posicao => vr_contador, pr_tag_nova => 'cdmensagem', pr_tag_cont => rw_mensagem.cdmensagem, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'mensagem', pr_posicao => vr_contador, pr_tag_nova => 'dhenvio_mensagem', pr_tag_cont => rw_mensagem.dhenvio_mensagem, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'mensagem', pr_posicao => vr_contador, pr_tag_nova => 'dstitulo_mensagem', pr_tag_cont => rw_mensagem.dstitulo_mensagem, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'mensagem', pr_posicao => vr_contador, pr_tag_nova => 'cdsituacao_mensagem', pr_tag_cont => rw_mensagem.cdsituacao_mensagem, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'mensagem', pr_posicao => vr_contador, pr_tag_nova => 'dssituacao_mensagem', pr_tag_cont => rw_mensagem.dssituacao_mensagem, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'mensagem', pr_posicao => vr_contador, pr_tag_nova => 'cdcooper', pr_tag_cont => rw_mensagem.cdcooper, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'mensagem', pr_posicao => vr_contador, pr_tag_nova => 'cdoperad', pr_tag_cont => rw_mensagem.cdoperad, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'mensagem', pr_posicao => vr_contador, pr_tag_nova => 'nmoperad', pr_tag_cont => rw_mensagem.nmoperad, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'mensagem', pr_posicao => vr_contador, pr_tag_nova => 'qtenviados', pr_tag_cont => rw_mensagem.qtenviados, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'mensagem', pr_posicao => vr_contador, pr_tag_nova => 'qtlidos', pr_tag_cont => rw_mensagem.qtlidos, pr_des_erro => vr_dscritic);
-      vr_contador := vr_contador+1;
+      gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<mensagem>'
+                                                || '<cdmensagem>'||rw_mensagem.cdmensagem||'</cdmensagem>'
+                                                || '<dhenvio_mensagem>'||rw_mensagem.dhenvio_mensagem||'</dhenvio_mensagem>' 
+                                                || '<dstitulo_mensagem>'||rw_mensagem.dstitulo_mensagem||'</dstitulo_mensagem>'
+                                                || '<cdsituacao_mensagem>'||rw_mensagem.cdsituacao_mensagem||'</cdsituacao_mensagem>'
+                                                || '<dssituacao_mensagem>'||rw_mensagem.dssituacao_mensagem||'</dssituacao_mensagem>'
+                                                || '<cdcooper>'||rw_mensagem.cdcooper||'</cdcooper>'
+                                                || '<cdoperad>'||rw_mensagem.cdoperad||'</cdoperad>'
+                                                || '<nmoperad>'||rw_mensagem.nmoperad||'</nmoperad>'
+                                                || '<qtenviados>'||gene0002.fn_busca_entrada(1,rw_mensagem.qtenviados,';')||'</qtenviados>'
+                                                || '<qtlidos>'||gene0002.fn_busca_entrada(2,rw_mensagem.qtenviados,';')||'</qtlidos>'
+                                                ||'</mensagem>');
     END LOOP;
+
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</mensagens></Dados></root>'
+                           ,pr_fecha_xml      => TRUE);
+
+    pr_retxml := xmltype.createXML(xmlData => vr_retxml);
 
   EXCEPTION
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       IF vr_cdcritic <> 0 THEN -- Tenta pegar a exception pelo CDCRITIC
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);

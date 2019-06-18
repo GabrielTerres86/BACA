@@ -6,6 +6,10 @@
 	 * --------------
 	 * ALTERAÇÕES   :
 	 * --------------
+
+       17/06/2019 - PRB0041586 na rotina pc_consultar_banner, filtro para trazer apenas os últimos 3 meses, melhoria na montagem do xml e 
+                    melhoria do cursor cur_banner; criação de novo índice para a tabela tbgen_banner_filtro_especifico (Carlos)
+
 	 */
 	 	
 	session_start();
@@ -96,7 +100,8 @@
 			exibeErro($xmlObjetoBanner->roottag->tags[0]->tags[0]->tags[4]->cdata);
 			die();
 		}
-		$banner = $xmlObjetoBanner->roottag->tags[0]->tags[2]->tags[0]->tags;
+//		$banner = $xmlObjetoBanner->roottag->tags[0]->tags[2]->tags[0]->tags;
+        $banner = $xmlObjetoBanner->roottag->tags[0]->tags[0]->tags[0]->tags;
 		
 		//titulo.php
 		$dstitulo_banner = getByTagName($banner,'DSTITULO_BANNER');
