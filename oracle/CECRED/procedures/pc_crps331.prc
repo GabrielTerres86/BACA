@@ -31,6 +31,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   --                     Log de início, fim e erros na execução dos jobs. (Carlos)
   --
   --        23/01/2018 - Ajustar log escrito negatativacao para negativacao (Lucas Ranghetti #832284)
+  --   
+  --        20/05/2019 - Ajustar mensagem para Exclusão de negativação quando 
+  --                     pois estava como Envio . PRB0041685 (INC0013353)
+  --                     (Roberto Holz  - Mout´s)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Atualiza a situacao do boleto
@@ -210,7 +214,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
                                  -- E se estiver para cancelar nao pode existir outro historico (o sistema bloqueia novas solicitacoes)
         vr_inserasa := 0; -- Coloca como nao negativada
         vr_dtretser := NULL; -- Coloca como nao recebida no Serasa
-        vr_dslog := 'Envio do cancelamento de negativacao do boleto - Serasa';
+		-- mensagem alterada de Envio para Exclusão . PRB0041685(INC0013353). 20/05/2019 (Roberto Holz - Mout´s)
+        vr_dslog := 'Exclusão do cancelamento de negativacao do boleto - Serasa';
       END IF;
 
       -- Se a UF necessitar de AR e for o retorno de uma inclusao, nao deve-se atualizar o boleto

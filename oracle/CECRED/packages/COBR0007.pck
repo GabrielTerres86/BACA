@@ -367,6 +367,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
   20/05/2019 - inc0011296 Na rotina pc_inst_protestar, corrigida a validação de existência de negativação e 
                centralizada a regra na function fn_flserasa (Carlos)
+  
+  20/05/2019 - PRB0041685(INC0013353) corrigida nas procedures abaixo a validação da existência de negativação (Roberto Holz  -  Mout´s)
+                    pc_inst_cancel_protesto_85
+                    pc_inst_cancel_protesto_bb
+                    pc_inst_aut_protesto 
+
+  18/06/2019 - Alteração de código de motivo. Alcemir Jr./Roberto Holz  -  Mout´s(PRB0041653).                 
   -------------------------------------------------------------------------------------------------------------*/
   --Ch 839539
   vr_cdprogra      tbgen_prglog.cdprograma%type := 'COBR0007';
@@ -4122,8 +4129,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     END IF;
 
     -- Verificamos se o boleto possui Negativacao no Serasa
+/*
     IF rw_crapcob.flserasa = 1 AND 
        rw_crapcob.qtdianeg > 0 THEN
+*/       
+    -- alterado if para utilizar a função fn_flserasa 
+    -- PRB0041685  Roberto Holz - Mout´s  20/05/2019
+    IF COBR0007.fn_flserasa(rw_crapcob.flserasa,
+                                     rw_crapcob.qtdianeg,
+                                     rw_crapcob.inserasa) THEN       
       -- Sera tratado como Negativacao Serasa
       vr_is_serasa := TRUE;
     ELSE 
@@ -4156,7 +4170,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0007.pc_inst_cancel_prote_85');
 
         -- Recusar a instrucao
-        vr_cdcritic := 1180;
+		-- corrigido código de crítica, estava erroneamente 1180. (Roberto Holz - Mout´s 27/05/2019)
+        vr_cdcritic := 1309;
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) --Excedido prazo cancelamento da instrucao automatica de negativacao! Canc instr negativacao nao efetuado
                        ||' dtmvtolt:'||rw_crapdat.dtmvtolt
                        ||', dtvencto:'||rw_crapcob.dtvencto
@@ -4186,7 +4201,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0007.pc_inst_cancel_prote_85');
 
         -- Recusar a instrucao
-        vr_cdcritic := 1180;
+		-- corrigido código de crítica, estava erroneamente 1180. (Roberto Holz - Mout´s 27/05/2019)
+        vr_cdcritic := 1310;
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) --Titulo ja enviado para Negativacao! Canc instr negativacao nao efetuado
                        ||' inserasa:'||rw_crapcob.inserasa;
         RAISE vr_exc_erro;        
@@ -12104,8 +12120,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     END IF;
 
     -- Verificamos se o boleto possui Negativacao no Serasa
+/*    
     IF rw_crapcob.flserasa = 1 AND 
        rw_crapcob.qtdianeg > 0 THEN
+*/
+    -- alterado if para utilizar a função fn_flserasa 
+    -- PRB0041685  Roberto Holz - Mout´s  20/05/2019
+    IF COBR0007.fn_flserasa(rw_crapcob.flserasa,
+                                     rw_crapcob.qtdianeg,
+                                     rw_crapcob.inserasa) THEN       
       -- Sera tratado como Negativacao Serasa
       vr_is_serasa := TRUE;
     ELSE 
@@ -13382,7 +13405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         -- Gerar o retorno para o cooperado 
         COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
                                            ,pr_cdocorre => 26   -- Instrucao Rejeitada
-                                           ,pr_cdmotivo => '99' -- Motivo -- revisar
+                                           ,pr_cdmotivo => 'H3' -- Motivo -- revisar
                                            ,pr_vltarifa => 0    -- Valor da Tarifa  
                                            ,pr_cdbcoctl => rw_crapcop.cdbcoctl
                                            ,pr_cdagectl => rw_crapcop.cdagectl
@@ -13417,7 +13440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 			-- Gerar o retorno para o cooperado 
         COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
                                            ,pr_cdocorre => 26   -- Instrucao Rejeitada
-                                           ,pr_cdmotivo => '99' -- Motivo -- revisar
+                                           ,pr_cdmotivo => 'H4' -- Motivo -- revisar
                                            ,pr_vltarifa => 0    -- Valor da Tarifa  
                                            ,pr_cdbcoctl => rw_crapcop.cdbcoctl
                                            ,pr_cdagectl => rw_crapcop.cdagectl
@@ -13447,7 +13470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       -- Gerar o retorno para o cooperado 
       COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
                                          ,pr_cdocorre => 26   -- Instrucao Rejeitada
-                                         ,pr_cdmotivo => '99' -- Motivo -- revisar
+                                         ,pr_cdmotivo => 'H6' -- Motivo -- revisar
                                          ,pr_vltarifa => 0    -- Valor da Tarifa  
                                          ,pr_cdbcoctl => rw_crapcop.cdbcoctl
                                          ,pr_cdagectl => rw_crapcop.cdagectl
@@ -13470,8 +13493,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         
     END IF;
     
+/*    
 		-- Verificar se já possui serviço do SERASA
     IF rw_crapcob.flserasa = 1 OR rw_crapcob.qtdianeg > 0 OR rw_crapcob.inserasa > 0 THEN
+*/      
+    
+    -- alterado if para utilizar a função fn_flserasa 
+    -- PRB0041685  Roberto Holz - Mout´s  20/05/2019
+    -- Verificar se já possui serviço do SERASA
+    IF COBR0007.fn_flserasa(rw_crapcob.flserasa,
+                                     rw_crapcob.qtdianeg,
+                                     rw_crapcob.inserasa) THEN     
 			-- Gerar o retorno para o cooperado 
 			COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid
 																				,pr_cdocorre => 26   -- Instrucao Rejeitada
