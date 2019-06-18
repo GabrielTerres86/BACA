@@ -15,6 +15,7 @@
  * 				        03/10/2017 - Projeto 410 - RF 52 / 62 - Tela impressão declaração optante simples nacional (Diogo - Mouts)
  * 				  12/04/2018 - Inclusão da opção de Declaração FATCA/CRS - PRJ 414 (Mateus Z - Mouts).
  *				  16/01/2019 - Inclusão do botão Ficha-Proposta (Cássia de Oliveira - GFT)
+ *                06/06/2019 - RITM0015775 - Mudança de nome de Ficha Proposta para Fica Matricula (Andreatta-Mouts)
  */
  
 	session_start();
@@ -103,7 +104,7 @@
 	<div id="declaracao_fatca_crs">Declara&ccedil;&atilde;o FATCA/CRS</div>
 	<!-- Inicio - Botão Ficha-Proposta - Cássia de Oliveira (GFT)!-->
 	<? if ($inpessoa == 1) { ?>
-			<div id="ficha_proposta">Ficha-Proposta</div>
+			<div id="ficha_proposta">Ficha-Matr&iacute;cula</div>
 	<? } ?>
 	<!-- Fim - Botão Ficha-Proposta - Cássia de Oliveira (GFT)!-->
 	<div id="btVoltar" onClick="fechaRotina(divRotina);return false;">Cancelar</div>

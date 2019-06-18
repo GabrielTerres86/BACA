@@ -211,7 +211,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
 
 END CADA0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
+ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   /*---------------------------------------------------------------------------------------------------------------
   
     Programa : CADA0002
@@ -2402,7 +2402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     --  Programa : pc_impressao_ficha_prop
     --  Sistema  : Rotinas para impressão de dados
     --  Autor    : Cássia de Oliveira - GFT
-    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: 18/06/2019
     --
     --  Dados referentes ao programa:
     -- 	
@@ -2410,7 +2410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     --   Objetivo  : Agrupa os dados e monta o layout para impressão de Ficha-Proposta
     --
     --   Alteracoes: 
-    --
+    --               18/06/2019 - RITM0015775 - Mudança de nome de Ficha Proposta para Fica Matricula + Inclusao campo matricula
     -- .............................................................................
       DECLARE
       -- Variaveis padrao
@@ -2458,6 +2458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       CURSOR cr_crapass IS 
         SELECT ass.dtadmiss
               ,ass.cdcatego
+              ,ass.nrmatric
               ,CASE ass.cdtipcta
                   WHEN 1  THEN 'NORMAL' 
                   WHEN 2  THEN 'ESPECIAL'
@@ -2819,6 +2820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Relatorio>"
                                                       <Dados>
                                                         <nrdconta>'||pr_nrdconta        ||'</nrdconta>
+                                                        <nrmatric>'||rw_crapass.nrmatric||'</nrmatric>
                                                         <dtabtcct>'||TO_CHAR(rw_crapass.dtadmiss,'DD/MM/YYYY')||'</dtabtcct>
                                                         <cdcatego>'||rw_crapass.cdcatego||'</cdcatego>
                                                         <dstipcta>'||rw_crapass.dstipcta||'</dstipcta>
