@@ -484,6 +484,11 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
                                ,pr_cdcritic OUT PLS_INTEGER                --> Código retorno erro
                                ,pr_dscritic OUT VARCHAR2);                 --> Descrição retorno erro
                                          
+  --Procedure para Gerar relatorio Rejeicoes
+  PROCEDURE pc_gera_relatorio_rejeic(pr_dtmvtolt  IN crapdat.dtmvtolt%type       -- Data movimento
+                                    ,pr_cdprogra  IN crapprg.cdprogra%type       -- Codigo Programa
+                                    ,pr_dscritic OUT VARCHAR2);                  -- Descricao Erro  
+                                         
                                     
   --Procedimento que envia solicitacao ao SICREDI para mandar os creditos a serem efetuados                                               
   PROCEDURE pc_benef_inss_solic_cred(pr_cdcooper IN crapcop.cdcooper%type   --Cooperativa
@@ -504,10 +509,12 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
                                        ,pr_idorigem IN INTEGER                    --Origem Processamento
                                        ,pr_cdoperad IN VARCHAR2                   --Operador
                                        ,pr_dtmvtolt IN crapdat.dtmvtolt%type      --Data Movimento
-                                       ,pr_nmdatela IN VARCHAR2                   --Nome da tela
                                        ,pr_cdprogra IN crapprg.cdprogra%type      --Nome Programa 
-                                       ,pr_des_reto OUT VARCHAR2                  --Saida OK/NOK
-                                       ,pr_tab_erro OUT gene0001.typ_tab_erro);   --Tabela Erros
+                                       ,pr_nmarquiv in VARCHAR2                   --Nome arquivo mensagem
+                                       ,pr_xmlmensg in XmlType                    --XML a processsar
+                                       ,pr_xmlretor OUT XmlType                   --XML de retorno
+                                       ,pr_cdcritic OUT INTEGER                   --Código Crítica
+                                       ,pr_dscritic OUT VARCHAR2);                --Descrição de Crítica
   
   /* Procedure para Eliminar  de Requisicao SOAP */
   PROCEDURE pc_elimina_arquivos_requis (pr_cdcooper IN crapcop.cdcooper%type --Codigo Cooperativa
@@ -2541,11 +2548,12 @@ create or replace package body cecred.INSS0001 as
                                       ,pr_nmarquiv IN VARCHAR2                --Nome Arquivo 
                                       ,pr_ercadttl IN BOOLEAN                 --Cadastro Titular
                                       ,pr_ercadcop IN BOOLEAN                 --Cadastro Cooperativa
-                                      ,pr_tab_arquivos IN OUT NOCOPY inss0001.typ_tab_arquivos   --Tabela Arquivos
-                                      ,pr_tab_rejeicoes IN OUT NOCOPY inss0001.typ_tab_rejeicoes --Tabela Rejeicoes
+                                      ,pr_tab_arquivos IN OUT NOCOPY INSS0001.typ_tab_arquivos   --Tabela Arquivos
+                                      ,pr_tab_rejeicoes IN OUT NOCOPY INSS0001.typ_tab_rejeicoes --Tabela Rejeicoes
                                       ,pr_cdprogra IN crapprg.cdprogra%type   --Nome Programa
                                       ,pr_pathcoop IN VARCHAR2                --Diretorio Padrao da Cooperativa
                                       ,pr_proc_aut IN INTEGER                 --Identifica se o processo está sendo executado de forma automatica(1) ou manual(0)
+                                      ,pr_xmlretor OUT XmlType                --XML de retorno
                                       ,pr_des_reto OUT VARCHAR2               --Saida OK/NOK
                                       ,pr_tab_erro OUT gene0001.typ_tab_erro) IS --Tabela Erros
   /*---------------------------------------------------------------------------------------------------------------
@@ -2554,7 +2562,7 @@ create or replace package body cecred.INSS0001 as
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Alisson C. Berrido - AMcom
-    Data     : Agosto/2014                           Ultima atualizacao: 25/07/2018
+    Data     : Agosto/2014                           Ultima atualizacao: 27/09/2018
   
     Dados referentes ao programa:
    
@@ -2580,6 +2588,9 @@ create or replace package body cecred.INSS0001 as
                 
                  25/07/2018 - Rotina pc benef inss xml div pgto incluido o CFP/CNPJ na mensagem de critica
                               (Belli - Envolti - Chamado REQ0020667)                   
+                
+                 27/09/2018 - Reestruturação Benefícios INSS - Não mais varrer diretório, mas receber via
+                              parâmetro o XML para Processar e devolver outro XML - Andreatta - Mouts         
                 
   ---------------------------------------------------------------------------------------------------------------*/
     --Variaveis de Indices
@@ -2634,7 +2645,7 @@ create or replace package body cecred.INSS0001 as
       IF pr_proc_aut = 1 THEN
         BEGIN
           --Gerar cabecalho XML
-          inss0001.pc_gera_cabecalho_xml (pr_idservic => 2   /* Rejeitar */
+          INSS0001.pc_gera_cabecalho_xml (pr_idservic => 2   /* Rejeitar */
                                          ,pr_nmmetodo => 'InRejeitarBeneficioINSS'
                                          ,pr_dstexto  => vr_dstexto     --Texto do Arquivo de Dados
                                          ,pr_des_reto => vr_des_reto    --Retorno OK/NOK
@@ -2658,12 +2669,15 @@ create or replace package body cecred.INSS0001 as
                           '<CodigoOcorrencia>'||vr_cdocorr1||'</CodigoOcorrencia>'||
                        '</InRejeitarBeneficioINSS>' ;
      
+          -- Devolver mensagem XML não mais gerar arquivo e enviar ao Sicredi
+          pr_xmlretor := XMLType.createXML(vr_dstexto);
+          
           --Envia Requisicao Via MQ
-          inss0001.pc_benef_inss_envia_req_mq (pr_cdcooper => pr_cdcooper    --Codigo Cooperativa
+          /*INSS0001.pc_benef_inss_envia_req_mq (pr_cdcooper => pr_cdcooper    --Codigo Cooperativa
                                               ,pr_dtmvtolt => pr_dtmvtolt    --Data movimento
                                               ,pr_cdoperad => NULL           --Codigo operador
                                               ,pr_cdprogra => pr_cdprogra    --Nome Programa
-                                              ,pr_idservic => 2 /* Divergencias */ --Identificador Servico
+                                              ,pr_idservic => 2 -- Divergencias  --Identificador Servico
                                               ,pr_dstexto  => vr_dstexto     --Texto do arquivo
                                               ,pr_nrrecben => pr_nrrecben    --Numero Recebimento Benficiario (NB)
                                               ,pr_pathcoop => pr_pathcoop    --Diretorio Padrao da Cooperativa
@@ -2672,7 +2686,7 @@ create or replace package body cecred.INSS0001 as
           --Se ocorreu erro
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
-          END IF;
+          END IF;*/
         EXCEPTION
           WHEN OTHERS THEN NULL;
         END;  
@@ -3000,7 +3014,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_arquivo => vr_nmarquiv); --Nome Arquivo
                                      
       /* Criptografa e Move Arquivo Envio */
-      inss0001.pc_criptografa_move_arquiv (pr_cdcooper => pr_cdcooper
+      INSS0001.pc_criptografa_move_arquiv (pr_cdcooper => pr_cdcooper
                                           ,pr_cdprogra => pr_cdprogra
                                           ,pr_nmarquiv => pr_arqenvio --Arquivo Orig
                                           ,pr_arqdesti => pr_movarqto||'/'||vr_nmarquiv --Nome arq Destino
@@ -3020,7 +3034,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_arquivo => vr_nmarquiv); --Nome Arquivo
                                      
       /* Criptografa e Move Arquivo Retorno */
-      inss0001.pc_criptografa_move_arquiv (pr_cdcooper => pr_cdcooper
+      INSS0001.pc_criptografa_move_arquiv (pr_cdcooper => pr_cdcooper
                                           ,pr_cdprogra => pr_cdprogra
                                           ,pr_nmarquiv => pr_arqreceb -- Arquivo Orig  
                                           ,pr_arqdesti => pr_movarqto||'/'||vr_nmarquiv --Nome arq Destino 
@@ -3465,6 +3479,7 @@ create or replace package body cecred.INSS0001 as
                                       ,pr_cdprogra IN crapprg.cdprogra%type --Codigo Programa
                                       ,pr_nrrecben IN NUMBER                --Numero Recebimento Benficiario (NB)
                                       ,pr_pathcoop IN VARCHAR2              --Diretorio Padrao da Cooperativa
+                                      ,pr_xmlretor OUT XmlType              --XML de retorno
                                       ,pr_dscritic OUT VARCHAR2) IS         --Saida Erro
   /*---------------------------------------------------------------------------------------------------------------
   
@@ -3472,7 +3487,7 @@ create or replace package body cecred.INSS0001 as
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Agosto/2014                           Ultima atualizacao: 27/07/2015
+    Data     : Agosto/2014                           Ultima atualizacao: 27/09/2018
   
     Dados referentes ao programa:
   
@@ -3490,6 +3505,9 @@ create or replace package body cecred.INSS0001 as
                               
                  27/07/2015 - Ajuste para efetuar o log no arquivo proc_message.log
                              (Adriano).             
+                
+                 27/09/2018 - Reestruturação Benefícios INSS - Não mais varrer diretório, mas receber via
+                              parâmetro o XML para Processar e devolver outro XML - Andreatta - Mouts          
                 
   ---------------------------------------------------------------------------------------------------------------*/
       --Variaveis Locais
@@ -3536,12 +3554,15 @@ create or replace package body cecred.INSS0001 as
                         '</UnidadeAtendimento>'||
                      '</InPagarBeneficioINSS>' ;
      
+      -- Não mais retornar arquivo, mas sim o xml
+      pr_xmlretor := XmlType.createXML(vr_dstexto);
+      
       --Envia Requisicao Via MQ
-      inss0001.pc_benef_inss_envia_req_mq (pr_cdcooper => pr_cdcooper    --Codigo Cooperativa
+      /*INSS0001.pc_benef_inss_envia_req_mq (pr_cdcooper => pr_cdcooper    --Codigo Cooperativa
                                           ,pr_dtmvtolt => pr_dtmvtolt    --Data movimento
                                           ,pr_cdoperad => NULL           --Codigo operador
                                           ,pr_cdprogra => pr_cdprogra    --Nome Programa
-                                          ,pr_idservic => 3 /* Pagamento Beneficio */ --Identificador Servico
+                                          ,pr_idservic => 3 -- Pagamento Beneficio  --Identificador Servico
                                           ,pr_dstexto  => vr_dstexto     --Texto do arquivo
                                           ,pr_nrrecben => pr_nrrecben    --Numero Recebimento Benficiario (NB)
                                           ,pr_pathcoop => pr_pathcoop    --Diretorio Padrao da Cooperativa
@@ -3550,7 +3571,7 @@ create or replace package body cecred.INSS0001 as
       --Se ocorreu erro
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
-      END IF;                                   
+      END IF;        */                           
  
     EXCEPTION
       WHEN vr_exc_erro THEN
@@ -3573,6 +3594,7 @@ create or replace package body cecred.INSS0001 as
                                       ,pr_vllanmto IN NUMBER                  --Valor Beneficio
                                       ,pr_tpbenefi IN VARCHAR2                --Tipo beneficio
                                       ,pr_cdbenefi IN NUMBER                  --Codigo beneficio
+                                      ,pr_idbenefi IN NUMBER                  --ID Beneficio
                                       ,pr_cdagesic IN INTEGER                 --Codigo Agencia Sicredi
                                       ,pr_dtmvtolt IN crapdat.dtmvtolt%type   --Data Movimento
                                       ,pr_dtdpagto IN crapdat.dtmvtolt%type   --Data pagamento
@@ -3584,8 +3606,9 @@ create or replace package body cecred.INSS0001 as
                                       ,pr_cdprogra IN crapprg.cdprogra%type   --Codigo programa
                                       ,pr_pathcoop IN VARCHAR2                --Diretorio Padrao da Cooperativa
                                       ,pr_proc_aut IN INTEGER                 --Identifica se o processo está sendo executado de forma automatica(1) ou manual(0)
-                                      ,pr_tab_arquivos  IN OUT NOCOPY inss0001.typ_tab_arquivos  --Tabela de Arquivos
-                                      ,pr_tab_rejeicoes IN OUT NOCOPY inss0001.typ_tab_rejeicoes --Tabela de Rejeicoes
+                                      ,pr_tab_arquivos  IN OUT NOCOPY INSS0001.typ_tab_arquivos  --Tabela de Arquivos
+                                      ,pr_tab_rejeicoes IN OUT NOCOPY INSS0001.typ_tab_rejeicoes --Tabela de Rejeicoes
+                                      ,pr_xmlretor OUT XmlType                --XML de retorno
                                       ,pr_des_reto OUT VARCHAR2               --Saida OK/NOK
                                       ,pr_tab_erro OUT gene0001.typ_tab_erro) IS --Tabela Erros
   /*---------------------------------------------------------------------------------------------------------------
@@ -3594,7 +3617,7 @@ create or replace package body cecred.INSS0001 as
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Agosto/2014                           Ultima atualizacao: 07/10/2015
+    Data     : Agosto/2014                           Ultima atualizacao: 27/09/2018
   
     Dados referentes ao programa:
   
@@ -3621,6 +3644,9 @@ create or replace package body cecred.INSS0001 as
                 
                  25/06/2018 - PRJ450 - Inclusao de chamada da LANC0001 para centralizar 
                               lancamentos na CRAPLCM (Teobaldo J, AMcom)
+    
+                 27/09/2018 - Reestruturação Benefícios INSS - Não mais varrer diretório, mas receber via
+                              parâmetro o XML para Processar e devolver outro XML - Andreatta - Mouts        
     
    ---------------------------------------------------------------------------------------------------------------*/
       --Registro do tipo tabela craplot
@@ -3813,7 +3839,7 @@ create or replace package body cecred.INSS0001 as
       -- Quando a execução for manual é aberto um incidente para o SICREDI atualizar os benefícios
       IF pr_proc_aut = 1 THEN
         --Confirmar Pagamento beneficio INSS
-        inss0001.pc_benef_inss_confir_pagto (pr_cdcooper => pr_cdcooper   --Codigo Cooperativa Associado
+        INSS0001.pc_benef_inss_confir_pagto (pr_cdcooper => pr_cdcooper   --Codigo Cooperativa Associado
                                             ,pr_cdagenci => pr_cdagenci   --Codigo Agencia
                                             ,pr_cdbenefi => pr_cdbenefi   --Codigo Beneficio
                                             ,pr_cdagesic => pr_cdagesic   --Agencia Sicredi
@@ -3821,6 +3847,7 @@ create or replace package body cecred.INSS0001 as
                                             ,pr_cdprogra => pr_cdprogra   --Codigo Programa
                                             ,pr_nrrecben => pr_nrrecben   --Numero Recebimento Benficiario (NB)
                                             ,pr_pathcoop => pr_pathcoop   --Diretorio Padrao da Cooperativa
+                                            ,pr_xmlretor => pr_xmlretor   --XML de retorno
                                             ,pr_dscritic => vr_dscritic); --Saida Erro
                                       
         --Se ocorreu erro   
@@ -3886,19 +3913,16 @@ create or replace package body cecred.INSS0001 as
   END pc_benef_inss_gera_credito;
 
   --Procedure para Gerar relatorio Rejeicoes
-  PROCEDURE pc_gera_relatorio_rejeic(pr_cdcooper      IN crapcop.cdcooper%type       --Codigo Cooperativa
-                                    ,pr_dtmvtolt      IN crapdat.dtmvtolt%type       --Data movimento
-                                    ,pr_cdprogra      IN crapprg.cdprogra%type       --Codigo Programa
-                                    ,pr_tab_arquivos  IN inss0001.typ_tab_arquivos   --Tabela de Arquivos
-                                    ,pr_tab_rejeicoes IN inss0001.typ_tab_rejeicoes  --Tabela de Rejeicoes
-                                    ,pr_dscritic      OUT VARCHAR2) IS               --Descricao Erro                      
+  PROCEDURE pc_gera_relatorio_rejeic(pr_dtmvtolt  IN crapdat.dtmvtolt%type       -- Data movimento
+                                    ,pr_cdprogra  IN crapprg.cdprogra%type       -- Codigo Programa
+                                    ,pr_dscritic OUT VARCHAR2) IS               -- Descricao Erro                      
   /*---------------------------------------------------------------------------------------------------------------
   
     Programa : pc_gera_relatorio_rejeic             Antigo: procedures/b1wgen0091.p/gera_relatorio_rejeicoes                
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Agosto/2014                           Ultima atualizacao: 22/12/2016
+    Data     : Agosto/2014                           Ultima atualizacao: 09/10/2018
   
     Dados referentes ao programa:
   
@@ -3921,7 +3945,26 @@ create or replace package body cecred.INSS0001 as
                               em questão e para postar na intranet no dia correto
                               (Adriano - SD 567303).
                  
+                 29/10/2018 - Leitura de tabela de banco e não mais de temp table passada (Andreatta-Mouts)
+                 
   ---------------------------------------------------------------------------------------------------------------*/
+    
+    -- Busca das informações do arquivo
+    CURSOR cr_relato IS
+      SELECT cdcooper cdcooper
+            ,cdagenci cdagenci
+            ,dschave  nmarquiv
+            ,dscritic dsstatus
+            ,row_number() over (partition By cdcooper
+                                    order by cdcooper) nrseqreg
+            ,count(1) over (partition By cdcooper) nrtotreg
+        FROM tbgen_batch_relatorio_wrk
+       WHERE dsrelatorio = 'tab_arquivos'
+         AND dtmvtolt >= pr_dtmvtolt - 12/24 -- Ultimas 12 horas
+       ORDER BY cdcooper
+               ,cdagenci
+               ,dschave;
+    
     -- Busca dos dados da cooperativa
     CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
     SELECT cop.nmrescop
@@ -3930,27 +3973,31 @@ create or replace package body cecred.INSS0001 as
           ,cop.dsdircop
       FROM crapcop cop
      WHERE cop.cdcooper = pr_cdcooper;
-     
     rw_crapcop cr_crapcop%ROWTYPE;
     
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
     
-    --Tipo de tabela para ordenar arquivos e rejeitados
-    TYPE typ_tab_arq2 IS TABLE OF inss0001.typ_reg_arquivos INDEX BY VARCHAR2(200);
-    TYPE typ_tab_rej2 IS TABLE OF inss0001.typ_reg_rejeicoes INDEX BY VARCHAR2(200);
-    
-    --Tabela Nova de Arquivos e Rejeitados
-    vr_tab_arq2 typ_tab_arq2;
-    vr_tab_rej2 typ_tab_rej2;
+    -- Busca das informações de rejeiçáo
+    CURSOR cr_relato_rejeitos(pr_cdcooper crapcop.cdcooper%TYPE) IS
+      SELECT cdagenci
+            ,nrdconta
+            ,dschave  nmrecben
+            ,dtvencto dtinipag
+            ,vldpagto nrrecben
+            ,vltitulo vllanmto
+            ,dscritic
+        FROM tbgen_batch_relatorio_wrk
+       WHERE cdcooper = pr_cdcooper
+         AND dsrelatorio = 'tab_rejeitos'
+         AND dtmvtolt >= pr_dtmvtolt - 12/24 -- Ultimas 12 horas
+       ORDER BY cdagenci
+               ,vldpagto -- nrrecben
+               ,dschave  -- nmrecben
+               ,dtvencto -- dtinipag
+               ,vltitulo;
     
     --Tabela de Memoria de erros
     vr_tab_erro gene0001.typ_tab_erro;
-    
-    --indices para tabelas memoria
-    vr_index_arq1 PLS_INTEGER;
-    vr_index_arq2 VARCHAR2(200);
-    vr_index_rej1 PLS_INTEGER;
-    vr_index_rej2 VARCHAR2(200);
     
     --Variaveis Locais
     vr_nmdireto  VARCHAR2(100);
@@ -3972,182 +4019,95 @@ create or replace package body cecred.INSS0001 as
     BEGIN
   	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_gera_relatorio_rejeic');                  
-      
-      --limpar tabela erros
-      pr_dscritic:= NULL;
-      
-      --Limpar tabela nova
-      vr_tab_arq2.DELETE;
-      
-      --Montar tabela memoria ordenada por cooperativa/agencia/arquivos
-      vr_index_arq1:= pr_tab_arquivos.FIRST;
-      
-      WHILE vr_index_arq1 IS NOT NULL LOOP
-        
-        --Novo Indice
-        vr_index_arq2:= lpad(pr_tab_arquivos(vr_index_arq1).cdcooper,10,'0')||
-                        lpad(pr_tab_arquivos(vr_index_arq1).cdagenci,10,'0')||
-                        rpad(pr_tab_arquivos(vr_index_arq1).nmarquiv,100,'#');
-                        
-        --Copiar dados de uma tabela para outra
-        vr_tab_arq2(vr_index_arq2):= pr_tab_arquivos(vr_index_arq1);    
-                    
-        --Proximo Registro
-        vr_index_arq1:= pr_tab_arquivos.NEXT(vr_index_arq1);
-        
-      END LOOP;
-        
-      --Percorrer todos os arquivos da tabela nova
-      vr_index_arq2:= vr_tab_arq2.FIRST;
-      
-      WHILE vr_index_arq2 IS NOT NULL LOOP
-        
+      -- Buscar arquivos
+      FOR rw_rel IN cr_relato LOOP        
         --Se for o primeiro registro da cooperativa
-        IF vr_index_arq2 = vr_tab_arq2.FIRST OR
-           vr_tab_arq2(vr_index_arq2).cdcooper <> vr_tab_arq2(vr_tab_arq2.PRIOR(vr_index_arq2)).cdcooper THEN
-           
+        IF rw_rel.nrseqreg = 1 THEN           
           -- Verifica se a cooperativa esta cadastrada
-          OPEN cr_crapcop (pr_cdcooper => vr_tab_arq2(vr_index_arq2).cdcooper);
-          
+          OPEN cr_crapcop (pr_cdcooper => rw_rel.cdcooper);          
           FETCH cr_crapcop INTO rw_crapcop;
-          
           -- Se não encontrar
           IF cr_crapcop%NOTFOUND THEN
             -- Fechar o cursor pois haverá raise
             CLOSE cr_crapcop;
-            
             -- Montar mensagem de critica
             vr_cdcritic := 651;
-            
             -- Busca critica
             vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
-            
             RAISE vr_exc_erro;
-            
           ELSE
             -- Apenas fechar o cursor
             CLOSE cr_crapcop;
           END IF;
-
           -- Leitura do calendário da cooperativa
 					OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
-          
 					FETCH btch0001.cr_crapdat INTO rw_crapdat;
-          
 					-- Se não encontrar
 					IF btch0001.cr_crapdat%NOTFOUND THEN
-            
 						-- Fechar o cursor pois efetuaremos raise
 						CLOSE btch0001.cr_crapdat;
-            
 						-- Montar mensagem de critica
 						vr_cdcritic := 1;
-            
             -- Busca critica
             vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
-            
 						RAISE vr_exc_erro;
-            
 					ELSE
 						-- Apenas fechar o cursor
 						CLOSE btch0001.cr_crapdat;
 					END IF;
-
           --Buscar Diretorio da Cooperativa
           vr_nmdireto:= gene0001.fn_diretorio(pr_tpdireto => 'C'
                                              ,pr_cdcooper => rw_crapcop.cdcooper
                                              ,pr_nmsubdir => NULL);
-          
           --Buscar Diretorio da Cooperativa
           vr_nmdireto_rl:= vr_nmdireto||'/rl';
           vr_nmdireto_rlnsv:= vr_nmdireto||'/rlnsv';
-                                 
           -- Inicializar as informações do XML de dados para o relatório
           dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
           dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
-          
           --Informacoes do cabecalho
           vr_dstxtaux:= 'data="'||to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY')||
                         '" time="'||to_char(sysdate,'HH24:MI:SS')||'">';
-                        
           --Escrever no arquivo XML
           gene0002.pc_escreve_xml(vr_clobxml,vr_dstexto,
                                  '<?xml version="1.0" encoding="UTF-8"?><crrl657><arquivos '||vr_dstxtaux);
-                                 
         END IF; --Primeiro Registro
-
         --Escrever no XML
         gene0002.pc_escreve_xml(vr_clobxml,vr_dstexto,
                                '<arq>'||
                                   '<cdcooper>'||rw_crapcop.cdcooper||'</cdcooper>'||
-                                  '<cdagenci>'||vr_tab_arq2(vr_index_arq2).cdagenci||'</cdagenci>'||
-                                  '<nmarquiv>'||vr_tab_arq2(vr_index_arq2).nmarquiv||'</nmarquiv>'||
-                                  '<dsstatus>'||vr_tab_arq2(vr_index_arq2).dsstatus||'</dsstatus>'||
+                                  '<cdagenci>'||rw_rel.cdagenci||'</cdagenci>'||
+                                  '<nmarquiv>'||rw_rel.nmarquiv||'</nmarquiv>'||
+                                  '<dsstatus>'||rw_rel.dsstatus||'</dsstatus>'||
                                '</arq>'); 
                                
-        --Se for o ultimo registro da cooperativa
-        IF vr_index_arq2 = vr_tab_arq2.LAST OR
-           vr_tab_arq2(vr_index_arq2).cdcooper <> vr_tab_arq2(vr_tab_arq2.NEXT(vr_index_arq2)).cdcooper THEN
-          
-          --Limpar tabela nova rejeicoes
-          vr_tab_rej2.DELETE;
-          
-          --Preparar nova tabela ordenada por cdcooper,cdagenci,nrbenefi,nrrecben,nmrecben,dtinipag,vllanmto 
-          vr_index_rej1:= pr_tab_rejeicoes.FIRST;
-          
-          WHILE vr_index_rej1 IS NOT NULL LOOP
-            
-            --Se for mesma cooperativa  
-            IF pr_tab_rejeicoes(vr_index_rej1).cdcooper = rw_crapcop.cdcooper THEN
-              
-              --Novo Indice
-              vr_index_rej2:= lpad(pr_tab_rejeicoes(vr_index_rej1).cdcooper,10,'0')||
-                              lpad(pr_tab_rejeicoes(vr_index_rej1).cdagenci,10,'0')||
-                              lpad(pr_tab_rejeicoes(vr_index_rej1).nrbenefi,20,'0')||
-                              lpad(pr_tab_rejeicoes(vr_index_rej1).nrrecben,20,'0')||
-                              rpad(pr_tab_rejeicoes(vr_index_rej1).nmrecben,100,'#')||
-                              to_char(pr_tab_rejeicoes(vr_index_rej1).dtinipag,'YYYYMMDD')||                            
-                              lpad(pr_tab_rejeicoes(vr_index_rej1).vllanmto*100,30,'0'); 
-                                                                                     
-              --Copiar dados de uma tabela para outra
-              vr_tab_rej2(vr_index_rej2):= pr_tab_rejeicoes(vr_index_rej1); 
-                             
-            END IF;  
-            
-            --Proximo Registro
-            vr_index_rej1:= pr_tab_rejeicoes.NEXT(vr_index_rej1);
-            
-          END LOOP;
-
+        -- Se for o ultimo registro da cooperativa
+        IF rw_rel.nrseqreg = rw_rel.nrtotreg  THEN   
           --Finaliza TAG Arquivos e inicia creditos rejeitados
           gene0002.pc_escreve_xml(vr_clobxml,vr_dstexto,'</arquivos><rejeicoes>');
-      
-          --Escrever os pagamentos rejeitados no XML
-          vr_index_rej2:= vr_tab_rej2.FIRST;
-          
-          WHILE vr_index_rej2 IS NOT NULL LOOP
-            
+          -- Buscar informações de rejeição desta cooperativa ordenando por 
+          --  Agencia
+          --  Beneficiario
+          --  Numero recolhimento
+          --  Nome
+          --  Data PAgamento
+          --  Valor
+          FOR rw_rej IN cr_relato_rejeitos(rw_crapcop.cdcooper) LOOP
             --Escrever no XML
             gene0002.pc_escreve_xml(vr_clobxml,vr_dstexto,
                                '<rej>'||
-                                  '<cdcooper>'||vr_tab_rej2(vr_index_rej2).cdcooper||'</cdcooper>'||
-                                  '<cdagenci>'||vr_tab_rej2(vr_index_rej2).cdagenci||'</cdagenci>'||
-                                  '<nrdconta>'||to_char(vr_tab_rej2(vr_index_rej2).nrdconta,'fm9999g999g9')||'</nrdconta>'||
-                                  '<nrrecben>'||vr_tab_rej2(vr_index_rej2).nrrecben||'</nrrecben>'||
-                                  '<nmrecben>'||vr_tab_rej2(vr_index_rej2).nmrecben||'</nmrecben>'||
-                                  '<dtinipag>'||to_char(vr_tab_rej2(vr_index_rej2).dtinipag,'DD/MM/YYYY')||'</dtinipag>'||
-                                  '<vllanmto>'||to_char(vr_tab_rej2(vr_index_rej2).vllanmto,'fm9g999g999g990d00')||'</vllanmto>'||
-                                  '<dscritic>'||substr(vr_tab_rej2(vr_index_rej2).dscritic,1,45)||'</dscritic>'||
+                                  '<cdcooper>'||rw_crapcop.cdcooper||'</cdcooper>'||
+                                  '<cdagenci>'||rw_rej.cdagenci||'</cdagenci>'||
+                                  '<nrdconta>'||to_char(rw_rej.nrdconta,'fm9999g999g9')||'</nrdconta>'||
+                                  '<nrrecben>'||rw_rej.nrrecben||'</nrrecben>'||
+                                  '<nmrecben>'||rw_rej.nmrecben||'</nmrecben>'||
+                                  '<dtinipag>'||to_char(rw_rej.dtinipag,'DD/MM/YYYY')||'</dtinipag>'||
+                                  '<vllanmto>'||to_char(rw_rej.vllanmto,'fm9g999g999g990d00')||'</vllanmto>'||
+                                  '<dscritic>'||substr(rw_rej.dscritic,1,45)||'</dscritic>'||
                                '</rej>'); 
-                               
-            --Proximo Registro
-            vr_index_rej2:= vr_tab_rej2.NEXT(vr_index_rej2);
-            
           END LOOP;
-          
           --Finaliza TAG Rejeitados e Relatorio
           gene0002.pc_escreve_xml(vr_clobxml,vr_dstexto,'</rejeicoes></crrl657>',TRUE);
-
           -- Gera relatório crrl657
 	      gene0002.pc_solicita_relato(pr_cdcooper  => rw_crapcop.cdcooper --> Cooperativa conectada
                                      ,pr_cdprogra  => pr_cdprogra         --> Programa chamador
@@ -4165,17 +4125,14 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_sqcabrel  => 1                   --> Qual a seq do cabrel
                                      ,pr_flappend  => 'S'                 --> Ira incrementar o relatorio se ja existir 
                                      ,pr_des_erro  => vr_dscritic);       --> Saída com erro
-          
           --Se ocorreu erro no relatorio
           IF vr_dscritic IS NOT NULL THEN
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF; 
-          
           --Fechar Clob e Liberar Memoria	
           dbms_lob.close(vr_clobxml);
           dbms_lob.freetemporary(vr_clobxml); 
-
           --Enviar arquivo para Intranet          
           GENE0002.pc_gera_arquivo_intranet (pr_cdcooper => rw_crapcop.cdcooper --Codigo Cooperativa
                                             ,pr_cdagenci => 0                    --Codigo Agencia
@@ -4188,9 +4145,7 @@ create or replace package body cecred.INSS0001 as
           
           --Se ocorreu erro
           IF vr_des_reto = 'NOK' THEN
-            
-            vr_dscritic:= 'inss0001.pc_gera_relatorio_rejeic --> ';
-            
+            vr_dscritic:= 'INSS0001.pc_gera_relatorio_rejeic --> ';
             --Se tem erro na tabela 
             IF vr_tab_erro.COUNT > 0 THEN
               vr_dscritic:= vr_dscritic||
@@ -4201,19 +4156,13 @@ create or replace package body cecred.INSS0001 as
                             'Nao foi possivel gerar o arquivo para a intranet - '||
                             rw_crapcop.nmrescop;  
             END IF; 
-            
             --Levantar Excecao
             RAISE vr_exc_erro;
-                        
           END IF; 
-          
-        END IF; --ultimo registro
-        
-        --Proximo Registro
-        vr_index_arq2:= vr_tab_arq2.NEXT(vr_index_arq2);       
-          
-      END LOOP; --arquivos
-        
+        END IF; -- ultimo registro da Coop
+      END LOOP; -- Loop registros dos arquivos
+      -- Gravar
+      COMMIT;
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
@@ -4221,7 +4170,6 @@ create or replace package body cecred.INSS0001 as
       WHEN OTHERS THEN
         -- Retorno não OK
         pr_dscritic:= 'Erro ao gerar relatorio de rejeicoes. '||SQLERRM;
-        
   END pc_gera_relatorio_rejeic;
 
   --Funcao para Substituir Caracteres Especiais do XML
@@ -4442,6 +4390,8 @@ create or replace package body cecred.INSS0001 as
                                        -- Arquivo e Diretorio
                                        ,pr_nmarquiv         IN VARCHAR2                   -- Nome do arquivo
                                        ,pr_nmdireto_integra IN VARCHAR2                   -- Diretorio Integra
+                                       -- Mensagem XML a retornar
+                                       ,pr_xmlretor OUT XmlType                           -- XML de retorno
                                        -- Erros
                                        ,pr_tpdiverg        OUT INTEGER                    -- Tipo da Divergencia
                                        ,pr_cod_reto        OUT INTEGER                    -- Retorno (0-OK/1-Divergencia/2-Ignorar Registro)
@@ -4452,7 +4402,7 @@ create or replace package body cecred.INSS0001 as
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Douglas Quisinski
-    Data     : Outubro/2015                          Ultima atualizacao: 07/08/2017
+    Data     : Outubro/2015                          Ultima atualizacao: 27/09/2018
     
     Dados referentes ao programa:
     
@@ -4478,6 +4428,9 @@ create or replace package body cecred.INSS0001 as
 				 07/08/2017 - Ajuste para efetuar log (temporário) de pontos criticos da rotina para tentarmos
 				              identificar lentidões que estão ocorrendo na rotina
 							 (Adriano).
+                              
+                 27/09/2018 - Reestruturação Benefícios INSS - Não mais varrer diretório, mas receber via
+                              parâmetro o XML para Processar e devolver outro XML - Andreatta - Mouts                              
     -------------------------------------------------------------------------------------------------------------*/
 
       -- Busca dos dados da cooperativa
@@ -4555,6 +4508,29 @@ create or replace package body cecred.INSS0001 as
            AND  craptco.flgativo = 1; -- TRUE    
       rw_craptco cr_craptco%ROWTYPE;
 
+      -- Testar se a mensagem jah não foi enviada
+      cursor cr_craplcm(pr_cdcooper craplcm.cdcooper%type
+                       ,pr_dtmvtolt craplcm.dtmvtolt%type 
+                       ,pr_cdagenci craplcm.cdagenci%type 
+                       ,pr_cdbccxlt craplcm.cdbccxlt%type 
+                       ,pr_nrdolote craplcm.nrdolote%type 
+                       ,pr_nrdconta craplcm.nrdconta%type 
+                       ,pr_cdhistor craplcm.cdhistor%type 
+                       ,pr_vllanmto craplcm.vllanmto%type 
+                       ,pr_cdpesqbb craplcm.cdpesqbb%type) is
+        select 1
+          from craplcm
+         where cdcooper = pr_cdcooper
+           and dtmvtolt = pr_dtmvtolt
+           and cdagenci = pr_cdagenci
+           and cdbccxlt = pr_cdbccxlt
+           and nrdolote = pr_nrdolote
+           and nrdconta = pr_nrdconta
+           and cdhistor = pr_cdhistor
+           and vllanmto = pr_vllanmto
+           and gene0002.fn_busca_entrada(3,cdpesqbb,';') = pr_cdpesqbb;
+      rw_craplcm cr_craplcm%rowtype;
+      
       --Variaveis Locais
       vr_crapttl   BOOLEAN:= FALSE;
       vr_crapcop   BOOLEAN:= FALSE;
@@ -4569,6 +4545,7 @@ create or replace package body cecred.INSS0001 as
     
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      vr_dtmvtolt crapdat.dtmvtolt%TYPE;
     
       --Variaveis de Criticas
       vr_cdcritic  INTEGER;
@@ -4805,11 +4782,20 @@ create or replace package body cecred.INSS0001 as
         OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);          
         FETCH btch0001.cr_crapdat INTO rw_crapdat;
                  
-        IF btch0001.cr_crapdat%NOTFOUND OR rw_crapdat.inproces <> 1 THEN
+        IF btch0001.cr_crapdat%NOTFOUND THEN
           CLOSE btch0001.cr_crapdat;
           RAISE vr_exc_proximo;
         END IF;
         CLOSE btch0001.cr_crapdat;
+                                                             
+        -- CAso processo em execução
+        IF rw_crapdat.inproces <> 1 THEN
+          -- Usaremos a próxima data util
+          vr_dtmvtolt := rw_crapdat.dtmvtopr;
+        ELSE
+          -- Usaremos a data atual
+          vr_dtmvtolt := rw_crapdat.dtmvtolt;
+        END IF;
                                                              
         /* VALIDAR CPF */
         --Selecionar Titular
@@ -4893,6 +4879,26 @@ create or replace package body cecred.INSS0001 as
           RAISE vr_exc_diverg;   
               
         ELSE  
+          -- TEstar se por ventura a mensagem já não foi processada
+          open cr_craplcm(pr_cdcooper => pr_tab_creditos(pr_index_creditos).cdcooper
+                         ,pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => rw_crapass.cdagenci
+                         ,pr_cdbccxlt => 100
+                         ,pr_nrdolote => 10132
+                         ,pr_nrdconta => pr_tab_creditos(pr_index_creditos).nrdconta
+                         ,pr_cdhistor => 1399
+                         ,pr_vllanmto => pr_tab_creditos(pr_index_creditos).vlrbenef
+                         ,pr_cdpesqbb => pr_tab_creditos(pr_index_creditos).idbenefi);
+          fetch cr_craplcm
+           into rw_craplcm;
+          if cr_craplcm%found then
+            close cr_craplcm;
+            -- Pular ao próximo
+            raise vr_exc_proximo;
+          else
+            close cr_craplcm;
+          end if;
+        
           --indicar que gera creditos
           pr_tab_creditos(pr_index_creditos).geracred := TRUE;
           pr_tab_creditos(pr_index_creditos).cdagenci := rw_crapass.cdagenci;
@@ -4923,8 +4929,9 @@ create or replace package body cecred.INSS0001 as
                                               ,pr_vllanmto => pr_tab_creditos(pr_index_creditos).vlrbenef --Valor Beneficio
                                               ,pr_tpbenefi => pr_tab_creditos(pr_index_creditos).tpnrbene --Tipo Numero beneficio
                                               ,pr_cdbenefi => pr_tab_creditos(pr_index_creditos).cdbenefi --Codigo beneficio
+                                              ,pr_idbenefi => pr_tab_creditos(pr_index_creditos).idbenefi --ID beneficio
                                               ,pr_cdagesic => pr_tab_creditos(pr_index_creditos).cdagesic --Codigo Agencia Sicredi
-                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt                         --Data Movimento
+                                              ,pr_dtmvtolt => vr_dtmvtolt                                 --Data Movimento
                                               ,pr_dtdpagto => pr_tab_creditos(pr_index_creditos).dtdpagto --Data pagamento
                                               ,pr_dtcompet => pr_tab_creditos(pr_index_creditos).dtinicio --Data Competencia do pagamento
                                               ,pr_nmbenefi => pr_tab_creditos(pr_index_creditos).nmbenefi --Nome Beneficiario                                           
@@ -4936,6 +4943,7 @@ create or replace package body cecred.INSS0001 as
                                               ,pr_proc_aut => pr_proc_aut                                 --Identifica se o processo está sendo executado de forma automatica(1) ou manual(0)
                                               ,pr_tab_arquivos  => pr_tab_arquivos                        --Tabela Arquivos
                                               ,pr_tab_rejeicoes => pr_tab_rejeicoes                       --Tabela Rejeicoes
+                                              ,pr_xmlretor => pr_xmlretor                                 --Mensagem retornar
                                               ,pr_des_reto => vr_des_reto                                 --Saida OK/NOK
                                               ,pr_tab_erro => pr_tab_erro);                               --Tabela de Erros
 
@@ -4959,8 +4967,7 @@ create or replace package body cecred.INSS0001 as
                          
           --Se ocorreu erro
           IF vr_des_reto = 'NOK' THEN
-            IF pr_proc_aut = 1 THEN  
-              
+            /*IF pr_proc_aut = 1 THEN  
               
               -- Enviar detalhamento do erro ao LOG (Temporario)
               CECRED.pc_log_programa(pr_dstiplog => 'O'
@@ -4971,13 +4978,13 @@ create or replace package body cecred.INSS0001 as
                              , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
                                                  pr_cdprogra || 
                                                  '01 - Mover arquivo ' 
-                                                            ||pr_nmdireto_integra||'/'||pr_nmarquiv||
+                                                            ||pr_nmdireto_integra||pr_nmarquiv||
                                                             ' para ' || vr_nmdireto_salvar)
                              , pr_idprglog => vr_idprglog);
                              
                                                             
               -- Comando para mover arquivo
-              gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||'/'||pr_nmarquiv
+              gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||pr_nmarquiv
                                     ,pr_dsarqdes => vr_nmdireto_salvar || '/'||'INSS.MQ.RREJ.'||
                            LPAD(pr_tab_creditos(pr_index_creditos).nrrecben,11,'0')||'.'||
                            LPAD(gene0002.fn_busca_time,5,'0')||
@@ -4990,7 +4997,7 @@ create or replace package body cecred.INSS0001 as
                   
                 --Monta mensagem de critica
                 vr_dscritic:= 'Nao foi possivel mover o arquivo: '||
-                              pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
+                              pr_nmdireto_integra||pr_nmarquiv||' '||
                               vr_nmdireto_salvar;
                   
                 -- retornando ao programa chamador
@@ -5007,14 +5014,14 @@ create or replace package body cecred.INSS0001 as
                              , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
                                                  pr_cdprogra || 
                                                  '01 - Arquivo ' 
-                                                            ||pr_nmdireto_integra||'/'||pr_nmarquiv||
+                                                            ||pr_nmdireto_integra||pr_nmarquiv||
                                                             ' movido para ' || vr_nmdireto_salvar
                                                             || ' com sucesso.')
                              , pr_idprglog => vr_idprglog);
                              
                                                             
                                                             
-            END IF;
+            END IF;*/
                 
             --Se tem erro na tabela
             IF pr_tab_erro.COUNT > 0 THEN
@@ -5039,7 +5046,7 @@ create or replace package body cecred.INSS0001 as
             --Proximo Arquivo e Desfazer
             RAISE vr_exc_proximo;
               
-          ELSE
+          /*ELSE
             IF pr_proc_aut = 1 THEN
                     
               -- Enviar detalhamento do erro ao LOG (Temporario)
@@ -5051,13 +5058,13 @@ create or replace package body cecred.INSS0001 as
                              , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
                                                  pr_cdprogra || 
                                                  '02 - Move o arquivo  ' 
-                                                            ||pr_nmdireto_integra||'/'||pr_nmarquiv||
+                                                            ||pr_nmdireto_integra||pr_nmarquiv||
                                                             ' para ' || vr_nmdireto_salvar)
                              , pr_idprglog => vr_idprglog);
                              
                                                                      
               -- Comando para mover arquivo
-              gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||'/'||pr_nmarquiv
+              gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||pr_nmarquiv
                                     ,pr_dsarqdes => vr_nmdireto_salvar||'/'||'INSS.MQ.RPAG.'||
                            LPAD(pr_tab_creditos(pr_index_creditos).nrrecben,11,'0')||'.'||
                            LPAD(gene0002.fn_busca_time,5,'0')||
@@ -5070,7 +5077,7 @@ create or replace package body cecred.INSS0001 as
                   
                 --Mensagem de Critica
                 vr_dscritic:= 'Nao foi possivel mover o arquivo: '||
-                              pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
+                              pr_nmdireto_integra||pr_nmarquiv||' '||
                               vr_nmdireto_salvar;
                   
                 -- retornando ao programa chamador
@@ -5087,12 +5094,12 @@ create or replace package body cecred.INSS0001 as
                              , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
                                                  pr_cdprogra || 
                                                  '02 - Arquivo ' 
-                                                            ||pr_nmdireto_integra||'/'||pr_nmarquiv||
+                                                            ||pr_nmdireto_integra||pr_nmarquiv||
                                                             ' movido para ' || vr_nmdireto_salvar
                                                             || ' com sucesso.')
                              , pr_idprglog => vr_idprglog);
                              
-            END IF;
+            END IF;*/
           END IF;          
         END IF;  --cr_crapttl2%FOUND
       END IF; --cr_crapcop
@@ -5142,8 +5149,8 @@ create or replace package body cecred.INSS0001 as
                        , pr_idprglog => vr_idprglog);
                        
         --Verificar Divergencias de Pagamento
-        inss0001.pc_benef_inss_xml_div_pgto (pr_cdcooper => pr_tab_creditos(pr_index_creditos).cdcooper     --Codigo Cooperativa 
-                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt             --Data Movimento
+        INSS0001.pc_benef_inss_xml_div_pgto (pr_cdcooper => pr_tab_creditos(pr_index_creditos).cdcooper     --Codigo Cooperativa 
+                                                ,pr_dtmvtolt => vr_dtmvtolt                                 --Data Movimento
                                             ,pr_tpdiverg => pr_tpdiverg             --Tipo Divergencia
                                             ,pr_dscritic => 'COM REJEITADOS'        --Descricao da Critica
                                             ,pr_nrcpfcgc => pr_tab_creditos(pr_index_creditos).nrcpfcgc --Numero Cpf CGC
@@ -5155,16 +5162,17 @@ create or replace package body cecred.INSS0001 as
                                             ,pr_nmbenefi => pr_tab_creditos(pr_index_creditos).nmbenefi --Nome Beneficiario
                                             ,pr_dtdpagto => pr_tab_creditos(pr_index_creditos).dtdpagto --Data pagamento
                                             ,pr_vlrbenef => pr_tab_creditos(pr_index_creditos).vlrbenef --Valor Beneficio
-                                            ,pr_nmarquiv => pr_nmdireto_integra||'/'||pr_nmarquiv    --Nome Arquivo 
+                                                ,pr_nmarquiv => pr_nmdireto_integra||pr_nmarquiv    --Nome Arquivo 
                                             ,pr_ercadttl => vr_crapttl              --Cadastro Titular
                                             ,pr_ercadcop => vr_crapcop              --Cadastro Cooperativa
                                             ,pr_tab_arquivos => pr_tab_arquivos     --Tabela de Memoria de arquivos
                                             ,pr_tab_rejeicoes => pr_tab_rejeicoes   --Tabela de Memoria de rejeicoes
                                             ,pr_cdprogra => pr_cdprogra             --Nome Programa
                                             ,pr_pathcoop => pr_tab_dircoop(pr_tab_creditos(pr_index_creditos).cdcooper) --Diretorio Padrao da Cooperativa
-                                            ,pr_proc_aut => pr_proc_aut
-                                            ,pr_des_reto => vr_des_reto             --Saida OK/NOK
-                                            ,pr_tab_erro => pr_tab_erro);           --Tabela de Erros
+                                                ,pr_proc_aut => pr_proc_aut             -- Propagar identificar de automático sim ou não
+                                                ,pr_xmlretor => pr_xmlretor             -- XML a retornar
+                                                ,pr_des_reto => vr_des_reto             -- Saida OK/NOK
+                                                ,pr_tab_erro => pr_tab_erro);           -- Tabela de Erros
                                                 
         --Se ocorreu erro
         IF vr_des_reto = 'NOK' THEN
@@ -5206,6 +5214,8 @@ create or replace package body cecred.INSS0001 as
                                                       pr_tab_creditos(pr_index_creditos).cdcooper)
                        , pr_idprglog => vr_idprglog);
         
+        -- Somente Se for processo manual
+        IF pr_proc_aut = 0 THEN
         -- Enviar detalhamento do erro ao LOG (Temporario)
         CECRED.pc_log_programa(pr_dstiplog => 'O'
                        , pr_cdprograma => pr_cdprogra
@@ -5215,7 +5225,7 @@ create or replace package body cecred.INSS0001 as
                        , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
                                            pr_cdprogra || 
                                            '03 - Move o arquivo ' 
-                                                      ||pr_nmdireto_integra||'/'||pr_nmarquiv||
+                                                        ||pr_nmdireto_integra||pr_nmarquiv||
                                                       ' para ' || vr_nmdireto_salvar)
                        , pr_idprglog => vr_idprglog);
                      
@@ -5229,7 +5239,7 @@ create or replace package body cecred.INSS0001 as
         de processamento do Sicredi pois, o NB em questao ja foi tratado... 
         */
         -- Comando para mover arquivo
-        gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||'/'||pr_nmarquiv
+          gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||pr_nmarquiv
                               ,pr_dsarqdes => vr_nmdireto_salvar||'/'||'INSS.MQ.RREJ.'||
                      LPAD(pr_tab_creditos(pr_index_creditos).nrrecben,11,'0')||'.'||
                      LPAD(gene0002.fn_busca_time,5,'0')||
@@ -5241,7 +5251,7 @@ create or replace package body cecred.INSS0001 as
         IF vr_typ_saida = 'ERR' THEN
               
           vr_dscritic:= 'Nao foi possivel mover o arquivo: '||
-                        pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
+                          pr_nmdireto_integra||pr_nmarquiv||' '||
                         vr_nmdireto_salvar;
               
           -- Escrever no log qual arquivo processou com erro
@@ -5264,11 +5274,11 @@ create or replace package body cecred.INSS0001 as
                        , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
                                            pr_cdprogra || 
                                            '03 - Arquivo ' 
-                                                      ||pr_nmdireto_integra||'/'||pr_nmarquiv||
+                                                        ||pr_nmdireto_integra||pr_nmarquiv||
                                                       ' movido para ' || vr_nmdireto_salvar||
                                                       ' com sucesso.')
                        , pr_idprglog => vr_idprglog);
-      
+        END IF;
       
       WHEN vr_exc_erro THEN
         pr_cod_reto:= 1; -- Erro NOK
@@ -5303,17 +5313,19 @@ create or replace package body cecred.INSS0001 as
                                        ,pr_idorigem IN INTEGER                    --Origem Processamento
                                        ,pr_cdoperad IN VARCHAR2                   --Operador
                                        ,pr_dtmvtolt IN crapdat.dtmvtolt%type      --Data Movimento
-                                       ,pr_nmdatela IN VARCHAR2                   --Nome da tela
                                        ,pr_cdprogra IN crapprg.cdprogra%type      --Nome Programa 
-                                       ,pr_des_reto OUT VARCHAR2                  --Saida OK/NOK
-                                       ,pr_tab_erro OUT gene0001.typ_tab_erro) IS --Tabela Erros
+                                       ,pr_nmarquiv in VARCHAR2                   --Nome arquivo mensagem
+                                       ,pr_xmlmensg in XmlType                    --XML a processsar
+                                       ,pr_xmlretor OUT XmlType                   --XML de retorno
+                                       ,pr_cdcritic OUT INTEGER                   --Código Crítica
+                                       ,pr_dscritic OUT VARCHAR2) IS              --Descrição de Crítica
   /*---------------------------------------------------------------------------------------------------------------
   
   Programa : pc_benef_inss_proces_pagto             Antigo: procedures/b1wgen0091.p/beneficios_inss_processa_pagamentos
   Sistema  : Conta-Corrente - Cooperativa de Credito
   Sigla    : CRED
   Autor    : Alisson C. Berrido - Amcom
-  Data     : Agosto/2014                           Ultima atualizacao: 07/08/2017
+  Data     : Agosto/2014                           Ultima atualizacao: 27/09/2018
   
   Dados referentes ao programa:
   
@@ -5351,8 +5363,10 @@ create or replace package body cecred.INSS0001 as
                            (Adriano - SD 473539).
                                          
                07/08/2017 - Ajuste para efetuar log (temporário) de pontos criticos da rotina para tentarmos
-				            identificar lentidões que estão ocorrendo na rotina
-							(Adriano).
+				                    identificar lentidões que estão ocorrendo na rotina (Adriano).
+              
+               27/09/2018 - Reestruturação Benefícios INSS - Não mais varrer diretório, mas receber via
+                            parâmetro o XML para Processar e devolver outro XML - Andreatta - Mouts
                                          
   -------------------------------------------------------------------------------------------------------------*/
 
@@ -5406,6 +5420,8 @@ create or replace package body cecred.INSS0001 as
     
     --Variaveis para Indices temp-tables      
     vr_index_creditos PLS_INTEGER;
+    vr_index_arq1 PLS_INTEGER;
+    vr_index_arq2 PLS_INTEGER;
     
     --Variaveis Documentos DOM
     vr_xmldoc     xmldom.DOMDocument;
@@ -5422,9 +5438,6 @@ create or replace package body cecred.INSS0001 as
     vr_cod_reto   INTEGER;
     vr_nm_parametro VARCHAR2(100);
     vr_nm_parametro_pai VARCHAR2(100);
-    
-    --Manipulacao de dados
-    vr_XML  XMLType;
     
     --Tabela de Agencias
     vr_tab_crapage   INSS0001.typ_tab_crapage;
@@ -5449,58 +5462,33 @@ create or replace package body cecred.INSS0001 as
                                        
     --Variaveis de Excecoes
     vr_exc_erro    EXCEPTION; 
-    vr_exc_saida   EXCEPTION;
     vr_exc_proximo EXCEPTION;
     vr_exc_diverg  EXCEPTION; 
+    vr_tab_erro    gene0001.typ_tab_erro;
     
     vr_idprglog NUMBER;
     
-    --Procedure para limpar tabelas temporarias
-    PROCEDURE pc_limpa_tabela IS
-    BEGIN
-      vr_tab_salvar.DELETE;
-      vr_tab_dircoop.DELETE;
-      vr_tab_creditos.DELETE;
-      vr_tab_arquivos.DELETE;
-      vr_tab_rejeicoes.DELETE;
-      vr_tab_cdagesic.DELETE;
-      vr_tab_crapage.DELETE;
-      vr_tab_crawarq.DELETE;
-    END pc_limpa_tabela;
-                                         
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 664301
-		GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_benef_inss_proces_pagto');
+		GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_benef_inss_proces_pagto');   
     
-    --limpar tabela erros
-    pr_tab_erro.DELETE;
-    
-    --Limpar tabelas de memoria
-    pc_limpa_tabela;      
-    
-    --Inicializar variaveis
-    vr_cdcritic:= 0;
-    vr_dscritic:= NULL;
+    -- Inicializar variaveis
+    vr_cdcritic := 0;
+    vr_dscritic := NULL;
     
     -- Verifica se a cooperativa esta cadastrada
     OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
-    
     FETCH cr_crapcop INTO rw_crapcop;
-    
     -- Se não encontrar
     IF cr_crapcop%NOTFOUND THEN
-      
       -- Fechar o cursor pois haverá raise
       CLOSE cr_crapcop;
-      
       -- Montar mensagem de critica
       vr_cdcritic := 651;
       -- Busca critica
       vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
-      
       --Gera exceção
       RAISE vr_exc_erro;
-     
     ELSE
       -- Apenas fechar o cursor
       CLOSE cr_crapcop;
@@ -5508,15 +5496,12 @@ create or replace package body cecred.INSS0001 as
 
     --Carregar diretórios das coops
     FOR rw_crapdat_cooper IN cr_crapdat_cooper LOOP
-      
       --Montar Diretorio Padrao de cada cooperativa    
       vr_tab_dircoop(rw_crapdat_cooper.cdcooper):= gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/Coop
                                                                          ,pr_cdcooper => rw_crapdat_cooper.cdcooper
                                                                          ,pr_nmsubdir => null);
-
       --Montar Diretorio Salvar de cada cooperativa
       vr_tab_salvar(rw_crapdat_cooper.cdcooper):= vr_tab_dircoop(rw_crapdat_cooper.cdcooper)||'/salvar/inss';
-      
     END LOOP;
  
     --Carregar tabela agencias Sicredi
@@ -5529,209 +5514,10 @@ create or replace package body cecred.INSS0001 as
       vr_tab_crapage(rw_crapage.cdcooper).tab_agenc(rw_crapage.cdorgins):= rw_crapage.cdagenci;
     END LOOP;
     
-    --Buscar Diretorio Cooperativa
-    vr_nmdireto:= vr_tab_dircoop(pr_cdcooper);
     
-    --Diretorio Integra
-    vr_nmdireto_integra:= vr_nmdireto||'/integra';
-    --Nome Arquivo filtrar
-    vr_nmarquiv:= '%msgr_sicredi_cecred%.xml';
-      
-    /** LER A PASTA INTEGRA BUSCANDO PELOS ARQ. XML DO SICREDI */
-      
-    
-    
-    -- Enviar detalhamento do erro ao LOG (Temporario)
-    CECRED.pc_log_programa(pr_dstiplog => 'O'
-                   , pr_cdprograma => pr_cdprogra
-                   , pr_cdcooper => pr_cdcooper
-                   , pr_tpexecucao => 0
-                   , pr_tpocorrencia => 4
-                   , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                       pr_cdprogra || 
-                                       'Buscando arquivos no diretorio para processamento: ' ||
-                                                 vr_nmdireto_integra)
-                   , pr_idprglog => vr_idprglog);
-                              
-    
-    --Buscar a lista de arquivos do diretorio
-    gene0001.pc_lista_arquivos(pr_lista_arquivo => vr_tab_crawarq
-                              ,pr_path          => vr_nmdireto_integra
-                              ,pr_pesq          => vr_nmarquiv);
-                              
-    --Quantidade de arquivos encontrados
-    vr_qtarqdir:= vr_tab_crawarq.COUNT();  
-                                
-    
-    -- Enviar detalhamento do erro ao LOG (Temporario)
-    CECRED.pc_log_programa(pr_dstiplog => 'O'
-                   , pr_cdprograma => pr_cdprogra
-                   , pr_cdcooper => pr_cdcooper
-                   , pr_tpexecucao => 0
-                   , pr_tpocorrencia => 4
-                   , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                       pr_cdprogra || 
-                                       'Quantidade de arquivos encontrados: ' ||
-                                                 NVL(vr_qtarqdir,0))
-                   , pr_idprglog => vr_idprglog);
-                   
-                                                      
-                                
-    -- se encontrar arquivos
-    IF vr_qtarqdir > 0 THEN
-      --Existem arquivos para processar
-      vr_flgproces:= TRUE;
-    ELSE
-      --Nao possui arquivos para processar
-      vr_dscritic:= 'Nao existem arquivos para processamento.';
-      
-      --Levantar Excecao sem erros
-      RAISE vr_exc_saida;          
-    END IF;          
-      
-    --Buscar parametros 
-    vr_dscomora:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_EXEC_SHELL');
-    vr_dsdirbin:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'ROOT_CECRED_BIN');
-    
-    --se nao encontrou
-    IF vr_dscomora IS NULL OR vr_dsdirbin IS NULL THEN
-      --Montar mensagem erro        
-      vr_dscritic:= 'Nao foi possivel selecionar parametros.';
-      RAISE vr_exc_erro;
-    END IF;
-     
-    -------------------------------------------------------------------------------- 
-    /* EFETUA A LEITURA DE CADA ARQUIVO DA PASTA INTEGRA */
-    FOR idx IN 1..vr_qtarqdir LOOP
-        
-      --Criar SavePoint 
-      SAVEPOINT save_trans_crawarq;
-        
-      --Bloco para permitir pular para proximo arquivo
       BEGIN
-        /**** DESCRIPTOGRAFA O ARQUIVO ****/
-        -- Comando para descriptografar arquivo
-        vr_comando:= vr_dscomora || ' perl_remoto ' ||vr_dsdirbin||
-                     'mqcecred_descriptografa.pl --descriptografa='||
-                     chr(39)|| vr_nmdireto_integra ||'/'||vr_tab_crawarq(idx)||chr(39);
-                                                                   
-        -- Enviar detalhamento do erro ao LOG (Temporario)
-        CECRED.pc_log_programa(pr_dstiplog => 'O'
-                       , pr_cdprograma => pr_cdprogra
-                       , pr_cdcooper => pr_cdcooper
-                       , pr_tpexecucao => 0
-                       , pr_tpocorrencia => 4
-                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                           pr_cdprogra || 
-                                           'Vai efetuar a descriptografia do arquivo: ' ||
-                                                      vr_tab_crawarq(idx))
-                       , pr_idprglog => vr_idprglog);
-                       
-                                                                                                                    
-        --Executar o comando no unix
-        GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                              ,pr_des_comando => vr_comando
-                              ,pr_typ_saida   => vr_typ_saida
-                              ,pr_des_saida   => vr_nmarqcri);
-         
-        --Se ocorreu erro dar RAISE
-        IF vr_typ_saida = 'ERR' THEN
-            
-          vr_dscritic:= 'Nao foi possivel executar comando unix: '||
-                        vr_comando||' - '||vr_nmarqcri;
-                          
-          -- retornando ao programa chamador
-          RAISE vr_exc_erro;
-        END IF;
-          
-        
-        -- Enviar detalhamento do erro ao LOG (Temporario)
-        CECRED.pc_log_programa(pr_dstiplog => 'O'
-                       , pr_cdprograma => pr_cdprogra
-                       , pr_cdcooper => pr_cdcooper
-                       , pr_tpexecucao => 0
-                       , pr_tpocorrencia => 4
-                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                           pr_cdprogra || 
-                                           'Descriptografia efetuada: '||
-                                                      vr_nmarqcri)
-                       , pr_idprglog => vr_idprglog);
-                       
-         
-                                                      
-          
-        --Retirar caracteres ENTER e LF do nome do arquivo
-        vr_nmarqcri:= REPLACE(REPLACE(vr_nmarqcri,chr(10),''),chr(13),'');
-          
-        /* Obtem arquivo temporario descriptografado / com .dcrypt no fim */
-        IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_nmarqcri) THEN  
-            
-          --Se Existir o arquivo original
-          IF gene0001.fn_exis_arquivo(pr_caminho => vr_nmdireto_integra||'/'||vr_tab_crawarq(idx)) THEN
-
-            --Montar Mensagem
-            vr_dscritic:= 'Arquivo descriptografado nao encontrado. Arquivo: '||vr_tab_crawarq(idx); 
-            
-            --Escrever No LOG
-            btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
-                                                           ' - ' || pr_cdprogra || ' --> ' || 
-                                                           'ERRO: ' || vr_dscritic
-                                      ,pr_cdprograma   => pr_cdprogra
-                                                          );
-          END IF;          
-                                                
-          --Proximo Arquivo
-          RAISE vr_exc_proximo;  
-          
-        END IF;
-            
-        /* Importar arquivo XML recebido no formato XMLType */
-        gene0002.pc_arquivo_para_xml (pr_nmarquiv => vr_nmarqcri    --> Nome do caminho completo) 
-                                     ,pr_xmltype  => vr_XML         --> Saida para o XML
-                                     ,pr_des_reto => vr_des_reto    --> Descrição OK/NOK
-                                     ,pr_dscritic => vr_dscritic);  --> Descricao Erro 
-
-        --Se Ocorreu erro
-        IF vr_des_reto = 'NOK' THEN
-          --Escrever No LOG
-          btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
-                                                        ' - ' || pr_cdprogra || ' --> ' || 
-                                                        'ERRO: ' || vr_dscritic ||
-                                                        ' ,Erro ao processar arquivo '||vr_nmarqcri
-                                    ,pr_cdprograma   => pr_cdprogra
-                                                        ); 
-          --Proximo Registro
-          RAISE vr_exc_proximo;
-          
-        END IF;                               
-                                    
-        -- Enviar detalhamento do erro ao LOG (Temporario)
-        CECRED.pc_log_programa(pr_dstiplog => 'O'
-                       , pr_cdprograma => pr_cdprogra
-                       , pr_cdcooper => pr_cdcooper
-                       , pr_tpexecucao => 0
-                       , pr_tpocorrencia => 4
-                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                           pr_cdprogra || 
-                                           'Coletando informacoes do arquivo: '||
-                                                      vr_nmarqcri)
-                       , pr_idprglog => vr_idprglog);
-                       
-         
-                                                      
-                                                      
-                                                                        
-        /**** FIM - DESCRIPTOGRAFA O ARQUIVO ****/
-                    
         /* Validacao do Cabecalho - Se eh o DadosBeneficioINSS */
-          
-        vr_xmldoc:= xmldom.newDOMDocument(vr_XML);
+      vr_xmldoc:= xmldom.newDOMDocument(pr_xmlmensg);
           
         --Lista de nodos
         vr_lista_nodo:= xmldom.getElementsByTagName(vr_xmldoc,'DadosBeneficioINSS');
@@ -5936,74 +5722,6 @@ create or replace package body cecred.INSS0001 as
           END LOOP; --> Fim Loop Beneficiario
         END LOOP; --> Fim Loop DadosBeneficioINSS
           
-        /******************* VALIDACAO DOS DADOS XML *******************/
-
-
-        -- Enviar detalhamento do erro ao LOG (Temporario)
-        CECRED.pc_log_programa(pr_dstiplog => 'O'
-                       , pr_cdprograma => pr_cdprogra
-                       , pr_cdcooper => pr_cdcooper
-                       , pr_tpexecucao => 0
-                       , pr_tpocorrencia => 4
-                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                           pr_cdprogra || 
-                                           'Informacoes coletadas: '||
-                                                      vr_nmarqcri)
-                       , pr_idprglog => vr_idprglog);
-                       
-         
-                                                      
-        
-        -- Enviar detalhamento do erro ao LOG (Temporario)
-        CECRED.pc_log_programa(pr_dstiplog => 'O'
-                       , pr_cdprograma => pr_cdprogra
-                       , pr_cdcooper => pr_cdcooper
-                       , pr_tpexecucao => 0
-                       , pr_tpocorrencia => 4
-                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                           pr_cdprogra || 
-                                           'Remove arquivo descriptografado: '||
-                                                      vr_nmarqcri)
-                       , pr_idprglog => vr_idprglog);
-                       
-         
-                                                                                                    
-        /* Remove o arquivo descriptografado */
-        vr_comando:= 'rm '||vr_nmarqcri||' 2> /dev/null';
-          
-        --Executar o comando no unix
-        GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                              ,pr_des_comando => vr_comando
-                              ,pr_typ_saida   => vr_typ_saida
-                              ,pr_des_saida   => vr_dscritic);
-                                
-        --Se ocorreu erro dar RAISE
-        IF vr_typ_saida = 'ERR' THEN
-            
-          vr_dscritic:= 'Nao foi possivel executar comando unix: '||vr_comando;
-            
-          -- retornando ao programa chamador
-          RAISE vr_exc_erro;
-            
-        END IF;
-    
-        
-        -- Enviar detalhamento do erro ao LOG (Temporario)
-        CECRED.pc_log_programa(pr_dstiplog => 'O'
-                       , pr_cdprograma => pr_cdprogra
-                       , pr_cdcooper => pr_cdcooper
-                       , pr_tpexecucao => 0
-                       , pr_tpocorrencia => 4
-                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
-                                           pr_cdprogra || 
-                                           'Arquivo descriptografado removido com sucesso: '||
-                                                      vr_nmarqcri)
-                       , pr_idprglog => vr_idprglog);
-                       
-                       
-         
-                                                      
-    
         /* Realiza as validações e o pagamento do beneficio */
         --------------
         pc_proces_pagto_benef_inss (pr_cdcooper        => pr_cdcooper       -- Codigo da Cooperativa
@@ -6020,12 +5738,14 @@ create or replace package body cecred.INSS0001 as
                                    ,pr_tab_rejeicoes   => vr_tab_rejeicoes  -- Tabela de Rejeicoes
                                    ,pr_proc_aut        => 1                 -- Essa procedure esta apenas no CRPS, e é executado com os arquivos do MQ
                                    -- Arquivo e Diretorio
-                                   ,pr_nmarquiv         => vr_tab_crawarq(idx) -- Nome do arquivo
-                                   ,pr_nmdireto_integra => vr_nmdireto_integra -- Diretorio Integra
+                                 ,pr_nmarquiv         => pr_nmarquiv      -- Nome do arquivo
+                                 ,pr_nmdireto_integra => null             -- Diretorio do Arquivo (Não existe)
+                                 -- XML de mensagem a retornar
+                                 ,pr_xmlretor        => pr_xmlretor       -- retorno da mensagem XML gerada
                                    -- Erros
                                    ,pr_tpdiverg        => vr_tpdiverg         -- Tipo da Divergencia
                                    ,pr_cod_reto        => vr_cod_reto         -- Retorno (0-OK/1-NOK/2-Divergencia/3-Ignorar Registro)
-                                   ,pr_tab_erro        => pr_tab_erro);       -- Tabela Erros
+                                 ,pr_tab_erro        => vr_tab_erro);       -- Tabela Erros
           
         
         CASE vr_cod_reto
@@ -6042,7 +5762,7 @@ create or replace package body cecred.INSS0001 as
             RAISE vr_exc_diverg;
           
           WHEN 3 THEN 
-            -- Se for ignorar o arquivo, ececuta rollback
+          -- Se for ignorar o arquivo, executa rollback
             RAISE vr_exc_proximo;
         END CASE;
         ---------------
@@ -6050,94 +5770,98 @@ create or replace package body cecred.INSS0001 as
       EXCEPTION
         WHEN vr_exc_proximo THEN
           -- Desfazer transacao
-          ROLLBACK to SAVEPOINT save_trans_crawarq;
+        ROLLBACK;
         WHEN vr_exc_diverg THEN
           -- Desfazer transacao
-          ROLLBACK to SAVEPOINT save_trans_crawarq;
+        ROLLBACK;
       END; --Exception    
       
-    END LOOP; --1..vr_tab_crawarq.COUNT  
-
-    --Se nao processou nenhum arquivo
-    IF NOT vr_flgproces THEN
-      
-      --Retornar OK
-      pr_des_reto:= 'OK';
-      
-      --Retornar para programa chamador
-      RETURN;
-      
+    -- Se possuir arquivo com erro ou rejeicoes gerar relatorio
+    IF (vr_tab_arquivos.COUNT + vr_tab_rejeicoes.COUNT) > 0 THEN      
+      -- Iterar sob as tabelas de rejeição e gravá-las em banco
+      vr_index_arq1:= vr_tab_arquivos.FIRST;      
+      WHILE vr_index_arq1 IS NOT NULL LOOP
+        -- Gravar em banco    
+        BEGIN
+          INSERT INTO tbgen_batch_relatorio_wrk rel
+                      (cdcooper
+                      ,dtmvtolt
+                      ,dsrelatorio
+                      ,cdagenci
+                      ,dschave
+                      ,dscritic)
+                VALUES(vr_tab_arquivos(vr_index_arq1).cdcooper
+                      ,SYSDATE
+                      ,'tab_arquivos'
+                      ,vr_tab_arquivos(vr_index_arq1).cdagenci
+                      ,vr_tab_arquivos(vr_index_arq1).nmarquiv
+                      ,vr_tab_arquivos(vr_index_arq1).dsstatus);
+        EXCEPTION 
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao alimentar tabela de arquivos com exceção: '||SQLERRM;
+            RAISE vr_Exc_erro;
+        END;
+        -- Proximo Registro
+        vr_index_arq1:= vr_tab_arquivos.NEXT(vr_index_arq1);
+      END LOOP;
+      -- Rejeições
+      vr_index_arq2:= vr_tab_rejeicoes.FIRST;      
+      WHILE vr_index_arq2 IS NOT NULL LOOP
+        -- Gravar em banco    
+        BEGIN
+          INSERT INTO tbgen_batch_relatorio_wrk rel
+                      (cdcooper
+                      ,dtmvtolt
+                      ,dsrelatorio
+                      ,cdagenci
+                      ,nrdconta
+                      ,dschave
+                      ,dtvencto
+                      ,vldpagto
+                      ,vltitulo
+                      ,dscritic)
+                VALUES(vr_tab_rejeicoes(vr_index_arq2).cdcooper
+                      ,SYSDATE
+                      ,'tab_rejeitos'
+                      ,vr_tab_rejeicoes(vr_index_arq2).cdagenci
+                      ,vr_tab_rejeicoes(vr_index_arq2).nrdconta
+                      ,vr_tab_rejeicoes(vr_index_arq2).nmrecben
+                      ,vr_tab_rejeicoes(vr_index_arq2).dtinipag
+                      ,vr_tab_rejeicoes(vr_index_arq2).nrrecben
+                      ,vr_tab_rejeicoes(vr_index_arq2).vllanmto
+                      ,vr_tab_rejeicoes(vr_index_arq2).dscritic);
+        EXCEPTION 
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao alimentar tabela de arquivos com exceção: '||SQLERRM;
+            RAISE vr_Exc_erro;
+        END;
+        -- Proximo Registro
+        vr_index_arq2:= vr_tab_rejeicoes.NEXT(vr_index_arq2);
+      END LOOP;   
+      -- GRavar no banco
+      COMMIT;
     END IF;
     
-    --Se possuir arquivos processados e arquivo com erro ou rejeicoes gerar relatorio
-    IF vr_flgproces AND (vr_tab_arquivos.COUNT + vr_tab_rejeicoes.COUNT) > 0 THEN
-       
-      --Gerar relatorio Rejeicoes
-      inss0001.pc_gera_relatorio_rejeic (pr_cdcooper      => pr_cdcooper      --Codigo Cooperativa
-                                        ,pr_dtmvtolt      => pr_dtmvtolt      --Data movimento
-                                        ,pr_cdprogra      => pr_cdprogra      --Codigo Programa
-                                        ,pr_tab_arquivos  => vr_tab_arquivos  --Tabela de Arquivos
-                                        ,pr_tab_rejeicoes => vr_tab_rejeicoes --Tabela de Rejeicoes
-                                        ,pr_dscritic      => vr_dscritic);    --Descricao Erro
-                                        
-      --Se ocorreu erro
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;  
-    END IF; 
-  
-    --Limpar tabelas de memoria
-    pc_limpa_tabela;    
-                                              
-    --Retornar OK
-    pr_des_reto:= 'OK';  
-    
   EXCEPTION
-    WHEN vr_exc_saida THEN
-      
-      --Limpar tabelas de memoria
-      pc_limpa_tabela;    
-      
-      --Nao possui arquivos para processar. Registra no LOG e retorna OK
-      pr_des_reto:= 'OK';
-      
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
-                                                        ' - ' || pr_cdprogra || ' --> ' || 
-                                                        'ERRO: ' || vr_dscritic
-                                ,pr_cdprograma   => pr_cdprogra
-                                                );
-                                                
     WHEN vr_exc_erro THEN
+      -- Desfazer alterações
+      rollback;
       -- Retorno não OK
-      pr_des_reto:= 'NOK';
-      
-      -- Chamar rotina de gravação de erro
-      gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                           ,pr_cdagenci => pr_cdagenci
-                           ,pr_nrdcaixa => pr_nrdcaixa
-                           ,pr_nrsequen => 1 --> Fixo
-                           ,pr_cdcritic => vr_cdcritic
-                           ,pr_dscritic => vr_dscritic
-                           ,pr_tab_erro => pr_tab_erro);
+      if vr_cdcritic > 0 and vr_dscritic is null then
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      end if;
+      -- Retornar
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
-      -- Retorno não OK
-      pr_des_reto:= 'NOK';
-      
+      -- Desfazer alterações
+      rollback;
       -- Chamar rotina de gravação de erro
+      vr_cdcritic := 0;
       vr_dscritic := 'Erro na pc_benef_inss_proces_pagto --> '|| SQLERRM;
-      
-      gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                           ,pr_cdagenci => pr_cdagenci
-                           ,pr_nrdcaixa => pr_nrdcaixa
-                           ,pr_nrsequen => 1 --> Fixo
-                           ,pr_cdcritic => vr_cdcritic
-                           ,pr_dscritic => vr_dscritic
-                           ,pr_tab_erro => pr_tab_erro);
-    
+      -- Retornar
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;    
   END pc_benef_inss_proces_pagto;  
     
   /* Procedure para gerar o cabecalho Soap */
@@ -6270,11 +5994,11 @@ create or replace package body cecred.INSS0001 as
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_des_reto:= 'NOK';
-        pr_dscritic:= 'Erro na inss0001.pc_gera_cabecalho_soap. '||pr_dscritic;
+        pr_dscritic:= 'Erro na INSS0001.pc_gera_cabecalho_soap. '||pr_dscritic;
       
       WHEN OTHERS THEN
         pr_des_reto:= 'NOK';
-        pr_dscritic:= 'Erro na inss0001.pc_gera_cabecalho_soap. '||sqlerrm;
+        pr_dscritic:= 'Erro na INSS0001.pc_gera_cabecalho_soap. '||sqlerrm;
     END;     
   END pc_gera_cabecalho_soap;                                     
 
@@ -18474,7 +18198,7 @@ create or replace package body cecred.INSS0001 as
   Sistema  : Conta-Corrente - Cooperativa de Credito
   Sigla    : CRED
   Autor    : Douglas Quisinski
-  Data     : Setembro/2015                         Ultima atualizacao: 21/06/2016
+  Data     : Setembro/2015                         Ultima atualizacao: 27/09/2018
   
   Dados referentes ao programa:
   
@@ -18493,6 +18217,10 @@ create or replace package body cecred.INSS0001 as
                              
                21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                            (Adriano - SD 473539).           
+                           
+               27/09/2018 - Reestruturação Benefícios INSS - Não mais varrer diretório, mas receber via
+                            parâmetro o XML para Processar e devolver outro XML - Andreatta - Mouts            
+                                  
   -------------------------------------------------------------------------------------------------------------*/
 
     -- Busca dos dados da cooperativa pela agencia sicredi
@@ -18537,6 +18265,8 @@ create or replace package body cecred.INSS0001 as
     --Variaveis para Indices temp-tables      
     vr_index_creditos PLS_INTEGER;
     vr_index_erro     PLS_INTEGER;
+    vr_index_arq1     PLS_INTEGER;
+    vr_index_arq2     PLS_INTEGER;
     
     --Tabela de Agencias
     vr_tab_crapage   INSS0001.typ_tab_crapage;
@@ -18558,6 +18288,8 @@ create or replace package body cecred.INSS0001 as
     TYPE typ_tab_coop IS TABLE OF crapcop.cdcooper%type INDEX BY PLS_INTEGER;
     vr_tab_coop_err typ_tab_coop;
 
+    -- XML de retorno, não usado nesta rotina
+    vr_xmlretor xmlType;
     
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -18783,7 +18515,9 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_proc_aut        => 0                 -- Essa procedure esta apenas no CRPS, e é executado com os arquivos do MQ
                                      -- Arquivo e Diretorio
                                      ,pr_nmarquiv         => pr_nmarquiv      -- Nome do arquivo
-                                     ,pr_nmdireto_integra => vr_nmdireto      -- Diretorio do Arquivo
+                                     ,pr_nmdireto_integra => vr_nmdireto||'/' -- Diretorio do Arquivo
+                                     -- XML de mensagem a retornar
+                                     ,pr_xmlretor        => vr_xmlretor       -- retorno
                                      -- Erros
                                      ,pr_tpdiverg        => vr_tpdiverg       -- Tipo da Divergencia
                                      ,pr_cod_reto        => vr_cod_reto       -- Retorno (0-OK/1-NOK/2-Divergencia/3-Ignorar Registro)
@@ -18837,19 +18571,70 @@ create or replace package body cecred.INSS0001 as
     --Se rejeicoes gerar relatorio
     IF vr_tab_rejeicoes.COUNT > 0 THEN
        
-      --Gerar relatorio Rejeicoes
-      inss0001.pc_gera_relatorio_rejeic (pr_cdcooper      => pr_cdcooper      --Codigo Cooperativa
-                                        ,pr_dtmvtolt      => TRUNC(SYSDATE)   --Data movimento
-                                        ,pr_cdprogra      => pr_cdprogra      --Codigo Programa
-                                        ,pr_tab_arquivos  => vr_tab_arquivos  --Tabela de Arquivos
-                                        ,pr_tab_rejeicoes => vr_tab_rejeicoes --Tabela de Rejeicoes
-                                        ,pr_dscritic      => vr_dscritic);    --Descricao Erro
-                                        
-      --Se ocorreu erro
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
+      -- Iterar sob as tabelas de rejeição e gravá-las em banco
+      vr_index_arq1:= vr_tab_arquivos.FIRST;      
+      WHILE vr_index_arq1 IS NOT NULL LOOP
+        -- Gravar em banco    
+        BEGIN
+          INSERT INTO tbgen_batch_relatorio_wrk rel
+                      (cdcooper
+                      ,dtmvtolt
+                      ,dsrelatorio
+                      ,cdagenci
+                      ,dschave
+                      ,dscritic)
+                VALUES(vr_tab_arquivos(vr_index_arq1).cdcooper
+                      ,SYSDATE
+                      ,'tab_arquivos'
+                      ,vr_tab_arquivos(vr_index_arq1).cdagenci
+                      ,vr_tab_arquivos(vr_index_arq1).nmarquiv
+                      ,vr_tab_arquivos(vr_index_arq1).dsstatus);
+        EXCEPTION 
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao alimentar tabela de arquivos com exceção: '||SQLERRM;
+            RAISE vr_Exc_erro;
+        END;
+        -- Proximo Registro
+        vr_index_arq1:= vr_tab_arquivos.NEXT(vr_index_arq1);
+      END LOOP;
+      -- Rejeições
+      vr_index_arq2:= vr_tab_rejeicoes.FIRST;      
+      WHILE vr_index_arq2 IS NOT NULL LOOP
+        -- Gravar em banco    
+        BEGIN
+          INSERT INTO tbgen_batch_relatorio_wrk rel
+                      (cdcooper
+                      ,dtmvtolt
+                      ,dsrelatorio
+                      ,cdagenci
+                      ,nrdconta
+                      ,dschave
+                      ,dtvencto
+                      ,vldpagto
+                      ,vltitulo
+                      ,dscritic)
+                VALUES(vr_tab_rejeicoes(vr_index_arq2).cdcooper
+                      ,SYSDATE
+                      ,'tab_rejeitos'
+                      ,vr_tab_rejeicoes(vr_index_arq2).cdagenci
+                      ,vr_tab_rejeicoes(vr_index_arq2).nrdconta
+                      ,vr_tab_rejeicoes(vr_index_arq2).nmrecben
+                      ,vr_tab_rejeicoes(vr_index_arq2).dtinipag
+                      ,vr_tab_rejeicoes(vr_index_arq2).nrrecben
+                      ,vr_tab_rejeicoes(vr_index_arq2).vllanmto
+                      ,vr_tab_rejeicoes(vr_index_arq2).dscritic);
+        EXCEPTION 
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao alimentar tabela de arquivos com exceção: '||SQLERRM;
+            RAISE vr_Exc_erro;
+        END;
+        -- Proximo Registro
+        vr_index_arq2:= vr_tab_rejeicoes.NEXT(vr_index_arq2);
+      END LOOP;   
+      -- GRavar no banco
+      COMMIT;
       
+      -- Devolução de parâmetro
       pr_nmarqerr:= '';
       vr_index_erro:= vr_tab_coop_err.FIRST;
       WHILE vr_index_erro IS NOT NULL LOOP
