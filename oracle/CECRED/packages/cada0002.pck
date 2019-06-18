@@ -2457,6 +2457,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       CURSOR cr_crapass IS 
         SELECT ass.dtadmiss
               ,ass.cdcatego
+              ,ass.nrmatric
               ,CASE ass.cdtipcta
                   WHEN 1  THEN 'NORMAL' 
                   WHEN 2  THEN 'ESPECIAL'
@@ -2818,6 +2819,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Relatorio>"
                                                       <Dados>
                                                         <nrdconta>'||pr_nrdconta        ||'</nrdconta>
+                                                        <nrmatric>'||rw_crapass.nrmatric||'</nrmatric>
                                                         <dtabtcct>'||TO_CHAR(rw_crapass.dtadmiss,'DD/MM/YYYY')||'</dtabtcct>
                                                         <cdcatego>'||rw_crapass.cdcatego||'</cdcatego>
                                                         <dstipcta>'||rw_crapass.dstipcta||'</dstipcta>
