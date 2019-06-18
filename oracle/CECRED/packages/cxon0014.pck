@@ -13287,7 +13287,8 @@ END pc_gera_titulos_iptu_prog;
 
   BEGIN
 
-    IF  TRIM(pr_cdbarras) is null THEN
+    IF  TRIM(pr_cdbarras) IS NULL THEN
+	    pr_lindigit := NULL;
         RETURN;
     END IF;
 
