@@ -130,6 +130,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                               fazendo com que se perdesse valores. Isso por que os relatórios 635 e 636 estavam 
                               com valores totais diferentes e deveriam ser iguais. (SCTASK0014061 - Kelvin).           
 
+                 24/05/2019 - RITM0011880 - Yuri Mouts
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -676,6 +677,56 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     END IF;  
   END;
   
+  -- Subrotina para escrever texto na variável CLOB do XML
+  -- cópia da procedure da GENE0002. Feito desta forma para não alterar a GENE0002, que afeta quase todas aplicações
+  procedure pc_escreve_xml(pr_xml in out nocopy clob,  --> Variável CLOB onde será incluído o texto
+                           pr_texto_completo in out nocopy varchar2,  --> Variável para armazenar o texto até ser incluído no CLOB
+                           pr_texto_novo in varchar2,  --> Texto a incluir no CLOB
+                           pr_fecha_xml in boolean default false) is  --> Flag indicando se é o último texto no CLOB
+    /*----------------------------------------------------------
+      RITM0011880
+      Yuri - Mouts
+    ----------------------------------------------------------*/
+    procedure pc_concatena(pr_xml in out nocopy clob,
+                           pr_texto_completo in out nocopy varchar2,
+                           pr_texto_novo varchar2) is
+      -- Prodimento para concatenar os textos em um varchar2 antes de incluir no CLOB,
+      -- ganhando performance. Somente grava no CLOB quando estourar a capacidade da variável.
+    begin
+      -- Tenta concatenar o novo texto após o texto antigo (variável global da package)
+      pr_texto_completo := pr_texto_completo || pr_texto_novo;
+    exception when value_error then
+      if pr_xml is null then
+        pr_xml := pr_texto_completo;
+      else
+        dbms_lob.writeappend(pr_xml, length(pr_texto_completo), pr_texto_completo);
+        pr_texto_completo := pr_texto_novo;
+      end if;
+    end;
+    --
+  begin
+	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_escreve_xml');
+    -- se Fim de Arquivo
+    if pr_fecha_xml then
+      -- se recebeu apenas espaço para indicar fim do arquivo, então não concatena
+      if pr_texto_novo <> ' ' then
+         -- Concatena o novo texto
+         pc_concatena(pr_xml, pr_texto_completo, pr_texto_novo);
+      end if;
+    else
+      -- não é fim de arquivo
+      -- Concatena o novo texto
+      pc_concatena(pr_xml, pr_texto_completo, pr_texto_novo);
+    end if;
+    -- Se for o último texto do arquivo, inclui no CLOB
+    if pr_fecha_xml then
+      dbms_lob.writeappend(pr_xml, length(pr_texto_completo), pr_texto_completo);
+      pr_texto_completo := null;
+    end if;
+    -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+    GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
+  end;
 
   BEGIN
     -- Incluir nome do módulo logado
@@ -1674,7 +1725,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             END IF;
 
             -- Mandar comando para copiar do CLOB todo o char pendente
-            gene0002.pc_escreve_xml(vr_des_clb,vr_des_txt,' ',true);
+            -- RITM0011880
+            --gene0002.pc_escreve_xml(vr_des_clb,vr_des_txt,' ',true);
+            pc_escreve_xml(vr_des_clb,vr_des_txt,' ',true);
 
             -- Ao final, solicita a geracao do arquivo
             GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper             --> Cooperativa conectada
@@ -1783,7 +1836,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             END IF;
 
             -- Mandar comando para copiar do CLOB todo o char pendente
-            gene0002.pc_escreve_xml(vr_des_clb,vr_des_txt,' ',true);
+            -- RITM0011880
+            --gene0002.pc_escreve_xml(vr_des_clb,vr_des_txt,' ',true);
+            pc_escreve_xml(vr_des_clb,vr_des_txt,' ',true);
 
             -- Ao final, solicita a geracao do arquivo
             GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper             --> Cooperativa conectada

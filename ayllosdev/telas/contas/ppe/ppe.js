@@ -495,8 +495,9 @@ function salvarPpe() {
 					eval(response);		
 
 					if(opcao == 'A' || operacao == 'CA'){ // opcao Alterar ou for operacao CAdastro
-						imprimirDeclaracao();
-						setTimeout(acessaAbaBens, 5000); // aguardar 5 segundos para a tela nao mudar repentinamente enquanto faz a requisicao de impressao			
+						acessaAbaBens();
+						//imprimirDeclaracao();						
+						//setTimeout(acessaAbaBens, 5000); // aguardar 5 segundos para a tela nao mudar repentinamente enquanto faz a requisicao de impressao			
 					}		
 					
 					return false;
@@ -615,8 +616,9 @@ function proximaRotina () {
 						'sim.gif','nao.gif');
 	} else if(opcao == 'A' || operacao == 'CA') {
 	    if (inpolexp == 1) {
-		imprimirDeclaracao();
-		setTimeout(acessaAbaBens, 5000); // aguardar 5 segundos para a tela nao mudar repentinamente enquanto faz a requisicao de impressao					
+		//imprimirDeclaracao();
+		//setTimeout(acessaAbaBens, 5000); // aguardar 5 segundos para a tela nao mudar repentinamente enquanto faz a requisicao de impressao					
+		acessaAbaBens();
 	} else {
 		acessaAbaBens();
 	}

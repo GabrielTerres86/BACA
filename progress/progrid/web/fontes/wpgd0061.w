@@ -1292,7 +1292,7 @@ PROCEDURE CriaListaInscritos:
                   ASSIGN tt-inscritos.qtfaleve = hTextTag:NODE-VALUE WHEN xField2:NAME = "qtfaleve".
                   ASSIGN tt-inscritos.flginsin = hTextTag:NODE-VALUE WHEN xField2:NAME = "flginsin".
                   ASSIGN tt-inscritos.qtinscri = ab_unmap.aux_qtdregis.				  
-
+				  
                   VALIDATE tt-inscritos.
    
                 END. 
@@ -1441,7 +1441,7 @@ PROCEDURE EncerraMatricula:
         
         IF crapedp.tpevento = 7 OR crapedp.tpevento = 12 THEN
           DO:
-            IF (crapidp.nrficpre = 0 OR crapidp.nrficpre = ? OR STRING(crapidp.nrficpre) = "") AND crapidp.dtconins <> ? THEN
+            IF (crapidp.nrficpre = ? OR STRING(crapidp.nrficpre) = "") AND crapidp.dtconins <> ? THEN
               DO:
                 ASSIGN msg-erro = "Existem inscritos confirmados e sem número de ficha de presença informado. Encerramento não permitido".
                 RETURN "NOK".
@@ -2504,7 +2504,7 @@ PROCEDURE verificaFichaPresenca:
                  AND crapfpa.cdagefic = par_cdagenci
 								 AND crapfpa.nrseqdig = par_nrseqeve	NO-LOCK NO-ERROR NO-WAIT.
   
-	IF NOT AVAILABLE crapfpa THEN
+	IF NOT AVAILABLE crapfpa and par_nrficpre <> 0 THEN
     DO:
 			ASSIGN msg-erro-aux = 13
              msg-erro = "Ficha de Presença não cadastrada.".
@@ -2526,7 +2526,7 @@ PROCEDURE verificaFichaPresenca:
     
   END.
  	
-  IF aux_contador < 25 THEN
+  IF aux_contador < 25 or par_nrficpre = 0 THEN
     RETURN "OK".
   ELSE
     DO:

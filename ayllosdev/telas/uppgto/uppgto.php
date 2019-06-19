@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 
  * --------------
+ * 13/06/2019 - Inclusao da opcao E - Upload de TED - Anderson Schloegel - Mout's
  */
 ?>
 
@@ -92,6 +93,7 @@
 																			<? include('form_opcao_c.php'); ?>
 																			<? include('form_opcao_l.php'); ?>
 																			<? include('form_opcao_r.php'); ?>
+																			<? include('form_opcao_e.php'); ?> <!-- p500 - Mouts - Anderson Schloegel -->
 																			<div id="divTabela"></div>																			
 																			<div id="divBotoes" style="margin-top:5px; margin-bottom :10px;display:block">
 																			</div>																																				

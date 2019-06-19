@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 29/01/2019
+ * FONTE        : emprestimos.js                            Última alteração: 30/05/2019
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -158,6 +158,7 @@
 * 126: [05/02/2019] Tratamento para coluna Origem. P438. (Douglas Pagel / AMcom)
 * 127: [06/02/2019] Inclusao de controle para botoes quando for origem 3. P438. (Douglas Pagel / AMcom)
 * 128: [08/05/2019] Incluido tratamentos para autorizacao de contratos. (P470 - Bruno Luiz Katzjarowski / Mouts)
+* 129: [27/05/2019] Ajuste do Erro 269 apresentado na tela atenda/emprestimos - Gabriel Marcos (Mouts).   
 
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
@@ -4501,7 +4502,7 @@ function controlaLayout(operacao) {
         if(cInpessoa.val() == ""){
             var __cpfcnpj_conjuge = $('#nrcpfcgc', '#frmIntevAnuente').val();
             var __tipoInterv = (validaCpfCnpj(__cpfcnpj_conjuge,1) ? '1' : (validaCpfCnpj(__cpfcnpj_conjuge,'2') ? '2' : '' )); 
-            inpessoa = __tipoInterv;
+            //inpessoa = __tipoInterv;
             cInpessoa.val(__tipoInterv);
         }
 
@@ -7246,7 +7247,9 @@ function validaDados(cdcooper, tela) { //bruno - prj 438 - 14625 - TELA_SOLICITA
         var perfatcl = $('#perfatcl', '#frmDadosPropPj').val();
 
         if (perfatcl <= 0 || perfatcl > 100) {
-            return limpaMsg(false, '269 - Valor errado.');
+            //return limpaMsg(false, '269 - Valor errado.'); BUG18425
+            showError('error', 'Cadastro incompleto. Passe pela tela CONTAS.', 'Alerta - Aimaro', 'hideMsgAguardo(); divRotina.show(); encerraRotina(true);');
+            return false;
         }
 
     } else if (in_array(operacao, ['A_DADOS_PROP', 'A_DADOS_PROP'])) {

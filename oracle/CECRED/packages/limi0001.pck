@@ -303,7 +303,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   --  Sistema  : Rotinas referentes ao limite de credito
   --  Sigla    : LIMI
   --  Autor    : James Prust Junior
-  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 13/03/2018
+  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 28/05/2019
   --
   -- Dados referentes ao programa:
   --
@@ -335,6 +335,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   --              
   --             13/05/2019 - Alterado pc_ultimas_alteracoes para nos casos de CANCELADOS buscar o operador baseado na cdopeexc
   --                          no casos em que o campo nao estiver vazio PRJ 438 (Mateus Z - Mouts)
+  --
+  --             28/05/2019 - Alterado pc_carrega_dados_avais para trazer s/n no numero de endereço do avalista terceiro quando 
+  --                          não estiver preenchido e trazer dsendres##2 caso o nmbairro estiver vazio. PRJ 438 (Mateus Z - Mouts)
+  --
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_tela_cadlim_consultar(pr_inpessoa IN craprli.inpessoa%TYPE --> Codigo do tipo de pessoa
                                     ,pr_flgdepop IN INTEGER               --> Flag para verificar o departamento do operador
@@ -1267,6 +1271,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
      Frequencia:
      Objetivo  : Rotina para buscar dados doa avalistas do contrato de limite de credito
      Alteracoes: 27/01/2017 - Buscar o CPF do avalista e nao do conjuge. (Jaison/Daniel)
+                 28/05/2019 - Alterado pc_carrega_dados_avais para trazer s/n no numero de endereço do avalista terceiro quando 
+                              não estiver preenchido e trazer dsendres##2 caso o nmbairro estiver vazio.  PRJ 438 (Mateus Z - Mouts)
     ..............................................................................*/
     
     ---------->> CURSORES <<--------   
@@ -1359,7 +1365,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
             ,avt.dsendres##1 dsendres
             ,avt.nrcepend
             ,avt.nrendere
-            ,avt.nmbairro
+            ,(case when length(avt.nmbairro) > 1 then avt.nmbairro else avt.dsendres##2 end) nmbairro
             ,avt.nmcidade
             ,avt.cdufresd
             ,avt.tpdocava
@@ -1537,12 +1543,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 	  END IF;
 			
       vr_tab_avais_ctr(vr_idxavais).dsdocava := rw_crapavt.tpdocava ||': '|| rw_crapavt.nrdocava;  
-      IF rw_crapavt.nrendere > 0 THEN
       
-        vr_tab_avais_ctr(vr_idxavais).dsendava := substr(rw_crapavt.dsendres,1,32) || ', ' || to_char(rw_crapavt.nrendere,'fm999G999G999')||', '||
+      vr_tab_avais_ctr(vr_idxavais).dsendava := substr(rw_crapavt.dsendres,1,32) || ', ' || 
+                                                case when rw_crapavt.nrendere > 0 then to_char(rw_crapavt.nrendere,'fm999G999G999') else 's/n' end ||', '||
                                                   rw_crapavt.nmbairro || ', ' || gene0002.fn_mask_cep(rw_crapavt.nrcepend) ||' - '||
                                                   rw_crapavt.nmcidade || '/'  || rw_crapavt.cdufresd || '.';
-      END IF;
       
 		  IF pr_nrvrsctr = 1 THEN								      
       vr_tab_avais_ctr(vr_idxavais).nmconjug := nvl(TRIM(rw_crapavt.nmconjug),lpad('_',40,'_'));

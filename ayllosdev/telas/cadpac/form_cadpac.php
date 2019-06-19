@@ -178,6 +178,14 @@
                         
                         <br clear="all" />
                         <br clear="all" />
+                        <label for="dtabertu">Dt Abertura:</label>
+                        <input type="text" id="dtabertu" name="dtabertu" />
+						
+						<label for="dtfechto">Dt Fechamento:</label>
+                        <input type="text" id="dtfechto" name="dtfechto" />
+
+                        <br clear="all" />
+                        <br clear="all" />
                     </div>
 
                     <div id="divAba1" class="clsAbas">

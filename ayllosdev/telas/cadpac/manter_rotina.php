@@ -114,6 +114,8 @@
     $nrlongit = (isset($_POST['nrlongit'])) ? $_POST['nrlongit'] : '';
 	$flmajora = (isset($_POST['flmajora'])) ? $_POST['flmajora'] : '';
     $vllimpag = (isset($_POST['vllimpag'])) ? converteFloat($_POST['vllimpag']) : '';
+	$dtabertu = (isset($_POST['dtabertu'])) ? $_POST['dtabertu'] : '';
+	$dtfechto = (isset($_POST['dtfechto'])) ? $_POST['dtfechto'] : '';
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
         exibirErro('error',$msgError,'Alerta - Ayllos','',false);
@@ -221,6 +223,8 @@
         $dsmensag = 'Dados gravados com sucesso!';
 	} else { // Inclusao/Alteracao
 	    $xml .= "   <flmajora>".$flmajora."</flmajora>";
+		$xml .= "   <dtabertu>".$dtabertu."</dtabertu>";
+		$xml .= "   <dtfechto>".$dtfechto."</dtfechto>";
         $nmdeacao = 'CADPAC_GRAVA';
         $dsmensag = 'PA '.($cddopcao == 'I' ? 'inclu&iacute;do' : 'alterado').' com sucesso!';
     }

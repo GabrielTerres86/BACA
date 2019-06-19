@@ -4379,7 +4379,6 @@ PROCEDURE Exclui_Dados:
     DEF VAR aux_tpatlcad AS INT                                     NO-UNDO.
     DEF VAR aux_msgatcad AS CHAR                                    NO-UNDO.
     DEF VAR aux_chavealt AS CHAR                                    NO-UNDO.   
-    DEF VAR aux_cdorgexp AS CHAR                                    NO-UNDO.   
 
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
 
@@ -4513,19 +4512,6 @@ Exclui: DO TRANSACTION
                             crapcrl.idseqmen = crapavt.nrctremp
                             NO-LOCK:
                      
-                       /* Retornar orgao expedidor */
-                       IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
-                              RUN sistema/generico/procedures/b1wgen0052b.p 
-                                  PERSISTENT SET h-b1wgen0052b.
-
-                       ASSIGN aux_cdorgexp = "".
-                       RUN busca_org_expedidor IN h-b1wgen0052b 
-                                             ( INPUT crapcrl.idorgexp,
-                                              OUTPUT aux_cdorgexp,
-                                              OUTPUT aux_cdcritic, 
-                                              OUTPUT aux_dscritic).
-
-                       DELETE PROCEDURE h-b1wgen0052b.   
 
                        IF  RETURN-VALUE = "NOK" THEN
                        DO:
@@ -4554,7 +4540,7 @@ Exclui: DO TRANSACTION
                                             INPUT crapcrl.nmrespon,
                                             INPUT crapcrl.tpdeiden,
                                             INPUT crapcrl.nridenti,
-                                            INPUT aux_cdorgexp,
+                                            INPUT "",
                                             INPUT crapcrl.cdufiden,
                                             INPUT crapcrl.dtemiden,
                                             INPUT crapcrl.dtnascin,

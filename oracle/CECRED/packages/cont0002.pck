@@ -57,6 +57,7 @@ CREATE OR REPLACE PACKAGE CECRED.cont0002 IS
 
 
   PROCEDURE pc_processa_arquivo_bancoob(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                       ,pr_dtmvtolt IN  DATE    
                                        ,pr_cdcritic OUT NUMBER                --> Desc. da crítica
                                        ,pr_dscritic OUT VARCHAR2);
 
@@ -95,11 +96,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                 Processamento dos ajustes solicitado no Projeto 421 - Melhorias nas
                 ferramentas contabeis e fiscais.
 
-    Alteracoes:
+    Alteracoes:  RITM0011945 - Gabriel (Mouts) 15/04/2019 - Adicionado campo dtmvtolt
 
   ********************************************************************************/
 
   PROCEDURE pc_processa_arquivo_bancoob(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                       ,pr_dtmvtolt IN  DATE                           
                                        ,pr_cdcritic OUT NUMBER                --> Desc. da crítica
                                        ,pr_dscritic OUT VARCHAR2) is
 
@@ -207,7 +209,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
   begin
     BEGIN
       --arquivos a serem listados
-      vr_nomedarq := '756-2011%TRANSACOES_CEXT'||to_char(SYSDATE,'RRRR-MM-DD')||'.CSV';
+      --vr_nomedarq := '756-2011%TRANSACOES_CEXT'||to_char(SYSDATE,'RRRR-MM-DD')||'.CSV';
+      -- RITM0011945
+      vr_nomedarq := '756-2011%TRANSACOES_CEXT'||to_char(pr_dtmvtolt + 1,'RRRR-MM-DD')||'.CSV';
 
       vr_nmdircop := gene0001.fn_diretorio(pr_tpdireto => 'M'
                                           ,pr_cdcooper => pr_cdcooper
@@ -219,7 +223,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                                 ,pr_des_erro => vr_dscritic);
 
       vr_tab_nmarqtel := gene0002.fn_quebra_string(vr_dslisarq);
-
 
       -- interar arquivos
       FOR idx IN 1..vr_tab_nmarqtel.count() LOOP
@@ -265,7 +268,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
 
            CLOSE cr_crapcop;
 
+           -- Se for nulo pega data do nome do arquivo.
+           -- Caso tela nao informe data ou for pelo job.
+           IF pr_dtmvtolt IS NULL THEN
            vr_dtmvtolt := to_date(REPLACE(SUBSTR(vr_tab_nmarqtel(idx),LENGTH(vr_tab_nmarqtel(idx))-13,10),'-',''),'yyyymmdd') - 1;
+           -- Caso tela informe a data ignoramos a data do nome do arq.
+           -- E utilizamos a data informada no label.
+           ELSE 
+             vr_dtmvtolt := pr_dtmvtolt;
+           END IF;                 
 
            vr_tot_neg := 0;
            vr_tot_pos := 0;
@@ -1202,6 +1213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
       CLOSE btch0001.cr_crapdat;
 
       pc_processa_arquivo_bancoob(pr_cdcooper => vr_cdcooper
+                                 ,pr_dtmvtolt => NULL      
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
 
