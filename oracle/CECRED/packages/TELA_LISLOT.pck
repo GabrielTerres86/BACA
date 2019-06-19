@@ -1,4 +1,4 @@
-create or replace package cecred.TELA_LISLOT is
+CREATE OR REPLACE PACKAGE CECRED.TELA_LISLOT IS
 
   /*Programa: visualização de detalhes da contab. do prejuízo na Lislot
     Sistema : contab. do prejuízo na Lislot
@@ -28,20 +28,23 @@ create or replace package cecred.TELA_LISLOT is
                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                    ,pr_des_erro OUT VARCHAR2);
                                                                         
-end TELA_LISLOT;
+END TELA_LISLOT;
 /
-create or replace package body cecred.TELA_LISLOT is
+CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LISLOT IS
 
   /*..............................................................................
 
      Sistema : contab. do prejuízo na Lislot
      Sigla   : CRED
      Autor   : Fabio Adriano
-     Data    : Agosto/2018                       Ultima atualizacao: 
+     Data    : Agosto/2018                       Ultima atualizacao: 07/06/2019
 
      Frequencia: Sempre que for chamado
 
-     Alteracoes: */
+     Alteracoes:  07/06/2019 - P450 - Tratamento historicos 2970 e 2971 e Prejuizo 
+                                      (Guilherme/AMcom)
+     
+     */
      
 
 /*Procedure para visualização de detalhes da contab. do prejuízo na Lislot*/

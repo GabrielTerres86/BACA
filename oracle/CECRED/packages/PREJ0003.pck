@@ -672,7 +672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                prj.vljuprej +
                    prj.vljur60_ctneg +
                    prj.vljur60_lcred +
-           prej0003.fn_juros_remun_prov(prj.cdcooper, prj.nrdconta) + 
+           PREJ0003.fn_juros_remun_prov(prj.cdcooper, prj.nrdconta) +
            nvl(sld.vliofmes, 0) saldo
           FROM tbcc_prejuizo prj
          , crapsld sld
@@ -3640,28 +3640,28 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
         END IF;
 
         IF vr_vljur60_lcred > 0 THEN
-            BEGIN
-          UPDATE  TBCC_PREJUIZO tbprj
-          SET tbprj.vljur60_lcred = tbprj.vljur60_lcred - vr_vljur60_lcred
-          WHERE tbprj.rowid = rw_contaprej.rowid;
-       EXCEPTION
-           WHEN OTHERS THEN
-             vr_cdcritic:=0;
-             vr_dscritic := 'Erro ao atualizar Juros60 - TBCC_PREJUIZO:'||SQLERRM;
-           RAISE vr_exc_saida;
-       END;
+           BEGIN
+             UPDATE tbcc_prejuizo tbprj
+                SET tbprj.vljur60_lcred = tbprj.vljur60_lcred - vr_vljur60_lcred
+              WHERE tbprj.rowid = rw_contaprej.rowid;
+           EXCEPTION
+             WHEN OTHERS THEN
+               vr_cdcritic := 0;
+               vr_dscritic := 'Erro ao atualizar Juros60 - TBCC_PREJUIZO:' || SQLERRM;
+               RAISE vr_exc_saida;
+           END;
         END IF;
 
         IF vr_vljupre > 0 THEN
             BEGIN
-                UPDATE  TBCC_PREJUIZO tbprj
-                SET   tbprj.vljuprej = tbprj.vljuprej - vr_vljupre
-                WHERE tbprj.rowid = rw_contaprej.rowid;
+              UPDATE tbcc_prejuizo tbprj
+                 SET tbprj.vljuprej = tbprj.vljuprej - vr_vljupre
+               WHERE tbprj.rowid = rw_contaprej.rowid;
             EXCEPTION
-                 WHEN OTHERS THEN
-                     vr_cdcritic:= 0;
-                     vr_dscritic := 'Erro ao atualizar valor de Juros Remuneratórios - TBCC_PREJUIZO:'||SQLERRM;
-                 RAISE vr_exc_saida;
+              WHEN OTHERS THEN
+                vr_cdcritic := 0;
+                vr_dscritic := 'Erro ao atualizar valor de Juros Remuneratórios - TBCC_PREJUIZO:' || SQLERRM;
+                RAISE vr_exc_saida;
             END;
         END IF;
 
@@ -3675,23 +3675,30 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 
       IF nvl(vr_vlprinc,0) <> 0 THEN
 
-      -- Valor pago do saldo devedor principal do prejuízo
-      pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
-                             , pr_nrdconta => pr_nrdconta
-                             , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                             , pr_cdhistor => 2725
-                             , pr_idprejuizo => rw_contaprej.idprejuizo
-                             , pr_vllanmto => vr_vlprinc
-                             , pr_dthrtran => vr_dthrtran
-                             , pr_cdcritic => vr_cdcritic
-                             , pr_dscritic => vr_dscritic);
+        -- Valor pago do saldo devedor principal do prejuízo
+        pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
+                               , pr_nrdconta => pr_nrdconta
+                               , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                               , pr_cdhistor => 2725
+                               , pr_idprejuizo => rw_contaprej.idprejuizo
+                               , pr_vllanmto => vr_vlprinc
+                               , pr_dthrtran => vr_dthrtran
+                               , pr_cdcritic => vr_cdcritic
+                               , pr_dscritic => vr_dscritic);
 
-      -- Atualiza o saldo devedor, descontando o valor pago
-      UPDATE tbcc_prejuizo prj
-         SET prj.vlsdprej = prj.vlsdprej - vr_vlprinc
-       WHERE prj.rowid = rw_contaprej.rowid;
-         
-    END IF;
+        BEGIN
+          -- Atualiza o saldo devedor, descontando o valor pago
+          UPDATE tbcc_prejuizo prj
+             SET prj.vlsdprej = prj.vlsdprej - vr_vlprinc
+           WHERE prj.rowid = rw_contaprej.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao atualizar valor Saldo Devedor - TBCC_PREJUIZO:' || SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+
+      END IF;
     END IF;
 
     vr_valrpago := vr_valrpago + vr_vlprinc;
@@ -3747,10 +3754,16 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
           RAISE vr_exc_saida;
         END IF;
 
-
-      UPDATE tbcc_prejuizo
-         SET vlrabono = nvl(vlrabono, 0) + pr_vlrabono
-       WHERE ROWID = rw_contaprej.rowid;
+      BEGIN
+        UPDATE tbcc_prejuizo
+           SET vlrabono = nvl(vlrabono, 0) + pr_vlrabono
+         WHERE ROWID = rw_contaprej.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao atualizar valor Abono - TBCC_PREJUIZO:' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
     END IF;
 
     IF pr_vlrpagto > 0 AND pr_vlrpagto > vr_vliofpag THEN
@@ -3777,9 +3790,16 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_dscritic => vr_dscritic);
     END IF;
 
+    BEGIN
     UPDATE tbcc_prejuizo
        SET vlpgprej = nvl(vlpgprej, 0) + least(vr_valrpago, pr_vlrpagto)
      WHERE ROWID = rw_contaprej.rowid;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao atualizar valor Pagp Prejuizo - TBCC_PREJUIZO:' || SQLERRM;
+        RAISE vr_exc_saida;
+    END;
 
     IF pr_atsldlib = 1 THEN
             -- Desconta o valor total do pagamento efetuado do saldo disponível para operações na C/C
