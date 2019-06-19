@@ -238,6 +238,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     --                          Ajuste na procedure "pc_pagar_IOF_contrato_conta" para evitar lançamento com valor "zero".
     --                          (Reginaldo/AMcom - P450)
   --
+  --             19/03/2019 - Ajuste na rotina "pc_pagar_contrato_emprestimo" para debitar corretamente da conta transitória
+  --                          o valor pago no contrato de empréstimo, caso a conta esteja em prejuízo.
+  --                          (Reginaldo/AMcom - P450)	
+  --
+  --              25/04/2019 - Ajuste na "pc_pagar_contrato_acordo" para inclusão de lançamentos com os históricos 2970 e 2971
+  --                           em substituição aos históricos 2193  e 2194 (bloqueio/desbloqueio de acordo) quando a conta estiver 
+  --                           em prejuízo. Os novos históricos são lançados na tabela TBCC_PREJUIZO_DETALHE, diferente dos 
+  --                           históricos originais que são lançados na CRAPLCM.
+  --                           (Reginaldo/AMcom - P450)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -1430,10 +1439,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     
     vr_des_reto        VARCHAR2(10);
     vr_tab_erro        GENE0001.typ_tab_erro;
-        vr_tab_parcelas    EMPR0011.typ_tab_parcelas;
-		vr_tab_calculado   empr0011.typ_tab_calculado;
-        vr_tab_parc_compe  EMPR0011.typ_tab_parcelas;
-        vr_tab_price       empr0011.typ_tab_price;
+    vr_tab_parcelas    EMPR0011.typ_tab_parcelas;
+	vr_tab_calculado   empr0011.typ_tab_calculado;
+    vr_tab_parc_compe  EMPR0011.typ_tab_parcelas;
+    vr_tab_price       empr0011.typ_tab_price;
     
     -- EXCEPTION
     vr_exc_erro        EXCEPTION;
@@ -1462,25 +1471,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     -----------------------------------------------------------------------------------------------
     -- Buscar as parcelas do contrato
     -----------------------------------------------------------------------------------------------
-        empr0011.pc_busca_pagto_parc_pos(pr_cdcooper     => pr_cdcooper
-                                        ,pr_cdprogra     => pr_nmtelant
-                                                                        ,pr_flgbatch     => TRUE -- Fixo 1
-                                                                        ,pr_dtmvtolt     => pr_crapdat.dtmvtolt
-                                                                        ,pr_dtmvtoan     => pr_crapdat.dtmvtoan
-                                                                        ,pr_nrdconta     => pr_nrdconta
-                                                                        ,pr_nrctremp     => pr_nrctremp
-                                                                        ,pr_dtefetiv     => pr_dtefetiv
-                                                                        ,pr_cdlcremp     => pr_cdlcremp
-                                                                        ,pr_vlemprst     => pr_vlemprst
-                                                                        ,pr_txmensal     => pr_txmensal
-                                                                        ,pr_dtdpagto     => pr_dtdpagto
-                                                                        ,pr_vlsprojt     => pr_vlsprojt
-                                                                        ,pr_qttolatr     => pr_qttolatr
-                                                                        ,pr_tab_parcelas => vr_tab_parcelas
-																		,pr_tab_calculado => vr_tab_calculado
-                                                                        ,pr_cdcritic     => pr_cdcritic
-                                                                        ,pr_dscritic     => pr_dscritic
-                                                                        );
+    empr0011.pc_busca_pagto_parc_pos(pr_cdcooper     => pr_cdcooper
+                                    ,pr_cdprogra     => pr_nmtelant
+                                    ,pr_flgbatch     => TRUE -- Fixo 1
+                                    ,pr_dtmvtolt     => pr_crapdat.dtmvtolt
+                                    ,pr_dtmvtoan     => pr_crapdat.dtmvtoan
+                                    ,pr_nrdconta     => pr_nrdconta
+                                    ,pr_nrctremp     => pr_nrctremp
+                                    ,pr_dtefetiv     => pr_dtefetiv
+                                    ,pr_cdlcremp     => pr_cdlcremp
+                                    ,pr_vlemprst     => pr_vlemprst
+                                    ,pr_txmensal     => pr_txmensal
+                                    ,pr_dtdpagto     => pr_dtdpagto
+                                    ,pr_vlsprojt     => pr_vlsprojt
+                                    ,pr_qttolatr     => pr_qttolatr
+                                    ,pr_tab_parcelas => vr_tab_parcelas
+									,pr_tab_calculado => vr_tab_calculado
+                                    ,pr_cdcritic     => pr_cdcritic
+                                    ,pr_dscritic     => pr_dscritic
+                                    );
       --
         IF pr_cdcritic IS NOT NULL OR pr_dscritic IS NOT NULL THEN
             -- Gera exceção
@@ -1500,25 +1509,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       vr_dtdatoan := fn_dia_util_anterior(vr_dtdatmvt);
         
       -- Chamar novamente a procedure "pc_busca_pagto_parc_pos" e passar nas datas "dtmvtolt, dtmvtoan" o dia anterior
-            empr0011.pc_busca_pagto_parc_pos(pr_cdcooper     => pr_cdcooper
-                                                                            ,pr_cdprogra     => pr_nmtelant
-                                                                            ,pr_flgbatch     => TRUE -- Fixo 1
-                                                                            ,pr_dtmvtolt     => vr_dtdatmvt -- Data com base no dia anterior
-                                                                            ,pr_dtmvtoan     => vr_dtdatoan -- Data com base no dia anterior
-                                                                            ,pr_nrdconta     => pr_nrdconta
-                                                                            ,pr_nrctremp     => pr_nrctremp
-                                                                            ,pr_dtefetiv     => pr_dtefetiv
-                                                                            ,pr_cdlcremp     => pr_cdlcremp
-                                                                            ,pr_vlemprst     => pr_vlemprst
-                                                                            ,pr_txmensal     => pr_txmensal
-                                                                            ,pr_dtdpagto     => pr_dtdpagto
-                                                                            ,pr_vlsprojt     => pr_vlsprojt
-                                                                            ,pr_qttolatr     => pr_qttolatr
-                                                                            ,pr_tab_parcelas => vr_tab_parc_compe
-																			,pr_tab_calculado => vr_tab_calculado
-                                                                            ,pr_cdcritic     => pr_cdcritic
-                                                                            ,pr_dscritic     => pr_dscritic
-                                                                            );
+        empr0011.pc_busca_pagto_parc_pos(pr_cdcooper     => pr_cdcooper
+                                        ,pr_cdprogra     => pr_nmtelant
+                                        ,pr_flgbatch     => TRUE -- Fixo 1
+                                        ,pr_dtmvtolt     => vr_dtdatmvt -- Data com base no dia anterior
+                                        ,pr_dtmvtoan     => vr_dtdatoan -- Data com base no dia anterior
+                                        ,pr_nrdconta     => pr_nrdconta
+                                        ,pr_nrctremp     => pr_nrctremp
+                                        ,pr_dtefetiv     => pr_dtefetiv
+                                        ,pr_cdlcremp     => pr_cdlcremp
+                                        ,pr_vlemprst     => pr_vlemprst
+                                        ,pr_txmensal     => pr_txmensal
+                                        ,pr_dtdpagto     => pr_dtdpagto
+                                        ,pr_vlsprojt     => pr_vlsprojt
+                                        ,pr_qttolatr     => pr_qttolatr
+                                        ,pr_tab_parcelas => vr_tab_parc_compe
+										,pr_tab_calculado => vr_tab_calculado
+                                        ,pr_cdcritic     => pr_cdcritic
+                                        ,pr_dscritic     => pr_dscritic
+                                        );
         
       IF pr_cdcritic IS NOT NULL OR pr_dscritic IS NOT NULL THEN
                 --
@@ -1984,6 +1993,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     
     END IF;   
   
+    -- Se a conta está em prejuízo, debita o valor pago da Conta Transitória (Bloqueado Prejuízo)
+    IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
+                                      , pr_nrdconta => pr_nrdconta) AND
+       pr_vltotpag > 0 THEN
+       
+       PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
+                                   , pr_nrdconta => pr_nrdconta
+                                   , pr_vlrlanc  => pr_vltotpag
+                                   , pr_dtmvtolt => pr_crapdat.dtmvtolt
+                                   , pr_cdcritic => vr_cdcritic
+                                   , pr_dscritic => vr_dscritic);
+                                   
+       IF trim(vr_dscritic) IS NOT NULL OR NVL(vr_cdcritic, 0) > 0 THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao debitar da conta em prejuízo o valor pago no contrato de empréstimo.';
+					--
+          RAISE vr_exp_erro;
+					--
+       END IF;
+    END IF;  
   EXCEPTION
     WHEN vr_exp_erro THEN
       -- Retornar total pago como zero
@@ -2451,6 +2480,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           RAISE vr_exc_erro;
         END IF;
 
+        PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => rw_acordo.cdcooper
+                                          , pr_nrdconta => rw_acordo.nrdconta
+                                          , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                          , pr_cdhistor => 2971 -- Equivalente ao histórico 2194 que é lançado na CRAPLCM
+                                          , pr_vllanmto => rw_acordo.vlbloqueado
+                                          , pr_dthrtran => SYSDATE
+										  , pr_idlancto_prejuizo => vr_idlancto_prejuizo
+                                          , pr_cdcritic => vr_cdcritic
+                                          , pr_dscritic => vr_dscritic);
+                                          
+        IF nvl(vr_cdcritic, 0) > 0 AND vr_dscritic IS NOT NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+
+          RAISE vr_exc_erro;
+        END IF;
       END IF;
       
       -- ZERAR O VALOR BLOQUEADO NA TABELA DE ACORDO
@@ -3031,7 +3076,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           RAISE vr_exc_erro;
         END IF;
 
-      END IF;
+          PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => rw_acordo.cdcooper
+                                          , pr_nrdconta => rw_acordo.nrdconta
+                                          , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                          , pr_cdhistor => 2970 -- Equivalente ao histórico 2193 que é lançado na CRAPLCM
+                                          , pr_vllanmto => vr_vlparcel
+                                          , pr_dthrtran => SYSDATE
+                                          , pr_idlancto_prejuizo => vr_idlancto_prejuizo
+                                          , pr_cdcritic => vr_cdcritic
+                                          , pr_dscritic => vr_dscritic);
+																			
+			IF nvl(vr_cdcritic, 0) > 0 AND vr_dscritic IS NOT NULL THEN
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := vr_dscritic;
+				
+				RAISE vr_exc_erro;
+			END IF;
+        END IF;
       
         -- Alterar o valor bloqueado no acordo, com o valor lançado
         BEGIN

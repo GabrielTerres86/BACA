@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0004 is
       Sistema  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : ESTE
       Autor    : Paulo Penteado (GFT) 
-      Data     : Fevereio/2018.                   Ultima atualizacao: 16/02/2018
+      Data     : Fevereio/2018.                   Ultima atualizacao: 30/04/2019
 
       Dados referentes ao programa:
 
@@ -17,6 +17,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0004 is
                   23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
                   Referentes a proposta. (Lindon Carlos Pecile - GFT)
 
+				  30/04/2019 - Chamada JSON variáveis internas (Mario - AMcom)
   ---------------------------------------------------------------------------------------------------------------*/
   --> Rotina responsavel por montar o objeto json para analise de limite de desconto de títulos
   PROCEDURE pc_gera_json_analise_lim(pr_cdcooper   in crapass.cdcooper%type
@@ -450,6 +451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     vr_obj_procurad  json      := json();
     vr_obj_generico  json      := json();
     vr_obj_generic2  json      := json();
+    vr_obj_generic4  json      := json(); -- Variáveis internas
     vr_lst_generico  json_list := json_list();
     vr_lst_generic2  json_list := json_list();
     
@@ -748,6 +750,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
        
     -- Adicionar o JSON montado do Proponente no objeto principal
     vr_obj_analise.put('proponente',vr_obj_generico);
+    
+    -- Chamada das Novas variaveis internas para o Json
+    rati0003.pc_json_variaveis_rating(pr_cdcooper => pr_cdcooper --> Código da cooperativa
+                                     ,pr_nrdconta => pr_nrdconta --> Numero da conta do emprestimo
+                                     ,pr_nrctremp => pr_nrctrlim --> Numero do contrato de desconto de tidulo
+                                     ,pr_flprepon => true    --> Flag Repon
+                                     ,pr_vlsalari => 0       --> Valor do Salario Associado
+                                     ,pr_persocio => 0       --> Percential do sócio
+                                     ,pr_dtadmsoc => NULL    --> Data Admissãio do Sócio
+                                     ,pr_dtvigpro => NULL    --> Data Vigência do Produto
+                                     ,pr_tpprodut => 0       --> Tipo de Produto
+                                     ,pr_dsjsonvar => vr_obj_generic4 --> Retorno Variáveis Json
+                                     ,pr_cdcritic => vr_cdcritic  --> Código de critica encontrada
+                                     ,pr_dscritic => vr_dscritic);
+    
+    -- Verifica inconsistencias
+    if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then  
+      RAISE vr_exc_erro;
+    end if;
+                  
+    -- Enviar informações das variáveis internas ao JSON
+    vr_obj_analise.put('variaveisInternas', vr_obj_generic4);   
     
     --> Para Pessoa Fisica iremos buscar seu Conjuge
     IF rw_crapass.inpessoa = 1 THEN 

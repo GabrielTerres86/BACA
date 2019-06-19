@@ -75,9 +75,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 		,dsdtelef       VARCHAR(20)
 		,nmpescto       tbrecup_cobranca.nmcontato%TYPE
 		,nrctacob       tbrecup_cobranca.nrdconta_cob%TYPE
-    ,lindigit       VARCHAR(60)
-    ,dsparcel       tbrecup_cobranca.dsparcelas%TYPE
-    ,incobran       crapcob.incobran%TYPE);
+        ,lindigit       VARCHAR(60)
+        ,dsparcel       tbrecup_cobranca.dsparcelas%TYPE
+        ,incobran       crapcob.incobran%TYPE);
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_cde IS TABLE OF typ_reg_cde INDEX BY BINARY_INTEGER;
@@ -105,7 +105,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
                            ,pr_prazobxa IN crapprm.dsvlrprm%TYPE --> Prazo de baixa para o boleto após vencimento: xx dias út(il/eis)
                            ,pr_vlrminpp IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – PP
                            ,pr_vlrmintr IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – TR
-													  ,pr_vlminpos IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – POS                                                       
+                           ,pr_vlminpos IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – POS                                                       
                            ,pr_dslinha1 IN crapprm.dsvlrprm%TYPE --> Instruções: Linha 1
                            ,pr_dslinha2 IN crapprm.dsvlrprm%TYPE --> Instruções: Linha 2
                            ,pr_dslinha3 IN crapprm.dsvlrprm%TYPE --> Instruções: Linha 3
@@ -380,6 +380,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --                          prejuízo (debitar da conta transitória e não da conta corrente).
   --  												P450 - Reginaldo/AMcom
   --
+  --             29/04/2019 - Ajuste na procedure "pg_pagar_epr_cobranca" para correção no tratamento de contas em prejuízo 
+  --                          para debitar corretamente o valor pago da Conta Transitória (Bloqueados Prejuízo).
+	--													450 - Reginaldo/AMcom
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_busca_convenios(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
@@ -1121,12 +1124,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                   24/04/2017 - Ajustado para efetuar abono para contratos de boletagem massiva 
                                e liquidação de prejuízo quando necessário. Projeto 210_2 (Lombardi)
 															 
-									27/12/2018 - Inclusão de tratamento para contas corrente em prejuízo (debitar da
-									             conta transitória e não da conta corrente).
-															 P450 - Reginaldo/AMcom
+                  27/12/2018 - Inclusão de tratamento para contas corrente em prejuízo (debitar da
+                               conta transitória e não da conta corrente).
+                               P450 - Reginaldo/AMcom
 
                   06/02/2019 - Ajustar para efetuar pagamento de emprestimo POS  
-                               P298.2.2 - Pos Fixado (Luciano - Supero)                             
+                               P298.2.2 - Pos Fixado (Luciano - Supero)
+
+                  29/04/2019 - Correção no tratamento de contas em prejuízo para debitar corretamente o valor 
+                               pago da Conta Transitória (Bloqueados Prejuízo).
+                               P450 - Reginaldo/AMcom
 
     ..............................................................................*/
 
@@ -1151,6 +1158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 		-- Variaveis locais
     vr_dsparcel gene0002.typ_split;
 	vr_vldpagto crapepr.vlsdeved%TYPE;    
+    vr_vldpagto_aux crapepr.vlsdeved%TYPE;
     vr_vltotpag craplcm.vllanmto%TYPE;
     vr_flgdel   BOOLEAN;
     vr_flgativo PLS_INTEGER;
@@ -1159,17 +1167,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
     vr_vlparcel craplcm.vllanmto%TYPE; 
     vr_cdprogra VARCHAR2(10) := 'COBEMP';
     
-		vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
+	vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
     
     -------------------------- TABELAS TEMPORARIAS --------------------------
 
-    vr_tab_pgto_parcel empr0001.typ_tab_pgto_parcel;
-		vr_tab_calculado   empr0001.typ_tab_calculado;
-    vr_tab_price       EMPR0011.typ_tab_price;
-    vr_tab_parcelas    EMPR0011.typ_tab_parcelas;    
+    vr_tab_pgto_parcel     empr0001.typ_tab_pgto_parcel;
+	vr_tab_calculado       empr0001.typ_tab_calculado;
+    vr_tab_price           EMPR0011.typ_tab_price;
+    vr_tab_parcelas        EMPR0011.typ_tab_parcelas;    
     vr_tab_calculado_pos   EMPR0011.typ_tab_calculado;
     
-    vr_index_pos PLS_INTEGER;
+    vr_index_pos           PLS_INTEGER;
 
     ------------------------------- CURSORES --------------------------------
 		
@@ -1380,6 +1388,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               RAISE vr_exc_saida;
             END IF;
 
+            vr_vldpagto_aux := vr_vldpagto;
+
             OPEN cr_crapepr;
             FETCH cr_crapepr INTO rw_crapepr;
       			
@@ -1428,6 +1438,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               -- Gera exceção
               RAISE vr_exc_saida;
             END IF;
+            
+            vr_vldpagto := vr_vldpagto + vr_vldpagto_aux;
             
             END IF; 
             
@@ -1512,8 +1524,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               
         END IF;
       
+      ELSE
         /* se tipo de emprestimo for TR */
-      ELSIF rw_crapepr.tpemprst = 0 THEN
+        IF rw_crapepr.tpemprst = 0 THEN
           
            pc_obtem_dados_tr(pr_cdcooper => pr_cdcooper
                             ,pr_nrdconta => pr_nrdconta
@@ -1604,12 +1617,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 											-- Lança histórico 2279 no extrato do prejuízo de C/C apenas em caráter informativo - Reginaldo/AMcom
 											PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
 											                                , pr_nrdconta => pr_nrdconta
-																											, pr_dtmvtolt => pr_dtmvtolt
-																											, pr_cdhistor => 2279
-																											, pr_vllanmto => vr_vlabono
-																											, pr_nrctremp => pr_nrctremp
-																											, pr_cdcritic => vr_cdcritic
-																											, pr_dscritic => vr_dscritic); 
+											                                , pr_dtmvtolt => pr_dtmvtolt
+											                                , pr_cdhistor => 2279
+											                                , pr_vllanmto => vr_vlabono
+											                                , pr_nrctremp => pr_nrctremp
+											                                , pr_cdcritic => vr_cdcritic
+											                                , pr_dscritic => vr_dscritic); 
 																											
 											IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 											  vr_cdcritic := 0;
@@ -1678,13 +1691,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 												
 												-- Lança histórico 2279 no extrato do prejuízo de C/C apenas em caráter informativo - Reginaldo/AMcom
 												PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
-																												, pr_nrdconta => pr_nrdconta
-																												, pr_dtmvtolt => pr_dtmvtolt
-																												, pr_cdhistor => 2012
-																												, pr_vllanmto => vr_vlajuste
-																												, pr_nrctremp => pr_nrctremp
-																												, pr_cdcritic => vr_cdcritic
-																												, pr_dscritic => vr_dscritic); 
+											                                                   , pr_nrdconta => pr_nrdconta
+											                                                   , pr_dtmvtolt => pr_dtmvtolt
+											                                                   , pr_cdhistor => 2012
+											                                                   , pr_vllanmto => vr_vlajuste
+											                                                   , pr_nrctremp => pr_nrctremp
+											                                                   , pr_cdcritic => vr_cdcritic
+											                                                   , pr_dscritic => vr_dscritic); 
 																												
 												IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 													vr_cdcritic := 0;
@@ -1710,7 +1723,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                    , pr_cdoperad => pr_cdoperad
                                    , pr_idorigem => pr_idorigem
                                    , pr_nmtelant => pr_nmtelant
-                                   , pr_vltotpag => vr_vltotpag --> Retorno do valor total pago
+                                   , pr_vltotpag => vr_vldpagto --> Retorno do valor total pago
                                    , pr_cdcritic => vr_cdcritic
                                    , pr_dscritic => vr_dscritic);                                 
 
@@ -2443,16 +2456,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       END IF; -- TR/PP/POS
 
       -- Se a conta está em prejuízo, lança débito referente ao valor pago na conta transitória - Reginaldo/AMcom
-      IF vr_prejuzcc THEN
+      IF vr_vldpagto > 0 AND vr_prejuzcc THEN
         PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
                                     , pr_nrdconta => pr_nrdconta
                                     , pr_dtmvtolt => pr_dtmvtolt
                                     , pr_vlrlanc  => vr_vldpagto
+                                    , pr_dsoperac => 'Pagto Emprestimo: ' || pr_nrctremp || ' na COBEMP.'
                                     , pr_cdcritic => vr_cdcritic
                                     , pr_dscritic => vr_dscritic);
 
         IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          vr_dscritic := 'Erro ao debitar pagamento das parcelas do Bloqueado Prejuizo (' || vr_dscritic || ')';	
+          vr_dscritic := 'Erro ao debitar pagamento das parcelas do Bloqueado Prejuizo (' || vr_dscritic || ')';
           RAISE vr_exc_saida;
         END IF;
       END IF;

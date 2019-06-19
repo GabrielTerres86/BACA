@@ -140,7 +140,8 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                                 , pr_vllanmto IN NUMBER
                                 , pr_dtmvtolt IN DATE
                                 , pr_versaldo IN INTEGER DEFAULT 1 -- Se deve validar o saldo disponível
-                                                                , pr_atsldlib IN INTEGER DEFAULT 1 -- Se deve atualizar o saldo disponível para operações na conta corrente (VLSLDLIB)
+                               , pr_atsldlib IN INTEGER DEFAULT 1 -- Se deve atualizar o saldo disponível para operações na conta corrente (VLSLDLIB)
+                                , pr_dsoperac IN VARCHAR2 DEFAULT NULL -- Descrição da operação que originou a transferência
                                 , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                 , pr_dscritic OUT crapcri.dscritic%TYPE);
                                                                 
@@ -149,7 +150,8 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                                  ,pr_cdoperad  IN VARCHAR2 DEFAULT '1'  --> Código do Operador
                                  ,pr_vlrlanc   IN NUMBER                --> Valor do Lançamento
                                  ,pr_dtmvtolt  IN DATE                  --> Data da cooperativa
-                                                            ,pr_nrdocmto  IN tbcc_prejuizo_lancamento.nrdocmto%TYPE DEFAULT NULL
+                                 ,pr_nrdocmto  IN tbcc_prejuizo_lancamento.nrdocmto%TYPE DEFAULT NULL
+                                 ,pr_dsoperac  IN VARCHAR2 DEFAULT NULL --> Descrição da operação que originou o crédito (Ex. Desbloqueio de acordo, Liberação de crédito de empréstimo, etc)
                                  ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic  OUT VARCHAR2);                                                           
 
@@ -158,6 +160,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                                  ,pr_cdoperad  IN VARCHAR2 DEFAULT '1'  --> Código do Operador
                                  ,pr_vlrlanc   IN NUMBER                --> Valor do Lançamento
                                  ,pr_dtmvtolt  IN DATE                  --> Data da cooperativa
+                                 ,pr_dsoperac  IN VARCHAR2 DEFAULT NULL --> Descrição breve da operação que originou o débito (Ex. Pagamento de empréstimo, bloqueio de acordo, etc)
                                  ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic  OUT VARCHAR2);        --> Erros do processo
 
@@ -296,9 +299,9 @@ PROCEDURE pc_resgata_cred_bloq_preju(pr_cdcooper IN crapcop.cdcooper%TYPE   --> 
                                    , pr_cdhistor IN tbcc_prejuizo_detalhe.cdhistor%TYPE
                                    , pr_idprejuizo IN tbcc_prejuizo_detalhe.idprejuizo%TYPE DEFAULT NULL
                                    , pr_vllanmto IN tbcc_prejuizo_detalhe.vllanmto%TYPE
-                                                                     , pr_nrctremp IN tbcc_prejuizo_detalhe.nrctremp%TYPE DEFAULT 0
+                                   , pr_nrctremp IN tbcc_prejuizo_detalhe.nrctremp%TYPE DEFAULT 0
                                    , pr_cdoperad IN tbcc_prejuizo_detalhe.cdoperad%TYPE DEFAULT '1'
-                                                                     , pr_dthrtran IN tbcc_prejuizo_detalhe.dthrtran%TYPE DEFAULT NULL
+                                   , pr_dthrtran IN tbcc_prejuizo_detalhe.dthrtran%TYPE DEFAULT NULL
                                    , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                    , pr_dscritic OUT crapcri.dscritic%TYPE);
 
@@ -419,6 +422,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                     
                11/02/2019 - Ajuste na "pc_pagar_prejuizo_cc_autom" para correção de pagamento de valor maior que o saldo devedor do prejuízo.
                             P450 - Reginaldo/AMcom 
+
+               24/04/2019 - Refatoração da procedure pc_pagar_prejuizo_cc e inclusão de SAVEPOINT para garantir que paga tudo, ou não paga nada.
+                            Alteração na procedure pc_pagar_prejuizo_cc_autom para obtem saldo disponível (créditos) da conta e não considerar mais
+                            o campo VLSLDLIB.
+                            P450 - Reginaldo/AMcom
+                            
+               02/05/2019 - Inclusão do parâmetro opcional para a descrição da operação nas procedures "pc_gera_cred_cta_prj",
+                            "pc_gera_debt_cta_prj" e "pc_gera_transf_cta_prj".
+                            (Reginaldo/AMcom)  
+
 ..............................................................................*/
 
   -- clob para conter o dados do excel/csv
@@ -1884,7 +1897,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     Objetivo  : Registra liquidação de prejuízo de conta corrente.
 
-    Alteracoes: 
+    Alteracoes: 07/11/2018 - P450 - Liquida prejuizo da conta somente se não tiver contrato de empréstimo 
+                                   ou de desconto de título em prejuízo (Fabio Adriano - AMcom).                               
                 09/11/2018 - Ajustes nos cursores da liquidação
                                (Reginaldo/AMcom/P450)                       
 
@@ -2230,7 +2244,8 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
                                 , pr_vllanmto IN NUMBER
                                 , pr_dtmvtolt IN DATE
                                 , pr_versaldo IN INTEGER DEFAULT 1 -- Se deve validar o saldo disponível
-                                                                , pr_atsldlib IN INTEGER DEFAULT 1 -- Se deve atualizar o saldo disponível para operações na conta corrente (VLSLDLIB)
+                                , pr_atsldlib IN INTEGER DEFAULT 1 -- Se deve atualizar o saldo disponível para operações na conta corrente (VLSLDLIB)
+                                , pr_dsoperac IN VARCHAR2 DEFAULT NULL -- Descrição da operação que originou a transferência
                                 , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                 , pr_dscritic OUT crapcri.dscritic%TYPE) IS
     /* .............................................................................
@@ -2239,7 +2254,7 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
    Sistema : Aimaro
    Sigla   : PREJ
    Autor   : Reginaldo (AMcom)
-   Data    : Setembro/2018.                    Ultima atualizacao:
+   Data    : Setembro/2018.                    Ultima atualizacao: 02/05/2019
 
    Dados referentes ao programa:
 
@@ -2251,6 +2266,9 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
    Alteracoes:
       13/02/2019 - Correção bug nos retornos das variáveis de erro e tratamentos de erro
                    Renato Cordeiro - AMcom
+         
+               02/05/2019 - P450 - Inclusão do parâmetro opcional para a descrição da operação que originou a transferência
+                            (Reginaldo/AMcom)
          
    ..............................................................................*/
 
@@ -2298,6 +2316,7 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
                          , pr_cdoperad => pr_cdoperad
                          , pr_vlrlanc =>  pr_vllanmto
                          , pr_dtmvtolt => pr_dtmvtolt
+                         , pr_dsoperac => pr_dsoperac 
                          , pr_cdcritic => vr_cdcritic
                          , pr_dscritic => vr_dscritic);
 
@@ -2365,6 +2384,7 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
                                  ,pr_cdoperad  IN VARCHAR2 DEFAULT '1'  --> Código do Operador
                                  ,pr_vlrlanc   IN NUMBER                --> Valor do Lançamento
                                  ,pr_dtmvtolt  IN DATE                  --> Data da cooperativa
+                                 ,pr_dsoperac  IN VARCHAR2 DEFAULT NULL --> Descrição breve da operação que originou o débito (Ex. Pagamento de empréstimo, bloqueio de acordo, etc)
                                  ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic  OUT VARCHAR2) IS         --> Descrição da crítica
 /* .............................................................................
@@ -2373,7 +2393,7 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
    Sistema : Aimaro
    Sigla   : PREJ
    Autor   : Reginaldo (AMcom)
-   Data    : Setembro/2018.                    Ultima atualizacao:
+   Data    : Setembro/2018.                    Ultima atualizacao: 02/05/2019
 
    Dados referentes ao programa:
 
@@ -2382,7 +2402,9 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
    Objetivo  : Gera lançamento de débito na conta transitória.
 
    Observacao:
-   Alteracoes:
+   Alteracoes: 02/05/2019 - P450 - Inclusão de parâmetro opcional para a descrição da operação que originou o débito
+                            (Reginaldo/AMcom)
+                             
    ..............................................................................*/
 
 
@@ -2415,16 +2437,18 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
                                             ,vllanmto
                                             ,dthrtran
                                             ,cdoperad
-                                            ,cdcooper)
+                                            ,cdcooper
+                                            ,dsoperac)
                                       VALUES(pr_dtmvtolt      -- dtmvtolt
                                             ,1                -- cdagenci
                                             ,pr_nrdconta      -- nrdconta
                                             ,2739             -- cdhistor
                                             ,vr_nrdocmto_prj  -- nrdocmto
-                                            ,pr_vlrlanc       -- vllanmto
+                                            ,nvl(pr_vlrlanc,0)-- vllanmto
                                             ,SYSDATE  -- dthrtran
                                             ,pr_cdoperad     -- cdoperad
-                                            ,pr_cdcooper);    -- cooperativa
+                                            ,pr_cdcooper
+                                            ,pr_dsoperac);    -- cooperativa
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;
@@ -2445,7 +2469,8 @@ PROCEDURE pc_gera_cred_cta_prj(pr_cdcooper  IN NUMBER                 --> Código
                               ,pr_cdoperad  IN VARCHAR2 DEFAULT '1'  --> Código do Operador
                               ,pr_vlrlanc   IN NUMBER                --> Valor do Lançamento
                               ,pr_dtmvtolt  IN DATE                  --> Data da cooperativa
-                                                            ,pr_nrdocmto  IN tbcc_prejuizo_lancamento.nrdocmto%TYPE DEFAULT NULL
+                              ,pr_nrdocmto  IN tbcc_prejuizo_lancamento.nrdocmto%TYPE DEFAULT NULL
+                              ,pr_dsoperac  IN VARCHAR2 DEFAULT NULL --> Descrição da operação que originou o crédito (Ex. Desbloqueio de acordo, Liberação de crédito de empréstimo, etc)
                               ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                               ,pr_dscritic  OUT VARCHAR2) IS         --> Descrição da crítica
 /* .............................................................................
@@ -2454,7 +2479,7 @@ PROCEDURE pc_gera_cred_cta_prj(pr_cdcooper  IN NUMBER                 --> Código
    Sistema : Aimaro
    Sigla   : PREJ
    Autor   : Reginaldo (AMcom)
-   Data    : Setembro/2018.                    Ultima atualizacao:
+   Data    : Setembro/2018.                    Ultima atualizacao: 02/05/2019
 
    Dados referentes ao programa:
 
@@ -2463,7 +2488,9 @@ PROCEDURE pc_gera_cred_cta_prj(pr_cdcooper  IN NUMBER                 --> Código
    Objetivo  : Gera lançamento de crédito na conta transitória.
 
    Observacao:
-   Alteracoes:
+   Alteracoes: 02/05/2019 - P450 - Inclusão de parâmetro opcional para a descrição da operação que originou o crédito
+                            (Reginaldo/AMcom)
+                            
    ..............................................................................*/
 
       vr_nrdocmto_prj tbcc_prejuizo_lancamento.nrdocmto%TYPE := pr_nrdocmto;
@@ -2496,16 +2523,18 @@ PROCEDURE pc_gera_cred_cta_prj(pr_cdcooper  IN NUMBER                 --> Código
                                             ,vllanmto
                                             ,dthrtran
                                             ,cdoperad
-                                            ,cdcooper)
+                                            ,cdcooper
+                                            ,dsoperac)
                                       VALUES(pr_dtmvtolt      -- dtmvtolt
                                             ,1                -- cdagenci
                                             ,pr_nrdconta      -- nrdconta
                                             ,2738             -- cdhistor
                                             ,vr_nrdocmto_prj  -- nrdocmto
-                                            ,pr_vlrlanc       -- vllanmto
+                                            ,nvl(pr_vlrlanc,0)-- vllanmto
                                             ,SYSDATE  -- dthrtran
                                             ,pr_cdoperad     -- cdoperad
-                                            ,pr_cdcooper);    -- cooperativa
+                                            ,pr_cdcooper
+                                            ,pr_dsoperac);    -- cooperativa
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;
@@ -3231,7 +3260,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
   Sistema : AYLLOS
   Sigla   : PREJ
   Autor   : Reginaldo (AMcom)
-  Data    : Agosto/2018.                  Ultima atualizacao:
+  Data    : Agosto/2018.                  Ultima atualizacao: 24/04/2019
 
   Dados referentes ao programa:
 
@@ -3239,7 +3268,8 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 
   Objetivo : Efetua a o pagamento de prejuízo de uma conta específica.
 
-  Alteracoes:
+  Alteracoes: 24/04/2019 - P450 - Refatoração do código da procedure e inclusão de SAVEPOINT para garantir atomicidade da transação de 
+                           pagamento (paga tudo, ou não paga nada). (Reginaldo/AMcom)
    ..............................................................................*/
   --
 
@@ -3345,6 +3375,8 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
      vr_vljr60_ctneg  := 0;
      vr_vljur60_lcred := 0;
      vr_vljupre       := 0;
+
+     SAVEPOINT savtrans_pagamento_prejuizo;
 
      -- Verifica IOF provisionado no saldo da conta
      OPEN cr_crapsldiof(pr_cdcooper => pr_cdcooper,
@@ -3501,19 +3533,19 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 
     IF vr_vlsddisp > 0 THEN
       -- Calcula os juros remuneratórios desde a última data de pagamento/débito até o dia atual
-                vr_diarefju  := nvl(rw_contaprej.nrdiarefju, to_char(rw_contaprej.dtinclusao, 'DD'));
-                vr_mesrefju  := nvl(rw_contaprej.nrmesrefju, to_char(rw_contaprej.dtinclusao, 'MM'));
-                vr_anorefju  := nvl(rw_contaprej.nranorefju, to_char(rw_contaprej.dtinclusao, 'YYYY'));
+      vr_diarefju  := nvl(rw_contaprej.nrdiarefju, to_char(rw_contaprej.dtinclusao, 'DD'));
+      vr_mesrefju  := nvl(rw_contaprej.nrmesrefju, to_char(rw_contaprej.dtinclusao, 'MM'));
+      vr_anorefju  := nvl(rw_contaprej.nranorefju, to_char(rw_contaprej.dtinclusao, 'YYYY'));
 
-                PREJ0003.pc_calc_juro_remuneratorio(pr_cdcooper => pr_cdcooper,
-                                                                                        pr_ehmensal => FALSE,
-                                                                                        pr_dtdpagto => rw_crapdat.dtmvtolt,
-                                                                                        pr_idprejuizo => rw_contaprej.idprejuizo,
-                                                                                        pr_vljpreju => vr_vljupre_prov,
-                                                                                        pr_diarefju => vr_diarefju,
-                                                                                        pr_mesrefju => vr_mesrefju,
-                                                                                        pr_anorefju => vr_anorefju,
-                                                                                        pr_des_reto => vr_dscritic);
+      PREJ0003.pc_calc_juro_remuneratorio(pr_cdcooper => pr_cdcooper,
+                                                         pr_ehmensal => FALSE,
+                                                         pr_dtdpagto => rw_crapdat.dtmvtolt,
+                                                         pr_idprejuizo => rw_contaprej.idprejuizo,
+                                                         pr_vljpreju => vr_vljupre_prov,
+                                                         pr_diarefju => vr_diarefju,
+                                                         pr_mesrefju => vr_mesrefju,
+                                                         pr_anorefju => vr_anorefju,
+                                                         pr_des_reto => vr_dscritic);
 
       IF vr_vljupre_prov > 0 THEN
         -- Atualiza juros remuneratórios do prejuízo
@@ -3709,13 +3741,12 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                                         ,pr_dscritic => vr_dscritic);
 
       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-        IF vr_incrineg = 0 THEN
           vr_cdcritic := 0;
           vr_dscritic := 'Erro ao creditar o abono do prejuízo na conta corrente.';
 
           RAISE vr_exc_saida;
         END IF;
-      END IF;
+
 
       UPDATE tbcc_prejuizo
          SET vlrabono = nvl(vlrabono, 0) + pr_vlrabono
@@ -3764,10 +3795,14 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
      WHEN vr_exc_saida THEN
          pr_cdcritic := 0;
          pr_dscritic := vr_dscritic;
+     
+     ROLLBACK TO SAVEPOINT savtrans_pagamento_prejuizo;
    WHEN OTHERS THEN
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 99999;
       pr_dscritic := 'Erro não tratado na rotina PREJ0003.pc_pagar_prejuizo_cc: ' ||SQLERRM;
+     
+     ROLLBACK TO SAVEPOINT savtrans_pagamento_prejuizo;
  END pc_pagar_prejuizo_cc;
 
  PROCEDURE pc_pagar_prejuizo_cc_autom(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Coop conectada
@@ -3799,6 +3834,9 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
 
             11/02/2019 - Ajuste para correção de pagamento de valor maior que o saldo devedor do prejuízo.
                          P450 - Reginaldo/AMcom
+                         
+            24/04/2019 - Alteração para considerar saldo disponível (créditos) na conta corrente ao invés do campo VLSLDLIB
+                         P450 - Reginaldo/AMcom
  ..............................................................................*/
 --
 
@@ -3822,7 +3860,7 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
         FROM tbcc_prejuizo tbprj
        WHERE tbprj.cdcooper = pr_cdcooper
          AND tbprj.dtliquidacao IS NULL;
-     rw_prej cr_contaprej%ROWTYPE;
+     rw_contaprej cr_contaprej%ROWTYPE;
 
      -- Busca lançamentos do histórico 1017 (somente para coop. Transpocred)
      CURSOR cr_hist1017(pr_nrdconta craplcm.nrdconta%TYPE
@@ -3833,6 +3871,16 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
         AND lcm.nrdconta = pr_nrdconta
         AND lcm.cdhistor = 1017
         AND lcm.dtmvtolt = pr_dtmvtolt;
+
+     CURSOR cr_hist2733(pr_cdcooper craplcm.cdcooper%TYPE
+                      , pr_nrdconta craplcm.nrdconta%TYPE
+                      , pr_dtmvtolt craplcm.dtmvtolt%TYPE) IS
+     SELECT nvl(SUM(prj.vllanmto), 0) vltotlan
+       FROM tbcc_prejuizo_detalhe prj
+      WHERE prj.cdcooper = pr_cdcooper
+        AND prj.nrdconta = pr_nrdconta
+        AND prj.dtmvtolt = pr_dtmvtolt
+        AND prj.cdhistor = 2733;
 
      vr_cdcritic  NUMBER(3);
      vr_dscritic  VARCHAR2(1000);
@@ -3845,61 +3893,84 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
 
      vr_vldeb1017 NUMBER := 0; -- Valor dos débitos do histórico 1017 (Aplicável somente para a Transpocred)
 
+     vr_vllan2733 NUMBER := 0; -- Valor da soma dos lançamentos com histórico 2733 ocorridos no dia
+
      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
   BEGIN
        OPEN BTCH0001.cr_crapdat(pr_cdcooper);
        FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
        CLOSE BTCH0001.cr_crapdat;
 
-       --Lista as contas em prejuizo
+       -- Percorre a lista de contas em prejuízo
        FOR  rw_contaprej in cr_contaprej(pr_cdooper => pr_cdcooper) LOOP
-         -- Obtém saldo disponível para pagamento
-         vr_vlsddisp:=  fn_cred_disp_prj(pr_nrdconta => rw_contaprej.nrdconta,
-                                         pr_cdcooper => rw_contaprej.cdcooper);
+         -- Obtém saldo disponível na conta corrente para pagamento do prejuízo
+         vr_vlsddisp:= PREJ0006.fn_obtem_saldo_lcm_dia(pr_cdcooper => pr_cdcooper
+                                                     , pr_nrdconta => rw_contaprej.nrdconta
+                                                     , pr_dtmvtolt => rw_crapdat.dtmvtolt);
+                       
+         -- Se não há valor disponível na conta corrente, não há como efetuar o pagamento                              
+         IF vr_vlsddisp <= 0 THEN
+           PREJ0006.pc_zera_saldo_liberado_CT(pr_cdcooper => pr_cdcooper
+                                              , pr_nrdconta => rw_contaprej.nrdconta);
+                                              
+           CONTINUE;
+         END IF;
+         
+         OPEN cr_hist2733(pr_cdcooper => pr_cdcooper
+                        , pr_nrdconta => rw_contaprej.nrdconta
+                        , pr_dtmvtolt => rw_crapdat.dtmvtolt);
+         FETCH cr_hist2733 INTO vr_vllan2733;
+         CLOSE cr_hist2733;
+         
+         vr_vlsddisp:= vr_vlsddisp - vr_vllan2733;
+         
+         IF vr_vlsddisp <= 0 THEN
+           CONTINUE;
+         END IF;
 
-         IF pr_cdcooper = 9 THEN -- Tratamento exclusivo para a cooperativa Transpocred do histórico 1017
+         IF pr_cdcooper = 9 THEN -- Tratamento exclusivo para a cooperativa Transpocred do histórico 1017 (BNDES)            
            OPEN cr_hist1017(rw_contaprej.nrdconta, rw_crapdat.dtmvtolt);
            FETCH cr_hist1017 INTO vr_vldeb1017;
            CLOSE cr_hist1017;
            
            IF vr_vlsddisp = vr_vldeb1017 THEN
              -- Zera o valor do saldo liberado para operações na conta transitória
-             UPDATE tbcc_prejuizo prj
-                SET prj.vlsldlib = 0
-              WHERE prj.cdcooper = pr_cdcooper
-                AND prj.nrdconta = rw_contaprej.nrdconta
-                AND dtliquidacao IS NULL;
+             PREJ0006.pc_zera_saldo_liberado_CT(pr_cdcooper => pr_cdcooper
+                                              , pr_nrdconta => rw_contaprej.nrdconta);
 				
 		     CONTINUE; -- Avança para a próxima conta, pois não deve efetuar nenhum pagamento
            END IF;
          END IF;
          
-         --> Verificar se ainda possui saldo para de prejuizo para regularizar
+         -- Verificar se ainda possui saldo de prejuízo a pagar
          vr_vlsldprj := fn_obtem_saldo_prejuizo_cc(pr_cdcooper => pr_cdcooper, 
                                                    pr_nrdconta => rw_contaprej.nrdconta);
                                   
-         IF vr_vlsddisp > 0 AND nvl(vr_vlsldprj,0) > 0 THEN
+         IF nvl(vr_vlsldprj,0) > 0 THEN
            pc_pagar_prejuizo_cc(pr_cdcooper => pr_cdcooper
                            , pr_nrdconta => rw_contaprej.nrdconta
                            , pr_vlrpagto => least(vr_vlsddisp, vr_vlsldprj) -- Se o valor liberado é maior que o saldo a pagar, paga somente o saldo do prejuízo
                            , pr_cdcritic => vr_cdcritic
                            , pr_dscritic => vr_dscritic);
 
-           IF NOT (nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL) THEN
-             -- Se o pagamento foi bem sucedido, zera o saldo liberado para operações na conta transitória
-             UPDATE tbcc_prejuizo
-                SET vlsldlib = 0
-              WHERE cdcooper = pr_cdcooper
-                AND nrdconta = rw_contaprej.nrdconta
-                AND dtliquidacao IS NULL;               
+           -- Se não foi possível pagar o prejuízo
+           IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+             -- Bloqueia valor da CRAPLCM para a conta Transitória
+             PREJ0006.pc_bloqueia_valor_para_CT(pr_cdcooper => pr_cdcooper
+                                              , pr_nrdconta => rw_contaprej.nrdconta
+                                              , pr_vllanmto => vr_vlsddisp
+                                              , pr_cdcritic => vr_cdcritic
+                                              , pr_dscritic => vr_dscritic);
+                                              
+             IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+               NULL; -- Incluir geração de LOG
            END IF;               
-         ELSIF vr_vlsddisp > 0 THEN
-            UPDATE tbcc_prejuizo
-               SET vlsldlib = 0
-             WHERE cdcooper = pr_cdcooper
-               AND nrdconta = rw_contaprej.nrdconta
-               AND dtliquidacao IS NULL;               
          END IF;
+         END IF;
+         
+         -- Sera saldo liberado eventualmente da conta transitória ao longo do dia e não utilizado
+         PREJ0006.pc_zera_saldo_liberado_CT(pr_cdcooper => pr_cdcooper
+                                          , pr_nrdconta => rw_contaprej.nrdconta);
        END LOOP;
 
       COMMIT;

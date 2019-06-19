@@ -10,7 +10,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Adriano
-     Data    : Outubro/9999                     Ultima atualizacao: 10/10/2017
+     Data    : Outubro/9999                     Ultima atualizacao: 12/06/2019
 
      Dados referentes ao programa:
 
@@ -81,6 +81,11 @@ BEGIN
                               senao subtrair do valor da divida o Juros60 para emprestimos em prejuizo. (P450 - Jaison)                              
 
                  10/10/2018 - P450 - Ajustes gerais no Juros60/ADP/Empr. (Guilherme/AMcom)
+
+                 09/11/2018 - PJ450 - Inclusão de Limite NÃO Utilizado nas Informações Agregadas
+                              (Renato Cordeiro - AMcom)
+
+                 12/06/2019 - P450 - Correcao do comparativo de divida e juros60 (Guilherme/AMcom)
 
   ............................................................................ */
 
@@ -176,7 +181,9 @@ BEGIN
     vr_dsparame       crapsol.dsparame%type;                       --> Parâmetro de execução
     vr_vlindivi       NUMBER(25,2);                                --> Valor para individualizar as operacoes
     vr_cdcooper       crapcop.cdcooper%TYPE;                       --> Codigo da Cooperativa
-    vr_vljuro60       crapris.vljura60%TYPE;
+    vr_vljuro60       crapris.vljura60%TYPE := 0;
+
+
     
     -- Tratamento de erros
     vr_exc_saida  EXCEPTION;                                       --> Controle de saída para erros
@@ -184,7 +191,7 @@ BEGIN
     vr_cdcritic   PLS_INTEGER;                                     --> Código da crítica
     vr_dscritic   VARCHAR2(4000);                                  --> Descrição da crítica
 
-    ------------------------------- CURSORES ---------------------------------
+    ------------------------------- CURSORES ----------------------------------------------------------
     -- Busca dados da cooperativa
     CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
       SELECT cop.cdcooper
@@ -243,6 +250,7 @@ BEGIN
         AND ci.inddocto IN(1,3,4,5)
       ORDER BY decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc);
     vr_vldivida crapris.vldivida%TYPE;
+    vr_vldivida_contrato crapris.vldivida%TYPE;
     
     
     -- Busca cnpjs/cpfs a individualizar origem BNDES
@@ -1242,12 +1250,16 @@ BEGIN
         vr_vldivida := 0;
         vr_tab_rowid.delete;
       END IF;  
+
+      --zera valor da variavel divida nova
+      vr_vldivida_contrato := 0;
+
       -- Acumular o valor da dívida (Somente para inddocto = 1, 4 e 5[desde que não tenha cdinfadi])
-      IF rw_crapris.inddocto IN (1,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
+      IF rw_crapris.inddocto IN (1,3,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
         IF rw_crapris.cdmodali = 101 THEN -- ADP  -- Alterado para verificar pela modalidade de não pelo inddocto (Reginaldo/AMcom) 
-          vr_vldivida := vr_vldivida + rw_crapris.vlsld59d;
+          vr_vldivida_contrato :=  rw_crapris.vlsld59d;
         ELSE
-          vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
+          vr_vldivida_contrato := (rw_crapris.vldivida - rw_crapris.vljura60);
         END IF;      
       END IF;
       
@@ -1260,10 +1272,14 @@ BEGIN
                                                                 ,pr_nrdconta => rw_crapris.nrdconta
                                                  ,pr_nrctremp => rw_crapris.nrctremp);
         -- Se o valor da divida for maior que juros60
-        IF vr_vldivida > vr_vljuro60 THEN
-           vr_vldivida := vr_vldivida - vr_vljuro60;
-      END IF; 
+        -- Verifica divida nova
+        IF vr_vldivida_contrato > vr_vljuro60 then
+           vr_vldivida_contrato := vr_vldivida_contrato - vr_vljuro60;
+        END IF; 
+
       END IF;              
+
+      vr_vldivida := vr_vldivida + vr_vldivida_contrato;
       
       -- Adicionar este rowid a pltable
       vr_tab_rowid(vr_tab_rowid.count()+1) := rw_crapris.rowid;        
@@ -1298,6 +1314,7 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
     
+----======================================= BNDES ==============================================--
     -- Para execução Trimestral na Central 
     IF pr_cdcooper = 3 AND to_char(vr_dtrefere,'mm') IN ('03','06','09','12') THEN
       -- Vamos buscar toda a central de risco de todas as Cooperativas com origem BNDES para individualizar as mesmas
@@ -1308,20 +1325,25 @@ BEGIN
           vr_vldivida := 0;
           vr_tab_rowid.delete;
         END IF;  
+
+        -- zera a variavel vr_vldivida_contrato
+        vr_vldivida_contrato := 0;
+
         -- Verifica migração/incorporação
         IF NOT fn_verifica_conta_migracao(pr_cdcooper => rw_crapris.cdcooper
                                          ,pr_nrdconta => rw_crapris.nrdconta) THEN
           CONTINUE;
         END IF;
         -- Acumular o valor da dívida (Somente para inddocto = 1, 4 e 5[desde que não tenha cdinfadi])
-        IF rw_crapris.inddocto IN (1,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
+        IF rw_crapris.inddocto IN (1,3,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
           IF rw_crapris.cdmodali = 101 THEN -- Alterado para verificar pela modalidade de não pelo inddocto (Reginaldo/AMcom) 
-            vr_vldivida := vr_vldivida + rw_crapris.vlsld59d;
+             vr_vldivida_contrato :=  rw_crapris.vlsld59d;
           ELSE
-            vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
+             vr_vldivida_contrato := (rw_crapris.vldivida - rw_crapris.vljura60);
           END IF;
         END IF;
         -- ***
+
         -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
         -- estejam em Prejuízo (innivris = 10)
         IF rw_crapris.cdorigem = 3 AND rw_crapris.innivris = 10 THEN
@@ -1329,10 +1351,12 @@ BEGIN
                                                                   ,pr_nrdconta => rw_crapris.nrdconta
                                                    ,pr_nrctremp => rw_crapris.nrctremp);
           -- Se o valor da divida for maior que juros60
-          IF vr_vldivida > vr_vljuro60 THEN
-             vr_vldivida := vr_vldivida - vr_vljuro60;
-          END IF;
+           IF vr_vldivida_contrato > vr_vljuro60 THEN
+              vr_vldivida_contrato := vr_vldivida_contrato - vr_vljuro60;
+           END IF;
         END IF; 
+
+        vr_vldivida := vr_vldivida + vr_vldivida_contrato;
 
         -- Adicionar este rowid a pltable
         vr_tab_rowid(vr_tab_rowid.count()+1) := rw_crapris.rowid;        
