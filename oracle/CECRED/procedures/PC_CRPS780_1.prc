@@ -545,7 +545,6 @@ BEGIN
                                  ,pr_cdbccxlt_lcm => CASE WHEN NOT vr_inprejuz THEN 100 ELSE NULL END
                                  ,pr_nrdolote_lcm => CASE WHEN NOT vr_inprejuz THEN 8457 ELSE NULL END
                                  ,pr_nrseqdig_lcm => CASE WHEN NOT vr_inprejuz THEN vr_nrseqdig_IOF ELSE NULL END
-								 ,pr_idlancto_prejuizo => CASE WHEN vr_inprejuz THEN vr_idlancto_prejuizo ELSE NULL END
                                  ,pr_vliofpri     => 0
                                  ,pr_vliofadi     => 0
                                  ,pr_vliofcpl     => vr_vlpiofpr
