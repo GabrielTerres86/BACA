@@ -110,7 +110,7 @@
 	  }else{
 			//Chama Procedure de validação consignado P437 S6
 			if (count($parcexp) > 0 ){
-				/*
+				
 				$xml  = "";
 				$xml .= "<Root>";
 				$xml .= "  <dto>";

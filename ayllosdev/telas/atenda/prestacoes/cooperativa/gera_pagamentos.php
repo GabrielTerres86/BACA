@@ -46,7 +46,7 @@
 	//P437
 	$xml  = "";
 	$xml .= "<Root>";
-	$xml .= " <Dados>";	
+	$xml .= " <dto>";	
 	$xml .= "	<nrdconta>".$nrdconta."</nrdconta>";	
 	$xml .= "	<cdpactra>".$glbvars["cdpactra"]."</cdpactra>";	
     $xml .= "	<idseqttl>".$idseqttl."</idseqttl>";	
@@ -58,7 +58,7 @@
 	$xml .= "	<totpagto>".$totpagto."</totpagto>";
 	$xml .= "	<nrseqava>".$nrseqavl."</nrseqava>";
 	$xml .= retornaXmlFilhos( $camposPc, $dadosPrc, 'Pagamentos', 'Itens');
-	$xml .= " </Dados>";
+	$xml .= " </dto>";
 	$xml .= "</Root>";
 
 	$xmlResult = mensageria($xml, "ATENDA", "GERA_PGTO_PARC_CONSIG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
