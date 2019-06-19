@@ -54,7 +54,7 @@
 		$xml .= '       <cdempres>'.$cdempres.'</cdempres>';
 		$xml .= '       <cddopcao>'.$consulta_cddopcao.'</cddopcao>';
 		$xml .= '       <nriniseq>0</nriniseq>';
-		$xml .= '       <nrregist>0</nrregist>';
+		$xml .= '       <nrregist>1</nrregist>';
 		$xml .= '	</Dados>';
 		$xml .= '</Root>';
 
@@ -360,7 +360,7 @@
 		$xml .= '       <cdempres>'.$cdempres.'</cdempres>';
 		$xml .= '       <cddopcao>'.$consulta_cddopcao.'</cddopcao>';
 		$xml .= '       <nriniseq>0</nriniseq>';
-		$xml .= '       <nrregist>0</nrregist>';
+		$xml .= '       <nrregist>1</nrregist>';
 		$xml .= '	</Dados>';
 		$xml .= '</Root>';
 
