@@ -2486,7 +2486,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                           , pr_cdhistor => 2971 -- Equivalente ao histórico 2194 que é lançado na CRAPLCM
                                           , pr_vllanmto => rw_acordo.vlbloqueado
                                           , pr_dthrtran => SYSDATE
-										  , pr_idlancto_prejuizo => vr_idlancto_prejuizo
                                           , pr_cdcritic => vr_cdcritic
                                           , pr_dscritic => vr_dscritic);
                                           
@@ -3082,7 +3081,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                           , pr_cdhistor => 2970 -- Equivalente ao histórico 2193 que é lançado na CRAPLCM
                                           , pr_vllanmto => vr_vlparcel
                                           , pr_dthrtran => SYSDATE
-                                          , pr_idlancto_prejuizo => vr_idlancto_prejuizo
                                           , pr_cdcritic => vr_cdcritic
                                           , pr_dscritic => vr_dscritic);
 																			
