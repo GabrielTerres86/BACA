@@ -94,6 +94,13 @@
 				   
                   11/01/2019 - Adicionada modal para selecionar impressão de Documentos quando for pessoa física (Luis Fernando - GFT)
                   
+                  07/06/2019 - Atualização da funcção limparDadosCampos() passando a quantidade de campos
+				               limpos de 30 (0 a 29) para 37 (0 a 36)
+							 - Inclusão de nova chamada da função limparDadosCampos() dentro da função
+							   obtemCabecalho() para que os campos sejam limpos antes de serem carregados
+							   pelas rotinas chamadas do php
+							   PRB0041519 - Jackson
+
 ***************************************************************************/
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela ATENDA
@@ -530,6 +537,9 @@ function obtemCabecalho() {
         }
     }
 
+    // Realiza a limpeza dos campos antes de carregar as informações do cooperado pesquisado
+	limparDadosCampos();
+
     // Carrega dados da conta através de ajax
     $.ajax({
         type: "POST",
@@ -602,7 +612,7 @@ function limparDadosCampos() {
     }
 
     // Limpa campos com saldos da conta
-    for (i = 0; i < 29; i++) {
+    for (i = 0; i < 36; i++) {
         $("#labelRot" + i).html("&nbsp;");
         $("#valueRot" + i).html("&nbsp;");
     }
