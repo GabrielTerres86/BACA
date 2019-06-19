@@ -7,6 +7,9 @@
  * --------------
  * ALTERAÇÕES   :
  * --------------
+   17/06/2019 - PRB0041586 na rotina pc_consultar_banner, filtro para trazer apenas os últimos 3 meses, melhoria na montagem do xml e 
+                melhoria do cursor cur_banner; criação de novo índice para a tabela tbgen_banner_filtro_especifico (Carlos)
+
  */
 
  //Carregar os parametros do canal
@@ -46,8 +49,8 @@ if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag-
     exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
     die();
 }
-
-$registros = $xmlObjeto->roottag->tags[0]->tags[2]->tags;
+//$registros = $xmlObjeto->roottag->tags[0]->tags[2]->tags;
+$registros = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 		
 $qtRegistros = count($registros);
 ?>
@@ -134,11 +137,11 @@ $qtRegistros = count($registros);
 					if($qtRegistros > 0){
 					    for ($i = 0; $i < $qtRegistros; $i++){ 
 				?>
-					<li id="banner<?= getByTagName($registros[$i]->tags, 'CDBANNER'); ?>" 
-						index="<?= getByTagName($registros[$i]->tags, 'CDBANNER'); ?>" 
-						key="<?= getByTagName($registros[$i]->tags, 'CDBANNER'); ?>" 
+					<li id="banner<? echo getByTagName($registros[$i]->tags, 'CDBANNER'); ?>" 
+						index="<? echo getByTagName($registros[$i]->tags, 'CDBANNER'); ?>" 
+						key="<? echo getByTagName($registros[$i]->tags, 'CDBANNER'); ?>" 
 						canalKey="<?= getByTagName($registros[$i]->tags, 'CDCANAL'); ?>" 
-						class="sortable"><span class=" "></span><?= getByTagName($registros[$i]->tags, 'DSTITULO_BANNER_FORMATADO'); ?></li>
+						class="sortable"><span class=" "></span><? echo getByTagName($registros[$i]->tags, 'DSTITULO_BANNER_FORMATADO'); ?></li>
 				<?php
 	
 					    }
