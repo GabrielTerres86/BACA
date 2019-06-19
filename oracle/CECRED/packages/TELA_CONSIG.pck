@@ -264,7 +264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
     ----------------------------------------------------------------------------------------------------------*/
     CURSOR cr_consig IS
     SELECT tec.idemprconsig
-      FROM cecred.tbcadast_empresa_consig tec
+      FROM tbcadast_empresa_consig tec
      WHERE tec.indconsignado = decode(pr_indconsignado, -1, tec.indconsignado, pr_indconsignado)
        AND tec.cdempres = pr_cdempres
        AND tec.cdcooper = pr_cdcooper;
@@ -351,7 +351,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
       CURSOR cr_empr_consig IS
       SELECT tmp.*
         FROM (
-        SELECT row_number() OVER(ORDER BY tec.cdempres) /*rownum*/ numero_linha
+        SELECT COUNT(1) OVER (PARTITION BY 1) qtregist  --Quantidade de registros 
+              ,COUNT(1) OVER (PARTITION BY 1 ORDER BY nmextemp, tec.cdempres ) numero_linha
               ,p.cdcooper
               ,p.cdempres
               ,p.nrdconta
@@ -372,10 +373,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
               ,tec.rowid      --> trocar pelo rowid da Tabela Nova CONSIG.
               ,CASE WHEN tec.idemprconsig > 0 THEN 1 ELSE 0 END inpossuiconsig
           FROM crapemp p
-          LEFT JOIN cecred.tbcadast_empresa_consig tec
+          LEFT JOIN tbcadast_empresa_consig tec
             ON tec.cdcooper = p.cdcooper
            AND tec.cdempres = p.cdempres
          WHERE p.cdcooper = pr_cdcooper
+           AND CASE WHEN (pr_nmextemp IS NULL AND pr_nmresemp IS NULL) AND (pr_cdempres IS NULL OR pr_cdempres = 0) THEN
+                      NVL(tec.indconsignado, 0)
+                    ELSE
+                     DECODE(pr_cddopcao,'H',0,1) 
+               END = DECODE(pr_cddopcao,'H',0,1)
            AND CASE
                  WHEN pr_cdempres >= 0 AND p.cdempres = pr_cdempres THEN 1
                  WHEN pr_cdempres is null THEN
@@ -387,13 +393,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
                    END
                  ELSE 0
                END = 1
+        ORDER BY nmextemp
            ) tmp
-      WHERE  CASE WHEN (pr_nriniseq + pr_nrregist) = 0 THEN 1
-                  WHEN (pr_nriniseq + pr_nrregist) > 0 AND
-                       numero_linha >= pr_nriniseq AND numero_linha < (pr_nriniseq + pr_nrregist) THEN 1
-                  ELSE 0
-             END = 1
-         ORDER BY nmextemp;
+      WHERE  numero_linha BETWEEN pr_nriniseq AND pr_nriniseq + pr_nrregist 
+         ;
 
       rw_empr_consig cr_empr_consig%ROWTYPE;
 
@@ -533,7 +536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
       vr_des_xml        clob;
       vr_texto_completo varchar2(32600);
       vr_index          varchar2(100);
-
+      
       procedure pc_escreve_xml( pr_des_dados in varchar2
                               , pr_fecha_xml in boolean default false
                               ) is
@@ -811,7 +814,7 @@ BEGIN
     
     CURSOR cr_consig IS
       SELECT tec.idemprconsig
-        FROM cecred.tbcadast_empresa_consig tec      
+        FROM tbcadast_empresa_consig tec      
        WHERE tec.cdempres = pr_cdempres
          AND tec.cdcooper = pr_cdcooper;
    rw_consig cr_consig      %ROWTYPE;
@@ -848,7 +851,7 @@ BEGIN
     END IF; 
     CLOSE cr_consig;
       
-    UPDATE cecred.tbcadast_empresa_consig tec
+    UPDATE tbcadast_empresa_consig tec
        SET indconsignado        = pr_indconsignado
           ,dtativconsignado     = pr_dtativconsignado
           ,tpmodconvenio        = pr_tpmodconvenio
@@ -888,7 +891,7 @@ BEGIN
       END IF;
     END;   
        
-    pr_dsmensag := 'Convênio de consignado atualizado com sucesso.';
+    --pr_dsmensag := 'Convênio de consignado atualizado com sucesso.';
 
   EXCEPTION
     WHEN vr_exc_erro then
@@ -928,6 +931,7 @@ BEGIN
     vr_dtativconsignado tbcadast_empresa_consig.dtativconsignado%TYPE;
     vr_dtinterromper    tbcadast_empresa_consig.dtinterromper%TYPE;
     vr_dsmensag         VARCHAR2(4000);
+    vr_dsmensag1        VARCHAR2(200);
 
     -- Variavel de criticas
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1136,8 +1140,9 @@ BEGIN
       
       -- Extraindo os dados do XML o valor da tag <total>
       vr_qtdtotal := TO_NUMBER(TRIM(pr_retxml.extract('/Root/dto/vencimentos/total/text()').getstringval()));
-      vr_nrvencto := 0;
-    
+      vr_nrvencto  := 0;
+      vr_dsmensag1 := NULL;
+      
       FOR x in 1 .. vr_qtdtotal LOOP
         
         vr_nrvencto:= vr_nrvencto + 1;        
@@ -1172,31 +1177,19 @@ BEGIN
         IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
+        
+        IF vr_dsmensag1 IS NULL THEN
+          vr_dsmensag1 := vr_dsmensag ; 
+        END IF;  
                 
       END LOOP;
     END;
     
-    /*\* Interromper a Conbrança de todos os contratos da empresa na Cyber - P437*\
-    BEGIN
-      
-      pc_interromper_cobranca( pr_cdempres       => vr_cdempres 
-                              ,pr_cdcooper       => vr_cdcooper
-                              ,pr_cdoperad       => vr_cdoperad
-                              ,pr_indinterromper => vr_indinterromper
-                              ,pr_cdorigem       => 3               -- Empréstimo
-                              ,pr_cdmotcin       => 8               -- 8 = Repasse Consignado
-                              ,pr_cdcritic       => vr_cdcritic --OUT
-                              ,pr_dscritic       => vr_dscritic --OUT
-                              ,pr_des_erro       => vr_des_erro --OUT
-                              );
-
-      IF vr_des_erro = 'NOK' THEN
-        raise vr_exc_erro;
-      END IF;
-    END;*/
-    
-    
-    vr_dsmensag := 'Gravado com Sucesso!!!';
+    IF vr_dsmensag1 IS NOT NULL THEN
+      vr_dsmensag := vr_dsmensag1;
+    ELSE
+      vr_dsmensag := 'Gravado com Sucesso!!!';
+    END IF;
      
     pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmensag>'||vr_dsmensag||'</dsmensag></Root>');
 
@@ -1266,7 +1259,7 @@ BEGIN
    CURSOR cr_consig IS
      SELECT tec.idemprconsig
        INTO pr_idemprconsig
-       FROM cecred.tbcadast_empresa_consig tec      
+       FROM tbcadast_empresa_consig tec      
       WHERE tec.cdempres = pr_cdempres
         AND tec.cdcooper = pr_cdcooper;
    rw_consig cr_consig      %ROWTYPE;
@@ -1333,7 +1326,7 @@ BEGIN
       pr_dsmensag := 'Convênio de consignado habilitado com sucesso.';
 
     ELSE
-      INSERT INTO cecred.tbcadast_empresa_consig
+      INSERT INTO tbcadast_empresa_consig
              (/*01*/ cdcooper
              ,/*02*/ cdempres
              ,/*03*/ indconsignado
@@ -1362,7 +1355,7 @@ BEGIN
        RETURNING idemprconsig 
             INTO pr_idemprconsig; /*P437*/
             
-      pr_dsmensag := 'Convênio de consignado criado com sucesso.';
+      --pr_dsmensag := 'Convênio de consignado criado com sucesso.';
     END IF;
 
     -- Caso ocorra alteração do Dia Fechamento Folha na tela CONSIG, esta deve ser refletida na tela CADEMP.
@@ -1410,6 +1403,7 @@ BEGIN
     vr_dtativconsignado tbcadast_empresa_consig.dtativconsignado%TYPE;
     vr_dtinterromper    tbcadast_empresa_consig.dtinterromper%TYPE;
     vr_dsmensag         VARCHAR2(4000);
+    vr_dsmensag1        VARCHAR2(200);
 
     -- Variavel de criticas
     vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1661,10 +1655,19 @@ BEGIN
         IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
+        
+        IF vr_dsmensag1 IS NULL THEN
+          vr_dsmensag1 := vr_dsmensag ; 
+        END IF;
+        
       END LOOP;
     END;
     
-    vr_dsmensag := 'Gravado com Sucesso!!!';
+    IF vr_dsmensag1 IS NOT NULL THEN
+      vr_dsmensag := vr_dsmensag1;
+    ELSE
+      vr_dsmensag := 'Gravado com Sucesso!!!';
+    END IF;
     
     pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmensag>'||vr_dsmensag||'</dsmensag></Root>');
 
@@ -1720,7 +1723,7 @@ BEGIN
   BEGIN
     pr_dsmensag := NULL;
 
-    UPDATE cecred.tbcadast_empresa_consig tec
+    UPDATE tbcadast_empresa_consig tec
        SET indconsignado = 0
      WHERE tec.cdempres = pr_cdempres
        AND tec.cdcooper = pr_cdcooper;
@@ -1905,12 +1908,6 @@ BEGIN
         RAISE vr_exc_erro;
     END;
 
-    --Regra: A data do campo envio do arquivo deverá ser igual ou maior que a data do campo até;
-    IF vr_dtenvioarquivo < vr_dtinclpropostaate THEN
-      vr_dscritic := 'Data do envio do arquivo '||to_char(vr_dtenvioarquivo,'DD/MM')||' deve ser igual ou maior que a Data de inclusao da proposta Ate '||to_char(vr_dtinclpropostaate,'DD/MM')||'.';
-      RAISE vr_exc_erro;
-    END IF;
-
     --Buscar a Dia de Fechamento da Folha
     OPEN cr_crapemp;
     FETCH cr_crapemp 
@@ -1960,7 +1957,13 @@ BEGIN
                                                   ' DtEnvioArquivo: '    || pr_dtenvioarquivo ||
                                                   ' DtVencimento: '      || pr_dtvencimento   ||'.');
 
-    pr_dsmensag := 'OK';
+    --Regra: A data do campo envio do arquivo deverá ser igual ou maior que a data do campo até;
+    IF vr_dtenvioarquivo < vr_dtinclpropostaate THEN
+      --pr_dsmensag := 'Data do envio do arquivo '||to_char(vr_dtenvioarquivo,'DD/MM')||' deve ser igual ou maior que a Data de inclusao da proposta Ate '||to_char(vr_dtinclpropostaate,'DD/MM')||'.';
+      pr_dsmensag := 'Atencao: ha datas de envio de arquivo menores do que as datas finais de inclusao.';
+    ELSE
+      pr_dsmensag := NULL;
+    END IF;
 
   EXCEPTION
     WHEN vr_exc_erro then
@@ -2069,12 +2072,13 @@ BEGIN
                to_char(dtinclpropostaate,'DD/MM') dtinclpropostaate,
                to_char(dtenvioarquivo,'DD/MM')    dtenvioarquivo,
                to_char(dtvencimento,'DD/MM')      dtvencimento
-          FROM cecred.tbcadast_emp_consig_param
+          FROM tbcadast_emp_consig_param
          WHERE idemprconsig = ( SELECT idemprconsig
-                                  FROM cecred.tbcadast_empresa_consig
+                                  FROM tbcadast_empresa_consig
                                  WHERE cdcooper = pr_cdcooper
                                    AND cdempres = pr_cdempres
-                                );
+                                )
+         order by dtinclpropostade;
 
       rw_param_consig cr_param_consig%ROWTYPE;
 
@@ -2192,12 +2196,12 @@ BEGIN
                               , pr_dscritic => vr_dscritic);
 
       tela_consig.pc_busca_param_consig( pr_cdcooper               => vr_cdcooper
-                                                    ,pr_cdempres               => pr_cdempres
-                                                     --> OUT <--
-                                                    ,pr_qtregist               => vr_qtregist
-                                                    ,pr_tab_dados_param_consig => vr_tab_dados_param_consig
-                                                    ,pr_cdcritic               => vr_cdcritic
-                                                    ,pr_dscritic               => vr_dscritic);
+                                        ,pr_cdempres               => pr_cdempres
+                                         --> OUT <--
+                                        ,pr_qtregist               => vr_qtregist
+                                        ,pr_tab_dados_param_consig => vr_tab_dados_param_consig
+                                        ,pr_cdcritic               => vr_cdcritic
+                                        ,pr_dscritic               => vr_dscritic);
 
       IF (nvl(vr_cdcritic,0) <> 0 OR  vr_dscritic IS NOT NULL) THEN
           raise vr_exc_erro;
@@ -2790,7 +2794,7 @@ BEGIN
       
       IF vr_existe_crapcyc = 0 AND pr_indinterromper = 1 THEN          
         BEGIN
-          INSERT INTO CECRED.CRAPCYC
+          INSERT INTO CRAPCYC
             (cdcooper,
              cdorigem,
              nrdconta,
@@ -2838,7 +2842,7 @@ BEGIN
         --Interromper a Cobrança
         IF pr_indinterromper = 1 THEN 
           BEGIN
-            UPDATE cecred.crapcyc c
+            UPDATE crapcyc c
                SET c.flgehvip = 1
                   ,c.cdmotcin = pr_cdmotcin                  
                   ,c.dtaltera = sysdate
@@ -2871,7 +2875,7 @@ BEGIN
         ELSIF pr_indinterromper = 0 THEN
         
           BEGIN
-            UPDATE cecred.crapcyc c
+            UPDATE crapcyc c
                SET c.flgehvip = 0
                   ,c.cdmotcin = 0
                   ,c.dtaltera = sysdate
@@ -2961,7 +2965,7 @@ BEGIN
      SELECT t.idemprconsigparam
        FROM tbcadast_emp_consig_param  t
       WHERE t.idemprconsig = (SELECT e.idemprconsig 
-                                FROM cecred.tbcadast_empresa_consig e 
+                                FROM tbcadast_empresa_consig e 
                                WHERE e.cdempres = pr_cdempres
                                  AND e.cdcooper = pr_cdcooper);
 
