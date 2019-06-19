@@ -763,6 +763,7 @@ function atualizaConvenio(){
         Publico = 2
         Privado = 1
     */
+
     if(tpmodconvenio == 1){
 		if (Cdtfchfol.val() == '')
 			Cdtfchfol.val(dtfchfolOld);
@@ -788,7 +789,7 @@ function atualizaConvenio(){
 			$('#indautrepassecc', FrmConsig).val(0);
 			$('#indinterromper', FrmConsig).val(0);
         }
-    } else if ( tpmodconvenio == 3){ // INSS
+    } else if ( tpmodconvenio == 3 || tpmodconvenio == 0){ // INSS
         // Limpa data de interrupï¿½ï¿½o para INSS
 		DivVencParc.css('display', 'none');
         Cdtfchfol.val('');
@@ -1004,7 +1005,16 @@ function controlaOperacao(){
     
 
 
-    // Validaï¿½ï¿½es de campos obrigatï¿½rios no front
+    // Calidações de campos obrigatórios no front
+    if(tpmodconvenio == 0){
+        hideMsgAguardo();
+            showError(
+                'error',
+                'Tipo de Convenio deve ser selecionado.',
+                'Alerta - Ayllos',
+                 "$('#dtfchfol','#"+FrmConsig.attr('id')+"').focus()");
+            return false;
+    }
     // Publico
     if(tpmodconvenio == 2 && (cddopcao == 'A' || cddopcao == 'H')){
         // Dia fechamento folha

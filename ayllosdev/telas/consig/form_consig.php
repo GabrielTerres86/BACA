@@ -50,6 +50,10 @@
 			id="select_tpmodconvenio"
 			name="select_tpmodconvenio"
 			class="campo">
+			<option <? echo ((getByTagName($inf,'tpmodconvenio') == 0) || (getByTagName($inf,'tpmodconvenio') == '') ? "selected" : ""); ?>
+				value="0">
+				<? echo utf8ToHtml('Selecione Tipo Conv&ecirc;nio') ?>
+			</option> 
 			<option
 				<?php echo (getByTagName($inf,'tpmodconvenio') == 3 ? "selected" : "");?>
 				value="3">
